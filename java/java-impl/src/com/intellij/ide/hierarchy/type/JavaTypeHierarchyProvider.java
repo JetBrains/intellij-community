@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,16 +15,16 @@
  */
 package com.intellij.ide.hierarchy.type;
 
-import com.intellij.ide.hierarchy.HierarchyProvider;
+import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.ide.hierarchy.HierarchyBrowser;
+import com.intellij.ide.hierarchy.HierarchyProvider;
 import com.intellij.ide.hierarchy.TypeHierarchyBrowserBase;
-import com.intellij.psi.*;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.LangDataKeys;
-import com.intellij.openapi.project.Project;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.codeInsight.TargetElementUtil;
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.*;
 
 /**
  * @author yole
@@ -39,8 +39,9 @@ public class JavaTypeHierarchyProvider implements HierarchyProvider {
       final PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
       if (file == null) return null;
 
-      final PsiElement targetElement = TargetElementUtil
-          .findTargetElement(editor, TargetElementUtil.ELEMENT_NAME_ACCEPTED | TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED | TargetElementUtil.LOOKUP_ITEM_ACCEPTED);
+      final PsiElement targetElement = TargetElementUtilBase.findTargetElement(editor, TargetElementUtilBase.ELEMENT_NAME_ACCEPTED |
+                                                                                       TargetElementUtilBase.REFERENCED_ELEMENT_ACCEPTED |
+                                                                                       TargetElementUtilBase.LOOKUP_ITEM_ACCEPTED);
       if (targetElement instanceof PsiClass) {
         return targetElement;
       }
@@ -53,7 +54,7 @@ public class JavaTypeHierarchyProvider implements HierarchyProvider {
           final PsiClass[] classes = ((PsiClassOwner)element).getClasses();
           return classes.length == 1 ? classes[0] : null;
         }
-        if (element instanceof PsiClass && !(element instanceof PsiAnonymousClass)) {
+        if (element instanceof PsiClass && !(element instanceof PsiAnonymousClass) && !(element instanceof PsiSyntheticClass)) {
           return element;
         }
         element = element.getParent();

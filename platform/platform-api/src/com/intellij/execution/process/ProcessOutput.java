@@ -33,6 +33,10 @@ public class ProcessOutput {
     myExitCode = -1; // until set explicitly, exit code denotes an error.
   }
 
+  public ProcessOutput(final int exitCode) {
+    myExitCode = exitCode;
+  }
+
   void appendStdout(String text) {
     myStdoutBuilder.append(text);
   }
@@ -66,14 +70,14 @@ public class ProcessOutput {
   }
 
   public List<String> getStdoutLines() {
-    return splitLines(myStdoutBuilder.toString());
+    return splitLines(getStdout());
   }
 
   public List<String> getStderrLines() {
-    return splitLines(myStderrBuilder.toString());
+    return splitLines(getStderr());
   }
 
-  private List<String> splitLines(String s) {
+  private static List<String> splitLines(String s) {
     String converted = StringUtil.convertLineSeparators(s);
     return StringUtil.split(converted, "\n");
   }

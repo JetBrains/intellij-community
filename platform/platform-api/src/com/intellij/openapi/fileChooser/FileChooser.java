@@ -18,6 +18,7 @@ package com.intellij.openapi.fileChooser;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
@@ -77,41 +78,41 @@ public class FileChooser {
   }
 
   /**
-   * Shows file/folder open dialog, allows user to choose files/folders and then passes result to callback in EDT.
-   * On MacOS Open Dialog will be shown with slide effect if Macish UI is turned on.
-   *
-   * @param descriptor file chooser descriptor
-   * @param project    project
-   * @param toSelect   file to preselect
-   * @param callback   callback will be invoked after user have closed dialog
+   * @deprecated use {@linkplain #chooseFiles(FileChooserDescriptor,
+   *                                          com.intellij.openapi.project.Project,
+   *                                          com.intellij.openapi.vfs.VirtualFile,
+   *                                          com.intellij.util.Consumer)} (to remove in IDEA 13)
    */
+  @SuppressWarnings("UnusedDeclaration")
   public static void chooseFilesWithSlideEffect(@NotNull final FileChooserDescriptor descriptor,
                                                 @Nullable final Project project,
                                                 @Nullable final VirtualFile toSelect,
                                                 @NotNull final Consumer<VirtualFile[]> callback) {
-    chooseFilesWithSlideEffect(descriptor, project, null, toSelect, callback);
+    chooseFiles(descriptor, project, toSelect, new Consumer<List<VirtualFile>>() {
+      @Override
+      public void consume(final List<VirtualFile> files) {
+        callback.consume(VfsUtil.toVirtualFileArray(files));
+      }
+    });
   }
 
   /**
-   * Shows file/folder open dialog, allows user to choose files/folders and then passes result to callback in EDT.
-   * On MacOS Open Dialog will be shown with slide effect if Macish UI is turned on.
-   *
-   * @param descriptor file chooser descriptor
-   * @param project    project
-   * @param parent     parent component
-   * @param toSelect   file to preselect
-   * @param callback   callback will be invoked after user have closed dialog
+   * @deprecated use {@linkplain #chooseFiles(FileChooserDescriptor,
+   *                                          com.intellij.openapi.project.Project,
+   *                                          java.awt.Component,
+   *                                          com.intellij.openapi.vfs.VirtualFile,
+   *                                          com.intellij.util.Consumer)} (to remove in IDEA 13)
    */
+  @SuppressWarnings("UnusedDeclaration")
   public static void chooseFilesWithSlideEffect(@NotNull final FileChooserDescriptor descriptor,
                                                 @Nullable final Project project,
                                                 @Nullable final Component parent,
                                                 @Nullable final VirtualFile toSelect,
                                                 @NotNull final Consumer<VirtualFile[]> callback) {
-    final String path = toSelect != null ? FileChooserUtil.getSelectionPath(toSelect) : null;
-    choosePaths(descriptor, project, parent, path, new Consumer<List<String>>() {
+    chooseFiles(descriptor, project, parent, toSelect, new Consumer<List<VirtualFile>>() {
       @Override
-      public void consume(final List<String> paths) {
-        callback.consume(FileChooserUtil.getFiles(ArrayUtil.toStringArray(paths)));
+      public void consume(final List<VirtualFile> files) {
+        callback.consume(VfsUtil.toVirtualFileArray(files));
       }
     });
   }
@@ -124,12 +125,13 @@ public class FileChooser {
    * @param project    project
    * @param toSelect   file to preselect
    * @param callback   callback will be invoked after user have closed dialog
+   * @since 11.1
    */
-  public static void choosePaths(@NotNull final FileChooserDescriptor descriptor,
+  public static void chooseFiles(@NotNull final FileChooserDescriptor descriptor,
                                  @Nullable final Project project,
-                                 @Nullable final String toSelect,
-                                 @NotNull final Consumer<List<String>> callback) {
-    choosePaths(descriptor, project, null, toSelect, callback);
+                                 @Nullable final VirtualFile toSelect,
+                                 @NotNull final Consumer<List<VirtualFile>> callback) {
+    chooseFiles(descriptor, project, null, toSelect, callback);
   }
 
   /**
@@ -141,12 +143,13 @@ public class FileChooser {
    * @param parent     parent component
    * @param toSelect   file to preselect
    * @param callback   callback will be invoked after user have closed dialog
+   * @since 11.1
    */
-  private static void choosePaths(@NotNull final FileChooserDescriptor descriptor,
-                                  @Nullable final Project project,
-                                  @Nullable final Component parent,
-                                  @Nullable final String toSelect,
-                                  @NotNull final Consumer<List<String>> callback) {
+  public static void chooseFiles(@NotNull final FileChooserDescriptor descriptor,
+                                 @Nullable final Project project,
+                                 @Nullable final Component parent,
+                                 @Nullable final VirtualFile toSelect,
+                                 @NotNull final Consumer<List<VirtualFile>> callback) {
     final FileChooserFactory factory = FileChooserFactory.getInstance();
     final PathChooserDialog pathChooser = factory.createPathChooser(descriptor, project, parent);
     pathChooser.choose(toSelect, callback);

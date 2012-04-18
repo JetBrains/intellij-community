@@ -116,7 +116,9 @@ public class InstalledPluginsManagerMain extends PluginManagerMain {
     final Set<PluginId> notInstalled = new HashSet<PluginId>();
     final Set<PluginId> disabledIds = new HashSet<PluginId>();
     final PluginId[] dependentPluginIds = pluginDescriptor.getDependentPluginIds();
+    final PluginId[] optionalDependentPluginIds = pluginDescriptor.getOptionalDependentPluginIds();
     for (PluginId id : dependentPluginIds) {
+      if (Arrays.binarySearch(optionalDependentPluginIds, id) > -1) continue;
       final boolean disabled = ((InstalledPluginsTableModel)pluginsModel).isDisabled(id);
       final boolean enabled = ((InstalledPluginsTableModel)pluginsModel).isEnabled(id);
       if (!enabled && !disabled && !PluginManager.isModuleDependency(id)) {

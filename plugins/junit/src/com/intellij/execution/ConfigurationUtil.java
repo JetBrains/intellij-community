@@ -67,7 +67,7 @@ public class ConfigurationUtil {
           if (containingClass instanceof PsiAnonymousClass) return;
           if (containingClass.hasModifierProperty(PsiModifier.ABSTRACT)) return;
           if (containingClass.getContainingClass() != null && !containingClass.hasModifierProperty(PsiModifier.STATIC)) return;
-          if (JUnitUtil.isSuiteMethod(method)) {
+          if (JUnitUtil.isSuiteMethod(method) && testClassFilter.isAccepted(containingClass)) {
             found.add(containingClass);
           }
         }
@@ -98,11 +98,11 @@ public class ConfigurationUtil {
         public boolean process(final PsiMember annotated) {
           final PsiClass containingClass = annotated instanceof PsiClass ? (PsiClass)annotated : annotated.getContainingClass();
           if (containingClass != null && annotated instanceof PsiMethod == isMethod) {
-            if (scope.contains(PsiUtilBase.getVirtualFile(containingClass)) && ApplicationManager.getApplication().runReadAction(
+            if (ApplicationManager.getApplication().runReadAction(
               new Computable<Boolean>() {
                 @Override
                 public Boolean compute() {
-                  return testClassFilter.isAccepted(containingClass);
+                  return scope.contains(PsiUtilBase.getVirtualFile(containingClass)) && testClassFilter.isAccepted(containingClass);
                 }
               })) {
               found.add(containingClass);

@@ -24,13 +24,15 @@ import org.jetbrains.annotations.NotNull;
  */
 public class ExtensionFileNameMatcher implements FileNameMatcher {
   private final String myExtension;
-                         
+  private final String myDotExtension;
+
   public ExtensionFileNameMatcher(@NotNull @NonNls String extension) {
     myExtension = extension.toLowerCase();
+    myDotExtension = "." + myExtension;
   }
 
   public boolean accept(@NotNull @NonNls String fileName) {
-    return fileName.regionMatches(true, fileName.length() - myExtension.length() - 1, "." + myExtension, 0, myExtension.length() + 1);
+    return fileName.regionMatches(true, fileName.length() - myDotExtension.length(), myDotExtension, 0, myDotExtension.length());
   }
 
   @NonNls

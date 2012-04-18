@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,8 +18,7 @@ package com.intellij.cvsSupport2.cvsBrowser;
 import com.intellij.CvsBundle;
 import com.intellij.cvsSupport2.connections.CvsEnvironment;
 import com.intellij.cvsSupport2.cvsExecution.CvsOperationExecutor;
-import com.intellij.cvsSupport2.cvsExecution.CvsOperationExecutorCallback;
-import com.intellij.cvsSupport2.cvsExecution.ModalityContext;
+import com.intellij.cvsSupport2.cvsExecution.DefaultCvsOperationExecutorCallback;
 import com.intellij.cvsSupport2.cvshandlers.CommandCvsHandler;
 import com.intellij.cvsSupport2.cvsoperations.common.CvsOperation;
 import com.intellij.cvsSupport2.cvsoperations.cvsContent.DirectoryContent;
@@ -40,19 +39,19 @@ public abstract class AbstractVcsDataProvider implements RemoteResourceDataProvi
     myEnvironment = environment;
   }
 
+  @Override
   public void fillContentFor(final GetContentCallback callback, Consumer<VcsException> errorCallback) {
     myErrorCallback = errorCallback;
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       executeCommand(createDirectoryContentProvider(callback.getElementPath()), callback);
     } else {
-      final GetDirectoriesListViaUpdateOperation provider =
-        new GetDirectoriesListViaUpdateOperation(myEnvironment, callback.getElementPath());
-      final Consumer<DirectoryContent> consumer = new Consumer<DirectoryContent>() {
+      final DirectoryContentProvider provider = createDirectoryContentProvider(callback.getElementPath());
+      provider.setStreamingListener(new Consumer<DirectoryContent>() {
+        @Override
         public void consume(final DirectoryContent directoryContent) {
           callback.appendDirectoryContent(directoryContent);
         }
-      };
-      provider.setStepByStepListener(consumer);
+      });
       executeCommand(provider, callback);
     }
   }
@@ -66,6 +65,7 @@ public abstract class AbstractVcsDataProvider implements RemoteResourceDataProvi
       super(title, cvsOperation, true);
     }
 
+    @Override
     protected boolean runInReadThread() {
       return false;
     }
@@ -81,12 +81,11 @@ public abstract class AbstractVcsDataProvider implements RemoteResourceDataProvi
     final CvsOperationExecutor executor = new CvsOperationExecutor(false, callback.getProject(), callback.getModalityState());
     executor.setIsQuietOperation(true);
 
-    final CancellableCvsHandler cvsHandler =
-        new CancellableCvsHandler(CvsBundle.message("browse.repository.operation.name"), (CvsOperation)command);
-
+    final CancellableCvsHandler cvsHandler = new CancellableCvsHandler(CvsBundle.message("browse.repository.operation.name"), (CvsOperation)command);
     callback.useForCancel(cvsHandler.getProgressListener());
 
-    executor.performActionSync(cvsHandler, new CvsOperationExecutorCallback() {
+    executor.performActionSync(cvsHandler, new DefaultCvsOperationExecutorCallback() {
+      @Override
       public void executionFinished(boolean successfully) {
         if (!successfully) {
           final List<VcsException> errors = cvsHandler.getErrorsExceptAborted();
@@ -95,12 +94,6 @@ public abstract class AbstractVcsDataProvider implements RemoteResourceDataProvi
           }
         }
         callback.finished();
-      }
-
-      public void executeInProgressAfterAction(ModalityContext modalityContext) {
-      }
-
-      public void executionFinishedSuccessfully() {
       }
     });
   }

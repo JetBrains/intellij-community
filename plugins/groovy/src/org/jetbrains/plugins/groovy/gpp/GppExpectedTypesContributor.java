@@ -18,7 +18,10 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GrTupleType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.types.GrClosureSignatureUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author peter
@@ -65,7 +68,7 @@ public class GppExpectedTypesContributor extends GroovyExpectedTypesContributor 
           final PsiElement method = resolveResult.getElement();
           if (method instanceof PsiMethod && ((PsiMethod)method).isConstructor()) {
             final Map<GrExpression,Pair<PsiParameter,PsiType>> map = GrClosureSignatureUtil
-              .mapArgumentsToParameters(resolveResult, list, false, GrNamedArgument.EMPTY_ARRAY, args, GrClosableBlock.EMPTY_ARRAY);
+              .mapArgumentsToParameters(resolveResult, list, false, true, GrNamedArgument.EMPTY_ARRAY, args, GrClosableBlock.EMPTY_ARRAY);
             if (map != null) {
               final Pair<PsiParameter, PsiType> pair = map.get(arg);
               if (pair != null) {

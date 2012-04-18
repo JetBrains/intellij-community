@@ -34,6 +34,7 @@ import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.input.SAXBuilder;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -62,15 +63,15 @@ public final class CutCopyPasteSupport implements CopyProvider, CutProvider, Pas
     myEditor = uiEditor;
   }
 
-  public boolean isCopyEnabled(final DataContext dataContext) {
+  public boolean isCopyEnabled(@NotNull final DataContext dataContext) {
     return FormEditingUtil.getSelectedComponents(myEditor).size() > 0 && !myEditor.getInplaceEditingLayer().isEditing();
   }
 
-  public boolean isCopyVisible(DataContext dataContext) {
+  public boolean isCopyVisible(@NotNull DataContext dataContext) {
     return true;
   }
 
-  public void performCopy(final DataContext dataContext) {
+  public void performCopy(@NotNull final DataContext dataContext) {
     doCopy();
   }
 
@@ -88,15 +89,15 @@ public final class CutCopyPasteSupport implements CopyProvider, CutProvider, Pas
     }
   }
 
-  public boolean isCutEnabled(final DataContext dataContext) {
+  public boolean isCutEnabled(@NotNull final DataContext dataContext) {
     return isCopyEnabled(dataContext) && FormEditingUtil.canDeleteSelection(myEditor);
   }
 
-  public boolean isCutVisible(DataContext dataContext) {
+  public boolean isCutVisible(@NotNull DataContext dataContext) {
     return true;
   }
 
-  public void performCut(final DataContext dataContext) {
+  public void performCut(@NotNull final DataContext dataContext) {
     if (doCopy() && myEditor.ensureEditable()) {
       CommandProcessor.getInstance().executeCommand(myEditor.getProject(), new Runnable() {
         public void run() {
@@ -106,15 +107,15 @@ public final class CutCopyPasteSupport implements CopyProvider, CutProvider, Pas
     }
   }
 
-  public boolean isPastePossible(final DataContext dataContext) {
+  public boolean isPastePossible(@NotNull final DataContext dataContext) {
     return isPasteEnabled(dataContext);
   }
 
-  public boolean isPasteEnabled(final DataContext dataContext) {
+  public boolean isPasteEnabled(@NotNull final DataContext dataContext) {
     return getSerializedComponents() != null && !myEditor.getInplaceEditingLayer().isEditing();
   }
 
-  public void performPaste(final DataContext dataContext) {
+  public void performPaste(@NotNull final DataContext dataContext) {
     final String serializedComponents = getSerializedComponents();
     if (serializedComponents == null) {
       return;

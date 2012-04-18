@@ -23,6 +23,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.xml.TagNameReference;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.xml.DefaultXmlExtension;
+import org.jetbrains.android.dom.manifest.ManifestDomFileDescription;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.util.AndroidResourceUtil;
 
@@ -47,7 +48,8 @@ public class AndroidXmlExtension extends DefaultXmlExtension {
       }
       return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
         public Boolean compute() {
-          return AndroidResourceUtil.isInResourceSubdirectory(file, null);
+          return AndroidResourceUtil.isInResourceSubdirectory(file, null) ||
+                 ManifestDomFileDescription.isManifestFile((XmlFile)file);
         }
       });
     }

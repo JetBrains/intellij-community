@@ -76,7 +76,7 @@ public abstract class SvnTestCase extends AbstractVcsTestCase {
           myRepoUrl = "file:///" + FileUtil.toSystemIndependentName(svnRoot.getPath());
           verify(runSvn("co", myRepoUrl, "."));
 
-          initProject(myWcRoot);
+          initProject(myWcRoot, SvnTestCase.this.getTestName());
           activateVCS(SvnVcs.VCS_NAME);
 
           myGate = new MockChangeListManagerGate(ChangeListManager.getInstance(myProject));

@@ -27,7 +27,6 @@ import com.intellij.util.Consumer;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitFileRevision;
 import git4idea.GitRevisionNumber;
-import git4idea.history.GitHistoryUtils;
 import git4idea.history.browser.GitCommit;
 import git4idea.history.browser.SHAHash;
 import git4idea.history.wholeTree.AbstractHash;
@@ -38,6 +37,7 @@ import org.testng.annotations.Test;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Method;
 import java.util.*;
 
 import static org.testng.Assert.*;
@@ -59,8 +59,8 @@ public class GitHistoryUtilsTest extends GitTest {
 
   @BeforeMethod
   @Override
-  public void setUp() throws Exception {
-    super.setUp();
+  public void setUp(Method testMethod) throws Exception {
+    super.setUp(testMethod);
     myRevisions = new ArrayList<GitTestRevision>(7);
     myRevisionsAfterRename = new ArrayList<GitTestRevision>(4);
 

@@ -1,5 +1,7 @@
 package com.intellij.tasks.jira;
 
+import com.atlassian.connector.commons.jira.soap.axis.JiraSoapService;
+import com.atlassian.connector.commons.jira.soap.axis.JiraSoapServiceServiceLocator;
 import com.atlassian.theplugin.jira.api.JIRAIssueBean;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.tasks.Task;
@@ -8,7 +10,9 @@ import com.intellij.tasks.TaskState;
 import com.intellij.tasks.impl.BaseRepositoryImpl;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.net.HttpConfigurable;
 import com.intellij.util.xmlb.annotations.Tag;
+import org.apache.axis.AxisProperties;
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.HttpStatus;
 import org.apache.commons.httpclient.methods.GetMethod;
@@ -20,6 +24,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URL;
+import java.rmi.RemoteException;
 import java.util.List;
 
 /**
@@ -29,7 +35,6 @@ import java.util.List;
 public class JiraRepository extends BaseRepositoryImpl {
 
   private final static Logger LOG = Logger.getInstance("#com.intellij.tasks.jira.JiraRepository");
-
   private boolean myJira4 = true;
 
   /**
@@ -104,20 +109,51 @@ public class JiraRepository extends BaseRepositoryImpl {
     return Task.EMPTY_ARRAY;
   }
 
-  private HttpClient login() throws IOException {
-    PostMethod postMethod = getLoginMethod();
+  private HttpClient login() throws Exception {
+
     HttpClient client = getHttpClient();
-    client.executeMethod(postMethod);
-    if (!checkLoginResult(postMethod)) {
-      // try 3.x protocol
-      return login();
+    if (myJira4) {
+      PostMethod postMethod = getLoginMethodFor4x();
+      client.executeMethod(postMethod);
+      if (checkLoginResult(postMethod)) {
+        return client;
+      }
     }
+    // try 3.x protocol
+    axisLogin();
     return client;
+  }
+
+  private void axisLogin() throws Exception {
+
+    try {
+      JiraSoapService soapService =
+        new JiraSoapServiceServiceLocator().getJirasoapserviceV2(new URL(getUrl() + "/rpc/soap/jirasoapservice-v2"));
+      if (isUseProxy()) {
+        HttpConfigurable proxy = HttpConfigurable.getInstance();
+        AxisProperties.setProperty("http.proxyHost", proxy.PROXY_HOST);
+        AxisProperties.setProperty("http.proxyPort", String.valueOf(proxy.PROXY_PORT));
+        if (proxy.PROXY_AUTHENTICATION) {
+          AxisProperties.setProperty("http.proxyUser", String.valueOf(proxy.PROXY_LOGIN));
+          AxisProperties.setProperty("http.proxyPassword", String.valueOf(proxy.getPlainProxyPassword()));
+        }
+      }
+
+      soapService.login(getUsername(), getPassword());
+    }
+    catch (RemoteException e) {
+      String message = e.toString();
+      int i = message.indexOf(": ");
+      if (i > 0) {
+        message = message.substring(i + 2);
+      }
+      throw new Exception(message, e);
+    }
   }
 
   private boolean checkLoginResult(PostMethod postMethod) throws IOException {
     int statusCode = postMethod.getStatusCode();
-    if (statusCode == HttpStatus.SC_NOT_FOUND && myJira4) {
+    if (statusCode == HttpStatus.SC_NOT_FOUND) {
       myJira4 = false;
       return false;
     }
@@ -127,8 +163,8 @@ public class JiraRepository extends BaseRepositoryImpl {
     return true;
   }
 
-  private PostMethod getLoginMethod() {
-    String url = getUrl() + (myJira4 ? "/rest/gadget/1.0/login" : "/secure/Dashboard.jspa");
+  private PostMethod getLoginMethodFor4x() {
+    String url = getUrl() + "/rest/gadget/1.0/login";
     PostMethod postMethod = new PostMethod(url);
     postMethod.addParameter("os_username", getUsername());
     postMethod.addParameter("os_password", getPassword());
@@ -139,7 +175,7 @@ public class JiraRepository extends BaseRepositoryImpl {
 
   @Override
   public CancellableConnection createCancellableConnection() {
-    PostMethod method = getLoginMethod();
+    PostMethod method = getLoginMethodFor4x();
     return new HttpTestConnection<PostMethod>(method) {
 
       @Override
@@ -147,12 +183,9 @@ public class JiraRepository extends BaseRepositoryImpl {
         HttpClient client = getHttpClient();
         client.executeMethod(myMethod);
         if (!checkLoginResult(method)) {
-          myMethod = getLoginMethod(); // another try
-          client.executeMethod(myMethod);
+          axisLogin();
         }
-        if (checkLoginResult(myMethod)) {
-          getIssues(1, client);
-        }
+        getIssues(1, client);
       }
     };
   }

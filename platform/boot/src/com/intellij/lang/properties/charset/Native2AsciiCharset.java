@@ -43,18 +43,22 @@ public class Native2AsciiCharset extends Charset {
     myBaseCharset = baseCharset == null ? Charset.forName(DEFAULT_ENCODING_NAME) : baseCharset;
   }
 
+  @Override
   public String displayName() {
     return getBaseCharset().displayName();
   }
 
+  @Override
   public boolean contains(Charset cs) {
     return false;
   }
 
+  @Override
   public CharsetDecoder newDecoder() {
     return new Native2AsciiCharsetDecoder(this);
   }
 
+  @Override
   public CharsetEncoder newEncoder() {
     return new Native2AsciiCharsetEncoder(this);
   }

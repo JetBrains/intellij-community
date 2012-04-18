@@ -16,8 +16,8 @@
 package git4idea.commands;
 
 import com.intellij.openapi.project.Project;
+import git4idea.GitUtil;
 import git4idea.repo.GitRepository;
-import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
@@ -90,6 +90,6 @@ public final class GitCompoundResult {
   }
   
   private boolean onlyOneRepositoryInTheProject() {
-    return !GitRepositoryManager.getInstance(myProject).moreThanOneRoot();
+    return !GitUtil.getRepositoryManager(myProject).moreThanOneRoot();
   }
 }

@@ -28,23 +28,34 @@ public class ProtoUtil {
     return builder.build();
   }
 
-  public static JpsRemoteProto.Message.Request createMakeRequest(String project, Collection<String> modules, Collection<String> artifacts) {
-    return createCompileRequest(JpsRemoteProto.Message.Request.CompilationRequest.Type.MAKE, project, modules, artifacts, Collections.<String>emptyList());
+  public static JpsRemoteProto.Message.Request createMakeRequest(String project,
+                                                                 Collection<String> modules,
+                                                                 Collection<String> artifacts,
+                                                                 final Map<String, String> userData) {
+    return createCompileRequest(JpsRemoteProto.Message.Request.CompilationRequest.Type.MAKE, project, modules, artifacts,
+                                userData, Collections.<String>emptyList());
   }
 
   public static JpsRemoteProto.Message.Request createForceCompileRequest(String project,
                                                                          Collection<String> modules,
-                                                                         Collection<String> artifacts, Collection<String> paths) {
-    return createCompileRequest(JpsRemoteProto.Message.Request.CompilationRequest.Type.FORCED_COMPILATION, project, modules, artifacts, paths);
+                                                                         Collection<String> artifacts,
+                                                                         Collection<String> paths,
+                                                                         final Map<String, String> userData) {
+    return createCompileRequest(JpsRemoteProto.Message.Request.CompilationRequest.Type.FORCED_COMPILATION, project, modules, artifacts,
+                                userData, paths);
   }
 
-  public static JpsRemoteProto.Message.Request createRebuildRequest(String project) {
+  public static JpsRemoteProto.Message.Request createRebuildRequest(String project, final Map<String, String> userData) {
     return createCompileRequest(JpsRemoteProto.Message.Request.CompilationRequest.Type.REBUILD, project, Collections.<String>emptyList(),
-                                Collections.<String>emptyList(), Collections.<String>emptyList());
+                                Collections.<String>emptyList(), userData, Collections.<String>emptyList());
   }
 
-  public static JpsRemoteProto.Message.Request createCleanRequest(String project, Collection<String> modules, Collection<String> artifacts) {
-    return createCompileRequest(JpsRemoteProto.Message.Request.CompilationRequest.Type.CLEAN, project, modules, artifacts, Collections.<String>emptyList());
+  public static JpsRemoteProto.Message.Request createCleanRequest(String project,
+                                                                  Collection<String> modules,
+                                                                  Collection<String> artifacts,
+                                                                  final Map<String, String> userData) {
+    return createCompileRequest(JpsRemoteProto.Message.Request.CompilationRequest.Type.CLEAN, project, modules, artifacts,
+                                userData, Collections.<String>emptyList());
   }
 
   public static JpsRemoteProto.Message.Request createCancelRequest(UUID compileSessionId) {
@@ -53,22 +64,34 @@ public class ProtoUtil {
     return JpsRemoteProto.Message.Request.newBuilder().setRequestType(JpsRemoteProto.Message.Request.Type.CANCEL_BUILD_COMMAND).setCancelBuildCommand(builder.build()).build();
   }
 
-  public static JpsRemoteProto.Message.Request createCompileRequest(final JpsRemoteProto.Message.Request.CompilationRequest.Type command, String project, Collection<String> modules,
-                                                                    Collection<String> artifacts, Collection<String> paths) {
+  public static JpsRemoteProto.Message.Request createCompileRequest(
+    final JpsRemoteProto.Message.Request.CompilationRequest.Type command,
+    String project,
+    Collection<String> modules,
+    Collection<String> artifacts, Map<String, String> userData, Collection<String> paths) {
+
     final JpsRemoteProto.Message.Request.CompilationRequest.Builder builder = JpsRemoteProto.Message.Request.CompilationRequest.newBuilder().setCommandType(
       command);
     builder.setProjectId(project);
-    if (modules.size() > 0) {
+    if (!modules.isEmpty()) {
       builder.addAllModuleName(modules);
     }
-    if (artifacts.size() > 0) {
+    if (!artifacts.isEmpty()) {
       builder.addAllArtifactName(artifacts);
     }
-    if (paths.size() > 0) {
+    if (!userData.isEmpty()) {
+      for (Map.Entry<String, String> entry : userData.entrySet()) {
+        final String key = entry.getKey();
+        final String value = entry.getValue();
+        if (key != null && value != null) {
+          builder.addBuilderParameter(createPair(key, value));
+        }
+      }
+    }
+    if (!paths.isEmpty()) {
       builder.addAllFilePath(paths);
     }
-    return JpsRemoteProto.Message.Request.newBuilder().setRequestType(JpsRemoteProto.Message.Request.Type.COMPILE_REQUEST).setCompileRequest(
-      builder.build()).build();
+    return JpsRemoteProto.Message.Request.newBuilder().setRequestType(JpsRemoteProto.Message.Request.Type.COMPILE_REQUEST).setCompileRequest(builder.build()).build();
   }
 
   public static JpsRemoteProto.Message.Request createShutdownRequest(boolean cancelRunningBuilds) {
@@ -93,7 +116,14 @@ public class ProtoUtil {
     return JpsRemoteProto.Message.Request.newBuilder().setRequestType(JpsRemoteProto.Message.Request.Type.FS_EVENT).setFsEvent(builder.build()).build();
   }
 
-  public static JpsRemoteProto.Message.Request createSetupRequest(final Map<String, String> pathVars, List<GlobalLibrary> sdkAndLibs, @Nullable String globalEncoding) {
+  public static JpsRemoteProto.Message.Request createPingRequest() {
+    return JpsRemoteProto.Message.Request.newBuilder().setRequestType(JpsRemoteProto.Message.Request.Type.PING).build();
+  }
+
+  public static JpsRemoteProto.Message.Request createSetupRequest(final Map<String, String> pathVars,
+                                                                  List<GlobalLibrary> sdkAndLibs,
+                                                                  @Nullable String globalEncoding,
+                                                                  String ignoredFilesPatterns) {
     final JpsRemoteProto.Message.Request.SetupCommand.Builder cmdBuilder = JpsRemoteProto.Message.Request.SetupCommand.newBuilder();
 
     if (!pathVars.isEmpty()) {
@@ -101,9 +131,7 @@ public class ProtoUtil {
         final String var = entry.getKey();
         final String value = entry.getValue();
         if (var != null && value != null) {
-          final JpsRemoteProto.Message.Request.SetupCommand.PathVariable.Builder pathVarBuilder =
-            JpsRemoteProto.Message.Request.SetupCommand.PathVariable.newBuilder();
-          cmdBuilder.addPathVariable(pathVarBuilder.setName(var).setValue(value).build());
+          cmdBuilder.addPathVariable(createPair(var, value));
         }
       }
     }
@@ -121,14 +149,23 @@ public class ProtoUtil {
           if (additional != null) {
             libBuilder.setAdditionalDataXml(additional);
           }
+          final String version = sdk.getVersion();
+          if (version != null) {
+            libBuilder.setVersion(version);
+          }
         }
         cmdBuilder.addGlobalLibrary(libBuilder.build());
       }
     }
 
     cmdBuilder.setGlobalEncoding(globalEncoding);
+    cmdBuilder.setIgnoredFilesPatterns(ignoredFilesPatterns);
 
     return JpsRemoteProto.Message.Request.newBuilder().setRequestType(JpsRemoteProto.Message.Request.Type.SETUP_COMMAND).setSetupCommand(cmdBuilder.build()).build();
+  }
+
+  public static JpsRemoteProto.Message.KeyValuePair createPair(String key, String value) {
+    return JpsRemoteProto.Message.KeyValuePair.newBuilder().setKey(key).setValue(value).build();
   }
 
   public static JpsRemoteProto.Message.Response createBuildStartedEvent(@Nullable String description) {

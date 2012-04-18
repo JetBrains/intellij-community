@@ -71,7 +71,7 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx {
     bus.connect().subscribe(VFS_CHANGES, new BulkVirtualFileListenerAdapter(myVirtualFileListenerMulticaster.getMulticaster()));
   }
 
-  public void registerFileSystem(VirtualFileSystem fileSystem) {
+  public void registerFileSystem(@NotNull VirtualFileSystem fileSystem) {
     myCollector.addExplicitExtension(fileSystem.getProtocol(), fileSystem);
     if (!(fileSystem instanceof CachingVirtualFileSystem)) {
       fileSystem.addVirtualFileListener(myVirtualFileListenerMulticaster.getMulticaster());
@@ -79,7 +79,7 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx {
     myPhysicalFileSystems.add(fileSystem);
   }
 
-  public void unregisterFileSystem(VirtualFileSystem fileSystem) {
+  public void unregisterFileSystem(@NotNull VirtualFileSystem fileSystem) {
     myCollector.removeExplicitExtension(fileSystem.getProtocol(), fileSystem);
     fileSystem.removeVirtualFileListener(myVirtualFileListenerMulticaster.getMulticaster());
     myPhysicalFileSystems.remove(fileSystem);

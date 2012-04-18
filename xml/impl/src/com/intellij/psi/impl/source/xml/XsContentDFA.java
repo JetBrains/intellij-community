@@ -124,11 +124,12 @@ class XsContentDFA extends XmlContentDFA {
   }
 
   private static QName createQName(XmlTag tag) {
+    //todo don't use intern to not pollute PermGen
     String namespace = tag.getNamespace();
-    return new QName(tag.getNamespacePrefix(),
-                     tag.getLocalName(),
-                     tag.getName(),
-                     namespace.length() == 0 ? null : namespace);
+    return new QName(tag.getNamespacePrefix().intern(),
+                     tag.getLocalName().intern(),
+                     tag.getName().intern(),
+                     namespace.length() == 0 ? null : namespace.intern());
   }
 
   @Nullable

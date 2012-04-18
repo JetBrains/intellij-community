@@ -94,23 +94,28 @@ public class EditorSmartKeysConfigurable extends CompositeConfigurable<UnnamedCo
     return false;
   }
 
+  @Override
   protected List<UnnamedConfigurable> createConfigurables() {
     return AbstractConfigurableEP.createConfigurables(EP_NAME);
   }
 
+  @Override
   @Nls
   public String getDisplayName() {
     return "Smart Keys";
   }
 
+  @Override
   public Icon getIcon() {
     return null;
   }
 
+  @Override
   public String getHelpTopic() {
     return "reference.settingsdialog.IDE.editor.smartkey";
   }
 
+  @Override
   public JComponent createComponent() {
     if (!myAddonsInitialized) {
       myAddonsInitialized = true;
@@ -230,11 +235,13 @@ public class EditorSmartKeysConfigurable extends CompositeConfigurable<UnnamedCo
     }
   }
 
+  @Override
   @NotNull
   public String getId() {
     return "editor.preferences.smartKeys";
   }
 
+  @Override
   public Runnable enableSearch(final String option) {
     return null;
   }

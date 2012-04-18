@@ -16,22 +16,13 @@
 
 package org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path;
 
-import com.intellij.psi.PsiPolyVariantReference;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 
 /**
  * @author ilyas
  */
-public interface GrIndexProperty extends GrExpression, PsiPolyVariantReference {
+public interface GrIndexProperty extends GrExpression, GrCallExpression {
   @NotNull
-  GrExpression getSelectedExpression();
-
-  GrArgumentList getArgumentList();
-
-  @NotNull
-  @Override
-  GroovyResolveResult[] multiResolve(final boolean incompleteCode);
+  GrExpression getInvokedExpression();
 }

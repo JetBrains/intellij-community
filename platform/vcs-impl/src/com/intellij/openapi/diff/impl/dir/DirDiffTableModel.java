@@ -24,6 +24,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
@@ -294,7 +295,7 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
         if (myProject.isDefault()) {
           SwingUtilities.invokeLater(uiThread);
         } else {
-          app.invokeLater(uiThread);
+          app.invokeLater(uiThread, ModalityState.any());
         }
       }
     });
@@ -766,7 +767,7 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
         }
         catch (InterruptedException e) {//
         }
-        SwingUtilities.invokeLater(new Runnable() {
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
           @Override
           public void run() {
             final String s = text.get();
@@ -774,7 +775,7 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
               myLoadingPanel.setLoadingText(s);
             }
           }
-        });
+        }, ModalityState.stateForComponent(myLoadingPanel));
         updater = new Updater(myLoadingPanel, mySleep);
         updater.start();
       } else {

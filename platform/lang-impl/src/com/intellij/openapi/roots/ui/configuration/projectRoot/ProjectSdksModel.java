@@ -32,6 +32,7 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.MasterDetailsComponent;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Condition;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.EventDispatcher;
@@ -214,8 +215,16 @@ public class ProjectSdksModel implements SdkModel {
   }
 
   public void createAddActions(DefaultActionGroup group, final JComponent parent, final Consumer<Sdk> updateTree) {
+    createAddActions(group, parent, updateTree, null);
+  }
+
+  public void createAddActions(DefaultActionGroup group,
+                               final JComponent parent,
+                               final Consumer<Sdk> updateTree,
+                               @Nullable Condition<SdkType> filter) {
     final SdkType[] types = SdkType.getAllTypes();
     for (final SdkType type : types) {
+      if (filter != null && !filter.value(type)) continue;
       final AnAction addAction = new DumbAwareAction(type.getPresentableName(),
                                               null,
                                               type.getIconForAddAction()) {

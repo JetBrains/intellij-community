@@ -43,6 +43,7 @@ import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
 import java.awt.*;
 
@@ -68,7 +69,7 @@ public class ITNReporter extends ErrorReportSubmitter {
                           String additionalInfo,
                           Component parentComponent,
                           Consumer<SubmittedReportInfo> consumer) {
-    return sendError(events [0], additionalInfo, parentComponent, consumer);
+    return sendError(events[0], additionalInfo, parentComponent, consumer);
   }
 
   /**
@@ -121,8 +122,14 @@ public class ITNReporter extends ErrorReportSubmitter {
       }
     }
 
-    if (event.getData() instanceof LogMessageEx) {
-      errorBean.setAttachments(((LogMessageEx)event.getData()).getAttachments());
+    Object data = event.getData();
+
+    if (data instanceof AbstractMessage) {
+      errorBean.setAssigneeId(((AbstractMessage)data).getAssigneeId());
+    }
+
+    if (data instanceof LogMessageEx) {
+      errorBean.setAttachments(((LogMessageEx)data).getAttachments());
     }
 
     @NonNls String login = errorReportConfigurable.ITN_LOGIN;
@@ -188,11 +195,10 @@ public class ITNReporter extends ErrorReportSubmitter {
               ApplicationInfoEx appInfo = (ApplicationInfoEx) ApplicationManager.getApplication().getComponent(ApplicationInfo.class);
               String message = DiagnosticBundle.message(
                 appInfo.isEAP() ? "error.report.new.eap.build.message" : "error.report.new.build.message", e.getMessage());
-              Messages.showMessageDialog(parentComponent, message, CommonBundle.getWarningTitle(), Messages.getWarningIcon());
+                showMessageDialog(parentComponent, project, message, CommonBundle.getWarningTitle(), Messages.getWarningIcon());
               callback.consume(new SubmittedReportInfo(null, "0", SubmittedReportInfo.SubmissionStatus.FAILED));
             }
-            else if (Messages.showYesNoDialog(parentComponent, msg,
-                                         ReportMessages.ERROR_REPORT, Messages.getErrorIcon()) != 0) {
+            else if (showYesNoDialog(parentComponent, project, msg, ReportMessages.ERROR_REPORT, Messages.getErrorIcon()) != 0) {
               callback.consume(new SubmittedReportInfo(null, "0", SubmittedReportInfo.SubmissionStatus.FAILED));
             }
             else {
@@ -218,5 +224,21 @@ public class ITNReporter extends ErrorReportSubmitter {
       }
     });
     return true;
+  }
+
+  private static void showMessageDialog(Component parentComponent, Project project, String message, String title, Icon icon) {
+    if (parentComponent.isShowing()) {
+      Messages.showMessageDialog(parentComponent, message, title, icon);
+    } else {
+      Messages.showMessageDialog(project, message, title, icon);
+    }
+  }
+
+  private static int showYesNoDialog(Component parentComponent, Project project, String message, String title, Icon icon) {
+    if (parentComponent.isShowing()) {
+      return Messages.showYesNoDialog(parentComponent, message, title, icon);
+    } else {
+      return Messages.showYesNoDialog(project, message, title, icon);
+    }
   }
 }

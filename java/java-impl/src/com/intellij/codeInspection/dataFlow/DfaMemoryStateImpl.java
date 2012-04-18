@@ -51,7 +51,8 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   private Stack<DfaValue> myStack;
   private TIntStack myOffsetStack;
   private TLongHashSet myDistinctClasses;
-  private Map<DfaVariableValue,DfaVariableState> myVariableStates;
+  private THashMap<DfaVariableValue,DfaVariableState> myVariableStates;
+  private boolean myHasDirtyFields = true;
 
   public DfaMemoryStateImpl(final DfaValueFactory factory) {
     myFactory = factory;
@@ -80,6 +81,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     newState.myStateSize = myStateSize;
     newState.myVariableStates = new THashMap<DfaVariableValue, DfaVariableState>();
     newState.myOffsetStack = new TIntStack(myOffsetStack);
+    newState.myHasDirtyFields = myHasDirtyFields;
 
     for (int i = 0; i < myEqClasses.size(); i++) {
       SortedIntSet aClass = myEqClasses.get(i);
@@ -110,6 +112,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     if (!myStack.equals(that.myStack)) return false;
     if (!myOffsetStack.equals(that.myOffsetStack)) return false;
     if (!myVariableStates.equals(that.myVariableStates)) return false;
+    if (myHasDirtyFields != that.myHasDirtyFields) return false;
 
     int[] permutation = getPermutationToSortedState();
     int[] thatPermutation = that.getPermutationToSortedState();
@@ -461,6 +464,11 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     myDistinctClasses.add(createPair(c1Index, c2Index));
   }
 
+  @Override
+  public void fieldReferenced() {
+    myHasDirtyFields = true;
+  }
+
   public boolean isNull(DfaValue dfaValue) {
     if (dfaValue instanceof DfaNotNullValue) return false;
 
@@ -559,6 +567,22 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       }
       return true;
     }
+
+    /*
+    if (dfaRight instanceof DfaNotNullValue) {
+      if (dfaLeft instanceof DfaVariableValue) {
+        DfaVariableState varState = getVariableState((DfaVariableValue)dfaLeft);
+        DfaVariableValue dfaVar = (DfaVariableValue)dfaLeft;
+        DfaTypeValue type = myFactory.getTypeFactory().create(((DfaNotNullValue)dfaRight).getType());
+        if (isNegated) {
+          return varState.addNotInstanceofValue(type) || applyCondition(compareToNull(dfaVar, false));
+        }
+        return applyCondition(compareToNull(dfaVar, true)) && varState.setInstanceofValue(type);
+
+      }
+      return true;
+    }
+    */
 
     if (dfaRight == myFactory.getConstFactory().getNull() && dfaLeft instanceof DfaVariableValue) {
       final DfaVariableState varState = getVariableState((DfaVariableValue)dfaLeft);
@@ -674,6 +698,9 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   }
 
   public void flushFields(DataFlowRunner runner) {
+    if (!myHasDirtyFields) return;
+
+    myHasDirtyFields = false;
     DfaVariableValue[] fields = runner.getFields();
     for (DfaVariableValue field : fields) {
       boolean resetNullability = isNotNull(field);
@@ -690,17 +717,19 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     }
 
     doFlash(variable);
-    doFlash((DfaVariableValue)variable.createNegated());
   }
 
   @Override
   public void flushVariableOutOfScope(DfaVariableValue variable) {
     doFlash(variable);
-    doFlash((DfaVariableValue)variable.createNegated());
   }
 
-  private void doFlash(DfaVariableValue variable) {
-    final int id = variable.getID();
+  private void doFlash(DfaVariableValue varPlain) {
+    DfaVariableValue varNegated = (DfaVariableValue)varPlain.createNegated();
+
+    final int idPlain = varPlain.getID();
+    final int idNegated = varNegated.getID();
+
     int size = myEqClasses.size();
     int interruptCount = 0;
     for (int varClassIndex = 0; varClassIndex < size; varClassIndex++) {
@@ -713,9 +742,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
         }
         int cl = varClass.get(i);
         DfaValue value = myFactory.getValue(cl);
-        if (value != null && id == value.getID() ||
-            value instanceof DfaBoxedValue && ((DfaBoxedValue)value).getWrappedValue().getID() == id ||
-            value instanceof DfaUnboxedValue && ((DfaUnboxedValue)value).getVariable().getID() == id) {
+        if (mine(idPlain, value) || mine(idNegated, value)) {
           varClass.remove(i);
           break;
         }
@@ -733,6 +760,13 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       }
     }
 
-    myVariableStates.remove(variable);
+    myVariableStates.remove(varPlain);
+    myVariableStates.remove(varNegated);
+  }
+
+  private static boolean mine(int id, DfaValue value) {
+    return value != null && id == value.getID() ||
+        value instanceof DfaBoxedValue && ((DfaBoxedValue)value).getWrappedValue().getID() == id ||
+        value instanceof DfaUnboxedValue && ((DfaUnboxedValue)value).getVariable().getID() == id;
   }
 }

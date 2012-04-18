@@ -27,6 +27,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
+import com.intellij.util.PlatformIcons;
 import com.intellij.util.ui.EmptyIcon;
 
 import javax.swing.*;
@@ -43,7 +44,7 @@ import java.util.Set;
  * Date: 1/25/11
  */
 public class NullableNotNullDialog extends DialogWrapper {
-  private static final Icon SELECT_ICON = IconLoader.getIcon("/actions/checked.png");
+  private static final Icon SELECT_ICON = PlatformIcons.CHECK_ICON;
   private static final Icon SELECTED_ICON = IconLoader.getIcon("/diff/currentLine.png");
 
   private final Project myProject;
@@ -155,7 +156,7 @@ public class NullableNotNullDialog extends DialogWrapper {
         .addExtraAction(selectButton);
       final JPanel panel = toolbarDecorator.createPanel();
       myComponent = new JPanel(new BorderLayout());
-      myComponent.setBorder(IdeBorderFactory.createTitledBorder(name + " annotations", true, false, true, new Insets(10, 0, 0, 0)));
+      myComponent.setBorder(IdeBorderFactory.createTitledBorder(name + " annotations", false, new Insets(10, 0, 0, 0)));
       myComponent.add(panel);
       final AnActionButton removeButton = ToolbarDecorator.findRemoveButton(myComponent);
       myList.addListSelectionListener(new ListSelectionListener() {

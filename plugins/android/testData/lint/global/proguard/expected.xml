@@ -3,6 +3,6 @@
   <problem>
     <file>proguard.cfg</file>
     <line>1</line>
-    <description>Obsolete proguard file; use -keepclasseswithmembers instead of -keepclasseswithmembernames</description>
+    <description>Obsolete ProGuard file; use -keepclasseswithmembers instead of -keepclasseswithmembernames</description>
   </problem>
 </problems>

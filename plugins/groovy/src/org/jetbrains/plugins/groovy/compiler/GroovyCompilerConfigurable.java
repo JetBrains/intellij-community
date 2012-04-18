@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,11 +30,15 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyIcons;
 
 import javax.swing.*;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * @author peter
@@ -63,11 +67,13 @@ public class GroovyCompilerConfigurable implements SearchableConfigurable, Confi
         return super.isFileVisible(file, showHiddenFiles) && !index.isIgnored(file);
       }
     };
-    for (final Module module: ModuleManager.getInstance(project).getModules()) {
-      for (VirtualFile file : ModuleRootManager.getInstance(module).getSourceRoots()) {
-        descriptor.addRoot(file);
-      }
-    }
+    descriptor.setRoots(ContainerUtil.concat(
+      ContainerUtil.map(ModuleManager.getInstance(project).getModules(), new Function<Module, List<VirtualFile>>() {
+        @Override
+        public List<VirtualFile> fun(final Module module) {
+          return Arrays.asList(ModuleRootManager.getInstance(module).getSourceRoots());
+        }
+      })));
     return new ExcludedEntriesConfigurable(project, descriptor, configuration);
   }
 

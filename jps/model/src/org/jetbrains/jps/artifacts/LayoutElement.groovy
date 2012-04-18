@@ -14,9 +14,24 @@ abstract class LayoutElement {
 class FileCopyElement extends LayoutElement {
   String filePath
   String outputFileName
+
+  FileCopyElement() {
+  }
+
+  FileCopyElement(String filePath, String outputFileName) {
+    this.filePath = filePath
+    this.outputFileName = outputFileName
+  }
 }
 
 class DirectoryCopyElement extends LayoutElement {
+  DirectoryCopyElement() {
+  }
+
+  DirectoryCopyElement(String dirPath) {
+    this.dirPath = dirPath
+  }
+
   String dirPath
 }
 

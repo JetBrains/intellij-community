@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,26 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/*
- * @author max
- */
 package com.intellij.psi.impl;
 
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.FileViewProvider;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.SingleRootFileViewProvider;
 import com.intellij.psi.impl.file.impl.FileManager;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.containers.ConcurrentWeakValueHashMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
 import java.util.List;
 
+/**
+ * @author max
+ */
 class EmptyFileManager implements FileManager {
   private final PsiManagerImpl myManager;
-
   private final ConcurrentWeakValueHashMap<VirtualFile, FileViewProvider> myVFileToViewProviderMap = new ConcurrentWeakValueHashMap<VirtualFile, FileViewProvider>();
 
   EmptyFileManager(final PsiManagerImpl manager) {
@@ -41,9 +41,6 @@ class EmptyFileManager implements FileManager {
 
   @Override
   public void dispose() {
-  }
-
-  public void runStartupActivity() {
   }
 
   @Override
@@ -57,23 +54,12 @@ class EmptyFileManager implements FileManager {
   }
 
   @Override
-  public void reloadFromDisk(@NotNull PsiFile file)
-  {
+  public void reloadFromDisk(@NotNull PsiFile file) {
   }
 
   @Override
   public PsiFile getCachedPsiFile(@NotNull VirtualFile vFile) {
     return null;
-  }
-
-  @NotNull
-  public GlobalSearchScope getResolveScope(@NotNull PsiElement element) {
-    return GlobalSearchScope.EMPTY_SCOPE;
-  }
-
-  @NotNull
-  public GlobalSearchScope getUseScope(@NotNull PsiElement element) {
-    return GlobalSearchScope.EMPTY_SCOPE;
   }
 
   @Override

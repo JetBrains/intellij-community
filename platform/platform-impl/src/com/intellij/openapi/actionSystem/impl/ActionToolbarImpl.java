@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -160,7 +160,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
   public void addNotify() {
     super.addNotify();
     myActionManager.addTimerListener(500, myWeakTimerListener);
-    myActionManager.addTransparrentTimerListener(500, myWeakTimerListener);
+    myActionManager.addTransparentTimerListener(500, myWeakTimerListener);
   }
 
   private boolean doMacEnhancementsForMainToolbar() {
@@ -175,7 +175,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
   public void removeNotify() {
     super.removeNotify();
     myActionManager.removeTimerListener(myWeakTimerListener);
-    myActionManager.removeTransparrentTimerListener(myWeakTimerListener);
+    myActionManager.removeTransparentTimerListener(myWeakTimerListener);
   }
 
   public JComponent getComponent() {
@@ -251,7 +251,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
     }
 
     if (mySecondaryActions.getChildrenCount() > 0) {
-      mySecondaryActionsButton = new SecondaryButton(mySecondaryActions, myPresentationFactory.getPresentation(mySecondaryActions), myPlace, getMinimumButtonSize());
+      mySecondaryActionsButton = new ActionButton(mySecondaryActions, myPresentationFactory.getPresentation(mySecondaryActions), myPlace, getMinimumButtonSize());
       mySecondaryActionsButton.setNoIconsInPopup(true);
       add(mySecondaryActionsButton);
     }
@@ -678,7 +678,8 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
 
   public Dimension getMinimumSize() {
     if (myLayoutPolicy == AUTO_LAYOUT_POLICY) {
-      return new Dimension(myAutoPopupIcon.getIconWidth(), myMinimumButtonSize.height);
+      final Insets i = getInsets();
+      return new Dimension(myAutoPopupIcon.getIconWidth() + i.left + i.right, myMinimumButtonSize.height + i.top + i.bottom);
     }
     else {
       return super.getMinimumSize();
@@ -713,7 +714,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
         }
       }
       else {
-        g.setColor(UIUtil.getSeparatorShadow());
+        g.setColor(UIUtil.getSeparatorColor());
         if (getParent() != null) {
           if (myOrientation == SwingConstants.HORIZONTAL) {
             UIUtil.drawLine(g, 3, 2, 3, getParent().getSize().height - 2);
@@ -868,6 +869,11 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
         }
       }
     }
+  }
+
+  @Override
+  public boolean hasVisibleActions() {
+    return !myVisibleActions.isEmpty();
   }
 
   public void setTargetComponent(final JComponent component) {
@@ -1081,26 +1087,6 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
 
   public void setSecondaryActionsTooltip(String secondaryActionsTooltip) {
     mySecondaryActions.getTemplatePresentation().setDescription(secondaryActionsTooltip);
-  }
-
-  private static class SecondaryButton extends ActionButton {
-    private SecondaryButton(AnAction action, Presentation presentation, String place, @NotNull Dimension minimumSize) {
-      super(action, presentation, place, minimumSize);
-    }
-
-    @Override
-    protected void paintButtonLook(Graphics g) {
-      final Color bright = new Color(255, 255, 255, 200);
-
-      g.setColor(bright);
-      int padding = 3;
-      g.drawLine(0, padding, 0, getHeight() - padding - 1);
-      final Color dark = new Color(64, 64, 64, 110);
-      g.setColor(dark);
-      g.drawLine(1, padding, 1, getHeight() - padding - 1);
-
-      super.paintButtonLook(g);
-    }
   }
 
   public List<SwitchTarget> getTargets(boolean onlyVisible, boolean originalProvider) {

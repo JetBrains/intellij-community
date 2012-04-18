@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -75,6 +75,7 @@ public class CompileAction extends CompileActionBase {
     final VirtualFile[] files = getCompilableFiles(project, PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext));
     if (module == null && files.length == 0) {
       presentation.setEnabled(false);
+      presentation.setVisible(!ActionPlaces.isPopupPlace(event.getPlace()));
       return;
     }
 

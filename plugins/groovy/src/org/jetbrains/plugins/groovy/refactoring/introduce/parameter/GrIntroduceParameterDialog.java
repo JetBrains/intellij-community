@@ -32,16 +32,16 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.ui.NameSuggestionsField;
 import com.intellij.ui.IdeBorderFactory;
+import com.intellij.ui.TextFieldWithAutoCompletion;
 import com.intellij.ui.components.JBRadioButton;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.TIntArrayList;
 import gnu.trove.TObjectIntHashMap;
 import gnu.trove.TObjectIntProcedure;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrParametersOwner;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
@@ -70,12 +70,14 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.util.ArrayList;
+import java.util.List;
 
 import static com.intellij.refactoring.IntroduceParameterRefactoring.*;
 
 public class GrIntroduceParameterDialog extends DialogWrapper implements GrIntroduceDialog<GrIntroduceParameterSettings> {
   private GrTypeComboBox myTypeComboBox;
-  private NameSuggestionsField myNameSuggestionsField;
+  private TextFieldWithAutoCompletion<String> myNameSuggestionsField;
   private JCheckBox myDeclareFinalCheckBox;
   private JCheckBox myDelegateViaOverloadingMethodCheckBox;
   private JBRadioButton myDoNotReplaceRadioButton;
@@ -91,10 +93,13 @@ public class GrIntroduceParameterDialog extends DialogWrapper implements GrIntro
   private JCheckBox myForceReturnCheckBox;
   private Project myProject;
 
+  private final boolean myCanIntroduceSimpleParameter;
+
   public GrIntroduceParameterDialog(IntroduceParameterInfo info) {
     super(info.getProject(), true);
     myInfo = info;
     myProject = info.getProject();
+    myCanIntroduceSimpleParameter = findExpr() != null || findVar() != null;
 
     TObjectIntHashMap<GrParameter> parametersToRemove = GroovyIntroduceParameterUtil.findParametersToRemove(info);
     toRemoveCBs = new TObjectIntHashMap<JCheckBox>(parametersToRemove.size());
@@ -139,8 +144,17 @@ public class GrIntroduceParameterDialog extends DialogWrapper implements GrIntro
 
     updateSignature();
 
-    if (findExpr() != null || findVar() != null) {
+    if (myCanIntroduceSimpleParameter) {
       mySignaturePanel.setVisible(false);
+
+      //action to hide signature panel if we have variants to introduce simple parameter
+      myTypeComboBox.addItemListener(new ItemListener() {
+        @Override
+        public void itemStateChanged(ItemEvent e) {
+          mySignaturePanel.setVisible(myTypeComboBox.isClosureSelected());
+          pack();
+        }
+      });
     }
 
     final PsiType closureReturnType = inferClosureReturnType();
@@ -157,13 +171,6 @@ public class GrIntroduceParameterDialog extends DialogWrapper implements GrIntro
       myDelegateViaOverloadingMethodCheckBox.setToolTipText("Delegating is not allowed in closure context");
     }
 
-    myTypeComboBox.addItemListener(new ItemListener() {
-      @Override
-      public void itemStateChanged(ItemEvent e) {
-        mySignaturePanel.setVisible(myTypeComboBox.isClosureSelected());
-        pack();
-      }
-    });
 
     pack();
   }
@@ -214,7 +221,7 @@ public class GrIntroduceParameterDialog extends DialogWrapper implements GrIntro
       }
     };
 
-    mySignature.setBorder(IdeBorderFactory.createTitledBorder(GroovyRefactoringBundle.message("signature.preview.border.title"), false, false, true));
+    mySignature.setBorder(IdeBorderFactory.createTitledBorder(GroovyRefactoringBundle.message("signature.preview.border.title"), false));
 
     Splitter splitter = new Splitter(true);
 
@@ -254,21 +261,13 @@ public class GrIntroduceParameterDialog extends DialogWrapper implements GrIntro
     panel.add(myReplaceFieldsInaccessibleInRadioButton);
     panel.add(myReplaceAllFieldsRadioButton);
 
-    panel.setBorder(IdeBorderFactory.createTitledBorder("Replace fields used in expression with their getters", false, true, true));
+    panel.setBorder(IdeBorderFactory.createTitledBorder("Replace fields used in expression with their getters", true));
     return panel;
   }
 
   private JPanel createNamePanel() {
     final GridBag c = new GridBag().setDefaultAnchor(GridBagConstraints.WEST).setDefaultInsets(1, 1, 1, 1);
     final JPanel namePanel = new JPanel(new GridBagLayout());
-    final JLabel nameLabel = new JLabel(UIUtil.replaceMnemonicAmpersand("&Name:"));
-    c.nextLine().next().weightx(0).fillCellNone();
-    namePanel.add(nameLabel, c);
-
-    myNameSuggestionsField = createNameField(findVar(), findExpr());
-    c.next().weightx(1).fillCellHorizontally();
-    namePanel.add(myNameSuggestionsField, c);
-    nameLabel.setLabelFor(myNameSuggestionsField);
 
     final JLabel typeLabel = new JLabel(UIUtil.replaceMnemonicAmpersand("&Type:"));
     c.nextLine().next().weightx(0).fillCellNone();
@@ -278,6 +277,17 @@ public class GrIntroduceParameterDialog extends DialogWrapper implements GrIntro
     c.next().weightx(1).fillCellHorizontally();
     namePanel.add(myTypeComboBox, c);
     typeLabel.setLabelFor(myTypeComboBox);
+
+    final JLabel nameLabel = new JLabel(UIUtil.replaceMnemonicAmpersand("&Name:"));
+    c.nextLine().next().weightx(0).fillCellNone();
+    namePanel.add(nameLabel, c);
+
+    myNameSuggestionsField = createNameField(findVar(), findExpr());
+    c.next().weightx(1).fillCellHorizontally();
+    namePanel.add(myNameSuggestionsField, c);
+    nameLabel.setLabelFor(myNameSuggestionsField);
+
+    GrTypeComboBox.registerUpDownHint(myNameSuggestionsField, myTypeComboBox);
 
     return namePanel;
   }
@@ -320,7 +330,7 @@ public class GrIntroduceParameterDialog extends DialogWrapper implements GrIntro
   @Nullable
   private PsiType inferClosureReturnType() {
     final ExtractClosureHelperImpl mockHelper =
-      new ExtractClosureHelperImpl(myInfo, "__test___n_", false, new TIntArrayList(), false, 0, false);
+      new ExtractClosureHelperImpl(myInfo, "__test___n_", false, new TIntArrayList(), false, 0, false, false);
     final PsiType returnType;
     final AccessToken token = WriteAction.start();
     try {
@@ -332,7 +342,7 @@ public class GrIntroduceParameterDialog extends DialogWrapper implements GrIntro
     return returnType;
   }
 
-  private NameSuggestionsField createNameField(GrVariable var, GrExpression expr) {
+  private TextFieldWithAutoCompletion<String> createNameField(GrVariable var, GrExpression expr) {
     String[] possibleNames;
     if (expr != null) {
       final GrIntroduceContext
@@ -350,13 +360,18 @@ public class GrIntroduceParameterDialog extends DialogWrapper implements GrIntro
       possibleNames = new String[]{"closure"};
     }
 
+    List<String> names = new ArrayList<String>();
     if (var != null) {
-      String[] arr = new String[possibleNames.length + 1];
-      arr[0] = var.getName();
-      System.arraycopy(possibleNames, 0, arr, 1, possibleNames.length);
-      possibleNames = arr;
+      names.add(var.getName());
     }
-    return new NameSuggestionsField(possibleNames, myProject, GroovyFileType.GROOVY_FILE_TYPE);
+    ContainerUtil.addAll(names, possibleNames);
+
+    TextFieldWithAutoCompletion<String> result = TextFieldWithAutoCompletion.create(myProject, names, null, true);
+    if (names.size() > 0) {
+      result.setText(names.get(0));
+      result.selectAll();
+    }
+    return result;
   }
 
   private void initReplaceFieldsWithGetters(JavaRefactoringSettings settings) {
@@ -392,7 +407,7 @@ public class GrIntroduceParameterDialog extends DialogWrapper implements GrIntro
 
   @Override
   protected ValidationInfo doValidate() {
-    final String text = myNameSuggestionsField.getEnteredName();
+    final String text = getEnteredName();
     if (!GroovyNamesUtil.isIdentifier(text)) {
       return new ValidationInfo(GroovyRefactoringBundle.message("name.is.wrong", text), myNameSuggestionsField);
     }
@@ -457,14 +472,15 @@ public class GrIntroduceParameterDialog extends DialogWrapper implements GrIntro
     final GrExpression expr = findExpr();
     final GrVariable var = findVar();
 
-    if (myTypeComboBox.isClosureSelected()) {
+    if (myTypeComboBox.isClosureSelected() || expr == null && var == null) {
       GrIntroduceParameterSettings settings = new ExtractClosureHelperImpl(myInfo,
-                                                                           myNameSuggestionsField.getEnteredName(),
+                                                                           getEnteredName(),
                                                                            myDeclareFinalCheckBox.isSelected(),
                                                                            getParametersToRemove(),
                                                                            myDelegateViaOverloadingMethodCheckBox.isSelected(),
                                                                            getReplaceFieldsWithGetter(),
-                                                                           myForceReturnCheckBox.isSelected());
+                                                                           myForceReturnCheckBox.isSelected(),
+                                                                           myTypeComboBox.getSelectedType() == null);
       if (toReplaceIn instanceof GrMethod) {
         invokeRefactoring(new ExtractClosureFromMethodProcessor(settings));
       }
@@ -475,7 +491,7 @@ public class GrIntroduceParameterDialog extends DialogWrapper implements GrIntro
     else {
 
       GrIntroduceParameterSettings settings = new GrIntroduceExpressionSettingsImpl(myInfo,
-                                                                                    myNameSuggestionsField.getEnteredName(),
+                                                                                    getEnteredName(),
                                                                                     myDeclareFinalCheckBox.isSelected(),
                                                                                     getParametersToRemove(),
                                                                                     myDelegateViaOverloadingMethodCheckBox.isSelected(),
@@ -491,6 +507,10 @@ public class GrIntroduceParameterDialog extends DialogWrapper implements GrIntro
         invokeRefactoring(new GrIntroduceClosureParameterProcessor(settings));
       }
     }
+  }
+
+  private String getEnteredName() {
+    return myNameSuggestionsField.getText().trim();
   }
 
   private void saveSettings() {

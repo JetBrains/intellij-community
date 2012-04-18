@@ -48,9 +48,11 @@ public class CodeStyleSchemesPanel{
     myDefaultComboFont = myCombo.getFont();
     myBoldComboFont = myDefaultComboFont.deriveFont(Font.BOLD);
     myCombo.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         if (!myIsReset) {
           ApplicationManager.getApplication().invokeLater(new Runnable() {
+                @Override
                 public void run() {
                   onCombo();
                 }
@@ -115,7 +117,12 @@ public class CodeStyleSchemesPanel{
       schemes.addAll(myModel.getAllSortedSchemes());
       DefaultComboBoxModel model = new DefaultComboBoxModel(schemes.toArray());
       myCombo.setModel(model);
-      myCombo.setSelectedItem(myModel.getSelectedGlobalScheme());
+      if (myModel.isUsePerProjectSettings()) {
+        myCombo.setSelectedItem(myModel.getProjectScheme());
+      }
+      else {
+        myCombo.setSelectedItem(myModel.getSelectedGlobalScheme());
+      }
     }
     finally {
       myIsReset = false;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,13 +18,18 @@ package com.intellij.idea;
 
 import com.intellij.ide.Bootstrap;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.util.Restarter;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.awt.*;
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -35,49 +40,40 @@ import java.util.List;
 public class Main {
   private static boolean isHeadless;
 
-  private Main() {
-  }
+  private Main() { }
 
+  @SuppressWarnings("MethodNamesDifferingOnlyByCase")
   public static void main(final String[] args) {
-    /// preload class before installing the patch to prevent class loader problems
-    Restarter.isSupported();
+    // force using bundled JNA dispatcher (if not explicitly stated)
+    if (SystemInfo.isUnix && System.getProperty("jna.nosys") == null && System.getProperty("jna.nounpack") == null) {
+      System.setProperty("jna.nosys", "true");
+      System.setProperty("jna.nounpack", "false");
+    }
 
-    if (installPatch()) {
-      boolean restarted = false;
-      int restartCode = 0;
-      try {
-        restarted = Restarter.restart();
-        restartCode = Restarter.getRestartCode();
-      }
-      catch (Throwable e) {
-        // can be either CannotRestartException
-        //  or something like class/method not found if they has been changed during update
+    final int[] restartCode = {Restarter.getRestartCode()};
 
-        //noinspection CallToPrintStackTrace
-        e.printStackTrace();
-      }
-
-      if (!restarted && restartCode == 0) {
-        try {
-          UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+    Runnable restart = new Runnable() {
+      @Override
+      public void run() {
+        if (restartCode[0] == 0) {
+          try {
+            if (Restarter.restart()) restartCode[0] = 1;
+          }
+          catch (Throwable ignore) {
+          }
         }
-        catch (Exception ignore) {
-        }
-        JOptionPane.showMessageDialog(null,
-                                      "The application cannot start right away since some critical files have been changed.\n" +
-                                      "Please restart it manually.",
-                                      "Update",
-                                      JOptionPane.INFORMATION_MESSAGE);
+      }
+    };
+
+    if (installPatch(restart)) {
+      if (restartCode[0] == 0) {
+        try { UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName()); } catch (Throwable ignore) { }
+
+        String msg = "Patch has been applied successfully, please restart application.";
+        JOptionPane.showMessageDialog(null, msg, "Update", JOptionPane.INFORMATION_MESSAGE);
       }
 
-      final int finalRestartCode = restartCode;
-      SwingUtilities.invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          System.exit(finalRestartCode);
-        }
-      });
-
+      System.exit(restartCode[0]);
       return;
     }
 
@@ -123,7 +119,7 @@ public class Main {
     return isHeadless;
   }
 
-  private static boolean installPatch() {
+  private static boolean installPatch(Runnable restart) {
     try {
       File ideaHomeDir = getIdeaHomeDir();
       if (ideaHomeDir == null) return false;
@@ -140,9 +136,11 @@ public class Main {
           File launcherFile = new File(ideaHomeDir, "bin/vistalauncher.exe");
           File launcherCopy = FileUtil.createTempFile("vistalauncher", ".exe");
           launcherCopy.deleteOnExit();
-          copyFile(launcherFile, launcherCopy);
+          FileUtil.copy(launcherFile, launcherCopy);
           args.add(launcherCopy.getPath());
         }
+
+        restart.run();
 
         Collections.addAll(args,
                            System.getProperty("java.home") + "/bin/java",
@@ -159,13 +157,14 @@ public class Main {
         errThread.start();
 
         try {
-          boolean requiresRestart = process.waitFor() == 42;
-          return requiresRestart;
+          process.waitFor();
         }
         finally {
           outThread.join();
           errThread.join();
         }
+
+        return true;
       }
       finally {
         patchFile.delete();
@@ -188,7 +187,7 @@ public class Main {
 
     public void run() {
       try {
-        copyStream(myIn, myOut);
+        StreamUtil.copyStreamContent(myIn, myOut);
       }
       catch (IOException e) {
         e.printStackTrace();
@@ -214,46 +213,6 @@ public class Main {
     }
     catch (URISyntaxException e) {
       return null;
-    }
-  }
-
-  public static void copyFile(File from, File to) throws IOException {
-    to.getParentFile().mkdirs();
-
-    FileInputStream is = null;
-    FileOutputStream os = null;
-    try {
-      is = new FileInputStream(from);
-      os = new FileOutputStream(to);
-
-      copyStream(is, os);
-    }
-    finally {
-      if (is != null) {
-        try {
-          is.close();
-        }
-        catch (IOException e) {
-          e.printStackTrace();
-        }
-      }
-      if (os != null) {
-        try {
-          os.close();
-        }
-        catch (IOException e) {
-          e.printStackTrace();
-        }
-      }
-    }
-  }
-
-  public static void copyStream(InputStream from, OutputStream to) throws IOException {
-    byte[] buffer = new byte[65536];
-    while (true) {
-      int read = from.read(buffer);
-      if (read < 0) break;
-      to.write(buffer, 0, read);
     }
   }
 }

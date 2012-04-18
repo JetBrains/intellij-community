@@ -64,7 +64,7 @@ public class ExceptionBreakpointPropertiesPanel extends BreakpointPropertiesPane
     _panel0.add(Box.createHorizontalStrut(3), BorderLayout.EAST);
     _panel.add(_panel0, BorderLayout.NORTH);
     _panel.setBorder(IdeBorderFactory.createTitledBorder(
-      DebuggerBundle.message("label.exception.breakpoint.properties.panel.group.notifications"), false, true, true));
+      DebuggerBundle.message("label.exception.breakpoint.properties.panel.group.notifications"), true));
 
     ActionListener listener = new ActionListener() {
       public void actionPerformed(ActionEvent e) {
@@ -93,10 +93,10 @@ public class ExceptionBreakpointPropertiesPanel extends BreakpointPropertiesPane
     myPassCountCheckbox.setEnabled(!(myExceptionBreakpoint instanceof AnyExceptionBreakpoint));
   }
 
-  public void initFrom(Breakpoint breakpoint) {
+  public void initFrom(Breakpoint breakpoint, boolean moreOptionsVisible) {
     ExceptionBreakpoint exceptionBreakpoint = (ExceptionBreakpoint)breakpoint;
     myExceptionBreakpoint = exceptionBreakpoint;
-    super.initFrom(breakpoint);
+    super.initFrom(breakpoint, moreOptionsVisible);
 
     myNotifyCaughtCheckBox.setSelected(exceptionBreakpoint.NOTIFY_CAUGHT);
     myNotifyUncaughtCheckBox.setSelected(exceptionBreakpoint.NOTIFY_UNCAUGHT);

@@ -65,7 +65,7 @@ public class ArtifactProblemsHolderImpl extends ArtifactProblemsHolderBase {
     String parentPath;
     PackagingElement<?> element;
     if (pathToPlace != null && !pathToPlace.isEmpty()) {
-      parentPath = PackagingElementPath.createPath(pathToPlace.subList(0, pathToPlace.size()-1)).getPathString();
+      parentPath = PackagingElementPath.createPath(pathToPlace.subList(1, pathToPlace.size()-1)).getPathString();
       element = pathToPlace.get(pathToPlace.size() - 1);
     }
     else {

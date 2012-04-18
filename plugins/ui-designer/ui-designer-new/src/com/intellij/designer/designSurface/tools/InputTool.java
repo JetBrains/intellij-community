@@ -37,10 +37,9 @@ public abstract class InputTool {
   protected ToolProvider myToolProvider;
   protected EditableArea myArea;
 
-  private Object myCommand;
+  protected boolean myExecuteEnabled;
 
   private boolean myActive;
-  private boolean myCanUnload = true;
 
   protected int myState;
 
@@ -53,6 +52,9 @@ public abstract class InputTool {
 
   private boolean myCanPastThreshold;
 
+  private Cursor myDefaultCursor;
+  private Cursor myDisabledCursor;
+
   //////////////////////////////////////////////////////////////////////////////////////////
   //
   // State
@@ -60,6 +62,7 @@ public abstract class InputTool {
   //////////////////////////////////////////////////////////////////////////////////////////
 
   public void activate() {
+    myCanPastThreshold = false;
     resetState();
     myState = STATE_INIT;
     myActive = true;
@@ -67,7 +70,7 @@ public abstract class InputTool {
 
   public void deactivate() {
     myActive = false;
-    setCommand(null);
+    setExecuteEnabled(false);
   }
 
   protected void resetState() {
@@ -77,7 +80,6 @@ public abstract class InputTool {
     myButton = 0;
     myStartScreenX = 0;
     myStartScreenY = 0;
-    myCanPastThreshold = false;
   }
 
   public final void setToolProvider(ToolProvider provider) {
@@ -100,16 +102,8 @@ public abstract class InputTool {
     }
   }
 
-  protected final boolean unloadWhenFinished() {
-    return myCanUnload;
-  }
-
-  public final void setUnloadWhenFinished(boolean value) {
-    myCanUnload = value;
-  }
-
-  protected final void setCommand(@Nullable Object command) {
-    myCommand = command;
+  protected final void setExecuteEnabled(boolean enabled) {
+    myExecuteEnabled = enabled;
     refreshCursor();
   }
 
@@ -118,8 +112,6 @@ public abstract class InputTool {
   // Cursor
   //
   //////////////////////////////////////////////////////////////////////////////////////////
-  private Cursor myDefaultCursor;
-  private Cursor myDisabledCursor;
 
   protected final void setCursor(@Nullable Cursor cursor) {
     if (myArea != null) {
@@ -138,13 +130,10 @@ public abstract class InputTool {
     if (myState == STATE_NONE) {
       return null;
     }
-    if (myCommand == null) {
-      return getDisabledCursor();
-    }
-    return getDefaultCursor();
+    return myExecuteEnabled ? getDefaultCursor() : getDisabledCursor();
   }
 
-  protected final Cursor getDefaultCursor() {
+  protected Cursor getDefaultCursor() {
     return myDefaultCursor;
   }
 
@@ -164,6 +153,11 @@ public abstract class InputTool {
       myDisabledCursor = cursor;
       refreshCursor();
     }
+  }
+
+  @Nullable
+  protected String getDescription() {
+    return null;
   }
 
   //////////////////////////////////////////////////////////////////////////////////////////
@@ -193,15 +187,28 @@ public abstract class InputTool {
     myCurrentScreenY = event.getY();
     myButton = event.getButton();
     myInputEvent = event;
+    myToolProvider.setEvent(event);
   }
 
   private boolean movedPastThreshold() {
     if (!myCanPastThreshold) {
       myCanPastThreshold =
-        Math.abs(myStartScreenX - myCurrentScreenX) > DRAG_THRESHOLD
-        || Math.abs(myStartScreenY - myCurrentScreenY) > DRAG_THRESHOLD;
+        Math.abs(moveDeltaWidth()) > DRAG_THRESHOLD
+        || Math.abs(moveDeltaHeight()) > DRAG_THRESHOLD;
     }
     return myCanPastThreshold;
+  }
+
+  protected final int moveDeltaWidth() {
+    return myCurrentScreenX - myStartScreenX;
+  }
+
+  protected final int moveDeltaHeight() {
+    return myCurrentScreenY - myStartScreenY;
+  }
+
+  protected final Point getLocation() {
+    return new Point(myCurrentScreenX, myCurrentScreenY);
   }
 
   protected void handleButtonDown(int button) {
@@ -226,16 +233,6 @@ public abstract class InputTool {
   }
 
   protected void handleAreaExited() {
-  }
-
-  protected void handleFinished() {
-    if (myCanUnload) {
-      myToolProvider.loadDefaultTool();
-    }
-    else {
-      deactivate();
-      activate();
-    }
   }
 
   public void mouseDown(MouseEvent event, EditableArea area) throws Exception {
@@ -292,6 +289,7 @@ public abstract class InputTool {
     }
 
     setArea(area);
+    myToolProvider.setArea(area);
   }
 
   public void mouseExited(MouseEvent event, EditableArea area) throws Exception {
@@ -299,6 +297,7 @@ public abstract class InputTool {
       setEvent(event);
       handleAreaExited();
       setArea(null);
+      myToolProvider.setArea(null);
     }
   }
 }

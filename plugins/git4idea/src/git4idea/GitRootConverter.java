@@ -19,27 +19,21 @@ package git4idea;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.HashSet;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
 
 /**
- * The converter for the VCS roots
+ * Given VFS content roots, filters them and returns only those, which are actual Git roots.
  */
 public class GitRootConverter implements AbstractVcs.RootsConvertor {
-  /**
-   * The static instance
-   */
+
   public static final GitRootConverter INSTANCE = new GitRootConverter();
 
-  /**
-   * {@inheritDoc}
-   */
-  public List<VirtualFile> convertRoots(List<VirtualFile> result) {
-    // The method relies on the fact that VFS caches metadata about files,
-    // so the query should be relatively fast and work mostly with in-memory structures.
-
-    // todo useless?
+  @NotNull
+  public List<VirtualFile> convertRoots(@NotNull List<VirtualFile> result) {
+    // TODO this should be faster, because it is called rather often. gitRootOrNull could be a bottle-neck.
     ArrayList<VirtualFile> roots = new ArrayList<VirtualFile>();
     HashSet<VirtualFile> listed = new HashSet<VirtualFile>();
     for (VirtualFile f : result) {

@@ -35,9 +35,12 @@ import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.codeInspection.ui.InspectionsConfigTreeComparator;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.PsiQualifiedNamedElement;
 import com.intellij.psi.util.PsiUtilCore;
 
 import java.util.Comparator;
@@ -138,7 +141,17 @@ public class InspectionResultsViewComparator implements Comparator {
 
   private static int compareEntity(final RefEntity entity, final PsiElement element) {
     if (entity instanceof RefElement) {
-      return PsiUtilCore.compareElementsByPosition(((RefElement)entity).getElement(), element);
+      final PsiElement psiElement = ((RefElement)entity).getElement();
+      if (psiElement != null && element != null) {
+        return PsiUtilCore.compareElementsByPosition(psiElement, element);
+      }
+      if (element == null) return psiElement == null ? 0 : 1;
+    }
+    if (element instanceof PsiQualifiedNamedElement) {
+      return StringUtil.compare(entity.getQualifiedName(), ((PsiQualifiedNamedElement)element).getQualifiedName(), true);
+    }
+    if (element instanceof PsiNamedElement) {
+      return StringUtil.compare(entity.getName(), ((PsiNamedElement)element).getName(), true);
     }
     return -1;
   }
@@ -146,10 +159,12 @@ public class InspectionResultsViewComparator implements Comparator {
   private static int compareEntities(final RefEntity entity1, final RefEntity entity2) {
     if (entity1 instanceof RefElement && entity2 instanceof RefElement) {
       return PsiUtilCore.compareElementsByPosition(((RefElement)entity1).getElement(), ((RefElement)entity2).getElement());
-    } else if (entity1 != null && entity2 != null) {
+    } 
+    if (entity1 != null && entity2 != null) {
       return entity1.getName().compareToIgnoreCase(entity2.getName());
     }
-    return 0;
+    if (entity1 != null) return -1;
+    return entity2 != null ? 1 : 0;
   }
 
   private static int compareLineNumbers(final Object userObject, final OfflineProblemDescriptor descriptor) {

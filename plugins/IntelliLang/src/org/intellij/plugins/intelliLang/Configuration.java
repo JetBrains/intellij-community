@@ -31,10 +31,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.util.FileContentUtil;
-import com.intellij.util.Function;
-import com.intellij.util.NullableFunction;
-import com.intellij.util.PairProcessor;
+import com.intellij.util.*;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
@@ -209,9 +206,24 @@ public class Configuration implements PersistentStateComponent<Element>, Modific
       final LanguageInjectionSupport support = supports.get(key);
       final BaseInjection injection = support == null ? new BaseInjection(key) : support.createInjection(child);
       injection.loadState(child);
-      myInjections.get(key).add(injection);
+      InjectionPlace[] places = dropKnownInvalidPlaces(injection.getInjectionPlaces());
+      if (places != null) { // not all places were removed
+        injection.setInjectionPlaces(places);
+        myInjections.get(key).add(injection);
+      }
     }
     importPlaces(getDefaultInjections());
+  }
+
+  @Nullable
+  private static InjectionPlace[] dropKnownInvalidPlaces(InjectionPlace[] places) {
+    InjectionPlace[] result = places;
+    for (InjectionPlace place : places) {
+      if (place.getText().contains("matches(\"[^${}/\\\\]+\")")) {
+        result = ArrayUtil.remove(result, place);
+      }
+    }
+    return places.length != 0 && result.length == 0? null : result;
   }
 
   private void loadStateOld(Element element, final LanguageInjectionSupport xmlSupport, final LanguageInjectionSupport javaSupport) {

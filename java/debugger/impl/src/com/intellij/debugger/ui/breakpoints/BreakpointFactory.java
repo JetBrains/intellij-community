@@ -15,6 +15,7 @@
  */
 package com.intellij.debugger.ui.breakpoints;
 
+import com.intellij.debugger.ui.breakpoints.actions.BreakpointPanelAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
@@ -35,7 +36,14 @@ public abstract class BreakpointFactory {
 
   public abstract Key<? extends Breakpoint> getBreakpointCategory();
 
-  public abstract @Nullable BreakpointPanel createBreakpointPanel(Project project, DialogWrapper parentDialog);
+  public BreakpointPanel createBreakpointPanel(final Project project, final DialogWrapper parentDialog) {
+    BreakpointPanel panel = new BreakpointPanel(project,
+                                                createBreakpointPropertiesPanel(project),
+                                                createBreakpointPanelActions(project, parentDialog),
+                                                getBreakpointCategory(), getDisplayName(), getHelpID());
+    configureBreakpointPanel(panel);
+    return panel;
+  }
 
   public abstract Icon getIcon();
 
@@ -52,4 +60,13 @@ public abstract class BreakpointFactory {
     return null;
   }
 
+  protected void configureBreakpointPanel(BreakpointPanel panel){};
+
+  protected abstract String getHelpID();
+
+  public abstract String getDisplayName();
+
+  public abstract BreakpointPropertiesPanel createBreakpointPropertiesPanel(Project project);
+
+  protected abstract BreakpointPanelAction[] createBreakpointPanelActions(Project project, DialogWrapper parentDialog);
 }

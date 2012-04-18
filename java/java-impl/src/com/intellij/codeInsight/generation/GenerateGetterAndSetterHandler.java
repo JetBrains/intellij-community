@@ -46,4 +46,9 @@ public class GenerateGetterAndSetterHandler extends GenerateGetterSetterHandlerB
   protected String getNothingFoundMessage() {
     return "No fields have been found to generate getters/setters for";
   }
+
+  @Override
+  protected String getNothingAcceptedMessage() {
+    return "No fields without getter/setter were found";
+  }
 }

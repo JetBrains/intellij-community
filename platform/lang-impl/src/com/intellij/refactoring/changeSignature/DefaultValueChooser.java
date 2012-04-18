@@ -59,7 +59,7 @@ public class DefaultValueChooser extends DialogWrapper{
     myValueEditor.setEnabled(false);
     myFeelLuckyDescription.setText("In method call place variable of the same type would be searched.\n" +
                                    "When exactly one is found - it would be used.\n" +
-                                   "Blank place would be used otherwise");
+                                   "Parameter place would be leaved blank otherwise");
     myFeelLuckyDescription.setUI(new MultiLineLabelUI());
     myBlankDescription.setUI(new MultiLineLabelUI());
     myValueEditor.setText(defaultValue);

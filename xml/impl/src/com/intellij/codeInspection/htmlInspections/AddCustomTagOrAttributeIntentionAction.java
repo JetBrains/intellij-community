@@ -17,7 +17,6 @@
 package com.intellij.codeInspection.htmlInspections;
 
 import com.intellij.CommonBundle;
-import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ModifiableModel;
@@ -79,7 +78,6 @@ public class AddCustomTagOrAttributeIntentionAction implements LocalQuickFix {
     final LocalInspectionToolWrapper wrapper = (LocalInspectionToolWrapper)model.getInspectionTool(myInspectionName, element);
     final HtmlUnknownTagInspection inspection = (HtmlUnknownTagInspection)wrapper.getTool();
     inspection.addCustomPropertyName(myName);
-    model.isProperSetting(HighlightDisplayKey.find(myInspectionName));
     try {
       model.commit();
     }

@@ -6,7 +6,7 @@ import com.android.prefs.AndroidLocation.AndroidLocationException;
 import com.android.sdklib.IAndroidTarget;
 import com.android.sdklib.SdkConstants;
 import com.intellij.openapi.diagnostic.Logger;
-import org.jetbrains.android.sdk.AndroidSdk;
+import org.jetbrains.android.sdk.AndroidSdkData;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.w3c.dom.Document;
@@ -149,13 +149,13 @@ public class LayoutDeviceManager {
     }
   }
 
-  public void loadDevices(@NotNull AndroidSdk sdk) {
-    loadDefaultAndUserDevices(sdk);
-    loadAddOnLayoutDevices(sdk);
+  public void loadDevices(@NotNull AndroidSdkData sdkData) {
+    loadDefaultAndUserDevices(sdkData);
+    loadAddOnLayoutDevices(sdkData);
   }
 
-  private void loadDefaultAndUserDevices(@NotNull AndroidSdk sdk) {
-    loadDefaultLayoutDevices(sdk.getLocation());
+  private void loadDefaultAndUserDevices(@NotNull AndroidSdkData sdkData) {
+    loadDefaultLayoutDevices(sdkData.getLocation());
 
     try {
       myUserLayoutDevices.clear();
@@ -181,8 +181,8 @@ public class LayoutDeviceManager {
     combineLayoutDevices();
   }
 
-  private void loadAddOnLayoutDevices(@NotNull AndroidSdk sdk) {
-    for (IAndroidTarget target : sdk.getTargets()) {
+  private void loadAddOnLayoutDevices(@NotNull AndroidSdkData sdkData) {
+    for (IAndroidTarget target : sdkData.getTargets()) {
       if (!target.isPlatform()) {
         File deviceXml = new File(target.getLocation(), SdkConstants.FN_DEVICES_XML);
         if (deviceXml.isFile()) {

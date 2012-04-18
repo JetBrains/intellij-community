@@ -21,6 +21,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.ReturnStatementsVisitor;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -42,6 +43,7 @@ class ConvertReturnStatementsVisitor implements ReturnStatementsVisitor {
   @Override
   public void visit(final List<PsiReturnStatement> returnStatements) throws IncorrectOperationException {
     final PsiReturnStatement statement = ApplicationManager.getApplication().runWriteAction(new Computable<PsiReturnStatement>() {
+      @Override
       public PsiReturnStatement compute() {
         return replaceReturnStatements(returnStatements);
       }
@@ -55,18 +57,21 @@ class ConvertReturnStatementsVisitor implements ReturnStatementsVisitor {
     return myLatestReturn;
   }
 
-  private String generateValue(final PsiElement stopElement) {
+  private String generateValue(@NotNull PsiElement stopElement) {
     final PsiVariable variable = mySearcher.getDeclaration(stopElement);
     return variable != null ? variable.getName() : myDefaultValue;
   }
 
   public PsiReturnStatement createReturnInLastStatement() throws IncorrectOperationException {
     return ApplicationManager.getApplication().runWriteAction(new Computable<PsiReturnStatement>() {
+      @Override
       public PsiReturnStatement compute() {
         PsiCodeBlock body = myMethod.getBody();
-        final String value = generateValue(body.getRBrace());
+        PsiJavaToken rBrace = body.getRBrace();
+        if (rBrace == null) return null;
+        final String value = generateValue(rBrace);
         PsiReturnStatement returnStatement = (PsiReturnStatement) myFactory.createStatementFromText("return " + value+";", myMethod);
-        return (PsiReturnStatement) body.addBefore(returnStatement, body.getRBrace());
+        return (PsiReturnStatement) body.addBefore(returnStatement, rBrace);
       }
     });
   }

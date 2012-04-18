@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.psi.*;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
@@ -35,7 +36,7 @@ public class DeclarationSearcher {
   }
 
   @Nullable
-  public PsiVariable getDeclaration(final PsiElement endPositionElement) {
+  public PsiVariable getDeclaration(@NotNull PsiElement endPositionElement) {
     final PsiVariable localVariable = getLocalDeclaration(endPositionElement);
     if (localVariable != null) {
       return localVariable;
@@ -54,7 +55,7 @@ public class DeclarationSearcher {
   }
 
   @Nullable
-  private PsiVariable getLocalDeclaration(final PsiElement endPositionElement) {
+  private PsiVariable getLocalDeclaration(@NotNull PsiElement endPositionElement) {
     final PsiElement parent = endPositionElement.getParent();
 
     // reuse of cache is possible IF requests are done up-to-down. otherwise - not first declaration can be returned

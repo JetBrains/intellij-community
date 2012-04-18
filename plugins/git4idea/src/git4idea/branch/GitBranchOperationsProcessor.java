@@ -16,6 +16,7 @@
 package git4idea.branch;
 
 import com.intellij.notification.NotificationType;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -26,16 +27,21 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.util.ui.UIUtil;
 import git4idea.GitBranch;
 import git4idea.GitExecutionException;
 import git4idea.GitVcs;
-import git4idea.NotificationManager;
+import git4idea.Notificator;
+import git4idea.changes.GitChangeUtils;
 import git4idea.commands.Git;
 import git4idea.commands.GitCommandResult;
 import git4idea.commands.GitCompoundResult;
 import git4idea.history.GitHistoryUtils;
 import git4idea.history.browser.GitCommit;
+import git4idea.jgit.GitHttpAdapter;
+import git4idea.push.GitSimplePushResult;
+import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
 import git4idea.ui.branch.GitBranchUiUtil;
 import git4idea.ui.branch.GitCompareBranchesDialog;
@@ -59,8 +65,9 @@ public final class GitBranchOperationsProcessor {
 
   private final Project myProject;
   private final List<GitRepository> myRepositories;
-  @Nullable private final Runnable myCallInAwtAfterExecution;
+  private final @Nullable Runnable myCallInAwtAfterExecution;
   private final GitRepository mySelectedRepository;
+  private final Git myGit;
 
   public GitBranchOperationsProcessor(@NotNull GitRepository repository) {
     this(repository, null);
@@ -83,6 +90,7 @@ public final class GitBranchOperationsProcessor {
     myRepositories = repositories;
     mySelectedRepository = selectedRepository;
     myCallInAwtAfterExecution = callInAwtAfterExecution;
+    myGit = ServiceManager.getService(Git.class);
   }
   
   @NotNull
@@ -119,14 +127,14 @@ public final class GitBranchOperationsProcessor {
     new CommonBackgroundTask(myProject, "Checking out new branch " + name, myCallInAwtAfterExecution) {
       @Override public void execute(@NotNull ProgressIndicator indicator) {
         for (GitRepository repository : myRepositories) {
-          Git.createNewTag(repository, name, null, reference);
+          myGit.createNewTag(repository, name, null, reference);
         }
       }
     }.runInBackground();
   }
 
   private void doCheckoutNewBranch(@NotNull final String name, @NotNull ProgressIndicator indicator) {
-    new GitCheckoutNewBranchOperation(myProject, myRepositories, name, getCurrentBranchOrRev(), indicator).execute();
+    new GitCheckoutNewBranchOperation(myProject, myGit, myRepositories, name, getCurrentBranchOrRev(), indicator).execute();
   }
 
   /**
@@ -167,15 +175,19 @@ public final class GitBranchOperationsProcessor {
   }
 
   private void doCheckout(@NotNull ProgressIndicator indicator, @NotNull String reference, @Nullable String newBranch) {
-    new GitCheckoutOperation(myProject, myRepositories, reference, newBranch, getCurrentBranchOrRev(), indicator).execute();
+    new GitCheckoutOperation(myProject, myGit, myRepositories, reference, newBranch, getCurrentBranchOrRev(), indicator).execute();
   }
 
   public void deleteBranch(final String branchName) {
     new CommonBackgroundTask(myProject, "Deleting " + branchName, myCallInAwtAfterExecution) {
       @Override public void execute(@NotNull ProgressIndicator indicator) {
-        new GitDeleteBranchOperation(myProject, myRepositories, branchName, getCurrentBranchOrRev(), indicator).execute();
+        doDelete(branchName, indicator);
       }
     }.runInBackground();
+  }
+
+  private void doDelete(@NotNull String branchName, @NotNull ProgressIndicator indicator) {
+    new GitDeleteBranchOperation(myProject, myGit, myRepositories, branchName, getCurrentBranchOrRev(), indicator).execute();
   }
 
   public void deleteRemoteBranch(@NotNull final String branchName) {
@@ -198,7 +210,7 @@ public final class GitBranchOperationsProcessor {
             if (decision.deleteTracking()) {
               for (final String branch : trackingBranches) {
                 indicator.setText("Deleting " + branch);
-                new GitDeleteBranchOperation(myProject, myRepositories, branch, getCurrentBranchOrRev(), indicator) {
+                new GitDeleteBranchOperation(myProject, myGit, myRepositories, branch, getCurrentBranchOrRev(), indicator) {
                   @Override
                   protected void notifySuccess(@NotNull String message) {
                     // do nothing - will display a combo notification for all deleted branches below
@@ -223,15 +235,57 @@ public final class GitBranchOperationsProcessor {
     GitCompoundResult result = new GitCompoundResult(myProject);
     for (GitRepository repository : myRepositories) {
       Pair<String, String> pair = GitBranch.splitNameOfRemoteBranch(branchName);
-      GitCommandResult res = Git.push(repository, pair.getFirst(), ":" + pair.getSecond());
+      String remote = pair.getFirst();
+      String branch = pair.getSecond();
+      GitCommandResult res = pushDeletion(repository, remote, branch);
       result.append(repository, res);
       repository.update(GitRepository.TrackedTopic.BRANCHES);
     }
     if (!result.totalSuccess()) {
-      NotificationManager.getInstance(myProject).notifyError("Failed to delete remote branch " + branchName,
+      Notificator.getInstance(myProject).notifyError("Failed to delete remote branch " + branchName,
                                                              result.getErrorOutputWithReposIndication());
     }
     return result.totalSuccess();
+  }
+
+  @NotNull
+  private GitCommandResult pushDeletion(GitRepository repository, String remoteName, String branchName) {
+    GitRemote remote = getRemoteByName(repository, remoteName);
+    if (remote == null) {
+      return pushDeletionNatively(repository, remoteName, branchName);
+    }
+
+    String remoteUrl = remote.getFirstUrl();
+    if (remoteUrl != null && GitHttpAdapter.shouldUseJGit(remoteUrl)) {
+      String fullBranchName = branchName.startsWith(GitBranch.REFS_HEADS_PREFIX) ? branchName : GitBranch.REFS_HEADS_PREFIX + branchName;
+      String spec = ":" + fullBranchName;
+      GitSimplePushResult simplePushResult = GitHttpAdapter.push(repository, remote, remoteUrl, spec);
+      return convertSimplePushResultToCommandResult(simplePushResult);
+    }
+    else {
+      return pushDeletionNatively(repository, remoteName, branchName);
+    }
+  }
+
+  private GitCommandResult pushDeletionNatively(GitRepository repository, String remoteName, String branchName) {
+    return myGit.push(repository, remoteName, ":" + branchName);
+  }
+
+  @NotNull
+  private static GitCommandResult convertSimplePushResultToCommandResult(GitSimplePushResult result) {
+    boolean success = result.getType() == GitSimplePushResult.Type.SUCCESS;
+    return new GitCommandResult(success, -1, success ? Collections.<String>emptyList() : Collections.singletonList(result.getOutput()),
+                                success ? Collections.singletonList(result.getOutput()) : Collections.<String>emptyList());
+  }
+
+  @Nullable
+  private static GitRemote getRemoteByName(@NotNull GitRepository repository, @NotNull String remoteName) {
+    for (GitRemote remote : repository.getRemotes()) {
+      if (remote.getName().equals(remoteName)) {
+        return remote;
+      }
+    }
+    return null;
   }
 
   private void notifySuccessfulDeletion(@NotNull String remoteBranchName, @NotNull Collection<String> localBranches) {
@@ -239,7 +293,7 @@ public final class GitBranchOperationsProcessor {
     if (!localBranches.isEmpty()) {
       message = "Also deleted local " + StringUtil.pluralize("branch", localBranches.size()) + ": " + StringUtil.join(localBranches, ", ");
     }
-    NotificationManager.getInstance(myProject).notify(GitVcs.NOTIFICATION_GROUP_ID, "Deleted remote branch " + remoteBranchName,
+    Notificator.getInstance(myProject).notify(GitVcs.NOTIFICATION_GROUP_ID, "Deleted remote branch " + remoteBranchName,
                                                       message, NotificationType.INFORMATION);
   }
 
@@ -345,10 +399,23 @@ public final class GitBranchOperationsProcessor {
     GitCommitCompareInfo compareInfo = new GitCommitCompareInfo();
     for (GitRepository repository : repositories) {
       compareInfo.put(repository, loadCommitsToCompare(repository, branchName));
+      compareInfo.put(repository, loadTotalDiff(repository, branchName));
     }
     return compareInfo;
   }
-  
+
+  @NotNull
+  private static Collection<Change> loadTotalDiff(@NotNull GitRepository repository, @NotNull String branchName) {
+    try {
+      return GitChangeUtils.getDiff(repository.getProject(), repository.getRoot(), null, branchName, null);
+    }
+    catch (VcsException e) {
+      // we treat it as critical and report an error
+      throw new GitExecutionException("Couldn't get [git diff " + branchName + "] on repository [" + repository.getRoot() + "]", e);
+    }
+  }
+
+  @NotNull
   private Pair<List<GitCommit>, List<GitCommit>> loadCommitsToCompare(@NotNull GitRepository repository, @NotNull final String branchName) {
     final List<GitCommit> headToBranch;
     final List<GitCommit> branchToHead;
@@ -373,20 +440,21 @@ public final class GitBranchOperationsProcessor {
     }
   }
 
-  public void merge(@NotNull final String branchName) {
+  public void merge(@NotNull final String branchName, final boolean localBranch) {
     new CommonBackgroundTask(myProject, "Merging " + branchName, myCallInAwtAfterExecution) {
       @Override public void execute(@NotNull ProgressIndicator indicator) {
-        doMerge(branchName, indicator);
+        doMerge(branchName, localBranch, indicator);
       }
     }.runInBackground();
   }
 
-  private void doMerge(@NotNull String branchName, @NotNull ProgressIndicator indicator) {
+  private void doMerge(@NotNull String branchName, boolean localBranch, @NotNull ProgressIndicator indicator) {
     Map<GitRepository, String> revisions = new HashMap<GitRepository, String>();
     for (GitRepository repository : myRepositories) {
       revisions.put(repository, repository.getCurrentRevision());
     }
-    new GitMergeOperation(myProject, myRepositories, branchName, getCurrentBranchOrRev(), mySelectedRepository, revisions, indicator).execute();
+    new GitMergeOperation(myProject, myGit, myRepositories, branchName, localBranch, getCurrentBranchOrRev(),
+                          mySelectedRepository, revisions, indicator).execute();
   }
 
   /**

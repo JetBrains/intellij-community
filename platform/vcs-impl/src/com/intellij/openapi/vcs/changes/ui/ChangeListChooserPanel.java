@@ -25,6 +25,7 @@ import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangeListRenderer;
 import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkRenderer;
+import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.ui.HtmlListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.Consumer;
@@ -36,12 +37,20 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
-import java.util.Collection;
+import java.util.*;
+import java.util.List;
 
 /**
  * @author yole
  */
 public class ChangeListChooserPanel extends JPanel {
+  private static final Comparator<ChangeList> CHANGE_LIST_COMPARATOR = new Comparator<ChangeList>() {
+    @Override
+    public int compare(ChangeList o1, ChangeList o2) {
+      return o1.getName().compareToIgnoreCase(o2.getName());
+    }
+  };
+
   private JPanel myPanel;
   private JRadioButton myRbExisting;
   private JRadioButton myRbNew;
@@ -94,12 +103,9 @@ public class ChangeListChooserPanel extends JPanel {
   }
 
   public void setChangeLists(Collection<? extends ChangeList> changeLists) {
-    final DefaultComboBoxModel model = new DefaultComboBoxModel();
-    for (ChangeList list : changeLists) {
-      model.addElement(list);
-    }
-
-    myExistingListsCombo.setModel(model);
+    List<ChangeList> list = new ArrayList<ChangeList>(changeLists);
+    Collections.sort(list, CHANGE_LIST_COMPARATOR);
+    myExistingListsCombo.setModel(new CollectionComboBoxModel(list, null));
   }
 
   public void setDefaultName(String name) {

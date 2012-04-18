@@ -15,7 +15,9 @@
  */
 package com.intellij.ui;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.IconLoader;
@@ -27,6 +29,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 public class RawCommandLineEditor extends JPanel {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.ui.RawCommandLineEditor");
+
   private final TextFieldWithBrowseButton myTextField;
   private String myDialogCaption = "";
 
@@ -34,6 +38,14 @@ public class RawCommandLineEditor extends JPanel {
     super(new BorderLayout());
     myTextField = new TextFieldWithBrowseButton(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
+        if (myDialogCaption == null) {
+          Container parent = getParent();
+          if (parent instanceof LabeledComponent) {
+            parent = parent.getParent();
+          }
+          LOG.error("Did not call RawCommandLineEditor.setDialogCaption() in " + parent);
+          myDialogCaption = "Parameters";
+        }
         Messages.showTextAreaDialog(myTextField.getTextField(), myDialogCaption, "EditParametersPopupWindow");
       }
     });

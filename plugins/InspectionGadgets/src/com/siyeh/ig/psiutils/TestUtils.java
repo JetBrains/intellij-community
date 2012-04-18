@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.siyeh.ig.psiutils;
 
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInsight.TestFrameworks;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -49,8 +50,7 @@ public class TestUtils {
   }
 
   public static boolean isPartOfJUnitTestMethod(@NotNull PsiElement element) {
-    final PsiMethod method = PsiTreeUtil.getParentOfType(element,
-                                                         PsiMethod.class);
+    final PsiMethod method = PsiTreeUtil.getParentOfType(element, PsiMethod.class, false);
     return method != null && isJUnitTestMethod(method);
   }
 
@@ -98,13 +98,18 @@ public class TestUtils {
   }
 
   public static boolean isJUnit4TestMethod(@Nullable PsiMethod method) {
-    return method != null &&
-           AnnotationUtil.isAnnotated(method, "org.junit.Test", true);
+    return method != null && AnnotationUtil.isAnnotated(method, "org.junit.Test", true);
   }
 
   public static boolean isJUnitTestClass(@Nullable PsiClass targetClass) {
-    return targetClass != null &&
-           InheritanceUtil.isInheritor(targetClass,
-                                       "junit.framework.TestCase");
+    return targetClass != null && InheritanceUtil.isInheritor(targetClass, "junit.framework.TestCase");
+  }
+
+  public static boolean isInTestCode(PsiElement element) {
+    if (isPartOfJUnitTestMethod(element)) {
+      return true;
+    }
+    final PsiClass containingClass = PsiTreeUtil.getParentOfType(element, PsiClass.class);
+    return containingClass != null && TestFrameworks.getInstance().isTestClass(containingClass);
   }
 }

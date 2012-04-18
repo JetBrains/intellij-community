@@ -20,12 +20,16 @@
  */
 package com.intellij.execution.junit;
 
-import com.intellij.execution.ExecutionException;
+import com.intellij.execution.CantRunException;
 import com.intellij.execution.JavaExecutionUtil;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.util.JavaParametersUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator;
+import com.intellij.openapi.progress.impl.ProgressManagerImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiClass;
@@ -36,13 +40,14 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.util.Function;
 import com.intellij.util.FunctionUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
+import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
 
-public class TestsPattern extends TestObject {
+public class TestsPattern extends TestPackage {
   public TestsPattern(final Project project,
                       final JUnitConfiguration configuration,
                       RunnerSettings runnerSettings,
@@ -51,41 +56,100 @@ public class TestsPattern extends TestObject {
   }
 
   @Override
-  protected void initialize() throws ExecutionException {
-    super.initialize();
+  protected TestClassFilter getClassFilter(JUnitConfiguration.Data data) throws CantRunException {
+    return TestClassFilter.create(getSourceScope(), myConfiguration.getConfigurationModule().getModule(), data.getPatternPresentation());
+  }
+
+  @Override
+  protected String getPackageName(JUnitConfiguration.Data data) throws CantRunException {
+    return "";
+  }
+
+  @Override
+  public Task findTests() {
     final JUnitConfiguration.Data data = myConfiguration.getPersistentData();
     final Project project = myConfiguration.getProject();
-    boolean isJUnit4 = false;
-    final ArrayList<String> classNames = new ArrayList<String>();
-    final Set<Module> modules = new HashSet<Module>();
+    final Set<String> classNames = new HashSet<String>();
     for (String className : data.getPatterns()) {
-      final PsiClass psiClass = JavaExecutionUtil.findMainClass(project, className.contains(",") ? className.substring(0, className.indexOf(',')) : className, GlobalSearchScope.allScope(project));
+      final PsiClass psiClass = JavaExecutionUtil.findMainClass(project,
+                                                                className.contains(",")
+                                                                ? className.substring(0, className.indexOf(','))
+                                                                : className,
+                                                                GlobalSearchScope.allScope(project));
       if (psiClass != null && JUnitUtil.isTestClass(psiClass)) {
         classNames.add(className);
-        modules.add(ModuleUtil.findModuleForPsiElement(psiClass));
-        if (JUnitUtil.isJUnit4TestClass(psiClass)) {
-          isJUnit4 = true;
-        }
       }
     }
+
+    if (classNames.size() == data.getPatterns().size()) {
+      final SearchForTestsTask task = new SearchForTestsTask(project, "Searching for tests...", true) {
+        @Override
+        public void run(@NotNull ProgressIndicator indicator) {
+          try {
+            mySocket = myServerSocket.accept();
+            addClassesListToJavaParameters(classNames,
+                                           StringUtil.isEmpty(data.METHOD_NAME)
+                                           ? FunctionUtil.<String>id()
+                                           : new Function<String, String>() {
+                                             @Override
+                                             public String fun(String className) {
+                                               return className;
+                                             }
+                                           }, "", false, true);
+          }
+          catch (IOException e) {
+            LOG.info(e);
+          }
+          catch (Throwable e) {
+            LOG.error(e);
+          }
+        }
+
+        @Override
+        public void onSuccess() {
+          finish();
+        }
+      };
+      mySearchForTestsIndicator = new BackgroundableProcessIndicator(task);
+      ProgressManagerImpl.runProcessWithProgressAsynchronously(task, mySearchForTestsIndicator);
+      return task;
+    }
+
+    return super.findTests();
+  }
+
+  protected void configureClasspath() throws CantRunException {
+    final JUnitConfiguration.Data data = myConfiguration.getPersistentData();
+    final Project project = myConfiguration.getProject();
+    final Set<Module> modules = new HashSet<Module>();
+    for (String className : data.getPatterns()) {
+      final PsiClass psiClass = JavaExecutionUtil.findMainClass(project,
+                                                                className.contains(",")
+                                                                ? className.substring(0, className.indexOf(','))
+                                                                : className,
+                                                                GlobalSearchScope.allScope(project));
+      if (psiClass != null && JUnitUtil.isTestClass(psiClass)) {
+        modules.add(ModuleUtil.findModuleForPsiElement(psiClass));
+      }
+    }
+
     final String jreHome = myConfiguration.isAlternativeJrePathEnabled() ? myConfiguration.getAlternativeJrePath() : null;
 
     Module module = myConfiguration.getConfigurationModule().getModule();
-    if (module == null && modules.size() == 1 && modules.iterator().next() != null) {
-       module = modules.iterator().next();
+    if (module == null && modules.size() == 1) {
+      final Module nextModule = modules.iterator().next();
+      if (nextModule != null) {
+        module = nextModule;
+      }
     }
 
     if (module != null) {
       JavaParametersUtil.configureModule(module, myJavaParameters, JavaParameters.JDK_AND_CLASSES_AND_TESTS, jreHome);
-    } else {
-      JavaParametersUtil.configureProject(project, myJavaParameters, JavaParameters.JDK_AND_CLASSES_AND_TESTS, jreHome);
     }
-    addClassesListToJavaParameters(classNames, StringUtil.isEmpty(data.METHOD_NAME) ? FunctionUtil.<String>id() : new Function<String, String>() {
-      @Override
-      public String fun(String className) {
-        return className;
-      }
-    }, "", true, isJUnit4);
+    else {
+      JavaParametersUtil
+        .configureProject(myConfiguration.getProject(), myJavaParameters, JavaParameters.JDK_AND_CLASSES_AND_TESTS, jreHome);
+    }
   }
 
   @Override
@@ -124,10 +188,7 @@ public class TestsPattern extends TestObject {
     for (String pattern : patterns) {
       final String className = pattern.contains(",") ? StringUtil.getPackageName(pattern, ',') : pattern;
       final PsiClass psiClass = JavaExecutionUtil.findMainClass(myConfiguration.getProject(), className, searchScope);
-      if (psiClass == null) {
-        throw new RuntimeConfigurationWarning("Class " + className + " not found");
-      }
-      if (!JUnitUtil.isTestClass(psiClass)) {
+      if (psiClass != null && !JUnitUtil.isTestClass(psiClass)) {
         throw new RuntimeConfigurationWarning("Class " + className + " not a test");
       }
     }

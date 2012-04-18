@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package com.intellij.formatting;
 
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
@@ -97,7 +96,7 @@ public class FormatterImpl extends FormatterEx
 
   @Override
   public void setProgressTask(@NotNull FormattingProgressTask progressIndicator) {
-    if (!FormatterUtil.FORMATTER_ACTION_NAMES.contains(CommandProcessor.getInstance().getCurrentCommandName())) {
+    if (!FormatterUtil.isFormatterCalledExplicitly()) {
       return;
     }
     myProgressTask.set(progressIndicator);
@@ -693,7 +692,7 @@ public class FormatterImpl extends FormatterEx
                                      final boolean keepLineBreaksFlag,
                                      final int keepLineBreaks,
                                      final boolean keepFirstColumn, int prefLineFeeds) {
-    synchronized(this) {
+    synchronized(ourSharedSpacing) {
       ourSharedSpacing.init(minSpaces, maxSpaces, minLineFeeds, readOnly, safe, keepLineBreaksFlag, keepLineBreaks, keepFirstColumn, prefLineFeeds);
       SpacingImpl spacing = ourSharedProperties.get(ourSharedSpacing);
 

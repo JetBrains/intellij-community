@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -134,7 +134,7 @@ public class ImportSettingsStep extends WizardStep {
   }
 
   @Override
-  public boolean setActive() {
+  public void activate() {
     if (!myIsInitialized) {
       myIsInitialized = true;
       myReleaseTag.setText(myImportConfiguration.RELEASE_TAG);
@@ -154,7 +154,6 @@ public class ImportSettingsStep extends WizardStep {
       myModuleName.setText(myDirectoryToImport.getName());
       myModuleName.selectAll();
     }
-    return true;
   }
 
   private void selectAll() {

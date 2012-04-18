@@ -16,6 +16,7 @@
 
 package com.intellij.cvsSupport2.javacvsImpl.io;
 
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.ByteArrayOutputStream;
@@ -28,7 +29,6 @@ import java.io.InputStream;
 public class LineReader {
 
   private static final int DEFAULT_BUFFER_SIZE = 10 * 1024;
-  private static final byte[] EMPTY_BYTE_ARRAY = new byte[0];
 
   private final byte[] myBuffer;
   private final InputStream myInputStream;
@@ -66,7 +66,7 @@ public class LineReader {
   private byte[] getLineArray() {
     myPosition++;
     if (myOutputStream.size() == 0) {
-      return EMPTY_BYTE_ARRAY;
+      return ArrayUtil.EMPTY_BYTE_ARRAY;
     }
     final byte[] bytes = myOutputStream.toByteArray();
     myOutputStream.reset();

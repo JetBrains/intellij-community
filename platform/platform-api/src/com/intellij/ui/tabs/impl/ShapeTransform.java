@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,20 +27,20 @@ public abstract class ShapeTransform {
 
   private Rectangle myShapeRect;
 
-  protected int myXTranform;
-  protected int myYTranform;
+  protected int myXTransform;
+  protected int myYTransform;
   private boolean mySwap;
 
-  public ShapeTransform(Rectangle shapeRect, int xTransform, int yTranform, boolean swap) {
+  public ShapeTransform(Rectangle shapeRect, int xTransform, int yTransform, boolean swap) {
     myShapeRect = shapeRect;
-    myXTranform = xTransform;
-    myYTranform = yTranform;
+    myXTransform = xTransform;
+    myYTransform = yTransform;
     mySwap = swap;
   }
 
   public ShapeTransform(int XTranform, int YTranform) {
-    myXTranform = XTranform;
-    myYTranform = YTranform;
+    myXTransform = XTranform;
+    myYTransform = YTranform;
   }
 
   public final Rectangle getShapeRect() {
@@ -56,27 +56,27 @@ public abstract class ShapeTransform {
   public abstract int getMaxY();
 
   public final int deltaX(int deltaX) {
-    return deltaX * myXTranform;
+    return deltaX * myXTransform;
   }
 
   public final int deltaY(int deltaY) {
-    return deltaY * myYTranform;
+    return deltaY * myYTransform;
   }
 
   public final <T> T transformX1(T o1, T o2) {
-    return (mySwap ? myYTranform : myXTranform) == 1 ? o1: o2;
+    return (mySwap ? myYTransform : myXTransform) == 1 ? o1: o2;
   }
 
   public final <T> T transformX2(T o1, T o2) {
-    return (mySwap ? myYTranform : myXTranform) == 1 ? o2: o1;
+    return (mySwap ? myYTransform : myXTransform) == 1 ? o2: o1;
   }
 
   public final <T> T transformY1(T o1, T o2) {
-    return (mySwap ? myXTranform : myYTranform) == 1 ? o1: o2;    
+    return (mySwap ? myXTransform : myYTransform) == 1 ? o1: o2;
   }
 
   public final <T> T transformY2(T o1, T o2) {
-    return (mySwap ? myXTranform : myYTranform) == 1 ? o2: o1;
+    return (mySwap ? myXTransform : myYTransform) == 1 ? o2: o1;
   }
 
   public abstract Insets transformInsets(Insets insets);
@@ -97,6 +97,7 @@ public abstract class ShapeTransform {
 
   public final ShapeTransform moveTo(int x, int y) {
     if (mySwap) {
+      //noinspection SuspiciousNameCombination
       myPath.moveTo(y, x);
     } else {
       myPath.moveTo(x, y);
@@ -107,6 +108,7 @@ public abstract class ShapeTransform {
 
   public final ShapeTransform quadTo(int x1, int y1, int x2, int y2) {
     if (mySwap) {
+      //noinspection SuspiciousNameCombination
       myPath.quadTo(y1, x1, y2, x2);
     } else {
       myPath.quadTo(x1, y1, x2, y2);
@@ -117,6 +119,7 @@ public abstract class ShapeTransform {
 
   public final ShapeTransform lineTo(int x, int y) {
     if (mySwap) {
+      //noinspection SuspiciousNameCombination
       myPath.lineTo(y, x);
     } else {
       myPath.lineTo(x, y);

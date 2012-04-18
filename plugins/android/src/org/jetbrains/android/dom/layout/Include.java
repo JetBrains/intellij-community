@@ -17,10 +17,9 @@
 package org.jetbrains.android.dom.layout;
 
 import com.intellij.util.xml.GenericAttributeValue;
-import com.intellij.util.xml.Required;
 import com.intellij.util.xml.Convert;
 import org.jetbrains.android.dom.AndroidAttributeValue;
-import org.jetbrains.android.dom.ResourceType;
+import org.jetbrains.android.dom.AndroidResourceType;
 import org.jetbrains.android.dom.converters.ResourceReferenceConverter;
 import org.jetbrains.android.dom.resources.ResourceValue;
 
@@ -33,11 +32,11 @@ import org.jetbrains.android.dom.resources.ResourceValue;
  */
 public interface Include extends LayoutElement {
   /*@Required*/
-  @ResourceType("id")
+  @AndroidResourceType("id")
   @Convert(ResourceReferenceConverter.class)
   AndroidAttributeValue<ResourceValue> getId();
 
-  @ResourceType("layout")
+  @AndroidResourceType("layout")
   @Convert(ResourceReferenceConverter.class)
   GenericAttributeValue<ResourceValue> getLayout();
 }

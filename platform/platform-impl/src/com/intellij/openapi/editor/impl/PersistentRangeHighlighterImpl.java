@@ -49,7 +49,7 @@ class PersistentRangeHighlighterImpl extends RangeHighlighterImpl implements Ran
     if (shouldTranslateViaDiff) {
       wasTranslatedViaDiff = translatedViaDiff(e, event);
     }
-    if (! wasTranslatedViaDiff) {
+    if (!wasTranslatedViaDiff) {
       super.changedUpdateImpl(e);
       if (isValid()) {
         setLine(getDocument().getLineNumber(getStartOffset()));
@@ -58,6 +58,10 @@ class PersistentRangeHighlighterImpl extends RangeHighlighterImpl implements Ran
           setIntervalEnd(getDocument().getLineEndOffset(getLine()));
         }
       }
+    }
+    if (isValid() && getTargetArea() == HighlighterTargetArea.LINES_IN_RANGE) {
+      setIntervalStart(getDocument().getLineStartOffset(getLine()));
+      setIntervalEnd(getDocument().getLineEndOffset(getLine()));
     }
   }
 
@@ -88,11 +92,11 @@ class PersistentRangeHighlighterImpl extends RangeHighlighterImpl implements Ran
   }
 
   // delegates
-  public int getLine() {
+  private int getLine() {
     return getData().myLine;
   }
 
-  public void setLine(int line) {
+  private void setLine(int line) {
     getData().myLine = line;
   }
 }

@@ -19,6 +19,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.stubs.IntStubIndexExtension;
 import com.intellij.psi.stubs.StubIndexKey;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.impl.search.GrSourceFilterScope;
 
@@ -40,6 +41,7 @@ public class GrFullScriptNameIndex extends IntStubIndexExtension<GroovyFile> {
     return super.getVersion() + 1;
   }
 
+  @NotNull
   public StubIndexKey<Integer, GroovyFile> getKey() {
     return KEY;
   }

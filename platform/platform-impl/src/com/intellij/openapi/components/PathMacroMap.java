@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.openapi.components;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.NotNullFunction;
 import org.jdom.Attribute;
 import org.jdom.Comment;
@@ -23,7 +24,6 @@ import org.jdom.Element;
 import org.jdom.Text;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -31,10 +31,11 @@ import java.util.Set;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Dec 6, 2004
+ * @since Dec 6, 2004
  */
 public abstract class PathMacroMap {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.components.PathMacroMap");
+
   protected final Map<String, String> myMacroMap;
 
   protected PathMacroMap() {
@@ -63,6 +64,7 @@ public abstract class PathMacroMap {
                                @Nullable final NotNullFunction<Object, Boolean> filter,
                                @Nullable final NotNullFunction<Object, Boolean> recursiveFilter) {
     List content = e.getContent();
+    //noinspection ForLoopReplaceableByForEach
     for (int i = 0, contentSize = content.size(); i < contentSize; i++) {
       Object child = content.get(i);
       if (child instanceof Element) {
@@ -77,18 +79,13 @@ public abstract class PathMacroMap {
                     : substitute(t.getText(), caseSensitive));
         }
       }
-      else if (child instanceof Comment) {
-        /*do not substitute in comments
-        Comment c = (Comment)child;
-        c.setText(substitute(c.getText(), caseSensitive, usedMacros));
-        */
-      }
-      else {
+      else if (!(child instanceof Comment)) {
         LOG.error("Wrong content: " + child.getClass());
       }
     }
 
     List attributes = e.getAttributes();
+    //noinspection ForLoopReplaceableByForEach
     for (int i = 0, attributesSize = attributes.size(); i < attributesSize; i++) {
       Object attribute1 = attributes.get(i);
       Attribute attribute = (Attribute)attribute1;
@@ -126,9 +123,7 @@ public abstract class PathMacroMap {
   }
 
   public static String quotePath(String path) {
-    path = path.replace(File.separatorChar, '/');
-    //path = StringUtil.replace(path, "&", "&amp;");
-    return path;
+    return FileUtil.toSystemIndependentName(path);
   }
 
   public int hashCode() {

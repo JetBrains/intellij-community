@@ -92,6 +92,15 @@ public class InplaceIntroduceConstantTest extends AbstractJavaInplaceIntroduceTe
       }
     });
   }
+  
+  public void testCorrectConstantPosition() throws Exception {
+     doTest(new Pass<AbstractInplaceIntroducer>() {
+       @Override
+       public void pass(AbstractInplaceIntroducer inplaceIntroduceFieldPopup) {
+         type("R");
+       }
+     });
+   }
 
   public void testEscapePosition() throws Exception {
     doTestEscape();

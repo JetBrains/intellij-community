@@ -18,7 +18,9 @@ package com.intellij.ui.tabs;
 
 import com.intellij.notification.impl.ui.StickyButton;
 import com.intellij.notification.impl.ui.StickyButtonUI;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.psi.search.scope.packageSet.CustomScopesProviderEx;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopeManager;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
@@ -34,8 +36,8 @@ import javax.swing.plaf.ButtonUI;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.Collection;
-import java.util.Map;
+import java.util.*;
+import java.util.List;
 
 /**
  * @author spleaner
@@ -68,12 +70,16 @@ public class FileColorConfigurationEditDialog extends DialogWrapper {
     final JPanel result = new JPanel();
     result.setLayout(new BoxLayout(result, BoxLayout.Y_AXIS));
 
-    final NamedScopesHolder[] scopeHolders = NamedScopeManager.getAllNamedScopeHolders(myManager.getProject());
+    final List<NamedScope> scopeList = new ArrayList<NamedScope>();
+    final Project project = myManager.getProject();
+    final NamedScopesHolder[] scopeHolders = NamedScopeManager.getAllNamedScopeHolders(project);
     for (final NamedScopesHolder scopeHolder : scopeHolders) {
       final NamedScope[] scopes = scopeHolder.getScopes();
-      for (final NamedScope scope : scopes) {
-        myScopeNames.put(scope.getName(), scope);
-      }
+      Collections.addAll(scopeList, scopes);
+    }
+    CustomScopesProviderEx.filterNoSettingsScopes(project, scopeList);
+    for (final NamedScope scope : scopeList) {
+      myScopeNames.put(scope.getName(), scope);
     }
 
     myScopeComboBox = new JComboBox(ArrayUtil.toStringArray(myScopeNames.keySet()));

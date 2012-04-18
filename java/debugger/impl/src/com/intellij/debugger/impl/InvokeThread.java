@@ -160,6 +160,9 @@ public abstract class InvokeThread<E extends PrioritizedTask> {
         }
         LOG.error(e);
       }
+      catch (Throwable e) {
+        LOG.error(e);
+      }
     }
 
     if (LOG.isDebugEnabled()) {

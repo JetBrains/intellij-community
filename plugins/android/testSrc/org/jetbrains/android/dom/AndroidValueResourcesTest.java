@@ -81,6 +81,10 @@ public class AndroidValueResourcesTest extends AndroidDomTest {
     toTestCompletion("attrs1.xml", "attrs1_after.xml");
   }
 
+  public void testResourceTypeCompletion() throws Throwable {
+    doTestCompletion();
+  }
+
   public void testStyles5() throws Throwable {
     toTestCompletion("styles5.xml", "styles5_after.xml");
   }

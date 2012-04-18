@@ -1,12 +1,11 @@
 package org.jetbrains.plugins.groovy.spock
 
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import com.intellij.codeInsight.lookup.LookupElement
-import com.intellij.util.containers.CollectionFactory
-import com.intellij.psi.PsiFile
-
-import com.intellij.psi.PsiVariable
 import com.intellij.psi.CommonClassNames
+import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiVariable
+import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.util.containers.CollectionFactory
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection
 import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GroovyUnresolvedAccessInspection
 
@@ -203,13 +202,13 @@ class FooSpec extends spock.lang.Specification {
   public void testVariable_resolved() {
     myFixture.enableInspections(GroovyAssignabilityCheckInspection, GroovyUnresolvedAccessInspection)
 
-    myFixture.configureByText("FooSpec.groovy", """
+    myFixture.configureByText("FooSpec.groovy", """\
 class FooSpec extends spock.lang.Specification {
   def "foo test"() {
-    String subscriber = <warning>Mock</warning>()
-    then: (0.._) * subscriber.concat(_)
-      subscriber.concat(<warning>asdasdasd</warning>)
-      subscriber.concat<warning>(23)</warning>
+    String subscriber = <warning descr="Can not resolve symbol 'Mock'">Mock</warning>()
+    then: (0.._) * subscriber.concat<weak_warning descr="Cannot infer argument types">(_)</weak_warning>
+      subscriber.concat<weak_warning descr="Cannot infer argument types">(<warning descr="Can not resolve symbol 'asdasdasd'">asdasdasd</warning>)</weak_warning>
+      subscriber.concat<warning descr="'concat' in 'java.lang.String' cannot be applied to '(java.lang.Integer)'">(23)</warning>
   }
 }
 """)

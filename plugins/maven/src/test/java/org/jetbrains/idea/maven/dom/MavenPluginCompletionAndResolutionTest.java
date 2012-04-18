@@ -344,6 +344,54 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
     checkHighlighting();
   }
 
+  public void testGoalsCompletionAndHighlightingInPluginManagement() throws Throwable {
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+
+                     "<build>" +
+                     "  <pluginManagement>" +
+                     "  <plugins>" +
+                     "    <plugin>" +
+                     "      <artifactId>maven-compiler-plugin</artifactId>" +
+                     "      <executions>" +
+                     "        <execution>" +
+                     "          <goals>" +
+                     "            <goal><caret></goal>" +
+                     "          </goals>" +
+                     "        </execution>" +
+                     "      </executions>" +
+                     "    </plugin>" +
+                     "  </plugins>" +
+                     "  </pluginManagement>" +
+                     "</build>");
+
+    assertCompletionVariants(myProjectPom, "compile", "testCompile");
+
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+
+                     "<build>" +
+                     "  <pluginManagement>" +
+                     "  <plugins>" +
+                     "    <plugin>" +
+                     "      <artifactId>maven-compiler-plugin</artifactId>" +
+                     "      <executions>" +
+                     "        <execution>" +
+                     "          <goals>" +
+                     "            <goal><error>xxx</error></goal>" +
+                     "          </goals>" +
+                     "        </execution>" +
+                     "      </executions>" +
+                     "    </plugin>" +
+                     "  </plugins>" +
+                     "  </pluginManagement>" +
+                     "</build>");
+
+    checkHighlighting();
+  }
+
   public void testGoalsResolution() throws Throwable {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +

@@ -57,7 +57,7 @@ class KeystoreStep extends ExportSignedPackageWizardStep {
   public KeystoreStep(ExportSignedPackageWizard wizard) {
     myWizard = wizard;
     myKeystoreLocationLabel.setLabelFor(myKeystoreLocationField);
-    final String defaultLocation = PropertiesComponent.getInstance().getValue(DEFAULT_KEYSTORE_LOCATION);
+    final String defaultLocation = PropertiesComponent.getInstance(wizard.getProject()).getValue(DEFAULT_KEYSTORE_LOCATION);
     final SaveFileListener newKeystoreLocationListener = new SaveFileListener(myContentPanel, myKeystoreLocationField,
                                                                               AndroidBundle.message(
                                                                                 "android.extract.package.choose.keystore.title")) {
@@ -129,6 +129,12 @@ class KeystoreStep extends ExportSignedPackageWizardStep {
 
   private void checkNewKeystoreOptions(File keystoreFile) throws CommitStepException {
     checkNewPassword(myKeystorePasswordField, myConfirmKeystorePasswordField);
+
+    if (keystoreFile.exists()) {
+      throw new CommitStepException(AndroidBundle.message(
+        "file.already.exists.error", keystoreFile.getPath()));
+    }
+
     File parentFile = keystoreFile.getParentFile();
     if (parentFile == null || !parentFile.isDirectory()) {
       String parentDir = keystoreFile.getParent();
@@ -184,7 +190,7 @@ class KeystoreStep extends ExportSignedPackageWizardStep {
       else {
         throw new CommitStepException(AndroidBundle.message("android.export.package.keystore.error.title"));
       }
-      PropertiesComponent.getInstance().setValue(DEFAULT_KEYSTORE_LOCATION, keyStoreLocation);
+      PropertiesComponent.getInstance(myWizard.getProject()).setValue(DEFAULT_KEYSTORE_LOCATION, keyStoreLocation);
     }
     myWizard.setKeystoreLocation(keyStoreLocation);
     myWizard.setKeystorePassword(myKeystorePasswordField.getPassword());
@@ -194,7 +200,7 @@ class KeystoreStep extends ExportSignedPackageWizardStep {
     public void actionPerformed(ActionEvent e) {
       String path = myKeystoreLocationField.getText().trim();
       if (path == null || path.length() == 0) {
-        String defaultLocation = PropertiesComponent.getInstance().getValue(DEFAULT_KEYSTORE_LOCATION);
+        String defaultLocation = PropertiesComponent.getInstance(myWizard.getProject()).getValue(DEFAULT_KEYSTORE_LOCATION);
         path = defaultLocation != null ? defaultLocation : "";
       }
       VirtualFile f = LocalFileSystem.getInstance().findFileByPath(path);

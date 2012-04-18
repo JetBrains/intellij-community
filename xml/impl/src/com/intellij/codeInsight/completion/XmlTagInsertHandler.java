@@ -31,6 +31,7 @@ import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.codeInspection.htmlInspections.RequiredAttributesInspection;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
@@ -140,7 +141,7 @@ public class XmlTagInsertHandler implements InsertHandler<LookupElement> {
     template.setToReformat(!htmlCode);
 
     StringBuilder indirectRequiredAttrs = addRequiredAttributes(descriptor, tag, template, containingFile);
-    final boolean chooseAttributeName = addTail(completionChar, descriptor, tag, template, indirectRequiredAttrs);
+    final boolean chooseAttributeName = addTail(completionChar, descriptor, htmlCode, tag, template, indirectRequiredAttrs);
 
     templateManager.startTemplate(editor, template, new TemplateEditingAdapter() {
       private RangeMarker myAttrValueMarker;
@@ -170,6 +171,12 @@ public class XmlTagInsertHandler implements InsertHandler<LookupElement> {
         if (myAttrValueMarker == null) {
           return;
         }
+
+        final UndoManager manager = UndoManager.getInstance(project);
+        if (manager.isUndoInProgress() || manager.isRedoInProgress()) {
+          return;
+        }
+
         if (chooseAttributeName) {
           final int startOffset = myAttrValueMarker.getStartOffset();
           final int endOffset = myAttrValueMarker.getEndOffset();
@@ -239,6 +246,7 @@ public class XmlTagInsertHandler implements InsertHandler<LookupElement> {
 
   protected static boolean addTail(char completionChar,
                                    XmlElementDescriptor descriptor,
+                                   boolean isHtmlCode,
                                    XmlTag tag,
                                    Template template,
                                    StringBuilder indirectRequiredAttrs) {
@@ -283,7 +291,7 @@ public class XmlTagInsertHandler implements InsertHandler<LookupElement> {
       }
     }
     else if (completionChar == Lookup.AUTO_INSERT_SELECT_CHAR || completionChar == Lookup.NORMAL_SELECT_CHAR || completionChar == Lookup.REPLACE_SELECT_CHAR) {
-      if (WebEditorOptions.getInstance().isAutomaticallyInsertClosingTag() && HtmlUtil.isSingleHtmlTag(tag.getName())) {
+      if (WebEditorOptions.getInstance().isAutomaticallyInsertClosingTag() && isHtmlCode && HtmlUtil.isSingleHtmlTag(tag.getName())) {
         template.addTextSegment(tag instanceof HtmlTag ? ">" : "/>");
       }
       else {

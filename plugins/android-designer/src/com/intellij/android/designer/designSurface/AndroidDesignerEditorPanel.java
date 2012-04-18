@@ -17,173 +17,466 @@ package com.intellij.android.designer.designSurface;
 
 import com.android.ide.common.rendering.api.RenderSession;
 import com.android.ide.common.rendering.api.Result;
-import com.android.ide.common.rendering.api.ViewInfo;
 import com.android.ide.common.resources.configuration.*;
-import com.android.resources.NightMode;
-import com.android.resources.UiMode;
 import com.android.sdklib.IAndroidTarget;
+import com.intellij.android.designer.actions.ProfileAction;
 import com.intellij.android.designer.componentTree.AndroidTreeDecorator;
+import com.intellij.android.designer.model.ModelParser;
+import com.intellij.android.designer.model.PropertyParser;
 import com.intellij.android.designer.model.RadViewComponent;
+import com.intellij.android.designer.model.viewAnimator.RadViewAnimatorLayout;
+import com.intellij.android.designer.profile.ProfileManager;
+import com.intellij.designer.DesignerToolWindowManager;
 import com.intellij.designer.componentTree.TreeComponentDecorator;
-import com.intellij.designer.designSurface.ComponentDecorator;
-import com.intellij.designer.designSurface.DecorationLayer;
-import com.intellij.designer.designSurface.DesignerEditorPanel;
-import com.intellij.designer.designSurface.selection.DirectionResizePoint;
+import com.intellij.designer.designSurface.*;
 import com.intellij.designer.designSurface.selection.NonResizeSelectionDecorator;
-import com.intellij.designer.designSurface.selection.ResizeSelectionDecorator;
+import com.intellij.designer.designSurface.tools.ComponentCreationFactory;
+import com.intellij.designer.designSurface.tools.ComponentPasteFactory;
 import com.intellij.designer.model.RadComponent;
-import com.intellij.designer.utils.Position;
+import com.intellij.designer.palette.Item;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.xml.XmlFile;
+import com.intellij.util.Alarm;
+import com.intellij.util.ThrowableRunnable;
 import org.jetbrains.android.facet.AndroidFacet;
+import org.jetbrains.android.maven.AndroidMavenUtil;
 import org.jetbrains.android.sdk.AndroidPlatform;
+import org.jetbrains.android.sdk.AndroidSdkUtils;
 import org.jetbrains.android.uipreview.*;
+import org.jetbrains.android.util.AndroidBundle;
+import org.jetbrains.android.util.AndroidSdkNotConfiguredException;
 import org.jetbrains.annotations.NotNull;
-import org.xml.sax.Attributes;
-import org.xml.sax.SAXException;
-import org.xml.sax.helpers.DefaultHandler;
 
 import javax.swing.*;
-import javax.xml.parsers.SAXParser;
-import javax.xml.parsers.SAXParserFactory;
 import java.awt.*;
-import java.awt.image.BufferedImage;
-import java.io.InputStream;
+import java.lang.reflect.Method;
 import java.util.List;
 
 /**
  * @author Alexander Lobas
  */
 public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
-  private static final Object RENDERING_LOCK = new Object();
   private final TreeComponentDecorator myTreeDecorator = new AndroidTreeDecorator();
-  private RenderSession mySession;
+  private final XmlFile myXmlFile;
+  private final ExternalPSIChangeListener myPSIChangeListener;
+  private final ProfileAction myProfileAction;
+  private final Alarm mySessionAlarm = new Alarm();
+  private volatile RenderSession mySession;
+  private boolean myParseTime;
+  private int myProfileLastVersion;
 
   public AndroidDesignerEditorPanel(@NotNull Module module, @NotNull VirtualFile file) {
     super(module, file);
 
-    // TODO: (profile|device|target|...|theme) panel
-
-    // TODO: use platform DOM
-
-    // (temp code)
-
-    try {
-      AndroidPlatform platform = AndroidPlatform.getInstance(module);
-      IAndroidTarget target = platform.getTarget();
-      AndroidFacet facet = AndroidFacet.getInstance(module);
-
-      LayoutDeviceManager layoutDeviceManager = new LayoutDeviceManager();
-      layoutDeviceManager.loadDevices(platform.getSdk());
-      LayoutDevice layoutDevice = layoutDeviceManager.getCombinedList().get(0);
-
-      LayoutDeviceConfiguration deviceConfiguration = layoutDevice.getConfigurations().get(0);
-
-      FolderConfiguration config = new FolderConfiguration();
-      config.set(deviceConfiguration.getConfiguration());
-      config.setUiModeQualifier(new UiModeQualifier(UiMode.NORMAL));
-      config.setNightModeQualifier(new NightModeQualifier(NightMode.NIGHT));
-      config.setLanguageQualifier(new LanguageQualifier());
-      config.setRegionQualifier(new RegionQualifier());
-
-      float xdpi = deviceConfiguration.getDevice().getXDpi();
-      float ydpi = deviceConfiguration.getDevice().getYDpi();
-
-      ThemeData theme = new ThemeData("Theme", false);
-
-      String layoutXmlText = new String(file.contentsToByteArray());
-
-      synchronized (RENDERING_LOCK) {
-        mySession = RenderUtil.createRenderSession(module.getProject(), layoutXmlText, file, target, facet, config, xdpi, ydpi, theme);
+    myXmlFile = (XmlFile)ApplicationManager.getApplication().runReadAction(new Computable<PsiFile>() {
+      @Override
+      public PsiFile compute() {
+        return PsiManager.getInstance(getProject()).findFile(myFile);
       }
+    });
+    myPSIChangeListener = new ExternalPSIChangeListener(this, myXmlFile, 100, new Runnable() {
+      @Override
+      public void run() {
+        reparseFile();
+      }
+    });
 
-      InputStream stream = file.getInputStream();
-      SAXParser parser = SAXParserFactory.newInstance().newSAXParser();
-      parser.parse(stream, new DefaultHandler() {
-        RadViewComponent myComponent;
+    showProgress("Load configuration");
+    myProfileAction = new ProfileAction(this, new Runnable() {
+      @Override
+      public void run() {
+        myActionPanel.update();
+        if (myRootComponent == null) {
+          myPSIChangeListener.activate();
+          myPSIChangeListener.addRequest();
+        }
+        else if (myProfileLastVersion != myProfileAction.getVersion() ||
+                 !ProfileManager.isAndroidSdk(myProfileAction.getCurrentSdk())) {
+          myPSIChangeListener.addRequest(new Runnable() {
+            @Override
+            public void run() {
+              updateRenderer(true);
+            }
+          });
+        }
+      }
+    });
+  }
 
-        @Override
-        public void startElement(String uri, String localName, String qName, Attributes attributes) throws SAXException {
-          myComponent = new RadViewComponent(myComponent, qName);
-          if (myRootComponent == null) {
-            myRootComponent = myComponent;
+  @Override
+  public void updateTreeArea(EditableArea area) {
+    area.addSelectionListener(new ComponentSelectionListener() {
+      @Override
+      public void selectionChanged(EditableArea area) {
+        List<RadComponent> selection = area.getSelection();
+        if (selection.size() == 1) {
+          final RadComponent component = selection.get(0);
+          final RadComponent parent = component.getParent();
+          if (parent instanceof RadViewComponent && parent.getLayout() instanceof RadViewAnimatorLayout) {
+            ApplicationManager.getApplication().invokeLater(
+              new Runnable() {
+                @Override
+                public void run() {
+                  try {
+                    int index = parent.getChildren().indexOf(component);
+                    Object parentView =
+                      ((RadViewComponent)parent).getViewInfo().getViewObject();
+                    Method method =
+                      parentView.getClass().getMethod("setDisplayedChild", int.class);
+                    method.invoke(parentView, index);
+
+                    Result result = mySession.render();
+
+                    // XXX
+
+                    if (!result.isSuccess()) {
+                      System.out.println(
+                        "No re render session: " +
+                        result.getErrorMessage() +
+                        " : " +
+                        result.getStatus() +
+                        " : " +
+                        result.getData() +
+                        " : " +
+                        result.getException());
+                    }
+                    else {
+                      RadViewComponent rootComponent = (RadViewComponent)myRootComponent;
+                      RootView rootView = (RootView)rootComponent.getNativeComponent();
+                      rootView.setImage(mySession.getImage());
+                      ModelParser.updateRootComponent(rootComponent, mySession, rootView);
+
+                      myLayeredPane.revalidate();
+
+                      DesignerToolWindowManager.getInstance(getProject()).refresh(true);
+                    }
+                  }
+                  catch (Throwable e) {
+                    showError("Render error", e);
+                  }
+                }
+              }, new Condition() {
+                @Override
+                public boolean value(Object o) {
+                  return mySession == null;
+                }
+              }
+            );
           }
         }
+      }
+    });
+  }
 
+  private void reparseFile() {
+    try {
+      storeState();
+      showDesignerCard();
+
+      parseFile(new Runnable() {
         @Override
-        public void endElement(String uri, String localName, String qName) throws SAXException {
-          if (myComponent != null) {
-            myComponent = (RadViewComponent)myComponent.getParent();
-          }
+        public void run() {
+          showDesignerCard();
+          myLayeredPane.revalidate();
+          restoreState();
         }
       });
-      stream.close();
-
-      Result result = mySession.getResult();
-      if (!result.isSuccess()) {
-        Throwable exception = result.getException();
-        if (exception != null) {
-          throw exception;
-        }
-        else {
-          throw new Exception("No session result");
-        }
-      }
-
-      RootView rootView = new RootView(mySession.getImage(), 30, 20);
-      updateRootComponent(mySession.getRootViews(), rootView);
-
-      JPanel rootPanel = new JPanel(null);
-      rootPanel.setBackground(Color.WHITE);
-      rootPanel.add(rootView);
-
-      myLayeredPane.add(rootPanel, LAYER_COMPONENT);
-
-      showDesignerCard();
     }
-    catch (Throwable e) {
-      showError("Parse error: ", e);
+    catch (RuntimeException e) {
+      myPSIChangeListener.clear();
+      showError("Parsing error", e.getCause());
     }
   }
 
-  private void updateRootComponent(List<ViewInfo> views, JComponent nativeComponent) {
-    RadViewComponent rootComponent = (RadViewComponent)myRootComponent;
+  private void parseFile(final Runnable runnable) {
+    myParseTime = true;
 
-    int size = views.size();
-    if (size == 1) {
-      RadViewComponent newRootComponent = new RadViewComponent(null, "Device Screen");
-      newRootComponent.getChildren().add(rootComponent);
-      rootComponent.setParent(newRootComponent);
+    final ModelParser parser = new ModelParser(getProject(), myXmlFile);
 
-      updateComponent(rootComponent, views.get(0), nativeComponent, 0, 0);
+    createRenderer(parser.getLayoutXmlText(), new ThrowableRunnable<Throwable>() {
+      @Override
+      public void run() throws Throwable {
+        RootView rootView = new RootView(mySession.getImage(), 30, 20);
+        parser.updateRootComponent(mySession, rootView);
+        RadViewComponent newRootComponent = parser.getRootComponent();
 
-      myRootComponent = rootComponent = newRootComponent;
+        newRootComponent.setClientProperty(ModelParser.XML_FILE_KEY, myXmlFile);
+
+        PropertyParser propertyParser = new PropertyParser(myModule, myProfileAction.getProfileManager().getSelectedTarget());
+        newRootComponent.setClientProperty(PropertyParser.KEY, propertyParser);
+        propertyParser.loadRecursive(newRootComponent);
+
+        JPanel rootPanel = new JPanel(null);
+        rootPanel.setBackground(Color.WHITE);
+        rootPanel.add(rootView);
+
+        removeNativeRoot();
+        myRootComponent = newRootComponent;
+        myLayeredPane.add(rootPanel, LAYER_COMPONENT);
+
+        myParseTime = false;
+
+        runnable.run();
+      }
+    });
+  }
+
+  private void createRenderer(final String layoutXmlText, final ThrowableRunnable<Throwable> runnable) {
+    disposeRenderer();
+
+    mySessionAlarm.addRequest(new Runnable() {
+      @Override
+      public void run() {
+        if (mySession == null) {
+          showProgress("Create RenderLib");
+        }
+      }
+    }, 500);
+
+    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+      @Override
+      public void run() {
+        try {
+          long time = System.currentTimeMillis();
+
+          myProfileLastVersion = myProfileAction.getVersion();
+
+          AndroidPlatform platform = AndroidPlatform.getInstance(myModule);
+          if (platform == null) {
+            throw new AndroidSdkNotConfiguredException();
+          }
+
+          AndroidFacet facet = AndroidFacet.getInstance(myModule);
+          ProfileManager manager = myProfileAction.getProfileManager();
+
+          LayoutDeviceConfiguration deviceConfiguration = manager.getSelectedDeviceConfiguration();
+          if (deviceConfiguration == null) {
+            throw new RenderingException("Device is not specified");
+          }
+
+          FolderConfiguration config = new FolderConfiguration();
+          config.set(deviceConfiguration.getConfiguration());
+          config.setUiModeQualifier(new UiModeQualifier(manager.getSelectedDockMode()));
+          config.setNightModeQualifier(new NightModeQualifier(manager.getSelectedNightMode()));
+
+          LocaleData locale = manager.getSelectedLocale();
+          if (locale == null) {
+            throw new RenderingException("Locale is not specified");
+          }
+          config.setLanguageQualifier(new LanguageQualifier(locale.getLanguage()));
+          config.setRegionQualifier(new RegionQualifier(locale.getRegion()));
+
+          float xdpi = deviceConfiguration.getDevice().getXDpi();
+          float ydpi = deviceConfiguration.getDevice().getYDpi();
+
+          IAndroidTarget target = manager.getSelectedTarget();
+          ThemeData theme = manager.getSelectedTheme();
+
+          if (target == null || theme == null) {
+            throw new RenderingException();
+          }
+
+          RenderingResult result =
+            RenderUtil.renderLayout(myModule, layoutXmlText, myFile, null, target, facet, config, xdpi, ydpi, theme, 10000, true);
+
+          if (ApplicationManagerEx.getApplicationEx().isInternal()) {
+            System.out.println("Render time: " + (System.currentTimeMillis() - time));
+          }
+
+          if (result == null) {
+            throw new RenderingException();
+          }
+
+          mySession = result.getSession();
+          mySessionAlarm.cancelAllRequests();
+
+          ApplicationManager.getApplication().invokeLater(new Runnable() {
+            @Override
+            public void run() {
+              try {
+                hideProgress();
+                runnable.run();
+              }
+              catch (Throwable e) {
+                myPSIChangeListener.clear();
+                showError("Parsing error", e);
+                myParseTime = false;
+              }
+            }
+          });
+        }
+        catch (final Throwable e) {
+          myPSIChangeListener.clear();
+          mySessionAlarm.cancelAllRequests();
+
+          ApplicationManager.getApplication().invokeLater(new Runnable() {
+            @Override
+            public void run() {
+              myPSIChangeListener.clear();
+              showError("Render error", e);
+              myParseTime = false;
+            }
+          });
+        }
+      }
+    });
+  }
+
+  private void disposeRenderer() {
+    if (mySession != null) {
+      mySession.dispose();
+      mySession = null;
+    }
+  }
+
+  private void updateRenderer(final boolean updateProperties) {
+    myParseTime = true;
+    final String layoutXmlText = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
+      @Override
+      public String compute() {
+        if (ModelParser.checkTag(myXmlFile.getRootTag())) {
+          return myXmlFile.getText();
+        }
+        return ModelParser.NO_ROOT_CONTENT;
+      }
+    });
+    createRenderer(layoutXmlText, new ThrowableRunnable<Throwable>() {
+      @Override
+      public void run() throws Throwable {
+        RadViewComponent rootComponent = (RadViewComponent)myRootComponent;
+        RootView rootView = (RootView)rootComponent.getNativeComponent();
+        rootView.setImage(mySession.getImage());
+        ModelParser.updateRootComponent(rootComponent, mySession, rootView);
+
+        myParseTime = false;
+
+        myLayeredPane.revalidate();
+        myHorizontalCaption.update();
+        myVerticalCaption.update();
+
+        DesignerToolWindowManager.getInstance(getProject()).refresh(updateProperties);
+      }
+    });
+  }
+
+  private void removeNativeRoot() {
+    if (myRootComponent != null) {
+      myLayeredPane.remove(((RadViewComponent)myRootComponent).getNativeComponent().getParent());
+    }
+  }
+
+  @Override
+  protected void configureError(@NotNull ErrorInfo info) {
+    if (info.myThrowable instanceof AndroidSdkNotConfiguredException) {
+      info.myShowLog = false;
+      info.myShowStack = false;
+
+      if (AndroidMavenUtil.isMavenizedModule(myModule)) {
+        info.myMessages.add(new FixableMessageInfo(true, AndroidBundle.message("android.maven.cannot.parse.android.sdk.error",
+                                                                               myModule.getName()), "", "", null, null));
+      }
+      else {
+        info.myMessages.add(new FixableMessageInfo(true, "Please ", "configure", " Android SDK", new Runnable() {
+          @Override
+          public void run() {
+            AndroidSdkUtils.openModuleDependenciesConfigurable(myModule);
+          }
+        }, null));
+      }
     }
     else {
-      List<RadComponent> children = rootComponent.getChildren();
-      for (int i = 0; i < size; i++) {
-        updateComponent((RadViewComponent)children.get(i), views.get(i), nativeComponent, 0, 0);
+      List<FixableIssueMessage> warnMessages = null;
+      boolean renderError = info.myThrowable instanceof RenderingException;
+
+      if (renderError) {
+        RenderingException exception = (RenderingException)info.myThrowable;
+        warnMessages = exception.getWarnMessages();
+
+        if (StringUtil.isEmpty(exception.getPresentableMessage())) {
+          Throwable[] causes = exception.getCauses();
+          if (causes.length == 0) {
+            info.myThrowable = new RenderingException(AndroidBundle.message("android.layout.preview.default.error.message"));
+          }
+          else if (causes.length == 1) {
+            info.myThrowable = causes[0];
+          }
+          else {
+            info.myThrowable = new RenderingException(AndroidBundle.message("android.layout.preview.default.error.message"), causes);
+          }
+        }
+      }
+
+      if (warnMessages == null) {
+        info.myShowMessage = myParseTime || renderError;
+        info.myShowLog = !renderError;
+      }
+      else {
+        info.myShowLog = false;
+        info.myShowStack = true;
+
+        for (FixableIssueMessage message : warnMessages) {
+          info.myMessages.add(
+            new FixableMessageInfo(false, message.myBeforeLinkText, message.myLinkText, message.myAfterLinkText, message.myQuickFix,
+                                   message.myAdditionalFixes));
+        }
       }
     }
 
-    rootComponent.setNativeComponent(nativeComponent);
-    rootComponent.setBounds(0, 0, nativeComponent.getWidth(), nativeComponent.getHeight());
+    StringBuilder builder = new StringBuilder("SDK: ");
+
+    try {
+      AndroidPlatform platform = AndroidPlatform.getInstance(myModule);
+      IAndroidTarget target = platform.getTarget();
+      builder.append(target.getFullName()).append(" - ").append(target.getVersion());
+    }
+    catch (Throwable e) {
+      builder.append("<unknown>");
+    }
+
+    info.myMessage = builder.toString();
   }
 
-  private static void updateComponent(RadViewComponent component, ViewInfo view, JComponent nativeComponent, int parentX, int parentY) {
-    component.setNativeComponent(nativeComponent);
+  @Override
+  protected void showErrorPage(ErrorInfo info) {
+    myPSIChangeListener.clear();
+    mySessionAlarm.cancelAllRequests();
+    removeNativeRoot();
+    super.showErrorPage(info);
+  }
 
-    int left = parentX + view.getLeft();
-    int top = parentY + view.getTop();
-    component.setBounds(left, top, view.getRight() - view.getLeft(), view.getBottom() - view.getTop());
+  public ProfileAction getProfileAction() {
+    return myProfileAction;
+  }
 
-    List<ViewInfo> views = view.getChildren();
-    List<RadComponent> children = component.getChildren();
-    int size = views.size();
+  @Override
+  public void activate() {
+    myProfileAction.externalUpdate();
+    myPSIChangeListener.activate();
+  }
 
-    for (int i = 0; i < size; i++) {
-      updateComponent((RadViewComponent)children.get(i), views.get(i), nativeComponent, left, top);
-    }
+  @Override
+  public void deactivate() {
+    myPSIChangeListener.deactivate();
+  }
+
+  @Override
+  public void dispose() {
+    myPSIChangeListener.stop();
+    super.dispose();
+    disposeRenderer();
+  }
+
+  @Override
+  public String getPlatformTarget() {
+    return "android";
   }
 
   @Override
@@ -191,25 +484,66 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
     return myTreeDecorator;
   }
 
+  private static final ComponentDecorator NON_RESIZE_DECORATOR = new NonResizeSelectionDecorator(Color.RED, 2);
+
   @Override
   protected ComponentDecorator getRootSelectionDecorator() {
-    return new ResizeSelectionDecorator(Color.RED, 1, new DirectionResizePoint(Position.EAST),
-                                        new DirectionResizePoint(Position.SOUTH_EAST),
-                                        new DirectionResizePoint(Position.SOUTH));
+    return NON_RESIZE_DECORATOR;
   }
 
-  private static class RootView extends JComponent {
-    private final BufferedImage myImage;
+  @Override
+  protected EditOperation processRootOperation(OperationContext context) {
+    return null;
+  }
 
-    public RootView(BufferedImage image, int x, int y) {
-      myImage = image;
-      setBounds(x, y, image.getWidth(), image.getHeight());
+  @Override
+  @NotNull
+  protected ComponentCreationFactory createCreationFactory(final Item paletteItem) {
+    return new ComponentCreationFactory() {
+      @NotNull
+      @Override
+      public RadComponent create() throws Exception {
+        return ModelParser.createComponent(null, paletteItem.getMetaModel());
+      }
+    };
+  }
+
+  @Override
+  public ComponentPasteFactory createPasteFactory(String xmlComponents) {
+    return new AndroidPasteFactory(getProject(), xmlComponents);
+  }
+
+  @Override
+  protected boolean execute(ThrowableRunnable<Exception> operation, boolean updateProperties) {
+    try {
+      myPSIChangeListener.stop();
+      operation.run();
+      updateRenderer(updateProperties);
+      return true;
     }
+    catch (Throwable e) {
+      showError("Execute command", e);
+      return false;
+    }
+    finally {
+      myPSIChangeListener.start();
+    }
+  }
 
-    @Override
-    public void paintComponent(Graphics g) {
-      super.paintComponent(g);
-      g.drawImage(myImage, 0, 0, null);
+  @Override
+  protected void execute(List<EditOperation> operations) {
+    try {
+      myPSIChangeListener.stop();
+      for (EditOperation operation : operations) {
+        operation.execute();
+      }
+      updateRenderer(true);
+    }
+    catch (Throwable e) {
+      showError("Execute command", e);
+    }
+    finally {
+      myPSIChangeListener.start();
     }
   }
 }

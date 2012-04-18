@@ -1,6 +1,7 @@
 package org.jetbrains.ether.dependencyView;
 
 import com.intellij.openapi.util.Pair;
+import org.jetbrains.asm4.Opcodes;
 
 import java.util.*;
 
@@ -12,6 +13,16 @@ import java.util.*;
  * To change this template use File | Settings | File Templates.
  */
 abstract class Difference {
+  public static boolean isPackageLocal(final int access) {
+    return (access & (Opcodes.ACC_PRIVATE | Opcodes.ACC_PROTECTED | Opcodes.ACC_PUBLIC)) == 0;
+  }
+
+  public static boolean weakerAccess(final int me, final int then) {
+    return ((me & Opcodes.ACC_PRIVATE) > 0 && (then & Opcodes.ACC_PRIVATE) == 0) ||
+           ((me & Opcodes.ACC_PROTECTED) > 0 && (then & Opcodes.ACC_PUBLIC) > 0) ||
+           (isPackageLocal(me) && (then & Opcodes.ACC_PROTECTED) > 0);
+  }
+
   public static final int NONE = 0;
   public static final int ACCESS = 1;
   public static final int TYPE = 2;
@@ -21,27 +32,28 @@ abstract class Difference {
 
   public interface Specifier<T> {
     Collection<T> added();
+
     Collection<T> removed();
+
     Collection<Pair<T, Difference>> changed();
+
     boolean unchanged();
   }
 
   public static <T> Specifier<T> make(final Set<T> past, final Set<T> now) {
     if (past == null) {
-      final Collection<T> removed = new HashSet<T>();
-      final Collection<Pair<T, Difference>> changed = new HashSet<Pair<T, Difference>>();
-
+      final Collection<T> _now = Collections.unmodifiableCollection(now);
       return new Specifier<T>() {
         public Collection<T> added() {
-          return now;
+          return _now;
         }
 
         public Collection<T> removed() {
-          return removed;
+          return Collections.emptyList();
         }
 
         public Collection<Pair<T, Difference>> changed() {
-          return changed;
+          return Collections.emptyList();
         }
 
         public boolean unchanged() {
@@ -107,9 +119,13 @@ abstract class Difference {
 
   public abstract boolean no();
 
+  public abstract boolean weakedAccess();
+
   public abstract int addedModifiers();
 
   public abstract int removedModifiers();
 
   public abstract boolean packageLocalOn();
+
+  public abstract boolean hadValue();
 }

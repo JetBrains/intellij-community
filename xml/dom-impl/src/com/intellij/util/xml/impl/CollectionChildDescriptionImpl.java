@@ -17,6 +17,7 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Type;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -27,7 +28,11 @@ public class CollectionChildDescriptionImpl extends DomChildDescriptionImpl impl
   private final NotNullFunction<DomInvocationHandler, List<XmlTag>> myTagsGetter = new NotNullFunction<DomInvocationHandler, List<XmlTag>>() {
     @NotNull
     public List<XmlTag> fun(final DomInvocationHandler handler) {
-      return DomImplUtil.findSubTags(handler.getXmlTag(), handler.createEvaluatedXmlName(getXmlName()), handler.getFile());
+      XmlTag tag = handler.getXmlTag();
+      if (tag == null) {
+        return Collections.emptyList();
+      }
+      return DomImplUtil.findSubTags(tag, handler.createEvaluatedXmlName(getXmlName()), handler.getFile());
     }
   };
 

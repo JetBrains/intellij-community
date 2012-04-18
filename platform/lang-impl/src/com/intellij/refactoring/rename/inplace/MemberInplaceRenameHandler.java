@@ -16,15 +16,19 @@
 package com.intellij.refactoring.rename.inplace;
 
 import com.intellij.codeInsight.lookup.LookupManager;
+import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
+import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.lang.LanguageRefactoringSupport;
 import com.intellij.lang.refactoring.RefactoringSupportProvider;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.command.impl.StartMarkAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.Pass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiNameIdentifierOwner;
 import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.rename.RenamePsiElementProcessor;
 import org.jetbrains.annotations.NotNull;
@@ -52,17 +56,29 @@ public class MemberInplaceRenameHandler extends VariableInplaceRenameHandler {
     if (elementToRename instanceof PsiNameIdentifierOwner) {
       final RenamePsiElementProcessor processor = RenamePsiElementProcessor.forElement(elementToRename);
       if (processor.isInplaceRenameSupported()) {
-        processor.substituteElementToRename(elementToRename, editor, new Pass<PsiElement>() {
-          @Override
-          public void pass(PsiElement element) {
-            final MemberInplaceRenamer renamer = new MemberInplaceRenamer((PsiNameIdentifierOwner)elementToRename, element, editor);
-            boolean startedRename = renamer.performInplaceRename();
-            if (!startedRename) {
-              performDialogRename(elementToRename, editor, dataContext);
+        final StartMarkAction startMarkAction = StartMarkAction.canStart(elementToRename.getProject());
+        if (startMarkAction == null) {
+          processor.substituteElementToRename(elementToRename, editor, new Pass<PsiElement>() {
+            @Override
+            public void pass(PsiElement element) {
+              final MemberInplaceRenamer renamer = new MemberInplaceRenamer((PsiNameIdentifierOwner)elementToRename, element, editor);
+              boolean startedRename = renamer.performInplaceRename();
+              if (!startedRename) {
+                performDialogRename(elementToRename, editor, dataContext);
+              }
+            }
+          });
+          return null;
+        }
+        else {
+          final InplaceRefactoring inplaceRefactoring = editor.getUserData(InplaceRefactoring.INPLACE_RENAMER);
+          if (inplaceRefactoring != null && inplaceRefactoring.getClass() == MemberInplaceRenamer.class) {
+            final TemplateState templateState = TemplateManagerImpl.getTemplateState(InjectedLanguageUtil.getTopLevelEditor(editor));
+            if (templateState != null) {
+              templateState.gotoEnd(true);
             }
           }
-        });
-        return null;
+        }
       }
     }
     performDialogRename(elementToRename, editor, dataContext);

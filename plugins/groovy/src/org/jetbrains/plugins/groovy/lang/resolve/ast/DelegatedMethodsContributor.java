@@ -20,12 +20,10 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightMethodBuilder;
 import com.intellij.psi.impl.light.LightMirrorMethod;
-import com.intellij.psi.util.CachedValue;
-import com.intellij.psi.util.MethodSignature;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.psi.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.hash.HashSet;
+import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
@@ -55,7 +53,7 @@ public class DelegatedMethodsContributor extends AstTransformContributor {
 
     if (!checkForDelegate(clazz)) return;
     
-    Map<MethodSignature, PsiMethod> signatures = new HashMap<MethodSignature, PsiMethod>();
+    Map<MethodSignature, PsiMethod> signatures = new THashMap<MethodSignature, PsiMethod>(MethodSignatureUtil.METHOD_PARAMETERS_ERASURE_EQUALITY);
     initializeSignatures(clazz, PsiSubstitutor.EMPTY, signatures, processed);
 
     List<PsiMethod> methods = new ArrayList<PsiMethod>();

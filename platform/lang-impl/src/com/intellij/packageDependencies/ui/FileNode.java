@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,7 +44,10 @@ public class FileNode extends PackageDependenciesNode implements Comparable<File
 
   public void fillFiles(Set<PsiFile> set, boolean recursively) {
     super.fillFiles(set, recursively);
-    set.add(getFile());
+    final PsiFile file = getFile();
+    if (file != null && file.isValid()) {
+      set.add(file);
+    }
   }
 
   public boolean hasUnmarked() {
@@ -123,7 +126,7 @@ public class FileNode extends PackageDependenciesNode implements Comparable<File
 
   @Nullable
   private PsiFile getFile() {
-    return myVFile.isValid() ? PsiManager.getInstance(myProject).findFile(myVFile) : null;
+    return myVFile.isValid() && !myProject.isDisposed() ? PsiManager.getInstance(myProject).findFile(myVFile) : null;
   }
 
   @Override

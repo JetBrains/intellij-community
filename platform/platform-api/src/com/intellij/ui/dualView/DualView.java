@@ -337,7 +337,7 @@ public class DualView extends JPanel {
   public void changeColumnSet(DualViewColumnInfo[] columns) {
     myTreeView.setTableModel(new ListTreeTableModelOnColumns((TreeNode)myTreeView.getTreeViewModel().getRoot(),
                                                              createTreeColumns(columns)));
-    myFlatView.setModel(new ListTableModel(columns));
+    myFlatView.setModelAndUpdateColumns(new ListTableModel(columns));
     if (myTreeCellRenderer != null) myTreeView.setTreeCellRenderer(myTreeCellRenderer);
     setRootVisible(myRootVisible);
 

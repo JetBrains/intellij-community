@@ -115,7 +115,7 @@ public abstract class ChangeSignatureTestCase extends LightCodeInsightFixtureTes
 
         assert (oldIndex < 0 && defValue != null) || oldIndex >= 0;
         assert name != null;
-        info = new GrParameterInfo(name, defValue, defInitializer, type, oldIndex);
+        info = new GrParameterInfo(name, defValue, defInitializer, type, oldIndex, sim.myFeelLucky);
         result[i] = info;
       }
       return result;
@@ -148,6 +148,7 @@ public abstract class ChangeSignatureTestCase extends LightCodeInsightFixtureTes
     String myDefaultValue;
     String myDefaultInitializer;
     private String myType;
+    boolean myFeelLucky;
 
     SimpleInfo(int oldIndex) {
       this(null, oldIndex);
@@ -158,11 +159,16 @@ public abstract class ChangeSignatureTestCase extends LightCodeInsightFixtureTes
     }
 
     SimpleInfo(String newName, int oldIndex, String defaultValue, @Nullable String defaultInitializer, String type) {
+      this(newName, oldIndex, defaultValue, defaultInitializer, type, false);
+    }
+
+    SimpleInfo(String newName, int oldIndex, String defaultValue, @Nullable String defaultInitializer, String type, boolean feelLucky) {
       myOldIndex = oldIndex;
       myNewName = newName;
       myDefaultValue = defaultValue;
       myDefaultInitializer = defaultInitializer;
       myType = type;
+      myFeelLucky = feelLucky;
     }
 
     SimpleInfo(String newName, int oldIndex, String defaultValue, String defaultInitializer, PsiType type) {

@@ -71,4 +71,16 @@ public class CommonTest extends IncrementalTestCase {
   public void testClass2Interface3() throws Exception {
     doTest();
   }
+
+  public void testDeleteClass3() throws Exception {
+      doTest();
+  }
+
+  public void testDeleteClass4() throws Exception {
+      doTest();
+  }
+
+  public void testAddClass() throws Exception {
+      doTest();
+  }
 }

@@ -15,9 +15,9 @@
  */
 package org.jetbrains.plugins.groovy.refactoring.rename;
 
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiReference;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.*;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.refactoring.rename.RenameJavaMethodProcessor;
@@ -26,6 +26,8 @@ import com.intellij.refactoring.rename.UnresolvableCollisionUsageInfo;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
@@ -73,7 +75,9 @@ public class RenameAliasImportedMethodProcessor extends RenameJavaMethodProcesso
         methodAccess.add(usage);
       }
     }
+
     super.renameElement(psiElement, newName, methodAccess.toArray(new UsageInfo[methodAccess.size()]), listener);
+
     final String propertyName;
     if (isGetter) {
       propertyName = getPropertyNameByGetterName(newName, true);
@@ -128,7 +132,7 @@ public class RenameAliasImportedMethodProcessor extends RenameJavaMethodProcesso
     while (iterator.hasNext()) {
       final UsageInfo info = iterator.next();
       final PsiElement ref = info.getElement();
-      if (ref == null) continue;
+      if (ref instanceof GrReferenceExpression || ref == null) continue;
       if (!RenameUtil.isValidName(element.getProject(), ref, newName)) {
         iterator.add(new UnresolvableCollisionUsageInfo(ref, element) {
           @Override
@@ -138,5 +142,27 @@ public class RenameAliasImportedMethodProcessor extends RenameJavaMethodProcesso
         });
       }
     }
+  }
+
+  @Nullable
+  @Override
+  protected PsiElement processRef(PsiReference ref, String newName) {
+    PsiElement element = ref.getElement();
+    if (RenameUtil.isValidName(element.getProject(), element, newName) || element instanceof GrReferenceElement) {
+      return super.processRef(ref, newName);
+    }
+
+    PsiElement nameElement;
+    if (element instanceof PsiReferenceExpression) {
+      nameElement = ((PsiReferenceExpression)element).getReferenceNameElement();
+    }
+    else {
+      return null;
+    }
+    TextRange range = nameElement.getTextRange();
+    Document document = PsiDocumentManager.getInstance(element.getProject()).getDocument(nameElement.getContainingFile());
+    document.replaceString(range.getStartOffset(), range.getEndOffset(), newName);
+
+    return null;
   }
 }

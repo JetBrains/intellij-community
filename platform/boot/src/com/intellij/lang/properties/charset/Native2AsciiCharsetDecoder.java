@@ -29,7 +29,7 @@ import java.nio.charset.CoderResult;
 
 class Native2AsciiCharsetDecoder extends CharsetDecoder {
   private static final char INVALID_CHAR = (char)-1;
-  private final StringBuffer myOutBuffer = new StringBuffer();
+  private final StringBuilder myOutBuffer = new StringBuilder();
   private final Charset myBaseCharset;
 
   public Native2AsciiCharsetDecoder(final Native2AsciiCharset charset) {
@@ -37,11 +37,13 @@ class Native2AsciiCharsetDecoder extends CharsetDecoder {
     myBaseCharset = charset.getBaseCharset();
   }
 
+  @Override
   protected void implReset() {
     super.implReset();
     myOutBuffer.setLength(0);
   }
 
+  @Override
   protected CoderResult implFlush(CharBuffer out) {
     return doFlush(out);
   }
@@ -57,6 +59,7 @@ class Native2AsciiCharsetDecoder extends CharsetDecoder {
     return CoderResult.UNDERFLOW;
   }
 
+  @Override
   protected CoderResult decodeLoop(ByteBuffer in, CharBuffer out) {
     try {
       CoderResult coderResult = doFlush(out);

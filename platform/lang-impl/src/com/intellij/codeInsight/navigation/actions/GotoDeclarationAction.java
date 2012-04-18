@@ -27,6 +27,7 @@ import com.intellij.ide.util.DefaultPsiElementCellRenderer;
 import com.intellij.ide.util.EditSourceUtil;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -54,6 +55,7 @@ import java.awt.*;
 import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
 import java.text.MessageFormat;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 
@@ -146,7 +148,9 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
     }
     if (elements.length > 1) {
       final TextRange range = reference.getRangeInElement();
-      final String refText = range.substring(reference.getElement().getText());
+      final String elementText = reference.getElement().getText();
+      LOG.assertTrue(range.getStartOffset() >= 0 && range.getEndOffset() <= elementText.length(), Arrays.toString(elements));
+      final String refText = range.substring(elementText);
       String title = MessageFormat.format(titlePattern, refText);
       NavigationUtil.getPsiElementPopup(elements, new DefaultPsiElementCellRenderer(), title, processor).showInBestPositionFor(editor);
       return true;
@@ -177,12 +181,12 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
       return PsiElement.EMPTY_ARRAY;
     }
 
-    final PsiElement[] targets = findTargetElementsNoVS(project, editor, offset);
+    final PsiElement[] targets = findTargetElementsNoVS(project, editor, offset, true);
     return targets != null ? targets : PsiElement.EMPTY_ARRAY;
   }
 
   @Nullable
-  public static PsiElement[] findTargetElementsNoVS(Project project, Editor editor, int offset) {
+  public static PsiElement[] findTargetElementsNoVS(Project project, Editor editor, int offset, boolean lookupAccepted) {
     final Document document = editor.getDocument();
     PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
     if (file == null) {
@@ -192,7 +196,7 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
 
     for (GotoDeclarationHandler handler : Extensions.getExtensions(GotoDeclarationHandler.EP_NAME)) {
       try {
-        PsiElement[] result = handler.getGotoDeclarationTargets(elementAt, editor);
+        PsiElement[] result = handler.getGotoDeclarationTargets(elementAt, offset, editor);
         if (result != null && result.length > 0) {
           return result;
         }
@@ -203,6 +207,9 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
     }
 
     int flags = TargetElementUtilBase.getInstance().getAllAccepted() & ~TargetElementUtilBase.ELEMENT_NAME_ACCEPTED;
+    if (!lookupAccepted) {
+      flags &= ~TargetElementUtilBase.LOOKUP_ITEM_ACCEPTED;
+    }
     PsiElement element = TargetElementUtilBase.getInstance().findTargetElement(editor, flags, offset);
     if (element != null) {
       return new PsiElement[] {element};
@@ -211,7 +218,7 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
     // if no references found in injected fragment, try outer document
     if (editor instanceof EditorWindow) {
       EditorWindow window = (EditorWindow)editor;
-      return findTargetElementsNoVS(project, window.getDelegate(), window.getDocument().injectedToHost(offset));
+      return findTargetElementsNoVS(project, window.getDelegate(), window.getDocument().injectedToHost(offset), lookupAccepted);
     }
     return null;
   }
@@ -226,6 +233,21 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
       if (componentAt instanceof EditorGutterComponentEx) {
         event.getPresentation().setEnabled(false);
         return;
+      }
+    }
+
+    for (GotoDeclarationHandler handler : Extensions.getExtensions(GotoDeclarationHandler.EP_NAME)) {
+      try {
+        final String text = handler.getActionText(event.getDataContext());
+
+        if (text != null) {
+          Presentation presentation = event.getPresentation();
+          presentation.setText(text);
+          break;
+        }
+      }
+      catch (AbstractMethodError e) {
+        LOG.error(handler.toString(), e);
       }
     }
 

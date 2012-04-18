@@ -29,6 +29,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.CollectingContentIterator;
 import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.*;
@@ -43,7 +44,6 @@ import com.intellij.util.*;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ConcurrentHashSet;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashSet;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
 import gnu.trove.*;
@@ -54,6 +54,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
+import java.lang.ref.SoftReference;
 import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -89,6 +90,9 @@ public abstract class FileBasedIndex {
   private IndexingStamp myIndexingStamp;
 
   private volatile int myLocalModCount;
+  private volatile int myFilesModCount;
+
+  private static final Key<SoftReference<ProjectIndexableFilesFilter>> ourProjectFilesSetKey = Key.create("projectFiles");
 
   public void requestReindex(final VirtualFile file) {
     myChangedFilesCollector.invalidateIndices(file, true);
@@ -169,8 +173,7 @@ public abstract class FileBasedIndex {
   protected void notifyIndexRebuild(String rebuildNotification) {
   }
 
-  public abstract void iterateIndexableFiles(final ContentIterator processor, Project project, ProgressIndicator indicator);
-
+  @Nullable
   private static String calcConfigPath(final String path) {
     try {
       final String _path = FileUtil.toSystemIndependentName(new File(path).getCanonicalPath());
@@ -206,8 +209,8 @@ public abstract class FileBasedIndex {
    * Keys obtained from the files which do not belong to the project specified may not be up-to-date or even exist
    */
   @NotNull
-  public <K> Collection<K> getAllKeys(final ID<K, ?> indexId, @NotNull Project project) {
-    Set<K> allKeys = new HashSet<K>();
+  public <K> Collection<K> getAllKeys(@NotNull final ID<K, ?> indexId, @NotNull Project project) {
+    Set<K> allKeys = new THashSet<K>();
     processAllKeys(indexId, new CommonProcessors.CollectProcessor<K>(allKeys), project);
     return allKeys;
   }
@@ -216,7 +219,7 @@ public abstract class FileBasedIndex {
    * @param project it is guaranteed to return data which is up-to-date withing the project
    * Keys obtained from the files which do not belong to the project specified may not be up-to-date or even exist
    */
-  public <K> boolean processAllKeys(final ID<K, ?> indexId, Processor<K> processor, @Nullable Project project) {
+  public <K> boolean processAllKeys(@NotNull final ID<K, ?> indexId, Processor<K> processor, @Nullable Project project) {
     try {
       final UpdatableIndex<K, ?, FileContent> index = myIndexIndicesManager.getIndex(indexId);
       if (index == null) {
@@ -278,12 +281,12 @@ public abstract class FileBasedIndex {
    * DO NOT CALL DIRECTLY IN CLIENT CODE
    * The method is internal to indexing engine end is called internally. The method is public due to implementation details
    */
-  public <K> void ensureUpToDate(final ID<K, ?> indexId, @Nullable Project project, @Nullable GlobalSearchScope filter) {
+  public <K> void ensureUpToDate(@NotNull final ID<K, ?> indexId, @Nullable Project project, @Nullable GlobalSearchScope filter) {
     ensureUpToDate(indexId, project, filter, null);
   }
 
-  private <K> void ensureUpToDate(final ID<K, ?> indexId, @Nullable Project project, @Nullable GlobalSearchScope filter,
-                                 @Nullable VirtualFile restrictedFile) {
+  private <K> void ensureUpToDate(@NotNull final ID<K, ?> indexId, @Nullable Project project, @Nullable GlobalSearchScope filter,
+                                  @Nullable VirtualFile restrictedFile) {
     if (!needsFileContentLoading(indexId)) {
       return; //indexed eagerly in foreground while building unindexed file list
     }
@@ -329,7 +332,7 @@ public abstract class FileBasedIndex {
   protected abstract boolean isDumb(@Nullable Project project);
 
   @NotNull
-  public <K, V> List<V> getValues(final ID<K, V> indexId, @NotNull K dataKey, @NotNull final GlobalSearchScope filter) {
+  public <K, V> List<V> getValues(@NotNull final ID<K, V> indexId, @NotNull K dataKey, @NotNull final GlobalSearchScope filter) {
     final List<V> values = new SmartList<V>();
     processValuesImpl(indexId, dataKey, true, null, new ValueProcessor<V>() {
       @Override
@@ -367,16 +370,16 @@ public abstract class FileBasedIndex {
   /**
    * @return false if ValueProcessor.process() returned false; true otherwise or if ValueProcessor was not called at all 
    */
-  public <K, V> boolean processValues(final ID<K, V> indexId, @NotNull final K dataKey, @Nullable final VirtualFile inFile,
-                                   ValueProcessor<V> processor, @NotNull final GlobalSearchScope filter) {
+  public <K, V> boolean processValues(@NotNull final ID<K, V> indexId, @NotNull final K dataKey, @Nullable final VirtualFile inFile,
+                                      @NotNull ValueProcessor<V> processor, @NotNull final GlobalSearchScope filter) {
     return processValuesImpl(indexId, dataKey, false, inFile, processor, filter);
   }
 
 
- 
-  
+
+
   private <K, V, R> R processExceptions(final ID<K, V> indexId,
-                                        @Nullable final VirtualFile restrictToFile, 
+                                        @Nullable final VirtualFile restrictToFile,
                                         final GlobalSearchScope filter,
                                         ThrowableConvertor<UpdatableIndex<K, V, FileContent>, R, StorageException> computable) {
     try {
@@ -411,12 +414,12 @@ public abstract class FileBasedIndex {
     return null;
   }
 
-  private <K, V> boolean processValuesImpl(final ID<K, V> indexId, final K dataKey, final boolean ensureValueProcessedOnce,
-                                           @Nullable final VirtualFile restrictToFile, final ValueProcessor<V> processor,
-                                           final GlobalSearchScope filter) {
+  private <K, V> boolean processValuesImpl(@NotNull final ID<K, V> indexId, final K dataKey, final boolean ensureValueProcessedOnce,
+                                           @Nullable final VirtualFile restrictToFile, @NotNull final ValueProcessor<V> processor,
+                                           @NotNull final GlobalSearchScope filter) {
     ThrowableConvertor<UpdatableIndex<K, V, FileContent>, Boolean, StorageException> keyProcessor = new ThrowableConvertor<UpdatableIndex<K, V, FileContent>, Boolean, StorageException>() {
       @Override
-      public Boolean convert(UpdatableIndex<K, V, FileContent> index) throws StorageException {
+      public Boolean convert(@NotNull UpdatableIndex<K, V, FileContent> index) throws StorageException {
         final ValueContainer<V> container = index.getData(dataKey);
 
         boolean shouldContinue = true;
@@ -459,10 +462,10 @@ public abstract class FileBasedIndex {
     final Boolean result = processExceptions(indexId, restrictToFile, filter, keyProcessor);
     return result == null || result.booleanValue();
   }
-  
-  public <K, V> boolean processFilesContainingAllKeys(final ID<K, V> indexId,
-                                                      final Collection<K> dataKeys,
-                                                      final GlobalSearchScope filter,
+
+  public <K, V> boolean processFilesContainingAllKeys(@NotNull final ID<K, V> indexId,
+                                                      @NotNull final Collection<K> dataKeys,
+                                                      @NotNull final GlobalSearchScope filter,
                                                       @Nullable Condition<V> valueChecker,
                                                       final Processor<VirtualFile> processor) {
     final TIntHashSet set = collectFileIdsContainingAllKeys(indexId, dataKeys, filter, valueChecker);
@@ -472,7 +475,7 @@ public abstract class FileBasedIndex {
     return processVirtualFiles(set, filter, processor);
   }
 
-  @Nullable 
+  @Nullable
   private <K, V> TIntHashSet collectFileIdsContainingAllKeys(final ID<K, V> indexId,
                                                             final Collection<K> dataKeys,
                                                             final GlobalSearchScope filter,
@@ -481,7 +484,7 @@ public abstract class FileBasedIndex {
       new ThrowableConvertor<UpdatableIndex<K, V, FileContent>, TIntHashSet, StorageException>() {
         @Nullable
         @Override
-        public TIntHashSet convert(UpdatableIndex<K, V, FileContent> index) throws StorageException {
+        public TIntHashSet convert(@NotNull UpdatableIndex<K, V, FileContent> index) throws StorageException {
           TIntHashSet mainIntersection = null;
 
           for (K dataKey : dataKeys) {
@@ -537,11 +540,14 @@ public abstract class FileBasedIndex {
   public static @Nullable Throwable getCauseToRebuildIndex(RuntimeException e) {
     Throwable cause = e.getCause();
     if (cause instanceof StorageException || cause instanceof IOException ||
-        cause instanceof IllegalArgumentException || cause instanceof IllegalStateException) return cause;
+        cause instanceof IllegalArgumentException) return cause;
     return null;
   }
 
-  public <K, V> boolean getFilesWithKey(final ID<K, V> indexId, final Set<K> dataKeys, Processor<VirtualFile> processor, GlobalSearchScope filter) {
+  public <K, V> boolean getFilesWithKey(@NotNull final ID<K, V> indexId,
+                                        @NotNull final Set<K> dataKeys,
+                                        @NotNull Processor<VirtualFile> processor,
+                                        @NotNull GlobalSearchScope filter) {
     try {
       final UpdatableIndex<K, V, FileContent> index = myIndexIndicesManager.getIndex(indexId);
       if (index == null) {
@@ -610,7 +616,8 @@ public abstract class FileBasedIndex {
     return true;
   }
 
-  private static TIntHashSet join(List<TIntHashSet> locals) {
+  @NotNull
+  private static TIntHashSet join(@NotNull List<TIntHashSet> locals) {
     TIntHashSet result = locals.get(0);
     if (locals.size() > 1) {
       TIntIterator it = result.iterator();
@@ -628,7 +635,7 @@ public abstract class FileBasedIndex {
     return result;
   }
 
-  public <K> void scheduleRebuild(final ID<K, ?> indexId, final Throwable e) {
+  public <K> void scheduleRebuild(@NotNull final ID<K, ?> indexId, @NotNull final Throwable e) {
     LOG.info(e);
     requestRebuild(indexId);
     try {
@@ -727,6 +734,7 @@ public abstract class FileBasedIndex {
     return myChangedFilesCollector.getNumberOfPendingInvalidations();
   }
 
+  @NotNull
   public Collection<VirtualFile> getFilesToUpdate(final Project project) {
     return ContainerUtil.findAll(myChangedFilesCollector.getAllFilesToUpdate(), new Condition<VirtualFile>() {
       @Override
@@ -745,12 +753,12 @@ public abstract class FileBasedIndex {
     });
   }
 
-  public void processRefreshedFile(@NotNull Project project, final com.intellij.ide.caches.FileContent fileContent) {
+  public void processRefreshedFile(@NotNull Project project, @NotNull final com.intellij.ide.caches.FileContent fileContent) {
     myChangedFilesCollector.ensureAllInvalidateTasksCompleted();
     myChangedFilesCollector.processFileImpl(project, fileContent, false);
   }
 
-  public void indexFileContent(@Nullable Project project, com.intellij.ide.caches.FileContent content) {
+  public void indexFileContent(@Nullable Project project, @NotNull com.intellij.ide.caches.FileContent content) {
     myChangedFilesCollector.ensureAllInvalidateTasksCompleted();
     final VirtualFile file = content.getVirtualFile();
     FileContentImpl fc = null;
@@ -853,7 +861,7 @@ public abstract class FileBasedIndex {
     }
   }
 
-  public static int getFileId(final VirtualFile file) {
+  public static int getFileId(@NotNull final VirtualFile file) {
     if (file instanceof VirtualFileWithId) {
       return ((VirtualFileWithId)file).getId();
     }
@@ -884,37 +892,37 @@ public abstract class FileBasedIndex {
     // No need to react on movement events since files stay valid, their ids don't change and all associated attributes remain intact.
 
     @Override
-    public void fileCreated(final VirtualFileEvent event) {
-      markDirty(event);
+    public void fileCreated(@NotNull final VirtualFileEvent event) {
+      markDirty(event, false);
     }
 
     @Override
-    public void fileDeleted(final VirtualFileEvent event) {
+    public void fileDeleted(@NotNull final VirtualFileEvent event) {
       myFilesToUpdate.remove(event.getFile()); // no need to update it anymore
     }
 
     @Override
-    public void fileCopied(final VirtualFileCopyEvent event) {
-      markDirty(event);
+    public void fileCopied(@NotNull final VirtualFileCopyEvent event) {
+      markDirty(event, false);
     }
 
     @Override
-    public void beforeFileDeletion(final VirtualFileEvent event) {
+    public void beforeFileDeletion(@NotNull final VirtualFileEvent event) {
       invalidateIndices(event.getFile(), false);
     }
 
     @Override
-    public void beforeContentsChange(final VirtualFileEvent event) {
+    public void beforeContentsChange(@NotNull final VirtualFileEvent event) {
       invalidateIndices(event.getFile(), true);
     }
 
     @Override
-    public void contentsChanged(final VirtualFileEvent event) {
-      markDirty(event);
+    public void contentsChanged(@NotNull final VirtualFileEvent event) {
+      markDirty(event, true);
     }
 
     @Override
-    public void beforePropertyChange(final VirtualFilePropertyEvent event) {
+    public void beforePropertyChange(@NotNull final VirtualFilePropertyEvent event) {
       if (event.getPropertyName().equals(VirtualFile.PROP_NAME)) {
         // indexes may depend on file name
         final VirtualFile file = event.getFile();
@@ -927,21 +935,22 @@ public abstract class FileBasedIndex {
     }
 
     @Override
-    public void propertyChanged(final VirtualFilePropertyEvent event) {
+    public void propertyChanged(@NotNull final VirtualFilePropertyEvent event) {
       if (event.getPropertyName().equals(VirtualFile.PROP_NAME)) {
         // indexes may depend on file name
         if (!event.getFile().isDirectory()) {
-          markDirty(event);
+          markDirty(event, false);
         }
       }
     }
 
-    private void markDirty(final VirtualFileEvent event) {
+    private void markDirty(@NotNull final VirtualFileEvent event, final boolean contentChange) {
       final VirtualFile eventFile = event.getFile();
       cleanupProcessedFlag(eventFile);
       iterateIndexableFiles(eventFile, new Processor<VirtualFile>() {
         @Override
         public boolean process(final VirtualFile file) {
+          if (!contentChange) ++myFilesModCount;
           FileContent fileContent = null;
           // handle 'content-less' indices separately
           for (ID<?, ?> indexId : myNotRequiringContentIndices) {
@@ -978,7 +987,7 @@ public abstract class FileBasedIndex {
       myFilesToUpdate.add(file);
     }
 
-    void invalidateIndices(final VirtualFile file, final boolean markForReindex) {
+    void invalidateIndices(@NotNull final VirtualFile file, final boolean markForReindex) {
       if (isUnderConfigOrSystem(file)) {
         return;
       }
@@ -1056,7 +1065,7 @@ public abstract class FileBasedIndex {
       }
     }
 
-    private void removeFileDataFromIndices(Collection<ID<?, ?>> affectedIndices, VirtualFile file) {
+    private void removeFileDataFromIndices(@NotNull Collection<ID<?, ?>> affectedIndices, @NotNull VirtualFile file) {
       Throwable unexpectedError = null;
       for (ID<?, ?> indexId : affectedIndices) {
         try {
@@ -1105,11 +1114,11 @@ public abstract class FileBasedIndex {
       }
     }
 
-    private void iterateIndexableFiles(final VirtualFile file, final Processor<VirtualFile> processor) {
+    private void iterateIndexableFiles(@NotNull final VirtualFile file, @NotNull final Processor<VirtualFile> processor) {
       if (file.isDirectory()) {
         final ContentIterator iterator = new ContentIterator() {
           @Override
-          public boolean processFile(final VirtualFile fileOrDir) {
+          public boolean processFile(@NotNull final VirtualFile fileOrDir) {
             if (!fileOrDir.isDirectory()) {
               processor.process(fileOrDir);
             }
@@ -1118,7 +1127,9 @@ public abstract class FileBasedIndex {
         };
 
         for (IndexableFileSet set : myIndexableSets) {
-          set.iterateIndexableFilesIn(file, iterator);
+          if (set.isInSet(file)) {
+            set.iterateIndexableFilesIn(file, iterator);
+          }
         }
       }
       else {
@@ -1168,7 +1179,7 @@ public abstract class FileBasedIndex {
       }
     }
 
-    private void processFileImpl(Project project, final com.intellij.ide.caches.FileContent fileContent, boolean onlyRemoveOutdatedData) {
+    private void processFileImpl(Project project, @NotNull final com.intellij.ide.caches.FileContent fileContent, boolean onlyRemoveOutdatedData) {
       final VirtualFile file = fileContent.getVirtualFile();
       final boolean reallyRemoved = myFilesToUpdate.remove(file);
       if (reallyRemoved && file.isValid()) {
@@ -1299,15 +1310,16 @@ public abstract class FileBasedIndex {
   }
 
   public CollectingContentIterator createContentIterator() {
+    ++myFilesModCount;
     return new UnindexedFilesFinder();
   }
 
-  public void registerIndexableSet(IndexableFileSet set, @Nullable Project project) {
+  public void registerIndexableSet(@NotNull IndexableFileSet set, @Nullable Project project) {
     myIndexableSets.add(set);
     myIndexableSetToProjectMap.put(set, project);
   }
 
-  public void removeIndexableSet(IndexableFileSet set) {
+  public void removeIndexableSet(@NotNull IndexableFileSet set) {
     myChangedFilesCollector.forceUpdate(null, null, null, true);
     myIndexableSets.remove(set);
     myIndexableSetToProjectMap.remove(set);
@@ -1332,4 +1344,70 @@ public abstract class FileBasedIndex {
   public interface InputFilter {
     boolean acceptInput(VirtualFile file);
   }
+
+  @Nullable
+  public ProjectIndexableFilesFilter projectIndexableFiles(@Nullable Project project) {
+    if (project == null) return null;
+
+    SoftReference<ProjectIndexableFilesFilter> reference = project.getUserData(ourProjectFilesSetKey);
+    ProjectIndexableFilesFilter data = reference != null ? reference.get() : null;
+    if (data != null && data.myModificationCount == myFilesModCount) return data;
+
+    final TIntHashSet filesSet = new TIntHashSet();
+    iterateIndexableFiles(new ContentIterator() {
+      @Override
+      public boolean processFile(@NotNull VirtualFile fileOrDir) {
+        filesSet.add(((VirtualFileWithId)fileOrDir).getId());
+        return true;
+      }
+    }, project, ProgressManager.getInstance().getProgressIndicator());
+    ProjectIndexableFilesFilter files = new ProjectIndexableFilesFilter(filesSet, myFilesModCount);
+    project.putUserData(ourProjectFilesSetKey, new SoftReference<ProjectIndexableFilesFilter>(files));
+    return files;
+  }
+
+  public static final class ProjectIndexableFilesFilter {
+    private static final int SHIFT = 6;
+    private static final int MASK = (1 << SHIFT) - 1;
+    private final long[] myBitMask;
+    private final int myModificationCount;
+    private final int myMinId;
+    private final int myMaxId;
+
+    private ProjectIndexableFilesFilter(@NotNull TIntHashSet set, int modificationCount) {
+      myModificationCount = modificationCount;
+      final int[] minMax = new int[2];
+      if (set.size() > 0) {
+        minMax[0] = minMax[1] = set.iterator().next();
+      }
+      set.forEach(new TIntProcedure() {
+        @Override
+        public boolean execute(int value) {
+          minMax[0] = Math.min(minMax[0], value);
+          minMax[1] = Math.max(minMax[1], value);
+          return true;
+        }
+      });
+      myMaxId = minMax[1];
+      myMinId = minMax[0];
+      myBitMask = new long[((myMaxId  - myMinId) >> SHIFT) + 1];
+      set.forEach(new TIntProcedure() {
+        @Override
+        public boolean execute(int value) {
+          value = value - myMinId;
+          myBitMask[value >> SHIFT] |= (1L << (value & MASK));
+          return true;
+        }
+      });
+    }
+
+    public boolean contains(int id) {
+      if (id < myMinId) return false;
+      if (id > myMaxId) return false;
+      id -= myMinId;
+      return (myBitMask[id >> SHIFT] & (1L << (id & MASK))) != 0;
+    }
+  }
+
+  public abstract void iterateIndexableFiles(final ContentIterator processor, Project project, ProgressIndicator indicator);
 }

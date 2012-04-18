@@ -47,6 +47,7 @@ public class HintHint {
 
   private int myPositionChangeX;
   private int myPositionChangeY;
+  private boolean myShowImmediately = false;
 
   public HintHint() {
   }
@@ -239,5 +240,20 @@ public class HintHint {
 
   public int getPositionChangeY() {
     return myPositionChangeY;
+  }
+
+  public boolean isShowImmediately() {
+    return myShowImmediately;
+  }
+
+  /**
+   * Make sense if and only if isAwtTooltip set to <code>true</code>
+   *
+   * @param showImmediately true or false
+   * @return current instance of HintHint
+   */
+  public HintHint setShowImmediately(boolean showImmediately) {
+    myShowImmediately = showImmediately;
+    return this;
   }
 }

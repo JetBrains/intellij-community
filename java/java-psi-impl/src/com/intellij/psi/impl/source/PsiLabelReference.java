@@ -18,12 +18,13 @@ package com.intellij.psi.impl.source;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
-
-import org.jetbrains.annotations.NotNull;
 
 /**
  * Created by IntelliJ IDEA.
@@ -94,19 +95,19 @@ public class PsiLabelReference implements PsiReference{
       return resolve() == element;
     }
 
-    @Override
-    @NotNull
-    public Object[] getVariants(){
-      final List result = new ArrayList();
-      PsiElement context = myStatement;
-      while(context != null){
-        if(context instanceof PsiLabeledStatement){
-          result.add(context);
-        }
-        context = context.getContext();
+  @Override
+  @NotNull
+  public String[] getVariants() {
+    final List<String> result = new ArrayList<String>();
+    PsiElement context = myStatement;
+    while(context != null){
+      if(context instanceof PsiLabeledStatement){
+        result.add(((PsiLabeledStatement)context).getName());
       }
-      return result.toArray();
+      context = context.getContext();
     }
+    return ArrayUtil.toStringArray(result);
+  }
 
   @Override
   public boolean isSoft(){

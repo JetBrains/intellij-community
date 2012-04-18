@@ -24,6 +24,7 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.model.gradle.*;
+import org.jetbrains.plugins.gradle.sync.GradleProjectStructureChangesModel;
 import org.jetbrains.plugins.gradle.task.GradleResolveProjectTask;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
 import org.jetbrains.plugins.gradle.util.GradleLog;
@@ -114,6 +115,11 @@ public class GradleModulesImporter {
         AccessToken writeLock = application.acquireWriteActionLock(getClass());
         try {
           final List<ModifiableRootModel> rootModels = new ArrayList<ModifiableRootModel>();
+          final GradleProjectEntityImportListener publisher =
+            intellijProject.getMessageBus().syncPublisher(GradleProjectEntityImportListener.TOPIC);
+          for (GradleModule module : modules) {
+            publisher.onImportStart(module);
+          }
           try {
             Map<GradleModule, Module> moduleMappings = doImportModules(modules, model, rootModels);
             result.putAll(moduleMappings);
@@ -127,6 +133,9 @@ public class GradleModulesImporter {
             ProjectRootManager projectRootManager = ProjectRootManager.getInstance(intellijProject);
             ModifiableRootModel[] modelsAsArray = rootModels.toArray(new ModifiableRootModel[rootModels.size()]);
             projectRootManager.multiCommit(model, modelsAsArray);
+            for (GradleModule module : modules) {
+              publisher.onImportEnd(module);
+            }
           }
         }
         finally {
@@ -290,6 +299,7 @@ public class GradleModulesImporter {
                                      @NotNull final String gradleProjectPath)
   {
     final Ref<GradleProject> gradleProjectRef = new Ref<GradleProject>();
+    final Ref<Library> libraryToPreserve = new Ref<Library>();
     
     final Runnable setupExternalDependenciesTask = new Runnable() {
       @Override
@@ -302,15 +312,28 @@ public class GradleModulesImporter {
         Application application = ApplicationManager.getApplication();
         AccessToken writeLock = application.acquireWriteActionLock(getClass());
         try {
-          doSetupLibraries(moduleMappings, gradleProject, intellijProject);
+          doSetupLibraries(moduleMappings, gradleProject, intellijProject, libraryToPreserve.get());
         }
         finally {
           writeLock.finish();
-        } 
+        }
+
+        if (intellijProject.isDisposed()) {
+          return;
+        }
+        
+        // Force refresh the infrastructure in order to apply newly introduce intellij project structure changes
+        final GradleProjectStructureChangesModel changesModel = intellijProject.getComponent(GradleProjectStructureChangesModel.class);
+        if (changesModel != null) {
+          final GradleProject project = changesModel.getGradleProject();
+          if (project != null) {
+            changesModel.update(project);
+          }
+        }
       }
     };
     
-    Runnable resolveDependenciesTask = new Runnable() {
+    final Runnable resolveDependenciesTask = new Runnable() {
       @Override
       public void run() {
         ProgressManager.getInstance().run(
@@ -319,21 +342,24 @@ public class GradleModulesImporter {
             public void run(@NotNull final ProgressIndicator indicator) {
               GradleResolveProjectTask task = new GradleResolveProjectTask(intellijProject, gradleProjectPath, true);
               task.execute(indicator);
-              GradleProject projectWithResolvedLibraries = task.getProject();
+              GradleProject projectWithResolvedLibraries = task.getGradleProject();
               gradleProjectRef.set(projectWithResolvedLibraries);
               ApplicationManager.getApplication().invokeLater(setupExternalDependenciesTask, ModalityState.NON_MODAL);
             }
           }); 
       }
     };
-    
+
     UIUtil.invokeLaterIfNeeded(resolveDependenciesTask);
   }
 
   private static void doSetupLibraries(@NotNull Map<GradleModule, Module> moduleMappings,
                                        @NotNull GradleProject gradleProject,
-                                       @NotNull Project intellijProject)
-  {
+                                       @NotNull Project intellijProject,
+                                       @Nullable Library libraryToPreserve) {
+    if (intellijProject.isDisposed()) {
+      return;
+    }
     Application application = ApplicationManager.getApplication();
     application.assertWriteAccessAllowed();
 
@@ -349,7 +375,9 @@ public class GradleModulesImporter {
     // Clean existing libraries (if any).
     try {
       for (Library library : model.getLibraries()) {
-        model.removeLibrary(library);
+        if (libraryToPreserve != library) {
+          model.removeLibrary(library);
+        }
       }
     }
     finally {
@@ -358,12 +386,16 @@ public class GradleModulesImporter {
 
     model = projectLibraryTable.getModifiableModel();
     List<ModifiableRootModel> modelsToCommit = new ArrayList<ModifiableRootModel>();
+    Map<GradleLibrary, Library> libraryMappings = registerProjectLibraries(gradleProject, model);
+    final GradleProjectEntityImportListener publisher
+      = intellijProject.getMessageBus().syncPublisher(GradleProjectEntityImportListener.TOPIC);
     try {
-      Map<GradleLibrary, Library> libraryMappings = registerProjectLibraries(gradleProject, model);
       if (libraryMappings == null) {
         return;
       }
-
+      for (GradleLibrary library : libraryMappings.keySet()) {
+        publisher.onImportStart(library);
+      }
       modelsToCommit.addAll(configureModulesLibraryDependencies(moduleMappings, libraryMappings, gradleProject));
     }
     finally {
@@ -371,6 +403,11 @@ public class GradleModulesImporter {
       ProjectRootManager projectRootManager = ProjectRootManager.getInstance(intellijProject);
       ModifiableRootModel[] modelsAsArray = modelsToCommit.toArray(new ModifiableRootModel[modelsToCommit.size()]);
       projectRootManager.multiCommit(modelsAsArray);
+      if (libraryMappings != null) {
+        for (GradleLibrary library : libraryMappings.keySet()) {
+          publisher.onImportEnd(library);
+        }
+      }
     }
   }
 

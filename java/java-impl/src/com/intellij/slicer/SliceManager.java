@@ -65,32 +65,32 @@ public class SliceManager implements PersistentStateComponent<SliceManager.Store
 
     psiManager.addPsiTreeChangeListener(new PsiTreeChangeAdapter() {
       @Override
-      public void beforeChildAddition(PsiTreeChangeEvent event) {
+      public void beforeChildAddition(@NotNull PsiTreeChangeEvent event) {
         cancel();
       }
 
       @Override
-      public void beforeChildRemoval(PsiTreeChangeEvent event) {
+      public void beforeChildRemoval(@NotNull PsiTreeChangeEvent event) {
         cancel();
       }
 
       @Override
-      public void beforeChildReplacement(PsiTreeChangeEvent event) {
+      public void beforeChildReplacement(@NotNull PsiTreeChangeEvent event) {
         cancel();
       }
 
       @Override
-      public void beforeChildMovement(PsiTreeChangeEvent event) {
+      public void beforeChildMovement(@NotNull PsiTreeChangeEvent event) {
         cancel();
       }
 
       @Override
-      public void beforeChildrenChange(PsiTreeChangeEvent event) {
+      public void beforeChildrenChange(@NotNull PsiTreeChangeEvent event) {
         cancel();
       }
 
       @Override
-      public void beforePropertyChange(PsiTreeChangeEvent event) {
+      public void beforePropertyChange(@NotNull PsiTreeChangeEvent event) {
         cancel();
       }
     }, project);

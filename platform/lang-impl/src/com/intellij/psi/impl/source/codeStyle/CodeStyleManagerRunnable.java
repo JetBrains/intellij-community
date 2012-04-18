@@ -48,8 +48,8 @@ abstract class CodeStyleManagerRunnable<T> {
   }
 
   public T perform(PsiFile file, int offset, @Nullable TextRange range, T defaultValue) {
-    if (file instanceof PsiCompiledElement) {
-      file = (PsiFile)((PsiCompiledElement)file).getMirror();
+    if (file instanceof PsiCompiledFile) {
+      file = ((PsiCompiledFile)file).getDecompiledPsiFile();
     }
 
     PsiDocumentManager documentManager = PsiDocumentManager.getInstance(myCodeStyleManager.getProject());

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -71,14 +71,13 @@ import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-
 public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
   private static final Logger LOG = Logger.getInstance("#com.intellij.project.impl.ProjectImpl");
   private static final String PLUGIN_SETTINGS_ERROR = "Plugin Settings Error";
 
   private ProjectManagerImpl myManager;
 
-  private IProjectStore myComponentStore;
+  private volatile IProjectStore myComponentStore;
 
   private MyProjectManagerListener myProjectManagerListener;
 
@@ -103,10 +102,14 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
     myOptimiseTestLoadSpeed = isOptimiseTestLoadSpeed;
 
     myManager = manager;
+
     myName = isDefault() ? TEMPLATE_PROJECT_NAME : projectName == null ? getStateStore().getProjectName() : projectName;
-    if (!isDefault() && projectName != null && getStateStore().getStorageScheme().equals(StorageScheme.DIRECTORY_BASED)) myOldName = ""; // new project
+    if (!isDefault() && projectName != null && getStateStore().getStorageScheme().equals(StorageScheme.DIRECTORY_BASED)) {
+      myOldName = "";  // new project
+    }
   }
 
+  @Override
   public void setProjectName(@NotNull String projectName) {
     if (!projectName.equals(myName)) {
       myOldName = myName;
@@ -126,6 +129,7 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
     }
   }
 
+  @Override
   protected void bootstrapPicoContainer() {
     Extensions.instantiateArea(PluginManager.AREA_IDEA_PROJECT, this, null);
     super.bootstrapPicoContainer();
@@ -150,22 +154,27 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
         return myDelegate;
       }
 
+      @Override
       public Object getComponentKey() {
         return IComponentStore.class;
       }
 
+      @Override
       public Class getComponentImplementation() {
         return getDelegate().getComponentImplementation();
       }
 
+      @Override
       public Object getComponentInstance(final PicoContainer container) throws PicoInitializationException, PicoIntrospectionException {
         return getDelegate().getComponentInstance(container);
       }
 
+      @Override
       public void verify(final PicoContainer container) throws PicoIntrospectionException {
         getDelegate().verify(container);
       }
 
+      @Override
       public void accept(final PicoVisitor visitor) {
         visitor.visitComponentAdapter(this);
         getDelegate().accept(visitor);
@@ -175,11 +184,17 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
   }
 
   @NotNull
-  public synchronized IProjectStore getStateStore() {
-    if (myComponentStore == null) {
-      myComponentStore = (IProjectStore)getPicoContainer().getComponentInstance(IComponentStore.class);
+  @Override
+  public IProjectStore getStateStore() {
+    IProjectStore componentStore = myComponentStore;
+    if (componentStore != null) return componentStore;
+    synchronized (this) {
+      componentStore = myComponentStore;
+      if (componentStore == null) {
+        myComponentStore = componentStore = (IProjectStore)getPicoContainer().getComponentInstance(IComponentStore.class);
+      }
+      return componentStore;
     }
-    return myComponentStore;
   }
 
   @Override
@@ -196,10 +211,12 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
     getStateStore().initComponent(component, service);
   }
 
+  @Override
   public boolean isOpen() {
     return ProjectManagerEx.getInstanceEx().isProjectOpened(this);
   }
 
+  @Override
   public boolean isInitialized() {
     return isOpen() && !isDisposed() && StartupManagerEx.getInstanceEx(this).startupActivityPassed();
   }
@@ -212,64 +229,77 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
     }
   }
 
+  @Override
   @NotNull
   public String getProjectFilePath() {
     return getStateStore().getProjectFilePath();
   }
 
-
-  @Nullable
+  @Override
   public VirtualFile getProjectFile() {
     return getStateStore().getProjectFile();
   }
 
-  @Nullable
+  @Override
   public VirtualFile getBaseDir() {
     return getStateStore().getProjectBaseDir();
   }
 
+  @Override
+  public String getBasePath() {
+    return getStateStore().getProjectBasePath();
+  }
+
   @NotNull
+  @Override
   public String getName() {
     return myName;
   }
 
-  @Nullable
   @NonNls
+  @Override
   public String getPresentableUrl() {
+    if (myName == null) return null;  // not yet initialized
     return getStateStore().getPresentableUrl();
   }
 
   @NotNull
   @NonNls
+  @Override
   public String getLocationHash() {
     String str = getPresentableUrl();
     if (str == null) str = getName();
 
-    final String prefix = getStateStore().getStorageScheme() == StorageScheme.DIRECTORY_BASED? "" : getName();
+    final String prefix = getStateStore().getStorageScheme() == StorageScheme.DIRECTORY_BASED ? "" : getName();
     return prefix + Integer.toHexString(str.hashCode());
   }
 
+  @SuppressWarnings("deprecation")
   @Nullable
   @NonNls
+  @Override
   public String getLocation() {
     if (myName == null) return null; // was called before initialized
     return isDisposed() ? null : getStateStore().getLocation();
   }
 
+  @Override
   @Nullable
   public VirtualFile getWorkspaceFile() {
     return getStateStore().getWorkspaceFile();
   }
 
+  @Override
   public boolean isOptimiseTestLoadSpeed() {
     return myOptimiseTestLoadSpeed;
   }
 
+  @Override
   public void setOptimiseTestLoadSpeed(final boolean optimiseTestLoadSpeed) {
     myOptimiseTestLoadSpeed = optimiseTestLoadSpeed;
   }
 
-
+  @Override
   public void init() {
     long start = System.currentTimeMillis();
 //    ProfilingUtil.startCPUProfiling();
@@ -297,53 +327,59 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
     return false;
   }
 
+  @Override
   public void save() {
     if (ApplicationManagerEx.getApplicationEx().isDoNotSave()) return; //no need to save
 
-    if (mySavingInProgress.compareAndSet(false, true)) {
-      try {
-        if (isToSaveProjectName()) {
-          final IProjectStore stateStore = getStateStore();
-          final VirtualFile baseDir = stateStore.getProjectBaseDir();
-          if (baseDir != null && baseDir.isValid()) {
-            final VirtualFile ideaDir = baseDir.findChild(DIRECTORY_STORE_FOLDER);
-            if (ideaDir != null && ideaDir.isValid() && ideaDir.isDirectory()) {
-              final File nameFile = new File(ideaDir.getPath(), ".name");
-              try {
-                FileUtil.writeToFile(nameFile, getName().getBytes("UTF-8"), false);
-                myOldName = null;
-              }
-              catch (IOException e) {
-                LOG.info("Unable to store project name to: " + nameFile.getPath());
-              }
+    if (!mySavingInProgress.compareAndSet(false, true)) {
+      return;
+    }
+    try {
+      if (isToSaveProjectName()) {
+        final IProjectStore stateStore = getStateStore();
+        final VirtualFile baseDir = stateStore.getProjectBaseDir();
+        if (baseDir != null && baseDir.isValid()) {
+          final VirtualFile ideaDir = baseDir.findChild(DIRECTORY_STORE_FOLDER);
+          if (ideaDir != null && ideaDir.isValid() && ideaDir.isDirectory()) {
+            final File nameFile = new File(ideaDir.getPath(), ".name");
+            try {
+              FileUtil.writeToFile(nameFile, getName().getBytes("UTF-8"), false);
+              myOldName = null;
+            }
+            catch (IOException e) {
+              LOG.info("Unable to store project name to: " + nameFile.getPath());
             }
           }
         }
+      }
 
-        StoreUtil.doSave(getStateStore());
-      }
-      catch (IComponentStore.SaveCancelledException e) {
-        LOG.info(e);
-      }
-      catch (PluginException e) {
-        PluginManager.disablePlugin(e.getPluginId().getIdString());
-        Notifications.Bus.notify(new Notification(PLUGIN_SETTINGS_ERROR, "Unable to save plugin settings!",
-                                                  "<p>The plugin <i>" + e.getPluginId() + "</i> failed to save settings and has been disabled. Please restart" +
-                                                  ApplicationNamesInfo.getInstance().getFullProductName() + "</p>" +
-                                (ApplicationManagerEx.getApplicationEx().isInternal() ? "<p>" + StringUtil.getThrowableText(e) + "</p>": ""),
-                                                  NotificationType.ERROR), NotificationDisplayType.BALLOON, this);
-        LOG.info("Unable to save plugin settings",e);
-      }
-      catch (IOException e) {
-        MessagesEx.error(this, ProjectBundle.message("project.save.error", e.getMessage())).showLater();
-        LOG.info("Error saving project", e);
-      } finally {
-        mySavingInProgress.set(false);
-        ApplicationManager.getApplication().getMessageBus().syncPublisher(ProjectSaved.TOPIC).saved(this);
-      }
+      StoreUtil.doSave(getStateStore());
+    }
+    catch (IComponentStore.SaveCancelledException e) {
+      LOG.info(e);
+    }
+    catch (PluginException e) {
+      PluginManager.disablePlugin(e.getPluginId().getIdString());
+      Notification notification = new Notification(
+        PLUGIN_SETTINGS_ERROR,
+        "Unable to save plugin settings!",
+        "<p>The plugin <i>" + e.getPluginId() + "</i> failed to save settings and has been disabled. Please restart" +
+        ApplicationNamesInfo.getInstance().getFullProductName() + "</p>" +
+        (ApplicationManagerEx.getApplicationEx().isInternal() ? "<p>" + StringUtil.getThrowableText(e) + "</p>" : ""),
+        NotificationType.ERROR);
+      Notifications.Bus.notify(notification, this);
+      LOG.info("Unable to save plugin settings",e);
+    }
+    catch (IOException e) {
+      MessagesEx.error(this, ProjectBundle.message("project.save.error", e.getMessage())).showLater();
+      LOG.info("Error saving project", e);
+    } finally {
+      mySavingInProgress.set(false);
+      ApplicationManager.getApplication().getMessageBus().syncPublisher(ProjectSaved.TOPIC).saved(this);
     }
   }
 
+  @Override
   public synchronized void dispose() {
     ApplicationEx application = ApplicationManagerEx.getApplicationEx();
     assert application.isWriteAccessAllowed();  // dispose must be under write action
@@ -378,11 +414,10 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
         component.projectOpened();
       }
       catch (Throwable e) {
-        LOG.error(e);
+        LOG.error(component.toString(), e);
       }
     }
   }
-  
 
   private void projectClosed() {
     List<ProjectComponent> components = new ArrayList<ProjectComponent>(Arrays.asList(getComponents(ProjectComponent.class)));
@@ -397,6 +432,7 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
     }
   }
 
+  @Override
   public <T> T[] getExtensions(final ExtensionPointName<T> extensionPointName) {
     return Extensions.getArea(this).getExtensionPoint(extensionPointName).getExtensions();
   }
@@ -408,25 +444,30 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
   }
 
   private class MyProjectManagerListener extends ProjectManagerAdapter {
+    @Override
     public void projectOpened(Project project) {
       LOG.assertTrue(project == ProjectImpl.this);
       ProjectImpl.this.projectOpened();
     }
 
+    @Override
     public void projectClosed(Project project) {
       LOG.assertTrue(project == ProjectImpl.this);
       ProjectImpl.this.projectClosed();
     }
   }
 
+  @Override
   protected MutablePicoContainer createPicoContainer() {
     return Extensions.getArea(this).getPicoContainer();
   }
 
+  @Override
   public boolean isDefault() {
     return false;
   }
 
+  @Override
   public void checkUnknownMacros(final boolean showDialog) {
     final IProjectStore stateStore = getStateStore();
 
@@ -443,7 +484,7 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
         for (Iterator it = macros2invalidate.iterator(); it.hasNext();) {
           final String macro = (String)it.next();
           final String value = pathMacros.getValue(macro);
-          if ((null == value || value.trim().length() == 0) && !pathMacros.isIgnoredMacroName(macro)) {
+          if ((value == null || value.trim().isEmpty()) && !pathMacros.isIgnoredMacroName(macro)) {
             it.remove();
           }
         }
@@ -466,13 +507,14 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
             }
 
             ApplicationManager.getApplication().runWriteAction(new Runnable() {
+              @Override
               public void run() {
                 stateStore.reinitComponents(components, true);
               }
             });
           }
           else {
-            if (Messages.showYesNoDialog(this, "Component could not be reloaded. Reload project?", "Configuration changed",
+            if (Messages.showYesNoDialog(this, "Component could not be reloaded. Reload project?", "Configuration Changed",
                                          Messages.getQuestionIcon()) == 0) {
               ProjectManagerEx.getInstanceEx().reloadProject(this);
             }
@@ -482,14 +524,14 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
     }
   }
 
+  @NonNls
   @Override
-   public String toString() {
-    return "Project"
-           + (isDisposed() ? " (Disposed" + (temporarilyDisposed ? " temporarily" : "") + ")"
-                           :isDefault() ? "" : " '" + getLocation()+"'")
-           + (isDefault() ? " (Default)" : "")
-           + " " + myName
-      ;
+  public String toString() {
+    return "Project" +
+           (isDisposed() ? " (Disposed" + (temporarilyDisposed ? " temporarily" : "") + ")"
+                         : isDefault() ? "" : " '" + getPresentableUrl() + "'") +
+           (isDefault() ? " (Default)" : "") +
+           " " + myName;
   }
 
   @Override

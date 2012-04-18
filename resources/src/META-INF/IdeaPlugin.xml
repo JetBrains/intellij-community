@@ -13,6 +13,11 @@
     <component>
       <implementation-class>com.intellij.util.xml.impl.JavaDomApplicationComponent</implementation-class>
     </component>
+
+    <component>
+      <interface-class>com.intellij.psi.impl.search.SimpleAccessorReferenceSearcherAdditionalScopeProvider</interface-class>
+      <implementation-class>com.intellij.psi.impl.search.SimpleAccessorReferenceSearcherAdditionalScopeProviderImpl</implementation-class>
+    </component>
   </application-components>
 
   <project-components>
@@ -111,9 +116,6 @@
                     interface="com.intellij.openapi.compiler.util.InspectionValidator"
                     area="IDEA_PROJECT"/>
 
-    <extensionPoint name="persistenceModel.persistenceModelProvider"
-                    interface="com.intellij.persistenceModel.PersistenceModelProvider"/>
-
     <extensionPoint name="javaExpressionSurrounder"
                     interface="com.intellij.codeInsight.generation.surroundWith.JavaExpressionSurrounder"/>
 
@@ -197,6 +199,9 @@
     <localInspection language="JAVA" shortName="UndesirableClassUsage" displayName="Undesirable Class Usage" groupName="IDEA Platform Inspections"
                      enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.internal.UndesirableClassUsageInspection"/>
+    <localInspection language="JAVA" shortName="FileEqualsUsage" displayName="File.equals() usage" groupName="IDEA Platform Inspections"
+                     enabledByDefault="true" level="WARNING"
+                     implementationClass="com.intellij.codeInspection.internal.FileEqualsUsageInspection"/>
     <localInspection language="JAVA" shortName="GtkPreferredJComboBoxRenderer" displayName="Preferred JComboBox renderer"
                      groupName="IDEA Platform Inspections" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.internal.GtkPreferredJComboBoxRendererInspection"/>
@@ -211,6 +216,7 @@
     <completion.confidence language="JAVA" implementationClass="com.intellij.codeInsight.completion.FocusInJavadoc" id="javadoc" order="before javaComments"/>
     <completion.confidence language="JAVA" implementationClass="com.intellij.codeInsight.completion.UnfocusedComments" id="javaComments"/>
     <completion.confidence language="JAVA" implementationClass="com.intellij.codeInsight.completion.AlwaysFocusLookup" id="javaTrue" order="last"/>
+    <completion.confidence language="JAVA" implementationClass="com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionCompletionConfidence" id="javaReflection" />
     <completion.confidence language="JAVA" implementationClass="com.intellij.codeInsight.completion.SkipAutopopupInStrings" id="javaSkipAutopopupInStrings"/>
 
     <completion.contributor language="JAVA" implementationClass="com.intellij.codeInsight.completion.JavaNoVariantsDelegator" id="javaBasic2ClassName"
@@ -296,6 +302,9 @@
 
     <applicationService serviceInterface="com.intellij.psi.JavaDirectoryService"
                         serviceImplementation="com.intellij.psi.impl.file.JavaDirectoryServiceImpl"/>
+    
+    <applicationService serviceInterface="com.intellij.openapi.projectRoots.JavaVersionService"
+                        serviceImplementation="com.intellij.openapi.projectRoots.JavaVersionServiceImpl"/>
 
     <applicationService serviceInterface="com.intellij.refactoring.JavaRefactoringActionHandlerFactory"
                         serviceImplementation="com.intellij.refactoring.openapi.impl.JavaRefactoringActionHandlerFactoryImpl"/>
@@ -1224,6 +1233,8 @@
 
     <regExpLanguageHost forClass="com.intellij.psi.impl.source.tree.java.PsiLiteralExpressionImpl"
                         implementationClass="com.intellij.psi.impl.JavaRegExpHost"/>
+
+    <psi.referenceContributor language="JAVA" implementation="com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceContributor"/>
   </extensions>
 
   <actions>

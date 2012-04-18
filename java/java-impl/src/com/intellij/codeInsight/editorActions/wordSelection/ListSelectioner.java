@@ -23,10 +23,12 @@ import java.util.List;
 import java.util.ArrayList;
 
 public class ListSelectioner extends BasicSelectioner {
+  @Override
   public boolean canSelect(PsiElement e) {
     return e instanceof PsiParameterList || e instanceof PsiExpressionList;
   }
 
+  @Override
   public List<TextRange> select(PsiElement e, CharSequence editorText, int cursorOffset, Editor editor) {
 
     PsiElement[] children = e.getChildren();

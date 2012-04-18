@@ -36,9 +36,8 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlChildRole;
-import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.ui.Gray;
@@ -60,13 +59,13 @@ public class XmlTagTreeHighlightingPass extends TextEditorHighlightingPass {
   private static final HighlightInfoType TYPE = new HighlightInfoType.HighlightInfoTypeImpl(HighlightSeverity.INFORMATION, TextAttributesKey
     .createTextAttributesKey("TAG_TREE_HIGHLIGHTING_KEY"));
 
-  private final XmlFile myFile;
+  private final PsiFile myFile;
   private final EditorEx myEditor;
   private final BreadcrumbsInfoProvider myInfoProvider;
 
   private final List<Pair<TextRange, TextRange>> myPairsToHighlight = new ArrayList<Pair<TextRange, TextRange>>();
 
-  public XmlTagTreeHighlightingPass(@NotNull XmlFile file, @NotNull EditorEx editor) {
+  public XmlTagTreeHighlightingPass(@NotNull PsiFile file, @NotNull EditorEx editor) {
     super(file.getProject(), editor.getDocument(), true);
     myFile = file;
     myEditor = editor;

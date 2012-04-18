@@ -24,6 +24,7 @@ import com.intellij.psi.stubs.EmptyStub;
 import com.intellij.util.ArrayFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameterList;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrStubElementBase;
@@ -67,5 +68,10 @@ public class GrTypeParameterListImpl extends GrStubElementBase<EmptyStub> implem
     }
 
     return -1;
+  }
+
+  @Override
+  public void accept(GroovyElementVisitor visitor) {
+    visitor.visitTypeParameterList(this);
   }
 }

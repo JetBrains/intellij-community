@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -762,12 +762,11 @@ public class ExtractMethodProcessor implements MatchProvider {
     }
 
     adjustFinalParameters(newMethod);
-
-    for (int i = 0, length = myVariableDatum.length; i < length; i++) {
-      ParameterTablePanel.VariableData data = myVariableDatum[i];
+    int i = 0;
+    for (ParameterTablePanel.VariableData data : myVariableDatum) {
       if (!data.passAsParameter) continue;
       final PsiVariable variable = data.variable;
-      final PsiParameter psiParameter = newMethod.getParameterList().getParameters()[i];
+      final PsiParameter psiParameter = newMethod.getParameterList().getParameters()[i++];
       if (!TypeConversionUtil.isAssignable(variable.getType(), psiParameter.getType())) {
         for (PsiReference reference : ReferencesSearch.search(psiParameter, new LocalSearchScope(body))){
           final PsiElement element = reference.getElement();

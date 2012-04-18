@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,6 +55,7 @@ public class EditorTabsConfigurable implements EditorOptionsProvider {
     }));
     myEditorTabPlacement.setRenderer(new MyTabsPlacementComboBoxRenderer(myEditorTabPlacement.getRenderer()));
     myEditorTabPlacement.addItemListener(new ItemListener() {
+      @Override
       public void itemStateChanged(ItemEvent e) {
         revalidateSingleRowCheckbox();
       }
@@ -65,31 +66,51 @@ public class EditorTabsConfigurable implements EditorOptionsProvider {
 
   private void revalidateSingleRowCheckbox() {
     final int i = ((Integer)myEditorTabPlacement.getSelectedItem()).intValue();
-    if (SwingConstants.TOP != i) {
+
+    if (i == UISettings.TABS_NONE) {
+      myHideKnownExtensions.setEnabled(false);
+      myScrollTabLayoutInEditorCheckBox.setEnabled(false);
+      myCbModifiedTabsMarkedWithAsterisk.setEnabled(false);
+      myShowCloseButtonOnCheckBox.setEnabled(false);
+      myShowDirectoryInTabCheckBox.setEnabled(false);
+    } else {
+      myHideKnownExtensions.setEnabled(true);
+      myScrollTabLayoutInEditorCheckBox.setEnabled(true);
+      myCbModifiedTabsMarkedWithAsterisk.setEnabled(true);
+      myShowCloseButtonOnCheckBox.setEnabled(true);
+      myShowDirectoryInTabCheckBox.setEnabled(true);
+    }
+
+    if (SwingConstants.TOP == i) {
+      myScrollTabLayoutInEditorCheckBox.setEnabled(true);
+    } else {
       myScrollTabLayoutInEditorCheckBox.setSelected(true);
       myScrollTabLayoutInEditorCheckBox.setEnabled(false);
-    } else {
-      myScrollTabLayoutInEditorCheckBox.setEnabled(true);
     }
   }
 
+  @Override
   @Nls
   public String getDisplayName() {
     return "Editor Tabs";
   }
 
+  @Override
   public Icon getIcon() {
     return null;
   }
 
+  @Override
   public String getHelpTopic() {
     return "reference.settingsdialog.IDE.editor.tabs";
   }
 
+  @Override
   public JComponent createComponent() {
     return myRootPanel;
   }
 
+  @Override
   public void reset() {
     UISettings uiSettings=UISettings.getInstance();
 
@@ -118,6 +139,7 @@ public class EditorTabsConfigurable implements EditorOptionsProvider {
     }
   }
 
+  @Override
   public void apply() throws ConfigurationException {
     UISettings uiSettings=UISettings.getInstance();
 
@@ -161,6 +183,7 @@ public class EditorTabsConfigurable implements EditorOptionsProvider {
     }
   }
 
+  @Override
   public boolean isModified() {
     final UISettings uiSettings = UISettings.getInstance();
     boolean isModified = isModified(myCbModifiedTabsMarkedWithAsterisk, uiSettings.MARK_MODIFIED_TABS_WITH_ASTERISK);
@@ -180,6 +203,7 @@ public class EditorTabsConfigurable implements EditorOptionsProvider {
     return isModified;
   }
 
+  @Override
   public void disposeUIResources() {
   }
 
@@ -229,11 +253,13 @@ public class EditorTabsConfigurable implements EditorOptionsProvider {
     }
   }
 
+  @Override
   @NotNull
   public String getId() {
     return "editor.preferences.tabs";
   }
 
+  @Override
   public Runnable enableSearch(final String option) {
     return null;
   }

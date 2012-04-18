@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.intellij.ui.tabs.impl.table;
 import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tabs.impl.JBTabsImpl;
 import com.intellij.ui.tabs.impl.LayoutPassInfo;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.util.ArrayList;
@@ -36,16 +37,18 @@ public class TablePassInfo extends LayoutPassInfo {
 
   JBTabsImpl myTabs;
 
-  TablePassInfo(final JBTabsImpl tabs, java.util.List<TabInfo> visibleInfos) {
+  TablePassInfo(final JBTabsImpl tabs, List<TabInfo> visibleInfos) {
     super(visibleInfos);
     myTabs = tabs;
   }
 
+  @Nullable
   public TabInfo getPreviousFor(final TabInfo info) {
     final TableRow row = myInfo2Row.get(info);
     return row != null ? getPrevious(row.myColumns, row.myColumns.indexOf(info)) : null;
   }
 
+  @Nullable
   public TabInfo getNextFor(final TabInfo info) {
     final TableRow row = myInfo2Row.get(info);
     return row != null ? getNext(row.myColumns, row.myColumns.indexOf(info)) : null;

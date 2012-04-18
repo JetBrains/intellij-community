@@ -57,7 +57,7 @@ public abstract class Breakpoint extends FilteredRequestor implements ClassPrepa
   public static final Breakpoint[] EMPTY_ARRAY = new Breakpoint[0];
   protected boolean myCachedVerifiedState = false;
 
-  protected Breakpoint(Project project) {
+  protected Breakpoint(@NotNull Project project) {
     super(project);
     myLogMessage = new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, "");
     //noinspection AbstractMethodCallInConstructor

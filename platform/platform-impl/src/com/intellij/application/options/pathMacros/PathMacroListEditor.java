@@ -19,13 +19,13 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathMacros;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.AnActionButton;
+import com.intellij.ui.AnActionButtonRunnable;
+import com.intellij.ui.ToolbarDecorator;
 import com.intellij.util.text.StringTokenizer;
 
 import javax.swing.*;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -35,11 +35,8 @@ import java.util.List;
  */
 public class PathMacroListEditor {
   JPanel myPanel;
-  JButton myAddButton;
-  JButton myRemoveButton;
-  JButton myEditButton;
-  JScrollPane myScrollPane;
   private JTextField myIgnoredVariables;
+  private JPanel myPathVariablesPanel;
   private PathMacroTable myPathMacroTable;
 
   public PathMacroListEditor() {
@@ -48,35 +45,26 @@ public class PathMacroListEditor {
 
   public PathMacroListEditor(final Collection<String> undefinedMacroNames) {
     myPathMacroTable = undefinedMacroNames != null ? new PathMacroTable(undefinedMacroNames) : new PathMacroTable();
-    myScrollPane.setViewportView(myPathMacroTable);
-    myAddButton.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        myPathMacroTable.addMacro();
-      }
-    });
-    myRemoveButton.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        myPathMacroTable.removeSelectedMacros();
-      }
-    });
-    myEditButton.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        myPathMacroTable.editMacro();
-      }
-    });
-
-    myPathMacroTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
-      public void valueChanged(final ListSelectionEvent e) {
-        updateButtons();
-      }
-    });
+    myPathVariablesPanel.add(
+      ToolbarDecorator.createDecorator(myPathMacroTable)
+        .setAddAction(new AnActionButtonRunnable() {
+          @Override
+          public void run(AnActionButton button) {
+            myPathMacroTable.addMacro();
+          }
+        }).setRemoveAction(new AnActionButtonRunnable() {
+        @Override
+        public void run(AnActionButton button) {
+          myPathMacroTable.removeSelectedMacros();
+        }
+      }).setEditAction(new AnActionButtonRunnable() {
+        @Override
+        public void run(AnActionButton button) {
+          myPathMacroTable.editMacro();
+        }
+      }).disableUpDownActions().createPanel(), BorderLayout.CENTER);
 
     fillIgnoredVariables();
-  }
-
-  private void updateButtons() {
-    myEditButton.setEnabled(myPathMacroTable.getSelectedRowCount() == 1);
-    myRemoveButton.setEnabled(myPathMacroTable.getSelectedRowCount() > 0);
   }
 
   private void fillIgnoredVariables() {
@@ -119,7 +107,6 @@ public class PathMacroListEditor {
   public void reset() {
     myPathMacroTable.reset();
     fillIgnoredVariables();
-    updateButtons();
   }
 
   public boolean isModified() {

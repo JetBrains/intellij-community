@@ -16,18 +16,31 @@
 package com.intellij.android.designer.model;
 
 import com.intellij.designer.designSurface.ComponentDecorator;
+import com.intellij.designer.designSurface.DesignerEditorPanel;
 import com.intellij.designer.designSurface.selection.NonResizeSelectionDecorator;
 import com.intellij.designer.model.RadComponent;
 import com.intellij.designer.model.RadLayout;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
 
+import javax.swing.*;
 import java.awt.*;
+import java.util.List;
 
 /**
  * @author Alexander Lobas
  */
 public class RadViewLayout extends RadLayout {
+  public static final RadLayout INSTANCE = new RadViewLayout();
+  public static final ComponentDecorator NON_RESIZE_DECORATOR = new NonResizeSelectionDecorator(Color.RED, 1);
+
   @Override
-  public ComponentDecorator getChildSelectionDecorator(RadComponent component) {
-    return new NonResizeSelectionDecorator(Color.RED, 1);
+  public ComponentDecorator getChildSelectionDecorator(RadComponent component, List<RadComponent> selection) {
+    return NON_RESIZE_DECORATOR;
+  }
+
+  public void addContainerSelectionActions(DesignerEditorPanel designer,
+                                           DefaultActionGroup actionGroup,
+                                           JComponent shortcuts,
+                                           List<RadComponent> selection) {
   }
 }

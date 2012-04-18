@@ -247,6 +247,7 @@ public class CreatePropertyFromUsageFix extends CreateFromUsageBaseFix {
     builder.setEndVariableAfter(body.getLBrace());
 
     accessor = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(accessor);
+    LOG.assertTrue(accessor != null);
     targetClass = accessor.getContainingClass();
     LOG.assertTrue(targetClass != null);
     Template template = builder.buildTemplate();

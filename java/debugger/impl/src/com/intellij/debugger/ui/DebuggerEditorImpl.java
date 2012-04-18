@@ -69,13 +69,13 @@ public abstract class DebuggerEditorImpl extends CompletionEditor{
   private WeakReference<ListPopup> myPopup;
 
   private final PsiTreeChangeListener myPsiListener = new PsiTreeChangeAdapter() {
-    public void childRemoved(PsiTreeChangeEvent event) {
+    public void childRemoved(@NotNull PsiTreeChangeEvent event) {
       checkContext();
     }
-    public void childReplaced(PsiTreeChangeEvent event) {
+    public void childReplaced(@NotNull PsiTreeChangeEvent event) {
       checkContext();
     }
-    public void childMoved(PsiTreeChangeEvent event) {
+    public void childMoved(@NotNull PsiTreeChangeEvent event) {
       checkContext();
     }
     private void checkContext() {

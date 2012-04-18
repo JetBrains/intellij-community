@@ -22,6 +22,9 @@ import com.intellij.openapi.util.JDOMExternalizable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * @see com.intellij.execution.RunManager
+ */
 public interface RunConfiguration extends RunProfile, JDOMExternalizable, Cloneable {
   ConfigurationFactory getFactory();
 

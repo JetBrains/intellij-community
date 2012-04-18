@@ -18,6 +18,7 @@ package com.intellij.openapi.editor.colors;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ServiceManager;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 public abstract class EditorColorsManager {
   @NonNls public static final String DEFAULT_SCHEME_NAME = "Default";
@@ -34,6 +35,7 @@ public abstract class EditorColorsManager {
 
   public abstract void setGlobalScheme(EditorColorsScheme scheme);
 
+  @NotNull
   public abstract EditorColorsScheme getGlobalScheme();
 
   public abstract EditorColorsScheme getScheme(@NonNls String schemeName);

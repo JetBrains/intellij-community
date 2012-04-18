@@ -77,6 +77,7 @@ public class NewColorAndFontPanel extends JPanel {
         }
       }
 
+      @Override
       public void selectedOptionChanged(final Object selected) {
         if (ApplicationManager.getApplication().isDispatchThread()) {
           myPreviewPanel.blinkSelectedHighlightType(selected);
@@ -85,6 +86,7 @@ public class NewColorAndFontPanel extends JPanel {
 
     });
     mySchemesPanel.addListener(new ColorAndFontSettingsListener.Abstract() {
+      @Override
       public void schemeChanged(final Object source) {
         myOptionsPanel.updateOptionsList();
         myPreviewPanel.updateView();

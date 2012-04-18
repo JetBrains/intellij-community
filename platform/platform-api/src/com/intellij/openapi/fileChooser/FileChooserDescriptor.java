@@ -29,10 +29,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @see FileChooserDescriptorFactory
@@ -239,17 +236,33 @@ public class FileChooserDescriptor implements Cloneable {
     return JarFileSystem.getInstance().findFileByPath(path + JarFileSystem.JAR_SEPARATOR);
   }
 
-  public final void setHideIgnored(boolean hideIgnored) { myHideIgnored = hideIgnored; }
+  public final void setHideIgnored(boolean hideIgnored) {
+    myHideIgnored = hideIgnored;
+  }
 
   public final List<VirtualFile> getRoots() {
-    return myRoots;
+    return Collections.unmodifiableList(myRoots);
   }
 
+  public final void setRoots(final VirtualFile... roots) {
+    setRoots(Arrays.asList(roots));
+  }
+
+  public final void setRoots(@NotNull final List<VirtualFile> roots) {
+    myRoots.clear();
+    myRoots.addAll(roots);
+  }
+
+  /** @deprecated use {@linkplain #setRoots(com.intellij.openapi.vfs.VirtualFile...)} (to remove in IDEA 13) */
+  @SuppressWarnings("UnusedDeclaration")
   public final void setRoot(VirtualFile root) {
     myRoots.clear();
-    addRoot(root);
+    myRoots.add(root);
   }
-  public void addRoot(VirtualFile root) {
+
+  /** @deprecated use {@linkplain #setRoots(com.intellij.openapi.vfs.VirtualFile...)} (to remove in IDEA 13) */
+  @SuppressWarnings("UnusedDeclaration")
+  public final void addRoot(VirtualFile root) {
     myRoots.add(root);
   }
 

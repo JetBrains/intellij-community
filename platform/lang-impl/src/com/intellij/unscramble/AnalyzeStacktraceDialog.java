@@ -16,7 +16,6 @@
 
 package com.intellij.unscramble;
 
-import com.intellij.execution.ui.ConsoleView;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -49,9 +48,7 @@ public class AnalyzeStacktraceDialog extends DialogWrapper {
 
   @Override
   protected void doOKAction() {
-    final ConsoleView consoleView = AnalyzeStacktraceUtil.addConsole(myProject, null, "<Stacktrace>");
-    consoleView.allowHeavyFilters();
-    AnalyzeStacktraceUtil.printStacktrace(consoleView, myEditorPanel.getText());
+    AnalyzeStacktraceUtil.addConsole(myProject, null, "<Stacktrace>",  myEditorPanel.getText());
     super.doOKAction();
   }
 

@@ -94,6 +94,7 @@ public class AndroidIdlCompiler implements SourceGeneratingCompiler {
     final boolean myTestSource;
     final IAndroidTarget myAndroidTarget;
     final String myPackageName;
+    private final TimestampValidityState myValidityState;
 
     public IdlGenerationItem(@NotNull Module module,
                              @NotNull VirtualFile file,
@@ -105,6 +106,7 @@ public class AndroidIdlCompiler implements SourceGeneratingCompiler {
       myTestSource = testSource;
       myAndroidTarget = androidTarget;
       myPackageName = packageName;
+      myValidityState = new TimestampValidityState(myFile.getTimeStamp());
     }
 
     @Nullable
@@ -114,7 +116,7 @@ public class AndroidIdlCompiler implements SourceGeneratingCompiler {
 
     @Nullable
     public ValidityState getValidityState() {
-      return new TimestampValidityState(myFile.getTimeStamp());
+      return myValidityState;
     }
 
     public Module getModule() {
@@ -183,6 +185,8 @@ public class AndroidIdlCompiler implements SourceGeneratingCompiler {
       return EMPTY_GENERATION_ITEM_ARRAY;
     }
     List<GenerationItem> results = new ArrayList<GenerationItem>(items.length);
+    boolean toRefresh = false;
+
     for (GenerationItem item : items) {
       if (item instanceof IdlGenerationItem) {
         final IdlGenerationItem idlItem = (IdlGenerationItem)item;
@@ -209,6 +213,7 @@ public class AndroidIdlCompiler implements SourceGeneratingCompiler {
             }
           });
           if (messages.get(CompilerMessageCategory.ERROR).isEmpty()) {
+            toRefresh = true;
             results.add(idlItem);
           }
         }
@@ -221,6 +226,10 @@ public class AndroidIdlCompiler implements SourceGeneratingCompiler {
           });
         }
       }
+    }
+
+    if (toRefresh) {
+      outputRootDirectory.refresh(false, true);
     }
     return results.toArray(new GenerationItem[results.size()]);
   }

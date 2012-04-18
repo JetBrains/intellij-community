@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  */
 package org.jetbrains.android.compiler.tools;
 
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -56,8 +56,7 @@ public class AndroidDxRunner {
   private static Field myConsoleOut;
   private static Field myConsoleErr;
 
-  private AndroidDxRunner() {
-  }
+  private AndroidDxRunner() { }
 
   private static void loadDex(String dxPath) {
     try {
@@ -166,10 +165,10 @@ public class AndroidDxRunner {
       }
     }
     else {
-      if ("class".equals(FileUtil.getExtension(file.getName()))) {
+      if ("class".equals(FileUtilRt.getExtension(file.getName()))) {
         final String qName = getQualifiedName(root, file);
         if (qName != null && !qNames.add(qName)) {
-          reportWarning(FileUtil.toSystemDependentName(file.getPath()) + " won't be added. Class " +
+          reportWarning(FileUtilRt.toSystemDependentName(file.getPath()) + " won't be added. Class " +
                         qName + " already exists in classpath");
           return;
         }
@@ -180,12 +179,12 @@ public class AndroidDxRunner {
 
   @Nullable
   private static String getQualifiedName(File root, File classFile) {
-    String relativePath = FileUtil.getRelativePath(root, classFile);
+    String relativePath = FileUtilRt.getRelativePath(root, classFile);
     if (relativePath == null) {
       return null;
     }
 
-    return FileUtil.getNameWithoutExtension(FileUtil.toSystemIndependentName(relativePath)).replace('/', '.');
+    return FileUtilRt.getNameWithoutExtension(FileUtilRt.toSystemIndependentName(relativePath)).replace('/', '.');
   }
 
   public static void main(String[] args) {

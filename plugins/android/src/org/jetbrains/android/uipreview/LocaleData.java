@@ -3,12 +3,12 @@ package org.jetbrains.android.uipreview;
 /**
 * @author Eugene.Kudelevsky
 */
-class LocaleData {
+public class LocaleData {
   private final String myLanguage;
   private final String myRegion;
   private final String myPresentation;
 
-  LocaleData(String language, String region, String presentation) {
+  public LocaleData(String language, String region, String presentation) {
     myPresentation = presentation;
     myLanguage = language;
     myRegion = region;

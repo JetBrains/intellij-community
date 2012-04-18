@@ -45,13 +45,15 @@ class ServerState {
   private final List<GlobalLibrary> myGlobalLibraries = new ArrayList<GlobalLibrary>();
   private volatile String myGlobalEncoding = null;
   private volatile boolean myKeepTempCachesInMemory = false;
+  private volatile String myIgnoredFilesPatterns;
 
-  public void setGlobals(List<GlobalLibrary> libs, Map<String, String> pathVars, String globalEncoding) {
+  public void setGlobals(List<GlobalLibrary> libs, Map<String, String> pathVars, String globalEncoding, String ignoredFilesPatterns) {
     synchronized (myConfigurationLock) {
       clearCahedState();
       myGlobalLibraries.addAll(libs);
       myPathVariables.putAll(pathVars);
       myGlobalEncoding = StringUtil.isEmpty(globalEncoding)? null : globalEncoding;
+      myIgnoredFilesPatterns = StringUtil.isEmpty(ignoredFilesPatterns)? "" : ignoredFilesPatterns;
     }
   }
 
@@ -124,9 +126,8 @@ class ServerState {
   }
 
   public void startBuild(String projectPath, BuildType buildType, Set<String> modules, Collection<String> artifacts,
-                         Collection<String> paths, final MessageHandler msgHandler, CanceledStatus cs) throws Throwable{
+                         Map<String, String> builderParams, Collection<String> paths, final MessageHandler msgHandler, CanceledStatus cs) throws Throwable{
 
-    final String projectName = getProjectName(projectPath);
 
     ProjectDescriptor pd;
     synchronized (myConfigurationLock) {
@@ -136,9 +137,10 @@ class ServerState {
         final FSState fsState = new FSState(false);
         ProjectTimestamps timestamps = null;
         BuildDataManager dataManager = null;
+        final File dataStorageRoot = Utils.getDataStorageRoot(project);
         try {
-          timestamps = new ProjectTimestamps(projectName);
-          dataManager = new BuildDataManager(projectName, myKeepTempCachesInMemory);
+          timestamps = new ProjectTimestamps(dataStorageRoot);
+          dataManager = new BuildDataManager(dataStorageRoot, myKeepTempCachesInMemory);
         }
         catch (Exception e) {
           // second try
@@ -150,24 +152,22 @@ class ServerState {
             dataManager.close();
           }
           buildType = BuildType.PROJECT_REBUILD; // force project rebuild
-          FileUtil.delete(Paths.getDataStorageRoot(projectName));
-          timestamps = new ProjectTimestamps(projectName);
-          dataManager = new BuildDataManager(projectName, myKeepTempCachesInMemory);
+          FileUtil.delete(dataStorageRoot);
+          timestamps = new ProjectTimestamps(dataStorageRoot);
+          dataManager = new BuildDataManager(dataStorageRoot, myKeepTempCachesInMemory);
           // second attempt succeded
           msgHandler.processMessage(new CompilerMessage("compile-server", BuildMessage.Kind.INFO, "Project rebuild forced: " + e.getMessage()));
         }
 
-        pd = new ProjectDescriptor(projectName, project, fsState, timestamps, dataManager);
+        pd = new ProjectDescriptor(project, fsState, timestamps, dataManager, BuildLoggingManager.DEFAULT);
         myProjects.put(projectPath, pd);
       }
       pd.incUsageCounter();
     }
 
-    final Project project = pd.project;
-
     try {
       final CompileScope compileScope = createCompilationScope(buildType, pd, modules, artifacts, paths);
-      final IncProjectBuilder builder = new IncProjectBuilder(pd, BuilderRegistry.getInstance(), cs);
+      final IncProjectBuilder builder = new IncProjectBuilder(pd, BuilderRegistry.getInstance(), builderParams, cs);
       if (msgHandler != null) {
         builder.addMessageHandler(msgHandler);
       }
@@ -277,67 +277,66 @@ class ServerState {
       }
       catch (Throwable ex) {
         ourCleanupFailed = true;
-        LOG.info(ex);
+        LOG.info("Method com.sun.tools.javac.zip.ZipFileIndex.clearCache() not found");
       }
     }
-  }
-
-  private static String getProjectName(String projectPath) {
-    final File path = new File(projectPath);
-    final String name = path.getName().toLowerCase(Locale.US);
-    if (!isDirectoryBased(path) && name.endsWith(".ipr")) {
-      return name.substring(0, name.length() - ".ipr".length());
-    }
-    return name;
   }
 
   private Project loadProject(String projectPath) {
-    final Project project = new Project();
-    // setup JDKs and global libraries
-    final MethodClosure fakeClosure = new MethodClosure(new Object(), "hashCode");
-    for (GlobalLibrary library : myGlobalLibraries) {
-      if (library instanceof SdkLibrary) {
-        final SdkLibrary sdk = (SdkLibrary)library;
-        Node additionalData = null;
-        final String additionalXml = sdk.getAdditionalDataXml();
-        if (additionalXml != null) {
-          try {
-            additionalData = new XmlParser(false, false).parseText(additionalXml);
+    final long start = System.currentTimeMillis();
+    try {
+      final Project project = new Project();
+      // setup JDKs and global libraries
+      final MethodClosure fakeClosure = new MethodClosure(new Object(), "hashCode");
+      for (GlobalLibrary library : myGlobalLibraries) {
+        if (library instanceof SdkLibrary) {
+          final SdkLibrary sdk = (SdkLibrary)library;
+          Node additionalData = null;
+          final String additionalXml = sdk.getAdditionalDataXml();
+          if (additionalXml != null) {
+            try {
+              additionalData = new XmlParser(false, false).parseText(additionalXml);
+            }
+            catch (Exception e) {
+              LOG.info(e);
+            }
           }
-          catch (Exception e) {
-            LOG.info(e);
+          final Sdk jdk = project.createSdk(sdk.getTypeName(), sdk.getName(), sdk.getVersion(), sdk.getHomePath(), additionalData);
+          if (jdk != null) {
+            jdk.setClasspath(sdk.getPaths());
           }
-        }
-        final Sdk jdk = project.createSdk(/*"JavaSDK"*/sdk.getTypeName(), sdk.getName(), sdk.getHomePath(), additionalData);
-        if (jdk != null) {
-          jdk.setClasspath(sdk.getPaths());
+          else {
+            LOG.info("Failed to load SDK " + sdk.getName() + ", type: " + sdk.getTypeName());
+          }
         }
         else {
-          LOG.info("Failed to load SDK " + sdk.getName() + ", type: " + sdk.getTypeName());
+          final Library lib = project.createGlobalLibrary(library.getName(), fakeClosure);
+          if (lib != null) {
+            lib.setClasspath(library.getPaths());
+          }
+          else {
+            LOG.info("Failed to load global library " + library.getName());
+          }
         }
       }
-      else {
-        final Library lib = project.createGlobalLibrary(library.getName(), fakeClosure);
-        if (lib != null) {
-          lib.setClasspath(library.getPaths());
-        }
-        else {
-          LOG.info("Failed to load global library " + lib.getName());
-        }
+
+      final File projectFile = new File(projectPath);
+
+      //String root = dirBased ? projectPath : projectFile.getParent();
+
+      final String loadPath = isDirectoryBased(projectFile) ? new File(projectFile, IDEA_PROJECT_DIRNAME).getPath() : projectPath;
+      IdeaProjectLoader.loadFromPath(project, loadPath, myPathVariables, getStartupScript(), new SystemOutErrorReporter(false));
+      final String globalEncoding = myGlobalEncoding;
+      if (globalEncoding != null && project.getProjectCharset() == null) {
+        project.setProjectCharset(globalEncoding);
       }
+      project.getIgnoredFilePatterns().loadFromString(myIgnoredFilesPatterns);
+      return project;
     }
-
-    final File projectFile = new File(projectPath);
-
-    //String root = dirBased ? projectPath : projectFile.getParent();
-
-    final String loadPath = isDirectoryBased(projectFile) ? new File(projectFile, IDEA_PROJECT_DIRNAME).getPath() : projectPath;
-    IdeaProjectLoader.loadFromPath(project, loadPath, myPathVariables, getStartupScript(), new SystemOutErrorReporter(false));
-    final String globalEncoding = myGlobalEncoding;
-    if (globalEncoding != null && project.getProjectCharset() == null) {
-      project.setProjectCharset(globalEncoding);
+    finally {
+      final long loadTime = System.currentTimeMillis() - start;
+      LOG.info("Project " + projectPath + " loaded in " + loadTime + " ms");
     }
-    return project;
   }
 
   private static boolean isDirectoryBased(File projectFile) {

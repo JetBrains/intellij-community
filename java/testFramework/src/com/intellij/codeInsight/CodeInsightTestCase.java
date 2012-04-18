@@ -249,7 +249,9 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
           else {
             editorInfos = new LinkedHashMap<VirtualFile, EditorInfo>();
             for (final VirtualFile vFile : reversed) {
-              editorInfos.putAll(copyFilesFillingEditorInfos(vFile.getParent(), toDir, vFile.getName()));
+              VirtualFile parent = vFile.getParent();
+              assert parent.isDirectory() : parent;
+              editorInfos.putAll(copyFilesFillingEditorInfos(parent, toDir, vFile.getName()));
             }
           }
 
@@ -258,7 +260,7 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
             final ContentEntry contentEntry = rootModel.addContentEntry(toDir);
             if (isAddDirToSource()) {
               sourceRootAdded = true;
-              contentEntry.addSourceFolder(toDir, false);
+              contentEntry.addSourceFolder(toDir, isAddDirToTests());
             }
           }
           doCommitModel(rootModel);
@@ -276,6 +278,10 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
 
 
     return toDir;
+  }
+
+  protected boolean isAddDirToTests() {
+    return false;
   }
 
   protected void doCommitModel(final ModifiableRootModel rootModel) {

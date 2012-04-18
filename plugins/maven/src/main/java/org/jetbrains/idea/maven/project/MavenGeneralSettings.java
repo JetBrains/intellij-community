@@ -19,6 +19,8 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.xmlb.annotations.Property;
+import com.intellij.util.xmlb.annotations.Transient;
 import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -71,6 +73,7 @@ public class MavenGeneralSettings implements Cloneable {
     fireChanged();
   }
 
+  @Property
   @NotNull
   public MavenExecutionOptions.PluginUpdatePolicy getPluginUpdatePolicy() {
     return pluginUpdatePolicy;
@@ -82,6 +85,7 @@ public class MavenGeneralSettings implements Cloneable {
     changed();
   }
 
+  @Property
   @NotNull
   public MavenExecutionOptions.ChecksumPolicy getChecksumPolicy() {
     return checksumPolicy;
@@ -93,6 +97,7 @@ public class MavenGeneralSettings implements Cloneable {
     changed();
   }
 
+  @Property
   @NotNull
   public MavenExecutionOptions.FailureMode getFailureBehavior() {
     return failureBehavior;
@@ -104,9 +109,16 @@ public class MavenGeneralSettings implements Cloneable {
     changed();
   }
 
-  public
+  @Transient
   @NotNull
-  MavenExecutionOptions.LoggingLevel getLoggingLevel() {
+  @Deprecated // Use getOutputLevel()
+  public MavenExecutionOptions.LoggingLevel getLoggingLevel() {
+    return getOutputLevel();
+  }
+
+  @Property
+  @NotNull
+  public MavenExecutionOptions.LoggingLevel getOutputLevel() {
     return outputLevel;
   }
 
@@ -116,9 +128,9 @@ public class MavenGeneralSettings implements Cloneable {
     changed();
   }
 
-  public
+  @Property
   @NotNull
-  MavenExecutionOptions.SnapshotUpdatePolicy getSnapshotUpdatePolicy() {
+  public MavenExecutionOptions.SnapshotUpdatePolicy getSnapshotUpdatePolicy() {
     return snapshotUpdatePolicy;
   }
 

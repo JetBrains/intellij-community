@@ -66,6 +66,7 @@ public class EditorAppearanceConfigurable extends CompositeConfigurable<UnnamedC
   public EditorAppearanceConfigurable() {
     myCbBlinkCaret.addActionListener(
     new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent event) {
         myBlinkIntervalField.setEnabled(myCbBlinkCaret.isSelected());
       }
@@ -165,19 +166,23 @@ public class EditorAppearanceConfigurable extends CompositeConfigurable<UnnamedC
     }
   }
 
+  @Override
   @Nls
   public String getDisplayName() {
     return ApplicationBundle.message("tab.editor.settings.appearance");
   }
 
+  @Override
   public Icon getIcon() {
     return null;
   }
 
+  @Override
   public String getHelpTopic() {
     return "reference.settingsdialog.IDE.editor.appearance";
   }
 
+  @Override
   public JComponent createComponent() {
     for (UnnamedConfigurable provider : getConfigurables()) {
       myAddonPanel.add(provider.createComponent(), new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0, 0, GridBagConstraints.NORTHWEST,
@@ -192,15 +197,18 @@ public class EditorAppearanceConfigurable extends CompositeConfigurable<UnnamedC
     super.disposeUIResources();
   }
 
+  @Override
   protected List<UnnamedConfigurable> createConfigurables() {
     return AbstractConfigurableEP.createConfigurables(EP_NAME);
   }
 
+  @Override
   @NotNull
   public String getId() {
     return "editor.preferences.appearance";
   }
 
+  @Override
   public Runnable enableSearch(final String option) {
     return null;
   }

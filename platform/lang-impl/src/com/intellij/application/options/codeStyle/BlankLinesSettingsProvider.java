@@ -28,6 +28,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public class BlankLinesSettingsProvider extends CodeStyleSettingsProvider {
 
+  @Override
   @NotNull
   public Configurable createSettingsPage(final CodeStyleSettings settings, final CodeStyleSettings originalSettings) {
     return new CodeStyleBlankLinesConfigurable(settings, originalSettings);

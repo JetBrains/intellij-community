@@ -32,6 +32,7 @@ import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
+import com.intellij.util.net.HttpConfigurable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.util.GroovyUtils;
@@ -80,26 +81,26 @@ public class DefaultGroovyScriptRunner extends GroovyScriptRunner {
     params.getProgramParametersList().addParametersString(configuration.getScriptParameters());
   }
 
-  public static void configureGenericGroovyRunner(@NotNull JavaParameters params, @NotNull Module module, @NotNull String mainClass, boolean mayUseBundled) {
+  public static void configureGenericGroovyRunner(@NotNull JavaParameters params, @NotNull Module module, @NotNull String mainClass, boolean useBundled) {
     final VirtualFile groovyJar = findGroovyJar(module);
-    if (groovyJar != null) {
-      params.getClassPath().add(groovyJar);
-    } else if (mayUseBundled) {
+    if (useBundled) {
       params.getClassPath().add(GroovyUtils.getBundledGroovyJar());
+    }
+    else if (groovyJar != null) {
+      params.getClassPath().add(groovyJar);
     }
 
     setToolsJar(params);
 
-    String groovyHome = LibrariesUtil.getGroovyHomePath(module);
+    String groovyHome = useBundled ? FileUtil.toCanonicalPath(GroovyUtils.getBundledGroovyJar().getParentFile().getParent()) : LibrariesUtil.getGroovyHomePath(module);
     if (groovyHome != null) {
       groovyHome = FileUtil.toSystemDependentName(groovyHome);
-    } else if (mayUseBundled) {
-      groovyHome = FileUtil.toCanonicalPath(GroovyUtils.getBundledGroovyJar().getParentFile().getParent());
     }
     setGroovyHome(params, groovyHome);
 
     final String confPath = getConfPath(groovyHome);
     params.getVMParametersList().add("-Dgroovy.starter.conf=" + confPath);
+    params.getVMParametersList().addAll(HttpConfigurable.getProxyCmdLineProperties());
 
     params.setMainClass("org.codehaus.groovy.tools.GroovyStarter");
 

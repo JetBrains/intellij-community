@@ -82,22 +82,22 @@ public abstract class CopyPasteDelegator implements CopyPasteSupport {
   }
 
   private class MyEditable implements CutProvider, CopyProvider, PasteProvider {
-    public void performCopy(DataContext dataContext) {
+    public void performCopy(@NotNull DataContext dataContext) {
       PsiElement[] elements = getValidSelectedElements();
       PsiCopyPasteManager.getInstance().setElements(elements, true);
       updateView();
     }
 
-    public boolean isCopyEnabled(DataContext dataContext) {
+    public boolean isCopyEnabled(@NotNull DataContext dataContext) {
       PsiElement[] elements = getValidSelectedElements();
       return CopyHandler.canCopy(elements) || PsiCopyPasteManager.asFileList(elements) != null;
     }
 
-    public boolean isCopyVisible(DataContext dataContext) {
+    public boolean isCopyVisible(@NotNull DataContext dataContext) {
       return true;
     }
 
-    public void performCut(DataContext dataContext) {
+    public void performCut(@NotNull DataContext dataContext) {
       PsiElement[] elements = getValidSelectedElements();
       if (MoveHandler.adjustForMove(myProject, elements, null) == null) {
         return;
@@ -108,16 +108,16 @@ public abstract class CopyPasteDelegator implements CopyPasteSupport {
       updateView();
     }
 
-    public boolean isCutEnabled(DataContext dataContext) {
+    public boolean isCutEnabled(@NotNull DataContext dataContext) {
       final PsiElement[] elements = getValidSelectedElements();
       return elements.length != 0 && MoveHandler.canMove(elements, null);
     }
 
-    public boolean isCutVisible(DataContext dataContext) {
+    public boolean isCutVisible(@NotNull DataContext dataContext) {
       return true;
     }
 
-    public void performPaste(DataContext dataContext) {
+    public void performPaste(@NotNull DataContext dataContext) {
       if (!performDefaultPaste(dataContext)) {
         for(PasteProvider provider: Extensions.getExtensions(EP_NAME)) {
           if (provider.isPasteEnabled(dataContext)) {
@@ -176,11 +176,11 @@ public abstract class CopyPasteDelegator implements CopyPasteSupport {
       return true;
     }
 
-    public boolean isPastePossible(DataContext dataContext) {
+    public boolean isPastePossible(@NotNull DataContext dataContext) {
       return true;
     }
 
-    public boolean isPasteEnabled(DataContext dataContext){
+    public boolean isPasteEnabled(@NotNull DataContext dataContext){
       if (isDefaultPasteEnabled(dataContext)) {
         return true;
       }

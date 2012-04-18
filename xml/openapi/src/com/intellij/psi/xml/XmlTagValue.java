@@ -36,4 +36,6 @@ public interface XmlTagValue {
   String getTrimmedText();
 
   void setText(String value);
+
+  boolean hasCDATA();
 }

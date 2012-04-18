@@ -58,6 +58,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
+import javax.swing.*;
 import java.io.File;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
@@ -84,7 +85,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
   private ChangeListWorker myWorker;
   private VcsException myUpdateException = null;
-  private List<String> myAdditionalInfo;
+  private Factory<JComponent> myAdditionalInfo;
 
   private final EventDispatcher<ChangeListListener> myListeners = EventDispatcher.create(ChangeListListener.class);
 
@@ -111,6 +112,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   };
   private final ChangelistConflictTracker myConflictTracker;
   private VcsDirtyScopeManager myDirtyScopeManager;
+  private VcsDirtyScopeVfsListener myVfsListener;
 
   public static ChangeListManagerImpl getInstanceImpl(final Project project) {
     return (ChangeListManagerImpl)PeriodicalTasksCloser.getInstance().safeGetComponent(project, ChangeListManager.class);
@@ -123,8 +125,9 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   public ChangeListManagerImpl(Project project, final VcsConfiguration config) {
     myProject = project;
     myFreezeName = new AtomicReference<String>(null);
-    myAdditionalInfo = new ArrayList<String>();
+    myAdditionalInfo = null;
     myChangesViewManager = myProject.isDefault() ? new DummyChangesView(myProject) : ChangesViewManager.getInstance(myProject);
+    myVfsListener = ApplicationManager.getApplication().getComponent(VcsDirtyScopeVfsListener.class);
     myFileStatusManager = FileStatusManager.getInstance(myProject);
     myComposite = new FileHolderComposite(project);
     myIgnoredIdeaLevel = new IgnoredFilesComponent(myProject, true);
@@ -402,7 +405,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
         myModifier.enterUpdate();
         if (wasEverythingDirty) {
           myUpdateException = null;
-          myAdditionalInfo.clear();
+          myAdditionalInfo = null;
         }
       }
       final String scopeInString = (! LOG.isDebugEnabled()) ? "" : StringUtil.join(scopes, new Function<VcsDirtyScope, String>() {
@@ -457,7 +460,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
         scope.iterateExistingInsideScope(new Processor<VirtualFile>() {
           @Override
           public boolean process(VirtualFile file) {
-            file.putUserData(LastUnchangedContentTracker.VCS_INVALID_FILE_STATUS, null); //todo what if it has become dirty again during update?
+            LastUnchangedContentTracker.markUntouched(file); //todo what if it has become dirty again during update?
             return true;
           }
         });
@@ -535,7 +538,9 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
       if (myUpdateException != null) break;
     }
     synchronized (myDataLock) {
-      myAdditionalInfo.addAll(builder.getAdditionalInfo());
+      if (myAdditionalInfo == null) {
+        myAdditionalInfo = builder.getAdditionalInfo();
+      }
     }
   }
 
@@ -623,6 +628,9 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
         catch (VcsException e) {
           LOG.info(e);
           if (myUpdateException == null) {
+            if (ApplicationManager.getApplication().isUnitTestMode()) {
+              e.printStackTrace();
+            }
             myUpdateException = e;
           }
         }
@@ -763,9 +771,9 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     }
   }
   
-  public List<String> getAdditionalUpdateInfo() {
+  public Factory<JComponent> getAdditionalUpdateInfo() {
     synchronized (myDataLock) {
-      return new ArrayList<String>(myAdditionalInfo);
+      return myAdditionalInfo;
     }
   }
 
@@ -789,7 +797,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     }
   }
 
-  public LocalChangeList addChangeList(@NotNull final String name, final String comment) {
+  public LocalChangeList addChangeList(@NotNull final String name, @Nullable final String comment) {
     return ApplicationManager.getApplication().runReadAction(new Computable<LocalChangeList>() {
       @Override
       public LocalChangeList compute() {
@@ -1309,6 +1317,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
   @TestOnly
   public void waitUntilRefreshed() {
+    myVfsListener.flushDirt();
     myUpdater.waitUntilRefreshed();
     waitUpdateAlarm();
   }
@@ -1330,6 +1339,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
    * Can be called only from not AWT thread; to do smthg after ChangeListManager refresh, call invokeAfterUpdate
    */
   public boolean ensureUpToDate(final boolean canBeCanceled) {
+    myVfsListener.flushDirt();
     final EnsureUpToDateFromNonAWTThread worker = new EnsureUpToDateFromNonAWTThread(myProject);
     worker.execute();
     myUpdater.waitUntilRefreshed();

@@ -74,7 +74,9 @@
 
   <project-components>
     <component>
-      <implementation-class>git4idea.repo.GitRepositoryManager</implementation-class>
+      <interface-class>git4idea.repo.GitRepositoryManager</interface-class>
+      <implementation-class>git4idea.repo.GitRepositoryManagerImpl</implementation-class>
+      <headless-implementation-class>git4idea.repo.GitFakeRepositoryManager</headless-implementation-class>
     </component>
   </project-components>
 
@@ -84,6 +86,7 @@
     <checkoutProvider implementation="git4idea.checkout.GitCheckoutProvider"/>
     <vcsPopupProvider implementation="git4idea.actions.GitQuickListContentProvider"/>
     <vcsCheckinHandlerFactory implementation="git4idea.checkin.GitCheckinHandlerFactory"/>
+    <vcsChangesViewRefresher implementation="git4idea.changes.GitChangesViewRefresher" />
 
     <projectService
       serviceInterface="git4idea.history.wholeTree.LogFactoryService"
@@ -122,35 +125,31 @@
         serviceInterface="git4idea.config.GitExecutableValidator"
         serviceImplementation="git4idea.config.GitExecutableValidator"/>
     <projectService
-        serviceInterface="git4idea.DialogManager"
-        serviceImplementation="git4idea.DialogManager"/>
-    <projectService
         serviceInterface="git4idea.MessageManager"
         serviceImplementation="git4idea.MessageManager"/>
-    <projectService
-        serviceInterface="git4idea.NotificationManager"
-        serviceImplementation="git4idea.NotificationManager"/>
-    <projectService
-        serviceInterface="git4idea.history.wholeTree.GitLogSettings"
-        serviceImplementation="git4idea.history.wholeTree.GitLogSettings"/>
-    <applicationService
-        serviceImplementation="git4idea.history.wholeTree.GitCommitsSequentialIndex"
-        serviceInterface="git4idea.history.wholeTree.GitCommitsSequentially"/>
-    <applicationService
-        serviceInterface="git4idea.config.GitVcsApplicationSettings"
-        serviceImplementation="git4idea.config.GitVcsApplicationSettings"/>
-    <applicationService
-        serviceInterface="git4idea.commands.GitSSHIdeaService"
-        serviceImplementation="git4idea.commands.GitSSHIdeaService"/>
-    <applicationService
-        serviceInterface="git4idea.rebase.GitRebaseEditorService"
-        serviceImplementation="git4idea.rebase.GitRebaseEditorService"/>
-    <applicationService
-        serviceInterface="git4idea.config.SSHConnectionSettings"
-        serviceImplementation="git4idea.config.SSHConnectionSettings"/>
-    <applicationService
-        serviceInterface="git4idea.remote.GitRememberedInputs"
-        serviceImplementation="git4idea.remote.GitRememberedInputs"/>
+    <projectService serviceInterface="git4idea.Notificator"
+                    serviceImplementation="git4idea.Notificator"/>
+    <projectService serviceInterface="git4idea.history.wholeTree.GitLogSettings"
+                    serviceImplementation="git4idea.history.wholeTree.GitLogSettings"/>
+    <projectService serviceInterface="git4idea.roots.GitRootProblemNotifier"
+                    serviceImplementation="git4idea.roots.GitRootProblemNotifier"/>
+
+    <applicationService serviceImplementation="git4idea.history.wholeTree.GitCommitsSequentialIndex"
+                        serviceInterface="git4idea.history.wholeTree.GitCommitsSequentially"/>
+    <applicationService serviceInterface="git4idea.config.GitVcsApplicationSettings"
+                        serviceImplementation="git4idea.config.GitVcsApplicationSettings"/>
+    <applicationService serviceInterface="git4idea.commands.GitSSHIdeaService"
+                        serviceImplementation="git4idea.commands.GitSSHIdeaService"/>
+    <applicationService serviceInterface="git4idea.rebase.GitRebaseEditorService"
+                        serviceImplementation="git4idea.rebase.GitRebaseEditorService"/>
+    <applicationService serviceInterface="git4idea.config.SSHConnectionSettings"
+                        serviceImplementation="git4idea.config.SSHConnectionSettings"/>
+    <applicationService serviceInterface="git4idea.remote.GitRememberedInputs"
+                        serviceImplementation="git4idea.remote.GitRememberedInputs"/>
+    <applicationService serviceInterface="git4idea.commands.Git"
+                        serviceImplementation="git4idea.commands.GitImpl"/>
+
+    <applicationService serviceInterface="git4idea.PlatformFacade" serviceImplementation="git4idea.PlatformFacadeImpl" />
 
     <ComponentRoamingType component="Git.Settings" type="DISABLED"/>
     <fileTypeFactory implementation="git4idea.vfs.GitFileTypeFactory"/>

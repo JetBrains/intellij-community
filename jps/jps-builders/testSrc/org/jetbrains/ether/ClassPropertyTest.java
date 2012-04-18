@@ -39,4 +39,8 @@ public class ClassPropertyTest extends IncrementalTestCase {
   public void testRemoveImplements3() throws Exception {
     doTest();
   }
+
+  public void testChangeExtends2() throws Exception {
+      doTest();
+  }
 }

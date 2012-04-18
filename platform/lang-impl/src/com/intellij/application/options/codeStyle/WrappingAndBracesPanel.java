@@ -30,6 +30,7 @@ public class WrappingAndBracesPanel extends OptionTableWithPreviewPanel {
     return LanguageCodeStyleSettingsProvider.SettingsType.WRAPPING_AND_BRACES_SETTINGS;
   }
 
+  @Override
   protected void initTables() {
     addOption("KEEP_LINE_BREAKS", ApplicationBundle.message("wrapping.keep.line.breaks"), WRAPPING_KEEP);
     addOption("KEEP_FIRST_COLUMN_COMMENT", ApplicationBundle.message("wrapping.keep.comment.at.first.column"), WRAPPING_KEEP);

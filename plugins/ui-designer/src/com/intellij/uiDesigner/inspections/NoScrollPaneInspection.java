@@ -17,10 +17,13 @@
 package com.intellij.uiDesigner.inspections;
 
 import com.intellij.openapi.module.Module;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.actions.SurroundAction;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.lw.IComponent;
+import com.intellij.uiDesigner.palette.ComponentItem;
+import com.intellij.uiDesigner.palette.Palette;
 import com.intellij.uiDesigner.quickFixes.QuickFix;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import org.jetbrains.annotations.NotNull;
@@ -62,8 +65,13 @@ public class NoScrollPaneInspection extends BaseFormInspection {
     }
 
     public void run() {
+      String scrollPane = JScrollPane.class.getName();
+      ComponentItem item = Palette.getInstance(myEditor.getProject()).getItem(scrollPane);
+
+      SurroundAction action = new SurroundAction(item == null ? JBScrollPane.class.getName() : scrollPane);
+
       ArrayList<RadComponent> targetList = new ArrayList<RadComponent>(Collections.singletonList(myComponent));
-      new SurroundAction(JScrollPane.class.getName()).actionPerformed(myEditor, targetList, null);
+      action.actionPerformed(myEditor, targetList, null);
     }
   }
 }

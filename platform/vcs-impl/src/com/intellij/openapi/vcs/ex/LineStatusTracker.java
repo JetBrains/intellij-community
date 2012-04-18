@@ -87,7 +87,9 @@ public class LineStatusTracker {
     myUpToDateDocument.putUserData(UndoConstants.DONT_RECORD_UNDO, Boolean.TRUE);
     myProject = project;
     myBaseLoaded = BaseLoadState.LOADING;
-    myRanges = new ArrayList<Range>();
+    synchronized (myLock) {
+      myRanges = new ArrayList<Range>();
+    }
     myAnathemaThrown = false;
     myFileEditorManager = FileEditorManager.getInstance(myProject);
   }
@@ -205,7 +207,6 @@ public class LineStatusTracker {
       }
       removeAnathema();
       removeHighlightersFromMarkupModel();
-      myRanges.clear();
       myReleased = true;
     }
   }
@@ -238,7 +239,6 @@ public class LineStatusTracker {
       myBulkUpdate = true;
       removeAnathema();
       removeHighlightersFromMarkupModel();
-      myRanges.clear();
     }
   }
 
@@ -249,6 +249,7 @@ public class LineStatusTracker {
           range.getHighlighter().dispose();
         }
       }
+      myRanges.clear();
     }
   }
 
@@ -279,9 +280,7 @@ public class LineStatusTracker {
       myUpToDateDocument.setReadOnly(true);
       removeAnathema();
       removeHighlightersFromMarkupModel();
-      myRanges.clear();
       myBaseLoaded = BaseLoadState.LOADING;
-      return;
     }
   }
 
@@ -293,12 +292,13 @@ public class LineStatusTracker {
     private int myLinesBeforeChange;
     private final VcsDirtyScopeManager myVcsDirtyScopeManager = VcsDirtyScopeManager.getInstance(myProject);
 
+    @Override
     public void beforeDocumentChange(DocumentEvent e) {
       myApplication.assertWriteAccessAllowed();
 
       synchronized (myLock) {
         if (myReleased) return;
-        if (myBulkUpdate || myAnathemaThrown || (BaseLoadState.LOADED != myBaseLoaded)) return;
+        if (myBulkUpdate || myAnathemaThrown || BaseLoadState.LOADED != myBaseLoaded) return;
         try {
           myFirstChangedLine = myDocument.getLineNumber(e.getOffset());
           myLastChangedLine = myDocument.getLineNumber(e.getOffset() + e.getOldLength());
@@ -316,7 +316,7 @@ public class LineStatusTracker {
             myUpToDateFirstLine = firstChangedRange.getUOffset1();
           }
           else {
-            myUpToDateFirstLine = firstChangedRange.getUOffset2() + (myFirstChangedLine - firstChangedRange.getOffset2());
+            myUpToDateFirstLine = firstChangedRange.getUOffset2() + myFirstChangedLine - firstChangedRange.getOffset2();
           }
 
           Range myLastChangedRange = getLastRangeBeforeLine(myLastChangedLine);
@@ -329,7 +329,7 @@ public class LineStatusTracker {
             myLastChangedLine = myLastChangedRange.getOffset2();
           }
           else {
-            myUpToDateLastLine = myLastChangedRange.getUOffset2() + (myLastChangedLine - myLastChangedRange.getOffset2());
+            myUpToDateLastLine = myLastChangedRange.getUOffset2() + myLastChangedLine - myLastChangedRange.getOffset2();
           }
         } catch (ProcessCanceledException ignore) {
         }
@@ -346,12 +346,13 @@ public class LineStatusTracker {
       return result;
     }
 
+    @Override
     public void documentChanged(final DocumentEvent e) {
       myApplication.assertWriteAccessAllowed();
 
       synchronized (myLock) {
         if (myReleased) return;
-        if (myBulkUpdate || myAnathemaThrown || (BaseLoadState.LOADED != myBaseLoaded)) return;
+        if (myBulkUpdate || myAnathemaThrown || BaseLoadState.LOADED != myBaseLoaded) return;
         try {
 
           int line = myDocument.getLineNumber(e.getOffset() + e.getNewLength());
@@ -413,7 +414,6 @@ public class LineStatusTracker {
         } catch (FilesTooBigForDiffException e1) {
           installAnathema();
           removeHighlightersFromMarkupModel();
-          myRanges.clear();
         }
       }
     }
@@ -646,7 +646,7 @@ public class LineStatusTracker {
   }
 
   public static LineStatusTracker createOn(@Nullable VirtualFile virtualFile, final Document doc, final Project project) {
-    final Document document = new DocumentImpl(true);
+    final Document document = new DocumentImpl("",true);
     return new LineStatusTracker(doc, document, project, virtualFile);
   }
 

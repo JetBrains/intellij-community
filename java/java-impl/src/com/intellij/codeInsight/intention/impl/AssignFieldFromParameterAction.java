@@ -17,6 +17,7 @@ package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
@@ -45,6 +46,7 @@ public class AssignFieldFromParameterAction extends BaseIntentionAction {
     return type;
   }
 
+  @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     PsiParameter myParameter = CreateFieldFromParameterAction.findParameterAtCursor(file, editor);
     final PsiType type = getType(myParameter);
@@ -58,21 +60,24 @@ public class AssignFieldFromParameterAction extends BaseIntentionAction {
         || !type.isValid()
         || targetClass == null
         || targetClass.isInterface()
-        || CreateFieldFromParameterAction.isParameterAssignedToField(myParameter)) {
+        || CreateFieldFromParameterAction.getParameterAssignedToField(myParameter) != null) {
       return false;
     }
     PsiField field = findFieldToAssign(myParameter);
     if (field == null) return false;
+    if (!field.getLanguage().isKindOf(JavaLanguage.INSTANCE)) return false;
     setText(CodeInsightBundle.message("intention.assign.field.from.parameter.text", field.getName()));
 
     return true;
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return CodeInsightBundle.message("intention.assign.field.from.parameter.family");
   }
 
+  @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) {
     PsiParameter myParameter = CreateFieldFromParameterAction.findParameterAtCursor(file, editor);
     if (!CodeInsightUtilBase.prepareFileForWrite(myParameter.getContainingFile())) return;

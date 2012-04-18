@@ -28,12 +28,14 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.file.PsiDirectoryImpl;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -147,7 +149,7 @@ public class CreateFileFix extends LocalQuickFixAndIntentionActionOnPsiElement {
         if (newDirectories != null) {
           try {
             VfsUtil.createDirectoryIfMissing(myDirectory.getVirtualFile(), newDirectories);
-            VirtualFile vfsDir = VfsUtil.findRelativeFile(myDirectory.getVirtualFile(), newDirectories);
+            VirtualFile vfsDir = VfsUtil.findRelativeFile(myDirectory.getVirtualFile(), ArrayUtil.toStringArray(StringUtil.split(newDirectories, "/")));
             directory = new PsiDirectoryImpl((PsiManagerImpl)myDirectory.getManager(), vfsDir);
           }
           catch (IOException e) {

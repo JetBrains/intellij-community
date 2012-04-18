@@ -27,6 +27,7 @@ import com.intellij.ui.DeferredIconImpl;
 import com.intellij.ui.mac.foundation.Foundation;
 import com.intellij.util.Function;
 import com.intellij.util.ui.update.ComparableObject;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -134,6 +135,7 @@ public class NativeFileIconProvider implements FileIconProvider {
       myText = new Object[] {text, flags};
     }
 
+    @NotNull
     public Object[] getEqualityObjects() {
       return myText;
     }

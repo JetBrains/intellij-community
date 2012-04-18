@@ -23,6 +23,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeGlassPane;
 import com.intellij.openapi.wm.IdeGlassPaneUtil;
 import com.intellij.openapi.wm.impl.content.GraphicsConfig;
+import com.intellij.ui.ColorUtil;
 import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.util.Alarm;
 import org.jetbrains.annotations.Nullable;
@@ -75,11 +76,7 @@ public class SwitchingSession implements KeyEventDispatcher, Disposable {
   };
 
   private boolean myFadingAway;
-  private Disposable myPainterDisposable = new Disposable() {
-    @Override
-    public void dispose() {
-    }
-  };
+  private Disposable myPainterDisposable = Disposer.newDisposable();
 
   public SwitchingSession(SwitchManager mgr, SwitchProvider provider, KeyEvent e, @Nullable SwitchTarget preselected, boolean showSpots) {
     myManager = mgr;
@@ -230,7 +227,7 @@ public class SwitchingSession implements KeyEventDispatcher, Disposable {
 
       if (selected != null) {
         Color bg = Color.darkGray;
-        g.setColor(new Color(bg.getRed(), bg.getGreen(), bg.getBlue(), 180));
+        g.setColor(ColorUtil.toAlpha(bg, 180));
         g.setStroke(new BasicStroke(3));
         g.draw(selected);
       }

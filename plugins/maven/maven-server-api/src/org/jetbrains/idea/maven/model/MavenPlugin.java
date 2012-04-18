@@ -18,6 +18,7 @@ package org.jetbrains.idea.maven.model;
 
 import com.intellij.openapi.util.JDOMUtil;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.Serializable;
@@ -84,6 +85,17 @@ public class MavenPlugin implements Serializable {
 
   public List<MavenId> getDependencies() {
     return myDependencies;
+  }
+
+  @Nullable
+  public Element getGoalConfiguration(@NotNull String goal) {
+    for (MavenPlugin.Execution each : getExecutions()) {
+      if (each.getGoals().contains(goal)) {
+        return each.getConfigurationElement();
+      }
+    }
+
+    return null;
   }
 
   public String getDisplayString() {

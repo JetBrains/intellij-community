@@ -35,7 +35,8 @@ import java.util.regex.Pattern;
  * The version of Git. Note that the version number ignores build and commit hash.
  * The class is able to distinct MSYS and CYGWIN Gits under Windows assuming that msysgit adds the 'msysgit' suffix to the output
  * of the 'git version' command.
- * This is not a very good way to distinguish msys and cygwin since in old versions of msys they didn't add the suffix. 
+ * This is not a very good way to distinguish msys and cygwin since in old versions of msys they didn't add the suffix.
+ *
  * Note: this class has a natural ordering that is inconsistent with equals.
  */
 public final class GitVersion implements Comparable<GitVersion> {
@@ -50,7 +51,9 @@ public final class GitVersion implements Comparable<GitVersion> {
     CYGWIN,
     /** The type doesn't matter or couldn't be detected. */
     UNDEFINED,
-    /** Information about Git version is unavailable because the GitVcs hasn't fully initialized yet, or because Git executable is invalid. */
+    /**
+     * Information about Git version is unavailable because the GitVcs hasn't fully initialized yet, or because Git executable is invalid.
+     */
     NULL
   }
 
@@ -65,7 +68,9 @@ public final class GitVersion implements Comparable<GitVersion> {
    */
   public static final GitVersion NULL = new GitVersion(0, 0, 0, 0, Type.NULL);
 
-  private static final Pattern FORMAT = Pattern.compile("git version (\\d+)\\.(\\d+)\\.(\\d+)(?:\\.(\\d+))?(?:\\.(msysgit))?[\\.\\-\\d\\w]*", Pattern.CASE_INSENSITIVE);
+  private static final Pattern FORMAT = Pattern.compile(
+    "git version (\\d+)\\.(\\d+)\\.(\\d+)(?:\\.(\\d+))?(.*)", Pattern.CASE_INSENSITIVE);
+
   private static final Logger LOG = Logger.getInstance(GitVersion.class.getName());
 
   private final int myMajor;
@@ -108,7 +113,7 @@ public final class GitVersion implements Comparable<GitVersion> {
     int minor = getIntGroup(m, 2);
     int rev = getIntGroup(m, 3);
     int patch = getIntGroup(m, 4);
-    boolean msys = (m.groupCount() >= 5) && m.group(5) != null && m.group(5).equalsIgnoreCase("msysgit");
+    boolean msys = (m.groupCount() >= 5) && m.group(5) != null && m.group(5).toLowerCase().contains("msysgit");
     Type type;
     if (SystemInfo.isWindows) {
       type = msys ? Type.MSYS : Type.CYGWIN;
@@ -139,7 +144,7 @@ public final class GitVersion implements Comparable<GitVersion> {
     CapturingProcessHandler handler = new CapturingProcessHandler(commandLine.createProcess(), CharsetToolkit.getDefaultSystemCharset());
     ProcessOutput result = handler.runProcess(30 * 1000);
     if (result.isTimeout()) {
-      throw new TimeoutException("Coulnd't identify the version of Git - stopped by timeout.");
+      throw new TimeoutException("Couldn't identify the version of Git - stopped by timeout.");
     }
     if (result.getExitCode() != 0 || !result.getStderr().isEmpty()) {
       LOG.info("getVersion exitCode=" + result.getExitCode() + " errors: " + result.getStderr());
@@ -147,7 +152,8 @@ public final class GitVersion implements Comparable<GitVersion> {
       try {
         parse(result.getStdout());
       } catch (ParseException pe) {
-        throw new ExecutionException("Errors while executing git --version. exitCode=" + result.getExitCode() + " errors: " + result.getStderr());
+        throw new ExecutionException("Errors while executing git --version. exitCode=" + result.getExitCode() +
+                                     " errors: " + result.getStderr());
       }
     }
     return parse(result.getStdout());

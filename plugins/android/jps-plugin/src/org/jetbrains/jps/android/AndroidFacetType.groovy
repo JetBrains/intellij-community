@@ -4,6 +4,7 @@ import org.jetbrains.jps.MacroExpander
 import org.jetbrains.jps.Module
 import org.jetbrains.jps.idea.Facet
 import org.jetbrains.jps.idea.FacetTypeService
+import org.jetbrains.jps.idea.IdeaProjectLoadingUtil
 
 /**
  * @author Eugene.Kudelevsky
@@ -49,6 +50,16 @@ class AndroidFacetType extends FacetTypeService {
           break
         case "ASSETS_FOLDER_RELATIVE_PATH":
           facet.assetsFolderRelativePath = value
+          break
+        case "APK_PATH":
+          facet.apkRelativePath = value
+          break
+        case "CUSTOM_DEBUG_KEYSTORE_PATH":
+          facet.customDebugKeyStorePath = IdeaProjectLoadingUtil.pathFromUrl(value)
+          break
+        case "LIBS_FOLDER_RELATIVE_PATH":
+          facet.nativeLibsFolderRelativePath = value
+          break
       }
     }
     return facet;

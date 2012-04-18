@@ -34,8 +34,12 @@ public class VcsBundle {
   private VcsBundle() {
   }
 
-  public static String message(@PropertyKey(resourceBundle = "messages.VcsBundle")String key, Object... params) {
+  public static String message(@PropertyKey(resourceBundle = PATH_TO_BUNDLE)String key, Object... params) {
     return CommonBundle.message(getBundle(), key, params);
+  }
+
+  public static String getString(@PropertyKey(resourceBundle = PATH_TO_BUNDLE) final String key) {
+    return getBundle().getString(key);
   }
 
   private static ResourceBundle getBundle() {

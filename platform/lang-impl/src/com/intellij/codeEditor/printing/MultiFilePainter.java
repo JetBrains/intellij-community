@@ -16,6 +16,7 @@
 
 package com.intellij.codeEditor.printing;
 
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
@@ -53,7 +54,13 @@ class MultiFilePainter implements Printable{
       }
       if (myTextPainter != null) {
         ((TextPainter)myTextPainter).setProgress(myProgress);
-        int ret = myTextPainter.print(g, pageFormat, pageIndex - myStartPageIndex);
+        int ret = 0;
+        try {
+          ret = myTextPainter.print(g, pageFormat, pageIndex - myStartPageIndex);
+        }
+        catch (ProcessCanceledException e) {
+        }
+
         if (myProgress.isCanceled()) {
           return Printable.NO_SUCH_PAGE;
         }

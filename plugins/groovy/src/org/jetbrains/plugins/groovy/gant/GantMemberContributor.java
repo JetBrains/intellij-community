@@ -29,6 +29,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlo
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.resolve.NonCodeMembersContributor;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
@@ -84,13 +85,15 @@ public class GantMemberContributor extends NonCodeMembersContributor {
       return;
     }
 
-    for (GrArgumentLabel label : GantUtils.getScriptTargets((GroovyFile)file)) {
-      final String targetName = label.getName();
-      if (targetName != null) {
-        final PsiNamedElement variable = new LightVariableBuilder(targetName, GroovyCommonClassNames.GROOVY_LANG_CLOSURE, label).
-          setBaseIcon(GantIcons.GANT_TARGET);
-        if (!ResolveUtil.processElement(processor, variable, state)) {
-          return;
+    if (aClass instanceof GroovyScriptClass) {
+      for (GrArgumentLabel label : GantUtils.getScriptTargets((GroovyFile)file)) {
+        final String targetName = label.getName();
+        if (targetName != null) {
+          final PsiNamedElement variable = new LightVariableBuilder(targetName, GroovyCommonClassNames.GROOVY_LANG_CLOSURE, label).
+            setBaseIcon(GantIcons.GANT_TARGET);
+          if (!ResolveUtil.processElement(processor, variable, state)) {
+            return;
+          }
         }
       }
     }

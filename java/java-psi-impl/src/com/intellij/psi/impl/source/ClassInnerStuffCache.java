@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,7 +37,7 @@ import java.util.List;
 import java.util.Map;
 
 public class ClassInnerStuffCache {
-  private final PsiClass myClass;
+  private final PsiExtensibleClass myClass;
   private final MyModificationTracker myTreeChangeTracker;
 
   private CachedValue<PsiMethod[]> myConstructorsCache;
@@ -48,7 +48,7 @@ public class ClassInnerStuffCache {
   private CachedValue<Map<String, List<PsiMethod>>> myMethodsMapCache;
   private CachedValue<Map<String, PsiClass>> myInnerClassesMapCache;
 
-  public ClassInnerStuffCache(final PsiClass aClass) {
+  public ClassInnerStuffCache(final PsiExtensibleClass aClass) {
     myClass = aClass;
     myTreeChangeTracker = new MyModificationTracker();
   }
@@ -197,27 +197,21 @@ public class ClassInnerStuffCache {
   }
 
   private PsiField[] getAllFields() {
-    if (!(myClass instanceof PsiClassImpl)) return myClass.getFields();
-
-    final PsiField[] own = ((PsiClassImpl)myClass).getStubOrPsiChildren(Constants.FIELD_BIT_SET, PsiField.ARRAY_FACTORY);
+    final List<PsiField> own = myClass.getOwnFields();
     final List<PsiField> ext = PsiAugmentProvider.collectAugments(myClass, PsiField.class);
-    return ArrayUtil.mergeArrayAndCollection(own, ext, PsiField.ARRAY_FACTORY);
+    return ArrayUtil.mergeCollections(own, ext, PsiField.ARRAY_FACTORY);
   }
 
   private PsiMethod[] getAllMethods() {
-    if (!(myClass instanceof PsiClassImpl)) return myClass.getMethods();
-
-    final PsiMethod[] own = ((PsiClassImpl)myClass).getStubOrPsiChildren(Constants.METHOD_BIT_SET, PsiMethod.ARRAY_FACTORY);
+    final List<PsiMethod> own = myClass.getOwnMethods();
     final List<PsiMethod> ext = PsiAugmentProvider.collectAugments(myClass, PsiMethod.class);
-    return ArrayUtil.mergeArrayAndCollection(own, ext, PsiMethod.ARRAY_FACTORY);
+    return ArrayUtil.mergeCollections(own, ext, PsiMethod.ARRAY_FACTORY);
   }
 
   private PsiClass[] getAllInnerClasses() {
-    if (!(myClass instanceof PsiClassImpl)) return myClass.getInnerClasses();
-
-    final PsiClass[] own = ((PsiClassImpl)myClass).getInnerClassesRaw();
+    final List<PsiClass> own = myClass.getOwnInnerClasses();
     final List<PsiClass> ext = PsiAugmentProvider.collectAugments(myClass, PsiClass.class);
-    return ArrayUtil.mergeArrayAndCollection(own, ext, PsiClass.ARRAY_FACTORY);
+    return ArrayUtil.mergeCollections(own, ext, PsiClass.ARRAY_FACTORY);
   }
 
   @Nullable

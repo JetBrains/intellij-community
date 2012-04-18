@@ -26,6 +26,8 @@ import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -34,7 +36,7 @@ import java.util.List;
 /**
 * @author peter
 */
-class ConstructorInsertHandler implements InsertHandler<LookupElementDecorator<LookupItem>> {
+public class ConstructorInsertHandler implements InsertHandler<LookupElementDecorator<LookupItem>> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.ConstructorInsertHandler");
   public static final ConstructorInsertHandler SMART_INSTANCE = new ConstructorInsertHandler(true);
   public static final ConstructorInsertHandler BASIC_INSTANCE = new ConstructorInsertHandler(false);
@@ -73,7 +75,7 @@ class ConstructorInsertHandler implements InsertHandler<LookupElementDecorator<L
     if (delegate instanceof PsiTypeLookupItem) {
       fillTypeArgs = !isRawTypeExpected(context, (PsiTypeLookupItem)delegate) &&
                      psiClass.getTypeParameters().length > 0 &&
-                     ((PsiTypeLookupItem)delegate).calcGenerics(position).isEmpty() &&
+                     ((PsiTypeLookupItem)delegate).calcGenerics(position, context).isEmpty() &&
                      context.getCompletionChar() != '(';
       delegate.handleInsert(context);
       PostprocessReformattingAspect.getInstance(context.getProject()).doPostponedFormatting(context.getFile().getViewProvider());
@@ -147,8 +149,16 @@ class ConstructorInsertHandler implements InsertHandler<LookupElementDecorator<L
     }
 
     final PsiElement place = context.getFile().findElementAt(context.getStartOffset());
-    final PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(context.getProject()).getResolveHelper();
     assert place != null;
+    boolean hasParams = hasConstructorParameters(psiClass, place);
+
+    JavaCompletionUtil.insertParentheses(context, delegate, false, hasParams, forAnonymous);
+
+    return true;
+  }
+
+  static boolean hasConstructorParameters(PsiClass psiClass, @NotNull PsiElement place) {
+    final PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(place.getProject()).getResolveHelper();
     boolean hasParams = false;
     for (PsiMethod constructor : psiClass.getConstructors()) {
       if (!resolveHelper.isAccessible(constructor, place, null)) continue;
@@ -157,12 +167,10 @@ class ConstructorInsertHandler implements InsertHandler<LookupElementDecorator<L
         break;
       }
     }
-
-    JavaCompletionUtil.insertParentheses(context, delegate, false, hasParams, forAnonymous);
-
-    return true;
+    return hasParams;
   }
 
+  @Nullable
   private static Runnable generateAnonymousBody(final Editor editor, final PsiFile file) {
     final Project project = file.getProject();
     PsiDocumentManager.getInstance(project).commitAllDocuments();
@@ -174,13 +182,20 @@ class ConstructorInsertHandler implements InsertHandler<LookupElementDecorator<L
     PsiElement parent = element.getParent();
     if (!(parent instanceof PsiAnonymousClass)) return null;
 
-    try{
+    return genAnonymousBodyFor((PsiAnonymousClass)parent, editor, file, project);
+  }
+
+  public static Runnable genAnonymousBodyFor(PsiAnonymousClass parent,
+                                             final Editor editor,
+                                             final PsiFile file,
+                                             final Project project) {
+    try {
       CodeStyleManager.getInstance(project).reformat(parent);
     }
-    catch(IncorrectOperationException e){
+    catch (IncorrectOperationException e) {
       LOG.error(e);
     }
-    offset = parent.getTextRange().getEndOffset() - 1;
+    int offset = parent.getTextRange().getEndOffset() - 1;
     editor.getCaretModel().moveToOffset(offset);
     editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
     editor.getSelectionModel().removeSelection();

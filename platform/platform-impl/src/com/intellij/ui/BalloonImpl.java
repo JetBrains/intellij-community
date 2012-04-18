@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,6 +58,10 @@ import java.awt.image.BufferedImage;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
 
+import static java.awt.event.KeyEvent.KEY_PRESSED;
+import static java.awt.event.MouseEvent.MOUSE_CLICKED;
+import static java.awt.event.MouseEvent.MOUSE_PRESSED;
+
 public class BalloonImpl implements Balloon, IdeTooltip.Ui {
 
   private MyComponent myComp;
@@ -78,45 +82,49 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
   private CloseButton myCloseRec;
 
   private final AWTEventListener myAwtActivityListener = new AWTEventListener() {
-    public void eventDispatched(final AWTEvent event) {
-      if (myHideOnMouse &&
-          (event.getID() == MouseEvent.MOUSE_PRESSED)) {
-        final MouseEvent me = (MouseEvent)event;
-        if (isInsideBalloon(me))  return;
+    public void eventDispatched(final AWTEvent e) {
+      final int id = e.getID();
+      if (e instanceof MouseEvent) {
+        final MouseEvent me = (MouseEvent)e;
+        final boolean insideBalloon = isInsideBalloon(me);
 
-        hide();
-        return;
-      }
-
-      if (myClickHandler != null && event.getID() == MouseEvent.MOUSE_CLICKED) {
-        final MouseEvent me = (MouseEvent)event;
-        if (!(me.getComponent() instanceof CloseButton) && isInsideBalloon(me)) {
-          myClickHandler.actionPerformed(new ActionEvent(BalloonImpl.this, ActionEvent.ACTION_PERFORMED, "click", me.getModifiersEx()));
-          if (myCloseOnClick) {
+        if (myHideOnMouse && id == MOUSE_PRESSED) {
+          if (!insideBalloon) {
             hide();
-            return;
+          }
+          return;
+        }
+
+        if (myClickHandler != null && id == MOUSE_CLICKED) {
+          if (!(me.getComponent() instanceof CloseButton) && insideBalloon) {
+            myClickHandler.actionPerformed(new ActionEvent(BalloonImpl.this, ActionEvent.ACTION_PERFORMED, "click", me.getModifiersEx()));
+            if (myCloseOnClick) {
+              hide();
+              return;
+            }
           }
         }
-      }
 
-      if (myEnableCloseButton && event.getID() == MouseEvent.MOUSE_MOVED) {
-        final MouseEvent me = (MouseEvent)event;
-        final boolean inside = isInsideBalloon(me);
-        final boolean moveChanged = inside != myLastMoveWasInsideBalloon;
-        myLastMoveWasInsideBalloon = inside;
-        if (moveChanged) {
-          myComp.repaintButton();
+        if (myEnableCloseButton && id == MouseEvent.MOUSE_MOVED) {
+          final boolean moveChanged = insideBalloon != myLastMoveWasInsideBalloon;
+          myLastMoveWasInsideBalloon = insideBalloon;
+          if (moveChanged) {
+            myComp.repaintButton();
+          }
+        }
+
+        if (UIUtil.isCloseClick((MouseEvent)e)) {
+          hide();
+          return;
         }
       }
 
-      if (event instanceof MouseEvent && UIUtil.isCloseClick((MouseEvent)event)) {
-        hide();
-        return;
-      }
-
-      if (myHideOnKey && (event.getID() == KeyEvent.KEY_PRESSED)) {
-        final KeyEvent ke = (KeyEvent)event;
-        if (ke.getKeyCode() != KeyEvent.VK_SHIFT && ke.getKeyCode() != KeyEvent.VK_CONTROL && ke.getKeyCode() != KeyEvent.VK_ALT && ke.getKeyCode() != KeyEvent.VK_META) {
+      if (myHideOnKey && e instanceof KeyEvent && id == KEY_PRESSED) {
+        final KeyEvent ke = (KeyEvent)e;
+        if (ke.getKeyCode() != KeyEvent.VK_SHIFT &&
+            ke.getKeyCode() != KeyEvent.VK_CONTROL &&
+            ke.getKeyCode() != KeyEvent.VK_ALT &&
+            ke.getKeyCode() != KeyEvent.VK_META) {
           if (SwingUtilities.isDescendingFrom(ke.getComponent(), myComp) || ke.getComponent() == myComp) return;
           hide();
         }
@@ -147,6 +155,7 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
   private boolean myAnimationEnabled = true;
   private boolean myShadow = false;
   private Layer myLayer;
+  private boolean myBlockClicks;
 
   public boolean isInsideBalloon(MouseEvent me) {
     return isInside(new RelativePoint(me));
@@ -159,7 +168,7 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
     if (!cmp.isShowing()) return true;
     if (cmp == myCloseRec) return true;
     if (SwingUtilities.isDescendingFrom(cmp, myComp) || cmp == myComp) return true;
-    if (!myComp.isShowing()) return false;
+    if (myComp == null || !myComp.isShowing()) return false;
     if (new Rectangle(myComp.getLocationOnScreen(), myComp.getSize()).contains(target.getScreenPoint())) return true;
 
     return false;
@@ -197,13 +206,14 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
                      boolean closeOnClick,
                      int animationCycle,
                      int calloutShift,
-                     int positioChangeXShfit,
+                     int positionChangeXShift,
                      int positionChangeYShift,
                      boolean dialogMode,
                      String title,
                      Insets contentInsets,
                      boolean shadow,
                      boolean smallVariant,
+                     boolean blockClicks,
                      Layer layer) {
     myBorderColor = borderColor;
     myFillColor = fillColor;
@@ -217,11 +227,12 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
     myClickHandler = clickHandler;
     myCloseOnClick = closeOnClick;
     myCalloutshift = calloutShift;
-    myPositionChangeXShift = positioChangeXShfit;
+    myPositionChangeXShift = positionChangeXShift;
     myPositionChangeYShift = positionChangeYShift;
     myDialogMode = dialogMode;
     myTitle = title;
     myLayer = layer != null ? layer : Layer.normal;
+    myBlockClicks = blockClicks;
     
     if (!myDialogMode) {
       new AwtVisitor(content) {
@@ -524,10 +535,28 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
     myLayeredPane.add(myComp);
     myLayeredPane.setLayer(myComp, getLayer());
     myPosition.updateBounds(this);
+    if (myBlockClicks) {
+      myComp.addMouseListener(new MouseAdapter() {
+        @Override
+        public void mouseClicked(MouseEvent e) {
+          e.consume();
+        }
+
+        @Override
+        public void mousePressed(MouseEvent e) {
+          e.consume();
+        }
+
+        @Override
+        public void mouseReleased(MouseEvent e) {
+          e.consume();
+        }
+      });
+    }
   }
 
 
-  private EmptyBorder getPointlessBorder() {
+  private static EmptyBorder getPointlessBorder() {
     return new EmptyBorder(getNormalInset(), getNormalInset(), getNormalInset(), getNormalInset());
   }
 
@@ -696,6 +725,7 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
     }
 
     myVisible = false;
+    myTracker = null;
   }
 
   public void dispose() {
@@ -787,8 +817,6 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
 
     void paintComponent(BalloonImpl balloon, final Rectangle bounds, final Graphics2D g, Point pointTarget, JComponent component) {
       final GraphicsConfig cfg = new GraphicsConfig(g);
-      cfg.setAntialiasing(true);
-
 
       Shape shape;
       if (balloon.myShowPointer) {
@@ -818,7 +846,7 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
 
 
         Color fgColor = UIManager.getColor("Label.foreground");
-        fgColor = new Color(fgColor.getRed(), fgColor.getGreen(), fgColor.getBlue(), 140);
+        fgColor = ColorUtil.toAlpha(fgColor, 140);
         g.setColor(fgColor);
         g.fill(area);
 
@@ -1496,7 +1524,7 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
           //pane.setBorder(new LineBorder(Color.blue));
 
           balloon.set(new BalloonImpl(new JLabel("FUCK"), Color.black, MessageType.ERROR.getPopupBackground(), true, true, true, true, true, 0, true, null, false, 500, 25, 0, 0, false, "This is the title",
-                                      new Insets(2, 2, 2, 2), true, false, Layer.normal));
+                                      new Insets(2, 2, 2, 2), true, false, false, Layer.normal));
           balloon.get().setShowPointer(true);
 
           if (e.isShiftDown()) {

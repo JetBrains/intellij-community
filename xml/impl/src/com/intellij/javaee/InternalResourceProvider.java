@@ -55,6 +55,8 @@ public class InternalResourceProvider implements StandardResourceProvider{
     impl.addInternalResource("http://www.wapforum.org/DTD/xhtml-mobile10-flat.dtd", "xhtml-mobile/xhtml-mobile10-flat.dtd");
     impl.addInternalResource("http://www.wapforum.org/DTD/xhtml-mobile12.dtd", "xhtml-mobile/xhtml-mobile12.dtd");
 
+    impl.addInternalResource("http://www.openmobilealliance.org/tech/DTD/xhtml-mobile12.dtd", "xhtml-mobile/xhtml-mobile12.dtd");
+
     // svg and mathML
     impl.addIgnoredResource(HtmlUtil.MATH_ML_NAMESPACE);
     impl.addIgnoredResource(HtmlUtil.SVG_NAMESPACE);

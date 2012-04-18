@@ -81,7 +81,7 @@ public abstract class LocalToFieldHandler {
 
     if (classes.isEmpty()) return false;
     if (classes.size() == 1 || ApplicationManager.getApplication().isUnitTestMode()) {
-      if (convertLocalToField(local, classes.get(classes.size() - 1), editor, tempIsStatic)) return false;
+      if (convertLocalToField(local, classes.get(getChosenClassIndex(classes)), editor, tempIsStatic)) return false;
     } else {
       final boolean isStatic = tempIsStatic;
       NavigationUtil.getPsiElementPopup(classes.toArray(new PsiClass[classes.size()]), new PsiClassListCellRenderer(), "Choose class to introduce " + (myIsConstant ? "constant" : "field"), new PsiElementProcessor<PsiClass>() {
@@ -94,6 +94,10 @@ public abstract class LocalToFieldHandler {
     }
 
     return true;
+  }
+
+  protected int getChosenClassIndex(List<PsiClass> classes) {
+    return classes.size() - 1;
   }
 
   private boolean convertLocalToField(PsiLocalVariable local, PsiClass aClass, Editor editor, boolean isStatic) {
@@ -250,7 +254,6 @@ public abstract class LocalToFieldHandler {
     private final PsiClass myDestinationClass;
     private final BaseExpressionToFieldHandler.Settings mySettings;
     private final BaseExpressionToFieldHandler.InitializationPlace myInitializerPlace;
-    private final boolean myStatic;
     private final PsiExpression[] myOccurences;
     private PsiField myField;
     private PsiStatement myAssignmentStatement;
@@ -269,7 +272,6 @@ public abstract class LocalToFieldHandler {
       myDestinationClass = aClass;
       mySettings = settings;
       myInitializerPlace = settings.getInitializerPlace();
-      myStatic = isStatic;
       myOccurences = occurrences;
     }
 
@@ -288,7 +290,7 @@ public abstract class LocalToFieldHandler {
         myField = mySettings.isIntroduceEnumConstant() ? EnumConstantsUtil.createEnumConstant(myDestinationClass, myLocal, myFieldName)
                                                        : createField(myLocal, mySettings.getForcedType(), myFieldName, myInitializerPlace == IN_FIELD_DECLARATION);
         myField = (PsiField)myDestinationClass.add(myField);
-        BaseExpressionToFieldHandler.setModifiers(myField, mySettings, myStatic);
+        BaseExpressionToFieldHandler.setModifiers(myField, mySettings);
         if (!mySettings.isIntroduceEnumConstant()) {
           VisibilityUtil.fixVisibility(myOccurences, myField, mySettings.getFieldVisibility());
         }

@@ -41,7 +41,7 @@ class SuppressByCommentOutAction extends SuppressIntentionAction {
   }
 
   @Override
-  public void invoke(Project project, Editor editor, PsiElement element) throws IncorrectOperationException {
+  public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
     if (!CodeInsightUtilBase.preparePsiElementForWrite(element)) return;
     element = findJavaCodeUpThere(element);
     PsiFile file = element.getContainingFile();

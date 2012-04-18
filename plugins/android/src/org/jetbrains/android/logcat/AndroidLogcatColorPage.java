@@ -48,12 +48,12 @@ public class AndroidLogcatColorPage implements ColorSettingsPage {
                                           "<assert>08-04 16:24:11.166: ASSERT/Assertion(4687): Expected true but was false</assert>";
 
   static {
-    ADDITIONAL_HIGHLIGHT_DESCRIPTORS.put("verbose.level.title", AndroidLogcatConstants.VERBOSE_OUTPUT_KEY);
-    ADDITIONAL_HIGHLIGHT_DESCRIPTORS.put("debug.level.title", AndroidLogcatConstants.DEBUG_OUTPUT_KEY);
-    ADDITIONAL_HIGHLIGHT_DESCRIPTORS.put("info.level.title", AndroidLogcatConstants.INFO_OUTPUT_KEY);
-    ADDITIONAL_HIGHLIGHT_DESCRIPTORS.put("warning.level.title", AndroidLogcatConstants.WARNING_OUTPUT_KEY);
-    ADDITIONAL_HIGHLIGHT_DESCRIPTORS.put("error.level.title", AndroidLogcatConstants.ERROR_OUTPUT_KEY);
-    ADDITIONAL_HIGHLIGHT_DESCRIPTORS.put("assert.level.title", AndroidLogcatConstants.ASSERT_OUTPUT_KEY);
+    ADDITIONAL_HIGHLIGHT_DESCRIPTORS.put("verbose", AndroidLogcatConstants.VERBOSE_OUTPUT_KEY);
+    ADDITIONAL_HIGHLIGHT_DESCRIPTORS.put("debug", AndroidLogcatConstants.DEBUG_OUTPUT_KEY);
+    ADDITIONAL_HIGHLIGHT_DESCRIPTORS.put("info", AndroidLogcatConstants.INFO_OUTPUT_KEY);
+    ADDITIONAL_HIGHLIGHT_DESCRIPTORS.put("warning", AndroidLogcatConstants.WARNING_OUTPUT_KEY);
+    ADDITIONAL_HIGHLIGHT_DESCRIPTORS.put("error", AndroidLogcatConstants.ERROR_OUTPUT_KEY);
+    ADDITIONAL_HIGHLIGHT_DESCRIPTORS.put("assert", AndroidLogcatConstants.ASSERT_OUTPUT_KEY);
   }
 
   private static final AttributesDescriptor[] ATTRIBUTES_DESCRIPTORS =

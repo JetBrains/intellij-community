@@ -51,6 +51,11 @@ public class ValidationTest extends DialogWrapper {
   }
 
   @Override
+  public JComponent getPreferredFocusedComponent() {
+    return myPanel.field2;
+  }
+
+  @Override
   protected void doOKAction() {
     super.doOKAction();
     Messages.showInfoMessage("on OK", "Info");

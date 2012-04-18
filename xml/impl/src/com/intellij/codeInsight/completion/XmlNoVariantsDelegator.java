@@ -15,18 +15,23 @@
  */
 package com.intellij.codeInsight.completion;
 
-import com.intellij.util.Consumer;
-
 /**
  * @author Dmitry Avdeev
  *         Date: 12/19/11
  */
-public class XmlNoVariantsDelegator extends NoVariantsDelegator {
+public class XmlNoVariantsDelegator extends CompletionContributor {
 
   @Override
-  protected void delegate(CompletionParameters parameters, CompletionResultSet result, Consumer<CompletionResult> passResult) {
-    if (parameters.getCompletionType() == CompletionType.BASIC) {
+  public void fillCompletionVariants(final CompletionParameters parameters, final CompletionResultSet result) {
+    final boolean empty = result.runRemainingContributors(parameters, true).isEmpty();
+
+    if (!empty && parameters.getInvocationCount() == 0) {
+      result.restartCompletionWhenNothingMatches();
+    }
+
+    if (empty && parameters.getCompletionType() == CompletionType.BASIC) {
       XmlCompletionContributor.completeTagName(parameters, result);
     }
   }
+
 }

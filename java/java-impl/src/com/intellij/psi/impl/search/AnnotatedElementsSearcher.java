@@ -56,28 +56,31 @@ public class AnnotatedElementsSearcher implements QueryExecutor<PsiModifierListO
       PsiElement parent = ann.getParent();
       if (!(parent instanceof PsiModifierList)) continue; // Can be a PsiNameValuePair, if annotation is used to annotate annotation parameters
 
-      PsiModifierList modlist = (PsiModifierList)parent;
-      final PsiElement owner = modlist.getParent();
+      final PsiElement owner = parent.getParent();
 
       if (!isInstanceof(owner, types)) continue;
 
-      PsiModifierListOwner candidate = (PsiModifierListOwner)owner;
-      if (!candidate.isValid()) {
-        throw new PsiInvalidElementAccessException(candidate);
-      }
+      final PsiModifierListOwner candidate = (PsiModifierListOwner)owner;
 
       if (!ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
         @Override
         public Boolean compute() {
-          return psiManager.areElementsEquivalent(ref.resolve(), annClass);
+          if (!candidate.isValid()) {
+            return false;
+          }
+          if (!psiManager.areElementsEquivalent(ref.resolve(), annClass)) {
+            return false;
+          }
+          if (useScope instanceof GlobalSearchScope &&
+              !((GlobalSearchScope)useScope).contains(candidate.getContainingFile().getVirtualFile())) {
+            return false;
+          }
+          return true;
         }
       })) {
         continue;
       }
-      if (useScope instanceof GlobalSearchScope &&
-          !((GlobalSearchScope)useScope).contains(candidate.getContainingFile().getVirtualFile())) {
-        continue;
-      }
+
       if (!consumer.process(candidate)) {
         return false;
       }

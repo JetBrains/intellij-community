@@ -16,40 +16,118 @@
 package com.intellij.designer.propertyTable;
 
 import com.intellij.designer.model.RadComponent;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
 import java.util.List;
 
 /**
  * @author Alexander Lobas
  */
-public abstract class Property {
+public abstract class Property<T extends RadComponent> {
   private final Property myParent;
-  @NotNull private final String myName;
+  private final String myName;
+  private boolean myImportant;
+  private boolean myExpert;
+  private boolean myDeprecated;
 
-  public Property(Property parent, @NotNull @NonNls String name) {
-
+  public Property(@Nullable Property parent, @NotNull String name) {
     myParent = parent;
     myName = name;
   }
 
+  public Property<T> createForNewPresentation() {
+    return createForNewPresentation(myParent, myName);
+  }
+
+  public abstract Property<T> createForNewPresentation(@Nullable Property parent, @NotNull String name);
+  //////////////////////////////////////////////////////////////////////////////////////////
+  //
+  // Hierarchy
+  //
+  //////////////////////////////////////////////////////////////////////////////////////////
+
   public final Property getParent() {
     return myParent;
   }
+
+  public List<Property<T>> getChildren(@Nullable T component) {
+    return Collections.emptyList();
+  }
+
+  public int getIndent() {
+    if (myParent != null) {
+      return myParent.getParent() != null ? 2 : 1;
+    }
+    return 0;
+  }
+
+  public String getPath() {
+    return myParent == null ? myName : myParent.getPath() + "/" + myName;
+  }
+
+  //////////////////////////////////////////////////////////////////////////////////////////
+  //
+  // Value
+  //
+  //////////////////////////////////////////////////////////////////////////////////////////
+
+  public Object getValue(T component) throws Exception {
+    return null;
+  }
+
+  public void setValue(T component, Object value) throws Exception {
+  }
+
+  public boolean isDefaultValue(T component) throws Exception {
+    return false;
+  }
+
+  public void setDefaultValue(T component) throws Exception {
+  }
+
+  public boolean availableFor(List<RadComponent> components) {
+    return true;
+  }
+
+  public boolean needRefreshPropertyList() {
+    return false;
+  }
+
+  //////////////////////////////////////////////////////////////////////////////////////////
+  //
+  // Presentation
+  //
+  //////////////////////////////////////////////////////////////////////////////////////////
 
   @NotNull
   public final String getName() {
     return myName;
   }
 
-  public List<Property> getChildren(RadComponent component) {
-    return null;
+  public boolean isImportant() {
+    return myImportant;
   }
 
-  public Object getValue(RadComponent component) {
-    return null;
+  public void setImportant(boolean important) {
+    myImportant = important;
+  }
+
+  public boolean isExpert() {
+    return myExpert;
+  }
+
+  public void setExpert(boolean expert) {
+    myExpert = expert;
+  }
+
+  public boolean isDeprecated() {
+    return myDeprecated;
+  }
+
+  public void setDeprecated(boolean deprecated) {
+    myDeprecated = deprecated;
   }
 
   @NotNull

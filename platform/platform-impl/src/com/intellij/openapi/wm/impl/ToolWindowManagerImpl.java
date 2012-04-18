@@ -50,6 +50,7 @@ import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.*;
 import com.intellij.openapi.wm.impl.commands.*;
 import com.intellij.ui.BalloonImpl;
+import com.intellij.ui.ColorUtil;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.switcher.QuickAccessSettings;
 import com.intellij.ui.switcher.SwitchManager;
@@ -464,9 +465,9 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     JLabel label = new JLabel("Initializing...", SwingConstants.CENTER);
     label.setOpaque(true);
     final Color treeBg = UIManager.getColor("Tree.background");
-    label.setBackground(new Color(treeBg.getRed(), treeBg.getGreen(), treeBg.getBlue(), 180));
+    label.setBackground(ColorUtil.toAlpha(treeBg, 180));
     final Color treeFg = UIUtil.getTreeForeground();
-    label.setForeground(new Color(treeFg.getRed(), treeFg.getGreen(), treeFg.getBlue(), 180));
+    label.setForeground(ColorUtil.toAlpha(treeFg, 180));
     final ToolWindowFactory factory = bean.getToolWindowFactory();
     final ToolWindowImpl toolWindow =
       (ToolWindowImpl)registerToolWindow(bean.id, label, toolWindowAnchor, myProject, DumbService.isDumbAware(factory),
@@ -775,7 +776,6 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   }
 
   public String[] getToolWindowIds() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
     final WindowInfoImpl[] infos = myLayout.getInfos();
     final String[] ids = ArrayUtil.newStringArray(infos.length);
     for (int i = 0; i < infos.length; i++) {
@@ -844,7 +844,6 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   }
 
   public ToolWindow getToolWindow(final String id) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
     if (!myLayout.isToolWindowRegistered(id)) {
       return null;
     }
@@ -1325,16 +1324,21 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
       position.set(Balloon.Position.atLeft);
     }
 
-    Icon actualIcon = icon != null ? icon : type.getDefaultIcon();
-
     final BalloonHyperlinkListener listenerWrapper = new BalloonHyperlinkListener(listener);
     final Balloon balloon =
-      JBPopupFactory.getInstance().createHtmlTextBalloonBuilder(text.replace("\n", "<br>"), actualIcon, type.getPopupBackground(), listenerWrapper)
+      JBPopupFactory.getInstance().createHtmlTextBalloonBuilder(text.replace("\n", "<br>"), icon, type.getPopupBackground(), listenerWrapper)
         .setHideOnClickOutside(false).setHideOnFrameResize(false).createBalloon();
     FrameStateManager.getInstance().getApplicationActive().doWhenDone(new Runnable() {
       @Override
       public void run() {
-        ((BalloonImpl)balloon).setHideOnClickOutside(true);
+        final Alarm alarm = new Alarm();
+        alarm.addRequest(new Runnable() {
+          @Override
+          public void run() {
+            ((BalloonImpl)balloon).setHideOnClickOutside(true);
+            Disposer.dispose(alarm);
+          }
+        }, 100);
       }
     });
     listenerWrapper.myBalloon = balloon;
@@ -1580,7 +1584,6 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   }
 
   boolean isToolWindowVisible(final String id) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
     checkId(id);
     return getInfo(id).isVisible();
   }

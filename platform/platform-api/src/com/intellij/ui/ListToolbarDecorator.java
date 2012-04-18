@@ -83,7 +83,8 @@ class ListToolbarDecorator extends ToolbarDecorator {
         if (0 <= index && index < myList.getModel().getSize()) {
           final boolean downEnable = myList.getMaxSelectionIndex() < myList.getModel().getSize() - 1;
           final boolean upEnable = myList.getMinSelectionIndex() > 0;
-          p.setEnabled(CommonActionsPanel.Buttons.EDIT, true);
+          final boolean editEnabled = myList.getSelectedIndices().length == 1;
+          p.setEnabled(CommonActionsPanel.Buttons.EDIT, editEnabled);
           p.setEnabled(CommonActionsPanel.Buttons.REMOVE, true);
           p.setEnabled(CommonActionsPanel.Buttons.UP, upEnable);
           p.setEnabled(CommonActionsPanel.Buttons.DOWN, downEnable);

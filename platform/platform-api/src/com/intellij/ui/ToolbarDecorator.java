@@ -71,9 +71,15 @@ public abstract class ToolbarDecorator implements DataProvider, CommonActionsPan
   private String myRemoveName;
   private String myMoveUpName;
   private String myMoveDownName;
+  private AnActionButtonUpdater myAddActionUpdater = null;
+  private AnActionButtonUpdater myRemoveActionUpdater = null;
+  private AnActionButtonUpdater myEditActionUpdater = null;
+  private AnActionButtonUpdater myMoveUpActionUpdater = null;
+  private AnActionButtonUpdater myMoveDownActionUpdater = null;
   private Dimension myPreferredSize;
   private CommonActionsPanel myPanel;
   private Comparator<AnActionButton> myButtonComparator;
+  private boolean myAsTopToolbar = false;
 
   protected abstract JComponent getComponent();
 
@@ -83,30 +89,31 @@ public abstract class ToolbarDecorator implements DataProvider, CommonActionsPan
     return myPanel;
   }
 
-  protected ToolbarDecorator initPositionAndBorder() {
-    myToolbarPosition = SystemInfo.isMac ? ActionToolbarPosition.BOTTOM : ActionToolbarPosition.RIGHT;
-    myBorder = new CustomLineBorder(0, SystemInfo.isMac ? 0 : 1, 0, 0);
-    final JComponent c = getComponent();
-    if (c != null) {
-      c.setBorder(IdeBorderFactory.createEmptyBorder(0));
-    }
+  public ToolbarDecorator initPosition() {
+    setToolbarPosition(SystemInfo.isMac ? ActionToolbarPosition.BOTTOM : ActionToolbarPosition.RIGHT);
+    return this;
+  }
+
+  public ToolbarDecorator setAsTopToolbar() {
+    myAsTopToolbar = true;
+    setToolbarPosition(ActionToolbarPosition.TOP);
     return this;
   }
 
   public static ToolbarDecorator createDecorator(@NotNull JTable table) {
-    return new TableToolbarDecorator(table, null).initPositionAndBorder();
+    return new TableToolbarDecorator(table, null).initPosition();
   }
   
   public static ToolbarDecorator createDecorator(@NotNull JTree tree) {
-    return new TreeToolbarDecorator(tree).initPositionAndBorder();
+    return new TreeToolbarDecorator(tree).initPosition();
   }
 
   public static ToolbarDecorator createDecorator(@NotNull JList list) {
-    return new ListToolbarDecorator(list).initPositionAndBorder();
+    return new ListToolbarDecorator(list).initPosition();
   }
 
   public static <T> ToolbarDecorator  createDecorator(@NotNull TableView<T> table, @Nullable ElementProducer<T> producer) {
-    return new TableToolbarDecorator(table, producer).initPositionAndBorder();
+    return new TableToolbarDecorator(table, producer).initPosition();
   }
 
   public ToolbarDecorator disableAddAction() {
@@ -175,6 +182,10 @@ public abstract class ToolbarDecorator implements DataProvider, CommonActionsPan
 
   public ToolbarDecorator setToolbarPosition(ActionToolbarPosition position) {
     myToolbarPosition = position;
+    myBorder = new CustomLineBorder(0,
+                                    myToolbarPosition == ActionToolbarPosition.RIGHT ? 1 : 0,
+                                    myToolbarPosition == ActionToolbarPosition.TOP ? 1 : 0,
+                                    myToolbarPosition == ActionToolbarPosition.LEFT ? 1 : 0);
     return this;
   }
 
@@ -233,6 +244,31 @@ public abstract class ToolbarDecorator implements DataProvider, CommonActionsPan
     return this;
   }
 
+  public ToolbarDecorator setAddActionUpdater(AnActionButtonUpdater updater) {
+    myAddActionUpdater = updater;
+    return this;
+  }
+
+  public ToolbarDecorator setRemoveActionUpdater(AnActionButtonUpdater updater) {
+    myRemoveActionUpdater = updater;
+    return this;
+  }
+
+  public ToolbarDecorator setEditActionUpdater(AnActionButtonUpdater updater) {
+    myEditActionUpdater = updater;
+    return this;
+  }
+
+  public ToolbarDecorator setMoveUpActionUpdater(AnActionButtonUpdater updater) {
+    myMoveUpActionUpdater = updater;
+    return this;
+  }
+
+  public ToolbarDecorator setMoveDownActionUpdater(AnActionButtonUpdater updater) {
+    myMoveDownActionUpdater = updater;
+    return this;
+  }
+
   public ToolbarDecorator setPreferredSize(Dimension size) {
     myPreferredSize = size;
     return this;
@@ -262,12 +298,37 @@ public abstract class ToolbarDecorator implements DataProvider, CommonActionsPan
     };
     panel.add(scrollPane, BorderLayout.CENTER);
     panel.add(myPanel, getPlacement());
+    installUpdaters();
     updateButtons();
     installDnD();
-    panel.setBorder(new LineBorder(UIUtil.getBorderColor()));
     panel.putClientProperty(ActionToolbar.ACTION_TOOLBAR_PROPERTY_KEY, myPanel.getComponent(0));
     DataManager.registerDataProvider(panel, this);
+    if (!myAsTopToolbar) {
+      panel.setBorder(new LineBorder(UIUtil.getBorderColor()));
+      final JComponent c = getComponent();
+      if (contextComponent != null) {
+        contextComponent.setBorder(IdeBorderFactory.createEmptyBorder(0));
+      }
+    }
     return panel;
+  }
+
+  private void installUpdaters() {
+    if (myAddActionEnabled && myAddAction != null && myAddActionUpdater != null) {
+      myPanel.getAnActionButton(CommonActionsPanel.Buttons.ADD).addCustomUpdater(myAddActionUpdater);
+    }
+    if (myEditActionEnabled && myEditAction != null && myEditActionUpdater != null) {
+      myPanel.getAnActionButton(CommonActionsPanel.Buttons.EDIT).addCustomUpdater(myEditActionUpdater);
+    }
+    if (myRemoveActionEnabled && myRemoveAction != null && myRemoveActionUpdater != null) {
+      myPanel.getAnActionButton(CommonActionsPanel.Buttons.REMOVE).addCustomUpdater(myRemoveActionUpdater);
+    }
+    if (myUpActionEnabled && myUpAction != null && myMoveUpActionUpdater != null) {
+      myPanel.getAnActionButton(CommonActionsPanel.Buttons.UP).addCustomUpdater(myMoveUpActionUpdater);
+    }
+    if (myDownActionEnabled && myDownAction != null && myMoveDownActionUpdater != null) {
+      myPanel.getAnActionButton(CommonActionsPanel.Buttons.DOWN).addCustomUpdater(myMoveDownActionUpdater);
+    }
   }
 
   protected void installDnD() {

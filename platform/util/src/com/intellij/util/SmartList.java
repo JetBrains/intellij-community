@@ -102,7 +102,6 @@ public class SmartList<E> extends AbstractList<E> {
       oldValue = (E)array[index];
       array[index] = element;
     }
-    modCount++;
     return oldValue;
   }
 

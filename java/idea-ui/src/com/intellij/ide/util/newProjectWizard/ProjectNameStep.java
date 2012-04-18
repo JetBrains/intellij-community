@@ -25,7 +25,6 @@ import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.projectImport.ProjectFormatPanel;
 
@@ -38,8 +37,6 @@ import java.io.File;
  *         Date: Jul 17, 2007
  */
 public class ProjectNameStep extends ModuleWizardStep {
-  private static final Icon NEW_PROJECT_ICON = IconLoader.getIcon("/newprojectwizard.png");
-
   private final JPanel myPanel;
   protected final JPanel myAdditionalContentPanel;
   protected NamePathComponent myNamePathComponent;
@@ -62,14 +59,13 @@ public class ProjectNameStep extends ModuleWizardStep {
     final String initialProjectName = projectName != null ? projectName : ProjectWizardUtil.findNonExistingFileName(baseDir, "untitled", "");
     myNamePathComponent.setPath(projectName == null ? (baseDir + File.separator + initialProjectName) : baseDir);
     myNamePathComponent.setNameValue(initialProjectName);
-    myNamePathComponent.getNameComponent().setSelectionStart(0);
-    myNamePathComponent.getNameComponent().setSelectionEnd(initialProjectName.length());
+    myNamePathComponent.getNameComponent().select(0, initialProjectName.length());
     myPanel = new JPanel(new GridBagLayout());
     myPanel.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createEtchedBorder(), BorderFactory.createEmptyBorder(10, 10, 10, 10)));
     myPanel.add(myNamePathComponent, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(10, 0, 20, 0), 0, 0));
 
     if (myWizardContext.getProject() == null) {
-      myNamePathComponent.add(new JLabel("Project file format:"), new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
+      myNamePathComponent.add(new JLabel("Project format:"), new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
       myNamePathComponent.add(myFormatPanel.getStorageFormatComboBox(), new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
     }
 
@@ -98,7 +94,7 @@ public class ProjectNameStep extends ModuleWizardStep {
   }
 
   public Icon getIcon() {
-    return myWizardContext.getProject() == null ? NEW_PROJECT_ICON : ICON;
+    return myWizardContext.getStepIcon();
   }
 
   public JComponent getPreferredFocusedComponent() {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -149,7 +149,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
   }
 
   public void addTimerListener(int delay, final TimerListener listener) {
-    _addTimerListener(delay, listener, false);
+    _addTimerListener(listener, false);
   }
 
   public void removeTimerListener(TimerListener listener) {
@@ -157,31 +157,30 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
   }
 
   @Override
-  public void addTransparrentTimerListener(int delay, TimerListener listener) {
-    _addTimerListener(delay, listener, true);
+  public void addTransparentTimerListener(int delay, TimerListener listener) {
+    _addTimerListener(listener, true);
   }
 
   @Override
-  public void removeTransparrentTimerListener(TimerListener listener) {
+  public void removeTransparentTimerListener(TimerListener listener) {
     _removeTimerListener(listener, true);
   }
 
-
-  private void _addTimerListener(int delay, final TimerListener listener, boolean transparrent) {
+  private void _addTimerListener(final TimerListener listener, boolean transparent) {
     if (ApplicationManager.getApplication().isUnitTestMode()) return;
     if (myTimer == null) {
       myTimer = new MyTimer();
       myTimer.start();
     }
 
-    myTimer.addTimerListener(listener, transparrent);
+    myTimer.addTimerListener(listener, transparent);
   }
 
-  private void _removeTimerListener(TimerListener listener, boolean transparrent) {
+  private void _removeTimerListener(TimerListener listener, boolean transparent) {
     if (ApplicationManager.getApplication().isUnitTestMode()) return;
     LOG.assertTrue(myTimer != null);
 
-    myTimer.removeTimerListener(listener, transparrent);
+    myTimer.removeTimerListener(listener, transparent);
   }
 
   public ActionPopupMenu createActionPopupMenu(String place, @NotNull ActionGroup group, @Nullable PresentationFactory presentationFactory) {
@@ -397,6 +396,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
     return stub;
   }
 
+  @Nullable
   private static ResourceBundle getActionsResourceBundle(ClassLoader loader, IdeaPluginDescriptor plugin) {
     @NonNls final String resBundleName = plugin != null && !plugin.getPluginId().getIdString().equals("com.intellij") ? plugin.getResourceBundleBaseName() : ACTIONS_BUNDLE;
     ResourceBundle bundle = null;
@@ -708,7 +708,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
    *                    case separator will be added to group described in the <add-to-group ....> subelement.
    * @param element     XML element which represent separator.
    */
-  private void processSeparatorNode(DefaultActionGroup parentGroup, Element element, PluginId pluginId) {
+  private void processSeparatorNode(@Nullable DefaultActionGroup parentGroup, Element element, PluginId pluginId) {
     if (!SEPARATOR_ELEMENT_NAME.equals(element.getName())) {
       reportActionError(pluginId, "unexpected name of element \"" + element.getName() + "\"");
       return;
@@ -834,19 +834,6 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
     }
     assertActionIsGroupOrStub(action);
     return action;
-  }
-
-  private void processActionsElement(Element element, ClassLoader loader, PluginId pluginId) {
-    if (!ACTIONS_ELEMENT_NAME.equals(element.getName())) {
-      reportActionError(pluginId, "unexpected name of element \"" + element.getName() + "\"");
-      return;
-    }
-    synchronized (myLock) {
-      for (final Object o : element.getChildren()) {
-        Element child = (Element)o;
-        processActionsChildElement(loader, pluginId, child);
-      }
-    }
   }
 
   private void processActionsChildElement(final ClassLoader loader, final PluginId pluginId, final Element child) {
@@ -1044,6 +1031,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
     if (action != null) {
       myPrevPerformedActionId = myLastPreformedActionId;
       myLastPreformedActionId = getId(action);
+      //noinspection AssignmentToStaticFieldFromInstanceMethod
       IdeaLogger.ourLastActionId = myLastPreformedActionId;
     }
     AnActionListener[] listeners = getActionListeners();
@@ -1056,6 +1044,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
     if (action != null) {
       myPrevPerformedActionId = myLastPreformedActionId;
       myLastPreformedActionId = getId(action);
+      //noinspection AssignmentToStaticFieldFromInstanceMethod
       IdeaLogger.ourLastActionId = myLastPreformedActionId;
     }
     AnActionListener[] listeners = getActionListeners();
@@ -1063,9 +1052,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
       try {
         listener.afterActionPerformed(action, dataContext, event);
       }
-      catch(AbstractMethodError e) {
-        // ignore
-      }
+      catch(AbstractMethodError ignored) { }
     }
   }
 
@@ -1167,11 +1154,10 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
       myActionsPreloaded++;
       if (myActionsPreloaded % 10 == 0) {
         try {
+          //noinspection BusyWait
           Thread.sleep(300);
         }
-        catch (InterruptedException e) {
-          // ignore
-        }
+        catch (InterruptedException ignored) { }
       }
     }
   }
@@ -1281,6 +1267,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
     if (now) {
       doRunnable.run();
     } else {
+      //noinspection SSBasedInspection
       SwingUtilities.invokeLater(doRunnable);
     }
     
@@ -1289,7 +1276,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
   }
 
   private void tryToExecuteNow(final AnAction action, final InputEvent inputEvent, final Component contextComponent, final String place, final ActionCallback result) {
-    final Presentation presentation = (Presentation)action.getTemplatePresentation().clone();
+    final Presentation presentation = action.getTemplatePresentation().clone();
 
     IdeFocusManager.findInstanceByContext(getContextBy(contextComponent)).doWhenFocusSettlesDown(new Runnable() {
       public void run() {
@@ -1335,7 +1322,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
               }
             }
           }
-        }, WindowEvent.WINDOW_EVENT_MASK, result);
+        }, AWTEvent.WINDOW_EVENT_MASK, result);
 
         action.actionPerformed(event);
         result.setDone();

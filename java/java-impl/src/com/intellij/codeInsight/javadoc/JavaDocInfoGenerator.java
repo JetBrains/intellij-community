@@ -759,11 +759,15 @@ public class JavaDocInfoGenerator {
   private PsiDocComment getMethodDocComment(final PsiMethod method) {
     final PsiClass parentClass = method.getContainingClass();
     if (parentClass != null && parentClass.isEnum()) {
-      if (method.getName().equals("values") && method.getParameterList().getParametersCount() == 0) {
+      final PsiParameterList parameterList = method.getParameterList();
+      if (method.getName().equals("values") && parameterList.getParametersCount() == 0) {
         return loadSyntheticDocComment(method, "/javadoc/EnumValues.java.template");
       }
-      if (method.getName().equals("valueOf") && method.getParameterList().getParametersCount() == 1) {
-        return loadSyntheticDocComment(method, "/javadoc/EnumValueOf.java.template");
+      if (method.getName().equals("valueOf") && parameterList.getParametersCount() == 1) {
+        final PsiType psiType = parameterList.getParameters()[0].getType();
+        if (psiType.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
+          return loadSyntheticDocComment(method, "/javadoc/EnumValueOf.java.template");
+        }
       }
     }
     return getDocComment(method);

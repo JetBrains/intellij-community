@@ -13,6 +13,7 @@ import org.jetbrains.jps.incremental.messages.UptoDateFilesSavedEvent;
 import org.jetbrains.jps.incremental.storage.BuildDataManager;
 import org.jetbrains.jps.incremental.storage.SourceToOutputMapping;
 import org.jetbrains.jps.incremental.storage.TimestampStorage;
+import org.jetbrains.jps.server.ProjectDescriptor;
 
 import java.io.File;
 import java.io.IOException;
@@ -29,41 +30,40 @@ public class CompileContext extends UserDataHolderBase implements MessageHandler
   private final boolean myIsProjectRebuild;
   private final ProjectChunks myProductionChunks;
   private final ProjectChunks myTestChunks;
-  private final FSState myFsState;
   private final MessageHandler myDelegateMessageHandler;
   private volatile boolean myCompilingTests = false;
-  private final BuildDataManager myDataManager;
-  private final ModuleRootsIndex myRootsIndex;
-
   private final Set<Pair<Module, DirtyMarkScope>> myNonIncrementalModules = new HashSet<Pair<Module, DirtyMarkScope>>();
 
   private final ProjectPaths myProjectPaths;
   private volatile boolean myErrorsFound = false;
   private final long myCompilationStartStamp;
+  private final ProjectDescriptor myProjectDescriptor;
   private final TimestampStorage myTsStorage;
+  private final Map<String, String> myBuilderParams;
   private final CanceledStatus myCancelStatus;
   private float myDone = -1.0f;
 
   public CompileContext(CompileScope scope,
-                        boolean isMake,
+                        ProjectDescriptor pd, boolean isMake,
                         boolean isProjectRebuild,
                         ProjectChunks productionChunks,
                         ProjectChunks testChunks,
-                        FSState fsState, final BuildDataManager dataManager, TimestampStorage tsStorage, MessageHandler delegateMessageHandler, final ModuleRootsIndex rootsIndex, CanceledStatus cancelStatus) throws ProjectBuildException {
-    myTsStorage = tsStorage;
+                        MessageHandler delegateMessageHandler,
+                        Map<String, String> builderParams,
+                        CanceledStatus cancelStatus) throws ProjectBuildException {
+    myProjectDescriptor = pd;
+    myTsStorage = myProjectDescriptor.timestamps.getStorage();
+    myBuilderParams = Collections.unmodifiableMap(builderParams);
     myCancelStatus = cancelStatus;
     myCompilationStartStamp = System.currentTimeMillis();
     myScope = scope;
     myIsProjectRebuild = isProjectRebuild;
-    myIsMake = isProjectRebuild? false : isMake;
+    myIsMake = !isProjectRebuild && isMake;
     myProductionChunks = productionChunks;
     myTestChunks = testChunks;
-    myFsState = fsState;
     myDelegateMessageHandler = delegateMessageHandler;
-    myDataManager = dataManager;
     final Project project = scope.getProject();
     myProjectPaths = new ProjectPaths(project);
-    myRootsIndex = rootsIndex;
   }
 
   public Project getProject() {
@@ -82,15 +82,38 @@ public class CompileContext extends UserDataHolderBase implements MessageHandler
     return myIsProjectRebuild;
   }
 
+  public BuildLoggingManager getLoggingManager() {
+    return myProjectDescriptor.getLoggingManager();
+  }
+
+  @Nullable
+  public String getBuilderParameter(String paramName) {
+    return myBuilderParams.get(paramName);
+  }
+
   public void markDirty(final File file) throws IOException {
     final RootDescriptor descriptor = getModuleAndRoot(file);
     if (descriptor != null) {
-      myFsState.markDirty(file, descriptor, myTsStorage);
+      myProjectDescriptor.fsState.markDirty(file, descriptor, myTsStorage);
+    }
+  }
+
+  public void markDirtyIfNotDeleted(final File file) throws IOException {
+    final RootDescriptor descriptor = getModuleAndRoot(file);
+    if (descriptor != null) {
+      myProjectDescriptor.fsState.markDirtyIfNotDeleted(file, descriptor, myTsStorage);
+    }
+  }
+
+  public void markDeleted(File file) throws IOException {
+    final RootDescriptor descriptor = getModuleAndRoot(file);
+    if (descriptor != null) {
+      myProjectDescriptor.fsState.registerDeleted(descriptor.module, file, descriptor.isTestRoot, myTsStorage);
     }
   }
 
   public void markDirty(final ModuleChunk chunk) throws IOException {
-    myFsState.clearContextRoundData();
+    myProjectDescriptor.fsState.clearContextRoundData();
     final Set<Module> modules = chunk.getModules();
     for (Module module : modules) {
       markDirtyFiles(module, myTsStorage, true, isCompilingTests()? DirtyMarkScope.TESTS : DirtyMarkScope.PRODUCTION, null);
@@ -112,12 +135,11 @@ public class CompileContext extends UserDataHolderBase implements MessageHandler
         }
       }
       else {
-        MODULES_LOOP: for (final Module module : moduleChunk.getModules()) {
-          for (ClasspathItem dependency : module.getClasspath(classpathKind)) {
-            if (dependency instanceof Module && dirtyModules.contains((Module)dependency)) {
-              dirtyModules.addAll(moduleChunk.getModules());
-              break MODULES_LOOP;
-            }
+        for (final Module module : moduleChunk.getModules()) {
+          final Set<Module> deps = getDependentModulesRecursively(module, classpathKind);
+          if (Utils.intersects(deps, modules)) {
+            dirtyModules.addAll(moduleChunk.getModules());
+            break;
           }
         }
       }
@@ -125,13 +147,41 @@ public class CompileContext extends UserDataHolderBase implements MessageHandler
 
     for (Module module : dirtyModules) {
       markDirtyFiles(module, myTsStorage, true, isCompilingTests()? DirtyMarkScope.TESTS : DirtyMarkScope.BOTH, null);
-      if (isMake()) {
+    }
+
+    if (isMake()) {
+      // mark as non-incremental only the module that triggered non-incremental change
+      for (Module module : modules) {
         if (!isCompilingTests()) {
           myNonIncrementalModules.add(new Pair<Module, DirtyMarkScope>(module, DirtyMarkScope.PRODUCTION));
         }
         myNonIncrementalModules.add(new Pair<Module, DirtyMarkScope>(module, DirtyMarkScope.TESTS));
       }
     }
+  }
+
+  private static Set<Module> getDependentModulesRecursively(final Module module, final ClasspathKind kind) {
+    final Set<Module> result = new HashSet<Module>();
+
+    new Object() {
+      final Set<Module> processed = new HashSet<Module>();
+
+      void traverse(Module module, ClasspathKind kind, Collection<Module> result, boolean exportedOnly) {
+        if (processed.add(module)) {
+          for (ClasspathItem item : module.getClasspath(kind, exportedOnly)) {
+            if (item instanceof ModuleSourceEntry) {
+              result.add(((ModuleSourceEntry)item).getModule());
+            }
+            else if (item instanceof Module) {
+              traverse((Module)item, kind, result, true);
+            }
+          }
+        }
+      }
+
+    }.traverse(module, kind, result, false);
+
+    return result;
   }
 
   boolean shouldDifferentiate(ModuleChunk chunk, boolean forTests) {
@@ -149,7 +199,7 @@ public class CompileContext extends UserDataHolderBase implements MessageHandler
   }
 
   public Mappings createDelta() {
-    return myDataManager.getMappings().createDelta();
+    return getDataManager().getMappings().createDelta();
   }
 
   public boolean isCompilingTests() {
@@ -175,17 +225,18 @@ public class CompileContext extends UserDataHolderBase implements MessageHandler
   }
 
   void beforeCompileRound(@NotNull ModuleChunk chunk) {
-    myFsState.beforeNextRoundStart();
+    myProjectDescriptor.fsState.beforeNextRoundStart();
   }
 
   public void onChunkBuildStart(ModuleChunk chunk) {
-    myFsState.setContextChunk(chunk);
+    myProjectDescriptor.fsState.setContextChunk(chunk);
   }
 
   void onChunkBuildComplete(@NotNull ModuleChunk chunk) throws IOException {
-    myDataManager.flush(true);
-    myFsState.clearContextRoundData();
-    myFsState.clearContextChunk();
+    getDataManager().closeSourceToOutputStorages(chunk, isCompilingTests());
+    getDataManager().flush(true);
+    myProjectDescriptor.fsState.clearContextRoundData();
+    myProjectDescriptor.fsState.clearContextChunk();
 
     if (!myErrorsFound && !myCancelStatus.isCanceled()) {
       final boolean compilingTests = isCompilingTests();
@@ -197,12 +248,12 @@ public class CompileContext extends UserDataHolderBase implements MessageHandler
           myNonIncrementalModules.remove(new Pair<Module, DirtyMarkScope>(module, dirtyScope));
         }
         if (isProjectRebuild()) {
-          myFsState.markInitialScanPerformed(module, compilingTests);
+          myProjectDescriptor.fsState.markInitialScanPerformed(module, compilingTests);
         }
-        final List<RootDescriptor> roots = myRootsIndex.getModuleRoots(module);
+        final List<RootDescriptor> roots = myProjectDescriptor.rootsIndex.getModuleRoots(module);
         for (RootDescriptor descriptor : roots) {
           if (compilingTests? descriptor.isTestRoot : !descriptor.isTestRoot) {
-            marked |= myFsState.markAllUpToDate(getScope(), descriptor, myTsStorage, myCompilationStartStamp);
+            marked |= myProjectDescriptor.fsState.markAllUpToDate(getScope(), descriptor, myTsStorage, myCompilationStartStamp);
           }
         }
       }
@@ -217,7 +268,7 @@ public class CompileContext extends UserDataHolderBase implements MessageHandler
   }
 
   public BuildDataManager getDataManager() {
-    return myDataManager;
+    return myProjectDescriptor.dataManager;
   }
 
   public TimestampStorage getTimestampStorage() {
@@ -234,9 +285,13 @@ public class CompileContext extends UserDataHolderBase implements MessageHandler
     myDelegateMessageHandler.processMessage(msg);
   }
 
+  public boolean errorsDetected() {
+    return myErrorsFound;
+  }
+
   public void processFilesToRecompile(ModuleChunk chunk, FileProcessor processor) throws IOException {
     for (Module module : chunk.getModules()) {
-      myFsState.processFilesToRecompile(this, module, processor);
+      myProjectDescriptor.fsState.processFilesToRecompile(this, module, processor);
     }
   }
 
@@ -247,7 +302,7 @@ public class CompileContext extends UserDataHolderBase implements MessageHandler
       }
       else {
         if (isMake()) {
-          if (myFsState.markInitialScanPerformed(module, isCompilingTests())) {
+          if (myProjectDescriptor.fsState.markInitialScanPerformed(module, isCompilingTests())) {
             initModuleFSState(module);
           }
         }
@@ -265,40 +320,43 @@ public class CompileContext extends UserDataHolderBase implements MessageHandler
     final HashSet<File> currentFiles = new HashSet<File>();
     markDirtyFiles(module, myTsStorage, false, isCompilingTests() ? DirtyMarkScope.TESTS : DirtyMarkScope.PRODUCTION, currentFiles);
 
-    final String moduleName = module.getName().toLowerCase(Locale.US);
-    final SourceToOutputMapping sourceToOutputMap = getDataManager().getSourceToOutputMap(moduleName, isCompilingTests());
+    final SourceToOutputMapping sourceToOutputMap = getDataManager().getSourceToOutputMap(module.getName(), isCompilingTests());
     for (final Iterator<String> it = sourceToOutputMap.getKeysIterator(); it.hasNext();) {
       final String path = it.next();
       // can check if the file exists
       final File file = new File(path);
       if (!currentFiles.contains(file)) {
-        myFsState.registerDeleted(module, file, isCompilingTests(), myTsStorage);
+        myProjectDescriptor.fsState.registerDeleted(module, file, isCompilingTests(), myTsStorage);
       }
     }
   }
 
   public boolean hasRemovedSources() {
-    final Set<String> removed = Paths.CHUNK_REMOVED_SOURCES_KEY.get(this);
+    final Set<String> removed = Utils.CHUNK_REMOVED_SOURCES_KEY.get(this);
     return removed != null && !removed.isEmpty();
   }
 
   @Nullable
   public RootDescriptor getModuleAndRoot(File file) {
-    return myRootsIndex.getModuleAndRoot(file);
+    return getRootsIndex().getModuleAndRoot(file);
   }
 
   @NotNull
   public List<RootDescriptor> getModuleRoots(Module module) {
-    return myRootsIndex.getModuleRoots(module);
+    return getRootsIndex().getModuleRoots(module);
   }
 
   public ModuleRootsIndex getRootsIndex() {
-    return myRootsIndex;
+    return myProjectDescriptor.rootsIndex;
   }
 
   public void setDone(float done) {
     myDone = done;
     //processMessage(new ProgressMessage("", done));
+  }
+
+  public ProjectDescriptor getProjectDescriptor() {
+    return myProjectDescriptor;
   }
 
   public static enum DirtyMarkScope{
@@ -324,8 +382,8 @@ public class CompileContext extends UserDataHolderBase implements MessageHandler
       if (!rd.root.exists()) {
         continue;
       }
-      myFsState.clearRecompile(rd);
-      myFsState.clearDeletedPaths(module, isCompilingTests());
+      myProjectDescriptor.fsState.clearRecompile(rd);
+      myProjectDescriptor.fsState.clearDeletedPaths(module, isCompilingTests());
       traverseRecursively(rd, rd.root, excludes, tsStorage, forceMarkDirty, currentFiles);
     }
   }
@@ -348,7 +406,7 @@ public class CompileContext extends UserDataHolderBase implements MessageHandler
         // if it is full project rebuild, all storages are already completely cleared;
         // so passing null because there is no need to access the storage to clear non-existing data
         final TimestampStorage _tsStorage = isProjectRebuild() ? null : tsStorage;
-        myFsState.markDirty(file, rd, _tsStorage);
+        myProjectDescriptor.fsState.markDirty(file, rd, _tsStorage);
       }
       if (currentFiles != null) {
         currentFiles.add(file);

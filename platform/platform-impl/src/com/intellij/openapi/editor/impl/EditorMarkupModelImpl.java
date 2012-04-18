@@ -813,8 +813,9 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
       return new LineTooltipRenderer(text, width, new Object[] {text});
     }
 
+    @NotNull
     @Override
-    public TrafficTooltipRenderer createTrafficTooltipRenderer(final Runnable onHide, Editor editor) {
+    public TrafficTooltipRenderer createTrafficTooltipRenderer(@NotNull final Runnable onHide, @NotNull Editor editor) {
       return new TrafficTooltipRenderer() {
         @Override
         public void repaintTooltipWindow() {

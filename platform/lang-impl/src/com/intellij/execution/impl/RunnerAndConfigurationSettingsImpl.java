@@ -366,6 +366,11 @@ public class RunnerAndConfigurationSettingsImpl implements JDOMExternalizable, C
     return 0;
   }
 
+  @Override
+  public String toString() {
+    return getType() + ": " + getName();
+  }
+
   private class InfoProvider implements ConfigurationInfoProvider {
     private final ProgramRunner myRunner;
 

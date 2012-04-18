@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,7 +41,9 @@ public final class TargetAction extends AnAction {
     templatePresentation.setDescription(description);
     myBuildName = buildFile.getPresentableName();
     myTargets = targets;
-    myDebugString = "Target action: " + displayName+ "; Build: " + buildFile.getPresentableName() + "; Project: " + buildFile.getProject().getLocation();
+    myDebugString = "Target action: " + displayName +
+                    "; Build: " + buildFile.getPresentableName() +
+                    "; Project: " + buildFile.getProject().getPresentableUrl();
   }
 
   public String toString() {

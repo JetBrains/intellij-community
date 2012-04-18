@@ -129,7 +129,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
   public FileElement getTreeElementNoLock() {
     ASTNode node = _getTreeElement();
     if (node == null && !getViewProvider().isPhysical()) {
-      setTreeElement(node = loadTreeElement());
+      node = loadTreeElement();
     }
     return (FileElement)node;
   }
@@ -220,7 +220,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
         stubs.next(); // Skip file stub;
         switchFromStubToAST(treeElement, stubs);
 
-        myStub = null;
+        clearStub();
       }
 
       setTreeElement(treeElement);
@@ -341,8 +341,16 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     myViewProvider.beforeContentsSynchronized();
     setTreeElement(null);
     synchronized (myStubLock) {
-      myStub = null;
+      clearStub();
     }
+  }
+
+  private void clearStub() {
+    StubTree stubHolder = myStub == null ? null : myStub.get();
+    if (stubHolder != null) {
+      ((StubBase<?>)stubHolder.getRoot()).setPsi(null);
+    }
+    myStub = null;
   }
 
   public void clearCaches() {}
@@ -389,12 +397,11 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
   private void doClearCaches() {
     final FileElement tree = getTreeElement();
     if (tree != null) {
-      myTreeElementPointer = tree;
       tree.clearCaches();
     }
 
     synchronized (myStubLock) {
-      myStub = null;
+      clearStub();
       if (tree != null) {
         tree.putUserData(STUB_TREE_IN_PARSED_TREE, null);
       }
@@ -674,7 +681,6 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
       myStub = new SoftReference<StubTree>(stubHolder);
       StubBase<PsiFile> base = (StubBase)stubHolder.getRoot();
       base.setPsi(this);
-      base.putUserData(STUB_TREE_IN_PARSED_TREE, stubHolder); // This will prevent soft reference myStub to be collected before all of the stubs are collected.
       return stubHolder;
     }
   }

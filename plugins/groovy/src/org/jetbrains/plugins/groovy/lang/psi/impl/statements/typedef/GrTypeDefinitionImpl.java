@@ -74,6 +74,7 @@ import org.jetbrains.plugins.groovy.lang.psi.stubs.GrTypeDefinitionStub;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrClassImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.AstTransformContributor;
+import org.jetbrains.plugins.groovy.runner.GroovyRunnerUtil;
 import org.jetbrains.plugins.groovy.util.LightCacheKey;
 
 import javax.swing.*;
@@ -660,11 +661,16 @@ public abstract class GrTypeDefinitionImpl extends GrStubElementBase<GrTypeDefin
   public Icon getIcon(int flags) {
     Icon icon = getIconInner();
     final boolean isLocked = (flags & ICON_FLAG_READ_STATUS) != 0 && !isWritable();
-    RowIcon rowIcon = ElementPresentationUtil.createLayeredIcon(icon, this, isLocked);
+    RowIcon rowIcon = createLayeredIcon(this, icon, ElementPresentationUtil.getFlags(this, isLocked) | getFlagsInner());
     if ((flags & ICON_FLAG_VISIBILITY) != 0) {
       VisibilityIcons.setVisibilityIcon(getModifierList(), rowIcon);
     }
     return rowIcon;
+  }
+
+  //hack to get runnable icon for all classes that can be run by Groovy
+  private int getFlagsInner() {
+    return GroovyRunnerUtil.isRunnable(this) ? ElementPresentationUtil.FLAGS_RUNNABLE : 0;
   }
 
   private Icon getIconInner() {
@@ -707,6 +713,7 @@ public abstract class GrTypeDefinitionImpl extends GrStubElementBase<GrTypeDefin
         return element;
       }
 
+      if (body == null) throw new IncorrectOperationException("Class must have body");
       return body.addBefore(element, nextChild);
     }
     else {
@@ -725,6 +732,7 @@ public abstract class GrTypeDefinitionImpl extends GrStubElementBase<GrTypeDefin
       return super.addBefore(element, anchor);
     }
 
+    if (body == null) throw new IncorrectOperationException("Class must have body");
     return body.addBefore(element, anchor);
   }
 
@@ -811,13 +819,7 @@ public abstract class GrTypeDefinitionImpl extends GrStubElementBase<GrTypeDefin
 
     GrTypeDefinitionBody body = getBody();
     if (body == null) throw new IncorrectOperationException("Type definition without a body");
-//    ASTNode anchorNode;
-//    anchorNode = anchorBefore.getNode();
-//    ASTNode bodyNode = body.getNode();
-    decl = (T)body.addBefore(decl, anchorBefore);
-//    bodyNode.addLeaf(GroovyTokenTypes.mWS, " ", decl.getNode()); //add whitespaces before and after to hack over incorrect auto reformat
-//    bodyNode.addLeaf(GroovyTokenTypes.mWS, " ", anchorNode);
-    return decl;
+    return  (T)body.addBefore(decl, anchorBefore);
   }
 
 }

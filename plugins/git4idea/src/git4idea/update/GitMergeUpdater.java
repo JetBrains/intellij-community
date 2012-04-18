@@ -107,13 +107,15 @@ public class GitMergeUpdater extends GitUpdater {
                                              final GitMerger merger,
                                              GitLineHandler mergeHandler) {
     final MergeError error = mergeLineListener.getMergeError();
-    LOG.info("doUpdate merge error: " + error);
+    LOG.info("merge error: " + error);
     if (error == MergeError.CONFLICT) {
+      LOG.info("Conflict detected");
       final boolean allMerged =
         new MyConflictResolver(myProject, merger, myRoot).merge();
       return allMerged ? GitUpdateResult.SUCCESS : GitUpdateResult.INCOMPLETE;
     }
     else if (error == MergeError.LOCAL_CHANGES) {
+      LOG.info("Local changes would be overwritten by merge");
       final List<FilePath> paths = getFilesOverwrittenByMerge(mergeLineListener.getOutput());
       final Collection<Change> changes = getLocalChangesFilteredByFiles(paths);
       final ChangeListViewerDialog dialog = new ChangeListViewerDialog(myProject, changes, false) {
@@ -129,12 +131,16 @@ public class GitMergeUpdater extends GitUpdater {
         }
       });
       return GitUpdateResult.ERROR;
-    } else if (untrackedFilesWouldBeOverwrittenByMergeDetector.wasMessageDetected()) {
+    }
+    else if (untrackedFilesWouldBeOverwrittenByMergeDetector.wasMessageDetected()) {
       LOG.info("handleMergeFailure: untracked files would be overwritten by merge");
       UntrackedFilesNotifier.notifyUntrackedFilesOverwrittenBy(myProject, untrackedFilesWouldBeOverwrittenByMergeDetector.getFiles(), "merge");
       return GitUpdateResult.ERROR;
-    } else {
-      GitUIUtil.notifyImportantError(myProject, "Error merging", GitUIUtil.stringifyErrors(mergeHandler.errors()));
+    }
+    else {
+      String errors = GitUIUtil.stringifyErrors(mergeHandler.errors());
+      LOG.info("Unknown error: " + errors);
+      GitUIUtil.notifyImportantError(myProject, "Error merging", errors);
       return GitUpdateResult.ERROR;
     }
   }

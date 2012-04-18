@@ -194,7 +194,7 @@ public class CommittedChangesBrowser extends JPanel {
 
   public void setModel(CommittedChangesTableModel tableModel) {
     myTableModel = tableModel;
-    myChangeListsView.setModel(tableModel);
+    myChangeListsView.setModelAndUpdateColumns(tableModel);
     tableModel.fireTableStructureChanged();
   }
 

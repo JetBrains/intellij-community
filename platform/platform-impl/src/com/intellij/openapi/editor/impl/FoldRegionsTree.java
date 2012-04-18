@@ -18,6 +18,7 @@ package com.intellij.openapi.editor.impl;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.CollectionFactory;
 import org.jetbrains.annotations.NotNull;
@@ -172,7 +173,7 @@ abstract class FoldRegionsTree {
     // We explicitly check for such situation, remove existing region and add the given one instead.
     if (fastIndex < myRegions.size()) {
       FoldRegion foldRegion = myRegions.get(fastIndex);
-      if (foldRegion.getStartOffset() == range.getStartOffset() && foldRegion.getEndOffset() == range.getEndOffset()) {
+      if (TextRange.areSegmentsEqual(foldRegion, range)) {
         removeRegion(foldRegion);
         return addRegion(range);
       } 

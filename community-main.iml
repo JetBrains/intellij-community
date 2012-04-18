@@ -31,7 +31,7 @@
     <orderEntry type="module" module-name="lang-impl" />
     <orderEntry type="module" module-name="lvcs-api" />
     <orderEntry type="module" module-name="lvcs-impl" />
-    <orderEntry type="module" module-name="notNull" />
+    <orderEntry type="module" module-name="instrumentation-util" />
     <orderEntry type="module" module-name="openapi" />
     <orderEntry type="module" module-name="platform-api" />
     <orderEntry type="module" module-name="platform-impl" />
@@ -70,8 +70,8 @@
     <orderEntry type="module" module-name="junit" />
     <orderEntry type="module" module-name="maven" />
     <orderEntry type="module" module-name="RegExpSupport" />
-    <orderEntry type="module" module-name="svn4ideaOld" />
-    <orderEntry type="module" module-name="svn4idea-testsOld" />
+    <orderEntry type="module" module-name="svn4idea" />
+    <orderEntry type="module" module-name="svn4idea-tests" />
     <orderEntry type="module" module-name="testng" />
     <orderEntry type="module" module-name="IntelliLang-java" />
     <orderEntry type="module" module-name="IntelliLang-javaee" />

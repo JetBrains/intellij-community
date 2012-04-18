@@ -50,7 +50,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.PathUtil;
 import com.intellij.util.SystemProperties;
-import com.intellij.util.containers.hash.HashMap;
+import com.intellij.util.containers.hash.LinkedHashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -77,7 +77,7 @@ public class GroovyScriptRunConfiguration extends ModuleBasedConfiguration<RunCo
   private boolean isDebugEnabled;
   @Nullable private String scriptParams;
   @Nullable private String scriptPath;
-  private final Map<String, String> envs = new HashMap<String, String>();
+  private final Map<String, String> envs = new LinkedHashMap<String, String>();
   public boolean passParentEnv = true;
 
   public GroovyScriptRunConfiguration(final String name, final Project project, final ConfigurationFactory factory) {
@@ -248,13 +248,7 @@ public class GroovyScriptRunConfiguration extends ModuleBasedConfiguration<RunCo
     final VirtualFile scriptFile = getScriptFile();
     if (scriptFile == null) return null;
     final PsiFile file = PsiManager.getInstance(getProject()).findFile(scriptFile);
-    if (!(file instanceof GroovyFile)) return null;
-    if (((GroovyFile)file).isScript()) return ((GroovyFile)file).getScriptClass();
-    final PsiClass[] classes = ((GroovyFile)file).getClasses();
-    if (classes.length > 0) {
-      return classes[0];
-    }
-    return null;
+    return GroovyRunnerUtil.getRunningClass(file);
   }
 
   public SettingsEditor<? extends RunConfiguration> getConfigurationEditor() {
@@ -268,7 +262,7 @@ public class GroovyScriptRunConfiguration extends ModuleBasedConfiguration<RunCo
       throw new RuntimeConfigurationWarning(GroovyBundle.message("class.does.not.exist"));
     }
     if (toRun instanceof GrTypeDefinition) {
-      if (!GroovyScriptRunConfigurationProducer.canBeRunByGroovy(toRun)) {
+      if (!GroovyRunnerUtil.canBeRunByGroovy(toRun)) {
         throw new RuntimeConfigurationWarning(GroovyBundle.message("class.can't be executed"));
       }
     }

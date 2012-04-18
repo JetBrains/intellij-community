@@ -17,10 +17,12 @@ package com.intellij.psi.codeStyle;
 
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FList;
+import com.intellij.util.text.CharArrayCharSequence;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -264,51 +266,69 @@ public class NameUtil {
         continue;
       }
 
-      StringBuilder buffer = new StringBuilder();
-      buffer.append(prefix);
-
-      if (upperCaseStyle) {
-        startWord = startWord.toUpperCase();
-      }
-      else {
-        if (prefix.length() == 0 || StringUtil.endsWithChar(prefix, '_')) {
-          startWord = startWord.toLowerCase();
-        }
-        else {
-          startWord = Character.toUpperCase(c) + startWord.substring(1);
-        }
-      }
-      buffer.append(startWord);
-
-      for (int i = words.length - wordCount + 1; i < words.length; i++) {
-        String word = words[i];
-        String prevWord = words[i - 1];
-        if (upperCaseStyle) {
-          word = word.toUpperCase();
-          if (prevWord.charAt(prevWord.length() - 1) != '_' && word.charAt(0) != '_') {
-            word = "_" + word;
-          }
-        }
-        else {
-          if (prevWord.charAt(prevWord.length() - 1) == '_') {
-            word = word.toLowerCase();
-          }
-        }
-        buffer.append(word);
-      }
-
-      String suggestion = buffer.toString();
-
-      if (isArray) {
-        suggestion = StringUtil.pluralize(suggestion);
-        if (upperCaseStyle) {
-          suggestion = suggestion.toUpperCase();
-        }
-      }
-
-      answer.add(suggestion + suffix);
+      answer.add(compoundSuggestion(prefix, upperCaseStyle, words, wordCount, startWord, c, isArray, false) + suffix);
+      answer.add(compoundSuggestion(prefix, upperCaseStyle, words, wordCount, startWord, c, isArray, true) + suffix);
     }
     return answer;
+  }
+
+  private static String compoundSuggestion(String prefix,
+                                           boolean upperCaseStyle,
+                                           String[] words,
+                                           int wordCount,
+                                           String startWord,
+                                           char c,
+                                           boolean isArray,
+                                           boolean skip_) {
+    StringBuilder buffer = new StringBuilder();
+
+    buffer.append(prefix);
+
+    if (upperCaseStyle) {
+      startWord = StringUtilRt.toUpperCase(startWord);
+    }
+    else {
+      if (prefix.length() == 0 || StringUtil.endsWithChar(prefix, '_')) {
+        startWord = startWord.toLowerCase();
+      }
+      else {
+        startWord = Character.toUpperCase(c) + startWord.substring(1);
+      }
+    }
+    buffer.append(startWord);
+
+    for (int i = words.length - wordCount + 1; i < words.length; i++) {
+      String word = words[i];
+      String prevWord = words[i - 1];
+      if (upperCaseStyle) {
+        word = StringUtilRt.toUpperCase(word);
+        if (prevWord.charAt(prevWord.length() - 1) != '_' && word.charAt(0) != '_') {
+          word = "_" + word;
+        }
+      }
+      else {
+        if (prevWord.charAt(prevWord.length() - 1) == '_') {
+          word = word.toLowerCase();
+        }
+
+        if (skip_) {
+          if (word.equals("_")) continue;
+          if (prevWord.equals("_")) {
+            word = StringUtil.capitalize(word);
+          }
+        }
+      }
+      buffer.append(word);
+    }
+
+    String suggestion = buffer.toString();
+    if (isArray) {
+      suggestion = StringUtil.pluralize(suggestion);
+      if (upperCaseStyle) {
+        suggestion = StringUtilRt.toUpperCase(suggestion);
+      }
+    }
+    return suggestion;
   }
 
   private static boolean isWordStart(char p) {
@@ -405,15 +425,15 @@ public class NameUtil {
       if (patternIndex == myPattern.length) {
         return FList.emptyList();
       }
+      if ('*' == myPattern[patternIndex]) {
+        return skipChars(name, patternIndex, nameIndex, true);
+      }
       if (nameIndex == name.length()) {
         return null;
       }
 
       if ('.' == myPattern[patternIndex] && name.charAt(nameIndex) != '.') {
         return skipChars(name, patternIndex, nameIndex, false);
-      }
-      if ('*' == myPattern[patternIndex]) {
-        return skipChars(name, patternIndex, nameIndex, true);
       }
 
       if (patternIndex == 0 && myOptions != MatchingCaseSensitivity.NONE && name.charAt(nameIndex) != myPattern[0]) {
@@ -437,26 +457,22 @@ public class NameUtil {
 
       int nextStart = NameUtil.nextWord(name, nameIndex);
 
-      boolean uppers = isWordStart(myPattern[patternIndex]);
+      int lastUpper = isWordStart(myPattern[patternIndex]) ? 0 : -1;
 
       int i = 1;
       while (true) {
-        if (patternIndex + i == myPattern.length) {
-          //end of pattern reached, the last word matches
-          return FList.<TextRange>emptyList().prepend(TextRange.from(nameIndex, i));
-        }
-        if (i + nameIndex == nextStart) {
-          //whole word match
+        if (patternIndex + i == myPattern.length || i + nameIndex == nextStart) {
           break;
         }
         char p = myPattern[patternIndex + i];
-        if (uppers && isWordStart(p) && myOptions != MatchingCaseSensitivity.ALL) {
+        char w = name.charAt(i + nameIndex);
+        if (lastUpper == i - 1 && isWordStart(p) && myOptions != MatchingCaseSensitivity.ALL) {
+          if (p == w) {
+            lastUpper = i;
+          }
           p = StringUtil.toLowerCase(p);
-        } else {
-          uppers = false;
         }
 
-        char w = name.charAt(i + nameIndex);
         if (myOptions != MatchingCaseSensitivity.ALL) {
           w = StringUtil.toLowerCase(w);
         }
@@ -466,29 +482,44 @@ public class NameUtil {
         i++;
       }
 
-      if (myPattern[patternIndex + i] == '*') {
-        nextStart = nameIndex + i;
+      if (isFinalSpaceMatch(name, patternIndex, nameIndex, nextStart, i)) {
+        return FList.<TextRange>emptyList().prepend(TextRange.from(nameIndex, i));
       }
 
-      // there's more in the pattern, but no more words
-      if (nextStart == name.length()) {
-        if (patternIndex + i == myPattern.length - 1) {
-          char last = myPattern[patternIndex + i];
-          if (' ' == last && (i == 1 && isWordStart(myPattern[patternIndex]) || i + nameIndex == name.length()) ||
-              '*' == last) {
-            return FList.<TextRange>emptyList().prepend(TextRange.from(nameIndex, i));
+      return matchAfterFragment(name, patternIndex, nameIndex, nextStart, lastUpper, i);
+    }
+
+    private boolean isFinalSpaceMatch(String name, int patternIndex, int nameIndex, int nextStart, int i) {
+      return nextStart == name.length() &&
+          patternIndex + i == myPattern.length - 1 &&
+          ' ' == myPattern[patternIndex + i] &&
+          (i == 1 && isWordStart(myPattern[patternIndex]) || i + nameIndex == name.length());
+    }
+
+    @Nullable
+    private FList<TextRange> matchAfterFragment(String name, int patternIndex, int nameIndex, int nextStart, int lastUpper, int matchLen) {
+      int star = patternIndex + matchLen < myPattern.length && myPattern[patternIndex + matchLen] == '*' ? matchLen : -1;
+      if (lastUpper >= 0) {
+        FList<TextRange> ranges = matchName(name, patternIndex + lastUpper + 1, lastUpper == star ? nameIndex + lastUpper : nextStart);
+        if (ranges != null) {
+          return prependRange(ranges, nameIndex, lastUpper + 1);
+        }
+      }
+
+      int startMatchLen = matchLen;
+      while (matchLen > 0) {
+        if (matchLen != lastUpper) {
+          FList<TextRange> ranges = matchName(name, patternIndex + matchLen, matchLen == star ? matchLen + lastUpper : nextStart);
+          if (ranges != null) {
+            return prependRange(ranges, nameIndex, matchLen);
           }
         }
-
-        return null;
+        matchLen--;
       }
 
-      while (i > 0) {
-        FList<TextRange> ranges = matchName(name, patternIndex + i, nextStart);
-        if (ranges != null) {
-          return prependRange(ranges, nameIndex, i);
-        }
-        i--;
+      FList<TextRange> ranges = matchName(name, patternIndex + startMatchLen, nameIndex + startMatchLen);
+      if (ranges != null) {
+        return prependRange(ranges, nameIndex, startMatchLen);
       }
       return null;
     }
@@ -567,15 +598,30 @@ public class NameUtil {
       Iterable<TextRange> iterable = matchingFragments(name);
       if (iterable == null) return Integer.MIN_VALUE;
 
-      int matchingCaps = 0;
       int fragmentCount = 0;
+      int matchingCaps = 0;
+      CharArrayCharSequence seq = new CharArrayCharSequence(myPattern);
+      int p = -1;
       for (TextRange range : iterable) {
-        matchingCaps += StringUtil.capitalsOnly(name.substring(range.getStartOffset(), range.getEndOffset())).length();
+        for (int i = range.getStartOffset(); i < range.getEndOffset(); i++) {
+          char c = name.charAt(i);
+          p = StringUtil.indexOf(seq, c, p + 1, myPattern.length, false);
+          if (p < 0) {
+            break;
+          }
+          if (Character.isUpperCase(myPattern[p])) {
+            matchingCaps += c == myPattern[p] ? 1 : -1;
+          }
+        }
         fragmentCount++;
       }
 
-      int patternCaps = StringUtil.capitalsOnly(new String(myPattern)).length();
-      return -fragmentCount - Math.max(0, patternCaps - matchingCaps) * 10;
+      int commonStart = 0;
+      while (commonStart < name.length() && commonStart < myPattern.length && name.charAt(commonStart) == myPattern[commonStart]) {
+        commonStart++;
+      }
+
+      return -fragmentCount + matchingCaps * 10 + commonStart;
     }
 
     @Override

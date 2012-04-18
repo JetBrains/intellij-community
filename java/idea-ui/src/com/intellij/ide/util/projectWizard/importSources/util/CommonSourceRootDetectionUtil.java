@@ -18,6 +18,8 @@ package com.intellij.ide.util.projectWizard.importSources.util;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.text.CharArrayCharSequence;
 import org.jetbrains.annotations.Nullable;
@@ -25,34 +27,34 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.IOException;
 
-public class CommonSourceRootDetectionUtil {
+public abstract class CommonSourceRootDetectionUtil<F> {
 
-  private CommonSourceRootDetectionUtil() {
+  protected CommonSourceRootDetectionUtil() {
   }
 
   @Nullable
-  public static Pair<File,String> suggestRootForFileWithPackageStatement(File file,
-                                                                         File topmostPossibleRoot,
-                                                                         NullableFunction<CharSequence, String> packageNameFetcher,
-                                                                         boolean packagePrefixSupported) {
-    if (!file.isFile()) return null;
+  public Pair<F, String> suggestRootForFileWithPackageStatement(F file,
+                                                                 F topmostPossibleRoot,
+                                                                 NullableFunction<CharSequence, String> packageNameFetcher,
+                                                                 boolean packagePrefixSupported) {
+    if (!isFile(file)) return null;
 
     final CharSequence chars;
     try {
-      chars = new CharArrayCharSequence(FileUtil.loadFileText(file));
+      chars = loadText(file);
     }
-    catch(IOException e){
+    catch (IOException e) {
       return null;
     }
 
     String packageName = packageNameFetcher.fun(chars);
     if (packageName != null) {
-      File root = file.getParentFile();
+      F root = getParentFile(file);
       int index = packageName.length();
       while (index > 0) {
         int index1 = packageName.lastIndexOf('.', index - 1);
         String token = packageName.substring(index1 + 1, index);
-        String dirName = root.getName();
+        String dirName = getName(root);
         final boolean equalsToToken = SystemInfo.isFileSystemCaseSensitive ? dirName.equals(token) : dirName.equalsIgnoreCase(token);
         if (!equalsToToken || root.equals(topmostPossibleRoot)) {
           String packagePrefix = packageName.substring(0, index);
@@ -61,11 +63,10 @@ public class CommonSourceRootDetectionUtil {
           }
           return Pair.create(root, packagePrefix);
         }
-        String parent = root.getParent();
-        if (parent == null) {
+        root = getParentFile(root);
+        if (root == null) {
           return null;
         }
-        root = new File(parent);
         index = index1;
       }
       return Pair.create(root, "");
@@ -73,4 +74,60 @@ public class CommonSourceRootDetectionUtil {
 
     return null;
   }
+
+  protected abstract String getName(final F file);
+
+  @Nullable
+  protected abstract F getParentFile(final F file);
+
+  protected abstract CharSequence loadText(final F file) throws IOException;
+
+  protected abstract boolean isFile(final F file);
+
+  public static final CommonSourceRootDetectionUtil<File> IO_FILE = new CommonSourceRootDetectionUtil<File>() {
+
+    @Override
+    protected String getName(final File file) {
+      return file.getName();
+    }
+
+    @Override
+    protected File getParentFile(final File file) {
+      return file.getParentFile();
+    }
+
+    @Override
+    protected CharSequence loadText(final File file) throws IOException {
+      return new CharArrayCharSequence(FileUtil.loadFileText(file));
+    }
+
+    @Override
+    protected boolean isFile(final File file) {
+      return file.isFile();
+    }
+  };
+
+  public static final CommonSourceRootDetectionUtil<VirtualFile> VIRTUAL_FILE = new CommonSourceRootDetectionUtil<VirtualFile>() {
+
+    @Override
+    protected String getName(VirtualFile file) {
+      return file.getName();
+    }
+
+    @Override
+    protected VirtualFile getParentFile(final VirtualFile file) {
+      return file.getParent();
+    }
+
+    @Override
+    protected CharSequence loadText(final VirtualFile file) throws IOException {
+      return VfsUtilCore.loadText(file);
+    }
+
+    @Override
+    protected boolean isFile(final VirtualFile file) {
+      return !file.isDirectory();
+    }
+  };
+
 }

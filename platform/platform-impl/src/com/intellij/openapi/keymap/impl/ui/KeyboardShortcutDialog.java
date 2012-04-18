@@ -29,7 +29,6 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ui.SeparatorFactory;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.UIUtil;
 
@@ -99,7 +98,7 @@ public class KeyboardShortcutDialog extends DialogWrapper {
     // Shortcut preview
 
     JPanel previewPanel = new JPanel(new BorderLayout());
-    previewPanel.setBorder(IdeBorderFactory.createTitledBorder(KeyMapBundle.message("shortcut.preview.ide.border.factory.title"), false, true, true));
+    previewPanel.setBorder(IdeBorderFactory.createTitledBorder(KeyMapBundle.message("shortcut.preview.ide.border.factory.title"), true));
     previewPanel.add(myKeystrokePreview);
     panel.add(
       previewPanel,
@@ -110,7 +109,7 @@ public class KeyboardShortcutDialog extends DialogWrapper {
 
     JPanel conflictsPanel = new JPanel(new BorderLayout());
     conflictsPanel.setBorder(IdeBorderFactory.createTitledBorder(KeyMapBundle.message("conflicts.ide.border.factory.title"),
-                                                                 false, true, true));
+                                                                 true));
     myConflictInfoArea.setEditable(false);
     myConflictInfoArea.setBackground(panel.getBackground());
     myConflictInfoArea.setLineWrap(true);
@@ -246,7 +245,7 @@ public class KeyboardShortcutDialog extends DialogWrapper {
 
     public StrokePanel(String borderText) {
       setLayout(new BorderLayout());
-      setBorder(IdeBorderFactory.createTitledBorder(borderText, false, false, true));
+      setBorder(IdeBorderFactory.createTitledBorder(borderText, false));
 
       myShortcutTextField = new ShortcutTextField(){
         protected void updateCurrentKeyStrokeInfo() {

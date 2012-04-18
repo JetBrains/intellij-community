@@ -31,6 +31,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.Alarm;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.datatransfer.Transferable;
 import java.util.ArrayList;
@@ -146,30 +147,30 @@ public class ProjectListBuilder extends AbstractListBuilder {
       myOutOfCodeBlockModificationCount = myModificationTracker.getOutOfCodeBlockModificationCount();
     }
 
-    public void childRemoved(final PsiTreeChangeEvent event) {
+    public void childRemoved(@NotNull final PsiTreeChangeEvent event) {
       final PsiElement child = event.getOldChild();
       if (child instanceof PsiWhiteSpace) return; //optimization
       childrenChanged();
     }
 
-    public void childAdded(final PsiTreeChangeEvent event) {
+    public void childAdded(@NotNull final PsiTreeChangeEvent event) {
       final PsiElement child = event.getNewChild();
       if (child instanceof PsiWhiteSpace) return; //optimization
       childrenChanged();
     }
 
-    public void childReplaced(final PsiTreeChangeEvent event) {
+    public void childReplaced(@NotNull final PsiTreeChangeEvent event) {
       final PsiElement oldChild = event.getOldChild();
       final PsiElement newChild = event.getNewChild();
       if (oldChild instanceof PsiWhiteSpace && newChild instanceof PsiWhiteSpace) return; //optimization
       childrenChanged();
     }
 
-    public void childMoved(final PsiTreeChangeEvent event) {
+    public void childMoved(@NotNull final PsiTreeChangeEvent event) {
       childrenChanged();
     }
 
-    public void childrenChanged(final PsiTreeChangeEvent event) {
+    public void childrenChanged(@NotNull final PsiTreeChangeEvent event) {
       childrenChanged();
     }
 
@@ -180,7 +181,7 @@ public class ProjectListBuilder extends AbstractListBuilder {
       addUpdateRequest();
     }
 
-    public void propertyChanged(final PsiTreeChangeEvent event) {
+    public void propertyChanged(@NotNull final PsiTreeChangeEvent event) {
       final String propertyName = event.getPropertyName();
       if (propertyName.equals(PsiTreeChangeEvent.PROP_ROOTS)) {
         addUpdateRequest();

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -295,7 +295,9 @@ public class ConversionServiceImpl extends ConversionService {
   @NotNull
   public ConversionResult convertModule(@NotNull final Project project, @NotNull final File moduleFile) {
     final IProjectStore stateStore = ((ProjectImpl)project).getStateStore();
-    String projectPath = FileUtil.toSystemDependentName(stateStore.getLocation());
+    final String url = stateStore.getPresentableUrl();
+    assert url != null : project;
+    final String projectPath = FileUtil.toSystemDependentName(url);
 
     if (!isConversionNeeded(projectPath, moduleFile)) {
       return ConversionResultImpl.CONVERSION_NOT_NEEDED;
@@ -322,7 +324,7 @@ public class ConversionServiceImpl extends ConversionService {
         }
       }
       context.saveFiles(Collections.singletonList(moduleFile));
-      Messages.showInfoMessage(project, IdeBundle.message("message.your.module.was.succesfully.converted.br.old.version.was.saved.to.0", backupFile.getAbsolutePath()),
+      Messages.showInfoMessage(project, IdeBundle.message("message.your.module.was.successfully.converted.br.old.version.was.saved.to.0", backupFile.getAbsolutePath()),
                                IdeBundle.message("dialog.title.convert.module"));
       return new ConversionResultImpl(runners);
     }

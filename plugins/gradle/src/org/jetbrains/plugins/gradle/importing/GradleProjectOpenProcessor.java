@@ -4,6 +4,7 @@ import com.intellij.ide.util.newProjectWizard.AddModuleWizard;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.ide.wizard.Step;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.projectImport.ProjectOpenProcessorBase;
 import com.intellij.util.Function;
@@ -39,7 +40,13 @@ public class GradleProjectOpenProcessor extends ProjectOpenProcessorBase<GradleP
       }
     });
     dialog.doNextAction();
-    
+    if (StringUtil.isEmpty(wizardContext.getProjectName())) {
+      final String projectName = dialog.getWizardContext().getProjectName();
+      if (!StringUtil.isEmpty(projectName)) {
+        wizardContext.setProjectName(projectName);
+      }
+    }
+
     dialog.show();
     return dialog.isOK();
   }

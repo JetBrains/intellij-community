@@ -104,6 +104,10 @@ public class MemberChangeTest extends IncrementalTestCase {
     doTest();
   }
 
+  public void testDeleteInterfaceMethod() throws Exception {
+    doTest();
+  }
+
   public void testDeleteMethodImplementation() throws Exception {
     doTest();
   }

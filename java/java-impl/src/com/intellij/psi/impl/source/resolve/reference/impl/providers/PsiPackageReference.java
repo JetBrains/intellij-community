@@ -38,7 +38,7 @@ public class PsiPackageReference extends PsiPolyVariantReferenceBase<PsiElement>
 
   @NotNull
   private Set<PsiPackage> getContext() {
-    if (myIndex == 0) return Collections.singleton(JavaPsiFacade.getInstance(getElement().getProject()).findPackage(""));
+    if (myIndex == 0) return myReferenceSet.getInitialContext();
     Set<PsiPackage> psiPackages = new HashSet<PsiPackage>();
     for (ResolveResult resolveResult : myReferenceSet.getReference(myIndex - 1).multiResolve(false)) {
       PsiElement psiElement = resolveResult.getElement();

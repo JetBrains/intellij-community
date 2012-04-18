@@ -192,12 +192,15 @@ public class UpdateRequestsQueue {
       dirtyScopeManagerFiller.consume(managerProxy);
     }
 
+    // can ask stopped without a lock
+    if (! myStopped) {
+      if (managerProxy != null) {
+        managerProxy.callRealManager(VcsDirtyScopeManager.getInstance(myProject));
+      }
+    }
+
     synchronized (myLock) {
       if (! myStopped) {
-        if (managerProxy != null) {
-          managerProxy.callRealManager(VcsDirtyScopeManager.getInstance(myProject));
-        }
-        
         myWaitingUpdateCompletionQueue.add(data.getCallback());
         schedule();
       }

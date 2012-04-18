@@ -1,9 +1,9 @@
 package org.jetbrains.jps.idea
 
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.text.StringUtil
 import org.jetbrains.jps.artifacts.Artifact
 import org.jetbrains.jps.*
-import com.intellij.openapi.util.text.StringUtil
 
 /**
  * @author max
@@ -16,6 +16,7 @@ public class IdeaProjectLoader {
   private Map<String, String> pathVariables
   private ProjectMacroExpander projectMacroExpander
   private ProjectLoadingErrorReporter errorReporter
+  private static final OwnServiceLoader<AdditionalRootsProviderService> rootsProviderLoader = OwnServiceLoader.load(AdditionalRootsProviderService.class)
 
   public static String guessHome(Script script) {
     File home = new File(script["gant.file"].substring("file:".length()))
@@ -95,7 +96,9 @@ public class IdeaProjectLoader {
   }
 
   def loadFromIpr(String path) {
-    def iprFile = new File(path).getAbsoluteFile()
+    def iprFile = new File(path).getCanonicalFile()
+    project.projectName = StringUtil.trimEnd(iprFile.getName(), ".ipr")
+    project.locationHash = iprFile.absolutePath.hashCode()
     projectMacroExpander = new ProjectMacroExpander(pathVariables, iprFile.parentFile.absolutePath)
 
     def root = new XmlParser(false, false).parse(iprFile)
@@ -105,11 +108,14 @@ public class IdeaProjectLoader {
     loadWorkspaceConfiguration(new File(iprFile.parentFile, iprFile.name[0..-4]+"iws"))
     loadProjectLibraries(getComponent(root, "libraryTable"))
     loadModules(getComponent(root, "ProjectModuleManager"))
+    loadUiDesignerConfiguration(root)
     loadArtifacts(getComponent(root, "ArtifactManager"))
     loadRunConfigurations(getComponent(root, "ProjectRunConfigurationManager"))
   }
 
   def loadFromDirectoryBased(File dir) {
+    project.projectName = getDirectoryBaseProjectName(dir)
+    project.locationHash = dir.absolutePath.hashCode()
     projectMacroExpander = new ProjectMacroExpander(pathVariables, dir.parentFile.absolutePath)
     def miscXml = new File(dir, "misc.xml")
     if (miscXml.exists()) {
@@ -149,6 +155,10 @@ public class IdeaProjectLoader {
       errorReporter.error("Cannot find modules.xml in $dir")
     }
 
+    def uiDesignerXml = new File(dir, "uiDesigner.xml")
+    if (uiDesignerXml.exists()) {
+      loadUiDesignerConfiguration(new XmlParser(false, false).parse(uiDesignerXml))
+    }
 
     def artifactsFolder = new File(dir, "artifacts")
     if (artifactsFolder.isDirectory()) {
@@ -171,6 +181,14 @@ public class IdeaProjectLoader {
     }
   }
 
+  def getDirectoryBaseProjectName(File dir) {
+    File nameFile = new File(dir, ".name")
+    if (nameFile.isFile()) {
+      return FileUtil.loadFile(nameFile).trim()
+    }
+    return StringUtil.replace(dir.parentFile.name, ":", "")
+  }
+
   boolean isXmlFile(File file) {
     return file.isFile() && StringUtil.endsWithIgnoreCase(file.name, ".xml")
   }
@@ -180,7 +198,10 @@ public class IdeaProjectLoader {
 
     def root = new XmlParser(false, false).parse(workspaceFile)
     def options = loadOptions(getComponent(root, "CompilerWorkspaceConfiguration"))
-    project.compilerConfiguration.addNotNullAssertions = parseBoolean(options["ASSERT_NOT_NULL"], true);
+    // compatibility: in older projects this setting was stored in workspace
+    if (project.compilerConfiguration.addNotNullAssertions == true) { // if is the same as default value
+      project.compilerConfiguration.addNotNullAssertions = parseBoolean(options["ASSERT_NOT_NULL"], true);
+    }
     project.compilerConfiguration.clearOutputDirectoryOnRebuild = parseBoolean(options["CLEAR_OUTPUT_DIRECTORY"], true);
   }
 
@@ -237,10 +258,20 @@ public class IdeaProjectLoader {
         configuration.annotationProcessing.processModule[it."@name"] = it."@generatedDirName"
       }
     }
+
+    def addNotNullTag = componentTag?.addNotNullAssertions
+    if (addNotNullTag != null) {
+      project.compilerConfiguration.addNotNullAssertions = parseBoolean(addNotNullTag."@enabled", true);
+    }
+  }
+
+  private def loadUiDesignerConfiguration(Node root) {
+    def options = loadOptions(getComponent(root, "uidesigner-configuration"))
+    project.uiDesignerConfiguration.copyFormsRuntimeToOutput = parseBoolean(options["COPY_FORMS_RUNTIME_TO_OUTPUT"], true)
   }
 
   private File getFileByUrl(final String url) {
-    return new File(FileUtil.toSystemDependentName(projectMacroExpander.expandMacros(IdeaProjectLoadingUtil.pathFromUrl(url))))
+    return new File(FileUtil.toCanonicalPath(projectMacroExpander.expandMacros(IdeaProjectLoadingUtil.pathFromUrl(url))))
   }
 
   private static boolean parseBoolean(Object value, boolean defaultValue) {
@@ -278,7 +309,7 @@ public class IdeaProjectLoader {
     }
     def outputTag = componentTag?.output?.getAt(0)
     String outputPath = outputTag != null ? IdeaProjectLoadingUtil.pathFromUrl(outputTag.'@url') : null
-    projectOutputPath = outputPath != null && outputPath.length() > 0 ? projectMacroExpander.expandMacros(outputPath) : null
+    projectOutputPath = outputPath != null && outputPath.length() > 0 ? FileUtil.toCanonicalPath(projectMacroExpander.expandMacros(outputPath)) : null
     project.projectSdk = sdk
     projectLanguageLevel = componentTag?."@languageLevel"
   }
@@ -508,6 +539,14 @@ public class IdeaProjectLoader {
           currentModule.languageLevel = convertLanguageLevel(languageLevel)
         }
 
+        rootsProviderLoader.each {AdditionalRootsProviderService service ->
+          def sourceRoots = service.getAdditionalSourceRoots(currentModule)
+          currentModule.sourceRoots.addAll(sourceRoots)
+          currentModule.generatedSourceRoots.addAll(sourceRoots)
+          if (!sourceRoots.isEmpty()) {
+            srcFolderExists = true
+          }
+        }
         if (srcFolderExists) {
           if (componentTag."@inherit-compiler-output" == "true") {
             if (projectOutputPath == null) {
@@ -519,8 +558,8 @@ public class IdeaProjectLoader {
             }
           }
           else {
-            currentModule.outputPath = moduleMacroExpander.expandMacros(IdeaProjectLoadingUtil.pathFromUrl(componentTag.output[0]?.@url))
-            currentModule.testOutputPath = moduleMacroExpander.expandMacros(IdeaProjectLoadingUtil.pathFromUrl(componentTag."output-test"[0]?.'@url'))
+            currentModule.outputPath = FileUtil.toCanonicalPath(moduleMacroExpander.expandMacros(IdeaProjectLoadingUtil.pathFromUrl(componentTag.output[0]?.@url)))
+            currentModule.testOutputPath = FileUtil.toCanonicalPath(moduleMacroExpander.expandMacros(IdeaProjectLoadingUtil.pathFromUrl(componentTag."output-test"[0]?.'@url')))
             if (currentModule.testOutputPath == null) {
               currentModule.testOutputPath = currentModule.outputPath
             }

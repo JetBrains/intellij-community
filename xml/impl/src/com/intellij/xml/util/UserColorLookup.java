@@ -80,41 +80,8 @@ public class UserColorLookup extends LookupElementDecorator<LookupElement> {
 
   @Nullable
   public static Color getColorFromElement(final PsiElement element) {
-    Color myColorAtCaret = null;
-
     if (!(element instanceof XmlToken)) return null;
 
-    final String text = element.getText();
-
-    if (text.length() > 0 && text.charAt(0) == '#') {
-      myColorAtCaret = decodeColor(text);
-    }
-    else {
-      final String hexCodeForColorName = ColorSampleLookupValue.getHexCodeForColorName(text);
-      if (hexCodeForColorName != null) myColorAtCaret = decodeColor(hexCodeForColorName);
-    }
-
-    return myColorAtCaret;
+    return ColorSampleLookupValue.getColor(element.getText());
   }
-
-  private static Color decodeColor(final String text) {
-    Color myColorAtCaret = null;
-    try {
-      String s = text.substring(1);
-
-      if (s.length() == 3) { // css color short hand
-        StringBuilder buf = new StringBuilder(6);
-        buf.append(s.charAt(0)).append(s.charAt(0));
-        buf.append(s.charAt(1)).append(s.charAt(1));
-        buf.append(s.charAt(2)).append(s.charAt(2));
-
-        s = buf.toString();
-      }
-      myColorAtCaret = Color.decode("0x" + s);
-    }
-    catch (Exception ignore) {
-    }
-    return myColorAtCaret;
-  }
-
 }

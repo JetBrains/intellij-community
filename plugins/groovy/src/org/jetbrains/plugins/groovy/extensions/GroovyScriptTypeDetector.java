@@ -55,7 +55,6 @@ public abstract class GroovyScriptTypeDetector {
 
   @NotNull
   public static GroovyScriptType getScriptType(@NotNull GroovyFile script) {
-    assert script.isScript();
     for (GroovyScriptTypeDetector detector : EP_NAME.getExtensions()) {
       if (detector.isSpecificScriptFile(script)) {
         return detector.getScriptType();

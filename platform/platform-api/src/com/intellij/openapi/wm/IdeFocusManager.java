@@ -91,7 +91,7 @@ public abstract class IdeFocusManager implements FocusRequestor {
 
   /**
    * Aggregates all key events until given callback object is processed
-   * @param done
+   * @param done action callback
    */
   public abstract void typeAheadUntil(ActionCallback done);
 

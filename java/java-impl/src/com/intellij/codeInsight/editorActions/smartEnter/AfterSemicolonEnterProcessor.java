@@ -27,6 +27,7 @@ import com.intellij.util.text.CharArrayUtil;
  * To change this template use Options | File Templates.
  */
 public class AfterSemicolonEnterProcessor implements EnterProcessor {
+  @Override
   public boolean doEnter(Editor editor, PsiElement psiElement, boolean isModified) {
     if (psiElement instanceof PsiExpressionStatement ||
         psiElement instanceof PsiDeclarationStatement ||

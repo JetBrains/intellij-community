@@ -59,10 +59,12 @@ public class YouTrackRepository extends BaseRepositoryImpl {
     if (request != null) {
       query += " " + request;
     }
-    HttpMethod method = doREST("/rest/project/issues/?filter=" + encodeUrl(query) + "&max=" + max, false);
+    String requestUrl = "/rest/project/issues/?filter=" + encodeUrl(query) + "&max=" + max;
+    HttpMethod method = doREST(requestUrl, false);
     InputStream stream = method.getResponseBodyAsStream();
+
     // workaround for http://youtrack.jetbrains.net/issue/JT-7984
-    String s = StreamUtil.readText(stream);
+    String s = StreamUtil.readText(stream, "UTF-8");
     for (int i = 0; i < s.length(); i++) {
       if (!XMLChar.isValid(s.charAt(i))) {
         s = s.replace(s.charAt(i), ' ');
@@ -71,14 +73,17 @@ public class YouTrackRepository extends BaseRepositoryImpl {
 
     Element element;
     try {
+      //InputSource source = new InputSource(stream);
+      //source.setEncoding("UTF-8");
+      //element = new SAXBuilder(false).build(source).getRootElement();
       element = new SAXBuilder(false).build(new StringReader(s)).getRootElement();
     }
     catch (JDOMException e) {
-      LOG.error("Can't parse YouTrack response", e);
+      LOG.error("Can't parse YouTrack response for " + requestUrl, e);
       throw e;
     }
     if ("error".equals(element.getName())) {
-      throw new Exception(element.getText());      
+      throw new Exception("Error from YouTrack for " + requestUrl + ": '" + element.getText() + "'");
     }
     @SuppressWarnings({"unchecked"})
     List<Object> children = element.getChildren("issue");

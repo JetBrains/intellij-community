@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -157,7 +157,11 @@ public class IndentHelperImpl extends IndentHelper {
     if (tabCount == 0) return spaceCount;
 
     int tabSize = settings.getTabSize(fileType);
-    int indentLevel = tabCount * tabSize / settings.getIndentSize(fileType);
+    int indentSize = settings.getIndentSize(fileType);
+    if (indentSize <= 0) {
+      indentSize = 1;
+    }
+    int indentLevel = tabCount * tabSize / indentSize;
     return indentLevel * INDENT_FACTOR + spaceCount;
   }
 }

@@ -60,7 +60,7 @@ public abstract class AvdComboBox extends ComboboxWithBrowseButton {
           return;
         }
 
-        RunAndroidAvdManagerAction.runAvdManager(platform.getSdk().getLocation());
+        RunAndroidAvdManagerAction.runAvdManager(platform.getSdkData().getLocation());
       }
     });
 

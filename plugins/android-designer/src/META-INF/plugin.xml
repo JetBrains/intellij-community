@@ -1,7 +1,7 @@
 <idea-plugin version="2">
   <name>Android Designer</name>
   <id>com.intellij.android-designer</id>
-  <vendor logo="/general/ijLogo.png">JetBrains</vendor>
+  <vendor logo="/icons/android.png">JetBrains</vendor>
 
   <resource-bundle>messages.AndroidDesignerBundle</resource-bundle>
 
@@ -12,6 +12,14 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <fileEditorProvider implementation="com.intellij.android.designer.AndroidDesignerEditorProvider"/>
+
+    <projectService serviceInterface="com.intellij.android.designer.profile.ProfileList"
+                    serviceImplementation="com.intellij.android.designer.profile.ProfileList"/>
+
+    <projectService serviceInterface="com.intellij.android.designer.model.ViewsMetaManager"
+                    serviceImplementation="com.intellij.android.designer.model.ViewsMetaManager"/>
+
+    <paletteItemProvider implementation="com.intellij.android.designer.palette.ViewsPaletteProvider"/>
   </extensions>
 
 </idea-plugin>

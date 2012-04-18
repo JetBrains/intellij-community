@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,10 +25,7 @@ import com.intellij.openapi.cvsIntegration.CvsResult;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.actions.VcsContextFactory;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
@@ -40,6 +37,7 @@ import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.AsynchConsumer;
 import com.intellij.util.Consumer;
+import gnu.trove.TObjectLongHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.netbeans.lib.cvsclient.admin.Entry;
@@ -58,11 +56,9 @@ public class CvsCommittedChangesProvider implements CachingCommittedChangesProvi
   private static final Logger LOG = Logger.getInstance("#com.intellij.cvsSupport2.changeBrowser.CvsCommittedChangesProvider");
 
   private final Project myProject;
-  private final MyZipper myZipper;
 
   public CvsCommittedChangesProvider(Project project) {
     myProject = project;
-    myZipper = new MyZipper();
   }
 
   public ChangeBrowserSettings createDefaultSettings() {
@@ -74,10 +70,13 @@ public class CvsCommittedChangesProvider implements CachingCommittedChangesProvi
   }
 
   public VcsCommittedListsZipper getZipper() {
-    return myZipper;
+    return new MyZipper();
   }
 
   private static class MyZipper extends VcsCommittedListsZipperAdapter {
+    private long lastNumber = 1;
+    private final TObjectLongHashMap<CommittedChangeListKey> numberCache = new TObjectLongHashMap<CommittedChangeListKey>();
+
     private MyZipper() {
       super(new GroupCreator() {
         public Object createKey(final RepositoryLocation location) {
@@ -97,7 +96,22 @@ public class CvsCommittedChangesProvider implements CachingCommittedChangesProvi
 
     @Override
     public long getNumber(final CommittedChangeList list) {
-      return list.getCommitDate().getTime();
+      final long time = list.getCommitDate().getTime();
+      final Long roundedTime = Long.valueOf(time - (time % CvsChangeList.SUITABLE_DIFF));
+      final CommittedChangeListKey key = new CommittedChangeListKey(list.getCommitterName(), roundedTime, list.getComment());
+      final long number = numberCache.get(key);
+      if (number == 0) {
+        numberCache.put(key, lastNumber);
+        return lastNumber++;
+      }
+      return number;
+    }
+  }
+
+  private static class CommittedChangeListKey extends Trinity<String, Long, String> {
+
+    CommittedChangeListKey(String name, Long commitDate, String comment) {
+      super(name, commitDate, comment);
     }
   }
 
@@ -191,6 +205,11 @@ public class CvsCommittedChangesProvider implements CachingCommittedChangesProvi
       throw cvsResult.composeError();
     }
     return new Pair<CvsChangeList, FilePath>(result.get(), filePath);
+  }
+
+  @Override
+  public RepositoryLocation getForNonLocal(VirtualFile file) {
+    return null;
   }
 
   public List<CvsChangeList> getCommittedChanges(ChangeBrowserSettings settings, RepositoryLocation location, final int maxCount)

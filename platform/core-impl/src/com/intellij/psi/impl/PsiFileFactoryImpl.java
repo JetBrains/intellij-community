@@ -191,16 +191,16 @@ public class PsiFileFactoryImpl extends PsiFileFactory {
   public PsiElement createElementFromText(@Nullable final String text,
                                           @NotNull final Language language,
                                           @NotNull final IElementType type,
-                                          @NotNull final PsiElement context) {
+                                          @Nullable final PsiElement context) {
     if (text == null) return null;
-    final DummyHolder result = DummyHolderFactory.createHolder(context.getManager(), language, context);
+    final DummyHolder result = DummyHolderFactory.createHolder(myManager, language, context);
     final FileElement holder = result.getTreeElement();
 
     final ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(language);
     if (parserDefinition == null) {
       throw new AssertionError("No parser definition for " + language);
     }
-    final Project project = context.getProject();
+    final Project project = myManager.getProject();
     final Lexer lexer = parserDefinition.createLexer(project);
     final PsiBuilder builder = PsiBuilderFactory.getInstance().createBuilder(project, holder, lexer, language, text);
     final ASTNode node = parserDefinition.createParser(project).parse(type, builder);

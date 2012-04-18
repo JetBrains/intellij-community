@@ -29,6 +29,7 @@ import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.JavaSdkType;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -36,6 +37,7 @@ import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.TextComponentAccessor;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -43,14 +45,12 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
-import com.intellij.ui.ComboboxWithBrowseButton;
-import com.intellij.ui.PanelWithAnchor;
-import com.intellij.ui.DocumentAdapter;
-import com.intellij.ui.RawCommandLineEditor;
+import com.intellij.ui.*;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBRadioButton;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.xpath.xslt.XsltSupport;
 import org.intellij.lang.xpath.xslt.associations.FileAssociationsManager;
@@ -76,36 +76,6 @@ class XsltRunSettingsEditor extends SettingsEditor<XsltRunConfiguration> {
 
   private Editor myEditor;
 
-  static class AddParameterAction extends AnAction {
-    private final JTable myParams;
-
-    public AddParameterAction(JTable params) {
-      super("Add", "Add Parameter", IconLoader.getIcon("/general/add.png"));
-      myParams = params;
-    }
-
-    public void actionPerformed(AnActionEvent e) {
-      ((Editor.ParamTableModel)myParams.getModel()).addParam();
-    }
-  }
-
-  static class RemoveParameterAction extends AnAction {
-    private final JTable myParams;
-
-    public RemoveParameterAction(JBTable paramModel) {
-      super("Remove", "Remove Parameter", IconLoader.getIcon("/general/remove.png"));
-      myParams = paramModel;
-    }
-
-    public void update(AnActionEvent e) {
-      e.getPresentation().setEnabled(myParams.getRowCount() > 0 && myParams.getSelectedRow() != -1);
-    }
-
-    public void actionPerformed(AnActionEvent e) {
-      ((Editor.ParamTableModel)myParams.getModel()).removeParam(myParams.getSelectedRow());
-    }
-  }
-
   static class Editor implements PanelWithAnchor {
     private JTabbedPane myComponent;
 
@@ -114,7 +84,6 @@ class XsltRunSettingsEditor extends SettingsEditor<XsltRunConfiguration> {
     private TextFieldWithBrowseButton myOutputFile;
     private JCheckBox myOpenOutputFile;
     private JCheckBox myOpenInBrowser;
-    private JPanel myParamsToolbar;
     private JBTable myParameters;
 
     private ButtonGroup myOutputOptions;
@@ -136,6 +105,7 @@ class XsltRunSettingsEditor extends SettingsEditor<XsltRunConfiguration> {
     private JPanel myPanelSettings;
     private JPanel myPanelAdvanced;
     private JBLabel myXSLTScriptFileLabel;
+    private JPanel myParametersPanel;
     private JComponent anchor;
 
     private final AnyXMLDescriptor myXmlDescriptor;
@@ -261,7 +231,7 @@ class XsltRunSettingsEditor extends SettingsEditor<XsltRunConfiguration> {
       });
       myFileType.setModel(new DefaultComboBoxModel(getFileTypes(project)));
 
-      myParameters.setModel(new ParamTableModel());
+      myParameters = new JBTable(new ParamTableModel());
       myParameters.setDefaultRenderer(String.class, new DefaultTableCellRenderer() {
         public Component getTableCellRendererComponent(JTable table,
                                                        Object value,
@@ -284,6 +254,20 @@ class XsltRunSettingsEditor extends SettingsEditor<XsltRunConfiguration> {
         }
       });
 
+      myParametersPanel.add(
+        ToolbarDecorator.createDecorator(myParameters)
+          .setAddAction(new AnActionButtonRunnable() {
+            @Override
+            public void run(AnActionButton button) {
+              ((Editor.ParamTableModel)myParameters.getModel()).addParam();
+            }
+          }).setRemoveAction(new AnActionButtonRunnable() {
+          @Override
+          public void run(AnActionButton button) {
+            ((Editor.ParamTableModel)myParameters.getModel()).removeParam(myParameters.getSelectedRow());
+          }
+        }).createPanel(), BorderLayout.CENTER);
+
       final Module[] modules = ModuleManager.getInstance(project).getModules();
       myModule.setModel(new DefaultComboBoxModel(ArrayUtil.mergeArrays(new Object[]{"<default>"}, modules)));
       myModule.setRenderer(new ListCellRendererWrapper(myModule) {
@@ -304,9 +288,14 @@ class XsltRunSettingsEditor extends SettingsEditor<XsltRunConfiguration> {
         }
       });
 
-      final Sdk[] allJdks = ProjectJdkTable.getInstance().getAllJdks();
-      myJDK.setModel(new DefaultComboBoxModel(allJdks));
-      if (allJdks.length > 0) {
+      final List<Sdk> allJdks = ContainerUtil.filter(ProjectJdkTable.getInstance().getAllJdks(), new Condition<Sdk>() {
+        @Override
+        public boolean value(Sdk sdk) {
+          return sdk.getSdkType() instanceof JavaSdkType;
+        }
+      });
+      myJDK.setModel(new DefaultComboBoxModel(allJdks.toArray()));
+      if (allJdks.size() > 0) {
         myJDK.setSelectedIndex(0);
       }
       else {
@@ -338,13 +327,6 @@ class XsltRunSettingsEditor extends SettingsEditor<XsltRunConfiguration> {
 
       myWorkingDirectory
         .addBrowseFolderListener("Working Directory", null, project, FileChooserDescriptorFactory.createSingleFolderDescriptor());
-
-      final DefaultActionGroup group = new DefaultActionGroup();
-      group.add(new AddParameterAction(myParameters));
-      group.add(new RemoveParameterAction(myParameters));
-      final ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar("XsltRunSettingsEditor", group, true);
-      myParamsToolbar.setLayout(new FlowLayout(FlowLayout.LEFT, 0, 0));
-      myParamsToolbar.add(actionToolbar.getComponent());
 
       myVmArguments.setDialogCaption("VM Arguments");
 

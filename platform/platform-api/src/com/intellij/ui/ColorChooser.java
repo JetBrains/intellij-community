@@ -23,16 +23,16 @@ import java.awt.*;
  * Utility wrapper around JColorChooser. Helps to avoid memory leak through JColorChooser.ColorChooserDialog.cancelButton.
  *
  * @author max
+ * @author Konstantin Bulenkov
  */
 public class ColorChooser {
-  private ColorChooser() {}
-
-  public static Color chooseColor(Component parent, String caption, @Nullable Color preselectedColor) {
-    return ColorPicker.showDialog(parent, caption, preselectedColor, false);
-  }
-
+  @Nullable
   public static Color chooseColor(Component parent, String caption, @Nullable Color preselectedColor, boolean enableOpacity) {
-    return ColorPicker.showDialog(parent, caption, preselectedColor, enableOpacity);
+    return ColorChooserService.getInstance().showDialog(parent, caption, preselectedColor, enableOpacity);
   }
 
+  @Nullable
+  public static Color chooseColor(Component parent, String caption, @Nullable Color preselectedColor) {
+    return chooseColor(parent, caption, preselectedColor, false);
+  }
 }

@@ -537,7 +537,7 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V> implements Concur
             ++sshift;
             ssize <<= 1;
         }
-        segmentShift = 32 - sshift;
+        segmentShift = 12; // the middle of the hash is much more random that its HSB. Especially when we use TObjectHashingStrategy.CANONICAl as a hash provider
         segmentMask = ssize - 1;
         this.segments = new Segment[ssize];
 

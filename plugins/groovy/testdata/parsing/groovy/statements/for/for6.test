@@ -26,7 +26,7 @@ Groovy script
           PsiElement(Integer)('5')
       PsiElement(;)(';')
       PsiWhiteSpace(' ')
-      Postfix expression
+      Unary expression
         Reference expression
           PsiElement(identifier)('i')
         PsiElement(++)('++')

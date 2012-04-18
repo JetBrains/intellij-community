@@ -184,6 +184,7 @@ class GroovyAutoPopupTest extends CompletionAutoPopupTestCase {
     assert !lookup
     type 'c'
     assert !lookup.focused
+    assert 'char' in myFixture.lookupElementStrings
     assert myFixture.editor.document.text.contains('for(final c)')
     type ' in c'
     assert lookup.focused
@@ -231,5 +232,50 @@ class GroovyAutoPopupTest extends CompletionAutoPopupTestCase {
     type 'FIS:'
     assert myFixture.file.text == 'FIS:'
   }
+
+  public void testEnteringNamedArg() {
+    myFixture.configureByText 'a.groovy', 'foo(<caret>)'
+    type 'has:'
+    myFixture.checkResult 'foo(has:<caret>)'
+  }
+
+  public void testEnteringMapKey() {
+    myFixture.configureByText 'a.groovy', '[<caret>]'
+    type 'has:'
+    myFixture.checkResult '[has:<caret>]'
+  }
+
+  public void testTypingFqn() {
+    CodeInsightSettings.instance.COMPLETION_CASE_SENSITIVE = CodeInsightSettings.NONE
+    myFixture.configureByText 'a.groovy', '<caret>'
+    type 'java.'
+    myFixture.checkResult 'java.<caret>'
+  }
+
+  public void testPreferRightCasedVariant() {
+    CodeInsightSettings.instance.COMPLETION_CASE_SENSITIVE = CodeInsightSettings.NONE
+    myFixture.configureByText 'a.groovy', '<caret>'
+    type 'boo'
+    myFixture.assertPreferredCompletionItems 0, 'boolean', 'Boolean'
+    type '\b\b\bBoo'
+    myFixture.assertPreferredCompletionItems 0, 'Boolean', 'boolean'
+  }
+
+  public void testPackageQualifier() {
+    myFixture.addClass("package com.too; public class Util {}")
+    myFixture.configureByText 'a.groovy', 'void foo(Object command) { <caret> }'
+    type 'com.t'
+    assert myFixture.lookupElementStrings.containsAll(['too', 'command.toString'])
+  }
+
+  public void testVarargParenthesis() {
+    myFixture.configureByText 'a.groovy', '''
+void foo(File... files) { }
+foo(new <caret>)
+'''
+    type 'File('
+    assert myFixture.file.text.contains('new File()')
+  }
+
 
 }

@@ -109,8 +109,8 @@ public class AndroidSdkAdditionalData implements SdkAdditionalData {
   }
 
   @Nullable
-  public IAndroidTarget getBuildTarget(@NotNull AndroidSdk sdkObject) {
-    return myBuildTarget != null ? sdkObject.findTargetByHashString(myBuildTarget) : null;
+  public IAndroidTarget getBuildTarget(@NotNull AndroidSdkData sdkData) {
+    return myBuildTarget != null ? sdkData.findTargetByHashString(myBuildTarget) : null;
   }
 
   @Nullable

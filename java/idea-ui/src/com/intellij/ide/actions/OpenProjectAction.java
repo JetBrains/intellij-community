@@ -29,10 +29,11 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.projectImport.ProjectOpenProcessor;
 import com.intellij.projectImport.ProjectOpenProcessorBase;
 import com.intellij.util.Consumer;
-import com.intellij.util.SystemProperties;
 
 import java.util.Collections;
 import java.util.LinkedHashSet;
@@ -54,19 +55,19 @@ public class OpenProjectAction extends AnAction implements DumbAware {
     }
     descriptor.setDescription(IdeBundle.message("filter.project.files", StringUtil.join(extensions, ", ")));
 
-    String userHomeDir = null;
+    VirtualFile userHomeDir = null;
     if (SystemInfo.isUnix) {
-      userHomeDir = SystemProperties.getUserHome();
+      userHomeDir = VfsUtil.getUserHomeDir();
     }
 
     descriptor.putUserData(PathChooserDialog.PREFER_LAST_OVER_EXPLICIT, Boolean.TRUE);
 
     final Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
-    FileChooser.choosePaths(descriptor, project, userHomeDir, new Consumer<List<String>>() {
+    FileChooser.chooseFiles(descriptor, project, userHomeDir, new Consumer<List<VirtualFile>>() {
       @Override
-      public void consume(final List<String> paths) {
-        if (paths.size() == 1) {
-          ProjectUtil.openOrImport(paths.get(0), project, false);
+      public void consume(final List<VirtualFile> files) {
+        if (files.size() == 1) {
+          ProjectUtil.openOrImport(files.get(0).getPath(), project, false);
         }
       }
     });

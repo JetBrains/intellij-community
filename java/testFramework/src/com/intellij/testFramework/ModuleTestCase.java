@@ -17,6 +17,7 @@ package com.intellij.testFramework;
 
 import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleType;
@@ -159,7 +160,13 @@ public abstract class ModuleTestCase extends IdeaTestCase {
     final File moduleDir = createTempDirectory();
     FileUtil.copyDir(dirInTestDataFile, moduleDir);
     final Module module = createModule(moduleDir + "/" + newModuleFileName, moduleType);
-    VirtualFile root = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(moduleDir);
+    final VirtualFile root = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(moduleDir);
+    new WriteCommandAction.Simple(module.getProject()) {
+      @Override
+      protected void run() throws Throwable {
+        root.refresh(false, true);
+      }
+    }.execute().throwException();
     if (addSourceRoot) {
       PsiTestUtil.addSourceContentToRoots(module, root);
     }

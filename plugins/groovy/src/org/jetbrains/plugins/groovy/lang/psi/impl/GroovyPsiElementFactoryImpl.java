@@ -123,7 +123,7 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
   public GrReferenceExpression createReferenceExpressionFromText(String idText) {
     PsiFile file = createGroovyFile(idText);
     final GrTopStatement[] statements = ((GroovyFileBase)file).getTopStatements();
-    LOG.assertTrue(statements.length == 1 && statements[0] instanceof GrReferenceExpression, idText);
+    if (!(statements.length == 1 && statements[0] instanceof GrReferenceExpression)) throw new IncorrectOperationException(idText);
     return (GrReferenceExpression) statements[0];
   }
 
@@ -260,7 +260,7 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
   }
 
   public GrClosableBlock createClosureFromText(String closureText, PsiElement context) throws IncorrectOperationException {
-    GroovyFile psiFile = createGroovyFile("def foo  = " + closureText, false, context);
+    GroovyFile psiFile = createGroovyFile("def __hdsjfghk_sdhjfshglk_foo  = " + closureText, false, context);
     final GrStatement st = psiFile.getStatements()[0];
     LOG.assertTrue(st instanceof GrVariableDeclaration, closureText);
     final GrExpression initializer = ((GrVariableDeclaration)st).getVariables()[0].getInitializerGroovy();
@@ -282,7 +282,7 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
   public GrParameter createParameter(String name, @Nullable String typeText, @Nullable String initializer, @Nullable GroovyPsiElement context)
     throws IncorrectOperationException {
     StringBuilder fileText = new StringBuilder();
-    fileText.append("def foo(");
+    fileText.append("def dsfsadfnbhfjks_weyripouh_huihnrecuio(");
     if (typeText != null) {
       fileText.append(typeText).append(" ");
     } else {
@@ -433,7 +433,7 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
   @NotNull
   @Override
   public GrAnnotation createAnnotationFromText(@NotNull @NonNls String annotationText, @Nullable PsiElement context) throws IncorrectOperationException {
-    return createMethodFromText(annotationText + " void foo() {}", context).getModifierList().getAnnotations()[0];
+    return createMethodFromText(annotationText + " void ___shdjklf_pqweirupncp_foo() {}", context).getModifierList().getAnnotations()[0];
   }
 
   @Override
@@ -497,8 +497,12 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
       text = StringUtil.repeatSymbol('\n', length);
     }
 
-    PsiFile dummyFile = PsiFileFactory.getInstance(myProject).createFileFromText(DUMMY + GroovyFileType.GROOVY_FILE_TYPE.getDefaultExtension(),
-        text);
+    return createLineTerminator(text);
+  }
+
+  @NotNull
+  public PsiElement createLineTerminator(String text) {
+    PsiFile dummyFile = PsiFileFactory.getInstance(myProject).createFileFromText(DUMMY + GroovyFileType.GROOVY_FILE_TYPE.getDefaultExtension(), text);
     PsiElement child = dummyFile.getFirstChild();
     assert child != null;
     return child;
@@ -581,6 +585,19 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
     GrCodeReferenceElement[] refElements = extendsClause.getReferenceElements();
     if (refElements.length != 1) throw new IncorrectOperationException("cannot create code reference element for class" + text);
     return refElements[0];
+  }
+
+  @Override
+  public GrThisReferenceExpression createThisExpression(PsiManager manager, @Nullable PsiClass psiClass) {
+    final String text;
+    if (psiClass == null) {
+      text = "this";
+    }
+    else {
+      text = psiClass.getQualifiedName() + ".this";
+    }
+    final GroovyFileImpl dummy = createDummyFile(text);
+    return (GrThisReferenceExpression)dummy.getStatements()[0];
   }
 
   public GrImportStatement createImportStatementFromText(String qName, boolean isStatic, boolean isOnDemand, String alias) {

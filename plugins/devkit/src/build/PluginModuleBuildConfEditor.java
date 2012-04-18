@@ -27,7 +27,6 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.ui.IdeBorderFactory;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.idea.devkit.DevKitBundle;
@@ -78,7 +77,7 @@ public class PluginModuleBuildConfEditor implements ModuleConfigurationEditor {
     myWholePanel.add(myPluginXMLLabel, gc);
     myWholePanel.add(myPluginXML, gc);
     JPanel manifestPanel = new JPanel(new GridBagLayout());
-    manifestPanel.setBorder(IdeBorderFactory.createTitledBorder(DevKitBundle.message("manifest.settings"), false, true, true));
+    manifestPanel.setBorder(IdeBorderFactory.createTitledBorder(DevKitBundle.message("manifest.settings"), true));
     gc.insets.left = 0;
     manifestPanel.add(myUseUserManifest, gc);
     gc.insets.left = 2;
@@ -128,7 +127,6 @@ public class PluginModuleBuildConfEditor implements ModuleConfigurationEditor {
   }
 
   public void reset() {
-    LocalFileSystem.getInstance().refresh(false);
     myPluginXML.setText(myBuildProperties.getPluginXmlPath().substring(0, myBuildProperties.getPluginXmlPath().length() - META_INF.length() - PLUGIN_XML.length() - 2));
     myManifest.setText(myBuildProperties.getManifestPath());
     myUseUserManifest.setSelected(myBuildProperties.isUseUserManifest());

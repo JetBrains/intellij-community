@@ -80,7 +80,7 @@ public abstract class DynamicDialog extends DialogWrapper {
     myDynamicManager = DynamicManager.getInstance(myProject);
 
     if (isTableVisible) {
-      myTablePane.setBorder(IdeBorderFactory.createTitledBorder(GroovyBundle.message("dynamic.properties.table.name"), false, false, false));
+      myTablePane.setBorder(IdeBorderFactory.createTitledBorder(GroovyBundle.message("dynamic.properties.table.name"), false));
     }
     else {
       myTablePane.setVisible(false);

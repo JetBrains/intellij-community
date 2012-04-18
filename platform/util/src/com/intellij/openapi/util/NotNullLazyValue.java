@@ -35,4 +35,8 @@ public abstract class NotNullLazyValue<T> {
     }
     return myValue;
   }
+
+  public void drop() {
+    myValue = null;
+  }
 }

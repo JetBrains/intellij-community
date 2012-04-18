@@ -17,8 +17,8 @@
 package org.jetbrains.android.dom.manifest;
 
 import com.intellij.util.xml.Convert;
+import org.jetbrains.android.dom.AndroidResourceType;
 import org.jetbrains.android.dom.converters.ResourceReferenceConverter;
-import org.jetbrains.android.dom.ResourceType;
 import org.jetbrains.android.dom.AndroidAttributeValue;
 import org.jetbrains.android.dom.resources.ResourceValue;
 
@@ -27,6 +27,6 @@ import org.jetbrains.android.dom.resources.ResourceValue;
  */
 public interface ApplicationComponent extends ManifestElementWithName {
   @Convert(ResourceReferenceConverter.class)
-  @ResourceType("string")
+  @AndroidResourceType("string")
   AndroidAttributeValue<ResourceValue> getLabel();
 }

@@ -41,6 +41,7 @@ import javax.swing.Timer;
 import javax.swing.event.HyperlinkEvent;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.net.UnknownHostException;
 import java.text.DecimalFormat;
 import java.util.*;
 import java.util.concurrent.Future;
@@ -82,7 +83,6 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
   private final WorkingContextManager myContextManager;
 
   private final Map<String,Task> myIssueCache = Collections.synchronizedMap(new LinkedHashMap<String,Task>());
-  private final Map<String,Task> myTemporaryCache = Collections.synchronizedMap(new LinkedHashMap<String,Task>());
 
   private final Map<String, LocalTaskImpl> myTasks = Collections.synchronizedMap(new LinkedHashMap<String, LocalTaskImpl>() {
     @Override
@@ -144,7 +144,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
               associatedTask.setUpdated(new Date());
               activateTask(associatedTask, true, false);              
             }
-          });
+          }, myProject.getDisposed());
           return;
         }
 
@@ -183,7 +183,6 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
     set.removeAll(repositories);
     myBadRepositories.removeAll(set); // remove all changed reps
     myIssueCache.clear();
-    myTemporaryCache.clear();
 
     myRepositories.clear();
     myRepositories.addAll(repositories);
@@ -229,21 +228,20 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
 
   @Override
   public List<Task> getIssues(String query) {
-    List<Task> tasks = getIssuesFromRepositories(query, 50, 0, true);
-    synchronized (myIssueCache) {
-      myTemporaryCache.clear();
-      myTemporaryCache.putAll(ContainerUtil.assignKeys(tasks.iterator(), KEY_CONVERTOR));
-    }
+    return getIssues(query, true);
+  }
+
+  @Override
+  public List<Task> getIssues(String query, boolean forceRequest) {
+    List<Task> tasks = getIssuesFromRepositories(query, 50, 0, forceRequest);
+    if (tasks == null) return getCachedIssues();
+    myIssueCache.putAll(ContainerUtil.assignKeys(tasks.iterator(), KEY_CONVERTOR));
     return tasks;
   }
 
   @Override
   public List<Task> getCachedIssues() {
-    synchronized (myIssueCache) {
-      ArrayList<Task> tasks = new ArrayList<Task>(myIssueCache.values());
-      tasks.addAll(myTemporaryCache.values());
-      return tasks;
-    }
+    return new ArrayList<Task>(myIssueCache.values());
   }
 
   @Nullable
@@ -310,7 +308,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
     }
     myContextManager.restoreContext(origin);
 
-    final Task task = doActivate(origin, true);
+    final LocalTask task = doActivate(origin, true);
 
     if (isVcsEnabled()) {
       List<ChangeListInfo> changeLists = getOpenChangelists(task);
@@ -320,7 +318,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
 
       if (createChangelist) {
         if (changeLists.isEmpty()) {
-          String name = TaskUtil.getChangeListName(task);
+          String name = getChangelistName(origin);
           String comment = TaskUtil.getChangeListComment(this, origin);
           createChangeList(task, name, comment);
         } else {
@@ -334,23 +332,35 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
     }
   }
 
+  public String getChangelistName(Task task) {
+    TaskRepository repository = task.getRepository();
+    if (repository != null) {
+      return TaskUtil.formatTask(task, myConfig.changelistNameFormat);
+    }
+    return task.getSummary();
+  }
+
   private void saveActiveTask() {
     myContextManager.saveContext(myActiveTask);
     myActiveTask.setActive(false);
     myActiveTask.setUpdated(new Date());
   }
 
-  public void createChangeList(Task task, String name) {
+  public void createChangeList(LocalTask task, String name) {
     String comment = TaskUtil.getChangeListComment(this, task);
     createChangeList(task, name, comment);
   }
 
-  public void createChangeList(Task task, String name, String comment) {
+  public void createChangeList(LocalTask task, String name, String comment) {
     LocalChangeList changeList = myChangeListManager.findChangeList(name);
     if (changeList == null) {
       changeList = myChangeListManager.addChangeList(name, comment);
     }
+    else {
+      changeList.setComment(comment);
+    }
     myChangeListManager.setDefaultChangeList(changeList);
+    task.setAssociatedChangelistId(changeList.getId());
     getOpenChangelists(task).add(new ChangeListInfo(changeList));
   }
 
@@ -393,38 +403,43 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
         indicator.setText("Connecting to " + repository.getUrl() + "...");
         indicator.setFraction(0);
         indicator.setIndeterminate(true);
-        myConnection = repository.createCancellableConnection();
-        if (myConnection != null) {
-          Future<Exception> future = ApplicationManager.getApplication().executeOnPooledThread(myConnection);
-          while (true) {
-            try {
-              myException = future.get(100, TimeUnit.MILLISECONDS);
-              return;
-            }
-            catch (TimeoutException ignore) {
+        try {
+          myConnection = repository.createCancellableConnection();
+          if (myConnection != null) {
+            Future<Exception> future = ApplicationManager.getApplication().executeOnPooledThread(myConnection);
+            while (true) {
               try {
-                indicator.checkCanceled();
+                myException = future.get(100, TimeUnit.MILLISECONDS);
+                return;
               }
-              catch (ProcessCanceledException e) {
+              catch (TimeoutException ignore) {
+                try {
+                  indicator.checkCanceled();
+                }
+                catch (ProcessCanceledException e) {
+                  myException = e;
+                  myConnection.cancel();
+                  return;
+                }
+              }
+              catch (Exception e) {
                 myException = e;
-                myConnection.cancel();
                 return;
               }
             }
+          }
+          else {
+            try {
+              repository.testConnection();
+            }
             catch (Exception e) {
+              LOG.info(e);
               myException = e;
-              return;
             }
           }
         }
-        else {
-          try {
-            repository.testConnection();
-          }
-          catch (Exception e) {
-            LOG.info(e);
-            myException = e;
-          }
+        catch (Exception e) {
+          myException = e;
         }
       }
     };
@@ -435,12 +450,21 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
       Messages.showMessageDialog(myProject, "Connection is successful", "Connection", Messages.getInformationIcon());
     }
     else if (!(e instanceof ProcessCanceledException)) {
-      Messages.showErrorDialog(myProject, e.getMessage(), "Error");
+      String message = e.getMessage();
+      if (e instanceof UnknownHostException) {
+        message = "Unknown host: " + message;
+      }
+      if (message == null) {
+        LOG.error(e);
+        message = "Unknown error";
+      }
+      Messages.showErrorDialog(myProject, message, "Error");
     }
     return e == null;
   }
 
   @SuppressWarnings({"unchecked"})
+  @NotNull
   public Config getState() {
     myConfig.tasks = ContainerUtil.map(myTasks.values(), new Function<Task, LocalTaskImpl>() {
       public LocalTaskImpl fun(Task task) {
@@ -662,6 +686,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
   private void doUpdate(Runnable onComplete) {
     try {
       List<Task> issues = getIssuesFromRepositories(null, myConfig.updateIssuesCount, 0, false);
+      if (issues == null) return;
 
       synchronized (myIssueCache) {
         myIssueCache.clear();
@@ -692,8 +717,9 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
     }
   }
 
+  @Nullable
   private List<Task> getIssuesFromRepositories(@Nullable String request, int max, long since, boolean forceRequest) {
-    List<Task> issues = new ArrayList<Task>();
+    List<Task> issues = null;
     for (final TaskRepository repository : getAllRepositories()) {
       if (!repository.isConfigured() || (!forceRequest && myBadRepositories.contains(repository))) {
         continue;
@@ -701,9 +727,11 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
       try {
         Task[] tasks = repository.getIssues(request, max, since);
         myBadRepositories.remove(repository);
+        if (issues == null) issues = new ArrayList<Task>(tasks.length);
         ContainerUtil.addAll(issues, tasks);
       }
       catch (Exception e) {
+        LOG.warn("Cannot connect to " + repository, e);
         myBadRepositories.add(repository);
         if (forceRequest) {
           notifyAboutConnectionFailure(repository);
@@ -813,6 +841,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
     public boolean saveContextOnCommit = true;
     public boolean trackContextForNewChangelist = true;
     public boolean markAsInProgress = false;
+    public String changelistNameFormat = "{id} {summary}";
 
     @Tag("servers")
     public Element servers = new Element("servers");

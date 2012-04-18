@@ -1,45 +1,52 @@
 package org.jetbrains.jps.client;
 
+import com.intellij.util.ConcurrencyUtil;
 import org.jboss.netty.channel.MessageEvent;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.api.*;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author Eugene Zhuravlev
  *         Date: 8/11/11
  */
 public class CompileServerClient extends SimpleProtobufClient<JpsServerResponseHandler> {
+  private static final ScheduledThreadPoolExecutor ourPingService = ConcurrencyUtil.newSingleScheduledThreadExecutor("Compile server ping thread", Thread.MIN_PRIORITY);
+  private volatile ScheduledFuture<?> myPingFuture;
+  private final long myServerPingInterval;
 
-  public CompileServerClient() {
-    super(JpsRemoteProto.Message.getDefaultInstance(), new UUIDGetter() {
+  public CompileServerClient(long serverPingInterval, final AsyncTaskExecutor asyncExec) {
+    super(JpsRemoteProto.Message.getDefaultInstance(), asyncExec, new UUIDGetter() {
       @NotNull
       public UUID getSessionUUID(@NotNull MessageEvent e) {
         final JpsRemoteProto.Message message = (JpsRemoteProto.Message)e.getMessage();
         return ProtoUtil.fromProtoUUID(message.getSessionId());
       }
     });
+    myServerPingInterval = serverPingInterval;
   }
 
   @NotNull
   public RequestFuture sendCompileRequest(boolean isMake, String projectId, Collection<String> modules, final Collection<String> artifacts,
-                                          Collection<String> paths, JpsServerResponseHandler handler) throws Exception{
+                                          Collection<String> paths,
+                                          final Map<String, String> userData,
+                                          JpsServerResponseHandler handler) throws Exception{
     checkConnected();
     final JpsRemoteProto.Message.Request request = isMake?
-      ProtoUtil.createMakeRequest(projectId, modules, artifacts) :
-      ProtoUtil.createForceCompileRequest(projectId, modules, artifacts, paths);
+      ProtoUtil.createMakeRequest(projectId, modules, artifacts, userData) :
+      ProtoUtil.createForceCompileRequest(projectId, modules, artifacts, paths, userData);
     return sendRequest(request, handler);
   }
 
   @NotNull
-  public RequestFuture sendRebuildRequest(String projectId, JpsServerResponseHandler handler) throws Exception{
+  public RequestFuture sendRebuildRequest(String projectId, JpsServerResponseHandler handler, Map<String, String> userData) throws Exception{
     checkConnected();
-    return sendRequest(ProtoUtil.createRebuildRequest(projectId), handler);
+    return sendRequest(ProtoUtil.createRebuildRequest(projectId, userData), handler);
   }
 
   @NotNull
@@ -49,9 +56,10 @@ public class CompileServerClient extends SimpleProtobufClient<JpsServerResponseH
   }
 
   @NotNull
-  public RequestFuture sendSetupRequest(final Map<String, String> pathVariables, final List<GlobalLibrary> sdkAndLibs, final String globalEncoding) throws Exception {
+  public RequestFuture sendSetupRequest(final Map<String, String> pathVariables, final List<GlobalLibrary> sdkAndLibs,
+                                        final String globalEncoding, final String ignoredFilesPatterns) throws Exception {
     checkConnected();
-    return sendRequest(ProtoUtil.createSetupRequest(pathVariables, sdkAndLibs, globalEncoding), null);
+    return sendRequest(ProtoUtil.createSetupRequest(pathVariables, sdkAndLibs, globalEncoding, ignoredFilesPatterns), null);
   }
 
   @NotNull
@@ -82,4 +90,27 @@ public class CompileServerClient extends SimpleProtobufClient<JpsServerResponseH
     return sendMessage(sessionUUID, ProtoUtil.toMessage(sessionUUID, request), handler, cancelAction);
   }
 
+  @Override
+  protected void onConnect() {
+    if (myServerPingInterval > 0L) {
+      myPingFuture = ourPingService.scheduleAtFixedRate(new Runnable() {
+        @Override
+        public void run() {
+          final JpsRemoteProto.Message.Request ping = ProtoUtil.createPingRequest();
+          if (isConnected()) {
+            sendRequest(ping, null);
+          }
+        }
+      }, myServerPingInterval, myServerPingInterval, TimeUnit.MILLISECONDS);
+    }
+  }
+
+  @Override
+  protected void beforeDisconnect() {
+    final ScheduledFuture<?> future = myPingFuture;
+    if (future != null) {
+      future.cancel(false);
+      myPingFuture = null;
+    }
+  }
 }

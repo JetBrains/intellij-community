@@ -35,6 +35,7 @@ import org.jetbrains.annotations.NotNull;
 public class SplitIfAction extends PsiElementBaseIntentionAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.intention.impl.SplitIfAction");
 
+  @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
     if (!(element instanceof PsiJavaToken)) {
       return false;
@@ -64,11 +65,13 @@ public class SplitIfAction extends PsiElementBaseIntentionAction {
     return true;
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return CodeInsightBundle.message("intention.split.if.family");
   }
 
+  @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) {
 
     try {

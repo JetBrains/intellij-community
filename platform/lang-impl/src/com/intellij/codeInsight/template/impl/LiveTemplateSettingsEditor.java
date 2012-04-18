@@ -211,7 +211,7 @@ public class LiveTemplateSettingsEditor extends JPanel {
   private JPanel createTemplateOptionsPanel() {
     JPanel panel = new JPanel();
     panel.setBorder(IdeBorderFactory.createTitledBorder(CodeInsightBundle.message("dialog.edit.template.options.title"),
-                                                        false, true, true));
+                                                        true));
     panel.setLayout(new GridBagLayout());
     GridBagConstraints gbConstraints = new GridBagConstraints();
     gbConstraints.fill = GridBagConstraints.BOTH;

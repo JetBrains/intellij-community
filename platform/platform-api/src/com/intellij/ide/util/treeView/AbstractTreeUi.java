@@ -27,6 +27,7 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.ui.LoadingNode;
+import com.intellij.ui.treeStructure.AlwaysExpandedTree;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
@@ -52,7 +53,6 @@ import java.util.*;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 public class AbstractTreeUi {
@@ -176,8 +176,7 @@ public class AbstractTreeUi {
   private SimpleTimerTask myCleanupTask;
 
   private final AtomicBoolean myCancelRequest = new AtomicBoolean();
-  private final Lock myStateLock = new ReentrantLock();
-  private final AtomicBoolean myLockWasAcquired = new AtomicBoolean();
+  private final ReentrantLock myStateLock = new ReentrantLock();
 
   private final AtomicBoolean myResettingToReadyNow = new AtomicBoolean();
 
@@ -751,7 +750,7 @@ public class AbstractTreeUi {
   }
 
   private boolean isAutoExpand(NodeDescriptor descriptor, boolean validate) {
-    if (descriptor == null) return false;
+    if (descriptor == null || isAlwaysExpandedTree()) return false;
 
     boolean autoExpand = getBuilder().isAutoExpandNode(descriptor);
 
@@ -819,6 +818,10 @@ public class AbstractTreeUi {
 
   private boolean isAutoExpand(DefaultMutableTreeNode node) {
     return isAutoExpand(getDescriptorFrom(node));
+  }
+
+  private boolean isAlwaysExpandedTree() {
+    return myTree instanceof AlwaysExpandedTree && ((AlwaysExpandedTree)myTree).isAlwaysExpanded();
   }
 
   private AsyncResult<Boolean> update(final NodeDescriptor nodeDescriptor, boolean now) {
@@ -1918,7 +1921,7 @@ public class AbstractTreeUi {
 
   @Nullable
   public Boolean _isReady(boolean attempt) {
-    if (attempt && myLockWasAcquired.get()) return false;
+    if (attempt && myStateLock.isLocked()) return false;
 
     Boolean ready = checkValue(new Computable<Boolean>() {
       @Override
@@ -2409,20 +2412,16 @@ public class AbstractTreeUi {
   }
 
   private boolean attemptLock() throws InterruptedException {
-    myLockWasAcquired.set(myStateLock.tryLock(Registry.intValue("ide.tree.uiLockAttempt"), TimeUnit.MILLISECONDS));
-    return myLockWasAcquired.get();
+    return myStateLock.tryLock(Registry.intValue("ide.tree.uiLockAttempt"), TimeUnit.MILLISECONDS);
   }
 
   private void acquireLock() {
     myStateLock.lock();
-    myLockWasAcquired.set(true);
   }
 
   private void releaseLock() {
     myStateLock.unlock();
-    myLockWasAcquired.set(false);
   }
-
 
   public ActionCallback batch(final Progressive progressive) {
     assertIsDispatchThread();
@@ -4065,6 +4064,21 @@ public class AbstractTreeUi {
 
 
     return preselectedRow;
+  }
+
+  public void expandAllWithoutRecursion(@Nullable final Runnable onDone) {
+    final JTree tree = getTree();
+    int myCurrentRow = 0;
+    if (tree.getRowCount() > 0) {
+      while (myCurrentRow < tree.getRowCount()) {
+        final TreePath path = tree.getPathForRow(myCurrentRow);
+        final Object last = path.getLastPathComponent();
+        final Object elem = getElementFor(last);
+        expand(elem, null);
+        myCurrentRow++;
+      }
+    }
+    runDone(onDone);
   }
 
   public void expandAll(@Nullable final Runnable onDone) {

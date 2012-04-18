@@ -25,7 +25,6 @@ import com.intellij.psi.scope.JavaScopeProcessorEvent;
 import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.*;
-import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -78,9 +77,9 @@ public class ResolveUtil {
   }
 
   /**
-   * 
+   *
    * @param place - place to start tree walk up
-   * @param processor 
+   * @param processor
    * @param processNonCodeMethods - this parameter tells us if we need non code members. But non code members are started to process only after we walk up any code block or script
    * @return
    */
@@ -95,10 +94,6 @@ public class ResolveUtil {
 
     while (run != null) {
       if (!run.processDeclarations(processor, ResolveState.initial(), lastParent, place)) return false;
-      if (run instanceof GrClosableBlock) {
-        PsiClass superClass = getLiteralSuperClass((GrClosableBlock)run);
-        if (superClass != null && !superClass.processDeclarations(processor, ResolveState.initial(), null, place)) return false;
-      }
       if (processNonCodeMethods) {
         if (!doProcessNonCodeMembers) {
           if (run instanceof GrCodeBlock) doProcessNonCodeMembers = true;
@@ -115,6 +110,9 @@ public class ResolveUtil {
             }
           }
           else if (run instanceof GrClosableBlock) {
+            PsiClass superClass = getLiteralSuperClass((GrClosableBlock)run);
+            if (superClass != null && !superClass.processDeclarations(processor, ResolveState.initial(), null, place)) return false;
+
             if (!GdkMethodUtil.categoryIteration((GrClosableBlock)run, processor)) return false;
             if (!GdkMethodUtil.withIteration((GrClosableBlock)run, processor, place)) return false;
           }
@@ -534,20 +532,16 @@ public class ResolveUtil {
     return variants;
   }
 
-  public static List<GroovyResolveResult> getAllClassConstructors(PsiClass psiClass, GroovyPsiElement place, PsiSubstitutor substitutor) {
-    final List<GroovyResolveResult> result = CollectionFactory.arrayList();
-
-    final PsiResolveHelper helper = JavaPsiFacade.getInstance(place.getProject()).getResolveHelper();
+  public static GroovyResolveResult[] getAllClassConstructors(PsiClass psiClass, GroovyPsiElement place, PsiSubstitutor substitutor, @Nullable PsiType[] argTypes) {
+    final MethodResolverProcessor processor = new MethodResolverProcessor(psiClass.getName(), place, true, null, argTypes, PsiType.EMPTY_ARRAY);
+    ResolveState state = ResolveState.initial().put(PsiSubstitutor.KEY, substitutor);
     for (PsiMethod constructor : psiClass.getConstructors()) {
-      result.add(new GroovyResolveResultImpl(constructor, null, substitutor, helper.isAccessible(constructor, place, null), true));
+      processor.execute(constructor, state);
     }
 
     final PsiClassType qualifierType = JavaPsiFacade.getElementFactory(psiClass.getProject()).createType(psiClass);
-    final MethodResolverProcessor processor = new MethodResolverProcessor(psiClass.getName(), place, true, null, null, PsiType.EMPTY_ARRAY);
-    ResolveState state = ResolveState.initial().put(PsiSubstitutor.KEY, substitutor);
     NonCodeMembersContributor.runContributors(qualifierType, processor, place, state);
-    Collections.addAll(result, processor.getCandidates());
-    return result;
+    return processor.getCandidates();
   }
 
   public static boolean isKeyOfMap(GrReferenceExpression ref) {

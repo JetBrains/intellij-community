@@ -80,7 +80,7 @@ public class RefactoringUtil {
     return Comparing.equal(virtualFile, sourceRootForFile);
   }
 
-  public static boolean isInStaticContext(PsiElement element, final PsiClass aClass) {
+  public static boolean isInStaticContext(PsiElement element, @Nullable final PsiClass aClass) {
     return PsiUtil.getEnclosingStaticElement(element, aClass) != null;
   }
 
@@ -499,6 +499,10 @@ public class RefactoringUtil {
           return initType.createArrayType();
         }
       }
+
+      if (expr instanceof PsiReferenceExpression && PsiUtil.isOnAssignmentLeftHand(expr)) {
+        return getTypeByExpression(((PsiAssignmentExpression)expr.getParent()).getRExpression());
+      }
       return null;
     }
     PsiClass refClass = PsiUtil.resolveClassInType(type);
@@ -551,7 +555,7 @@ public class RefactoringUtil {
     }
   }
 
-  public static PsiElement getAnchorElementForMultipleExpressions(PsiExpression[] occurrences, PsiElement scope) {
+  public static PsiElement getAnchorElementForMultipleExpressions(@NotNull PsiExpression[] occurrences, PsiElement scope) {
     PsiElement anchor = null;
     for (PsiExpression occurrence : occurrences) {
     //  if (!occurrence.isPhysical()) continue;

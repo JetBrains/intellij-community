@@ -1,12 +1,10 @@
 package org.jetbrains.ether.dependencyView;
 
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.util.io.InlineKeyDescriptor;
-import com.intellij.util.io.KeyDescriptor;
 import com.intellij.util.io.PersistentStringEnumerator;
-import org.jetbrains.ether.RW;
 
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -64,92 +62,20 @@ class DependencyContext {
     myEnumerator = new PersistentStringEnumerator(file, true);
   }
 
-  static KeyDescriptor<S> descriptorS = new InlineKeyDescriptor<S>() {
-    @Override
-    public S fromInt(int n) {
-      return new S(n);
-    }
-
-    @Override
-    public int toInt(S s) {
-      return s.index;
-    }
-  };
-
-  static class S implements Comparable<S>, RW.Writable {
-    public final int index;
-
-    S(final DataInput in){
-      try{
-      index = in.readInt();
-      }
-      catch (IOException e){
-        throw new RuntimeException(e);
-      }
-    }
-          
-    private S(final int i) {
-      index = i;
-    }
-    
-    public S(final BufferedReader r) {
-      index = RW.readInt(r);
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-
-      S s = (S)o;
-
-      if (index != s.index) return false;
-
-      return true;
-    }
-
-    @Override
-    public int hashCode() {
-      return index;
-    }
-
-    public int compareTo(S o) {
-      return index - o.index;
-    }
-
-    public void write(BufferedWriter w) {
-      RW.writeln(w, Integer.toString(index));
-    }
-
-    public void save(final DataOutput out){
-      try{
-        out.writeInt(index);
-      }
-      catch (IOException e){
-        throw new RuntimeException(e);
-      }
-    }
-    
-    @Override
-    public String toString() {
-      return Integer.toString(index);
-    }
-  }
-
-  public String getValue(final S s) {
+  public String getValue(final int s) {
     try {
-      return myEnumerator.valueOf(s.index);
+      return myEnumerator.valueOf(s);
     }
     catch (IOException e) {
       throw new RuntimeException(e);
     }
   }
 
-  public S get(final String s) {
+  public int get(final String s) {
     try {
       final int i = s == null ? myEnumerator.enumerate("") : myEnumerator.enumerate(s);
 
-      return new S(i);
+      return i;
     }
     catch (IOException e) {
       throw new RuntimeException(e);
@@ -169,10 +95,10 @@ class DependencyContext {
     myEnumerator.force();
   }
 
-  public Logger<S> getLogger(final com.intellij.openapi.diagnostic.Logger log) {
-    return new Logger<S>() {
+  public Logger<Integer> getLogger(final com.intellij.openapi.diagnostic.Logger log) {
+    return new Logger<Integer>() {
       @Override
-      public void debug(String comment, S s) {
+      public void debug(String comment, Integer s) {
         if (log.isDebugEnabled()) {
           log.debug(comment + getValue(s));
         }

@@ -39,6 +39,10 @@ public class NormalizeDeclarationFix extends InspectionGadgetsFix {
     if (parent == null) {
       return;
     }
+    if (parent instanceof PsiField) {
+      parent.normalizeDeclaration();
+      return;
+    }
     final PsiElement grandParent = parent.getParent();
     if (!(grandParent instanceof PsiDeclarationStatement)) {
       return;

@@ -71,7 +71,10 @@ public class ExceptionUtil {
   @NotNull
   public static String getThrowableText(@NotNull Throwable aThrowable, @NonNls @NotNull final String stackFrameSkipPattern) {
     @NonNls final String prefix = "\tat ";
+    @NonNls final String prefixProxy = prefix + "$Proxy";
+    final String prefixRemoteUtil = prefix + "com.intellij.execution.rmi.RemoteUtil";
     final String skipPattern = prefix + stackFrameSkipPattern;
+
     final StringWriter stringWriter = new StringWriter();
     @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
     final PrintWriter writer = new PrintWriter(stringWriter) {
@@ -85,7 +88,11 @@ public class ExceptionUtil {
             super.println("\tin "+ stripPackage(x, skipPattern.length()));
           }
           skipping = curSkipping;
-          if (skipping) return;
+          if (skipping) {
+            skipping = !x.startsWith(prefixRemoteUtil);
+            return;
+          }
+          if (x.startsWith(prefixProxy)) return;
           super.println(x);
         }
       }

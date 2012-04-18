@@ -24,6 +24,7 @@ import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ui.update.ComparableObject;
 import com.intellij.util.ui.update.ComparableObjectCheck;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -263,6 +264,7 @@ public abstract class SimpleNode extends PresentableNodeDescriptor implements Co
     return list.toArray(new ColoredFragment[list.size()]);
   }
 
+  @NotNull
   public Object[] getEqualityObjects() {
     return NONE;
   }

@@ -53,6 +53,7 @@ public class ClassMember implements GroovyElementTypes {
     PsiBuilder.Marker initMarker = builder.mark();
     PsiBuilder.Marker modMarker = builder.mark();
     ParserUtils.getToken(builder, kSTATIC);
+    ParserUtils.getToken(builder, mNLS);
     if (mLCURLY == builder.getTokenType()) {
       modMarker.done(MODIFIERS);
       if (OpenOrClosableBlock.parseOpenBlock(builder, parser)) {

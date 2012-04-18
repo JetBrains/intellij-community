@@ -24,13 +24,10 @@ import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.ui.UIUtil;
 import junit.framework.Assert;
-import org.jetbrains.idea.svn17.SvnAuthenticationManager;
-import org.jetbrains.idea.svn17.SvnConfiguration17;
-import org.jetbrains.idea.svn17.SvnVcs17;
-import org.jetbrains.idea.svn17.auth.ProviderType;
-import org.jetbrains.idea.svn17.auth.SvnAuthenticationInteraction;
-import org.jetbrains.idea.svn17.auth.SvnAuthenticationListener;
-import org.jetbrains.idea.svn17.dialogs.SvnAuthenticationProvider;
+import org.jetbrains.idea.svn.auth.ProviderType;
+import org.jetbrains.idea.svn.auth.SvnAuthenticationInteraction;
+import org.jetbrains.idea.svn.auth.SvnAuthenticationListener;
+import org.jetbrains.idea.svn.dialogs.SvnAuthenticationProvider;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
@@ -49,7 +46,7 @@ public class SvnAuthenticationTest extends PlatformTestCase {
   private TestInteraction myTestInteraction;
   private final Object mySynchObject = new Object();
   private SvnTestInteractiveAuthentication myInteractiveProvider;
-  private SvnConfiguration17 myConfiguration;
+  private SvnConfiguration myConfiguration;
 
   @Override
   protected void runBareRunnable(Runnable runnable) throws Throwable {
@@ -71,21 +68,20 @@ public class SvnAuthenticationTest extends PlatformTestCase {
     });
 
 
-    myConfiguration = SvnConfiguration17.getInstance(myProject);
+    myConfiguration = SvnConfiguration.getInstance(myProject);
     final String configPath = myProject.getBaseDir().getPath() + File.separator + "Subversion";
     myConfiguration.setConfigurationDirectory(configPath);
 
     final File configFile = new File(configPath);
     myFilesToDelete.add(configFile);
 
-    SvnVcs17 vcs = SvnVcs17.getInstance(myProject);
+    SvnVcs vcs = SvnVcs.getInstance(myProject);
 
     myAuthenticationManager = new SvnAuthenticationManager(myProject, configFile);
 
     myInteractiveProvider = new SvnTestInteractiveAuthentication(myAuthenticationManager);
-    myAuthenticationManager.setAuthenticationProvider(new SvnAuthenticationProvider(vcs, myInteractiveProvider,
-                                                                                    SvnConfiguration17.RUNTIME_AUTH_CACHE));
-    myAuthenticationManager.setRuntimeStorage(SvnConfiguration17.RUNTIME_AUTH_CACHE);
+    myAuthenticationManager.setAuthenticationProvider(new SvnAuthenticationProvider(vcs, myInteractiveProvider, SvnConfiguration.RUNTIME_AUTH_CACHE));
+    myAuthenticationManager.setRuntimeStorage(SvnConfiguration.RUNTIME_AUTH_CACHE);
 
     myTestInteraction = new TestInteraction();
     myAuthenticationManager.setInteraction(myTestInteraction);
@@ -140,7 +136,7 @@ public class SvnAuthenticationTest extends PlatformTestCase {
 
           listener.reset();
           if (!SystemInfo.isWindows) savedOnceListener.reset();
-          SvnConfiguration17.RUNTIME_AUTH_CACHE.clear();
+          SvnConfiguration.RUNTIME_AUTH_CACHE.clear();
           listener.addStep(new Trinity<ProviderType, SVNURL, Type>(ProviderType.persistent, url, Type.request));
           if (! SystemInfo.isWindows) {
             listener.addStep(new Trinity<ProviderType, SVNURL, Type>(ProviderType.interactive, url, Type.request));
@@ -207,7 +203,7 @@ public class SvnAuthenticationTest extends PlatformTestCase {
             //long start = System.currentTimeMillis();
             //waitListenerStep(start, listener, 3);
 
-            SvnConfiguration17.RUNTIME_AUTH_CACHE.clear();
+            SvnConfiguration.RUNTIME_AUTH_CACHE.clear();
             listener.addStep(new Trinity<ProviderType, SVNURL, Type>(ProviderType.persistent, url, Type.request));
             commonScheme(url, false, null);
             //start = System.currentTimeMillis();
@@ -280,7 +276,7 @@ public class SvnAuthenticationTest extends PlatformTestCase {
           // cause is not cleared though
           savedOnceListener.reset();
 
-          SvnConfiguration17.RUNTIME_AUTH_CACHE.clear();
+          SvnConfiguration.RUNTIME_AUTH_CACHE.clear();
           listener.addStep(new Trinity<ProviderType, SVNURL, Type>(ProviderType.persistent, url, Type.request));
           listener.addStep(new Trinity<ProviderType, SVNURL, Type>(ProviderType.interactive, url, Type.request));
           commonScheme(url, false, null);
@@ -344,7 +340,7 @@ public class SvnAuthenticationTest extends PlatformTestCase {
             savedOnceListener.assertForAwt();
             savedOnceListener.reset();
 
-            SvnConfiguration17.RUNTIME_AUTH_CACHE.clear();
+            SvnConfiguration.RUNTIME_AUTH_CACHE.clear();
             listener.addStep(new Trinity<ProviderType, SVNURL, Type>(ProviderType.persistent, url, Type.request));
             listener.addStep(new Trinity<ProviderType, SVNURL, Type>(ProviderType.interactive, url, Type.request));
             commonScheme(url, false, null);
@@ -405,7 +401,7 @@ public class SvnAuthenticationTest extends PlatformTestCase {
             savedOnceListener.assertForAwt();
             savedOnceListener.reset();
 
-            SvnConfiguration17.RUNTIME_AUTH_CACHE.clear();
+            SvnConfiguration.RUNTIME_AUTH_CACHE.clear();
             listener.addStep(new Trinity<ProviderType, SVNURL, Type>(ProviderType.persistent, url, Type.request));
             listener.addStep(new Trinity<ProviderType, SVNURL, Type>(ProviderType.interactive, url, Type.request));
             commonScheme(url, false, null);
@@ -473,7 +469,7 @@ public class SvnAuthenticationTest extends PlatformTestCase {
             savedOnceListener.assertForAwt();
             savedOnceListener.reset();
 
-            SvnConfiguration17.RUNTIME_AUTH_CACHE.clear();
+            SvnConfiguration.RUNTIME_AUTH_CACHE.clear();
             listener.addStep(new Trinity<ProviderType, SVNURL, Type>(ProviderType.persistent, url, Type.request));
             listener.addStep(new Trinity<ProviderType, SVNURL, Type>(ProviderType.interactive, url, Type.request));
             listener.addStep(new Trinity<ProviderType, SVNURL, Type>(ProviderType.persistent, url, Type.without_pasword_save));
@@ -536,7 +532,7 @@ public class SvnAuthenticationTest extends PlatformTestCase {
             savedOnceListener.assertForAwt();
             savedOnceListener.reset();
 
-            SvnConfiguration17.RUNTIME_AUTH_CACHE.clear();
+            SvnConfiguration.RUNTIME_AUTH_CACHE.clear();
             listener.addStep(new Trinity<ProviderType, SVNURL, Type>(ProviderType.persistent, url, Type.request));
             listener.addStep(new Trinity<ProviderType, SVNURL, Type>(ProviderType.interactive, url, Type.request));
             listener.addStep(new Trinity<ProviderType, SVNURL, Type>(ProviderType.persistent, url, Type.without_pasword_save));
@@ -606,7 +602,7 @@ public class SvnAuthenticationTest extends PlatformTestCase {
             savedOnceListener.assertForAwt();
             savedOnceListener.reset();
 
-            SvnConfiguration17.RUNTIME_AUTH_CACHE.clear();
+            SvnConfiguration.RUNTIME_AUTH_CACHE.clear();
             listener.addStep(new Trinity<ProviderType, SVNURL, Type>(ProviderType.persistent, url, Type.request));
             listener.addStep(new Trinity<ProviderType, SVNURL, Type>(ProviderType.interactive, url, Type.request));
             listener.addStep(new Trinity<ProviderType, SVNURL, Type>(ProviderType.persistent, url, Type.without_pasword_save));
@@ -669,7 +665,7 @@ public class SvnAuthenticationTest extends PlatformTestCase {
             savedOnceListener.assertForAwt();
             savedOnceListener.reset();
 
-            SvnConfiguration17.RUNTIME_AUTH_CACHE.clear();
+            SvnConfiguration.RUNTIME_AUTH_CACHE.clear();
             listener.addStep(new Trinity<ProviderType, SVNURL, Type>(ProviderType.persistent, url, Type.request));
             listener.addStep(new Trinity<ProviderType, SVNURL, Type>(ProviderType.interactive, url, Type.request));
             listener.addStep(new Trinity<ProviderType, SVNURL, Type>(ProviderType.persistent, url, Type.without_pasword_save));
@@ -734,7 +730,7 @@ public class SvnAuthenticationTest extends PlatformTestCase {
             @Override
             public void run() {
               try {
-                myConfiguration.clearAuthenticationDirectory();
+                myConfiguration.clearAuthenticationDirectory(getProject());
               }
               catch (Exception e) {
                 throw new RuntimeException(e);
@@ -743,7 +739,7 @@ public class SvnAuthenticationTest extends PlatformTestCase {
           });
 
           myTestInteraction.setPlaintextAnswer(false);
-          SvnConfiguration17.RUNTIME_AUTH_CACHE.clear();
+          SvnConfiguration.RUNTIME_AUTH_CACHE.clear();
 
           listener.addStep(new Trinity<ProviderType, SVNURL, Type>(ProviderType.persistent, url, Type.request));
           listener.addStep(new Trinity<ProviderType, SVNURL, Type>(ProviderType.interactive, url, Type.request));
@@ -755,7 +751,7 @@ public class SvnAuthenticationTest extends PlatformTestCase {
 
           savedOnceListener.reset();
           myTestInteraction.reset();
-          SvnConfiguration17.RUNTIME_AUTH_CACHE.clear();
+          SvnConfiguration.RUNTIME_AUTH_CACHE.clear();
           listener.addStep(new Trinity<ProviderType, SVNURL, Type>(ProviderType.persistent, url, Type.request));
           listener.addStep(new Trinity<ProviderType, SVNURL, Type>(ProviderType.interactive, url, Type.request));
           listener.addStep(new Trinity<ProviderType, SVNURL, Type>(ProviderType.persistent, url, Type.without_pasword_save));
@@ -879,7 +875,7 @@ public class SvnAuthenticationTest extends PlatformTestCase {
             @Override
             public void run() {
               try {
-                myConfiguration.clearAuthenticationDirectory();
+                myConfiguration.clearAuthenticationDirectory(getProject());
               }
               catch (Exception e) {
                 throw new RuntimeException(e);
@@ -888,7 +884,7 @@ public class SvnAuthenticationTest extends PlatformTestCase {
           });
 
           myTestInteraction.setSSLPlaintextAnswer(false);
-          SvnConfiguration17.RUNTIME_AUTH_CACHE.clear();
+          SvnConfiguration.RUNTIME_AUTH_CACHE.clear();
 
           listener.addStep(new Trinity<ProviderType, SVNURL, Type>(ProviderType.persistent, url, Type.request));
           listener.addStep(new Trinity<ProviderType, SVNURL, Type>(ProviderType.interactive, url, Type.request));
@@ -898,7 +894,7 @@ public class SvnAuthenticationTest extends PlatformTestCase {
           waitListenerStep(start, listener, 6);
           Assert.assertEquals(1, myTestInteraction.getNumSSLPlaintextPrompt());
 
-          SvnConfiguration17.RUNTIME_AUTH_CACHE.clear();
+          SvnConfiguration.RUNTIME_AUTH_CACHE.clear();
           myTestInteraction.reset();
           savedOnceListener.reset();
 
@@ -1059,6 +1055,10 @@ public class SvnAuthenticationTest extends PlatformTestCase {
     }
 
     @Override
+    public void acknowledge(boolean accepted, String kind, String realm, SVNErrorMessage message, SVNAuthentication authentication) {
+    }
+
+    @Override
     public void saveAttemptStarted(ProviderType type, SVNURL url, String realm, String kind) {
       mySaved = false;
     }
@@ -1069,10 +1069,6 @@ public class SvnAuthenticationTest extends PlatformTestCase {
       if (! mySaved) {
         saveRegistration(type, url, false);
       }
-    }
-
-    @Override
-    public void acknowledge(boolean accepted, String kind, String realm, SVNErrorMessage message, SVNAuthentication authentication) {
     }
 
     @Override
@@ -1127,6 +1123,10 @@ public class SvnAuthenticationTest extends PlatformTestCase {
       mySaved = new HashSet<Pair<SVNURL, String>>();
     }
 
+    @Override
+    public void acknowledge(boolean accepted, String kind, String realm, SVNErrorMessage message, SVNAuthentication authentication) {
+    }
+
     public void reset() {
       mySaved.clear();
       myClientRequested.clear();
@@ -1142,10 +1142,6 @@ public class SvnAuthenticationTest extends PlatformTestCase {
       if (! mySaveCalled) {
         saveRegistration(url, kind);
       }
-    }
-
-    @Override
-    public void acknowledge(boolean accepted, String kind, String realm, SVNErrorMessage message, SVNAuthentication authentication) {
     }
 
     @Override

@@ -36,6 +36,7 @@ import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -59,9 +60,12 @@ public class CreateLocalVarFromInstanceofAction extends BaseIntentionAction {
     if (instanceOfExpression == null) return false;
     PsiTypeElement checkType = instanceOfExpression.getCheckType();
     if (checkType == null) return false;
+    PsiExpression operand = instanceOfExpression.getOperand();
+    PsiType operandType = operand.getType();
+    if (TypeConversionUtil.isPrimitiveAndNotNull(operandType)) return false;
     PsiType type = checkType.getType();
     String castTo = type.getPresentableText();
-    setText(QuickFixBundle.message("create.local.from.instanceof.usage.text", castTo, instanceOfExpression.getOperand().getText()));
+    setText(QuickFixBundle.message("create.local.from.instanceof.usage.text", castTo, operand.getText()));
 
     PsiStatement statement = PsiTreeUtil.getParentOfType(instanceOfExpression, PsiStatement.class);
     boolean insideIf = statement instanceof PsiIfStatement

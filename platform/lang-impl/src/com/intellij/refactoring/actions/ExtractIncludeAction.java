@@ -50,7 +50,7 @@ public class ExtractIncludeAction extends BaseRefactoringAction {
       e.getPresentation().setText(((TitledHandler) handler).getActionTitle());
     }
     else {
-      e.getPresentation().setText("Extract Include File...");
+      e.getPresentation().setText("Include File...");
     }
   }
 

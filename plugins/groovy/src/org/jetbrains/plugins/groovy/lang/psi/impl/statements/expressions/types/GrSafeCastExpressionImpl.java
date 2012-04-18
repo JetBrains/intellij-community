@@ -20,13 +20,14 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
+import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.NullableFunction;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
@@ -37,19 +38,51 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrExpressionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 
+import java.util.HashMap;
+
+import static com.intellij.psi.CommonClassNames.JAVA_UTIL_COLLECTION;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.kAS;
+
 /**
  * @author ven
  */
 public class GrSafeCastExpressionImpl extends GrExpressionImpl implements GrSafeCastExpression, PsiPolyVariantReference {
 
-  private static final Function<GrSafeCastExpressionImpl, PsiType> TYPE_CALCULATOR = new NullableFunction<GrSafeCastExpressionImpl, PsiType>() {
-    @Override
-    public PsiType fun(GrSafeCastExpressionImpl cast) {
-      GrTypeElement typeElement = cast.getCastTypeElement();
-      if (typeElement != null) return TypesUtil.boxPrimitiveType(typeElement.getType(), cast.getManager(), cast.getResolveScope());
-      return null;
-    }
-  };
+  private static final Function<GrSafeCastExpressionImpl, PsiType> TYPE_CALCULATOR =
+    new NullableFunction<GrSafeCastExpressionImpl, PsiType>() {
+      @Override
+      public PsiType fun(GrSafeCastExpressionImpl cast) {
+        GrTypeElement typeElement = cast.getCastTypeElement();
+        if (typeElement == null) return null;
+
+        final PsiType opType = cast.getOperand().getType();
+        final PsiType castType = typeElement.getType();
+
+        if (isCastToRawCollectionFromArray(opType, castType)) {
+          final PsiClass resolved = ((PsiClassType)castType).resolve();
+          final PsiTypeParameter typeParameter = resolved.getTypeParameters()[0];
+          final HashMap<PsiTypeParameter, PsiType> substitutionMap = new HashMap<PsiTypeParameter, PsiType>();
+          substitutionMap.put(typeParameter, TypesUtil.getItemType(opType));
+          final PsiSubstitutor substitutor = JavaPsiFacade.getElementFactory(cast.getProject()).createSubstitutor(substitutionMap);
+          return JavaPsiFacade.getElementFactory(cast.getProject()).createType(resolved, substitutor);
+        }
+
+        return TypesUtil.boxPrimitiveType(castType, cast.getManager(), cast.getResolveScope());
+      }
+    };
+
+
+  /**
+   * It is assumed that collection class should have only one type param and this param defines collection's item type.
+   */
+  private static boolean isCastToRawCollectionFromArray(PsiType opType, PsiType castType) {
+    return castType instanceof PsiClassType &&
+           InheritanceUtil.isInheritor(castType, JAVA_UTIL_COLLECTION) &&
+           PsiUtil.extractIterableTypeParameter(castType, false) == null &&
+           ((PsiClassType)castType).resolve().getTypeParameters().length == 1 &&
+           TypesUtil.getItemType(opType) != null;
+  }
+
 
   private static final class OurResolver implements ResolveCache.PolyVariantResolver<GrSafeCastExpressionImpl> {
     @Override
@@ -61,12 +94,8 @@ public class GrSafeCastExpressionImpl extends GrExpressionImpl implements GrSafe
 
       final GrTypeElement typeElement = cast.getCastTypeElement();
       final PsiType toCast = typeElement == null ? null : typeElement.getType();
-      return TypesUtil.getOverloadedOperatorCandidates(
-        type,
-        GroovyTokenTypes.kAS,
-        cast,
-        new PsiType[]{TypesUtil.createJavaLangClassType(toCast, cast.getProject(), cast.getResolveScope())}
-      );
+      final PsiType classType = TypesUtil.createJavaLangClassType(toCast, cast.getProject(), cast.getResolveScope());
+      return TypesUtil.getOverloadedOperatorCandidates(type, kAS, cast, new PsiType[]{classType});
     }
   }
 
@@ -110,7 +139,7 @@ public class GrSafeCastExpressionImpl extends GrExpressionImpl implements GrSafe
 
   @Override
   public TextRange getRangeInElement() {
-    final PsiElement as = findNotNullChildByType(GroovyTokenTypes.kAS);
+    final PsiElement as = findNotNullChildByType(kAS);
     final int offset = as.getStartOffsetInParent();
     return new TextRange(offset, offset + 2);
   }

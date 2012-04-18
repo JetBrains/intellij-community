@@ -108,6 +108,11 @@ public class GitUpdateProcess {
     String oldText = myProgressIndicator.getText();
     myProgressIndicator.setText("Updating...");
 
+    // check if update is possible
+    if (checkRebaseInProgress() || isMergeInProgress() || areUnmergedFiles() || !checkTrackedBranchesConfigured()) {
+      return false;
+    }
+
     if (!fetchAndNotify()) {
       return false;
     }
@@ -125,10 +130,6 @@ public class GitUpdateProcess {
 
   private boolean updateImpl(UpdateMethod updateMethod, ContinuationContext context) {
     // define updaters for roots
-    // check if update is possible
-    if (checkRebaseInProgress() || isMergeInProgress() || areUnmergedFiles()) return false;
-    if (!checkTrackedBranchesConfigured()) return false;
-
     try {
       for (VirtualFile root : myRoots) {
         final GitUpdater updater;
@@ -193,10 +194,11 @@ public class GitUpdateProcess {
       notifyImportantError(myProject, "Error updating " + rootName,
                            "Updating " + rootName + " failed with an error: " + e.getLocalizedMessage());
     } finally {
-      if (!incomplete) {
-        restoreLocalChanges(context);
-      } else {
+      if (incomplete || !success) {
         mySaver.notifyLocalChangesAreNotRestored();
+      }
+      else {
+        restoreLocalChanges(context);
       }
     }
     return success;
@@ -221,7 +223,7 @@ public class GitUpdateProcess {
 
   // fetch all roots. If an error happens, return false and notify about errors.
   private boolean fetchAndNotify() {
-    return new GitFetcher(myProject, myProgressIndicator).fetchRootsAndNotify(myRoots, "Update failed", false);
+    return new GitFetcher(myProject, myProgressIndicator, false).fetchRootsAndNotify(myRoots, "Update failed", false);
   }
 
   public Map<VirtualFile, GitBranchPair> getTrackedBranches() {

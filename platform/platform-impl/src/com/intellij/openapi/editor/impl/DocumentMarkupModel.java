@@ -53,7 +53,7 @@ public class DocumentMarkupModel {
    * @return the markup model instance.
    * @see com.intellij.openapi.editor.Editor#getMarkupModel()
    */
-  public static MarkupModel forDocument(Document document, @Nullable Project project, boolean create) {
+  public static MarkupModel forDocument(@NotNull Document document, @Nullable Project project, boolean create) {
     if (document instanceof DocumentWindow) {
       final Document delegate = ((DocumentWindow)document).getDelegate();
       final MarkupModelEx baseMarkupModel = (MarkupModelEx)forDocument(delegate, project, true);
@@ -97,7 +97,7 @@ public class DocumentMarkupModel {
     return model;
   }
 
-  private static ConcurrentMap<Project, MarkupModelImpl> getMarkupModelMap(Document document) {
+  private static ConcurrentMap<Project, MarkupModelImpl> getMarkupModelMap(@NotNull Document document) {
     ConcurrentMap<Project, MarkupModelImpl> markupModelMap = document.getUserData(MARKUP_MODEL_MAP_KEY);
     if (markupModelMap == null) {
       synchronized (lock) {

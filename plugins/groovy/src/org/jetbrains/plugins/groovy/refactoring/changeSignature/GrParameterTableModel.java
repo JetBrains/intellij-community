@@ -17,7 +17,7 @@ package org.jetbrains.plugins.groovy.refactoring.changeSignature;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiCodeFragment;
-import com.intellij.ui.RowEditableTableModel;
+import com.intellij.util.ui.EditableModel;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.debugger.fragments.GroovyCodeFragment;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
@@ -31,15 +31,15 @@ import java.util.List;
 /**
  * @author Maxim.Medvedev
  */
-public class GrParameterTableModel extends AbstractTableModel implements RowEditableTableModel {
+public class GrParameterTableModel extends AbstractTableModel implements EditableModel {
+  private static final int COLUMN_COUNT = 5;
+
   private final List<GrTableParameterInfo> infos;
   private final GrMethod myMethod;
-  private final GrChangeSignatureDialog myDialog;
   private final Project myProject;
 
-  public GrParameterTableModel(GrMethod method, GrChangeSignatureDialog dialog, Project project) {
+  public GrParameterTableModel(GrMethod method, Project project) {
     myMethod = method;
-    myDialog = dialog;
     final GrParameter[] parameters = myMethod.getParameters();
     infos = new ArrayList<GrTableParameterInfo>(parameters.length);
     for (int i = 0; i < parameters.length; i++) {
@@ -77,7 +77,7 @@ public class GrParameterTableModel extends AbstractTableModel implements RowEdit
   }
 
   public int getColumnCount() {
-    return 4;
+    return COLUMN_COUNT;
   }
 
   @Nullable
@@ -93,6 +93,8 @@ public class GrParameterTableModel extends AbstractTableModel implements RowEdit
         return info.getDefaultInitializerFragment();
       case 3:
         return info.getDefaultValueFragment();
+      case 4:
+        return info.isUseAnyVar();
       default:
         throw new IllegalArgumentException();
     }
@@ -101,7 +103,8 @@ public class GrParameterTableModel extends AbstractTableModel implements RowEdit
   @Override
   public void setValueAt(Object value, int rowIndex, int columnIndex) {
     if (rowIndex < 0 || rowIndex >= infos.size()) return;
-    if (columnIndex < 0 || columnIndex > 3) return;
+    if (columnIndex < 0 || columnIndex >= COLUMN_COUNT) return;
+    if (columnIndex==4) infos.get(rowIndex).setUseAnyVar(((Boolean)value).booleanValue());
     fireTableCellUpdated(rowIndex, columnIndex);
   }
 
@@ -117,6 +120,8 @@ public class GrParameterTableModel extends AbstractTableModel implements RowEdit
         return GroovyRefactoringBundle.message("column.name.default.initializer");
       case 3:
         return GroovyRefactoringBundle.message("column.name.default.value");
+      case 4:
+        return GroovyRefactoringBundle.message("column.name.use.any.var");
       default:
         throw new IllegalArgumentException();
     }
@@ -131,6 +136,8 @@ public class GrParameterTableModel extends AbstractTableModel implements RowEdit
       case 2:
       case 3:
         return GroovyCodeFragment.class;
+      case 4:
+        return Boolean.class;
       default:
         throw new IllegalArgumentException();
     }

@@ -43,11 +43,13 @@ public abstract class GrCallImpl extends GroovyPsiElementImpl implements GrCall 
     return null;
   }
 
+  @NotNull
   public GrNamedArgument[] getNamedArguments() {
     GrArgumentList argList = getArgumentList();
     return argList != null ? argList.getNamedArguments() : GrNamedArgument.EMPTY_ARRAY;
   }
 
+  @NotNull
   public GrExpression[] getExpressionArguments() {
     GrArgumentList argList = getArgumentList();
     return argList != null ? argList.getExpressionArguments() : GrExpression.EMPTY_ARRAY;

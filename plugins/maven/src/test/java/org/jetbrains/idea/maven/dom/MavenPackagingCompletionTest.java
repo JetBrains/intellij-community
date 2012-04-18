@@ -27,7 +27,7 @@ public class MavenPackagingCompletionTest extends MavenDomTestCase {
 
                      "<packaging><caret></packaging>");
 
-    assertCompletionVariants(myProjectPom, "jar", "pom", "war", "ejb", "ejb-client", "ear", "bundle");
+    assertCompletionVariants(myProjectPom, "jar", "pom", "war", "ejb", "ejb-client", "ear", "bundle", "maven-plugin");
   }
 
   public void testDoNotHighlightUnknownPackagingTypes() throws Throwable {

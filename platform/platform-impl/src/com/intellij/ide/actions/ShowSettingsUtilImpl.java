@@ -19,8 +19,10 @@ import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableGroup;
+import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.options.ex.*;
+import com.intellij.openapi.options.newEditor.OptionsEditor;
 import com.intellij.openapi.options.newEditor.OptionsEditorDialog;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -105,6 +107,57 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
     OptionsEditorDialog dialog = new OptionsEditorDialog(actualProject, group, nameToSelect);
     dialog.show();
 
+  }
+
+  public static void showSettingsDialog(final Project project, final String id2Select, final String filter) {
+    ConfigurableGroup[] group;
+    if (project == null) {
+      group = new ConfigurableGroup[]{new IdeConfigurablesGroup()};
+    }
+    else {
+      group = new ConfigurableGroup[]{new ProjectConfigurablesGroup(project), new IdeConfigurablesGroup()};
+    }
+
+    Project actualProject = project != null ? project : ProjectManager.getInstance().getDefaultProject();
+
+    group = filterEmptyGroups(group);
+    final Configurable configurable2Select = findConfigurable2Select(id2Select, group);
+
+    final OptionsEditorDialog dialog = new OptionsEditorDialog(actualProject, group, configurable2Select);
+    new UiNotifyConnector.Once(dialog.getContentPane(), new Activatable.Adapter() {
+      @Override
+      public void showNotify() {
+        final OptionsEditor editor = (OptionsEditor)dialog.getData(OptionsEditor.KEY.getName());
+        LOG.assertTrue(editor != null);
+        editor.select(configurable2Select, filter);
+      }
+    });
+    dialog.show();
+  }
+
+  @Nullable
+  private static Configurable findConfigurable2Select(String id2Select, ConfigurableGroup[] group) {
+    for (ConfigurableGroup configurableGroup : group) {
+      for (Configurable configurable : configurableGroup.getConfigurables()) {
+        final Configurable conf = containsId(id2Select, configurable);
+        if (conf != null) return conf;
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  private static Configurable containsId(String id2Select, Configurable configurable) {
+    if (configurable instanceof SearchableConfigurable && id2Select.equals(((SearchableConfigurable)configurable).getId())) {
+      return configurable;
+    }
+    if (configurable instanceof SearchableConfigurable.Parent) {
+      for (Configurable subConfigurable : ((SearchableConfigurable.Parent)configurable).getConfigurables()) {
+        final Configurable config = containsId(id2Select, subConfigurable);
+        if (config != null) return config;
+      }
+    }
+    return null;
   }
 
   public void showSettingsDialog(@NotNull final Project project, final Configurable toSelect) {

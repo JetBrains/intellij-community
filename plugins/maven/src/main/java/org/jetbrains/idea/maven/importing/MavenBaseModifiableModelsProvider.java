@@ -24,6 +24,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootModel;
+import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
@@ -106,6 +107,16 @@ public abstract class MavenBaseModifiableModelsProvider implements MavenModifiab
       myLibraryModels.put(library, result);
     }
     return result;
+  }
+
+  @NotNull
+  @Override
+  public String[] getLibraryUrls(@NotNull Library library, @NotNull OrderRootType type) {
+    final Library.ModifiableModel model = myLibraryModels.get(library);
+    if (model != null) {
+      return model.getUrls(type);
+    }
+    return library.getUrls(type);
   }
 
   protected abstract ModifiableArtifactModel doGetArtifactModel();

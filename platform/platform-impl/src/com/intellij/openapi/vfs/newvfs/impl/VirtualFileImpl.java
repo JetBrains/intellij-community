@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,11 +45,13 @@ public class VirtualFileImpl extends VirtualFileSystemEntry {
     return null;
   }
 
+  @NotNull
   @Override
   public Collection<VirtualFile> getCachedChildren() {
     return Collections.emptyList();
   }
 
+  @NotNull
   @Override
   public Iterable<VirtualFile> iterInDbChildren() {
     return ContainerUtil.emptyIterable();
@@ -60,19 +62,28 @@ public class VirtualFileImpl extends VirtualFileSystemEntry {
   public NewVirtualFileSystem getFileSystem() {
     final VirtualFileSystemEntry parent = getParent();
     assert parent != null;
-
     return parent.getFileSystem();
   }
 
   @Override
   @Nullable
-  public NewVirtualFile refreshAndFindChild(final String name) {
+  public NewVirtualFile refreshAndFindChild(@NotNull final String name) {
     return null;
   }
 
   @Override
   @Nullable
-  public NewVirtualFile findChildIfCached(final String name) {
+  public NewVirtualFile findChildIfCached(@NotNull final String name) {
+    return null;
+  }
+
+  @Override
+  public NewVirtualFile findChildById(final int id) {
+    return null;
+  }
+
+  @Override
+  public NewVirtualFile findChildByIdIfCached(final int id) {
     return null;
   }
 
@@ -89,7 +100,7 @@ public class VirtualFileImpl extends VirtualFileSystemEntry {
   @Override
   @NotNull
   public InputStream getInputStream() throws IOException {
-    return VfsUtilCore.inputStreamSkippingBOM(ourPersistence.getInputStream(this),this);
+    return VfsUtilCore.inputStreamSkippingBOM(ourPersistence.getInputStream(this), this);
   }
 
   @Override
@@ -107,16 +118,6 @@ public class VirtualFileImpl extends VirtualFileSystemEntry {
   @Override
   @NotNull
   public OutputStream getOutputStream(final Object requestor, final long modStamp, final long timeStamp) throws IOException {
-    return VfsUtilCore.outputStreamAddingBOM(ourPersistence.getOutputStream(this, requestor, modStamp, timeStamp),this);
-  }
-
-  @Override
-  public NewVirtualFile findChildById(int id) {
-    return null;
-  }
-
-  @Override
-  public NewVirtualFile findChildByIdIfCached(int id) {
-    return null;
+    return VfsUtilCore.outputStreamAddingBOM(ourPersistence.getOutputStream(this, requestor, modStamp, timeStamp), this);
   }
 }

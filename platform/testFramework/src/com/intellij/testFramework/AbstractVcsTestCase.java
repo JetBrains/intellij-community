@@ -28,10 +28,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.AbstractVcs;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vcs.VcsConfiguration;
-import com.intellij.openapi.vcs.VcsShowConfirmationOption;
+import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -116,6 +113,15 @@ public abstract class AbstractVcsTestCase {
     return result;
   }
 
+  protected void setVcsMappings(VcsDirectoryMapping... mappings) {
+    setVcsMappings(Arrays.asList(mappings));
+  }
+    protected void setVcsMappings(List<VcsDirectoryMapping> mappings) {
+    ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(myProject);
+    vcsManager.setDirectoryMappings(mappings);
+    vcsManager.updateActiveVcss();
+  }
+
   protected static ProcessOutput runArbitrary(final String command, final String[] args) throws IOException {
     final List<String> arguments = new ArrayList<String>();
     arguments.add(command);
@@ -131,8 +137,9 @@ public abstract class AbstractVcsTestCase {
     return result;
   }
 
-  protected void initProject(final File clientRoot) throws Exception {
-    final TestFixtureBuilder<IdeaProjectTestFixture> testFixtureBuilder = IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder();
+  protected void initProject(final File clientRoot, String testName) throws Exception {
+    String name = getClass().getName() + "." + testName;
+    final TestFixtureBuilder<IdeaProjectTestFixture> testFixtureBuilder = IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder(name);
     myProjectFixture = testFixtureBuilder.getFixture();
     testFixtureBuilder.addModule(EmptyModuleFixtureBuilder.class).addContentRoot(clientRoot.toString());
     myProjectFixture.setUp();
@@ -296,7 +303,7 @@ public abstract class AbstractVcsTestCase {
           throw new RuntimeException(e);
         }
       }
-    }.execute();
+    }.execute().throwException();
   }
 
   protected void renamePsiInCommand(final PsiNamedElement element, final String newName) {
@@ -374,15 +381,18 @@ public abstract class AbstractVcsTestCase {
   }
 
   protected VirtualFile copyFileInCommand(final VirtualFile file, final VirtualFile newParent) {
-    return copyFileInCommand(myProject, file, newParent);
+    return copyFileInCommand(myProject, file, newParent, file.getName());
   }
                                           
-  public static VirtualFile copyFileInCommand(final Project project, final VirtualFile file, final VirtualFile newParent) {
+  public static VirtualFile copyFileInCommand(final Project project,
+                                              final VirtualFile file,
+                                              final VirtualFile newParent,
+                                              final String newName) {
     return new WriteCommandAction<VirtualFile>(project) {
       @Override
       protected void run(Result<VirtualFile> result) throws Throwable {
         try {
-          result.setResult(file.copy(this, newParent, file.getName()));
+          result.setResult(file.copy(this, newParent, newName));
         }
         catch (IOException e) {
           throw new RuntimeException(e);

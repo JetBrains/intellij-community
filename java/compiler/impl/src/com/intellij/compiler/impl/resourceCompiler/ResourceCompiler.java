@@ -50,6 +50,7 @@ public class ResourceCompiler implements TranslatingCompiler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.impl.resourceCompiler.ResourceCompiler");
   private final Project myProject;
   private final CompilerConfiguration myConfiguration;
+  private final ResourceCompilerExtension[] myResourceCompilerExtensions = ResourceCompilerExtension.EP_NAME.getExtensions();
   private static final FileTypeManager FILE_TYPE_MANAGER = FileTypeManager.getInstance();
 
   public ResourceCompiler(Project project, CompilerConfiguration compilerConfiguration) {
@@ -68,6 +69,11 @@ public class ResourceCompiler implements TranslatingCompiler {
   }
 
   public boolean isCompilableFile(VirtualFile file, CompileContext context) {
+    final Module module = context.getModuleByFile(file);
+    if (module != null && skipStandardResourceCompiler(module)) {
+      return false;
+    }
+
     return !StdFileTypes.JAVA.equals(file.getFileType()) && myConfiguration.isResourceFile(file);
   }
 
@@ -153,6 +159,15 @@ public class ResourceCompiler implements TranslatingCompiler {
       it.remove(); // to free memory
     }
     context.getProgressIndicator().popState();
+  }
+
+  private boolean skipStandardResourceCompiler(final Module module) {
+    for (ResourceCompilerExtension extension : myResourceCompilerExtensions) {
+      if (extension.skipStandardResourceCompiler(module)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private static void addToMap(Map<String, Collection<OutputItem>> map, String outputDir, OutputItem item) {

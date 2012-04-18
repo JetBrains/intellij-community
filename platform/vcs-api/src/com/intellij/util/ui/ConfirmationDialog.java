@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,14 +27,26 @@ public class ConfirmationDialog extends OptionsMessageDialog{
 
   private final VcsShowConfirmationOption myOption;
   private String myDoNotShowAgainMessage;
+  private final String myOkActionName;
+  private final String myCancelActionName;
 
   public static boolean requestForConfirmation(@NotNull VcsShowConfirmationOption option,
                                                @NotNull Project project,
                                                @NotNull String message,
                                                @NotNull String title,
                                                @Nullable Icon icon) {
+    return requestForConfirmation(option, project, message, title, icon, null, null);
+  }
+
+  public static boolean requestForConfirmation(@NotNull VcsShowConfirmationOption option,
+                                               @NotNull Project project,
+                                               @NotNull String message,
+                                               @NotNull String title,
+                                               @Nullable Icon icon,
+                                               @Nullable String okActionName,
+                                               @Nullable String cancelActionName) {
     if (option.getValue() == VcsShowConfirmationOption.Value.DO_NOTHING_SILENTLY) return false;
-    final ConfirmationDialog dialog = new ConfirmationDialog(project, message, title, icon, option);
+    final ConfirmationDialog dialog = new ConfirmationDialog(project, message, title, icon, option, okActionName, cancelActionName);
     if (! option.isPersistent()) {
       dialog.setDoNotAskOption(null);
     } else {
@@ -45,9 +57,16 @@ public class ConfirmationDialog extends OptionsMessageDialog{
   }
 
   public ConfirmationDialog(Project project, final String message, String title, final Icon icon, final VcsShowConfirmationOption option) {
+    this(project, message, title, icon, option, null, null);
+  }
+
+  public ConfirmationDialog(Project project, final String message, String title, final Icon icon, final VcsShowConfirmationOption option,
+                            @Nullable String okActionName, @Nullable String cancelActionName) {
     super(project, message, title, icon);
     myOption = option;
-    init();    
+    myOkActionName = okActionName != null ? okActionName : CommonBundle.getYesButtonText();
+    myCancelActionName = cancelActionName != null ? cancelActionName : CommonBundle.getNoButtonText();
+    init();
   }
   
   public void setDoNotShowAgainMessage(final String doNotShowAgainMessage) {
@@ -61,11 +80,11 @@ public class ConfirmationDialog extends OptionsMessageDialog{
   }
 
   protected String getOkActionName() {
-    return CommonBundle.message("button.yes");
+    return myOkActionName;
   }
 
   protected String getCancelActionName() {
-    return CommonBundle.message("button.no");
+    return myCancelActionName;
   }
 
   protected boolean isToBeShown() {

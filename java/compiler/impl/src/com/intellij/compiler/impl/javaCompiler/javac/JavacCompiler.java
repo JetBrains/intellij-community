@@ -214,7 +214,7 @@ public class JavacCompiler extends ExternalCompiler {
     }
 
     final List<String> additionalOptions =
-      addAdditionalSettings(commandLine, javacSettings, myAnnotationProcessorMode, version, myProject, annotationProcessorsEnabled);
+      addAdditionalSettings(commandLine, javacSettings, myAnnotationProcessorMode, version, chunk, annotationProcessorsEnabled);
 
     CompilerUtil.addLocaleOptions(commandLine, false);
 
@@ -275,15 +275,15 @@ public class JavacCompiler extends ExternalCompiler {
   }
 
   public static List<String> addAdditionalSettings(List<String> commandLine, JavacSettings javacSettings, boolean isAnnotationProcessing,
-                                                   JavaSdkVersion version, Project project, boolean annotationProcessorsEnabled) {
+                                                   JavaSdkVersion version, ModuleChunk chunk, boolean annotationProcessorsEnabled) {
     final List<String> additionalOptions = new ArrayList<String>();
-    StringTokenizer tokenizer = new StringTokenizer(javacSettings.getOptionsString(project), " ");
+    StringTokenizer tokenizer = new StringTokenizer(javacSettings.getOptionsString(chunk), " ");
     if (!version.isAtLeast(JavaSdkVersion.JDK_1_6)) {
       isAnnotationProcessing = false; // makes no sense for these versions
       annotationProcessorsEnabled = false;
     }
     if (isAnnotationProcessing) {
-      final CompilerConfiguration config = CompilerConfiguration.getInstance(project);
+      final CompilerConfiguration config = CompilerConfiguration.getInstance(chunk.getProject());
       additionalOptions.add("-Xprefer:source");
       additionalOptions.add("-implicit:none");
       additionalOptions.add("-proc:only");

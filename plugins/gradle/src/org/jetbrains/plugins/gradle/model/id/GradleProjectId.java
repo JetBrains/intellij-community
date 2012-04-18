@@ -3,6 +3,7 @@ package org.jetbrains.plugins.gradle.model.id;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.model.GradleEntityOwner;
 import org.jetbrains.plugins.gradle.model.GradleEntityType;
+import org.jetbrains.plugins.gradle.util.GradleProjectStructureContext;
 
 /**
  * @author Denis Zhdanov
@@ -15,7 +16,7 @@ public class GradleProjectId extends GradleAbstractEntityId {
   }
 
   @Override
-  public Object mapToEntity(@NotNull GradleEntityMappingContext context) {
+  public Object mapToEntity(@NotNull GradleProjectStructureContext context) {
     switch (getOwner()) {
       case GRADLE: return context.getChangesModel().getGradleProject();
       case INTELLIJ: return context.getProjectStructureHelper().getProject();

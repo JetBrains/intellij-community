@@ -55,6 +55,7 @@ import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.pom.Navigatable;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.BeforeAfter;
+import com.intellij.util.PlatformIcons;
 import com.intellij.util.ui.ButtonlessScrollBarUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcsUtil.VcsUtil;
@@ -578,7 +579,7 @@ public class ChangesFragmentedDiffPanel implements Disposable {
     }
   }
 
-  private final static Icon ourIcon = IconLoader.findIcon("/actions/checked.png");
+  private final static Icon ourIcon = PlatformIcons.CHECK_ICON;
   
   private class PopupAction extends DumbAwareAction {
     private Component myParent;
@@ -588,7 +589,7 @@ public class ChangesFragmentedDiffPanel implements Disposable {
 
     private PopupAction() {
       super("Settings", "Settings", IconLoader.getIcon("/general/secondaryGroup.png"));
-      myUsual = new AnAction("Top | Bottom") {
+      myUsual = new AnAction("Top | Bottom", "", VcsUtil.ourNotDot) {
         @Override
         public void actionPerformed(AnActionEvent e) {
           boolean was = myConfiguration.SHORT_DIFF_HORISONTALLY;
@@ -602,7 +603,7 @@ public class ChangesFragmentedDiffPanel implements Disposable {
           e.getPresentation().setIcon(myConfiguration.SHORT_DIFF_HORISONTALLY ? VcsUtil.ourNotDot : VcsUtil.ourDot);
         }
       };
-      myNumbered = new AnAction("Left | Right") {
+      myNumbered = new AnAction("Left | Right", "", VcsUtil.ourNotDot) {
         @Override
         public void actionPerformed(AnActionEvent e) {
           boolean was = myConfiguration.SHORT_DIFF_HORISONTALLY;
@@ -755,7 +756,7 @@ public class ChangesFragmentedDiffPanel implements Disposable {
     private final Icon myIcon;
 
     private MyUseSoftWrapsAction(boolean turned) {
-      super("Use soft wraps");
+      super("Use soft wraps", "", ourIcon);
       myIcon = ourIcon;
     }
 

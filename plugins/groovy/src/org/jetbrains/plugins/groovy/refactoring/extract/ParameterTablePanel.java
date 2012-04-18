@@ -60,7 +60,7 @@ public abstract class ParameterTablePanel extends JPanel {
 
   public void init(ExtractInfoHelper helper) {
 
-    setBorder(IdeBorderFactory.createTitledBorder(GroovyRefactoringBundle.message("parameters.border.title"), false, false, true));
+    setBorder(IdeBorderFactory.createTitledBorder(GroovyRefactoringBundle.message("parameters.border.title"), false));
 
     myParameterInfos = helper.getParameterInfos();
 

@@ -122,6 +122,7 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
                                      PsiElement lastParent,
                                      @NotNull PsiElement place) {
     if (myContext != null) {
+      if (!processChildrenScopes(processor, state, lastParent, place)) return false;
       return true;
     }
 

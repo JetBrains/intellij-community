@@ -17,6 +17,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import java.lang.reflect.Method;
+
 import static org.zmlx.hg4idea.test.HgTestOutputParser.added;
 
 /**
@@ -26,8 +28,8 @@ public class HgAddTest extends HgSingleUserTest {
 
   @BeforeMethod
   @Override
-  protected void setUp() throws Exception {
-    super.setUp();
+  protected void setUp(Method testMethod) throws Exception {
+    super.setUp(testMethod);
     doNothingSilently(VcsConfiguration.StandardConfirmation.ADD);
   }
 

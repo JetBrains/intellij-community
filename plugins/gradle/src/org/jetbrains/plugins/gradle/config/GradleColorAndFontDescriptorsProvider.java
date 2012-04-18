@@ -1,6 +1,5 @@
 package org.jetbrains.plugins.gradle.config;
 
-import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.options.colors.AttributesDescriptor;
 import com.intellij.openapi.options.colors.ColorAndFontDescriptorsProvider;
 import com.intellij.openapi.options.colors.ColorDescriptor;
@@ -17,28 +16,33 @@ import org.jetbrains.plugins.gradle.util.GradleBundle;
  */
 public class GradleColorAndFontDescriptorsProvider implements ColorAndFontDescriptorsProvider {
   
-  private static final AttributesDescriptor[] DESCRIPTORS = {
-    new AttributesDescriptor(
-      GradleBundle.message("gradle.sync.change.type.conflict"),
-      GradleTextAttributes.GRADLE_CHANGE_CONFLICT
-    ),
-    new AttributesDescriptor(
-      GradleBundle.message("gradle.sync.change.type.confirmed"),
-      GradleTextAttributes.GRADLE_CONFIRMED_CONFLICT
-    ),
-    new AttributesDescriptor(
-      GradleBundle.message("gradle.sync.change.type.gradle"),
-      GradleTextAttributes.GRADLE_LOCAL_CHANGE
-    ),
-    new AttributesDescriptor(
-      GradleBundle.message("gradle.sync.change.type.intellij", ApplicationNamesInfo.getInstance().getProductName()),
-      GradleTextAttributes.INTELLIJ_LOCAL_CHANGE
-    ),
-    new AttributesDescriptor(
-      GradleBundle.message("gradle.sync.change.type.unchanged"),
-      GradleTextAttributes.GRADLE_NO_CHANGE
-    )
-  };
+  public static final AttributesDescriptor CONFLICT = new AttributesDescriptor(
+    GradleBundle.message("gradle.sync.change.type.conflict"),
+    GradleTextAttributes.CHANGE_CONFLICT
+  );
+  
+  public static final AttributesDescriptor CONFIRMED = new AttributesDescriptor(
+    GradleBundle.message("gradle.sync.change.type.confirmed"),
+    GradleTextAttributes.CONFIRMED_CONFLICT
+  );
+
+  public static final AttributesDescriptor GRADLE_LOCAL = new AttributesDescriptor(
+    GradleBundle.message("gradle.sync.change.type.gradle"),
+    GradleTextAttributes.GRADLE_LOCAL_CHANGE
+  );
+
+  public static final AttributesDescriptor INTELLIJ_LOCAL = new AttributesDescriptor(
+    GradleBundle.message("gradle.sync.change.type.intellij"),
+    //GradleBundle.message("gradle.sync.change.type.intellij", ApplicationNamesInfo.getInstance().getProductName()),
+    GradleTextAttributes.INTELLIJ_LOCAL_CHANGE
+  );
+
+  public static final AttributesDescriptor NO_CHANGE = new AttributesDescriptor(
+    GradleBundle.message("gradle.sync.change.type.unchanged"),
+    GradleTextAttributes.NO_CHANGE
+  );
+  
+  public static final AttributesDescriptor[] DESCRIPTORS = { CONFLICT, /*CONFIRMED,*/ GRADLE_LOCAL, INTELLIJ_LOCAL, NO_CHANGE };
 
   @NotNull
   @Override

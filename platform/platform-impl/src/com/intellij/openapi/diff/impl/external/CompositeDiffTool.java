@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.diff.impl.external;
 
+import com.intellij.ide.highlighter.ArchiveFileType;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.*;
@@ -57,11 +58,16 @@ class CompositeDiffTool implements DiffTool {
   private DiffTool chooseTool(DiffRequest data) {
     final DiffContent[] contents = data.getContents();
 
-    if (contents != null && contents.length == 2) {
+    if (contents.length == 2) {
       final FileType type1 = contents[0].getContentType();
       final FileType type2 = contents[1].getContentType();
       if (type1 == type2 && type1 instanceof UIBasedFileType) {
         return BinaryDiffTool.INSTANCE;
+      }
+
+      //todo[kb] register or not this instance in common diff tools ?
+      if (type1 == type2 && type1 instanceof ArchiveFileType) {
+        return ArchiveDiffTool.INSTANCE;
       }
     }
 

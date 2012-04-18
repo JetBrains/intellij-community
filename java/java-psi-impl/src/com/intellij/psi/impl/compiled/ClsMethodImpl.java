@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.intellij.psi.impl.compiled;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.ItemPresentationProviders;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.ElementPresentationUtil;
@@ -275,9 +276,7 @@ public class ClsMethodImpl extends ClsRepositoryPsiElement<PsiMethodStub> implem
       buffer.append(";");
     }
     else {
-      buffer.append(" { /* ");
-      buffer.append(PsiBundle.message("psi.decompiled.method.body"));
-      buffer.append(" */ }");
+      buffer.append(" { /* compiled code */ }");
     }
   }
 
@@ -379,6 +378,13 @@ public class ClsMethodImpl extends ClsRepositoryPsiElement<PsiMethodStub> implem
   @Override
   @NotNull
   public PsiElement getNavigationElement() {
+    for (ClsCustomNavigationPolicy customNavigationPolicy : Extensions.getExtensions(ClsCustomNavigationPolicy.EP_NAME)) {
+      PsiElement navigationElement = customNavigationPolicy.getNavigationElement(this);
+      if (navigationElement != null) {
+        return navigationElement;
+      }
+    }
+
     final PsiMethod method = getSourceMirrorMethod();
     return method != this ? method.getNavigationElement() : this;
   }

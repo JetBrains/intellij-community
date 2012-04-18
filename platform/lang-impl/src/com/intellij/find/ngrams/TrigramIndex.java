@@ -49,11 +49,13 @@ public class TrigramIndex extends ScalarIndexExtension<Integer> {
     }
   };
 
+  @NotNull
   @Override
   public ID<Integer, Void> getName() {
     return INDEX_ID;
   }
 
+  @NotNull
   @Override
   public DataIndexer<Integer, Void, FileContent> getIndexer() {
     return new DataIndexer<Integer, Void, FileContent>() {
@@ -76,7 +78,7 @@ public class TrigramIndex extends ScalarIndexExtension<Integer> {
 
   @Override
   public KeyDescriptor<Integer> getKeyDescriptor() {
-    return new EnumeratorIntegerDescriptor();
+    return EnumeratorIntegerDescriptor.INSTANCE;
   }
 
   @Override

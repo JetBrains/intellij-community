@@ -24,12 +24,14 @@ import com.intellij.codeInspection.InspectionToolProvider;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.htmlInspections.RequiredAttributesInspection;
 import com.intellij.javaee.ExternalResourceManagerEx;
-import com.intellij.mock.MockProgressIndicator;
-import com.intellij.openapi.application.*;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.Result;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
@@ -48,7 +50,6 @@ import org.intellij.plugins.relaxNG.inspections.RngDomInspection;
 import org.intellij.plugins.testUtil.IdeaCodeInsightTestCase;
 import org.intellij.plugins.testUtil.ResourceUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
@@ -130,7 +131,7 @@ public abstract class HighlightingTestBase extends UsefulTestCase implements Ide
   }
 
   protected CodeInsightTestFixture createContentFixture(IdeaTestFixtureFactory factory) {
-    final TestFixtureBuilder<IdeaProjectTestFixture> builder = factory.createFixtureBuilder();
+    final TestFixtureBuilder<IdeaProjectTestFixture> builder = factory.createFixtureBuilder(getName());
     final EmptyModuleFixtureBuilder moduleBuilder = builder.addModule(EmptyModuleFixtureBuilder.class);
     final IdeaProjectTestFixture fixture = builder.getFixture();
 

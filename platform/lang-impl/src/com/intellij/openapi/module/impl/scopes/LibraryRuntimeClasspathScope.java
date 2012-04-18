@@ -29,6 +29,7 @@ import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -39,11 +40,9 @@ import java.util.Set;
 public class LibraryRuntimeClasspathScope extends GlobalSearchScope {
   private final ProjectFileIndex myIndex;
   private final LinkedHashSet<VirtualFile> myEntries = new LinkedHashSet<VirtualFile>();
-  private final List<Module> myModules;
 
   public LibraryRuntimeClasspathScope(final Project project, final List<Module> modules) {
     super(project);
-    myModules = modules;
     myIndex = ProjectRootManager.getInstance(project).getFileIndex();
     final Set<Sdk> processedSdk = new THashSet<Sdk>();
     final Set<Library> processedLibraries = new THashSet<Library>();
@@ -63,8 +62,14 @@ public class LibraryRuntimeClasspathScope extends GlobalSearchScope {
     }
   }
 
+  public LibraryRuntimeClasspathScope(Project project, LibraryOrderEntry entry) {
+    super(project);
+    myIndex = ProjectRootManager.getInstance(project).getFileIndex();
+    Collections.addAll(myEntries, entry.getRootFiles(OrderRootType.CLASSES));
+  }
+
   public int hashCode() {
-    return myModules.hashCode();
+    return myEntries.hashCode();
   }
 
   public boolean equals(Object object) {
@@ -72,7 +77,7 @@ public class LibraryRuntimeClasspathScope extends GlobalSearchScope {
     if (object == null || object.getClass() != LibraryRuntimeClasspathScope.class) return false;
 
     final LibraryRuntimeClasspathScope that = (LibraryRuntimeClasspathScope)object;
-    return that.myModules.equals(myModules);
+    return that.myEntries.equals(myEntries);
   }
 
   private void buildEntries(@NotNull final Module module,

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,19 +16,15 @@
 package com.intellij.ide.diff;
 
 import com.intellij.ide.presentation.VirtualFilePresentation;
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.application.AccessToken;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diff.DiffRequest;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserFactory;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileEditor.FileEditor;
-import com.intellij.openapi.fileEditor.FileEditorProvider;
+import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
@@ -47,7 +43,9 @@ import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Callable;
 
 /**
@@ -149,9 +147,45 @@ public class VirtualFileDiffElement extends DiffElement<VirtualFile> {
     if (providers.length > 0) {
       myFileEditor = providers[0].createEditor(project, getValue());
       myEditorProvider = providers[0];
+      setCustomState(myFileEditor);
       return myFileEditor.getComponent();
     }
     return null;
+  }
+
+  private static void setCustomState(FileEditor editor) {
+    final FileEditorState state = editor.getState(FileEditorStateLevel.FULL);
+    if (state instanceof TransferableFileEditorState) {
+      final TransferableFileEditorState editorState = (TransferableFileEditorState)state;
+      final String id = editorState.getEditorId();
+      final HashMap<String, String> options = new HashMap<String, String>();
+      final PropertiesComponent properties = PropertiesComponent.getInstance();
+      for (String key : editorState.getTransferableOptions().keySet()) {
+        final String value = properties.getValue(getKey(id, key));
+        if (value != null) {
+          options.put(key, value);
+        }
+      }
+      editorState.setTransferableOptions(options);
+      editor.setState(editorState);
+    }
+  }
+
+  private static void saveCustomState(FileEditor editor) {
+    final FileEditorState state = editor.getState(FileEditorStateLevel.FULL);
+    if (state instanceof TransferableFileEditorState) {
+      final TransferableFileEditorState editorState = (TransferableFileEditorState)state;
+      final String id = editorState.getEditorId();
+      final PropertiesComponent properties = PropertiesComponent.getInstance();
+      final Map<String,String> options = editorState.getTransferableOptions();
+      for (String key : options.keySet()) {
+        properties.setValue(getKey(id, key), options.get(key));
+      }
+    }
+  }
+
+  private static String getKey(String editorId, String key) {
+    return "dir.diff.editor.options." + editorId + "." + key;
   }
 
   @Override
@@ -168,6 +202,7 @@ public class VirtualFileDiffElement extends DiffElement<VirtualFile> {
   public void disposeViewComponent() {
     super.disposeViewComponent();
     if (myFileEditor != null && myEditorProvider != null) {
+      saveCustomState(myFileEditor);
       myEditorProvider.disposeEditor(myFileEditor);
       myFileEditor = null;
       myEditorProvider = null;
@@ -233,31 +268,25 @@ public class VirtualFileDiffElement extends DiffElement<VirtualFile> {
       final FileDocumentManager manager = FileDocumentManager.getInstance();
       for (Document document : manager.getUnsavedDocuments()) {
         VirtualFile file = manager.getFile(document);
-        if (file!=null && VfsUtilCore.isAncestor(virtualFile, file, false)) {
+        if (file != null && VfsUtilCore.isAncestor(virtualFile, file, false)) {
           docsToSave.add(document);
         }
       }
 
       if (!docsToSave.isEmpty()) {
-        ApplicationManager.getApplication().invokeAndWait(new Runnable() {
+        ApplicationManagerEx.getApplicationEx().runEdtSafeAction(new Runnable() {
           @Override
           public void run() {
-            AccessToken token = WriteAction.start();
-            try {
-              for (Document document : docsToSave) {
-                manager.saveDocument(document);
-              }
-            }
-            finally {
-              token.finish();
+            for (Document document : docsToSave) {
+              manager.saveDocument(document);
             }
           }
-        }, ModalityState.defaultModalityState());
+        });
       }
+      if (!FileWatcher.getInstance().isWatched(virtualFile)) {
+        ((NewVirtualFile)virtualFile).markDirtyRecursively();
+      }
+      virtualFile.refresh(true, true);
     }
-    if (!FileWatcher.getInstance().isWatched(virtualFile)) {
-      ((NewVirtualFile)virtualFile).markDirtyRecursively();
-    }
-    virtualFile.refresh(false, true);
   }
 }

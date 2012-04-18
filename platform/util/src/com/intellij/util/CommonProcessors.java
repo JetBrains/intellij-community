@@ -39,6 +39,7 @@ public class CommonProcessors {
       myCollection = new ArrayList<T>();
     }
 
+    @Override
     public boolean process(T t) {
       if (accept(t)) {
         myCollection.add(t);
@@ -62,6 +63,7 @@ public class CommonProcessors {
   @NotNull
   public static <T> Processor<T> notNullProcessor(@NotNull final Processor<T> processor) {
     return new Processor<T>() {
+      @Override
       public boolean process(@NotNull T t) {
         return processor.process(t);
       }
@@ -76,6 +78,7 @@ public class CommonProcessors {
       myCollection = new HashSet<T>();
     }
 
+    @Override
     public boolean process(T t) {
       myCollection.add(t);
       return true;
@@ -101,6 +104,7 @@ public class CommonProcessors {
       processed = new THashSet<T>(strategy);
     }
 
+    @Override
     public boolean process(T t) {
       synchronized (processed) {
         if (!processed.add(t)) {
@@ -111,7 +115,7 @@ public class CommonProcessors {
     }
   }
 
-  public static abstract class FindProcessor<T> implements Processor<T> {
+  public abstract static class FindProcessor<T> implements Processor<T> {
     private T myValue = null;
 
     public boolean isFound() {
@@ -122,6 +126,7 @@ public class CommonProcessors {
       return myValue;
     }
 
+    @Override
     public boolean process(T t) {
       if (accept(t)) {
         myValue = t;
@@ -142,11 +147,13 @@ public class CommonProcessors {
   }
 
   private static final Processor FALSE = new Processor<Object>() {
+    @Override
     public boolean process(Object t) {
       return false;
     }
   };
   private static final Processor TRUE = new Processor<Object>() {
+    @Override
     public boolean process(Object t) {
       return true;
     }

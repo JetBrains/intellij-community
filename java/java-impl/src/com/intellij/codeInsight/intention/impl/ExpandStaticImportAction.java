@@ -40,11 +40,13 @@ public class ExpandStaticImportAction extends PsiElementBaseIntentionAction {
   private static final String REPLACE_THIS_OCCURRENCE = "Replace this occurrence and keep the method";
   private static final String REPLACE_ALL_AND_DELETE_IMPORT = "Replace all and delete the import";
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return "Expand Static Import";
   }
 
+  @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
     if (!PsiUtil.isLanguageLevel5OrHigher(element)) return false;
     final PsiElement parent = element.getParent();
@@ -106,6 +108,7 @@ public class ExpandStaticImportAction extends PsiElementBaseIntentionAction {
     }
   }
 
+  @Override
   public void invoke(@NotNull final Project project, final Editor editor, PsiFile file) throws IncorrectOperationException {
     PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
     invoke(project, file, editor, element);

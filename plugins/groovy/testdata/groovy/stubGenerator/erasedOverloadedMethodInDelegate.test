@@ -1,0 +1,102 @@
+class A {
+    def foo(List<?> s){print 'A'}
+}
+
+class B  extends A {
+    def foo(List s){print 'B'}
+}
+
+class C {
+    @Delegate B b = new B()
+}
+-----
+public class A extends groovy.lang.GroovyObjectSupport implements groovy.lang.GroovyObject {
+public java.lang.Object foo(java.util.List<?> s) {
+return null;
+}
+
+public java.lang.Object getProperty(java.lang.String property) {
+return null;
+}
+
+public void setProperty(java.lang.String property, java.lang.Object newValue) {
+return ;
+}
+
+public java.lang.Object invokeMethod(java.lang.String name, java.lang.Object args) {
+return null;
+}
+
+public groovy.lang.MetaClass getMetaClass() {
+return null;
+}
+
+public void setMetaClass(groovy.lang.MetaClass metaClass) {
+return ;
+}
+
+}
+---
+public class B extends A implements groovy.lang.GroovyObject {
+public java.lang.Object foo(java.util.List s) {
+return null;
+}
+
+public java.lang.Object getProperty(java.lang.String property) {
+return null;
+}
+
+public void setProperty(java.lang.String property, java.lang.Object newValue) {
+return ;
+}
+
+public java.lang.Object invokeMethod(java.lang.String name, java.lang.Object args) {
+return null;
+}
+
+public groovy.lang.MetaClass getMetaClass() {
+return null;
+}
+
+public void setMetaClass(groovy.lang.MetaClass metaClass) {
+return ;
+}
+
+}
+---
+public class C extends groovy.lang.GroovyObjectSupport implements groovy.lang.GroovyObject {
+public B getB() {
+return null;
+}
+
+public void setB(B b) {
+return ;
+}
+
+public java.lang.Object foo(java.util.List s) {
+return null;
+}
+
+public java.lang.Object getProperty(java.lang.String property) {
+return null;
+}
+
+public void setProperty(java.lang.String property, java.lang.Object newValue) {
+return ;
+}
+
+public java.lang.Object invokeMethod(java.lang.String name, java.lang.Object args) {
+return null;
+}
+
+public groovy.lang.MetaClass getMetaClass() {
+return null;
+}
+
+public void setMetaClass(groovy.lang.MetaClass metaClass) {
+return ;
+}
+
+private B b = null;
+}
+---

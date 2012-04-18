@@ -36,6 +36,7 @@ public class JavaMethodNameIndex extends StringStubIndexExtension<PsiMethod> {
     return ourInstance;
   }
 
+  @NotNull
   @Override
   public StubIndexKey<String, PsiMethod> getKey() {
     return JavaStubIndexKeys.METHODS;

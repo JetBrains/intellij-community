@@ -59,4 +59,14 @@ public class ExceptionFromCatchWhichDoesntWrap {
       throw exception;
     }
   }
+
+  private void NoWrappingAllowed() {
+    try {
+
+    } catch (RuntimeException e) {
+      throw new MyException();
+    }
+  }
+
+  class MyException extends RuntimeException {}
 }

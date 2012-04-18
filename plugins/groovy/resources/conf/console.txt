@@ -27,6 +27,6 @@ try {
     System.out.println result
   }
 }
-catch (e) {
+catch (Throwable e) {
   e.printStackTrace()
 }

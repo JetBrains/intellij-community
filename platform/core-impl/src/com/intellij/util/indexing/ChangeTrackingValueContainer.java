@@ -109,6 +109,11 @@ class ChangeTrackingValueContainer<Value> extends UpdatableValueContainer<Value>
   }
 
   @Override
+  public IntPredicate getValueAssociationPredicate(Value value) {
+    return getMergedData().getValueAssociationPredicate(value);
+  }
+
+  @Override
   public IntIterator getInputIdsIterator(final Value value) {
     return getMergedData().getInputIdsIterator(value);
   }
@@ -119,7 +124,7 @@ class ChangeTrackingValueContainer<Value> extends UpdatableValueContainer<Value>
 
   // need 'synchronized' to ensure atomic initialization of merged data
   // because several threads that acquired read lock may simultaneously execute the method
-  private ValueContainer<Value> getMergedData() {
+  private ValueContainerImpl<Value> getMergedData() {
     ValueContainerImpl<Value> merged = myMerged;
     if (merged != null) {
       return merged;
@@ -129,16 +134,15 @@ class ChangeTrackingValueContainer<Value> extends UpdatableValueContainer<Value>
       if (merged != null) {
         return merged;
       }
-      final ValueContainerImpl<Value> newMerged = new ValueContainerImpl<Value>();
 
       final ValueContainer<Value> fromDisk = myInitializer.compute();
+      final ValueContainerImpl<Value> newMerged;
 
-      fromDisk.forEach(new ContainerAction<Value>() {
-        @Override
-        public void perform(final int id, final Value value) {
-          newMerged.addValue(id, value);
-        }
-      });
+      if (fromDisk instanceof ValueContainerImpl) {
+        newMerged = ((ValueContainerImpl<Value>)fromDisk).copy();
+      } else {
+        newMerged = ((ChangeTrackingValueContainer<Value>)fromDisk).getMergedData().copy();
+      }
       myInvalidated.forEach(new TIntProcedure() {
         @Override
         public boolean execute(int inputId) {
@@ -148,15 +152,17 @@ class ChangeTrackingValueContainer<Value> extends UpdatableValueContainer<Value>
       });
       myRemoved.forEach(new ContainerAction<Value>() {
         @Override
-        public void perform(final int id, final Value value) {
+        public boolean perform(final int id, final Value value) {
           newMerged.removeValue(id, value);
+          return true;
         }
       });
       myAdded.forEach(new ContainerAction<Value>() {
         @Override
-        public void perform(final int id, final Value value) {
+        public boolean perform(final int id, final Value value) {
           newMerged.removeAssociatedValue(id); // enforcing "one-value-per-file for particular key" invariant
           newMerged.addValue(id, value);
+          return true;
         }
       });
       setNeedsCompacting(fromDisk.needsCompacting());
@@ -167,7 +173,7 @@ class ChangeTrackingValueContainer<Value> extends UpdatableValueContainer<Value>
   }
 
   public boolean isDirty() {
-    return myAdded.size() > 0 || myRemoved.size() > 0 || myInvalidated.size() > 0 || needsCompacting();
+    return myAdded.size() > 0 || myRemoved.size() > 0 || !myInvalidated.isEmpty() || needsCompacting();
   }
 
   public ValueContainer<Value> getAddedDelta() {

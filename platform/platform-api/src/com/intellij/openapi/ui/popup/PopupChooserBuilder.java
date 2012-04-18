@@ -203,8 +203,8 @@ public class PopupChooserBuilder {
 
     (list != null ? list : myChooserComponent).addMouseListener(new MouseAdapter() {
       @Override
-      public void mousePressed(MouseEvent e) {
-        if (UIUtil.isActionClick(e) && !UIUtil.isSelectionButtonDown(e) && !e.isConsumed()) {
+      public void mouseReleased(MouseEvent e) {
+        if (UIUtil.isActionClick(e, MouseEvent.MOUSE_RELEASED) && !UIUtil.isSelectionButtonDown(e) && !e.isConsumed()) {
           closePopup(true, e, true);
         }
       }

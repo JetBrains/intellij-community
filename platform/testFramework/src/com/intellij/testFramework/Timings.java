@@ -110,11 +110,12 @@ public class Timings {
   }
 
   /**
-   * @param value
+   * @param value the value (e.g. number of iterations) which needs to be adjusted according to my machine speed
+   * @param isParallelizable true if the test load is scalable with the CPU cores
    * @return value calibrated according to this machine speed. For slower machine, lesser value will be returned
    */
-  public static int adjustAccordingToMySpeed(int value) {
-    return Math.max(1, (int)(1.0 * value * ETALON_TIMING / MACHINE_TIMING) / 8 * JobSchedulerImpl.CORES_COUNT);
+  public static int adjustAccordingToMySpeed(int value, boolean isParallelizable) {
+    return Math.max(1, (int)(1.0 * value * ETALON_TIMING / MACHINE_TIMING) / 8 * (isParallelizable ? JobSchedulerImpl.CORES_COUNT : 1));
   }
 
   public static String getStatistics() {

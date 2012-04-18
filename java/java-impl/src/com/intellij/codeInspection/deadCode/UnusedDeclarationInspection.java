@@ -341,50 +341,30 @@ public class UnusedDeclarationInspection extends FilteringInspectionTool {
       @Override public void visitElement(final RefEntity refEntity) {
         if (refEntity instanceof RefJavaElement) {
           final RefElementImpl refElement = (RefElementImpl)refEntity;
-          final PsiElement element = refElement.getElement();
-          if (element == null) return;
+          if (!refElement.isSuspicious()) return;
+
+          PsiFile file = refElement.getContainingFile();
+
+          if (file == null) return;
           final boolean isSuppressed = refElement.isSuppressed(getShortName());
-          if (!getContext().isToCheckMember(element, UnusedDeclarationInspection.this) || isSuppressed) {
-            if (isSuppressed || !scope.contains(element)) {
+          if (!getContext().isToCheckFile(file, UnusedDeclarationInspection.this) || isSuppressed) {
+            if (isSuppressed || !scope.contains(file)) {
               getEntryPointsManager().addEntryPoint(refElement, false);
             }
             return;
           }
-          if (!refElement.isSuspicious()) return;
-          refElement.accept(new RefJavaVisitor() {
-            @Override public void visitElement(final RefEntity elem) {
-              if (elem instanceof RefElement) {
-                final RefElement element = (RefElement)elem;
-                if (isEntryPoint(element)) {
-                  getEntryPointsManager().addEntryPoint(element, false);
-                }
-              }
-            }
 
+          refElement.accept(new RefJavaVisitor() {
             @Override public void visitMethod(RefMethod method) {
               if (isAddMainsEnabled() && method.isAppMain()) {
                 getEntryPointsManager().addEntryPoint(method, false);
-              } else {
-                super.visitMethod(method);
               }
             }
 
             @Override public void visitClass(RefClass aClass) {
-              final PsiClass psiClass = aClass.getElement();
-              if (
-                isAddAppletEnabled() && aClass.isApplet() ||
-                isAddServletEnabled() && aClass.isServlet()) {
+              if (isAddAppletEnabled() && aClass.isApplet() ||
+                  isAddServletEnabled() && aClass.isServlet()) {
                 getEntryPointsManager().addEntryPoint(aClass, false);
-              } else if (psiClass.isAnnotationType()){
-                getEntryPointsManager().addEntryPoint(aClass, false);
-                final PsiMethod[] psiMethods = psiClass.getMethods();
-                for (PsiMethod psiMethod : psiMethods) {
-                  getEntryPointsManager().addEntryPoint(getRefManager().getReference(psiMethod), false);
-                }
-              } else if (psiClass.isEnum()) {
-                getEntryPointsManager().addEntryPoint(aClass, false);
-              } else {
-                super.visitClass(aClass);
               }
             }
           });
@@ -434,7 +414,7 @@ public class UnusedDeclarationInspection extends FilteringInspectionTool {
     myPhase = 1;
   }
 
-  private boolean isEntryPoint(final RefElement owner) {
+  public boolean isEntryPoint(final RefElement owner) {
     final PsiElement element = owner.getElement();
     if (RefUtil.isImplicitUsage(element)) return true;
     if (element instanceof PsiModifierListOwner) {
@@ -904,8 +884,6 @@ public class UnusedDeclarationInspection extends FilteringInspectionTool {
       @Override public void visitElement(RefEntity refEntity) {
         if (refEntity instanceof RefJavaElement) {
           final RefJavaElementImpl refElement = (RefJavaElementImpl)refEntity;
-          final PsiElement element = refElement.getElement();
-          if (element == null) return;
           if (!getContext().isToCheckMember(refElement, UnusedDeclarationInspection.this)) return;
           refElement.setReachable(false);
         }

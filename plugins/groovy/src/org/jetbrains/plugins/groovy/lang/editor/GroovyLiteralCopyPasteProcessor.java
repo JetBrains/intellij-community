@@ -157,13 +157,11 @@ public class GroovyLiteralCopyPasteProcessor extends StringLiteralCopyPasteProce
     }
 
     if (tokenType == mGSTRING_CONTENT || tokenType == mGSTRING_LITERAL) {
-      boolean escapeDoubleQuotes = !token.getText().contains("\"\"\"");
-      return GrStringUtil.escapeSymbolsForGString(s, escapeDoubleQuotes, false);
+      return GrStringUtil.escapeSymbolsForGString(s, !token.getText().contains("\"\"\""), false);
     }
 
     if (tokenType == mSTRING_LITERAL) {
-      boolean escapeQuotes = !token.getText().contains("'''");
-      return GrStringUtil.escapeSymbolsForString(s, escapeQuotes, false);
+      return GrStringUtil.escapeSymbolsForString(s, !token.getText().contains("'''"), false);
     }
 
     return super.escapeCharCharacters(s, token);

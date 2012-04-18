@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<animated-rotate xmlns:android="http://schemas.android.com/apk/res/android"
+    android:drawable="<error>@drawable/adsdsd</error>"
+    android:pivotX="50%"
+    android:pivotY="50%"
+    android:framesCount="12"
+    android:frameDuration="<error>aba</error>"/>

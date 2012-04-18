@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,12 +20,14 @@ import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectLocator;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.vcs.ConstantZipperUpdater;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.*;
+import com.intellij.util.Alarm;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.messages.MessageBusConnection;
@@ -34,40 +36,94 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
 /**
- * Listens to file system events and notifies VcsDirtyScopeManagers responsible for changed files to mark these
- * files dirty.
+ * Listens to file system events and notifies VcsDirtyScopeManagers responsible for changed files to mark these files dirty.
+ *
  * @author Irina Chernushina
  * @author Kirill Likhodedov
  */
 public class VcsDirtyScopeVfsListener implements ApplicationComponent, BulkFileListener {
   private final ProjectLocator myProjectLocator;
   private final MessageBusConnection myMessageBusConnection;
+  // for tests only
+  private boolean myForbid;
+  private final ConstantZipperUpdater myZipperUpdater;
+  private final List<FileAndDirsCollector> myQueue;
+  private final Object myLock;
+  private final Runnable myDirtReporter;
 
   public VcsDirtyScopeVfsListener() {
     myProjectLocator = ProjectLocator.getInstance();
     myMessageBusConnection = ApplicationManager.getApplication().getMessageBus().connect();
+    myLock = new Object();
+    myQueue = new ArrayList<FileAndDirsCollector>();
+    myDirtReporter = new Runnable() {
+      @Override
+      public void run() {
+        ArrayList<FileAndDirsCollector> list;
+        synchronized (myLock) {
+          list = new ArrayList<FileAndDirsCollector>(myQueue);
+          myQueue.clear();
+        }
+        Map<VcsDirtyScopeManager, Pair<HashSet<FilePath>, HashSet<FilePath>>> map =
+          new HashMap<VcsDirtyScopeManager, Pair<HashSet<FilePath>, HashSet<FilePath>>>();
+        for (FileAndDirsCollector collector : list) {
+          Map<VcsDirtyScopeManager, Pair<HashSet<FilePath>, HashSet<FilePath>>> pairMap =
+            collector.map;
+          for (Map.Entry<VcsDirtyScopeManager, Pair<HashSet<FilePath>, HashSet<FilePath>>> entry : pairMap
+            .entrySet()) {
+            final VcsDirtyScopeManager key = entry.getKey();
+            Pair<HashSet<FilePath>, HashSet<FilePath>> existing = map.get(key);
+            Pair<HashSet<FilePath>, HashSet<FilePath>> value = entry.getValue();
+            if (existing != null) {
+              existing.getFirst().addAll(value.getFirst());
+              existing.getSecond().addAll(value.getSecond());
+            }
+            else {
+              map.put(key, value);
+            }
+          }
+        }
+        new FileAndDirsCollector().markDirty(map);
+      }
+    };
+    myZipperUpdater = new ConstantZipperUpdater(300, Alarm.ThreadToUse.SHARED_THREAD, ApplicationManager.getApplication(),
+                                                myDirtReporter);
   }
 
+  public void setForbid(boolean forbid) {
+    assert ApplicationManager.getApplication().isUnitTestMode();
+    myForbid = forbid;
+  }
+
+  public void flushDirt() {
+    myDirtReporter.run();
+  }
+
+  @Override
   @NotNull
   public String getComponentName() {
     return VcsDirtyScopeVfsListener.class.getName();
   }
 
+  @Override
   public void initComponent() {
     myMessageBusConnection.subscribe(VirtualFileManager.VFS_CHANGES, this);
   }
 
+  @Override
   public void disposeComponent() {
     myMessageBusConnection.disconnect();
   }
 
   @Override
-  public void before(List<? extends VFileEvent> events) {
+  public void before(@NotNull List<? extends VFileEvent> events) {
+    if (myForbid) return;
     final FileAndDirsCollector dirtyFilesAndDirs = new FileAndDirsCollector();
     // collect files and directories - sources of events
     for (VFileEvent event : events) {
@@ -84,14 +140,17 @@ public class VcsDirtyScopeVfsListener implements ApplicationComponent, BulkFileL
       }
     }
     // and notify VCSDirtyScopeManager
-    dirtyFilesAndDirs.markDirty();
+    markDirtyOnPooled(dirtyFilesAndDirs);
   }
 
   @Override
-  public void after(List<? extends VFileEvent> events) {
+  public void after(@NotNull List<? extends VFileEvent> events) {
+    if (myForbid) return;
     final FileAndDirsCollector dirtyFilesAndDirs = new FileAndDirsCollector();
     // collect files and directories - sources of events
     for (VFileEvent event : events) {
+      if (event instanceof VFileDeleteEvent) continue;
+
       final VirtualFile file = getFileForEvent(event);
       if (file == null) {
         continue;
@@ -114,7 +173,14 @@ public class VcsDirtyScopeVfsListener implements ApplicationComponent, BulkFileL
       }
     }
     // and notify VCSDirtyScopeManager
-    dirtyFilesAndDirs.markDirty();
+    markDirtyOnPooled(dirtyFilesAndDirs);
+  }
+
+  private void markDirtyOnPooled(final FileAndDirsCollector dirtyFilesAndDirs) {
+    synchronized (myLock) {
+      myQueue.add(dirtyFilesAndDirs);
+    }
+    myZipperUpdater.request();
   }
 
   @Nullable
@@ -139,7 +205,7 @@ public class VcsDirtyScopeVfsListener implements ApplicationComponent, BulkFileL
      * @param file        file which path is to be added.
      * @param addToFiles  If true, then add to dirty files even if it is a directory. Otherwise add to the proper set.
      */
-    public void add(VirtualFile file, boolean addToFiles, final boolean forDelete) {
+    private void add(VirtualFile file, boolean addToFiles, final boolean forDelete) {
       if (file == null) { return; }
       final boolean isDirectory = file.isDirectory();
       // need to create FilePath explicitly without referring to VirtualFile because the path of VirtualFile may change
@@ -165,7 +231,7 @@ public class VcsDirtyScopeVfsListener implements ApplicationComponent, BulkFileL
     /**
      * Adds files to the collection of files and directories - to the collection of directories (which are handled recursively).
      */
-    void add(VirtualFile file, final boolean forDelete) {
+    private void add(VirtualFile file, final boolean forDelete) {
       add(file, false, forDelete);
     }
 
@@ -173,12 +239,12 @@ public class VcsDirtyScopeVfsListener implements ApplicationComponent, BulkFileL
      * Adds to the collection of files. A file (even if it is a directory) is marked dirty alone (not recursively).
      * Use this method, when you want directory not to be marked dirty recursively.
      */
-    void addToFiles(VirtualFile file, final boolean forDelete) {
+    private void addToFiles(VirtualFile file, final boolean forDelete) {
       add(file, true, forDelete);
     }
 
-    void markDirty() {
-      for (Map.Entry<VcsDirtyScopeManager, Pair<HashSet<FilePath>, HashSet<FilePath>>> entry : map.entrySet()) {
+    private void markDirty(final Map<VcsDirtyScopeManager, Pair<HashSet<FilePath>, HashSet<FilePath>>> outerMap) {
+      for (Map.Entry<VcsDirtyScopeManager, Pair<HashSet<FilePath>, HashSet<FilePath>>> entry : outerMap.entrySet()) {
         VcsDirtyScopeManager manager = entry.getKey();
         HashSet<FilePath> files = entry.getValue().first;
         HashSet<FilePath> dirs = entry.getValue().second;
@@ -196,14 +262,18 @@ public class VcsDirtyScopeVfsListener implements ApplicationComponent, BulkFileL
   private Collection<VcsDirtyScopeManager> getManagers(final VirtualFile file) {
     final Collection<VcsDirtyScopeManager> result = new HashSet<VcsDirtyScopeManager>();
     if (file == null) { return result; }
-    final Collection<Project> projects = myProjectLocator.getProjectsForFile(file);
-    for (Project project : projects) {
-      final VcsDirtyScopeManager manager = VcsDirtyScopeManager.getInstance(project);
-      if (manager != null) {
-        result.add(manager);
+    ApplicationManager.getApplication().runReadAction(new Runnable() {
+      @Override
+      public void run() {
+        final Collection<Project> projects = myProjectLocator.getProjectsForFile(file);
+        for (Project project : projects) {
+          final VcsDirtyScopeManager manager = VcsDirtyScopeManager.getInstance(project);
+          if (manager != null) {
+            result.add(manager);
+          }
+        }
       }
-    }
+    });
     return result;
   }
-
 }

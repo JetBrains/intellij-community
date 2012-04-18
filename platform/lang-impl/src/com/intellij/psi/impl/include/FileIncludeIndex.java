@@ -67,11 +67,13 @@ public class FileIncludeIndex extends FileBasedIndexExtension<FileIncludeIndex.K
     return result;
   }
 
+  @NotNull
   @Override
   public ID<Key, List<FileIncludeInfoImpl>> getName() {
     return INDEX_ID;
   }
 
+  @NotNull
   @Override
   public DataIndexer<Key, List<FileIncludeInfoImpl>, FileContent> getIndexer() {
     return new DataIndexer<Key, List<FileIncludeInfoImpl>, FileContent>() {

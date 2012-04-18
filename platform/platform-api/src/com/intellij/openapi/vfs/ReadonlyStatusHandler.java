@@ -16,7 +16,10 @@
 package com.intellij.openapi.vfs;
 
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -24,6 +27,24 @@ import java.util.Collection;
 public abstract class ReadonlyStatusHandler {
   public static boolean ensureFilesWritable(@NotNull Project project, @NotNull VirtualFile... files) {
     return !getInstance(project).ensureFilesWritable(files).hasReadonlyFiles();
+  }
+
+  public static boolean ensureDocumentWritable(@NotNull Project project, @NotNull Document document) {
+    final PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document);
+    boolean okWritable;
+    if (psiFile != null) {
+      final VirtualFile virtualFile = psiFile.getVirtualFile();
+      if (virtualFile != null) {
+        okWritable = ensureFilesWritable(project, virtualFile);
+      }
+      else {
+        okWritable = psiFile.isWritable();
+      }
+    }
+    else {
+      okWritable = document.isWritable();
+    }
+    return okWritable;
   }
 
   public abstract static class OperationStatus {

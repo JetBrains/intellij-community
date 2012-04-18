@@ -136,20 +136,20 @@ public class StructureTreeBuilder extends AbstractTreeBuilder {
       myOutOfCodeBlockModificationCount = myModificationTracker.getOutOfCodeBlockModificationCount();
     }
 
-    public void childRemoved(PsiTreeChangeEvent event) {
+    public void childRemoved(@NotNull PsiTreeChangeEvent event) {
       PsiElement child = event.getOldChild();
       if (child instanceof PsiWhiteSpace) return; //optimization
 
       childrenChanged();
     }
 
-    public void childAdded(PsiTreeChangeEvent event) {
+    public void childAdded(@NotNull PsiTreeChangeEvent event) {
       PsiElement child = event.getNewChild();
       if (child instanceof PsiWhiteSpace) return; //optimization
       childrenChanged();
     }
 
-    public void childReplaced(PsiTreeChangeEvent event) {
+    public void childReplaced(@NotNull PsiTreeChangeEvent event) {
       /** Test comment */
       PsiElement oldChild = event.getOldChild();
       PsiElement newChild = event.getNewChild();
@@ -157,11 +157,11 @@ public class StructureTreeBuilder extends AbstractTreeBuilder {
       childrenChanged();
     }
 
-    public void childMoved(PsiTreeChangeEvent event) {
+    public void childMoved(@NotNull PsiTreeChangeEvent event) {
       childrenChanged();
     }
 
-    public void childrenChanged(PsiTreeChangeEvent event) {
+    public void childrenChanged(@NotNull PsiTreeChangeEvent event) {
       childrenChanged();
     }
 
@@ -172,7 +172,7 @@ public class StructureTreeBuilder extends AbstractTreeBuilder {
       setupUpdateAlarm();
     }
 
-    public void propertyChanged(PsiTreeChangeEvent event) {
+    public void propertyChanged(@NotNull PsiTreeChangeEvent event) {
       childrenChanged();
     }
   }

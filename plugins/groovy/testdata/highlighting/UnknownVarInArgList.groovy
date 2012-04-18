@@ -1,7 +1,7 @@
 def foo(Date d) {}
 
 def a = unknown
-foo(a)
+foo<weak_warning descr="Cannot infer argument types">(a)</weak_warning>
 foo<warning descr="'foo' in 'UnknownVarInArgList' cannot be applied to '(java.lang.Integer)'">(1)</warning>
 
 
@@ -9,4 +9,5 @@ foo<warning descr="'foo' in 'UnknownVarInArgList' cannot be applied to '(java.la
 def abc(Date d){}
 def abc(int i) {}
 
-abc<warning descr="'abc' in 'UnknownVarInArgList' cannot be applied to '(null)'">(a)</warning>
+def x = unknown2
+abc<weak_warning descr="Cannot infer argument types">(x)</weak_warning>

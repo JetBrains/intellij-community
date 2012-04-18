@@ -29,8 +29,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.IgnoredFileBean;
-import com.intellij.ui.ColoredListCellRenderer;
-import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nls;
@@ -38,45 +37,26 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 
 public class IgnoredSettingsPanel implements SearchableConfigurable, Configurable.NoScroll {
   private JBList myList;
-  private JButton myAddButton;
-  private JButton myEditButton;
-  private JButton myRemoveButton;
   private JPanel myPanel;
   private final Project myProject;
   private DefaultListModel myModel;
   private final ChangeListManager myChangeListManager;
 
   public IgnoredSettingsPanel(Project project) {
-    myProject = project;
+    myList = new JBList();
     myList.setCellRenderer(new MyCellRenderer());
-    myAddButton.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        addItem();
-      }
-    });
-    myEditButton.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        editItem();
-      }
-    });
-    myRemoveButton.addActionListener(new ActionListener() {
-      public void actionPerformed(final ActionEvent e) {
-        deleteItems();
-      }
-    });
-    myChangeListManager = ChangeListManager.getInstance(myProject);
-
     myList.getEmptyText().setText(VcsBundle.message("no.ignored.files"));
+
+    myProject = project;
+    myChangeListManager = ChangeListManager.getInstance(myProject);
   }
 
   private void setItems(final IgnoredFileBean[] filesToIgnore) {
     myModel = new DefaultListModel();
-    for(IgnoredFileBean bean: filesToIgnore) {
+    for (IgnoredFileBean bean : filesToIgnore) {
       myModel.addElement(bean);
     }
     myList.setModel(myModel);
@@ -85,8 +65,8 @@ public class IgnoredSettingsPanel implements SearchableConfigurable, Configurabl
   public IgnoredFileBean[] getItems() {
     final int count = myList.getModel().getSize();
     IgnoredFileBean[] result = new IgnoredFileBean[count];
-    for(int i=0; i<count; i++) {
-      result [i] = (IgnoredFileBean) myList.getModel().getElementAt(i);
+    for (int i = 0; i < count; i++) {
+      result[i] = (IgnoredFileBean)myList.getModel().getElementAt(i);
     }
     return result;
   }
@@ -96,14 +76,14 @@ public class IgnoredSettingsPanel implements SearchableConfigurable, Configurabl
     dlg.show();
     if (dlg.isOK()) {
       final IgnoredFileBean[] ignoredFiles = dlg.getSelectedIgnoredFiles();
-      for(IgnoredFileBean bean: ignoredFiles) {
+      for (IgnoredFileBean bean : ignoredFiles) {
         myModel.addElement(bean);
       }
     }
   }
 
   private void editItem() {
-    IgnoredFileBean bean = (IgnoredFileBean) myList.getSelectedValue();
+    IgnoredFileBean bean = (IgnoredFileBean)myList.getSelectedValue();
     if (bean == null) return;
     IgnoreUnversionedDialog dlg = new IgnoreUnversionedDialog(myProject);
     dlg.setIgnoredFile(bean);
@@ -112,7 +92,7 @@ public class IgnoredSettingsPanel implements SearchableConfigurable, Configurabl
       IgnoredFileBean[] beans = dlg.getSelectedIgnoredFiles();
       assert beans.length == 1;
       int selectedIndex = myList.getSelectedIndex();
-      myModel.setElementAt(beans [0], selectedIndex);
+      myModel.setElementAt(beans[0], selectedIndex);
     }
   }
 
@@ -120,7 +100,7 @@ public class IgnoredSettingsPanel implements SearchableConfigurable, Configurabl
     boolean contigiousSelection = true;
     int minSelectionIndex = myList.getSelectionModel().getMinSelectionIndex();
     int maxSelectionIndex = myList.getSelectionModel().getMaxSelectionIndex();
-    for(int i=minSelectionIndex; i<=maxSelectionIndex; i++) {
+    for (int i = minSelectionIndex; i <= maxSelectionIndex; i++) {
       if (!myList.getSelectionModel().isSelectedIndex(i)) {
         contigiousSelection = false;
         break;
@@ -131,7 +111,7 @@ public class IgnoredSettingsPanel implements SearchableConfigurable, Configurabl
     }
     else {
       final Object[] selection = myList.getSelectedValues();
-      for(Object item: selection) {
+      for (Object item : selection) {
         myModel.removeElement(item);
       }
     }
@@ -150,6 +130,25 @@ public class IgnoredSettingsPanel implements SearchableConfigurable, Configurabl
   }
 
   public JComponent createComponent() {
+    if (myPanel == null) {
+      myPanel = ToolbarDecorator.createDecorator(myList)
+        .setAddAction(new AnActionButtonRunnable() {
+          @Override
+          public void run(AnActionButton button) {
+            addItem();
+          }
+        }).setEditAction(new AnActionButtonRunnable() {
+          @Override
+          public void run(AnActionButton button) {
+            editItem();
+          }
+        }).setRemoveAction(new AnActionButtonRunnable() {
+          @Override
+          public void run(AnActionButton button) {
+            deleteItems();
+          }
+        }).disableUpDownActions().createPanel();
+    }
     return myPanel;
   }
 
@@ -178,18 +177,14 @@ public class IgnoredSettingsPanel implements SearchableConfigurable, Configurabl
     return null;
   }
 
-  public JComponent getPanel() {
-    return myPanel;
-  }
-
   private static class MyCellRenderer extends ColoredListCellRenderer {
     protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
-      if (UIUtil.isUnderGTKLookAndFeel()){
+      if (UIUtil.isUnderGTKLookAndFeel()) {
         final Color background = selected ? UIUtil.getTreeSelectionBackground() : UIUtil.getTreeTextBackground();
         UIUtil.changeBackGround(this, background);
       }
 
-      IgnoredFileBean bean = (IgnoredFileBean) value;
+      IgnoredFileBean bean = (IgnoredFileBean)value;
       final String path = bean.getPath();
       if (path != null) {
         if (path.endsWith("/")) {
@@ -204,5 +199,4 @@ public class IgnoredSettingsPanel implements SearchableConfigurable, Configurabl
       }
     }
   }
-
 }

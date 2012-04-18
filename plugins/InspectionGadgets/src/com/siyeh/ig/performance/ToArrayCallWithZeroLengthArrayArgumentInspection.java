@@ -18,8 +18,6 @@ package com.siyeh.ig.performance;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -35,8 +33,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class ToArrayCallWithZeroLengthArrayArgumentInspection
-  extends BaseInspection {
+public class ToArrayCallWithZeroLengthArrayArgumentInspection extends BaseInspection {
 
   @Override
   @Nls
@@ -112,49 +109,36 @@ public class ToArrayCallWithZeroLengthArrayArgumentInspection
         return;
       }
       // need to introduce a variable to prevent calling a method twice
-      final PsiStatement statement = PsiTreeUtil.getParentOfType(methodCallExpression, PsiStatement.class);
+      PsiStatement statement = PsiTreeUtil.getParentOfType(methodCallExpression, PsiStatement.class);
       if (statement == null) {
         return;
-      }
-      final StringBuilder replacementText = new StringBuilder();
-      replacementText.append("{\n");
-      final CodeStyleSettings codeStyleSettings = CodeStyleSettingsManager.getSettings(project);
-      if (codeStyleSettings.GENERATE_FINAL_LOCALS) {
-        replacementText.append("final ");
       }
       final PsiType qualifierType = qualifier.getType();
       if (qualifierType == null) {
         return;
       }
-      replacementText.append(qualifierType.getCanonicalText()).append(" var =").append(qualifier.getText());
-      replacementText.append(";\nvar.toArray(new ").append(typeText).append("[var.size()]);\n}\n");
-      final PsiBlockStatement newStatement =
-        (PsiBlockStatement)factory.createStatementFromText(replacementText.toString(), methodCallExpression);
-      final PsiElement statementParent = statement.getParent();
-
-      if (statementParent instanceof PsiLoopStatement || statementParent instanceof PsiIfStatement) {
-        final PsiBlockStatement blockStatement = (PsiBlockStatement)statement.replace(newStatement);
-        final PsiCodeBlock codeBlock = blockStatement.getCodeBlock();
-        final PsiStatement[] statements = codeBlock.getStatements();
-        showRenameTemplate((PsiDeclarationStatement)statements[0], (PsiExpressionStatement)statements[1], statementParent);
-      } else {
-        final PsiCodeBlock codeBlock = newStatement.getCodeBlock();
-        final PsiStatement[] statements = codeBlock.getStatements();
-        final PsiDeclarationStatement declarationStatement = (PsiDeclarationStatement)statementParent.addBefore(statements[0], statement);
-        final PsiExpressionStatement expressionStatement = (PsiExpressionStatement)statement.replace(statements[1]);
-        showRenameTemplate(declarationStatement, expressionStatement, statementParent);
+      PsiDeclarationStatement declarationStatement = factory.createVariableDeclarationStatement("var", qualifierType, qualifier);
+      PsiElement statementParent = statement.getParent();
+      while (statementParent instanceof PsiLoopStatement || statementParent instanceof PsiIfStatement) {
+        statement = (PsiStatement) statementParent;
+        statementParent = statement.getParent();
       }
+      final String toArrayText = "var.toArray(new " + typeText + "[var.size()])";
+      PsiMethodCallExpression newMethodCallExpression =
+        (PsiMethodCallExpression)factory.createExpressionFromText(toArrayText, methodCallExpression);
+      declarationStatement = (PsiDeclarationStatement)statementParent.addBefore(declarationStatement, statement);
+      newMethodCallExpression = (PsiMethodCallExpression)methodCallExpression.replace(newMethodCallExpression);
+      showRenameTemplate(declarationStatement, newMethodCallExpression, statementParent);
     }
 
-    private void showRenameTemplate(PsiDeclarationStatement declarationStatement, PsiExpressionStatement expressionStatement,
+    private void showRenameTemplate(PsiDeclarationStatement declarationStatement, PsiMethodCallExpression methodCallExpression,
                                     PsiElement context) {
       if (!isOnTheFly()) {
         return;
       }
       final PsiVariable variable = (PsiVariable)declarationStatement.getDeclaredElements()[0];
-      final PsiMethodCallExpression callExpression = (PsiMethodCallExpression)expressionStatement.getExpression();
-      final PsiReferenceExpression ref1 = (PsiReferenceExpression)callExpression.getMethodExpression().getQualifierExpression();
-      final PsiNewExpression argument = (PsiNewExpression)callExpression.getArgumentList().getExpressions()[0];
+      final PsiReferenceExpression ref1 = (PsiReferenceExpression)methodCallExpression.getMethodExpression().getQualifierExpression();
+      final PsiNewExpression argument = (PsiNewExpression)methodCallExpression.getArgumentList().getExpressions()[0];
       final PsiMethodCallExpression sizeExpression = (PsiMethodCallExpression)argument.getArrayDimensions()[0];
       final PsiReferenceExpression ref2 = (PsiReferenceExpression)sizeExpression.getMethodExpression().getQualifierExpression();
       HighlightUtils.showRenameTemplate(context, variable, ref1, ref2);

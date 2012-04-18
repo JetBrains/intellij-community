@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,9 @@ package com.intellij.ui.tabs.impl;
 import com.intellij.ui.InplaceButton;
 import com.intellij.ui.MouseDragHelper;
 import com.intellij.ui.ScreenUtil;
+import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.tabs.TabInfo;
+import com.intellij.ui.util.Axis;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -34,10 +36,8 @@ class DragHelper extends MouseDragHelper {
   Rectangle myDragRec;
   Dimension myHoldDelta;
 
-  Measurer myHorizontal = new Measurer.Width();
-  Measurer myVertical = new Measurer.Height();
-
   private TabInfo myDragOutSource;
+  private TabLabel myPressedTabLabel;
 
   public DragHelper(JBTabsImpl tabs) {
     super(tabs, tabs);
@@ -50,6 +50,7 @@ class DragHelper extends MouseDragHelper {
     if (myDragSource == null || !myDragSource.canBeDraggedOut()) return false;
 
     TabLabel label = myTabs.myInfo2Label.get(myDragSource);
+    if (label == null) return false;
 
     int dX = dragToScreenPoint.x - startScreenPoint.x;
     int dY = dragToScreenPoint.y - startScreenPoint.y;
@@ -81,19 +82,25 @@ class DragHelper extends MouseDragHelper {
     myDragOutSource.getDragOutDelegate().dragOutCancelled(myDragOutSource);
   }
 
+  @Override
+  protected void processMousePressed(MouseEvent event) {
+    // since selection change can cause tabs to be reordered, we need to remember the tab on which the mouse was pressed, otherwise
+    // we'll end up dragging the wrong tab (IDEA-65073)
+    myPressedTabLabel = findLabel(new RelativePoint(event).getPoint(myTabs));
+  }
+
   protected void processDrag(MouseEvent event, Point targetScreenPoint, Point startPointScreen) {
     if (!myTabs.isTabDraggingEnabled()) return;
 
     SwingUtilities.convertPointFromScreen(startPointScreen, myTabs);
 
     if (isDragJustStarted()) {
-      final TabLabel label = findLabel(startPointScreen);
-      if (label == null) return;
+      if (myPressedTabLabel == null) return;
 
-      final Rectangle labelBounds = label.getBounds();
+      final Rectangle labelBounds = myPressedTabLabel.getBounds();
 
       myHoldDelta = new Dimension(startPointScreen.x - labelBounds.x, startPointScreen.y - labelBounds.y);
-      myDragSource = label.getInfo();
+      myDragSource = myPressedTabLabel.getInfo();
       myDragRec = new Rectangle(startPointScreen, labelBounds.getSize());
       myDragOriginalRec = (Rectangle)myDragRec.clone();
 
@@ -126,14 +133,14 @@ class DragHelper extends MouseDragHelper {
 
     TabLabel targetLabel;
     if (myTabs.isHorizontalTabs()) {
-      targetLabel = findMostOverlapping(myHorizontal, left, right);
+      targetLabel = findMostOverlapping(Axis.X, left, right);
       if (targetLabel == null) {
-        targetLabel = findMostOverlapping(myVertical, top, bottom);
+        targetLabel = findMostOverlapping(Axis.Y, top, bottom);
       }
     } else {
-      targetLabel = findMostOverlapping(myVertical, top, bottom);
+      targetLabel = findMostOverlapping(Axis.Y, top, bottom);
       if (targetLabel == null) {
-        targetLabel = findMostOverlapping(myHorizontal, left, right);
+        targetLabel = findMostOverlapping(Axis.X, left, right);
       }
     }
 
@@ -155,7 +162,7 @@ class DragHelper extends MouseDragHelper {
     }
   }
 
-  private TabLabel findMostOverlapping(Measurer measurer, TabLabel... labels) {
+  private TabLabel findMostOverlapping(Axis measurer, TabLabel... labels) {
     double freeSpace;
 
     if (measurer.getMinValue(myDragRec) < measurer.getMinValue(myDragOriginalRec)) {
@@ -171,7 +178,7 @@ class DragHelper extends MouseDragHelper {
       if (each == null) continue;
 
       final Rectangle eachBounds = each.getBounds();
-      if (measurer.getMeasuredValue(eachBounds) > freeSpace + freeSpace *0.3) continue;
+      if (measurer.getSize(eachBounds) > freeSpace + freeSpace *0.3) continue;
 
       Rectangle intersection = myDragRec.intersection(eachBounds);
       int size = intersection.width * intersection.height;
@@ -182,40 +189,6 @@ class DragHelper extends MouseDragHelper {
     }
 
     return maxLabel;
-  }
-
-  interface Measurer {
-    int getMinValue(Rectangle r);
-    int getMaxValue(Rectangle r);
-    int getMeasuredValue(Rectangle r);
-
-    class Width implements Measurer{
-      public int getMinValue(Rectangle r) {
-        return r.x;
-      }
-
-      public int getMaxValue(Rectangle r) {
-        return (int)r.getMaxX();
-      }
-
-      public int getMeasuredValue(Rectangle r) {
-        return r.width;
-      }
-    }
-
-    class Height implements Measurer{
-      public int getMinValue(Rectangle r) {
-        return r.y;
-      }
-
-      public int getMaxValue(Rectangle r) {
-        return (int)r.getMaxY();
-      }
-
-      public int getMeasuredValue(Rectangle r) {
-        return r.height;
-      }
-    }
   }
 
 

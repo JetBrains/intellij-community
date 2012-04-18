@@ -16,11 +16,10 @@
 
 package org.jetbrains.plugins.groovy.editor.selection;
 
-import com.intellij.psi.PsiElement;
-import com.intellij.openapi.util.TextRange;
+import com.intellij.codeInsight.editorActions.ExtendWordSelectionHandlerBase;
 import com.intellij.openapi.editor.Editor;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrTypeCastExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.PsiElement;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocMethodParams;
 
 import java.util.List;
@@ -28,7 +27,7 @@ import java.util.List;
 /**
  * @author ilyas
  */
-public class GroovyDocParamsSelectioner extends GroovyBasicSelectioner {
+public class GroovyDocParamsSelectioner extends ExtendWordSelectionHandlerBase {
   public boolean canSelect(PsiElement e) {
     return e instanceof GrDocMethodParams;
   }

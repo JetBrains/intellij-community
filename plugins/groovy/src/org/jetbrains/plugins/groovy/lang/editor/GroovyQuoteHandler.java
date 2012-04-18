@@ -16,16 +16,19 @@
 
 package org.jetbrains.plugins.groovy.lang.editor;
 
-import com.intellij.codeInsight.editorActions.QuoteHandler;
+import com.intellij.codeInsight.editorActions.MultiCharQuoteHandler;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.tree.IElementType;
+
 import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
 
 /**
  * @author ven
  */
-public class GroovyQuoteHandler implements QuoteHandler {
+public class GroovyQuoteHandler implements MultiCharQuoteHandler {
 
   public boolean isClosingQuote(HighlighterIterator iterator, int offset) {
     final IElementType tokenType = iterator.getTokenType();
@@ -42,7 +45,7 @@ public class GroovyQuoteHandler implements QuoteHandler {
   public boolean isOpeningQuote(HighlighterIterator iterator, int offset) {
     final IElementType tokenType = iterator.getTokenType();
 
-    if (tokenType== mGSTRING_BEGIN) return true;
+    if (tokenType == mGSTRING_BEGIN) return true;
     if (tokenType == mGSTRING_LITERAL || tokenType == mSTRING_LITERAL) {
       int start = iterator.getStart();
       return offset == start;
@@ -57,5 +60,17 @@ public class GroovyQuoteHandler implements QuoteHandler {
   public boolean isInsideLiteral(HighlighterIterator iterator) {
     final IElementType tokenType = iterator.getTokenType();
     return tokenType == mSTRING_LITERAL || tokenType == mGSTRING_LITERAL;
+  }
+
+  @Override
+  public CharSequence getClosingQuote(HighlighterIterator iterator, int offset) {
+    if (offset >= 3) {
+      Document document = iterator.getDocument();
+      if (document == null) return null;
+      String quote = document.getText(new TextRange(offset - 3, offset));
+      if ("'''".equals(quote)) return quote;
+      if ("\"\"\"".equals(quote)) return quote;
+    }
+    return null;
   }
 }

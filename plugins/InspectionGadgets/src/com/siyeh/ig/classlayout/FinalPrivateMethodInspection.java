@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.classlayout;
 
+import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
 import com.siyeh.InspectionGadgetsBundle;
@@ -63,6 +64,9 @@ public class FinalPrivateMethodInspection extends BaseInspection {
       //no call to super, so we don't drill into anonymous classes
       if (!method.hasModifierProperty(PsiModifier.FINAL)
           || !method.hasModifierProperty(PsiModifier.PRIVATE)) {
+        return;
+      }
+      if (AnnotationUtil.isAnnotated(method, "java.lang.SafeVarargs", false) && method.isVarArgs()) {
         return;
       }
       registerModifierError(PsiModifier.FINAL, method, PsiModifier.FINAL);

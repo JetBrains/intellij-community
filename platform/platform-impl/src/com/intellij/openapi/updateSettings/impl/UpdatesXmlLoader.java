@@ -18,7 +18,6 @@ package com.intellij.openapi.updateSettings.impl;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.reporter.ConnectionException;
-import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.JDOMUtil;
@@ -43,13 +42,9 @@ public class UpdatesXmlLoader {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.updateSettings.impl.UpdatesXmlLoader");
 
   private final String updateUrl;
-  private final String uid;
-  private final String additionalRequestOptions;
 
-  public UpdatesXmlLoader(final String updatesUrl, @NotNull String uid, @Nullable String additionalRequestOptions) {
+  public UpdatesXmlLoader(final String updatesUrl) {
     this.updateUrl = updatesUrl;
-    this.uid = uid;
-    this.additionalRequestOptions = additionalRequestOptions != null ? additionalRequestOptions : "";
   }
 
 
@@ -130,7 +125,7 @@ public class UpdatesXmlLoader {
       if (url.startsWith("file:")) {
         return new URL(url);
       }
-      return new URL(url + "?build=" + ApplicationInfo.getInstance().getBuild().asString() + "&uid=" + uid + additionalRequestOptions);
+      return new URL(url + "?" + UpdateChecker.prepareUpdateCheckArgs());
     }
     catch (Exception e) {
       throw new ConnectionException(e);

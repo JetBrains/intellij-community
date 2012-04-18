@@ -47,12 +47,13 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUt
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.params.GrParameterListImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.ClosureSyntheticParameter;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightVariable;
-import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.resolve.MethodTypeInferencer;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.PropertyResolverProcessor;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ResolverProcessor;
 import org.jetbrains.plugins.groovy.refactoring.GroovyNamesUtil;
+
+import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.GROOVY_LANG_CLOSURE;
 
 /**
  * @author ilyas
@@ -82,24 +83,50 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
     if (lastParent == null) return true;
 
     ResolveState state = _state.put(ResolverProcessor.RESOLVE_CONTEXT, this);
-    if (!super.processDeclarations(processor, state, lastParent, place)) return false;
+    if (!super.processDeclarations(processor, _state, lastParent, place)) return false;
+    if (!processParameters(processor, _state, state, place)) return false;
+    if (!processOwner(processor, state)) return false;
+    if (!processClosureClassMembers(processor, state, lastParent, place)) return false;
 
-    PsiElement current = place;
-    boolean it_already_processed = false;
-    while (current != this && current != null) {
-      if (current instanceof GrClosableBlock && !((GrClosableBlock)current).hasParametersSection() && !(current.getParent() instanceof GrStringInjection)) {
-        it_already_processed = true;
-        break;
+    return true;
+  }
+
+  private boolean processClosureClassMembers(PsiScopeProcessor processor,
+                                             ResolveState state, PsiElement lastParent,
+                                             PsiElement place) {
+    final PsiClass closureClass = GroovyPsiManager.getInstance(getProject()).findClassWithCache(GROOVY_LANG_CLOSURE, getResolveScope());
+    if (closureClass != null) {
+      if (!closureClass.processDeclarations(processor, state, lastParent, place)) return false;
+
+      if (place instanceof GroovyPsiElement) {
+        GrClosureType closureType = GrClosureType.create(this, false /*if it is 'true' need-to-prevent-recursion triggers*/);
+        if (!ResolveUtil.processNonCodeMembers(closureType, processor, (GroovyPsiElement)place, state)) {
+          return false;
+        }
       }
-      current = current.getParent();
     }
+    return true;
+  }
 
-    if (!it_already_processed || hasParametersSection()) {
-      for (final PsiParameter parameter : getAllParameters()) {
-        if (!ResolveUtil.processElement(processor, parameter, state)) return false;
+  private boolean processParameters(PsiScopeProcessor processor,
+                                    ResolveState _state,
+                                    ResolveState state,
+                                    PsiElement place) {
+    if (hasParametersSection()) {
+      for (GrParameter parameter : getParameters()) {
+        if (!ResolveUtil.processElement(processor, parameter, _state)) return false;
       }
     }
+    else if (!isItAlreadyDeclared(place)) {
+      GrParameter[] synth = getSyntheticItParameter();
+      if (synth.length > 0) {
+        if (!ResolveUtil.processElement(processor, synth[0], state)) return false;
+      }
+    }
+    return true;
+  }
 
+  private boolean processOwner(PsiScopeProcessor processor, ResolveState state) {
     if (processor instanceof PropertyResolverProcessor && OWNER_NAME.equals(((PropertyResolverProcessor)processor).getName())) {
       processor.handleEvent(ResolveUtil.DECLARATION_SCOPE_PASSED, this);
     }
@@ -108,20 +135,19 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
     if (nameHint == null || nameHint.equals(OWNER_NAME)) {
       if (!processor.execute(getOwner(), state)) return false;
     }
-
-    final PsiClass closureClass = GroovyPsiManager.getInstance(getProject()).findClassWithCache(GroovyCommonClassNames.GROOVY_LANG_CLOSURE, getResolveScope());
-    if (closureClass != null) {
-      if (!closureClass.processDeclarations(processor, state, lastParent, place)) return false;
-
-      if (place instanceof GroovyPsiElement &&
-          !ResolveUtil
-            .processNonCodeMembers(GrClosureType.create(this, false /*if it is 'true' need-to-prevent-recursion triggers*/), processor,
-                                   (GroovyPsiElement)place, state)) {
-        return false;
-      }
-    }
-
     return true;
+  }
+
+  private boolean isItAlreadyDeclared(PsiElement place) {
+    while (place != this && place != null) {
+      if (place instanceof GrClosableBlock &&
+          !((GrClosableBlock)place).hasParametersSection() &&
+          !(place.getParent() instanceof GrStringInjection)) {
+        return true;
+      }
+      place = place.getParent();
+    }
+    return false;
   }
 
   public String toString() {

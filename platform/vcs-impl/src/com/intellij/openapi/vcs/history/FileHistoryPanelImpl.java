@@ -642,6 +642,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
           VcsHistoryUtil.showDiff(project, myFilePath, left, right, leftTitle, rightTitle);
         }
         catch (final VcsException e) {
+          LOG.info(e);
           WaitForProgressToShow.runOrInvokeLaterAboveProgress(new Runnable() {
             public void run() {
               Messages.showErrorDialog(VcsBundle.message("message.text.cannot.show.differences", e.getLocalizedMessage()),
@@ -650,7 +651,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
           }, null, project);
         }
         catch (IOException e) {
-          LOG.error(e);
+          LOG.info(e);
         }
         catch (ProcessCanceledException ex) {
           LOG.info(ex);
@@ -673,12 +674,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
     });
 
     JPanel commentGroup = new JPanel(new BorderLayout());
-    final JLabel commentLabel = new JLabel(COMMIT_MESSAGE_TITLE + ":") {
-      @Override
-      public Dimension getPreferredSize() {
-        return new Dimension(super.getWidth(), 29);
-      }
-    };
+    final JLabel commentLabel = new JLabel(COMMIT_MESSAGE_TITLE + ":");
     commentGroup.add(commentLabel, BorderLayout.NORTH);
     JScrollPane pane = ScrollPaneFactory.createScrollPane(myComments);
     pane.setBorder(IdeBorderFactory.createBorder(SideBorder.TOP | SideBorder.LEFT | (myAdditionalDetails == null ? 0 : SideBorder.RIGHT)));
@@ -1334,6 +1330,11 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
       for (final TreeItem<VcsFileRevision> root : roots) {
         add(new TreeNodeOnVcsRevision(root.getData(), root.getChildren()));
       }
+    }
+
+    @Override
+    public RepositoryLocation getChangedRepositoryPath() {
+      return myRevision.getChangedRepositoryPath();
     }
 
     public VcsFileRevision getRevision() {

@@ -129,8 +129,7 @@ public class TypeProvider {
 
           if (element instanceof GrReferenceExpression) {
             final GrCall call = (GrCall)element.getParent();
-            final GrClosureSignatureUtil.ArgInfo<PsiElement>[] argInfos = GrClosureSignatureUtil
-              .mapParametersToArguments(signature, call.getArgumentList(), ((GrReferenceExpression)element), call.getClosureArguments());
+            final GrClosureSignatureUtil.ArgInfo<PsiElement>[] argInfos = GrClosureSignatureUtil.mapParametersToArguments(signature, call);
 
             if (argInfos == null) return true;
             paramInds.forEach(new TIntProcedure() {

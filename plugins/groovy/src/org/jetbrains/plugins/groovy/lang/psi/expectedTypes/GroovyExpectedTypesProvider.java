@@ -173,7 +173,7 @@ public class GroovyExpectedTypesProvider {
           final GrNamedArgument[] namedArgs = argumentList == null ? GrNamedArgument.EMPTY_ARRAY : argumentList.getNamedArguments();
           final GrExpression[] expressionArgs = argumentList == null ? GrExpression.EMPTY_ARRAY : argumentList.getExpressionArguments();
           addConstraintsFromMap(constraints,
-                                GrClosureSignatureUtil.mapArgumentsToParameters(variant, methodCall, true, namedArgs, expressionArgs,
+                                GrClosureSignatureUtil.mapArgumentsToParameters(variant, methodCall, true, true, namedArgs, expressionArgs,
                                                                                 closureArgs),
                                 closureIndex == closureArgs.length - 1);
         }
@@ -238,7 +238,7 @@ public class GroovyExpectedTypesProvider {
       for (GroovyResolveResult variant : ResolveUtil.getCallVariants(list)) {
         final GrExpression[] arguments = list.getExpressionArguments();
         addConstraintsFromMap(constraints,
-                              GrClosureSignatureUtil.mapArgumentsToParameters(variant, list, true,
+                              GrClosureSignatureUtil.mapArgumentsToParameters(variant, list, true, true,
                                                                               list.getNamedArguments(),
                                                                               list.getExpressionArguments(),
                                                                               GrClosableBlock.EMPTY_ARRAY

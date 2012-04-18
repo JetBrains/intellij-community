@@ -79,14 +79,13 @@ public class ToggleHighlightingMarkupAction extends AnAction {
     }
   }
 
-  private static void perform(Project project, final Document document, int startOffset, final int endOffset) {
+  private static void perform(Project project, final Document document, final int startOffset, final int endOffset) {
     final CharSequence sequence = document.getCharsSequence();
     final StringBuilder sb = new StringBuilder();
     Pattern pattern = Pattern.compile("<(error|warning|EOLError|EOLWarning|info|weak_warning)((?:\\s|=|\\w+|\\\"(?:[^\"]|\\\\\\\")*?\\\")*?)>(.*?)</\\1>");
     Matcher matcher = pattern.matcher(sequence);
-    sb.append(sequence, 0, startOffset);
+    List<TextRange> ranges = new ArrayList<TextRange>();
     if (matcher.find(startOffset)) {
-      List<TextRange> ranges = new ArrayList<TextRange>();
       boolean compactMode = false;
       int pos;
       do {
@@ -106,7 +105,9 @@ public class ToggleHighlightingMarkupAction extends AnAction {
       }
       while (matcher.find(pos));
       Collections.sort(ranges, IndentsPass.RANGE_COMPARATOR);
-      pos = 0;
+    }
+    if (!ranges.isEmpty()) {
+      int pos = 0;
       for (TextRange range : ranges) {
         sb.append(sequence, pos, range.getStartOffset());
         pos = range.getEndOffset();
@@ -114,7 +115,7 @@ public class ToggleHighlightingMarkupAction extends AnAction {
       sb.append(sequence, pos, sequence.length());
     }
     else {
-      final int[] offset = new int[] {startOffset};
+      final int[] offset = new int[] {0};
       final ArrayList<HighlightInfo> infos = new ArrayList<HighlightInfo>();
       DaemonCodeAnalyzerImpl.processHighlights(
         document, project, HighlightSeverity.WARNING, 0, sequence.length(),
@@ -123,7 +124,9 @@ public class ToggleHighlightingMarkupAction extends AnAction {
           public boolean process(HighlightInfo info) {
             if (info.severity != HighlightSeverity.WARNING && info.severity != HighlightSeverity.ERROR) return true;
             if (info.getStartOffset() >= endOffset) return false;
-            offset[0] = appendInfo(info, sb, sequence, offset[0], infos, false);
+            if (info.getEndOffset() > startOffset) {
+              offset[0] = appendInfo(info, sb, sequence, offset[0], infos, false);
+            }
             return true;
           }
         });

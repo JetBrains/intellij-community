@@ -33,7 +33,6 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.beans.PropertyChangeListener;
-import java.io.Serializable;
 
 /**
  * Image Editor.
@@ -87,9 +86,9 @@ final class ImageFileEditorImpl extends UserDataHolderBase implements ImageFileE
         if (state instanceof ImageFileEditorState) {
             ImageFileEditorState editorState = (ImageFileEditorState) state;
             ImageZoomModel zoomModel = imageEditor.getZoomModel();
-            imageEditor.setTransparencyChessboardVisible(editorState.backgroundVisible);
-            imageEditor.setGridVisible(editorState.gridVisible);
-            zoomModel.setZoomFactor(editorState.zoomFactor);
+            imageEditor.setTransparencyChessboardVisible(editorState.isBackgroundVisible());
+            imageEditor.setGridVisible(editorState.isGridVisible());
+            zoomModel.setZoomFactor(editorState.getZoomFactor());
         }
     }
 
@@ -133,23 +132,5 @@ final class ImageFileEditorImpl extends UserDataHolderBase implements ImageFileE
     @NotNull
     public ImageEditor getImageEditor() {
         return imageEditor;
-    }
-
-    private static class ImageFileEditorState implements FileEditorState, Serializable {
-        private static final long serialVersionUID = -4470317464706072486L;
-
-        private final boolean backgroundVisible;
-        private final boolean gridVisible;
-        private final double zoomFactor;
-
-        private ImageFileEditorState(boolean backgroundVisible, boolean gridVisible, double zoomFactor) {
-            this.backgroundVisible = backgroundVisible;
-            this.gridVisible = gridVisible;
-            this.zoomFactor = zoomFactor;
-        }
-
-        public boolean canBeMergedWith(FileEditorState otherState, FileEditorStateLevel level) {
-            return otherState instanceof ImageFileEditorState;
-        }
     }
 }

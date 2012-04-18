@@ -70,12 +70,6 @@ public class EditExistingLibraryDialog extends LibraryEditorDialogBase {
     if (commitChanges) {
       Disposer.register(getDisposable(), libraryEditor);
     }
-    getLibraryRootsComponent().addListener(new Runnable() {
-      @Override
-      public void run() {
-        myNameField.setText(myLibraryEditor.getName());
-      }
-    });
     context.addLibraryEditorListener(new LibraryEditorListener() {
       @Override
       public void libraryRenamed(@NotNull Library library, String oldName, String newName) {

@@ -28,6 +28,7 @@ import com.intellij.util.xml.highlighting.DomElementAnnotationsManager;
 import com.intellij.util.xml.highlighting.DomElementProblemDescriptor;
 import com.intellij.util.xml.highlighting.DomElementsProblemsHolder;
 import com.intellij.util.xml.reflect.DomCollectionChildDescription;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -60,6 +61,7 @@ public class DomElementsGroupNode extends AbstractDomElementNode {
     return simpleNodes.toArray(new SimpleNode[simpleNodes.size()]);
   }
 
+  @NotNull
   public Object[] getEqualityObjects() {
     return new Object[]{myParentElement, myChildrenTagName};
   }

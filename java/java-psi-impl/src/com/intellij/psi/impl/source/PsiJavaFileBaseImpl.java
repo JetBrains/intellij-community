@@ -58,10 +58,9 @@ import java.util.List;
 
 public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJavaFile {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.PsiJavaFileBaseImpl");
-
   @NonNls private static final String[] IMPLICIT_IMPORTS = { CommonClassNames.DEFAULT_PACKAGE };
-
   private final CachedValue<MostlySingularMultiMap<String, SymbolCollectingProcessor.ResultWithContext>> myResolveCache;
+  private volatile String myPackageName;
 
   protected PsiJavaFileBaseImpl(IElementType elementType, IElementType contentElementType, FileViewProvider viewProvider) {
     super(elementType, contentElementType, viewProvider);
@@ -74,6 +73,12 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
     PsiJavaFileBaseImpl clone = (PsiJavaFileBaseImpl)super.clone();
     clone.clearCaches();
     return clone;
+  }
+
+  @Override
+  public void subtreeChanged() {
+    super.subtreeChanged();
+    myPackageName = null;
   }
 
   @Override
@@ -101,8 +106,12 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
       return stub.getPackageName();
     }
 
-    PsiPackageStatement statement = getPackageStatement();
-    return statement == null ? "" : statement.getPackageName();
+    String name = myPackageName;
+    if (name == null) {
+      PsiPackageStatement statement = getPackageStatement();
+      myPackageName = name = statement == null ? "" : statement.getPackageName();
+    }
+    return name;
   }
 
   @Override

@@ -111,8 +111,9 @@ public class DaemonTooltipRendererProvider implements ErrorStripTooltipRendererP
     return new MyRenderer(text, width, new Object[] {text});
   }
 
+  @NotNull
   @Override
-  public TrafficTooltipRenderer createTrafficTooltipRenderer(Runnable onHide, Editor editor) {
+  public TrafficTooltipRenderer createTrafficTooltipRenderer(@NotNull Runnable onHide, @NotNull Editor editor) {
     return new TrafficTooltipRendererImpl(onHide, editor);
   }
 

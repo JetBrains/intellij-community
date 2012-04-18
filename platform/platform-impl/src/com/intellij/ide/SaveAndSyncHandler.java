@@ -30,6 +30,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.openapi.vfs.newvfs.RefreshSession;
+import com.intellij.util.Alarm;
 import org.jetbrains.annotations.NotNull;
 
 import java.beans.PropertyChangeEvent;
@@ -48,6 +49,7 @@ public class SaveAndSyncHandler implements ApplicationComponent {
   
   private final AtomicInteger myBlockSaveOnFrameDeactivationCount = new AtomicInteger();
   private final AtomicInteger myBlockSyncOnFrameActivationCount = new AtomicInteger();
+  private final Alarm myRefreshDelayAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
 
   public static SaveAndSyncHandler getInstance(){
     return ApplicationManager.getApplication().getComponent(SaveAndSyncHandler.class);
@@ -157,7 +159,8 @@ public class SaveAndSyncHandler implements ApplicationComponent {
     }
 
 
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
+    myRefreshDelayAlarm.cancelAllRequests();
+    myRefreshDelayAlarm.addRequest(new Runnable() {
       @Override
       public void run() {
         if (canSyncOrSave()) {
@@ -166,7 +169,7 @@ public class SaveAndSyncHandler implements ApplicationComponent {
 
         maybeRefresh(ModalityState.NON_MODAL);
       }
-    }, ModalityState.NON_MODAL);
+    }, 300, ModalityState.NON_MODAL);
 
     if (LOG.isDebugEnabled()) {
       LOG.debug("exit: synchronize()");

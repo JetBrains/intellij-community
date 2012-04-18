@@ -63,6 +63,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.util.*;
 import com.intellij.util.cls.ClsFormatException;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.net.HttpConfigurable;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.groovy.compiler.rt.GroovycRunner;
@@ -150,6 +151,7 @@ public abstract class GroovyCompilerBase implements TranslatingCompiler {
     if (profileGroovyc) {
       parameters.getVMParametersList().add("-XX:+HeapDumpOnOutOfMemoryError");
     }
+    parameters.getVMParametersList().addAll(HttpConfigurable.getProxyCmdLineProperties());
 
     //debug
     //parameters.getVMParametersList().add("-Xdebug"); parameters.getVMParametersList().add("-Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=5239");
@@ -163,38 +165,40 @@ public abstract class GroovyCompilerBase implements TranslatingCompiler {
 
     parameters.setMainClass(GroovycRunner.class.getName());
 
-    try {
-      final VirtualFile finalOutputDir = getMainOutput(compileContext, module, tests);
-      LOG.assertTrue(finalOutputDir != null, "No output directory for module " + module.getName() + (tests ? " tests" : " production"));
-      final Charset ideCharset = EncodingProjectManager.getInstance(myProject).getDefaultCharset();
-      String encoding = ideCharset != null && !Comparing.equal(CharsetToolkit.getDefaultSystemCharset(), ideCharset) ? ideCharset.name() : null;
-      Set<String> paths2Compile = ContainerUtil.map2Set(toCompile, new Function<VirtualFile, String>() {
-        @Override
-        public String fun(VirtualFile file) {
-          return file.getPath();
-        }
-      });
-      Map<String, String> class2Src = new HashMap<String, String>();
+    final VirtualFile finalOutputDir = getMainOutput(compileContext, module, tests);
+    LOG.assertTrue(finalOutputDir != null, "No output directory for module " + module.getName() + (tests ? " tests" : " production"));
+    final Charset ideCharset = EncodingProjectManager.getInstance(myProject).getDefaultCharset();
+    String encoding = ideCharset != null && !Comparing.equal(CharsetToolkit.getDefaultSystemCharset(), ideCharset) ? ideCharset.name() : null;
+    Set<String> paths2Compile = ContainerUtil.map2Set(toCompile, new Function<VirtualFile, String>() {
+      @Override
+      public String fun(VirtualFile file) {
+        return file.getPath();
+      }
+    });
+    Map<String, String> class2Src = new HashMap<String, String>();
 
-      for (VirtualFile file : enumerateGroovyFiles(module)) {
-        if (!paths2Compile.contains(file.getPath())) {
-          for (String name : TranslatingCompilerFilesMonitor.getCompiledClassNames(file, myProject)) {
-            class2Src.put(name, file.getPath());
-          }
+    for (VirtualFile file : enumerateGroovyFiles(module)) {
+      if (!paths2Compile.contains(file.getPath())) {
+        for (String name : TranslatingCompilerFilesMonitor.getInstance().getCompiledClassNames(file, myProject)) {
+          class2Src.put(name, file.getPath());
         }
       }
+    }
 
-      File fileWithParameters = GroovycOSProcessHandler
+    final File fileWithParameters;
+    try {
+      fileWithParameters = GroovycOSProcessHandler
         .fillFileWithGroovycParameters(outputDir.getPath(), paths2Compile, FileUtil.toSystemDependentName(finalOutputDir.getPath()),
                                        class2Src, encoding, patchers);
-
-      parameters.getProgramParametersList().add(forStubs ? "stubs" : "groovyc");
-      parameters.getProgramParametersList().add(fileWithParameters.getPath());
     }
     catch (IOException e) {
-      LOG.error(e);
+      LOG.info(e);
+      compileContext.addMessage(CompilerMessageCategory.ERROR, "Error creating a temp file to launch Groovy compiler: " + e.getMessage(), null, -1, -1);
+      return;
     }
 
+    parameters.getProgramParametersList().add(forStubs ? "stubs" : "groovyc");
+    parameters.getProgramParametersList().add(fileWithParameters.getPath());
 
     try {
       Process process = JdkUtil.setupJVMCommandLine(exePath, parameters, true).createProcess();
@@ -270,7 +274,8 @@ public abstract class GroovyCompilerBase implements TranslatingCompiler {
       sink.add(outputDir.getPath(), items, VfsUtil.toVirtualFileArray(toRecompile));
     }
     catch (ExecutionException e) {
-      LOG.error(e);
+      LOG.info(e);
+      compileContext.addMessage(CompilerMessageCategory.ERROR, "Error running Groovy compiler: " + e.getMessage(), null, -1, -1);
     }
   }
 

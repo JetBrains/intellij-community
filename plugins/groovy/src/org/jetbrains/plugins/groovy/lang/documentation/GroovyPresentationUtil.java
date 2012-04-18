@@ -15,10 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.lang.documentation;
 
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiReference;
-import com.intellij.psi.PsiSubstitutor;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.util.ArrayUtil;
@@ -37,14 +34,27 @@ import java.util.Set;
  */
 public class GroovyPresentationUtil {
   private static final int CONSTRAINTS_NUMBER = 2;
-  
+
   public static String getParameterPresentation(GrParameter parameter, PsiSubstitutor substitutor, boolean presentable) {
     StringBuilder builder = new StringBuilder();
+    appendParameterPresentation(parameter, substitutor, presentable, builder);
+    return builder.toString();
+  }
+
+  public static void appendParameterPresentation(GrParameter parameter,
+                                                 PsiSubstitutor substitutor,
+                                                 boolean presentable,
+                                                 StringBuilder builder) {
+    for (PsiAnnotation annotation : parameter.getModifierList().getAnnotations()) {
+      builder.append(annotation.getText()).append(' ');
+    }
+
     PsiType type = parameter.getTypeGroovy();
     if (type != null) {
       type = substitutor.substitute(type);
-      return builder.append(presentable ? type.getPresentableText() : type.getCanonicalText()).append(" ").append(parameter.getName()).toString();
-    } else {
+      builder.append(presentable ? type.getPresentableText() : type.getCanonicalText()).append(' ').append(parameter.getName());
+    }
+    else {
       builder.append(parameter.getName());
       final Set<String> structural = Collections.synchronizedSet(new LinkedHashSet<String>());
       ReferencesSearch.search(parameter).forEach(new Processor<PsiReference>() {
@@ -58,7 +68,7 @@ public class GroovyPresentationUtil {
             }
 
             StringBuilder builder1 = new StringBuilder();
-            builder1.append(((GrReferenceElement) parent).getReferenceName());
+            builder1.append(((GrReferenceElement)parent).getReferenceName());
             PsiType[] argTypes = PsiUtil.getArgumentTypes(parent, true);
             if (argTypes != null) {
               builder1.append("(");
@@ -66,11 +76,12 @@ public class GroovyPresentationUtil {
                 builder1.append(argTypes.length);
                 if (argTypes.length == 1) {
                   builder1.append(" arg");
-                } else {
+                }
+                else {
                   builder1.append(" args");
                 }
               }
-              builder1.append(")");
+              builder1.append(')');
             }
 
             structural.add(builder1.toString());
@@ -83,14 +94,13 @@ public class GroovyPresentationUtil {
       if (!structural.isEmpty()) {
         builder.append(".");
         String[] array = ArrayUtil.toStringArray(structural);
-        if (array.length> 1) builder.append("[");
+        if (array.length > 1) builder.append("[");
         for (int i = 0; i < array.length; i++) {
           if (i > 0) builder.append(", ");
           builder.append(array[i]);
         }
-        if (array.length> 1) builder.append("]");
+        if (array.length > 1) builder.append("]");
       }
-      return builder.toString();
     }
   }
 

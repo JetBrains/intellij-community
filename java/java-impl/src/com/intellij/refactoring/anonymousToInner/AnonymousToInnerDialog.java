@@ -1,4 +1,3 @@
-
 /*
  * Copyright 2000-2009 JetBrains s.r.o.
  *
@@ -24,6 +23,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.ui.NameSuggestionsField;
@@ -34,6 +34,7 @@ import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.NonFocusableCheckBox;
 import com.intellij.util.Function;
 import com.intellij.util.containers.HashMap;
+import com.intellij.util.ui.FormBuilder;
 
 import javax.swing.*;
 import java.awt.*;
@@ -86,10 +87,14 @@ class AnonymousToInnerDialog extends DialogWrapper{
     if (typeParameters.length > 0) {
       names = new String[]{StringUtil.join(typeParameters, new Function<PsiType, String>() {
         public String fun(PsiType psiType) {
+          PsiType type = psiType;
           if (psiType instanceof PsiClassType) {
-            return ((PsiClassType)psiType).rawType().getPresentableText();
+            type = TypeConversionUtil.erasure(psiType);
           }
-          return psiType.getPresentableText();
+          if (type instanceof PsiArrayType) {
+            type = type.getDeepComponentType();
+          }
+          return type.getPresentableText();
         }
       }, "") + name, "My" + name};
     } else {
@@ -176,39 +181,18 @@ class AnonymousToInnerDialog extends DialogWrapper{
   }
 
   protected JComponent createNorthPanel() {
-    JPanel panel = new JPanel(new GridBagLayout());
-    GridBagConstraints gbConstraints = new GridBagConstraints();
-
-    gbConstraints.insets = new Insets(4, 4, 4, 4);
-    gbConstraints.anchor = GridBagConstraints.EAST;
-    gbConstraints.fill = GridBagConstraints.BOTH;
-
-    gbConstraints.gridwidth = 1;
-    gbConstraints.weightx = 0;
-    gbConstraints.weighty = 1;
-    gbConstraints.gridx = 0;
-    gbConstraints.gridy = 0;
-    JLabel namePrompt = new JLabel(RefactoringBundle.message("anonymousToInner.class.name.label.text"));
-    panel.add(namePrompt, gbConstraints);
-
     myNameField = new NameSuggestionsField(myProject);
-    gbConstraints.gridwidth = 1;
-    gbConstraints.weightx = 1;
-    gbConstraints.gridx = 1;
-    gbConstraints.gridy = 0;
-    panel.add(myNameField, gbConstraints);
+
+    FormBuilder formBuilder = FormBuilder.createFormBuilder()
+      .addLabeledComponent(RefactoringBundle.message("anonymousToInner.class.name.label.text"), myNameField);
 
     if(!myShowCanBeStatic) {
-      myCbMakeStatic = new NonFocusableCheckBox();
-      myCbMakeStatic.setText(RefactoringBundle.message("anonymousToInner.make.class.static.checkbox.text"));
-      //myCbMakeStatic.setDisplayedMnemonicIndex(11);
-      gbConstraints.gridx = 0;
-      gbConstraints.gridy++;
-      gbConstraints.gridwidth = 2;
-      panel.add(myCbMakeStatic, gbConstraints);
+      myCbMakeStatic = new NonFocusableCheckBox(RefactoringBundle.message("anonymousToInner.make.class.static.checkbox.text"));
       myCbMakeStatic.setSelected(true);
+      formBuilder.addComponent(myCbMakeStatic);
     }
-    return panel;
+
+    return formBuilder.getPanel();
   }
 
   private JComponent createParametersPanel() {
@@ -225,7 +209,7 @@ class AnonymousToInnerDialog extends DialogWrapper{
       }
     };
     panel.setBorder(IdeBorderFactory.createTitledBorder(
-      RefactoringBundle.message("anonymousToInner.parameters.panel.border.title"), false, true, true));
+      RefactoringBundle.message("anonymousToInner.parameters.panel.border.title"), false));
     return panel;
   }
 

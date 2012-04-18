@@ -7,6 +7,8 @@ import org.jetbrains.jps.idea.SdkLoader
  * @author max
  */
 class Project {
+  String projectName
+  int locationHash
   final Map<String, Library> globalLibraries = [:]
   final Map<String, Sdk> sdks = [:]
 
@@ -16,6 +18,8 @@ class Project {
   final Map<String, Artifact> artifacts = [:]
   final Map<String, RunConfiguration> runConfigurations = [:]
   final CompilerConfiguration compilerConfiguration = new CompilerConfiguration()
+  final UiDesignerConfiguration uiDesignerConfiguration = new UiDesignerConfiguration()
+  final IgnoredFilePatterns ignoredFilePatterns = new IgnoredFilePatterns()
 
   String projectCharset; // contains project charset, if not specified default charset will be used (used by compilers)
 
@@ -43,13 +47,13 @@ class Project {
   }
 
   def JavaSdk createJavaSdk(String name, String path, Closure initializer) {
-    def sdk = new JavaSdkImpl(this, name, path, initializer)
+    def sdk = new JavaSdkImpl(this, name, null, path, initializer)
     sdks[name] = sdk
     return sdk
   }
 
-  def Sdk createSdk(String typeName, String sdkName, String path, Node additionalData) {
-    def sdk = SdkLoader.createSdk(this, typeName, sdkName, path, additionalData)
+  def Sdk createSdk(String typeName, String sdkName, String version, String path, Node additionalData) {
+    def sdk = SdkLoader.createSdk(this, typeName, sdkName, version, path, additionalData)
     sdks[sdkName] = sdk
     return sdk
   }

@@ -122,27 +122,27 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
   public WolfTheProblemSolverImpl(Project project, PsiManager psiManager, VirtualFileManager virtualFileManager) {
     myProject = project;
     PsiTreeChangeListener changeListener = new PsiTreeChangeAdapter() {
-      public void childAdded(PsiTreeChangeEvent event) {
+      public void childAdded(@NotNull PsiTreeChangeEvent event) {
         childrenChanged(event);
       }
 
-      public void childRemoved(PsiTreeChangeEvent event) {
+      public void childRemoved(@NotNull PsiTreeChangeEvent event) {
         childrenChanged(event);
       }
 
-      public void childReplaced(PsiTreeChangeEvent event) {
+      public void childReplaced(@NotNull PsiTreeChangeEvent event) {
         childrenChanged(event);
       }
 
-      public void childMoved(PsiTreeChangeEvent event) {
+      public void childMoved(@NotNull PsiTreeChangeEvent event) {
         childrenChanged(event);
       }
 
-      public void propertyChanged(PsiTreeChangeEvent event) {
+      public void propertyChanged(@NotNull PsiTreeChangeEvent event) {
         childrenChanged(event);
       }
 
-      public void childrenChanged(PsiTreeChangeEvent event) {
+      public void childrenChanged(@NotNull PsiTreeChangeEvent event) {
         clearSyntaxErrorFlag(event);
       }
     };

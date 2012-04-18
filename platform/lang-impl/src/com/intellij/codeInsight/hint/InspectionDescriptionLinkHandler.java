@@ -46,7 +46,6 @@ public class InspectionDescriptionLinkHandler extends TooltipLinkHandler {
 
     final PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
     if (file == null) {
-      LOG.error(editor.getDocument());
       return null;
     }
 

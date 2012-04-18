@@ -32,8 +32,8 @@ import com.intellij.util.containers.HashMap;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.facet.AndroidRootUtil;
 import org.jetbrains.android.sdk.AndroidPlatform;
-import org.jetbrains.android.sdk.AndroidSdkUtils;
 import org.jetbrains.android.util.AndroidBundle;
+import org.jetbrains.android.util.AndroidUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -58,7 +58,7 @@ public class AndroidIncludingCompiler implements SourceGeneratingCompiler {
       return null;
     }
 
-    for (AndroidFacet depFacet : AndroidSdkUtils.getAllAndroidDependencies(module, true)) {
+    for (AndroidFacet depFacet : AndroidUtils.getAllAndroidDependencies(module, true)) {
       String genSrcRootPath = AndroidRootUtil.getAptGenSourceRootPath(depFacet);
       VirtualFile genSrcRoot = genSrcRootPath != null ? LocalFileSystem.getInstance().findFileByPath(genSrcRootPath) : null;
       VirtualFile[] srcRoots = ModuleRootManager.getInstance(depFacet.getModule()).getSourceRoots();
@@ -90,10 +90,10 @@ public class AndroidIncludingCompiler implements SourceGeneratingCompiler {
           }
 
           Map<String, MyItem> qName2Item = new HashMap<String, MyItem>();
-          for (AndroidFacet depFacet : AndroidSdkUtils.getAllAndroidDependencies(module, true)) {
+          for (AndroidFacet depFacet : AndroidUtils.getAllAndroidDependencies(module, true)) {
             final AndroidPlatform platform = depFacet.getConfiguration().getAndroidPlatform();
 
-            final int platformToolsRevision = platform != null ? platform.getSdk().getPlatformToolsRevision() : -1;
+            final int platformToolsRevision = platform != null ? platform.getSdkData().getPlatformToolsRevision() : -1;
             if (platformToolsRevision < 0 || platformToolsRevision > 7) {
               // "including" style building of library projects is deprecated since platform-tools-r8
               continue;
@@ -163,12 +163,13 @@ public class AndroidIncludingCompiler implements SourceGeneratingCompiler {
       context.getProgressIndicator().setText(AndroidBundle.message("android.compile.messages.copying.sources.from.libraries"));
     }
     List<GenerationItem> result = new ArrayList<GenerationItem>();
+    boolean toRefresh = false;
     for (GenerationItem item : items) {
 
       if (!AndroidCompileUtil.isModuleAffected(context, ((MyItem)item).myModule)) {
         continue;
       }
-
+      toRefresh = true;
       String fromPath = ((MyItem)item).mySourceFile.getPath();
       File from = new File(fromPath);
       File to = new File(outputRootDirectory.getPath() + '/' + item.getPath());
@@ -182,6 +183,10 @@ public class AndroidIncludingCompiler implements SourceGeneratingCompiler {
                          (e.getMessage() != null ? ": " + e.getMessage() : "");
         context.addMessage(CompilerMessageCategory.ERROR, message, null, -1, -1);
       }
+    }
+
+    if (toRefresh) {
+      outputRootDirectory.refresh(false, true);
     }
     return result.toArray(new GenerationItem[result.size()]);
   }
@@ -206,11 +211,13 @@ public class AndroidIncludingCompiler implements SourceGeneratingCompiler {
     final Module myModule;
     final VirtualFile mySourceFile;
     final String mySourceRelativePath;
+    private final TimestampValidityState myValidityState;
 
     private MyItem(Module module, VirtualFile sourceFile, String sourceRelativePath) {
       myModule = module;
       mySourceFile = sourceFile;
       mySourceRelativePath = sourceRelativePath;
+      myValidityState = new TimestampValidityState(mySourceFile.getTimeStamp());
     }
 
     @Override
@@ -221,7 +228,7 @@ public class AndroidIncludingCompiler implements SourceGeneratingCompiler {
     @Nullable
     @Override
     public ValidityState getValidityState() {
-      return new TimestampValidityState(mySourceFile.getTimeStamp());
+      return myValidityState;
     }
 
     @Override

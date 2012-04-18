@@ -15,9 +15,7 @@
  */
 package com.theoryinpractice.testng.inspection;
 
-import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.*;
-import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.LabeledComponent;
@@ -171,7 +169,6 @@ public class DependsOnGroupsInspection extends BaseJavaLocalInspectionTool {
       final InspectionProfile inspectionProfile =
         InspectionProjectProfileManager.getInstance(project).getInspectionProfile();
       //correct save settings
-      ((InspectionProfileImpl)inspectionProfile).isProperSetting(HighlightDisplayKey.find(SHORT_NAME));
       InspectionProfileManager.getInstance().fireProfileChanged(inspectionProfile);
       //TODO lesya
       /*

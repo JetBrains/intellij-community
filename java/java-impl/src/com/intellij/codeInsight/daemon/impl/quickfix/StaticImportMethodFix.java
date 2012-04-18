@@ -43,6 +43,7 @@ import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.ui.popup.list.PopupListElementRenderer;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -96,34 +97,38 @@ public class StaticImportMethodFix implements IntentionAction {
   @NotNull
   private List<PsiMethod> getMethodsToImport() {
     PsiShortNamesCache cache = PsiShortNamesCache.getInstance(myMethodCall.getProject());
-    PsiMethodCallExpression element = myMethodCall.getElement();
+    final PsiMethodCallExpression element = myMethodCall.getElement();
     PsiReferenceExpression reference = element.getMethodExpression();
-    PsiExpressionList argumentList = element.getArgumentList();
+    final PsiExpressionList argumentList = element.getArgumentList();
     String name = reference.getReferenceName();
-    List<PsiMethod> list = new ArrayList<PsiMethod>();
+    final List<PsiMethod> list = new ArrayList<PsiMethod>();
     if (name == null) return list;
     GlobalSearchScope scope = element.getResolveScope();
-    PsiMethod[] methods = cache.getMethodsByNameIfNotMoreThan(name, scope, 20);
-    List<PsiMethod> applicableList = new ArrayList<PsiMethod>();
+
+    final List<PsiMethod> applicableList = new ArrayList<PsiMethod>();
     final PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(element.getProject()).getResolveHelper();
-    for (PsiMethod method : methods) {
-      ProgressManager.checkCanceled();
-      if (JavaCompletionUtil.isInExcludedPackage(method, false)) continue;
-      if (!method.hasModifierProperty(PsiModifier.STATIC)) continue;
-      PsiFile file = method.getContainingFile();
-      if (file instanceof PsiJavaFile
-          //do not show methods from default package
-          && ((PsiJavaFile)file).getPackageName().length() != 0
-          && PsiUtil.isAccessible(method, element, method.getContainingClass())) {
-        list.add(method);
-        PsiSubstitutor substitutorForMethod = resolveHelper
-          .inferTypeArguments(method.getTypeParameters(), method.getParameterList().getParameters(), argumentList.getExpressions(),
-                              PsiSubstitutor.EMPTY, element.getParent(), DefaultParameterTypeInferencePolicy.INSTANCE);
-        if (PsiUtil.isApplicable(method, substitutorForMethod, argumentList)) {
-          applicableList.add(method);
+    cache.processMethodsWithName(name, scope, new Processor<PsiMethod>() {
+      @Override
+      public boolean process(PsiMethod method) {
+        ProgressManager.checkCanceled();
+        if (JavaCompletionUtil.isInExcludedPackage(method, false)
+            || !method.hasModifierProperty(PsiModifier.STATIC)) return true;
+        PsiFile file = method.getContainingFile();
+        if (file instanceof PsiJavaFile
+            //do not show methods from default package
+            && !((PsiJavaFile)file).getPackageName().isEmpty()
+            && PsiUtil.isAccessible(method, element, method.getContainingClass())) {
+          list.add(method);
+          PsiSubstitutor substitutorForMethod = resolveHelper
+            .inferTypeArguments(method.getTypeParameters(), method.getParameterList().getParameters(), argumentList.getExpressions(),
+                                PsiSubstitutor.EMPTY, element.getParent(), DefaultParameterTypeInferencePolicy.INSTANCE);
+          if (PsiUtil.isApplicable(method, substitutorForMethod, argumentList)) {
+            applicableList.add(method);
+          }
         }
+        return (applicableList.isEmpty() ? list : applicableList).size() < 50;
       }
-    }
+    });
     List<PsiMethod> result = applicableList.isEmpty() ? list : applicableList;
     for (int i = result.size() - 1; i >= 0; i--) {
       ProgressManager.checkCanceled();

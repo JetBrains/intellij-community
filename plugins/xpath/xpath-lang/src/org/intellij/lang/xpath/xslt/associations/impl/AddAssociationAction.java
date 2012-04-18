@@ -15,8 +15,6 @@
  */
 package org.intellij.lang.xpath.xslt.associations.impl;
 
-import org.intellij.lang.xpath.xslt.associations.FileAssociationsManager;
-
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -24,15 +22,16 @@ import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.PlatformIcons;
+import org.intellij.lang.xpath.xslt.associations.FileAssociationsManager;
 
 class AddAssociationAction extends AnAction {
     private final FileAssociationsManager myManager;
 
     public AddAssociationAction(FileAssociationsManager manager) {
-        super("Add...", "Add File Association", IconLoader.getIcon("/general/add.png"));
+        super("Add...", "Add File Association", PlatformIcons.TABLE_ADD_ROW);
         myManager = manager;
     }
 

@@ -108,7 +108,7 @@ public class XmlCompletionContributor extends CompletionContributor {
                  addWordVariants.set(attributeValue.getReferences().length == 0);
                }
 
-               if (addWordVariants.get().booleanValue()) {
+               if (addWordVariants.get().booleanValue() && parameters.getInvocationCount() > 0) {
                  WordCompletionContributor.addWordCompletionVariants(result, parameters, usedWords);
                }
              }

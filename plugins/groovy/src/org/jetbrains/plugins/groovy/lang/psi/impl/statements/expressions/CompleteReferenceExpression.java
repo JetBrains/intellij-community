@@ -29,6 +29,7 @@ import com.intellij.util.Consumer;
 import com.intellij.util.containers.hash.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.GroovyIcons;
 import org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionUtil;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
@@ -342,6 +343,8 @@ public class CompleteReferenceExpression {
     private final Set<String> myPropertyNames = new HashSet<String>();
     private final Set<String> myLocalVars = new HashSet<String>();
     private final Set<GrMethod> myProcessedMethodWithOptionalParams = new HashSet<GrMethod>();
+    private final boolean myFieldPointerOperator;
+    private final boolean myMethodPointerOperator;
 
     protected CompleteReferenceProcessor(GrReferenceExpression place, Consumer<Object> consumer, @NotNull PrefixMatcher matcher, CompletionParameters parameters) {
       super(null, EnumSet.allOf(ResolveKind.class), place, PsiType.EMPTY_ARRAY);
@@ -349,9 +352,21 @@ public class CompleteReferenceExpression {
       myMatcher = matcher;
       myParameters = parameters;
       myPreferredFieldNames = addAllRestrictedProperties(place);
-      mySkipPackages = PsiImplUtil.getRuntimeQualifier(place) == null;
+      mySkipPackages = shouldSkipPackages(place);
       myEventListener = JavaPsiFacade.getInstance(place.getProject()).findClass("java.util.EventListener", place.getResolveScope());
       myPropertyNames.addAll(addAllRestrictedProperties(place));
+
+      myFieldPointerOperator = place.hasAt();
+      myMethodPointerOperator = place.getDotTokenType() == GroovyTokenTypes.mMEMBER_POINTER;
+    }
+
+    private static boolean shouldSkipPackages(GrReferenceExpression place) {
+      if (PsiImplUtil.getRuntimeQualifier(place) != null) {
+        return false;
+      }
+
+      PsiElement parent = place.getParent();
+      return parent == null || parent.getLanguage().isKindOf(GroovyFileType.GROOVY_LANGUAGE); //don't skip in Play!
     }
 
     @Override
@@ -379,7 +394,8 @@ public class CompleteReferenceExpression {
       }
 
       GroovyResolveResult result = (GroovyResolveResult)o;
-      if (!result.isStaticsOK() || !result.isAccessible()) return;
+      if (!result.isStaticsOK()) return;
+      if (!result.isAccessible() && myParameters.getInvocationCount() < 2) return;
       if (mySkipPackages && result.getElement() instanceof PsiPackage) return;
 
       PsiElement element = result.getElement();
@@ -396,17 +412,25 @@ public class CompleteReferenceExpression {
                                              result.isInvokedOnProperty());
       }
 
+      if (myFieldPointerOperator && !(element instanceof PsiVariable)) {
+        return;
+      }
+      if (myMethodPointerOperator && !(element instanceof PsiMethod)) {
+        return;
+      }
       addCandidate(result);
 
-      if (element instanceof PsiMethod) {
-        processProperty((PsiMethod)element, result);
-      }
-      else if (element instanceof GrField) {
-        if (((GrField)element).isProperty()) {
-          processPropertyFromField((GrField)element, result);
+      if (!myFieldPointerOperator && !myMethodPointerOperator) {
+        if (element instanceof PsiMethod) {
+          processProperty((PsiMethod)element, result);
+        }
+        else if (element instanceof GrField) {
+          if (((GrField)element).isProperty()) {
+            processPropertyFromField((GrField)element, result);
+          }
         }
       }
-      else if (element instanceof GrVariable) {
+      if (element instanceof GrVariable && !(element instanceof GrField)) {
         myLocalVars.add(((GrVariable)element).getName());
       }
     }

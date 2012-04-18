@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,6 +49,8 @@ public class IdeTooltip extends ComparableObject.Impl {
   private int myPositionChangeY;
 
   private Ui myUi;
+
+  private boolean myHint = false;
 
 
   public IdeTooltip(Component component, Point point, JComponent tipComponent, Object... identity) {
@@ -196,7 +198,7 @@ public class IdeTooltip extends ComparableObject.Impl {
     myPoint = point;
   }
 
-  public IdeTooltip setExlicitClose(boolean explicitClose) {
+  public IdeTooltip setExplicitClose(boolean explicitClose) {
     myExplicitClose = explicitClose;
     return this;
   }
@@ -230,6 +232,15 @@ public class IdeTooltip extends ComparableObject.Impl {
 
   public Balloon.Layer getLayer() {
     return myLayer;
+  }
+
+  public IdeTooltip setHint(boolean hint) {
+    this.myHint = hint;
+    return this;
+  }
+
+  public boolean isHint() {
+    return myHint;
   }
 
   public boolean isInside(RelativePoint target) {

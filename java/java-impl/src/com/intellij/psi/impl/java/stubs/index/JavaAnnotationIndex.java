@@ -36,6 +36,7 @@ public class JavaAnnotationIndex extends StringStubIndexExtension<PsiAnnotation>
     return ourInstance;
   }
 
+  @NotNull
   @Override
   public StubIndexKey<String, PsiAnnotation> getKey() {
     return JavaStubIndexKeys.ANNOTATIONS;

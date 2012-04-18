@@ -63,7 +63,7 @@ public class StatisticsPanel implements DataProvider {
   public StatisticsPanel(final Project project, final TestFrameworkRunningModel model) {
     myProject = project;
     myTableModel = new StatisticsTableModel();
-    myStatisticsTableView.setModel(myTableModel);
+    myStatisticsTableView.setModelAndUpdateColumns(myTableModel);
     myFrameworkRunningModel = model;
 
     final Runnable gotoSuiteOrParentAction = createGotoSuiteOrParentAction();

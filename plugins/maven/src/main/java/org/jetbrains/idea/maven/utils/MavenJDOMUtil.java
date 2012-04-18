@@ -33,8 +33,6 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
-import static com.intellij.openapi.util.text.StringUtil.isEmptyOrSpaces;
-
 public class MavenJDOMUtil {
   @Nullable
   public static Element read(final VirtualFile file, @Nullable final ErrorHandler handler) {
@@ -95,7 +93,7 @@ public class MavenJDOMUtil {
 
       public void endTag(CharSequence localName, String namespace, int startoffset, int endoffset) {
         String name = localName.toString();
-        if (isEmptyOrSpaces(name)) return;
+        if (StringUtil.isEmptyOrSpaces(name)) return;
 
         int index = -1;
         for (int i = stack.size() - 1; i >= 0; i--) {
@@ -129,22 +127,27 @@ public class MavenJDOMUtil {
     return result[0];
   }
 
+  @Nullable
   public static Element findChildByPath(@Nullable Element element, String path) {
-    if (element == null) return null;
+    int i = 0;
+    while (element != null) {
+      int dot = path.indexOf('.', i);
+      if (dot == -1) {
+        return element.getChild(path.substring(i));
+      }
 
-    List<String> parts = StringUtil.split(path, ".");
-    Element current = element;
-    for (String each : parts) {
-      current = current.getChild(each);
-      if (current == null) break;
+      element = element.getChild(path.substring(i, dot));
+      i = dot + 1;
     }
-    return current;
+
+    return null;
   }
 
   public static String findChildValueByPath(@Nullable Element element, String path, String defaultValue) {
     Element child = findChildByPath(element, path);
-    String childValue = child == null ? null : child.getTextTrim();
-    return StringUtil.isEmptyOrSpaces(childValue) ? defaultValue : childValue;
+    if (child == null) return defaultValue;
+    String childValue = child.getTextTrim();
+    return childValue.isEmpty() ? defaultValue : childValue;
   }
 
   public static String findChildValueByPath(@Nullable Element element, String path) {
@@ -163,7 +166,7 @@ public class MavenJDOMUtil {
     List<String> result = new ArrayList<String>();
     for (Element each : findChildrenByPath(element, path, childrenName)) {
       String value = each.getTextTrim();
-      if (!StringUtil.isEmptyOrSpaces(value)) {
+      if (!value.isEmpty()) {
         result.add(value);
       }
     }
@@ -173,13 +176,20 @@ public class MavenJDOMUtil {
   private static List<Element> collectChildren(@Nullable Element container, String subPath) {
     if (container == null) return Collections.emptyList();
 
-    List<String> subParts = StringUtil.split(subPath, ".");
-    String childName = subParts.get(0);
-    String pathInChild = subParts.size() > 1 ? StringUtil.join(subParts.subList(1, subParts.size()), ".") : null;
+    int firstDot = subPath.indexOf('.');
+
+    if (firstDot == -1) {
+      //noinspection unchecked
+      return (List<Element>)container.getChildren(subPath);
+    }
+
+    String childName = subPath.substring(0, firstDot);
+    String pathInChild = subPath.substring(firstDot + 1);
 
     List<Element> result = new ArrayList<Element>();
+    //noinspection unchecked
     for (Element each : (Iterable<? extends Element>)container.getChildren(childName)) {
-      Element child = pathInChild == null ? each : findChildByPath(each, pathInChild);
+      Element child = findChildByPath(each, pathInChild);
       if (child != null) result.add(child);
     }
     return result;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,14 +23,13 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.List;
 
 /**
  * @author Alexey Kudravtsev
  */
 abstract class FileTemplateTab {
-  protected final java.util.List<FileTemplateBase> myTemplates = new ArrayList<FileTemplateBase>(); 
+  protected final List<FileTemplateBase> myTemplates = new ArrayList<FileTemplateBase>();
   private final String myTitle;
   protected static final Color MODIFIED_FOREGROUND = new Color(0, 0, 210);
 

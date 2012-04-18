@@ -6,6 +6,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.Processor;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.android.compiler.tools.AndroidApt;
@@ -13,13 +14,15 @@ import org.jetbrains.android.compiler.tools.AndroidIdl;
 import org.jetbrains.android.compiler.tools.AndroidRenderscript;
 import org.jetbrains.android.util.AndroidCommonUtils;
 import org.jetbrains.android.util.AndroidCompilerMessageKind;
+import org.jetbrains.android.util.ResourceEntry;
+import org.jetbrains.android.util.ValueResourcesFileParser;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.*;
+import org.jetbrains.jps.Module;
+import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.incremental.*;
 import org.jetbrains.jps.incremental.java.FormsParsing;
-import org.jetbrains.jps.incremental.java.JavaBuilder;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
 import org.jetbrains.jps.incremental.messages.ProgressMessage;
@@ -42,6 +45,9 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
   @NonNls private static final String RENDERSCRIPT_EXTENSION = "rs";
   @NonNls private static final String MANIFEST_TAG = "manifest";
   @NonNls private static final String PACKAGE_MANIFEST_ATTRIBUTE = "package";
+  @NonNls private static final String PERMISSION_TAG = "permission";
+  @NonNls private static final String PERMISSION_GROUP_TAG = "permission-group";
+  @NonNls private static final String NAME_ATTRIBUTE = "name";
 
   public AndroidSourceGeneratingBuilder() {
     super(BuilderCategory.SOURCE_GENERATOR);
@@ -55,9 +61,9 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
   @Override
   public ModuleLevelBuilder.ExitCode build(CompileContext context, ModuleChunk chunk) throws ProjectBuildException {
     if (context.isCompilingTests() || !AndroidJpsUtil.containsAndroidFacet(chunk)) {
-      return ModuleLevelBuilder.ExitCode.OK;
+      return ExitCode.NOTHING_DONE;
     }
-    
+
     try {
       return doBuild(context, chunk);
     }
@@ -98,6 +104,26 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
     }
     boolean success = true;
 
+    if (context.isProjectRebuild()) {
+      for (Module module : moduleDataMap.keySet()) {
+        final File generatedSourcesStorage = AndroidJpsUtil.getGeneratedSourcesStorage(module);
+        if (generatedSourcesStorage.exists() &&
+            !deleteAndMarkRecursively(generatedSourcesStorage, context)) {
+          success = false;
+        }
+
+        final File generatedResourcesStorage = AndroidJpsUtil.getGeneratedResourcesStorage(module);
+        if (generatedResourcesStorage.exists() &&
+            !deleteAndMarkRecursively(generatedResourcesStorage, context)) {
+          success = false;
+        }
+      }
+    }
+
+    if (!success) {
+      return ExitCode.ABORT;
+    }
+
     if (!runAidlCompiler(context, idlFilesToCompile, moduleDataMap)) {
       success = false;
     }
@@ -106,8 +132,14 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
       success = false;
     }
 
-    if (!runAaptCompiler(context, moduleDataMap)) {
-      success = false;
+    final AndroidAptStateStorage storage = new AndroidAptStateStorage(context.getDataManager().getDataStorageRoot());
+    try {
+      if (!runAaptCompiler(context, moduleDataMap, storage)) {
+        success = false;
+      }
+    }
+    finally {
+      storage.close();
     }
 
     return success ? ExitCode.OK : ExitCode.ABORT;
@@ -116,7 +148,9 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
   private static boolean runAidlCompiler(@NotNull final CompileContext context,
                                          @NotNull Map<File, Module> files,
                                          @NotNull Map<Module, MyModuleData> moduleDataMap) {
-    context.processMessage(new ProgressMessage(AndroidJpsBundle.message("android.jps.progress.aidl")));
+    if (files.size() > 0) {
+      context.processMessage(new ProgressMessage(AndroidJpsBundle.message("android.jps.progress.aidl")));
+    }
 
     boolean success = true;
 
@@ -132,15 +166,23 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
         success = false;
         continue;
       }
-      final File outputDirectory = moduleData.getOutputDirectory();
-      final File aidlOutputDirectory = new File(outputDirectory, "generated-aidl");
+      final File generatedSourcesDir = AndroidJpsUtil.getGeneratedSourcesStorage(module);
+      final File aidlOutputDirectory = new File(generatedSourcesDir, AndroidJpsUtil.AIDL_GENERATED_SOURCE_ROOT_NAME);
+
+      if (!aidlOutputDirectory.exists() && !aidlOutputDirectory.mkdirs()) {
+        context.processMessage(
+          new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR, "Cannot create directory " + aidlOutputDirectory.getPath()));
+        success = false;
+        continue;
+      }
+
       final IAndroidTarget target = moduleData.getAndroidTarget();
 
       try {
-        final File[] sourceRoots = getSourceRootsForModuleAndDependencies(module);
+        final File[] sourceRoots = AndroidJpsUtil.getSourceRootsForModuleAndDependencies(module);
         final String[] sourceRootPaths = AndroidJpsUtil.toPaths(sourceRoots);
         final String packageName = computePackageForFile(context, file);
-        
+
         if (packageName == null) {
           context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR,
                                                      AndroidJpsBundle.message("android.jps.errors.cannot.compute.package", filePath)));
@@ -160,11 +202,9 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
           success = false;
         }
         else {
-          final String moduleName = getCannonicalModuleName(module);
-          final SourceToOutputMapping sourceToOutputMap = context.getDataManager().getSourceToOutputMap(moduleName, false);
+          final SourceToOutputMapping sourceToOutputMap = context.getDataManager().getSourceToOutputMap(module.getName(), false);
           sourceToOutputMap.update(filePath, outputFilePath);
-
-          JavaBuilder.addTempSourcePathRoot(context, aidlOutputDirectory);
+          context.markDirty(outputFile);
         }
       }
       catch (final IOException e) {
@@ -178,7 +218,9 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
   private static boolean runRenderscriptCompiler(@NotNull final CompileContext context,
                                                  @NotNull Map<File, Module> files,
                                                  @NotNull Map<Module, MyModuleData> moduleDataMap) {
-    context.processMessage(new ProgressMessage("Processing Renderscript files..."));
+    if (files.size() > 0) {
+      context.processMessage(new ProgressMessage(AndroidJpsBundle.message("android.jps.progress.renderscript")));
+    }
 
     boolean success = true;
 
@@ -193,9 +235,23 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
         continue;
       }
 
-      final File outputDirectory = moduleData.getOutputDirectory();
-      final File rsOutputDirectory = new File(outputDirectory, "generated-rs");
-      final File generatedResourcesDir = new File(outputDirectory, "generated-resources");
+      final File generatedSourcesDir = AndroidJpsUtil.getGeneratedSourcesStorage(module);
+      final File rsOutputDirectory = new File(generatedSourcesDir, AndroidJpsUtil.RENDERSCRIPT_GENERATED_SOURCE_ROOT_NAME);
+      if (!rsOutputDirectory.exists() && !rsOutputDirectory.mkdirs()) {
+        context.processMessage(
+          new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR, "Cannot create directory " + rsOutputDirectory.getPath()));
+        success = false;
+        continue;
+      }
+
+      final File generatedResourcesDir = AndroidJpsUtil.getGeneratedResourcesStorage(module);
+      final File rawDir = new File(generatedResourcesDir, "raw");
+
+      if (!rawDir.exists() && !rawDir.mkdirs()) {
+        context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR, "Cannot create directory " + rawDir.getPath()));
+        success = false;
+        continue;
+      }
 
       final IAndroidTarget target = moduleData.getAndroidTarget();
       final String sdkLocation = moduleData.getSdkLocation();
@@ -206,7 +262,6 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
       try {
         tmpOutputDirectory = FileUtil.createTempDirectory("generated-rs-temp", null);
         final String depFolderPath = getDependencyFolder(context, file, tmpOutputDirectory);
-        final File rawDir = new File(generatedResourcesDir, "raw");
 
         final Map<AndroidCompilerMessageKind, List<String>> messages =
           AndroidRenderscript.execute(sdkLocation, target, filePath, tmpOutputDirectory.getPath(), depFolderPath, rawDir.getPath());
@@ -226,11 +281,12 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
           }
           final List<String> newFilePaths = Arrays.asList(AndroidJpsUtil.toPaths(newFiles.toArray(new File[newFiles.size()])));
 
-          final String moduleName = getCannonicalModuleName(module);
-          final SourceToOutputMapping sourceToOutputMap = context.getDataManager().getSourceToOutputMap(moduleName, false);
+          final SourceToOutputMapping sourceToOutputMap = context.getDataManager().getSourceToOutputMap(module.getName(), false);
           sourceToOutputMap.update(filePath, newFilePaths);
 
-          JavaBuilder.addTempSourcePathRoot(context, rsOutputDirectory);
+          for (File newFile : newFiles) {
+            context.markDirty(newFile);
+          }
         }
       }
       catch (IOException e) {
@@ -246,11 +302,9 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
     return success;
   }
 
-  // todo: save validity state
   private static boolean runAaptCompiler(@NotNull final CompileContext context,
-                                         @NotNull Map<Module, MyModuleData> moduleDataMap) {
-    context.processMessage(new ProgressMessage(AndroidJpsBundle.message("android.jps.progress.aapt")));
-
+                                         @NotNull Map<Module, MyModuleData> moduleDataMap,
+                                         @NotNull AndroidAptStateStorage storage) {
     boolean success = true;
 
     for (Map.Entry<Module, MyModuleData> entry : moduleDataMap.entrySet()) {
@@ -263,7 +317,7 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
       final IAndroidTarget target = moduleData.getAndroidTarget();
 
       try {
-        final String[] resPaths = AndroidJpsUtil.collectResourceDirs(facet);
+        final String[] resPaths = AndroidJpsUtil.collectResourceDirsForCompilation(facet, false, context);
         if (resPaths.length == 0) {
           // there is no resources in the module
           continue;
@@ -284,16 +338,44 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
           continue;
         }
 
-        final Set<String> depLibPackagesSet = getDepLibPackages(module);
+        final Map<Module, String> depLibPackageMap = getDepLibPackages(module);
+        final Map<Module, String> packageMap = new HashMap<Module, String>(depLibPackageMap);
+        packageMap.put(module, packageName);
+
+        if (hasBadCircularDependencies(facet, packageMap)) {
+          continue;
+        }
+
+        final Set<String> depLibPackagesSet = new HashSet<String>(depLibPackageMap.values());
         depLibPackagesSet.remove(packageName);
 
-        final File outputDirectory = moduleData.getOutputDirectory();
-        final File aptOutputDirectory = new File(outputDirectory, "generated-aapt");
+        final Set<ResourceEntry> resources = collectResources(resPaths);
+        final Set<ResourceEntry> manifestElements = collectManifestElements(manifestFile);
+        final AndroidAptValidityState newState = new AndroidAptValidityState(resources, manifestElements, depLibPackagesSet, packageName);
 
-        if (aptOutputDirectory.exists()) {
-          // clear directory, because it may contain obsolete files (ex. if package name was changed)
-          FileUtil.delete(aptOutputDirectory);
+        if (context.isMake()) {
+          final AndroidAptValidityState oldState = storage.getState(module.getName());
+          if (newState.equalsTo(oldState)) {
+            continue;
+          }
         }
+        final File generatedSourcesDir = AndroidJpsUtil.getGeneratedSourcesStorage(module);
+        final File aptOutputDirectory = new File(generatedSourcesDir, AndroidJpsUtil.AAPT_GENERATED_SOURCE_ROOT_NAME);
+
+        // clear directory, because it may contain obsolete files (ex. if package name was changed)
+        if (!deleteAndMarkRecursively(aptOutputDirectory, context)) {
+          success = false;
+          continue;
+        }
+
+        if (!aptOutputDirectory.mkdirs()) {
+          context.processMessage(
+            new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR, "Cannot create directory " + aptOutputDirectory.getPath()));
+          success = false;
+          continue;
+        }
+
+        context.processMessage(new ProgressMessage(AndroidJpsBundle.message("android.jps.progress.aapt", module.getName())));
 
         final Map<AndroidCompilerMessageKind, List<String>> messages =
           AndroidApt.compile(target, -1, manifestFile.getPath(), packageName, aptOutputDirectory.getPath(), resPaths,
@@ -303,9 +385,11 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
 
         if (messages.get(AndroidCompilerMessageKind.ERROR).size() > 0) {
           success = false;
+          storage.update(module.getName(), null);
         }
         else {
-          JavaBuilder.addTempSourcePathRoot(context, aptOutputDirectory);
+          storage.update(module.getName(), newState);
+          markDirtyRecursively(aptOutputDirectory, context);
         }
       }
       catch (IOException e) {
@@ -316,9 +400,62 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
     return success;
   }
 
+  private static boolean deleteAndMarkRecursively(@NotNull File dir, @NotNull CompileContext context) throws IOException {
+    if (dir.exists()) {
+      final List<File> filesToDelete = collectJavaFilesRecursively(dir);
+      if (!FileUtil.delete(dir)) {
+        context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR, "Cannot delete " + dir.getPath()));
+        return false;
+      }
+
+      for (File file : filesToDelete) {
+        context.markDeleted(file);
+      }
+    }
+    return true;
+  }
+
+  private static boolean markDirtyRecursively(@NotNull File dir, @NotNull final CompileContext context) {
+    final Ref<Boolean> success = Ref.create(true);
+
+    FileUtil.processFilesRecursively(dir, new Processor<File>() {
+      @Override
+      public boolean process(File file) {
+        if (file.isFile() && "java".equals(FileUtil.getExtension(file.getName()))) {
+          try {
+            context.markDirty(file);
+          }
+          catch (IOException e) {
+            AndroidJpsUtil.reportExceptionError(context, null, e, BUILDER_NAME);
+            success.set(false);
+            return false;
+          }
+        }
+        return true;
+      }
+    });
+    return success.get();
+  }
+
   @NotNull
-  private static Set<String> getDepLibPackages(@NotNull Module module) throws IOException {
-    final Set<String> result = new HashSet<String>();
+  private static List<File> collectJavaFilesRecursively(@NotNull File dir) {
+    final List<File> result = new ArrayList<File>();
+
+    FileUtil.processFilesRecursively(dir, new Processor<File>() {
+      @Override
+      public boolean process(File file) {
+        if (file.isFile() && "java".equals(FileUtil.getExtension(file.getName()))) {
+          result.add(file);
+        }
+        return true;
+      }
+    });
+    return result;
+  }
+
+  @NotNull
+  private static Map<Module, String> getDepLibPackages(@NotNull Module module) throws IOException {
+    final Map<Module, String> result = new HashMap<Module, String>();
 
     for (AndroidFacet depFacet : AndroidJpsUtil.getAllDependentAndroidLibraries(module)) {
       final File depManifestFile = AndroidJpsUtil.getManifestFileForCompilationPath(depFacet);
@@ -327,7 +464,7 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
         final String packageName = parsePackageNameFromManifestFile(depManifestFile);
 
         if (packageName != null) {
-          result.add(packageName);
+          result.put(depFacet.getModule(), packageName);
         }
       }
     }
@@ -372,8 +509,97 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
   }
 
   @NotNull
-  private static String getCannonicalModuleName(@NotNull Module module) {
-    return module.getName().toLowerCase(Locale.US);
+  private static Set<ResourceEntry> collectResources(@NotNull String[] resPaths) throws IOException {
+    final Set<ResourceEntry> result = new HashSet<ResourceEntry>();
+
+    for (String resDirPath : resPaths) {
+      final File[] resSubdirs = new File(resDirPath).listFiles();
+
+      if (resSubdirs != null) {
+        for (File resSubdir : resSubdirs) {
+          final String resType = AndroidCommonUtils.getResourceTypeByDirName(resSubdir.getName());
+
+          if (resType != null) {
+            final boolean valueResDir = "values".equals(resType);
+            final File[] resFiles = resSubdir.listFiles();
+
+            if (resFiles != null) {
+              for (File resFile : resFiles) {
+                if (valueResDir && "xml".equals(FileUtil.getExtension(resFile.getName()))) {
+                  collectValueResources(resFile, result);
+                }
+                else {
+                  final String resName = AndroidCommonUtils.getResourceName(resType, resFile.getName());
+                  result.add(new ResourceEntry(resType, resName));
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+    return result;
+  }
+
+  private static void collectValueResources(@NotNull File valueResXmlFile, @NotNull final Set<ResourceEntry> result)
+    throws IOException {
+    final InputStream inputStream = new BufferedInputStream(new FileInputStream(valueResXmlFile));
+    try {
+
+      FormsParsing.parse(inputStream, new ValueResourcesFileParser() {
+        @Override
+        protected void stop() {
+          throw new FormsParsing.ParserStoppedException();
+        }
+
+        @Override
+        protected void process(@NotNull ResourceEntry resourceEntry) {
+          result.add(resourceEntry);
+        }
+      });
+    }
+    finally {
+      inputStream.close();
+    }
+  }
+
+  @NotNull
+  private static Set<ResourceEntry> collectManifestElements(@NotNull File manifestFile) throws IOException {
+    final InputStream inputStream = new BufferedInputStream(new FileInputStream(manifestFile));
+    try {
+      final Set<ResourceEntry> result = new HashSet<ResourceEntry>();
+
+      FormsParsing.parse(inputStream, new FormsParsing.IXMLBuilderAdapter() {
+        String myLastName;
+
+        @Override
+        public void startElement(String name, String nsPrefix, String nsURI, String systemID, int lineNr)
+          throws Exception {
+          myLastName = null;
+        }
+
+        @Override
+        public void addAttribute(String key, String nsPrefix, String nsURI, String value, String type)
+          throws Exception {
+          if (value != null && NAME_ATTRIBUTE.equals(key)) {
+            myLastName = value;
+          }
+        }
+
+        @Override
+        public void elementAttributesProcessed(String name, String nsPrefix, String nsURI) throws Exception {
+          if (myLastName != null && PERMISSION_TAG.equals(name) || PERMISSION_GROUP_TAG.equals(name)) {
+            assert myLastName != null;
+            result.add(new ResourceEntry(name, myLastName));
+          }
+        }
+      });
+
+      return result;
+    }
+    finally {
+      inputStream.close();
+    }
   }
 
   @Nullable
@@ -396,7 +622,7 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
     assert relativePath != null;
     return genFolder.getPath() + '/' + relativePath;
   }
-  
+
   @Nullable
   private static Map<Module, MyModuleData> computeModuleDatas(@NotNull Collection<Module> modules, @NotNull CompileContext context) {
     final Map<Module, MyModuleData> moduleDataMap = new HashMap<Module, MyModuleData>();
@@ -409,7 +635,7 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
         continue;
       }
 
-      final Pair<AndroidSdk,IAndroidTarget> pair = AndroidJpsUtil.getAndroidPlatform(module, context, BUILDER_NAME);
+      final Pair<AndroidSdk, IAndroidTarget> pair = AndroidJpsUtil.getAndroidPlatform(module, context, BUILDER_NAME);
       if (pair == null) {
         success = false;
         continue;
@@ -417,15 +643,7 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
       final AndroidSdk androidSdk = pair.getFirst();
       final IAndroidTarget target = pair.getSecond();
 
-      final File outputDir = context.getProjectPaths().getModuleOutputDir(module, false);
-      if (outputDir == null) {
-        context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR, AndroidJpsBundle
-          .message("android.jps.errors.output.dir.not.specified", module.getName())));
-        success = false;
-        continue;
-      }
-
-      moduleDataMap.put(module, new MyModuleData(outputDir, androidSdk.getSdkPath(), target, facet));
+      moduleDataMap.put(module, new MyModuleData(androidSdk.getSdkPath(), target, facet));
     }
 
     return success ? moduleDataMap : null;
@@ -442,51 +660,39 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
     if (relPath == null) {
       return null;
     }
-    
+
     return FileUtil.toSystemIndependentName(relPath).replace('/', '.');
-  }
-
-  private static void fillSourceRoots(@NotNull Module module, @NotNull Set<Module> visited, @NotNull Set<File> result)
-    throws IOException {
-    visited.add(module);
-    final AndroidFacet facet = AndroidJpsUtil.getFacet(module);
-    File resDir = null;
-    File resDirForCompilation = null;
-
-    if (facet != null) {
-      resDir = facet.getResourceDir();
-      resDirForCompilation = facet.getResourceDirForCompilation();
-    }
-
-    for (String sourceRootPath : module.getSourceRoots()) {
-      final File sourceRoot = new File(sourceRootPath).getCanonicalFile();
-      
-      if (!sourceRoot.equals(resDir) && !sourceRoot.equals(resDirForCompilation)) {
-        result.add(sourceRoot);
-      }
-    }
-    
-    for (ClasspathItem classpathItem : module.getClasspath(ClasspathKind.PRODUCTION_COMPILE)) {
-      if (classpathItem instanceof Module) {
-        final Module depModule = (Module)classpathItem;
-
-        if (!visited.contains(depModule)) {
-          fillSourceRoots(depModule, visited, result);
-        }
-      }
-    }
-  }
-
-  @NotNull
-  public static File[] getSourceRootsForModuleAndDependencies(@NotNull Module module) throws IOException {
-    Set<File> result = new HashSet<File>();
-    fillSourceRoots(module, new HashSet<Module>(), result);
-    return result.toArray(new File[result.size()]);
   }
 
   @Override
   public String getDescription() {
     return "Android Source Generating Builder";
+  }
+
+  // see IDEA-79737 for details
+  private static boolean hasBadCircularDependencies(@NotNull AndroidFacet facet, @NotNull Map<Module, String> packages) throws IOException {
+    final String aPackage = packages.get(facet.getModule());
+    if (aPackage == null || aPackage.length() == 0) {
+      return false;
+    }
+
+    final List<AndroidFacet> dependencies = AndroidJpsUtil.getAllDependentAndroidLibraries(facet.getModule());
+
+    for (AndroidFacet depFacet : dependencies) {
+      final String depPackage = packages.get(depFacet.getModule());
+
+      if (!aPackage.equals(depPackage)) {
+        continue;
+      }
+      final List<AndroidFacet> depDependencies = AndroidJpsUtil.getAllDependentAndroidLibraries(depFacet.getModule());
+
+      if (depDependencies.contains(facet) &&
+          dependencies.contains(depFacet) &&
+          depFacet.getModule().getName().compareTo(facet.getModule().getName()) < 0) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private static void addMessages(@NotNull CompileContext context,
@@ -508,24 +714,16 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
   }
 
   private static class MyModuleData {
-    private final File myOutputDirectory;
     private final String mySdkLocation;
     private final IAndroidTarget myAndroidTarget;
     private final AndroidFacet myFacet;
 
-    private MyModuleData(@NotNull File outputDirectory,
-                         @NotNull String sdkLocation,
+    private MyModuleData(@NotNull String sdkLocation,
                          @NotNull IAndroidTarget androidTarget,
                          @NotNull AndroidFacet facet) {
-      myOutputDirectory = outputDirectory;
       mySdkLocation = sdkLocation;
       myAndroidTarget = androidTarget;
       myFacet = facet;
-    }
-
-    @NotNull
-    public File getOutputDirectory() {
-      return myOutputDirectory;
     }
 
     @NotNull

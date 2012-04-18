@@ -1,4 +1,3 @@
-
 package com.intellij.codeInsight.intention.impl.config;
 
 import com.intellij.openapi.editor.*;
@@ -218,6 +217,7 @@ class LazyEditor extends UserDataHolderBase implements Editor {
     return getEditor().getHeaderComponent();
   }
 
+  @NotNull
   public IndentsModel getIndentsModel() {
     return getEditor().getIndentsModel();
   }

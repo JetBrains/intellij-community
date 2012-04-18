@@ -35,11 +35,14 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.psi.JavaPsiFacade;
@@ -50,17 +53,18 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
+import org.jetbrains.android.dom.manifest.Manifest;
 import org.jetbrains.android.dom.resources.Attr;
 import org.jetbrains.android.dom.resources.DeclareStyleable;
 import org.jetbrains.android.dom.resources.ResourceElement;
 import org.jetbrains.android.dom.resources.Resources;
 import org.jetbrains.android.facet.AndroidFacet;
+import org.jetbrains.android.facet.AndroidFacetConfiguration;
 import org.jetbrains.android.facet.AndroidRootUtil;
 import org.jetbrains.android.fileTypes.AndroidIdlFileType;
 import org.jetbrains.android.fileTypes.AndroidRenderscriptFileType;
 import org.jetbrains.android.resourceManagers.LocalResourceManager;
 import org.jetbrains.android.sdk.AndroidPlatform;
-import org.jetbrains.android.sdk.AndroidSdkUtils;
 import org.jetbrains.android.util.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -77,11 +81,12 @@ import java.util.regex.Matcher;
 public class AndroidCompileUtil {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.android.compiler.AndroidCompileUtil");
 
-  private static final Key<Boolean> RELEASE_BUILD_KEY = new Key<Boolean>("RELEASE_BUILD_KEY");
+  private static final Key<Boolean> RELEASE_BUILD_KEY = new Key<Boolean>(AndroidCommonUtils.RELEASE_BUILD_OPTION);
   @NonNls private static final String RESOURCES_CACHE_DIR_NAME = "res-cache";
   @NonNls private static final String GEN_MODULE_PREFIX = "~generated_";
 
-  @NonNls private static final String PROGUARD_CFG_FILE_NAME = "proguard.cfg";
+  @NonNls public static final String PROGUARD_CFG_FILE_NAME = "proguard-project.txt";
+  @NonNls public static final String OLD_PROGUARD_CFG_FILE_NAME = "proguard.cfg";
 
   @NonNls
   private static final String[] SCALA_TEST_CONFIGURATIONS =
@@ -114,9 +119,21 @@ public class AndroidCompileUtil {
   }
 
   @Nullable
-  public static VirtualFile getProguardConfigFile(@NotNull AndroidFacet facet) {
-    final VirtualFile root = AndroidRootUtil.getMainContentRoot(facet);
-    return root != null ? root.findChild(PROGUARD_CFG_FILE_NAME) : null;
+  public static Pair<VirtualFile, Boolean> getDefaultProguardConfigFile(@NotNull AndroidFacet facet) {
+    VirtualFile root = AndroidRootUtil.getMainContentRoot(facet);
+    if (root == null) {
+      return null;
+    }
+    final VirtualFile proguardCfg = root.findChild(PROGUARD_CFG_FILE_NAME);
+    if (proguardCfg != null) {
+      return new Pair<VirtualFile, Boolean>(proguardCfg, true);
+    }
+
+    final VirtualFile oldProguardCfg = root.findChild(OLD_PROGUARD_CFG_FILE_NAME);
+    if (oldProguardCfg != null) {
+      return new Pair<VirtualFile, Boolean>(oldProguardCfg, false);
+    }
+    return null;
   }
 
   static void addMessages(final CompileContext context, final Map<CompilerMessageCategory, List<String>> messages) {
@@ -243,13 +260,14 @@ public class AndroidCompileUtil {
     return GEN_MODULE_PREFIX + module.getName();
   }
 
-  public static void createSourceRootIfNotExist(@NotNull final String path, @NotNull final Module module) {
+  @Nullable
+  public static VirtualFile createSourceRootIfNotExist(@NotNull final String path, @NotNull final Module module) {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
     final File rootFile = new File(path);
     final boolean created;
     if (!rootFile.exists()) {
-      if (!rootFile.mkdirs()) return;
+      if (!rootFile.mkdirs()) return null;
       created = true;
     }
     else {
@@ -265,7 +283,7 @@ public class AndroidCompileUtil {
     }
 
     if (project.isDisposed() || module.isDisposed()) {
-      return;
+      return null;
     }
 
     final VirtualFile root;
@@ -294,9 +312,8 @@ public class AndroidCompileUtil {
           }
         });
       }
-
-      excludeFromCompilation(project, root);
     }
+    return root;
   }
 
   private static void excludeFromCompilation(@NotNull Project project, @NotNull VirtualFile dir) {
@@ -414,9 +431,12 @@ public class AndroidCompileUtil {
         contextWrapper[0] = new CompileContextImpl(project, task, scope, null, false, false);
       }
     });
-    generate(module, mode, contextWrapper[0]);
-
-    return contextWrapper[0].getMessages(CompilerMessageCategory.ERROR).length == 0;
+    CompileContext context = contextWrapper[0];
+    if (context == null) {
+      return false;
+    }
+    generate(module, mode, context);
+    return context.getMessages(CompilerMessageCategory.ERROR).length == 0;
   }
 
   public static boolean isModuleAffected(CompileContext context, Module module) {
@@ -519,7 +539,7 @@ public class AndroidCompileUtil {
 
     doCollectResourceDirs(facet, collectResCacheDirs, result, context);
 
-    for (AndroidFacet depFacet : AndroidSdkUtils.getAllAndroidDependencies(facet.getModule(), true)) {
+    for (AndroidFacet depFacet : AndroidUtils.getAllAndroidDependencies(facet.getModule(), true)) {
       doCollectResourceDirs(depFacet, collectResCacheDirs, result, context);
     }
     return ArrayUtil.toStringArray(result);
@@ -530,7 +550,7 @@ public class AndroidCompileUtil {
 
     if (collectResCacheDirs) {
       final AndroidPlatform platform = facet.getConfiguration().getAndroidPlatform();
-      final int platformToolsRevision = platform != null ? platform.getSdk().getPlatformToolsRevision() : -1;
+      final int platformToolsRevision = platform != null ? platform.getSdkData().getPlatformToolsRevision() : -1;
 
       if (platformToolsRevision < 0 || platformToolsRevision > 7) {
         // png cache is supported since platform-tools-r8
@@ -632,27 +652,57 @@ public class AndroidCompileUtil {
 
   public static void createGenModulesAndSourceRoots(@NotNull final AndroidFacet facet) {
     final Module module = facet.getModule();
-    String sourceRootPath;
-
     final GlobalSearchScope moduleScope = facet.getModule().getModuleScope();
 
-    if (FileTypeIndex.getFiles(AndroidRenderscriptFileType.INSTANCE, moduleScope).size() > 0) {
-      sourceRootPath = AndroidRootUtil.getRenderscriptGenSourceRootPath(facet);
-      if (sourceRootPath != null) {
-        createSourceRootIfNotExist(sourceRootPath, module);
-      }
+    initializeGenSourceRoot(module, AndroidRootUtil.getRenderscriptGenSourceRootPath(facet),
+                            FileTypeIndex.getFiles(AndroidRenderscriptFileType.INSTANCE, moduleScope).size() > 0);
+
+    if (AndroidAptCompiler.isToCompileModule(module, facet.getConfiguration())) {
+      initializeGenSourceRoot(module, AndroidRootUtil.getAptGenSourceRootPath(facet), true);
+    }
+    else {
+      // we need to include generated-sources/r to compilation, because it contains R.java generated by Maven,
+      // which should be used in Maven-based resource processing mode
+      includeAaptGenSourceRootToCompilation(facet);
     }
 
-    sourceRootPath = AndroidRootUtil.getAptGenSourceRootPath(facet);
-    if (sourceRootPath != null) {
-      createSourceRootIfNotExist(sourceRootPath, module);
-    }
+    initializeGenSourceRoot(module, AndroidRootUtil.getAidlGenSourceRootPath(facet),
+                            FileTypeIndex.getFiles(AndroidIdlFileType.ourFileType, moduleScope).size() > 0);
+  }
 
-    if (FileTypeIndex.getFiles(AndroidIdlFileType.ourFileType, moduleScope).size() > 0) {
-      sourceRootPath = AndroidRootUtil.getAidlGenSourceRootPath(facet);
-      if (sourceRootPath != null) {
-        createSourceRootIfNotExist(sourceRootPath, module);
+  private static void includeAaptGenSourceRootToCompilation(AndroidFacet facet) {
+    final Project project = facet.getModule().getProject();
+    final ExcludedEntriesConfiguration configuration =
+      ((CompilerConfigurationImpl)CompilerConfiguration.getInstance(project)).getExcludedEntriesConfiguration();
+    final ExcludeEntryDescription[] descriptions = configuration.getExcludeEntryDescriptions();
+
+    configuration.removeAllExcludeEntryDescriptions();
+
+    for (ExcludeEntryDescription description : descriptions) {
+      final VirtualFile vFile = description.getVirtualFile();
+      if (!Comparing.equal(vFile, AndroidRootUtil.getAaptGenDir(facet))) {
+        configuration.addExcludeEntryDescription(description);
       }
+    }
+  }
+
+  private static void initializeGenSourceRoot(@NotNull Module module, @Nullable String sourceRootPath, boolean createIfNotExist) {
+    if (sourceRootPath == null) {
+      return;
+    }
+    VirtualFile sourceRoot = null;
+
+    if (createIfNotExist) {
+      final VirtualFile root = createSourceRootIfNotExist(sourceRootPath, module);
+      if (root != null) {
+        sourceRoot = root;
+      }
+    }
+    if (sourceRoot == null) {
+      sourceRoot = LocalFileSystem.getInstance().findFileByPath(sourceRootPath);
+    }
+    if (sourceRoot != null) {
+      excludeFromCompilation(module.getProject(), sourceRoot);
     }
   }
 
@@ -660,8 +710,8 @@ public class AndroidCompileUtil {
     final LocalResourceManager manager = facet.getLocalResourceManager();
     final Project project = facet.getModule().getProject();
 
-    for (final String resType : ResourceType.getNames()) {
-      for (final ResourceElement element : manager.getValueResources(resType)) {
+    for (final ResourceType resType : AndroidResourceUtil.VALUE_RESOURCE_TYPES) {
+      for (final ResourceElement element : manager.getValueResources(resType.getName())) {
         waitForSmartMode(project);
 
         ApplicationManager.getApplication().runReadAction(new Runnable() {
@@ -673,15 +723,16 @@ public class AndroidCompileUtil {
             final String name = element.getName().getValue();
 
             if (name != null) {
-              resourceSet.add(new ResourceEntry(resType, name));
+              resourceSet.add(new ResourceEntry(resType.getName(), name));
             }
           }
         });
       }
     }
 
-    for (final Resources resources : manager.getResourceElements()) {
-        waitForSmartMode(project);
+    for (final Pair<Resources, VirtualFile> pair : manager.getResourceElements()) {
+      final Resources resources = pair.getFirst();
+      waitForSmartMode(project);
 
         ApplicationManager.getApplication().runReadAction(new Runnable() {
           @Override
@@ -730,7 +781,10 @@ public class AndroidCompileUtil {
       AndroidUtils.collectFiles(subdir, visited, resourceFiles);
 
       for (VirtualFile file : resourceFiles) {
-        resourceSet.add(new ResourceEntry(subdir.getName(), file.getName()));
+        final String subdirName = subdir.getName();
+        final int index = subdirName.indexOf('-');
+        final String type = index >= 0 ? subdirName.substring(0, index) : subdirName;
+        resourceSet.add(new ResourceEntry(type, FileUtil.getNameWithoutExtension(file.getName())));
       }
     }
   }
@@ -768,5 +822,81 @@ public class AndroidCompileUtil {
     VirtualFile compilerOutput = CompilerModuleExtension.getInstance(module).getCompilerOutputPath();
     if (compilerOutput == null) return null;
     return new File(compilerOutput.getPath(), getApkName(module)).getPath();
+  }
+
+  public static boolean isExcludedFromCompilation(@NotNull File file, @Nullable Project project) {
+    final VirtualFile vFile = LocalFileSystem.getInstance().findFileByIoFile(file);
+    return vFile != null && isExcludedFromCompilation(vFile, project);
+  }
+
+  public static boolean isExcludedFromCompilation(VirtualFile child, @Nullable Project project) {
+    final CompilerManager compilerManager = project != null ? CompilerManager.getInstance(project) : null;
+
+    if (compilerManager == null) {
+      return false;
+    }
+
+    if (!compilerManager.isExcludedFromCompilation(child)) {
+      return false;
+    }
+
+    final Module module = ModuleUtil.findModuleForFile(child, project);
+    if (module == null) {
+      return true;
+    }
+
+    final AndroidFacet facet = AndroidFacet.getInstance(module);
+    if (facet == null || !facet.getConfiguration().LIBRARY_PROJECT) {
+      return true;
+    }
+
+    final AndroidPlatform platform = facet.getConfiguration().getAndroidPlatform();
+    if (platform == null) {
+      return true;
+    }
+
+    // we exclude sources of library modules automatically for tools r7 or previous
+    return platform.getSdkData().getPlatformToolsRevision() > 7;
+  }
+
+  @Nullable
+  public static ProguardRunningOptions getProguardConfigFilePathIfShouldRun(@NotNull AndroidFacet facet, CompileContext context) {
+    final String path = context.getCompileScope().getUserData(AndroidProguardCompiler.PROGUARD_CFG_PATH_KEY);
+    if (path != null) {
+      final Boolean includeSystemProguardFile = context.getCompileScope().
+        getUserData(AndroidProguardCompiler.INCLUDE_SYSTEM_PROGUARD_FILE);
+      return new ProguardRunningOptions(path, Boolean.TRUE.equals(includeSystemProguardFile));
+    }
+
+    final AndroidFacetConfiguration configuration = facet.getConfiguration();
+    if (configuration.RUN_PROGUARD) {
+      final VirtualFile proguardCfgFile = AndroidRootUtil.getProguardCfgFile(facet);
+      final String proguardCfgPath = proguardCfgFile != null ? FileUtil.toSystemDependentName(proguardCfgFile.getPath()) : null;
+      return new ProguardRunningOptions(proguardCfgPath, configuration.isIncludeSystemProguardCfgPath());
+    }
+    return null;
+  }
+
+  @Nullable
+  public static Module findCircularDependencyOnLibraryWithSamePackage(@NotNull AndroidFacet facet) {
+    final Manifest manifest = facet.getManifest();
+    final String aPackage = manifest != null ? manifest.getPackage().getValue() : null;
+    if (aPackage == null) {
+      return null;
+    }
+
+    for (AndroidFacet depFacet : AndroidUtils.getAllAndroidDependencies(facet.getModule(), true)) {
+      final Manifest depManifest = depFacet.getManifest();
+      final String depPackage = depManifest != null ? depManifest.getPackage().getValue() : null;
+      if (aPackage.equals(depPackage)) {
+        final List<AndroidFacet> depDependencies = AndroidUtils.getAllAndroidDependencies(depFacet.getModule(), false);
+
+        if (depDependencies.contains(facet)) {
+          // circular dependency on library with the same package
+          return depFacet.getModule();
+        }
+      }
+    }
+    return null;
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -122,6 +122,14 @@ public class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider {
   @Override
   public JComponent getComponent() {
     return getRootPane();
+  }
+
+  @Nullable
+  public static Window getActiveFrame() {
+    for (Frame frame : getFrames()) {
+      if (frame.isActive()) return frame;
+    }
+    return null;
   }
 
   private static boolean isThereActiveFrame() {
@@ -256,7 +264,7 @@ public class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider {
       myUpdatingTitle = false;
     }
   }
-  
+
   private static final class Builder {
     public StringBuilder sb = new StringBuilder();
     
@@ -455,7 +463,21 @@ public class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider {
     return myBalloonLayout;
   }
 
+  public boolean isInFullScreen() {
+    return myFrameDecorator != null && myFrameDecorator.isInFullScreen();
+  }
+
   public void showWelcomeScreen() {
     myRootPane.showWelcomeScreen();
+  }
+
+  @Override
+  public void toFront() {
+    super.toFront();
+  }
+
+  @Override
+  public void toBack() {
+    super.toBack();
   }
 }

@@ -85,6 +85,7 @@ public class MacMessagesImpl extends MacMessages {
       int defaultOptionIndex = Integer.parseInt(toStringViaUTF8(invoke(params, "objectAtIndex:", 6)));
       int focusedOptionIndex = Integer.parseInt(toStringViaUTF8(invoke(params, "objectAtIndex:", 7)));
       ID buttons = invoke(params, "objectAtIndex:", 8);
+      ID doNotAskChecked = invoke(params, "objectAtIndex:", 9);
 
       ID alert = invoke(invoke("NSAlert", "alloc"), "init");
 
@@ -121,6 +122,7 @@ public class MacMessagesImpl extends MacMessages {
       if (!"-1".equals(doNotAsk)) {
         invoke(alert, "setShowsSuppressionButton:", 1);
         invoke(invoke(alert, "suppressionButton"), "setTitle:", doNotAskText);
+        invoke(invoke(alert, "suppressionButton"), "setState:", "checked".equals(toStringViaUTF8(doNotAskChecked)));
       }
 
       invoke(alert, "beginSheetModalForWindow:modalDelegate:didEndSelector:contextInfo:", focusedWindow, self,
@@ -139,6 +141,7 @@ public class MacMessagesImpl extends MacMessages {
       ID fakeId = invoke(params, "objectAtIndex:", 6);
       ID alertStyle = invoke(params, "objectAtIndex:", 7);
       ID doNotAskText = invoke(params, "objectAtIndex:", 8);
+      ID doNotAskChecked = invoke(params, "objectAtIndex:", 9);
 
       boolean alternateExist = !"-1".equals(toStringViaUTF8(alternateText));
       boolean otherExist = !"-1".equals(toStringViaUTF8(otherText));
@@ -165,6 +168,7 @@ public class MacMessagesImpl extends MacMessages {
       if (!"-1".equals(doNotAsk)) {
         invoke(alert, "setShowsSuppressionButton:", 1);
         invoke(invoke(alert, "suppressionButton"), "setTitle:", doNotAskText);
+        invoke(invoke(alert, "suppressionButton"), "setState:", "checked".equals(toStringViaUTF8(doNotAskChecked)));
       }
 
       invoke(alert, "beginSheetModalForWindow:modalDelegate:didEndSelector:contextInfo:", focusedWindow, self,
@@ -277,7 +281,8 @@ public class MacMessagesImpl extends MacMessages {
                                              ? "-1"
                                              : doNotAskDialogOption.getDoNotShowMessage()), 
                                     nsString(Integer.toString(defaultOptionIndex)), 
-                                    nsString(Integer.toString(focusedOptionIndex)), buttonsArray, null);
+                                    nsString(Integer.toString(focusedOptionIndex)), buttonsArray,
+                                    nsString(doNotAskDialogOption != null && !doNotAskDialogOption.isToBeShown() ? "checked" : "-1"), null);
 
             IdeFocusManager.getGlobalInstance().setTypeaheadEnabled(false);
 
@@ -438,7 +443,8 @@ public class MacMessagesImpl extends MacMessages {
                                     nsString(doNotAskDialogOption == null || !doNotAskDialogOption.canBeHidden()
                                              // TODO: state=!doNotAsk.shouldBeShown()
                                              ? "-1"
-                                             : doNotAskDialogOption.getDoNotShowMessage()), null);
+                                             : doNotAskDialogOption.getDoNotShowMessage()),
+                                    nsString(doNotAskDialogOption != null && !doNotAskDialogOption.isToBeShown() ? "checked" : "-1"), null);
 
             IdeFocusManager.getGlobalInstance().setTypeaheadEnabled(false);
             

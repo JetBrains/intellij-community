@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,16 +17,22 @@ package com.intellij.ui;
 
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.ui.UISettings;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.ToolWindowManagerAdapter;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
+import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
@@ -78,6 +84,23 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
       }
     });
 
+    new AnAction() {
+      @Override
+      public void actionPerformed(AnActionEvent e) {
+        final String prefix = getEnteredPrefix();
+        assert prefix != null;
+        final String[] strings = NameUtil.splitNameIntoWords(prefix);
+        final String last = strings[strings.length - 1];
+        final int i = prefix.lastIndexOf(last);
+        mySearchPopup.mySearchField.setText(prefix.substring(0, i).trim());
+      }
+
+      @Override
+      public void update(AnActionEvent e) {
+        e.getPresentation().setEnabled(isPopupActive() && !StringUtil.isEmpty(getEnteredPrefix()));
+      }
+    }.registerCustomShortcutSet(CustomShortcutSet.fromString(SystemInfo.isMac ? "meta BACK_SPACE" : "control BACK_SPACE"), myComponent);
+
     installSupplyTo(component);
   }
 
@@ -112,6 +135,10 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
 
   protected abstract String getElementText(Object element);
 
+  protected int getElementCount() {
+    return getAllElements().length;
+  }
+
   /**
    * Should convert given view index to model index
    */
@@ -126,8 +153,7 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
   protected abstract void selectElement(Object element, String selectedText);
 
   protected ListIterator<Object> getElementIterator(int startingIndex) {
-    final Object[] allElements = getAllElements();
-    return new ViewIterator(this, startingIndex < 0 ? allElements.length : startingIndex);
+    return new ViewIterator(this, startingIndex < 0 ? getElementCount() : startingIndex);
   }
 
   public void addChangeListener(PropertyChangeListener listener) {
@@ -176,6 +202,15 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
       final Object element = it.next();
       if (isMatchingElement(element, _s)) return element;
     }
+
+    if (UISettings.getInstance().CYCLE_SCROLLING) {
+      final ListIterator<Object> i = getElementIterator(0);
+      while (i.hasNext()) {
+        final Object element = i.next();
+        if (isMatchingElement(element, _s)) return element;
+      }
+    }
+
     return ( current != null && isMatchingElement(current, _s) ) ? current : null;
   }
 
@@ -195,6 +230,15 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
       final Object element = it.previous();
       if (isMatchingElement(element, _s)) return element;
     }
+
+    if (UISettings.getInstance().CYCLE_SCROLLING) {
+      final ListIterator<Object> i = getElementIterator(getElementCount());
+      while (i.hasPrevious()) {
+        final Object element = i.previous();
+        if (isMatchingElement(element, _s)) return element;
+      }
+    }
+
     return selectedIndex != -1 && isMatchingElement(current, _s) ? current : null;
   }
 
@@ -523,7 +567,7 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
     }
   }
 
-  protected class ViewIterator implements ListIterator {
+  protected class ViewIterator implements ListIterator<Object> {
     private SpeedSearchBase mySpeedSearch;
     private int myCurrentIndex;
     private Object[] myElements;

@@ -60,13 +60,17 @@ import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.runners.ExecutionUtil;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.idea.ActionsBundle;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.PsiDocumentManager;
@@ -144,7 +148,9 @@ public abstract class DebugProcessImpl implements DebugProcess {
   private boolean myIsFailed = false;
   protected DebuggerSession mySession;
   @Nullable protected MethodReturnValueWatcher myReturnValueWatcher;
-  private final Alarm myStatusUpdateAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
+  private final Disposable myDisposable = Disposer.newDisposable();
+  private final Alarm myStatusUpdateAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD, myDisposable);
+
   /** @noinspection FieldCanBeLocal*/
   private volatile boolean myDebugProcessStarted = false;
 
@@ -550,7 +556,7 @@ public abstract class DebugProcessImpl implements DebugProcess {
             String portString = myConnection.getAddress();
             String hostString = myConnection.getHostName();
 
-            if (hostString == null || hostString.length() == 0) {
+            if (hostString == null || hostString.isEmpty()) {
               //noinspection HardCodedStringLiteral
               hostString = "localhost";
             }
@@ -764,6 +770,9 @@ public abstract class DebugProcessImpl implements DebugProcess {
       finally {
         myVirtualMachineProxy = null;
         myPositionManager = null;
+        myReturnValueWatcher = null;
+        myNodeRederersMap.clear();
+        myRenderers.clear();
         myState.set(STATE_DETACHED);
         try {
           myDebugProcessDispatcher.getMulticaster().processDetached(this, closedByUser);
@@ -819,7 +828,7 @@ public abstract class DebugProcessImpl implements DebugProcess {
         buf.append(DebuggerBundle.message("error.cannot.open.debugger.port")).append(" : ");
         buf.append(e1.getClass().getName()).append(" ");
         final String localizedMessage = e1.getLocalizedMessage();
-        if (localizedMessage != null && localizedMessage.length() > 0) {
+        if (localizedMessage != null && !localizedMessage.isEmpty()) {
           buf.append('"');
           buf.append(localizedMessage);
           buf.append('"');
@@ -847,14 +856,14 @@ public abstract class DebugProcessImpl implements DebugProcess {
 
   public void dispose() {
     NodeRendererSettings.getInstance().removeListener(mySettingsListener);
-    Disposer.dispose(myStatusUpdateAlarm);
+    Disposer.dispose(myDisposable);
   }
 
   public DebuggerManagerThreadImpl getManagerThread() {
     if (myDebuggerManagerThread == null) {
       synchronized (this) {
         if (myDebuggerManagerThread == null) {
-          myDebuggerManagerThread = new DebuggerManagerThreadImpl();
+          myDebuggerManagerThread = new DebuggerManagerThreadImpl(myDisposable);
         }
       }
     }
@@ -1215,40 +1224,12 @@ public abstract class DebugProcessImpl implements DebugProcess {
   }
 
   private static boolean isVisibleFromClassLoader(final ClassLoaderReference fromLoader, final ReferenceType refType) {
-    final ClassLoaderReference typeLoader = refType.classLoader();
-    if (typeLoader == null) {
-      return true; // optimization: if class is loaded by a bootstrap loader, it is visible from every other loader
-    }
-    for (ClassLoaderReference checkLoader = fromLoader; checkLoader != null; checkLoader = getParentLoader(checkLoader)) {
-      if (Comparing.equal(typeLoader, checkLoader)) {
-        return true;
-      }
-    }
-    return fromLoader != null && fromLoader.visibleClasses().contains(refType);
-  }
-
-  @SuppressWarnings({"HardCodedStringLiteral"})
-  private static ClassLoaderReference getParentLoader(final ClassLoaderReference fromLoader) {
-    final ReferenceType refType = fromLoader.referenceType();
-    Field field = refType.fieldByName("parent");
-    if (field == null) {
-      final List<Field> allFields = refType.allFields();
-      for (Field candidateField : allFields) {
-        try {
-          final Type checkedType = candidateField.type();
-          if (checkedType instanceof ReferenceType &&
-              DebuggerUtilsEx.isAssignableFrom("java.lang.ClassLoader", (ReferenceType)checkedType)) {
-            field = candidateField;
-            break;
-          }
-        }
-        catch (ClassNotLoadedException e) {
-          // ignore this and continue,
-          // java.lang.ClassLoader must be loaded at the moment of check, so if this happens, the field's type is definitely not java.lang.ClassLoader
-        }
-      }
-    }
-    return field != null? (ClassLoaderReference)fromLoader.getValue(field) : null;
+    // IMPORTANT! Even if the refType is already loaded by some parent or bootstrap loader, it may not be visible from the given loader.
+    // For example because there were no accesses yet from this loader to this class. So the loader is not in the list of "initialing" loaders
+    // for this refType and the refType is not visible to the loader.
+    // Attempt to evaluate method with this refType will yield ClassNotLoadedException.
+    // The only way to say for sure whether the class is _visible_ to the given loader, is to use the following API call
+    return fromLoader == null || fromLoader.visibleClasses().contains(refType);
   }
 
   private static String reformatArrayName(String className) {
@@ -1777,7 +1758,7 @@ public abstract class DebugProcessImpl implements DebugProcess {
                 fail();
                 if (myExecutionResult != null || !connectorIsReady.get()) {
                   // propagate exception only in case we succeded to obtain execution result,
-                  // otherwise it the error is induced by the fact that there is nothing to debug, and there is no need to show
+                  // otherwise if the error is induced by the fact that there is nothing to debug, and there is no need to show
                   // this problem to the user
                   final RunProfile runProfile = state.getRunnerSettings().getRunProfile();
                   if (runProfile != null) {

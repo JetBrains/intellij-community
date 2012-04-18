@@ -37,4 +37,18 @@ public class VisualStudioCustomFoldingProvider extends CustomFoldingProvider {
     return elementText.replaceFirst("..?\\s*region(.*)","$1").trim();
   }
 
+  @Override
+  public String getDescription() {
+    return "region...endregion Comments";
+  }
+
+  @Override
+  public String getStartString() {
+    return "region ?";
+  }
+
+  @Override
+  public String getEndString() {
+    return "endregion";
+  }
 }

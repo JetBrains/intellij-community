@@ -22,7 +22,7 @@ import java.lang.annotation.Target;
 
 /**
  * @author peter
- * @see com.intellij.util.xml.DomFileDescription#registerNamespacePolicy(String, com.intellij.util.NotNullFunction) 
+ * @see com.intellij.util.xml.DomFileDescription#getAllowedNamespaces(String, com.intellij.psi.xml.XmlFile)
  * @see com.intellij.util.xml.DomFileDescription#registerNamespacePolicy(String, String...)
  */
 @Retention(RetentionPolicy.RUNTIME)

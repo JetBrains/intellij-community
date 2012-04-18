@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,7 +41,7 @@ import java.util.Map;
  */
 public class CreateClassAction extends JavaCreateTemplateInPackageAction<PsiClass> {
   public CreateClassAction() {
-    super(IdeBundle.message("action.create.new.class"), IdeBundle.message("action.create.new.class"), PlatformIcons.CLASS_ICON, true);
+    super("", IdeBundle.message("action.create.new.class.description"), PlatformIcons.CLASS_ICON, true);
   }
 
   @Override
@@ -50,7 +50,7 @@ public class CreateClassAction extends JavaCreateTemplateInPackageAction<PsiClas
       .setTitle(IdeBundle.message("action.create.new.class"))
       .addKind("Class", PlatformIcons.CLASS_ICON, JavaTemplateUtil.INTERNAL_CLASS_TEMPLATE_NAME)
       .addKind("Interface", PlatformIcons.INTERFACE_ICON, JavaTemplateUtil.INTERNAL_INTERFACE_TEMPLATE_NAME);
-    if (LanguageLevelProjectExtension.getInstance(project).getLanguageLevel().compareTo(LanguageLevel.JDK_1_5) >= 0) {
+    if (LanguageLevelProjectExtension.getInstance(project).getLanguageLevel().isAtLeast(LanguageLevel.JDK_1_5)) {
       builder.addKind("Enum", PlatformIcons.ENUM_ICON, JavaTemplateUtil.INTERNAL_ENUM_TEMPLATE_NAME);
       builder.addKind("Annotation", PlatformIcons.ANNOTATION_TYPE_ICON, JavaTemplateUtil.INTERNAL_ANNOTATION_TYPE_TEMPLATE_NAME);
     }

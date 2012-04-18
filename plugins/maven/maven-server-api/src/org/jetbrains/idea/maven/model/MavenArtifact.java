@@ -26,6 +26,9 @@ import java.io.Serializable;
 import java.text.MessageFormat;
 
 public class MavenArtifact implements Serializable {
+
+  private static final String MAVEN_LIB_PREFIX = "Maven: ";
+
   private final String myGroupId;
   private final String myArtifactId;
   private final String myVersion;
@@ -41,6 +44,8 @@ public class MavenArtifact implements Serializable {
   private final File myFile;
   private final boolean myResolved;
   private final boolean myStubbed;
+
+  private transient volatile String myLibraryNameCache;
 
   public MavenArtifact(String groupId,
                        String artifactId,
@@ -240,19 +245,35 @@ public class MavenArtifact implements Serializable {
     return builder.toString();
   }
 
+  public String getLibraryName() {
+    String res = myLibraryNameCache;
+    if (res == null) {
+      StringBuilder builder = new StringBuilder();
+
+      MavenId.append(builder, myGroupId);
+      MavenId.append(builder, myArtifactId);
+
+      if (!StringUtil.isEmptyOrSpaces(myType) && !MavenConstants.TYPE_JAR.equals(myType)) MavenId.append(builder, myType);
+      if (!StringUtil.isEmptyOrSpaces(myClassifier)) MavenId.append(builder, myClassifier);
+
+      String version = !StringUtil.isEmptyOrSpaces(myBaseVersion) ? myBaseVersion : myVersion;
+      if (!StringUtil.isEmptyOrSpaces(version)) MavenId.append(builder, version);
+
+      builder.insert(0, MAVEN_LIB_PREFIX);
+
+      res = builder.toString();
+      myLibraryNameCache = res;
+    }
+
+    return res;
+  }
+
   public String getDisplayStringForLibraryName() {
-    StringBuilder builder = new StringBuilder();
+    return getLibraryName().substring(MAVEN_LIB_PREFIX.length());
+  }
 
-    MavenId.append(builder, myGroupId);
-    MavenId.append(builder, myArtifactId);
-
-    if (!StringUtil.isEmptyOrSpaces(myType) && !MavenConstants.TYPE_JAR.equals(myType)) MavenId.append(builder, myType);
-    if (!StringUtil.isEmptyOrSpaces(myClassifier)) MavenId.append(builder, myClassifier);
-
-    String version = !StringUtil.isEmptyOrSpaces(myBaseVersion) ? myBaseVersion : myVersion;
-    if (!StringUtil.isEmptyOrSpaces(version)) MavenId.append(builder, version);
-
-    return builder.toString();
+  public static boolean isMavenLibrary(@Nullable String libraryName) {
+    return libraryName != null && libraryName.startsWith(MAVEN_LIB_PREFIX);
   }
 
   @Override

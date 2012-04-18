@@ -17,6 +17,7 @@ package org.jetbrains.plugins.groovy.lang.resolve;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.AbstractElementManipulator;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
@@ -36,10 +37,10 @@ public class GroovyStringLiteralManipulator extends AbstractElementManipulator<G
     String oldText = expr.getText();
     final String quote = GrStringUtil.getStartQuote(oldText);
 
-    if (quote.startsWith("'")) {
-      newContent = GrStringUtil.escapeSymbolsForString(newContent, !quote.equals("'''"), false);
+    if (StringUtil.startsWithChar(quote, '\'')) {
+      newContent = GrStringUtil.escapeSymbolsForString(newContent, !quote.equals("'''"), true);
     }
-    else if (quote.startsWith("\"")) {
+    else if (StringUtil.startsWithChar(quote, '\"')) {
       newContent = GrStringUtil.escapeSymbolsForGString(newContent, !quote.equals("\"\"\""), true);
     }
     else if ("/".equals(quote)) {

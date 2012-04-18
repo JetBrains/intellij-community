@@ -26,6 +26,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgument
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 
 /**
 * @author Sergey Evdokimov
@@ -38,6 +39,7 @@ public class NamedArgumentDescriptor {
   public static final NamedArgumentDescriptor SIMPLE_UNLIKELY = new UnmodifiableDescriptor(Priority.UNLIKELY);
 
   public static final StringTypeConditionWithPriority TYPE_STRING = new StringTypeConditionWithPriority(CommonClassNames.JAVA_LANG_STRING);
+  public static final StringTypeConditionWithPriority TYPE_CLOSURE = new StringTypeConditionWithPriority(GroovyCommonClassNames.GROOVY_LANG_CLOSURE);
   public static final StringTypeConditionWithPriority TYPE_MAP = new StringTypeConditionWithPriority(CommonClassNames.JAVA_UTIL_MAP);
   public static final StringTypeConditionWithPriority TYPE_BOOL = new StringTypeConditionWithPriority(CommonClassNames.JAVA_LANG_BOOLEAN);
   public static final StringTypeConditionWithPriority TYPE_CLASS = new StringTypeConditionWithPriority(CommonClassNames.JAVA_LANG_CLASS);
@@ -214,6 +216,10 @@ public class NamedArgumentDescriptor {
 
   public static class TypeCondition extends NamedArgumentDescriptor {
     private final PsiType myType;
+
+    public TypeCondition(@NotNull PsiType type) {
+      this(type, null);
+    }
 
     public TypeCondition(@NotNull PsiType type, @Nullable PsiElement navigationElement) {
       super(navigationElement);

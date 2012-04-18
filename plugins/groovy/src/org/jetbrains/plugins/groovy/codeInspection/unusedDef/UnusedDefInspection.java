@@ -24,7 +24,7 @@ import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
-import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.util.Processor;
 import gnu.trove.TIntHashSet;
 import gnu.trove.TIntObjectHashMap;
@@ -33,28 +33,25 @@ import gnu.trove.TObjectProcedure;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyLocalInspectionBase;
+import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrClassInitializer;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrPostfixExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrUnaryExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.ReadWriteVariableInstruction;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DFAEngine;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs.ReachingDefinitionsDfaInstance;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs.ReachingDefinitionsSemilattice;
 
-import java.util.ArrayList;
+import java.util.List;
 
 /**
  & @author ven
@@ -86,7 +83,11 @@ public class UnusedDefInspection extends GroovyLocalInspectionBase {
     final ReachingDefinitionsDfaInstance dfaInstance = new ReachingDefinitionsDfaInstance(flow);
     final ReachingDefinitionsSemilattice lattice = new ReachingDefinitionsSemilattice();
     final DFAEngine<TIntObjectHashMap<TIntHashSet>> engine = new DFAEngine<TIntObjectHashMap<TIntHashSet>>(flow, dfaInstance, lattice);
-    final ArrayList<TIntObjectHashMap<TIntHashSet>> dfaResult = engine.performDFA();
+    final List<TIntObjectHashMap<TIntHashSet>> dfaResult = engine.performDFAWithTimeout();
+    if (dfaResult == null) {
+      return;
+    }
+
     final TIntHashSet unusedDefs = new TIntHashSet();
     for (Instruction instruction : flow) {
       if (instruction instanceof ReadWriteVariableInstruction && ((ReadWriteVariableInstruction) instruction).isWrite()) {
@@ -97,9 +98,9 @@ public class UnusedDefInspection extends GroovyLocalInspectionBase {
     for (int i = 0; i < dfaResult.size(); i++) {
       final Instruction instruction = flow[i];
       if (instruction instanceof ReadWriteVariableInstruction) {
-        final ReadWriteVariableInstruction varInsn = (ReadWriteVariableInstruction) instruction;
-        if (!varInsn.isWrite()) {
-          final String varName = varInsn.getVariableName();
+        final ReadWriteVariableInstruction varInst = (ReadWriteVariableInstruction) instruction;
+        if (!varInst.isWrite()) {
+          final String varName = varInst.getVariableName();
           TIntObjectHashMap<TIntHashSet> e = dfaResult.get(i);
           e.forEachValue(new TObjectProcedure<TIntHashSet>() {
             public boolean execute(TIntHashSet reaching) {
@@ -124,21 +125,8 @@ public class UnusedDefInspection extends GroovyLocalInspectionBase {
         final ReadWriteVariableInstruction instruction = (ReadWriteVariableInstruction)flow[num];
         final PsiElement element = instruction.getElement();
         if (element == null) return true;
-        PsiElement toHighlight = null;
-        if (isLocalAssignment(element) && isUsedInToplevelFlowOnly(element)) {
-          if (element instanceof GrReferenceExpression) {
-            PsiElement parent = element.getParent();
-            if (parent instanceof GrAssignmentExpression) {
-              toHighlight = ((GrAssignmentExpression)parent).getLValue();
-            }
-            if (parent instanceof GrPostfixExpression) {
-              toHighlight = parent;
-            }
-          }
-          else if (element instanceof GrVariable) {
-            toHighlight = ((GrVariable)element).getNameIdentifierGroovy();
-          }
-          if (toHighlight == null) toHighlight = element;
+        if (isLocalAssignment(element) && isUsedInTopLevelFlowOnly(element) && !isIncOrDec(element)) {
+          PsiElement toHighlight = getHighlightElement(element);
           problemsHolder.registerProblem(toHighlight, GroovyInspectionBundle.message("unused.assignment.tooltip"),
                                          ProblemHighlightType.LIKE_UNUSED_SYMBOL);
         }
@@ -147,25 +135,52 @@ public class UnusedDefInspection extends GroovyLocalInspectionBase {
     });
   }
 
-  private static boolean isUsedInToplevelFlowOnly(PsiElement element) {
+  private static PsiElement getHighlightElement(PsiElement element) {
+    PsiElement toHighlight = null;
+    if (element instanceof GrReferenceExpression) {
+      PsiElement parent = element.getParent();
+      if (parent instanceof GrAssignmentExpression) {
+        toHighlight = ((GrAssignmentExpression)parent).getLValue();
+      }
+      if (parent instanceof GrUnaryExpression && ((GrUnaryExpression)parent).isPostfix()) {
+        toHighlight = parent;
+      }
+    }
+    else if (element instanceof GrVariable) {
+      toHighlight = ((GrVariable)element).getNameIdentifierGroovy();
+    }
+    if (toHighlight == null) toHighlight = element;
+    return toHighlight;
+  }
+
+  private static boolean isIncOrDec(PsiElement element) {
+    PsiElement parent = element.getParent();
+    if (!(parent instanceof GrUnaryExpression)) return false;
+
+    IElementType type = ((GrUnaryExpression)parent).getOperationTokenType();
+    return type == GroovyTokenTypes.mINC || type == GroovyTokenTypes.mDEC;
+  }
+
+  private static boolean isUsedInTopLevelFlowOnly(PsiElement element) {
     GrVariable var = null;
     if (element instanceof GrVariable) {
-      var = (GrVariable) element;
-    } else if (element instanceof GrReferenceExpression) {
-      final PsiElement resolved = ((GrReferenceExpression) element).resolve();
-      if (resolved instanceof GrVariable) var = (GrVariable) resolved;
+      var = (GrVariable)element;
+    }
+    else if (element instanceof GrReferenceExpression) {
+      final PsiElement resolved = ((GrReferenceExpression)element).resolve();
+      if (resolved instanceof GrVariable) var = (GrVariable)resolved;
     }
 
     if (var != null) {
-      final GroovyPsiElement scope = getScope(var);
+      final GroovyPsiElement scope = ControlFlowUtils.findControlFlowOwner(var);
       if (scope == null) {
         PsiFile file = var.getContainingFile();
-        LOG.error(file == null ? "no file??? var of type"+ var.getClass().getCanonicalName() : DebugUtil.psiToString(file, true, false));
+        LOG.error(file == null ? "no file??? var of type" + var.getClass().getCanonicalName() : DebugUtil.psiToString(file, true, false));
       }
 
       return ReferencesSearch.search(var, new LocalSearchScope(scope)).forEach(new Processor<PsiReference>() {
         public boolean process(PsiReference ref) {
-          return getScope(ref.getElement()) == scope;
+          return ControlFlowUtils.findControlFlowOwner(ref.getElement()) == scope;
         }
       });
     }
@@ -173,17 +188,14 @@ public class UnusedDefInspection extends GroovyLocalInspectionBase {
     return true;
   }
 
-  @Nullable
-  private static GroovyPsiElement getScope(PsiElement var) {
-    return PsiTreeUtil.getContextOfType(var, GrClosableBlock.class, GrMethod.class, GrClassInitializer.class, GroovyFileBase.class);
-  }
 
   private static boolean isLocalAssignment(PsiElement element) {
     if (element instanceof GrVariable) {
-      return isLocalVariable((GrVariable) element, false);
-    } else if (element instanceof GrReferenceExpression) {
-      final PsiElement resolved = ((GrReferenceExpression) element).resolve();
-      return resolved instanceof GrVariable && isLocalVariable((GrVariable) resolved, true);
+      return isLocalVariable((GrVariable)element, false);
+    }
+    else if (element instanceof GrReferenceExpression) {
+      final PsiElement resolved = ((GrReferenceExpression)element).resolve();
+      return resolved instanceof GrVariable && isLocalVariable((GrVariable)resolved, true);
     }
 
     return false;

@@ -17,13 +17,11 @@ package com.siyeh.ig.naming;
 
 import com.intellij.codeInspection.ui.ListTable;
 import com.intellij.codeInspection.ui.ListWrappingTableModel;
-import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiVariable;
-import com.intellij.ui.ScrollPaneFactory;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -35,7 +33,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.awt.*;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -86,29 +83,9 @@ public class QuestionableNameInspection extends BaseInspection {
 
   @Override
   public JComponent createOptionsPanel() {
-    final JPanel panel = new JPanel(new GridBagLayout());
-    final ListTable table = new ListTable(new ListWrappingTableModel(
-      nameList, InspectionGadgetsBundle.message(
-      "questionable.name.column.title")));
-    final JScrollPane scrollPane =
-      ScrollPaneFactory.createScrollPane(table);
-    UiUtils.setScrollPaneSize(scrollPane, 7, 25);
-    final ActionToolbar toolbar =
-      UiUtils.createAddRemoveToolbar(table);
-
-    final GridBagConstraints constraints = new GridBagConstraints();
-    constraints.gridx = 0;
-    constraints.gridy = 0;
-    constraints.fill = GridBagConstraints.HORIZONTAL;
-    panel.add(toolbar.getComponent(), constraints);
-
-    constraints.gridy = 1;
-    constraints.weightx = 1.0;
-    constraints.weighty = 1.0;
-    constraints.fill = GridBagConstraints.BOTH;
-    panel.add(scrollPane, constraints);
-
-    return panel;
+    final ListTable table =
+      new ListTable(new ListWrappingTableModel(nameList, InspectionGadgetsBundle.message("questionable.name.column.title")));
+    return UiUtils.createAddRemovePanel(table);
   }
 
   @Override

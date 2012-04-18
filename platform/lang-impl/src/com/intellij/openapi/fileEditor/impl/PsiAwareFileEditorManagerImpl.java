@@ -28,6 +28,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
+import com.intellij.ui.ColorUtil;
 import com.intellij.ui.docking.DockManager;
 import org.jetbrains.annotations.NotNull;
 
@@ -68,7 +69,7 @@ public class PsiAwareFileEditorManagerImpl extends FileEditorManagerImpl {
   public Color getFileColor(@NotNull final VirtualFile file) {
     Color color = super.getFileColor(file);
     if (myProblemSolver.isProblemFile(file)) {
-      return new Color(color.getRed(), color.getGreen(), color.getBlue(), WaverGraphicsDecorator.WAVE_ALPHA_KEY);
+      return ColorUtil.toAlpha(color, WaverGraphicsDecorator.WAVE_ALPHA_KEY);
     }
     return color;
   }
@@ -105,7 +106,7 @@ public class PsiAwareFileEditorManagerImpl extends FileEditorManagerImpl {
    * Updates attribute of open files when roots change
    */
   private final class MyPsiTreeChangeListener extends PsiTreeChangeAdapter {
-    public void propertyChanged(final PsiTreeChangeEvent e) {
+    public void propertyChanged(@NotNull final PsiTreeChangeEvent e) {
       if (PsiTreeChangeEvent.PROP_ROOTS.equals(e.getPropertyName())) {
         ApplicationManager.getApplication().assertIsDispatchThread();
         final VirtualFile[] openFiles = getOpenFiles();
@@ -117,23 +118,23 @@ public class PsiAwareFileEditorManagerImpl extends FileEditorManagerImpl {
       }
     }
 
-    public void childAdded(PsiTreeChangeEvent event) {
+    public void childAdded(@NotNull PsiTreeChangeEvent event) {
       doChange(event);
     }
 
-    public void childRemoved(PsiTreeChangeEvent event) {
+    public void childRemoved(@NotNull PsiTreeChangeEvent event) {
       doChange(event);
     }
 
-    public void childReplaced(PsiTreeChangeEvent event) {
+    public void childReplaced(@NotNull PsiTreeChangeEvent event) {
       doChange(event);
     }
 
-    public void childMoved(PsiTreeChangeEvent event) {
+    public void childMoved(@NotNull PsiTreeChangeEvent event) {
       doChange(event);
     }
 
-    public void childrenChanged(PsiTreeChangeEvent event) {
+    public void childrenChanged(@NotNull PsiTreeChangeEvent event) {
       doChange(event);
     }
 

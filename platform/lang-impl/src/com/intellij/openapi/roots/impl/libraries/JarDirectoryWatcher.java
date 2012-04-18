@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2012 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.openapi.roots.impl.libraries;
 
 import com.intellij.openapi.Disposable;
@@ -10,18 +25,17 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.*;
 import com.intellij.util.messages.MessageBusConnection;
+import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author ksafonov
  */
 public abstract class JarDirectoryWatcher implements Disposable {
-
   private final JarDirectories myJarDirectories;
   private MessageBusConnection myBusConnection = null;
-  private final List<LocalFileSystem.WatchRequest> myWatchRequests = new ArrayList<LocalFileSystem.WatchRequest>();
+  private Collection<LocalFileSystem.WatchRequest> myWatchRequests = Collections.emptySet();
 
   public JarDirectoryWatcher(JarDirectories jarDirectories) {
     myJarDirectories = jarDirectories;
@@ -29,43 +43,64 @@ public abstract class JarDirectoryWatcher implements Disposable {
 
   public void updateWatchedRoots() {
     final LocalFileSystem fs = LocalFileSystem.getInstance();
-    if (!myWatchRequests.isEmpty()) {
-      fs.removeWatchedRoots(myWatchRequests);
-      myWatchRequests.clear();
-    }
     if (!myJarDirectories.isEmpty()) {
+      final Set<String> recursiveRoots = new HashSet<String>();
+      final Set<String> flatRoots = new HashSet<String>();
       final VirtualFileManager fm = VirtualFileManager.getInstance();
       for (OrderRootType rootType : myJarDirectories.getRootTypes()) {
         for (String url : myJarDirectories.getDirectories(rootType)) {
           if (fm.getFileSystem(VirtualFileManager.extractProtocol(url)) instanceof LocalFileSystem) {
             final boolean watchRecursively = myJarDirectories.isRecursive(rootType, url);
-            final LocalFileSystem.WatchRequest request = fs.addRootToWatch(VirtualFileManager.extractPath(url), watchRecursively);
-            myWatchRequests.add(request);
+            final String path = VirtualFileManager.extractPath(url);
+            (watchRecursively ? recursiveRoots : flatRoots).add(path);
           }
         }
       }
+
+      if (flatRoots.isEmpty()) {
+        myWatchRequests = fs.replaceWatchedRoots(myWatchRequests, recursiveRoots, true);
+      }
+      else if (recursiveRoots.isEmpty()) {
+        myWatchRequests = fs.replaceWatchedRoots(myWatchRequests, flatRoots, false);
+      }
+      else {
+        fs.removeWatchedRoots(myWatchRequests);
+        final int rootsTotal = flatRoots.size() + recursiveRoots.size();
+        if (rootsTotal > 0) {
+          myWatchRequests = new ArrayList<LocalFileSystem.WatchRequest>(rootsTotal);
+          myWatchRequests.addAll(fs.addRootsToWatch(flatRoots, false));
+          myWatchRequests.addAll(fs.addRootsToWatch(recursiveRoots, true));
+        }
+        else {
+          myWatchRequests = Collections.emptySet();
+        }
+      }
+
       if (myBusConnection == null) {
         myBusConnection = ApplicationManager.getApplication().getMessageBus().connect();
         myBusConnection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
-          public void before(final List<? extends VFileEvent> events) {
+          @Override
+          public void before(@NotNull final List<? extends VFileEvent> events) {
           }
 
-          public void after(final List<? extends VFileEvent> events) {
+          @Override
+          public void after(@NotNull final List<? extends VFileEvent> events) {
             boolean changesDetected = false;
             for (VFileEvent event : events) {
               if (event instanceof VFileCopyEvent) {
                 final VFileCopyEvent copyEvent = (VFileCopyEvent)event;
+                final VirtualFile file = copyEvent.getFile();
                 if (isUnderJarDirectory(copyEvent.getNewParent() + "/" + copyEvent.getNewChildName()) ||
-                    isUnderJarDirectory(copyEvent.getFile().getUrl())) {
+                    file != null && isUnderJarDirectory(file.getUrl())) {
                   changesDetected = true;
                   break;
                 }
               }
               else if (event instanceof VFileMoveEvent) {
                 final VFileMoveEvent moveEvent = (VFileMoveEvent)event;
-
                 final VirtualFile file = moveEvent.getFile();
-                if (isUnderJarDirectory(file.getUrl()) || isUnderJarDirectory(moveEvent.getOldParent().getUrl() + "/" + file.getName())) {
+                if (file != null &&
+                    (isUnderJarDirectory(file.getUrl()) || isUnderJarDirectory(moveEvent.getOldParent().getUrl() + "/" + file.getName()))) {
                   changesDetected = true;
                   break;
                 }
@@ -103,11 +138,7 @@ public abstract class JarDirectoryWatcher implements Disposable {
       }
     }
     else {
-      final MessageBusConnection connection = myBusConnection;
-      if (connection != null) {
-        myBusConnection = null;
-        connection.disconnect();
-      }
+      cleanup();
     }
   }
 
@@ -115,13 +146,19 @@ public abstract class JarDirectoryWatcher implements Disposable {
 
   @Override
   public void dispose() {
+    cleanup();
+  }
+
+  private void cleanup() {
     if (!myWatchRequests.isEmpty()) {
       LocalFileSystem.getInstance().removeWatchedRoots(myWatchRequests);
-      myWatchRequests.clear();
+      myWatchRequests = Collections.emptySet();
     }
-    if (myBusConnection != null) {
-      myBusConnection.disconnect();
+
+    final MessageBusConnection connection = myBusConnection;
+    if (connection != null) {
       myBusConnection = null;
+      connection.disconnect();
     }
   }
 }

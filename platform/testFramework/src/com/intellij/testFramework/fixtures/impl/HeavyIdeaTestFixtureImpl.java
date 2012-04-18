@@ -57,6 +57,7 @@ import com.intellij.util.PathUtil;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.ByteArrayOutputStream;
@@ -80,6 +81,11 @@ class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTestFixtu
   private final Set<ModuleFixtureBuilder> myModuleFixtureBuilders = new THashSet<ModuleFixtureBuilder>();
   private EditorListenerTracker myEditorListenerTracker;
   private ThreadTracker myThreadTracker;
+  private final String myName;
+
+  public HeavyIdeaTestFixtureImpl(@NotNull String name) {
+    myName = name;
+  }
 
   protected void addModuleFixtureBuilder(ModuleFixtureBuilder builder) {
     myModuleFixtureBuilders.add(builder);
@@ -138,7 +144,7 @@ class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTestFixtu
     new WriteCommandAction.Simple(null) {
       @Override
       protected void run() throws Throwable {
-        File projectFile = FileUtil.createTempFile(PROJECT_FILE_PREFIX, PROJECT_FILE_SUFFIX);
+        File projectFile = FileUtil.createTempFile(myName+"_", PROJECT_FILE_SUFFIX);
         FileUtil.delete(projectFile);
         myFilesToDelete.add(projectFile);
 

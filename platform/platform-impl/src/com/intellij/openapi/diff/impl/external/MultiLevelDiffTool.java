@@ -21,10 +21,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.diff.DiffContent;
-import com.intellij.openapi.diff.DiffRequest;
-import com.intellij.openapi.diff.DiffTool;
-import com.intellij.openapi.diff.DiffViewer;
+import com.intellij.openapi.diff.*;
 import com.intellij.openapi.diff.impl.CompositeDiffPanel;
 import com.intellij.openapi.diff.impl.DiffUtil;
 import com.intellij.openapi.keymap.KeymapManager;
@@ -35,7 +32,6 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.config.AbstractProperty;
-import com.intellij.util.containers.hash.HashMap;
 
 import java.awt.*;
 import java.util.*;
@@ -95,7 +91,7 @@ public class MultiLevelDiffTool implements DiffTool, DiscloseMultiRequest {
 
       new AnAction() {
         public void actionPerformed(final AnActionEvent e) {
-          frameWrapper.getFrame().dispose();
+          Disposer.dispose(frameWrapper);
         }
       }.registerCustomShortcutSet(new CustomShortcutSet(KeymapManager.getInstance().getActiveKeymap().getShortcuts("CloseContent")),
                                   diffPanel.getComponent());
@@ -104,7 +100,7 @@ public class MultiLevelDiffTool implements DiffTool, DiscloseMultiRequest {
     }
   }
 
-  private CompositeDiffPanel createPanel(DiffRequest request, final Window window, final Disposable parentDisposable) {
+  private CompositeDiffPanel createPanel(final DiffRequest request, final Window window, final Disposable parentDisposable) {
     final CompositeDiffPanel panel = new CompositeDiffPanel(request.getProject(), this, window, parentDisposable);
     request.getGenericData().put(PlatformDataKeys.COMPOSITE_DIFF_VIEWER.getName(), panel);
     final List<Pair<String, DiffRequest>> layers = request.getOtherLayers();
@@ -113,6 +109,18 @@ public class MultiLevelDiffTool implements DiffTool, DiscloseMultiRequest {
         layer.getSecond().getGenericData().put(PlatformDataKeys.COMPOSITE_DIFF_VIEWER.getName(), panel);
       }
     }
+    Disposer.register(parentDisposable, new Disposable() {
+      @Override
+      public void dispose() {
+        final String name = PlatformDataKeys.COMPOSITE_DIFF_VIEWER.getName();
+        request.getGenericData().remove(name);
+        if (layers != null) {
+          for (Pair<String, DiffRequest> layer : layers) {
+            layer.getSecond().getGenericData().remove(name);
+          }
+        }
+      }
+    });
     return panel;
   }
 
@@ -161,7 +169,17 @@ public class MultiLevelDiffTool implements DiffTool, DiscloseMultiRequest {
     AbstractProperty.AbstractPropertyContainer config = DiffManagerImpl.getInstanceEx().getProperties();
     if (isFile && DiffManagerImpl.ENABLE_FILES.value(config)) return false;
     if (! isFile && DiffManagerImpl.ENABLE_FOLDERS.value(config)) return false;
-    return request.haveMultipleLayers();
+    return ! (DiffViewerType.merge.equals(request.getType()) && contentsWriteable(request));
+    //return request.haveMultipleLayers();
+  }
+
+  private boolean contentsWriteable(DiffRequest request) {
+    final DiffContent[] contents = request.getContents();
+
+    for (DiffContent content : contents) {
+      if (content != null && content.getDocument().isWritable()) return true;
+    }
+    return false;
   }
 
   @Override

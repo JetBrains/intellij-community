@@ -154,16 +154,3 @@ public final class InjectedLanguageBlockWrapper implements Block {
     return myOriginal.isLeaf();
   }
 }
-class A {
-  private List<Integer> myResult;
-  {
-    m(10, myResult);
-  }
-
-  private void m(int i, List<Integer> result) {
-    if (i > 0) {
-      m(i - 1, result);
-    }
-    result.add(i);
-  }
-}

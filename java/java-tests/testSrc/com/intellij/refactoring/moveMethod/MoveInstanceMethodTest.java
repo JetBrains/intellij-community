@@ -33,6 +33,8 @@ public class MoveInstanceMethodTest extends LightRefactoringTestCase {
 
   public void testQualifyThisHierarchy() throws Exception {doTest(true, 0);}
 
+  public void testQualifyField() throws Exception {doTest(false, 0);}
+
   public void testAnonymousHierarchy() throws Exception {doTest(true, 0);}
 
   public void testTwoParams() throws Exception { doTest(true, 0); }
@@ -52,6 +54,8 @@ public class MoveInstanceMethodTest extends LightRefactoringTestCase {
   public void testThisInAnonymous() throws Exception { doTest(true, 0); }
 
   public void testOverloadingMethods() throws Exception { doTest(true, 0); }
+
+  public void testPolyadicExpr() throws Exception { doTest(true, 0); }
 
   public void testEscalateVisibility() throws Exception {
     doTest(true, 0, VisibilityUtil.ESCALATE_VISIBILITY);

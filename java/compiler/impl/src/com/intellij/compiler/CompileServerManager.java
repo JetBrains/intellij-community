@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,6 +33,7 @@ import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.compiler.CompilerTopics;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerAdapter;
@@ -90,10 +91,12 @@ public class CompileServerManager implements ApplicationComponent{
   private static final String COMPILE_SERVER_SYSTEM_ROOT = "compile-server";
   private static final String LOGGER_CONFIG = "log.xml";
   private static final String DEFAULT_LOGGER_CONFIG = "defaultLogConfig.xml";
-  private volatile OSProcessHandler myProcessHandler;
+  private volatile ServerWrapper myProcessHandler;
   private final File mySystemDirectory;
-  private volatile CompileServerClient myClient = new CompileServerClient();
-  private final SequentialTaskExecutor myTaskExecutor = new SequentialTaskExecutor(new SequentialTaskExecutor.AsyncTaskExecutor() {
+  @Nullable
+  private volatile CompileServerClient myClient;
+  private final SequentialTaskExecutor myTaskExecutor = new SequentialTaskExecutor(new AsyncTaskExecutor() {
+    @Override
     public void submit(Runnable runnable) {
       ApplicationManager.getApplication().executeOnPooledThread(runnable);
     }
@@ -102,6 +105,12 @@ public class CompileServerManager implements ApplicationComponent{
   private static final int MAKE_TRIGGER_DELAY = 5 * 1000 /*5 seconds*/;
   private final Map<RequestFuture, Project> myAutomakeFutures = new HashMap<RequestFuture, Project>();
   private final CompileServerClasspathManager myClasspathManager = new CompileServerClasspathManager();
+  private final AsyncTaskExecutor myAsyncExec = new AsyncTaskExecutor() {
+    @Override
+    public void submit(Runnable runnable) {
+      ApplicationManager.getApplication().executeOnPooledThread(runnable);
+    }
+  };
 
   public CompileServerManager(final ProjectManager projectManager) {
     myProjectManager = projectManager;
@@ -121,11 +130,11 @@ public class CompileServerManager implements ApplicationComponent{
       private final Alarm myAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
       private final AtomicBoolean myAutoMakeInProgress = new AtomicBoolean(false);
       @Override
-      public void before(List<? extends VFileEvent> events) {
+      public void before(@NotNull List<? extends VFileEvent> events) {
       }
 
       @Override
-      public void after(List<? extends VFileEvent> events) {
+      public void after(@NotNull List<? extends VFileEvent> events) {
         if (shouldTriggerMake(events)) {
           scheduleMake(new Runnable() {
             @Override
@@ -191,6 +200,14 @@ public class CompileServerManager implements ApplicationComponent{
     sendNotification(paths, true);
   }
 
+  @Nullable
+  private static String getProjectPath(final Project project) {
+    final String path = project.getPresentableUrl();
+    if (path == null) return path;
+    final VirtualFile vFile = LocalFileSystem.getInstance().findFileByPath(path);
+    return vFile != null ? vFile.getPath() : null;
+  }
+
   public void sendReloadRequest(final Project project) {
     if (!project.isDefault() && project.isOpen()) {
       myTaskExecutor.submit(new Runnable() {
@@ -200,7 +217,7 @@ public class CompileServerManager implements ApplicationComponent{
             if (!project.isDisposed()) {
               final CompileServerClient client = ensureServerRunningAndClientConnected(false);
               if (client != null) {
-                client.sendProjectReloadRequest(Collections.singletonList(project.getLocation()));
+                client.sendProjectReloadRequest(Collections.singletonList(getProjectPath(project)));
               }
             }
           }
@@ -237,6 +254,7 @@ public class CompileServerManager implements ApplicationComponent{
       final CompileServerClient client = ensureServerRunningAndClientConnected(false);
       if (client != null) {
         myTaskExecutor.submit(new Runnable() {
+          @Override
           public void run() {
             final Project[] openProjects = myProjectManager.getOpenProjects();
             if (openProjects.length > 0) {
@@ -251,7 +269,7 @@ public class CompileServerManager implements ApplicationComponent{
               }
               for (Project project : openProjects) {
                 try {
-                  client.sendFSEvent(project.getLocation(), changed, deleted);
+                  client.sendFSEvent(getProjectPath(project), changed, deleted);
                 }
                 catch (Exception e) {
                   LOG.info(e);
@@ -268,11 +286,12 @@ public class CompileServerManager implements ApplicationComponent{
   }
 
   private void runAutoMake() {
-    final Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
+    if (ApplicationManager.getApplication().isUnitTestMode()) return;
+    final Project[] openProjects = myProjectManager.getOpenProjects();
     if (openProjects.length > 0) {
       final List<RequestFuture> futures = new ArrayList<RequestFuture>();
       for (final Project project : openProjects) {
-        if (project.isDefault()) {
+        if (project.isDefault() || project.isDisposed()) {
           continue;
         }
         final CompilerWorkspaceConfiguration config = CompilerWorkspaceConfiguration.getInstance(project);
@@ -280,7 +299,8 @@ public class CompileServerManager implements ApplicationComponent{
           continue;
         }
         final RequestFuture future = submitCompilationTask(project, false, true, Collections.<String>emptyList(), Collections.<String>emptyList(),
-                                                           Collections.<String>emptyList(), new AutoMakeResponseHandler(project));
+                                                           Collections.<String>emptyList(), Collections.<String, String>emptyMap(), new AutoMakeResponseHandler(project)
+        );
         if (future != null) {
           futures.add(future);
           synchronized (myAutomakeFutures) {
@@ -305,26 +325,35 @@ public class CompileServerManager implements ApplicationComponent{
     synchronized (myAutomakeFutures) {
       for (Map.Entry<RequestFuture, Project> entry : myAutomakeFutures.entrySet()) {
         if (entry.getValue().equals(project)) {
-          entry.getKey().cancel(true);
+          entry.getKey().cancel(false);
         }
       }
     }
   }
 
   @Nullable
-  public RequestFuture submitCompilationTask(final Project project, final boolean isRebuild, final boolean isMake, 
-                                             final Collection<String> modules, final Collection<String> artifacts, 
-                                             final Collection<String> paths, final JpsServerResponseHandler handler) {
-    final String projectId = project.getLocation();
+  public RequestFuture submitCompilationTask(final Project project, final boolean isRebuild, final boolean isMake,
+                                             final Collection<String> modules, final Collection<String> artifacts,
+                                             final Collection<String> paths,
+                                             final Map<String, String> _userData, final JpsServerResponseHandler handler) {
+    final String projectId = getProjectPath(project);
     final Ref<RequestFuture> futureRef = new Ref<RequestFuture>(null);
     final RunnableFuture future = myTaskExecutor.submit(new Runnable() {
+      @Override
       public void run() {
         try {
           final CompileServerClient client = ensureServerRunningAndClientConnected(true);
           if (client != null) {
+            final Map<String, String> userData = new LinkedHashMap<String, String>();
+            if (!isRebuild) { //todo pass user data on rebuild as well?
+              userData.putAll(_userData);
+            }
+            if (Registry.is("compiler.server.use.external.javac.process")) {
+              userData.put(GlobalOptions.USE_EXTERNAL_JAVAC_OPTION, "true");
+            }
             final RequestFuture requestFuture = isRebuild ?
-              client.sendRebuildRequest(projectId, handler) :
-              client.sendCompileRequest(isMake, projectId, modules, artifacts, paths, handler);
+                                                client.sendRebuildRequest(projectId, handler, userData) :
+                                                client.sendCompileRequest(isMake, projectId, modules, artifacts, paths, userData, handler);
             futureRef.set(requestFuture);
           }
           else {
@@ -368,9 +397,9 @@ public class CompileServerManager implements ApplicationComponent{
   // executed in one thread at a time
   @Nullable
   private CompileServerClient ensureServerRunningAndClientConnected(boolean forceRestart) throws Throwable {
-    final OSProcessHandler ph = myProcessHandler;
+    final ServerWrapper ph = myProcessHandler;
     final CompileServerClient cl = myClient;
-    final boolean processNotRunning = ph == null || ph.isProcessTerminated() || ph.isProcessTerminating();
+    final boolean processNotRunning = ph == null || ph.isDead();
     final boolean clientNotConnected = cl == null || !cl.isConnected();
 
     if (processNotRunning || clientNotConnected) {
@@ -383,82 +412,103 @@ public class CompileServerManager implements ApplicationComponent{
         return null;
       }
 
+      final File workDirectory = new File(mySystemDirectory, COMPILE_SERVER_SYSTEM_ROOT);
+      workDirectory.mkdirs();
+      ensureLogConfigExists(workDirectory);
+
       final int port = NetUtils.findAvailableSocketPort();
-      final Process process = launchServer(port);
+      final long serverPingInterval = Registry.intValue("compiler.server.ping.interval", -1) * 1000L;
+      ServerWrapper wrapper = Registry.is("compiler.server.in.process") ? launchServerThread(workDirectory, port) : launchServerProcess(port, serverPingInterval, workDirectory);
 
-      final OSProcessHandler processHandler = new OSProcessHandler(process, null) {
-        protected boolean shouldDestroyProcessRecursively() {
-          return true;
-        }
-      };
-      final StringBuilder serverStartMessage = new StringBuilder();
-      final Semaphore semaphore  = new Semaphore();
-      semaphore.down();
-      processHandler.addProcessListener(new ProcessAdapter() {
-        public void onTextAvailable(ProcessEvent event, Key outputType) {
-          // re-translate server's output to idea.log
-          final String text = event.getText();
-          if (!StringUtil.isEmpty(text)) {
-            LOG.info("COMPILE_SERVER [" +outputType.toString() +"]: "+ text.trim());
-          }
-        }
-      });
-      processHandler.addProcessListener(new ProcessAdapter() {
-        public void processTerminated(ProcessEvent event) {
-          try {
-            processHandler.removeProcessListener(this);
-          }
-          finally {
-            semaphore.up();
-          }
-        }
-
-        public void onTextAvailable(ProcessEvent event, Key outputType) {
-          if (outputType == ProcessOutputTypes.STDERR) {
-            try {
-              final String text = event.getText();
-              if (text != null) {
-                if (text.contains(Server.SERVER_SUCCESS_START_MESSAGE) || text.contains(Server.SERVER_ERROR_START_MESSAGE)) {
-                  processHandler.removeProcessListener(this);
-                }
-                if (serverStartMessage.length() > 0) {
-                  serverStartMessage.append("\n");
-                }
-                serverStartMessage.append(text);
-              }
-            }
-            finally {
-              semaphore.up();
-            }
-          }
-        }
-      });
-      processHandler.startNotify();
-      semaphore.waitFor();
-
-      final String startupMsg = serverStartMessage.toString();
-      if (!startupMsg.contains(Server.SERVER_SUCCESS_START_MESSAGE)) {
-        throw new Exception("Server startup failed: " + startupMsg);
-      }
-
-      CompileServerClient client = new CompileServerClient();
+      CompileServerClient client = new CompileServerClient(serverPingInterval, myAsyncExec);
       boolean connected = false;
       try {
         connected = client.connect(NetUtils.getLocalHostString(), port);
         if (connected) {
           final RequestFuture setupFuture = sendSetupRequest(client);
           setupFuture.waitFor();
-          myProcessHandler = processHandler;
+          myProcessHandler = wrapper;
           myClient = client;
         }
       }
       finally {
         if (!connected) {
-          shutdownServer(cl, processHandler);
+          shutdownServer(cl, wrapper);
         }
       }
     }
     return myClient;
+  }
+
+  private static ServerWrapper launchServerThread(final File workDirectory, final int port) {
+    final Server server = new Server(workDirectory, Registry.is("compiler.server.use.memory.temp.cache"));
+    //todo hostname
+    server.start(port);
+    return new ServerWrapper(null, server);
+  }
+
+  private ServerWrapper launchServerProcess(int port, long serverPingInterval, File workDirectory) throws Exception {
+    final Process process = launchServer(port, serverPingInterval, workDirectory);
+
+    final OSProcessHandler processHandler = new OSProcessHandler(process, null) {
+      @Override
+      protected boolean shouldDestroyProcessRecursively() {
+        return true;
+      }
+    };
+    final StringBuilder serverStartMessage = new StringBuilder();
+    final Semaphore semaphore  = new Semaphore();
+    semaphore.down();
+    processHandler.addProcessListener(new ProcessAdapter() {
+      @Override
+      public void onTextAvailable(ProcessEvent event, Key outputType) {
+        // re-translate server's output to idea.log
+        final String text = event.getText();
+        if (!StringUtil.isEmpty(text)) {
+          LOG.info("COMPILE_SERVER [" +outputType.toString() +"]: "+ text.trim());
+        }
+      }
+    });
+    processHandler.addProcessListener(new ProcessAdapter() {
+      @Override
+      public void processTerminated(ProcessEvent event) {
+        try {
+          processHandler.removeProcessListener(this);
+        }
+        finally {
+          semaphore.up();
+        }
+      }
+
+      @Override
+      public void onTextAvailable(ProcessEvent event, Key outputType) {
+        if (outputType == ProcessOutputTypes.STDERR) {
+          try {
+            final String text = event.getText();
+            if (text != null) {
+              if (text.contains(Server.SERVER_SUCCESS_START_MESSAGE) || text.contains(Server.SERVER_ERROR_START_MESSAGE)) {
+                processHandler.removeProcessListener(this);
+              }
+              if (serverStartMessage.length() > 0) {
+                serverStartMessage.append("\n");
+              }
+              serverStartMessage.append(text);
+            }
+          }
+          finally {
+            semaphore.up();
+          }
+        }
+      }
+    });
+    processHandler.startNotify();
+    semaphore.waitFor();
+
+    final String startupMsg = serverStartMessage.toString();
+    if (!startupMsg.contains(Server.SERVER_SUCCESS_START_MESSAGE)) {
+      throw new Exception("Server startup failed: " + startupMsg);
+    }
+    return new ServerWrapper(processHandler, null);
   }
 
   private static RequestFuture sendSetupRequest(final @NotNull CompileServerClient client) throws Exception {
@@ -481,7 +531,8 @@ public class CompileServerManager implements ApplicationComponent{
     fillSdks(globals);
     fillGlobalLibraries(globals);
 
-    return client.sendSetupRequest(data, globals, EncodingManager.getInstance().getDefaultCharsetName());
+    final String ignoredFilesList = FileTypeManager.getInstance().getIgnoredFilesList();
+    return client.sendSetupRequest(data, globals, EncodingManager.getInstance().getDefaultCharsetName(), ignoredFilesList);
   }
 
   private static void fillSdks(List<GlobalLibrary> globals) {
@@ -503,7 +554,14 @@ public class CompileServerManager implements ApplicationComponent{
         additionalDataXml = JDOMUtil.writeElement(element, "\n");
       }
       final List<String> paths = convertToLocalPaths(sdk.getRootProvider().getFiles(OrderRootType.CLASSES));
-      globals.add(new SdkLibrary(name, sdkType.getName(), homePath, paths, additionalDataXml));
+      String versionString = sdk.getVersionString();
+      if (versionString != null && sdkType instanceof JavaSdk) {
+        final JavaSdkVersion version = ((JavaSdk)sdkType).getVersion(versionString);
+        if (version != null) {
+          versionString = version.getDescription();
+        }
+      }
+      globals.add(new SdkLibrary(name, sdkType.getName(), versionString, homePath, paths, additionalDataXml));
     }
   }
 
@@ -535,7 +593,7 @@ public class CompileServerManager implements ApplicationComponent{
   //  commandLine.add((launcherUsed? "-J" : "") + "-D" + CharsetToolkit.FILE_ENCODING_PROPERTY + "=" + CharsetToolkit.getDefaultSystemCharset().name());
   //}
 
-  private Process launchServer(final int port) throws ExecutionException {
+  private Process launchServer(final int port, long pingInterval, File workDirectory) throws ExecutionException {
     // validate tools.jar presence
     final JavaCompiler systemCompiler = ToolProvider.getSystemJavaCompiler();
     if (systemCompiler == null) {
@@ -551,7 +609,21 @@ public class CompileServerManager implements ApplicationComponent{
     cmdLine.addParameter("-XX:ReservedCodeCacheSize=64m");
     cmdLine.addParameter("-Xmx" + Registry.intValue("compiler.server.heap.size") + "m");
     cmdLine.addParameter("-Djava.awt.headless=true");
-    //cmdLine.addParameter("-DuseJavaUtilZip");
+
+    final String shouldGenerateIndex = System.getProperty(GlobalOptions.GENERATE_CLASSPATH_INDEX_OPTION);
+    if (shouldGenerateIndex != null) {
+      cmdLine.addParameter("-D"+ GlobalOptions.GENERATE_CLASSPATH_INDEX_OPTION +"=" + shouldGenerateIndex);
+    }
+    //noinspection ConstantConditions
+    if (pingInterval > 0L) {
+      cmdLine.addParameter("-D" + GlobalOptions.PING_INTERVAL_MS_OPTION + "=" + pingInterval);
+    }
+
+    final String maxBuilds = Registry.stringValue("compiler.server.max.simultaneous.builds");
+    if (!StringUtil.isEmpty(maxBuilds)) {
+      cmdLine.addParameter("-D" + GlobalOptions.MAX_SIMULTANEOUS_BUILDS_OPTION + "=" + maxBuilds);
+    }
+
     final String additionalOptions = Registry.stringValue("compiler.server.vm.options");
     if (!StringUtil.isEmpty(additionalOptions)) {
       final StringTokenizer tokenizer = new StringTokenizer(additionalOptions, " ", false);
@@ -570,11 +642,7 @@ public class CompileServerManager implements ApplicationComponent{
     if (Registry.is("compiler.server.use.memory.temp.cache")) {
       cmdLine.addParameter("-D"+ GlobalOptions.USE_MEMORY_TEMP_CACHE_OPTION + "=true");
     }
-    if (Registry.is("compiler.server.use.external.javac.process")) {
-      cmdLine.addParameter("-D"+ GlobalOptions.USE_EXTERNAL_JAVAC_OPTION + "=true");
-    }
     cmdLine.addParameter("-D"+ GlobalOptions.HOSTNAME_OPTION + "=" + NetUtils.getLocalHostString());
-    cmdLine.addParameter("-D"+ GlobalOptions.VM_EXE_PATH_OPTION + "=" + FileUtil.toSystemIndependentName(vmExecutablePath));
 
     // javac's VM should use the same default locale that IDEA uses in order for javac to print messages in 'correct' language
     final String lang = System.getProperty("user.language");
@@ -603,10 +671,6 @@ public class CompileServerManager implements ApplicationComponent{
 
     cmdLine.addParameter(org.jetbrains.jps.server.Server.class.getName());
     cmdLine.addParameter(Integer.toString(port));
-
-    final File workDirectory = new File(mySystemDirectory, COMPILE_SERVER_SYSTEM_ROOT);
-    workDirectory.mkdirs();
-    ensureLogConfigExists(workDirectory);
 
     cmdLine.addParameter(FileUtil.toSystemIndependentName(workDirectory.getPath()));
 
@@ -647,7 +711,7 @@ public class CompileServerManager implements ApplicationComponent{
     shutdownServer(myClient, myProcessHandler);
   }
 
-  private static void shutdownServer(final CompileServerClient client, final OSProcessHandler processHandler) {
+  private static void shutdownServer(final CompileServerClient client, final ServerWrapper processHandler) {
     try {
       if (client != null && client.isConnected()) {
         final Future future = client.sendShutdownRequest();
@@ -743,7 +807,7 @@ public class CompileServerManager implements ApplicationComponent{
           statusMessage = "Auto make completed with errors";
           break;
         case CANCELED:
-          statusMessage = "Auto make has been canceled";
+          //statusMessage = "Auto make has been canceled";
           break;
       }
       if (statusMessage != null) {
@@ -776,16 +840,20 @@ public class CompileServerManager implements ApplicationComponent{
   private class ProjectWatcher extends ProjectManagerAdapter {
     private final Map<Project, MessageBusConnection> myConnections = new HashMap<Project, MessageBusConnection>();
 
+    @Override
     public void projectOpened(final Project project) {
       final MessageBusConnection conn = project.getMessageBus().connect();
       myConnections.put(project, conn);
       conn.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
+        @Override
         public void beforeRootsChange(final ModuleRootEvent event) {
           sendReloadRequest(project);
         }
 
+        @Override
         public void rootsChanged(final ModuleRootEvent event) {
           myTaskExecutor.submit(new Runnable() {
+            @Override
             public void run() {
               try {
                 // this will reload sdks and global libraries
@@ -803,10 +871,12 @@ public class CompileServerManager implements ApplicationComponent{
       });
     }
 
+    @Override
     public void projectClosing(Project project) {
       sendReloadRequest(project);
     }
 
+    @Override
     public void projectClosed(Project project) {
       final MessageBusConnection conn = myConnections.remove(project);
       if (conn != null) {
@@ -814,4 +884,28 @@ public class CompileServerManager implements ApplicationComponent{
       }
     }
   }
+
+  private static class ServerWrapper {
+    final @Nullable OSProcessHandler myHandler;
+    final @Nullable Server myServer;
+
+    ServerWrapper(OSProcessHandler handler, Server server) {
+      myHandler = handler;
+      myServer = server;
+    }
+
+    public void destroyProcess() {
+      if (myHandler != null) {
+        myHandler.destroyProcess();
+      } else if (myServer != null) {
+        myServer.stop();
+      }
+    }
+
+    public boolean isDead() {
+      return myHandler != null && (myHandler.isProcessTerminated() || myHandler.isProcessTerminating()) ||
+             myServer != null && myServer.isStopped();
+    }
+  }
 }
+

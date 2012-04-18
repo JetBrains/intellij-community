@@ -88,6 +88,10 @@ public class TempDirTestFixtureImpl extends BaseFixture implements TempDirTestFi
     return createTempDirectory().getAbsolutePath();
   }
 
+  public File createTempFile(String prefix, String suffix) throws IOException {
+    return FileUtil.createTempFile(new File(getTempDirPath()), prefix, suffix, true);
+  }
+
   @Override
   @Nullable
   public VirtualFile getFile(final String path) {

@@ -268,6 +268,10 @@ public class ChangesBrowser extends JPanel implements TypeSafeDataProvider {
     myViewer.setChangesToDisplay(getCurrentDisplayedChanges(), myToSelect);
   }
 
+  public void setAlwayExpandList(final boolean value) {
+    myViewer.setAlwaysExpandList(value);
+  }
+
   private JComponent createToolbar() {
     DefaultActionGroup toolbarGroups = new DefaultActionGroup();
     myToolBarGroup = new DefaultActionGroup();
@@ -292,7 +296,7 @@ public class ChangesBrowser extends JPanel implements TypeSafeDataProvider {
       }
 
       public void actionPerformed(AnActionEvent e) {
-        showDiff();
+        showDiff();                     // todo here
       }
     };
     myDiffAction.registerCustomShortcutSet(CommonShortcuts.getDiff(), myViewer);

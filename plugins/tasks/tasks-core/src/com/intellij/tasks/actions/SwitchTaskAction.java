@@ -185,7 +185,7 @@ public class SwitchTaskAction extends BaseTaskAction {
           int result = Messages.showYesNoCancelDialog(project,
                                    "Changelist associated with this task is not empty.\n" +
                                    "Do you want to remove it and move the changes to the active changelist?",
-                                   "Changelist is not empty", Messages.getWarningIcon());
+                                   "Changelist Not Empty", Messages.getWarningIcon());
           switch (result) {
             case 0:
               break l;

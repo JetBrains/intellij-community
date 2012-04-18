@@ -22,14 +22,9 @@ import java.util.List;
  */
 public class JavacServerBootstrap {
 
-  public static BaseOSProcessHandler launchJavacServer(String vmExecutablePath,
-                                                       int heapSize,
-                                                       int port,
-                                                       File workingDir,
-                                                       List<String> vmOptions) throws Exception {
-
+  public static BaseOSProcessHandler launchJavacServer(String sdkHomePath, int heapSize, int port, File workingDir, List<String> vmOptions) throws Exception {
     final List<String> cmdLine = new ArrayList<String>();
-    appendParam(cmdLine, vmExecutablePath);
+    appendParam(cmdLine, getVMExecutablePath(sdkHomePath));
     appendParam(cmdLine, "-server");
     appendParam(cmdLine, "-XX:MaxPermSize=150m");
     //appendParam(cmdLine, "-XX:ReservedCodeCacheSize=64m");
@@ -38,7 +33,7 @@ public class JavacServerBootstrap {
 
     // debugging
     //appendParam(cmdLine, "-XX:+HeapDumpOnOutOfMemoryError");
-    //appendParam(cmdLine, "-Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=5009");
+    //appendParam(cmdLine, "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5009");
 
     // javac's VM should use the same default locale that IDEA uses in order for javac to print messages in 'correct' language
     final String lang = System.getProperty("user.language");
@@ -64,7 +59,7 @@ public class JavacServerBootstrap {
 
     appendParam(cmdLine, "-classpath");
 
-    final List<File> cp = ClasspathBootstrap.getJavacServerClasspath();
+    final List<File> cp = ClasspathBootstrap.getJavacServerClasspath(sdkHomePath);
     final StringBuilder classpath = new StringBuilder();
     for (File file : cp) {
       if (classpath.length() > 0) {
@@ -154,5 +149,9 @@ public class JavacServerBootstrap {
       }
     }
     cmdLine.add(param);
+  }
+
+  public static String getVMExecutablePath(String sdkHome) {
+    return sdkHome + "/bin/java";
   }
 }

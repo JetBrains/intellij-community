@@ -42,7 +42,12 @@ public class ColorUtil {
   }
 
   public static Color withAlpha(Color c, double a) {
-    return new Color(c.getRed(), c.getGreen(), c.getBlue(), (int)(255 * a));
+    return toAlpha(c, (int)(255 * a));
+  }
+
+  public static Color toAlpha(Color color, int a) {
+    Color c = color != null ? color : Color.black;
+    return new Color(c.getRed(), c.getGreen(), c.getBlue(), a);
   }
 
   public static Color withAlphaAdjustingDarkness(Color c, double d) {

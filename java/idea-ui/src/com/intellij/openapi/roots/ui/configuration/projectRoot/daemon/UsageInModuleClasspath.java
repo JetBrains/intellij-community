@@ -2,6 +2,9 @@ package com.intellij.openapi.roots.ui.configuration.projectRoot.daemon;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
+import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.roots.impl.OrderEntryUtil;
+import com.intellij.openapi.roots.ui.configuration.ModuleEditor;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ModuleStructureConfigurable;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
 import org.jetbrains.annotations.NotNull;
@@ -70,6 +73,17 @@ public class UsageInModuleClasspath extends ProjectStructureElementUsage {
     if (mySourceElement instanceof LibraryProjectStructureElement) {
       ModuleStructureConfigurable.getInstance(myModule.getProject())
         .removeLibraryOrderEntry(myModule, ((LibraryProjectStructureElement)mySourceElement).getLibrary());
+    }
+  }
+
+  @Override
+  public void replaceElement(final ProjectStructureElement newElement) {
+    final ModuleEditor editor = myContext.getModulesConfigurator().getModuleEditor(myModule);
+    if (editor != null) {
+      final ModifiableRootModel rootModel = editor.getModifiableRootModelProxy();
+      OrderEntryUtil.replaceLibrary(rootModel, ((LibraryProjectStructureElement)mySourceElement).getLibrary(),
+                                    ((LibraryProjectStructureElement)newElement).getLibrary());
+      myContext.getDaemonAnalyzer().queueUpdate(new ModuleProjectStructureElement(myContext, myModule));
     }
   }
 }

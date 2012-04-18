@@ -38,6 +38,7 @@ public class CreateResourceFileActionGroup extends DefaultActionGroup {
     a.add(new CreateTypedResourceFileAction("Values", "values", "resources", true, false));
     a.add(new CreateTypedResourceFileAction("Menu", "menu", "menu", false, false));
     a.add(new CreateTypedResourceFileAction("Animation", "anim", "set"));
+    a.add(new CreateTypedResourceFileAction("Animator", "animator", "set"));
     myMajorAction = a;
     add(a);
     for (CreateTypedResourceFileAction subaction : a.getSubactions()) {

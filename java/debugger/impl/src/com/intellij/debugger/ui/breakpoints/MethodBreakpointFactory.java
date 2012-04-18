@@ -44,8 +44,24 @@ public class MethodBreakpointFactory extends BreakpointFactory{
     return MethodBreakpoint.DISABLED_ICON;
   }
 
-  public BreakpointPanel createBreakpointPanel(Project project, final DialogWrapper parentDialog) {
-    BreakpointPanel panel = new BreakpointPanel(project, new MethodBreakpointPropertiesPanel(project), new BreakpointPanelAction[]{
+  @Override
+  protected String getHelpID() {
+    return HelpID.METHOD_BREAKPOINTS;
+  }
+
+  @Override
+  public String getDisplayName() {
+    return DebuggerBundle.message("method.breakpoints.tab.title");
+  }
+
+  @Override
+  public BreakpointPropertiesPanel createBreakpointPropertiesPanel(Project project) {
+    return new MethodBreakpointPropertiesPanel(project);
+  }
+
+  @Override
+  protected BreakpointPanelAction[] createBreakpointPanelActions(Project project, final DialogWrapper parentDialog) {
+    return new BreakpointPanelAction[]{
       new SwitchViewAction(),
       new AddWildcardBreakpointAction(project),
       new GotoSourceAction(project) {
@@ -58,9 +74,13 @@ public class MethodBreakpointFactory extends BreakpointFactory{
       new RemoveAction(project),
       new ToggleGroupByClassesAction(),
       new ToggleFlattenPackagesAction(),
-    }, getBreakpointCategory(), DebuggerBundle.message("method.breakpoints.tab.title"), HelpID.METHOD_BREAKPOINTS);
+    };
+  }
+
+  @Override
+  protected void configureBreakpointPanel(BreakpointPanel panel) {
+    super.configureBreakpointPanel(panel);
     panel.getTree().setGroupByMethods(false);
-    return panel;
   }
 
   public Key<MethodBreakpoint> getBreakpointCategory() {

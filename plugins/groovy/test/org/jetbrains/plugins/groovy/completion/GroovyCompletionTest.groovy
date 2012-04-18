@@ -18,13 +18,13 @@ package org.jetbrains.plugins.groovy.completion;
 
 
 import com.intellij.codeInsight.CodeInsightSettings
+import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementPresentation
-import org.jetbrains.plugins.groovy.GroovyFileType
-import org.jetbrains.plugins.groovy.util.TestUtils
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager
+import org.jetbrains.plugins.groovy.GroovyFileType
 import org.jetbrains.plugins.groovy.formatter.GroovyCodeStyleSettings
-import com.intellij.codeInsight.completion.CompletionType
+import org.jetbrains.plugins.groovy.util.TestUtils
 
 /**
  * @author Maxim.Medvedev
@@ -96,7 +96,7 @@ public class GroovyCompletionTest extends GroovyCompletionTestBase {
   }
 
   public void testNamedParametersForConstructorCall() throws Throwable {
-    doVariantableTest("hahaha", "hohoho");
+    doVariantableTest("hahaha", "hohoho", "hashCode");
   }
 
   public void testUnfinishedMethodTypeParameter() throws Throwable {
@@ -110,6 +110,9 @@ public class GroovyCompletionTest extends GroovyCompletionTestBase {
   public void testInstanceofHelpsDetermineType() throws Throwable {
     doBasicTest();
   }
+
+  public void testInstanceofHelpsDetermineTypeInBinaryAnd() throws Throwable { doBasicTest() }
+  public void testInstanceofHelpsDetermineTypeInBinaryOr() throws Throwable { doBasicTest() }
 
   public void testNotInstanceofDoesntHelpDetermineType() throws Throwable {
     myFixture.testCompletion(getTestName(false) + ".groovy", getTestName(false) + ".groovy");
@@ -187,6 +190,8 @@ public class GroovyCompletionTest extends GroovyCompletionTestBase {
   public void testThisKeywordCompletionAfterClassName2() throws Throwable {
     doBasicTest();
   }
+
+  public void testWhileInstanceof() throws Throwable { doBasicTest() }
 
   public void testCompletionInParameterListInClosableBlock() throws Throwable { doBasicTest(); }
   public void testCompletionInParameterListInClosableBlock3() throws Throwable { doBasicTest(); }
@@ -1126,6 +1131,8 @@ public class KeyVO {
 Util.foo()<caret>'''
   }
 
+  public void testUseDescendantStaticImport() { doBasicTest() }
+
   public void testPreferInterfacesInImplements() {
     myFixture.addClass('interface FooIntf {}')
     myFixture.addClass('class FooClass {}')
@@ -1133,4 +1140,168 @@ Util.foo()<caret>'''
   }
 
   public void testPropertyChain() { doBasicTest() }
+
+  public void testMethodPointer() {
+    doBasicTest('''\
+class Base {
+  def prefixMethod(){}
+  def prefixField
+}
+
+new Base().&prefix<caret>''', '''\
+class Base {
+  def prefixMethod(){}
+  def prefixField
+}
+
+new Base().&prefixMethod<caret>''')
+  }
+
+  private void doBasicTest(String before, String after) {
+    myFixture.configureByText('_a.groovy', before)
+    myFixture.completeBasic()
+    assertNull(myFixture.lookupElements)
+    myFixture.checkResult(after)
+  }
+
+  public void testFieldPointer() {
+    doBasicTest '''\
+class Base {
+  def prefixMethod(){}
+  def prefixField
+}
+
+new Base().@prefix<caret>''', '''\
+class Base {
+  def prefixMethod(){}
+  def prefixField
+}
+
+new Base().@prefixField<caret>'''
+  }
+
+  public void testPrivateFieldOnSecondInvocation() {
+    myFixture.configureByText('_a.groovy', '''\
+class Base {
+  private int field1
+}
+
+new Base().fie<caret>x''')
+    myFixture.complete(CompletionType.BASIC, 2)
+    assert myFixture.lookupElementStrings == ['field1']
+  }
+
+  public void testForIn() {
+    assert doContainsTest('in', 'for (int i i<caret>')
+    assert doContainsTest('in', 'for (i i<caret>')
+  }
+
+  public void testReturnInVoidMethod() {
+    doBasicTest('''\
+void foo() {
+  retur<caret>
+}
+''', '''\
+void foo() {
+  return<caret>
+}
+''')
+  }
+
+  public void testReturnInNotVoidMethod() {
+    doBasicTest('''\
+String foo() {
+  retur<caret>
+}
+''', '''\
+String foo() {
+  return <caret>
+}
+''')
+  }
+
+  void testInferArgumentTypeFromMethod1() {
+    doBasicTest('''\
+def bar(String s) {}
+
+def foo(Integer a) {
+    bar(a)
+    a.subSequen<caret>()
+}
+''', '''\
+def bar(String s) {}
+
+def foo(Integer a) {
+    bar(a)
+    a.subSequence(<caret>)
+}
+''')
+  }
+
+  void testInferArgumentTypeFromMethod2() {
+    doBasicTest('''\
+def bar(String s) {}
+
+def foo(Integer a) {
+  while(true) {
+    bar(a)
+    a.subSequen<caret>()
+  }
+}
+''', '''\
+def bar(String s) {}
+
+def foo(Integer a) {
+  while(true) {
+    bar(a)
+    a.subSequence(<caret>)
+  }
+}
+''')
+  }
+
+  void testInferArgumentTypeFromMethod3() {
+    doBasicTest('''\
+def bar(String s) {}
+
+def foo(Integer a) {
+    bar(a)
+    print a
+    a.subSequen<caret>()
+}
+''', '''\
+def bar(String s) {}
+
+def foo(Integer a) {
+    bar(a)
+    print a
+    a.subSequence(<caret>)
+}
+''')
+  }
+
+  void testInferArgumentTypeFromMethod4() {
+    doBasicTest('''\
+def bar(String s) {}
+
+def foo(Integer a) {
+  while(true) {
+    bar(a)
+    print a
+    a.subSequen<caret>()
+  }
+}
+''', '''\
+def bar(String s) {}
+
+def foo(Integer a) {
+  while(true) {
+    bar(a)
+    print a
+    a.subSequence(<caret>)
+  }
+}
+''')
+  }
+
 }

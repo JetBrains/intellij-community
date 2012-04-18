@@ -15,14 +15,22 @@
  */
 package com.siyeh.ig.errorhandling;
 
+import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.siyeh.InspectionGadgetsBundle;import com.siyeh.ig.BaseInspection;
+import com.intellij.psi.util.InheritanceUtil;
+import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
+
 public class NewExceptionWithoutArgumentsInspection extends BaseInspection {
+
+  @SuppressWarnings("PublicField")
+  public boolean ignoreWithoutParameters = false;
+
   @Nls
   @NotNull
   @Override
@@ -37,11 +45,17 @@ public class NewExceptionWithoutArgumentsInspection extends BaseInspection {
   }
 
   @Override
+  public JComponent createOptionsPanel() {
+    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("new.exception.without.arguments.ignore.option"), this,
+                                          "ignoreWithoutParameters");
+  }
+
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new NewExceptionWithoutArgumentsVisitor();
   }
 
-  private static class NewExceptionWithoutArgumentsVisitor extends BaseInspectionVisitor {
+  private class NewExceptionWithoutArgumentsVisitor extends BaseInspectionVisitor {
 
     @Override
     public void visitNewExpression(PsiNewExpression expression) {
@@ -63,16 +77,29 @@ public class NewExceptionWithoutArgumentsInspection extends BaseInspection {
         return;
       }
       final PsiClass aClass = (PsiClass)target;
-      final GlobalSearchScope resolveScope = expression.getResolveScope();
-      final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(expression.getProject());
-      final PsiClass exceptionClass = psiFacade.findClass(CommonClassNames.JAVA_LANG_EXCEPTION, resolveScope);
-      if (exceptionClass == null) {
+      if (!InheritanceUtil.isInheritor(aClass, CommonClassNames.JAVA_LANG_EXCEPTION)) {
         return;
       }
-      if (!aClass.isInheritor(exceptionClass, true)) {
-        return;
+      if (ignoreWithoutParameters) {
+        if (!hasAccessibleConstructorWithParameters(aClass, expression)) return;
       }
       registerNewExpressionError(expression);
+    }
+
+    private boolean hasAccessibleConstructorWithParameters(PsiClass aClass, PsiElement context) {
+      final PsiMethod[] constructors = aClass.getConstructors();
+      for (PsiMethod constructor : constructors) {
+        final PsiParameterList parameterList = constructor.getParameterList();
+        final int count = parameterList.getParametersCount();
+        if (count <= 0) {
+          continue;
+        }
+        final PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(context.getProject()).getResolveHelper();
+        if (resolveHelper.isAccessible(constructor, context, aClass)) {
+          return true;
+        }
+      }
+      return false;
     }
   }
 }

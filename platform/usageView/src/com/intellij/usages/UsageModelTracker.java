@@ -19,6 +19,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -35,32 +36,32 @@ public class UsageModelTracker implements Disposable {
   public UsageModelTracker(Project project) {
     final PsiTreeChangeListener myPsiListener = new PsiTreeChangeAdapter() {
       @Override
-      public void childAdded(PsiTreeChangeEvent event) {
+      public void childAdded(@NotNull PsiTreeChangeEvent event) {
         doFire(event, false);
       }
 
       @Override
-      public void childRemoved(PsiTreeChangeEvent event) {
+      public void childRemoved(@NotNull PsiTreeChangeEvent event) {
         doFire(event, false);
       }
 
       @Override
-      public void childReplaced(PsiTreeChangeEvent event) {
+      public void childReplaced(@NotNull PsiTreeChangeEvent event) {
         doFire(event, false);
       }
 
       @Override
-      public void childrenChanged(PsiTreeChangeEvent event) {
+      public void childrenChanged(@NotNull PsiTreeChangeEvent event) {
         doFire(event, false);
       }
 
       @Override
-      public void childMoved(PsiTreeChangeEvent event) {
+      public void childMoved(@NotNull PsiTreeChangeEvent event) {
         doFire(event, false);
       }
 
       @Override
-      public void propertyChanged(PsiTreeChangeEvent event) {
+      public void propertyChanged(@NotNull PsiTreeChangeEvent event) {
         doFire(event, true);
       }
     };

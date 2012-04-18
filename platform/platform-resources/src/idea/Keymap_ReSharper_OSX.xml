@@ -1,0 +1,200 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component>
+  <keymap version="1" name="ReSharper OSX" parent="Visual Studio">
+    <action id="ActivateProjectToolWindow">
+      <keyboard-shortcut first-keystroke="shift alt L"/>
+    </action>
+    <action id="ClassNameCompletion">
+      <keyboard-shortcut first-keystroke="shift alt SPACE"/>
+    </action>
+    <action id="CommentByBlockComment">
+      <keyboard-shortcut first-keystroke="shift control SLASH"/>
+    </action>
+    <action id="CommentByLineComment">
+      <keyboard-shortcut first-keystroke="control alt SLASH"/>
+    </action>
+    <action id="Console.History.Browse"/>
+    <action id="Console.History.BrowseTW">
+      <keyboard-shortcut first-keystroke="control COMMA"/>
+    </action>
+    <action id="Console.TableResult.AddRow">
+      <keyboard-shortcut first-keystroke="meta alt ENTER"/>
+    </action>
+    <action id="Console.TableResult.Reload"/>
+    <action id="DatabaseView.AddAction">
+      <keyboard-shortcut first-keystroke="meta alt ENTER"/>
+    </action>
+    <action id="ExportTestResults">
+      <keyboard-shortcut first-keystroke="control alt U"/>
+    </action>
+    <action id="ExtractClass">
+      <keyboard-shortcut first-keystroke="control alt E" second-keystroke="C"/>
+    </action>
+    <action id="ExtractInclude">
+      <keyboard-shortcut first-keystroke="control alt E" second-keystroke="I"/>
+    </action>
+    <action id="ExtractInlineCssAction">
+      <keyboard-shortcut first-keystroke="control alt E" second-keystroke="L"/>
+    </action>
+    <action id="ExtractInterface">
+      <keyboard-shortcut first-keystroke="control alt E" second-keystroke="F"/>
+    </action>
+    <action id="ExtractMethod">
+      <keyboard-shortcut first-keystroke="control R" second-keystroke="M"/>
+    </action>
+    <action id="ExtractModule">
+      <keyboard-shortcut first-keystroke="control alt E" second-keystroke="M"/>
+    </action>
+    <action id="ExtractSuperclass">
+      <keyboard-shortcut first-keystroke="control alt E" second-keystroke="S"/>
+    </action>
+    <action id="FileStructurePopup">
+      <keyboard-shortcut first-keystroke="control alt F"/>
+    </action>
+    <action id="FindUsages">
+      <keyboard-shortcut first-keystroke="shift F12"/>
+    </action>
+    <action id="FindUsagesInFile">
+      <keyboard-shortcut first-keystroke="shift alt F11"/>
+    </action>
+    <action id="Generate">
+      <keyboard-shortcut first-keystroke="meta alt ENTER"/>
+    </action>
+    <action id="GotoClass">
+      <keyboard-shortcut first-keystroke="control T"/>
+    </action>
+    <action id="GotoDeclaration">
+      <keyboard-shortcut first-keystroke="F12"/>
+      <mouse-shortcut keystroke="control button1"/>
+      <mouse-shortcut keystroke="button2"/>
+    </action>
+    <action id="GotoFile">
+      <keyboard-shortcut first-keystroke="shift control T"/>
+    </action>
+    <action id="GotoImplementation">
+      <mouse-shortcut keystroke="control alt button1"/>
+      <keyboard-shortcut first-keystroke="control F12"/>
+    </action>
+    <action id="GotoLine">
+      <keyboard-shortcut first-keystroke="alt BACK_SLASH"/>
+    </action>
+    <action id="GotoNextError">
+      <keyboard-shortcut first-keystroke="shift alt PAGE_DOWN"/>
+    </action>
+    <action id="GotoPreviousError">
+      <keyboard-shortcut first-keystroke="shift alt PAGE_UP"/>
+    </action>
+    <action id="GotoRelated">
+      <keyboard-shortcut first-keystroke="control alt F7"/>
+    </action>
+    <action id="GotoSymbol">
+      <keyboard-shortcut first-keystroke="shift alt T"/>
+    </action>
+    <action id="GotoTest"/>
+    <action id="GotoTypeDeclaration">
+      <keyboard-shortcut first-keystroke="shift control F11"/>
+    </action>
+    <action id="Images.ShowThumbnails"/>
+    <action id="Inline">
+      <keyboard-shortcut first-keystroke="control R" second-keystroke="S"/>
+    </action>
+    <action id="InsertLiveTemplate">
+      <keyboard-shortcut first-keystroke="control E" second-keystroke="L"/>
+    </action>
+    <action id="InspectCode">
+      <keyboard-shortcut first-keystroke="shift control alt A"/>
+    </action>
+    <action id="IntroduceField">
+      <keyboard-shortcut first-keystroke="control E" second-keystroke="F"/>
+    </action>
+    <action id="IntroduceParameter">
+      <keyboard-shortcut first-keystroke="control E" second-keystroke="P"/>
+    </action>
+    <action id="IntroduceVariable">
+      <keyboard-shortcut first-keystroke="control E" second-keystroke="V"/>
+    </action>
+    <action id="JumpToLastChange">
+      <keyboard-shortcut first-keystroke="shift control BACK_SPACE"/>
+    </action>
+    <action id="Move">
+      <keyboard-shortcut first-keystroke="control R" second-keystroke="O"/>
+    </action>
+    <action id="NewElement">
+      <keyboard-shortcut first-keystroke="alt INSERT"/>
+      <keyboard-shortcut first-keystroke="control meta alt ENTER"/>
+    </action>
+    <action id="PerforceDirect.Edit"/>
+    <action id="QuickChangeScheme"/>
+    <action id="QuickJavaDoc">
+      <keyboard-shortcut first-keystroke="shift control F1"/>
+    </action>
+    <action id="RecentChangedFiles">
+      <keyboard-shortcut first-keystroke="shift control COMMA"/>
+    </action>
+    <action id="RecentFiles">
+      <keyboard-shortcut first-keystroke="control COMMA"/>
+    </action>
+    <action id="Refactorings.QuickListPopupAction">
+      <keyboard-shortcut first-keystroke="shift control R"/>
+    </action>
+    <action id="ReformatCode">
+      <keyboard-shortcut first-keystroke="alt F8"/>
+    </action>
+    <action id="RenameElement">
+      <keyboard-shortcut first-keystroke="control R" second-keystroke="R"/>
+    </action>
+    <action id="ReplaceInPath"/>
+    <action id="RestoreDefaultLayout"/>
+    <action id="SafeDelete">
+      <keyboard-shortcut first-keystroke="control R" second-keystroke="D"/>
+      <keyboard-shortcut first-keystroke="alt BACK_SPACE" second-keystroke="D"/>
+    </action>
+    <action id="ShowBookmarks">
+      <keyboard-shortcut first-keystroke="control BACK_QUOTE"/>
+    </action>
+    <action id="ShowUsages"/>
+    <action id="SmartTypeCompletion">
+      <keyboard-shortcut first-keystroke="control alt SPACE"/>
+    </action>
+    <action id="SurroundWithLiveTemplate">
+      <keyboard-shortcut first-keystroke="control E" second-keystroke="U"/>
+    </action>
+    <action id="SwitchApply">
+      <keyboard-shortcut first-keystroke="control alt ENTER"/>
+    </action>
+    <action id="SwitchDown">
+      <keyboard-shortcut first-keystroke="control alt DOWN"/>
+    </action>
+    <action id="SwitchLeft">
+      <keyboard-shortcut first-keystroke="control alt LEFT"/>
+    </action>
+    <action id="SwitchRight">
+      <keyboard-shortcut first-keystroke="control alt RIGHT"/>
+    </action>
+    <action id="SwitchUp">
+      <keyboard-shortcut first-keystroke="control alt UP"/>
+    </action>
+    <action id="TypeHierarchy">
+      <keyboard-shortcut first-keystroke="control E" second-keystroke="H"/>
+    </action>
+    <action id="TypeHierarchyBase.BaseOnThisType">
+      <keyboard-shortcut first-keystroke="meta UP"/>
+    </action>
+    <action id="Unscramble">
+      <keyboard-shortcut first-keystroke="control E" second-keystroke="T"/>
+    </action>
+    <action id="UsageView.ShowRecentFindUsages">
+      <keyboard-shortcut first-keystroke="control COMMA"/>
+    </action>
+    <action id="Vcs.ShowMessageHistory">
+      <keyboard-shortcut first-keystroke="control M"/>
+    </action>
+    <action id="Vcs.UpdateProject"/>
+    <action id="context.load"/>
+    <action id="org.jetbrains.plugins.ruby.console.LoadInIrbConsoleAction"/>
+    <action id="tasks.switch"/>
+    <action id="tasks.switch.toolbar"/>
+  </keymap>
+</component>
+
+

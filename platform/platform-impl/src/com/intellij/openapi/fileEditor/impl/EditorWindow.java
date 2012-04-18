@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.ScrollingModel;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.fileEditor.TextEditor;
@@ -33,6 +34,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.util.IconUtil;
@@ -44,6 +46,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
+import java.awt.event.FocusAdapter;
+import java.awt.event.FocusEvent;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -464,6 +468,7 @@ public class EditorWindow {
     return myPanel.getSize();
   }
 
+  @Nullable
   public EditorTabbedContainer getTabbedPane() {
     return myTabbedPane;
   }
@@ -493,6 +498,15 @@ public class EditorWindow {
       myEditor = editor;
       myWindow = window;
       add(editor.getComponent(), BorderLayout.CENTER);
+      addFocusListener(new FocusAdapter() {
+        @Override
+        public void focusGained(FocusEvent e) {
+          final JComponent focus = myEditor.getSelectedEditorWithProvider().getFirst().getPreferredFocusedComponent();
+          if (focus != null) {
+            IdeFocusManager.getGlobalInstance().requestFocus(focus, true);
+          }
+        }
+      });
     }
 
     @Override
@@ -574,7 +588,11 @@ public class EditorWindow {
     if (editor != null) {
       final int index = findFileIndex(editor.getFile());
       if (index != -1) {
-        myTabbedPane.setSelectedIndex(index, focusEditor);
+        UIUtil.invokeLaterIfNeeded(new Runnable() {
+          public void run() {
+            myTabbedPane.setSelectedIndex(index, focusEditor);
+          }
+        });
       }
     }
   }
@@ -664,6 +682,18 @@ public class EditorWindow {
           */
           // open only selected file in the new splitter instead of opening all tabs
           final VirtualFile file = selectedEditor.getFile();
+
+          if (virtualFile == null) {
+            for (FileEditorAssociateFinder finder : Extensions.getExtensions(FileEditorAssociateFinder.EP_NAME)) {
+              VirtualFile associatedFile = finder.getAssociatedFileToOpen(fileEditorManager.getProject(), file);
+
+              if (associatedFile != null) {
+                virtualFile = associatedFile;
+                break;
+              }
+            }
+          }
+
           final VirtualFile nextFile = virtualFile == null ? file : virtualFile;
           final FileEditor[] editors = fileEditorManager.openFileImpl3(res, nextFile, false, null, true).first;
           syncCaretIfPossible(editors);
@@ -969,23 +999,24 @@ public class EditorWindow {
   }
 
   public void setFilePinned(final VirtualFile file, final boolean pinned) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
     final EditorComposite editorComposite = findFileComposite(file);
     if (editorComposite == null) {
       throw new IllegalArgumentException("file is not open: " + file.getPath());
     }
+    boolean wasPinned = editorComposite.isPinned();
     editorComposite.setPinned(pinned);
-    updateFileIcon(file);
+    if (wasPinned != pinned && ApplicationManager.getApplication().isDispatchThread()) {
+      updateFileIcon(file);
+    }
   }
 
   void trimToSize(final int limit, @Nullable final VirtualFile fileToIgnore, final boolean transferFocus) {
-    if (myTabbedPane == null) {
-      return;
-    }
+    if (myTabbedPane == null) return;
 
     FileEditorManagerEx.getInstanceEx(getManager().getProject()).getReady(this).doWhenDone(new Runnable() {
       @Override
       public void run() {
+        if (myTabbedPane == null) return;
         final boolean closeNonModifiedFilesFirst = UISettings.getInstance().CLOSE_NON_MODIFIED_FILES_FIRST;
         final EditorComposite selectedComposite = getSelectedEditor();
         try {

@@ -137,7 +137,8 @@ public abstract class DiffRequest {
    */
   public void addHint(Object hint) {
     myHints.add(hint);
-    if (haveMultipleLayers()) {
+    // do not take hint about no differences acceptable for properties level - then just don't show it
+    if (haveMultipleLayers() && ! DiffTool.HINT_ALLOW_NO_DIFFERENCES.equals(hint)) {
       for (Pair<String, DiffRequest> pair : myAdditional) {
         pair.getSecond().addHint(hint);
       }

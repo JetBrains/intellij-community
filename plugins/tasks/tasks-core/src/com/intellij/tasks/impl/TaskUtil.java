@@ -26,21 +26,30 @@ import org.jetbrains.annotations.Nullable;
  * @author Dmitry Avdeev
  */
 public class TaskUtil {
-  public static String getChangeListName(Task task) {
-    return task.isIssue() ? task.getId() + ": " + task.getSummary() : task.getSummary();
+
+  public static String formatTask(Task task, String format) {
+    return format.replace("{id}", task.getId()).replace("{number}", task.getNumber())
+      .replace("{project}", task.getProject()).replace("{summary}", task.getSummary());
   }
 
   @Nullable
   public static String getChangeListComment(TaskManagerImpl manager, Task task) {
     final TaskRepository repository = task.getRepository();
-    if (repository != null) return repository.getTaskComment(task);
+    if (repository != null) {
+      return getChangeListComment(task, repository);
+    }
     for (TaskRepository repo : manager.getAllRepositories()) {
       try {
         final Task origin = repo.findTask(task.getId());
-        if (origin != null) return repo.getTaskComment(origin);
+        if (origin != null) return getChangeListComment(task, repo);
       } catch (Exception ignored) {}
     }
     return null;
+  }
+
+  @Nullable
+  private static String getChangeListComment(Task task, TaskRepository repository) {
+    return repository.isShouldFormatCommitMessage() ? formatTask(task, repository.getCommitMessageFormat()) : null;
   }
 
   public static String getTrimmedSummary(LocalTask task) {

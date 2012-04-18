@@ -94,16 +94,18 @@ public class DiffLog implements DiffTreeChangeBuilder<ASTNode,ASTNode> {
     private final ASTNode myOldChild;
     private final ASTNode myNewChild;
 
-    public ReplaceEntry(ASTNode oldChild, ASTNode newChild) {
-      myOldChild = oldChild;
-      myNewChild = newChild;
+    public ReplaceEntry(@NotNull ASTNode oldNode, @NotNull ASTNode newNode) {
+      myOldChild = oldNode;
+      myNewChild = newNode;
+      ASTNode parent = oldNode.getTreeParent();
+      assert parent != null : "old:" + oldNode + " new:" + newNode;
     }
 
     @Override
     void doActualPsiChange(@NotNull PsiFile file, @NotNull ASTDiffBuilder astDiffBuilder) {
       ASTNode oldNode = myOldChild;
-      ASTNode parent = oldNode.getTreeParent();
       ASTNode newNode = myNewChild;
+      ASTNode parent = oldNode.getTreeParent();
       assert parent != null : "old:" + oldNode + " new:" + newNode;
 
       final PsiElement psiParent = parent.getPsi();

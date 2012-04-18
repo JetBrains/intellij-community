@@ -23,6 +23,10 @@ class AndroidFacet extends Facet {
   boolean useCustomManifestForCompilation;
   boolean packTestCode;
 
+  String apkRelativePath;
+  String customDebugKeyStorePath;
+  String nativeLibsFolderRelativePath;
+
   AndroidFacet(Module module, String name) {
     this.module = module
     this.name = name;
@@ -52,6 +56,11 @@ class AndroidFacet extends Facet {
   File getAssetsDir() throws IOException {
     def manifestFile = findFileByRelativeModulePath(assetsFolderRelativePath, false);
     return manifestFile != null ? manifestFile.getCanonicalFile() : null;
+  }
+
+  File getNativeLibsDir() throws IOException {
+    def nativeLibsFolder = findFileByRelativeModulePath(nativeLibsFolderRelativePath, false);
+    return nativeLibsFolder != null ? nativeLibsFolder.getCanonicalFile() : null;
   }
 
   private File findFileByRelativeModulePath(String relativePath, boolean lookInContentRoot) {

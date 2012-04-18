@@ -30,6 +30,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.GrReferenceAdjuster;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
@@ -133,9 +134,11 @@ public class GroovyOverrideImplementUtil {
     for (int i = 0; i < parameters.length; i++) {
       if (i > 0) buffer.append(", ");
       PsiParameter parameter = parameters[i];
-      final PsiType parameterType = substitutor.substitute(parameter.getType());
-      buffer.append(parameterType.getCanonicalText());
-      buffer.append(" ");
+      if (!(parameter instanceof GrParameter && parameter.getTypeElement() == null)) {
+        final PsiType parameterType = substitutor.substitute(parameter.getType());
+        buffer.append(parameterType.getCanonicalText());
+        buffer.append(" ");
+      }
       final String paramName = parameter.getName();
       if (paramName != null) {
         buffer.append(paramName);

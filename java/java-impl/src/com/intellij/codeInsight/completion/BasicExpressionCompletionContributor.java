@@ -20,6 +20,7 @@ import com.intellij.codeInsight.lookup.*;
 import com.intellij.codeInsight.template.SmartCompletionContextType;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
 import com.intellij.codeInsight.template.impl.TemplateSettings;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.getters.ClassLiteralGetter;
@@ -67,7 +68,10 @@ public class BasicExpressionCompletionContributor {
     }
 
     if (!AFTER_DOT.accepts(element)) {
-      CollectionsUtilityMethodsProvider.addCompletions(parameters, result);
+      new CollectionsUtilityMethodsProvider(parameters.getPosition(),
+                                            parameters.getExpectedType(),
+                                            parameters.getDefaultType(), result)
+        .addCompletions(parameters.getParameters().getInvocationCount() > 1 || StringUtil.isNotEmpty(matcher.getPrefix()));
       ClassLiteralGetter.addCompletions(parameters, result, matcher);
 
       final PsiElement position = parameters.getPosition();

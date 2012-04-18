@@ -292,7 +292,7 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
                                                   final int parentId,
                                                   @NotNull VirtualFile file,
                                                   @NotNull NewVirtualFileSystem delegate,
-                                                  @NewVirtualFileSystem.FileBooleanAttributes int attributes) {
+                                                  @FileUtil.FileBooleanAttributes int attributes) {
     String name = file.getName();
 
     if (!name.isEmpty() && namesEqual(delegate, name, FSRecords.getName(id))) return false; // TODO: Handle root attributes change.
@@ -308,11 +308,11 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
 
     FSRecords.setTimestamp(id, delegate.getTimeStamp(file));
 
-    boolean isDir = (attributes & NewVirtualFileSystem.BA_DIRECTORY) != 0;
+    boolean isDir = (attributes & FileUtil.BA_DIRECTORY) != 0;
     FSRecords.setLength(id, isDir ? -1L : delegate.getLength(file));
 
-    boolean isSpecial = (attributes & (NewVirtualFileSystem.BA_REGULAR | NewVirtualFileSystem.BA_DIRECTORY | NewVirtualFileSystem.BA_EXISTS)) ==
-                        NewVirtualFileSystem.BA_EXISTS;
+    boolean isSpecial = (attributes & (FileUtil.BA_REGULAR | FileUtil.BA_DIRECTORY | FileUtil.BA_EXISTS)) ==
+                        FileUtil.BA_EXISTS;
     FSRecords.setFlags(id, (isDir ? IS_DIRECTORY_FLAG : 0) |
                            (delegate.isWritable(file) ? 0 : IS_READ_ONLY) |
                            (delegate.isSymLink(file) ? IS_SYMLINK : 0) |
@@ -408,7 +408,7 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
 
     VirtualFile fake = new FakeVirtualFile(parent, childName);
     int attributes = delegate.getBooleanAttributes(fake, -1);
-    if ((attributes & NewVirtualFileSystem.BA_EXISTS) != 0) {
+    if ((attributes & FileUtil.BA_EXISTS) != 0) {
       int child = createAndCopyRecord(delegate, fake, parentId, attributes);
       FSRecords.updateList(parentId, ArrayUtil.append(children, child));
       return child;
@@ -419,6 +419,12 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
 
   @Override
   public long getLength(@NotNull final VirtualFile file) {
+    final VirtualFile canonicalFile = file.getCanonicalFile();
+    return canonicalFile == null ? 0 : getLengthNoFollow(canonicalFile);
+  }
+
+  @SuppressWarnings("MethodMayBeStatic")
+  public long getLengthNoFollow(@NotNull final VirtualFile file) {
     final int id = getFileId(file);
 
     long len = FSRecords.getLength(id);
@@ -491,16 +497,18 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
 
   @NotNull
   public byte[] contentsToByteArray(@NotNull final VirtualFile file, boolean cacheContent) throws IOException {
+    final VirtualFile canonicalFile = getCanonicalFile(file);
+
     InputStream contentStream = null;
     boolean reloadFromDelegate;
     synchronized (INPUT_LOCK) {
-      reloadFromDelegate = mustReloadContent(file) || (contentStream = readContent(file)) == null;
+      reloadFromDelegate = mustReloadContent(canonicalFile) || (contentStream = readContent(canonicalFile)) == null;
     }
 
     if (reloadFromDelegate) {
-      final NewVirtualFileSystem delegate = getDelegate(file);
-      FSRecords.setLength(getFileId(file), delegate.getLength(file));
-      final byte[] content = delegate.contentsToByteArray(file);
+      final NewVirtualFileSystem delegate = getDelegate(canonicalFile);
+      FSRecords.setLength(getFileId(canonicalFile), delegate.getLength(canonicalFile));
+      final byte[] content = delegate.contentsToByteArray(canonicalFile);
 
       ApplicationEx application = (ApplicationEx)ApplicationManager.getApplication();
       // we should cache every local files content
@@ -509,8 +517,8 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
       if ((!delegate.isReadOnly() || !application.isInternal() && !application.isUnitTestMode()) &&
           content.length <= PersistentFSConstants.FILE_LENGTH_TO_CACHE_THRESHOLD) {
         synchronized (INPUT_LOCK) {
-          writeContent(file, new ByteSequence(content), delegate.isReadOnly());
-          setFlag(file, MUST_RELOAD_CONTENT, false);
+          writeContent(canonicalFile, new ByteSequence(content), delegate.isReadOnly());
+          setFlag(canonicalFile, MUST_RELOAD_CONTENT, false);
         }
       }
 
@@ -518,8 +526,8 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
     }
     else {
       try {
-        final int length = (int)file.getLength();
-        assert length >= 0 : file;
+        final int length = (int)canonicalFile.getLength();
+        assert length >= 0 : canonicalFile;
         return FileUtil.loadBytes(contentStream, length);
       }
       catch (IOException e) {
@@ -536,21 +544,31 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
   @Override
   @NotNull
   public InputStream getInputStream(@NotNull final VirtualFile file) throws IOException {
+    final VirtualFile canonicalFile = getCanonicalFile(file);
     synchronized (INPUT_LOCK) {
       InputStream contentStream;
-      if (mustReloadContent(file) || (contentStream = readContent(file)) == null) {
-        final NewVirtualFileSystem delegate = getDelegate(file);
-        final long len = delegate.getLength(file);
-        FSRecords.setLength(getFileId(file), len);
-        final InputStream nativeStream = delegate.getInputStream(file);
+      if (mustReloadContent(canonicalFile) || (contentStream = readContent(canonicalFile)) == null) {
+        final NewVirtualFileSystem delegate = getDelegate(canonicalFile);
+        final long len = delegate.getLength(canonicalFile);
+        FSRecords.setLength(getFileId(canonicalFile), len);
+        final InputStream nativeStream = delegate.getInputStream(canonicalFile);
 
         if (len > PersistentFSConstants.FILE_LENGTH_TO_CACHE_THRESHOLD) return nativeStream;
-        return createReplicator(file, nativeStream, len, delegate.isReadOnly());
+        return createReplicator(canonicalFile, nativeStream, len, delegate.isReadOnly());
       }
       else {
         return contentStream;
       }
     }
+  }
+
+  @NotNull
+  private static VirtualFile getCanonicalFile(@NotNull final VirtualFile file) throws IOException {
+    final VirtualFile canonicalFile = file.getCanonicalFile();
+    if (canonicalFile == null) {
+      throw new IOException("Broken link: " + file);
+    }
+    return canonicalFile;
   }
 
   private InputStream createReplicator(@NotNull final VirtualFile file, final InputStream nativeStream, final long fileLength, final boolean readOnly)
@@ -593,9 +611,13 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
 
   @Override
   @NotNull
-  public OutputStream getOutputStream(@NotNull final VirtualFile file, final Object requestor, final long modStamp, final long timeStamp)
-    throws IOException {
-    final VFileContentChangeEvent event = new VFileContentChangeEvent(requestor, file, file.getModificationStamp(), modStamp, false);
+  public OutputStream getOutputStream(@NotNull final VirtualFile file,
+                                      final Object requestor,
+                                      final long modStamp,
+                                      final long timeStamp) throws IOException {
+    final VirtualFile canonicalFile = getCanonicalFile(file);
+
+    final VFileContentChangeEvent event = new VFileContentChangeEvent(requestor, canonicalFile, canonicalFile.getModificationStamp(), modStamp, false);
 
     final List<VFileContentChangeEvent> events = Collections.singletonList(event);
 
@@ -607,18 +629,18 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
       public void close() throws IOException {
         super.close();
 
-        NewVirtualFileSystem delegate = getDelegate(file);
-        final OutputStream outputStream = delegate.getOutputStream(file, requestor, modStamp, timeStamp);
+        NewVirtualFileSystem delegate = getDelegate(canonicalFile);
+        final OutputStream outputStream = delegate.getOutputStream(canonicalFile, requestor, modStamp, timeStamp);
 
         //noinspection IOResourceOpenedButNotSafelyClosed
-        final DupOutputStream sink = new DupOutputStream(new BufferedOutputStream(writeContent(file, delegate.isReadOnly())), outputStream) {
+        final DupOutputStream sink = new DupOutputStream(new BufferedOutputStream(writeContent(canonicalFile, delegate.isReadOnly())), outputStream) {
           @Override
           public void close() throws IOException {
             try {
               super.close();
             }
             finally {
-              executeTouch(file, false, event.getModificationStamp());
+              executeTouch(canonicalFile, false, event.getModificationStamp());
               publisher.after(events);
             }
           }
@@ -673,6 +695,7 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
     }
   };
 
+  @NotNull
   private static List<? extends VFileEvent> validateEvents(@NotNull List<? extends VFileEvent> events) {
     final List<EventWrapper> deletionEvents = Lists.newArrayList();
     for (int i = 0, size = events.size(); i < size; i++) {
@@ -756,25 +779,22 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
             };
           }
           else {
-            root = new VirtualDirectoryImpl(basePath, null, fs, rootId) {
-              @NotNull
-              @Override
-              public String getName() {
-                final String name = super.getName();
-
-                // TODO: HACK!!! Get to simpler solution.
-                if (getFileSystem() instanceof JarFileSystem) {
-                  String jarName = name.substring(0, name.length() - JarFileSystem.JAR_SEPARATOR.length());
-                  return jarName.substring(jarName.lastIndexOf('/') + 1);
-                }
-
-                return name;
-              }
-            };
+            if (fs instanceof JarFileSystem) {
+              // optimization: for jar roots do not store base path in the myName field, use local FS file's getPath()
+              String parentPath = basePath.substring(0, basePath.indexOf(JarFileSystem.JAR_SEPARATOR));
+              final VirtualFile parentLocalFile = LocalFileSystem.getInstance().findFileByPath(parentPath);
+              if (parentLocalFile == null) return null;
+              root = new JarRoot(fs, rootId, parentLocalFile);
+            }
+            else {
+              root = new VirtualDirectoryImpl(basePath, null, fs, rootId);
+            }
           }
-          if (!fs.exists(root)) return null;
+          if (!fs.exists(root)) {
+            return null;
+          }
 
-          int attributes = NewVirtualFileSystem.BA_DIRECTORY | NewVirtualFileSystem.BA_EXISTS;
+          int attributes = FileUtil.BA_DIRECTORY | FileUtil.BA_EXISTS;
           boolean newRoot = copyRecordFromDelegateFS(rootId, 0, root, fs, attributes);
           if (!newRoot) {
             if (fs.getTimeStamp(root) != FSRecords.getTimestamp(rootId)) {
@@ -964,16 +984,17 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
     final NewVirtualFileSystem delegate = getDelegate(parent);
     VirtualFile fake = new FakeVirtualFile(parent, name);
     int attributes = delegate.getBooleanAttributes(fake, -1);
-    if ((attributes & NewVirtualFileSystem.BA_EXISTS) != 0) {
+    if ((attributes & FileUtil.BA_EXISTS) != 0) {
       final int parentId = getFileId(parent);
       int childId = createAndCopyRecord(delegate, fake, parentId, attributes);
       appendIdToParentList(parentId, childId);
+      assert parent instanceof VirtualDirectoryImpl : parent;
       final VirtualDirectoryImpl dir = (VirtualDirectoryImpl)parent;
       dir.addChild(dir.createChild(name, childId));
     }
   }
 
-  private static int createAndCopyRecord(@NotNull NewVirtualFileSystem delegateSystem, @NotNull VirtualFile delegateFile, int parentId, @NewVirtualFileSystem.FileBooleanAttributes int attributes) {
+  private static int createAndCopyRecord(@NotNull NewVirtualFileSystem delegateSystem, @NotNull VirtualFile delegateFile, int parentId, @FileUtil.FileBooleanAttributes int attributes) {
     int childId = FSRecords.createRecord();
     copyRecordFromDelegateFS(childId, parentId, delegateFile, delegateSystem, attributes);
     return childId;
@@ -1045,7 +1066,7 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
   }
 
   private static void executeRename(@NotNull VirtualFile file, @NotNull final String newName) {
-    ((VirtualFileSystemEntry)file).setName(newName);
+    ((VirtualFileSystemEntry)file).setNewName(newName);
     final int id = getFileId(file);
     FSRecords.setName(id, newName);
   }
@@ -1139,5 +1160,25 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
       delegate = Win32LocalFileSystem.getWin32Instance();
     }
     return delegate;
+  }
+
+  private static class JarRoot extends VirtualDirectoryImpl {
+    private final VirtualFile myParentLocalFile;
+
+    public JarRoot(@NotNull NewVirtualFileSystem fs, int rootId, @NotNull VirtualFile parentLocalFile) {
+      super("", null, fs, rootId);
+      myParentLocalFile = parentLocalFile;
+    }
+
+    @NotNull
+    @Override
+    public String getName() {
+      return myParentLocalFile.getName();
+    }
+
+    @Override
+    protected Object rawName() {
+      return myParentLocalFile.getPath() + JarFileSystem.JAR_SEPARATOR;
+    }
   }
 }

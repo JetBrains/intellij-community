@@ -35,9 +35,11 @@ public class IgnoredFilesComponent {
 
     if (registerListener) {
       project.getMessageBus().connect(project).subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
-        public void before(List<? extends VFileEvent> events) {}
+        @Override
+        public void before(@NotNull List<? extends VFileEvent> events) {}
 
-        public void after(List<? extends VFileEvent> events) {
+        @Override
+        public void after(@NotNull List<? extends VFileEvent> events) {
           resetCaches();
         }
       });

@@ -3,6 +3,7 @@ package org.jetbrains.jps.javac;
 import org.jboss.netty.channel.MessageEvent;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.api.RequestFuture;
+import org.jetbrains.jps.api.SharedThreadPool;
 import org.jetbrains.jps.client.SimpleProtobufClient;
 import org.jetbrains.jps.client.UUIDGetter;
 
@@ -16,7 +17,7 @@ import java.util.*;
 public class JavacServerClient extends SimpleProtobufClient<JavacServerResponseHandler>{
 
   public JavacServerClient() {
-    super(JavacRemoteProto.Message.getDefaultInstance(), new UUIDGetter() {
+    super(JavacRemoteProto.Message.getDefaultInstance(), SharedThreadPool.ASYNC_EXEC, new UUIDGetter() {
       @NotNull
       public UUID getSessionUUID(@NotNull MessageEvent e) {
         final JavacRemoteProto.Message message = (JavacRemoteProto.Message)e.getMessage();

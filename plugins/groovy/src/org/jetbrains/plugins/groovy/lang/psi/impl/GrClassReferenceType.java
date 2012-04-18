@@ -58,6 +58,8 @@ public class GrClassReferenceType extends PsiClassType {
 
   @Nullable
   public String getClassName() {
+    final PsiClass resolved = resolve();
+    if (resolved != null) return resolved.getName();
     return myReferenceElement.getReferenceName();
   }
 
@@ -145,7 +147,8 @@ public class GrClassReferenceType extends PsiClassType {
     return myLanguageLevel;
   }
 
-  public PsiClassType setLanguageLevel(final LanguageLevel languageLevel) {
+  @NotNull
+  public PsiClassType setLanguageLevel(@NotNull final LanguageLevel languageLevel) {
     return new GrClassReferenceType(myReferenceElement,languageLevel);
   }
 }

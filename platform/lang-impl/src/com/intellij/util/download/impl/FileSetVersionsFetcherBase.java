@@ -70,9 +70,17 @@ public abstract class FileSetVersionsFetcherBase<F extends DownloadableFileSetDe
           for (ArtifactItem item : items) {
             String url = item.getUrl();
             final String prefix = version.getUrlPrefix();
-            if (!url.startsWith("http://") && prefix != null) {
-              url = prefix + url;
+            if (url == null) {
+              if (prefix != null) {
+                url = prefix + item.getName();
+              }
+            } else {
+              if (!url.startsWith("http://") && prefix != null) {
+                url = prefix + url;
+              }
             }
+            assert url != null;
+
             files.add(DownloadableFileService.getInstance().createFileDescription(url, item.getName()));
           }
           result.add(createVersion(version, files));

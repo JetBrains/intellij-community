@@ -24,6 +24,7 @@ import com.intellij.openapi.cvsIntegration.CvsResult;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.RepositoryLocation;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
@@ -102,4 +103,8 @@ public class ComparableVcsRevisionOnOperation implements VcsFileRevision {
     return null;
   }
 
+  @Override
+  public RepositoryLocation getChangedRepositoryPath() {
+    return null;
+  }
 }

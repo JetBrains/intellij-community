@@ -16,6 +16,8 @@
 package com.intellij.ui.popup.util;
 
 import com.intellij.openapi.ui.popup.MnemonicNavigationFilter;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.ui.popup.WizardPopup;
 
 import java.awt.event.KeyEvent;
@@ -39,14 +41,14 @@ public abstract class MnemonicsSearch<T> {
       if (pos != -1) {
         final String text = filter.getTextFor(each);
         final String charText = text.substring(pos + 1, pos + 2);
-        myChar2ValueMap.put(charText.toUpperCase(), each);
+        myChar2ValueMap.put(StringUtilRt.toUpperCase(charText), each);
         myChar2ValueMap.put(charText.toLowerCase(), each);
       }
     }
   }
 
   public void process(KeyEvent e) {
-    if (e.isConsumed()) return;
+    if (e.isConsumed() || !StringUtil.isEmptyOrSpaces(myPopup.getSpeedSearch().getFilter())) return;
 
     if (Character.isLetterOrDigit(e.getKeyChar())) {
       final String s = Character.toString(e.getKeyChar());

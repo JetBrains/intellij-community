@@ -42,7 +42,7 @@ public class BackwardDependenciesStorage implements Flushable, Disposable {
   private static final int CLASS = 3;
 
   public BackwardDependenciesStorage(File file, final int cacheSize) throws IOException {
-    myMap = new PersistentHashMap<Integer, DependenciesSet>(file, new EnumeratorIntegerDescriptor(), new MyDataExternalizer());
+    myMap = new PersistentHashMap<Integer, DependenciesSet>(file, EnumeratorIntegerDescriptor.INSTANCE, new MyDataExternalizer());
 
     myCache = new SLRUCache<Integer, ReferencerSetHolder>(cacheSize * 2, cacheSize) {
       @NotNull

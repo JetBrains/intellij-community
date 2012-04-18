@@ -1,5 +1,6 @@
 package org.jetbrains.android.actions;
 
+import com.android.resources.ResourceFolderType;
 import com.intellij.CommonBundle;
 import com.intellij.ide.actions.CreateElementActionBase;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -22,15 +23,23 @@ import java.io.File;
  * @author Eugene.Kudelevsky
  */
 public class CreateResourceDirectoryAction extends CreateElementActionBase {
+  private final ResourceFolderType myResourceFolderType;
+
+  @SuppressWarnings("UnusedDeclaration")
   public CreateResourceDirectoryAction() {
+    this(null);
+  }
+
+  public CreateResourceDirectoryAction(@Nullable ResourceFolderType resourceFolderType) {
     super(AndroidBundle.message("new.resource.dir.action.title"), AndroidBundle.message("new.resource.action.description"),
           PlatformIcons.DIRECTORY_CLOSED_ICON);
+    myResourceFolderType = resourceFolderType;
   }
 
   @NotNull
   @Override
-  protected PsiElement[] invokeDialog(final Project project, final PsiDirectory directory) {
-    final CreateResourceDirectoryDialog dialog = new CreateResourceDirectoryDialog(project) {
+  public PsiElement[] invokeDialog(final Project project, final PsiDirectory directory) {
+    final CreateResourceDirectoryDialog dialog = new CreateResourceDirectoryDialog(project, myResourceFolderType) {
       @Override
       protected InputValidator createValidator() {
         return CreateResourceDirectoryAction.this.createValidator(project, directory);

@@ -40,6 +40,7 @@ import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.speedSearch.SpeedSearch;
+import com.intellij.util.Alarm;
 import com.intellij.util.ImageLoader;
 import com.intellij.util.Processor;
 import com.intellij.util.ui.ChildFocusWatcher;
@@ -612,6 +613,7 @@ public class AbstractPopup implements JBPopup {
 
     assert ApplicationManager.getApplication().isDispatchThread();
 
+    installWindowHook(this);
     addActivity();
 
     final boolean shouldShow = beforeShow();
@@ -704,7 +706,8 @@ public class AbstractPopup implements JBPopup {
 
     myRequestorComponent = owner;
 
-    boolean forcedDialog = (SystemInfo.isMac && !(myOwner instanceof IdeFrame)) || myMayBeParent;
+    boolean forcedDialog = myMayBeParent
+      || (SystemInfo.isMac && !(myOwner instanceof IdeFrame) && (myOwner != null && myOwner.isShowing()));
 
     PopupComponent.Factory factory = getFactory(myForcedHeavyweight || myResizable, forcedDialog);
     myNativePopup = factory.isNativePopup();
@@ -862,6 +865,19 @@ public class AbstractPopup implements JBPopup {
           afterShow.run();
         }
       });
+    }
+  }
+
+  //Sometimes just after popup was shown the WINDOW_ACTIVATED cancels it
+  private static void installWindowHook(final AbstractPopup popup) {
+    if (popup.myCancelOnWindow) {
+      popup.myCancelOnWindow = false;
+      new Alarm(popup).addRequest(new Runnable() {
+        @Override
+        public void run() {
+          popup.myCancelOnWindow = true;
+        }
+      }, 100);
     }
   }
 

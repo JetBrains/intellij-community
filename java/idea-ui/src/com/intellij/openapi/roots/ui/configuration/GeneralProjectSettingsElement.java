@@ -18,7 +18,7 @@ package com.intellij.openapi.roots.ui.configuration;
 import com.intellij.compiler.ModuleCompilerUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
-import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.roots.ModuleRootModel;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.*;
 import com.intellij.openapi.util.text.StringUtil;
@@ -49,14 +49,13 @@ public class GeneralProjectSettingsElement extends ProjectStructureElement {
 
   @Override
   public void check(ProjectStructureProblemsHolder problemsHolder) {
-    final Graph<Chunk<ModifiableRootModel>> graph = ModuleCompilerUtil.toChunkGraph(
-      myContext.getModulesConfigurator().createGraphGenerator());
-    final Collection<Chunk<ModifiableRootModel>> chunks = graph.getNodes();
+    final Graph<Chunk<ModuleRootModel>> graph = ModuleCompilerUtil.toChunkGraph(myContext.getModulesConfigurator().createGraphGenerator());
+    final Collection<Chunk<ModuleRootModel>> chunks = graph.getNodes();
     List<String> cycles = new ArrayList<String>();
-    for (Chunk<ModifiableRootModel> chunk : chunks) {
-      final Set<ModifiableRootModel> modules = chunk.getNodes();
+    for (Chunk<ModuleRootModel> chunk : chunks) {
+      final Set<ModuleRootModel> modules = chunk.getNodes();
       List<String> names = new ArrayList<String>();
-      for (ModifiableRootModel model : modules) {
+      for (ModuleRootModel model : modules) {
         names.add(model.getModule().getName());
       }
       if (modules.size() > 1) {

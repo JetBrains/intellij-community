@@ -54,7 +54,7 @@ import java.util.Map;
 public abstract class ComponentManagerImpl extends UserDataHolderBase implements ComponentManagerEx, Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.components.ComponentManager");
 
-  private final Map<Class, Object> myInitializedComponents = new ConcurrentHashMap<Class, Object>(4096);
+  private final Map<Class, Object> myInitializedComponents = new ConcurrentHashMap<Class, Object>();
 
   private boolean myComponentsCreated = false;
 
@@ -128,7 +128,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     return component;
   }
 
-  protected void disposeComponents() {
+  protected synchronized void disposeComponents() {
     assert !myDisposeCompleted : "Already disposed!";
 
     final List<Object> components = myComponentsRegistry.getRegisteredImplementations();
@@ -160,7 +160,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     //}
 
     synchronized (this) {
-      if (!myComponentsRegistry.containsInterface(interfaceClass)) {
+      if (myComponentsRegistry == null || !myComponentsRegistry.containsInterface(interfaceClass)) {
         return null;
       }
 

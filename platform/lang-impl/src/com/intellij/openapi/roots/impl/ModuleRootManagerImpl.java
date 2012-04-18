@@ -267,6 +267,18 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
     return myRootModel.getModuleDependencies(includeTests);
   }
 
+  @NotNull
+  @Override
+  public Module[] getModuleDependencies() {
+    return myRootModel.getModuleDependencies();
+  }
+
+  @NotNull
+  @Override
+  public Module[] getModuleDependencies(boolean includeTests) {
+    return myRootModel.getModuleDependencies(includeTests);
+  }
+
   public boolean isDependsOn(Module module) {
     return myRootModel.isDependsOn(module);
   }
@@ -404,7 +416,7 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
     final Map<String, RootModelImpl> nameToModel = new HashMap<String, RootModelImpl>();
     for (final RootModelImpl rootModel : rootModels) {
       final String name = rootModel.getModule().getName();
-      LOG.assertTrue(!nameToModel.containsKey(name));
+      LOG.assertTrue(!nameToModel.containsKey(name), name);
       nameToModel.put(name, rootModel);
     }
     final Module[] modules = moduleModel.getModules();

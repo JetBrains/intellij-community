@@ -61,6 +61,12 @@ public class PsiClassPattern extends PsiMemberPattern<PsiClass, PsiClassPattern>
         return psiClass.isInterface();
       }
     });}
+  public PsiClassPattern isAnnotationType() {
+    return with(new PatternCondition<PsiClass>("isAnnotationType") {
+      public boolean accepts(@NotNull final PsiClass psiClass, final ProcessingContext context) {
+        return psiClass.isAnnotationType();
+      }
+    });}
 
   public PsiClassPattern withMethod(final boolean checkDeep, final ElementPattern<? extends PsiMethod> memberPattern) {
     return with(new PatternCondition<PsiClass>("withMethod") {

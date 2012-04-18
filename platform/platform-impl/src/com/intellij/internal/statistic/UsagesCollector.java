@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +16,9 @@
 package com.intellij.internal.statistic;
 
 import com.intellij.internal.statistic.beans.GroupDescriptor;
+import com.intellij.internal.statistic.beans.UsageDescriptor;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
-import com.intellij.internal.statistic.beans.UsageDescriptor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,7 +27,7 @@ import java.util.Set;
 public abstract class UsagesCollector {
   public static ExtensionPointName<UsagesCollector> EP_NAME = ExtensionPointName.create("com.intellij.statistics.usagesCollector");
 
-  public abstract @NotNull Set<UsageDescriptor> getUsages(@Nullable Project project);
+  public abstract @NotNull Set<UsageDescriptor> getUsages(@Nullable Project project) throws CollectUsagesException;
 
   public abstract @NotNull GroupDescriptor getGroupId();
 }

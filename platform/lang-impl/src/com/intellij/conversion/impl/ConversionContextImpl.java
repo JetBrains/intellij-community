@@ -159,6 +159,13 @@ public class ConversionContextImpl implements ConversionContext {
     return map;
   }
 
+  @Override
+  @NotNull
+  public String expandPath(@NotNull String path) {
+    ExpandMacroToPathMap map = createExpandMacroMap(null);
+    return map.substitute(path, SystemInfo.isFileSystemCaseSensitive);
+  }
+
   @NotNull
   public String collapsePath(@NotNull String path) {
     ReplacePathToMacroMap map = createCollapseMacroMap(PathMacrosImpl.PROJECT_DIR_MACRO_NAME, myProjectBaseDir);

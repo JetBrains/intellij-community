@@ -54,4 +54,14 @@ public class PathUtil {
     }
     return false;
   }
+
+  public static String getFileName(String path) {
+    if (path.length() == 0) {
+      return "";
+    }
+    final char c = path.charAt(path.length() - 1);
+    int end = c == '/' || c == '\\' ? path.length() - 1 : path.length();
+    int start = Math.max(path.lastIndexOf('/', end - 1), path.lastIndexOf('\\', end - 1)) + 1;
+    return path.substring(start, end);
+  }
 }

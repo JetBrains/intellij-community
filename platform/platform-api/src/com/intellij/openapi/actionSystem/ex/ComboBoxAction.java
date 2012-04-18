@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -41,18 +42,21 @@ import java.beans.PropertyChangeListener;
 public abstract class ComboBoxAction extends AnAction implements CustomComponentAction {
   private static final Icon ARROW_ICON = IconLoader.getIcon("/general/comboArrow.png");
   private static final Icon DISABLED_ARROW_ICON = IconLoader.getDisabledIcon(ARROW_ICON);
-  
+
   private boolean mySmallVariant = true;
   private DataContext myDataContext;
 
-  protected ComboBoxAction() { }
+  protected ComboBoxAction() {
+  }
 
-  public void actionPerformed(AnActionEvent e) { }
+  public void actionPerformed(AnActionEvent e) {
+  }
 
   public JComponent createCustomComponent(Presentation presentation) {
     JPanel panel = new JPanel(new GridBagLayout());
     ComboBoxButton button = createComboBoxButton(presentation);
-    panel.add(button, new GridBagConstraints(0, 0, 1, 1, 1, 1, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(0, 3, 0, 3), 0, 0));
+    panel.add(button,
+              new GridBagConstraints(0, 0, 1, 1, 1, 1, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(0, 3, 0, 3), 0, 0));
     return panel;
   }
 
@@ -216,6 +220,7 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
     @Override
     public void updateUI() {
       super.updateUI();
+      //putClientProperty(SwingUtilities2.AA_TEXT_PROPERTY_KEY, null);
       if (UIUtil.isMotifLookAndFeel()) {
         setBorder(BorderFactory.createEtchedBorder());
       }
@@ -291,27 +296,33 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
     }
 
     @Override
-    protected void paintComponent(Graphics g) {
+    public void paint(Graphics g) {
+      GraphicsUtil.setupAntialiasing(g);
+
       final boolean isEmpty = getIcon() == null && StringUtil.isEmpty(getText());
-      final Dimension size = getSize();      
+      final Dimension size = getSize();
       if (isSmallVariant()) {
-        final Graphics2D g2 = (Graphics2D)g;        
+        final Graphics2D g2 = (Graphics2D)g;
         g2.setColor(UIUtil.getControlColor());
         final int w = getWidth();
         final int h = getHeight();
         if (getModel().isArmed() && getModel().isPressed()) {
-          g2.setPaint(new GradientPaint(0,0, UIUtil.getControlColor(), 0, h, ColorUtil.shift(UIUtil.getControlColor(), 0.8)));
-        } else {
-          g2.setPaint(new GradientPaint(0,0, ColorUtil.shift(UIUtil.getControlColor(), 1.1), 0, h, ColorUtil.shift(UIUtil.getControlColor(), 0.9)));
+          g2.setPaint(new GradientPaint(0, 0, UIUtil.getControlColor(), 0, h, ColorUtil.shift(UIUtil.getControlColor(), 0.8)));
         }
-        g2.fillRect(2, 0, w-2, h);
+        else {
+          g2.setPaint(
+            new GradientPaint(0, 0, ColorUtil.shift(UIUtil.getControlColor(), 1.1), 0, h, ColorUtil.shift(UIUtil.getControlColor(), 0.9)));
+        }
+        g2.fillRect(2, 0, w - 2, h);
+        GraphicsUtil.setupAntialiasing(g2);
         if (!myMouseInside) {
-          g2.setPaint(new GradientPaint(0,0, UIUtil.getBorderColor(), 0, h, UIUtil.getBorderColor().darker()));
+          g2.setPaint(new GradientPaint(0, 0, UIUtil.getBorderColor(), 0, h, UIUtil.getBorderColor().darker()));
           //g2.setColor(UIUtil.getBorderColor());
-        } else {
+        }
+        else {
           g2.setPaint(new GradientPaint(0, 0, UIUtil.getBorderColor().darker(), 0, h, UIUtil.getBorderColor().darker().darker()));
         }
-        g2.drawRect(2,0, w-3, h-1);
+        g2.drawRect(2, 0, w - 3, h - 1);
         final Icon icon = getIcon();
         int x = 7;
         if (icon != null) {
@@ -322,24 +333,27 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
           final Font font = getFont();
           g2.setFont(font);
           g2.setColor(UIManager.getColor("Button.foreground"));
-          g2.drawString(getText(), x, (size.height + font.getSize())/2 - 1);
+          g2.drawString(getText(), x, (size.height + font.getSize()) / 2 - 1);
         }
-      } else {
+      }
+      else {
         super.paintComponent(g);
       }
-        final Insets insets = super.getInsets();
-        final Icon icon = isEnabled() ? ARROW_ICON : DISABLED_ARROW_ICON;
-        final int x;
-        if (isEmpty) {
-          x = (size.width - icon.getIconWidth()) / 2;
-        } else {
-            if (isSmallVariant()) {
-              x = size.width - icon.getIconWidth() - insets.right + 1;
-            } else {
-              x = size.width - icon.getIconWidth() - insets.right + (UIUtil.isUnderNimbusLookAndFeel() ? -3 : 2);
-            }
+      final Insets insets = super.getInsets();
+      final Icon icon = isEnabled() ? ARROW_ICON : DISABLED_ARROW_ICON;
+      final int x;
+      if (isEmpty) {
+        x = (size.width - icon.getIconWidth()) / 2;
+      }
+      else {
+        if (isSmallVariant()) {
+          x = size.width - icon.getIconWidth() - insets.right + 1;
         }
-        icon.paintIcon(null, g, x, (size.height - icon.getIconHeight()) / 2);        
+        else {
+          x = size.width - icon.getIconWidth() - insets.right + (UIUtil.isUnderNimbusLookAndFeel() ? -3 : 2);
+        }
+      }
+      icon.paintIcon(null, g, x, (size.height - icon.getIconHeight()) / 2);
     }
 
     private boolean isGlowSupported() {

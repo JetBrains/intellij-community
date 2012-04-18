@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,9 @@ import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * @author Bas Leijdekkers
+ */
 public class WindowDressing extends AbstractProjectComponent {
 
   public WindowDressing(@NotNull Project project) {
@@ -27,11 +30,11 @@ public class WindowDressing extends AbstractProjectComponent {
   }
 
   public void projectOpened() {
-    getWindowActionGroup().addProject(myProject.getName());
+    getWindowActionGroup().addProject(myProject);
   }
 
   public void projectClosed() {
-    getWindowActionGroup().removeProject(myProject.getName());
+    getWindowActionGroup().removeProject(myProject);
   }
 
   public static ProjectWindowActionGroup getWindowActionGroup() {

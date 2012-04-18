@@ -27,6 +27,7 @@ import com.intellij.psi.PsiBundle;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -147,6 +148,11 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
       public boolean isSearchInLibraries() {
         return GlobalSearchScope.this.isSearchInLibraries();
       }
+
+      @Override
+      public String toString() {
+        return "UnionToLocal: (" + GlobalSearchScope.this.toString() + ", " + scope + ")";
+      }
     };
   }
 
@@ -246,13 +252,33 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
 
   @NotNull
   public static GlobalSearchScope fileScope(@NotNull Project project, final VirtualFile virtualFile) {
-    return new FileScope(project, virtualFile);
+    return fileScope(project, virtualFile, null);
+  }
+
+  @NotNull
+  public static GlobalSearchScope fileScope(@NotNull Project project, final VirtualFile virtualFile, @Nullable final String displayName) {
+    return new FileScope(project, virtualFile) {
+      @Override
+      public String getDisplayName() {
+        return displayName == null ? super.getDisplayName() : displayName;
+      }
+    };
   }
 
   @NotNull
   public static GlobalSearchScope filesScope(@NotNull Project project, @NotNull Collection<VirtualFile> files) {
+    return filesScope(project, files, null);
+  }
+
+  @NotNull
+  public static GlobalSearchScope filesScope(@NotNull Project project, @NotNull Collection<VirtualFile> files, @Nullable final String displayName) {
     if (files.isEmpty()) return EMPTY_SCOPE;
-    return files.size() == 1? fileScope(project, files.iterator().next()) : new FilesScope(project, files);
+    return files.size() == 1? fileScope(project, files.iterator().next(), displayName) : new FilesScope(project, files) {
+      @Override
+      public String getDisplayName() {
+        return displayName == null ? super.getDisplayName() : displayName;
+      }
+    };
   }
 
   static class IntersectionScope extends GlobalSearchScope {
@@ -341,7 +367,13 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
     public int hashCode() {
       return 31 * myScope1.hashCode() + myScope2.hashCode();
     }
+
+    @Override
+    public String toString() {
+      return "Intersection: (" + myScope1 + ", " + myScope2 + ")";
+    }
   }
+
   private static class UnionScope extends GlobalSearchScope {
     private final GlobalSearchScope myScope1;
     private final GlobalSearchScope myScope2;
@@ -418,6 +450,12 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
     @Override
     public int hashCode() {
       return 31 * myScope1.hashCode() + myScope2.hashCode();
+    }
+
+    @NonNls
+    @Override
+    public String toString() {
+      return "Union: (" + myScope1 + ", " + myScope2 + ")";
     }
   }
 

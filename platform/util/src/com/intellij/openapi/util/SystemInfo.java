@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,23 +16,23 @@
 package com.intellij.openapi.util;
 
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.util.List;
 
 @SuppressWarnings({"HardCodedStringLiteral", "UtilityClassWithoutPrivateConstructor", "UnusedDeclaration"})
-public class SystemInfo {
-  public static final String OS_NAME = System.getProperty("os.name");
-  public static final String OS_VERSION = System.getProperty("os.version").toLowerCase();
+public class SystemInfo extends SystemInfoRt {
+  public static final String OS_NAME = SystemInfoRt.OS_NAME;
+  public static final String OS_VERSION = SystemInfoRt.OS_VERSION;
   public static final String OS_ARCH = System.getProperty("os.arch");
   public static final String JAVA_VERSION = System.getProperty("java.version");
   public static final String JAVA_RUNTIME_VERSION = System.getProperty("java.runtime.version");
   public static final String ARCH_DATA_MODEL = System.getProperty("sun.arch.data.model");
   public static final String SUN_DESKTOP = System.getProperty("sun.desktop", "");
 
-  private static final String _OS_NAME = OS_NAME.toLowerCase();
-  public static final boolean isWindows = _OS_NAME.startsWith("windows");
+  public static final boolean isWindows = SystemInfoRt.isWindows;
   public static final boolean isWindowsNT = _OS_NAME.startsWith("windows nt");
   public static final boolean isWindows2000 = _OS_NAME.startsWith("windows 2000");
   public static final boolean isWindows2003 = _OS_NAME.startsWith("windows 2003");
@@ -40,22 +40,21 @@ public class SystemInfo {
   public static final boolean isWindowsVista = _OS_NAME.startsWith("windows vista");
   public static final boolean isWindows7 = _OS_NAME.startsWith("windows 7");
   public static final boolean isWindows9x = _OS_NAME.startsWith("windows 9") || _OS_NAME.startsWith("windows me");
-  public static final boolean isOS2 = _OS_NAME.startsWith("os/2") || _OS_NAME.startsWith("os2");
-  public static final boolean isMac = _OS_NAME.startsWith("mac");
+  public static final boolean isOS2 = SystemInfoRt.isOS2;
+  public static final boolean isMac = SystemInfoRt.isMac;
+  public static final boolean isLinux = SystemInfoRt.isLinux;
   public static final boolean isFreeBSD = _OS_NAME.startsWith("freebsd");
-  public static final boolean isLinux = _OS_NAME.startsWith("linux");
   public static final boolean isSolaris = _OS_NAME.startsWith("sunos");
-  public static final boolean isUnix = !isWindows && !isOS2;
+  public static final boolean isUnix = SystemInfoRt.isUnix;
 
-  private static final String _SUN_DESKTOP = SUN_DESKTOP.toLowerCase();
-  public static final boolean isKDE = _SUN_DESKTOP.contains("kde");
-  public static final boolean isGnome = _SUN_DESKTOP.contains("gnome");
-
-  public static final boolean hasXdgOpen = isUnix && new File("/usr/bin/xdg-open").canExecute();
+  /** @deprecated inaccurate (to remove in IDEA 13) */
+  public static final boolean isKDE = SUN_DESKTOP.toLowerCase().contains("kde");
+  /** @deprecated inaccurate (to remove in IDEA 13) */
+  public static final boolean isGnome = SUN_DESKTOP.toLowerCase().contains("gnome");
 
   public static final boolean isMacSystemMenu = isMac && "true".equals(System.getProperty("apple.laf.useScreenMenuBar"));
 
-  public static final boolean isFileSystemCaseSensitive = !isWindows && !isOS2 && !isMac;
+  public static final boolean isFileSystemCaseSensitive = SystemInfoRt.isFileSystemCaseSensitive;
   public static final boolean areSymLinksSupported = isUnix ||
                                                      isWindows && OS_VERSION.compareTo("6.0") >= 0 && isJavaVersionAtLeast("1.7");
 
@@ -64,11 +63,46 @@ public class SystemInfo {
   public static final boolean isAMD64 = "amd64".equals(OS_ARCH);
   public static final boolean isMacIntel64 = isMac && "x86_64".equals(OS_ARCH);
 
-  public static final String nativeFileManagerName = isMac ? "Finder" :
-                                                     isGnome ? "Nautilus" :
-                                                     isKDE ? "Konqueror" :
-                                                     isWindows ? "Explorer" :
-                                                     "File Manager";
+  /** @deprecated use {@linkplain #hasXdgOpen()} (to remove in IDEA 13) */
+  public static final boolean hasXdgOpen = isLinux;
+  private static final NotNullLazyValue<Boolean> ourHasXdgOpen = new AtomicNotNullLazyValue<Boolean>() {
+    @NotNull
+    @Override
+    protected Boolean compute() {
+      return isUnix && new File("/usr/bin/xdg-open").canExecute();
+    }
+  };
+  public static boolean hasXdgOpen() {
+    return ourHasXdgOpen.getValue();
+  }
+
+  private static final NotNullLazyValue<Boolean> hasNautilus = new AtomicNotNullLazyValue<Boolean>() {
+    @NotNull
+    @Override
+    protected Boolean compute() {
+      return isUnix && new File("/usr/bin/nautilus").canExecute();
+    }
+  };
+  public static boolean hasNautilus() {
+    return hasNautilus.getValue();
+  }
+
+  /** @deprecated use {@linkplain #getFileManagerName()} (to remove in IDEA 13) */
+  public static final String nativeFileManagerName = "File Manager";
+  private static final NotNullLazyValue<String> ourFileManagerName = new AtomicNotNullLazyValue<String>() {
+    @NotNull
+    @Override
+    protected String compute() {
+      return isMac ? "Finder" :
+             isWindows ? "Explorer" :
+             hasNautilus() ? "Nautilus" :
+             "File Manager";
+    }
+  };
+  @NotNull
+  public static String getFileManagerName() {
+    return ourFileManagerName.getValue();
+  }
 
   /**
    * Whether IDEA is running under MacOS X version 10.4 or later.
@@ -147,6 +181,16 @@ public class SystemInfo {
   }
 
   @NotNull
+  public static String getMacOSMajorVersion() {
+    return getMacOSMajorVersion(OS_VERSION);
+  }
+
+  public static String getMacOSMajorVersion(String version) {
+    int[] parts = getMacOSVersionParts(version);
+    return String.format("%d.%d", parts[0], parts[1]);
+  }
+
+  @NotNull
   public static String getMacOSVersionCode() {
     return getMacOSVersionCode(OS_VERSION);
   }
@@ -202,15 +246,8 @@ public class SystemInfo {
     return StringUtil.compareVersionNumbers(JAVA_RUNTIME_VERSION, v) >= 0;
   }
 
+  /** @deprecated use {@linkplain SystemProperties#getIntProperty(String, int)} (to remove in IDEA 13) */
   public static int getIntProperty(@NotNull final String key, final int defaultValue) {
-    final String value = System.getProperty(key);
-    if (value != null) {
-      try {
-        return Integer.parseInt(value);
-      }
-      catch (NumberFormatException ignored) { }
-    }
-
-    return defaultValue;
+    return SystemProperties.getIntProperty(key, defaultValue);
   }
 }

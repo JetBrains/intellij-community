@@ -74,6 +74,11 @@ public class RemoteTestNGStarter {
 
         if (line.startsWith(cantRunMessage) && !new File(line).exists()){
           System.err.println(line.substring(cantRunMessage.length()));
+          while (true) {
+            line = reader.readLine();
+            if (line == null || line.equals("end")) break;
+            System.err.println(line);
+          }
           System.exit(1);
           return;
         }

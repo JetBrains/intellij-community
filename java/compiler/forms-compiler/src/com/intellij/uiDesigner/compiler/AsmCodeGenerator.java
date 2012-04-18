@@ -15,20 +15,19 @@
  */
 package com.intellij.uiDesigner.compiler;
 
+import com.intellij.compiler.instrumentation.InstrumentationClassFinder;
 import com.intellij.uiDesigner.UIFormXmlConstants;
 import com.intellij.uiDesigner.lw.*;
 import com.intellij.uiDesigner.shared.BorderType;
-import org.objectweb.asm.*;
-import org.objectweb.asm.Label;
-import org.objectweb.asm.commons.EmptyVisitor;
-import org.objectweb.asm.commons.GeneratorAdapter;
-import org.objectweb.asm.commons.Method;
+import org.jetbrains.asm4.*;
+import org.jetbrains.asm4.Label;
+import org.jetbrains.asm4.commons.GeneratorAdapter;
+import org.jetbrains.asm4.commons.Method;
 
 import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
 import java.io.*;
-import java.lang.reflect.Constructor;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -40,7 +39,7 @@ import java.util.Map;
  */
 public class AsmCodeGenerator {
   private final LwRootContainer myRootContainer;
-  private final ClassLoader myLoader;
+  private final InstrumentationClassFinder myFinder;
   private final ArrayList myErrors;
   private final ArrayList myWarnings;
 
@@ -96,20 +95,20 @@ public class AsmCodeGenerator {
   }
 
   public AsmCodeGenerator(LwRootContainer rootContainer,
-                          ClassLoader loader,
+                          InstrumentationClassFinder finder,
                           NestedFormLoader formLoader,
                           final boolean ignoreCustomCreation,
                           final ClassWriter classWriter) {
     myFormLoader = formLoader;
     myIgnoreCustomCreation = ignoreCustomCreation;
-    if (loader == null){
+    if (finder == null){
       throw new IllegalArgumentException("loader cannot be null");
     }
     if (rootContainer == null){
       throw new IllegalArgumentException("rootContainer cannot be null");
     }
     myRootContainer = rootContainer;
-    myLoader = loader;
+    myFinder = finder;
 
     myErrors = new ArrayList();
     myWarnings = new ArrayList();
@@ -210,9 +209,9 @@ public class AsmCodeGenerator {
     codeGen.generatePushValue(generator, value);
   }
 
-  static Class getComponentClass(String className, final ClassLoader classLoader) throws CodeGenerationException {
+  static InstrumentationClassFinder.PseudoClass getComponentClass(String className, final InstrumentationClassFinder finder) throws CodeGenerationException {
     try {
-      return Class.forName(className, false, classLoader);
+      return finder.loadClass(className);
     }
     catch (ClassNotFoundException e) {
       throw new CodeGenerationException(null, "Class not found: " + className);
@@ -220,13 +219,16 @@ public class AsmCodeGenerator {
     catch(UnsupportedClassVersionError e) {
       throw new CodeGenerationException(null, "Unsupported class version error: " + className);
     }
+    catch (IOException e) {
+      throw new CodeGenerationException(null, e.getMessage(), e);
+    }
   }
 
   public static Type typeFromClassName(final String className) {
     return Type.getType("L" + className.replace('.', '/') + ";");
   }
 
-  class FormClassVisitor extends ClassAdapter {
+  class FormClassVisitor extends ClassVisitor {
     private String myClassName;
     private String mySuperName;
     private final Map myFieldDescMap = new HashMap();
@@ -236,7 +238,7 @@ public class AsmCodeGenerator {
     private final boolean myExplicitSetupCall;
 
     public FormClassVisitor(final ClassVisitor cv, final boolean explicitSetupCall) {
-      super(cv);
+      super(Opcodes.ASM4, cv);
       myExplicitSetupCall = explicitSetupCall;
     }
 
@@ -252,7 +254,7 @@ public class AsmCodeGenerator {
 
       for (Iterator iterator = myPropertyCodeGenerators.values().iterator(); iterator.hasNext();) {
         PropertyCodeGenerator propertyCodeGenerator = (PropertyCodeGenerator)iterator.next();
-        propertyCodeGenerator.generateClassStart(this, name, myLoader);
+        propertyCodeGenerator.generateClassStart(this, name, myFinder);
       }
     }
 
@@ -394,28 +396,30 @@ public class AsmCodeGenerator {
 
       myIdToLocalMap.put(lwComponent.getId(), new Integer(componentLocal));
 
-      Class componentClass = getComponentClass(className, myLoader);
+      InstrumentationClassFinder.PseudoClass componentClass = getComponentClass(className, myFinder);
       validateFieldBinding(lwComponent, componentClass);
 
       if (myIgnoreCustomCreation) {
-        boolean creatable = true;
-        if ((componentClass.getModifiers() & (Modifier.PRIVATE | Modifier.ABSTRACT)) != 0) {
-          creatable = false;
-        }
-        else {
-          try {
-            final Constructor constructor = componentClass.getConstructor(new Class[0]);
-            if ((constructor.getModifiers() & Modifier.PUBLIC) == 0) {
+        try {
+          boolean creatable = true;
+          if ((componentClass.getModifiers() & (Modifier.PRIVATE | Modifier.ABSTRACT)) != 0) {
+            creatable = false;
+          }
+          else {
+            if (!componentClass.hasDefaultPublicConstructor()) {
               creatable = false;
             }
           }
-          catch(NoSuchMethodException ex) {
-            creatable = false;
+          if (!creatable) {
+            componentClass = Utils.suggestReplacementClass(componentClass);
+            componentType = Type.getType(componentClass.getDescriptor());
           }
         }
-        if (!creatable) {
-          componentClass = Utils.suggestReplacementClass(componentClass);
-          componentType = Type.getType(componentClass);
+        catch (ClassNotFoundException e) {
+          throw new CodeGenerationException(lwComponent.getId(), e.getMessage(), e);
+        }
+        catch (IOException e) {
+          throw new CodeGenerationException(lwComponent.getId(), e.getMessage(), e);
         }
       }
 
@@ -468,12 +472,11 @@ public class AsmCodeGenerator {
       }
     }
 
-    private int getNestedFormComponent(GeneratorAdapter generator, Class componentClass, int formLocal) throws CodeGenerationException {
+    private int getNestedFormComponent(GeneratorAdapter generator, InstrumentationClassFinder.PseudoClass componentClass, int formLocal) throws CodeGenerationException {
       final Type componentType = Type.getType(JComponent.class);
       int componentLocal = generator.newLocal(componentType);
       generator.loadLocal(formLocal);
-      generator.invokeVirtual(Type.getType(componentClass),
-                              new Method(GET_ROOT_COMPONENT_METHOD_NAME, componentType, new Type[0]));
+      generator.invokeVirtual(Type.getType(componentClass.getDescriptor()), new Method(GET_ROOT_COMPONENT_METHOD_NAME, componentType, new Type[0]));
       generator.storeLocal(componentLocal);
       return componentLocal;
     }
@@ -502,7 +505,7 @@ public class AsmCodeGenerator {
     }
 
     private void generateComponentProperties(final LwComponent lwComponent,
-                                             final Class componentClass,
+                                             final InstrumentationClassFinder.PseudoClass componentClass,
                                              final GeneratorAdapter generator,
                                              final int componentLocal) throws CodeGenerationException {
       // introspected properties
@@ -543,7 +546,12 @@ public class AsmCodeGenerator {
             else {
               setterClass = Class.forName(propertyClass);
             }
-            componentClass.getMethod(property.getWriteMethodName(), new Class[] { setterClass } );
+            //componentClass.getMethod(property.getWriteMethodName(), new Class[] { setterClass } );
+            final String descriptor = "(L"+setterClass.getName().replace('.', '/') + ";)V";
+            final InstrumentationClassFinder.PseudoMethod setter = componentClass.findMethod(property.getWriteMethodName(), descriptor);
+            if (setter == null) {
+              continue;
+            }
           }
           catch (Exception e) {
             continue;
@@ -551,9 +559,16 @@ public class AsmCodeGenerator {
         }
         final PropertyCodeGenerator propGen = (PropertyCodeGenerator) myPropertyCodeGenerators.get(propertyClass);
 
-        if (propGen != null && propGen.generateCustomSetValue(lwComponent, componentClass, property,
-                                                              generator, componentLocal, myClassName)) {
-          continue;
+        try {
+          if (propGen != null && propGen.generateCustomSetValue(lwComponent, componentClass, property, generator, componentLocal, myClassName)) {
+            continue;
+          }
+        }
+        catch (IOException e) {
+          throw new CodeGenerationException(lwComponent.getId(), e.getMessage(), e);
+        }
+        catch (ClassNotFoundException e) {
+          throw new CodeGenerationException(lwComponent.getId(), e.getMessage(), e);
         }
 
         generator.loadLocal(componentLocal);
@@ -602,7 +617,7 @@ public class AsmCodeGenerator {
 
         Type declaringType = (property.getDeclaringClassName() != null)
                              ? typeFromClassName(property.getDeclaringClassName())
-                             : Type.getType(componentClass);
+                             : Type.getType(componentClass.getDescriptor());
         generator.invokeVirtual(declaringType, new Method(property.getWriteMethodName(),
                                                           Type.VOID_TYPE, new Type[] { setterArgType } ));
       }
@@ -611,7 +626,7 @@ public class AsmCodeGenerator {
     }
 
     private void generateClientProperties(final LwComponent lwComponent,
-                                          final Class componentClass,
+                                          final InstrumentationClassFinder.PseudoClass componentClass,
                                           final GeneratorAdapter generator,
                                           final int componentLocal) throws CodeGenerationException {
       HashMap props = lwComponent.getDelegeeClientProperties();
@@ -652,7 +667,7 @@ public class AsmCodeGenerator {
           }
         }
 
-        Type componentType = Type.getType(componentClass);
+        Type componentType = Type.getType(componentClass.getDescriptor());
         Type objectType = Type.getType(Object.class);
         generator.invokeVirtual(componentType, new Method("putClientProperty",
                                                           Type.VOID_TYPE, new Type[] { objectType, objectType } ));
@@ -664,7 +679,7 @@ public class AsmCodeGenerator {
       if (component instanceof LwNestedForm) return;
       int componentLocal = ((Integer) myIdToLocalMap.get(component.getId())).intValue();
       final LayoutCodeGenerator layoutCodeGenerator = getComponentCodeGenerator(component.getParent());
-      Class componentClass = getComponentClass(layoutCodeGenerator.mapComponentClass(component.getComponentClassName()), myLoader);
+      InstrumentationClassFinder.PseudoClass componentClass = getComponentClass(layoutCodeGenerator.mapComponentClass(component.getComponentClassName()), myFinder);
 
       final LwIntrospectedProperty[] introspectedProperties = component.getAssignedIntrospectedProperties();
       for (int i = 0; i < introspectedProperties.length; i++) {
@@ -681,7 +696,7 @@ public class AsmCodeGenerator {
               generator.loadLocal(targetLocal);
               Type declaringType = (property.getDeclaringClassName() != null)
                                    ? typeFromClassName(property.getDeclaringClassName())
-                                   : Type.getType(componentClass);
+                                   : Type.getType(componentClass.getDescriptor());
               generator.invokeVirtual(declaringType,
                                       new Method(property.getWriteMethodName(),
                                                  Type.VOID_TYPE, new Type[] { typeFromClassName(property.getPropertyClassName()) } ));
@@ -702,32 +717,44 @@ public class AsmCodeGenerator {
     private void generateButtonGroups(final LwRootContainer rootContainer, final GeneratorAdapter generator) throws CodeGenerationException {
       IButtonGroup[] groups = rootContainer.getButtonGroups();
       if (groups.length > 0) {
-        int groupLocal = generator.newLocal(ourButtonGroupType);
-        for(int groupIndex=0; groupIndex<groups.length; groupIndex++) {
-          String[] ids = groups [groupIndex].getComponentIds();
+        try {
+          InstrumentationClassFinder.PseudoClass buttonGroupClass = null; // cached
+          int groupLocal = generator.newLocal(ourButtonGroupType);
+          for(int groupIndex=0; groupIndex<groups.length; groupIndex++) {
+            String[] ids = groups [groupIndex].getComponentIds();
 
-          if (ids.length > 0) {
-            generator.newInstance(ourButtonGroupType);
-            generator.dup();
-            generator.invokeConstructor(ourButtonGroupType, Method.getMethod("void <init>()"));
-            generator.storeLocal(groupLocal);
+            if (ids.length > 0) {
+              generator.newInstance(ourButtonGroupType);
+              generator.dup();
+              generator.invokeConstructor(ourButtonGroupType, Method.getMethod("void <init>()"));
+              generator.storeLocal(groupLocal);
 
-            if (groups [groupIndex].isBound() && !myIgnoreCustomCreation) {
-              validateFieldClass(groups [groupIndex].getName(), ButtonGroup.class, null);
-              generator.loadThis();
-              generator.loadLocal(groupLocal);
-              generator.putField(getMainClassType(), groups [groupIndex].getName(), ourButtonGroupType);
-            }
-
-            for(int i = 0; i<ids.length; i++) {
-              Integer localInt = (Integer) myIdToLocalMap.get(ids [i]);
-              if (localInt != null) {
+              if (groups [groupIndex].isBound() && !myIgnoreCustomCreation) {
+                if (buttonGroupClass == null) {
+                  buttonGroupClass = myFinder.loadClass(ButtonGroup.class.getName());
+                }
+                validateFieldClass(groups [groupIndex].getName(), buttonGroupClass, null);
+                generator.loadThis();
                 generator.loadLocal(groupLocal);
-                generator.loadLocal(localInt.intValue());
-                generator.invokeVirtual(ourButtonGroupType, Method.getMethod("void add(javax.swing.AbstractButton)"));
+                generator.putField(getMainClassType(), groups [groupIndex].getName(), ourButtonGroupType);
+              }
+
+              for(int i = 0; i<ids.length; i++) {
+                Integer localInt = (Integer) myIdToLocalMap.get(ids [i]);
+                if (localInt != null) {
+                  generator.loadLocal(groupLocal);
+                  generator.loadLocal(localInt.intValue());
+                  generator.invokeVirtual(ourButtonGroupType, Method.getMethod("void add(javax.swing.AbstractButton)"));
+                }
               }
             }
           }
+        }
+        catch (IOException e) {
+          throw new CodeGenerationException(rootContainer.getId(), e.getMessage(), e);
+        }
+        catch (ClassNotFoundException e) {
+          throw new CodeGenerationException(rootContainer.getId(), e.getMessage(), e);
         }
       }
     }
@@ -756,14 +783,14 @@ public class AsmCodeGenerator {
       return Type.getType("L" + myClassName + ";");
     }
 
-    private void validateFieldBinding(LwComponent component, final Class componentClass) throws CodeGenerationException {
+    private void validateFieldBinding(LwComponent component, final InstrumentationClassFinder.PseudoClass componentClass) throws CodeGenerationException {
       String binding = component.getBinding();
       if (binding == null) return;
 
       validateFieldClass(binding, componentClass, component.getId());
     }
 
-    private void validateFieldClass(String binding, Class componentClass, String componentId) throws CodeGenerationException {
+    private void validateFieldClass(String binding, InstrumentationClassFinder.PseudoClass componentClass, String componentId) throws CodeGenerationException {
       if (!myFieldDescMap.containsKey(binding)) {
         throw new CodeGenerationException(componentId, "Cannot bind: field does not exist: " + myClassToBind + "." + binding);
       }
@@ -773,15 +800,17 @@ public class AsmCodeGenerator {
         throw new CodeGenerationException(componentId, "Cannot bind: field is of primitive type: " + myClassToBind + "." + binding);
       }
 
-      Class fieldClass;
       try {
-        fieldClass = myLoader.loadClass(fieldType.getClassName());
+        final InstrumentationClassFinder.PseudoClass fieldClass = myFinder.loadClass(fieldType.getClassName());
+        if (!fieldClass.isAssignableFrom(componentClass)) {
+          throw new CodeGenerationException(componentId, "Cannot bind: Incompatible types. Cannot assign " + componentClass.getName().replace('/', '.') + " to field " + myClassToBind + "." + binding);
+        }
       }
       catch (ClassNotFoundException e) {
         throw new CodeGenerationException(componentId, "Class not found: " + fieldType.getClassName());
       }
-      if (!fieldClass.isAssignableFrom(componentClass)) {
-        throw new CodeGenerationException(componentId, "Cannot bind: Incompatible types. Cannot assign " + componentClass.getName() + " to field " + myClassToBind + "." + binding);
+      catch (IOException e) {
+        throw new CodeGenerationException(componentId, e.getMessage(), e);
       }
     }
 
@@ -863,7 +892,7 @@ public class AsmCodeGenerator {
     }
   }
 
-  private class FormConstructorVisitor extends MethodAdapter {
+  private class FormConstructorVisitor extends MethodVisitor {
     private final String myClassName;
     private final String mySuperName;
     private boolean callsSelfConstructor = false;
@@ -871,7 +900,7 @@ public class AsmCodeGenerator {
     private boolean mySuperCalled = false;
 
     public FormConstructorVisitor(final MethodVisitor mv, final String className, final String superName) {
-      super(mv);
+      super(Opcodes.ASM4, mv);
       myClassName = className;
       mySuperName = superName;
     }
@@ -924,11 +953,11 @@ public class AsmCodeGenerator {
     }
   }
 
-  private static class FirstPassClassVisitor extends ClassAdapter {
+  private static class FirstPassClassVisitor extends ClassVisitor {
     private boolean myExplicitSetupCall = false;
 
     public FirstPassClassVisitor() {
-      super(new EmptyVisitor());
+      super(Opcodes.ASM4, new ClassVisitor(Opcodes.ASM4){});
     }
 
     public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
@@ -942,9 +971,9 @@ public class AsmCodeGenerator {
       return myExplicitSetupCall;
     }
 
-    private class FirstPassConstructorVisitor extends MethodAdapter {
+    private class FirstPassConstructorVisitor extends MethodVisitor {
       public FirstPassConstructorVisitor() {
-        super(new EmptyVisitor());
+        super(Opcodes.ASM4, new MethodVisitor(Opcodes.ASM4){});
       }
 
       public void visitMethodInsn(final int opcode, final String owner, final String name, final String desc) {

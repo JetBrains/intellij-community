@@ -23,6 +23,7 @@ import com.intellij.codeInsight.folding.impl.CollapseBlockHandler;
  * @author ven
  */
 public class CollapseBlockAction  extends BaseCodeInsightAction {
+  @Override
   protected CodeInsightActionHandler getHandler() {
     return new CollapseBlockHandler ();
   }

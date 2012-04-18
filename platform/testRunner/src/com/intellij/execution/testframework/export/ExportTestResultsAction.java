@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -134,19 +134,20 @@ public class ExportTestResultsAction extends DumbAwareAction {
         public void run(@NotNull ProgressIndicator indicator) {
           indicator.setIndeterminate(true);
 
-          File outputFolder;
-          if (StringUtil.isNotEmpty(config.getOutputFolder())) {
-            if (FileUtil.isAbsolute(config.getOutputFolder())) {
-              outputFolder = new File(config.getOutputFolder());
+          final File outputFolder;
+          final String outputFolderPath = config.getOutputFolder();
+          if (!StringUtil.isEmptyOrSpaces(outputFolderPath)) {
+            if (FileUtil.isAbsolute(outputFolderPath)) {
+              outputFolder = new File(outputFolderPath);
             }
             else {
-              outputFolder = new File(new File(project.getLocation()), config.getOutputFolder());
+              outputFolder = new File(new File(project.getBasePath()), config.getOutputFolder());
             }
           }
           else {
-            outputFolder = new File(project.getLocation());
-
+            outputFolder = new File(project.getBasePath());
           }
+
           final File outputFile = new File(outputFolder, filename_);
           final String outputText;
           try {

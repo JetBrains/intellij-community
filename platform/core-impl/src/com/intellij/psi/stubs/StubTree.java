@@ -19,6 +19,7 @@
  */
 package com.intellij.psi.stubs;
 
+import com.intellij.openapi.util.Key;
 import gnu.trove.THashMap;
 import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NotNull;
@@ -29,12 +30,20 @@ import java.util.List;
 import java.util.Map;
 
 public class StubTree {
+  private static final Key<StubTree> STUB_TO_TREE_REFERENCE = Key.create("stub to tree reference");
   private final PsiFileStub myRoot;
   private final List<StubElement<?>> myPlainList = new ArrayList<StubElement<?>>();
 
   public StubTree(@NotNull final PsiFileStub root) {
+    this(root, true);
+  }
+
+  public StubTree(@NotNull final PsiFileStub root, final boolean withBackReference) {
     myRoot = root;
     enumerateStubs(root, myPlainList);
+    if (withBackReference) {
+      myRoot.putUserData(STUB_TO_TREE_REFERENCE, this); // This will prevent soft references to stub tree to be collected before all of the stubs are collected.
+    }
   }
 
   private static void enumerateStubs(final StubElement<?> root, final List<StubElement<?>> result) {

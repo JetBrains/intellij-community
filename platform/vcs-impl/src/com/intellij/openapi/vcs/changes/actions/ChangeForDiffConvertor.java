@@ -18,6 +18,7 @@ package com.intellij.openapi.vcs.changes.actions;
 import com.intellij.openapi.diff.DiffRequest;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Getter;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
@@ -68,6 +69,22 @@ public class ChangeForDiffConvertor implements Convertor<Change, DiffRequestPres
 
       return new ConflictedDiffRequestPresentable(myProject, vf, ch);
     } else {
+      if (forceText) {
+        if (ch.getBeforeRevision() != null && ch.getAfterRevision() != null) {
+          try {
+            if (StringUtil.isEmptyOrSpaces(ch.getBeforeRevision().getContent()) &&
+                StringUtil.isEmptyOrSpaces(ch.getAfterRevision().getContent())) {
+              return null;
+            }
+            if (StringUtil.equals(ch.getBeforeRevision().getContent(), ch.getAfterRevision().getContent())) {
+              return null;
+            }
+          }
+          catch (VcsException e) {
+            //
+          }
+        }
+      }
       final ChangeDiffRequestPresentable presentable = new ChangeDiffRequestPresentable(myProject, ch);
       if (forceText) {
         presentable.setIgnoreDirectoryFlag(true);

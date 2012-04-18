@@ -18,6 +18,7 @@ package com.intellij.ide.actions;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.PresentationFactory;
 import com.intellij.openapi.actionSystem.impl.Utils;
+import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,6 +30,7 @@ import java.util.ArrayList;
  * @author peter
  */
 public abstract class WeighingActionGroup extends ActionGroup {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.actions.WeighingActionGroup");
   private final PresentationFactory myPresentationFactory = new PresentationFactory();
 
   @Override
@@ -40,9 +42,13 @@ public abstract class WeighingActionGroup extends ActionGroup {
 
   private static void getAllChildren(@Nullable AnActionEvent e, ActionGroup group, List<AnAction> result) {
     for (final AnAction action : group.getChildren(e)) {
-      if (action instanceof ActionGroup && !((ActionGroup) action).isPopup()) {
-        getAllChildren(e, (ActionGroup) action, result);
-      } else {
+      if (action == null) {
+        LOG.error("Null child for " + group);
+      }
+      if (action instanceof ActionGroup && !((ActionGroup)action).isPopup()) {
+        getAllChildren(e, (ActionGroup)action, result);
+      }
+      else {
         result.add(action);
       }
     }

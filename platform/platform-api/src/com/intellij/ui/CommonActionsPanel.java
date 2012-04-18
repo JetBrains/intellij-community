@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,7 @@ import java.util.*;
 /**
  * @author Konstantin Bulenkov
  */
-class CommonActionsPanel extends JPanel {
+public class CommonActionsPanel extends JPanel {
   public static enum Buttons {
     ADD, EDIT, REMOVE, UP, DOWN;
 
@@ -38,11 +38,11 @@ class CommonActionsPanel extends JPanel {
 
     Icon getIcon() {
       switch (this) {
-        case ADD:    return IconUtil.getAddRowIcon();
+        case ADD:    return IconUtil.getAddIcon();
         case EDIT:    return IconUtil.getEditIcon();
-        case REMOVE: return IconUtil.getRemoveRowIcon();
-        case UP:     return IconUtil.getMoveRowUpIcon();
-        case DOWN:   return IconUtil.getMoveRowDownIcon();
+        case REMOVE: return IconUtil.getRemoveIcon();
+        case UP:     return IconUtil.getMoveUpIcon();
+        case DOWN:   return IconUtil.getMoveDownIcon();
       }
       return null;
     }
@@ -193,14 +193,7 @@ class CommonActionsPanel extends JPanel {
 
     @Override
     public ShortcutSet getShortcut() {
-      switch (myButton) {
-        case ADD: return CommonShortcuts.getNewForDialogs();
-        case EDIT: return CustomShortcutSet.fromString("ENTER");
-        case REMOVE: return CustomShortcutSet.fromString(SystemInfo.isMac ? "meta BACK_SPACE" : "alt DELETE");
-        case UP: return CustomShortcutSet.fromString("alt UP");
-        case DOWN: return CustomShortcutSet.fromString("alt DOWN");
-      }
-      return null;
+      return getCommonShortcut(myButton);
     }
 
     @Override
@@ -242,6 +235,17 @@ class CommonActionsPanel extends JPanel {
     boolean isRemoveButton() {
       return myButton == Buttons.REMOVE;
     }
+  }
+
+  public static ShortcutSet getCommonShortcut(Buttons button) {
+    switch (button) {
+      case ADD: return CommonShortcuts.getNewForDialogs();
+      case EDIT: return CustomShortcutSet.fromString("ENTER");
+      case REMOVE: return CustomShortcutSet.fromString(SystemInfo.isMac ? "meta BACK_SPACE" : "alt DELETE");
+      case UP: return CustomShortcutSet.fromString("alt UP");
+      case DOWN: return CustomShortcutSet.fromString("alt DOWN");
+    }
+    return null;
   }
 
   interface ListenerFactory {

@@ -564,8 +564,11 @@ public class DocumentationManager {
       LookupElement item = activeLookup.getCurrentItem();
       if (item != null) {
 
-        final PsiElement contextElement = file != null ? file.findElementAt(editor.getCaretModel().getOffset()) : null;
-        final PsiReference ref = TargetElementUtilBase.findReference(editor, editor.getCaretModel().getOffset());
+
+        int offset = editor.getCaretModel().getOffset();
+        if (offset > 0 && offset == editor.getDocument().getTextLength()) offset--;
+        final PsiElement contextElement = file == null? null : file.findElementAt(offset);
+        final PsiReference ref = TargetElementUtilBase.findReference(editor, offset);
 
         final DocumentationProvider documentationProvider = getProviderFromElement(file);
 
@@ -715,6 +718,7 @@ public class DocumentationManager {
 
     myUpdateDocAlarm.addRequest(new Runnable() {
       public void run() {
+        if (myProject.isDisposed()) return;
         final Throwable[] ex = new Throwable[1];
         String text = null;
         try {

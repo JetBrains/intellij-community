@@ -192,19 +192,26 @@ public class ExceptionUtil {
   }
 
   @NotNull
-  public static Collection<PsiClassType> collectUnhandledExceptions(@NotNull PsiElement element, @Nullable PsiElement topElement) {
-    final Set<PsiClassType> set = collectUnhandledExceptions(element, topElement, null);
+  public static Collection<PsiClassType> collectUnhandledExceptions(@NotNull PsiElement element,
+                                                                    @Nullable PsiElement topElement) {
+    return collectUnhandledExceptions(element, topElement, true);
+  }
+
+  @NotNull
+  public static Collection<PsiClassType> collectUnhandledExceptions(@NotNull PsiElement element,
+                                                                    @Nullable PsiElement topElement, boolean includeSelfCalls) {
+    final Set<PsiClassType> set = collectUnhandledExceptions(element, topElement, null, includeSelfCalls);
     return set == null ? Collections.<PsiClassType>emptyList() : set;
   }
 
   @Nullable
   private static Set<PsiClassType> collectUnhandledExceptions(@NotNull PsiElement element,
                                                               PsiElement topElement,
-                                                              @Nullable Set<PsiClassType> foundExceptions) {
+                                                              @Nullable Set<PsiClassType> foundExceptions, boolean includeSelfCalls) {
     Collection<PsiClassType> unhandledExceptions = null;
     if (element instanceof PsiCallExpression) {
       PsiCallExpression expression = (PsiCallExpression)element;
-      unhandledExceptions = getUnhandledExceptions(expression, topElement);
+      unhandledExceptions = getUnhandledExceptions(expression, topElement, includeSelfCalls);
     }
     else if (element instanceof PsiThrowStatement) {
       PsiThrowStatement statement = (PsiThrowStatement)element;
@@ -239,7 +246,7 @@ public class ExceptionUtil {
         for (PsiClassInitializer initializer : initializers) {
           if (initializer.hasModifierProperty(PsiModifier.STATIC)) continue;
           thrownByInitializer.clear();
-          collectUnhandledExceptions(initializer.getBody(), initializer, thrownByInitializer);
+          collectUnhandledExceptions(initializer.getBody(), initializer, thrownByInitializer, includeSelfCalls);
           for (PsiClassType thrown : thrownByInitializer) {
             if (!isHandled(constructor.getBody(), thrown, topElement)) {
               unhandled.add(thrown);
@@ -268,7 +275,7 @@ public class ExceptionUtil {
     }
 
     for (PsiElement child = element.getFirstChild(); child != null; child = child.getNextSibling()) {
-      foundExceptions = collectUnhandledExceptions(child, topElement, foundExceptions);
+      foundExceptions = collectUnhandledExceptions(child, topElement, foundExceptions, includeSelfCalls);
     }
 
     return foundExceptions;
@@ -334,8 +341,19 @@ public class ExceptionUtil {
 
   @NotNull
   public static List<PsiClassType> getUnhandledExceptions(final PsiCallExpression methodCall, @Nullable final PsiElement topElement) {
+    return getUnhandledExceptions(methodCall, topElement, true);
+  }
+
+  @NotNull
+  public static List<PsiClassType> getUnhandledExceptions(final PsiCallExpression methodCall,
+                                                          @Nullable final PsiElement topElement,
+                                                          boolean includeSelfCalls) {
     final JavaResolveResult result = methodCall.resolveMethodGenerics();
     final PsiMethod method = (PsiMethod)result.getElement();
+    if (!includeSelfCalls && method == PsiTreeUtil.getParentOfType(methodCall, PsiMethod.class)) {
+      return Collections.emptyList();
+    }
+
     final PsiSubstitutor substitutor = ApplicationManager.getApplication().runReadAction(new Computable<PsiSubstitutor>() {
       @Override
       public PsiSubstitutor compute() {

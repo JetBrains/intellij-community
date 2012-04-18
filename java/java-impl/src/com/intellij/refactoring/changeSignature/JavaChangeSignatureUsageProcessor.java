@@ -375,7 +375,7 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
           else {
             newArg = factory.createExpressionFromText(info.getName(), list);
           }
-          list.add(newArg);
+          JavaCodeStyleManager.getInstance(list.getProject()).shortenClassReferences(list.add(newArg));
         }
       }
       else {
@@ -630,7 +630,7 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
       else {
         actualArg = changeInfo.getValue(i, callExpression);
       }
-      callExpression.getArgumentList().add(actualArg);
+      JavaCodeStyleManager.getInstance(callExpression.getProject()).shortenClassReferences(callExpression.getArgumentList().add(actualArg));
     }
   }
 
@@ -909,7 +909,7 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
               String message =
                 RefactoringBundle.message("0.with.1.visibility.is.not.accessible.from.2",
                                           RefactoringUIUtil.getDescription(method, true),
-                                          myChangeInfo.getNewVisibility(),
+                                          VisibilityUtil.toPresentableText(myChangeInfo.getNewVisibility()),
                                           RefactoringUIUtil.getDescription(ConflictsUtil.getContainer(element), true));
               conflictDescriptions.putValue(method, message);
               if (!needToChangeCalls()) {

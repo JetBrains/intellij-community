@@ -27,6 +27,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.OrderRootType;
@@ -158,6 +159,13 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
                   final ItemElement itemElement = (ItemElement)selectedElement;
                   getLibraryEditor().removeRoot(itemElement.getUrl(), itemElement.getRootType());
                 }
+                else if (selectedElement instanceof OrderRootTypeElement) {
+                  final OrderRootType rootType = ((OrderRootTypeElement)selectedElement).getOrderRootType();
+                  final String[] urls = getLibraryEditor().getUrls(rootType);
+                  for (String url : urls) {
+                    getLibraryEditor().removeRoot(url, rootType);
+                  }
+                }
               }
             }
           });
@@ -165,7 +173,6 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
         }
       });
 
-    final List<? extends RootDetector> detectors = myDescriptor.getRootDetectors();
     toolbarDecorator.setAddAction(new AnActionButtonRunnable() {
       @Override
       public void run(AnActionButton button) {
@@ -180,9 +187,7 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
 
       private AnAction[] getActions() {
         List<AnAction> actions = new ArrayList<AnAction>();
-        if (!detectors.isEmpty()) {
-          actions.add(new AttachFilesAction(detectors, ProjectBundle.message("button.text.attach.files")));
-        }
+        actions.add(new AttachFilesAction(ProjectBundle.message("button.text.attach.files")));
         for (AttachRootButtonDescriptor descriptor : myDescriptor.createAttachButtons()) {
           actions.add(new AttachItemAction(descriptor, descriptor.getButtonText()));
         }
@@ -197,8 +202,15 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
       @Override
       public boolean isEnabled(AnActionEvent e) {
         final Object[] selectedElements = getSelectedElements();
-        final Class<?> elementsClass = getElementsClass(selectedElements);
-        return elementsClass != null && !elementsClass.isAssignableFrom(OrderRootTypeElement.class);
+        for (Object element : selectedElements) {
+          if (element instanceof ItemElement) {
+            return true;
+          }
+          if (element instanceof OrderRootTypeElement && getLibraryEditor().getUrls(((OrderRootTypeElement)element).getOrderRootType()).length > 0) {
+            return true;
+          }
+        }
+        return false;
       }
     });
 
@@ -333,11 +345,8 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
   }
 
   private class AttachFilesAction extends AttachItemActionBase {
-    private final List<? extends RootDetector> myDetectors;
-
-    public AttachFilesAction(List<? extends RootDetector> detectors, String title) {
+    public AttachFilesAction(String title) {
       super(title);
-      myDetectors = detectors;
     }
 
     @Override
@@ -353,11 +362,11 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
       final VirtualFile[] files = FileChooser.chooseFiles(myPanel, chooserDescriptor, initialSelection);
       if (files.length == 0) return Collections.emptyList();
 
-      return RootDetectionUtil.detectRoots(Arrays.asList(files), myPanel, myProject, myDetectors, true);
+      return RootDetectionUtil.detectRoots(Arrays.asList(files), myPanel, myProject, myDescriptor);
     }
   }
 
-  public abstract class AttachItemActionBase extends AnAction {
+  public abstract class AttachItemActionBase extends DumbAwareAction {
     private VirtualFile myLastChosen = null;
 
     protected AttachItemActionBase(String text) {

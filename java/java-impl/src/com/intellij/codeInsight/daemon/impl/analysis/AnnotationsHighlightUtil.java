@@ -372,6 +372,7 @@ public class AnnotationsHighlightUtil {
 
   public static class AnnotationReturnTypeVisitor extends PsiTypeVisitor<Boolean> {
     public static final AnnotationReturnTypeVisitor INSTANCE = new AnnotationReturnTypeVisitor();
+    @Override
     public Boolean visitType(PsiType type) {
       return Boolean.FALSE;
     }

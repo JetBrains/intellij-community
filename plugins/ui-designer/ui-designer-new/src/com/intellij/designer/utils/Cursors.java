@@ -35,6 +35,26 @@ public final class Cursors {
     }
   }
 
+  // TODO: replace on better cursor (self image)
+  public static Cursor getMoveCursor() {
+    try {
+      return Cursor.getSystemCustomCursor("MoveDrop.32x32");
+    }
+    catch (Exception ex) {
+      return Cursor.getDefaultCursor();
+    }
+  }
+
+  // TODO: replace on better cursor (self image)
+  public static Cursor getCopyCursor() {
+    try {
+      return Cursor.getSystemCustomCursor("CopyDrop.32x32");
+    }
+    catch (Exception ex) {
+      return Cursor.getDefaultCursor();
+    }
+  }
+
   @Nullable
   public static Cursor getResizeCursor(int direction) {
     int cursor;

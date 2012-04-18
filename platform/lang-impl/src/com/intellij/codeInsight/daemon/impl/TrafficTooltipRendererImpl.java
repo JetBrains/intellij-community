@@ -26,6 +26,7 @@ import com.intellij.ui.HintHint;
 import com.intellij.ui.HintListener;
 import com.intellij.ui.LightweightHint;
 import com.intellij.util.ui.update.ComparableObject;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 import java.util.EventObject;
@@ -38,7 +39,7 @@ public class TrafficTooltipRendererImpl extends ComparableObject.Impl implements
   private final Runnable onHide;
   private TrafficLightRenderer myTrafficLightRenderer;
 
-  public TrafficTooltipRendererImpl(Runnable onHide, Editor editor) {
+  public TrafficTooltipRendererImpl(@NotNull Runnable onHide, @NotNull Editor editor) {
     super(editor);
     this.onHide = onHide;
   }
@@ -58,6 +59,11 @@ public class TrafficTooltipRendererImpl extends ComparableObject.Impl implements
     myPanel = new TrafficProgressPanel(myTrafficLightRenderer, editor, hintHint);
     LineTooltipRenderer.correctLocation(editor, myPanel, p, alignToRight, false, -1);
     LightweightHint hint = new LightweightHint(myPanel);
+
+    HintManagerImpl hintManager = (HintManagerImpl)HintManager.getInstance();
+    hintManager.showEditorHint(hint, editor, p,
+                               HintManager.HIDE_BY_ANY_KEY | HintManager.HIDE_BY_TEXT_CHANGE | HintManager.HIDE_BY_OTHER_HINT |
+                               HintManager.HIDE_BY_SCROLLING, 0, false, hintHint);
     hint.addHintListener(new HintListener() {
       @Override
       public void hintHidden(EventObject event) {
@@ -66,11 +72,6 @@ public class TrafficTooltipRendererImpl extends ComparableObject.Impl implements
         onHide.run();
       }
     });
-
-    HintManagerImpl hintManager = (HintManagerImpl)HintManager.getInstance();
-    hintManager.showEditorHint(hint, editor, p,
-                               HintManager.HIDE_BY_ANY_KEY | HintManager.HIDE_BY_TEXT_CHANGE | HintManager.HIDE_BY_OTHER_HINT |
-                               HintManager.HIDE_BY_SCROLLING, 0, false, hintHint);
     repaintTooltipWindow();
     return hint;
   }

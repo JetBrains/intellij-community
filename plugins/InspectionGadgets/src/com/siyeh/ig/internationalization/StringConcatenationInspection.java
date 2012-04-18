@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package com.siyeh.ig.internationalization;
 
 import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.codeInsight.TestFrameworks;
 import com.intellij.codeInsight.intention.AddAnnotationFix;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.psi.*;
@@ -149,26 +148,14 @@ public class StringConcatenationInspection extends BaseInspection {
   @Override
   @Nullable
   public JComponent createOptionsPanel() {
-    final MultipleCheckboxOptionsPanel optionsPanel =
-      new MultipleCheckboxOptionsPanel(this);
-    optionsPanel.addCheckbox(InspectionGadgetsBundle.message(
-      "string.concatenation.ignore.assert.option"),
-                             "ignoreAsserts");
-    optionsPanel.addCheckbox(InspectionGadgetsBundle.message(
-      "string.concatenation.ignore.system.out.option"),
-                             "ignoreSystemOuts");
-    optionsPanel.addCheckbox(InspectionGadgetsBundle.message(
-      "string.concatenation.ignore.system.err.option"),
-                             "ignoreSystemErrs");
-    optionsPanel.addCheckbox(InspectionGadgetsBundle.message(
-      "string.concatenation.ignore.exceptions.option"),
-                             "ignoreThrowableArguments");
-    optionsPanel.addCheckbox(InspectionGadgetsBundle.message(
-      "string.concatenation.ignore.constant.initializers.option"),
+    final MultipleCheckboxOptionsPanel optionsPanel = new MultipleCheckboxOptionsPanel(this);
+    optionsPanel.addCheckbox(InspectionGadgetsBundle.message("string.concatenation.ignore.assert.option"), "ignoreAsserts");
+    optionsPanel.addCheckbox(InspectionGadgetsBundle.message("string.concatenation.ignore.system.out.option"), "ignoreSystemOuts");
+    optionsPanel.addCheckbox(InspectionGadgetsBundle.message("string.concatenation.ignore.system.err.option"), "ignoreSystemErrs");
+    optionsPanel.addCheckbox(InspectionGadgetsBundle.message("string.concatenation.ignore.exceptions.option"), "ignoreThrowableArguments");
+    optionsPanel.addCheckbox(InspectionGadgetsBundle.message("string.concatenation.ignore.constant.initializers.option"),
                              "ignoreConstantInitializers");
-    optionsPanel.addCheckbox(InspectionGadgetsBundle.message(
-      "string.concatenation.ignore.in.test.code"),
-                             "ignoreInTestCode");
+    optionsPanel.addCheckbox(InspectionGadgetsBundle.message("ignore.in.test.code"), "ignoreInTestCode");
     return optionsPanel;
   }
 
@@ -201,16 +188,8 @@ public class StringConcatenationInspection extends BaseInspection {
       if (isInsideAnnotation(expression)) {
         return;
       }
-      if (ignoreInTestCode) {
-        if (TestUtils.isPartOfJUnitTestMethod(expression)) {
-          return;
-        }
-        final PsiClass containingClass =
-          PsiTreeUtil.getParentOfType(expression, PsiClass.class);
-        if (containingClass != null &&
-            TestFrameworks.getInstance().isTestClass(containingClass)) {
-          return;
-        }
+      if (ignoreInTestCode && TestUtils.isInTestCode(expression)) {
+        return;
       }
       if (ignoreAsserts) {
         final PsiAssertStatement assertStatement =

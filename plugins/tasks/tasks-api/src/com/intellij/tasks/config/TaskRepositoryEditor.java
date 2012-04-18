@@ -15,6 +15,7 @@
  */
 package com.intellij.tasks.config;
 
+import com.intellij.openapi.Disposable;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -22,7 +23,7 @@ import javax.swing.*;
 /**
  * @author Dmitry Avdeev
  */
-public abstract class TaskRepositoryEditor {
+public abstract class TaskRepositoryEditor implements Disposable {
 
   public abstract JComponent createComponent();
 
@@ -30,4 +31,7 @@ public abstract class TaskRepositoryEditor {
   public JComponent getPreferredFocusedComponent() {
     return null;
   }
+
+  @Override
+  public void dispose() {}
 }

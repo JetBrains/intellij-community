@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.lang.editor.actions;
 
+import com.intellij.codeInsight.AutoPopupController;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.editorActions.JavaTypedHandler;
 import com.intellij.codeInsight.editorActions.TypedHandlerDelegate;
@@ -23,8 +24,12 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.openapi.util.Condition;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.tree.TokenSet;
+import com.intellij.psi.util.PsiTreeUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 
@@ -50,10 +55,41 @@ public class GroovyTypedHandler extends TypedHandlerDelegate {
       }
     }
 
+    if (c == '@' && file instanceof GroovyFile) {
+      autoPopupMemberLookup(project, editor, new Condition<PsiFile>() {
+        public boolean value(final PsiFile file) {
+          int offset = editor.getCaretModel().getOffset();
+
+          PsiElement lastElement = file.findElementAt(offset - 1);
+          if (lastElement == null) return false;
+
+          final PsiElement prevSibling = PsiTreeUtil.prevVisibleLeaf(lastElement);
+          return prevSibling != null && ".".equals(prevSibling.getText());
+        }
+      });
+    }
+
+    if (c == '&' && file instanceof GroovyFile) {
+      autoPopupMemberLookup(project, editor, new Condition<PsiFile>() {
+        public boolean value(final PsiFile file) {
+          int offset = editor.getCaretModel().getOffset();
+
+          PsiElement lastElement = file.findElementAt(offset - 1);
+          return lastElement != null && ".&".equals(lastElement.getText());
+        }
+      });
+    }
+
+
     return Result.CONTINUE;
   }
 
-  public Result charTyped(final char c, final Project project, final Editor editor, final PsiFile file) {
+  private static void autoPopupMemberLookup(Project project, final Editor editor, Condition<PsiFile> condition) {
+    AutoPopupController.getInstance(project).autoPopupMemberLookup(editor, condition);
+  }
+
+
+  public Result charTyped(final char c, final Project project, final Editor editor, @NotNull final PsiFile file) {
     if (myJavaLTTyped) {
       myJavaLTTyped = false;
       JavaTypedHandler.handleAfterJavaLT(editor, GroovyTokenTypes.mLT, GroovyTokenTypes.mGT, INVALID_INSIDE_REFERENCE);

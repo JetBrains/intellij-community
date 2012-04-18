@@ -48,7 +48,7 @@ public class PersistentEnumerator<Data> extends PersistentEnumeratorBase<Data> {
   private int valuesCount; // TODO: valuesCount should be persistent
   private static final Version ourVersion = new Version(CORRECTLY_CLOSED_MAGIC, DIRTY_MAGIC);
 
-  public PersistentEnumerator(File file, KeyDescriptor<Data> dataDescriptor, int initialSize) throws IOException {
+  public PersistentEnumerator(@NotNull File file, @NotNull KeyDescriptor<Data> dataDescriptor, int initialSize) throws IOException {
     super(file, new ResizeableMappedFile(file, initialSize, ourLock), dataDescriptor, initialSize, ourVersion,
           new RecordBufferHandler(), true);
   }
@@ -57,11 +57,11 @@ public class PersistentEnumerator<Data> extends PersistentEnumeratorBase<Data> {
     allocVector(FIRST_VECTOR);
   }
 
-  public synchronized boolean traverseAllRecords(RecordsProcessor p) throws IOException {
+  public synchronized boolean traverseAllRecords(@NotNull RecordsProcessor p) throws IOException {
     return traverseRecords(FIRST_VECTOR_OFFSET, SLOTS_PER_FIRST_VECTOR, p);
   }
 
-  private boolean traverseRecords(int vectorStart, int slotsCount, RecordsProcessor p) throws IOException {
+  private boolean traverseRecords(int vectorStart, int slotsCount, @NotNull RecordsProcessor p) throws IOException {
     synchronized (ourLock) {
       for (int slotIdx = 0; slotIdx < slotsCount; slotIdx++) {
         final int vector = myStorage.getInt(vectorStart + slotIdx * 4);
@@ -186,7 +186,7 @@ public class PersistentEnumerator<Data> extends PersistentEnumeratorBase<Data> {
     return (hashcode >>> (byteN * BITS_PER_LEVEL)) & LEVEL_MASK;
   }
 
-  private int allocVector(final byte[] empty) throws IOException {
+  private int allocVector(@NotNull final byte[] empty) throws IOException {
     final int pos = (int)myStorage.length();
     myStorage.put(pos, empty, 0, empty.length);
     return pos;
@@ -208,7 +208,7 @@ public class PersistentEnumerator<Data> extends PersistentEnumeratorBase<Data> {
   private static class RecordBufferHandler extends PersistentEnumeratorBase.RecordBufferHandler<PersistentEnumerator> {
     private final byte[] myBuffer = new byte[RECORD_SIZE];
 
-    protected int recordWriteOffset(PersistentEnumerator enumerator, byte[] buf) {
+    protected int recordWriteOffset(@NotNull PersistentEnumerator enumerator, byte[] buf) {
       return (int)enumerator.myStorage.length();
     }
 

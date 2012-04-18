@@ -4,14 +4,15 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.ModuleOrderEntry;
+import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.util.Ref;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.model.GradleEntityOwner;
 import org.jetbrains.plugins.gradle.model.gradle.*;
 import org.jetbrains.plugins.gradle.model.intellij.IntellijEntityVisitor;
-import org.jetbrains.plugins.gradle.sync.GradleProjectStructureChangesModel;
-import org.jetbrains.plugins.gradle.sync.GradleProjectStructureHelper;
+import org.jetbrains.plugins.gradle.model.intellij.ModuleAwareContentRoot;
+import org.jetbrains.plugins.gradle.util.GradleProjectStructureContext;
 import org.jetbrains.plugins.gradle.util.GradleUtil;
 
 /**
@@ -26,12 +27,10 @@ import org.jetbrains.plugins.gradle.util.GradleUtil;
  */
 public class GradleEntityIdMapper {
   
-  @NotNull GradleEntityMappingContext myMappingContext;
+  @NotNull GradleProjectStructureContext myMappingContext;
 
-  public GradleEntityIdMapper(@NotNull GradleProjectStructureHelper projectStructureHelper,
-                              @NotNull GradleProjectStructureChangesModel changesModel)
-  {
-    myMappingContext = new GradleEntityMappingContext(projectStructureHelper, changesModel);
+  public GradleEntityIdMapper(@NotNull GradleProjectStructureContext context) {
+    myMappingContext = context;
   }
 
   /**
@@ -59,7 +58,7 @@ public class GradleEntityIdMapper {
 
         @Override
         public void visit(@NotNull GradleModuleDependency dependency) {
-          result.set(new GradleLibraryDependencyId(GradleEntityOwner.GRADLE, dependency.getOwnerModule().getName(), dependency.getName()));
+          result.set(new GradleModuleDependencyId(GradleEntityOwner.GRADLE, dependency.getOwnerModule().getName(), dependency.getName()));
         }
 
         @Override
@@ -74,7 +73,7 @@ public class GradleEntityIdMapper {
 
         @Override
         public void visit(@NotNull GradleLibrary library) {
-          // TODO den implement 
+          result.set(new GradleLibraryId(GradleEntityOwner.GRADLE, library.getName())); 
         }
       });
     }
@@ -92,12 +91,24 @@ public class GradleEntityIdMapper {
         }
 
         @Override
+        public void visit(@NotNull ModuleAwareContentRoot contentRoot) {
+          final String path = contentRoot.getFile().getPath();
+          result.set(new GradleContentRootId(GradleEntityOwner.INTELLIJ, contentRoot.getModule().getName(), path));
+        }
+
+        @Override
         public void visit(@NotNull LibraryOrderEntry libraryDependency) {
-          final String libraryName = libraryDependency.getLibraryName();
-          if (libraryName != null) {
-            result
-              .set(new GradleLibraryDependencyId(GradleEntityOwner.INTELLIJ, libraryDependency.getOwnerModule().getName(), libraryName));
+          String libraryName = libraryDependency.getLibraryName();
+          if (libraryName == null) {
+            final Library library = libraryDependency.getLibrary();
+            if (library != null) {
+              libraryName = GradleUtil.getLibraryName(library);
+            }
           }
+          if (libraryName == null) {
+            return;
+          }
+          result.set(new GradleLibraryDependencyId(GradleEntityOwner.INTELLIJ, libraryDependency.getOwnerModule().getName(), libraryName));
         }
 
         @Override
@@ -105,6 +116,11 @@ public class GradleEntityIdMapper {
           result.set(new GradleModuleDependencyId(
             GradleEntityOwner.INTELLIJ, moduleDependency.getOwnerModule().getName(), moduleDependency.getModuleName()
           ));
+        }
+
+        @Override
+        public void visit(@NotNull Library library) {
+          result.set(new GradleLibraryId(GradleEntityOwner.INTELLIJ, GradleUtil.getLibraryName(library)));
         }
       });
     }

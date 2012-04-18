@@ -165,16 +165,16 @@ public class InlineConstantFieldProcessor extends BaseRefactoringProcessor {
     if (expr instanceof PsiReferenceExpression) {
       PsiExpression qExpression = ((PsiReferenceExpression)expr).getQualifierExpression();
       if (qExpression != null) {
-        if (initializer1 instanceof PsiMethodCallExpression) {
-          PsiReferenceExpression methodExpression = ((PsiMethodCallExpression)initializer1).getMethodExpression();
-          if (methodExpression.getQualifierExpression() == null) {
-            methodExpression.setQualifierExpression(qExpression);
-          }
-        } else if (initializer1 instanceof PsiReferenceExpression) {
-          PsiReferenceExpression referenceExpression = (PsiReferenceExpression)initializer1;
-          if (referenceExpression.getQualifierExpression() == null) {
-            referenceExpression.setQualifierExpression(qExpression);
-          }
+        PsiReferenceExpression referenceExpression = null;
+        if (initializer1 instanceof PsiReferenceExpression) {
+          referenceExpression = (PsiReferenceExpression)initializer1;
+        } else if (initializer1 instanceof PsiMethodCallExpression) {
+          referenceExpression = ((PsiMethodCallExpression)initializer1).getMethodExpression();
+        }
+        if (referenceExpression != null && 
+            referenceExpression.getQualifierExpression() == null && 
+            !(referenceExpression.advancedResolve(false).getCurrentFileResolveScope() instanceof PsiImportStaticStatement)) {
+          referenceExpression.setQualifierExpression(qExpression);
         }
       }
     }

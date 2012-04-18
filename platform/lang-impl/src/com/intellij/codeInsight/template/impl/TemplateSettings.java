@@ -487,16 +487,19 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
     String templateName = getDefaultTemplateName(defTemplate);
     InputStream inputStream = DecodeDefaultsUtil.getDefaultsInputStream(provider, defTemplate);
     if (inputStream != null) {
-      readDefTemplateFile(inputStream, templateName, provider.getClass().getClassLoader(), registerTemplate);
+      TemplateGroup group =
+        readTemplateFile(JDOMUtil.loadDocument(inputStream), templateName, true, registerTemplate, provider.getClass().getClassLoader());
+      if (group != null && group.getReplace() != null) {
+        Collection<TemplateImpl> templates = myTemplates.get(group.getReplace());
+        for (TemplateImpl template : templates) {
+          removeTemplate(template);
+        }
+      }
     }
   }
 
   private static String getDefaultTemplateName(String defTemplate) {
     return defTemplate.substring(defTemplate.lastIndexOf("/") + 1);
-  }
-
-  private void readDefTemplateFile(InputStream inputStream, String defGroupName, ClassLoader classLoader, boolean registerTemplate) throws JDOMException, InvalidDataException, IOException {
-    readTemplateFile(JDOMUtil.loadDocument(inputStream), defGroupName, true, registerTemplate, classLoader);
   }
 
   @Nullable
@@ -512,7 +515,7 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
     String groupName = root.getAttributeValue(GROUP);
     if (groupName == null || groupName.length() == 0) groupName = defGroupName;
 
-    TemplateGroup result = new TemplateGroup(groupName);
+    TemplateGroup result = new TemplateGroup(groupName, root.getAttributeValue("REPLACE"));
 
     Map<String, TemplateImpl> created = new LinkedHashMap<String,  TemplateImpl>();
 

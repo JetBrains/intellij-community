@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,10 +43,12 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.configuration.actions.ModuleDeleteProvider;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -179,25 +181,14 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
       .disableUpAction()
       .addExtraAction(new DeleteFromFavoritesAction() {
         {
-          getTemplatePresentation().setIcon(IconUtil.getRemoveRowIcon());
+          getTemplatePresentation().setIcon(IconUtil.getRemoveIcon());
         }
 
         @Override
         public ShortcutSet getShortcut() {
           return CustomShortcutSet.fromString("DELETE");
         }
-      })
-      .addExtraAction(AnActionButton.fromAction(new CollapseAllAction(myTree)));
-
-    if (!PlatformUtils.isCidr()) {
-      decorator.addExtraAction(new FavoritesShowMembersAction(myProject, myBuilder));
-    }
-
-    if (ProjectViewDirectoryHelper.getInstance(myProject).supportsFlattenPackages()) {
-      decorator.addExtraAction(new FavoritesFlattenPackagesAction(myProject, myBuilder));
-    }
-
-    decorator.addExtraAction(new FavoritesAutoScrollToSourceAction(myProject, myAutoScrollToSourceHandler, myBuilder));
+      });
 
     AnAction action = ActionManager.getInstance().getAction(IdeActions.ACTION_NEW_ELEMENT);
     action.registerCustomShortcutSet(action.getShortcutSet(), myTree);
@@ -265,7 +256,7 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
     }
     if (PlatformDataKeys.NAVIGATABLE_ARRAY.is(dataId)) {
       final List<Navigatable> selectedElements = getSelectedElements(Navigatable.class);
-      return selectedElements.toArray(new Navigatable[selectedElements.size()]);
+      return selectedElements.isEmpty() ? null : selectedElements.toArray(new Navigatable[selectedElements.size()]);
     }
 
     if (PlatformDataKeys.CUT_PROVIDER.is(dataId)) {
@@ -432,6 +423,25 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
     return result.toArray(new FavoritesTreeNodeDescriptor[result.size()]);
   }
 
+  public void setupToolWindow(ToolWindowEx window) {
+    final CollapseAllAction collapseAction = new CollapseAllAction(myTree);
+    collapseAction.getTemplatePresentation().setIcon(IconLoader.getIcon("/general/collapseAll.png"));
+    collapseAction.getTemplatePresentation().setHoveredIcon(IconLoader.getIcon("/general/collapseAllHover.png"));
+    window.setTitleActions(collapseAction);
+
+    final DefaultActionGroup group = new DefaultActionGroup();
+    if (!PlatformUtils.isCidr()) {
+      group.add(new FavoritesShowMembersAction(myProject, myBuilder));
+    }
+
+    if (ProjectViewDirectoryHelper.getInstance(myProject).supportsFlattenPackages()) {
+      group.add(new FavoritesFlattenPackagesAction(myProject, myBuilder));
+    }
+
+    group.add(new FavoritesAutoScrollToSourceAction(myProject, myAutoScrollToSourceHandler, myBuilder));
+    window.setAdditionalGearActions(group);
+  }
+
   public static String getQualifiedName(final VirtualFile file) {
     return file.getPresentableUrl();
   }
@@ -441,12 +451,12 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
   }
 
   private final class MyDeletePSIElementProvider implements DeleteProvider {
-    public boolean canDeleteElement(DataContext dataContext) {
+    public boolean canDeleteElement(@NotNull DataContext dataContext) {
       final PsiElement[] elements = getElementsToDelete();
       return DeleteHandler.shouldEnableDeleteAction(elements);
     }
 
-    public void deleteElement(DataContext dataContext) {
+    public void deleteElement(@NotNull DataContext dataContext) {
       List<PsiElement> allElements = Arrays.asList(getElementsToDelete());
       List<PsiElement> validElements = new ArrayList<PsiElement>();
       for (PsiElement psiElement : allElements) {

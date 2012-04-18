@@ -878,7 +878,7 @@ public class RangeMarkerTest extends LightPlatformTestCase {
     final int N = 100;
 
     final Random gen = new Random();
-    int N_TRIES = Timings.adjustAccordingToMySpeed(7000);
+    int N_TRIES = Timings.adjustAccordingToMySpeed(7000, false);
     System.out.println("N_TRIES = " + N_TRIES);
     DocumentEx document = null;
     for (int tryn=0; tryn < N_TRIES;tryn++) {
@@ -1044,5 +1044,16 @@ public class RangeMarkerTest extends LightPlatformTestCase {
     finally {
       EditorFactory.getInstance().releaseEditor(editor);
     }
+  }
+  public void testPersistent() throws Exception {
+    String text = "xxx\nzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz";
+    Document document = EditorFactory.getInstance().createDocument(text);
+    int startOffset = text.indexOf('z');
+    int endOffset = text.lastIndexOf('z');
+    RangeMarker marker = document.createRangeMarker(startOffset, endOffset, true);
+
+    document.replaceString(startOffset+1, endOffset-1, "ccc");
+
+    assertTrue(marker.isValid());
   }
 }

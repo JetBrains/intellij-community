@@ -21,8 +21,8 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.*;
-import com.intellij.openapi.vcs.rollback.RollbackEnvironment;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.vcsUtil.RollbackUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.Nullable;
 
@@ -98,10 +98,6 @@ public class RollbackChangesDialog extends DialogWrapper {
       }
     };
     myBrowser = new MultipleChangeListBrowser(project, changeLists, changes, null, true, true, myListChangeListener, myListChangeListener);
-    myBrowser.setToggleActionTitle("Include in rollback");
-
-    setOKButtonText(VcsBundle.message("changes.action.rollback.text"));
-    setTitle(VcsBundle.message("changes.action.rollback.title"));
 
     Set<AbstractVcs> affectedVcs = new HashSet<AbstractVcs>();
     for (Change c : changes) {
@@ -111,20 +107,17 @@ public class RollbackChangesDialog extends DialogWrapper {
         affectedVcs.add(vcs);
       }
     }
-    if (affectedVcs.size() == 1) {
-      AbstractVcs vcs = (AbstractVcs)affectedVcs.toArray()[0];
-      final RollbackEnvironment rollbackEnvironment = vcs.getRollbackEnvironment();
-      if (rollbackEnvironment != null) {
-        String rollbackOperationName = rollbackEnvironment.getRollbackOperationName();
-        int pos = rollbackOperationName.indexOf(UIUtil.MNEMONIC);
-        if (pos >= 0) {
-          setOKButtonMnemonic(Character.toUpperCase(rollbackOperationName.charAt(pos + 1)));
-          rollbackOperationName = rollbackOperationName.replace(Character.toString(UIUtil.MNEMONIC), "");
-        }
-        setTitle(VcsBundle.message("changes.action.rollback.custom.title", rollbackOperationName).replace("_", ""));
-        setOKButtonText(rollbackOperationName);
-      }
+
+    String operationName = RollbackUtil.getRollbackOperationName(affectedVcs);
+    int pos = operationName.indexOf(UIUtil.MNEMONIC);
+    if (pos >= 0) {
+      setOKButtonMnemonic(Character.toUpperCase(operationName.charAt(pos + 1)));
+      operationName = operationName.replace(Character.toString(UIUtil.MNEMONIC), "");
     }
+
+    setTitle(VcsBundle.message("changes.action.rollback.custom.title", operationName).replace("_", ""));
+    setOKButtonText(operationName);
+    myBrowser.setToggleActionTitle("Include in " + operationName.toLowerCase());
 
     for (Change c : changes) {
       if (c.getType() == Change.Type.NEW) {

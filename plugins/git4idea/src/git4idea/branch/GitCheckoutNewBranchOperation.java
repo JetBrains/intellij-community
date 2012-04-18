@@ -43,9 +43,9 @@ class GitCheckoutNewBranchOperation extends GitBranchOperation {
   @NotNull private final String myNewBranchName;
   @NotNull private final String myPreviousBranch;
 
-  GitCheckoutNewBranchOperation(@NotNull Project project, @NotNull Collection<GitRepository> repositories,
+  GitCheckoutNewBranchOperation(@NotNull Project project, @NotNull Git git, @NotNull Collection<GitRepository> repositories,
                                 @NotNull String newBranchName, @NotNull String previousBranch, @NotNull ProgressIndicator indicator) {
-    super(project, repositories, previousBranch, indicator);
+    super(project, git, repositories, previousBranch, indicator);
     myNewBranchName = newBranchName;
     myProject = project;
     myPreviousBranch = previousBranch;
@@ -58,7 +58,7 @@ class GitCheckoutNewBranchOperation extends GitBranchOperation {
       final GitRepository repository = next();
 
       GitSimpleEventDetector unmergedDetector = new GitSimpleEventDetector(GitSimpleEventDetector.Event.UNMERGED_PREVENTING_CHECKOUT);
-      GitCommandResult result = Git.checkoutNewBranch(repository, myNewBranchName, unmergedDetector);
+      GitCommandResult result = myGit.checkoutNewBranch(repository, myNewBranchName, unmergedDetector);
 
       if (result.success()) {
         refresh(repository);
@@ -110,10 +110,10 @@ class GitCheckoutNewBranchOperation extends GitBranchOperation {
     GitCompoundResult deleteResult = new GitCompoundResult(myProject);
     Collection<GitRepository> repositories = getSuccessfulRepositories();
     for (GitRepository repository : repositories) {
-      GitCommandResult result = Git.checkout(repository, myPreviousBranch, null, true);
+      GitCommandResult result = myGit.checkout(repository, myPreviousBranch, null, true);
       checkoutResult.append(repository, result);
       if (result.success()) {
-        deleteResult.append(repository, Git.branchDelete(repository, myNewBranchName, false));
+        deleteResult.append(repository, myGit.branchDelete(repository, myNewBranchName, false));
       }
       refresh(repository);
     }

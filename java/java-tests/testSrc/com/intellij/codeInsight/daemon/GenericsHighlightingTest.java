@@ -4,6 +4,11 @@ import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.uncheckedWarnings.UncheckedWarningLocalInspection;
 import com.intellij.codeInspection.unusedImport.UnusedImportLocalInspection;
 import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspection;
+import com.intellij.openapi.projectRoots.JavaSdkVersion;
+import com.intellij.openapi.projectRoots.JavaVersionService;
+import com.intellij.openapi.projectRoots.JavaVersionServiceImpl;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiClass;
@@ -30,8 +35,22 @@ public class GenericsHighlightingTest extends LightDaemonAnalyzerTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    LanguageLevel level = getTestName(false).contains("Level6") ? LanguageLevel.JDK_1_6 : LanguageLevel.JDK_1_5;
+    LanguageLevel level;
+    final String testName = getTestName(false);
+    if (testName.contains("Level17")) {
+      level = LanguageLevel.JDK_1_7;
+    } else if (testName.contains("Level6")) {
+      level = LanguageLevel.JDK_1_6;
+    }
+    else {
+      level = LanguageLevel.JDK_1_5;
+    }
     LanguageLevelProjectExtension.getInstance(getJavaFacade().getProject()).setLanguageLevel(level);
+  }
+
+  @Override
+  protected Sdk getProjectJDK() {
+    return getTestName(false).contains("Jdk14") ? JavaSdkImpl.getMockJdk14() : super.getProjectJDK();
   }
 
   public void testReferenceTypeParams() throws Exception { doTest(false); }
@@ -84,7 +103,8 @@ public class GenericsHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testSOE() throws Exception { doTest(true); }
 
   public void testGenericExtendException() throws Exception { doTest(false); }
-  public void testSameErasureDifferentReturnTypes() throws Exception { doTest(false); }
+  public void testSameErasureDifferentReturnTypes() throws Exception { doTest17Incompatibility(); }
+  public void testSameErasureDifferentReturnTypesJdk14() throws Exception { doTest(false); }
   public void testDeepConflictingReturnTypes() throws Exception { doTest(false); }
   public void testInheritFromTypeParameter() throws Exception { doTest(false); }
   public void testAnnotationsAsPartOfModifierList() throws Exception { doTest(false); }
@@ -98,6 +118,20 @@ public class GenericsHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testInnerClassRef() throws Exception { doTest(false); }
   public void testPrivateInnerClassRef() throws Exception { doTest(false); }
   public void testWideningCastToTypeParam() throws Exception { doTest(false); }
+  public void testCapturedWildcardAssignments() throws Exception { doTest(false);}
+  public void testTypeParameterBoundVisibility() throws Exception { doTest17Incompatibility(); }
+  public void testTypeParameterBoundVisibilityJdk14() throws Exception { doTest(false);}
+
+  public void testUncheckedWarningsLevel6() throws Exception { doTest(true);}
+  public void testIDEA77991() throws Exception { doTest(false);}
+  public void testIDEA80386() throws Exception { doTest(false);}
+
+  public void testIDEA66311() throws Exception { doTest17Incompatibility();}
+  public void testIDEA66311_16() throws Exception { doTest(false);}
+  public void testIDEA76283() throws Exception {doTest(false);}
+  public void testIDEA74899() throws Exception {doTest(false);}
+  public void testIDEA63291() throws Exception {doTest(false);}
+  public void testIDEA72912() throws Exception {doTest(false);}
 
   public void testJavaUtilCollections_NoVerify() throws Exception {
     PsiClass collectionsClass = getJavaFacade().findClass("java.util.Collections", GlobalSearchScope.moduleWithLibrariesScope(getModule()));
@@ -107,5 +141,16 @@ public class GenericsHighlightingTest extends LightDaemonAnalyzerTestCase {
     final String text = collectionsClass.getContainingFile().getText();
     configureFromFileText("Collections.java", text.replaceAll("\r","\n"));
     doTestConfiguredFile(false, false, null);
+  }
+
+  private void doTest17Incompatibility() throws Exception {
+    final JavaVersionServiceImpl javaVersionService = (JavaVersionServiceImpl)JavaVersionService.getInstance();
+    try {
+      javaVersionService.setTestVersion(JavaSdkVersion.JDK_1_7);
+      doTest(false);
+    }
+    finally {
+      javaVersionService.setTestVersion(null);
+    }
   }
 }

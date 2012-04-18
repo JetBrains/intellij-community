@@ -197,7 +197,7 @@ public final class ObjectTree<T> {
   }
 
   @SuppressWarnings({"UseOfSystemOutOrSystemErr", "HardCodedStringLiteral"})
-  public void assertIsEmpty() {
+  public void assertIsEmpty(boolean throwError) {
     boolean firstObject = true;
 
     for (T object : myRootObjects) {
@@ -219,6 +219,8 @@ public final class ObjectTree<T> {
       if (trace != null) {
         System.err.println("***         First seen at: ");
         trace.printStackTrace();
+        if (throwError) throw new RuntimeException("Memory leak detected: " + object + " of class " + object.getClass()
+                                                   +"\nSee the cause for the corresponding Disposer.register() stacktrace:\n",trace);
       }
     }
 

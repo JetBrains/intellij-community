@@ -36,6 +36,23 @@ public class StripTrailingSpacesTest extends LightPlatformCodeInsightTestCase {
     super.tearDown();
   }
 
+  private void doTest(@NonNls String before, @NonNls String after) throws IOException {
+    configureFromFileText("x.txt", before);
+    type(' ');
+    backspace();
+    stripTrailingSpaces();
+    checkResultByText(after);
+  }
+
+  private static void stripTrailingSpaces() {
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
+      public void run() {
+        TrailingSpacesStripper.stripIfNotCurrentLine(getEditor().getDocument(), true);
+      }
+    });
+  }
+
   public void testDoNotStripModifiedOnCurrentLine() throws IOException {
     doTest("xxx\n   <caret>\nyyy",
            "xxx\n   <caret>\nyyy");
@@ -108,20 +125,14 @@ public class StripTrailingSpacesTest extends LightPlatformCodeInsightTestCase {
     checkResultByText("xxx\n<caret>yyy\n"); // now we can strip
   }
 
-  private void doTest(@NonNls String before, @NonNls String after) throws IOException {
-    configureFromFileText("x.txt", before);
-    type(' ');
-    backspace();
-    stripTrailingSpaces();
-    checkResultByText(after);
-  }
+  public void testDoNotStripModifiedLines_And_EnsureBlankLineAtTheEnd_LeavesWhitespacesAtTheEndOfFileAlone() throws IOException {
+    EditorSettingsExternalizable settings = EditorSettingsExternalizable.getInstance();
+    settings.setStripTrailingSpaces(EditorSettingsExternalizable.STRIP_TRAILING_SPACES_NONE);
+    settings.setEnsureNewLineAtEOF(true);
 
-  private static void stripTrailingSpaces() {
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        TrailingSpacesStripper.stripIfNotCurrentLine(getEditor().getDocument(), true);
-      }
-    });
+    configureFromFileText("x.txt", "xxx <caret>\nyyy\n\t\t\t");
+
+    FileDocumentManager.getInstance().saveAllDocuments();
+    checkResultByText("xxx <caret>\nyyy\n\t\t\t\n");
   }
 }

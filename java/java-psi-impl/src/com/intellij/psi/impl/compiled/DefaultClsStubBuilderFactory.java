@@ -24,7 +24,7 @@ import com.intellij.psi.impl.java.stubs.impl.PsiJavaFileStubImpl;
 import com.intellij.psi.stubs.PsiFileStub;
 import com.intellij.util.cls.ClsFormatException;
 import org.jetbrains.annotations.Nullable;
-import org.objectweb.asm.ClassReader;
+import org.jetbrains.asm4.ClassReader;
 
 import java.io.IOException;
 
@@ -42,7 +42,7 @@ public class DefaultClsStubBuilderFactory extends ClsStubBuilderFactory {
       final ClassReader reader = new ClassReader(bytes);
       final StubBuildingVisitor<VirtualFile> classVisitor =
         new StubBuildingVisitor<VirtualFile>(vFile, VirtualFileInnerClassStrategy.INSTANCE, file, 0);
-      reader.accept(classVisitor, 0);
+      reader.accept(classVisitor, ClassReader.SKIP_FRAMES);
 
       @SuppressWarnings("unchecked") final PsiClassStub<PsiClass> result = (PsiClassStub<PsiClass>)classVisitor.getResult();
       if (result == null) return null;
@@ -51,7 +51,7 @@ public class DefaultClsStubBuilderFactory extends ClsStubBuilderFactory {
       return file;
     }
     catch (Exception e) {
-      LOG.warn(vFile.getPath(), e);
+      LOG.debug(vFile.getPath(), e);
       throw new ClsFormatException();
     }
   }

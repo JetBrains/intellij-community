@@ -71,15 +71,18 @@ public class DefaultProjectStoreImpl extends ProjectStoreImpl {
     final XmlElementStorage storage = new XmlElementStorage(pathMacroManager.createTrackingSubstitutor(), componentManager,
                                                             ROOT_TAG_NAME, StreamProvider.DEFAULT, "", ComponentRoamingManager.getInstance(),
                                                             ComponentVersionProvider.EMPTY) {
+      @Override
       @Nullable
       protected Document loadDocument() throws StateStorageException {
         return document;
       }
 
+      @Override
       protected MySaveSession createSaveSession(final MyExternalizationSession externalizationSession) {
         return new DefaultSaveSession(externalizationSession);
       }
 
+      @Override
       @NotNull
       protected StorageData createStorageData() {
         return new BaseStorageData(ROOT_TAG_NAME);
@@ -90,14 +93,17 @@ public class DefaultProjectStoreImpl extends ProjectStoreImpl {
           super(externalizationSession);
         }
 
+        @Override
         protected void doSave() throws StateStorageException {
           myProjectManager.setDefaultProjectRootElement(getDocumentToSave().getRootElement());
         }
 
+        @Override
         public Collection<IFile> getStorageFilesToSave() throws StateStorageException {
           return Collections.emptyList();
         }
 
+        @Override
         public List<IFile> getAllStorageFiles() {
           return Collections.emptyList();
         }
@@ -105,75 +111,92 @@ public class DefaultProjectStoreImpl extends ProjectStoreImpl {
     };
 
     return new StateStorageManager() {
+      @Override
       public void addMacro(String macro, String expansion) {
         throw new UnsupportedOperationException("Method addMacro not implemented in " + getClass());
       }
 
+      @Override
       @Nullable
       public TrackingPathMacroSubstitutor getMacroSubstitutor() {
         return null;
       }
 
+      @Override
       @Nullable
       public StateStorage getStateStorage(@NotNull Storage storageSpec) throws StateStorageException {
         return storage;
       }
 
+      @Override
       @Nullable
       public StateStorage getFileStateStorage(String fileName) {
         return storage;
       }
 
+      @Override
       public void clearStateStorage(@NotNull String file) {
       }
 
+      @Override
       public ExternalizationSession startExternalization() {
         return new MyExternalizationSession(storage);
       }
 
+      @Override
       public SaveSession startSave(final ExternalizationSession externalizationSession) {
         return new MySaveSession(storage, externalizationSession);
       }
 
+      @Override
       public void finishSave(SaveSession saveSession) {
         storage.finishSave(((MySaveSession)saveSession).saveSession);
       }
 
+      @Override
       public String expandMacroses(final String file) {
         throw new UnsupportedOperationException("Method expandMacroses not implemented in " + getClass());
       }
 
+      @Override
       @Nullable
       public StateStorage getOldStorage(Object component, final String componentName, final StateStorageOperation operation)
       throws StateStorageException {
         return storage;
       }
 
+      @Override
       public void registerStreamProvider(final StreamProvider streamProvider, final RoamingType type) {
         throw new UnsupportedOperationException("Method registerStreamProvider not implemented in " + getClass());
       }
 
+      @Override
       public void unregisterStreamProvider(final StreamProvider streamProvider, final RoamingType roamingType) {
         throw new UnsupportedOperationException("Method unregisterStreamProvider not implemented in " + getClass());
       }
+      @Override
       public StreamProvider[] getStreamProviders(final RoamingType roamingType) {
         throw new UnsupportedOperationException("Method getStreamProviders not implemented in " + getClass());
       }
 
+      @Override
       public Collection<String> getStorageFileNames() {
         throw new UnsupportedOperationException("Method getStorageFileNames not implemented in " + getClass());
       }
 
+      @Override
       public void reset() {
         
       }
     };
   }
 
+  @Override
   public String getLocation() {
     throw new UnsupportedOperationException("Method getLocation not implemented in " + getClass());
   }
 
+  @Override
   public void load() throws IOException, StateStorageException {
     if (myElement == null) return;
     super.load();
@@ -186,11 +209,13 @@ public class DefaultProjectStoreImpl extends ProjectStoreImpl {
       externalizationSession = storage.startExternalization();
     }
 
+    @Override
     public void setState(@NotNull final Storage[] storageSpecs, final Object component, final String componentName, final Object state)
     throws StateStorageException {
       externalizationSession.setState(component, componentName, state, null);
     }
 
+    @Override
     public void setStateInOldStorage(final Object component, final String componentName, final Object state) throws StateStorageException {
       externalizationSession.setState(component, componentName, state, null);
     }
@@ -204,19 +229,23 @@ public class DefaultProjectStoreImpl extends ProjectStoreImpl {
     }
 
     //returns set of component which were changed, null if changes are much more than just component state.
+    @Override
     @Nullable
     public Set<String> analyzeExternalChanges(Set<Pair<VirtualFile, StateStorage>> files) {
       throw new UnsupportedOperationException("Method analyzeExternalChanges not implemented in " + getClass());
     }
 
+    @Override
     public List<IFile> getAllStorageFilesToSave() throws StateStorageException {
       return Collections.emptyList();
     }
 
+    @Override
     public List<IFile> getAllStorageFiles() {
       return Collections.emptyList();
     }
 
+    @Override
     public void save() throws StateStorageException {
       saveSession.save();
     }

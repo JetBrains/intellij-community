@@ -19,6 +19,7 @@ import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.StringBuilderSpinAllocator;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -51,6 +52,7 @@ public class FileElement {
     return myName;
   }
 
+  @NotNull
   public final String getPath() {
     if (myPath == null) {
       final StringBuilder sb = StringBuilderSpinAllocator.alloc();

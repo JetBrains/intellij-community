@@ -16,44 +16,23 @@
 package org.jetbrains.plugins.groovy.refactoring.ui;
 
 import com.intellij.codeInsight.daemon.impl.JavaReferenceImporter;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.ui.EditorTextField;
+import com.intellij.psi.PsiCodeFragment;
+import com.intellij.refactoring.ui.CodeFragmentTableCellEditorBase;
 import org.jetbrains.plugins.groovy.GroovyFileType;
-import org.jetbrains.plugins.groovy.debugger.fragments.GroovyCodeFragment;
 
-import javax.swing.*;
 import javax.swing.table.TableCellEditor;
-import java.awt.*;
 
 /**
  * @author Maxim.Medvedev
  */
-public class GrCodeFragmentTableCellEditor extends AbstractCellEditor implements TableCellEditor {
-  private GroovyCodeFragment myCodeFragment;
-  private Document myDocument;
-  private Project myProject;
-  private EditorTextField myEditorTextField;
-
+public class GrCodeFragmentTableCellEditor extends CodeFragmentTableCellEditorBase implements TableCellEditor {
   public GrCodeFragmentTableCellEditor(Project project) {
-    myProject = project;
+    super(project, GroovyFileType.GROOVY_FILE_TYPE);
   }
 
-  public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
-    myCodeFragment = (GroovyCodeFragment)value;
-
-    myDocument = PsiDocumentManager.getInstance(myProject).getDocument(myCodeFragment);
-    myEditorTextField = new EditorTextField(myDocument, myProject, GroovyFileType.GROOVY_FILE_TYPE) {
-      protected boolean shouldHaveBorder() {
-        return false;
-      }
-    };
-    return myEditorTextField;
-  }
-
-  public Object getCellEditorValue() {
+  public PsiCodeFragment getCellEditorValue() {
     return myCodeFragment;
   }
 
@@ -63,8 +42,6 @@ public class GrCodeFragmentTableCellEditor extends AbstractCellEditor implements
     if (editor != null) {
       JavaReferenceImporter.autoImportReferenceAtCursor(editor, myCodeFragment, true);
     }
-    super.stopCellEditing();
-    PsiDocumentManager.getInstance(myProject).commitDocument(myDocument);
-    return true;
+    return super.stopCellEditing();
   }
 }

@@ -658,7 +658,7 @@ public abstract class TodoTreeBuilder extends AbstractTreeBuilder {
   }
 
   private final class MyPsiTreeChangeListener extends PsiTreeChangeAdapter {
-    public void childAdded(PsiTreeChangeEvent e) {
+    public void childAdded(@NotNull PsiTreeChangeEvent e) {
       // If local modification
       if (e.getFile() != null) {
         markFileAsDirty(e.getFile());
@@ -675,7 +675,7 @@ public abstract class TodoTreeBuilder extends AbstractTreeBuilder {
       updateTree(true);
     }
 
-    public void beforeChildRemoval(PsiTreeChangeEvent e) {
+    public void beforeChildRemoval(@NotNull PsiTreeChangeEvent e) {
       // If local midification
       final PsiFile file = e.getFile();
       if (file != null) {
@@ -711,7 +711,7 @@ public abstract class TodoTreeBuilder extends AbstractTreeBuilder {
       }
     }
 
-    public void childMoved(PsiTreeChangeEvent e) {
+    public void childMoved(@NotNull PsiTreeChangeEvent e) {
       if (e.getFile() != null) { // local change
         markFileAsDirty(e.getFile());
         updateTree(true);
@@ -744,21 +744,21 @@ public abstract class TodoTreeBuilder extends AbstractTreeBuilder {
       }
     }
 
-    public void childReplaced(PsiTreeChangeEvent e) {
+    public void childReplaced(@NotNull PsiTreeChangeEvent e) {
       if (e.getFile() != null) {
         markFileAsDirty(e.getFile());
         updateTree(true);
       }
     }
 
-    public void childrenChanged(PsiTreeChangeEvent e) {
+    public void childrenChanged(@NotNull PsiTreeChangeEvent e) {
       if (e.getFile() != null) {
         markFileAsDirty(e.getFile());
         updateTree(true);
       }
     }
 
-    public void propertyChanged(PsiTreeChangeEvent e) {
+    public void propertyChanged(@NotNull PsiTreeChangeEvent e) {
       String propertyName = e.getPropertyName();
       if (propertyName.equals(PsiTreeChangeEvent.PROP_ROOTS)) { // rebuild all tree when source roots were changed
         getUpdater().runBeforeUpdate(

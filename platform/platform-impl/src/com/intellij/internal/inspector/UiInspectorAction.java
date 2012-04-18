@@ -28,16 +28,17 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.HashMap;
+import com.intellij.util.ui.ColorIcon;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
-import javax.swing.plaf.ColorUIResource;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
@@ -268,6 +269,10 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
             foreground = Color.GRAY;
           } else if (component.getWidth() == 0 || component.getHeight() == 0) {
             foreground = new Color(128, 10, 0);
+          } else if (component.getPreferredSize() != null &&
+                     (component.getSize().width < component.getPreferredSize().width
+                      || component.getSize().height < component.getPreferredSize().height)) {
+            foreground = Color.BLUE;
           }
           
           if (componentNode.getToSelect() == componentNode.getOwnComponent()) {
@@ -553,9 +558,9 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
       RENDERERS.put(Insets.class, new InsetsRenderer());
       RENDERERS.put(Rectangle.class, new RectangleRenderer());
       RENDERERS.put(Color.class, new ColorRenderer());
-      RENDERERS.put(ColorUIResource.class, new ColorRenderer());
       RENDERERS.put(Font.class, new FontRenderer());
       RENDERERS.put(Boolean.class, new BooleanRenderer());
+      RENDERERS.put(Icon.class, new IconRenderer());
     }
 
     private static final Renderer DEFAULT_RENDERER = new ObjectRenderer();
@@ -570,16 +575,9 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
         return NULL_RENDERER;
       }
 
-      Renderer renderer = RENDERERS.get(value.getClass());
-      if (renderer == null) {
-        if (value instanceof Font) {
-          renderer = RENDERERS.get(Font.class);
-        } else if (value instanceof Color) {
-          renderer = RENDERERS.get(Color.class);
-        } else {
-          renderer = DEFAULT_RENDERER;
-        }
-      }
+      Renderer renderer = getRenderer(value.getClass());
+      if (renderer == null)
+        renderer = DEFAULT_RENDERER;
 
       JComponent result = renderer.setValue(value);
       result.setOpaque(false);
@@ -587,9 +585,28 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
       result.setBackground(isSelected ? table.getSelectionBackground() : table.getBackground());
       return result;
     }
+
+    @Nullable
+    private static Renderer getRenderer(Class clazz) {
+      if (clazz == null)
+        return null;
+      Renderer renderer = RENDERERS.get(clazz);
+      if (renderer != null)
+        return renderer;
+      Class[] interfaces = clazz.getInterfaces();
+      for (Class aClass : interfaces) {
+        renderer = getRenderer(aClass);
+        if (renderer != null)
+          return renderer;
+      }
+      clazz = clazz.getSuperclass();
+      if (clazz != null)
+        return getRenderer(clazz);
+      return null;
+    }
   }
 
-  private interface Renderer<T> {                              
+  private interface Renderer<T> {
     JComponent setValue(@NotNull T value);
   }
 
@@ -624,6 +641,7 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
   private static class ColorRenderer extends JLabel implements Renderer<Color> {
     public JComponent setValue(@NotNull final Color value) {
       setText("r:" + value.getRed() + ", g:" + value.getGreen() + ", b:" + value.getBlue());
+      setIcon(new ColorIcon(13, 11, value, true));
       return this;
     }
   }
@@ -638,6 +656,13 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
   private static class BooleanRenderer extends JLabel implements Renderer<Boolean> {
     public JComponent setValue(@NotNull final Boolean value) {
       setText(value ? "Yes" : "No");
+      return this;
+    }
+  }
+
+  private static class IconRenderer extends JLabel implements Renderer<Icon> {
+    public JComponent setValue(@NotNull final Icon value) {
+      setIcon(value);
       return this;
     }
   }
@@ -664,10 +689,10 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
   private static class InspectorTableModel extends AbstractTableModel {
 
     private static final String[] JCOMPONENT_METHODS = new String[] {
-      "getLocation", "getLocationOnScreen", "getPreferredSize", "getMinimumSize", "getMaximumSize",
+      "getLocation", "getLocationOnScreen", "getMinimumSize", "getMaximumSize", "getPreferredSize", "getSize",
       "getAlignmentX", "getAlignmentY", "getTooltipText", "getVisibleRect", "getLayout",
       "getForeground", "getBackground", "getFont", "isOpaque", "isFocusCycleRoot", "isValid", "isDisplayable",
-      "isShowing", "isEnabled", "isLightweight", "isFocusable", "isFocusOwner"
+      "isShowing", "isEnabled", "isLightweight", "isFocusable", "isFocusOwner", "getToolTipText", "getText", "isEditable", "getIcon"
     };
 
     private Component myComponent;
@@ -700,7 +725,7 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
         }
       }
     }
-
+    @Nullable
     public Object getValueAt(int row, int column) {
       final PropertyBean bean = myProperties.get(row);
       if (bean != null) {

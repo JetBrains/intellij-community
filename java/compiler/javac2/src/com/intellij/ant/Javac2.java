@@ -15,6 +15,8 @@
  */
 package com.intellij.ant;
 
+import com.intellij.compiler.instrumentation.InstrumentationClassFinder;
+import com.intellij.compiler.instrumentation.InstrumenterClassWriter;
 import com.intellij.compiler.notNullVerification.NotNullVerifyingInstrumenter;
 import com.intellij.uiDesigner.compiler.*;
 import com.intellij.uiDesigner.lw.CompiledClassPropertiesProvider;
@@ -23,10 +25,10 @@ import org.apache.tools.ant.BuildException;
 import org.apache.tools.ant.Project;
 import org.apache.tools.ant.taskdefs.Javac;
 import org.apache.tools.ant.types.Path;
-import org.objectweb.asm.ClassReader;
-import org.objectweb.asm.ClassWriter;
-import org.objectweb.asm.Opcodes;
-import org.objectweb.asm.commons.EmptyVisitor;
+import org.jetbrains.asm4.ClassReader;
+import org.jetbrains.asm4.ClassVisitor;
+import org.jetbrains.asm4.ClassWriter;
+import org.jetbrains.asm4.Opcodes;
 
 import java.io.*;
 import java.net.MalformedURLException;
@@ -201,26 +203,34 @@ public class Javac2 extends Javac {
      * class files.
      */
     protected void compile() {
-        // compile java
-        if (areJavaClassesCompiled()) {
-            super.compile();
-        }
+      // compile java
+      if (areJavaClassesCompiled()) {
+        super.compile();
+      }
 
-        PseudoClassLoader loader = buildClasspathClassLoader();
-        if (loader == null) return;
-        instrumentForms(loader);
+      InstrumentationClassFinder finder = buildClasspathClassLoader();
+      if (finder == null) {
+        return;
+      }
+      try {
+        instrumentForms(finder);
 
         //NotNull instrumentation
-        final int instrumented = instrumentNotNull(getDestdir(), loader);
+        final int instrumented = instrumentNotNull(getDestdir(), finder);
+
         log("Added @NotNull assertions to " + instrumented + " files", Project.MSG_INFO);
+      }
+      finally {
+        finder.releaseResources();
+      }
     }
 
-    /**
+  /**
      * Instrument forms
      *
-     * @param loader a classloader to use
+     * @param finder a classloader to use
      */
-    private void instrumentForms(final PseudoClassLoader loader) {
+    private void instrumentForms(final InstrumentationClassFinder finder) {
         // we instrument every file, because we cannot find which files should not be instrumented without dependency storage
         final ArrayList formsToInstrument = myFormFiles;
 
@@ -237,7 +247,7 @@ public class Javac2 extends Javac {
             log("compiling form " + formFile.getAbsolutePath(), Project.MSG_VERBOSE);
             final LwRootContainer rootContainer;
             try {
-                rootContainer = Utils.getRootContainer(formFile.toURL(), new CompiledClassPropertiesProvider(loader.getLoader()));
+                rootContainer = Utils.getRootContainer(formFile.toURL(), new CompiledClassPropertiesProvider(finder.getLoader()));
             }
             catch (AlienFormFileException e) {
                 // ignore non-IDEA forms
@@ -283,9 +293,9 @@ public class Javac2 extends Javac {
                 finally {
                     stream.close();
                 }
-                AntNestedFormLoader formLoader = new AntNestedFormLoader(loader.getLoader(), myNestedFormPathList);
-                AntClassWriter classWriter = new AntClassWriter(getAsmClassWriterFlags(version), loader);
-                final AsmCodeGenerator codeGenerator = new AsmCodeGenerator(rootContainer, loader.getLoader(), formLoader, false, classWriter);
+                AntNestedFormLoader formLoader = new AntNestedFormLoader(finder.getLoader(), myNestedFormPathList);
+                InstrumenterClassWriter classWriter = new InstrumenterClassWriter(getAsmClassWriterFlags(version), finder);
+                final AsmCodeGenerator codeGenerator = new AsmCodeGenerator(rootContainer, finder, formLoader, false, classWriter);
                 codeGenerator.patchFile(classFile);
                 final FormErrorInfo[] warnings = codeGenerator.getWarnings();
 
@@ -322,7 +332,7 @@ public class Javac2 extends Javac {
      *
      * @return a URL classloader
      */
-    private PseudoClassLoader buildClasspathClassLoader() {
+    private InstrumentationClassFinder buildClasspathClassLoader() {
         final StringBuffer classPathBuffer = new StringBuffer();
         final Path cp = new Path(getProject());
         appendPath(cp, getBootclasspath());
@@ -349,7 +359,7 @@ public class Javac2 extends Javac {
         log("classpath=" + classPath, Project.MSG_VERBOSE);
 
         try {
-            return InstrumentationUtil.createPseudoClassLoader(classPath);
+            return InstrumentationUtil.createInstrumentationClassFinder(classPath);
         }
         catch (MalformedURLException e) {
             fireError(e.getMessage());
@@ -373,10 +383,10 @@ public class Javac2 extends Javac {
      * Instrument classes with NotNull annotations
      *
      * @param dir    the directory with classes to instrument (the directory is processed recursively)
-     * @param loader the classloader to use
+     * @param finder the classloader to use
      * @return the amount of classes actually affected by instrumentation
      */
-    private int instrumentNotNull(File dir, final PseudoClassLoader loader) {
+    private int instrumentNotNull(File dir, final InstrumentationClassFinder finder) {
         int instrumented = 0;
         final File[] files = dir.listFiles();
         for (int i = 0; i < files.length; i++) {
@@ -393,7 +403,7 @@ public class Javac2 extends Javac {
                         int version = getClassFileVersion(reader);
 
                         if (version >= Opcodes.V1_5) {
-                            ClassWriter writer = new AntClassWriter(getAsmClassWriterFlags(version), loader);
+                            ClassWriter writer = new InstrumenterClassWriter(getAsmClassWriterFlags(version), finder);
 
                             final NotNullVerifyingInstrumenter instrumenter = new NotNullVerifyingInstrumenter(writer);
                             reader.accept(instrumenter, 0);
@@ -421,7 +431,7 @@ public class Javac2 extends Javac {
                 }
             }
             else if (file.isDirectory()) {
-                instrumented += instrumentNotNull(file, loader);
+                instrumented += instrumentNotNull(file, finder);
             }
         }
 
@@ -430,7 +440,7 @@ public class Javac2 extends Javac {
 
     private static int getClassFileVersion(ClassReader reader) {
         final int[] classfileVersion = new int[1];
-        reader.accept(new EmptyVisitor() {
+        reader.accept(new ClassVisitor(Opcodes.ASM4) {
             public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
                 classfileVersion[0] = version;
             }

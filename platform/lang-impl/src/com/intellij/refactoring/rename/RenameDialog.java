@@ -16,6 +16,7 @@
 
 package com.intellij.refactoring.rename;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.Extensions;
@@ -86,7 +87,7 @@ public class RenameDialog extends RefactoringDialog {
       myCbSearchTextOccurences.setSelected(toSearchForTextOccurences);
     }
 
-    validateButtons();
+    if (!ApplicationManager.getApplication().isUnitTestMode()) validateButtons();
     myHelpID = RenamePsiElementProcessor.forElement(psiElement).getHelpID(psiElement);
   }
 

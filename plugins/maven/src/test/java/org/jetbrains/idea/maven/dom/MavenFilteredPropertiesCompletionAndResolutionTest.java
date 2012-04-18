@@ -20,6 +20,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiReference;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.dom.model.MavenDomProfilesModel;
 import org.jetbrains.idea.maven.dom.references.MavenPropertyPsiReference;
@@ -488,12 +489,14 @@ public class MavenFilteredPropertiesCompletionAndResolutionTest extends MavenDom
 
     VirtualFile f = createProjectSubFile("res/foo1.properties",
                                          "foo1=${basedir}\n" +
-                                         "foo2=|baseUri|\n" +
+                                         "foo2=|pom.baseUri|\n" +
                                          "foo3=a(ve|rsion]");
 
     assertNotNull(resolveReference(f, "basedir"));
-    assertNotNull(resolveReference(f, "baseUri"));
-    assertNotNull(getReference(f, "ve|rsion"));
+    assertNotNull(resolveReference(f, "pom.baseUri"));
+    PsiReference ref = getReference(f, "ve|rsion");
+    assertNotNull(ref);
+    assertTrue(ref.isSoft());
   }
 
   public void testDontUseDefaultDelimiter1() throws Exception {
@@ -526,10 +529,10 @@ public class MavenFilteredPropertiesCompletionAndResolutionTest extends MavenDom
 
     VirtualFile f = createProjectSubFile("res/foo1.properties",
                                          "foo1=${basedir}\n" +
-                                         "foo2=|baseUri|");
+                                         "foo2=|pom.baseUri|");
 
     assert !(getReference(f, "basedir") instanceof MavenPropertyPsiReference);
-    assertNotNull(resolveReference(f, "baseUri"));
+    assertNotNull(resolveReference(f, "pom.baseUri"));
   }
 
 }

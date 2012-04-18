@@ -39,6 +39,7 @@ import java.util.Set;
 public class DomFileIndex extends ScalarIndexExtension<String>{
   public static final ID<String,Void> NAME = ID.create("DomFileIndex");
   private static final FileBasedIndex.InputFilter INPUT_FILTER = new FileBasedIndex.InputFilter() {
+    @Override
     public boolean acceptInput(final VirtualFile file) {
       return file.getFileType() == StdFileTypes.XML;
     }
@@ -47,6 +48,7 @@ public class DomFileIndex extends ScalarIndexExtension<String>{
 
   public DomFileIndex() {
     myDataIndexer = new DataIndexer<String, Void, FileContent>() {
+      @Override
       @NotNull
       public Map<String, Void> map(final FileContent inputData) {
         final Set<String> namespaces = new THashSet<String>();
@@ -77,26 +79,34 @@ public class DomFileIndex extends ScalarIndexExtension<String>{
     };
   }
 
+  @Override
+  @NotNull
   public ID<String, Void> getName() {
     return NAME;
   }
 
+  @Override
+  @NotNull
   public DataIndexer<String, Void, FileContent> getIndexer() {
     return myDataIndexer;
   }
 
+  @Override
   public KeyDescriptor<String> getKeyDescriptor() {
     return new EnumeratorStringDescriptor();
   }
 
+  @Override
   public FileBasedIndex.InputFilter getInputFilter() {
     return INPUT_FILTER;
   }
 
+  @Override
   public boolean dependsOnFileContent() {
     return true;
   }
 
+  @Override
   public int getVersion() {
     final DomApplicationComponent component = DomApplicationComponent.getInstance();
     int result = 0;

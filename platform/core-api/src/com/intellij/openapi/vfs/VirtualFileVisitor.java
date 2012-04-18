@@ -15,13 +15,15 @@
  */
 package com.intellij.openapi.vfs;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * @author Dmitry Avdeev
  *         Date: 10/31/11
  */
 public abstract class VirtualFileVisitor {
 
-  public abstract boolean visitFile(VirtualFile file);
+  public abstract boolean visitFile(@NotNull VirtualFile file);
 
-  public void afterChildrenVisited(VirtualFile file) {}
+  public void afterChildrenVisited(@NotNull VirtualFile file) {}
 }

@@ -16,11 +16,11 @@
 package org.jetbrains.plugins.github.ui;
 
 import com.intellij.ide.BrowserUtil;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.HyperlinkAdapter;
-import org.jetbrains.plugins.github.GithubUtil;
+import org.jetbrains.plugins.github.GithubSettings;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
@@ -33,14 +33,11 @@ import java.awt.event.ActionListener;
  * @date 10/20/10
  */
 public class GithubSettingsPanel {
-  private JTextField myLoginTextField;
-  private JPasswordField myPasswordField;
   private JTextPane mySignupTextField;
   private JPanel myPane;
   private JButton myTestButton;
-  private JTextField myHostTextField;
 
-  public GithubSettingsPanel() {
+  public GithubSettingsPanel(final GithubSettings settings) {
     mySignupTextField.addHyperlinkListener(new HyperlinkAdapter() {
       @Override
       protected void hyperlinkActivated(final HyperlinkEvent e) {
@@ -54,10 +51,12 @@ public class GithubSettingsPanel {
     myTestButton.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        if (GithubUtil.checkCredentials(ProjectManager.getInstance().getDefaultProject(), getHost(), getLogin(), getPassword())){
-          Messages.showInfoMessage("Connection successful", "Success");
-        } else {
-          Messages.showErrorDialog("Cannot login to the " + getHost() + " using given credentials", "Failure");
+        Project project = ProjectManager.getInstance().getDefaultProject();
+        final GithubLoginDialog dialog = new GithubLoginDialog(project);
+        dialog.show();
+        if (dialog.isOK()){
+          // the dialog won't let close after pressing OK if the connection is not successful
+          Messages.showInfoMessage(myPane, "Connection successful", "Success");
         }
       }
     });
@@ -67,29 +66,5 @@ public class GithubSettingsPanel {
     return myPane;
   }
 
-  public void setLogin(final String login) {
-    myLoginTextField.setText(login);
-  }
-
-  public void setPassword(final String password) {
-    // Show password as blank if password is empty
-    myPasswordField.setText(StringUtil.isEmpty(password) ? null : password);
-  }
-
-  public String getLogin() {
-    return myLoginTextField.getText().trim();
-  }
-
-  public String getPassword() {
-    return String.valueOf(myPasswordField.getPassword());
-  }
-
-  public void setHost(final String host) {
-    myHostTextField.setText(host);
-  }
-
-  public String getHost() {
-    return myHostTextField.getText().trim();
-  }
 }
 

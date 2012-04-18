@@ -1,4 +1,6 @@
 print '\n'
+print <error descr="Illegal escape character in string literal">'\u000a'</error>
+print <error descr="Illegal escape character in string literal">"\u000d"</error>
 print <error descr="Illegal escape character in string literal">'\y'</error>
 ptint <error descr="Illegal escape character in string literal">"\n\a\t"</error>
 print <error descr="Illegal escape character in string literal">"\n\a${x}\t"</error>
@@ -14,5 +16,7 @@ print "dfg\$fg"
 print 'fg\$fg'
 print (<error descr="Illegal escape character in string literal">/abc\n\r\y\o \u12 /</error>)
 print (/abc\n\r\y\o \u1234 /)
+print '\123\123'
+print '\198'
 print """\n${x}\"""
 <EOLError descr="String end expected"></EOLError>

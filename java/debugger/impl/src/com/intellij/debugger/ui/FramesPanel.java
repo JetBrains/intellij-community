@@ -650,7 +650,7 @@ public class FramesPanel extends UpdatableDebuggerView {
   }
 
   public void requestFocus() {
-    myThreadsCombo.requestFocus();
+    myFramesList.requestFocus();
   }
 
   public OccurenceNavigator getOccurenceNavigator() {

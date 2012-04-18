@@ -94,6 +94,9 @@ public class GroovyCompletionUtil {
     while (statement != null &&
            !(statement instanceof GrExpression)) {
       statement = statement.getLastChild();
+      if (statement instanceof PsiErrorElement) {
+        statement = nearestLeftSibling(statement);
+      }
     }
     return statement != null;
   }
@@ -332,7 +335,7 @@ public class GroovyCompletionUtil {
   }
 
   public static boolean hasConstructorParameters(@NotNull PsiClass clazz, @NotNull GroovyPsiElement place) {
-    for (GroovyResolveResult result : ResolveUtil.getAllClassConstructors(clazz, place, PsiSubstitutor.EMPTY)) {
+    for (GroovyResolveResult result : ResolveUtil.getAllClassConstructors(clazz, place, PsiSubstitutor.EMPTY, null)) {
       if (result.isAccessible() && ((PsiMethod)result.getElement()).getParameterList().getParametersCount() > 0) {
         return true;
       }

@@ -25,6 +25,7 @@ import org.jetbrains.annotations.NotNull;
 public abstract class BaseIntentionAction implements IntentionAction {
   private String myText = "";
 
+  @Override
   @NotNull
   public String getText() {
     return myText;
@@ -34,6 +35,7 @@ public abstract class BaseIntentionAction implements IntentionAction {
     myText = text;
   }
 
+  @Override
   public boolean startInWriteAction() {
     return true;
   }

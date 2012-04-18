@@ -203,7 +203,7 @@ public class RenameUtil {
     });
   }
 
-  public static void doRenameGenericNamedElement(PsiElement namedElement, String newName, UsageInfo[] usages,
+  public static void doRenameGenericNamedElement(@NotNull PsiElement namedElement, String newName, UsageInfo[] usages,
                                                  @Nullable RefactoringElementListener listener) throws IncorrectOperationException {
     PsiWritableMetaData writableMetaData = null;
     if (namedElement instanceof PsiMetaOwner) {
@@ -213,7 +213,7 @@ public class RenameUtil {
       }
     }
     if (writableMetaData == null && !(namedElement instanceof PsiNamedElement)) {
-      LOG.error("Unknown element type");
+      LOG.error("Unknown element type:" + namedElement);
     }
 
     boolean hasBindables = false;

@@ -195,7 +195,7 @@ public class BookmarksAction extends AnAction implements DumbAware {
 
     ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar("", actions, true);
     actionToolbar.setReservePlaceAutoPopupIcon(false);
-    actionToolbar.setMinimumButtonSize(new Dimension(16, 16));
+    actionToolbar.setMinimumButtonSize(new Dimension(20, 20));
     final JComponent toolBar = actionToolbar.getComponent();
     toolBar.setOpaque(false);
 

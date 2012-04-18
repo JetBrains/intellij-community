@@ -17,11 +17,8 @@ package com.intellij.designer.designSurface.tools;
 
 import com.intellij.designer.designSurface.EditableArea;
 import com.intellij.designer.model.RadComponent;
-import com.intellij.designer.utils.Cursors;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.util.List;
@@ -33,25 +30,45 @@ public class SelectionTool extends InputTool {
   private InputTool myTracker;
 
   @Override
+  public void deactivate() {
+    deactivateTracker();
+    super.deactivate();
+  }
+
+  @Override
+  public void refreshCursor() {
+    if (myTracker == null) {
+      super.refreshCursor();
+    }
+  }
+
+  @Override
   protected void handleButtonDown(int button) {
     if (myState == STATE_INIT) {
       myState = STATE_DRAG;
       deactivateTracker();
 
-      if (myInputEvent.isAltDown()) {
-        setTracker(new MarqueeTracker());
-        return;
+      if (!myArea.isTree()) {
+        if (myInputEvent.isAltDown()) {
+          setTracker(new MarqueeTracker());
+          return;
+        }
+
+        InputTool tracker = myArea.findTargetTool(myCurrentScreenX, myCurrentScreenY);
+        if (tracker != null) {
+          setTracker(tracker);
+          if (tracker instanceof ResizeTracker) {
+            myArea.showSelection(false);
+          }
+          return;
+        }
       }
 
-      InputTool tracker = myArea.findTargetTool(myCurrentScreenX, myCurrentScreenY);
-      if (tracker != null) {
-        setTracker(tracker);
-        return;
-      }
-
-      RadComponent component = myArea.findTarget(myCurrentScreenX, myCurrentScreenY);
+      RadComponent component = myArea.findTarget(myCurrentScreenX, myCurrentScreenY, null);
       if (component == null) {
-        setTracker(new MarqueeTracker());
+        if (!myArea.isTree()) {
+          setTracker(new MarqueeTracker());
+        }
       }
       else {
         setTracker(component.getDragTracker());
@@ -63,6 +80,7 @@ public class SelectionTool extends InputTool {
   protected void handleButtonUp(int button) {
     myState = STATE_INIT;
     setTracker(null);
+    handleMove(); // hack: update cursor
   }
 
   @Override
@@ -71,23 +89,12 @@ public class SelectionTool extends InputTool {
       InputTool tracker = myArea.findTargetTool(myCurrentScreenX, myCurrentScreenY);
       if (tracker == null) {
         refreshCursor();
+        myArea.setDescription(null);
       }
       else {
         myArea.setCursor(tracker.getDefaultCursor());
+        myArea.setDescription(tracker.getDescription());
       }
-    }
-  }
-
-  @Override
-  public void deactivate() {
-    deactivateTracker();
-    super.deactivate();
-  }
-
-  @Override
-  public void refreshCursor() {
-    if (myTracker == null) {
-      super.refreshCursor();
     }
   }
 
@@ -109,6 +116,7 @@ public class SelectionTool extends InputTool {
     if (myTracker != null) {
       myTracker.deactivate();
       myTracker = null;
+      myArea.showSelection(true);
     }
   }
 

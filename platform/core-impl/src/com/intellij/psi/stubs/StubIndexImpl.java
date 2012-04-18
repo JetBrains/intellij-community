@@ -24,7 +24,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -38,6 +37,8 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.IStubFileElementType;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.util.CommonProcessors;
+import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
 import com.intellij.util.indexing.*;
 import com.intellij.util.io.DataExternalizer;
@@ -57,7 +58,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Lock;
 
-public class StubIndexImpl extends StubIndex {
+public class StubIndexImpl extends StubIndex  {
   private static final AtomicReference<Boolean> ourForcedClean = new AtomicReference<Boolean>(null);
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.stubs.StubIndexImpl");
   private final Map<StubIndexKey<?,?>, MyIndex<?>> myIndices = new THashMap<StubIndexKey<?,?>, MyIndex<?>>();
@@ -170,16 +171,28 @@ public class StubIndexImpl extends StubIndex {
     }
   }
 
+  @NotNull
   @Override
   public <Key, Psi extends PsiElement> Collection<Psi> get(@NotNull final StubIndexKey<Key, Psi> indexKey,
                                                            @NotNull final Key key,
                                                            @NotNull final Project project,
                                                            final GlobalSearchScope scope) {
-    myFileBasedIndex.ensureUpToDate(StubUpdatingIndex.INDEX_ID, project, scope);
+    final List<Psi> result = new SmartList<Psi>();
+    process(indexKey, key, project, scope, new CommonProcessors.CollectProcessor<Psi>(result));
+    return result;
+  }
+
+  @Override
+  public <Key, Psi extends PsiElement> boolean process(@NotNull final StubIndexKey<Key, Psi> indexKey,
+                                                       @NotNull final Key key,
+                                                       @NotNull final Project project,
+                                                       @Nullable final GlobalSearchScope scope,
+                                                       @NotNull final Processor<? super Psi> processor) {
+    final FileBasedIndex fileBasedIndex = FileBasedIndex.getInstance();
+    fileBasedIndex.ensureUpToDate(StubUpdatingIndex.INDEX_ID, project, scope);
 
     final PsiManager psiManager = PsiManager.getInstance(project);
 
-    final List<Psi> result = new SmartList<Psi>();
     final MyIndex<Key> index = (MyIndex<Key>)myIndices.get(indexKey);
 
     try {
@@ -189,13 +202,15 @@ public class StubIndexImpl extends StubIndex {
         index.getReadLock().lock();
         final ValueContainer<TIntArrayList> container = index.getData(key);
 
-        container.forEach(new ValueContainer.ContainerAction<TIntArrayList>() {
+        final FileBasedIndex.ProjectIndexableFilesFilter projectFilesFilter = myFileBasedIndex.projectIndexableFiles(project);
+
+        return container.forEach(new ValueContainer.ContainerAction<TIntArrayList>() {
           @Override
-          public void perform(final int id, final TIntArrayList value) {
-            ProgressManager.checkCanceled();
+          public boolean perform(final int id, @NotNull final TIntArrayList value) {
+            if (projectFilesFilter != null && !projectFilesFilter.contains(id)) return true;
             final VirtualFile file = myFileBasedIndex.getVFSAdapter().findFileByIdIfCached(id);
             if (file == null || scope != null && !scope.contains(file)) {
-              return;
+              return true;
             }
             StubTree stubTree = null;
 
@@ -213,12 +228,12 @@ public class StubIndexImpl extends StubIndex {
             }
 
             if (stubTree == null && psiFile == null) {
-              return;
+              return true;
             }
             if (stubTree == null) {
               stubTree = StubTreeLoader.getInstance().readFromVFile(project, file);
               if (stubTree == null) {
-                return;
+                return true;
               }
               final List<StubElement<?>> plained = stubTree.getPlainList();
               for (int i = 0; i < value.size(); i++) {
@@ -227,7 +242,8 @@ public class StubIndexImpl extends StubIndex {
 
                 if (tree != null) {
                   if (tree.getElementType() == stubType(stub)) {
-                    result.add((Psi)tree.getPsi());
+                    Psi psi = (Psi)tree.getPsi();
+                    if (!processor.process(psi)) return false;
                   }
                   else {
                     String persistedStubTree = ((PsiFileStubImpl)stubTree.getRoot()).printTree();
@@ -252,7 +268,7 @@ public class StubIndexImpl extends StubIndex {
                     ApplicationManager.getApplication().invokeLater(new Runnable() {
                       @Override
                       public void run() {
-                        myFileBasedIndex.requestReindex(file);
+                        fileBasedIndex.requestReindex(file);
                       }
                     }, ModalityState.NON_MODAL);
                   }
@@ -262,9 +278,11 @@ public class StubIndexImpl extends StubIndex {
             else {
               final List<StubElement<?>> plained = stubTree.getPlainList();
               for (int i = 0; i < value.size(); i++) {
-                result.add((Psi)plained.get(value.get(i)).getPsi());
+                Psi psi = (Psi)plained.get(value.get(i)).getPsi();
+                if (!processor.process(psi)) return false;
               }
             }
+            return true;
           }
         });
       }
@@ -286,9 +304,8 @@ public class StubIndexImpl extends StubIndex {
       }
     }
 
-    return result;
+    return true;
   }
-
   private static IElementType stubType(final StubElement<?> stub) {
     if (stub instanceof PsiFileStub) {
       return ((PsiFileStub)stub).getType();
@@ -447,5 +464,4 @@ public class StubIndexImpl extends StubIndex {
     
     return collection;
   }
-
 }

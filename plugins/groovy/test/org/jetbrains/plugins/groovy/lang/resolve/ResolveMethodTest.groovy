@@ -17,6 +17,7 @@
 package org.jetbrains.plugins.groovy.lang.resolve;
 
 
+import com.intellij.psi.util.PropertyUtil
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
@@ -36,7 +37,7 @@ import com.intellij.psi.*
 public class ResolveMethodTest extends GroovyResolveTestCase {
   @Override
   protected String getBasePath() {
-    return TestUtils.getTestDataPath() + "resolve/method/";
+    return TestUtils.testDataPath + "resolve/method/";
   }
 
 
@@ -190,13 +191,13 @@ public class ResolveMethodTest extends GroovyResolveTestCase {
     assertFalse(resolved.isPhysical());
   }
 
-  //public void testSwingProperty() throws Exception {
-  //  PsiReference ref = configureByFile("swingProperty/A.groovy");
-  //  PsiElement resolved = ref.resolve();
-  //  assertTrue(resolved instanceof PsiMethod);
-  //  assertTrue(PropertyUtil.isSimplePropertySetter((PsiMethod) resolved));
-  //  assertEquals("javax.swing.JComponent", ((PsiMethod) resolved).getContainingClass().getQualifiedName());
-  //}
+  public void testSwingProperty() throws Exception {
+    PsiReference ref = configureByFile("swingProperty/A.groovy");
+    PsiElement resolved = ref.resolve();
+    assertTrue(resolved instanceof PsiMethod);
+    assertTrue(PropertyUtil.isSimplePropertySetter((PsiMethod) resolved));
+    assertEquals("javax.swing.JComponent", ((PsiMethod) resolved).getContainingClass().getQualifiedName());
+  }
 
   public void testLangClass() throws Exception {
     PsiReference ref = configureByFile("langClass/A.groovy");
@@ -789,8 +790,38 @@ print new B().f<caret>oo()
 
     def resolved = ref.resolve()
     assertInstanceOf(resolved, GrMethod)
-    assertTrue(resolved.isPhysical())
+    assertTrue(resolved.physical)
   }
+
+  void testTwoMixinsInModifierList() {
+    def ref = configureByText("""
+class PersonHelper {
+  def useThePerson() {
+    Person person = new Person()
+
+    person.getUsername()
+    person.get<caret>Name()
+  }
+}
+
+@Mixin(PersonMixin)
+@Mixin(OtherPersonMixin)
+class Person { }
+
+class PersonMixin {
+  String getUsername() { }
+}
+
+class OtherPersonMixin {
+  String getName() { }
+}
+""")
+
+    def resolved = ref.resolve()
+    assertInstanceOf(resolved, GrMethod)
+    assertTrue(resolved.physical)
+  }
+
 
   void testDisjunctionType() {
     def ref = configureByText ("""
@@ -831,5 +862,134 @@ def scriptMethod(String s){}
 ''')
 
     assertNull(ref.resolve())
+  }
+
+  public void testStaticallyImportedMethodsVsDGMMethods() {
+    myFixture.addClass('''\
+package p;
+public class Matcher{}
+''' )
+    myFixture.addClass('''\
+package p;
+class Other {
+  public static Matcher is(Matcher m){}
+  public static Matcher create(){}
+}''')
+
+    def ref = configureByText('''\
+import static p.Other.is
+import static p.Other.create
+
+i<caret>s(create())
+
+''')
+
+    def resolved = ref.resolve()
+    assertInstanceOf resolved, PsiMethod
+    assertEquals 'Other', resolved.containingClass.name
+  }
+
+  public void testStaticallyImportedMethodsVsCurrentClassMethod() {
+    myFixture.addClass('''\
+package p;
+class Other {
+  public static Object is(Object m){}
+}''')
+
+    def ref = configureByText('''\
+import static p.Other.is
+
+class A {
+  public boolean is(String o){true}
+
+  public foo() {
+    print i<caret>s('abc')
+  }
+}
+
+''')
+
+    def resolved = ref.resolve()
+    assertInstanceOf resolved, PsiMethod
+    assertEquals 'Other', resolved.containingClass.name
+  }
+
+  public void testInapplicableStaticallyImportedMethodsVsCurrentClassMethod() {
+    myFixture.addClass('''\
+package p;
+class Other {
+  public static Object is(String m){}
+}''')
+
+    def ref = configureByText('''\
+import static p.Other.is
+
+class A {
+  public boolean is(Object o){true}
+
+  public foo() {
+    print i<caret>s(new Object())
+  }
+}
+
+''')
+
+    def resolved = ref.resolve()
+    assertInstanceOf resolved, PsiMethod
+    assertEquals 'A', resolved.containingClass.name
+  }
+
+  public void testInferArgumentTypeFromMethod1() {
+    def ref = configureByText('''\
+def bar(String s) {}
+
+def foo(Integer a) {
+    bar(a)
+
+    a.subst<caret>ring(2)
+}
+''')
+    assertNotNull(ref.resolve())
+  }
+
+  public void testInferArgumentTypeFromMethod2() {
+    def ref = configureByText('''\
+def bar(String s) {}
+
+def foo(Integer a) {
+  while(true) {
+    bar(a)
+    a.subst<caret>ring(2)
+  }
+}
+''')
+    assertNotNull(ref.resolve())
+  }
+
+  public void testInferArgumentTypeFromMethod3() {
+    def ref = configureByText('''\
+def bar(String s) {}
+
+def foo(Integer a) {
+    bar(a)
+
+    a.int<caret>Value()
+}
+''')
+    assertNotNull(ref.resolve())
+  }
+
+  public void testInferArgumentTypeFromMethod4() {
+    def ref = configureByText('''\
+def bar(String s) {}
+
+def foo(Integer a) {
+  while(true) {
+    bar(a)
+    a.intVal<caret>ue()
+  }
+}
+''')
+    assertNotNull(ref.resolve())
   }
 }

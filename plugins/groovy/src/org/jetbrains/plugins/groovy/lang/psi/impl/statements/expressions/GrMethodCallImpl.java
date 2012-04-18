@@ -28,7 +28,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethod
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.path.GrCallExpressionImpl;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.path.GrCallExpressionTypeCalculator;
+import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrCallExpressionTypeCalculator;
 
 /**
  * @author Maxim.Medvedev
@@ -109,5 +109,13 @@ public abstract class GrMethodCallImpl extends GrCallExpressionImpl implements G
     if (!(expression instanceof GrReferenceExpression) || ((GrReferenceExpression)expression).getQualifier() == null) return false;
 
     return ((GrReferenceExpression)expression).getDotToken() == null;
+  }
+
+  @NotNull
+  @Override
+  public GroovyResolveResult[] multiResolve(boolean incompleteCode) {
+    GrExpression expression = getInvokedExpression();
+    if (!(expression instanceof GrReferenceExpression)) return GroovyResolveResult.EMPTY_ARRAY;
+    return ((GrReferenceExpression)expression).multiResolve(incompleteCode);
   }
 }

@@ -19,12 +19,15 @@ import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightMessageUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.codeInsight.daemon.impl.quickfix.AccessStaticViaInstanceFix;
+import com.intellij.codeInsight.daemon.impl.quickfix.RemoveUnusedVariableFix;
 import com.intellij.codeInspection.BaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.ArrayList;
 
 /**
  * User: anna
@@ -87,6 +90,12 @@ public class AccessStaticViaInstance extends BaseJavaLocalInspectionTool {
     String description = JavaErrorMessages.message("static.member.accessed.via.instance.reference",
                                                    HighlightUtil.formatType(qualifierExpression.getType()),
                                                    HighlightMessageUtil.getSymbolName(resolved, result.getSubstitutor()));
+    if (!onTheFly) {
+      if (RemoveUnusedVariableFix.checkSideEffects(qualifierExpression, null, new ArrayList<PsiElement>())) {
+        holder.registerProblem(expr, description);
+        return;
+      }
+    }
     holder.registerProblem(expr, description, new AccessStaticViaInstanceFix(expr, result, onTheFly));
   }
 }

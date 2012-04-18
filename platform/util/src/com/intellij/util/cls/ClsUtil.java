@@ -15,6 +15,7 @@
  */
 package com.intellij.util.cls;
 
+import com.intellij.openapi.util.text.StringUtilRt;
 import org.jetbrains.annotations.NonNls;
 
 
@@ -406,7 +407,7 @@ public class ClsUtil {
                buffer.append("\\").append(quote);
              }
              else if (Character.isISOControl(c)) {
-               String hexCode = Integer.toHexString(c).toUpperCase();
+               String hexCode = StringUtilRt.toUpperCase(Integer.toHexString(c));
                buffer.append("\\u");
                int paddingCount = 4 - hexCode.length();
                while (paddingCount-- > 0) {

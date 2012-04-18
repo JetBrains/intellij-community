@@ -37,6 +37,7 @@ public class JavaAnonymousClassBaseRefOccurenceIndex extends StringStubIndexExte
   }
 
 
+  @NotNull
   @Override
   public StubIndexKey<String, PsiAnonymousClass> getKey() {
     return JavaStubIndexKeys.ANONYMOUS_BASEREF;

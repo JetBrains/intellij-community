@@ -20,8 +20,9 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import org.jetbrains.android.sdk.AndroidSdkUtils;
+import com.intellij.openapi.project.Project;
 import org.jetbrains.android.util.AndroidBundle;
+import org.jetbrains.android.util.AndroidCommonUtils;
 import org.jetbrains.android.util.AndroidUtils;
 import org.jetbrains.android.util.ExecutionStatus;
 import org.jetbrains.annotations.NotNull;
@@ -39,11 +40,11 @@ public class RunAndroidSdkManagerAction extends AndroidRunSdkToolAction {
   }
 
   @Override
-  protected void doRunTool(@NotNull final String sdkPath) {
+  protected void doRunTool(@NotNull Project project, @NotNull final String sdkPath) {
     ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
       @Override
       public void run() {
-        final String toolPath = sdkPath + File.separator + AndroidSdkUtils.toolPath(SdkConstants.androidCmdName());
+        final String toolPath = sdkPath + File.separator + AndroidCommonUtils.toolPath(SdkConstants.androidCmdName());
         GeneralCommandLine commandLine = new GeneralCommandLine();
         commandLine.setExePath(toolPath);
         commandLine.addParameter("sdk");

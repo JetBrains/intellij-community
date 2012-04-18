@@ -19,6 +19,7 @@ import com.intellij.rt.execution.junit.segments.Packet;
 import com.intellij.rt.execution.junit.segments.PacketProcessor;
 import com.intellij.rt.execution.junit.segments.SegmentedStream;
 import com.intellij.util.StringBuilderSpinAllocator;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -31,10 +32,11 @@ public class SegmentedInputStream extends InputStream {
   private PacketProcessor myEventsDispatcher;
   private int myStartupPassed = 0;
 
-  public SegmentedInputStream(final InputStream sourceStream, final Charset charset) {
+  public SegmentedInputStream(@NotNull InputStream sourceStream, @NotNull Charset charset) {
     mySourceStream = new PushReader(new BufferedReader(new InputStreamReader(sourceStream, charset)));
   }
 
+  @Override
   public int read() throws IOException {
     if (myStartupPassed < SegmentedStream.STARTUP_MESSAGE.length()) {
       return rawRead();
@@ -86,9 +88,9 @@ public class SegmentedInputStream extends InputStream {
   }
 
   private char[] readMarker() throws IOException {
-    int nextRead = '0';
     final StringBuilder buffer = StringBuilderSpinAllocator.alloc();
     try {
+      int nextRead = '0';
       while (nextRead != ' ' && nextRead != SegmentedStream.SPECIAL_SYMBOL) {
         buffer.append((char)nextRead);
         nextRead = readNext();
@@ -108,10 +110,12 @@ public class SegmentedInputStream extends InputStream {
     return mySourceStream.next();
   }
 
+  @Override
   public int available() throws IOException {
     return mySourceStream.ready() ? 1 : 0;
   }
 
+  @Override
   public void close() throws IOException {
     mySourceStream.close();
   }
@@ -126,10 +130,11 @@ public class SegmentedInputStream extends InputStream {
           i++;
           chr = chars[i];
           if (chr != Packet.ourSpecialSymbol) {
-            final StringBuffer codeBuffer = new StringBuffer(Packet.CODE_LENGTH);
+            final StringBuilder codeBuffer = new StringBuilder(Packet.CODE_LENGTH);
             codeBuffer.append(chr);
-            for (int j = 1; j < Packet.CODE_LENGTH; j++)
-              codeBuffer.append(chars[i+j]);
+            for (int j = 1; j < Packet.CODE_LENGTH; j++) {
+              codeBuffer.append(chars[i + j]);
+            }
             i += Packet.CODE_LENGTH - 1;
             decodedChar = (char)Integer.parseInt(codeBuffer.toString());
           }

@@ -201,6 +201,7 @@ public class DataManagerImpl extends DataManager implements ApplicationComponent
     myWindowManager = windowManager;
   }
 
+  @NotNull
   public DataContext getDataContext() {
     return getDataContext(getFocusedComponent());
   }

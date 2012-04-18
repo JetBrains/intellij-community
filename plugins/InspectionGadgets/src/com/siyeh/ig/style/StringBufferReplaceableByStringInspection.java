@@ -126,6 +126,10 @@ public class StringBufferReplaceableByStringInspection extends BaseInspection {
             result.append(argument.getText());
           }
         }
+        final PsiElement parent = initializer.getParent();
+        if (result.length() == 0 && parent instanceof PsiVariable) {
+          result.append("\"\"");
+        }
         return result;
       }
       else if (initializer instanceof PsiMethodCallExpression) {
@@ -247,18 +251,8 @@ public class StringBufferReplaceableByStringInspection extends BaseInspection {
       if (expression == null) {
         return false;
       }
-      else if (
-      expression instanceof PsiNewExpression) {
-        if (!(expression.getParent() instanceof PsiVariable)) {
-          return true;
-        }
-        final PsiNewExpression newExpression = (PsiNewExpression)expression;
-        final PsiExpressionList argumentList = newExpression.getArgumentList();
-        if (argumentList == null) {
-          return false;
-        }
-        final PsiExpression[] arguments = argumentList.getExpressions();
-        return arguments.length == 1;
+      else if (expression instanceof PsiNewExpression) {
+        return true;
       }
       else if (expression instanceof PsiMethodCallExpression) {
         final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)expression;

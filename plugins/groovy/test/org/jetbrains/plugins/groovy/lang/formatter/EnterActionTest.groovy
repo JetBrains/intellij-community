@@ -307,5 +307,23 @@ foo {
 '''
   }
 
+  void testEnterAfterSlash() {
+    doTest """\
+print '\\<caret>'
+""", """\
+print '''\\
+<caret>'''
+"""
+  }
+
+  void testEnterAfterSlash2() {
+    doTest '''\
+print "\\<caret>"
+''', '''\
+print """\\
+<caret>"""
+'''
+  }
+
 }
 

@@ -369,6 +369,9 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
     if (key.equals(VcsDataKeys.CHANGES)) {
       final Collection<Change> changes = collectChanges(getSelectedChangeLists(), false);
       sink.put(VcsDataKeys.CHANGES, changes.toArray(new Change[changes.size()]));
+    } else if (key.equals(VcsDataKeys.HAVE_SELECTED_CHANGES)) {
+      final int count = myChangesTree.getSelectionCount();
+      sink.put(VcsDataKeys.HAVE_SELECTED_CHANGES, count > 0 ? Boolean.TRUE : Boolean.FALSE);
     }
     else if (key.equals(VcsDataKeys.CHANGES_WITH_MOVED_CHILDREN)) {
       final Collection<Change> changes = collectChanges(getSelectedChangeLists(), true);

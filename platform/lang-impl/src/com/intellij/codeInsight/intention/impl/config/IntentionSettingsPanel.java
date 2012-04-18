@@ -23,6 +23,7 @@ import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.ui.DetailsComponent;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.GuiUtils;
+import com.intellij.util.Alarm;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
@@ -41,19 +42,27 @@ public class IntentionSettingsPanel implements MasterDetails {
   private JPanel myTreePanel;
   private JPanel myDescriptionPanel;
   private DetailsComponent myDetailsComponent;
+  
+  private Alarm myResetAlarm = new Alarm();
 
   public IntentionSettingsPanel() {
     myIntentionSettingsTree = new IntentionSettingsTree() {
       protected void selectionChanged(Object selected) {
         if (selected instanceof IntentionActionMetaData) {
-          IntentionActionMetaData actionMetaData = (IntentionActionMetaData)selected;
-          intentionSelected(actionMetaData);
-          if (myDetailsComponent != null) {
-            String[] text = new String[actionMetaData.myCategory.length + 1];
-            System.arraycopy(actionMetaData.myCategory, 0, text,0,actionMetaData.myCategory.length);
-            text[text.length - 1] = actionMetaData.getFamily();
-            myDetailsComponent.setText(text);
-          }
+          final IntentionActionMetaData actionMetaData = (IntentionActionMetaData)selected;
+          final Runnable runnable = new Runnable() {
+            public void run() {
+              intentionSelected(actionMetaData);
+              if (myDetailsComponent != null) {
+                String[] text = new String[actionMetaData.myCategory.length + 1];
+                System.arraycopy(actionMetaData.myCategory, 0, text,0,actionMetaData.myCategory.length);
+                text[text.length - 1] = actionMetaData.getFamily();
+                myDetailsComponent.setText(text);
+              }
+            }
+          };
+          myResetAlarm.cancelAllRequests();
+          myResetAlarm.addRequest(runnable, 100);
         }
         else {
           categorySelected((String)selected);
@@ -102,9 +111,9 @@ public class IntentionSettingsPanel implements MasterDetails {
 
   public void reset() {
     myIntentionSettingsTree.reset();
-    SwingUtilities.invokeLater(new Runnable(){
+    SwingUtilities.invokeLater(new Runnable() {
       public void run() {
-        myIntentionDescriptionPanel.init(myPanel.getWidth()/2);
+        myIntentionDescriptionPanel.init(myPanel.getWidth() / 2);
       }
     });
   }

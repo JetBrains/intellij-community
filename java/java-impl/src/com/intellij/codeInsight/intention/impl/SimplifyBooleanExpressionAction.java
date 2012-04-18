@@ -30,16 +30,19 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
 public class SimplifyBooleanExpressionAction implements IntentionAction{
+  @Override
   @NotNull
   public String getText() {
     return getFamilyName();
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return new SimplifyBooleanExpressionFix(null,null).getFamilyName();
   }
 
+  @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     PsiExpression expression = getExpressionToSimplify(editor, file);
     return expression != null && SimplifyBooleanExpressionFix.canBeSimplified(expression);
@@ -58,12 +61,14 @@ public class SimplifyBooleanExpressionAction implements IntentionAction{
     return expression;
   }
 
+  @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     if (!CodeInsightUtilBase.prepareFileForWrite(file)) return;
     PsiExpression expression = getExpressionToSimplify(editor, file);
     SimplifyBooleanExpressionFix.simplifyExpression(expression);
   }
 
+  @Override
   public boolean startInWriteAction() {
     return true;
   }

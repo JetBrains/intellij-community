@@ -81,9 +81,8 @@ public class GrMethodCallUsageInfo extends UsageInfo implements PossiblyIncorrec
       myMapToArguments = GrClosureSignatureUtil.ArgInfo.empty_array();
     }
     else {
-      myMapToArguments = GrClosureSignatureUtil
-        .mapParametersToArguments(signature, call.getNamedArguments(), call.getExpressionArguments(), call, call.getClosureArguments(),
-                                  false);
+      myMapToArguments = GrClosureSignatureUtil.mapParametersToArguments(signature, call.getNamedArguments(), call.getExpressionArguments(),
+                                                                         call.getClosureArguments(), call, false, false);
     }
   }
 
@@ -98,7 +97,7 @@ public class GrMethodCallUsageInfo extends UsageInfo implements PossiblyIncorrec
 
   @Nullable
   private static GroovyResolveResult resolveMethod(final PsiElement ref) {
-    if (ref instanceof GrEnumConstant) return ((GrEnumConstant)ref).resolveConstructorGenerics();
+    if (ref instanceof GrEnumConstant) return ((GrEnumConstant)ref).advancedResolve();
     PsiElement parent = ref.getParent();
     if (parent instanceof GrMethodCall) {
       final GrExpression expression = ((GrMethodCall)parent).getInvokedExpression();
@@ -107,7 +106,7 @@ public class GrMethodCallUsageInfo extends UsageInfo implements PossiblyIncorrec
       }
     }
     else if (parent instanceof GrConstructorCall) {
-      return ((GrConstructorCall)parent).resolveConstructorGenerics();
+      return ((GrConstructorCall)parent).advancedResolve();
     }
 
     return null;

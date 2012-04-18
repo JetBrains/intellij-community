@@ -43,7 +43,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.module.LanguageLevelUtil;
 import com.intellij.openapi.module.Module;
@@ -78,7 +77,6 @@ import com.intellij.packaging.impl.artifacts.ArtifactImpl;
 import com.intellij.packaging.impl.artifacts.ArtifactUtil;
 import com.intellij.packaging.impl.compiler.ArtifactCompileScope;
 import com.intellij.packaging.impl.compiler.ArtifactCompilerUtil;
-import com.intellij.pom.Navigatable;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.util.*;
@@ -154,23 +152,25 @@ public class CompileDriver {
 
     myGenerationCompilerModuleToOutputDirMap = new HashMap<Pair<IntermediateOutputCompiler, Module>, Pair<VirtualFile, VirtualFile>>();
 
-    final LocalFileSystem lfs = LocalFileSystem.getInstance();
-    final IntermediateOutputCompiler[] generatingCompilers = CompilerManager.getInstance(myProject).getCompilers(IntermediateOutputCompiler.class, myCompilerFilter);
-    final Module[] allModules = ModuleManager.getInstance(myProject).getModules();
-    final CompilerConfiguration config = CompilerConfiguration.getInstance(project);
-    for (Module module : allModules) {
-      for (IntermediateOutputCompiler compiler : generatingCompilers) {
-        final VirtualFile productionOutput = lookupVFile(lfs, CompilerPaths.getGenerationOutputPath(compiler, module, false));
-        final VirtualFile testOutput = lookupVFile(lfs, CompilerPaths.getGenerationOutputPath(compiler, module, true));
-        final Pair<IntermediateOutputCompiler, Module> pair = new Pair<IntermediateOutputCompiler, Module>(compiler, module);
-        final Pair<VirtualFile, VirtualFile> outputs = new Pair<VirtualFile, VirtualFile>(productionOutput, testOutput);
-        myGenerationCompilerModuleToOutputDirMap.put(pair, outputs);
-      }
-      if (config.isAnnotationProcessorsEnabled()) {
-        if (config.isAnnotationProcessingEnabled(module)) {
-          final String path = CompilerPaths.getAnnotationProcessorsGenerationPath(module);
-          if (path != null) {
-            lookupVFile(lfs, path);  // ensure the file is created and added to VFS
+    if (!useCompileServer()) {
+      final LocalFileSystem lfs = LocalFileSystem.getInstance();
+      final IntermediateOutputCompiler[] generatingCompilers = CompilerManager.getInstance(myProject).getCompilers(IntermediateOutputCompiler.class, myCompilerFilter);
+      final Module[] allModules = ModuleManager.getInstance(myProject).getModules();
+      final CompilerConfiguration config = CompilerConfiguration.getInstance(project);
+      for (Module module : allModules) {
+        for (IntermediateOutputCompiler compiler : generatingCompilers) {
+          final VirtualFile productionOutput = lookupVFile(lfs, CompilerPaths.getGenerationOutputPath(compiler, module, false));
+          final VirtualFile testOutput = lookupVFile(lfs, CompilerPaths.getGenerationOutputPath(compiler, module, true));
+          final Pair<IntermediateOutputCompiler, Module> pair = new Pair<IntermediateOutputCompiler, Module>(compiler, module);
+          final Pair<VirtualFile, VirtualFile> outputs = new Pair<VirtualFile, VirtualFile>(productionOutput, testOutput);
+          myGenerationCompilerModuleToOutputDirMap.put(pair, outputs);
+        }
+        if (config.isAnnotationProcessorsEnabled()) {
+          if (config.isAnnotationProcessingEnabled(module)) {
+            final String path = CompilerPaths.getAnnotationProcessorsGenerationPath(module);
+            if (path != null) {
+              lookupVFile(lfs, path);  // ensure the file is created and added to VFS
+            }
           }
         }
       }
@@ -430,7 +430,23 @@ public class CompileDriver {
     final CompileServerManager csManager = CompileServerManager.getInstance();
     final MessageBus messageBus = myProject.getMessageBus();
     csManager.cancelAutoMakeTasks(myProject);
-    return csManager.submitCompilationTask(myProject, compileContext.isRebuild(), compileContext.isMake(), moduleNames, artifactNames, paths, new JpsServerResponseHandler() {
+    final CompileScope scope = compileContext.getCompileScope();
+    // need to pass scope's user data to server
+    final Map<Key, Object> exported = scope.exportUserData();
+    final Map<String, String> builderParams;
+    if (!exported.isEmpty()) {
+      builderParams = new HashMap<String, String>();
+      for (Map.Entry<Key, Object> entry : exported.entrySet()) {
+        final String _key = entry.getKey().toString();
+        final String _value = entry.getValue().toString();
+        builderParams.put(_key, _value);
+      }
+    }
+    else {
+      builderParams = Collections.emptyMap();
+    }
+    return csManager.submitCompilationTask(myProject, compileContext.isRebuild(), compileContext.isMake(), moduleNames, artifactNames, paths,
+                                           builderParams, new JpsServerResponseHandler() {
 
       @Override
       public void handleCompileMessage(JpsRemoteProto.Message.Response.CompileMessage compilerMessage) {
@@ -446,22 +462,16 @@ public class CompileDriver {
         else {
           final CompilerMessageCategory category = kind == JpsRemoteProto.Message.Response.CompileMessage.Kind.ERROR ? CompilerMessageCategory.ERROR
             : kind == JpsRemoteProto.Message.Response.CompileMessage.Kind.WARNING ? CompilerMessageCategory.WARNING : CompilerMessageCategory.INFORMATION;
-          Navigatable navigatable = null;
 
           String sourceFilePath = compilerMessage.hasSourceFilePath() ? compilerMessage.getSourceFilePath() : null;
           if (sourceFilePath != null) {
             sourceFilePath = FileUtil.toSystemIndependentName(sourceFilePath);
           }
-          final long offset = compilerMessage.hasProblemLocationOffset() ? compilerMessage.getProblemLocationOffset() : -1L;
-          if (sourceFilePath != null && offset >= 0L) {
-            final VirtualFile file = LocalFileSystem.getInstance().findFileByPath(sourceFilePath);
-            if (file != null) {
-              navigatable = new OpenFileDescriptor(myProject, file, (int)offset);
-            }
-          }
+          final long line = compilerMessage.hasLine() ? compilerMessage.getLine() : -1;
+          final long column = compilerMessage.hasColumn() ? compilerMessage.getColumn() : -1;
           final String srcUrl = sourceFilePath != null ? VirtualFileManager.constructUrl(LocalFileSystem.PROTOCOL, sourceFilePath) : null;
           compileContext.addMessage(
-            category, compilerMessage.getText(), srcUrl, (int)compilerMessage.getLine(), (int)compilerMessage.getColumn(), navigatable
+            category, compilerMessage.getText(), srcUrl, (int)line, (int)column
           );
         }
       }
@@ -593,7 +603,7 @@ public class CompileDriver {
             if (future != null) {
               while (!future.waitFor(200L , TimeUnit.MILLISECONDS)) {
                 if (indicator.isCanceled()) {
-                  future.cancel(true);
+                  future.cancel(false);
                 }
               }
             }
@@ -1076,7 +1086,7 @@ public class CompileDriver {
     if (scopeOutputs.size() > 0) {
       CompilerUtil.runInContext(context, CompilerBundle.message("progress.clearing.output"), new ThrowableRunnable<RuntimeException>() {
         public void run() {
-          clearOutputDirectories(scopeOutputs);
+          CompilerUtil.clearOutputDirectories(scopeOutputs);
         }
       });
     }
@@ -1499,7 +1509,7 @@ public class CompileDriver {
         final boolean isTestMode = ApplicationManager.getApplication().isUnitTestMode();
         final VirtualFile[] allSources = context.getProjectCompileScope().getFiles(null, true);
         if (myShouldClearOutputDirectory) {
-          clearOutputDirectories(myAllOutputDirectories);
+          CompilerUtil.clearOutputDirectories(myAllOutputDirectories);
         }
         else { // refresh is still required
           try {
@@ -1623,34 +1633,6 @@ public class CompileDriver {
       }
     }
     return outputDirs;
-  }
-
-  private static void clearOutputDirectories(final Collection<File> outputDirectories) {
-    final long start = System.currentTimeMillis();
-    // do not delete directories themselves, or we'll get rootsChanged() otherwise
-    final Collection<File> filesToDelete = new ArrayList<File>(outputDirectories.size() * 2);
-    for (File outputDirectory : outputDirectories) {
-      File[] files = outputDirectory.listFiles();
-      if (files != null) {
-        ContainerUtil.addAll(filesToDelete, files);
-      }
-    }
-    if (filesToDelete.size() > 0) {
-      FileUtil.asyncDelete(filesToDelete);
-
-      // ensure output directories exist
-      for (final File file : outputDirectories) {
-        file.mkdirs();
-      }
-      final long clearStop = System.currentTimeMillis();
-
-      CompilerUtil.refreshIODirectories(outputDirectories);
-
-      final long refreshStop = System.currentTimeMillis();
-
-      CompilerUtil.logDuration("Clearing output dirs", clearStop - start);
-      CompilerUtil.logDuration("Refreshing output directories", refreshStop - clearStop);
-    }
   }
 
   private void clearCompilerSystemDirectory(final CompileContextEx context) {
@@ -2049,10 +2031,6 @@ public class CompileDriver {
         try {
           for (FileProcessingCompiler.ProcessingItem item : items) {
             final VirtualFile file = item.getFile();
-            if (file == null) {
-              LOG.error("FileProcessingCompiler.ProcessingItem.getFile() must not return null: compiler " + adapter.getCompiler().getDescription());
-              continue;
-            }
             final String url = file.getUrl();
             allUrls.add(url);
             if (!forceCompile && cache.getTimestamp(url) == file.getTimeStamp()) {
@@ -2364,6 +2342,11 @@ public class CompileDriver {
         if (!validateOutputAndSourcePathsIntersection()) {
           return false;
         }
+        // myShouldClearOutputDirectory may change in validateOutputAndSourcePathsIntersection()
+        CompilerPathsEx.CLEAR_ALL_OUTPUTS_KEY.set(scope, myShouldClearOutputDirectory);
+      }
+      else {
+        CompilerPathsEx.CLEAR_ALL_OUTPUTS_KEY.set(scope, false);
       }
       final List<Chunk<Module>> chunks = ModuleCompilerUtil.getSortedModuleChunks(myProject, Arrays.asList(scopeModules));
       for (final Chunk<Module> chunk : chunks) {
@@ -2531,31 +2514,11 @@ public class CompileDriver {
       ContainerUtil.addIfNotNull(artifact.getOutputFile(), allOutputs);
     }
     final Set<VirtualFile> affectedOutputPaths = new HashSet<VirtualFile>();
-    for (Module module : allModules) {
-      final ModuleRootManager rootManager = ModuleRootManager.getInstance(module);
-      final VirtualFile[] sourceRoots = rootManager.getSourceRoots();
-      for (final VirtualFile outputPath : allOutputs) {
-        for (VirtualFile sourceRoot : sourceRoots) {
-          if (VfsUtil.isAncestor(outputPath, sourceRoot, true) || VfsUtil.isAncestor(sourceRoot, outputPath, false)) {
-            affectedOutputPaths.add(outputPath);
-          }
-        }
-      }
-    }
+    CompilerUtil.computeIntersectingPaths(myProject, allOutputs, affectedOutputPaths);
     affectedOutputPaths.addAll(ArtifactCompilerUtil.getArtifactOutputsContainingSourceFiles(myProject));
 
     if (!affectedOutputPaths.isEmpty()) {
-      final StringBuilder paths = new StringBuilder();
-      for (final VirtualFile affectedOutputPath : affectedOutputPaths) {
-        if (paths.length() > 0) {
-          paths.append(",\n");
-        }
-        paths.append(affectedOutputPath.getPath().replace('/', File.separatorChar));
-      }
-      final int answer = Messages.showOkCancelDialog(myProject,
-                                                     CompilerBundle.message("warning.sources.under.output.paths", paths.toString()),
-                                                     CommonBundle.getErrorTitle(), Messages.getWarningIcon());
-      if (answer == 0) { // ok
+      if (CompilerUtil.askUserToContinueWithNoClearing(myProject, affectedOutputPaths)) {
         myShouldClearOutputDirectory = false;
         return true;
       }

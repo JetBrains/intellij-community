@@ -48,7 +48,7 @@ class FrameDiffTool implements DiffTool {
     boolean shouldOpenDialog = shouldOpenDialog(hints);
     if (shouldOpenDialog) {
       final DialogBuilder builder = new DialogBuilder(request.getProject());
-      DiffPanelImpl diffPanel = createDiffPanelIfShouldShow(request, builder.getWindow(), builder);
+      DiffPanelImpl diffPanel = createDiffPanelIfShouldShow(request, builder.getWindow(), builder, true);
       if (diffPanel == null) {
         Disposer.dispose(builder);
         return;
@@ -83,7 +83,7 @@ class FrameDiffTool implements DiffTool {
     }
     else {
       final FrameWrapper frameWrapper = new FrameWrapper(request.getProject(), request.getGroupKey());
-      DiffPanelImpl diffPanel = createDiffPanelIfShouldShow(request, frameWrapper.getFrame(), frameWrapper);
+      DiffPanelImpl diffPanel = createDiffPanelIfShouldShow(request, frameWrapper.getFrame(), frameWrapper, true);
       if (diffPanel == null) {
         Disposer.dispose(frameWrapper);
         return;
@@ -134,9 +134,10 @@ class FrameDiffTool implements DiffTool {
   }*/
 
   @Nullable
-  private static DiffPanelImpl createDiffPanelIfShouldShow(DiffRequest request, Window window, @NotNull Disposable parentDisposable) {
+  private static DiffPanelImpl createDiffPanelIfShouldShow(DiffRequest request, Window window, @NotNull Disposable parentDisposable,
+                                                           final boolean showMessage) {
     DiffPanelImpl diffPanel = (DiffPanelImpl)DiffManagerImpl.createDiffPanel(request, window, parentDisposable);
-    if (checkNoDifferenceAndNotify(diffPanel, request, window)) {
+    if (checkNoDifferenceAndNotify(diffPanel, request, window, showMessage)) {
       Disposer.dispose(diffPanel);
       diffPanel = null;
     }
@@ -154,7 +155,7 @@ class FrameDiffTool implements DiffTool {
     return KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow() instanceof JDialog;
   }
 
-  private static boolean checkNoDifferenceAndNotify(DiffPanel diffPanel, DiffRequest data, final Window window) {
+  private static boolean checkNoDifferenceAndNotify(DiffPanel diffPanel, DiffRequest data, final Window window, final boolean showMessage) {
     if (!diffPanel.hasDifferences() && !data.getHints().contains(HINT_ALLOW_NO_DIFFERENCES)) {
       DiffManagerImpl manager = (DiffManagerImpl) DiffManager.getInstance();
       if (!Comparing.equal(manager.getComparisonPolicy(), ComparisonPolicy.DEFAULT)) {
@@ -170,6 +171,9 @@ class FrameDiffTool implements DiffTool {
         if (hasDiffs) return false;
       }
 
+      if (! showMessage) {
+        return true;
+      }
       return !askForceOpenDiff(data);
     }
     return false;
@@ -208,6 +212,6 @@ class FrameDiffTool implements DiffTool {
 
   @Override
   public DiffViewer createComponent(String title, DiffRequest request, Window window, Disposable parentDisposable) {
-    return createDiffPanelIfShouldShow(request, window, parentDisposable);
+    return createDiffPanelIfShouldShow(request, window, parentDisposable, false);
   }
 }

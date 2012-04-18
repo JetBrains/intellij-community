@@ -10,10 +10,10 @@ import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.svn17.SvnVcs17;
-import org.jetbrains.idea.svn17.history.SvnChangeList;
-import org.jetbrains.idea.svn17.history.SvnRepositoryLocation;
+import org.jetbrains.idea.svn.history.SvnChangeList;
+import org.jetbrains.idea.svn.history.SvnRepositoryLocation;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 
 import java.io.File;
@@ -22,6 +22,12 @@ import java.util.Collection;
 import java.util.List;
 
 public class SvnCommittedViewTest extends SvnTestCase {
+  @Override
+  @Before
+  public void setUp() throws Exception {
+    super.setUp();
+    SvnConfiguration.getInstance(myProject).DETECT_NESTED_COPIES = false;
+  }
 
   @Test
   public void testAdd() throws Exception {
@@ -36,7 +42,8 @@ public class SvnCommittedViewTest extends SvnTestCase {
     // r1, addition without history
     checkin();
 
-    final SvnVcs17 vcs = SvnVcs17.getInstance(myProject);
+    final SvnVcs vcs = SvnVcs.getInstance(myProject);
+    vcs.invokeRefreshSvnRoots(false);
     final CommittedChangesProvider<SvnChangeList,ChangeBrowserSettings> committedChangesProvider = vcs.getCommittedChangesProvider();
     final List<SvnChangeList> changeListList =
       committedChangesProvider.getCommittedChanges(committedChangesProvider.createDefaultSettings(),
@@ -67,7 +74,8 @@ public class SvnCommittedViewTest extends SvnTestCase {
 
     checkin();
 
-    final SvnVcs17 vcs = SvnVcs17.getInstance(myProject);
+    final SvnVcs vcs = SvnVcs.getInstance(myProject);
+    vcs.invokeRefreshSvnRoots(false);
     final CommittedChangesProvider<SvnChangeList,ChangeBrowserSettings> committedChangesProvider = vcs.getCommittedChangesProvider();
     final List<SvnChangeList> changeListList =
       committedChangesProvider.getCommittedChanges(committedChangesProvider.createDefaultSettings(),
@@ -89,13 +97,17 @@ public class SvnCommittedViewTest extends SvnTestCase {
     // r1, addition without history
     checkin();
 
-    final String d1Path = new File(d1.getPath()).getAbsolutePath();
+    File dir = new File(d1.getPath());
+    final String d1Path = dir.getAbsolutePath();
     verify(runSvn("delete", d1Path));
+    boolean created = dir.mkdir();
+    Assert.assertTrue(created);
     verify(runSvn("add", d1Path));
 
     checkin();
 
-    final SvnVcs17 vcs = SvnVcs17.getInstance(myProject);
+    final SvnVcs vcs = SvnVcs.getInstance(myProject);
+    vcs.invokeRefreshSvnRoots(false);
     final CommittedChangesProvider<SvnChangeList,ChangeBrowserSettings> committedChangesProvider = vcs.getCommittedChangesProvider();
     final List<SvnChangeList> changeListList =
       committedChangesProvider.getCommittedChanges(committedChangesProvider.createDefaultSettings(),
@@ -123,13 +135,13 @@ public class SvnCommittedViewTest extends SvnTestCase {
 
     checkin();
 
-    final SvnVcs17 vcs = SvnVcs17.getInstance(myProject);
+    final SvnVcs vcs = SvnVcs.getInstance(myProject);
+    vcs.invokeRefreshSvnRoots(false);
     final CommittedChangesProvider<SvnChangeList,ChangeBrowserSettings> committedChangesProvider = vcs.getCommittedChangesProvider();
     final List<SvnChangeList> changeListList =
       committedChangesProvider.getCommittedChanges(committedChangesProvider.createDefaultSettings(),
                                                    new SvnRepositoryLocation(myRepoUrl), 0);
-    checkList(changeListList, 2, new Data[] {new Data(absPath(d1), FileStatus.MODIFIED, "- moved from .." + File.separatorChar + "d1"),
-      new Data(oldPath, FileStatus.DELETED, null)});
+    checkList(changeListList, 2, new Data[] {new Data(absPath(d1), FileStatus.MODIFIED, "- moved from .." + File.separatorChar + "d1")});
   }
 
   @Test
@@ -155,13 +167,13 @@ public class SvnCommittedViewTest extends SvnTestCase {
 
     checkin();
 
-    final SvnVcs17 vcs = SvnVcs17.getInstance(myProject);
+    final SvnVcs vcs = SvnVcs.getInstance(myProject);
+    vcs.invokeRefreshSvnRoots(false);
     final CommittedChangesProvider<SvnChangeList,ChangeBrowserSettings> committedChangesProvider = vcs.getCommittedChangesProvider();
     final List<SvnChangeList> changeListList =
       committedChangesProvider.getCommittedChanges(committedChangesProvider.createDefaultSettings(),
                                                    new SvnRepositoryLocation(myRepoUrl), 0);
     checkList(changeListList, 2, new Data[] {new Data(absPath(d1), FileStatus.MODIFIED, "- moved from .." + File.separatorChar + "d1"),
-      new Data(oldPath, FileStatus.DELETED, null),
       new Data(absPath(f11), FileStatus.MODIFIED, "- moved from " + oldF11Path)});
   }
 
@@ -180,7 +192,8 @@ public class SvnCommittedViewTest extends SvnTestCase {
     verify(runSvn("import", "-m", "test", trunk.getAbsolutePath(), myRepoUrl + "/trunk"));
     verify(runSvn("copy", "-m", "test", myRepoUrl + "/trunk", myRepoUrl + "/branch"));
 
-    final SvnVcs17 vcs = SvnVcs17.getInstance(myProject);
+    final SvnVcs vcs = SvnVcs.getInstance(myProject);
+    vcs.invokeRefreshSvnRoots(false);
     final CommittedChangesProvider<SvnChangeList,ChangeBrowserSettings> committedChangesProvider = vcs.getCommittedChangesProvider();
     final List<SvnChangeList> changeListList =
       committedChangesProvider.getCommittedChanges(committedChangesProvider.createDefaultSettings(),
@@ -209,7 +222,8 @@ public class SvnCommittedViewTest extends SvnTestCase {
 
     checkin();
 
-    final SvnVcs17 vcs = SvnVcs17.getInstance(myProject);
+    final SvnVcs vcs = SvnVcs.getInstance(myProject);
+    vcs.invokeRefreshSvnRoots(false);
     final CommittedChangesProvider<SvnChangeList,ChangeBrowserSettings> committedChangesProvider = vcs.getCommittedChangesProvider();
     final List<SvnChangeList> changeListList =
       committedChangesProvider.getCommittedChanges(committedChangesProvider.createDefaultSettings(),

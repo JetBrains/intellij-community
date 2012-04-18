@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,6 +34,7 @@ import com.intellij.util.Processor;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
@@ -56,7 +57,7 @@ public class VirtualFilePointerTest extends PlatformLangTestCase {
     private final ArrayList<String> myLog = new ArrayList<String>();
 
     @Override
-    public void beforeValidityChanged(VirtualFilePointer[] pointers) {
+    public void beforeValidityChanged(@NotNull VirtualFilePointer[] pointers) {
       verifyPointersInCorrectState(pointers);
       myLog.add(buildMessage("before", pointers));
     }
@@ -74,7 +75,7 @@ public class VirtualFilePointerTest extends PlatformLangTestCase {
     }
 
     @Override
-    public void validityChanged(VirtualFilePointer[] pointers) {
+    public void validityChanged(@NotNull VirtualFilePointer[] pointers) {
       verifyPointersInCorrectState(pointers);
       myLog.add(buildMessage("after", pointers));
     }
@@ -240,12 +241,12 @@ public class VirtualFilePointerTest extends PlatformLangTestCase {
     final VirtualFilePointer[] pointersToWatch = new VirtualFilePointer[2];
     final VirtualFilePointerListener listener = new VirtualFilePointerListener() {
       @Override
-      public void beforeValidityChanged(VirtualFilePointer[] pointers) {
+      public void beforeValidityChanged(@NotNull VirtualFilePointer[] pointers) {
         verifyPointersInCorrectState(pointersToWatch);
       }
 
       @Override
-      public void validityChanged(VirtualFilePointer[] pointers) {
+      public void validityChanged(@NotNull VirtualFilePointer[] pointers) {
         verifyPointersInCorrectState(pointersToWatch);
       }
     };
@@ -302,12 +303,12 @@ public class VirtualFilePointerTest extends PlatformLangTestCase {
     final VirtualFilePointer[] pointersToWatch = new VirtualFilePointer[1];
     final VirtualFilePointerListener listener = new VirtualFilePointerListener() {
       @Override
-      public void beforeValidityChanged(VirtualFilePointer[] pointers) {
+      public void beforeValidityChanged(@NotNull VirtualFilePointer[] pointers) {
         verifyPointersInCorrectState(pointersToWatch);
       }
 
       @Override
-      public void validityChanged(VirtualFilePointer[] pointers) {
+      public void validityChanged(@NotNull VirtualFilePointer[] pointers) {
         verifyPointersInCorrectState(pointersToWatch);
       }
     };
@@ -381,22 +382,25 @@ public class VirtualFilePointerTest extends PlatformLangTestCase {
 
   public void testFilePointerUpdate() throws Exception {
     final File tempDir = createTempDirectory();
-    final File file_f1 = new File(tempDir, "f1");
+    final File file = new File(tempDir, "f1");
 
-    final VirtualFilePointer pointer_f1 = createPointerByFile(file_f1, null);
+    final VirtualFilePointer pointer = createPointerByFile(file, null);
 
-    assertFalse(pointer_f1.isValid());
+    assertFalse(pointer.isValid());
 
-    file_f1.createNewFile();
+    boolean created = file.createNewFile();
+    assertTrue(created);
 
-    doVfsRefresh();
-
-    assertTrue(pointer_f1.isValid());
-
-    file_f1.delete();
 
     doVfsRefresh();
-    assertFalse(pointer_f1.isValid());
+
+    assertTrue(pointer.isValid());
+
+    boolean deleted = file.delete();
+    assertTrue(deleted);
+
+    doVfsRefresh();
+    assertFalse(pointer.isValid());
   }
 
   public void testContainerDeletePerformance() throws Exception {
@@ -419,6 +423,39 @@ public class VirtualFilePointerTest extends PlatformLangTestCase {
         LocalFileSystem.getInstance().refresh(false);
       }
     });
+  }
+
+  public void testDoubleDispose() throws IOException {
+    final File tempDir = createTempDirectory();
+    final File file = new File(tempDir, "f1");
+    boolean created = file.createNewFile();
+    assertTrue(created);
+
+    final VirtualFile[] vFile = new VirtualFile[1];
+    final String url = VirtualFileManager.constructUrl(LocalFileSystem.PROTOCOL, file.getCanonicalPath().replace(File.separatorChar, '/'));
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
+      public void run() {
+        vFile[0] = VirtualFileManager.getInstance().refreshAndFindFileByUrl(url);
+      }
+    });
+
+    Disposable disposable = Disposer.newDisposable();
+    final VirtualFilePointer pointer = myVirtualFilePointerManager.create(vFile[0], disposable, new VirtualFilePointerListener() {
+      @Override
+      public void beforeValidityChanged(@NotNull VirtualFilePointer[] pointers) {
+      }
+
+      @Override
+      public void validityChanged(@NotNull VirtualFilePointer[] pointers) {
+      }
+    });
+
+
+    assertTrue(pointer.isValid());
+
+    Disposer.dispose(disposable);
+    assertFalse(pointer.isValid());
   }
 
   public void testThreads() throws IOException, InterruptedException {
@@ -451,8 +488,7 @@ public class VirtualFilePointerTest extends PlatformLangTestCase {
       }
     };
     VirtualFileManager.getInstance().addVirtualFileListener(listener, getTestRootDisposable());
-
-    int N = Timings.adjustAccordingToMySpeed(1000);
+    int N = Timings.adjustAccordingToMySpeed(1000, false);
     System.out.println("N = " + N);
     for (int i=0;i< N;i++) {
       assertNotNull(pointer.getFile());

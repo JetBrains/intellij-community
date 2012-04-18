@@ -33,7 +33,9 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.Map;
 
 /**
@@ -63,6 +65,14 @@ public abstract class CreateResourceDialog extends DialogWrapper {
     myResourceTypeCombo.registerUpDownHint(myFileNameField);
     myUpDownHint.setIcon(PlatformIcons.UP_DOWN_ARROWS);
     CreateTypedResourceFileAction[] actionArray = actions.toArray(new CreateTypedResourceFileAction[actions.size()]);
+
+    Arrays.sort(actionArray, new Comparator<CreateTypedResourceFileAction>() {
+      @Override
+      public int compare(CreateTypedResourceFileAction a1, CreateTypedResourceFileAction a2) {
+        return a1.toString().compareTo(a2.toString());
+      }
+    });
+
     for (CreateTypedResourceFileAction action : actionArray) {
       String resType = action.getResourceType();
       assert !myResType2ActionMap.containsKey(resType);

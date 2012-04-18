@@ -19,7 +19,6 @@ import com.android.ddmlib.AndroidDebugBridge;
 import com.android.ddmlib.Client;
 import com.android.ddmlib.ClientData;
 import com.android.ddmlib.IDevice;
-import com.android.sdklib.SdkConstants;
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.executors.DefaultDebugExecutor;
@@ -349,18 +348,12 @@ public class AndroidProcessChooserDialog extends DialogWrapper {
     xmlElement.accept(new XmlRecursiveElementVisitor() {
       @Override
       public void visitXmlAttribute(XmlAttribute attribute) {
-        if (!"process".equals(attribute.getName())) {
-          return;
-        }
+        if ("process".equals(attribute.getLocalName())) {
+          final String value = attribute.getValue();
 
-        final String namespace = attribute.getNamespace();
-        if (SdkConstants.NS_RESOURCES.equals(namespace)) {
-          return;
-        }
-
-        final String value = attribute.getValue();
-        if (value != null) {
-          result.add(value);
+          if (value != null) {
+            result.add(value);
+          }
         }
       }
     });

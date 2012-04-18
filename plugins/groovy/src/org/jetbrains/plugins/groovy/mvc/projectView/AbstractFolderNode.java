@@ -33,16 +33,16 @@ import java.util.List;
 public class AbstractFolderNode extends AbstractMvcPsiNodeDescriptor {
   @Nullable private final String myLocationMark;
 
-  private final PsiDirectory myHiddenParent;
+  private final String myPresentableText;
 
   protected AbstractFolderNode(@NotNull final Module module,
                                @NotNull final PsiDirectory directory,
-                               @NotNull  PsiDirectory hiddenParent,
+                               @NotNull String presentableText,
                                @Nullable final String locationMark,
                                final ViewSettings viewSettings, int weight) {
     super(module, viewSettings, new NodeId(directory, locationMark), weight);
     myLocationMark = locationMark;
-    myHiddenParent = hiddenParent;
+    myPresentableText = presentableText;
   }
 
   @Override
@@ -82,6 +82,8 @@ public class AbstractFolderNode extends AbstractMvcPsiNodeDescriptor {
   private AbstractFolderNode createFolderNode(PsiDirectory directory) {
     PsiDirectory realDirectory = directory;
 
+    StringBuilder textBuilder = null;
+
     if (getSettings().isHideEmptyMiddlePackages()) {
       do {
         if (realDirectory.getFiles().length > 0) break;
@@ -89,11 +91,20 @@ public class AbstractFolderNode extends AbstractMvcPsiNodeDescriptor {
         PsiDirectory[] subdirectories = realDirectory.getSubdirectories();
         if (subdirectories.length != 1) break;
 
+        if (textBuilder == null) {
+          textBuilder = new StringBuilder();
+          textBuilder.append(realDirectory.getName());
+        }
+
         realDirectory = subdirectories[0];
+
+        textBuilder.append('.').append(realDirectory.getName());
       } while (true);
     }
 
-    return new AbstractFolderNode(getModule(), realDirectory, directory, myLocationMark, getSettings(), FOLDER) {
+    String presentableText = textBuilder == null ? directory.getName() : textBuilder.toString();
+
+    return new AbstractFolderNode(getModule(), realDirectory, presentableText, myLocationMark, getSettings(), FOLDER) {
       @Override
       protected void processNotDirectoryFile(List<AbstractTreeNode> nodes, PsiFile file) {
         AbstractFolderNode.this.processNotDirectoryFile(nodes, file);
@@ -110,21 +121,7 @@ public class AbstractFolderNode extends AbstractMvcPsiNodeDescriptor {
   protected void updateImpl(final PresentationData data) {
     final PsiDirectory psiDirectory = getPsiDirectory();
 
-    String text;
-
-    if (psiDirectory == myHiddenParent) {
-      text = psiDirectory.getName();
-    }
-    else {
-      StringBuilder sb = new StringBuilder();
-      for (PsiDirectory dir = myHiddenParent; dir != psiDirectory; dir = dir.getSubdirectories()[0]) {
-        sb.append(dir.getName()).append('.');
-      }
-      sb.append(psiDirectory.getName());
-      text = sb.toString();
-    }
-
-    data.setPresentableText(text);
+    data.setPresentableText(myPresentableText);
 
     for (final IconProvider provider : Extensions.getExtensions(IconProvider.EXTENSION_POINT_NAME)) {
       final Icon openIcon = provider.getIcon(psiDirectory, Iconable.ICON_FLAG_OPEN);

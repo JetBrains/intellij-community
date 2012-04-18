@@ -45,7 +45,7 @@ public class ConvertSchemaPrefixToDefaultIntention extends PsiElementBaseIntenti
   }
 
   @Override
-  public void invoke(Project project, Editor editor, PsiElement element) throws IncorrectOperationException {
+  public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
     final XmlAttribute xmlns = getXmlnsDeclaration(element);
     if (xmlns == null) return;
     SchemaPrefixReference prefixRef = null;

@@ -1053,6 +1053,9 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
     if (myOriginal != null) {
       myOriginal.myChildren.remove(this);
     }
+    myMinimizedButtonsPlaceholder.clear();
+    myCommonActionsPlaceholder.clear();
+    myContextActions.clear();
   }
 
   public void restoreLayout() {

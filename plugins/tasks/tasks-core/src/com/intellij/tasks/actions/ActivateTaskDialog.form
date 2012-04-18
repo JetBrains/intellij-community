@@ -28,7 +28,7 @@
             <properties>
               <focusable value="false"/>
               <selected value="true"/>
-              <text value="Clear current conte&amp;xt"/>
+              <text value="&amp;Clear current context"/>
             </properties>
           </component>
           <component id="5ef71" class="javax.swing.JCheckBox" binding="myCreateChangelist" default-binding="true">

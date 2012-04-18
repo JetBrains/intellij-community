@@ -88,7 +88,7 @@ class InitialKeyStep extends ExportSignedPackageWizardStep {
       myNewKeyButton.setSelected(true);
     }
     myAliasCombo.setModel(new CollectionComboBoxModel(myAliasList, myAliasList.size() > 0 ? myAliasList.get(0) : null));
-    String defaultAlias = PropertiesComponent.getInstance().getValue(DEFAULT_KEY_ALIAS);
+    String defaultAlias = PropertiesComponent.getInstance(myWizard.getProject()).getValue(DEFAULT_KEY_ALIAS);
     if (defaultAlias != null) {
       myAliasCombo.setSelectedItem(defaultAlias);
     }
@@ -113,7 +113,7 @@ class InitialKeyStep extends ExportSignedPackageWizardStep {
     if (privateKey == null || certificate == null) {
       throw new CommitStepException(AndroidBundle.message("android.extract.package.cannot.find.key.error", alias));
     }
-    PropertiesComponent.getInstance().setValue(DEFAULT_KEY_ALIAS, alias);
+    PropertiesComponent.getInstance(myWizard.getProject()).setValue(DEFAULT_KEY_ALIAS, alias);
     myWizard.setPrivateKey(privateKey);
     myWizard.setCertificate((X509Certificate)certificate);
   }

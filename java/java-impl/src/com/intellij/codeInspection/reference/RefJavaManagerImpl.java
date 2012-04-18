@@ -15,14 +15,20 @@
  */
 package com.intellij.codeInspection.reference;
 
+import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.SuppressionUtil;
+import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
 import com.intellij.codeInspection.ex.EntryPointsManager;
 import com.intellij.codeInspection.ex.EntryPointsManagerImpl;
+import com.intellij.codeInspection.ex.InspectionToolWrapper;
+import com.intellij.codeInspection.ex.Tools;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.UserDataCache;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
@@ -89,6 +95,41 @@ public class RefJavaManagerImpl extends RefJavaManager {
     return refPackage;
   }
 
+
+  public boolean isEntryPoint(final RefElement element) {
+    UnusedDeclarationInspection tool = getDeadCodeTool(element);
+    return tool != null && tool.isEntryPoint(element);
+  }
+
+  @Nullable
+  private UnusedDeclarationInspection getDeadCodeTool(RefElement element) {
+    PsiFile file = ((RefElementImpl)element).getContainingFile();
+    if (file == null) return null;
+
+    return getDeadCodeTool(file);
+  }
+
+  private static final UserDataCache<Ref<UnusedDeclarationInspection>, PsiFile, RefManagerImpl> DEAD_CODE_TOOL = new UserDataCache<Ref<UnusedDeclarationInspection>, PsiFile, RefManagerImpl>("DEAD_CODE_TOOL") {
+    @Override
+    protected Ref<UnusedDeclarationInspection> compute(PsiFile file, RefManagerImpl refManager) {
+      Tools tools = refManager.getContext().getTools().get(UnusedDeclarationInspection.SHORT_NAME);
+      InspectionProfileEntry tool = tools != null ? tools.getEnabledTool(file) : null;
+      if (tool instanceof InspectionToolWrapper) tool = ((InspectionToolWrapper)tool).getTool();
+      return Ref.create(tool instanceof UnusedDeclarationInspection ? (UnusedDeclarationInspection)tool : null);
+    }
+  };
+
+  @Nullable
+  private UnusedDeclarationInspection getDeadCodeTool(PsiElement element) {
+    PsiFile file = element.getContainingFile();
+    return file != null ? DEAD_CODE_TOOL.get(file, myRefManager).get() : null;
+  }
+
+  public boolean isEntryPoint(PsiElement element) {
+    UnusedDeclarationInspection tool = getDeadCodeTool(element);
+    return tool != null && tool.isEntryPoint(element);
+  }
+
   public RefPackage getDefaultPackage() {
     if (myDefaultPackage == null) {
       myDefaultPackage = getPackage(InspectionsBundle.message("inspection.reference.default.package"));
@@ -133,8 +174,7 @@ public class RefJavaManagerImpl extends RefJavaManager {
         refPackage.accept(visitor);
       }
     }
-    final THashMap<PsiAnchor, RefElement> refTable = myRefManager.getRefTable();
-    for (RefElement refElement : refTable.values()) {
+    for (RefElement refElement : myRefManager.getSortedElements()) {
       if (refElement instanceof RefClass) {
         RefClass refClass = (RefClass)refElement;
         RefMethod refDefaultConstructor = refClass.getDefaultConstructor();
@@ -260,12 +300,34 @@ public class RefJavaManagerImpl extends RefJavaManager {
 
   public void export(final RefEntity refEntity, final Element element) {
     if (refEntity instanceof RefElement) {
-      final PsiElement psiElement = ((RefElement)refEntity).getElement();
-      if (psiElement != null) {
-        final PsiFile psiFile = psiElement.getContainingFile();
+      final SmartPsiElementPointer pointer = ((RefElement)refEntity).getPointer();
+      if (pointer != null) {
+        final PsiFile psiFile = pointer.getContainingFile();
         if (psiFile instanceof PsiJavaFile) {
           appendPackageElement(element, ((PsiJavaFile)psiFile).getPackageName());
         }
+      }
+    }
+  }
+
+  @Override
+  public void onEntityInitialized(RefElement refElement, PsiElement psiElement) {
+    if (isEntryPoint(refElement)) {
+      getEntryPointsManager().addEntryPoint(refElement, false);
+    }
+
+    if (psiElement instanceof PsiClass) {
+      PsiClass psiClass = (PsiClass)psiElement;
+
+      EntryPointsManager entryPointsManager = getEntryPointsManager();
+      if (psiClass.isAnnotationType()){
+        entryPointsManager.addEntryPoint(refElement, false);
+        for (PsiMethod psiMethod : psiClass.getMethods()) {
+          entryPointsManager.addEntryPoint(myRefManager.getReference(psiMethod), false);
+        }
+      }
+      else if (psiClass.isEnum()) {
+        entryPointsManager.addEntryPoint(refElement, false);
       }
     }
   }

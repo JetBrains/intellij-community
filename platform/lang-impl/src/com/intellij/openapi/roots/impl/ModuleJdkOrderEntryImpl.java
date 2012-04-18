@@ -43,16 +43,16 @@ public class ModuleJdkOrderEntryImpl extends LibraryOrderEntryBaseImpl implement
   @NonNls public static final String JDK_NAME_ATTR = "jdkName";
   @NonNls public static final String JDK_TYPE_ATTR = "jdkType";
 
-  private Sdk myJdk;
+  @Nullable private Sdk myJdk;
   private String myJdkName;
   private String myJdkType;
 
-  ModuleJdkOrderEntryImpl(@NotNull Sdk projectJdk, RootModelImpl rootModel, ProjectRootManagerImpl projectRootManager) {
+  ModuleJdkOrderEntryImpl(@NotNull Sdk projectJdk, @NotNull RootModelImpl rootModel, @NotNull ProjectRootManagerImpl projectRootManager) {
     super(rootModel, projectRootManager);
     init(projectJdk, null, null);
   }
 
-  ModuleJdkOrderEntryImpl(Element element, RootModelImpl rootModel, ProjectRootManagerImpl projectRootManager) throws InvalidDataException {
+  ModuleJdkOrderEntryImpl(@NotNull Element element, @NotNull RootModelImpl rootModel, @NotNull ProjectRootManagerImpl projectRootManager) throws InvalidDataException {
     super(rootModel, projectRootManager);
     if (!element.getName().equals(OrderEntryFactory.ORDER_ENTRY_ELEMENT_NAME)) {
       throw new InvalidDataException();
@@ -95,15 +95,15 @@ public class ModuleJdkOrderEntryImpl extends LibraryOrderEntryBaseImpl implement
   }
 
 
-  private ModuleJdkOrderEntryImpl(ModuleJdkOrderEntryImpl that, RootModelImpl rootModel, ProjectRootManagerImpl projectRootManager) {
+  private ModuleJdkOrderEntryImpl(@NotNull ModuleJdkOrderEntryImpl that, @NotNull RootModelImpl rootModel, @NotNull ProjectRootManagerImpl projectRootManager) {
     super(rootModel, projectRootManager);
     init(that.myJdk, that.getJdkName(), that.getJdkType());
   }
 
   public ModuleJdkOrderEntryImpl(final String jdkName,
                                  final String jdkType,
-                                 final RootModelImpl rootModel,
-                                 final ProjectRootManagerImpl projectRootManager) {
+                                 @NotNull final RootModelImpl rootModel,
+                                 @NotNull final ProjectRootManagerImpl projectRootManager) {
     super(rootModel, projectRootManager);
     init(null, jdkName, jdkType);
   }
@@ -127,14 +127,19 @@ public class ModuleJdkOrderEntryImpl extends LibraryOrderEntryBaseImpl implement
     myProjectRootManagerImpl.addJdkTableListener(this);
   }
 
+  @Override
   protected RootProvider getRootProvider() {
     return myJdk == null ? null : myJdk.getRootProvider();
   }
 
+  @Override
+  @Nullable
   public Sdk getJdk() {
     return getRootModel().getConfigurationAccessor().getSdk(myJdk, myJdkName);
   }
 
+  @Override
+  @Nullable
   public String getJdkName() {
     if (myJdkName != null) return myJdkName;
     Sdk jdk = getJdk();
@@ -144,24 +149,30 @@ public class ModuleJdkOrderEntryImpl extends LibraryOrderEntryBaseImpl implement
     return null;
   }
 
+  @Override
   public boolean isSynthetic() {
     return true;
   }
 
 
+  @Override
+  @NotNull
   public String getPresentableName() {
     return "< " + (myJdk == null ? getJdkName() : myJdk.getName())+ " >";
   }
 
+  @Override
   public boolean isValid() {
     return !isDisposed() && getJdk() != null;
   }
 
-  public <R> R accept(RootPolicy<R> policy, R initialValue) {
+  @Override
+  public <R> R accept(@NotNull RootPolicy<R> policy, R initialValue) {
     return policy.visitModuleJdkOrderEntry(this, initialValue);
   }
 
-  public void jdkAdded(Sdk jdk) {
+  @Override
+  public void jdkAdded(@NotNull Sdk jdk) {
     if (myJdk == null && getJdkName().equals(jdk.getName())) {
       myJdk = jdk;
       setJdkName(null);
@@ -170,7 +181,8 @@ public class ModuleJdkOrderEntryImpl extends LibraryOrderEntryBaseImpl implement
     }
   }
 
-  public void jdkNameChanged(Sdk jdk, String previousName) {
+  @Override
+  public void jdkNameChanged(@NotNull Sdk jdk, String previousName) {
     if (myJdk == null && getJdkName().equals(jdk.getName())) {
       myJdk = jdk;
       setJdkName(null);
@@ -179,6 +191,7 @@ public class ModuleJdkOrderEntryImpl extends LibraryOrderEntryBaseImpl implement
     }
   }
 
+  @Override
   public void jdkRemoved(Sdk jdk) {
     if (jdk == myJdk) {
       setJdkName(myJdk.getName());
@@ -188,7 +201,8 @@ public class ModuleJdkOrderEntryImpl extends LibraryOrderEntryBaseImpl implement
     }
   }
 
-  public void writeExternal(Element rootElement) throws WriteExternalException {
+  @Override
+  public void writeExternal(@NotNull Element rootElement) throws WriteExternalException {
     final Element element = OrderEntryFactory.createOrderEntryElement(ENTRY_TYPE);
     final String jdkName = getJdkName();
     if (jdkName != null) {
@@ -201,12 +215,15 @@ public class ModuleJdkOrderEntryImpl extends LibraryOrderEntryBaseImpl implement
     rootElement.addContent(element);
   }
 
-  public OrderEntry cloneEntry(RootModelImpl rootModel,
+  @Override
+  @NotNull
+  public OrderEntry cloneEntry(@NotNull RootModelImpl rootModel,
                                ProjectRootManagerImpl projectRootManager,
                                VirtualFilePointerManager filePointerManager) {
     return new ModuleJdkOrderEntryImpl(this, rootModel, ProjectRootManagerImpl.getInstanceImpl(getRootModel().getModule().getProject()));
   }
 
+  @Override
   public void dispose() {
     super.dispose();
     myProjectRootManagerImpl.removeJdkTableListener(this);

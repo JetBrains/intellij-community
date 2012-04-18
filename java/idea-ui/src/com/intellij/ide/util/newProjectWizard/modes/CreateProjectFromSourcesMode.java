@@ -16,20 +16,11 @@
 package com.intellij.ide.util.newProjectWizard.modes;
 
 import com.intellij.ide.util.projectWizard.WizardContext;
-import com.intellij.openapi.util.IconLoader;
-
-import javax.swing.*;
 
 /**
  * @author nik
  */
 public class CreateProjectFromSourcesMode extends CreateFromSourcesMode {
-  private static final Icon STEP_ICON = IconLoader.getIcon("/newprojectwizard.png");
-
-  protected Icon getIcon() {
-    return STEP_ICON;
-  }
-
   public boolean isAvailable(WizardContext context) {
     return context.isCreatingNewProject();
   }

@@ -54,7 +54,10 @@ public interface ModifiableModel extends Profile {
 
   void setModified(final boolean toolsSettingsChanged);
 
+  @Deprecated
   boolean isProperSetting(HighlightDisplayKey key);
+
+  boolean isProperSetting(String toolId);
 
   void resetToBase();
 
@@ -65,8 +68,6 @@ public interface ModifiableModel extends Profile {
   InspectionProfileEntry[] getInspectionTools(PsiElement element);
 
   void copyFrom(InspectionProfile profile);
-
-  boolean isDefault();
 
   void setEditable(String toolDisplayName);
 

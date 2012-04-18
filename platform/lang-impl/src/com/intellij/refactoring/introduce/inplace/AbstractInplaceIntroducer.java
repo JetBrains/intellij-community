@@ -485,7 +485,14 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
         }
       }.execute();
     }
-    performIntroduce();
+
+    CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
+      @Override
+      public void run() {
+        performIntroduce();
+      }
+    }, getCommandName(), getCommandName());
+
     V variable = getVariable();
     if (variable != null) {
       saveSettings(variable);

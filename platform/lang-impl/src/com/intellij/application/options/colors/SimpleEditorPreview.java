@@ -79,6 +79,7 @@ public class SimpleEditorPreview implements PreviewPanel{
       addMouseMotionListener(myEditor, page.getHighlighter(), myHighlightData, false);
 
       CaretListener listener = new CaretListener() {
+        @Override
         public void caretPositionChanged(CaretEvent e) {
           navigate(myEditor, true, e.getNewPosition(), page.getHighlighter(), myHighlightData, false);
         }
@@ -91,6 +92,7 @@ public class SimpleEditorPreview implements PreviewPanel{
                                       final SyntaxHighlighter highlighter,
                                       final HighlightData[] data, final boolean isBackgroundImportant) {
     view.getContentComponent().addMouseMotionListener(new MouseMotionAdapter() {
+      @Override
       public void mouseMoved(MouseEvent e) {
         LogicalPosition pos = view.xyToLogicalPosition(new Point(e.getX(), e.getY()));
         navigate(view, false, pos, highlighter, data, isBackgroundImportant);
@@ -138,7 +140,6 @@ public class SimpleEditorPreview implements PreviewPanel{
   }
 
   private void selectItem(HighlighterIterator itr, SyntaxHighlighter highlighter, final boolean select) {
-
     IElementType tokenType = itr.getTokenType();
     if (tokenType == null) return;
     String type = ClickNavigator.highlightingTypeFromTokenType(tokenType, highlighter);
@@ -147,10 +148,12 @@ public class SimpleEditorPreview implements PreviewPanel{
     }
   }
 
+  @Override
   public JComponent getPanel() {
     return myEditor.getComponent();
   }
 
+  @Override
   public void updateView() {
     EditorColorsScheme scheme = myOptions.getSelectedScheme();
 
@@ -173,6 +176,7 @@ public class SimpleEditorPreview implements PreviewPanel{
   }
 
   private void updateHighlighters() {
+    myEditor.getMarkupModel().removeAllHighlighters();
     HighlightData[] datum = myHighlightData;
     final Map<TextAttributesKey, String> displayText = ColorSettingsUtil.keyToDisplayTextMap(myPage);
     for (final HighlightData data : datum) {
@@ -182,6 +186,7 @@ public class SimpleEditorPreview implements PreviewPanel{
 
   private static final int BLINK_COUNT = 3 * 2;
 
+  @Override
   public void blinkSelectedHighlightType(Object description) {
     if (description instanceof EditorSchemeAttributeDescriptor){
       String type = ((EditorSchemeAttributeDescriptor)description).getType();
@@ -270,6 +275,7 @@ public class SimpleEditorPreview implements PreviewPanel{
 
     // sort highlights to avoid overlappings
     Collections.sort(highlights, new Comparator<HighlightData>() {
+      @Override
       public int compare(HighlightData highlightData1, HighlightData highlightData2) {
         return highlightData1.getStartOffset() - highlightData2.getStartOffset();
       }
@@ -289,6 +295,7 @@ public class SimpleEditorPreview implements PreviewPanel{
     }
     alarm.cancelAllRequests();
     alarm.addComponentRequest(new Runnable() {
+      @Override
       public void run() {
         startBlinkingHighlights(editor, highlightDatum, attrKey, highlighter, !show, alarm, count - 1, page);
       }
@@ -297,10 +304,12 @@ public class SimpleEditorPreview implements PreviewPanel{
   }
 
 
+  @Override
   public void addListener(@NotNull final ColorAndFontSettingsListener listener) {
     myDispatcher.addListener(listener);
   }
 
+  @Override
   public void disposeUIResources() {
     EditorFactory editorFactory = EditorFactory.getInstance();
     editorFactory.releaseEditor(myEditor);

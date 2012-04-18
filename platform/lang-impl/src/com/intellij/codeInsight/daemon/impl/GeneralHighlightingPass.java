@@ -291,8 +291,8 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     List<DocumentWindow> injected = InjectedLanguageUtil.getCachedInjectedDocuments(myFile);
     Collection<PsiElement> hosts = new THashSet<PsiElement>(elements1.size() + elements2.size() + injected.size());
 
-    // rehighlight all injected PSI regardless the range,
-    // since change in one place can lead to invalidation of injected PSI in (completely) other place.
+    //rehighlight all injected PSI regardless the range,
+    //since change in one place can lead to invalidation of injected PSI in (completely) other place.
     for (DocumentWindow documentRange : injected) {
       progress.checkCanceled();
       if (!documentRange.isValid()) continue;
@@ -342,7 +342,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
         if (documentWindow == null) return true;
         Place places = InjectedLanguageUtil.getShreds(injectedPsi);
         for (PsiLanguageInjectionHost.Shred place : places) {
-          TextRange textRange = place.getRangeInsideHost().shiftRight(place.host.getTextRange().getStartOffset());
+          TextRange textRange = place.getRangeInsideHost().shiftRight(place.getHost().getTextRange().getStartOffset());
           if (textRange.isEmpty()) continue;
           String desc = injectedPsi.getLanguage().getDisplayName() + ": " + injectedPsi.getText();
           HighlightInfo info = HighlightInfo.createHighlightInfo(HighlightInfoType.INJECTED_LANGUAGE_BACKGROUND, textRange, null, desc, injectedAttributes);
@@ -457,7 +457,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
   // finds the first nearest text range
   private static TextRange findNearestTextRange(final DocumentWindow documentWindow, final int startOffset) {
     TextRange textRange = null;
-    for (RangeMarker marker : documentWindow.getHostRanges()) {
+    for (Segment marker : documentWindow.getHostRanges()) {
       TextRange curRange = ProperTextRange.create(marker);
       if (curRange.getStartOffset() > startOffset && textRange != null) break;
       textRange = curRange;
@@ -491,7 +491,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
   }
 
   private void highlightInjectedSyntax(final PsiFile injectedPsi, HighlightInfoHolder holder) {
-    List<Trinity<IElementType, PsiLanguageInjectionHost, TextRange>> tokens = InjectedLanguageUtil.getHighlightTokens(injectedPsi);
+    List<Trinity<IElementType, SmartPsiElementPointer<PsiLanguageInjectionHost>, TextRange>> tokens = InjectedLanguageUtil.getHighlightTokens(injectedPsi);
     if (tokens == null) return;
 
     final Language injectedLanguage = injectedPsi.getLanguage();
@@ -499,10 +499,11 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     SyntaxHighlighter syntaxHighlighter = SyntaxHighlighterFactory.getSyntaxHighlighter(injectedLanguage, project, injectedPsi.getVirtualFile());
     final TextAttributes defaultAttrs = myGlobalScheme.getAttributes(HighlighterColors.TEXT);
 
-    for (Trinity<IElementType, PsiLanguageInjectionHost, TextRange> token : tokens) {
+    for (Trinity<IElementType, SmartPsiElementPointer<PsiLanguageInjectionHost>, TextRange> token : tokens) {
       ProgressManager.checkCanceled();
       IElementType tokenType = token.getFirst();
-      PsiLanguageInjectionHost injectionHost = token.getSecond();
+      PsiLanguageInjectionHost injectionHost = token.getSecond().getElement();
+      if (injectionHost == null) continue;
       TextRange textRange = token.getThird();
       TextAttributesKey[] keys = syntaxHighlighter.getTokenHighlights(tokenType);
       if (textRange.getLength() == 0) continue;

@@ -28,6 +28,7 @@ import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.util.Function;
 import com.intellij.util.FunctionUtil;
 import com.intellij.util.ui.ColorIcon;
 import org.jetbrains.annotations.NotNull;
@@ -45,7 +46,7 @@ public final class ColorLineMarkerProvider implements LineMarkerProvider {
   private final ElementColorProvider[] myExtensions = ElementColorProvider.EP_NAME.getExtensions();
 
   @Override
-  public LineMarkerInfo getLineMarkerInfo(PsiElement element) {    
+  public LineMarkerInfo getLineMarkerInfo(@NotNull PsiElement element) {
     for (ElementColorProvider colorProvider : myExtensions) {
       final Color color = colorProvider.getColorFrom(element);
       if (color != null) {
@@ -56,7 +57,7 @@ public final class ColorLineMarkerProvider implements LineMarkerProvider {
   }
 
   @Override
-  public void collectSlowLineMarkers(List<PsiElement> elements, Collection<LineMarkerInfo> result) {
+  public void collectSlowLineMarkers(@NotNull List<PsiElement> elements, @NotNull Collection<LineMarkerInfo> result) {
   }
   
   private static class MyInfo extends MergeableLineMarkerInfo<PsiElement> {
@@ -90,13 +91,18 @@ public final class ColorLineMarkerProvider implements LineMarkerProvider {
     }
 
     @Override
-    public boolean canMergeWith(MergeableLineMarkerInfo<?> info) {
+    public boolean canMergeWith(@NotNull MergeableLineMarkerInfo<?> info) {
       return info instanceof MyInfo;
     }
 
     @Override
-    public Icon getCommonIcon(List<MergeableLineMarkerInfo> infos) {
+    public Icon getCommonIcon(@NotNull List<MergeableLineMarkerInfo> infos) {
       return IconLoader.getIcon("/gutter/colors.png");
+    }
+
+    @Override
+    public Function<? super PsiElement, String> getCommonTooltip(@NotNull List<MergeableLineMarkerInfo> infos) {
+      return FunctionUtil.nullConstant();
     }
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.ide.CutProvider;
 import com.intellij.ide.DeleteProvider;
 import com.intellij.ide.PasteProvider;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.VisualPosition;
@@ -47,6 +48,11 @@ public interface EditorEx extends Editor {
   @NonNls String PROP_FONT_SIZE = "fontSize";
   Key<TextRange> LAST_PASTED_REGION = Key.create("LAST_PASTED_REGION");
 
+  @NotNull
+  @Override
+  DocumentEx getDocument();
+
+  @NotNull
   EditorGutterComponentEx getGutterComponentEx();
 
   EditorHighlighter getHighlighter();
@@ -108,6 +114,7 @@ public interface EditorEx extends Editor {
 
   void setFile(VirtualFile vFile);
 
+  @NotNull
   DataContext getDataContext();
 
   boolean processKeyTyped(@NotNull KeyEvent e);
@@ -156,6 +163,7 @@ public interface EditorEx extends Editor {
    * @param customGlobalScheme
    * @return
    */
+  @NotNull
   EditorColorsScheme createBoundColorSchemeDelegate(@Nullable EditorColorsScheme customGlobalScheme);
 
   /**
@@ -196,6 +204,12 @@ public interface EditorEx extends Editor {
   void setStickySelection(boolean enable);
 
   /**
+   * @return  width in pixels of the {@link #setPrefixTextAndAttributes(String, TextAttributes) prefix} used with the current editor if any;
+   *          zero otherwise
+   */
+  int getPrefixTextWidthInPixels();
+
+  /**
    * Allows to define prefix to be displayed on every editor line and text attributes to use for its coloring.
    * 
    * @param prefixText  target prefix text
@@ -204,8 +218,21 @@ public interface EditorEx extends Editor {
   void setPrefixTextAndAttributes(@Nullable String prefixText, @Nullable TextAttributes attributes);
 
   /**
-   * @return  width in pixels of the {@link #setPrefixTextAndAttributes(String, TextAttributes) prefix} used with the current editor if any;
-   * zero otherwise
+   * @return    current 'pure painting mode' status
+   * @see #setPurePaintingMode(boolean)
    */
-  int getPrefixTextWidthInPixels();
+  boolean isPurePaintingMode();
+  
+  /**
+   * We often re-use the logic encapsulated at the editor. For example, every time we show editor fragment (folding, preview etc) we
+   * create a dedicated graphics object and ask the editor to paint into it.
+   * <p/>
+   * The thing is that the editor itself may change its state if any postponed operation is triggered by the painting request
+   * (e.g. soft wraps recalculation is triggered by the paint request and newly calculated soft wraps cause caret to change its position).
+   * <p/>
+   * This method allows to inform the editor that all subsequent painting request should not change the editor state.
+   * 
+   * @param enabled  'pure painting mode' status to use
+   */
+  void setPurePaintingMode(boolean enabled);
 }

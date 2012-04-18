@@ -267,7 +267,7 @@ public class LiveTemplateTest extends LightCodeInsightFixtureTestCase {
 
   @Override
   protected void invokeTestRunnable(final Runnable runnable) throws Exception {
-    if ("testNavigationActionsDontTerminateTemplate".equals(getName()) || "testTemplateWithEnd".equals(getName())) {
+    if (name in ["testNavigationActionsDontTerminateTemplate", "testTemplateWithEnd", "testDisappearingVar"]) {
       runnable.run();
       return;
     }
@@ -372,6 +372,45 @@ public class LiveTemplateTest extends LightCodeInsightFixtureTestCase {
   private void moveCaret(final int offset) {
     edt {
       getEditor().getCaretModel().moveToOffset(offset);
+    }
+  }
+
+  public void testUseDefaultValueForQuickResultCalculation() {
+    myFixture.configureByText 'a.txt', '<caret>'
+
+    final TemplateManager manager = TemplateManager.getInstance(getProject());
+    final Template template = manager.createTemplate("vn", "user", '$V1$ var = $V2$;');
+    template.addVariable("V1", "", "", true);
+    template.addVariable("V2", "", '"239"', true);
+
+    writeCommand { manager.startTemplate(editor, template) }
+
+    myFixture.checkResult '<caret> var = 239;'
+
+    myFixture.type 'O'
+    myFixture.checkResult 'O<caret> var = 239;'
+
+    myFixture.type '\t'
+    myFixture.checkResult 'O var = <selection>239</selection>;'
+  }
+
+  public void testTemplateExpandingWithSelection() {
+    final TemplateManager manager = TemplateManager.getInstance(getProject());
+    final Template template = manager.createTemplate("tpl", "user", 'expanded');
+    final JavaStringContextType contextType =
+      ContainerUtil.findInstance(TemplateContextType.EP_NAME.getExtensions(), JavaStringContextType.class);
+    ((TemplateImpl)template).getTemplateContext().setEnabled(contextType, true);
+
+    myFixture.configureByText("a.java", "class A { void f() { Stri<selection>ng s = \"tpl</selection><caret>\"; } }")
+
+    def settings = TemplateSettings.getInstance()
+    settings.addTemplate(template);
+    try {
+      myFixture.type '\t'
+      myFixture.checkResult 'class A { void f() { Stri    "; } }'
+    }
+    finally {
+      settings.removeTemplate(template);
     }
   }
 

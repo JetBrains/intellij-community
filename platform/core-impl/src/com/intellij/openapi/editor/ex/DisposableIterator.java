@@ -37,7 +37,7 @@ public interface DisposableIterator<T> extends Iterator<T> {
 
     @Override
     public void remove() {
-      throw new IllegalAccessError();
+      throw new NoSuchElementException();
     }
   };
 }

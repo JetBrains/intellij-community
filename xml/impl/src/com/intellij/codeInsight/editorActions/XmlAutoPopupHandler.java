@@ -117,7 +117,10 @@ public class XmlAutoPopupHandler extends TypedHandlerDelegate {
     Boolean result = isRelevantLanguage.get();
     if (result == null) {
       Language language = element.getLanguage();
-      if (element instanceof PsiWhiteSpace) language = element.getParent().getLanguage();
+      PsiElement parent = element.getParent();
+      if (element instanceof PsiWhiteSpace && parent != null) {
+        language = parent.getLanguage();
+      }
       result = language instanceof XMLLanguage || isAntFile.booleanValue();
       isRelevantLanguage.set(result);
     }

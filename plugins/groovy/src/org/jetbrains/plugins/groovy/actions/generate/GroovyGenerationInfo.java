@@ -26,8 +26,10 @@ import com.intellij.psi.PsiMember;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.GrReferenceAdjuster;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
@@ -52,11 +54,24 @@ public class GroovyGenerationInfo<T extends PsiMember> extends PsiGenerationInfo
   @Override
   public void insert(PsiClass aClass, PsiElement anchor, boolean before) throws IncorrectOperationException {
     super.insert(aClass, anchor, before);
+
     final T member = getPsiMember();
-    if (member != null) {
-      assert member instanceof GroovyPsiElement;
-      GrReferenceAdjuster.shortenReferences(member);
+    if (member == null) return;
+
+    LOG.assertTrue(member instanceof GroovyPsiElement);
+    final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(member.getProject());
+
+    final PsiElement prev = member.getPrevSibling();
+    if (prev!=null && GroovyTokenTypes.mNLS == prev.getNode().getElementType()) {
+      prev.replace(factory.createLineTerminator(1));
     }
+
+    final PsiElement next = member.getNextSibling();
+    if (next != null && GroovyTokenTypes.mNLS == next.getNode().getElementType()) {
+      next.replace(factory.createLineTerminator(1));
+    }
+
+    GrReferenceAdjuster.shortenReferences(member);
   }
 
   @Override

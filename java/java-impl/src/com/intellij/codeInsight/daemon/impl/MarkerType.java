@@ -209,7 +209,7 @@ public class MarkerType {
   private final GutterIconNavigationHandler<PsiElement> handler;
   private final Function<PsiElement, String> myTooltip;
 
-  public MarkerType(Function<PsiElement, String> tooltip, final LineMarkerNavigator navigator) {
+  public MarkerType(@NotNull Function<PsiElement, String> tooltip, @NotNull final LineMarkerNavigator navigator) {
     myTooltip = tooltip;
     handler = new GutterIconNavigationHandler<PsiElement>() {
       @Override
@@ -219,10 +219,12 @@ public class MarkerType {
     };
   }
 
+  @NotNull
   public GutterIconNavigationHandler<PsiElement> getNavigationHandler() {
     return handler;
   }
 
+  @NotNull
   public Function<PsiElement, String> getTooltip() {
     return myTooltip;
   }
@@ -245,7 +247,7 @@ public class MarkerType {
     }
 
     @Override
-    public void run(@NotNull ProgressIndicator indicator) {
+    public void run(@NotNull final ProgressIndicator indicator) {
       super.run(indicator);
       ClassInheritorsSearch.search(myClass, ApplicationManager.getApplication().runReadAction(new Computable<SearchScope>() {
         @Override
@@ -255,7 +257,10 @@ public class MarkerType {
       }), true).forEach(new CommonProcessors.CollectProcessor<PsiClass>() {
         @Override
         public boolean process(final PsiClass o) {
-          updateComponent(o, myRenderer.getComparator());
+          if (!updateComponent(o, myRenderer.getComparator())) {
+            indicator.cancel();
+          }
+          indicator.checkCanceled();
           return super.process(o);
         }
       });
@@ -281,13 +286,16 @@ public class MarkerType {
     }
 
     @Override
-    public void run(@NotNull ProgressIndicator indicator) {
+    public void run(@NotNull final ProgressIndicator indicator) {
       super.run(indicator);
       OverridingMethodsSearch.search(myMethod, true).forEach(
         new CommonProcessors.CollectProcessor<PsiMethod>() {
           @Override
           public boolean process(PsiMethod psiMethod) {
-            updateComponent(psiMethod, myRenderer.getComparator());
+            if (!updateComponent(psiMethod, myRenderer.getComparator())) {
+              indicator.cancel();
+            }
+            indicator.checkCanceled();
             return super.process(psiMethod);
           }
         });

@@ -44,19 +44,20 @@ public class RangeHighlighterTree extends RangeMarkerTree<RangeHighlighterEx> {
   @NotNull
   @Override
   protected RHNode createNewNode(@NotNull RangeHighlighterEx key, int start, int end, boolean greedyToLeft, boolean greedyToRight, int layer) {
-    return new RHNode(key, start, end, greedyToLeft, greedyToRight,layer);
+    return new RHNode(this, key, start, end, greedyToLeft, greedyToRight,layer);
   }
 
-  class RHNode extends RangeMarkerTree<RangeHighlighterEx>.RMNode {
+  static class RHNode extends RMNode<RangeHighlighterEx> {
     final int myLayer;
 
-    public RHNode(@NotNull final RangeHighlighterEx key,
+    public RHNode(@NotNull RangeHighlighterTree rangeMarkerTree,
+                  @NotNull final RangeHighlighterEx key,
                   int start,
                   int end,
                   boolean greedyToLeft,
                   boolean greedyToRight,
                   int layer) {
-      super(key, start, end, greedyToLeft, greedyToRight);
+      super(rangeMarkerTree, key, start, end, greedyToLeft, greedyToRight);
       myLayer = layer;
     }
 

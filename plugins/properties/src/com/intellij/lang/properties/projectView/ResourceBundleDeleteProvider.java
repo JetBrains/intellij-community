@@ -25,6 +25,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.safeDelete.SafeDeleteHandler;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -44,14 +45,14 @@ class ResourceBundleDeleteProvider implements DeleteProvider {
     myResourceBundle = resourceBundle;
   }
 
-  public void deleteElement(DataContext dataContext) {
+  public void deleteElement(@NotNull DataContext dataContext) {
     final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
     List<PropertiesFile> propertiesFiles = myResourceBundle.getPropertiesFiles(project);
     assert project != null;
     new SafeDeleteHandler().invoke(project, ContainerUtil.map2Array(propertiesFiles, PsiElement.class, MAPPER), dataContext);
   }
 
-  public boolean canDeleteElement(DataContext dataContext) {
+  public boolean canDeleteElement(@NotNull DataContext dataContext) {
     final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
     return project != null;
   }

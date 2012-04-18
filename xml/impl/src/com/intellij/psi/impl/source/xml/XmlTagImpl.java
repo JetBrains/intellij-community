@@ -52,7 +52,10 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.BidirectionalMap;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.xml.*;
+import com.intellij.xml.XmlAttributeDescriptor;
+import com.intellij.xml.XmlElementDescriptor;
+import com.intellij.xml.XmlExtension;
+import com.intellij.xml.XmlNSDescriptor;
 import com.intellij.xml.impl.dtd.XmlNSDescriptorImpl;
 import com.intellij.xml.impl.schema.AnyXmlElementDescriptor;
 import com.intellij.xml.util.XmlTagUtil;
@@ -91,6 +94,22 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
 
   private final int myHC = ourHC++;
   private static final RecursionGuard ourGuard = RecursionManager.createGuard("xmlTag");
+
+  private static final Key<ParameterizedCachedValue<XmlTag[], XmlTagImpl>> SUBTAGS_KEY = Key.create("subtags");
+  private static final ParameterizedCachedValueProvider<XmlTag[],XmlTagImpl> CACHED_VALUE_PROVIDER =
+    new ParameterizedCachedValueProvider<XmlTag[], XmlTagImpl>() {
+      @Override
+      public CachedValueProvider.Result<XmlTag[]> compute(XmlTagImpl tag) {
+        final List<XmlTag> result = new ArrayList<XmlTag>();
+
+        tag.fillSubTags(result);
+
+        final int s = result.size();
+        XmlTag[] tags = s > 0 ? ContainerUtil.toArray(result, new XmlTag[s]) : EMPTY;
+        return CachedValueProvider.Result
+          .create(tags, PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT, tag.getContainingFile());
+      }
+    };
 
   @Override
   public final int hashCode() {
@@ -606,19 +625,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
 
   @NotNull
   public XmlTag[] getSubTags() {
-    return CachedValuesManager.getManager(getProject()).getCachedValue(this, new CachedValueProvider<XmlTag[]>() {
-      @Override
-      public Result<XmlTag[]> compute() {
-        final List<XmlTag> result = new ArrayList<XmlTag>();
-
-        fillSubTags(result);
-
-        final int s = result.size();
-        XmlTag[] tags = s > 0 ? ContainerUtil.toArray(result, new XmlTag[s]) : EMPTY;
-        return Result.create(tags, PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT, getContainingFile());
-
-      }
-    });
+    return CachedValuesManager.getManager(getProject()).getParameterizedCachedValue(this, SUBTAGS_KEY, CACHED_VALUE_PROVIDER, false, this);
   }
 
   protected void fillSubTags(final List<XmlTag> result) {
@@ -857,11 +864,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
 
   private String getNsLocation(String ns) {
     if (XmlUtil.XHTML_URI.equals(ns)) {
-      String defaultHtmlDoctype = ExternalResourceManagerEx.getInstanceEx().getDefaultHtmlDoctype(getProject());
-      if (Html5SchemaProvider.HTML5_SCHEMA_LOCATION.equals(defaultHtmlDoctype)) {
-        defaultHtmlDoctype = Html5SchemaProvider.XHTML5_SCHEMA_LOCATION;
-      }
-      return defaultHtmlDoctype;
+      return XmlUtil.getDefaultXhtmlNamespace(getProject());
     }
     return ns;
   }
@@ -951,35 +954,9 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
   public XmlTagValue getValue() {
     XmlTagValue tagValue = myValue;
     if (tagValue == null) {
-      final PsiElement[] elements = getElements();
-      final List<XmlTagChild> bodyElements = new ArrayList<XmlTagChild>(elements.length);
-
-      boolean insideBody = false;
-      for (final PsiElement element : elements) {
-        final ASTNode treeElement = element.getNode();
-        if (insideBody) {
-          if (treeElement.getElementType() == XmlTokenType.XML_END_TAG_START) break;
-          if (!(element instanceof XmlTagChild)) continue;
-          bodyElements.add((XmlTagChild)element);
-        }
-        else if (treeElement.getElementType() == XmlTokenType.XML_TAG_END) insideBody = true;
-      }
-
-      XmlTagChild[] tagChildren = ContainerUtil.toArray(bodyElements, new XmlTagChild[bodyElements.size()]);
-      myValue = tagValue = new XmlTagValueImpl(tagChildren, this);
+      myValue = tagValue = XmlTagValueImpl.createXmlTagValue(this);
     }
     return tagValue;
-  }
-
-  private PsiElement[] getElements() {
-    final List<PsiElement> elements = new ArrayList<PsiElement>();
-    processElements(new PsiElementProcessor() {
-      public boolean execute(@NotNull PsiElement psiElement) {
-        elements.add(psiElement);
-        return true;
-      }
-    }, this);
-    return ContainerUtil.toArray(elements, new PsiElement[elements.size()]);
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {

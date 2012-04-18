@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -465,14 +465,14 @@ public class TemplateState implements Disposable {
     if (currentSegmentNumber < 0) return;
     final int start = mySegments.getSegmentStart(currentSegmentNumber);
     final int end = mySegments.getSegmentEnd(currentSegmentNumber);
-    myEditor.getCaretModel().moveToOffset(end);
-    myEditor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
-    myEditor.getSelectionModel().removeSelection();
-
-
-    myEditor.getSelectionModel().setSelection(start, end);
+    if (end >= 0) {
+      myEditor.getCaretModel().moveToOffset(end);
+      myEditor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+      myEditor.getSelectionModel().removeSelection();
+      myEditor.getSelectionModel().setSelection(start, end);
+    }
+    
     Expression expressionNode = myTemplate.getExpressionAt(myCurrentVariableNumber);
-
     final ExpressionContext context = createExpressionContext(start);
     final LookupElement[] lookupItems = expressionNode.calculateLookupItems(context);
     final PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(myDocument);
@@ -651,33 +651,20 @@ public class TemplateState implements Disposable {
     String oldValue = getExpressionString(segmentNumber);
     int start = mySegments.getSegmentStart(segmentNumber);
     int end = mySegments.getSegmentEnd(segmentNumber);
-    ExpressionContext context = createExpressionContext(start);
-    Result result;
-    if (isQuick) {
-      result = expressionNode.calculateQuickResult(context);
-    }
-    else {
-      result = expressionNode.calculateResult(context);
-      if (expressionNode instanceof ConstantNode) {
-        if (result instanceof TextResult) {
-          TextResult text = (TextResult)result;
-          if (text.getText().length() == 0 && defaultValue != null) {
-            result = defaultValue.calculateResult(context);
-          }
-        }
-      }
-      if (result == null && defaultValue != null) {
-        result = defaultValue.calculateResult(context);
-      }
-    }
-    if (result == null) return;
 
+    PsiDocumentManager.getInstance(myProject).commitDocument(myDocument);
     PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(myDocument);
     PsiElement element = psiFile.findElementAt(start);
-    if (result.equalsToText(oldValue, element)) return;
 
-    String newValue = result.toString();
-    if (newValue == null) newValue = "";
+    ExpressionContext context = createExpressionContext(start);
+    Result result = isQuick ? expressionNode.calculateQuickResult(context) : expressionNode.calculateResult(context);
+    if ((result == null || result.equalsToText("", element)) && defaultValue != null) {
+      result = defaultValue.calculateResult(context);
+    }
+    assert element == null || element.isValid();
+    if (result == null || result.equalsToText(oldValue, element)) return;
+
+    String newValue = StringUtil.notNullize(result.toString());
 
     if (element != null && !(expressionNode instanceof SelectionNode)) {
       newValue = LanguageLiteralEscapers.INSTANCE.forLanguage(PsiUtilBase.getLanguageAtOffset(psiFile, start)).getEscapedText(element, newValue);
@@ -844,8 +831,8 @@ public class TemplateState implements Disposable {
     if (selStart >= 0 && selEnd >= 0) {
       myEditor.getSelectionModel().setSelection(mySegments.getSegmentStart(selStart), mySegments.getSegmentStart(selEnd));
     }
-    fireBeforeTemplateFinished();
     final Editor editor = myEditor;
+    fireBeforeTemplateFinished();
     int oldVar = myCurrentVariableNumber;
     setCurrentVariableNumber(-1);
     currentVariableChanged(oldVar);

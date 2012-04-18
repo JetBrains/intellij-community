@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -150,4 +150,16 @@ public abstract class AbstractVcsHelper {
                                                                 final String singleFileTitle,
                                                                 final String singleFilePromptTemplate,
                                                                 final VcsShowConfirmationOption confirmationOption);
+
+  @Nullable
+  public Collection<FilePath> selectFilePathsToProcess(List<FilePath> files,
+                                                                final String title,
+                                                                @Nullable final String prompt,
+                                                                final String singleFileTitle,
+                                                                final String singleFilePromptTemplate,
+                                                                final VcsShowConfirmationOption confirmationOption,
+                                                                @Nullable String okActionName,
+                                                                @Nullable String cancelActionName) {
+    return selectFilePathsToProcess(files, title, prompt, singleFileTitle, singleFilePromptTemplate, confirmationOption);
+  };
 }

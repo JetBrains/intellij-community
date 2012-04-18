@@ -27,7 +27,6 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.*;
@@ -57,12 +56,12 @@ import com.intellij.util.ui.AdjustComponentWhenShown;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcsUtil.VcsUtil;
+import git4idea.GitUtil;
 import git4idea.GitVcs;
+import git4idea.branch.GitBranchOperationsProcessor;
 import git4idea.changes.GitChangeUtils;
 import git4idea.history.browser.*;
-import git4idea.branch.GitBranchOperationsProcessor;
 import git4idea.repo.GitRepository;
-import git4idea.repo.GitRepositoryManager;
 import git4idea.ui.branch.GitBranchUiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -1436,7 +1435,7 @@ public class GitLogUI implements Disposable {
   // todo test action
   private class TestIndexAction extends DumbAwareAction {
     private TestIndexAction() {
-      super("Test Index", "Test Index", IconLoader.getIcon("/actions/checked.png"));
+      super("Test Index", "Test Index", PlatformIcons.CHECK_ICON);
     }
 
     @Override
@@ -1454,6 +1453,19 @@ public class GitLogUI implements Disposable {
     @Override
     public void actionPerformed(AnActionEvent e) {
       rootsChanged(myRootsUnderVcs);
+      updateRefs();
+    }
+
+    private void updateRefs() {
+      for (VirtualFile root : myRootsUnderVcs) {
+        try {
+          CachedRefs cachedRefs = new LowLevelAccessImpl(myProject, root).getRefs();
+          myUIRefresh.reportSymbolicRefs(root, cachedRefs);
+        }
+        catch (VcsException e) {
+          LOG.warn("Couldn't update references in repository " + root, e);
+        }
+      }
     }
   }
 
@@ -1591,10 +1603,7 @@ public class GitLogUI implements Disposable {
     @Override
     public void actionPerformed(AnActionEvent e) {
       final MultiMap<VirtualFile, GitCommit> commits = getSelectedCommitsAndCheck();
-      if (commits == null) return;
-      final int result = Messages.showOkCancelDialog("You are going to cherry-pick changes into current branch. Continue?", "Cherry-pick",
-                                                     Messages.getQuestionIcon());
-      if (result != 0) return;
+      if (commits.isEmpty()) return;
       for (GitCommit commit : commits.values()) {
         myIdsInProgress.add(commit.getShortHash());
       }
@@ -1621,20 +1630,31 @@ public class GitLogUI implements Disposable {
     }
 
     // newest first
-    @Nullable
+    @NotNull
     private MultiMap<VirtualFile, GitCommit> getSelectedCommitsAndCheck() {
-      if (myJBTable == null) return null;
+      if (myJBTable == null) {
+        return MultiMap.emptyInstance();
+      }
       final int[] rows = myJBTable.getSelectedRows();
       final MultiMap<VirtualFile, GitCommit> hashes = new MultiMap<VirtualFile, GitCommit>();
 
       for (int row : rows) {
         final CommitI commitI = myTableModel.getCommitAt(row);
-        if (commitI == null) return null;
-        if (commitI.holdsDecoration()) return null;
-        if (myIdsInProgress.contains(commitI.getHash())) return null;
+        if (commitI == null) {
+          return MultiMap.emptyInstance();
+
+        }
+        if (commitI.holdsDecoration()) {
+          return MultiMap.emptyInstance();
+        }
+        if (myIdsInProgress.contains(commitI.getHash())) {
+          return MultiMap.emptyInstance();
+        }
         final VirtualFile root = commitI.selectRepository(myRootsUnderVcs);
         final GitCommit gitCommit = myDetailsCache.convert(root, commitI.getHash());
-        if (gitCommit == null) return null;
+        if (gitCommit == null) {
+          return MultiMap.emptyInstance();
+        }
         hashes.putValue(root, gitCommit);
       }
       return hashes;
@@ -1648,7 +1668,9 @@ public class GitLogUI implements Disposable {
 
     private boolean enabled() {
       final MultiMap<VirtualFile, GitCommit> commitsAndCheck = getSelectedCommitsAndCheck();
-      if (commitsAndCheck == null) return false;
+      if (commitsAndCheck.isEmpty()) {
+        return false;
+      }
       for (VirtualFile root : commitsAndCheck.keySet()) {
         final SymbolicRefsI refs = myRefs.get(root);
         final String currentBranch = refs == null ? null : (refs.getCurrent() == null ? null : refs.getCurrent().getName());
@@ -1866,7 +1888,7 @@ public class GitLogUI implements Disposable {
 
     public MyTreeSettings() {
       myIcon = IconLoader.getIcon("/general/comboArrow.png");
-      myMarkIcon = IconLoader.findIcon("/actions/checked.png");
+      myMarkIcon = PlatformIcons.CHECK_ICON;
 
       myMultiColorAction = new DumbAwareAction("Multicolour") {
         @Override
@@ -2326,7 +2348,7 @@ public class GitLogUI implements Disposable {
       if (commitAt.holdsDecoration() || myTableModel.isStashed(commitAt)) return;
 
       final GitRepository repository =
-        GitRepositoryManager.getInstance(myProject).getRepositoryForRoot(commitAt.selectRepository(myRootsUnderVcs));
+        GitUtil.getRepositoryManager(myProject).getRepositoryForRoot(commitAt.selectRepository(myRootsUnderVcs));
       if (repository == null) return;
       new GitBranchOperationsProcessor(repository, myRefresh).checkout(commitAt.getHash().getString());
     }
@@ -2350,7 +2372,7 @@ public class GitLogUI implements Disposable {
       if (commitAt.holdsDecoration() || myTableModel.isStashed(commitAt)) return;
 
       final GitRepository repository =
-        GitRepositoryManager.getInstance(myProject).getRepositoryForRoot(commitAt.selectRepository(myRootsUnderVcs));
+        GitUtil.getRepositoryManager(myProject).getRepositoryForRoot(commitAt.selectRepository(myRootsUnderVcs));
       if (repository == null) return;
 
       String reference = commitAt.getHash().getString();
@@ -2390,7 +2412,7 @@ public class GitLogUI implements Disposable {
       if (commitAt.holdsDecoration() || myTableModel.isStashed(commitAt)) return;
 
       final GitRepository repository =
-        GitRepositoryManager.getInstance(myProject).getRepositoryForRoot(commitAt.selectRepository(myRootsUnderVcs));
+        GitUtil.getRepositoryManager(myProject).getRepositoryForRoot(commitAt.selectRepository(myRootsUnderVcs));
       if (repository == null) return;
       new GitCreateNewTag(myProject, repository, commitAt.getHash().getString(), myRefresh).execute();
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@ import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -62,6 +63,7 @@ public class VcsGeneralConfigurationPanel implements SearchableConfigurable {
   private JCheckBox myCbOfferToMoveChanges;
   private JComboBox myFailedCommitChangelistCombo;
   private JComboBox myOnPatchCreation;
+  private JCheckBox myClearInitialCommitMessage;
   private ButtonGroup myEmptyChangelistRemovingGroup;
 
   public VcsGeneralConfigurationPanel(final Project project) {
@@ -93,7 +95,8 @@ public class VcsGeneralConfigurationPanel implements SearchableConfigurable {
     }
 
     myPromptsPanel.setSize(myPromptsPanel.getPreferredSize());
-    myOnPatchCreation.setName((SystemInfo.isMac ? "Reveal patch in" : "Show patch in ") + SystemInfo.nativeFileManagerName + " after creation:");
+    myOnPatchCreation.setName((SystemInfo.isMac ? "Reveal patch in" : "Show patch in ") +
+                              SystemInfo.getFileManagerName() + " after creation:");
   }
 
   public void apply() throws ConfigurationException {
@@ -101,6 +104,7 @@ public class VcsGeneralConfigurationPanel implements SearchableConfigurable {
     VcsConfiguration settings = VcsConfiguration.getInstance(myProject);
 
     settings.FORCE_NON_EMPTY_COMMENT = myForceNonEmptyComment.isSelected();
+    settings.CLEAR_INITIAL_COMMIT_MESSAGE = myClearInitialCommitMessage.isSelected();
     settings.OFFER_MOVE_TO_ANOTHER_CHANGELIST_ON_PARTIAL_COMMIT = myCbOfferToMoveChanges.isSelected();
     settings.REMOVE_EMPTY_INACTIVE_CHANGELISTS = getSelected(myEmptyChangelistRemovingGroup);
     settings.MOVE_TO_FAILED_COMMIT_CHANGELIST = getFailedCommitConfirm();
@@ -120,6 +124,7 @@ public class VcsGeneralConfigurationPanel implements SearchableConfigurable {
     settings.SHOW_PATCH_IN_EXPLORER = getShowPatchValue();
   }
   
+  @Nullable
   private Boolean getShowPatchValue() {
     final int index = myOnPatchCreation.getSelectedIndex();
     if (index == 0) {
@@ -176,6 +181,9 @@ public class VcsGeneralConfigurationPanel implements SearchableConfigurable {
     if (settings.FORCE_NON_EMPTY_COMMENT != myForceNonEmptyComment.isSelected()){
       return true;
     }
+    if (settings.CLEAR_INITIAL_COMMIT_MESSAGE != myClearInitialCommitMessage.isSelected()){
+      return true;
+    }
     if (settings.OFFER_MOVE_TO_ANOTHER_CHANGELIST_ON_PARTIAL_COMMIT != myCbOfferToMoveChanges.isSelected()){
       return true;
     }
@@ -205,6 +213,7 @@ public class VcsGeneralConfigurationPanel implements SearchableConfigurable {
   public void reset() {
     VcsConfiguration settings = VcsConfiguration.getInstance(myProject);
     myForceNonEmptyComment.setSelected(settings.FORCE_NON_EMPTY_COMMENT);
+    myClearInitialCommitMessage.setSelected(settings.CLEAR_INITIAL_COMMIT_MESSAGE);
     myCbOfferToMoveChanges.setSelected(settings.OFFER_MOVE_TO_ANOTHER_CHANGELIST_ON_PARTIAL_COMMIT);
     int id = settings.REMOVE_EMPTY_INACTIVE_CHANGELISTS.getId();
     UIUtil.setSelectedButton(myEmptyChangelistRemovingGroup, id == 0 ? 0 : id == 1 ? 2 : 1);
@@ -291,6 +300,7 @@ public class VcsGeneralConfigurationPanel implements SearchableConfigurable {
     return null;
   }
 
+  @NotNull
   public String getHelpTopic() {
     return "project.propVCSSupport.Confirmation";
   }

@@ -18,7 +18,6 @@ package org.jetbrains.generate.tostring;
 import com.intellij.codeInsight.generation.PsiElementClassMember;
 import com.intellij.codeInsight.generation.PsiFieldMember;
 import com.intellij.codeInsight.generation.PsiMethodMember;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -31,7 +30,6 @@ import org.jetbrains.generate.tostring.exception.GenerateCodeException;
 import org.jetbrains.generate.tostring.exception.PluginException;
 import org.jetbrains.generate.tostring.psi.PsiAdapter;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -142,9 +140,8 @@ public class GenerateToStringUtils {
      * @param e       the caused exception.
      * @throws RuntimeException is thrown for severe exceptions
      */
-    public static void handleExeption(Project project, Exception e) throws RuntimeException {
-        e.printStackTrace(); // must print stacktrace to see caused in IDEA log / console
-        log.error(e);
+    public static void handleException(Project project, Exception e) throws RuntimeException {
+        log.info(e);
 
         if (e instanceof GenerateCodeException) {
             // code generation error - display velocity errror in error dialog so user can identify problem quicker

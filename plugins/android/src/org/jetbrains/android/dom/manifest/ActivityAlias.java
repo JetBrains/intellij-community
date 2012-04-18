@@ -28,12 +28,12 @@ import java.util.List;
 /**
  * @author coyote
  */
-public interface ActivityAlias extends ManifestElementWithName {
-  @Attribute("name")
+public interface ActivityAlias extends ManifestElementWithRequiredName {
   @Required
-  @Convert(value = PackageClassConverter.class, soft = true)
+  @Convert(value = PackageClassConverter.class)
   @ExtendClass("android.app.Activity")
-  AndroidAttributeValue<PsiClass> getActivityClass();
+  @Attribute("targetActivity")
+  AndroidAttributeValue<PsiClass> getTargetActivity();
 
   List<IntentFilter> getIntentFilters();
 

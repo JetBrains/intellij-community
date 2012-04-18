@@ -138,7 +138,7 @@ public class Dependency {
   private static String[] parseParameterDescriptors(String signature) {
     ArrayList<String> list = new ArrayList<String>();
     String paramSignature = parseFieldType(signature);
-    while (paramSignature != null && !"".equals(paramSignature)) {
+    while (paramSignature != null && !paramSignature.isEmpty()) {
       list.add(paramSignature);
       signature = signature.substring(paramSignature.length());
       paramSignature = parseFieldType(signature);
@@ -147,39 +147,40 @@ public class Dependency {
   }
 
   private static String parseFieldType(@NonNls String signature) {
-    if (signature.length() == 0) {
+    if (signature.isEmpty()) {
       return null;
     }
-    if (signature.charAt(0) == 'B') {
-      return "B";
-    }
-    if (signature.charAt(0) == 'C') {
-      return "C";
-    }
-    if (signature.charAt(0) == 'D') {
-      return "D";
-    }
-    if (signature.charAt(0) == 'F') {
-      return "F";
-    }
-    if (signature.charAt(0) == 'I') {
+    char first = signature.charAt(0);
+    if (first == 'I') {
       return "I";
     }
-    if (signature.charAt(0) == 'J') {
+    if (first == 'L') {
+      return signature.substring(0, signature.indexOf(';') + 1);
+    }
+    if (first == 'B') {
+      return "B";
+    }
+    if (first == 'C') {
+      return "C";
+    }
+    if (first == 'D') {
+      return "D";
+    }
+    if (first == 'F') {
+      return "F";
+    }
+    if (first == 'J') {
       return "J";
     }
-    if (signature.charAt(0) == 'S') {
+    if (first == 'S') {
       return "S";
     }
-    if (signature.charAt(0) == 'Z') {
+    if (first == 'Z') {
       return "Z";
     }
-    if (signature.charAt(0) == 'L') {
-      return signature.substring(0, signature.indexOf(";") + 1);
-    }
-    if (signature.charAt(0) == '[') {
+    if (first == '[') {
       String s = parseFieldType(signature.substring(1));
-      return (s != null)? ("[" + s) : null;
+      return s == null ? null : "[" + s;
     }
     return null;
   }

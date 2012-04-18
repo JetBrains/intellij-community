@@ -22,30 +22,45 @@ package com.intellij.profile.codeInspection.ui;
 
 import com.intellij.codeInspection.ex.Descriptor;
 import com.intellij.codeInspection.ex.ScopeToolState;
+import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.ui.CheckedTreeNode;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class InspectionConfigTreeNode extends CheckedTreeNode {
   private ScopeToolState myState;
   private boolean myByDefault;
   private boolean myInspectionNode;
-  public boolean isProperSetting;
+  private final NotNullLazyValue<Boolean> myProperSetting = new NotNullLazyValue<Boolean>() {
+    @NotNull
+    @Override
+    protected Boolean compute() {
+      Descriptor descriptor = getDesriptor();
+      if (descriptor != null) return descriptor.getInspectionProfile().isProperSetting(descriptor.getTool().getShortName());
+      for (int i = 0; i < getChildCount(); i++) {
+        InspectionConfigTreeNode node = (InspectionConfigTreeNode)getChildAt(i);
+        if (node.isProperSetting()) {
+          return true;
+        }
+      }
+      return false;
+    }
+  };
 
-  public InspectionConfigTreeNode(Object userObject, ScopeToolState state, boolean byDefault, boolean properSetting, boolean inspectionNode) {
+  public InspectionConfigTreeNode(Object userObject, ScopeToolState state, boolean byDefault, boolean inspectionNode) {
     super(userObject);
     myState = state;
     myByDefault = byDefault;
-    isProperSetting = properSetting;
     myInspectionNode = inspectionNode;
     if (state != null) {
       setChecked(state.isEnabled());
     }
   }
 
-  public InspectionConfigTreeNode(Descriptor descriptor, ScopeToolState state, boolean byDefault, boolean isEnabled, boolean properSetting,
+  public InspectionConfigTreeNode(Descriptor descriptor, ScopeToolState state, boolean byDefault, boolean isEnabled,
                                   boolean inspectionNode) {
-    this(descriptor, state, byDefault, properSetting, inspectionNode);
+    this(descriptor, state, byDefault, inspectionNode);
     setChecked(isEnabled);
   }
 
@@ -84,5 +99,13 @@ public class InspectionConfigTreeNode extends CheckedTreeNode {
   @Nullable
   public String getScopeName() {
     return myState != null ? myState.getScopeName() : null;
+  }
+
+  public boolean isProperSetting() {
+    return myProperSetting.getValue();
+  }
+
+  public void dropCache() {
+    myProperSetting.drop();
   }
 }

@@ -156,7 +156,11 @@ public class PackageElementNode extends ProjectViewNode<PackageElement> {
   }
 
   public VirtualFile[] getVirtualFiles() {
-    final PsiDirectory[] directories = getValue().getPackage().getDirectories(PackageUtil.getScopeToShow(getProject(), getValue().getModule(), isLibraryElement()));
+    final PackageElement value = getValue();
+    if (value == null) {
+      return VirtualFile.EMPTY_ARRAY;
+    }
+    final PsiDirectory[] directories = value.getPackage().getDirectories(PackageUtil.getScopeToShow(getProject(), value.getModule(), isLibraryElement()));
     final VirtualFile[] result = new VirtualFile[directories.length];
     for (int i = 0; i < directories.length; i++) {
       PsiDirectory directory = directories[i];

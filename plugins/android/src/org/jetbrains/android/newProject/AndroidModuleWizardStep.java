@@ -167,7 +167,7 @@ public class AndroidModuleWizardStep extends ModuleWizardStep {
           return;
         }
 
-        RunAndroidAvdManagerAction.runAvdManager(platform.getSdk().getLocation());
+        RunAndroidAvdManagerAction.runAvdManager(platform.getSdkData().getLocation());
       }
     });
 
@@ -390,8 +390,8 @@ public class AndroidModuleWizardStep extends ModuleWizardStep {
 
   @NotNull
   private static String[] getAvds(@NotNull AndroidPlatform androidPlatform) {
-    final AndroidSdk sdkObject = androidPlatform.getSdk();
-    final SdkManager sdkManager = sdkObject.getSdkManager();
+    final AndroidSdkData sdkData = androidPlatform.getSdkData();
+    final SdkManager sdkManager = sdkData.getSdkManager();
     try {
       final AvdManager avdManager = new AvdManager(sdkManager, new MessageBuildingSdkLog());
       final AvdInfo[] validAvds = avdManager.getValidAvds();

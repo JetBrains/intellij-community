@@ -27,6 +27,7 @@ import org.testng.annotations.Test;
 import org.zmlx.hg4idea.HgVcs;
 
 import java.io.IOException;
+import java.lang.reflect.Method;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static org.testng.Assert.assertNotNull;
@@ -43,8 +44,8 @@ public class HgMergeProviderTest extends HgCollaborativeTest {
 
   @BeforeMethod
   @Override
-  protected void setUp() throws Exception {
-    super.setUp();
+  protected void setUp(Method testMethod) throws Exception {
+    super.setUp(testMethod);
     myMergeProvider = HgVcs.getInstance(myProject).getMergeProvider();
     assertNotNull(myMergeProvider);
   }

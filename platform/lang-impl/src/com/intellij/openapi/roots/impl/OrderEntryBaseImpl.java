@@ -18,6 +18,7 @@ package com.intellij.openapi.roots.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.roots.OrderEntry;
+import org.jetbrains.annotations.NotNull;
 
 public abstract class OrderEntryBaseImpl extends RootModelComponentBase implements OrderEntry {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.impl.OrderEntryVeryBaseImpl");
@@ -28,7 +29,7 @@ public abstract class OrderEntryBaseImpl extends RootModelComponentBase implemen
   @SuppressWarnings({"AssignmentToStaticFieldFromInstanceMethod"})
   private final int hc = _hc++;
 
-  protected OrderEntryBaseImpl(RootModelImpl rootModel) {
+  protected OrderEntryBaseImpl(@NotNull RootModelImpl rootModel) {
     super(rootModel);
   }
 
@@ -36,12 +37,12 @@ public abstract class OrderEntryBaseImpl extends RootModelComponentBase implemen
     myIndex = index;
   }
 
-  public int compareTo(OrderEntry orderEntry) {
+  public int compareTo(@NotNull OrderEntry orderEntry) {
     LOG.assertTrue(orderEntry.getOwnerModule() == getOwnerModule());
     return myIndex - ((OrderEntryBaseImpl)orderEntry).myIndex;
   }
 
-  boolean sameType(OrderEntry that) {
+  boolean sameType(@NotNull OrderEntry that) {
     return getClass().equals(that.getClass());
   }
 
@@ -56,6 +57,7 @@ public abstract class OrderEntryBaseImpl extends RootModelComponentBase implemen
     return hc;
   }
 
+  @NotNull
   @Override
   public String toString() {
     return getOwnerModule().getName() + " -> " + getPresentableName();

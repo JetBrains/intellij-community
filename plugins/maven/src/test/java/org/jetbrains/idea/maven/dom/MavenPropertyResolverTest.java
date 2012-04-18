@@ -123,10 +123,10 @@ public class MavenPropertyResolverTest extends MavenImportingTestCase {
     assertEquals("parent.value", resolve("${parentProp}", f));
     assertEquals("module.value", resolve("${moduleProp}", f));
 
-    assertEquals("parent.value", resolve("${project.parentProp}", f));
-    assertEquals("parent.value", resolve("${pom.parentProp}", f));
-    assertEquals("module.value", resolve("${project.moduleProp}", f));
-    assertEquals("module.value", resolve("${pom.moduleProp}", f));
+    assertEquals("${project.parentProp}", resolve("${project.parentProp}", f));
+    assertEquals("${pom.parentProp}", resolve("${pom.parentProp}", f));
+    assertEquals("${project.moduleProp}", resolve("${project.moduleProp}", f));
+    assertEquals("${pom.moduleProp}", resolve("${pom.moduleProp}", f));
   }
 
   public void testProjectPropertiesRecursively() throws Exception {

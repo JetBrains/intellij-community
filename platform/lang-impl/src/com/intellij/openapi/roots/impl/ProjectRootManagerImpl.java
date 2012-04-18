@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,10 +52,13 @@ import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerAdapter;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.impl.PsiModificationTrackerImpl;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.EventDispatcher;
-import com.intellij.util.containers.*;
+import com.intellij.util.containers.ConcurrentHashMap;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.messages.MessageBusConnection;
@@ -256,31 +259,42 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
     }
   }
 
+  @Override
+  @NotNull
+  public List<String> getContentRootUrls() {
+    final List<String> result = new ArrayList<String>();
+    for (Module module : getModuleManager().getModules()) {
+      final String[] urls = ModuleRootManager.getInstance(module).getContentRootUrls();
+      ContainerUtil.addAll(result, urls);
+    }
+    return result;
+  }
+
+  @Override
   @NotNull
   public VirtualFile[] getContentRoots() {
-    ArrayList<VirtualFile> result = new ArrayList<VirtualFile>();
-    final Module[] modules = getModuleManager().getModules();
-    for (Module module : modules) {
+    final List<VirtualFile> result = new ArrayList<VirtualFile>();
+    for (Module module : getModuleManager().getModules()) {
       final VirtualFile[] contentRoots = ModuleRootManager.getInstance(module).getContentRoots();
       ContainerUtil.addAll(result, contentRoots);
     }
     return VfsUtil.toVirtualFileArray(result);
   }
 
+  @Override
   public VirtualFile[] getContentSourceRoots() {
-    ArrayList<VirtualFile> result = new ArrayList<VirtualFile>();
-    final Module[] modules = getModuleManager().getModules();
-    for (Module module : modules) {
+    final List<VirtualFile> result = new ArrayList<VirtualFile>();
+    for (Module module : getModuleManager().getModules()) {
       final VirtualFile[] sourceRoots = ModuleRootManager.getInstance(module).getSourceRoots();
       ContainerUtil.addAll(result, sourceRoots);
     }
     return VfsUtil.toVirtualFileArray(result);
   }
 
+  @Override
   public VirtualFile[] getFilesFromAllModules(OrderRootType type) {
-    List<VirtualFile> result = new ArrayList<VirtualFile>();
-    final Module[] modules = getModuleManager().getSortedModules();
-    for (Module module : modules) {
+    final List<VirtualFile> result = new ArrayList<VirtualFile>();
+    for (Module module : getModuleManager().getSortedModules()) {
       final VirtualFile[] files = ModuleRootManager.getInstance(module).getFiles(type);
       ContainerUtil.addAll(result, files);
     }
@@ -514,6 +528,10 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
 
     myModificationCount++;
 
+    PsiManager psiManager = PsiManager.getInstance(myProject);
+    psiManager.dropResolveCaches();
+    ((PsiModificationTrackerImpl)psiManager.getModificationTracker()).incCounter();
+
     isFiringEvent = true;
     try {
       myProject.getMessageBus()
@@ -596,12 +614,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
   private void addRootsToWatch() {
     final Set<String> rootPaths = getAllRoots(false);
     if (rootPaths == null) return;
-
-    final Set<LocalFileSystem.WatchRequest> newRootsToWatch = LocalFileSystem.getInstance().addRootsToWatch(rootPaths, true);
-
-    //remove old requests after adding new ones, helps avoiding unnecessary synchronizations
-    LocalFileSystem.getInstance().removeWatchedRoots(myRootsToWatch);
-    myRootsToWatch = newRootsToWatch;
+    myRootsToWatch = LocalFileSystem.getInstance().replaceWatchedRoots(myRootsToWatch, rootPaths, true);
   }
 
   @Nullable
@@ -719,7 +732,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
   }
 
   private class MyVirtualFilePointerListener implements VirtualFilePointerListener {
-    public void beforeValidityChanged(VirtualFilePointer[] pointers) {
+    public void beforeValidityChanged(@NotNull VirtualFilePointer[] pointers) {
       if (!myProject.isDisposed()) {
         if (myInsideRefresh == 0) {
           if (affectsRoots(pointers)) {
@@ -736,7 +749,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
       }
     }
 
-    public void validityChanged(VirtualFilePointer[] pointers) {
+    public void validityChanged(@NotNull VirtualFilePointer[] pointers) {
       if (!myProject.isDisposed()) {
         if (myInsideRefresh > 0) {
           clearScopesCaches();

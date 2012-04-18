@@ -46,10 +46,10 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
 
   private volatile boolean myFlushing;
 
-  private String myName;
+  private final String myName;
   private int myMergingTimeSpan;
   private JComponent myModalityStateComponent;
-  private boolean myExecuteInDispatchThread;
+  private final boolean myExecuteInDispatchThread;
   private boolean myPassThrough;
   private boolean myDisposed;
 
@@ -163,6 +163,7 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
     restartTimer();
   }
 
+  @Override
   public void hideNotify() {
     if (!myActive) {
       return;
@@ -175,6 +176,7 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
     clearWaiter();
   }
 
+  @Override
   public void showNotify() {
     if (myActive) {
       return;
@@ -202,6 +204,7 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
     }
   }
 
+  @Override
   public void run() {
     if (mySuspended) return;
     flush();
@@ -227,6 +230,7 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
 
     myFlushing = true;
     final Runnable toRun = new Runnable() {
+      @Override
       public void run() {
         try {
           final Update[] all;
@@ -289,6 +293,7 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
 
       if (each.executeInWriteAction()) {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          @Override
           public void run() {
             execute(each);
           }
@@ -381,6 +386,7 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
     return myActive;
   }
 
+  @Override
   public void dispose() {
     myDisposed = true;
     myActive = false;

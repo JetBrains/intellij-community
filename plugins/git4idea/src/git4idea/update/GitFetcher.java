@@ -23,11 +23,15 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
+import git4idea.GitBranch;
+import git4idea.GitUtil;
 import git4idea.GitVcs;
-import git4idea.NotificationManager;
+import git4idea.Notificator;
+import git4idea.branch.GitBranchUtil;
 import git4idea.commands.*;
 import git4idea.config.GitVersionSpecialty;
 import git4idea.jgit.GitHttpAdapter;
+import git4idea.repo.GitBranchTrackInfo;
 import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
@@ -43,6 +47,9 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static git4idea.GitBranch.REFS_HEADS_PREFIX;
+import static git4idea.GitBranch.REFS_REMOTES_PREFIX;
+
 /**
  * @author Kirill Likhodedov
  */
@@ -53,14 +60,20 @@ public class GitFetcher {
   private final Project myProject;
   private final GitRepositoryManager myRepositoryManager;
   private final ProgressIndicator myProgressIndicator;
+  private final boolean myFetchAll;
   private final GitVcs myVcs;
 
   private final Collection<Exception> myErrors = new ArrayList<Exception>();
 
-  public GitFetcher(@NotNull Project project, @NotNull ProgressIndicator progressIndicator) {
+  /**
+   * @param fetchAll Pass {@code true} to fetch all remotes and all branches (like {@code git fetch} without parameters does).
+   *                 Pass {@code false} to fetch only the tracked branch of the current branch.
+   */
+  public GitFetcher(@NotNull Project project, @NotNull ProgressIndicator progressIndicator, boolean fetchAll) {
     myProject = project;
     myProgressIndicator = progressIndicator;
-    myRepositoryManager = GitRepositoryManager.getInstance(project);
+    myFetchAll = fetchAll;
+    myRepositoryManager = GitUtil.getRepositoryManager(myProject);
     myVcs = GitVcs.getInstance(project);
   }
 
@@ -74,22 +87,96 @@ public class GitFetcher {
     
     // TODO need to have a fair compound result here
     GitFetchResult fetchResult = GitFetchResult.success();
+    if (myFetchAll) {
+      fetchResult = fetchAll(root, repository, fetchResult);
+    }
+    else {
+      return fetchCurrentRemote(repository);
+    }
+
+    repository.update(GitRepository.TrackedTopic.BRANCHES);
+    return fetchResult;
+  }
+
+  private GitFetchResult fetchCurrentRemote(@NotNull GitRepository repository) {
+    FetchParams fetchParams = getFetchParams(repository);
+    if (fetchParams.isError()) {
+      return fetchParams.getError();
+    }
+
+    GitRemote remote = fetchParams.getRemote();
+    String url = fetchParams.getUrl();
+
+    if (GitHttpAdapter.shouldUseJGit(url)) {
+      return GitHttpAdapter.fetch(repository, remote, url, null);
+    }
+    return fetchNatively(repository.getRoot(), remote, null);
+  }
+
+  // leaving this unused method, because the wanted behavior can change again
+  @SuppressWarnings("UnusedDeclaration")
+  @NotNull
+  private GitFetchResult fetchCurrentBranch(@NotNull GitRepository repository) {
+    FetchParams fetchParams = getFetchParams(repository);
+    if (fetchParams.isError()) {
+      return fetchParams.getError();
+    }
+
+    GitRemote remote = fetchParams.getRemote();
+    String remoteBranch = fetchParams.getRemoteBranch();
+    String url = fetchParams.getUrl();
+    if (GitHttpAdapter.shouldUseJGit(url)) {
+      return GitHttpAdapter.fetch(repository, remote, url, remoteBranch);
+    }
+    return fetchNatively(repository.getRoot(), remote, remoteBranch);
+  }
+
+  @NotNull
+  private static FetchParams getFetchParams(@NotNull GitRepository repository) {
+    GitBranch currentBranch = repository.getCurrentBranch();
+    if (currentBranch == null) {
+      // fetching current branch is called from Update Project and Push, where branch tracking is pre-checked
+      String message = "Current branch can't be null here. \nRepository: " + repository;
+      LOG.error(message);
+      return new FetchParams(GitFetchResult.error(new Exception(message)));
+    }
+    GitBranchTrackInfo trackInfo = GitBranchUtil.getTrackInfoForBranch(repository, currentBranch);
+    if (trackInfo == null) {
+      String message = "Tracked info is null for branch " + currentBranch + "\n Repository: " + repository;
+      LOG.error(message);
+      return new FetchParams(GitFetchResult.error(new Exception(message)));
+    }
+
+    GitRemote remote = trackInfo.getRemote();
+    String url = remote.getFirstUrl();
+    if (url == null) {
+      String message = "URL is null for remote " + remote.getName();
+      LOG.error(message);
+      return new FetchParams(GitFetchResult.error(new Exception(message)));
+    }
+
+    return new FetchParams(remote, trackInfo.getRemoteBranch(), url);
+  }
+
+  @NotNull
+  private GitFetchResult fetchAll(@NotNull VirtualFile root, @NotNull GitRepository repository, @NotNull GitFetchResult fetchResult) {
     for (GitRemote remote : repository.getRemotes()) {
       String url = remote.getFirstUrl();
       if (url == null) {
+        LOG.error("URL is null for remote " + remote.getName());
         continue;
       }
       if (GitHttpAdapter.shouldUseJGit(url)) {
-        GitFetchResult res = GitHttpAdapter.fetch(repository, remote, url);
+        GitFetchResult res = GitHttpAdapter.fetch(repository, remote, url, null);
         res.addPruneInfo(fetchResult.getPrunedRefs());
         fetchResult = res;
         myErrors.addAll(fetchResult.getErrors());
         if (!fetchResult.isSuccess()) {
           break;
         }
-      } 
+      }
       else {
-        GitFetchResult res = fetchNatively(root, remote);
+        GitFetchResult res = fetchNatively(root, remote, null);
         res.addPruneInfo(fetchResult.getPrunedRefs());
         fetchResult = res;
         if (!fetchResult.isSuccess()) {
@@ -97,17 +184,22 @@ public class GitFetcher {
         }
       }
     }
-    
-    repository.update(GitRepository.TrackedTopic.BRANCHES);
     return fetchResult;
   }
 
-  private GitFetchResult fetchNatively(@NotNull VirtualFile root, @NotNull GitRemote remote) {
+  private GitFetchResult fetchNatively(@NotNull VirtualFile root, @NotNull GitRemote remote, @Nullable String branch) {
     final GitLineHandlerPasswordRequestAware h = new GitLineHandlerPasswordRequestAware(myProject, root, GitCommand.FETCH);
     if (GitVersionSpecialty.SUPPORTS_FETCH_PRUNE.existsIn(myVcs.getVersion())) {
       h.addParameters("--prune");
     }
-    h.addParameters(remote.getName());
+
+    String remoteName = remote.getName();
+    h.addParameters(remoteName);
+    if (branch != null) {
+      branch = getRidOfPrefixIfExists(branch);
+      h.addParameters(REFS_HEADS_PREFIX + branch + ":" + REFS_REMOTES_PREFIX + remoteName + "/" + branch);
+    }
+
     final GitTask fetchTask = new GitTask(myProject, h, "Fetching...");
     fetchTask.setProgressIndicator(myProgressIndicator);
     fetchTask.setProgressAnalyzer(new GitStandardProgressAnalyzer());
@@ -142,6 +234,13 @@ public class GitFetcher {
 
     result.get().addPruneInfo(pruneDetector.getPrunedRefs());
     return result.get();
+  }
+
+  private static String getRidOfPrefixIfExists(String branch) {
+    if (branch.startsWith(REFS_HEADS_PREFIX)) {
+      return branch.substring(REFS_HEADS_PREFIX.length());
+    }
+    return branch;
   }
 
   @NotNull
@@ -205,7 +304,7 @@ public class GitFetcher {
 
     String addInfo = makeAdditionalInfoByRoot(additionalInfo);
     if (!StringUtil.isEmptyOrSpaces(addInfo)) {
-        NotificationManager.getInstance(myProject).notify(GitVcs.MINOR_NOTIFICATION, "Fetch details", addInfo, NotificationType.INFORMATION);
+        Notificator.getInstance(myProject).notify(GitVcs.MINOR_NOTIFICATION, "Fetch details", addInfo, NotificationType.INFORMATION);
     }
 
     return true;
@@ -246,6 +345,43 @@ public class GitFetcher {
     @NotNull
     public Collection<String> getPrunedRefs() {
       return myPrunedRefs;
+    }
+  }
+
+  private static class FetchParams {
+    private GitRemote myRemote;
+    private String myRemoteBranch;
+    private GitFetchResult myError;
+    private String myUrl;
+
+    FetchParams(GitFetchResult error) {
+      myError = error;
+    }
+
+    FetchParams(GitRemote remote, String remoteBranch, String url) {
+      myRemote = remote;
+      myRemoteBranch = remoteBranch;
+      myUrl = url;
+    }
+
+    boolean isError() {
+      return myError != null;
+    }
+
+    public GitFetchResult getError() {
+      return myError;
+    }
+
+    public GitRemote getRemote() {
+      return myRemote;
+    }
+
+    public String getRemoteBranch() {
+      return myRemoteBranch;
+    }
+
+    public String getUrl() {
+      return myUrl;
     }
   }
 }

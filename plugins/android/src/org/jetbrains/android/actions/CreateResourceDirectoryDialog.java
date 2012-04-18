@@ -26,6 +26,7 @@ import com.intellij.ui.components.JBLabel;
 import org.jetbrains.android.uipreview.DeviceConfiguratorPanel;
 import org.jetbrains.android.uipreview.InvalidOptionValueException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -45,7 +46,7 @@ public abstract class CreateResourceDirectoryDialog extends DialogWrapper {
   private final DeviceConfiguratorPanel myDeviceConfiguratorPanel;
   private InputValidator myValidator;
 
-  public CreateResourceDirectoryDialog(@NotNull Project project) {
+  public CreateResourceDirectoryDialog(@NotNull Project project, @Nullable ResourceFolderType resType) {
     super(project);
 
     myResourceTypeComboBox.setModel(new EnumComboBoxModel<ResourceFolderType>(ResourceFolderType.class));
@@ -83,6 +84,11 @@ public abstract class CreateResourceDirectoryDialog extends DialogWrapper {
         myDeviceConfiguratorPanel.applyEditors();
       }
     });
+
+    if (resType != null) {
+      myResourceTypeComboBox.setSelectedItem(resType);
+      myResourceTypeComboBox.setEnabled(false);
+    }
 
     myDeviceConfiguratorPanel.updateAll();
     setOKActionEnabled(myDirectoryNameTextField.getText().length() > 0);

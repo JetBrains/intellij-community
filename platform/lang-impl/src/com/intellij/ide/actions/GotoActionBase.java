@@ -109,12 +109,14 @@ public abstract class GotoActionBase extends AnAction {
     public abstract void elementChosen(ChooseByNamePopup popup, Object element);
   }
 
-  private static Pair<String, Integer> getInitialText(boolean useEditorSelection, AnActionEvent e) {
-    final Editor editor = e.getData(PlatformDataKeys.EDITOR);
-    if (editor != null) {
-      final String selectedText = editor.getSelectionModel().getSelectedText();
-      if (selectedText != null && !selectedText.contains("\n")) {
-        return Pair.create(selectedText, 0);
+  protected static Pair<String, Integer> getInitialText(boolean useEditorSelection, AnActionEvent e) {
+    if (useEditorSelection) {
+      final Editor editor = e.getData(PlatformDataKeys.EDITOR);
+      if (editor != null) {
+        final String selectedText = editor.getSelectionModel().getSelectedText();
+        if (selectedText != null && !selectedText.contains("\n")) {
+          return Pair.create(selectedText, 0);
+        }
       }
     }
 
@@ -146,17 +148,26 @@ public abstract class GotoActionBase extends AnAction {
   }
 
   protected <T> void showNavigationPopup(AnActionEvent e,
-                                                ChooseByNameModel model,
-                                                final GotoActionCallback<T> callback,
-                                                @Nullable final String findUsagesTitle,
-                                                boolean useSelectionFromEditor) {
+                                         ChooseByNameModel model,
+                                         final GotoActionCallback<T> callback,
+                                         @Nullable final String findUsagesTitle,
+                                         boolean useSelectionFromEditor) {
     final Project project = e.getData(PlatformDataKeys.PROJECT);
-
     boolean mayRequestOpenInCurrentWindow = model.willOpenEditor() && FileEditorManagerEx.getInstanceEx(project).hasSplitOrUndockedWindows();
+    Pair<String, Integer> start = getInitialText(useSelectionFromEditor, e);
+    showNavigationPopup(callback, findUsagesTitle,
+                        ChooseByNamePopup.createPopup(project, model, getPsiContext(e), start.first,
+                                                      mayRequestOpenInCurrentWindow, start.second));
+  }
+
+  protected <T> void showNavigationPopup(final GotoActionCallback<T> callback,
+                                         @Nullable final String findUsagesTitle,
+                                         final ChooseByNamePopup popup) {
+   
+
     final Class startedAction = myInAction;
     LOG.assertTrue(startedAction != null);
-    Pair<String, Integer> start = getInitialText(useSelectionFromEditor, e);
-    final ChooseByNamePopup popup = ChooseByNamePopup.createPopup(project, model, getPsiContext(e), start.first, mayRequestOpenInCurrentWindow, start.second);
+
     popup.setCheckBoxShortcut(getShortcutSet());
     popup.setFindUsagesTitle(findUsagesTitle);
     final ChooseByNameFilter<T> filter = callback.createFilter(popup);
@@ -166,7 +177,8 @@ public abstract class GotoActionBase extends AnAction {
       @Override
       public void onClose() {
         ourLastStrings.put(myInAction, Pair.create(popup.getEnteredText(), popup.getSelectedIndex()));
-        if (startedAction.equals(myInAction)) {
+        //noinspection ConstantConditions
+        if (startedAction != null && startedAction.equals(myInAction)) {
           myInAction = null;
         }
         if (filter != null) {

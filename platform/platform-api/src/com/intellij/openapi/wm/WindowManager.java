@@ -72,7 +72,7 @@ public abstract class WindowManager {
    * that can be parent.
    */
   @Nullable
-  public abstract Window suggestParentWindow(Project project);
+  public abstract Window suggestParentWindow(@Nullable Project project);
 
   /**
    * Get the status bar for the project's main frame

@@ -1,5 +1,5 @@
 /*
- * Copyright 2011 Bas Leijdekkers
+ * Copyright 2011-2012 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -167,7 +167,7 @@ public class UnnecessaryExplicitNumericCastInspection extends BaseInspection {
         if (PsiType.LONG.equals(castType) || PsiType.FLOAT.equals(castType) || PsiType.DOUBLE.equals(castType)) {
           final PsiExpression[] operands = polyadicExpression.getOperands();
           for (PsiExpression operand1 : operands) {
-            if (PsiTreeUtil.isAncestor(operand1, expression, false)) {
+            if (!PsiTreeUtil.isAncestor(operand1, expression, false)) {
               final PsiType type = operand1.getType();
               if (castType.equals(type)) {
                 return false;

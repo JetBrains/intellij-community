@@ -27,6 +27,7 @@ import com.intellij.execution.process.ProcessEvent;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.wizard.CommitStepException;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompileScope;
 import com.intellij.openapi.compiler.CompileStatusNotification;
@@ -41,6 +42,7 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -49,15 +51,17 @@ import org.jetbrains.android.compiler.AndroidCompileUtil;
 import org.jetbrains.android.compiler.AndroidPackagingCompiler;
 import org.jetbrains.android.compiler.AndroidProguardCompiler;
 import org.jetbrains.android.facet.AndroidFacet;
+import org.jetbrains.android.facet.AndroidFacetConfiguration;
 import org.jetbrains.android.facet.AndroidRootUtil;
 import org.jetbrains.android.sdk.AndroidPlatform;
-import org.jetbrains.android.sdk.AndroidSdkUtils;
 import org.jetbrains.android.util.AndroidBundle;
+import org.jetbrains.android.util.AndroidCommonUtils;
 import org.jetbrains.android.util.SaveFileListener;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
@@ -73,8 +77,10 @@ import java.security.cert.X509Certificate;
  */
 class ApkStep extends ExportSignedPackageWizardStep {
   public static final String APK_PATH_PROPERTY = "ExportedApkPath";
+  public static final String APK_PATH_PROPERTY_UNSIGNED = "ExportedUnsignedApkPath";
   public static final String RUN_PROGUARD_PROPERTY = "AndroidRunProguardForReleaseBuild";
   public static final String PROGUARD_CFG_PATH_PROPERTY = "AndroidProguardConfigPath";
+  public static final String INCLUDE_SYSTEM_PROGUARD_FILE_PROPERTY = "AndroidIncludeSystemProguardFile";
 
   private TextFieldWithBrowseButton myApkPathField;
   private JPanel myContentPanel;
@@ -82,6 +88,7 @@ class ApkStep extends ExportSignedPackageWizardStep {
   private JCheckBox myProguardCheckBox;
   private JBLabel myProguardConfigFilePathLabel;
   private TextFieldWithBrowseButton myProguardConfigFilePathField;
+  private JCheckBox myIncludeSystemProguardFileCheckBox;
 
   private final ExportSignedPackageWizard myWizard;
   private boolean myInited;
@@ -136,18 +143,22 @@ class ApkStep extends ExportSignedPackageWizardStep {
         final boolean enabled = myProguardCheckBox.isSelected();
         myProguardConfigFilePathLabel.setEnabled(enabled);
         myProguardConfigFilePathField.setEnabled(enabled);
+        myIncludeSystemProguardFileCheckBox.setEnabled(enabled);
       }
     });
+
+    myContentPanel.setPreferredSize(new Dimension(myContentPanel.getPreferredSize().width, 250));
   }
 
   @Override
   public void _init() {
     if (myInited) return;
-    Module module = myWizard.getFacet().getModule();
+    final AndroidFacet facet = myWizard.getFacet();
+    Module module = facet.getModule();
 
     PropertiesComponent properties = PropertiesComponent.getInstance(module.getProject());
     String lastModule = properties.getValue(ChooseModuleStep.MODULE_PROPERTY);
-    String lastApkPath = properties.getValue(APK_PATH_PROPERTY);
+    String lastApkPath = properties.getValue(getApkPathPropertyName());
     if (lastApkPath != null && module.getName().equals(lastModule)) {
       myApkPathField.setText(FileUtil.toSystemDependentName(lastApkPath));
     }
@@ -166,25 +177,50 @@ class ApkStep extends ExportSignedPackageWizardStep {
       selected = Boolean.parseBoolean(runProguardPropValue);
     }
     else {
-      selected = false;
+      selected = facet.getConfiguration().RUN_PROGUARD;
     }
     myProguardCheckBox.setSelected(selected);
     myProguardConfigFilePathLabel.setEnabled(selected);
     myProguardConfigFilePathField.setEnabled(selected);
+    myIncludeSystemProguardFileCheckBox.setEnabled(selected);
+
+    final AndroidPlatform platform = AndroidPlatform.getInstance(module);
+    final int sdkToolsRevision = platform != null ? platform.getSdkData().getSdkToolsRevision() : -1;
+    myIncludeSystemProguardFileCheckBox.setVisible(AndroidCommonUtils.isIncludingInProguardSupported(sdkToolsRevision));
 
     final String proguardCfgPath = properties.getValue(PROGUARD_CFG_PATH_PROPERTY);
     if (proguardCfgPath != null && 
         LocalFileSystem.getInstance().refreshAndFindFileByPath(proguardCfgPath) != null) {
       myProguardConfigFilePathField.setText(FileUtil.toSystemDependentName(proguardCfgPath));
+      final String includeSystemProguardFile = properties.getValue(INCLUDE_SYSTEM_PROGUARD_FILE_PROPERTY);
+      myIncludeSystemProguardFileCheckBox.setSelected(Boolean.parseBoolean(includeSystemProguardFile));
     }
     else {
-      final VirtualFile proguardConfigFile = AndroidCompileUtil.getProguardConfigFile(myWizard.getFacet());
-      if (proguardConfigFile != null) {
-        myProguardConfigFilePathField.setText(FileUtil.toSystemDependentName(proguardConfigFile.getPath()));
+      final AndroidFacetConfiguration configuration = facet.getConfiguration();
+      if (configuration.RUN_PROGUARD) {
+        final VirtualFile proguardCfgFile = AndroidRootUtil.getProguardCfgFile(facet);
+        if (proguardCfgFile != null) {
+          myProguardConfigFilePathField.setText(FileUtil.toSystemDependentName(proguardCfgFile.getPath()));
+        }
+        myIncludeSystemProguardFileCheckBox.setSelected(facet.getConfiguration().isIncludeSystemProguardCfgPath());
+      }
+      else {
+        final Pair<VirtualFile, Boolean> pair = AndroidCompileUtil.getDefaultProguardConfigFile(facet);
+        if (pair != null) {
+          myProguardConfigFilePathField.setText(FileUtil.toSystemDependentName(pair.getFirst().getPath()));
+          myIncludeSystemProguardFileCheckBox.setSelected(pair.getSecond());
+        }
+        else {
+          myIncludeSystemProguardFileCheckBox.setSelected(true);
+        }
       }
     }
 
     myInited = true;
+  }
+
+  private String getApkPathPropertyName() {
+    return myWizard.isSigned() ? APK_PATH_PROPERTY : APK_PATH_PROPERTY_UNSIGNED;
   }
 
   @Override
@@ -195,8 +231,8 @@ class ApkStep extends ExportSignedPackageWizardStep {
   private void createAndAlignApk(final String apkPath) {
     AndroidPlatform platform = myWizard.getFacet().getConfiguration().getAndroidPlatform();
     assert platform != null;
-    String sdkPath = platform.getSdk().getLocation();
-    String zipAlignPath = sdkPath + File.separatorChar + AndroidSdkUtils.toolPath(SdkConstants.FN_ZIPALIGN);
+    String sdkPath = platform.getSdkData().getLocation();
+    String zipAlignPath = sdkPath + File.separatorChar + AndroidCommonUtils.toolPath(SdkConstants.FN_ZIPALIGN);
     File zipalign = new File(zipAlignPath);
     final boolean runZipAlign = zipalign.isFile();
     File destFile = null;
@@ -229,38 +265,43 @@ class ApkStep extends ExportSignedPackageWizardStep {
         }
         Messages.showInfoMessage(myWizard.getProject(), AndroidBundle.message("android.export.package.success.message", apkPath), title);
       }
-    });
+    }, ModalityState.NON_MODAL);
   }
 
   @SuppressWarnings({"IOResourceOpenedButNotSafelyClosed"})
   private void createApk(File destFile) throws IOException, GeneralSecurityException {
-    FileOutputStream fos = new FileOutputStream(destFile);
-    PrivateKey privateKey = myWizard.getPrivateKey();
-    assert privateKey != null;
-    X509Certificate certificate = myWizard.getCertificate();
-    assert certificate != null;
-    SignedJarBuilder builder = new SignedJarBuilder(fos, privateKey, certificate);
-    Module module = myWizard.getFacet().getModule();
-    //String srcApkPath = CompilerPaths.getModuleOutputPath(module, false) + '/' + module.getName() + ".apk";
-    String srcApkPath = AndroidRootUtil.getApkPath(myWizard.getFacet()) + AndroidPackagingCompiler.UNSIGNED_SUFFIX;
-    FileInputStream fis = new FileInputStream(new File(FileUtil.toSystemDependentName(srcApkPath)));
-    try {
-      builder.writeZip(fis, null);
-      builder.close();
-    }
-    finally {
+    final String srcApkPath = AndroidRootUtil.getApkPath(myWizard.getFacet()) + AndroidPackagingCompiler.UNSIGNED_SUFFIX;
+    final File srcApk = new File(FileUtil.toSystemDependentName(srcApkPath));
+
+    if (myWizard.isSigned()) {
+      FileOutputStream fos = new FileOutputStream(destFile);
+      PrivateKey privateKey = myWizard.getPrivateKey();
+      assert privateKey != null;
+      X509Certificate certificate = myWizard.getCertificate();
+      assert certificate != null;
+      SignedJarBuilder builder = new SignedJarBuilder(fos, privateKey, certificate);
+      FileInputStream fis = new FileInputStream(srcApk);
       try {
-        fis.close();
-      }
-      catch (IOException ignored) {
+        builder.writeZip(fis, null);
+        builder.close();
       }
       finally {
         try {
-          fos.close();
+          fis.close();
         }
         catch (IOException ignored) {
         }
+        finally {
+          try {
+            fos.close();
+          }
+          catch (IOException ignored) {
+          }
+        }
       }
+    }
+    else {
+      FileUtil.copy(srcApk, destFile);
     }
   }
 
@@ -269,7 +310,7 @@ class ApkStep extends ExportSignedPackageWizardStep {
       public void run() {
         Messages.showErrorDialog(myWizard.getProject(), "Error: " + message, CommonBundle.getErrorTitle());
       }
-    });
+    }, ModalityState.NON_MODAL);
   }
 
   @Nullable
@@ -308,7 +349,7 @@ class ApkStep extends ExportSignedPackageWizardStep {
   }
 
   @Override
-  protected void commitForNext() throws CommitStepException {
+  public void _commit(boolean finishChosen) throws CommitStepException {
     final String apkPath = myApkPathField.getText().trim();
     if (apkPath.length() == 0) {
       throw new CommitStepException(AndroidBundle.message("android.extract.package.specify.apk.path.error"));
@@ -317,7 +358,7 @@ class ApkStep extends ExportSignedPackageWizardStep {
     AndroidFacet facet = myWizard.getFacet();
     PropertiesComponent properties = PropertiesComponent.getInstance(myWizard.getProject());
     properties.setValue(ChooseModuleStep.MODULE_PROPERTY, facet != null ? facet.getModule().getName() : "");
-    properties.setValue(APK_PATH_PROPERTY, apkPath);
+    properties.setValue(getApkPathPropertyName(), apkPath);
 
     File folder = new File(apkPath).getParentFile();
     if (folder == null) {
@@ -337,19 +378,21 @@ class ApkStep extends ExportSignedPackageWizardStep {
     AndroidCompileUtil.setReleaseBuild(compileScope);
 
     properties.setValue(RUN_PROGUARD_PROPERTY, Boolean.toString(myProguardCheckBox.isSelected()));
-    
+
     if (myProguardCheckBox.isSelected()) {
       final String proguardCfgPath = myProguardConfigFilePathField.getText().trim();
       if (proguardCfgPath.length() == 0) {
         throw new CommitStepException(AndroidBundle.message("android.extract.package.specify.proguard.cfg.path.error"));
       }
       properties.setValue(PROGUARD_CFG_PATH_PROPERTY, proguardCfgPath);
-      
+      properties.setValue(INCLUDE_SYSTEM_PROGUARD_FILE_PROPERTY, Boolean.toString(myIncludeSystemProguardFileCheckBox.isSelected()));
+
       if (!new File(proguardCfgPath).isFile()) {
         throw new CommitStepException("Cannot find file " + proguardCfgPath);
       }
-      
+
       compileScope.putUserData(AndroidProguardCompiler.PROGUARD_CFG_PATH_KEY, proguardCfgPath);
+      compileScope.putUserData(AndroidProguardCompiler.INCLUDE_SYSTEM_PROGUARD_FILE, myIncludeSystemProguardFileCheckBox.isSelected());
     }
 
     manager.make(compileScope, new CompileStatusNotification() {
@@ -366,5 +409,9 @@ class ApkStep extends ExportSignedPackageWizardStep {
         });
       }
     });
+  }
+
+  @Override
+  protected void commitForNext() throws CommitStepException {
   }
 }

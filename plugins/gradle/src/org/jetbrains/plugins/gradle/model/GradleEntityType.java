@@ -11,7 +11,7 @@ import javax.swing.*;
  */
 public enum GradleEntityType {
   PROJECT(GradleIcons.PROJECT_ICON), MODULE(GradleIcons.MODULE_ICON), MODULE_DEPENDENCY(GradleIcons.MODULE_ICON),
-  LIBRARY_DEPENDENCY(GradleIcons.LIB_ICON), CONTENT_ROOT(GradleIcons.CONTENT_ROOT_ICON), SYNTHETIC(null);
+  LIBRARY(GradleIcons.LIB_ICON), LIBRARY_DEPENDENCY(GradleIcons.LIB_ICON), CONTENT_ROOT(GradleIcons.CONTENT_ROOT_ICON), SYNTHETIC(null);
 
   @Nullable private final Icon myIcon;
 

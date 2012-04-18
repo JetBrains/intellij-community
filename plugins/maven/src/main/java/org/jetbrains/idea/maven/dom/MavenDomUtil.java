@@ -36,6 +36,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.reflect.DomCollectionChildDescription;
 import org.jetbrains.annotations.NotNull;
@@ -50,10 +51,18 @@ import org.jetbrains.idea.maven.utils.MavenLog;
 import org.jetbrains.idea.maven.vfs.MavenPropertiesVirtualFileSystem;
 
 import java.util.List;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class MavenDomUtil {
+
+  // see http://maven.apache.org/settings.html
+  private static final Set<String> SUBTAGS_IN_SETTINGS_FILE = CollectionFactory.newSet("localRepository", "interactiveMode",
+                                                                                       "usePluginRegistry", "offline", "pluginGroups",
+                                                                                       "servers", "mirrors", "proxies", "profiles",
+                                                                                       "activeProfiles");
+
   public static boolean isMavenFile(PsiFile file) {
     return isProjectFile(file) || isProfilesFile(file) || isSettingsFile(file);
   }
@@ -70,15 +79,33 @@ public class MavenDomUtil {
   public static boolean isProfilesFile(PsiFile file) {
     if (!(file instanceof XmlFile)) return false;
 
-    String name = file.getName();
-    return name.equals(MavenConstants.PROFILES_XML);
+    return MavenConstants.PROFILES_XML.equals(file.getName());
   }
 
   public static boolean isSettingsFile(PsiFile file) {
     if (!(file instanceof XmlFile)) return false;
 
     String name = file.getName();
-    return name.equals(MavenConstants.SETTINGS_XML);
+    if (!name.equals(MavenConstants.SETTINGS_XML)) return false;
+
+    XmlTag rootTag = ((XmlFile)file).getRootTag();
+    if (rootTag == null || !"settings".equals(rootTag.getName())) return false;
+
+    String xmlns = rootTag.getAttributeValue("xmlns");
+    if (xmlns != null) {
+      return xmlns.contains("maven");
+    }
+
+    boolean hasTag = false;
+
+    for (PsiElement e = rootTag.getFirstChild(); e != null; e = e.getNextSibling()) {
+      if (e instanceof XmlTag) {
+        if (SUBTAGS_IN_SETTINGS_FILE.contains(((XmlTag)e).getName())) return true;
+        hasTag = true;
+      }
+    }
+
+    return !hasTag;
   }
 
   public static boolean isMavenFile(PsiElement element) {
@@ -310,10 +337,12 @@ public class MavenDomUtil {
     if (file == null) return false;
 
     for (MavenResource each : project.getResources()) {
+      if (!each.isFiltered()) continue;
+
       VirtualFile resourceDir = LocalFileSystem.getInstance().findFileByPath(each.getDirectory());
       if (resourceDir == null) continue;
       if (!VfsUtil.isAncestor(resourceDir, file, true)) continue;
-      return each.isFiltered();
+      return true;
     }
     return false;
   }

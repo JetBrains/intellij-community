@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,24 +16,18 @@
 package com.intellij.openapi.ui.playback.util;
 
 import com.intellij.ide.RecentProjectsManagerBase;
-import com.intellij.ide.UiActivityMonitor;
 import com.intellij.openapi.project.*;
 import com.intellij.openapi.startup.StartupManager;
-import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.ui.playback.PlaybackContext;
-import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.AsyncResult;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.ui.UIUtil;
 
-import java.awt.*;
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
 
 public class ProjectPlaybackCall {
-
   public static AsyncResult<String> openProjectClone(final PlaybackContext context, String path) {
     try {
       File parentDir = FileUtil.createTempDirectory("funcTest", "");
@@ -67,7 +61,7 @@ public class ProjectPlaybackCall {
             DumbService.getInstance(project).runWhenSmart(new Runnable() {
               @Override
               public void run() {
-                result.setDone("Opened successfully: " + project.getProjectFilePath());
+                result.setDone("Opened successfully: " + project.getPresentableUrl());
               }
             });
           }

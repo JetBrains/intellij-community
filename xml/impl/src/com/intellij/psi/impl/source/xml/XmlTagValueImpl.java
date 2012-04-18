@@ -19,7 +19,9 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.XmlElementFactory;
+import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.xml.*;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
@@ -122,5 +124,39 @@ public class XmlTagValueImpl implements XmlTagValue{
     catch (IncorrectOperationException e) {
       LOG.error(e);
     }
+  }
+
+  @Override
+  public boolean hasCDATA() {
+    for (XmlText xmlText : myTextElements) {
+      PsiElement[] children = xmlText.getChildren();
+      for (PsiElement child : children) {
+        if (child.getNode().getElementType() == XmlElementType.XML_CDATA) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  public static XmlTagValue createXmlTagValue(XmlTag tag) {
+    final List<XmlTagChild> bodyElements = new ArrayList<XmlTagChild>();
+
+    tag.processElements(new PsiElementProcessor() {
+      boolean insideBody = false;
+      public boolean execute(@NotNull PsiElement element) {
+        final ASTNode treeElement = element.getNode();
+        if (insideBody) {
+          if (treeElement != null && treeElement.getElementType() == XmlTokenType.XML_END_TAG_START) return false;
+          if (!(element instanceof XmlTagChild)) return true;
+          bodyElements.add((XmlTagChild)element);
+        }
+        else if (treeElement != null && treeElement.getElementType() == XmlTokenType.XML_TAG_END) insideBody = true;
+        return true;
+      }
+    }, tag);
+
+    XmlTagChild[] tagChildren = ContainerUtil.toArray(bodyElements, new XmlTagChild[bodyElements.size()]);
+    return new XmlTagValueImpl(tagChildren, tag);
   }
 }

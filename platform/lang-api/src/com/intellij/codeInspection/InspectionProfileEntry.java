@@ -52,8 +52,6 @@ public abstract class InspectionProfileEntry {
   private Boolean myUseNewSerializer = null;
 
   /**
-   * DO NOT OVERRIDE this method.
-   *
    * @see InspectionEP#groupDisplayName
    * @see InspectionEP#groupKey
    * @see InspectionEP#groupBundle
@@ -64,8 +62,6 @@ public abstract class InspectionProfileEntry {
   }
 
   /**
-   * DO NOT OVERRIDE this method.
-   *
    * @see InspectionEP#groupPath
    */
   @NotNull
@@ -78,8 +74,6 @@ public abstract class InspectionProfileEntry {
   }
 
   /**
-   * DO NOT OVERRIDE this method.
-   *
    * @see InspectionEP#displayName
    * @see InspectionEP#key
    * @see InspectionEP#bundle

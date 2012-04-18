@@ -311,6 +311,11 @@ public class AddModuleWizard extends AbstractWizard<ModuleWizardStep> {
     if (projectJdk != null) {
       return projectJdk;
     }
+    return null;
+  }
+
+  @Nullable
+  public static Sdk getMostRecentSuitableSdk(final WizardContext context) {
     if (context.getProject() == null) {
       @Nullable final ProjectBuilder projectBuilder = context.getProjectBuilder();
       return ProjectJdkTable.getInstance().findMostRecentSdk(new Condition<Sdk>() {

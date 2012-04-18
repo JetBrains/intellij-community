@@ -35,7 +35,7 @@ public class MavenAddArchetypeDialog extends DialogWrapper {
 
   public MavenAddArchetypeDialog(Component parent) {
     super(parent, false);
-    setTitle("Add archetype");
+    setTitle("Add Archetype");
 
     init();
 

@@ -96,28 +96,29 @@ public class DebuggerPanelsManager implements ProjectComponent {
   }
 
   @Nullable
-  public
-  RunContentDescriptor attachVirtualMachine(Executor executor,
-                                            ProgramRunner runner,
-                                            ExecutionEnvironment environment,
-                                            RunProfileState state,
-                                            RunContentDescriptor reuseContent,
-                                            RemoteConnection remoteConnection,
-                                            boolean pollConnection) throws ExecutionException {
+  public RunContentDescriptor attachVirtualMachine(Executor executor,
+                                                   ProgramRunner runner,
+                                                   ExecutionEnvironment environment,
+                                                   RunProfileState state,
+                                                   RunContentDescriptor reuseContent,
+                                                   RemoteConnection remoteConnection,
+                                                   boolean pollConnection) throws ExecutionException {
 
-    final DebuggerSession debuggerSession =
-      DebuggerManagerEx.getInstanceEx(myProject).attachVirtualMachine(executor, runner, (ModuleRunProfile) environment.getRunProfile(), state, remoteConnection, pollConnection);
+    final DebuggerSession debuggerSession = DebuggerManagerEx.getInstanceEx(myProject).attachVirtualMachine(
+      executor, runner, (ModuleRunProfile) environment.getRunProfile(), state, remoteConnection, pollConnection
+    );
     if (debuggerSession == null) {
       return null;
     }
 
     final DebugProcessImpl debugProcess = debuggerSession.getProcess();
     if (debugProcess.isDetached() || debugProcess.isDetaching()) {
+      debuggerSession.dispose();
       return null;
     }
     if (state instanceof RemoteState) {
       // optimization: that way BatchEvaluator will not try to lookup the class file in remote VM
-      // which is an expensive oparation when executed first time
+      // which is an expensive operation when executed first time
       debugProcess.putUserData(BatchEvaluator.REMOTE_SESSION_KEY, Boolean.TRUE);
     }
 

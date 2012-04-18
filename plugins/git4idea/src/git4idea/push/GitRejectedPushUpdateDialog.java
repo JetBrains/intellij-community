@@ -104,6 +104,11 @@ class GitRejectedPushUpdateDialog extends DialogWrapper {
     return rootPanel;
   }
 
+  @Override
+  protected String getHelpId() {
+    return "reference.VersionControl.Git.UpdateOnRejectedPushDialog";
+  }
+
   private String makeDescription() {
     if (GitUtil.justOneGitRepository(myProject)) {
       assert !myRepositories.isEmpty() : "repositories are empty";

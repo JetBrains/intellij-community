@@ -6,7 +6,9 @@
 
     <intent android:action="android.intent.action.VIEW"
             android:data="data"/>
+    <extra android:name="someKey" android:value="someHeaderValue" />
 
+    <<warning>someTag</warning>/>
   </PreferenceScreen>
 
 </PreferenceCategory>

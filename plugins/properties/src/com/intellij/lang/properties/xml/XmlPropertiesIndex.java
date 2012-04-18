@@ -29,11 +29,13 @@ public class XmlPropertiesIndex extends FileBasedIndexExtension<XmlPropertiesInd
 
   private static final EnumeratorStringDescriptor ENUMERATOR_STRING_DESCRIPTOR = new EnumeratorStringDescriptor();
 
+  @NotNull
   @Override
   public ID<Key, String> getName() {
     return NAME;
   }
 
+  @NotNull
   @Override
   public DataIndexer<Key, String, FileContent> getIndexer() {
     return this;

@@ -3,7 +3,7 @@
   <grid id="41bd3" binding="myPanel" layout-manager="GridLayoutManager" row-count="1" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
     <margin top="0" left="0" bottom="0" right="0"/>
     <constraints>
-      <xy x="81" y="44" width="464" height="586"/>
+      <xy x="81" y="44" width="507" height="606"/>
     </constraints>
     <properties/>
     <border type="none"/>
@@ -235,7 +235,7 @@
               </component>
             </children>
           </grid>
-          <grid id="937be" layout-manager="GridLayoutManager" row-count="4" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+          <grid id="937be" layout-manager="GridLayoutManager" row-count="5" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
             <margin top="0" left="0" bottom="0" right="0"/>
             <constraints>
               <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="1" fill="3" indent="0" use-parent-layout="false"/>
@@ -258,7 +258,7 @@
               </component>
               <component id="2c9a3" class="javax.swing.JCheckBox" binding="myCbDisplayIconsInMenu">
                 <constraints>
-                  <grid row="3" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="3" anchor="9" fill="0" indent="0" use-parent-layout="false"/>
+                  <grid row="4" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="3" anchor="9" fill="0" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties>
                   <margin top="2" left="2" bottom="2" right="2"/>
@@ -273,6 +273,15 @@
                 <properties>
                   <margin top="2" left="2" bottom="2" right="2"/>
                   <text resource-bundle="messages/KeyMapBundle" key="disable.mnemonic.in.menu.check.box"/>
+                </properties>
+              </component>
+              <component id="f217f" class="javax.swing.JCheckBox" binding="myDisableMnemonicInControlsCheckBox" default-binding="true">
+                <constraints>
+                  <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                </constraints>
+                <properties>
+                  <margin top="2" left="2" bottom="2" right="2"/>
+                  <text resource-bundle="messages/KeyMapBundle" key="disable.mnemonic.in.controls.check.box"/>
                 </properties>
               </component>
               <component id="32072" class="javax.swing.JCheckBox" binding="myWindowShortcutsCheckBox">

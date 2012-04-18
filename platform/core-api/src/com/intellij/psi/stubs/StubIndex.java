@@ -23,12 +23,12 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 
 public abstract class StubIndex {
-
   private static class StubIndexHolder {
     private static final StubIndex ourInstance = ApplicationManager.getApplication().getComponent(StubIndex.class);
   }
@@ -39,8 +39,15 @@ public abstract class StubIndex {
 
   public abstract <Key, Psi extends PsiElement> Collection<Psi> get(@NotNull StubIndexKey<Key, Psi> indexKey,
                                                                     @NotNull Key key,
-                                                                    final Project project,
+                                                                    @NotNull Project project,
                                                                     final GlobalSearchScope scope);
 
-  public abstract <Key> Collection<Key> getAllKeys(StubIndexKey<Key, ?> indexKey, @NotNull Project project);
+  public abstract <Key, Psi extends PsiElement> boolean process(@NotNull StubIndexKey<Key, Psi> indexKey,
+                                                                @NotNull Key key,
+                                                                @NotNull Project project,
+                                                                GlobalSearchScope scope,
+                                                                @NotNull Processor<? super Psi> processor);
+
+  @NotNull
+  public abstract <Key> Collection<Key> getAllKeys(@NotNull StubIndexKey<Key, ?> indexKey, @NotNull Project project);
 }

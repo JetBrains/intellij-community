@@ -595,9 +595,14 @@ public class GenerationUtil {
       final GrExpression invokedExpression = ((GrMethodCall)expression).getInvokedExpression();
       return getDeclaredType(invokedExpression, context);
     }
-    else if (expression instanceof GrBinaryExpression || expression instanceof GrIndexProperty) {
-      final GroovyResolveResult result =
-        PsiImplUtil.extractUniqueResult((GroovyResolveResult[])((PsiPolyVariantReference)expression).multiResolve(false));
+    else if (expression instanceof GrBinaryExpression) {
+      final GroovyResolveResult result = PsiImplUtil.extractUniqueResult(((GrBinaryExpression)expression).multiResolve(false));
+      if (result.getElement() instanceof PsiMethod) {
+        return getDeclaredType((PsiMethod)result.getElement(), result.getSubstitutor(), context);
+      }
+    }
+    else if (expression instanceof GrIndexProperty) {
+      final GroovyResolveResult result = ((GrIndexProperty)expression).advancedResolve();
       if (result.getElement() instanceof PsiMethod) {
         return getDeclaredType((PsiMethod)result.getElement(), result.getSubstitutor(), context);
       }

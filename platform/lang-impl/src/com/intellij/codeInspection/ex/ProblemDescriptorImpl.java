@@ -48,6 +48,7 @@ public class ProblemDescriptorImpl extends CommonProblemDescriptorImpl implement
   private final HintAction myHintAction;
   private TextAttributesKey myEnforcedTextAttributes;
   private int myLineNumber = -1;
+  private String myProblemGroup;
 
   public ProblemDescriptorImpl(@NotNull PsiElement startElement, @NotNull PsiElement endElement, String descriptionTemplate, LocalQuickFix[] fixes,
                                ProblemHighlightType highlightType,
@@ -87,7 +88,11 @@ public class ProblemDescriptorImpl extends CommonProblemDescriptorImpl implement
     assertPhysical(startElement);
     if (startElement != endElement) assertPhysical(endElement);
 
-    if (startElement.getTextRange().getStartOffset() >= endElement.getTextRange().getEndOffset()) {
+    final TextRange startElementRange = startElement.getTextRange();
+    LOG.assertTrue(startElementRange != null, startElement);
+    final TextRange endElementRange = endElement.getTextRange();
+    LOG.assertTrue(endElementRange != null, endElement);
+    if (startElementRange.getStartOffset() >= endElementRange.getEndOffset()) {
       if (!(startElement instanceof PsiFile && endElement instanceof PsiFile)) {
         LOG.error("Empty PSI elements should not be passed to createDescriptor. Start: " + startElement + ", end: " + endElement);
       }
@@ -200,6 +205,15 @@ public class ProblemDescriptorImpl extends CommonProblemDescriptorImpl implement
 
   public HintAction getHintAction() {
     return myHintAction;
+  }
+
+  @Nullable
+  public String getProblemGroup() {
+    return myProblemGroup;
+  }
+
+  public void setProblemGroup(@Nullable String problemGroup) {
+    myProblemGroup = problemGroup;
   }
 
   public boolean showTooltip() {

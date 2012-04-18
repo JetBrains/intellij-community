@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.projectRoots.impl;
 
+import com.intellij.execution.util.ExecUtil;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.*;
@@ -93,6 +94,21 @@ public class JavaSdkImpl extends JavaSdk {
     return ADD_ICON;
   }
 
+  @Nullable
+  public String getDefaultDocumentationUrl(final @NotNull Sdk sdk) {
+    final JavaSdkVersion version = getVersion(sdk);
+    if (version == JavaSdkVersion.JDK_1_5) {
+      return "http://download.oracle.com/javase/1.5.0/docs/api/";
+    }
+    else if (version == JavaSdkVersion.JDK_1_6) {
+      return "http://download.oracle.com/javase/6/docs/api/";
+    }
+    else if (version == JavaSdkVersion.JDK_1_7) {
+      return "http://download.oracle.com/javase/7/docs/api/";
+    }
+    return null;
+  }
+
   @Override
   public AdditionalDataConfigurable createAdditionalDataConfigurable(SdkModel sdkModel, SdkModificator sdkModificator) {
     return null;
@@ -139,33 +155,27 @@ public class JavaSdkImpl extends JavaSdk {
   public String suggestHomePath() {
     if (SystemInfo.isMac) {
       if (new File("/usr/libexec/java_home").exists()) {
-        BufferedReader input = null;
-        try {
-          final Process exec = Runtime.getRuntime().exec("/usr/libexec/java_home");
-          input = new BufferedReader(new InputStreamReader(exec.getInputStream()));
-          final String path = input.readLine();
-          if (new File(path).exists()) return path;
-        }
-        catch (IOException e) {
-          // nothing
-        } finally {
-          try {
-            if (input != null) input.close();
-          }
-          catch (IOException e) {
-            // ignore
-          }
+        final String path = ExecUtil.execAndReadLine("/usr/libexec/java_home");
+        if (path != null && new File(path).exists()) {
+          return path;
         }
       }
+      return "/System/Library/Frameworks/JavaVM.framework/Versions";
+    }
 
-      return "/System/Library/Frameworks/JavaVM.framework/Versions/";
-    }
     if (SystemInfo.isLinux) {
-      return "/usr/lib/jvm/";
+      final String[] homes = {"/usr/java", "/opt/java", "/usr/lib/jvm"};
+      for (String home : homes) {
+        if (new File(home).isDirectory()) {
+          return home;
+        }
+      }
     }
+
     if (SystemInfo.isSolaris) {
-      return "/usr/jdk/";
+      return "/usr/jdk";
     }
+
     return null;
   }
 

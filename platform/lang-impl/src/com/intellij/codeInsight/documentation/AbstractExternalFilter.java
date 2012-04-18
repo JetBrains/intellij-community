@@ -24,6 +24,7 @@ import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -37,6 +38,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.*;
 import java.net.URL;
 import java.net.URLConnection;
+import java.util.Locale;
 import java.util.concurrent.Future;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -83,7 +85,7 @@ public abstract class AbstractExternalFilter {
     protected abstract String convertReference(String root, String href);
 
     public String refFilter(final String root, String read) {
-      String toMatch = read.toUpperCase();
+      String toMatch = StringUtilRt.toUpperCase(read);
       StringBuffer ready = new StringBuffer();
       int prev = 0;
       Matcher matcher = mySelector.matcher(toMatch);
@@ -225,7 +227,7 @@ public abstract class AbstractExternalFilter {
 
     if (anchorMatcher.find()) {
       isClassDoc = false;
-      startSection = "<A NAME=\"" + anchorMatcher.group(1).toUpperCase() + "\"";
+      startSection = "<A NAME=\"" + StringUtilRt.toUpperCase(anchorMatcher.group(1)) + "\"";
       endSection = "<A NAME=";
     }
 
@@ -257,7 +259,7 @@ public abstract class AbstractExternalFilter {
         }
       }
     }
-    while (read != null && read.toUpperCase().indexOf(startSection) == -1);
+    while (read != null && StringUtilRt.toUpperCase(read).indexOf(startSection) == -1);
 
     if (input instanceof MyReader && contentEncoding != null) {
       if (contentEncoding != null && !contentEncoding.equals("UTF-8") && !contentEncoding.equals(((MyReader)input).getEncoding())) { //restart page parsing with correct encoding
@@ -284,9 +286,9 @@ public abstract class AbstractExternalFilter {
     if (isClassDoc) {
       boolean skip = false;
 
-      while (((read = buf.readLine()) != null) && !read.toUpperCase().trim().equals(DL) &&
+      while (((read = buf.readLine()) != null) && !StringUtilRt.toUpperCase(read).trim().equals(DL) &&
              !StringUtil.containsIgnoreCase(read, "<div class=\"description\"")) {
-        if (read.toUpperCase().contains(H2) && !read.toUpperCase().contains("H2")) { // read=class name in <H2>
+        if (StringUtilRt.toUpperCase(read).contains(H2) && !read.toUpperCase().contains("H2")) { // read=class name in <H2>
           data.append(H2);
           skip = true;
         }
@@ -303,12 +305,12 @@ public abstract class AbstractExternalFilter {
 
       StringBuffer classDetails = new StringBuffer();
 
-      while (((read = buf.readLine()) != null) && !read.toUpperCase().equals(HR) && !read.toUpperCase().equals(P)) {
+      while (((read = buf.readLine()) != null) && !StringUtilRt.toUpperCase(read).equals(HR) && !StringUtilRt.toUpperCase(read).equals(P)) {
         if (reachTheEnd(data, read, classDetails)) return;
         appendLine(classDetails, read);
       }
 
-      while (((read = buf.readLine()) != null) && !read.toUpperCase().equals(P) && !read.toUpperCase().equals(HR)) {
+      while (((read = buf.readLine()) != null) && !StringUtilRt.toUpperCase(read).equals(P) && !StringUtilRt.toUpperCase(read).equals(HR)) {
         if (reachTheEnd(data, read, classDetails)) return;
         appendLine(data, read.replaceAll(DT, DT + BR));
       }
@@ -320,7 +322,7 @@ public abstract class AbstractExternalFilter {
     while (((read = buf.readLine()) != null) &&
            StringUtil.indexOfIgnoreCase(read, endSection, 0) == -1 &&
            StringUtil.indexOfIgnoreCase(read, greatestEndSection, 0) == -1) {
-      if (read.toUpperCase().indexOf(HR) == -1
+      if (StringUtilRt.toUpperCase(read).indexOf(HR) == -1
           && !StringUtil.containsIgnoreCase(read, "<ul class=\"blockList\">")
           && !StringUtil.containsIgnoreCase(read, "<li class=\"blockList\">")) {
         appendLine(data, read);

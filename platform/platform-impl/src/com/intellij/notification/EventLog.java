@@ -36,6 +36,7 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.*;
@@ -117,12 +118,12 @@ public class EventLog implements Notifications {
   }
 
   @Nullable
-  public static Pair<Notification, Long> getStatusMessage(@Nullable Project project) {
+  public static Trinity<Notification, String, Long> getStatusMessage(@Nullable Project project) {
     return getLogModel(project).getStatusMessage();
   }
 
-  public static LogEntry formatForLog(@NotNull final Notification notification) {
-    DocumentImpl logDoc = new DocumentImpl(true);
+  public static LogEntry formatForLog(@NotNull final Notification notification, String indent) {
+    DocumentImpl logDoc = new DocumentImpl("",true);
     AtomicBoolean showMore = new AtomicBoolean(false);
     Map<RangeMarker, HyperlinkInfo> links = new LinkedHashMap<RangeMarker, HyperlinkInfo>();
     List<RangeMarker> lineSeparators = new ArrayList<RangeMarker>();
@@ -141,7 +142,7 @@ public class EventLog implements Notifications {
 
     String status = getStatusText(logDoc, showMore, lineSeparators, hasHtml);
 
-    indentNewLines(logDoc, lineSeparators, afterTitle, hasHtml);
+    indentNewLines(logDoc, lineSeparators, afterTitle, hasHtml, indent);
 
     ArrayList<Pair<TextRange, HyperlinkInfo>> list = new ArrayList<Pair<TextRange, HyperlinkInfo>>();
     for (RangeMarker marker : links.keySet()) {
@@ -165,7 +166,7 @@ public class EventLog implements Notifications {
     return new LogEntry(logDoc.getText(), status, list);
   }
 
-  private static void indentNewLines(DocumentImpl logDoc, List<RangeMarker> lineSeparators, RangeMarker afterTitle, boolean hasHtml) {
+  private static void indentNewLines(DocumentImpl logDoc, List<RangeMarker> lineSeparators, RangeMarker afterTitle, boolean hasHtml, String indent) {
     if (!hasHtml) {
       int i = -1;
       while (true) {
@@ -187,8 +188,8 @@ public class EventLog implements Notifications {
           continue;
         }
 
-        logDoc.replaceString(start, separator.getEndOffset(), "\n\t");
-        nextLineStart = start + 2;
+        logDoc.replaceString(start, separator.getEndOffset(), "\n" + indent);
+        nextLineStart = start + 1 + indent.length();
         while (nextLineStart < logDoc.getTextLength() && Character.isWhitespace(logDoc.getCharsSequence().charAt(nextLineStart))) {
           logDoc.deleteString(nextLineStart, nextLineStart + 1);
         }
@@ -197,8 +198,7 @@ public class EventLog implements Notifications {
   }
 
   private static String getStatusText(DocumentImpl logDoc, AtomicBoolean showMore, List<RangeMarker> lineSeparators, boolean hasHtml) {
-    DocumentImpl statusDoc = new DocumentImpl(true);
-    statusDoc.setText(logDoc.getText());
+    DocumentImpl statusDoc = new DocumentImpl(logDoc.getText(),true);
     List<RangeMarker> statusSeparators = new ArrayList<RangeMarker>();
     for (RangeMarker separator : lineSeparators) {
       if (separator.isValid()) {
@@ -234,8 +234,9 @@ public class EventLog implements Notifications {
         int linkEnd = content.indexOf(A_CLOSING, tagMatcher.end());
         if (linkEnd > 0) {
           String linkText = content.substring(tagMatcher.end(), linkEnd).replaceAll(TAG_PATTERN.pattern(), "");
+          int linkStart = document.getTextLength();
           appendText(document, linkText);
-          links.put(document.createRangeMarker(new TextRange(document.getTextLength() - linkText.length(), document.getTextLength())),
+          links.put(document.createRangeMarker(new TextRange(linkStart, document.getTextLength())),
                     new NotificationHyperlinkInfo(notification, href));
           content = content.substring(linkEnd + A_CLOSING.length());
           continue;
@@ -403,7 +404,7 @@ public class EventLog implements Notifications {
 
       myProjectModel.addNotification(notification);
 
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
+      StartupManager.getInstance(myProject).runWhenProjectIsInitialized(new Runnable() {
         @Override
         public void run() {
           if (!ShutDownTracker.isShutdownHookRunning() && !myProject.isDisposed()) {
@@ -419,6 +420,7 @@ public class EventLog implements Notifications {
     return project.getComponent(ProjectTracker.class);
   }
   public static class FactoryItself implements ToolWindowFactory, DumbAware {
+    @Override
     public void createToolWindowContent(final Project project, ToolWindow toolWindow) {
       final Editor editor = getProjectComponent(project).myConsole.getConsoleEditor();
 

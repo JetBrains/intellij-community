@@ -47,7 +47,7 @@ class CanBeFinalAnnotator extends RefGraphAnnotatorEx {
     if (refElement instanceof RefClass) {
       final RefClass refClass = (RefClass)refElement;
       final PsiClass psiClass = refClass.getElement();
-      if (RefUtil.isEntryPoint(refClass)) {
+      if (refClass.isEntry()) {
         ((RefClassImpl)refClass).setFlag(false, CAN_BE_FINAL_MASK);
         return;
       }
@@ -115,7 +115,7 @@ class CanBeFinalAnnotator extends RefGraphAnnotatorEx {
       final PsiClass psiClass = (PsiClass)refElement.getElement();
       if (psiClass != null) {
 
-        if (RefUtil.isEntryPoint(refElement)) {
+        if (refElement.isEntry()) {
           ((RefClassImpl)refElement).setFlag(false, CAN_BE_FINAL_MASK);
         }
 
@@ -205,11 +205,8 @@ class CanBeFinalAnnotator extends RefGraphAnnotatorEx {
     }
     else if (refElement instanceof RefMethod) {
       final RefMethod refMethod = (RefMethod)refElement;
-      final PsiElement element = refMethod.getElement();
-      if (element instanceof PsiMethod) {
-        if (RefUtil.isEntryPoint(refMethod)) {
-          ((RefMethodImpl)refMethod).setFlag(false, CAN_BE_FINAL_MASK);
-        }
+      if (refMethod.isEntry()) {
+        ((RefMethodImpl)refMethod).setFlag(false, CAN_BE_FINAL_MASK);
       }
     }
   }

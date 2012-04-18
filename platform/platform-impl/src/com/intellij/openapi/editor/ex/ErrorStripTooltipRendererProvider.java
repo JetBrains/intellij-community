@@ -34,5 +34,6 @@ public interface ErrorStripTooltipRendererProvider {
   TooltipRenderer calcTooltipRenderer(@NotNull String text);
   TooltipRenderer calcTooltipRenderer(@NotNull String text, int width);
 
-  TrafficTooltipRenderer createTrafficTooltipRenderer(Runnable onHide, Editor editor);
+  @NotNull
+  TrafficTooltipRenderer createTrafficTooltipRenderer(@NotNull Runnable onHide, @NotNull Editor editor);
 }

@@ -96,7 +96,17 @@ public class ConfigurationSettingsEditorWrapper extends SettingsEditor<RunnerAnd
         }
       }
 
-      myStepsPanel.setLayout(new GridLayout((stepsRows.size() + 1) / 2, 1, UIUtil.DEFAULT_HGAP, UIUtil.DEFAULT_VGAP));
+      int maxStepRowWidth = 0;
+      for (StepBeforeLaunchRow stepRow : stepsRows) {
+        maxStepRowWidth = Math.max(maxStepRowWidth, stepRow.getPreferredSize().width);
+      }
+      if (maxStepRowWidth * 3 < getComponent().getPreferredSize().width || maxStepRowWidth < 200) {
+        myStepsPanel.setLayout(new GridLayout(0, 3, UIUtil.DEFAULT_HGAP, UIUtil.DEFAULT_VGAP));
+      } else if (maxStepRowWidth * 2 < getComponent().getPreferredSize().width || maxStepRowWidth < 300) {
+        myStepsPanel.setLayout(new GridLayout(0, 2, UIUtil.DEFAULT_HGAP, UIUtil.DEFAULT_VGAP));
+      } else {
+        myStepsPanel.setLayout(new GridLayout(0, 1, UIUtil.DEFAULT_HGAP, UIUtil.DEFAULT_VGAP));
+      }
       for (StepBeforeLaunchRow stepRow : stepsRows) {
         myStepsPanel.add(stepRow);
       }

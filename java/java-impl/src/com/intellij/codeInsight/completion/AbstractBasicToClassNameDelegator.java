@@ -16,7 +16,6 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.Consumer;
@@ -38,18 +37,12 @@ public abstract class AbstractBasicToClassNameDelegator extends CompletionContri
     final PsiElement position = parameters.getPosition();
     if (!isClassNameCompletionSupported(result, file, position)) return;
 
-    final Ref<Boolean> empty = Ref.create(true);
-    result.runRemainingContributors(parameters, new Consumer<CompletionResult>() {
-          public void consume(final CompletionResult lookupElement) {
-            empty.set(false);
-            result.passResult(lookupElement);
-          }
-        });
+    final boolean empty = result.runRemainingContributors(parameters, true).isEmpty();
 
     final CompletionParameters classParams;
 
     final int invocationCount = parameters.getInvocationCount();
-    if (empty.get().booleanValue()) {
+    if (empty) {
       classParams = parameters.withType(CompletionType.CLASS_NAME);
     }
     else if (invocationCount > 1) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@ package com.intellij.ui.tabs.impl.singleRow;
 import com.intellij.ui.tabs.impl.JBTabsImpl;
 import com.intellij.ui.tabs.impl.ShapeTransform;
 import com.intellij.ui.tabs.impl.TabLabel;
-import com.intellij.ui.tabs.impl.table.TableLayout;
+import com.intellij.ui.tabs.impl.TabLayout;
 
 import java.awt.*;
 
@@ -41,13 +41,19 @@ public abstract class SingleRowLayoutStrategy {
 
   public abstract int getLengthIncrement(final Dimension dimension);
 
+  public abstract int getMinPosition(final Rectangle bounds);
+
   public abstract int getMaxPosition(final Rectangle bounds);
 
-  public abstract int getFixedFitLength(final SingleRowPassInfo data);
+  protected abstract int getFixedFitLength(final SingleRowPassInfo data);
 
-  public abstract Rectangle getLayoutRec(final int position, final int fixedPos, final int length, final int fixedFitLength);
+  public Rectangle getLayoutRect(final SingleRowPassInfo data, final int position, final int length) {
+    return getLayoutRec(position, getFixedPosition(data), length, getFixedFitLength(data));
+  }
 
-  public abstract int getFixedPosition(final SingleRowPassInfo data);
+  protected abstract Rectangle getLayoutRec(final int position, final int fixedPos, final int length, final int fixedFitLength);
+
+  protected abstract int getFixedPosition(final SingleRowPassInfo data);
 
   public abstract Rectangle getMoreRect(final SingleRowPassInfo data);
 
@@ -67,6 +73,21 @@ public abstract class SingleRowLayoutStrategy {
 
   public abstract boolean isDragOut(TabLabel tabLabel, int deltaX, int deltaY);
 
+  /**
+   * Whether a tab that didn't fit completely on the right/bottom side in scrollable layout should be clipped or hidden altogether.
+   *
+   * @return true if the tab should be clipped, false if hidden.
+   */
+  public abstract boolean drawPartialOverflowTabs();
+
+  /**
+   * Return the change of scroll offset for every unit of mouse wheel scrolling.
+   *
+   * @param label the first visible tab label
+   * @return the scroll amount
+   */
+  public abstract int getScrollUnitIncrement(TabLabel label);
+
   abstract static class Horizontal extends SingleRowLayoutStrategy {
     protected Horizontal(final SingleRowLayout layout) {
       super(layout);
@@ -83,11 +104,11 @@ public abstract class SingleRowLayoutStrategy {
 
     @Override
     public boolean isDragOut(TabLabel tabLabel, int deltaX, int deltaY) {
-      return Math.abs(deltaY) > tabLabel.getHeight() * TableLayout.getDragOutMultiplier();
+      return Math.abs(deltaY) > tabLabel.getHeight() * TabLayout.getDragOutMultiplier();
     }
 
     public int getMoreRectAxisSize() {
-      return myLayout.myMoreIcon.getIconWidth() + 6;
+      return myLayout.myMoreIcon.myIcon.getIconWidth() + 2 + 6;
     }
 
     public int getToFitLength(final SingleRowPassInfo data) {
@@ -100,6 +121,11 @@ public abstract class SingleRowLayoutStrategy {
 
     public int getLengthIncrement(final Dimension labelPrefSize) {
       return myTabs.isEditorTabs() ? labelPrefSize.width < MIN_TAB_WIDTH ? MIN_TAB_WIDTH : labelPrefSize.width : labelPrefSize.width;
+    }
+
+    @Override
+    public int getMinPosition(Rectangle bounds) {
+      return (int)bounds.getX();
     }
 
     public int getMaxPosition(final Rectangle bounds) {
@@ -118,6 +144,15 @@ public abstract class SingleRowLayoutStrategy {
       return data.insets.left;
     }
 
+    @Override
+    public boolean drawPartialOverflowTabs() {
+      return true;
+    }
+
+    @Override
+    public int getScrollUnitIncrement(TabLabel label) {
+      return 10;
+    }
   }
 
   static class Top extends Horizontal {
@@ -230,7 +265,7 @@ public abstract class SingleRowLayoutStrategy {
 
     @Override
     public boolean isDragOut(TabLabel tabLabel, int deltaX, int deltaY) {
-      return Math.abs(deltaX) > tabLabel.getHeight() * TableLayout.getDragOutMultiplier();
+      return Math.abs(deltaX) > tabLabel.getHeight() * TabLayout.getDragOutMultiplier();
     }
 
     public boolean isToCenterTextWhenStretched() {
@@ -238,7 +273,7 @@ public abstract class SingleRowLayoutStrategy {
     }
 
     int getMoreRectAxisSize() {
-      return myLayout.myMoreIcon.getIconHeight() + 4;
+      return myLayout.myMoreIcon.myIcon.getIconHeight() + 4;
     }
 
     public Dimension getCompSizeDelta(SingleRowPassInfo data) {
@@ -262,6 +297,11 @@ public abstract class SingleRowLayoutStrategy {
       return labelPrefSize.height;
     }
 
+    @Override
+    public int getMinPosition(Rectangle bounds) {
+      return (int) bounds.getMinY();
+    }
+
     public int getMaxPosition(final Rectangle bounds) {
       int maxY = (int)bounds.getMaxY();
       return myTabs.isEditorTabs() ? maxY - 1 : maxY;
@@ -271,6 +311,15 @@ public abstract class SingleRowLayoutStrategy {
       return myTabs.myHeaderFitSize.width;
     }
 
+    @Override
+    public boolean drawPartialOverflowTabs() {
+      return false;
+    }
+
+    @Override
+    public int getScrollUnitIncrement(TabLabel label) {
+      return label.getPreferredSize().height;
+    }
   }
 
   static class Left extends Vertical {

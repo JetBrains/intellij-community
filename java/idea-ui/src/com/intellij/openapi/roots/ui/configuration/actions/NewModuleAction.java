@@ -20,12 +20,14 @@ import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.ide.util.projectWizard.ProjectBuilder;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ui.configuration.DefaultModulesProvider;
 import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -43,7 +45,13 @@ public class NewModuleAction extends AnAction implements DumbAware {
       return;
     }
     Object dataFromContext = prepareDataFromContext(e);
-    final AddModuleWizard wizard = new AddModuleWizard(project, new DefaultModulesProvider(project), null);
+
+    String defaultPath = null;
+    final VirtualFile virtualFile = e.getData(PlatformDataKeys.VIRTUAL_FILE);
+    if (virtualFile != null && virtualFile.isDirectory()) {
+      defaultPath = virtualFile.getPath();
+    }
+    final AddModuleWizard wizard = new AddModuleWizard(project, new DefaultModulesProvider(project), defaultPath);
 
     wizard.show();
 

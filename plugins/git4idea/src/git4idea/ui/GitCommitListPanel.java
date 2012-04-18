@@ -16,15 +16,16 @@
 package git4idea.ui;
 
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ui.table.JBTable;
+import com.intellij.ui.table.TableView;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.ColumnInfo;
+import com.intellij.util.ui.ListTableModel;
+import com.intellij.util.ui.UIUtil;
 import git4idea.history.browser.GitCommit;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,10 +33,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
-import javax.swing.table.AbstractTableModel;
-import javax.swing.table.TableModel;
 import java.awt.*;
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -45,21 +43,19 @@ import java.util.List;
  */
 public class GitCommitListPanel extends JPanel implements TypeSafeDataProvider {
 
-  private static final List<ColumnInfo<GitCommit, Object>> COLUMNS_INFO = initColumnsInfo();
-
-  private final Project myProject;
   private final List<GitCommit> myCommits;
-  private final JBTable myTable;
+  private final TableView<GitCommit> myTable;
 
-  public GitCommitListPanel(@NotNull Project project, @NotNull List<GitCommit> commits) {
-    myProject = project;
+  public GitCommitListPanel(@NotNull List<GitCommit> commits, @Nullable String emptyText) {
     myCommits = commits;
 
-    TableModel tableModel = new GitCommitListTableModel(myCommits);
-
-    myTable = new JBTable(tableModel);
+    myTable = new TableView<GitCommit>();
+    updateModel();
     myTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     myTable.setStriped(true);
+    if (emptyText != null) {
+      myTable.getEmptyText().setText(emptyText);
+    }
 
     setLayout(new BorderLayout());
     add(ScrollPaneFactory.createScrollPane(myTable));
@@ -96,6 +92,8 @@ public class GitCommitListPanel extends JPanel implements TypeSafeDataProvider {
       int row = rows[0];
 
       GitCommit gitCommit = myCommits.get(row);
+      // suppressing: inherited API
+      //noinspection unchecked
       sink.put(key, ArrayUtil.toObjectArray(gitCommit.getChanges(), Change.class));
     }
   }
@@ -112,68 +110,101 @@ public class GitCommitListPanel extends JPanel implements TypeSafeDataProvider {
   public void setCommits(@NotNull List<GitCommit> commits) {
     myCommits.clear();
     myCommits.addAll(commits);
-    myTable.setModel(new GitCommitListTableModel(myCommits));
+    updateModel();
     myTable.repaint();
   }
 
-  private static class GitCommitListTableModel extends AbstractTableModel {
+  private void updateModel() {
+    myTable.setModelAndUpdateColumns(new ListTableModel<GitCommit>(generateColumnsInfo(myCommits), myCommits, 0));
+  }
 
-    private final List<GitCommit> myCommits;
-
-    GitCommitListTableModel(List<GitCommit> commits) {
-      myCommits = commits;
+  @NotNull
+  private ColumnInfo[] generateColumnsInfo(@NotNull List<GitCommit> commits) {
+    ItemAndWidth hash = new ItemAndWidth("", 0);
+    ItemAndWidth author = new ItemAndWidth("", 0);
+    ItemAndWidth time = new ItemAndWidth("", 0);
+    for (GitCommit commit : commits) {
+      hash = getMax(hash, getHash(commit));
+      author = getMax(author, getAuthor(commit));
+      time = getMax(time, getTime(commit));
     }
 
-    @Override
-    public int getRowCount() {
-      return myCommits.size();
+    return new ColumnInfo[] {
+    new GitCommitColumnInfo("Hash", hash.myItem) {
+      @Override
+      public String valueOf(GitCommit commit) {
+        return getHash(commit);
+      }
+    },
+    new ColumnInfo<GitCommit, String>("Subject") {
+      @Override
+      public String valueOf(GitCommit commit) {
+        return commit.getSubject();
+      }
+    },
+    new GitCommitColumnInfo("Author", author.myItem) {
+      @Override
+      public String valueOf(GitCommit commit) {
+        return getAuthor(commit);
+      }
+    },
+    new GitCommitColumnInfo("Author time", time.myItem) {
+      @Override
+      public String valueOf(GitCommit commit) {
+        return getTime(commit);
+      }
     }
+    };
+  }
 
-    @Override
-    public int getColumnCount() {
-      return COLUMNS_INFO.size();
+  private ItemAndWidth getMax(ItemAndWidth current, String candidate) {
+    int width = myTable.getFontMetrics(myTable.getFont()).stringWidth(candidate);
+    if (width > current.myWidth) {
+      return new ItemAndWidth(candidate, width);
     }
+    return current;
+  }
 
-    @Override
-    public String getColumnName(int column) {
-      return COLUMNS_INFO.get(column).getName();
-    }
+  private static class ItemAndWidth {
+    private final String myItem;
+    private final int myWidth;
 
-    @Nullable
-    @Override
-    public Object getValueAt(int rowIndex, int columnIndex) {
-      GitCommit commit = myCommits.get(rowIndex);
-      return COLUMNS_INFO.get(columnIndex).valueOf(commit);
+    private ItemAndWidth(String item, int width) {
+      myItem = item;
+      myWidth = width;
     }
   }
 
-  private static List<ColumnInfo<GitCommit, Object>> initColumnsInfo() {
-    List<ColumnInfo<GitCommit, Object>> infos = new ArrayList<ColumnInfo<GitCommit, Object>>();
-    infos.add(new ColumnInfo<GitCommit, Object>("Hash") {
-      @Override
-      public Object valueOf(GitCommit commit) {
-        return commit.getShortHash();
-      }
-    });
-    infos.add(new ColumnInfo<GitCommit, Object>("Subject") {
-      @Override
-      public Object valueOf(GitCommit commit) {
-        return commit.getSubject();
-      }
-    });
-    infos.add(new ColumnInfo<GitCommit, Object>("Author") {
-      @Override
-      public Object valueOf(GitCommit commit) {
-        return commit.getAuthor();
-      }
-    });
-    infos.add(new ColumnInfo<GitCommit, Object>("Author time") {
-      @Override
-      public Object valueOf(GitCommit commit) {
-        return DateFormatUtil.formatPrettyDateTime(commit.getAuthorTime());
-      }
-    });
-    return infos;
+  private static String getHash(GitCommit commit) {
+    return commit.getShortHash().toString();
+  }
+
+  private static String getAuthor(GitCommit commit) {
+    return commit.getAuthor();
+  }
+
+  private static String getTime(GitCommit commit) {
+    return DateFormatUtil.formatPrettyDateTime(commit.getAuthorTime());
+  }
+
+  private abstract static class GitCommitColumnInfo extends ColumnInfo<GitCommit, String> {
+
+    @NotNull private final String myMaxString;
+
+    public GitCommitColumnInfo(@NotNull String name, @NotNull String maxString) {
+      super(name);
+      myMaxString = maxString;
+    }
+
+    @Override
+    public String getMaxStringValue() {
+      return myMaxString;
+    }
+
+    @Override
+    public int getAdditionalWidth() {
+      return UIUtil.DEFAULT_HGAP;
+    }
   }
 
 }

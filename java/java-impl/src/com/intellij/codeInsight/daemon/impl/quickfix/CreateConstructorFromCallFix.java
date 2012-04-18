@@ -44,6 +44,11 @@ public class CreateConstructorFromCallFix extends CreateFromUsageBaseFix {
   }
 
   @Override
+  protected boolean canBeTargetClass(PsiClass psiClass) {
+    return false;
+  }
+
+  @Override
   protected void invokeImpl(final PsiClass targetClass) {
     final Project project = myConstructorCall.getProject();
     PsiElementFactory elementFactory = JavaPsiFacade.getInstance(project).getElementFactory();

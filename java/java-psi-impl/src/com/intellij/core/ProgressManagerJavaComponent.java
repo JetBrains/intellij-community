@@ -21,12 +21,8 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.progress.*;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.ThrowableComputable;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.psi.PsiLock;
 import org.jetbrains.annotations.*;
@@ -191,6 +187,19 @@ public class ProgressManagerJavaComponent extends ProgressManager implements Dis
     },progress);
   }
 
+  @Override
+  public <T> T runProcess(@NotNull final Computable<T> process, ProgressIndicator progress) throws ProcessCanceledException {
+    final Ref<T> ref = new Ref<T>();
+    runProcess(new Runnable() {
+      @Override
+      public void run() {
+        ref.set(process.compute());
+      }
+    }, progress);
+    return ref.get();
+
+  }
+
   public void executeProcessUnderProgress(@NotNull Runnable process, ProgressIndicator progress) throws ProcessCanceledException {
     ProgressIndicator oldIndicator = myThreadIndicator.get();
 
@@ -278,10 +287,10 @@ public class ProgressManagerJavaComponent extends ProgressManager implements Dis
       final Task.NotificationInfo notificationInfo = task.notifyFinished();
       time = end - start;
       if (notificationInfo != null && time > 5000) { // show notification only if process took more than 5 secs
-        final JFrame frame = WindowManager.getInstance().getFrame(task.getProject());
-        if (!frame.hasFocus()) {
-          systemNotify(notificationInfo);
-        }
+        //final JFrame frame = WindowManager.getInstance().getFrame(task.getProject());
+        //if (!frame.hasFocus()) {
+        //  systemNotify(notificationInfo);
+        //}
       }
       task.onSuccess();
     }

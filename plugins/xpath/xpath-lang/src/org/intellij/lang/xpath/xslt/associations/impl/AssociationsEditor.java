@@ -9,7 +9,8 @@ import com.intellij.ide.util.PsiElementListCellRenderer;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.ide.util.treeView.NodeRenderer;
 import com.intellij.ide.util.treeView.TreeState;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Progressive;
@@ -18,15 +19,13 @@ import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.psi.PsiFile;
-import com.intellij.ui.IdeBorderFactory;
-import com.intellij.ui.LayeredIcon;
-import com.intellij.ui.TreeSpeedSearch;
+import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.treeStructure.Tree;
-import com.intellij.uiDesigner.core.GridConstraints;
-import com.intellij.uiDesigner.core.GridLayoutManager;
+import com.intellij.util.PlatformIcons;
 import com.intellij.util.config.StorageAccessors;
+import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.xpath.xslt.XsltSupport;
 import org.intellij.lang.xpath.xslt.associations.FileAssociationsManager;
 import org.jetbrains.annotations.NonNls;
@@ -51,7 +50,6 @@ class AssociationsEditor {
   @NonNls private static final String DIVIDER_PROPORTION = "dividerProportion";
 
   private JPanel myComponent;
-  private JPanel myToolbar;
   private JBList myList;
   private Tree myTree;
   private Splitter mySplitter;
@@ -62,18 +60,9 @@ class AssociationsEditor {
   private final ProjectTreeBuilder myBuilder;
 
   public AssociationsEditor(final Project project, final TreeState oldState) {
-    initUI();
-
     myManager = ((FileAssociationsManagerImpl)FileAssociationsManager.getInstance(project)).getTempManager();
 
-    final DefaultActionGroup group = new DefaultActionGroup();
-    group.add(new AddAssociationActionWrapper());
-    group.add(new RemoveAssociationAction());
-
-    final ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("AssociationsEditor", group, true);
-    myToolbar.add(toolbar.getComponent(), new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_HORIZONTAL,
-                                                              GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null,
-                                                              null, null));
+    initUI();
 
     final DefaultTreeModel treeModel = new DefaultTreeModel(new DefaultMutableTreeNode());
     myTree.setModel(treeModel);
@@ -126,22 +115,22 @@ class AssociationsEditor {
     myComponent.add(mySplitter, BorderLayout.CENTER);
 
     JPanel leftPanel = new JPanel(new BorderLayout());
-    leftPanel.setBorder(IdeBorderFactory.createTitledBorder("Project XSLT Files", false, false, true, new Insets(0, 0, 0, 0)));
+    leftPanel.setBorder(IdeBorderFactory.createTitledBorder("Project XSLT Files", false, new Insets(0, 0, 0, 0)));
     myTree = new Tree();
     myTree.setRootVisible(false);
     myTree.setShowsRootHandles(false);
     leftPanel.add(new JBScrollPane(myTree), BorderLayout.CENTER);
     mySplitter.setFirstComponent(leftPanel);
 
-    JPanel rightPanel = new JPanel(new BorderLayout());
-    rightPanel.setBorder(IdeBorderFactory.createTitledBorder("Associated Files", false, false, true, new Insets(0, 0, 0, 0)));
-    myToolbar = new JPanel(new GridLayoutManager(1, 1));
-    rightPanel.add(myToolbar, BorderLayout.NORTH);
     myList = new JBList();
     myList.setCellRenderer(new MyCellRenderer());
     myList.setMinimumSize(new Dimension(120, 200));
     myList.getEmptyText().setText("No associated files");
-    rightPanel.add(new JBScrollPane(myList), BorderLayout.CENTER);
+    JPanel rightPanel = ToolbarDecorator.createDecorator(myList)
+      .addExtraAction(AnActionButton.fromAction(new AddAssociationActionWrapper()))
+      .addExtraAction(AnActionButton.fromAction(new RemoveAssociationAction()))
+      .disableUpDownActions().disableAddAction().disableRemoveAction().createPanel();
+    UIUtil.addBorder(rightPanel, IdeBorderFactory.createTitledBorder("Associated Files", false, new Insets(0, 0, 0, 0)));
     mySplitter.setSecondComponent(rightPanel);
 
     final float dividerProportion = myProperties.getFloat(DIVIDER_PROPORTION, 0.3f);
@@ -236,7 +225,7 @@ class AssociationsEditor {
 
   class RemoveAssociationAction extends AnAction {
     public RemoveAssociationAction() {
-      super(null, "Remove Association", IconLoader.getIcon("/general/remove.png"));
+      super(null, "Remove Association", PlatformIcons.TABLE_REMOVE_ROW);
     }
 
     public void actionPerformed(AnActionEvent e) {
@@ -352,7 +341,7 @@ class AssociationsEditor {
       }
     }
 
-    public void update(PsiFile selection) {
+    public void update(@Nullable PsiFile selection) {
       final int oldSize = myFiles.length;
       myFiles = PsiFile.EMPTY_ARRAY;
       if (myFiles.length != oldSize) fireIntervalRemoved(this, 0, oldSize - 1);

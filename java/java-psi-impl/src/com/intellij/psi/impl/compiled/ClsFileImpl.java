@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.progress.NonCancelableSection;
@@ -57,7 +58,7 @@ import java.lang.ref.SoftReference;
 import java.util.*;
 
 public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub> implements PsiJavaFile, PsiFileWithStubSupport, PsiFileEx,
-                                                                                            Queryable, PsiClassOwnerEx {
+                                                                                            Queryable, PsiClassOwnerEx, PsiCompiledFile {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.compiled.ClsFileImpl");
 
   /** YOU absolutely MUST NOT hold PsiLock under the MIRROR_LOCK */
@@ -235,7 +236,7 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
 
   @Override
   public void appendMirrorText(final int indentLevel, final StringBuilder buffer) {
-    buffer.append(PsiBundle.message("psi.decompiled.text.header"));
+    buffer.append("\n  // IntelliJ API Decompiler stub source generated from a class file\n  // Implementation of methods is not available");
     goNextLine(indentLevel, buffer);
     goNextLine(indentLevel, buffer);
     final PsiPackageStatement packageStatement = getPackageStatement();
@@ -294,20 +295,23 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
     synchronized (MIRROR_LOCK) {
       if (myMirrorFileElement == null) {
         VirtualFile virtualFile = getVirtualFile();
-        final Document document = FileDocumentManager.getInstance().getDocument(virtualFile);
-        String text = document.getText();
+        String mirrorText = decompile(getManager(), virtualFile);
         String ext = JavaFileType.INSTANCE.getDefaultExtension();
         PsiClass[] classes = getClasses();
 
         String fileName = (classes.length > 0 ? classes[0].getName(): virtualFile.getNameWithoutExtension()) + "." + ext;
         PsiManager manager = getManager();
-        PsiFile mirror = PsiFileFactory.getInstance(manager.getProject()).createFileFromText(fileName, JavaLanguage.INSTANCE, text, false, false);
+        PsiFile mirror = PsiFileFactory.getInstance(manager.getProject()).createFileFromText(fileName, JavaLanguage.INSTANCE, mirrorText, false, false);
         final ASTNode mirrorTreeElement = SourceTreeToPsiMap.psiElementToTree(mirror);
 
         //IMPORTANT: do not take lock too early - FileDocumentManager.getInstance().saveToString() can run write action...
         final NonCancelableSection section = ProgressIndicatorProvider.getInstance().startNonCancelableSection();
         try {
           setMirror((TreeElement)mirrorTreeElement);
+
+          // TODO this code should be removed after 11.1 release. It is left just in case.
+          // Document is not actually used, maybe it is stored in mirror just to avoid garbage collecting
+          Document document = FileDocumentManager.getInstance().getDocument(virtualFile);
           myMirrorFileElement.putUserData(DOCUMENT_IN_MIRROR_KEY, document);
         }
         finally {
@@ -317,6 +321,17 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
 
       return myMirrorFileElement.getPsi();
     }
+  }
+
+  @Override
+  public PsiFile getDecompiledPsiFile() {
+    for (ClsFileDecompiledPsiFileProvider provider : Extensions.getExtensions(ClsFileDecompiledPsiFileProvider.EP_NAME)) {
+      PsiFile decompiledPsiFile = provider.getDecompiledPsiFile(this);
+      if (decompiledPsiFile != null) {
+        return decompiledPsiFile;
+      }
+    }
+    return (PsiFile) getMirror();
   }
 
   @Override
@@ -371,7 +386,7 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
     ClsFileImpl psiFile = null;
     if (provider != null) {
       final PsiFile psi = provider.getPsi(provider.getBaseLanguage());
-      if (psi instanceof ClsFileImpl) {
+      if (psi instanceof PsiCompiledFile) {
         psiFile = (ClsFileImpl)psi;
       }
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.CommandLineBuilder;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.junit.JUnitProcessHandler;
+import com.intellij.execution.junit2.segments.OutputPacketProcessor;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
@@ -46,6 +47,7 @@ import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.openapi.wm.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -63,7 +65,7 @@ public final class ExecutionHandler {
    */
   public static void runBuild(final AntBuildFileBase buildFile,
                               String[] targets,
-                              final AntBuildMessageView buildMessageViewToReuse,
+                              @Nullable final AntBuildMessageView buildMessageViewToReuse,
                               final DataContext dataContext,
                               List<BuildFileProperty> additionalProperties, @NotNull final AntBuildListener antBuildListener) {
     FileDocumentManager.getInstance().saveAllDocuments();
@@ -134,7 +136,7 @@ public final class ExecutionHandler {
 
     final long startTime = System.currentTimeMillis();
     LocalHistory.getInstance().putSystemLabel(project, AntBundle.message("ant.build.local.history.label", buildFile.getName()));
-    JUnitProcessHandler handler;
+    final JUnitProcessHandler handler;
     try {
       handler = JUnitProcessHandler.runCommandLine(commandLine);
     }
@@ -153,7 +155,7 @@ public final class ExecutionHandler {
   }
 
   private static void processRunningAnt(final ProgressIndicator progress,
-                                        JUnitProcessHandler handler,
+                                        final JUnitProcessHandler handler,
                                         final AntBuildMessageView errorView,
                                         final AntBuildFile buildFile,
                                         final long startTime,
@@ -171,9 +173,9 @@ public final class ExecutionHandler {
 
     handler.addProcessListener(new ProcessAdapter() {
       public void processTerminated(ProcessEvent event) {
+        final long buildTime = System.currentTimeMillis() - startTime;
         checkCancelTask.cancel();
         parser.setStopped(true);
-        errorView.stopScrollerThread();
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           public void run() {
             if (project.isDisposed()) return;
@@ -181,14 +183,13 @@ public final class ExecutionHandler {
             ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.MESSAGES_WINDOW);
             if (toolWindow != null) { // can be null if project is closed
               toolWindow.activate(null, false);
-              final long buildTime = System.currentTimeMillis() - startTime;
-              errorView.buildFinished(progress != null && progress.isCanceled(), buildTime, antBuildListener);
+              final OutputPacketProcessor dispatcher = handler.getErr().getEventsDispatcher();
+              errorView.buildFinished(progress != null && progress.isCanceled(), buildTime, antBuildListener, dispatcher);
             }
           }
         }, ModalityState.NON_MODAL);
       }
     });
-    errorView.startScrollerThread();
     handler.startNotify();
   }
 
@@ -223,7 +224,7 @@ public final class ExecutionHandler {
     }
   }
 
-  private static AntBuildMessageView prepareMessageView(AntBuildMessageView buildMessageViewToReuse,
+  private static AntBuildMessageView prepareMessageView(@Nullable AntBuildMessageView buildMessageViewToReuse,
                                                         AntBuildFileBase buildFile,
                                                         String[] targets) throws RunCanceledException {
     AntBuildMessageView messageView;

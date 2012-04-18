@@ -45,7 +45,7 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
   private static final Key<ChooseByNamePopup> CHOOSE_BY_NAME_POPUP_IN_PROJECT_KEY = new Key<ChooseByNamePopup>("ChooseByNamePopup");
   private Component myOldFocusOwner = null;
   private boolean myShowListForEmptyPattern = false;
-  private boolean myMayRequestCurrentWindow;
+  private final boolean myMayRequestCurrentWindow;
 
   protected ChooseByNamePopup(@Nullable final Project project, final ChooseByNameModel model, ChooseByNameItemProvider provider, final ChooseByNamePopup oldPopup,
                             @Nullable final String predefinedText, boolean mayRequestOpenInCurrentWindow, int initialIndex) {
@@ -170,7 +170,8 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
       if (chosenElements != null) {
         if (myActionListener instanceof MultiElementsCallback) {
           ((MultiElementsCallback)myActionListener).elementsChosen(chosenElements);
-        } else {
+        }
+        else {
           for (Object element : chosenElements) {
             myActionListener.elementChosen(element);
             String text = myModel.getFullName(element);
@@ -179,7 +180,8 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
             }
           }
         }
-      } else {
+      }
+      else {
         return;
       }
 

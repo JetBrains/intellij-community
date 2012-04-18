@@ -106,7 +106,7 @@ public class ActionUninstallPlugin extends AnAction implements DumbAware {
 
     try {
       PluginInstaller.prepareToUninstall(pluginId);
-      final JDOMExternalizableStringList installedPlugins = PluginManagerUISettings.getInstance().myInstalledPlugins;
+      final JDOMExternalizableStringList installedPlugins = PluginManagerUISettings.getInstance().getInstalledPlugins();
       final String pluginIdString = pluginId.getIdString();
       while (installedPlugins.contains(pluginIdString)) {
         installedPlugins.remove(pluginIdString);

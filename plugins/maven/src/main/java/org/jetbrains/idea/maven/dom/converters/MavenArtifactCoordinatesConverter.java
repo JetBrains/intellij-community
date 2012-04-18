@@ -82,7 +82,7 @@ public abstract class MavenArtifactCoordinatesConverter extends ResolvingConvert
     return result != null ? result : super.resolve(o, context);
   }
 
-  private Project getProject(ConvertContext context) {
+  private static Project getProject(ConvertContext context) {
     return context.getFile().getProject();
   }
 
@@ -126,7 +126,7 @@ public abstract class MavenArtifactCoordinatesConverter extends ResolvingConvert
     return new ConverterStrategy();
   }
 
-  private class MyUpdateIndicesFix implements LocalQuickFix {
+  private static class MyUpdateIndicesFix implements LocalQuickFix {
     @NotNull
     public String getFamilyName() {
       return MavenDomBundle.message("inspection.group");

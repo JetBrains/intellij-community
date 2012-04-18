@@ -15,8 +15,122 @@
  */
 package com.intellij.designer.designSurface.tools;
 
+import com.intellij.designer.designSurface.EditableArea;
+import com.intellij.designer.model.RadComponent;
+import com.intellij.designer.utils.Cursors;
+
+import java.awt.*;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseEvent;
+
 /**
  * @author Alexander Lobas
  */
 public abstract class AbstractCreationTool extends TargetingTool {
+  private boolean myCanUnload;
+
+  protected AbstractCreationTool(boolean canUnload) {
+    myCanUnload = canUnload;
+    setDefaultCursor(Cursors.getCopyCursor());
+    setDisabledCursor(Cursors.getNoCursor());
+  }
+
+  @Override
+  protected void handleButtonDown(int button) {
+    if (button == MouseEvent.BUTTON1) {
+      if (myState == STATE_INIT) {
+        myState = STATE_DRAG;
+      }
+    }
+    else {
+      myState = STATE_INVALID;
+      handleInvalidInput();
+    }
+  }
+
+  @Override
+  protected void handleButtonUp(int button) {
+    if (myState == STATE_DRAG || myState == STATE_DRAG_IN_PROGRESS) {
+      eraseFeedback();
+      executeCommand();
+      selectAddedObjects();
+    }
+
+    myState = STATE_NONE;
+    handleFinished();
+  }
+
+  @Override
+  protected void handleMove() {
+    updateContext();
+    updateTargetUnderMouse();
+    showFeedback();
+    updateCommand();
+  }
+
+  @Override
+  protected void handleDragInProgress() {
+    if (myState == STATE_DRAG_IN_PROGRESS) {
+      updateContext();
+      showFeedback();
+      updateCommand();
+    }
+  }
+
+  private void selectAddedObjects() {
+    myArea.setSelection(myContext.getComponents());
+  }
+
+  @Override
+  protected void resetState() {
+    // hack: update cursor
+    if (myCanUnload || myArea == null) {
+      super.resetState();
+    }
+  }
+
+  private void handleFinished() {
+    if (myCanUnload) {
+      myToolProvider.loadDefaultTool();
+    }
+    else {
+      deactivate();
+      activate();
+
+      // hack: update cursor
+      if (myArea != null) {
+        handleMove();
+      }
+    }
+  }
+
+  private void updateTargetUnderMouse() {
+    ContainerTargetFilter filter = new ContainerTargetFilter();
+    RadComponent target = myArea.findTarget(myCurrentScreenX, myCurrentScreenY, filter);
+    setTarget(target, filter);
+
+    if (target != null) {
+      updateTarget();
+    }
+  }
+
+  protected abstract void updateTarget();
+
+  @Override
+  protected void updateContext() {
+    super.updateContext();
+
+    if (myState == STATE_DRAG_IN_PROGRESS) {
+      myContext.setSizeDelta(new Dimension(moveDeltaWidth(), moveDeltaHeight()));
+    }
+
+    myContext.setLocation(getLocation());
+  }
+
+  @Override
+  public void keyPressed(KeyEvent event, EditableArea area) throws Exception {
+    if (event.getKeyCode() == KeyEvent.VK_ESCAPE) {
+      myToolProvider.loadDefaultTool();
+    }
+  }
 }

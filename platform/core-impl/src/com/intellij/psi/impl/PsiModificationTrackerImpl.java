@@ -21,6 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.messages.MessageBus;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -68,7 +69,7 @@ public class PsiModificationTrackerImpl implements PsiModificationTracker, PsiTr
   }
 
   @Override
-  public void treeChanged(PsiTreeChangeEventImpl event) {
+  public void treeChanged(@NotNull PsiTreeChangeEventImpl event) {
     myModificationCount.getAndIncrement();
     if (event.getParent() instanceof PsiDirectory) {
       incOutOfCodeBlockModificationCounter();

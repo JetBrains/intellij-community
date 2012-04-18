@@ -22,6 +22,7 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchScopeUtil;
 import com.intellij.psi.search.searches.ReferencesSearch;
@@ -241,7 +242,8 @@ public class RefactoringConflictsUtil {
           if (resolved != null &&
               !reported.contains(resolved) &&
               !CommonRefactoringUtil.isAncestor(resolved, scopes) &&
-              !PsiSearchScopeUtil.isInScope(resolveScope, resolved)) {
+              !PsiSearchScopeUtil.isInScope(resolveScope, resolved) && 
+              !(resolved instanceof LightElement)) {
             final String scopeDescription = RefactoringUIUtil.getDescription(ConflictsUtil.getContainer(reference), true);
             final String message = RefactoringBundle.message("0.referenced.in.1.will.not.be.accessible.in.module.2",
                                                              RefactoringUIUtil.getDescription(resolved, true),

@@ -21,7 +21,6 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.util.Function;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.indexing.AdditionalIndexedRootsScope;
 import com.intellij.util.indexing.FileBasedIndex;
@@ -38,22 +37,17 @@ import java.util.List;
  */
 public class IndexedRelevantResource<K, V extends Comparable> implements Comparable<IndexedRelevantResource<K, V>> {
 
-  public static final Function<IndexedRelevantResource<String,String>,VirtualFile> MAPPING = new Function<IndexedRelevantResource<String, String>, VirtualFile>() {
-    public VirtualFile fun(IndexedRelevantResource<String, String> resource) {
-      return resource.getFile();
-    }
-  };
-
   public static <K, V extends Comparable> List<IndexedRelevantResource<K, V>> getResources(ID<K, V> indexId,
                                                                                            final K key,
                                                                                            @Nullable final Module module,
-                                                                                           @NotNull Project project) {
+                                                                                           @NotNull Project project,
+                                                                                           @Nullable final GlobalSearchScope additionalScope) {
 
     final ArrayList<IndexedRelevantResource<K, V>> resources = new ArrayList<IndexedRelevantResource<K, V>>();
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     FileBasedIndex.getInstance().processValues(indexId, key, null, new FileBasedIndex.ValueProcessor<V>() {
       public boolean process(VirtualFile file, V value) {
-        ResourceRelevance relevance = ResourceRelevance.getRelevance(file, module, fileIndex);
+        ResourceRelevance relevance = ResourceRelevance.getRelevance(file, module, fileIndex, additionalScope);
         if (relevance != ResourceRelevance.NONE) {
           resources.add(new IndexedRelevantResource<K, V>(file, key, value, relevance));
         }
@@ -69,7 +63,8 @@ public class IndexedRelevantResource<K, V extends Comparable> implements Compara
     ArrayList<IndexedRelevantResource<K, V>> all = new ArrayList<IndexedRelevantResource<K, V>>();
     Collection<K> allKeys = FileBasedIndex.getInstance().getAllKeys(indexId, module.getProject());
     for (K key : allKeys) {
-      List<IndexedRelevantResource<K, V>> resources = getResources(indexId, key, module, module.getProject());
+      List<IndexedRelevantResource<K, V>> resources = getResources(indexId, key, module, module.getProject(),
+                                                                   null);
       if (!resources.isEmpty()) {
         if (chooser == null) {
           all.add(resources.get(0));

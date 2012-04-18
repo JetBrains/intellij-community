@@ -88,6 +88,7 @@ public class RedundantCastTest extends InspectionTestCase {
   public void testIDEADEV15170() throws Exception { doTest(); }
 
   public void testIDEADEV25675() throws Exception { doTest(); }
+  public void testFieldAccessOnTheLeftOfAssignment() throws Exception { doTest(); }
   
   public void testNestedCast() throws Exception { doTest(); }
   public void testPrimitiveInsideSynchronized() throws Exception { doTest(); }

@@ -47,7 +47,7 @@ public interface FileSystemTree extends Disposable {
 
   void addListener(Listener listener, Disposable parent);
 
-  boolean isUnderRoots(VirtualFile file);
+  boolean isUnderRoots(@NotNull VirtualFile file);
 
   boolean selectionExists();
 

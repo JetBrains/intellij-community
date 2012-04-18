@@ -31,11 +31,13 @@ import org.jetbrains.annotations.NotNull;
  * @author max
  */
 public class SplitDeclarationAction extends PsiElementBaseIntentionAction {
+  @Override
   @NotNull
   public String getFamilyName() {
     return CodeInsightBundle.message("intention.split.declaration.family");
   }
 
+  @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
 
     if (element instanceof PsiCompiledElement) return false;
@@ -86,6 +88,7 @@ public class SplitDeclarationAction extends PsiElementBaseIntentionAction {
     return false;
   }
 
+  @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     if (!CodeInsightUtilBase.prepareFileForWrite(file)) return;
 

@@ -55,4 +55,21 @@ public interface Computable <T> {
     }
   }
 
+  abstract class NullableCachedComputable<T> implements Computable<T> {
+    private static final Object NULL_VALUE = new Object();
+    private Object myValue;
+
+    @Nullable
+    protected abstract T internalCompute();
+
+    @Nullable
+    @Override
+    public final T compute() {
+      if (myValue == null) {
+        final T value = internalCompute();
+        myValue = value != null ? value : NULL_VALUE;
+      }
+      return myValue != NULL_VALUE ? (T)myValue : null;
+    }
+  }
 }

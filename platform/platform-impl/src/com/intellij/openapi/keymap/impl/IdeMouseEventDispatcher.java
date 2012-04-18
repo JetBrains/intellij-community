@@ -26,7 +26,6 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
 import com.intellij.util.containers.HashMap;
-import com.intellij.util.ui.MacUIUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 
@@ -130,8 +129,6 @@ public final class IdeMouseEventDispatcher {
       resetPopupTrigger(e);
     }
 
-    MacUIUtil.showCursor();
-
     if (!(e.getID() == MouseEvent.MOUSE_PRESSED ||
           e.getID() == MouseEvent.MOUSE_RELEASED ||
           e.getID() == MOUSE_CLICKED)) {
@@ -144,6 +141,10 @@ public final class IdeMouseEventDispatcher {
         || e.getClickCount() < 1 // TODO[vova,anton] is it possible. it seems that yes! but how???
         || e.getButton() == MouseEvent.NOBUTTON) { // See #16995. It did happen
       ignore = true;
+    }
+
+    if (e.getID() == MouseEvent.MOUSE_PRESSED && e.getButton() > 3) {
+      return true;
     }
 
     final JRootPane root = findRoot(e);
@@ -209,6 +210,8 @@ public final class IdeMouseEventDispatcher {
           e.consume();
         }
       }
+      if (actions.length > 0 && e.isConsumed())
+        return true;
     }
     return false;
   }

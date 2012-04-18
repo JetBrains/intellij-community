@@ -48,7 +48,10 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.ExternalChangeAction;
 import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.xml.XmlTag;
 import org.jetbrains.android.AndroidFileTemplateProvider;
 import org.jetbrains.android.dom.manifest.Manifest;
 import org.jetbrains.android.dom.resources.ResourceElement;
@@ -63,6 +66,8 @@ import org.jetbrains.android.run.testing.AndroidTestRunConfigurationType;
 import org.jetbrains.android.sdk.AndroidPlatform;
 import org.jetbrains.android.sdk.AndroidSdkUtils;
 import org.jetbrains.android.util.AndroidBundle;
+import org.jetbrains.android.util.AndroidCommonUtils;
+import org.jetbrains.android.util.AndroidResourceUtil;
 import org.jetbrains.android.util.AndroidUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -215,10 +220,10 @@ public class AndroidModuleBuilder extends JavaModuleBuilder {
       return true;
     }
 
-    IAndroidTarget target = platform.getTarget();
+    final IAndroidTarget target = platform.getTarget();
 
     final String androidToolPath =
-      platform.getSdk().getLocation() + File.separator + AndroidSdkUtils.toolPath(SdkConstants.androidCmdName());
+      platform.getSdkData().getLocation() + File.separator + AndroidCommonUtils.toolPath(SdkConstants.androidCmdName());
 
     if (!new File(androidToolPath).exists()) {
       return false;
@@ -327,6 +332,7 @@ public class AndroidModuleBuilder extends JavaModuleBuilder {
                   }
                   if (myProjectType == ProjectType.APPLICATION) {
                     assignApplicationName(facet);
+                    configureManifest(facet, target);
                     createChildDirectoryIfNotExist(project, contentRoot, SdkConstants.FD_ASSETS);
                     createChildDirectoryIfNotExist(project, contentRoot, SdkConstants.FD_NATIVE_LIBS);
                   }
@@ -375,6 +381,29 @@ public class AndroidModuleBuilder extends JavaModuleBuilder {
     return true;
   }
 
+  private static void configureManifest(@NotNull AndroidFacet facet, @NotNull IAndroidTarget target) {
+    final Manifest manifest = facet.getManifest();
+    if (manifest == null) {
+      return;
+    }
+
+    final XmlTag manifestTag = manifest.getXmlTag();
+    if (manifestTag == null) {
+      return;
+    }
+
+    XmlTag usesSdkTag = manifestTag.createChildTag("uses-sdk", "", null, false);
+    if (usesSdkTag != null) {
+      usesSdkTag = manifestTag.addSubTag(usesSdkTag, true);
+      usesSdkTag.setAttribute("minSdkVersion", SdkConstants.NS_RESOURCES, target.getVersion().getApiString());
+    }
+
+    final PsiFile manifestFile = manifestTag.getContainingFile();
+    if (manifestFile != null) {
+      CodeStyleManager.getInstance(manifestFile.getProject()).reformat(manifestFile);
+    }
+  }
+
   private void assignApplicationName(AndroidFacet facet) {
     if (myApplicationName == null || myApplicationName.length() == 0) {
       return;
@@ -390,19 +419,21 @@ public class AndroidModuleBuilder extends JavaModuleBuilder {
       }
     }
 
+    final String normalizedAppName = AndroidResourceUtil.normalizeXmlResourceValue(myApplicationName.replace("\\", "\\\\"));
+
     if (appNameResElement == null) {
-      manager.addValueResource("string", appNameResource, myApplicationName);
+      manager.addValueResource("string", appNameResource, normalizedAppName);
     }
     else {
-      appNameResElement.setStringValue(myApplicationName);
+      appNameResElement.setStringValue(normalizedAppName);
     }
 
     final Manifest manifest = facet.getManifest();
 
     if (manifest != null) {
       manifest.getApplication().getLabel().setValue(ResourceValue.referenceTo('@', null, "string", appNameResource));
+      }
     }
-  }
 
   private void createManifestFileAndAntFiles(Project project, VirtualFile contentRoot) {
     VirtualFile existingManifestFile = contentRoot.findChild(FN_ANDROID_MANIFEST_XML);
@@ -514,6 +545,11 @@ public class AndroidModuleBuilder extends JavaModuleBuilder {
                 });
 
                 assignApplicationName(facet);
+
+                final AndroidPlatform platform = AndroidPlatform.parse(mySdk);
+                if (platform != null) {
+                  configureManifest(facet, platform.getTarget());
+                }
               }
             }
           };

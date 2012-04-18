@@ -21,6 +21,7 @@ import com.intellij.openapi.vcs.actions.VcsContextFactory;
 import com.intellij.openapi.vcs.VcsBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
@@ -51,6 +52,7 @@ public abstract class LocalChangeList implements Cloneable, ChangeList {
 
   public abstract void setName(@NotNull String name);
 
+  @Nullable
   public abstract String getComment();
 
   public abstract void setComment(String comment);

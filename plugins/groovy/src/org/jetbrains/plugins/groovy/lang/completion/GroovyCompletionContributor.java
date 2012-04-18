@@ -349,12 +349,10 @@ public class GroovyCompletionContributor extends CompletionContributor {
                                     ProcessingContext context,
                                     @NotNull final CompletionResultSet result) {
         final Set<String> usedWords = new THashSet<String>();
-        result.runRemainingContributors(parameters, new Consumer<CompletionResult>() {
-          public void consume(CompletionResult element) {
-            result.passResult(element);
-            usedWords.add(element.getLookupElement().getLookupString());
-          }
-        });
+        for (CompletionResult element : result.runRemainingContributors(parameters, true)) {
+          usedWords.add(element.getLookupElement().getLookupString());
+        }
+
         PsiReference reference = parameters.getPosition().getContainingFile().findReferenceAt(parameters.getOffset());
         if (reference == null || reference.isSoft()) {
           WordCompletionContributor.addWordCompletionVariants(result, parameters, usedWords);
@@ -435,7 +433,8 @@ public class GroovyCompletionContributor extends CompletionContributor {
       for (String string : CompleteReferenceExpression.getVariantsWithSameQualifier(matcher, (GrExpression)qualifier, (GrReferenceExpression)reference)) {
         result.add(GroovyCompletionUtil.getLookupElement(string));
       }
-      if (parameters.getInvocationCount() < 2 && qualifier != null && qualifierType == null) {
+      if (parameters.getInvocationCount() < 2 && qualifier != null && qualifierType == null &&
+          !(qualifier instanceof GrReferenceExpression && ((GrReferenceExpression)qualifier).resolve() instanceof PsiPackage)) {
         if (parameters.getInvocationCount() == 1) {
           showInfo();
         }

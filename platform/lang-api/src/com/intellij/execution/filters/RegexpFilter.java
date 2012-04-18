@@ -53,7 +53,7 @@ public class RegexpFilter implements Filter {
     myProject = project;
     validate(expression);
 
-    if (expression == null || "".equals(expression.trim())) {
+    if (expression == null || expression.trim().isEmpty()) {
       throw new InvalidExpressionException("expression == null or empty");
     }
 
@@ -105,7 +105,7 @@ public class RegexpFilter implements Filter {
   }
 
   public static void validate(String expression) {
-    if (expression == null || "".equals(expression.trim())) {
+    if (expression == null || expression.trim().isEmpty()) {
       throw new InvalidExpressionException("expression == null or empty");
     }
 

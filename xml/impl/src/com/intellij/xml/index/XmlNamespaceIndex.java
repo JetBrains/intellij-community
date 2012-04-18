@@ -45,7 +45,8 @@ public class XmlNamespaceIndex extends XmlIndex<String> {
   }
 
   public static List<IndexedRelevantResource<String, String>> getResourcesByNamespace(String namespace, final Project project, Module module) {
-    List<IndexedRelevantResource<String, String>> resources = IndexedRelevantResource.getResources(NAME, namespace, module, project);
+    List<IndexedRelevantResource<String, String>> resources = IndexedRelevantResource.getResources(NAME, namespace, module, project,
+                                                                                                   null);
     Collections.sort(resources);
     return resources;
   }
@@ -59,12 +60,17 @@ public class XmlNamespaceIndex extends XmlIndex<String> {
   
   private static final ID<String,String> NAME = ID.create("XmlNamespaces");
 
+  @Override
+  @NotNull
   public ID<String, String> getName() {
     return NAME;
   }
 
+  @Override
+  @NotNull
   public DataIndexer<String, String, FileContent> getIndexer() {
     return new DataIndexer<String, String, FileContent>() {
+      @Override
       @NotNull
       public Map<String, String> map(final FileContent inputData) {
         final String ns = XsdNamespaceBuilder.computeNamespace(new UnsyncByteArrayInputStream(inputData.getContent()));
@@ -78,6 +84,7 @@ public class XmlNamespaceIndex extends XmlIndex<String> {
     };
   }
 
+  @Override
   public DataExternalizer<String> getValueExternalizer() {
     return KEY_DESCRIPTOR;
   }

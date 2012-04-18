@@ -53,11 +53,13 @@ public class ProjectInspectionToolsConfigurable extends InspectionToolsConfigura
       myProfileManager.setRootProfile(profileName);
       myProjectProfileManager.setProjectProfile(null);
     }
+    InspectionProfileManager.onProfilesChanged();
   }
 
   @Override
   public boolean isModified() {
-    if (!Comparing.strEqual(getCurrentProfile().getName(), getSelectedObject().getName())) return true;
+    final InspectionProfileImpl selectedObject = getSelectedObject();
+    if (selectedObject != null && !Comparing.strEqual(getCurrentProfile().getName(), selectedObject.getName())) return true;
     return super.isModified();
   }
 }

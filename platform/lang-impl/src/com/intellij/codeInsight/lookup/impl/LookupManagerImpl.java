@@ -95,7 +95,7 @@ public class LookupManagerImpl extends LookupManager {
 
 
     final EditorFactoryAdapter myEditorFactoryListener = new EditorFactoryAdapter() {
-      public void editorReleased(EditorFactoryEvent event) {
+      public void editorReleased(@NotNull EditorFactoryEvent event) {
         if (event.getEditor() == myActiveLookupEditor) {
           hideActiveLookup();
         }

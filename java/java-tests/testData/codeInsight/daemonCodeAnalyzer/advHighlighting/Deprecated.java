@@ -60,3 +60,30 @@ class ci1 extends ac1 implements i1 {
  // no chance not to implement it
  public void f() {}
 }
+
+class Aaa {
+  public Aaa(String s) {
+    System.out.println(s);
+  }
+
+  /**
+   * @deprecated
+   */
+  public Aaa() {}
+
+  public void foo() {
+    new Aaa("asdasdad") {};
+  }
+}
+
+class Anonym {
+    /**
+     * @deprecated
+     */
+    public Anonym(String sss) {
+        System.out.println(sss);
+    }
+    public void foo() {
+        new <warning descr="'Anonym(java.lang.String)' is deprecated">Anonym</warning>("asdasd") {};
+    }
+}

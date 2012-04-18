@@ -53,7 +53,16 @@ public class MacMainFrameDecorator implements UISettingsListener, Disposable {
   public static final Key<Boolean> SHOULD_OPEN_IN_FULLSCREEN = Key.create("mac.should.open.in.fullscreen");
   
   public static final String FULL_SCREEN = "Idea.Is.In.FullScreen.Mode.Now";
-  public static final boolean FULL_SCREEN_AVAILABLE = SystemInfo.isJavaVersionAtLeast("1.6.0_29");
+  private static boolean HAS_FULLSCREEN_UTILITIES;
+  static {
+    try {
+      Class.forName("com.apple.eawt.FullScreenUtilities");
+      HAS_FULLSCREEN_UTILITIES = true;
+    } catch (Exception e) {
+      HAS_FULLSCREEN_UTILITIES = false;
+    }
+  }
+  public static final boolean FULL_SCREEN_AVAILABLE = SystemInfo.isJavaVersionAtLeast("1.6.0_29") && HAS_FULLSCREEN_UTILITIES;
   
   private static boolean SHOWN = false;
 
@@ -127,14 +136,16 @@ public class MacMainFrameDecorator implements UISettingsListener, Disposable {
     final ID pool = invoke("NSAutoreleasePool", "new");
 
     int v = UNIQUE_COUNTER.incrementAndGet();
-    frame.addWindowListener(new WindowAdapter() {
-      @Override
-      public void windowDeiconified(WindowEvent e) {
-        if (e.getWindow() == frame && frame.getState() == Frame.ICONIFIED) {
-          frame.setState(Frame.NORMAL);
+    if (Patches.APPLE_BUG_ID_10514018) {
+      frame.addWindowListener(new WindowAdapter() {
+        @Override
+        public void windowDeiconified(WindowEvent e) {
+          if (e.getWindow() == frame && frame.getState() == Frame.ICONIFIED) {
+            frame.setState(Frame.NORMAL);
+          }
         }
-      }
-    });
+      });
+    }
     try {
       if (SystemInfo.isMacOSLion) {
         if (!FULL_SCREEN_AVAILABLE) return;

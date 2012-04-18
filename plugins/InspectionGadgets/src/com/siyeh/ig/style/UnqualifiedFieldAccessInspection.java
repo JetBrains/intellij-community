@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2011 Bas Leijdekkers
+ * Copyright 2006-201@ Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -71,6 +71,10 @@ public class UnqualifiedFieldAccessInspection extends BaseInspection {
       }
       final PsiField field = (PsiField)element;
       if (field.hasModifierProperty(PsiModifier.STATIC)) {
+        return;
+      }
+      final PsiClass containingClass = field.getContainingClass();
+      if (containingClass instanceof PsiAnonymousClass) {
         return;
       }
       registerError(expression);

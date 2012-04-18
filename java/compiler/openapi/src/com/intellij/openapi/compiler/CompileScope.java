@@ -17,7 +17,6 @@ package com.intellij.openapi.compiler;
 
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,7 +27,7 @@ import org.jetbrains.annotations.Nullable;
  *
  * @see CompilerManager#compile(CompileScope, CompileStatusNotification)
  */
-public interface CompileScope extends UserDataHolder {
+public interface CompileScope extends ExportableUserDataHolder {
   CompileScope[] EMPTY_ARRAY = new CompileScope[0];
   /**
    * Returns the list of files within the scope.

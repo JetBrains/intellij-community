@@ -1,6 +1,7 @@
 package org.jetbrains.jps.incremental.resources;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.jps.Module;
 import org.jetbrains.jps.ModuleChunk;
@@ -12,7 +13,6 @@ import org.jetbrains.jps.incremental.storage.SourceToOutputMapping;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Locale;
 
 /**
  * @author Eugene Zhuravlev
@@ -38,15 +38,15 @@ public class ResourcesBuilder extends ModuleLevelBuilder {
     }
     try {
       final ResourcePatterns finalPatterns = patterns;
-      // todo: process all files in case of rebuild or wholeModuleDirty
-      // todo: otherwise avoid traverwing the whole module and use dirty file list taken from params
+      final Ref<Boolean> doneSomething = new Ref<Boolean>(false);
       context.processFilesToRecompile(chunk, new FileProcessor() {
         public boolean apply(final Module module, final File file, final String sourceRoot) throws IOException {
           if (finalPatterns.isResourceFile(file, sourceRoot)) {
             try {
               context.processMessage(new ProgressMessage("Copying " + file.getPath()));
-              final String moduleName = module.getName().toLowerCase(Locale.US);
-              copyResource(context, module, file, sourceRoot, context.getDataManager().getSourceToOutputMap(moduleName, context.isCompilingTests()));
+              doneSomething.set(true);
+              copyResource(context, module, file, sourceRoot,
+                           context.getDataManager().getSourceToOutputMap(module.getName(), context.isCompilingTests()));
             }
             catch (IOException e) {
               LOG.info(e);
@@ -58,7 +58,7 @@ public class ResourcesBuilder extends ModuleLevelBuilder {
         }
       });
 
-      return ExitCode.OK;
+      return doneSomething.get()? ExitCode.OK : ExitCode.NOTHING_DONE;
     }
     catch (Exception e) {
       throw new ProjectBuildException(e.getMessage(), e);

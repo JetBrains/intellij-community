@@ -16,6 +16,7 @@
 package com.intellij.util.io;
 
 import com.intellij.openapi.Forceable;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.Closeable;
@@ -24,9 +25,9 @@ import java.io.IOException;
 import java.util.Collection;
 
 public class PersistentEnumeratorDelegate<Data> implements Closeable, Forceable {
-  protected final PersistentEnumeratorBase<Data> myEnumerator;
+  @NotNull protected final PersistentEnumeratorBase<Data> myEnumerator;
 
-  public PersistentEnumeratorDelegate(final File file, KeyDescriptor<Data> dataDescriptor, final int initialSize) throws IOException {
+  public PersistentEnumeratorDelegate(@NotNull final File file, @NotNull KeyDescriptor<Data> dataDescriptor, final int initialSize) throws IOException {
     myEnumerator = useBtree() ? new PersistentBTreeEnumerator<Data>(file, dataDescriptor, initialSize) :
                    new PersistentEnumerator<Data>(file, dataDescriptor, initialSize);
   }

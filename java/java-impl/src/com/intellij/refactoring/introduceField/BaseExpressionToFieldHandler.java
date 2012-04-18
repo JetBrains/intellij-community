@@ -218,9 +218,9 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
     return false;
   }
 
-  public static void setModifiers(PsiField field, Settings settings, final boolean declareStatic) {
+  public static void setModifiers(PsiField field, Settings settings) {
     if (!settings.isIntroduceEnumConstant()) {
-      if (declareStatic) {
+      if (settings.isDeclareStatic()) {
         PsiUtil.setModifierProperty(field, PsiModifier.STATIC, true);
       }
       if (settings.isDeclareFinal()) {
@@ -315,7 +315,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
 
   private static void addInitializationToSetUp(final PsiExpression initializer,
                                                final PsiField field,
-                                               final OccurrenceManager occurrenceManager,
+                                               final PsiExpression[] occurrences,
                                                final boolean replaceAll,
                                                final PsiClass parentClass) throws IncorrectOperationException {
     final PsiMethod setupMethod = TestFrameworks.getInstance().findOrCreateSetUpMethod(parentClass);
@@ -325,7 +325,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
     PsiElement anchor = null;
     if (PsiTreeUtil.isAncestor(setupMethod, initializer, true)) {
       anchor = replaceAll
-               ? occurrenceManager.getAnchorStatementForAllInScope(setupMethod)
+               ? RefactoringUtil.getAnchorElementForMultipleExpressions(occurrences, setupMethod)
                : PsiTreeUtil.getParentOfType(initializer, PsiStatement.class);
     }
 
@@ -711,7 +711,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
                          createField(myFieldName, myType, initializer, initializerPlace == InitializationPlace.IN_FIELD_DECLARATION && initializer != null,
                                      myParentClass);
 
-        setModifiers(myField, mySettings, mySettings.isDeclareStatic());
+        setModifiers(myField, mySettings);
         myField = appendField(initializer, initializerPlace, destClass, myParentClass, myAnchorElement, myField);
         if (!mySettings.isIntroduceEnumConstant()) {
           VisibilityUtil.fixVisibility(myOccurrences, myField, mySettings.getFieldVisibility());
@@ -742,7 +742,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
           addInitializationToConstructors(initializer, myField, enclosingConstructor, myParentClass);
         }
         if (initializerPlace == InitializationPlace.IN_SETUP_METHOD && initializer != null) {
-          addInitializationToSetUp(initializer, myField, myOccurrenceManager, myReplaceAll, myParentClass);
+          addInitializationToSetUp(initializer, myField, myOccurrences, myReplaceAll, myParentClass);
         }
         if (mySelectedExpr.getParent() instanceof PsiParenthesizedExpression) {
           mySelectedExpr = (PsiExpression)mySelectedExpr.getParent();
@@ -755,8 +755,13 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
             if (parent instanceof PsiClass) break;
             endElement = parent;
           }
-          myElement.getParent().deleteChildRange(myElement, PsiTreeUtil.skipSiblingsBackward(endElement, PsiWhiteSpace.class));
-        } else if (myDeleteSelf) {
+          PsiElement last = PsiTreeUtil.skipSiblingsBackward(endElement, PsiWhiteSpace.class);
+          if (last.getTextRange().getStartOffset() < myElement.getTextRange().getStartOffset()) {
+            last = myElement;
+          }
+          myElement.getParent().deleteChildRange(myElement, last);
+        }
+        else if (myDeleteSelf) {
           myElement.getParent().delete();
         }
 
@@ -850,7 +855,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
     }
 
     @Nullable
-    private static PsiField checkForwardRefs(@Nullable PsiExpression initializer, final PsiClass parentClass) {
+    private static PsiField checkForwardRefs(@Nullable final PsiExpression initializer, final PsiClass parentClass) {
       if (initializer == null) return null;
       final PsiField[] refConstantFields = new PsiField[1];
       initializer.accept(new JavaRecursiveElementWalkingVisitor() {
@@ -860,7 +865,8 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
           final PsiElement resolve = expression.resolve();
           if (resolve instanceof PsiField &&
               ((PsiField)resolve).hasModifierProperty(PsiModifier.FINAL) &&
-              PsiTreeUtil.isAncestor(parentClass, resolve, false) && ((PsiField)resolve).hasInitializer()) {
+              PsiTreeUtil.isAncestor(parentClass, resolve, false) && ((PsiField)resolve).hasInitializer() &&
+              !PsiTreeUtil.isAncestor(initializer, resolve, false)) {
             if (refConstantFields[0] == null || refConstantFields[0].getTextOffset() < resolve.getTextOffset()) {
               refConstantFields[0] = (PsiField)resolve;
             }

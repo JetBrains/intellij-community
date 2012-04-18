@@ -17,6 +17,7 @@ import org.jetbrains.plugins.groovy.actions.generate.accessors.GroovyGenerateGet
 import org.jetbrains.plugins.groovy.actions.generate.constructors.GroovyGenerateConstructorHandler
 import org.jetbrains.plugins.groovy.util.TestUtils
 import com.intellij.codeInsight.generation.*
+import com.intellij.psi.impl.source.PostprocessReformattingAspect
 
 /**
  * @author peter
@@ -65,7 +66,6 @@ class Foo extends Super {
         this.d = d
         this.e = e
     }
-
 }
 """
   }
@@ -113,7 +113,6 @@ class Test {
     def getFoo() {
         return foo
     }
-
 }'''
   }
 
@@ -132,7 +131,6 @@ class Test {
       int getFoo() {
           return foo
       }
-
   }'''
     }
 
@@ -151,7 +149,6 @@ class Test {
       static getFoo() {
           return foo
       }
-
   }'''
     }
 
@@ -178,7 +175,6 @@ class Test {
       @Nullable getFoo() {
           return foo
       }
-
   }'''
     }
 
@@ -198,7 +194,6 @@ class Test {
     void setFoo(def foo) {
         this.foo = foo
     }
-
 }'''
 
   }
@@ -219,7 +214,6 @@ class Test {
     void setFoo(int foo) {
         this.foo = foo
     }
-
 }'''
 
   }
@@ -241,7 +235,6 @@ class Test {
     static void setFoo(def foo) {
         Test.foo = foo
     }
-
 }'''
 
   }
@@ -270,14 +263,36 @@ class Test {
     void setFoo(@Nullable foo) {
         this.foo = foo
     }
-
 }'''
 
   }
 
+  void testConstructorInTheMiddle() {
+    myFixture.configureByText("a.groovy", """
+class Foo {
+    def foo() {}
 
+
+
+    <caret>
+
+
+    def bar() {}
+}""")
+    generateConstructor()
+    myFixture.checkResult """
+class Foo {
+    def foo() {}
+
+    Foo() {
+    }
+
+    def bar() {}
+}"""
+  }
 
   void generateGetter() {
+    //noinspection GroovyResultOfObjectAllocationIgnored
     new GroovyGenerateGetterSetterAction() //don't remove it!!!
     new WriteCommandAction(project, new PsiFile[0]) {
       protected void run(Result result) throws Throwable {
@@ -287,11 +302,13 @@ class Test {
             return members
           }
         }.invoke(project, myFixture.editor, myFixture.file);
+        PostprocessReformattingAspect.getInstance(project).doPostponedFormatting()
       }
     }.execute()
   }
 
   void generateSetter() {
+    //noinspection GroovyResultOfObjectAllocationIgnored
     new GroovyGenerateGetterSetterAction() //don't remove it!!!
     new WriteCommandAction(project, new PsiFile[0]) {
       protected void run(Result result) throws Throwable {
@@ -301,6 +318,7 @@ class Test {
             return members
           }
         }.invoke(project, myFixture.editor, myFixture.file);
+        PostprocessReformattingAspect.getInstance(project).doPostponedFormatting()
       }
     }.execute()
   }
@@ -322,6 +340,7 @@ class Test {
           }
 
         }.invoke(project, myFixture.editor, myFixture.file);
+        PostprocessReformattingAspect.getInstance(project).doPostponedFormatting()
       }
     }.execute()
   }

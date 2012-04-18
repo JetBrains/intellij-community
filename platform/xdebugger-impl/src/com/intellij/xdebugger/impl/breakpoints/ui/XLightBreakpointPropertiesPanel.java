@@ -17,8 +17,6 @@ package com.intellij.xdebugger.impl.breakpoints.ui;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.components.labels.LinkLabel;
-import com.intellij.ui.components.labels.LinkListener;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XBreakpointManager;
 import com.intellij.xdebugger.breakpoints.XBreakpointType;
@@ -42,19 +40,11 @@ import java.util.List;
  */
 public class XLightBreakpointPropertiesPanel<B extends XBreakpoint<?>> implements XSuspendPolicyPanel.Delegate {
 
-  private LinkLabel myShowMoreOptionsLink;
-  private boolean myShowMoreOptions;
-
-  private void createUIComponents() {
-    myShowMoreOptionsLink = new LinkLabel("More Options", null, new LinkListener() {
-      @Override
-      public void linkSelected(LinkLabel aSource, Object aLinkData) {
-        if (myDelegate != null) {
-          myDelegate.showMoreOptions();
-        }
-      }
-    });
+  public boolean showMoreOptions() {
+    return myShowMoreOptions;
   }
+
+  private boolean myShowMoreOptions;
 
   @Override
   public void showMoreOptionsIfNeeded() {
@@ -124,8 +114,6 @@ public class XLightBreakpointPropertiesPanel<B extends XBreakpoint<?>> implement
         myShowMoreOptions = true;
       }
     }
-
-    myShowMoreOptionsLink.setVisible(myShowMoreOptions);
 
     myCustomPanels = new ArrayList<XBreakpointCustomPropertiesPanel<B>>();
     XBreakpointCustomPropertiesPanel<B> customPropertiesPanel = breakpointType.createCustomPropertiesPanel();

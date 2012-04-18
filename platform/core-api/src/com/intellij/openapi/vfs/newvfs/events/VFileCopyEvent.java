@@ -22,6 +22,7 @@ package com.intellij.openapi.vfs.newvfs.events;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 public class VFileCopyEvent extends VFileEvent {
   private final VirtualFile myFile;
@@ -58,6 +59,7 @@ public class VFileCopyEvent extends VFileEvent {
     return myNewParent.getPath() + "/" + myNewChildName;
   }
 
+  @NotNull
   @Override
   public VirtualFileSystem getFileSystem() {
     return myFile.getFileSystem();

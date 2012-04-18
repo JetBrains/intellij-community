@@ -43,9 +43,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ProjectCreateModeStep extends ModuleWizardStep {
-  private static final Icon NEW_PROJECT_ICON = IconLoader.getIcon("/newprojectwizard.png");
-
-
   private final JPanel myWholePanel;
 
   private WizardMode myMode;
@@ -57,7 +54,7 @@ public class ProjectCreateModeStep extends ModuleWizardStep {
     for (WizardMode mode : Extensions.getExtensions(WizardMode.MODES)) {
       if (mode.isAvailable(wizardContext)) {
         myModes.add(mode);
-        if (defaultPath != null) {
+        if (defaultPath != null && wizardContext.isCreatingNewProject()) {
           if (mode instanceof CreateFromSourcesMode) {
             myMode = mode;
           }
@@ -114,6 +111,7 @@ public class ProjectCreateModeStep extends ModuleWizardStep {
         myWholePanel.add(settings, gc);
       }
     }
+    myMode.onChosen(true);
     gc.weighty = 1;
     gc.fill = GridBagConstraints.BOTH;
     myWholePanel.add(Box.createVerticalBox(), gc);
@@ -137,7 +135,7 @@ public class ProjectCreateModeStep extends ModuleWizardStep {
   }
 
   public Icon getIcon() {
-    return myWizardContext.getProject() == null ? NEW_PROJECT_ICON : ICON;
+    return myWizardContext.getStepIcon();
   }
 
   public WizardMode getMode() {

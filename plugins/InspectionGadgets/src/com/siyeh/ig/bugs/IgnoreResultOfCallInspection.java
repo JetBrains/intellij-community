@@ -17,12 +17,10 @@ package com.siyeh.ig.bugs;
 
 import com.intellij.codeInspection.ui.ListTable;
 import com.intellij.codeInspection.ui.ListWrappingTableModel;
-import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.ui.CheckBox;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -107,43 +105,15 @@ public class IgnoreResultOfCallInspection extends BaseInspection {
 
   @Override
   public JComponent createOptionsPanel() {
-    final JPanel panel = new JPanel(new GridBagLayout());
-    final ListTable table =
-      new ListTable(new ListWrappingTableModel(
-        Arrays.asList(classNames, methodNamePatterns),
-        InspectionGadgetsBundle.message(
-          "result.of.method.call.ignored.class.column.title"),
-        InspectionGadgetsBundle.message(
-          "result.of.method.call.ignored.method.column.title")));
-    final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(table);
-    UiUtils.setScrollPaneSize(scrollPane, 7, 25);
-
-    final ActionToolbar toolbar = UiUtils.createAddRemoveToolbar(table);
-
-    final CheckBox checkBox = new CheckBox(InspectionGadgetsBundle.message(
-      "result.of.method.call.ignored.non.library.option"), this,
-                                           "m_reportAllNonLibraryCalls");
-
-    final GridBagConstraints constraints = new GridBagConstraints();
-    constraints.anchor = GridBagConstraints.FIRST_LINE_START;
-    constraints.gridx = 0;
-    constraints.gridy = 0;
-    constraints.insets.left = 4;
-    constraints.insets.right = 4;
-    constraints.fill = GridBagConstraints.HORIZONTAL;
-    panel.add(toolbar.getComponent(), constraints);
-
-    constraints.gridy = 1;
-    constraints.weightx = 1.0;
-    constraints.weighty = 1.0;
-    constraints.fill = GridBagConstraints.BOTH;
-    panel.add(scrollPane, constraints);
-
-    constraints.gridy = 2;
-    constraints.weighty = 0.0;
-    constraints.fill = GridBagConstraints.HORIZONTAL;
-    panel.add(checkBox, constraints);
-    panel.add(checkBox, constraints);
+    final JPanel panel = new JPanel(new BorderLayout());
+    final ListTable table = new ListTable(new ListWrappingTableModel(Arrays.asList(classNames, methodNamePatterns), InspectionGadgetsBundle
+      .message("result.of.method.call.ignored.class.column.title"), InspectionGadgetsBundle
+      .message("result.of.method.call.ignored.method.column.title")));
+    final JPanel tablePanel = UiUtils.createAddRemovePanel(table);
+    final CheckBox checkBox =
+      new CheckBox(InspectionGadgetsBundle.message("result.of.method.call.ignored.non.library.option"), this, "m_reportAllNonLibraryCalls");
+    panel.add(tablePanel, BorderLayout.CENTER);
+    panel.add(checkBox, BorderLayout.SOUTH);
     return panel;
   }
 

@@ -16,7 +16,6 @@
 package org.jetbrains.plugins.groovy.lang.resolve;
 
 
-import com.intellij.psi.CommonClassNames
 import com.intellij.psi.PsiIntersectionType
 import com.intellij.psi.PsiReference
 import com.intellij.psi.PsiType
@@ -28,8 +27,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType
 import org.jetbrains.plugins.groovy.util.TestUtils
-import static com.intellij.psi.CommonClassNames.JAVA_LANG_INTEGER
-import static com.intellij.psi.CommonClassNames.JAVA_LANG_STRING
+
+import static com.intellij.psi.CommonClassNames.*
 
 /**
  * @author ven
@@ -41,80 +40,80 @@ public class TypeInferenceTest extends GroovyResolveTestCase {
   }
 
   public void testTryFinallyFlow() throws Exception {
-    GrReferenceExpression ref = (GrReferenceExpression) configureByFile("tryFinallyFlow/A.groovy").getElement();
+    GrReferenceExpression ref = (GrReferenceExpression)configureByFile("tryFinallyFlow/A.groovy").getElement();
     final PsiType type = ref.getType();
     assertTrue(type instanceof PsiIntersectionType);
-    final PsiType[] conjuncts = ((PsiIntersectionType) type).getConjuncts();
+    final PsiType[] conjuncts = ((PsiIntersectionType)type).getConjuncts();
     assertEquals(conjuncts.length, 2);
   }
 
   public void testTryFinallyFlow1() throws Exception {
-    GrReferenceExpression ref = (GrReferenceExpression) configureByFile("tryFinallyFlow1/A.groovy").getElement();
+    GrReferenceExpression ref = (GrReferenceExpression)configureByFile("tryFinallyFlow1/A.groovy").getElement();
     final PsiType type = ref.getType();
     assertNotNull(type);
     assertTrue(type.equalsToText("java.lang.Integer"));
   }
 
   public void testTryFinallyFlow2() throws Exception {
-    GrReferenceExpression ref = (GrReferenceExpression) configureByFile("tryFinallyFlow2/A.groovy").getElement();
+    GrReferenceExpression ref = (GrReferenceExpression)configureByFile("tryFinallyFlow2/A.groovy").getElement();
     final PsiType type = ref.getType();
     assertNotNull(type);
     assertTrue(type.equalsToText("java.lang.Integer"));
   }
 
   public void testThrowVariable() throws Exception {
-    GrReferenceExpression ref = (GrReferenceExpression) configureByFile("throwVariable/A.groovy").getElement();
+    GrReferenceExpression ref = (GrReferenceExpression)configureByFile("throwVariable/A.groovy").getElement();
     final PsiType type = ref.getType();
     assertNotNull(type);
     assertEquals("java.lang.Exception", type.getCanonicalText());
   }
 
   public void testGrvy852() throws Exception {
-    GrReferenceExpression ref = (GrReferenceExpression) configureByFile("grvy852/A.groovy").getElement();
+    GrReferenceExpression ref = (GrReferenceExpression)configureByFile("grvy852/A.groovy").getElement();
     final PsiType type = ref.getType();
     assertNotNull(type);
     assertEquals("java.lang.Object", type.getCanonicalText());
   }
 
   public void testGenericMethod() throws Exception {
-    GrReferenceExpression ref = (GrReferenceExpression) configureByFile("genericMethod/A.groovy").getElement();
+    GrReferenceExpression ref = (GrReferenceExpression)configureByFile("genericMethod/A.groovy").getElement();
     final PsiType type = ref.getType();
     assertNotNull(type);
     assertEquals("java.util.List<java.lang.String>", type.getCanonicalText());
   }
 
   public void testCircular() throws Exception {
-    GrReferenceExpression ref = (GrReferenceExpression) configureByFile("circular/A.groovy").getElement();
+    GrReferenceExpression ref = (GrReferenceExpression)configureByFile("circular/A.groovy").getElement();
     assertNull(ref.getType());
   }
 
-  public void  testCircular1() throws Exception {
-    GrReferenceExpression ref = (GrReferenceExpression) configureByFile("circular1/A.groovy").getElement();
+  public void testCircular1() throws Exception {
+    GrReferenceExpression ref = (GrReferenceExpression)configureByFile("circular1/A.groovy").getElement();
     assertNull(ref.getType());
   }
 
   public void testClosure() throws Exception {
-    GrReferenceExpression ref = (GrReferenceExpression) configureByFile("closure/A.groovy").getElement();
+    GrReferenceExpression ref = (GrReferenceExpression)configureByFile("closure/A.groovy").getElement();
     assertNotNull(ref.getType());
   }
 
   public void testClosure1() throws Exception {
-    GrReferenceExpression ref = (GrReferenceExpression) configureByFile("closure1/A.groovy").getElement();
+    GrReferenceExpression ref = (GrReferenceExpression)configureByFile("closure1/A.groovy").getElement();
     assertTrue(ref.getType().equalsToText("java.lang.Integer"));
   }
 
   public void testClosure2() throws Exception {
-    GrReferenceExpression ref = (GrReferenceExpression) configureByFile("closure2/A.groovy").getElement();
+    GrReferenceExpression ref = (GrReferenceExpression)configureByFile("closure2/A.groovy").getElement();
     assertTrue(ref.getType().equalsToText("java.lang.Integer"));
   }
 
   public void testGrvy1209() throws Exception {
-    GrReferenceExpression ref = (GrReferenceExpression) configureByFile("grvy1209/A.groovy").getElement();
+    GrReferenceExpression ref = (GrReferenceExpression)configureByFile("grvy1209/A.groovy").getElement();
     assertTrue(ref.getType().equalsToText("java.lang.String"));
   }
 
   public void testLeastUpperBoundClosureType() throws Exception {
-    GrReferenceExpression ref= (GrReferenceExpression)configureByFile("leastUpperBoundClosureType/A.groovy").getElement();
+    GrReferenceExpression ref = (GrReferenceExpression)configureByFile("leastUpperBoundClosureType/A.groovy").getElement();
     assertInstanceOf(ref.getType(), GrClosureType.class);
   }
 
@@ -200,6 +199,7 @@ public class TypeInferenceTest extends GroovyResolveTestCase {
   public void testPlusEquals3() {
     assertTypeEquals("java.lang.String", "A.groovy");
   }
+
   public void testPlusEqualsClosure() {
     assertTypeEquals("java.lang.String", "A.groovy");
   }
@@ -217,7 +217,7 @@ public class TypeInferenceTest extends GroovyResolveTestCase {
   }
 
   public void testReturnTypeFromMethodClosure() {
-    assertTypeEquals("java.lang.String","A.groovy");
+    assertTypeEquals("java.lang.String", "A.groovy");
   }
 
   public void testNoSOF() {
@@ -266,7 +266,7 @@ map = new X()
 map['i'] += 2
 ''') as GroovyFile
     GrAssignmentExpression assignment = file.topStatements[2] as GrAssignmentExpression
-    assertTrue(assignment.getLValue().getType().equalsToText(CommonClassNames.JAVA_UTIL_DATE))
+    assertTrue(assignment.LValue.type.equalsToText(JAVA_UTIL_DATE))
   }
 
   void testAllTypeParamsAreSubstituted() {
@@ -291,19 +291,159 @@ List<Integer> l2
   void testWildCardsNormalized() {
     assertTypeEquals(Object.canonicalName, 'a.groovy')
   }
-  
+
   void testIndexPropertyInLHS() {
     assertTypeEquals("java.util.Map", 'a.groovy')
   }
-  
+
   void testEmptyMapTypeArgs() {
     myFixture.configureByText('a.groovy', '''
 class X<A, B> implements Map<A, B> {}
 
 X<String, Integer> x = [:]
 ''')
-    
+
     def type = ((myFixture.file as GroovyFile).statements[0] as GrVariableDeclaration).variables[0].initializerGroovy.type
     assertEquals("java.util.Map<java.lang.String,java.lang.Integer>", type.canonicalText)
+  }
+
+  void testRawCollectionsInCasts() {
+    doTest('''\
+String[] a = ["a"]
+def b = a as ArrayList
+def cc = b[0]
+print c<caret>c''', String.canonicalName)
+  }
+
+  void testFind() {
+    doTest('''\
+def arr =  ['1', '2', '3'] as String[]
+def found = arr.find({it=='1'})
+print fou<caret>nd''', String.canonicalName)
+  }
+
+  void testFindAll() {
+    doTest('''\
+def arr =  ['1', '2', '3']
+def found = arr.findAll({it==1})
+print fou<caret>nd''', 'java.util.ArrayList<java.lang.String>')
+  }
+
+  void testFindAllForArray() {
+    doTest('''\
+def arr =  ['1', '2', '3'] as String[]
+def found = arr.findAll({it==1})
+print fou<caret>nd''', 'java.util.ArrayList<java.lang.String>')
+  }
+
+  void testFindAllForSet() {
+    doTest('''\
+def arr =  ['1', '2', '3'] as Set<String>
+def found = arr.findAll({it==1})
+print fou<caret>nd''', 'java.util.Set<java.lang.String>')
+  }
+
+  void testInferArgumentTypeFromMethod1() {
+    doTest('''\
+def bar(String s) {}
+
+def foo(Integer a) {
+  while(true) {
+    bar(a)
+    <caret>a.substring(2)
+  }
+}
+''', '[java.lang.String,java.lang.Integer]')
+  }
+
+  void testInferArgumentTypeFromMethod2() {
+    doTest('''\
+def bar(String s) {}
+
+def foo(Integer a) {
+    bar(a)
+    <caret>a.substring(2)
+}
+''', '[java.lang.String,java.lang.Integer]')
+  }
+
+  void testInferArgumentTypeFromMethod3() {
+    doTest('''\
+def bar(String s) {}
+
+def foo(Integer a) {
+    bar(a)
+    print a
+    <caret>a.substring(2)
+}
+''', '[java.lang.String,java.lang.Integer]')
+  }
+
+  void testInferArgumentTypeFromMethod4() {
+    doTest('''\
+def bar(String s) {}
+
+def foo(Integer a) {
+  while(true) {
+    bar(a)
+    print a
+    <caret>a.substring(2)
+  }
+}
+''', '[java.lang.String,java.lang.Integer]')
+  }
+
+  void testEmptyListOrListWithGenerics() {
+    doTest('''\
+def list = cond ? [1, 2, 3] : []
+print lis<caret>t
+''', "$JAVA_UTIL_LIST<$JAVA_LANG_INTEGER>")
+  }
+
+  void testEmptyListOrListWithGenerics2() {
+    doTest('''\
+def List<Integer> foo(){}
+def list = cond ? foo() : []
+print lis<caret>t
+''', "$JAVA_UTIL_LIST<$JAVA_LANG_INTEGER>")
+  }
+
+  void testEmptyMapOrMapWithGenerics() {
+    doTest('''\
+def map = cond ? [1:'a', 2:'a', 3:'a'] : [:]
+print ma<caret>p
+''', "$JAVA_UTIL_MAP<$JAVA_LANG_STRING, $JAVA_LANG_STRING>")
+  }
+
+  void testEmptyMapOrMapWithGenerics2() {
+    doTest('''\
+def Map<String, String> foo(){}
+def map = cond ? foo() : [:]
+print ma<caret>p
+''', "$JAVA_UTIL_MAP<$JAVA_LANG_STRING,$JAVA_LANG_STRING>")
+  }
+
+
+  private void doTest(String text, String type) {
+    def file = myFixture.configureByText('_.groovy', text)
+    def ref = file.findReferenceAt(myFixture.editor.caretModel.offset) as GrReferenceExpression
+    def actual = ref.type
+    if (actual instanceof PsiIntersectionType) {
+      assertEquals(type, genIntersectionTypeText(actual))
+    }
+    else {
+      assertEquals(type, actual.canonicalText)
+    }
+  }
+
+  private static String genIntersectionTypeText(PsiIntersectionType t) {
+    StringBuilder b = new StringBuilder('[')
+    for (PsiType c : t.conjuncts) {
+      b.append(c.canonicalText).append(',')
+    }
+    if (t.conjuncts) {
+      b.replace(b.length() - 1, b.length(), ']')
+    }
+    return b.toString()
   }
 }

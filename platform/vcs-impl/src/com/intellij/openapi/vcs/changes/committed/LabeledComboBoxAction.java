@@ -93,4 +93,8 @@ public abstract class LabeledComboBoxAction extends AnAction implements CustomCo
       boxModel.setSelectedItem(boxModel.getElementAt(idx));
     }
   }
+
+  protected JComboBox getComboBox() {
+    return myComboBox;
+  }
 }

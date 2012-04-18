@@ -47,7 +47,7 @@ public class TestNGInClassConfigurationProducer extends TestNGConfigurationProdu
 
   @Nullable
   protected RunnerAndConfigurationSettings createConfigurationByElement(Location location, ConfigurationContext context) {
-    final PsiElement[] elements = LangDataKeys.PSI_ELEMENT_ARRAY.getData(context.getDataContext());
+    final PsiElement[] elements = context != null ? LangDataKeys.PSI_ELEMENT_ARRAY.getData(context.getDataContext()) : null;
     if (elements != null && TestNGPatternConfigurationProducer.collectTestMembers(elements).size() > 1) {
       return null;
     }

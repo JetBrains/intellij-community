@@ -61,7 +61,7 @@ public abstract class CreateFromSourcesMode extends WizardMode {
     myProjectBuilder = projectBuilder;
     
     final StepSequence sequence = new StepSequence();
-    final Icon icon = getIcon();
+    final Icon icon = context.getStepIcon();
     if (context.isCreatingNewProject()) {
       sequence.addCommonStep(new ProjectNameStep(context, this));
     }
@@ -88,8 +88,6 @@ public abstract class CreateFromSourcesMode extends WizardMode {
 
     return sequence;
   }
-
-  protected abstract Icon getIcon();
 
   public ProjectBuilder getModuleBuilder() {
     return myProjectBuilder;

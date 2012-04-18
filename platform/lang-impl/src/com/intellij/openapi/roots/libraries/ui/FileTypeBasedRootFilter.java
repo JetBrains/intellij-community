@@ -64,6 +64,7 @@ public class FileTypeBasedRootFilter extends RootFilter {
     return !VfsUtil.processFilesRecursively(rootCandidate, new Processor<VirtualFile>() {
       @Override
       public boolean process(VirtualFile virtualFile) {
+        progressIndicator.checkCanceled();
         if (virtualFile.isDirectory()) {
           progressIndicator.setText2(virtualFile.getPath());
           return true;

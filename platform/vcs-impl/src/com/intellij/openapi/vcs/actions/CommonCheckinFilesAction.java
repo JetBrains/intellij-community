@@ -16,10 +16,12 @@
 package com.intellij.openapi.vcs.actions;
 
 import com.intellij.lifecycle.PeriodicalTasksCloser;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.roots.impl.FileIndexImplUtil;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.Change;
@@ -78,7 +80,12 @@ public class CommonCheckinFilesAction extends AbstractCommonCheckinAction {
         final FileIndexFacade index = PeriodicalTasksCloser.getInstance().safeGetService(project, FileIndexFacade.class);
         final VirtualFileFilter filter = new VirtualFileFilter() {
           public boolean accept(final VirtualFile file) {
-            return (! index.isExcludedFile(file));
+            return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
+              @Override
+              public Boolean compute() {
+                return (! index.isExcludedFile(file));
+              }
+            });
           }
         };
         FileIndexImplUtil.iterateRecursively(file, filter, new ContentIterator() {

@@ -8,6 +8,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.application.ApplicationManager;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author ven
@@ -17,7 +18,7 @@ public class PsiEventsTest extends PsiTestCase {
     final Ref<Boolean> gotIt = new Ref<Boolean>(false);
     getPsiManager().addPsiTreeChangeListener(new PsiTreeChangeAdapter() {
       @Override
-      public void childReplaced(PsiTreeChangeEvent event) {
+      public void childReplaced(@NotNull PsiTreeChangeEvent event) {
         gotIt.set(true);
       }
     });

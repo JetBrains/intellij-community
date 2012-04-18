@@ -137,7 +137,7 @@ public class StringPattern extends ObjectPattern<String, StringPattern> {
 
     return with(new ValuePatternCondition<String>("matchesBrics") {
       public boolean accepts(@NotNull String str, final ProcessingContext context) {
-        if(str.charAt(0)=='"' || str.charAt(0)=='\'') str = str.substring(1);
+        if (str.length() > 0 && (str.charAt(0) == '"' || str.charAt(0) == '\'')) str = str.substring(1);
         return runAutomaton.run(str);
       }
 

@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.diff.impl.dir.actions.popup;
 
+import com.intellij.openapi.diff.impl.dir.DirDiffElement;
 import com.intellij.openapi.diff.impl.dir.DirDiffOperation;
 import org.jetbrains.annotations.NotNull;
 
@@ -26,5 +27,10 @@ public class SetDelete extends SetOperationToBase {
   @Override
   protected DirDiffOperation getOperation() {
     return DirDiffOperation.DELETE;
+  }
+
+  @Override
+  protected boolean isEnabledFor(DirDiffElement element) {
+    return element.getSource() == null || element.getTarget() == null;
   }
 }

@@ -45,6 +45,7 @@ import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.RefactoringUIUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.io.ReadOnlyAttributeUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -56,7 +57,7 @@ public class DeleteHandler {
   }
 
   public static class DefaultDeleteProvider implements DeleteProvider {
-    public boolean canDeleteElement(DataContext dataContext) {
+    public boolean canDeleteElement(@NotNull DataContext dataContext) {
       if (PlatformDataKeys.PROJECT.getData(dataContext) == null) {
         return false;
       }
@@ -82,7 +83,7 @@ public class DeleteHandler {
       return elements;
     }
 
-    public void deleteElement(DataContext dataContext) {
+    public void deleteElement(@NotNull DataContext dataContext) {
       PsiElement[] elements = getPsiElements(dataContext);
       if (elements == null) return;
       Project project = PlatformDataKeys.PROJECT.getData(dataContext);
@@ -98,6 +99,10 @@ public class DeleteHandler {
   }
 
   public static void deletePsiElement(final PsiElement[] elementsToDelete, final Project project) {
+    deletePsiElement(elementsToDelete, project, true);
+  }
+
+  public static void deletePsiElement(final PsiElement[] elementsToDelete, final Project project, boolean needConfirmation) {
     if (elementsToDelete == null || elementsToDelete.length == 0) return;
 
     final PsiElement[] elements = PsiTreeUtil.filterAncestors(elementsToDelete);
@@ -120,8 +125,10 @@ public class DeleteHandler {
           }, elements, dialog.isSearchInComments(), dialog.isSearchInNonJava(), true).run();
         }
       });
-      dialog.show();
-      if (!dialog.isOK()) return;
+      if (needConfirmation) {
+        dialog.show();
+        if (!dialog.isOK()) return;
+      }
     }
     else {
       @SuppressWarnings({"UnresolvedPropertyKey"})
@@ -146,13 +153,17 @@ public class DeleteHandler {
       }
 
       if (safeDeleteApplicable && dumb) {
-        warningMessage += "\n\nWarning:\n  Safe delete is not available while " + ApplicationNamesInfo.getInstance().getFullProductName() + " updates indices,\n  no usages will be checked.";
+        warningMessage += "\n\nWarning:\n  Safe delete is not available while " +
+                          ApplicationNamesInfo.getInstance().getFullProductName() +
+                          " updates indices,\n  no usages will be checked.";
       }
 
-      int result = Messages.showOkCancelDialog(project, warningMessage, IdeBundle.message("title.delete"),
-                                       ApplicationBundle.message("button.delete"), CommonBundle.getCancelButtonText(),
-                                       Messages.getQuestionIcon());
-      if (result != 0) return;
+      if (needConfirmation) {
+        int result = Messages.showOkCancelDialog(project, warningMessage, IdeBundle.message("title.delete"),
+                                                 ApplicationBundle.message("button.delete"), CommonBundle.getCancelButtonText(),
+                                                 Messages.getQuestionIcon());
+        if (result != 0) return;
+      }
     }
 
     final FileTypeManager ftManager = FileTypeManager.getInstance();

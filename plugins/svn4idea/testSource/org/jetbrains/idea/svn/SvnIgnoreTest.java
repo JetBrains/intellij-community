@@ -15,14 +15,11 @@
  */
 package org.jetbrains.idea.svn;
 
-import com.intellij.idea.Bombed;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.idea.svn17.SvnPropertyKeys;
-import org.jetbrains.idea.svn17.SvnVcs17;
 import org.junit.Assert;
 import org.junit.Test;
 import org.tmatesoft.svn.core.SVNDepth;
@@ -30,7 +27,6 @@ import org.tmatesoft.svn.core.SVNPropertyValue;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.List;
 import java.util.Random;
 
@@ -41,14 +37,14 @@ import java.util.Random;
  */
 public class SvnIgnoreTest extends SvnTestCase {
   private ChangeListManager clManager;
-  private SvnVcs17 myVcs;
+  private SvnVcs myVcs;
 
   @Override
   public void setUp() throws Exception {
     super.setUp();
 
     clManager = ChangeListManager.getInstance(myProject);
-    myVcs = SvnVcs17.getInstance(myProject);
+    myVcs = SvnVcs.getInstance(myProject);
 
     enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
     enableSilentOperation(VcsConfiguration.StandardConfirmation.REMOVE);

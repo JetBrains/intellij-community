@@ -1,0 +1,20 @@
+<preference-headers
+    xmlns:android="http://schemas.android.com/apk/res/android" >
+
+  <header
+      android:fragment="p1.p2.MyFragmentActivity$MyFragment"
+      android:title="title" />
+
+  <header
+      android:fragment="p1.p2.MyFragmentActivity$<error>MyFragment1</error>"
+      android:title="title1"
+      <warning>android:someAttr</warning>="">
+
+    <extra android:name="someKey" android:value="someHeaderValue" />
+    <intent android:action="android.intent.action.VIEW" android:data="http://www.android.com" />
+    <<warning>someTag</warning>/>
+  </header>
+
+  <<warning>someTag</warning>/>
+
+</preference-headers>

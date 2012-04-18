@@ -24,6 +24,8 @@ import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.vfs.ReadonlyStatusHandler;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.util.PlatformIcons;
@@ -32,6 +34,7 @@ import org.jetbrains.android.dom.manifest.Action;
 import org.jetbrains.android.dom.manifest.*;
 import org.jetbrains.android.dom.resources.ResourceValue;
 import org.jetbrains.android.facet.AndroidFacet;
+import org.jetbrains.android.facet.AndroidRootUtil;
 import org.jetbrains.android.util.AndroidBundle;
 import org.jetbrains.android.util.AndroidUtils;
 import org.jetbrains.annotations.NotNull;
@@ -149,8 +152,18 @@ public class NewAndroidComponentDialog extends DialogWrapper {
                                           AndroidFacet facet,
                                           String label,
                                           boolean startupActivity) {
-    Manifest manifest = facet.getManifest();
-    if (manifest == null) return;
+
+    final VirtualFile manifestFile = AndroidRootUtil.getManifestFile(facet);
+    if (manifestFile == null ||
+        !ReadonlyStatusHandler.ensureFilesWritable(facet.getModule().getProject(), manifestFile)) {
+      return;
+    }
+
+    final Manifest manifest = AndroidUtils.loadDomElement(facet.getModule(), manifestFile, Manifest.class);
+    if (manifest == null) {
+      return;
+    }
+
     String packageName = manifest.getPackage().getValue();
     if (packageName == null || packageName.length() == 0) {
       manifest.getPackage().setValue(aPackage.getQualifiedName());

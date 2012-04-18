@@ -39,6 +39,21 @@ public class NetBeansCustomFoldingProvider extends CustomFoldingProvider {
   }
 
   @Override
+  public String getDescription() {
+    return "<editor-fold...> Comments";
+  }
+
+  @Override
+  public String getStartString() {
+    return "<editor-fold desc=\"?\">";
+  }
+
+  @Override
+  public String getEndString() {
+    return "</editor-fold>";
+  }
+
+  @Override
   public boolean isCollapsedByDefault(String text) {
     return text.matches(".*defaultstate\\s*=\\s*\"collapsed\".*");
   }

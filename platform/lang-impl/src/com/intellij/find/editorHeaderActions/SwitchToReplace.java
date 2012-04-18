@@ -1,11 +1,13 @@
 package com.intellij.find.editorHeaderActions;
 
+import com.intellij.execution.impl.ConsoleViewUtil;
 import com.intellij.find.EditorSearchComponent;
 import com.intellij.find.FindModel;
 import com.intellij.find.FindUtil;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.editor.Editor;
 
 /**
 * Created by IntelliJ IDEA.
@@ -21,6 +23,12 @@ public class SwitchToReplace extends EditorHeaderAction {
     if (replaceAction != null) {
       registerCustomShortcutSet(replaceAction.getShortcutSet(), editorSearchComponent);
     }
+  }
+
+  @Override
+  public void update(AnActionEvent e) {
+    final Editor editor = getEditorSearchComponent().getEditor();
+    e.getPresentation().setEnabled(!ConsoleViewUtil.isConsoleViewEditor(editor));
   }
 
   @Override

@@ -27,12 +27,13 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.UserDataHolderEx;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.reference.SoftReference;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.PatchedSoftReference;
 import com.intellij.util.containers.ConcurrentHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -75,12 +76,13 @@ public class MethodBodyChecker {
     }
   }
 
-  private static final Key<Map<String, PsiMethod>> CACHE_KEY = new Key<Map<String, PsiMethod>>("MethodBodyChecker templates cache");
+  private static final Key<SoftReference<Map<String, PsiMethod>>> CACHE_KEY = Key.create("MethodBodyChecker templates cache");
 
   private static Map<String, PsiMethod> getTemplatesCache(PsiClass aClass) {
-    Map<String, PsiMethod> cache = aClass.getUserData(CACHE_KEY);
+    SoftReference<Map<String, PsiMethod>> ref = aClass.getUserData(CACHE_KEY);
+    Map<String, PsiMethod> cache = ref == null ? null : ref.get();
     if (cache == null) {
-      cache = ((UserDataHolderEx)aClass).putUserDataIfAbsent(CACHE_KEY, new ConcurrentHashMap<String, PsiMethod>());
+      aClass.putUserData(CACHE_KEY, new PatchedSoftReference<Map<String, PsiMethod>>(cache = new ConcurrentHashMap<String, PsiMethod>()));
     }
     return cache;
   }

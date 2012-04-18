@@ -16,6 +16,7 @@
 package com.intellij.psi.xml;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.Language;
 import com.intellij.lang.dtd.DTDLanguage;
 import com.intellij.lang.html.HTMLLanguage;
 import com.intellij.lang.xhtml.XHTMLLanguage;
@@ -75,7 +76,7 @@ public interface XmlElementType extends XmlTokenType {
       final XmlParsingContext parsingContext = new XmlParsingContext(table);
       return parsingContext.getXmlParsing().parse(new OldXmlLexer(), chars, 0, chars.length(), SharedImplUtil.getManagerByTree(chameleon));
     }
-    public boolean isParsable(CharSequence buffer, final Project project) {return true;}
+    public boolean isParsable(CharSequence buffer, Language fileLanguage, final Project project) {return true;}
   };
 
   IElementType XML_MARKUP = new CustomParsingType("XML_MARKUP_DECL", XMLLanguage.INSTANCE){

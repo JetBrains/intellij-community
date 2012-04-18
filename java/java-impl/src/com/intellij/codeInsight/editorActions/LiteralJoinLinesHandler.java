@@ -22,6 +22,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiJavaToken;
 
 public class LiteralJoinLinesHandler implements JoinLinesHandlerDelegate {
+  @Override
   public int tryJoinLines(final Document doc, final PsiFile psiFile, final int offsetNear, final int end) {
     CharSequence text = doc.getCharsSequence();
 

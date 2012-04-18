@@ -54,7 +54,7 @@ class ModuleChunk extends DagNode<Module> {
   }
 
   def List<String> getExcludes() {
-    map {it.excludes}
+    map {it.getExcludes()}
   }
 
   private <T> List<T> map(Closure c) {

@@ -591,7 +591,7 @@ public final class ComponentTree extends Tree implements DataProvider {
       myEditor = editor;
     }
 
-    public void deleteElement(DataContext dataContext) {
+    public void deleteElement(@NotNull DataContext dataContext) {
       if (myEditor != null) {
         LwInspectionSuppression[] suppressions = LW_INSPECTION_SUPPRESSION_ARRAY_DATA_KEY.getData(dataContext);
         if (suppressions != null) {
@@ -610,7 +610,7 @@ public final class ComponentTree extends Tree implements DataProvider {
       }
     }
 
-    public boolean canDeleteElement(DataContext dataContext) {
+    public boolean canDeleteElement(@NotNull DataContext dataContext) {
       if (myEditor != null) {
         LwInspectionSuppression[] suppressions = LW_INSPECTION_SUPPRESSION_ARRAY_DATA_KEY.getData(dataContext);
         if (suppressions != null) {

@@ -17,21 +17,13 @@ package com.intellij.openapi.roots.ui.configuration.projectRoot;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.impl.OrderEntryUtil;
 import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.configuration.LibraryTableModifiableModelProvider;
-import com.intellij.openapi.roots.ui.configuration.ModuleEditor;
-import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator;
 import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
-import com.intellij.openapi.roots.ui.configuration.artifacts.UsageInArtifact;
 import com.intellij.openapi.roots.ui.configuration.classpath.ChangeLibraryLevelActionBase;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.*;
-import com.intellij.packaging.elements.PackagingElement;
-import com.intellij.packaging.elements.PackagingElementFactory;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -67,23 +59,9 @@ public class ChangeLibraryLevelAction extends ChangeLibraryLevelActionBase {
     final Library newLibrary = doCopy(oldLibrary);
     if (newLibrary == null) return;
 
-    final ModulesConfigurator configurator = context.getModulesConfigurator();
     final Collection<ProjectStructureElementUsage> usages = context.getDaemonAnalyzer().getUsages(libraryElement);
     for (ProjectStructureElementUsage usage : usages) {
-      if (usage instanceof UsageInModuleClasspath) {
-        final Module module = ((UsageInModuleClasspath)usage).getModule();
-        final ModuleEditor editor = configurator.getModuleEditor(module);
-        if (editor != null) {
-          final ModifiableRootModel rootModel = editor.getModifiableRootModelProxy();
-          OrderEntryUtil.replaceLibrary(rootModel, oldLibrary, newLibrary);
-          context.getDaemonAnalyzer().queueUpdate(new ModuleProjectStructureElement(context, module));
-        }
-      }
-      else if (usage instanceof UsageInArtifact) {
-        final PackagingElement<?> newLibraryElement = PackagingElementFactory.getInstance().createLibraryFiles(newLibrary.getName(),
-                                                                                                               newLibrary.getTable().getTableLevel(), null);
-        ((UsageInArtifact)usage).replaceElement(newLibraryElement);
-      }
+      usage.replaceElement(new LibraryProjectStructureElement(context, newLibrary));
     }
 
     if (!myCopy) {

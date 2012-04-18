@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -96,11 +96,11 @@ public abstract class AbstractSuppressByNoInspectionCommentFix extends SuppressI
 
   @Override
   public boolean isAvailable(@NotNull final Project project, final Editor editor, @NotNull final PsiElement context) {
-    return context.getManager().isInProject(context) && getContainer(context) != null;
+    return context.isValid() && context.getManager().isInProject(context) && getContainer(context) != null;
   }
 
   @Override
-  public void invoke(final Project project, @Nullable Editor editor, final PsiElement element) throws IncorrectOperationException {
+  public void invoke(@NotNull final Project project, @Nullable Editor editor, @NotNull final PsiElement element) throws IncorrectOperationException {
     PsiElement container = getContainer(element);
     if (container == null) return;
 

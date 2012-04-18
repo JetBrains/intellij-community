@@ -16,7 +16,7 @@
 package org.jetbrains.plugins.gradle.diff;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.gradle.model.id.GradleEntityId;
 
 /**
  * Defines general contract for a change that encapsulates information about conflicting property value of the matched gradle
@@ -31,21 +31,32 @@ import org.jetbrains.annotations.Nullable;
  * @param <T>   target property value type
  */
 public abstract class GradleAbstractConflictingPropertyChange<T> extends GradleAbstractProjectStructureChange {
-  
-  private final String myPropertyDescription;
-  private final T myGradleValue;
-  private final T myIntellijValue;
 
-  public GradleAbstractConflictingPropertyChange(@NotNull String propertyDescription, @Nullable T gradleValue, @Nullable T intellijValue) {
+  @NotNull private final GradleEntityId myEntityId;
+  @NotNull private final String         myPropertyDescription;
+  @NotNull private final T              myGradleValue;
+  @NotNull private final T              myIntellijValue;
+
+  public GradleAbstractConflictingPropertyChange(@NotNull GradleEntityId id,
+                                                 @NotNull String propertyDescription,
+                                                 @NotNull T gradleValue,
+                                                 @NotNull T intellijValue)
+  {
+    myEntityId = id;
     myPropertyDescription = propertyDescription;
     myGradleValue = gradleValue;
     myIntellijValue = intellijValue;
   }
 
+  @NotNull
+  public GradleEntityId getEntityId() {
+    return myEntityId;
+  }
+
   /**
    * @return    target property's value at Gradle side
    */
-  @Nullable
+  @NotNull
   public T getGradleValue() {
     return myGradleValue;
   }
@@ -53,16 +64,16 @@ public abstract class GradleAbstractConflictingPropertyChange<T> extends GradleA
   /**
    * @return    target property's value at IntelliJ IDEA side
    */
-  @Nullable
+  @NotNull
   public T getIntellijValue() {
     return myIntellijValue;
   }
 
   @Override
   public int hashCode() {
-    int result = super.hashCode();
-    result = 31 * result + (myGradleValue != null ? myGradleValue.hashCode() : 0);
-    return  31 * result + (myIntellijValue != null ? myIntellijValue.hashCode() : 0);
+    int result = 31 * super.hashCode() + myEntityId.hashCode();
+    result = 31 * result + myGradleValue.hashCode();
+    return  31 * result + myIntellijValue.hashCode();
   }
 
   @Override
@@ -73,9 +84,7 @@ public abstract class GradleAbstractConflictingPropertyChange<T> extends GradleA
 
     GradleAbstractConflictingPropertyChange that = (GradleAbstractConflictingPropertyChange)o;
 
-    if (myGradleValue != null ? !myGradleValue.equals(that.myGradleValue) : that.myGradleValue != null) return false;
-    if (myIntellijValue != null ? !myIntellijValue.equals(that.myIntellijValue) : that.myIntellijValue != null) return false;
-    return true;
+    return myEntityId.equals(that.myEntityId) && myGradleValue.equals(that.myGradleValue) && myIntellijValue.equals(that.myIntellijValue);
   }
 
   @Override

@@ -39,6 +39,7 @@ import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.debugger.settings.ViewsGeneralSettings;
 import com.intellij.debugger.ui.impl.watch.*;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -234,6 +235,10 @@ public class FrameVariablesTree extends DebuggerTree {
       return new Pair<Set<String>, Set<TextWithImports>>(Collections.<String>emptySet(), Collections.<TextWithImports>emptySet());
     }
     final PsiFile positionFile = position.getFile();
+    if (!positionFile.getLanguage().isKindOf(JavaLanguage.INSTANCE)) {
+      return new Pair<Set<String>, Set<TextWithImports>>(visibleVars, Collections.<TextWithImports>emptySet());
+    }
+
     final VirtualFile vFile = positionFile.getVirtualFile();
     final Document doc = vFile != null? FileDocumentManager.getInstance().getDocument(vFile) : null;
     if (doc == null || doc.getLineCount() == 0 || line > (doc.getLineCount() - 1)) {

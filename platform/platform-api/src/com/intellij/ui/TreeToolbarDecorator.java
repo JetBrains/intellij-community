@@ -31,9 +31,8 @@ class TreeToolbarDecorator extends ToolbarDecorator {
   }
 
   @Override
-  protected ToolbarDecorator initPositionAndBorder() {
-    return super.initPositionAndBorder()
-      .setToolbarPosition(SystemInfo.isMac ? ActionToolbarPosition.BOTTOM : ActionToolbarPosition.TOP);
+  public ToolbarDecorator initPosition() {
+    return setToolbarPosition(SystemInfo.isMac ? ActionToolbarPosition.BOTTOM : ActionToolbarPosition.TOP);
   }
 
   @Override

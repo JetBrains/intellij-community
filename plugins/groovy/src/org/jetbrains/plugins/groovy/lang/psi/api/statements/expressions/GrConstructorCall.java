@@ -15,17 +15,11 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions;
 
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 
 /**
  * @author ven
  */
 public interface GrConstructorCall extends GrCall {
-  @NotNull
-  GroovyResolveResult resolveConstructorGenerics();
-
-  GroovyResolveResult[] multiResolveConstructor();
-
   GroovyResolveResult[] multiResolveClass();
 }

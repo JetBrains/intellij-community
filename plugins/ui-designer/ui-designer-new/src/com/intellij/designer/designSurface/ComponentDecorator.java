@@ -24,9 +24,19 @@ import java.awt.*;
 /**
  * @author Alexander Lobas
  */
-public interface ComponentDecorator {
+public abstract class ComponentDecorator {
   @Nullable
-  InputTool findTargetTool(DecorationLayer layer, RadComponent component, int x, int y);
+  public abstract InputTool findTargetTool(DecorationLayer layer, RadComponent component, int x, int y);
 
-  void decorate(DecorationLayer layer, Graphics2D g, RadComponent component);
+  public void decorate(DecorationLayer layer, Graphics2D host, RadComponent component) {
+    Graphics2D child = (Graphics2D)host.create();
+    try {
+      paint(layer, child, component);
+    }
+    finally {
+      child.dispose();
+    }
+  }
+
+  protected abstract void paint(DecorationLayer layer, Graphics2D g, RadComponent component);
 }

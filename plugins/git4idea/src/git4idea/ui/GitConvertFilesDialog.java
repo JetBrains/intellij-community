@@ -17,14 +17,15 @@ package git4idea.ui;
 
 import com.intellij.ide.presentation.VirtualFilePresentation;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.*;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.vcsUtil.VcsFileUtil;
-import git4idea.DialogManager;
 import git4idea.GitUtil;
+import git4idea.PlatformFacade;
 import git4idea.config.GitVcsSettings;
 import git4idea.i18n.GitBundle;
 
@@ -71,7 +72,7 @@ public class GitConvertFilesDialog extends DialogWrapper {
   @Override
   public void show() {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
-      DialogManager.getInstance(myProject).showDialog(this);
+      ServiceManager.getService(myProject, PlatformFacade.class).showDialog(this);
     } else {
       super.show();
     }

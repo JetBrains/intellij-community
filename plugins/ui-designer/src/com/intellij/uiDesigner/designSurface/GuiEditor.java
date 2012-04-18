@@ -1037,7 +1037,7 @@ public final class GuiEditor extends JPanel implements DataProvider {
    * Allows "DEL" button to work through the standard mechanism
    */
   private final class MyDeleteProvider implements DeleteProvider {
-    public void deleteElement(final DataContext dataContext) {
+    public void deleteElement(@NotNull final DataContext dataContext) {
       if (!GuiEditor.this.ensureEditable()) {
         return;
       }
@@ -1048,7 +1048,7 @@ public final class GuiEditor extends JPanel implements DataProvider {
       }, UIDesignerBundle.message("command.delete.selection"), null);
     }
 
-    public boolean canDeleteElement(final DataContext dataContext) {
+    public boolean canDeleteElement(@NotNull final DataContext dataContext) {
       final UIDesignerToolWindowManager manager = UIDesignerToolWindowManager.getInstance(getProject());
       return
         !manager.getPropertyInspector().isEditing() &&
@@ -1077,27 +1077,27 @@ public final class GuiEditor extends JPanel implements DataProvider {
       myAlarm.cancelAllRequests();
     }
 
-    public void childAdded(final PsiTreeChangeEvent event) {
+    public void childAdded(@NotNull final PsiTreeChangeEvent event) {
       handleEvent(event);
     }
 
-    public void childMoved(final PsiTreeChangeEvent event) {
+    public void childMoved(@NotNull final PsiTreeChangeEvent event) {
       handleEvent(event);
     }
 
-    public void childrenChanged(final PsiTreeChangeEvent event) {
+    public void childrenChanged(@NotNull final PsiTreeChangeEvent event) {
       handleEvent(event);
     }
 
-    public void childRemoved(PsiTreeChangeEvent event) {
+    public void childRemoved(@NotNull PsiTreeChangeEvent event) {
       handleEvent(event);
     }
 
-    public void childReplaced(PsiTreeChangeEvent event) {
+    public void childReplaced(@NotNull PsiTreeChangeEvent event) {
       handleEvent(event);
     }
 
-    public void propertyChanged(final PsiTreeChangeEvent event) {
+    public void propertyChanged(@NotNull final PsiTreeChangeEvent event) {
       if (PsiTreeChangeEvent.PROP_ROOTS.equals(event.getPropertyName())) {
         myAlarm.cancelRequest(myRefreshPropertiesRequest);
         myAlarm.addRequest(myRefreshPropertiesRequest, 500, ModalityState.stateForComponent(GuiEditor.this));

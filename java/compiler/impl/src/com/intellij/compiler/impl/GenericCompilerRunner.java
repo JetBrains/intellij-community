@@ -175,7 +175,7 @@ public class GenericCompilerRunner {
   boolean processTarget(T target, final int targetId, final GenericCompiler<Key, SourceState, OutputState> compiler, final GenericCompilerInstance<T, Item, Key, SourceState, OutputState> instance,
                         final GenericCompilerCache<Key, SourceState, OutputState> cache) throws IOException, ExitException {
     if (LOG.isDebugEnabled()) {
-      LOG.debug("Processing target '" + target + "' (id=" + targetId + ")");
+      LOG.debug("Processing target '" + target + "' (id=" + targetId + ") by " + compiler);
     }
     final List<Item> items = instance.getItems(target);
     checkForErrorsOrCanceled();
@@ -226,6 +226,12 @@ public class GenericCompilerRunner {
 
     if (LOG.isDebugEnabled()) {
       LOG.debug(toProcess.size() + " items will be processed, " + toRemove.size() + " items will be removed");
+      for (int i = 0; i < Math.min(100, toProcess.size()); i++) {
+        LOG.debug("to process:" + toProcess.get(i).getItem().getKey());
+      }
+      for (int i = 0; i < Math.min(100, toRemove.size()); i++) {
+        LOG.debug("to delete:" + toRemove.get(i));
+      }
     }
 
     if (toProcess.isEmpty() && toRemove.isEmpty()) {
@@ -271,6 +277,15 @@ public class GenericCompilerRunner {
         }
         CompilerUtil.refreshIOFiles(filesToRefresh);
         CompilerUtil.refreshIODirectories(dirsToRefresh);
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("refreshed " + filesToRefresh.size() + " files and " + dirsToRefresh.size() + " dirs");
+          for (int i = 0; i < Math.min(100, filesToRefresh.size()); i++) {
+            LOG.debug("file: " + filesToRefresh.get(i));
+          }
+          for (int i = 0; i < Math.min(100, dirsToRefresh.size()); i++) {
+            LOG.debug("dir: " + dirsToRefresh.get(i));
+          }
+        }
 
         final RunResult runResult = new ReadAction() {
           protected void run(final Result result) throws Throwable {

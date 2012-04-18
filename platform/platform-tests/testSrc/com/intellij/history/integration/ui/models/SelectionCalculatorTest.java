@@ -24,6 +24,7 @@ import com.intellij.history.core.revisions.Revision;
 import com.intellij.history.core.tree.RootEntry;
 import com.intellij.history.integration.IdeaGateway;
 import com.intellij.util.diff.FilesTooBigForDiffException;
+import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 
 import java.util.List;
@@ -133,7 +134,7 @@ public class SelectionCalculatorTest extends LocalHistoryTestCase {
 
   private static class MyIdeaGateway extends IdeaGateway {
     @Override
-    public String stringFromBytes(byte[] bytes, String path) {
+    public String stringFromBytes(@NotNull byte[] bytes, @NotNull String path) {
       return new String(bytes);
     }
   }

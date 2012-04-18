@@ -173,12 +173,54 @@ public class AndroidLintTest extends AndroidTestCase {
     doGlobalInspectionTest(new AndroidLintInspectionToolProvider.AndroidLintManifestOrderInspection());
   }
 
+  public void testButtonsOrder() throws Exception {
+    myFixture.copyFileToProject(getGlobalTestDir() + "/AndroidManifest.xml", "AndroidManifest.xml");
+    myFixture.copyFileToProject(getGlobalTestDir() + "/strings.xml", "res/values/strings.xml");
+    myFixture.copyFileToProject(getGlobalTestDir() + "/layout.xml", "res/layout/layout.xml");
+    doGlobalInspectionTest(new AndroidLintInspectionToolProvider.AndroidLintButtonOrderInspection());
+  }
+
+  public void testViewType() throws Exception {
+    createManifest();
+    myFixture.copyFileToProject(getGlobalTestDir() + "/MyActivity.java", "src/p1/p2/MyActivity.java");
+    myFixture.copyFileToProject(getGlobalTestDir() + "/layout.xml", "res/layout/layout.xml");
+    doGlobalInspectionTest(new AndroidLintInspectionToolProvider.AndroidLintWrongViewCastInspection());
+  }
+
   public void testDuplicateIcons() throws Exception {
     createManifest();
     myFixture.copyFileToProject(getGlobalTestDir() + "/dup1.png", "res/drawable/dup1.png");
     myFixture.copyFileToProject(getGlobalTestDir() + "/dup2.png", "res/drawable/dup2.png");
     myFixture.copyFileToProject(getGlobalTestDir() + "/other.png", "res/drawable/other.png");
     doGlobalInspectionTest(new AndroidLintInspectionToolProvider.AndroidLintIconDuplicatesInspection());
+  }
+
+  public void testSuppressingInXml1() throws Exception {
+    doTestNoFix(new AndroidLintInspectionToolProvider.AndroidLintHardcodedTextInspection(),
+                "/res/layout/layout.xml", "xml");
+  }
+
+  public void testSuppressingInXml2() throws Exception {
+    doTestNoFix(new AndroidLintInspectionToolProvider.AndroidLintHardcodedTextInspection(),
+                "/res/layout/layout.xml", "xml");
+  }
+
+  public void testSuppressingInXml3() throws Exception {
+    createManifest();
+    myFixture.copyFileToProject(getGlobalTestDir() + "/layout.xml", "res/layout/layout.xml");
+    doGlobalInspectionTest(new AndroidLintInspectionToolProvider.AndroidLintHardcodedTextInspection());
+  }
+
+  public void testSuppressingInJava() throws Exception {
+    createManifest();
+    myFixture.copyFileToProject(getGlobalTestDir() + "/MyActivity.java", "src/p1/p2/MyActivity.java");
+    doGlobalInspectionTest(new AndroidLintInspectionToolProvider.AndroidLintUseValueOfInspection());
+  }
+
+  public void testLintInJavaFile() throws Exception {
+    createManifest();
+    myFixture.copyFileToProject(getGlobalTestDir() + "/MyActivity.java", "src/p1/p2/MyActivity.java");
+    doGlobalInspectionTest(new AndroidLintInspectionToolProvider.AndroidLintUseValueOfInspection());
   }
 
   private void doGlobalInspectionTest(@NotNull AndroidLintInspectionBase inspection) {

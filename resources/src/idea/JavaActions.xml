@@ -23,13 +23,6 @@
       <add-to-group group-id="NewGroup1" anchor="first"/>
     </action>
 
-    <action id="ExpandJavadocs" class="com.intellij.codeInsight.folding.impl.actions.ExpandJavadocsAction">
-      <add-to-group group-id="LanguageSpecificFoldingGroup" anchor="last"/>
-    </action>
-    <action id="CollapseJavadocs" class="com.intellij.codeInsight.folding.impl.actions.CollapseJavadocsAction">
-      <add-to-group group-id="LanguageSpecificFoldingGroup" anchor="last"/>
-    </action>
-
     <action id="CollapseBlock" class="com.intellij.codeInsight.folding.impl.actions.CollapseBlockAction">
       <add-to-group group-id="FoldingGroup" anchor="after" relative-to-action="CollapseSelection"/>
     </action>

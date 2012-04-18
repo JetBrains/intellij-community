@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -82,6 +82,11 @@ public class CompilerPaths {
     return new File(getCompilerSystemDirectory(project), ".caches");
   }
 
+  public static File getCacheStoreDirectory(String compilerProjectDirName) {
+    //noinspection HardCodedStringLiteral
+    return new File(getCompilerSystemDirectory(compilerProjectDirName), ".caches");
+  }
+
   public static File getRebuildMarkerFile(Project project) {
     return new File(getCompilerSystemDirectory(project), "rebuild_required");
   }
@@ -91,18 +96,28 @@ public class CompilerPaths {
    * @return a directory under IDEA "system" directory where all files related to compiler subsystem are stored (such as compiler caches or generated files)
    */
   public static File getCompilerSystemDirectory(Project project) {
-    //noinspection HardCodedStringLiteral
-    String projectName = getPresentableName(project);
-    return new File(getCompilerSystemDirectory(), projectName + "." + project.getLocationHash());
+    return getCompilerSystemDirectory(getCompilerSystemDirectoryName(project));
   }
 
+  public static File getCompilerSystemDirectory(String compilerProjectDirName) {
+    return new File(getCompilerSystemDirectory(), compilerProjectDirName);
+  }
+
+  public static String getCompilerSystemDirectoryName(Project project) {
+    return getPresentableName(project) + "." + project.getLocationHash();
+  }
+
+  @Nullable
   private static String getPresentableName(final Project project) {
     if (project.isDefault()) {
       return project.getName();
     }
 
-    String location = project.getLocation();
-    if (location == null) return null;
+    String location = project.getPresentableUrl();
+    if (location == null) {
+      return null;
+    }
+
     String projectName = FileUtil.toSystemIndependentName(location);
     if (projectName.endsWith("/")) {
       projectName = projectName.substring(0, projectName.length() - 1);

@@ -1,9 +1,12 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -14,19 +17,13 @@ package com.intellij.openapi.vcs.ex;
 
 import com.intellij.codeInsight.hint.EditorFragmentComponent;
 import com.intellij.codeInsight.hint.HintManagerImpl;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.ActionPlaces;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diff.DiffColors;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.ScrollType;
-import com.intellij.openapi.editor.colors.EditorColors;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.colors.EditorColorsScheme;
-import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.editor.colors.*;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
@@ -49,8 +46,10 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.EventObject;
+import java.util.List;
 
 /**
  * @author irengrig
@@ -60,27 +59,25 @@ public class LineStatusTrackerDrawing {
   }
 
   static TextAttributes getAttributesFor(final Range range) {
-    final EditorColorsScheme globalScheme = EditorColorsManager.getInstance().getGlobalScheme();
-    final Color stripeColor = globalScheme.getAttributes(getDiffColor(range)).getErrorStripeColor();
+    final Color stripeColor = getDiffColor(range, false);
     final TextAttributes textAttributes = new TextAttributes(null, stripeColor, null, EffectType.BOXED, Font.PLAIN);
     textAttributes.setErrorStripeColor(stripeColor);
     return textAttributes;
   }
 
-  private static void paintGutterFragment(final Editor editor, final Graphics g, final Rectangle r, final TextAttributesKey diffAttributeKey) {
+  private static void paintGutterFragment(final Editor editor, final Graphics g, final Rectangle r, final Color stripeColor) {
     final EditorGutterComponentEx gutter = ((EditorEx)editor).getGutterComponentEx();
-    final Color stripeColor = editor.getColorsScheme().getAttributes(diffAttributeKey).getErrorStripeColor();
-    g.setColor(brighter(stripeColor));
+    g.setColor(stripeColor);
 
     final int endX = gutter.getWhitespaceSeparatorOffset();
-    final int x = r.x + r.width - 2;
+    final int x = r.x + r.width - 5;
     final int width = endX - x;
     if (r.height > 0) {
-      g.fillRect(x, r.y + 2, width, r.height - 4);
+      g.fillRect(x, r.y, width, r.height);
       g.setColor(gutter.getOutlineColor(false));
-      UIUtil.drawLine(g, x, r.y + 2, x + width, r.y + 2);
-      UIUtil.drawLine(g, x, r.y + 2, x, r.y + r.height - 3);
-      UIUtil.drawLine(g, x, r.y + r.height - 3, x + width, r.y + r.height - 3);
+      UIUtil.drawLine(g, x, r.y, x + width, r.y);
+      UIUtil.drawLine(g, x, r.y, x, r.y + r.height - 1);
+      UIUtil.drawLine(g, x, r.y + r.height - 1, x + width, r.y + r.height - 1);
     }
     else {
       final int[] xPoints = new int[]{x,
@@ -120,7 +117,7 @@ public class LineStatusTrackerDrawing {
   public static LineMarkerRenderer createRenderer(final Range range, final LineStatusTracker tracker) {
     return new ActiveGutterRenderer() {
       public void paint(final Editor editor, final Graphics g, final Rectangle r) {
-        paintGutterFragment(editor, g, r, getDiffColor(range));
+        paintGutterFragment(editor, g, r, getDiffColor(range, true));
       }
 
       public void doAction(final Editor editor, final MouseEvent e) {
@@ -159,11 +156,15 @@ public class LineStatusTrackerDrawing {
     localShowNextAction.copyFrom(globalShowNextAction);
     localShowPrevAction.copyFrom(globalShowPrevAction);
 
-    group.add(new RollbackLineStatusRangeAction(tracker, range, editor));
+    final RollbackLineStatusRangeAction rollback = new RollbackLineStatusRangeAction(tracker, range, editor);
+    EmptyAction.setupAction(rollback, IdeActions.CHANGES_VIEW_ROLLBACK, editorComponent);
+    group.add(rollback);
+
     group.add(new ShowLineStatusRangeDiffAction(tracker, range, editor));
     group.add(new CopyLineStatusRangeAction(tracker, range));
 
-    final java.util.List<AnAction> actionList = (java.util.List<AnAction>)editorComponent.getClientProperty(AnAction.ourClientProperty);
+    @SuppressWarnings("unchecked")
+    final List<AnAction> actionList = (List<AnAction>)editorComponent.getClientProperty(AnAction.ourClientProperty);
 
     actionList.remove(globalShowPrevAction);
     actionList.remove(globalShowNextAction);
@@ -182,6 +183,26 @@ public class LineStatusTrackerDrawing {
     final JPanel toolbarPanel = new JPanel(new BorderLayout());
     toolbarPanel.setOpaque(false);
     toolbarPanel.add(toolbar, BorderLayout.WEST);
+    JPanel emptyPanel = new JPanel();
+    emptyPanel.setOpaque(false);
+    toolbarPanel.add(emptyPanel, BorderLayout.CENTER);
+    MouseAdapter listener = new MouseAdapter() {
+      @Override
+      public void mousePressed(MouseEvent e) {
+        editor.getContentComponent().dispatchEvent(SwingUtilities.convertMouseEvent(e.getComponent(), e, editor.getContentComponent()));
+      }
+
+      @Override
+      public void mouseClicked(MouseEvent e) {
+        editor.getContentComponent().dispatchEvent(SwingUtilities.convertMouseEvent(e.getComponent(), e, editor.getContentComponent()));
+      }
+
+      public void mouseReleased(final MouseEvent e) {
+        editor.getContentComponent().dispatchEvent(SwingUtilities.convertMouseEvent(e.getComponent(), e, editor.getContentComponent()));
+      }
+    };
+    emptyPanel.addMouseListener(listener);
+
     component.add(toolbarPanel, BorderLayout.NORTH);
 
     if (range.getType() != Range.INSERTED) {
@@ -194,12 +215,14 @@ public class LineStatusTrackerDrawing {
         EditorFragmentComponent.createEditorFragmentComponent(uEditor, range.getUOffset1(), range.getUOffset2(), false, false);
 
       component.add(editorFragmentComponent, BorderLayout.CENTER);
+
       EditorFactory.getInstance().releaseEditor(uEditor);
     }
 
     final LightweightHint lightweightHint = new LightweightHint(component);
     lightweightHint.addHintListener(new HintListener() {
       public void hintHidden(final EventObject event) {
+        actionList.remove(rollback);
         actionList.remove(localShowPrevAction);
         actionList.remove(localShowNextAction);
         actionList.add(globalShowPrevAction);
@@ -208,7 +231,7 @@ public class LineStatusTrackerDrawing {
     });
 
     HintManagerImpl.getInstanceImpl().showEditorHint(lightweightHint, editor, point, HintManagerImpl.HIDE_BY_ANY_KEY | HintManagerImpl.HIDE_BY_TEXT_CHANGE |
-                                                                             HintManagerImpl.HIDE_BY_OTHER_HINT | HintManagerImpl.HIDE_BY_SCROLLING,
+                                                                             HintManagerImpl.HIDE_BY_SCROLLING,
                                                                              -1, false, new HintHint(editor, point));
   }
 
@@ -220,13 +243,13 @@ public class LineStatusTrackerDrawing {
 
   public static void moveToRange(final Range range, final Editor editor, final LineStatusTracker tracker) {
     final Document document = tracker.getDocument();
-    final int firstOffset = document.getLineStartOffset(Math.min(range.getOffset1(), document.getLineCount() - 1));
-    editor.getCaretModel().moveToOffset(firstOffset);
+    final int lastOffset = document.getLineStartOffset(Math.min(range.getOffset2(), document.getLineCount() - 1));
+    editor.getCaretModel().moveToOffset(lastOffset);
     editor.getScrollingModel().scrollToCaret(ScrollType.CENTER);
 
     editor.getScrollingModel().runActionOnScrollingFinished(new Runnable() {
       public void run() {
-        Point p = editor.visualPositionToXY(editor.offsetToVisualPosition(firstOffset));
+        Point p = editor.visualPositionToXY(editor.offsetToVisualPosition(lastOffset));
         final JComponent editorComponent = editor.getContentComponent();
         final JLayeredPane layeredPane = editorComponent.getRootPane().getLayeredPane();
         p = SwingUtilities.convertPoint(editorComponent, 0, p.y, layeredPane);
@@ -235,14 +258,17 @@ public class LineStatusTrackerDrawing {
     });
   }
 
-  private static TextAttributesKey getDiffColor(Range range) {
+  private static Color getDiffColor(Range range, boolean gutter) {
+    final EditorColorsScheme globalScheme = EditorColorsManager.getInstance().getGlobalScheme();
     switch (range.getType()) {
       case Range.INSERTED:
-        return DiffColors.DIFF_INSERTED;
+        return gutter ? globalScheme.getColor(EditorColors.ADDED_LINES_COLOR)
+                      : globalScheme.getAttributes(DiffColors.DIFF_INSERTED).getErrorStripeColor();
       case Range.DELETED:
-        return DiffColors.DIFF_DELETED;
+        return globalScheme.getAttributes(DiffColors.DIFF_DELETED).getErrorStripeColor();
       case Range.MODIFIED:
-        return DiffColors.DIFF_MODIFIED;
+        return gutter ? globalScheme.getColor(EditorColors.MODIFIED_LINES_COLOR)
+                      : globalScheme.getAttributes(DiffColors.DIFF_MODIFIED).getErrorStripeColor();
       default:
         assert false;
         return null;

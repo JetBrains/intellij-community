@@ -16,7 +16,7 @@
 package com.siyeh.ipp.base;
 
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
-import com.intellij.lang.StdLanguages;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
@@ -158,7 +158,7 @@ public abstract class Intention extends PsiElementBaseIntentionAction {
   @Nullable
   PsiElement findMatchingElement(@Nullable PsiElement element, Editor editor) {
     while (element != null) {
-      if (!StdLanguages.JAVA.equals(element.getLanguage())) {
+      if (!JavaLanguage.INSTANCE.equals(element.getLanguage())) {
         break;
       }
       if (predicate instanceof PsiElementEditorPredicate) {

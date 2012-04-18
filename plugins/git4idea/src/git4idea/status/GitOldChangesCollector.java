@@ -153,24 +153,8 @@ class GitOldChangesCollector extends GitChangesCollector {
     if (dirtyPaths.isEmpty()) {
       return;
     }
-    GitSimpleHandler handler = new GitSimpleHandler(myProject, myVcsRoot, GitCommand.DIFF);
-    handler.addParameters("--name-status", "--diff-filter=ADCMRUXT", "-M", "HEAD");
-    handler.setNoSSH(true);
-    handler.setSilent(true);
-    handler.setStdoutSuppressed(true);
-    handler.endOptions();
-    handler.addRelativePaths(dirtyPaths);
-    if (handler.isLargeCommandLine()) {
-      // if there are too much files, just get all changes for the project
-      handler = new GitSimpleHandler(myProject, myVcsRoot, GitCommand.DIFF);
-      handler.addParameters("--name-status", "--diff-filter=ADCMRUXT", "-M", "HEAD");
-      handler.setNoSSH(true);
-      handler.setSilent(true);
-      handler.setStdoutSuppressed(true);
-      handler.endOptions();
-    }
     try {
-      String output = handler.run();
+      String output = GitChangeUtils.getDiffOutput(myProject, myVcsRoot, "HEAD", dirtyPaths);
       GitChangeUtils.parseChanges(myProject, myVcsRoot, null, GitChangeUtils.loadRevision(myProject, myVcsRoot, "HEAD"), output, myChanges,
                                   myUnmergedNames);
     }
@@ -178,7 +162,7 @@ class GitOldChangesCollector extends GitChangesCollector {
       if (!GitChangeUtils.isHeadMissing(ex)) {
         throw ex;
       }
-      handler = new GitSimpleHandler(myProject, myVcsRoot, GitCommand.LS_FILES);
+      GitSimpleHandler handler = new GitSimpleHandler(myProject, myVcsRoot, GitCommand.LS_FILES);
       handler.addParameters("--cached");
       handler.setNoSSH(true);
       handler.setSilent(true);

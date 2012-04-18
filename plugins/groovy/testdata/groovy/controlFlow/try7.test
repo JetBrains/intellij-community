@@ -11,10 +11,9 @@ try {
 4(6) element: RETURN statement
 5(10) element: Finally clause
 6(5,7)  CALL 5
-7(13) AFTER CALL 6
+7(12) AFTER CALL 6
 8(5,9)  CALL 5
-9(13) AFTER CALL 8
+9(12) AFTER CALL 8
 10(11) READ bar
-11(12) element: Method call MAYBE_RETURN
-12(7,9)  RETURN
-13() element: null
+11(7,9)  RETURN
+12() element: null

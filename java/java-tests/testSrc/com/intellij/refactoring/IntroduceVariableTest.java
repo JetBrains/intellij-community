@@ -3,6 +3,7 @@ package com.intellij.refactoring;
 import com.intellij.JavaTestUtil;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiType;
@@ -53,7 +54,7 @@ public class IntroduceVariableTest extends LightCodeInsightTestCase {
   }
 
   public void testAnonymousClass1() throws Exception {
-    doTest(new MockIntroduceVariableHandler("runnable", false, false, false, "java.lang.Runnable"));
+    doTest(new MockIntroduceVariableHandler("runnable", false, false, false, CommonClassNames.JAVA_LANG_RUNNABLE));
   }
 
   public void testAnonymousClass2() throws Exception {
@@ -201,6 +202,10 @@ public class IntroduceVariableTest extends LightCodeInsightTestCase {
   public void testArrayFromVarargs1() throws Exception {
     doTest(new MockIntroduceVariableHandler("strs", false, false, false, "java.lang.String[]"));
   }
+  
+  public void testEnumArrayFromVarargs() throws Exception {
+    doTest(new MockIntroduceVariableHandler("strs", false, false, false, "E[]"));
+  }
 
   public void testFromFinalFieldOnAssignment() throws Exception {
     doTest(new MockIntroduceVariableHandler("strs", false, false, false, "java.lang.String"));
@@ -263,6 +268,14 @@ public class IntroduceVariableTest extends LightCodeInsightTestCase {
 
   public void testCantCollapsedToDiamond() throws Exception {
     doTest(new MockIntroduceVariableHandler("a", true, true, true, "Foo<java.lang.Number>"));
+  }
+  
+  public void testPolyadic() throws Exception {
+    doTest(new MockIntroduceVariableHandler("b1", true, true, true, "boolean"));
+  }
+  
+  public void testAssignmentToUnresolvedReference() throws Exception {
+    doTest(new MockIntroduceVariableHandler("collection", true, true, true, "java.util.List<? extends java.util.Collection<?>>"));
   }
 
   public void testSiblingInnerClassType() throws Exception {

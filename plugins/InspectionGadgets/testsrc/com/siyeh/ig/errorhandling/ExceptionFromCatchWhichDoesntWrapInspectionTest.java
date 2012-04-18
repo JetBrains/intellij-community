@@ -6,7 +6,8 @@ public class ExceptionFromCatchWhichDoesntWrapInspectionTest extends
                                                              IGInspectionTestCase {
 
   public void test() throws Exception {
-    doTest("com/siyeh/igtest/errorhandling/exception_from_catch",
-           new ExceptionFromCatchWhichDoesntWrapInspection());
+    final ExceptionFromCatchWhichDoesntWrapInspection tool = new ExceptionFromCatchWhichDoesntWrapInspection();
+    tool.ignoreCantWrap = true;
+    doTest("com/siyeh/igtest/errorhandling/exception_from_catch", tool);
   }
 }

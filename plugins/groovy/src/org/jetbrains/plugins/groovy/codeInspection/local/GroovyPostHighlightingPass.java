@@ -21,6 +21,8 @@ import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.impl.*;
+import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
+import com.intellij.codeInsight.daemon.impl.quickfix.SafeDeleteFix;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.ProblemHighlightType;
@@ -122,20 +124,24 @@ public class GroovyPostHighlightingPass extends TextEditorHighlightingPass {
           if (nameId.getNode().getElementType() == GroovyTokenTypes.mIDENT) {
             String name = ((GrNamedElement)element).getName();
             if (element instanceof GrTypeDefinition && !PostHighlightingPass.isClassUsed((GrTypeDefinition)element, progress, usageHelper)) {
-              unusedDeclarations.add(
-                PostHighlightingPass.createUnusedSymbolInfo(nameId, "Class " + name + " is unused", HighlightInfoType.UNUSED_SYMBOL));
+              HighlightInfo highlightInfo = PostHighlightingPass.createUnusedSymbolInfo(nameId, "Class " + name + " is unused", HighlightInfoType.UNUSED_SYMBOL);
+              QuickFixAction.registerQuickFixAction(highlightInfo, new SafeDeleteFix(element));
+              unusedDeclarations.add(highlightInfo);
             }
             else if (element instanceof GrMethod) {
               GrMethod method = (GrMethod)element;
-              if (!GroovyCompletionUtil.OPERATOR_METHOD_NAMES.contains(method.getName()) &&
-                  !PostHighlightingPass.isMethodReferenced(method, progress, usageHelper)) {
-                unusedDeclarations.add(
-                  PostHighlightingPass.createUnusedSymbolInfo(nameId, (method.isConstructor() ? "Constructor" : "Method") +" " + name + " is unused", HighlightInfoType.UNUSED_SYMBOL));
+              if (!GroovyCompletionUtil.OPERATOR_METHOD_NAMES.contains(method.getName()) && !PostHighlightingPass.isMethodReferenced(method, progress, usageHelper)) {
+                String message = (method.isConstructor() ? "Constructor" : "Method") + " " + name + " is unused";
+                HighlightInfo highlightInfo = PostHighlightingPass.createUnusedSymbolInfo(nameId, message, HighlightInfoType.UNUSED_SYMBOL);
+                QuickFixAction.registerQuickFixAction(highlightInfo, new SafeDeleteFix(method));
+                unusedDeclarations.add(highlightInfo);
               }
             }
             else if (element instanceof GrField && PostHighlightingPass.isFieldUnused((GrField)element, progress, usageHelper)) {
-              unusedDeclarations.add(
-                PostHighlightingPass.createUnusedSymbolInfo(nameId, "Property " + name + " is unused", HighlightInfoType.UNUSED_SYMBOL));
+              HighlightInfo highlightInfo =
+                PostHighlightingPass.createUnusedSymbolInfo(nameId, "Property " + name + " is unused", HighlightInfoType.UNUSED_SYMBOL);
+              QuickFixAction.registerQuickFixAction(highlightInfo, new SafeDeleteFix(element));
+              unusedDeclarations.add(highlightInfo);
             }
           }
         }

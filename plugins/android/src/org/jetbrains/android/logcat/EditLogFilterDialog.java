@@ -1,6 +1,7 @@
 package org.jetbrains.android.logcat;
 
 import com.android.ddmlib.Log;
+import com.intellij.codeInsight.completion.CompletionParameters;
 import com.intellij.ide.ui.ListCellRendererWrapper;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -56,10 +57,10 @@ class EditLogFilterDialog extends DialogWrapper {
     myTagField = new TextFieldWithAutoCompletion<String>(project, new TextFieldWithAutoCompletion.StringsCompletionProvider(null, null) {
       @NotNull
       @Override
-      public Collection<String> getItems(String prefix, boolean cached) {
+      public Collection<String> getItems(String prefix, boolean cached, CompletionParameters parameters) {
         parseExistingMessagesIfNecessary();
         setItems(Arrays.asList(myUsedTags));
-        return super.getItems(prefix, cached);
+        return super.getItems(prefix, cached, parameters);
       }
     }, true);
 
@@ -69,10 +70,10 @@ class EditLogFilterDialog extends DialogWrapper {
     myPidField = new TextFieldWithAutoCompletion<String>(project, new TextFieldWithAutoCompletion.StringsCompletionProvider(null, null) {
       @NotNull
       @Override
-      public Collection<String> getItems(String prefix, boolean cached) {
+      public Collection<String> getItems(String prefix, boolean cached, CompletionParameters parameters) {
         parseExistingMessagesIfNecessary();
         setItems(Arrays.asList(myUsedPids));
-        return super.getItems(prefix, cached);
+        return super.getItems(prefix, cached, parameters);
       }
 
       @Override

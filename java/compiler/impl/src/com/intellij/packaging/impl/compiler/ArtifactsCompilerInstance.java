@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,7 +38,6 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -53,7 +52,6 @@ import com.intellij.packaging.elements.PackagingElementResolvingContext;
 import com.intellij.packaging.impl.artifacts.ArtifactSortingUtil;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.text.CaseInsensitiveStringHashingStrategy;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
@@ -307,9 +305,7 @@ public class ArtifactsCompilerInstance extends GenericCompilerInstance<ArtifactB
   }
 
   private static THashSet<String> createPathsHashSet() {
-    return SystemInfo.isFileSystemCaseSensitive
-           ? new THashSet<String>()
-           : new THashSet<String>(CaseInsensitiveStringHashingStrategy.INSTANCE);
+    return new THashSet<String>(FileUtil.PATH_HASHING_STRATEGY);
   }
 
   @Override

@@ -41,29 +41,30 @@ public class LocalSearchScope extends SearchScope {
   public static final LocalSearchScope EMPTY = new LocalSearchScope(PsiElement.EMPTY_ARRAY);
   private String myDisplayName;
 
-  public LocalSearchScope(PsiElement scope) {
+  public LocalSearchScope(@NotNull PsiElement scope) {
     this(scope, null);
   }
 
-  public LocalSearchScope(PsiElement scope, String displayName) {
+  public LocalSearchScope(@NotNull PsiElement scope, @Nullable String displayName) {
     this(new PsiElement[]{scope});
     myDisplayName = displayName;
   }
 
-  public LocalSearchScope(PsiElement[] scope) {
+  public LocalSearchScope(@NotNull PsiElement[] scope) {
     this(scope, null);
   }
 
-  public LocalSearchScope(PsiElement[] scope, String displayName) {
+  public LocalSearchScope(@NotNull PsiElement[] scope, @Nullable String displayName) {
     this(scope, displayName, false);
   }
 
-  public LocalSearchScope(final PsiElement[] scope, final String displayName, final boolean ignoreInjectedPsi) {
+  public LocalSearchScope(@NotNull PsiElement[] scope, @Nullable final String displayName, final boolean ignoreInjectedPsi) {
     myIgnoreInjectedPsi = ignoreInjectedPsi;
     myDisplayName = displayName;
     Set<PsiElement> localScope = new LinkedHashSet<PsiElement>(scope.length);
 
     for (final PsiElement element : scope) {
+      LOG.assertTrue(element != null, "null element");
       LOG.assertTrue(element.getContainingFile() != null, element.getClass().getName());
       if (element instanceof PsiFile) {
         List<PsiFile> files = ((PsiFile)element).getViewProvider().getAllFiles();
@@ -156,7 +157,7 @@ public class LocalSearchScope extends SearchScope {
   }
 
   public String toString() {
-    StringBuffer result = new StringBuffer();
+    StringBuilder result = new StringBuilder();
     for (int i = 0; i < myScope.length; i++) {
       final PsiElement element = myScope[i];
       if (i > 0) {

@@ -56,7 +56,7 @@ public abstract class ColoredTreeCellRenderer extends SimpleColoredComponent imp
     clear();
 
     mySelected = selected;
-    myFocused = tree.hasFocus();
+    myFocused = isFocused();
 
     // We paint background if and only if tree path is selected and tree has focus.
     // If path is selected and tree is not focused then we just paint focused border.
@@ -104,7 +104,7 @@ public abstract class ColoredTreeCellRenderer extends SimpleColoredComponent imp
       super.setIconOpaque(false);
     }
     else {
-      super.setOpaque(myOpaque || selected && hasFocus || selected && tree.hasFocus()); // draw selection background even for non-opaque tree
+      super.setOpaque(myOpaque || selected && hasFocus || selected && isFocused()); // draw selection background even for non-opaque tree
     }
 
     if (tree.getUI() instanceof UIUtil.MacTreeUI) {
@@ -119,6 +119,10 @@ public abstract class ColoredTreeCellRenderer extends SimpleColoredComponent imp
     customizeCellRenderer(tree, value, selected, expanded, leaf, row, hasFocus);
 
     return this;
+  }
+
+  protected boolean isFocused() {
+    return myTree.hasFocus();
   }
 
   public void setOpaque(boolean isOpaque) {

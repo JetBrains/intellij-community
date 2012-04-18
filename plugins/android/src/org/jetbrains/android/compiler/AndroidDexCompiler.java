@@ -124,17 +124,16 @@ public class AndroidDexCompiler implements ClassPostProcessingCompiler {
           
           Collection<VirtualFile> files;
             
-          final boolean shouldRunProguard = myContext.getCompileScope().
-            getUserData(AndroidProguardCompiler.PROGUARD_CFG_PATH_KEY) != null;
+          final boolean shouldRunProguard = AndroidCompileUtil.getProguardConfigFilePathIfShouldRun(facet, myContext) != null;
 
           if (shouldRunProguard) {
-            final VirtualFile obfuscatedSourcesJar = dexOutputDir.findChild(AndroidProguardCompiler.PROGUARD_OUTPUT_JAR_NAME);
+            final VirtualFile obfuscatedSourcesJar = dexOutputDir.findChild(AndroidCommonUtils.PROGUARD_OUTPUT_JAR_NAME);
             if (obfuscatedSourcesJar == null) {
               myContext.addMessage(CompilerMessageCategory.INFORMATION, "Dex won't be launched for module " +
                                                                         module.getName() +
                                                                         " because file " +
-                                                                        AndroidProguardCompiler.PROGUARD_OUTPUT_JAR_NAME +
-                                                                        "doesn't exist", null, -1, -1);
+                                                                        AndroidCommonUtils.PROGUARD_OUTPUT_JAR_NAME +
+                                                                        " doesn't exist", null, -1, -1);
               continue;
             }
             

@@ -19,14 +19,10 @@ import com.intellij.execution.JavaRunConfigurationExtensionManager;
 import com.intellij.execution.Location;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.actions.ConfigurationContext;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.execution.junit2.info.LocationUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.JavaPsiFacade;
-import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPackage;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.theoryinpractice.testng.model.TestData;
 import com.theoryinpractice.testng.model.TestType;
 import com.theoryinpractice.testng.util.TestNGUtil;
@@ -39,18 +35,7 @@ public class TestNGPackageConfigurationProducer extends TestNGConfigurationProdu
     final PsiElement element = location.getPsiElement();
     myPackage = checkPackage(element);
     if (myPackage == null) return null;
-    final JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
-    boolean testngJarFound = false;
-    for (PsiDirectory directory : myPackage.getDirectories()) {
-      final Module module = ModuleUtil.findModuleForFile(directory.getVirtualFile(), project);
-      if (module != null) {
-        if (facade.findClass(TestNGUtil.TEST_ANNOTATION_FQN, GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module, true)) != null) {
-          testngJarFound = true;
-          break;
-        }
-      }
-    }
-    if (!testngJarFound) return null;
+    if (!LocationUtil.isJarAttached(location, myPackage, TestNGUtil.TEST_ANNOTATION_FQN)) return null;
     RunnerAndConfigurationSettings settings = cloneTemplateConfiguration(project, context);
     final TestNGConfiguration configuration = (TestNGConfiguration)settings.getConfiguration();
     final TestData data = configuration.data;

@@ -19,6 +19,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.BackgroundTaskQueue;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Comparing;
@@ -60,7 +61,13 @@ public abstract class AbstractRefreshablePanel<T> implements RefreshablePanel {
     myDetailsLoader = new GenericDetailsLoader<Ticket, T>(new Consumer<Ticket>() {
       @Override
       public void consume(Ticket ticket) {
-        myQueue.run(new Loader(project, loadingTitle, myTicket.copy()));
+        final Loader loader = new Loader(project, loadingTitle, myTicket.copy());
+        loader.runSteadily(new Consumer<Task.Backgroundable>() {
+          @Override
+          public void consume(Task.Backgroundable backgroundable) {
+            myQueue.run(backgroundable);
+          }
+        });
       }
     }, new PairConsumer<Ticket, T>() {
       @Override
@@ -129,13 +136,15 @@ public abstract class AbstractRefreshablePanel<T> implements RefreshablePanel {
     @Override
     protected void doInAwtIfFail(Exception e) {
       final Exception cause;
-      if (e instanceof MyRuntime) {
+      if (e instanceof MyRuntime && e.getCause() != null) {
         cause = (Exception) e.getCause();
       } else {
         cause = e;
       }
       LOG.info(e);
-      VcsBalloonProblemNotifier.showOverChangesView(myProject, cause.getMessage(), MessageType.ERROR);
+      String message = cause.getMessage() == null ? e.getMessage() : cause.getMessage();
+      message = message == null ? "Unknown error" : message;
+      VcsBalloonProblemNotifier.showOverChangesView(myProject, message, MessageType.ERROR);
     }
 
     @Override

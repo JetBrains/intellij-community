@@ -15,10 +15,13 @@
  */
 package com.intellij.psi.util;
 
+import org.jetbrains.annotations.NotNull;
+
 public interface CachedValue<T> {
 
   T getValue();
 
+  @NotNull
   CachedValueProvider<T> getValueProvider();
 
   boolean hasUpToDateValue();

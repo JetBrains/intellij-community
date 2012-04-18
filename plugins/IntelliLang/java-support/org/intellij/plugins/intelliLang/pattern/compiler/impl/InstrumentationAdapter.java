@@ -17,14 +17,14 @@ package org.intellij.plugins.intelliLang.pattern.compiler.impl;
 
 import org.intellij.plugins.intelliLang.Configuration;
 import org.jetbrains.annotations.NonNls;
-import org.objectweb.asm.*;
+import org.jetbrains.asm4.*;
 
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-class InstrumentationAdapter extends MethodAdapter implements Opcodes {
+class InstrumentationAdapter extends MethodVisitor implements Opcodes {
   @NonNls
   private static final String RETURN_VALUE_NAME = "$returnvalue$";
 
@@ -46,7 +46,7 @@ class InstrumentationAdapter extends MethodAdapter implements Opcodes {
                                 Type returnType,
                                 int access,
                                 String name) {
-    super(methodvisitor);
+    super(Opcodes.ASM4, methodvisitor);
     myInstrumenter = instrumenter;
     myArgTypes = argTypes;
     myReturnType = returnType;
@@ -208,11 +208,12 @@ class InstrumentationAdapter extends MethodAdapter implements Opcodes {
     mv.visitInsn(Opcodes.ATHROW);
   }
 
-  private static class MyAnnotationVisitor implements AnnotationVisitor {
+  private static class MyAnnotationVisitor extends AnnotationVisitor {
     private final AnnotationVisitor av;
     private final PatternValue myPatternValue;
 
     public MyAnnotationVisitor(AnnotationVisitor annotationvisitor, PatternValue v) {
+      super(Opcodes.ASM4);
       av = annotationvisitor;
       myPatternValue = v;
     }

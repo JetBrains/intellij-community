@@ -270,13 +270,29 @@ public abstract class AndroidFacetImporterBase extends FacetImporter<AndroidFace
     final MavenId artifactMavenId = artifact.getMavenId();
 
     final String genModuleName = AndroidMavenUtil.getModuleNameForExtApklibArtifact(artifactMavenId);
+    String genExternalApklibsDirPath = null;
+    String targetDirPath = null;
 
-    final String genExternalApklibsDirPath =
-      AndroidMavenUtil.computePathForGenExternalApklibsDir(artifactMavenId, mavenProject, mavenTree.getProjects());
-    
-    final String targetDirPath = genExternalApklibsDirPath != null
-                              ? genExternalApklibsDirPath + '/' + AndroidMavenUtil.getMavenIdStringForFileName(artifactMavenId)
-                              : null;
+    if (apklibModule == null) {
+      genExternalApklibsDirPath =
+        AndroidMavenUtil.computePathForGenExternalApklibsDir(artifactMavenId, mavenProject, mavenTree.getProjects());
+
+      targetDirPath = genExternalApklibsDirPath != null
+                      ? genExternalApklibsDirPath + '/' + AndroidMavenUtil.getMavenIdStringForFileName(artifactMavenId)
+                      : null;
+    }
+    else {
+      final VirtualFile[] contentRoots = ModuleRootManager.getInstance(apklibModule).getContentRoots();
+      if (contentRoots.length == 1) {
+        targetDirPath = contentRoots[0].getPath();
+      }
+      else {
+        final String moduleDir = new File(apklibModule.getModuleFilePath()).getParent();
+        if (moduleDir != null) {
+          targetDirPath = moduleDir + '/' + AndroidMavenUtil.getMavenIdStringForFileName(artifactMavenId);
+        }
+      }
+    }
 
     if (targetDirPath == null) {
       return null;
@@ -493,7 +509,7 @@ public abstract class AndroidFacetImporterBase extends FacetImporter<AndroidFace
       new ArrayList<AndroidExternalApklibDependenciesManager.MavenDependencyInfo>();
     
     for (MavenArtifact depArtifact : projectForExternalApklib.getDependencies()) {
-      final String depArtifactLibraryName = MavenRootModelAdapter.makeLibraryName(depArtifact);
+      final String depArtifactLibraryName = depArtifact.getLibraryName();
 
       dependencies.add(new AndroidExternalApklibDependenciesManager.MavenDependencyInfo(
         depArtifact.getMavenId(), depArtifact.getType(), depArtifactLibraryName));
@@ -618,11 +634,11 @@ public abstract class AndroidFacetImporterBase extends FacetImporter<AndroidFace
         return null;
       }
 
-      AndroidSdk sdk = AndroidSdk.parse(sdkPath, new EmptySdkLog());
-      if (sdk != null) {
-        IAndroidTarget target = sdk.findTargetByApiLevel(apiLevel);
+      AndroidSdkData sdkData = AndroidSdkData.parse(sdkPath, new EmptySdkLog());
+      if (sdkData != null) {
+        IAndroidTarget target = sdkData.findTargetByApiLevel(apiLevel);
         if (target != null) {
-          Sdk library = AndroidSdkUtils.findAppropriateAndroidPlatform(target, sdk);
+          Sdk library = AndroidSdkUtils.findAppropriateAndroidPlatform(target, sdkData);
           if (library == null) {
             library = AndroidSdkUtils.createNewAndroidPlatform(target, sdkPath, true);
           }
@@ -663,7 +679,7 @@ public abstract class AndroidFacetImporterBase extends FacetImporter<AndroidFace
     AndroidFacetConfiguration configuration = facet.getConfiguration();
 
     String resFolderRelPath = getPathFromConfig(module, project, moduleDirPath, "resourceDirectory", true, true);
-    if (resFolderRelPath != null) {
+    if (resFolderRelPath != null && isFullyResolved(resFolderRelPath)) {
       configuration.RES_FOLDER_RELATIVE_PATH = '/' + resFolderRelPath;
     }
 
@@ -685,13 +701,14 @@ public abstract class AndroidFacetImporterBase extends FacetImporter<AndroidFace
     }
     else {
       String resOverlayFolderRelPath = getPathFromConfig(module, project, moduleDirPath, "resourceOverlayDirectory", true, true);
-      if (resOverlayFolderRelPath != null) {
+      if (resOverlayFolderRelPath != null && isFullyResolved(resOverlayFolderRelPath)) {
         configuration.RES_OVERLAY_FOLDERS = Arrays.asList('/' + resOverlayFolderRelPath);
       }
     }
 
     String resFolderForCompilerRelPath = getPathFromConfig(module, project, moduleDirPath, "resourceDirectory", false, true);
-    if (resFolderForCompilerRelPath != null && !resFolderForCompilerRelPath.equals(resFolderRelPath)) {
+    if (resFolderForCompilerRelPath != null &&
+        !resFolderForCompilerRelPath.equals(resFolderRelPath)) {
       if (!configuration.USE_CUSTOM_APK_RESOURCE_FOLDER) {
         // it may be already configured in setupFacet()
         configuration.USE_CUSTOM_APK_RESOURCE_FOLDER = true;
@@ -701,26 +718,32 @@ public abstract class AndroidFacetImporterBase extends FacetImporter<AndroidFace
     }
 
     String assetsFolderRelPath = getPathFromConfig(module, project, moduleDirPath, "assetsDirectory", false, true);
-    if (assetsFolderRelPath != null) {
+    if (assetsFolderRelPath != null && isFullyResolved(assetsFolderRelPath)) {
       configuration.ASSETS_FOLDER_RELATIVE_PATH = '/' + assetsFolderRelPath;
     }
 
     String manifestFileRelPath =  getPathFromConfig(module, project, moduleDirPath, "androidManifestFile", true, false);
-    if (manifestFileRelPath != null) {
+    if (manifestFileRelPath != null && isFullyResolved(manifestFileRelPath)) {
       configuration.MANIFEST_FILE_RELATIVE_PATH = '/' + manifestFileRelPath;
     }
 
     String manifestFileForCompilerRelPath = getPathFromConfig(module, project, moduleDirPath, "androidManifestFile", false, false);
-    if (manifestFileForCompilerRelPath != null && !manifestFileForCompilerRelPath.equals(manifestFileRelPath)) {
+    if (manifestFileForCompilerRelPath != null &&
+        !manifestFileForCompilerRelPath.equals(manifestFileRelPath) &&
+        isFullyResolved(manifestFileForCompilerRelPath)) {
       configuration.USE_CUSTOM_COMPILER_MANIFEST = true;
       configuration.CUSTOM_COMPILER_MANIFEST = '/' + manifestFileForCompilerRelPath;
       configuration.RUN_PROCESS_RESOURCES_MAVEN_TASK = true;
     }
 
     String nativeLibsFolderRelPath = getPathFromConfig(module, project, moduleDirPath, "nativeLibrariesDirectory", false, true);
-    if (nativeLibsFolderRelPath != null) {
+    if (nativeLibsFolderRelPath != null && isFullyResolved(nativeLibsFolderRelPath)) {
       configuration.LIBS_FOLDER_RELATIVE_PATH = '/' + nativeLibsFolderRelPath;
     }
+  }
+
+  private static boolean isFullyResolved(@NotNull String s) {
+    return !s.contains("${");
   }
 
   @Nullable

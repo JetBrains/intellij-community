@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="org.jetbrains.idea.svn.update.SvnIntegratePanel1">
+  <grid id="3083f" binding="myPanel" layout-manager="GridLayoutManager" row-count="4" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+    <margin top="0" left="0" bottom="0" right="0"/>
+    <constraints>
+      <xy x="32" y="158" width="403" height="208"/>
+    </constraints>
+    <properties/>
+    <border type="none"/>
+    <children>
+      <component id="625e3" class="javax.swing.JCheckBox" binding="myDryRunCheckbox">
+        <constraints>
+          <grid row="2" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties>
+          <text resource-bundle="org/jetbrains/idea/svn/SvnBundle" key="checkbox.update.switch.configurable.try.merge.without.changes"/>
+        </properties>
+      </component>
+      <xy id="ef0c1" binding="myRootOptionsPanel" layout-manager="XYLayout" hgap="-1" vgap="-1">
+        <margin top="0" left="0" bottom="0" right="0"/>
+        <constraints>
+          <grid row="0" column="0" row-span="1" col-span="2" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties/>
+        <border type="none"/>
+        <children/>
+      </xy>
+      <component id="68eaf" class="javax.swing.JCheckBox" binding="myUseAncestry">
+        <constraints>
+          <grid row="1" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties>
+          <text resource-bundle="org/jetbrains/idea/svn/SvnBundle" key="action.Subversion.integrate.difference.option.use.ancestry.text"/>
+        </properties>
+      </component>
+      <component id="31e75" class="org.jetbrains.idea.svn.DepthCombo" binding="myDepthCombo" custom-create="true">
+        <constraints>
+          <grid row="3" column="1" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties/>
+      </component>
+      <component id="61668" class="javax.swing.JLabel" binding="myDepthLabel">
+        <constraints>
+          <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties>
+          <text resource-bundle="org/jetbrains/idea/svn/SvnBundle" key="label.depth.text"/>
+          <toolTipText resource-bundle="org/jetbrains/idea/svn/SvnBundle" key="label.depth.description"/>
+        </properties>
+      </component>
+    </children>
+  </grid>
+</form>

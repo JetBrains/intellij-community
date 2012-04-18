@@ -32,14 +32,7 @@ public class RelaxedMatchingContributor extends CompletionContributor {
 
   @Override
   public void fillCompletionVariants(CompletionParameters parameters, final CompletionResultSet result) {
-    final Set<CompletionResult> elements = new HashSet<CompletionResult>();
-    result.runRemainingContributors(parameters, new Consumer<CompletionResult>() {
-      @Override
-      public void consume(CompletionResult element) {
-        elements.add(element);
-        result.passResult(element);
-      }
-    });
+    final Set<CompletionResult> elements = result.runRemainingContributors(parameters, true);
 
     if (!elements.isEmpty() && parameters.getInvocationCount() == 0) {
       Set<String> prefixes = new HashSet<String>();

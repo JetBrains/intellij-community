@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.List;
 
 /**
  * Allows to query and modify the list of root directories belonging to a project.
@@ -103,10 +104,18 @@ public abstract class ProjectRootManager implements ModificationTracker {
   public abstract VirtualFile[] getContentRootsFromAllModules();
 
   /**
-   * Returns the list of content roots for all modules in the project.
+   * Returns the list of content root URLs for all modules in the project.
    *
-   * @return the list of content roots.
+   * @return the list of content root URLs.
    */
+  @NotNull
+  public abstract List<String> getContentRootUrls();
+
+    /**
+    * Returns the list of content roots for all modules in the project.
+    *
+    * @return the list of content roots.
+    */
   @NotNull
   public abstract VirtualFile[] getContentRoots();
 

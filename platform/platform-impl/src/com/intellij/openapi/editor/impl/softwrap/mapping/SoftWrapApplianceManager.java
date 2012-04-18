@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.editor.impl.softwrap.mapping;
 
+import com.intellij.diagnostic.Dumpable;
 import com.intellij.diagnostic.LogMessageEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
@@ -23,6 +24,7 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.event.VisibleAreaEvent;
 import com.intellij.openapi.editor.event.VisibleAreaListener;
+import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.ScrollingModelEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
@@ -53,7 +55,7 @@ import java.util.List;
  * @author Denis Zhdanov
  * @since Jul 5, 2010 10:01:27 AM
  */
-public class SoftWrapApplianceManager implements SoftWrapFoldingListener, DocumentListener {
+public class SoftWrapApplianceManager implements SoftWrapFoldingListener, DocumentListener, Dumpable {
   
   private static final Logger LOG = Logger.getInstance("#" + SoftWrapApplianceManager.class.getName());
   
@@ -79,7 +81,6 @@ public class SoftWrapApplianceManager implements SoftWrapFoldingListener, Docume
   private final SoftWrapsStorage               myStorage;
   private final EditorEx                       myEditor;
   private final SoftWrapPainter myPainter;
-  private final EditorTextRepresentationHelper myRepresentationHelper;
   private final SoftWrapDataMapper myDataMapper;
 
   /**
@@ -92,15 +93,16 @@ public class SoftWrapApplianceManager implements SoftWrapFoldingListener, Docume
    */
   private int myLastTopLeftCornerOffset = -1;
 
-  private VisibleAreaWidthProvider    myWidthProvider;
-  private LineWrapPositionStrategy    myLineWrapPositionStrategy;
-  private IncrementalCacheUpdateEvent myEventBeingProcessed;
-  private boolean                     myVisualAreaListenerAttached;
-  private boolean                     myCustomIndentUsedLastTime;
-  private int                         myCustomIndentValueUsedLastTime;
-  private int                         myVisibleAreaWidth;
-  private boolean                     myInProgress;
-  private boolean                     myHasLinesWithFailedWrap;
+  private VisibleAreaWidthProvider       myWidthProvider;
+  private EditorTextRepresentationHelper myRepresentationHelper;
+  private LineWrapPositionStrategy       myLineWrapPositionStrategy;
+  private IncrementalCacheUpdateEvent    myEventBeingProcessed;
+  private boolean                        myVisualAreaListenerAttached;
+  private boolean                        myCustomIndentUsedLastTime;
+  private int                            myCustomIndentValueUsedLastTime;
+  private int                            myVisibleAreaWidth;
+  private boolean                        myInProgress;
+  private boolean                        myHasLinesWithFailedWrap;
 
   public SoftWrapApplianceManager(@NotNull SoftWrapsStorage storage,
                                   @NotNull EditorEx editor,
@@ -236,9 +238,24 @@ public class SoftWrapApplianceManager implements SoftWrapFoldingListener, Docume
 
     // Define start of the visual line that holds target range start.
     int start = event.getNewStartOffset();
-    LogicalPosition logical = myDataMapper.offsetToLogicalPosition(start);
-    VisualPosition visual = new VisualPosition(myDataMapper.logicalToVisualPosition(logical, myEditor.logicalToVisualPosition(logical, false)).line, 0);
-    start = myEditor.logicalPositionToOffset(logical);
+    
+    final LogicalPosition logical;
+    final Point point;
+    
+    if (start == 0 && myEditor.getPrefixTextWidthInPixels() <= 0) {
+      logical = new LogicalPosition(0, 0, 0, 0, 0, 0, 0);
+      point = new Point(0, 0);
+    }
+    else {
+      logical = myDataMapper.offsetToLogicalPosition(start);
+      VisualPosition visual = new VisualPosition(
+        myDataMapper.logicalToVisualPosition(logical, myEditor.logicalToVisualPosition(logical, false)).line,
+        0
+      );
+      point = myEditor.visualPositionToXY(visual);
+      start = myEditor.logicalPositionToOffset(logical);
+    }
+    
     Document document = myEditor.getDocument();
     myContext.text = document.getCharsSequence();
     myContext.tokenStartOffset = start;
@@ -249,7 +266,6 @@ public class SoftWrapApplianceManager implements SoftWrapFoldingListener, Docume
       myContext.rangeEndOffset = event.getNewEndOffset();
 
       EditorPosition position = new EditorPosition(logical, start, myEditor, myRepresentationHelper);
-      Point point = myEditor.visualPositionToXY(visual);
       position.x = point.x;
       int spaceWidth = EditorUtil.getSpaceWidth(myContext.fontType, myEditor);
 
@@ -302,6 +318,7 @@ public class SoftWrapApplianceManager implements SoftWrapFoldingListener, Docume
    * @param foldRegion    target collapsed fold region to process
    * @return              <code>true</code> if processing should be continued; <code>false</code> otherwise
    */
+  @SuppressWarnings("MagicConstant")
   private boolean processCollapsedFoldRegion(FoldRegion foldRegion) {
     if (processOutOfDateFoldRegion(foldRegion)) {
       return false;
@@ -311,10 +328,9 @@ public class SoftWrapApplianceManager implements SoftWrapFoldingListener, Docume
     if (placeholder.isEmpty()) {
       return true;
     }
-    FontInfo fontInfo = EditorUtil.fontForChar(placeholder.charAt(0), myContext.fontType, myEditor);
     int placeholderWidthInPixels = 0;
     for (int i = 0; i < placeholder.length(); i++) {
-      placeholderWidthInPixels += fontInfo.charWidth(placeholder.charAt(i), myContext.contentComponent);
+      placeholderWidthInPixels += myRepresentationHelper.charWidth(placeholder.charAt(i), myContext.fontType);
     }
     int newX = myContext.currentPosition.x + placeholderWidthInPixels;
     
@@ -490,19 +506,50 @@ public class SoftWrapApplianceManager implements SoftWrapFoldingListener, Docume
     }
   }
   
+  @SuppressWarnings("MagicConstant")
   private void createSoftWrapIfPossible() {
     final int offset = myContext.currentPosition.offset;
     myContext.logicalLineData.update(offset);
     int softWrapStartOffset = myContext.softWrapStartOffset;
+    int preferredOffset = Math.max(softWrapStartOffset, offset - 1 /* reserve a column for the soft wrap sign */);
     SoftWrap softWrap = registerSoftWrap(
-      softWrapStartOffset, Math.max(softWrapStartOffset, offset),
-      calculateSoftWrapEndOffset(softWrapStartOffset, myContext.logicalLineData.endLineOffset), myContext.getSpaceWidth(),
+      softWrapStartOffset,
+      preferredOffset,
+      calculateSoftWrapEndOffset(softWrapStartOffset, myContext.logicalLineData.endLineOffset),
+      myContext.getSpaceWidth(),
       myContext.logicalLineData
     );
+    boolean revertedToFoldRegion = false;
     if (softWrap == null) {
-      myContext.tryToShiftToNextLine();
-      myHasLinesWithFailedWrap = true;
-      return;
+      EditorPosition wrapPosition = null;
+      
+      // Try to insert soft wrap after the last collapsed fold region that is located on the current visual line.
+      if (myContext.lastFoldEndPosition != null && myStorage.getSoftWrap(myContext.lastFoldEndPosition.offset) == null
+          && myContext.lastFoldEndPosition.offset + 1/* reserve one visual column for the soft wrap sign */
+             < myContext.currentPosition.offset)
+      {
+        wrapPosition = myContext.lastFoldEndPosition;
+      }
+
+      if (wrapPosition == null && myContext.lastFoldStartPosition != null
+          && myStorage.getSoftWrap(myContext.lastFoldStartPosition.offset) == null
+          && myContext.lastFoldStartPosition.offset < myContext.currentPosition.offset)
+      {
+        wrapPosition = myContext.lastFoldStartPosition;
+      }
+      
+      if (wrapPosition != null){
+        revertListeners(wrapPosition.offset, wrapPosition.visualLine);
+        myContext.currentPosition = wrapPosition;
+        softWrap = registerSoftWrap(wrapPosition.offset, myContext.getSpaceWidth(), myContext.logicalLineData);
+        myContext.tokenStartOffset = wrapPosition.offset;
+        revertedToFoldRegion = true;
+      }
+      else {
+        myContext.tryToShiftToNextLine();
+        myHasLinesWithFailedWrap = true;
+        return;
+      }
     }
     
     myContext.skipToLineEnd = false;
@@ -527,14 +574,16 @@ public class SoftWrapApplianceManager implements SoftWrapFoldingListener, Docume
       return;
     }
     else if (actualSoftWrapOffset < offset) {
-      revertListeners(actualSoftWrapOffset, myContext.currentPosition.visualLine);
-      for (int j = offset - 1; j >= actualSoftWrapOffset; j--) {
-        int pixelsDiff = myOffset2widthInPixels.data[j - myOffset2widthInPixels.anchor];
-        int tmpFontType = myOffset2fontType.get(j);
-        int columnsDiff = calculateWidthInColumns(myContext.text.charAt(j), pixelsDiff, myContext.getSpaceWidth(tmpFontType));
-        myContext.currentPosition.offset--;
-        myContext.currentPosition.logicalColumn -= columnsDiff;
-        myContext.currentPosition.visualColumn -= columnsDiff;
+      if (!revertedToFoldRegion) {
+        revertListeners(actualSoftWrapOffset, myContext.currentPosition.visualLine);
+        for (int j = offset - 1; j >= actualSoftWrapOffset; j--) {
+          int pixelsDiff = myOffset2widthInPixels.data[j - myOffset2widthInPixels.anchor];
+          int tmpFontType = myOffset2fontType.get(j);
+          int columnsDiff = calculateWidthInColumns(myContext.text.charAt(j), pixelsDiff, myContext.getSpaceWidth(tmpFontType));
+          myContext.currentPosition.offset--;
+          myContext.currentPosition.logicalColumn -= columnsDiff;
+          myContext.currentPosition.visualColumn -= columnsDiff;
+        }
       }
     }
     else if (actualSoftWrapOffset > offset) {
@@ -548,6 +597,10 @@ public class SoftWrapApplianceManager implements SoftWrapFoldingListener, Docume
     myContext.currentPosition.offset = actualSoftWrapOffset;
     myOffset2fontType.clear();
     myOffset2widthInPixels.clear();
+
+    if (revertedToFoldRegion && myContext.currentPosition.offset == myContext.lastFold.getStartOffset()) {
+      processCollapsedFoldRegion(myContext.lastFold);
+    }
   }
 
   private int calculateNewX(char c) {
@@ -569,7 +622,7 @@ public class SoftWrapApplianceManager implements SoftWrapFoldingListener, Docume
         return i;
       }
     }
-    return end;
+    return Math.max(start, end);
   }
 
   private static int calculateWidthInColumns(char c, int widthInPixels, int spaceWithInPixels) {
@@ -618,7 +671,9 @@ public class SoftWrapApplianceManager implements SoftWrapFoldingListener, Docume
     }
     
     if (softWrapOffset >= lineData.endLineOffset || softWrapOffset < 0
-        || (myCustomIndentUsedLastTime && softWrapOffset == lineData.nonWhiteSpaceSymbolOffset))
+        || (myCustomIndentUsedLastTime && softWrapOffset == lineData.nonWhiteSpaceSymbolOffset)
+        || (softWrapOffset > preferredOffset && myContext.lastFoldStartPosition != null // Prefer to wrap on fold region backwards
+            && myContext.lastFoldStartPosition.offset <= preferredOffset))              // to wrapping forwards.
     {
       return null;
     }
@@ -922,16 +977,28 @@ public class SoftWrapApplianceManager implements SoftWrapFoldingListener, Docume
     recalculateIfNecessary();
   }
 
-  public void setWidthProvider(VisibleAreaWidthProvider widthProvider) {
+  public void setWidthProvider(@NotNull VisibleAreaWidthProvider widthProvider) {
     myWidthProvider = widthProvider;
+    reset();
   }
-  
+
+  public void setRepresentationHelper(@NotNull EditorTextRepresentationHelper representationHelper) {
+    myRepresentationHelper = representationHelper;
+    reset();
+  }
+
+  @NotNull
   @Override
-  public String toString() {
+  public String dumpState() {
     return String.format(
       "recalculation in progress: %b; stored update events: %s; active update events: %s, event being processed: %s",
       myInProgress, myEventsStorage, myActiveEvents, myEventBeingProcessed
     );
+  }
+
+  @Override
+  public String toString() {
+    return dumpState();
   }
 
   /**
@@ -1125,6 +1192,14 @@ public class SoftWrapApplianceManager implements SoftWrapFoldingListener, Docume
     public CharSequence   text;
     public EditorPosition lineStartPosition;
     public EditorPosition currentPosition;
+    /**
+     * Start position of the last collapsed fold region that is located at the current visual line and can be used as a fall back
+     * position for soft wrapping.
+     */
+    public EditorPosition lastFoldStartPosition;
+    public EditorPosition lastFoldEndPosition;
+    /** A fold region referenced by the {@link #lastFoldStartPosition}. */
+    public FoldRegion     lastFold;
     public SoftWrap       delayedSoftWrap;
     public JComponent     contentComponent;
     public int            reservedWidthInPixels;
@@ -1149,6 +1224,9 @@ public class SoftWrapApplianceManager implements SoftWrapFoldingListener, Docume
       text = null;
       lineStartPosition = null;
       currentPosition = null;
+      lastFoldStartPosition = null;
+      lastFoldEndPosition = null;
+      lastFold = null;
       delayedSoftWrap = null;
       contentComponent = null;
       reservedWidthInPixels = 0;
@@ -1180,10 +1258,14 @@ public class SoftWrapApplianceManager implements SoftWrapFoldingListener, Docume
     /**
      * Asks current context to update its state assuming that it begins to point to the line next to its current position.
      */
+    @SuppressWarnings("MagicConstant")
     public void onNewLine() {
       notifyListenersOnVisualLineEnd();
       currentPosition.onNewLine();
       softWrapStartOffset = currentPosition.offset;
+      lastFoldStartPosition = null;
+      lastFoldEndPosition = null;
+      lastFold = null;
       lineStartPosition.from(currentPosition);
       logicalLineData.update(currentPosition.logicalLine, getSpaceWidth(), myEditor);
       fontType = myOffset2fontType.get(currentPosition.offset);
@@ -1206,6 +1288,7 @@ public class SoftWrapApplianceManager implements SoftWrapFoldingListener, Docume
       onNonLineFeedSymbol(c, newX);
     }
     
+    @SuppressWarnings("MagicConstant")
     public void onNonLineFeedSymbol(char c, int newX) {
       int widthInPixels = newX - myContext.currentPosition.x;
       
@@ -1240,18 +1323,27 @@ public class SoftWrapApplianceManager implements SoftWrapFoldingListener, Docume
      * @param foldRegion    collapsed fold region to process
      */
     private void advance(FoldRegion foldRegion, int placeHolderWidthInPixels) {
+      lastFoldStartPosition = currentPosition.clone();
+      lastFold = foldRegion;
       int visualLineBefore = currentPosition.visualLine;
+      int logicalLineBefore = currentPosition.logicalLine;
       int logicalColumnBefore = currentPosition.logicalColumn;
       currentPosition.advance(foldRegion);
       currentPosition.x += placeHolderWidthInPixels;
       int collapsedFoldingWidthInColumns = currentPosition.logicalColumn;
-      if (currentPosition.visualLine <= visualLineBefore) {
+      if (currentPosition.logicalLine <= logicalLineBefore) {
         // Single-line fold region.
         collapsedFoldingWidthInColumns = currentPosition.logicalColumn - logicalColumnBefore;
+      }
+      else {
+        final DocumentEx document = myEditor.getDocument();
+        int endFoldLine = document.getLineNumber(foldRegion.getEndOffset());
+        logicalLineData.endLineOffset = document.getLineEndOffset(endFoldLine);
       }
       notifyListenersOnFoldRegion(foldRegion, collapsedFoldingWidthInColumns, visualLineBefore);
       tokenStartOffset = myContext.currentPosition.offset;
       softWrapStartOffset = foldRegion.getEndOffset();
+      lastFoldEndPosition = currentPosition.clone();
     }
     
     /**
@@ -1281,7 +1373,7 @@ public class SoftWrapApplianceManager implements SoftWrapFoldingListener, Docume
      * @return    <code>true</code> if given <code>'x'</code> coordinate exceeds visual area's right edge; <code>false</code> otherwise
      */
     public boolean exceedsVisualEdge(int x) {
-      return x + reservedWidthInPixels >= myVisibleAreaWidth;
+      return x >= myVisibleAreaWidth;
     }
   }
 

@@ -91,7 +91,7 @@ public class UnimplementInterfaceAction implements IntentionAction {
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
     if (!CodeInsightUtilBase.preparePsiElementForWrite(file)) return;
 
-    final PsiReference psiReference = file.findReferenceAt(editor.getCaretModel().getOffset());
+    final PsiReference psiReference = TargetElementUtilBase.findReference(editor);
     if (psiReference == null) return;
 
     final PsiReferenceList referenceList = PsiTreeUtil.getParentOfType(psiReference.getElement(), PsiReferenceList.class);

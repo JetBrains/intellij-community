@@ -22,7 +22,6 @@ import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.editor.event.*;
-import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.project.Project;
@@ -118,19 +117,11 @@ public class PositionPanel extends EditorBasedWidget implements StatusBarWidget.
 
   @Override
   public void selectionChanged(final SelectionEvent e) {
-    final Editor editor = e.getEditor();
-    Project project = editor.getProject();
-    if (project != null && !project.isDisposed() && FileEditorManager.getInstance(project).getSelectedTextEditor() == e.getEditor()) {
-       updatePosition(editor);
-    }
+    updatePosition(e.getEditor());
   }
 
   public void caretPositionChanged(final CaretEvent e) {
-    final Editor editor = e.getEditor();
-    Project project = editor.getProject();
-    if (project != null && !project.isDisposed() && FileEditorManager.getInstance(project).getSelectedTextEditor() == e.getEditor()) {
-       updatePosition(editor);
-    }
+    updatePosition(e.getEditor());
   }
 
   private void updatePosition(final Editor editor) {

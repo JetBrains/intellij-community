@@ -26,6 +26,8 @@ import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.JavaSdkVersion;
+import com.intellij.openapi.projectRoots.JavaVersionService;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.java.LanguageLevel;
@@ -370,6 +372,7 @@ public class GenericsHighlightUtil {
     }
   }
 
+  @Nullable
   public static HighlightInfo checkElementInTypeParameterExtendsList(PsiReferenceList referenceList, JavaResolveResult resolveResult, PsiElement element) {
     PsiClass aClass = (PsiClass)referenceList.getParent();
     final PsiJavaCodeReferenceElement[] referenceElements = referenceList.getReferenceElements();
@@ -390,6 +393,11 @@ public class GenericsHighlightUtil {
         JavaPsiFacade.getInstance(aClass.getProject()).getElementFactory().createType(extendFrom, resolveResult.getSubstitutor());
       IntentionAction fix = QUICK_FIX_FACTORY.createExtendsListFix(aClass, type, false);
       QuickFixAction.registerQuickFixAction(errorResult, fix, null);
+    }
+    if (errorResult == null && JavaVersionService.getInstance().isAtLeast(referenceList, JavaSdkVersion.JDK_1_7) && 
+        referenceElements.length > 1) {
+      //todo suppress erased methods which come from the same class
+      return checkOverrideEquivalentMethods(aClass);
     }
     return errorResult;
   }
@@ -499,17 +507,37 @@ public class GenericsHighlightUtil {
     }
     else if (superMethod.isConstructor()) return null;
 
-    if (checkMethod.hasModifierProperty(PsiModifier.STATIC) && !checkEqualsSuper) {
+    final boolean atLeast17 = JavaVersionService.getInstance().isAtLeast(checkMethod, JavaSdkVersion.JDK_1_7);
+    if (checkMethod.hasModifierProperty(PsiModifier.STATIC) && !checkEqualsSuper && !atLeast17) {
       return null;
     }
 
     final PsiType retErasure1 = TypeConversionUtil.erasure(checkMethod.getReturnType());
     final PsiType retErasure2 = TypeConversionUtil.erasure(superMethod.getReturnType());
-    if (!Comparing.equal(retErasure1, retErasure2) &&
+
+    boolean differentReturnTypeErasure = !Comparing.equal(retErasure1, retErasure2);
+    if (checkEqualsSuper && atLeast17) {
+      if (retErasure1 != null && retErasure2 != null) {
+        differentReturnTypeErasure = !TypeConversionUtil.isAssignable(retErasure1, retErasure2);
+      } else {
+        differentReturnTypeErasure = !(retErasure1 == null && retErasure2 == null);
+      }
+    }
+
+    if (differentReturnTypeErasure &&
         !TypeConversionUtil.isVoidType(retErasure1) &&
         !TypeConversionUtil.isVoidType(retErasure2) &&
-        !(checkEqualsSuper && Arrays.equals(superSignature.getParameterTypes(), signatureToCheck.getParameterTypes()))) {
-      return null;
+        !(checkEqualsSuper && Arrays.equals(superSignature.getParameterTypes(), signatureToCheck.getParameterTypes())) &&
+        !atLeast17) {
+      int idx = 0;
+      final PsiType[] parameterTypes = signatureToCheck.getParameterTypes();
+      boolean erasure = parameterTypes.length > 0;
+      for (PsiType type : superSignature.getParameterTypes()) {
+        erasure &= Comparing.equal(type, TypeConversionUtil.erasure(parameterTypes[idx]));
+        idx++;
+      }
+
+      if (!erasure) return null;
     }
 
     if (!checkEqualsSuper && MethodSignatureUtil.isSubsignature(superSignature, signatureToCheck)) {
@@ -527,7 +555,10 @@ public class GenericsHighlightUtil {
 
   private static HighlightInfo getSameErasureMessage(final boolean sameClass, final PsiMethod method, final PsiMethod superMethod,
                                                      TextRange textRange) {
-    @NonNls final String key = sameClass ? "generics.methods.have.same.erasure" : "generics.methods.have.same.erasure.override";
+    @NonNls final String key = sameClass ? "generics.methods.have.same.erasure" : 
+                                           method.hasModifierProperty(PsiModifier.STATIC) ? 
+                                             "generics.methods.have.same.erasure.hide" :
+                                             "generics.methods.have.same.erasure.override";
     String description = JavaErrorMessages.message(key, HighlightMethodUtil.createClashMethodMessage(method, superMethod, !sameClass));
     return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, textRange, description);
   }
@@ -676,7 +707,7 @@ public class GenericsHighlightUtil {
           return true;
         }
       }
-      if (isUncheckedTypeArgumentConversion(lTypeArg, rTypeArg)) return true;
+      if (!TypeConversionUtil.typesAgree(lTypeArg, rTypeArg, false)) return true;
     }
     return false;
   }
@@ -716,48 +747,6 @@ public class GenericsHighlightUtil {
     }
 
     return false;
-  }
-
-  private static boolean isUncheckedTypeArgumentConversion (PsiType lTypeArg, PsiType rTypeArg) {
-    if (lTypeArg instanceof PsiPrimitiveType || rTypeArg instanceof PsiPrimitiveType) return false;
-    if (lTypeArg.equals(rTypeArg)) return false;
-    if (lTypeArg instanceof PsiCapturedWildcardType) {
-      //ignore capture conversion
-      return isUncheckedTypeArgumentConversion(((PsiCapturedWildcardType)lTypeArg).getWildcard(), rTypeArg);
-    }
-    if (rTypeArg instanceof PsiCapturedWildcardType) {
-      //ignore capture conversion
-      return isUncheckedTypeArgumentConversion(lTypeArg, ((PsiCapturedWildcardType)rTypeArg).getWildcard());
-    }
-
-    if (lTypeArg instanceof PsiWildcardType || rTypeArg instanceof PsiWildcardType) {
-      return !lTypeArg.isAssignableFrom(rTypeArg);
-    }
-
-    if (lTypeArg instanceof PsiArrayType && rTypeArg instanceof PsiArrayType) {
-      return isUncheckedTypeArgumentConversion(((PsiArrayType)rTypeArg).getComponentType(), ((PsiArrayType)lTypeArg).getComponentType());
-    }
-    if (lTypeArg instanceof PsiArrayType || rTypeArg instanceof PsiArrayType) return false;
-    if (lTypeArg instanceof PsiIntersectionType) {
-      for (PsiType type : ((PsiIntersectionType)lTypeArg).getConjuncts()) {
-        if (!isUncheckedTypeArgumentConversion(type, rTypeArg)) return false;
-      }
-      return true;
-    }
-    if (!(lTypeArg instanceof PsiClassType)) {
-      LOG.error("left: "+lTypeArg + "; "+lTypeArg.getClass());
-    }
-    if (rTypeArg instanceof PsiIntersectionType) {
-      for (PsiType type : ((PsiIntersectionType)rTypeArg).getConjuncts()) {
-        if (!isUncheckedTypeArgumentConversion(lTypeArg, type)) return false;
-      }
-      return true;
-    }
-    if (!(rTypeArg instanceof PsiClassType)) {
-      LOG.error("right :"+rTypeArg + "; "+rTypeArg.getClass());
-    }
-    return ((PsiClassType)lTypeArg).resolve() instanceof PsiTypeParameter ||
-           ((PsiClassType)rTypeArg).resolve() instanceof PsiTypeParameter;
   }
 
   @Nullable

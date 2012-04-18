@@ -20,6 +20,7 @@ import com.intellij.designer.designSurface.tools.InputTool;
 import com.intellij.designer.designSurface.tools.ResizeTracker;
 import com.intellij.designer.model.RadComponent;
 import com.intellij.designer.utils.Position;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 
@@ -28,16 +29,22 @@ import java.awt.*;
  */
 public class DirectionResizePoint extends ResizePoint {
   private int myDirection;
+  final private Object myType;
   private double myXSeparator;
   private double myYSeparator;
+  private final String myDescription;
 
-  public DirectionResizePoint(int direction) {
+  public DirectionResizePoint(int direction, Object type, @Nullable String description) {
     setDirection(direction);
+    myType = type;
+    myDescription = description;
   }
 
-  public DirectionResizePoint(Color color, Color border, int direction) {
+  public DirectionResizePoint(Color color, Color border, int direction, Object type, @Nullable String description) {
     super(color, border);
     setDirection(direction);
+    myType = type;
+    myDescription = description;
   }
 
   private void setDirection(int direction) {
@@ -66,17 +73,32 @@ public class DirectionResizePoint extends ResizePoint {
     }
   }
 
+  public DirectionResizePoint move(double xSeparator, double ySeparator) {
+    myXSeparator = xSeparator;
+    myYSeparator = ySeparator;
+    return this;
+  }
+
+  public int getDirection() {
+    return myDirection;
+  }
+
+  @Override
+  public Object getType() {
+    return myType;
+  }
+
   @Override
   protected InputTool createTool(RadComponent component) {
-    return new ResizeTracker(myDirection);
+    return new ResizeTracker(myDirection, myType, myDescription);
   }
 
   @Override
   protected Point getLocation(DecorationLayer layer, RadComponent component) {
-    Rectangle bounds = layer.getComponentBounds(component);
+    Rectangle bounds = component.getBounds(layer);
     int size = (getSize() + 1) / 2;
-    int x = bounds.x + (int) (bounds.width * myXSeparator) - size;
-    int y = bounds.y + (int) (bounds.height * myYSeparator) - size;
+    int x = bounds.x + (int)(bounds.width * myXSeparator) - size;
+    int y = bounds.y + (int)(bounds.height * myYSeparator) - size;
 
     return new Point(x, y);
   }

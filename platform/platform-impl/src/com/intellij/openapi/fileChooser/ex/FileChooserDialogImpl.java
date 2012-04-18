@@ -26,6 +26,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.fileChooser.*;
 import com.intellij.openapi.fileChooser.impl.FileChooserFactoryImpl;
+import com.intellij.openapi.fileChooser.impl.FileChooserUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
@@ -65,8 +66,6 @@ import java.util.List;
 import java.util.Map;
 
 public class FileChooserDialogImpl extends DialogWrapper implements FileChooserDialog, PathChooserDialog, FileLookup {
-  private static String ourLastPath = null;
-
   private final FileChooserDescriptor myChooserDescriptor;
   protected FileSystemTreeImpl myFileSystemTree;
   private Project myProject;
@@ -108,22 +107,27 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
   @Override
   @NotNull
   public VirtualFile[] choose(@Nullable VirtualFile toSelect, Project project) {
-    prepareAndShow(toSelect != null ? toSelect.getPath() : null, project);
+    if (myProject == null && project != null) {
+      myProject = project;
+    }
+
+    prepareAndShow(toSelect);
     return myChosenFiles;
   }
 
   @Override
-  public void choose(@Nullable String toSelect, @NotNull Consumer<List<String>> callback) {
-    prepareAndShow(toSelect, myProject);
-    callback.consume(Arrays.asList(FileChooserUtil.getPaths(myChosenFiles)));
+  public void choose(@Nullable VirtualFile toSelect, @NotNull Consumer<List<VirtualFile>> callback) {
+    prepareAndShow(toSelect);
+    if (myChosenFiles.length > 0) {
+      callback.consume(Arrays.asList(myChosenFiles));
+    }
   }
 
-  private void prepareAndShow(@Nullable String toSelect, @Nullable Project project) {
+  private void prepareAndShow(@Nullable VirtualFile toSelect) {
     init();
 
-    final String selectPath = FileChooserUtil.getPathToSelect(myChooserDescriptor, project, toSelect, ourLastPath);
-
-    final VirtualFile file = selectPath != null ? LocalFileSystem.getInstance().findFileByPath(selectPath) : null;
+    final VirtualFile lastOpenedFile = FileChooserUtil.getLastOpenedFile(myProject);
+    final VirtualFile file = FileChooserUtil.getFileToSelect(myChooserDescriptor, myProject, toSelect, lastOpenedFile);
 
     if (file != null && file.isValid()) {
       myFileSystemTree.select(file, new Runnable() {
@@ -272,29 +276,25 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
       }
     }
 
-    final VirtualFile[] selectedFiles = getSelectedFiles();
-    if (selectedFiles.length == 0) {
+    final VirtualFile[] files = getSelectedFilesInt();
+    if (files.length == 0) {
       myChosenFiles = VirtualFile.EMPTY_ARRAY;
       close(CANCEL_EXIT_CODE);
       return;
     }
 
     try {
-      myChooserDescriptor.validateSelectedFiles(selectedFiles);
+      myChooserDescriptor.validateSelectedFiles(files);
     }
     catch (Exception e) {
       Messages.showErrorDialog(getContentPane(), e.getMessage(), getTitle());
       return;
     }
 
-    myChosenFiles = selectedFiles;
-    setLastSelectedPath(FileChooserUtil.getSelectionPath(selectedFiles[selectedFiles.length - 1]));
+    myChosenFiles = files;
+    FileChooserUtil.setLastOpenedFile(myProject, files[files.length - 1]);
 
     super.doOKAction();
-  }
-
-  private static void setLastSelectedPath(final String selectedPath) {
-    ourLastPath = selectedPath;
   }
 
   public final void doCancelAction() {
@@ -313,7 +313,7 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
     });
     JTree tree = myFileSystemTree.getTree();
     tree.setCellRenderer(new NodeRenderer());
-    tree.addTreeSelectionListener(new FileTreeSelectionListener());
+    tree.getSelectionModel().addTreeSelectionListener(new FileTreeSelectionListener());
     tree.addTreeExpansionListener(new FileTreeExpansionListener());
     setOKActionEnabled(false);
 
@@ -349,8 +349,14 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
     myFileSystemTree.registerMouseListener(group);
   }
 
+  /** @deprecated internal method (to remove in IDEA 12) */
   protected VirtualFile[] getSelectedFiles() {
-    return myFileSystemTree.getChosenFiles();
+    return getSelectedFilesInt();
+  }
+
+  private VirtualFile[] getSelectedFilesInt() {
+    final List<VirtualFile> selectedFiles = Arrays.asList(myFileSystemTree.getSelectedFiles());
+    return VfsUtil.toVirtualFileArray(FileChooserUtil.getChosenFiles(myChooserDescriptor, selectedFiles));
   }
 
   private final Map<String, LocalFileSystem.WatchRequest> myRequests = new HashMap<String, LocalFileSystem.WatchRequest>();
@@ -492,12 +498,12 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
 
     String text = "";
     if (selection.size() > 0) {
-      text = getFilePath(selection.get(0));
+      text = VfsUtil.getReadableUrl(selection.get(0));
     }
     else {
-      List<VirtualFile> roots = myChooserDescriptor.getRoots();
+      final List<VirtualFile> roots = myChooserDescriptor.getRoots();
       if (!myFileSystemTree.getTree().isRootVisible() && roots.size() == 1) {
-        text = getFilePath(roots.get(0));
+        text = VfsUtil.getReadableUrl(roots.get(0));
       }
     }
 
@@ -507,11 +513,6 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
         setErrorText(null);
       }
     });
-  }
-
-  // todo[r.sh] correct path if archive is picked via symlink
-  private static String getFilePath(final VirtualFile file) {
-    return file.isInLocalFileSystem() ? FileChooserUtil.getSelectionPath(file) : file.getUrl();
   }
 
   private void updateTreeFromPath(final String text) {

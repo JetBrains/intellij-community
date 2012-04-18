@@ -52,7 +52,7 @@ public final class TrailingSpacesStripper extends FileDocumentManagerAdapter {
   }
 
   @Override
-  public void beforeDocumentSaving(Document document) {
+  public void beforeDocumentSaving(@NotNull Document document) {
     strip(document);
   }
 
@@ -84,10 +84,11 @@ public final class TrailingSpacesStripper extends FileDocumentManagerAdapter {
       if (start != end) {
         final CharSequence content = document.getCharsSequence();
         ApplicationManager.getApplication().runWriteAction(new DocumentRunnable(document, null) {
+          @Override
           public void run() {
             CommandProcessor.getInstance().runUndoTransparentAction(new Runnable() {
               public void run() {
-                if (CharArrayUtil.containsOnlyWhiteSpaces(content.subSequence(start, end))) {
+                if (CharArrayUtil.containsOnlyWhiteSpaces(content.subSequence(start, end)) && doStrip) {
                   document.deleteString(start, end);
                 }
                 else {

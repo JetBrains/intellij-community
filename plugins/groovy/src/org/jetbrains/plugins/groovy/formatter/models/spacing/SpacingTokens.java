@@ -22,23 +22,24 @@ import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 /**
  * @author ilyas
  */
-public abstract class SpacingTokens implements GroovyElementTypes {
+public interface SpacingTokens extends GroovyElementTypes {
 
-  protected final static TokenSet LEFT_BRACES = TokenSet.create(mLPAREN, mLBRACK, mLCURLY);
-  protected final static TokenSet RIGHT_BRACES = TokenSet.create(mRPAREN, mRBRACK, mRCURLY);
+  TokenSet LEFT_BRACES = TokenSet.create(mLPAREN, mLBRACK, mLCURLY);
+  TokenSet RIGHT_BRACES = TokenSet.create(mRPAREN, mRBRACK, mRCURLY);
 
-  protected final static TokenSet PUNCTUATION_SIGNS = TokenSet.create(mDOT,
-      mMEMBER_POINTER,
-      mSPREAD_DOT,
-      mOPTIONAL_DOT,
-      mCOMMA,
-      mSEMI);
+  TokenSet INDEX_OR_ARRAY = TokenSet.create(PATH_INDEX_PROPERTY, ARRAY_TYPE, ARRAY_DECLARATOR);
 
-  protected final static TokenSet INDEX_OR_ARRAY = TokenSet.create(PATH_INDEX_PROPERTY, ARRAY_TYPE, ARRAY_DECLARATOR);
+  TokenSet PREFIXES = TokenSet.create(mDEC, mINC, mAT, mBNOT, mLNOT);
+  TokenSet POSTFIXES = TokenSet.create(mDEC, mINC);
+  TokenSet PREFIXES_OPTIONAL = TokenSet.create(mPLUS, mMINUS);
 
-  protected final static TokenSet PREFIXES = TokenSet.create(mDEC, mINC, mAT, mBNOT, mLNOT);
-  protected final static TokenSet POSTFIXES = TokenSet.create(mDEC, mINC);
-  protected final static TokenSet PREFIXES_OPTIONAL = TokenSet.create(mPLUS, mMINUS);
+  TokenSet RANGES = TokenSet.create(mRANGE_EXCLUSIVE, mRANGE_INCLUSIVE);
 
-  protected final static TokenSet RANGES = TokenSet.create(mRANGE_EXCLUSIVE, mRANGE_INCLUSIVE);
+  TokenSet LOGICAL_OPERATORS = TokenSet.create(mLAND, mLOR);
+  TokenSet EQUALITY_OPERATORS = TokenSet.create(mEQUAL, mNOT_EQUAL);
+  TokenSet RELATIONAL_OPERATORS = TokenSet.create(mGT, mGE, mLT, mLE);
+  TokenSet BITWISE_OPERATORS = TokenSet.create(mBAND, mBOR, mBXOR);
+  TokenSet ADDITIVE_OPERATORS = TokenSet.create(mPLUS, mMINUS);
+  TokenSet MULTIPLICATIVE_OPERATORS = TokenSet.create(mSTAR, mDIV, mMOD);
+  TokenSet SHIFT_OPERATORS = TokenSet.create(COMPOSITE_LSHIFT_SIGN, COMPOSITE_RSHIFT_SIGN, COMPOSITE_TRIPLE_SHIFT_SIGN);
 }

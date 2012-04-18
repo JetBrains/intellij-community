@@ -16,7 +16,10 @@
 package org.jetbrains.plugins.groovy.refactoring.changeSignature;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaCodeFragmentFactory;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeCodeFragment;
 import org.jetbrains.plugins.groovy.debugger.fragments.GroovyCodeFragment;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
@@ -30,6 +33,7 @@ public class GrTableParameterInfo {
   private PsiTypeCodeFragment myType;
   private GroovyCodeFragment myDefaultInitializer;
   private final int myPosition;
+  private boolean myUseAnyVar = false;
 
   public GrTableParameterInfo(GrParameter parameter, int position) {
     myPosition = position;
@@ -117,6 +121,14 @@ public class GrTableParameterInfo {
       type = null;
     }
     String defaultValue = getDefaultValue();
-    return new GrParameterInfo(getName(), defaultValue, defaultInitializer, type, myPosition);
+    return new GrParameterInfo(getName(), defaultValue, defaultInitializer, type, myPosition, myUseAnyVar);
+  }
+
+  public boolean isUseAnyVar() {
+    return myUseAnyVar;
+  }
+
+  public void setUseAnyVar(boolean useAnyVar) {
+    myUseAnyVar = useAnyVar;
   }
 }

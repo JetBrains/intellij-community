@@ -83,6 +83,8 @@ public class JavaCoreEnvironmentWithIndex extends JavaCoreEnvironment {
 
 
     //search
+    myApplication.registerService(SimpleAccessorReferenceSearcherAdditionalScopeProvider.class, SimpleAccessorReferenceSearcherAdditionalScopeProviderJavaCore.class);
+
     registerExtensionPoint(Extensions.getRootArea(), UseScopeEnlarger.EP_NAME, UseScopeEnlarger.class);
     registerExtensionPoint(Extensions.getRootArea(), "com.intellij.referencesSearch", QueryExecutor.class);
 

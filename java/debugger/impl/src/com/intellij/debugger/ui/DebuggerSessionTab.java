@@ -157,7 +157,7 @@ public class DebuggerSessionTab extends DebuggerSessionTabBase implements Dispos
 
     // frames
     Content framesContent = myUi.createContent(DebuggerContentInfo.FRAME_CONTENT, myFramesPanel, XDebuggerBundle.message("debugger.session.tab.frames.title"),
-                                               XDebuggerUIConstants.FRAMES_TAB_ICON, null);
+                                               XDebuggerUIConstants.FRAMES_TAB_ICON, myFramesPanel.getFramesList());
     framesContent.setCloseable(false);
     framesContent.setAlertIcon(breakpointAlert);
 
@@ -439,11 +439,18 @@ public class DebuggerSessionTab extends DebuggerSessionTabBase implements Dispos
 
     session.getContextManager().addListener(new DebuggerContextListener() {
       public void changeEvent(DebuggerContextImpl newContext, int event) {
-        if (myUi.isDisposed()) return;
-
-        attractFramesOnPause(event);
-
-        myStateManager.fireStateChanged(newContext, event);
+        if (!myUi.isDisposed()) {
+          attractFramesOnPause(event);
+          myStateManager.fireStateChanged(newContext, event);
+          SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+              if (!myUi.isDisposed()) {
+                myUi.updateActionsNow();
+              }
+            }
+          });
+        }
       }
     });
     return initUI(session.getProcess().getExecutionResult());
@@ -452,7 +459,8 @@ public class DebuggerSessionTab extends DebuggerSessionTabBase implements Dispos
   private void attractFramesOnPause(final int event) {
     if (DebuggerSession.EVENT_PAUSE == event) {
       myUi.attractBy(XDebuggerUIConstants.LAYOUT_VIEW_BREAKPOINT_CONDITION);
-    } else if (DebuggerSession.EVENT_RESUME == event) {
+    }
+    else if (DebuggerSession.EVENT_RESUME == event) {
       myUi.clearAttractionBy(XDebuggerUIConstants.LAYOUT_VIEW_BREAKPOINT_CONDITION);
     }
   }

@@ -112,7 +112,14 @@ public class RecursionManager {
           return result;
         }
         finally {
-          stack.afterComputation(realKey, sizeBefore, sizeAfter);
+          try {
+            stack.afterComputation(realKey, sizeBefore, sizeAfter);
+          }
+          catch (Throwable e) {
+            throw new RuntimeException("Throwable in afterComputation", e);
+          }
+
+          stack.checkDepth("4");
 
           if (oldHash != realKey.hashCode()) {
             throw new AssertionError("Object has changed its hashCode: " + key);
@@ -252,20 +259,21 @@ public class RecursionManager {
 
       if (depth == 0) {
         intermediateCache.clear();
-        assert key2ReentrancyDuringItsCalculation.isEmpty() : "non-empty key2ReentrancyDuringItsCalculation";
-        assert toMemoize.isEmpty() : "non-empty toMemoize";
+        LOG.assertTrue(key2ReentrancyDuringItsCalculation.isEmpty(), "non-empty key2ReentrancyDuringItsCalculation");
+        LOG.assertTrue(toMemoize.isEmpty(), "non-empty toMemoize");
       }
 
       if (sizeBefore != progressMap.size()) {
         LOG.error("Map size doesn't decrease: " + progressMap.size() + " " + sizeBefore + " " + realKey.second);
       }
 
-      assert value != null : realKey.second + " has changed its equals/hashCode";
+      if (value == null) {
+        LOG.error(realKey.second + " has changed its equals/hashCode");
+      }
 
       reentrancyCount = value;
       checkZero();
 
-      checkDepth("4");
     }
 
     private void enableMemoization(MyKey realKey, Set<MyKey> loop) {
@@ -283,7 +291,9 @@ public class RecursionManager {
     private Set<MyKey> prohibitResultCaching(MyKey realKey) {
       reentrancyCount++;
 
-      checkZero();
+      if (!checkZero()) {
+        throw new AssertionError("zero1");
+      }
 
       Set<MyKey> loop = new THashSet<MyKey>();
       boolean inLoop = false;
@@ -297,7 +307,9 @@ public class RecursionManager {
         }
       }
 
-      checkZero();
+      if (!checkZero()) {
+        throw new AssertionError("zero2");
+      }
       return loop;
     }
 
@@ -309,10 +321,12 @@ public class RecursionManager {
       }
     }
 
-    private void checkZero() {
+    private boolean checkZero() {
       if (!progressMap.isEmpty() && !new Integer(0).equals(progressMap.get(progressMap.keySet().iterator().next()))) {
-        throw new AssertionError("Prisoner Zero has escaped: " + progressMap + "; value=" + progressMap.get(progressMap.keySet().iterator().next()));
+        LOG.error("Prisoner Zero has escaped: " + progressMap + "; value=" + progressMap.get(progressMap.keySet().iterator().next()));
+        return false;
       }
+      return true;
     }
 
   }

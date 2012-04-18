@@ -16,6 +16,7 @@
 
 package com.intellij.openapi.editor.actions;
 
+import com.intellij.execution.impl.ConsoleViewUtil;
 import com.intellij.find.EditorSearchComponent;
 import com.intellij.find.FindManager;
 import com.intellij.find.FindModel;
@@ -47,7 +48,7 @@ public class IncrementalFindAction extends EditorAction {
         if (headerComponent instanceof EditorSearchComponent) {
           EditorSearchComponent editorSearchComponent = (EditorSearchComponent)headerComponent;
             headerComponent.requestFocus();
-          FindUtil.configureFindModel(myReplace, editor.getSelectionModel().getSelectedText(), editorSearchComponent.getFindModel(), false);
+          FindUtil.configureFindModel(myReplace, editor, editorSearchComponent.getFindModel(), false);
         } else {
           FindManager findManager = FindManager.getInstance(project);
           FindModel model;
@@ -57,7 +58,7 @@ public class IncrementalFindAction extends EditorAction {
             model = new FindModel();
             model.copyFrom(findManager.getFindInFileModel());
           }
-          FindUtil.configureFindModel(myReplace, editor.getSelectionModel().getSelectedText(), model, true);
+          FindUtil.configureFindModel(myReplace, editor, model, true);
           final EditorSearchComponent header = new EditorSearchComponent(editor, project, model);
           editor.setHeaderComponent(header);
           header.requestFocus();
@@ -66,6 +67,9 @@ public class IncrementalFindAction extends EditorAction {
     }
 
     public boolean isEnabled(Editor editor, DataContext dataContext) {
+      if (myReplace && ConsoleViewUtil.isConsoleViewEditor(editor)) {
+        return false;
+      }
       Project project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(editor.getComponent()));
       return project != null && !editor.isOneLineMode();
     }

@@ -39,6 +39,7 @@ class LeafPatcher extends RecursiveTreeElementWalkingVisitor {
   private String prevElementTail;
   private int shredNo;
   private String hostText;
+  private TextRange rangeInHost;
   private final Place myShreds;
   private final List<LiteralTextEscaper<? extends PsiLanguageInjectionHost>> myEscapers;
   final Map<LeafElement, String> newTexts = new THashMap<LeafElement, String>();
@@ -74,14 +75,19 @@ class LeafPatcher extends RecursiveTreeElementWalkingVisitor {
 
   private StringBuilder constructTextFromHostPSI(int startOffset, int endOffset) {
     PsiLanguageInjectionHost.Shred current = myShreds.get(shredNo);
-    if (hostText == null) hostText = current.host.getText();
+    if (hostText == null) {
+      hostText = current.getHost().getText();
+      rangeInHost = current.getRangeInsideHost();
+    }
+
     StringBuilder text = new StringBuilder(endOffset-startOffset);
     while (startOffset < endOffset) {
-      TextRange shredRange = current.range;
-      String prefix = current.prefix;
+      TextRange shredRange = current.getRange();
+      String prefix = current.getPrefix();
       if (startOffset >= shredRange.getEndOffset()) {
         current = myShreds.get(++shredNo);
-        hostText = current.host.getText();
+        hostText = current.getHost().getText();
+        rangeInHost = current.getRangeInsideHost();
         continue;
       }
       assert startOffset >= shredRange.getStartOffset();
@@ -93,12 +99,14 @@ class LeafPatcher extends RecursiveTreeElementWalkingVisitor {
         continue;
       }
 
-      String suffix = current.suffix;
+      String suffix = current.getSuffix();
       if (startOffset < shredRange.getEndOffset() - suffix.length()) {
         // inside host body, cut out from the host text
-        int startOffsetInHost = myEscapers.get(shredNo).getOffsetInHost(startOffset - shredRange.getStartOffset() - prefix.length(), current.getRangeInsideHost());
+        int startOffsetInHost = myEscapers.get(shredNo).getOffsetInHost(
+          startOffset - shredRange.getStartOffset() - prefix.length(), rangeInHost);
         int endOffsetCut = Math.min(endOffset, shredRange.getEndOffset() - suffix.length());
-        int endOffsetInHost = myEscapers.get(shredNo).getOffsetInHost(endOffsetCut - shredRange.getStartOffset() - prefix.length(), current.getRangeInsideHost());
+        int endOffsetInHost = myEscapers.get(shredNo).getOffsetInHost(
+          endOffsetCut - shredRange.getStartOffset() - prefix.length(), rangeInHost);
         if (endOffsetInHost != -1) {
           text.append(hostText, startOffsetInHost, endOffsetInHost);
           startOffset = endOffsetCut;
@@ -118,7 +126,7 @@ class LeafPatcher extends RecursiveTreeElementWalkingVisitor {
   private static void storeUnescapedTextFor(final LeafElement leaf, final String leafText) {
     PsiElement psi = leaf.getPsi();
     if (psi != null) {
-      psi.putUserData(InjectedLanguageManagerImpl.UNESCAPED_TEXT, leafText);
+      psi.putCopyableUserData(InjectedLanguageManagerImpl.UNESCAPED_TEXT, leafText);
     }
   }
 }

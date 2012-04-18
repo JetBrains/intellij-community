@@ -19,8 +19,6 @@ package org.jetbrains.plugins.groovy.completion;
 
 import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.codeInsight.completion.StaticallyImportable
-import com.intellij.psi.PsiDocumentManager
-import com.intellij.psi.PsiFile
 import org.jetbrains.plugins.groovy.util.TestUtils
 
 /**
@@ -29,20 +27,16 @@ import org.jetbrains.plugins.groovy.util.TestUtils
 public class GroovySmartCompletionTest extends GroovyCompletionTestBase {
   @Override
   protected String getBasePath() {
-    return TestUtils.getTestDataPath() + "groovy/completion/smart";
+    return "${TestUtils.testDataPath}groovy/completion/smart";
   }
 
   public void testSmartCompletionAfterNewInDeclaration() throws Throwable {
     myFixture.configureByFile(getTestName(false) + ".groovy");
     myFixture.complete(CompletionType.SMART);
-    assertOrderedEquals(myFixture.getLookupElementStrings(), "Bar", "Foo");
+    assertOrderedEquals(myFixture.lookupElementStrings, "Bar", "Foo");
   }
 
-  public void testSmartCompletionAfterNewInDeclarationWithInterface() throws Throwable { doSmartTest(); }
-
   public void testCaretAfterSmartCompletionAfterNewInDeclaration() throws Throwable { doSmartTest(); }
-
-  public void testSmartCompletionAfterNewInDeclarationWithAbstractClass() throws Throwable { doSmartTest(); }
 
   public void testSmartCompletionAfterNewInDeclarationWithArray() throws Throwable { doSmartTest(); }
 
@@ -61,11 +55,11 @@ public class GroovySmartCompletionTest extends GroovyCompletionTestBase {
   }
 
   public void testReturnStatement() throws Exception {
-    doSmartCompletion("b", "b1", "b2", "foo");
+    doSmartCompletion("b", "b1", "b2", "equals", "foo");
   }
 
   public void testIncSmartCompletion() throws Exception {
-    doSmartCompletion("a", "b");
+    doSmartCompletion("a", "b", "hashCode");
   }
 
   public void testInheritConstructorsAnnotation() throws Throwable {
@@ -116,12 +110,33 @@ class Expected {
 
 Expected exp = fooField'''
   }
+
+  public void testThrow() {
+    myFixture.configureByText('_a.groovy', '''\
+throw new RunEx<caret>
+''')
+    myFixture.complete(CompletionType.SMART)
+    myFixture.checkResult('''\
+throw new RuntimeException()
+''')
+  }
   
   void testInnerClassReferenceWithoutQualifier() {
     doSmartTest()
   }
 
-  def getFileText(PsiFile file) {
-    return PsiDocumentManager.getInstance(project).getDocument(file).text
+  void testAnonymousClassCompletion() {
+    myFixture.configureByText('_a.groovy', '''\
+Runnable r = new Run<caret>
+''')
+    myFixture.complete(CompletionType.SMART)
+    myFixture.checkResult('''\
+Runnable r = new Runnable() {
+    @Override
+    void run() {
+        <caret><selection>//To change body of implemented methods use File | Settings | File Templates.</selection>
+    }
+}
+''')
   }
 }

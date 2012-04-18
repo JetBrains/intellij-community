@@ -66,11 +66,7 @@ public class EditorPlaybackCall {
   
   public static AsyncResult<String> waitDaemonForFinish(final PlaybackContext context) {
     final AsyncResult<String> result = new AsyncResult<String>();
-    final Disposable connection = new Disposable() {
-      @Override
-      public void dispose() {
-      }
-    };
+    final Disposable connection = Disposer.newDisposable();
     result.doWhenProcessed(new Runnable() {
       @Override
       public void run() {

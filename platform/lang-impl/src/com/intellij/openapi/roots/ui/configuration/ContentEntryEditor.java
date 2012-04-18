@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,9 +19,10 @@ package com.intellij.openapi.roots.ui.configuration;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.EventDispatcher;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -30,16 +31,14 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.io.File;
 import java.util.EventListener;
 
 /**
  * @author Eugene Zhuravlev
- * Date: Oct 8, 2003
- * Time: 3:48:13 PM
+ * @since Oct 8, 2003
  */
+@SuppressWarnings("UnusedDeclaration")
 public abstract class ContentEntryEditor implements ContentRootPanel.ActionCallback {
-
   private boolean myIsSelected;
   private ContentRootPanel myContentRootPanel;
   private JPanel myMainPanel;
@@ -108,14 +107,17 @@ public abstract class ContentEntryEditor implements ContentRootPanel.ActionCallb
   protected abstract ModifiableRootModel getModel();
 
   public void deleteContentEntry() {
-    final int answer = Messages.showYesNoDialog(ProjectBundle.message("module.paths.remove.content.prompt",
-                                                                      VirtualFileManager.extractPath(myContentEntryUrl).replace('/', File.separatorChar)),
+    final String path = FileUtil.toSystemDependentName(VfsUtil.urlToPath(myContentEntryUrl));
+    final int answer = Messages.showYesNoDialog(ProjectBundle.message("module.paths.remove.content.prompt", path),
                                                 ProjectBundle.message("module.paths.remove.content.title"), Messages.getQuestionIcon());
     if (answer != 0) { // no
       return;
     }
     myEventDispatcher.getMulticaster().beforeEntryDeleted(this);
-    getModel().removeContentEntry(getContentEntry());
+    final ContentEntry entry = getContentEntry();
+    if (entry != null) {
+      getModel().removeContentEntry(entry);
+    }
   }
 
   public void deleteContentFolder(ContentEntry contentEntry, ContentFolder folder) {
@@ -189,10 +191,10 @@ public abstract class ContentEntryEditor implements ContentRootPanel.ActionCallb
   }
 
   @Nullable
-  public SourceFolder addSourceFolder(VirtualFile file, boolean isTestSource) {
+  public SourceFolder addSourceFolder(@NotNull final VirtualFile file, boolean isTestSource, String packagePrefix) {
     final ContentEntry contentEntry = getContentEntry();
     if (contentEntry != null) {
-      final SourceFolder sourceFolder = contentEntry.addSourceFolder(file, isTestSource);
+      final SourceFolder sourceFolder = contentEntry.addSourceFolder(file, isTestSource, packagePrefix);
       try {
         return sourceFolder;
       }
@@ -205,25 +207,29 @@ public abstract class ContentEntryEditor implements ContentRootPanel.ActionCallb
     return null;
   }
 
-  public void removeSourceFolder(SourceFolder sourceFolder) {
-    final VirtualFile file = sourceFolder.getFile();
-    final boolean isTestSource = sourceFolder.isTestSource();
+  @Nullable
+  protected SourceFolder doAddSourceFolder(@NotNull final VirtualFile file, final boolean isTestSource) {
+    final ContentEntry contentEntry = getContentEntry();
+    return contentEntry != null ? contentEntry.addSourceFolder(file, isTestSource) : null;
+  }
+
+  public void removeSourceFolder(@NotNull final SourceFolder sourceFolder) {
     try {
       doRemoveSourceFolder(sourceFolder);
     }
     finally {
-      myEventDispatcher.getMulticaster().sourceFolderRemoved(this, file, isTestSource);
+      myEventDispatcher.getMulticaster().sourceFolderRemoved(this, sourceFolder.getFile(), sourceFolder.isTestSource());
       update();
     }
   }
 
-  protected void doRemoveSourceFolder(SourceFolder sourceFolder) {
+  protected void doRemoveSourceFolder(@NotNull final SourceFolder sourceFolder) {
     final ContentEntry contentEntry = getContentEntry();
     if (contentEntry != null) contentEntry.removeSourceFolder(sourceFolder);
   }
 
   @Nullable
-  public ExcludeFolder addExcludeFolder(VirtualFile file) {
+  public ExcludeFolder addExcludeFolder(@NotNull final VirtualFile file) {
     try {
       return doAddExcludeFolder(file);
     }
@@ -234,26 +240,29 @@ public abstract class ContentEntryEditor implements ContentRootPanel.ActionCallb
   }
 
   @Nullable
-  protected ExcludeFolder doAddExcludeFolder(VirtualFile file) {
+  protected ExcludeFolder doAddExcludeFolder(@NotNull final VirtualFile file) {
     final ContentEntry contentEntry = getContentEntry();
-    if (contentEntry != null) {
-      return contentEntry.addExcludeFolder(file);
-    }
-
-    return null;
+    return contentEntry != null ? contentEntry.addExcludeFolder(file) : null;
   }
 
-  public void removeExcludeFolder(ExcludeFolder excludeFolder) {
-    final VirtualFile file = excludeFolder.getFile();
+  public void removeExcludeFolder(@NotNull final ExcludeFolder excludeFolder) {
     try {
-      doRemoveExcludeFolder(excludeFolder, file);
+      doRemoveExcludeFolder(excludeFolder);
     }
     finally {
-      myEventDispatcher.getMulticaster().folderIncluded(this, file);
+      myEventDispatcher.getMulticaster().folderIncluded(this, excludeFolder.getFile());
       update();
     }
   }
 
+  protected void doRemoveExcludeFolder(@NotNull final ExcludeFolder excludeFolder) {
+    if (!excludeFolder.isSynthetic()) {
+      final ContentEntry contentEntry = getContentEntry();
+      if (contentEntry != null) contentEntry.removeExcludeFolder(excludeFolder);
+    }
+  }
+
+  /** @deprecated use {@linkplain #doRemoveExcludeFolder(com.intellij.openapi.roots.ExcludeFolder)} (to remove in IDEA 12) */
   protected void doRemoveExcludeFolder(ExcludeFolder excludeFolder, VirtualFile file) {
     if (!excludeFolder.isSynthetic()) {
       final ContentEntry contentEntry = getContentEntry();
@@ -261,17 +270,17 @@ public abstract class ContentEntryEditor implements ContentRootPanel.ActionCallb
     }
   }
 
-  public boolean isSource(VirtualFile file) {
+  public boolean isSource(@NotNull final VirtualFile file) {
     final SourceFolder sourceFolder = getSourceFolder(file);
     return sourceFolder != null && !sourceFolder.isTestSource();
   }
 
-  public boolean isTestSource(VirtualFile file) {
+  public boolean isTestSource(@NotNull final VirtualFile file) {
     final SourceFolder sourceFolder = getSourceFolder(file);
     return sourceFolder != null && sourceFolder.isTestSource();
   }
 
-  public boolean isExcluded(VirtualFile file) {
+  public boolean isExcluded(@NotNull final VirtualFile file) {
     return getExcludeFolder(file) != null;
   }
 
@@ -294,7 +303,7 @@ public abstract class ContentEntryEditor implements ContentRootPanel.ActionCallb
   }
 
   @Nullable
-  public ExcludeFolder getExcludeFolder(VirtualFile file) {
+  public ExcludeFolder getExcludeFolder(@NotNull final VirtualFile file) {
     final ContentEntry contentEntry = getContentEntry();
     if (contentEntry == null) {
       return null;
@@ -313,7 +322,7 @@ public abstract class ContentEntryEditor implements ContentRootPanel.ActionCallb
   }
 
   @Nullable
-  public SourceFolder getSourceFolder(VirtualFile file) {
+  public SourceFolder getSourceFolder(@NotNull final VirtualFile file) {
     final ContentEntry contentEntry = getContentEntry();
     if (contentEntry == null) {
       return null;
@@ -321,10 +330,7 @@ public abstract class ContentEntryEditor implements ContentRootPanel.ActionCallb
     final SourceFolder[] sourceFolders = contentEntry.getSourceFolders();
     for (SourceFolder sourceFolder : sourceFolders) {
       final VirtualFile f = sourceFolder.getFile();
-      if (f == null) {
-        continue;
-      }
-      if (f.equals(file)) {
+      if (f != null && f.equals(file)) {
         return sourceFolder;
       }
     }

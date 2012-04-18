@@ -24,10 +24,17 @@ import com.intellij.psi.codeStyle.PackageEntry;
 import com.intellij.psi.codeStyle.PackageEntryTable;
 import com.intellij.ui.*;
 import com.intellij.ui.table.JBTable;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
-import javax.swing.event.*;
-import javax.swing.table.*;
+import javax.swing.event.CellEditorListener;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
+import javax.swing.table.AbstractTableModel;
+import javax.swing.table.TableCellEditor;
+import javax.swing.table.TableColumn;
+import javax.swing.table.TableModel;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -48,7 +55,6 @@ public class CodeStyleImportsPanel extends JPanel {
   private JButton myMoveUpButton;
   private JButton myMoveDownButton;
   private JButton myRemovePackageFromImportLayoutButton;
-  private JButton myRemovePackageFromPackagesButton;
   private JBTable myPackageTable;
   private final CodeStyleSettings mySettings;
   private JRadioButton myJspImportCommaSeparated;
@@ -90,12 +96,12 @@ public class CodeStyleImportsPanel extends JPanel {
                                                                          "<% page import=\"com.company.Far\"%>");
     final JPanel labelPanel = new JPanel(new BorderLayout());
     labelPanel.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createEmptyBorder(20, 10, 0, 0), IdeBorderFactory.createTitledBorder(
-      ApplicationBundle.message("title.preview"), false, false, true)));
+      ApplicationBundle.message("title.preview"), false)));
 
     JPanel resultPanel = new JPanel(new BorderLayout());
     resultPanel.add(btnPanel, BorderLayout.NORTH);
     resultPanel.add(labelPanel, BorderLayout.CENTER);
-    resultPanel.setBorder(IdeBorderFactory.createTitledBorder(ApplicationBundle.message("title.jsp.imports.layout"), true, true, true));
+    resultPanel.setBorder(IdeBorderFactory.createTitledBorder(ApplicationBundle.message("title.jsp.imports.layout"), true));
 
 
     ActionListener actionListener = new ActionListener() {
@@ -141,17 +147,27 @@ public class CodeStyleImportsPanel extends JPanel {
   }
 
   private JPanel createPackagesPanel() {
-    JPanel panel = new JPanel(new BorderLayout());
-    panel.setBorder(IdeBorderFactory.createTitledBorder(ApplicationBundle.message("title.packages.to.use.import.with"), true, false, true));
+    JPanel panel = ToolbarDecorator.createDecorator(myPackageTable = createTableForPackageEntries(myPackageList))
+      .setAddAction(new AnActionButtonRunnable() {
+        @Override
+        public void run(AnActionButton button) {
+          addPackageToPackages();
+        }
+      }).setRemoveAction(new AnActionButtonRunnable() {
+        @Override
+        public void run(AnActionButton button) {
+          removeEntryFromPackages();
+        }
+      }).disableUpDownActions().createPanel();
 
-    panel.add(createPackagesTable(), BorderLayout.CENTER);
-    panel.add(createPackagesButtonsPanel(), BorderLayout.EAST);
+    UIUtil.addBorder(panel, IdeBorderFactory.createTitledBorder(ApplicationBundle.message("title.packages.to.use.import.with"), false));
+
     return panel;
   }
 
   private JPanel createImportLayoutPanel() {
     JPanel panel = new JPanel(new BorderLayout());
-    panel.setBorder(IdeBorderFactory.createTitledBorder(ApplicationBundle.message("title.import.layout"), true, false, true));
+    panel.setBorder(IdeBorderFactory.createTitledBorder(ApplicationBundle.message("title.import.layout"), false));
     myCbLayoutStaticImportsSeparately = new JCheckBox("Layout static imports separately");
 
     myCbLayoutStaticImportsSeparately.addItemListener(new ItemListener(){
@@ -269,37 +285,6 @@ public class CodeStyleImportsPanel extends JPanel {
     return tableButtonsPanel;
   }
 
-  private JPanel createPackagesButtonsPanel() {
-    JPanel tableButtonsPanel = new JPanel();
-    tableButtonsPanel.setLayout(new BoxLayout(tableButtonsPanel, BoxLayout.Y_AXIS));
-
-    JButton addPackageToPackagesButton = new JButton(ApplicationBundle.message("button.add.package.p"));
-    tableButtonsPanel.add(addPackageToPackagesButton);
-    addPackageToPackagesButton.setMaximumSize(new Dimension(Integer.MAX_VALUE, addPackageToPackagesButton.getMaximumSize().height));
-
-    myRemovePackageFromPackagesButton = new JButton(ApplicationBundle.message("button.remove.r"));
-    tableButtonsPanel.add(myRemovePackageFromPackagesButton);
-    myRemovePackageFromPackagesButton.setMaximumSize(new Dimension(Integer.MAX_VALUE, myRemovePackageFromPackagesButton.getMaximumSize().height));
-
-    addPackageToPackagesButton.addActionListener(
-      new ActionListener(){
-        public void actionPerformed(ActionEvent e){
-          addPackageToPackages();
-        }
-      }
-    );
-
-    myRemovePackageFromPackagesButton.addActionListener(
-      new ActionListener(){
-        public void actionPerformed(ActionEvent e){
-          removeEntryFromPackages();
-        }
-      }
-    );
-
-    return tableButtonsPanel;
-  }
-
   private void addPackageToImportLayouts() {
     int selected = myImportLayoutTable.getSelectedRow() + 1;
     if(selected < 0) {
@@ -308,6 +293,7 @@ public class CodeStyleImportsPanel extends JPanel {
     PackageEntry entry = new PackageEntry(false,"", true);
     myImportLayoutList.insertEntryAt(entry, selected);
     refreshTableModel(selected, myImportLayoutTable);
+    updateButtons();
   }
 
   private static void refreshTableModel(int selectedRow, JBTable table) {
@@ -340,6 +326,7 @@ public class CodeStyleImportsPanel extends JPanel {
     AbstractTableModel model = (AbstractTableModel)myImportLayoutTable.getModel();
     model.fireTableRowsInserted(selected, selected);
     myImportLayoutTable.setRowSelectionInterval(selected, selected);
+    updateButtons();
   }
 
   private void removeEntryFromImportLayouts() {
@@ -360,6 +347,7 @@ public class CodeStyleImportsPanel extends JPanel {
     if(selected >= 0) {
       myImportLayoutTable.setRowSelectionInterval(selected, selected);
     }
+    updateButtons();
   }
 
   private void removeEntryFromPackages() {
@@ -375,6 +363,7 @@ public class CodeStyleImportsPanel extends JPanel {
     if(selected >= 0) {
       myPackageTable.setRowSelectionInterval(selected, selected);
     }
+    updateButtons();
   }
 
   private void moveRowUp() {
@@ -391,6 +380,7 @@ public class CodeStyleImportsPanel extends JPanel {
     AbstractTableModel model = (AbstractTableModel)myImportLayoutTable.getModel();
     model.fireTableRowsUpdated(selected-1, selected);
     myImportLayoutTable.setRowSelectionInterval(selected-1, selected-1);
+    updateButtons();
   }
 
   private void moveRowDown() {
@@ -407,11 +397,7 @@ public class CodeStyleImportsPanel extends JPanel {
     AbstractTableModel model = (AbstractTableModel)myImportLayoutTable.getModel();
     model.fireTableRowsUpdated(selected, selected+1);
     myImportLayoutTable.setRowSelectionInterval(selected+1, selected+1);
-  }
-
-  private JComponent createPackagesTable() {
-    myPackageTable = createTableForPackageEntries(myPackageList);
-    return ScrollPaneFactory.createScrollPane(myPackageTable);
+    updateButtons();
   }
 
   private JBTable createTableForPackageEntries(final PackageEntryTable packageTable) {
@@ -495,6 +481,12 @@ public class CodeStyleImportsPanel extends JPanel {
     final JBTable result = new JBTable(dataModel);
     result.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     resizeColumns(packageTable, result);
+    result.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
+      @Override
+      public void valueChanged(ListSelectionEvent e) {
+        updateButtons();
+      }
+    });
 
     TableCellEditor editor = result.getDefaultEditor(String.class);
     if (editor instanceof DefaultCellEditor) {
@@ -512,14 +504,6 @@ public class CodeStyleImportsPanel extends JPanel {
       public void editingCanceled(ChangeEvent e) {
       }
     });
-
-    result.getSelectionModel().addListSelectionListener(
-      new ListSelectionListener(){
-        public void valueChanged(ListSelectionEvent e){
-          updateButtons();
-        }
-      }
-    );
 
     return result;
   }
@@ -579,9 +563,6 @@ public class CodeStyleImportsPanel extends JPanel {
     PackageEntry entry = selectedImport < 0 ? null : myImportLayoutList.getEntryAt(selectedImport);
     boolean canRemove =  entry != null && entry != PackageEntry.ALL_OTHER_STATIC_IMPORTS_ENTRY && entry != PackageEntry.ALL_OTHER_IMPORTS_ENTRY;
     myRemovePackageFromImportLayoutButton.setEnabled(canRemove);
-
-    int selectedPackage = myPackageTable.getSelectedRow();
-    myRemovePackageFromPackagesButton.setEnabled(selectedPackage >= 0);
   }
 
   private JComponent createImportLayoutTable() {

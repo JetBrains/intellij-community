@@ -19,6 +19,7 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public abstract class JavaCodeFragmentFactory {
   public static JavaCodeFragmentFactory getInstance(Project project) {
@@ -49,7 +50,7 @@ public abstract class JavaCodeFragmentFactory {
    * @return the created code fragment.
    */
   @NotNull
-  public abstract JavaCodeFragment createCodeBlockCodeFragment(@NotNull String text, PsiElement context, boolean isPhysical);
+  public abstract JavaCodeFragment createCodeBlockCodeFragment(@NotNull String text, @Nullable PsiElement context, boolean isPhysical);
 
   /**
    * Flag for {@linkplain #createTypeCodeFragment(String, PsiElement, boolean, int)} - allows void type.

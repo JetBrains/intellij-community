@@ -18,15 +18,19 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.TypeConversionUtil;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrThisReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
+import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
+import org.jetbrains.plugins.groovy.lang.resolve.processors.CompletionProcessor;
+import org.jetbrains.plugins.groovy.lang.resolve.processors.MethodResolverProcessor;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ResolverProcessor;
 
 import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mSPREAD_DOT;
@@ -41,6 +45,13 @@ public class GrReferenceResolveUtil {
   public static boolean resolveImpl(ResolverProcessor processor, GrReferenceExpression place) {
     GrExpression qualifier = place.getQualifier();
     if (qualifier == null) {
+      if (processor instanceof MethodResolverProcessor || processor instanceof CompletionProcessor) {
+        processStaticImports(place.getContainingFile(), processor, ResolveState.initial(), place);
+        if (processor instanceof MethodResolverProcessor && ((MethodResolverProcessor)processor).hasApplicableCandidates()) {
+          return false;
+        }
+      }
+
       if (!ResolveUtil.treeWalkUp(place, processor, true)) return false;
       if (!processor.hasCandidates()) {
         qualifier = PsiImplUtil.getRuntimeQualifier(place);
@@ -60,6 +71,18 @@ public class GrReferenceResolveUtil {
       if (qualifier instanceof GrReferenceExpression && "class".equals(((GrReferenceExpression)qualifier).getReferenceName()) ||
           qualifier instanceof GrThisReferenceExpression) {
         if (!processIfJavaLangClass(processor, qualifier.getType(), qualifier, place)) return false;
+      }
+    }
+    return true;
+  }
+
+  private static boolean processStaticImports(PsiFile file, ResolverProcessor processor, ResolveState state, PsiElement place) {
+    if (file instanceof GroovyFile) {
+      GrImportStatement[] imports = ((GroovyFile)file).getImportStatements();
+      for (GrImportStatement anImport : imports) {
+        if (anImport.isStatic()) {
+          if (!anImport.processDeclarations(processor, state, null, place)) return false;
+        }
       }
     }
     return true;

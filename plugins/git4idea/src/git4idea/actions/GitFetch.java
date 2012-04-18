@@ -46,7 +46,7 @@ public class GitFetch extends GitRepositoryAction {
     GitVcs.runInBackground(new Task.Backgroundable(project, "Fetching...", false) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
-        new GitFetcher(project, indicator).fetchRootsAndNotify(gitRoots, null, true);
+        new GitFetcher(project, indicator, true).fetchRootsAndNotify(gitRoots, null, true);
       }
     });
   }

@@ -48,23 +48,29 @@ public class AndroidDomElementDescriptorProvider implements XmlElementDescriptor
   private static XmlElementDescriptor getDescriptor(DomElement domElement, XmlTag tag, String baseClassName) {
     AndroidFacet facet = AndroidFacet.getInstance(domElement);
     if (facet == null) return null;
-    Map<String, PsiClass> classMap = facet.getClassMap(baseClassName, SimpleClassMapConstructor.getInstance());
-    String name = domElement.getXmlTag().getName();
-    PsiClass aClass = classMap.get(name);
-    if (aClass != null) {
-      final DefinesXml definesXml = domElement.getAnnotation(DefinesXml.class);
-      if (definesXml != null) {
-        return new AndroidClassTagDescriptor(aClass, new DomElementXmlDescriptor(domElement));
-      }
-      final PsiElement parent = tag.getParent();
-      if (parent instanceof XmlTag) {
-        final XmlElementDescriptor parentDescriptor = ((XmlTag)parent).getDescriptor();
+    PsiClass aClass;
 
-        if (parentDescriptor != null && parentDescriptor instanceof AndroidClassTagDescriptor) {
-          XmlElementDescriptor domDescriptor = parentDescriptor.getElementDescriptor(tag, (XmlTag)parent);
-          if (domDescriptor != null) {
-            return new AndroidClassTagDescriptor(aClass, domDescriptor);
-          }
+    if (baseClassName != null) {
+      Map<String, PsiClass> classMap = facet.getClassMap(baseClassName, SimpleClassMapConstructor.getInstance());
+      String name = domElement.getXmlTag().getName();
+      aClass = classMap.get(name);
+    }
+    else {
+      aClass = null;
+    }
+
+    final DefinesXml definesXml = domElement.getAnnotation(DefinesXml.class);
+    if (definesXml != null) {
+      return new AndroidXmlTagDescriptor(aClass, new DomElementXmlDescriptor(domElement));
+    }
+    final PsiElement parent = tag.getParent();
+    if (parent instanceof XmlTag) {
+      final XmlElementDescriptor parentDescriptor = ((XmlTag)parent).getDescriptor();
+
+      if (parentDescriptor != null && parentDescriptor instanceof AndroidXmlTagDescriptor) {
+        XmlElementDescriptor domDescriptor = parentDescriptor.getElementDescriptor(tag, (XmlTag)parent);
+        if (domDescriptor != null) {
+          return new AndroidXmlTagDescriptor(aClass, domDescriptor);
         }
       }
     }
@@ -75,6 +81,10 @@ public class AndroidDomElementDescriptorProvider implements XmlElementDescriptor
     Project project = tag.getProject();
     if (project.isDefault()) return null;
     final DomElement domElement = DomManager.getDomManager(project).getDomElement(tag);
+    if (!(domElement instanceof AndroidDomElement)) {
+      return null;
+    }
+
     String className = null;
     if (domElement instanceof LayoutViewElement) {
       className = AndroidUtils.VIEW_CLASS_NAME;
@@ -82,6 +92,6 @@ public class AndroidDomElementDescriptorProvider implements XmlElementDescriptor
     else if (domElement instanceof XmlResourceElement) {
       className = AndroidXmlResourcesUtil.PREFERENCE_CLASS_NAME;
     }
-    return className != null ? getDescriptor(domElement, tag, className) : null;
+    return getDescriptor(domElement, tag, className);
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,19 +15,18 @@
  */
 package com.intellij.openapi.wm.impl;
 
+import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.wm.WindowManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
-
 /**
+ * @ author Bas Leijdekkers
  * This class is programmatically instantiated and registered when opening and closing projects
  * and thus not registered in plugin.xml
  */
@@ -36,9 +35,13 @@ public class ProjectWindowAction extends ToggleAction implements DumbAware {
 
   private ProjectWindowAction myPrevious;
   private ProjectWindowAction myNext;
+  @NotNull private final String myProjectName;
+  @NotNull private final String myProjectLocation;
 
-  public ProjectWindowAction(@NotNull String projectName, ProjectWindowAction previous) {
-    super(projectName);
+  public ProjectWindowAction(@NotNull String projectName, @NotNull String projectLocation, ProjectWindowAction previous) {
+    super();
+    myProjectName = projectName;
+    myProjectLocation = projectLocation;
     if (previous != null) {
       myPrevious = previous;
       myNext = previous.myNext;
@@ -48,6 +51,7 @@ public class ProjectWindowAction extends ToggleAction implements DumbAware {
       myPrevious = this;
       myNext = this;
     }
+    getTemplatePresentation().setText(projectName, false);
   }
 
   public void dispose() {
@@ -71,43 +75,47 @@ public class ProjectWindowAction extends ToggleAction implements DumbAware {
     return myNext;
   }
 
+  @NotNull
+  public String getProjectLocation() {
+    return myProjectLocation;
+  }
+
+  @NotNull
+  public String getProjectName() {
+    return myProjectName;
+  }
+
   @Nullable
-  public static Frame findProjectFrame(@NotNull String projectName) {
+  private Project findProject() {
     final Project[] projects = ProjectManager.getInstance().getOpenProjects();
     for (Project project : projects) {
-      if (projectName.equals(project.getName())) {
-        final WindowManager windowManager = WindowManager.getInstance();
-        return windowManager.getFrame(project);
+      if (myProjectLocation.equals(project.getPresentableUrl())) {
+        return project;
       }
     }
     return null;
   }
 
+  @Override
   public boolean isSelected(AnActionEvent e) {
     // show check mark for active and visible project frame
     final Project project = e.getData(PlatformDataKeys.PROJECT);
     if (project == null) {
       return false;
     }
-    final String text = getTemplatePresentation().getText();
-    return text.equals(project.getName());
+    return myProjectLocation.equals(project.getPresentableUrl());
   }
 
+  @Override
   public void setSelected(@Nullable AnActionEvent e, boolean selected) {
     if (!selected) {
       return;
     }
-    final Frame projectFrame = findProjectFrame(getTemplatePresentation().getText());
-    if (projectFrame == null) {
+    final Project project = findProject();
+    if (project == null) {
       return;
     }
-    final int frameState = projectFrame.getExtendedState();
-    if ((frameState & Frame.ICONIFIED) == Frame.ICONIFIED) {
-      // restore the frame if it is minimized
-      projectFrame.setExtendedState(frameState ^ Frame.ICONIFIED);
-    }
-    // bring the frame forward
-    projectFrame.toFront();
+    ProjectUtil.focusProjectWindow(project, true);
   }
 
   @Override

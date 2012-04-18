@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.PsiDocumentManagerImpl;
 import com.intellij.psi.impl.PsiToDocumentSynchronizer;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -59,7 +60,7 @@ public class FormattingDocumentModelImpl implements FormattingDocumentModel {
         LOG.error("Document is uncommitted");
       }
       if (!document.getText().equals(file.getText())) {
-        LOG.error("Document and psi file texts should be equal");
+        LOG.error("Document and psi file texts should be equal: file " + file);
       }
       return new FormattingDocumentModelImpl(document, file);
     }
@@ -83,7 +84,10 @@ public class FormattingDocumentModelImpl implements FormattingDocumentModel {
 
   @Override
   public int getLineNumber(int offset) {
-    LOG.assertTrue (offset <= myDocument.getTextLength());
+    if (offset > myDocument.getTextLength()) {
+      LOG.error(String.format("Invalid offset detected (%d). Document length: %d. Target file: %s",
+                              offset, myDocument.getTextLength(), myFile));
+    }
     return myDocument.getLineNumber(offset);
   }
 
@@ -120,7 +124,21 @@ public class FormattingDocumentModelImpl implements FormattingDocumentModel {
 
   @Override
   public boolean containsWhiteSpaceSymbolsOnly(int startOffset, int endOffset) {
-    return myWhiteSpaceStrategy.check(myDocument.getCharsSequence(), startOffset, endOffset) >= endOffset;
+    WhiteSpaceFormattingStrategy strategy = myWhiteSpaceStrategy;
+    if (strategy.check(myDocument.getCharsSequence(), startOffset, endOffset) >= endOffset) {
+      return true;
+    }
+    PsiElement injectedElement = myFile != null ? InjectedLanguageUtil.findElementAtNoCommit(myFile, startOffset) : null;
+    if (injectedElement != null) {
+      Language injectedLanguage = injectedElement.getLanguage();
+      if (!injectedLanguage.equals(myFile.getLanguage())) {
+        WhiteSpaceFormattingStrategy localStrategy = WhiteSpaceFormattingStrategyFactory.getStrategy(injectedLanguage);
+        if (localStrategy != null) {
+          return localStrategy.check(myDocument.getCharsSequence(), startOffset, endOffset) >= endOffset;
+        }
+      }
+    }
+    return false;
   }
 
   @NotNull

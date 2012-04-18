@@ -28,7 +28,7 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.impl.RangeMarkerImpl");
 
   protected final DocumentEx myDocument;
-  protected RangeMarkerTree<RangeMarkerEx>.RMNode myNode;
+  protected RangeMarkerTree.RMNode<RangeMarkerEx> myNode;
 
   private final long myId;
   private static final StripedIDGenerator counter = new StripedIDGenerator();
@@ -91,7 +91,7 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
 
   public void invalidate(final DocumentEvent e) {
     setValid(false);
-    RangeMarkerTree<RangeMarkerEx>.RMNode node = myNode;
+    RangeMarkerTree.RMNode<RangeMarkerEx> node = myNode;
 
     if (node != null) {
       node.processAliveKeys(new Processor<RangeMarkerEx>() {

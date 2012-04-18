@@ -18,10 +18,8 @@ package com.siyeh.ig.errorhandling;
 import com.intellij.codeInsight.TestFrameworks;
 import com.intellij.codeInspection.ui.ListTable;
 import com.intellij.codeInspection.ui.ListWrappingTableModel;
-import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.ui.CheckBox;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -95,28 +93,16 @@ public class BadExceptionDeclaredInspection extends BaseInspection {
 
   @Override
   public JComponent createOptionsPanel() {
-    final JComponent panel = new JPanel(new BorderLayout());
-
     final ListTable table =
-      new ListTable(new ListWrappingTableModel(exceptions,
-                                               InspectionGadgetsBundle.message(
-                                                 "exception.class.column.name")));
-    final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(table);
-    UiUtils.setScrollPaneSize(scrollPane, 7, 25);
-    final ActionToolbar toolbar =
-      UiUtils.createAddRemoveTreeClassChooserToolbar(table,
-                                                     InspectionGadgetsBundle.message(
-                                                       "choose.exception.class"),
-                                                     "java.lang.Throwable");
-
-    final CheckBox checkBox = new CheckBox(InspectionGadgetsBundle.message(
-      "bad.exception.declared.ignore.exceptions.declared.in.tests.option"),
-                                           this, "ignoreTestCases");
-
-    panel.add(toolbar.getComponent(), BorderLayout.NORTH);
-    panel.add(scrollPane, BorderLayout.CENTER);
+      new ListTable(new ListWrappingTableModel(exceptions, InspectionGadgetsBundle.message("exception.class.column.name")));
+    JPanel tablePanel =
+      UiUtils.createAddRemoveTreeClassChooserPanel(table, InspectionGadgetsBundle.message("choose.exception.class"), "java.lang.Throwable");
+    final CheckBox checkBox =
+      new CheckBox(InspectionGadgetsBundle.message("bad.exception.declared.ignore.exceptions.declared.in.tests.option"), this,
+                   "ignoreTestCases");
+    final JComponent panel = new JPanel(new BorderLayout());
+    panel.add(tablePanel, BorderLayout.CENTER);
     panel.add(checkBox, BorderLayout.SOUTH);
-
     return panel;
   }
 

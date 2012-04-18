@@ -46,6 +46,9 @@
     <extensionPoint name="compiler.makeDependencyProcessor"
                     interface="com.intellij.compiler.DependencyProcessor"/>
 
+    <extensionPoint name="compiler.resourceCompilerExtension"
+                    interface="com.intellij.compiler.impl.resourceCompiler.ResourceCompilerExtension"/>
+
     <extensionPoint name="java.programPatcher"
                     interface="com.intellij.execution.runners.JavaProgramPatcher"/>
 
@@ -184,6 +187,8 @@
                     serviceImplementation="com.intellij.openapi.roots.impl.CompilerProjectExtensionImpl"/>
     <projectService serviceInterface="com.intellij.openapi.roots.LanguageLevelProjectExtension"
                     serviceImplementation="com.intellij.openapi.roots.impl.LanguageLevelProjectExtensionImpl"/>
+    <projectService serviceInterface="com.intellij.compiler.CompilerEncodingService"
+                    serviceImplementation="com.intellij.compiler.impl.CompilerEncodingServiceImpl"/>
 
     <projectService serviceInterface="com.intellij.packaging.impl.compiler.ArtifactsWorkspaceSettings"
                     serviceImplementation="com.intellij.packaging.impl.compiler.ArtifactsWorkspaceSettings"/>

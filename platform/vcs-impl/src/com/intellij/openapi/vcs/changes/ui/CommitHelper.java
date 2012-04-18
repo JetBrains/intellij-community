@@ -42,12 +42,12 @@ import com.intellij.openapi.vcs.update.RefreshVFsSynchronously;
 import com.intellij.util.Consumer;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.WaitForProgressToShow;
-import com.intellij.util.containers.hash.HashSet;
 import com.intellij.util.ui.ConfirmationDialog;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 
 public class CommitHelper {
@@ -326,7 +326,7 @@ public class CommitHelper {
       myAfterVcsRefreshModification = ChangeListsModificationAfterCommit.NOTHING;
       if (myChangeList instanceof LocalChangeList) {
         final LocalChangeList localList = (LocalChangeList) myChangeList;
-        final boolean containsAll = myIncludedChanges.containsAll(myChangeList.getChanges());
+        final boolean containsAll = new HashSet<Change>(myIncludedChanges).containsAll(new HashSet<Change>(myChangeList.getChanges()));
         if (containsAll && !localList.isDefault() && !localList.isReadOnly()) {
           myAfterVcsRefreshModification = ChangeListsModificationAfterCommit.DELETE_LIST;
         }

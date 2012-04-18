@@ -20,7 +20,7 @@ import com.intellij.util.xml.Attribute;
 import com.intellij.util.xml.Convert;
 import com.intellij.util.xml.ExtendClass;
 import org.jetbrains.android.dom.AndroidAttributeValue;
-import org.jetbrains.android.dom.ResourceType;
+import org.jetbrains.android.dom.AndroidResourceType;
 import org.jetbrains.android.dom.converters.AndroidBooleanValueConverter;
 import org.jetbrains.android.dom.converters.PackageClassConverter;
 import org.jetbrains.android.dom.converters.ResourceReferenceConverter;
@@ -34,6 +34,8 @@ import java.util.List;
 public interface Application extends ManifestElement {
 
   List<Activity> getActivities();
+
+  List<ActivityAlias> getActivityAliass();
 
   Activity addActivity();
 
@@ -62,7 +64,7 @@ public interface Application extends ManifestElement {
   AndroidAttributeValue<PsiClass> getName();
 
   @Convert(ResourceReferenceConverter.class)
-  @ResourceType("string")
+  @AndroidResourceType("string")
   AndroidAttributeValue<ResourceValue> getLabel();
 
   List<UsesLibrary> getUsesLibrarys();

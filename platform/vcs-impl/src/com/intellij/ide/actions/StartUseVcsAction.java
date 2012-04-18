@@ -23,9 +23,6 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsBundle;
-import com.intellij.openapi.vcs.VcsDirectoryMapping;
-
-import java.util.Arrays;
 
 public class StartUseVcsAction extends AnAction implements DumbAware {
   public StartUseVcsAction() {
@@ -61,8 +58,7 @@ public class StartUseVcsAction extends AnAction implements DumbAware {
         final ProjectLevelVcsManager manager = data.getManager();
         AbstractVcs vcs = manager.findVcsByName(vcsName);
         assert vcs != null : "No vcs found for name " + vcsName;
-        vcs.generalPreConfigurationStep();
-        manager.setDirectoryMappings(Arrays.asList(new VcsDirectoryMapping("", vcsName)));
+        vcs.enableIntegration();
       }
     }
   }

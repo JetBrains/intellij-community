@@ -69,19 +69,24 @@ class PersistentRangeMarker extends RangeMarkerImpl {
   private boolean translateViaDiff(final DocumentEventImpl event) {
     try {
       myStartLine = event.translateLineViaDiffStrict(myStartLine);
-      if (myStartLine < 0 || myStartLine >= getDocument().getLineCount()) {
+      DocumentEx document = getDocument();
+      if (myStartLine < 0 || myStartLine >= document.getLineCount()) {
         invalidate(event);
       }
       else {
-        setIntervalStart(getDocument().getLineStartOffset(myStartLine) + myStartColumn);
+        int start = document.getLineStartOffset(myStartLine) + myStartColumn;
+        if (start >= document.getTextLength()) return false;
+        setIntervalStart(start);
       }
 
       myEndLine = event.translateLineViaDiffStrict(myEndLine);
-      if (myEndLine < 0 || myEndLine >= getDocument().getLineCount()) {
+      if (myEndLine < 0 || myEndLine >= document.getLineCount()) {
         invalidate(event);
       }
       else {
-        setIntervalEnd(getDocument().getLineStartOffset(myEndLine) + myEndColumn);
+        int end = document.getLineStartOffset(myEndLine) + myEndColumn;
+        if (end > document.getTextLength()) return false;
+        setIntervalEnd(end);
       }
       return true;
     }

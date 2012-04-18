@@ -152,26 +152,8 @@ public class UnnecessarilyQualifiedStaticUsageInspection
       if (!(qualifierElement instanceof PsiJavaCodeReferenceElement)) {
         return false;
       }
-      final PsiJavaCodeReferenceElement qualifier =
-        (PsiJavaCodeReferenceElement)qualifierElement;
-      final PsiReferenceParameterList qualifierParameterList =
-        qualifier.getParameterList();
-      if (qualifierParameterList != null) {
-        final PsiTypeElement[] typeParameterElements =
-          qualifierParameterList.getTypeParameterElements();
-        if (typeParameterElements.length > 0) {
-          return false;
-        }
-      }
-      final PsiReferenceParameterList parameterList =
-        referenceElement.getParameterList();
-      if (parameterList != null) {
-        final PsiTypeElement[] typeParameterElements =
-          parameterList.getTypeParameterElements();
-        if (typeParameterElements.length > 0) {
-          return false;
-        }
-      }
+      final PsiJavaCodeReferenceElement qualifier = (PsiJavaCodeReferenceElement)qualifierElement;
+      if (isGenericReference(referenceElement, qualifier)) return false;
       final PsiElement target = referenceElement.resolve();
       if ((!(target instanceof PsiField) || m_ignoreStaticFieldAccesses) &&
           (!(target instanceof PsiMethod) || m_ignoreStaticMethodCalls)) {
@@ -258,5 +240,24 @@ public class UnnecessarilyQualifiedStaticUsageInspection
       }
       return false;
     }
+  }
+
+  static boolean isGenericReference(PsiJavaCodeReferenceElement referenceElement, PsiJavaCodeReferenceElement qualifierElement) {
+    final PsiReferenceParameterList qualifierParameterList = qualifierElement.getParameterList();
+    if (qualifierParameterList != null) {
+      final PsiTypeElement[] typeParameterElements = qualifierParameterList.getTypeParameterElements();
+      if (typeParameterElements.length > 0) {
+        return true;
+      }
+    }
+
+    final PsiReferenceParameterList parameterList = referenceElement.getParameterList();
+    if (parameterList != null) {
+      final PsiTypeElement[] typeParameterElements = parameterList.getTypeParameterElements();
+      if (typeParameterElements.length > 0) {
+        return true;
+      }
+    }
+    return false;
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,6 +39,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.ToolWindowManagerAdapter;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
+import com.intellij.ui.InplaceButton;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.docking.DockManager;
 import com.intellij.ui.docking.DockableContent;
@@ -71,7 +72,7 @@ import java.util.Map;
 final class EditorTabbedContainer implements Disposable, CloseAction.CloseTarget {
   private final EditorWindow myWindow;
   private final Project myProject;
-  private final JBTabs myTabs;
+  private final JBEditorTabs myTabs;
 
   @NonNls public static final String HELP_ID = "ideaInterface.editor";
 
@@ -82,7 +83,6 @@ final class EditorTabbedContainer implements Disposable, CloseAction.CloseTarget
     myProject = project;
     final ActionManager actionManager = ActionManager.getInstance();
     myTabs = new JBEditorTabs(project, actionManager, IdeFocusManager.getInstance(project), this); 
-    ((JBTabsImpl)myTabs).setEditorTabs(true);
     myTabs.setDataProvider(new MyDataProvider()).setPopupGroup(new Getter<ActionGroup>() {
       public ActionGroup get() {
         return (ActionGroup)CustomActionsSchema.getInstance().getCorrectedAction(IdeActions.GROUP_EDITOR_TAB_POPUP);
@@ -212,7 +212,12 @@ final class EditorTabbedContainer implements Disposable, CloseAction.CloseTarget
 
   public ActionCallback removeTabAt(final int componentIndex, int indexToSelect, boolean transferFocus) {
     TabInfo toSelect = indexToSelect >= 0 && indexToSelect < myTabs.getTabCount() ? myTabs.getTabAt(indexToSelect) : null;
-    final ActionCallback callback = myTabs.removeTab(myTabs.getTabAt(componentIndex), toSelect, transferFocus);
+    final TabInfo info = myTabs.getTabAt(componentIndex);
+    // removing hidden tab happens on end of drag-out, we've already selected the correct tab for this case in dragOutStarted
+    if (info.isHidden()) {
+      toSelect = null;
+    }
+    final ActionCallback callback = myTabs.removeTab(info, toSelect, transferFocus);
     return myProject.isOpen() ? callback : new ActionCallback.Done();
   }
 
@@ -301,7 +306,7 @@ final class EditorTabbedContainer implements Disposable, CloseAction.CloseTarget
     tabActions.add(new CloseTab(comp, tab));
 
     tab.setTabLabelActions(tabActions, ActionPlaces.EDITOR_TAB);
-    myTabs.addTab(tab, indexToInsert);
+    myTabs.addTabSilently(tab, indexToInsert);
   }
 
   public boolean isEmptyVisible() {
@@ -469,20 +474,34 @@ final class EditorTabbedContainer implements Disposable, CloseAction.CloseTarget
   }
 
   private class TabMouseListener extends MouseAdapter {
+    private int myActionClickCount;
+
     @Override
-    public void mousePressed(final MouseEvent e) {
-      if (UIUtil.isCloseClick(e, MouseEvent.MOUSE_PRESSED)) {
+    public void mouseReleased(MouseEvent e) {
+      if (UIUtil.isCloseClick(e, MouseEvent.MOUSE_RELEASED)) {
         final TabInfo info = myTabs.findInfo(e);
         if (info != null) {
           IdeEventQueue.getInstance().blockNextEvents(e);
           FileEditorManagerEx.getInstanceEx(myProject).closeFile((VirtualFile)info.getObject(), myWindow);
-          return;
         }
       }
+    }
 
-      if (UIUtil.isActionClick(e) && (e.getClickCount() % 2) == 0 && !isFloating()) {
-        final ActionManager mgr = ActionManager.getInstance();
-        mgr.tryToExecute(mgr.getAction("HideAllWindows"), e, null, ActionPlaces.UNKNOWN, true);
+    @Override
+    public void mousePressed(final MouseEvent e) {
+      if (UIUtil.isActionClick(e)) {
+        if (e.getClickCount() == 1) {
+          myActionClickCount = 0;
+        }
+        // clicks on the close window button don't count in determining whether we have a double-click on tab (IDEA-70403)
+        final Component deepestComponent = SwingUtilities.getDeepestComponentAt(e.getComponent(), e.getX(), e.getY());
+        if (!(deepestComponent instanceof InplaceButton)) {
+          myActionClickCount++;
+        }
+        if (myActionClickCount == 2 && !isFloating()) {
+          final ActionManager mgr = ActionManager.getInstance();
+          mgr.tryToExecute(mgr.getAction("HideAllWindows"), e, null, ActionPlaces.UNKNOWN, true);
+        }
       }
     }
 
@@ -554,8 +573,12 @@ final class EditorTabbedContainer implements Disposable, CloseAction.CloseTarget
 
     @Override
     public void dragOutStarted(MouseEvent mouseEvent, TabInfo info) {
+      final TabInfo previousSelection = info.getPreviousSelection();
       final Image img = myTabs.getComponentImage(info);
       info.setHidden(true);
+      if (previousSelection != null) {
+        myTabs.select(previousSelection, true);
+      }
 
       myFile = (VirtualFile)info.getObject();
       Presentation presentation = new Presentation(info.getText());
@@ -576,6 +599,7 @@ final class EditorTabbedContainer implements Disposable, CloseAction.CloseTarget
     public void dragOutFinished(MouseEvent event, TabInfo source) {
       boolean copy = event.isMetaDown() || (!SystemInfo.isMac && event.isControlDown());
       if (!copy) {
+        myFile.putUserData(FileEditorManagerImpl.CLOSING_TO_REOPEN, Boolean.TRUE);
         FileEditorManagerEx.getInstanceEx(myProject).closeFile(myFile, myWindow);
       }
       else {
@@ -583,6 +607,9 @@ final class EditorTabbedContainer implements Disposable, CloseAction.CloseTarget
       }
 
       mySession.process(event);
+      if (!copy) {
+        myFile.putUserData(FileEditorManagerImpl.CLOSING_TO_REOPEN, null);
+      }
 
       myFile = null;
       mySession = null;

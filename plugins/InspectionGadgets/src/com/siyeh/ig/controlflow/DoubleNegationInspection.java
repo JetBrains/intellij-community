@@ -56,17 +56,20 @@ public class DoubleNegationInspection extends BaseInspection {
       final PsiElement expression = descriptor.getPsiElement();
       if (expression instanceof PsiPrefixExpression) {
         final PsiPrefixExpression prefixExpression = (PsiPrefixExpression)expression;
-        final PsiExpression operand = prefixExpression.getOperand();
+        final PsiExpression operand = ParenthesesUtils.stripParentheses(prefixExpression.getOperand());
         replaceExpression(prefixExpression, BoolUtils.getNegatedExpressionText(operand));
-      } else if (expression instanceof PsiBinaryExpression) {
-        final PsiBinaryExpression binaryExpression = (PsiBinaryExpression)expression;
+      } else if (expression instanceof PsiPolyadicExpression) {
+        final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)expression;
+        final PsiExpression[] operands = polyadicExpression.getOperands();
         final StringBuilder newExpressionText = new StringBuilder();
-        final PsiExpression lhs = binaryExpression.getLOperand();
-        newExpressionText.append(BoolUtils.getNegatedExpressionText(lhs));
-        newExpressionText.append("==");
-        final PsiExpression rhs = binaryExpression.getROperand();
-        newExpressionText.append(BoolUtils.getNegatedExpressionText(rhs));
-        replaceExpression(binaryExpression, newExpressionText.toString());
+        for (int i = 0, length = operands.length; i < length; i++) {
+          final PsiExpression operand = operands[i];
+          if (i > 0) {
+            newExpressionText.append("==");
+          }
+          newExpressionText.append(BoolUtils.getNegatedExpressionText(operand));
+        }
+        replaceExpression(polyadicExpression, newExpressionText.toString());
       }
     }
   }
@@ -91,14 +94,24 @@ public class DoubleNegationInspection extends BaseInspection {
     }
 
     @Override
-    public void visitBinaryExpression(PsiBinaryExpression expression) {
-      super.visitBinaryExpression(expression);
+    public void visitPolyadicExpression(PsiPolyadicExpression expression) {
+      super.visitPolyadicExpression(expression);
       if (!isNegation(expression)) {
         return;
       }
-      final PsiExpression lhs = expression.getLOperand();
-      final PsiExpression rhs = expression.getROperand();
-      if (rhs == null || !isNegation(lhs) && !isNegation(rhs)) {
+      final PsiExpression[] operands = expression.getOperands();
+      if (operands.length == 2) {
+        int notNegatedCount = 0;
+        for (PsiExpression operand : operands) {
+          if (!isNegation(operand)) {
+            notNegatedCount++;
+          }
+        }
+        if (notNegatedCount > 1) {
+          return;
+        }
+      }
+      if (operands.length > 3) {
         return;
       }
       registerError(expression);
@@ -107,11 +120,11 @@ public class DoubleNegationInspection extends BaseInspection {
     private static boolean isNegation(PsiExpression expression) {
       expression = ParenthesesUtils.stripParentheses(expression);
       if (expression instanceof PsiPrefixExpression) return isNegation((PsiPrefixExpression)expression);
-      if (expression instanceof PsiBinaryExpression) return isNegation((PsiBinaryExpression)expression);
+      if (expression instanceof PsiPolyadicExpression) return isNegation((PsiPolyadicExpression)expression);
       return false;
     }
 
-    private static boolean isNegation(PsiBinaryExpression expression) {
+    private static boolean isNegation(PsiPolyadicExpression expression) {
       return JavaTokenType.NE.equals(expression.getOperationTokenType());
     }
 

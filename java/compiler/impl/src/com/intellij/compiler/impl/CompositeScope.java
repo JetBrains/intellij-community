@@ -22,10 +22,10 @@
 package com.intellij.compiler.impl;
 
 import com.intellij.openapi.compiler.CompileScope;
+import com.intellij.openapi.compiler.ExportableUserDataHolderBase;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
@@ -34,7 +34,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-public class CompositeScope extends UserDataHolderBase implements CompileScope{
+public class CompositeScope extends ExportableUserDataHolderBase implements CompileScope{
   private final List<CompileScope> myScopes = new ArrayList<CompileScope>();
 
   public CompositeScope(CompileScope scope1, CompileScope scope2) {

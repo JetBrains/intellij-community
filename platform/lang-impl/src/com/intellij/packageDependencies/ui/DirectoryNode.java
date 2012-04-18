@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -237,8 +237,11 @@ public class DirectoryNode extends PackageDependenciesNode {
 
   @Override
   public String getComment() {
-    if (myVDirectory != null && myVDirectory.isValid()) {
-      return ProjectViewDirectoryHelper.getInstance(myProject).getLocationString(getPsiDirectory());
+    if (myVDirectory != null && myVDirectory.isValid() && !myProject.isDisposed()) {
+      final PsiDirectory directory = getPsiDirectory();
+      if (directory != null) {
+        return ProjectViewDirectoryHelper.getInstance(myProject).getLocationString(directory);
+      }
     }
     return super.getComment();
   }

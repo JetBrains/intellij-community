@@ -19,6 +19,7 @@ import com.google.common.collect.ImmutableMap;
 import com.intellij.testFramework.IdeaTestCase;
 import com.intellij.util.xmlb.XmlSerializer;
 import org.jdom.Element;
+import org.jetbrains.idea.maven.project.MavenGeneralSettings;
 
 import java.util.Arrays;
 
@@ -26,8 +27,16 @@ public class MavenRunConfigurationTest extends IdeaTestCase {
   public void testSaveLoadRunnerParameters() {
     MavenRunConfiguration.MavenSettings s = new MavenRunConfiguration.MavenSettings(myProject);
     s.myRunnerParameters.setWorkingDirPath("some path");
-    s.myRunnerParameters.setGoals(Arrays.asList("clean validate"));
+    s.myRunnerParameters.setGoals(Arrays.asList("clean", "validate"));
     s.myRunnerParameters.setProfilesMap(ImmutableMap.of("prof1", true, "prof2", true, "prof3", false));
+
+    s.myGeneralSettings = new MavenGeneralSettings();
+    s.myGeneralSettings.setChecksumPolicy(MavenExecutionOptions.ChecksumPolicy.WARN);
+    s.myGeneralSettings.setFailureBehavior(MavenExecutionOptions.FailureMode.AT_END);
+    s.myGeneralSettings.setOutputLevel(MavenExecutionOptions.LoggingLevel.FATAL);
+
+    s.myRunnerSettings = new MavenRunnerSettings();
+    s.myRunnerSettings.setMavenProperties(ImmutableMap.of("a", "1", "b", "2", "c", "3"));
 
     Element xml = XmlSerializer.serialize(s);
     MavenRunConfiguration.MavenSettings loaded
@@ -36,5 +45,8 @@ public class MavenRunConfigurationTest extends IdeaTestCase {
     assertEquals(s.myRunnerParameters.getWorkingDirPath(), loaded.myRunnerParameters.getWorkingDirPath());
     assertEquals(s.myRunnerParameters.getGoals(), loaded.myRunnerParameters.getGoals());
     assertEquals(s.myRunnerParameters.getProfilesMap(), loaded.myRunnerParameters.getProfilesMap());
+
+    assertEquals(s.myGeneralSettings, loaded.myGeneralSettings);
+    assertEquals(s.myRunnerSettings, loaded.myRunnerSettings);
   }
 }

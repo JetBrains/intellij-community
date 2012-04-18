@@ -60,6 +60,7 @@ public class MethodResolverProcessor extends ResolverProcessor {
   public MethodResolverProcessor(String name, GroovyPsiElement place, boolean isConstructor, PsiType thisType, @Nullable PsiType[] argumentTypes, PsiType[] typeArguments) {
     this(name, place, isConstructor, thisType, argumentTypes, typeArguments, false, false);
   }
+
   public MethodResolverProcessor(String name,
                                  GroovyPsiElement place,
                                  boolean isConstructor,
@@ -111,10 +112,6 @@ public class MethodResolverProcessor extends ResolverProcessor {
     }
 
     return true;
-  }
-
-  public PsiType getThisType() {
-    return myThisType;
   }
 
   @NotNull
@@ -215,10 +212,11 @@ public class MethodResolverProcessor extends ResolverProcessor {
     return 0;
   }
   
-  private static boolean isMoreConcreteThan(PsiMethod method, @NotNull final PsiSubstitutor substitutor,
-                           @NotNull PsiMethod another,
-                           @NotNull PsiSubstitutor anotherSubstitutor,
-                           @NotNull GroovyPsiElement context) {
+  private static boolean isMoreConcreteThan(@NotNull PsiMethod method,
+                                            @NotNull final PsiSubstitutor substitutor,
+                                            @NotNull PsiMethod another,
+                                            @NotNull PsiSubstitutor anotherSubstitutor,
+                                            @NotNull GroovyPsiElement context) {
     if (another instanceof GrGdkMethodImpl && another.getName().equals(method.getName())) {
       final PsiParameter[] plusParameters = method.getParameterList().getParameters();
       final PsiParameter[] defParameters = another.getParameterList().getParameters();

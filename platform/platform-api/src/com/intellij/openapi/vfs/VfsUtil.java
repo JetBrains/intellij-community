@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,10 +23,7 @@ import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.Function;
-import com.intellij.util.PathUtil;
-import com.intellij.util.Processor;
+import com.intellij.util.*;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.io.fs.FileSystem;
@@ -406,13 +403,14 @@ public class VfsUtil extends VfsUtilCore {
     return protocol + "://" + path;
   }
 
-  public static String urlToPath(@NonNls String url) {
+  @NotNull
+  public static String urlToPath(@NonNls @Nullable String url) {
     if (url == null) return "";
     return VirtualFileManager.extractPath(url);
   }
 
   @NotNull
-  public static String pathToUrl(@NotNull String path) {
+  public static String pathToUrl(@NonNls @NotNull String path) {
     return VirtualFileManager.constructUrl(LocalFileSystem.PROTOCOL, path);
   }
 
@@ -660,5 +658,16 @@ public class VfsUtil extends VfsUtilCore {
       }
     }
     return null;
+  }
+
+  @NotNull
+  public static String getReadableUrl(@NotNull final VirtualFile file) {
+    return file.isInLocalFileSystem() ? file.getPresentableUrl() : file.getUrl();
+  }
+
+  @Nullable
+  public static VirtualFile getUserHomeDir() {
+    final String path = SystemProperties.getUserHome();
+    return LocalFileSystem.getInstance().findFileByPath(FileUtil.toSystemIndependentName(path));
   }
 }

@@ -20,6 +20,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
+import com.intellij.psi.impl.source.tree.java.PsiAnnotationImpl;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.util.PairFunction;
 import org.jetbrains.annotations.NonNls;
@@ -30,7 +31,14 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationArgumentList;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameter;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrStubElementBase;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrAnnotationStub;
 
@@ -118,4 +126,55 @@ public class GrAnnotationImpl extends GrStubElementBase<GrAnnotationStub> implem
     return (PsiAnnotationOwner)getParent();
   }
 
+  @Nullable
+  public static String[] getApplicableElementTypeFields(PsiElement owner) {
+    if (owner instanceof PsiClass) {
+      PsiClass aClass = (PsiClass)owner;
+      if (aClass.isAnnotationType()) {
+        return new String[]{"ANNOTATION_TYPE", "TYPE"};
+      }
+      else if (aClass instanceof GrTypeParameter) {
+        return new String[]{"TYPE_PARAMETER"};
+      }
+      else {
+        return new String[]{"TYPE"};
+      }
+    }
+    if (owner instanceof GrMethod) {
+      if (((PsiMethod)owner).isConstructor()) {
+        return new String[]{"CONSTRUCTOR"};
+      }
+      else {
+        return new String[]{"METHOD"};
+      }
+    }
+    if (owner instanceof GrField) {
+      return new String[]{"FIELD"};
+    }
+    if (owner instanceof GrParameter) {
+      return new String[]{"PARAMETER"};
+    }
+    if (owner instanceof GrVariable) {
+      return new String[]{"LOCAL_VARIABLE"};
+    }
+    if (owner instanceof GrPackageDefinition) {
+      return new String[]{"PACKAGE"};
+    }
+    if (owner instanceof GrTypeElement) {
+      return new String[]{"TYPE_USE"};
+    }
+
+    return null;
+  }
+
+
+  public static boolean isAnnotationApplicableTo(GrAnnotation annotation, boolean strict, String... elementTypeFields) {
+    if (elementTypeFields == null) return true;
+    GrCodeReferenceElement nameRef = annotation.getClassReference();
+    PsiElement resolved = nameRef.resolve();
+    if (resolved instanceof PsiClass && ((PsiClass)resolved).isAnnotationType()) {
+      return PsiAnnotationImpl.isAnnotationApplicable(strict, (PsiClass)resolved, elementTypeFields, annotation.getManager(),annotation.getResolveScope());
+    }
+    return !strict;
+  }
 }

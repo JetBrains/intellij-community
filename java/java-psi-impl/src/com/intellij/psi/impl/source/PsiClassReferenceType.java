@@ -78,8 +78,9 @@ public class PsiClassReferenceType extends PsiClassType {
     return PsiUtil.getLanguageLevel(myReference);
   }
 
+  @NotNull
   @Override
-  public PsiClassType setLanguageLevel(final LanguageLevel languageLevel) {
+  public PsiClassType setLanguageLevel(@NotNull final LanguageLevel languageLevel) {
     if (languageLevel.equals(myLanguageLevel)) return this;
     return new PsiClassReferenceType(myReference,languageLevel,getAnnotations());
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package com.intellij.ui.table;
 
 import com.intellij.Patches;
-import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.ComponentWithExpandableItems;
@@ -24,6 +23,7 @@ import com.intellij.ui.ExpandableItemsHandler;
 import com.intellij.ui.ExpandableItemsHandlerFactory;
 import com.intellij.ui.TableCell;
 import com.intellij.ui.components.JBViewport;
+import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.util.ui.*;
 import org.jetbrains.annotations.NotNull;
 
@@ -31,6 +31,7 @@ import javax.swing.*;
 import javax.swing.event.*;
 import javax.swing.table.*;
 import java.awt.*;
+import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
@@ -192,7 +193,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
       @Override
       public void paint(Graphics g) {
         if (myEnableAntialiasing) {
-          UISettings.setupAntialiasing(g);
+          GraphicsUtil.setupAntialiasing(g);
         }
         super.paint(g);
       }
@@ -251,7 +252,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
   @Override
   protected void paintComponent(Graphics g) {
     if (myEnableAntialiasing) {
-      UISettings.setupAntialiasing(g);
+      GraphicsUtil.setupAntialiasing(g);
     }
     super.paintComponent(g);
     myEmptyText.paint(this, g);
@@ -260,7 +261,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
   @Override
   protected void paintChildren(Graphics g) {
     if (myEnableAntialiasing) {
-      UISettings.setupAntialiasing(g);
+      GraphicsUtil.setupAntialiasing(g);
     }
     super.paintChildren(g);
   }
@@ -396,6 +397,13 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
 
     if (!isCellEditable(row, column)) {
       return false;
+    }
+
+    if (e instanceof KeyEvent && UIUtil.isReallyTypedEvent((KeyEvent)e)) {
+      SpeedSearchSupply supply = SpeedSearchSupply.getSupply(this);
+      if (supply != null && supply.isPopupActive()) {
+        return false;
+      }
     }
 
     if (myEditorRemover == null) {

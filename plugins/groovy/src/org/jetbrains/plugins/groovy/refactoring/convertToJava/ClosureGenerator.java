@@ -87,7 +87,7 @@ public class ClosureGenerator {
 
     Collection<GrStatement> myExitPoints = ControlFlowUtils.collectReturns(block);
     boolean shouldInsertReturnNull =
-      !(returnType instanceof PsiPrimitiveType) && MissingReturnInspection.methodMissesSomeReturns(block, false);
+      !(returnType instanceof PsiPrimitiveType) && MissingReturnInspection.methodMissesSomeReturns(block, MissingReturnInspection.ReturnStatus.shouldNotReturnValue);
 
     new CodeBlockGenerator(builder, context.extend(), myExitPoints).generateCodeBlock(block, shouldInsertReturnNull);
     builder.append('\n');

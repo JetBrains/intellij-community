@@ -82,11 +82,11 @@ public class ConsoleViewContentType {
     return myTextAttributes;
   }
 
-  public synchronized static void registerNewConsoleViewType(final Key processOutputType, final ConsoleViewContentType attributes) {
+  public static synchronized void registerNewConsoleViewType(final Key processOutputType, final ConsoleViewContentType attributes) {
     ourRegisteredTypes.put(processOutputType, attributes);
   }
 
-  public synchronized static ConsoleViewContentType getConsoleViewType(final Key processOutputType) {
+  public static synchronized ConsoleViewContentType getConsoleViewType(final Key processOutputType) {
     if (ourRegisteredTypes.containsKey(processOutputType)) {
       return ourRegisteredTypes.get(processOutputType);
     }

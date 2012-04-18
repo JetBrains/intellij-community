@@ -50,7 +50,7 @@ public final class QuickFixAction {
   }
 
   public static void registerQuickFixAction(HighlightInfo info, IntentionAction action) {
-    registerQuickFixAction(info, null, action, null);
+    registerQuickFixAction(info, null, action);
   }
 
   public static void registerQuickFixActions(final HighlightInfo info, final Collection<? extends IntentionAction> actions) {
@@ -59,6 +59,7 @@ public final class QuickFixAction {
     }
   }
 
+  /** This is used by TeamCity plugin */
   @Deprecated
   public static void registerQuickFixAction(HighlightInfo info, IntentionAction action, List<IntentionAction> options, String displayName) {
     doRegister(info, action, options, displayName, null, null);
@@ -86,6 +87,10 @@ public final class QuickFixAction {
 
   public static void registerQuickFixAction(HighlightInfo info, TextRange fixRange, IntentionAction action, final HighlightDisplayKey key) {
     doRegister(info, action, null, HighlightDisplayKey.getDisplayNameByKey(key), fixRange, key);
+  }
+
+  public static void registerQuickFixAction(HighlightInfo info, TextRange fixRange, IntentionAction action) {
+    doRegister(info, action, null, null, fixRange, null);
   }
 
   public static void unregisterQuickFixAction(HighlightInfo info, Condition<IntentionAction> condition) {
@@ -117,7 +122,7 @@ public final class QuickFixAction {
   }
 
   private static void addAvailableActionsForGroups(@NotNull HighlightInfo info,
-                                                   Editor editor,
+                                                   @NotNull Editor editor,
                                                    @NotNull PsiFile file,
                                                    @NotNull List<HighlightInfo.IntentionActionDescriptor> outList,
                                                    int group,

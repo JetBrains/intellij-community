@@ -17,6 +17,7 @@ package com.intellij.codeInspection;
 
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * See {@link InspectionManager#createProblemDescriptor(com.intellij.psi.PsiElement, String, LocalQuickFix, ProblemHighlightType,boolean) } for method descriptions.
@@ -38,6 +39,21 @@ public interface ProblemDescriptor extends CommonProblemDescriptor{
    * @since 9.0
    */
   void setTextAttributes(TextAttributesKey key);
+
+  /**
+   * Gets the unique string, which is the same for all of the problems of this group
+   *
+   * @return the problem group
+   */
+  @Nullable
+  String getProblemGroup();
+
+  /**
+   * Sets the unique string, which is the same for all of the problems of this group
+   *
+   * @param problemGroup the problemGroup
+   */
+  void setProblemGroup(@Nullable String problemGroup);
 
   boolean showTooltip();
 }

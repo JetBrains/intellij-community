@@ -86,7 +86,7 @@ public class ElementPresentationUtil implements PlatformIcons {
   private static final int FLAGS_STATIC = 0x200;
   private static final int FLAGS_FINAL = 0x400;
   private static final int FLAGS_JUNIT_TEST = 0x2000;
-  private static final int FLAGS_RUNNABLE = 0x4000;
+  public static final int FLAGS_RUNNABLE = 0x4000;
 
   private static final Key<CachedValue<Integer>> CLASS_KIND_KEY = new Key<CachedValue<Integer>>("CLASS_KIND_KEY");
 

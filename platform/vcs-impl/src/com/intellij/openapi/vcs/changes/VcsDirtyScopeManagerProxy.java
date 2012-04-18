@@ -54,11 +54,11 @@ class VcsDirtyScopeManagerProxy extends VcsDirtyScopeManager {
     myFiles.clear();
   }
 
-  public void fileDirty(final VirtualFile file) {
+  public void fileDirty(@NotNull final VirtualFile file) {
     myVFiles.add(file);
   }
 
-  public void fileDirty(final FilePath file) {
+  public void fileDirty(@NotNull final FilePath file) {
     myFiles.add(file);
   }
 

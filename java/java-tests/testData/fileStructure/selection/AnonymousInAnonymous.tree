@@ -4,7 +4,7 @@
   -foo():void
    -$1
     -toString():String
-     -Anonymous
+     -$1
       [method():void]
   num1:int
   num2:int

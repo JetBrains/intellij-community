@@ -72,7 +72,7 @@ public class GitRepositoryReaderTest extends LightIdeaTestCase {
   
   public void testBranches(){
     GitBranchesCollection branchesCollection = myRepositoryReader.readBranches();
-    GitBranch currentBranch = branchesCollection.getCurrentBranch();
+    GitBranch currentBranch = myRepositoryReader.readCurrentBranch();
     Collection<GitBranch> localBranches = branchesCollection.getLocalBranches();
     Collection<GitBranch> remoteBranches = branchesCollection.getRemoteBranches();
     
@@ -151,8 +151,8 @@ public class GitRepositoryReaderTest extends LightIdeaTestCase {
     private final String myHash;
 
     private GitTestBranch(String name, String hash) {
-      myName = name;
-      myHash = hash;
+      myName = name.trim();
+      myHash = hash.trim();
     }
 
     String getName() {

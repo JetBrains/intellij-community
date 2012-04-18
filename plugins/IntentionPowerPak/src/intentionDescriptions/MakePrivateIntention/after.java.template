@@ -1,0 +1,4 @@
+public class X {
+
+  private void f() {}
+}

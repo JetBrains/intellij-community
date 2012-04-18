@@ -15,6 +15,7 @@
  */
 package org.jetbrains.android;
 
+import com.android.resources.ResourceType;
 import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeInsight.daemon.GutterIconNavigationHandler;
 import com.intellij.codeInsight.daemon.LineMarkerInfo;
@@ -23,6 +24,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -40,6 +42,7 @@ import org.jetbrains.android.dom.resources.ResourceElement;
 import org.jetbrains.android.dom.resources.Resources;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.resourceManagers.LocalResourceManager;
+import org.jetbrains.android.util.AndroidCommonUtils;
 import org.jetbrains.android.util.AndroidResourceUtil;
 import org.jetbrains.android.util.AndroidUtils;
 import org.jetbrains.annotations.NotNull;
@@ -58,11 +61,11 @@ import java.util.Map;
 public class AndroidResourcesLineMarkerProvider implements LineMarkerProvider {
   private static final Icon ICON = IconLoader.getIcon("/icons/navigate.png");
 
-  public LineMarkerInfo getLineMarkerInfo(PsiElement psiElement) {
+  public LineMarkerInfo getLineMarkerInfo(@NotNull PsiElement psiElement) {
     return null;
   }
 
-  public void collectSlowLineMarkers(List<PsiElement> psiElements, Collection<LineMarkerInfo> lineMarkerInfos) {
+  public void collectSlowLineMarkers(@NotNull List<PsiElement> psiElements, @NotNull Collection<LineMarkerInfo> lineMarkerInfos) {
     //noinspection ForLoopReplaceableByForEach
     for (int i = 0; i < psiElements.size(); i++) {
       PsiElement element = psiElements.get(i);
@@ -172,11 +175,12 @@ public class AndroidResourcesLineMarkerProvider implements LineMarkerProvider {
   private static Map<MyResourceEntry, List<PsiElement>> buildLocalResourceMap(@NotNull Project project,
                                                                               @NotNull final LocalResourceManager resManager) {
     final Map<MyResourceEntry, List<PsiElement>> result = new HashMap<MyResourceEntry, List<PsiElement>>();
-    Collection<Resources> resourceFiles = resManager.getResourceElements();
-    for (Resources res : resourceFiles) {
-      for (String valueResourceType : AndroidResourceUtil.VALUE_RESOURCE_TYPES) {
-        for (ResourceElement valueResource : AndroidResourceUtil.getValueResourcesFromElement(valueResourceType, res)) {
-          addResource(valueResourceType, valueResource, result);
+    List<Pair<Resources,VirtualFile>> resourceFiles = resManager.getResourceElements();
+    for (Pair<Resources, VirtualFile> pair : resourceFiles) {
+      final Resources res = pair.getFirst();
+      for (ResourceType valueResourceType : AndroidResourceUtil.VALUE_RESOURCE_TYPES) {
+        for (ResourceElement valueResource : AndroidResourceUtil.getValueResourcesFromElement(valueResourceType.getName(), res)) {
+          addResource(valueResourceType.getName(), valueResource, result);
         }
       }
       for (Attr attr : res.getAttrs()) {
@@ -201,13 +205,13 @@ public class AndroidResourcesLineMarkerProvider implements LineMarkerProvider {
       public void run() {
         List<VirtualFile> resourceSubdirs = resManager.getResourceSubdirs(null);
         for (VirtualFile dir : resourceSubdirs) {
-          String resType = AndroidResourceUtil.getResourceTypeByDirName(dir.getName());
+          String resType = AndroidCommonUtils.getResourceTypeByDirName(dir.getName());
           if (resType != null) {
             for (VirtualFile resourceFile : dir.getChildren()) {
               if (!resourceFile.isDirectory()) {
                 PsiFile resourcePsiFile = psiManager.findFile(resourceFile);
                 if (resourcePsiFile != null) {
-                  String resName = AndroidResourceUtil.getResourceName(resType, resourceFile.getName());
+                  String resName = AndroidCommonUtils.getResourceName(resType, resourceFile.getName());
                   MyResourceEntry key = new MyResourceEntry(resName, resType);
                   List<PsiElement> list = result.get(key);
                   if (list == null) {

@@ -1,2 +1,0 @@
-Features:
-- Groovy support

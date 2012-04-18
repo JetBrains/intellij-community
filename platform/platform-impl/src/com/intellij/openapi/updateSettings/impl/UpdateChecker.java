@@ -58,6 +58,7 @@ import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLConnection;
+import java.net.URLEncoder;
 import java.util.*;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -83,7 +84,8 @@ import java.util.concurrent.TimeoutException;
 public final class UpdateChecker {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.updateSettings.impl.UpdateChecker");
 
-  public static String ADDITIONAL_REQUEST_OPTIONS = "";
+  private static Map<String, String> ADDITIONAL_REQUEST_OPTIONS = new HashMap<String, String>();
+
   @NonNls private static final String INSTALLATION_UID = "installation.uid";
 
   private UpdateChecker() {
@@ -148,7 +150,6 @@ public final class UpdateChecker {
   public static ActionCallback updateAndShowResult() {
     final ActionCallback result = new ActionCallback();
     final Application app = ApplicationManager.getApplication();
-    final PropertiesComponent propertiesComponent = PropertiesComponent.getInstance();
     final UpdateSettings updateSettings = UpdateSettings.getInstance();
     if (!updateSettings.CHECK_NEEDED) {
       result.setDone();
@@ -157,9 +158,9 @@ public final class UpdateChecker {
     app.executeOnPooledThread(new Runnable() {
       @Override
       public void run() {
-        final CheckForUpdateResult checkForUpdateResult = checkForUpdates(updateSettings, propertiesComponent, false);
+        final CheckForUpdateResult checkForUpdateResult = checkForUpdates(updateSettings, false);
 
-        final List<PluginDownloader> updatedPlugins = updatePlugins(false, null);
+        final List<PluginDownloader> updatedPlugins = updatePlugins(false, null, null);
         app.invokeLater(new Runnable() {
           @Override
           public void run() {
@@ -173,12 +174,16 @@ public final class UpdateChecker {
   }
 
   public static List<PluginDownloader> updatePlugins(final boolean showErrorDialog,
-                                                     final @Nullable PluginHostsConfigurable hostsConfigurable) {
+                                                     final @Nullable PluginHostsConfigurable hostsConfigurable, 
+                                                     @Nullable ProgressIndicator indicator) {
     final List<PluginDownloader> downloaded = new ArrayList<PluginDownloader>();
     final Set<String> failed = new HashSet<String>();
     for (String host : getPluginHosts(hostsConfigurable)) {
       try {
-        checkPluginsHost(host, downloaded);
+        checkPluginsHost(host, downloaded, true, indicator);
+      }
+      catch (ProcessCanceledException e) {
+        return null;
       }
       catch (Exception e) {
         LOG.info(e);
@@ -197,7 +202,7 @@ public final class UpdateChecker {
     updateSettings.myOutdatedPlugins.clear();
     if (!toUpdate.isEmpty()) {
       try {
-        final ArrayList<IdeaPluginDescriptor> process = RepositoryHelper.process(null);
+        final ArrayList<IdeaPluginDescriptor> process = RepositoryHelper.process(indicator);
         for (IdeaPluginDescriptor loadedPlugin : process) {
           final String idString = loadedPlugin.getPluginId().getIdString();
           final IdeaPluginDescriptor installedPlugin = toUpdate.get(idString);
@@ -213,6 +218,9 @@ public final class UpdateChecker {
             }
           }
         }
+      }
+      catch (ProcessCanceledException ignore) {
+        return null;
       }
       catch (Exception e) {
         showErrorMessage(showErrorDialog, e.getMessage());
@@ -255,12 +263,17 @@ public final class UpdateChecker {
   }
 
   public static boolean checkPluginsHost(final String host, final List<PluginDownloader> downloaded) throws Exception {
-    return checkPluginsHost(host, downloaded, true);
+    try {
+      return checkPluginsHost(host, downloaded, true, null);
+    }
+    catch (ProcessCanceledException e) {
+      return false;
+    }
   }
 
   public static boolean checkPluginsHost(final String host,
                                          final List<PluginDownloader> downloaded,
-                                         final boolean collectToUpdate) throws Exception {
+                                         final boolean collectToUpdate, @Nullable ProgressIndicator indicator) throws Exception {
     InputStream inputStream = loadVersionInfo(host);
     if (inputStream == null) return false;
     final Document document;
@@ -273,7 +286,7 @@ public final class UpdateChecker {
 
     inputStream = loadVersionInfo(host);
     if (inputStream == null) return false;
-    final ArrayList<IdeaPluginDescriptor> descriptors = RepositoryHelper.loadPluginsFromDescription(inputStream);
+    final ArrayList<IdeaPluginDescriptor> descriptors = RepositoryHelper.loadPluginsFromDescription(inputStream, indicator);
     for (IdeaPluginDescriptor descriptor : descriptors) {
       ((PluginNode)descriptor).setRepositoryName(host);
       downloaded.add(PluginDownloader.createDownloader(descriptor));
@@ -350,11 +363,11 @@ public final class UpdateChecker {
   }
 
   @NotNull
-  public static CheckForUpdateResult doCheckForUpdates(final UpdateSettings settings, final PropertiesComponent instance) {
+  public static CheckForUpdateResult doCheckForUpdates(final UpdateSettings settings) {
     ApplicationInfo appInfo = ApplicationInfo.getInstance();
     BuildNumber currentBuild = appInfo.getBuild();
     int majorVersion = Integer.parseInt(appInfo.getMajorVersion());
-    final UpdatesXmlLoader loader = new UpdatesXmlLoader(getUpdateUrl(), getInstallationUID(instance), null);
+    final UpdatesXmlLoader loader = new UpdatesXmlLoader(getUpdateUrl());
     final UpdatesInfo info;
     try {
       info = loader.loadUpdatesInfo();
@@ -370,9 +383,16 @@ public final class UpdateChecker {
     return strategy.checkForUpdates();
   }
 
+  public static void addUpdateRequestParameter(String name) {
+    addUpdateRequestParameter(name, "");
+  }
+
+  public static void addUpdateRequestParameter(@NotNull String name, @NotNull String value) {
+    ADDITIONAL_REQUEST_OPTIONS.put(name, value);
+  }
+
   @NotNull
   public static CheckForUpdateResult checkForUpdates(final UpdateSettings updateSettings,
-                                                     final PropertiesComponent propertiesComponent,
                                                      final boolean disregardIgnoredBuilds) {
     if (LOG.isDebugEnabled()) {
       LOG.debug("enter: auto checkForUpdates()");
@@ -405,10 +425,10 @@ public final class UpdateChecker {
       };
     }
 
-    final CheckForUpdateResult result = doCheckForUpdates(updateSettings, propertiesComponent);
+    final CheckForUpdateResult result = doCheckForUpdates(updateSettings);
 
     if (result.getState() == UpdateStrategy.State.LOADED) {
-      updateSettings.LAST_TIME_CHECKED = System.currentTimeMillis();
+      updateSettings.saveLastCheckedInfo();
       settings.setKnownChannelIds(result.getAllChannelsIds());
     }
 
@@ -436,7 +456,38 @@ public final class UpdateChecker {
       dialog.setShowConfirmation(showConfirmation);
       dialog.show();
     }
-}
+  }
+
+  public static String prepareUpdateCheckArgs() {
+    addUpdateRequestParameter("build", ApplicationInfo.getInstance().getBuild().asString());
+    addUpdateRequestParameter("uid", getInstallationUID(PropertiesComponent.getInstance()));
+    addUpdateRequestParameter("os", SystemInfo.OS_NAME + ' ' + SystemInfo.OS_VERSION);
+    if (ApplicationInfoEx.getInstanceEx().isEAP()) {
+      addUpdateRequestParameter("eap");
+    }
+
+    StringBuilder args = new StringBuilder();
+
+    try {
+      for (String name : ADDITIONAL_REQUEST_OPTIONS.keySet()) {
+        if (args.length() > 0) {
+          args.append('&');
+        }
+
+        args.append(URLEncoder.encode(name, "UTF-8"));
+
+        String value = ADDITIONAL_REQUEST_OPTIONS.get(name);
+        if (!StringUtil.isEmpty(value)) {
+          args.append('=').append(URLEncoder.encode(value, "UTF-8"));
+        }
+      }
+
+      return args.toString();
+    }
+    catch (UnsupportedEncodingException e) {
+      return ""; // Can't be anyway
+    }
+  }
 
   private static InputStream loadVersionInfo(final String url) throws Exception {
     if (LOG.isDebugEnabled()) {
@@ -444,16 +495,11 @@ public final class UpdateChecker {
     }
     final InputStream[] inputStreams = new InputStream[]{null};
     final Exception[] exception = new Exception[]{null};
-    final PropertiesComponent propertiesComponent = PropertiesComponent.getInstance();
     Future<?> downloadThreadFuture = ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
       public void run() {
         try {
           HttpConfigurable.getInstance().prepareURL(url);
-
-          String uid = getInstallationUID(propertiesComponent);
-
-          final URL requestUrl =
-            new URL(url + "?build=" + ApplicationInfo.getInstance().getBuild().asString() + "&uid=" + uid + ADDITIONAL_REQUEST_OPTIONS);
+          final URL requestUrl = new URL(url + "?build=" + ApplicationInfo.getInstance().getBuild().asString());
           inputStreams[0] = requestUrl.openStream();
         }
         catch (IOException e) {
@@ -501,6 +547,8 @@ public final class UpdateChecker {
     for (PluginDownloader downloader : downloaders) {
       if (getDisabledToUpdatePlugins().contains(downloader.getPluginId())) continue;
       try {
+        final IdeaPluginDescriptor descriptor = downloader.getDescriptor();
+        InstalledPluginsTableModel.updateExistingPlugin(descriptor, PluginManager.getPlugin(descriptor.getPluginId()));
         downloader.install();
         installed = true;
       }
@@ -565,13 +613,13 @@ public final class UpdateChecker {
     OutputStream out = null;
 
     String platform = PlatformUtils.getPlatformPrefix();
-    String patchFileName = ("jetbrains.patch.jar." + platform).toLowerCase();
-    File patchFile = new File(FileUtil.getTempDirectory(), patchFileName);
+
+    File tempFile = FileUtil.createTempFile(platform, "patch", true);
 
     try {
       connection = new URL(new URL(getPatchesUrl()), fileName).openConnection();
       in = UrlConnectionUtil.getConnectionInputStreamWithException(connection, i);
-      out = new BufferedOutputStream(new FileOutputStream(patchFile));
+      out = new BufferedOutputStream(new FileOutputStream(tempFile));
 
       i.setIndeterminate(false);
 
@@ -588,23 +636,16 @@ public final class UpdateChecker {
         i.setText2((read / 1024) + "/" + (total / 1024) + " KB");
       }
     }
-    catch (IOException e) {
-      patchFile.delete();
-      throw e;
-    }
-    catch (ProcessCanceledException e) {
-      patchFile.delete();
-      throw e;
-    }
-    catch (Throwable e) {
-      patchFile.delete();
-      throw new RuntimeException(e);
-    }
     finally {
       if (out != null) out.close();
       if (in != null) in.close();
       if (connection instanceof HttpURLConnection) ((HttpURLConnection)connection).disconnect();
     }
+
+    String patchFileName = ("jetbrains.patch.jar." + platform).toLowerCase();
+    File patchFile = new File(FileUtil.getTempDirectory(), patchFileName);
+    FileUtil.copy(tempFile, patchFile);
+    FileUtil.delete(tempFile);
   }
 
   public static Set<String> getDisabledToUpdatePlugins() {

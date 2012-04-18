@@ -126,7 +126,7 @@ private layoutWin(Map args, String home, Paths paths) {
   ant.copy(file: "$home/platform/icons/src/idea_CE.ico", tofile: "$target/bin/idea.ico")
 
   winScripts(target, home, "idea.bat", args)
-  winVMOptions(target, null, "idea.exe")
+  winVMOptions(target, null, "idea.exe", "idea64.exe")
 }
 
 private layoutMac(Map _args, String home, Paths paths) {

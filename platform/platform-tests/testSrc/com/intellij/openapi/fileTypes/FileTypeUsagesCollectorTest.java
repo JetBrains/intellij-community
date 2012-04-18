@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.fileTypes;
 
+import com.intellij.internal.statistic.CollectUsagesException;
 import com.intellij.internal.statistic.beans.UsageDescriptor;
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
 import com.intellij.util.NotNullFunction;
@@ -30,7 +31,7 @@ import java.util.Set;
  */
 public class FileTypeUsagesCollectorTest extends LightPlatformCodeInsightFixtureTestCase {
 
-  private void doTest(@NotNull Collection<FileType> fileTypes) {
+  private void doTest(@NotNull Collection<FileType> fileTypes) throws CollectUsagesException {
     final Set<UsageDescriptor> usages = new FileTypeUsagesCollector().getProjectUsages(getProject());
     for (UsageDescriptor usage : usages) {
       assertEquals(1, usage.getValue());
@@ -53,16 +54,16 @@ public class FileTypeUsagesCollectorTest extends LightPlatformCodeInsightFixture
     );
   }
 
-  public void testEmptyProject() {
+  public void testEmptyProject() throws CollectUsagesException {
     doTest(Arrays.asList(UnknownFileType.INSTANCE));
   }
 
-  public void testSingleFileProject() {
+  public void testSingleFileProject() throws CollectUsagesException {
     myFixture.configureByText("a.txt", "");
     doTest(Arrays.asList(UnknownFileType.INSTANCE, PlainTextFileType.INSTANCE));
   }
 
-  public void testSeveralSameFilesProject() {
+  public void testSeveralSameFilesProject() throws CollectUsagesException {
     myFixture.configureByText("a.txt", "");
     myFixture.configureByText("b.txt", "");
     doTest(Arrays.asList(UnknownFileType.INSTANCE, PlainTextFileType.INSTANCE));

@@ -23,9 +23,9 @@ import com.intellij.openapi.paths.PathReference;
 import com.intellij.util.xml.Convert;
 import com.intellij.util.xml.GenericDomValue;
 import com.intellij.util.xml.Required;
-import com.intellij.util.xml.converters.PathReferenceConverter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.dom.MavenDomElement;
+import org.jetbrains.idea.maven.dom.references.MavenDirectoryPathReferenceConverter;
 
 /**
  * http://maven.apache.org/POM/4.0.0:BuildBase interface.
@@ -84,7 +84,7 @@ public interface MavenDomBuildBase extends MavenDomElement {
    */
   @NotNull
   @Required(value = false, nonEmpty = true)
-  @Convert(value = PathReferenceConverter.class, soft = true)
+  @Convert(value = MavenDirectoryPathReferenceConverter.class, soft = true)
   GenericDomValue<PathReference> getDirectory();
 
   /**

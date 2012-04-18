@@ -45,16 +45,13 @@ public class GitRepositoryFiles {
   private final String myCommitMessagePath;
   private final String myExcludePath;
 
-  public static GitRepositoryFiles getInstance(@NotNull VirtualFile root) {
+  public static GitRepositoryFiles getInstance(@NotNull VirtualFile gitDir) {
     // maybe will be cached later to store a single GitRepositoryFiles for a root. 
-    return new GitRepositoryFiles(root);
+    return new GitRepositoryFiles(gitDir);
   }
 
-  private GitRepositoryFiles(@NotNull VirtualFile root) {
+  private GitRepositoryFiles(@NotNull VirtualFile gitDir) {
     // add .git/ and .git/refs/heads to the VFS
-    VirtualFile gitDir = root.findChild(".git");
-    assert gitDir != null;
-
     // save paths of the files, that we will watch
     String gitDirPath = GitFileUtils.stripFileProtocolPrefix(gitDir.getPath());
     myConfigFilePath = gitDirPath + "/config";

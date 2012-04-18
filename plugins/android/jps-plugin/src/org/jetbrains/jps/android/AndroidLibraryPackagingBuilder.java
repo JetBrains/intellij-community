@@ -22,10 +22,6 @@ import java.util.Set;
 /**
  * @author Eugene.Kudelevsky
  */
-
-// todo: save validity states
-// todo: support light builds
-
 public class AndroidLibraryPackagingBuilder extends ModuleLevelBuilder {
   @NonNls private static final String BUILDER_NAME = "android-library-packager";
 
@@ -34,11 +30,10 @@ public class AndroidLibraryPackagingBuilder extends ModuleLevelBuilder {
   }
 
   @Override
-  public ModuleLevelBuilder.ExitCode build(CompileContext context, ModuleChunk chunk) throws ProjectBuildException {
-    if (context.isCompilingTests() || !AndroidJpsUtil.containsAndroidFacet(chunk)) {
-      return ModuleLevelBuilder.ExitCode.OK;
+  public ExitCode build(CompileContext context, ModuleChunk chunk) throws ProjectBuildException {
+    if (context.isCompilingTests() || !AndroidJpsUtil.containsAndroidFacet(chunk) || AndroidJpsUtil.isLightBuild(context)) {
+      return ExitCode.NOTHING_DONE;
     }
-    context.processMessage(new ProgressMessage(AndroidJpsBundle.message("android.jps.progress.library.packaging")));
 
     try {
       return doBuild(context, chunk);
@@ -48,46 +43,63 @@ public class AndroidLibraryPackagingBuilder extends ModuleLevelBuilder {
     }
   }
 
-  private static ModuleLevelBuilder.ExitCode doBuild(CompileContext context, ModuleChunk chunk) {
+  private static ModuleLevelBuilder.ExitCode doBuild(CompileContext context, ModuleChunk chunk) throws IOException {
     boolean success = true;
+    final AndroidFileSetStorage storage = new AndroidFileSetStorage(context.getDataManager().getDataStorageRoot(), "libs_packaging");
 
-    for (Module module : chunk.getModules()) {
-      final AndroidFacet facet = AndroidJpsUtil.getFacet(module);
-      if (facet == null || !facet.isLibrary()) {
-        continue;
-      }
-
-      final ProjectPaths projectPaths = context.getProjectPaths();
-      final File outputDirectoryForPackagedFiles = AndroidJpsUtil.getOutputDirectoryForPackagedFiles(projectPaths, module);
-
-      if (outputDirectoryForPackagedFiles == null) {
-        context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR, AndroidJpsBundle
-          .message("android.jps.errors.output.dir.not.specified", module.getName())));
-        success = false;
-        continue;
-      }
-
-      final File classesDir = projectPaths.getModuleOutputDir(module, false);
-      if (classesDir == null || !classesDir.isDirectory()) {
-        continue;
-      }
-
-      final Set<String> subdirs = new HashSet<String>();
-      AndroidJpsUtil.addSubdirectories(classesDir, subdirs);
-
-      if (subdirs.size() > 0) {
-        final File outputJarFile = new File(outputDirectoryForPackagedFiles, AndroidCommonUtils.CLASSES_JAR_FILE_NAME);
-
-        try {
-          AndroidCommonUtils.packClassFilesIntoJar(ArrayUtil.EMPTY_STRING_ARRAY, ArrayUtil.toStringArray(subdirs), outputJarFile);
+    try {
+      boolean doneSomething = false;
+      for (Module module : chunk.getModules()) {
+        final AndroidFacet facet = AndroidJpsUtil.getFacet(module);
+        if (facet == null || !facet.isLibrary()) {
+          continue;
         }
-        catch (IOException e) {
-          AndroidJpsUtil.reportExceptionError(context, null, e, BUILDER_NAME);
+
+        final ProjectPaths projectPaths = context.getProjectPaths();
+        final File outputDirectoryForPackagedFiles = AndroidJpsUtil.getOutputDirectoryForPackagedFiles(projectPaths, module);
+
+        if (outputDirectoryForPackagedFiles == null) {
+          context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR, AndroidJpsBundle
+            .message("android.jps.errors.output.dir.not.specified", module.getName())));
           success = false;
+          continue;
+        }
+
+        final File classesDir = projectPaths.getModuleOutputDir(module, false);
+        if (classesDir == null || !classesDir.isDirectory()) {
+          continue;
+        }
+
+        final Set<String> subdirs = new HashSet<String>();
+        AndroidJpsUtil.addSubdirectories(classesDir, subdirs);
+
+        final AndroidFileSetState newState = new AndroidFileSetState(subdirs, AndroidJpsUtil.CLASSES_AND_JARS_FILTER, true);
+        final AndroidFileSetState oldState = storage.getState(module.getName());
+
+        if (oldState != null && oldState.equalsTo(newState)) {
+          continue;
+        }
+
+        if (subdirs.size() > 0) {
+          context.processMessage(new ProgressMessage(AndroidJpsBundle.message("android.jps.progress.library.packaging", module.getName())));
+          final File outputJarFile = new File(outputDirectoryForPackagedFiles, AndroidCommonUtils.CLASSES_JAR_FILE_NAME);
+          doneSomething = true;
+          try {
+            AndroidCommonUtils.packClassFilesIntoJar(ArrayUtil.EMPTY_STRING_ARRAY, ArrayUtil.toStringArray(subdirs), outputJarFile);
+            storage.update(module.getName(), newState);
+          }
+          catch (IOException e) {
+            AndroidJpsUtil.reportExceptionError(context, null, e, BUILDER_NAME);
+            storage.update(module.getName(), null);
+            success = false;
+          }
         }
       }
+      return success ? (doneSomething? ExitCode.OK : ExitCode.NOTHING_DONE) : ExitCode.ABORT;
     }
-    return success ? ModuleLevelBuilder.ExitCode.OK : ModuleLevelBuilder.ExitCode.ABORT;
+    finally {
+      storage.close();
+    }
   }
 
   @Override

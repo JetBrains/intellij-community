@@ -34,6 +34,15 @@ public abstract class TextFieldAction extends AnAction implements CustomComponen
     myDescription = description;
     myIcon = icon;
     myField = new JTextField(initSize);
+    myField.addKeyListener(new KeyAdapter() {
+      @Override
+      public void keyTyped(KeyEvent e) {
+        if ('\n' == e.getKeyChar()) {
+          e.consume();
+          actionPerformed(null);
+        }
+      }
+    });
   }
 
   public JComponent createCustomComponent(Presentation presentation) {
@@ -66,29 +75,6 @@ public abstract class TextFieldAction extends AnAction implements CustomComponen
         actionPerformed(null);
       }
     });
-    /*myField.addFocusListener(new FocusAdapter() {
-      @Override
-      public void focusLost(FocusEvent e) {
-        actionPerformed(null);
-      }
-    });*/
-    myField.addKeyListener(new KeyAdapter() {
-      @Override
-      public void keyTyped(KeyEvent e) {
-        reaction(e);
-      }
-      @Override
-      public void keyPressed(KeyEvent e) {
-        reaction(e);
-      }
-    });
     return panel;
-  }
-
-  private void reaction(KeyEvent e) {
-    if ((KeyEvent.VK_ENTER == e.getKeyCode()) || ('\n' == e.getKeyChar())) {
-      e.consume();
-      actionPerformed(null);
-    }
   }
 }

@@ -16,13 +16,12 @@
 package com.intellij.execution.junit;
 
 import com.intellij.execution.ExecutionException;
-import com.intellij.execution.configurations.CommandLineBuilder;
 import com.intellij.execution.configurations.GeneralCommandLine;
-import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.junit2.segments.Extractor;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessTerminatedListener;
-import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.Reader;
 import java.nio.charset.Charset;
@@ -35,17 +34,19 @@ public class JUnitProcessHandler extends OSProcessHandler {
   private final Extractor myErr;
   private final Charset myCharset;
 
-  public JUnitProcessHandler(final Process process, final String commandLine, final Charset charset) {
+  public JUnitProcessHandler(@NotNull Process process, final String commandLine, @NotNull Charset charset) {
     super(process, commandLine);
     myOut = new Extractor(getProcess().getInputStream(), charset);
     myErr = new Extractor(getProcess().getErrorStream(), charset);
     myCharset = charset;
   }
 
+  @Override
   protected Reader createProcessOutReader() {
     return myOut.createReader();
   }
 
+  @Override
   protected Reader createProcessErrReader() {
     return myErr.createReader();
   }
@@ -58,16 +59,9 @@ public class JUnitProcessHandler extends OSProcessHandler {
     return myOut;
   }
 
+  @Override
   public Charset getCharset() {
     return myCharset;
-  }
-
-  public static JUnitProcessHandler runJava(final JavaParameters javaParameters) throws ExecutionException {
-    return runJava(javaParameters, null);
-  }
-
-  public static JUnitProcessHandler runJava(final JavaParameters javaParameters, final Project project) throws ExecutionException {
-    return runCommandLine(CommandLineBuilder.createFromJavaParameters(javaParameters, project, true));
   }
 
   public static JUnitProcessHandler runCommandLine(final GeneralCommandLine commandLine) throws ExecutionException {
@@ -75,5 +69,19 @@ public class JUnitProcessHandler extends OSProcessHandler {
                                                                  commandLine.getCharset());
     ProcessTerminatedListener.attach(processHandler);
     return processHandler;
+  }
+
+  @Override
+  protected void notifyProcessTerminated(int exitCode) {
+    super.notifyProcessTerminated(exitCode);
+    Disposer.dispose(myOut);
+    Disposer.dispose(myErr);
+  }
+
+  @Override
+  protected void notifyProcessDetached() {
+    super.notifyProcessDetached();
+    Disposer.dispose(myOut);
+    Disposer.dispose(myErr);
   }
 }

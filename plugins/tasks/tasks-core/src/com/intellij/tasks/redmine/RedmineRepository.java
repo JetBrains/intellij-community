@@ -20,6 +20,7 @@ import org.jdom.Element;
 import org.jdom.input.SAXBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.xml.sax.InputSource;
 
 import javax.swing.*;
 import java.io.InputStream;
@@ -164,11 +165,6 @@ public class RedmineRepository extends BaseRepositoryImpl {
       public String getPresentableName() {
         return getId() + ": " + getSummary();
       }
-
-      @Override
-      public String getCustomIcon() {
-        return null;
-      }
     };
   }
 
@@ -211,7 +207,9 @@ public class RedmineRepository extends BaseRepositoryImpl {
     }
     HttpMethod method = doREST(url, false);
     InputStream stream = method.getResponseBodyAsStream();
-    Element element = new SAXBuilder(false).build(stream).getRootElement();
+    InputSource source = new InputSource(stream);
+    source.setEncoding("UTF-8");
+    Element element = new SAXBuilder(false).build(source).getRootElement();
 
     if (!"issues".equals(element.getName())) {
       LOG.warn("Error fetching issues for: " + url + ", HTTP status code: " + method.getStatusCode());

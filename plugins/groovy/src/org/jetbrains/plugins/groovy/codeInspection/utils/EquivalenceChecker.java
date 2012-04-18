@@ -445,8 +445,8 @@ public class EquivalenceChecker {
         return prefixExpressionsAreEquivalent((GrUnaryExpression) expToCompare1,
             (GrUnaryExpression) expToCompare2);
       case POSTFIX_EXPRESSION:
-        return postfixExpressionsAreEquivalent((GrPostfixExpression) expToCompare1,
-            (GrPostfixExpression) expToCompare2);
+        return postfixExpressionsAreEquivalent((GrUnaryExpression) expToCompare1,
+            (GrUnaryExpression) expToCompare2);
       case BINARY_EXPRESSION:
         return binaryExpressionsAreEquivalent((GrBinaryExpression) expToCompare1,
             (GrBinaryExpression) expToCompare2);
@@ -540,8 +540,8 @@ public class EquivalenceChecker {
 
   private static boolean indexExpressionsAreEquivalent(GrIndexProperty expression1,
                                                        GrIndexProperty expression2) {
-    final GrExpression operand1 = expression1.getSelectedExpression();
-    final GrExpression operand2 = expression2.getSelectedExpression();
+    final GrExpression operand1 = expression1.getInvokedExpression();
+    final GrExpression operand2 = expression2.getInvokedExpression();
     return expressionsAreEquivalent(operand1, operand2);
   }
 
@@ -674,8 +674,8 @@ public class EquivalenceChecker {
     return expressionsAreEquivalent(operand1, operand2);
   }
 
-  private static boolean postfixExpressionsAreEquivalent(@NotNull GrPostfixExpression postfixExp1,
-                                                         @NotNull GrPostfixExpression postfixExp2) {
+  private static boolean postfixExpressionsAreEquivalent(@NotNull GrUnaryExpression postfixExp1,
+                                                         @NotNull GrUnaryExpression postfixExp2) {
     final IElementType sign1 = postfixExp1.getOperationTokenType();
     final IElementType sign2 = postfixExp2.getOperationTokenType();
     if (!sign1.equals(sign2)) {
@@ -690,7 +690,7 @@ public class EquivalenceChecker {
                                                         @NotNull GrBinaryExpression binaryExp2) {
     final IElementType sign1 = binaryExp1.getOperationTokenType();
     final IElementType sign2 = binaryExp2.getOperationTokenType();
-    if (sign1 == null || sign2 == null || !sign1.equals(sign2)) {
+    if (!sign1.equals(sign2)) {
       return false;
     }
     final GrExpression lhs1 = binaryExp1.getLeftOperand();
@@ -703,9 +703,9 @@ public class EquivalenceChecker {
 
   private static boolean rangeExpressionsAreEquivalent(@NotNull GrRangeExpression rangeExp1,
                                                        @NotNull GrRangeExpression rangeExp2) {
-    return expressionsAreEquivalent(getLowerBoundForRange(rangeExp1), getLowerBoundForRange(rangeExp1)) &&
-        expressionsAreEquivalent(getUpperBoundForRange(rangeExp1), getUpperBoundForRange(rangeExp1)) &&
-        isInclusive(rangeExp1) == isInclusive(rangeExp2);
+    return expressionsAreEquivalent(rangeExp1.getLeftOperand(), rangeExp2.getLeftOperand()) &&
+           expressionsAreEquivalent(rangeExp1.getRightOperand(), rangeExp2.getRightOperand()) &&
+           isInclusive(rangeExp1) == isInclusive(rangeExp2);
   }
 
   private static boolean isInclusive(GrRangeExpression range) {
@@ -715,31 +715,6 @@ public class EquivalenceChecker {
       }
     }
     return false;
-  }
-
-  @Nullable
-  private static GrExpression getLowerBoundForRange(GrRangeExpression range) {
-    for (PsiElement child : range.getChildren()) {
-      if (child instanceof GrExpression) {
-        return (GrExpression) child;
-      }
-    }
-    return null;
-  }
-
-  @Nullable
-  private static GrExpression getUpperBoundForRange(GrRangeExpression range) {
-    boolean firstChildSeen = false;
-    for (PsiElement child : range.getChildren()) {
-      if (child instanceof GrExpression) {
-        if (firstChildSeen) {
-          return (GrExpression) child;
-        } else {
-          firstChildSeen = true;
-        }
-      }
-    }
-    return null;
   }
 
   private static boolean assignmentExpressionsAreEquivalent(@NotNull GrAssignmentExpression assignExp1,
@@ -834,11 +809,8 @@ public class EquivalenceChecker {
     if (exp instanceof GrMethodCall) {
       return CALL_EXPRESSION;
     }
-    if (exp instanceof GrPostfixExpression) {
-      return POSTFIX_EXPRESSION;
-    }
     if (exp instanceof GrUnaryExpression) {
-      return PREFIX_EXPRESSION;
+      return ((GrUnaryExpression)exp).isPostfix() ? POSTFIX_EXPRESSION : PREFIX_EXPRESSION;
     }
     if (exp instanceof GrAssignmentExpression) {
       return ASSIGNMENT_EXPRESSION;

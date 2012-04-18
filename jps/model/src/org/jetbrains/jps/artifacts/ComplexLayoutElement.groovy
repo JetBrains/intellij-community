@@ -18,6 +18,7 @@ abstract class ComplexLayoutElement extends LayoutElement {
 }
 
 class LibraryFilesElement extends ComplexLayoutElement {
+  public static final String PROJECT_LEVEL = "project"
   String moduleName
   String libraryName
   String libraryLevel
@@ -25,7 +26,7 @@ class LibraryFilesElement extends ComplexLayoutElement {
   List<LayoutElement> getSubstitution(Project project) {
     Library library
     switch (libraryLevel) {
-      case "project":
+      case PROJECT_LEVEL:
         library = project.libraries[libraryName]
         break
       case "module":

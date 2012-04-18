@@ -26,6 +26,7 @@ import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.ApplicationAdapter;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.actionSystem.TypedAction;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.fileEditor.FileEditorManagerAdapter;
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
@@ -284,7 +285,6 @@ public abstract class CompletionPhase implements Disposable {
     private final CaretListener caretListener;
     private final DocumentAdapter documentListener;
     private final PropertyChangeListener lookupListener;
-    private boolean changeGuard = false;
     private final SelectionListener selectionListener;
 
     public EmptyAutoPopup(CompletionProgressIndicator indicator) {
@@ -309,7 +309,7 @@ public abstract class CompletionPhase implements Disposable {
       caretListener = new CaretListener() {
         @Override
         public void caretPositionChanged(CaretEvent e) {
-          if (!changeGuard) {
+          if (!TypedAction.isTypedActionInProgress()) {
             stopAutoPopup();
           }
         }
@@ -323,7 +323,7 @@ public abstract class CompletionPhase implements Disposable {
       documentListener = new DocumentAdapter() {
         @Override
         public void documentChanged(DocumentEvent e) {
-          if (!changeGuard) {
+          if (!TypedAction.isTypedActionInProgress()) {
             stopAutoPopup();
           }
         }
@@ -349,16 +349,6 @@ public abstract class CompletionPhase implements Disposable {
       editor.getSelectionModel().removeSelectionListener(selectionListener);
       editor.getDocument().removeDocumentListener(documentListener);
       LookupManager.getInstance(project).removePropertyChangeListener(lookupListener);
-    }
-
-    public void handleTyping(char c) {
-      changeGuard = true;
-      try {
-        EditorModificationUtil.typeInStringAtCaretHonorBlockSelection(editor, String.valueOf(c), true);
-      }
-      finally {
-        changeGuard = false;
-      }
     }
 
     private static void stopAutoPopup() {

@@ -59,7 +59,7 @@ public class GitUpdateConfigurable implements Configurable {
    * {@inheritDoc}
    */
   public String getHelpTopic() {
-    return null;
+    return "reference.VersionControl.Git.UpdateProject";
   }
 
   /**

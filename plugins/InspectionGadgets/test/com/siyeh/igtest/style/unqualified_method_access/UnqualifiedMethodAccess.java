@@ -15,4 +15,16 @@ public class UnqualifiedMethodAccess extends JPanel {
   void foo(String s) {
     this.foo();
   }
+
+  void anonymous() {
+    new Object() {
+      void bar() {
+        new Object() {
+          void foo() {
+            bar();
+          }
+        };
+      }
+    };
+  }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.util.PathUtil;
 import com.intellij.util.PathsList;
 import com.intellij.util.containers.HashMap;
@@ -97,7 +97,7 @@ public class AndroidDxWrapper {
     }
     final PathsList classPath = parameters.getClassPath();
     classPath.add(PathUtil.getJarPathForClass(AndroidDxRunner.class));
-    classPath.add(PathUtil.getJarPathForClass(FileUtil.class));
+    classPath.add(PathUtil.getJarPathForClass(FileUtilRt.class));
 
     // delete file to check if it will exist after dex compilation
     if (!new File(outFile).delete()) {

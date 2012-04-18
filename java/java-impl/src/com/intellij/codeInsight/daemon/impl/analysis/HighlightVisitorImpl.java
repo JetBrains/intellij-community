@@ -128,7 +128,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
         Project project = file.getProject();
         DaemonCodeAnalyzer daemonCodeAnalyzer = DaemonCodeAnalyzer.getInstance(project);
         FileStatusMap fileStatusMap = ((DaemonCodeAnalyzerImpl)daemonCodeAnalyzer).getFileStatusMap();
-        RefCountHolder refCountHolder = RefCountHolder.getInstance(file);
+        RefCountHolder refCountHolder = RefCountHolder.startUsing(file);
         myRefCountHolder = refCountHolder;
         Document document = PsiDocumentManager.getInstance(project).getDocument(file);
         TextRange dirtyScope = document == null ? file.getTextRange() : fileStatusMap.getFileDirtyScope(document, Pass.UPDATE_ALL);

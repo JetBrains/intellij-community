@@ -19,7 +19,6 @@ import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.RefactoringBundle;
@@ -30,9 +29,9 @@ import com.intellij.refactoring.ui.YesNoPreviewUsagesDialog;
  * @author dsl
  */
 public class ExtractClassUtil {
-  public static void askAndTurnRefsToSuper(final Project project, PsiClass aClass, final PsiClass aSuperClass) {
-    final SmartPsiElementPointer classPointer = SmartPointerManager.getInstance(project).createSmartPsiElementPointer(aClass);
-    final SmartPsiElementPointer interfacePointer = SmartPointerManager.getInstance(project).createSmartPsiElementPointer(aSuperClass);
+  public static void askAndTurnRefsToSuper(final Project project,
+                                           final SmartPsiElementPointer classPointer, 
+                                           final SmartPsiElementPointer interfacePointer) {
     final PsiElement classElement = classPointer.getElement();
     final PsiElement interfaceElement = interfacePointer.getElement();
     if (classElement instanceof PsiClass && classElement.isValid() && interfaceElement instanceof PsiClass && interfaceElement.isValid()) {

@@ -54,7 +54,7 @@ public class TextFieldWithAutoCompletionContributor<T> extends CompletionContrib
   }
 
   @Override
-  public void fillCompletionVariants(CompletionParameters parameters, CompletionResultSet result) {
+  public void fillCompletionVariants(final CompletionParameters parameters, CompletionResultSet result) {
     PsiFile file = parameters.getOriginalFile();
     final TextFieldWithAutoCompletionListProvider<T> provider = file.getUserData(KEY);
 
@@ -84,7 +84,7 @@ public class TextFieldWithAutoCompletionContributor<T> extends CompletionContrib
         result = result.withPrefixMatcher(prefixMatcher);
       }
 
-      Collection<T> items = provider.getItems(prefix, true);
+      Collection<T> items = provider.getItems(prefix, true, parameters);
       addCompletionElements(result, provider, items, -10000);
 
       Future<Collection<T>>
@@ -92,7 +92,7 @@ public class TextFieldWithAutoCompletionContributor<T> extends CompletionContrib
         ApplicationManager.getApplication().executeOnPooledThread(new Callable<Collection<T>>() {
           @Override
           public Collection<T> call() {
-            return provider.getItems(prefix, false);
+            return provider.getItems(prefix, false, parameters);
           }
         });
 

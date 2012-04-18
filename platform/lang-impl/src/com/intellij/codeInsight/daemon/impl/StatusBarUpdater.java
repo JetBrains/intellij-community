@@ -1,4 +1,3 @@
-
 /*
  * Copyright 2000-2009 JetBrains s.r.o.
  *
@@ -23,9 +22,6 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.editor.event.CaretEvent;
-import com.intellij.openapi.editor.event.CaretListener;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerAdapter;
@@ -52,14 +48,6 @@ public class StatusBarUpdater implements Disposable {
 
   public StatusBarUpdater(Project project) {
     myProject = project;
-
-    CaretListener caretListener = new CaretListener() {
-      @Override
-      public void caretPositionChanged(CaretEvent e) {
-        updateLater();
-      }
-    };
-    EditorFactory.getInstance().getEventMulticaster().addCaretListener(caretListener, this);
 
     project.getMessageBus().connect(this).subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerAdapter() {
       @Override

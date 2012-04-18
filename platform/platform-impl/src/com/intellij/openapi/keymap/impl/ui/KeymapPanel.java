@@ -50,12 +50,16 @@ import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.FilterComponent;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Alarm;
+import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.containers.HashMap;
+import com.intellij.util.ui.FormBuilder;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import javax.swing.event.DocumentEvent;
 import java.awt.*;
 import java.awt.event.*;
@@ -119,7 +123,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
 
       if (shortcuts != null) {
         for (Shortcut shortcut : shortcuts) {
-          impl.removeShortcut(actionId,  shortcut);          
+          impl.removeShortcut(actionId,  shortcut);
           impl.addShortcut(newActionId, shortcut);
         }
       }
@@ -270,7 +274,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
 
       importButton.setMargin(insets);
       panel.add(importButton,gc);
-      
+
     }
 
 
@@ -376,7 +380,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
     };
     group.add(commonActionsManager.createExpandAllAction(treeExpander, myActionsTree.getTree()));
     group.add(commonActionsManager.createCollapseAllAction(treeExpander, myActionsTree.getTree()));
-    
+
     group.add(new AnAction("Edit Shortcut", "Edit Shortcut", IconLoader.getIcon("/actions/properties.png")) {
       {
         registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0)), myActionsTree.getTree());
@@ -459,40 +463,45 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
 
   private JPanel createFilteringPanel() {
     myActionsTree.reset(getSelectedKeymap(), getCurrentQuickListIds());
-    JPanel filterComponent = new JPanel(new GridBagLayout());
-    filterComponent.setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
 
+    final JLabel firstLabel = new JLabel(KeyMapBundle.message("filter.first.stroke.input"));
+    final JCheckBox enable2Shortcut = new JCheckBox(KeyMapBundle.message("filter.second.stroke.input"));
     final ShortcutTextField firstShortcut = new ShortcutTextField();
     final ShortcutTextField secondShortcut = new ShortcutTextField();
-    final JCheckBox enable2Shortcut = new JCheckBox(KeyMapBundle.message("filter.enable.second.stroke.checkbox"));
-    firstShortcut.getDocument().addDocumentListener(new DocumentAdapter() {
-      protected void textChanged(DocumentEvent e) {
-        filterTreeByShortcut(firstShortcut, enable2Shortcut, secondShortcut);
-      }
-    });
-    secondShortcut.getDocument().addDocumentListener(new DocumentAdapter() {
-      protected void textChanged(DocumentEvent e) {
-        filterTreeByShortcut(firstShortcut, enable2Shortcut, secondShortcut);
-      }
-    });
-    final JLabel firstLabel = new JLabel(KeyMapBundle.message("filter.first.stroke.input"));
-    final JLabel secondLabel = new JLabel(KeyMapBundle.message("filter.second.stroke.input"));
-    filterComponent.add(firstLabel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1, 0, GridBagConstraints.NORTH, GridBagConstraints.HORIZONTAL, new Insets(5,2,0,0),0,0));
-    filterComponent.add(firstShortcut, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1, 0, GridBagConstraints.NORTH, GridBagConstraints.HORIZONTAL, new Insets(0,2,0,0),0,0));
+
     enable2Shortcut.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         secondShortcut.setEnabled(enable2Shortcut.isSelected());
-        secondLabel.setEnabled(enable2Shortcut.isSelected());
         if (enable2Shortcut.isSelected()){
           secondShortcut.requestFocusInWindow();
         }
       }
     });
-    filterComponent.add(enable2Shortcut, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1, 0, GridBagConstraints.NORTH, GridBagConstraints.HORIZONTAL, new Insets(0,0,0,0),0,0));
-    filterComponent.add(secondLabel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1, 0, GridBagConstraints.NORTH, GridBagConstraints.HORIZONTAL, new Insets(0,2,0,0),0,0));
-    filterComponent.add(secondShortcut, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1, 0, GridBagConstraints.NORTH, GridBagConstraints.HORIZONTAL, new Insets(0,2,0,0),0,0));
+
+    firstShortcut.getDocument().addDocumentListener(new DocumentAdapter() {
+      protected void textChanged(DocumentEvent e) {
+        filterTreeByShortcut(firstShortcut, enable2Shortcut, secondShortcut);
+      }
+    });
+
+    secondShortcut.getDocument().addDocumentListener(new DocumentAdapter() {
+      protected void textChanged(DocumentEvent e) {
+        filterTreeByShortcut(firstShortcut, enable2Shortcut, secondShortcut);
+      }
+    });
+
+    IJSwingUtilities.adjustComponentsOnMac(firstLabel, firstShortcut);
+    JPanel filterComponent = FormBuilder.createFormBuilder()
+      .addLabeledComponent(firstLabel, firstShortcut, true)
+      .addComponent(enable2Shortcut)
+      .setVerticalGap(0)
+      .setIndent(5)
+      .addComponent(secondShortcut)
+      .getPanel();
+
+    filterComponent.setBorder(new EmptyBorder(UIUtil.PANEL_SMALL_INSETS));
+
     enable2Shortcut.setSelected(false);
-    secondLabel.setEnabled(false);
     secondShortcut.setEnabled(false);
     SwingUtilities.invokeLater(new Runnable() {
       public void run() {
@@ -938,7 +947,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
     DefaultActionGroup group = new DefaultActionGroup();
 
     final Shortcut[] shortcuts = mySelectedKeymap.getShortcuts(actionId);
-    
+
     group.add(new AnAction("Add Keyboard Shortcut") {
       @Override
       public void actionPerformed(AnActionEvent e) {
@@ -953,7 +962,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
         addKeyboardShortcut(firstKeyboard);
       }
     });
-    
+
     group.add(new AnAction("Add Mouse Shortcut") {
       @Override
       public void actionPerformed(AnActionEvent e) {
@@ -991,7 +1000,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
                                 dataContext,
                                 JBPopupFactory.ActionSelectionAid.SPEEDSEARCH,
                                 true);
-  
+
       if (e instanceof MouseEvent) {
         popup.show(new RelativePoint((MouseEvent)e));
       }

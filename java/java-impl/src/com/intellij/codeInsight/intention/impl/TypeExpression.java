@@ -41,6 +41,7 @@ public class TypeExpression extends Expression {
     }
   }
 
+  @Override
   public Result calculateResult(ExpressionContext context) {
     final Project project = context.getProject();
     PsiDocumentManager.getInstance(project).commitAllDocuments();
@@ -55,10 +56,12 @@ public class TypeExpression extends Expression {
     };
   }
 
+  @Override
   public Result calculateQuickResult(ExpressionContext context) {
     return calculateResult(context);
   }
 
+  @Override
   public LookupElement[] calculateLookupItems(ExpressionContext context) {
     if (myItems.size() <= 1) return null;
     PsiDocumentManager.getInstance(context.getProject()).commitAllDocuments();

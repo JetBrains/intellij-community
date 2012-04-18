@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,22 +19,50 @@
  */
 package com.intellij.ui.speedSearch;
 
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.util.Function;
 
 import javax.swing.*;
 
+/**
+ * @param <T> list elements generic type
+ *
+ * @author max
+ * @author Konstantin Bulenkov
+ */
 public class NameFilteringListModel<T> extends FilteringListModel<T> {
   private final Function<T, String> myNamer;
-
   private int myFullMatchIndex = -1;
   private int myStartsWithIndex = -1;
-  private final SpeedSearch mySpeedSearch;
+  private final Computable<String> myPattern;
 
-  public NameFilteringListModel(JList list, final Function<T, String> namer, final Condition<String> filter,
-                                SpeedSearch speedSearch) {
+  public NameFilteringListModel(JList list,
+                                final Function<T, String> namer,
+                                final Condition<String> filter,
+                                final SpeedSearch speedSearch) {
+    this(list, namer, filter, new Computable<String>() {
+      @Override
+      public String compute() {
+        return speedSearch.getFilter();
+      }
+    });
+  }
+
+  public NameFilteringListModel(JList list, final Function<T, String> namer, final Condition<String> filter, final SpeedSearchSupply speedSearch) {
+    this(list, namer, filter, new Computable<String>() {
+          @Override
+          public String compute() {
+            final String prefix = speedSearch.getEnteredPrefix();
+            return prefix == null ? "" : prefix;
+          }
+        });
+  }
+
+  public NameFilteringListModel(JList list, final Function<T, String> namer, final Condition<String> filter, Computable<String> pattern) {
     super(list);
-    mySpeedSearch = speedSearch;
+    myPattern = pattern;
     myNamer = namer;
     setFilter(namer != null ? new Condition<T>() {
       public boolean value(T t) {
@@ -48,8 +76,8 @@ public class NameFilteringListModel<T> extends FilteringListModel<T> {
     super.addToFiltered(elt);
 
     if (myNamer != null) {
-      String filterString = mySpeedSearch.getFilter().toUpperCase();
-      String candidateString = myNamer.fun(elt).toUpperCase();
+      String filterString = StringUtilRt.toUpperCase(myPattern.compute());
+      String candidateString = StringUtilRt.toUpperCase(myNamer.fun(elt));
       int index = getSize() - 1;
 
       if (myFullMatchIndex == -1 && filterString.equals(candidateString)) {

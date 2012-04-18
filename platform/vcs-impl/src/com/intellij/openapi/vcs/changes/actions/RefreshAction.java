@@ -29,10 +29,13 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
+import com.intellij.openapi.vcs.changes.ChangesViewRefresher;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import org.jetbrains.annotations.NotNull;
 
 public class RefreshAction extends AnAction implements DumbAware {
+
   public void actionPerformed(AnActionEvent e) {
     final Project project = e.getData(PlatformDataKeys.PROJECT);
     if (project == null) return;
@@ -41,7 +44,10 @@ public class RefreshAction extends AnAction implements DumbAware {
 
   public static void doRefresh(final Project project) {
     if (ChangeListManager.getInstance(project).isFreezedWithNotification(null)) return;
+
     FileDocumentManager.getInstance().saveAllDocuments();
+    invokeCustomRefreshes(project);
+
     VirtualFileManager.getInstance().refresh(true, new Runnable() {
       public void run() {
         // already called in EDT or under write action
@@ -51,4 +57,12 @@ public class RefreshAction extends AnAction implements DumbAware {
       }
     });
   }
+
+  private static void invokeCustomRefreshes(@NotNull Project project) {
+    ChangesViewRefresher[] extensions = ChangesViewRefresher.EP_NAME.getExtensions();
+    for (ChangesViewRefresher refresher : extensions) {
+      refresher.refresh(project);
+    }
+  }
+
 }

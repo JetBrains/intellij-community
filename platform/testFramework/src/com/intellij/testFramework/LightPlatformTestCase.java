@@ -45,6 +45,7 @@ import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.editor.impl.EditorFactoryImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl;
@@ -82,6 +83,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSchemes;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.impl.DocumentCommitThread;
 import com.intellij.psi.impl.PsiDocumentManagerImpl;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl;
@@ -155,7 +157,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
   }
 
   @TestOnly
-  public static void disposeApplication() throws Exception {
+  public static void disposeApplication() {
     if (ourApplication != null) {
       Disposer.dispose(ourApplication);
       ourApplication = null;
@@ -233,12 +235,12 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
 
         FileBasedIndex.getInstance().registerIndexableSet(new IndexableFileSet() {
           @Override
-          public boolean isInSet(final VirtualFile file) {
-            return ourSourceRoot != null && file.getFileSystem() == ourSourceRoot.getFileSystem();
+          public boolean isInSet(@NotNull final VirtualFile file) {
+            return ourSourceRoot != null && file.getFileSystem() == ourSourceRoot.getFileSystem() && ourProject.isOpen();
           }
 
           @Override
-          public void iterateIndexableFilesIn(final VirtualFile file, final ContentIterator iterator) {
+          public void iterateIndexableFilesIn(@NotNull final VirtualFile file, @NotNull final ContentIterator iterator) {
             if (file.isDirectory()) {
               for (VirtualFile child : file.getChildren()) {
                 iterateIndexableFilesIn(child, iterator);
@@ -334,6 +336,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     storeSettings();
 
     myThreadTracker = new ThreadTracker();
+    DocumentImpl.CHECK_DOCUMENT_CONSISTENCY = !isPerformanceTest();
   }
 
   public static void doSetup(final LightProjectDescriptor descriptor,
@@ -474,6 +477,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
   }
 
   public static void doTearDown(final Project project, IdeaTestApplication application, boolean checkForEditors) throws Exception {
+    DocumentCommitThread.getInstance().clearQueue();
     CodeStyleSettingsManager.getInstance(project).dropTemporarySettings();
     checkAllTimersAreDisposed();
     UsefulTestCase.doPostponedFormatting(project);
@@ -523,6 +527,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     PsiDocumentManagerImpl documentManager = (PsiDocumentManagerImpl)PsiDocumentManager.getInstance(project);
     documentManager.clearUncommitedDocuments();
     ((HintManagerImpl)HintManager.getInstance()).cleanup();
+    DocumentCommitThread.getInstance().clearQueue();
 
     UIUtil.invokeAndWaitIfNeeded(new Runnable() {
       @Override

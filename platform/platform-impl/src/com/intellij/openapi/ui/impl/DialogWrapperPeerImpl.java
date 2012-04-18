@@ -82,6 +82,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
 
   private final ActionCallback myWindowFocusedCallback = new ActionCallback("DialogFocusedCallback");
   private final ActionCallback myTypeAheadDone = new ActionCallback("DialogTypeAheadDone");
+  private ActionCallback myTypeAheadCallback;
 
   /**
    * Creates modal <code>DialogWrapper</code>. The currently active window will be the dialog's parent.
@@ -94,6 +95,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
    */
   protected DialogWrapperPeerImpl(DialogWrapper wrapper, Project project, boolean canBeParent) {
     myWrapper = wrapper;
+    myTypeAheadCallback = myWrapper.isTypeAheadEnabled() ? new ActionCallback() : (ActionCallback)null;
     myWindowManager = null;
     Application application = ApplicationManager.getApplication();
     if (application != null && application.hasComponent(WindowManager.class)) {
@@ -211,10 +213,10 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
     }
 
     if (owner instanceof Frame) {
-      myDialog = new MyDialog((Frame)owner, myWrapper, myProject, myWindowFocusedCallback, myTypeAheadDone);
+      myDialog = new MyDialog((Frame)owner, myWrapper, myProject, myWindowFocusedCallback, myTypeAheadDone, myTypeAheadCallback);
     }
     else {
-      myDialog = new MyDialog((Dialog)owner, myWrapper, myProject, myWindowFocusedCallback, myTypeAheadDone);
+      myDialog = new MyDialog((Dialog)owner, myWrapper, myProject, myWindowFocusedCallback, myTypeAheadDone, myTypeAheadCallback);
     }
     myDialog.setModal(true);
     myCanBeParent = canBeParent;
@@ -335,6 +337,11 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
     myDialog.setModal(modal);
   }
 
+  @Override
+  public boolean isModal() {
+    return myDialog.isModal();
+  }
+
   public boolean isVisible() {
     return myDialog.isVisible();
   }
@@ -372,6 +379,9 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
   }
 
   public ActionCallback show() {
+    if (myTypeAheadCallback != null) {
+      IdeFocusManager.getInstance(myProject).typeAheadUntil(myTypeAheadCallback);
+    }
     final ActionCallback result = new ActionCallback();
 
     LOG.assertTrue(EventQueue.isDispatchThread(), "Access is allowed from event dispatch thread only");
@@ -499,27 +509,29 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
     private final WeakReference<Project> myProject;
     private ActionCallback myFocusedCallback;
     private ActionCallback myTypeAheadDone;
+    private ActionCallback myTypeAheadCallback;
     private MyComponentListener myComponentListener;
 
-    public MyDialog(Dialog owner, DialogWrapper dialogWrapper, Project project, ActionCallback focused, ActionCallback typeAheadDone) {
+    public MyDialog(Dialog owner, DialogWrapper dialogWrapper, Project project, ActionCallback focused, ActionCallback typeAheadDone, ActionCallback typeAheadCallback) {
       super(owner);
       myDialogWrapper = new WeakReference<DialogWrapper>(dialogWrapper);
       myProject = project != null ? new WeakReference<Project>(project) : null;
-      initDialog(focused, typeAheadDone);
+      initDialog(focused, typeAheadDone, typeAheadCallback);
     }
 
-    public MyDialog(Frame owner, DialogWrapper dialogWrapper, Project project, ActionCallback focused, ActionCallback typeAheadDone) {
+    public MyDialog(Frame owner, DialogWrapper dialogWrapper, Project project, ActionCallback focused, ActionCallback typeAheadDone, ActionCallback typeAheadCallback) {
       super(owner);
       myDialogWrapper = new WeakReference<DialogWrapper>(dialogWrapper);
       myProject = project != null ? new WeakReference<Project>(project) : null;
-      initDialog(focused, typeAheadDone);
+      initDialog(focused, typeAheadDone, typeAheadCallback);
     }
 
-    private void initDialog(ActionCallback focused, ActionCallback typeAheadDone) {
+    private void initDialog(ActionCallback focused, ActionCallback typeAheadDone, ActionCallback typeAheadCallback) {
       setFocusTraversalPolicy(new LayoutFocusTraversalPolicyExt());
 
       myFocusedCallback = focused;
       myTypeAheadDone = typeAheadDone;
+      myTypeAheadCallback = typeAheadCallback;
 
       final long typeAhead = getDialogWrapper().getTypeAheadTimeoutMs();
       if (typeAhead <= 0) {
@@ -706,7 +718,27 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
         
         addWindowListener(macFullScreenPatchListener);
       }
+      if (SystemInfo.isMac && Registry.is("ide.mac.fix.dialog.showing")) {
+        final Window owner = getOwner();
+        if (KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow() != owner) {
+          final Ref<WindowAdapter> dialogFixerRef = new Ref<WindowAdapter>();
+          final WindowAdapter dialogFixer = new WindowAdapter() {
+            @Override
+            public void windowActivated(WindowEvent e) {
+              owner.removeWindowListener(dialogFixerRef.get());
+              superShow();
+            }
+          };
+          dialogFixerRef.set(dialogFixer);
+          owner.addWindowListener(dialogFixer);
+          return;
+        }
+      }
 
+      superShow();
+    }
+
+    private void superShow() {
       super.show();
     }
 
@@ -924,6 +956,9 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
                 notifyFocused(wrapper);
               }
             }
+            if (myTypeAheadCallback != null) {
+              myTypeAheadCallback.setDone();
+            }
           }
         });
       }
@@ -1082,191 +1117,5 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
 
   public void centerInParent() {
     myDialog.centerInParent();
-  }
-
-  interface AbstractDialog extends Disposable {
-    void setUndecorated(boolean undecorated);
-
-    void addMouseListener(MouseListener listener);
-
-    void addMouseMotionListener(MouseMotionListener listener);
-
-    void addKeyListener(KeyListener listener);
-
-    void setModal(boolean b);
-
-    void toFront();
-
-    void setContentPane(Container content);
-
-    void centerInParent();
-
-    void toBack();
-
-    JRootPane getRootPane();
-
-    void remove(Component root);
-
-    Container getContentPane();
-
-    void validate();
-
-    void repaint();
-
-    Window getOwner();
-
-    JDialog getWindow();
-
-    Dimension getSize();
-
-    String getTitle();
-
-    void pack();
-
-    Dimension getPreferredSize();
-
-    boolean isVisible();
-
-    boolean isShowing();
-
-    void setSize(int width, int height);
-
-    void setTitle(String title);
-
-    boolean isResizable();
-
-    void setResizable(boolean resizable);
-
-    Point getLocation();
-
-    void setLocation(Point p);
-
-    void setLocation(int x, int y);
-
-    boolean isModal();
-
-    void show();
-
-    IdeFocusManager getFocusManager();
-
-    FocusTrackback getFocusTrackback();
-  }
-
-  class HeadlessDialog implements AbstractDialog {
-    public void setUndecorated(boolean undecorated) {
-    }
-
-    public void addMouseListener(MouseListener listener) {
-    }
-
-    public void addMouseMotionListener(MouseMotionListener listener) {
-    }
-
-    public void addKeyListener(KeyListener listener) {
-    }
-
-    public void setModal(boolean b) {
-    }
-
-    public void toFront() {
-    }
-
-    public void setContentPane(Container content) {
-    }
-
-    public void centerInParent() {
-    }
-
-    public void toBack() {
-    }
-
-    public JRootPane getRootPane() {
-      return null;
-    }
-
-    public void remove(Component root) {
-    }
-
-    public Container getContentPane() {
-      return null;
-    }
-
-    public void validate() {
-    }
-
-    public void repaint() {
-    }
-
-    public Window getOwner() {
-      return null;
-    }
-
-    public JDialog getWindow() {
-      return null;
-    }
-
-    public Dimension getSize() {
-      return null;
-    }
-
-    public String getTitle() {
-      return null;
-    }
-
-    public void pack() {
-    }
-
-    public Dimension getPreferredSize() {
-      return null;
-    }
-
-    public boolean isVisible() {
-      return false;
-    }
-
-    public boolean isShowing() {
-      return false;
-    }
-
-    public void setSize(int width, int height) {
-    }
-
-    public void setTitle(String title) {
-    }
-
-    public boolean isResizable() {
-      return false;
-    }
-
-    public void setResizable(boolean resizable) {
-    }
-
-    public Point getLocation() {
-      return null;
-    }
-
-    public void setLocation(Point p) {
-    }
-
-    public void setLocation(int x, int y) {
-    }
-
-    public boolean isModal() {
-      return false;
-    }
-
-    public void show() {
-    }
-
-    public IdeFocusManager getFocusManager() {
-      return null;
-    }
-
-    public FocusTrackback getFocusTrackback() {
-      return null;
-    }
-
-    public void dispose() {
-    }
   }
 }

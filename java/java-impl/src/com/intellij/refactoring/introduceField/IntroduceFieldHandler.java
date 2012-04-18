@@ -31,6 +31,8 @@ import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.occurrences.*;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
+
 public class IntroduceFieldHandler extends BaseExpressionToFieldHandler {
 
   public static final String REFACTORING_NAME = RefactoringBundle.message("introduce.field.title");
@@ -199,8 +201,17 @@ public class IntroduceFieldHandler extends BaseExpressionToFieldHandler {
         final PsiStatement statement = PsiTreeUtil.getParentOfType(local, PsiStatement.class);
         return IntroduceFieldHandler.this.showRefactoringDialog(project, editor, aClass, local.getInitializer(), local.getType(), occurences, local, statement);
       }
+
+      @Override
+      protected int getChosenClassIndex(List<PsiClass> classes) {
+        return IntroduceFieldHandler.this.getChosenClassIndex(classes);
+      }
     };
     return localToFieldHandler.convertLocalToField(localVariable, editor);
+  }
+
+  protected int getChosenClassIndex(List<PsiClass> classes) {
+    return classes.size() - 1;
   }
 
   private static class MyOccurrenceFilter implements OccurrenceFilter {

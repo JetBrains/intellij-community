@@ -17,7 +17,7 @@ package com.intellij.codeInsight.generation;
 
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageUtils;
 import com.intellij.lang.ASTNode;
-import com.intellij.lang.StdLanguages;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
@@ -109,7 +109,7 @@ public class GenerateMembersUtil {
   }
 
   @NotNull
-  public static <T extends GenerationInfo> List<T> insertMembersBeforeAnchor(PsiClass aClass, PsiElement anchor, @NotNull List<T> memberPrototypes) throws IncorrectOperationException {
+  public static <T extends GenerationInfo> List<T> insertMembersBeforeAnchor(PsiClass aClass, @Nullable PsiElement anchor, @NotNull List<T> memberPrototypes) throws IncorrectOperationException {
     boolean before = true;
     for (T memberPrototype : memberPrototypes) {
       memberPrototype.insert(aClass, anchor, before);
@@ -280,7 +280,7 @@ public class GenerateMembersUtil {
         if (paramName == null) paramName = "p" + i;
 
         PsiParameter newParameter = factory.createParameter(paramName, substituted);
-        if (parameter.getLanguage() == StdLanguages.JAVA) {
+        if (parameter.getLanguage() == JavaLanguage.INSTANCE) {
           PsiModifierList modifierList = newParameter.getModifierList();
           modifierList = (PsiModifierList)modifierList.replace(parameter.getModifierList());
           processAnnotations(project, modifierList);

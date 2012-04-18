@@ -16,10 +16,13 @@
 package com.intellij.ide.util.gotoByName;
 
 import com.intellij.concurrency.JobUtil;
+import com.intellij.diagnostic.PluginException;
+import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.util.NavigationItemListCellRenderer;
 import com.intellij.navigation.ChooseByNameContributor;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
@@ -109,7 +112,13 @@ public abstract class ContributorsBasedGotoByModel implements ChooseByNameModel 
         try {
           for (NavigationItem item : contributor.getItemsByName(name, pattern, myProject, checkBoxState)) {
             if (item == null) {
-              LOG.error("null item from contributor " + contributor + " for name " + name);
+              final PluginId pluginId = PluginManager.getPluginByClassName(contributor.getClass().getName());
+              if (pluginId != null) {
+                LOG.error(new PluginException("null item from contributor " + contributor + " for name " + name, pluginId));
+              }
+              else {
+                LOG.error("null item from contributor " + contributor + " for name " + name);
+              }
               continue;
             }
 

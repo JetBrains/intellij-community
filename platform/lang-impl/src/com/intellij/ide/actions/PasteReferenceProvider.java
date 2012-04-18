@@ -34,12 +34,13 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.Producer;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.datatransfer.Transferable;
 
 public class PasteReferenceProvider implements PasteProvider {
-  public void performPaste(DataContext dataContext) {
+  public void performPaste(@NotNull DataContext dataContext) {
     final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
     final Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
     if (project == null || editor == null) return;
@@ -61,13 +62,13 @@ public class PasteReferenceProvider implements PasteProvider {
     }
   }
 
-  public boolean isPastePossible(DataContext dataContext) {
+  public boolean isPastePossible(@NotNull DataContext dataContext) {
     final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
     final Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
     return project != null && editor != null && getCopiedFqn(dataContext) != null;
   }
 
-  public boolean isPasteEnabled(DataContext dataContext) {
+  public boolean isPasteEnabled(@NotNull DataContext dataContext) {
     final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
     String fqn = getCopiedFqn(dataContext);
     if (project == null || fqn == null) {

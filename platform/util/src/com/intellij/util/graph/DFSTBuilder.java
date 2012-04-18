@@ -39,7 +39,7 @@ public class DFSTBuilder<Node> {
 
   public DFSTBuilder(Graph<Node> graph) {
     myGraph = graph;
-    myNodeToNNumber = new LinkedHashMap<Node, Integer>(myGraph.getNodes().size());
+    myNodeToNNumber = new LinkedHashMap<Node, Integer>(myGraph.getNodes().size() * 2, 0.5f);
     myInvN = (Node[])new Object[myGraph.getNodes().size()];
   }
 
@@ -64,21 +64,19 @@ public class DFSTBuilder<Node> {
   public Comparator<Node> comparator() {
     if (myComparator == null) {
       buildDFST();
+      final Map<Node, Integer> map;
       if (isAcyclic()) {
-        myComparator = new Comparator<Node>() {
-          public int compare(Node t, Node t1) {
-            return myNodeToNNumber.get(t).compareTo(myNodeToNNumber.get(t1));
-          }
-        };
+        map = myNodeToNNumber;
       }
       else {
         build_T();
-        myComparator = new Comparator<Node>() {
-          public int compare(Node t, Node t1) {
-            return myNodeToTNumber.get(t).compareTo(myNodeToTNumber.get(t1));
-          }
-        };
+        map = myNodeToTNumber;
       }
+      myComparator = new Comparator<Node>() {
+        public int compare(Node t, Node t1) {
+          return map.get(t).compareTo(map.get(t1));
+        }
+      };
     }
     return myComparator;
   }
@@ -136,7 +134,7 @@ public class DFSTBuilder<Node> {
 
     int size = myGraph.getNodes().size();
 
-    myNodeToTNumber = new LinkedHashMap<Node, Integer>(size);
+    myNodeToTNumber = new LinkedHashMap<Node, Integer>(size * 2, 0.5f);
 
     int currT = 0;
     for (int i = 0; i < size; i++) {

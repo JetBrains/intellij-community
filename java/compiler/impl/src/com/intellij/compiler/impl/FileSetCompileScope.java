@@ -23,10 +23,10 @@ package com.intellij.compiler.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.CompileScope;
+import com.intellij.openapi.compiler.ExportableUserDataHolderBase;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -34,7 +34,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-public class FileSetCompileScope extends UserDataHolderBase implements CompileScope {
+public class FileSetCompileScope extends ExportableUserDataHolderBase implements CompileScope {
   private final Set<VirtualFile> myRootFiles = new HashSet<VirtualFile>();
   private final Set<String> myDirectoryUrls = new HashSet<String>();
   private Set<String> myUrls = null; // urls caching

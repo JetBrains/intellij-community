@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,12 +17,10 @@ package com.intellij.psi.impl.search;
 
 import com.intellij.openapi.application.QueryExecutorBase;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiReference;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchRequestCollector;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.UsageSearchContext;
@@ -51,16 +49,20 @@ public class SimpleAccessorReferenceSearcher extends QueryExecutorBase<PsiRefere
   static void addPropertyAccessUsages(PsiMethod method, SearchScope scope, SearchRequestCollector collector) {
     final String propertyName = PropertyUtil.getPropertyName(method);
     if (StringUtil.isNotEmpty(propertyName)) {
-      SearchScope additional = GlobalSearchScope.getScopeRestrictedByFileTypes(GlobalSearchScope.allScope(method.getProject()),
-                                                                               StdFileTypes.JSP, StdFileTypes.JSPX,
-                                                                               StdFileTypes.XML, StdFileTypes.XHTML);
+
+      SearchScope additional = getAdditionalScope(method);
 
       for (CustomPropertyScopeProvider provider : Extensions.getExtensions(CustomPropertyScopeProvider.EP_NAME)) {
         additional = additional.union(provider.getScope(method.getProject()));
       }
       assert propertyName != null;
       final SearchScope propScope = scope.intersectWith(method.getUseScope()).intersectWith(additional);
+
       collector.searchWord(propertyName, propScope, UsageSearchContext.IN_FOREIGN_LANGUAGES, true, method);
     }
+  }
+
+  private static SearchScope getAdditionalScope(PsiMethod method) {
+    return SimpleAccessorReferenceSearcherAdditionalScopeProvider.getInstance().getAdditionalScope(method);
   }
 }

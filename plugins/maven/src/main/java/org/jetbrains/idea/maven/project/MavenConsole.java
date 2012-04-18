@@ -15,14 +15,14 @@
  */
 package org.jetbrains.idea.maven.project;
 
+import com.google.common.collect.BiMap;
+import com.google.common.collect.ImmutableBiMap;
 import com.intellij.execution.process.ProcessHandler;
-import gnu.trove.THashMap;
 import org.jetbrains.idea.maven.execution.MavenExecutionOptions;
 import org.jetbrains.idea.maven.execution.RunnerBundle;
 import org.jetbrains.idea.maven.server.MavenServerConsole;
 
 import java.text.MessageFormat;
-import java.util.Map;
 
 public abstract class MavenConsole {
   private static final String LINE_SEPARATOR = System.getProperty("line.separator");
@@ -34,21 +34,13 @@ public abstract class MavenConsole {
   private final int myOutputLevel;
   private boolean isFinished;
 
-  private static final Map<String, Integer> PREFIX_TO_LEVEL = new THashMap<String, Integer>();
-  private static final Map<Integer, String> LEVEL_TO_PREFIX = new THashMap<Integer, String>();
-
-  static {
-    map("DEBUG", MavenServerConsole.LEVEL_DEBUG);
-    map("INFO", MavenServerConsole.LEVEL_INFO);
-    map("WARNING", MavenServerConsole.LEVEL_WARN);
-    map("ERROR", MavenServerConsole.LEVEL_ERROR);
-    map("FATAL_ERROR", MavenServerConsole.LEVEL_FATAL);
-  }
-
-  private static void map(String prefix, int level) {
-    PREFIX_TO_LEVEL.put(prefix, level);
-    LEVEL_TO_PREFIX.put(level, prefix);
-  }
+  private static final BiMap<String, Integer> PREFIX_TO_LEVEL = ImmutableBiMap.of(
+    "DEBUG", MavenServerConsole.LEVEL_DEBUG,
+    "INFO", MavenServerConsole.LEVEL_INFO,
+    "WARNING", MavenServerConsole.LEVEL_WARN,
+    "ERROR", MavenServerConsole.LEVEL_ERROR,
+    "FATAL_ERROR", MavenServerConsole.LEVEL_FATAL
+  );
 
   public MavenConsole(MavenExecutionOptions.LoggingLevel outputLevel, boolean printStrackTrace) {
     myOutputLevel = outputLevel.getLevel();
@@ -147,7 +139,7 @@ public abstract class MavenConsole {
   //  }
   //}
 
-  private String appendExecutionFailureMessage(String message, String newMessage) {
+  private static String appendExecutionFailureMessage(String message, String newMessage) {
     if (message == null) return newMessage;
     if (newMessage == null) return message;
     return message + LINE_SEPARATOR + LINE_SEPARATOR + newMessage;
@@ -179,6 +171,6 @@ public abstract class MavenConsole {
   }
 
   private static String getPrefixByLevel(int level) {
-    return LEVEL_TO_PREFIX.get(level);
+    return PREFIX_TO_LEVEL.inverse().get(level);
   }
 }

@@ -33,7 +33,8 @@ public class ModifyKeywordDialog extends DialogWrapper {
     super(parent, false);
     if (initialValue == null || "".equals(initialValue)) {
       setTitle(IdeBundle.message("title.add.new.keyword"));
-    } else {
+    }
+    else {
       setTitle(IdeBundle.message("title.edit.keyword"));
     }
     init();
@@ -46,7 +47,8 @@ public class ModifyKeywordDialog extends DialogWrapper {
     gc.gridx = 0;
     gc.gridy = 0;
     gc.weightx = 0;
-    gc.insets = new Insets(5, 0, 5, 5);
+    gc.insets = new Insets(5, 0, 5, 10);
+    gc.anchor = GridBagConstraints.BASELINE;
     panel.add(new JLabel(IdeBundle.message("editbox.keyword")), gc);
 
     gc = new GridBagConstraints();

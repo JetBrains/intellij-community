@@ -39,6 +39,7 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
+import com.intellij.ui.ColorUtil;
 import com.intellij.ui.FocusTrackback;
 import com.intellij.ui.HintHint;
 import com.intellij.ui.awt.RelativePoint;
@@ -59,6 +60,7 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 
@@ -410,12 +412,38 @@ public class PopupFactoryImpl extends JBPopupFactory {
     else if (component instanceof JTree) { // JTree
       JTree tree = (JTree)component;
       int[] selectionRows = tree.getSelectionRows();
-      for (int i = 0; selectionRows != null && i < selectionRows.length; i++) {
-        int row = selectionRows[i];
-        Rectangle rowBounds = tree.getRowBounds(row);
-        if (visibleRect.y <= rowBounds.y && rowBounds.y <= visibleRect.y + visibleRect.height) {
-          popupMenuPoint = new Point(visibleRect.x + visibleRect.width / 4, rowBounds.y + rowBounds.height);
-          break;
+      if (selectionRows != null) {
+        Arrays.sort(selectionRows);
+        for (int i = 0; i < selectionRows.length; i++) {
+          int row = selectionRows[i];
+          Rectangle rowBounds = tree.getRowBounds(row);
+          if (visibleRect.contains(rowBounds)) {
+            popupMenuPoint = new Point(rowBounds.x + 2, rowBounds.y + rowBounds.height - 1);
+            break;
+          }
+        }
+        if (popupMenuPoint == null) {//All selected rows are out of visible rect
+          Point visibleCenter = new Point(visibleRect.x + visibleRect.width / 2, visibleRect.y + visibleRect.height / 2);
+          double minDistance = Double.POSITIVE_INFINITY;
+          int bestRow = -1;
+          Point rowCenter;
+          double distance;
+          for (int i = 0; i < selectionRows.length; i++) {
+            int row = selectionRows[i];
+            Rectangle rowBounds = tree.getRowBounds(row);
+            rowCenter = new Point(rowBounds.x + rowBounds.width / 2, rowBounds.y + rowBounds.height / 2);
+            distance = visibleCenter.distance(rowCenter);
+            if (minDistance > distance) {
+              minDistance = distance;
+              bestRow = row;
+            }
+          }
+
+          if (bestRow != -1) {
+            Rectangle rowBounds = tree.getRowBounds(bestRow);
+            tree.scrollRectToVisible(new Rectangle(rowBounds.x, rowBounds.y, Math.min(visibleRect.width, rowBounds.width), rowBounds.height));
+            popupMenuPoint = new Point(rowBounds.x + 2, rowBounds.y + rowBounds.height - 1);
+          }
         }
       }
     } else if (component instanceof PopupOwner){
@@ -784,7 +812,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
         else {
           icon = new IconWrapper(icon);
         }
-        boolean prependSeparator = !myListModel.isEmpty() && myPrependWithSeparator;
+        boolean prependSeparator = (!myListModel.isEmpty() || mySeparatorText != null) && myPrependWithSeparator;
         assert text != null : action + " has no presentation";
         myListModel.add(new ActionItem(action, text, presentation.isEnabled(), icon, prependSeparator, mySeparatorText));
         myPrependWithSeparator = false;
@@ -838,7 +866,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
     final BalloonPopupBuilderImpl builder = new BalloonPopupBuilderImpl(content);
     final Color bg = UIManager.getColor("Panel.background");
     final Color borderOriginal = Color.darkGray;
-    final Color border = new Color(borderOriginal.getRed(), borderOriginal.getGreen(), borderOriginal.getBlue(), 75);
+    final Color border = ColorUtil.toAlpha(borderOriginal, 75);
     builder
       .setDialogMode(true)
       .setTitle(title)

@@ -219,18 +219,15 @@ public class GroovyIntroduceParameterUtil {
       argList.add(expression);
     }
 
-    removeParametersFromCall(methodCall, argList, settings);
+    removeParametersFromCall(methodCall, settings);
   }
 
-  private static void removeParametersFromCall(GrMethodCallExpression methodCall,
-                                               GrArgumentList argList,
-                                               GrIntroduceParameterSettings settings) {
+  private static void removeParametersFromCall(GrMethodCallExpression methodCall, GrIntroduceParameterSettings settings) {
     final GroovyResolveResult resolveResult = methodCall.advancedResolve();
     final PsiElement resolved = resolveResult.getElement();
     LOG.assertTrue(resolved instanceof PsiMethod);
     final GrClosureSignature signature = GrClosureSignatureUtil.createSignature((PsiMethod)resolved, resolveResult.getSubstitutor());
-    final GrClosureSignatureUtil.ArgInfo<PsiElement>[] argInfos =
-      GrClosureSignatureUtil.mapParametersToArguments(signature, argList, methodCall, methodCall.getClosureArguments());
+    final GrClosureSignatureUtil.ArgInfo<PsiElement>[] argInfos = GrClosureSignatureUtil.mapParametersToArguments(signature, methodCall);
     LOG.assertTrue(argInfos != null);
     settings.parametersToRemove().forEach(new TIntProcedure() {
       @Override

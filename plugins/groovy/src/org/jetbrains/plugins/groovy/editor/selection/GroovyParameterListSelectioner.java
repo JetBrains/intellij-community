@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.editor.selection;
 
+import com.intellij.codeInsight.editorActions.ExtendWordSelectionHandlerBase;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
@@ -26,7 +27,7 @@ import java.util.List;
 /**
  * @author Maxim.Medvedev
  */
-public class GroovyParameterListSelectioner extends GroovyBasicSelectioner {
+public class GroovyParameterListSelectioner extends ExtendWordSelectionHandlerBase {
   @Override
   public boolean canSelect(PsiElement e) {
     return e instanceof GrParameterList || e.getParent() instanceof GrParameterList;

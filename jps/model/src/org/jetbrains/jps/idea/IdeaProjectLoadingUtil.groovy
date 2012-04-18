@@ -29,7 +29,8 @@ public class IdeaProjectLoadingUtil {
 
   static findFacetById(Project project, String facetId) {
     def moduleName = facetId.substring(0, facetId.indexOf('/'))
-    def facet = project.modules[moduleName]?.facets[facetId]
-    return facet
+    def module = project.modules[moduleName]
+    if (module == null) return null
+    return module.facets[facetId]
   }
 }

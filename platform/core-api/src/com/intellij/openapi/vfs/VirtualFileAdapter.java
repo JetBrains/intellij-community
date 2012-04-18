@@ -16,34 +16,44 @@
 package com.intellij.openapi.vfs;
 
 public abstract class VirtualFileAdapter implements VirtualFileListener {
+  @Override
   public void propertyChanged(VirtualFilePropertyEvent event){
   }
 
+  @Override
   public void contentsChanged(VirtualFileEvent event){
   }
 
+  @Override
   public void fileCreated(VirtualFileEvent event){
   }
 
+  @Override
   public void fileDeleted(VirtualFileEvent event){
   }
 
+  @Override
   public void fileMoved(VirtualFileMoveEvent event){
   }
 
+  @Override
   public void fileCopied(VirtualFileCopyEvent event) {
     fileCreated(event);
   }
 
+  @Override
   public void beforePropertyChange(VirtualFilePropertyEvent event){
   }
 
+  @Override
   public void beforeContentsChange(VirtualFileEvent event){
   }
 
+  @Override
   public void beforeFileDeletion(VirtualFileEvent event){
   }
 
+  @Override
   public void beforeFileMovement(VirtualFileMoveEvent event){
   }
 }

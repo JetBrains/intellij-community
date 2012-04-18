@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,7 +36,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.ex.MessagesEx;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -47,7 +46,6 @@ import com.intellij.util.SequentialTask;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.FutureTask;
@@ -389,15 +387,12 @@ public abstract class AbstractLayoutCodeProcessor {
   private static Set<VirtualFile> getIgnoreRoots(@NotNull Project project) {
     Set<VirtualFile> result = new HashSet<VirtualFile>();
 
-    String location = project.getLocation();
-    if (location != null) {
-      File projectDir = new File(location, Project.DIRECTORY_STORE_FOLDER);
-      if (projectDir.isDirectory()) {
-        VirtualFile projectVirtualDirectory = LocalFileSystem.getInstance().findFileByIoFile(projectDir);
-        if (projectVirtualDirectory != null) {
-          result.add(projectVirtualDirectory);
-        } 
-      } 
+    VirtualFile projectBaseDir = project.getBaseDir();
+    if (projectBaseDir != null && projectBaseDir.isDirectory()) {
+      VirtualFile projectVirtualDirectory = projectBaseDir.findChild(Project.DIRECTORY_STORE_FOLDER);
+      if (projectVirtualDirectory != null) {
+        result.add(projectVirtualDirectory);
+      }
     }
 
     VirtualFile projectFile = project.getProjectFile();
@@ -416,6 +411,7 @@ public abstract class AbstractLayoutCodeProcessor {
         result.add(moduleFile);
       }
     }
+
     return result;
   }
   
@@ -563,11 +559,11 @@ public abstract class AbstractLayoutCodeProcessor {
         }
       }
       catch (InterruptedException e) {
-        LOG.error("Got unexpected during formatting", e);
+        LOG.error("Got unexpected exception during formatting", e);
         return true;
       }
       catch (ExecutionException e) {
-        LOG.error("Got unexpected during formatting", e);
+        LOG.error("Got unexpected exception during formatting", e);
         return true;
       }
       if (myCompositeTask != null) {

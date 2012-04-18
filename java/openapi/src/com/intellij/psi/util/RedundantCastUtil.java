@@ -476,7 +476,7 @@ public class RedundantCastUtil {
       PsiAssignmentExpression assignment = PsiTreeUtil.getParentOfType(element, PsiAssignmentExpression.class, false, PsiMember.class);
       if (assignment == null) return false;
       PsiExpression lExpression = assignment.getLExpression();
-      return PsiTreeUtil.isAncestor(lExpression, element, false);
+      return PsiTreeUtil.isAncestor(lExpression, element, false) && lExpression instanceof PsiArrayAccessExpression;
     }
   }
 

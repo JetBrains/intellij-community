@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,11 +15,8 @@
  */
 package com.intellij.refactoring.rename.inplace;
 
-import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageExtension;
-import com.intellij.lang.LanguageNamesValidation;
-import com.intellij.lang.refactoring.NamesValidator;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -132,12 +129,18 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
     return stringUsages.isEmpty();
   }
 
+  protected boolean shouldCreateSnapshot() {
+    return true;
+  }
+
   @Override
   protected void beforeTemplateStart() {
     super.beforeTemplateStart();
     myLanguage = myScope.getLanguage();
-    final ResolveSnapshotProvider resolveSnapshotProvider = INSTANCE.forLanguage(myLanguage);
-    mySnapshot = resolveSnapshotProvider != null ? resolveSnapshotProvider.createSnapshot(myScope) : null;
+    if (shouldCreateSnapshot()) {
+      final ResolveSnapshotProvider resolveSnapshotProvider = INSTANCE.forLanguage(myLanguage);
+      mySnapshot = resolveSnapshotProvider != null ? resolveSnapshotProvider.createSnapshot(myScope) : null;
+    }
 
     final SelectionModel selectionModel = myEditor.getSelectionModel();
     mySelectedRange =
@@ -186,6 +189,9 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
   protected void performRefactoringRename(final String newName,
                                           final StartMarkAction markAction) {
     try {
+      if (!isIdentifier(newName, myLanguage)) {
+        return;
+      }
       PsiNamedElement elementToRename = getVariable();
       if (elementToRename != null) {
         new WriteCommandAction(myProject, getCommandName()) {
@@ -263,12 +269,12 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
     boolean bind = false;
     if (myInsertedName != null) {
       bind = true;
-      if (!isIdentifier(myInsertedName)) {
+      if (!isIdentifier(myInsertedName, myLanguage)) {
         performOnInvalidIdentifier(myInsertedName, myNameSuggestions);
       }
       else {
         if (mySnapshot != null) {
-          if (isIdentifier(myInsertedName)) {
+          if (isIdentifier(myInsertedName, myLanguage)) {
             ApplicationManager.getApplication().runWriteAction(new Runnable() {
               public void run() {
                 mySnapshot.apply(myInsertedName);
@@ -282,14 +288,20 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
     return bind;
   }
 
-  private boolean isIdentifier(final String newName) {
-
-    final NamesValidator namesValidator = LanguageNamesValidation.INSTANCE.forLanguage(myLanguage);
-    return namesValidator == null || namesValidator.isIdentifier(newName, myProject);
+  @Override
+  public void finish(boolean success) {
+    super.finish(success);
+    if (success) {
+      revertStateOnFinish();
+    }
+    else {
+      ((EditorImpl)InjectedLanguageUtil.getTopLevelEditor(myEditor)).stopDumb();
+    }
   }
 
-  @Override
-  protected LookupElement[] createLookupItems(final LookupElement[] lookupItems, final String name) {
-    return lookupItems;
+  protected void revertStateOnFinish() {
+    if (!isIdentifier(myInsertedName, myLanguage)) {
+      revertState();
+    }
   }
 }

@@ -73,8 +73,9 @@ public class RangeBlinker {
 
     MarkupModel markupModel = myEditor.getMarkupModel();
     if (show) {
-      for (Segment rangeMarker : myMarkers) {
-        RangeHighlighter highlighter = markupModel.addRangeHighlighter(rangeMarker.getStartOffset(), rangeMarker.getEndOffset(),
+      for (Segment segment : myMarkers) {
+        if (segment.getEndOffset() > myEditor.getDocument().getTextLength()) continue;
+        RangeHighlighter highlighter = markupModel.addRangeHighlighter(segment.getStartOffset(), segment.getEndOffset(),
                                                                        HighlighterLayer.ADDITIONAL_SYNTAX, myAttributes,
                                                                        HighlighterTargetArea.EXACT_RANGE);
         myAddedHighlighters.add(highlighter);
@@ -85,6 +86,7 @@ public class RangeBlinker {
     }
     stopBlinking();
     myBlinkingAlarm.addRequest(new Runnable() {
+      @Override
       public void run() {
         if (myTimeToLive > 0 || show) {
           myTimeToLive--;

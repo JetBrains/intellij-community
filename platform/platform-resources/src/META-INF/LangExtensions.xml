@@ -559,6 +559,10 @@
   <intentionAction>
     <className>com.intellij.codeInsight.intention.impl.EditFoldingOptionsAction</className>
   </intentionAction>
+  <intentionAction>
+    <className>com.intellij.codeInsight.intention.impl.QuickEditAction</className>
+    <category>Language Injection</category>
+  </intentionAction>
 
   <!-- CodeInsightSettings -->
   <editorActionHandler action="EditorEnter" implementationClass="com.intellij.codeInsight.editorActions.EnterHandler" id="editorEnter"/>
@@ -574,6 +578,8 @@
                        implementationClass="com.intellij.codeInsight.editorActions.BackspaceToWordStartHandler"/>
   <editorTypedHandler implementationClass="com.intellij.codeInsight.editorActions.TypedHandler"/>
 
+  <editorActionHandler action="EditorDuplicate" implementationClass="com.intellij.openapi.editor.actions.NamedElementDuplicateHandler"/>
+
   <!-- LookupManagerActions -->
   <editorActionHandler action="EditorUp" implementationClass="com.intellij.codeInsight.lookup.impl.LookupActionHandler$UpHandler"/>
   <editorActionHandler action="EditorDown" implementationClass="com.intellij.codeInsight.lookup.impl.LookupActionHandler$DownHandler"/>
@@ -587,7 +593,8 @@
   <editorActionHandler action="EditorBackSpace" implementationClass="com.intellij.codeInsight.lookup.impl.BackspaceHandler"/>
 
   <!-- TemplateManagerActions -->
-  <editorActionHandler action="EditorEscape" implementationClass="com.intellij.codeInsight.template.impl.editorActions.EscapeHandler"/>
+  <editorActionHandler action="EditorEscape" implementationClass="com.intellij.codeInsight.template.impl.editorActions.EscapeHandler"
+                       id="templateEscape" order="after hide-hints"/>
   <editorActionHandler action="EditorEnter" implementationClass="com.intellij.codeInsight.template.impl.editorActions.EnterHandler"
                        id="templateEnter" order="before editorEnter"/>
   <editorActionHandler action="EditorLineStart" implementationClass="com.intellij.codeInsight.template.impl.editorActions.HomeHandler"/>

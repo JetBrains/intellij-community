@@ -36,7 +36,7 @@ public class ChangeExtendsToImplementsFix extends ExtendsListFix {
     myName = QuickFixBundle.message("exchange.extends.implements.keyword",
                                     aClass.isInterface() == myClassToExtendFrom.isInterface() ? PsiKeyword.IMPLEMENTS : PsiKeyword.EXTENDS,
                                     aClass.isInterface() == myClassToExtendFrom.isInterface() ? PsiKeyword.EXTENDS : PsiKeyword.IMPLEMENTS,
-                                    myClassToExtendFrom.getQualifiedName());
+                                    myClassToExtendFrom.getName());
   }
 
   @Override

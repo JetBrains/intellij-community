@@ -46,10 +46,10 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.ui.PanelWithAnchor;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.EditorTextFieldWithBrowseButton;
 import com.intellij.ui.InsertPathAction;
+import com.intellij.ui.PanelWithAnchor;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.TextFieldCompletionProvider;
@@ -102,6 +102,8 @@ public class JUnitConfigurable extends SettingsEditor<JUnitConfiguration> implem
   private JComboBox myForkCb;
   private JBLabel myTestLabel;
   private JComboBox myTypeChooser;
+  private JBLabel mySearchForTestsLabel;
+  private JPanel myScopesPanel;
   @NonNls private static final String NONE = "none";
   @NonNls private static final String METHOD = "method";
   @NonNls private static final String KLASS = "class";
@@ -216,7 +218,7 @@ public class JUnitConfigurable extends SettingsEditor<JUnitConfiguration> implem
 
     myCommonJavaParameters.getProgramParametersComponent().setVisible(false);
 
-    setAnchor(myDir.getLabel());
+    setAnchor(mySearchForTestsLabel);
     myAlternativeJREPanel.setAnchor(myModule.getLabel());
     myCommonJavaParameters.setAnchor(myModule.getLabel());
   }
@@ -267,6 +269,7 @@ public class JUnitConfigurable extends SettingsEditor<JUnitConfiguration> implem
     final Integer selectedType = (Integer)myTypeChooser.getSelectedItem();
     if (selectedType == JUnitConfigurationModel.ALL_IN_PACKAGE) {
       myPackagePanel.setVisible(true);
+      myScopesPanel.setVisible(true);
       myPattern.setVisible(false);
       myClass.setVisible(false);
       myMethod.setVisible(false);
@@ -276,6 +279,7 @@ public class JUnitConfigurable extends SettingsEditor<JUnitConfiguration> implem
       myForkCb.setSelectedItem(selectedItem);
     } else if (selectedType == JUnitConfigurationModel.DIR) {
       myPackagePanel.setVisible(false);
+      myScopesPanel.setVisible(false);
       myDir.setVisible(true);
       myPattern.setVisible(false);
       myClass.setVisible(false);
@@ -286,6 +290,7 @@ public class JUnitConfigurable extends SettingsEditor<JUnitConfiguration> implem
     }
     else if (selectedType == JUnitConfigurationModel.CLASS) {
       myPackagePanel.setVisible(false);
+      myScopesPanel.setVisible(false);
       myPattern.setVisible(false);
       myDir.setVisible(false);
       myClass.setVisible(true);
@@ -296,6 +301,7 @@ public class JUnitConfigurable extends SettingsEditor<JUnitConfiguration> implem
     }
     else if (selectedType == JUnitConfigurationModel.METHOD){
       myPackagePanel.setVisible(false);
+      myScopesPanel.setVisible(false);
       myPattern.setVisible(false);
       myDir.setVisible(false);
       myClass.setVisible(true);
@@ -304,6 +310,7 @@ public class JUnitConfigurable extends SettingsEditor<JUnitConfiguration> implem
       myForkCb.setSelectedItem(NONE);
     } else {
       myPackagePanel.setVisible(false);
+      myScopesPanel.setVisible(true);
       myPattern.setVisible(true);
       myDir.setVisible(false);
       myClass.setVisible(false);
@@ -403,6 +410,7 @@ public class JUnitConfigurable extends SettingsEditor<JUnitConfiguration> implem
   @Override
   public void setAnchor(JComponent anchor) {
     this.anchor = anchor;
+    mySearchForTestsLabel.setAnchor(anchor);
     myTestLabel.setAnchor(anchor);
     myClass.setAnchor(anchor);
     myDir.setAnchor(anchor);
@@ -427,7 +435,7 @@ public class JUnitConfigurable extends SettingsEditor<JUnitConfiguration> implem
       getTestLocation(i).setEnabled(enabledFields.contains(i));
     /*if (newType == JUnitConfigurationModel.PATTERN) {
       myModule.setEnabled(false);
-    } else */if (newType != JUnitConfigurationModel.ALL_IN_PACKAGE) {
+    } else */if (newType != JUnitConfigurationModel.ALL_IN_PACKAGE && newType != JUnitConfigurationModel.PATTERN) {
       myModule.setEnabled(true);
     }
     else {

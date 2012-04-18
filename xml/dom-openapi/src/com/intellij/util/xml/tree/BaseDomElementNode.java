@@ -178,6 +178,7 @@ public class BaseDomElementNode extends AbstractDomElementNode {
     return consolidated;
   }
 
+  @NotNull
   public Object[] getEqualityObjects() {
     return new Object[]{myDomElement};
   }

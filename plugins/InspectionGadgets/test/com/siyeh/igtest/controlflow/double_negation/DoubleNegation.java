@@ -7,5 +7,6 @@ public class DoubleNegation {
     boolean r2 = !!b1;
     boolean r3 = !b1 != b2;
     boolean r4 = (b1 != (b2 != b3));
+    boolean r5 = (b1 != b2 != b3);
   }
 }

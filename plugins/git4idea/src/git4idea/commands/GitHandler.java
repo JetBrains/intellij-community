@@ -399,7 +399,9 @@ public abstract class GitHandler {
         myHandlerNo = ssh.registerHandler(new GitSSHGUIHandler(myProject));
         myEnvironmentCleanedUp = false;
         myEnv.put(GitSSHHandler.SSH_HANDLER_ENV, Integer.toString(myHandlerNo));
-        myEnv.put(GitSSHHandler.SSH_PORT_ENV, Integer.toString(ssh.getXmlRcpPort()));
+        int port = ssh.getXmlRcpPort();
+        myEnv.put(GitSSHHandler.SSH_PORT_ENV, Integer.toString(port));
+        LOG.debug(String.format("handler=%s, port=%s", myHandlerNo, port));
       }
       myCommandLine.setEnvParams(myEnv);
       // start process
@@ -620,11 +622,8 @@ public abstract class GitHandler {
 
     boolean suspendable = false;
     switch (myCommand.lockingPolicy()) {
-      case META:
-        // do nothing no locks are taken for metadata
-        break;
       case READ:
-        vcs.getCommandLock().readLock().lock();
+        // need to lock only write operations: reads can be performed even when a write operation is going on
         break;
       case WRITE_SUSPENDABLE:
         suspendable = true;
@@ -715,11 +714,7 @@ public abstract class GitHandler {
     }
     finally {
       switch (myCommand.lockingPolicy()) {
-        case META:
-          // do nothing no locks are taken for metadata
-          break;
         case READ:
-          vcs.getCommandLock().readLock().unlock();
           break;
         case WRITE_SUSPENDABLE:
         case WRITE:

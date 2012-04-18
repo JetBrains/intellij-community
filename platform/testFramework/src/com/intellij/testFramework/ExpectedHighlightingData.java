@@ -30,6 +30,7 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.editor.markup.TextAttributes;
@@ -238,6 +239,7 @@ public class ExpectedHighlightingData {
                                 "(?:\\s+effectcolor=\"([0-9xa-f]+)\")?" +
                                 "(?:\\s+effecttype=\"([A-Z]+)\")?" +
                                 "(?:\\s+fonttype=\"([0-9]+)\")?" +
+                                "(?:\\s+textAttributesKey=\"((?:[^\"]|\\\\\"|\\\\\\\\\"|\\\\\\[|\\\\\\])*)\")?" +
                                 "(/)?>";
 
     final Matcher matcher = Pattern.compile(openingTagRx).matcher(text);
@@ -261,6 +263,7 @@ public class ExpectedHighlightingData {
     final String effectColor = matcher.group(groupIdx++);
     final String effectType = matcher.group(groupIdx++);
     final String fontType = matcher.group(groupIdx++);
+    final String attrKey = matcher.group(groupIdx++);
     final boolean closed = matcher.group(groupIdx) != null;
 
     if (descr == null) {
@@ -319,7 +322,8 @@ public class ExpectedHighlightingData {
 
     final ExpectedHighlightingSet expectedHighlightingSet = highlightingTypes.get(marker);
     if (expectedHighlightingSet.enabled) {
-      final HighlightInfo highlightInfo = new HighlightInfo(forcedAttributes, type, rangeStart, textOffset.get(), descr, descr,
+      TextAttributesKey forcedTextAttributesKey = attrKey == null ? null : TextAttributesKey.createTextAttributesKey(attrKey);
+      final HighlightInfo highlightInfo = new HighlightInfo(forcedAttributes, forcedTextAttributesKey, type, rangeStart, textOffset.get(), descr, descr,
                                                             expectedHighlightingSet.severity, expectedHighlightingSet.endOfLine, null,
                                                             false);
       expectedHighlightingSet.infos.add(highlightInfo);
@@ -551,13 +555,13 @@ public class ExpectedHighlightingData {
     if (expectedInfo == info) return true;
     return
       info.getSeverity() == expectedInfo.getSeverity() &&
-      info.startOffset /*+ (info.isAfterEndOfLine ? 1 : 0)*/ == expectedInfo.startOffset &&
+      info.startOffset == expectedInfo.startOffset &&
       info.endOffset == expectedInfo.endOffset &&
       info.isAfterEndOfLine == expectedInfo.isAfterEndOfLine &&
       (expectedInfo.type == WHATEVER || expectedInfo.type.equals(info.type)) &&
       (Comparing.strEqual(ANY_TEXT, expectedInfo.description) || Comparing.strEqual(info.description, expectedInfo.description))
       && (expectedInfo.forcedTextAttributes == null || expectedInfo.getTextAttributes(null, null).equals(info.getTextAttributes(null, null)))
-      && (expectedInfo.forcedTextAttributesKey == null || expectedInfo.getTextAttributes(null, null).equals(info.getTextAttributes(null, null)))
+      && (expectedInfo.forcedTextAttributesKey == null || expectedInfo.forcedTextAttributesKey.equals(info.forcedTextAttributesKey))
       ;
   }
 }

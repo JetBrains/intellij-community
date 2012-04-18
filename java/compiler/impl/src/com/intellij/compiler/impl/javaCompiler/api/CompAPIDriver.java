@@ -16,6 +16,7 @@
 package com.intellij.compiler.impl.javaCompiler.api;
 
 import com.intellij.compiler.OutputParser;
+import com.intellij.openapi.compiler.CompilerMessageCategory;
 import com.sun.source.util.JavacTask;
 import com.sun.source.util.TaskEvent;
 import com.sun.source.util.TaskListener;
@@ -27,6 +28,7 @@ import javax.tools.*;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.lang.reflect.Field;
 import java.net.URI;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
@@ -112,6 +114,15 @@ class CompAPIDriver {
       });
       task.call();
     }
+    catch (IllegalArgumentException e) {
+      final String message = "Javac in-process compiler error: " + e.getMessage();
+      myCompilationResults.offer(new CompilationEvent() {
+        @Override
+        protected void process(OutputParser.Callback callback) {
+          callback.message(CompilerMessageCategory.ERROR, message, null, -1, -1);
+        }
+      });
+    }
     finally {
       compiling = false;
       myCompilationResults.offer(GUARD);
@@ -145,6 +156,18 @@ class CompAPIDriver {
     assert !processing;
     //assert myCompilationResults.isEmpty() : myCompilationResults;
     myCompilationResults.clear();
+    cleanupInternalFields();
+  }
+
+  private static void cleanupInternalFields() {
+    try {
+      Field freelist = Class.forName("com.sun.tools.javac.util.SharedNameTable").getDeclaredField("freelist");
+      freelist.setAccessible(true);
+      freelist.set(null, com.sun.tools.javac.util.List.nil());
+    }
+    catch (Exception ignored) {
+
+    }
   }
 
   public void offerClassFile(URI uri, byte[] bytes) {

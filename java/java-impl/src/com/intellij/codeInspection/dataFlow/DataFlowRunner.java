@@ -32,6 +32,7 @@ import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import gnu.trove.THashSet;
@@ -42,7 +43,8 @@ import java.util.*;
 
 public class DataFlowRunner {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.dataFlow.DataFlowRunner");
-  private static final long ourTimeLimit = 10000;
+  private static final Key<Integer> TOO_EXPENSIVE_SIZE = Key.create("TOO_EXPENSIVE_SIZE");
+  private static final long ourTimeLimit = 1000;
 
   private Instruction[] myInstructions;
   private DfaVariableValue[] myFields;
@@ -107,12 +109,10 @@ public class DataFlowRunner {
         }
       }
 
-      int branchCount = 0;
-      for (Instruction instruction : myInstructions) {
-        if (instruction instanceof BranchingInstruction) branchCount++;
+      Integer tooExpensiveSize = psiBlock.getUserData(TOO_EXPENSIVE_SIZE);
+      if (tooExpensiveSize != null && tooExpensiveSize == psiBlock.getTextLength()) {
+        return RunnerResult.TOO_COMPLEX;
       }
-
-      if (branchCount > 80) return RunnerResult.TOO_COMPLEX; // Do not even try. Definitely will out of time.
 
       final ArrayList<DfaInstructionState> queue = new ArrayList<DfaInstructionState>();
       for (final DfaMemoryState initialState : initialStates) {
@@ -124,7 +124,10 @@ public class DataFlowRunner {
       final long before = System.currentTimeMillis();
       int count = 0;
       while (!queue.isEmpty()) {
-        if (count % 50 == 0 && !unitTestMode && System.currentTimeMillis() - before > timeLimit) return RunnerResult.TOO_COMPLEX;
+        if (count % 50 == 0 && !unitTestMode && System.currentTimeMillis() - before > timeLimit) {
+          psiBlock.putUserData(TOO_EXPENSIVE_SIZE, psiBlock.getTextLength());
+          return RunnerResult.TOO_COMPLEX;
+        }
         ProgressManager.checkCanceled();
 
         DfaInstructionState instructionState = queue.remove(0);
@@ -155,6 +158,7 @@ public class DataFlowRunner {
         count++;
       }
 
+      psiBlock.putUserData(TOO_EXPENSIVE_SIZE, null);
       return RunnerResult.OK;
     }
     catch (ArrayIndexOutOfBoundsException e) {

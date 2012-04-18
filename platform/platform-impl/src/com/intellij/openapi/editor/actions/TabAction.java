@@ -37,6 +37,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ui.MacUIUtil;
 
 public class TabAction extends EditorAction {
   public TabAction() {
@@ -60,6 +61,7 @@ public class TabAction extends EditorAction {
   }
 
   private static void insertTabAtCaret(Editor editor, Project project) {
+    MacUIUtil.hideCursor();
     int columnNumber = editor.getCaretModel().getLogicalPosition().column;
 
     CodeStyleFacade settings = CodeStyleFacade.getInstance(project);

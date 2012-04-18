@@ -87,7 +87,7 @@ public class JavaVfsSourceRootDetectionUtil {
       if (!child.isDirectory()) {
         FileType type = typeManager.getFileTypeByFileName(child.getName());
         if (StdFileTypes.JAVA == type) {
-          if (progressIndicator != null && progressIndicator.isCanceled()) {
+          if (progressIndicator.isCanceled()) {
             return;
           }
 

@@ -71,4 +71,10 @@
       </grid>
     </children>
   </grid>
+  <buttonGroups>
+    <group name="after_hit_behavior">
+      <member id="8b5ce"/>
+      <member id="44673"/>
+    </group>
+  </buttonGroups>
 </form>

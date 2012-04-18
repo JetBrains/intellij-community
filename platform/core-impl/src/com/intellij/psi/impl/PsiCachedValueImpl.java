@@ -19,6 +19,7 @@ package com.intellij.psi.impl;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -27,7 +28,7 @@ import org.jetbrains.annotations.Nullable;
 public class PsiCachedValueImpl<T> extends PsiCachedValue<T> implements CachedValue<T>  {
   private final CachedValueProvider<T> myProvider;
 
-  public PsiCachedValueImpl(PsiManager manager, CachedValueProvider<T> provider) {
+  public PsiCachedValueImpl(@NotNull PsiManager manager, @NotNull CachedValueProvider<T> provider) {
     super(manager);
     myProvider = provider;
   }
@@ -37,6 +38,7 @@ public class PsiCachedValueImpl<T> extends PsiCachedValue<T> implements CachedVa
     return getValueWithLock(null);
   }
 
+  @NotNull
   @Override
   public CachedValueProvider<T> getValueProvider() {
     return myProvider;

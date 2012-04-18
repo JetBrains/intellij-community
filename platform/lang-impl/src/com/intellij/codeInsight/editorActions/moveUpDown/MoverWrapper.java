@@ -131,7 +131,6 @@ class MoverWrapper {
         }
       });
     }
-    CodeFoldingManager.getInstance(project).allowFoldingOnCaretLine(editor);
 
     if (hasSelection) {
       restoreSelection(editor, selectionStart, selectionEnd, start, myInfo.range2.getStartOffset());

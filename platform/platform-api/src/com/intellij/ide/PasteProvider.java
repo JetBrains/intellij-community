@@ -17,14 +17,15 @@
 package com.intellij.ide;
 
 import com.intellij.openapi.actionSystem.DataContext;
+import org.jetbrains.annotations.NotNull;
 
 public interface PasteProvider {
-  void performPaste(DataContext dataContext);
+  void performPaste(@NotNull DataContext dataContext);
 
   /**
    * Should perform fast and memory cheap negation. May return incorrect true.
    * See #12326
    */
-  boolean isPastePossible(DataContext dataContext);
-  boolean isPasteEnabled(DataContext dataContext);
+  boolean isPastePossible(@NotNull DataContext dataContext);
+  boolean isPasteEnabled(@NotNull DataContext dataContext);
 }

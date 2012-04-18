@@ -174,8 +174,8 @@ public class SrcRepositoryUseTest extends PsiTestCase{
     PsiClass aClass = classes[0];
     PsiClass[] superTypes = aClass.getSupers();
     LOG.assertTrue(superTypes.length == 2);
-    LOG.assertTrue(superTypes[0].getQualifiedName().equals("java.lang.String"));
-    LOG.assertTrue(superTypes[1].getQualifiedName().equals("java.lang.Runnable"));
+    LOG.assertTrue(superTypes[0].getQualifiedName().equals(CommonClassNames.JAVA_LANG_STRING));
+    LOG.assertTrue(superTypes[1].getQualifiedName().equals(CommonClassNames.JAVA_LANG_RUNNABLE));
 
     teardownLoadingFilter();
   }

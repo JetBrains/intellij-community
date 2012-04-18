@@ -19,6 +19,7 @@ import com.intellij.codeInsight.completion.scope.JavaCompletionProcessor;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementWeigher;
 import com.intellij.psi.*;
+import com.intellij.psi.filters.getters.MembersGetter;
 import com.intellij.psi.util.PropertyUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -44,8 +45,9 @@ public class PreferLocalVariablesLiteralsAndAnnoMethodsWeigher extends LookupEle
     qualifiedWithField,
     qualifiedWithGetter,
     superMethodParameters,
-    collectionFactory,
     normal,
+    collectionFactory,
+    expectedTypeMember,
     nonInitialized,
     classLiteral,
     className,
@@ -75,7 +77,10 @@ public class PreferLocalVariablesLiteralsAndAnnoMethodsWeigher extends LookupEle
       if (item.getUserData(CollectionsUtilityMethodsProvider.COLLECTION_FACTORY) != null) {
         return MyResult.collectionFactory;
       }
-      
+      if (Boolean.TRUE.equals(item.getUserData(MembersGetter.EXPECTED_TYPE_INHERITOR_MEMBER))) {
+        return MyResult.expectedTypeMember;
+      }
+
       final JavaChainLookupElement chain = item.as(JavaChainLookupElement.CLASS_CONDITION_KEY);
       if (chain != null) {
         Object qualifier = chain.getQualifier().getObject();

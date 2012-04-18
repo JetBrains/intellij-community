@@ -17,9 +17,7 @@ package com.intellij.util.io;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.LowMemoryWatcher;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
-import com.intellij.openapi.util.io.ByteSequence;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
@@ -53,14 +51,15 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
   @NonNls
   public static final String DATA_FILE_EXTENSION = ".values";
   private long myLiveAndGarbageKeysCounter; // first four bytes contain live keys count (updated via LIVE_KEY_MASK), last four bytes - number of dead keys
+  private int myReadCompactionGarbageSize;
   private static final long LIVE_KEY_MASK = (1L << 32);
   private static final long USED_LONG_VALUE_MASK = 1L << 62;
   private static final int POSITIVE_VALUE_SHIFT = 1;
   private final int myParentValueRefOffset;
-  private final byte[] myRecordBuffer;
-  private final byte[] mySmallRecordBuffer;
+  @NotNull private final byte[] myRecordBuffer;
+  @NotNull private final byte[] mySmallRecordBuffer;
   private final boolean myCanReEnumerate;
-  private int myWatermarkId;
+  private int myLargeIndexWatermarkId;  // starting with this id we store offset in adjacent file in long format
   private boolean myIntAddressForNewRecord;
   private static final boolean doHardConsistencyChecks = false;
 
@@ -73,28 +72,34 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
       ((UnsyncByteArrayOutputStream)out).reset();
     }
     
+    @NotNull
     private BufferExposingByteArrayOutputStream getInternalBuffer() {
       return (BufferExposingByteArrayOutputStream)out;      
     }
   }
 
   private final LimitedPool<AppendStream> myStreamPool = new LimitedPool<AppendStream>(10, new LimitedPool.ObjectFactory<AppendStream>() {
+    @Override
+    @NotNull
     public AppendStream create() {
       return new AppendStream();
     }
 
-    public void cleanup(final AppendStream appendStream) {
+    @Override
+    public void cleanup(@NotNull final AppendStream appendStream) {
       appendStream.reset();
     }
   });  
 
   private final SLRUCache<Key, AppendStream> myAppendCache = new SLRUCache<Key, AppendStream>(16 * 1024, 4 * 1024) {
+    @Override
     @NotNull
     public AppendStream createValue(final Key key) {
       return myStreamPool.alloc();
     }
 
-    protected void onDropFromCache(final Key key, final AppendStream value) {
+    @Override
+    protected void onDropFromCache(final Key key, @NotNull final AppendStream value) {
       synchronized (PersistentEnumerator.ourLock) {
         try {
           final BufferExposingByteArrayOutputStream bytes = value.getInternalBuffer();
@@ -122,17 +127,18 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
   }
 
   private final LowMemoryWatcher myAppendCacheFlusher = LowMemoryWatcher.register(new LowMemoryWatcher.ForceableAdapter() {
+    @Override
     public void force() {
       //System.out.println("Flushing caches: " + myFile.getPath());
       dropMemoryCaches();
     }
   });
 
-  public PersistentHashMap(final File file, KeyDescriptor<Key> keyDescriptor, DataExternalizer<Value> valueExternalizer) throws IOException {
+  public PersistentHashMap(@NotNull final File file, @NotNull KeyDescriptor<Key> keyDescriptor, @NotNull DataExternalizer<Value> valueExternalizer) throws IOException {
     this(file, keyDescriptor, valueExternalizer, INITIAL_INDEX_SIZE);
   }
   
-  public PersistentHashMap(final File file, KeyDescriptor<Key> keyDescriptor, DataExternalizer<Value> valueExternalizer, final int initialSize) throws IOException {
+  public PersistentHashMap(@NotNull final File file, @NotNull KeyDescriptor<Key> keyDescriptor, @NotNull DataExternalizer<Value> valueExternalizer, final int initialSize) throws IOException {
     super(checkDataFiles(file), keyDescriptor, initialSize);
 
     final PersistentEnumeratorBase.RecordBufferHandler<PersistentEnumeratorBase> recordHandler = myEnumerator.getRecordHandler();
@@ -153,7 +159,7 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
       }
 
       @Override
-      void setupRecord(PersistentEnumeratorBase enumerator, int hashCode, int dataOffset, byte[] buf) {
+      void setupRecord(PersistentEnumeratorBase enumerator, int hashCode, int dataOffset, @NotNull byte[] buf) {
         recordHandler.setupRecord(enumerator, hashCode, dataOffset, buf);
         for (int i = myParentValueRefOffset; i < buf.length; i++) {
           buf[i] = 0;
@@ -166,7 +172,7 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
         @Override
         public void flush() throws IOException {
           myEnumerator.putMetaData(myLiveAndGarbageKeysCounter);
-          myEnumerator.putMetaData2(myWatermarkId);
+          myEnumerator.putMetaData2(myLargeIndexWatermarkId | ((long)myReadCompactionGarbageSize << 32));
         }
       }
     );
@@ -175,7 +181,9 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
       myValueExternalizer = valueExternalizer;
       myValueStorage = PersistentHashMapValueStorage.create(getDataFile(file).getPath());
       myLiveAndGarbageKeysCounter = myEnumerator.getMetaData();
-      myWatermarkId = (int)myEnumerator.getMetaData2();
+      long data2 = myEnumerator.getMetaData2();
+      myLargeIndexWatermarkId = (int)(data2 & 0xFFFFFFFF);
+      myReadCompactionGarbageSize = (int)(data2 >>> 32);
       myCanReEnumerate = myEnumerator.canReEnumerate();
 
       if (makesSenseToCompact()) {
@@ -209,25 +217,37 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
 
   private boolean makesSenseToCompact() {
     final long fileSize = getDataFile(myEnumerator.myFile).length();
-    if (fileSize > 5 * 1024 * 1024) { // file is longer than 5MB and more than 50% of keys is garbage
+    final int megabyte = 1024 * 1024;
+
+    if (fileSize > 5 * megabyte) { // file is longer than 5MB and (more than 50% of keys is garbage or approximate benefit larger than 100M)
       int liveKeys = (int)(myLiveAndGarbageKeysCounter / LIVE_KEY_MASK);
-      int oldKeys = (int)(myLiveAndGarbageKeysCounter & 0xFFFFFFFF);
-      return oldKeys > liveKeys;
+      int deadKeys = (int)(myLiveAndGarbageKeysCounter & 0xFFFFFFFF);
+
+      if (deadKeys < 50) return false;
+
+      final int benefitSize = 100 * megabyte;
+      final long avgValueSize = fileSize / (liveKeys + deadKeys);
+
+      return deadKeys > liveKeys ||
+             avgValueSize *deadKeys > benefitSize ||
+             myReadCompactionGarbageSize > (fileSize / 2);
     }
     return false;
   }
 
-  private static File checkDataFiles(final File file) {
+  @NotNull
+  private static File checkDataFiles(@NotNull final File file) {
     if (!file.exists()) {
       deleteFilesStartingWith(getDataFile(file));
     }
     return file;
   }
 
-  public static void deleteFilesStartingWith(File prefixFile) {
+  public static void deleteFilesStartingWith(@NotNull File prefixFile) {
     final String baseName = prefixFile.getName();
     final File[] files = prefixFile.getParentFile().listFiles(new FileFilter() {
-      public boolean accept(final File pathName) {
+      @Override
+      public boolean accept(@NotNull final File pathName) {
         return pathName.getName().startsWith(baseName);
       }
     });
@@ -238,10 +258,12 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
     }
   }
 
-  private static File getDataFile(final File file) {
+  @NotNull
+  private static File getDataFile(@NotNull final File file) {
     return new File(file.getParentFile(), file.getName() + DATA_FILE_EXTENSION);
   }
 
+  @Override
   public final void put(Key key, Value value) throws IOException {
     synchronized (myEnumerator) {
       doPut(key, value);
@@ -284,13 +306,13 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
     void append(DataOutput out) throws IOException;
   }
   
-  public final void appendData(Key key, ValueDataAppender appender) throws IOException {
+  public final void appendData(Key key, @NotNull ValueDataAppender appender) throws IOException {
     synchronized (myEnumerator) {
       doAppendData(key, appender);
     }
   }
 
-  protected void doAppendData(Key key, ValueDataAppender appender) throws IOException {
+  protected void doAppendData(Key key, @NotNull ValueDataAppender appender) throws IOException {
     myEnumerator.markDirty(true);
 
     final AppendStream stream = myAppendCache.get(key);
@@ -301,6 +323,7 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
    * Process all keys registered in the map. Note that keys which were removed after {@link #compact()} call will be processed as well. Use
    * {@link #processKeysWithExistingMapping(com.intellij.util.Processor)} to process only keys with existing mappings
    */
+  @Override
   public final boolean processKeys(Processor<Key> processor) throws IOException {
     synchronized (myEnumerator) {
       myAppendCache.clear();
@@ -308,6 +331,7 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
     }
   }
 
+  @NotNull
   public Collection<Key> getAllKeysWithExistingMapping() throws IOException {
     final List<Key> values = new ArrayList<Key>();
     processKeysWithExistingMapping(new CommonProcessors.CollectProcessor<Key>(values));
@@ -318,6 +342,7 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
     synchronized (myEnumerator) {
       myAppendCache.clear();
       return myEnumerator.processAllDataObject(processor, new PersistentEnumerator.DataFilter() {
+        @Override
         public boolean accept(final int id) {
           return readValueId(id) != NULL_ADDR;
         }
@@ -325,13 +350,15 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
     }
   }
 
-  public final @Nullable Value get(Key key) throws IOException {
+  @Override
+  public final Value get(Key key) throws IOException {
     synchronized (myEnumerator) {
       return doGet(key);
     }
   }
 
-  protected @Nullable Value doGet(Key key) throws IOException {
+  @Nullable
+  protected Value doGet(Key key) throws IOException {
     synchronized (PersistentEnumerator.ourLock) {
       myAppendCache.remove(key);
       final int id = tryEnumerate(key);
@@ -343,15 +370,16 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
         return null;
       }
 
-      Pair<Long, byte[]> readResult = myValueStorage.readBytes(oldHeader);
-      if (readResult.first != null && readResult.first != oldHeader) {
+      PersistentHashMapValueStorage.ReadResult readResult = myValueStorage.readBytes(oldHeader);
+      if (readResult.offset != oldHeader) {
         myEnumerator.markDirty(true);
 
-        updateValueId(id, readResult.first, oldHeader, key, 0);
+        updateValueId(id, readResult.offset, oldHeader, key, 0);
         myLiveAndGarbageKeysCounter++;
+        myReadCompactionGarbageSize += readResult.buffer.length;
       }
 
-      final DataInputStream input = new DataInputStream(new UnsyncByteArrayInputStream(readResult.second));
+      final DataInputStream input = new DataInputStream(new UnsyncByteArrayInputStream(readResult.buffer));
       try {
         return myValueExternalizer.read(input);
       }
@@ -402,12 +430,14 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
     }
   }
 
+  @Override
   public final void markDirty() throws IOException {
     synchronized (myEnumerator) {
       myEnumerator.markDirty(true);
     }
   }
 
+  @Override
   public final void force() {
     synchronized (myEnumerator) {
       doForce();
@@ -430,6 +460,7 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
     myValueStorage.force();
   }
 
+  @Override
   public final void close() throws IOException {
     synchronized (myEnumerator) {
       doClose();
@@ -457,13 +488,15 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
       final PersistentHashMapValueStorage newStorage = PersistentHashMapValueStorage.create(newPath);
       myValueStorage.switchToCompactionMode();
       myLiveAndGarbageKeysCounter = 0;
+      myReadCompactionGarbageSize = 0;
 
       traverseAllRecords(new PersistentEnumerator.RecordsProcessor() {
+        @Override
         public boolean process(final int keyId) throws IOException {
           final long record = readValueId(keyId);
           if (record != NULL_ADDR) {
-            Pair<Long, byte[]> readResult = myValueStorage.readBytes(record);
-            long value = newStorage.appendBytes(new ByteSequence(readResult.second), 0);
+            PersistentHashMapValueStorage.ReadResult readResult = myValueStorage.readBytes(record);
+            long value = newStorage.appendBytes(readResult.buffer, 0, readResult.buffer.length, 0);
             updateValueId(keyId, value, record, null, getCurrentKey());
             myLiveAndGarbageKeysCounter += LIVE_KEY_MASK;
           }
@@ -515,8 +548,10 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
         myEnumerator.myStorage.putInt(keyId + myParentValueRefOffset, -(int)(value + POSITIVE_VALUE_SHIFT));
         if (newKey) ++smallKeys;
       } else {
-        if (newKey && myWatermarkId == 0) myWatermarkId = keyId;
-        if (keyId < myWatermarkId && (oldValue == NULL_ADDR || canUseIntAddressForNewRecord(oldValue))) {
+        if (newKey && myLargeIndexWatermarkId == 0) {
+          myLargeIndexWatermarkId = keyId;
+        }
+        if (keyId < myLargeIndexWatermarkId && (oldValue == NULL_ADDR || canUseIntAddressForNewRecord(oldValue))) {
           // keyId is result of enumerate, if we do reenumerate then it is no longer accessible unless somebody cached it
           myIntAddressForNewRecord = false;
           keyId = myEnumerator.reenumerate(key == null ? myEnumerator.getValue(keyId, processingKey) : key);

@@ -53,6 +53,7 @@ import com.sun.jdi.request.EventRequest;
 import com.sun.jdi.request.MethodEntryRequest;
 import com.sun.jdi.request.MethodExitRequest;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -64,16 +65,16 @@ public class MethodBreakpoint extends BreakpointWithHighlighter {
   public boolean WATCH_ENTRY = true;
   public boolean WATCH_EXIT  = true;
 
-  private String myMethodName;
-  private JVMName mySignature;
+  @Nullable private String myMethodName;
+  @Nullable private JVMName mySignature;
   private boolean myIsStatic;
 
-  public static Icon ICON = IconLoader.getIcon("/debugger/db_method_breakpoint.png");
-  public static Icon MUTED_ICON = IconLoader.getIcon("/debugger/db_muted_method_breakpoint.png");
-  public static Icon DISABLED_ICON = IconLoader.getIcon("/debugger/db_disabled_method_breakpoint.png");
-  public static Icon DISABLED_DEP_ICON = IconLoader.getIcon("/debugger/db_dep_method_breakpoint.png");
-  public static Icon MUTED_DISABLED_ICON = IconLoader.getIcon("/debugger/db_muted_disabled_method_breakpoint.png");
-  public static Icon MUTED_DISABLED_DEP_ICON = IconLoader.getIcon("/debugger/db_muted_dep_method_breakpoint.png");
+  @NotNull public static Icon ICON = IconLoader.getIcon("/debugger/db_method_breakpoint.png");
+  @NotNull public static Icon MUTED_ICON = IconLoader.getIcon("/debugger/db_muted_method_breakpoint.png");
+  @NotNull public static Icon DISABLED_ICON = IconLoader.getIcon("/debugger/db_disabled_method_breakpoint.png");
+  @NotNull public static Icon DISABLED_DEP_ICON = IconLoader.getIcon("/debugger/db_dep_method_breakpoint.png");
+  @NotNull public static Icon MUTED_DISABLED_ICON = IconLoader.getIcon("/debugger/db_muted_disabled_method_breakpoint.png");
+  @NotNull public static Icon MUTED_DISABLED_DEP_ICON = IconLoader.getIcon("/debugger/db_muted_dep_method_breakpoint.png");
   private static final Icon ourInvalidIcon = IconLoader.getIcon("/debugger/db_invalid_method_breakpoint.png");
   private static final Icon ourMutedInvalidIcon = IconLoader.getIcon("/debugger/db_muted_invalid_method_breakpoint.png");
   private static final Icon ourVerifiedIcon = IconLoader.getIcon("/debugger/db_verified_method_breakpoint.png");
@@ -82,11 +83,11 @@ public class MethodBreakpoint extends BreakpointWithHighlighter {
   private static final Icon ourMutedVerifiedWarningIcon = IconLoader.getIcon("/debugger/db_muted_method_warning_breakpoint.png");
   public static final @NonNls Key<MethodBreakpoint> CATEGORY = BreakpointCategory.lookup("method_breakpoints");
 
-  protected MethodBreakpoint(Project project) {
+  protected MethodBreakpoint(@NotNull Project project) {
     super(project);
   }
 
-  private MethodBreakpoint(Project project, RangeHighlighter highlighter) {
+  private MethodBreakpoint(@NotNull Project project, @NotNull RangeHighlighter highlighter) {
     super(project, highlighter);
   }
 
@@ -94,10 +95,12 @@ public class MethodBreakpoint extends BreakpointWithHighlighter {
     return myIsStatic;
   }
 
+  @NotNull
   public Key<MethodBreakpoint> getCategory() {
     return CATEGORY;
   }
 
+  @Nullable
   public PsiMethod getPsiMethod() {
     Document document = getDocument();
     if(document == null) return null;
@@ -114,7 +117,7 @@ public class MethodBreakpoint extends BreakpointWithHighlighter {
     return super.isValid() && myMethodName != null;
   }
 
-  protected void reload(PsiFile psiFile) {
+  protected void reload(@NotNull PsiFile psiFile) {
     myMethodName = null;
     mySignature = null;
 
@@ -129,7 +132,7 @@ public class MethodBreakpoint extends BreakpointWithHighlighter {
     }
   }
 
-  protected void createRequestForPreparedClass(DebugProcessImpl debugProcess, ReferenceType classType) {
+  protected void createRequestForPreparedClass(@NotNull DebugProcessImpl debugProcess, @NotNull ReferenceType classType) {
     try {
       boolean hasMethod = false;
       for (Iterator iterator = classType.allMethods().iterator(); iterator.hasNext();) {
@@ -183,7 +186,7 @@ public class MethodBreakpoint extends BreakpointWithHighlighter {
   }
 
 
-  public String getEventMessage(LocatableEvent event) {
+  public String getEventMessage(@NotNull LocatableEvent event) {
     final Location location = event.location();
     final String locationQName = location.declaringType().name() + "." + location.method().name();
     String locationFileName = "";
@@ -223,6 +226,7 @@ public class MethodBreakpoint extends BreakpointWithHighlighter {
     return getPsiClass();
   }
 
+  @NotNull
   protected Icon getDisabledIcon(boolean isMuted) {
     final Breakpoint master = DebuggerManagerEx.getInstanceEx(myProject).getBreakpointManager().findMasterBreakpoint(this);
     if (isMuted) {
@@ -233,18 +237,22 @@ public class MethodBreakpoint extends BreakpointWithHighlighter {
     }
   }
 
+  @NotNull
   protected Icon getSetIcon(boolean isMuted) {
     return isMuted? MUTED_ICON : ICON;
   }
 
+  @NotNull
   protected Icon getInvalidIcon(boolean isMuted) {
     return isMuted? ourMutedInvalidIcon : ourInvalidIcon;
   }
 
+  @NotNull
   protected Icon getVerifiedIcon(boolean isMuted) {
     return isMuted? ourMutedVerifiedIcon : ourVerifiedIcon;
   }
 
+  @NotNull
   protected Icon getVerifiedWarningsIcon(boolean isMuted) {
     return isMuted? ourMutedVerifiedWarningIcon : ourVerifiedWarningIcon;
   }
@@ -275,14 +283,14 @@ public class MethodBreakpoint extends BreakpointWithHighlighter {
     }
   }
 
-  public boolean evaluateCondition(EvaluationContextImpl context, LocatableEvent event) throws EvaluateException {
+  public boolean evaluateCondition(@NotNull EvaluationContextImpl context, @NotNull LocatableEvent event) throws EvaluateException {
     if (!matchesEvent(event, context.getDebugProcess())) {
       return false;
     }
     return super.evaluateCondition(context, event);
   }
 
-  public boolean matchesEvent(final LocatableEvent event, final DebugProcessImpl process) throws EvaluateException {
+  public boolean matchesEvent(@NotNull final LocatableEvent event, final DebugProcessImpl process) throws EvaluateException {
     if (myMethodName == null || mySignature == null) {
       return false;
     }
@@ -290,7 +298,8 @@ public class MethodBreakpoint extends BreakpointWithHighlighter {
     return method != null && method.name().equals(myMethodName) && method.signature().equals(mySignature.getName(process));
   }
 
-  public static MethodBreakpoint create(Project project, Document document, int lineIndex) {
+  @Nullable
+  public static MethodBreakpoint create(@NotNull Project project, @NotNull Document document, int lineIndex) {
     final MethodBreakpoint breakpoint = new MethodBreakpoint(project, createHighlighter(project, document, lineIndex));
     return (MethodBreakpoint)breakpoint.init();
   }
@@ -304,7 +313,7 @@ public class MethodBreakpoint extends BreakpointWithHighlighter {
    * finds FQ method's class name and method's signature
    */
   @Nullable
-  private static MethodDescriptor getMethodDescriptor(final Project project, final PsiFile psiJavaFile, final SourcePosition sourcePosition) {
+  private static MethodDescriptor getMethodDescriptor(@NotNull final Project project, @NotNull final PsiFile psiJavaFile, @NotNull final SourcePosition sourcePosition) {
     final PsiDocumentManager docManager = PsiDocumentManager.getInstance(project);
     final Document document = docManager.getDocument(psiJavaFile);
     if(document == null) {
@@ -312,6 +321,7 @@ public class MethodBreakpoint extends BreakpointWithHighlighter {
     }
     //final int endOffset = document.getLineEndOffset(sourcePosition);
     final MethodDescriptor descriptor = docManager.commitAndRunReadAction(new Computable<MethodDescriptor>() {
+      @Nullable
       public MethodDescriptor compute() {
         //PsiMethod method = DebuggerUtilsEx.findPsiMethod(psiJavaFile, endOffset);
         PsiMethod method = PositionUtil.getPsiElementAt(project, PsiMethod.class, sourcePosition);
@@ -349,7 +359,8 @@ public class MethodBreakpoint extends BreakpointWithHighlighter {
     return descriptor;
   }
 
-  private EventRequest findRequest(DebugProcessImpl debugProcess, Class requestClass) {
+  @Nullable
+  private EventRequest findRequest(@NotNull DebugProcessImpl debugProcess, Class requestClass) {
     Set reqSet = debugProcess.getRequestsManager().findRequests(this);
     for (Iterator iterator = reqSet.iterator(); iterator.hasNext();) {
       EventRequest eventRequest = (EventRequest) iterator.next();
@@ -365,7 +376,7 @@ public class MethodBreakpoint extends BreakpointWithHighlighter {
     return getDescription();
   }
 
-  public boolean isBodyAt(Document document, int offset) {
+  public boolean isBodyAt(@NotNull Document document, int offset) {
     PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
     if(psiFile instanceof PsiJavaFile) {
       PsiMethod method = DebuggerUtilsEx.findPsiMethod(psiFile, offset);

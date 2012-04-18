@@ -105,7 +105,8 @@ public class XmlEntityDeclImpl extends XmlElementImpl implements XmlEntityDecl, 
   }
 
   public PsiElement parse(PsiFile baseFile, int context, final XmlEntityRef originalElement) {
-    PsiElement dependsOnElement = getValueElement(baseFile);
+    PsiElement dep = XmlElement.DEPENDING_ELEMENT.get(getParent());
+    PsiElement dependsOnElement = getValueElement(dep instanceof PsiFile ? (PsiFile)dep : baseFile);
     String value = null;
     if (dependsOnElement instanceof XmlAttributeValue) {
       XmlAttributeValue attributeValue = (XmlAttributeValue)dependsOnElement;

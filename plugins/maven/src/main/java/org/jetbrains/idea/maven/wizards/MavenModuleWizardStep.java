@@ -24,7 +24,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.containers.Convertor;
-import com.intellij.util.ui.AbstractLayoutManager;
 import com.intellij.util.ui.AsyncProcessIcon;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -45,7 +44,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.*;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 public class MavenModuleWizardStep extends ModuleWizardStep {
   private static final Icon WIZARD_ICON = IconLoader.getIcon("/addmodulewizard.png");
@@ -90,6 +88,8 @@ public class MavenModuleWizardStep extends ModuleWizardStep {
 
   private Object myCurrentUpdaterMarker;
   private final AsyncProcessIcon myLoadingIcon = new AsyncProcessIcon.Big(getClass() + ".loading");
+
+  private boolean skipUpdateUI;
 
   public MavenModuleWizardStep(@Nullable Project project, MavenModuleBuilder builder) {
     myProjectOrNull = project;
@@ -140,6 +140,12 @@ public class MavenModuleWizardStep extends ModuleWizardStep {
     myInheritVersionCheckBox.addActionListener(updatingListener);
 
     myUseArchetypeCheckBox.addActionListener(updatingListener);
+    myUseArchetypeCheckBox.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        archetypeMayBeChanged();
+      }
+    });
 
     myAddArchetypeButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
@@ -155,6 +161,7 @@ public class MavenModuleWizardStep extends ModuleWizardStep {
     myArchetypesTree.getSelectionModel().addTreeSelectionListener(new TreeSelectionListener() {
       public void valueChanged(TreeSelectionEvent e) {
         updateArchetypeDescription();
+        archetypeMayBeChanged();
       }
     });
 
@@ -167,6 +174,20 @@ public class MavenModuleWizardStep extends ModuleWizardStep {
 
     myArchetypeDescriptionField.setEditable(false);
     myArchetypeDescriptionField.setBackground(UIUtil.getPanelBackground());
+  }
+
+  private void archetypeMayBeChanged() {
+    MavenArchetype selectedArchetype = getSelectedArchetype();
+    if (((myBuilder.getArchetype() == null) != (selectedArchetype == null))) {
+      myBuilder.setArchetype(selectedArchetype);
+      skipUpdateUI = true;
+      try {
+        fireStateChanged();
+      }
+      finally {
+        skipUpdateUI = false;
+      }
+    }
   }
 
   @Override
@@ -253,6 +274,8 @@ public class MavenModuleWizardStep extends ModuleWizardStep {
 
   @Override
   public void updateStep() {
+    if (skipUpdateUI) return;
+
     if (isMavenizedProject()) {
       MavenProject parent = myBuilder.findPotentialParentProject(myProjectOrNull);
       myAggregator = parent;
@@ -429,7 +452,7 @@ public class MavenModuleWizardStep extends ModuleWizardStep {
     myArchetypesTree.setBackground(archetypesEnabled ? UIUtil.getListBackground() : UIUtil.getPanelBackground());
   }
 
-  private String formatProjectString(MavenProject project) {
+  private static String formatProjectString(MavenProject project) {
     if (project == null) return "<none>";
     return project.getMavenId().getDisplayString();
   }
@@ -448,12 +471,13 @@ public class MavenModuleWizardStep extends ModuleWizardStep {
     myBuilder.setArchetype(getSelectedArchetype());
   }
 
+  @Nullable
   private MavenArchetype getSelectedArchetype() {
     if (!myUseArchetypeCheckBox.isSelected() || myArchetypesTree.isSelectionEmpty()) return null;
     return getArchetypeInfoFromPathComponent(myArchetypesTree.getLastSelectedPathComponent());
   }
 
-  private MavenArchetype getArchetypeInfoFromPathComponent(Object sel) {
+  private static MavenArchetype getArchetypeInfoFromPathComponent(Object sel) {
     return (MavenArchetype)((DefaultMutableTreeNode)sel).getUserObject();
   }
 

@@ -126,7 +126,7 @@ class MouseShortcutDialog extends DialogWrapper{
 
     JPanel clickCountPanel=new JPanel(new GridBagLayout());
     clickCountPanel.setBorder(IdeBorderFactory.createTitledBorder(
-      KeyMapBundle.message("mouse.shortcut.dialog.click.count.border"), false, true, true));
+      KeyMapBundle.message("mouse.shortcut.dialog.click.count.border"), true));
     panel.add(
       clickCountPanel,
       new GridBagConstraints(0,0,1,1,1,0,GridBagConstraints.CENTER,GridBagConstraints.HORIZONTAL,new Insets(0,0,0,0),0,0)
@@ -156,7 +156,7 @@ class MouseShortcutDialog extends DialogWrapper{
       new GridBagConstraints(0,1,1,1,1,0,GridBagConstraints.CENTER,GridBagConstraints.BOTH,new Insets(0,0,4,0),0,0)
     );
     clickPadPanel.setBorder(IdeBorderFactory.createTitledBorder(
-      KeyMapBundle.message("mouse.shortcut.dialog.click.pad.border"), false, true, true));
+      KeyMapBundle.message("mouse.shortcut.dialog.click.pad.border"), true));
     myClickPad.setPreferredSize(new Dimension(260,60));
     clickPadPanel.add(myClickPad,BorderLayout.CENTER);
 
@@ -164,7 +164,7 @@ class MouseShortcutDialog extends DialogWrapper{
 
     JPanel previewPanel=new JPanel(new GridBagLayout());
     previewPanel.setBorder(IdeBorderFactory.createTitledBorder(
-      KeyMapBundle.message("mouse.shortcut.dialog.shortcut.preview.border"), false, true, true));
+      KeyMapBundle.message("mouse.shortcut.dialog.shortcut.preview.border"), true));
     panel.add(
       previewPanel,
       new GridBagConstraints(0,2,1,1,1,0,GridBagConstraints.CENTER,GridBagConstraints.BOTH,new Insets(0,0,4,0),0,0)
@@ -178,7 +178,7 @@ class MouseShortcutDialog extends DialogWrapper{
 
     JPanel conflictsPanel=new JPanel(new GridBagLayout());
     conflictsPanel.setBorder(IdeBorderFactory.createTitledBorder(
-      KeyMapBundle.message("mouse.shortcut.dialog.conflicts.border"), false, true, true));
+      KeyMapBundle.message("mouse.shortcut.dialog.conflicts.border"), true));
     panel.add(
       conflictsPanel,
       new GridBagConstraints(0,3,1,1,1,1,GridBagConstraints.CENTER,GridBagConstraints.BOTH,new Insets(0,0,0,0),0,0)

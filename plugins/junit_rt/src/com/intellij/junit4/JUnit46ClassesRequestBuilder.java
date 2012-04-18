@@ -21,13 +21,13 @@
 package com.intellij.junit4;
 
 import org.junit.internal.builders.AllDefaultPossibilitiesBuilder;
+import org.junit.internal.builders.SuiteMethodBuilder;
+import org.junit.internal.runners.ErrorReportingRunner;
 import org.junit.runner.Request;
 import org.junit.runner.Runner;
 import org.junit.runners.model.InitializationError;
 
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class JUnit46ClassesRequestBuilder {
   private JUnit46ClassesRequestBuilder() {}
@@ -35,13 +35,39 @@ public class JUnit46ClassesRequestBuilder {
   public static Request getClassesRequest(final String suiteName, Class[] classes, Map classMethods) {
     boolean canUseSuiteMethod = canUseSuiteMethod(classMethods);
     try {
-      final AllDefaultPossibilitiesBuilder builder = new AllDefaultPossibilitiesBuilder(canUseSuiteMethod);
-      final Runner suite = new IdeaSuite(builder, classes, suiteName);
+      final Runner suite;
+      if (canUseSuiteMethod) {
+        suite = new IdeaSuite(collectWrappedRunners(classes), suiteName);
+      } else {
+        final AllDefaultPossibilitiesBuilder builder = new AllDefaultPossibilitiesBuilder(canUseSuiteMethod);
+        suite = new IdeaSuite(builder, classes, suiteName);
+      }
       return Request.runner(suite);
     }
     catch (InitializationError e) {
       throw new RuntimeException(e);
     }
+  }
+
+  private static List collectWrappedRunners(Class[] classes) throws InitializationError {
+    final List runners = new ArrayList();
+    final List nonSuiteClasses = new ArrayList();
+    final SuiteMethodBuilder suiteMethodBuilder = new SuiteMethodBuilder();
+    for (int i = 0, length = classes.length; i < length; i++) {
+      Class aClass = classes[i];
+      if (suiteMethodBuilder.hasSuiteMethod(aClass)) {
+        try {
+          runners.add(new ClassAwareSuiteMethod(aClass));
+        }
+        catch (Throwable throwable) {
+          runners.add(new ErrorReportingRunner(aClass, throwable));
+        }
+      } else {
+        nonSuiteClasses.add(aClass);
+      }
+    }
+    runners.addAll(new AllDefaultPossibilitiesBuilder(false).runners(null, (Class[])nonSuiteClasses.toArray(new Class[nonSuiteClasses.size()])));
+    return runners;
   }
 
   private static boolean canUseSuiteMethod(Map classMethods) {

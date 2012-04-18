@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -109,14 +109,16 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
     myVisualLineEnd = doc.getLineCount() > 1 ? doc.getLineStartOffset(1) : doc.getLineCount() == 0 ? 0 : doc.getLineEndOffset(0);
     DocumentBulkUpdateListener bulkUpdateListener = new DocumentBulkUpdateListener() {
       @Override
-      public void updateStarted(Document doc) {
-        if (doc != myEditor.getDocument()) return;
+      public void updateStarted(@NotNull Document doc) {
+        if (doc != myEditor.getDocument() && myOffset >= doc.getTextLength() || savedBeforeBulkCaretMarker != null) return;
         savedBeforeBulkCaretMarker = doc.createRangeMarker(myOffset, myOffset);
       }
       @Override
-      public void updateFinished(Document doc) {
+      public void updateFinished(@NotNull Document doc) {
         if (doc != myEditor.getDocument() || myIsInUpdate) return;
-        if (savedBeforeBulkCaretMarker != null && savedBeforeBulkCaretMarker.isValid()) {
+        if (savedBeforeBulkCaretMarker != null && savedBeforeBulkCaretMarker.isValid()
+            && savedBeforeBulkCaretMarker.getStartOffset() != myOffset && !myReportCaretMoves)
+        {
           moveToOffset(savedBeforeBulkCaretMarker.getStartOffset());
         }
         releaseBulkCaretMarker();
@@ -182,7 +184,7 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
     myVisualLineStart = myEditor.logicalPositionToOffset(myEditor.visualToLogicalPosition(new VisualPosition(myVisibleCaret.line, 0)));
     myVisualLineEnd = myEditor.logicalPositionToOffset(myEditor.visualToLogicalPosition(new VisualPosition(myVisibleCaret.line + 1, 0)));
 
-    ((FoldingModelImpl)myEditor.getFoldingModel()).flushCaretPosition();
+    myEditor.getFoldingModel().flushCaretPosition();
 
     myEditor.setLastColumnNumber(myVisibleCaret.column);
     myEditor.updateCaretCursor();
@@ -220,13 +222,15 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
       final DocumentEx document = myEditor.getDocument();
       int textEnd = Math.min(document.getTextLength() - 1, Math.max(offset, myOffset) + 1);
       CharSequence text = document.getCharsSequence().subSequence(textStart, textEnd);
+      StringBuilder positionToOffsetTrace = new StringBuilder();
+      int inverseOffset = myEditor.logicalPositionToOffset(logicalPosition, positionToOffsetTrace);
       LogMessageEx.error(
-        LOG, "caret moved to wrong offset",
+        LOG, "caret moved to wrong offset. Please submit a dedicated ticket and attach current editor's text to it.",
         String.format(
           "Requested: offset=%d, logical position='%s' but actual: offset=%d, logical position='%s' (%s). %s%n"
-          + "interested text [%d;%d): '%s'%n debug trace: %s",
+          + "interested text [%d;%d): '%s'%n debug trace: %s%nLogical position -> offset ('%s'->'%d') trace: %s",
           offset, logicalPosition, myOffset, myLogicalCaret, positionByOffsetAfterMove, myEditor.dumpState(),
-          textStart, textEnd, text, debugBuffer
+          textStart, textEnd, text, debugBuffer, logicalPosition, inverseOffset, positionToOffsetTrace
       ));
     }
     if (event != null) {
@@ -237,7 +241,7 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
   }
 
   public void setIgnoreWrongMoves(boolean ignoreWrongMoves) {
-    this.myIgnoreWrongMoves = ignoreWrongMoves;
+    myIgnoreWrongMoves = ignoreWrongMoves;
   }
 
   @Override
@@ -439,14 +443,14 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
 
     if (column < 0) {
       if (debugBuffer != null) {
-        debugBuffer.append("Resetting target logical column to zero as it is negative (" + column + ")\n");
+        debugBuffer.append("Resetting target logical column to zero as it is negative (").append(column).append(")\n");
       }
       column = 0;
       softWrapColumns = 0;
     }
     if (line < 0) {
       if (debugBuffer != null) {
-        debugBuffer.append("Resetting target logical line to zero as it is negative (" + line + ")\n");
+        debugBuffer.append("Resetting target logical line to zero as it is negative (").append(line).append(")\n");
       }
       line = 0;
       softWrapLinesBefore = 0;
@@ -493,7 +497,7 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
       }
     }
 
-    ((FoldingModelImpl)myEditor.getFoldingModel()).flushCaretPosition();
+    myEditor.getFoldingModel().flushCaretPosition();
 
     VerticalInfo oldInfo = myCaretInfo;
     LogicalPosition oldCaretPosition = myLogicalCaret;
@@ -522,7 +526,7 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
       Runnable runnable = new Runnable() {
         @Override
         public void run() {
-          FoldRegion[] allCollapsedAt = ((FoldingModelImpl)myEditor.getFoldingModel()).fetchCollapsedAt(offset);
+          FoldRegion[] allCollapsedAt = myEditor.getFoldingModel().fetchCollapsedAt(offset);
           for (FoldRegion foldRange : allCollapsedAt) {
             foldRange.setExpanded(true);
           }
@@ -695,9 +699,8 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
         moveToOffset(newLength, performSoftWrapAdjustment);
       }
       else {
-        final int line;
         try {
-          line = event.translateLineViaDiff(myLogicalCaret.line);
+          final int line = event.translateLineViaDiff(myLogicalCaret.line);
           moveToLogicalPosition(new LogicalPosition(line, myLogicalCaret.column), performSoftWrapAdjustment, null, false);
         }
         catch (FilesTooBigForDiffException e1) {

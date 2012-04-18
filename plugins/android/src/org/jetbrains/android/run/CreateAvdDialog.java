@@ -31,7 +31,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.ui.CollectionComboBoxModel;
 import org.jetbrains.android.facet.AndroidFacet;
-import org.jetbrains.android.sdk.AndroidSdk;
+import org.jetbrains.android.sdk.AndroidSdkData;
 import org.jetbrains.android.sdk.AndroidSdkUtils;
 import org.jetbrains.android.sdk.MessageBuildingSdkLog;
 import org.jetbrains.android.util.AndroidBundle;
@@ -163,9 +163,9 @@ public class CreateAvdDialog extends DialogWrapper {
     setTitle(AndroidBundle.message("create.avd.dialog.title"));
     init();
     myAvdManager = manager;
-    final AndroidSdk sdk = facet.getConfiguration().getAndroidSdk();
-    assert sdk != null;
-    IAndroidTarget[] targets = sdk.getTargets();
+    final AndroidSdkData sdkData = facet.getConfiguration().getAndroidSdk();
+    assert sdkData != null;
+    IAndroidTarget[] targets = sdkData.getTargets();
     myTargetBox.setModel(new DefaultComboBoxModel(targets));
     myTargetBox.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {

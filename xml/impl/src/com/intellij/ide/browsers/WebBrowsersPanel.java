@@ -61,7 +61,7 @@ public class WebBrowsersPanel extends JPanel {
   private void createIndividualSettings(@NotNull final BrowsersConfiguration.BrowserFamily family, final JPanel container) {
     final JPanel result = new JPanel();
 
-    result.setBorder(IdeBorderFactory.createTitledBorder(family.getName(), true, true, true));
+    result.setBorder(IdeBorderFactory.createTitledBorder(family.getName(), true));
 
     result.setLayout(new BoxLayout(result, BoxLayout.Y_AXIS));
 

@@ -15,9 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.lang.completion.weighers;
 
-import com.intellij.openapi.util.Condition;
 import com.intellij.patterns.PlatformPatterns;
-import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.ProximityLocation;
 import com.intellij.psi.util.proximity.ReferenceListWeigher;
@@ -32,7 +30,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
  */
 public class GrReferenceListWeigher extends ReferenceListWeigher {
   @Override
-  protected Condition<PsiClass> getPreferredCondition(@NotNull ProximityLocation location) {
+  protected Preference getPreferredCondition(@NotNull ProximityLocation location) {
     PsiElement position = location.getPosition();
     if (PlatformPatterns.psiElement().withParents(GrCodeReferenceElement.class, GrReferenceList.class).accepts(position)) {
       assert position != null;
@@ -41,14 +39,14 @@ public class GrReferenceListWeigher extends ReferenceListWeigher {
       if (parent instanceof GrTypeDefinition) {
         GrTypeDefinition cls = (GrTypeDefinition)parent;
         if (cls.isInterface() && list == cls.getExtendsClause() || list == cls.getImplementsClause()) {
-          return PREFER_INTERFACES;
+          return Preference.Interfaces;
         }
         if (list == cls.getExtendsClause()) {
-          return PREFER_CLASSES;
+          return Preference.Classes;
         }
       }
       if (parent instanceof GrMethod && ((GrMethod)parent).getThrowsList() == list) {
-        return PREFER_EXCEPTIONS;
+        return Preference.Exceptions;
       }
     }
 

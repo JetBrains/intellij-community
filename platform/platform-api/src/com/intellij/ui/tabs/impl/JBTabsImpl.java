@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.impl.content.GraphicsConfig;
 import com.intellij.ui.CaptionPanel;
+import com.intellij.ui.ColorUtil;
 import com.intellij.ui.Gray;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.awt.RelativeRectangle;
@@ -64,7 +65,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 public class JBTabsImpl extends JComponent
   implements JBTabs, PropertyChangeListener, TimerListener, DataProvider, PopupMenuListener, Disposable, JBTabsPresentation, Queryable, QuickActionProvider {
 
-  static DataKey<JBTabsImpl> NAVIGATION_ACTIONS_KEY = DataKey.create("JBTabs");
+  public static DataKey<JBTabsImpl> NAVIGATION_ACTIONS_KEY = DataKey.create("JBTabs");
   
   public static final String EDITOR_TABS = "main.editor.tabs";
   public static final Color MAC_AQUA_BG_COLOR = Gray._200;
@@ -103,18 +104,18 @@ public class JBTabsImpl extends JComponent
 
   private final WeakHashMap<Component, Component> myDeferredToRemove = new WeakHashMap<Component, Component>();
 
-  private final SingleRowLayout mySingleRowLayout = new SingleRowLayout(this);
+  private final SingleRowLayout mySingleRowLayout;
   private final TableLayout myTableLayout = new TableLayout(this);
 
 
-  private TabLayout myLayout = mySingleRowLayout;
+  private TabLayout myLayout;
   private LayoutPassInfo myLastLayoutPass;
   private TabInfo myLastPaintedSelection;
 
   public boolean myForcedRelayout;
 
   private UiDecorator myUiDecorator;
-  static final UiDecorator ourDefaultDecorator = new DefautDecorator();
+  static final UiDecorator ourDefaultDecorator = new DefaultDecorator();
 
   private boolean myPaintFocus;
 
@@ -147,7 +148,7 @@ public class JBTabsImpl extends JComponent
 
   private TimedDeadzone.Length myTabActionsMouseDeadzone = TimedDeadzone.DEFAULT;
 
-  private long myRemoveDefferredRequest;
+  private long myRemoveDeferredRequest;
   private boolean myTestMode;
 
   private JBTabsPosition myPosition = JBTabsPosition.top;
@@ -155,8 +156,6 @@ public class JBTabsImpl extends JComponent
   private final TabsBorder myBorder = new TabsBorder(this);
   private BaseNavigationAction myNextAction;
   private BaseNavigationAction myPrevAction;
-
-  private boolean myWasEverShown;
 
   private boolean myTabDraggingEnabled;
   private DragHelper myDragHelper;
@@ -171,7 +170,6 @@ public class JBTabsImpl extends JComponent
 
   private TabInfo myOldSelection;
   private SelectionChangeHandler mySelectionChangeHandler;
-  private boolean myEditorTabs;
 
   private Runnable myDeferredFocusRequest;
   
@@ -209,6 +207,9 @@ public class JBTabsImpl extends JComponent
 
     setUiDecorator(null);
 
+    mySingleRowLayout = createSingleRowLayout();
+    myLayout = mySingleRowLayout;
+
     myPopupListener = new PopupMenuListener() {
       public void popupMenuWillBecomeVisible(final PopupMenuEvent e) {
       }
@@ -228,6 +229,15 @@ public class JBTabsImpl extends JComponent
             mySingleRowLayout.myLastSingRowLayout.moreRect != null &&
             mySingleRowLayout.myLastSingRowLayout.moreRect.contains(e.getPoint())) {
           showMorePopup(e);
+        }
+      }
+    });
+    addMouseWheelListener(new MouseWheelListener() {
+      @Override
+      public void mouseWheelMoved(MouseWheelEvent e) {
+        if (mySingleRowLayout.myLastSingRowLayout != null) {
+          mySingleRowLayout.scroll(e.getUnitsToScroll() * mySingleRowLayout.getScrollUnitIncrement());
+          revalidateAndRepaint(false);
         }
       }
     });
@@ -287,6 +297,10 @@ public class JBTabsImpl extends JComponent
     };
   }
 
+  protected SingleRowLayout createSingleRowLayout() {
+    return new SingleRowLayout(this);
+  }
+
 
   public JBTabs setNavigationActionBinding(String prevActionId, String nextActionId) {
     if (myNextAction != null) {
@@ -299,12 +313,8 @@ public class JBTabsImpl extends JComponent
     return this;
   }
   
-  public void setEditorTabs(boolean b) {
-    myEditorTabs = b;
-  }
-
   public boolean isEditorTabs() {
-    return myEditorTabs;
+    return false;
   }
 
   public JBTabs setNavigationActionsEnabled(boolean enabled) {
@@ -327,7 +337,9 @@ public class JBTabsImpl extends JComponent
 
     BufferedImage img;
     if (cmp.isShowing()) {
-      img = new BufferedImage(cmp.getWidth(), cmp.getHeight(), BufferedImage.TYPE_INT_ARGB);
+      final int width = cmp.getWidth();
+      final int height = cmp.getHeight();
+      img = new BufferedImage(width > 0 ? width : 500, height > 0 ? height : 500, BufferedImage.TYPE_INT_ARGB);
       Graphics2D g = img.createGraphics();
       cmp.paint(g);
     } else {
@@ -520,13 +532,22 @@ public class JBTabsImpl extends JComponent
     }
   }
 
-  private void showMorePopup(final MouseEvent e) {
+  public boolean canShowMorePopup() {
+    final SingleRowPassInfo lastLayout = mySingleRowLayout.myLastSingRowLayout;
+    return lastLayout != null && lastLayout.moreRect != null;
+  }
+
+  public void showMorePopup(@Nullable final MouseEvent e) {
+    final SingleRowPassInfo lastLayout = mySingleRowLayout.myLastSingRowLayout;
+    if (lastLayout == null) {
+      return;
+    }
     mySingleRowLayout.myMorePopup = new JPopupMenu();
     for (final TabInfo each : myVisibleInfos) {
       final JCheckBoxMenuItem item = new JCheckBoxMenuItem(each.getText());
       Color color = UIManager.getColor("MenuItem.background");
       if (color != null) {
-        if (mySingleRowLayout.myLastSingRowLayout.toDrop.contains(each)) {
+        if (mySingleRowLayout.isTabHidden(each)) {
           color = new Color((int) (color.getRed() * 0.85f), (int) (color.getGreen() * 0.85f), (int) (color.getBlue() * 0.85f));
         }
 
@@ -557,7 +578,15 @@ public class JBTabsImpl extends JComponent
       }
     });
 
-    mySingleRowLayout.myMorePopup.show(this, e.getX(), e.getY());
+    if (e != null) {
+      mySingleRowLayout.myMorePopup.show(this, e.getX(), e.getY());
+    }
+    else {
+      final Rectangle rect = lastLayout.moreRect;
+      if (rect != null) {
+        mySingleRowLayout.myMorePopup.show(this, rect.x, rect.y+rect.height);
+      }
+    }
   }
 
 
@@ -623,10 +652,14 @@ public class JBTabsImpl extends JComponent
 
   @NotNull
   public TabInfo addTab(TabInfo info, int index) {
-    return addTab(info, index, false);
+    return addTab(info, index, false, true);
   }
 
-  private TabInfo addTab(TabInfo info, int index, boolean isDropTarget) {
+  public TabInfo addTabSilently(TabInfo info, int index) {
+    return addTab(info, index, false, false);
+  }
+
+  private TabInfo addTab(TabInfo info, int index, boolean isDropTarget, boolean fireEvents) {
     if (!isDropTarget && getTabs().contains(info)) {
       return getTabs().get(getTabs().indexOf(info));
     }
@@ -665,7 +698,7 @@ public class JBTabsImpl extends JComponent
       updateHiding();
     }
 
-    if (!isDropTarget) {
+    if (!isDropTarget && fireEvents) {
       if (getTabCount() == 1) {
         fireBeforeSelectionChanged(null, info);
         fireSelectionChanged(null, info);
@@ -884,11 +917,11 @@ public class JBTabsImpl extends JComponent
   private ActionCallback removeDeferred() {
     final ActionCallback callback = new ActionCallback();
 
-    final long executionRequest = ++myRemoveDefferredRequest;
+    final long executionRequest = ++myRemoveDeferredRequest;
 
     final Runnable onDone = new Runnable() {
       public void run() {
-        if (myRemoveDefferredRequest == executionRequest) {
+        if (myRemoveDeferredRequest == executionRequest) {
           removeDeferredNow();
         }
 
@@ -1468,11 +1501,6 @@ public class JBTabsImpl extends JComponent
     return insets;
   }
 
-  private int fixInset(int inset, int addin) {
-    return inset + addin;
-  }
-
-
   public int getToolbarInset() {
     return getArcSize() + 1;
   }
@@ -1531,12 +1559,7 @@ public class JBTabsImpl extends JComponent
   }
   
   protected void doPaintBackground(Graphics2D g2d, Rectangle clip) {
-    if (isEditorTabs() && UIUtil.isUnderAquaLookAndFeel()) {
-      g2d.setColor(MAC_AQUA_BG_COLOR);
-    } else {
-      g2d.setColor(getBackground());
-    }
-    
+    g2d.setColor(getBackground());
     g2d.fill(clip);
   }
   
@@ -1633,8 +1656,8 @@ public class JBTabsImpl extends JComponent
         bgPreFill = bgColor;
         alpha = 255;
         paintBottomY = shapeInfo.labelTopY + shapeInfo.labelPath.deltaY(getArcSize() - 2);
-        shapeInfo.from = UIUtil.toAlpha(UIUtil.getFocusedFillColor(), alpha);
-        shapeInfo.to = UIUtil.toAlpha(getActiveTabFillIn(), alpha);
+        shapeInfo.from = ColorUtil.toAlpha(UIUtil.getFocusedFillColor(), alpha);
+        shapeInfo.to = ColorUtil.toAlpha(getActiveTabFillIn(), alpha);
       }
     }
     else {
@@ -1642,20 +1665,20 @@ public class JBTabsImpl extends JComponent
       if (isPaintFocus()) {
         if (bgColor == null) {
           alpha = 150;
-          shapeInfo.from = UIUtil.toAlpha(UIUtil.getPanelBackground().brighter(), alpha);
-          shapeInfo.to = UIUtil.toAlpha(UIUtil.getPanelBackground(), alpha);
+          shapeInfo.from = ColorUtil.toAlpha(UIUtil.getPanelBackground().brighter(), alpha);
+          shapeInfo.to = ColorUtil.toAlpha(UIUtil.getPanelBackground(), alpha);
         }
         else {
           alpha = 255;
-          shapeInfo.from = UIUtil.toAlpha(bgColor, alpha);
-          shapeInfo.to = UIUtil.toAlpha(bgColor, alpha);
+          shapeInfo.from = ColorUtil.toAlpha(bgColor, alpha);
+          shapeInfo.to = ColorUtil.toAlpha(bgColor, alpha);
         }
       }
       else {
         alpha = 255;
         final Color tabColor = getActiveTabColor(null);
-        shapeInfo.from = UIUtil.toAlpha(tabColor == null ? Color.white : tabColor, alpha);
-        shapeInfo.to = UIUtil.toAlpha(tabColor == null ? Color.white : tabColor, alpha);
+        shapeInfo.from = ColorUtil.toAlpha(tabColor == null ? Color.white : tabColor, alpha);
+        shapeInfo.to = ColorUtil.toAlpha(tabColor == null ? Color.white : tabColor, alpha);
       }
     }
 
@@ -2491,8 +2514,6 @@ public class JBTabsImpl extends JComponent
   }
 
   private void updateContainer(boolean forced, final boolean layoutNow) {
-    final TabLabel selectedLabel = getSelectedLabel();
-
     for (TabInfo each : myVisibleInfos) {
       final JComponent eachComponent = each.getComponent();
       if (getSelectedInfo() == each && getSelectedInfo() != null) {
@@ -2518,6 +2539,7 @@ public class JBTabsImpl extends JComponent
       }
     }
 
+    mySingleRowLayout.scrollSelectionInView(myVisibleInfos);
     relayout(forced, layoutNow);
   }
 
@@ -2903,7 +2925,7 @@ public class JBTabsImpl extends JComponent
     return mySingleRowLayout;
   }
 
-  public JBTabsPresentation setUiDecorator(UiDecorator decorator) {
+  public JBTabsPresentation setUiDecorator(@Nullable UiDecorator decorator) {
     myUiDecorator = decorator == null ? ourDefaultDecorator : decorator;
     applyDecoration();
     return this;
@@ -2989,9 +3011,7 @@ public class JBTabsImpl extends JComponent
       ActionGroup group = selection.getGroup();
       if (group != null) {
         AnAction[] children = group.getChildren(null);
-        for (int i = 0; i < children.length; i++) {
-          result.add(children[i]);
-        }
+        Collections.addAll(result, children);
       }
     }
 
@@ -3019,7 +3039,7 @@ public class JBTabsImpl extends JComponent
   }
 
 
-  private static class DefautDecorator implements UiDecorator {
+  private static class DefaultDecorator implements UiDecorator {
     @NotNull
     public UiDecoration getDecoration() {
       return new UiDecoration(null, new Insets(0, 4, 0, 5));
@@ -3205,6 +3225,7 @@ public class JBTabsImpl extends JComponent
       return myInfo.getText();
     }
 
+    @NotNull
     @Override
     public Object[] getEqualityObjects() {
       return new Object[] {myInfo};
@@ -3230,7 +3251,7 @@ public class JBTabsImpl extends JComponent
 
     int index = myLayout.getDropIndexFor(point.getPoint(this));
     setDropInfoIndex(index);
-    addTab(myDropInfo, index, true);
+    addTab(myDropInfo, index, true, true);
 
     TabLabel label = myInfo2Label.get(myDropInfo);
     Dimension size = label.getPreferredSize();

@@ -49,6 +49,7 @@ public class IdeMenuBar extends JMenuBar {
   private final DataManager myDataManager;
   private final ActionManagerEx myActionManager;
   private final Disposable myDisposable = Disposer.newDisposable();
+  private boolean DISABLED = false;
 
   public IdeMenuBar(ActionManagerEx actionManager, DataManager dataManager) {
     myActionManager = actionManager;
@@ -91,7 +92,9 @@ public class IdeMenuBar extends JMenuBar {
     myNewVisibleActions.clear();
     final DataContext dataContext = ((DataManagerImpl)myDataManager).getDataContextTest(this);
 
-    expandActionGroup(dataContext, myNewVisibleActions, myActionManager);
+    if (!DISABLED) {
+      expandActionGroup(dataContext, myNewVisibleActions, myActionManager);
+    }
 
     if (!myNewVisibleActions.equals(myVisibleActions)) {
       // should rebuild UI
@@ -163,6 +166,16 @@ public class IdeMenuBar extends JMenuBar {
     for (int i = 0; i < getMenuCount(); i++) {
       ((ActionMenu)getMenu(i)).setMnemonicEnabled(enabled);
     }
+  }
+
+  public void disableUpdates() {
+    DISABLED = true;
+    updateMenuActions();
+  }
+
+  public void enableUpdates() {
+    DISABLED = false;
+    updateMenuActions();
   }
 
   private final class MyTimerListener implements TimerListener {

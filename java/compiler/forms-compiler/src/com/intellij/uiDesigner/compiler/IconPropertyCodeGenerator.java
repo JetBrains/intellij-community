@@ -15,10 +15,10 @@
  */
 package com.intellij.uiDesigner.compiler;
 
-import org.objectweb.asm.commons.GeneratorAdapter;
-import org.objectweb.asm.commons.Method;
-import org.objectweb.asm.Type;
 import com.intellij.uiDesigner.lw.IconDescriptor;
+import org.jetbrains.asm4.Type;
+import org.jetbrains.asm4.commons.GeneratorAdapter;
+import org.jetbrains.asm4.commons.Method;
 
 import javax.swing.*;
 

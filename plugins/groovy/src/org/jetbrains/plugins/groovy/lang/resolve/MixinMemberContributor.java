@@ -50,20 +50,19 @@ public class MixinMemberContributor extends NonCodeMembersContributor {
     final PsiModifierList modifierList = aClass.getModifierList();
     if (modifierList == null) return;
 
-    final PsiAnnotation annotation = modifierList.findAnnotation(GroovyCommonClassNames.GROOVY_LANG_MIXIN);
-    if (annotation == null) return;
-
-    final PsiAnnotationMemberValue value = annotation.findAttributeValue("value");
-
     List<PsiClass> mixins = new ArrayList<PsiClass>();
-    if (value instanceof GrAnnotationArrayInitializer) {
-      final GrAnnotationMemberValue[] initializers = ((GrAnnotationArrayInitializer)value).getInitializers();
-      for (GrAnnotationMemberValue initializer : initializers) {
-        addMixin(initializer, mixins);
+    for (PsiAnnotation annotation : getAllMixins(modifierList)) {
+      final PsiAnnotationMemberValue value = annotation.findAttributeValue("value");
+
+      if (value instanceof GrAnnotationArrayInitializer) {
+        final GrAnnotationMemberValue[] initializers = ((GrAnnotationArrayInitializer)value).getInitializers();
+        for (GrAnnotationMemberValue initializer : initializers) {
+          addMixin(initializer, mixins);
+        }
       }
-    }
-    else if (value instanceof GrExpression) {
-      addMixin((GrExpression)value, mixins);
+      else if (value instanceof GrExpression) {
+        addMixin((GrExpression)value, mixins);
+      }
     }
 
     for (PsiClass mixin : mixins) {
@@ -81,6 +80,16 @@ public class MixinMemberContributor extends NonCodeMembersContributor {
         return;
       }
     }
+  }
+
+  private static List<PsiAnnotation> getAllMixins(PsiModifierList modifierList) {
+    final ArrayList<PsiAnnotation> result = new ArrayList<PsiAnnotation>();
+    for (PsiAnnotation annotation : modifierList.getApplicableAnnotations()) {
+      if (GroovyCommonClassNames.GROOVY_LANG_MIXIN.equals(annotation.getQualifiedName())) {
+        result.add(annotation);
+      }
+    }
+    return result;
   }
 
   private static boolean isCategoryMethod(PsiElement element, PsiType qualifierType) {

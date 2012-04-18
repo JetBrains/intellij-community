@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.util.*;
 import com.intellij.util.text.CharArrayCharSequence;
+import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.LineReader;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -35,12 +36,15 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 //TeamCity inherits StringUtil: do not add private constructors!!!
-@SuppressWarnings({"UtilityClassWithoutPrivateConstructor"})
-public class StringUtil {
+@SuppressWarnings({"UtilityClassWithoutPrivateConstructor", "MethodOverridesStaticMethodOfSuperclass"})
+public class StringUtil extends StringUtilRt {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.util.text.StringUtil");
+
   @NonNls private static final String VOWELS = "aeiouy";
-  private static final Pattern EOL_SPLIT_PATTERN = Pattern.compile(" *(\r|\n|\r\n)+ *");
+  @NonNls private static final Pattern EOL_SPLIT_PATTERN = Pattern.compile(" *(\r|\n|\r\n)+ *");
+
   public static final NotNullFunction<String, String> QUOTER = new NotNullFunction<String, String>() {
+    @Override
     @NotNull
     public String fun(String s) {
       return "\"" + s + "\"";
@@ -48,6 +52,7 @@ public class StringUtil {
   };
 
   public static final NotNullFunction<String, String> SINGLE_QUOTER = new NotNullFunction<String, String>() {
+    @Override
     @NotNull
     public String fun(String s) {
       return "'" + s + "'";
@@ -55,31 +60,47 @@ public class StringUtil {
   };
 
   @NotNull
-  public static String escapePattern(final @NotNull String text) {
+  public static List<String> getWordsInStringLongestFirst(@NotNull String find) {
+    List<String> words = getWordsIn(find);
+    // hope long words are rare
+    Collections.sort(words, new Comparator<String>() {
+      @Override
+      public int compare(@NotNull final String o1, @NotNull final String o2) {
+        return o2.length() - o1.length();
+      }
+    });
+    return words;
+  }
+
+  @NotNull
+  public static String escapePattern(@NotNull final String text) {
     return replace(replace(text, "'", "''"), "{", "'{'");
   }
 
+  @NotNull
   public static <T> Function<T, String> createToStringFunction(Class<T> cls) {
     return new Function<T, String>() {
       @Override
-      public String fun(T o) {
+      public String fun(@NotNull T o) {
         return o.toString();
       }
     };
   }
 
-  public static Function<String, String> TRIMMER = new Function<String, String>() {
+  @NotNull public static Function<String, String> TRIMMER = new Function<String, String>() {
     @Nullable
     @Override
-    public String fun(String s) {
+    public String fun(@Nullable String s) {
       return s == null ? null : s.trim();
     }
   };
 
+  @Nullable
   public static String replace(@NonNls @NotNull String text, @NonNls @NotNull String oldS, @NonNls @Nullable String newS) {
     return replace(text, oldS, newS, false);
   }
 
+  @Nullable
   public static String replaceIgnoreCase(@NotNull String text, @NotNull String oldS, @Nullable String newS) {
     return replace(text, oldS, newS, true);
   }
@@ -113,6 +134,7 @@ public class StringUtil {
     return newBuffer == null ? buffer : newBuffer.toString();
   }
 
+  @Nullable
   public static String replace(@NotNull final String text, @NotNull final String oldS, @Nullable final String newS, boolean ignoreCase) {
     if (text.length() < oldS.length()) return text;
 
@@ -136,17 +158,7 @@ public class StringUtil {
         i = i1 + oldS.length();
       }
     }
-    return newText!= null ? newText.toString():"";
-  }
-
-  @NotNull
-  public static String getShortName(@NotNull String fqName) {
-    return getShortName(fqName, '.');
-  }
-
-  @NotNull
-  public static String getShortName(@NotNull Class aClass) {
-    return getShortName(aClass.getName());
+    return newText != null ? newText.toString() : "";
   }
 
   /**
@@ -209,32 +221,6 @@ public class StringUtil {
     return stringLength >= prefixLength && str.regionMatches(true, 0, prefix, 0, prefixLength);
   }
 
-  public static boolean charsEqualIgnoreCase(char a, char b) {
-    return a == b || toUpperCase(a) == toUpperCase(b) || toLowerCase(a) == toLowerCase(b);
-  }
-
-  public static char toUpperCase(char a) {
-    if (a < 'a') {
-      return a;
-    }
-    if (a >= 'a' && a <= 'z') {
-      return (char)(a + ('A' - 'a'));
-    }
-    return Character.toUpperCase(a);
-  }
-
-  public static char toLowerCase(final char a) {
-    if (a < 'A' || a >= 'a' && a <= 'z') {
-      return a;
-    }
-
-    if (a >= 'A' && a <= 'Z') {
-      return (char)(a + ('a' - 'A'));
-    }
-
-    return Character.toLowerCase(a);
-  }
-
   public static String stripHtml(String html, boolean convertBreaks) {
     if (convertBreaks) {
       html = html.replaceAll("<br/?>", "\n\n");
@@ -245,16 +231,8 @@ public class StringUtil {
 
   @Nullable
   public static String toLowerCase(@Nullable final String str) {
+    //noinspection ConstantConditions
     return str == null ? null : str.toLowerCase();
-  }
-
-  @NotNull
-  public static String getShortName(@NotNull String fqName, char separator) {
-    int lastPointIdx = fqName.lastIndexOf(separator);
-    if (lastPointIdx >= 0) {
-      return fqName.substring(lastPointIdx + 1);
-    }
-    return fqName;
   }
 
   @NotNull
@@ -269,101 +247,6 @@ public class StringUtil {
       return fqName.substring(0, lastPointIdx);
     }
     return "";
-  }
-
-  /**
-   * Converts line separators to <code>"\n"</code>
-   */
-  @NotNull
-  public static String convertLineSeparators(@NotNull String text) {
-    return convertLineSeparators(text, false);
-  }
-
-  @NotNull
-  public static String convertLineSeparators(@NotNull String text, boolean keepCarriageReturn) {
-    return convertLineSeparators(text, "\n", null, keepCarriageReturn);
-  }
-
-  @NotNull
-  public static String convertLineSeparators(@NotNull String text, @NotNull String newSeparator) {
-    return convertLineSeparators(text, newSeparator, null);
-  }
-
-  @NotNull
-  public static String convertLineSeparators(@NotNull String text, @NotNull String newSeparator, @Nullable int[] offsetsToKeep) {
-    return convertLineSeparators(text, newSeparator, offsetsToKeep, false);
-  }
-
-  @NotNull
-  public static String convertLineSeparators(@NotNull String text, @NotNull String newSeparator, @Nullable int[] offsetsToKeep,
-                                             boolean keepCarriageReturn) {
-    StringBuilder buffer = null;
-    int intactLength = 0;
-    final boolean newSeparatorIsSlashN = "\n".equals(newSeparator);
-    for (int i = 0; i < text.length(); i++) {
-      char c = text.charAt(i);
-      if (c == '\n') {
-        if (!newSeparatorIsSlashN) {
-          if (buffer == null) {
-            buffer = new StringBuilder(text.length());
-            buffer.append(text, 0, intactLength);
-          }
-          buffer.append(newSeparator);
-          shiftOffsets(offsetsToKeep, buffer.length(), 1, newSeparator.length());
-        }
-        else if (buffer == null) {
-          intactLength++;
-        }
-        else {
-          buffer.append(c);
-        }
-      }
-      else if (c == '\r') {
-        boolean followedByLineFeed = i < text.length() - 1 && text.charAt(i + 1) == '\n';
-        if (!followedByLineFeed && keepCarriageReturn) {
-          if (buffer == null) {
-            intactLength++;
-          }
-          else {
-            buffer.append(c);
-          }
-          continue;
-        }
-        if (buffer == null) {
-          buffer = new StringBuilder(text.length());
-          buffer.append(text, 0, intactLength);
-        }
-        buffer.append(newSeparator);
-        if (followedByLineFeed) {
-          i++;
-          shiftOffsets(offsetsToKeep, buffer.length(), 2, newSeparator.length());
-        }
-        else {
-          shiftOffsets(offsetsToKeep, buffer.length(), 1, newSeparator.length());
-        }
-      }
-      else {
-        if (buffer == null) {
-          intactLength++;
-        }
-        else {
-          buffer.append(c);
-        }
-      }
-    }
-    return buffer == null ? text : buffer.toString();
-  }
-
-  private static void shiftOffsets(int[] offsets, int changeOffset, int oldLength, int newLength) {
-    if (offsets == null) return;
-    int shift = newLength - oldLength;
-    if (shift == 0) return;
-    for (int i = 0; i < offsets.length; i++) {
-      int offset = offsets[i];
-      if (offset >= changeOffset + oldLength) {
-        offsets[i] += shift;
-      }
-    }
   }
 
   public static int getLineBreakCount(@NotNull CharSequence text) {
@@ -480,7 +363,7 @@ public class StringUtil {
 
   @NotNull
   private static String toTitleCase(@NotNull String s, @NotNull String[] prepositions) {
-    StringBuffer buffer = null;
+    StringBuilder buffer = null;
     for (int i = 0; i < s.length(); i++) {
       char prevChar = i == 0 ? ' ' : s.charAt(i - 1);
       char currChar = s.charAt(i);
@@ -495,7 +378,7 @@ public class StringUtil {
             }
             if (!isPreposition(s, i, j - 1, prepositions)) {
               if (buffer == null) {
-                buffer = new StringBuffer(s);
+                buffer = new StringBuilder(s);
               }
               buffer.setCharAt(i, toUpperCase(currChar));
             }
@@ -536,11 +419,12 @@ public class StringUtil {
     return false;
   }
 
+  @NotNull
   public static NotNullFunction<String, String> escaper(final boolean escapeSlash, @Nullable final String additionalChars) {
     return new NotNullFunction<String, String>() {
       @NotNull
       @Override
-      public String fun(String dom) {
+      public String fun(@NotNull String dom) {
         final StringBuilder builder = StringBuilderSpinAllocator.alloc();
         try {
           StringUtil.escapeStringCharacters(dom.length(), dom, additionalChars, escapeSlash, builder);
@@ -604,7 +488,7 @@ public class StringUtil {
             buffer.append("\\").append(ch);
           }
           else if (Character.isISOControl(ch)) {
-            String hexCode = Integer.toHexString(ch).toUpperCase();
+            String hexCode = StringUtilRt.toUpperCase(Integer.toHexString(ch));
             buffer.append("\\u");
             int paddingCount = 4 - hexCode.length();
             while (paddingCount-- > 0) {
@@ -648,7 +532,8 @@ public class StringUtil {
   /**
    * This is just an optimized version of Matcher.quoteReplacement
    */
-  public static String quoteReplacement(String s) {
+  @NotNull
+  public static String quoteReplacement(@NotNull String s) {
     boolean needReplacements = false;
 
     for (int i = 0; i < s.length(); i++) {
@@ -759,6 +644,13 @@ public class StringUtil {
       return suggestion + "ren";
     }
 
+    if (suggestion.equals("this")) {
+      return "these";
+    }
+    if (suggestion.equals("This")) {
+      return "These";
+    }
+
     if (endsWithIgnoreCase(suggestion, "s") || endsWithIgnoreCase(suggestion, "x") || endsWithIgnoreCase(suggestion, "ch")) {
       return suggestion + "es";
     }
@@ -808,8 +700,8 @@ public class StringUtil {
 
   @NotNull
   public static String capitalize(@NotNull String s) {
-    if (s.length() == 0) return s;
-    if (s.length() == 1) return s.toUpperCase();
+    if (s.isEmpty()) return s;
+    if (s.length() == 1) return StringUtilRt.toUpperCase(s);
 
     // Optimization
     if (Character.isUpperCase(s.charAt(0))) return s;
@@ -817,7 +709,7 @@ public class StringUtil {
   }
 
   public static boolean isCapitalized(@Nullable String s) {
-    return s != null && s.length() > 0 && Character.isUpperCase(s.charAt(0));
+    return s != null && !s.isEmpty() && Character.isUpperCase(s.charAt(0));
   }
 
   @NotNull
@@ -828,7 +720,7 @@ public class StringUtil {
     return capitalize(s);
   }
 
-  public static int stringHashCode(CharSequence chars) {
+  public static int stringHashCode(@NotNull CharSequence chars) {
     if (chars instanceof String) return chars.hashCode();
     if (chars instanceof CharSequenceWithStringHash) return chars.hashCode();
     if (chars instanceof CharArrayCharSequence) return chars.hashCode();
@@ -836,7 +728,7 @@ public class StringUtil {
     return stringHashCode(chars, 0, chars.length());
   }
 
-  public static int stringHashCode(CharSequence chars, int from, int to) {
+  public static int stringHashCode(@NotNull CharSequence chars, int from, int to) {
     int h = 0;
     for (int off = from; off < to; off++) {
       h = 31 * h + chars.charAt(off);
@@ -852,7 +744,7 @@ public class StringUtil {
     return h;
   }
 
-  public static int stringHashCodeInsensitive(char[] chars, int from, int to) {
+  public static int stringHashCodeInsensitive(@NotNull char[] chars, int from, int to) {
     int h = 0;
     for (int off = from; off < to; off++) {
       h = 31 * h + toLowerCase(chars[off]);
@@ -860,7 +752,7 @@ public class StringUtil {
     return h;
   }
 
-  public static int stringHashCodeInsensitive(CharSequence chars, int from, int to) {
+  public static int stringHashCodeInsensitive(@NotNull CharSequence chars, int from, int to) {
     int h = 0;
     for (int off = from; off < to; off++) {
       h = 31 * h + toLowerCase(chars.charAt(off));
@@ -880,7 +772,7 @@ public class StringUtil {
    * @param secondPrefix
    * @return
    */
-  public static boolean startsWithConcatenationOf(String testee, String firstPrefix, String secondPrefix) {
+  public static boolean startsWithConcatenationOf(@NotNull String testee, @NotNull String firstPrefix, @NotNull String secondPrefix) {
     int l1 = firstPrefix.length();
     int l2 = secondPrefix.length();
     if (testee.length() < l1 + l2) return false;
@@ -895,7 +787,8 @@ public class StringUtil {
     return s;
   }
 
-  public static String trimLog(final String text, final int limit) {
+  @NotNull
+  public static String trimLog(@NotNull final String text, final int limit) {
     if (limit > 5 && text.length() > limit) {
       return text.substring(0, limit - 5) + " ...\n";
     }
@@ -921,7 +814,7 @@ public class StringUtil {
   }
 
   public static boolean endsWithChar(@Nullable CharSequence s, char suffix) {
-    return s != null && s.length() != 0 && s.charAt(s.length() - 1) == suffix;
+    return StringUtilRt.endsWithChar(s, suffix);
   }
 
   @NotNull
@@ -951,11 +844,11 @@ public class StringUtil {
   }
 
   public static boolean isNotEmpty(@Nullable String s) {
-    return s != null && s.length() > 0;
+    return s != null && !s.isEmpty();
   }
 
   public static boolean isEmpty(@Nullable String s) {
-    return s == null || s.length() == 0;
+    return s == null || s.isEmpty();
   }
 
   public static boolean isEmpty(@Nullable CharSequence cs) {
@@ -972,17 +865,17 @@ public class StringUtil {
   }
 
   @NotNull
-  public static String notNullize(final String s, @NotNull String defaultValue) {
+  public static String notNullize(@Nullable final String s, @NotNull String defaultValue) {
     return s == null ? defaultValue : s;
   }
 
   @Nullable
-  public static String nullize(final @Nullable String s) {
+  public static String nullize(@Nullable final String s) {
     return nullize(s, false);
   }
 
   @Nullable
-  public static String nullize(final @Nullable String s, boolean nullizeSpaces) {
+  public static String nullize(@Nullable final String s, boolean nullizeSpaces) {
     if (nullizeSpaces) {
       if (isEmpty(s)) return null;
     }
@@ -993,7 +886,7 @@ public class StringUtil {
   }
 
   public static boolean isEmptyOrSpaces(@Nullable final String s) {
-    return s == null || s.trim().length() == 0;
+    return s == null || s.trim().isEmpty();
   }
 
   /**
@@ -1078,7 +971,7 @@ public class StringUtil {
   @NotNull
   public static List<String> split(@NotNull String s, @NotNull String separator,
                                    boolean excludeSeparator, boolean excludeEmptyStrings) {
-    if (separator.length() == 0) {
+    if (separator.isEmpty()) {
       return Collections.singletonList(s);
     }
     List<String> result = new ArrayList<String>();
@@ -1088,7 +981,7 @@ public class StringUtil {
       if (index == -1) break;
       final int nextPos = index + separator.length();
       String token = s.substring(pos, excludeSeparator ? index : nextPos);
-      if (token.length() != 0 || !excludeEmptyStrings) {
+      if (!token.isEmpty() || !excludeEmptyStrings) {
         result.add(token);
       }
       pos = nextPos;
@@ -1103,16 +996,21 @@ public class StringUtil {
   public static Iterable<String> tokenize(@NotNull String s, @NotNull String separators) {
     final com.intellij.util.text.StringTokenizer tokenizer = new com.intellij.util.text.StringTokenizer(s, separators);
     return new Iterable<String>() {
+      @NotNull
+      @Override
       public Iterator<String> iterator() {
         return new Iterator<String>() {
+          @Override
           public boolean hasNext() {
             return tokenizer.hasMoreTokens();
           }
 
+          @Override
           public String next() {
             return tokenizer.nextToken();
           }
 
+          @Override
           public void remove() {
             throw new UnsupportedOperationException();
           }
@@ -1122,18 +1020,23 @@ public class StringUtil {
   }
 
   @NotNull
-  public static Iterable<String> tokenize(final StringTokenizer tokenizer) {
+  public static Iterable<String> tokenize(@NotNull final StringTokenizer tokenizer) {
     return new Iterable<String>() {
+      @NotNull
+      @Override
       public Iterator<String> iterator() {
         return new Iterator<String>() {
+          @Override
           public boolean hasNext() {
             return tokenizer.hasMoreTokens();
           }
 
+          @Override
           public String next() {
             return tokenizer.nextToken();
           }
 
+          @Override
           public void remove() {
             throw new UnsupportedOperationException();
           }
@@ -1237,7 +1140,7 @@ public class StringUtil {
     final StringBuilder result = new StringBuilder();
     for (T item : items) {
       String string = f.fun(item);
-      if (string != null && string.length() != 0) {
+      if (string != null && !string.isEmpty()) {
         if (result.length() != 0) result.append(separator);
         result.append(string);
       }
@@ -1249,7 +1152,7 @@ public class StringUtil {
   public static String join(@NotNull Collection<? extends String> strings, @NotNull final String separator) {
     final StringBuilder result = new StringBuilder();
     for (String string : strings) {
-      if (string != null && string.length() != 0) {
+      if (string != null && !string.isEmpty()) {
         if (result.length() != 0) result.append(separator);
         result.append(string);
       }
@@ -1268,7 +1171,7 @@ public class StringUtil {
   }
 
   @NotNull
-  public static String join(final String... strings) {
+  public static String join(@Nullable final String... strings) {
     if (strings == null || strings.length == 0) return "";
 
     final StringBuilder builder = StringBuilderSpinAllocator.alloc();
@@ -1372,6 +1275,7 @@ public class StringUtil {
     return null;
   }
 
+  @Nullable
   private static String stripEnding(@NotNull String name, @NotNull String ending) {
     if (name.endsWith(ending)) {
       if (name.equals(ending)) return name; // do not return empty string
@@ -1395,13 +1299,13 @@ public class StringUtil {
     return false;
   }
 
-  public static boolean containsChar(final String value, final char ch) {
+  public static boolean containsChar(@NotNull final String value, final char ch) {
     return value.indexOf(ch) >= 0;
   }
 
   @Nullable
   public static String firstLetterToUpperCase(@Nullable final String displayString) {
-    if (displayString == null || displayString.length() == 0) return displayString;
+    if (displayString == null || displayString.isEmpty()) return displayString;
     char firstChar = displayString.charAt(0);
     char uppedFirstChar = toUpperCase(firstChar);
 
@@ -1431,11 +1335,13 @@ public class StringUtil {
     return result.toString();
   }
 
-  public static List<String> findMatches(String s, Pattern pattern) {
+  @NotNull
+  public static List<String> findMatches(@NotNull String s, @NotNull Pattern pattern) {
     return findMatches(s, pattern, 1);
   }
 
-  public static List<String> findMatches(String s, Pattern pattern, int groupIndex) {
+  @NotNull
+  public static List<String> findMatches(@NotNull String s, @NotNull Pattern pattern, int groupIndex) {
     List<String> result = new SmartList<String>();
     Matcher m = pattern.matcher(s);
     while (m.find()) {
@@ -1553,7 +1459,7 @@ public class StringUtil {
    * @return <code>true</code> if given symbol is contained at the target range of the given char sequence;
    *         <code>false</code> otherwise
    */
-  public static boolean contains(CharSequence s, int start, int end, char c) {
+  public static boolean contains(@NotNull CharSequence s, int start, int end, char c) {
     return indexOf(s, c, start, end) >= 0;
   }
 
@@ -1594,17 +1500,18 @@ public class StringUtil {
     return i + subString.length();
   }
 
-  public static int indexOfAny(final String s, final String chars) {
+  public static int indexOfAny(@NotNull final String s, @NotNull final String chars) {
     return indexOfAny(s, chars, 0, s.length());
   }
 
-  public static int indexOfAny(final String s, final String chars, final int start, final int end) {
+  public static int indexOfAny(@NotNull final String s, @NotNull final String chars, final int start, final int end) {
     for (int i = start; i < end; i++) {
       if (containsChar(chars, s.charAt(i))) return i;
     }
     return -1;
   }
 
+  @Nullable
   public static String substringAfter(@NotNull String text, @NotNull String subString) {
     int i = text.indexOf(subString);
     if (i == -1) return null;
@@ -1696,7 +1603,7 @@ public class StringUtil {
     }
   }
 
-  private static void unescapeSlashes(StringBuilder buf, String str) {
+  private static void unescapeSlashes(@NotNull StringBuilder buf, @NotNull String str) {
     final int length = str.length();
     final int last = length - 1;
     for (int i = 0; i < length; i++) {
@@ -1723,12 +1630,14 @@ public class StringUtil {
   @NonNls private static final String[] REPLACES_REFS = {"&lt;", "&gt;", "&amp;", "&#39;", "&quot;"};
   @NonNls private static final String[] REPLACES_DISP = {"<", ">", "&", "'", "\""};
 
-  public static String unescapeXml(final String text) {
+  @Nullable
+  public static String unescapeXml(@Nullable final String text) {
     if (text == null) return null;
     return replace(text, REPLACES_REFS, REPLACES_DISP);
   }
 
-  public static String escapeXml(final String text) {
+  @Nullable
+  public static String escapeXml(@Nullable final String text) {
     if (text == null) return null;
     return replace(text, REPLACES_DISP, REPLACES_REFS);
   }
@@ -1777,14 +1686,14 @@ public class StringUtil {
   public static String[] filterEmptyStrings(@NotNull String[] strings) {
     int emptyCount = 0;
     for (String string : strings) {
-      if (string == null || string.length() == 0) emptyCount++;
+      if (string == null || string.isEmpty()) emptyCount++;
     }
     if (emptyCount == 0) return strings;
 
     String[] result = ArrayUtil.newStringArray(strings.length - emptyCount);
     int count = 0;
     for (String string : strings) {
-      if (string == null || string.length() == 0) continue;
+      if (string == null || string.isEmpty()) continue;
       result[count++] = string;
     }
 
@@ -1833,6 +1742,7 @@ public class StringUtil {
     return r.toString();
   }
 
+  @Nullable
   public static String getPropertyName(@NonNls @NotNull String methodName) {
     if (methodName.startsWith("get")) {
       return Introspector.decapitalize(methodName.substring(3));
@@ -1947,8 +1857,8 @@ public class StringUtil {
     return escaped.toString();
   }
 
-  public static String getQualifiedName(String packageName, String className) {
-    if (packageName == null || packageName.length() == 0) {
+  public static String getQualifiedName(@Nullable String packageName, String className) {
+    if (packageName == null || packageName.isEmpty()) {
       return className;
     }
     return packageName + '.' + className;
@@ -1992,24 +1902,6 @@ public class StringUtil {
     }
   }
 
-  public static int parseInt(final String string, final int defaultValue) {
-    try {
-      return Integer.parseInt(string);
-    }
-    catch (Exception e) {
-      return defaultValue;
-    }
-  }
-
-  public static double parseDouble(final String string, final double defaultValue) {
-    try {
-      return Double.parseDouble(string);
-    }
-    catch (Exception e) {
-      return defaultValue;
-    }
-  }
-
   public static int getOccurenceCount(@NotNull String text, final char c) {
     int res = 0;
     int i = 0;
@@ -2035,7 +1927,8 @@ public class StringUtil {
     return "a" + Character.toUpperCase(c) + name.substring(1);
   }
 
-  public static String sanitizeJavaIdentifier(String name) {
+  @NotNull
+  public static String sanitizeJavaIdentifier(@NotNull String name) {
     final StringBuilder result = new StringBuilder();
 
     for (int i = 0; i < name.length(); i++) {
@@ -2049,12 +1942,31 @@ public class StringUtil {
   }
 
   public static void assertValidSeparators(@NotNull CharSequence s) {
-    for (int i = 0; i < s.length(); i++) {
-      if (s.charAt(i) == '\r') {
-        String context = String.valueOf(last(s.subSequence(0, i), 10, true)) + first(s.subSequence(i, s.length()), 10, true);
-        context = escapeStringCharacters(context);
-        LOG.error("Wrong line separators: '" + context + "' at offset " + i);
+    char[] chars = CharArrayUtil.fromSequenceWithoutCopying(s);
+    int slashRIndex = -1;
+
+    if (chars != null) {
+      for (int i = 0, len = s.length(); i < len; ++i) {
+        if (chars[i] == '\r') {
+          slashRIndex = i;
+          break;
+        }
       }
+    }
+    else {
+      for (int i = 0, len = s.length(); i < len; i++) {
+        if (s.charAt(i) == '\r') {
+          slashRIndex = i;
+          break;
+        }
+      }
+    }
+
+    if (slashRIndex != -1) {
+      String context =
+        String.valueOf(last(s.subSequence(0, slashRIndex), 10, true)) + first(s.subSequence(slashRIndex, s.length()), 10, true);
+      context = escapeStringCharacters(context);
+      LOG.error("Wrong line separators: '" + context + "' at offset " + slashRIndex);
     }
   }
 
@@ -2100,11 +2012,11 @@ public class StringUtil {
    * Implementation of "Sorting for Humans: Natural Sort Order":
    * http://www.codinghorror.com/blog/2007/12/sorting-for-humans-natural-sort-order.html
    */
-  public static int naturalCompare(String string1, String string2) {
+  public static int naturalCompare(@NotNull String string1, @NotNull String string2) {
     return naturalCompare(string1, string2, false);
   }
 
-  private static int naturalCompare(String string1, String string2, boolean caseSensitive) {
+  private static int naturalCompare(@NotNull String string1, @NotNull String string2, boolean caseSensitive) {
     final int string1Length = string1.length();
     final int string2Length = string2.length();
     for (int i = 0, j = 0; i < string1Length && j < string2Length; i++, j++) {
@@ -2127,6 +2039,17 @@ public class StringUtil {
         j = startNum2;
         while (i < string1Length && isDigit(string1.charAt(i))) i++;
         while (j < string2Length && isDigit(string2.charAt(j))) j++;
+        String digits1 = string1.substring(startNum1, i);
+        String digits2 = string2.substring(startNum2, j);
+        if (digits1.length() != digits2.length()) {
+          return digits1.length() - digits2.length();
+        }
+        int numberDiff = digits1.compareTo(digits2);
+        if (numberDiff != 0) {
+          return numberDiff;
+        }
+        i--;
+        j--;
         final int lengthDiff = (i - startNum1) - (j - startNum2);
         if (lengthDiff != 0) {
           return lengthDiff;
@@ -2164,7 +2087,7 @@ public class StringUtil {
   }
 
   private static boolean isDigit(char c) {
-    return (c >= '0' && c <= '9');
+    return c >= '0' && c <= '9';
   }
 
   public static int compare(@Nullable String s1, @Nullable String s2, boolean ignoreCase) {
@@ -2246,5 +2169,87 @@ public class StringUtil {
 
   public static boolean isOctalDigit(char c) {
     return '0' <= c && c <= '7';
+  }
+
+  @NotNull
+  public static String shortenTextWithEllipsis(@NotNull final String text, final int max_length, final int suffix_length) {
+    final int prefix_length = max_length - suffix_length - 3;
+    assert prefix_length > 0;
+    final StringBuilder buffer = new StringBuilder();
+    final int textLength = text.length();
+    if (textLength > max_length) {
+      StringBuilder shorterText = new StringBuilder();
+      shorterText.append(text.substring(0, prefix_length));
+      shorterText.append("...");
+      shorterText.append(text.substring(textLength - suffix_length));
+      buffer.append(shorterText.toString());
+    }
+    else {
+      buffer.append(text);
+    }
+    return buffer.toString();
+  }
+
+  public static boolean charsEqualIgnoreCase(char a, char b) {
+    return StringUtilRt.charsEqualIgnoreCase(a, b);
+  }
+
+  public static char toUpperCase(char a) {
+    return StringUtilRt.toUpperCase(a);
+  }
+
+  public static char toLowerCase(final char a) {
+    return StringUtilRt.toLowerCase(a);
+  }
+
+  @NotNull
+  public static String convertLineSeparators(@NotNull String text) {
+    return StringUtilRt.convertLineSeparators(text);
+  }
+
+  @NotNull
+  public static String convertLineSeparators(@NotNull String text, boolean keepCarriageReturn) {
+    return StringUtilRt.convertLineSeparators(text, keepCarriageReturn);
+  }
+
+  @NotNull
+  public static String convertLineSeparators(@NotNull String text, @NotNull String newSeparator) {
+    return StringUtilRt.convertLineSeparators(text, newSeparator);
+  }
+
+  @NotNull
+  public static String convertLineSeparators(@NotNull String text, @NotNull String newSeparator, @Nullable int[] offsetsToKeep) {
+    return StringUtilRt.convertLineSeparators(text, newSeparator, offsetsToKeep);
+  }
+
+  @NotNull
+  public static String convertLineSeparators(@NotNull String text,
+                                             @NotNull String newSeparator,
+                                             @Nullable int[] offsetsToKeep,
+                                             boolean keepCarriageReturn) {
+    return StringUtilRt.convertLineSeparators(text, newSeparator, offsetsToKeep, keepCarriageReturn);
+  }
+
+  public static int parseInt(final String string, final int defaultValue) {
+    return StringUtilRt.parseInt(string, defaultValue);
+  }
+
+  public static double parseDouble(final String string, final double defaultValue) {
+    return StringUtilRt.parseDouble(string, defaultValue);
+  }
+
+  @NotNull
+  public static String getShortName(@NotNull Class aClass) {
+    return StringUtilRt.getShortName(aClass);
+  }
+
+  @NotNull
+  public static String getShortName(@NotNull String fqName) {
+    return StringUtilRt.getShortName(fqName);
+  }
+
+  @NotNull
+  public static String getShortName(@NotNull String fqName, char separator) {
+    return StringUtilRt.getShortName(fqName, separator);
   }
 }

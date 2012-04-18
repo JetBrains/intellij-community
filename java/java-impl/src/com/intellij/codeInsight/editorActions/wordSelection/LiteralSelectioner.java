@@ -27,6 +27,7 @@ import com.intellij.psi.StringEscapesTokenTypes;
 import java.util.List;
 
 public class LiteralSelectioner extends BasicSelectioner {
+  @Override
   public boolean canSelect(PsiElement e) {
     PsiElement parent = e.getParent();
     return
@@ -38,6 +39,7 @@ public class LiteralSelectioner extends BasicSelectioner {
            ((PsiLiteralExpression)element).getType().equalsToText("java.lang.String") && element.getText().startsWith("\"") && element.getText().endsWith("\"");
   }
 
+  @Override
   public List<TextRange> select(PsiElement e, CharSequence editorText, int cursorOffset, Editor editor) {
     List<TextRange> result = super.select(e, editorText, cursorOffset, editor);
 

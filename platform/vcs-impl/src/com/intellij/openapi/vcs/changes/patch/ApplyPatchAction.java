@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,6 +36,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileChooser.FileChooser;
+import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.StdFileTypes;
@@ -85,17 +86,19 @@ public class ApplyPatchAction extends DumbAwareAction {
       final ApplyPatchDifferentiatedDialog dialog = new ApplyPatchDifferentiatedDialog(project, new ApplyPatchDefaultExecutor(project),
         Collections.<ApplyPatchExecutor>singletonList(new ImportToShelfExecutor(project)), ApplyPatchMode.APPLY, file);
       dialog.show();
-    } else {
-      FileChooser.chooseFilesWithSlideEffect(ApplyPatchDifferentiatedDialog.createSelectPatchDescriptor(), 
-                                             project, null, new Consumer<VirtualFile[]>() {
-          @Override
-          public void consume(VirtualFile[] virtualFiles) {
-            if (virtualFiles.length != 1) return;
-            final ApplyPatchDifferentiatedDialog dialog = new ApplyPatchDifferentiatedDialog(project, new ApplyPatchDefaultExecutor(project),
-              Collections.<ApplyPatchExecutor>singletonList(new ImportToShelfExecutor(project)), ApplyPatchMode.APPLY, virtualFiles[0]);
-            dialog.show();
-          }
-        });
+    }
+    else {
+      final FileChooserDescriptor descriptor = ApplyPatchDifferentiatedDialog.createSelectPatchDescriptor();
+      FileChooser.chooseFiles(descriptor, project, null, new Consumer<List<VirtualFile>>() {
+        @Override
+        public void consume(List<VirtualFile> files) {
+          if (files.size() != 1) return;
+          new ApplyPatchDifferentiatedDialog(
+            project, new ApplyPatchDefaultExecutor(project),
+            Collections.<ApplyPatchExecutor>singletonList(new ImportToShelfExecutor(project)), ApplyPatchMode.APPLY, files.get(0)
+          ).show();
+        }
+      });
     }
   }
 

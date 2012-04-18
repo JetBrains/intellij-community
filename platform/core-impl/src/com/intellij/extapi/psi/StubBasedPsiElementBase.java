@@ -103,7 +103,7 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
   }
 
   private ASTNode notBoundInExistingAst(PsiFileImpl file, FileElement treeElement, StubTree stubTree) {
-    String message = "this=" + this +
+    String message = "this=" + this.getClass() +
                      "; file.isPhysical=" + file.isPhysical() +
                      "; node=" + myNode +
                      "; file=" + file +
@@ -111,7 +111,7 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
                      "; stubTree=" + stubTree;
     PsiElement each = this;
     while (each != null) {
-      message += "\n each=" + each + " of class " + each.getClass();
+      message += "\n each of class " + each.getClass();
       if (each instanceof StubBasedPsiElementBase) {
         message += "; node=" + ((StubBasedPsiElementBase)each).myNode + "; stub=" + ((StubBasedPsiElementBase)each).myStub;
         each = ((StubBasedPsiElementBase)each).getParentByStub();
@@ -154,11 +154,8 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
   public boolean isValid() {
     T stub = myStub;
     if (stub != null) {
-      if (stub instanceof PsiFileStub) {
-        return stub.getPsi().isValid();
-      }
-
-      return stub.getParentStub().getPsi().isValid();
+      PsiElement psi = stub.getParentStub().getPsi();
+      return psi != null && psi.isValid();
     }
 
     return super.isValid();

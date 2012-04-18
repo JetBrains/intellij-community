@@ -217,7 +217,10 @@
         <action id="ExpandAllRegions" class="com.intellij.codeInsight.folding.impl.actions.ExpandAllRegionsAction"/>
         <action id="CollapseAllRegions" class="com.intellij.codeInsight.folding.impl.actions.CollapseAllRegionsAction"/>
         <separator/>
-        <group id="LanguageSpecificFoldingGroup"/>
+        <group id="LanguageSpecificFoldingGroup">
+          <action id="ExpandDocComments" class="com.intellij.codeInsight.folding.impl.actions.ExpandDocCommentsAction"/>
+          <action id="CollapseDocComments" class="com.intellij.codeInsight.folding.impl.actions.CollapseDocCommentsAction"/>
+        </group>
         <separator/>
         <action id="CollapseSelection" class="com.intellij.codeInsight.folding.impl.actions.CollapseSelectionAction"/>
       </group>
@@ -625,6 +628,7 @@
       <separator/>
       <action id="ToggleLineBreakpoint" class="com.intellij.xdebugger.impl.actions.ToggleLineBreakpointAction"/>
       <action id="ViewBreakpoints" class="com.intellij.xdebugger.impl.actions.ViewBreakpointsAction" icon="/debugger/viewBreakpoints.png"/>
+      <action id="EditBreakpoint" class="com.intellij.xdebugger.impl.actions.EditBreakpointAction" use-shortcut-of="ViewBreakpoints"/>
       <separator/>
 
       <add-to-group group-id="RunMenu" anchor="last"/>

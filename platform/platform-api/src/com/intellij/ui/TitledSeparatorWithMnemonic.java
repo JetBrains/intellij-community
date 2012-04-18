@@ -34,11 +34,7 @@ public class TitledSeparatorWithMnemonic extends TitledSeparator {
   }
 
   public TitledSeparatorWithMnemonic(String textWithMnemonic, @Nullable JComponent labelFor) {
-    this(textWithMnemonic, labelFor, false, true);
-  }
-
-  public TitledSeparatorWithMnemonic(String textWithMnemonic, @Nullable JComponent labelFor, boolean boldFont, boolean smallFont) {
-    super(textWithMnemonic, boldFont, smallFont);
+    super(textWithMnemonic);
     setText(textWithMnemonic);
     setLabelFor(labelFor);
   }

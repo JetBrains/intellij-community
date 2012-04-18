@@ -32,20 +32,13 @@ import com.sun.jdi.ReferenceType;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author lex
  */
 class ReloadClassesWorker {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.impl.ReloadClassesWorker");
-  /**
-   * number of clasess that will be reloaded in one go. 
-   * Such restriction is needed to deal with big number of classes being reloaded
-   */
-  private static final int CLASSES_CHUNK_SIZE = 100; 
   private final DebuggerSession  myDebuggerSession;
   private final HotSwapProgress  myProgress;
 
@@ -111,11 +104,12 @@ class ReloadClassesWorker {
     final Project project = debugProcess.getProject();
     final BreakpointManager breakpointManager = (DebuggerManagerEx.getInstanceEx(project)).getBreakpointManager();
     breakpointManager.disableBreakpoints(debugProcess);
-    
+
     //virtualMachineProxy.suspend();
-           
+
     try {
-      final Map<ReferenceType, byte[]> redefineMap = new HashMap<ReferenceType,byte[]>();
+      RedefineProcessor redefineProcessor = new RedefineProcessor(virtualMachineProxy);
+
       int processedClassesCount = 0;
       for (final String qualifiedName : modifiedClasses.keySet()) {
         processedClassesCount++;
@@ -124,32 +118,30 @@ class ReloadClassesWorker {
           myProgress.setFraction(processedClassesCount / (double)modifiedClasses.size());
         }
         final HotSwapFile fileDescr = modifiedClasses.get(qualifiedName);
+        final byte[] content;
         try {
-          final byte[] buffer = FileUtil.loadFileBytes(fileDescr.file);
-          final List<ReferenceType> classes = virtualMachineProxy.classesByName(qualifiedName);
-          for (final ReferenceType reference : classes) {
-            redefineMap.put(reference, buffer);
-          }
+          content = FileUtil.loadFileBytes(fileDescr.file);
         }
         catch (IOException e) {
           reportProblem(qualifiedName, e);
+          continue;
         }
-        if (redefineMap.size() >= CLASSES_CHUNK_SIZE) {
-          // reload this portion of clasess and clear the map to free memory
-          try {
-            virtualMachineProxy.redefineClasses(redefineMap);
-          }
-          finally {
-            redefineMap.clear();
-          }
-        }
+        redefineProcessor.processClass(qualifiedName, content);
       }
-      if (redefineMap.size() > 0) {
-        virtualMachineProxy.redefineClasses(redefineMap);
-      }
+      redefineProcessor.processPending();
       myProgress.setFraction(1);
-            
-      myProgress.addMessage(myDebuggerSession, MessageCategory.INFORMATION, DebuggerBundle.message("status.classes.reloaded", modifiedClasses.size()));
+
+      final int partiallyRedefinedClassesCount = redefineProcessor.getPartiallyRedefinedClassesCount();
+      if (partiallyRedefinedClassesCount == 0) {
+        myProgress.addMessage(myDebuggerSession, MessageCategory.INFORMATION,
+                              DebuggerBundle.message("status.classes.reloaded", redefineProcessor.getProcessedClassesCount()));
+      }
+      else {
+        final String message = DebuggerBundle.message("status.classes.not.all.versions.reloaded", partiallyRedefinedClassesCount,
+                                                      redefineProcessor.getProcessedClassesCount());
+        myProgress.addMessage(myDebuggerSession, MessageCategory.WARNING, message);
+      }
+
       if (LOG.isDebugEnabled()) {
         LOG.debug("classes reloaded");
       }
@@ -203,11 +195,10 @@ class ReloadClassesWorker {
     catch (Exception e) {
       processException(e);
     }
-
   }
 
   private void reportProblem(final String qualifiedName, @Nullable Exception ex) {
-    String reason = null;     
+    String reason = null;
     if (ex != null)  {
       reason = ex.getLocalizedMessage();
     }
@@ -221,6 +212,80 @@ class ReloadClassesWorker {
     }
     finally {
       StringBuilderSpinAllocator.dispose(buf);
+    }
+  }
+
+  private static class RedefineProcessor {
+    /**
+     * number of classes that will be reloaded in one go.
+     * Such restriction is needed to deal with big number of classes being reloaded
+     */
+    private static final int CLASSES_CHUNK_SIZE = 100;
+    private final VirtualMachineProxyImpl myVirtualMachineProxy;
+    private final Map<ReferenceType, byte[]> myRedefineMap = new HashMap<ReferenceType, byte[]>();
+    private int myProcessedClassesCount;
+    private int myPartiallyRedefinedClassesCount;
+
+    public RedefineProcessor(VirtualMachineProxyImpl virtualMachineProxy) {
+      myVirtualMachineProxy = virtualMachineProxy;
+    }
+
+    public void processClass(String qualifiedName, byte[] content) throws Throwable {
+      final List<ReferenceType> vmClasses = myVirtualMachineProxy.classesByName(qualifiedName);
+      if (vmClasses.isEmpty()) return;
+
+      if (vmClasses.size() == 1) {
+        myRedefineMap.put(vmClasses.get(0), content);
+        if (myRedefineMap.size() >= CLASSES_CHUNK_SIZE) {
+          processChunk();
+        }
+        return;
+      }
+
+      int redefinedVersionsCount = 0;
+      Throwable error = null;
+      for (ReferenceType vmClass : vmClasses) {
+        try {
+          myVirtualMachineProxy.redefineClasses(Collections.singletonMap(vmClass, content));
+          redefinedVersionsCount++;
+        }
+        catch (Throwable t) {
+          error = t;
+        }
+      }
+      if (redefinedVersionsCount == 0) {
+        throw error;
+      }
+
+      if (redefinedVersionsCount < vmClasses.size()) {
+        myPartiallyRedefinedClassesCount++;
+      }
+      myProcessedClassesCount++;
+    }
+
+    private void processChunk() throws Throwable {
+      // reload this portion of classes and clear the map to free memory
+      try {
+        myVirtualMachineProxy.redefineClasses(myRedefineMap);
+        myProcessedClassesCount += myRedefineMap.size();
+      }
+      finally {
+        myRedefineMap.clear();
+      }
+    }
+
+    public void processPending() throws Throwable {
+      if (myRedefineMap.size() > 0) {
+        processChunk();
+      }
+    }
+
+    public int getProcessedClassesCount() {
+      return myProcessedClassesCount;
+    }
+
+    public int getPartiallyRedefinedClassesCount() {
+      return myPartiallyRedefinedClassesCount;
     }
   }
 }

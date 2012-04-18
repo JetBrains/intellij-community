@@ -17,13 +17,14 @@ package org.jetbrains.plugins.gradle.config;
 
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.Project;
-import com.intellij.util.containers.hash.HashSet;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.gradle.diff.GradleProjectStructureChange;
 
-import java.util.Set;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Holds project-level gradle-related settings.
@@ -39,14 +40,28 @@ import java.util.Set;
 )
 public class GradleSettings implements PersistentStateComponent<GradleSettings>, Cloneable {
 
-  /** Holds changes confirmed by the end-user. */
-  public final Set<GradleProjectStructureChange> CHANGES = new HashSet<GradleProjectStructureChange>();
-
-  public String LINKED_PROJECT_FILE_PATH;
-  public String GRADLE_HOME;
+  @SuppressWarnings("UseOfArchaicSystemPropertyAccessors")
+  private static final boolean PRESERVE_EXPAND_STATE = !Boolean.getBoolean("gradle.forget.expand.nodes.state");
   
+  /** Holds changes confirmed by the end-user. */
+  private final AtomicReference<Map<String/*tree path*/, Boolean/*expanded*/>> myExpandStates
+    = new AtomicReference<Map<String, Boolean>>(new HashMap<String, Boolean>());
+  /** @see #getWorkingExpandStates() */
+  private final AtomicReference<Map<String/*tree path*/, Boolean/*expanded*/>> myWorkingExpandStates
+    = new AtomicReference<Map<String, Boolean>>(new HashMap<String, Boolean>());
+  /** Holds information about 'expand/collapse' status of the 'sync project structure tree' nodes. */
+  //private final AtomicReference<Set<GradleProjectStructureChange>>             myAcceptedChanges
+  //  = new AtomicReference<Set<GradleProjectStructureChange>>();
+  
+  private String myLinkedProjectPath;
+  private String myGradleHome;
+
   @Override
   public GradleSettings getState() {
+    myExpandStates.get().clear();
+    if (PRESERVE_EXPAND_STATE && !StringUtil.isEmpty(getLinkedProjectPath())) {
+      myExpandStates.get().putAll(myWorkingExpandStates.get());
+    }
     return this;
   }
 
@@ -60,15 +75,71 @@ public class GradleSettings implements PersistentStateComponent<GradleSettings>,
     return ServiceManager.getService(project, GradleSettings.class);
   }
 
-  public static void setLinkedProjectPath(@Nullable String path, @NotNull Project project) {
+  @Nullable
+  public String getGradleHome() {
+    return myGradleHome;
+  }
+
+  @SuppressWarnings("UnusedDeclaration")
+  public void setGradleHome(@Nullable String gradleHome) { // Necessary for the serialization.
+    myGradleHome = gradleHome;
+  }
+
+  public static void applyGradleHome(@Nullable String newPath, @NotNull Project project) {
     final GradleSettings settings = getInstance(project);
-    final String oldPath = settings.LINKED_PROJECT_FILE_PATH;
-    settings.LINKED_PROJECT_FILE_PATH = path;
+    final String oldPath = settings.myGradleHome;
+    settings.myGradleHome = newPath;
+    project.getMessageBus().syncPublisher(GradleConfigNotifier.TOPIC).onGradleHomeChange(oldPath, newPath);
+  }
+
+  @Nullable
+  public String getLinkedProjectPath() {
+    return myLinkedProjectPath;
+  }
+
+  @SuppressWarnings("UnusedDeclaration")
+  public void setLinkedProjectPath(@Nullable String linkedProjectPath) { // Necessary for the serialization.
+    myLinkedProjectPath = linkedProjectPath;
+  }
+
+  public static void applyLinkedProjectPath(@Nullable String path, @NotNull Project project) {
+    final GradleSettings settings = getInstance(project);
+    final String oldPath = settings.myLinkedProjectPath;
+    settings.myLinkedProjectPath = path;
     project.getMessageBus().syncPublisher(GradleConfigNotifier.TOPIC).onLinkedProjectPathChange(oldPath, path);
   }
 
+  @SuppressWarnings("UnusedDeclaration")
+  @NotNull
+  public Map<String, Boolean> getExpandStates() { // Necessary for the serialization.
+    return myExpandStates.get();
+  }
+
+  /**
+   * It's possible to configure the gradle integration to not persist 'expand states' (see {@link #PRESERVE_EXPAND_STATE}).
+   * <p/>
+   * However, we want the state to be saved during the single IDE session even if we don't want to persist it between the
+   * different sessions.
+   * <p/>
+   * This method allows to retrieve that 'non-persistent state'.
+   * 
+   * @return    project structure changes tree nodes 'expand state' to use
+   */
+  @NotNull
+  public Map<String, Boolean> getWorkingExpandStates() {
+    return myWorkingExpandStates.get();
+  }
+  
+  @SuppressWarnings("UnusedDeclaration")
+  public void setExpandStates(@Nullable Map<String, Boolean> state) { // Necessary for the serialization.
+    if (state != null) {
+      myExpandStates.get().putAll(state);
+      myWorkingExpandStates.get().putAll(state);
+    }
+  }
+  
   @Override
   public String toString() {
-    return "home: " + GRADLE_HOME + ", path: " + LINKED_PROJECT_FILE_PATH;
+    return "home: " + myGradleHome + ", path: " + myLinkedProjectPath;
   }
 }

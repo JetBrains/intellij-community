@@ -28,6 +28,7 @@ import com.intellij.openapi.editor.event.EditorMouseAdapter;
 import com.intellij.openapi.editor.event.EditorMouseEvent;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
@@ -72,8 +73,12 @@ public class EditorHyperlinkSupport {
       public void mouseReleased(final EditorMouseEvent e) {
         final MouseEvent mouseEvent = e.getMouseEvent();
         if (mouseEvent.getButton() == MouseEvent.BUTTON1 && !mouseEvent.isPopupTrigger()) {
-          int offset = myEditor.logicalPositionToOffset(myEditor.xyToLogicalPosition(e.getMouseEvent().getPoint()));
-          RangeHighlighter range = findLinkRangeAt(offset);
+          LogicalPosition logical = myEditor.xyToLogicalPosition(e.getMouseEvent().getPoint());
+          if (EditorUtil.inVirtualSpace(editor, logical)) {
+            return;
+          }
+
+          RangeHighlighter range = findLinkRangeAt(myEditor.logicalPositionToOffset(logical));
           final HyperlinkInfo info = myHighlighterToMessageInfoMap.get(range);
           if (info != null) {
             info.navigate(project);
@@ -252,6 +257,10 @@ public class EditorHyperlinkSupport {
   @Nullable
   public HyperlinkInfo getHyperlinkInfoByPoint(final Point p) {
     final LogicalPosition pos = myEditor.xyToLogicalPosition(new Point(p.x, p.y));
+    if (EditorUtil.inVirtualSpace(myEditor, pos)) {
+      return null;
+    }
+
     return getHyperlinkInfoByLineAndCol(pos.line, pos.column);
   }
 

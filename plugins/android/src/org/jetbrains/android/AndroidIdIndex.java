@@ -43,6 +43,7 @@ public class AndroidIdIndex extends ScalarIndexExtension<String> {
   public static final String MARKER = "$";
 
   private static final FileBasedIndex.InputFilter INPUT_FILTER = new FileBasedIndex.InputFilter() {
+    @Override
     public boolean acceptInput(final VirtualFile file) {
       return (file.getFileSystem() == LocalFileSystem.getInstance() || file.getFileSystem() instanceof TempFileSystem) &&
              file.getFileType() == StdFileTypes.XML;
@@ -50,6 +51,7 @@ public class AndroidIdIndex extends ScalarIndexExtension<String> {
   };
 
   private static final DataIndexer<String, Void, FileContent> INDEXER = new DataIndexer<String, Void, FileContent>() {
+    @Override
     @NotNull
     public Map<String, Void> map(FileContent inputData) {
       final CharSequence content = inputData.getContentAsText();
@@ -79,11 +81,13 @@ public class AndroidIdIndex extends ScalarIndexExtension<String> {
     }
   };
 
+  @NotNull
   @Override
   public ID<String, Void> getName() {
     return INDEX_ID;
   }
 
+  @NotNull
   @Override
   public DataIndexer<String, Void, FileContent> getIndexer() {
     return INDEXER;

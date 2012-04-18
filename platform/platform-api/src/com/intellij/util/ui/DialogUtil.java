@@ -15,6 +15,9 @@
  */
 package com.intellij.util.ui;
 
+import com.intellij.ide.ui.UISettings;
+import org.jetbrains.annotations.Nullable;
+
 import javax.swing.*;
 
 /**
@@ -51,13 +54,20 @@ public class DialogUtil{
       }
       if (mnemonic != '\0') {
         button.setText(realText.toString());
-        button.setMnemonic(mnemonic);
-        button.setDisplayedMnemonicIndex(index);
+        if (UISettings.getShadowInstance().DISABLE_MNEMONICS_IN_CONTROLS) {
+          button.setMnemonic(0);
+          button.setDisplayedMnemonicIndex(-1);
+          button.setFocusable(true);
+        }
+        else {
+          button.setMnemonic(mnemonic);
+          button.setDisplayedMnemonicIndex(index);
+        }
       }
     }
   }
 
-  public static void registerMnemonic(JLabel label, JComponent target) {
+  public static void registerMnemonic(JLabel label, @Nullable JComponent target) {
     registerMnemonic(label, target, UIUtil.MNEMONIC);
   }
 
@@ -67,7 +77,7 @@ public class DialogUtil{
    * @param mn mnemonic char
    * @since 11.0
    */
-  public static void registerMnemonic(JLabel label, JComponent target, char mn) {
+  public static void registerMnemonic(JLabel label, @Nullable JComponent target, char mn) {
     String text = label.getText();
     if (text != null) {
       final StringBuilder realText = new StringBuilder(text.length());
@@ -84,11 +94,18 @@ public class DialogUtil{
       }
       if (mnemonic != '\0') {
         label.setText(realText.toString());
-        label.setDisplayedMnemonic(mnemonic);
+        if (UISettings.getShadowInstance().DISABLE_MNEMONICS_IN_CONTROLS) {
+          label.setDisplayedMnemonic(0);
+          label.setDisplayedMnemonicIndex(-1);
+        }
+        else {
+          label.setDisplayedMnemonic(mnemonic);
+          label.setDisplayedMnemonicIndex(index);
+        }
+
         if (target != null) {
           label.setLabelFor(target);
         }
-        label.setDisplayedMnemonicIndex(index);
       }
     }
   }

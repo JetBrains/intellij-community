@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.editor.selection;
 
+import com.intellij.codeInsight.editorActions.ExtendWordSelectionHandlerBase;
 import com.intellij.codeInsight.editorActions.SelectWordUtil;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Editor;
@@ -33,7 +34,7 @@ import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
 /**
  * @author Maxim.Medvedev
  */
-public class GroovyGStringSelectioner extends GroovyBasicSelectioner {
+public class GroovyGStringSelectioner extends ExtendWordSelectionHandlerBase {
   public boolean canSelect(PsiElement e) {
     PsiElement parent = e.getParent();
     return parent instanceof GrStringInjection || parent instanceof GrString;

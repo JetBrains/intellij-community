@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -79,10 +79,21 @@ public class OffsetsElementSignatureProvider extends AbstractElementSignaturePro
     PsiElement element = file.findElementAt(start);
     if (element != null) {
       result = findElement(start, end, index, element, processingInfoStorage);
+      if (result == null && processingInfoStorage != null) {
+        processingInfoStorage.append(String.format(
+          "Failed to find an element by the given offsets. Started by the element '%s' (%s)", element, element.getText()
+        ));
+      }
     }
 
     if (result == null) {
       final PsiElement injectedStartElement = InjectedLanguageUtil.findElementAtNoCommit(file, start);
+      if (processingInfoStorage != null) {
+        processingInfoStorage.append(String.format(
+          "Trying to find injected element starting from the '%s'%s%n",
+          injectedStartElement, injectedStartElement == null ? "" : String.format("(%s)", injectedStartElement.getText())
+        ));
+      }
       if (injectedStartElement != null && injectedStartElement != element) {
         result = findElement(start, end, index, injectedStartElement, processingInfoStorage);
       } 

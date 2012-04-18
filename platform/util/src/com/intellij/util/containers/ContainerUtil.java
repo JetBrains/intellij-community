@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,9 +31,39 @@ import java.lang.reflect.Array;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-@SuppressWarnings({"UtilityClassWithoutPrivateConstructor", "unchecked"})
-public class ContainerUtil {
+@SuppressWarnings({"UtilityClassWithoutPrivateConstructor", "unchecked", "MethodOverridesStaticMethodOfSuperclass"})
+public class ContainerUtil extends ContainerUtilRt {
   private static final int INSERTION_SORT_THRESHOLD = 10;
+
+  public static <K, V> Map<K, V> intersection(Map<K, V> map1, Map<K, V> map2) {
+    final Map<K, V> res = new HashMap<K, V>();
+    final HashSet<K> keys = new HashSet<K>();
+    keys.addAll(map1.keySet());
+    keys.addAll(map2.keySet());
+    for (K k : keys) {
+      V v1 = map1.get(k);
+      V v2 = map2.get(k);
+      if (v1 == v2 || (v1 != null && v1.equals(v2))) {
+        res.put(k, v1);
+      }
+    }
+    return res;
+  }
+
+  public static <K, V> Map<K,Pair<V,V>> diff(Map<K, V> map1, Map<K, V> map2) {
+    final Map<K, Pair<V,V>> res = new HashMap<K, Pair<V, V>>();
+    final HashSet<K> keys = new HashSet<K>();
+    keys.addAll(map1.keySet());
+    keys.addAll(map2.keySet());
+    for (K k : keys) {
+      V v1 = map1.get(k);
+      V v2 = map2.get(k);
+      if (!(v1 == v2 || (v1 != null && v1.equals(v2)))) {
+        res.put(k, Pair.create(v1, v2));
+      }
+    }
+    return res;
+  }
 
   @NotNull
   public static <T> List<T> mergeSortedLists(@NotNull List<T> list1, @NotNull List<T> list2, @NotNull Comparator<? super T> comparator, boolean mergeEqualItems){
@@ -258,34 +288,6 @@ public class ContainerUtil {
       if (condition.value(value)) return value;
     }
     return null;
-  }
-
-  @NotNull
-  public static <T, V> List<V> map2List(@NotNull T[] array, @NotNull Function<T, V> mapper) {
-    return map2List(Arrays.asList(array), mapper);
-  }
-
-  @NotNull
-  public static <T, V> List<V> map2List(@NotNull Collection<? extends T> collection, @NotNull Function<T, V> mapper) {
-    final ArrayList<V> list = new ArrayList<V>(collection.size());
-    for (final T t : collection) {
-      list.add(mapper.fun(t));
-    }
-    return list;
-  }
-
-  @NotNull
-  public static <T, V> Set<V> map2Set(@NotNull T[] collection, @NotNull Function<T, V> mapper) {
-    return map2Set(Arrays.asList(collection), mapper);
-  }
-
-  @NotNull
-  public static <T, V> Set<V> map2Set(@NotNull Collection<? extends T> collection, @NotNull Function<T, V> mapper) {
-    final HashSet<V> set = new HashSet<V>(collection.size());
-    for (final T t : collection) {
-      set.add(mapper.fun(t));
-    }
-    return set;
   }
 
   @NotNull
@@ -706,38 +708,6 @@ public class ContainerUtil {
   public static <T> T[] mergeCollectionsToArray(@NotNull Collection<? extends T> c1, @NotNull Collection<? extends T> c2, @NotNull ArrayFactory<T> factory) {
     return ArrayUtil.mergeCollections(c1, c2, factory);
   }
-  
-  @NotNull
-  public static <T> T[] toArray(@NotNull List<T> collection, @NotNull T[] array) {
-    final int length = array.length;
-    if (length < 20) {
-      for (int i = 0; i < collection.size(); i++) {
-        array[i] = collection.get(i);
-      }
-      return array;
-    }
-    else {
-      return collection.toArray(array);
-    }
-  }
-
-  /**
-   * This is a replacement for {@link Collection#toArray(Object[])}. For small collections it is faster to stay at java level and refrain
-   * from calling JNI {@link System#arraycopy(Object, int, Object, int, int)}
-   */
-  @NotNull
-  public static <T> T[] toArray(@NotNull Collection<T> c, @NotNull T[] sample) {
-    final int size = c.size();
-    if (size == sample.length && size < 20) {
-      int i = 0;
-      for (T t : c) {
-        sample[i++] = t;
-      }
-      return sample;
-    }
-
-    return c.toArray(sample);
-  }
 
   public static <T extends Comparable<T>> void sort(@NotNull List<T> list) {
     int size = list.size();
@@ -950,17 +920,6 @@ public class ContainerUtil {
     return addAll(new HashSet<T>(), items);
   }
   
-  public static <T> void addIfNotNull(final T element, @NotNull Collection<T> result) {
-    if (element != null) {
-      result.add(element);
-    }
-  }
-  public static <T> void addIfNotNull(@NotNull Collection<T> result, @Nullable final T element) {
-    if (element != null) {
-      result.add(element);
-    }
-  }
-
   public static <K, V> void putIfNotNull(final K key, @Nullable V value, @NotNull final Map<K, V> result) {
     if (value != null) {
       result.put(key, value);
@@ -1136,17 +1095,6 @@ public class ContainerUtil {
     }
   }
 
-  @NotNull
-  public static <T> CopyOnWriteArrayList<T> createEmptyCOWList() {
-    // does not create garbage new Object[0]
-    return new CopyOnWriteArrayList<T>(ContainerUtil.<T>emptyList());
-  }
-
-  @NotNull
-  public static <T> List<T> emptyList() {
-    return (List<T>)EmptyList.INSTANCE;
-  }
-
   /**
    * Merge sorted points, which are sorted by x and with equal x by y.
    * Result is put to x1 y1.
@@ -1196,35 +1144,6 @@ public class ContainerUtil {
     y1.clear();
     x1.add(newX.toNativeArray());
     y1.add(newY.toNativeArray());
-  }
-
-  /**
-   * has optimized toArray() as opposed to the {@link java.util.Collections#emptyList()}
-   */
-  private static class EmptyList extends AbstractList<Object> implements RandomAccess {
-    private static final EmptyList INSTANCE = new EmptyList();
-
-    public int size() {
-      return 0;
-    }
-
-    public boolean contains(Object obj) {
-      return false;
-    }
-
-    public Object get(int index) {
-      throw new IndexOutOfBoundsException("Index: " + index);
-    }
-
-    @Override
-    public Object[] toArray() {
-      return ArrayUtil.EMPTY_OBJECT_ARRAY;
-    }
-
-    @Override
-    public <T> T[] toArray(T[] a) {
-      return a;
-    }
   }
 
   @NotNull
@@ -1354,6 +1273,7 @@ public class ContainerUtil {
     return true;
   }
 
+  @Nullable
   public static <T> List<T> trimToSize(List<T> list) {
     if (list == null) return null;
     if (list.isEmpty()) return Collections.emptyList();
@@ -1363,5 +1283,53 @@ public class ContainerUtil {
     }
 
     return list;
+  }
+
+  @NotNull
+  public static <T> List<T> emptyList() {
+    return ContainerUtilRt.emptyList();
+  }
+
+  @NotNull
+  public static <T> CopyOnWriteArrayList<T> createEmptyCOWList() {
+    return ContainerUtilRt.createEmptyCOWList();
+  }
+
+  public static <T> void addIfNotNull(final T element, @NotNull Collection<T> result) {
+    ContainerUtilRt.addIfNotNull(element, result);
+  }
+
+  public static <T> void addIfNotNull(@NotNull Collection<T> result, @Nullable final T element) {
+    ContainerUtilRt.addIfNotNull(result, element);
+  }
+
+  @NotNull
+  public static <T, V> List<V> map2List(@NotNull T[] array, @NotNull Function<T, V> mapper) {
+    return ContainerUtilRt.map2List(array, mapper);
+  }
+
+  @NotNull
+  public static <T, V> List<V> map2List(@NotNull Collection<? extends T> collection, @NotNull Function<T, V> mapper) {
+    return ContainerUtilRt.map2List(collection, mapper);
+  }
+
+  @NotNull
+  public static <T, V> Set<V> map2Set(@NotNull T[] collection, @NotNull Function<T, V> mapper) {
+    return ContainerUtilRt.map2Set(collection, mapper);
+  }
+
+  @NotNull
+  public static <T, V> Set<V> map2Set(@NotNull Collection<? extends T> collection, @NotNull Function<T, V> mapper) {
+    return ContainerUtilRt.map2Set(collection, mapper);
+  }
+
+  @NotNull
+  public static <T> T[] toArray(@NotNull List<T> collection, @NotNull T[] array) {
+    return ContainerUtilRt.toArray(collection, array);
+  }
+
+  @NotNull
+  public static <T> T[] toArray(@NotNull Collection<T> c, @NotNull T[] sample) {
+    return ContainerUtilRt.toArray(c, sample);
   }
 }

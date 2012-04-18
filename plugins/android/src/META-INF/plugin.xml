@@ -44,7 +44,19 @@
            class="org.jetbrains.android.actions.AndroidToolsActionGroup">
       <add-to-group group-id="ToolsMenu" anchor="last"/>
     </group>
+    <action id="Android.RunDdms" class="org.jetbrains.android.actions.AndroidRunDdmsAction">
+      <add-to-group group-id="AndroidToolsGroup" anchor="last"/>
+    </action>
+    <action id="Android.RunHierarchyViewer" class="org.jetbrains.android.actions.AndroidRunHierarchyViewerAction">
+      <add-to-group group-id="AndroidToolsGroup" anchor="last"/>
+    </action>
+    <action id="Android.RunDraw9Patch" class="org.jetbrains.android.actions.AndroidRunDraw9PatchAction">
+      <add-to-group group-id="AndroidToolsGroup" anchor="last"/>
+    </action>
     <action id="Android.ExportSignedPackage" class="org.jetbrains.android.actions.ExportSignedPackageAction">
+      <add-to-group group-id="AndroidToolsGroup" anchor="last"/>
+    </action>
+    <action id="Android.ExportUnsignedPackage" class="org.jetbrains.android.actions.AndroidExportUnsignedPackageAction">
       <add-to-group group-id="AndroidToolsGroup" anchor="last"/>
     </action>
     <action id="Android.RunAndroidAvdManager" class="org.jetbrains.android.actions.RunAndroidAvdManagerAction">
@@ -53,8 +65,8 @@
     <action id="Android.RunAndroidSdkManager" class="org.jetbrains.android.actions.RunAndroidSdkManagerAction">
       <add-to-group group-id="AndroidToolsGroup" anchor="last"/>
     </action>
-    <action id="Android.EnableDdms" class="org.jetbrains.android.actions.AndroidEnableDdmsAction">
-      <add-to-group group-id="AndroidToolsGroup" anchor="first"/>
+    <action id="Android.EnableDdms" class="org.jetbrains.android.actions.AndroidEnableAdbServiceAction">
+      <add-to-group group-id="AndroidToolsGroup" anchor="last"/>
     </action>
     <!--<action id="GotoAndroidResourceDefinition" class="org.jetbrains.android.actions.GotoResourceAction">
       <keyboard-shortcut first-keystroke="control shift alt R" keymap="$default"/>
@@ -93,6 +105,7 @@
     <dom.fileDescription implementation="org.jetbrains.android.dom.manifest.ManifestDomFileDescription"/>
     <dom.fileDescription implementation="org.jetbrains.android.dom.layout.LayoutDomFileDescription"/>
     <dom.fileDescription implementation="org.jetbrains.android.dom.animation.AnimationDomFileDescription"/>
+    <dom.fileDescription implementation="org.jetbrains.android.dom.animator.AnimatorDomFileDescription"/>
     <dom.fileDescription implementation="org.jetbrains.android.dom.menu.MenuDomFileDescription"/>
     <dom.fileDescription implementation="org.jetbrains.android.dom.resources.ResourcesDomFileDescription"/>
     <dom.fileDescription implementation="org.jetbrains.android.dom.xml.XmlResourceDomFileDescription"/>
@@ -139,15 +152,25 @@
     <renamePsiElementProcessor implementation="org.jetbrains.android.AndroidRenameResourceProcessor" order="first"/>
     <intentionAction>
       <className>org.jetbrains.android.intentions.AndroidAddStringResourceAction</className>
+      <category>Android</category>
     </intentionAction>
 
     <localInspection language="XML" shortName="AndroidDomInspection" bundle="messages.AndroidBundle" key="android.inspections.dom.name"
                      groupKey="android.inspections.group.name" enabledByDefault="true" level="ERROR"
                      implementationClass="org.jetbrains.android.inspections.AndroidDomInspection"/>
 
-    <localInspection language="JAVA" shortName="AndroidNonConstantResIdsInSwitch" bundle="messages.AndroidBundle" key="android.inspections.group.name"
-                         groupKey="android.inspections.group.name" enabledByDefault="true" level="ERROR"
-                         implementationClass="org.jetbrains.android.inspections.AndroidNonConstantResIdsInSwitchInspection"/>
+    <localInspection language="XML" shortName="AndroidUnknownAttribute" bundle="messages.AndroidBundle"
+                     key="android.inspections.unknown.attribute.name" groupKey="android.inspections.group.name" enabledByDefault="true"
+                     level="WARNING" implementationClass="org.jetbrains.android.inspections.AndroidUnknownAttributeInspection"/>
+
+    <localInspection language="XML" shortName="AndroidElementNotAllowed" bundle="messages.AndroidBundle"
+                     key="android.inspections.element.not.allowed.name" groupKey="android.inspections.group.name" enabledByDefault="true"
+                     level="WARNING" implementationClass="org.jetbrains.android.inspections.AndroidElementNotAllowedInspection"/>
+
+    <localInspection language="JAVA" shortName="AndroidNonConstantResIdsInSwitch" bundle="messages.AndroidBundle"
+                     key="android.inspections.non.constant.res.ids.in.switch.name" groupKey="android.inspections.group.name"
+                     enabledByDefault="true" level="ERROR"
+                     implementationClass="org.jetbrains.android.inspections.AndroidNonConstantResIdsInSwitchInspection"/>
 
     <inspectionToolProvider implementation="org.jetbrains.android.inspections.lint.AndroidLintInspectionToolProvider"/>
     <codeInspection.InspectionExtension implementation="org.jetbrains.android.inspections.lint.AndroidInspectionExtensionsFactory"/>
@@ -160,7 +183,7 @@
     <annotator language="XML" implementationClass="org.jetbrains.android.AndroidColorAnnotator" order="first"/>
     <xml.elementDescriptorProvider implementation="org.jetbrains.android.dom.AndroidDomElementDescriptorProvider" order="first"/>
 
-    <facet.toolWindow id="Android Logcat"
+    <facet.toolWindow id="Android"
                       facetIdList="android"
                       anchor="bottom"
                       icon="/icons/android.png"
@@ -196,11 +219,23 @@
     <renameHandler implementation="org.jetbrains.android.AndroidRenameHandler" order="first"/>
 
     <compileServer.plugin jar-path="jps/android-jps-plugin.jar"/>
-    <compileServer.plugin jar-path="android-rt.jar"/>
+    <compileServer.plugin jar-path="android-common.jar"/>
 
     <compileServer.plugin jar-path="sdklib.jar"/>
     <compileServer.plugin jar-path="../../../../../community/plugins/android/lib/sdklib.jar"/>
     <compileServer.plugin jar-path="../../../../../plugins/android/lib/sdklib.jar"/>
+
+    <compileServer.plugin jar-path="common.jar"/>
+    <compileServer.plugin jar-path="../../../../../community/plugins/android/lib/common.jar"/>
+    <compileServer.plugin jar-path="../../../../../plugins/android/lib/common.jar"/>
+
+    <compileServer.plugin jar-path="jarutils.jar"/>
+    <compileServer.plugin jar-path="../../../../../community/plugins/android/lib/jarutils.jar"/>
+    <compileServer.plugin jar-path="../../../../../plugins/android/lib/jarutils.jar"/>
+
+    <compileServer.plugin jar-path="androidprefs.jar"/>
+    <compileServer.plugin jar-path="../../../../../community/plugins/android/lib/androidprefs.jar"/>
+    <compileServer.plugin jar-path="../../../../../plugins/android/lib/androidprefs.jar"/>
   </extensions>
 
   <extensionPoints>

@@ -17,13 +17,12 @@ package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.editor.TextChange;
 import com.intellij.util.text.CharArrayUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * Allows to store and retrieve {@link TextChange} objects assuming that they are applied to the same text.
@@ -36,9 +35,7 @@ import java.util.concurrent.locks.ReentrantLock;
  * @since 3/2/11 11:55 AM
  */
 public class TextChangesStorage {
-  
   private final List<ChangeEntry> myChanges = new ArrayList<ChangeEntry>();
-  private final Lock myLock = new ReentrantLock();
 
   /**
    * @return    list of changes stored previously via {@link #store(TextChange)}. Note that the changes offsets relate to initial
@@ -47,20 +44,13 @@ public class TextChangesStorage {
    */
   @NotNull
   public List<TextChangeImpl> getChanges() {
-    List<TextChangeImpl> result = new ArrayList<TextChangeImpl>();
+    if (myChanges.isEmpty()) return Collections.emptyList();
+    List<TextChangeImpl> result = new ArrayList<TextChangeImpl>(myChanges.size());
+
     for (ChangeEntry changeEntry : myChanges) {
       result.add(changeEntry.change);
     }
     return result;
-  }
-
-  /**
-   * @return    lock object associated with the current storage object. We use {@link Lock} in preference to 'synchronised' here
-   *            because it shows better performance
-   */
-  @NotNull
-  public Lock getLock() {
-    return myLock;
   }
 
   /**
@@ -176,8 +166,7 @@ public class TextChangesStorage {
     int clientShift = 0; // 'Client text' shift before the given change to store. I.e. this value can be subtracted from the
                          // given change's start/end offsets in order to get original document range affected by the given change.
     int changeDiff = change.getText().length() - (change.getEnd() - change.getStart());
-    boolean updateClientOffsetOnly = false;
-    
+
     if (insertionIndex < 0) {
       insertionIndex = -insertionIndex - 1;
       if (insertionIndex >= myChanges.size()) {
@@ -200,7 +189,8 @@ public class TextChangesStorage {
       ChangeEntry changeEntry = myChanges.get(insertionIndex);
       clientShift = changeEntry.clientStartOffset - changeEntry.change.getStart();
     }
-    
+
+    boolean updateClientOffsetOnly = false;
     for (int i = insertionIndex; i < myChanges.size(); i++) {
       ChangeEntry changeEntry = myChanges.get(i);
       int storedClientStart = changeEntry.change.getStart() + clientShift;
@@ -366,8 +356,8 @@ public class TextChangesStorage {
       }
     }
     else {
-      int clientShift = 0;
       changeIndex = -changeIndex - 1;
+      int clientShift = 0;
       if (changeIndex > 0 && changeIndex <= myChanges.size()) {
         ChangeEntry changeEntry = myChanges.get(changeIndex - 1);
         clientShift = changeEntry.clientStartOffset - changeEntry.change.getStart() + changeEntry.change.getDiff();
@@ -519,6 +509,7 @@ public class TextChangesStorage {
       return clientStartOffset + change.getText().length();
     }
     
+    @NonNls
     @Override
     public String toString() {
       return "client start offset: " + clientStartOffset + ", change: " + change;

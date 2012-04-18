@@ -17,7 +17,6 @@ package git4idea.branch;
 
 import git4idea.GitBranch;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -36,14 +35,12 @@ import java.util.HashSet;
  */
 public final class GitBranchesCollection {
   
-  public static final GitBranchesCollection EMPTY = new GitBranchesCollection(null, Collections.<GitBranch>emptyList(), Collections.<GitBranch>emptyList());
+  public static final GitBranchesCollection EMPTY = new GitBranchesCollection(Collections.<GitBranch>emptyList(), Collections.<GitBranch>emptyList());
 
   private final Collection<GitBranch> myLocalBranches;
   private final Collection<GitBranch> myRemoteBranches;
-  private final GitBranch myCurrentBranch;
 
-  public GitBranchesCollection(@Nullable GitBranch currentBranch, @NotNull Collection<GitBranch> localBranches, @NotNull Collection<GitBranch> remoteBranches) {
-    myCurrentBranch = currentBranch;
+  public GitBranchesCollection(@NotNull Collection<GitBranch> localBranches, @NotNull Collection<GitBranch> remoteBranches) {
     myRemoteBranches = remoteBranches;
     myLocalBranches = localBranches;
   }
@@ -52,7 +49,7 @@ public final class GitBranchesCollection {
    * Copy constructor. Sets inside are also copied.
    */
   public GitBranchesCollection(@NotNull GitBranchesCollection branches) {
-    this(branches.getCurrentBranch(), branches.getLocalBranches(), branches.getRemoteBranches());
+    this(branches.getLocalBranches(), branches.getRemoteBranches());
   }
 
   /**
@@ -71,12 +68,4 @@ public final class GitBranchesCollection {
     return new HashSet<GitBranch>(myRemoteBranches);
   }
 
-  /**
-   * @return currently active branch.
-   *         Current branch may be <code>null</code> in the case of detached head,
-   */
-  @Nullable
-  public GitBranch getCurrentBranch() {
-    return myCurrentBranch;
-  }
 }

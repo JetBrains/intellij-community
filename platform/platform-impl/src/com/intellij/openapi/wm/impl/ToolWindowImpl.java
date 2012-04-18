@@ -23,6 +23,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.BusyObject;
 import com.intellij.openapi.util.Disposer;
@@ -30,6 +31,7 @@ import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.openapi.wm.impl.commands.FinalizableCommand;
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi;
+import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
 import com.intellij.ui.content.ContentManager;
@@ -76,6 +78,8 @@ public final class ToolWindowImpl implements ToolWindowEx {
     }
   };
   private boolean myUseLastFocused = true;
+
+  private final static Logger LOG = Logger.getInstance(ToolWindowImpl.class);
 
   ToolWindowImpl(final ToolWindowManagerImpl toolWindowManager, final String id, boolean canCloseContent, @Nullable final JComponent component) {
     myToolWindowManager = toolWindowManager;
@@ -195,12 +199,10 @@ public final class ToolWindowImpl implements ToolWindowEx {
   }
 
   public final boolean isVisible() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
     return myToolWindowManager.isToolWindowVisible(myId);
   }
 
   public final ToolWindowAnchor getAnchor() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
     return myToolWindowManager.getToolWindowAnchor(myId);
   }
 
@@ -253,7 +255,6 @@ public final class ToolWindowImpl implements ToolWindowEx {
   }
 
   public final ToolWindowType getType() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
     return myToolWindowManager.getToolWindowType(myId);
   }
 
@@ -288,7 +289,7 @@ public final class ToolWindowImpl implements ToolWindowEx {
   }
 
   @Override
-  public void setTitleActions(AnAction[] actions) {
+  public void setTitleActions(AnAction... actions) {
     getDecorator().setTitleActions(actions);
   }
 
@@ -312,7 +313,6 @@ public final class ToolWindowImpl implements ToolWindowEx {
    *         passed content manager.
    */
   public final boolean isAvailable() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
     return myAvailable && myComponent != null;
   }
 
@@ -346,6 +346,9 @@ public final class ToolWindowImpl implements ToolWindowEx {
   public final void setIcon(final Icon icon) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     final Icon oldIcon = getIcon();
+    if (oldIcon != icon && !(icon instanceof LayeredIcon) && (icon.getIconHeight() != 13 || icon.getIconWidth() != 13)) {
+      LOG.warn("ToolWindow icons should be 13x13. Please fix " + icon);
+    }
     getSelectedContent().setIcon(icon);
     myIcon = icon;
     myChangeSupport.firePropertyChange(PROP_ICON, oldIcon, icon);

@@ -18,6 +18,7 @@ package com.intellij.codeEditor.printing;
 
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.*;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -40,8 +41,8 @@ public class PrintSettings implements PersistentStateComponent<PrintSettings>, E
 
   public boolean PORTRAIT_LAYOUT = true;
 
-  @NonNls public String FONT_NAME = "monospaced";
-  public int FONT_SIZE = 10;
+  @NonNls public String FONT_NAME = EditorColorsManager.getInstance().getGlobalScheme().getEditorFontName();
+  public int FONT_SIZE = EditorColorsManager.getInstance().getGlobalScheme().getEditorFontSize();
 
   public boolean PRINT_LINE_NUMBERS = true;
 

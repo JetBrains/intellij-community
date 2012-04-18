@@ -200,7 +200,7 @@ public abstract class BaseRunConfigurationAction extends ActionGroup {
         context.updateConfiguration(producers.get(0));
       }
       final String name = suggestRunActionName((LocatableConfiguration)configuration.getConfiguration());
-      updatePresentation(presentation, existing != null || producers.size() <= 1 ? " " + name : "", context);
+      updatePresentation(presentation, existing != null || producers.size() <= 1 ? name : "", context);
     }
   }
 
@@ -211,8 +211,8 @@ public abstract class BaseRunConfigurationAction extends ActionGroup {
 
   public static String suggestRunActionName(final LocatableConfiguration configuration) {
     if (!configuration.isGeneratedName()) {
-      return "\"" + ProgramRunnerUtil.shortenName(configuration.getName(), 0) + "\"";
-    } else return "\"" + configuration.suggestedName() + "\"";
+      return ProgramRunnerUtil.shortenName(configuration.getName(), 0);
+    } else return configuration.suggestedName();
   }
 
   protected abstract void updatePresentation(Presentation presentation, String actionText, ConfigurationContext context);

@@ -73,6 +73,7 @@ public class SourceItemsTree extends SimpleDnDAwareTree implements AdvancedDnDSo
     group.add(new PutSourceItemIntoDefaultLocationAction(this, myArtifactsEditor));
     group.add(new PackAndPutIntoDefaultLocationAction(this, myArtifactsEditor));
     group.add(new PutSourceItemIntoParentAndLinkViaManifestAction(this, myArtifactsEditor));
+    group.add(new ExtractIntoDefaultLocationAction(this, myArtifactsEditor));
 
     group.add(Separator.getInstance());
     group.add(new SourceItemNavigateAction(this));

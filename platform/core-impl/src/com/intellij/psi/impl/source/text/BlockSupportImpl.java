@@ -55,7 +55,7 @@ public class BlockSupportImpl extends BlockSupport {
   public BlockSupportImpl(Project project) {
     project.getMessageBus().connect().subscribe(DocumentBulkUpdateListener.TOPIC, new DocumentBulkUpdateListener.Adapter() {
       @Override
-      public void updateStarted(final Document doc) {
+      public void updateStarted(@NotNull final Document doc) {
         doc.putUserData(DO_NOT_REPARSE_INCREMENTALLY,  Boolean.TRUE);
       }
     });
@@ -112,14 +112,14 @@ public class BlockSupportImpl extends BlockSupport {
         final TextRange textRange = node.getTextRange();
         final IReparseableElementType reparseable = (IReparseableElementType)elementType;
 
-        if (reparseable.getLanguage() == baseLanguage) {
+        if (baseLanguage.isKindOf(reparseable.getLanguage())) {
           final int start = textRange.getStartOffset();
           final int end = start + textRange.getLength() + lengthShift;
           assertFileLength(file, newFileText, node, elementType, start, end);
 
           CharSequence newTextStr = newFileText.subSequence(start, end);
 
-          if (reparseable.isParsable(newTextStr, project)) {
+          if (reparseable.isParsable(newTextStr, baseLanguage, project)) {
             ASTNode chameleon = reparseable.createNode(newTextStr);
             if (chameleon != null) {
               DummyHolder holder = DummyHolderFactory.createHolder(fileImpl.getManager(), null, node.getPsi(), charTable);
@@ -190,9 +190,8 @@ public class BlockSupportImpl extends BlockSupport {
       final PsiFileImpl newFile = (PsiFileImpl)copy.getPsi(language);
 
       if (newFile == null) {
-        LOG.error("View provider " + viewProvider + " refused to parse text with " + language +
+        throw new RuntimeException("View provider " + viewProvider + " refused to parse text with " + language +
                   "; base: " + viewProvider.getBaseLanguage() + "; copy: " + copy.getBaseLanguage() + "; fileType: " + fileType);
-        return null;
       }
 
       newFile.setOriginalFile(fileImpl);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,7 +59,7 @@ public class CodeFoldingManagerImpl extends CodeFoldingManager implements Projec
   CodeFoldingManagerImpl(Project project) {
     myProject = project;
     project.getMessageBus().connect().subscribe(DocumentBulkUpdateListener.TOPIC, new DocumentBulkUpdateListener.Adapter() {
-      public void updateStarted(final Document doc) {
+      public void updateStarted(@NotNull final Document doc) {
         resetFoldingInfo(doc);
       }
     });
@@ -88,7 +88,7 @@ public class CodeFoldingManagerImpl extends CodeFoldingManager implements Projec
       public void mouseMoved(EditorMouseEvent e) {
         if (myProject.isDisposed()) return;
         HintManager hintManager = HintManager.getInstance();
-        if (hintManager != null && hintManager.hasShownHintsThatWillHideByOtherHint()) {
+        if (hintManager != null && hintManager.hasShownHintsThatWillHideByOtherHint(false)) {
           return;
         } 
 
@@ -185,7 +185,7 @@ public class CodeFoldingManagerImpl extends CodeFoldingManager implements Projec
     PsiDocumentManager.getInstance(myProject).commitDocument(document);
 
     Editor[] otherEditors = EditorFactory.getInstance().getEditors(document, myProject);
-    if (otherEditors.length == 0) {
+    if (otherEditors.length == 0 && !editor.isDisposed()) {
       getDocumentFoldingInfo(document).loadFromEditor(editor);
     }
     EditorFoldingInfo.get(editor).dispose();
@@ -330,10 +330,5 @@ public class CodeFoldingManagerImpl extends CodeFoldingManager implements Projec
       }
       document.putUserData(FOLDING_STATE_INFO_IN_DOCUMENT_KEY, null);
     }
-  }
-
-  @Override
-  public void allowFoldingOnCaretLine(@NotNull Editor editor) {
-    editor.putUserData(UpdateFoldRegionsOperation.ALLOW_FOLDING_ON_CARET_LINE_KEY, true);
   }
 }

@@ -21,6 +21,7 @@ import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -40,16 +41,18 @@ public class RunToCursorBreakpoint extends LineBreakpoint {
     return myRestoreBreakpoints;
   }
 
+  @Override
   public boolean isVisible() {
     return false;
   }
 
-  protected boolean isMuted(final DebugProcessImpl debugProcess) {
+  @Override
+  protected boolean isMuted(@NotNull final DebugProcessImpl debugProcess) {
     return false;  // always enabled
   }
 
   @Nullable
-  protected static RunToCursorBreakpoint create(Project project, Document document, int lineIndex, boolean restoreBreakpoints) {
+  protected static RunToCursorBreakpoint create(@NotNull Project project, @NotNull Document document, int lineIndex, boolean restoreBreakpoints) {
     VirtualFile virtualFile = FileDocumentManager.getInstance().getFile(document);
     if (virtualFile == null) {
       return null;

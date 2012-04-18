@@ -18,9 +18,10 @@ package com.intellij.openapi.module;
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.ide.util.projectWizard.WizardContext;
-import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -80,7 +81,7 @@ public abstract class ModuleType<T extends ModuleBuilder> {
     }
   }
 
-  public boolean isValidSdk(final Module module, final Sdk projectSdk) {
+  public boolean isValidSdk(final Module module, @Nullable final Sdk projectSdk) {
     return true;
   }
 

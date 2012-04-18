@@ -33,8 +33,6 @@ public class UnscrambleListener implements ApplicationActivationListener {
 
   @Override
   public void applicationActivated(final IdeFrame ideFrame) {
-    if (SystemInfo.isMac) return;
-    
     final Runnable processClipboard = new Runnable() {
       @Override
       public void run() {

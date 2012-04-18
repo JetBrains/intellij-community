@@ -129,7 +129,7 @@ public class FrameWrapper implements Disposable, DataProvider {
     } else {
       ((JDialog)frame).setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
     }
-    WindowAdapter focusListener = new WindowAdapter() {
+    final WindowAdapter focusListener = new WindowAdapter() {
       public void windowOpened(WindowEvent e) {
         IdeFocusManager fm = IdeFocusManager.getInstance(myProject);
         JComponent toFocus = myPreferedFocus;
@@ -145,6 +145,12 @@ public class FrameWrapper implements Disposable, DataProvider {
       }
     };
     frame.addWindowListener(focusListener);
+    Disposer.register(this, new Disposable() {
+      @Override
+      public void dispose() {
+        frame.removeWindowListener(focusListener);
+      }
+    });
     if (myCloseOnEsc) addCloseOnEsc((RootPaneContainer)frame);
     ((RootPaneContainer)frame).getContentPane().add(myComponent, BorderLayout.CENTER);
     if (frame instanceof JFrame) {
@@ -181,6 +187,12 @@ public class FrameWrapper implements Disposable, DataProvider {
     if (isDisposed()) return;
 
     Window frame = getFrame();
+
+    final JRootPane rootPane = ((RootPaneContainer)frame).getRootPane();
+    if (rootPane != null) {
+      DialogWrapper.unregisterKeyboardActions(rootPane);
+    }
+
     frame.setVisible(false);
     frame.dispose();
 

@@ -31,6 +31,7 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 
 import java.io.File;
+import java.lang.reflect.Method;
 import java.util.Map;
 
 import static org.testng.Assert.assertNotNull;
@@ -60,7 +61,7 @@ public abstract class GitTest extends AbstractVcsTestCase {
   protected GitVcs myVcs;
 
   @BeforeMethod
-  protected void setUp() throws Exception {
+  protected void setUp(final Method testMethod) throws Exception {
     myProjectDirFixture = IdeaTestFixtureFactory.getFixtureFactory().createTempDirTestFixture();
     myProjectDirFixture.setUp();
     myProjectDir = new File(myProjectDirFixture.getTempDirPath());
@@ -69,7 +70,7 @@ public abstract class GitTest extends AbstractVcsTestCase {
       @Override
       public void run() {
         try {
-          initProject(myProjectDir);
+          initProject(myProjectDir, testMethod.getName());
           initRepositories();
           activateVCS(GitVcs.NAME);
         } catch (Exception e) {

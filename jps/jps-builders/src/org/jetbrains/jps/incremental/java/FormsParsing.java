@@ -220,7 +220,7 @@ public class FormsParsing {
     }
   }
 
-  private static class ParserStoppedException extends RuntimeException {
+  public static class ParserStoppedException extends RuntimeException {
     @Override
     public Throwable fillInStackTrace() {
       return this;

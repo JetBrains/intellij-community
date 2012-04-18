@@ -16,6 +16,7 @@
 package com.intellij.psi.impl;
 
 import com.intellij.ide.IconProvider;
+import com.intellij.ide.TypePresentationService;
 import com.intellij.lang.Language;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.*;
@@ -92,6 +93,9 @@ public class PomTargetPsiElementImpl extends RenameableFakePsiElement implements
         }
       }
     }
+
+    Icon icon = TypePresentationService.getService().getIcon(myTarget);
+    if (icon != null) return icon;
 
     if (myTarget instanceof PsiTarget) {
       return ((PsiTarget)myTarget).getNavigationElement().getIcon(0);
@@ -191,5 +195,16 @@ public class PomTargetPsiElementImpl extends RenameableFakePsiElement implements
   @Override
   public Project getProject() {
     return myProject;
+  }
+
+  @Override
+  public String getLocationString() {
+    if (myTarget instanceof PsiTarget) {
+      PsiFile file = ((PsiTarget)myTarget).getNavigationElement().getContainingFile();
+      if (file != null) {
+        return "(" + file.getName() + ")";
+      }
+    }
+    return super.getLocationString();
   }
 }

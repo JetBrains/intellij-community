@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -129,8 +129,9 @@ public class DeprecationInspection extends BaseJavaLocalInspectionTool {
         if (results.length == 1) result = (MethodCandidateInfo)results[0];
 
         PsiMethod constructor = result == null ? null : result.getElement();
-        if (constructor != null && expression.getClassReference() != null) {
-          checkDeprecated(constructor, expression.getClassReference(), null, myIgnoreInsideDeprecated, myHolder);
+        if (constructor != null && expression.getClassOrAnonymousClassReference() != null) {
+          if (expression.getClassReference() == null && constructor.getParameterList().getParametersCount() == 0) return;
+          checkDeprecated(constructor, expression.getClassOrAnonymousClassReference(), null, myIgnoreInsideDeprecated, myHolder);
         }
       }
     }
@@ -150,6 +151,10 @@ public class DeprecationInspection extends BaseJavaLocalInspectionTool {
       assert containingClass != null;
       final PsiClass superClass = containingClass.getSuperClass();
       if (hasDefaultDeprecatedConstructor(superClass)) {
+        if (superClass instanceof PsiAnonymousClass) {
+          final PsiExpressionList argumentList = ((PsiAnonymousClass)superClass).getArgumentList();
+          if (argumentList != null && argumentList.getExpressions().length > 0) return;
+        }
         final PsiCodeBlock body = method.getBody();
         if (body != null) {
           final PsiStatement[] statements = body.getStatements();
@@ -172,6 +177,10 @@ public class DeprecationInspection extends BaseJavaLocalInspectionTool {
         final PsiClass superClass = aClass.getSuperClass();
         if (hasDefaultDeprecatedConstructor(superClass)) {
           final boolean isAnonymous = aClass instanceof PsiAnonymousClass;
+          if (isAnonymous) {
+            final PsiExpressionList argumentList = ((PsiAnonymousClass)aClass).getArgumentList();
+            if (argumentList != null && argumentList.getExpressions().length > 0) return;
+          }
           registerDefaultConstructorProblem(superClass, isAnonymous ? ((PsiAnonymousClass)aClass).getBaseClassReference() : aClass.getNameIdentifier(), isAnonymous);
         }
       }

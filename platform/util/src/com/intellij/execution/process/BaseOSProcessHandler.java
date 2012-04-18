@@ -51,19 +51,23 @@ public class BaseOSProcessHandler extends ProcessHandler {
     return ExecutorServiceHolder.ourThreadExecutorsService.submit(task);
   }
 
+  @NotNull
   public Process getProcess() {
     return myProcess;
   }
 
+  @Override
   public void startNotify() {
     if (myCommandLine != null) {
       notifyTextAvailable(myCommandLine + '\n', ProcessOutputTypes.SYSTEM);
     }
 
     addProcessListener(new ProcessAdapter() {
+      @Override
       public void startNotified(final ProcessEvent event) {
         try {
           final OutputReader stdoutReader = new OutputReader(createProcessOutReader()) {
+            @Override
             protected void onTextAvailable(@NotNull String text) {
               notifyTextAvailable(text, ProcessOutputTypes.STDOUT);
             }
@@ -75,6 +79,7 @@ public class BaseOSProcessHandler extends ProcessHandler {
           };
 
           final OutputReader stderrReader = new OutputReader(createProcessErrReader()) {
+            @Override
             protected void onTextAvailable(@NotNull String text) {
               notifyTextAvailable(text, ProcessOutputTypes.STDERR);
             }
@@ -135,6 +140,7 @@ public class BaseOSProcessHandler extends ProcessHandler {
     return new InputStreamReader(streamToRead, charset);
   }
 
+  @Override
   protected void destroyProcessImpl() {
     try {
       closeStreams();
@@ -148,8 +154,10 @@ public class BaseOSProcessHandler extends ProcessHandler {
     getProcess().destroy();
   }
 
+  @Override
   protected void detachProcessImpl() {
     final Runnable runnable = new Runnable() {
+      @Override
       public void run() {
         closeStreams();
 
@@ -170,10 +178,12 @@ public class BaseOSProcessHandler extends ProcessHandler {
     }
   }
 
+  @Override
   public boolean detachIsDefault() {
     return false;
   }
 
+  @Override
   public OutputStream getProcessInput() {
     return myProcess.getOutputStream();
   }
@@ -194,6 +204,7 @@ public class BaseOSProcessHandler extends ProcessHandler {
 
     private static ThreadPoolExecutor createServiceImpl() {
       return new ThreadPoolExecutor(10, Integer.MAX_VALUE, 60L, TimeUnit.SECONDS, new SynchronousQueue<Runnable>(), new ThreadFactory() {
+        @Override
         @SuppressWarnings({"HardCodedStringLiteral"})
         public Thread newThread(Runnable r) {
           return new Thread(r, "OSProcessHandler pooled thread");
@@ -213,6 +224,7 @@ public class BaseOSProcessHandler extends ProcessHandler {
 
     public ProcessWaitFor(final Process process) {
       myWaitForThreadFuture = executeOnPooledThread(new Runnable() {
+        @Override
         public void run() {
           int exitCode = 0;
           try {

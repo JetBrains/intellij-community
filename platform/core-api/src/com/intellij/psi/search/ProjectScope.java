@@ -53,7 +53,7 @@ public class ProjectScope {
 
   @NotNull
   public static GlobalSearchScope getContentScope(@NotNull Project project) {
-    GlobalSearchScope cached = project.getUserData(LIBRARIES_SCOPE_KEY);
+    GlobalSearchScope cached = project.getUserData(CONTENT_SCOPE_KEY);
     return cached != null ? cached : ((UserDataHolderEx)project).putUserDataIfAbsent(CONTENT_SCOPE_KEY, ProjectScopeBuilder.getInstance(project).buildContentScope());
   }
 }

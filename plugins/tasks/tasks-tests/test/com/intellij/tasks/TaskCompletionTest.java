@@ -27,15 +27,15 @@ public class TaskCompletionTest extends LightCodeInsightFixtureTestCase {
   }
 
   public void testTaskCompletion() throws Exception {
-    doTest("<caret>", "TEST-001: Test task<caret>");
+    doTest("<caret>", "TEST-001 Test task<caret>");
   }
 
   public void testPrefix() throws Exception {
-    doTest("TEST-<caret>", "TEST-001: Test task<caret>");
+    doTest("TEST-<caret>", "TEST-001 Test task<caret>");
   }
 
   public void testSecondWord() throws Exception {
-    doTest("my TEST-<caret>", "my TEST-001: Test task<caret>");
+    doTest("my TEST-<caret>", "my TEST-001 Test task<caret>");
   }
 
   public void testNumberCompletion() throws Exception {
@@ -63,12 +63,18 @@ public class TaskCompletionTest extends LightCodeInsightFixtureTestCase {
   }
 
   public void testSIOOBE() throws Exception {
-    doTest("  <caret>    my", "  TEST-001: Test task    my");
+    doTest("  <caret>    my", "  TEST-001 Test task    my");
   }
 
-  private void doTest(String text, String after) {
+  private void doTest(String text, final String after) {
     configureFile(text);
-    configureRepository(new LocalTaskImpl("TEST-001", "Test task"));
+    final TestRepository repository = configureRepository();
+    repository.setTasks(new LocalTaskImpl("TEST-001", "Test task") {
+      @Override
+      public TaskRepository getRepository() {
+        return repository;
+      }
+    });
     myFixture.completeBasic();
     myFixture.checkResult(after);
   }

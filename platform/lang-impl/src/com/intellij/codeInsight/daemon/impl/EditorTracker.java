@@ -228,7 +228,7 @@ public class EditorTracker extends AbstractProjectComponent {
     private final Map<Editor, Runnable> myExecuteOnEditorRelease = new HashMap<Editor, Runnable>();
 
     @Override
-    public void editorCreated(EditorFactoryEvent event) {
+    public void editorCreated(@NotNull EditorFactoryEvent event) {
       final Editor editor = event.getEditor();
       if (editor.getProject() != null && editor.getProject() != myProject) return;
       PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(editor.getDocument());
@@ -267,7 +267,7 @@ public class EditorTracker extends AbstractProjectComponent {
     }
 
     @Override
-    public void editorReleased(EditorFactoryEvent event) {
+    public void editorReleased(@NotNull EditorFactoryEvent event) {
       final Editor editor = event.getEditor();
       if (editor.getProject() != null && editor.getProject() != myProject) return;
       unregisterEditor(editor);

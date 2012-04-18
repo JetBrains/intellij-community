@@ -25,6 +25,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.ui.GradleIcons;
+import org.jetbrains.plugins.gradle.util.GradleBundle;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 import org.jetbrains.plugins.gradle.util.GradleLibraryManager;
 import org.jetbrains.plugins.groovy.config.GroovyLibraryPresentationProviderBase;
@@ -32,6 +33,7 @@ import org.jetbrains.plugins.groovy.config.GroovyLibraryProperties;
 
 import javax.swing.*;
 import java.io.File;
+import java.util.regex.Matcher;
 
 /**
  * @author nik
@@ -85,7 +87,7 @@ public class GradleLibraryPresentationProvider extends GroovyLibraryPresentation
   @NotNull
   @Override
   public String getLibraryCategoryName() {
-    return "Gradle";
+    return GradleBundle.message("gradle.name");
   }
 
   @Override
@@ -114,11 +116,10 @@ public class GradleLibraryPresentationProvider extends GroovyLibraryPresentation
 
   @Nullable
   private static String getGradleJarVersion(VirtualFile file) {
-    // TODO den implement
-    //final Matcher matcher = GRADLE_JAR_FILE_PATTERN.matcher(file.getName());
-    //if (matcher.matches()) {
-    //  return matcher.group(2);
-    //}
+    final Matcher matcher = GradleLibraryManager.GRADLE_JAR_FILE_PATTERN.matcher(file.getName());
+    if (matcher.matches()) {
+      return matcher.group(2);
+    }
     return null;
   }
 }

@@ -29,6 +29,7 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
+import com.intellij.util.ui.MacUIUtil;
 
 public class BackspaceAction extends EditorAction {
   public BackspaceAction() {
@@ -38,6 +39,7 @@ public class BackspaceAction extends EditorAction {
   private static class Handler extends EditorWriteActionHandler {
     @Override
     public void executeWriteAction(Editor editor, DataContext dataContext) {
+      MacUIUtil.hideCursor();
       CommandProcessor.getInstance().setCurrentCommandGroupId(EditorActionUtil.DELETE_COMMAND_GROUP);
       final SelectionModel selectionModel = editor.getSelectionModel();
       if (selectionModel.hasBlockSelection()) {

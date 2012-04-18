@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,19 +18,17 @@ package com.intellij.codeInsight.folding.impl;
 
 import com.intellij.lang.folding.FoldingDescriptor;
 import com.intellij.lang.injection.InjectedLanguageManager;
-import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.FoldingGroup;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.SmartPointerManager;
-import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -44,9 +42,9 @@ import static com.intellij.util.containers.CollectionFactory.newTroveMap;
  * @author cdr
  */
 class UpdateFoldRegionsOperation implements Runnable {
-
-  static final Key<Boolean> ALLOW_FOLDING_ON_CARET_LINE_KEY = Key.create("AllowFoldingOnCaretLine.KEY");
-
+  
+  private static final Logger LOG = Logger.getInstance("#" + UpdateFoldRegionsOperation.class.getName());
+  
   private final Project myProject;
   private final Editor myEditor;
   private final PsiFile myFile;
@@ -68,10 +66,11 @@ class UpdateFoldRegionsOperation implements Runnable {
     myForInjected = forInjected;
   }
 
+  @Override
   public void run() {
     EditorFoldingInfo info = EditorFoldingInfo.get(myEditor);
     FoldingModelEx foldingModel = (FoldingModelEx)myEditor.getFoldingModel();
-    HashMap<TextRange,Boolean> rangeToExpandStatusMap = new HashMap<TextRange, Boolean>();
+    Map<TextRange,Boolean> rangeToExpandStatusMap = newTroveMap();
 
     removeInvalidRegions(info, foldingModel, rangeToExpandStatusMap);
 
@@ -80,12 +79,11 @@ class UpdateFoldRegionsOperation implements Runnable {
     List<FoldRegion> newRegions = addNewRegions(info, foldingModel, rangeToExpandStatusMap, shouldExpand, groupExpand);
 
     applyExpandStatus(newRegions, shouldExpand, groupExpand);
-
-    // Reset the key.
-    myEditor.putUserData(ALLOW_FOLDING_ON_CARET_LINE_KEY, false);
   }
 
-  private static void applyExpandStatus(List<FoldRegion> newRegions, Map<FoldRegion, Boolean> shouldExpand, Map<FoldingGroup, Boolean> groupExpand) {
+  private static void applyExpandStatus(@NotNull List<FoldRegion> newRegions,
+                                        @NotNull Map<FoldRegion, Boolean> shouldExpand,
+                                        @NotNull Map<FoldingGroup, Boolean> groupExpand) {
     for (final FoldRegion region : newRegions) {
       final FoldingGroup group = region.getGroup();
       final Boolean expanded = group == null ? shouldExpand.get(region) : groupExpand.get(group);
@@ -96,11 +94,11 @@ class UpdateFoldRegionsOperation implements Runnable {
     }
   }
 
-  private List<FoldRegion> addNewRegions(EditorFoldingInfo info,
-                                         FoldingModelEx foldingModel,
-                                         Map<TextRange, Boolean> rangeToExpandStatusMap,
-                                         Map<FoldRegion, Boolean> shouldExpand,
-                                         Map<FoldingGroup, Boolean> groupExpand) {
+  private List<FoldRegion> addNewRegions(@NotNull EditorFoldingInfo info,
+                                         @NotNull FoldingModelEx foldingModel,
+                                         @NotNull Map<TextRange, Boolean> rangeToExpandStatusMap,
+                                         @NotNull Map<FoldRegion, Boolean> shouldExpand,
+                                         @NotNull Map<FoldingGroup, Boolean> groupExpand) {
     List<FoldRegion> newRegions = arrayList();
     SmartPointerManager smartPointerManager = SmartPointerManager.getInstance(myProject);
     for (PsiElement element : myElementsToFoldMap.keySet()) {
@@ -110,6 +108,11 @@ class UpdateFoldRegionsOperation implements Runnable {
         FoldingGroup group = descriptor.getGroup();
         TextRange range = descriptor.getRange();
         String placeholder = descriptor.getPlaceholderText();
+        if (range.getEndOffset() > myEditor.getDocument().getTextLength()) {
+          LOG.error(String.format("Invalid folding descriptor detected (%s). It ends beyond the document range (%d)",
+                                  descriptor, myEditor.getDocument().getTextLength()));
+          continue;
+        }
         FoldRegion region = foldingModel.createFoldRegion(range.getStartOffset(), range.getEndOffset(),
                                                           placeholder == null ? "..." : placeholder,
                                                           group,
@@ -145,27 +148,14 @@ class UpdateFoldRegionsOperation implements Runnable {
       // Considering that this code is executed only on initial fold regions construction on editor opening.
       return !FoldingPolicy.isCollapseByDefault(element);
     }
-    boolean caretInside;
-    if (myEditor.getUserData(ALLOW_FOLDING_ON_CARET_LINE_KEY) == Boolean.TRUE) {
-      caretInside = FoldingUtil.caretInsideRange(myEditor, range);
-    }
-    else {
-      final Document document = myEditor.getDocument();
-      final int firstLine = document.getLineNumber(range.getStartOffset());
-      final int lastLine = document.getLineNumber(range.getEndOffset());
-      int caretOffset = myEditor.getCaretModel().getOffset();
-      if (caretOffset > myEditor.getDocument().getTextLength()) {
-        return false;
-      }
-      final int currentLine = document.getLineNumber(caretOffset);
-      caretInside = firstLine <= currentLine && currentLine <= lastLine;
-    }
 
     final Boolean oldStatus = rangeToExpandStatusMap.get(range);
-    return oldStatus == null || caretInside || oldStatus.booleanValue();
+    return oldStatus == null || FoldingUtil.caretInsideRange(myEditor, range) || oldStatus.booleanValue();
   }
 
-  private void removeInvalidRegions(EditorFoldingInfo info, FoldingModelEx foldingModel, HashMap<TextRange, Boolean> rangeToExpandStatusMap) {
+  private void removeInvalidRegions(@NotNull EditorFoldingInfo info,
+                                    @NotNull FoldingModelEx foldingModel,
+                                    @NotNull Map<TextRange, Boolean> rangeToExpandStatusMap) {
     List<FoldRegion> toRemove = arrayList();
     InjectedLanguageManager injectedManager = InjectedLanguageManager.getInstance(myProject);
     for (FoldRegion region : foldingModel.getAllFoldRegions()) {
@@ -175,24 +165,34 @@ class UpdateFoldRegionsOperation implements Runnable {
         boolean isInjected = injectedManager.isInjectedFragment(containingFile);
         if (isInjected != myForInjected) continue;
       }
-      if (element != null && myElementsToFoldMap.containsKey(element)) {
-        final Collection<FoldingDescriptor> descriptors = myElementsToFoldMap.get(element);
-        for (FoldingDescriptor descriptor : descriptors) {
+      final Collection<FoldingDescriptor> descriptors;
+      if (element != null && !(descriptors = myElementsToFoldMap.get(element)).isEmpty()) {
+        boolean matchingDescriptorFound = false;
+        FoldingDescriptor[] array = descriptors.toArray(new FoldingDescriptor[descriptors.size()]);
+        for (FoldingDescriptor descriptor : array) {
           TextRange range = descriptor.getRange();
-          if (!region.isValid() ||
-              region.getGroup() != null ||
-              descriptor.getGroup() != null ||
-              region.getStartOffset() != range.getStartOffset() ||
-              region.getEndOffset() != range.getEndOffset() ||
-              !region.getPlaceholderText().equals(descriptor.getPlaceholderText()) ||
-              range.getLength() < 2
-            ) {
-            rangeToExpandStatusMap.put(range, region.isExpanded());
-            toRemove.add(region);
+          if (TextRange.areSegmentsEqual(region, range)) {
+            matchingDescriptorFound = true;
+            if (!region.isValid() ||
+                region.getGroup() != null ||
+                descriptor.getGroup() != null ||
+                !region.getPlaceholderText().equals(descriptor.getPlaceholderText()) ||
+                range.getLength() < 2
+              ) {
+              rangeToExpandStatusMap.put(range, region.isExpanded());
+              toRemove.add(region);
+              break;
+            }
+            else {
+              myElementsToFoldMap.removeValue(element, descriptor);
+            }
           }
-          else {
-            myElementsToFoldMap.remove(element);
+        }
+        if (!matchingDescriptorFound) {
+          for (FoldingDescriptor descriptor : descriptors) {
+            rangeToExpandStatusMap.put(descriptor.getRange(), region.isExpanded());
           }
+          toRemove.add(region);
         }
       }
       else if (region.isValid() && info.isLightRegion(region)) {

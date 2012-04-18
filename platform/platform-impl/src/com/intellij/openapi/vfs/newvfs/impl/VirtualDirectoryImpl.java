@@ -38,6 +38,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
+import com.intellij.openapi.vfs.newvfs.RefreshSession;
 import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.util.ArrayUtil;
@@ -64,8 +65,6 @@ import java.util.*;
  * @author max
  */
 public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
-  private static final boolean ALT_SYMLINK_HANDLING = "true".equalsIgnoreCase(System.getProperty("idea.io.alt.symlink"));
-
   private static final VirtualFileSystemEntry NULL_VIRTUAL_FILE = new VirtualFileImpl("*?;%NULL", null, -42) {
     public String toString() {
       return "NULL";
@@ -74,7 +73,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   private final NewVirtualFileSystem myFS;
 
   // guarded by this
-  protected Object myChildren; // Either HashMap<String, VFile> or VFile[]
+  private Object myChildren; // Either HashMap<String, VFile> or VFile[]
 
   public VirtualDirectoryImpl(@NotNull String name, final VirtualDirectoryImpl parent, @NotNull NewVirtualFileSystem fs, final int id) {
     super(name, parent, id);
@@ -89,12 +88,12 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
 
   @Nullable
   private VirtualFileSystemEntry findChild(@NotNull String name,
-                                           final boolean createIfNotFound,
+                                           final boolean doRefresh,
                                            boolean ensureCanonicalName,
-                                           NewVirtualFileSystem delegate) {
-    final VirtualFileSystemEntry result = doFindChild(name, createIfNotFound, ensureCanonicalName, delegate);
+                                           @NotNull NewVirtualFileSystem delegate) {
+    VirtualFileSystemEntry result = doFindChild(name, ensureCanonicalName, delegate);
     if (result == NULL_VIRTUAL_FILE) {
-      return createIfNotFound ? createAndFindChildWithEventFire(name) : null;
+      return doRefresh ? createAndFindChildWithEventFire(name) : null;
     }
 
     if (result == null) {
@@ -105,16 +104,24 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
         }
       }
     }
+    else if (doRefresh && delegate.isDirectory(result) != result.isDirectory()) {
+      final RefreshSession session = RefreshQueue.getInstance().createSession(false, false, null);
+      session.addFile(result);
+      session.launch();
+      result = doFindChild(name, ensureCanonicalName, delegate);
+      if (result == NULL_VIRTUAL_FILE) {
+        result = createAndFindChildWithEventFire(name);
+      }
+    }
 
     return result;
   }
 
   @Nullable
   private VirtualFileSystemEntry doFindChild(@NotNull String name,
-                                             final boolean createIfNotFound,
                                              boolean ensureCanonicalName,
-                                             NewVirtualFileSystem delegate) {
-    if (name.length() == 0) {
+                                             @NotNull NewVirtualFileSystem delegate) {
+    if (name.isEmpty()) {
       return null;
     }
 
@@ -137,7 +144,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
       for (VirtualFileSystemEntry vf : array) {
         if (vf.nameMatches(name, ignoreCase)) return vf;
       }
-      return createIfNotFound ? createAndFindChildWithEventFire(name) : null;
+      return NULL_VIRTUAL_FILE;
     }
 
     if (file != null) return file;
@@ -145,7 +152,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     if (ensureCanonicalName) {
       VirtualFile fake = new FakeVirtualFile(this, name);
       name = delegate.getCanonicallyCasedName(fake);
-      if (name.length() == 0) return null;
+      if (name.isEmpty()) return null;
     }
 
     synchronized (this) {
@@ -167,14 +174,15 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   }
 
   @NotNull
-  public VirtualFileSystemEntry createChild(String name, int id) {
+  public VirtualFileSystemEntry createChild(@NotNull String name, int id) {
     final VirtualFileSystemEntry child;
     final NewVirtualFileSystem fs = getFileSystem();
     if (PersistentFS.isDirectory(id)) {
-      child = ALT_SYMLINK_HANDLING && PersistentFS.isSymLink(id) ? new SymlinkDirectory(name, this, fs, id) : new VirtualDirectoryImpl(name, this, fs, id);
+      child = new VirtualDirectoryImpl(name, this, fs, id);
     }
     else {
       child = new VirtualFileImpl(name, this, id);
+      //noinspection TestOnlyProblems
       assertAccessInTests(child);
     }
 
@@ -187,27 +195,32 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
 
 
   private static final boolean IS_UNDER_TEAMCITY = System.getProperty("bootstrap.testcases") != null;
-
   private static final boolean SHOULD_PERFORM_ACCESS_CHECK = System.getenv("NO_FS_ROOTS_ACCESS_CHECK") == null;
 
-  private static final boolean IS_UNIT_TESTS = ApplicationManager.getApplication().isUnitTestMode();
-
-
-  private static final Collection<String> additionalRoots = new THashSet<String>();
+  private static final Collection<String> ourAdditionalRoots = new THashSet<String>();
 
   @TestOnly
-  public static void allowToAccess(@NotNull String root) {
-    additionalRoots.add(FileUtil.toSystemIndependentName(root));
+  public static void allowRootAccess(@NotNull String... roots) {
+    for (String root : roots) {
+      ourAdditionalRoots.add(FileUtil.toSystemIndependentName(root));
+    }
+  }
+
+  @TestOnly
+  public static void disallowRootAccess(@NotNull String... roots) {
+    for (String root : roots) {
+      ourAdditionalRoots.remove(FileUtil.toSystemIndependentName(root));
+    }
   }
 
   @TestOnly
   private static void assertAccessInTests(VirtualFileSystemEntry child) {
-    if (IS_UNIT_TESTS &&
-        IS_UNDER_TEAMCITY &&
-        ApplicationManager.getApplication() instanceof ApplicationImpl &&
-        ((ApplicationImpl)ApplicationManager.getApplication()).isComponentsCreated()
-        &&
-        SHOULD_PERFORM_ACCESS_CHECK) {
+    final Application application = ApplicationManager.getApplication();
+    if (IS_UNDER_TEAMCITY &&
+        SHOULD_PERFORM_ACCESS_CHECK &&
+        application.isUnitTestMode() &&
+        application instanceof ApplicationImpl &&
+        ((ApplicationImpl)application).isComponentsCreated()) {
       NewVirtualFileSystem fileSystem = child.getFileSystem();
       if (fileSystem != LocalFileSystem.getInstance() && fileSystem != JarFileSystem.getInstance()) {
         return;
@@ -222,6 +235,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
           String childPath = child.getPath();
           if (child.getFileSystem() == JarFileSystem.getInstance()) {
             VirtualFile local = JarFileSystem.getInstance().getVirtualFileForJar(child);
+            assert local != null : child;
             childPath = local.getPath();
           }
           if (FileUtil.startsWith(childPath, root)) {
@@ -238,35 +252,35 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
 
       if (!isUnder) {
         if (!allowed.isEmpty()) {
-          assert false : "File accessed outside allowed roots: " + child + ";\n Allowed roots: " + new ArrayList(allowed);
+          assert false : "File accessed outside allowed roots: " + child + ";\nAllowed roots: " + new ArrayList<String>(allowed);
         }
       }
     }
   }
 
   // null means we were unable to get roots, so do not check access
+  @Nullable
   private static Set<String> allowedRoots() {
     if (insideGettingRoots) return null;
+
     Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
     if (openProjects.length == 0) return null;
+
     final Set<String> allowed = new THashSet<String>();
-    String homePath = PathManager.getHomePath();
-    allowed.add(FileUtil.toSystemIndependentName(homePath));
+    allowed.add(FileUtil.toSystemIndependentName(PathManager.getHomePath()));
+
     try {
       URL outUrl = Application.class.getResource("/");
       String output = new File(outUrl.toURI()).getParentFile().getParentFile().getPath();
       allowed.add(FileUtil.toSystemIndependentName(output));
     }
-    catch (URISyntaxException ignored) {
-    }
-    String javaHome = SystemProperties.getJavaHome();
-    allowed.add(FileUtil.toSystemIndependentName(javaHome));
-    String tempDirectorySpecific = new File(FileUtil.getTempDirectory()).getParent();
-    allowed.add(FileUtil.toSystemIndependentName(tempDirectorySpecific));
-    String tempDirectory = System.getProperty("java.io.tmpdir");
-    allowed.add(FileUtil.toSystemIndependentName(tempDirectory));
-    String userHome = SystemProperties.getUserHome();
-    allowed.add(FileUtil.toSystemIndependentName(userHome));
+    catch (URISyntaxException ignored) { }
+
+    allowed.add(FileUtil.toSystemIndependentName(SystemProperties.getJavaHome()));
+    allowed.add(FileUtil.toSystemIndependentName(new File(FileUtil.getTempDirectory()).getParent()));
+    allowed.add(FileUtil.toSystemIndependentName(System.getProperty("java.io.tmpdir")));
+    allowed.add(FileUtil.toSystemIndependentName(SystemProperties.getUserHome()));
+
     for (Project project : openProjects) {
       if (!project.isInitialized()) {
         return null; // all is allowed
@@ -277,16 +291,13 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
       for (VirtualFile root : getAllRoots(project)) {
         allowed.add(StringUtil.trimEnd(root.getPath(), JarFileSystem.JAR_SEPARATOR));
       }
-      String location = project.getLocation();
+      String location = project.getBasePath();
+      assert location != null : project;
       allowed.add(FileUtil.toSystemIndependentName(location));
     }
 
-    //for (Sdk sdk : ProjectJdkTable.getInstance().getAllJdks()) {
-    //  allowed.add(FileUtil.toSystemIndependentName(sdk.getHomePath()));
-    //}
-    for (String root : additionalRoots) {
-      allowed.add(root);
-    }
+    allowed.addAll(ourAdditionalRoots);
+
     return allowed;
   }
 
@@ -294,21 +305,19 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
 
   private static VirtualFile[] getAllRoots(Project project) {
     insideGettingRoots = true;
-    Set<VirtualFile> roots = new THashSet<VirtualFile>();
+    final Set<VirtualFile> roots = new THashSet<VirtualFile>();
+
     final Module[] modules = ModuleManager.getInstance(project).getModules();
     for (Module module : modules) {
       final ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
       final OrderEntry[] orderEntries = moduleRootManager.getOrderEntries();
       for (OrderEntry entry : orderEntries) {
-        VirtualFile[] files;
-        files = entry.getFiles(OrderRootType.CLASSES);
-        ContainerUtil.addAll(roots, files);
-        files = entry.getFiles(OrderRootType.SOURCES);
-        ContainerUtil.addAll(roots, files);
-        files = entry.getFiles(OrderRootType.CLASSES_AND_OUTPUT);
-        ContainerUtil.addAll(roots, files);
+        ContainerUtil.addAll(roots, entry.getFiles(OrderRootType.CLASSES));
+        ContainerUtil.addAll(roots, entry.getFiles(OrderRootType.SOURCES));
+        ContainerUtil.addAll(roots, entry.getFiles(OrderRootType.CLASSES_AND_OUTPUT));
       }
     }
+
     insideGettingRoots = false;
     return VfsUtil.toVirtualFileArray(roots);
   }
@@ -317,10 +326,10 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   private VirtualFileSystemEntry createAndFindChildWithEventFire(@NotNull String name) {
     final NewVirtualFileSystem delegate = getFileSystem();
     VirtualFile fake = new FakeVirtualFile(this, name);
-    int attributes = delegate.getBooleanAttributes(fake, NewVirtualFileSystem.BA_EXISTS | NewVirtualFileSystem.BA_DIRECTORY);
-    if ((attributes & NewVirtualFileSystem.BA_EXISTS) != 0) {
+    int attributes = delegate.getBooleanAttributes(fake, FileUtil.BA_EXISTS | FileUtil.BA_DIRECTORY);
+    if ((attributes & FileUtil.BA_EXISTS) != 0) {
       final String realName = delegate.getCanonicallyCasedName(fake);
-      boolean isDir = (attributes & NewVirtualFileSystem.BA_DIRECTORY) != 0;
+      boolean isDir = (attributes & FileUtil.BA_DIRECTORY) != 0;
       VFileCreateEvent event = new VFileCreateEvent(null, this, realName, isDir, true);
       RefreshQueue.getInstance().processSingleEvent(event);
       return findChild(realName);
@@ -371,8 +380,9 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
 
   @NotNull
   private synchronized Collection<VirtualFile> getInDbChildren() {
-    if (myChildren instanceof VirtualFileSystemEntry[]) {
-      return Arrays.asList((VirtualFile[])myChildren);
+    VirtualFileSystemEntry[] children = asArray();
+    if (children != null) {
+      return Arrays.asList((VirtualFile[])children);
     }
 
     if (!ourPersistence.wereChildrenAccessed(this)) {
@@ -396,13 +406,13 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   @Override
   @NotNull
   public synchronized VirtualFile[] getChildren() {
-    if (myChildren instanceof VirtualFileSystemEntry[]) {
-      return (VirtualFileSystemEntry[])myChildren;
+    VirtualFileSystemEntry[] children = asArray();
+    if (children != null) {
+      return children;
     }
 
     Pair<String[], int[]> pair = PersistentFS.listAll(this);
     final int[] childrenIds = pair.second;
-    VirtualFileSystemEntry[] children;
     if (childrenIds.length == 0) {
       children = EMPTY_ARRAY;
     }
@@ -446,7 +456,10 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
 
   @Override
   public NewVirtualFile findChildByIdIfCached(int id) {
-    final VirtualFile[] a = asArray();
+    final VirtualFile[] a;
+    synchronized (this) {
+      a = asArray();
+    }
     if (a != null) {
       for (VirtualFile file : a) {
         NewVirtualFile withId = (NewVirtualFile)file;
@@ -469,17 +482,21 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     return null;
   }
 
+  // MUST BE CALLED UNDER this LOCK
   @Nullable
   private VirtualFileSystemEntry[] asArray() {
-    if (myChildren instanceof VirtualFileSystemEntry[]) return (VirtualFileSystemEntry[])myChildren;
+    Object children = myChildren;
+    if (children instanceof VirtualFileSystemEntry[]) return (VirtualFileSystemEntry[])children;
     return null;
   }
 
+  // MUST BE CALLED UNDER this LOCK
   @Nullable
   private Map<String, VirtualFileSystemEntry> asMap() {
     if (myChildren instanceof Map) {
-      //noinspection unchecked
-      return (Map<String, VirtualFileSystemEntry>)myChildren;
+      @SuppressWarnings({"unchecked", "UnnecessaryLocalVariable"})
+      final Map<String, VirtualFileSystemEntry> map = (Map<String, VirtualFileSystemEntry>)myChildren;
+      return map;
     }
     return null;
   }
@@ -492,8 +509,9 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
       myChildren = map;
     }
     else {
-      //noinspection unchecked
-      map = (Map<String, VirtualFileSystemEntry>)myChildren;
+      @SuppressWarnings({"unchecked", "UnnecessaryLocalVariable"})
+      final Map<String, VirtualFileSystemEntry> _map = (Map<String, VirtualFileSystemEntry>)myChildren;
+      map = _map;
     }
 
     return map;
@@ -520,7 +538,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   }
 
   public synchronized boolean allChildrenLoaded() {
-    return myChildren instanceof VirtualFileSystemEntry[];
+    return asArray() != null;
   }
 
   @NotNull

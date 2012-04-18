@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.intellij.util.io;
 import com.intellij.openapi.Forceable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.hash.LinkedHashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -51,15 +52,15 @@ public class PagedFileStorage implements Forceable {
     final int lower = 100;
     final int upper = SystemInfo.is64Bit && !PersistentEnumeratorDelegate.useBtree() ? 500 : 200;
 
-    BUFFER_SIZE = Math.max(1, SystemInfo.getIntProperty("idea.paged.storage.page.size", 10)) * MB;
+    BUFFER_SIZE = Math.max(1, SystemProperties.getIntProperty("idea.paged.storage.page.size", 10)) * MB;
     if (ByteBufferWrapper.NO_MMAP) {
       final long max = VM.maxDirectMemory() - 2 * BUFFER_SIZE;
       LOWER_LIMIT = (int)Math.min(lower * MB, max);
-      UPPER_LIMIT = (int)Math.min(Math.max(LOWER_LIMIT, SystemInfo.getIntProperty("idea.max.paged.storage.cache", upper) * MB), max);
+      UPPER_LIMIT = (int)Math.min(Math.max(LOWER_LIMIT, SystemProperties.getIntProperty("idea.max.paged.storage.cache", upper) * MB), max);
     }
     else {
       LOWER_LIMIT = lower * MB;
-      UPPER_LIMIT = Math.max(LOWER_LIMIT, SystemInfo.getIntProperty("idea.max.paged.storage.cache", upper) * MB);
+      UPPER_LIMIT = Math.max(LOWER_LIMIT, SystemProperties.getIntProperty("idea.max.paged.storage.cache", upper) * MB);
     }
 
     LOG.info("lower=" + (LOWER_LIMIT / MB) +

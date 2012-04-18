@@ -16,6 +16,7 @@
 package com.intellij.openapi.editor.highlighter;
 
 import com.intellij.lang.Language;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.util.LexerEditorHighlighter;
@@ -32,6 +33,8 @@ import org.jetbrains.annotations.Nullable;
  * @author yole
  */
 public class EditorHighlighterFactoryImpl extends EditorHighlighterFactory {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.highlighter.EditorHighlighterFactoryImpl");
+
   @Override
   public EditorHighlighter createEditorHighlighter(SyntaxHighlighter highlighter, final EditorColorsScheme colors) {
     if (highlighter == null) highlighter = new PlainSyntaxHighlighter();
@@ -54,7 +57,7 @@ public class EditorHighlighterFactoryImpl extends EditorHighlighterFactory {
   }
 
   @Override
-  public EditorHighlighter createEditorHighlighter(@NotNull final VirtualFile vFile, final EditorColorsScheme settings, final Project project) {
+  public EditorHighlighter createEditorHighlighter(@NotNull final VirtualFile vFile, @NotNull final EditorColorsScheme settings, final Project project) {
     final FileType fileType = vFile.getFileType();
     if (fileType instanceof LanguageFileType) {
       LanguageFileType substFileType = substituteFileType(((LanguageFileType)fileType).getLanguage(), vFile, project);
@@ -74,8 +77,16 @@ public class EditorHighlighterFactoryImpl extends EditorHighlighterFactory {
     final ContentBasedFileSubstitutor[] processors = Extensions.getExtensions(ContentBasedFileSubstitutor.EP_NAME);
     SyntaxHighlighter highlighter = null;
     for (ContentBasedFileSubstitutor processor : processors) {
-      if (processor.isApplicable(project, vFile) && processor instanceof ContentBasedClassFileProcessor) {
-        highlighter = ((ContentBasedClassFileProcessor) processor).createHighlighter(project, vFile);
+      boolean applicable;
+      try {
+        applicable = processor.isApplicable(project, vFile);
+      }
+      catch (Exception e) {
+        LOG.error(e);
+        continue;
+      }
+      if (applicable && processor instanceof ContentBasedClassFileProcessor) {
+        highlighter = ((ContentBasedClassFileProcessor)processor).createHighlighter(project, vFile);
       }
     }
     if (highlighter == null) {

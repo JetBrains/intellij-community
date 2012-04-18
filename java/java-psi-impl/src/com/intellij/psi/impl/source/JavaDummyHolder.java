@@ -35,7 +35,7 @@ public class JavaDummyHolder extends DummyHolder implements PsiImportHolder {
   private Map<String, PsiClass> myPseudoImports = EMPTY;
 
   public JavaDummyHolder(@NotNull PsiManager manager, TreeElement contentElement, PsiElement context) {
-    super(manager, contentElement, context, null, null, JavaLanguage.INSTANCE);
+    super(manager, contentElement, context, null, null, language(context, JavaLanguage.INSTANCE));
   }
 
   public JavaDummyHolder(@NotNull PsiManager manager, CharTable table, boolean validity) {
@@ -43,15 +43,15 @@ public class JavaDummyHolder extends DummyHolder implements PsiImportHolder {
   }
 
   public JavaDummyHolder(@NotNull PsiManager manager, PsiElement context) {
-    super(manager, null, context, null, null, JavaLanguage.INSTANCE);
+    super(manager, null, context, null, null, language(context, JavaLanguage.INSTANCE));
   }
 
   public JavaDummyHolder(@NotNull PsiManager manager, TreeElement contentElement, PsiElement context, CharTable table) {
-    super(manager, contentElement, context, table, null, JavaLanguage.INSTANCE);
+    super(manager, contentElement, context, table, null, language(context, JavaLanguage.INSTANCE));
   }
 
   public JavaDummyHolder(@NotNull PsiManager manager, PsiElement context, CharTable table) {
-    super(manager, null, context, table, null, JavaLanguage.INSTANCE);
+    super(manager, null, context, table, null, language(context, JavaLanguage.INSTANCE));
   }
 
   public JavaDummyHolder(@NotNull PsiManager manager, final CharTable table) {

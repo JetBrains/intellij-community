@@ -87,6 +87,13 @@ public abstract class RefElementImpl extends RefEntityImpl implements RefElement
     if (myIsDeleted) return false;
     return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
       public Boolean compute() {
+
+        final PsiFile file = myID.getContainingFile();
+        //no need to check resolve in offline mode
+        if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
+          return file != null && file.isPhysical();
+        }
+
         final PsiElement element = getElement();
         return element != null && element.isPhysical();
       }
@@ -118,6 +125,10 @@ public abstract class RefElementImpl extends RefEntityImpl implements RefElement
   @Nullable
   public PsiFile getContainingFile() {
     return myID.getContainingFile();
+  }
+
+  public VirtualFile getVirtualFile() {
+    return myID.getVirtualFile();
   }
 
   public SmartPsiElementPointer getPointer() {

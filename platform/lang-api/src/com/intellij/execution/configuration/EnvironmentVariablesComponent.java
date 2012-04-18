@@ -72,7 +72,8 @@ public class EnvironmentVariablesComponent extends LabeledComponent<TextFieldWit
   }
 
   public void setEnvs(@NotNull Map<String, String> envs) {
-    myEnvs = envs;
+    myEnvs.clear();
+    myEnvs.putAll(envs);
     @NonNls final StringBuilder buf = StringBuilderSpinAllocator.alloc();
     try {
       for (String variable : myEnvs.keySet()) {

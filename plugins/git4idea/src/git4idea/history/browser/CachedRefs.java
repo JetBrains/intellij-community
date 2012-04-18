@@ -31,6 +31,7 @@ import java.util.*;
  */
 public class CachedRefs implements SymbolicRefsI {
   private GitBranchesCollection myCollection;
+  private GitBranch myCurrentBranch;
   private String myTrackedRemoteName;
   private String myUsername;
   private AbstractHash myHeadHash;
@@ -42,6 +43,10 @@ public class CachedRefs implements SymbolicRefsI {
 
   public CachedRefs() {
     myRefsMap = new MultiMap<String, Pair<SymbolicRefs.Kind, String>>();
+  }
+
+  public void setCurrentBranch(GitBranch currentBranch) {
+    myCurrentBranch = currentBranch;
   }
 
   public void setCollection(GitBranchesCollection collection) {
@@ -109,13 +114,12 @@ public class CachedRefs implements SymbolicRefsI {
 
   @Override
   public String getCurrentName() {
-    GitBranch branch = myCollection.getCurrentBranch();
-    return branch == null ? null : branch.getName();
+    return myCurrentBranch == null ? null : myCurrentBranch.getName();
   }
 
   @Override
   public GitBranch getCurrent() {
-    return myCollection.getCurrentBranch();
+    return myCurrentBranch;
   }
 
   @Override

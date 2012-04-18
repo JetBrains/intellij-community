@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.cvsSupport2.cvsoperations.cvsContent.GetModulesListOperation
 import com.intellij.cvsSupport2.cvsoperations.cvsContent.DirectoryContent;
 import com.intellij.cvsSupport2.cvsoperations.cvsContent.GetDirectoriesListViaUpdateOperation;
 import com.intellij.cvsSupport2.cvsoperations.cvsContent.*;
+import com.intellij.util.Consumer;
 
 class RootDirectoryContentProvider extends CompositeOperation implements DirectoryContentProvider{
   private final GetDirectoriesListViaUpdateOperation myDirectoryListOperation;
@@ -34,11 +35,18 @@ class RootDirectoryContentProvider extends CompositeOperation implements Directo
     addOperation(myModuleListOperation);
   }
 
+  @Override
   public DirectoryContent getDirectoryContent() {
-    DirectoryContent result = new DirectoryContent();
+    final DirectoryContent result = new DirectoryContent();
     result.copyDataFrom(myDirectoryListOperation.getDirectoryContent());
     result.copyDataFrom(myModuleListOperation.getDirectoryContent());
     return result;
+  }
+
+  @Override
+  public void setStreamingListener(Consumer<DirectoryContent> streamingListener) {
+    myDirectoryListOperation.setStreamingListener(streamingListener);
+    myModuleListOperation.setStreamingListener(streamingListener);
   }
 }
 public class RootDataProvider extends AbstractVcsDataProvider{
@@ -51,10 +59,12 @@ public class RootDataProvider extends AbstractVcsDataProvider{
     super(environment);
   }
 
+  @Override
   public AbstractVcsDataProvider getChildrenDataProvider() {
     return new FolderDataProvider(myEnvironment);
   }
 
+  @Override
   public DirectoryContentProvider createDirectoryContentProvider(String path) {
     return new RootDirectoryContentProvider(myEnvironment);
   }

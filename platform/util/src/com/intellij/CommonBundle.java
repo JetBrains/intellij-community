@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 
 package com.intellij;
 
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -24,17 +23,17 @@ import org.jetbrains.annotations.PropertyKey;
 
 import java.lang.ref.Reference;
 import java.lang.ref.SoftReference;
-import java.text.MessageFormat;
-import java.util.MissingResourceException;
 import java.util.ResourceBundle;
 
 /**
  * @author yole
  */
-public class CommonBundle {
+@SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
+public class CommonBundle extends BundleBase {
+  public static boolean assertKeyIsFound = false;
+
   @NonNls private static final String BUNDLE = "messages.CommonBundle";
   private static Reference<ResourceBundle> ourBundle;
-  public static boolean assertKeyIsFound = false;
 
   private CommonBundle() {}
 
@@ -53,36 +52,16 @@ public class CommonBundle {
     return bundle;
   }
 
-  public static String messageOrDefault(@Nullable final ResourceBundle bundle, final String key, @Nullable final String defaultValue, final Object... params) {
-    if (bundle == null) return defaultValue;
-
-    String value;
-    try {
-      value = bundle.getString(key);
-    }
-    catch (MissingResourceException e) {
-      if (defaultValue != null) {
-        value = defaultValue;
-      } else {
-        value = "!" + key + "!";
-        if (assertKeyIsFound) {
-          assert false: key + " is not found in "+BUNDLE;
-        }
-      }
-    }
-
-    value = UIUtil.replaceMnemonicAmpersand(value);
-
-    if (params.length > 0 && value.indexOf('{')>=0) {
-      return MessageFormat.format(value, params);
-    }
-
-    return value;
+  public static String messageOrDefault(@Nullable final ResourceBundle bundle,
+                                        final String key,
+                                        @Nullable final String defaultValue,
+                                        final Object... params) {
+    return BundleBase.messageOrDefault(bundle, key, defaultValue, params);
   }
 
   @NotNull
   public static String message(@NotNull ResourceBundle bundle, @NotNull String key, @NotNull Object... params) {
-    return messageOrDefault(bundle, key, null, params);
+    return BundleBase.message(bundle, key, params);
   }
 
   @NotNull
@@ -142,5 +121,4 @@ public class CommonBundle {
   public static String getApplyButtonText() {
     return message("button.apply");
   }
-
 }

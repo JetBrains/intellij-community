@@ -41,8 +41,7 @@ public interface JavaElementType {
     private final Constructor<? extends ASTNode> myConstructor;
 
     private JavaCompositeElementType(@NonNls final String debugName, final Class<? extends ASTNode> nodeClass) {
-      super(debugName);
-      myConstructor = ReflectionUtil.getDefaultConstructor(nodeClass);
+      this(debugName, nodeClass, false);
     }
 
     private JavaCompositeElementType(@NonNls final String debugName, final Class<? extends ASTNode> nodeClass, final boolean leftBound) {
@@ -165,7 +164,7 @@ public interface JavaElementType {
     }
 
     @Override
-    public int getErrorsCount(final CharSequence seq, final Project project) {
+    public int getErrorsCount(final CharSequence seq, Language fileLanguage, final Project project) {
       final Lexer lexer = new JavaLexer(LanguageLevel.HIGHEST);
 
       lexer.start(seq);

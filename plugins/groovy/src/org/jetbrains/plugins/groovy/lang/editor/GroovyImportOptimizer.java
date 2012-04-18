@@ -47,11 +47,12 @@ public class GroovyImportOptimizer implements ImportOptimizer {
 
   @NotNull
   public Runnable processFile(PsiFile file) {
-    return new MyProcessor((GroovyFile)file, false);
+    return new MyProcessor(file, false);
   }
 
   public List<GrImportStatement> findUnusedImports(GroovyFile file, Set<GrImportStatement> usedImports) {
-    return new MyProcessor(file, true).findUnusedImports(new HashSet<String>(), new HashSet<String>(),usedImports, new HashSet<String>(), new HashSet<String>());
+    return new MyProcessor(file, true)
+      .findUnusedImports(new HashSet<String>(), new HashSet<String>(), usedImports, new HashSet<String>(), new HashSet<String>());
   }
 
   public boolean supports(PsiFile file) {
@@ -59,17 +60,20 @@ public class GroovyImportOptimizer implements ImportOptimizer {
   }
 
   private class MyProcessor implements Runnable {
-    private final GroovyFile myFile;
+    private final PsiFile myFile;
     private final boolean myRemoveUnusedOnly;
 
-    private MyProcessor(GroovyFile file, boolean removeUnusedOnly) {
+    private MyProcessor(PsiFile file, boolean removeUnusedOnly) {
       myFile = file;
       myRemoveUnusedOnly = removeUnusedOnly;
     }
 
     public void run() {
-      final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(myFile.getProject());
-      final Document document = documentManager.getDocument(myFile);
+      if (!(myFile instanceof GroovyFile)) return;
+
+      GroovyFile file = ((GroovyFile)myFile);
+      final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(file.getProject());
+      final Document document = documentManager.getDocument(file);
       if (document != null) {
         documentManager.commitDocument(document);
       }
@@ -83,7 +87,7 @@ public class GroovyImportOptimizer implements ImportOptimizer {
       if (myRemoveUnusedOnly) {
         for (GrImportStatement oldImport : oldImports) {
           if (!usedImports.contains(oldImport)) {
-            myFile.removeImport(oldImport);
+            file.removeImport(oldImport);
           }
         }
         return;
@@ -92,12 +96,13 @@ public class GroovyImportOptimizer implements ImportOptimizer {
       Map<String, String> annotations = new HashMap<String, String>();
 
       // Getting aliased imports
-      GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(myFile.getProject());
+      GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(file.getProject());
       ArrayList<GrImportStatement> aliased = new ArrayList<GrImportStatement>();
       for (GrImportStatement oldImport : oldImports) {
         if (oldImport.isAliasedImport() && usedImports.contains(oldImport)) {
           aliased.add(factory.createImportStatementFromText(oldImport.getText()));
-        } else {
+        }
+        else {
           String importReference = getImportReferenceText(oldImport);
           GrModifierList annotationList = oldImport.getAnnotationList();
           if (importReference != null && annotationList != null) {
@@ -112,7 +117,7 @@ public class GroovyImportOptimizer implements ImportOptimizer {
         return;
       }
 
-      GroovyFile tempFile = (GroovyFile)PsiFileFactory.getInstance(myFile.getProject()).createFileFromText("a.groovy", "");
+      GroovyFile tempFile = (GroovyFile)PsiFileFactory.getInstance(file.getProject()).createFileFromText("a.groovy", "");
 
       for (GrImportStatement aliasedImport : aliased) {
         tempFile.addImport(aliasedImport);
@@ -135,17 +140,18 @@ public class GroovyImportOptimizer implements ImportOptimizer {
       }
 
       for (GrImportStatement statement : tempFile.getImportStatements()) {
-        myFile.addImport(statement);
+        file.addImport(statement);
       }
 
-      myFile.removeImport(myFile.addImport(factory.createImportStatementFromText("import xxxx"))); //to remove trailing whitespaces
+      file.removeImport(file.addImport(factory.createImportStatementFromText("import xxxx"))); //to remove trailing whitespaces
 
       for (GrImportStatement importStatement : oldImports) {
-        myFile.removeImport(importStatement);
+        file.removeImport(importStatement);
       }
     }
 
-    @Nullable String getImportReferenceText(GrImportStatement statement) {
+    @Nullable
+    String getImportReferenceText(GrImportStatement statement) {
       GrCodeReferenceElement importReference = statement.getImportReference();
       if (importReference != null) {
         return statement.getText().substring(importReference.getStartOffsetInParent());
@@ -158,7 +164,9 @@ public class GroovyImportOptimizer implements ImportOptimizer {
                                                      final Set<GrImportStatement> usedImports,
                                                      final Set<String> implicitlyImported,
                                                      final Set<String> innerClasses) {
-      myFile.accept(new GroovyRecursiveElementVisitor() {
+      if (!(myFile instanceof GroovyFile)) return Collections.emptyList();
+
+      ((GroovyFile)myFile).accept(new GroovyRecursiveElementVisitor() {
         public void visitCodeReferenceElement(GrCodeReferenceElement refElement) {
           visitRefElement(refElement);
           super.visitCodeReferenceElement(refElement);
@@ -177,7 +185,7 @@ public class GroovyImportOptimizer implements ImportOptimizer {
             if (element == null) return;
 
             if (context instanceof GrImportStatement) {
-              final GrImportStatement importStatement = (GrImportStatement) context;
+              final GrImportStatement importStatement = (GrImportStatement)context;
 
               usedImports.add(importStatement);
               if (!importStatement.isAliasedImport()) {
@@ -186,7 +194,7 @@ public class GroovyImportOptimizer implements ImportOptimizer {
 
                   if (importStatement.isStatic()) {
                     if (element instanceof PsiMember) {
-                      final PsiMember member = (PsiMember) element;
+                      final PsiMember member = (PsiMember)element;
                       final PsiClass clazz = member.getContainingClass();
                       if (clazz != null) {
                         final String classQName = clazz.getQualifiedName();
@@ -198,10 +206,12 @@ public class GroovyImportOptimizer implements ImportOptimizer {
                         }
                       }
                     }
-                  } else {
+                  }
+                  else {
                     importedName = getTargetQualifiedName(element);
                   }
-                } else {
+                }
+                else {
                   final GrCodeReferenceElement importReference = importStatement.getImportReference();
                   if (importReference != null) {
                     importedName = PsiUtil.getQualifiedReferenceText(importReference);
@@ -220,7 +230,8 @@ public class GroovyImportOptimizer implements ImportOptimizer {
                   }
                 }
               }
-            } else if (context == null && !(refElement.getParent() instanceof GrImportStatement) && refElement.getQualifier() == null) {
+            }
+            else if (context == null && !(refElement.getParent() instanceof GrImportStatement) && refElement.getQualifier() == null) {
               final String qname = getTargetQualifiedName(element);
               if (qname != null) {
                 implicitlyImported.add(qname);
@@ -232,15 +243,16 @@ public class GroovyImportOptimizer implements ImportOptimizer {
       });
 
 
-      return getValidImportStatements(myFile);
+      return getValidImportStatements((GroovyFile)myFile);
     }
 
-    @Nullable private String getTargetQualifiedName(PsiElement element) {
+    @Nullable
+    private String getTargetQualifiedName(PsiElement element) {
       if (element instanceof PsiClass) {
-        return ((PsiClass) element).getQualifiedName();
+        return ((PsiClass)element).getQualifiedName();
       }
-      if (element instanceof PsiMethod && ((PsiMethod) element).isConstructor()) {
-        return ((PsiMethod) element).getContainingClass().getQualifiedName();
+      if (element instanceof PsiMethod && ((PsiMethod)element).isConstructor()) {
+        return ((PsiMethod)element).getContainingClass().getQualifiedName();
       }
       return null;
     }
@@ -301,8 +313,10 @@ public class GroovyImportOptimizer implements ImportOptimizer {
       for (String importedClass : importedClasses) {
         final String parentName = StringUtil.getPackageName(importedClass);
         if (packageCountMap.get(parentName) >= settings.CLASS_COUNT_TO_USE_IMPORT_ON_DEMAND) continue;
-        if (implicitlyImported.contains(importedClass) && !onDemandImportedSimpleClassNames.contains(StringUtil.getShortName(importedClass)))
+        if (implicitlyImported.contains(importedClass) &&
+            !onDemandImportedSimpleClassNames.contains(StringUtil.getShortName(importedClass))) {
           continue;
+        }
 
         explicated.add(factory.createImportStatementFromText(importedClass, false, false, null));
       }
@@ -341,7 +355,6 @@ public class GroovyImportOptimizer implements ImportOptimizer {
       explicated.addAll(result);
       return explicated.toArray(new GrImportStatement[explicated.size()]);
     }
-
   }
 
   public static List<GrImportStatement> getValidImportStatements(final GroovyFile file) {

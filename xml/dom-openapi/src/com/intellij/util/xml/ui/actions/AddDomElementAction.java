@@ -22,8 +22,12 @@ import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
+import com.intellij.ui.CommonActionsPanel;
 import com.intellij.util.ReflectionUtil;
-import com.intellij.util.xml.*;
+import com.intellij.util.xml.DomElement;
+import com.intellij.util.xml.DomManager;
+import com.intellij.util.xml.ElementPresentationManager;
+import com.intellij.util.xml.TypeChooser;
 import com.intellij.util.xml.reflect.DomCollectionChildDescription;
 import com.intellij.util.xml.ui.DomCollectionControl;
 import org.jetbrains.annotations.NotNull;
@@ -31,7 +35,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.KeyEvent;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
@@ -40,8 +43,6 @@ import java.util.List;
  * User: Sergey.Vasiliev
  */
 public abstract class AddDomElementAction extends AnAction {
-
-  private final static ShortcutSet shortcutSet = new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_INSERT, 0));
 
   public AddDomElementAction() {
     super(ApplicationBundle.message("action.add"), null, DomCollectionControl.ADD_ICON);
@@ -84,7 +85,7 @@ public abstract class AddDomElementAction extends AnAction {
 
       final DataContext dataContext = e.getDataContext();
       final ListPopup groupPopup =
-        JBPopupFactory.getInstance().createActionGroupPopup(null,//J2EEBundle.message("label.menu.title.add.activation.config.property"),
+        JBPopupFactory.getInstance().createActionGroupPopup(null,
                                                             group, dataContext, JBPopupFactory.ActionSelectionAid.NUMBERING, true);
 
       showPopup(groupPopup, e);
@@ -137,8 +138,9 @@ public abstract class AddDomElementAction extends AnAction {
     }
     if (actions.size() > 1 && showAsPopup()) {
       ActionGroup group = new ActionGroup() {
+        @NotNull
         public AnAction[] getChildren(@Nullable AnActionEvent e) {
-          return actions.toArray(AnAction.EMPTY_ARRAY);
+          return actions.toArray(new AnAction[actions.size()]);
         }
       };
       return new AnAction[]{new ShowPopupAction(group)};
@@ -150,7 +152,7 @@ public abstract class AddDomElementAction extends AnAction {
 
       }
     }
-    return actions.toArray(AnAction.EMPTY_ARRAY);
+    return actions.toArray(new AnAction[actions.size()]);
   }
 
   protected abstract AnAction createAddingAction(final AnActionEvent e,
@@ -178,12 +180,12 @@ public abstract class AddDomElementAction extends AnAction {
     protected ShowPopupAction(ActionGroup group) {
       super(ApplicationBundle.message("action.add"), null, DomCollectionControl.ADD_ICON);
       myGroup = group;
-      setShortcutSet(shortcutSet);
+      setShortcutSet(CommonActionsPanel.getCommonShortcut(CommonActionsPanel.Buttons.ADD));
     }
 
     public void actionPerformed(AnActionEvent e) {
       final ListPopup groupPopup =
-        JBPopupFactory.getInstance().createActionGroupPopup(null,//J2EEBundle.message("label.menu.title.add.activation.config.property"),
+        JBPopupFactory.getInstance().createActionGroupPopup(null,
                                                             myGroup, e.getDataContext(), JBPopupFactory.ActionSelectionAid.NUMBERING, true);
 
       showPopup(groupPopup, e);

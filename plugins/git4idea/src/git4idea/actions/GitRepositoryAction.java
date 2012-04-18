@@ -15,7 +15,10 @@
  */
 package git4idea.actions;
 
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -113,7 +116,11 @@ public abstract class GitRepositoryAction extends DumbAwareAction {
       final VirtualFile[] files = e.getData(PlatformDataKeys.VIRTUAL_FILE_ARRAY);
       if (files != null) {
         for (VirtualFile file : files) {
-          final GitRepository repositoryForFile = GitRepositoryManager.getInstance(project).getRepositoryForFile(file);
+          GitRepositoryManager manager = GitUtil.getRepositoryManager(project);
+          if (manager == null) {
+            return false;
+          }
+          final GitRepository repositoryForFile = manager.getRepositoryForFile(file);
           if (repositoryForFile != null && repositoryForFile.getState() == GitRepository.State.REBASING) {
             return true;
           }

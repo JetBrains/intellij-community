@@ -86,6 +86,7 @@ public class ExpressionOccurrenceManager extends BaseOccurrenceManager {
       final FindManager findManager = FindManager.getInstance(getScope().getProject());
       final FindModel findModel = (FindModel)findManager.getFindInFileModel().clone();
       findModel.setCaseSensitive(true);
+      findModel.setRegularExpressions(false);
       String value = StringUtil.stripQuotesAroundValue(myMainOccurence.getText());
       if (value.length() > 0) {
         findModel.setStringToFind(value);

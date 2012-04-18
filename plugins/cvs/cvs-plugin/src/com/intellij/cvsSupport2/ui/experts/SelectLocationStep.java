@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,7 @@ import com.intellij.openapi.fileChooser.ex.LocalFsFinder;
 import com.intellij.openapi.fileChooser.impl.FileChooserFactoryImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.ScrollPaneFactory;
@@ -58,7 +59,7 @@ public abstract class SelectLocationStep extends WizardStep {
   private final JPanel myNorthPanel = new JPanel(new BorderLayout());
   private final JComponent myPathTextFieldWrapper;
 
-  private TextFieldAction myTextFieldAction;
+  private final TextFieldAction myTextFieldAction;
   private ActionToolbar myFileSystemToolBar;
   private VirtualFile mySelectedFile;
   private boolean myShowPath = CvsApplicationLevelConfiguration.getInstance().SHOW_PATH;
@@ -157,10 +158,6 @@ public abstract class SelectLocationStep extends WizardStep {
   public boolean nextIsEnabled() {
     final VirtualFile[] selectedFiles = myFileSystemTree.getSelectedFiles();
     return selectedFiles.length == 1 && selectedFiles[0].isDirectory();
-  }
-
-  public boolean setActive() {
-    return true;
   }
 
   private DefaultActionGroup createFileSystemActionGroup() {
@@ -262,13 +259,7 @@ public abstract class SelectLocationStep extends WizardStep {
     else {
       final List<VirtualFile> roots = myChooserDescriptor.getRoots();
       if (!myFileSystemTree.getTree().isRootVisible() && roots.size() == 1) {
-        final VirtualFile vFile = roots.get(0);
-        if (vFile.isInLocalFileSystem()) {
-          text = vFile.getPresentableUrl();
-        }
-        else {
-          text = vFile.getUrl();
-        }
+        text = VfsUtil.getReadableUrl(roots.get(0));
       }
     }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,6 +40,7 @@ import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.event.*;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerAdapter;
@@ -47,9 +48,7 @@ import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.util.ProgressIndicatorBase;
+import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
@@ -211,7 +210,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
       if (matchMouseShortcut(activeKeymap, modifiers, IdeActions.ACTION_GOTO_DECLARATION)) return BrowseMode.Declaration;
       if (matchMouseShortcut(activeKeymap, modifiers, IdeActions.ACTION_GOTO_TYPE_DECLARATION)) return BrowseMode.TypeDeclaration;
       if (matchMouseShortcut(activeKeymap, modifiers, IdeActions.ACTION_GOTO_IMPLEMENTATION)) return BrowseMode.Implementation;
-      if (modifiers == InputEvent.CTRL_MASK) return BrowseMode.Declaration;
+      if (modifiers == InputEvent.CTRL_MASK || modifiers == InputEvent.META_MASK) return BrowseMode.Declaration;
     }
     return BrowseMode.None;
   }
@@ -351,6 +350,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
 
     public boolean isValid(Document document) {
       if (!myTargetElement.isValid()) return false;
+      if (!myElementAtPointer.isValid()) return false;
       if (myTargetElement == myElementAtPointer || myTargetElement == myElementAtPointer.getParent()) return false;
 
       return rangesAreCorrect(document);
@@ -389,7 +389,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
       final List<PsiElement> resolvedElements = ref != null ? resolve(ref) : Collections.<PsiElement>emptyList();
       final PsiElement resolvedElement = resolvedElements.size() == 1 ? resolvedElements.get(0) : null;
 
-      final PsiElement[] targetElements = GotoDeclarationAction.findTargetElementsNoVS(myProject, editor, offset);
+      final PsiElement[] targetElements = GotoDeclarationAction.findTargetElementsNoVS(myProject, editor, offset, false);
       final PsiElement elementAtPointer = file.findElementAt(offset);
 
       if (targetElements != null) {
@@ -398,7 +398,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
         }
         else if (targetElements.length == 1) {
           if (targetElements[0] != resolvedElement && elementAtPointer != null && targetElements[0].isPhysical()) {
-            return new InfoSingle(elementAtPointer, targetElements[0]);
+            return ref != null ? new InfoSingle(ref, targetElements[0]) : new InfoSingle(elementAtPointer, targetElements[0]);
           }
         }
         else {
@@ -506,7 +506,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
       if (file == null) return;
       PsiDocumentManager.getInstance(myProject).commitAllDocuments();
 
-      if (TargetElementUtilBase.inVirtualSpace(myEditor, myPosition)) {
+      if (EditorUtil.inVirtualSpace(myEditor, myPosition)) {
         return;
       }
 
@@ -519,32 +519,11 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
 
       ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
         public void run() {
-          final ProgressIndicator progressIndicator = new ProgressIndicatorBase();
-          final ApplicationAdapter listener = new ApplicationAdapter() {
-            @Override
-            public void beforeWriteActionStart(Object action) {
-              progressIndicator.cancel();
+          ProgressIndicatorUtils.runWithWriteActionPriority(new Runnable() {
+            public void run() {
+              doExecute(file, offset);
             }
-          };
-          final Application application = ApplicationManager.getApplication();
-          try {
-            application.addApplicationListener(listener);
-            ProgressManager.getInstance().runProcess(new Runnable(){
-                @Override
-                public void run() {
-                  // This read action can possibe last for a long time, we want it to stop immediately on the first write access.
-                  // For this purpose we launch it under empty progress and invoke progressIndicator#cancel on write access to avoid possible write lock delays.
-                  application.runReadAction(new Runnable() {
-                    public void run() {
-                      doExecute(file, offset);
-                    }
-                  });
-                }
-              }, progressIndicator);
-          }
-          finally {
-            application.removeApplicationListener(listener);
-          }
+          });
         }
       });
     }
@@ -569,7 +548,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
     }
 
     private void showHint(Info info) {
-      if (myDisposed) return;
+      if (myDisposed || myEditor.isDisposed()) return;
       Component internalComponent = myEditor.getContentComponent();
       if (myHighlighter != null) {
         if (!info.isSimilarTo(myHighlighter.getStoredInfo())) {

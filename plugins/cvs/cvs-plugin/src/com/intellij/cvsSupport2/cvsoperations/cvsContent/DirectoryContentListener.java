@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,10 +43,9 @@ class DirectoryContentListener {
       if ((myModuleName != null) && StringUtil.startsWithConcatenationOf(fileName, myModuleName, "/")) {
         fileName = fileName.substring(myModuleName.length() + 1);
       }
-
-      int slashPos = fileName.indexOf('/');
+      final int slashPos = fileName.indexOf('/');
       if (slashPos > 0) {
-        String directoryName = fileName.substring(0, slashPos);
+        final String directoryName = fileName.substring(0, slashPos);
         myDirectoryContent.addSubDirectory(directoryName);
       }
       else {
@@ -55,18 +54,22 @@ class DirectoryContentListener {
       }
     }
     else if (moduleMessage_ver1(message)) {
-      String moduleName = moduleNameFromMessage_ver1(message);
+      final String moduleName = moduleNameFromMessage_ver1(message);
       myDirectoryContent.addModule(moduleName);
     }
     else if (moduleMessage_ver2(message)) {
-      String moduleName = moduleNameFromMessage_ver2(message);
+      final String moduleName = moduleNameFromMessage_ver2(message);
       myDirectoryContent.addModule(moduleName);
     }
   }
 
   private String moduleNameFromMessage_ver2(final String message) {
-    String prefix = updatingModulePrefix2();
+    final String prefix = updatingModulePrefix2();
     return message.substring(prefix.length());
+  }
+
+  public String getModuleName() {
+    return myModuleName;
   }
 
   private static String moduleNameFromMessage_ver1(String message) {
@@ -105,21 +108,16 @@ class DirectoryContentListener {
   }
 
   public static String directoryNameFromMessage(String message) {
-    byte directoryNameBeginMarker = '`';
-    byte directoryNameendMarker = '\'';
-    int beginIndex = message.indexOf(directoryNameBeginMarker) + 1;
-    int endIndex = message.indexOf(directoryNameendMarker);
+    final byte directoryNameBeginMarker = '`';
+    final byte directoryNameEndMarker = '\'';
+    final int beginIndex = message.indexOf(directoryNameBeginMarker) + 1;
+    final int endIndex = message.indexOf(directoryNameEndMarker);
     return message.substring(beginIndex, endIndex);
   }
-
 
   public DirectoryContent getDirectoryContent() {
     return myDirectoryContent;
   }
-
-  //public void addModule(String name) {
-  //  myDirectoryContent.addModule(name);
-  //}
 
   public void setModuleName(final String moduleLocation) {
     myModuleName = moduleLocation;

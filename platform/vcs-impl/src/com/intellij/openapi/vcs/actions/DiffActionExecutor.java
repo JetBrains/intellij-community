@@ -26,10 +26,7 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.vcs.AbstractVcsHelper;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vcs.VcsBundle;
-import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.BackgroundFromStartOption;
 import com.intellij.openapi.vcs.changes.BinaryContentRevision;
 import com.intellij.openapi.vcs.changes.ContentRevision;
@@ -118,13 +115,20 @@ public abstract class DiffActionExecutor {
           if (document == null) return;
           final DocumentContent content2 = new DocumentContent(myProject, document);
 
-          final VcsRevisionNumber currentRevision = myDiffProvider.getCurrentRevision(mySelectedFile);
+          final FileStatus status = FileStatusManager.getInstance(myProject).getStatus(mySelectedFile);
+          if (status == null || FileStatus.NOT_CHANGED.equals(status) || FileStatus.UNKNOWN.equals(status) ||
+              FileStatus.IGNORED.equals(status)) {
 
-          if (revisionNumber.compareTo(currentRevision) > 0) {
-            request.setContents(content2, remote);
-            request.setContentTitles(VcsBundle.message("diff.title.local"), revisionNumber.asString());
-          }
-          else {
+            final VcsRevisionNumber currentRevision = myDiffProvider.getCurrentRevision(mySelectedFile);
+            if (revisionNumber.compareTo(currentRevision) > 0) {
+              request.setContents(content2, remote);
+              request.setContentTitles(VcsBundle.message("diff.title.local.with.number", currentRevision.asString()), revisionNumber.asString());
+            }
+            else {
+              request.setContents(remote, content2);
+              request.setContentTitles(revisionNumber.asString(), VcsBundle.message("diff.title.local.with.number", currentRevision.asString()));
+            }
+          } else {
             request.setContents(remote, content2);
             request.setContentTitles(revisionNumber.asString(), VcsBundle.message("diff.title.local"));
           }

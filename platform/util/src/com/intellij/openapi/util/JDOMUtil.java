@@ -16,6 +16,7 @@
 package com.intellij.openapi.util;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.StringInterner;
 import com.intellij.util.io.URLUtil;
@@ -229,7 +230,7 @@ public class JDOMUtil {
         if (Verifier.isXMLCharacter(each)) {
           result.append((char)each);
         } else {
-          result.append("0x").append(Long.toHexString(each).toUpperCase());
+          result.append("0x").append(StringUtilRt.toUpperCase(Long.toHexString(each)));
         }
       }
       catch (IOException e) {
@@ -501,7 +502,7 @@ public class JDOMUtil {
     XMLOutputter xmlOutputter = new MyXMLOutputter();
     Format format = Format.getCompactFormat().
       setIndent("  ").
-      setTextMode(Format.TextMode.NORMALIZE).
+      setTextMode(Format.TextMode.TRIM).
       setEncoding(ENCODING).
       setOmitEncoding(false).
       setOmitDeclaration(false).
@@ -514,7 +515,7 @@ public class JDOMUtil {
    * Returns null if no escapement necessary.
    */
   @Nullable
-  private static String escapeChar(char c, boolean escapeSpaces, boolean escapeLineEnds) {
+  private static String escapeChar(char c, boolean escapeApostrophes, boolean escapeSpaces, boolean escapeLineEnds) {
     switch (c) {
       case '\n': return escapeLineEnds ? "&#10;" : null;
       case '\r': return escapeLineEnds ? "&#13;" : null;
@@ -523,6 +524,7 @@ public class JDOMUtil {
       case '<':  return "&lt;";
       case '>':  return "&gt;";
       case '\"': return "&quot;";
+      case '\'': return escapeApostrophes ? "&apos;": null;
       case '&':  return "&amp;";
     }
     return null;
@@ -535,10 +537,15 @@ public class JDOMUtil {
 
   @NotNull
   public static String escapeText(String text, boolean escapeSpaces, boolean escapeLineEnds) {
+    return escapeText(text, false, escapeSpaces, escapeLineEnds);
+  }
+
+  @NotNull
+  public static String escapeText(String text, boolean escapeApostrophes, boolean escapeSpaces, boolean escapeLineEnds) {
     StringBuffer buffer = null;
     for (int i = 0; i < text.length(); i++) {
       final char ch = text.charAt(i);
-      final String quotation = escapeChar(ch, escapeSpaces, escapeLineEnds);
+      final String quotation = escapeChar(ch, escapeApostrophes, escapeSpaces, escapeLineEnds);
 
       if (buffer == null) {
         if (quotation != null) {

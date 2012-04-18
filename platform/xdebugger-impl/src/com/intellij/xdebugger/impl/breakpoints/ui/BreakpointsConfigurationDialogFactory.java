@@ -117,10 +117,7 @@ public class BreakpointsConfigurationDialogFactory {
 
       JComponent contentComponent = null;
       if (myPanels.size() > 1) {
-        final Disposable tabbedPaneDisposable = new Disposable() {
-          public void dispose() {
-          }
-        };
+        final Disposable tabbedPaneDisposable = Disposer.newDisposable();
         final TabbedPaneWrapper tabbedPane = new TabbedPaneWrapper(tabbedPaneDisposable);
         for (AbstractBreakpointPanel breakpointPanel : myPanels) {
           addPanel(breakpointPanel, tabbedPane);

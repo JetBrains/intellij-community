@@ -48,7 +48,7 @@ public class PsiMultiReference implements PsiPolyVariantReference {
       final TextRange range1 = ref1.getRangeInElement();
       final TextRange range2 = ref2.getRangeInElement();
 
-      if(range1.getStartOffset() == range2.getStartOffset() && range1.getEndOffset() == range2.getEndOffset()) return 0;
+      if(TextRange.areSegmentsEqual(range1, range2)) return 0;
       if(range1.getStartOffset() >= range2.getStartOffset() && range1.getEndOffset() <= range2.getEndOffset()) return -1;
       if(range2.getStartOffset() >= range1.getStartOffset() && range2.getEndOffset() <= range1.getEndOffset()) return 1;
 

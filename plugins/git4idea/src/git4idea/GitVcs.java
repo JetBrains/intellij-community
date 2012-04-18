@@ -50,7 +50,6 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
-import com.intellij.util.EventDispatcher;
 import com.intellij.util.containers.ComparatorDelegate;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.UIUtil;
@@ -59,6 +58,7 @@ import git4idea.changes.GitCommittedChangeListProvider;
 import git4idea.changes.GitOutgoingChangesProvider;
 import git4idea.checkin.GitCheckinEnvironment;
 import git4idea.checkin.GitCommitAndPushExecutor;
+import git4idea.commands.Git;
 import git4idea.config.*;
 import git4idea.diff.GitDiffProvider;
 import git4idea.diff.GitTreeDiffProvider;
@@ -70,11 +70,13 @@ import git4idea.history.wholeTree.GitCommitsSequentially;
 import git4idea.i18n.GitBundle;
 import git4idea.merge.GitMergeProvider;
 import git4idea.rollback.GitRollbackEnvironment;
+import git4idea.roots.GitIntegrationEnabler;
+import git4idea.roots.GitRootChecker;
+import git4idea.roots.GitRootDetectInfo;
+import git4idea.roots.GitRootDetector;
 import git4idea.status.GitChangeProvider;
 import git4idea.ui.branch.GitBranchWidget;
 import git4idea.update.GitUpdateEnvironment;
-import git4idea.vfs.GitRootTracker;
-import git4idea.vfs.GitRootsListener;
 import git4idea.vfs.GitVFSListener;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -113,6 +115,7 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
   private final GitAnnotationProvider myAnnotationProvider;
   private final DiffProvider myDiffProvider;
   private final VcsHistoryProvider myHistoryProvider;
+  @NotNull private final Git myGit;
   private final ProjectLevelVcsManager myVcsManager;
   private final GitVcsApplicationSettings myAppSettings;
   private final Configurable myConfigurable;
@@ -120,11 +123,10 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
   private final GitMergeProvider myMergeProvider;
   private final GitMergeProvider myReverseMergeProvider;
   private final GitCommittedChangeListProvider myCommittedChangeListProvider;
+  private final @NotNull PlatformFacade myPlatformFacade;
 
   private GitVFSListener myVFSListener; // a VFS listener that tracks file addition, deletion, and renaming.
 
-  private GitRootTracker myRootTracker; // The tracker that checks validity of git roots
-  private final EventDispatcher<GitRootsListener> myRootListeners = EventDispatcher.create(GitRootsListener.class);
   private final BackgroundTaskQueue myTaskQueue; // The queue that is used to schedule background task from actions
   private final ReadWriteLock myCommandLock = new ReentrantReadWriteLock(true); // The command read/write lock
   private final TreeDiffProvider myTreeDiffProvider;
@@ -133,6 +135,7 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
   private GitBranchWidget myBranchWidget;
 
   private GitVersion myVersion = GitVersion.NULL; // version of Git which this plugin uses.
+  private static final int MAX_CONSOLE_OUTPUT_SIZE = 10000;
 
   @Nullable
   public static GitVcs getInstance(Project project) {
@@ -142,7 +145,7 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
     return (GitVcs) ProjectLevelVcsManager.getInstance(project).findVcsByName(NAME);
   }
 
-  public GitVcs(@NotNull Project project,
+  public GitVcs(@NotNull Project project, @NotNull Git git,
                 @NotNull final ProjectLevelVcsManager gitVcsManager,
                 @NotNull final GitAnnotationProvider gitAnnotationProvider,
                 @NotNull final GitDiffProvider gitDiffProvider,
@@ -151,6 +154,7 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
                 @NotNull final GitVcsApplicationSettings gitSettings,
                 @NotNull final GitVcsSettings gitProjectSettings) {
     super(project, NAME);
+    myGit = git;
     myVcsManager = gitVcsManager;
     myAppSettings = gitSettings;
     myChangeProvider = project.isDefault() ? null : ServiceManager.getService(project, GitChangeProvider.class);
@@ -170,6 +174,7 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
     myCommitAndPushExecutor = new GitCommitAndPushExecutor(myCheckinEnvironment);
     myTaskQueue = new BackgroundTaskQueue(myProject, GitBundle.getString("task.queue.title"));
     myExecutableValidator = new GitExecutableValidator(myProject, this);
+    myPlatformFacade = ServiceManager.getService(myProject, PlatformFacade.class);
   }
 
 
@@ -302,6 +307,11 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
   }
 
   @Override
+  public VcsRootChecker getRootChecker() {
+    return new GitRootChecker(myProject, myPlatformFacade);
+  }
+
+  @Override
   protected void start() throws VcsException {
   }
 
@@ -317,11 +327,8 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
       }
     }
 
-    if (!myProject.isDefault() && myRootTracker == null) {
-      myRootTracker = new GitRootTracker(this, myProject, myRootListeners.getMulticaster());
-    }
     if (myVFSListener == null) {
-      myVFSListener = new GitVFSListener(myProject, this);
+      myVFSListener = new GitVFSListener(myProject, this, myGit);
     }
     NewGitUsersComponent.getInstance(myProject).activate();
     GitProjectLogManager.getInstance(myProject).activate();
@@ -338,10 +345,6 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
 
   @Override
   protected void deactivate() {
-    if (myRootTracker != null) {
-      myRootTracker.dispose();
-      myRootTracker = null;
-    }
     if (myVFSListener != null) {
       Disposer.dispose(myVFSListener);
       myVFSListener = null;
@@ -407,6 +410,9 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
    * @param style   a style to use
    */
   private void showMessage(@NotNull String message, final TextAttributes style) {
+    if (message.length() > MAX_CONSOLE_OUTPUT_SIZE) {
+      message = message.substring(0, MAX_CONSOLE_OUTPUT_SIZE);
+    }
     myVcsManager.addMessageToConsoleWindow(message, style);
   }
 
@@ -535,5 +541,16 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
   @Override
   public boolean fileListenerIsSynchronous() {
     return false;
+  }
+
+  @Override
+  @CalledInAwt
+  public void enableIntegration() {
+    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+      public void run() {
+        GitRootDetectInfo detectInfo = new GitRootDetector(myProject, myPlatformFacade).detect();
+        new GitIntegrationEnabler(myProject, myGit, myPlatformFacade).enable(detectInfo);
+      }
+    });
   }
 }

@@ -49,7 +49,7 @@ public class IgnoredFilesTest extends AbstractVcsTestCase {
           myClientRoot = new File(myTempDirFixture.getTempDirPath(), "clientroot");
           myClientRoot.mkdir();
 
-          initProject(myClientRoot);
+          initProject(myClientRoot, IgnoredFilesTest.this.getTestName());
 
           ((StartupManagerImpl)StartupManager.getInstance(myProject)).runPostStartupActivities();
 

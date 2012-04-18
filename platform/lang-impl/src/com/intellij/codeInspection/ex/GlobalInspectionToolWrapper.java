@@ -132,4 +132,8 @@ public class GlobalInspectionToolWrapper extends InspectionToolWrapper<GlobalIns
     }
     return null;
   }
+
+  public boolean worksInBatchModeOnly() {
+    return getTool().worksInBatchModeOnly();
+  }
 }

@@ -20,6 +20,7 @@ import com.intellij.openapi.fileEditor.FileDocumentSynchronizationVetoer;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.changes.ui.CommitHelper;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
 
@@ -33,7 +34,7 @@ public class SaveCommittingDocumentsVetoer implements FileDocumentSynchronizatio
     myAdapter = adapter;
   }
 
-  public boolean maySaveDocument(Document document) {
+  public boolean maySaveDocument(@NotNull Document document) {
     final Object beingCommitted = document.getUserData(CommitHelper.DOCUMENT_BEING_COMMITTED_KEY);
     if (beingCommitted == VetoSavingCommittingDocumentsAdapter.SAVE_DENIED) {
       return false;
@@ -47,7 +48,7 @@ public class SaveCommittingDocumentsVetoer implements FileDocumentSynchronizatio
     return true;
   }
 
-  public boolean mayReloadFileContent(VirtualFile file, Document document)  {
+  public boolean mayReloadFileContent(VirtualFile file, @NotNull Document document)  {
     return true;
   }
 }

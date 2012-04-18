@@ -28,7 +28,6 @@ import com.intellij.psi.impl.SharedPsiElementImplUtil;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
-import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.ReflectionCache;
 import com.intellij.util.containers.ConcurrentHashMap;
@@ -72,7 +71,7 @@ public abstract class MultiplePsiFilesPerDocumentFileViewProvider extends Single
   }
 
   @Override
-  protected PsiFile getPsiInner(final Language target) {
+  protected PsiFile getPsiInner(@NotNull final Language target) {
     PsiFile file = myRoots.get(target);
     if (file == null) {
       if (isPhysical()) {

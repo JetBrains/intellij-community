@@ -16,10 +16,11 @@
 
 package com.intellij.util.descriptors.impl;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.MultiValuesMap;
 import com.intellij.openapi.vfs.*;
-import com.intellij.openapi.Disposable;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.descriptors.*;
 import org.jetbrains.annotations.Nullable;
@@ -135,6 +136,7 @@ public class ConfigFileContainerImpl implements ConfigFileContainer {
       }
       for (ConfigFileInfo configuration : newDescriptors) {
         final ConfigFileImpl configFile = new ConfigFileImpl(this, configuration);
+        Disposer.register(this, configFile);
         myConfigFiles.put(metaData, configFile);
         added.add(configFile);
       }
@@ -142,6 +144,7 @@ public class ConfigFileContainerImpl implements ConfigFileContainer {
 
     for (ConfigFile descriptor : toDelete) {
       myConfigFiles.remove(descriptor.getMetaData(), descriptor);
+      Disposer.dispose(descriptor);
     }
 
     myCachedConfigFiles = null;

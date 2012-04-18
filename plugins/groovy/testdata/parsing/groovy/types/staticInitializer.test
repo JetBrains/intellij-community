@@ -1,0 +1,73 @@
+class StaticDemo {
+  static
+  {
+    println "Demo"
+  }
+
+  public static void main(String[] args)
+  {
+
+  }
+}
+-----
+Groovy script
+  Class definition
+    Modifiers
+      <empty list>
+    PsiElement(class)('class')
+    PsiWhiteSpace(' ')
+    PsiElement(identifier)('StaticDemo')
+    PsiWhiteSpace(' ')
+    Type definition body
+      PsiElement({)('{')
+      PsiWhiteSpace('\n  ')
+      Class initializer
+        Modifiers
+          PsiElement(static)('static')
+          PsiElement(new line)('\n  ')
+        Open block
+          PsiElement({)('{')
+          PsiWhiteSpace('\n    ')
+          Call expression
+            Reference expression
+              PsiElement(identifier)('println')
+            PsiWhiteSpace(' ')
+            Command arguments
+              Literal
+                PsiElement(Gstring)('"Demo"')
+          PsiElement(new line)('\n  ')
+          PsiElement(})('}')
+      PsiElement(new line)('\n\n  ')
+      Method
+        Modifiers
+          PsiElement(public)('public')
+          PsiWhiteSpace(' ')
+          PsiElement(static)('static')
+        PsiWhiteSpace(' ')
+        Built in type
+          PsiElement(void)('void')
+        PsiWhiteSpace(' ')
+        PsiElement(identifier)('main')
+        PsiElement(()('(')
+        Parameter list
+          Parameter
+            Modifiers
+              <empty list>
+            Array type
+              Type element
+                Reference element
+                  PsiElement(identifier)('String')
+              PsiElement([)('[')
+              PsiElement(])(']')
+            PsiWhiteSpace(' ')
+            PsiElement(identifier)('args')
+        PsiElement())(')')
+        PsiElement(new line)('\n  ')
+        Throw clause
+          <empty list>
+        Open block
+          PsiElement({)('{')
+          PsiWhiteSpace('\n\n  ')
+          PsiElement(})('}')
+      PsiElement(new line)('\n')
+      PsiElement(})('}')

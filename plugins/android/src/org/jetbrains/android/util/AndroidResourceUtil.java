@@ -16,6 +16,8 @@
 
 package org.jetbrains.android.util;
 
+import com.android.resources.ResourceFolderType;
+import com.android.resources.ResourceType;
 import com.android.sdklib.SdkConstants;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -23,7 +25,6 @@ import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModulePackageIndex;
 import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -39,35 +40,40 @@ import org.jetbrains.android.dom.resources.Item;
 import org.jetbrains.android.dom.resources.ResourceElement;
 import org.jetbrains.android.dom.resources.Resources;
 import org.jetbrains.android.facet.AndroidFacet;
-import org.jetbrains.android.sdk.AndroidSdkUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
-
-import static java.util.Collections.addAll;
+import java.util.*;
 
 /**
  * @author Eugene.Kudelevsky
  */
 public class AndroidResourceUtil {
   public static final String NEW_ID_PREFIX = "@+id/";
-  public static final String[] VALUE_RESOURCE_TYPES =
-    new String[]{"drawable", "dimen", "color", "string", "style", "array", "id", "bool", "integer", "integer-array"};
-  private static final String[] DRAWABLE_EXTENSIONS = new String[]{AndroidUtils.PNG_EXTENSION, "jpg", "gif"};
-  public static final Set<String> REFERABLE_RESOURCE_TYPES = new HashSet<String>();
-  public static final String[] FILE_RESOURCE_TYPES = new String[]{"drawable", "anim", "layout", "values", "menu", "xml", "raw", "color"};
 
-  static {
-    addAll(REFERABLE_RESOURCE_TYPES, FILE_RESOURCE_TYPES);
-    addAll(REFERABLE_RESOURCE_TYPES, VALUE_RESOURCE_TYPES);
-    REFERABLE_RESOURCE_TYPES.remove("values");
-  }
+  public static final Set<ResourceType> VALUE_RESOURCE_TYPES = EnumSet.of(ResourceType.DRAWABLE, ResourceType.COLOR, ResourceType.DIMEN,
+                                                                          ResourceType.STRING, ResourceType.STYLE, ResourceType.ARRAY,
+                                                                          ResourceType.ID, ResourceType.BOOL, ResourceType.INTEGER);
+
+  public static final Set<ResourceType> REFERRABLE_RESOURCE_TYPES = EnumSet.noneOf(ResourceType.class);
 
   private AndroidResourceUtil() {
+  }
+
+  @NotNull
+  public static String normalizeXmlResourceValue(@NotNull String value) {
+    return value.replace("'", "\\'").replace("\"", "\\\"");
+  }
+
+  static {
+    REFERRABLE_RESOURCE_TYPES.addAll(Arrays.asList(ResourceType.values()));
+    REFERRABLE_RESOURCE_TYPES.remove(ResourceType.ATTR);
+    REFERRABLE_RESOURCE_TYPES.remove(ResourceType.STYLEABLE);
+  }
+
+  public static boolean isValueResourceType(@NotNull String resTypeName) {
+    final ResourceType type = ResourceType.getEnum(resTypeName);
+    return type != null && VALUE_RESOURCE_TYPES.contains(type);
   }
 
   @NotNull
@@ -194,7 +200,7 @@ public class AndroidResourceUtil {
       return PsiField.EMPTY_ARRAY;
     }
 
-    final String resourceName = getResourceName(resourceType, file.getName());
+    final String resourceName = AndroidCommonUtils.getResourceName(resourceType, file.getName());
     return findResourceFields(facet, resourceType, resourceName, onlyInOwnPackages);
   }
 
@@ -253,23 +259,12 @@ public class AndroidResourceUtil {
     String resClassName = tag.getName();
     resClassName = resClassName.equals("item")
                    ? tag.getAttributeValue("type", null)
-                   : getResourceTypeByTagName(resClassName);
+                   : AndroidCommonUtils.getResourceTypeByTagName(resClassName);
     if (resClassName != null) {
       final String resourceName = tag.getAttributeValue("name");
       return resourceName != null ? resClassName : null;
     }
     return null;
-  }
-
-  @NotNull
-  public static String getResourceTypeByTagName(@NotNull String tagName) {
-    if (tagName.equals("declare-styleable")) {
-      tagName = "styleable";
-    }
-    else if (tagName.endsWith("-array")) {
-      tagName = "array";
-    }
-    return tagName;
   }
 
   @Nullable
@@ -395,16 +390,9 @@ public class AndroidResourceUtil {
     throw new IllegalArgumentException("Incorrect resource type");
   }
 
-  @Nullable
-  public static String getResourceTypeByDirName(@NotNull String name) {
-    final int index = name.indexOf('-');
-    final String type = index >= 0 ? name.substring(0, index) : name;
-    return ArrayUtil.find(FILE_RESOURCE_TYPES, type) >= 0 ? type : null;
-  }
-
   @NotNull
   public static List<VirtualFile> getResourceSubdirs(@Nullable String resourceType, @NotNull VirtualFile[] resourceDirs) {
-    if (ArrayUtil.find(FILE_RESOURCE_TYPES, resourceType) < 0 && resourceType != null) {
+    if (resourceType != null && ResourceFolderType.getTypeByName(resourceType) == null) {
       return Collections.emptyList();
     }
     final List<VirtualFile> dirs = new ArrayList<VirtualFile>();
@@ -418,7 +406,7 @@ public class AndroidResourceUtil {
       }
       else {
         for (VirtualFile child : resourcesDir.getChildren()) {
-          String type = getResourceTypeByDirName(child.getName());
+          String type = AndroidCommonUtils.getResourceTypeByDirName(child.getName());
           if (resourceType.equals(type)) dirs.add(child);
         }
       }
@@ -428,23 +416,7 @@ public class AndroidResourceUtil {
 
   @Nullable
   public static String getDefaultResourceFileName(@NotNull String resourceType) {
-    if (ArrayUtil.find(VALUE_RESOURCE_TYPES, resourceType) < 0) {
-      return null;
-    }
-    return resourceType + "s.xml";
-  }
-
-  @NotNull
-  public static String getResourceName(@NotNull String resourceType, @NotNull String fileName) {
-    final String extension = FileUtil.getExtension(fileName);
-    final String s = FileUtil.getNameWithoutExtension(fileName);
-
-    return resourceType.equals("drawable") &&
-           ArrayUtil.find(DRAWABLE_EXTENSIONS, extension) >= 0 &&
-           s.endsWith(".9") &&
-           extension.equals(AndroidUtils.PNG_EXTENSION)
-           ? s.substring(0, s.length() - 2)
-           : s;
+    return isValueResourceType(resourceType) ? resourceType + "s.xml" : null;
   }
 
   @NotNull
@@ -496,7 +468,8 @@ public class AndroidResourceUtil {
   public static boolean isResourceSubdirectory(@NotNull PsiDirectory directory, @Nullable String resourceType) {
     PsiDirectory dir = directory;
 
-    if (resourceType != null && !dir.getName().startsWith(resourceType)) {
+    final String dirName = dir.getName();
+    if (resourceType != null && !dirName.equals(resourceType) && !dirName.startsWith(resourceType + '-')) {
       return false;
     }
     dir = dir.getParent();
@@ -566,12 +539,30 @@ public class AndroidResourceUtil {
         return true;
       }
 
-      for (String aPackage : AndroidSdkUtils.getDepLibsPackages(facet.getModule())) {
+      for (String aPackage : AndroidUtils.getDepLibsPackages(facet.getModule())) {
         if (javaFile.getPackageName().equals(aPackage)) {
           return true;
         }
       }
     }
     return false;
+  }
+
+  public static List<String> getNames(@NotNull Collection<ResourceType> resourceTypes) {
+    if (resourceTypes.size() == 0) {
+      return Collections.emptyList();
+    }
+    final List<String> result = new ArrayList<String>();
+
+    for (ResourceType type : resourceTypes) {
+      result.add(type.getName());
+    }
+    return result;
+  }
+
+  @NotNull
+  public static String[] getNamesArray(@NotNull Collection<ResourceType> resourceTypes) {
+    final List<String> names = getNames(resourceTypes);
+    return ArrayUtil.toStringArray(names);
   }
 }

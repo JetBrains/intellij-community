@@ -62,24 +62,24 @@ public abstract class TemplateLanguageStructureViewBuilder implements StructureV
     myProject = psiElement.getProject();
 
     myPsiTreeChangeAdapter = new PsiTreeChangeAdapter() {
-      public void childAdded(PsiTreeChangeEvent event) {
+      public void childAdded(@NotNull PsiTreeChangeEvent event) {
         childrenChanged(event);
       }
 
-      public void childRemoved(PsiTreeChangeEvent event) {
+      public void childRemoved(@NotNull PsiTreeChangeEvent event) {
         childrenChanged(event);
       }
 
-      public void childReplaced(PsiTreeChangeEvent event) {
+      public void childReplaced(@NotNull PsiTreeChangeEvent event) {
         childrenChanged(event);
       }
 
-      public void childMoved(PsiTreeChangeEvent event) {
+      public void childMoved(@NotNull PsiTreeChangeEvent event) {
         childrenChanged(event);
       }
 
       final Alarm myAlarm = new Alarm();
-      public void childrenChanged(PsiTreeChangeEvent event) {
+      public void childrenChanged(@NotNull PsiTreeChangeEvent event) {
         myAlarm.cancelAllRequests();
         myAlarm.addRequest(new Runnable(){
           public void run() {

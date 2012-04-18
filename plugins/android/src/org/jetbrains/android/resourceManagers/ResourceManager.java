@@ -17,11 +17,11 @@ package org.jetbrains.android.resourceManagers;
 
 import com.android.resources.ResourceType;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -38,6 +38,7 @@ import org.jetbrains.android.dom.attrs.AttributeDefinitions;
 import org.jetbrains.android.dom.resources.ResourceElement;
 import org.jetbrains.android.dom.resources.Resources;
 import org.jetbrains.android.facet.AndroidFacet;
+import org.jetbrains.android.util.AndroidCommonUtils;
 import org.jetbrains.android.util.AndroidResourceUtil;
 import org.jetbrains.android.util.AndroidUtils;
 import org.jetbrains.android.util.ResourceEntry;
@@ -52,7 +53,9 @@ import static java.util.Collections.addAll;
  * @author coyote
  */
 public abstract class ResourceManager {
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.android.resourceManagers.LocalResourceManager");
+  public static final ResourceType[] ID_PROVIDING_RESOURCE_TYPES = new ResourceType[] {
+    ResourceType.LAYOUT, ResourceType.MENU
+  };
 
   protected final Module myModule;
   protected final AndroidFacet myFacet;
@@ -102,7 +105,7 @@ public abstract class ResourceManager {
       for (final VirtualFile resFile : dir.getChildren()) {
         String extension = resFile.getExtension();
         if (extensions.length == 0 || extensionSet.contains(extension)) {
-          String s = AndroidResourceUtil.getResourceName(resType, resFile.getName());
+          String s = AndroidCommonUtils.getResourceName(resType, resFile.getName());
           if (resName == null || AndroidUtils.equal(resName, s, distinguishDelimetersInName)) {
             PsiFile file = ApplicationManager.getApplication().runReadAction(new Computable<PsiFile>() {
               @Nullable
@@ -129,17 +132,19 @@ public abstract class ResourceManager {
     return findResourceFiles(resType, null, true);
   }
 
-  protected List<Resources> getResourceElements(@Nullable Set<VirtualFile> files) {
+  protected List<Pair<Resources, VirtualFile>> getResourceElements(@Nullable Set<VirtualFile> files) {
     return getRootDomElements(Resources.class, files);
   }
 
-  private <T extends DomElement> List<T> getRootDomElements(@NotNull Class<T> elementType,
-                                                            @Nullable Set<VirtualFile> files) {
-    final List<T> result = new ArrayList<T>();
+  private <T extends DomElement> List<Pair<T, VirtualFile>> getRootDomElements(@NotNull Class<T> elementType,
+                                                                               @Nullable Set<VirtualFile> files) {
+    final List<Pair<T, VirtualFile>> result = new ArrayList<Pair<T, VirtualFile>>();
     for (VirtualFile file : getAllValueResourceFiles()) {
       if ((files == null || files.contains(file)) && file.isValid()) {
-        T element = AndroidUtils.loadDomElement(myModule, file, elementType);
-        if (element != null) result.add(element);
+        final T element = AndroidUtils.loadDomElement(myModule, file, elementType);
+        if (element != null) {
+          result.add(new Pair<T, VirtualFile>(element, file));
+        }
       }
     }
     return result;
@@ -161,8 +166,9 @@ public abstract class ResourceManager {
 
   protected List<ResourceElement> getValueResources(@NotNull final String resourceType, @Nullable Set<VirtualFile> files) {
     final List<ResourceElement> result = new ArrayList<ResourceElement>();
-    Collection<Resources> resourceFiles = getResourceElements(files);
-    for (final Resources resources : resourceFiles) {
+    List<Pair<Resources, VirtualFile>> resourceFiles = getResourceElements(files);
+    for (final Pair<Resources, VirtualFile> pair : resourceFiles) {
+      final Resources resources = pair.getFirst();
       ApplicationManager.getApplication().runReadAction(new Runnable() {
         @Override
         public void run() {
@@ -197,7 +203,7 @@ public abstract class ResourceManager {
         if (possibleResDir == null || !isResourceDir(possibleResDir.getVirtualFile())) {
           return null;
         }
-        String type = AndroidResourceUtil.getResourceTypeByDirName(dir.getName());
+        String type = AndroidCommonUtils.getResourceTypeByDirName(dir.getName());
         if (type == null) return null;
         return type;
       }
@@ -211,7 +217,7 @@ public abstract class ResourceManager {
     for (VirtualFile dir : dirs) {
       for (VirtualFile resourceFile : dir.getChildren()) {
         if (resourceFile.isDirectory()) continue;
-        result.add(AndroidResourceUtil.getResourceName(resourceType, resourceFile.getName()));
+        result.add(AndroidCommonUtils.getResourceName(resourceType, resourceFile.getName()));
       }
     }
     return result;
@@ -222,7 +228,6 @@ public abstract class ResourceManager {
     final ResourceType type = ResourceType.getEnum(resourceType);
 
     if (type == null) {
-      LOG.error("Unknown resource type " + resourceType);
       return Collections.emptyList();
     }
 
@@ -337,10 +342,11 @@ public abstract class ResourceManager {
   }
 
   @NotNull
-  private List<VirtualFile> getResourceSubdirsToSearchIds() {
+  public List<VirtualFile> getResourceSubdirsToSearchIds() {
     final List<VirtualFile> resSubdirs = new ArrayList<VirtualFile>();
-    resSubdirs.addAll(getResourceSubdirs(ResourceType.LAYOUT.getName()));
-    resSubdirs.addAll(getResourceSubdirs(ResourceType.MENU.getName()));
+    for (ResourceType type : ID_PROVIDING_RESOURCE_TYPES) {
+      resSubdirs.addAll(getResourceSubdirs(type.getName()));
+    }
     return resSubdirs;
   }
 
@@ -354,7 +360,6 @@ public abstract class ResourceManager {
                                                   boolean distinguishDelimetersInName) {
     final ResourceType type = ResourceType.getEnum(resourceType);
     if (type == null) {
-      LOG.error("Unknown resource type " + resourceType);
       return Collections.emptyList();
     }
 

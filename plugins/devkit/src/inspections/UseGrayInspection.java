@@ -19,9 +19,12 @@ import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NullUtils;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.JavaConstantExpressionEvaluator;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.ui.Gray;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -47,12 +50,16 @@ public class UseGrayInspection extends DevKitInspectionBase {
 
   @Nullable
   private static ProblemDescriptor checkNewExpression(PsiNewExpression expression, InspectionManager manager, boolean isOnTheFly) {
+    final Project project = manager.getProject();
+    final JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
+    final PsiClass grayClass = facade.findClass(Gray.class.getName(), GlobalSearchScope.allScope(project));
     final PsiType type = expression.getType();
-    if (type != null) {
+    if (type != null && grayClass != null) {
       final PsiExpressionList arguments = expression.getArgumentList();
       if (arguments != null) {
         final PsiExpression[] expressions = arguments.getExpressions();
         if (expressions.length == 3 && "java.awt.Color".equals(type.getCanonicalText())) {
+          if (! facade.getResolveHelper().isAccessible(grayClass, expression, grayClass)) return null;
           final PsiExpression r = expressions[0];
           final PsiExpression g = expressions[1];
           final PsiExpression b = expressions[2];

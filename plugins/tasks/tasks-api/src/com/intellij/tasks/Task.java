@@ -64,7 +64,9 @@ public abstract class Task {
   public abstract boolean isClosed();
 
   @Nullable
-  public abstract String getCustomIcon();
+  public String getCustomIcon() {
+    return null;
+  }
 
   /**
    * @return true if bugtracking issue is associated
@@ -101,5 +103,17 @@ public abstract class Task {
   @Override
   public final int hashCode() {
     return getId().hashCode();
+  }
+
+  @Nullable
+  public String getNumber() {
+    String[] split = getId().split("\\-");
+    return split.length > 1 ? split[1] : null;
+  }
+
+  @Nullable
+  public String getProject() {
+    String[] split = getId().split("\\-");
+    return split.length > 1 ? split[0] : null;
   }
 }

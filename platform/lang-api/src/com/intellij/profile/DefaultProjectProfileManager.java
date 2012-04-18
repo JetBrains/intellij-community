@@ -15,6 +15,7 @@
  */
 package com.intellij.profile;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.StateSplitter;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -35,7 +36,7 @@ import java.util.*;
  * User: anna
  * Date: 30-Nov-2005
  */
-public abstract class DefaultProjectProfileManager extends ProjectProfileManager {
+public abstract class DefaultProjectProfileManager extends ProjectProfileManager implements JDOMExternalizable {
   protected static final Logger LOG = Logger.getInstance("#com.intellij.profile.DefaultProjectProfileManager");
 
   @NonNls protected static final String PROFILES = "profiles";
@@ -49,7 +50,9 @@ public abstract class DefaultProjectProfileManager extends ProjectProfileManager
 
   protected final Project myProject;
 
+  /** This field is used for serialization. Do not rename it or make access weaker */
   public String PROJECT_PROFILE;
+  /** This field is used for serialization. Do not rename it or make access weaker */
   public boolean USE_PROJECT_PROFILE = true;
 
   private final ApplicationProfileManager myApplicationProfileManager;
@@ -71,20 +74,18 @@ public abstract class DefaultProjectProfileManager extends ProjectProfileManager
     return myProject;
   }
 
-  public Profile getProfile(@NotNull String name, boolean returnRootProfileIfNamedIsAbsent) {
+  public synchronized Profile getProfile(@NotNull String name, boolean returnRootProfileIfNamedIsAbsent) {
     return myProfiles.containsKey(name) ? myProfiles.get(name) : myApplicationProfileManager.getProfile(name, returnRootProfileIfNamedIsAbsent);
   }
 
-  public void updateProfile(Profile profile) {
+  public synchronized void updateProfile(Profile profile) {
     myProfiles.put(profile.getName(), profile);
     for (ProfileChangeAdapter profileChangeAdapter : myProfilesListener) {
       profileChangeAdapter.profileChanged(profile);
     }
   }
 
-
-
-  public void readExternal(Element element) throws InvalidDataException {
+  public synchronized void readExternal(Element element) throws InvalidDataException {
     myProfiles.clear();
     DefaultJDOMExternalizer.readExternal(this, element);
     final Element profilesElement = element.getChild(PROFILES);
@@ -117,7 +118,7 @@ public abstract class DefaultProjectProfileManager extends ProjectProfileManager
   protected void convert(Element element) throws InvalidDataException {
   }
 
-  public void writeExternal(Element element) throws WriteExternalException {
+  public synchronized void writeExternal(Element element) throws WriteExternalException {
 
     final List<String> sortedProfiles = new ArrayList<String>(myProfiles.keySet());
     Element profiles = null;
@@ -159,34 +160,36 @@ public abstract class DefaultProjectProfileManager extends ProjectProfileManager
     return myHolder;
   }
 
-  public Collection<Profile> getProfiles() {
+  public synchronized Collection<Profile> getProfiles() {
     getProjectProfileImpl();
     return myProfiles.values();
   }
 
-  public String[] getAvailableProfileNames() {
+  public synchronized String[] getAvailableProfileNames() {
     return ArrayUtil.toStringArray(myProfiles.keySet());
   }
 
-  public void deleteProfile(String name) {
+  public synchronized void deleteProfile(String name) {
     myProfiles.remove(name);
   }
 
-  public String getProjectProfile() {
+  public synchronized String getProjectProfile() {
     return PROJECT_PROFILE;
   }
 
-  public void setProjectProfile(@Nullable final String projectProfile) {
-    final String profileName = PROJECT_PROFILE;
-    PROJECT_PROFILE = projectProfile;
-    USE_PROJECT_PROFILE = projectProfile != null;
-    for (ProfileChangeAdapter adapter : myProfilesListener) {
-      adapter.profileActivated(profileName != null ? getProfile(profileName) : null, projectProfile != null ?  getProfile(projectProfile) : null);
+  public synchronized void setProjectProfile(@Nullable final String newProfile) {
+    final String oldProfile = PROJECT_PROFILE;
+    PROJECT_PROFILE = newProfile;
+    USE_PROJECT_PROFILE = newProfile != null;
+    if (oldProfile != null) {
+      for (ProfileChangeAdapter adapter : myProfilesListener) {
+        adapter.profileActivated(getProfile(oldProfile), newProfile != null ?  getProfile(newProfile) : null);
+      }
     }
   }
 
   @NotNull
-  public Profile getProjectProfileImpl(){
+  public synchronized Profile getProjectProfileImpl(){
     if (!USE_PROJECT_PROFILE) return myApplicationProfileManager.getRootProfile();
     if (PROJECT_PROFILE == null || myProfiles.isEmpty()){
       setProjectProfile(PROJECT_DEFAULT_PROFILE_NAME);
@@ -204,8 +207,14 @@ public abstract class DefaultProjectProfileManager extends ProjectProfileManager
     return profile;
   }
 
-  public void addProfilesListener(ProfileChangeAdapter profilesListener) {
+  public void addProfilesListener(final ProfileChangeAdapter profilesListener, Disposable parent) {
     myProfilesListener.add(profilesListener);
+    Disposer.register(parent, new Disposable() {
+      @Override
+      public void dispose() {
+        myProfilesListener.remove(profilesListener);
+      }
+    });
   }
 
   public void removeProfilesListener(ProfileChangeAdapter profilesListener) {

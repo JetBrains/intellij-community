@@ -35,4 +35,6 @@ public interface GrUnaryExpression extends GrExpression, PsiPolyVariantReference
   @NotNull
   @Override
   GroovyResolveResult[] multiResolve(final boolean incompleteCode);
+
+  boolean isPostfix();
 }

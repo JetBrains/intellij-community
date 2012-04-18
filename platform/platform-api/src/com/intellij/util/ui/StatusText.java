@@ -16,7 +16,6 @@
 
 package com.intellij.util.ui;
 
-import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.UIBundle;
@@ -134,6 +133,7 @@ public abstract class StatusText {
     myText = "";
     myComponent.clear();
     myClickListeners.clear();
+    if (myOwner != null) myOwner.repaint();
     return this;
   }
 
@@ -154,7 +154,7 @@ public abstract class StatusText {
     myText += text;
     myComponent.append(text, attrs);
     myClickListeners.add(listener);
-
+    if (myOwner != null) myOwner.repaint();
     return this;
   }
 

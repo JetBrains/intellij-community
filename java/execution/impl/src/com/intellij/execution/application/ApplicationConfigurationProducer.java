@@ -103,9 +103,6 @@ public class ApplicationConfigurationProducer extends JavaRuntimeConfigurationPr
     for (RunnerAndConfigurationSettings existingConfiguration : existingConfigurations) {
       final ApplicationConfiguration appConfiguration = (ApplicationConfiguration)existingConfiguration.getConfiguration();
       if (Comparing.equal(JavaExecutionUtil.getRuntimeQualifiedName(aClass), appConfiguration.MAIN_CLASS_NAME)) {
-        if (Comparing.equal(location.getModule(), appConfiguration.getConfigurationModule().getModule())) {
-          return existingConfiguration;
-        }
         final Module configurationModule = appConfiguration.getConfigurationModule().getModule();
         if (Comparing.equal(location.getModule(), configurationModule)) return existingConfiguration;
         if (Comparing.equal(predefinedModule, configurationModule)) {

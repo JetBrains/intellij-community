@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,6 +42,9 @@ public class CollapseSelectionHandler implements CodeInsightActionHandler {
                 if (editor.getSelectionModel().hasSelection()) {
                   int start = editor.getSelectionModel().getSelectionStart();
                   int end = editor.getSelectionModel().getSelectionEnd();
+                  if (start + 1 >= end) {
+                    return;
+                  }
                   Document doc = editor.getDocument();
                   if (start < end && doc.getCharsSequence().charAt(end-1) == '\n') end--;
                   FoldRegion region;
@@ -52,7 +55,7 @@ public class CollapseSelectionHandler implements CodeInsightActionHandler {
                     }
                   } else if (!foldingModel.intersectsRegion(start, end)) {
                     region = foldingModel.addFoldRegion(start, end, ourPlaceHolderText);
-                    LOG.assertTrue(region != null);
+                    LOG.assertTrue(region != null, "Fold region is not created. Folding model: " + foldingModel);
                     region.setExpanded(false);
                     int offset = Math.min(start + ourPlaceHolderText.length(), doc.getTextLength());
                     editor.getCaretModel().moveToOffset(offset);

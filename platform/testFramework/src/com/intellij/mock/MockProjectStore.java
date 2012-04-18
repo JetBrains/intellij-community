@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,10 +29,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.util.Collection;
-import java.util.List;
 import java.util.Set;
-import java.util.TreeSet;
 
 /**
  * @author peter
@@ -64,10 +61,14 @@ public class MockProjectStore implements IProjectStore {
   }
 
   @Override
-  @Nullable
   public VirtualFile getProjectBaseDir() {
     throw new UnsupportedOperationException("Method getProjectBaseDir is not yet implemented in " + getClass().getName());
-  }//------ This methods should be got rid of
+  }
+
+  @Override
+  public String getProjectBasePath() {
+    throw new UnsupportedOperationException("Method getProjectBasePath is not yet implemented in " + getClass().getName());
+  }
 
   @Override
   public String getLocation() {
@@ -117,18 +118,7 @@ public class MockProjectStore implements IProjectStore {
   @Override
   @NotNull
   public String getProjectFilePath() {
-    return null;
-  }
-
-  public void setUsedMacros(@NotNull Collection<String> macros) {
-  }
-
-  public Set<String> getMacroTrackingSet() {
-    return new TreeSet<String>();
-  }
-
-  public void initStore() {
-    throw new UnsupportedOperationException("Method initStore is not yet implemented in " + getClass().getName());
+    throw new UnsupportedOperationException("Method getProjectFilePath is not yet implemented in " + getClass().getName());
   }
 
   @Override
@@ -149,18 +139,10 @@ public class MockProjectStore implements IProjectStore {
     throw new UnsupportedOperationException("Method load is not yet implemented in " + getClass().getName());
   }
 
-  public Collection<String> getUsedMacros() {
-    throw new UnsupportedOperationException("Method getUsedMacros not implemented in " + getClass());
-  }
-
   @Override
   @NotNull
   public SaveSession startSave() throws IOException {
     throw new UnsupportedOperationException("Method startSave not implemented in " + getClass());
-  }
-
-  public List<VirtualFile> getAllStorageFilesToSave(final boolean includingSubStructures) {
-    throw new UnsupportedOperationException("Method getAllStorageFilesToSave is not yet implemented in " + getClass().getName());
   }
 
   @Override

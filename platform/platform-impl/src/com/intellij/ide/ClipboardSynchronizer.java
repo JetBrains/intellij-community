@@ -391,12 +391,14 @@ public class ClipboardSynchronizer implements ApplicationComponent {
         if (formats == null || formats.length == 0) {
           return Collections.emptySet();
         }
-        for (int i = 0, length = formats.length; i < length; i++) {
-          if (formats[i] == 0) return Collections.emptySet();
+        try {
+          @SuppressWarnings({"unchecked", "UnnecessaryLocalVariable"})
+          final Set<DataFlavor> set = DataTransferer.getInstance().getFlavorsForFormats(formats, FLAVOR_MAP).keySet();
+          return set;
         }
-        @SuppressWarnings({"unchecked", "UnnecessaryLocalVariable"})
-        final Set<DataFlavor> set = DataTransferer.getInstance().getFlavorsForFormats(formats, FLAVOR_MAP).keySet();
-        return set;
+        catch (NullPointerException e) {
+          LOG.warn("Sun bug #6322854", e);
+        }
       }
       catch (IllegalAccessException ignore) { }
       catch (IllegalArgumentException ignore) { }

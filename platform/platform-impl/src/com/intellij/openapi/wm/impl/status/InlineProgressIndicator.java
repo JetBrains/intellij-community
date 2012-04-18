@@ -24,6 +24,7 @@ import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.impl.content.GraphicsConfig;
+import com.intellij.ui.ColorUtil;
 import com.intellij.ui.InplaceButton;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.Wrapper;
@@ -343,7 +344,7 @@ public class InlineProgressIndicator extends ProgressIndicatorBase implements Di
       g.fillRoundRect(0, 0, getWidth() - 1, getHeight() - 1, arc, arc);
       
       Color bg = getBackground().darker().darker();
-      bg = new Color(bg.getRed(), bg.getGreen(), bg.getBlue(), 230);
+      bg = ColorUtil.toAlpha(bg, 230);
 
       g.setColor(bg);
 

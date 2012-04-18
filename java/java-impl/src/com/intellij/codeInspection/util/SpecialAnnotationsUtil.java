@@ -16,14 +16,11 @@
 
 package com.intellij.codeInspection.util;
 
-import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ex.InspectionProfileImpl;
-import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspection;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.util.ClassFilter;
 import com.intellij.ide.util.TreeClassChooser;
@@ -209,7 +206,6 @@ public class SpecialAnnotationsUtil {
     Collections.sort(targetList);
     final InspectionProfile inspectionProfile = InspectionProjectProfileManager.getInstance(project).getInspectionProfile();
     //correct save settings
-    ((InspectionProfileImpl)inspectionProfile).isProperSetting(HighlightDisplayKey.find(UnusedSymbolLocalInspection.SHORT_NAME));
 
     //TODO lesya
     InspectionProfileManager.getInstance().fireProfileChanged(inspectionProfile);

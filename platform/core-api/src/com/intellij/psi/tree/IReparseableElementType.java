@@ -42,11 +42,11 @@ public class IReparseableElementType extends ILazyParseableElementType {
    * chameleon node.
    *
    * @param buffer  the content to parse.
-   * @param project the project containing the content.
-   * @return true if the content is valid, false if not
+   * @param fileLanguage language of the file
+   * @param project the project containing the content.  @return true if the content is valid, false if not
    */
 
-  public boolean isParsable(CharSequence buffer, final Project project) {
+  public boolean isParsable(CharSequence buffer, Language fileLanguage, final Project project) {
     return false;
   }
 }

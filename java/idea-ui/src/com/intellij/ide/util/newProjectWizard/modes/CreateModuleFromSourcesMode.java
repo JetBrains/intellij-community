@@ -31,13 +31,7 @@ import java.io.File;
  * @author nik
  */
 public class CreateModuleFromSourcesMode extends CreateFromSourcesMode {
-  private static final Icon STEP_ICON = IconLoader.getIcon("/addmodulewizard.png");
   private TextFieldWithBrowseButton myPathPanel;
-
-
-  protected Icon getIcon() {
-    return STEP_ICON;
-  }
 
   public boolean isAvailable(WizardContext context) {
     return !context.isCreatingNewProject();

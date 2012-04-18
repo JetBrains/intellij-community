@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vfs.newvfs.persistent;
 
+import com.intellij.openapi.application.ApplicationManager;
 import org.jetbrains.annotations.NonNls;
 
 public class PersistentFSConstants {
@@ -22,13 +23,24 @@ public class PersistentFSConstants {
   /**
    * always  in range [0, PersistentFS.FILE_LENGTH_TO_CACHE_THRESHOLD]
    */
-  public static final int MAX_INTELLISENSE_FILESIZE = maxIntellisenseFileSize();
+  private static int ourMaxIntellisenseFilesize = computeMaxIntellisenseFileSize();
   @NonNls private static final String MAX_INTELLISENSE_SIZE_PROPERTY = "idea.max.intellisense.filesize";
+
+  public static int getMaxIntellisenseFileSize() {
+    return ourMaxIntellisenseFilesize;
+  }
+
+  public static void setMaxIntellisenseFileSize(int sizeInBytes) {
+    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+      throw new IllegalStateException("cannot change max setMaxIntellisenseFileSize while running");
+    }
+    ourMaxIntellisenseFilesize = sizeInBytes;
+  }
 
   private PersistentFSConstants() {
   }
 
-  private static int maxIntellisenseFileSize() {
+  private static int computeMaxIntellisenseFileSize() {
     final int maxLimitBytes = (int)FILE_LENGTH_TO_CACHE_THRESHOLD;
     final String userLimitKb = System.getProperty(MAX_INTELLISENSE_SIZE_PROPERTY);
     try {

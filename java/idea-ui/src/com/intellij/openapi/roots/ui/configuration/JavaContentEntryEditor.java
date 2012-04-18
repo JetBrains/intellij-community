@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,8 +18,10 @@ package com.intellij.openapi.roots.ui.configuration;
 import com.intellij.openapi.roots.CompilerModuleExtension;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ExcludeFolder;
-import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class JavaContentEntryEditor extends ContentEntryEditor {
@@ -40,11 +42,10 @@ public abstract class JavaContentEntryEditor extends ContentEntryEditor {
     };
   }
 
-  @Nullable
   @Override
-  protected ExcludeFolder doAddExcludeFolder(VirtualFile file) {
+  protected ExcludeFolder doAddExcludeFolder(@NotNull final VirtualFile file) {
     final boolean isCompilerOutput = isCompilerOutput(file);
-    boolean isExplodedDirectory = isExplodedDirectory(file);
+    final boolean isExplodedDirectory = isExplodedDirectory(file);
     if (isCompilerOutput || isExplodedDirectory) {
       if (isCompilerOutput) {
         myCompilerExtension.setExcludeOutput(true);
@@ -58,34 +59,35 @@ public abstract class JavaContentEntryEditor extends ContentEntryEditor {
   }
 
   @Override
-  protected void doRemoveExcludeFolder(ExcludeFolder excludeFolder, VirtualFile file) {
-    if (isCompilerOutput(file)) {
-      myCompilerExtension.setExcludeOutput(false);
+  protected void doRemoveExcludeFolder(@NotNull final ExcludeFolder excludeFolder) {
+    final VirtualFile file = excludeFolder.getFile();
+    if (file != null) {
+      if (isCompilerOutput(file)) {
+        myCompilerExtension.setExcludeOutput(false);
+      }
+      if (isExplodedDirectory(file)) {
+        getModel().setExcludeExplodedDirectory(false);
+      }
     }
-    if (isExplodedDirectory(file)) {
-      getModel().setExcludeExplodedDirectory(false);
-    }
-    super.doRemoveExcludeFolder(excludeFolder, file);
+    super.doRemoveExcludeFolder(excludeFolder);
   }
 
-  private boolean isCompilerOutput(@Nullable VirtualFile file) {
+  private boolean isCompilerOutput(@NotNull final VirtualFile file) {
     final VirtualFile compilerOutputPath = myCompilerExtension.getCompilerOutputPath();
-    if (compilerOutputPath != null) {
-      if (compilerOutputPath.equals(file)) {
-        return true;
-      }
+    if (file.equals(compilerOutputPath)) {
+      return true;
     }
 
     final VirtualFile compilerOutputPathForTests = myCompilerExtension.getCompilerOutputPathForTests();
-    if (compilerOutputPathForTests != null) {
-      if (compilerOutputPathForTests.equals(file)) {
-        return true;
-      }
+    if (file.equals(compilerOutputPathForTests)) {
+      return true;
     }
 
+    final String path = file.getPath();
     if (myCompilerExtension.isCompilerOutputPathInherited()) {
-      final String compilerOutput = ProjectStructureConfigurable.getInstance(getModel().getModule().getProject()).getProjectConfig().getCompilerOutputUrl();
-      if (file != null && Comparing.equal(compilerOutput, file.getUrl())) {
+      final ProjectStructureConfigurable instance = ProjectStructureConfigurable.getInstance(getModel().getModule().getProject());
+      final String compilerOutput = VfsUtil.urlToPath(instance.getProjectConfig().getCompilerOutputUrl());
+      if (FileUtil.pathsEqual(compilerOutput, path)) {
         return true;
       }
     }
@@ -93,14 +95,7 @@ public abstract class JavaContentEntryEditor extends ContentEntryEditor {
     return false;
   }
 
-  private boolean isExplodedDirectory(VirtualFile file) {
-    final VirtualFile explodedDir = getModel().getExplodedDirectory();
-    if (explodedDir != null) {
-      if (explodedDir.equals(file)) {
-        return true;
-      }
-    }
-    return false;
+  private boolean isExplodedDirectory(@NotNull final VirtualFile file) {
+    return file.equals(getModel().getExplodedDirectory());
   }
-
 }

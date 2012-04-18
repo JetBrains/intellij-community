@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.github;
 
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.CheckoutProvider;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -22,6 +23,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.actions.BasicAction;
 import git4idea.checkout.GitCheckoutProvider;
 import git4idea.checkout.GitCloneDialog;
+import git4idea.commands.Git;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -71,7 +73,8 @@ public class GithubCheckoutProvider implements CheckoutProvider {
     final String directoryName = dialog.getDirectoryName();
     final String parentDirectory = dialog.getParentDirectory();
 
-    GitCheckoutProvider.clone(project, listener, destinationParent, sourceRepositoryURL, directoryName, parentDirectory);
+    Git git = ServiceManager.getService(Git.class);
+    GitCheckoutProvider.clone(project, git, listener, destinationParent, sourceRepositoryURL, directoryName, parentDirectory);
   }
 
   @Override

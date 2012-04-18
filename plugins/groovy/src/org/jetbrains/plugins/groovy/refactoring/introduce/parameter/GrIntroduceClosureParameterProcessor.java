@@ -343,8 +343,9 @@ public class GrIntroduceClosureParameterProcessor extends BaseRefactoringProcess
       final PsiElement arrow = block.addAfter(factory.createClosureFromText("{->}").getArrow().copy(), parameterList);
       final PsiElement child = block.getFirstChild().getNextSibling();
       if (TokenSets.WHITE_SPACES_SET.contains(child.getNode().getElementType())) {
-        block.addAfter(child, arrow);
+        final String text = child.getText();
         child.delete();
+        block.addAfter(factory.createLineTerminator(text), arrow);
       }
     }
     GrReferenceAdjuster.shortenReferences(parameter);
@@ -395,8 +396,9 @@ public class GrIntroduceClosureParameterProcessor extends BaseRefactoringProcess
     GrClosureSignature signature = GrClosureSignatureUtil.createSignature(callExpression);
     if (signature == null) signature = GrClosureSignatureUtil.createSignature(toReplaceIn);
 
-    final GrClosureSignatureUtil.ArgInfo<PsiElement>[] actualArgs =
-      GrClosureSignatureUtil.mapParametersToArguments(signature, argList, callExpression, callExpression.getClosureArguments(), true);
+    final GrClosureSignatureUtil.ArgInfo<PsiElement>[] actualArgs = GrClosureSignatureUtil
+      .mapParametersToArguments(signature, callExpression.getNamedArguments(), callExpression.getExpressionArguments(),
+                                callExpression.getClosureArguments(), callExpression, true, true);
 
     if (PsiTreeUtil.isAncestor(toReplaceIn, callExpression, false)) {
       argList.addAfter(factory.createExpressionFromText(settings.getName()), anchor);
@@ -567,7 +569,7 @@ public class GrIntroduceClosureParameterProcessor extends BaseRefactoringProcess
         argList.add(expression);
       }
 
-      removeParametersFromCall(methodCall, argList, settings);
+      removeParametersFromCall(methodCall, settings);
 
     }
     else {
@@ -575,15 +577,12 @@ public class GrIntroduceClosureParameterProcessor extends BaseRefactoringProcess
     }
   }
 
-  private static void removeParametersFromCall(GrMethodCallExpression methodCall,
-                                               GrArgumentList argList,
-                                               GrIntroduceParameterSettings settings) {
+  private static void removeParametersFromCall(GrMethodCallExpression methodCall, GrIntroduceParameterSettings settings) {
     final GroovyResolveResult resolveResult = methodCall.advancedResolve();
     final PsiElement resolved = resolveResult.getElement();
     LOG.assertTrue(resolved instanceof PsiMethod);
     final GrClosureSignature signature = GrClosureSignatureUtil.createSignature((PsiMethod)resolved, resolveResult.getSubstitutor());
-    final GrClosureSignatureUtil.ArgInfo<PsiElement>[] argInfos =
-      GrClosureSignatureUtil.mapParametersToArguments(signature, argList, methodCall, methodCall.getClosureArguments());
+    final GrClosureSignatureUtil.ArgInfo<PsiElement>[] argInfos = GrClosureSignatureUtil.mapParametersToArguments(signature, methodCall);
     LOG.assertTrue(argInfos != null);
     settings.parametersToRemove().forEach(new TIntProcedure() {
       @Override

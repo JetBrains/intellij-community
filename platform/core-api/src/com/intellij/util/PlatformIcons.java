@@ -87,6 +87,7 @@ public interface PlatformIcons {
   Icon UNSELECT_ALL_ICON = IconLoader.getIcon("/actions/unselectall.png");
   Icon PROPERTIES_ICON = IconLoader.getIcon("/actions/properties.png");
   Icon SYNCHRONIZE_ICON = IconLoader.getIcon("/actions/sync.png");
+  Icon SHOW_SETTINGS_ICON = IconLoader.getIcon("/actions/showSettings.png");
 
   Icon CHECK_ICON = IconLoader.getIcon("/actions/checked.png");
   Icon CHECK_ICON_SELECTED = IconLoader.getIcon("/actions/checked_selected.png");

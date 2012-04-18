@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,8 +19,11 @@ import com.intellij.ide.SelectInContext;
 import com.intellij.ide.SelectInTarget;
 import com.intellij.ide.StandardTargetWeights;
 import com.intellij.ide.actions.RevealFileAction;
+import com.intellij.ide.actions.ShowFilePathAction;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.vfs.VirtualFile;
+
+import java.io.File;
 
 /**
  * @author Roman.Chernyatchik
@@ -35,9 +38,7 @@ public class ProjectViewSelectInExplorerTarget implements SelectInTarget, DumbAw
   @Override
   public void selectIn(final SelectInContext context, final boolean requestFocus) {
     final VirtualFile file = context.getVirtualFile();
-    assert file != null;
-
-    RevealFileAction.revealFile(file);
+    ShowFilePathAction.openFile(new File(file.getPresentableUrl()));
   }
 
   @Override

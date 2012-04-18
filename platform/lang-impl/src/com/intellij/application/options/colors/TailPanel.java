@@ -23,6 +23,7 @@ import javax.swing.*;
 import java.awt.*;
 
 class TailPanel extends JPanel {
+  @Override
   public Dimension getMinimumSize() {
     return new Dimension(0, 0);
   }

@@ -17,11 +17,9 @@ package com.siyeh.ig.logging;
 
 import com.intellij.codeInspection.ui.ListTable;
 import com.intellij.codeInspection.ui.ListWrappingTableModel;
-import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
-import com.intellij.ui.ScrollPaneFactory;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -31,7 +29,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -78,32 +75,8 @@ public class ClassWithMultipleLoggersInspection extends BaseInspection {
 
   @Override
   public JComponent createOptionsPanel() {
-    final JComponent panel = new JPanel(new GridBagLayout());
-
-    final ListTable table =
-      new ListTable(new ListWrappingTableModel(loggerNames,
-                                               InspectionGadgetsBundle.message("logger.class.names")));
-    final JScrollPane scrollPane =
-      ScrollPaneFactory.createScrollPane(table);
-    UiUtils.setScrollPaneSize(scrollPane, 7, 25);
-    final ActionToolbar toolbar =
-      UiUtils.createAddRemoveTreeClassChooserToolbar(table,
-                                                     InspectionGadgetsBundle.message("choose.logger.class"));
-
-    final GridBagConstraints constraints = new GridBagConstraints();
-    constraints.gridx = 0;
-    constraints.gridy = 0;
-    constraints.insets.left = 4;
-    constraints.insets.right = 4;
-    constraints.fill = GridBagConstraints.HORIZONTAL;
-    panel.add(toolbar.getComponent(), constraints);
-
-    constraints.gridy = 1;
-    constraints.weightx = 1.0;
-    constraints.weighty = 1.0;
-    constraints.fill = GridBagConstraints.BOTH;
-    panel.add(scrollPane, constraints);
-    return panel;
+    final ListTable table = new ListTable(new ListWrappingTableModel(loggerNames, InspectionGadgetsBundle.message("logger.class.names")));
+    return UiUtils.createAddRemoveTreeClassChooserPanel(table, InspectionGadgetsBundle.message("choose.logger.class"));
   }
 
   @Override

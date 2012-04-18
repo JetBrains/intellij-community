@@ -42,12 +42,17 @@ public class XmlTagNamesIndex extends XmlIndex<Void> {
 
   private static final ID<String,Void> NAME = ID.create("XmlTagNames");
 
+  @Override
+  @NotNull
   public ID<String, Void> getName() {
     return NAME;
   }
 
+  @Override
+  @NotNull
   public DataIndexer<String, Void, FileContent> getIndexer() {
     return new DataIndexer<String, Void, FileContent>() {
+      @Override
       @NotNull
       public Map<String, Void> map(final FileContent inputData) {
         final Collection<String> tags = XsdTagNameBuilder.computeTagNames(new UnsyncByteArrayInputStream(inputData.getContent()));
@@ -65,6 +70,7 @@ public class XmlTagNamesIndex extends XmlIndex<Void> {
     };
   }
 
+  @Override
   public DataExternalizer<Void> getValueExternalizer() {
     return ScalarIndexExtension.VOID_DATA_EXTERNALIZER;
   }

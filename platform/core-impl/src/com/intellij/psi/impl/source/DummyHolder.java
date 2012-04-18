@@ -47,7 +47,17 @@ public class DummyHolder extends PsiFileImpl {
   }
 
   public DummyHolder(@NotNull PsiManager manager, TreeElement contentElement, PsiElement context, CharTable table) {
-    this(manager, contentElement, context, table, null, context == null ? PlainTextLanguage.INSTANCE : context.getLanguage());
+    this(manager, contentElement, context, table, null, language(context, PlainTextLanguage.INSTANCE));
+  }
+
+  protected static Language language(PsiElement context, Language defaultLanguage) {
+    if (context == null) return defaultLanguage;
+    PsiFile file = context.getContainingFile();
+    if (file == null) return defaultLanguage;
+    Language contextLanguage = context.getLanguage();
+    Language language = file.getLanguage();
+    if (language.isKindOf(contextLanguage)) return language;
+    return contextLanguage;
   }
 
   public DummyHolder(@NotNull PsiManager manager, TreeElement contentElement, PsiElement context, CharTable table, Boolean validity, Language language) {

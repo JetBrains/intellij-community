@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,11 +27,11 @@ import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.codeInsight.template.impl.LiveTemplateLookupElement;
 import com.intellij.featureStatistics.FeatureUsageTracker;
+import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.lang.LangBundle;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
@@ -40,22 +40,20 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.event.*;
+import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.Trinity;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.StringUtilRt;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.DebugUtil;
-import com.intellij.ui.LightweightHint;
-import com.intellij.ui.ListScrollingUtil;
-import com.intellij.ui.ScreenUtil;
+import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBScrollPane;
@@ -83,8 +81,7 @@ import javax.swing.border.LineBorder;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
+import java.awt.event.*;
 import java.util.*;
 import java.util.List;
 
@@ -98,12 +95,28 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
 
   private final Project myProject;
   private final Editor myEditor;
-
+  private CompletionExtender extender;
   private String myInitialPrefix;
 
   private boolean myStableStart;
   private RangeMarker myLookupStartMarker;
-  private final JList myList = new JBList(new DefaultListModel());
+  private final JList myList = new JBList(new DefaultListModel()) {
+    @Override
+    protected void processKeyEvent(final KeyEvent e) {
+      final char keyChar = e.getKeyChar();
+      if (keyChar == KeyEvent.VK_ENTER || keyChar == KeyEvent.VK_TAB) {
+        IdeFocusManager.getInstance(myProject).requestFocus(myEditor.getContentComponent(), true).doWhenDone(new Runnable() {
+          @Override
+          public void run() {
+            IdeEventQueue.getInstance().getKeyEventDispatcher().dispatchKeyEvent(e);
+          }
+        });
+        return;
+      }
+
+      super.processKeyEvent(e);
+    }
+  };
   private final LookupCellRenderer myCellRenderer;
   private Boolean myPositionedAbove = null;
 
@@ -173,8 +186,11 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
         return myScrollBarIncreaseButton;
       }
     });
-    
+
     getComponent().add(myLayeredPane, BorderLayout.CENTER);
+
+    //IDEA-82111
+    fixMouseCheaters();
 
     myLayeredPane.mainPanel.add(myScrollPane, BorderLayout.CENTER);
     myScrollPane.setBorder(null);
@@ -209,6 +225,26 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
       }
     });
     updateSorting();
+  }
+
+  //Yes, it's possible to move focus to the hint. It's inconvenient, it doesn't make sense, but it's possible.
+  // This fix is for those jerks
+  private void fixMouseCheaters() {
+    getComponent().addFocusListener(new FocusAdapter() {
+      @Override
+      public void focusGained(FocusEvent e) {
+        final ActionCallback done = IdeFocusManager.getInstance(myProject).requestFocus(myEditor.getContentComponent(), true);
+        IdeFocusManager.getInstance(myProject).typeAheadUntil(done);
+        new Alarm(LookupImpl.this).addRequest(new Runnable() {
+          @Override
+          public void run() {
+            if (!done.isDone()) {
+              done.setDone();
+            }
+          }
+        }, 300);
+      }
+    });
   }
 
   private void updateSorting() {
@@ -784,7 +820,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
         int bs = myEditor.logicalPositionToOffset(new LogicalPosition(line, blockStart.column));
         int start = bs - prefix.length();
         int end = myEditor.logicalPositionToOffset(new LogicalPosition(line, blockEnd.column));
-        if (start >= end) {
+        if (start > end) {
           LOG.error("bs=" + bs + "; start=" + start + "; end=" + end +
                     "; blockStart=" + blockStart + "; blockEnd=" + blockEnd + "; line=" + line + "; len=" +
                     (document.getLineEndOffset(line) - document.getLineStartOffset(line)));
@@ -839,7 +875,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     }
     if (sameCase) return lookupString;
     if (isAllLower) return lookupString.toLowerCase();
-    if (isAllUpper) return lookupString.toUpperCase();
+    if (isAllUpper) return StringUtilRt.toUpperCase(lookupString);
     return lookupString;
   }
 
@@ -854,8 +890,9 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
 
   public boolean performGuardedChange(Runnable change, @Nullable final String debug) {
     checkValid();
-    assert myLookupStartMarker.isValid();
-    assert !myChangeGuard;
+    assert myLookupStartMarker != null : "null start before";
+    assert myLookupStartMarker.isValid() : "invalid start";
+    assert !myChangeGuard : "already in change";
 
     myChangeGuard = true;
     final Document document = myEditor.getDocument();
@@ -875,7 +912,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
       document.removeDocumentListener(spy);
       myChangeGuard = false;
     }
-    if (!myLookupStartMarker.isValid() || myDisposed) {
+    if (myDisposed || !myLookupStartMarker.isValid()) {
       hide();
       return false;
     }
@@ -888,7 +925,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
 
   @Override
   public boolean vetoesHiding() {
-    return myChangeGuard || myDisposed;
+    return myChangeGuard;
   }
 
   public boolean isAvailableToUser() {
@@ -1004,6 +1041,16 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
           updateHint(item);
         }
         oldItem = item;
+
+        if (item != null && LookupImpl.this.isVisible()) {
+          if (extender == null || !extender.isVisible() || !extender.sameAsFor(item)) {
+            if (extender != null) extender.hide();
+            extender = new CompletionExtender(item, LookupImpl.this);
+            if (!extender.show()) {
+              extender.hide();
+            }
+          }
+        }
       }
     });
 
@@ -1275,7 +1322,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
   public void hideLookup(boolean explicitly) {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
-    if (myDisposed) return;
+    if (myHidden) return;
 
     doHide(true, explicitly);
   }
@@ -1331,7 +1378,9 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     }
     Disposer.dispose(myProcessIcon);
     Disposer.dispose(myHintAlarm);
-
+    if (extender != null) {
+      extender.hide();
+    }
     myDisposed = true;
     disposeTrace = DebugUtil.currentStackTrace() + "\n============";
     //noinspection AssignmentToStaticFieldFromInstanceMethod

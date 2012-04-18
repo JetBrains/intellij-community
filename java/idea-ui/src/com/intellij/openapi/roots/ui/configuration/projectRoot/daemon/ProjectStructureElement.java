@@ -18,6 +18,11 @@ public abstract class ProjectStructureElement {
 
   public abstract String getPresentableName();
 
+  @Nullable
+  public String getDescription() {
+    return null;
+  }
+
   public abstract String getTypeName();
 
   public abstract String getId();

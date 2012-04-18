@@ -39,7 +39,6 @@ import java.util.List;
 
 public class SvnChangesCorrectlyRefreshedTest extends SvnTestCase {
   private ChangeListManager clManager;
-  //private static final Logger LOG = Logger.getInstance("#SvnChangesCorrectlyRefreshedTest");
 
   @Override
   public void setUp() throws Exception {
@@ -86,7 +85,6 @@ public class SvnChangesCorrectlyRefreshedTest extends SvnTestCase {
 
   @Test
   public void testModificationAndAfterRevert() throws Exception {
-    //ChangeListManagerImpl.DEBUG = true;
     final SubTree subTree = new SubTree(myWorkingCopyDir);
     checkin();
     sleep(100);

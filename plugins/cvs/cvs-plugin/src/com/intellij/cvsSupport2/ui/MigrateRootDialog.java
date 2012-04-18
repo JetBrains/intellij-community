@@ -1,5 +1,5 @@
 /*
- * Copyright 2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -70,10 +70,7 @@ public class MigrateRootDialog extends DialogWrapper {
         }
       }
     };
-    final VirtualFile[] roots = ProjectRootManager.getInstance(project).getContentRootsFromAllModules();
-    for (VirtualFile vFile : roots) {
-      descriptor.addRoot(vFile);
-    }
+    descriptor.setRoots(ProjectRootManager.getInstance(project).getContentRootsFromAllModules());
     myDirectoryField.addBrowseFolderListener("Select directory to migrate to a new CVS root", "", project, descriptor);
     FileChooserFactory.getInstance().installFileCompletion(myDirectoryField.getChildComponent(), descriptor, true, getDisposable());
     myDirectoryField.getTextField().getDocument().addDocumentListener(new DocumentListener() {

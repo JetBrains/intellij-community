@@ -70,8 +70,6 @@ class TextEditorComponent extends JPanel implements DataProvider{
   private final Document myDocument;
 
   private final MyEditorMouseListener myEditorMouseListener;
-  private final MyEditorCaretListener myEditorCaretListener;
-  private final MyEditorSelectionListener myEditorSelectionListener;
   private final MyDocumentListener myDocumentListener;
   private final MyEditorPropertyChangeListener myEditorPropertyChangeListener;
   private final MyVirtualFileListener myVirtualFileListener;
@@ -90,8 +88,6 @@ class TextEditorComponent extends JPanel implements DataProvider{
   TextEditorComponent(@NotNull final Project project, @NotNull final VirtualFile file, @NotNull final TextEditorImpl textEditor) {
     super(new BorderLayout (), true);
 
-    assertThread();
-
     myProject = project;
     myFile = file;
     myTextEditor = textEditor;
@@ -102,8 +98,6 @@ class TextEditorComponent extends JPanel implements DataProvider{
     myDocument.addDocumentListener(myDocumentListener);
 
     myEditorMouseListener = new MyEditorMouseListener();
-    myEditorCaretListener = new MyEditorCaretListener();
-    myEditorSelectionListener = new MyEditorSelectionListener();
     myEditorPropertyChangeListener = new MyEditorPropertyChangeListener();
 
     myConnection = project.getMessageBus().connect();
@@ -177,8 +171,6 @@ class TextEditorComponent extends JPanel implements DataProvider{
     ((EditorEx) editor).setFile(myFile);
 
     editor.addEditorMouseListener(myEditorMouseListener);
-    editor.getCaretModel().addCaretListener(myEditorCaretListener);
-    editor.getSelectionModel().addSelectionListener(myEditorSelectionListener);
     ((EditorEx)editor).addPropertyChangeListener(myEditorPropertyChangeListener);
 
     ((EditorImpl) editor).setDropHandler(new FileDropHandler(editor));
@@ -194,8 +186,6 @@ class TextEditorComponent extends JPanel implements DataProvider{
   private void disposeEditor(final Editor editor){
     EditorFactory.getInstance().releaseEditor(editor);
     editor.removeEditorMouseListener(myEditorMouseListener);
-    editor.getCaretModel().removeCaretListener(myEditorCaretListener);
-    editor.getSelectionModel().removeSelectionListener(myEditorSelectionListener);
     ((EditorEx)editor).removePropertyChangeListener(myEditorPropertyChangeListener);
   }
 
@@ -311,27 +301,6 @@ class TextEditorComponent extends JPanel implements DataProvider{
     }
   }
 
-  /**
-   * Getts events about caret movements and modifies status bar
-   */
-  private final class MyEditorCaretListener implements CaretListener {
-    public void caretPositionChanged(final CaretEvent e) {
-      assertThread();
-      if (e.getEditor() == getEditor()) {
-        updateStatusBar();
-      }
-    }
-  }
-
-  private final class MyEditorSelectionListener implements SelectionListener {
-    public void selectionChanged(SelectionEvent e) {
-      assertThread();
-      if (e.getEditor() == getEditor()) {
-        updateStatusBar();
-      }
-    }
-  }
-
 
   /**
    * Updates "modified" property
@@ -357,7 +326,7 @@ class TextEditorComponent extends JPanel implements DataProvider{
   }
 
   /**
-   * Gets event obout insert/overwrite modes
+   * Gets event about insert/overwrite modes
    */
   private final class MyEditorPropertyChangeListener implements PropertyChangeListener {
     public void propertyChange(final PropertyChangeEvent e) {

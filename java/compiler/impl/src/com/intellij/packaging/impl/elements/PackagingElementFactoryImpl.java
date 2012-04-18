@@ -159,7 +159,7 @@ public class PackagingElementFactoryImpl extends PackagingElementFactory {
     if (outputFileName != null && outputFileName.equals(fileName)) {
       outputFileName = null;
     }
-    getOrCreateDirectory(root, outputDirectoryPath).addOrFindChild(new FileCopyPackagingElement(sourceFilePath, outputFileName));
+    getOrCreateDirectory(root, outputDirectoryPath).addOrFindChild(createFileCopy(sourceFilePath, outputFileName));
   }
 
   @NotNull
@@ -291,8 +291,12 @@ public class PackagingElementFactoryImpl extends PackagingElementFactory {
   public PackagingElement<?> createFileCopyWithParentDirectories(@NotNull String filePath,
                                                                  @NotNull String relativeOutputPath,
                                                                  @Nullable String outputFileName) {
-    final FileCopyPackagingElement file = new FileCopyPackagingElement(filePath, outputFileName);
-    return createParentDirectories(relativeOutputPath, file);
+    return createParentDirectories(relativeOutputPath, createFileCopy(filePath, outputFileName));
+  }
+
+  @Override
+  public PackagingElement<?> createFileCopy(@NotNull String filePath, String outputFileName) {
+    return new FileCopyPackagingElement(filePath, outputFileName);
   }
 
   @NotNull

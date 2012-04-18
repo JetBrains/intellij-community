@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,6 @@ import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.ContentManagerEvent;
-import com.intellij.ui.tabs.impl.singleRow.MoreIcon;
 import com.intellij.util.ui.BaseButtonBehavior;
 import org.jetbrains.annotations.Nullable;
 
@@ -319,7 +318,7 @@ class TabContentLayout extends ContentLayout {
   
   @Nullable
   private static BufferedImage drawToBuffer(Rectangle r, boolean selected, boolean last, boolean prevSelected, boolean active) {
-    if (r.width == 0 || r.height == 0) return null;
+    if (r.width <= 0 || r.height <= 0) return null;
     BufferedImage image = new BufferedImage(r.width, r.height, BufferedImage.TYPE_INT_ARGB);
     Graphics2D g2d = image.createGraphics();
     g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);

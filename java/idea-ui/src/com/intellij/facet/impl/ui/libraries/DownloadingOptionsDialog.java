@@ -101,6 +101,7 @@ public class DownloadingOptionsDialog extends DialogWrapper {
       }
     });
 
+    myFilesList.setBorder(null);
     myFilesToDownloadLabel.setLabelFor(myFilesList);
     myDirectoryField.addBrowseFolderListener(ProjectBundle.message("file.chooser.directory.for.downloaded.libraries.title"),
                                              ProjectBundle.message("file.chooser.directory.for.downloaded.libraries.description"), null,

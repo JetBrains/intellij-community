@@ -70,9 +70,6 @@ public class KeymapImpl implements Keymap, ExternalizableScheme {
   @NonNls private static final String META = "meta";
   @NonNls private static final String ALT = "alt";
   @NonNls private static final String ALT_GRAPH = "altGraph";
-  @NonNls private static final String BUTTON1 = "button1";
-  @NonNls private static final String BUTTON2 = "button2";
-  @NonNls private static final String BUTTON3 = "button3";
   @NonNls private static final String DOUBLE_CLICK = "doubleClick";
   @NonNls private static final String VIRTUAL_KEY_PREFIX = "VK_";
   @NonNls private static final String EDITOR_ACTION_PREFIX = "Editor";
@@ -792,22 +789,7 @@ public class KeymapImpl implements Keymap, ExternalizableScheme {
 
     // button
 
-    int button = shortcut.getButton();
-    if (MouseEvent.BUTTON1 == button) {
-      buffer.append(BUTTON1);
-      buffer.append(' ');
-    }
-    else if (MouseEvent.BUTTON2 == button) {
-      buffer.append(BUTTON2);
-      buffer.append(' ');
-    }
-    else if (MouseEvent.BUTTON3 == button) {
-      buffer.append(BUTTON3);
-      buffer.append(' ');
-    }
-    else {
-      buffer.append("button").append(button);
-    }
+    buffer.append("button").append(shortcut.getButton()).append(' ');
 
     if (shortcut.getClickCount() > 1) {
       buffer.append(DOUBLE_CLICK);

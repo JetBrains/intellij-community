@@ -66,7 +66,7 @@ public class QualifyThisArgumentFix extends PsiElementBaseIntentionAction {
   }
 
   @Override
-  public void invoke(Project project, Editor editor, PsiElement element) throws IncorrectOperationException {
+  public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
     myExpression.replace(RefactoringUtil.createThisExpression(PsiManager.getInstance(project), myPsiClass));
   }
 
@@ -111,7 +111,7 @@ public class QualifyThisArgumentFix extends PsiElementBaseIntentionAction {
           if (!TypeConversionUtil.isAssignable(parameterType, exprType)) {
             final PsiClass psiClass = PsiUtil.resolveClassInClassTypeOnly(parameterType);
             if (psiClass != null && containingClasses.contains(psiClass)) {
-              QuickFixAction.registerQuickFixAction(highlightInfo, fixRange, new QualifyThisArgumentFix((PsiThisExpression)expression, psiClass), null);
+              QuickFixAction.registerQuickFixAction(highlightInfo, fixRange, new QualifyThisArgumentFix((PsiThisExpression)expression, psiClass));
             }
           }
         }

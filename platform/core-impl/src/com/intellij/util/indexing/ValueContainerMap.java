@@ -4,6 +4,7 @@ import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.util.io.*;
 import com.intellij.util.io.DataOutputStream;
 import gnu.trove.TIntHashSet;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
 import java.util.Iterator;
@@ -13,17 +14,17 @@ import java.util.Iterator;
  *         Date: 8/10/11
  */
 class ValueContainerMap<Key, Value> extends PersistentHashMap<Key, ValueContainer<Value>> {
+  @NotNull private final ValueContainerExternalizer<Value> myValueContainerExternalizer;
 
-  private final ValueContainerExternalizer<Value> myValueContainerExternalizer;
-
-  ValueContainerMap(final File file,
-                           KeyDescriptor<Key> keyKeyDescriptor,
-                           DataExternalizer<Value> valueExternalizer) throws IOException {
+  ValueContainerMap(@NotNull final File file,
+                    @NotNull KeyDescriptor<Key> keyKeyDescriptor,
+                    @NotNull DataExternalizer<Value> valueExternalizer) throws IOException {
 
     super(file, keyKeyDescriptor, new ValueContainerExternalizer<Value>(valueExternalizer));
     myValueContainerExternalizer = (ValueContainerExternalizer<Value>)myValueExternalizer;
   }
 
+  @NotNull
   Object getDataAccessLock() {
     return myEnumerator;
   }
@@ -54,7 +55,7 @@ class ValueContainerMap<Key, Value> extends PersistentHashMap<Key, ValueContaine
 
         appendData(key, new PersistentHashMap.ValueDataAppender() {
           @Override
-          public void append(final DataOutput out) throws IOException {
+          public void append(@NotNull final DataOutput out) throws IOException {
             out.write(bytes.getInternalBuffer(), 0, bytes.size());
           }
         });
@@ -67,18 +68,18 @@ class ValueContainerMap<Key, Value> extends PersistentHashMap<Key, ValueContaine
   }
 
   private static final class ValueContainerExternalizer<T> implements DataExternalizer<ValueContainer<T>> {
-    private final DataExternalizer<T> myExternalizer;
+    @NotNull private final DataExternalizer<T> myExternalizer;
 
-    private ValueContainerExternalizer(DataExternalizer<T> externalizer) {
+    private ValueContainerExternalizer(@NotNull DataExternalizer<T> externalizer) {
       myExternalizer = externalizer;
     }
 
     @Override
-    public void save(final DataOutput out, final ValueContainer<T> container) throws IOException {
+    public void save(final DataOutput out, @NotNull final ValueContainer<T> container) throws IOException {
       saveImpl(out, container, false);
     }
 
-    public void saveAsRemoved(final DataOutput out, final ValueContainer<T> container) throws IOException {
+    public void saveAsRemoved(final DataOutput out, @NotNull final ValueContainer<T> container) throws IOException {
       saveImpl(out, container, true);
     }
 
@@ -86,7 +87,7 @@ class ValueContainerMap<Key, Value> extends PersistentHashMap<Key, ValueContaine
       DataInputOutputUtil.writeSINT(out, -inputId);
     }
 
-    private void saveImpl(final DataOutput out, final ValueContainer<T> container, final boolean asRemovedData) throws IOException {
+    private void saveImpl(final DataOutput out, @NotNull final ValueContainer<T> container, final boolean asRemovedData) throws IOException {
       DataInputOutputUtil.writeSINT(out, container.size());
       for (final Iterator<T> valueIterator = container.getValueIterator(); valueIterator.hasNext();) {
         final T value = valueIterator.next();
@@ -106,6 +107,7 @@ class ValueContainerMap<Key, Value> extends PersistentHashMap<Key, ValueContaine
       }
     }
 
+    @NotNull
     @Override
     public ValueContainerImpl<T> read(final DataInput in) throws IOException {
       DataInputStream stream = (DataInputStream)in;

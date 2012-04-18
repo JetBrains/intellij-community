@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,11 +38,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class ImplementAbstractMethodAction extends BaseIntentionAction {
+  @Override
   @NotNull
   public String getFamilyName() {
     return CodeInsightBundle.message("intention.implement.abstract.method.family");
   }
 
+  @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     int offset = editor.getCaretModel().getOffset();
     final PsiMethod method = findMethod(file, offset);
@@ -54,7 +56,9 @@ public class ImplementAbstractMethodAction extends BaseIntentionAction {
 
     PsiClass containingClass = method.getContainingClass();
     if (containingClass == null) return false;
-    if (method.hasModifierProperty(PsiModifier.ABSTRACT) || !method.hasModifierProperty(PsiModifier.PRIVATE)) {
+    final boolean isAbstract = method.hasModifierProperty(PsiModifier.ABSTRACT);
+    if (isAbstract || !method.hasModifierProperty(PsiModifier.PRIVATE)) {
+      if (!isAbstract && !isOnIdentifier(file, offset)) return false;
       MyElementProcessor processor = new MyElementProcessor(method);
       if (containingClass.isEnum()) {
         for (PsiField field : containingClass.getFields()) {
@@ -78,8 +82,21 @@ public class ImplementAbstractMethodAction extends BaseIntentionAction {
     return false;
   }
 
+  private static boolean isOnIdentifier(PsiFile file, int offset) {
+    final PsiElement psiElement = file.findElementAt(offset);
+    if (psiElement instanceof PsiIdentifier){
+      if (psiElement.getParent() instanceof PsiMethod) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   protected String getIntentionName(final PsiMethod method) {
-    return CodeInsightBundle.message("intention.implement.abstract.method.text", method.getName());
+    return method.hasModifierProperty(PsiModifier.ABSTRACT) ?
+           CodeInsightBundle.message("intention.implement.abstract.method.text", method.getName()) :
+           CodeInsightBundle.message("intention.override.method.text", method.getName())
+      ;
   }
 
   static class MyElementProcessor implements PsiElementProcessor {
@@ -99,6 +116,7 @@ public class ImplementAbstractMethodAction extends BaseIntentionAction {
       return myHasExistingImplementations;
     }
 
+    @Override
     public boolean execute(@NotNull PsiElement element) {
       if (element instanceof PsiClass) {
         PsiClass aClass = (PsiClass) element;
@@ -145,6 +163,7 @@ public class ImplementAbstractMethodAction extends BaseIntentionAction {
     return PsiTreeUtil.getParentOfType(file.findElementAt(offset), PsiMethod.class);
   }
 
+  @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     PsiMethod method = findMethod(file, editor.getCaretModel().getOffset());
     if (method == null) return;
@@ -156,6 +175,7 @@ public class ImplementAbstractMethodAction extends BaseIntentionAction {
     new ImplementAbstractMethodHandler(project, editor, method).invoke();
   }
 
+  @Override
   public boolean startInWriteAction() {
     return false;
   }

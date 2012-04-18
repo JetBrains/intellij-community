@@ -15,21 +15,31 @@
  */
 package com.intellij.psi.impl.source.parsing.xml;
 
-import com.intellij.psi.impl.source.ParsingContext;
+import com.intellij.lexer.Lexer;
+import com.intellij.lexer.LexerUtil;
 import com.intellij.util.CharTable;
 
 /**
  * @author ven
  */
-public class XmlParsingContext extends ParsingContext {
-  protected final OldXmlParsing myXmlParsing;
+public class XmlParsingContext {
+  private final OldXmlParsing myXmlParsing;
+  private final CharTable myTable;
+
+  public XmlParsingContext(final CharTable table) {
+    myTable = table;
+    myXmlParsing = new OldXmlParsing(this);
+  }
+
+  public CharTable getCharTable() {
+    return myTable;
+  }
+
+  public CharSequence tokenText(Lexer lexer) {
+    return LexerUtil.internToken(lexer, myTable);
+  }
 
   public OldXmlParsing getXmlParsing() {
     return myXmlParsing;
-  }
-
-  public XmlParsingContext(final CharTable table) {
-    super(table);
-    myXmlParsing = new OldXmlParsing(this);
   }
 }

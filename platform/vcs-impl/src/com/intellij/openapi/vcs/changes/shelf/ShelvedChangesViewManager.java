@@ -304,7 +304,11 @@ public class ShelvedChangesViewManager implements ProjectComponent {
       else if (key == SHELVED_BINARY_FILE_KEY) {
         sink.put(SHELVED_BINARY_FILE_KEY, TreeUtil.collectSelectedObjectsOfType(this, ShelvedBinaryFile.class));
       }
-      else if (key == VcsDataKeys.CHANGES) {
+      else if (key == VcsDataKeys.HAVE_SELECTED_CHANGES) {
+        sink.put(VcsDataKeys.HAVE_SELECTED_CHANGES, getSelectionCount() > 0);
+        /*List<ShelvedChange> shelvedChanges = TreeUtil.collectSelectedObjectsOfType(this, ShelvedChange.class);
+        final List<ShelvedChangeList> changeLists = TreeUtil.collectSelectedObjectsOfType(this, ShelvedChangeList.class);*/
+      } else if (key == VcsDataKeys.CHANGES) {
         List<ShelvedChange> shelvedChanges = TreeUtil.collectSelectedObjectsOfType(this, ShelvedChange.class);
         if (shelvedChanges.size() > 0) {
           Change[] changes = new Change[shelvedChanges.size()];
@@ -476,7 +480,7 @@ public class ShelvedChangesViewManager implements ProjectComponent {
   }
 
   private class MyChangeListDeleteProvider implements DeleteProvider {
-    public void deleteElement(DataContext dataContext) {
+    public void deleteElement(@NotNull DataContext dataContext) {
       //noinspection unchecked
       final List<ShelvedChangeList> shelvedChangeLists = getLists(dataContext);
       if (shelvedChangeLists.isEmpty()) return;
@@ -490,7 +494,7 @@ public class ShelvedChangesViewManager implements ProjectComponent {
       }
     }
 
-    public boolean canDeleteElement(DataContext dataContext) {
+    public boolean canDeleteElement(@NotNull DataContext dataContext) {
       //noinspection unchecked
       return ! getLists(dataContext).isEmpty();
     }
@@ -512,7 +516,7 @@ public class ShelvedChangesViewManager implements ProjectComponent {
   }
 
   private class MyChangesDeleteProvider implements DeleteProvider {
-    public void deleteElement(DataContext dataContext) {
+    public void deleteElement(@NotNull DataContext dataContext) {
       final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
       if (project == null) return;
       final ShelvedChangeList[] shelved = SHELVED_CHANGELIST_KEY.getData(dataContext);
@@ -559,7 +563,7 @@ public class ShelvedChangesViewManager implements ProjectComponent {
       }
     }
 
-    public boolean canDeleteElement(DataContext dataContext) {
+    public boolean canDeleteElement(@NotNull DataContext dataContext) {
       final ShelvedChangeList[] shelved = SHELVED_CHANGELIST_KEY.getData(dataContext);
       if (shelved == null || (shelved.length != 1)) return false;
       final List<ShelvedChange> changes = SHELVED_CHANGE_KEY.getData(dataContext);
@@ -586,14 +590,14 @@ public class ShelvedChangesViewManager implements ProjectComponent {
       return null;
     }
 
-    public void deleteElement(DataContext dataContext) {
+    public void deleteElement(@NotNull DataContext dataContext) {
       final DeleteProvider delegate = selectDelegate(dataContext);
       if (delegate != null) {
         delegate.deleteElement(dataContext);
       }
     }
 
-    public boolean canDeleteElement(DataContext dataContext) {
+    public boolean canDeleteElement(@NotNull DataContext dataContext) {
       return selectDelegate(dataContext) != null;
     }
   }

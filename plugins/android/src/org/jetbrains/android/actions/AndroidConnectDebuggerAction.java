@@ -22,8 +22,10 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Computable;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.sdk.AndroidSdkUtils;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Eugene.Kudelevsky
@@ -36,9 +38,13 @@ public class AndroidConnectDebuggerAction extends AnAction {
     final Project project = e.getData(PlatformDataKeys.PROJECT);
     assert project != null;
 
-    final AndroidDebugBridge debugBridge = AndroidSdkUtils.getDebugBridge(project);
-
-    if (!AndroidSdkUtils.activateDdmsIfNecessary(project, debugBridge)) {
+    if (!AndroidSdkUtils.activateDdmsIfNecessary(project, new Computable<AndroidDebugBridge>() {
+      @Nullable
+      @Override
+      public AndroidDebugBridge compute() {
+        return AndroidSdkUtils.getDebugBridge(project);
+      }
+    })) {
       return;
     }
 

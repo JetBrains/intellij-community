@@ -20,10 +20,7 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.MnemonicHelper;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CustomShortcutSet;
-import com.intellij.openapi.actionSystem.MacOtherAction;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -48,6 +45,7 @@ import com.intellij.util.ui.DialogUtil;
 import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -142,6 +140,8 @@ public abstract class DialogWrapper {
   };
   private List<JBOptionButton> myOptionsButtons = new ArrayList<JBOptionButton>();
   private int myCurrentOptionsButtonIndex = -1;
+  private boolean myResizeInProgress = false;
+  private ComponentAdapter myResizeListener;
 
   protected String getDoNotShowMessage() {
     return CommonBundle.message("dialog.options.do.not.show");
@@ -165,8 +165,23 @@ public abstract class DialogWrapper {
    *                    by <code>WindowManager</code>.
    * @throws IllegalStateException if the dialog is invoked not on the event dispatch thread
    */
-  protected DialogWrapper(Project project, boolean canBeParent) {
+  protected DialogWrapper(@Nullable Project project, boolean canBeParent) {
     myPeer = createPeer(project, canBeParent);
+    final Window window = myPeer.getWindow();
+    if (window != null) {
+      myResizeListener = new ComponentAdapter() {
+        @Override
+        public void componentResized(ComponentEvent e) {
+          if (!myResizeInProgress) {
+            myActualSize = myPeer.getSize();
+            if (myErrorText.isVisible()) {
+              myActualSize.height -= myErrorText.getHeight() + 10;
+            }
+          }
+        }
+      };
+      window.addComponentListener(myResizeListener);
+    }
     createDefaultActions();
   }
 
@@ -180,7 +195,7 @@ public abstract class DialogWrapper {
    * @throws IllegalStateException if the dialog is invoked not on the event dispatch thread
    * @see com.intellij.openapi.ui.DialogWrapper#DialogWrapper(com.intellij.openapi.project.Project, boolean)
    */
-  protected DialogWrapper(Project project) {
+  protected DialogWrapper(@Nullable Project project) {
     this(project, true);
   }
 
@@ -207,7 +222,7 @@ public abstract class DialogWrapper {
    * @param canBeParent can be parent
    * @throws IllegalStateException if the dialog is invoked not on the event dispatch thread
    */
-  protected DialogWrapper(Component parent, boolean canBeParent) {
+  protected DialogWrapper(@NotNull Component parent, boolean canBeParent) {
     ensureEventDispatchThread();
     myPeer = createPeer(parent, canBeParent);
     createDefaultActions();
@@ -318,6 +333,11 @@ public abstract class DialogWrapper {
     if (myClosed) return;
     myClosed = true;
     myExitCode = exitCode;
+    Window window = getWindow();
+    if (window != null && myResizeListener != null) {
+      window.removeComponentListener(myResizeListener);
+      myResizeListener = null;
+    }
 
     if (isOk) {
       processDoNotAskOnOk(exitCode);
@@ -474,6 +494,10 @@ public abstract class DialogWrapper {
 
   protected boolean toBeShown() {
     return !myCheckBoxDoNotShowDialog.isSelected();
+  }
+
+  public boolean isTypeAheadEnabled() {
+    return false;
   }
 
   public static JPanel addDoNotShowCheckBox(JComponent southPanel, JCheckBox checkBox) {
@@ -715,33 +739,40 @@ public abstract class DialogWrapper {
     final JRootPane rootPane = getRootPane();
     // if rootPane = null, dialog has already been disposed
     if (rootPane != null) {
-      new AwtVisitor(rootPane) {
-        public boolean visit(final Component component) {
-          if (component instanceof JComponent) {
-            final JComponent eachComp = (JComponent)component;
-            final ActionMap actionMap = eachComp.getActionMap();
-            final KeyStroke[] strokes = eachComp.getRegisteredKeyStrokes();
-            for (KeyStroke eachStroke : strokes) {
-              boolean remove = true;
-              if (actionMap != null) {
-                for (int i = 0; i < 3; i++) {
-                  final InputMap inputMap = eachComp.getInputMap(i);
-                  final Object key = inputMap.get(eachStroke);
-                  if (key != null) {
-                    final Action action = actionMap.get(key);
-                    if (action instanceof UIResource) remove = false;
-                  }
-                }
-              }
-
-              if (remove) eachComp.unregisterKeyboardAction(eachStroke);
-            }
-          }
-          return false;
-        }
-      };
+      unregisterKeyboardActions(rootPane);
+      if (myActualSize != null) {
+        setSize(myActualSize.width, myActualSize.height);
+      }
       myPeer.dispose();
     }
+  }
+
+  public static void unregisterKeyboardActions(final JRootPane rootPane) {
+    new AwtVisitor(rootPane) {
+      public boolean visit(final Component component) {
+        if (component instanceof JComponent) {
+          final JComponent eachComp = (JComponent)component;
+          final ActionMap actionMap = eachComp.getActionMap();
+          final KeyStroke[] strokes = eachComp.getRegisteredKeyStrokes();
+          for (KeyStroke eachStroke : strokes) {
+            boolean remove = true;
+            if (actionMap != null) {
+              for (int i = 0; i < 3; i++) {
+                final InputMap inputMap = eachComp.getInputMap(i);
+                final Object key = inputMap.get(eachStroke);
+                if (key != null) {
+                  final Action action = actionMap.get(key);
+                  if (action instanceof UIResource) remove = false;
+                }
+              }
+            }
+
+            if (remove) eachComp.unregisterKeyboardAction(eachStroke);
+          }
+        }
+        return false;
+      }
+    };
   }
 
 
@@ -810,7 +841,7 @@ public abstract class DialogWrapper {
   }
 
   /**
-   * @return whether the native window cross butoon closes the window or not.
+   * @return whether the native window cross button closes the window or not.
    *         <code>true</code> means that cross performs hide or dispose of the dialog.
    */
   public boolean shouldCloseOnCross() {
@@ -821,7 +852,7 @@ public abstract class DialogWrapper {
    * This is factory method which creates action of dialog. Each action is represented
    * by <code>JButton</code> which is created by <code>createJButtonForAction(Action)</code>
    * method. These buttons are places into panel which is created by <code>createButtonsPanel</code>
-   * method. Therefore you have anough ways to customise the dialog by ovverriding of
+   * method. Therefore you have enough ways to customise the dialog by overriding of
    * <code>createActions()</code>, <code>createButtonsPanel()</code> and
    * </code>createJButtonForAction(Action)</code> methods. By default the <code>createActions()</code>
    * method returns "OK" and "Cancel" action. The help action is automatically added is if
@@ -1186,6 +1217,10 @@ public abstract class DialogWrapper {
     myPeer.setModal(modal);
   }
 
+  public boolean isModal() {
+    return myPeer.isModal();
+  }
+
   protected void setOKActionEnabled(boolean isEnabled) {
     myOKAction.setEnabled(isEnabled);
   }
@@ -1378,17 +1413,29 @@ public abstract class DialogWrapper {
       }
     }, KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_IN_FOCUSED_WINDOW);
 
-    getRootPane().registerKeyboardAction(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        doHelpAction();
+    if (ApplicationInfo.contextHelpAvailable()) {
+      ShortcutSet help = CommonShortcuts.getContextHelp();
+      for (Shortcut shortcut : help.getShortcuts()) {
+        if (shortcut instanceof KeyboardShortcut) {
+          KeyboardShortcut ks = (KeyboardShortcut)shortcut;
+          KeyStroke first = ks.getFirstKeyStroke();
+          KeyStroke second = ks.getSecondKeyStroke();
+          if (second == null) {
+            getRootPane().registerKeyboardAction(new ActionListener() {
+              public void actionPerformed(ActionEvent e) {
+                doHelpAction();
+              }
+            }, first, JComponent.WHEN_IN_FOCUSED_WINDOW);
+          }
+        }
       }
-    }, KeyStroke.getKeyStroke(KeyEvent.VK_F1, 0), JComponent.WHEN_IN_FOCUSED_WINDOW);
 
-    getRootPane().registerKeyboardAction(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        doHelpAction();
-      }
-    }, KeyStroke.getKeyStroke(KeyEvent.VK_HELP, 0), JComponent.WHEN_IN_FOCUSED_WINDOW);
+      getRootPane().registerKeyboardAction(new ActionListener() {
+        public void actionPerformed(ActionEvent e) {
+          doHelpAction();
+        }
+      }, KeyStroke.getKeyStroke(KeyEvent.VK_HELP, 0), JComponent.WHEN_IN_FOCUSED_WINDOW);
+    }
 
     if (myButtons != null) {
       getRootPane().registerKeyboardAction(new AbstractAction() {
@@ -1607,8 +1654,10 @@ public abstract class DialogWrapper {
 
   private void resizeWithAnimation(final Dimension size) {
     //todo[kb]: fix this PITA
+    myResizeInProgress = true;
     if (!Registry.is("enable.animation.on.dialogs")) {
       setSize(size.width, size.height);
+      myResizeInProgress = false;
       return;
     }
 
@@ -1633,6 +1682,7 @@ public abstract class DialogWrapper {
         if (myErrorText.shouldBeVisible()) {
           myErrorText.setVisible(true);
         }
+        myResizeInProgress = false;
       }
     }.start();
   }

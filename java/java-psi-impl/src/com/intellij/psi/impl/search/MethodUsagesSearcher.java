@@ -70,7 +70,5 @@ public class MethodUsagesSearcher extends QueryExecutorBase<PsiReference, Method
                          new MethodTextOccurrenceProcessor(aClass, strictSignatureSearch, methods));
 
     SimpleAccessorReferenceSearcher.addPropertyAccessUsages(method, restrictedByAccess, collector);
-
   }
-
 }

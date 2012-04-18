@@ -94,7 +94,7 @@ public class SuppressForMemberFix extends SuppressIntentionAction {
     return container != null && context != null && context.getManager().isInProject(context);
   }
 
-  public void invoke(final Project project, final Editor editor, final PsiElement element) throws IncorrectOperationException {
+  public void invoke(@NotNull final Project project, final Editor editor, @NotNull final PsiElement element) throws IncorrectOperationException {
     GrDocCommentOwner container = getContainer(element);
     assert container != null;
     if (!CodeInsightUtilBase.preparePsiElementForWrite(container)) return;

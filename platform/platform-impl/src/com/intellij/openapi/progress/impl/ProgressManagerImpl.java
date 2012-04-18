@@ -24,7 +24,7 @@ import com.intellij.openapi.progress.*;
 import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.progress.util.SmoothProgressAdapter;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.ThrowableComputable;
@@ -50,7 +50,7 @@ public class ProgressManagerImpl extends ProgressManager implements Disposable{
 
   private static volatile int ourLockedCheckCounter = 0;
   @NonNls private static final String NAME = "Progress Cancel Checker";
-  private static final boolean DISABLED = Comparing.equal(System.getProperty(PROCESS_CANCELED_EXCEPTION), "disabled");
+  private static final boolean DISABLED = "disabled".equals(System.getProperty(PROCESS_CANCELED_EXCEPTION));
 
   private volatile boolean enabled = true;
 
@@ -194,6 +194,18 @@ public class ProgressManagerImpl extends ProgressManager implements Disposable{
         }
       }
     },progress);
+  }
+
+  @Override
+  public <T> T runProcess(@NotNull final Computable<T> process, ProgressIndicator progress) throws ProcessCanceledException {
+    final Ref<T> ref = new Ref<T>();
+    runProcess(new Runnable() {
+      @Override
+      public void run() {
+        ref.set(process.compute());
+      }
+    }, progress);
+    return ref.get();
   }
 
   public void executeProcessUnderProgress(@NotNull Runnable process, ProgressIndicator progress) throws ProcessCanceledException {

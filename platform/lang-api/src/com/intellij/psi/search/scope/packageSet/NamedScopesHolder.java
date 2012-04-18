@@ -179,16 +179,17 @@ public abstract class NamedScopesHolder implements PersistentStateComponent<Elem
     for (NamedScope scope : myScopes) {
       if (name.equals(scope.getName())) return scope;
     }
-    final List<NamedScope> predefinedScopes = getPredefinedScopes();
-    for (NamedScope scope : predefinedScopes) {
-      if (name.equals(scope.getName())) return scope;
-    }
-    return null;
+    return getPredefinedScope(name);
   }
 
   @NotNull
   public List<NamedScope> getPredefinedScopes(){
     return Collections.emptyList();
+  }
+  
+  @Nullable
+  public NamedScope getPredefinedScope(String name) {
+    return null;
   }
 
   public Project getProject() {

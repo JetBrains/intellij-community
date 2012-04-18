@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -17,12 +18,10 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.VcsOutgoingChangesProvider;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
 import com.intellij.openapi.vcs.changes.InvokeAfterUpdateMode;
 import com.intellij.openapi.vcs.changes.actions.RefreshAction;
-import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.concurrency.Semaphore;
@@ -32,11 +31,13 @@ import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.actions.BasicAction;
 import git4idea.actions.GitInit;
-import git4idea.push.GitPushUtils;
 import git4idea.commands.*;
 import git4idea.i18n.GitBundle;
-import git4idea.util.GitUIUtil;
+import git4idea.push.GitPushUtils;
+import git4idea.repo.GitRepository;
+import git4idea.repo.GitRepositoryManager;
 import git4idea.util.GitFileUtils;
+import git4idea.util.GitUIUtil;
 import org.jetbrains.plugins.github.ui.GithubShareDialog;
 
 import java.io.IOException;
@@ -129,12 +130,13 @@ public class GithubShareAction extends DumbAwareAction {
       Messages.showErrorDialog(e1.getMessage(), "Failed to create new GitHub repository");
       return;
     }
-    bindToGithub(project, root, gitDetected, settings.getLogin(), name);
-    Notifications.Bus.notify(new Notification("github", "Success", "Successfully created project ''" + name + "'' on github",
-                                              NotificationType.INFORMATION));
+    if (bindToGithub(project, root, gitDetected, settings.getLogin(), name)) {
+      Notifications.Bus.notify(new Notification("github", "Success", "Successfully created project ''" + name + "'' on github",
+                                                NotificationType.INFORMATION));
+    }
   }
 
-  private void bindToGithub(final Project project, final VirtualFile root, final boolean gitDetected, final String login, final String name) {
+  private boolean bindToGithub(final Project project, final VirtualFile root, final boolean gitDetected, final String login, String name) {
     LOG.info("Binding local project with GitHub");
     // creating empty git repo if git isnot initialized
     if (!gitDetected) {
@@ -145,7 +147,7 @@ public class GithubShareAction extends DumbAwareAction {
       if (!h.errors().isEmpty()) {
         GitUIUtil.showOperationErrors(project, h.errors(), "git init");
         LOG.info("Failed to create empty git repo: " + h.errors());
-        return;
+        return false;
       }
       final ProgressManager manager = ProgressManager.getInstance();
       manager.runProcessWithProgressSynchronously(new Runnable() {
@@ -157,7 +159,9 @@ public class GithubShareAction extends DumbAwareAction {
     }
 
     // In this case we should create sample commit for binding project
-    performFirstCommitIfRequired(project, root);
+    if (!performFirstCommitIfRequired(project, root)) {
+      return false;
+    }
 
     //git remote add origin git@github.com:login/name.git
     LOG.info("Adding GitHub as a remote host");
@@ -169,13 +173,13 @@ public class GithubShareAction extends DumbAwareAction {
       addRemoteHandler.run();
       if (addRemoteHandler.getExitCode() != 0) {
         Messages.showErrorDialog("Failed to add GitHub repository as remote", "Failed to add GitHub repository as remote");
-        return;
+        return false;
       }
     }
     catch (VcsException e) {
       Messages.showErrorDialog(e.getMessage(), "Failed to add GitHub repository as remote");
       LOG.info("Failed to add GitHub as remote: " + e.getMessage());
-      return;
+      return false;
     }
 
     //git push origin master
@@ -198,6 +202,7 @@ public class GithubShareAction extends DumbAwareAction {
     }
     // refresh vcs manually
     RefreshAction.doRefresh(project);
+    return true;
   }
 
   private boolean performFirstCommitIfRequired(final Project project, final VirtualFile root) {
@@ -206,20 +211,21 @@ public class GithubShareAction extends DumbAwareAction {
       Messages.showErrorDialog(project, "Cannot find git initialized", "Failed to share");
       return false;
     }
-    final VcsOutgoingChangesProvider<CommittedChangeList> provider = gitVcs.getOutgoingChangesProvider();
-    if (provider == null) {
-      Messages.showErrorDialog(project, "Cannot find git initialized", "Failed to share");
+
+    GitRepositoryManager repositoryManager = ServiceManager.getService(project, GitRepositoryManager.class);
+    Git git = ServiceManager.getService(Git.class);
+    if (repositoryManager == null || git == null) {
       return false;
     }
-    try {
-      if (!provider.getOutgoingChanges(root, false).getSecond().isEmpty()){
-        return true;
-      }
-    }
-    catch (VcsException e) {
-      Messages.showErrorDialog(project, e.getMessage(), "Failed to share");
+    GitRepository repository = repositoryManager.getRepositoryForRoot(root);
+    if (repository == null) {
+      Messages.showErrorDialog(project, "Cannot find git repository for root " + root, "Failed to share");
       return false;
     }
+    if (!repository.isFresh()) {
+      return true;
+    }
+
     final Ref<Exception> exceptionRef = new Ref<Exception>();
     // Creating or modifying readme file
     LOG.info("Touching file 'README' for initial commit");

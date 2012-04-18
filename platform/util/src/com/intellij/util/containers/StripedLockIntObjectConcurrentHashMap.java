@@ -16,6 +16,9 @@
 
 package com.intellij.util.containers;
 
+import gnu.trove.THashSet;
+import org.jetbrains.annotations.NotNull;
+
 import java.util.*;
 
 /** similar to java.util.ConcurrentHashMap except:
@@ -27,14 +30,14 @@ import java.util.*;
  added hashing strategy argument
  made not Serializable
  */
-public class StripedLockIntObjectConcurrentHashMap<V> extends IntSegment<V> {
+public class StripedLockIntObjectConcurrentHashMap<V> {
   /* ---------------- Constants -------------- */
 
   /**
    * The default initial number of table slots for this table.
    * Used when not otherwise specified in constructor.
    */
-  static int DEFAULT_INITIAL_CAPACITY = 16;
+  private static final int DEFAULT_INITIAL_CAPACITY = 16;
 
   /**
    * The maximum capacity, used if a higher value is implicitly
@@ -42,13 +45,13 @@ public class StripedLockIntObjectConcurrentHashMap<V> extends IntSegment<V> {
    * be a power of two <= 1<<30 to ensure that entries are indexible
    * using ints.
    */
-  static final int MAXIMUM_CAPACITY = 1 << 30;
+  private static final int MAXIMUM_CAPACITY = 1 << 30;
 
   /**
    * The default load factor for this table.  Used when not
    * otherwise specified in constructor.
    */
-  public static final float DEFAULT_LOAD_FACTOR = 0.75f;
+  protected static final float DEFAULT_LOAD_FACTOR = 0.75f;
 
 
   /* ---------------- Fields -------------- */
@@ -74,7 +77,8 @@ public class StripedLockIntObjectConcurrentHashMap<V> extends IntSegment<V> {
    *                                  nonpositive.
    */
   public StripedLockIntObjectConcurrentHashMap(int initialCapacity, float loadFactor) {
-    super(getInitCap(initialCapacity, loadFactor), loadFactor);
+    int cap = getInitCap(initialCapacity, loadFactor);
+    setTable(new IntHashEntry[cap]);
   }
 
   private static int getInitCap(int initialCapacity, float loadFactor) {
@@ -141,10 +145,7 @@ public class StripedLockIntObjectConcurrentHashMap<V> extends IntSegment<V> {
    * @throws NullPointerException if the key or value is
    *                              <tt>null</tt>.
    */
-  public V put(int key, V value) {
-    if (value == null) {
-      throw new NullPointerException();
-    }
+  public V put(int key, @NotNull V value) {
     return put(key, value, false);
   }
 
@@ -167,10 +168,7 @@ public class StripedLockIntObjectConcurrentHashMap<V> extends IntSegment<V> {
    * @throws NullPointerException if the specified key or value is
    *                              <tt>null</tt>.
    */
-  public V putIfAbsent(int key, V value) {
-    if (value == null) {
-      throw new NullPointerException();
-    }
+  public V putIfAbsent(int key, @NotNull V value) {
     return put(key, value, true);
   }
 
@@ -205,23 +203,21 @@ public class StripedLockIntObjectConcurrentHashMap<V> extends IntSegment<V> {
    * Returns an enumeration of the values in this table.
    *
    * @return an enumeration of the values in this table.
-   * @see #values
    */
+  @NotNull
   public Enumeration<V> elements() {
     return new ValueIterator();
   }
 
   /* ---------------- Iterator Support -------------- */
 
-  abstract class HashIterator {
-    int nextSegmentIndex;
-    int nextTableIndex;
-    IntHashEntry[] currentTable;
-    IntHashEntry<V> nextEntry;
-    IntHashEntry<V> lastReturned;
+  private class HashIterator {
+    private int nextTableIndex;
+    private IntHashEntry[] currentTable;
+    private IntHashEntry<V> nextEntry;
+    private IntHashEntry<V> lastReturned;
 
-    HashIterator() {
-      nextSegmentIndex = 0;
+    private HashIterator() {
       nextTableIndex = -1;
       advance();
     }
@@ -230,7 +226,7 @@ public class StripedLockIntObjectConcurrentHashMap<V> extends IntSegment<V> {
       return hasNext();
     }
 
-    final void advance() {
+    private void advance() {
       if (nextEntry != null && (nextEntry = nextEntry.next) != null) {
         return;
       }
@@ -241,16 +237,13 @@ public class StripedLockIntObjectConcurrentHashMap<V> extends IntSegment<V> {
         }
       }
 
-      while (nextSegmentIndex >= 0) {
-        IntSegment seg = StripedLockIntObjectConcurrentHashMap.this;
-        nextSegmentIndex--;
-        if (seg.count != 0) {
-          currentTable = seg.table;
-          for (int j = currentTable.length - 1; j >= 0; --j) {
-            if ((nextEntry = (IntHashEntry<V>)currentTable[j]) != null) {
-              nextTableIndex = j - 1;
-              return;
-            }
+      StripedLockIntObjectConcurrentHashMap seg = StripedLockIntObjectConcurrentHashMap.this;
+      if (seg.count != 0) {
+        currentTable = seg.table;
+        for (int j = currentTable.length - 1; j >= 0; --j) {
+          if ((nextEntry = (IntHashEntry<V>)currentTable[j]) != null) {
+            nextTableIndex = j - 1;
+            return;
           }
         }
       }
@@ -260,7 +253,7 @@ public class StripedLockIntObjectConcurrentHashMap<V> extends IntSegment<V> {
       return nextEntry != null;
     }
 
-    IntHashEntry<V> nextEntry() {
+    protected IntHashEntry<V> nextEntry() {
       if (nextEntry == null) {
         throw new NoSuchElementException();
       }
@@ -278,84 +271,60 @@ public class StripedLockIntObjectConcurrentHashMap<V> extends IntSegment<V> {
     }
   }
 
-  final class ValueIterator extends HashIterator implements Iterator<V>, Enumeration<V> {
+  private final class ValueIterator extends HashIterator implements Iterator<V>, Enumeration<V> {
+    @Override
     public V next() {
       return nextEntry().value;
     }
 
+    @Override
     public V nextElement() {
       return nextEntry().value;
     }
   }
 
-  interface IntEntry<V> {
+  public interface IntEntry<V> {
     int getKey();
-    V getValue();
-    V setValue(V value);
+    @NotNull V getValue();
   }
 
 
-  final class Values extends AbstractCollection<V> {
-    public Iterator<V> iterator() {
-      return new ValueIterator();
+  public Collection<IntEntry<V>> entries() {
+    HashIterator iterator = new HashIterator();
+    Set<IntEntry<V>> result = new THashSet<IntEntry<V>>();
+    while (iterator.hasNext()) {
+      IntHashEntry<V> ie = iterator.nextEntry;
+      SimpleEntry<V> entry = new SimpleEntry<V>(ie.key, ie.value);
+      result.add(entry);
     }
-
-    public int size() {
-      return StripedLockIntObjectConcurrentHashMap.this.size();
-    }
-
-    public boolean contains(Object o) {
-      return containsValue(o);
-    }
-
-    public void clear() {
-      StripedLockIntObjectConcurrentHashMap.this.clear();
-    }
-
-    public Object[] toArray() {
-      Collection<V> c = new ArrayList<V>();
-      for (V k : this) {
-        c.add(k);
-      }
-      return c.toArray();
-    }
-
-    public <T> T[] toArray(T[] a) {
-      Collection<V> c = new ArrayList<V>();
-      for (V k : this) {
-        c.add(k);
-      }
-      return c.toArray(a);
-    }
+    return result;
   }
 
   /**
    * This duplicates java.util.AbstractMap.SimpleEntry until this class
    * is made accessible.
    */
-  static final class SimpleEntry<V> implements IntEntry<V> {
-    int key;
-    V value;
+  private static final class SimpleEntry<V> implements IntEntry<V> {
+    private final int key;
+    private final V value;
 
-    public SimpleEntry(IntEntry<V> e) {
-      key = e.getKey();
-      value = e.getValue();
+    private SimpleEntry(int key, @NotNull V value) {
+      this.key = key;
+      this.value = value;
     }
 
+    @Override
     public int getKey() {
       return key;
     }
 
+    @Override
+    @NotNull
     public V getValue() {
       return value;
     }
 
-    public V setValue(V value) {
-      V oldValue = this.value;
-      this.value = value;
-      return oldValue;
-    }
-
+    @Override
     public boolean equals(Object o) {
       if (!(o instanceof SimpleEntry)) {
         return false;
@@ -365,30 +334,31 @@ public class StripedLockIntObjectConcurrentHashMap<V> extends IntSegment<V> {
       return key == o2 && eq(value, e.getValue());
     }
 
+    @Override
     public int hashCode() {
       return key ^
              (value == null ? 0 : value.hashCode());
     }
 
+    @Override
     public String toString() {
       return key + "=" + value;
     }
 
-    boolean eq(Object o1, Object o2) {
+    private static boolean eq(Object o1, Object o2) {
       return o1 == null ? o2 == null : o1.equals(o2);
     }
   }
-}
 
-class IntSegment<V> {
+
   private static final StripedReentrantLocks STRIPED_REENTRANT_LOCKS = StripedReentrantLocks.getInstance();
   private final byte lockIndex = (byte)STRIPED_REENTRANT_LOCKS.allocateLockIndex();
 
-  public void lock() {
+  private void lock() {
     STRIPED_REENTRANT_LOCKS.lock(lockIndex & 0xff);
   }
 
-  public void unlock() {
+  private void unlock() {
     STRIPED_REENTRANT_LOCKS.unlock(lockIndex & 0xff);
   }
   /*
@@ -431,7 +401,7 @@ class IntSegment<V> {
   /**
    * The number of elements in this segment's region.
    */
-   volatile int count;
+   protected volatile int count;
 
   /**
    * Number of updates that alter the size of the table. This is
@@ -441,47 +411,33 @@ class IntSegment<V> {
    * we might have an inconsistent view of state so (usually)
    * must retry.
    */
-   int modCount;
+  protected int modCount;
 
   /**
    * The table is rehashed when its size exceeds this threshold.
    */
-  int threshold() {
-    return (int)(table.length * loadFactor);
+  private int threshold() {
+    return (int)(table.length * StripedLockIntObjectConcurrentHashMap.DEFAULT_LOAD_FACTOR);
   }
 
   /**
    * The per-segment table. Declared as a raw type, casted
    * to IntHashEntry<K,V> on each use.
    */
-   volatile IntHashEntry[] table;
-
-  /**
-   * The load factor for the hash table.  Even though this value
-   * is same for all segments, it is replicated to avoid needing
-   * links to outer object.
-   *
-   * @serial
-   */
-  final float loadFactor;
-
-  IntSegment(int initialCapacity, float lf) {
-    loadFactor = lf;
-    setTable(new IntHashEntry[initialCapacity]);
-  }
+  protected volatile IntHashEntry[] table;
 
   /**
    * Set table to new IntHashEntry array.
    * Call only while holding lock or in constructor.
    */
-  void setTable(IntHashEntry[] newTable) {
+  private void setTable(IntHashEntry[] newTable) {
     table = newTable;
   }
 
   /**
    * Return properly casted first entry of bin for given hash
    */
-  IntHashEntry<V> getFirst(int hash) {
+  private IntHashEntry<V> getFirst(int hash) {
     IntHashEntry[] tab = table;
     return tab[hash & tab.length - 1];
   }
@@ -493,7 +449,7 @@ class IntSegment<V> {
    * its table assignment, which is legal under memory model
    * but is not known to ever occur.
    */
-  V readValueUnderLock(IntHashEntry<V> e) {
+  private V readValueUnderLock(IntHashEntry<V> e) {
     lock();
     try {
       return e.value;
@@ -535,32 +491,7 @@ class IntSegment<V> {
     return false;
   }
 
-  public boolean containsValue(Object value) {
-    if (count != 0) { // read-volatile
-      IntHashEntry[] tab = table;
-      int len = tab.length;
-      for (int i = 0; i < len; i++) {
-        for (IntHashEntry<V> e = tab[i];
-             e != null;
-             e = e.next) {
-          V v = e.value;
-          if (v == null) // recheck
-          {
-            v = readValueUnderLock(e);
-          }
-          if (value.equals(v)) {
-            return true;
-          }
-        }
-      }
-    }
-    return false;
-  }
-
-  public boolean replace(int key, V oldValue, V newValue) {
-    if (oldValue == null || newValue == null) {
-      throw new NullPointerException();
-    }
+  public boolean replace(int key, @NotNull V oldValue, @NotNull V newValue) {
     lock();
     try {
       IntHashEntry<V> e = getFirst(key);
@@ -580,31 +511,7 @@ class IntSegment<V> {
     }
   }
 
-  public V replace(int key, V newValue) {
-    if (newValue == null) {
-      throw new NullPointerException();
-    }
-    lock();
-    try {
-      IntHashEntry<V> e = getFirst(key);
-      while (e != null && !(key == e.key)) {
-        e = e.next;
-      }
-
-      V oldValue = null;
-      if (e != null) {
-        oldValue = e.value;
-        e.value = newValue;
-      }
-      return oldValue;
-    }
-    finally {
-      unlock();
-    }
-  }
-
-
-  V put(int key, V value, boolean onlyIfAbsent) {
+  protected V put(int key, @NotNull V value, boolean onlyIfAbsent) {
     lock();
     try {
       int c = count;
@@ -640,10 +547,10 @@ class IntSegment<V> {
     }
   }
 
-  void rehash() {
+  private void rehash() {
     IntHashEntry[] oldTable = table;
     int oldCapacity = oldTable.length;
-    if (oldCapacity >= StripedLockConcurrentHashMap.MAXIMUM_CAPACITY) {
+    if (oldCapacity >= MAXIMUM_CAPACITY) {
       return;
     }
 
@@ -696,8 +603,7 @@ class IntSegment<V> {
           for (IntHashEntry<V> p = e; p != lastRun; p = p.next) {
             int k = p.key & sizeMask;
             IntHashEntry<V> n = newTable[k];
-            newTable[k] = new IntHashEntry<V>(p.key,
-                                              n, p.value);
+            newTable[k] = new IntHashEntry<V>(p.key, n, p.value);
           }
         }
       }
@@ -708,7 +614,7 @@ class IntSegment<V> {
   /**
    * Remove; match on key only if value null, else match both.
    */
-  public V remove(int key, Object value) {
+  protected V remove(int key, Object value) {
     lock();
     try {
       int c = count - 1;
@@ -731,8 +637,7 @@ class IntSegment<V> {
           ++modCount;
           IntHashEntry<V> newFirst = e.next;
           for (IntHashEntry<V> p = first; p != e; p = p.next) {
-            newFirst = new IntHashEntry<V>(p.key,
-                                           newFirst, p.value);
+            newFirst = new IntHashEntry<V>(p.key, newFirst, p.value);
           }
           tab[index] = newFirst;
           count = c; // write-volatile
@@ -761,28 +666,37 @@ class IntSegment<V> {
       }
     }
   }
-}
 
-/**
- * ConcurrentHashMap list entry. Note that this is never exported
- * out as a user-visible Map.Entry.
- * <p/>
- * Because the value field is volatile, not final, it is legal wrt
- * the Java Memory Model for an unsynchronized reader to see null
- * instead of initial value when read via a data race.  Although a
- * reordering leading to this is not likely to ever actually
- * occur, the Segment.readValueUnderLock method is used as a
- * backup in case a null (pre-initialized) value is ever seen in
- * an unsynchronized access method.
- */
-final class IntHashEntry<V> {
-  final int key;
-  volatile V value;
-  final IntHashEntry<V> next;
+  public void putAll(@NotNull StripedLockIntObjectConcurrentHashMap<? extends V> t) {
+    for (IntEntry<? extends V> e : t.entries()) {
+      V value = e.getValue();
+      put(e.getKey(), value);
+    }
+  }
 
-  IntHashEntry(int key, IntHashEntry<V> next, V value) {
-    this.key = key;
-    this.next = next;
-    this.value = value;
+
+
+  /**
+   * ConcurrentHashMap list entry. Note that this is never exported
+   * out as a user-visible Map.Entry.
+   * <p/>
+   * Because the value field is volatile, not final, it is legal wrt
+   * the Java Memory Model for an unsynchronized reader to see null
+   * instead of initial value when read via a data race.  Although a
+   * reordering leading to this is not likely to ever actually
+   * occur, the Segment.readValueUnderLock method is used as a
+   * backup in case a null (pre-initialized) value is ever seen in
+   * an unsynchronized access method.
+   */
+  private static final class IntHashEntry<V> {
+    final int key;
+    @NotNull volatile V value;
+    final IntHashEntry<V> next;
+
+    IntHashEntry(int key, IntHashEntry<V> next, @NotNull V value) {
+      this.key = key;
+      this.next = next;
+      this.value = value;
+    }
   }
 }

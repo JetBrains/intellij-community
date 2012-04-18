@@ -25,6 +25,7 @@ import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.KeyDescriptor;
 import com.intellij.util.io.PersistentMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
@@ -49,8 +50,9 @@ public final class MapIndexStorage<Key, Value> implements IndexStorage<Key, Valu
   private final Lock l = new ReentrantLock();
   private final DataExternalizer<Value> myDataExternalizer;
 
-  public MapIndexStorage(File storageFile, final KeyDescriptor<Key> keyDescriptor,
-                         final DataExternalizer<Value> valueExternalizer,
+  public MapIndexStorage(@NotNull File storageFile,
+                         @NotNull KeyDescriptor<Key> keyDescriptor,
+                         @NotNull DataExternalizer<Value> valueExternalizer,
                          final int cacheSize) throws IOException {
 
     myStorageFile = storageFile;
@@ -67,11 +69,13 @@ public final class MapIndexStorage<Key, Value> implements IndexStorage<Key, Valu
       @NotNull
       public ChangeTrackingValueContainer<Value> createValue(final Key key) {
         return new ChangeTrackingValueContainer<Value>(new ChangeTrackingValueContainer.Initializer<Value>() {
+          @NotNull
           @Override
           public Object getLock() {
             return map.getDataAccessLock();
           }
 
+          @Nullable
           @Override
           public ValueContainer<Value> compute() {
             ValueContainer<Value> value;
@@ -90,7 +94,7 @@ public final class MapIndexStorage<Key, Value> implements IndexStorage<Key, Valu
       }
 
       @Override
-      protected void onDropFromCache(final Key key, final ChangeTrackingValueContainer<Value> valueContainer) {
+      protected void onDropFromCache(final Key key, @NotNull final ChangeTrackingValueContainer<Value> valueContainer) {
         if (valueContainer.isDirty()) {
           try {
             map.put(key, valueContainer);
@@ -192,6 +196,7 @@ public final class MapIndexStorage<Key, Value> implements IndexStorage<Key, Valu
     }
   }
 
+  @NotNull
   @Override
   public Collection<Key> getKeys() throws StorageException {
     List<Key> keys = new ArrayList<Key>();

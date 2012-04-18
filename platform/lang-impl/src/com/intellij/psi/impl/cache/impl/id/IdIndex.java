@@ -35,6 +35,5 @@ public class IdIndex extends IdIndexBase {
             CacheBuilderRegistry.getInstance().getCacheBuilder(fileType) != null) &&
            !ProjectUtil.isProjectOrWorkspaceFile(file, fileType);
   }
-
 }
 

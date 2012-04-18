@@ -24,11 +24,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Created by IntelliJ IDEA.
+ * Created with IntelliJ IDEA.
  * User: Irina.Chernushina
- * Date: 12/6/11
- * Time: 3:27 PM
- * To change this template use File | Settings | File Templates.
+ * Date: 1/25/12
+ * Time: 12:37 PM
  */
 @org.junit.runner.RunWith(org.junit.runners.Parameterized.class)
 public class MultipleRefreshesTest {

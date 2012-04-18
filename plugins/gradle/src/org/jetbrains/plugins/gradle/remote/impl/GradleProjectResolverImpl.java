@@ -8,6 +8,7 @@ import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ConcurrentHashSet;
 import com.intellij.util.containers.HashMap;
 import org.gradle.tooling.*;
+import org.gradle.tooling.internal.consumer.DefaultGradleConnector;
 import org.gradle.tooling.model.DomainObjectSet;
 import org.gradle.tooling.model.idea.*;
 import org.jetbrains.annotations.NotNull;
@@ -95,6 +96,13 @@ public class GradleProjectResolverImpl extends RemoteObject implements GradlePro
     progressManager.onStart(id);
     ProjectConnection connection = getConnection(projectPath);
     ModelBuilder<? extends IdeaProject> modelBuilder = connection.model(downloadLibraries ? IdeaProject.class : BasicIdeaProject.class);
+    final RemoteGradleProcessSettings settings = mySettings.get();
+    if (settings != null) {
+      final String javaHome = settings.getJavaHome();
+      if (javaHome != null && new File(javaHome).isDirectory()) {
+        modelBuilder.setJavaHome(new File(javaHome));
+      }
+    }
     modelBuilder.addProgressListener(new ProgressListener() {
       @Override
       public void statusChanged(ProgressEvent event) {
@@ -102,7 +110,6 @@ public class GradleProjectResolverImpl extends RemoteObject implements GradlePro
       }
     });
     IdeaProject project = modelBuilder.get();
-    progressManager.onEnd(id);
     GradleProject result = populateProject(project, projectPath);
 
     // We need two different steps ('create' and 'populate') in order to handle module dependencies, i.e. when one module is
@@ -391,6 +398,9 @@ public class GradleProjectResolverImpl extends RemoteObject implements GradlePro
     RemoteGradleProcessSettings settings = mySettings.get();
     if (settings != null) {
       connector.useInstallation(new File(settings.getGradleHome()));
+      if (settings.isVerboseApi() && connector instanceof DefaultGradleConnector) {
+        ((DefaultGradleConnector)connector).setVerboseLogging(true);
+      }
     }
     connector.forProjectDirectory(projectDir);
     ProjectConnection connection = connector.connect();

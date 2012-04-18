@@ -33,16 +33,19 @@ import org.jetbrains.annotations.NotNull;
 public class AddOverrideAnnotationAction implements IntentionAction {
   private static final String JAVA_LANG_OVERRIDE = "java.lang.Override";
 
+  @Override
   @NotNull
   public String getText() {
     return CodeInsightBundle.message("intention.add.override.annotation");
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return CodeInsightBundle.message("intention.add.override.annotation.family");
   }
 
+  @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     if (!PsiUtil.isLanguageLevel5OrHigher(file)) return false;
     PsiMethod method = findMethod(file, editor.getCaretModel().getOffset());
@@ -59,6 +62,7 @@ public class AddOverrideAnnotationAction implements IntentionAction {
     return false;
   }
 
+  @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     PsiMethod method = findMethod(file, editor.getCaretModel().getOffset());
     if (method != null) {
@@ -80,6 +84,7 @@ public class AddOverrideAnnotationAction implements IntentionAction {
     return res;
   }
 
+  @Override
   public boolean startInWriteAction() {
     return true;
   }

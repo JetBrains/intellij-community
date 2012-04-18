@@ -17,10 +17,8 @@
 package com.intellij.openapi.util;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
@@ -181,72 +179,5 @@ public class ActionCallback implements Disposable {
 
   @Override
   public void dispose() {
-  }
-
-  public static class TimedOut extends ActionCallback implements Runnable {
-
-    private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.util.ActionCallback.TimedOut");
-
-    private Throwable myAllocation;
-    private String myMessage;
-    private SimpleTimerTask myTask;
-
-    public TimedOut(long timeOut, String message, Throwable allocation, boolean isEdt) {
-      sheduleCheck(timeOut, message, allocation, isEdt);
-    }
-
-    public TimedOut(int countToDone, long timeOut, String message, Throwable allocation, boolean isEdt) {
-      super(countToDone);
-      sheduleCheck(timeOut, message, allocation, isEdt);
-    }
-
-    private void sheduleCheck(long timeOut, final String message, Throwable allocation, final boolean isEdt) {
-      myMessage = message;
-      myAllocation = allocation;
-      myTask = SimpleTimer.getInstance().setUp(new Runnable() {
-        @Override
-        public void run() {
-          if (isEdt) {
-            SwingUtilities.invokeLater(TimedOut.this);
-          } else {
-            TimedOut.this.run();
-          }
-        }
-      }, timeOut);
-    }
-
-    @Override
-    public final void run() {
-      if (!isProcessed()) {
-        setRejected();
-        dumpError();
-        onTimeout();
-      }
-    }
-
-    protected void dumpError() {
-      if (myAllocation != null) {
-        LOG.error(myMessage, myAllocation);
-      } else {
-        LOG.error(myMessage);
-      }
-    }
-
-    public String getMessage() {
-      return myMessage;
-    }
-
-    public Throwable getAllocation() {
-      return myAllocation;
-    }
-
-    @Override
-    public void dispose() {
-      super.dispose();
-      myTask.cancel();
-    }
-
-    protected void onTimeout() {
-    }
   }
 }

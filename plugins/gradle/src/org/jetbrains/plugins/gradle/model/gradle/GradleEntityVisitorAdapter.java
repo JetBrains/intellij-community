@@ -6,7 +6,7 @@ import org.jetbrains.annotations.NotNull;
  * @author Denis Zhdanov
  * @since 8/23/11 1:16 PM
  */
-public class GradleEntityVisitorAdapter implements GradleEntityVisitor {
+public abstract class GradleEntityVisitorAdapter implements GradleEntityVisitor {
   @Override
   public void visit(@NotNull GradleProject project) {
   }

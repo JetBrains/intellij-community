@@ -101,7 +101,8 @@ public class CodeBlockGenerator extends Generator {
     if (!method.isConstructor() && returnType != PsiType.VOID) {
       myExitPoints.addAll(ControlFlowUtils.collectReturns(block));
       shouldInsertReturnNull = !(returnType instanceof PsiPrimitiveType) &&
-                               MissingReturnInspection.methodMissesSomeReturns(block, method.getReturnTypeElementGroovy() != null);
+                               MissingReturnInspection.methodMissesSomeReturns(block,
+                                                                               MissingReturnInspection.ReturnStatus.getReturnStatus(method));
     }
 
     if (block != null) {
@@ -164,7 +165,7 @@ public class CodeBlockGenerator extends Generator {
       public void writeStatement(StringBuilder builder, ExpressionContext context) {
         final GrThisSuperReferenceExpression thisOrSuperKeyword = invocation.getThisOrSuperKeyword();
         final GrArgumentList argumentList = invocation.getArgumentList();
-        final GroovyResolveResult resolveResult = invocation.resolveConstructorGenerics();
+        final GroovyResolveResult resolveResult = invocation.advancedResolve();
         if (thisOrSuperKeyword.getQualifier() == null) {
           builder.append(thisOrSuperKeyword.getReferenceName());
         }

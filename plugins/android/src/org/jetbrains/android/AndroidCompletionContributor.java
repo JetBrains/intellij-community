@@ -27,6 +27,8 @@ import com.intellij.psi.xml.XmlTag;
 import org.jetbrains.android.dom.AndroidDomExtender;
 import org.jetbrains.android.dom.animation.AndroidAnimationUtils;
 import org.jetbrains.android.dom.animation.AnimationDomFileDescription;
+import org.jetbrains.android.dom.animator.AndroidAnimatorUtil;
+import org.jetbrains.android.dom.animator.AnimatorDomFileDescription;
 import org.jetbrains.android.dom.color.ColorDomFileDescription;
 import org.jetbrains.android.dom.drawable.AndroidDrawableDomUtil;
 import org.jetbrains.android.dom.drawable.DrawableStateListDomFileDescription;
@@ -79,6 +81,10 @@ public class AndroidCompletionContributor extends CompletionContributor {
           }
           else if (AnimationDomFileDescription.isAnimationFile(xmlFile)) {
             addAll(AndroidAnimationUtils.getPossibleChildren(facet), resultSet);
+            return false;
+          }
+          else if (AnimatorDomFileDescription.isAnimatorFile(xmlFile)) {
+            addAll(AndroidAnimatorUtil.getPossibleChildren(), resultSet);
             return false;
           }
           else if (XmlResourceDomFileDescription.isXmlResourceFile(xmlFile)) {

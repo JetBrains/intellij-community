@@ -45,6 +45,7 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
     myContext = new WeakReference<PsiElement>(context);
   }
 
+  @Override
   public void filterElements(ChooseByNameBase base,
                              String pattern,
                              boolean everywhere,
@@ -53,11 +54,11 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
     String namePattern = getNamePattern(base, pattern);
     String qualifierPattern = getQualifierPattern(base, pattern);
 
-    if (base.isSearchInAnyPlace() && namePattern.trim().length() > 0) {
+    if (base.isSearchInAnyPlace() && !namePattern.trim().isEmpty()) {
       namePattern = "*" + namePattern + "*";
     }
 
-    boolean empty = namePattern.length() == 0 || namePattern.equals("@");    // TODO[yole]: remove implicit dependency
+    boolean empty = namePattern.isEmpty() || namePattern.equals("@");    // TODO[yole]: remove implicit dependency
     if (empty && !base.canShowListForEmptyPattern()) return;
 
     List<String> namesList = new ArrayList<String>();
@@ -65,8 +66,8 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
     if (cancelled.compute()) {
       throw new ProcessCanceledException();
     }
-    // Here we sort using namePattern to have similar logic with empty qualified patten case
-    Collections.sort(namesList, new MatchesComparator(namePattern));
+    sortNamesList(namePattern, namesList);
+
 
     List<Object> sameNameElements = new SmartList<Object>();
 
@@ -93,8 +94,18 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
     }
   }
 
+  protected void sortNamesList(String namePattern, List<String> namesList) {
+    // Here we sort using namePattern to have similar logic with empty qualified patten case
+    Collections.sort(namesList, new MatchesComparator(namePattern));
+  }
+
   private void sortByProximity(ChooseByNameBase base, final List<Object> sameNameElements) {
-    Collections.sort(sameNameElements, new PathProximityComparator(base.getModel(), myContext.get()));
+    final ChooseByNameModel model = base.getModel();
+    if (model instanceof Comparator) {
+      Collections.sort(sameNameElements, (Comparator)model);
+    } else {
+      Collections.sort(sameNameElements, new PathProximityComparator(model, myContext.get()));
+    }
   }
 
   private static String getQualifierPattern(ChooseByNameBase base, String pattern) {
@@ -123,7 +134,7 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
   private static List<String> split(String s, ChooseByNameBase base) {
     List<String> answer = new ArrayList<String>();
     for (String token : StringUtil.tokenize(s, StringUtil.join(base.getModel().getSeparators(), ""))) {
-      if (token.length() > 0) {
+      if (!token.isEmpty()) {
         answer.add(token);
       }
     }
@@ -138,6 +149,7 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
     final List<String> suspects = split(name, base);
     final List<Pair<String, Matcher>> patternsAndMatchers =
       ContainerUtil.map2List(split(qualifierPattern, base), new Function<String, Pair<String, Matcher>>() {
+        @Override
         public Pair<String, NameUtil.Matcher> fun(String s) {
           final String pattern = getNamePattern(base, s);
           final NameUtil.Matcher matcher = buildPatternMatcher(pattern);
@@ -153,7 +165,7 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
       for (Pair<String, NameUtil.Matcher> patternAndMatcher : patternsAndMatchers) {
         final String pattern = patternAndMatcher.first;
         final NameUtil.Matcher matcher = patternAndMatcher.second;
-        if (pattern.length() > 0) {
+        if (!pattern.isEmpty()) {
           for (int j = matchPosition; j < suspects.size() - 1; j++) {
             String suspect = suspects.get(j);
             if (matches(base, pattern, matcher, suspect)) {
@@ -174,6 +186,7 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
     return true;
   }
 
+  @Override
   public List<String> filterNames(ChooseByNameBase base, String[] names, String pattern) {
     ArrayList<String> res = new ArrayList<String>();
     getNamesByPattern(base, names, null, res, pattern);
@@ -187,7 +200,7 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
                                  String pattern)
     throws ProcessCanceledException {
     if (!base.canShowListForEmptyPattern()) {
-      LOG.assertTrue(pattern.length() > 0);
+      LOG.assertTrue(!pattern.isEmpty());
     }
 
     if (pattern.startsWith("@")) {
@@ -219,7 +232,7 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
           matches = true;
         }
       }
-      else if (pattern.length() == 0 || matcher.matches(name)) {
+      else if (pattern.isEmpty() || matcher.matches(name)) {
         matches = true;
       }
     }
@@ -237,6 +250,7 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
       myOriginalPattern = originalPattern.trim();
     }
 
+    @Override
     public int compare(final String a, final String b) {
       boolean aStarts = a.startsWith(myOriginalPattern);
       boolean bStarts = b.startsWith(myOriginalPattern);
@@ -256,6 +270,7 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
       myProximityComparator = new PsiProximityComparator(context);
     }
 
+    @Override
     public int compare(final Object o1, final Object o2) {
       int rc = myProximityComparator.compare(o1, o2);
       if (rc != 0) return rc;

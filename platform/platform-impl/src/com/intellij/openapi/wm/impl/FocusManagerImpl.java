@@ -27,6 +27,7 @@ import com.intellij.openapi.application.ApplicationActivationListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
@@ -46,11 +47,13 @@ import java.awt.event.WindowEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.lang.ref.WeakReference;
+import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.List;
 
+@SuppressWarnings("SSBasedInspection")
 public class FocusManagerImpl extends IdeFocusManager implements Disposable {
-
+  private static final Logger LOG = Logger.getInstance(FocusManagerImpl.class);
   private static final UiActivity FOCUS = new UiActivity.Focus("awtFocusRequest");
   private static final UiActivity TYPEAHEAD = new UiActivity.Focus("typeahead");
 
@@ -253,8 +256,8 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
         if (checkForRejectOrByPass(command, forced, result)) return;
 
         if (myRequestFocusCmd == command) {
-          final ActionCallback.TimedOut focusTimeout =
-            new ActionCallback.TimedOut(Registry.intValue("actionSystem.commandProcessingTimeout"),
+          final TimedOutCallback focusTimeout =
+            new TimedOutCallback(Registry.intValue("actionSystem.commandProcessingTimeout"),
                                         "Focus command timed out, cmd=" + command, command.getAllocation(), true) {
               @Override
               protected void onTimeout() {
@@ -692,15 +695,45 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
   }
 
   @Override
-  public void typeAheadUntil(final ActionCallback done) {
-    assertDispatchThread();
-
+  public void typeAheadUntil(final ActionCallback callback) {
     if (!isTypeaheadEnabled()) return;
 
+    final long currentTime = System.currentTimeMillis();
+    final ActionCallback done;
+    if (!Registry.is("type.ahead.logging.enabled")) {
+      done = callback;
+    } else {
+      final String id = new Exception().getStackTrace()[2].getClassName();
+      //LOG.setLevel(Level.ALL);
+      final SimpleDateFormat dateFormat = new SimpleDateFormat("dd MMM yyyy HH:ss:SSS", Locale.US);
+      LOG.info(dateFormat.format(System.currentTimeMillis()) + "\tStarted:  " + id);
+      done = new ActionCallback();
+      callback.doWhenDone(new Runnable() {
+        @Override
+        public void run() {
+          done.setDone();
+          LOG.info(dateFormat.format(System.currentTimeMillis()) + "\tDone:     " + id);
+        }
+      });
+      callback.doWhenRejected(new Runnable() {
+        @Override
+        public void run() {
+          done.setRejected();
+          LOG.info(dateFormat.format(System.currentTimeMillis()) + "\tRejected: " + id);
+        }
+      });
+    }
+    assertDispatchThread();
+
     myTypeAheadRequestors.add(done);
-    done.notify(new ActionCallback.TimedOut(Registry.intValue("actionSystem.commandProcessingTimeout"),
+    done.notify(new TimedOutCallback(Registry.intValue("actionSystem.commandProcessingTimeout"),
                                             "Typeahead request blocked",
-                                            new Exception(),
+                                            new Exception() {
+                                              @Override
+                                              public String getMessage() {
+                                                return "Time: " + (System.currentTimeMillis() - currentTime);
+                                              }
+                                            },
                                             true).doWhenProcessed(new Runnable() {
       @Override
       public void run() {
@@ -766,14 +799,10 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
     return modalityCount;
   }
 
-  private boolean isModalContextPopup(JRootPane rootPane) {
+  private static boolean isModalContextPopup(JRootPane rootPane) {
     final JBPopup popup = (JBPopup)rootPane.getClientProperty(JBPopup.KEY);
     return popup != null && popup.isModalContext();
   } 
-  
-  public void suspendKeyProcessingUntil(@NotNull final ActionCallback done) {
-    typeAheadUntil(done);
- }
 
   public Expirable getTimestamp(final boolean trackOnlyForcedCommands) {
     assertDispatchThread();

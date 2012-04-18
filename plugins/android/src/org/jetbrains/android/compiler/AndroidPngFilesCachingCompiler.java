@@ -16,7 +16,7 @@ import org.jetbrains.android.compiler.tools.AndroidApt;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.sdk.AndroidPlatform;
 import org.jetbrains.android.util.AndroidBundle;
-import org.jetbrains.android.util.AndroidUtils;
+import org.jetbrains.android.util.AndroidCommonUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -58,7 +58,7 @@ public class AndroidPngFilesCachingCompiler implements SourceGeneratingCompiler 
             continue;
           }
 
-          final int platformToolsRevision = platform.getSdk().getPlatformToolsRevision();
+          final int platformToolsRevision = platform.getSdkData().getPlatformToolsRevision();
           if (platformToolsRevision > 0 && platformToolsRevision <= 7) {
             // png files cache is supported since platform-tools-r8
             continue;
@@ -147,6 +147,7 @@ public class AndroidPngFilesCachingCompiler implements SourceGeneratingCompiler 
     private final Module myModule;
     private final IAndroidTarget myTarget;
     private final VirtualFile myResourceDir;
+    private final MyValidityState myValidityState;
 
     private MyItem(@NotNull Module module,
                    @NotNull IAndroidTarget target,
@@ -154,6 +155,7 @@ public class AndroidPngFilesCachingCompiler implements SourceGeneratingCompiler 
       myModule = module;
       myTarget = target;
       myResourceDir = resourceDir;
+      myValidityState = new MyValidityState(myTarget, myResourceDir);
     }
 
     @NotNull
@@ -184,7 +186,7 @@ public class AndroidPngFilesCachingCompiler implements SourceGeneratingCompiler 
 
     @Override
     public ValidityState getValidityState() {
-      return new MyValidityState(myTarget, myResourceDir);
+      return myValidityState;
     }
   }
 
@@ -218,7 +220,7 @@ public class AndroidPngFilesCachingCompiler implements SourceGeneratingCompiler 
           collectPngFiles(child, visited);
         }
       }
-      else if (AndroidUtils.PNG_EXTENSION.equals(file.getExtension())) {
+      else if (AndroidCommonUtils.PNG_EXTENSION.equals(file.getExtension())) {
         myTimestamps.put(file.getPath(), file.getTimeStamp());
       }
     }

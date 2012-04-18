@@ -61,6 +61,7 @@ abstract class BaseFileConfigurableStoreImpl extends ComponentStoreImpl {
       myVersion = ProjectManagerImpl.CURRENT_FORMAT_VERSION;
     }
 
+    @Override
     protected void load(@NotNull final Element rootElement) throws IOException {
       super.load(rootElement);
 
@@ -73,6 +74,7 @@ abstract class BaseFileConfigurableStoreImpl extends ComponentStoreImpl {
       }
     }
 
+    @Override
     @NotNull
     protected Element save() {
       final Element root = super.save();
@@ -80,16 +82,19 @@ abstract class BaseFileConfigurableStoreImpl extends ComponentStoreImpl {
       return root;
     }
 
+    @Override
     public XmlElementStorage.StorageData clone() {
       return new BaseStorageData(this);
     }
 
+    @Override
     protected int computeHash() {
       int result = super.computeHash();
       result = result*31 + myVersion;
       return result;
     }
 
+    @Override
     @Nullable
     public Set<String> getDifference(final XmlElementStorage.StorageData storageData, PathMacroSubstitutor substitutor) {
       final BaseStorageData data = (BaseStorageData)storageData;
@@ -105,6 +110,7 @@ abstract class BaseFileConfigurableStoreImpl extends ComponentStoreImpl {
     return ourConversionProblemsStorage;
   }
 
+  @Override
   public void load() throws IOException, StateStorageException {
     getMainStorageData(); //load it
   }
@@ -118,6 +124,7 @@ abstract class BaseFileConfigurableStoreImpl extends ComponentStoreImpl {
     return myDefaultsStateStorage;
   }
 
+  @Override
   public StateStorageManager getStateStorageManager() {
     if (myStateStorageManager == null) {
       myStateStorageManager = createStateStorageManager();

@@ -27,7 +27,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
-import com.intellij.openapi.fileChooser.FileChooserUtil;
+import com.intellij.openapi.fileChooser.impl.FileChooserUtil;
 import com.intellij.openapi.fileChooser.FileElement;
 import com.intellij.openapi.fileChooser.FileSystemTree;
 import com.intellij.openapi.fileChooser.impl.FileComparator;
@@ -133,9 +133,7 @@ public class FileSystemTreeImpl implements FileSystemTree {
     TreeUtil.installActions(myTree);
 
     myTree.getSelectionModel().setSelectionMode(
-        myTreeStructure.getChooserDescriptor().getChooseMultiple() ?
-        TreeSelectionModel.DISCONTIGUOUS_TREE_SELECTION :
-        TreeSelectionModel.SINGLE_TREE_SELECTION
+      descriptor.getChooseMultiple() ? TreeSelectionModel.DISCONTIGUOUS_TREE_SELECTION : TreeSelectionModel.SINGLE_TREE_SELECTION
     );
     registerTreeActions();
 
@@ -258,7 +256,7 @@ public class FileSystemTreeImpl implements FileSystemTree {
   }
 
   @Nullable
-  private static FileElement getFileElementFor(VirtualFile file) {
+  private static FileElement getFileElementFor(@NotNull VirtualFile file) {
     VirtualFile selectFile;
 
     if ((file.getFileSystem() instanceof JarFileSystem) && file.getParent() == null) {
@@ -339,17 +337,16 @@ public class FileSystemTreeImpl implements FileSystemTree {
     final DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
     if (!(node.getUserObject() instanceof FileNodeDescriptor)) return null;
     final FileElement element = ((FileNodeDescriptor)node.getUserObject()).getElement();
-    final VirtualFile file = element.getFile();
-    FileChooserUtil.setSelectionPath(file, element.getPath());
-    return file;
+    return element.getFile();
   }
 
   @Nullable
   public VirtualFile getNewFileParent() {
-    if (getSelectedFile() != null) return getSelectedFile();
+    final VirtualFile selected = getSelectedFile();
+    if (selected != null) return selected;
 
     final List<VirtualFile> roots = myDescriptor.getRoots();
-    return roots.size() > 0 ? roots.get(0) : null;
+    return roots.size() == 1 ? roots.get(0) : null;
   }
 
   @NotNull
@@ -358,27 +355,18 @@ public class FileSystemTreeImpl implements FileSystemTree {
       @Override
       public VirtualFile fun(final FileElement element) {
         final VirtualFile file = element.getFile();
-        if (file == null || !file.isValid()) return null;
-        FileChooserUtil.setSelectionPath(file, element.getPath());
-        return file;
+        return file != null && file.isValid() ? file : null;
       }
     });
     return VfsUtil.toVirtualFileArray(files);
   }
 
+  /** @deprecated use {@linkplain FileChooserUtil#getChosenFiles(com.intellij.openapi.fileChooser.FileChooserDescriptor, java.util.List)} (to remove in IDEA 12) */
+  @SuppressWarnings("UnusedDeclaration")
   @NotNull
   public VirtualFile[] getChosenFiles() {
-    final List<VirtualFile> files = collectSelectedElements(new NullableFunction<FileElement, VirtualFile>() {
-      @Override
-      public VirtualFile fun(final FileElement element) {
-        VirtualFile file = element.getFile();
-        if (file == null || !file.isValid()) return null;
-        file = myTreeStructure.getChooserDescriptor().getFileToSelect(file);
-        FileChooserUtil.setSelectionPath(file, element.getPath());
-        return file;
-      }
-    });
-    return VfsUtil.toVirtualFileArray(files);
+    final List<VirtualFile> selectedFiles = Arrays.asList(getSelectedFiles());
+    return VfsUtil.toVirtualFileArray(FileChooserUtil.getChosenFiles(myTreeStructure.getChooserDescriptor(), selectedFiles));
   }
 
   private <T> List<T> collectSelectedElements(final Function<FileElement, T> converter) {
@@ -404,17 +392,17 @@ public class FileSystemTreeImpl implements FileSystemTree {
     return selectedPaths != null && selectedPaths.length != 0;
   }
 
-  public boolean isUnderRoots(VirtualFile file) {
+  @Override
+  public boolean isUnderRoots(@NotNull VirtualFile file) {
     final List<VirtualFile> roots = myDescriptor.getRoots();
-    if (roots.size() == 0) {
-      return true;
-    }
+    if (roots.size() == 0) return true;
+
     for (VirtualFile root : roots) {
-      if (root == null) continue;
-      if (VfsUtilCore.isAncestor(root, file, false)) {
+      if (root != null && VfsUtilCore.isAncestor(root, file, false)) {
         return true;
       }
     }
+
     return false;
   }
 
@@ -447,7 +435,6 @@ public class FileSystemTreeImpl implements FileSystemTree {
             final FileElement element = ((FileNodeDescriptor)object).getElement();
             final VirtualFile file = element.getFile();
             if (file != null) {
-              FileChooserUtil.setSelectionPath(file, element.getPath());
               selection.add(file);
             }
           }

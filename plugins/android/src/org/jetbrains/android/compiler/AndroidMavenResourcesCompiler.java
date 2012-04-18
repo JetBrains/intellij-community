@@ -139,6 +139,7 @@ public class AndroidMavenResourcesCompiler implements SourceGeneratingCompiler {
     final String myPackage;
     final File myGeneratedFile;
     final String mySourceRootPath;
+    private final MyValidityState myValidityState;
 
     private MyGenerationItem(@NotNull Module module, @NotNull String aPackage, @NotNull String sourceRootPath) {
       myModule = module;
@@ -146,6 +147,7 @@ public class AndroidMavenResourcesCompiler implements SourceGeneratingCompiler {
       myGeneratedFile =
         new File(sourceRootPath, aPackage.replace('.', File.separatorChar) + File.separator + AndroidCommonUtils.R_JAVA_FILENAME);
       mySourceRootPath = sourceRootPath;
+      myValidityState = new MyValidityState(myModule);
     }
 
     @Nullable
@@ -154,7 +156,7 @@ public class AndroidMavenResourcesCompiler implements SourceGeneratingCompiler {
     }
 
     public ValidityState getValidityState() {
-      return new MyValidityState(myModule);
+      return myValidityState;
     }
 
     public Module getModule() {

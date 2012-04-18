@@ -29,8 +29,8 @@ import org.jetbrains.idea.maven.project.MavenProject;
 import java.util.List;
 
 public class MavenFilteredPropertyPsiReference extends MavenPropertyPsiReference {
-  public MavenFilteredPropertyPsiReference(MavenProject mavenProject, PsiElement element, String text, TextRange range, boolean isSoft) {
-    super(mavenProject, element, text, range, isSoft);
+  public MavenFilteredPropertyPsiReference(MavenProject mavenProject, PsiElement element, String text, TextRange range) {
+    super(mavenProject, element, text, range, true);
   }
 
   @Override
@@ -55,7 +55,7 @@ public class MavenFilteredPropertyPsiReference extends MavenPropertyPsiReference
     for (String each : myMavenProject.getFilters()) {
       VirtualFile file = LocalFileSystem.getInstance().findFileByPath(each);
       if (file == null) continue;
-      collectPropertiesFileVariants(MavenDomUtil.getPropertiesFile(myProject, file), "", result);
+      collectPropertiesFileVariants(MavenDomUtil.getPropertiesFile(myProject, file), null, result);
     }
   }
 

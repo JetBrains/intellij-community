@@ -63,6 +63,7 @@ import com.intellij.openapi.vfs.VirtualFilePropertyEvent;
 import com.intellij.profile.Profile;
 import com.intellij.profile.ProfileChangeAdapter;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
+import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiDocumentManagerImpl;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
@@ -129,7 +130,7 @@ class DaemonListeners implements Disposable {
       @Override
       public void caretPositionChanged(CaretEvent e) {
         Editor editor = e.getEditor();
-        if (!worthBothering(editor.getDocument(), editor.getProject())) {
+        if (!editor.getComponent().isShowing() || !worthBothering(editor.getDocument(), editor.getProject())) {
           return; //no need to stop daemon if something happened in the console
         }
 
@@ -147,31 +148,38 @@ class DaemonListeners implements Disposable {
       @Override
       public void activeEditorsChanged(@NotNull List<Editor> editors) {
         List<Editor> activeEditors = getActiveEditors();
-        if (!myActiveEditors.equals(activeEditors)) {
-          myActiveEditors = activeEditors;
-          stopDaemon(true);  // do not stop daemon if idea loses/gains focus
-          if (LaterInvocator.isInModalContext()) {
-            // editor appear in modal context, reenable the daemon
-            myDaemonCodeAnalyzer.setUpdateByTimerEnabled(true);
-          }
+        if (myActiveEditors.equals(activeEditors)) {
+          return;
+        }
+        myActiveEditors = activeEditors;
+        stopDaemon(true);  // do not stop daemon if idea loses/gains focus
+        if (LaterInvocator.isInModalContext()) {
+          // editor appear in modal context, re-enable the daemon
+          myDaemonCodeAnalyzer.setUpdateByTimerEnabled(true);
         }
       }
     };
     myEditorTracker.addEditorTrackerListener(editorTrackerListener, this);
 
-    EditorFactoryListener editorFactoryListener = new EditorFactoryAdapter() {
+    EditorFactoryListener editorFactoryListener = new EditorFactoryListener() {
       @Override
-      public void editorCreated(EditorFactoryEvent event) {
+      public void editorCreated(@NotNull EditorFactoryEvent event) {
         Editor editor = event.getEditor();
         Document document = editor.getDocument();
         Project editorProject = editor.getProject();
         // worthBothering() checks for getCachedPsiFile, so call getPsiFile here
         PsiFile file = editorProject == null ? null : PsiDocumentManager.getInstance(editorProject).getPsiFile(document);
-        if (!worthBothering(document, editorProject)) {
+        if (!editor.getComponent().isShowing() || !worthBothering(document, editorProject)) {
           LOG.debug("Not worth: " + file);
           return;
         }
         myDaemonCodeAnalyzer.repaintErrorStripeRenderer(editor);
+      }
+
+      @Override
+      public void editorReleased(@NotNull EditorFactoryEvent event) {
+        // mem leak after closing last editor otherwise
+        myDaemonCodeAnalyzer.hideLastIntentionHint();
       }
     };
     EditorFactory.getInstance().addEditorFactoryListener(editorFactoryListener, this);
@@ -228,8 +236,9 @@ class DaemonListeners implements Disposable {
     CommandProcessor.getInstance().addCommandListener(new MyCommandListener(), this);
     ApplicationListener applicationListener = new MyApplicationListener();
     ApplicationManager.getApplication().addApplicationListener(applicationListener, this);
-    EditorColorsManager.getInstance().addEditorColorsListener(new MyEditorColorsListener(),this);
+    EditorColorsManager.getInstance().addEditorColorsListener(new MyEditorColorsListener(), this);
     InspectionProfileManager.getInstance().addProfileChangeListener(new MyProfileChangeListener(), this);
+    InspectionProjectProfileManager.getInstance(project).addProfilesListener(new MyProfileChangeListener(), this);
     TodoConfiguration.getInstance().addPropertyChangeListener(new MyTodoListener(), this);
     ActionManagerEx.getInstanceEx().addAnActionListener(new MyAnActionListener(), this);
     VirtualFileManager.getInstance().addVirtualFileListener(new VirtualFileAdapter() {

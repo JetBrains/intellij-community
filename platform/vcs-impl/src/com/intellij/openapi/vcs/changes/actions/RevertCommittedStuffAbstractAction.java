@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,36 +18,35 @@ package com.intellij.openapi.vcs.changes.actions;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.impl.patch.BinaryFilePatch;
 import com.intellij.openapi.diff.impl.patch.FilePatch;
 import com.intellij.openapi.diff.impl.patch.IdeaTextPatchBuilder;
 import com.intellij.openapi.diff.impl.patch.formove.PatchApplier;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.changes.BackgroundFromStartOption;
-import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ChangeList;
-import com.intellij.openapi.vcs.changes.ChangeListManager;
+import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.ui.ChangeListChooser;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.WaitForProgressToShow;
 import com.intellij.util.containers.Convertor;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 abstract class RevertCommittedStuffAbstractAction extends AnAction implements DumbAware {
   private final Convertor<AnActionEvent, Change[]> myForUpdateConvertor;
   private final Convertor<AnActionEvent, Change[]> myForPerformConvertor;
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.actions.RevertCommittedStuffAbstractAction");
 
   public RevertCommittedStuffAbstractAction(final Convertor<AnActionEvent, Change[]> forUpdateConvertor,
                                             final Convertor<AnActionEvent, Change[]> forPerformConvertor) {
@@ -63,6 +62,7 @@ abstract class RevertCommittedStuffAbstractAction extends AnAction implements Du
     if (changes == null || changes.length == 0) return;
     final List<Change> changesList = new ArrayList<Change>();
     Collections.addAll(changesList, changes);
+    FileDocumentManager.getInstance().saveAllDocuments();
 
     String defaultName = null;
     final ChangeList[] changeLists = e.getData(VcsDataKeys.CHANGE_LISTS);
@@ -81,7 +81,8 @@ abstract class RevertCommittedStuffAbstractAction extends AnAction implements Du
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         try {
-          patches.addAll(IdeaTextPatchBuilder.buildPatch(project, changesList, baseDir.getPresentableUrl(), true));
+          final List<Change> preprocessed = ChangesPreprocess.preprocessChangesRemoveDeletedForDuplicateMoved(changesList);
+          patches.addAll(IdeaTextPatchBuilder.buildPatch(project, preprocessed, baseDir.getPresentableUrl(), true));
         }
         catch (final VcsException ex) {
           WaitForProgressToShow.runOrInvokeLaterAboveProgress(new Runnable() {

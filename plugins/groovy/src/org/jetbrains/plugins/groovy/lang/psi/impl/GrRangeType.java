@@ -77,8 +77,9 @@ public class GrRangeType extends GrLiteralClassType {
     return PsiType.EMPTY_ARRAY;
   }
 
+  @NotNull
   @Override
-  public PsiClassType setLanguageLevel(LanguageLevel languageLevel) {
+  public PsiClassType setLanguageLevel(@NotNull LanguageLevel languageLevel) {
     return new GrRangeType(languageLevel, myScope, myFacade, myLeft, myRight);
   }
 

@@ -1,9 +1,25 @@
+/*
+ * Copyright 2000-2012 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.jetbrains.jps.android;
 
 import com.android.sdklib.IAndroidTarget;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
@@ -13,9 +29,11 @@ import org.jetbrains.android.util.AndroidCompilerMessageKind;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.Module;
-import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.ProjectPaths;
-import org.jetbrains.jps.incremental.*;
+import org.jetbrains.jps.incremental.CompileContext;
+import org.jetbrains.jps.incremental.ExternalProcessUtil;
+import org.jetbrains.jps.incremental.ProjectBuildException;
+import org.jetbrains.jps.incremental.ProjectLevelBuilder;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
 import org.jetbrains.jps.incremental.messages.ProgressMessage;
@@ -28,37 +46,57 @@ import java.util.*;
 /**
  * @author Eugene.Kudelevsky
  */
-// todo: save validity state
-// todo: support light builds (for tests)
-
-public class AndroidDexBuilder extends ModuleLevelBuilder {
+public class AndroidDexBuilder extends ProjectLevelBuilder {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.android.AndroidDexBuilder");
 
   @NonNls private static final String BUILDER_NAME = "android-dex";
 
-  protected AndroidDexBuilder() {
-    super(BuilderCategory.CLASS_POST_PROCESSOR);
-  }
-
   @Override
-  public ExitCode build(CompileContext context, ModuleChunk chunk) throws ProjectBuildException {
-    if (context.isCompilingTests() || !AndroidJpsUtil.containsAndroidFacet(chunk)) {
-      return ModuleLevelBuilder.ExitCode.OK;
+  public void build(CompileContext context) throws ProjectBuildException {
+    if (!AndroidJpsUtil.containsAndroidFacet(context.getProject()) || AndroidJpsUtil.isLightBuild(context)) {
+      return;
     }
-    context.processMessage(new ProgressMessage(AndroidJpsBundle.message("android.jps.progress.dex")));
 
     try {
-      return doBuild(context, chunk);
+      doBuild(context);
+    }
+    catch (ProjectBuildException e) {
+      throw e;
     }
     catch (Exception e) {
-      return AndroidJpsUtil.handleException(context, e, BUILDER_NAME);
+      AndroidJpsUtil.handleException(context, e, BUILDER_NAME);
     }
   }
 
-  private static ExitCode doBuild(CompileContext context, ModuleChunk chunk) {
+  private static void doBuild(CompileContext context) throws IOException, ProjectBuildException {
+    final File root = context.getDataManager().getDataStorageRoot();
+
+    AndroidFileSetStorage dexStateStorage = null;
+    AndroidFileSetStorage proguardStateStorage = null;
+    try {
+      dexStateStorage = new AndroidFileSetStorage(root, "dex");
+      proguardStateStorage = new AndroidFileSetStorage(root, "proguard");
+
+      if (!doDexBuild(context, dexStateStorage, proguardStateStorage)) {
+        throw new ProjectBuildException();
+      }
+    }
+    finally {
+      if (proguardStateStorage != null) {
+        proguardStateStorage.close();
+      }
+      if (dexStateStorage != null) {
+        dexStateStorage.close();
+      }
+    }
+  }
+
+  private static boolean doDexBuild(@NotNull CompileContext context,
+                                    @NotNull AndroidFileSetStorage dexStateStorage,
+                                    @NotNull AndroidFileSetStorage proguardStateStorage) {
     boolean success = true;
 
-    for (Module module : chunk.getModules()) {
+    for (Module module : context.getProject().getModules().values()) {
       final AndroidFacet facet = AndroidJpsUtil.getFacet(module);
       if (facet == null || facet.getLibrary()) {
         continue;
@@ -82,45 +120,87 @@ public class AndroidDexBuilder extends ModuleLevelBuilder {
         continue;
       }
 
-      // todo: support proguard
-
       final File classesDir = projectPaths.getModuleOutputDir(module, false);
-
       if (classesDir == null || !classesDir.isDirectory()) {
         context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.INFO, AndroidJpsBundle
           .message("android.jps.warnings.dex.no.compiled.files", module.getName())));
         continue;
       }
+      final Set<String> externalLibraries = AndroidJpsUtil.getExternalLibraries(projectPaths, module);
 
-      final Set<String> fileSet = new HashSet<String>();
-      AndroidJpsUtil.addSubdirectories(classesDir, fileSet);
-      fileSet.addAll(AndroidJpsUtil.getExternalLibraries(projectPaths, module));
+      // todo: read proguard options from Android facet settings if there is no settings in the context
 
-      for (String filePath : AndroidJpsUtil.getClassdirsOfDependentModules(projectPaths, module)) {
-        if (!classesDir.getPath().equals(filePath)) {
-          fileSet.add(filePath);
+      final String proguardCfgPath = context.getBuilderParameter(AndroidCommonUtils.PROGUARD_CFG_PATH_OPTION);
+      final String includeSystemProguardCfgOption = context.getBuilderParameter(AndroidCommonUtils.INCLUDE_SYSTEM_PROGUARD_FILE_OPTION);
+      final boolean includeSystemProguardCfg = Boolean.parseBoolean(includeSystemProguardCfgOption);
+      final Set<String> fileSet;
+
+      try {
+        if (proguardCfgPath != null) {
+          final String outputJarPath =
+            FileUtil.toSystemDependentName(dexOutputDir.getPath() + '/' + AndroidCommonUtils.PROGUARD_OUTPUT_JAR_NAME);
+
+          if (!runProguardIfNecessary(facet, classesDir, androidSdk, target, externalLibraries, context,
+                                      outputJarPath, proguardCfgPath, includeSystemProguardCfg, proguardStateStorage)) {
+            success = false;
+            continue;
+          }
+          fileSet = Collections.singleton(outputJarPath);
+        }
+        else {
+          fileSet = new HashSet<String>();
+          AndroidJpsUtil.addSubdirectories(classesDir, fileSet);
+          fileSet.addAll(externalLibraries);
+
+          for (String filePath : AndroidJpsUtil.getClassdirsOfDependentModulesAndPackagesLibraries(projectPaths, module)) {
+            if (!classesDir.getPath().equals(filePath)) {
+              fileSet.add(filePath);
+            }
+          }
+
+          if (facet.isPackTestCode()) {
+            final File testsClassDir = projectPaths.getModuleOutputDir(module, true);
+
+            if (testsClassDir != null && testsClassDir.isDirectory()) {
+              AndroidJpsUtil.addSubdirectories(testsClassDir, fileSet);
+            }
+          }
+        }
+        final AndroidFileSetState newState = new AndroidFileSetState(fileSet, AndroidJpsUtil.CLASSES_AND_JARS_FILTER, true);
+
+        if (context.isMake()) {
+          final AndroidFileSetState oldState = dexStateStorage.getState(module.getName());
+          if (oldState != null && oldState.equalsTo(newState)) {
+            continue;
+          }
+        }
+
+        if (fileSet.size() == 0) {
+          continue;
+        }
+
+        final String[] files = new String[fileSet.size()];
+        int i = 0;
+        for (String filePath : fileSet) {
+          files[i++] = FileUtil.toSystemDependentName(filePath);
+        }
+
+        context.processMessage(new ProgressMessage(AndroidJpsBundle.message("android.jps.progress.dex", module.getName())));
+
+        if (!runDex(androidSdk, target, dexOutputDir.getPath(), files, context)) {
+          success = false;
+          dexStateStorage.update(module.getName(), null);
+        }
+        else {
+          dexStateStorage.update(module.getName(), newState);
         }
       }
-
-      if (facet.isLibrary()) {
-        final File testsClassDir = projectPaths.getModuleOutputDir(module, true);
-
-        if (testsClassDir != null && testsClassDir.isDirectory()) {
-          AndroidJpsUtil.addSubdirectories(testsClassDir, fileSet);
-        }
-      }
-
-      final String[] files = new String[fileSet.size()];
-      int i = 0;
-      for (String filePath : fileSet) {
-        files[i++] = FileUtil.toSystemDependentName(filePath);
-      }
-
-      if (!runDex(androidSdk, target, dexOutputDir.getPath(), files, context)) {
-        success = false;
+      catch (IOException e) {
+        AndroidJpsUtil.reportExceptionError(context, null, e, BUILDER_NAME);
+        return false;
       }
     }
-    return success ? ExitCode.OK : ExitCode.ABORT;
+    return success;
   }
 
   @Override
@@ -133,11 +213,11 @@ public class AndroidDexBuilder extends ModuleLevelBuilder {
     return "Android Dex Builder";
   }
 
-  public static boolean runDex(@NotNull AndroidSdk sdk,
-                               @NotNull IAndroidTarget target,
-                               @NotNull String outputDir,
-                               @NotNull String[] compileTargets,
-                               @NotNull CompileContext context) {
+  private static boolean runDex(@NotNull AndroidSdk sdk,
+                                @NotNull IAndroidTarget target,
+                                @NotNull String outputDir,
+                                @NotNull String[] compileTargets,
+                                @NotNull CompileContext context) throws IOException {
     @SuppressWarnings("deprecation")
     final String dxJarPath = FileUtil.toSystemDependentName(target.getPath(IAndroidTarget.DX_JAR));
 
@@ -157,7 +237,7 @@ public class AndroidDexBuilder extends ModuleLevelBuilder {
 
     final List<String> classPath = new ArrayList<String>();
     classPath.add(ClasspathBootstrap.getResourcePath(AndroidDxRunner.class).getPath());
-    classPath.add(ClasspathBootstrap.getResourcePath(FileUtil.class).getPath());
+    classPath.add(ClasspathBootstrap.getResourcePath(FileUtilRt.class).getPath());
 
     final File outFile = new File(outFilePath);
     if (outFile.exists() && !outFile.delete()) {
@@ -173,23 +253,104 @@ public class AndroidDexBuilder extends ModuleLevelBuilder {
 
     LOG.info(AndroidCommonUtils.command2string(commandLine));
 
-    try {
-      final Process process = Runtime.getRuntime().exec(ArrayUtil.toStringArray(commandLine));
+    final Process process = Runtime.getRuntime().exec(ArrayUtil.toStringArray(commandLine));
 
-      final HashMap<AndroidCompilerMessageKind, List<String>> messages = new HashMap<AndroidCompilerMessageKind, List<String>>(3);
-      messages.put(AndroidCompilerMessageKind.ERROR, new ArrayList<String>());
-      messages.put(AndroidCompilerMessageKind.WARNING, new ArrayList<String>());
-      messages.put(AndroidCompilerMessageKind.INFORMATION, new ArrayList<String>());
+    final HashMap<AndroidCompilerMessageKind, List<String>> messages = new HashMap<AndroidCompilerMessageKind, List<String>>(3);
+    messages.put(AndroidCompilerMessageKind.ERROR, new ArrayList<String>());
+    messages.put(AndroidCompilerMessageKind.WARNING, new ArrayList<String>());
+    messages.put(AndroidCompilerMessageKind.INFORMATION, new ArrayList<String>());
 
-      AndroidCommonUtils.handleDexCompilationResult(process, outFilePath, messages);
+    AndroidCommonUtils.handleDexCompilationResult(process, outFilePath, messages);
 
-      AndroidJpsUtil.addMessages(context, messages, BUILDER_NAME);
+    AndroidJpsUtil.addMessages(context, messages, BUILDER_NAME);
 
-      return messages.get(AndroidCompilerMessageKind.ERROR).size() == 0;
-    }
-    catch (IOException e) {
-      AndroidJpsUtil.reportExceptionError(context, null, e, BUILDER_NAME);
+    return messages.get(AndroidCompilerMessageKind.ERROR).size() == 0;
+  }
+
+  private static boolean runProguardIfNecessary(@NotNull AndroidFacet facet,
+                                                @NotNull File classesDir,
+                                                @NotNull AndroidSdk sdk,
+                                                @NotNull IAndroidTarget target,
+                                                @NotNull Set<String> externalJars,
+                                                @NotNull CompileContext context,
+                                                @NotNull String outputJarPath,
+                                                @NotNull String proguardCfgPath,
+                                                boolean includeSystemProguardCfg,
+                                                @NotNull AndroidFileSetStorage proguardStateStorage) throws IOException {
+    final Module module = facet.getModule();
+
+    final File proguardCfgFile = new File(proguardCfgPath);
+    if (!proguardCfgFile.exists()) {
+      context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR, "Cannot find file " + proguardCfgPath));
       return false;
     }
+
+    final File mainContentRoot = AndroidJpsUtil.getMainContentRoot(facet);
+    if (mainContentRoot == null) {
+      context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR, AndroidJpsBundle
+        .message("android.jps.errors.main.content.root.not.found", module.getName())));
+      return false;
+    }
+
+    final ProjectPaths paths = context.getProjectPaths();
+    final Set<String> classFilesDirs = new HashSet<String>();
+    final Set<String> libClassFilesDirs = new HashSet<String>();
+
+    AndroidJpsUtil.addSubdirectories(classesDir, classFilesDirs);
+
+    for (String depPath : AndroidJpsUtil.getClassdirsOfDependentModulesAndPackagesLibraries(paths, module)) {
+      final File depFile = new File(depPath);
+      if (depFile.isDirectory()) {
+        AndroidJpsUtil.addSubdirectories(depFile, classFilesDirs);
+      }
+      else {
+        AndroidJpsUtil.addSubdirectories(depFile.getParentFile(), libClassFilesDirs);
+      }
+    }
+
+    final String logsDirOsPath =
+          FileUtil.toSystemDependentName(mainContentRoot.getPath() + '/' + AndroidCommonUtils.DIRECTORY_FOR_LOGS_NAME);
+
+    final Set<String> allFiles = new HashSet<String>();
+    allFiles.addAll(classFilesDirs);
+    allFiles.addAll(libClassFilesDirs);
+    allFiles.addAll(externalJars);
+
+    final AndroidFileSetState newState = new AndroidFileSetState(allFiles, AndroidJpsUtil.CLASSES_AND_JARS_FILTER, true);
+    final AndroidFileSetState oldState = proguardStateStorage.getState(module.getName());
+    if (context.getTimestampStorage().getStamp(proguardCfgFile) == proguardCfgFile.lastModified() &&
+        newState.equalsTo(oldState)) {
+      return true;
+    }
+
+    final String[] classFilesDirOsPaths = ArrayUtil.toStringArray(classFilesDirs);
+    final String[] libClassFilesDirOsPaths = ArrayUtil.toStringArray(libClassFilesDirs);
+    final String[] externalJarOsPaths = ArrayUtil.toStringArray(externalJars);
+    final String inputJarOsPath = AndroidCommonUtils.buildTempInputJar(classFilesDirOsPaths, libClassFilesDirOsPaths);
+
+    final File logsDir = new File(logsDirOsPath);
+    if (!logsDir.exists()) {
+      if (!logsDir.mkdirs()) {
+        context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR, "Cannot create directory " + logsDirOsPath));
+        return false;
+      }
+    }
+
+    context.processMessage(new ProgressMessage(AndroidJpsBundle.message("android.jps.progress.proguard", module.getName())));
+
+    // todo: pass sdk revision
+    final Map<AndroidCompilerMessageKind, List<String>> messages =
+      AndroidCommonUtils.launchProguard(target, -1, sdk.getSdkPath(), proguardCfgPath, includeSystemProguardCfg, inputJarOsPath,
+                                        externalJarOsPaths, outputJarPath, logsDirOsPath);
+
+    AndroidJpsUtil.addMessages(context, messages, BUILDER_NAME);
+    final boolean success = messages.get(AndroidCompilerMessageKind.ERROR).isEmpty();
+
+    proguardStateStorage.update(module.getName(), success ? newState : null);
+
+    if (success) {
+      context.getTimestampStorage().saveStamp(proguardCfgFile, proguardCfgFile.lastModified());
+    }
+    return success;
   }
 }

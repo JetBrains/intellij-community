@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,8 +28,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -40,8 +38,6 @@ import java.util.List;
 public class PathsChooserComponent implements ComponentWithEmptyText {
   private JPanel myContentPane;
   private JBList myList;
-  private JButton myAddButton;
-  private JButton myRemoveButton;
   private final DefaultListModel myListModel;
 
   private List<String> myWorkingCollection;
@@ -55,39 +51,37 @@ public class PathsChooserComponent implements ComponentWithEmptyText {
   public PathsChooserComponent(@NotNull final List<String> collection,
                                @NotNull final PathProcessor processor,
                                @Nullable final Project project) {
+    myList = new JBList();
+    myList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     myInitialCollection = collection;
     myProject = project;
     myWorkingCollection = new ArrayList<String>(myInitialCollection);
     myListModel = new DefaultListModel();
     myList.setModel(myListModel);
 
-    // fill list
-    reset();
-
-    // listeners
-    myAddButton.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
+    myContentPane = ToolbarDecorator.createDecorator(myList).disableUpDownActions().setAddAction(new AnActionButtonRunnable() {
+      @Override
+      public void run(AnActionButton button) {
         final FileChooserDescriptor dirChooser = FileChooserDescriptorFactory.createSingleFolderDescriptor();
         dirChooser.setShowFileSystemRoots(true);
         dirChooser.setHideIgnored(true);
         dirChooser.setTitle(UIBundle.message("file.chooser.default.title"));
-        FileChooser.chooseFilesWithSlideEffect(dirChooser, myProject, null, new Consumer<VirtualFile[]>() {
+        FileChooser.chooseFiles(dirChooser, myProject, null, new Consumer<List<VirtualFile>>() {
           @Override
-          public void consume(VirtualFile[] files) {
+          public void consume(List<VirtualFile> files) {
             for (VirtualFile file : files) {
-            // adding to the end
+              // adding to the end
               final String path = file.getPath();
-              if (processor.addPath(myWorkingCollection, path)){
+              if (processor.addPath(myWorkingCollection, path)) {
                 myListModel.addElement(path);
               }
             }
           }
         });
       }
-    });
-
-    myRemoveButton.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
+    }).setRemoveAction(new AnActionButtonRunnable() {
+      @Override
+      public void run(AnActionButton button) {
         int selected = myList.getSelectedIndex();
         if (selected != -1) {
           // removing index
@@ -97,7 +91,10 @@ public class PathsChooserComponent implements ComponentWithEmptyText {
           }
         }
       }
-    });
+    }).createPanel();
+
+    // fill list
+    reset();
   }
 
   @Override

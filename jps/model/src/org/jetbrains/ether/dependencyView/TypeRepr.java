@@ -2,13 +2,14 @@ package org.jetbrains.ether.dependencyView;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.io.DataExternalizer;
+import org.jetbrains.asm4.Type;
 import org.jetbrains.ether.RW;
-import org.objectweb.asm.Type;
 
-import java.io.*;
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.LinkedList;
 
 /**
  * Created by IntelliJ IDEA.
@@ -18,50 +19,55 @@ import java.util.LinkedList;
  * To change this template use File | Settings | File Templates.
  */
 class TypeRepr {
-  private final static int PRIMITIVE_TYPE = 0;
-  private final static int CLASS_TYPE = 1;
-  private final static int ARRAY_TYPE = 2;
+  private static final byte PRIMITIVE_TYPE = 0x0;
+  private static final byte CLASS_TYPE = 0x1;
+  private static final byte ARRAY_TYPE = 0x2;
 
   private TypeRepr() {
 
   }
 
   interface AbstractType extends RW.Savable {
-    void updateClassUsages(DependencyContext context, DependencyContext.S owner, UsageRepr.Cluster s);
+    void updateClassUsages(DependencyContext context, int owner, UsageRepr.Cluster s);
     String getDescr(DependencyContext context);
     void save(DataOutput out);
   }
 
   public static class PrimitiveType implements AbstractType {
-    public final DependencyContext.S type;
+    public final int myType;
 
     @Override
     public String getDescr(final DependencyContext context) {
-      return context.getValue(type);
+      return context.getValue(myType);
     }
 
     @Override
-    public void updateClassUsages(final DependencyContext context, final DependencyContext.S owner, final UsageRepr.Cluster s) {
+    public void updateClassUsages(final DependencyContext context, final int owner, final UsageRepr.Cluster s) {
 
     }
 
     @Override
     public void save(final DataOutput out) {
       try {
-        out.writeInt(PRIMITIVE_TYPE);
-        type.save(out);
+        out.writeByte(PRIMITIVE_TYPE);
+        out.writeInt(myType);
       }
       catch (IOException e) {
         throw new RuntimeException(e);
       }
     }
 
-    PrimitiveType(final DependencyContext.S type) {
-      this.type = type;
+    PrimitiveType(final int type) {
+      this.myType = type;
     }
 
     PrimitiveType(final DataInput in) {
-      type = new DependencyContext.S(in);
+      try {
+        myType = in.readInt();
+      }
+      catch (IOException e) {
+        throw new RuntimeException(e);
+      }
     }
 
     @Override
@@ -71,12 +77,12 @@ class TypeRepr {
 
       final PrimitiveType that = (PrimitiveType)o;
 
-      return type.equals(that.type);
+      return myType == that.myType;
     }
 
     @Override
     public int hashCode() {
-      return type.hashCode();
+      return myType;
     }
   }
 
@@ -99,7 +105,7 @@ class TypeRepr {
     }
 
     @Override
-    public void updateClassUsages(final DependencyContext context, final DependencyContext.S owner, final UsageRepr.Cluster s) {
+    public void updateClassUsages(final DependencyContext context, final int owner, final UsageRepr.Cluster s) {
       elementType.updateClassUsages(context, owner, s);
     }
 
@@ -125,7 +131,7 @@ class TypeRepr {
     @Override
     public void save(final DataOutput out) {
       try {
-        out.writeInt(ARRAY_TYPE);
+        out.writeByte(ARRAY_TYPE);
         elementType.save(out);
       }
       catch (IOException e) {
@@ -135,7 +141,7 @@ class TypeRepr {
   }
 
   public static class ClassType implements AbstractType {
-    public final DependencyContext.S className;
+    public final int className;
     public final AbstractType[] typeArgs;
 
     @Override
@@ -144,18 +150,18 @@ class TypeRepr {
     }
 
     @Override
-    public void updateClassUsages(final DependencyContext context, final DependencyContext.S owner, final UsageRepr.Cluster s) {
+    public void updateClassUsages(final DependencyContext context, final int owner, final UsageRepr.Cluster s) {
       s.addUsage(owner, UsageRepr.createClassUsage(context, className));
     }
 
-    ClassType(final DependencyContext.S className) {
+    ClassType(final int className) {
       this.className = className;
       typeArgs = new AbstractType[0];
     }
 
     ClassType(final DependencyContext context, final DataInput in) {
       try {
-        className = new DependencyContext.S(in);
+        className = in.readInt();
         final int size = in.readInt();
         typeArgs = new AbstractType[size];
 
@@ -177,7 +183,7 @@ class TypeRepr {
 
       final ClassType classType = (ClassType)o;
 
-      if (className != null ? !className.equals(classType.className) : classType.className != null) return false;
+      if (className != classType.className) return false;
       if (!Arrays.equals(typeArgs, classType.typeArgs)) return false;
 
       return true;
@@ -185,7 +191,7 @@ class TypeRepr {
 
     @Override
     public int hashCode() {
-      int result = className != null ? className.hashCode() : 0;
+      int result = className;
       result = 31 * result + (typeArgs != null ? Arrays.hashCode(typeArgs) : 0);
       return result;
     }
@@ -193,8 +199,8 @@ class TypeRepr {
     @Override
     public void save(final DataOutput out) {
       try {
-        out.writeInt(CLASS_TYPE);
-        className.save(out);
+        out.writeByte(CLASS_TYPE);
+        out.writeInt(className);
         out.writeInt(typeArgs.length);
         for (AbstractType t : typeArgs) {
           t.save(out);
@@ -230,11 +236,11 @@ class TypeRepr {
     return acc;
   }
 
-  public static ClassType createClassType(final DependencyContext context, final DependencyContext.S s) {
+  public static ClassType createClassType(final DependencyContext context, final int s) {
     return (ClassType)context.getType(new ClassType(s));
   }
 
-  public static AbstractType getType(final DependencyContext context, final DependencyContext.S descr) {
+  public static AbstractType getType(final DependencyContext context, final int descr) {
     final Type t = Type.getType(context.getValue(descr));
 
     switch (t.getSort()) {
@@ -277,7 +283,8 @@ class TypeRepr {
 
         loop:
         while (true) {
-          switch (in.readInt()) {
+          final byte tag = in.readByte();
+          switch (tag) {
             case PRIMITIVE_TYPE:
               elementType = context.getType(new PrimitiveType(in));
               break loop;
@@ -289,6 +296,9 @@ class TypeRepr {
             case ARRAY_TYPE:
               level++;
               break;
+
+            default :
+              System.out.println("Unknown type!");
           }
         }
 

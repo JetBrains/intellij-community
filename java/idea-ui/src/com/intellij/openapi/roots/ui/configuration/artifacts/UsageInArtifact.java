@@ -1,10 +1,13 @@
 package com.intellij.openapi.roots.ui.configuration.artifacts;
 
+import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.LibraryProjectStructureElement;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.PlaceInProjectStructure;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureElement;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureElementUsage;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.elements.PackagingElement;
+import com.intellij.packaging.elements.PackagingElementFactory;
 
 import javax.swing.*;
 
@@ -80,5 +83,14 @@ public class UsageInArtifact extends ProjectStructureElementUsage {
   @Override
   public void removeSourceElement() {
     removeElement();
+  }
+
+  @Override
+  public void replaceElement(final ProjectStructureElement newElement) {
+    Library library = ((LibraryProjectStructureElement)newElement).getLibrary();
+    PackagingElement<?> newLibraryElement = PackagingElementFactory.getInstance().createLibraryFiles(library.getName(),
+                                                                                                     library.getTable().getTableLevel(),
+                                                                                                     null);
+    replaceElement(newLibraryElement);
   }
 }

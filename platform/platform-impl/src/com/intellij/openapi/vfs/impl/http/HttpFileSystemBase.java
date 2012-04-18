@@ -107,6 +107,7 @@ public abstract class HttpFileSystemBase extends HttpFileSystem {
     throw new UnsupportedOperationException();
   }
 
+  @NotNull
   @Override
   public String extractPresentableUrl(@NotNull String path) {
     return VirtualFileManager.constructUrl(myProtocol, path);

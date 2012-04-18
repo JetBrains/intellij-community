@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,10 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Set;
+
+import static java.util.Collections.singleton;
 
 public abstract class LocalFileSystem extends NewVirtualFileSystem {
   @NonNls public static final String PROTOCOL = "file";
@@ -64,20 +67,6 @@ public abstract class LocalFileSystem extends NewVirtualFileSystem {
     return false;
   }
 
-  /**
-   * Attempts to resolve a symbolic link represented by given file and returns link target.
-   *
-   * @since 11.0
-   * @param file a file to resolve.
-   * @return <code>this</code> if the file isn't a symbolic link;
-   *         instance of <code>VirtualFile</code> if the link was successfully resolved;
-   *         <code>null</code> otherwise
-   */
-  @Nullable
-  public VirtualFile getRealFile(@NotNull final VirtualFile file) {
-    return file;
-  }
-
   @Nullable
   public abstract VirtualFile findFileByIoFile(@NotNull File file);
 
@@ -110,38 +99,63 @@ public abstract class LocalFileSystem extends NewVirtualFileSystem {
 
   public abstract void refreshFiles(@NotNull Iterable<VirtualFile> files, boolean async, boolean recursive, @Nullable Runnable onFinish);
 
-  public abstract byte[] physicalContentsToByteArray(@NotNull VirtualFile virtualFile) throws IOException;
+  /** @deprecated use {@linkplain com.intellij.openapi.vfs.VirtualFile#contentsToByteArray()} (to remove in IDEA 13) */
+  @SuppressWarnings({"MethodMayBeStatic", "UnusedDeclaration"})
+  public byte[] physicalContentsToByteArray(@NotNull VirtualFile virtualFile) throws IOException{
+    return virtualFile.contentsToByteArray();
+  }
 
-  public abstract long physicalLength(@NotNull VirtualFile virtualFile) throws IOException;
+  /** @deprecated use {@linkplain VirtualFile#getLength()} (to remove in IDEA 13) */
+  @SuppressWarnings({"MethodMayBeStatic", "UnusedDeclaration"})
+  public long physicalLength(@NotNull VirtualFile virtualFile) throws IOException{
+    return virtualFile.getLength();
+  }
 
   public interface WatchRequest {
     @NotNull
     String getRootPath();
 
+    boolean isToWatchRecursively();
+
+    /** @deprecated implementation details (to remove in IDEA 13) */
+    @SuppressWarnings({"UnusedDeclaration"})
     @NotNull
     String getFileSystemRootPath();
 
-    boolean isToWatchRecursively();
-
+    /** @deprecated implementation details (to remove in IDEA 13) */
+    @SuppressWarnings({"UnusedDeclaration"})
     boolean dominates(@NotNull WatchRequest other);
   }
 
-  /**
-   * Adds this rootFile as the watch root for file system.
-   *
-   * @param rootPath           path to watch.
-   * @param toWatchRecursively whether the whole subtree should be monitored.
-   * @return request handle or null if rootFile does not belong to this file system.
-   */
   @Nullable
-  public abstract WatchRequest addRootToWatch(@NotNull final String rootPath, final boolean toWatchRecursively);
+  public WatchRequest addRootToWatch(@NotNull final String rootPath, final boolean watchRecursively) {
+    final Set<WatchRequest> result = addRootsToWatch(singleton(rootPath), watchRecursively);
+    return result.size() == 1 ? result.iterator().next() : null;
+  }
 
   @NotNull
-  public abstract Set<WatchRequest> addRootsToWatch(@NotNull final Collection<String> rootPaths, final boolean toWatchRecursively);
+  public abstract Set<WatchRequest> addRootsToWatch(@NotNull final Collection<String> rootPaths, final boolean watchRecursively);
 
-  public abstract void removeWatchedRoots(@NotNull final Collection<WatchRequest> rootsToWatch);
+  public void removeWatchedRoot(@Nullable final WatchRequest watchRequest) {
+    if (watchRequest != null) {
+      removeWatchedRoots(singleton(watchRequest));
+    }
+  }
 
-  public abstract void removeWatchedRoot(@NotNull final WatchRequest watchRequest);
+  public abstract void removeWatchedRoots(@NotNull final Collection<WatchRequest> watchRequests);
+
+  @Nullable
+  public WatchRequest replaceWatchedRoot(@Nullable final WatchRequest watchRequest,
+                                         @NotNull final String rootPath,
+                                         final boolean watchRecursively) {
+    final Set<WatchRequest> requests = watchRequest != null ? singleton(watchRequest) : Collections.<WatchRequest>emptySet();
+    final Set<WatchRequest> result = replaceWatchedRoots(requests, singleton(rootPath), watchRecursively);
+    return result.size() == 1 ? result.iterator().next() : null;
+  }
+
+  public abstract Set<WatchRequest> replaceWatchedRoots(@NotNull final Collection<WatchRequest> watchRequests,
+                                                        @NotNull final Collection<String> rootPaths,
+                                                        final boolean watchRecursively);
 
   public abstract void registerAuxiliaryFileOperationsHandler(@NotNull LocalFileOperationsHandler handler);
 

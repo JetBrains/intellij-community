@@ -244,7 +244,7 @@ public class MavenIndicesTest extends MavenIndicesTestCase {
     assertUnorderedElementsAreEqual(i2.getGroupIds(), "jmock");
 
     shutdownIndices();
-    damageFile(i1, "groupIds.dat", true);
+    damageFile(i1, "artifactIds-map.dat", true);
     initIndices();
 
     assertEquals(2, myIndices.getIndices().size());
@@ -307,7 +307,7 @@ public class MavenIndicesTest extends MavenIndicesTestCase {
     myIndices.updateOrRepair(index, true, getMavenGeneralSettings(), EMPTY_MAVEN_PROCESS);
 
     shutdownIndices();
-    damageFile(index, "groupIds.dat", false);
+    damageFile(index, "artifactIds-map.dat", false);
     initIndices();
 
     index = myIndices.getIndices().get(0);

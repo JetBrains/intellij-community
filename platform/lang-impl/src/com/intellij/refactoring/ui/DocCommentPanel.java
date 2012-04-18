@@ -41,7 +41,7 @@ public class DocCommentPanel extends JPanel {
 
   public DocCommentPanel(String title) {
     setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
-    myBorder = IdeBorderFactory.createTitledBorder(title, false, true, true,
+    myBorder = IdeBorderFactory.createTitledBorder(title, true,
                                                    new Insets(IdeBorderFactory.TITLED_BORDER_TOP_INSET,
                                                               UIUtil.DEFAULT_HGAP,
                                                               IdeBorderFactory.TITLED_BORDER_BOTTOM_INSET,

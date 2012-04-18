@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,10 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- */
-
-/*
- * @author max
  */
 package com.intellij.openapi.vfs.newvfs;
 
@@ -32,36 +28,49 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.util.Collection;
 
+/**
+ * @author max
+ */
 public abstract class NewVirtualFile extends VirtualFile implements VirtualFileWithId {
   private volatile long myModificationStamp = LocalTimeCounter.currentTime();
 
+  @Override
   public boolean isValid() {
     ApplicationManager.getApplication().assertReadAccessAllowed();
     return exists();
   }
 
+  @Override
   @NotNull
   public byte[] contentsToByteArray() throws IOException {
     throw new IOException("not applicable to the "+this);
   }
 
+  @Override
   @NotNull
   public abstract NewVirtualFileSystem getFileSystem();
 
+  @Override
   public abstract NewVirtualFile getParent();
 
+  @Override
+  @Nullable
+  public abstract NewVirtualFile getCanonicalFile();
+
+  @Override
   @Nullable
   public abstract NewVirtualFile findChild(@NotNull @NonNls final String name);
 
   @Nullable
-  public abstract NewVirtualFile refreshAndFindChild(final String name);
+  public abstract NewVirtualFile refreshAndFindChild(@NotNull String name);
 
   @Nullable
-  public abstract NewVirtualFile findChildIfCached(final String name);
+  public abstract NewVirtualFile findChildIfCached(@NotNull String name);
 
 
   public abstract void setTimeStamp(final long time) throws IOException;
 
+  @Override
   public abstract int getId();
 
   @Nullable
@@ -70,10 +79,12 @@ public abstract class NewVirtualFile extends VirtualFile implements VirtualFileW
   @Nullable
   public abstract NewVirtualFile findChildByIdIfCached(int id);
 
+  @Override
   public void refresh(final boolean asynchronous, final boolean recursive, final Runnable postRunnable) {
     RefreshQueue.getInstance().refresh(asynchronous, recursive, postRunnable, this);
   }
 
+  @Override
   public long getModificationStamp() {
     return myModificationStamp;
   }
@@ -92,6 +103,7 @@ public abstract class NewVirtualFile extends VirtualFile implements VirtualFileW
 
   public abstract void markClean();
 
+  @Override
   public void move(final Object requestor, @NotNull final VirtualFile newParent) throws IOException {
     if (!exists()) {
       throw new IOException("File to move does not exist: " + getPath());
@@ -111,6 +123,7 @@ public abstract class NewVirtualFile extends VirtualFile implements VirtualFileW
     }
 
     EncodingRegistry.doActionAndRestoreEncoding(this, new ThrowableComputable<VirtualFile, IOException>() {
+      @Override
       public VirtualFile compute() throws IOException {
         getFileSystem().moveFile(requestor, NewVirtualFile.this, newParent);
         return NewVirtualFile.this;
@@ -118,8 +131,10 @@ public abstract class NewVirtualFile extends VirtualFile implements VirtualFileW
     });
   }
 
+  @NotNull
   public abstract Collection<VirtualFile> getCachedChildren();
 
+  @NotNull
   /** iterated children will NOT contain NullVirtualFile.INSTANCE */
   public abstract Iterable<VirtualFile> iterInDbChildren();
 

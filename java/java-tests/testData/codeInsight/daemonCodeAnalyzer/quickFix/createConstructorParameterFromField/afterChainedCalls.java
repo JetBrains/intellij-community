@@ -4,11 +4,11 @@ class A {
   private int j;
 
   A(int field) {
-    this(0, field);
+    this(field, 0);
   }
 
-  A(int j, int field) {
-    this.j = j;
+  A(int field, int j) {
       this.field = field;
+      this.j = j;
   }
 }

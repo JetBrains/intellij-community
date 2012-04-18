@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.ui.tabs.impl;
 
 import com.intellij.ui.tabs.TabInfo;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.util.List;
@@ -28,15 +29,19 @@ public abstract class LayoutPassInfo {
     myVisibleInfos = visibleInfos;
   }
 
+  @Nullable
   public abstract TabInfo getPreviousFor(TabInfo info);
 
+  @Nullable
   public abstract TabInfo getNextFor(TabInfo info);
 
-  public TabInfo getPrevious(List<TabInfo> list, int i) {
+  @Nullable
+  public static TabInfo getPrevious(List<TabInfo> list, int i) {
     return i > 0 ? list.get(i - 1) : null;
   }
 
-  public TabInfo getNext(List<TabInfo> list, int i) {
+  @Nullable
+  public static TabInfo getNext(List<TabInfo> list, int i) {
     return i < list.size() - 1 ? list.get(i + 1) : null;
   }
 

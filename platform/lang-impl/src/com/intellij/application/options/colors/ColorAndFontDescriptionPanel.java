@@ -114,6 +114,7 @@ public class ColorAndFontDescriptionPanel extends JPanel {
     panel.add(new TailPanel(), gbConstraints);
 
     myCbBold.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         if (myActionListener != null) {
           myActionListener.actionPerformed(e);
@@ -121,6 +122,7 @@ public class ColorAndFontDescriptionPanel extends JPanel {
       }
     });
     myCbItalic.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         if (myActionListener != null) {
           myActionListener.actionPerformed(e);
@@ -188,6 +190,7 @@ public class ColorAndFontDescriptionPanel extends JPanel {
 
     myEffectsColorChooser.addActionListener(
       new ActionListener() {
+        @Override
         public void actionPerformed(ActionEvent e) {
           if (myActionListener != null) {
             myActionListener.actionPerformed(e);
@@ -198,6 +201,7 @@ public class ColorAndFontDescriptionPanel extends JPanel {
 
     myForegroundChooser.addActionListener(
       new ActionListener() {
+        @Override
         public void actionPerformed(ActionEvent e) {
           if (myActionListener != null) {
             myActionListener.actionPerformed(e);
@@ -208,6 +212,7 @@ public class ColorAndFontDescriptionPanel extends JPanel {
 
     myCbForeground.addActionListener(
       new ActionListener() {
+        @Override
         public void actionPerformed(ActionEvent e) {
           myForegroundChooser.setEnabled(myCbForeground.isSelected());
           if (myActionListener != null) {
@@ -219,6 +224,7 @@ public class ColorAndFontDescriptionPanel extends JPanel {
 
     myBackgroundChooser.addActionListener(
       new ActionListener() {
+        @Override
         public void actionPerformed(ActionEvent e) {
           if (myActionListener != null) {
             myActionListener.actionPerformed(e);
@@ -228,6 +234,7 @@ public class ColorAndFontDescriptionPanel extends JPanel {
     );
     myErrorStripeColorChooser.addActionListener(
       new ActionListener() {
+        @Override
         public void actionPerformed(ActionEvent e) {
           if (myActionListener != null) {
             myActionListener.actionPerformed(e);
@@ -238,6 +245,7 @@ public class ColorAndFontDescriptionPanel extends JPanel {
 
     myCbBackground.addActionListener(
       new ActionListener() {
+        @Override
         public void actionPerformed(ActionEvent e) {
           myBackgroundChooser.setEnabled(myCbBackground.isSelected());
           if (myActionListener != null) {
@@ -248,6 +256,7 @@ public class ColorAndFontDescriptionPanel extends JPanel {
     );
     myCbErrorStripe.addActionListener(
       new ActionListener() {
+        @Override
         public void actionPerformed(ActionEvent e) {
           myErrorStripeColorChooser.setEnabled(myCbErrorStripe.isSelected());
           if (myActionListener != null) {
@@ -260,6 +269,7 @@ public class ColorAndFontDescriptionPanel extends JPanel {
 
     myCbEffects.addActionListener(
       new ActionListener() {
+        @Override
         public void actionPerformed(ActionEvent e) {
           boolean checked = myCbEffects.isSelected();
           myEffectsColorChooser.setEnabled(checked);
@@ -272,6 +282,7 @@ public class ColorAndFontDescriptionPanel extends JPanel {
     );
 
     myEffectsCombo.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         if (!updatingEffects) {
           if (myActionListener != null) {

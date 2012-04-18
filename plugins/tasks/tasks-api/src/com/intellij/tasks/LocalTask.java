@@ -44,4 +44,6 @@ public abstract class LocalTask extends Task {
   public boolean isDefault() {
     return false;
   }
+
+  public abstract void setAssociatedChangelistId(String associatedChangelistId);
 }

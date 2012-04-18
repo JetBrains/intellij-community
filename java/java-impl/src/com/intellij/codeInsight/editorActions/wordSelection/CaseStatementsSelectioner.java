@@ -24,11 +24,13 @@ import java.util.List;
 import java.util.ArrayList;
 
 public class CaseStatementsSelectioner extends BasicSelectioner {
+    @Override
     public boolean canSelect(PsiElement e) {
       return  e.getParent() instanceof PsiCodeBlock &&
              e.getParent().getParent() instanceof PsiSwitchStatement;
     }
 
+    @Override
     public List<TextRange> select(PsiElement statement, CharSequence editorText, int cursorOffset, Editor editor) {
       List<TextRange> result = new ArrayList<TextRange>();
       PsiElement caseStart = statement;

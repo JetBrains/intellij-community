@@ -36,6 +36,7 @@ public class JavaShortClassNameIndex extends StringStubIndexExtension<PsiClass> 
     return ourInstance;
   }
 
+  @NotNull
   @Override
   public StubIndexKey<String, PsiClass> getKey() {
     return JavaStubIndexKeys.CLASS_SHORT_NAMES;

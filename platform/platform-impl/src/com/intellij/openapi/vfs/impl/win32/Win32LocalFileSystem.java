@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,8 @@ package com.intellij.openapi.vfs.impl.win32;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.FileAttributes;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.impl.local.LocalFileSystemBase;
 import com.intellij.util.ArrayUtil;
@@ -27,6 +29,8 @@ import java.io.FileNotFoundException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Set;
+
+import static com.intellij.util.BitUtil.isSet;
 
 /**
  * @author Dmitry Avdeev
@@ -177,29 +181,36 @@ public class Win32LocalFileSystem extends LocalFileSystemBase {
     }
   }
 
-  @Override
-  public WatchRequest addRootToWatch(@NotNull String rootPath, boolean toWatchRecursively) {
-    throw new UnsupportedOperationException();
-  }
-
   @NotNull
   @Override
-  public Set<WatchRequest> addRootsToWatch(@NotNull Collection<String> rootPaths, boolean toWatchRecursively) {
+  public Set<WatchRequest> addRootsToWatch(@NotNull Collection<String> rootPaths, boolean watchRecursively) {
     throw new UnsupportedOperationException();
   }
 
   @Override
-  public void removeWatchedRoots(@NotNull Collection<WatchRequest> rootsToWatch) {
+  public void removeWatchedRoots(@NotNull Collection<WatchRequest> watchRequests) {
     throw new UnsupportedOperationException();
   }
 
   @Override
-  public void removeWatchedRoot(@NotNull WatchRequest watchRequest) {
+  public Set<WatchRequest> replaceWatchedRoots(@NotNull Collection<WatchRequest> watchRequests, @NotNull Collection<String> rootPaths, boolean watchRecursively) {
     throw new UnsupportedOperationException();
   }
 
   @Override
   public int getBooleanAttributes(@NotNull VirtualFile file, int flags) {
     return myKernel.getBooleanAttributes(file.getPath(), flags);
+  }
+
+  @Override
+  public FileAttributes getAttributes(@NotNull final VirtualFile file) {
+    final FileInfo fileInfo = myKernel.doGetInfo(FileUtil.toSystemDependentName(file.getPath()));
+    if (fileInfo == null) return null;
+
+    final boolean isDirectory = isSet(fileInfo.attributes, Win32Kernel.FILE_ATTRIBUTE_DIRECTORY);
+    final boolean isSymlink = isSet(fileInfo.attributes, Win32Kernel.FILE_ATTRIBUTE_REPARSE_POINT);
+    final boolean isSpecial = isSet(fileInfo.attributes, Win32Kernel.FILE_ATTRIBUTE_DEVICE);
+    final boolean isWritable = !isSet(fileInfo.attributes, Win32Kernel.FILE_ATTRIBUTE_READONLY);
+    return new FileAttributes(isDirectory, isSymlink, isSpecial, fileInfo.length, fileInfo.timestamp, isWritable);
   }
 }

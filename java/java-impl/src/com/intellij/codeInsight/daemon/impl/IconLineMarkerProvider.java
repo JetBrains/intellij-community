@@ -56,7 +56,7 @@ public class IconLineMarkerProvider implements LineMarkerProvider {
   private final HashMap<String, Pair<Long, Icon>> iconsCache = new HashMap<String, Pair<Long, Icon>>();
 
   @Override
-  public LineMarkerInfo getLineMarkerInfo(PsiElement element) {
+  public LineMarkerInfo getLineMarkerInfo(@NotNull PsiElement element) {
     if (! DaemonCodeAnalyzerSettings.getInstance().SHOW_SMALL_ICONS_IN_GUTTER) return null;
 
     if (element instanceof PsiAssignmentExpression) {
@@ -171,7 +171,7 @@ public class IconLineMarkerProvider implements LineMarkerProvider {
   }
 
   @Override
-  public void collectSlowLineMarkers(List<PsiElement> elements, Collection<LineMarkerInfo> result) {
+  public void collectSlowLineMarkers(@NotNull List<PsiElement> elements, @NotNull Collection<LineMarkerInfo> result) {
   }
 
   private static boolean hasProperSize(Icon icon) {

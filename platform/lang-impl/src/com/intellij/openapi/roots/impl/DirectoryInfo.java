@@ -107,4 +107,8 @@ public class DirectoryInfo {
       this.orderEntries = new ArrayList<OrderEntry>(tmp);
     }
   }
+
+  public void setInternedOrderEntries(List<OrderEntry> internedOrderEntries) {
+    orderEntries = internedOrderEntries;
+  }
 }

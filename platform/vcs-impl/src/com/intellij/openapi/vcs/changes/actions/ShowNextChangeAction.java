@@ -57,7 +57,7 @@ public class ShowNextChangeAction extends AnAction implements DumbAware {
     if (diffViewer == null) return;
     final DiffRequest request = chain.moveForward();
     if (request != null) {
-      if (diffViewer.getType().equals(request.getType())) {
+      if (diffViewer.acceptsType(request.getType())) {
         diffViewer.setDiffRequest(request);
       } else {
         final Window window = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();

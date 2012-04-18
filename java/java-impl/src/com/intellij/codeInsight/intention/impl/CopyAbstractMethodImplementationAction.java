@@ -25,19 +25,23 @@ import org.jetbrains.annotations.NotNull;
  * @author yole
  */
 public class CopyAbstractMethodImplementationAction extends ImplementAbstractMethodAction {
+  @Override
   @NotNull
   public String getFamilyName() {
     return "Copy Abstract Method Implementation";
   }
 
+  @Override
   protected String getIntentionName(final PsiMethod method) {
     return CodeInsightBundle.message("copy.abstract.method.intention.name", method.getName());
   }
 
+  @Override
   protected boolean isAvailable(final MyElementProcessor processor) {
     return processor.hasMissingImplementations() && processor.hasExistingImplementations();
   }
 
+  @Override
   protected void invokeHandler(final Project project, final Editor editor, final PsiMethod method) {
     new CopyAbstractMethodImplementationHandler(project, editor, method).invoke();
   }

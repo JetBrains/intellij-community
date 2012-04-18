@@ -66,11 +66,7 @@ public class PlaybackRunner {
 
   private Map<String, String> myRegistryValues = new HashMap<String, String>();
 
-  private Disposable myOnStop = new Disposable() {
-    @Override
-    public void dispose() {
-    }
-  };
+  private Disposable myOnStop = Disposer.newDisposable();
 
   public PlaybackRunner(String script, StatusCallback callback, final boolean useDirectActionCall, boolean stopOnAppDeactivation, boolean useTypingTargets) {
     myScript = script;

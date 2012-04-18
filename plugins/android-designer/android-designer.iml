@@ -24,6 +24,7 @@
     <orderEntry type="module" module-name="ui-designer-new" />
     <orderEntry type="module" module-name="dom-impl" />
     <orderEntry type="module" module-name="dom-openapi" />
+    <orderEntry type="module" module-name="xml" />
   </component>
 </module>
 

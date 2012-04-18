@@ -176,7 +176,6 @@ public class RefClassImpl extends RefJavaElementImpl implements RefClass {
 
     final PsiClass applet = getRefJavaManager().getApplet();
     setApplet(applet != null && psiClass.isInheritor(applet, true));
-    getRefManager().fireNodeInitialized(this);
     PsiManager psiManager = getRefManager().getPsiManager();
     psiManager.dropResolveCaches();
     PsiFile file = psiClass.getContainingFile();
@@ -427,6 +426,10 @@ public class RefClassImpl extends RefJavaElementImpl implements RefClass {
   private void removeBase(RefClass superClass) {
     final Set<RefClass> baseClasses = getBaseClasses();
     if (baseClasses.contains(superClass)) {
+      if (baseClasses.size() == 1) {
+        myBases = null;
+        return;
+      }
       baseClasses.remove(superClass);
     }
   }

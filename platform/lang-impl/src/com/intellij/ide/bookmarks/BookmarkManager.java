@@ -16,25 +16,32 @@
 
 package com.intellij.ide.bookmarks;
 
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.AbstractProjectComponent;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.event.*;
+import com.intellij.openapi.editor.ex.MarkupModelEx;
+import com.intellij.openapi.editor.impl.DocumentMarkupModel;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.messages.MessageBus;
+import com.intellij.util.ui.UIUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.awt.*;
 import java.awt.event.InputEvent;
 import java.util.*;
@@ -46,49 +53,52 @@ import java.util.List;
     @Storage( file = "$WORKSPACE_FILE$")
   }
 )
-public class BookmarkManager implements PersistentStateComponent<Element>, ProjectComponent {
-  
+public class BookmarkManager extends AbstractProjectComponent implements PersistentStateComponent<Element> {
   private static final int MAX_AUTO_DESCRIPTION_SIZE = 50;
 
-  private final List<Bookmark>        myBookmarks           = new ArrayList<Bookmark>();
-  private final MyEditorMouseListener myEditorMouseListener = new MyEditorMouseListener();
+  private final List<Bookmark> myBookmarks = new ArrayList<Bookmark>();
 
-  private final Project    myProject;
   private final MessageBus myBus;
 
   public static BookmarkManager getInstance(Project project) {
     return project.getComponent(BookmarkManager.class);
   }
 
-  public BookmarkManager(Project project, MessageBus bus) {
-    myProject = project;
+  public BookmarkManager(Project project, MessageBus bus, PsiDocumentManager documentManager) {
+    super(project);
     myBus = bus;
-    EditorFactory.getInstance().getEventMulticaster().addDocumentListener(new MyDocumentListener(), myProject);
+    EditorEventMulticaster multicaster = EditorFactory.getInstance().getEventMulticaster();
+    multicaster.addDocumentListener(new MyDocumentListener(), myProject);
+    multicaster.addEditorMouseListener(new MyEditorMouseListener(), myProject);
+
+    documentManager.addListener(new PsiDocumentManager.Listener() {
+      @Override
+      public void documentCreated(@NotNull final Document document, PsiFile psiFile) {
+        final VirtualFile file = FileDocumentManager.getInstance().getFile(document);
+        if (file == null) return;
+        UIUtil.invokeLaterIfNeeded(new Runnable() {
+          @Override
+          public void run() {
+            if (myProject.isDisposed()) return;
+            for (Bookmark bookmark : myBookmarks) {
+              if (bookmark.getFile() == file) {
+                bookmark.createHighlighter((MarkupModelEx)DocumentMarkupModel.forDocument(document, myProject, true));
+              }
+            }
+          }
+        });
+      }
+
+      @Override
+      public void fileCreated(@NotNull PsiFile file, @NotNull Document document) {
+      }
+    });
   }
-
-  public void projectOpened() {
-    EditorFactory.getInstance().getEventMulticaster().addEditorMouseListener(myEditorMouseListener, myProject);
-  }
-
-  @Override
-  public void projectClosed() {
-    EditorFactory.getInstance().getEventMulticaster().removeEditorMouseListener(myEditorMouseListener);
-  }
-
-  @Override
-  public void initComponent() {}
-
-  @Override
-  public void disposeComponent() {}
 
   @NotNull
   @Override
   public String getComponentName() {
     return "BookmarkManager";
-  }
-
-  public Project getProject() {
-    return myProject;
   }
 
   public void addEditorBookmark(Editor editor, int lineIndex) {
@@ -127,7 +137,7 @@ public class BookmarkManager implements PersistentStateComponent<Element>, Proje
     if (file == null) return null;
     if (findFileBookmark(file) != null) return null;
 
-    Bookmark b = new Bookmark(myProject, file, description);
+    Bookmark b = new Bookmark(myProject, file, -1, description);
     myBookmarks.add(0, b);
     myBus.syncPublisher(BookmarksListener.TOPIC).bookmarkAdded(b);
     return b;
@@ -144,9 +154,9 @@ public class BookmarkManager implements PersistentStateComponent<Element>, Proje
 
 
   @Nullable
-  public Bookmark findEditorBookmark(Document document, int lineIndex) {
+  public Bookmark findEditorBookmark(@NotNull Document document, int line) {
     for (Bookmark bookmark : myBookmarks) {
-      if (bookmark.getDocument() == document && bookmark.getLine() == lineIndex) {
+      if (bookmark.getDocument() == document && bookmark.getLine() == line) {
         return bookmark;
       }
     }
@@ -155,7 +165,7 @@ public class BookmarkManager implements PersistentStateComponent<Element>, Proje
   }
 
   @Nullable
-  public Bookmark findFileBookmark(VirtualFile file) {
+  public Bookmark findFileBookmark(@NotNull VirtualFile file) {
     for (Bookmark bookmark : myBookmarks) {
       if (bookmark.getFile() == file && bookmark.getLine() == -1) return bookmark;
     }
@@ -180,20 +190,23 @@ public class BookmarkManager implements PersistentStateComponent<Element>, Proje
     return false;
   }
 
-  public void removeBookmark(Bookmark bookmark) {
+  public void removeBookmark(@NotNull Bookmark bookmark) {
     myBookmarks.remove(bookmark);
     bookmark.release();
     myBus.syncPublisher(BookmarksListener.TOPIC).bookmarkRemoved(bookmark);
   }
 
+  @Override
   public Element getState() {
     Element container = new Element("BookmarkManager");
     writeExternal(container);
     return container;
   }
 
+  @Override
   public void loadState(final Element state) {
     StartupManager.getInstance(myProject).runWhenProjectIsInitialized(new DumbAwareRunnable() {
+      @Override
       public void run() {
         BookmarksListener publisher = myBus.syncPublisher(BookmarksListener.TOPIC);
         for (Bookmark bookmark : myBookmarks) {
@@ -214,7 +227,7 @@ public class BookmarkManager implements PersistentStateComponent<Element>, Proje
       if ("bookmark".equals(bookmarkElement.getName())) {
         String url = bookmarkElement.getAttributeValue("url");
         String line = bookmarkElement.getAttributeValue("line");
-        String description = bookmarkElement.getAttributeValue("description");
+        String description = StringUtil.notNullize(bookmarkElement.getAttributeValue("description"));
         String mnemonic = bookmarkElement.getAttributeValue("mnemonic");
 
         Bookmark b = null;
@@ -335,6 +348,7 @@ public class BookmarkManager implements PersistentStateComponent<Element>, Proje
 
     Bookmark[] bookmarks = answer.toArray(new Bookmark[answer.size()]);
     Arrays.sort(bookmarks, new Comparator<Bookmark>() {
+      @Override
       public int compare(final Bookmark o1, final Bookmark o2) {
         return o1.getLine() - o2.getLine();
       }
@@ -342,7 +356,7 @@ public class BookmarkManager implements PersistentStateComponent<Element>, Proje
     return bookmarks;
   }
 
-  public void setMnemonic(Bookmark bookmark, char c) {
+  public void setMnemonic(@NotNull Bookmark bookmark, char c) {
     final Bookmark old = findBookmarkForMnemonic(c);
     if (old != null) removeBookmark(old);
 
@@ -350,13 +364,14 @@ public class BookmarkManager implements PersistentStateComponent<Element>, Proje
     myBus.syncPublisher(BookmarksListener.TOPIC).bookmarkChanged(bookmark);
   }
 
-  public void setDescription(Bookmark bookmark, String description) {
+  public void setDescription(@NotNull Bookmark bookmark, String description) {
     bookmark.setDescription(description);
     myBus.syncPublisher(BookmarksListener.TOPIC).bookmarkChanged(bookmark);
   }
 
 
   private class MyEditorMouseListener extends EditorMouseAdapter {
+    @Override
     public void mouseClicked(final EditorMouseEvent e) {
       if (e.getArea() != EditorMouseEventArea.LINE_MARKERS_AREA) return;
       if (e.getMouseEvent().isPopupTrigger()) return;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -202,7 +202,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
                          boolean isHeadless,
                          boolean isCommandLine,
                          @NotNull String appName,
-                         Splash splash) {
+                         @Nullable Splash splash) {
     super(null);
 
     ApplicationManager.setApplication(this, myLastDisposable); // reset back to null only when all components already disposed
@@ -309,12 +309,15 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
 
   private boolean disposeSelf(final boolean checkCanCloseProject) {
     final CommandProcessor commandProcessor = CommandProcessor.getInstance();
-    final Ref<Boolean> canClose = new Ref<Boolean>(Boolean.TRUE);
+    final Ref<Boolean> canClose = new Ref<Boolean>(true);
     for (final Project project : ProjectManagerEx.getInstanceEx().getOpenProjects()) {
       try {
         commandProcessor.executeCommand(project, new Runnable() {
           public void run() {
-            canClose.set(((ProjectManagerImpl)ProjectManagerEx.getInstanceEx()).closeProject(project, true, true, checkCanCloseProject));
+            final ProjectManagerImpl manager = (ProjectManagerImpl)ProjectManagerEx.getInstanceEx();
+            if (!manager.closeProject(project, true, true, checkCanCloseProject)) {
+              canClose.set(false);
+            }
           }
         }, ApplicationBundle.message("command.exit"), null);
       }
@@ -763,23 +766,10 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
 
         getMessageBus().syncPublisher(AppLifecycleListener.TOPIC).appClosing();
         myDisposeInProgress = true;
-
-        FileDocumentManager.getInstance().saveAllDocuments();
-
-        saveSettings();
-
-        if (allowListenersToCancel && !canExit()) {
+        if (!doExit(allowListenersToCancel)) {
+          myDisposeInProgress = false;
           myExitCode = 0;
-          return;
         }
-
-        final boolean success = disposeSelf(allowListenersToCancel);
-        if (!success || isUnitTestMode()) {
-          myExitCode = 0;
-          return;
-        }
-
-        System.exit(myExitCode);
       }
     };
 
@@ -789,6 +779,22 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     else {
       runnable.run();
     }
+  }
+
+  private boolean doExit(boolean allowListenersToCancel) {
+    saveSettings();
+
+    if (allowListenersToCancel && !canExit()) {
+      return false;
+    }
+
+    final boolean success = disposeSelf(allowListenersToCancel);
+    if (!success || isUnitTestMode()) {
+      return false;
+    }
+
+    System.exit(myExitCode);
+    return true;
   }
 
   private static boolean showConfirmation() {
@@ -1309,7 +1315,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   }
 
   public boolean isDisposeInProgress() {
-    return myDisposeInProgress;
+    return myDisposeInProgress || ShutDownTracker.isShutdownHookRunning();
   }
 
   public boolean isRestartCapable() {

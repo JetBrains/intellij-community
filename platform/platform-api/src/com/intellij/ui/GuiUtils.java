@@ -17,6 +17,7 @@ package com.intellij.ui;
 
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
@@ -126,7 +127,7 @@ public class GuiUtils {
 
   public static JPanel makeTitledPanel(JComponent aComponent, String aTitle) {
     JPanel result = makePaddedPanel(aComponent, false, true, false, true);
-    return wrapWithBorder(result, IdeBorderFactory.createTitledBorder(aTitle, false, true, true));
+    return wrapWithBorder(result, IdeBorderFactory.createTitledBorder(aTitle, true));
   }
 
 
@@ -380,6 +381,20 @@ public class GuiUtils {
     }
     else {
       invokeAndWait(runnable);
+    }
+  }
+
+  /**
+   * Runs the runnable, if called from the dispatch thread.
+   * Otherwise calls {@link Application#invokeAndWait(Runnable, com.intellij.openapi.application.ModalityState)}
+   */
+  public static void invokeAndWaitIfNeeded(@NotNull Runnable runnable, @NotNull ModalityState modalityState) {
+    Application application = ApplicationManager.getApplication();
+    if (application.isDispatchThread()) {
+      runnable.run();
+    }
+    else {
+      application.invokeAndWait(runnable, modalityState);
     }
   }
 }

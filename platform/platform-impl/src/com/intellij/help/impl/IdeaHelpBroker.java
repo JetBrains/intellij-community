@@ -15,7 +15,10 @@
  */
 package com.intellij.help.impl;
 
+import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.openapi.wm.impl.IdeFocusManagerHeadless;
 import com.intellij.ui.AppUIUtil;
+import com.intellij.util.Alarm;
 import org.jetbrains.annotations.NotNull;
 
 import javax.help.*;
@@ -207,6 +210,9 @@ class IdeaHelpBroker extends DefaultHelpBroker implements KeyListener{
       //myFrame.setLocationRelativeTo(null);
       myFrame.setVisible(visible);
       myFrame.setState(JFrame.NORMAL);
+      IdeFocusManager focusManager = IdeFocusManager.findInstance();
+      JComponent target = focusManager.getFocusTargetFor(myFrame.getRootPane());
+      focusManager.requestFocus(target != null ? target : myFrame, true);
     }
   }
 
@@ -671,8 +677,9 @@ class IdeaHelpBroker extends DefaultHelpBroker implements KeyListener{
             if(myDialog.isShowing()){
               myDialog.hide();
             }
-            if(myOwnerWindow!=null)
+            if (myOwnerWindow != null) {
               myOwnerWindow.removeWindowListener(dl);
+            }
             myOwnerWindow=null;
             modalDeactivated=true;
           }
@@ -694,22 +701,24 @@ class IdeaHelpBroker extends DefaultHelpBroker implements KeyListener{
         }
       }
     } else{
-      if(myFrame==null){
-        myFrame=new JFrame(helpTitle);
+      if (myFrame == null) {
+        myFrame = new JFrame(helpTitle);
         resize = true;
         AppUIUtil.updateFrameIcon(myFrame);
-        WindowListener l=new WindowAdapter(){
-          public void windowClosing(WindowEvent e){
+        WindowListener l = new WindowAdapter() {
+          public void windowClosing(WindowEvent e) {
             myFrame.setVisible(false);
           }
 
-          public void windowClosed(WindowEvent e){
+          public void windowClosed(WindowEvent e) {
             myFrame.setVisible(false);
           }
         };
         myFrame.addWindowListener(l);
-      } else
+      }
+      else {
         pos = myFrame.getLocation();
+      }
       if(myDialog!=null){
         pos=myDialog.getLocation();
         size=myDialog.getSize();

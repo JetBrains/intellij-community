@@ -47,7 +47,7 @@
           </grid>
         </constraints>
         <properties>
-          <enabled value="false"/>
+          <enabled value="true"/>
         </properties>
       </component>
       <component id="71b17" class="com.intellij.ui.components.JBLabel" binding="myErrorLabel">

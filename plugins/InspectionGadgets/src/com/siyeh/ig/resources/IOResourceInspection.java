@@ -17,12 +17,10 @@ package com.siyeh.ig.resources;
 
 import com.intellij.codeInspection.ui.ListTable;
 import com.intellij.codeInspection.ui.ListWrappingTableModel;
-import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.ui.CheckBox;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -88,44 +86,15 @@ public class IOResourceInspection extends ResourceInspection {
 
   @Override
   public JComponent createOptionsPanel() {
-    final JComponent panel = new JPanel(new GridBagLayout());
-
+    final JComponent panel = new JPanel(new BorderLayout());
     final ListTable table =
-      new ListTable(new ListWrappingTableModel(ignoredTypes,
-                                               InspectionGadgetsBundle.message(
-                                                 "ignored.io.resource.types")));
-    final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(table);
-    UiUtils.setScrollPaneSize(scrollPane, 7, 25);
-    final ActionToolbar toolbar =
-      UiUtils.createAddRemoveTreeClassChooserToolbar(table,
-                                                     InspectionGadgetsBundle.message(
-                                                       "choose.io.resource.type.to.ignore"), IO_TYPES);
-
-    final CheckBox checkBox = new CheckBox(
-      InspectionGadgetsBundle.message(
-        "allow.resource.to.be.opened.inside.a.try.block"),
-      this, "insideTryAllowed");
-
-    final GridBagConstraints constraints = new GridBagConstraints();
-    constraints.anchor = GridBagConstraints.FIRST_LINE_START;
-    constraints.gridx = 0;
-    constraints.gridy = 0;
-    constraints.insets.left = 4;
-    constraints.insets.right = 4;
-    constraints.fill = GridBagConstraints.HORIZONTAL;
-    panel.add(toolbar.getComponent(), constraints);
-
-    constraints.gridy = 1;
-    constraints.weightx = 1.0;
-    constraints.weighty = 1.0;
-    constraints.fill = GridBagConstraints.BOTH;
-    panel.add(scrollPane, constraints);
-
-    constraints.gridy = 2;
-    constraints.weighty = 0.0;
-    constraints.fill = GridBagConstraints.HORIZONTAL;
-    panel.add(checkBox, constraints);
-
+      new ListTable(new ListWrappingTableModel(ignoredTypes, InspectionGadgetsBundle.message("ignored.io.resource.types")));
+    JPanel tablePanel =
+      UiUtils.createAddRemoveTreeClassChooserPanel(table, InspectionGadgetsBundle.message("choose.io.resource.type.to.ignore"), IO_TYPES);
+    final CheckBox checkBox =
+      new CheckBox(InspectionGadgetsBundle.message("allow.resource.to.be.opened.inside.a.try.block"), this, "insideTryAllowed");
+    panel.add(tablePanel, BorderLayout.CENTER);
+    panel.add(checkBox, BorderLayout.SOUTH);
     return panel;
   }
 
@@ -148,7 +117,8 @@ public class IOResourceInspection extends ResourceInspection {
 
   private class IOResourceVisitor extends BaseInspectionVisitor {
 
-    IOResourceVisitor() {}
+    IOResourceVisitor() {
+    }
 
     @Override
     public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {

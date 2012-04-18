@@ -386,29 +386,35 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
     ApplicationManager.getApplication().assertIsDispatchThread();
 
     Collection<DocumentReference> refs = getDocRefs(editor);
-    if (refs == null) return false;
+    if (refs == null) {
+      return false;
+    }
     return isUndoOrRedoAvailable(refs, undo);
   }
 
-  public boolean isUndoOrRedoAvailable(DocumentReference ref) {
+  public boolean isUndoOrRedoAvailable(@NotNull DocumentReference ref) {
     Set<DocumentReference> refs = Collections.singleton(ref);
     return isUndoOrRedoAvailable(refs, true) || isUndoOrRedoAvailable(refs, false);
   }
 
-  private boolean isUndoOrRedoAvailable(Collection<DocumentReference> refs, boolean isUndo) {
+  private boolean isUndoOrRedoAvailable(@NotNull Collection<DocumentReference> refs, boolean isUndo) {
     if (isUndo && myMerger.isUndoAvailable(refs)) return true;
     UndoRedoStacksHolder stackHolder = getStackHolder(isUndo);
     return stackHolder.canBeUndoneOrRedone(refs);
   }
 
-  private static Collection<DocumentReference> getDocRefs(FileEditor editor) {
+  private static Collection<DocumentReference> getDocRefs(@Nullable FileEditor editor) {
     if (editor instanceof TextEditor && ((TextEditor)editor).getEditor().isViewer()) {
       return null;
+    }
+    if (editor == null) {
+      return Collections.emptyList();
     }
     return getDocumentReferences(editor);
   }
 
-  static Set<DocumentReference> getDocumentReferences(FileEditor editor) {
+  @NotNull
+  static Set<DocumentReference> getDocumentReferences(@NotNull FileEditor editor) {
     Set<DocumentReference> result = new THashSet<DocumentReference>();
 
     if (editor instanceof DocumentReferenceProvider) {
@@ -416,7 +422,7 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
       return result;
     }
 
-    Document[] documents = editor == null ? null : TextEditorProvider.getDocuments(editor);
+    Document[] documents = TextEditorProvider.getDocuments(editor);
     if (documents != null) {
       for (Document each : documents) {
         Document original = getOriginal(each);
@@ -429,6 +435,7 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
     return result;
   }
 
+  @NotNull
   private UndoRedoStacksHolder getStackHolder(boolean isUndo) {
     return isUndo ? myUndoStacksHolder : myRedoStacksHolder;
   }

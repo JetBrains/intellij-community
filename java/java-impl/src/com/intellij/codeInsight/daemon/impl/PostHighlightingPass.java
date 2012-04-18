@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -75,6 +75,7 @@ import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.search.searches.SuperMethodsSearch;
 import com.intellij.psi.util.PropertyUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.changeSignature.ChangeSignatureGestureDetector;
 import com.intellij.util.Processor;
@@ -141,7 +142,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
     VirtualFile virtualFile = viewProvider.getVirtualFile();
     myInLibrary = fileIndex.isInLibraryClasses(virtualFile) || fileIndex.isInLibrarySource(virtualFile);
 
-    myRefCountHolder = RefCountHolder.getInstance(myFile);
+    myRefCountHolder = RefCountHolder.endUsing(myFile);
     if (!myRefCountHolder.retrieveUnusedReferencesInfo(new Runnable() {
       @Override
       public void run() {
@@ -322,16 +323,18 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
     return null;
   }
 
-
   @Nullable
   private HighlightInfo processLocalVariable(PsiLocalVariable variable, ProgressIndicator progress) {
     PsiIdentifier identifier = variable.getNameIdentifier();
     if (identifier == null) return null;
+    if (variable instanceof PsiResourceVariable && PsiUtil.isIgnoredName(variable.getName())) return null;
     if (isImplicitUsage(variable, progress)) return null;
+
     if (!myRefCountHolder.isReferenced(variable)) {
       String message = JavaErrorMessages.message("local.variable.is.never.used", identifier.getText());
       HighlightInfo highlightInfo = createUnusedSymbolInfo(identifier, message, HighlightInfoType.UNUSED_SYMBOL);
-      QuickFixAction.registerQuickFixAction(highlightInfo, new RemoveUnusedVariableFix(variable), myUnusedSymbolKey);
+      IntentionAction fix = variable instanceof PsiResourceVariable ? new RenameToIgnoredFix(variable) : new RemoveUnusedVariableFix(variable);
+      QuickFixAction.registerQuickFixAction(highlightInfo, fix, myUnusedSymbolKey);
       return highlightInfo;
     }
 
@@ -355,7 +358,6 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
 
     return null;
   }
-
 
   public static boolean isImplicitUsage(final PsiModifierListOwner element, ProgressIndicator progress) {
     if (UnusedSymbolLocalInspection.isInjected(element)) return true;
@@ -412,7 +414,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
 
         HighlightInfo highlightInfo = suggestionsToMakeFieldUsed(field, identifier, message);
         if (!field.hasInitializer()) {
-          QuickFixAction.registerQuickFixAction(highlightInfo, HighlightMethodUtil.getFixRange(field), new CreateConstructorParameterFromFieldFix(field), null);
+          QuickFixAction.registerQuickFixAction(highlightInfo, HighlightMethodUtil.getFixRange(field), new CreateConstructorParameterFromFieldFix(field));
         }
         return highlightInfo;
       }
@@ -432,7 +434,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
         final HighlightInfo info = createUnusedSymbolInfo(identifier, message, HighlightInfoType.UNUSED_SYMBOL);
 
         QuickFixAction.registerQuickFixAction(info, new CreateGetterOrSetterFix(false, true, field), myUnusedSymbolKey);
-        QuickFixAction.registerQuickFixAction(info, HighlightMethodUtil.getFixRange(field), new CreateConstructorParameterFromFieldFix(field), null);
+        QuickFixAction.registerQuickFixAction(info, HighlightMethodUtil.getFixRange(field), new CreateConstructorParameterFromFieldFix(field));
         SpecialAnnotationsUtil.createAddToSpecialAnnotationFixes(field, new Processor<String>() {
           @Override
           public boolean process(final String annoName) {
@@ -506,10 +508,10 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
         }
       }
     }
-    else if (declarationScope instanceof PsiForeachStatement && !Comparing.strEqual(parameter.getName(), "ignore")) {
+    else if (declarationScope instanceof PsiForeachStatement && !PsiUtil.isIgnoredName(parameter.getName())) {
       HighlightInfo highlightInfo = checkUnusedParameter(parameter, progress);
       if (highlightInfo != null) {
-        QuickFixAction.registerQuickFixAction(highlightInfo, new EmptyIntentionAction(UnusedSymbolLocalInspection.DISPLAY_NAME), myUnusedSymbolKey);
+        QuickFixAction.registerQuickFixAction(highlightInfo, new RenameToIgnoredFix(parameter), myUnusedSymbolKey);
         return highlightInfo;
       }
     }

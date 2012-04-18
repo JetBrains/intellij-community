@@ -4,11 +4,15 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.roots.OrderEnumerator;
+import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.config.GradleSettings;
+import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -27,8 +31,9 @@ import java.util.regex.Pattern;
 @SuppressWarnings("MethodMayBeStatic")
 public class GradleLibraryManager {
 
-  private static final Pattern GRADLE_JAR_FILE_PATTERN;
-  private static final Pattern ANY_GRADLE_JAR_FILE_PATTERN;
+  public static final Pattern  GRADLE_JAR_FILE_PATTERN;
+  public static final Pattern  ANY_GRADLE_JAR_FILE_PATTERN;
+
   private static final String[] GRADLE_START_FILE_NAMES;
   @NonNls private static final String GRADLE_ENV_PROPERTY_NAME;
   static {
@@ -98,7 +103,6 @@ public class GradleLibraryManager {
     File result = getManuallyDefinedGradleHome(project);
     if (result != null) {
       return result;
-      
     }
     result = getGradleHomeFromPath();
     return result == null ? getGradleHomeFromEnvProperty() : result;
@@ -153,18 +157,33 @@ public class GradleLibraryManager {
    */
   @Nullable
   public File getManuallyDefinedGradleHome(@Nullable Project project) {
-    if (project == null) {
-      project = ProjectManager.getInstance().getDefaultProject();
+    
+    // Try to search settings of the given project.
+    if (project != null) {
+      File result = doGetManuallyDefinedGradleHome(project);
+      if (result != null) {
+        return result;
+      }
     }
+    
+    // Fallback to the default project settings.
+    return doGetManuallyDefinedGradleHome(ProjectManager.getInstance().getDefaultProject());
+  }
+
+  @Nullable
+  private File doGetManuallyDefinedGradleHome(@NotNull Project project) {
     GradleSettings settings = GradleSettings.getInstance(project);
-    String path = settings.GRADLE_HOME;
+    String path = settings.getGradleHome();
     if (path == null) {
       return null;
     }
     File candidate = new File(path);
+    if (isGradleSdkHome(candidate)) {
+      return candidate;
+    }
     return isGradleSdkHome(candidate) ? candidate : null;
   }
-
+  
   /**
    * Tries to discover gradle installation path from the configured system path
    * 
@@ -187,8 +206,8 @@ public class GradleLibraryManager {
           File candidate = dir.getParentFile();
           if (isGradleSdkHome(candidate)) {
             return candidate;
-          } 
-        } 
+          }
+        }
       }
     }
     return null;
@@ -235,10 +254,19 @@ public class GradleLibraryManager {
     }
     final File libs = new File(file, "lib");
     if (!libs.isDirectory()) {
+      if (GradleEnvironment.DEBUG_GRADLE_HOME_PROCESSING) {
+        GradleLog.LOG.info(String.format(
+          "Gradle sdk check failed for the path '%s'. Reason: it doesn't have a child directory named 'lib'", file.getAbsolutePath()
+        ));
+      }
       return false;
     }
 
-    return isGradleSdk(libs.listFiles());
+    final boolean found = isGradleSdk(libs.listFiles());
+    if (GradleEnvironment.DEBUG_GRADLE_HOME_PROCESSING) {
+      GradleLog.LOG.info(String.format("Gradle home check %s for the path '%s'", found ? "passed" : "failed", file.getAbsolutePath()));
+    }
+    return found;
   }
 
   /**
@@ -272,26 +300,49 @@ public class GradleLibraryManager {
         return file;
       }
     }
+
+    if (GradleEnvironment.DEBUG_GRADLE_HOME_PROCESSING) {
+      StringBuilder filesInfo = new StringBuilder();
+      for (File file : files) {
+        filesInfo.append(file.getAbsolutePath()).append(';');
+      }
+      if (filesInfo.length() > 0) {
+        filesInfo.setLength(filesInfo.length() - 1);
+      }
+      GradleLog.LOG.info(String.format(
+        "Gradle sdk check fails. Reason: no one of the given files matches gradle jar pattern (%s). Files: %s",
+        GRADLE_JAR_FILE_PATTERN.toString(), filesInfo
+      ));
+    }
+    
     return null;
   }
 
   /**
-   * Allows to ask for the gradle class roots.
+   * Allows to ask for the classpath roots of the classes that are additionally provided by the gradle integration (e.g. gradle class
+   * files, bundled groovy-all jar etc).
    * 
    * @param project  target project to use for gradle home retrieval
-   * @return         collection of the gradle class roots (if any); <code>null</code> otherwise
+   * @return         classpath roots of the classes that are additionally provided by the gradle integration (if any);
+   *                 <code>null</code> otherwise
    */
   @Nullable
-  public Collection<VirtualFile> getClassRoots(@Nullable Project project) {
+  public List<VirtualFile> getClassRoots(@Nullable Project project) {
     final Collection<File> libraries = getAllLibraries(project);
     if (libraries == null) {
       return null;
     }
-    final LocalFileSystem fileSystem = LocalFileSystem.getInstance();
+    final LocalFileSystem localFileSystem = LocalFileSystem.getInstance();
+    final JarFileSystem jarFileSystem = JarFileSystem.getInstance();
     List<VirtualFile> result = new ArrayList<VirtualFile>();
     for (File file : libraries) {
-      if (ANY_GRADLE_JAR_FILE_PATTERN.matcher(file.getName()).matches()) {
-        result.add(fileSystem.findFileByIoFile(file));
+      if (ANY_GRADLE_JAR_FILE_PATTERN.matcher(file.getName()).matches()
+          || GroovyConfigUtils.GROOVY_ALL_JAR_PATTERN.matcher(file.getName()).matches())
+      {
+        final VirtualFile virtualFile = localFileSystem.findFileByIoFile(file);
+        if (virtualFile != null) {
+          ContainerUtil.addIfNotNull(result, jarFileSystem.getJarRootForLocalFile(virtualFile));
+        }
       }
     }
     return result;

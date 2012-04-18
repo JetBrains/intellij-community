@@ -24,9 +24,6 @@
           </grid>
         </constraints>
         <properties/>
-        <clientProperties>
-          <caretAspectRatio class="java.lang.Float" value="0.04"/>
-        </clientProperties>
       </component>
       <component id="4a787" class="javax.swing.JCheckBox" binding="myCreateBoundClassCheckbox">
         <constraints>
@@ -39,7 +36,7 @@
       </component>
       <component id="991e5" class="javax.swing.JLabel">
         <constraints>
-          <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="1" use-parent-layout="false"/>
+          <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="4" use-parent-layout="false"/>
         </constraints>
         <properties>
           <labelFor value="465f3"/>
@@ -53,9 +50,6 @@
           </grid>
         </constraints>
         <properties/>
-        <clientProperties>
-          <caretAspectRatio class="java.lang.Float" value="0.04"/>
-        </clientProperties>
       </component>
       <component id="876fb" class="javax.swing.JLabel">
         <constraints>

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,7 +33,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.*;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -131,8 +131,13 @@ public class Utils{
         ActionGroup actionGroup = (ActionGroup)child;
         if (actionGroup.isPopup()) { // popup menu has its own presentation
           // disable group if it contains no visible actions
-          final boolean enabled = actionGroup.canBePerformed(context) || hasVisibleChildren(actionGroup, presentationFactory, context, place);
-          presentation.setEnabled(enabled);
+          final boolean visibleChildren = hasVisibleChildren(actionGroup, presentationFactory, context, place);
+          if (actionGroup.hideIfNoVisibleChildren() && !visibleChildren) {
+            continue;
+          }
+          if (!actionGroup.canBePerformed(context) && !visibleChildren) {
+            presentation.setEnabled(false);
+          }
           list.add(child);
         }
         else {
@@ -247,6 +252,15 @@ public class Utils{
                                   getBorder() != null &&
                                   insets.top + insets.bottom == 0;
               return fix ? new Insets(2, insets.left, 3, insets.right) : insets;  // workaround for Sun bug #6636964
+            }
+
+            @Override
+            protected void paintComponent(Graphics g) {
+              if (UIUtil.isUnderWindowsClassicLookAndFeel()) {
+                g.setColor(component.getBackground());
+                g.fillRect(0, 0, getWidth(), getHeight());
+              }
+              super.paintComponent(g);
             }
           });
         }

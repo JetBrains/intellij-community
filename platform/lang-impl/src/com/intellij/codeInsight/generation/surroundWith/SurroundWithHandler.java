@@ -29,6 +29,7 @@ import com.intellij.codeInsight.template.impl.WrapWithCustomTemplateAction;
 import com.intellij.ide.DataManager;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageSurrounders;
+import com.intellij.lang.folding.CustomFoldingSurroundDescriptor;
 import com.intellij.lang.surroundWith.SurroundDescriptor;
 import com.intellij.lang.surroundWith.Surrounder;
 import com.intellij.openapi.actionSystem.*;
@@ -107,6 +108,7 @@ public class SurroundWithHandler implements CodeInsightActionHandler {
 
     surroundDescriptors.addAll(LanguageSurrounders.INSTANCE.allForLanguage(l));
     if (l != baseLanguage) surroundDescriptors.addAll(LanguageSurrounders.INSTANCE.allForLanguage(baseLanguage));
+    surroundDescriptors.add(CustomFoldingSurroundDescriptor.INSTANCE);
 
     int exclusiveCount = 0;
     List<SurroundDescriptor> exclusiveSurroundDescriptors = new ArrayList<SurroundDescriptor>();
@@ -152,8 +154,12 @@ public class SurroundWithHandler implements CodeInsightActionHandler {
     for (SurroundDescriptor descriptor : surroundDescriptors) {
       final PsiElement[] elements = descriptor.getElementsToSurround(file, startOffset, endOffset);
       if (elements.length > 0) {
-        doSurround(project, editor, surrounder, elements);
-        return;
+        for (Surrounder descriptorSurrounder : descriptor.getSurrounders()) {
+          if (surrounder.getClass().equals(descriptorSurrounder.getClass())) {
+            doSurround(project, editor, surrounder, elements);
+            return;
+          }
+        }
       }
     }
   }

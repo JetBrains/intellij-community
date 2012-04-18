@@ -57,6 +57,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
 
   private Dimension myHoldSize;
   private final MySelectionModel mySelectionModel = new MySelectionModel();
+  private boolean myHorizontalAutoScrolling = false;
 
   public Tree() {
     initTree_();
@@ -682,5 +683,13 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
     }
 
     return size;
+  }
+
+  public boolean isHorizontalAutoScrollingEnabled() {
+    return myHorizontalAutoScrolling;
+  }
+
+  public void setHorizontalAutoScrollingEnabled(boolean enabled) {
+    myHorizontalAutoScrolling = enabled;
   }
 }

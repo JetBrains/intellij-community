@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,10 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.*;
@@ -30,10 +33,7 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.JarFileSystem;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.*;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
@@ -42,6 +42,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import junit.framework.Assert;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
@@ -88,6 +89,7 @@ import java.util.Collection;
     filesToDelete.add(dir);
 
     final VirtualFile vDir = LocalFileSystem.getInstance().refreshAndFindFileByPath(dir.getCanonicalPath().replace(File.separatorChar, '/'));
+    assert vDir.isDirectory(): vDir;
 
     final Exception[] exception = {null};
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
@@ -130,11 +132,11 @@ import java.util.Collection;
     }.execute().throwException();
   }
 
-  public static void addSourceContentToRoots(Module module, VirtualFile vDir) {
+  public static void addSourceContentToRoots(Module module, @NotNull VirtualFile vDir) {
     addSourceContentToRoots(module, vDir, false);
   }
 
-  public static void addSourceContentToRoots(final Module module, final VirtualFile vDir, final boolean testSource) {
+  public static void addSourceContentToRoots(final Module module, @NotNull final VirtualFile vDir, final boolean testSource) {
     new WriteCommandAction.Simple(module.getProject()) {
       @Override
       protected void run() throws Throwable {
@@ -255,7 +257,12 @@ import java.util.Collection;
             jar = "/" + jar;
           }
           final String path = libPath + jar;
-          final VirtualFile root = JarFileSystem.getInstance().refreshAndFindFileByPath(path + "!/");
+          VirtualFile root;
+          if (path.endsWith(".jar")) {
+            root = JarFileSystem.getInstance().refreshAndFindFileByPath(path + "!/");
+          } else {
+            root = LocalFileSystem.getInstance().refreshAndFindFileByPath(path);
+          }
           assert root != null : "Library root folder not found: " + path + "!/";
           libraryModel.addRoot(root, OrderRootType.CLASSES);
         }
@@ -270,5 +277,58 @@ import java.util.Collection;
         model.rearrangeOrderEntries(orderEntries);
       }
     }.execute().throwException();
+  }
+
+  public static void addLibrary(final Module module,
+                                final String libName, final String libDir,
+                                final String[] classRoots,
+                                final String[] sourceRoots) {
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      public void run() {
+        final ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
+        final String parentUrl = VirtualFileManager.constructUrl(JarFileSystem.PROTOCOL, libDir);
+        final Library library = model.getModuleLibraryTable().createLibrary(libName);
+        final Library.ModifiableModel libModifiableModel = library.getModifiableModel();
+        for (String classRoot : classRoots) {
+          libModifiableModel.addRoot(parentUrl + classRoot, OrderRootType.CLASSES);
+        }
+        for (String sourceRoot : sourceRoots) {
+          libModifiableModel.addRoot(parentUrl + sourceRoot, OrderRootType.SOURCES);
+        }
+        libModifiableModel.commit();
+        model.commit();
+      }
+    });
+  }
+
+  public static Module addModule(final Project project, final ModuleType type, final String name, final VirtualFile root) {
+    return new WriteCommandAction<Module>(project) {
+      @Override
+      protected void run(Result<Module> result) throws Throwable {
+        final ModifiableModuleModel moduleModel = ModuleManager.getInstance(project).getModifiableModel();
+        String moduleName = moduleModel.newModule(root.getPath() + "/" + name + ".iml", type).getName();
+        moduleModel.commit();
+
+        final Module dep = ModuleManager.getInstance(project).findModuleByName(moduleName);
+        final ModifiableRootModel model = ModuleRootManager.getInstance(dep).getModifiableModel();
+        final ContentEntry entry = model.addContentEntry(root);
+        entry.addSourceFolder(root, false);
+
+        model.commit();
+        result.setResult(dep);
+      }
+    }.execute().getResultObject();
+  }
+
+  public static void addDependency(final Module from, final Module to) {
+    new WriteCommandAction(from.getProject()) {
+      @Override
+      protected void run(Result result) throws Throwable {
+        final ModifiableRootModel model = ModuleRootManager.getInstance(from).getModifiableModel();
+        model.addModuleOrderEntry(to);
+        model.commit();
+      }
+    }.execute().getResultObject();
+
   }
 }

@@ -21,6 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.ui.components.JBCheckBox;
+import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.i18n.GitBundle;
 import git4idea.repo.GitRepositoryManager;
@@ -36,7 +37,7 @@ import java.awt.event.ActionListener;
  */
 public class GitVcsPanel {
 
-  private static final String IDEA_SSH = ApplicationNamesInfo.getInstance().getProductName() + " " + GitBundle.getString("git.vcs.config.ssh.mode.idea"); // IDEA ssh value
+  private static final String IDEA_SSH = GitBundle.getString("git.vcs.config.ssh.mode.idea"); // IDEA ssh value
   private static final String NATIVE_SSH = GitBundle.getString("git.vcs.config.ssh.mode.native"); // Native SSH value
   private static final String CRLF_CONVERT_TO_PROJECT = GitBundle.getString("git.vcs.config.convert.project");
   private static final String CRLF_DO_NOT_CONVERT = GitBundle.getString("git.vcs.config.convert.do.not.convert");
@@ -74,7 +75,7 @@ public class GitVcsPanel {
     myConvertTextFilesComboBox.setSelectedItem(CRLF_ASK);
     myGitField.addBrowseFolderListener(GitBundle.getString("find.git.title"), GitBundle.getString("find.git.description"), project,
                                        FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor());
-    final GitRepositoryManager repositoryManager = GitRepositoryManager.getInstance(project);
+    final GitRepositoryManager repositoryManager = GitUtil.getRepositoryManager(myProject);
     mySyncBranchControl.setVisible(repositoryManager != null && repositoryManager.moreThanOneRoot());
   }
 
@@ -90,17 +91,17 @@ public class GitVcsPanel {
     try {
       version = GitVersion.identifyVersion(executable);
     } catch (Exception e) {
-      Messages.showErrorDialog(myProject, e.getMessage(), GitBundle.getString("find.git.error.title"));
+      Messages.showErrorDialog(myRootPanel, e.getMessage(), GitBundle.getString("find.git.error.title"));
       return;
     }
 
     if (version.isSupported()) {
-      Messages.showInfoMessage(myProject,
+      Messages.showInfoMessage(myRootPanel,
                                String.format("<html>%s<br>Git version is %s</html>", GitBundle.getString("find.git.success.title"),
                                              version.toString()),
                                GitBundle.getString("find.git.success.title"));
     } else {
-      Messages.showWarningDialog(myProject, GitBundle.message("find.git.unsupported.message", version.toString(), GitVersion.MIN),
+      Messages.showWarningDialog(myRootPanel, GitBundle.message("find.git.unsupported.message", version.toString(), GitVersion.MIN),
                                  GitBundle.getString("find.git.success.title"));
     }
   }

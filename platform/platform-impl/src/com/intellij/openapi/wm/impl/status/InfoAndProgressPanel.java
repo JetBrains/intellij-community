@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,10 +41,7 @@ import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.components.labels.LinkListener;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.util.Alarm;
-import com.intellij.util.ui.AbstractLayoutManager;
-import com.intellij.util.ui.AsyncProcessIcon;
-import com.intellij.util.ui.EmptyIcon;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.*;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import org.jetbrains.annotations.NotNull;
@@ -63,7 +60,7 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
 
   private final StatusPanel myInfoPanel = new StatusPanel();
   private final JPanel myRefreshAndInfoPanel = new JPanel();
-  private final AsyncProcessIcon myProgressIcon;
+  private final AnimatedIcon myProgressIcon;
 
   private final ArrayList<ProgressIndicatorEx> myOriginals = new ArrayList<ProgressIndicatorEx>();
   private final ArrayList<TaskInfo> myInfos = new ArrayList<TaskInfo>();
@@ -78,7 +75,7 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
   private boolean myShouldClosePopupAndOnProcessFinish;
 
   private final Alarm myRefreshAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
-  private AsyncProcessIcon myRefreshIcon;
+  private AnimatedIcon myRefreshIcon;
   private EmptyIcon myEmptyRefreshIcon;
 
   private String myCurrentRequestor;
@@ -89,24 +86,25 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
 
     setOpaque(false);
 
-    myRefreshIcon = new AsyncProcessIcon("Refreshing filesystem") {
-      protected Icon getPassiveIcon() {
-        return myEmptyRefreshIcon;
-      }
-
-      @Override
-      public Dimension getPreferredSize() {
-        if (!isRunning()) return new Dimension(0, 0);
-        return super.getPreferredSize();
-      }
-
-      @Override
-      public void paint(Graphics g) {
-        g.translate(0, -1);
-        super.paint(g);
-        g.translate(0, 1);
-      }
-    };
+    myRefreshIcon = new RefreshFileSystemIcon();
+    //  new AsyncProcessIcon("Refreshing filesystem") {
+    //  protected Icon getPassiveIcon() {
+    //    return myEmptyRefreshIcon;
+    //  }
+    //
+    //  @Override
+    //  public Dimension getPreferredSize() {
+    //    if (!isRunning()) return new Dimension(0, 0);
+    //    return super.getPreferredSize();
+    //  }
+    //
+    //  @Override
+    //  public void paint(Graphics g) {
+    //    g.translate(0, -1);
+    //    super.paint(g);
+    //    g.translate(0, 1);
+    //  }
+    //};
 
     myRefreshIcon.setPaintPassiveIcon(false);
     myEmptyRefreshIcon = new EmptyIcon(0, myRefreshIcon.getPreferredSize().height);

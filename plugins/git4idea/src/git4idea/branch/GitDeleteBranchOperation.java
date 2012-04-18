@@ -19,15 +19,13 @@ import com.intellij.notification.NotificationType;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.UIUtil;
-import git4idea.GitVcs;
-import git4idea.commands.Git;
 import git4idea.GitExecutionException;
-import git4idea.commands.GitCommandResult;
-import git4idea.commands.GitCompoundResult;
-import git4idea.commands.GitSimpleEventDetector;
+import git4idea.GitVcs;
+import git4idea.commands.*;
 import git4idea.history.GitHistoryUtils;
 import git4idea.history.browser.GitCommit;
 import git4idea.repo.GitRepository;
@@ -37,6 +35,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Deletes a branch.
@@ -52,9 +52,9 @@ class GitDeleteBranchOperation extends GitBranchOperation {
   private final String myBranchName;
   private final String myCurrentBranch;
 
-  GitDeleteBranchOperation(@NotNull Project project, @NotNull Collection<GitRepository> repositories,
+  GitDeleteBranchOperation(@NotNull Project project, @NotNull Git git, @NotNull Collection<GitRepository> repositories,
                            @NotNull String branchName, @NotNull String currentBranch, @NotNull ProgressIndicator indicator) {
-    super(project, repositories, currentBranch, indicator);
+    super(project, git, repositories, currentBranch, indicator);
     myBranchName = branchName;
     myCurrentBranch = currentBranch;
   }
@@ -66,15 +66,21 @@ class GitDeleteBranchOperation extends GitBranchOperation {
       final GitRepository repository = next();
 
       GitSimpleEventDetector notFullyMergedDetector = new GitSimpleEventDetector(GitSimpleEventDetector.Event.BRANCH_NOT_FULLY_MERGED);
-      GitCommandResult result = Git.branchDelete(repository, myBranchName, false, notFullyMergedDetector);
+      GitBranchNotMergedToUpstreamDetector notMergedToUpstreamDetector = new GitBranchNotMergedToUpstreamDetector();
+      GitCommandResult result = myGit.branchDelete(repository, myBranchName, false, notFullyMergedDetector, notMergedToUpstreamDetector);
 
       if (result.success()) {
         refresh(repository);
         markSuccessful(repository);
       }
       else if (notFullyMergedDetector.hasHappened()) {
+        String baseBranch = notMergedToUpstreamDetector.getBaseBranch();
+        if (baseBranch == null) { // GitBranchNotMergedToUpstreamDetector didn't happen
+          baseBranch = myCurrentBranch;
+        }
+
         Collection<GitRepository> remainingRepositories = getRemainingRepositories();
-        boolean forceDelete = showNotFullyMergedDialog(myBranchName, remainingRepositories);
+        boolean forceDelete = showNotFullyMergedDialog(myBranchName, baseBranch, remainingRepositories);
         if (forceDelete) {
           GitCompoundResult compoundResult = forceDelete(myBranchName, remainingRepositories);
           if (compoundResult.totalSuccess()) {
@@ -88,7 +94,7 @@ class GitDeleteBranchOperation extends GitBranchOperation {
           }
         }
         else {
-          fatalError(getErrorTitle(), "This branch is not fully merged to " + myCurrentBranch + ".");
+          fatalError(getErrorTitle(), "This branch is not fully merged to " + baseBranch + ".");
           fatalErrorHappened = true;
         }
       }
@@ -113,7 +119,7 @@ class GitDeleteBranchOperation extends GitBranchOperation {
   protected void rollback() {
     GitCompoundResult result = new GitCompoundResult(myProject);
     for (GitRepository repository : getSuccessfulRepositories()) {
-      GitCommandResult res = Git.branchCreate(repository, myBranchName);
+      GitCommandResult res = myGit.branchCreate(repository, myBranchName);
       result.append(repository, res);
       refresh(repository);
     }
@@ -152,7 +158,7 @@ class GitDeleteBranchOperation extends GitBranchOperation {
   private GitCompoundResult forceDelete(@NotNull String branchName, @NotNull Collection<GitRepository> possibleFailedRepositories) {
     GitCompoundResult compoundResult = new GitCompoundResult(myProject);
     for (GitRepository repository : possibleFailedRepositories) {
-      GitCommandResult res = Git.branchDelete(repository, branchName, true);
+      GitCommandResult res = myGit.branchDelete(repository, branchName, true);
       compoundResult.append(repository, res);
     }
     return compoundResult;
@@ -164,14 +170,15 @@ class GitDeleteBranchOperation extends GitBranchOperation {
    * In multi-repository setup collects unmerged commits for all given repositories.
    * @return true if the branch should be force deleted.
    */
-  private boolean showNotFullyMergedDialog(@NotNull final String branchName, @NotNull Collection<GitRepository> repositories) {
-    final List<String> mergedToBranches = getMergedToBranches(branchName);
+  private boolean showNotFullyMergedDialog(@NotNull final String unmergedBranch, @NotNull final String baseBranch,
+                                           @NotNull Collection<GitRepository> repositories) {
+    final List<String> mergedToBranches = getMergedToBranches(unmergedBranch);
 
     final Map<GitRepository, List<GitCommit>> history = new HashMap<GitRepository, List<GitCommit>>();
     for (GitRepository repository : getRepositories()) {
       // we don't confuse user with the absence of repositories that have succeeded, just show no commits for them (and don't query for log)
       if (repositories.contains(repository)) {
-        history.put(repository, getUnmergedCommits(repository, branchName));
+        history.put(repository, getUnmergedCommits(repository, unmergedBranch, baseBranch));
       }
       else {
         history.put(repository, Collections.<GitCommit>emptyList());
@@ -182,17 +189,17 @@ class GitDeleteBranchOperation extends GitBranchOperation {
     UIUtil.invokeAndWaitIfNeeded(new Runnable() {
       @Override
       public void run() {
-        forceDelete.set(GitBranchIsNotFullyMergedDialog.showAndGetAnswer(myProject, history, branchName, mergedToBranches, myCurrentBranch));
+        forceDelete.set(GitBranchIsNotFullyMergedDialog.showAndGetAnswer(myProject, history, unmergedBranch, mergedToBranches, baseBranch));
       }
     });
     return forceDelete.get();
   }
 
   @NotNull
-  private List<GitCommit> getUnmergedCommits(@NotNull GitRepository repository, @NotNull String branchName) {
+  private List<GitCommit> getUnmergedCommits(@NotNull GitRepository repository, @NotNull String branchName, @NotNull String baseBranch) {
     List<GitCommit> history;
     try {
-      history = GitHistoryUtils.history(myProject, repository.getRoot(), ".." + branchName);
+      history = GitHistoryUtils.history(myProject, repository.getRoot(), baseBranch + ".." + branchName);
     } catch (VcsException e) {
       // this is critical, because we need to show the list of unmerged commits, and it shouldn't happen => inform user and developer
       throw new GitExecutionException("Couldn't get [git log .." + branchName + "] on repository [" + repository.getRoot() + "]", e);
@@ -220,7 +227,7 @@ class GitDeleteBranchOperation extends GitBranchOperation {
    * except the given branch itself.
    */
   @NotNull
-  private static List<String> getMergedToBranches(@NotNull GitRepository repository, @NotNull String branchName) {
+  private List<String> getMergedToBranches(@NotNull GitRepository repository, @NotNull String branchName) {
     String tip = tip(repository, branchName);
     if (tip == null) {
       return Collections.emptyList();
@@ -229,8 +236,8 @@ class GitDeleteBranchOperation extends GitBranchOperation {
   }
 
   @Nullable
-  private static String tip(GitRepository repository, @NotNull String branchName) {
-    GitCommandResult result = Git.tip(repository, branchName);
+  private String tip(GitRepository repository, @NotNull String branchName) {
+    GitCommandResult result = myGit.tip(repository, branchName);
     if (result.success() && result.getOutput().size() == 1) {
       return result.getOutput().get(0).trim();
     }
@@ -240,8 +247,8 @@ class GitDeleteBranchOperation extends GitBranchOperation {
   }
 
   @NotNull
-  private static List<String> branchContainsCommit(@NotNull GitRepository repository, @NotNull String tip, @NotNull String branchName) {
-    GitCommandResult result = Git.branchContains(repository, tip);
+  private List<String> branchContainsCommit(@NotNull GitRepository repository, @NotNull String tip, @NotNull String branchName) {
+    GitCommandResult result = myGit.branchContains(repository, tip);
     if (result.success()) {
       List<String> branches = new ArrayList<String>();
       for (String s : result.getOutput()) {
@@ -261,4 +268,34 @@ class GitDeleteBranchOperation extends GitBranchOperation {
     return Collections.emptyList();
   }
 
+  // warning: not deleting branch 'feature' that is not yet merged to
+  //          'refs/remotes/origin/feature', even though it is merged to HEAD.
+  // error: The branch 'feature' is not fully merged.
+  // If you are sure you want to delete it, run 'git branch -D feature'.
+  private static class GitBranchNotMergedToUpstreamDetector implements GitLineHandlerListener {
+
+    private static final Pattern PATTERN = Pattern.compile(".*'(.*)', even though it is merged to.*");
+    @Nullable private String myBaseBranch;
+
+    @Override
+    public void onLineAvailable(String line, Key outputType) {
+      Matcher matcher = PATTERN.matcher(line);
+      if (matcher.matches()) {
+        myBaseBranch = matcher.group(1);
+      }
+    }
+
+    @Override
+    public void processTerminated(int exitCode) {
+    }
+
+    @Override
+    public void startFailed(Throwable exception) {
+    }
+
+    @Nullable
+    public String getBaseBranch() {
+      return myBaseBranch;
+    }
+  }
 }

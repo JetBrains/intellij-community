@@ -22,6 +22,7 @@ import java.util.List;
 public abstract class CustomFoldingBuilder extends FoldingBuilderEx implements DumbAware {
 
   private CustomFoldingProvider myDefaultProvider;
+  private static final int MAX_LOOKUP_DEPTH = 10;
 
   @NotNull
   @Override
@@ -29,7 +30,7 @@ public abstract class CustomFoldingBuilder extends FoldingBuilderEx implements D
     List<FoldingDescriptor> descriptors = new ArrayList<FoldingDescriptor>();
     if (CustomFoldingProvider.getAllProviders().length > 0) {
       myDefaultProvider = null;
-      addCustomFoldingRegionsRecursively(null, root.getNode(), descriptors);
+      addCustomFoldingRegionsRecursively(null, root.getNode(), descriptors, 0);
     }
     buildLanguageFoldRegions(descriptors, root, document, quick);
     return descriptors.toArray(new FoldingDescriptor[descriptors.size()]);
@@ -57,7 +58,8 @@ public abstract class CustomFoldingBuilder extends FoldingBuilderEx implements D
 
   private void addCustomFoldingRegionsRecursively(@Nullable FoldingStack foldingStack,
                                                   @NotNull ASTNode node,
-                                                  List<FoldingDescriptor> descriptors) {
+                                                  @NotNull List<FoldingDescriptor> descriptors,
+                                                  int currDepth) {
     FoldingStack localFoldingStack = isCustomFoldingRoot(node) || foldingStack == null ? new FoldingStack(node) : foldingStack;
     for (ASTNode child = node.getFirstChildNode(); child != null; child = child.getTreeNext()) {
       if (isCustomRegionStart(child)) {
@@ -68,26 +70,24 @@ public abstract class CustomFoldingBuilder extends FoldingBuilderEx implements D
           ASTNode startNode = localFoldingStack.pop();
           int startOffset = startNode.getTextRange().getStartOffset();
           TextRange range = new TextRange(startOffset, child.getTextRange().getEndOffset());
-          descriptors.add(new FoldingDescriptor(localFoldingStack.getOwner(), range));
+          descriptors.add(new FoldingDescriptor(startNode, range));
         }
       }
       else {
-        addCustomFoldingRegionsRecursively(localFoldingStack, child, descriptors);
+        if (currDepth < MAX_LOOKUP_DEPTH) {
+          addCustomFoldingRegionsRecursively(localFoldingStack, child, descriptors, currDepth + 1);
+        }
       }
     }
   }
 
   @Override
   public final String getPlaceholderText(@NotNull ASTNode node, @NotNull TextRange range) {
-    if (isCustomFoldingRoot(node)) {
-      PsiFile file = node.getPsi().getContainingFile();
-      PsiElement contextElement = file.findElementAt(range.getStartOffset());
-      if (contextElement != null && isCustomFoldingCandidate(contextElement.getNode())) {
-        String elementText = contextElement.getText();
-        CustomFoldingProvider defaultProvider = getDefaultProvider(elementText);
-        if (defaultProvider != null && defaultProvider.isCustomRegionStart(elementText)) {
-          return defaultProvider.getPlaceholderText(elementText);
-        }
+    if (isCustomFoldingCandidate(node)) {
+      String elementText = node.getText();
+      CustomFoldingProvider defaultProvider = getDefaultProvider(elementText);
+      if (defaultProvider != null && defaultProvider.isCustomRegionStart(elementText)) {
+        return defaultProvider.getPlaceholderText(elementText);
       }
     }
     return getLanguagePlaceholderText(node, range);
@@ -192,7 +192,7 @@ public abstract class CustomFoldingBuilder extends FoldingBuilderEx implements D
   }
 
   private static class FoldingStack extends Stack<ASTNode> {
-    private ASTNode owner;
+    private final ASTNode owner;
 
     public FoldingStack(@NotNull ASTNode owner) {
       super(1);
@@ -201,7 +201,7 @@ public abstract class CustomFoldingBuilder extends FoldingBuilderEx implements D
 
     @NotNull
     public ASTNode getOwner() {
-      return this.owner;
+      return owner;
     }
   }
 }

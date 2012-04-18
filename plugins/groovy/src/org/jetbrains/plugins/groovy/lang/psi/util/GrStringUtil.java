@@ -242,27 +242,31 @@ public class GrStringUtil {
     buffer.append(hexCode);
   }
 
-  public static String escapeSymbolsForGString(String s, boolean escapeDoubleQuotes, boolean forInjection) {
+  public static String escapeSymbolsForGString(CharSequence s, boolean isSingleLine, boolean forInjection) {
     StringBuilder b = new StringBuilder();
-    escapeStringCharacters(s.length(), s, escapeDoubleQuotes ? "$\"" : "$", forInjection, true, b);
-    if (!forInjection) {
-      unescapeCharacters(b, escapeDoubleQuotes ? "'" : "'\"", true);
-    }
+    escapeSymbolsForGString(s, isSingleLine, forInjection, b);
     return b.toString();
   }
 
-  public static String escapeSymbolsForString(String s, boolean escapeQuotes, boolean forInjection) {
-    final StringBuilder builder = new StringBuilder();
-    escapeStringCharacters(s.length(), s, escapeQuotes ? "'" : "", forInjection, true, builder);
+  private static void escapeSymbolsForGString(CharSequence s, boolean isSingleLine, boolean forInjection, StringBuilder b) {
+    escapeStringCharacters(s.length(), s, isSingleLine ? "$\"" : "$", isSingleLine, true, b);
     if (!forInjection) {
-      unescapeCharacters(builder, escapeQuotes ? "$\"" : "$'\"", true);
+      unescapeCharacters(b, isSingleLine ? "'" : "'\"", true);
+    }
+  }
+
+  public static String escapeSymbolsForString(String s, boolean isSingleLine, boolean forInjection) {
+    final StringBuilder builder = new StringBuilder();
+    escapeStringCharacters(s.length(), s, isSingleLine ? "'" : "", isSingleLine, true, builder);
+    if (!forInjection) {
+      unescapeCharacters(builder, isSingleLine ? "$\"" : "$'\"", true);
     }
     return builder.toString();
   }
 
   @NotNull
   public static StringBuilder escapeStringCharacters(int length,
-                                                     @NotNull String str,
+                                                     @NotNull CharSequence str,
                                                      @Nullable String additionalChars,
                                                      boolean escapeLineFeeds,
                                                      boolean escapeBackSlash,
@@ -741,6 +745,8 @@ public class GrStringUtil {
           if (index + 4 <= chars.length()) {
             try {
               int code = Integer.parseInt(chars.substring(index, index + 4), 16);
+              //line separators are invalid here
+              if (code == 0x000a || code == 0x000d) return false;
               c = chars.charAt(index);
               if (c == '+' || c == '-') return false;
               outChars.append((char)code);

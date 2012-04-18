@@ -101,7 +101,7 @@ public class SearchResults implements DocumentListener {
 
   public boolean isExcluded(LiveOccurrence occurrence) {
     for (RangeMarker rangeMarker : myExcluded) {
-      if (rangeMarker.getStartOffset() == occurrence.getPrimaryRange().getStartOffset() && rangeMarker.getEndOffset() == occurrence.getPrimaryRange().getEndOffset()) {
+      if (TextRange.areSegmentsEqual(rangeMarker, occurrence.getPrimaryRange())) {
         return true;
       }
     }
@@ -112,7 +112,7 @@ public class SearchResults implements DocumentListener {
     boolean include = false;
     final TextRange r = occurrence.getPrimaryRange();
     for (RangeMarker rangeMarker : myExcluded) {
-      if (rangeMarker.getStartOffset() == r.getStartOffset() && rangeMarker.getEndOffset() == r.getEndOffset()) {
+      if (TextRange.areSegmentsEqual(rangeMarker, r)) {
         myExcluded.remove(rangeMarker);
         rangeMarker.dispose();
         include = true;

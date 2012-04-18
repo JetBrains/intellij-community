@@ -208,7 +208,7 @@ public class ChangeSignatureTest extends LightRefactoringTestCase {
   }
 
   public void testCovariantReturnType() throws Exception {
-    doTest("java.lang.Runnable", new ParameterInfoImpl[0], false);
+    doTest(CommonClassNames.JAVA_LANG_RUNNABLE, new ParameterInfoImpl[0], false);
   }
 
   public void testReorderExceptions() throws Exception {

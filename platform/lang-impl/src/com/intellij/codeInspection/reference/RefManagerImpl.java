@@ -36,19 +36,21 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.extensions.ExtensionPoint;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightElement;
 import com.intellij.util.concurrency.JBReentrantReadWriteLock;
 import com.intellij.util.concurrency.LockFactory;
+import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nullable;
@@ -98,11 +100,14 @@ public class RefManagerImpl extends RefManager {
     }
   }
 
+  public GlobalInspectionContextImpl getContext() {
+    return myContext;
+  }
+
   public void iterate(RefVisitor visitor) {
     myLock.readLock().lock();
     try {
-      final THashMap<PsiAnchor, RefElement> refTable = getRefTable();
-      for (RefElement refElement : refTable.values()) {
+      for (RefElement refElement : getSortedElements()) {
         refElement.accept(visitor);
       }
       if (myModules != null) {
@@ -206,8 +211,8 @@ public class RefManagerImpl extends RefManager {
 
     if (refEntity instanceof RefElement) {
       final RefElement refElement = (RefElement)refEntity;
-      PsiElement psiElement = refElement.getElement();
-      PsiFile psiFile = psiElement.getContainingFile();
+      final SmartPsiElementPointer pointer = refElement.getPointer();
+      PsiFile psiFile = pointer.getContainingFile();
 
       Element fileElement = new Element("file");
       Element lineElement = new Element("line");
@@ -216,9 +221,10 @@ public class RefManagerImpl extends RefManager {
       fileElement.addContent(virtualFile.getUrl());
 
       if (actualLine == -1) {
-        final Document document = PsiDocumentManager.getInstance(refElement.getRefManager().getProject()).getDocument(psiFile);
+        final Document document = PsiDocumentManager.getInstance(pointer.getProject()).getDocument(psiFile);
         LOG.assertTrue(document != null);
-        lineElement.addContent(String.valueOf(document.getLineNumber(psiElement.getTextOffset()) + 1));
+        final Segment range = pointer.getRange();
+        lineElement.addContent(String.valueOf(range != null ? (document.getLineNumber(range.getStartOffset()) + 1) : -1));
       }
       else {
         lineElement.addContent(String.valueOf(actualLine));
@@ -301,6 +307,21 @@ public class RefManagerImpl extends RefManager {
 
   public THashMap<PsiAnchor, RefElement> getRefTable() {
     return myRefTable;
+  }
+
+  public ArrayList<RefElement> getSortedElements() {
+    ArrayList<RefElement> answer = new ArrayList<RefElement>(myRefTable.values());
+    ContainerUtil.quickSort(answer, new Comparator<RefElement>() {
+      @Override
+      public int compare(RefElement o1, RefElement o2) {
+        VirtualFile v1 = ((RefElementImpl)o1).getVirtualFile();
+        VirtualFile v2 = ((RefElementImpl)o2).getVirtualFile();
+
+        return (v1 != null ? v1.hashCode() : 0) - (v2 != null ? v2.hashCode() : 0);
+      }
+    });
+
+    return answer;
   }
 
   @Override
@@ -425,6 +446,10 @@ public class RefManagerImpl extends RefManager {
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
         refElement.initialize();
+        for (RefManagerExtension extension : myExtensions.values()) {
+          extension.onEntityInitialized(refElement, elem);
+        }
+        fireNodeInitialized(refElement);
       }
     });
 

@@ -58,8 +58,6 @@ public class AppletConfigurable extends SettingsEditor<AppletConfiguration> impl
   private JTextField myHeight;
   private LabeledComponent<JComboBox> myModule;
   private JPanel myTablePlace;
-  private JButton myAddButton;
-  private JButton myRemoveButton;
   private JBLabel myHtmlFileLabel;
   private JBLabel myClassNameLabel;
   private JBLabel myWidthLabel;
@@ -72,7 +70,7 @@ public class AppletConfigurable extends SettingsEditor<AppletConfiguration> impl
   private final ConfigurationModuleSelector myModuleSelector;
 
   private static final ColumnInfo[] PARAMETER_COLUMNS = new ColumnInfo[]{
-    new MyColumnInfo(ExecutionBundle.message("applet.configuration.parameter.name.column")){
+    new MyColumnInfo(ExecutionBundle.message("applet.configuration.parameter.name.column")) {
       public String valueOf(final AppletConfiguration.AppletParameter appletParameter) {
         return appletParameter.getName();
       }
@@ -96,7 +94,7 @@ public class AppletConfigurable extends SettingsEditor<AppletConfiguration> impl
   @NonNls
   protected static final String HTTP_PREFIX = "http:/";
 
-  private void changePanel () {
+  private void changePanel() {
     if (myMainClass.isSelected()) {
       myClassOptions.setVisible(true);
       myHTMLOptions.setVisible(false);
@@ -120,7 +118,19 @@ public class AppletConfigurable extends SettingsEditor<AppletConfiguration> impl
     myParameters = new ListTableModel<AppletConfiguration.AppletParameter>(PARAMETER_COLUMNS);
     myTable = new TableView(myParameters);
     myTable.getEmptyText().setText(ExecutionBundle.message("no.parameters"));
-    myTablePlace.add(ScrollPaneFactory.createScrollPane(myTable), BorderLayout.CENTER);
+    myTablePlace.add(
+      ToolbarDecorator.createDecorator(myTable)
+        .setAddAction(new AnActionButtonRunnable() {
+          @Override
+          public void run(AnActionButton button) {
+            addParameter();
+          }
+        }).setRemoveAction(new AnActionButtonRunnable() {
+        @Override
+        public void run(AnActionButton button) {
+          removeParameter();
+        }
+      }).disableUpDownActions().createPanel(), BorderLayout.CENTER);
     myAppletRadioButtonGroup = new ButtonGroup();
     myAppletRadioButtonGroup.add(myMainClass);
     myAppletRadioButtonGroup.add(myURL);
@@ -145,17 +155,6 @@ public class AppletConfigurable extends SettingsEditor<AppletConfiguration> impl
 
     myHTMLOptions.setVisible(false);
 
-    myAddButton.addActionListener(new ActionListener() {
-      public void actionPerformed(final ActionEvent e) {
-        addParameter();
-      }
-    });
-    myRemoveButton.addActionListener(new ActionListener() {
-      public void actionPerformed(final ActionEvent e) {
-        removeParameter();
-      }
-    });
-
     setAnchor(myVMParameters.getLabel());
   }
 
@@ -164,7 +163,8 @@ public class AppletConfigurable extends SettingsEditor<AppletConfiguration> impl
   }
 
   private void addParameter() {
-    final ArrayList<AppletConfiguration.AppletParameter> newItems = new ArrayList<AppletConfiguration.AppletParameter>(myParameters.getItems());
+    final ArrayList<AppletConfiguration.AppletParameter> newItems =
+      new ArrayList<AppletConfiguration.AppletParameter>(myParameters.getItems());
     final AppletConfiguration.AppletParameter parameter = new AppletConfiguration.AppletParameter("newParameter", "");
     newItems.add(parameter);
     myParameters.setItems(newItems);
@@ -281,7 +281,7 @@ public class AppletConfigurable extends SettingsEditor<AppletConfiguration> impl
   }
 
   private void createUIComponents() {
-     myClassName = new EditorTextFieldWithBrowseButton(myProject, true);
+    myClassName = new EditorTextFieldWithBrowseButton(myProject, true);
   }
 
   @Override

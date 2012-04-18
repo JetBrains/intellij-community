@@ -473,16 +473,41 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor implem
     if (element.getParent() instanceof PsiMethodCallExpression) {
       PsiMethodCallExpression methodCall = (PsiMethodCallExpression)element.getParent();
 
+      if (myMethodToReplaceIn == myMethodToSearchFor && PsiTreeUtil.isAncestor(methodCall, myParameterInitializer, false)) return;
+
       PsiElementFactory factory = JavaPsiFacade.getInstance(methodCall.getProject()).getElementFactory();
       PsiExpression expression = factory.createExpressionFromText(myParameterName, null);
       final PsiExpressionList argList = methodCall.getArgumentList();
       final PsiExpression[] exprs = argList.getExpressions();
 
-      if (exprs.length > 0) {
-        argList.addAfter(expression, exprs[exprs.length - 1]);
+      boolean first = false;
+      PsiElement anchor = null;
+      if (myMethodToSearchFor.isVarArgs()) {
+        final int oldParamCount = myMethodToSearchFor.getParameterList().getParametersCount() - 1;
+        if (exprs.length >= oldParamCount) {
+          if (oldParamCount > 1) {
+            anchor = exprs[oldParamCount - 2];
+          }
+          else {
+            first = true;
+            anchor = null;
+          }
+        } else {
+          anchor = exprs[exprs.length -1];
+        }
+      } else if (exprs.length > 0) {
+        anchor = exprs[exprs.length - 1];
+      }
+
+      if (anchor != null) {
+        argList.addAfter(expression, anchor);
       }
       else {
-        argList.add(expression);
+        if (first && exprs.length > 0) {
+          argList.addBefore(expression, exprs[0]);
+        } else {
+          argList.add(expression);
+        }
       }
 
       removeParametersFromCall(argList);

@@ -23,6 +23,7 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.io.IOException;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -44,8 +45,8 @@ public class GitBranchTest extends GitTest {
 
   @BeforeMethod
   @Override
-  public void setUp() throws Exception {
-    super.setUp();
+  public void setUp(Method testMethod) throws Exception {
+    super.setUp(testMethod);
     GitTestUtil.createFileStructure(myProject, myRepo, "a.txt", "b.txt", "dir/c.txt", "dir/subdir/d.txt");
     myRepo.commit();
     myRepo.push("origin", "master");

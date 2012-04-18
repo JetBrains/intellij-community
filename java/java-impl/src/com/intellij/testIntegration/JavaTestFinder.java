@@ -69,10 +69,7 @@ public class JavaTestFinder implements TestFinder {
   }
 
   private static boolean isTestSubjectClass(PsiClass klass) {
-    if (klass.isEnum()
-        || klass.isInterface()
-        || klass.isAnnotationType()
-        || TestFrameworks.getInstance().isTestClass(klass)) {
+    if (klass.isAnnotationType() || TestFrameworks.getInstance().isTestClass(klass)) {
       return false;
     }
     return true;

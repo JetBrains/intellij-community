@@ -82,7 +82,15 @@ public class AnalyzeStacktraceUtil {
     JComponent createConsoleComponent(ConsoleView consoleView, DefaultActionGroup toolbarActions);
   }
 
-  public static ConsoleView addConsole(Project project, @Nullable ConsoleFactory consoleFactory, final String tabTitle) {
+  public static void addConsole(Project project, @Nullable ConsoleFactory consoleFactory, final String tabTitle, String text) {
+    addConsole(project, consoleFactory, tabTitle, text, null);
+  }
+
+  public static RunContentDescriptor addConsole(Project project,
+                                                @Nullable ConsoleFactory consoleFactory,
+                                                final String tabTitle,
+                                                String text,
+                                                @Nullable Icon icon) {
     final TextConsoleBuilder builder = TextConsoleBuilderFactory.getInstance().createBuilder(project);
     for(Filter filter: Extensions.getExtensions(EP_NAME, project)) {
       builder.addFilter(filter);
@@ -94,7 +102,7 @@ public class AnalyzeStacktraceUtil {
                                   ? consoleFactory.createConsoleComponent(consoleView, toolbarActions)
                                   : new MyConsolePanel(consoleView, toolbarActions);
     final RunContentDescriptor descriptor =
-      new RunContentDescriptor(consoleView, null, consoleComponent, tabTitle) {
+      new RunContentDescriptor(consoleView, null, consoleComponent, tabTitle, icon) {
       public boolean isContentReuseProhibited() {
         return true;
       }
@@ -106,7 +114,9 @@ public class AnalyzeStacktraceUtil {
       toolbarActions.add(action);
     }
     ExecutionManager.getInstance(project).getContentManager().showRunContent(executor, descriptor);
-    return consoleView;
+    consoleView.allowHeavyFilters();
+    printStacktrace(consoleView, text);
+    return descriptor;
   }
 
   private static final class MyConsolePanel extends JPanel {

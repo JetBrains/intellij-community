@@ -173,9 +173,10 @@ public class GroovyMethodInliner implements InlineHandler.Inliner {
         }
       }
 
-      if (getAloneResultExpression(method) != null) {
-        GrMethod newMethod = prepareNewMethod(call, method, qualifier);
-        GrExpression result = getAloneResultExpression(newMethod);
+
+      GrMethod _method = prepareNewMethod(call, method, qualifier);
+      GrExpression result = getAloneResultExpression(_method);
+      if (result != null) {
         GrExpression expression = call.replaceWithExpression(result, false);
         TextRange range = expression.getTextRange();
         return editor != null ? editor.getDocument().createRangeMarker(range.getStartOffset(), range.getEndOffset(), true) : null;

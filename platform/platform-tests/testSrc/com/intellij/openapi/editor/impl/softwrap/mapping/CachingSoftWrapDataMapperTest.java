@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.intellij.openapi.editor.impl.softwrap.mapping;
 
 import com.intellij.mock.MockFoldRegion;
 import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.editor.ex.SoftWrapModelEx;
@@ -103,7 +104,7 @@ public class CachingSoftWrapDataMapperTest {
   private CachingSoftWrapDataMapper          myMapper;
   private Mockery                            myMockery;
   private EditorEx                           myEditor;
-  private Document                           myDocument;
+  private DocumentEx                         myDocument;
   private SoftWrapsStorage                   myStorage;
   private SoftWrapModelEx                    mySoftWrapModel;
   private FoldingModelEx                     myFoldingModel;
@@ -114,7 +115,7 @@ public class CachingSoftWrapDataMapperTest {
     myMockery = new JUnit4Mockery();
 
     myEditor = myMockery.mock(EditorEx.class);
-    myDocument = myMockery.mock(Document.class);
+    myDocument = myMockery.mock(DocumentEx.class);
     myStorage = new SoftWrapsStorage();
     mySoftWrapModel = myMockery.mock(SoftWrapModelEx.class);
     myFoldingModel = myMockery.mock(FoldingModelEx.class);

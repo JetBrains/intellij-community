@@ -252,12 +252,17 @@ public class ProjectNameWithTypeStep extends ProjectNameStep {
       assert project != null;
       VirtualFile baseDir = project.getBaseDir();
       if (baseDir != null) { //e.g. was deleted
-        final String moduleName = ProjectWizardUtil.findNonExistingFileName(baseDir.getPath(), "untitled", "");
+        final String baseDirPath = baseDir.getPath();
+        String moduleName = ProjectWizardUtil.findNonExistingFileName(baseDirPath, "untitled", "");
+        String contentRoot = baseDirPath + "/" + moduleName;
+        if (!Comparing.strEqual(project.getName(), wizardContext.getProjectName()) && !wizardContext.isCreatingNewProject() && wizardContext.getProjectName() != null) {
+          moduleName = ProjectWizardUtil.findNonExistingFileName(wizardContext.getProjectFileDirectory(), wizardContext.getProjectName(), "");
+          contentRoot = wizardContext.getProjectFileDirectory();
+        }
         setModuleName(moduleName);
-        setModuleContentRoot(baseDir.getPath() + "/" + moduleName);
-        setImlFileLocation(baseDir.getPath() + "/" + moduleName);
-        myModuleName.setSelectionStart(0);
-        myModuleName.setSelectionEnd(moduleName.length());
+        setModuleContentRoot(contentRoot);
+        setImlFileLocation(contentRoot);
+        myModuleName.select(0, moduleName.length());
       }
     }
   }

@@ -18,6 +18,7 @@ package com.intellij.ui;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.ui.ComponentWithEmptyText;
 import com.intellij.util.ui.StatusText;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -90,7 +91,7 @@ public abstract class AddEditRemovePanel<T> extends PanelWithButtons implements 
     add(panel, BorderLayout.CENTER);
     final String label = getLabelText();
     if (label != null) {
-      add(SeparatorFactory.createSeparator(label, myTable), BorderLayout.NORTH);
+      UIUtil.addBorder(panel, IdeBorderFactory.createTitledBorder(label, false));
     }
   }
 

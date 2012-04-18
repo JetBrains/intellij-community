@@ -19,6 +19,7 @@ package com.intellij.ui;
 import com.intellij.ide.CopyProvider;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.diagnostic.Logger;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.datatransfer.Clipboard;
@@ -34,7 +35,7 @@ public class TreeCopyProvider implements CopyProvider {
     myTree = tree;
   }
 
-  public void performCopy(DataContext dataContext) {
+  public void performCopy(@NotNull DataContext dataContext) {
     try {
       final Clipboard clipboard = myTree.getToolkit().getSystemClipboard();
       myTree.getTransferHandler().exportToClipboard(myTree, clipboard, TransferHandler.COPY);
@@ -45,11 +46,11 @@ public class TreeCopyProvider implements CopyProvider {
     }
   }
 
-  public boolean isCopyEnabled(DataContext dataContext) {
+  public boolean isCopyEnabled(@NotNull DataContext dataContext) {
     return myTree.getSelectionPath() != null;
   }
 
-  public boolean isCopyVisible(DataContext dataContext) {
+  public boolean isCopyVisible(@NotNull DataContext dataContext) {
     return true;
   }
 }

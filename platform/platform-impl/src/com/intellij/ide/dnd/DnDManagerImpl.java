@@ -68,7 +68,7 @@ public class DnDManagerImpl extends DnDManager implements Disposable {
       onTimer();
     }
   });
-  private Runnable myHightlighterShowRequest;
+  private Runnable myHighlighterShowRequest;
   private Rectangle myLastHighlightedRec;
   private int myLastProcessedAction;
 
@@ -179,7 +179,7 @@ public class DnDManagerImpl extends DnDManager implements Disposable {
           DnDEventImpl event = (DnDEventImpl)jComp.getClientProperty(DnDNativeTarget.EVENT_KEY);
           if (event == null) {
             DnDNativeTarget.EventInfo info = new DnDNativeTarget.EventInfo(flavors, transferable);
-            event = new DnDEventImpl(this, DnDAction.COPY, info, aPoint, null);
+            event = new DnDEventImpl(this, DnDAction.COPY, info, aPoint);
             jComp.putClientProperty(DnDNativeTarget.EVENT_KEY, event);
           }
 
@@ -431,7 +431,7 @@ public class DnDManagerImpl extends DnDManager implements Disposable {
   }
 
   private void queueTooltip(final DnDEvent aEvent, final JLayeredPane aLayeredPane, final Rectangle aRectangle) {
-    myHightlighterShowRequest = new Runnable() {
+    myHighlighterShowRequest = new Runnable() {
       public void run() {
         if (myCurrentEvent != aEvent) return;
         Highlighters.hide(DnDEvent.DropTargetHighlightingType.TEXT | DnDEvent.DropTargetHighlightingType.ERROR_TEXT);
@@ -451,14 +451,14 @@ public class DnDManagerImpl extends DnDManager implements Disposable {
 
   void hideCurrentHighlighter() {
     Highlighters.hide();
-    myHightlighterShowRequest = null;
+    myHighlighterShowRequest = null;
     setLastHighlightedEvent(null, null);
   }
 
   private void onTimer() {
-    if (myHightlighterShowRequest != null) {
-      myHightlighterShowRequest.run();
-      myHightlighterShowRequest = null;
+    if (myHighlighterShowRequest != null) {
+      myHighlighterShowRequest.run();
+      myHighlighterShowRequest = null;
     }
   }
   
@@ -556,7 +556,7 @@ public class DnDManagerImpl extends DnDManager implements Disposable {
             LOG.debug("Starting dragging for " + action);
             hideCurrentHighlighter();
             final DnDDragStartBean dnDDragStartBean = source.startDragging(action, dge.getDragOrigin());
-            myCurrentEvent = new DnDEventImpl(DnDManagerImpl.this, action, dnDDragStartBean.getAttachedObject(), dnDDragStartBean.getPoint(), source);
+            myCurrentEvent = new DnDEventImpl(DnDManagerImpl.this, action, dnDDragStartBean.getAttachedObject(), dnDDragStartBean.getPoint());
             myCurrentEvent.setOrgPoint(dge.getDragOrigin());
 
             Pair<Image, Point> pair = source.createDraggedImage(action, dge.getDragOrigin());
@@ -729,7 +729,7 @@ public class DnDManagerImpl extends DnDManager implements Disposable {
       target.cleanUpOnLeave();
     }
     hideCurrentHighlighter();
-    myHightlighterShowRequest = null;
+    myHighlighterShowRequest = null;
   }
 
   private Application getApplication() {

@@ -3,4 +3,4 @@
 <clip xmlns:android="http://schemas.android.com/apk/res/android"
     android:drawable="<error>@drawable/myDrawa</error>"
     android:clipOrientation="horizontal"
-    android:gravity="left" <error>android:aba</error>=""/>
+    android:gravity="left" <warning>android:aba</warning>=""/>

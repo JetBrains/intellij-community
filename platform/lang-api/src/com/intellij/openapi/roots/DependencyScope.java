@@ -50,7 +50,7 @@ public enum DependencyScope {
   private final boolean myForTestCompile;
   private final boolean myForTestRuntime;
 
-  private static final String SCOPE_ATTR = "scope";
+  public static final String SCOPE_ATTR = "scope";
 
   DependencyScope(String displayName,
                   boolean forProductionCompile,

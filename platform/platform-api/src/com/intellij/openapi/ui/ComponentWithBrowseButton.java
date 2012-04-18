@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,6 +42,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.io.File;
+import java.util.List;
 
 public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel implements Disposable {
   private final Comp myComponent;
@@ -197,12 +198,10 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel i
       }
       VirtualFile initialFile = getInitialFile();
 
-      FileChooser.chooseFilesWithSlideEffect(fileChooserDescriptor, myProject, initialFile, new Consumer<VirtualFile[]>() {
+      FileChooser.chooseFiles(fileChooserDescriptor, myProject, initialFile, new Consumer<List<VirtualFile>>() {
         @Override
-        public void consume(VirtualFile[] virtualFiles) {
-          if (virtualFiles != null && virtualFiles.length > 0) {
-            onFileChoosen(virtualFiles[0]);
-          }
+        public void consume(List<VirtualFile> files) {
+          onFileChoosen(files.get(0));
         }
       });
     }

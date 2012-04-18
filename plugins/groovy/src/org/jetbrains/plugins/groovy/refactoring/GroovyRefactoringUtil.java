@@ -197,8 +197,8 @@ public abstract class GroovyRefactoringUtil {
     });
   }
 
-  public static boolean isLocalVariable(GrVariable variable) {
-    return !(variable instanceof GrField || variable instanceof GrParameter);
+  public static boolean isLocalVariable(PsiElement variable) {
+    return variable instanceof GrVariable && !(variable instanceof GrField || variable instanceof GrParameter);
   }
 
 
@@ -568,7 +568,15 @@ public abstract class GroovyRefactoringUtil {
         hasSideEffect.set(true);
       }
 
+      @Override
+      public void visitClosure(GrClosableBlock closure) {
+        hasSideEffect.set(true);
+      }
 
+      @Override
+      public void visitUnaryExpression(GrUnaryExpression expression) {
+        hasSideEffect.set(true);
+      }
 
       @Override
       public void visitElement(GroovyPsiElement element) {

@@ -30,6 +30,11 @@ public final class TreeNodeDescriptor extends NodeDescriptor {
     myElement = element;
   }
 
+  public TreeNodeDescriptor(@Nullable NodeDescriptor parentDescriptor, Object element, String name) {
+    this(parentDescriptor, element);
+    myName = name;
+  }
+
   @Override
   public boolean update() {
     return false;

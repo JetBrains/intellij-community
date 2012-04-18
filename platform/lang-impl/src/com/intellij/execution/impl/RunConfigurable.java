@@ -41,10 +41,12 @@ import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.config.StorageAccessors;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -75,6 +77,8 @@ class RunConfigurable extends BaseConfigurable {
   @NonNls private static final String EDIT_DEFAULTS_ICON_PATH = "/general/ideOptions.png";
   private static final Icon EDIT_DEFAULTS_ICON = IconLoader.getIcon(EDIT_DEFAULTS_ICON_PATH);
   @NonNls private static final String DIVIDER_PROPORTION = "dividerProportion";
+
+  private volatile boolean isDisposed = false;
 
   private final Project myProject;
   private RunDialogBase myRunDialog;
@@ -261,6 +265,8 @@ class RunConfigurable extends BaseConfigurable {
     }, KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), JComponent.WHEN_FOCUSED);
     SwingUtilities.invokeLater(new Runnable() {
       public void run() {
+        if (isDisposed) return;
+
         myTree.requestFocusInWindow();
         final RunnerAndConfigurationSettings settings = manager.getSelectedConfiguration();
         if (settings != null) {
@@ -481,12 +487,12 @@ class RunConfigurable extends BaseConfigurable {
           if (configurationType != null) {
             defaults = TreeUtil.findNodeWithObject(configurationType, myTree.getModel(), defaults);
           }
+          final DefaultMutableTreeNode defaultsNode = (DefaultMutableTreeNode)defaults;
+          final TreePath path = TreeUtil.getPath(myRoot, defaultsNode);
+          myTree.expandPath(path);
+          TreeUtil.selectInTree(defaultsNode, true, myTree);
+          myTree.scrollPathToVisible(path);
         }
-        final DefaultMutableTreeNode defaultsNode = (DefaultMutableTreeNode)defaults;
-        final TreePath path = TreeUtil.getPath(myRoot, defaultsNode);
-        myTree.expandPath(path);
-        TreeUtil.selectInTree(defaultsNode, true, myTree);
-        myTree.scrollPathToVisible(path);
       }
 
       @Override
@@ -541,14 +547,12 @@ class RunConfigurable extends BaseConfigurable {
   }
 
   public void apply() throws ConfigurationException {
+    updateActiveConfigurationFromSelected();
+
     final RunManagerImpl manager = getRunManager();
     final ConfigurationType[] configurationTypes = manager.getConfigurationFactories();
     for (ConfigurationType configurationType : configurationTypes) {
       applyByType(configurationType);
-    }
-
-    if (mySelectedConfigurable != null && mySelectedConfigurable instanceof SingleConfigurationConfigurable) {
-      manager.setSelectedConfiguration((RunnerAndConfigurationSettings) ((SingleConfigurationConfigurable)mySelectedConfigurable).getSettings());
     }
 
     String recentsLimit = myRecentsLimit.getText();
@@ -571,6 +575,15 @@ class RunConfigurable extends BaseConfigurable {
     }
 
     setModified(false);
+  }
+
+  protected void updateActiveConfigurationFromSelected() {
+    if (mySelectedConfigurable != null && mySelectedConfigurable instanceof SingleConfigurationConfigurable) {
+      RunnerAndConfigurationSettings settings =
+        (RunnerAndConfigurationSettings)((SingleConfigurationConfigurable)mySelectedConfigurable).getSettings();
+
+      getRunManager().setSelectedConfiguration(settings);
+    }
   }
 
   private void applyByType(ConfigurationType type) throws ConfigurationException {
@@ -596,14 +609,14 @@ class RunConfigurable extends BaseConfigurable {
           configurationBean = new RunConfigurationBean(settings,
                                                        manager.isConfigurationShared(settings),
                                                        manager.getBeforeRunTasks(settings.getConfiguration()));
-          
+
         }
         if (configurationBean != null) {
           final SingleConfigurationConfigurable configurable = configurationBean.getConfigurable();
           final String nameText = configurable != null ? configurable.getNameText() : configurationBean.getSettings().getName();
           if (!names.add(nameText)) {
             TreeUtil.selectNode(myTree, node);
-            throw new ConfigurationException("Configuration with name \'" + nameText + "\' already exist");
+            throw new ConfigurationException("Configuration with name \'" + nameText + "\' already exists");
           }
           stableConfigurations.add(configurationBean);
         }
@@ -618,11 +631,19 @@ class RunConfigurable extends BaseConfigurable {
     }
 
     // if apply succeeded, update the list of configurations in RunManager
-    manager.removeConfigurations(type);
-    for (final RunConfigurationBean stableConfiguration : stableConfigurations) {
-      manager.addConfiguration(stableConfiguration.getSettings(),
-                               stableConfiguration.isShared(),
-                               stableConfiguration.getStepsBeforeLaunch());
+    Set<RunnerAndConfigurationSettings> toDeleteSettings = new THashSet<RunnerAndConfigurationSettings>();
+    for (RunConfiguration each : manager.getConfigurations(type)) {
+      ContainerUtil.addIfNotNull(toDeleteSettings, manager.getSettings(each));
+    }
+
+    for (RunConfigurationBean each : stableConfigurations) {
+      toDeleteSettings.remove(each.getSettings());
+      manager.addConfiguration(each.getSettings(), each.isShared(), each.getStepsBeforeLaunch());
+    }
+
+    RunnerAndConfigurationSettings selected = manager.getSelectedConfiguration();
+    for (RunnerAndConfigurationSettings each : toDeleteSettings) {
+      manager.removeConfiguration(each);
     }
   }
 
@@ -694,6 +715,7 @@ class RunConfigurable extends BaseConfigurable {
   }
 
   public void disposeUIResources() {
+    isDisposed = true;
     for (Configurable configurable : myStoredComponents.values()) {
       configurable.disposeUIResources();
     }
@@ -954,7 +976,7 @@ class RunConfigurable extends BaseConfigurable {
               return type.getConfigurationFactories().length > 1;
             }
 
-          });      
+          });
       //new TreeSpeedSearch(myTree);
       popup.showUnderneathOf(myToolbarComponent);
     }

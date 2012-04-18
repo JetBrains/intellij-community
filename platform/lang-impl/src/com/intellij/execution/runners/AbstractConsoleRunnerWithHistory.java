@@ -75,23 +75,26 @@ public abstract class AbstractConsoleRunnerWithHistory<T extends LanguageConsole
    */
   public void initAndRun() throws ExecutionException {
     // Create Server process
-    myProcessHandler = createProcess();
-    ProcessTerminatedListener.attach(myProcessHandler);
+    final Process process = createProcess();
 
     UIUtil.invokeLaterIfNeeded(new Runnable() {
       @Override
       public void run() {
-        initConsoleUI();
+        initConsoleUI(process);
       }
     });
   }
 
-  private void initConsoleUI() {
+  private void initConsoleUI(Process process) {
     // Init console view
     myConsoleView = createConsoleView();
     myConsoleView.setBorder(new SideBorder(UIUtil.getBorderColor(), SideBorder.LEFT));
 
+    myProcessHandler = createProcessHandler(process);
+
     myConsoleExecuteActionHandler = createConsoleExecuteActionHandler();
+
+    ProcessTerminatedListener.attach(myProcessHandler);
 
     myProcessHandler.addProcessListener(new ProcessAdapter() {
       @Override
@@ -188,7 +191,9 @@ public abstract class AbstractConsoleRunnerWithHistory<T extends LanguageConsole
   protected abstract T createConsoleView();
 
   @Nullable
-  protected abstract OSProcessHandler createProcess() throws ExecutionException;
+  protected abstract Process createProcess() throws ExecutionException;
+
+  protected abstract OSProcessHandler createProcessHandler(final Process process);
 
   public static void registerActionShortcuts(final List<AnAction> actions, final JComponent component) {
     for (AnAction action : actions) {

@@ -12,6 +12,7 @@ import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.tasks.TaskManager;
 import com.intellij.tasks.impl.TaskManagerImpl;
 import com.intellij.ui.GuiUtils;
+import com.intellij.ui.components.JBCheckBox;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -43,6 +44,11 @@ public class TaskConfigurable extends BindableConfigurable implements Searchable
 
   @BindControl("saveContextOnCommit")
   private JCheckBox mySaveContextOnCommit;
+
+  @BindControl("changelistNameFormat")
+  private JTextField myChangelistNameFormat;
+  private JBCheckBox myAlwaysDisplayTaskCombo;
+  private JTextField myConnectionTimeout;
 
   private final Project myProject;
   private Configurable[] myConfigurables;
@@ -81,6 +87,8 @@ public class TaskConfigurable extends BindableConfigurable implements Searchable
   public void reset() {
     super.reset();
     enableFields();
+    myAlwaysDisplayTaskCombo.setSelected(TaskSettings.getInstance().ALWAYS_DISPLAY_COMBO);
+    myConnectionTimeout.setText(Integer.toString(TaskSettings.getInstance().CONNECTION_TIMEOUT));
   }
 
   @Override
@@ -90,6 +98,15 @@ public class TaskConfigurable extends BindableConfigurable implements Searchable
     if (getConfig().updateEnabled && !old) {
       TaskManager.getManager(myProject).updateIssues(null);
     }
+    TaskSettings.getInstance().ALWAYS_DISPLAY_COMBO = myAlwaysDisplayTaskCombo.isSelected();
+    TaskSettings.getInstance().CONNECTION_TIMEOUT = Integer.valueOf(myConnectionTimeout.getText());
+  }
+
+  @Override
+  public boolean isModified() {
+    return super.isModified() ||
+           TaskSettings.getInstance().ALWAYS_DISPLAY_COMBO != myAlwaysDisplayTaskCombo.isSelected() ||
+      TaskSettings.getInstance().CONNECTION_TIMEOUT != Integer.valueOf(myConnectionTimeout.getText());
   }
 
   @Nls

@@ -46,7 +46,7 @@ public class IndexedExpressionConversionIntention extends Intention {
         final GrExpression[] arguments = argList.getExpressionArguments();
 
         final PsiElement parent = element.getParent();
-        final GrExpression arrayExpression = arrayIndexExpression.getSelectedExpression();
+        final GrExpression arrayExpression = arrayIndexExpression.getInvokedExpression();
         if (!(parent instanceof GrAssignmentExpression)) {
             rewriteAsGetAt(arrayIndexExpression, arrayExpression, arguments[0]);
             return;

@@ -33,33 +33,41 @@
     <projectOpenProcessor implementation="org.jetbrains.plugins.gradle.importing.GradleProjectOpenProcessor"/>
     <colorAndFontPanelFactory implementation="org.jetbrains.plugins.gradle.config.GradleColorAndFontPanelFactory"/>
     <colorAndFontDescriptorProvider implementation="org.jetbrains.plugins.gradle.config.GradleColorAndFontDescriptorsProvider"/>
+    <postStartupActivity implementation="org.jetbrains.plugins.gradle.sync.GradleStartupActivity"/>
 
     <!--Structure diff calculators-->
     <applicationService serviceInterface="org.jetbrains.plugins.gradle.diff.GradleStructureChangesCalculator"
-                        serviceImplementation="org.jetbrains.plugins.gradle.diff.GradleProjectStructureChangesCalculator"/>
-    <applicationService serviceImplementation="org.jetbrains.plugins.gradle.diff.GradleModuleStructureChangesCalculator"/>
-    <applicationService serviceImplementation="org.jetbrains.plugins.gradle.diff.GradleLibraryStructureChangesCalculator"/>
-    <applicationService serviceImplementation="org.jetbrains.plugins.gradle.diff.GradleLibraryDependencyStructureChangesCalculator"/>
+                        serviceImplementation="org.jetbrains.plugins.gradle.diff.project.GradleProjectStructureChangesCalculator"/>
+    <applicationService serviceImplementation="org.jetbrains.plugins.gradle.diff.module.GradleModuleStructureChangesCalculator"/>
+    <applicationService serviceImplementation="org.jetbrains.plugins.gradle.diff.contentroot.GradleContentRootStructureChangesCalculator"/>
+    <applicationService serviceImplementation="org.jetbrains.plugins.gradle.diff.dependency.GradleModuleDependencyStructureChangesCalculator"/>
+    <applicationService serviceImplementation="org.jetbrains.plugins.gradle.diff.library.GradleLibraryStructureChangesCalculator"/>
+    <applicationService serviceImplementation="org.jetbrains.plugins.gradle.diff.dependency.GradleLibraryDependencyStructureChangesCalculator"/>
     
     <!--Import services-->
     <applicationService serviceImplementation="org.jetbrains.plugins.gradle.importing.GradleModuleImporter"/>
     <applicationService serviceImplementation="org.jetbrains.plugins.gradle.importing.GradleLibraryImporter"/>
     <applicationService serviceImplementation="org.jetbrains.plugins.gradle.importing.GradleContentRootImporter"/>
-    <applicationService serviceImplementation="org.jetbrains.plugins.gradle.importing.GradleModuleDependencyImporter"/>
+    <applicationService serviceImplementation="org.jetbrains.plugins.gradle.importing.GradleDependencyImporter"/>
 
     <!--Generic application services-->
     <applicationService serviceImplementation="org.jetbrains.plugins.gradle.remote.GradleApiFacadeManager"/>
     <applicationService serviceImplementation="org.jetbrains.plugins.gradle.util.GradleLibraryManager"/>
-    <applicationService serviceImplementation="org.jetbrains.plugins.gradle.task.GradleTaskManager"/>
     <applicationService serviceInterface="org.jetbrains.plugins.gradle.notification.GradleProgressNotificationManager"
                         serviceImplementation="org.jetbrains.plugins.gradle.notification.GradleProgressNotificationManagerImpl"/>
-    <applicationService serviceInterface="org.jetbrains.plugins.gradle.diff.PlatformFacade"
-                        serviceImplementation="org.jetbrains.plugins.gradle.diff.PlatformFacadeImpl"/>
+    <applicationService serviceInterface="org.jetbrains.plugins.gradle.config.PlatformFacade"
+                        serviceImplementation="org.jetbrains.plugins.gradle.config.PlatformFacadeImpl"/>
+    
+    <!--Conflict UI components-->
+    <applicationService serviceImplementation="org.jetbrains.plugins.gradle.sync.conflict.GradleConflictControlFactory"/>
+    <applicationService serviceImplementation="org.jetbrains.plugins.gradle.sync.conflict.GradleProjectConflictControlFactory"/>
+    <applicationService serviceImplementation="org.jetbrains.plugins.gradle.sync.conflict.GradleCommonDependencyConflictControlFactory"/>
+    <applicationService serviceImplementation="org.jetbrains.plugins.gradle.sync.conflict.GradleLibraryDependencyConflictControlFactory"/>
 
     <projectService serviceImplementation="org.jetbrains.plugins.gradle.config.GradleSettings"/>
     <projectService serviceImplementation="org.jetbrains.plugins.gradle.config.GradleProjectState"/>
 
-    <toolWindow id="Gradle" anchor="right" icon="/icons/gradle.png"
+    <toolWindow id="JetGradle" anchor="right" icon="/icons/toolWindowGradle.png"
                 factoryClass="org.jetbrains.plugins.gradle.ui.GradleToolWindowFactory"/>
   </extensions>
 
@@ -67,6 +75,7 @@
     <positionManagerDelegate implementation="org.jetbrains.plugins.gradle.config.GradlePositionManager"/>
     <scriptTypeDetector implementation="org.jetbrains.plugins.gradle.config.GradleScriptTypeDetector"/>
     <defaultImportContributor implementation="org.jetbrains.plugins.gradle.config.GradleDefaultImportContributor"/>
+    <groovyFrameworkConfigNotification implementation="org.jetbrains.plugins.gradle.config.GradleGroovyConfigNotification"/>
   </extensions>
 
   <project-components>
@@ -80,25 +89,56 @@
       <implementation-class>org.jetbrains.plugins.gradle.model.id.GradleEntityIdMapper</implementation-class>
     </component>
     <component>
+      <implementation-class>org.jetbrains.plugins.gradle.util.GradleProjectStructureContext</implementation-class>
+    </component>
+    <component>
       <implementation-class>org.jetbrains.plugins.gradle.importing.GradleLocalNodeImportHelper</implementation-class>
     </component>
     <component>
       <implementation-class>org.jetbrains.plugins.gradle.sync.GradleProjectStructureChangesDetector</implementation-class>
     </component>
+    <component>
+      <implementation-class>org.jetbrains.plugins.gradle.notification.GradleConfigNotificationManager</implementation-class>
+    </component>
+    <component>
+      <implementation-class>org.jetbrains.plugins.gradle.task.GradleTaskManager</implementation-class>
+    </component>
   </project-components>
   
   <actions>
-    <action id="Gradle.LinkToProject" class="org.jetbrains.plugins.gradle.action.GradleLinkToProjectAction" icon="/general/add.png"/>
+    
+    <!-- Tool window toolbar actions -->
+    <action id="Gradle.LinkToProject" class="org.jetbrains.plugins.gradle.action.GradleLinkToProjectAction"/>
     <action id="Gradle.RefreshProject" class="org.jetbrains.plugins.gradle.action.GradleRefreshProjectAction" icon="/actions/sync.png"/>
-    <action id="Gradle.OpenScript" class="org.jetbrains.plugins.gradle.action.GradleOpenScriptAction" icon="/icons/gradle.png"/>
-    <action id="Gradle.ImportEntity" class="org.jetbrains.plugins.gradle.action.GradleImportEntityAction"/>
+    <action id="Gradle.OpenScript" class="org.jetbrains.plugins.gradle.action.GradleOpenScriptAction" icon="/icons/gradleNavigate.png"/>
+    <action id="Gradle.Help.ToolWindow" class="org.jetbrains.plugins.gradle.action.GradleToolWindowHelpAction" icon="/actions/help.png"/>
     <group id="Gradle.ChangeActionsToolbar">
       <reference id="Gradle.RefreshProject"/>
       <reference id="Gradle.OpenScript"/>
+      <reference id="Gradle.Help.ToolWindow"/>
     </group>
+
+    <!-- 'Sync project structure' tree nodes actions -->
+    <action id="Gradle.ImportEntity" class="org.jetbrains.plugins.gradle.action.GradleImportEntityAction" icon="/icons/gradleImport.png"/>
+    <action id="Gradle.ShowConflict" class="org.jetbrains.plugins.gradle.action.GradleShowConflictDetailsAction" icon="/actions/diff.png"/>
     <group id="Gradle.SyncTreeGroup">
       <reference id="Gradle.ImportEntity"/>
+      <reference id="Gradle.ShowConflict"/>
     </group>
+
+    <!-- 'Sync project structure' tree filters -->
+    <action id="Gradle.SyncTreeFilter.GradleLocal" class="org.jetbrains.plugins.gradle.action.GradleLocalSyncTreeFilterAction"/>
+    <action id="Gradle.SyncTreeFilter.IntellijLocal" class="org.jetbrains.plugins.gradle.action.IntellijLocalSyncTreeFilterAction"/>
+    <action id="Gradle.SyncTreeFilter.Conflict" class="org.jetbrains.plugins.gradle.action.GradleConflictSyncTreeFilterAction"/>
+    <action id="Gradle.SyncTreeFilter.Confirmed" class="org.jetbrains.plugins.gradle.action.GradleConfirmedSyncTreeFilterAction"/>
+    <group id="Gradle.SyncTreeFilter">
+      <reference id="Gradle.SyncTreeFilter.GradleLocal"/>
+      <reference id="Gradle.SyncTreeFilter.IntellijLocal"/>
+      <reference id="Gradle.SyncTreeFilter.Conflict"/>
+      <!--<reference id="Gradle.SyncTreeFilter.Confirmed"/>-->
+    </group>
+    
+    <action id="Gradle.RebuildChangesTree" class="org.jetbrains.plugins.gradle.action.GradleRebuildStructureChangesTreeAction"/>
   </actions>
   
 </idea-plugin>

@@ -23,6 +23,7 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.actions.VcsContextFactory;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
@@ -93,12 +94,17 @@ public abstract class VcsVFSListener implements Disposable {
 
   protected boolean isEventIgnored(final VirtualFileEvent event, boolean putInDirty) {
     if (event.isFromRefresh()) return true;
-    boolean vcsIgnored = myVcsManager.getVcsFor(event.getFile()) != myVcs ||
-                (!myVcsManager.isFileInContent(event.getFile())) || myChangeListManager.isIgnoredFile(event.getFile());
+    boolean vcsIgnored = !isUnderMyVcs(event.getFile());
     if (vcsIgnored) {
       myDirtyFiles.add(event.getFile());
     }
     return vcsIgnored;
+  }
+
+  private boolean isUnderMyVcs(VirtualFile file) {
+    return myVcsManager.getVcsFor(file) == myVcs &&
+           (myVcsManager.isFileInContent(file)) &&
+           !myChangeListManager.isIgnoredFile(file);
   }
 
   protected void executeAdd() {
@@ -226,6 +232,13 @@ public abstract class VcsVFSListener implements Disposable {
   protected void beforeContentsChange(VirtualFileEvent event, VirtualFile file) {
   }
 
+  protected void fileAdded(VirtualFileEvent event, VirtualFile file) {
+    if (!isEventIgnored(event, true) && !myChangeListManager.isIgnoredFile(file) &&
+        (isDirectoryVersioningSupported() || !file.isDirectory())) {
+      myAddedFiles.add(event.getFile());
+    }
+  }
+
   private void addFileToMove(final VirtualFile file, final String newParentPath, final String newName) {
     if (file.isDirectory() && !isDirectoryVersioningSupported()) {
       VirtualFile[] children = file.getChildren();
@@ -301,9 +314,9 @@ public abstract class VcsVFSListener implements Disposable {
 
   private class MyVirtualFileAdapter extends VirtualFileAdapter {
     public void fileCreated(final VirtualFileEvent event) {
-      if (!isEventIgnored(event, true) && !myChangeListManager.isIgnoredFile(event.getFile()) &&
-          (isDirectoryVersioningSupported() || !event.getFile().isDirectory())) {
-        myAddedFiles.add(event.getFile());
+      VirtualFile file = event.getFile();
+      if (isUnderMyVcs(file)) {
+        VcsVFSListener.this.fileAdded(event, file);
       }
     }
 
@@ -381,8 +394,11 @@ public abstract class VcsVFSListener implements Disposable {
 
     @Override
     public void beforeContentsChange(VirtualFileEvent event) {
-      assert !event.getFile().isDirectory();
-      VcsVFSListener.this.beforeContentsChange(event, event.getFile());
+      VirtualFile file = event.getFile();
+      assert !file.isDirectory();
+      if (isUnderMyVcs(file)) {
+        VcsVFSListener.this.beforeContentsChange(event, file);
+      }
     }
   }
 
@@ -414,6 +430,32 @@ public abstract class VcsVFSListener implements Disposable {
       }
     }
 
+    // If a file is scheduled for deletion, and at the same time for copying or addition, don't delete it.
+    // It happens during Overwrite command or undo of overwrite.
+    private void dontDeleteAddedCopiedOrMovedFiles() {
+      Collection<String> copiedAddedMoved = new ArrayList<String>();
+      for (VirtualFile file : myCopyFromMap.keySet()) {
+        copiedAddedMoved.add(file.getPath());
+      }
+      for (VirtualFile file : myAddedFiles) {
+        copiedAddedMoved.add(file.getPath());
+      }
+      for (MovedFileInfo movedFileInfo : myMovedFiles) {
+        copiedAddedMoved.add(movedFileInfo.myNewPath);
+      }
+
+      for (Iterator<FilePath> iter = myDeletedFiles.iterator(); iter.hasNext(); ) {
+        if (copiedAddedMoved.contains(FileUtil.toSystemIndependentName(iter.next().getPath()))) {
+          iter.remove();
+        }
+      }
+      for (Iterator<FilePath> iter = myDeletedWithoutConfirmFiles.iterator(); iter.hasNext(); ) {
+        if (copiedAddedMoved.contains(FileUtil.toSystemIndependentName(iter.next().getPath()))) {
+          iter.remove();
+        }
+      }
+    }
+
     public void commandFinished(final CommandEvent event) {
       if (myProject != event.getProject()) return;
       myCommandLevel--;
@@ -429,6 +471,7 @@ public abstract class VcsVFSListener implements Disposable {
           finally {
             myCommandLevel--;
           }
+          dontDeleteAddedCopiedOrMovedFiles();
           checkMovedAddedSourceBack();
           if (!myAddedFiles.isEmpty()) {
             executeAdd();
@@ -464,5 +507,6 @@ public abstract class VcsVFSListener implements Disposable {
         }
       }
     }
+
   }
 }

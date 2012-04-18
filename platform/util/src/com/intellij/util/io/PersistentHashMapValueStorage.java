@@ -19,7 +19,6 @@
  */
 package com.intellij.util.io;
 
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.ByteSequence;
 import com.intellij.util.containers.SLRUCache;
 import org.jetbrains.annotations.NotNull;
@@ -121,10 +120,20 @@ public class PersistentHashMapValueStorage {
 
   private final byte[] myBuffer = new byte[1024];
 
+  public static class ReadResult {
+    public final long offset;
+    public final byte[] buffer;
+
+    public ReadResult(long offset, byte[] buffer) {
+      this.offset = offset;
+      this.buffer = buffer;
+    }
+  }
+
   /**
    * Reads bytes pointed by tailChunkAddress into result passed, returns new address if linked list compactification have been performed
    */
-  public Pair<Long, byte[]> readBytes(long tailChunkAddress) throws IOException {    
+  public ReadResult readBytes(long tailChunkAddress) throws IOException {
     force();
 
     long chunk = tailChunkAddress;
@@ -186,10 +195,10 @@ public class PersistentHashMapValueStorage {
 
     if (chunkCount > 1 && !myCompactionMode) {
       long l = appendBytes(new ByteSequence(result), 0);
-      return new Pair<Long, byte[]>(l, result);
+      return new ReadResult(l, result);
     }
 
-    return new Pair<Long, byte[]>(tailChunkAddress, result);
+    return new ReadResult(tailChunkAddress, result);
   }
 
   public long getSize() {

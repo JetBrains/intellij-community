@@ -53,8 +53,7 @@ public class MavenPropertyCompletionContributor extends CompletionContributor {
     TextRange range = TextRange.create(braceOffset, offset);
     String prefix = range.substring(text);
 
-    MavenFilteredPropertyPsiReference ref = new MavenFilteredPropertyPsiReference(projectFile, psiFile, prefix, range,
-                                                                                  MavenPropertyPsiReferenceProvider.SOFT_DEFAULT);
+    MavenFilteredPropertyPsiReference ref = new MavenFilteredPropertyPsiReference(projectFile, psiFile, prefix, range);
 
     addVariants(Arrays.asList(ref.getVariants()), result.withPrefixMatcher(prefix));
   }

@@ -271,7 +271,7 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar {
   public synchronized Set<OptionDescription> getAcceptableDescriptions(final String prefix) {
     if (prefix == null) return null;
     final String stemmedPrefix = PorterStemmerUtil.stem(prefix);
-    if (stemmedPrefix == null) return null;
+    if (StringUtil.isEmptyOrSpaces(stemmedPrefix)) return null;
     loadHugeFilesIfNecessary();
     Set<OptionDescription> result = null;
     for (Map.Entry<String, Set<OptionDescription>> entry : myStorage.entrySet()) {

@@ -52,6 +52,10 @@ public abstract class XDebuggerEditorBase {
     mySourcePosition = sourcePosition;
   }
 
+  public EvaluationMode getMode() {
+    return myMode;
+  }
+
   public abstract JComponent getComponent();
 
   protected abstract void doSetText(String text);

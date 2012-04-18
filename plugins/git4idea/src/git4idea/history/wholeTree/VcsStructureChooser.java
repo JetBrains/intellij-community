@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,7 +33,6 @@ import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.changes.ui.VirtualFileListCellRenderer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.*;
@@ -163,9 +162,7 @@ public class VcsStructureChooser extends DialogWrapper {
         return path1.compareToIgnoreCase(path2);
       }
     };
-    for (VirtualFile root : list) {
-      descriptor.addRoot(root);
-    }
+    descriptor.setRoots(list);
     myTree = new Tree();
     myTree.setMinimumSize(new Dimension(200, 200));
     myTree.setBorder(BORDER);

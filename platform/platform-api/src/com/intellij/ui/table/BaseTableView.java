@@ -18,7 +18,6 @@ package com.intellij.ui.table;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.config.Storage;
 import com.intellij.util.ui.ListTableModel;
-import com.intellij.util.ui.Table;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
@@ -31,7 +30,7 @@ import java.util.Arrays;
 /**
  * Do NOT add code that assumes that table has same number of rows as model. It isn't true!
  */
-public class BaseTableView extends Table {
+public class BaseTableView extends JBTable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ui.table.BaseTableView");
 
   public BaseTableView(final ListTableModel model) {

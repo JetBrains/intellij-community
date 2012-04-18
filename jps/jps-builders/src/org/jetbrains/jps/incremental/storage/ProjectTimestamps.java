@@ -2,7 +2,6 @@ package org.jetbrains.jps.incremental.storage;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
-import org.jetbrains.jps.incremental.Paths;
 
 import java.io.File;
 import java.io.IOException;
@@ -14,12 +13,12 @@ import java.io.IOException;
 public class ProjectTimestamps {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.incremental.storage.ProjectTimestamps");
   private static final String TIMESTAMP_STORAGE = "timestamps";
-  private final String myProjectName;
   private final TimestampStorage myTimestamps;
+  private final File myTimestampsRoot;
 
-  public ProjectTimestamps(String projectName) throws IOException {
-    myProjectName = projectName;
-    myTimestamps = new TimestampStorage(new File(getTimestampsRoot(projectName), "data"));
+  public ProjectTimestamps(final File dataStorageRoot) throws IOException {
+    myTimestampsRoot = new File(dataStorageRoot, TIMESTAMP_STORAGE);
+    myTimestamps = new TimestampStorage(new File(myTimestampsRoot, "data"));
   }
 
   public TimestampStorage getStorage() {
@@ -32,7 +31,7 @@ public class ProjectTimestamps {
       timestamps.wipe();
     }
     else {
-      FileUtil.delete(getTimestampsRoot(myProjectName));
+      FileUtil.delete(myTimestampsRoot);
     }
   }
 
@@ -44,12 +43,8 @@ public class ProjectTimestamps {
       }
       catch (IOException e) {
         LOG.error(e);
-        FileUtil.delete(getTimestampsRoot(myProjectName));
+        FileUtil.delete(myTimestampsRoot);
       }
     }
-  }
-
-  public static File getTimestampsRoot(final String projectName) {
-    return new File(Paths.getDataStorageRoot(projectName), TIMESTAMP_STORAGE);
   }
 }

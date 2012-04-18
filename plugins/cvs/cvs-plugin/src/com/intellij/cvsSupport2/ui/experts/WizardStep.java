@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,7 +41,7 @@ public abstract class WizardStep extends StepAdapter{
   }
 
   public abstract boolean nextIsEnabled();
-  public abstract boolean setActive();
+  public void activate() {}
   protected abstract JComponent createComponent();
   protected void dispose() {}
 
@@ -49,7 +49,7 @@ public abstract class WizardStep extends StepAdapter{
   public JComponent getComponent(){
     if (myComponent == null) {
       myComponent = createComponent();
-      final IdeaTitledBorder border = IdeBorderFactory.createTitledBorder(myDescription, false, false, false);
+      final IdeaTitledBorder border = IdeBorderFactory.createTitledBorder(myDescription, false);
       myComponent.setBorder(border);
     }
     return myComponent;
@@ -61,7 +61,7 @@ public abstract class WizardStep extends StepAdapter{
   }
 
   protected void setStepTitle(String title){
-    final IdeaTitledBorder border = IdeBorderFactory.createTitledBorder(title, false, false, false);
+    final IdeaTitledBorder border = IdeBorderFactory.createTitledBorder(title, false);
     getComponent().setBorder(border);
   }
 
@@ -73,5 +73,14 @@ public abstract class WizardStep extends StepAdapter{
 
   public JComponent getPreferredFocusedComponent() {
     return myComponent;
+  }
+
+  public void focus() {
+    SwingUtilities.invokeLater(new Runnable() {
+      @Override
+      public void run() {
+        getPreferredFocusedComponent().requestFocus();
+      }
+    });
   }
 }

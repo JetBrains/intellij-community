@@ -37,6 +37,7 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileVisitor;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 
@@ -74,11 +75,15 @@ public class FileBasedIndexProjectHandler extends AbstractProjectComponent imple
           rootManager.registerRefreshUpdater(changedFilesUpdater);
           myIndex.registerIndexableSet(FileBasedIndexProjectHandler.this, project);
           projectManager.addProjectManagerListener(project, new ProjectManagerAdapter() {
+            private boolean removed = false;
             @Override
             public void projectClosing(Project project) {
-              rootManager.unregisterRefreshUpdater(changedFilesUpdater);
-              rootManager.unregisterRootsChangeUpdater(unindexedFilesUpdater);
-              myIndex.removeIndexableSet(FileBasedIndexProjectHandler.this);
+              if (!removed) {
+                removed = true;
+                rootManager.unregisterRefreshUpdater(changedFilesUpdater);
+                rootManager.unregisterRootsChangeUpdater(unindexedFilesUpdater);
+                myIndex.removeIndexableSet(FileBasedIndexProjectHandler.this);
+              }
             }
           });
         }
@@ -87,7 +92,7 @@ public class FileBasedIndexProjectHandler extends AbstractProjectComponent imple
   }
 
   @Override
-  public boolean isInSet(final VirtualFile file) {
+  public boolean isInSet(@NotNull final VirtualFile file) {
     final ProjectFileIndex index = myRootManager.getFileIndex();
     if (index.isInContent(file) || index.isInLibraryClasses(file) || index.isInLibrarySource(file)) {
       if (myExclusionManager != null && myExclusionManager.isExcluded(file)) return false;
@@ -97,10 +102,10 @@ public class FileBasedIndexProjectHandler extends AbstractProjectComponent imple
   }
 
   @Override
-  public void iterateIndexableFilesIn(final VirtualFile file, final ContentIterator iterator) {
+  public void iterateIndexableFilesIn(@NotNull final VirtualFile file, @NotNull final ContentIterator iterator) {
     VfsUtilCore.visitChildrenRecursively(file, new VirtualFileVisitor() {
       @Override
-      public boolean visitFile(VirtualFile file) {
+      public boolean visitFile(@NotNull VirtualFile file) {
 
         if (!isInSet(file)) return false;
         if (!file.isDirectory()) {

@@ -15,10 +15,15 @@ public final class RootDescriptor {
   @NotNull
   public final File root;
   public final boolean isTestRoot;
+  public final boolean isGeneratedSources;
 
   RootDescriptor(@NotNull Module module, @NotNull File root, boolean isTestRoot) {
+    this(module, root, isTestRoot, false);
+  }
+  RootDescriptor(@NotNull Module module, @NotNull File root, boolean isTestRoot, boolean isGenerated) {
     this.module = module;
     this.root = root;
     this.isTestRoot = isTestRoot;
+    this.isGeneratedSources = isGenerated;
   }
 }

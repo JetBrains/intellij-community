@@ -198,7 +198,7 @@ public class SvnConfigureProxiesComponent extends MasterDetailsComponent {
         public void actionPerformed(AnActionEvent event) {
           // apply - for update of editable object
           try {
-            getSelectedConfugurable().apply();
+            getSelectedConfigurable().apply();
           } catch (ConfigurationException e) {
             // suppress & wait for OK
           }

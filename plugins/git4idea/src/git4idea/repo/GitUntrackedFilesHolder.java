@@ -16,6 +16,7 @@
 package git4idea.repo;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
@@ -25,6 +26,7 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.*;
 import com.intellij.util.messages.MessageBusConnection;
+import git4idea.GitUtil;
 import git4idea.commands.Git;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -78,23 +80,27 @@ public class GitUntrackedFilesHolder implements Disposable, BulkFileListener {
   private final Project myProject;
   private final VirtualFile myRoot;
   private final ChangeListManager myChangeListManager;
-  private final GitRepositoryManager myRepositoryManager;
   private final VcsDirtyScopeManager myDirtyScopeManager;
   private final GitRepositoryFiles myRepositoryFiles;
+  private final Git myGit;
 
   private Set<VirtualFile> myDefinitelyUntrackedFiles = new HashSet<VirtualFile>();
   private Set<VirtualFile> myPossiblyUntrackedFiles = new HashSet<VirtualFile>();
   private Set<VirtualFile> myPossiblyTrackedFiles = new HashSet<VirtualFile>();
   private boolean myReady;   // if false, total refresh is needed
   private final Object LOCK = new Object();
+  private final GitRepositoryManager myRepositoryManager;
 
-  GitUntrackedFilesHolder(@NotNull VirtualFile root, @NotNull Project project) {
-    myProject = project;
-    myRoot = root;
-    myRepositoryFiles = GitRepositoryFiles.getInstance(root);
-    myChangeListManager = ChangeListManager.getInstance(project);
-    myRepositoryManager = GitRepositoryManager.getInstance(project);
-    myDirtyScopeManager = VcsDirtyScopeManager.getInstance(project);
+  GitUntrackedFilesHolder(@NotNull GitRepository repository) {
+    myProject = repository.getProject();
+    myRoot = repository.getRoot();
+    myChangeListManager = ChangeListManager.getInstance(myProject);
+    myDirtyScopeManager = VcsDirtyScopeManager.getInstance(myProject);
+    myGit = ServiceManager.getService(Git.class);
+
+    myRepositoryManager = GitUtil.getRepositoryManager(myProject);
+    assert myRepositoryManager != null;
+    myRepositoryFiles = GitRepositoryFiles.getInstance(repository.getGitDir());
   }
 
   void setupVfsListener(@NotNull Project project) {
@@ -173,11 +179,17 @@ public class GitUntrackedFilesHolder implements Disposable, BulkFileListener {
     }
   }
 
+  public void invalidate() {
+    synchronized (LOCK) {
+      myReady = false;
+    }
+  }
+
   /**
    * Resets the list of untracked files after retrieving the full list of them from Git.
    */
   public void rescanAll() throws VcsException {
-    Set<VirtualFile> untrackedFiles = Git.untrackedFiles(myProject, myRoot, null);
+    Set<VirtualFile> untrackedFiles = myGit.untrackedFiles(myProject, myRoot, null);
     synchronized (LOCK) {
       myDefinitelyUntrackedFiles = untrackedFiles;
       myPossiblyUntrackedFiles.clear();
@@ -205,7 +217,7 @@ public class GitUntrackedFilesHolder implements Disposable, BulkFileListener {
       suspiciousFiles.addAll(myPossiblyTrackedFiles);
     }
 
-    Set<VirtualFile> untrackedFiles = Git.untrackedFiles(myProject, myRoot, suspiciousFiles);
+    Set<VirtualFile> untrackedFiles = myGit.untrackedFiles(myProject, myRoot, suspiciousFiles);
     suspiciousFiles.removeAll(untrackedFiles);
     // files that were suspicious (and thus passed to 'git ls-files'), but are not untracked, are definitely tracked.
     Set<VirtualFile> trackedFiles  = suspiciousFiles;
@@ -219,11 +231,11 @@ public class GitUntrackedFilesHolder implements Disposable, BulkFileListener {
   }
 
   @Override
-  public void before(List<? extends VFileEvent> events) {
+  public void before(@NotNull List<? extends VFileEvent> events) {
   }
 
   @Override
-  public void after(List<? extends VFileEvent> events) {
+  public void after(@NotNull List<? extends VFileEvent> events) {
     boolean allChanged = false;
     Set<VirtualFile> filesToRefresh = new HashSet<VirtualFile>();
 

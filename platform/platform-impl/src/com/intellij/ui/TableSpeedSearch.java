@@ -49,6 +49,11 @@ public class TableSpeedSearch extends SpeedSearchBase<JTable> {
     return new MyListIterator(startingIndex);
   }
 
+  protected int getElementCount() {
+    final TableModel tableModel = myComponent.getModel();
+    return tableModel.getRowCount() * tableModel.getColumnCount();
+  }
+
   protected void selectElement(Object element, String selectedText) {
     final int index = ((Integer)element).intValue();
     final TableModel model = myComponent.getModel();
@@ -62,12 +67,12 @@ public class TableSpeedSearch extends SpeedSearchBase<JTable> {
   protected int getSelectedIndex() {
     final int row = myComponent.getSelectedRow();
     final int col = myComponent.getSelectedColumn();
-    // TODO: WTF?! getComponent().getSelectedRow() should be enough for everyone.
+    // selected row is not enough as we want to select specific cell in a large multi-column table
     return row > -1 && col > -1? row * myComponent.getModel().getColumnCount() + col : -1;
   }
 
   protected Object[] getAllElements() {
-    throw new AssertionError("Not Implemented");
+    throw new UnsupportedOperationException("Not implemented");
   }
 
   protected String getElementText(Object element) {
@@ -84,17 +89,12 @@ public class TableSpeedSearch extends SpeedSearchBase<JTable> {
     private int myCursor;
 
     public MyListIterator(int startingIndex) {
-      final int total = getTotal();
+      final int total = getElementCount();
       myCursor = startingIndex < 0? total : startingIndex;
     }
 
-    private int getTotal() {
-      final TableModel tableModel = myComponent.getModel();
-      return tableModel.getRowCount() * tableModel.getColumnCount();
-    }
-
     public boolean hasNext() {
-      return myCursor < getTotal();
+      return myCursor < getElementCount();
     }
 
     public Object next() {

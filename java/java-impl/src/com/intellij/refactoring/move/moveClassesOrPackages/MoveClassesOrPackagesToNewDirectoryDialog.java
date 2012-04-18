@@ -114,7 +114,7 @@ public class MoveClassesOrPackagesToNewDirectoryDialog extends DialogWrapper {
           for (PsiDirectory psiDirectory : ((PsiPackage)element).getDirectories()) {
             final VirtualFile virtualFile = psiDirectory.getVirtualFile();
             sourceRoots.add(fileIndex.getSourceRootForFile(virtualFile));
-            sameModule &= destinationModule == fileIndex.getModuleForFile(virtualFile);
+            //sameModule &= destinationModule == fileIndex.getModuleForFile(virtualFile);
           }
         } else if (element instanceof PsiClass) {
           final VirtualFile virtualFile = element.getContainingFile().getVirtualFile();

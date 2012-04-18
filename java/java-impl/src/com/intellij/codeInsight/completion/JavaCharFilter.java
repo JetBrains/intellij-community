@@ -34,6 +34,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 
 public class JavaCharFilter extends CharFilter {
 
@@ -42,7 +43,7 @@ public class JavaCharFilter extends CharFilter {
     return psiElement != null && psiElement.getParent() instanceof PsiLiteralExpression;
   }
 
-  public static boolean isNonImportedClassEntered(LookupImpl lookup) {
+  public static boolean isNonImportedClassEntered(LookupImpl lookup, boolean orPackage) {
     if (lookup.isSelectionTouched() || !lookup.isCompletion()) return false;
 
     CompletionProcess process = CompletionService.getCompletionService().getCurrentCompletion();
@@ -61,9 +62,13 @@ public class JavaCharFilter extends CharFilter {
       }
     }
     for (PsiClass aClass : PsiShortNamesCache.getInstance(file.getProject()).getClassesByName(prefix, file.getResolveScope())) {
-      if (!isObfuscated(aClass)) {
+      if (!isObfuscated(aClass) && PsiUtil.isAccessible(aClass, file, null)) {
         return true;
       }
+    }
+
+    if (orPackage && prefix.length() > 1 && JavaPsiFacade.getInstance(file.getProject()).findPackage(prefix) != null) {
+      return true;
     }
 
     return false;
@@ -79,7 +84,7 @@ public class JavaCharFilter extends CharFilter {
       return false;
     }
     
-    return name.length() == 1 && Character.isLowerCase(name.charAt(0));
+    return name.length() <= 2 && Character.isLowerCase(name.charAt(0));
   }
 
   public Result acceptChar(char c, final int prefixLength, final Lookup lookup) {
@@ -117,17 +122,23 @@ public class JavaCharFilter extends CharFilter {
       return Result.HIDE_LOOKUP;
     }
 
-    if ((c == '[' || c == '<' || c == '.' || c == ' ' || c == '(') && isNonImportedClassEntered((LookupImpl)lookup)) {
+    if ((c == '[' || c == '<' || c == '.' || c == ' ' || c == '(') &&
+        isNonImportedClassEntered((LookupImpl)lookup, c == '.')) {
       return Result.HIDE_LOOKUP;
     }
     
     if (c == '[') return CharFilter.Result.SELECT_ITEM_AND_FINISH_LOOKUP;
     if (c == '<' && o instanceof PsiClass) return Result.SELECT_ITEM_AND_FINISH_LOOKUP;
-    if (c == '(' && o instanceof PsiClass) {
-      if (PsiJavaPatterns.psiElement().afterLeaf(PsiKeyword.NEW).accepts(lookup.getPsiElement())) {
-        return Result.SELECT_ITEM_AND_FINISH_LOOKUP;
+    if (c == '(') {
+      if (o instanceof PsiClass) {
+        if (PsiJavaPatterns.psiElement().afterLeaf(PsiKeyword.NEW).accepts(lookup.getPsiElement())) {
+          return Result.SELECT_ITEM_AND_FINISH_LOOKUP;
+        }
+        return Result.HIDE_LOOKUP;
       }
-      return Result.HIDE_LOOKUP;
+      if (o instanceof PsiType) {
+        return Result.HIDE_LOOKUP;
+      }
     }
     if ((c == ',' || c == '=') && o instanceof PsiVariable) {
       int lookupStart = ((LookupImpl)lookup).getLookupStart();

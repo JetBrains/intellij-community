@@ -36,20 +36,17 @@ import org.jetbrains.plugins.groovy.codeInspection.GroovyUnusedDeclarationInspec
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyResultOfAssignmentUsedInspection
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyUncheckedAssignmentOfMemberOfRawTypeInspection
-import org.jetbrains.plugins.groovy.codeInspection.confusing.ClashingGettersInspection
-import org.jetbrains.plugins.groovy.codeInspection.confusing.GroovyOctalIntegerInspection
-import org.jetbrains.plugins.groovy.codeInspection.confusing.GroovyResultOfIncrementOrDecrementUsedInspection
 import org.jetbrains.plugins.groovy.codeInspection.control.GroovyTrivialConditionalInspection
 import org.jetbrains.plugins.groovy.codeInspection.control.GroovyTrivialIfInspection
 import org.jetbrains.plugins.groovy.codeInspection.control.GroovyUnnecessaryReturnInspection
 import org.jetbrains.plugins.groovy.codeInspection.metrics.GroovyOverlyLongMethodInspection
-import org.jetbrains.plugins.groovy.codeInspection.noReturnMethod.MissingReturnInspection
 import org.jetbrains.plugins.groovy.codeInspection.unassignedVariable.UnassignedVariableAccessInspection
 import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GroovyUnresolvedAccessInspection
 import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GroovyUntypedAccessInspection
 import org.jetbrains.plugins.groovy.codeInspection.unusedDef.UnusedDefInspection
 import org.jetbrains.plugins.groovy.util.TestUtils
 import org.jetbrains.plugins.groovy.codeInspection.bugs.*
+import org.jetbrains.plugins.groovy.codeInspection.confusing.*
 
 /**
  * @author peter
@@ -87,7 +84,7 @@ public class GroovyHighlightingTest extends LightCodeInsightFixtureTestCase {
 
   private void doTest(InspectionProfileEntry... tools) {
     myFixture.enableInspections(tools);
-    myFixture.testHighlighting(true, false, false, getTestName(false) + ".groovy");
+    myFixture.testHighlighting(true, false, true, getTestName(false) + ".groovy");
   }
 
   public void testCircularInheritance() throws Throwable {
@@ -189,10 +186,10 @@ public class GroovyHighlightingTest extends LightCodeInsightFixtureTestCase {
   public void testUnassigned3() throws Exception { doTest(new UnassignedVariableAccessInspection()); }
   public void testUnassignedTryFinally() throws Exception { doTest(new UnassignedVariableAccessInspection()); }
 
-  public void testUnusedVariable() throws Exception { doTest(new UnusedDefInspection()); }
-  public void testDefinitionUsedInClosure() throws Exception { doTest(new UnusedDefInspection()); }
-  public void testDefinitionUsedInClosure2() throws Exception { doTest(new UnusedDefInspection()); }
-  public void testDefinitionUsedInSwitchCase() throws Exception { doTest(new UnusedDefInspection()); }
+  public void testUnusedVariable() throws Exception { doTest(new UnusedDefInspection(), new GrUnusedIncDecInspection()); }
+  public void testDefinitionUsedInClosure() throws Exception { doTest(new UnusedDefInspection(), new GrUnusedIncDecInspection()); }
+  public void testDefinitionUsedInClosure2() throws Exception { doTest(new UnusedDefInspection(), new GrUnusedIncDecInspection()); }
+  public void testDefinitionUsedInSwitchCase() throws Exception { doTest(new UnusedDefInspection(), new GrUnusedIncDecInspection()); }
   public void testDuplicateInnerClass() throws Throwable{doTest();}
 
   public void testThisInStaticContext() throws Throwable {doTest();}
@@ -223,6 +220,16 @@ public class GroovyHighlightingTest extends LightCodeInsightFixtureTestCase {
 
   public void testEachOverRange() throws Exception {doTest();}
 
+  public void testEllipsisParam() {
+    myFixture.configureByText('a.groovy', '''\
+class A {
+  def foo(int... x){}
+  def foo(<error descr="Ellipsis type is not allowed here">int...</error> x, double y) {}
+}
+''')
+    myFixture.checkHighlighting(true, false, false)
+  }
+
   public void testMethodCallWithDefaultParameters() throws Exception {doTest(new GroovyAssignabilityCheckInspection());}
   public void testClosureWithDefaultParameters() throws Exception {doTest(new GroovyAssignabilityCheckInspection());}
   public void testClosureCallMethodWithInapplicableArguments() throws Exception {doTest(new GroovyAssignabilityCheckInspection());}
@@ -239,8 +246,8 @@ public class GroovyHighlightingTest extends LightCodeInsightFixtureTestCase {
   public void testByteArrayArgument() throws Exception {doTest(new GroovyAssignabilityCheckInspection());}
 
   public void testForLoopWithNestedEndlessLoop() throws Exception {doTest(new UnassignedVariableAccessInspection());}
-  public void testPrefixIncrementCfa() throws Exception {doTest(new UnusedDefInspection());}
-  public void testIfIncrementElseReturn() throws Exception {doTest(new UnusedDefInspection()); }
+  public void testPrefixIncrementCfa() throws Exception {doTest(new UnusedDefInspection(), new GrUnusedIncDecInspection());}
+  public void testIfIncrementElseReturn() throws Exception {doTest(new UnusedDefInspection(), new GrUnusedIncDecInspection()); }
 
   public void testArrayLikeAccess() throws Exception {doTest();}
 
@@ -306,7 +313,7 @@ public class GroovyHighlightingTest extends LightCodeInsightFixtureTestCase {
 
   public void testBuiltInTypeInstantiation() {doTest();}
 
-  public void testSwitchControlFlow() {doTest(new UnusedDefInspection(), new GroovyResultOfAssignmentUsedInspection());}
+  public void testSwitchControlFlow() {doTest(new UnusedDefInspection(), new GroovyResultOfAssignmentUsedInspection(), new GrUnusedIncDecInspection());}
 
   public void testRawTypeInAssignment() {doTest(new GroovyAssignabilityCheckInspection());}
 
@@ -316,7 +323,7 @@ public class GroovyHighlightingTest extends LightCodeInsightFixtureTestCase {
     IdeaTestUtil.assertTiming("", 10000, 1, new Runnable() {
       @Override
       public void run() {
-        doTest(new GroovyAssignabilityCheckInspection(), new UnusedDefInspection());
+        doTest(new GroovyAssignabilityCheckInspection(), new UnusedDefInspection(), new GrUnusedIncDecInspection());
       }
     });
   }
@@ -388,7 +395,7 @@ public class GroovyHighlightingTest extends LightCodeInsightFixtureTestCase {
     doTest(new GroovyUnresolvedAccessInspection(), new GroovyUntypedAccessInspection());
   }
 
-  public void testUsageInInjection() { doTest(new UnusedDefInspection()); }
+  public void testUsageInInjection() { doTest(new UnusedDefInspection(), new GrUnusedIncDecInspection()); }
 
   public void testDuplicatedNamedArgs() {doTest();}
 
@@ -410,15 +417,19 @@ public class GroovyHighlightingTest extends LightCodeInsightFixtureTestCase {
   }
 
   public void testUnusedDefsForArgs() {
-    doTest(new UnusedDefInspection());
+    doTest(new UnusedDefInspection(), new GrUnusedIncDecInspection());
   }
 
   public void testUsedDefBeforeTry1() {
-    doTest(new UnusedDefInspection());
+    doTest(new UnusedDefInspection(), new GrUnusedIncDecInspection());
   }
 
   public void testUsedDefBeforeTry2() {
-    doTest(new UnusedDefInspection());
+    doTest(new UnusedDefInspection(), new GrUnusedIncDecInspection());
+  }
+
+  public void testUnusedInc() {
+    doTest(new UnusedDefInspection(), new GrUnusedIncDecInspection())
   }
 
   public void testStringAssignableToChar() {
@@ -466,11 +477,11 @@ public class GroovyHighlightingTest extends LightCodeInsightFixtureTestCase {
     doTest(new GroovyUnresolvedAccessInspection());
   }
 
-  public void testUnknownVarInArgList() {
+  public void testImplicitEnumCoercion() {
     doTest(new GroovyAssignabilityCheckInspection());
   }
-  
-  public void testImplicitEnumCoercion() {
+
+  public void testUnknownVarInArgList() {
     doTest(new GroovyAssignabilityCheckInspection());
   }
 
@@ -502,10 +513,6 @@ public class GroovyHighlightingTest extends LightCodeInsightFixtureTestCase {
     doTest(new GroovyAssignabilityCheckInspection());
   }
   
-  public void testMissingReturnInClosure() {
-    doTest(new MissingReturnInspection());
-  }
-
   public void testImmutableConstructorFromJava() {
     myFixture.addFileToProject "a.groovy", '''@groovy.transform.Immutable class Foo { int a; String b }'''
     myFixture.configureByText 'a.java', '''
@@ -673,4 +680,112 @@ List<?> list2
   public void testGloballyUnusedSymbols() {
     doTest(new GroovyUnusedDeclarationInspection(), new UnusedDeclarationInspection())
   }
+
+  public void testGloballyUnusedInnerMethods() {
+    myFixture.addClass 'package junit.framework; public class TestCase {}'
+    doTest(new GroovyUnusedDeclarationInspection(), new UnusedDeclarationInspection())
+  }
+
+  public void testAliasInParameterType() {
+    myFixture.configureByText('a_.groovy', '''\
+import java.awt.event.ActionListener
+import java.awt.event.ActionEvent as AE
+
+public class CorrectImplementor implements ActionListener {
+  public void actionPerformed (AE e) { //AE is alias to ActionEvent
+  }
+}
+
+<error descr="Method 'actionPerformed' is not implemented">public class IncorrectImplementor implements ActionListener</error> {
+  public void actionPerformed (Object e) {
+  }
+}
+''')
+    myFixture.testHighlighting(true, false, false)
+  }
+
+  public void testReassignedHighlighting() {
+    myFixture.testHighlighting(true, true, true, getTestName(false) + ".groovy");
+  }
+
+  public void testDeprecated() {
+    myFixture.configureByText('_a.groovy', '''\
+/**
+ @deprecated
+*/
+class X {
+  @Deprecated
+  def foo(){}
+
+  public static void main() {
+    new <warning descr="'X' is deprecated">X</warning>().<warning descr="'foo' is deprecated">foo</warning>()
+  }
+}''')
+
+    myFixture.enableInspections(GrDeprecatedAPIUsageInspection)
+    myFixture.testHighlighting(true, false, false)
+  }
+
+  public void testInstanceOf() {
+    myFixture.configureByText('_a.groovy', '''\
+class DslPointcut {}
+
+private def handleImplicitBind(arg) {
+    if (arg instanceof Map && arg.size() == 1 && arg.keySet().iterator().next() instanceof String && arg.values().iterator().next() instanceof DslPointcut) {
+        return DslPointcut.bind(arg)
+    }
+    return arg
+}''')
+    myFixture.testHighlighting(true, false, false)
+  }
+
+  public void testTargetAnnotationInsideGroovy1() {
+    myFixture.addFileToProject('Ann.groovy', '''
+import java.lang.annotation.Target
+
+import static java.lang.annotation.ElementType.*
+
+@Target(FIELD)
+@interface Ann {}
+''')
+
+    myFixture.configureByText('_.groovy', '''
+@<error descr="'@Ann' not applicable to type">Ann</error>
+class C {
+  @Ann
+  def foo
+
+  def ar() {
+    @Ann
+    def x
+  }
+}''')
+
+    myFixture.testHighlighting(true, false, false)
+  }
+
+  public void testTargetAnnotationInsideGroovy2() {
+    myFixture.addFileToProject('Ann.groovy', '''
+import java.lang.annotation.Target
+
+import static java.lang.annotation.ElementType.*
+
+@Target(value=[FIELD, TYPE])
+@interface Ann {}
+''')
+
+    myFixture.configureByText('_.groovy', '''
+@Ann
+class C {
+  @Ann
+  def foo
+
+  def ar() {
+    @Ann
+    def x
+  }
+}''')
+    myFixture.testHighlighting(true, false, false)
+  }
+
 }

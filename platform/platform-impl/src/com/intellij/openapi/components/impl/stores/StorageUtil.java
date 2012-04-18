@@ -90,7 +90,8 @@ public class StorageUtil {
     }
   }
 
-  static void save(final IFile file, final Parent element, final Object requestor) throws StateStorageException {
+  static VirtualFile save(final IFile file, final Parent element, final Object requestor) throws StateStorageException {
+    final VirtualFile[] result = new VirtualFile[1];
     final String filePath = file.getCanonicalPath();
     try {
       final Ref<IOException> refIOException = Ref.create(null);
@@ -98,7 +99,7 @@ public class StorageUtil {
       final Pair<String, String> pair = loadFile(file);
       final byte[] text = JDOMUtil.writeParent(element, pair.second).getBytes(CharsetToolkit.UTF8);
       if (file.exists()) {
-        if (new String(text).equals(pair.first)) return;
+        if (new String(text).equals(pair.first)) return null;
         IFile backupFile = deleteBackup(filePath);
         file.renameTo(backupFile);
       }
@@ -114,6 +115,7 @@ public class StorageUtil {
             final VirtualFile virtualFile = getOrCreateVirtualFile(requestor, file);
 
             virtualFile.setBinaryContent(text, -1, -1, requestor);
+            result[0] = virtualFile;
           }
           catch (IOException e) {
             refIOException.set(e);
@@ -129,6 +131,7 @@ public class StorageUtil {
     catch (IOException e) {
       throw new StateStorageException(e);
     }
+    return result[0];
   }
 
   static IFile deleteBackup(final String path) {

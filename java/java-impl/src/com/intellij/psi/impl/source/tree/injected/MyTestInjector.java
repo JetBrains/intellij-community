@@ -36,6 +36,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.PsiCommentImpl;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -191,7 +192,8 @@ public class MyTestInjector {
     Disposer.register(parent, new Disposable() {
       @Override
       public void dispose() {
-        InjectedLanguageManager.getInstance(psiManager.getProject()).unregisterMultiHostInjector(myMultiHostInjector);
+        boolean b = InjectedLanguageManager.getInstance(psiManager.getProject()).unregisterMultiHostInjector(myMultiHostInjector);
+        assert b;
       }
     });
 
@@ -250,8 +252,35 @@ public class MyTestInjector {
               }
             }
           }
-
         }
+
+        if (host instanceof PsiComment && ((PsiComment)host).getTokenType() == JavaTokenType.C_STYLE_COMMENT) {
+          /* {{{
+           *   js code
+           *   js code
+           * }}}
+           */
+          String text = host.getText();
+          String prefix = "/*\n * {{{\n";
+          String suffix = " }}}\n */";
+          if (text.startsWith(prefix) && text.endsWith(suffix)) {
+            String s = StringUtil.trimEnd(StringUtil.trimStart(text, prefix), suffix);
+            int off = 0;
+            while (!s.isEmpty()) {
+              String t = s.trim();
+              if (t.startsWith("*")) t = t.substring(1).trim();
+              int i = s.length() - t.length();
+              off += i;
+              int endOfLine = t.indexOf('\n');
+              if (endOfLine == -1) endOfLine = t.length();
+              placesToInject.addPlace(js, TextRange.from(prefix.length() + off, endOfLine), "", "\n");
+              off += endOfLine;
+              s = s.substring(i+endOfLine);
+            }
+            return;
+          }
+        }
+
         if (host instanceof PsiCommentImpl) {
           String text = host.getText();
           if (text.startsWith("/*--{") && text.endsWith("}--*/")) {
@@ -275,6 +304,7 @@ public class MyTestInjector {
             return;
           }
         }
+
         // inject to all string literal initializers of variables named 'ql'
         if (host instanceof PsiLiteralExpression && ((PsiLiteralExpression)host).getValue() instanceof String) {
           PsiVariable variable = PsiTreeUtil.getParentOfType(host, PsiVariable.class);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -153,7 +153,7 @@ public class LibrariesUtil {
   private static String getEmbeddableGroovyJar(VirtualFile[] classRoots) {
     for (VirtualFile file : classRoots) {
       final String name = file.getName();
-      if (name.matches(GroovyConfigUtils.GROOVY_ALL_JAR_PATTERN)) {
+      if (GroovyConfigUtils.GROOVY_ALL_JAR_PATTERN.matcher(name).matches()) {
         String jarPath = file.getPresentableUrl();
         File realFile = new File(jarPath);
         if (realFile.exists()) {

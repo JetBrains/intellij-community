@@ -20,8 +20,10 @@
  */
 package com.intellij.profile.codeInspection.ui;
 
+import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ex.Descriptor;
+import com.intellij.codeInspection.ex.GlobalInspectionToolWrapper;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.ide.ui.search.SearchUtil;
 import com.intellij.ui.CheckboxTree;
@@ -51,7 +53,7 @@ abstract class InspectionsConfigTreeRenderer extends CheckboxTree.CheckboxTreeCe
     final Color background = selected ? UIUtil.getTreeSelectionBackground() : UIUtil.getTreeTextBackground();
     UIUtil.changeBackGround(this, background);
     Color foreground =
-      selected ? UIUtil.getTreeSelectionForeground() : node.isProperSetting ? Color.BLUE : UIUtil.getTreeTextForeground();
+      selected ? UIUtil.getTreeSelectionForeground() : node.isProperSetting() ? Color.BLUE : UIUtil.getTreeTextForeground();
 
     @NonNls String text = null;
     int style = SimpleTextAttributes.STYLE_PLAIN;
@@ -91,14 +93,15 @@ abstract class InspectionsConfigTreeRenderer extends CheckboxTree.CheckboxTreeCe
   }
 
   @Nullable
-private static String getHint(Descriptor descriptor) {
-  if (descriptor.getTool() == null) {
-    return InspectionsBundle.message("inspection.tool.availability.in.tree.node");
+  private static String getHint(Descriptor descriptor) {
+    final InspectionProfileEntry tool = descriptor.getTool();
+    if (tool == null) {
+      return InspectionsBundle.message("inspection.tool.availability.in.tree.node");
+    }
+    if (tool instanceof LocalInspectionToolWrapper ||
+        tool instanceof GlobalInspectionToolWrapper && !((GlobalInspectionToolWrapper)tool).worksInBatchModeOnly()) {
+      return null;
+    }
+    return InspectionsBundle.message("inspection.tool.availability.in.tree.node1");
   }
-  if (descriptor.getTool()instanceof LocalInspectionToolWrapper) {
-    return null;
-  }
-  return InspectionsBundle.message("inspection.tool.availability.in.tree.node1");
-}
-
 }

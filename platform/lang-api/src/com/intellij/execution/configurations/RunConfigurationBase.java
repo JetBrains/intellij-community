@@ -228,4 +228,9 @@ public abstract class RunConfigurationBase extends UserDataHolderBase implements
   public boolean excludeCompileBeforeLaunchOption() {
     return false;
   }
+
+  @Override
+  public String toString() {
+    return getType() + ": " + getName();
+  }
 }

@@ -15,7 +15,8 @@
  */
 package com.intellij.psi.util.proximity;
 
-import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.patterns.PlatformPatterns;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
@@ -28,40 +29,25 @@ import org.jetbrains.annotations.Nullable;
  */
 public class ReferenceListWeigher extends ProximityWeigher {
 
-  protected static final Condition<PsiClass> PREFER_INTERFACES = new Condition<PsiClass>() {
-    @Override
-    public boolean value(PsiClass psiClass) {
-      return psiClass.isInterface();
-    }
-  };
-  protected static final Condition<PsiClass> PREFER_CLASSES = new Condition<PsiClass>() {
-    @Override
-    public boolean value(PsiClass psiClass) {
-      return !psiClass.isInterface();
-    }
-  };
-  protected static final Condition<PsiClass> PREFER_EXCEPTIONS = new Condition<PsiClass>() {
-    @Override
-    public boolean value(PsiClass psiClass) {
-      return InheritanceUtil.isInheritor(psiClass, CommonClassNames.JAVA_LANG_THROWABLE);
-    }
-  };
+  protected enum Preference {
+    Interfaces, Classes, Exceptions
+  }
 
   @Nullable
-  protected Condition<PsiClass> getPreferredCondition(@NotNull ProximityLocation location) {
+  protected Preference getPreferredCondition(@NotNull ProximityLocation location) {
     PsiElement position = location.getPosition();
     if (PlatformPatterns.psiElement().withParents(PsiJavaCodeReferenceElement.class, PsiReferenceList.class).accepts(position)) {
       assert position != null;
       PsiReferenceList list = (PsiReferenceList)position.getParent().getParent();
       PsiReferenceList.Role role = list.getRole();
       if (shouldContainInterfaces(list, role)) {
-        return PREFER_INTERFACES;
+        return Preference.Interfaces;
       }
       if (role == PsiReferenceList.Role.EXTENDS_LIST) {
-        return PREFER_CLASSES;
+        return Preference.Classes;
       }
       if (role == PsiReferenceList.Role.THROWS_LIST) {
-        return PREFER_EXCEPTIONS;
+        return Preference.Exceptions;
 
       }
     }
@@ -82,10 +68,20 @@ public class ReferenceListWeigher extends ProximityWeigher {
   @Override
   public Integer weigh(@NotNull PsiElement element, @NotNull ProximityLocation location) {
     if (element instanceof PsiClass) {
-      Condition<PsiClass> condition = getPreferredCondition(location);
-      if (condition != null) {
-        return condition.value((PsiClass)element) ? 1 : -1;
+      Preference condition = getPreferredCondition(location);
+      PsiClass aClass = (PsiClass)element;
+      if (condition == Preference.Interfaces) return aClass.isInterface() ? 1 : -1;
+      if (condition == Preference.Classes) {
+        if (aClass.isInterface()) return -1;
+        if (aClass.getName().endsWith("TestCase")) {
+          VirtualFile vFile = aClass.getContainingFile().getVirtualFile();
+          if (vFile != null && ProjectFileIndex.SERVICE.getInstance(location.getProject()).isInTestSourceContent(vFile)) {
+            return 2;
+          }
+        }
+        return 1;
       }
+      if (condition == Preference.Exceptions) return InheritanceUtil.isInheritor(aClass, CommonClassNames.JAVA_LANG_THROWABLE) ? 1 : -1;
     }
 
     return 0;

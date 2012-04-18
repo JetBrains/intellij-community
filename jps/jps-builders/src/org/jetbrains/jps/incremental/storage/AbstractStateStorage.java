@@ -13,7 +13,7 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.Iterator;
 
-public abstract class AbstractStateStorage<Key, T> {
+public abstract class AbstractStateStorage<Key, T> implements StorageOwner {
   private PersistentHashMap<Key, T> myMap;
   private final File myBaseFile;
   private final KeyDescriptor<Key> myKeyDescriptor;
@@ -45,6 +45,11 @@ public abstract class AbstractStateStorage<Key, T> {
     synchronized (myDataLock) {
       myMap.close();
     }
+  }
+
+  @Override
+  public void clean() throws IOException {
+    wipe();
   }
 
   public boolean wipe() {
@@ -92,6 +97,7 @@ public abstract class AbstractStateStorage<Key, T> {
     }
   }
 
+  @Nullable
   public T getState(Key key) throws IOException {
     synchronized (myDataLock) {
       return myMap.get(key);

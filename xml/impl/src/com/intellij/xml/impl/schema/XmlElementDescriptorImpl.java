@@ -16,18 +16,19 @@
 package com.intellij.xml.impl.schema;
 
 import com.intellij.codeInsight.daemon.Validator;
+import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.meta.PsiWritableMetaData;
-import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.*;
 import com.intellij.psi.xml.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.*;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Mike
@@ -44,6 +45,8 @@ public class XmlElementDescriptorImpl implements XmlElementDescriptor, PsiWritab
   public static final String NONQUALIFIED_ATTR_VALUE = "unqualified";
   @NonNls
   private static final String ELEMENT_FORM_DEFAULT = "elementFormDefault";
+  private static final Key<ParameterizedCachedValue<XmlAttributeDescriptor[], XmlTag>> ATTRS_KEY = Key.create("attributes");
+  private ParameterizedCachedValueProvider<XmlAttributeDescriptor[],XmlTag> myCachedValueProvider;
 
   public XmlElementDescriptorImpl(@Nullable XmlTag descriptorTag) {
     myDescriptorTag = descriptorTag;
@@ -71,7 +74,8 @@ public class XmlElementDescriptorImpl implements XmlElementDescriptor, PsiWritab
 
           if (rootTag != null && 
               ( NONQUALIFIED_ATTR_VALUE.equals(elementFormDefault = rootTag.getAttributeValue(ELEMENT_FORM_DEFAULT)) || elementFormDefault == null /*unqualified is default*/) &&
-              tag.getNamespaceByPrefix("").length() == 0
+              tag.getNamespaceByPrefix("").isEmpty()
+            && myDescriptorTag.getParentTag() != rootTag
              ) {
             value = XmlUtil.findLocalNameByQualifiedName(value);
           } else {
@@ -242,6 +246,7 @@ public class XmlElementDescriptorImpl implements XmlElementDescriptor, PsiWritab
   }
 
   public XmlAttributeDescriptor[] getAttributesDescriptors(final XmlTag context) {
+
     TypeDescriptor type = getType(context);
 
     if (type instanceof ComplexTypeDescriptor) {
@@ -269,18 +274,18 @@ public class XmlElementDescriptorImpl implements XmlElementDescriptor, PsiWritab
     return XmlAttributeDescriptor.EMPTY;
   }
 
+  /** <xsd:anyAttribute> directive processed here */
   private static XmlAttributeDescriptor[] updateAttributeDescriptorsFromAny(final XmlTag context,
                                                                             final ComplexTypeDescriptor typeDescriptor,
                                                                             XmlAttributeDescriptor[] attributeDescriptors,
                                                                             final String ns) {
     if (typeDescriptor.canContainAttribute(ns, null) != ComplexTypeDescriptor.CanContainAttributeType.CanNotContain) {
+      // anyAttribute found
       final XmlNSDescriptor descriptor = context.getNSDescriptor(ns, true);
 
       if (descriptor instanceof XmlNSDescriptorImpl) {
-        attributeDescriptors = ArrayUtil.mergeArrays(
-          attributeDescriptors,
-          ((XmlNSDescriptorImpl)descriptor).getRootAttributeDescriptors(context)
-        );
+        XmlAttributeDescriptor[] rootDescriptors = ((XmlNSDescriptorImpl)descriptor).getRootAttributeDescriptors(context);
+        attributeDescriptors = ArrayUtil.mergeArrays(attributeDescriptors, rootDescriptors);
       }
     }
     return attributeDescriptors;
@@ -295,7 +300,7 @@ public class XmlElementDescriptorImpl implements XmlElementDescriptor, PsiWritab
     final String localName = XmlUtil.findLocalNameByQualifiedName(attributeName);
     final String namespacePrefix = XmlUtil.findPrefixByQualifiedName(attributeName);
     final XmlNSDescriptorImpl xmlNSDescriptor = (XmlNSDescriptorImpl)getNSDescriptor();
-    final String namespace = "".equals(namespacePrefix) ?
+    final String namespace = namespacePrefix != null && namespacePrefix.isEmpty() ?
                              ((xmlNSDescriptor != null)?xmlNSDescriptor.getDefaultNamespace():"") :
                              context.getNamespaceByPrefix(namespacePrefix);
 

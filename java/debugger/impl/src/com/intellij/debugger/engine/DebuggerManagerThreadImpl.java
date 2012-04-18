@@ -21,11 +21,13 @@ import com.intellij.debugger.engine.managerThread.DebuggerCommand;
 import com.intellij.debugger.engine.managerThread.DebuggerManagerThread;
 import com.intellij.debugger.engine.managerThread.SuspendContextCommand;
 import com.intellij.debugger.impl.InvokeAndWaitThread;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorListenerAdapter;
 import com.intellij.openapi.progress.util.ProgressWindowWithNotification;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.util.Alarm;
 import com.sun.jdi.VMDisconnectedException;
 import org.jetbrains.annotations.NotNull;
@@ -34,19 +36,23 @@ import org.jetbrains.annotations.TestOnly;
 /**
  * @author lex
  */
-public class DebuggerManagerThreadImpl extends InvokeAndWaitThread<DebuggerCommandImpl> implements DebuggerManagerThread {
+public class DebuggerManagerThreadImpl extends InvokeAndWaitThread<DebuggerCommandImpl> implements DebuggerManagerThread, Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.engine.DebuggerManagerThreadImpl");
   public static final int COMMAND_TIMEOUT = 3000;
   private static final int RESTART_TIMEOUT = 500;
+  private volatile boolean myDisposed;
 
-  DebuggerManagerThreadImpl() {
-    //noinspection HardCodedStringLiteral
-    super();
+  DebuggerManagerThreadImpl(@NotNull Disposable parent) {
+    Disposer.register(parent, this);
+  }
+
+  public void dispose() {
+    myDisposed = true;
   }
 
   @TestOnly
-  public static DebuggerManagerThreadImpl createTestInstance() {
-    return new DebuggerManagerThreadImpl();
+  public static DebuggerManagerThreadImpl createTestInstance(@NotNull Disposable parent) {
+    return new DebuggerManagerThreadImpl(parent);
   }
 
   public static boolean isManagerThread() {
@@ -94,7 +100,6 @@ public class DebuggerManagerThreadImpl extends InvokeAndWaitThread<DebuggerComma
    * if worker thread is still processing the same command
    * calls terminateCommand
    */
-
   public void terminateAndInvoke(DebuggerCommandImpl command, int terminateTimeout) {
     final DebuggerCommandImpl currentCommand = myEvents.getCurrentEvent();
 
@@ -104,20 +109,27 @@ public class DebuggerManagerThreadImpl extends InvokeAndWaitThread<DebuggerComma
       final Alarm alarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
       alarm.addRequest(new Runnable() {
         public void run() {
-          if (currentCommand == myEvents.getCurrentEvent()) {
-            // if current command is still in progress, cancel it
-            getCurrentRequest().interrupt();
-            try {
-              getCurrentRequest().join();
+          try {
+            if (currentCommand == myEvents.getCurrentEvent()) {
+              // if current command is still in progress, cancel it
+              getCurrentRequest().interrupt();
+              try {
+                getCurrentRequest().join();
+              }
+              catch (InterruptedException ignored) {
+              }
+              catch (Exception e) {
+                throw new RuntimeException(e);
+              }
+              finally {
+                if (!myDisposed) {
+                  startNewWorkerThread();
+                }
+              }
             }
-            catch (InterruptedException ignored) {
-            }
-            catch (Exception e) {
-              throw new RuntimeException(e);
-            }
-            finally {
-              startNewWorkerThread();
-            }
+          }
+          finally {
+            Disposer.dispose(alarm);
           }
         }
       }, terminateTimeout);

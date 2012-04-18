@@ -23,13 +23,16 @@ import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.InstructionImpl;
  * @author ven
 */
 public class ReadWriteVariableInstruction extends InstructionImpl {
+  public static final int WRITE = -1;
+  public static final int READ = 1;
+
   private final boolean myIsWrite;
   private final String myName;
 
-  public ReadWriteVariableInstruction(@NotNull String varName, PsiElement element, int num, boolean isWrite) {
+  public ReadWriteVariableInstruction(@NotNull String varName, PsiElement element, int num, int accessType) {
     super(element, num);
     myName = varName;
-    myIsWrite = isWrite;
+    myIsWrite = accessType == WRITE;
   }
 
   @NotNull public String getVariableName() {

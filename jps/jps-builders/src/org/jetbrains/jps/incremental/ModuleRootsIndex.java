@@ -29,19 +29,23 @@ public class ModuleRootsIndex {
         moduleRoots = new ArrayList<RootDescriptor>();
         myModuleToRootsMap.put(module, moduleRoots);
       }
+      Set<String> generatedRoots = module.getGeneratedSourceRoots();
+      if (generatedRoots == null) {
+        generatedRoots = Collections.emptySet();
+      }
       for (String r : module.getSourceRoots()) {
         final File root = new File(FileUtil.toCanonicalPath(r));
-        final RootDescriptor descriptor = new RootDescriptor(module, root, false);
+        final RootDescriptor descriptor = new RootDescriptor(module, root, false, generatedRoots.contains(r));
         myRootToModuleMap.put(root, descriptor);
         moduleRoots.add(descriptor);
       }
       for (String r : module.getTestRoots()) {
         final File root = new File(FileUtil.toCanonicalPath(r));
-        final RootDescriptor descriptor = new RootDescriptor(module, root, true);
+        final RootDescriptor descriptor = new RootDescriptor(module, root, true, generatedRoots.contains(r));
         myRootToModuleMap.put(root, descriptor);
         moduleRoots.add(descriptor);
       }
-      for (String r : module.getExcludes()) {
+      for (String r : module.getOwnExcludes()) {
         final File root = new File(FileUtil.toCanonicalPath(r));
         myExcludedRoots.add(root);
       }
@@ -61,6 +65,23 @@ public class ModuleRootsIndex {
   @Nullable
   public RootDescriptor getRootDescriptor(File root) {
     return myRootToModuleMap.get(root);
+  }
+
+  @NotNull
+  public RootDescriptor associateRoot(File root, Module module, boolean isTestRoot, final boolean isForGeneratedSources) {
+    final RootDescriptor d = myRootToModuleMap.get(root);
+    if (d != null) {
+      return d;
+    }
+    List<RootDescriptor> moduleRoots = myModuleToRootsMap.get(module);
+    if (moduleRoots == null) {
+      moduleRoots = new ArrayList<RootDescriptor>();
+      myModuleToRootsMap.put(module, moduleRoots);
+    }
+    final RootDescriptor descriptor = new RootDescriptor(module, root, isTestRoot, isForGeneratedSources);
+    myRootToModuleMap.put(root, descriptor);
+    moduleRoots.add(descriptor);
+    return descriptor;
   }
 
   @Nullable

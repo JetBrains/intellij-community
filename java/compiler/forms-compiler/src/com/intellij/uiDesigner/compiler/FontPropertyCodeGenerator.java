@@ -15,12 +15,13 @@
  */
 package com.intellij.uiDesigner.compiler;
 
+import com.intellij.compiler.instrumentation.InstrumentationClassFinder;
 import com.intellij.uiDesigner.lw.FontDescriptor;
 import com.intellij.uiDesigner.lw.LwComponent;
 import com.intellij.uiDesigner.lw.LwIntrospectedProperty;
-import org.objectweb.asm.Type;
-import org.objectweb.asm.commons.GeneratorAdapter;
-import org.objectweb.asm.commons.Method;
+import org.jetbrains.asm4.Type;
+import org.jetbrains.asm4.commons.GeneratorAdapter;
+import org.jetbrains.asm4.commons.Method;
 
 import java.awt.*;
 
@@ -41,7 +42,7 @@ public class FontPropertyCodeGenerator extends PropertyCodeGenerator {
   private static final Method ourGetStyleMethod = new Method("getStyle", Type.INT_TYPE, new Type[0] );
 
   public boolean generateCustomSetValue(final LwComponent lwComponent,
-                                        final Class componentClass,
+                                        final InstrumentationClassFinder.PseudoClass componentClass,
                                         final LwIntrospectedProperty property,
                                         final GeneratorAdapter generator,
                                         final int componentLocal, final String formClassName) {

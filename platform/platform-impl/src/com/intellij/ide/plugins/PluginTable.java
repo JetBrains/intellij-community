@@ -23,6 +23,9 @@ import com.intellij.util.ui.ColumnInfo;
 import javax.swing.*;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
+import javax.swing.table.TableModel;
+import javax.swing.table.TableRowSorter;
+import java.util.List;
 
 /**
  * Created by IntelliJ IDEA.
@@ -57,6 +60,19 @@ public class PluginTable extends JBTable {
     TableColumn column = getColumnModel().getColumn(columnIndex);
     column.setMinWidth(width);
     column.setMaxWidth(width);
+  }
+
+  @Override
+  protected TableRowSorter<TableModel> createRowSorter(TableModel model) {
+    return new DefaultColumnInfoBasedRowSorter(model){
+      @Override
+      public void setSortKeys(List<? extends SortKey> sortKeys) {
+        if (sortKeys != null && !sortKeys.isEmpty()) {
+          ((PluginTableModel)getModel()).setSortKey(sortKeys.get(0));
+        }
+        super.setSortKeys(sortKeys);
+      }
+    };
   }
 
   @Override

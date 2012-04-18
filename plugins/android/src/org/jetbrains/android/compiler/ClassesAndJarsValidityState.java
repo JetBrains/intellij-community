@@ -29,7 +29,9 @@ class ClassesAndJarsValidityState implements ValidityState {
       }
     }
     else if (StdFileTypes.CLASS.equals(file.getFileType()) || file.getFileType() instanceof ArchiveFileType) {
-      myFiles.put(file.getPath(), file.getTimeStamp());
+      if (file.isValid()) {
+        myFiles.put(file.getPath(), file.getTimeStamp());
+      }
     }
   }
 

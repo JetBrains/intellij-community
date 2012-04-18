@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,9 +20,7 @@ import org.jetbrains.annotations.NonNls;
 
 public class ConditionalUtils {
 
-  private ConditionalUtils() {
-    super();
-  }
+  private ConditionalUtils() {}
 
   public static PsiStatement stripBraces(PsiStatement branch) {
     if (branch instanceof PsiBlockStatement) {
@@ -84,15 +82,5 @@ public class ConditionalUtils {
     }
     final String rhsText = rhs.getText();
     return value.equals(rhsText);
-  }
-
-  public static boolean isAssignment(PsiStatement statement) {
-    if (!(statement instanceof PsiExpressionStatement)) {
-      return false;
-    }
-    final PsiExpressionStatement expressionStatement =
-      (PsiExpressionStatement)statement;
-    final PsiExpression expression = expressionStatement.getExpression();
-    return expression instanceof PsiAssignmentExpression;
   }
 }

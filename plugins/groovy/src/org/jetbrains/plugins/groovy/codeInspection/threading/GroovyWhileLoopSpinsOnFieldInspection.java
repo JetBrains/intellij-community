@@ -30,7 +30,10 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrBlockStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrWhileStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrUnaryExpression;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import javax.swing.*;
@@ -94,9 +97,8 @@ public class GroovyWhileLoopSpinsOnFieldInspection extends BaseInspection {
         return true;
       }
 
-      if (condition instanceof GrPostfixExpression) {
-        final GrPostfixExpression postfixExpression =
-            (GrPostfixExpression) condition;
+      if (condition instanceof GrUnaryExpression && ((GrUnaryExpression)condition).isPostfix()) {
+        final GrUnaryExpression postfixExpression = (GrUnaryExpression) condition;
         final GrExpression operand =
             postfixExpression.getOperand();
         return isSimpleFieldComparison(operand);

@@ -1,5 +1,6 @@
 package org.jetbrains.android.inspections;
 
+import com.intellij.codeInsight.daemon.impl.quickfix.ConvertSwitchToIfIntention;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
@@ -111,7 +112,7 @@ public class AndroidNonConstantResIdsInSwitchInspection extends LocalInspectionT
         return;
       }
 
-      ReplaceSwitchWithIfIntention.doProcessIntention(switchStatement); 
+      ConvertSwitchToIfIntention.doProcessIntention(switchStatement); 
     }
   }
 }

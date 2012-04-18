@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -567,9 +567,10 @@ public class CvsChangeProvider implements ChangeProvider {
           final Entry entry = myEntriesManager.getEntryFor(virtualFile.getParent(), virtualFile.getName());
           if (entry != null) {
             revision = entry.getRevision();
+            operation = GetFileContentOperation.createForFile(virtualFile, new SimpleRevision(revision));
+          } else {
+            operation = GetFileContentOperation.createForFile(myPath);
           }
-
-          operation = GetFileContentOperation.createForFile(virtualFile, SimpleRevision.createForTheSameVersionOf(virtualFile));
         }
         else {
           operation = GetFileContentOperation.createForFile(myPath);

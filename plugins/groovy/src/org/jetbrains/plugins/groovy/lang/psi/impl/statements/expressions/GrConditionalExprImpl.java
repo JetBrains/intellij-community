@@ -20,6 +20,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
 import com.intellij.util.Function;
+import com.intellij.util.NullableFunction;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
@@ -32,8 +33,9 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
  * @author ilyas
  */
 public class GrConditionalExprImpl extends GrExpressionImpl implements GrConditionalExpression {
-  private static final Function<GrConditionalExpression, PsiType> TYPE_CALCULATOR = new Function<GrConditionalExpression, PsiType>() {
+  private static final Function<GrConditionalExpression, PsiType> TYPE_CALCULATOR = new NullableFunction<GrConditionalExpression, PsiType>() {
     @Override
+    @Nullable
     public PsiType fun(GrConditionalExpression conditional) {
       GrExpression thenBranch = conditional.getThenBranch();
       GrExpression elseBranch = conditional.getElseBranch();

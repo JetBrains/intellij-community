@@ -201,7 +201,7 @@ public class NewKeyStep extends ExportSignedPackageWizardStep {
         }
         throw new CommitStepException(AndroidBundle.message("android.cannot.create.new.key.error"));
       }
-      PropertiesComponent.getInstance().setValue(KeystoreStep.DEFAULT_KEYSTORE_LOCATION, keystoreLocation);
+      PropertiesComponent.getInstance(myWizard.getProject()).setValue(KeystoreStep.DEFAULT_KEYSTORE_LOCATION, keystoreLocation);
       loadKeystoreAndKey(keystoreLocation, keystorePassword, keyAlias, keyPassword);
     }
     finally {
@@ -227,7 +227,7 @@ public class NewKeyStep extends ExportSignedPackageWizardStep {
       if (privateKey == null || certificate == null) {
         throw new CommitStepException(AndroidBundle.message("android.extract.package.cannot.find.key.error", keyAlias));
       }
-      PropertiesComponent.getInstance().setValue(InitialKeyStep.DEFAULT_KEY_ALIAS, keyAlias);
+      PropertiesComponent.getInstance(myWizard.getProject()).setValue(InitialKeyStep.DEFAULT_KEY_ALIAS, keyAlias);
       myWizard.setPrivateKey(privateKey);
       myWizard.setCertificate((X509Certificate)certificate);
 

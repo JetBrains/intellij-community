@@ -51,7 +51,7 @@ public interface ToolWindowEx extends ToolWindow {
 
   void setAdditionalGearActions(ActionGroup additionalGearActions);
 
-  void setTitleActions(AnAction[] actions);
+  void setTitleActions(AnAction... actions);
 
   void setUseLastFocusedOnActivation(boolean focus);
 

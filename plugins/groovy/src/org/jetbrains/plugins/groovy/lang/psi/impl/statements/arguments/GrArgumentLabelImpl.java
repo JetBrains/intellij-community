@@ -44,6 +44,8 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUt
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.literals.GrLiteralImpl;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
+import java.util.Map;
+
 /**
  * @author ilyas
  */
@@ -79,13 +81,14 @@ public class GrArgumentLabelImpl extends GroovyPsiElementImpl implements GrArgum
 
     String labelName = getName();
 
-    NamedArgumentDescriptor descr =
-      GroovyNamedArgumentProvider.getNamedArgumentsFromAllProviders(call, labelName, false).get(labelName);
-
-    if (descr != null) {
-      PsiPolyVariantReference res = descr.createReference(this);
-      if (res != null) {
-        return res;
+    Map<String,NamedArgumentDescriptor> providers = GroovyNamedArgumentProvider.getNamedArgumentsFromAllProviders(call, labelName, false);
+    if (providers != null) {
+      NamedArgumentDescriptor descr = providers.get(labelName);
+      if (descr != null) {
+        PsiPolyVariantReference res = descr.createReference(this);
+        if (res != null) {
+          return res;
+        }
       }
     }
 

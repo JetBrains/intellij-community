@@ -32,7 +32,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
-import java.awt.event.MouseEvent;
 import java.lang.reflect.Method;
 import java.util.HashSet;
 import java.util.Set;
@@ -52,9 +51,6 @@ public class KeymapUtil {
   @NonNls private static final String META = "meta";
   @NonNls private static final String ALT = "alt";
   @NonNls private static final String ALT_GRAPH = "altGraph";
-  @NonNls private static final String BUTTON1 = "button1";
-  @NonNls private static final String BUTTON2 = "button2";
-  @NonNls private static final String BUTTON3 = "button3";
   @NonNls private static final String DOUBLE_CLICK = "doubleClick";
 
   private static final Set<Integer> ourTooltipKeys = new HashSet<Integer>();
@@ -114,34 +110,9 @@ public class KeymapUtil {
    * @return string representation of passed mouse shortcut.
    */
   public static String getMouseShortcutText(int button, @JdkConstants.InputEventMask int modifiers, int clickCount) {
-    // Modal keys
-
-    final int buttonNum;
-
-    if (MouseEvent.BUTTON1 == button) {
-      buttonNum = 1;
-    }
-    else if (MouseEvent.BUTTON2 == button) {
-      buttonNum = 2;
-    }
-    else if (MouseEvent.BUTTON3 == button) {
-      buttonNum = 3;
-    }
-    else if (MouseEvent.NOBUTTON == button || -1 == button) {
-      buttonNum = 0;
-      // do nothing
-    }
-    else {
-      buttonNum = button;
-    }
-
-    if (clickCount == 1) {
-      return KeyMapBundle.message("mouse.click.shortcut.text", getModifiersText(mapNewModifiers(modifiers)), buttonNum);
-    }
-    else if (clickCount == 2) {
-      return KeyMapBundle.message("mouse.double.click.shortcut.text", getModifiersText(mapNewModifiers(modifiers)), buttonNum);
-    }
-    else {
+    if (clickCount < 3) {
+      return KeyMapBundle.message("mouse." + (clickCount == 1? "" : "double.") + "click.shortcut.text", getModifiersText(mapNewModifiers(modifiers)), button);
+    } else {
       throw new IllegalStateException("unknown clickCount: " + clickCount);
     }
   }
@@ -262,14 +233,13 @@ public class KeymapUtil {
       else if (ALT_GRAPH.equals(token)) {
         modifiers |= InputEvent.ALT_GRAPH_DOWN_MASK;
       }
-      else if (BUTTON1.equals(token)) {
-        button = MouseEvent.BUTTON1;
-      }
-      else if (BUTTON2.equals(token)) {
-        button = MouseEvent.BUTTON2;
-      }
-      else if (BUTTON3.equals(token)) {
-        button = MouseEvent.BUTTON3;
+      else if (token.startsWith("button") && token.length() > 6) {
+        try {
+          button = Integer.parseInt(token.substring(6));
+        }
+        catch (NumberFormatException e) {
+          throw new InvalidDataException("unparseable token: " + token);
+        }
       }
       else if (DOUBLE_CLICK.equals(token)) {
         clickCount = 2;

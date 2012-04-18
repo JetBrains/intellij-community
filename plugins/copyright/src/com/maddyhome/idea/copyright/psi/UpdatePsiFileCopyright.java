@@ -57,6 +57,7 @@ public abstract class UpdatePsiFileCopyright extends AbstractUpdateCopyright {
     langOpts = CopyrightManager.getInstance(project).getOptions().getMergedOptions(type.getName());
   }
 
+  @Override
   public void prepare() {
     if (file == null) {
       logger.info("No file for root: " + getRoot());
@@ -68,7 +69,8 @@ public abstract class UpdatePsiFileCopyright extends AbstractUpdateCopyright {
     }
   }
 
-  public void complete() throws IncorrectOperationException, Exception {
+  @Override
+  public void complete() throws Exception {
     if (file == null) {
       logger.info("No file for root: " + getRoot());
       return;
@@ -117,13 +119,13 @@ public abstract class UpdatePsiFileCopyright extends AbstractUpdateCopyright {
         String text = comment.getText();
         Matcher match = pattern.matcher(text);
         if (match.find()) {
-          found.add(getLineCopyrightComments(comments, doc, i, comment, text));
+          found.add(getLineCopyrightComments(comments, doc, i, comment));
         }
       }
 
       // Default insertion point to just before user chosen marker (package, import, class)
       PsiElement point = last;
-      if (commentHere && comments.size() > 0 && langOpts.isRelativeBefore()) {
+      if (commentHere && !comments.isEmpty() && langOpts.isRelativeBefore()) {
         // Insert before first comment within this section of code.
         point = comments.get(0);
       }
@@ -131,8 +133,8 @@ public abstract class UpdatePsiFileCopyright extends AbstractUpdateCopyright {
       if (commentHere && found.size() == 1) {
         CommentRange range = found.iterator().next();
         // Is the comment in the right place?
-        if ((langOpts.isRelativeBefore() && range.getFirst() == comments.get(0)) ||
-            (!langOpts.isRelativeBefore() && range.getLast() == comments.get(comments.size() - 1))) {
+        if (langOpts.isRelativeBefore() && range.getFirst() == comments.get(0) ||
+            !langOpts.isRelativeBefore() && range.getLast() == comments.get(comments.size() - 1)) {
           // Check to see if current copyright comment matches new one.
           String newComment = getCommentText("", "");
           resetCommentText();
@@ -147,15 +149,13 @@ public abstract class UpdatePsiFileCopyright extends AbstractUpdateCopyright {
               // TODO - do we need option to remove blank line after?
               return; // Nothing to do since the comment is the same
             }
-            else {
-              PsiElement next = getNextSibling(range.getLast());
-              if (next instanceof PsiWhiteSpace && countNewline(next.getText()) > 1) {
-                return;
-              }
+            PsiElement next = getNextSibling(range.getLast());
+            if (next instanceof PsiWhiteSpace && countNewline(next.getText()) > 1) {
+              return;
             }
             point = range.getFirst();
           }
-          else if (newComment.length() > 0) {
+          else if (!newComment.isEmpty()) {
             int start = range.getFirst().getTextRange().getStartOffset();
             int end = range.getLast().getTextRange().getEndOffset();
             addAction(new CommentAction(CommentAction.ACTION_REPLACE, start, end));
@@ -247,7 +247,7 @@ public abstract class UpdatePsiFileCopyright extends AbstractUpdateCopyright {
     }
   }
 
-  private static CommentRange getLineCopyrightComments(List<PsiComment> comments, Document doc, int i, PsiComment comment, String text) {
+  private static CommentRange getLineCopyrightComments(List<PsiComment> comments, Document doc, int i, PsiComment comment) {
     PsiElement firstComment = comment;
     PsiElement lastComment = comment;
     final Commenter commenter = LanguageCommenters.INSTANCE.forLanguage(PsiUtilBase.findLanguageFromElement(comment));
@@ -311,6 +311,7 @@ public abstract class UpdatePsiFileCopyright extends AbstractUpdateCopyright {
   protected void processActions() throws IncorrectOperationException {
     Application app = ApplicationManager.getApplication();
     app.runWriteAction(new Runnable() {
+      @Override
       public void run() {
         Document doc = FileDocumentManager.getInstance().getDocument(getRoot());
         PsiDocumentManager.getInstance(file.getProject()).doPostponedOperationsAndUnblockDocument(doc);
@@ -321,7 +322,7 @@ public abstract class UpdatePsiFileCopyright extends AbstractUpdateCopyright {
           switch (action.getType()) {
             case CommentAction.ACTION_INSERT:
               String comment = getCommentText(action.getPrefix(), action.getSuffix());
-              if (comment.length() > 0) {
+              if (!comment.isEmpty()) {
                 doc.insertString(start, comment);
               }
               break;
@@ -414,6 +415,7 @@ public abstract class UpdatePsiFileCopyright extends AbstractUpdateCopyright {
       return suffix;
     }
 
+    @Override
     public int compareTo(CommentAction object) {
       int s = object.getStart();
       int diff = s - start;

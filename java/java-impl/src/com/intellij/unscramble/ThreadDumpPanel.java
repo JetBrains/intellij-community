@@ -93,7 +93,7 @@ public class ThreadDumpPanel extends JPanel {
     add(ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, toolbarActions, false).getComponent(), BorderLayout.WEST);
 
     final Splitter splitter = new Splitter(false, 0.3f);
-    splitter.setFirstComponent(ScrollPaneFactory.createScrollPane(myThreadList));
+    splitter.setFirstComponent(ScrollPaneFactory.createScrollPane(myThreadList, SideBorder.LEFT | SideBorder.RIGHT));
     splitter.setSecondComponent(consoleView.getComponent());
 
     add(splitter, BorderLayout.CENTER);

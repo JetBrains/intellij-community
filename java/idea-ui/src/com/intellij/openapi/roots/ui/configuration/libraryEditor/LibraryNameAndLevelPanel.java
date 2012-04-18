@@ -87,6 +87,6 @@ public class LibraryNameAndLevelPanel {
   }
 
   public static FormBuilder createFormBuilder() {
-    return new FormBuilder(false, 5);
+    return FormBuilder.createFormBuilder();
   }
 }

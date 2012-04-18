@@ -1,25 +1,27 @@
  package org.jetbrains.android.uipreview;
 
  import com.intellij.openapi.Disposable;
- import com.intellij.openapi.progress.ProgressIndicator;
- import com.intellij.openapi.ui.Messages;
- import com.intellij.openapi.ui.VerticalFlowLayout;
- import com.intellij.openapi.util.Disposer;
- import com.intellij.ui.HyperlinkLabel;
- import com.intellij.ui.components.JBLabel;
- import com.intellij.util.ui.AsyncProcessIcon;
- import org.jetbrains.annotations.NonNls;
- import org.jetbrains.annotations.NotNull;
- import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.VerticalFlowLayout;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Pair;
+import com.intellij.ui.HyperlinkLabel;
+import com.intellij.ui.IdeBorderFactory;
+import com.intellij.ui.components.JBLabel;
+import com.intellij.util.ui.AsyncProcessIcon;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
- import javax.swing.*;
- import javax.swing.border.EmptyBorder;
- import javax.swing.event.HyperlinkEvent;
- import javax.swing.event.HyperlinkListener;
- import java.awt.*;
- import java.awt.image.BufferedImage;
- import java.util.ArrayList;
- import java.util.List;
+import javax.swing.*;
+import javax.swing.border.EmptyBorder;
+import javax.swing.event.HyperlinkEvent;
+import javax.swing.event.HyperlinkListener;
+import java.awt.*;
+import java.awt.image.BufferedImage;
+import java.util.ArrayList;
+import java.util.List;
 
  /**
  * @author Eugene.Kudelevsky
@@ -29,12 +31,11 @@ public class AndroidLayoutPreviewPanel extends JPanel implements Disposable {
   private static final double MAX_ZOOM_FACTOR = 2.0;
   private static final double ZOOM_STEP = 1.25;
 
-  private RenderingErrorMessage myErrorMessage;
-  private String myWarnMessage;
+  private FixableIssueMessage myErrorMessage;
+  private List<FixableIssueMessage> myWarnMessages;
   private BufferedImage myImage;
 
-  private final HyperlinkLabel myHyperlinkMessageLabel = new HyperlinkLabel("", Color.BLUE, getBackground(), Color.BLUE);
-  private final JBLabel myMessageLabel = new JBLabel();
+  private final JPanel myMessagesPanel = new JPanel(new VerticalFlowLayout(VerticalFlowLayout.TOP, 0, 0, true, false));
 
   private double myZoomFactor = 1.0;
   private boolean myZoomToFit = true;
@@ -70,16 +71,6 @@ public class AndroidLayoutPreviewPanel extends JPanel implements Disposable {
     setOpaque(true);
     myImagePanel.setBorder(BorderFactory.createMatteBorder(1, 1, 1, 1, Color.GRAY));
 
-    myHyperlinkMessageLabel.addHyperlinkListener(new HyperlinkListener() {
-      public void hyperlinkUpdate(final HyperlinkEvent e) {
-        final Runnable quickFix = myErrorMessage.myQuickFix;
-        if (quickFix != null && e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
-          quickFix.run();
-        }
-      }
-    });
-    myHyperlinkMessageLabel.setOpaque(false);
-
     myFileNameLabel.setHorizontalAlignment(SwingConstants.CENTER);
     myFileNameLabel.setBorder(new EmptyBorder(5, 0, 5, 0));
 
@@ -104,8 +95,10 @@ public class AndroidLayoutPreviewPanel extends JPanel implements Disposable {
     ((CardLayout)myProgressIconWrapper.getLayout()).show(myProgressIconWrapper, EMPTY_CARD_NAME);
 
     add(titlePanel);
-    add(myHyperlinkMessageLabel);
-    add(myMessageLabel);
+
+    myMessagesPanel.setBorder(IdeBorderFactory.createEmptyBorder(0, 5, 0, 5));
+    myMessagesPanel.setOpaque(false);
+    add(myMessagesPanel);
 
     add(new MyImagePanelWrapper());
   }
@@ -148,45 +141,83 @@ public class AndroidLayoutPreviewPanel extends JPanel implements Disposable {
     repaint();
   }
 
-  public void setErrorMessage(@Nullable RenderingErrorMessage errorMessage) {
+  public void setErrorMessage(@Nullable FixableIssueMessage errorMessage) {
     myErrorMessage = errorMessage;
   }
 
-  public void setWarnMessage(String warnMessage) {
-    myWarnMessage = warnMessage;
+  public void setWarnMessages(@Nullable List<FixableIssueMessage> warnMessages) {
+    myWarnMessages = warnMessages;
   }
 
   public void update() {
     myImagePanel.setVisible(true);
-
-    myHyperlinkMessageLabel.setVisible(false);
-    myMessageLabel.setVisible(false);
+    myMessagesPanel.removeAll();
 
     if (myErrorMessage != null) {
-      if (myErrorMessage.myLinkText.length() > 0 || myErrorMessage.myAfterLinkText.length() > 0) {
-        myHyperlinkMessageLabel.setHyperlinkText(myErrorMessage.myBeforeLinkText,
-                                      myErrorMessage.myLinkText,
-                                      myErrorMessage.myAfterLinkText);
-        myHyperlinkMessageLabel.setIcon(Messages.getErrorIcon());
-        myHyperlinkMessageLabel.setVisible(true);
-      }
-      else {
-        myMessageLabel.setText("<html><body>" + myErrorMessage.myBeforeLinkText.replace("\n", "<br>") + "</body></html>");
-        myMessageLabel.setIcon(Messages.getErrorIcon());
-        myMessageLabel.setVisible(true);
+      showMessage(myErrorMessage, Messages.getErrorIcon());
+    }
+    if (myWarnMessages != null) {
+      for (FixableIssueMessage warnMessage : myWarnMessages) {
+        showMessage(warnMessage, Messages.getWarningIcon());
       }
     }
-
-    if (myErrorMessage == null && myWarnMessage != null && myWarnMessage.length() > 0) {
-      myMessageLabel.setText("<html><body>" + myWarnMessage.replace("\n", "<br>") + "</body></html>");
-      myMessageLabel.setIcon(Messages.getWarningIcon());
-      myMessageLabel.setVisible(true);
-    }
-
+    revalidate();
     repaint();
   }
 
-  void updateImageSize() {
+   private void showMessage(final FixableIssueMessage message, Icon icon) {
+     if (message.myLinkText.length() > 0 || message.myAfterLinkText.length() > 0) {
+       final HyperlinkLabel warnLabel = new HyperlinkLabel();
+       warnLabel.setOpaque(false);
+       warnLabel.setHyperlinkText(message.myBeforeLinkText,
+                                  message.myLinkText,
+                                  message.myAfterLinkText);
+       warnLabel.setIcon(icon);
+
+       warnLabel.addHyperlinkListener(new HyperlinkListener() {
+         public void hyperlinkUpdate(final HyperlinkEvent e) {
+           final Runnable quickFix = message.myQuickFix;
+           if (quickFix != null && e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
+             quickFix.run();
+           }
+         }
+       });
+       myMessagesPanel.add(warnLabel);
+     }
+     else {
+       final JBLabel warnLabel = new JBLabel();
+       warnLabel.setOpaque(false);
+       warnLabel.setText("<html><body>" + message.myBeforeLinkText.replace("\n", "<br>") + "</body></html>");
+       warnLabel.setIcon(icon);
+       myMessagesPanel.add(warnLabel);
+     }
+     if (message.myAdditionalFixes.size() > 0) {
+       final JPanel fixesPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
+       fixesPanel.setBorder(IdeBorderFactory.createEmptyBorder(3, 0, 10, 0));
+       fixesPanel.setOpaque(false);
+       fixesPanel.add(Box.createHorizontalStrut(icon.getIconWidth()));
+
+       for (Pair<String, Runnable> pair : message.myAdditionalFixes) {
+         final HyperlinkLabel fixLabel = new HyperlinkLabel();
+         fixLabel.setOpaque(false);
+         fixLabel.setHyperlinkText(pair.getFirst());
+         final Runnable fix = pair.getSecond();
+
+         fixLabel.addHyperlinkListener(new HyperlinkListener() {
+           @Override
+           public void hyperlinkUpdate(HyperlinkEvent e) {
+             if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
+               fix.run();
+             }
+           }
+         });
+         fixesPanel.add(fixLabel);
+       }
+       myMessagesPanel.add(fixesPanel);
+     }
+   }
+
+   void updateImageSize() {
     if (myImage == null) {
       myImagePanel.setSize(0, 0);
     }

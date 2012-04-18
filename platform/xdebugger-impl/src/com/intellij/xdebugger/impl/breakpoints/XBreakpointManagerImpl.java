@@ -72,6 +72,9 @@ public class XBreakpointManagerImpl implements XBreakpointManager, PersistentSta
         }
       };
       HttpFileSystem.getInstance().addFileListener(httpVirtualFileListener, project);
+      for (XBreakpointType<?, ?> type : XBreakpointUtil.getBreakpointTypes()) {
+        addDefaultBreakpoint(type);
+      }
     }
   }
 

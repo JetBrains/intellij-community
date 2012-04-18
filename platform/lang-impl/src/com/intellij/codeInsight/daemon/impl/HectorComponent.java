@@ -128,7 +128,7 @@ public class HectorComponent extends JPanel {
                                                    GridBagConstraints.NONE, new Insets(0, 5, 0, 0), 0, 0);
 
     JPanel panel = new JPanel(new GridBagLayout());
-    panel.setBorder(IdeBorderFactory.createTitledBorder(myTitle, false, false, true, new Insets(5, 0, 0, 0)));
+    panel.setBorder(IdeBorderFactory.createTitledBorder(myTitle, false));
     final boolean addLabel = mySliders.size() > 1;
     if (addLabel) {
       layoutVertical(panel);
@@ -147,6 +147,7 @@ public class HectorComponent extends JPanel {
 
     final HyperlinkLabel configurator = new HyperlinkLabel("Configure inspections");
     gc.insets.right = 5;
+    gc.insets.bottom = 10;
     gc.weightx = 0;
     gc.fill = GridBagConstraints.NONE;
     gc.anchor = GridBagConstraints.EAST;
@@ -184,7 +185,7 @@ public class HectorComponent extends JPanel {
   @Override
   public Dimension getPreferredSize() {
     final Dimension preferredSize = super.getPreferredSize();
-    final int width = getFontMetrics(getFont()).stringWidth(myTitle) + 60;
+    final int width = 300;
     if (preferredSize.width < width){
       preferredSize.width = width;
     }
@@ -196,7 +197,7 @@ public class HectorComponent extends JPanel {
       slider.setOrientation(SwingConstants.HORIZONTAL);
       slider.setPreferredSize(new Dimension(200, 40));
       panel.add(slider, new GridBagConstraints(0, 1, 1, 1, 1, 0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL,
-                                               new Insets(0, 0, 0, 0), 0, 0));
+                                               new Insets(5, 0, 5, 0), 0, 0));
     }
   }
 
@@ -204,11 +205,11 @@ public class HectorComponent extends JPanel {
     for (Language language : mySliders.keySet()) {
       JSlider slider = mySliders.get(language);
       JPanel borderPanel = new JPanel(new BorderLayout());
-      slider.setPreferredSize(new Dimension(80, 100));
+      slider.setPreferredSize(new Dimension(100, 100));
       borderPanel.add(new JLabel(language.getID()), BorderLayout.NORTH);
       borderPanel.add(slider, BorderLayout.CENTER);
       panel.add(borderPanel, new GridBagConstraints(GridBagConstraints.RELATIVE, 1, 1, 1, 0, 1, GridBagConstraints.CENTER, GridBagConstraints.VERTICAL,
-                                                    new Insets(0, 0, 0, 0), 0, 0));
+                                                    new Insets(0, 5, 0, 5), 0, 0));
     }
   }
 

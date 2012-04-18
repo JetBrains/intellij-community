@@ -29,6 +29,7 @@ import com.intellij.ide.fileTemplates.JavaTemplateUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -66,8 +67,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-
-import static com.intellij.codeInsight.daemon.impl.quickfix.CreateClassKind.*;
 
 /**
  * @author mike
@@ -184,16 +183,23 @@ public class CreateFromUsageUtils {
     }
   }
 
-  public static void setupEditor(PsiMethod method, Editor newEditor) {
+  public static void setupEditor(PsiMethod method, final Editor newEditor) {
     PsiCodeBlock body = method.getBody();
     if (body != null) {
       PsiElement l = PsiTreeUtil.skipSiblingsForward(body.getLBrace(), PsiWhiteSpace.class);
       PsiElement r = PsiTreeUtil.skipSiblingsBackward(body.getRBrace(), PsiWhiteSpace.class);
       if (l != null && r != null) {
-        int start = l.getTextRange().getStartOffset(),
-            end   = r.getTextRange().getEndOffset();
+        int start = l.getTextRange().getStartOffset();
+        int end   = r.getTextRange().getEndOffset();
         newEditor.getCaretModel().moveToOffset(Math.max(start, end));
-        newEditor.getSelectionModel().setSelection(Math.min(start, end), Math.max(start, end));
+        if (end < start) {
+          newEditor.getCaretModel().moveToOffset(end + 1);
+          CodeStyleManager styleManager = CodeStyleManager.getInstance(method.getProject());
+          final String lineIndent = styleManager.getLineIndent(method.getContainingFile(), Math.min(start, end));
+          EditorModificationUtil.insertStringAtCaret(newEditor, lineIndent);
+        } else {
+          newEditor.getSelectionModel().setSelection(Math.min(start, end), Math.max(start, end));
+        }
         newEditor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
       }
     }
@@ -346,9 +352,9 @@ public class CreateFromUsageUtils {
 
       PsiManager manager = psiClass.getManager();
       PsiElementFactory elementFactory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
-      PsiClass result = classKind == INTERFACE ? elementFactory.createInterface(name) :
-                        classKind == CLASS ? elementFactory.createClass(name) :
-                        classKind == ANNOTATION ? elementFactory.createAnnotationType(name) :
+      PsiClass result = classKind == CreateClassKind.INTERFACE ? elementFactory.createInterface(name) :
+                        classKind == CreateClassKind.CLASS ? elementFactory.createClass(name) :
+                        classKind == CreateClassKind.ANNOTATION ? elementFactory.createAnnotationType(name) :
                         elementFactory.createEnum(name);
       CreateFromUsageBaseFix.setupGenericParameters(result, referenceElement);
       result = (PsiClass)CodeStyleManager.getInstance(manager.getProject()).reformat(result);
@@ -378,16 +384,16 @@ public class CreateFromUsageUtils {
             PsiClass targetClass;
             if (directory != null) {
               try {
-                if (classKind == INTERFACE) {
+                if (classKind == CreateClassKind.INTERFACE) {
                   targetClass = JavaDirectoryService.getInstance().createInterface(directory, name);
                 }
-                else if (classKind == CLASS) {
+                else if (classKind == CreateClassKind.CLASS) {
                   targetClass = JavaDirectoryService.getInstance().createClass(directory, name);
                 }
-                else if (classKind == ENUM) {
+                else if (classKind == CreateClassKind.ENUM) {
                   targetClass = JavaDirectoryService.getInstance().createEnum(directory, name);
                 }
-                else if (classKind == ANNOTATION) {
+                else if (classKind == CreateClassKind.ANNOTATION) {
                   targetClass = JavaDirectoryService.getInstance().createAnnotationType(directory, name);
                 }
                 else {
@@ -405,16 +411,16 @@ public class CreateFromUsageUtils {
             }
             else { //tests
               PsiClass aClass;
-              if (classKind == INTERFACE) {
+              if (classKind == CreateClassKind.INTERFACE) {
                 aClass = factory.createInterface(name);
               }
-              else if (classKind == CLASS) {
+              else if (classKind == CreateClassKind.CLASS) {
                 aClass = factory.createClass(name);
               }
-              else if (classKind == ENUM) {
+              else if (classKind == CreateClassKind.ENUM) {
                 aClass = factory.createEnum(name);
               }
-              else if (classKind == ANNOTATION) {
+              else if (classKind == CreateClassKind.ANNOTATION) {
                 aClass = factory.createAnnotationType(name);
               }
               else {
@@ -428,7 +434,7 @@ public class CreateFromUsageUtils {
               final PsiClass superClass =
                 facade.findClass(superClassName, targetClass.getResolveScope());
               final PsiJavaCodeReferenceElement superClassReference = factory.createReferenceElementByFQClassName(superClassName, targetClass.getResolveScope());
-              final PsiReferenceList list = classKind == INTERFACE || superClass == null || !superClass.isInterface() ?
+              final PsiReferenceList list = classKind == CreateClassKind.INTERFACE || superClass == null || !superClass.isInterface() ?
                 targetClass.getExtendsList() : targetClass.getImplementsList();
               list.add(superClassReference);
             }
@@ -463,10 +469,6 @@ public class CreateFromUsageUtils {
 
     final List<PsiReferenceExpression> result = new ArrayList<PsiReferenceExpression>();
     JavaRecursiveElementWalkingVisitor visitor = new JavaRecursiveElementWalkingVisitor() {
-      public List getResult() {
-        return result;
-      }
-
       @Override public void visitReferenceExpression(PsiReferenceExpression expr) {
         if (expression instanceof PsiReferenceExpression) {
           if (expr.textMatches(expression) && !isValidReference(expr, false)) {
@@ -740,6 +742,7 @@ public class CreateFromUsageUtils {
     Arrays.sort(members, new Comparator<PsiMember>() {
       @Override
       public int compare(final PsiMember m1, final PsiMember m2) {
+        ProgressManager.checkCanceled();
         int result = JavaStatisticsManager.createInfo(null, m2).getUseCount() - JavaStatisticsManager.createInfo(null, m1).getUseCount();
         if (result != 0) return result;
         final PsiClass aClass = m1.getContainingClass();
@@ -761,13 +764,12 @@ public class CreateFromUsageUtils {
     List<ExpectedTypeInfo> l = new ArrayList<ExpectedTypeInfo>();
     PsiManager manager = expression.getManager();
     JavaPsiFacade facade = JavaPsiFacade.getInstance(manager.getProject());
-    for (int i = 0; i < Math.min(MAX_GUESSED_MEMBERS_COUNT, members.length); i++) {
+    for (PsiMember member : members) {
       ProgressManager.checkCanceled();
-      PsiMember member = members[i];
       PsiClass aClass = member.getContainingClass();
       if (aClass instanceof PsiAnonymousClass || aClass == null) continue;
 
-      if (facade.getResolveHelper().isAccessible(aClass, expression, null)) {
+      if (facade.getResolveHelper().isAccessible(member, expression, null)) {
         PsiClassType type;
         final PsiElement pparent = expression.getParent().getParent();
         if (pparent instanceof PsiMethodCallExpression && member instanceof PsiMethod) {
@@ -783,6 +785,7 @@ public class CreateFromUsageUtils {
           type = factory.createType(aClass);
         }
         l.add(ExpectedTypesProvider.createInfo(type, ExpectedTypeInfo.TYPE_OR_SUBTYPE, type, TailType.NONE));
+        if (l.size() == MAX_GUESSED_MEMBERS_COUNT) break;
       }
     }
 

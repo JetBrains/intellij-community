@@ -15,6 +15,7 @@ public class SurroundExpressionTest extends SurroundTestCase {
   public void testType_cast2() throws Exception { doTest(new TypeCastSurrounder()); }
   public void testWhile1() throws Exception { doTest(new WhileExprSurrounder()); }
   public void testWith2() throws Exception { doTest(new WithExprSurrounder()); }
+  public void testBinaryWithCast() throws Exception { doTest(new TypeCastSurrounder()); }
 
   @Override
   protected String getBasePath() {

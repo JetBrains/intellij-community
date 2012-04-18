@@ -15,11 +15,13 @@
  */
 package com.intellij.execution.console;
 
+import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.execution.impl.ConsoleViewUtil;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.impl.TypeSafeDataProviderAdapter;
 import com.intellij.lang.Language;
+import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.Application;
@@ -38,13 +40,15 @@ import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.editor.impl.EditorFactoryImpl;
+import com.intellij.openapi.editor.impl.EditorHeaderComponent;
+import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.impl.EditorWindow;
 import com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl;
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
-import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
@@ -91,6 +95,7 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
   private final JPanel myPanel = new JPanel(new MyLayout());
 
   private String myTitle;
+  @Nullable
   private String myPrompt = "> ";
   private final LightVirtualFile myHistoryFile;
   private Editor myCurrentEditor;
@@ -122,7 +127,7 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
     myTitle = title;
     installEditorFactoryListener();
     final EditorFactory editorFactory = EditorFactory.getInstance();
-    myHistoryFile = new LightVirtualFile(getTitle() + ".history.txt", StdFileTypes.PLAIN_TEXT, "");
+    myHistoryFile = new LightVirtualFile(getTitle() + ".history.txt", FileTypes.PLAIN_TEXT, "");
     myEditorDocument = editorFactory.createDocument("");
     setLanguage(language);
     myConsoleEditor = (EditorEx)editorFactory.createEditor(myEditorDocument, myProject);
@@ -140,6 +145,7 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
   public void initComponents() {
     final EditorColorsScheme colorsScheme = myConsoleEditor.getColorsScheme();
     final DelegateColorScheme scheme = new DelegateColorScheme(colorsScheme) {
+      @NotNull
       @Override
       public Color getDefaultBackground() {
         final Color color = getColor(ConsoleViewContentType.CONSOLE_BACKGROUND_KEY);
@@ -311,11 +317,12 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
     return myHistoryFile;
   }
 
+  @Nullable
   public String getPrompt() {
     return myPrompt;
   }
 
-  public void setPrompt(String prompt) {
+  public void setPrompt(@Nullable String prompt) {
     // always add space to the prompt otherwise it may look ugly
     myPrompt = prompt != null && !prompt.endsWith(" ") ? prompt + " " : prompt;
     setPromptInner(myPrompt);
@@ -430,8 +437,10 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
   protected String addTextRangeToHistory(TextRange textRange, final EditorEx consoleEditor, boolean preserveMarkup) {
     final Document history = myHistoryViewer.getDocument();
     final MarkupModel markupModel = DocumentMarkupModel.forDocument(history, myProject, true);
-    appendToHistoryDocument(history, myPrompt);
-    markupModel.addRangeHighlighter(history.getTextLength() - myPrompt.length(), history.getTextLength(), HighlighterLayer.SYNTAX,
+    if (myPrompt != null) {
+      appendToHistoryDocument(history, myPrompt);
+    }
+    markupModel.addRangeHighlighter(history.getTextLength() - StringUtil.length(myPrompt), history.getTextLength(), HighlighterLayer.SYNTAX,
                                     ConsoleViewContentType.USER_INPUT.getAttributes(),
                                     HighlighterTargetArea.EXACT_RANGE);
 
@@ -471,6 +480,9 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
   private static void duplicateHighlighters(MarkupModel to, MarkupModel from, int offset, TextRange textRange) {
     for (RangeHighlighter rangeHighlighter : from.getAllHighlighters()) {
       if (!rangeHighlighter.isValid()) continue;
+      Object tooltip = rangeHighlighter.getErrorStripeTooltip();
+      HighlightSeverity severity = tooltip instanceof HighlightInfo? ((HighlightInfo)tooltip).getSeverity() : null;
+      if (severity != HighlightSeverity.INFORMATION) continue;
       final int localOffset = textRange.getStartOffset();
       final int start = Math.max(rangeHighlighter.getStartOffset(), localOffset) - localOffset;
       final int end = Math.min(rangeHighlighter.getEndOffset(), textRange.getEndOffset()) - localOffset;
@@ -551,7 +563,7 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
       @Override
       public void fileClosed(FileEditorManager source, VirtualFile file) {
         if (file != myFile.getVirtualFile()) return;
-        if (myUiUpdateRunnable != null) {
+        if (myUiUpdateRunnable != null && !Boolean.TRUE.equals(file.getUserData(FileEditorManagerImpl.CLOSING_TO_REOPEN))) {
           ApplicationManager.getApplication().runReadAction(myUiUpdateRunnable);
         }
       }
@@ -600,10 +612,13 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
 
   private void configureFullEditor(final Editor editor) {
     if (editor == null || myFullEditorActions == null || editor == myConsoleEditor) return;
-    final JPanel header = new JPanel(new BorderLayout());
+    final JPanel header = new EditorHeaderComponent();
     final ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, myFullEditorActions, true);
     actionToolbar.setTargetComponent(editor.getContentComponent());
-    header.add(actionToolbar.getComponent(), BorderLayout.EAST);
+    JComponent component = actionToolbar.getComponent();
+    component.setOpaque(false);
+    header.add(component, BorderLayout.EAST);
+    editor.putUserData(EditorImpl.PERMANENT_HEADER, header);
     editor.setHeaderComponent(header);
     editor.getSettings().setLineMarkerAreaShown(false);
   }

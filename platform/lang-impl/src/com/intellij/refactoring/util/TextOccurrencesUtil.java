@@ -108,11 +108,14 @@ public class TextOccurrencesUtil {
                                                    @NotNull String stringToSearch,
                                                    @NotNull final Collection<UsageInfo> results,
                                                    @NotNull final UsageInfoFactory factory) {
+    final Object lock = new Object();
     processUsagesInStringsAndComments(element, stringToSearch, false, new PairProcessor<PsiElement, TextRange>() {
       public boolean process(PsiElement commentOrLiteral, TextRange textRange) {
         UsageInfo usageInfo = factory.createUsageInfo(commentOrLiteral, textRange.getStartOffset(), textRange.getEndOffset());
         if (usageInfo != null) {
-          results.add(usageInfo);
+          synchronized (lock) {
+            results.add(usageInfo);
+          }
         }
         return true;
       }

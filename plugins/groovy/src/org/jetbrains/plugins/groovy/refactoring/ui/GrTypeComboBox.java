@@ -15,6 +15,11 @@
  */
 package org.jetbrains.plugins.groovy.refactoring.ui;
 
+import com.intellij.ide.ui.UISettings;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CustomShortcutSet;
+import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.psi.*;
@@ -28,6 +33,9 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUt
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 
+import javax.swing.*;
+import java.awt.event.InputEvent;
+import java.awt.event.KeyEvent;
 import java.util.*;
 
 /**
@@ -172,6 +180,34 @@ public class GrTypeComboBox extends ComboBox {
     if (clazz == null) return false;
 
     return clazz.getTypeParameters().length != parameters.length;
+  }
+
+  public static void registerUpDownHint(JComponent component, final GrTypeComboBox combo) {
+    final AnAction arrow = new AnAction() {
+      @Override
+      public void actionPerformed(AnActionEvent e) {
+        if (e.getInputEvent() instanceof KeyEvent) {
+          final int code = ((KeyEvent)e.getInputEvent()).getKeyCode();
+          scrollBy(code == KeyEvent.VK_DOWN ? 1 : code == KeyEvent.VK_UP ? -1 : 0, combo);
+        }
+      }
+    };
+    final KeyboardShortcut up = new KeyboardShortcut(KeyStroke.getKeyStroke(KeyEvent.VK_UP, InputEvent.ALT_DOWN_MASK), null);
+    final KeyboardShortcut down = new KeyboardShortcut(KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, InputEvent.ALT_DOWN_MASK), null);
+    arrow.registerCustomShortcutSet(new CustomShortcutSet(up, down), component);
+  }
+
+  private static void scrollBy(int delta, GrTypeComboBox combo) {
+    if (delta == 0) return;
+    final int size = combo.getModel().getSize();
+    int next = combo.getSelectedIndex() + delta;
+    if (next < 0 || next >= size) {
+      if (!UISettings.getInstance().CYCLE_SCROLLING) {
+        return;
+      }
+      next = (next + size) % size;
+    }
+    combo.setSelectedIndex(next);
   }
 
   private static class PsiTypeItem {

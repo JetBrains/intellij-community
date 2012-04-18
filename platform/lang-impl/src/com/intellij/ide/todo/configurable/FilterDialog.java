@@ -127,7 +127,7 @@ class FilterDialog extends DialogWrapper {
               new GridBagConstraints(1, 0, 1, 1, 1, 0, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 5, 0), 0, 0));
 
     JPanel patternsPanel = new JPanel(new GridBagLayout());
-    Border border = IdeBorderFactory.createTitledBorder(IdeBundle.message("group.todo.filter.patterns"), false, false, true);
+    Border border = IdeBorderFactory.createTitledBorder(IdeBundle.message("group.todo.filter.patterns"), false);
     patternsPanel.setBorder(border);
     myTable.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myTable);

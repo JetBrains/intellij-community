@@ -21,16 +21,16 @@ import com.intellij.injected.editor.DocumentWindowImpl;
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.lang.Language;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.FreeThreadedFileViewProvider;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -55,7 +55,7 @@ public class InjectedFileViewProvider extends SingleRootFileViewProvider impleme
                            @NotNull Language language) {
     super(psiManager, (VirtualFile)virtualFile, true, language);
     myDocumentWindow = documentWindow;
-    myProject = documentWindow.getShreds().get(0).host.getProject();
+    myProject = documentWindow.getShreds().get(0).getHost().getProject();
   }
 
   @Override
@@ -73,10 +73,11 @@ public class InjectedFileViewProvider extends SingleRootFileViewProvider impleme
       String change = changes[i];
       if (change != null) {
         PsiLanguageInjectionHost.Shred shred = shreds.get(i);
-        PsiLanguageInjectionHost host = shred.host;
+        PsiLanguageInjectionHost host = shred.getHost();
         TextRange rangeInsideHost = shred.getRangeInsideHost();
         String newHostText = StringUtil.replaceSubstring(host.getText(), rangeInsideHost, change);
-        shred.host = host.updateText(newHostText);
+        //shred.host =
+          host.updateText(newHostText);
       }
     }
   }
@@ -87,13 +88,14 @@ public class InjectedFileViewProvider extends SingleRootFileViewProvider impleme
     Document hostDocument = oldDocumentWindow.getDelegate();
     final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(getManager().getProject());
     PsiFile hostFile = documentManager.getPsiFile(hostDocument);
-    final Language hostFileLanguage = getPsi(getBaseLanguage()).getContext().getContainingFile().getLanguage();
+    Language language = getBaseLanguage();
+    final Language hostFileLanguage = getPsi(language).getContext().getContainingFile().getLanguage();
     PsiFile hostPsiFileCopy = (PsiFile)hostFile.copy();
-    RangeMarker firstTextRange = oldDocumentWindow.getHostRanges()[0];
-    PsiElement elementCopy = hostPsiFileCopy.getViewProvider().findElementAt(firstTextRange.getStartOffset(), hostFileLanguage);
-    assert elementCopy != null;
+    Segment firstTextRange = oldDocumentWindow.getHostRanges()[0];
+    PsiElement hostElementCopy = hostPsiFileCopy.getViewProvider().findElementAt(firstTextRange.getStartOffset(), hostFileLanguage);
+    assert hostElementCopy != null;
     final Ref<FileViewProvider> provider = new Ref<FileViewProvider>();
-    InjectedLanguageUtil.enumerate(elementCopy, hostPsiFileCopy, true, new PsiLanguageInjectionHost.InjectedPsiVisitor() {
+    PsiLanguageInjectionHost.InjectedPsiVisitor visitor = new PsiLanguageInjectionHost.InjectedPsiVisitor() {
       @Override
       public void visit(@NotNull PsiFile injectedPsi, @NotNull List<PsiLanguageInjectionHost.Shred> places) {
         Document document = documentManager.getCachedDocument(injectedPsi);
@@ -101,19 +103,21 @@ public class InjectedFileViewProvider extends SingleRootFileViewProvider impleme
           provider.set(injectedPsi.getViewProvider());
         }
       }
-    });
+    };
+    for (PsiElement current = hostElementCopy; current != null && current != hostPsiFileCopy; current = current.getParent()) {
+      current.putUserData(LANGUAGE_FOR_INJECTED_COPY_KEY, language);
+      try {
+        InjectedLanguageUtil.enumerate(current, hostPsiFileCopy, false, visitor);
+      }
+      finally {
+        current.putUserData(LANGUAGE_FOR_INJECTED_COPY_KEY, null);
+      }
+      if (provider.get() != null) break;
+    }
     return provider.get();
   }
 
-  @Override
-  @Nullable
-  protected PsiFile getPsiInner(Language target) {
-    // when FileManager rebuilds file map, all files temporarily become invalid, so this check is doomed
-    PsiFile file = super.getPsiInner(target);
-    //if (file == null || file.getContext() == null) return null;
-    return file;
-  }
-
+  static Key<Language> LANGUAGE_FOR_INJECTED_COPY_KEY = Key.create("LANGUAGE_FOR_INJECTED_COPY_KEY");
   // returns true if shreds were set, false if old ones were reused
   boolean setShreds(@NotNull Place newShreds, @NotNull Project project) {
     synchronized (myLock) {

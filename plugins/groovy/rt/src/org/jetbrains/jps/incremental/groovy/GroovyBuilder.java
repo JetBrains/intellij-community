@@ -8,6 +8,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.SystemProperties;
 import groovy.util.CharsetToolkit;
+import org.jetbrains.asm4.ClassReader;
 import org.jetbrains.ether.dependencyView.Callbacks;
 import org.jetbrains.ether.dependencyView.Mappings;
 import org.jetbrains.groovy.compiler.rt.GroovyCompilerWrapper;
@@ -19,7 +20,6 @@ import org.jetbrains.jps.incremental.messages.FileGeneratedEvent;
 import org.jetbrains.jps.incremental.messages.ProgressMessage;
 import org.jetbrains.jps.incremental.storage.SourceToOutputMapping;
 import org.jetbrains.jps.server.ClasspathBootstrap;
-import org.objectweb.asm.ClassReader;
 
 import java.io.File;
 import java.io.IOException;
@@ -46,15 +46,14 @@ public class GroovyBuilder extends ModuleLevelBuilder {
   }
 
   public ModuleLevelBuilder.ExitCode build(final CompileContext context, ModuleChunk chunk) throws ProjectBuildException {
-    ExitCode exitCode = ExitCode.OK;
     try {
       final List<File> toCompile = collectChangedFiles(context, chunk);
       if (toCompile.isEmpty()) {
-        return exitCode;
+        return ExitCode.NOTHING_DONE;
       }
 
       String moduleOutput = getModuleOutput(context, chunk);
-      String compilerOutput = getCompilerOutput(context, moduleOutput);
+      String compilerOutput = getCompilerOutput(moduleOutput);
 
       final Set<String> toCompilePaths = new LinkedHashSet<String>();
       for (File file : toCompile) {
@@ -83,40 +82,33 @@ public class GroovyBuilder extends ModuleLevelBuilder {
                               tempFile.getPath())
       );
 
-      List<GroovycOSProcessHandler.OutputItem> successfullyCompiled = Collections.emptyList();
-      try {
-        final Process process = Runtime.getRuntime().exec(ArrayUtil.toStringArray(cmd));
-        GroovycOSProcessHandler handler = GroovycOSProcessHandler.runGroovyc(process, new Consumer<String>() {
-          public void consume(String s) {
-            context.processMessage(new ProgressMessage(s));
-          }
-        });
-
-        if (myForStubs && handler.shouldRetry()) {
-          if (CHUNK_REBUILD_ORDERED.get(context) != null) {
-            CHUNK_REBUILD_ORDERED.set(context, null);
-          } else {
-            CHUNK_REBUILD_ORDERED.set(context, Boolean.TRUE);
-            exitCode = ExitCode.CHUNK_REBUILD_REQUIRED;
-            return exitCode;
-          }
+      final Process process = Runtime.getRuntime().exec(ArrayUtil.toStringArray(cmd));
+      GroovycOSProcessHandler handler = GroovycOSProcessHandler.runGroovyc(process, new Consumer<String>() {
+        public void consume(String s) {
+          context.processMessage(new ProgressMessage(s));
         }
+      });
 
-        successfullyCompiled = handler.getSuccessfullyCompiled();
-
-        for (CompilerMessage message : handler.getCompilerMessages()) {
-          context.processMessage(message);
-        }
-      }
-      finally {
-        if (!myForStubs) {
-          if (updateDependencies(context, chunk, toCompile, moduleOutput, successfullyCompiled)) {
-            exitCode = ExitCode.ADDITIONAL_PASS_REQUIRED;
-          }
+      if (!context.isProjectRebuild() && handler.shouldRetry()) {
+        if (CHUNK_REBUILD_ORDERED.get(context) != null) {
+          CHUNK_REBUILD_ORDERED.set(context, null);
+        } else {
+          CHUNK_REBUILD_ORDERED.set(context, Boolean.TRUE);
+          return ExitCode.CHUNK_REBUILD_REQUIRED;
         }
       }
 
-      return exitCode;
+      if (myForStubs) {
+        JavaBuilder.addTempSourcePathRoot(context, new File(compilerOutput));
+      }
+
+      for (CompilerMessage message : handler.getCompilerMessages()) {
+        context.processMessage(message);
+      }
+      if (!myForStubs && updateDependencies(context, chunk, toCompile, moduleOutput, handler.getSuccessfullyCompiled())) {
+        return ExitCode.ADDITIONAL_PASS_REQUIRED;
+      }
+      return ExitCode.OK;
     }
     catch (Exception e) {
       throw new ProjectBuildException(e);
@@ -139,12 +131,8 @@ public class GroovyBuilder extends ModuleLevelBuilder {
     return moduleOutputPath.endsWith("/") ? moduleOutputPath : moduleOutputPath + "/";
   }
 
-  private String getCompilerOutput(CompileContext context, String moduleOutputDir) throws IOException {
-    final File dir = myForStubs ? FileUtil.createTempDirectory("groovyStubs", null) : new File(moduleOutputDir);
-    if (myForStubs) {
-      JavaBuilder.addTempSourcePathRoot(context, dir);
-    }
-    return FileUtil.toCanonicalPath(dir.getPath());
+  private String getCompilerOutput(String moduleOutputDir) throws IOException {
+    return FileUtil.toCanonicalPath((myForStubs ? FileUtil.createTempDirectory("groovyStubs", null) : new File(moduleOutputDir)).getPath());
   }
 
   private static List<File> collectChangedFiles(CompileContext context, ModuleChunk chunk) throws IOException {
@@ -178,10 +166,10 @@ public class GroovyBuilder extends ModuleLevelBuilder {
         final String outputPath = FileUtil.toSystemIndependentName(item.outputPath);
         final RootDescriptor moduleAndRoot = context.getModuleAndRoot(new File(sourcePath));
         if (moduleAndRoot != null) {
-          final String moduleName = moduleAndRoot.module.getName().toLowerCase(Locale.US);
+          final String moduleName = moduleAndRoot.module.getName();
           context.getDataManager().getSourceToOutputMap(moduleName, moduleAndRoot.isTestRoot).appendData(sourcePath, outputPath);
         }
-        callback.associate(outputPath, Callbacks.getDefaultLookup(sourcePath), new ClassReader(FileUtil.loadFileBytes(new File(outputPath))));
+        callback.associate(outputPath, sourcePath, new ClassReader(FileUtil.loadFileBytes(new File(outputPath))));
         successfullyCompiledFiles.add(new File(sourcePath));
 
         generatedEvent.add(moduleOutputPath, FileUtil.getRelativePath(moduleOutputPath, outputPath, '/'));
@@ -216,10 +204,10 @@ public class GroovyBuilder extends ModuleLevelBuilder {
   private static Map<String, String> buildClassToSourceMap(ModuleChunk chunk, CompileContext context, Set<String> toCompilePaths, String moduleOutputPath) throws IOException {
     final Map<String, String> class2Src = new HashMap<String, String>();
     for (Module module : chunk.getModules()) {
-      final String moduleName = module.getName().toLowerCase(Locale.US);
-      final SourceToOutputMapping srcToOut = context.getDataManager().getSourceToOutputMap(moduleName, context.isCompilingTests());
+      final SourceToOutputMapping srcToOut = context.getDataManager().getSourceToOutputMap(module.getName(), context.isCompilingTests());
       for (String src : srcToOut.getKeys()) {
-        if (!toCompilePaths.contains(src) && isGroovyFile(src)) {
+        if (!toCompilePaths.contains(src) && isGroovyFile(src) &&
+            !context.getProject().getCompilerConfiguration().getExcludes().isExcluded(new File(src))) {
           final Collection<String> outs = srcToOut.getState(src);
           if (outs != null) {
             for (String out : outs) {
@@ -233,6 +221,13 @@ public class GroovyBuilder extends ModuleLevelBuilder {
       }
     }
     return class2Src;
+  }
+
+  @Override
+  public String toString() {
+    return "GroovyBuilder{" +
+           "myForStubs=" + myForStubs +
+           '}';
   }
 
   public String getDescription() {

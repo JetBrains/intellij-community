@@ -40,7 +40,7 @@ public class PsiConcurrencyStressTest extends PsiTestCase {
   private volatile boolean writeActionInProgress;
   public void testStress() throws Exception {
     int numOfThreads = 10;
-    int iterations = Timings.adjustAccordingToMySpeed(20);
+    int iterations = Timings.adjustAccordingToMySpeed(20, true);
     System.out.println("iterations = " + iterations);
     final int readIterations = iterations * 3;
     final int writeIterations = iterations;

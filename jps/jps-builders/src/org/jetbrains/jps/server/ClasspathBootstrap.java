@@ -15,22 +15,23 @@
  */
 package org.jetbrains.jps.server;
 
-import com.google.common.cache.CacheBuilder;
+import com.google.protobuf.Message;
 import com.intellij.compiler.notNullVerification.NotNullVerifyingInstrumenter;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.uiDesigner.compiler.AlienFormFileException;
 import com.intellij.uiDesigner.core.GridConstraints;
+import com.intellij.util.SystemProperties;
 import com.jgoodies.forms.layout.CellConstraints;
-import com.sun.jna.Pointer;
-import com.sun.jna.platform.FileMonitor;
-import gnu.trove.TIntHash;
 import net.n3.nanoxml.IXMLBuilder;
 import org.codehaus.groovy.GroovyException;
+import org.jboss.netty.util.Version;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.asm4.ClassVisitor;
+import org.jetbrains.asm4.ClassWriter;
 import org.jetbrains.jps.MacroExpander;
 import org.jetbrains.jps.javac.JavacServer;
-import org.objectweb.asm.ClassWriter;
 
 import javax.tools.*;
 import java.io.File;
@@ -44,7 +45,7 @@ import java.util.Set;
  *         Date: 9/12/11
  */
 public class ClasspathBootstrap {
-  public static final String JPS_RUNTIME_PATH = "rt/jps-incremental";
+  private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.server.ClasspathBootstrap");
 
   private static class OptimizedFileManagerClassHolder {
     static final String CLASS_NAME = "org.jetbrains.jps.javac.OptimizedFileManager";
@@ -88,24 +89,18 @@ public class ClasspathBootstrap {
   public static List<File> getCompileServerApplicationClasspath() {
     final Set<File> cp = new LinkedHashSet<File>();
     cp.add(getResourcePath(Server.class));
-    cp.add(getResourcePath(com.google.protobuf.Message.class)); // protobuf
-    cp.add(getResourcePath(org.jboss.netty.bootstrap.Bootstrap.class)); // netty
-    cp.add(getResourcePath(TIntHash.class));  // trove
-    cp.add(getResourcePath(FileUtil.class));  // util module
-    cp.add(getResourcePath(Pointer.class));  // jna.jar
-    cp.add(getResourcePath(CacheBuilder.class));  // guava
-    cp.add(getResourcePath(FileMonitor.class));  // jna-utils.jar
+    for (String path : PathManager.getUtilClassPath()) { cp.add(new File(path)); } // util
+    cp.add(getResourcePath(Message.class)); // protobuf
+    cp.add(getResourcePath(Version.class)); // netty
     cp.add(getResourcePath(ClassWriter.class));  // asm
-    cp.add(getResourcePath(org.objectweb.asm.commons.EmptyVisitor.class));  // asm-commons
+    cp.add(getResourcePath(ClassVisitor.class));  // asm-commons
     cp.add(getResourcePath(MacroExpander.class));  // jps-model
     cp.add(getResourcePath(AlienFormFileException.class));  // forms-compiler
     cp.add(getResourcePath(GroovyException.class));  // groovy
-    cp.add(getResourcePath(org.jdom.input.SAXBuilder.class));  // jdom
     cp.add(getResourcePath(GridConstraints.class));  // forms-rt
     cp.add(getResourcePath(CellConstraints.class));  // jgoodies-forms
     cp.add(getResourcePath(NotNullVerifyingInstrumenter.class));  // not-null
     cp.add(getResourcePath(IXMLBuilder.class));  // nano-xml
-    cp.add(getResourcePath(org.apache.log4j.Logger.class)); // log4j
 
     final Class<StandardJavaFileManager> optimizedFileManagerClass = getOptimizedFileManagerClass();
     if (optimizedFileManagerClass != null) {
@@ -130,36 +125,60 @@ public class ClasspathBootstrap {
     return new ArrayList<File>(cp);
   }
 
-  public static List<File> getJavacServerClasspath() {
+  public static List<File> getJavacServerClasspath(String sdkHome) {
     final Set<File> cp = new LinkedHashSet<File>();
-    cp.add(getResourcePath(JavacServer.class));
-    cp.add(getResourcePath(com.google.protobuf.Message.class)); // protobuf
-    cp.add(getResourcePath(org.jboss.netty.bootstrap.Bootstrap.class)); // netty
-    cp.add(getResourcePath(TIntHash.class));  // trove
-    cp.add(getResourcePath(FileUtil.class));  // util module
-    cp.add(getResourcePath(Pointer.class));  // jna.jar
-    cp.add(getResourcePath(CacheBuilder.class));  // guava
-    cp.add(getResourcePath(FileMonitor.class));  // jna-utils.jar
-    cp.add(getResourcePath(org.jdom.input.SAXBuilder.class));  // jdom
+    cp.add(getResourcePath(JavacServer.class)); // self
+    // util
+    for (String path : PathManager.getUtilClassPath()) {
+      cp.add(new File(path));
+    }
+    cp.add(getResourcePath(Message.class)); // protobuf
+    cp.add(getResourcePath(Version.class)); // netty
 
     final Class<StandardJavaFileManager> optimizedFileManagerClass = getOptimizedFileManagerClass();
     if (optimizedFileManagerClass != null) {
-      cp.add(getResourcePath(optimizedFileManagerClass));  // optimizedFileManager
+      cp.add(getResourcePath(optimizedFileManagerClass));  // optimizedFileManager, if applicable
     }
 
     try {
       final Class<?> cmdLineWrapper = Class.forName("com.intellij.rt.execution.CommandLineWrapper");
       cp.add(getResourcePath(cmdLineWrapper));  // idea_rt.jar
     }
-    catch (Throwable ignored) {
+    catch (Throwable th) {
+      LOG.info(th);
     }
 
     final JavaCompiler systemCompiler = ToolProvider.getSystemJavaCompiler();
     if (systemCompiler != null) {
       try {
-        cp.add(getResourcePath(systemCompiler.getClass()));  // tools.jar
+        final String localJarPath = FileUtil.toSystemIndependentName(getResourcePath(systemCompiler.getClass()).getPath());
+        final String localJavaHome = FileUtil.toSystemIndependentName(SystemProperties.getJavaHome());
+        if (FileUtil.pathsEqual(localJavaHome, FileUtil.toSystemIndependentName(sdkHome))) {
+          cp.add(new File(localJarPath));
+        }
+        else {
+          // sdkHome is not the same as the sdk used to run this process
+          final File candidate = new File(sdkHome, "lib/tools.jar");
+          if (candidate.exists()) {
+            cp.add(candidate);
+          }
+          else {
+            // last resort
+            String relPath = FileUtil.getRelativePath(localJavaHome, localJarPath, '/');
+            if (relPath != null) {
+              if (relPath.contains("..")) {
+                relPath = FileUtil.getRelativePath(FileUtil.toSystemIndependentName(new File(localJavaHome).getParent()), localJarPath, '/');
+              }
+              if (relPath != null) {
+                final File targetFile = new File(sdkHome, relPath);
+                cp.add(targetFile);  // tools.jar
+              }
+            }
+          }
+        }
       }
-      catch (Throwable ignored) {
+      catch (Throwable th) {
+        LOG.info(th);
       }
     }
 
@@ -178,5 +197,4 @@ public class ClasspathBootstrap {
   public static File getResourcePath(Class aClass) {
     return new File(PathManager.getResourceRoot(aClass, "/" + aClass.getName().replace('.', '/') + ".class"));
   }
-
 }

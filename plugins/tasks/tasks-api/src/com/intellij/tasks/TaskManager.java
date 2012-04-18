@@ -41,6 +41,8 @@ public abstract class TaskManager {
    */
   public abstract List<Task> getIssues(String query);
 
+  public abstract List<Task> getIssues(String query, boolean forceRequest);
+
   /**
    * Returns already cached issues.
    * @return cached issues.

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,7 +37,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.ui.CollectionListModel;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.IconUtil;
-import org.jetbrains.android.actions.AndroidEnableDdmsAction;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.sdk.AndroidPlatform;
 import org.jetbrains.android.util.AndroidBundle;
@@ -216,7 +215,6 @@ public abstract class AndroidLogcatToolWindowView implements Disposable {
 
     final DefaultActionGroup group1 = new DefaultActionGroup();
     group1.addAll(myLogConsole.getToolbarActions());
-    group1.add(new AndroidEnableDdmsAction(AndroidUtils.DDMS_ICON));
     group1.add(new MyRestartAction());
     final JComponent tbComp1 =
       ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group1, false).getComponent();
@@ -409,7 +407,7 @@ public abstract class AndroidLogcatToolWindowView implements Disposable {
   private void updateDevices() {
     AndroidPlatform platform = getAndroidPlatform(myProject);
     if (platform != null) {
-      final AndroidDebugBridge debugBridge = platform.getSdk().getDebugBridge(myProject);
+      final AndroidDebugBridge debugBridge = platform.getSdkData().getDebugBridge(myProject);
       if (debugBridge != null) {
         IDevice[] devices = debugBridge.getDevices();
         Object temp = myDeviceCombo.getSelectedItem();
@@ -477,7 +475,7 @@ public abstract class AndroidLogcatToolWindowView implements Disposable {
 
   private class MyAddFilterAction extends AnAction {
     private MyAddFilterAction() {
-      super(CommonBundle.message("button.add"), AndroidBundle.message("android.logcat.add.logcat.filter.button"), IconUtil.getAddRowIcon());
+      super(CommonBundle.message("button.add"), AndroidBundle.message("android.logcat.add.logcat.filter.button"), IconUtil.getAddIcon());
     }
 
     @Override
@@ -503,7 +501,7 @@ public abstract class AndroidLogcatToolWindowView implements Disposable {
   private class MyRemoveFilterAction extends AnAction {
     private MyRemoveFilterAction() {
       super(CommonBundle.message("button.delete"), AndroidBundle.message("android.logcat.remove.logcat.filter.button"),
-            IconUtil.getRemoveRowIcon());
+            IconUtil.getRemoveIcon());
     }
 
     @Override

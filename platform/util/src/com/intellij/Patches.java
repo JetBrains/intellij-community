@@ -111,6 +111,11 @@ public class Patches {
     SystemInfo.isMac && (!SystemInfo.isMacOSLeopard || !SystemInfo.isJavaVersionAtLeast("1.6.0_30"));
 
   /**
+   * Minimizing and restoring application via View | Minimize leads to visual artifacts
+   */
+  public static final boolean APPLE_BUG_ID_10514018 = SystemInfo.isMac && !SystemInfo.isJavaVersionAtLeast("1.6.0_31");
+
+  /**
    * Index out of bounds at apple.laf.AquaTabbedPaneUI.tabForCoordinate
    * http://www.jetbrains.net/jira/browse/IDEADEV-15769
    */

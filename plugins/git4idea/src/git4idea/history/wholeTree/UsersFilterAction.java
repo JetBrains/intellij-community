@@ -125,6 +125,7 @@ public class UsersFilterAction extends BasePopupAction {
         if (myPopup != null) {
           mySelectOkAction.unregisterCustomShortcutSet(myPopup.getContent());
         }
+        myComponentPopupBuilder.setMayBeParent(true);
         myPopup = myComponentPopupBuilder.createPopup();
         myTextFieldCompletionProvider.apply(myEditorField);
         myEditorField.setText(myCurrentText);

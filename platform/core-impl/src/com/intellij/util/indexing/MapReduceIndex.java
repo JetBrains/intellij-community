@@ -38,22 +38,23 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  */
 public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Value, Input> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.indexing.MapReduceIndex");
-  private final ID<Key, Value> myIndexId;
+  @Nullable private final ID<Key, Value> myIndexId;
   private final DataIndexer<Key, Value, Input> myIndexer;
-  protected final IndexStorage<Key, Value> myStorage;
-  private PersistentHashMap<Integer, Collection<Key>> myInputsIndex;
+  @NotNull protected final IndexStorage<Key, Value> myStorage;
+  @Nullable private PersistentHashMap<Integer, Collection<Key>> myInputsIndex;
 
   private final ReentrantReadWriteLock myLock = new ReentrantReadWriteLock();
   
   private Factory<PersistentHashMap<Integer, Collection<Key>>> myInputsIndexFactory;
 
 
-  public MapReduceIndex(@Nullable final ID<Key, Value> indexId, DataIndexer<Key, Value, Input> indexer, final IndexStorage<Key, Value> storage) {
+  public MapReduceIndex(@Nullable final ID<Key, Value> indexId, DataIndexer<Key, Value, Input> indexer, @NotNull IndexStorage<Key, Value> storage) {
     myIndexId = indexId;
     myIndexer = indexer;
     myStorage = storage;
   }
 
+  @NotNull
   public IndexStorage<Key, Value> getStorage() {
     return myStorage;
   }
@@ -149,6 +150,7 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
     return myLock.writeLock();
   }
 
+  @NotNull
   @Override
   public Collection<Key> getAllKeys() throws StorageException {
     Set<Key> allKeys = new HashSet<Key>();
@@ -186,6 +188,7 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
     myInputsIndex = createInputsIndex();
   }
 
+  @Nullable
   private PersistentHashMap<Integer, Collection<Key>> createInputsIndex() throws IOException {
     Factory<PersistentHashMap<Integer, Collection<Key>>> factory = myInputsIndexFactory;
     if (factory != null) {
@@ -217,7 +220,7 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
     });
   }
 
-  protected void updateWithMap(final int inputId, final Map<Key, Value> newData, Callable<Collection<Key>> oldKeysGetter) throws StorageException {
+  protected void updateWithMap(final int inputId, @NotNull Map<Key, Value> newData, @NotNull Callable<Collection<Key>> oldKeysGetter) throws StorageException {
     getWriteLock().lock();
     try {
       try {

@@ -17,6 +17,7 @@ package com.intellij.ide.dnd.aware;
 
 import com.intellij.ide.dnd.DnDAware;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -47,6 +48,12 @@ public class DnDAwareTree extends Tree implements DnDAware {
 //todo [kirillk] to delegate this to DnDEnabler
     if (getToolTipText() == null && e.getID() == MouseEvent.MOUSE_ENTERED) return;
     super.processMouseEvent(e);
+  }
+
+  @Override
+  protected void processMouseMotionEvent(MouseEvent e) {
+    if (SystemInfo.isMac && SwingUtilities.isRightMouseButton(e) && e.getID() == MouseEvent.MOUSE_DRAGGED) return;
+    super.processMouseMotionEvent(e);
   }
 
   public final boolean isOverSelection(final Point point) {

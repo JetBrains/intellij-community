@@ -40,7 +40,8 @@ public abstract class VirtualFileSystem {
    * @see VirtualFile#getUrl
    * @see VirtualFileManager#getFileSystem
    */
-  @NonNls @NotNull 
+  @NonNls
+  @NotNull
   public abstract String getProtocol();
 
   /**
@@ -65,6 +66,7 @@ public abstract class VirtualFileSystem {
    * @return presentable URL
    * @see VirtualFile#getPresentableUrl
    */
+  @NotNull
   public String extractPresentableUrl(@NotNull String path) {
     return path.replace('/', File.separatorChar);
   }
@@ -164,9 +166,9 @@ public abstract class VirtualFileSystem {
    * @see VirtualFile#copy(Object,VirtualFile,String)
    */
   protected abstract VirtualFile copyFile(final Object requestor,
-                                       @NotNull VirtualFile virtualFile,
-                                       @NotNull VirtualFile newParent,
-                                       @NotNull String copyName) throws IOException;
+                                          @NotNull VirtualFile virtualFile,
+                                          @NotNull VirtualFile newParent,
+                                          @NotNull String copyName) throws IOException;
 
   public abstract boolean isReadOnly();
 }

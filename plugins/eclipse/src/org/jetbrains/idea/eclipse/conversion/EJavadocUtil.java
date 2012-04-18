@@ -22,9 +22,11 @@ package org.jetbrains.idea.eclipse.conversion;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.JavadocOrderRootType;
 import com.intellij.openapi.roots.LibraryOrderEntry;
+import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ModuleRootModel;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.util.Comparing;
@@ -37,6 +39,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import static org.jetbrains.idea.eclipse.EclipseXml.*;
@@ -161,13 +164,13 @@ public class EJavadocUtil {
           JarFileSystem.getInstance().getVirtualFileForJar(VirtualFileManager.getInstance().findFileByUrl(javadocPath));
         if (javadocFile != null) {
           final String relativeUrl;
-          if (contentRoot != null && VfsUtil.isAncestor(contentRoot, javadocFile, false)) {
+          if (contentRoot != null && VfsUtilCore.isAncestor(contentRoot, javadocFile, false)) {
             relativeUrl = "/" + VfsUtilCore.getRelativePath(javadocFile, baseDir, '/');
           } else {
             relativeUrl = collapse2eclipseRelative2OtherModule(project, javadocFile);
           }
           if (relativeUrl != null) {
-            if (javadocPath.indexOf(JarFileSystem.JAR_SEPARATOR) == -1) {
+            if (!javadocPath.contains(JarFileSystem.JAR_SEPARATOR)) {
               javadocPath = StringUtil.trimEnd(javadocPath, "/") + JarFileSystem.JAR_SEPARATOR;
             }
             javadocPath = JAR_PREFIX +
@@ -177,6 +180,12 @@ public class EJavadocUtil {
                           javadocPath.substring(javadocFile.getUrl().length() - 1);
           }
           else {
+            LOG.info("Javadoc path: " + javadocPath);
+            final Module module = ModuleUtil.findModuleForFile(javadocFile, project);
+            LOG.info("Module: " + (module != null ? module.getName() : "not found"));
+            if (module != null) {
+              LOG.info("Content roots: " + Arrays.toString(ModuleRootManager.getInstance(module).getContentRoots()));
+            }
             javadocPath = JAR_PREFIX + FILE_PROTOCOL + StringUtil.trimStart(path, "/");
           }
         }

@@ -19,6 +19,7 @@ import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.daemon.LineMarkerInfo;
 import com.intellij.codeInsight.daemon.LineMarkerProvider;
+import com.intellij.codeInsight.daemon.MergeableLineMarkerInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -37,10 +38,12 @@ import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.search.searches.SuperMethodsSearch;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.Function;
 import com.intellij.util.FunctionUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.HashSet;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -50,7 +53,7 @@ import java.util.Set;
 
 public class JavaLineMarkerProvider implements LineMarkerProvider, DumbAware {
   protected static final Icon OVERRIDING_METHOD_ICON = IconLoader.getIcon("/gutter/overridingMethod.png");
-  protected  static final Icon IMPLEMENTING_METHOD_ICON = IconLoader.getIcon("/gutter/implementingMethod.png");
+  protected static final Icon IMPLEMENTING_METHOD_ICON = IconLoader.getIcon("/gutter/implementingMethod.png");
 
   protected static final Icon OVERRIDEN_METHOD_MARKER_RENDERER = IconLoader.getIcon("/gutter/overridenMethod.png");
   protected static final Icon IMPLEMENTED_METHOD_MARKER_RENDERER = IconLoader.getIcon("/gutter/implementedMethod.png");
@@ -67,7 +70,7 @@ public class JavaLineMarkerProvider implements LineMarkerProvider, DumbAware {
 
   @Override
   @Nullable
-  public LineMarkerInfo getLineMarkerInfo(final PsiElement element) {
+  public LineMarkerInfo getLineMarkerInfo(@NotNull final PsiElement element) {
     if (element instanceof PsiIdentifier && element.getParent() instanceof PsiMethod) {
       PsiMethod method = (PsiMethod)element.getParent();
       MethodSignatureBackedByPsiMethod superSignature = null;
@@ -83,7 +86,7 @@ public class JavaLineMarkerProvider implements LineMarkerProvider, DumbAware {
 
         final Icon icon = overrides ? OVERRIDING_METHOD_ICON : IMPLEMENTING_METHOD_ICON;
         final MarkerType type = MarkerType.OVERRIDING_METHOD;
-        return new LineMarkerInfo<PsiElement>(element, element.getTextRange(), icon, Pass.UPDATE_ALL, type.getTooltip(), type.getNavigationHandler(), GutterIconRenderer.Alignment.LEFT);
+        return new ArrowUpLineMarkerInfo(element, icon, type);
       }
     }
 
@@ -108,7 +111,9 @@ public class JavaLineMarkerProvider implements LineMarkerProvider, DumbAware {
         }
 
         if (drawSeparator) {
-          LineMarkerInfo info = new LineMarkerInfo<PsiElement>(element, element.getTextRange(), null, Pass.UPDATE_ALL, FunctionUtil.<Object, String>nullConstant(), null, GutterIconRenderer.Alignment.RIGHT);
+          LineMarkerInfo info = new LineMarkerInfo<PsiElement>(element, element.getTextRange(), null, Pass.UPDATE_ALL,
+                                                               FunctionUtil.<Object, String>nullConstant(), null,
+                                                               GutterIconRenderer.Alignment.RIGHT);
           EditorColorsScheme scheme = myColorsManager.getGlobalScheme();
           info.separatorColor = scheme.getColor(CodeInsightColors.METHOD_SEPARATORS_COLOR);
           info.separatorPlacement = SeparatorPlacement.TOP;
@@ -139,7 +144,7 @@ public class JavaLineMarkerProvider implements LineMarkerProvider, DumbAware {
   }
 
   @Override
-  public void collectSlowLineMarkers(final List<PsiElement> elements, final Collection<LineMarkerInfo> result) {
+  public void collectSlowLineMarkers(@NotNull final List<PsiElement> elements, @NotNull final Collection<LineMarkerInfo> result) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
 
     if (elements.isEmpty() || DumbService.getInstance(elements.get(0).getProject()).isDumb()) {
@@ -178,8 +183,10 @@ public class JavaLineMarkerProvider implements LineMarkerProvider, DumbAware {
       PsiElement range = aClass.getNameIdentifier();
       if (range == null) range = aClass;
       MarkerType type = MarkerType.SUBCLASSED_CLASS;
-      LineMarkerInfo info = new LineMarkerInfo<PsiElement>(range, range.getTextRange(), icon, Pass.UPDATE_OVERRIDEN_MARKERS, type.getTooltip(), type.getNavigationHandler(),
-                                                         GutterIconRenderer.Alignment.RIGHT);
+      LineMarkerInfo info = new LineMarkerInfo<PsiElement>(range, range.getTextRange(),
+                                                           icon, Pass.UPDATE_OVERRIDEN_MARKERS, type.getTooltip(),
+                                                           type.getNavigationHandler(),
+                                                           GutterIconRenderer.Alignment.RIGHT);
       result.add(info);
     }
   }
@@ -212,11 +219,15 @@ public class JavaLineMarkerProvider implements LineMarkerProvider, DumbAware {
     }
 
     for (PsiMethod method : overridden) {
+      ProgressManager.checkCanceled();
       boolean overrides = !method.hasModifierProperty(PsiModifier.ABSTRACT);
 
       final Icon icon = overrides ? OVERRIDEN_METHOD_MARKER_RENDERER : IMPLEMENTED_METHOD_MARKER_RENDERER;
       PsiElement range;
-      if (!method.isPhysical()) {
+      if (method.isPhysical()) {
+        range = method.getNameIdentifier();
+      }
+      else {
         final PsiElement navigationElement = method.getNavigationElement();
         if (navigationElement instanceof PsiNameIdentifierOwner) {
           range = ((PsiNameIdentifierOwner)navigationElement).getNameIdentifier();
@@ -225,14 +236,44 @@ public class JavaLineMarkerProvider implements LineMarkerProvider, DumbAware {
           range = navigationElement;
         }
       }
-      else {
-        range = method.getNameIdentifier();
-      }
       if (range == null) range = method;
       final MarkerType type = MarkerType.OVERRIDEN_METHOD;
-      LineMarkerInfo info = new LineMarkerInfo<PsiElement>(range, range.getTextRange(), icon, Pass.UPDATE_OVERRIDEN_MARKERS, type.getTooltip(), type.getNavigationHandler(),
-                                                          GutterIconRenderer.Alignment.RIGHT);
+      LineMarkerInfo info = new LineMarkerInfo<PsiElement>(range, range.getTextRange(),
+                                                           icon, Pass.UPDATE_OVERRIDEN_MARKERS, type.getTooltip(),
+                                                           type.getNavigationHandler(),
+                                                           GutterIconRenderer.Alignment.RIGHT);
       result.add(info);
+    }
+  }
+
+  private static class ArrowUpLineMarkerInfo extends MergeableLineMarkerInfo<PsiElement> {
+    private ArrowUpLineMarkerInfo(@NotNull PsiElement element, Icon icon, @NotNull MarkerType markerType) {
+      super(element, element.getTextRange(), icon, Pass.UPDATE_ALL, markerType.getTooltip(),
+            markerType.getNavigationHandler(), GutterIconRenderer.Alignment.LEFT);
+    }
+
+    @Override
+    public boolean canMergeWith(@NotNull MergeableLineMarkerInfo<?> info) {
+      if (!(info instanceof ArrowUpLineMarkerInfo)) return false;
+      PsiElement otherElement = info.getElement();
+      PsiElement myElement = getElement();
+      return otherElement != null && myElement != null;
+    }
+
+
+    @Override
+    public Icon getCommonIcon(@NotNull List<MergeableLineMarkerInfo> infos) {
+      return myIcon;
+    }
+
+    @Override
+    public Function<? super PsiElement, String> getCommonTooltip(@NotNull List<MergeableLineMarkerInfo> infos) {
+      return new Function<PsiElement, String>() {
+        @Override
+        public String fun(PsiElement element) {
+          return "Multiple method overrides";
+        }
+      };
     }
   }
 }

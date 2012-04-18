@@ -102,12 +102,25 @@ public final class GitHttpAdapter {
    * Asks username and password if needed.
    */
   @NotNull
-  public static GitFetchResult fetch(@NotNull final GitRepository repository, @NotNull final GitRemote remote, @NotNull String remoteUrl)  {
+  public static GitFetchResult fetch(@NotNull final GitRepository repository, @NotNull final GitRemote remote,
+                                     @NotNull String remoteUrl, @Nullable String remoteBranch)  {
     GitFetchResult.Type resultType;
     try {
       final Git git = convertToGit(repository);
       final GitHttpCredentialsProvider provider = new GitHttpCredentialsProvider(repository.getProject(), remoteUrl);
-      GeneralResult result = callWithAuthRetry(new GitHttpRemoteCommand.Fetch(git, provider, remoteUrl, convertRefSpecs(remote.getFetchRefSpecs())),
+
+      List<String> specs;
+      if (remoteBranch == null) {
+        specs = remote.getFetchRefSpecs();
+      }
+      else {
+        if (!remoteBranch.startsWith(GitBranch.REFS_HEADS_PREFIX)) {
+          remoteBranch = GitBranch.REFS_HEADS_PREFIX + remoteBranch;
+        }
+        specs = Collections.singletonList(remoteBranch);
+      }
+
+      GeneralResult result = callWithAuthRetry(new GitHttpRemoteCommand.Fetch(git, provider, remoteUrl, convertRefSpecs(specs)),
                                                repository.getProject());
       resultType = convertToFetchResultType(result);
     } catch (IOException e) {

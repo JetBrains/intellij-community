@@ -16,6 +16,7 @@
 package com.intellij.debugger;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -38,6 +39,7 @@ import java.util.List;
  * Time: 8:23:06 PM
  */
 public abstract class SourcePosition implements Navigatable{
+  private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.SourcePosition");
   @NotNull
   public abstract PsiFile getFile();
 
@@ -53,7 +55,7 @@ public abstract class SourcePosition implements Navigatable{
   public abstract Editor openEditor(boolean requestFocus);
 
   private abstract static class SourcePositionCache extends SourcePosition {
-    private final @NotNull PsiFile myFile;
+    @NotNull private final PsiFile myFile;
     private long myModificationStamp = -1L;
 
     private PsiElement myPsiElement;
@@ -65,21 +67,26 @@ public abstract class SourcePosition implements Navigatable{
       updateData();
     }
 
+    @Override
     @NotNull
     public PsiFile getFile() {
       return myFile;
     }
 
+    @Override
     public boolean canNavigate() {
       return getFile().isValid();
     }
 
+    @Override
     public boolean canNavigateToSource() {
       return canNavigate();
     }
 
+    @Override
     public void navigate(final boolean requestFocus) {
       ApplicationManager.getApplication().invokeLater(new Runnable() {
+        @Override
         public void run() {
           if (!canNavigate()) {
             return;
@@ -89,6 +96,7 @@ public abstract class SourcePosition implements Navigatable{
       });
     }
 
+    @Override
     public Editor openEditor(final boolean requestFocus) {
       final PsiFile psiFile = getFile();
       final Project project = psiFile.getProject();
@@ -120,12 +128,10 @@ public abstract class SourcePosition implements Navigatable{
         return true;
       }
       final PsiElement psiElement = myPsiElement;
-      if (psiElement != null && !psiElement.isValid()) {
-        return true;
-      }
-      return false;
+      return psiElement != null && !psiElement.isValid();
     }
 
+    @Override
     public int getLine() {
       updateData();
       if (myLine == null) {
@@ -134,6 +140,7 @@ public abstract class SourcePosition implements Navigatable{
       return myLine.intValue();
     }
 
+    @Override
     public int getOffset() {
       updateData();
       if (myOffset == null) {
@@ -142,6 +149,7 @@ public abstract class SourcePosition implements Navigatable{
       return myOffset.intValue();
     }
 
+    @Override
     public PsiElement getElementAt() {
       updateData();
       if (myPsiElement == null) {
@@ -152,7 +160,13 @@ public abstract class SourcePosition implements Navigatable{
 
     protected int calcLine() {
       final PsiFile file = getFile();
-      final Document document = PsiDocumentManager.getInstance(file.getProject()).getDocument(file);
+      Document document = null;
+      try {
+        document = PsiDocumentManager.getInstance(file.getProject()).getDocument(file);
+      }
+      catch (Throwable e) {
+        LOG.error(e);
+      }
       if (document != null) {
         try {
           return document.getLineNumber(calcOffset());
@@ -198,8 +212,6 @@ public abstract class SourcePosition implements Navigatable{
         return null;
       }
 
-      PsiElement element;
-
       PsiElement rootElement = psiFile;
 
       List<PsiFile> allFiles = psiFile.getViewProvider().getAllFiles();
@@ -213,6 +225,7 @@ public abstract class SourcePosition implements Navigatable{
         }
       }
 
+      PsiElement element;
       while(true) {
         final CharSequence charsSequence = document.getCharsSequence();
         for (; startOffset < charsSequence.length(); startOffset++) {
@@ -240,6 +253,7 @@ public abstract class SourcePosition implements Navigatable{
 
   public static SourcePosition createFromLineComputable(final PsiFile file, final Computable<Integer> line) {
     return new SourcePositionCache(file) {
+      @Override
       protected int calcLine() {
         return line.compute();
       }
@@ -248,6 +262,7 @@ public abstract class SourcePosition implements Navigatable{
 
   public static SourcePosition createFromLine(final PsiFile file, final int line) {
     return new SourcePositionCache(file) {
+      @Override
       protected int calcLine() {
         return line;
       }
@@ -257,6 +272,7 @@ public abstract class SourcePosition implements Navigatable{
   public static SourcePosition createFromOffset(final PsiFile file, final int offset) {
     return new SourcePositionCache(file) {
 
+      @Override
       protected int calcOffset() {
         return offset;
       }
@@ -273,10 +289,12 @@ public abstract class SourcePosition implements Navigatable{
       psiFile = navigationElement.getContainingFile();
     }
     return new SourcePositionCache(psiFile) {
+      @Override
       protected PsiElement calcPsiElement() {
         return navigationElement;
       }
 
+      @Override
       protected int calcOffset() {
         return navigationElement.getTextOffset();
       }
@@ -285,7 +303,7 @@ public abstract class SourcePosition implements Navigatable{
 
   public boolean equals(Object o) {
     if(o instanceof SourcePosition) {
-      SourcePosition sourcePosition = ((SourcePosition)o);
+      SourcePosition sourcePosition = (SourcePosition)o;
       return Comparing.equal(sourcePosition.getFile(), getFile()) && sourcePosition.getOffset() == getOffset();
     }
 

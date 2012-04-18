@@ -16,6 +16,7 @@
 package git4idea.push;
 
 import com.intellij.notification.NotificationType;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
@@ -28,7 +29,7 @@ import com.intellij.util.ui.UIUtil;
 import git4idea.GitBranch;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
-import git4idea.NotificationManager;
+import git4idea.Notificator;
 import git4idea.branch.GitBranchPair;
 import git4idea.commands.Git;
 import git4idea.commands.GitCommandResult;
@@ -68,12 +69,13 @@ public final class GitPusher {
   private static final String INDICATOR_TEXT = "Pushing";
   private static final int MAX_PUSH_ATTEMPTS = 10;
 
-  private final Project myProject;
-  private final ProgressIndicator myProgressIndicator;
-  private final Collection<GitRepository> myRepositories;
-  private final GitVcsSettings mySettings;
-  private final GitPushSettings myPushSettings;
-  private final GitVcs myVcs;
+  private final @NotNull Project myProject;
+  private final @NotNull GitRepositoryManager myRepositoryManager;
+  private final @NotNull ProgressIndicator myProgressIndicator;
+  private final @NotNull Collection<GitRepository> myRepositories;
+  private final @NotNull GitVcsSettings mySettings;
+  private final @NotNull GitPushSettings myPushSettings;
+  private final @NotNull Git myGit;
 
   public static void showPushDialogAndPerformPush(@NotNull final Project project) {
     final GitPushDialog dialog = new GitPushDialog(project);
@@ -120,10 +122,11 @@ public final class GitPusher {
   public GitPusher(@NotNull Project project, @NotNull ProgressIndicator indicator) {
     myProject = project;
     myProgressIndicator = indicator;
-    myRepositories = GitRepositoryManager.getInstance(project).getRepositories();
+    myRepositoryManager = GitUtil.getRepositoryManager(myProject);
+    myRepositories = myRepositoryManager.getRepositories();
     mySettings = GitVcsSettings.getInstance(myProject);
     myPushSettings = GitPushSettings.getInstance(myProject);
-    myVcs = GitVcs.getInstance(project);
+    myGit = ServiceManager.getService(Git.class);
   }
 
   /**
@@ -240,14 +243,14 @@ public final class GitPusher {
         break;
       }
     }
-    GitRepositoryManager.getInstance(myProject).updateAllRepositories(GitRepository.TrackedTopic.BRANCHES); // new remote branch may be created
+    myRepositoryManager.updateAllRepositories(GitRepository.TrackedTopic.BRANCHES); // new remote branch may be created
     return pushResult;
   }
 
   @NotNull
-  private static GitPushRepoResult pushRepository(@NotNull GitPushInfo pushInfo,
-                                                  @NotNull GitCommitsByRepoAndBranch commits,
-                                                  @NotNull GitRepository repository) {
+  private GitPushRepoResult pushRepository(@NotNull GitPushInfo pushInfo,
+                                           @NotNull GitCommitsByRepoAndBranch commits,
+                                           @NotNull GitRepository repository) {
     GitPushSpec pushSpec = pushInfo.getPushSpecs().get(repository);
     GitSimplePushResult simplePushResult = pushAndGetSimpleResult(repository, pushSpec, commits.get(repository));
     String output = simplePushResult.getOutput();
@@ -299,7 +302,7 @@ public final class GitPusher {
   }
 
   @NotNull
-  private static GitSimplePushResult pushAndGetSimpleResult(@NotNull GitRepository repository,
+  private GitSimplePushResult pushAndGetSimpleResult(@NotNull GitRepository repository,
                                                             @NotNull GitPushSpec pushSpec, @NotNull GitCommitsByBranch commitsByBranch) {
     if (pushSpec.getDest() == NO_TARGET_BRANCH) {
       return GitSimplePushResult.notPushed();
@@ -345,7 +348,7 @@ public final class GitPusher {
       catch (VcsException e) {
         LOG.error(String.format("Couldn't set up tracking for source branch %s, target branch %s, remote %s in root %s",
                                 source, dest, remote, repository), e);
-        NotificationManager.getInstance(project).notify(GitVcs.NOTIFICATION_GROUP_ID, "", "Couldn't set up branch tracking",
+        Notificator.getInstance(project).notify(GitVcs.NOTIFICATION_GROUP_ID, "", "Couldn't set up branch tracking",
                                                         NotificationType.ERROR);
       }
     }
@@ -381,9 +384,9 @@ public final class GitPusher {
   }
 
   @NotNull
-  private static GitSimplePushResult pushNatively(GitRepository repository, GitPushSpec pushSpec) {
+  private GitSimplePushResult pushNatively(GitRepository repository, GitPushSpec pushSpec) {
     GitPushRejectedDetector rejectedDetector = new GitPushRejectedDetector();
-    GitCommandResult res = Git.push(repository, pushSpec, rejectedDetector);
+    GitCommandResult res = myGit.push(repository, pushSpec, rejectedDetector);
     if (rejectedDetector.rejected()) {
       Collection<String> rejectedBranches = rejectedDetector.getRejectedBranches();
       return GitSimplePushResult.reject(rejectedBranches);

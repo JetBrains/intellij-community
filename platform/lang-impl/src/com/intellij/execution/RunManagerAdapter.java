@@ -15,6 +15,8 @@
  */
 package com.intellij.execution;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * @author nik
  */
@@ -28,14 +30,14 @@ public abstract class RunManagerAdapter implements RunManagerListener {
   }
 
   @Override
-  public void runConfigurationAdded(RunnerAndConfigurationSettings settings) {
+  public void runConfigurationAdded(@NotNull RunnerAndConfigurationSettings settings) {
   }
 
   @Override
-  public void runConfigurationRemoved(RunnerAndConfigurationSettings settings) {
+  public void runConfigurationRemoved(@NotNull RunnerAndConfigurationSettings settings) {
   }
 
   @Override
-  public void runConfigurationChanged(RunnerAndConfigurationSettings settings) {
+  public void runConfigurationChanged(@NotNull RunnerAndConfigurationSettings settings) {
   }
 }

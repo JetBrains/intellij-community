@@ -17,6 +17,7 @@ package com.intellij.util;
 
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.FileUtil;
 import com.sun.jna.Native;
 import com.sun.jna.WString;
 import com.sun.jna.win32.StdCallLibrary;
@@ -68,7 +69,13 @@ public class Restarter {
     int pid = kernel32.GetCurrentProcessId();
 
     try {
-      String command = "restarter " + Integer.toString(pid) + " " + cline;
+      // to prevent blocking exe file during update we should copy it
+      File restarterFile = new File(PathManager.getBinPath(), "restarter.exe");
+      File restarterCopy = FileUtil.createTempFile("restarter", ".exe");
+
+      FileUtil.copy(restarterFile, restarterCopy);
+
+      String command = "\"" + restarterCopy + "\" " + Integer.toString(pid) + " " + cline;
       Runtime.getRuntime().exec(command, null, new File(PathManager.getBinPath()));
     }
     catch (IOException ex) {

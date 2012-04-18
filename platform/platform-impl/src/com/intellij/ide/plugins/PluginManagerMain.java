@@ -25,6 +25,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -219,7 +220,7 @@ public abstract class PluginManagerMain implements Disposable {
         for (String host : UpdateSettings.getInstance().myPluginHosts) {
           final ArrayList<PluginDownloader> downloaded = new ArrayList<PluginDownloader>();
           try {
-            UpdateChecker.checkPluginsHost(host, downloaded, false);
+            UpdateChecker.checkPluginsHost(host, downloaded, false, null);
             for (PluginDownloader downloader : downloaded) {
               final PluginNode pluginNode = PluginDownloader.createPluginNode(host, downloader);
               if (pluginNode != null) {
@@ -227,6 +228,8 @@ public abstract class PluginManagerMain implements Disposable {
                 list.add(pluginNode);
               }
             }
+          }
+          catch (ProcessCanceledException ignore) {
           }
           catch (Exception e) {
             LOG.info(e);
@@ -288,7 +291,10 @@ public abstract class PluginManagerMain implements Disposable {
     loadPluginsFromHostInBackground();
   }
 
-  public static boolean downloadPlugins(final List<PluginNode> plugins, final List<IdeaPluginDescriptor> allPlugins, final Runnable onSuccess) throws IOException {
+  public static boolean downloadPlugins(final List<PluginNode> plugins,
+                                        final List<IdeaPluginDescriptor> allPlugins,
+                                        final Runnable onSuccess,
+                                        final Runnable cleanup) throws IOException {
     final boolean[] result = new boolean[1];
     try {
       ProgressManager.getInstance().run(new Task.Backgroundable(null, IdeBundle.message("progress.download.plugins"), true) {
@@ -298,6 +304,18 @@ public abstract class PluginManagerMain implements Disposable {
             ApplicationManager.getApplication().invokeLater(onSuccess);
             result[0] = true;
           }
+        }
+
+        @Override
+        public void onCancel() {
+          cleanup.run();
+          super.onCancel();
+        }
+
+        @Override
+        public void onSuccess() {
+          super.onSuccess();
+          cleanup.run();
         }
       });
     }

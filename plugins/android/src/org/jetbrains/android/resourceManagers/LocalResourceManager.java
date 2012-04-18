@@ -24,6 +24,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
@@ -45,7 +47,6 @@ import org.jetbrains.android.dom.resources.ResourceElement;
 import org.jetbrains.android.dom.resources.Resources;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.facet.AndroidRootUtil;
-import org.jetbrains.android.sdk.AndroidSdkUtils;
 import org.jetbrains.android.util.AndroidBundle;
 import org.jetbrains.android.util.AndroidResourceUtil;
 import org.jetbrains.android.util.AndroidUtils;
@@ -96,7 +97,7 @@ public class LocalResourceManager extends ResourceManager {
     return AndroidRootUtil.getResourceDir(getFacet());
   }
 
-  public List<Resources> getResourceElements() {
+  public List<Pair<Resources, VirtualFile>> getResourceElements() {
     return getResourceElements(null);
   }
 
@@ -120,7 +121,7 @@ public class LocalResourceManager extends ResourceManager {
     if (resDir != null && !result.add(resDir)) {
       return;
     }
-    for (AndroidFacet depFacet : AndroidSdkUtils.getAllAndroidDependencies(facet.getModule(), false)) {
+    for (AndroidFacet depFacet : AndroidUtils.getAllAndroidDependencies(facet.getModule(), false)) {
       collectResourceDirs(depFacet, result, visited);
     }
   }
@@ -143,8 +144,8 @@ public class LocalResourceManager extends ResourceManager {
     final FileBasedIndex index = FileBasedIndex.getInstance();
     final GlobalSearchScope scope = GlobalSearchScope.projectScope(myModule.getProject());
 
-    for (String resourceType : ResourceType.getNames()) {
-      final ResourceEntry typeMarkerEntry = AndroidValueResourcesIndex.createTypeMarkerEntry(resourceType);
+    for (ResourceType resourceType : AndroidResourceUtil.VALUE_RESOURCE_TYPES) {
+      final ResourceEntry typeMarkerEntry = AndroidValueResourcesIndex.createTypeMarkerEntry(resourceType.getName());
 
       for (Set<ResourceEntry> entrySet : index.getValues(AndroidValueResourcesIndex.INDEX_ID, typeMarkerEntry, scope)) {
         for (ResourceEntry entry : entrySet) {
@@ -200,7 +201,8 @@ public class LocalResourceManager extends ResourceManager {
   @NotNull
   public List<Attr> findAttrs(@NotNull String name) {
     List<Attr> list = new ArrayList<Attr>();
-    for (Resources res : getResourceElements()) {
+    for (Pair<Resources, VirtualFile> pair : getResourceElements()) {
+      final Resources res = pair.getFirst();
       for (Attr attr : res.getAttrs()) {
         if (name.equals(attr.getName().getValue())) {
           list.add(attr);
@@ -219,7 +221,8 @@ public class LocalResourceManager extends ResourceManager {
 
   public List<DeclareStyleable> findStyleables(@NotNull String name) {
     List<DeclareStyleable> list = new ArrayList<DeclareStyleable>();
-    for (Resources res : getResourceElements()) {
+    for (Pair<Resources, VirtualFile> pair : getResourceElements()) {
+      final Resources res = pair.getFirst();
       for (DeclareStyleable styleable : res.getDeclareStyleables()) {
         if (name.equals(styleable.getName().getValue())) {
           list.add(styleable);
@@ -286,7 +289,10 @@ public class LocalResourceManager extends ResourceManager {
       throw new IllegalArgumentException("Incorrect resource type");
     }
     VirtualFile resFile = findOrCreateResourceFile(resourceFileName);
-    if (resFile == null) return null;
+    if (resFile == null ||
+        !ReadonlyStatusHandler.ensureFilesWritable(myModule.getProject(), resFile)) {
+      return null;
+    }
     final Resources resources = loadDomElement(myModule, resFile, Resources.class);
     if (resources == null) {
       if (ApplicationManager.getApplication().isUnitTestMode()) {

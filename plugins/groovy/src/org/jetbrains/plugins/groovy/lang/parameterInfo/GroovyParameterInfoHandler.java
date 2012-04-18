@@ -19,6 +19,7 @@ import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.completion.JavaCompletionUtil;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.lang.parameterInfo.*;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
@@ -58,6 +59,8 @@ import java.util.*;
  * @author ven
  */
 public class GroovyParameterInfoHandler implements ParameterInfoHandlerWithTabActionSupport<GroovyPsiElement, Object, GroovyPsiElement> {
+  private static final Logger LOG = Logger.getInstance(GroovyParameterInfoHandler.class);
+
   public boolean couldShowInLookup() {
     return true;
   }
@@ -371,7 +374,7 @@ public class GroovyParameterInfoHandler implements ParameterInfoHandlerWithTabAc
     int highlightStartOffset = -1;
     int highlightEndOffset = -1;
 
-    StringBuffer buffer = new StringBuffer();
+    StringBuilder buffer = new StringBuilder();
 
 
     if (element instanceof PsiMethod) {
@@ -383,26 +386,27 @@ public class GroovyParameterInfoHandler implements ParameterInfoHandlerWithTabAc
           PsiType returnType = PsiUtil.getSmartReturnType(method);
           if (returnType != null) {
             buffer.append(returnType.getPresentableText());
-            buffer.append(" ");
+            buffer.append(' ');
           }
         }
         buffer.append(method.getName());
-        buffer.append("(");
+        buffer.append('(');
       }
 
       final int currentParameter = context.getCurrentParameterIndex();
 
-      final PsiParameter[] parms = method.getParameterList().getParameters();
-      final GroovyResolveResult resolveResult = (GroovyResolveResult)o;
-      int numParams = parms.length;
+      final PsiParameter[] params = method.getParameterList().getParameters();
+
+      int numParams = params.length;
       if (numParams > 0) {
-        final PsiSubstitutor substitutor = resolveResult.getSubstitutor();
+        LOG.assertTrue(o instanceof GroovyResolveResult, o.getClass());
+        final PsiSubstitutor substitutor = ((GroovyResolveResult)o).getSubstitutor();
         for (int j = 0; j < numParams; j++) {
-          PsiParameter parm = parms[j];
+          PsiParameter param = params[j];
 
           int startOffset = buffer.length();
 
-          appendParameterText(parm, substitutor, buffer);
+          appendParameterText(param, substitutor, buffer);
 
           int endOffset = buffer.length();
 
@@ -412,7 +416,7 @@ public class GroovyParameterInfoHandler implements ParameterInfoHandlerWithTabAc
 
           if (context.isUIComponentEnabled() &&
               (j == currentParameter ||
-                  (j == numParams - 1 && parm.isVarArgs() && currentParameter >= numParams)
+                  (j == numParams - 1 && param.isVarArgs() && currentParameter >= numParams)
               )
               ) {
             highlightStartOffset = startOffset;
@@ -462,7 +466,7 @@ public class GroovyParameterInfoHandler implements ParameterInfoHandlerWithTabAc
     );
   }
 
-  private static void generateForClosureType(StringBuffer buffer, PsiType type) {
+  private static void generateForClosureType(StringBuilder buffer, PsiType type) {
     if (type instanceof GrClosureType) {
       GrClosureParameter[] parameters = ((GrClosureType)type).getSignature().getParameters();
       if (parameters.length > 0) {
@@ -487,10 +491,10 @@ public class GroovyParameterInfoHandler implements ParameterInfoHandlerWithTabAc
     }
   }
 
-  private static void appendParameterText(PsiParameter parm, PsiSubstitutor substitutor, StringBuffer buffer) {
-    if (parm instanceof GrParameter) {
-      GrParameter grParam = (GrParameter)parm;
-      buffer.append(GroovyPresentationUtil.getParameterPresentation(grParam, substitutor, true));
+  private static void appendParameterText(PsiParameter param, PsiSubstitutor substitutor, StringBuilder buffer) {
+    if (param instanceof GrParameter) {
+      GrParameter grParam = (GrParameter)param;
+      GroovyPresentationUtil.appendParameterPresentation(grParam, substitutor, true, buffer);
 
       final GrExpression initializer = grParam.getDefaultInitializer();
       if (initializer != null) {
@@ -500,10 +504,10 @@ public class GroovyParameterInfoHandler implements ParameterInfoHandlerWithTabAc
         buffer.append(" = null");
       }
     } else {
-      PsiType t = parm.getType();
+      PsiType t = param.getType();
       PsiType paramType = substitutor.substitute(t);
       buffer.append(paramType.getPresentableText());
-      String name = parm.getName();
+      String name = param.getName();
       if (name != null) {
         buffer.append(" ");
         buffer.append(name);

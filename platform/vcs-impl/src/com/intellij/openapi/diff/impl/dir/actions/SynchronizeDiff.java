@@ -26,6 +26,8 @@ import com.intellij.openapi.util.SystemInfo;
 
 import java.util.List;
 
+import static com.intellij.openapi.diff.impl.dir.DirDiffOperation.*;
+
 /**
  * @author Konstantin Bulenkov
  */
@@ -48,7 +50,8 @@ public class SynchronizeDiff extends DirDiffAction {
       List<DirDiffElement> elements = mySelectedOnly ? getModel().getSelectedElements() : getModel().getElements();
       for (DirDiffElement dirDiffElement : elements) {
         if ((dirDiffElement.getSource() == null || dirDiffElement.getSource().isOperationsEnabled()) &&
-            (dirDiffElement.getTarget() == null || dirDiffElement.getTarget().isOperationsEnabled())) {
+            (dirDiffElement.getTarget() == null || dirDiffElement.getTarget().isOperationsEnabled()) &&
+            (dirDiffElement.getOperation() == COPY_FROM || dirDiffElement.getOperation() == COPY_TO || dirDiffElement.getOperation() == DELETE)) {
           e.getPresentation().setEnabled(true);
           return;
         }

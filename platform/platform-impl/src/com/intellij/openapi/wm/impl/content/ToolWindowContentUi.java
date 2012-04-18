@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -307,11 +307,17 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
         myLastPoint[0] = e.getPoint();
         SwingUtilities.convertPointToScreen(myLastPoint[0], c);
         if (!e.isPopupTrigger()) {
-          if (UIUtil.isCloseClick(e)) {
-            ui.processHide(e);
-          }
-          else {
+          if (!UIUtil.isCloseClick(e)) {
             ui.myWindow.fireActivated();
+          }
+        }
+      }
+
+      @Override
+      public void mouseReleased(MouseEvent e) {
+        if (!e.isPopupTrigger()) {
+          if (UIUtil.isCloseClick(e, MouseEvent.MOUSE_RELEASED)) {
+            ui.processHide(e);
           }
         }
       }
@@ -379,6 +385,8 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
             hideWindow(e);
           }
         }
+      } else {
+        hideWindow(e);
       }
     }
     else {
@@ -548,6 +556,7 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
       return myContent.getDisplayName();
     }
 
+    @NotNull
     @Override
     public Object[] getEqualityObjects() {
       return new Object[] {myContent};

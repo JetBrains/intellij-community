@@ -104,10 +104,17 @@ public class OptimizeImportsRefactoringHelper implements RefactoringHelper<Set<P
             if (importStatement != null && importStatement.isValid()) {
               final PsiJavaCodeReferenceElement ref = importStatement.getImportReference();
               //Do not remove non-resolving refs
-              if (ref == null || ref.resolve() == null) {
+              if (ref == null) {
+                continue;
+              }
+              final PsiElement resolve = ref.resolve();
+              if (resolve == null) {
                 continue;
               }
 
+              if (resolve instanceof PsiPackage && ((PsiPackage)resolve).getDirectories(ref.getResolveScope()).length == 0) {
+                continue;
+              }
               importStatement.delete();
             }
           }

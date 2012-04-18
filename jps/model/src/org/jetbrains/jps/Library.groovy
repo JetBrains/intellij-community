@@ -1,5 +1,7 @@
 package org.jetbrains.jps
 
+import com.intellij.openapi.util.io.FileUtil
+
 /**
  * @author max
  */
@@ -23,11 +25,11 @@ class Library extends LazyInitializeableObject implements ClasspathItem {
     Closure lazyInit = {
       def meta = new InitializingExpando()
       meta.classpath = {Object[] arg ->
-        arg.each { classpath << it.toString() }
+        arg.each { classpath << FileUtil.toCanonicalPath(it.toString()) }
       }
 
       meta.src = {Object[] arg ->
-        arg.each { sourceRoots << it.toString() }
+        arg.each { sourceRoots << FileUtil.toCanonicalPath(it.toString()) }
       }
 
       initializer.delegate = meta

@@ -65,10 +65,10 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
   private static final int DIRTY_MAGIC = 0xbabe1977;
   private static final int VERSION = 6 + IntToIntBtree.VERSION;
   private static final int CORRECTLY_CLOSED_MAGIC = 0xebabafc + VERSION + PAGE_SIZE;
-  private static Version ourVersion = new Version(CORRECTLY_CLOSED_MAGIC, DIRTY_MAGIC);
+  @NotNull private static Version ourVersion = new Version(CORRECTLY_CLOSED_MAGIC, DIRTY_MAGIC);
   private static final int KEY_SHIFT = 1;
 
-  public PersistentBTreeEnumerator(File file, KeyDescriptor<Data> dataDescriptor, int initialSize) throws IOException {
+  public PersistentBTreeEnumerator(@NotNull File file, @NotNull KeyDescriptor<Data> dataDescriptor, int initialSize) throws IOException {
     super(file, new ResizeableMappedFile(file, initialSize, ourLock, VALUE_PAGE_SIZE, true), dataDescriptor, initialSize,
           ourVersion, new RecordBufferHandler(), false);
 
@@ -84,7 +84,8 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
     }
   }
 
-  private File indexFile(File file) {
+  @NotNull
+  private File indexFile(@NotNull File file) {
     return new File(file.getPath() + "_i");
   }
 
@@ -143,8 +144,12 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
 
   @Override
   protected void doClose() throws IOException {
-    super.doClose();
-    btree.doClose();
+    try {
+      super.doClose();
+    }
+    finally {
+      btree.doClose();
+    }
   }
 
   private int allocPage() {
@@ -153,7 +158,7 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
     return pageStart;
   }
 
-  public boolean processAllDataObject(final Processor<Data> processor, @Nullable final DataFilter filter) throws IOException {
+  public boolean processAllDataObject(@NotNull final Processor<Data> processor, @Nullable final DataFilter filter) throws IOException {
     if(myInlineKeysNoMapping) {
       return traverseAllRecords(new RecordsProcessor() {
         public boolean process(final int record) throws IOException {
@@ -169,45 +174,52 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
   }
 
   @Override
-  public boolean traverseAllRecords(RecordsProcessor p) throws IOException {
-    synchronized (ourLock) {
+  public boolean traverseAllRecords(@NotNull RecordsProcessor p) throws IOException {
+    try {
+      synchronized (ourLock) {
 
-      List<IntToIntBtree.BtreeIndexNodeView> leafPages = new ArrayList<IntToIntBtree.BtreeIndexNodeView> ();
-      btree.doFlush();
-      btree.root.syncWithStore();
-      collectLeafPages(btree.root, leafPages);
-      Collections.sort(leafPages, new Comparator<IntToIntBtree.BtreeIndexNodeView>() {
-        @Override
-        public int compare(IntToIntBtree.BtreeIndexNodeView o1, IntToIntBtree.BtreeIndexNodeView o2) {
-          return o1.address - o2.address;
-        }
-      });
+        List<IntToIntBtree.BtreeIndexNodeView> leafPages = new ArrayList<IntToIntBtree.BtreeIndexNodeView> ();
+        btree.doFlush();
+        btree.root.syncWithStore();
+        collectLeafPages(btree.root, leafPages);
+        Collections.sort(leafPages, new Comparator<IntToIntBtree.BtreeIndexNodeView>() {
+          @Override
+          public int compare(@NotNull IntToIntBtree.BtreeIndexNodeView o1, @NotNull IntToIntBtree.BtreeIndexNodeView o2) {
+            return o1.address - o2.address;
+          }
+        });
 
-      out:
-      for(IntToIntBtree.BtreeIndexNodeView page:leafPages) {
-        for(int key:page.exportKeys()) {
-          boolean hasMapping = btree.get(key, myResultBuf);
-          p.setCurrentKey(key);
-          assert hasMapping;
-          int record = myResultBuf[0];
+        out:
+        for(IntToIntBtree.BtreeIndexNodeView page:leafPages) {
+          for(int key:page.exportKeys()) {
+            boolean hasMapping = btree.get(key, myResultBuf);
+            p.setCurrentKey(key);
+            assert hasMapping;
+            int record = myResultBuf[0];
 
-          if (record > 0) {
-            if (!p.process(record)) return false;
-          } else {
-            int rec = - record;
-            while(rec != 0) {
-              int id = myStorage.getInt(rec);
-              if (!p.process(id)) return false;
-              rec = myStorage.getInt(rec + COLLISION_OFFSET);
+            if (record > 0) {
+              if (!p.process(record)) return false;
+            } else {
+              int rec = - record;
+              while(rec != 0) {
+                int id = myStorage.getInt(rec);
+                if (!p.process(id)) return false;
+                rec = myStorage.getInt(rec + COLLISION_OFFSET);
+              }
             }
           }
         }
+        return true;
       }
-      return true;
+    }
+    catch (IllegalStateException e) {
+      CorruptedException corruptedException = new CorruptedException(myFile);
+      corruptedException.initCause(e);
+      throw corruptedException;
     }
   }
 
-  private void collectLeafPages(IntToIntBtree.BtreeIndexNodeView node, List<IntToIntBtree.BtreeIndexNodeView> leafPages) {
+  private void collectLeafPages(@NotNull IntToIntBtree.BtreeIndexNodeView node, @NotNull List<IntToIntBtree.BtreeIndexNodeView> leafPages) {
     if (node.isIndexLeaf()) {
       leafPages.add(node);
       return;
@@ -248,7 +260,7 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
   }
 
   @Override
-  public void setRecordHandler(PersistentEnumeratorBase.RecordBufferHandler<PersistentEnumeratorBase> recordHandler) {
+  public void setRecordHandler(@NotNull PersistentEnumeratorBase.RecordBufferHandler<PersistentEnumeratorBase> recordHandler) {
     myExternalKeysNoMapping = false;
     super.setRecordHandler(recordHandler);
   }
@@ -264,108 +276,115 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
   private final int[] myResultBuf = new int[1];
   
   protected synchronized int enumerateImpl(final Data value, final boolean onlyCheckForExisting, boolean saveNewValue) throws IOException {
-    synchronized (ourLock) {
-      if (IntToIntBtree.doDump) System.out.println(value);
-      final int valueHC = myDataDescriptor.getHashCode(value);
+    try {
+      synchronized (ourLock) {
+        if (IntToIntBtree.doDump) System.out.println(value);
+        final int valueHC = myDataDescriptor.getHashCode(value);
 
-      final boolean hasMapping = btree.get(valueHC, myResultBuf);
-      if (!hasMapping && onlyCheckForExisting) {
-        return NULL_ID;
-      }
+        final boolean hasMapping = btree.get(valueHC, myResultBuf);
+        if (!hasMapping && onlyCheckForExisting) {
+          return NULL_ID;
+        }
 
-      int indexNodeValueAddress = hasMapping ? myResultBuf[0]:0;
-      int collisionAddress = NULL_ID;
-      Data existingData = null;
+        int indexNodeValueAddress = hasMapping ? myResultBuf[0]:0;
+        int collisionAddress = NULL_ID;
+        Data existingData = null;
 
-      if (!myInlineKeysNoMapping) {
-        collisionAddress = NULL_ID;
+        if (!myInlineKeysNoMapping) {
+          collisionAddress = NULL_ID;
 
-        if (indexNodeValueAddress > 0) {
-          // we found reference to no dupe key
-          Data candidate = valueOf(indexNodeValueAddress);
-          if (IntToIntBtree.doSanityCheck) IntToIntBtree.myAssert(myDataDescriptor.getHashCode(candidate) == valueHC);
-
-          if (myDataDescriptor.isEqual(value, candidate)) {
-            if (!saveNewValue) return indexNodeValueAddress;
-            existingData = candidate;
-          }
-
-          collisionAddress = indexNodeValueAddress;
-        } else if (indexNodeValueAddress < 0) { // indexNodeValueAddress points to duplicates list
-          collisionAddress = -indexNodeValueAddress;
-
-          while (true) {
-            final int address = myStorage.getInt(collisionAddress);
-            Data candidate = valueOf(address);
-            if (myDataDescriptor.isEqual(value, candidate)) {
-              if (!saveNewValue) return address;
-              existingData = candidate;
-              break;
-            }
+          if (indexNodeValueAddress > 0) {
+            // we found reference to no dupe key
+            Data candidate = valueOf(indexNodeValueAddress);
             if (IntToIntBtree.doSanityCheck) IntToIntBtree.myAssert(myDataDescriptor.getHashCode(candidate) == valueHC);
 
-            int newCollisionAddress = myStorage.getInt(collisionAddress + COLLISION_OFFSET);
-            if (newCollisionAddress == 0) break;
-            collisionAddress = newCollisionAddress;
+            if (myDataDescriptor.isEqual(value, candidate)) {
+              if (!saveNewValue) return indexNodeValueAddress;
+              existingData = candidate;
+            }
+
+            collisionAddress = indexNodeValueAddress;
+          } else if (indexNodeValueAddress < 0) { // indexNodeValueAddress points to duplicates list
+            collisionAddress = -indexNodeValueAddress;
+
+            while (true) {
+              final int address = myStorage.getInt(collisionAddress);
+              Data candidate = valueOf(address);
+              if (myDataDescriptor.isEqual(value, candidate)) {
+                if (!saveNewValue) return address;
+                existingData = candidate;
+                break;
+              }
+              if (IntToIntBtree.doSanityCheck) IntToIntBtree.myAssert(myDataDescriptor.getHashCode(candidate) == valueHC);
+
+              int newCollisionAddress = myStorage.getInt(collisionAddress + COLLISION_OFFSET);
+              if (newCollisionAddress == 0) break;
+              collisionAddress = newCollisionAddress;
+            }
+          }
+
+          if (onlyCheckForExisting) return NULL_ID;
+        } else {
+          if (hasMapping) {
+            if(!saveNewValue) return indexNodeValueAddress;
+            existingData = value;
           }
         }
 
-        if (onlyCheckForExisting) return NULL_ID;
-      } else {
-        if (hasMapping) {
-          if(!saveNewValue) return indexNodeValueAddress;
-          existingData = value;
+        int newValueId = writeData(value, valueHC);
+        ++valuesCount;
+
+        if (valuesCount % IOStatistics.KEYS_FACTOR == 0 && IOStatistics.DEBUG) {
+          IOStatistics.dump("Index " +
+                            myFile +
+                            ", values " +
+                            valuesCount +
+                            ", storage size:" +
+                            myStorage.length());
+          btree.dumpStatistics();
         }
-      }
 
-      int newValueId = writeData(value, valueHC);
-      ++valuesCount;
-
-      if (valuesCount % IOStatistics.KEYS_FACTOR == 0 && IOStatistics.DEBUG) {
-        IOStatistics.dump("Index " +
-                          myFile +
-                          ", values " +
-                          valuesCount +
-                          ", storage size:" +
-                          myStorage.length());
-        btree.dumpStatistics();
-      }
-
-      if (collisionAddress != NULL_ID) {
-        if (existingData != null) {
-          if (indexNodeValueAddress > 0) {
-            btree.put(valueHC, newValueId);
+        if (collisionAddress != NULL_ID) {
+          if (existingData != null) {
+            if (indexNodeValueAddress > 0) {
+              btree.put(valueHC, newValueId);
+            } else {
+              myStorage.putInt(collisionAddress, newValueId);
+            }
           } else {
-            myStorage.putInt(collisionAddress, newValueId);
+            if (indexNodeValueAddress > 0) {
+              // organize collision type reference
+              int duplicatedValueOff = nextDuplicatedValueRecord();
+              btree.put(valueHC, -duplicatedValueOff);
+
+              myStorage.putInt(duplicatedValueOff, indexNodeValueAddress); // we will set collision offset in next if
+              collisionAddress = duplicatedValueOff;
+              ++collisions;
+            }
+
+            ++collisions;
+            int duplicatedValueOff = nextDuplicatedValueRecord();
+            myStorage.putInt(collisionAddress + COLLISION_OFFSET, duplicatedValueOff);
+            myStorage.putInt(duplicatedValueOff, newValueId);
+            myStorage.putInt(duplicatedValueOff + COLLISION_OFFSET, 0);
           }
         } else {
-          if (indexNodeValueAddress > 0) {
-            // organize collision type reference
-            int duplicatedValueOff = nextDuplicatedValueRecord();
-            btree.put(valueHC, -duplicatedValueOff);
+          btree.put(valueHC, newValueId);
+        }
 
-            myStorage.putInt(duplicatedValueOff, indexNodeValueAddress); // we will set collision offset in next if
-            collisionAddress = duplicatedValueOff;
-            ++collisions;
+        if (IntToIntBtree.doSanityCheck) {
+          if (!myInlineKeysNoMapping) {
+            Data data = valueOf(newValueId);
+            IntToIntBtree.myAssert(myDataDescriptor.isEqual(value, data));
           }
-
-          ++collisions;
-          int duplicatedValueOff = nextDuplicatedValueRecord();
-          myStorage.putInt(collisionAddress + COLLISION_OFFSET, duplicatedValueOff);
-          myStorage.putInt(duplicatedValueOff, newValueId);
-          myStorage.putInt(duplicatedValueOff + COLLISION_OFFSET, 0);
         }
-      } else {
-        btree.put(valueHC, newValueId);
+        return newValueId;
       }
-
-      if (IntToIntBtree.doSanityCheck) {
-        if (!myInlineKeysNoMapping) {
-          Data data = valueOf(newValueId);
-          IntToIntBtree.myAssert(myDataDescriptor.isEqual(value, data));
-        }
-      }
-      return newValueId;
+    }
+    catch (IllegalStateException e) {
+      CorruptedException exception = new CorruptedException(myFile);
+      exception.initCause(e);
+      throw exception;
     }
   }
 
@@ -404,7 +423,7 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
     private byte[] myBuffer;
 
     @Override
-    int recordWriteOffset(PersistentBTreeEnumerator enumerator, byte[] buf) {
+    int recordWriteOffset(@NotNull PersistentBTreeEnumerator enumerator, @NotNull byte[] buf) {
       if (enumerator.myFirstPageStart == -1) {
         enumerator.myFirstPageStart = enumerator.myDataPageStart = enumerator.allocPage();
       }
@@ -424,7 +443,7 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
 
     @NotNull
     @Override
-    byte[] getRecordBuffer(PersistentBTreeEnumerator enumerator) {
+    byte[] getRecordBuffer(@NotNull PersistentBTreeEnumerator enumerator) {
       if (myBuffer == null) {
         myBuffer = new byte[enumerator.myInlineKeysNoMapping ? 0:RECORD_SIZE];
       }
@@ -432,7 +451,7 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
     }
 
     @Override
-    void setupRecord(PersistentBTreeEnumerator enumerator, int hashCode, int dataOffset, byte[] buf) {
+    void setupRecord(@NotNull PersistentBTreeEnumerator enumerator, int hashCode, int dataOffset, byte[] buf) {
       if (!enumerator.myInlineKeysNoMapping) Bits.putInt(buf, 0, dataOffset);
     }
   }

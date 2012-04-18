@@ -51,7 +51,7 @@ public abstract class PsiWalkingState extends WalkingState<PsiElement> {
     private static final PsiTreeGuide instance = new PsiTreeGuide();
   }
 
-  protected PsiWalkingState(PsiElementVisitor delegate) {
+  protected PsiWalkingState(@NotNull PsiElementVisitor delegate) {
     super(PsiTreeGuide.instance);
     myVisitor = delegate;
   }
@@ -64,7 +64,6 @@ public abstract class PsiWalkingState extends WalkingState<PsiElement> {
   @Override
   public void elementStarted(@NotNull PsiElement element) {
     if (!startedWalking && element instanceof PsiCompiledElement) {
-      // do not walk inside compiled PSI since getNextSibling() is too slow there
       LOG.error(element+"; Do not use walking visitor inside compiled PSI since getNextSibling() is too slow there");
     }
 

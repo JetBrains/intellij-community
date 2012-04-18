@@ -27,10 +27,12 @@ import java.util.List;
    */
 
 public class MethodOrClassSelectioner extends BasicSelectioner {
+  @Override
   public boolean canSelect(PsiElement e) {
     return e instanceof PsiClass && !(e instanceof PsiTypeParameter) || e instanceof PsiMethod;
   }
 
+  @Override
   public List<TextRange> select(PsiElement e, CharSequence editorText, int cursorOffset, Editor editor) {
     List<TextRange> result = super.select(e, editorText, cursorOffset, editor);
 

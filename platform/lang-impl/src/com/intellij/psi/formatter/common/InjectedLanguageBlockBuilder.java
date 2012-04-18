@@ -70,8 +70,8 @@ public abstract class InjectedLanguageBlockBuilder {
                canProcessFragment(childText.substring(textRange.getEndOffset()), injectionHost))) {
             injectedFile[0] = injectedPsi;
             injectedRangeInsideHost.set(textRange);
-            prefixLength.set(shred.prefix != null ? shred.prefix.length() : 0);
-            suffixLength.set(shred.suffix != null ? shred.suffix.length() : 0);
+            prefixLength.set(shred.getPrefix() != null ? shred.getPrefix().length() : 0);
+            suffixLength.set(shred.getSuffix() != null ? shred.getSuffix().length() : 0);
           }
         }
       }

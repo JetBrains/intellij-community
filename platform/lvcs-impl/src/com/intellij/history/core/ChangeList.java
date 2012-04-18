@@ -95,6 +95,8 @@ public class ChangeList {
     }
 
     myCurrentChangeSet.setName(name);
+    myCurrentChangeSet.lock();
+
     myStorage.writeNextSet(myCurrentChangeSet);
     myCurrentChangeSet = null;
 

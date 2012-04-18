@@ -18,6 +18,7 @@ package com.intellij.psi.impl.compiled;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.ItemPresentationProviders;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.*;
@@ -247,6 +248,13 @@ public class ClsFieldImpl extends ClsRepositoryPsiElement<PsiFieldStub> implemen
   @Override
   @NotNull
   public PsiElement getNavigationElement() {
+    for (ClsCustomNavigationPolicy customNavigationPolicy : Extensions.getExtensions(ClsCustomNavigationPolicy.EP_NAME)) {
+      PsiElement navigationElement = customNavigationPolicy.getNavigationElement(this);
+      if (navigationElement != null) {
+        return navigationElement;
+      }
+    }
+
     PsiClass sourceClassMirror = ((ClsClassImpl)getParent()).getSourceMirrorClass();
     PsiElement sourceFieldMirror = sourceClassMirror != null ? sourceClassMirror.findFieldByName(getName(), false) : null;
     return sourceFieldMirror != null && sourceFieldMirror != this ? sourceFieldMirror.getNavigationElement() : this;

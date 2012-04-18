@@ -205,7 +205,7 @@ public abstract class BaseInspection extends XmlSuppressableInspectionTool {
       return getDisplayName();
     }
 
-    public void invoke(Project project, Editor editor, PsiElement element) throws IncorrectOperationException {
+    public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
       suppress(element.getContainingFile(), getTarget(element));
     }
 

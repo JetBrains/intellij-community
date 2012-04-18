@@ -85,7 +85,7 @@ public class ChangeMethodSignatureFromUsageReverseOrderFix extends ChangeMethodS
       if (parameterAssignable) {
         final PsiType type = parameter.getType();
         result.add(0, new ParameterInfoImpl(pi, parameter.getName(), type));
-        buf.append(type.getPresentableText());
+        buf.append(escapePresentableType(type));
         pi--;
         ei--;
       }
@@ -94,7 +94,7 @@ public class ChangeMethodSignatureFromUsageReverseOrderFix extends ChangeMethodS
           assert varargParam != null;
           final PsiType type = varargParam.getType();
           result.add(0, new ParameterInfoImpl(pi, varargParam.getName(), type));
-          buf.append(type.getPresentableText());
+          buf.append(escapePresentableType(type));
         }
         pi--;
         ei--;
@@ -108,7 +108,7 @@ public class ChangeMethodSignatureFromUsageReverseOrderFix extends ChangeMethodS
         final ParameterInfoImpl newParameterInfo = new ParameterInfoImpl(-1, name, exprType, expression.getText().replace('\n', ' '));
         result.add(0, newParameterInfo);
         newParams.add(newParameterInfo);
-        buf.append("<b>").append(exprType.getPresentableText()).append("</b>");
+        buf.append("<b>").append(escapePresentableType(exprType)).append("</b>");
         ei--;
       }
     }

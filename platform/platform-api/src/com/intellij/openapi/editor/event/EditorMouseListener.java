@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,8 +25,12 @@ import java.util.EventListener;
  * @see EditorMouseMotionListener
  */
 public interface EditorMouseListener extends EventListener {
+
   /**
    * Called when a mouse button is pressed over the editor.
+   * <p/>
+   * <b>Note:</b> this callback is assumed to be at the very start of 'mouse press' processing, i.e. common actions
+   * like 'caret position change', 'selection change' etc implied by the 'mouse press' have not been performed yet.
    *
    * @param e the event containing information about the mouse press.
    */

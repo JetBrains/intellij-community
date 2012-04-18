@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -88,17 +88,17 @@ public abstract class AnAction implements PossiblyDumbAware {
    * Creates a new action with the specified text. Description and icon are
    * set to <code>null</code>.
    *
-   * @param text Serves as a tooltip when the presention is a button and the name of the
+   * @param text Serves as a tooltip when the presentation is a button and the name of the
    *  menu item when the presentation is a menu item.
    */
-  public AnAction(String text){
+  public AnAction(@Nullable String text){
     this(text, null, null);
   }
 
   /**
    * Constructs a new action with the specified text, description and icon.
    *
-   * @param text Serves as a tooltip when the presention is a button and the name of the
+   * @param text Serves as a tooltip when the presentation is a button and the name of the
    *  menu item when the presentation is a menu item
    *
    * @param description Describes current action, this description will appear on
@@ -106,7 +106,7 @@ public abstract class AnAction implements PossiblyDumbAware {
    *
    * @param icon Action's icon
    */
-  public AnAction(String text, String description, @Nullable Icon icon){
+  public AnAction(String text, @Nullable String description, @Nullable Icon icon){
     myShortcutSet = ourEmptyShortcutSet;
     myEnabledInModalContext = false;
     Presentation presentation = getTemplatePresentation();
@@ -118,7 +118,7 @@ public abstract class AnAction implements PossiblyDumbAware {
   /**
    * Returns the shortcut set associated with this action.
    *
-   * @return shorcut set associated with this action
+   * @return shortcut set associated with this action
    */
   public final ShortcutSet getShortcutSet(){
     return myShortcutSet;
@@ -127,15 +127,15 @@ public abstract class AnAction implements PossiblyDumbAware {
   /**
    * Registers a set of shortcuts that will be processed when the specified component
    * is the ancestor of focused component. Note that the action doesn't have
-   * to be registered in action manager in order for that shorcut to work.
+   * to be registered in action manager in order for that shortcut to work.
    *
    * @param shortcutSet the shortcuts for the action.
    * @param component   the component for which the shortcuts will be active.
    */
-  public final void registerCustomShortcutSet(@NotNull ShortcutSet shortcutSet, JComponent component){
+  public final void registerCustomShortcutSet(@NotNull ShortcutSet shortcutSet, @Nullable JComponent component){
     myShortcutSet = shortcutSet;
     if (component != null){
-      ArrayList<AnAction> actionList = (ArrayList<AnAction>)component.getClientProperty(ourClientProperty);
+      @SuppressWarnings("unchecked") ArrayList<AnAction> actionList = (ArrayList<AnAction>)component.getClientProperty(ourClientProperty);
       if (actionList == null){
         actionList = new ArrayList<AnAction>(1);
         component.putClientProperty(ourClientProperty, actionList);
@@ -161,7 +161,7 @@ public abstract class AnAction implements PossiblyDumbAware {
 
   public final void unregisterCustomShortcutSet(JComponent component){
     if (component != null){
-      ArrayList<AnAction> actionList = (ArrayList<AnAction>)component.getClientProperty(ourClientProperty);
+      @SuppressWarnings("unchecked") ArrayList<AnAction> actionList = (ArrayList<AnAction>)component.getClientProperty(ourClientProperty);
       if (actionList != null){
         actionList.remove(this);
       }
@@ -221,9 +221,10 @@ public abstract class AnAction implements PossiblyDumbAware {
   }
 
   /**
-   * Same as {@link #update(AnActionEvent)} but is calls immediately before actionPerformed() as final check
-   * guard. Default implementation delegates to {@link #update(AnActionEvent)}. 
-   * @param e
+   * Same as {@link #update(AnActionEvent)} but is calls immediately before actionPerformed() as final check guard.
+   * Default implementation delegates to {@link #update(AnActionEvent)}.
+   *
+   * @param e Carries information on the invocation place and data available
    */
   public void beforeActionPerformedUpdate(AnActionEvent e) {
     boolean worksInInjected = isInInjectedContext();

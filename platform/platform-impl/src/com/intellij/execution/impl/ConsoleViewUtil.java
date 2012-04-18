@@ -16,6 +16,7 @@
 package com.intellij.execution.impl;
 
 import com.intellij.execution.ui.ConsoleViewContentType;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.EditorSettings;
 import com.intellij.openapi.editor.colors.EditorColors;
@@ -26,6 +27,8 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.impl.EditorFactoryImpl;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 
@@ -33,6 +36,10 @@ import java.awt.*;
  * @author peter
  */
 public class ConsoleViewUtil {
+
+  public static final Key<Boolean> EDITOR_IS_CONSOLE_VIEW = Key.create("EDITOR_IS_CONSOLE_VIEW");
+
+
   public static EditorEx setupConsoleEditor(Project project, final boolean foldingOutlineShown, final boolean lineMarkerAreaShown) {
     EditorEx editor = (EditorEx) EditorFactory
       .getInstance().createViewer(((EditorFactoryImpl)EditorFactory.getInstance()).createDocument(true), project);
@@ -52,6 +59,8 @@ public class ConsoleViewUtil {
     editorSettings.setAdditionalColumnsCount(0);
     editorSettings.setAdditionalLinesCount(0);
 
+    editor.putUserData(EDITOR_IS_CONSOLE_VIEW, true);
+
     final DelegateColorScheme scheme = updateConsoleColorScheme(editor.getColorsScheme());
     editor.setColorsScheme(scheme);
     scheme.setColor(EditorColors.CARET_ROW_COLOR, null);
@@ -60,6 +69,7 @@ public class ConsoleViewUtil {
 
   public static DelegateColorScheme updateConsoleColorScheme(EditorColorsScheme scheme) {
     return new DelegateColorScheme(scheme) {
+      @NotNull
       @Override
       public Color getDefaultBackground() {
         final Color color = getColor(ConsoleViewContentType.CONSOLE_BACKGROUND_KEY);
@@ -86,5 +96,9 @@ public class ConsoleViewUtil {
         return super.getFont(EditorFontType.getConsoleType(key));
       }
     };
+  }
+
+  public static boolean isConsoleViewEditor(Editor editor) {
+    return editor.getUserData(EDITOR_IS_CONSOLE_VIEW) == Boolean.TRUE;
   }
 }

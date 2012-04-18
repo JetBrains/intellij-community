@@ -34,8 +34,10 @@ public abstract class FileBasedIndexExtension<K, V> {
   public static final ExtensionPointName<FileBasedIndexExtension> EXTENSION_POINT_NAME = ExtensionPointName.create("com.intellij.fileBasedIndex");
   public static final int DEFAULT_CACHE_SIZE = 1024;
 
+  @NotNull
   public abstract ID<K, V> getName();
-  
+
+  @NotNull
   public abstract DataIndexer<K, V, FileContent> getIndexer();
   
   public abstract KeyDescriptor<K> getKeyDescriptor();

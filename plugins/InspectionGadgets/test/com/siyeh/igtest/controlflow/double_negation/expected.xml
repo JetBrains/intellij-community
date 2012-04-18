@@ -27,4 +27,11 @@
     <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Double negation</problem_class>
     <description>Double negation in &lt;code&gt;b1 != (b2 != b3)&lt;/code&gt; #loc</description>
   </problem>
+
+  <problem>
+    <file>DoubleNegation.java</file>
+    <line>10</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Double negation</problem_class>
+    <description>Double negation in &lt;code&gt;b1 != b2 != b3&lt;/code&gt; #loc</description>
+  </problem>
 </problems>

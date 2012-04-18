@@ -161,13 +161,11 @@ public class ClsParameterImpl extends ClsRepositoryPsiElement<PsiParameterStub> 
           return "p" + Arrays.asList(parms).indexOf(this);
         }
 
-        @NonNls String name = getName();
-        if (name != null) return name;
-
         String[] nameSuggestions = JavaCodeStyleManager.getInstance(getProject()).suggestVariableName(VariableKind.PARAMETER, null,
             null, getType())
             .names;
-        name = "p";
+
+        @NonNls String name = "p";
         if (nameSuggestions.length > 0) {
           name = nameSuggestions[0];
         }

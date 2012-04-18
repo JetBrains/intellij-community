@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.siyeh.ig.classlayout;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInspection.util.SpecialAnnotationsUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.util.ui.CheckBox;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -34,7 +35,11 @@ public class EmptyClassInspection extends BaseInspection {
   @SuppressWarnings({"PublicField"})
   public final ExternalizableStringSet ignorableAnnotations = new ExternalizableStringSet();
 
+  @SuppressWarnings({"PublicField"})
   public boolean ignoreClassWithParameterization = false;
+
+  @SuppressWarnings({"PublicField"})
+  public boolean ignoreThrowables = true;
 
   @Override
   @NotNull
@@ -59,10 +64,26 @@ public class EmptyClassInspection extends BaseInspection {
 
   @Override
   public JComponent createOptionsPanel() {
-    final JPanel panel = SpecialAnnotationsUtil.createSpecialAnnotationsListControl(
+    final JPanel panel = new JPanel(new GridBagLayout());
+    final JPanel annotationsListControl = SpecialAnnotationsUtil.createSpecialAnnotationsListControl(
       ignorableAnnotations, InspectionGadgetsBundle.message("ignore.if.annotated.by"));
-    panel.add(new CheckBox(InspectionGadgetsBundle.message("empty.class.ignore.parameterization.option"),
-                           this, "ignoreClassWithParameterization"), BorderLayout.SOUTH);
+    final GridBagConstraints constraints = new GridBagConstraints();
+    constraints.gridx = 0;
+    constraints.gridy = 0;
+    constraints.weightx = 1.0;
+    constraints.weighty = 1.0;
+    constraints.anchor = GridBagConstraints.WEST;
+    constraints.fill = GridBagConstraints.BOTH;
+    panel.add(annotationsListControl, constraints);
+    constraints.gridy++;
+    constraints.weighty = 0.0;
+    constraints.fill = GridBagConstraints.HORIZONTAL;
+    final CheckBox checkBox1 = new CheckBox(InspectionGadgetsBundle.message("empty.class.ignore.parameterization.option"),
+                                                   this, "ignoreClassWithParameterization");
+    panel.add(checkBox1, constraints);
+    constraints.gridy++;
+    final CheckBox checkBox2 = new CheckBox("Ignore subclasses of java.lang.Throwable", this, "ignoreThrowables");
+    panel.add(checkBox2, constraints);
     return panel;
   }
 
@@ -125,6 +146,9 @@ public class EmptyClassInspection extends BaseInspection {
         }
       }
       if (AnnotationUtil.isAnnotated(aClass, ignorableAnnotations)) {
+        return;
+      }
+      if (ignoreThrowables && InheritanceUtil.isInheritor(aClass, "java.lang.Throwable")) {
         return;
       }
       registerClassError(aClass, aClass);

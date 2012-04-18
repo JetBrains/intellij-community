@@ -36,6 +36,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Function;
 import com.intellij.util.net.IOExceptionDialog;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.event.HyperlinkEvent;
 import java.io.IOException;
@@ -46,6 +47,8 @@ import java.util.*;
  */
 public class ActionInstallPlugin extends AnAction implements DumbAware {
   final private static String updateMessage = IdeBundle.message("action.update.plugin");
+
+  private static final Set<IdeaPluginDescriptor> ourInstallingNodes = new HashSet<IdeaPluginDescriptor>();
 
   private final PluginManagerMain installed;
   private final PluginManagerMain host;
@@ -65,6 +68,7 @@ public class ActionInstallPlugin extends AnAction implements DumbAware {
       for (IdeaPluginDescriptor descr : selection) {
         presentation.setText(IdeBundle.message("action.download.and.install.plugin"));
         presentation.setDescription(IdeBundle.message("action.download.and.install.plugin"));
+        enabled &= !ourInstallingNodes.contains(descr);
         if (descr instanceof PluginNode) {
           enabled &= !PluginManagerColumnInfo.isDownloaded((PluginNode)descr);
           if (((PluginNode)descr).getStatus() == PluginNode.STATUS_INSTALLED) {
@@ -100,14 +104,18 @@ public class ActionInstallPlugin extends AnAction implements DumbAware {
           pluginNode = (PluginNode)descr;
         }
         else if (descr instanceof IdeaPluginDescriptorImpl) {
-          pluginNode = new PluginNode(descr.getPluginId());
+          final PluginId pluginId = descr.getPluginId();
+          pluginNode = new PluginNode(pluginId);
           pluginNode.setName(descr.getName());
           pluginNode.setDepends(Arrays.asList(descr.getDependentPluginIds()), descr.getOptionalDependentPluginIds());
           pluginNode.setSize("-1");
+          pluginNode.setRepositoryName(((InstalledPluginsTableModel)host.getPluginsModel())
+                                         .getPluginHostUrl(pluginId.getIdString()));
         }
 
         if (pluginNode != null) {
           list.add(pluginNode);
+          ourInstallingNodes.add(pluginNode);
         }
       }
       try {
@@ -115,7 +123,6 @@ public class ActionInstallPlugin extends AnAction implements DumbAware {
           @Override
           public void run() {
             installedPluginsToModel(list);
-            installed.setRequireShutdown(true);
             if (!installed.isDisposed()) {
               getPluginTable().updateUI();
               final InstalledPluginsTableModel pluginsModel = (InstalledPluginsTableModel)installed.getPluginsModel();
@@ -136,14 +143,32 @@ public class ActionInstallPlugin extends AnAction implements DumbAware {
                   }
                 }
               }
-              suggestToEnableInstalledPlugins(pluginsModel, disabled, disabledDependants, list);
+              if (suggestToEnableInstalledPlugins(pluginsModel, disabled, disabledDependants, list)) {
+                installed.setRequireShutdown(true);
+              }
             }
             else {
-              notifyPluginsWereInstalled();
+              boolean needToRestart = false;
+              for (PluginNode node : list) {
+                final IdeaPluginDescriptor pluginDescriptor = PluginManager.getPlugin(node.getPluginId());
+                if (pluginDescriptor == null || pluginDescriptor.isEnabled()) {
+                  needToRestart = true;
+                  break;
+                }
+              }
+
+              if (needToRestart) {
+                notifyPluginsWereInstalled(list.size() == 1 ? list.get(0).getName() : null);
+              }
             }
           }
         };
-        PluginManagerMain.downloadPlugins(list, host.getPluginsModel().view, onInstallRunnable);
+        PluginManagerMain.downloadPlugins(list, host.getPluginsModel().view, onInstallRunnable, new Runnable(){
+          @Override
+          public void run() {
+            ourInstallingNodes.removeAll(list);
+          }
+        });
       }
       catch (IOException e1) {
         PluginManagerMain.LOG.error(e1);
@@ -153,16 +178,16 @@ public class ActionInstallPlugin extends AnAction implements DumbAware {
     }
   }
 
-  private static void suggestToEnableInstalledPlugins(final InstalledPluginsTableModel pluginsModel,
+  private static boolean suggestToEnableInstalledPlugins(final InstalledPluginsTableModel pluginsModel,
                                                       final Set<IdeaPluginDescriptor> disabled,
                                                       final Set<IdeaPluginDescriptor> disabledDependants, 
                                                       final ArrayList<PluginNode> list) {
     if (!disabled.isEmpty() || !disabledDependants.isEmpty()) {
-      String message = "";
+      String message = "<html><body>";
       if (disabled.size() == 1) {
-        message = "Updated plugin '" + disabled.iterator().next().getName() + "' is disabled";
+        message += "Updated plugin '" + disabled.iterator().next().getName() + "' is disabled.";
       } else if (!disabled.isEmpty()) {
-        message = "Updated plugins " + StringUtil.join(disabled, new Function<IdeaPluginDescriptor, String>() {
+        message += "Updated plugins " + StringUtil.join(disabled, new Function<IdeaPluginDescriptor, String>() {
           @Override
           public String fun(IdeaPluginDescriptor pluginDescriptor) {
             return pluginDescriptor.getName();
@@ -171,9 +196,7 @@ public class ActionInstallPlugin extends AnAction implements DumbAware {
       }
 
       if (!disabledDependants.isEmpty()) {
-        if (!message.isEmpty()) {
-          message += "\n";
-        }
+        message += "<br>";
         message += "Updated plugin" + (list.size() > 1 ? "s depend " : " depends ") + "on disabled";
         if (disabledDependants.size() == 1) {
           message += " plugin '" + disabledDependants.iterator().next().getName() + "'.";
@@ -186,16 +209,26 @@ public class ActionInstallPlugin extends AnAction implements DumbAware {
           }, ", ") + ".";
         }
       }
-      message += "\nWould you like to enable plugins with dependencies?";
+      message += " Disabled plugins and plugins which depends on disabled plugins won't be activated after restart.";
 
       int result;
       if (!disabled.isEmpty() && !disabledDependants.isEmpty()) {
         result =
-          Messages.showYesNoCancelDialog(message, CommonBundle.getWarningTitle(), "Enable all",
+          Messages.showYesNoCancelDialog(message + "</body></html>", CommonBundle.getWarningTitle(), "Enable all",
                                          "Enable updated plugin" + (disabled.size() > 1 ? "s" : ""), CommonBundle.getCancelButtonText(),
                                          Messages.getQuestionIcon());
+        if (result == DialogWrapper.NEXT_USER_EXIT_CODE) return false;
       } else {
-        result = Messages.showOkCancelDialog(message, CommonBundle.getWarningTitle(), "Enable", CommonBundle.getCancelButtonText(), Messages.getQuestionIcon());
+        message += "<br>Would you like to enable ";
+        if (!disabled.isEmpty()) {
+          message += "updated plugin" + (disabled.size() > 1 ? "s" : "");
+        }
+        else {
+          message += "plugin dependenc" + (disabledDependants.size() > 1 ? "ies" : "y");
+        }
+        message += "?</body></html>";
+        result = Messages.showOkCancelDialog(message, CommonBundle.getWarningTitle(), Messages.getQuestionIcon());
+        if (result == DialogWrapper.CANCEL_EXIT_CODE) return false;
       }
 
       if (result == DialogWrapper.OK_EXIT_CODE) {
@@ -205,14 +238,15 @@ public class ActionInstallPlugin extends AnAction implements DumbAware {
         pluginsModel.enableRows(disabled.toArray(new IdeaPluginDescriptor[disabled.size()]), true);
       }
     }
+    return true;
   }
 
   private void installedPluginsToModel(ArrayList<PluginNode> list) {
     for (PluginNode pluginNode : list) {
       final String idString = pluginNode.getPluginId().getIdString();
       final PluginManagerUISettings pluginManagerUISettings = PluginManagerUISettings.getInstance();
-      if (!pluginManagerUISettings.myInstalledPlugins.contains(idString)) {
-        pluginManagerUISettings.myInstalledPlugins.add(idString);
+      if (!pluginManagerUISettings.getInstalledPlugins().contains(idString)) {
+        pluginManagerUISettings.getInstalledPlugins().add(idString);
       }
       pluginManagerUISettings.myOutdatedPlugins.remove(idString);
     }
@@ -223,7 +257,7 @@ public class ActionInstallPlugin extends AnAction implements DumbAware {
     }
   }
 
-  private static void notifyPluginsWereInstalled() {
+  private static void notifyPluginsWereInstalled(@Nullable String pluginName) {
     final ApplicationEx app = ApplicationManagerEx.getApplicationEx();
     final boolean restartCapable = app.isRestartCapable();
     String message = "<html>";
@@ -232,7 +266,8 @@ public class ActionInstallPlugin extends AnAction implements DumbAware {
     message += "<br><a href=";
     message += restartCapable ? "\"restart\">Restart now" : "\"shutdown\">Shutdown";
     message += "</a></html>";
-    Notifications.Bus.notify(new Notification(IdeBundle.message("title.plugin.error"), IdeBundle.message("title.plugin.error"),
+    Notifications.Bus.notify(new Notification("Plugins Lifecycle Group", 
+                                              pluginName != null ? "Plugin \'" + pluginName + "\' was successfully installed" : "Plugins were installed",
                                               message, NotificationType.INFORMATION, new NotificationListener() {
       @Override
       public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {

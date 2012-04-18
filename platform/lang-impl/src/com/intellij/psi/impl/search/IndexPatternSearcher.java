@@ -65,13 +65,11 @@ public class IndexPatternSearcher implements QueryExecutor<IndexPatternOccurrenc
     int count = patternProvider != null
                 ? cacheManager.getTodoCount(virtualFile, patternProvider)
                 : cacheManager.getTodoCount(virtualFile, queryParameters.getPattern());
-    if (count == 0) return true;
-
-    return executeImpl(queryParameters, consumer);
+    return count == 0 || executeImpl(queryParameters, consumer);
   }
 
-  protected boolean executeImpl(IndexPatternSearch.SearchParameters queryParameters,
-                              Processor<IndexPatternOccurrence> consumer) {
+  protected static boolean executeImpl(IndexPatternSearch.SearchParameters queryParameters,
+                                       Processor<IndexPatternOccurrence> consumer) {
     final IndexPatternProvider patternProvider = queryParameters.getPatternProvider();
     final PsiFile file = queryParameters.getFile();
     TIntArrayList commentStarts = new TIntArrayList();
@@ -113,50 +111,45 @@ public class IndexPatternSearcher implements QueryExecutor<IndexPatternOccurrenc
                                              final TIntArrayList commentEnds) {
     if (file instanceof PsiPlainTextFile) {
       FileType fType = file.getFileType();
-      synchronized (PsiLock.LOCK) {
-        if (fType instanceof AbstractFileType) {
-          Lexer lexer = SyntaxHighlighter.PROVIDER.create(fType, file.getProject(), file.getVirtualFile()).getHighlightingLexer();
-          findComments(lexer, chars, range, COMMENT_TOKENS, commentStarts, commentEnds, null);
-        }
-        else {
-          commentStarts.add(0);
-          commentEnds.add(file.getTextLength());
-        }
+      if (fType instanceof AbstractFileType) {
+        Lexer lexer = SyntaxHighlighter.PROVIDER.create(fType, file.getProject(), file.getVirtualFile()).getHighlightingLexer();
+        findComments(lexer, chars, range, COMMENT_TOKENS, commentStarts, commentEnds, null);
+      }
+      else {
+        commentStarts.add(0);
+        commentEnds.add(file.getTextLength());
       }
     }
     else {
-      // collect comment offsets to prevent long locks by PsiManagerImpl.LOCK
-      synchronized (PsiLock.LOCK) {
-        final FileViewProvider viewProvider = file.getViewProvider();
-        final Set<Language> relevantLanguages = viewProvider.getLanguages();
-        for (Language lang : relevantLanguages) {
-          final TIntArrayList commentStartsList = new TIntArrayList();
-          final TIntArrayList commentEndsList = new TIntArrayList();
+      final FileViewProvider viewProvider = file.getViewProvider();
+      final Set<Language> relevantLanguages = viewProvider.getLanguages();
+      for (Language lang : relevantLanguages) {
+        final TIntArrayList commentStartsList = new TIntArrayList();
+        final TIntArrayList commentEndsList = new TIntArrayList();
 
-          final SyntaxHighlighter syntaxHighlighter =
-            SyntaxHighlighterFactory.getSyntaxHighlighter(lang, file.getProject(), file.getVirtualFile());
-          Lexer lexer = syntaxHighlighter.getHighlightingLexer();
-          TokenSet commentTokens = null;
-          IndexPatternBuilder builderForFile = null;
-          for (IndexPatternBuilder builder : Extensions.getExtensions(IndexPatternBuilder.EP_NAME)) {
-            Lexer lexerFromBuilder = builder.getIndexingLexer(file);
-            if (lexerFromBuilder != null) {
-              lexer = lexerFromBuilder;
-              commentTokens = builder.getCommentTokenSet(file);
-              builderForFile = builder;
-            }
+        final SyntaxHighlighter syntaxHighlighter =
+          SyntaxHighlighterFactory.getSyntaxHighlighter(lang, file.getProject(), file.getVirtualFile());
+        Lexer lexer = syntaxHighlighter.getHighlightingLexer();
+        TokenSet commentTokens = null;
+        IndexPatternBuilder builderForFile = null;
+        for (IndexPatternBuilder builder : Extensions.getExtensions(IndexPatternBuilder.EP_NAME)) {
+          Lexer lexerFromBuilder = builder.getIndexingLexer(file);
+          if (lexerFromBuilder != null) {
+            lexer = lexerFromBuilder;
+            commentTokens = builder.getCommentTokenSet(file);
+            builderForFile = builder;
           }
-          if (builderForFile == null) {
-            final ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(lang);
-            if (parserDefinition != null) {
-              commentTokens = parserDefinition.getCommentTokens();
-            }
+        }
+        if (builderForFile == null) {
+          final ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(lang);
+          if (parserDefinition != null) {
+            commentTokens = parserDefinition.getCommentTokens();
           }
+        }
 
-          if (commentTokens != null) {
-            findComments(lexer, chars, range, commentTokens, commentStartsList, commentEndsList, builderForFile);
-            mergeCommentLists(commentStarts, commentEnds, commentStartsList, commentEndsList);
-          }
+        if (commentTokens != null) {
+          findComments(lexer, chars, range, commentTokens, commentStartsList, commentEndsList, builderForFile);
+          mergeCommentLists(commentStarts, commentEnds, commentStartsList, commentEndsList);
         }
       }
     }
@@ -166,7 +159,7 @@ public class IndexPatternSearcher implements QueryExecutor<IndexPatternOccurrenc
                                         TIntArrayList commentEnds,
                                         TIntArrayList commentStartsList,
                                         TIntArrayList commentEndsList) {
-    if (commentStarts.size() == 0 && commentEnds.size() == 0) {
+    if (commentStarts.isEmpty() && commentEnds.isEmpty()) {
       commentStarts.add(commentStartsList.toNativeArray());
       commentEnds.add(commentEndsList.toNativeArray());
       return;

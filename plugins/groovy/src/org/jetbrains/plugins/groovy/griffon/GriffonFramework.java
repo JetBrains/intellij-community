@@ -120,6 +120,7 @@ public class GriffonFramework extends MvcFramework {
 
   @Override
   public VirtualFile getSdkRoot(@Nullable Module module) {
+    if (module == null) return null;
     final VirtualFile[] classRoots = ModuleRootManager.getInstance(module).orderEntries().librariesOnly().getClassesRoots();
     for (VirtualFile file : classRoots) {
       if (GriffonLibraryPresentationProvider.isGriffonCoreJar(file)) {

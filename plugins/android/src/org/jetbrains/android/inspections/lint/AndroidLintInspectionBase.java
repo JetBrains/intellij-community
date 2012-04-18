@@ -2,11 +2,15 @@ package org.jetbrains.android.inspections.lint;
 
 import com.android.tools.lint.detector.api.Category;
 import com.android.tools.lint.detector.api.Issue;
+import com.android.tools.lint.detector.api.Scope;
 import com.android.tools.lint.detector.api.Severity;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
+import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.*;
+import com.intellij.lang.java.JavaLanguage;
+import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
@@ -22,6 +26,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashMap;
+import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.facet.AndroidRootUtil;
 import org.jetbrains.android.util.AndroidBundle;
@@ -30,14 +35,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author Eugene.Kudelevsky
  */
-public abstract class AndroidLintInspectionBase extends GlobalInspectionTool {
+public abstract class AndroidLintInspectionBase extends GlobalInspectionTool implements CustomSuppressableInspectionTool {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.android.inspections.lint.AndroidLintInspectionBase");
 
   private static final Map<Issue, String> ourIssue2InspectionShortName = new HashMap<Issue, String>();
@@ -136,7 +139,8 @@ public abstract class AndroidLintInspectionBase extends GlobalInspectionTool {
     final List<ProblemDescriptor> result = new ArrayList<ProblemDescriptor>();
 
     for (ProblemData problemData : problems) {
-      final String message = problemData.getMessage();
+      final String s = problemData.getMessage();
+      final String message = XmlUtil.escape(s.indexOf('>') >= 0 && s.indexOf('<') >= 0 ? s.replace('<', '{').replace('>', '}') : s);
       final TextRange range = problemData.getTextRange();
 
       if (range.getStartOffset() == range.getEndOffset()) {
@@ -156,7 +160,7 @@ public abstract class AndroidLintInspectionBase extends GlobalInspectionTool {
           }
         }
 
-        if (f != null) {
+        if (f != null && !isSuppressedFor(f)) {
           result.add(manager.createProblemDescriptor(f, message, false, getLocalQuickFixes(f, f, message),
                                                      ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
         }
@@ -165,7 +169,7 @@ public abstract class AndroidLintInspectionBase extends GlobalInspectionTool {
         final PsiElement startElement = psiFile.findElementAt(range.getStartOffset());
         final PsiElement endElement = psiFile.findElementAt(range.getEndOffset() - 1);
 
-        if (startElement != null && endElement != null) {
+        if (startElement != null && endElement != null && !isSuppressedFor(startElement)) {
           result.add(manager.createProblemDescriptor(startElement, endElement, message,
                                                      ProblemHighlightType.GENERIC_ERROR_OR_WARNING, false,
                                                      getLocalQuickFixes(startElement, endElement, message)));
@@ -173,6 +177,29 @@ public abstract class AndroidLintInspectionBase extends GlobalInspectionTool {
       }
     }
     return result.toArray(new ProblemDescriptor[result.size()]);
+  }
+
+  @Override
+  public SuppressIntentionAction[] getSuppressActions(@Nullable PsiElement element) {
+    final List<SuppressIntentionAction> result = new ArrayList<SuppressIntentionAction>();
+    result.addAll(Arrays.asList(SuppressManager.getInstance().createSuppressActions(HighlightDisplayKey.find(getShortName()))));
+    result.addAll(Arrays.asList(new XmlSuppressableInspectionTool.SuppressTagStatic(getShortName()),
+                                new XmlSuppressableInspectionTool.SuppressForFile(getShortName())));
+    return result.toArray(new SuppressIntentionAction[result.size()]);
+  }
+
+  @Override
+  public boolean isSuppressedFor(PsiElement element) {
+    if (element == null) {
+      return false;
+    }
+    else if (element.getLanguage() == JavaLanguage.INSTANCE) {
+      return SuppressManager.getInstance().isSuppressedFor(element, getShortName());
+    }
+    else if (element.getLanguage() == XMLLanguage.INSTANCE) {
+      return XmlSuppressionProvider.isSuppressed(element, getShortName());
+    }
+    return false;
   }
 
   private synchronized static void addIssue(@NotNull Issue issue, @NotNull String shortName) {
@@ -271,6 +298,8 @@ public abstract class AndroidLintInspectionBase extends GlobalInspectionTool {
     switch (severity) {
       case ERROR:
         return HighlightDisplayLevel.ERROR;
+      case FATAL:
+        return HighlightDisplayLevel.ERROR;
       case WARNING:
         return HighlightDisplayLevel.WARNING;
       case INFORMATIONAL:
@@ -282,7 +311,18 @@ public abstract class AndroidLintInspectionBase extends GlobalInspectionTool {
         return null;
     }
   }
-  
+
+  public boolean worksInBatchModeOnly() {
+    final EnumSet<Scope> scopeSet = myIssue.getScope();
+    if (scopeSet.size() != 1) {
+      return true;
+    }
+    final Scope scope = scopeSet.iterator().next();
+    return scope != Scope.MANIFEST &&
+           scope != Scope.RESOURCE_FILE &&
+           scope != Scope.PROGUARD_FILE;
+  }
+
   static class MyLocalQuickFix implements LocalQuickFix {
     private final AndroidLintQuickFix myLintQuickFix;
 

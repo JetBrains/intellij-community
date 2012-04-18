@@ -33,6 +33,7 @@ import com.intellij.uiDesigner.radComponents.RadContainer;
 import com.intellij.uiDesigner.radComponents.RadRootContainer;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -458,14 +459,14 @@ public class GridCaptionPanel extends JPanel implements ComponentSelectionListen
   }
 
   private class MyDeleteProvider implements DeleteProvider {
-    public void deleteElement(DataContext dataContext) {
+    public void deleteElement(@NotNull DataContext dataContext) {
       int[] selection = getSelectedCells(null);
       if (selection.length > 0) {
         FormEditingUtil.deleteRowOrColumn(myEditor, mySelectedContainer, selection, myIsRow);
       }
     }
 
-    public boolean canDeleteElement(DataContext dataContext) {
+    public boolean canDeleteElement(@NotNull DataContext dataContext) {
       if (mySelectedContainer == null || mySelectionModel.isSelectionEmpty()) {
         return false;
       }

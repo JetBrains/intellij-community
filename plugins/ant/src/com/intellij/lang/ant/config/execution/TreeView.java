@@ -43,6 +43,7 @@ import com.intellij.util.OpenSourceUtil;
 import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -591,15 +592,15 @@ public final class TreeView implements AntOutputView, OccurenceNavigator {
     public Object getData(String dataId) {
       if (PlatformDataKeys.COPY_PROVIDER.is(dataId)) {
         return new CopyProvider() {
-          public boolean isCopyEnabled(DataContext dataContext) {
+          public boolean isCopyEnabled(@NotNull DataContext dataContext) {
             return getSelectionPath() != null;
           }
 
-          public boolean isCopyVisible(DataContext dataContext) {
+          public boolean isCopyVisible(@NotNull DataContext dataContext) {
             return true;
           }
 
-          public void performCopy(DataContext dataContext) {
+          public void performCopy(@NotNull DataContext dataContext) {
             TreePath selection = getSelectionPath();
             Object value = selection.getLastPathComponent();
             String text;

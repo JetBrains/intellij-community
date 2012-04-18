@@ -161,6 +161,11 @@ public class CompositeCommittedChangesProvider implements CommittedChangesProvid
     throw new UnsupportedOperationException();
   }
 
+  @Override
+  public RepositoryLocation getForNonLocal(VirtualFile file) {
+    throw new UnsupportedOperationException();
+  }
+
   public static class CompositeChangeBrowserSettings extends ChangeBrowserSettings {
     private final Map<AbstractVcs, ChangeBrowserSettings> myMap;
     private final Set<AbstractVcs> myEnabledVcs = new HashSet<AbstractVcs>();
@@ -207,7 +212,7 @@ public class CompositeCommittedChangesProvider implements CommittedChangesProvid
         myEditors.put(vcs, editor);
 
         JPanel wrapperPane = new JPanel(new BorderLayout());
-        wrapperPane.setBorder(IdeBorderFactory.createTitledBorder(vcs.getDisplayName(), false, true, true));
+        wrapperPane.setBorder(IdeBorderFactory.createTitledBorder(vcs.getDisplayName(), true));
         final JCheckBox checkBox = new JCheckBox(VcsBundle.message("composite.change.provider.include.vcs.checkbox", vcs.getDisplayName()), true);
         checkBox.addActionListener(new ActionListener() {
           public void actionPerformed(final ActionEvent e) {

@@ -16,7 +16,6 @@
 package com.intellij.openapi.updateSettings.impl;
 
 import com.intellij.ide.plugins.PluginHostsConfigurable;
-import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -40,18 +39,21 @@ public class CheckForUpdateAction extends AnAction implements DumbAware {
 
   public void actionPerformed(AnActionEvent e) {
     Project project = e.getData(PlatformDataKeys.PROJECT);
-    actionPerformed(project, true, null);
+    actionPerformed(project, true, null, UpdateSettings.getInstance());
   }
 
-  public static void actionPerformed(Project project, final boolean enableLink, final @Nullable PluginHostsConfigurable hostsConfigurable) {
-    ProgressManager.getInstance().run(new Task.Modal(project, "Checking for updates", false) {
+  public static void actionPerformed(Project project,
+                                     final boolean enableLink,
+                                     final @Nullable PluginHostsConfigurable hostsConfigurable,
+                                     final UpdateSettings instance) {
+    ProgressManager.getInstance().run(new Task.Backgroundable(project, "Checking for updates", true) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
-        final CheckForUpdateResult result = UpdateChecker.checkForUpdates(UpdateSettings.getInstance(), PropertiesComponent.getInstance(),
-                                                                          true
-        );
+        indicator.setIndeterminate(true);
+        final CheckForUpdateResult result = UpdateChecker.checkForUpdates(instance, true);
 
-        final List<PluginDownloader> updatedPlugins = UpdateChecker.updatePlugins(true, hostsConfigurable);
+        final List<PluginDownloader> updatedPlugins = UpdateChecker.updatePlugins(true, hostsConfigurable, indicator);
+        if (updatedPlugins == null) return;
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           @Override
           public void run() {
@@ -60,7 +62,7 @@ public class CheckForUpdateAction extends AnAction implements DumbAware {
               return;
             }
 
-            UpdateSettings.getInstance().LAST_TIME_CHECKED = System.currentTimeMillis();
+            instance.saveLastCheckedInfo();
             UpdateChecker.showUpdateResult(result, updatedPlugins, true, enableLink, true);
           }
         });

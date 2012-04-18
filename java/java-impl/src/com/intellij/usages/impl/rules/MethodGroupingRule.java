@@ -32,10 +32,7 @@ import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiFormatUtilBase;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.usageView.UsageInfo;
-import com.intellij.usages.Usage;
-import com.intellij.usages.UsageGroup;
-import com.intellij.usages.UsageView;
-import com.intellij.usages.UsageViewSettings;
+import com.intellij.usages.*;
 import com.intellij.usages.rules.PsiElementUsage;
 import com.intellij.usages.rules.UsageGroupingRule;
 import org.jetbrains.annotations.NotNull;
@@ -48,6 +45,7 @@ import javax.swing.*;
 public class MethodGroupingRule implements UsageGroupingRule {
   private static final Logger LOG = Logger.getInstance("#com.intellij.usages.impl.rules.MethodGroupingRule");
 
+  @Override
   public UsageGroup groupUsage(@NotNull Usage usage) {
     if (!(usage instanceof PsiElementUsage)) return null;
     PsiElement psiElement = ((PsiElementUsage)usage).getElement();
@@ -55,6 +53,10 @@ public class MethodGroupingRule implements UsageGroupingRule {
     PsiFile topLevelFile = InjectedLanguageUtil.getTopLevelFile(containingFile);
     if (topLevelFile instanceof PsiJavaFile) {
       PsiElement containingMethod = topLevelFile == containingFile ? psiElement : containingFile.getContext();
+      if (usage instanceof UsageInfo2UsageAdapter && topLevelFile == containingFile) {
+        int offset = ((UsageInfo2UsageAdapter)usage).getUsageInfo().getNavigationOffset();
+        containingMethod = containingFile.findElementAt(offset);
+      }
       do {
         containingMethod = PsiTreeUtil.getParentOfType(containingMethod, PsiMethod.class, true);
         if (containingMethod == null) break;
@@ -89,6 +91,7 @@ public class MethodGroupingRule implements UsageGroupingRule {
       myIcon = getIconImpl(psiMethod);
     }
 
+    @Override
     public void update() {
     }
 
@@ -109,6 +112,7 @@ public class MethodGroupingRule implements UsageGroupingRule {
              && SmartPointerManager.getInstance(myProject).pointToTheSameElement(myMethodPointer, group.myMethodPointer);
     }
 
+    @Override
     public Icon getIcon(boolean isOpen) {
       return myIcon;
     }
@@ -117,34 +121,41 @@ public class MethodGroupingRule implements UsageGroupingRule {
       return myMethodPointer.getElement();
     }
 
+    @Override
     @NotNull
     public String getText(UsageView view) {
       return myName;
     }
 
+    @Override
     public FileStatus getFileStatus() {
       return isValid() ? NavigationItemFileStatus.get(getMethod()) : null;
     }
 
+    @Override
     public boolean isValid() {
       final PsiMethod method = getMethod();
       return method != null && method.isValid();
     }
 
+    @Override
     public void navigate(boolean focus) throws UnsupportedOperationException {
       if (canNavigate()) {
           getMethod().navigate(focus);
       }
     }
 
+    @Override
     public boolean canNavigate() {
       return isValid();
     }
 
+    @Override
     public boolean canNavigateToSource() {
       return canNavigate();
     }
 
+    @Override
     public int compareTo(UsageGroup usageGroup) {
       if (!(usageGroup instanceof MethodUsageGroup)) {
         LOG.error("MethodUsageGroup expected but " + usageGroup.getClass() + " found");
@@ -164,6 +175,7 @@ public class MethodGroupingRule implements UsageGroupingRule {
       return myName.compareToIgnoreCase(other.myName);
     }
 
+    @Override
     public void calcData(final DataKey key, final DataSink sink) {
       if (!isValid()) return;
       if (LangDataKeys.PSI_ELEMENT == key) {

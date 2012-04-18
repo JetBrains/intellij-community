@@ -20,7 +20,6 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.options.BaseConfigurable;
-import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
@@ -118,7 +117,10 @@ public class UpdateSettingsConfigurable extends BaseConfigurable implements Sear
       myBtnCheckNow.addActionListener(new ActionListener() {
         public void actionPerformed(ActionEvent e) {
           Project project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(myBtnCheckNow));
-          CheckForUpdateAction.actionPerformed(project, false, null);  //todo load configured hosts on the fly
+          UpdateSettings settings = new UpdateSettings();
+          settings.loadState(UpdateSettings.getInstance().getState());
+          settings.UPDATE_CHANNEL_TYPE = getSelectedChannelType().getCode();
+          CheckForUpdateAction.actionPerformed(project, false, null, settings);  //todo load configured hosts on the fly
           updateLastCheckedLabel();
         }
       });

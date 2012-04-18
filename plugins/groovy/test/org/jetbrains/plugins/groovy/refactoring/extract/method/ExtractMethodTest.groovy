@@ -114,4 +114,7 @@ public class ExtractMethodTest extends LightGroovyTestCase {
   public void testParamChangedInsideExtractedMethod() {doTest();}
 
   public void testTerribleAppStatement() {doTest()}
+
+  public void testArgsUsedOnlyInClosure() {doTest()}
+  public void testArgsUsedOnlyInAnonymousClass() {doTest()}
 }

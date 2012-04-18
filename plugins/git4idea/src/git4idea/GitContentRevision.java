@@ -146,7 +146,7 @@ public class GitContentRevision implements ContentRevision {
    */
   public static ContentRevision createRevision(VirtualFile vcsRoot,
                                                String path,
-                                               VcsRevisionNumber revisionNumber,
+                                               @Nullable VcsRevisionNumber revisionNumber,
                                                Project project,
                                                boolean isDeleted, final boolean canBeDeleted, boolean unescapePath) throws VcsException {
     final FilePath file;

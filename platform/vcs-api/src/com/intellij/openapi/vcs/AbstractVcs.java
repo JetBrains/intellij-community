@@ -46,6 +46,7 @@ import com.intellij.util.ui.VcsSynchronousProgressWrapper;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -72,11 +73,11 @@ public abstract class AbstractVcs<ComList extends CommittedChangeList> extends S
   private RollbackEnvironment myRollbackEnvironment;
   private static boolean ourUseAnnotationCache;
 
-  {
+  static {
     final String property = System.getProperty(USE_ANNOTATION_CACHE);
     ourUseAnnotationCache = true;
     if (property != null) {
-      ourUseAnnotationCache = Boolean.getBoolean(USE_ANNOTATION_CACHE);
+      ourUseAnnotationCache = Boolean.valueOf(property);
     }
   }
 
@@ -88,16 +89,28 @@ public abstract class AbstractVcs<ComList extends CommittedChangeList> extends S
     myKey = new VcsKey(myName);
   }
 
+  // for tests only
+  protected AbstractVcs(final Project project, String name, VcsKey key) {
+    super();
+    myProject = project;
+    myName = name;
+    myKey = key;
+  }
+
   // acts as adapter
+  @Override
   protected void start() throws VcsException {
   }
 
+  @Override
   protected void shutdown() throws VcsException {
   }
 
+  @Override
   protected void activate() {
   }
 
+  @Override
   protected void deactivate() {
   }
 
@@ -245,6 +258,18 @@ public abstract class AbstractVcs<ComList extends CommittedChangeList> extends S
 
   public boolean needsLastUnchangedContent() {
     return false;
+  }
+
+  /**
+   * This method is called when user invokes "Enable VCS Integration" and selects a particular VCS.
+   * By default it sets up a single mapping {@code <Project> -> selected VCS}.
+   */
+  @CalledInAwt
+  public void enableIntegration() {
+    ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(myProject);
+    if (vcsManager != null) {
+      vcsManager.setDirectoryMappings(Arrays.asList(new VcsDirectoryMapping("", getName())));
+    }
   }
 
   public static boolean fileInVcsByFileStatus(final Project project, final FilePath path) {
@@ -402,6 +427,11 @@ public abstract class AbstractVcs<ComList extends CommittedChangeList> extends S
   }
 
   @Nullable
+  public VcsRootChecker getRootChecker() {
+    return null;
+  }
+
+  @Nullable
   public VcsRootSettings createEmptyVcsRootSettings() {
     return null;
   }
@@ -523,13 +553,6 @@ public abstract class AbstractVcs<ComList extends CommittedChangeList> extends S
    */
   public boolean isVcsBackgroundOperationsAllowed(final VirtualFile root) {
     return true;
-  }
-
-  /**
-   * will be useful for Clear Case
-   */
-  @CalledInAwt
-  public void generalPreConfigurationStep() {
   }
 
   public void setCheckinEnvironment(CheckinEnvironment checkinEnvironment) {

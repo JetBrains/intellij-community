@@ -5,6 +5,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.CompilerModuleExtension;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.HashSet;
 import org.jetbrains.android.facet.AndroidRootUtil;
 import org.jetbrains.annotations.Nullable;
 
@@ -17,6 +18,7 @@ import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author Eugene.Kudelevsky
@@ -39,7 +41,26 @@ public final class ProjectClassLoader extends ClassLoader {
       throw new ClassNotFoundException(name);
     }
 
-    Class<?> aClass = loadClassFromModule(myModule, name);
+    try {
+      final Class<?> aClass = loadClassFromModuleOrDependency(myModule, name, new HashSet<Module>());
+      if (aClass != null) {
+        return aClass;
+      }
+    }
+    catch (UnsupportedClassVersionError e) {
+      throw new IncompatibleClassFileFormatException(name);
+    }
+
+    throw new ClassNotFoundException(name);
+  }
+
+  @Nullable
+  private Class<?> loadClassFromModuleOrDependency(Module module, String name, Set<Module> visited) {
+    if (!visited.add(module)) {
+      return null;
+    }
+
+    Class<?> aClass = loadClassFromModule(module, name);
     if (aClass != null) {
       return aClass;
     }
@@ -49,14 +70,13 @@ public final class ProjectClassLoader extends ClassLoader {
       return aClass;
     }
 
-    for (Module depModule : ModuleRootManager.getInstance(myModule).getDependencies(false)) {
-      aClass = loadClassFromModule(depModule, name);
+    for (Module depModule : ModuleRootManager.getInstance(module).getDependencies(false)) {
+      aClass = loadClassFromModuleOrDependency(depModule, name, visited);
       if (aClass != null) {
         return aClass;
       }
     }
-
-    throw new ClassNotFoundException(name);
+    return null;
   }
 
   @Nullable

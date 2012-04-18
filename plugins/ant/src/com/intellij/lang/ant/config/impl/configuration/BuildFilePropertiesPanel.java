@@ -28,16 +28,13 @@ import com.intellij.openapi.projectRoots.ui.ProjectJdksEditor;
 import com.intellij.openapi.ui.ComponentWithBrowseButton;
 import com.intellij.openapi.ui.DialogBuilder;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.ui.ComboboxWithBrowseButton;
-import com.intellij.ui.RawCommandLineEditor;
-import com.intellij.ui.SimpleColoredComponent;
-import com.intellij.ui.TabbedPaneWrapper;
-import com.intellij.util.NewInstanceFactory;
+import com.intellij.ui.*;
+import com.intellij.ui.table.JBTable;
 import com.intellij.util.config.AbstractProperty;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.ColumnInfo;
+import com.intellij.util.ui.ListTableModel;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -197,8 +194,6 @@ public class BuildFilePropertiesPanel {
   }
 
   private static class PropertiesTab extends Tab {
-    private JButton myAddButton;
-    private JButton myRemoveButton;
     private JTable myPropertiesTable;
     private JPanel myWholePanel;
 
@@ -237,11 +232,41 @@ public class BuildFilePropertiesPanel {
     private static final ColumnInfo[] PROPERTY_COLUMNS = new ColumnInfo[]{NAME_COLUMN, VALUE_COLUMN};
 
     public PropertiesTab() {
+      myPropertiesTable = new JBTable();
       UIPropertyBinding.TableListBinding<BuildFileProperty> tableListBinding = getBinding().bindList(myPropertiesTable, PROPERTY_COLUMNS,
-                                                                                  AntBuildFileImpl.ANT_PROPERTIES);
+                                                                                                     AntBuildFileImpl.ANT_PROPERTIES);
       tableListBinding.setColumnWidths(GlobalAntConfiguration.PROPERTIES_TABLE_LAYOUT);
-      tableListBinding.addAddFacility(myAddButton, NewInstanceFactory.fromClass(BuildFileProperty.class));
-      tableListBinding.addRemoveFacility(myRemoveButton, Condition.TRUE);
+
+      myWholePanel = ToolbarDecorator.createDecorator(myPropertiesTable)
+        .setAddAction(new AnActionButtonRunnable() {
+
+
+          @Override
+          public void run(AnActionButton button) {
+            if (myPropertiesTable.isEditing() && !myPropertiesTable.getCellEditor().stopCellEditing()) {
+              return;
+            }
+            BuildFileProperty item = new BuildFileProperty();
+            ListTableModel<BuildFileProperty> model = (ListTableModel<BuildFileProperty>)myPropertiesTable.getModel();
+            ArrayList<BuildFileProperty> items = new ArrayList<BuildFileProperty>(model.getItems());
+            items.add(item);
+            model.setItems(items);
+            int newIndex = model.indexOf(item);
+            ListSelectionModel selectionModel = myPropertiesTable.getSelectionModel();
+            selectionModel.clearSelection();
+            selectionModel.setSelectionInterval(newIndex, newIndex);
+            ColumnInfo[] columns = model.getColumnInfos();
+            for (int i = 0; i < columns.length; i++) {
+              ColumnInfo column = columns[i];
+              if (column.isCellEditable(item)) {
+                myPropertiesTable.requestFocusInWindow();
+                myPropertiesTable.editCellAt(newIndex, i);
+                break;
+              }
+            }
+          }
+        }).disableUpDownActions().createPanel();
+      myWholePanel.setBorder(null);
     }
 
     public JComponent getComponent() {
@@ -288,9 +313,9 @@ public class BuildFilePropertiesPanel {
     private static final Comparator<TargetFilter> NAME_COMPARATOR = new Comparator<TargetFilter>() {
       public int compare(TargetFilter o1, TargetFilter o2) {
         final String name1 = o1.getTargetName();
-        if(name1 == null) return -1;
+        if (name1 == null) return -1;
         final String name2 = o2.getTargetName();
-        if(name2 == null) return 1;
+        if (name2 == null) return 1;
         return name1.compareToIgnoreCase(name2);
       }
     };
@@ -482,5 +507,4 @@ public class BuildFilePropertiesPanel {
   private static void setLabelFor(JLabel label, ComponentWithBrowseButton component) {
     label.setLabelFor(component.getChildComponent());
   }
-
 }

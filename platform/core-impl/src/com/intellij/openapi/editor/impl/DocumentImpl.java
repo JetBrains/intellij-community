@@ -29,16 +29,15 @@ import com.intellij.openapi.editor.ex.*;
 import com.intellij.openapi.editor.impl.event.DocumentEventImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.ShutDownTracker;
-import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -52,6 +51,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.impl.DocumentImpl");
+  public static boolean CHECK_DOCUMENT_CONSISTENCY = ApplicationManager.getApplication().isUnitTestMode();
 
   private final CopyOnWriteArrayList<DocumentListener> myDocumentListeners = ContainerUtil.createEmptyCOWList();
   private final RangeMarkerTree<RangeMarkerEx> myRangeMarkers = new RangeMarkerTree<RangeMarkerEx>(this);
@@ -59,7 +59,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   private ReadonlyFragmentModificationHandler myReadonlyFragmentModificationHandler;
 
   private final LineSet myLineSet = new LineSet();
-  private final CharArray myText = new MyCharArray();
+  private final CharArray myText;
 
   private boolean myIsReadOnly = false;
   private boolean isStripTrailingSpacesEnabled = true;
@@ -72,31 +72,25 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   private int myCheckGuardedBlocks = 0;
   private boolean myGuardsSuppressed = false;
   private boolean myEventsHandling = false;
-  private final boolean myAssertWriteAccess;
+  private final boolean myAssertThreading;
   private volatile boolean myDoingBulkUpdate = false;
-  private boolean myAcceptSlashR = false;
+  private volatile boolean myAcceptSlashR = false;
   private boolean myChangeInProgress;
 
-  public DocumentImpl(String text) {
-    this((CharSequence)text);
+  public DocumentImpl(@NotNull String text) {
+    this(text, false);
+  }
+  public DocumentImpl(@NotNull CharSequence chars) {
+    this(chars, false);
   }
 
-  public DocumentImpl(CharSequence chars) {
-    this();
+  public DocumentImpl(@NotNull CharSequence chars, boolean forUseInNonAWTThread) {
     assertValidSeparators(chars);
-    myText.setText(this, chars);
-    DocumentEvent event = new DocumentEventImpl(this, 0, null, null, -1, true);
-    myLineSet.documentCreated(event);
-  }
-
-  private DocumentImpl() {
-    this(false);
-  }
-
-  public DocumentImpl(boolean forUseInNonAWTThread) {
+    myText = new MyCharArray(CharArrayUtil.fromSequence(chars), chars.length());
+    myLineSet.documentCreated(this);
     setCyclicBufferSize(0);
     setModificationStamp(LocalTimeCounter.currentTime());
-    myAssertWriteAccess = !forUseInNonAWTThread;
+    myAssertThreading = !forUseInNonAWTThread;
   }
 
   public boolean setAcceptSlashR(boolean accept) {
@@ -115,7 +109,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   @Override
   @NotNull
   public char[] getChars() {
-    return CharArrayUtil.fromSequence(getCharsSequence());
+    return ArrayUtil.realloc(CharArrayUtil.fromSequence(getCharsSequence()), myText.length());
   }
 
   @Override
@@ -351,7 +345,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
       throwGuardedFragment(marker, offset, null, s.toString());
     }
 
-    myText.insert(this, s, offset);
+    myText.insert(s, offset);
   }
 
   @Override
@@ -370,7 +364,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
       throwGuardedFragment(marker, startOffset, sToDelete.toString(), null);
     }
 
-    myText.remove(this, startOffset, endOffset, sToDelete);
+    myText.remove(startOffset, endOffset, sToDelete);
   }
 
   @Override
@@ -406,10 +400,6 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
       newEndInString--;
       endOffset--;
     }
-    //if (newEndInString - newStartInString == 0 && startOffset == endOffset) {
-    //setModificationStamp(newModificationStamp);
-    //return;
-    //}
 
     s = s.subSequence(newStartInString, newEndInString);
     CharSequence sToDelete = myText.substring(startOffset, endOffset);
@@ -418,7 +408,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
       throwGuardedFragment(guard, startOffset, sToDelete.toString(), s.toString());
     }
 
-    myText.replace(this, startOffset, endOffset, sToDelete, s, newModificationStamp, wholeTextReplaced);
+    myText.replace(startOffset, endOffset, sToDelete, s, newModificationStamp, wholeTextReplaced);
   }
 
   private void assertBounds(final int startOffset, final int endOffset) {
@@ -434,7 +424,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   }
 
   private void assertWriteAccess() {
-    if (myAssertWriteAccess) {
+    if (myAssertThreading) {
       final Application application = ApplicationManager.getApplication();
       if (application != null) {
         application.assertWriteAccessAllowed();
@@ -442,7 +432,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     }
   }
 
-  private void assertValidSeparators(final CharSequence s) {
+  private void assertValidSeparators(@NotNull CharSequence s) {
     if (myAcceptSlashR) return;
     StringUtil.assertValidSeparators(s);
   }
@@ -535,9 +525,6 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     }
 
     DocumentEvent event = new DocumentEventImpl(this, offset, oldString, newString, myModificationStamp, wholeTextReplaced);
-    //System.out.printf("%nbefore change: offset=%d, old text='%s', new text='%s'%n document: id=%d, modification stamp=%d%nDocument:'%s'%n",
-    //                  event.getOffset(), event.getOldFragment(), event.getNewFragment(), System.identityHashCode(this),
-    //                  getModificationStamp(), getText());
 
     if (!ShutDownTracker.isShutdownHookRunning()) {
       DocumentListener[] listeners = getCachedListeners();
@@ -556,8 +543,6 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   }
 
   private void changedUpdate(DocumentEvent event, long newModificationStamp) {
-    //System.out.printf("after change: document id=%d, new modification stamp=%d%ndocument='%s'%n", System.identityHashCode(this),
-    //                  getModificationStamp(), getText());
     try {
       if (LOG.isDebugEnabled()) LOG.debug(event.toString());
 
@@ -583,47 +568,43 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
 
   @Override
   public String getText() {
-    assertReadAccessToDocumentsAllowed();
-    return myText.toString();
+    return ApplicationManager.getApplication().runReadAction(new Computable<String>() {
+      @Override
+      public String compute() {
+        return myText.toString();
+      }
+    });
   }
 
   @NotNull
   @Override
-  public String getText(@NotNull TextRange range) {
-    assertReadAccessToDocumentsAllowed();
-    return myText.substring(range.getStartOffset(), range.getEndOffset()).toString();
+  public String getText(@NotNull final TextRange range) {
+    return ApplicationManager.getApplication().runReadAction(new Computable<String>() {
+      @Override
+      public String compute() {
+        return myText.substring(range.getStartOffset(), range.getEndOffset()).toString();
+      }
+    });
   }
 
   @Override
   public int getTextLength() {
-    assertReadAccessToDocumentsAllowed();
     return myText.length();
   }
 
-  private static void assertReadAccessToDocumentsAllowed() {
-    /*
-    final ApplicationEx application = ApplicationManagerEx.getApplicationEx();
-    if (application != null) {
-      application.assertReadAccessToDocumentsAllowed();
-    }
-    */
-  }
-
-/*
-  This method should be used very carefully - only to read the array, and to be sure, that nobody changes
-  text, while this array is processed.
-  Really it is used only to optimize paint in Editor.
-  [Valentin] 25.04.2001: More really, it is used in 61 places in 29 files across the project :-)))
-*/
-
+  /**
+   This method should be used very carefully - only to read the array, and to be sure, that nobody changes
+   text, while this array is processed.
+   Really it is used only to optimize paint in Editor.
+   [Valentin] 25.04.2001: More really, it is used in 61 places in 29 files across the project :-)))
+   */
   CharSequence getCharsNoThreadCheck() {
-    return myText.getCharArray();
+    return getCharsSequence();
   }
 
   @Override
   @NotNull
   public CharSequence getCharsSequence() {
-    assertReadAccessToDocumentsAllowed();
     return myText.getCharArray();
   }
 
@@ -651,16 +632,13 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     myCachedDocumentListeners = null;
     boolean success = myDocumentListeners.remove(listener);
     if (!success) {
-      LOG.error(String.format("Can't remove given document listener (%s). Registered listeners: %s", listener, myDocumentListeners));
+      LOG.error("Can't remove document listener (" + listener + "). Registered listeners: "+myDocumentListeners);
     }
   }
 
   @Override
-  public int getLineNumber(int offset) {
-    assertReadAccessToDocumentsAllowed();
-    int lineIndex = myLineSet.findLineIndex(offset);
-    assert lineIndex >= 0;
-    return lineIndex;
+  public int getLineNumber(final int offset) {
+    return myLineSet.findLineIndex(offset);
   }
 
   @Override
@@ -670,12 +648,9 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   }
 
   @Override
-  public final int getLineStartOffset(int line) {
-    assertReadAccessToDocumentsAllowed();
+  public final int getLineStartOffset(final int line) {
     if (line == 0) return 0; // otherwise it crashed for zero-length document
-    int lineStart = myLineSet.getLineStart(line);
-    assert lineStart >= 0;
-    return lineStart;
+    return myLineSet.getLineStart(line);
   }
 
   @Override
@@ -704,7 +679,8 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   private DocumentListener[] getCachedListeners() {
     DocumentListener[] cachedListeners = myCachedDocumentListeners;
     if (cachedListeners == null) {
-      DocumentListener[] listeners = myDocumentListeners.toArray(new DocumentListener[myDocumentListeners.size()]);
+      List<DocumentListener> copy = new ArrayList<DocumentListener>(myDocumentListeners);
+      DocumentListener[] listeners = copy.toArray(new DocumentListener[copy.size()]);
       Arrays.sort(listeners, PrioritizedDocumentListener.COMPARATOR);
       myCachedDocumentListeners = cachedListeners = listeners;
     }
@@ -777,6 +753,10 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   @Override
   public final void setInBulkUpdate(boolean value) {
     ApplicationManager.getApplication().assertIsDispatchThread();
+    if (myDoingBulkUpdate == value) {
+      // do not fire listeners or otherwise updateStarted() will be called more times than updateFinished()
+      return;
+    }
     myDoingBulkUpdate = value;
     myText.setDeferredChangeMode(value);
     if (value) {
@@ -808,7 +788,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
 
   @NotNull
   public String dumpState() {
-    StringBuilder result = new StringBuilder();
+    @NonNls StringBuilder result = new StringBuilder();
     result.append("deferred mode: ").append(myText.isDeferredChangeMode() ? "on" : "off");
     result.append(", intervals:\n");
     for (int line = 0; line < getLineCount(); line++) {
@@ -821,24 +801,38 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     return result.toString();
   }
   
-  private static class MyCharArray extends CharArray {
-    public MyCharArray() {
-      super(0);
+  private class MyCharArray extends CharArray {
+    private MyCharArray(@NotNull char[] chars, int length) {
+      super(0, chars, length);
     }
 
     @Override
     @NotNull
-    protected DocumentEvent beforeChangedUpdate(DocumentImpl subj,
-                                                int offset,
+    protected DocumentEvent beforeChangedUpdate(int offset,
                                                 CharSequence oldString,
                                                 CharSequence newString,
                                                 boolean wholeTextReplaced) {
-      return subj.beforeChangedUpdate(offset, oldString, newString, wholeTextReplaced);
+      return DocumentImpl.this.beforeChangedUpdate(offset, oldString, newString, wholeTextReplaced);
     }
 
     @Override
     protected void afterChangedUpdate(@NotNull DocumentEvent event, long newModificationStamp) {
       ((DocumentImpl)event.getDocument()).changedUpdate(event, newModificationStamp);
+    }
+
+    @Override
+    protected void assertWriteAccess() {
+      DocumentImpl.this.assertWriteAccess();
+    }
+
+    @Override
+    protected void assertReadAccess() {
+      if (myAssertThreading) {
+        final Application application = ApplicationManager.getApplication();
+        if (application != null) {
+          application.assertReadAccessAllowed();
+        }
+      }
     }
   }
 }

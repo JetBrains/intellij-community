@@ -30,11 +30,11 @@ import org.jetbrains.plugins.groovy.util.TestUtils
 public class GroovyActionsTest extends LightCodeInsightFixtureTestCase {
 
   protected String getBasePath() {
-    return TestUtils.getTestDataPath() + "groovy/actions/";
+    return TestUtils.testDataPath + "groovy/actions/";
   }
 
   public void testSelectWordBeforeMethod() throws Throwable {
-    doTestForSelectWord(1);
+    doTestForSelectWord 1;
   }
 
   public void testSWInGString1() throws Exception {doTestForSelectWord(1);}
@@ -57,6 +57,24 @@ public class GroovyActionsTest extends LightCodeInsightFixtureTestCase {
   }
 
   public void testSWInCodeBlock() throws Exception {doTestForSelectWord 3}
+
+  public void testElseBranch() {
+    doTestForSelectWord (3, '''\
+def foo() {
+  if (a){
+  }
+  else <caret>{
+  }
+}
+''', '''\
+def foo() {
+  if (a){
+  }
+<selection>  else <caret>{
+  }
+</selection>}
+''')
+  }
 
   private void doTestForSelectWord(int count, String input, String expected) throws Exception {
     myFixture.configureByText("a.groovy", input);

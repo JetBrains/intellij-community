@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,8 +60,6 @@ public class JdkChooserPanel extends JPanel {
     myList = new JBList(myListModel);
     myList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     myList.setCellRenderer(new ProjectJdkListRenderer(myList.getCellRenderer()));
-    //noinspection HardCodedStringLiteral
-    myList.setPrototypeCellValue("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX");
 
     myList.addListSelectionListener(new ListSelectionListener() {
       public void valueChanged(ListSelectionEvent e) {
@@ -152,7 +150,7 @@ public class JdkChooserPanel extends JPanel {
   public void fillList(final SdkType type) {
     myListModel.clear();
     final Sdk[] jdks;
-    if (myProject == null) {
+    if (myProject == null || myProject.isDefault()) {
       final Sdk[] allJdks = ProjectJdkTable.getInstance().getAllJdks();
       jdks = getCompatibleJdks(type, Arrays.asList(allJdks));
     }
@@ -203,6 +201,10 @@ public class JdkChooserPanel extends JPanel {
     if (index >= 0) {
       myList.setSelectedIndex(index);
     }
+  }
+
+  public void addSelectionListener(final ListSelectionListener listener) {
+    myList.addListSelectionListener(listener);
   }
 
   private static Sdk showDialog(final Project project, String title, final Component parent, Sdk jdkToSelect) {

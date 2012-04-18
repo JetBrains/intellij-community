@@ -3,7 +3,7 @@ public class TTT {
     void f() {
         String s = new Object();
         int[][] i = new Object();
-        TTT[] f = new TTT[<caret><selection>0</selection>];
+        TTT[] f = new TTT[0]<caret>;
 
     }
 }

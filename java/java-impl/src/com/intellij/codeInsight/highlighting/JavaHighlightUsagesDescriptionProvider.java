@@ -25,6 +25,7 @@ import org.jetbrains.annotations.NotNull;
  * @author yole
  */
 public class JavaHighlightUsagesDescriptionProvider implements ElementDescriptionProvider {
+  @Override
   public String getElementDescription(@NotNull final PsiElement element, @NotNull final ElementDescriptionLocation location) {
     if (!(location instanceof HighlightUsagesDescriptionLocation)) return null;
 

@@ -18,12 +18,8 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.synthetic;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.util.*;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.ElementBase;
-import com.intellij.psi.impl.ElementPresentationUtil;
-import com.intellij.psi.impl.InheritanceImplUtil;
-import com.intellij.psi.impl.PsiClassImplUtil;
-import com.intellij.psi.impl.light.LightElement;
-import com.intellij.psi.impl.light.LightMethodBuilder;
+import com.intellij.psi.impl.*;
+import com.intellij.psi.impl.light.*;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.scope.BaseScopeProcessor;
 import com.intellij.psi.scope.PsiScopeProcessor;
@@ -76,7 +72,7 @@ public class GroovyScriptClass extends LightElement implements GrMemberOwner, Sy
       setMethodReturnType(PsiType.getJavaLangObject(getManager(), getResolveScope())).
       addModifier(PsiModifier.PUBLIC);
 
-    myModifierList = new LightModifierList(myManager, Collections.singleton(PsiModifier.PUBLIC));
+    myModifierList = new LightModifierList(myManager, GroovyFileType.GROOVY_LANGUAGE, PsiModifier.PUBLIC);
   }
 
 
@@ -126,7 +122,7 @@ public class GroovyScriptClass extends LightElement implements GrMemberOwner, Sy
   }
 
   public boolean isWritable() {
-    return true;
+    return myFile.isWritable();
   }
 
   public boolean isAnnotationType() {
@@ -163,7 +159,7 @@ public class GroovyScriptClass extends LightElement implements GrMemberOwner, Sy
 
   @NotNull
   public PsiClassType[] getExtendsListTypes() {
-    return PsiClassType.EMPTY_ARRAY;
+    return new PsiClassType[]{ TypesUtil.createTypeByFQClassName(GroovyCommonClassNames.GROOVY_LANG_SCRIPT, this)};
   }
 
   @NotNull
@@ -172,27 +168,21 @@ public class GroovyScriptClass extends LightElement implements GrMemberOwner, Sy
   }
 
   public PsiClass getSuperClass() {
-    return JavaPsiFacade.getInstance(getProject()).findClass(GroovyCommonClassNames.GROOVY_LANG_SCRIPT, getResolveScope());
+    return PsiClassImplUtil.getSuperClass(this);
   }
 
   public PsiClass[] getInterfaces() {
-    return PsiClass.EMPTY_ARRAY;
+    return PsiClassImplUtil.getInterfaces(this);
   }
 
   @NotNull
   public PsiClass[] getSupers() {
-    final PsiClass superClass = getSuperClass();
-    if (superClass != null) {
-      return new PsiClass[]{superClass};
-    }
-    else {
-      return PsiClass.EMPTY_ARRAY;
-    }
+    return PsiClassImplUtil.getSupers(this);
   }
 
   @NotNull
   public PsiClassType[] getSuperTypes() {
-    return new PsiClassType[]{ TypesUtil.createTypeByFQClassName(GroovyCommonClassNames.GROOVY_LANG_SCRIPT, this)};
+    return PsiClassImplUtil.getSuperTypes(this);
   }
 
   public PsiClass getContainingClass() {
@@ -201,7 +191,7 @@ public class GroovyScriptClass extends LightElement implements GrMemberOwner, Sy
 
   @NotNull
   public Collection<HierarchicalMethodSignature> getVisibleSignatures() {
-    return Collections.emptySet();
+    return PsiSuperMethodImplUtil.getVisibleSignatures(this);
   }
 
   @NotNull

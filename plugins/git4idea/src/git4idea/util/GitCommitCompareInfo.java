@@ -17,6 +17,7 @@ package git4idea.util;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.vcs.changes.Change;
 import git4idea.history.browser.GitCommit;
 import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NotNull;
@@ -31,9 +32,14 @@ public class GitCommitCompareInfo {
   private static final Logger LOG = Logger.getInstance(GitCommitCompareInfo.class);
   
   private final Map<GitRepository, Pair<List<GitCommit>, List<GitCommit>>> myInfo = new HashMap<GitRepository, Pair<List<GitCommit>, List<GitCommit>>>();
-  
+  private final Map<GitRepository, Collection<Change>> myTotalDiff = new HashMap<GitRepository, Collection<Change>>();
+
   public void put(@NotNull GitRepository repository, @NotNull Pair<List<GitCommit>, List<GitCommit>> commits) {
     myInfo.put(repository, commits);
+  }
+
+  public void put(@NotNull GitRepository repository, @NotNull Collection<Change> totalDiff) {
+    myTotalDiff.put(repository, totalDiff);
   }
 
   @NotNull
@@ -63,5 +69,14 @@ public class GitCommitCompareInfo {
 
   public boolean isEmpty() {
     return myInfo.isEmpty();
+  }
+
+  @NotNull
+  public List<Change> getTotalDiff() {
+    List<Change> changes = new ArrayList<Change>();
+    for (Collection<Change> changeCollection : myTotalDiff.values()) {
+      changes.addAll(changeCollection);
+    }
+    return changes;
   }
 }

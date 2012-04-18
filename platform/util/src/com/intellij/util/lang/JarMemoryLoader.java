@@ -56,6 +56,7 @@ public class JarMemoryLoader {
       JarMemoryLoader loader = new JarMemoryLoader();
       for (int i = 0; i < size; i++) {
         ZipEntry entry = zipStream.getNextEntry();
+        if (entry == null) return loader;
         byte[] content = FileUtil.loadBytes(zipStream, (int)entry.getSize());
         MyResource resource = new MyResource(entry.getName(), new URL(baseUrl, entry.getName()), content);
         loader.myResources.put(entry.getName(), resource);

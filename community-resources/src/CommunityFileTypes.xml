@@ -1630,6 +1630,7 @@
           <keyword name="html_entity_decode"/>
           <keyword name="htmlentities"/>
           <keyword name="htmlspecialchars"/>
+          <keyword name="htmlspecialchars_decode"/>
           <keyword name="http_build_query"/>
           <keyword name="hw_array2objrec"/>
           <keyword name="hw_changeobject"/>

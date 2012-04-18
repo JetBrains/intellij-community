@@ -20,6 +20,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.io.IOUtil;
 import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.incremental.storage.StorageOwner;
 
 import java.io.*;
 import java.util.HashMap;
@@ -29,9 +30,9 @@ import java.util.Set;
 /**
  * @author nik
  */
-public class ArtifactCompilerPersistentData {
+public class ArtifactCompilerPersistentData implements StorageOwner {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.impl.generic.ArtifactCompilerPersistentData");
-  private static final int VERSION = 0;
+  private static final int VERSION = 1;
   private File myFile;
   private Map<String, Integer> myArtifact2Id = new HashMap<String, Integer>();
   private TIntHashSet myUsedIds = new TIntHashSet();
@@ -40,7 +41,7 @@ public class ArtifactCompilerPersistentData {
   public ArtifactCompilerPersistentData(File cacheStoreDirectory) throws IOException {
     myFile = new File(cacheStoreDirectory, "info");
     if (!myFile.exists()) {
-      LOG.info("Artifacts compiler info file doesn't exist: " + myFile.getAbsolutePath());
+      LOG.debug("Artifacts compiler info file doesn't exist: " + myFile.getAbsolutePath());
       myVersionChanged = true;
       return;
     }
@@ -49,7 +50,7 @@ public class ArtifactCompilerPersistentData {
     try {
       final int version = input.readInt();
       if (version != VERSION) {
-        LOG.info("Artifacts compiler version changed (" + myFile.getAbsolutePath() + "): " + version + " -> " + VERSION);
+        LOG.debug("Artifacts compiler version changed (" + myFile.getAbsolutePath() + "): " + version + " -> " + VERSION);
         myVersionChanged = true;
         return;
       }
@@ -71,7 +72,22 @@ public class ArtifactCompilerPersistentData {
     return myVersionChanged;
   }
 
-  public void save() throws IOException {
+  @Override
+  public void flush(boolean memoryCachesOnly) {
+    try {
+      save();
+    }
+    catch (IOException e) {
+      LOG.info(e);
+    }
+  }
+
+  @Override
+  public void close() throws IOException {
+    save();
+  }
+
+  private void save() throws IOException {
     final DataOutputStream output = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(myFile)));
     try {
       output.writeInt(VERSION);

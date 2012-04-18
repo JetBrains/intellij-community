@@ -53,7 +53,6 @@ import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -183,7 +182,7 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar, ModificationT
     RangeMarker relevantMarker = myHostDocument.createRangeMarker(relevantRangeInHost);
     relevantMarker.setGreedyToLeft(true);
     relevantMarker.setGreedyToRight(true);
-    shreds.add(new PsiLanguageInjectionHost.Shred(host, relevantMarker, prefix, suffix, new ProperTextRange(startOffset, endOffset)));
+    shreds.add(new ShredImpl(host, myHostPsiFile, relevantMarker, prefix, suffix, new ProperTextRange(startOffset, endOffset)));
     return this;
   }
 
@@ -193,13 +192,15 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar, ModificationT
       if (shreds.isEmpty()) {
         throw new IllegalStateException("Seems you haven't called addPlace()");
       }
-      PsiDocumentManager documentManager = PsiDocumentManager.getInstance(myProject);
-      assert ArrayUtil.indexOf(documentManager.getUncommittedDocuments(), myHostDocument) == -1 : "document is uncommitted: "+myHostDocument;
+      PsiDocumentManagerImpl documentManager = (PsiDocumentManagerImpl)PsiDocumentManager.getInstance(myProject);
+      //todo restore
+      //assert !documentManager.getUncommittedDocumentsUnsafe().contains(myHostDocument) : "document is uncommitted: "+myHostDocument;
 
       Place place = new Place(shreds);
       DocumentWindowImpl documentWindow = new DocumentWindowImpl(myHostDocument, isOneLineEditor, place);
       VirtualFileWindowImpl virtualFile = new VirtualFileWindowImpl(myHostVirtualFile, documentWindow, myLanguage, outChars);
-      myLanguage = LanguageSubstitutors.INSTANCE.substituteLanguage(myLanguage, virtualFile, myProject);
+      Language forcedLanguage = myContextElement.getUserData(InjectedFileViewProvider.LANGUAGE_FOR_INJECTED_COPY_KEY);
+      myLanguage = forcedLanguage == null ? LanguageSubstitutors.INSTANCE.substituteLanguage(myLanguage, virtualFile, myProject) : forcedLanguage;
       virtualFile.setLanguage(myLanguage);
 
       DocumentImpl decodedDocument;
@@ -207,7 +208,7 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar, ModificationT
         decodedDocument = new DocumentImpl(outChars);
       }
       else {
-        decodedDocument = new DocumentImpl(true);
+        decodedDocument = new DocumentImpl("", true);
         decodedDocument.setAcceptSlashR(true);
         decodedDocument.replaceString(0,0,outChars);
       }
@@ -218,7 +219,7 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar, ModificationT
       assert parserDefinition != null : "Parser definition for language "+myLanguage+" is null";
       PsiFile psiFile = parserDefinition.createFile(viewProvider);
 
-      SmartPsiElementPointer<PsiLanguageInjectionHost> pointer = createHostSmartPointer(shreds.get(0).host, myHostPsiFile);
+      SmartPsiElementPointer<PsiLanguageInjectionHost> pointer = ((ShredImpl)shreds.get(0)).getSmartPointer();
 
       synchronized (PsiLock.LOCK) {
         final ASTNode parsedNode = keepTreeFromChameleoningBack(psiFile);
@@ -272,7 +273,7 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar, ModificationT
         assert viewProvider.isValid();
 
         try {
-          List<Trinity<IElementType, PsiLanguageInjectionHost, TextRange>> tokens = obtainHighlightTokensFromLexer(myLanguage, outChars, escapers, place, virtualFile, myProject);
+          List<Trinity<IElementType, SmartPsiElementPointer<PsiLanguageInjectionHost>, TextRange>> tokens = obtainHighlightTokensFromLexer(myLanguage, outChars, escapers, place, virtualFile, myProject);
           psiFile.putUserData(InjectedLanguageUtil.HIGHLIGHT_TOKENS, tokens);
         }
         catch (ProcessCanceledException e) {
@@ -334,7 +335,7 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar, ModificationT
   private void assertEverythingIsAllright(PsiDocumentManager documentManager, DocumentWindowImpl documentWindow, PsiFile psiFile) {
     boolean isAncestor = false;
     for (PsiLanguageInjectionHost.Shred shred : shreds) {
-      PsiLanguageInjectionHost host = shred.host;
+      PsiLanguageInjectionHost host = shred.getHost();
       isAncestor |= PsiTreeUtil.isAncestor(myContextElement, host, false);
     }
     assert isAncestor : exceptionContext(myContextElement + " must be the parent of at least one of injection hosts");
@@ -355,12 +356,6 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar, ModificationT
     result.add(Pair.create(place, psiFile));
   }
 
-  @NotNull
-  private static <T extends PsiLanguageInjectionHost> SmartPsiElementPointer<T> createHostSmartPointer(@NotNull T host, @NotNull PsiFile hostPsiFile) {
-    return hostPsiFile.isPhysical()
-           ? SmartPointerManager.getInstance(host.getProject()).createSmartPsiElementPointer(host, hostPsiFile)
-           : new IdentitySmartPointer<T>(host, hostPsiFile);
-  }
 
   private static void patchLeafs(ASTNode parsedNode, List<LiteralTextEscaper<? extends PsiLanguageInjectionHost>> escapers, Place shreds) {
     LeafPatcher patcher = new LeafPatcher(shreds, escapers);
@@ -373,7 +368,7 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar, ModificationT
                                                   "\nLeaf texts concatenated:'"+ patcher.catLeafs +"';" +
                                                   "\nFile root: "+parsedNode+
                                                   "\nLanguage: "+parsedNode.getPsi().getLanguage()+
-                                                  "\nHost file: "+shreds.get(0).host.getContainingFile().getVirtualFile()
+                                                  "\nHost file: "+ shreds.get(0).getHost().getContainingFile().getVirtualFile()
         ;
     for (Map.Entry<LeafElement, String> entry : patcher.newTexts.entrySet()) {
       LeafElement leaf = entry.getKey();
@@ -396,7 +391,6 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar, ModificationT
       DocumentWindowImpl oldDocument = (DocumentWindowImpl)injected.get(i);
       final PsiFileImpl oldFile = (PsiFileImpl)documentManager.getCachedPsiFile(oldDocument);
       FileViewProvider viewProvider;
-
       if (oldFile == null ||
           !oldFile.isValid() ||
           !((viewProvider = oldFile.getViewProvider()) instanceof InjectedFileViewProvider) ||
@@ -447,20 +441,20 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar, ModificationT
   }
 
   // returns lexer element types with corresponding ranges in encoded (injection host based) PSI
-  private static List<Trinity<IElementType, PsiLanguageInjectionHost, TextRange>>
+  private static List<Trinity<IElementType, SmartPsiElementPointer<PsiLanguageInjectionHost>, TextRange>>
           obtainHighlightTokensFromLexer(Language language,
                                          StringBuilder outChars,
                                          List<LiteralTextEscaper<? extends PsiLanguageInjectionHost>> escapers,
                                          Place shreds,
                                          VirtualFileWindow virtualFile,
                                          Project project) {
-    List<Trinity<IElementType, PsiLanguageInjectionHost, TextRange>> tokens = new ArrayList<Trinity<IElementType, PsiLanguageInjectionHost, TextRange>>(10);
+    List<Trinity<IElementType, SmartPsiElementPointer<PsiLanguageInjectionHost>, TextRange>> tokens = new ArrayList<Trinity<IElementType, SmartPsiElementPointer<PsiLanguageInjectionHost>, TextRange>>(10);
     SyntaxHighlighter syntaxHighlighter = SyntaxHighlighterFactory.getSyntaxHighlighter(language, project, (VirtualFile)virtualFile);
     Lexer lexer = syntaxHighlighter.getHighlightingLexer();
     lexer.start(outChars);
     int hostNum = -1;
     int prevHostEndOffset = 0;
-    PsiLanguageInjectionHost host = null;
+    SmartPsiElementPointer<PsiLanguageInjectionHost> host = null;
     LiteralTextEscaper<? extends PsiLanguageInjectionHost> escaper = null;
     int prefixLength = 0;
     int suffixLength = 0;
@@ -472,13 +466,13 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar, ModificationT
         if (range.getStartOffset() >= shredEndOffset) {
           hostNum++;
           PsiLanguageInjectionHost.Shred shred = shreds.get(hostNum);
-          shredEndOffset = shred.range.getEndOffset();
+          shredEndOffset = shred.getRange().getEndOffset();
           prevHostEndOffset = range.getStartOffset();
-          host = shred.host;
+          host = ((ShredImpl)shred).getSmartPointer();
           escaper = escapers.get(hostNum);
           rangeInsideHost = shred.getRangeInsideHost();
-          prefixLength = shred.prefix.length();
-          suffixLength = shred.suffix.length();
+          prefixLength = shred.getPrefix().length();
+          suffixLength = shred.getSuffix().length();
         }
         //in prefix/suffix or spills over to next fragment
         if (range.getStartOffset() < prevHostEndOffset + prefixLength) {

@@ -51,6 +51,7 @@ import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.util.Function;
 import com.intellij.util.FunctionUtil;
 import gnu.trove.THashSet;
+import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -121,7 +122,7 @@ public class LineMarkersPass extends ProgressableTextEditorHighlightingPass impl
     myMarkers = mergeLineMarkers(lineMarkers);
   }
 
-  private List<LineMarkerInfo> mergeLineMarkers(List<LineMarkerInfo> markers) {    
+  private List<LineMarkerInfo> mergeLineMarkers(@NotNull List<LineMarkerInfo> markers) {
     List<MergeableLineMarkerInfo> forMerge = new ArrayList<MergeableLineMarkerInfo>();
     final Iterator<LineMarkerInfo> iterator = markers.iterator();
     while (iterator.hasNext()) {
@@ -136,25 +137,26 @@ public class LineMarkersPass extends ProgressableTextEditorHighlightingPass impl
     if (forMerge.isEmpty() || myEditor == null) return markers;
 
     final List<LineMarkerInfo> result = new ArrayList<LineMarkerInfo>(markers);
-    final HashMap<Integer, List<MergeableLineMarkerInfo>> map = new HashMap<Integer, List<MergeableLineMarkerInfo>>();
+    TIntObjectHashMap<List<MergeableLineMarkerInfo>> sameLineMarkers = new TIntObjectHashMap<List<MergeableLineMarkerInfo>>();
     for (MergeableLineMarkerInfo info : forMerge) {
       final LogicalPosition position = myEditor.offsetToLogicalPosition(info.startOffset);
-      List<MergeableLineMarkerInfo> infos = map.get(position.line);
+      List<MergeableLineMarkerInfo> infos = sameLineMarkers.get(position.line);
       if (infos == null) {
         infos = new ArrayList<MergeableLineMarkerInfo>();
-        map.put(position.line, infos);
+        sameLineMarkers.put(position.line, infos);
       }
       infos.add(info);
     }
 
-    for (List<MergeableLineMarkerInfo> infos : map.values()) {
+    for (Object v : sameLineMarkers.getValues()) {
+      List<MergeableLineMarkerInfo> infos = (List<MergeableLineMarkerInfo>)v;
       result.addAll(MergeableLineMarkerInfo.merge(infos));
     }
 
     return result;
   }
 
-  public static List<LineMarkerProvider> getMarkerProviders(Language language, Project project) {
+  public static List<LineMarkerProvider> getMarkerProviders(@NotNull Language language, @NotNull Project project) {
     return DumbService.getInstance(project).filterByDumbAwareness(LineMarkerProviders.INSTANCE.allForLanguage(language));
   }
 
@@ -202,13 +204,14 @@ public class LineMarkersPass extends ProgressableTextEditorHighlightingPass impl
     final List<LineMarkerInfo> injectedMarkers = new ArrayList<LineMarkerInfo>();
 
     final Set<PsiFile> injectedFiles = new THashSet<PsiFile>();
-    for (PsiElement element : elements) {
-      InjectedLanguageUtil.enumerate(element, file, false, new PsiLanguageInjectionHost.InjectedPsiVisitor() {
-        @Override
-        public void visit(@NotNull final PsiFile injectedPsi, @NotNull List<PsiLanguageInjectionHost.Shred> places) {
-          injectedFiles.add(injectedPsi);
-        }
-      });
+    final PsiLanguageInjectionHost.InjectedPsiVisitor collectingVisitor = new PsiLanguageInjectionHost.InjectedPsiVisitor() {
+      @Override
+      public void visit(@NotNull final PsiFile injectedPsi, @NotNull List<PsiLanguageInjectionHost.Shred> places) {
+        injectedFiles.add(injectedPsi);
+      }
+    };
+    for (int i = 0, size = elements.size(); i < size; ++i) {
+      InjectedLanguageUtil.enumerate(elements.get(i), file, false, collectingVisitor);
     }
     for (PsiFile injectedPsi : injectedFiles) {
       final Project project = injectedPsi.getProject();
@@ -239,6 +242,7 @@ public class LineMarkersPass extends ProgressableTextEditorHighlightingPass impl
     }
   }
 
+  @NotNull
   public Collection<LineMarkerInfo> queryLineMarkers() {
     if (myFile.getNode() == null) {
       // binary file? see IDEADEV-2809
@@ -255,7 +259,7 @@ public class LineMarkersPass extends ProgressableTextEditorHighlightingPass impl
   }
 
   @NotNull
-  public static LineMarkerInfo createMethodSeparatorLineMarker(PsiElement startFrom, EditorColorsManager colorsManager) {
+  public static LineMarkerInfo createMethodSeparatorLineMarker(@NotNull PsiElement startFrom, @NotNull EditorColorsManager colorsManager) {
     LineMarkerInfo info = new LineMarkerInfo<PsiElement>(
       startFrom, 
       startFrom.getTextRange(), 

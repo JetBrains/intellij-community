@@ -5,11 +5,15 @@ import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.PathUtil;
+import org.jetbrains.jps.incremental.CompileContext;
+import org.jetbrains.jps.incremental.artifacts.ArtifactOutputToSourceMapping;
+import org.jetbrains.jps.incremental.artifacts.ArtifactSourceToOutputMapping;
 import org.jetbrains.jps.incremental.artifacts.JarPathUtil;
+import org.jetbrains.jps.incremental.storage.BuildDataManager;
 
 import java.io.*;
+import java.util.Collections;
 import java.util.Enumeration;
-import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -33,7 +37,7 @@ public class JarBasedArtifactSourceRoot extends ArtifactSourceRoot {
   }
 
   @Override
-  public boolean containsFile(String filePath) {
+  public boolean containsFile(String filePath, BuildDataManager dataManager) {
     return new File(FileUtil.toSystemDependentName(filePath)).equals(myJarFile);
   }
 
@@ -82,7 +86,11 @@ public class JarBasedArtifactSourceRoot extends ArtifactSourceRoot {
     }
   }
 
-  public void copyFromRoot(String filePath, final String outputPath, final List<String> outputs) throws IOException {
+  public void copyFromRoot(final String filePath,
+                           final int rootIndex, final String outputPath,
+                           CompileContext context, final ArtifactSourceToOutputMapping srcOutMapping,
+                           final ArtifactOutputToSourceMapping outSrcMapping) throws IOException {
+    context.getLoggingManager().getArtifactBuilderLogger().fileCopied(filePath);
     processEntries(new EntryProcessor() {
       @Override
       public void process(@Nullable InputStream inputStream, @NotNull String relativePath) throws IOException {
@@ -94,17 +102,21 @@ public class JarBasedArtifactSourceRoot extends ArtifactSourceRoot {
           outputFile.mkdir();
         }
         else {
-          final BufferedInputStream from = new BufferedInputStream(inputStream);
-          final BufferedOutputStream to = new BufferedOutputStream(new FileOutputStream(outputFile));
-          try {
-            FileUtil.copy(from, to);
+          String fullSourcePath = filePath + JarPathUtil.JAR_SEPARATOR + relativePath;
+          if (outSrcMapping.getState(fullOutputPath) == null) {
+            final BufferedInputStream from = new BufferedInputStream(inputStream);
+            final BufferedOutputStream to = new BufferedOutputStream(new FileOutputStream(outputFile));
+            try {
+              FileUtil.copy(from, to);
+            }
+            finally {
+              from.close();
+              to.close();
+            }
+            srcOutMapping.appendData(filePath, Collections.singletonList(fullOutputPath));
           }
-          finally {
-            from.close();
-            to.close();
-          }
+          outSrcMapping.appendData(fullOutputPath, Collections.singletonList(new ArtifactOutputToSourceMapping.SourcePathAndRootIndex(fullSourcePath, rootIndex)));
         }
-        outputs.add(fullOutputPath);
       }
     });
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,10 +30,7 @@ import com.intellij.ide.util.projectWizard.ProjectWizardUtil;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.module.ModifiableModuleModel;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.module.ModuleType;
+import com.intellij.openapi.module.*;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
@@ -43,19 +40,20 @@ import com.intellij.openapi.roots.impl.ClonableOrderEntry;
 import com.intellij.openapi.roots.impl.ProjectRootManagerImpl;
 import com.intellij.openapi.roots.impl.RootModelImpl;
 import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.roots.ui.configuration.ClasspathEditor;
 import com.intellij.openapi.roots.ui.configuration.ModuleEditor;
 import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator;
+import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.LibraryProjectStructureElement;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ModuleProjectStructureElement;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureDaemonAnalyzer;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureElement;
-import com.intellij.openapi.ui.DialogBuilder;
-import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.ui.NamedConfigurable;
+import com.intellij.openapi.ui.*;
+import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.NullableComputable;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -368,6 +366,10 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
     if (myContext.myModulesConfigurator.isModified()) {
       myContext.myModulesConfigurator.apply();
     }
+
+    for (final ModuleStructureExtension extension : ModuleStructureExtension.EP_NAME.getExtensions()) {
+      extension.afterModelCommit();
+    }
   }
 
   public boolean isModified() {
@@ -426,6 +428,38 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
       return topic;
     }
     return "reference.settingsdialog.project.structure.module";
+  }
+
+  public ActionCallback selectOrderEntry(@NotNull final Module module, @Nullable final OrderEntry orderEntry) {
+    for (final ModuleStructureExtension extension : ModuleStructureExtension.EP_NAME.getExtensions()) {
+      final ActionCallback callback = extension.selectOrderEntry(module, orderEntry);
+      if (callback != null) {
+        return callback;
+      }
+    }
+
+    Place p = new Place();
+    p.putPath(ProjectStructureConfigurable.CATEGORY, this);
+    Runnable r = null;
+
+    final MasterDetailsComponent.MyNode node = findModuleNode(module);
+    if (node != null) {
+      p.putPath(TREE_OBJECT, module);
+      p.putPath(ModuleEditor.SELECTED_EDITOR_NAME, ClasspathEditor.NAME);
+      r = new Runnable() {
+        public void run() {
+          if (orderEntry != null) {
+            ModuleEditor moduleEditor = ((ModuleConfigurable)node.getConfigurable()).getModuleEditor();
+            ModuleConfigurationEditor editor = moduleEditor.getEditor(ClasspathEditor.NAME);
+            if (editor instanceof ClasspathEditor) {
+              ((ClasspathEditor)editor).selectOrderEntry(orderEntry);
+            }
+          }
+        }
+      };
+    }
+    final ActionCallback result = ProjectStructureConfigurable.getInstance(myProject).navigateTo(p, true);
+    return r != null ? result.doWhenDone(r) : result;
   }
 
 
@@ -736,10 +770,16 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
             return null;
           }
         };
+
+        Collection<AnAction> actionsFromExtensions = new ArrayList<AnAction>();
         for (final ModuleStructureExtension extension : ModuleStructureExtension.EP_NAME.getExtensions()) {
-          result.addAll(extension.createAddActions(selectedNodeRetriever, TREE_UPDATER, myProject, myRoot));
+          actionsFromExtensions.addAll(extension.createAddActions(selectedNodeRetriever, TREE_UPDATER, myProject, myRoot));
         }
 
+        if (!actionsFromExtensions.isEmpty() && !result.isEmpty()) {
+          result.add(new Separator());
+        }
+        result.addAll(actionsFromExtensions);
         return result.toArray(new AnAction[result.size()]);
       }
     };
@@ -778,7 +818,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
     }
 
     public void actionPerformed(final AnActionEvent e) {
-      final NamedConfigurable namedConfigurable = getSelectedConfugurable();
+      final NamedConfigurable namedConfigurable = getSelectedConfigurable();
       if (namedConfigurable instanceof ModuleConfigurable) {
         try {
           final ModuleEditor moduleEditor = ((ModuleConfigurable)namedConfigurable).getModuleEditor();
@@ -788,7 +828,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
                                                                     false);
           final Module originalModule = moduleEditor.getModule();
           if (originalModule != null) {
-            component.setPath(PathUtil.getParentPath(originalModule.getModuleFilePath()));
+            component.setPath(FileUtil.toSystemDependentName(PathUtil.getParentPath(originalModule.getModuleFilePath())));
           }
 
           final DialogBuilder dialogBuilder = new DialogBuilder(myTree);
@@ -882,7 +922,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
       if (selectionPaths == null || selectionPaths.length != 1) {
         e.getPresentation().setEnabled(false);
       } else {
-        final NamedConfigurable selectedConfigurable = getSelectedConfugurable();
+        final NamedConfigurable selectedConfigurable = getSelectedConfigurable();
         e.getPresentation().setEnabled(selectedConfigurable instanceof ModuleConfigurable || canBeCopiedByExtension(selectedConfigurable));
       }
     }

@@ -18,14 +18,13 @@ package org.jetbrains.idea.devkit.run;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.configurations.LogFileOptions;
 import com.intellij.execution.ui.AlternativeJREPanel;
-import com.intellij.ide.ui.ListCellRendererWrapper;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.ui.configuration.ModulesCombobox;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.ui.PanelWithAnchor;
 import com.intellij.ui.RawCommandLineEditor;
@@ -35,6 +34,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
+import org.jetbrains.idea.devkit.module.PluginModuleType;
 import org.jetbrains.idea.devkit.projectRoots.IdeaJdk;
 import org.jetbrains.idea.devkit.projectRoots.Sandbox;
 
@@ -49,9 +49,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 
 public class PluginRunConfigurationEditor extends SettingsEditor<PluginRunConfiguration> implements PanelWithAnchor {
-
-  private DefaultComboBoxModel myModulesModel = new DefaultComboBoxModel();
-  private final JComboBox myModules = new JComboBox(myModulesModel);
+  private final ModulesCombobox myModules = new ModulesCombobox();
   private final JBLabel myModuleLabel = new JBLabel(ExecutionBundle.message("application.configuration.use.classpath.and.jdk.of.module.label"));
   private final LabeledComponent<RawCommandLineEditor> myVMParameters = new LabeledComponent<RawCommandLineEditor>();
   private final LabeledComponent<RawCommandLineEditor> myProgramParameters = new LabeledComponent<RawCommandLineEditor>();
@@ -73,9 +71,10 @@ public class PluginRunConfigurationEditor extends SettingsEditor<PluginRunConfig
     });
     myModules.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
-        if (myModules.getSelectedItem() != null){
+        final Module selectedModule = myModules.getSelectedModule();
+        if (selectedModule != null){
           prc.removeAllLogFiles();
-          Sdk jdk = ModuleRootManager.getInstance((Module)myModules.getSelectedItem()).getSdk();
+          Sdk jdk = ModuleRootManager.getInstance(selectedModule).getSdk();
           jdk = IdeaJdk.findIdeaJdk(jdk);
           if (jdk != null) {
             final String sandboxHome = ((Sandbox)jdk.getSdkAdditionalData()).getSandboxHome();
@@ -129,7 +128,7 @@ public class PluginRunConfigurationEditor extends SettingsEditor<PluginRunConfig
   }
 
   public void resetEditorFrom(PluginRunConfiguration prc) {
-    myModules.setSelectedItem(prc.getModule());
+    myModules.setSelectedModule(prc.getModule());
     getVMParameters().setText(prc.VM_PARAMETERS);
     getProgramParameters().setText(prc.PROGRAM_PARAMETERS);
     myAlternativeJREPanel.init(prc.getAlternativeJrePath(), prc.isAlternativeJreEnabled());
@@ -137,7 +136,7 @@ public class PluginRunConfigurationEditor extends SettingsEditor<PluginRunConfig
 
 
   public void applyEditorTo(PluginRunConfiguration prc) throws ConfigurationException {
-    prc.setModule(((Module)myModules.getSelectedItem()));
+    prc.setModule(myModules.getSelectedModule());
     prc.VM_PARAMETERS = getVMParameters().getText();
     prc.PROGRAM_PARAMETERS = getProgramParameters().getText();
     prc.setAlternativeJrePath(myAlternativeJREPanel.getPath());
@@ -146,17 +145,7 @@ public class PluginRunConfigurationEditor extends SettingsEditor<PluginRunConfig
 
   @NotNull
   public JComponent createEditor() {
-    myModulesModel = new DefaultComboBoxModel(myPRC.getModules());
-    myModules.setModel(myModulesModel);
-    myModules.setRenderer(new ListCellRendererWrapper<Module>(myModules.getRenderer()) {
-      @Override
-      public void customize(JList list, final Module module, int index, boolean selected, boolean hasFocus) {
-        if (module != null) {
-          setText(module.getName());
-          setIcon(ModuleType.get(module).getNodeIcon(true));
-        }
-      }
-    });
+    myModules.fillModules(myPRC.getProject(), PluginModuleType.getInstance());
     JPanel wholePanel = new JPanel(new GridBagLayout());
     myVMParameters.setText(DevKitBundle.message("vm.parameters"));
     myVMParameters.setComponent(new RawCommandLineEditor());

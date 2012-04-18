@@ -50,7 +50,7 @@ import java.util.concurrent.ConcurrentMap;
  * @author max
  */
 public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
-  private final PsiElementFinder[] myElementFinders;
+  private ArrayList<PsiElementFinder> myElementFinders;
   private final PsiNameHelper myNameHelper;
   private final PsiConstantEvaluationHelper myConstantEvaluationHelper;
   private final ConcurrentMap<String, PsiPackage> myPackageCache = new ConcurrentHashMap<String, PsiPackage>();
@@ -66,11 +66,6 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
     myFileManager = javaFileManager;
     myNameHelper = new PsiNameHelperImpl(this);
     myConstantEvaluationHelper = new PsiConstantEvaluationHelperImpl();
-
-    List<PsiElementFinder> elementFinders = new ArrayList<PsiElementFinder>();
-    elementFinders.add(new PsiElementFinderImpl());
-    ContainerUtil.addAll(elementFinders, myProject.getExtensions(PsiElementFinder.EP_NAME));
-    myElementFinders = elementFinders.toArray(new PsiElementFinder[elementFinders.size()]);
 
     final PsiModificationTracker modificationTracker = psiManager.getModificationTracker();
 
@@ -113,7 +108,7 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
       return null;
     }
 
-    for (PsiElementFinder finder : myElementFinders) {
+    for (PsiElementFinder finder : finders()) {
       PsiClass aClass = finder.findClass(qualifiedName, scope);
       if (aClass != null) return aClass;
     }
@@ -161,12 +156,29 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
     }
 
     List<PsiClass> classes = new SmartList<PsiClass>();
-    for (PsiElementFinder finder : myElementFinders) {
+    for (PsiElementFinder finder : finders()) {
       PsiClass[] finderClasses = finder.findClasses(qualifiedName, scope);
       ContainerUtil.addAll(classes, finderClasses);
     }
 
     return classes.toArray(new PsiClass[classes.size()]);
+  }
+
+  private ArrayList<PsiElementFinder> finders() {
+    ArrayList<PsiElementFinder> answer = myElementFinders;
+    if (answer == null) {
+      answer = calcFinders();
+      myElementFinders = answer;
+    }
+
+    return answer;
+  }
+
+  private ArrayList<PsiElementFinder> calcFinders() {
+    ArrayList<PsiElementFinder> elementFinders = new ArrayList<PsiElementFinder>();
+    elementFinders.add(new PsiElementFinderImpl());
+    ContainerUtil.addAll(elementFinders, myProject.getExtensions(PsiElementFinder.EP_NAME));
+    return elementFinders;
   }
 
   @Override
@@ -194,7 +206,7 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
 
   private List<PsiElementFinder> filteredFinders() {
     DumbService dumbService = DumbService.getInstance(getProject());
-    List<PsiElementFinder> finders = Arrays.asList(myElementFinders);
+    List<PsiElementFinder> finders = finders();
     if (dumbService.isDumb()) {
       finders = dumbService.filterByDumbAwareness(finders);
     }

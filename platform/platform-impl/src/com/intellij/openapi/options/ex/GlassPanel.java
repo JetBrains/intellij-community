@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,17 +36,11 @@ import java.util.Set;
  */
 public class GlassPanel extends JComponent {
   private final Set<JComponent> myLightComponents = new HashSet<JComponent>();
-
-  protected RenderingHints myHints;
-
   private final JComponent myPanel;
   private static final Insets EMPTY_INSETS = new Insets(0, 0, 0, 0);
 
 
   public GlassPanel(JComponent containingPanel) {
-    myHints = new RenderingHints(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
-    myHints.put(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-    myHints.put(RenderingHints.KEY_FRACTIONALMETRICS, RenderingHints.VALUE_FRACTIONALMETRICS_ON);
     myPanel = containingPanel;
     setVisible(false);
   }

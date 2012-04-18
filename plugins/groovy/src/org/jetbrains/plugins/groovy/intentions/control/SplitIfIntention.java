@@ -64,17 +64,11 @@ public class SplitIfIntention extends Intention {
     return new PsiElementPredicate() {
       @Override
       public boolean satisfiedBy(PsiElement element) {
-        if ("&&".equals(element.getText()) &&
-            element.getParent() instanceof GrBinaryExpression &&
-            ((GrBinaryExpression)element.getParent()).getRightOperand() != null &&
-            element.getParent().getParent() instanceof GrIfStatement &&
-            ((GrIfStatement) element.getParent().getParent()).getElseBranch() == null
-          ) {
-          return true;
-
-        }
-
-        return false;
+        return element.getParent() instanceof GrBinaryExpression &&
+               ((GrBinaryExpression)element.getParent()).getRightOperand() != null &&
+               element.getParent().getParent() instanceof GrIfStatement &&
+               ((GrIfStatement)element.getParent().getParent()).getElseBranch() == null
+               && "&&".equals(element.getText());
       }
     };
   }

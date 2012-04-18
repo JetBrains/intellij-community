@@ -61,6 +61,7 @@ import com.intellij.psi.impl.PsiDocumentManagerImpl;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopeManager;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.Alarm;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
@@ -94,7 +95,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
   private final Alarm myAlarm = new Alarm();
   private boolean myUpdateByTimerEnabled = true;
   private final Collection<VirtualFile> myDisabledHintsFiles = new THashSet<VirtualFile>();
-  private final Collection<PsiFile> myDisabledHighlightingFiles = new THashSet<PsiFile>();
+  private final Collection<VirtualFile> myDisabledHighlightingFiles = new THashSet<VirtualFile>();
 
   private final FileStatusMap myFileStatusMap;
   private DaemonCodeAnalyzerSettings myLastSettings;
@@ -113,7 +114,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
   private volatile boolean allowToInterrupt = true;
   private StatusBarUpdater myStatusBarUpdater;
 
-  public DaemonCodeAnalyzerImpl(Project project, DaemonCodeAnalyzerSettings daemonCodeAnalyzerSettings, EditorTracker editorTracker) {
+  public DaemonCodeAnalyzerImpl(@NotNull Project project, DaemonCodeAnalyzerSettings daemonCodeAnalyzerSettings, EditorTracker editorTracker) {
     myProject = project;
 
     mySettings = daemonCodeAnalyzerSettings;
@@ -122,8 +123,9 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
 
     myFileStatusMap = new FileStatusMap(myProject);
     myPassExecutorService = new PassExecutorService(myProject) {
+      @Override
       protected void afterApplyInformationToEditor(final TextEditorHighlightingPass pass,
-                                                   final FileEditor fileEditor,
+                                                   @NotNull final FileEditor fileEditor,
                                                    final ProgressIndicator updateProgress) {
         if (fileEditor instanceof TextEditor) {
           log(updateProgress, pass, "Apply ");
@@ -132,6 +134,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
         }
       }
 
+      @Override
       protected boolean isDisposed() {
         return myDisposed || super.isDisposed();
       }
@@ -140,19 +143,20 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     Disposer.register(project, myFileStatusMap);
   }
 
-  static boolean hasErrors(Project project, Document document) {
+  static boolean hasErrors(@NotNull Project project, @NotNull Document document) {
     return !processHighlights(document, project, HighlightSeverity.ERROR, 0, document.getTextLength(), CommonProcessors.<HighlightInfo>alwaysFalse());
   }
 
   @NotNull
   @TestOnly
-  public static List<HighlightInfo> getHighlights(Document document, HighlightSeverity minSeverity, Project project) {
+  public static List<HighlightInfo> getHighlights(@NotNull Document document, HighlightSeverity minSeverity, @NotNull Project project) {
     List<HighlightInfo> infos = new ArrayList<HighlightInfo>();
     processHighlights(document, project, minSeverity, 0, document.getTextLength(),
                       new CommonProcessors.CollectProcessor<HighlightInfo>(infos));
     return infos;
   }
 
+  @NotNull
   public List<HighlightInfo> runMainPasses(@NotNull PsiFile psiFile,
                                            @NotNull Document document,
                                            @NotNull final ProgressIndicator progress) {
@@ -181,6 +185,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     return result;
   }
 
+  @NotNull
   @TestOnly
   public List<HighlightInfo> runPasses(@NotNull PsiFile file,
                                        @NotNull Document document,
@@ -209,6 +214,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     TextEditorBackgroundHighlighter highlighter = (TextEditorBackgroundHighlighter)textEditor.getBackgroundHighlighter();
     final List<TextEditorHighlightingPass> passes = highlighter.getPasses(toIgnore);
     HighlightingPass[] array = passes.toArray(new HighlightingPass[passes.size()]);
+    assert array.length != 0: "Highlighting is disabled for the file "+file;
 
     final DaemonProgressIndicator progress = createUpdateProgress();
     progress.setDebug(LOG.isDebugEnabled());
@@ -282,14 +288,17 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     myPassExecutorService.cancelAll(true);
   }
 
+  @Override
   @NotNull
   public String getComponentName() {
     return "DaemonCodeAnalyzer";
   }
 
+  @Override
   public void initComponent() {
   }
 
+  @Override
   public void disposeComponent() {
   }
 
@@ -308,6 +317,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     myFileStatusMap.markAllFilesDirty();
   }
 
+  @Override
   public void projectClosed() {
     assert myInitialized : "Disposing not initialized component";
     assert !myDisposed : "Double dispose";
@@ -318,7 +328,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     myLastSettings = null;
   }
 
-  void repaintErrorStripeRenderer(Editor editor) {
+  void repaintErrorStripeRenderer(@NotNull Editor editor) {
     if (!myProject.isInitialized()) return;
     final Document document = editor.getDocument();
     final PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
@@ -341,7 +351,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     dependencyValidationManager.reloadRules();
   }
 
-  private static void addScopesToList(final List<Pair<NamedScope, NamedScopesHolder>> scopeList, final NamedScopesHolder holder) {
+  private static void addScopesToList(@NotNull final List<Pair<NamedScope, NamedScopesHolder>> scopeList, @NotNull final NamedScopesHolder holder) {
     NamedScope[] scopes = holder.getScopes();
     for (NamedScope scope : scopes) {
       scopeList.add(Pair.create(scope, holder));
@@ -353,6 +363,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     return myScopes;
   }
 
+  @Override
   public void settingsChanged() {
     DaemonCodeAnalyzerSettings settings = DaemonCodeAnalyzerSettings.getInstance();
     if (settings.isCodeHighlightingChanged(myLastSettings)) {
@@ -361,11 +372,13 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     myLastSettings = (DaemonCodeAnalyzerSettings)settings.clone();
   }
 
+  @Override
   public void updateVisibleHighlighters(@NotNull Editor editor) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     // no need, will not work anyway
   }
 
+  @Override
   public void setUpdateByTimerEnabled(boolean value) {
     myUpdateByTimerEnabled = value;
     stopProcess(value);
@@ -375,6 +388,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     return myUpdateByTimerEnabled;
   }
 
+  @Override
   public void setImportHintsEnabled(@NotNull PsiFile file, boolean value) {
     VirtualFile vFile = file.getVirtualFile();
     if (value) {
@@ -387,23 +401,27 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     }
   }
 
+  @Override
   public void resetImportHintsEnabledForProject() {
     myDisabledHintsFiles.clear();
   }
 
+  @Override
   public void setHighlightingEnabled(@NotNull PsiFile file, boolean value) {
+    VirtualFile virtualFile = PsiUtilCore.getVirtualFile(file);
     if (value) {
-      myDisabledHighlightingFiles.remove(file);
+      myDisabledHighlightingFiles.remove(virtualFile);
     }
     else {
-      myDisabledHighlightingFiles.add(file);
+      myDisabledHighlightingFiles.add(virtualFile);
     }
   }
 
-  public boolean isHighlightingAvailable(PsiFile file) {
-    if (myDisabledHighlightingFiles.contains(file)) return false;
-
+  @Override
+  public boolean isHighlightingAvailable(@Nullable PsiFile file) {
     if (file == null || !file.isPhysical()) return false;
+    if (myDisabledHighlightingFiles.contains(PsiUtilCore.getVirtualFile(file))) return false;
+
     if (file instanceof PsiCompiledElement) return false;
     final FileType fileType = file.getFileType();
     if (fileType == StdFileTypes.GUI_DESIGNER_FORM){
@@ -413,14 +431,17 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     return !fileType.isBinary();
   }
 
+  @Override
   public boolean isImportHintsEnabled(@NotNull PsiFile file) {
     return isAutohintsAvailable(file) && !myDisabledHintsFiles.contains(file.getVirtualFile());
   }
 
+  @Override
   public boolean isAutohintsAvailable(PsiFile file) {
     return isHighlightingAvailable(file) && !(file instanceof PsiCompiledElement);
   }
 
+  @Override
   public void restart() {
     myFileStatusMap.markAllFilesDirty();
     stopProcess(true);
@@ -434,6 +455,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     stopProcess(true);
   }
 
+  @NotNull
   public List<TextEditorHighlightingPass> getPassesToShowProgressFor(Document document) {
     List<TextEditorHighlightingPass> allPasses = myPassExecutorService.getAllSubmittedPasses();
     List<TextEditorHighlightingPass> result = new ArrayList<TextEditorHighlightingPass>(allPasses.size());
@@ -453,7 +475,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
            myFileStatusMap.allDirtyScopesAreNull(document);
   }
 
-  public boolean isErrorAnalyzingFinished(PsiFile file) {
+  public boolean isErrorAnalyzingFinished(@NotNull PsiFile file) {
     if (myDisposed) return false;
     Document document = PsiDocumentManager.getInstance(myProject).getCachedDocument(file);
     return document != null &&
@@ -461,6 +483,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
            myFileStatusMap.getFileDirtyScope(document, Pass.UPDATE_ALL) == null;
   }
 
+  @NotNull
   public FileStatusMap getFileStatusMap() {
     return myFileStatusMap;
   }
@@ -506,7 +529,8 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     final SeverityRegistrar severityRegistrar = SeverityRegistrar.getInstance(project);
     MarkupModelEx model = (MarkupModelEx)DocumentMarkupModel.forDocument(document, project, true);
     return model.processRangeHighlightersOverlappingWith(startOffset, endOffset, new Processor<RangeHighlighterEx>() {
-      public boolean process(RangeHighlighterEx marker) {
+      @Override
+      public boolean process(@NotNull RangeHighlighterEx marker) {
         Object tt = marker.getErrorStripeTooltip();
         if (!(tt instanceof HighlightInfo)) return true;
         HighlightInfo info = (HighlightInfo)tt;
@@ -528,7 +552,8 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     final SeverityRegistrar severityRegistrar = SeverityRegistrar.getInstance(project);
     MarkupModelEx model = (MarkupModelEx)DocumentMarkupModel.forDocument(document, project, true);
     return model.processRangeHighlightersOutside(startOffset, endOffset, new Processor<RangeHighlighterEx>() {
-      public boolean process(RangeHighlighterEx marker) {
+      @Override
+      public boolean process(@NotNull RangeHighlighterEx marker) {
         Object tt = marker.getErrorStripeTooltip();
         if (!(tt instanceof HighlightInfo)) return true;
         HighlightInfo info = (HighlightInfo)tt;
@@ -547,7 +572,8 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
                                                     final boolean includeFixRange,
                                                     @NotNull final Processor<HighlightInfo> processor) {
     return processHighlights(document, project, null, 0, document.getTextLength(), new Processor<HighlightInfo>() {
-      public boolean process(HighlightInfo info) {
+      @Override
+      public boolean process(@NotNull HighlightInfo info) {
         if (!isOffsetInsideHighlightInfo(offset, info, includeFixRange)) return true;
 
         int compare = info.getSeverity().compareTo(minSeverity);
@@ -557,10 +583,11 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
   }
 
   @Nullable
-  public HighlightInfo findHighlightByOffset(Document document, final int offset, final boolean includeFixRange) {
+  public HighlightInfo findHighlightByOffset(@NotNull Document document, final int offset, final boolean includeFixRange) {
     final List<HighlightInfo> foundInfoList = new SmartList<HighlightInfo>();
     processHighlightsNearOffset(document, myProject, HighlightSeverity.INFORMATION, offset, includeFixRange, new Processor<HighlightInfo>() {
-      public boolean process(HighlightInfo info) {
+      @Override
+      public boolean process(@NotNull HighlightInfo info) {
         if (!foundInfoList.isEmpty()) {
           HighlightInfo foundInfo = foundInfoList.get(0);
           int compare = foundInfo.getSeverity().compareTo(info.getSeverity());
@@ -581,7 +608,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     return new HighlightInfoComposite(foundInfoList);
   }
 
-  private static boolean isOffsetInsideHighlightInfo(int offset, HighlightInfo info, boolean includeFixRange) {
+  private static boolean isOffsetInsideHighlightInfo(int offset, @NotNull HighlightInfo info, boolean includeFixRange) {
     RangeHighlighterEx highlighter = info.highlighter;
     if (highlighter == null || !highlighter.isValid()) return false;
     int startOffset = highlighter.getStartOffset();
@@ -601,7 +628,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
   }
 
   @Nullable
-  public static List<LineMarkerInfo> getLineMarkers(Document document, Project project) {
+  public static List<LineMarkerInfo> getLineMarkers(@NotNull Document document, Project project) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     MarkupModel markup = DocumentMarkupModel.forDocument(document, project, true);
     return markup.getUserData(MARKERS_IN_EDITOR_DOCUMENT_KEY);
@@ -613,7 +640,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     markup.putUserData(MARKERS_IN_EDITOR_DOCUMENT_KEY, lineMarkers);
   }
 
-  public synchronized void setLastIntentionHint(Project project, PsiFile file, Editor editor, ShowIntentionsPass.IntentionsInfo intentions, boolean hasToRecreate) {
+  public synchronized void setLastIntentionHint(@NotNull Project project, @NotNull PsiFile file, @NotNull Editor editor, @NotNull ShowIntentionsPass.IntentionsInfo intentions, boolean hasToRecreate) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     hideLastIntentionHint();
     IntentionHintComponent hintComponent = IntentionHintComponent.showIntentionHint(project, file, editor, intentions, false);
@@ -630,11 +657,13 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     }
   }
 
+  @Nullable
   public synchronized IntentionHintComponent getLastIntentionHint() {
     return myLastIntentionHint;
   }
 
-  public void writeExternal(Element parentNode) throws WriteExternalException {
+  @Override
+  public void writeExternal(@NotNull Element parentNode) throws WriteExternalException {
     Element disableHintsElement = new Element(DISABLE_HINTS_TAG);
     parentNode.addContent(disableHintsElement);
 
@@ -653,7 +682,8 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     }
   }
 
-  public void readExternal(Element parentNode) throws InvalidDataException {
+  @Override
+  public void readExternal(@NotNull Element parentNode) throws InvalidDataException {
     myDisabledHintsFiles.clear();
 
     Element element = parentNode.getChild(DISABLE_HINTS_TAG);
@@ -672,14 +702,17 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     }
   }
 
+  @NotNull
   private Runnable createUpdateRunnable() {
     return new Runnable() {
+      @Override
       public void run() {
         if (myDisposed || !myProject.isInitialized()) return;
         if (PowerSaveMode.isEnabled()) return;
         Editor activeEditor = FileEditorManager.getInstance(myProject).getSelectedTextEditor();
 
         Runnable runnable = new Runnable() {
+          @Override
           public void run() {
             PassExecutorService.log(myUpdateProgress, null, "Update Runnable. myUpdateByTimerEnabled:",myUpdateByTimerEnabled," something disposed:",PowerSaveMode.isEnabled() || myDisposed || !myProject.isInitialized()," activeEditors:",myProject.isDisposed() ? null : myDaemonListeners.getSelectedEditors());
             if (!myUpdateByTimerEnabled) return;
@@ -727,6 +760,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     };
   }
 
+  @NotNull
   private synchronized DaemonProgressIndicator createUpdateProgress() {
     DaemonProgressIndicator progress = new DaemonProgressIndicator() {
       @Override
@@ -740,10 +774,11 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     return progress;
   }
 
-  public boolean canChangeFileSilently(PsiFileSystemItem file) {
+  public boolean canChangeFileSilently(@NotNull PsiFileSystemItem file) {
     return myDaemonListeners.canChangeFileSilently(file);
   }
 
+  @Override
   public void autoImportReferenceAtCursor(@NotNull Editor editor, @NotNull PsiFile file) {
     for(ReferenceImporter importer: Extensions.getExtensions(ReferenceImporter.EP_NAME)) {
       if (importer.autoImportReferenceAtCursor(editor, file)) break;
@@ -752,7 +787,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
 
   @NotNull
   @TestOnly
-  public static List<HighlightInfo> getFileLevelHighlights(Project project,PsiFile file ) {
+  public static List<HighlightInfo> getFileLevelHighlights(@NotNull Project project, @NotNull PsiFile file ) {
     return UpdateHighlightersUtil.getFileLeveleHighlights(project, file);
   }
 

@@ -46,14 +46,14 @@ public abstract class VcsDirtyScopeManager {
    *
    * @param file the file for which the status update is requested.
    */
-  public abstract void fileDirty(VirtualFile file);
+  public abstract void fileDirty(@NotNull VirtualFile file);
 
   /**
    * Requests an asynchronous file status update for the specified file path. Must be called from a read action.
    *
    * @param file the file path for which the status update is requested.
    */
-  public abstract void fileDirty(FilePath file);
+  public abstract void fileDirty(@NotNull FilePath file);
 
   /**
    * Requests an asynchronous file status update for all files under the specified directory.

@@ -32,7 +32,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class SpellCheckerSeveritiesProvider extends SeveritiesProvider {
-  public static final HighlightSeverity TYPO = new HighlightSeverity("TYPO", 10);
+  public static final HighlightSeverity TYPO = new HighlightSeverity("TYPO", HighlightSeverity.INFORMATION.myVal + 5);
 
   public List<HighlightInfoType> getSeveritiesHighlightInfoTypes() {
     final List<HighlightInfoType> result = new ArrayList<HighlightInfoType>();

@@ -28,12 +28,13 @@ public class SeparatorFactory {
   private SeparatorFactory() {
   }
 
+  @Deprecated
   public static JComponent createSeparator(String textWithMnemonic, @Nullable JComponent labelFor, boolean boldFont, boolean smallFont) {
-    return new TitledSeparatorWithMnemonic(textWithMnemonic, labelFor, boldFont, smallFont);
+    return new TitledSeparatorWithMnemonic(textWithMnemonic, labelFor);
   }
 
   public static JComponent createSeparator(String textWithMnemonic, @Nullable JComponent labelFor) {
-    return new TitledSeparatorWithMnemonic(textWithMnemonic, labelFor, false, true);
+    return new TitledSeparatorWithMnemonic(textWithMnemonic, labelFor);
   }
 
   @Deprecated

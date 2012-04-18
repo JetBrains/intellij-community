@@ -2,42 +2,66 @@ package org.jetbrains.plugins.gradle.util;
 
 import com.intellij.execution.rmi.RemoteUtil;
 import com.intellij.ide.actions.OpenProjectFileChooserDescriptor;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileTypeDescriptor;
+import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.ModuleOrderEntry;
+import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.BalloonBuilder;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.ToolWindow;
+import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.content.Content;
+import com.intellij.ui.content.ContentManager;
+import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.PathUtil;
+import com.intellij.util.containers.WeakHashMap;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.config.GradleSettings;
 import org.jetbrains.plugins.gradle.model.gradle.GradleProject;
 import org.jetbrains.plugins.gradle.model.id.GradleEntityId;
+import org.jetbrains.plugins.gradle.model.id.GradleSyntheticId;
 import org.jetbrains.plugins.gradle.model.intellij.IntellijEntityVisitor;
+import org.jetbrains.plugins.gradle.model.intellij.ModuleAwareContentRoot;
 import org.jetbrains.plugins.gradle.remote.GradleApiException;
+import org.jetbrains.plugins.gradle.sync.GradleProjectStructureTreeModel;
 import org.jetbrains.plugins.gradle.task.GradleResolveProjectTask;
-import org.jetbrains.plugins.gradle.ui.GradleIcons;
-import org.jetbrains.plugins.gradle.ui.GradleProjectStructureNode;
-import org.jetbrains.plugins.gradle.ui.GradleProjectStructureNodeDescriptor;
+import org.jetbrains.plugins.gradle.ui.*;
 
 import javax.swing.*;
+import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.io.File;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -47,6 +71,18 @@ import java.util.concurrent.TimeUnit;
  * @since 8/25/11 1:19 PM
  */
 public class GradleUtil {
+
+  public static final String PATH_SEPARATOR = "/";
+
+  private static final Map<Project, List<Balloon>>            PROJECT_BALLOONS     = new WeakHashMap<Project, List<Balloon>>();
+  private static final List<Balloon>                          APPLICATION_BALLOONS = new CopyOnWriteArrayList<Balloon>();
+  private static final NotNullLazyValue<GradleLibraryManager> LIBRARY_MANAGER      = new NotNullLazyValue<GradleLibraryManager>() {
+    @NotNull
+    @Override
+    protected GradleLibraryManager compute() {
+      return ServiceManager.getService(GradleLibraryManager.class);
+    }
+  };
 
   private GradleUtil() {
   }
@@ -80,7 +116,9 @@ public class GradleUtil {
    * @param message      message to show
    */
   public static void showBalloon(@NotNull JComponent component, @NotNull MessageType messageType, @NotNull String message) {
-    BalloonBuilder balloonBuilder = JBPopupFactory.getInstance().createHtmlTextBalloonBuilder(message, messageType, null);
+    final BalloonBuilder delegate = JBPopupFactory.getInstance().createHtmlTextBalloonBuilder(message, messageType, null);
+    BalloonBuilder balloonBuilder = new GradleBalloonBuilder(delegate, APPLICATION_BALLOONS);
+    ApplicationBalloonsDisposeActivator.ensureActivated();
     Balloon balloon = balloonBuilder.setFadeoutTime(TimeUnit.SECONDS.toMillis(1)).createBalloon();
     Dimension size = component.getSize();
     Balloon.Position position;
@@ -112,10 +150,11 @@ public class GradleUtil {
    */
   public static void refreshProject(@NotNull Project project) {
     final GradleSettings settings = GradleSettings.getInstance(project);
-    final String linkedProjectPath = settings.LINKED_PROJECT_FILE_PATH;
+    final String linkedProjectPath = settings.getLinkedProjectPath();
     if (StringUtil.isEmpty(linkedProjectPath)) {
       return;
     }
+    assert linkedProjectPath != null;
     Ref<String> errorHolder = new Ref<String>();
     refreshProject(project, linkedProjectPath, errorHolder, true, false);
     final String error = errorHolder.get();
@@ -157,10 +196,10 @@ public class GradleUtil {
    */
   @Nullable
   public static GradleProject refreshProject(@NotNull final Project project,
-                                    @NotNull final String gradleProjectPath,
-                                    @NotNull final Ref<String> errorHolder,
-                                    final boolean resolveLibraries,
-                                    final boolean modal)
+                                             @NotNull final String gradleProjectPath,
+                                             @NotNull final Ref<String> errorHolder,
+                                             final boolean resolveLibraries,
+                                             final boolean modal)
   {
     final Ref<GradleProject> gradleProject = new Ref<GradleProject>();
     final TaskUnderProgress task = new TaskUnderProgress() {
@@ -169,7 +208,7 @@ public class GradleUtil {
       public void execute(@NotNull ProgressIndicator indicator) {
         GradleResolveProjectTask task = new GradleResolveProjectTask(project, gradleProjectPath, resolveLibraries);
         task.execute(indicator);
-        gradleProject.set(task.getProject());
+        gradleProject.set(task.getGradleProject());
         final Throwable error = task.getError();
         if (error == null) {
           return;
@@ -182,7 +221,7 @@ public class GradleUtil {
       @Override
       public void run() {
         if (modal) {
-          ProgressManager.getInstance().run(new Task.Modal(project, GradleBundle.message("gradle.import.progress.text"), true) {
+          ProgressManager.getInstance().run(new Task.Modal(project, GradleBundle.message("gradle.import.progress.text"), false) {
             @Override
             public void run(@NotNull ProgressIndicator indicator) {
               task.execute(indicator);
@@ -196,12 +235,12 @@ public class GradleUtil {
               task.execute(indicator);
             }
           });
-        } 
+        }
       }
     });
     return gradleProject.get();
   }
-
+  
   /**
    * Tries to dispatch given entity via the given visitor.
    * 
@@ -215,26 +254,203 @@ public class GradleUtil {
     else if (entity instanceof Module) {
       visitor.visit(((Module)entity));
     }
+    else if (entity instanceof ModuleAwareContentRoot) {
+      visitor.visit(((ModuleAwareContentRoot)entity));
+    }
     else if (entity instanceof LibraryOrderEntry) {
       visitor.visit(((LibraryOrderEntry)entity));
     }
     else if (entity instanceof ModuleOrderEntry) {
       visitor.visit(((ModuleOrderEntry)entity));
     }
+    else if (entity instanceof Library) {
+      visitor.visit(((Library)entity));
+    }
   }
 
+  @NotNull
   public static <T extends GradleEntityId> GradleProjectStructureNodeDescriptor<T> buildDescriptor(@NotNull T id, @NotNull String name) {
     return new GradleProjectStructureNodeDescriptor<T>(id, name, id.getType().getIcon());
   }
-
-  @NotNull
-  public static  <T extends GradleEntityId> GradleProjectStructureNode<T> buildNode(@NotNull T id) {
-    return new GradleProjectStructureNode<T>(buildDescriptor(id, id.toString()));
-  }
   
   @NotNull
-  public static  <T extends GradleEntityId> GradleProjectStructureNode<T> buildNode(@NotNull T id, @NotNull String name) {
-    return new GradleProjectStructureNode<T>(buildDescriptor(id, name));
+  public static GradleProjectStructureNodeDescriptor<GradleSyntheticId> buildSyntheticDescriptor(@NotNull String text) {
+    return buildSyntheticDescriptor(text, null);
+  }
+  
+  public static GradleProjectStructureNodeDescriptor<GradleSyntheticId> buildSyntheticDescriptor(@NotNull String text, @Nullable Icon icon) {
+    return new GradleProjectStructureNodeDescriptor<GradleSyntheticId>(new GradleSyntheticId(text), text, icon);
+  }
+
+  @NotNull
+  public static String getLocalFileSystemPath(@NotNull VirtualFile file) {
+    if (file.getFileType() == FileTypes.ARCHIVE) {
+      final VirtualFile jar = JarFileSystem.getInstance().getVirtualFileForJar(file);
+      if (jar != null) {
+        return jar.getPath();
+      }
+    }
+    return file.getPath();
+  }
+
+  /**
+   * Tries to calculate the position to use for showing hint for the given node of the given tree.
+   * 
+   * @param node  target node for which a hint should be shown
+   * @param tree  target tree that contains given node
+   * @return      preferred hint position (in coordinates relative to the given tree) if it's possible to calculate the one;
+   *              <code>null</code> otherwise
+   */
+  @Nullable
+  public static Point getHintPosition(@NotNull GradleProjectStructureNode<?> node, @NotNull Tree tree) {
+    final Rectangle bounds = tree.getPathBounds(new TreePath(node.getPath()));
+    if (bounds == null) {
+      return null;
+    }
+    final Icon icon = ((GradleProjectStructureNode)node).getDescriptor().getOpenIcon();
+    int xAdjustment = 0;
+    if (icon != null) {
+      xAdjustment = icon.getIconWidth();
+    }
+    return new Point(bounds.x + xAdjustment, bounds.y + bounds.height);
+  }
+
+  @NotNull
+  public static String getLibraryName(@NotNull Library library) {
+    final String result = library.getName();
+    if (result != null) {
+      return result;
+    }
+    String[] endingsToStrip = { "/", "!", ".jar" };
+    StringBuilder buffer = new StringBuilder();
+    for (OrderRootType type : OrderRootType.getAllTypes()) {
+      for (String url : library.getUrls(type)) {
+        buffer.setLength(0);
+        buffer.append(url);
+        for (String ending : endingsToStrip) {
+          if (buffer.lastIndexOf(ending) == buffer.length() - ending.length()) {
+            buffer.setLength(buffer.length() - ending.length());
+          }
+        }
+        final int i = buffer.lastIndexOf(PATH_SEPARATOR);
+        if (i < 0 || i >= buffer.length() - 1) {
+          continue;
+        }
+        String candidate = buffer.substring(i + 1);
+        if (!StringUtil.isEmpty(candidate)) {
+          return candidate;
+        }
+      }
+    }
+    assert false;
+    return "unknown-lib";
+  }
+
+  /**
+   * Tries to find the current {@link GradleProjectStructureTreeModel} instance.
+   * 
+   * @param context  target context (if defined)
+   * @return         current {@link GradleProjectStructureTreeModel} instance (if any has been found); <code>null</code> otherwise
+   */
+  @Nullable
+  public static GradleProjectStructureTreeModel getProjectStructureTreeModel(@Nullable DataContext context) {
+    if (context != null) {
+      final GradleProjectStructureTreeModel model = GradleDataKeys.SYNC_TREE_MODEL.getData(context);
+      if (model != null) {
+        return model;
+      }
+    }
+
+    if (context == null) {
+      return null;
+    }
+    
+    final Project project = PlatformDataKeys.PROJECT.getData(context);
+    if (project == null) {
+      return null;
+    }
+
+    return getProjectStructureTreeModel(project);
+  }
+
+  @Nullable
+  public static GradleProjectStructureTreeModel getProjectStructureTreeModel(@NotNull Project project) {
+    final ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(project);
+    final ToolWindow toolWindow = toolWindowManager.getToolWindow(GradleConstants.TOOL_WINDOW_ID);
+    if (toolWindow == null) {
+      return null;
+    }
+
+    final ContentManager contentManager = toolWindow.getContentManager();
+    if (contentManager == null) {
+      return null;
+    }
+
+    for (Content content : contentManager.getContents()) {
+      final JComponent component = content.getComponent();
+      if (component instanceof DataProvider) {
+        final Object data = ((DataProvider)component).getData(GradleDataKeys.SYNC_TREE_MODEL.getName());
+        if (data instanceof GradleProjectStructureTreeModel) {
+          return (GradleProjectStructureTreeModel)data;
+        }
+      }
+    }
+    return null;
+  }
+
+  /**
+   * @return    {@link MatrixControlBuilder} with predefined set of columns ('gradle' and 'intellij')
+   */
+  @NotNull
+  public static MatrixControlBuilder getConflictChangeBuilder() {
+    final String gradle = GradleBundle.message("gradle.name");
+    final String intellij = GradleBundle.message("gradle.ide");
+    return new MatrixControlBuilder(gradle, intellij);
+  }
+  
+  /**
+   * Wraps {@link JBPopupFactory#createBalloonBuilder(JComponent) default api} in order to take care of automatic balloon disposing
+   * on project close.
+   * 
+   * @param content  target balloon content
+   * @param project  project that should be used to bound target balloon's lifecycle to 
+   * @return         balloon builder to use.
+   */
+  @NotNull
+  public static BalloonBuilder getBalloonBuilder(@NotNull JComponent content, @NotNull final Project project) {
+    List<Balloon> balloons = PROJECT_BALLOONS.get(project);
+    if (balloons == null) {
+      PROJECT_BALLOONS.put(project, balloons = new CopyOnWriteArrayList<Balloon>());
+      final List<Balloon> b = balloons;
+      Disposer.register(project, new Disposable() {
+        @Override
+        public void dispose() {
+          for (Balloon balloon : b) {
+            if (!balloon.isDisposed()) {
+              Disposer.dispose(balloon);
+            }
+          }
+          PROJECT_BALLOONS.remove(project);
+        }
+      });
+    }
+    return new GradleBalloonBuilder(JBPopupFactory.getInstance().createBalloonBuilder(content), balloons);
+  }
+
+  public static boolean isGradleAvailable() {
+    final Project[] projects = ProjectManager.getInstance().getOpenProjects();
+    final Project project;
+    if (projects.length == 1) {
+      project = projects[0];
+    }
+    else {
+      project = null;
+    }
+    return isGradleAvailable(project);
+  }
+  
+  public static boolean isGradleAvailable(@Nullable Project project) {
+    return LIBRARY_MANAGER.getValue().getGradleHome(project) != null;
   }
   
   private interface TaskUnderProgress {
@@ -257,8 +473,27 @@ public class GradleUtil {
         if (!super.isFileVisible(file, showHiddenFiles)) {
           return false;
         }
-        return file.isDirectory() || GradleConstants.EXTENSION.equals(file.getExtension());
+        return file.isDirectory() || GradleConstants.DEFAULT_SCRIPT_NAME.equals(file.getName());
       }
     };
+  }
+
+  /**
+   * Serves the same purpose as the {@link DescriptorHolder} but for application-level balloons releasing.
+   */
+  private static class ApplicationBalloonsDisposeActivator {
+    static {
+      Disposer.register(ApplicationManager.getApplication(), new Disposable() {
+        @Override
+        public void dispose() {
+          for (Balloon balloon : APPLICATION_BALLOONS) {
+            if (!balloon.isDisposed()) {
+              Disposer.dispose(balloon);
+            }
+          }
+        }
+      });
+    }
+    static void ensureActivated() { /* the real job is at the static init block. */ }
   }
 }

@@ -22,7 +22,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.facet.AndroidRootUtil;
 import org.jetbrains.android.sdk.AndroidPlatform;
-import org.jetbrains.android.sdk.AndroidSdkUtils;
+import org.jetbrains.android.util.AndroidUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -62,7 +62,11 @@ public class ResourcesValidityState implements ValidityState {
     if (resourcesDir != null) {
       collectFiles(resourcesDir);
     }
-    for (AndroidFacet depFacet : AndroidSdkUtils.getAllAndroidDependencies(module, true)) {
+    VirtualFile assetsDir = AndroidRootUtil.getAssetsDir(facet);
+    if (assetsDir != null) {
+      collectFiles(assetsDir);
+    }
+    for (AndroidFacet depFacet : AndroidUtils.getAllAndroidDependencies(module, true)) {
       VirtualFile depManifest = AndroidRootUtil.getManifestFile(depFacet);
       if (depManifest != null) {
         myResourceTimestamps.put(depManifest.getPath(), depManifest.getTimeStamp());
@@ -71,10 +75,10 @@ public class ResourcesValidityState implements ValidityState {
       if (depResDir != null) {
         collectFiles(depResDir);
       }
-    }
-    VirtualFile assetsDir = AndroidRootUtil.getAssetsDir(facet);
-    if (assetsDir != null) {
-      collectFiles(assetsDir);
+      final VirtualFile depAssetDir = AndroidRootUtil.getAssetsDir(depFacet);
+      if (depAssetDir != null) {
+        collectFiles(depAssetDir);
+      }
     }
   }
 

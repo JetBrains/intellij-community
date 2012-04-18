@@ -35,7 +35,7 @@ import java.util.List;
  * @author anna
  * @author Konstantin Bulenkov
  */
-public class DefaultScopesProvider implements CustomScopesProvider {
+public class DefaultScopesProvider extends CustomScopesProviderEx {
   private final NamedScope myProblemsScope;
   private final Project myProject;
   private final List<NamedScope> myScopes;

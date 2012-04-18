@@ -45,6 +45,7 @@ import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.PathUtil;
+import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ConcurrentMultiMap;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.indexing.*;
@@ -86,7 +87,7 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
   private static final MultiMap<String, LinkedBlockingQueue<Pair<VirtualFile, GroovyDslExecutor>>> filesInProcessing =
     new ConcurrentMultiMap<String, LinkedBlockingQueue<Pair<VirtualFile, GroovyDslExecutor>>>();
 
-  private static final ThreadPoolExecutor ourPool = new ThreadPoolExecutor(1, 1, 10, TimeUnit.SECONDS, new LinkedBlockingQueue<Runnable>(), new ThreadFactory() {
+  private static final ThreadPoolExecutor ourPool = new ThreadPoolExecutor(0, 1, 10, TimeUnit.SECONDS, new LinkedBlockingQueue<Runnable>(), new ThreadFactory() {
     @Override
     public Thread newThread(Runnable r) {
       return new Thread(r, "Groovy DSL File Index Executor");
@@ -113,26 +114,34 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
     });
   }
 
+  @Override
+  @NotNull
   public ID<String, Void> getName() {
     return NAME;
   }
 
+  @Override
+  @NotNull
   public DataIndexer<String, Void, FileContent> getIndexer() {
     return myDataIndexer;
   }
 
+  @Override
   public KeyDescriptor<String> getKeyDescriptor() {
     return myKeyDescriptor;
   }
 
+  @Override
   public FileBasedIndex.InputFilter getInputFilter() {
     return myInputFilter;
   }
 
+  @Override
   public boolean dependsOnFileContent() {
     return false;
   }
 
+  @Override
   public int getVersion() {
     return 0;
   }
@@ -256,9 +265,22 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
   private static volatile List<Pair<File, GroovyDslExecutor>> ourStandardScripts;
 
   private static List<Pair<File, GroovyDslExecutor>> getStandardScripts() {
-    if (ourStandardScripts == null) {
-      synchronized (SCRIPTS_CACHE) {
-        if (ourStandardScripts == null) {
+    List<Pair<File, GroovyDslExecutor>> result = ourStandardScripts;
+    if (result != null) {
+      return result;
+    }
+
+    final Semaphore semaphore = new Semaphore();
+    semaphore.down();
+    ourPool.execute(new Runnable() {
+      @SuppressWarnings("AssignmentToStaticFieldFromInstanceMethod")
+      @Override
+      public void run() {
+        if (ourStandardScripts != null) {
+          return;
+        }
+
+        try {
           Set<File> scriptFolders = new LinkedHashSet<File>();
           // perhaps a separate extension for that?
           for (GroovyFrameworkConfigNotification extension : GroovyFrameworkConfigNotification.EP_NAME.getExtensions()) {
@@ -285,11 +307,28 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
                 }
               }
             }
-
           }
           ourStandardScripts = executors;
         }
+        catch (OutOfMemoryError e) {
+          stopGdsl = true;
+          throw e;
+        }
+        catch (NoClassDefFoundError e) {
+          stopGdsl = true;
+          throw e;
+        }
+        finally {
+          semaphore.up();
+        }
       }
+    });
+
+    while (ourStandardScripts == null && !stopGdsl && !semaphore.waitFor(20)) {
+      ProgressManager.checkCanceled();
+    }
+    if (stopGdsl) {
+      return Collections.emptyList();
     }
     return ourStandardScripts;
   }
@@ -307,18 +346,11 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
 
         List<GroovyDslScript> result = new ArrayList<GroovyDslScript>();
 
-        try {
-          for (Pair<File, GroovyDslExecutor> pair : getStandardScripts()) {
-            result.add(new GroovyDslScript(project, null, pair.second, pair.first.getPath()));
-          }
+        for (Pair<File, GroovyDslExecutor> pair : getStandardScripts()) {
+          result.add(new GroovyDslScript(project, null, pair.second, pair.first.getPath()));
         }
-        catch (OutOfMemoryError e) {
-          stopGdsl = true;
-          throw e;
-        }
-        catch (NoClassDefFoundError e) {
-          stopGdsl = true;
-          throw e;
+        if (stopGdsl) {
+          return Result.create(Collections.<GroovyDslScript>emptyList());
         }
 
         final LinkedBlockingQueue<Pair<VirtualFile, GroovyDslExecutor>> queue =
@@ -369,6 +401,7 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
 
   private static class MyDataIndexer implements DataIndexer<String, Void, FileContent> {
 
+    @Override
     @NotNull
     public Map<String, Void> map(final FileContent inputData) {
       return Collections.singletonMap(OUR_KEY, null);
@@ -376,6 +409,7 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
   }
 
   private static class MyInputFilter implements FileBasedIndex.InputFilter {
+    @Override
     public boolean acceptInput(final VirtualFile file) {
       return "gdsl".equals(file.getExtension());
     }
@@ -389,6 +423,7 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
     final String fileUrl = vfile.getUrl();
 
     final Runnable parseScript = new Runnable() {
+      @Override
       public void run() {
         GroovyDslExecutor executor = getCachedExecutor(vfile, stamp);
         try {
@@ -478,6 +513,7 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
     String content = "<p>" + e.getMessage() + "</p><p><a href=\"\">Click here to investigate.</a></p>";
     NOTIFICATION_GROUP.createNotification("DSL script execution error", content, NotificationType.ERROR,
                                           new NotificationListener() {
+                                            @Override
                                             public void hyperlinkUpdate(@NotNull Notification notification,
                                                                         @NotNull HyperlinkEvent event) {
                                               GroovyDslAnnotator.analyzeStackTrace(project, exceptionText);

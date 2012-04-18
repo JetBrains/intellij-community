@@ -173,3 +173,47 @@ class My<T> {
         if (getSuperclass() == List.class);
     }
 }
+
+class IDEA75178 {
+    void test(Set<String> labels) {
+        final Matcher<? super Object> empty = isEmpty();
+        assertThat(labels, empty);
+        assertAlsoThat(empty, labels);
+    }
+
+    public static <T> void assertThat(T actual, Matcher<T> matcher) { throw new AssertionError(actual.toString() + matcher.toString());}
+    public static <T> void assertAlsoThat(Matcher<T> matcher, T actual) { throw new AssertionError(actual.toString() + matcher.toString());}
+
+    public static <T> Matcher<? super T> isEmpty() {
+        return null;
+    }
+
+    static class Matcher<<warning descr="Type parameter 'T' is never used">T</warning>>{}
+  
+  class Foo {}
+  void testComment() {
+      Set<Foo> foos = Collections.emptySet();
+      assertThatComment(foos, hasSize(0));
+  }
+
+  <E> Matcher<? super Collection<? extends E>> hasSize(int size) {return size == 0 ? null : null;}
+  <T> void assertThatComment(T actual, Matcher<? super T> matcher){ throw new AssertionError(actual.toString() + matcher.toString());}
+}
+
+class IDEA66750 {
+  public void test() {
+    List<List<String>> data = new ArrayList<List<String>>();
+    List<List<?>> y = <error descr="Inconvertible types; cannot cast 'java.util.List<java.util.List<java.lang.String>>' to 'java.util.List<java.util.List<?>>'">(List<List<?>>)data</error>;
+    System.out.println(y);
+
+    ArrayList<Number> al = <error descr="Inconvertible types; cannot cast 'java.util.ArrayList<java.lang.Integer>' to 'java.util.ArrayList<java.lang.Number>'">(ArrayList<Number>) new ArrayList<Integer>(1)</error>;
+    System.out.println(al);
+  }
+}
+
+class IDEA73377 {
+  public Iterator<Map.Entry<Map.Entry<?, ?>, ?>> iterator(Map<?, ?> map) {
+    //noinspection unchecked
+    return <error descr="Inconvertible types; cannot cast 'java.util.Iterator<java.util.Map.Entry<capture<?>,capture<?>>>' to 'java.util.Iterator<java.util.Map.Entry<java.util.Map.Entry<?,?>,?>>'">(Iterator<Map.Entry<Map.Entry<?, ?>, ?>>)map.entrySet().iterator()</error>;
+  }
+}

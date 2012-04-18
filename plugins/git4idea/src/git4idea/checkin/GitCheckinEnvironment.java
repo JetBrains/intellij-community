@@ -330,8 +330,10 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       }
       handler.endOptions();
       handler.run();
-      GitRepositoryManager.getInstance(project).updateRepository(root, GitRepository.TrackedTopic.CURRENT_REVISION,
-                                                                 GitRepository.TrackedTopic.STATE);
+      GitRepositoryManager manager = GitUtil.getRepositoryManager(project);
+      if (manager != null) {
+        manager.updateRepository(root, GitRepository.TrackedTopic.CURRENT_REVISION, GitRepository.TrackedTopic.STATE);
+      }
     }
     catch (VcsException ex) {
       exceptions.add(ex);
@@ -474,9 +476,10 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       handler.addParameters(paths);
       handler.run();
     }
-    GitRepositoryManager.getInstance(project).updateRepository(root,
-                                                               GitRepository.TrackedTopic.CURRENT_REVISION,
-                                                               GitRepository.TrackedTopic.STATE);
+    GitRepositoryManager manager = GitUtil.getRepositoryManager(project);
+    if (manager != null) {
+      manager.updateRepository(root, GitRepository.TrackedTopic.CURRENT_REVISION, GitRepository.TrackedTopic.STATE);
+    }
   }
 
 

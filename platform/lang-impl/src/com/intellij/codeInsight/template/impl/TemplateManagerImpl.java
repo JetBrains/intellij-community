@@ -69,7 +69,7 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
 
   public void projectOpened() {
     final EditorFactoryListener myEditorFactoryListener = new EditorFactoryAdapter() {
-      public void editorReleased(EditorFactoryEvent event) {
+      public void editorReleased(@NotNull EditorFactoryEvent event) {
         Editor editor = event.getEditor();
         if (editor.getProject() != null && editor.getProject() != myProject) return;
         if (myProject.isDisposed() || !myProject.isOpen()) return;
@@ -239,6 +239,10 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
 
   @Nullable
   public Runnable prepareTemplate(final Editor editor, char shortcutChar, @Nullable final PairProcessor<String, String> processor) {
+    if (editor.getSelectionModel().hasSelection()) {
+      return null;
+    }
+
     PsiFile file = PsiUtilBase.getPsiFileInEditor(editor, myProject);
     if (file == null) return null;
     TemplateSettings templateSettings = TemplateSettings.getInstance();

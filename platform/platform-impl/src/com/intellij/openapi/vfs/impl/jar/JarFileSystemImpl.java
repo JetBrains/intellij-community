@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,9 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ApplicationComponent;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
@@ -28,6 +30,7 @@ import com.intellij.openapi.vfs.newvfs.*;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.util.containers.ConcurrentHashSet;
 import com.intellij.util.messages.MessageBus;
+import com.intellij.util.text.CaseInsensitiveStringHashingStrategy;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -40,11 +43,17 @@ import java.util.*;
 import java.util.zip.ZipFile;
 
 public class JarFileSystemImpl extends JarFileSystem implements ApplicationComponent {
-  private final Set<String> myNoCopyJarPaths = new ConcurrentHashSet<String>();
+  private final Set<String> myNoCopyJarPaths = SystemInfo.isFileSystemCaseSensitive ?
+                                               new ConcurrentHashSet<String>() :
+                                               new ConcurrentHashSet<String>(CaseInsensitiveStringHashingStrategy.INSTANCE);
+
+  private final static Logger LOG = Logger.getInstance(JarFileSystemImpl.class);
+
   @NonNls private static final String IDEA_JARS_NOCOPY = "idea.jars.nocopy";
   private File myNoCopyJarDir;
 
   private final Map<String, JarHandler> myHandlers = new HashMap<String, JarHandler>();
+  private String[] jarPathsCache; // jarPathsCache = myHandlers.keySet()
 
   private static final class JarFileSystemImplLock {
   }
@@ -54,19 +63,24 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
   public JarFileSystemImpl(MessageBus bus) {
     bus.connect().subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
       @Override
-      public void before(final List<? extends VFileEvent> events) {
+      public void before(@NotNull final List<? extends VFileEvent> events) {
       }
 
       @Override
-      public void after(final List<? extends VFileEvent> events) {
+      public void after(@NotNull final List<? extends VFileEvent> events) {
         final List<VirtualFile> rootsToRefresh = new ArrayList<VirtualFile>();
 
         for (VFileEvent event : events) {
           if (event.getFileSystem() instanceof LocalFileSystem) {
-            final String path = event.getPath();
-            List<String> jarPaths = new ArrayList<String>();
+            String path = event.getPath();
+
+            String[] jarPaths;
             synchronized (LOCK) {
-              jarPaths.addAll(myHandlers.keySet());
+              if (jarPathsCache == null) {
+                Set<String> jarPathsSet = myHandlers.keySet();
+                jarPathsCache = jarPathsSet.toArray(new String[jarPathsSet.size()]);
+              }
+              jarPaths = jarPathsCache;
             }
 
             for (String jarPath : jarPaths) {
@@ -75,6 +89,7 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
                                       SystemInfo.isFileSystemCaseSensitive)) {
                 VirtualFile jarRootToRefresh = markDirty(jarPath);
                 if (jarRootToRefresh != null) {
+                  LOG.info(jarPath + " will be refreshed due to " + event);
                   rootsToRefresh.add(jarRootToRefresh);
                 }
               }
@@ -114,6 +129,7 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
     final JarHandler handler;
     synchronized (LOCK) {
       handler = myHandlers.remove(path);
+      jarPathsCache = null;
     }
 
     if (handler != null) {
@@ -148,9 +164,6 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
     if (index < 0) return;
     String path = pathInJar.substring(0, index);
     path = path.replace('/', File.separatorChar);
-    if (!SystemInfo.isFileSystemCaseSensitive) {
-      path = path.toLowerCase();
-    }
     myNoCopyJarPaths.add(path);
   }
 
@@ -191,6 +204,7 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
       if (handler == null) {
         freshHandler = handler = new JarHandler(this, jarRootPath.substring(0, jarRootPath.length() - JAR_SEPARATOR.length()));
         myHandlers.put(jarRootPath, handler);
+        jarPathsCache = null;
       }
       else {
         freshHandler = null;
@@ -216,6 +230,7 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
     return PROTOCOL;
   }
 
+  @NotNull
   @Override
   public String extractPresentableUrl(@NotNull String path) {
     return super.extractPresentableUrl(StringUtil.trimEnd(path, JAR_SEPARATOR));
@@ -266,12 +281,7 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
     String property = System.getProperty(IDEA_JARS_NOCOPY);
     if (Boolean.TRUE.toString().equalsIgnoreCase(property)) return false;
 
-    String path = originalJar.getPath();
-    if (!SystemInfo.isFileSystemCaseSensitive) {
-      path = path.toLowerCase();
-    }
-
-    if (myNoCopyJarPaths.contains(path)) return false;
+    if (myNoCopyJarPaths.contains(originalJar.getPath())) return false;
     if (myNoCopyJarDir!=null && FileUtil.isAncestor(myNoCopyJarDir, originalJar, false)) return false;
 
     return true;
@@ -367,17 +377,32 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
   public int getBooleanAttributes(@NotNull VirtualFile file, int flags) {
     int exists = 0;
     JarHandler handler = getHandler(file);
-    if ((flags & BA_EXISTS) != 0) {
-      exists = handler.exists(file) ? BA_EXISTS : 0;
+    if ((flags & FileUtil.BA_EXISTS) != 0) {
+      exists = handler.exists(file) ? FileUtil.BA_EXISTS : 0;
     }
     int isDir = 0;
-    if ((flags & BA_DIRECTORY) != 0) {
-      isDir = handler.isDirectory(file) ? BA_DIRECTORY : 0;
+    if ((flags & FileUtil.BA_DIRECTORY) != 0) {
+      isDir = handler.isDirectory(file) ? FileUtil.BA_DIRECTORY : 0;
     }
     int regular = 0;
-    if ((flags & BA_REGULAR) != 0) {
-      regular = isDir == 0 ? BA_REGULAR : 0;
+    if ((flags & FileUtil.BA_REGULAR) != 0) {
+      regular = isDir == 0 ? FileUtil.BA_REGULAR : 0;
     }
     return exists | isDir | regular;
+  }
+
+  @Override
+  public FileAttributes getAttributes(@NotNull final VirtualFile file) {
+    final JarHandler handler = getHandler(file);
+    if (handler == null) return null;
+
+    if (file.getParent() == null) {
+      final LocalFileSystem localFileSystem = LocalFileSystem.getInstance();
+      final VirtualFile originalFile = localFileSystem.findFileByIoFile(handler.getOriginalFile());
+      assert originalFile != null : file;
+      return localFileSystem.getAttributes(originalFile);
+    }
+
+    return handler.getAttributes(file);
   }
 }

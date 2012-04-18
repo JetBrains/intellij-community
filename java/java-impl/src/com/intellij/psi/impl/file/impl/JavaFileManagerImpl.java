@@ -98,19 +98,19 @@ public class JavaFileManagerImpl implements JavaFileManager, Disposable {
 
     connection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
       @Override
-      public void before(final List<? extends VFileEvent> events) {
+      public void before(@NotNull final List<? extends VFileEvent> events) {
         clearNonRepositoryMaps();
       }
 
       @Override
-      public void after(final List<? extends VFileEvent> events) {
+      public void after(@NotNull final List<? extends VFileEvent> events) {
         clearNonRepositoryMaps();
       }
     });
 
     connection.subscribe(AppTopics.FILE_DOCUMENT_SYNC, new FileDocumentManagerAdapter() {
       @Override
-      public void fileWithNoDocumentChanged(final VirtualFile file) {
+      public void fileWithNoDocumentChanged(@NotNull final VirtualFile file) {
         clearNonRepositoryMaps();
       }
     });

@@ -32,7 +32,7 @@ public class AndroidCreateComponentTest extends AndroidTestCase {
 
   public void testDeleteComponent() {
     myFixture.copyFileToProject(TEST_FOLDER + "f1.xml", "AndroidManifest.xml");
-    final VirtualFile activityFile = myFixture.copyFileToProject(TEST_FOLDER + "MyActivity.java", "p1/p2/MyActivity.java");
+    final VirtualFile activityFile = myFixture.copyFileToProject(TEST_FOLDER + "MyActivity.java", "src/p1/p2/MyActivity.java");
     myFixture.configureFromExistingVirtualFile(activityFile);
     final PsiFile psiActivityFile = PsiManager.getInstance(getProject()).findFile(activityFile);
     final PsiClass activityClass = ((PsiJavaFile)psiActivityFile).getClasses()[0];

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -337,13 +337,13 @@ public abstract class AbstractFileProcessor {
     ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
       public void run() {
         readAction.run();
-        new WriteCommandAction(myProject, title, null) {
-          protected void run(Result result) throws Throwable {
-            writeAction.run();
-          }
-        }.execute();
       }
     }, title, true, myProject);
+    new WriteCommandAction(myProject, title, null) {
+      protected void run(Result result) throws Throwable {
+        writeAction.run();
+      }
+    }.execute();
   }
 
   private static final Logger logger = Logger.getInstance(AbstractFileProcessor.class.getName());

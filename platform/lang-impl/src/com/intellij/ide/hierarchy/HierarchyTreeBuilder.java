@@ -110,27 +110,27 @@ public class HierarchyTreeBuilder extends AbstractTreeBuilder {
   }
 
   private final class MyPsiTreeChangeListener extends PsiTreeChangeAdapter {
-    public final void childAdded(final PsiTreeChangeEvent event) {
+    public final void childAdded(@NotNull final PsiTreeChangeEvent event) {
       getUpdater().addSubtreeToUpdate(getRootNode());
     }
 
-    public final void childRemoved(final PsiTreeChangeEvent event) {
+    public final void childRemoved(@NotNull final PsiTreeChangeEvent event) {
       getUpdater().addSubtreeToUpdate(getRootNode());
     }
 
-    public final void childReplaced(final PsiTreeChangeEvent event) {
+    public final void childReplaced(@NotNull final PsiTreeChangeEvent event) {
       getUpdater().addSubtreeToUpdate(getRootNode());
     }
 
-    public final void childMoved(final PsiTreeChangeEvent event) {
+    public final void childMoved(@NotNull final PsiTreeChangeEvent event) {
       getUpdater().addSubtreeToUpdate(getRootNode());
     }
 
-    public final void childrenChanged(final PsiTreeChangeEvent event) {
+    public final void childrenChanged(@NotNull final PsiTreeChangeEvent event) {
       getUpdater().addSubtreeToUpdate(getRootNode());
     }
 
-    public final void propertyChanged(final PsiTreeChangeEvent event) {
+    public final void propertyChanged(@NotNull final PsiTreeChangeEvent event) {
       getUpdater().addSubtreeToUpdate(getRootNode());
     }
   }

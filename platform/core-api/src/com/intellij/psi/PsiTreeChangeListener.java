@@ -15,6 +15,8 @@
  */
 package com.intellij.psi;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.util.EventListener;
 
 /**
@@ -31,7 +33,7 @@ public interface PsiTreeChangeListener extends EventListener {
    *
    * @param event the event object describing the change.
    */
-  void beforeChildAddition(PsiTreeChangeEvent event);
+  void beforeChildAddition(@NotNull PsiTreeChangeEvent event);
 
   /**
    * Invoked just before removal of a child from the tree.<br>
@@ -40,7 +42,7 @@ public interface PsiTreeChangeListener extends EventListener {
    *
    * @param event the event object describing the change.
    */
-  void beforeChildRemoval(PsiTreeChangeEvent event);
+  void beforeChildRemoval(@NotNull PsiTreeChangeEvent event);
 
   /**
    * Invoked just before replacement of a child in the tree by another element.<br>
@@ -49,7 +51,7 @@ public interface PsiTreeChangeListener extends EventListener {
    *
    * @param event the event object describing the change.
    */
-  void beforeChildReplacement(PsiTreeChangeEvent event);
+  void beforeChildReplacement(@NotNull PsiTreeChangeEvent event);
 
   /**
    * Invoked just before movement of a child in the tree by changing its parent or by changing its position in the same parent.<br>
@@ -59,7 +61,7 @@ public interface PsiTreeChangeListener extends EventListener {
    *
    * @param event the event object describing the change.
    */
-  void beforeChildMovement(PsiTreeChangeEvent event);
+  void beforeChildMovement(@NotNull PsiTreeChangeEvent event);
 
   /**
    * Invoked before a mass change of children of the specified node.<br>
@@ -67,7 +69,7 @@ public interface PsiTreeChangeListener extends EventListener {
    *
    * @param event the event object describing the change.
    */
-  void beforeChildrenChange(PsiTreeChangeEvent event);
+  void beforeChildrenChange(@NotNull PsiTreeChangeEvent event);
 
   /**
    * Invoked just before changing of some property of an element.<br>
@@ -77,7 +79,7 @@ public interface PsiTreeChangeListener extends EventListener {
    *
    * @param event the event object describing the change.
    */
-  void beforePropertyChange(PsiTreeChangeEvent event);
+  void beforePropertyChange(@NotNull PsiTreeChangeEvent event);
 
   /**
    * Invoked just after adding of a new child to the tree.<br>
@@ -86,7 +88,7 @@ public interface PsiTreeChangeListener extends EventListener {
    *
    * @param event the event object describing the change.
    */
-  void childAdded(PsiTreeChangeEvent event);
+  void childAdded(@NotNull PsiTreeChangeEvent event);
 
   /**
    * Invoked just after removal of a child from the tree.<br>
@@ -97,7 +99,7 @@ public interface PsiTreeChangeListener extends EventListener {
    *
    * @param event the event object describing the change.
    */
-  void childRemoved(PsiTreeChangeEvent event);
+  void childRemoved(@NotNull PsiTreeChangeEvent event);
 
   /**
    * Invoked just after replacement of a child in the tree by another element.<br>
@@ -109,7 +111,7 @@ public interface PsiTreeChangeListener extends EventListener {
    *
    * @param event the event object describing the change.
    */
-  void childReplaced(PsiTreeChangeEvent event);
+  void childReplaced(@NotNull PsiTreeChangeEvent event);
 
   /**
    * Invoked after a mass change of children of the specified node.<br>
@@ -117,7 +119,7 @@ public interface PsiTreeChangeListener extends EventListener {
    *
    * @param event the event object describing the change.
    */
-  void childrenChanged(PsiTreeChangeEvent event);
+  void childrenChanged(@NotNull PsiTreeChangeEvent event);
 
   /**
    * Invoked just after movement of a child in the tree by changing its parent or by changing its position in the same parent.<br>
@@ -127,7 +129,7 @@ public interface PsiTreeChangeListener extends EventListener {
    *
    * @param event the event object describing the change.
    */
-  void childMoved(PsiTreeChangeEvent event);
+  void childMoved(@NotNull PsiTreeChangeEvent event);
 
   /**
    * Invoked just after changing of some property of an element.<br>
@@ -138,5 +140,5 @@ public interface PsiTreeChangeListener extends EventListener {
    *
    * @param event the event object describing the change.
    */
-  void propertyChanged(PsiTreeChangeEvent event);
+  void propertyChanged(@NotNull PsiTreeChangeEvent event);
 }

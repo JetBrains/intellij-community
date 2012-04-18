@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,10 +19,11 @@ package com.intellij.openapi.roots.ui.configuration.actions;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.actionSystem.impl.ActionButtonWithText;
+import com.intellij.openapi.fileChooser.FileElement;
 import com.intellij.openapi.fileChooser.ex.FileNodeDescriptor;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -32,9 +33,7 @@ import java.util.List;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Oct 14
- * @author 2003
- *         Time: 3:07:14 PM
+ * @since Oct 14, 2003
  */
 public abstract class ContentEntryEditingAction extends ToggleAction implements CustomComponentAction, DumbAware {
   protected final JTree myTree;
@@ -49,7 +48,7 @@ public abstract class ContentEntryEditingAction extends ToggleAction implements 
     final Presentation presentation = e.getPresentation();
     presentation.setEnabled(true);
     final VirtualFile[] files = getSelectedFiles();
-    if (files == null || files.length == 0) {
+    if (files.length == 0) {
       presentation.setEnabled(false);
       return;
     }
@@ -61,20 +60,21 @@ public abstract class ContentEntryEditingAction extends ToggleAction implements 
     }
   }
 
-  @Nullable
+  @NotNull
   protected final VirtualFile[] getSelectedFiles() {
     final TreePath[] selectionPaths = myTree.getSelectionPaths();
     if (selectionPaths == null) {
-      return null;
+      return VirtualFile.EMPTY_ARRAY;
     }
     final List<VirtualFile> selected = new ArrayList<VirtualFile>();
     for (TreePath treePath : selectionPaths) {
       final DefaultMutableTreeNode node = (DefaultMutableTreeNode)treePath.getLastPathComponent();
       final Object nodeDescriptor = node.getUserObject();
       if (!(nodeDescriptor instanceof FileNodeDescriptor)) {
-        return null;
+        return VirtualFile.EMPTY_ARRAY;
       }
-      final VirtualFile file = ((FileNodeDescriptor)nodeDescriptor).getElement().getFile();
+      final FileElement fileElement = ((FileNodeDescriptor)nodeDescriptor).getElement();
+      final VirtualFile file = fileElement.getFile();
       if (file != null) {
         selected.add(file);
       }

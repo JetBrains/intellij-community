@@ -175,6 +175,16 @@ public class GotoRelatedFileAction extends AnAction {
       }
 
       @Override
+      public String getIndexedString(Object value) {
+        if (value instanceof GotoRelatedItem) {
+          //noinspection ConstantConditions
+          return ((GotoRelatedItem)value).getCustomName();
+        }
+        final PsiElement element = (PsiElement)value;
+        return renderer.getElementText(element) + " " + renderer.getContainerText(element, null);
+      }
+
+      @Override
       public PopupStep onChosen(Object selectedValue, boolean finalChoice) {
         processor.process(selectedValue);
         return super.onChosen(selectedValue, finalChoice);

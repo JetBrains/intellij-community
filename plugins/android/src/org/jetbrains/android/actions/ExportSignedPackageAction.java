@@ -17,16 +17,16 @@
 package org.jetbrains.android.actions;
 
 import com.intellij.CommonBundle;
-import com.intellij.facet.ProjectFacetManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataKeys;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import org.jetbrains.android.exportSignedPackage.CheckModulePanel;
 import org.jetbrains.android.exportSignedPackage.ExportSignedPackageWizard;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.util.AndroidBundle;
+import org.jetbrains.android.util.AndroidUtils;
 
 import javax.swing.*;
 import java.util.List;
@@ -41,21 +41,21 @@ public class ExportSignedPackageAction extends AnAction {
 
   @Override
   public void update(AnActionEvent e) {
-    final Project project = e.getData(DataKeys.PROJECT);
-    e.getPresentation().setEnabled(project != null && ProjectFacetManager.getInstance(project).getFacets(AndroidFacet.ID).size() > 0);
+    final Project project = e.getData(PlatformDataKeys.PROJECT);
+    e.getPresentation().setEnabled(project != null && AndroidUtils.getApplicationFacets(project).size() > 0);
   }
 
   @Override
   public void actionPerformed(AnActionEvent e) {
-    final Project project = e.getData(DataKeys.PROJECT);
+    final Project project = e.getData(PlatformDataKeys.PROJECT);
     assert project != null;
 
-    List<AndroidFacet> facets = ProjectFacetManager.getInstance(project).getFacets(AndroidFacet.ID);
+    List<AndroidFacet> facets = AndroidUtils.getApplicationFacets(project);
     assert facets.size() > 0;
     if (facets.size() == 1) {
       if (!checkFacet(facets.get(0))) return;
     }
-    ExportSignedPackageWizard wizard = new ExportSignedPackageWizard(project, facets);
+    ExportSignedPackageWizard wizard = new ExportSignedPackageWizard(project, facets, true);
     wizard.show();
   }
 

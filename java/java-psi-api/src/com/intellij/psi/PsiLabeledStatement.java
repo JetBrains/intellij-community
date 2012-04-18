@@ -37,4 +37,8 @@ public interface PsiLabeledStatement extends PsiStatement, PsiNamedElement {
    */
   @Nullable
   PsiStatement getStatement();
+
+  @Override
+  @NotNull
+  String getName();
 }

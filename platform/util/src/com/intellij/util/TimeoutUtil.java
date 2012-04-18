@@ -20,8 +20,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
- *
- *
  * @author Konstantin Bulenkov
  */
 public final class TimeoutUtil {
@@ -53,5 +51,12 @@ public final class TimeoutUtil {
 
   public static void executeWithTimeout(long timeout, @NotNull final Runnable run) {
     executeWithTimeout(timeout, 50, run);
+  }
+
+  public static void sleep(final long millis) {
+    try {
+      Thread.sleep(millis);
+    }
+    catch (InterruptedException ignored) { }
   }
 }

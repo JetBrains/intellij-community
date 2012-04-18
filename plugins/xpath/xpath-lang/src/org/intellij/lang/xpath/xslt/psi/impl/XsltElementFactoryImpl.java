@@ -47,7 +47,7 @@ class XsltElementFactoryImpl extends XsltElementFactory {
                 }
             }
         }
-        assert XsltSupport.isXsltTag(target);
+        assert XsltSupport.isXsltTag(target) : "Not an XSLT tag: {" + target.getNamespace() + "}" + target.getName();
 
         final XsltElement element;
         if (XsltSupport.isTemplate(target, false)) {

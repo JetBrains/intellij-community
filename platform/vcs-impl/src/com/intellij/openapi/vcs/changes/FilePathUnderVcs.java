@@ -20,11 +20,12 @@ import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vcs.VcsRoot;
+import org.jetbrains.annotations.NonNls;
 
 public class FilePathUnderVcs {
   private final FilePath myPath;
   private final AbstractVcs myVcs;
-  private int hashcode;
+  private int hashCode;
 
   public FilePathUnderVcs(final FilePath path, final AbstractVcs vcs) {
     myPath = path;
@@ -59,10 +60,20 @@ public class FilePathUnderVcs {
 
   @Override
   public int hashCode() {
-    if (hashcode == 0) {
-      hashcode = myPath != null ? myPath.hashCode() : 0;
-      hashcode = 31 * hashcode + (myVcs != null ? myVcs.getName().hashCode() : 0);
+    if (hashCode == 0) {
+      int hc = myPath != null ? myPath.hashCode() : 0;
+      hc = 31 * hc + (myVcs != null ? myVcs.getName().hashCode() : 0);
+      hashCode = hc;
     }
-    return hashcode;
+    return hashCode;
+  }
+
+  @NonNls
+  @Override
+  public String toString() {
+    return "FilePathUnderVcs{" +
+           "myPath=" + myPath +
+           ", myVcs=" + myVcs +
+           '}';
   }
 }

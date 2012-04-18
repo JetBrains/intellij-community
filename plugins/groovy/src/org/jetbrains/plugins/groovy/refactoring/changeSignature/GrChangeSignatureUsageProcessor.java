@@ -25,6 +25,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.source.tree.Factory;
 import com.intellij.psi.impl.source.tree.SharedImplUtil;
+import com.intellij.psi.scope.processor.VariablesProcessor;
 import com.intellij.psi.util.*;
 import com.intellij.refactoring.changeSignature.*;
 import com.intellij.refactoring.util.CanonicalTypes;
@@ -36,8 +37,8 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.HashSet;
 import com.intellij.util.containers.MultiMap;
-import com.intellij.util.containers.hash.HashSet;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.GrReferenceAdjuster;
@@ -52,10 +53,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrCatchClause;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrConstructorInvocation;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrTryCatchStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
@@ -73,6 +71,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.types.GrClosureSignatureUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
+import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.refactoring.DefaultGroovyVariableNameValidator;
 import org.jetbrains.plugins.groovy.refactoring.GroovyNameSuggestionUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
@@ -561,29 +560,18 @@ public class GrChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
             continue;
           }
           try {
-            final String value = parameter.getDefaultValue();
-            if (value == null || value.isEmpty()) {
-              if (i > 0) {
-                PsiElement comma = Factory.createSingleLeafElement(GroovyTokenTypes.mCOMMA, ",", 0, 1,
+
+            GrExpression value = createDefaultValue(factory, changeInfo, parameter, argumentList);
+            if (i > 0 && (value == null || anchor == null)) {
+              PsiElement comma = Factory.createSingleLeafElement(GroovyTokenTypes.mCOMMA, ",", 0, 1,
                                                                  SharedImplUtil.findCharTableByTree(argumentList.getNode()),
                                                                  argumentList.getManager()).getPsi();
-                if (anchor == null) anchor = argumentList.getLeftParen();
+              if (anchor == null) anchor = argumentList.getLeftParen();
 
-                anchor = argumentList.addAfter(comma, anchor);
-              }
+              anchor = argumentList.addAfter(comma, anchor);
             }
-            else {
-              if (i > 0 && anchor == null) {
-                anchor = argumentList.getLeftParen();
-                PsiElement comma = Factory.createSingleLeafElement(GroovyTokenTypes.mCOMMA, ",", 0, 1,
-                                                                   SharedImplUtil.findCharTableByTree(argumentList.getNode()),
-                                                                   argumentList.getManager()).getPsi();
+            anchor = argumentList.addAfter(value, anchor);
 
-                anchor = argumentList.addAfter(comma, anchor);
-              }
-              GrExpression fromText = factory.createExpressionFromText(value);
-              anchor = argumentList.addAfter(fromText, anchor);
-            }
           }
           catch (IncorrectOperationException e) {
             LOG.error(e.getMessage());
@@ -603,6 +591,63 @@ public class GrChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
       PsiClassType[] exceptions = getExceptions(exceptionInfos, element, element.getManager());
       fixExceptions(element, exceptions);
     }
+  }
+
+  @Nullable
+  private static GrExpression createDefaultValue(GroovyPsiElementFactory factory,
+                                                 JavaChangeInfo changeInfo,
+                                                 JavaParameterInfo info,
+                                                 final GrArgumentList list) {
+    if (info.isUseAnySingleVariable()) {
+      final PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(list.getProject()).getResolveHelper();
+      final PsiType type = info.getTypeWrapper().getType(changeInfo.getMethod(), list.getManager());
+      final VariablesProcessor processor = new VariablesProcessor(false) {
+        protected boolean check(PsiVariable var, ResolveState state) {
+          if (var instanceof PsiField && !resolveHelper.isAccessible((PsiField)var, list, null)) return false;
+          if (var instanceof GrVariable &&
+              GroovyRefactoringUtil.isLocalVariable(var) &&
+              list.getTextRange().getStartOffset() <= var.getTextRange().getStartOffset()) {
+            return false;
+          }
+          if (PsiTreeUtil.isAncestor(var, list, false)) return false;
+          final PsiType _type = var instanceof GrVariable ? ((GrVariable)var).getTypeGroovy() : var.getType();
+          final PsiType varType = state.get(PsiSubstitutor.KEY).substitute(_type);
+          return type.isAssignableFrom(varType);
+        }
+
+        public boolean execute(PsiElement pe, ResolveState state) {
+          super.execute(pe, state);
+          return size() < 2;
+        }
+      };
+      ResolveUtil.treeWalkUp(list, processor, false);
+      if (processor.size() == 1) {
+        final PsiVariable result = processor.getResult(0);
+        return factory.createExpressionFromText(result.getName(), list);
+      }
+      if (processor.size() == 0) {
+        final PsiClass parentClass = PsiTreeUtil.getParentOfType(list, PsiClass.class);
+        if (parentClass != null) {
+          PsiClass containingClass = parentClass;
+          final Set<PsiClass> containingClasses = new HashSet<PsiClass>();
+          final PsiElementFactory jfactory = JavaPsiFacade.getElementFactory(list.getProject());
+          while (containingClass != null) {
+            if (type.isAssignableFrom(jfactory.createType(containingClass, PsiSubstitutor.EMPTY))) {
+              containingClasses.add(containingClass);
+            }
+            containingClass = PsiTreeUtil.getParentOfType(containingClass, PsiClass.class);
+          }
+          if (containingClasses.size() == 1) {
+            return factory.createThisExpression(parentClass.getManager(),
+                                                containingClasses.contains(parentClass) ? null : containingClasses.iterator().next());
+          }
+        }
+      }
+    }
+
+
+    final String value = info.getDefaultValue();
+    return !StringUtil.isEmpty(value) ? factory.createExpressionFromText(value, list) : null;
   }
 
   protected static boolean forceOptional(JavaParameterInfo parameter) {

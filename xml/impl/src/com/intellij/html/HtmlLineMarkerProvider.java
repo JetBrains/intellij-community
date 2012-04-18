@@ -23,6 +23,7 @@ import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiWhiteSpace;
 import gnu.trove.THashMap;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -37,7 +38,7 @@ import java.util.Map;
 public class HtmlLineMarkerProvider implements LineMarkerProvider {
   private final Map<Language, LineMarkerProvider> embeddedLanguagesLineMarkerProviders = new THashMap<Language, LineMarkerProvider>();
 
-  public LineMarkerInfo getLineMarkerInfo(final PsiElement element) {
+  public LineMarkerInfo getLineMarkerInfo(@NotNull final PsiElement element) {
     if (element instanceof PsiWhiteSpace) return null;
     final Language language = element.getLanguage();
 
@@ -61,7 +62,7 @@ public class HtmlLineMarkerProvider implements LineMarkerProvider {
     return markerProvider;
   }
 
-  public void collectSlowLineMarkers(final List<PsiElement> elements, final Collection<LineMarkerInfo> result) {
+  public void collectSlowLineMarkers(@NotNull final List<PsiElement> elements, @NotNull final Collection<LineMarkerInfo> result) {
     Map<Language, LineMarkerProvider> localEmbeddedLanguagesLineMarkerProviders = null;
     Map<LineMarkerProvider, List<PsiElement>> embeddedLineMarkersWorkItems = null;
 

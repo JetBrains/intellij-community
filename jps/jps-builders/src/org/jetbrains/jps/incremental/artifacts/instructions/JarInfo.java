@@ -17,60 +17,40 @@
 package org.jetbrains.jps.incremental.artifacts.instructions;
 
 import com.intellij.openapi.util.Pair;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
-import java.util.LinkedHashSet;
 import java.util.List;
 
 /**
  * @author nik
  */
 public class JarInfo {
-  private final List<Pair<String, ArtifactSourceRoot>> myPackedRoots;
-  private final LinkedHashSet<Pair<String, JarInfo>> myPackedJars;
-  private final List<DestinationInfo> myDestinations;
+  private final List<Pair<String, Object>> myContent;
+  private final DestinationInfo myDestination;
 
-  public JarInfo() {
-    myDestinations = new ArrayList<DestinationInfo>();
-    myPackedRoots = new ArrayList<Pair<String, ArtifactSourceRoot>>();
-    myPackedJars = new LinkedHashSet<Pair<String, JarInfo>>();
-  }
-
-  public void addDestination(DestinationInfo info) {
-    myDestinations.add(info);
-    if (info instanceof JarDestinationInfo) {
-      JarDestinationInfo destinationInfo = (JarDestinationInfo)info;
-      destinationInfo.getJarInfo().myPackedJars.add(Pair.create(destinationInfo.getPathInJar(), this));
-    }
+  public JarInfo(@NotNull DestinationInfo destination) {
+    myDestination = destination;
+    myContent = new ArrayList<Pair<String, Object>>();
   }
 
   public void addContent(String pathInJar, ArtifactSourceRoot sourceFile) {
-    myPackedRoots.add(Pair.create(pathInJar, sourceFile));
+    myContent.add(Pair.create(pathInJar, (Object)sourceFile));
   }
 
-  public List<Pair<String, ArtifactSourceRoot>> getPackedRoots() {
-    return myPackedRoots;
+  public void addJar(String pathInJar, JarInfo jarInfo) {
+    myContent.add(Pair.create(pathInJar, (Object)jarInfo));
   }
 
-  public LinkedHashSet<Pair<String, JarInfo>> getPackedJars() {
-    return myPackedJars;
+  public List<Pair<String, Object>> getContent() {
+    return myContent;
   }
 
-  public List<JarDestinationInfo> getJarDestinations() {
-    final ArrayList<JarDestinationInfo> list = new ArrayList<JarDestinationInfo>();
-    for (DestinationInfo destination : myDestinations) {
-      if (destination instanceof JarDestinationInfo) {
-        list.add((JarDestinationInfo)destination);
-      }
-    }
-    return list;
-  }
-
-  public List<DestinationInfo> getAllDestinations() {
-    return myDestinations;
+  public DestinationInfo getDestination() {
+    return myDestination;
   }
 
   public String getPresentableDestination() {
-    return !myDestinations.isEmpty() ? myDestinations.get(0).getOutputPath() : "";
+    return myDestination.getOutputPath();
   }
 }

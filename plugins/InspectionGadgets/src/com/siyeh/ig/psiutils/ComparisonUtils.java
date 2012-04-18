@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.siyeh.ig.psiutils;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiBinaryExpression;
 import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiPolyadicExpression;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -66,11 +67,10 @@ public class ComparisonUtils {
   }
 
   public static boolean isComparison(@Nullable PsiExpression expression) {
-    if (!(expression instanceof PsiBinaryExpression)) {
+    if (!(expression instanceof PsiPolyadicExpression)) {
       return false;
     }
-    final PsiBinaryExpression binaryExpression =
-      (PsiBinaryExpression)expression;
+    final PsiPolyadicExpression binaryExpression = (PsiPolyadicExpression)expression;
     final IElementType tokenType = binaryExpression.getOperationTokenType();
     return isComparisonOperation(tokenType);
   }
@@ -83,11 +83,9 @@ public class ComparisonUtils {
     return s_swappedComparisons.get(tokenType);
   }
 
-  public static boolean isEqualityComparison(
-    @NotNull PsiBinaryExpression expression) {
+  public static boolean isEqualityComparison(@NotNull PsiBinaryExpression expression) {
     final IElementType tokenType = expression.getOperationTokenType();
-    return tokenType.equals(JavaTokenType.EQEQ) ||
-           tokenType.equals(JavaTokenType.NE);
+    return tokenType.equals(JavaTokenType.EQEQ) || tokenType.equals(JavaTokenType.NE);
   }
 
   public static String getNegatedComparison(IElementType tokenType) {

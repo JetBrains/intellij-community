@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,10 +16,11 @@
 
 package com.intellij.ide.fileTemplates.ui;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.FileTemplateUtil;
-import com.intellij.ide.IdeBundle;
+import com.intellij.ide.ui.ListCellRendererWrapper;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.FixedSizeButton;
@@ -80,6 +81,15 @@ public class SelectTemplateDialog extends DialogWrapper{
     }
     if(myCbxTemplates == null){
       myCbxTemplates = new JComboBox(model);
+      myCbxTemplates.setRenderer(new ListCellRendererWrapper<FileTemplate>(myCbxTemplates.getRenderer()) {
+        @Override
+        public void customize(JList list, FileTemplate fileTemplate, int index, boolean selected, boolean hasFocus) {
+          if (fileTemplate != null) {
+            setIcon(FileTemplateUtil.getIcon(fileTemplate));
+            setText(fileTemplate.getName());
+          }
+        }
+      });
     }
     else{
       Object selected = myCbxTemplates.getSelectedItem();

@@ -62,9 +62,10 @@ public abstract class EditorBasedWidget extends FileEditorManagerAdapter impleme
     return result;
   }
 
-
   protected boolean isOurEditor(Editor editor) {
-    return editor != null && getEditor() == editor;
+    return editor != null &&
+           editor.getComponent().isShowing() &&
+           WindowManager.getInstance().getStatusBar(editor.getComponent()) == myStatusBar;
   }
 
   @Nullable

@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInsight.navigation;
 
-import com.intellij.openapi.progress.PerformInBackgroundOption;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.components.JBList;
@@ -26,21 +25,9 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 /**
-* User: anna
-*/
+ * User: anna
+ */
 public abstract class ListBackgroundUpdaterTask extends BackgroundUpdaterTask<JBList> {
-
-  public ListBackgroundUpdaterTask(@Nullable final Project project,
-                                   @NotNull final String title,
-                                   final boolean canBeCancelled,
-                                   @Nullable final PerformInBackgroundOption backgroundOption) {
-    super(project, title, canBeCancelled, backgroundOption);
-  }
-
-  public ListBackgroundUpdaterTask(@Nullable final Project project, @NotNull final String title, final boolean canBeCancelled) {
-    super(project, title, canBeCancelled);
-  }
-
   public ListBackgroundUpdaterTask(@Nullable final Project project, @NotNull final String title) {
     super(project, title);
   }
@@ -51,13 +38,14 @@ public abstract class ListBackgroundUpdaterTask extends BackgroundUpdaterTask<JB
   }
 
   @Override
-  protected void replaceModel(List<PsiElement> data) {
+  protected void replaceModel(@NotNull List<PsiElement> data) {
     final Object selectedValue = myComponent.getSelectedValue();
     final int index = myComponent.getSelectedIndex();
     ((NameFilteringListModel)myComponent.getModel()).replaceAll(data);
     if (index == 0) {
       myComponent.setSelectedIndex(0);
-    } else {
+    }
+    else {
       myComponent.setSelectedValue(selectedValue, true);
     }
   }

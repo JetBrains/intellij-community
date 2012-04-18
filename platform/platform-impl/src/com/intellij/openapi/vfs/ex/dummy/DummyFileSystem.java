@@ -67,6 +67,7 @@ public class DummyFileSystem extends DeprecatedVirtualFileSystem implements NonP
     return null;
   }
 
+  @NotNull
   @Override
   public String extractPresentableUrl(@NotNull String path) {
     return path;
@@ -121,12 +122,12 @@ public class DummyFileSystem extends DeprecatedVirtualFileSystem implements NonP
   }
 
   @Override
-  public void fireBeforeContentsChange(final Object requestor, final VirtualFile file) {
+  public void fireBeforeContentsChange(final Object requestor, @NotNull final VirtualFile file) {
     super.fireBeforeContentsChange(requestor, file);
   }
 
   @Override
-  public void fireContentsChanged(final Object requestor, final VirtualFile file, final long oldModificationStamp) {
+  public void fireContentsChanged(final Object requestor, @NotNull final VirtualFile file, final long oldModificationStamp) {
     super.fireContentsChanged(requestor, file, oldModificationStamp);
   }
 

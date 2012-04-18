@@ -39,16 +39,19 @@ import java.util.List;
  * @author ven
  */
 public class ConcatenationToMessageFormatAction implements IntentionAction {
+  @Override
   @NotNull
   public String getFamilyName() {
     return CodeInsightBundle.message("intention.replace.concatenation.with.formatted.output.family");
   }
 
+  @Override
   @NotNull
   public String getText() {
     return CodeInsightBundle.message("intention.replace.concatenation.with.formatted.output.text");
   }
 
+  @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     if (!CodeInsightUtilBase.prepareFileForWrite(file)) return;
     final PsiElement element = findElementAtCaret(editor, file);
@@ -124,6 +127,7 @@ public class ConcatenationToMessageFormatAction implements IntentionAction {
     return newExpr;
   }
 
+  @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     if (PsiUtil.getLanguageLevel(file).compareTo(LanguageLevel.JDK_1_4) < 0) return false;
     final PsiElement element = findElementAtCaret(editor, file);
@@ -155,6 +159,7 @@ public class ConcatenationToMessageFormatAction implements IntentionAction {
     }
   }
 
+  @Override
   public boolean startInWriteAction() {
     return true;
   }

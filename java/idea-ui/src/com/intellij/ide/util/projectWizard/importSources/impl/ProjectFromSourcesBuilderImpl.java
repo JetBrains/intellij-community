@@ -32,6 +32,7 @@ import com.intellij.ide.util.projectWizard.importSources.ProjectStructureDetecto
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.*;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
@@ -260,6 +261,15 @@ public class ProjectFromSourcesBuilderImpl extends ProjectBuilder implements Pro
 
   public void addConfigurationUpdater(ProjectConfigurationUpdater updater) {
     myUpdaters.add(updater);
+  }
+
+  public boolean hasRootsFromOtherDetectors(ProjectStructureDetector thisDetector) {
+    for (ProjectStructureDetector projectStructureDetector : Extensions.getExtensions(ProjectStructureDetector.EP_NAME)) {
+      if (projectStructureDetector != thisDetector && !getProjectRoots(projectStructureDetector).isEmpty()) {
+        return true;
+      }
+    }
+    return false;
   }
 
   @NotNull

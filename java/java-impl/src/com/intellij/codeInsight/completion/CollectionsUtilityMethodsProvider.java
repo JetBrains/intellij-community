@@ -30,55 +30,62 @@ import static com.intellij.psi.CommonClassNames.*;
 */
 class CollectionsUtilityMethodsProvider {
   public static final Key<Boolean> COLLECTION_FACTORY = Key.create("CollectionFactory");
-  
-  public static void addCompletions(@NotNull final JavaSmartCompletionParameters parameters,
-                                    @NotNull final Consumer<LookupElement> result) {
-    final PsiElement element = parameters.getPosition();
+  private final PsiElement myElement;
+  private final PsiType myExpectedType;
+  private final PsiType myDefaultType;
+  @NotNull private final Consumer<LookupElement> myResult;
 
-    final PsiElement parent = element.getParent();
+  CollectionsUtilityMethodsProvider(PsiElement position,
+                                    PsiType expectedType,
+                                    PsiType defaultType, @NotNull final Consumer<LookupElement> result) {
+    myResult = result;
+    myElement = position;
+    myExpectedType = expectedType;
+    myDefaultType = defaultType;
+  }
+
+  public void addCompletions(boolean showAll) {
+    final PsiElement parent = myElement.getParent();
     if (parent instanceof PsiReferenceExpression && ((PsiReferenceExpression)parent).getQualifierExpression() != null) return;
 
     final PsiClass collectionsClass =
-        JavaPsiFacade.getInstance(element.getProject()).findClass(JAVA_UTIL_COLLECTIONS, element.getResolveScope());
+        JavaPsiFacade.getInstance(myElement.getProject()).findClass(JAVA_UTIL_COLLECTIONS, myElement.getResolveScope());
     if (collectionsClass == null) return;
 
-    final PsiType type = parameters.getExpectedType();
-    final PsiType defaultType = parameters.getDefaultType();
     final PsiElement pparent = parent.getParent();
-    if (parameters.getParameters().getInvocationCount() > 1 ||
+    if (showAll ||
         pparent instanceof PsiReturnStatement ||
         pparent instanceof PsiConditionalExpression && pparent.getParent() instanceof PsiReturnStatement) {
-      addCollectionMethod(result, type, defaultType, JAVA_UTIL_LIST, "emptyList", collectionsClass, element);
-      addCollectionMethod(result, type, defaultType, JAVA_UTIL_SET, "emptySet", collectionsClass, element);
-      addCollectionMethod(result, type, defaultType, JAVA_UTIL_MAP, "emptyMap", collectionsClass, element);
+      addCollectionMethod(JAVA_UTIL_LIST, "emptyList", collectionsClass);
+      addCollectionMethod(JAVA_UTIL_SET, "emptySet", collectionsClass);
+      addCollectionMethod(JAVA_UTIL_MAP, "emptyMap", collectionsClass);
     }
 
-    if (parameters.getParameters().getInvocationCount() > 1) {
-      addCollectionMethod(result, type, defaultType, JAVA_UTIL_LIST, "singletonList", collectionsClass, element);
-      addCollectionMethod(result, type, defaultType, JAVA_UTIL_SET, "singleton", collectionsClass, element);
-      addCollectionMethod(result, type, defaultType, JAVA_UTIL_MAP, "singletonMap", collectionsClass, element);
+    if (showAll) {
+      addCollectionMethod(JAVA_UTIL_LIST, "singletonList", collectionsClass);
+      addCollectionMethod(JAVA_UTIL_SET, "singleton", collectionsClass);
+      addCollectionMethod(JAVA_UTIL_MAP, "singletonMap", collectionsClass);
 
-      addCollectionMethod(result, type, defaultType, JAVA_UTIL_COLLECTION, "unmodifiableCollection", collectionsClass, element);
-      addCollectionMethod(result, type, defaultType, JAVA_UTIL_LIST, "unmodifiableList", collectionsClass, element);
-      addCollectionMethod(result, type, defaultType, JAVA_UTIL_SET, "unmodifiableSet", collectionsClass, element);
-      addCollectionMethod(result, type, defaultType, JAVA_UTIL_MAP, "unmodifiableMap", collectionsClass, element);
-      addCollectionMethod(result, type, defaultType, "java.util.SortedSet", "unmodifiableSortedSet", collectionsClass, element);
-      addCollectionMethod(result, type, defaultType, "java.util.SortedMap", "unmodifiableSortedMap", collectionsClass, element);
+      addCollectionMethod(JAVA_UTIL_COLLECTION, "unmodifiableCollection", collectionsClass);
+      addCollectionMethod(JAVA_UTIL_LIST, "unmodifiableList", collectionsClass);
+      addCollectionMethod(JAVA_UTIL_SET, "unmodifiableSet", collectionsClass);
+      addCollectionMethod(JAVA_UTIL_MAP, "unmodifiableMap", collectionsClass);
+      addCollectionMethod("java.util.SortedSet", "unmodifiableSortedSet", collectionsClass);
+      addCollectionMethod("java.util.SortedMap", "unmodifiableSortedMap", collectionsClass);
     }
 
   }
 
-  private static void addCollectionMethod(final Consumer<LookupElement> result, final PsiType expectedType,
-                                   final PsiType defaultType, final String baseClassName,
-                                   @NonNls final String method, @NotNull final PsiClass collectionsClass, PsiElement place) {
-    if (isClassType(expectedType, baseClassName) || isClassType(expectedType, JAVA_UTIL_COLLECTION)) {
-      addMethodItem(result, expectedType, method, collectionsClass, place);
-    } else if (isClassType(defaultType, baseClassName) || isClassType(defaultType, JAVA_UTIL_COLLECTION)) {
-      addMethodItem(result, defaultType, method, collectionsClass, place);
+  private void addCollectionMethod(final String baseClassName,
+                                   @NonNls final String method, @NotNull final PsiClass collectionsClass) {
+    if (isClassType(myExpectedType, baseClassName) || isClassType(myExpectedType, JAVA_UTIL_COLLECTION)) {
+      addMethodItem(myExpectedType, method, collectionsClass);
+    } else if (isClassType(myDefaultType, baseClassName) || isClassType(myDefaultType, JAVA_UTIL_COLLECTION)) {
+      addMethodItem(myDefaultType, method, collectionsClass);
     }
   }
 
-  private static void addMethodItem(Consumer<LookupElement> result, PsiType expectedType, String methodName, PsiClass containingClass, PsiElement place) {
+  private void addMethodItem(PsiType expectedType, String methodName, PsiClass containingClass) {
     final PsiMethod[] methods = containingClass.findMethodsByName(methodName, false);
     if (methods.length == 0) {
       return;
@@ -87,9 +94,9 @@ class CollectionsUtilityMethodsProvider {
     final PsiMethod method = methods[0];
     final JavaMethodCallElement item = new JavaMethodCallElement(method, false, false);
     item.setAutoCompletionPolicy(AutoCompletionPolicy.NEVER_AUTOCOMPLETE);
-    item.setInferenceSubstitutor(SmartCompletionDecorator.calculateMethodReturnTypeSubstitutor(method, expectedType), place);
+    item.setInferenceSubstitutor(SmartCompletionDecorator.calculateMethodReturnTypeSubstitutor(method, expectedType), myElement);
     item.putUserData(COLLECTION_FACTORY, true);
-    result.consume(item);
+    myResult.consume(item);
   }
 
   private static boolean isClassType(final PsiType type, final String className) {

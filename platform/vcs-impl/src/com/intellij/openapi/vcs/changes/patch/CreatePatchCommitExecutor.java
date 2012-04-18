@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,7 +32,6 @@ import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager;
@@ -52,7 +51,7 @@ import java.util.List;
 /**
  * @author yole
  */
-public class CreatePatchCommitExecutor implements CommitExecutorWithHelp, ProjectComponent, JDOMExternalizable {
+public class CreatePatchCommitExecutor extends LocalCommitExecutor implements ProjectComponent, JDOMExternalizable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.patch.CreatePatchCommitExecutor");
   
   private final Project myProject;
@@ -209,7 +208,7 @@ public class CreatePatchCommitExecutor implements CommitExecutorWithHelp, Projec
           public void run() {
             final VcsConfiguration configuration = VcsConfiguration.getInstance(myProject);
             if (Boolean.TRUE.equals(configuration.SHOW_PATCH_IN_EXPLORER)) {
-              ShowFilePathAction.open(file, file);
+              ShowFilePathAction.openFile(file);
             } else if (Boolean.FALSE.equals(configuration.SHOW_PATCH_IN_EXPLORER)) {
               return;
             } else {

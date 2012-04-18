@@ -17,30 +17,37 @@ package com.intellij.designer.designSurface;
 
 import com.intellij.designer.designSurface.tools.InputTool;
 import com.intellij.designer.model.RadComponent;
+import com.intellij.designer.model.RadComponentVisitor;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Alexander Lobas
  */
 public class DecorationLayer extends JComponent {
   private final EditableArea myArea;
+  private boolean myShowSelection = true;
 
   public DecorationLayer(EditableArea area) {
     myArea = area;
   }
 
-  @Override
-  public void paint(Graphics g) {
-    painSelection((Graphics2D)g);
+  public void showSelection(boolean value) {
+    if (myShowSelection != value) {
+      myShowSelection = value;
+      repaint();
+    }
   }
 
   @Nullable
   public InputTool findTargetTool(int x, int y) {
-    for (RadComponent component : myArea.getSelection()) {
-      ComponentDecorator decorator = getDecorator(component);
+    List<RadComponent> selection = myArea.getSelection();
+    for (RadComponent component : selection) {
+      ComponentDecorator decorator = getDecorator(component, selection);
       InputTool tracker = decorator.findTargetTool(this, component, x, y);
       if (tracker != null) {
         return tracker;
@@ -49,26 +56,46 @@ public class DecorationLayer extends JComponent {
     return null;
   }
 
-  private void painSelection(Graphics2D g) {
-    for (RadComponent component : myArea.getSelection()) {
-      ComponentDecorator decorator = getDecorator(component);
-      // TODO: set component clipping
-      decorator.decorate(this, g, component);
-      // TODO: restore Graphics state: color, font, stroke etc.
+  @Override
+  public void paint(Graphics g) {
+    if (myArea.getRootComponent() != null) {
+      Graphics2D g2d = (Graphics2D)g;
+      paintStaticDecorators(g2d);
+      if (myShowSelection) {
+        paintSelection(g2d);
+      }
     }
   }
 
-  private ComponentDecorator getDecorator(RadComponent component) {
+  private void paintStaticDecorators(Graphics2D g) {
+    final List<StaticDecorator> decorators = new ArrayList<StaticDecorator>();
+    final List<RadComponent> selection = myArea.getSelection();
+
+    myArea.getRootComponent().accept(new RadComponentVisitor() {
+      @Override
+      public void endVisit(RadComponent component) {
+        component.addStaticDecorators(decorators, selection);
+      }
+    }, true);
+
+    for (StaticDecorator decorator : decorators) {
+      decorator.decorate(this, g);
+    }
+  }
+
+  private void paintSelection(Graphics2D g) {
+    List<RadComponent> selection = myArea.getSelection();
+    for (RadComponent component : selection) {
+      ComponentDecorator decorator = getDecorator(component, selection);
+      decorator.decorate(this, g, component);
+    }
+  }
+
+  private ComponentDecorator getDecorator(RadComponent component, List<RadComponent> selection) {
     RadComponent parent = component.getParent();
     if (parent == null) {
       return myArea.getRootSelectionDecorator();
     }
-    return parent.getLayout().getChildSelectionDecorator(component);
-  }
-
-  public Rectangle getComponentBounds(RadComponent component) {
-    Rectangle bounds = component.getBounds();
-    Point location = component.convertPoint(bounds.x, bounds.y, this);
-    return new Rectangle(location.x, location.y, bounds.width, bounds.height);
+    return parent.getLayout().getChildSelectionDecorator(component, selection);
   }
 }

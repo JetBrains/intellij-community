@@ -16,6 +16,7 @@
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.ide.util.treeView.TreeState;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diff.DiffBundle;
@@ -42,6 +43,7 @@ import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
+import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -73,6 +75,7 @@ public abstract class ChangesTreeList<T> extends JPanel {
 
   private final Collection<T> myIncludedChanges;
   private Runnable myDoubleClickHandler = EmptyRunnable.getInstance();
+  private boolean myAlwaysExpandList;
 
   @NonNls private static final String TREE_CARD = "Tree";
   @NonNls private static final String LIST_CARD = "List";
@@ -93,6 +96,7 @@ public abstract class ChangesTreeList<T> extends JPanel {
     myInclusionListener = inclusionListener;
     myChangeDecorator = decorator;
     myIncludedChanges = new HashSet<T>(initiallyIncluded);
+    myAlwaysExpandList = true;
 
     myCards = new CardLayout();
 
@@ -290,6 +294,7 @@ public abstract class ChangesTreeList<T> extends JPanel {
   }
   
   public void setChangesToDisplay(final List<T> changes, @Nullable final VirtualFile toSelect) {
+    final boolean wasEmpty = myList.isEmpty();
     final List<T> sortedChanges = new ArrayList<T>(changes);
     Collections.sort(sortedChanges, new Comparator<T>() {
       public int compare(final T o1, final T o2) {
@@ -297,6 +302,7 @@ public abstract class ChangesTreeList<T> extends JPanel {
       }
     });
 
+    final Set<Object> wasSelected = new HashSet<Object>(Arrays.asList(myList.getSelectedValues()));
     myList.setModel(new AbstractListModel() {
       @Override
       public int getSize() {
@@ -310,7 +316,24 @@ public abstract class ChangesTreeList<T> extends JPanel {
     });
 
     final DefaultTreeModel model = buildTreeModel(changes, myChangeDecorator);
+    TreeState state = null;
+    if (! myAlwaysExpandList && ! wasEmpty) {
+      state = TreeState.createOn(myTree, (DefaultMutableTreeNode) myTree.getModel().getRoot());
+    }
     myTree.setModel(model);
+    if (! myAlwaysExpandList && ! wasEmpty) {
+      state.applyTo(myTree, (DefaultMutableTreeNode) myTree.getModel().getRoot());
+
+      final TIntArrayList indices = new TIntArrayList();
+      for (int i = 0; i < sortedChanges.size(); i++) {
+        T t = sortedChanges.get(i);
+        if (wasSelected.contains(t)) {
+          indices.add(i);
+        }
+      }
+      myList.setSelectedIndices(indices.toNativeArray());
+      return;
+    }
 
     final Runnable runnable = new Runnable() {
       public void run() {
@@ -394,7 +417,7 @@ public abstract class ChangesTreeList<T> extends JPanel {
       SwingUtilities.invokeLater(runnable);
     }
   }
-  
+
   private static boolean seemsToBeMoved(Change change, VirtualFile toSelect) {
     ContentRevision afterRevision = change.getAfterRevision();
     if (afterRevision == null) return false;
@@ -681,7 +704,7 @@ public abstract class ChangesTreeList<T> extends JPanel {
   }
 
 
-  private CheckboxTree.NodeState getNodeStatus(ChangesBrowserNode node) {
+  private CheckboxTree.NodeState getNodeStatus(ChangesBrowserNode<T> node) {
     boolean hasIncluded = false;
     boolean hasExcluded = false;
 
@@ -839,5 +862,9 @@ public abstract class ChangesTreeList<T> extends JPanel {
 
   public void enableSelection(final boolean value) {
     myTree.setEnabled(value);
+  }
+
+  public void setAlwaysExpandList(boolean alwaysExpandList) {
+    myAlwaysExpandList = alwaysExpandList;
   }
 }

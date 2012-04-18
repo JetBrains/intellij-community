@@ -4,8 +4,9 @@ for (e in [1,2,3,4]) {
 -----
 0(1) element: null
 1(2) WRITE e
-2(3,6) element: For statement
+2(3,7) element: For statement
 3(4) element: Block statement
 4(5) READ print
-5(2) READ e
-6() element: null
+5(6) READ e
+6(2) ARGUMENT element: Reference expression
+7() element: null

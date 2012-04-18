@@ -38,7 +38,7 @@ import java.util.List;
  * @author yole
  */
 public class TestDataLineMarkerProvider implements LineMarkerProvider {
-  public LineMarkerInfo getLineMarkerInfo(PsiElement element) {
+  public LineMarkerInfo getLineMarkerInfo(@NotNull PsiElement element) {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       return null;
     }
@@ -75,7 +75,7 @@ public class TestDataLineMarkerProvider implements LineMarkerProvider {
     return fileNames != null && !fileNames.isEmpty();
   }
 
-  public void collectSlowLineMarkers(List<PsiElement> elements, Collection<LineMarkerInfo> result) {
+  public void collectSlowLineMarkers(@NotNull List<PsiElement> elements, @NotNull Collection<LineMarkerInfo> result) {
   }
 
   @Nullable

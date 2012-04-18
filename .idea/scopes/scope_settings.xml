@@ -1,5 +1,6 @@
 <component name="DependencyValidationManager">
   <state>
     <option name="SKIP_IMPORT_STATEMENTS" value="false" />
+    <deny_rule from_scope="util-rt" to_scope="libraries.except.jdk" is_deny="true" />
   </state>
 </component>

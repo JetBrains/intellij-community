@@ -16,7 +16,7 @@
 package org.jetbrains.android;
 
 import com.intellij.openapi.components.ApplicationComponent;
-import org.jetbrains.android.sdk.AndroidSdk;
+import org.jetbrains.android.sdk.AndroidSdkData;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -33,6 +33,6 @@ public class AndroidPlugin implements ApplicationComponent {
   }
 
   public void disposeComponent() {
-    AndroidSdk.terminateDdmlib();
+    AndroidSdkData.terminateDdmlib();
   }
 }

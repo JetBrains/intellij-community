@@ -37,6 +37,7 @@ public class ImageInfoIndex extends SingleEntryFileBasedIndexExtension<ImageInfo
   public static final ID<Integer, ImageInfo> INDEX_ID = ID.create("ImageFileInfoIndex");
 
   private final FileBasedIndex.InputFilter myInputFilter = new FileBasedIndex.InputFilter() {
+    @Override
     public boolean acceptInput(final VirtualFile file) {
       return (file.getFileSystem() == LocalFileSystem.getInstance() || file.getFileSystem() instanceof TempFileSystem) &&
              file.getFileType() == ImageFileTypeManager.getInstance().getImageFileType();
@@ -44,28 +45,35 @@ public class ImageInfoIndex extends SingleEntryFileBasedIndexExtension<ImageInfo
   };
 
   private final DataExternalizer<ImageInfo> myValueExternalizer = new DataExternalizer<ImageInfo>() {
+    @Override
     public void save(final DataOutput out, final ImageInfo info) throws IOException {
       out.writeInt(info.width);
       out.writeInt(info.height);
       out.writeInt(info.bpp);
     }
 
+    @Override
     public ImageInfo read(final DataInput in) throws IOException {
       return new ImageInfo(in.readInt(), in.readInt(), in.readInt());
     }
   };
 
   private final SingleEntryIndexer<ImageInfo> myDataIndexer = new SingleEntryIndexer<ImageInfo>(false) {
+    @Override
     protected ImageInfo computeValue(@NotNull FileContent inputData) {
       final ImageInfoReader.Info info = ImageInfoReader.getInfo(inputData.getContent());
       return info != null? new ImageInfo(info.width, info.height, info.bpp) : null;
     }
   };
 
+  @Override
+  @NotNull
   public ID<Integer, ImageInfo> getName() {
     return INDEX_ID;
   }
 
+  @Override
+  @NotNull
   public SingleEntryIndexer<ImageInfo> getIndexer() {
     return myDataIndexer;
   }
@@ -75,14 +83,17 @@ public class ImageInfoIndex extends SingleEntryFileBasedIndexExtension<ImageInfo
         .fileScope(project, virtualFile));
   }
 
+  @Override
   public DataExternalizer<ImageInfo> getValueExternalizer() {
     return myValueExternalizer;
   }
 
+  @Override
   public FileBasedIndex.InputFilter getInputFilter() {
     return myInputFilter;
   }
 
+  @Override
   public int getVersion() {
     return 3;
   }

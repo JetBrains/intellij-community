@@ -259,7 +259,14 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
       }
       else {
         VisibilityUtil.escalateVisibility((PsiField)myTargetVariable, expression);
-        newQualifier = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createExpressionFromText(myTargetVariable.getName(), null);
+        String newQualifierName = myTargetVariable.getName();
+        if (myTargetVariable instanceof PsiField && oldQualifier != null) {
+          final PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(oldQualifier.getType());
+          if (aClass == ((PsiField)myTargetVariable).getContainingClass()) {
+            newQualifierName = oldQualifier.getText() + "." + newQualifierName;
+          }
+        }
+        newQualifier = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createExpressionFromText(newQualifierName, null);
       }
 
       PsiExpression newArgument = null;
@@ -369,6 +376,7 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
       //correct internal references
       final PsiCodeBlock body = myMethod.getBody();
       if (body != null) {
+        final Map<PsiElement, PsiElement> replaceMap = new HashMap<PsiElement, PsiElement>();
         body.accept(new JavaRecursiveElementVisitor() {
           @Override public void visitThisExpression(PsiThisExpression expression) {
             final PsiClass classReferencedByThis = MoveInstanceMembersUtil.getClassReferencedByThis(expression);
@@ -377,7 +385,7 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
               String paramName = getParameterNameToCreate(classReferencedByThis);
               try {
                 final PsiExpression refExpression = factory.createExpressionFromText(paramName, null);
-                expression.replace(refExpression);
+                replaceMap.put(expression, refExpression);
               }
               catch (IncorrectOperationException e) {
                 LOG.error(e);
@@ -404,7 +412,7 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
               }
               if (myTargetVariable.equals(resolved)) {
                 PsiThisExpression thisExpression = (PsiThisExpression)factory.createExpressionFromText("this", null);
-                expression.replace(thisExpression);
+                replaceMap.put(expression, thisExpression);
                 return;
               }
               else if (myMethod.equals(resolved)) {
@@ -439,7 +447,7 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
                   if (qualifier != null) qualifier.delete();
                   final String paramName = getParameterNameToCreate(classReferencedByThis);
                   final PsiExpression newExpression = factory.createExpressionFromText(paramName + "." + expression.getText(), null);
-                  expression = (PsiNewExpression)expression.replace(newExpression);
+                  replaceMap.put(expression, newExpression);
                 }
               }
               super.visitNewExpression(expression);
@@ -454,6 +462,10 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
             super.visitMethodCallExpression(expression);
           }
         });
+        for (PsiElement element : replaceMap.keySet()) {
+          final PsiElement replacement = replaceMap.get(element);
+          element.replace(replacement);
+        }
       }
 
       final PsiMethod methodCopy = getPatternMethod();

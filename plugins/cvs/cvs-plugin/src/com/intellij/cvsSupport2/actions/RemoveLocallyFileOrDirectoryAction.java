@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.cvsSupport2.actions;
 
+import com.intellij.CommonBundle;
 import com.intellij.CvsBundle;
 import com.intellij.cvsSupport2.CvsUtil;
 import com.intellij.cvsSupport2.CvsVcs2;
@@ -55,9 +56,8 @@ public class RemoveLocallyFileOrDirectoryAction extends ActionOnSelectedElement 
   }
 
   protected CvsHandler getCvsHandler(CvsContext context) {
-    Project project = context.getProject();
+    final Project project = context.getProject();
     final boolean showDialog = myOptions.isToBeShown(project) || OptionsDialog.shiftIsPressed(context.getModifiers());
-
     return getCvsHandler(project, getFilesToRemove(context), showDialog);
   }
 
@@ -68,7 +68,7 @@ public class RemoveLocallyFileOrDirectoryAction extends ActionOnSelectedElement 
   private static CvsHandler getCvsHandler(final Project project,
                                           final Collection<File> filesToRemove,
                                           final boolean showDialog) {
-    ArrayList<File> files = new ArrayList<File>();
+    final ArrayList<File> files = new ArrayList<File>();
 
     for (final File file : filesToRemove) {
       if (CvsUtil.fileIsLocallyAdded(file)) {
@@ -88,14 +88,16 @@ public class RemoveLocallyFileOrDirectoryAction extends ActionOnSelectedElement 
                                                             null,
                                                             CvsBundle.message("dialog.title.delete.file.from.cvs"),
                                                             CvsBundle.message("confirmation.text.delete.file.from.cvs"),
-                                                            CvsVcs2.getInstance(project).getRemoveConfirmation());
+                                                            CvsVcs2.getInstance(project).getRemoveConfirmation(),
+                                                            CvsBundle.message("button.text.delete.from.cvs"),
+                                                            CommonBundle.getCancelButtonText());
       if (filesToBeRemoved == null || filesToBeRemoved.isEmpty()) return CvsHandler.NULL;
     }
     return CommandCvsHandler.createRemoveFilesHandler(project, ChangesUtil.filePathsToFiles(filesToBeRemoved));
   }
 
   private static List<FilePath> filesToFilePaths(final ArrayList<File> files) {
-    List<FilePath> result = new ArrayList<FilePath>();
+    final List<FilePath> result = new ArrayList<FilePath>();
     for(File f: files) {
       result.add(VcsContextFactory.SERVICE.getInstance().createFilePathOnDeleted(f, false));
     }
@@ -103,8 +105,8 @@ public class RemoveLocallyFileOrDirectoryAction extends ActionOnSelectedElement 
   }
 
   protected Collection<File> getFilesToRemove(CvsContext context) {
-    Collection<String> deletedFileNames = context.getDeletedFileNames();
-    ArrayList<File> result = new ArrayList<File>();
+    final Collection<String> deletedFileNames = context.getDeletedFileNames();
+    final ArrayList<File> result = new ArrayList<File>();
     for (final String deletedFileName : deletedFileNames) {
       result.add(new File(deletedFileName));
     }

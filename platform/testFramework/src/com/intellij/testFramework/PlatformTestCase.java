@@ -36,6 +36,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.event.DocumentListener;
+import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.module.EmptyModuleType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -53,17 +54,16 @@ import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.impl.VirtualFilePointerManagerImpl;
 import com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
-import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.codeStyle.CodeStyleSchemes;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.impl.DocumentCommitThread;
 import com.intellij.psi.impl.PsiDocumentManagerImpl;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl;
@@ -110,7 +110,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
   private ThreadTracker myThreadTracker;
 
   protected static boolean ourPlatformPrefixInitialized;
-  private static Set<VirtualFile> ourEternallyLivingFiles;
+  private static Set<VirtualFile> ourEternallyLivingFilesCache;
 
   static {
     Logger.setFactory(TestLoggerFactory.getInstance());
@@ -188,6 +188,9 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
       CodeStyleSettingsManager.getInstance(myProject).setTemporarySettings(new CodeStyleSettings());
       ((InjectedLanguageManagerImpl)InjectedLanguageManager.getInstance(myProject)).pushInjectors();
     }
+
+    DocumentCommitThread.getInstance().clearQueue();
+    DocumentImpl.CHECK_DOCUMENT_CONSISTENCY = !isPerformanceTest();
   }
 
   public Project getProject() {
@@ -265,7 +268,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
   }
 
   protected File getIprFile() throws IOException {
-    File tempFile = FileUtil.createTempFile("tmp_" + getName()+"_", ProjectFileType.DOT_DEFAULT_EXTENSION);
+    File tempFile = FileUtil.createTempFile(getName()+"_", ProjectFileType.DOT_DEFAULT_EXTENSION);
     myFilesToDelete.add(tempFile);
     return tempFile;
   }
@@ -336,27 +339,12 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
 
     LocalHistoryImpl.getInstanceImpl().cleanupForNextTest();
 
-    VirtualFilePointerManagerImpl virtualFilePointerManager = (VirtualFilePointerManagerImpl)VirtualFilePointerManager.getInstance();
-    if (virtualFilePointerManager != null) {
-      virtualFilePointerManager.cleanupForNextTest();
-    }
     PatchedWeakReference.clearAll();
   }
 
-  private static void addSubTree(VirtualFile root, Set<VirtualFile> to) {
-    if (root instanceof VirtualDirectoryImpl) {
-      for (VirtualFile child : ((VirtualDirectoryImpl)root).getCachedChildren()) {
-        if (child instanceof VirtualDirectoryImpl) {
-          to.add(child);
-          addSubTree(child, to);
-        }
-      }
-    }
-  }
-
-  public static Set<VirtualFile> eternallyLivingFiles() {
-    if (ourEternallyLivingFiles != null) {
-      return ourEternallyLivingFiles;
+  private static Set<VirtualFile> eternallyLivingFiles() {
+    if (ourEternallyLivingFilesCache != null) {
+      return ourEternallyLivingFilesCache;
     }
 
     Set<VirtualFile> survivors = new HashSet<VirtualFile>();
@@ -367,14 +355,31 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
       }
     }
 
-    ourEternallyLivingFiles = survivors;
+    ourEternallyLivingFilesCache = survivors;
     return survivors;
   }
 
-  public static void registerSurvivor(Set<VirtualFile> survivors, VirtualFile file) {
+  public static void addSurvivingFiles(@NotNull Collection<VirtualFile> files) {
+    for (VirtualFile each : files) {
+      registerSurvivor(eternallyLivingFiles(), each);
+    }
+  }
+
+  private static void registerSurvivor(Set<VirtualFile> survivors, VirtualFile file) {
     addSubTree(file, survivors);
     while (file != null && survivors.add(file)) {
       file = file.getParent();
+    }
+  }
+
+  private static void addSubTree(VirtualFile root, Set<VirtualFile> to) {
+    if (root instanceof VirtualDirectoryImpl) {
+      for (VirtualFile child : ((VirtualDirectoryImpl)root).getCachedChildren()) {
+        if (child instanceof VirtualDirectoryImpl) {
+          to.add(child);
+          addSubTree(child, to);
+        }
+      }
     }
   }
 
@@ -464,6 +469,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
 
   private void disposeProject(@NotNull CompositeException result) /* throws nothing */ {
     try {
+      DocumentCommitThread.getInstance().clearQueue();
       UIUtil.dispatchAllInvocationEvents();
     }
     catch (Exception e) {
@@ -472,6 +478,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     try {
       if (myProject != null) {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          @Override
           public void run() {
             Disposer.dispose(myProject);
             ProjectManagerEx projectManager = ProjectManagerEx.getInstanceEx();
@@ -709,11 +716,19 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
   }
 
   public static File createTempDir(@NonNls final String prefix) throws IOException {
+    return createTempDir(prefix, true);
+  }
+
+  public static File createTempDir(@NonNls final String prefix, final boolean refresh) throws IOException {
     final File tempDirectory = FileUtil.createTempDirectory(TEST_DIR_PREFIX + prefix, null);
     myFilesToDelete.add(tempDirectory);
+    if (refresh) {
+      getVirtualFile(tempDirectory);
+    }
     return tempDirectory;
   }
 
+  @Nullable
   protected static VirtualFile getVirtualFile(final File file) {
     return LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
   }
@@ -722,6 +737,11 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     return createTempDir(getTestName(true));
   }
 
+  protected File createTempDirectory(final boolean refresh) throws IOException {
+    return createTempDir(getTestName(true), refresh);
+  }
+
+  @Nullable
   protected PsiFile getPsiFile(final Document document) {
     return PsiDocumentManager.getInstance(getProject()).getPsiFile(document);
   }

@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.actionSystem;
 
+import com.intellij.ide.ui.UISettings;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
@@ -139,8 +140,14 @@ public final class Presentation implements Cloneable {
             if (i >= text.length()) break;
             ch = text.charAt(i);
             if (ch != '_' && ch != '&') {
-              myMnemonic = Character.toUpperCase(ch);  // mnemonics are case insensitive
-              myDisplayedMnemonicIndex = i - 1;
+              if (UISettings.getInstance().DISABLE_MNEMONICS_IN_CONTROLS) {
+                myMnemonic = 0;
+                myDisplayedMnemonicIndex = -1;
+              }
+              else {
+                myMnemonic = Character.toUpperCase(ch);  // mnemonics are case insensitive
+                myDisplayedMnemonicIndex = i - 1;
+              }
             }
           }
           plainText.append(ch);
@@ -279,6 +286,11 @@ public final class Presentation implements Cloneable {
     boolean oldEnabled = myEnabled;
     myEnabled = enabled;
     firePropertyChange(PROP_ENABLED, oldEnabled?Boolean.TRUE:Boolean.FALSE, myEnabled?Boolean.TRUE:Boolean.FALSE);
+  }
+
+  public final void setEnabledAndVisible(boolean enabled) {
+    setEnabled(enabled);
+    setVisible(enabled);
   }
 
   void firePropertyChange(String propertyName, Object oldValue, Object newValue) {

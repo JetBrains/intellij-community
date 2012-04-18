@@ -73,9 +73,9 @@ public class EncapsulateFieldsDialog extends RefactoringDialog implements Encaps
   private JTable myTable;
   private MyTableModel myTableModel;
 
-  private final JCheckBox myCbEncapsulateGet = new JCheckBox();
-  private final JCheckBox myCbEncapsulateSet = new JCheckBox();
-  private final JCheckBox myCbUseAccessorsWhenAccessible = new JCheckBox();
+  private final JCheckBox myCbEncapsulateGet = new NonFocusableCheckBox();
+  private final JCheckBox myCbEncapsulateSet = new NonFocusableCheckBox();
+  private final JCheckBox myCbUseAccessorsWhenAccessible = new NonFocusableCheckBox();
   private final JRadioButton myRbFieldPrivate = new JRadioButton();
   private final JRadioButton myRbFieldProtected = new JRadioButton();
   private final JRadioButton myRbFieldPackageLocal = new JRadioButton();
@@ -88,10 +88,6 @@ public class EncapsulateFieldsDialog extends RefactoringDialog implements Encaps
   private DocCommentPanel myJavadocPolicy;
 
   {
-    myCbEncapsulateGet.setFocusable(false);
-    myCbEncapsulateSet.setFocusable(false);
-    myCbUseAccessorsWhenAccessible.setFocusable(false);
-
     myRbAccessorPackageLocal.setFocusable(false);
     myRbAccessorPrivate.setFocusable(false);
     myRbAccessorProtected.setFocusable(false);
@@ -320,7 +316,7 @@ public String getAccessorsVisibility() {
     leftBox.add(myCbUseAccessorsWhenAccessible);
     JPanel leftPanel = new JPanel(new BorderLayout());
     leftPanel.setBorder(IdeBorderFactory.createTitledBorder(
-      RefactoringBundle.message("encapsulate.fields.encapsulate.border.title"), false, true, true));
+      RefactoringBundle.message("encapsulate.fields.encapsulate.border.title"), true));
     leftPanel.add(leftBox, BorderLayout.CENTER);
     leftPanel.add(Box.createHorizontalStrut(5), BorderLayout.WEST);
 
@@ -344,7 +340,7 @@ public String getAccessorsVisibility() {
     fieldsBox.add(myRbFieldAsIs);
     JPanel fieldsVisibilityPanel = new JPanel(new BorderLayout());
     fieldsVisibilityPanel.setBorder(IdeBorderFactory.createTitledBorder(
-      RefactoringBundle.message("encapsulate.fields..encapsulated.fields.visibility.border.title"), false, true, true));
+      RefactoringBundle.message("encapsulate.fields..encapsulated.fields.visibility.border.title"), true));
     fieldsVisibilityPanel.add(fieldsBox, BorderLayout.CENTER);
     fieldsVisibilityPanel.add(Box.createHorizontalStrut(5), BorderLayout.WEST);
 
@@ -355,7 +351,7 @@ public String getAccessorsVisibility() {
     methodsBox.add(myRbAccessorPrivate);
     JPanel methodsVisibilityPanel = new JPanel(new BorderLayout());
     methodsVisibilityPanel.setBorder(IdeBorderFactory.createTitledBorder(
-      RefactoringBundle.message("encapsulate.fields.accessors.visibility.border.title"), false, true, true));
+      RefactoringBundle.message("encapsulate.fields.accessors.visibility.border.title"), true));
     methodsVisibilityPanel.add(methodsBox, BorderLayout.CENTER);
     methodsVisibilityPanel.add(Box.createHorizontalStrut(5), BorderLayout.WEST);
 
@@ -397,7 +393,7 @@ public String getAccessorsVisibility() {
 //    CompTitledBorder titledBorder = new CompTitledBorder(label);
     JPanel panel = new JPanel(new BorderLayout());
     Border border = IdeBorderFactory.createTitledBorder(
-      RefactoringBundle.message("encapsulate.fields.fields.to.encapsulate.border.title"), false, false, true);
+      RefactoringBundle.message("encapsulate.fields.fields.to.encapsulate.border.title"), false);
     panel.setBorder(border);
     panel.add(scrollPane);
 

@@ -728,7 +728,7 @@ public class GitHistoryUtils {
 
   @Nullable
   public static Pair<AbstractHash, AbstractHash> getStashTop(@NotNull Project project, @NotNull VirtualFile root) throws VcsException {
-    GitSimpleHandler h = new GitSimpleHandler(project, root, GitCommand.STASH);
+    GitSimpleHandler h = new GitSimpleHandler(project, root, GitCommand.STASH.readLockingCommand());
     GitLogParser parser = new GitLogParser(project, SHORT_HASH, SHORT_PARENTS);
     h.setSilent(true);
     h.setNoSSH(true);
@@ -776,7 +776,7 @@ public class GitHistoryUtils {
   @Nullable
   public static List<Pair<String, GitCommit>> loadStashStackAsCommits(@NotNull Project project, @NotNull VirtualFile root,
                                                                       SymbolicRefsI refs, final String... parameters) throws VcsException {
-    GitSimpleHandler h = new GitSimpleHandler(project, root, GitCommand.STASH);
+    GitSimpleHandler h = new GitSimpleHandler(project, root, GitCommand.STASH.readLockingCommand());
     GitLogParser parser = new GitLogParser(project, GitLogParser.NameStatus.STATUS, SHORT_HASH, HASH, COMMIT_TIME, AUTHOR_NAME, AUTHOR_TIME, AUTHOR_EMAIL, COMMITTER_NAME,
                                            COMMITTER_EMAIL, SHORT_PARENTS, REF_NAMES, SHORT_REF_LOG_SELECTOR, SUBJECT, BODY, RAW_BODY);
     h.setSilent(true);

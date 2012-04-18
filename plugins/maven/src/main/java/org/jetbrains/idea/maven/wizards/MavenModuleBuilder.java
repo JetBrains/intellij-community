@@ -33,6 +33,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.idea.maven.model.MavenArchetype;
 import org.jetbrains.idea.maven.model.MavenId;
+import org.jetbrains.idea.maven.project.MavenEnvironmentForm;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.utils.MavenUtil;
@@ -41,6 +42,7 @@ import javax.swing.*;
 import java.io.File;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 public class MavenModuleBuilder extends ModuleBuilder implements SourcePathsBuilder {
   private static final Icon BIG_ICON = IconLoader.getIcon("/modules/javaModule.png");
@@ -54,6 +56,10 @@ public class MavenModuleBuilder extends ModuleBuilder implements SourcePathsBuil
   private MavenId myProjectId;
   private MavenArchetype myArchetype;
 
+  private MavenEnvironmentForm myEnvironmentForm;
+
+  private Map<String, String> myPropertiesToCreateByArtifact;
+
   public void setupRootModel(ModifiableRootModel rootModel) throws ConfigurationException {
     final Project project = rootModel.getProject();
 
@@ -64,8 +70,12 @@ public class MavenModuleBuilder extends ModuleBuilder implements SourcePathsBuil
 
     MavenUtil.runWhenInitialized(project, new DumbAwareRunnable() {
       public void run() {
+        if (myEnvironmentForm != null) {
+          myEnvironmentForm.setData(MavenProjectsManager.getInstance(project).getGeneralSettings());
+        }
+
         new MavenModuleBuilderHelper(myProjectId, myAggregatorProject, myParentProject, myInheritGroupId,
-                                     myInheritVersion, myArchetype, "Create new Maven module").configure(project, root, false);
+                                     myInheritVersion, myArchetype, myPropertiesToCreateByArtifact, "Create new Maven module").configure(project, root, false);
       }
     });
   }
@@ -96,7 +106,8 @@ public class MavenModuleBuilder extends ModuleBuilder implements SourcePathsBuil
 
   @Override
   public ModuleWizardStep[] createWizardSteps(WizardContext wizardContext, ModulesProvider modulesProvider) {
-    return new ModuleWizardStep[]{new MavenModuleWizardStep(wizardContext.getProject(), this)};
+    return new ModuleWizardStep[]{new MavenModuleWizardStep(wizardContext.getProject(), this),
+      new SelectPropertiesStep(wizardContext.getProject(), this)};
   }
 
   public MavenProject findPotentialParentProject(Project project) {
@@ -169,5 +180,21 @@ public class MavenModuleBuilder extends ModuleBuilder implements SourcePathsBuil
 
   public MavenArchetype getArchetype() {
     return myArchetype;
+  }
+
+  public MavenEnvironmentForm getEnvironmentForm() {
+    return myEnvironmentForm;
+  }
+
+  public void setEnvironmentForm(MavenEnvironmentForm environmentForm) {
+    myEnvironmentForm = environmentForm;
+  }
+
+  public Map<String, String> getPropertiesToCreateByArtifact() {
+    return myPropertiesToCreateByArtifact;
+  }
+
+  public void setPropertiesToCreateByArtifact(Map<String, String> propertiesToCreateByArtifact) {
+    myPropertiesToCreateByArtifact = propertiesToCreateByArtifact;
   }
 }

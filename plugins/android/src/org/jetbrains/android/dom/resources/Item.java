@@ -16,7 +16,6 @@
 
 package org.jetbrains.android.dom.resources;
 
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.xml.Convert;
 import com.intellij.util.xml.GenericAttributeValue;
 import org.jetbrains.android.dom.attrs.AttributeFormat;
@@ -38,7 +37,7 @@ import java.util.List;
 public interface Item extends ResourceElement {
   class TypeConverter extends StaticEnumConverter {
     public TypeConverter() {
-      super(ArrayUtil.toStringArray(AndroidResourceUtil.REFERABLE_RESOURCE_TYPES));
+      super(AndroidResourceUtil.getNamesArray(AndroidResourceUtil.REFERRABLE_RESOURCE_TYPES));
     }
   }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.openapi.fileTypes;
 
 import com.intellij.internal.statistic.AbstractApplicationUsagesCollector;
+import com.intellij.internal.statistic.CollectUsagesException;
 import com.intellij.internal.statistic.beans.GroupDescriptor;
 import com.intellij.internal.statistic.beans.UsageDescriptor;
 import com.intellij.openapi.application.ApplicationManager;
@@ -46,30 +47,35 @@ public class FileTypeUsagesCollector extends AbstractApplicationUsagesCollector 
 
   @NotNull
   @Override
-  public Set<UsageDescriptor> getProjectUsages(@NotNull final Project project) {
+  public Set<UsageDescriptor> getProjectUsages(@NotNull final Project project) throws CollectUsagesException {
     final Set<FileType> usedFileTypes = new HashSet<FileType>();
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      @Override
-      public void run() {
-        if (!project.isDisposed()) {
-          final FileType[] registeredFileTypes = FileTypeManager.getInstance().getRegisteredFileTypes();
-          for (final FileType fileType : registeredFileTypes) {
-            FileBasedIndex.getInstance().processValues(
-              FileTypeIndex.NAME,
-              fileType,
-              null,
-              new FileBasedIndex.ValueProcessor<Void>() {
-                @Override
-                public boolean process(VirtualFile file, Void value) {
-                  usedFileTypes.add(fileType);
-                  return false;
-                }
-              }, GlobalSearchScope.projectScope(project));
-          }
-          usedFileTypes.add(UnknownFileType.INSTANCE);
-        }
+    final FileTypeManager fileTypeManager = FileTypeManager.getInstance();
+    if (fileTypeManager == null) {
+      throw new CollectUsagesException("Cannot get instance of FileTypeManager");
+    }
+    final FileType[] registeredFileTypes = fileTypeManager.getRegisteredFileTypes();
+    for (final FileType fileType : registeredFileTypes) {
+      if (project.isDisposed()) {
+        throw new CollectUsagesException("Project is disposed");
       }
-    });
+      ApplicationManager.getApplication().runReadAction(new Runnable() {
+        @Override
+        public void run() {
+          FileBasedIndex.getInstance().processValues(
+            FileTypeIndex.NAME,
+            fileType,
+            null,
+            new FileBasedIndex.ValueProcessor<Void>() {
+              @Override
+              public boolean process(VirtualFile file, Void value) {
+                usedFileTypes.add(fileType);
+                return false;
+              }
+            }, GlobalSearchScope.projectScope(project));
+        }
+      });
+    }
+    usedFileTypes.add(UnknownFileType.INSTANCE);
     return ContainerUtil.map2Set(usedFileTypes, new NotNullFunction<FileType, UsageDescriptor>() {
       @NotNull
       @Override

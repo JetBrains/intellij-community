@@ -19,6 +19,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.PatternUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -37,6 +38,7 @@ public class DirDiffSettings {
   public boolean showNewOnSource = true;
   public boolean showNewOnTarget = true;
   public boolean showCompareModes = true;
+  public boolean enableChoosers = true;
   public CompareMode compareMode = CompareMode.CONTENT;
   public double compareTimestampAccuracy = 0;
 
@@ -69,7 +71,14 @@ public class DirDiffSettings {
     SIZE, // Compares size only
     TIMESTAMP; // Compares size, if equal compares timestamps
 
-    public String getPresentableName() {
+    public String getPresentableName(DirDiffSettings settings) {
+      Object provider = settings.customSettings.get(DirDiffSettings.CompareModeNameProvider.COMPARE_MODE_NAME_PROVIDER);
+      if (provider instanceof DirDiffSettings.CompareModeNameProvider) {
+        String name = ((DirDiffSettings.CompareModeNameProvider)provider).getName(this);
+        if (name != null) {
+          return name;
+        }
+      }
       return StringUtil.capitalize(name().toLowerCase());
     }
   }
@@ -86,5 +95,12 @@ public class DirDiffSettings {
 
   public List<AnAction> getExtraActions() {
     return extraToolbarActions;
+  }
+
+  public interface CompareModeNameProvider {
+    String COMPARE_MODE_NAME_PROVIDER = "Compare mode name provider"; //NON-NLS
+
+    @Nullable
+    String getName(CompareMode mode);
   }
 }

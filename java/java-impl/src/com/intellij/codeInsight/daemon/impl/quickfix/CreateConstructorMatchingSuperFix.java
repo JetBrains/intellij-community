@@ -29,6 +29,7 @@ import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
@@ -147,7 +148,8 @@ public class CreateConstructorMatchingSuperFix extends BaseIntentionAction {
 
               derived.getBody().replace(stub.getBody());
               derived = (PsiMethod)reformatter.reformat(derived);
-              derived = (PsiMethod)targetClass.add(derived);
+              derived = (PsiMethod)JavaCodeStyleManager.getInstance(project).shortenClassReferences(derived);
+              derived = (PsiMethod)GenerateMembersUtil.insert(targetClass, derived, null, true);
             }
             if (derived != null) {
               editor.getCaretModel().moveToOffset(derived.getTextRange().getStartOffset());

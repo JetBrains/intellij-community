@@ -116,7 +116,7 @@ public class BreadcrumbsXmlWrapper implements BreadcrumbsItemListener<Breadcrumb
 
     PsiManager.getInstance(project).addPsiTreeChangeListener(new PsiTreeChangeAdapter() {
       @Override
-      public void propertyChanged(PsiTreeChangeEvent event) {
+      public void propertyChanged(@NotNull PsiTreeChangeEvent event) {
         PsiFile psiFile = event.getFile();
         VirtualFile file = psiFile == null ? null : psiFile.getVirtualFile();
         if (file != myFile) return;
@@ -124,27 +124,27 @@ public class BreadcrumbsXmlWrapper implements BreadcrumbsItemListener<Breadcrumb
       }
 
       @Override
-      public void childrenChanged(PsiTreeChangeEvent event) {
+      public void childrenChanged(@NotNull PsiTreeChangeEvent event) {
         propertyChanged(event);
       }
 
       @Override
-      public void childMoved(PsiTreeChangeEvent event) {
+      public void childMoved(@NotNull PsiTreeChangeEvent event) {
         propertyChanged(event);
       }
 
       @Override
-      public void childReplaced(PsiTreeChangeEvent event) {
+      public void childReplaced(@NotNull PsiTreeChangeEvent event) {
         propertyChanged(event);
       }
 
       @Override
-      public void childRemoved(PsiTreeChangeEvent event) {
+      public void childRemoved(@NotNull PsiTreeChangeEvent event) {
         propertyChanged(event);
       }
 
       @Override
-      public void childAdded(PsiTreeChangeEvent event) {
+      public void childAdded(@NotNull PsiTreeChangeEvent event) {
         propertyChanged(event);
       }
     },this);

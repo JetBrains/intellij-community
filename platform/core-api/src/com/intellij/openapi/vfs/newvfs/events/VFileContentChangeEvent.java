@@ -61,6 +61,7 @@ public class VFileContentChangeEvent extends VFileEvent {
     return myFile.getPath();
   }
 
+  @NotNull
   @Override
   public VirtualFileSystem getFileSystem() {
     return myFile.getFileSystem();

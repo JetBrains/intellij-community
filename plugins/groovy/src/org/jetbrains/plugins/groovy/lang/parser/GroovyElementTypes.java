@@ -222,7 +222,6 @@ public interface GroovyElementTypes extends GroovyTokenTypes, GroovyDocElementTy
   GroovyElementType CAST_EXPRESSION = new GroovyElementType("cast expression");
   GroovyElementType SAFE_CAST_EXPRESSION = new GroovyElementType("safe cast expression");
   GroovyElementType INSTANCEOF_EXPRESSION = new GroovyElementType("instanceof expression");
-  GroovyElementType POSTFIX_EXPRESSION = new GroovyElementType("Postfix expression");
   GroovyElementType PATH_PROPERTY_REFERENCE = new GroovyElementType("Property reference");
 
   GroovyElementType PATH_METHOD_CALL = new GroovyElementType("Method call");

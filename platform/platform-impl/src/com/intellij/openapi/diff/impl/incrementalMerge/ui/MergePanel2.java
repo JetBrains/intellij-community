@@ -297,8 +297,8 @@ public class MergePanel2 implements DiffViewer {
   }
 
   @Override
-  public DiffViewerType getType() {
-    return DiffViewerType.merge;
+  public boolean acceptsType(DiffViewerType type) {
+    return DiffViewerType.merge.equals(type);
   }
 
   private boolean hasAllEditors() {

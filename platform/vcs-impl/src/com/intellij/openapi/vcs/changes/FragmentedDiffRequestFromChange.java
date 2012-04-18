@@ -81,14 +81,15 @@ public class FragmentedDiffRequestFromChange {
     final FileStatus fs = change.getFileStatus();
     fragmentedContent.setIsAddition(FileStatus.ADDED.equals(fs));
     fragmentedContent.setOneSide(FileStatus.ADDED.equals(fs) || FileStatus.DELETED.equals(fs));
-    final PreparedFragmentedContent preparedFragmentedContent = new PreparedFragmentedContent(myProject, fragmentedContent,
-                                    filePath.getName(), filePath.getFileType());
     VirtualFile file = filePath.getVirtualFile();
     if (file == null) {
       filePath.hardRefresh();
       file = filePath.getVirtualFile();
     }
-    preparedFragmentedContent.setVirtualFile(file);
+    final PreparedFragmentedContent preparedFragmentedContent = new PreparedFragmentedContent(myProject, fragmentedContent,
+                                    filePath.getName(), filePath.getFileType(),
+                                    change.getBeforeRevision() == null ? null : change.getBeforeRevision().getRevisionNumber(),
+                                    change.getAfterRevision() == null ? null : change.getAfterRevision().getRevisionNumber(), filePath, file);
     return preparedFragmentedContent;
   }
 
@@ -174,10 +175,9 @@ public class FragmentedDiffRequestFromChange {
     }
 
     private Document documentFromRevision(final ContentRevision cr) throws VcsException {
-      final Document oldDocument = new DocumentImpl(true);
+      final Document oldDocument = new DocumentImpl(StringUtil.convertLineSeparators(notNullContentRevision(cr)),true);
       // todo !!! a question how to show line separators in diff etc
       // todo currently document doesn't allow to put \r as separator
-      oldDocument.replaceString(0, oldDocument.getTextLength(), StringUtil.convertLineSeparators(notNullContentRevision(cr)));
       oldDocument.setReadOnly(true);
       return oldDocument;
     }

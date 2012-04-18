@@ -60,14 +60,47 @@ public class WildcardFileNameMatcher implements FileNameMatcher {
     }
   }
 
+  private static final class PrefixMatcher implements MaskMatcher {
+    private final String myPrefix;
+
+    private PrefixMatcher(final String prefix) {
+      myPrefix = prefix;
+    }
+
+    public boolean matches(final String filename) {
+      return filename.startsWith(myPrefix);
+    }
+  }
+
+  private static final class InfixMatcher implements MaskMatcher {
+    private final String myInfix;
+
+    private InfixMatcher(final String infix) {
+      myInfix = infix;
+    }
+
+    public boolean matches(final String filename) {
+      return filename.contains(myInfix);
+    }
+  }
+
   public WildcardFileNameMatcher(@NotNull @NonNls String pattern) {
     myPattern = pattern;
     myMatcher = createMatcher(pattern);
   }
 
   private static MaskMatcher createMatcher(final String pattern) {
-    if (pattern.length() > 1 && pattern.charAt(0) == '*' && pattern.indexOf('*', 1) < 0 && pattern.indexOf('?') < 0) {
-      return new SuffixMatcher(pattern.substring(1));
+    int len = pattern.length();
+    if (len > 1 && pattern.indexOf('?') < 0) {
+      if (pattern.charAt(0) == '*' && pattern.indexOf('*', 1) < 0) {
+        return new SuffixMatcher(pattern.substring(1));
+      }
+      if (pattern.indexOf('*') == len - 1) {
+        return new PrefixMatcher(pattern.substring(0, len - 1));
+      }
+      if (len > 2 && pattern.charAt(0) == '*' && pattern.indexOf('*', 1) == len - 1) {
+        return new InfixMatcher(pattern.substring(1, len - 1));
+      }
     }
     return new RegexpMatcher(pattern);
   }

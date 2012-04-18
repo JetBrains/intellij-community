@@ -123,7 +123,8 @@ class MyFileManager implements StandardJavaFileManager {
           if (kind == JavaFileObject.Kind.SOURCE && child.getFileSystem() instanceof JarFileSystem) continue;  //for some reasdon javac looks for java files inside jar
 
           // use VFS to read content inside .jar
-          JavaFileObject fileObject = !child.getPath().contains("!/") ? new JavaIoFile(new File(child.getPath()), kind, myEncoding) : new JavaVirtualFile(child, kind);
+          String childPath = child.getPath();
+          JavaFileObject fileObject = !childPath.contains("!/") ? new JavaIoFile(new File(childPath), kind, myEncoding) : new JavaVirtualFile(child, kind);
           results.add(fileObject);
         }
       }

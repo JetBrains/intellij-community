@@ -363,7 +363,7 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
     // dispose myself when editor closed
     EditorFactory.getInstance().addEditorFactoryListener(new EditorFactoryAdapter() {
       @Override
-      public void editorReleased(EditorFactoryEvent event) {
+      public void editorReleased(@NotNull EditorFactoryEvent event) {
         if (event.getEditor() == myEditor) {
           hide();
         }

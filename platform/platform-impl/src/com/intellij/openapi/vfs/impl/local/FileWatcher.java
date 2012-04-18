@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,34 +20,32 @@ import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.watcher.ChangeKind;
-import com.intellij.util.PairFunction;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.event.HyperlinkEvent;
 import java.io.*;
 import java.util.*;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * @author max
  */
 public class FileWatcher {
-  @NonNls public static final String PROPERTY_WATCHER_DISABLED = "filewatcher.disabled";
-  @NonNls private static final String PROPERTY_WATCHER_EXECUTABLE_PATH = "idea.filewatcher.executable.path";
+  @NonNls public static final String PROPERTY_WATCHER_DISABLED = "idea.filewatcher.disabled";
+  @NonNls public static final String PROPERTY_WATCHER_EXECUTABLE_PATH = "idea.filewatcher.executable.path";
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.impl.local.FileWatcher");
 
@@ -59,15 +57,7 @@ public class FileWatcher {
   @NonNls private static final String EXIT_COMMAND = "EXIT";
   @NonNls private static final String MESSAGE_COMMAND = "MESSAGE";
 
-  private static final PairFunction<String,String,Boolean> PATH_COMPARATOR = new PairFunction<String, String, Boolean>() {
-    @Override
-    public Boolean fun(final String s1, final String s2) {
-      return SystemInfo.isFileSystemCaseSensitive ? s1.equals(s2) : s1.equalsIgnoreCase(s2);
-    }
-  };
-
   private final Object LOCK = new Object();
-  private final Lock SET_ROOTS_LOCK = new ReentrantLock(true);
 
   private List<String> myDirtyPaths = new ArrayList<String>();
   private List<String> myDirtyRecursivePaths = new ArrayList<String>();
@@ -75,21 +65,23 @@ public class FileWatcher {
   private List<String> myManualWatchRoots = new ArrayList<String>();
 
   private final List<Pair<String, String>> myMapping = new ArrayList<Pair<String, String>>();
-  private List<Pair<String, String>> myCanonicalMapping = new ArrayList<Pair<String, String>>();
-
   private List<String> myRecursiveWatchRoots = new ArrayList<String>();
   private List<String> myFlatWatchRoots = new ArrayList<String>();
 
+  private final Collection<String> myAllPaths = new ArrayList<String>(2);
+  private final Collection<String> myWatchedPaths = new ArrayList<String>(2);
+
+  private File executable;
   private volatile Process notifierProcess;
   private volatile BufferedReader notifierReader;
-  private volatile BufferedWriter notifierWriter;
 
+  private volatile BufferedWriter notifierWriter;
   private boolean myFailureShownToTheUser = false;
   private int attemptCount = 0;
   private static final int MAX_PROCESS_LAUNCH_ATTEMPT_COUNT = 10;
   private boolean isShuttingDown = false;
-  private final ManagingFS myManagingFS;
 
+  private final ManagingFS myManagingFS;
   private static final FileWatcher ourInstance = new FileWatcher();
 
   public static FileWatcher getInstance() {
@@ -140,7 +132,6 @@ public class FileWatcher {
       myDirtyRecursivePaths = new ArrayList<String>();
       return result;
     }
-
   }
 
   public List<String> getDirtyDirs() {
@@ -158,26 +149,16 @@ public class FileWatcher {
   }
 
   public void setWatchRoots(final List<String> recursive, final List<String> flat) {
-    SET_ROOTS_LOCK.lock();
-    try {
-      synchronized (LOCK) {
-        if (myRecursiveWatchRoots.equals(recursive) && myFlatWatchRoots.equals(flat)) return;
-      }
-
-      final List<Pair<String, String>> mapping = new ArrayList<Pair<String, String>>();
-      long t = System.nanoTime();
-      final List<String> checkedRecursive = checkPaths(recursive, mapping);
-      final List<String> checkedFlat = checkPaths(flat, mapping);
-      t = (System.nanoTime() - t) / 1000;
-      LOG.info((recursive.size() + flat.size()) + " paths checked, " + mapping.size() + " mapped, " + t + " mks");
+    synchronized (LOCK) {
+      if (myRecursiveWatchRoots.equals(recursive) && myFlatWatchRoots.equals(flat)) return;
 
       if (isAlive()) {
         try {
           writeLine(ROOTS_COMMAND);
-          for (String path : checkedRecursive) {
+          for (String path : recursive) {
             writeLine(path);
           }
-          for (String path : checkedFlat) {
+          for (String path : flat) {
             writeLine("|" + path);
           }
           writeLine("#");
@@ -187,37 +168,10 @@ public class FileWatcher {
         }
       }
 
-      synchronized (LOCK) {
-        myRecursiveWatchRoots = recursive;
-        myFlatWatchRoots = flat;
-        myMapping.clear();
-        myCanonicalMapping = mapping;
-      }
+      myRecursiveWatchRoots = recursive;
+      myFlatWatchRoots = flat;
+      myMapping.clear();
     }
-    finally {
-      SET_ROOTS_LOCK.unlock();
-    }
-  }
-
-  private static List<String> checkPaths(final List<String> paths, final List<Pair<String, String>> mapping) {
-    if (!SystemInfo.areSymLinksSupported) return paths;
-
-    final List<String> checkedPaths = new ArrayList<String>(paths.size());
-    for (String path : paths) {
-      String watched = path;
-      final String canonical = getCanonicalPath(path);
-      //noinspection ConstantConditions
-      if (!PATH_COMPARATOR.fun(path, canonical)) {
-        mapping.add(Pair.create((watched = canonical), path));
-      }
-      checkedPaths.add(watched);
-    }
-    return checkedPaths;
-  }
-
-  private static String getCanonicalPath(final String path) {
-    final String realPath = FileSystemUtil.resolveSymLink(path);
-    return realPath != null ? realPath : path;
   }
 
   private boolean isAlive() {
@@ -247,43 +201,34 @@ public class FileWatcher {
 
     shutdownProcess();
 
-    String execPath = null;
+    if (executable == null) {
+      executable = getExecutable();
 
-    final String altExecPath = System.getProperty(PROPERTY_WATCHER_EXECUTABLE_PATH);
-    if (altExecPath != null && new File(altExecPath).isFile()) {
-      execPath = FileUtil.toSystemDependentName(altExecPath);
-    }
-
-    if (execPath == null) {
-      final String execName;
-      execName = getExecutableName();
-      if (execName == null) {
+      if (executable == null) {
         myFailureShownToTheUser = true;  // ignore unsupported platforms
         return;
       }
-      execPath = PathManager.getBinPath() + File.separatorChar + execName;
+
+      if (!executable.exists()) {
+        notifyOnFailure("File watcher is not found at path: " + executable, null);
+        return;
+      }
+
+      if (!executable.canExecute()) {
+        final String message = "File watcher is not executable: <a href=\"" + executable + "\">" + executable + "</a>";
+        final File exec = executable;
+        notifyOnFailure(message, new NotificationListener() {
+          @Override
+          public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
+            ShowFilePathAction.openFile(exec);
+          }
+        });
+        return;
+      }
     }
 
-    final File exec = new File(execPath);
-    if (!exec.exists()) {
-      notifyOnFailure("File watcher is not found at path: " + execPath, null);
-      return;
-    }
-
-    if (!exec.canExecute()) {
-      notifyOnFailure("File watcher is not executable: <a href=\"" + execPath + "\">" + execPath +"</a>", new NotificationListener() {
-        @Override
-        public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
-          ShowFilePathAction.open(exec, exec);
-        }
-      });
-      return;
-    }
-
-    LOG.info("Starting file watcher: " + execPath);
-
-    notifierProcess = Runtime.getRuntime().exec(new String[]{execPath});
-
+    LOG.info("Starting file watcher: " + executable);
+    notifierProcess = Runtime.getRuntime().exec(executable.getAbsolutePath());
     notifierReader = new BufferedReader(new InputStreamReader(notifierProcess.getInputStream()));
     notifierWriter = new BufferedWriter(new OutputStreamWriter(notifierProcess.getOutputStream()));
 
@@ -299,15 +244,43 @@ public class FileWatcher {
   }
 
   @Nullable
-  private static String getExecutableName() {
+  private static File getExecutable() {
+    String execPath = null;
+
+    final String altExecPath = System.getProperty(PROPERTY_WATCHER_EXECUTABLE_PATH);
+    if (altExecPath != null && new File(altExecPath).isFile()) {
+      execPath = FileUtil.toSystemDependentName(altExecPath);
+    }
+
+    if (execPath == null) {
+      final String execName = getExecutableName(false);
+      if (execName == null) {
+        return null;
+      }
+      execPath = FileUtil.join(PathManager.getBinPath(), execName);
+    }
+
+    File exec = new File(execPath);
+    if (!exec.exists()) {
+      String homePath = PathManager.getHomePath();
+      if (new File(homePath, "community").exists()) {
+        homePath += File.separator + "community";
+      }
+      exec = new File(FileUtil.join(homePath, "bin", getExecutableName(true)));
+    }
+    return exec;
+  }
+
+  @Nullable
+  private static String getExecutableName(final boolean withSubDir) {
     if (SystemInfo.isWindows) {
-      return "fsnotifier.exe";
+      return (withSubDir ? "win" + File.separator : "") + "fsnotifier.exe";
     }
     else if (SystemInfo.isMac) {
-      return "fsnotifier";
+      return (withSubDir ? "mac" + File.separator : "") + "fsnotifier";
     }
     else if (SystemInfo.isLinux) {
-      return SystemInfo.isAMD64 ? "fsnotifier64" : "fsnotifier";
+      return (withSubDir ? "linux" + File.separator : "") + (SystemInfo.isAMD64 ? "fsnotifier64" : "fsnotifier");
     }
 
     return null;
@@ -316,7 +289,8 @@ public class FileWatcher {
   private void notifyOnFailure(String cause, @Nullable NotificationListener listener) {
     if (!myFailureShownToTheUser) {
       myFailureShownToTheUser = true;
-      Notifications.Bus.notify(new Notification(Notifications.SYSTEM_MESSAGES_GROUP_ID, "External file sync may be slow", cause, NotificationType.WARNING, listener));
+      Notifications.Bus.notify(new Notification(Notifications.SYSTEM_MESSAGES_GROUP_ID, "External file sync may be slow",
+                                                cause, NotificationType.WARNING, listener));
     }
   }
 
@@ -337,6 +311,32 @@ public class FileWatcher {
 
   public boolean isOperational() {
     return notifierProcess != null;
+  }
+
+  @TestOnly
+  public void startup() throws IOException {
+    final Application app = ApplicationManager.getApplication();
+    assert app != null && app.isUnitTestMode() : app;
+
+    myFailureShownToTheUser = true;
+    attemptCount = 0;
+    startupProcess(false);
+    attemptCount = 2 * MAX_PROCESS_LAUNCH_ATTEMPT_COUNT;
+    if (notifierProcess != null) {
+      new WatchForChangesThread().start();
+    }
+  }
+
+  @TestOnly
+  public void shutdown() throws InterruptedException {
+    final Application app = ApplicationManager.getApplication();
+    assert app != null && app.isUnitTestMode() : app;
+
+    final Process process = notifierProcess;
+    if (process != null) {
+      shutdownProcess();
+      process.waitFor();
+    }
   }
 
   private class WatchForChangesThread extends Thread {
@@ -396,7 +396,7 @@ public class FileWatcher {
               final String pathB = readLine();
               if (pathB == null || "#".equals(pathB)) break;
 
-              pairs.add(new Pair<String, String>(ensureEndsWithSlash(pathA), ensureEndsWithSlash(pathB)));
+              pairs.add(Pair.create(preparePathForMapping(pathA), preparePathForMapping(pathB)));
             }
             while (true);
 
@@ -413,15 +413,19 @@ public class FileWatcher {
               continue;
             }
 
+            final ChangeKind kind;
+            try {
+              kind = ChangeKind.valueOf(command);
+            }
+            catch (IllegalArgumentException e) {
+              LOG.error("Illegal watcher command: " + command);
+              continue;
+            }
+
             synchronized (LOCK) {
-              final String watchedPath = checkWatchable(path);
-              if (watchedPath != null) {
-                try {
-                  onPathChange(ChangeKind.valueOf(command), watchedPath);
-                }
-                catch (IllegalArgumentException e) {
-                  LOG.error("Illegal watcher command: " + command);
-                }
+              final Collection<String> watchedPaths = checkWatchable(path, !(kind == ChangeKind.DIRTY || kind == ChangeKind.RECDIRTY));
+              if (!watchedPaths.isEmpty()) {
+                onPathChange(kind, watchedPaths);
               }
               else if (LOG.isDebugEnabled()) {
                 LOG.debug("Not watchable, filtered: " + path);
@@ -438,9 +442,9 @@ public class FileWatcher {
     }
   }
 
-  private static String ensureEndsWithSlash(String path) {
-    if (path.endsWith("/") || path.endsWith(File.separator)) return path;
-    return path + '/';
+  private static String preparePathForMapping(final String path) {
+    final String localPath = FileUtil.toSystemDependentName(path);
+    return localPath.endsWith(File.separator) ? localPath : localPath + File.separator;
   }
 
   private void writeLine(String line) throws IOException {
@@ -486,82 +490,83 @@ public class FileWatcher {
     return line;
   }
 
-  public boolean isWatched(VirtualFile file) {
-    return isOperational() && checkWatchable(file.getPresentableUrl()) != null;
+  public boolean isWatched(@NotNull final VirtualFile file) {
+    if (isOperational()) {
+      synchronized (LOCK) {
+        return !checkWatchable(file.getPresentableUrl(), true).isEmpty();
+      }
+    }
+    return false;
   }
 
-  @Nullable
-  private String checkWatchable(String path) {
-    if (path == null) return null;
+  @NotNull
+  private Collection<String> checkWatchable(final String reportedPath, final boolean checkParent) {
+    if (reportedPath == null) return Collections.emptyList();
 
-    for (Pair<String, String> mapping : myCanonicalMapping) {
-      if (path.startsWith(mapping.first)) {
-        path = mapping.second + path.substring(mapping.first.length());
-        break;
+    myAllPaths.clear();
+    myAllPaths.add(reportedPath);
+    for (Pair<String, String> map : myMapping) {
+      if (FileUtil.startsWith(reportedPath, map.first)) {
+        myAllPaths.add(map.second + reportedPath.substring(map.first.length()));
+      }
+      else if (FileUtil.startsWith(reportedPath, map.second)) {
+        myAllPaths.add(map.first + reportedPath.substring(map.second.length()));
       }
     }
 
-    for (String root : myRecursiveWatchRoots) {
-      if (FileUtil.startsWith(path, root)) {
-        return path;
+    myWatchedPaths.clear();
+    ext:
+    for (String path : myAllPaths) {
+      for (String root : myRecursiveWatchRoots) {
+        if (FileUtil.startsWith(path, root)) {
+          myWatchedPaths.add(path);
+          continue ext;
+        }
+      }
+
+      for (String root : myFlatWatchRoots) {
+        if (FileUtil.pathsEqual(path, root)) {
+          myWatchedPaths.add(path);
+          continue ext;
+        }
+        if (checkParent) {
+          final File parentFile = new File(path).getParentFile();
+          if (parentFile != null && FileUtil.pathsEqual(parentFile.getPath(), root)) {
+            myWatchedPaths.add(path);
+            continue ext;
+          }
+        }
       }
     }
-
-    for (String root : myFlatWatchRoots) {
-      if (FileUtil.pathsEqual(path, root)) {
-        return path;
-      }
-      final File parentFile = new File(path).getParentFile();
-      if (parentFile != null && FileUtil.pathsEqual(parentFile.getPath(), root)) {
-        return path;
-      }
-    }
-
-    return null;
+    return myWatchedPaths;
   }
 
-  private void onPathChange(final ChangeKind changeKind, final String path) {
+  private void onPathChange(final ChangeKind changeKind, final Collection<String> paths) {
     switch (changeKind) {
       case STATS:
       case CHANGE:
-        addPath(path, myDirtyPaths);
+        myDirtyPaths.addAll(paths);
         break;
 
       case CREATE:
       case DELETE:
-        final File parentFile = new File(path).getParentFile();
-        if (parentFile != null) {
-          addPath(parentFile.getPath(), myDirtyPaths);
-        }
-        else {
-          addPath(path, myDirtyPaths);
+        for (String path : paths) {
+          final File parent = new File(path).getParentFile();
+          myDirtyPaths.add(parent != null ? parent.getPath() : path);
         }
         break;
 
       case DIRTY:
-        addPath(path, myDirtyDirs);
+        myDirtyDirs.addAll(paths);
         break;
 
       case RECDIRTY:
-        addPath(path, myDirtyRecursivePaths);
+        myDirtyRecursivePaths.addAll(paths);
         break;
 
       case RESET:
         reset();
         break;
-    }
-  }
-
-  private void addPath(String path, List<String> list) {
-    list.add(path);
-
-    for (Pair<String, String> map : myMapping) {
-      if (FileUtil.startsWith(path, map.getFirst())) {
-        list.add(map.getSecond() + path.substring(map.getFirst().length()));
-      }
-      else if (FileUtil.startsWith(path, map.getSecond())) {
-        list.add(map.getFirst() + path.substring(map.getSecond().length()));
-      }
     }
   }
 

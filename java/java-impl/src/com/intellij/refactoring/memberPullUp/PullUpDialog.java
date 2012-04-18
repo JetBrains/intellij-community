@@ -36,6 +36,7 @@ import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.refactoring.util.classMembers.MemberInfoStorage;
 import com.intellij.refactoring.util.classMembers.UsesAndInterfacesDependencyMemberInfoModel;
 import com.intellij.usageView.UsageViewUtil;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -192,10 +193,14 @@ public class PullUpDialog extends RefactoringDialog {
   protected void doAction() {
     if (!myCallback.checkConflicts(this)) return;
     JavaRefactoringSettings.getInstance().PULL_UP_MEMBERS_JAVADOC = myJavaDocPanel.getPolicy();
-    StatisticsManager
-            .getInstance().incUseCount(new StatisticsInfo(PULL_UP_STATISTICS_KEY + myClass.getQualifiedName(), getSuperClass().getQualifiedName()));
+    final PsiClass superClass = getSuperClass();
+    String name = superClass.getQualifiedName();
+    if (name != null) {
+      StatisticsManager
+        .getInstance().incUseCount(new StatisticsInfo(PULL_UP_STATISTICS_KEY + myClass.getQualifiedName(), name));
+    }
     
-    invokeRefactoring(new PullUpHelper(myClass, getSuperClass(), getSelectedMemberInfos(),
+    invokeRefactoring(new PullUpHelper(myClass, superClass, getSelectedMemberInfos(),
                                                new DocCommentPolicy(getJavaDocPolicy())));
     close(OK_EXIT_CODE);
   }
@@ -211,6 +216,15 @@ public class PullUpDialog extends RefactoringDialog {
 
     myJavaDocPanel = new DocCommentPanel(RefactoringBundle.message("javadoc.for.abstracts"));
     myJavaDocPanel.setPolicy(JavaRefactoringSettings.getInstance().PULL_UP_MEMBERS_JAVADOC);
+    boolean hasJavadoc = false;
+    for (MemberInfo info : myMemberInfos) {
+      final PsiMember member = info.getMember();
+      if (myMemberInfoModel.isAbstractEnabled(info) && member instanceof PsiDocCommentOwner && ((PsiDocCommentOwner)member).getDocComment() != null) {
+        hasJavadoc = true;
+        break;
+      }
+    }
+    UIUtil.setEnabled(myJavaDocPanel, hasJavadoc, true);
     panel.add(myJavaDocPanel, BorderLayout.EAST);
     return panel;
   }

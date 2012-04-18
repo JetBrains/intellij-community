@@ -20,6 +20,7 @@ import com.intellij.psi.PsiReference;
 import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.console.GroovyShellAction;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrForStatement;
@@ -55,6 +56,9 @@ public class GroovyCompletionConfidence extends CompletionConfidence {
       final GrExpression qualifier = ref.getQualifierExpression();
       if (qualifier == null) {
         if (isPossibleClosureParameter(ref)) return ThreeState.NO;
+        if (parameters.getOriginalFile().getUserData(GroovyShellAction.GROOVY_SHELL_FILE) == Boolean.TRUE) {
+          return ThreeState.NO;
+        }
 
         GrExpression runtimeQualifier = PsiImplUtil.getRuntimeQualifier(ref);
         if (runtimeQualifier != null && runtimeQualifier.getType() == null) {

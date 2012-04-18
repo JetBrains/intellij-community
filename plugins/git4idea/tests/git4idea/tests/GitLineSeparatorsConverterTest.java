@@ -57,8 +57,8 @@ public class GitLineSeparatorsConverterTest extends GitTest {
 
   @BeforeMethod
   @Override
-  protected void setUp() throws Exception {
-    super.setUp();
+  protected void setUp(Method testMethod) throws Exception {
+    super.setUp(testMethod);
     myChangeListManager = ChangeListManagerImpl.getInstanceImpl(myProject);
     mySettings = GitVcsSettings.getInstance(myProject);
     myCodeStyleSeparator = CodeStyleFacade.getInstance(myProject).getLineSeparator();

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -236,7 +236,7 @@ public class AboutDialog extends JDialog {
 
         g2.setColor(col);
         TextRenderer renderer = new TextRenderer(0, 145, 398, 120, g2);
-        g2.setComposite(AlphaComposite.Src);
+        UIUtil.setupComposite(g2);
         myFont = labelFont.deriveFont(Font.PLAIN, labelSize);
         myBoldFont = labelFont.deriveFont(Font.BOLD, labelSize + 1);
         try {

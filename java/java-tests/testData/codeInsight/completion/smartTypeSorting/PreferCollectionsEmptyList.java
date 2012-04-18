@@ -1,8 +1,12 @@
+import java.util.List;
+
 public class Aaaaaaa {
 
+  List<String> locMethod() {}
+
     {
-        java.util.List<String> local = null;
-        java.util.List<String> l = <caret>
+        List<String> local = null;
+        List<String> l = <caret>
     }
 
 }

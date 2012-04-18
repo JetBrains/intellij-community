@@ -20,8 +20,8 @@ import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.event.DocumentAdapter;
+import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.FocusChangeListener;
 import com.intellij.openapi.fileTypes.PlainTextLanguage;
@@ -56,7 +56,7 @@ public class TextFieldWithAutoCompletion<T> extends LanguageTextField {
   }
 
   public TextFieldWithAutoCompletion(final Project project,
-                                     final TextFieldWithAutoCompletionListProvider<T> provider,
+                                     @Nullable final TextFieldWithAutoCompletionListProvider<T> provider,
                                      final boolean showAutocompletionIsAvailableHint) {
     super(PlainTextLanguage.INSTANCE, project, "");
 

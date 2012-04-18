@@ -104,17 +104,14 @@ public class ParenthesesUtils {
         expression instanceof GrNewExpression) {
       return TYPE_CAST_PRECEDENCE;
     }
-    if (expression instanceof GrPostfixExpression) {
-      return POSTFIX_PRECEDENCE;
-    }
     if (expression instanceof GrUnaryExpression) {
-      return PREFIX_PRECEDENCE;
+      return ((GrUnaryExpression)expression).isPostfix()?POSTFIX_PRECEDENCE:PREFIX_PRECEDENCE;
     }
     if (expression instanceof GrBinaryExpression) {
       final GrBinaryExpression binaryExpression =
           (GrBinaryExpression) expression;
       final IElementType sign = binaryExpression.getOperationTokenType();
-      if (sign != null) return precedenceForBinaryOperator(sign);
+      return precedenceForBinaryOperator(sign);
     }
     if (expression instanceof GrConditionalExpression) {
       return CONDITIONAL_PRECEDENCE;

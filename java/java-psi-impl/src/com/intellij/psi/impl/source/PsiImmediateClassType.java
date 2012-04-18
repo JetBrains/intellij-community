@@ -261,8 +261,9 @@ public class PsiImmediateClassType extends PsiClassType {
     return PsiUtil.getLanguageLevel(myClass);
   }
 
+  @NotNull
   @Override
-  public PsiClassType setLanguageLevel(final LanguageLevel languageLevel) {
+  public PsiClassType setLanguageLevel(@NotNull final LanguageLevel languageLevel) {
     if (languageLevel.equals(myLanguageLevel)) return this;
     return new PsiImmediateClassType(myClass, mySubstitutor, languageLevel,getAnnotations());
   }

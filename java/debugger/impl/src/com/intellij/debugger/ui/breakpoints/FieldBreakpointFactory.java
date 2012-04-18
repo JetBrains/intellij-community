@@ -49,8 +49,29 @@ public class FieldBreakpointFactory extends BreakpointFactory{
     return FieldBreakpoint.DISABLED_ICON;
   }
 
-  public BreakpointPanel createBreakpointPanel(final Project project, final DialogWrapper parentDialog) {
-    BreakpointPanel panel = new BreakpointPanel(project, new FieldBreakpointPropertiesPanel(project), new BreakpointPanelAction[] {
+  @Override
+  protected void configureBreakpointPanel(BreakpointPanel panel) {
+    panel.getTree().setGroupByMethods(false);
+  }
+
+  @Override
+  protected String getHelpID() {
+    return HelpID.FIELD_WATCHPOINTS;
+  }
+
+  @Override
+  public String getDisplayName() {
+    return DebuggerBundle.message("field.watchpoints.tab.title");
+  }
+
+  @Override
+  public BreakpointPropertiesPanel createBreakpointPropertiesPanel(Project project) {
+    return new FieldBreakpointPropertiesPanel(project);
+  }
+
+  @Override
+  protected BreakpointPanelAction[] createBreakpointPanelActions(final Project project, final DialogWrapper parentDialog) {
+    return new BreakpointPanelAction[] {
       new SwitchViewAction(),
       new AddFieldBreakpointAction(project),
       new GotoSourceAction(project) {
@@ -63,9 +84,7 @@ public class FieldBreakpointFactory extends BreakpointFactory{
       new RemoveAction(project),
       new ToggleGroupByClassesAction(),
       new ToggleFlattenPackagesAction(),
-    }, getBreakpointCategory(), DebuggerBundle.message("field.watchpoints.tab.title"), HelpID.FIELD_WATCHPOINTS);
-    panel.getTree().setGroupByMethods(false);
-    return panel;
+    };
   }
 
   public Key<FieldBreakpoint> getBreakpointCategory() {

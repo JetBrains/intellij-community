@@ -95,6 +95,7 @@ public class HTMLExporter {
     try {
       File folderFile = new File(folder);
       folderFile.mkdirs();
+      new File(fullPath).getParentFile().mkdirs();
       writer = new FileWriter(fullPath);
       writer.write(buf.toString().toCharArray());
     } catch (IOException e) {

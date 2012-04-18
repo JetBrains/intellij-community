@@ -33,6 +33,7 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.status.StatusBarUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitBranch;
+import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.config.GitVcsSettings;
 import git4idea.repo.GitRepository;
@@ -76,7 +77,7 @@ public class GitBranchUiUtil {
    */
   @Nullable
   public static String getNewBranchNameFromUser(@NotNull Project project, @NotNull Collection<GitRepository> repositories, @NotNull String dialogTitle) {
-    return Messages.showInputDialog(project, "Enter the name of new branch", dialogTitle, Messages.getQuestionIcon(), "",
+    return Messages.showInputDialog(project, "Enter the name of new branch:", dialogTitle, Messages.getQuestionIcon(), "",
                                     GitNewBranchNameValidator.newInstance(repositories));
   }
 
@@ -163,7 +164,10 @@ public class GitBranchUiUtil {
     if (project == null) {
       return null;
     }
-    GitRepositoryManager manager = GitRepositoryManager.getInstance(project);
+    GitRepositoryManager manager = GitUtil.getRepositoryManager(project);
+    if (manager == null) {
+      return null;
+    }
     VirtualFile file = getSelectedFile(project);
     if (file != null) {
       return manager.getRepositoryForRoot(getVcsRootFor(project, file));

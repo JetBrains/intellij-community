@@ -60,7 +60,7 @@ public abstract class TextFieldWithAutoCompletionListProvider<T> implements Comp
   }
 
   @NotNull
-  public Collection<T> getItems(String prefix, boolean cached) {
+  public Collection<T> getItems(String prefix, boolean cached, CompletionParameters parameters) {
     if (prefix == null) {
       return Collections.emptyList();
     }

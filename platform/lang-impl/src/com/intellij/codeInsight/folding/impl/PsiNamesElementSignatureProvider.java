@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.folding.impl;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -67,7 +68,7 @@ public class PsiNamesElementSignatureProvider extends AbstractElementSignaturePr
         else {
           if (processingInfoStorage != null) {
             processingInfoStorage.append(String.format(
-              "Stopping '%s' provider because it has top level marker but more than one non white-space child: %s",
+              "Stopping '%s' provider because it has top level marker but more than one non white-space child: %s%n",
               getClass().getName(), Arrays.toString(file.getChildren())
             ));
           }
@@ -77,7 +78,7 @@ public class PsiNamesElementSignatureProvider extends AbstractElementSignaturePr
       }
       if (processingInfoStorage != null) {
         processingInfoStorage.append(String.format(
-          "Finished processing of '%s' provider because all of its top-level children have been processed: %s",
+          "Finished processing of '%s' provider because all of its top-level children have been processed: %s%n",
           getClass().getName(), Arrays.toString(file.getChildren())
         ));
       }
@@ -98,8 +99,18 @@ public class PsiNamesElementSignatureProvider extends AbstractElementSignaturePr
       return null;
     }
 
+    if (!tokenizer.hasMoreTokens()) {
+      if (processingInfoStorage != null) {
+        processingInfoStorage.append(String.format("Stopping '%s' provider because it has no more data to process%n", getClass().getName()));
+      }
+      return null;
+    }
     try {
       int index = Integer.parseInt(tokenizer.nextToken());
+      if (processingInfoStorage != null) {
+        processingInfoStorage.append(String.format("Looking for the child with a name '%s' # %d at the element '%s'%n",
+                                                   elementMarker, index, parent));
+      }
       return restoreElementInternal(parent, elementMarker, index, PsiNamedElement.class);
     }
     catch (NumberFormatException e) {
@@ -169,7 +180,7 @@ public class PsiNamesElementSignatureProvider extends AbstractElementSignaturePr
     if (element instanceof PsiNamedElement) {
       PsiNamedElement named = (PsiNamedElement)element;
       final String name = named.getName();
-      if (name == null) {
+      if (StringUtil.isEmpty(name)) {
         return null;
       }
       int index = getChildIndex(named, element.getParent(), name, (Class<PsiNamedElement>)named.getClass());

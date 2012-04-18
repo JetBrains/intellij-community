@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@
  */
 package com.intellij.openapi.editor.impl;
 
+import com.intellij.diagnostic.Dumpable;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.FoldRegion;
@@ -46,7 +47,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
 
-public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentListener {
+public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentListener, Dumpable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.impl.EditorFoldingModelImpl");
 
   private final Set<FoldingListener> myListeners = new CopyOnWriteArraySet<FoldingListener>();
@@ -526,8 +527,14 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
     }
   }
 
+  @NotNull
+  @Override
+  public String dumpState() {
+    return Arrays.toString(myFoldTree.fetchTopLevel());
+  }
+
   @Override
   public String toString() {
-    return Arrays.toString(myFoldTree.fetchTopLevel());
+    return dumpState();
   }
 }

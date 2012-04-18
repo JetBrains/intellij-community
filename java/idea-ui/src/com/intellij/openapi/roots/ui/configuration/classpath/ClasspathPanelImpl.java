@@ -178,8 +178,13 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
       WHEN_FOCUSED
     );
 
+    myEditButton = new AnActionButton(ProjectBundle.message("module.classpath.button.edit"), null, IconUtil.getEditIcon()) {
+      @Override
+      public void actionPerformed(AnActionEvent e) {
+        doEdit();
+      }
+    };
     add(createTableWithButtons(), BorderLayout.CENTER);
-    //add(createButtonsBlock(), BorderLayout.EAST);
 
     if (myEntryTable.getRowCount() > 0) {
       myEntryTable.getSelectionModel().setSelectionInterval(0,0);
@@ -212,6 +217,7 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
     };
     navigateAction.registerCustomShortcutSet(ActionManager.getInstance().getAction(IdeActions.ACTION_EDIT_SOURCE).getShortcutSet(),
                                              myEntryTable);
+    actionGroup.add(myEditButton);
     actionGroup.add(navigateAction);
     actionGroup.add(new MyFindUsagesAction());
     actionGroup.add(new AnalyzeDependencyAction());
@@ -279,30 +285,6 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
         removeSelectedItems(TableUtil.removeSelectedItems(myEntryTable));
       }
     };
-
-    myEditButton = new AnActionButton(ProjectBundle.message("module.classpath.button.edit"), null, IconUtil.getEditIcon()) {
-      @Override
-      public void actionPerformed(AnActionEvent e) {
-        final OrderEntry entry = getSelectedEntry();
-        if (!(entry instanceof LibraryOrderEntry)) return;
-
-        final Library library = ((LibraryOrderEntry)entry).getLibrary();
-        if (library == null) {
-          return;
-        }
-        final LibraryTable table = library.getTable();
-        final String tableLevel = table != null ? table.getTableLevel() : LibraryTableImplUtil.MODULE_LEVEL;
-        final LibraryTablePresentation presentation = LibraryEditingUtil.getLibraryTablePresentation(getProject(), tableLevel);
-        final LibraryTableModifiableModelProvider provider = getModifiableModelProvider(tableLevel);
-        EditExistingLibraryDialog dialog = EditExistingLibraryDialog.createDialog(ClasspathPanelImpl.this, provider, library, myState.getProject(),
-                                                                                  presentation, getStructureConfigurableContext());
-        dialog.setContextModule(getRootModel().getModule());
-        dialog.show();
-        myEntryTable.repaint();
-        ModuleStructureConfigurable.getInstance(myState.getProject()).getTree().repaint();
-      }
-    };
-
 
     final AnActionButton analyzeButton = new AnActionButton(ProjectBundle.message("classpath.panel.analyze"), null, SystemInfo.isMac ? PlatformIcons.TABLE_ANALYZE : PlatformIcons.ANALYZE) {
       @Override
@@ -393,6 +375,26 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
     final JPanel panel = decorator.createPanel();
     myRemoveButton = ToolbarDecorator.findRemoveButton(panel);
     return panel;
+  }
+
+  private void doEdit() {
+    final OrderEntry entry = getSelectedEntry();
+    if (!(entry instanceof LibraryOrderEntry)) return;
+
+    final Library library = ((LibraryOrderEntry)entry).getLibrary();
+    if (library == null) {
+      return;
+    }
+    final LibraryTable table = library.getTable();
+    final String tableLevel = table != null ? table.getTableLevel() : LibraryTableImplUtil.MODULE_LEVEL;
+    final LibraryTablePresentation presentation = LibraryEditingUtil.getLibraryTablePresentation(getProject(), tableLevel);
+    final LibraryTableModifiableModelProvider provider = getModifiableModelProvider(tableLevel);
+    EditExistingLibraryDialog dialog = EditExistingLibraryDialog.createDialog(this, provider, library, myState.getProject(),
+                                                                              presentation, getStructureConfigurableContext());
+    dialog.setContextModule(getRootModel().getModule());
+    dialog.show();
+    myEntryTable.repaint();
+    ModuleStructureConfigurable.getInstance(myState.getProject()).getTree().repaint();
   }
 
   @Override

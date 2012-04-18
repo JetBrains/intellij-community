@@ -24,8 +24,8 @@ import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.impl.actionholder.ActionRef;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.StatusBar;
-import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.ui.plaf.beg.IdeaMenuUI;
 import com.intellij.ui.plaf.gtk.GtkMenuUI;
 import com.intellij.util.ui.UIUtil;
@@ -198,17 +198,12 @@ public final class ActionMenu extends JMenu {
   }
 
   public static void showDescriptionInStatusBar(boolean isIncluded, Component component, String description) {
-    IdeFrameImpl frame = component instanceof IdeFrameImpl
-                         ? (IdeFrameImpl)component
-                         : (IdeFrameImpl)SwingUtilities.getAncestorOfClass(IdeFrameImpl.class, component);
-    if (frame != null) {
-      StatusBar statusBar = frame.getStatusBar();
-      if (isIncluded) {
-        statusBar.setInfo(description);
-      }
-      else {
-        statusBar.setInfo(null);
-      }
+    IdeFrame frame = component instanceof IdeFrame
+                         ? (IdeFrame)component
+                         : (IdeFrame)SwingUtilities.getAncestorOfClass(IdeFrame.class, component);
+    StatusBar statusBar;
+    if (frame != null && (statusBar = frame.getStatusBar()) != null) {
+      statusBar.setInfo(isIncluded ? description : null);
     }
   }
 

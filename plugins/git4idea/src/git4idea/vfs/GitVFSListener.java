@@ -45,9 +45,11 @@ public class GitVFSListener extends VcsVFSListener {
    * More than zero if events are suppressed
    */
   private final AtomicInteger myEventsSuppressLevel = new AtomicInteger(0);
+  private final Git myGit;
 
-  public GitVFSListener(final Project project, final GitVcs vcs) {
+  public GitVFSListener(final Project project, final GitVcs vcs, Git git) {
     super(project, vcs);
+    myGit = git;
   }
 
   /**
@@ -102,7 +104,7 @@ public class GitVFSListener extends VcsVFSListener {
           final List<VirtualFile> files = e.getValue();
           pi.setText(root.getPresentableUrl());
           try {
-            retainedFiles.addAll(Git.untrackedFiles(myProject, root, files));
+            retainedFiles.addAll(myGit.untrackedFiles(myProject, root, files));
           }
           catch (final VcsException ex) {
             UIUtil.invokeLaterIfNeeded(new Runnable() {

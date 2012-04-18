@@ -17,12 +17,11 @@ package com.siyeh.ig.bugs;
 
 import com.intellij.codeInspection.ui.ListTable;
 import com.intellij.codeInspection.ui.ListWrappingTableModel;
-import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.util.ui.UIUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -76,37 +75,15 @@ public class MismatchedCollectionQueryUpdateInspection
 
   @Override
   public JComponent createOptionsPanel() {
-    final JPanel panel = new JPanel(new GridBagLayout());
+    final JPanel panel = new JPanel(new GridLayout(1, 2, UIUtil.DEFAULT_HGAP, UIUtil.DEFAULT_VGAP));
     final ListTable table1 = new ListTable(new ListWrappingTableModel(queryNames, InspectionGadgetsBundle.message("query.column.name")));
-    final JScrollPane scrollPane1 = ScrollPaneFactory.createScrollPane(table1);
-    UiUtils.setScrollPaneSize(scrollPane1, 10, 15);
-    final ActionToolbar toolbar1 = UiUtils.createAddRemoveToolbar(table1);
+    final JPanel tablePanel1 = UiUtils.createAddRemovePanel(table1);
 
     final ListTable table2 = new ListTable(new ListWrappingTableModel(updateNames, InspectionGadgetsBundle.message("update.column.name")));
-    final JScrollPane scrollPane2 = ScrollPaneFactory.createScrollPane(table2);
-    UiUtils.setScrollPaneSize(scrollPane2, 10, 15);
-    final ActionToolbar toolbar2 = UiUtils.createAddRemoveToolbar(table2);
+    final JPanel tablePanel2 = UiUtils.createAddRemovePanel(table2);
 
-    final GridBagConstraints constraints = new GridBagConstraints();
-    constraints.gridx = 0;
-    constraints.gridy = 0;
-    constraints.insets.left = 4;
-    constraints.insets.right = 4;
-    constraints.fill = GridBagConstraints.HORIZONTAL;
-    panel.add(toolbar1.getComponent(), constraints);
-
-    constraints.gridx = 1;
-    panel.add(toolbar2.getComponent(), constraints);
-
-    constraints.gridx = 0;
-    constraints.gridy = 1;
-    constraints.weightx = 0.5;
-    constraints.weighty = 1.0;
-    constraints.fill = GridBagConstraints.BOTH;
-    panel.add(scrollPane1, constraints);
-
-    constraints.gridx = 1;
-    panel.add(scrollPane2, constraints);
+    panel.add(tablePanel1);
+    panel.add(tablePanel2);
     return panel;
   }
 

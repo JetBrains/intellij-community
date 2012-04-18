@@ -41,7 +41,7 @@ public class GrAnnotationMethodImpl extends GrMethodBaseImpl implements GrAnnota
   }
 
   public void accept(GroovyElementVisitor visitor) {
-    visitor.visitDefaultAnnotationMember(this);
+    visitor.visitAnnotationMethod(this);
   }
 
   public String toString() {

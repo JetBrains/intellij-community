@@ -305,7 +305,7 @@ class RecursionUtils {
 
   private static boolean arrayAccessExpressionDefinitelyRecurses(
       GrIndexProperty expression, GrMethod method) {
-    final GrExpression arrayExp = expression.getSelectedExpression();
+    final GrExpression arrayExp = expression.getInvokedExpression();
     return expressionDefinitelyRecurses(arrayExp, method);
   }
 

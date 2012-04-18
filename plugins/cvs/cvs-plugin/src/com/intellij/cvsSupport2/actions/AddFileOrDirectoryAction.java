@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,9 +28,10 @@ import com.intellij.cvsSupport2.cvshandlers.CommandCvsHandler;
 import com.intellij.cvsSupport2.cvshandlers.CvsHandler;
 import com.intellij.cvsSupport2.cvsoperations.cvsAdd.AddedFileInfo;
 import com.intellij.cvsSupport2.cvsoperations.cvsAdd.ui.AbstractAddOptionsDialog;
-import com.intellij.cvsSupport2.ui.Options;
 import com.intellij.cvsSupport2.ui.CvsTabbedWindow;
+import com.intellij.cvsSupport2.ui.Options;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.actions.VcsContext;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
@@ -47,31 +48,27 @@ public class AddFileOrDirectoryAction extends ActionOnSelectedElement {
 
   private final String myTitle;
   private final Options myOptions;
-  private final boolean myIsAutomaticallyAction;
 
   public static AddFileOrDirectoryAction createActionToAddNewFileAutomatically() {
-    return new AddFileOrDirectoryAction(CvsBundle.getAddingFilesOperationName(), Options.ON_FILE_ADDING, true);
+    return new AddFileOrDirectoryAction(CvsBundle.getAddingFilesOperationName(), Options.ON_FILE_ADDING);
   }
 
   public AddFileOrDirectoryAction() {
-    this(CvsBundle.getAddingFilesOperationName(), Options.ADD_ACTION, false);
+    this(CvsBundle.getAddingFilesOperationName(), Options.ADD_ACTION);
     getVisibility().canBePerformedOnSeveralFiles();
   }
 
-  public AddFileOrDirectoryAction(String title, Options options, boolean isAutomatically) {
+  public AddFileOrDirectoryAction(String title, Options options) {
     super(false);
     myTitle = title;
     myOptions = options;
-    myIsAutomaticallyAction = isAutomatically;
-
-    CvsActionVisibility visibility = getVisibility();
+    final CvsActionVisibility visibility = getVisibility();
     visibility.addCondition(FILES_ARENT_UNDER_CVS);
   }
   public void update(AnActionEvent e) {
     super.update(e);
-    if (!e.getPresentation().isVisible())
-      return;
-    Project project = CvsContextWrapper.createInstance(e).getProject();
+    if (!e.getPresentation().isVisible()) return;
+    final Project project = CvsContextWrapper.createInstance(e).getProject();
     if (project == null) return;
     adjustName(CvsVcs2.getInstance(project).getAddOptions().getValue(), e);
   }
@@ -81,40 +78,33 @@ public class AddFileOrDirectoryAction extends ActionOnSelectedElement {
   }
 
   protected CvsHandler getCvsHandler(CvsContext context) {
-    Project project = context.getProject();
-    boolean showDialog = myOptions.isToBeShown(project) || OptionsDialog.shiftIsPressed(context.getModifiers());
-
-    return getCvsHandler(project, context.getSelectedFiles(), !myIsAutomaticallyAction, showDialog, myOptions);
+    final Project project = context.getProject();
+    final boolean showDialog = myOptions.isToBeShown(project) || OptionsDialog.shiftIsPressed(context.getModifiers());
+    return getCvsHandler(project, context.getSelectedFiles(), showDialog, myOptions);
   }
 
   public static CvsHandler getDefaultHandler(Project project, VirtualFile[] files) {
-    return getCvsHandler(project, files, true, true, Options.NULL);
+    return getCvsHandler(project, files, true, Options.NULL);
   }
 
   private static CvsHandler getCvsHandler(final Project project,
                                           final VirtualFile[] files,
-                                          final boolean includeAllRoots,
                                           final boolean showDialog,
                                           final Options dialogOptions) {
-    ArrayList<VirtualFile> filesToAdd = collectFilesToAdd(files);
+    final ArrayList<VirtualFile> filesToAdd = collectFilesToAdd(files);
     if (filesToAdd.isEmpty()) return CvsHandler.NULL;
     LOG.assertTrue(!filesToAdd.isEmpty());
 
-    Collection<AddedFileInfo> roots = new CreateTreeOnFileList(filesToAdd,  project, includeAllRoots).getRoots();
-
-    if (roots.size() == 0) {
+    final Collection<AddedFileInfo> roots = new CreateTreeOnFileList(filesToAdd,  project).getRoots();
+    if (roots.isEmpty()) {
       LOG.error(filesToAdd);
     }
 
     if (showDialog){
-      AbstractAddOptionsDialog dialog = AbstractAddOptionsDialog.createDialog(project,
-                                                                              roots,
-                                                                              dialogOptions);
+      final AbstractAddOptionsDialog dialog = AbstractAddOptionsDialog.createDialog(project, roots, dialogOptions);
       dialog.show();
-
       if (!dialog.isOK()) return CvsHandler.NULL;
     }
-
 
     return CommandCvsHandler.createAddFilesHandler(project, roots);
   }
@@ -123,7 +113,7 @@ public class AddFileOrDirectoryAction extends ActionOnSelectedElement {
   protected void onActionPerformed(final CvsContext context,
                                    final CvsTabbedWindow tabbedWindow, final boolean successfully, final CvsHandler handler) {
     super.onActionPerformed(context, tabbedWindow, successfully, handler);
-    VirtualFile[] filesToAdd = context.getSelectedFiles();
+    final VirtualFile[] filesToAdd = context.getSelectedFiles();
     final VcsDirtyScopeManager dirtyScopeManager = VcsDirtyScopeManager.getInstance(context.getProject());
     for(VirtualFile file: filesToAdd) {
       if (file.isDirectory()) {
@@ -136,9 +126,9 @@ public class AddFileOrDirectoryAction extends ActionOnSelectedElement {
   }
 
   private static ArrayList<VirtualFile> collectFilesToAdd(final VirtualFile[] files) {
-    ArrayList<VirtualFile> result = new ArrayList<VirtualFile>();
+    final ArrayList<VirtualFile> result = new ArrayList<VirtualFile>();
     for (VirtualFile file : files) {
-      List<VirtualFile> parentsToAdd = new ArrayList<VirtualFile>();
+      final List<VirtualFile> parentsToAdd = new ArrayList<VirtualFile>();
       VirtualFile parent = file.getParent();
       do {
         if (parent == null || CvsUtil.fileExistsInCvs(parent) || result.contains(parent)) break;
@@ -150,23 +140,20 @@ public class AddFileOrDirectoryAction extends ActionOnSelectedElement {
       if (parent != null) {
         result.addAll(parentsToAdd);
       }
-
       addFilesToCollection(result, file);
     }
-
     Collections.sort(result, new Comparator<VirtualFile>() {
       public int compare(final VirtualFile o1, final VirtualFile o2) {
         return o1.getPath().compareTo(o2.getPath());
       }
     });
-
     return result;
   }
 
   private static void addFilesToCollection(Collection<VirtualFile> collection, VirtualFile file) {
     if (DeletedCVSDirectoryStorage.isAdminDir(file)) return;
     collection.add(file);
-    VirtualFile[] children = file.getChildren();
+    final VirtualFile[] children = file.getChildren();
     if (children == null) return;
     for (VirtualFile child : children) {
       addFilesToCollection(collection, child);
@@ -175,21 +162,18 @@ public class AddFileOrDirectoryAction extends ActionOnSelectedElement {
 
   static class CreateTreeOnFileList {
     private final Collection<VirtualFile> myFiles;
-    private final Map<VirtualFile, AddedFileInfo> myResult
-      = new HashMap<VirtualFile, AddedFileInfo>();
+    private final Map<VirtualFile, AddedFileInfo> myResult = new HashMap<VirtualFile, AddedFileInfo>();
     private final Project myProject;
 
-    public CreateTreeOnFileList(Collection<VirtualFile> files, Project project, boolean shouldIncludeAllRoots) {
+    public CreateTreeOnFileList(Collection<VirtualFile> files, Project project) {
       myFiles = files;
       myProject = project;
       fillFileToInfoMap();
       setAllParents();
-      if (!shouldIncludeAllRoots) {
-        final CvsEntriesManager entriesManager = CvsEntriesManager.getInstance();
-        for (final VirtualFile file : files) {
-          if (entriesManager.fileIsIgnored(file)) {
-            myResult.get(file).setIncluded(false);
-          }
+      final CvsEntriesManager entriesManager = CvsEntriesManager.getInstance();
+      for (final VirtualFile file : files) {
+        if (entriesManager.fileIsIgnored(file) || FileTypeManager.getInstance().isFileIgnored(file)) {
+          myResult.get(file).setIncluded(false);
         }
       }
       removeFromMapInfoWithParentAndResortAll();
@@ -202,7 +186,7 @@ public class AddFileOrDirectoryAction extends ActionOnSelectedElement {
     private void removeFromMapInfoWithParentAndResortAll() {
       for (final VirtualFile file : myFiles) {
         if (myResult.containsKey(file)) {
-          AddedFileInfo info = myResult.get(file);
+          final AddedFileInfo info = myResult.get(file);
           if (info.getParent() != null) {
             myResult.remove(file);
           }
@@ -216,7 +200,7 @@ public class AddFileOrDirectoryAction extends ActionOnSelectedElement {
     private void setAllParents() {
       for (final VirtualFile file : myFiles) {
         if (myResult.containsKey(file.getParent()) && myResult.containsKey(file)) {
-          AddedFileInfo info = myResult.get(file);
+          final AddedFileInfo info = myResult.get(file);
           info.setParent(myResult.get(file.getParent()));
         }
       }
@@ -227,8 +211,5 @@ public class AddFileOrDirectoryAction extends ActionOnSelectedElement {
         myResult.put(file, new AddedFileInfo(file, myProject, CvsConfiguration.getInstance(myProject)));
       }
     }
-
-
   }
-
 }

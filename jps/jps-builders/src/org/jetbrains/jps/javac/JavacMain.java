@@ -14,6 +14,7 @@ import java.util.*;
  *         Date: 1/21/12
  */
 public class JavacMain {
+  private static final boolean IS_VM_6_VERSION = System.getProperty("java.version", "1.6").contains("1.6");
   private static final Set<String> FILTERED_OPTIONS = new HashSet<String>(Arrays.<String>asList(
     "-d", "-classpath", "-cp", "-bootclasspath"
   ));
@@ -69,8 +70,13 @@ public class JavacMain {
       final JavaCompiler.CompilationTask task = compiler.getTask(
         out, fileManager, outConsumer, _options, null, fileManager.toJavaFileObjects(sources)
       );
-      final JavacASTAnalyser analyzer = new JavacASTAnalyser(outConsumer, shouldSuppressAnnotationProcessing(options));
-      task.setProcessors(Collections.singleton(analyzer));
+
+      if (!IS_VM_6_VERSION) {
+        // Do not add the processor for JDK 1.6 because of the bugs in javac
+        // The processor's presence may lead to NPE and resolve bugs in compiler
+        final JavacASTAnalyser analyzer = new JavacASTAnalyser(outConsumer, shouldSuppressAnnotationProcessing(options));
+        task.setProcessors(Collections.singleton(analyzer));
+      }
       return task.call();
     }
     catch(IllegalArgumentException e) {

@@ -18,6 +18,7 @@ package git4idea.branch;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
@@ -33,6 +34,7 @@ import com.intellij.ui.components.JBLabel;
 import com.intellij.util.Function;
 import com.intellij.util.ui.UIUtil;
 import git4idea.*;
+import git4idea.commands.Git;
 import git4idea.commands.GitMessageWithFilesDetector;
 import git4idea.config.GitVcsSettings;
 import git4idea.merge.GitConflictResolver;
@@ -59,6 +61,7 @@ abstract class GitBranchOperation {
   private static final Logger LOG = Logger.getInstance(GitBranchOperation.class);
 
   @NotNull protected final Project myProject;
+  @NotNull protected final Git myGit;
   @NotNull private final Collection<GitRepository> myRepositories;
   @NotNull private final String myCurrentBranchOrRev;
   @NotNull private final ProgressIndicator myIndicator;
@@ -67,9 +70,10 @@ abstract class GitBranchOperation {
   @NotNull private final Collection<GitRepository> mySuccessfulRepositories;
   @NotNull private final Collection<GitRepository> myRemainingRepositories;
 
-  protected GitBranchOperation(@NotNull Project project, @NotNull Collection<GitRepository> repositories,
+  protected GitBranchOperation(@NotNull Project project, @NotNull Git git, @NotNull Collection<GitRepository> repositories,
                                @NotNull String currentBranchOrRev, @NotNull ProgressIndicator indicator) {
     myProject = project;
+    myGit = git;
     myRepositories = repositories;
     myCurrentBranchOrRev = currentBranchOrRev;
     myIndicator = indicator;
@@ -161,7 +165,7 @@ abstract class GitBranchOperation {
   }
 
   protected void notifySuccess(@NotNull String message) {
-    NotificationManager.getInstance(myProject).notify(GitVcs.NOTIFICATION_GROUP_ID, "", message, NotificationType.INFORMATION);
+    Notificator.getInstance(myProject).notify(GitVcs.NOTIFICATION_GROUP_ID, "", message, NotificationType.INFORMATION);
   }
 
   protected final void notifySuccess() {
@@ -225,7 +229,7 @@ abstract class GitBranchOperation {
   }
 
   protected void notifyError(@NotNull String title, @NotNull String message) {
-    NotificationManager.getInstance(myProject).notify(GitVcs.IMPORTANT_ERROR_NOTIFICATION, title, message, NotificationType.ERROR);
+    Notificator.getInstance(myProject).notify(GitVcs.IMPORTANT_ERROR_NOTIFICATION, title, message, NotificationType.ERROR);
   }
 
   @NotNull
@@ -285,7 +289,7 @@ abstract class GitBranchOperation {
   private void showUnmergedFilesNotification() {
     String title = unmergedFilesErrorTitle();
     String description = unmergedFilesErrorNotificationDescription();
-    NotificationManager.getInstance(myProject).notify(GitVcs.IMPORTANT_ERROR_NOTIFICATION, title, description, NotificationType.ERROR,
+    Notificator.getInstance(myProject).notify(GitVcs.IMPORTANT_ERROR_NOTIFICATION, title, description, NotificationType.ERROR,
                                                       new NotificationListener() {
       @Override public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
         if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED && event.getDescription().equals("resolve")) {
@@ -342,7 +346,7 @@ abstract class GitBranchOperation {
     UIUtil.invokeAndWaitIfNeeded(new Runnable() {
       @Override
       public void run() {
-        DialogManager.getInstance(myProject).showDialog(dialog);
+        ServiceManager.getService(myProject, PlatformFacade.class).showDialog(dialog);
       }
     });
 

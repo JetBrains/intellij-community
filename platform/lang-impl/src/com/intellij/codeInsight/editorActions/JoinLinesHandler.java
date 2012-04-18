@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@
 package com.intellij.codeInsight.editorActions;
 
 import com.intellij.ide.DataManager;
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
@@ -42,8 +43,11 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.NotNullFunction;
+import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.codeInsight.editorActions.JoinLinesHandlerDelegate.CANNOT_JOIN;
@@ -69,6 +73,9 @@ public class JoinLinesHandler extends EditorWriteActionHandler {
     }
     final DocumentEx doc = (DocumentEx)editor.getDocument();
     final Project project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(editor.getContentComponent()));
+    if (project == null) {
+      return;
+    }
 
     LogicalPosition caretPosition = editor.getCaretModel().getLogicalPosition();
 
@@ -88,6 +95,30 @@ public class JoinLinesHandler extends EditorWriteActionHandler {
       if (doc.getLineStartOffset(endLine) == editor.getSelectionModel().getSelectionEnd()) endLine--;
     }
 
+    final int startReformatOffset = CharArrayUtil.shiftBackward(doc.getCharsSequence(), doc.getLineEndOffset(startLine), " \t");
+    CodeEditUtil.setNodeReformatStrategy(new NotNullFunction<ASTNode, Boolean>() {
+      @NotNull
+      @Override
+      public Boolean fun(ASTNode node) {
+        return node.getTextRange().getStartOffset() >= startReformatOffset;
+      }
+    });
+    try {
+      doJob(editor, doc, project, docManager, psiFile, startLine, endLine);
+    }
+    finally {
+      CodeEditUtil.setNodeReformatStrategy(null);
+    }
+  }
+
+  private static void doJob(Editor editor,
+                            DocumentEx doc,
+                            Project project,
+                            PsiDocumentManager docManager,
+                            PsiFile psiFile,
+                            int startLine,
+                            int endLine)
+  {
     int caretRestoreOffset = -1;
     // joining lines, several times if selection is multiline
     for (int i = startLine; i < endLine; i++) {
@@ -98,7 +129,9 @@ public class JoinLinesHandler extends EditorWriteActionHandler {
       docManager.commitDocument(doc);
       CharSequence text = doc.getCharsSequence();
       int firstNonSpaceOffsetInNextLine = doc.getLineStartOffset(startLine + 1);
-      while (firstNonSpaceOffsetInNextLine < text.length() - 1 && (text.charAt(firstNonSpaceOffsetInNextLine) == ' ' || text.charAt(firstNonSpaceOffsetInNextLine) == '\t')) {
+      while (firstNonSpaceOffsetInNextLine < text.length() - 1
+             && (text.charAt(firstNonSpaceOffsetInNextLine) == ' ' || text.charAt(firstNonSpaceOffsetInNextLine) == '\t'))
+      {
         firstNonSpaceOffsetInNextLine++;
       }
       PsiElement elementAtNextLineStart = psiFile.findElementAt(firstNonSpaceOffsetInNextLine);
@@ -162,7 +195,7 @@ public class JoinLinesHandler extends EditorWriteActionHandler {
           if (rc != CANNOT_JOIN) break;
         }
       }
-      doPostponedOperationsAndUnblockDocument(docManager, doc);
+      docManager.doPostponedOperationsAndUnblockDocument(doc);
 
       if (rc != CANNOT_JOIN) {
         if (caretRestoreOffset == CANNOT_JOIN) caretRestoreOffset = rc;
@@ -211,7 +244,7 @@ public class JoinLinesHandler extends EditorWriteActionHandler {
       }
 
       if (prevLineCount < doc.getLineCount()) {
-        doPostponedOperationsAndUnblockDocument(docManager, doc);
+        docManager.doPostponedOperationsAndUnblockDocument(doc);
         end = doc.getLineEndOffset(startLine) + doc.getLineSeparatorLength(startLine);
         start = end - doc.getLineSeparatorLength(startLine);
         int addedLinesCount = doc.getLineCount() - prevLineCount - 1;
@@ -237,19 +270,6 @@ public class JoinLinesHandler extends EditorWriteActionHandler {
     }
   }
 
-  private static void doPostponedOperationsAndUnblockDocument(@NotNull PsiDocumentManager docManager, @NotNull DocumentEx document) {
-    //boolean restore = CodeEditUtil.isSuspendedNodesReformattingAllowed();
-    //CodeEditUtil.setAllowSuspendNodesReformatting(false);
-    //try {
-      docManager.doPostponedOperationsAndUnblockDocument(document);
-    //}
-    //finally {
-    //  if (restore) {
-    //    CodeEditUtil.setAllowSuspendNodesReformatting(true);
-    //  }
-    //}
-  }
-  
   private static boolean isCommentElement(final PsiElement element) {
     return element != null && PsiTreeUtil.getParentOfType(element, PsiComment.class, false) != null;
   }

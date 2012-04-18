@@ -280,6 +280,10 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder, AS
       myLexemeIndex = 0;
       myParent = myNext = null;
     }
+
+    public void remapTokenType(IElementType type) {
+      throw new UnsupportedOperationException("Shall not be called on this kind of markers");
+    }
   }
 
   private static class StartMarker extends ProductionMarker implements Marker {
@@ -420,6 +424,12 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder, AS
     }
 
     @Override
+    public void remapTokenType(IElementType type) {
+      //assert myType != null && type != null;
+      myType = type;
+    }
+
+    @Override
     public void setCustomEdgeTokenBinders(final WhitespacesAndCommentsBinder left, final WhitespacesAndCommentsBinder right) {
       if (left != null) {
         myEdgeTokenBinder = left;
@@ -538,6 +548,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder, AS
       return myParsed;
     }
 
+    @Override
     public ASTNodeBuilder getBuilder() {
       return myBuilder;
     }

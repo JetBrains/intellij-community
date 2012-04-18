@@ -20,6 +20,8 @@ import com.intellij.openapi.editor.impl.event.DocumentEventImpl;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.containers.Stack;
+import com.intellij.util.text.CharSequenceBackedByArray;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jmock.Expectations;
 import org.jmock.Mockery;
@@ -46,7 +48,6 @@ import static org.junit.Assert.*;
  * @since 03/01/2011
  */
 public class CharArrayTest {
-
   @Rule
   public TestWatcher configReader = new TestWatcher() {
     @Override
@@ -81,7 +82,7 @@ public class CharArrayTest {
     
     init(10);
     if (myConfig != null) {
-      myArray.insert(myDocument, myConfig.text(), 0);
+      myArray.insert(myConfig.text(), 0);
       myArray.setDeferredChangeMode(myConfig.deferred());
     }
   }
@@ -95,27 +96,24 @@ public class CharArrayTest {
   @Test 
   public void deferredReplace() {
     replace(1, 3, "abc");
-    checkText("1abc4");
     assertTrue(myArray.hasDeferredChanges());
-    
+    checkText("1abc4");
+
     replace(2, 3, "XY");
     checkText("1aXYc4");
-    assertTrue(myArray.hasDeferredChanges());
-    
+
     replace(3, 6, "ABC");
     checkText("1aXABC");
-    assertTrue(myArray.hasDeferredChanges());
-    
+
     myArray.setDeferredChangeMode(false);
     checkText("1aXABC");
-    assertFalse(myArray.hasDeferredChanges());
   }
 
   @Config(text = "01234567", deferred = true)
   @Test
   public void subSequenceWithDeferredChangeBeforeIt() {
     replace(0, 2, "abc");
-    CharArray subsSequence = (CharArray)myArray.subSequence(5, 6);
+    CharSequenceBackedByArray subsSequence = (CharSequenceBackedByArray)myArray.subSequence(5, 6);
     assertArrayEquals("4".toCharArray(), subsSequence.getChars());
   }
 
@@ -123,7 +121,7 @@ public class CharArrayTest {
   @Test
   public void subSequenceWithDeferredChangeIntersectingFromLeft() {
     replace(0, 2, "abc");
-    CharArray subsSequence = (CharArray)myArray.subSequence(2, 4);
+    CharSequenceBackedByArray subsSequence = (CharSequenceBackedByArray)myArray.subSequence(2, 4);
     assertArrayEquals("c2".toCharArray(), subsSequence.getChars());
   }
 
@@ -131,7 +129,7 @@ public class CharArrayTest {
   @Test
   public void subSequenceWithDeferredChangeIntersectingFromRight() {
     replace(4, 6, "abc");
-    CharArray subsSequence = (CharArray)myArray.subSequence(3, 5);
+    CharSequenceBackedByArray subsSequence = (CharSequenceBackedByArray)myArray.subSequence(3, 5);
     assertArrayEquals("3a".toCharArray(), subsSequence.getChars());
   }
   
@@ -139,27 +137,34 @@ public class CharArrayTest {
   @Test
   public void subSequenceWithDeferredChangeAfterIt() {
     replace(6, 8, "abc");
-    CharArray subsSequence = (CharArray)myArray.subSequence(1, 2);
+    CharSequenceBackedByArray subsSequence = (CharSequenceBackedByArray)myArray.subSequence(1, 2);
     assertArrayEquals("1".toCharArray(), subsSequence.getChars());
   }
   
   private void init(int size) {
-    myArray = new CharArray(size) {
+    myArray = new CharArray(size, new char[0], 0) {
       @NotNull
       @Override
-      protected DocumentEvent beforeChangedUpdate(DocumentImpl subj, int offset, CharSequence oldString, CharSequence newString,
-                                                  boolean wholeTextReplaced)
-      {
-        return new DocumentEventImpl(subj, offset, oldString, newString, LocalTimeCounter.currentTime(), wholeTextReplaced);
+      protected DocumentEvent beforeChangedUpdate(int offset, CharSequence oldString, CharSequence newString,
+                                                  boolean wholeTextReplaced) {
+        return new DocumentEventImpl(myDocument, offset, oldString, newString, LocalTimeCounter.currentTime(), wholeTextReplaced);
       }
 
       @Override
       protected void afterChangedUpdate(@NotNull DocumentEvent event, long newModificationStamp) {
       }
+
+      @Override
+      protected void assertWriteAccess() {
+      }
+
+      @Override
+      protected void assertReadAccess() {
+      }
     };
   }
 
-  private void checkText(@NotNull String expected) {
+  private void checkText(@NonNls @NotNull String expected) {
     // Test as a whole.
     assertEquals(expected, myArray.toString());
     assertEquals(expected.length(), myArray.length());
@@ -192,8 +197,7 @@ public class CharArrayTest {
   }
   
   private void checkSubSequence(@NotNull String expected, @NotNull CharSequence actual,
-                                       @NotNull Stack<Pair<Integer, Integer>> history)
-  {
+                                @NotNull Stack<Pair<Integer, Integer>> history) {
     assertEquals(expected.length(), actual.length());
     for (int i = 0; i < expected.length(); i++) {
       char expectedChar = expected.charAt(i);
@@ -223,9 +227,9 @@ public class CharArrayTest {
     }
   }
   
-  private void replace(int startOffset, int endOffset, String newText) {
+  private void replace(int startOffset, int endOffset, @NonNls String newText) {
     myArray.replace(
-      myDocument, startOffset, endOffset, myArray.substring(startOffset, endOffset), newText, LocalTimeCounter.currentTime(),
+      startOffset, endOffset, myArray.substring(startOffset, endOffset), newText, LocalTimeCounter.currentTime(),
       startOffset == 0 && endOffset == myArray.length()
     );
   }

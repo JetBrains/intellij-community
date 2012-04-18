@@ -17,6 +17,7 @@
 package com.intellij.tasks.actions;
 
 import com.intellij.CommonBundle;
+import com.intellij.codeInsight.completion.CompletionParameters;
 import com.intellij.codeInsight.completion.InsertHandler;
 import com.intellij.codeInsight.completion.InsertionContext;
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -49,8 +50,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
@@ -75,7 +74,6 @@ public class ActivateTaskDialog extends DialogWrapper {
   private final Project myProject;
   private Task mySelectedTask;
   private boolean myVcsEnabled;
-  private boolean myMarkAsInProgress;
   private AsyncProcessIcon myUpdateIcon;
   private JLabel myUpdateLabel;
 
@@ -113,14 +111,15 @@ public class ActivateTaskDialog extends DialogWrapper {
 
     myVcsEnabled = manager.isVcsEnabled();
 
-    myMarkAsInProgress = manager.getState().markAsInProgress;
-    myMarkAsInProgressBox.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        if (isMarkAsInProgressApplicable()) {
-          myMarkAsInProgress = myMarkAsInProgressBox.isSelected();
-        }
+    myMarkAsInProgressBox.setSelected(manager.getState().markAsInProgress);
+    myMarkAsInProgressBox.setVisible(false);
+    for (TaskRepository repository : manager.getAllRepositories()) {
+      if (repository.getRepositoryType().getPossibleTaskStates().contains(TaskState.IN_PROGRESS)) {
+        myMarkAsInProgressBox.setVisible(true);
+        break;
       }
-    });
+    }
+
     taskChanged();
 
     init();
@@ -162,14 +161,6 @@ public class ActivateTaskDialog extends DialogWrapper {
     TaskManagerImpl taskManager = (TaskManagerImpl)TaskManager.getManager(myProject);
     Task task = getSelectedTask();
 
-    myMarkAsInProgressBox.setVisible(false);
-    for (TaskRepository repository : taskManager.getAllRepositories()) {
-      if (repository.getRepositoryType().getPossibleTaskStates().contains(TaskState.IN_PROGRESS)) {
-        myMarkAsInProgressBox.setVisible(true);
-        break;
-      }
-    }
-
     if (myMarkAsInProgressBox.isVisible()) {
       myMarkAsInProgressBox.setEnabled(false);
       if (task != null) {
@@ -179,7 +170,6 @@ public class ActivateTaskDialog extends DialogWrapper {
         }
       }
     }
-    myMarkAsInProgressBox.setSelected(myMarkAsInProgress && isMarkAsInProgressApplicable());
 
     // refresh change lists
     ChangeListManager changeListManager = ChangeListManager.getInstance(myProject);
@@ -247,9 +237,7 @@ public class ActivateTaskDialog extends DialogWrapper {
         mySelectedTask = manager.createLocalTask(taskName);
       }
     }
-    if (isMarkAsInProgressApplicable()) {
-      manager.getState().markAsInProgress = myMarkAsInProgress;
-    }
+    manager.getState().markAsInProgress = myMarkAsInProgressBox.isSelected();
     super.doOKAction();
   }
 
@@ -267,11 +255,7 @@ public class ActivateTaskDialog extends DialogWrapper {
   }
 
   boolean isMarkAsInProgress() {
-    return isMarkAsInProgressApplicable() && myMarkAsInProgressBox.isEnabled();
-  }
-
-  private boolean isMarkAsInProgressApplicable() {
-    return myMarkAsInProgressBox.isSelected() && myMarkAsInProgressBox.isVisible();
+    return myMarkAsInProgressBox.isSelected() && myMarkAsInProgressBox.isVisible() && myMarkAsInProgressBox.isEnabled();
   }
 
   @NonNls
@@ -311,22 +295,23 @@ public class ActivateTaskDialog extends DialogWrapper {
   }
 
   public static class MyTextFieldWithAutoCompletionListProvider extends TextFieldWithAutoCompletionListProvider<Task> {
-    private final TaskSearchSupport mySearchSupport;
 
-    public MyTextFieldWithAutoCompletionListProvider(@Nullable final Project project) {
+    private final Project myProject;
+
+    public MyTextFieldWithAutoCompletionListProvider(Project project) {
       super(null);
-      mySearchSupport = new TaskSearchSupport(project);
+      myProject = project;
     }
 
     @Override
     protected String getQuickDocHotKeyAdvertisementTail(@NotNull String shortcut) {
-      return " would show task description and comments";
+      return " task description and comments";
     }
 
     @NotNull
     @Override
-    public List<Task> getItems(final String prefix, final boolean cached) {
-      return mySearchSupport.getItems(prefix, cached);
+    public List<Task> getItems(final String prefix, final boolean cached, CompletionParameters parameters) {
+      return new TaskSearchSupport(myProject).getItems(prefix, cached, parameters.isAutoPopup());
     }
 
     @Override
@@ -352,7 +337,7 @@ public class ActivateTaskDialog extends DialogWrapper {
         @Override
         public void handleInsert(InsertionContext context, LookupElement item) {
           Document document = context.getEditor().getDocument();
-          String s = task.getId() + ": " + task.getSummary();
+          String s = ((TaskManagerImpl)TaskManager.getManager(context.getProject())).getChangelistName(task);
           s = StringUtil.convertLineSeparators(s);
           document.replaceString(context.getStartOffset(), context.getTailOffset(), s);
           context.getEditor().getCaretModel().moveToOffset(context.getStartOffset() + s.length());

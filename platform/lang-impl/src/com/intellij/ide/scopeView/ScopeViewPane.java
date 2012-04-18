@@ -34,6 +34,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.search.scope.NonProjectFilesScope;
 import com.intellij.psi.search.scope.packageSet.*;
 import com.intellij.ui.PopupHandler;
 import com.intellij.util.Alarm;
@@ -127,6 +128,7 @@ public class ScopeViewPane extends AbstractProjectViewPane {
   public String[] getSubIds() {
     NamedScope[] scopes = myDependencyValidationManager.getScopes();
     scopes = ArrayUtil.mergeArrays(scopes, myNamedScopeManager.getScopes());
+    scopes = NonProjectFilesScope.removeFromList(scopes);
     String[] ids = new String[scopes.length];
     for (int i = 0; i < scopes.length; i++) {
       final NamedScope scope = scopes[i];

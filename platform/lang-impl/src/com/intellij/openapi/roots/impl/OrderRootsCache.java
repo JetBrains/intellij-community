@@ -49,7 +49,7 @@ public class OrderRootsCache {
   @Nullable
   public VirtualFile[] getCachedRoots(OrderRootType rootType, int flags) {
     final VirtualFilePointerContainer cached = myRoots.get(new CacheKey(rootType, flags));
-    return cached != null ? cached.getFiles() : null;
+    return cached == null ? null : cached.getFiles();
   }
 
   @Nullable
@@ -67,7 +67,7 @@ public class OrderRootsCache {
 
   private static final class CacheKey {
     private final OrderRootType myRootType;
-    private int myFlags;
+    private final int myFlags;
 
     private CacheKey(OrderRootType rootType, int flags) {
       myRootType = rootType;

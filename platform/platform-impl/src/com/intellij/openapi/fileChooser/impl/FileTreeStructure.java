@@ -64,8 +64,8 @@ public class FileTreeStructure extends AbstractTreeStructure {
     return myShowHidden;
   }
 
-  public final void showHiddens(final boolean showHiddens) {
-    myShowHidden = showHiddens;
+  public final void showHiddens(final boolean showHidden) {
+    myShowHidden = showHidden;
   }
 
   public final Object getRootElement() {

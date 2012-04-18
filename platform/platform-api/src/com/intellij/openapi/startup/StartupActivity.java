@@ -20,6 +20,8 @@ import com.intellij.openapi.project.Project;
 
 /**
  * @author Dmitry Avdeev
+ *
+ * This may implement {@link com.intellij.openapi.project.DumbAware}.
  */
 public interface StartupActivity {
 

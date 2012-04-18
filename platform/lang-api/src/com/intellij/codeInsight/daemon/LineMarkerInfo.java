@@ -35,7 +35,7 @@ import java.awt.event.MouseEvent;
 import java.lang.ref.WeakReference;
 
 public class LineMarkerInfo<T extends PsiElement> {
-  private final Icon myIcon;
+  protected final Icon myIcon;
   private final WeakReference<T> elementRef;
   public final int startOffset;
   public final int endOffset;
@@ -75,7 +75,7 @@ public class LineMarkerInfo<T extends PsiElement> {
     endOffset = range.getEndOffset();
   }
 
-  public LineMarkerInfo(T element,
+  public LineMarkerInfo(@NotNull T element,
                         int startOffset,
                         Icon icon,
                         int updatePass,
@@ -104,6 +104,7 @@ public class LineMarkerInfo<T extends PsiElement> {
   }
 
   private class NavigateAction extends AnAction {
+    @Override
     public void actionPerformed(AnActionEvent e) {
       if (myNavigationHandler != null) {
         MouseEvent mouseEvent = (MouseEvent)e.getInputEvent();
@@ -131,19 +132,23 @@ public class LineMarkerInfo<T extends PsiElement> {
       return myInfo;
     }
 
+    @Override
     @NotNull
     public Icon getIcon() {
       return myInfo.myIcon;
     }
 
+    @Override
     public AnAction getClickAction() {
       return myInfo.new NavigateAction();
     }
 
+    @Override
     public boolean isNavigateAction() {
       return myInfo.myNavigationHandler != null;
     }
 
+    @Override
     public String getTooltipText() {
       try {
         return myInfo.getLineMarkerTooltip();
@@ -153,11 +158,12 @@ public class LineMarkerInfo<T extends PsiElement> {
       }
     }
 
+    @Override
     public Alignment getAlignment() {
       return myInfo.myIconAlignment;
     }
 
-    private boolean looksTheSameAs(@NotNull LineMarkerGutterIconRenderer renderer) {
+    protected boolean looksTheSameAs(@NotNull LineMarkerGutterIconRenderer renderer) {
       return
         myInfo.getElement() != null &&
         renderer.myInfo.getElement() != null &&

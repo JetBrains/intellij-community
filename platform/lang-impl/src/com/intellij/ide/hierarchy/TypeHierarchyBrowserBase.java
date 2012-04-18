@@ -97,7 +97,7 @@ public abstract class TypeHierarchyBrowserBase extends HierarchyBrowserBaseEx {
   }
 
   private final class MyDeleteProvider implements DeleteProvider {
-    public final void deleteElement(final DataContext dataContext) {
+    public final void deleteElement(@NotNull final DataContext dataContext) {
       final PsiElement aClass = getSelectedElement();
       if (!canBeDeleted(aClass)) return;
       LocalHistoryAction a = LocalHistory.getInstance().startAction(IdeBundle.message("progress.deleting.class", getQualifiedName(aClass)));
@@ -110,7 +110,7 @@ public abstract class TypeHierarchyBrowserBase extends HierarchyBrowserBaseEx {
       }
     }
 
-    public final boolean canDeleteElement(final DataContext dataContext) {
+    public final boolean canDeleteElement(@NotNull final DataContext dataContext) {
       final PsiElement aClass = getSelectedElement();
       if (!canBeDeleted(aClass)) {
         return false;

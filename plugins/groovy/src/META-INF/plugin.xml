@@ -32,8 +32,8 @@
     <extensionPoint name="defaultImportContributor" interface="org.jetbrains.plugins.groovy.lang.resolve.DefaultImportContributor"/>
     <extensionPoint name="astTransformContributor" interface="org.jetbrains.plugins.groovy.lang.resolve.AstTransformContributor"/>
     <extensionPoint name="closureMissingMethodContributor" interface="org.jetbrains.plugins.groovy.lang.resolve.ClosureMissingMethodContributor"/>
-    <extensionPoint name="variableEnhancer" interface="org.jetbrains.plugins.groovy.lang.psi.GrVariableEnhancer"/>
-    <extensionPoint name="referenceTypeEnhancer" interface="org.jetbrains.plugins.groovy.lang.psi.GrReferenceTypeEnhancer"/>
+    <extensionPoint name="variableEnhancer" interface="org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrVariableEnhancer"/>
+    <extensionPoint name="referenceTypeEnhancer" interface="org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrReferenceTypeEnhancer"/>
     <extensionPoint name="typeConverter" interface="org.jetbrains.plugins.groovy.lang.psi.GrTypeConverter"/>
     <extensionPoint name="expectedTypesContributor" interface="org.jetbrains.plugins.groovy.lang.psi.expectedTypes.GroovyExpectedTypesContributor"/>
     <extensionPoint name="classSubstitutor" interface="org.jetbrains.plugins.groovy.lang.psi.GrClassSubstitutor"/>
@@ -49,9 +49,11 @@
     <extensionPoint name="unresolvedHighlightFileFilter" interface="org.jetbrains.plugins.groovy.extensions.GroovyUnresolvedHighlightFileFilter"/>
     <extensionPoint name="configSlurperSupport" interface="org.jetbrains.plugins.groovy.configSlurper.ConfigSlurperSupport"/>
 
-    <extensionPoint name="callExpressionTypeCalculator" interface="org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.path.GrCallExpressionTypeCalculator"/>
+    <extensionPoint name="callExpressionTypeCalculator" interface="org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrCallExpressionTypeCalculator"/>
     <extensionPoint name="classDescriptor" beanClass="org.jetbrains.plugins.groovy.extensions.GroovyClassDescriptor"/>
     <extensionPoint name="methodDescriptor" beanClass="org.jetbrains.plugins.groovy.extensions.GroovyMethodDescriptorExtension"/>
+
+    <extensionPoint name="groovyShellRunner" interface="org.jetbrains.plugins.groovy.console.GroovyShellRunner"/>
 
     <!-- Groovy DSL extension points -->
     <extensionPoint name="psiEnhancerCategory" interface="org.jetbrains.plugins.groovy.dsl.psi.PsiEnhancerCategory"/>
@@ -72,6 +74,7 @@
     <membersContributor implementation="org.jetbrains.plugins.groovy.lang.resolve.noncode.LoggingContributor"/>
     <membersContributor implementation="org.jetbrains.plugins.groovy.spock.SpockMemberContributor"/>
     <membersContributor implementation="org.jetbrains.plugins.groovy.lang.resolve.MixinMemberContributor"/>
+    <membersContributor implementation="org.jetbrains.plugins.groovy.swingBuilder.SwingBuilderNonCodeMemberContributor"/>
 
     <astTransformContributor implementation="org.jetbrains.plugins.groovy.lang.resolve.ast.DelegatedMethodsContributor"/>
     <astTransformContributor implementation="org.jetbrains.plugins.groovy.lang.resolve.ast.AutoExternalizeContributor"/>
@@ -80,6 +83,9 @@
     <astTransformContributor implementation="org.jetbrains.plugins.groovy.lang.resolve.noncode.GrInheritConstructorContributor"/>
 
     <positionManagerDelegate implementation="org.jetbrains.plugins.groovy.gant.GantPositionManagerHelper"/>
+
+    <methodDescriptor lightMethodKey="SwingBuilder_builder_method"
+                      namedArgsProvider="org.jetbrains.plugins.groovy.swingBuilder.SwingBuilderNamedArgumentProvider"/>
 
     <mapContentProvider implementation="org.jetbrains.plugins.groovy.configSlurper.ConfigSlurperMapContentProvider"/>
     <referenceTypeEnhancer implementation="org.jetbrains.plugins.groovy.configSlurper.GroovyMapValueTypeEhancer"/>
@@ -104,7 +110,7 @@
     <psiEnhancerCategory implementation="org.jetbrains.plugins.groovy.dsl.psi.PsiMethodCategory"/>
     <psiEnhancerCategory implementation="org.jetbrains.plugins.groovy.dsl.psi.PsiExpressionCategory"/>
 
-    <variableEnhancer implementation="org.jetbrains.plugins.groovy.lang.psi.ClosureParameterEnhancer"/>
+    <variableEnhancer implementation="org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.ClosureParameterEnhancer"/>
 
     <membersContributor implementation="org.jetbrains.plugins.groovy.gant.GantMemberContributor"/>
 
@@ -120,6 +126,7 @@
     <groovyFrameworkConfigNotification implementation="org.jetbrains.plugins.groovy.griffon.GriffonConfigureNotification"/>
     <defaultImportContributor implementation="org.jetbrains.plugins.groovy.griffon.GriffonDefaultImportContributor"/>
 
+    <groovyShellRunner implementation="org.jetbrains.plugins.groovy.console.DefaultGroovyShellRunner" order="last"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -146,11 +153,12 @@
 
     <projectService serviceInterface="org.jetbrains.plugins.groovy.gant.GantSettings" serviceImplementation="org.jetbrains.plugins.groovy.gant.GantSettings"/>
 
-    <spellchecker.support language="Groovy" implementationClass="org.jetbrains.plugins.groovy.codeInspection.GroovySpellcheckingStrategy"/>
+    <spellchecker.support language="Groovy" implementationClass="org.jetbrains.plugins.groovy.codeInspection.spellchecker.GroovySpellcheckingStrategy"/>
 
     <colorSettingsPage implementation="org.jetbrains.plugins.groovy.highlighter.GroovyColorsAndFontsPage"/>
     <framework.type implementation="org.jetbrains.plugins.groovy.config.GroovyFrameworkType"/>
     <renameHandler implementation="org.jetbrains.plugins.groovy.refactoring.rename.PropertyRenameHandler"/>
+    <renameHandler implementation="org.jetbrains.plugins.groovy.refactoring.rename.GrMethodRenameHandler"/>
     <renamePsiElementProcessor id="groovyFieldRenameProcessor"
                                implementation="org.jetbrains.plugins.groovy.refactoring.rename.RenameGrFieldProcessor"
                                order="first"/>
@@ -213,8 +221,11 @@
     <lang.surroundDescriptor language="Groovy"
                              implementationClass="org.jetbrains.plugins.groovy.lang.surroundWith.GroovySurroundDescriptor"/>
     <lang.findUsagesProvider language="Groovy" implementationClass="org.jetbrains.plugins.groovy.findUsages.GroovyFindUsagesProvider"/>
+    <importFilteringRule implementation="org.jetbrains.plugins.groovy.findUsages.GrImportFilteringRule"/>
+
     <readWriteAccessDetector implementation="org.jetbrains.plugins.groovy.findUsages.GroovyReadWriteAccessDetector" order="before java"/>
     <findUsagesHandlerFactory implementation="org.jetbrains.plugins.groovy.findUsages.GroovyFindUsagesHandlerFactory"/>
+    <highlightUsagesHandlerFactory implementation="org.jetbrains.plugins.groovy.findUsages.GrHighlightOverridingMethodsHandlerFactory"/>
     <lang.braceMatcher language="Groovy" implementationClass="org.jetbrains.plugins.groovy.highlighter.GroovyBraceMatcher"/>
     <lang.importOptimizer language="Groovy" implementationClass="org.jetbrains.plugins.groovy.lang.editor.GroovyImportOptimizer"/>
     <lang.documentationProvider language="Groovy"
@@ -306,6 +317,7 @@
     <extendWordSelectionHandler implementation="org.jetbrains.plugins.groovy.editor.selection.GroovyArgListSelectioner"/>
     <extendWordSelectionHandler implementation="org.jetbrains.plugins.groovy.editor.selection.GroovyGStringSelectioner" order="before wordSelectioner"/>
     <extendWordSelectionHandler implementation="org.jetbrains.plugins.groovy.editor.selection.GroovyParameterListSelectioner"/>
+    <extendWordSelectionHandler implementation="org.jetbrains.plugins.groovy.editor.selection.GroovyElseSelectioner"/>
 
     <methodReferencesSearch implementation="org.jetbrains.plugins.groovy.findUsages.AccessorMethodReferencesSearcher"/>
     <methodReferencesSearch implementation="org.jetbrains.plugins.groovy.findUsages.MethodLateBoundReferencesSearcher"/>
@@ -398,6 +410,9 @@
     <localInspection language="Groovy" groupPath="Groovy" shortName="GroovyUnusedAssignment" bundle="org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle"
                      key="unused.assignment" groupKey="groovy.dfa.issues" enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.unusedDef.UnusedDefInspection"/>
+    <localInspection language="Groovy" groupPath="Groovy" shortName="GroovyUnusedIncOrDec" bundle="org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle"
+                     key="unused.inc.dec" groupKey="groovy.dfa.issues" enabledByDefault="true" level="WARNING"
+                     implementationClass="org.jetbrains.plugins.groovy.codeInspection.confusing.GrUnusedIncDecInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="GroovyVariableNotAssigned" bundle="org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle"
                      key="unassigned.access" groupKey="groovy.dfa.issues" enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.unassignedVariable.UnassignedVariableAccessInspection"/>
@@ -586,6 +601,9 @@
     <localInspection language="Groovy" groupPath="Groovy" shortName="ClashingGetters" bundle="org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle"
                      key="clashing.getters" groupName="Potentially confusing code constructs" enabledByDefault="false" level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.confusing.ClashingGettersInspection"/>
+    <localInspection language="Groovy" groupPath="Groovy" shortName="GrDeprecatedAPIUsage" bundle="org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle"
+                     key="gr.deprecated.api.usage" groupName="Potentially confusing code constructs" enabledByDefault="true" level="WARNING"
+                     implementationClass="org.jetbrains.plugins.groovy.codeInspection.confusing.GrDeprecatedAPIUsageInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="GroovyNestedConditional" displayName="Nested conditional expression"
                      groupName="Potentially confusing code constructs" enabledByDefault="false" level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.confusing.GroovyNestedConditionalInspection"/>
@@ -881,6 +899,11 @@
     <intentionAction>
       <bundleName>org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle</bundleName>
       <categoryKey>intention.category.groovy/intention.category.conversions</categoryKey>
+      <className>org.jetbrains.plugins.groovy.intentions.conversions.GrSplitDeclarationIntention</className>
+    </intentionAction>
+    <intentionAction>
+      <bundleName>org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle</bundleName>
+      <categoryKey>intention.category.groovy/intention.category.conversions</categoryKey>
       <className>org.jetbrains.plugins.groovy.intentions.conversions.RemoveParenthesesFromMethodCallIntention</className>
     </intentionAction>
     <intentionAction>
@@ -960,11 +983,6 @@
       <categoryKey>intention.category.groovy/intention.category.groovy.style</categoryKey>
       <className>org.jetbrains.plugins.groovy.intentions.style.AddReturnTypeFix</className>
     </intentionAction>
-    <intentionAction>
-          <bundleName>org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle</bundleName>
-          <categoryKey>intention.category.groovy/intention.category.groovy.style</categoryKey>
-          <className>org.jetbrains.plugins.groovy.intentions.style.ReplaceQualifiedReferenceWithImportIntention</className>
-        </intentionAction>
     <intentionAction>
       <bundleName>org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle</bundleName>
       <categoryKey>intention.category.groovy/intention.category.groovy.style</categoryKey>

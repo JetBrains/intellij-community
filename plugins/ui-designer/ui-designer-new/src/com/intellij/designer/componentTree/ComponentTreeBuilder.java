@@ -18,79 +18,78 @@ package com.intellij.designer.componentTree;
 import com.intellij.designer.designSurface.ComponentSelectionListener;
 import com.intellij.designer.designSurface.DesignerEditorPanel;
 import com.intellij.designer.designSurface.EditableArea;
-import com.intellij.designer.model.RadComponent;
 import com.intellij.ide.util.treeView.AbstractTreeBuilder;
 
-import javax.swing.event.TreeSelectionEvent;
-import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultTreeModel;
-import javax.swing.tree.TreeSelectionModel;
 
 /**
  * @author Alexander Lobas
  */
-public final class ComponentTreeBuilder extends AbstractTreeBuilder implements ComponentSelectionListener, TreeSelectionListener {
+public final class ComponentTreeBuilder extends AbstractTreeBuilder implements ComponentSelectionListener {
   private final EditableArea mySurfaceArea;
-  private final TreeSelectionModel myTreeSelectionModel;
+  private final TreeEditableArea myTreeArea;
+  private final TreeGlassLayer myGlassLayer;
+  private final ExpandStateHandler myExpandStateHandler;
 
   public ComponentTreeBuilder(ComponentTree tree, DesignerEditorPanel designer) {
-    super(tree, (DefaultTreeModel)tree.getModel(), new TreeContentProvider(designer), null); // TODO: comparator?
+    super(tree, (DefaultTreeModel)tree.getModel(), new TreeContentProvider(designer), null);
+
     initRootNode();
+
     mySurfaceArea = designer.getSurfaceArea();
-    myTreeSelectionModel = getTree().getSelectionModel();
-    // TODO: restore expanded state
-    setTreeSelection();
+    myTreeArea = new TreeEditableArea(tree, this);
+    myGlassLayer = new TreeGlassLayer(tree, designer.getToolProvider(), myTreeArea);
+    myExpandStateHandler = new ExpandStateHandler(tree, designer, this);
+
+    designer.updateTreeArea(myTreeArea);
+
+    select(mySurfaceArea.getSelection().toArray(), null);
+    expandFromState();
+
     addListeners();
+    myExpandStateHandler.hookListener();
+  }
+
+  public TreeEditableArea getTreeArea() {
+    return myTreeArea;
   }
 
   @Override
   public void dispose() {
     removeListeners();
+    myTreeArea.unhookSelection();
+    myGlassLayer.dispose();
+    myExpandStateHandler.unhookListener();
     super.dispose();
   }
 
   private void addListeners() {
     mySurfaceArea.addSelectionListener(this);
-    myTreeSelectionModel.addTreeSelectionListener(this);
+    myTreeArea.addSelectionListener(this);
   }
 
   private void removeListeners() {
     mySurfaceArea.removeSelectionListener(this);
-    myTreeSelectionModel.removeTreeSelectionListener(this);
+    myTreeArea.removeSelectionListener(this);
   }
 
-  private void handleSelection(Runnable runnable) {
+  @Override
+  public void selectionChanged(EditableArea area) {
     try {
       removeListeners();
-      runnable.run();
+      if (mySurfaceArea == area) {
+        myTreeArea.setSelection(mySurfaceArea.getSelection());
+      }
+      else {
+        mySurfaceArea.setSelection(myTreeArea.getSelection());
+      }
     }
     finally {
       addListeners();
     }
   }
 
-  @Override
-  public void selectionChanged(EditableArea area) {
-    handleSelection(new Runnable() {
-      @Override
-      public void run() {
-        queueUpdate();
-        setTreeSelection();
-      }
-    });
-  }
-
-  private void setTreeSelection() {
-    select(mySurfaceArea.getSelection().toArray(), null);
-  }
-
-  @Override
-  public void valueChanged(TreeSelectionEvent e) {
-    handleSelection(new Runnable() {
-      @Override
-      public void run() {
-        mySurfaceArea.setSelection(getSelectedElements(RadComponent.class));
-      }
-    });
+  public void expandFromState() {
+    expand(myExpandStateHandler.getExpanded(), null);
   }
 }

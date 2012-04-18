@@ -231,8 +231,10 @@ public class CommandMerger {
     return !myCurrentActions.isEmpty();
   }
 
-  public boolean isUndoAvailable(Collection<DocumentReference> refs) {
-    if (hasNonUndoableActions()) return false;
+  public boolean isUndoAvailable(@NotNull Collection<DocumentReference> refs) {
+    if (hasNonUndoableActions()) {
+      return false;
+    }
     if (refs.isEmpty()) return isGlobal() && hasActions();
 
     for (DocumentReference each : refs) {

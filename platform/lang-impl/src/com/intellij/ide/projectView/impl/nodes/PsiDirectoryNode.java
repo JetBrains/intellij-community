@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,7 +36,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.NavigatableWithText;
 import com.intellij.projectImport.ProjectAttachProcessor;
@@ -91,12 +91,12 @@ public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> implements Navig
           data.addText(directoryFile.getName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
         }
 
-        if (parentValue instanceof Project || parentValue instanceof Module) {
-          if (parentValue instanceof Project) {
-            data.addText(" (" + FileUtil.getLocationRelativeToUserHome(directoryFile.getPresentableUrl()) + ")", SimpleTextAttributes.GRAYED_ATTRIBUTES);
-          } else {
-            data.addText(" (" + directoryFile.getPresentableUrl() + ")", SimpleTextAttributes.GRAYED_ATTRIBUTES);
-          }
+        if (parentValue instanceof Project) {
+          final String location = FileUtil.getLocationRelativeToUserHome(((Project)parentValue).getPresentableUrl());
+          data.addText(" (" + location + ")", SimpleTextAttributes.GRAYED_ATTRIBUTES);
+        }
+        else if (parentValue instanceof Module) {
+          data.addText(" (" + directoryFile.getPresentableUrl() + ")", SimpleTextAttributes.GRAYED_ATTRIBUTES);
         }
         else if (ProjectRootsUtil.isSourceOrTestRoot(directoryFile, project)) {
           if (ProjectRootsUtil.isInTestSource(directoryFile, project)) {
@@ -183,7 +183,7 @@ public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> implements Navig
       file = PathUtil.getLocalFile(file);
     }
 
-    if (!VfsUtil.isAncestor(directory, file, false)) {
+    if (!VfsUtilCore.isAncestor(directory, file, false)) {
       return false;
     }
 

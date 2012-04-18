@@ -20,7 +20,6 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.ModuleRootModel;
 import com.intellij.openapi.roots.OrderEntry;
@@ -30,10 +29,10 @@ import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.roots.impl.libraries.LibraryImpl;
 import com.intellij.openapi.roots.impl.libraries.LibraryTableImplUtil;
 import com.intellij.openapi.roots.libraries.*;
-import com.intellij.openapi.roots.ui.configuration.ChooseModulesDialog;
 import com.intellij.openapi.roots.ui.configuration.classpath.ClasspathPanel;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesModifiableModel;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ModuleStructureConfigurable;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureValidator;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.vfs.JarFileSystem;
@@ -210,20 +209,9 @@ public class LibraryEditingUtil {
     return modules;
   }
 
-  public static void showDialogAndAddLibraryToDependencies(@NotNull Library library, @NotNull Project project) {
-    final ModuleStructureConfigurable moduleStructureConfigurable = ModuleStructureConfigurable.getInstance(project);
-    final List<Module> modules = getSuitableModules(moduleStructureConfigurable, ((LibraryEx)library).getType(), library);
-    if (modules.isEmpty()) return;
-    final ChooseModulesDialog
-      dlg = new ChooseModulesDialog(moduleStructureConfigurable.getProject(), modules, ProjectBundle.message("choose.modules.dialog.title"),
-                                                            ProjectBundle
-                                                              .message("choose.modules.dialog.description", library.getName()));
-    dlg.show();
-    if (dlg.isOK()) {
-      final List<Module> chosenModules = dlg.getChosenElements();
-      for (Module module : chosenModules) {
-        moduleStructureConfigurable.addLibraryOrderEntry(module, library);
-      }
-    }
+  public static void showDialogAndAddLibraryToDependencies(@NotNull Library library,
+                                                           @NotNull Project project,
+                                                           boolean allowEmptySelection) {
+    ProjectStructureValidator.showDialogAndAddLibraryToDependencies(library, project, allowEmptySelection);
   }
 }

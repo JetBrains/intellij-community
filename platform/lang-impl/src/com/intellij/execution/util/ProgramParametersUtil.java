@@ -16,75 +16,32 @@
 package com.intellij.execution.util;
 
 import com.intellij.execution.CommonProgramRunConfigurationParameters;
-import com.intellij.execution.configurations.ModuleBasedConfiguration;
 import com.intellij.execution.configurations.RuntimeConfigurationWarning;
 import com.intellij.execution.configurations.SimpleProgramParameters;
-import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.Nullable;
-
-import java.io.File;
-import java.util.HashMap;
-import java.util.Map;
 
 public class ProgramParametersUtil {
   public static void configureConfiguration(SimpleProgramParameters parameters, CommonProgramRunConfigurationParameters configuration) {
-    Project project = configuration.getProject();
-    Module module = getModule(configuration);
-
-    parameters.getProgramParametersList().addParametersString(expandPath(configuration.getProgramParameters(), module, project));
-
-    parameters.setWorkingDirectory(getWorkingDir(configuration, project, module));
-
-    parameters.setupEnvs(configuration.getEnvs(), configuration.isPassParentEnvs());
-    if (parameters.getEnv() != null) {
-      Map<String, String> expanded = new HashMap<String, String>();
-      for (Map.Entry<String, String> each : parameters.getEnv().entrySet()) {
-        expanded.put(each.getKey(), expandPath(each.getValue(), module, project));
-      }
-      parameters.setEnv(expanded);
-    }
+    new ProgramParametersConfigurator().configureConfiguration(parameters, configuration);
   }
 
   public static String getWorkingDir(CommonProgramRunConfigurationParameters configuration, Project project, Module module) {
-    String workingDirectory = configuration.getWorkingDirectory();
-    VirtualFile baseDir = project.getBaseDir();
-
-    if (workingDirectory == null || workingDirectory.trim().length() == 0) {
-      workingDirectory = PathUtil.getLocalPath(baseDir);
-    }
-    workingDirectory = expandPath(workingDirectory, module, project);
-    if (!FileUtil.isAbsolute(workingDirectory) && baseDir != null) {
-      workingDirectory = baseDir.getPath() + "/" + workingDirectory;
-    }
-    return workingDirectory;
+    return new ProgramParametersConfigurator().getWorkingDir(configuration, project, module);
   }
 
   public static void checkWorkingDirectoryExist(CommonProgramRunConfigurationParameters configuration, Project project, Module module)
     throws RuntimeConfigurationWarning {
-    final String workingDir = getWorkingDir(configuration, project, module);
-    if (!new File(workingDir).exists()) {
-      throw new RuntimeConfigurationWarning("Working directory '" + workingDir + "' doesn't exist");
-    }
+    new ProgramParametersConfigurator().checkWorkingDirectoryExist(configuration, project, module);
   }
 
   protected static String expandPath(String path, Module module, Project project) {
-    path = PathMacroManager.getInstance(project).expandPath(path);
-    if (module != null) {
-      path = PathMacroManager.getInstance(module).expandPath(path);
-    }
-    return path;
+    return new ProgramParametersConfigurator().expandPath(path, module, project);
   }
 
   @Nullable
   protected static Module getModule(CommonProgramRunConfigurationParameters configuration) {
-    if (configuration instanceof ModuleBasedConfiguration) {
-      return ((ModuleBasedConfiguration)configuration).getConfigurationModule().getModule();
-    }
-    return null;
+    return new ProgramParametersConfigurator().getModule(configuration);
   }
 }

@@ -88,6 +88,10 @@ public class StartMarkAction extends BasicUndoableAction {
     return markAction;
   }
 
+  public static StartMarkAction canStart(Project project) {
+    return ourCurrentMarks.get(project);
+  }
+
   static void markFinished(Project project) {
     final StartMarkAction existingMark = ourCurrentMarks.remove(project);
     if (existingMark != null) {

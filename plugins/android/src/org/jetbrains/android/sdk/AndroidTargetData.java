@@ -33,15 +33,16 @@ import java.util.Set;
 public class AndroidTargetData {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.android.sdk.AndroidTargetData");
 
-  private final AndroidSdk mySdk;
+  private final AndroidSdkData mySdkData;
   private final IAndroidTarget myTarget;
 
   private volatile AttributeDefinitions myAttrDefs;
   private volatile RenderServiceFactory myRenderServiceFactory;
   private volatile Set<String> myThemes;
+  private volatile boolean myThemesLoaded;
 
-  public AndroidTargetData(@NotNull AndroidSdk sdk, @NotNull IAndroidTarget target) {
-    mySdk = sdk;
+  public AndroidTargetData(@NotNull AndroidSdkData sdkData, @NotNull IAndroidTarget target) {
+    mySdkData = sdkData;
     myTarget = target;
   }
 
@@ -76,15 +77,15 @@ public class AndroidTargetData {
   }
 
   public boolean areThemesCached() {
-    return myThemes != null;
+    return myThemesLoaded;
   }
 
   @NotNull
-  public Set<String> getThemes(@NotNull final AndroidFacet facet) {
+  public synchronized Set<String> getThemes(@NotNull final AndroidFacet facet) {
     if (myThemes == null) {
       myThemes = new HashSet<String>();
       final Module module = facet.getModule();
-      final SystemResourceManager systemResourceManager = new SystemResourceManager(facet, new AndroidPlatform(mySdk, myTarget));
+      final SystemResourceManager systemResourceManager = new SystemResourceManager(facet, new AndroidPlatform(mySdkData, myTarget));
 
       for (VirtualFile valueResourceDir : systemResourceManager.getResourceSubdirs("values")) {
         for (final VirtualFile valueResourceFile : valueResourceDir.getChildren()) {
@@ -125,6 +126,8 @@ public class AndroidTargetData {
           }
         }
       }
+
+      myThemesLoaded = true;
     }
     return myThemes;
   }

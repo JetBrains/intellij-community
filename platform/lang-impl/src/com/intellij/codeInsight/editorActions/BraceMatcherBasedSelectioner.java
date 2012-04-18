@@ -22,7 +22,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -42,6 +41,7 @@ public abstract class BraceMatcherBasedSelectioner extends ExtendWordSelectionHa
     final VirtualFile file = e.getContainingFile().getVirtualFile();
     final FileType fileType = file == null? null : file.getFileType();
     if (fileType == null) return super.select(e, editorText, cursorOffset, editor);
+    final int textLength = editorText.length();
     final TextRange totalRange = e.getTextRange();
     final HighlighterIterator iterator = ((EditorEx)editor).getHighlighter().createIterator(totalRange.getStartOffset());
     final BraceMatcher braceMatcher = BraceMatchingUtil.getBraceMatcher(fileType, iterator);
@@ -59,8 +59,8 @@ public abstract class BraceMatcherBasedSelectioner extends ExtendWordSelectionHa
         result.addAll(expandToWholeLine(editorText, new TextRange(last.first, iterator.getEnd())));
         int bodyStart = last.second + 1;
         int bodyEnd = iterator.getStart();
-        while (Character.isWhitespace(editorText.charAt(bodyStart))) bodyStart ++;
-        while (Character.isWhitespace(editorText.charAt(bodyEnd - 1))) bodyEnd --;
+        while (bodyStart < textLength && Character.isWhitespace(editorText.charAt(bodyStart))) bodyStart ++;
+        while (bodyEnd > 0 && Character.isWhitespace(editorText.charAt(bodyEnd - 1))) bodyEnd --;
         result.addAll(expandToWholeLine(editorText, new TextRange(bodyStart, bodyEnd)));
       }
       iterator.advance();

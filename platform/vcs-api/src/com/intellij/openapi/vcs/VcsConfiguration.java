@@ -90,6 +90,7 @@ public final class VcsConfiguration implements PersistentStateComponent<Element>
   public boolean CREATE_PATCH_EXPAND_DETAILS_DEFAULT = true;
   public Boolean SHOW_PATCH_IN_EXPLORER = null;
   public boolean SHOW_FILE_HISTORY_DETAILS = true;
+  public boolean SHOW_VCS_ERROR_NOTIFICATIONS = true;
 
   public enum StandardOption {
     ADD(VcsBundle.message("vcs.command.name.add")),
@@ -126,6 +127,7 @@ public final class VcsConfiguration implements PersistentStateComponent<Element>
   }
 
   public boolean FORCE_NON_EMPTY_COMMENT = false;
+  public boolean CLEAR_INITIAL_COMMIT_MESSAGE = false;
 
   private final ArrayList<String> myLastCommitMessages = new ArrayList<String>();
   public String LAST_COMMIT_MESSAGE = null;

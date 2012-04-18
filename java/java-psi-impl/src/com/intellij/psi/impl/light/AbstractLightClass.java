@@ -44,7 +44,10 @@ public abstract class AbstractLightClass extends LightElement implements PsiClas
     super(manager, JavaLanguage.INSTANCE);
   }
 
+  @NotNull
   public abstract PsiClass getDelegate();
+
+  @NotNull
   public abstract PsiElement copy();
 
   @Override

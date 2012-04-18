@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -288,6 +288,7 @@ public class WelcomeScreen implements Disposable {
                                                         Messages.getQuestionIcon());
               if (rc == 0) {
                 final RecentProjectsManagerBase manager = RecentProjectsManagerBase.getInstance();
+                assert action instanceof ReopenProjectAction : action;
                 manager.removePath(((ReopenProjectAction)action).getProjectPath());
                 final AnAction[] actions = manager.getRecentProjectsActions(false);
                 if (actions.length == 0) {
@@ -455,7 +456,6 @@ public class WelcomeScreen implements Disposable {
     return "<i>" + message + "</i>";
   }
 
-
   private void addListItemToPlugins(final JPanel bundledPluginsPanel, final String title) {
     addListItemToPlugins(bundledPluginsPanel, title, null, null, null, null, true, false);
   }
@@ -467,10 +467,10 @@ public class WelcomeScreen implements Disposable {
 
   public void addListItemToPlugins(final JPanel panel,
                                    String name,
-                                   String description,
-                                   final String iconPath,
-                                   final ClassLoader pluginClassLoader,
-                                   final String url,
+                                   @Nullable String description,
+                                   @Nullable final String iconPath,
+                                   @Nullable final ClassLoader pluginClassLoader,
+                                   @Nullable final String url,
                                    final boolean enabled,
                                    final boolean incompatible) {
     if (StringUtil.isEmptyOrSpaces(name)) {
@@ -533,6 +533,7 @@ public class WelcomeScreen implements Disposable {
     }
 
     if (!StringUtil.isEmpty(description)) {
+      //noinspection ConstantConditions
       description = description.trim();
       if (description.startsWith(HTML_PREFIX)) {
         description = description.replaceAll(HTML_PREFIX, "");
@@ -906,12 +907,12 @@ public class WelcomeScreen implements Disposable {
     protected abstract void onPress(InputEvent e, MyActionButton button);
   }
 
-  private static JScrollPane scrollPane(final JPanel panel, final Color borderColor) {
+  private static JScrollPane scrollPane(final JPanel panel, @Nullable final Color borderColor) {
     final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(panel);
     scrollPane.setBorder(borderColor != null ?
                          BorderFactory.createLineBorder(borderColor, 1) : BorderFactory.createEmptyBorder());
-    scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-    scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+    scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+    scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
     return scrollPane;
   }
 

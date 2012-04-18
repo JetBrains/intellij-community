@@ -196,7 +196,7 @@ public class ConvertMapToClassIntention extends Intention {
 
     GrClosableBlock[] closures = methodCall.getClosureArguments();
     final Map<GrExpression, Pair<PsiParameter, PsiType>> mapToParams = GrClosureSignatureUtil
-      .mapArgumentsToParameters(resolveResult, arg, false, argList.getNamedArguments(), argList.getExpressionArguments(), closures);
+      .mapArgumentsToParameters(resolveResult, arg, false, false, argList.getNamedArguments(), argList.getExpressionArguments(), closures);
     if (mapToParams == null) return null;
 
     final Pair<PsiParameter, PsiType> parameterPair = mapToParams.get(arg);
