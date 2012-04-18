@@ -9,7 +9,7 @@
 
   <version>1.0</version>
   <vendor logo="/general/ijLogo.png">JetBrains</vendor>
-  <depends>com.intellij.modules.ultimate</depends>
+  <depends>com.intellij.modules.lang</depends>
   <resource-bundle>resources.messages.TypoScriptBundle</resource-bundle>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -19,6 +19,8 @@
 
     <lang.parserDefinition language="TypoScript" implementationClass="com.jetbrains.typoscript.lang.TypoScriptParserDefinition"/>
     <lang.braceMatcher language="TypoScript" implementationClass="com.jetbrains.typoscript.lang.TypoScriptBraceMatcher"/>
+
+    <lang.foldingBuilder language="TypoScript" implementationClass="com.jetbrains.typoscript.lang.TypoScriptFoldingBuilder"/>
   </extensions>
 
 </idea-plugin>
