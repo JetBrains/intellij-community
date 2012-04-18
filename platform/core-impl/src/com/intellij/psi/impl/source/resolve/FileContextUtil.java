@@ -32,7 +32,7 @@ public class FileContextUtil {
   private FileContextUtil() { }
 
   @Nullable
-  public static PsiElement getFileContext(PsiFile file) {
+  public static PsiElement getFileContext(@NotNull PsiFile file) {
     SmartPsiElementPointer pointer = file.getUserData(INJECTED_IN_ELEMENT);
     return pointer == null ? null : pointer.getElement();
   }
