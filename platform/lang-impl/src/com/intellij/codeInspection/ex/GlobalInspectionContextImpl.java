@@ -341,7 +341,7 @@ public class GlobalInspectionContextImpl extends UserDataHolderBase implements G
                     ((InspectionTool)state.getTool()).exportResults(element, refEntity);
                   }
                   catch (Exception e) {
-                    LOG.error(e);
+                    LOG.error("Problem when exporting: " + refEntity.getExternalName(), e);
                   }
                 }
               }
