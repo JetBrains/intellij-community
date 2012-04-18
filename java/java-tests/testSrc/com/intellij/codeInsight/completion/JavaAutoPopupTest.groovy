@@ -1061,7 +1061,7 @@ public class UTest {
     return editor
   }
 
-  public void testCharSelectionUndo() {
+  public void _testCharSelectionUndo() {
     myFixture.configureByText "a.java", "class Foo {{ <caret> }}"
     def editor = openEditorForUndo();
     type('ArrStoExce.')

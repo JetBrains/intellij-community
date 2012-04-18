@@ -165,7 +165,7 @@ public class LookupTypedHandler extends TypedHandlerDelegate {
     FeatureUsageTracker.getInstance().triggerFeatureUsed(CodeCompletionFeatures.EDITING_COMPLETION_FINISH_BY_DOT_ETC);
     CompletionProcess process = CompletionService.getCompletionService().getCurrentCompletion();
     SelectionModel sm = editor.getSelectionModel();
-    final boolean smartUndo = !sm.hasSelection() && !sm.hasBlockSelection() && process != null && process.isAutopopupCompletion();
+    final boolean smartUndo = false;//!sm.hasSelection() && !sm.hasBlockSelection() && process != null && process.isAutopopupCompletion();
     final ScrollingModelEx scrollingModel = (ScrollingModelEx)editor.getScrollingModel();
     scrollingModel.accumulateViewportChanges();
     try {
