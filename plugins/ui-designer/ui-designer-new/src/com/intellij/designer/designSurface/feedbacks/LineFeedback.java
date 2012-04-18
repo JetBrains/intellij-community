@@ -22,9 +22,9 @@ import java.awt.*;
  * @author Alexander Lobas
  */
 public class LineFeedback extends JComponent {
-  private final Color myColor;
+  protected final Color myColor;
   private final int myLine;
-  private final boolean myHorizontal;
+  private boolean myHorizontal;
 
   public LineFeedback(Color color, int line, boolean horizontal) {
     myColor = color;
@@ -41,11 +41,26 @@ public class LineFeedback extends JComponent {
     }
   }
 
+  public void horizontal(int x, int y, int width) {
+    myHorizontal = true;
+    setBounds(x, y, width, myLine);
+    setVisible(true);
+  }
+
+  public void vertical(int x, int y, int height) {
+    myHorizontal = false;
+    setBounds(x, y, myLine, height);
+    setVisible(true);
+  }
+
   @Override
   protected void paintComponent(Graphics g) {
     super.paintComponent(g);
     g.setColor(myColor);
+    paintLines(g);
+  }
 
+  protected void paintLines(Graphics g) {
     Dimension size = getSize();
     if (myHorizontal) {
       paintHorizontal(g, size);

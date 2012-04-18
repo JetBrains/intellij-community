@@ -24,8 +24,12 @@ import com.intellij.util.ArrayUtil;
 public class GridInfo {
   public int width;
   public int height;
+
   public int[] hLines = ArrayUtil.EMPTY_INT_ARRAY;
   public int[] vLines = ArrayUtil.EMPTY_INT_ARRAY;
   public boolean[] emptyColumns = ArrayUtil.EMPTY_BOOLEAN_ARRAY;
+
   public RadComponent[][] components;
+  public int lastRow = -1;
+  public int lastColumn = -1;
 }

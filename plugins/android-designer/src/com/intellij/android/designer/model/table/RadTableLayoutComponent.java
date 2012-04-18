@@ -105,14 +105,24 @@ public class RadTableLayoutComponent extends RadViewContainer {
       myVirtualGridInfo.width = bounds.width;
       myVirtualGridInfo.height = bounds.height;
 
-      myVirtualGridInfo.vLines = addLineInfo(gridInfo.vLines, bounds.width - (gridInfo.vLines.length == 0 ? 0 : gridInfo.width));
-      myVirtualGridInfo.hLines = addLineInfo(gridInfo.hLines, bounds.height - gridInfo.height);
+      int deltaWidth = bounds.width - (gridInfo.vLines.length == 0 ? 0 : gridInfo.width);
+      myVirtualGridInfo.vLines = addLineInfo(gridInfo.vLines, deltaWidth);
+
+      int deltaHeight = bounds.height - gridInfo.height;
+      myVirtualGridInfo.hLines = addLineInfo(gridInfo.hLines, deltaHeight);
 
       List<RadComponent> rows = getChildren();
       if (!rows.isEmpty()) {
         int columnSize = Math.max(1, gridInfo.vLines.length - 1);
         RadComponent[][] components = new RadComponent[rows.size()][columnSize];
         myVirtualGridInfo.components = components;
+
+        if (deltaWidth < 2) {
+          myVirtualGridInfo.lastColumn = columnSize - 1;
+        }
+        if (deltaHeight < 2) {
+          myVirtualGridInfo.lastRow = rows.size() - 1;
+        }
 
         for (int i = 0; i < components.length; i++) {
           RadComponent row = rows.get(i);
@@ -138,26 +148,6 @@ public class RadTableLayoutComponent extends RadViewContainer {
       }
     }
     return myVirtualGridInfo;
-  }
-
-  private static int getCellIndex(RadComponent component) {
-    try {
-      String column = ((RadViewComponent)component).getTag().getAttributeValue("android:layout_column");
-      return Integer.parseInt(column);
-    }
-    catch (Throwable e) {
-      return -1;
-    }
-  }
-
-  private static int getCellSnap(RadComponent component) {
-    try {
-      String span = ((RadViewComponent)component).getTag().getAttributeValue("android:layout_span");
-      return Integer.parseInt(span);
-    }
-    catch (Throwable e) {
-      return 1;
-    }
   }
 
   private static final int NEW_CELL_SIZE = 32;
@@ -186,5 +176,25 @@ public class RadTableLayoutComponent extends RadViewContainer {
       return oldLines;
     }
     return oldLines;
+  }
+
+  private static int getCellIndex(RadComponent component) {
+    try {
+      String column = ((RadViewComponent)component).getTag().getAttributeValue("android:layout_column");
+      return Integer.parseInt(column);
+    }
+    catch (Throwable e) {
+      return -1;
+    }
+  }
+
+  private static int getCellSnap(RadComponent component) {
+    try {
+      String span = ((RadViewComponent)component).getTag().getAttributeValue("android:layout_span");
+      return Integer.parseInt(span);
+    }
+    catch (Throwable e) {
+      return 1;
+    }
   }
 }

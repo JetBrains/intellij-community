@@ -24,6 +24,8 @@ public enum GridInsertType {
   after_h_cell,
   before_v_cell,
   after_v_cell,
-  before_row,
-  after_row
+  corner_top_left,
+  corner_top_right,
+  corner_bottom_left,
+  corner_bottom_right
 }

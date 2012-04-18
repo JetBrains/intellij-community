@@ -25,14 +25,16 @@ import java.awt.*;
 public final class Cursors {
   public static final Cursor RESIZE_ALL = Cursor.getPredefinedCursor(Cursor.MOVE_CURSOR);
   public static final Cursor CROSS = Cursor.getPredefinedCursor(Cursor.CROSSHAIR_CURSOR);
+  public static Cursor NO_CURSOR;
 
+  // TODO: all platform???
   public static Cursor getNoCursor() {
-    try {
-      return Cursor.getSystemCustomCursor("MoveNoDrop.32x32");
+    if (NO_CURSOR == null) {
+      Toolkit toolkit = Toolkit.getDefaultToolkit();
+      Image image = toolkit.createImage(Cursors.class.getResource("no-cursor.gif"));
+      NO_CURSOR = toolkit.createCustomCursor(image, new Point(), "No_Cursor");
     }
-    catch (Exception ex) {
-      return Cursor.getDefaultCursor();
-    }
+    return NO_CURSOR;
   }
 
   // TODO: replace on better cursor (self image)
