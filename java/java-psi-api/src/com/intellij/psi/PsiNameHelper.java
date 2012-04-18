@@ -172,43 +172,63 @@ public abstract class PsiNameHelper {
     if (referenceText.indexOf('<') < 0) return ArrayUtil.EMPTY_STRING_ARRAY;
     referenceText = removeWhitespace(referenceText);
     final char[] chars = referenceText.toCharArray();
-    int count = 0;
-    int dim = 0;
-    for (final char aChar : chars) {
+    int afterLastDotIndex = 0;
+
+    int level = 0;
+    for (int i = 0; i < chars.length; i++) {
+      char aChar = chars[i];
       switch (aChar) {
         case '<':
-          count++;
-          if (count == 1) dim++;
+          level++;
           break;
-        case ',':
-          if (count == 1) dim++;
+        case '.':
+          if (level == 0) afterLastDotIndex = i + 1;
           break;
         case '>':
-          count--;
+          level--;
           break;
       }
     }
-    if (count != 0 || dim == 0) return ArrayUtil.EMPTY_STRING_ARRAY;
+
+    if (level != 0) return ArrayUtil.EMPTY_STRING_ARRAY;
+
+    int dim = 0;
+    for (int i = afterLastDotIndex; i < chars.length; i++) {
+      char aChar = chars[i];
+      switch (aChar) {
+        case '<':
+          level++;
+          if (level == 1) dim++;
+          break;
+        case ',':
+          if (level == 1) dim++;
+          break;
+        case '>':
+          level--;
+          break;
+      }
+    }
+    if (level != 0 || dim == 0) return ArrayUtil.EMPTY_STRING_ARRAY;
 
     final String[] result = new String[dim];
     dim = 0;
     int ltPos = 0;
-    for (int i = 0; i < chars.length; i++) {
+    for (int i = afterLastDotIndex; i < chars.length; i++) {
       final char aChar = chars[i];
       switch (aChar) {
         case '<':
-          count++;
-          if (count == 1) ltPos = i;
+          level++;
+          if (level == 1) ltPos = i;
           break;
         case ',':
-          if (count == 1) {
+          if (level == 1) {
             result[dim++] = new String(chars, ltPos + 1, i - ltPos - 1);
             ltPos = i;
           }
           break;
         case '>':
-          count--;
-          if (count == 0) result[dim++] = new String(chars, ltPos + 1, i - ltPos - 1);
+          level--;
+          if (level == 0) result[dim++] = new String(chars, ltPos + 1, i - ltPos - 1);
           break;
       }
     }
