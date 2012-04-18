@@ -20,6 +20,7 @@ package org.jetbrains.idea.maven.execution;
 
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.project.MavenConsole;
 import org.jetbrains.idea.maven.project.MavenGeneralSettings;
 import org.jetbrains.idea.maven.server.MavenServerConsole;
@@ -28,8 +29,6 @@ import java.text.MessageFormat;
 
 public abstract class MavenExecutor {
   final MavenRunnerParameters myParameters;
-  final MavenGeneralSettings myCoreSettings;
-  final MavenRunnerSettings myRunnerSettings;
   private final String myCaption;
   protected MavenConsole myConsole;
   private String myAction;
@@ -39,13 +38,9 @@ public abstract class MavenExecutor {
   private int exitCode = 0;
 
   public MavenExecutor(MavenRunnerParameters parameters,
-                       MavenGeneralSettings coreSettings,
-                       MavenRunnerSettings runnerSettings,
                        String caption,
                        MavenConsole console) {
     myParameters = parameters;
-    myCoreSettings = coreSettings;
-    myRunnerSettings = runnerSettings;
     myCaption = caption;
     myConsole = console;
   }
@@ -58,7 +53,7 @@ public abstract class MavenExecutor {
     return myConsole;
   }
 
-  public void setAction(final String action) {
+  public void setAction(@Nullable final String action) {
     myAction = action;
   }
 
@@ -113,5 +108,5 @@ public abstract class MavenExecutor {
     }
   }
 
-  public abstract boolean execute(ProgressIndicator indicator);
+  public abstract boolean execute(@Nullable ProgressIndicator indicator);
 }

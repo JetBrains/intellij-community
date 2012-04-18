@@ -15,7 +15,9 @@
  */
 package org.jetbrains.idea.maven.execution;
 
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
@@ -26,7 +28,6 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.project.MavenConsole;
@@ -65,10 +66,9 @@ public class MavenRunner implements PersistentStateComponent<MavenRunnerSettings
   public void run(final MavenRunnerParameters parameters, final MavenRunnerSettings settings, final Runnable onComplete) {
     FileDocumentManager.getInstance().saveAllDocuments();
 
-    final MavenConsole console = createConsole(getGeneralSettings(),
-                                               Pair.create(parameters, settings));
+    final MavenConsole console = createConsole();
     try {
-      final MavenExecutor[] executor = new MavenExecutor[]{createExecutor(parameters, getGeneralSettings(), settings, console)};
+      final MavenExecutor[] executor = new MavenExecutor[]{createExecutor(parameters, null, settings, console)};
 
       ProgressManager.getInstance().run(new Task.Backgroundable(myProject, executor[0].getCaption(), true) {
         public void run(@NotNull ProgressIndicator indicator) {
@@ -114,21 +114,26 @@ public class MavenRunner implements PersistentStateComponent<MavenRunnerSettings
     }
   }
 
-  private MavenGeneralSettings getGeneralSettings() {
-    return MavenProjectsManager.getInstance(myProject).getGeneralSettings();
-  }
-
   public boolean runBatch(List<MavenRunnerParameters> commands,
                           @Nullable MavenGeneralSettings coreSettings,
                           @Nullable MavenRunnerSettings runnerSettings,
                           @Nullable final String action,
-                          ProgressIndicator indicator) {
+                          @Nullable ProgressIndicator indicator) {
+    assert !ApplicationManager.getApplication().isReadAccessAllowed();
+
     if (commands.isEmpty()) return true;
 
-    final MavenGeneralSettings effectiveCoreSettings = coreSettings != null ? coreSettings : getGeneralSettings();
-    final MavenRunnerSettings effectiveRunnerSettings = runnerSettings != null ? runnerSettings : getState();
+    MavenConsole console;
 
-    MavenConsole console = createConsole(effectiveCoreSettings, null);
+    AccessToken accessToken = ReadAction.start();
+    try {
+      if (myProject.isDisposed()) return false;
+      console = createConsole();
+    }
+    finally {
+      accessToken.finish();
+    }
+
     try {
       int count = 0;
       for (MavenRunnerParameters command : commands) {
@@ -136,7 +141,17 @@ public class MavenRunner implements PersistentStateComponent<MavenRunnerSettings
           indicator.setFraction(((double)count++) / commands.size());
         }
 
-        MavenExecutor executor = createExecutor(command, effectiveCoreSettings, effectiveRunnerSettings, console);
+        MavenExecutor executor;
+
+        accessToken = ReadAction.start();
+        try {
+          if (myProject.isDisposed()) break;
+          executor = createExecutor(command, coreSettings, runnerSettings, console);
+        }
+        finally {
+          accessToken.finish();
+        }
+
         executor.setAction(action);
         if (!executor.execute(indicator)) {
           updateTargetFolders();
@@ -158,8 +173,7 @@ public class MavenRunner implements PersistentStateComponent<MavenRunnerSettings
     MavenProjectsManager.getInstance(myProject).updateProjectTargetFolders();
   }
 
-  private MavenConsole createConsole(MavenGeneralSettings coreSettings,
-                                     Pair<MavenRunnerParameters, MavenRunnerSettings> parametersAndSettings) {
+  private MavenConsole createConsole() {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       return new SoutMavenConsole();
     }
@@ -167,8 +181,8 @@ public class MavenRunner implements PersistentStateComponent<MavenRunnerSettings
   }
 
   private MavenExecutor createExecutor(MavenRunnerParameters taskParameters,
-                                       MavenGeneralSettings coreSettings,
-                                       MavenRunnerSettings runnerSettings,
+                                       @Nullable MavenGeneralSettings coreSettings,
+                                       @Nullable MavenRunnerSettings runnerSettings,
                                        MavenConsole console) {
     return new MavenExternalExecutor(myProject, taskParameters, coreSettings, runnerSettings, console);
   }
