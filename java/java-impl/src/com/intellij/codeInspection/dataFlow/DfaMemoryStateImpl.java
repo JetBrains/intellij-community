@@ -27,10 +27,8 @@ package com.intellij.codeInspection.dataFlow;
 import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.psi.JavaTokenType;
-import com.intellij.psi.PsiModifier;
-import com.intellij.psi.PsiType;
-import com.intellij.psi.PsiVariable;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.*;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -218,14 +216,19 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     }
 
     result.append(" distincts: ");
+    List<String> distincs = new ArrayList<String>();
     long[] dclasses = myDistinctClasses.toArray();
     for (long pair : dclasses) {
-      result.append("{");
-      appendClass(result, low(pair));
-      result.append(", ");
-      appendClass(result, high(pair));
-      result.append("} ");
+      StringBuffer one = new StringBuffer();
+      one.append("{");
+      appendClass(one, low(pair));
+      one.append(", ");
+      appendClass(one, high(pair));
+      one.append("}");
+      distincs.add(one.toString());
     }
+    Collections.sort(distincs);
+    result.append(StringUtil.join(distincs, " "));
 
     result.append(" stack: ");
     for (DfaValue value : myStack) {
@@ -374,13 +377,27 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   @SuppressWarnings({"UnnecessaryBoxing"})
   private static Object box(final Object value) {
     Object newBoxedValue;
-    if (value instanceof Integer) newBoxedValue = Integer.valueOf(((Integer)value).intValue());
-    else if (value instanceof Byte) newBoxedValue = Byte.valueOf(((Byte)value).byteValue());
-    else if (value instanceof Short) newBoxedValue = Short.valueOf(((Short)value).shortValue());
-    else if (value instanceof Long) newBoxedValue = Long.valueOf(((Long)value).longValue());
-    else if (value instanceof Boolean) newBoxedValue = Boolean.valueOf(((Boolean)value).booleanValue());
-    else if (value instanceof Character) newBoxedValue = Character.valueOf(((Character)value).charValue());
-    else return new Object();
+    if (value instanceof Integer) {
+      newBoxedValue = Integer.valueOf(((Integer)value).intValue());
+    }
+    else if (value instanceof Byte) {
+      newBoxedValue = Byte.valueOf(((Byte)value).byteValue());
+    }
+    else if (value instanceof Short) {
+      newBoxedValue = Short.valueOf(((Short)value).shortValue());
+    }
+    else if (value instanceof Long) {
+      newBoxedValue = Long.valueOf(((Long)value).longValue());
+    }
+    else if (value instanceof Boolean) {
+      newBoxedValue = Boolean.valueOf(((Boolean)value).booleanValue());
+    }
+    else if (value instanceof Character) {
+      newBoxedValue = Character.valueOf(((Character)value).charValue());
+    }
+    else {
+      return new Object();
+    }
     return newBoxedValue;
   }
 
@@ -676,6 +693,15 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   }
 
   public boolean applyNotNull(DfaValue value) {
+    /*
+    if (value instanceof DfaVariableValue) {
+      PsiVariable variable = ((DfaVariableValue)value).getPsiVariable();
+      if (variable != null && variable.getType() instanceof PsiPrimitiveType) {
+        return true;
+      }
+    }
+    */
+
     return checkNotNullable(value) && applyCondition(compareToNull(value, true));
   }
 

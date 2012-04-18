@@ -169,6 +169,6 @@ public class DfaRelationValue extends DfaValue {
   }
 
   @NonNls public String toString() {
-    return (isNegated() ? "not " : "") + myLeftOperand + myRelation + myRightOperand;
+    return (isNegated() ? "not " : "") + myLeftOperand + " " + myRelation + " " + myRightOperand;
   }
 }

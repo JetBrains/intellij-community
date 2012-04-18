@@ -110,7 +110,7 @@ public class DataFlowRunner {
       }
 
       Integer tooExpensiveSize = psiBlock.getUserData(TOO_EXPENSIVE_SIZE);
-      if (tooExpensiveSize != null && tooExpensiveSize == psiBlock.getTextLength()) {
+      if (tooExpensiveSize != null && tooExpensiveSize == psiBlock.getText().hashCode()) {
         return RunnerResult.TOO_COMPLEX;
       }
 
