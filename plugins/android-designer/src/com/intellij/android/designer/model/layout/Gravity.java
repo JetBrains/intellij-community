@@ -23,6 +23,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Alexander Lobas
@@ -89,7 +91,8 @@ public enum Gravity {
     return gravity.length() == 0 ? null : gravity.toString();
   }
 
-  public static int getFlags(String value) {
+  public static int getFlags(RadComponent component) {
+    String value = ((RadViewComponent)component).getTag().getAttributeValue("android:layout_gravity");
     int flags = NONE;
 
     if (!StringUtil.isEmpty(value)) {
@@ -143,30 +146,51 @@ public enum Gravity {
     return flags;
   }
 
+  public static List<Gravity> flagToValues(int flags) {
+    List<Gravity> values = new ArrayList<Gravity>();
+
+    if ((flags & LEFT) != 0) {
+      values.add(left);
+    }
+    if ((flags & RIGHT) != 0) {
+      values.add(right);
+    }
+    if ((flags & TOP) != 0) {
+      values.add(top);
+    }
+    if ((flags & BOTTOM) != 0) {
+      values.add(bottom);
+    }
+    if ((flags & CENTER) != 0) {
+      values.add(center);
+    }
+
+    return values;
+  }
+
   public static Pair<Gravity, Gravity> getSides(RadComponent component) {
-    String value = ((RadViewComponent)component).getTag().getAttributeValue("android:layout_gravity");
-    int flags = getFlags(value);
+    int flags = getFlags(component);
 
     Gravity horizontal = left;
     if ((flags & LEFT) != 0) {
       horizontal = left;
     }
-    else if ((flags & CENTER_HORIZONTAL) != 0) {
-      horizontal = center;
-    }
     else if ((flags & RIGHT) != 0) {
       horizontal = right;
+    }
+    else if ((flags & CENTER_HORIZONTAL) != 0) {
+      horizontal = center;
     }
 
     Gravity vertical = top;
     if ((flags & TOP) != 0) {
       vertical = top;
     }
-    else if ((flags & CENTER_VERTICAL) != 0) {
-      vertical = center;
-    }
     else if ((flags & BOTTOM) != 0) {
       vertical = bottom;
+    }
+    else if ((flags & CENTER_VERTICAL) != 0) {
+      vertical = center;
     }
 
     return Pair.create(horizontal, vertical);

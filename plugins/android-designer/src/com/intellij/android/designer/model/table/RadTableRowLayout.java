@@ -15,13 +15,23 @@
  */
 package com.intellij.android.designer.model.table;
 
+import com.intellij.android.designer.model.RadViewComponent;
+import com.intellij.android.designer.model.layout.AbstractGravityAction;
+import com.intellij.android.designer.model.layout.Gravity;
 import com.intellij.android.designer.model.layout.RadLinearLayout;
 import com.intellij.designer.designSurface.*;
 import com.intellij.designer.model.RadComponent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.xml.XmlAttribute;
+import com.intellij.psi.xml.XmlTag;
+import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -90,7 +100,90 @@ public class RadTableRowLayout extends RadLinearLayout {
                                   DefaultActionGroup actionGroup,
                                   JComponent shortcuts,
                                   List<RadComponent> selection) {
-    if (!isTableParent()) {
+    if (isTableParent()) {
+      if (selection.get(selection.size() - 1).getParent() != myContainer) {
+        return;
+      }
+      for (RadComponent component : selection) {
+        if (!is(component.getParent())) {
+          return;
+        }
+      }
+
+      AbstractGravityAction<Gravity> action = new AbstractGravityAction<Gravity>(designer, selection) {
+        private List<Gravity> mySelection;
+
+        @NotNull
+        @Override
+        protected DefaultActionGroup createPopupActionGroup(JComponent button) {
+          Iterator<RadComponent> I = myComponents.iterator();
+          int flags = Gravity.getFlags(I.next());
+          while (I.hasNext()) {
+            if (flags != Gravity.getFlags(I.next())) {
+              flags = 0;
+              break;
+            }
+          }
+          mySelection = Gravity.flagToValues(flags);
+
+          return super.createPopupActionGroup(button);
+        }
+
+        @Override
+        protected void update(Gravity item, Presentation presentation, boolean popup) {
+          if (popup) {
+            presentation.setIcon(mySelection.contains(item) ? CHECKED : null);
+            presentation.setText(item.name());
+          }
+        }
+
+        @Override
+        protected boolean selectionChanged(Gravity item) {
+          int index = mySelection.indexOf(item);
+          if (index == -1) {
+            mySelection.add(item);
+          }
+          else {
+            mySelection.remove(index);
+          }
+          execute(new Runnable() {
+            @Override
+            public void run() {
+              if (mySelection.isEmpty()) {
+                for (RadComponent component : myComponents) {
+                  XmlAttribute attribute = ((RadViewComponent)component).getTag().getAttribute("android:layout_gravity");
+                  if (attribute != null) {
+                    attribute.delete();
+                  }
+                }
+              }
+              else {
+                String value = StringUtil.join(mySelection, new Function<Gravity, String>() {
+                  @Override
+                  public String fun(Gravity gravity) {
+                    return gravity.name();
+                  }
+                }, "|");
+
+                for (RadComponent component : myComponents) {
+                  XmlTag tag = ((RadViewComponent)component).getTag();
+                  tag.setAttribute("android:layout_gravity", value);
+                }
+              }
+            }
+          });
+
+          return false;
+        }
+
+        @Override
+        public void setSelection(Gravity selection) {
+        }
+      };
+      action.setItems(Arrays.asList(Gravity.values()), null);
+      actionGroup.add(action);
+    }
+    else {
       super.addSelectionActions(designer, actionGroup, shortcuts, selection);
     }
   }

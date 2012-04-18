@@ -19,7 +19,6 @@ import com.intellij.android.designer.designSurface.TreeDropToOperation;
 import com.intellij.android.designer.designSurface.layout.*;
 import com.intellij.android.designer.model.RadViewComponent;
 import com.intellij.android.designer.model.RadViewLayoutWithData;
-import com.intellij.designer.actions.AbstractComboBoxAction;
 import com.intellij.designer.componentTree.TreeEditOperation;
 import com.intellij.designer.designSurface.*;
 import com.intellij.designer.designSurface.selection.DirectionResizePoint;
@@ -200,10 +199,10 @@ public class RadLinearLayout extends RadViewLayoutWithData implements ILayoutDec
   private static final List<Gravity> VERTICALS = Arrays.asList(Gravity.top, Gravity.center, Gravity.bottom, null);
 
   @Override
-  public void addSelectionActions(final DesignerEditorPanel designer,
+  public void addSelectionActions(DesignerEditorPanel designer,
                                   DefaultActionGroup actionGroup,
                                   JComponent shortcuts,
-                                  final List<RadComponent> selection) {
+                                  List<RadComponent> selection) {
     for (RadComponent component : selection) {
       if (component.getParent() != myContainer) {
         return;
@@ -211,64 +210,59 @@ public class RadLinearLayout extends RadViewLayoutWithData implements ILayoutDec
     }
 
     createOrientationAction(designer, actionGroup, shortcuts, Arrays.asList(myContainer));
+    actionGroup.add(new GravityAction(designer, selection));
+  }
 
-    AbstractComboBoxAction<Gravity> action = new AbstractComboBoxAction<Gravity>() {
-      private Gravity mySelection;
+  private class GravityAction extends AbstractGravityAction<Gravity> {
+    private Gravity mySelection;
 
-      @NotNull
-      @Override
-      protected DefaultActionGroup createPopupActionGroup(JComponent button) {
-        boolean horizontal = isHorizontal();
-        Gravity unknown = horizontal ? Gravity.left : Gravity.top;
-        setItems(horizontal ? VERTICALS : HORIZONTALS, unknown);
+    public GravityAction(DesignerEditorPanel designer, List<RadComponent> components) {
+      super(designer, components);
+    }
 
-        Iterator<RadComponent> I = selection.iterator();
-        mySelection = LinearLayoutOperation.getGravity(horizontal, I.next());
+    @NotNull
+    @Override
+    protected DefaultActionGroup createPopupActionGroup(JComponent button) {
+      boolean horizontal = isHorizontal();
+      Gravity unknown = horizontal ? Gravity.left : Gravity.top;
+      setItems(horizontal ? VERTICALS : HORIZONTALS, unknown);
 
-        while (I.hasNext()) {
-          if (mySelection != LinearLayoutOperation.getGravity(horizontal, I.next())) {
-            mySelection = unknown;
-            break;
-          }
-        }
+      Iterator<RadComponent> I = myComponents.iterator();
+      mySelection = LinearLayoutOperation.getGravity(horizontal, I.next());
 
-        return super.createPopupActionGroup(button);
-      }
-
-      @Override
-      protected void update(Gravity item, Presentation presentation, boolean popup) {
-        if (popup) {
-          presentation.setIcon(mySelection == item ? CHECKED : null);
-          presentation.setText(item == null ? "fill" : item.name());
+      while (I.hasNext()) {
+        if (mySelection != LinearLayoutOperation.getGravity(horizontal, I.next())) {
+          mySelection = unknown;
+          break;
         }
       }
 
-      @Override
-      protected boolean selectionChanged(final Gravity item) {
-        designer.getToolProvider().execute(new ThrowableRunnable<Exception>() {
-          @Override
-          public void run() throws Exception {
-            ApplicationManager.getApplication().runWriteAction(new Runnable() {
-              @Override
-              public void run() {
-                LinearLayoutOperation.execute(isHorizontal(), item, selection);
-              }
-            });
-          }
-        }, "Change attribute 'gravity'", true);
+      return super.createPopupActionGroup(button);
+    }
 
-        return false;
+    @Override
+    protected void update(Gravity item, Presentation presentation, boolean popup) {
+      if (popup) {
+        presentation.setIcon(mySelection == item ? CHECKED : null);
+        presentation.setText(item == null ? "fill" : item.name());
       }
+    }
 
-      @Override
-      public void update() {
-      }
-    };
-    Presentation presentation = action.getTemplatePresentation();
-    presentation.setDescription("Gravity");
-    presentation.setIcon(Gravity.ICON);
+    @Override
+    protected boolean selectionChanged(final Gravity item) {
+      execute(new Runnable() {
+        @Override
+        public void run() {
+          LinearLayoutOperation.execute(isHorizontal(), item, myComponents);
+        }
+      });
 
-    actionGroup.add(action);
+      return false;
+    }
+
+    @Override
+    public void update() {
+    }
   }
 
   private static void createOrientationAction(DesignerEditorPanel designer,

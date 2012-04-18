@@ -21,7 +21,6 @@ import com.intellij.android.designer.designSurface.layout.LayoutMarginOperation;
 import com.intellij.android.designer.designSurface.layout.ResizeOperation;
 import com.intellij.android.designer.model.RadViewComponent;
 import com.intellij.android.designer.model.RadViewLayoutWithData;
-import com.intellij.designer.actions.AbstractComboBoxAction;
 import com.intellij.designer.componentTree.TreeEditOperation;
 import com.intellij.designer.designSurface.ComponentDecorator;
 import com.intellij.designer.designSurface.DesignerEditorPanel;
@@ -34,9 +33,7 @@ import com.intellij.designer.model.RadComponent;
 import com.intellij.designer.utils.Position;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Pair;
-import com.intellij.util.ThrowableRunnable;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -127,15 +124,15 @@ public class RadFrameLayout extends RadViewLayoutWithData {
             Pair.create(Boolean.TRUE, Gravity.center), Pair.create(Boolean.TRUE, Gravity.right));
 
   @Override
-  public void addSelectionActions(final DesignerEditorPanel designer,
+  public void addSelectionActions(DesignerEditorPanel designer,
                                   DefaultActionGroup actionGroup,
                                   JComponent shortcuts,
-                                  final List<RadComponent> selection) {
+                                  List<RadComponent> selection) {
     if (selection.size() != 1) {
       return;
     }
 
-    AbstractComboBoxAction<Pair<Boolean, Gravity>> action = new AbstractComboBoxAction<Pair<Boolean, Gravity>>() {
+    AbstractGravityAction<Pair<Boolean, Gravity>> action = new AbstractGravityAction<Pair<Boolean, Gravity>>(designer, selection) {
       private Pair<Gravity, Gravity> myGravity;
 
       @Override
@@ -150,7 +147,7 @@ public class RadFrameLayout extends RadViewLayoutWithData {
       @NotNull
       @Override
       protected DefaultActionGroup createPopupActionGroup(JComponent button) {
-        myGravity = Gravity.getSides(selection.get(0));
+        myGravity = Gravity.getSides(myComponents.get(0));
         return super.createPopupActionGroup(button);
       }
 
@@ -166,20 +163,17 @@ public class RadFrameLayout extends RadViewLayoutWithData {
       @Override
       protected boolean selectionChanged(Pair<Boolean, Gravity> item) {
         Gravity oldSelection = item.first ? myGravity.first : myGravity.second;
+
         if (oldSelection != item.second) {
           final String gravity =
             item.first ? Gravity.getValue(item.second, myGravity.second) : Gravity.getValue(myGravity.first, item.second);
-          designer.getToolProvider().execute(new ThrowableRunnable<Exception>() {
+
+          execute(new Runnable() {
             @Override
-            public void run() throws Exception {
-              ApplicationManager.getApplication().runWriteAction(new Runnable() {
-                @Override
-                public void run() {
-                  ((RadViewComponent)selection.get(0)).getTag().setAttribute("android:layout_gravity", gravity);
-                }
-              });
+            public void run() {
+              ((RadViewComponent)myComponents.get(0)).getTag().setAttribute("android:layout_gravity", gravity);
             }
-          }, "Change attribute 'gravity'", true);
+          });
         }
 
         return false;
@@ -189,9 +183,6 @@ public class RadFrameLayout extends RadViewLayoutWithData {
       public void setSelection(Pair<Boolean, Gravity> selection) {
       }
     };
-    Presentation presentation = action.getTemplatePresentation();
-    presentation.setDescription("Gravity");
-    presentation.setIcon(Gravity.ICON);
     action.setItems(ITEMS, null);
 
     actionGroup.add(action);

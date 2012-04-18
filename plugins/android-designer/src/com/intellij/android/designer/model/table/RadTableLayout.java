@@ -15,8 +15,8 @@
  */
 package com.intellij.android.designer.model.table;
 
-import com.intellij.android.designer.designSurface.*;
 import com.intellij.android.designer.designSurface.AbstractEditOperation;
+import com.intellij.android.designer.designSurface.TreeDropToOperation;
 import com.intellij.android.designer.designSurface.layout.ResizeOperation;
 import com.intellij.android.designer.designSurface.layout.TableLayoutDecorator;
 import com.intellij.android.designer.designSurface.layout.TableLayoutOperation;
@@ -28,7 +28,6 @@ import com.intellij.designer.designSurface.*;
 import com.intellij.designer.designSurface.selection.ResizeSelectionDecorator;
 import com.intellij.designer.model.RadComponent;
 import com.intellij.designer.model.RadLayout;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -106,28 +105,6 @@ public class RadTableLayout extends RadViewLayoutWithData implements ILayoutDeco
       ResizeOperation.height(myResizeDecorator);
     }
     return myResizeDecorator;
-  }
-
-  //////////////////////////////////////////////////////////////////////////////////////////
-  //
-  // Actions
-  //
-  //////////////////////////////////////////////////////////////////////////////////////////
-
-  @Override
-  public void addContainerSelectionActions(DesignerEditorPanel designer,
-                                           DefaultActionGroup actionGroup,
-                                           JComponent shortcuts,
-                                           List<RadComponent> selection) {
-    super.addContainerSelectionActions(designer, actionGroup, shortcuts, selection); // TODO: Auto-generated method stub
-  }
-
-  @Override
-  public void addSelectionActions(DesignerEditorPanel designer,
-                                  DefaultActionGroup actionGroup,
-                                  JComponent shortcuts,
-                                  List<RadComponent> selection) {
-    super.addSelectionActions(designer, actionGroup, shortcuts, selection); // TODO: Auto-generated method stub
   }
 
   //////////////////////////////////////////////////////////////////////////////////////////
