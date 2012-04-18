@@ -328,10 +328,11 @@ public class LocalFileSystemTest extends PlatformLangTestCase {
     VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
     assertNotNull("File not found: " + file, virtualFile);
 
-    System.out.println("desktop.ini found");
     NewVirtualFileSystem system = (NewVirtualFileSystem)virtualFile.getFileSystem();
     system = PersistentFS.replaceWithNativeFS(system);
 
     assertTrue(system.exists(virtualFile));
+    int childAttributes = system.getBooleanAttributes(virtualFile, -1);
+    assertTrue((childAttributes & FileUtil.BA_EXISTS) != 0);
   }
 }

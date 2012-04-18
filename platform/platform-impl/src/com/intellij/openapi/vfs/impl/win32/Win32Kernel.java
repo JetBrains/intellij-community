@@ -64,8 +64,8 @@ public class Win32Kernel {
     return ArrayUtil.toStringArray(names);
   }
 
-  public boolean exists(String path) {
-    return doGetInfo(path) != null;
+  public void exists(String path) throws FileNotFoundException {
+    getInfo(path);
   }
 
   public boolean isDirectory(String path) throws FileNotFoundException {
@@ -88,6 +88,7 @@ public class Win32Kernel {
     return getInfo(path).length;
   }
 
+  @NotNull
   private FileInfo getInfo(String path) throws FileNotFoundException {
     FileInfo info = doGetInfo(path);
     if (info == null) {
@@ -110,20 +111,21 @@ public class Win32Kernel {
   }
 
   @FileUtil.FileBooleanAttributes
-  public int getBooleanAttributes(@NotNull String path, @FileUtil.FileBooleanAttributes int flags) {
-    FileInfo info = doGetInfo(path);
+  public int getBooleanAttributes(@NotNull String path, @FileUtil.FileBooleanAttributes int flags) throws FileNotFoundException {
+    FileInfo info = getInfo(path);
     int result = 0;
     if ((flags & FileUtil.BA_EXISTS) != 0) {
-      result |= info == null ? 0 : FileUtil.BA_EXISTS;
+      result |= FileUtil.BA_EXISTS;
     }
     if ((flags & FileUtil.BA_DIRECTORY) != 0) {
-      result |= info == null || (info.attributes & FILE_ATTRIBUTE_DIRECTORY) == 0 ? 0 : FileUtil.BA_DIRECTORY;
+      result |= (info.attributes & FILE_ATTRIBUTE_DIRECTORY) == 0 ? 0 : FileUtil.BA_DIRECTORY;
     }
     if ((flags & FileUtil.BA_REGULAR) != 0) {
-      result |= info == null || (info.attributes & (FILE_ATTRIBUTE_DIRECTORY | FILE_ATTRIBUTE_DEVICE | FILE_ATTRIBUTE_REPARSE_POINT)) != 0 ? 0 : FileUtil.BA_REGULAR;
+      result |= (info.attributes & (FILE_ATTRIBUTE_DIRECTORY | FILE_ATTRIBUTE_DEVICE | FILE_ATTRIBUTE_REPARSE_POINT)) != 0
+                ? 0 : FileUtil.BA_REGULAR;
     }
     if ((flags & FileUtil.BA_HIDDEN) != 0) {
-      result |= info == null || (info.attributes & FILE_ATTRIBUTE_HIDDEN) == 0 ? 0 : FileUtil.BA_HIDDEN;
+      result |= (info.attributes & FILE_ATTRIBUTE_HIDDEN) == 0 ? 0 : FileUtil.BA_HIDDEN;
     }
     return result;
   }
