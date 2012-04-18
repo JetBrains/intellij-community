@@ -166,8 +166,11 @@ public class DebuggerUIUtil {
       new XLightBreakpointPropertiesPanel(project, breakpointManager,
                                           breakpoint, showAllOptions);
 
+    propertiesPanel.loadProperties();
+
     final JComponent mainPanel = propertiesPanel.getMainPanel();
-    final Balloon balloon = JBPopupFactory.getInstance().createDialogBalloonBuilder(mainPanel, breakpoint.getType().getDisplayText(breakpoint)).
+    final Balloon balloon = JBPopupFactory.getInstance().createDialogBalloonBuilder(mainPanel,
+                                                                                    breakpoint.getType().getDisplayText(breakpoint)).
       setHideOnClickOutside(true).
       createBalloon();
     final XBreakpointListener<XBreakpoint<?>> breakpointListener = new XBreakpointListener<XBreakpoint<?>>() {
@@ -199,22 +202,26 @@ public class DebuggerUIUtil {
       }
     });
 
+    final boolean[] isShown = new boolean[1];
+
     propertiesPanel.setDelegate(new XLightBreakpointPropertiesPanel.Delegate() {
       @Override
       public void showMoreOptions() {
         propertiesPanel.saveProperties();
-        balloon.hide();
+        if (isShown[0]) {
+          balloon.hide();
+        }
         showBreakpointEditorBalloon(project, point, component, true, breakpoint);
       }
     });
-
-    propertiesPanel.loadProperties();
 
     if (point == null) {
       balloon.showInCenterOf(component);
     } else {
       balloon.show(new RelativePoint(component, point), Balloon.Position.atRight);
     }
+
+    isShown[0] = true;
 
     breakpointManager.addBreakpointListener(breakpointListener);
     ApplicationManager.getApplication().invokeLater(new Runnable() {
