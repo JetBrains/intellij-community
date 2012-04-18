@@ -38,6 +38,13 @@ public class XsltFunctionContext extends DefaultFunctionContext {
     }
   };
 
+  public static final String EXSLT_DATE_TIME = "http://exslt.org/dates-and-times";
+  public static final String EXSLT_COMMON = "http://exslt.org/common";
+  public static final String EXSLT_MATH = "http://exslt.org/math";
+  public static final String EXSLT_SETS = "http://exslt.org/sets";
+  public static final String EXSLT_DYNAMIC = "http://exslt.org/dynamic";
+  public static final String EXSLT_STRINGS = "http://exslt.org/strings";
+
   static {
     final Map<Pair<QName, Integer>, Function> decls = new HashMap<Pair<QName, Integer>, Function>();
 
@@ -74,6 +81,76 @@ public class XsltFunctionContext extends DefaultFunctionContext {
 
     // node-set current()
     addFunction(decls, new FunctionImpl("current", XPathType.NODESET));
+
+    final Parameter optional_string = new Parameter(XPathType.STRING, Parameter.Kind.OPTIONAL);
+    final Parameter required_string = new Parameter(XPathType.STRING, Parameter.Kind.REQUIRED);
+    final Parameter required_nodeset = new Parameter(XPathType.NODESET, Parameter.Kind.REQUIRED);
+    final Parameter required_number = new Parameter(XPathType.NUMBER, Parameter.Kind.REQUIRED);
+
+    // EXSLT (http://www.exslt.org) extensions supported by Xalan & Saxon
+    addFunction(decls, EXSLT_DATE_TIME, new FunctionImpl("date", XPathType.STRING, optional_string));
+    addFunction(decls, EXSLT_DATE_TIME, new FunctionImpl("date-time", XPathType.STRING));
+    addFunction(decls, EXSLT_DATE_TIME, new FunctionImpl("day-abbreviation", XPathType.STRING, optional_string));
+    addFunction(decls, EXSLT_DATE_TIME, new FunctionImpl("day-in-month", XPathType.NUMBER, optional_string));
+    addFunction(decls, EXSLT_DATE_TIME, new FunctionImpl("day-in-week", XPathType.NUMBER, optional_string));
+    addFunction(decls, EXSLT_DATE_TIME, new FunctionImpl("day-in-year", XPathType.NUMBER, optional_string));
+    addFunction(decls, EXSLT_DATE_TIME, new FunctionImpl("day-name", XPathType.STRING, optional_string));
+    addFunction(decls, EXSLT_DATE_TIME, new FunctionImpl("day-of-week-in-month", XPathType.NUMBER, optional_string));
+    addFunction(decls, EXSLT_DATE_TIME, new FunctionImpl("hour-in-day", XPathType.NUMBER, optional_string));
+    addFunction(decls, EXSLT_DATE_TIME, new FunctionImpl("leap-year", XPathType.BOOLEAN, optional_string));
+    addFunction(decls, EXSLT_DATE_TIME, new FunctionImpl("minute-in-hour", XPathType.NUMBER, optional_string));
+    addFunction(decls, EXSLT_DATE_TIME, new FunctionImpl("month-abbreviation", XPathType.STRING, optional_string));
+    addFunction(decls, EXSLT_DATE_TIME, new FunctionImpl("month-in-year", XPathType.NUMBER, optional_string));
+    addFunction(decls, EXSLT_DATE_TIME, new FunctionImpl("month-name", XPathType.STRING, optional_string));
+    addFunction(decls, EXSLT_DATE_TIME, new FunctionImpl("second-in-minute", XPathType.NUMBER, optional_string));
+    addFunction(decls, EXSLT_DATE_TIME, new FunctionImpl("time", XPathType.STRING, optional_string));
+    addFunction(decls, EXSLT_DATE_TIME, new FunctionImpl("week-in-year", XPathType.NUMBER, optional_string));
+    addFunction(decls, EXSLT_DATE_TIME, new FunctionImpl("year", XPathType.NUMBER, optional_string));
+
+    addFunction(decls, EXSLT_COMMON, new FunctionImpl("node-set", XPathType.NODESET, new Parameter(XPathType.ANY, Parameter.Kind.REQUIRED)));
+    addFunction(decls, EXSLT_COMMON, new FunctionImpl("object-type", XPathType.STRING, new Parameter(XPathType.ANY, Parameter.Kind.REQUIRED)));
+
+    addFunction(decls, EXSLT_MATH, new FunctionImpl("highest", XPathType.NODESET, required_nodeset));
+    addFunction(decls, EXSLT_MATH, new FunctionImpl("lowest", XPathType.NODESET, required_nodeset));
+    addFunction(decls, EXSLT_MATH, new FunctionImpl("max", XPathType.NUMBER, required_nodeset));
+    addFunction(decls, EXSLT_MATH, new FunctionImpl("min", XPathType.NUMBER, required_nodeset));
+
+    addFunction(decls, EXSLT_MATH, new FunctionImpl("abs", XPathType.NUMBER, required_number));
+    addFunction(decls, EXSLT_MATH, new FunctionImpl("sqrt", XPathType.NUMBER, required_number));
+    addFunction(decls, EXSLT_MATH, new FunctionImpl("log", XPathType.NUMBER, required_number));
+    addFunction(decls, EXSLT_MATH, new FunctionImpl("sin", XPathType.NUMBER, required_number));
+    addFunction(decls, EXSLT_MATH, new FunctionImpl("cos", XPathType.NUMBER, required_number));
+    addFunction(decls, EXSLT_MATH, new FunctionImpl("tan", XPathType.NUMBER, required_number));
+    addFunction(decls, EXSLT_MATH, new FunctionImpl("asin", XPathType.NUMBER, required_number));
+    addFunction(decls, EXSLT_MATH, new FunctionImpl("acos", XPathType.NUMBER, required_number));
+    addFunction(decls, EXSLT_MATH, new FunctionImpl("atan", XPathType.NUMBER, required_number));
+    addFunction(decls, EXSLT_MATH, new FunctionImpl("exp", XPathType.NUMBER, required_number));
+    addFunction(decls, EXSLT_MATH, new FunctionImpl("atan2", XPathType.NUMBER, required_number, required_number));
+    addFunction(decls, EXSLT_MATH, new FunctionImpl("power", XPathType.NUMBER, required_number, required_number));
+    addFunction(decls, EXSLT_MATH, new FunctionImpl("random", XPathType.NUMBER));
+
+    addFunction(decls, EXSLT_MATH, new FunctionImpl("constant", XPathType.NUMBER, required_string, required_number));
+
+    addFunction(decls, EXSLT_SETS, new FunctionImpl("difference", XPathType.NODESET, required_nodeset, required_nodeset));
+    addFunction(decls, EXSLT_SETS, new FunctionImpl("intersection", XPathType.NODESET, required_nodeset, required_nodeset));
+    addFunction(decls, EXSLT_SETS, new FunctionImpl("leading", XPathType.NODESET, required_nodeset, required_nodeset));
+    addFunction(decls, EXSLT_SETS, new FunctionImpl("trailing", XPathType.NODESET, required_nodeset, required_nodeset));
+    addFunction(decls, EXSLT_SETS, new FunctionImpl("has-same-node", XPathType.BOOLEAN, required_nodeset, required_nodeset));
+    addFunction(decls, EXSLT_SETS, new FunctionImpl("distinct", XPathType.NODESET, required_nodeset));
+
+    // Xalan only
+    addFunction(decls, EXSLT_DYNAMIC, new FunctionImpl("evaluate", XPathType.ANY, required_string));
+    addFunction(decls, EXSLT_DYNAMIC, new FunctionImpl("min", XPathType.NUMBER, required_nodeset, required_string));
+    addFunction(decls, EXSLT_DYNAMIC, new FunctionImpl("max", XPathType.NUMBER, required_nodeset, required_string));
+    addFunction(decls, EXSLT_DYNAMIC, new FunctionImpl("sum", XPathType.NUMBER, required_nodeset, required_string));
+    addFunction(decls, EXSLT_DYNAMIC, new FunctionImpl("map", XPathType.NODESET, required_nodeset, required_string));
+    addFunction(decls, EXSLT_DYNAMIC, new FunctionImpl("closure", XPathType.NODESET, required_nodeset, required_string));
+
+    addFunction(decls, EXSLT_STRINGS, new FunctionImpl("align", XPathType.STRING, required_string, required_string, optional_string));
+    addFunction(decls, EXSLT_STRINGS, new FunctionImpl("padding", XPathType.STRING, required_number, optional_string));
+    addFunction(decls, EXSLT_STRINGS, new FunctionImpl("tokenize", XPathType.NODESET, required_string, optional_string));
+    addFunction(decls, EXSLT_STRINGS, new FunctionImpl("split", XPathType.NODESET, required_string, optional_string));
+
 
     XSLT_FUNCTIONS = Collections.unmodifiableMap(decls);
   }

@@ -6,8 +6,10 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
+import com.intellij.refactoring.util.RefactoringConflictsUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.Function;
+import com.intellij.util.containers.MultiMap;
 
 import java.util.*;
 
@@ -97,6 +99,15 @@ public class JavaMoveDirectoryWithClassesHelper extends MoveDirectoryWithClasses
         }
       }
     }
+  }
+
+  @Override
+  public void preprocessUsages(Project project,
+                               Set<PsiFile> files,
+                               UsageInfo[] infos,
+                               PsiDirectory directory,
+                               MultiMap<PsiElement, String> conflicts) {
+    RefactoringConflictsUtil.analyzeModuleConflicts(project, files, infos, directory, conflicts);
   }
 
   @Override

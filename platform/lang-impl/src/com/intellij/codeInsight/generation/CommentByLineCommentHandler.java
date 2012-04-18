@@ -97,6 +97,12 @@ public class CommentByLineCommentHandler implements CodeInsightActionHandler {
     myStartOffset = selectionModel.getSelectionStart();
     myEndOffset = selectionModel.getSelectionEnd();
 
+    FoldRegion fold = myEditor.getFoldingModel().getCollapsedRegionAtOffset(myStartOffset);
+    if (fold != null && fold.shouldNeverExpand() && fold.getStartOffset() == myStartOffset && fold.getEndOffset() == myEndOffset) {
+      // Foldings that never expand are automatically selected, so the fact it is selected must not interfer with commenter's logic
+      hasSelection = false;
+    }
+
     if (myDocument.getTextLength() == 0) return;
 
     while (true) {

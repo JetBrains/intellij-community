@@ -11,12 +11,14 @@ import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFileHandler;
 import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.Function;
+import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * @author ksafonov
@@ -39,6 +41,12 @@ public abstract class MoveDirectoryWithClassesHelper {
   public abstract void beforeMove(PsiFile psiFile);
 
   public abstract void afterMove(PsiElement newElement);
+
+  public void preprocessUsages(Project project,
+                               Set<PsiFile> files,
+                               UsageInfo[] infos,
+                               PsiDirectory directory,
+                               MultiMap<PsiElement, String> conflicts) {}
 
   public static MoveDirectoryWithClassesHelper[] findAll() {
     return Extensions.getExtensions(EP_NAME);

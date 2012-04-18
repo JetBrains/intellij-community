@@ -50,7 +50,13 @@ public class DataFlowInspectionFixtureTest extends JavaCodeInsightFixtureTestCas
   public void testFieldInAnonymous() throws Throwable { doTest(); }
   public void testNullableField() throws Throwable { doTest(); }
   public void testCanBeNullDoesntImplyIsNull() throws Throwable { doTest(); }
-  /*public void testAnnReport() throws Throwable { doTest(); }*/
+  public void testAnnReport() throws Throwable { doTest(); }
 
   public void testBigMethodNotComplex() throws Throwable { doTest(); }
+  public void testTernaryInWhileNotComplex() throws Throwable { doTest(); }
+  public void testTryCatchInForNotComplex() throws Throwable { doTest(); }
+  public void testFieldChangedBetweenSynchronizedBlocks() throws Throwable { doTest(); }
+
+  public void testIDEA84489() throws Throwable { doTest(); }
+
 }

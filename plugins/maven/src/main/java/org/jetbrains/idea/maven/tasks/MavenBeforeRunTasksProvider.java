@@ -31,6 +31,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.concurrency.Semaphore;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.execution.MavenRunner;
 import org.jetbrains.idea.maven.execution.MavenRunnerParameters;
 import org.jetbrains.idea.maven.navigator.SelectMavenGoalDialog;
@@ -40,6 +41,7 @@ import org.jetbrains.idea.maven.utils.MavenIcons;
 import org.jetbrains.idea.maven.utils.MavenLog;
 
 import javax.swing.*;
+import java.util.Collection;
 import java.util.Collections;
 
 public class MavenBeforeRunTasksProvider extends BeforeRunTaskProvider<MavenBeforeRunTask> {
@@ -76,6 +78,7 @@ public class MavenBeforeRunTasksProvider extends BeforeRunTaskProvider<MavenBefo
            : TasksBundle.message("maven.tasks.before.run", desc);
   }
 
+  @Nullable
   private Pair<MavenProject, String> getProjectAndGoalChecked(MavenBeforeRunTask task) {
     String path = task.getProjectPath();
     String goal = task.getGoal();
@@ -129,6 +132,9 @@ public class MavenBeforeRunTasksProvider extends BeforeRunTaskProvider<MavenBefo
 
             FileDocumentManager.getInstance().saveAllDocuments();
 
+            final Collection<String> explicitProfiles = MavenProjectsManager.getInstance(project).getExplicitProfiles();
+            final MavenRunner mavenRunner = MavenRunner.getInstance(project);
+
             targetDone.down();
             new Task.Backgroundable(project, TasksBundle.message("maven.tasks.executing"), true) {
               public void run(@NotNull ProgressIndicator indicator) {
@@ -137,13 +143,13 @@ public class MavenBeforeRunTasksProvider extends BeforeRunTaskProvider<MavenBefo
                     true,
                     projectAndGoal.first.getDirectory(),
                     Collections.singletonList(projectAndGoal.second),
-                    MavenProjectsManager.getInstance(project).getExplicitProfiles());
+                    explicitProfiles);
 
-                  result[0] = MavenRunner.getInstance(project).runBatch(Collections.singletonList(params),
-                                                                        null,
-                                                                        null,
-                                                                        TasksBundle.message("maven.tasks.executing"),
-                                                                        indicator);
+                  result[0] = mavenRunner.runBatch(Collections.singletonList(params),
+                                                null,
+                                                null,
+                                                TasksBundle.message("maven.tasks.executing"),
+                                                indicator);
                 }
                 finally {
                   targetDone.up();

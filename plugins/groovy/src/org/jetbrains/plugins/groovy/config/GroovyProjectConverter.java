@@ -61,7 +61,7 @@ public class GroovyProjectConverter extends ProjectConverter {
             }
             else {
               element.setAttribute("type", wasGrails ? GRAILS_RUN_CONFIGURATION_TYPE : "GroovyScriptRunConfiguration");
-              element.setAttribute("factoryName", wasGrails ? "Grails" : "Groovy Script");
+              element.setAttribute("factoryName", wasGrails ? "Grails" : "Groovy");
             }
           }
           else if (GRAILS_RUN_CONFIGURATION_TYPE.equals(confType) &&

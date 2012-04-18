@@ -31,6 +31,8 @@ import com.intellij.codeInspection.dataFlow.InstructionVisitor;
 import com.intellij.codeInspection.dataFlow.value.DfaUnknownValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiReferenceExpression;
 import org.jetbrains.annotations.NotNull;
 
 public class PushInstruction extends Instruction {
@@ -58,5 +60,9 @@ public class PushInstruction extends Instruction {
 
   public String toString() {
     return "PUSH " + myValue;
+  }
+
+  public boolean isFieldReference() {
+    return myPlace instanceof PsiReferenceExpression && ((PsiReferenceExpression)myPlace).resolve() instanceof PsiField;
   }
 }

@@ -227,7 +227,7 @@ public class RefactoringConflictsUtil {
                                             final MultiMap<PsiElement, String> conflicts) {
     if (scopes == null) return;
     for (final PsiElement scope : scopes) {
-      if (scope instanceof PsiPackage || scope instanceof PsiDirectory) return;
+      if (scope instanceof PsiPackage) return;
     }
 
     final Module targetModule = ModuleUtil.findModuleForFile(vFile, project);

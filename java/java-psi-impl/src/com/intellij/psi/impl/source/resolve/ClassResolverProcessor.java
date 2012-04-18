@@ -32,6 +32,7 @@ import java.util.Iterator;
 import java.util.List;
 
 public class ClassResolverProcessor extends BaseScopeProcessor implements NameHint, ElementClassHint {
+  private static final String[] DEFAULT_PACKAGES = new String[]{CommonClassNames.DEFAULT_PACKAGE};
   private final String myClassName;
   private final PsiElement myPlace;
   private PsiClass myAccessClass = null;
@@ -108,12 +109,16 @@ public class ClassResolverProcessor extends BaseScopeProcessor implements NameHi
 
     String fqn = psiClass.getQualifiedName();
     if (fqn == null) return false;
+
+    PsiFile file = myPlace == null ? null : FileContextUtil.getContextFile(myPlace);
+
+    String[] defaultPackages = file instanceof PsiJavaFile ? ((PsiJavaFile)file).getImplicitlyImportedPackages() : DEFAULT_PACKAGES;
     String packageName = StringUtil.getPackageName(fqn);
-    if (CommonClassNames.DEFAULT_PACKAGE.equals(packageName)) return true;
+    for (String defaultPackage : defaultPackages) {
+      if (defaultPackage.equals(packageName)) return true;
+    }
 
     // class from my package imported implicitly
-    PsiFile file = myPlace == null ? null : FileContextUtil.getContextFile(myPlace);
-    
     return file instanceof PsiJavaFile && ((PsiJavaFile)file).getPackageName().equals(packageName);
   }
 
