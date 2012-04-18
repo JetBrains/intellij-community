@@ -191,16 +191,18 @@ public class MavenPluginConfigurationDomExtender extends DomExtender<MavenDomCon
   }
 
   private static void addRequiredAnnotation(DomExtension e, final ParameterData data) {
-    if (Boolean.parseBoolean(data.parameter.getRequired().getStringValue())) {
+    if (Boolean.parseBoolean(data.parameter.getRequired().getStringValue())
+        && StringUtil.isEmptyOrSpaces(data.defaultValue)
+        && StringUtil.isEmptyOrSpaces(data.expression)) {
       e.addCustomAnnotation(new Required(){
         @Override
         public boolean value() {
-          return StringUtil.isEmptyOrSpaces(data.defaultValue) && StringUtil.isEmptyOrSpaces(data.expression);
+          return true;
         }
 
         @Override
         public boolean nonEmpty() {
-          return true;
+          return false;
         }
 
         @Override
