@@ -168,7 +168,7 @@ public class DebuggerUIUtil {
     final XLightBreakpointPropertiesPanel propertiesPanel =
       new XLightBreakpointPropertiesPanel(project, breakpointManager,
                                           breakpoint, showAllOptions);
-
+    propertiesPanel.loadProperties();
     final JComponent mainPanel = propertiesPanel.getMainPanel();
 
     final Runnable showMoreOptions = new Runnable() {
@@ -217,7 +217,6 @@ public class DebuggerUIUtil {
       }
     });
 
-    propertiesPanel.loadProperties();
 
     if (point == null) {
       balloon.showInCenterOf(component);
