@@ -25,6 +25,10 @@ import com.intellij.openapi.project.DumbAware;
  */
 public class FakeRerunAction extends AnAction implements DumbAware{
   public void actionPerformed(AnActionEvent e) {
+  }
+
+  @Override
+  public void update(AnActionEvent e) {
     final Presentation presentation = e.getPresentation();
     presentation.setEnabled(false);
     presentation.setVisible(false);
