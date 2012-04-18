@@ -644,7 +644,7 @@ public class UnusedDeclarationInspection extends FilteringInspectionTool {
         final RefElement refElement = (RefElement)refEntity;
         final HighlightSeverity severity = getCurrentSeverity(refElement);
         final String attributeKey =
-          getTextAttributeKey(refElement.getElement().getProject(), severity, ProblemHighlightType.LIKE_UNUSED_SYMBOL);
+          getTextAttributeKey(refElement.getRefManager().getProject(), severity, ProblemHighlightType.LIKE_UNUSED_SYMBOL);
         problemClassElement.setAttribute("severity", severity.myName);
         problemClassElement.setAttribute("attribute_key", attributeKey);
       }

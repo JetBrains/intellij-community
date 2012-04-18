@@ -290,7 +290,7 @@ public abstract class DescriptorProviderInspection extends InspectionTool implem
         ProblemHighlightType problemHighlightType = description instanceof ProblemDescriptor
                                                     ? ((ProblemDescriptor)description).getHighlightType()
                                                     : ProblemHighlightType.GENERIC_ERROR_OR_WARNING;
-        final String attributeKey = getTextAttributeKey(refElement.getElement().getProject(), severity, problemHighlightType);
+        final String attributeKey = getTextAttributeKey(refElement.getRefManager().getProject(), severity, problemHighlightType);
         problemClassElement.setAttribute("severity", severity.myName);
         problemClassElement.setAttribute("attribute_key", attributeKey);
       }

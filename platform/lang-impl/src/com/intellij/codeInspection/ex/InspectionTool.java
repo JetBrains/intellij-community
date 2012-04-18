@@ -168,7 +168,7 @@ public abstract class InspectionTool extends InspectionProfileEntry {
   }
 
   protected HighlightSeverity getCurrentSeverity(RefElement element) {
-    final PsiElement psiElement = element.getElement();
+    final PsiElement psiElement = element.getPointer().getContainingFile();
     if (psiElement != null) {
       if (myContext != null) {
         final Tools tools = myContext.getTools().get(getShortName());
