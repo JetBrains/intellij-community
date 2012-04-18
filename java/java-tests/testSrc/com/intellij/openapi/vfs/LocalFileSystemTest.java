@@ -21,6 +21,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
+import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.testFramework.IdeaTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
@@ -306,5 +307,18 @@ public class LocalFileSystemTest extends IdeaTestCase{
       GeneralSettings.getInstance().setUseSafeWrite(safeWrite);
       FileUtil.delete(dir);
     }
+  }
+
+  public void testWindowsVirtualDirectory() throws Exception {
+    if (!SystemInfo.isWindows) return;
+    File file = new File("c:\\Documents and Settings\\desktop.ini");
+    VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
+    if (virtualFile == null) return;
+
+    System.out.println("desktop.ini found");
+    NewVirtualFileSystem system = (NewVirtualFileSystem)virtualFile.getFileSystem();
+    system = PersistentFS.replaceWithNativeFS(system);
+
+    assertTrue(system.exists(virtualFile));
   }
 }
