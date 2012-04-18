@@ -285,5 +285,11 @@ public class Server {
       myAllOpenChannels.add(e.getChannel());
       super.channelOpen(ctx, e);
     }
+
+    @Override
+    public void channelClosed(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception {
+      myAllOpenChannels.remove(e.getChannel());
+      super.channelClosed(ctx, e);
+    }
   }
 }
