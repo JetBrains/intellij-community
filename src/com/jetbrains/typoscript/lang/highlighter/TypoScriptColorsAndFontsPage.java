@@ -23,23 +23,25 @@ import java.util.Map;
 public class TypoScriptColorsAndFontsPage implements ColorSettingsPage, DisplayPrioritySortable {
 
   @NonNls private static final String DEMO_TEXT = "/*\n" +
-                                          " *   Menu description\n" +
-                                          " */\n" +
-                                          "temp.menu = COA\n" +
-                                          "temp.menu { some ignored text\n" +
-                                          "  10 = HMENU\n" +
-                                          "  10.entryLevel = 0\n" +
-                                          "  10.1 = TMENU\n" +
-                                          "  10.1 {\n" +
-                                          "    wrap = <div class=\"menuBar\" style=\"width:80%;\">|</div>\n" +
-                                          "    NO.ATagParams = class=\"menuButton\"\n" +
-                                          "  } \n" +
-                                          "} \n" +
-                                          "\n" +
-                                          "# Default PAGE object:\n" +
-                                          "page = PAGE\n" +
-                                          "page.typeNum = 0\n" +
-                                          "page.10 < temp.menu ";
+                                                  " *   Menu description\n" +
+                                                  " */\n" +
+                                                  "<INCLUDE_TYPOSCRIPT: source=\"FILE: folder/html/typoscript.txt\">\n" +
+                                                  "temp.menu = COA\n" +
+                                                  "temp.menu { some ignored text\n" +
+                                                  "  10 = HMENU\n" +
+                                                  "  10.entryLevel = 0\n" +
+                                                  "  10.1 = TMENU\n" +
+                                                  "  10.1 {\n" +
+                                                  "    wrap = <div class=\"menuBar\" style=\"width:80%;\">|</div>\n" +
+                                                  "    NO.ATagParams = class=\"menuButton\"\n" +
+                                                  "  } \n" +
+                                                  "} \n" +
+                                                  "\n" +
+                                                  "# Default PAGE object:\n" +
+                                                  "page = PAGE\n" +
+                                                  "[GLOBAL]\n" +
+                                                  "page.typeNum = 0\n" +
+                                                  "page.10 < temp.menu ";
 
 
   private static final AttributesDescriptor[] ATTRIBUTES =
@@ -54,6 +56,8 @@ public class TypoScriptColorsAndFontsPage implements ColorSettingsPage, DisplayP
       new AttributesDescriptor(TypoScriptBundle.message("color.settings.object.path.separator"),
                                TypoScriptHighlightingData.OBJECT_PATH_SEPARATOR),
       new AttributesDescriptor(TypoScriptBundle.message("color.settings.assigned.value"), TypoScriptHighlightingData.ASSIGNED_VALUE),
+      new AttributesDescriptor(TypoScriptBundle.message("color.settings.condition"), TypoScriptHighlightingData.CONDITION),
+      new AttributesDescriptor(TypoScriptBundle.message("color.settings.include"), TypoScriptHighlightingData.INCLUDE_STATEMENT),
       new AttributesDescriptor(TypoScriptBundle.message("color.settings.bad.character"), TypoScriptHighlightingData.BAD_CHARACTER)
     };
 
