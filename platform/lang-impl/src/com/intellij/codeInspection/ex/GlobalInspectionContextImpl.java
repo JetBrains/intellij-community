@@ -337,7 +337,12 @@ public class GlobalInspectionContextImpl extends UserDataHolderBase implements G
               for (Element element : globalTools.keySet()) {
                 final Tools tools = globalTools.get(element);
                 for (ScopeToolState state : tools.getTools()) {
-                  ((InspectionTool)state.getTool()).exportResults(element, refEntity);
+                  try {
+                    ((InspectionTool)state.getTool()).exportResults(element, refEntity);
+                  }
+                  catch (Exception e) {
+                    LOG.error(e);
+                  }
                 }
               }
             }
