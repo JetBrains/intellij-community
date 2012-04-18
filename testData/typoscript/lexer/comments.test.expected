@@ -17,10 +17,10 @@ IGNORED_TEXT (' ignored text')
 WHITE_SPACE_WITH_NEW_LINE ('
 
 ')
-OBJECT_PATH_ENTITY ('assign')
+object path entity ('assign')
 WHITE_SPACE (' ')
-ASSIGN ('=')
+= ('=')
 WHITE_SPACE (' ')
-ASSIGNMENT_VALUE ('ment')
+assignment value ('ment')
 WHITE_SPACE_WITH_NEW_LINE ('
 ')

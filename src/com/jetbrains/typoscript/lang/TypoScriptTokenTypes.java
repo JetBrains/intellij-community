@@ -14,27 +14,27 @@ public interface TypoScriptTokenTypes extends TokenType {
   IElementType IGNORED_TEXT = new TypoScriptTokenType("IGNORED_TEXT");
   IElementType WHITE_SPACE_WITH_NEW_LINE = new TypoScriptTokenType("WHITE_SPACE_WITH_NEW_LINE");
 
-  IElementType ASSIGNMENT_OPERATOR = new TypoScriptTokenType("ASSIGN");
-  IElementType ASSIGNMENT_VALUE = new TypoScriptTokenType("ASSIGNMENT_VALUE");
+  IElementType ASSIGNMENT_OPERATOR = new TypoScriptTokenType("=");
+  IElementType ASSIGNMENT_VALUE = new TypoScriptTokenType("assignment value");
 
-  IElementType MULTILINE_VALUE_OPERATOR_BEGIN = new TypoScriptTokenType("MULTILINE_OPEN");
-  IElementType MULTILINE_VALUE_OPERATOR_END = new TypoScriptTokenType("MULTILINE_CLOSE");
-  IElementType MULTILINE_VALUE = new TypoScriptTokenType("MULTILINE_VALUE");
+  IElementType MULTILINE_VALUE_OPERATOR_BEGIN = new TypoScriptTokenType("(");
+  IElementType MULTILINE_VALUE_OPERATOR_END = new TypoScriptTokenType(")");
+  IElementType MULTILINE_VALUE = new TypoScriptTokenType("multiline value");
 
-  IElementType CODE_BLOCK_OPERATOR_BEGIN = new TypoScriptTokenType("CODE_BLOCK_OPEN");
-  IElementType CODE_BLOCK_OPERATOR_END = new TypoScriptTokenType("CODE_BLOCK_CLOSE");
+  IElementType CODE_BLOCK_OPERATOR_BEGIN = new TypoScriptTokenType("{");
+  IElementType CODE_BLOCK_OPERATOR_END = new TypoScriptTokenType("}");
 
-  IElementType UNSETTING_OPERATOR = new TypoScriptTokenType("UNSET");
-  IElementType COPYING_OPERATOR = new TypoScriptTokenType("COPY");
+  IElementType UNSETTING_OPERATOR = new TypoScriptTokenType(">");
+  IElementType COPYING_OPERATOR = new TypoScriptTokenType("<");
 
-  IElementType MODIFICATION_OPERATOR = new TypoScriptTokenType("MODIFY");
-  IElementType MODIFICATION_OPERATOR_FUNCTION = new TypoScriptTokenType("MODIFICATION_FUNCTION");
-  IElementType MODIFICATION_OPERATOR_FUNCTION_PARAM_BEGIN = new TypoScriptTokenType("MODIFICATION_OPEN");
-  IElementType MODIFICATION_OPERATOR_FUNCTION_PARAM_END = new TypoScriptTokenType("MODIFICATION_CLOSE");
-  IElementType MODIFICATION_OPERATOR_FUNCTION_ARGUMENT = new TypoScriptTokenType("MODIFICATION_VALUE");
+  IElementType MODIFICATION_OPERATOR = new TypoScriptTokenType(":=");
+  IElementType MODIFICATION_OPERATOR_FUNCTION = new TypoScriptTokenType("modification function");
+  IElementType MODIFICATION_OPERATOR_FUNCTION_PARAM_BEGIN = new TypoScriptTokenType("(");
+  IElementType MODIFICATION_OPERATOR_FUNCTION_PARAM_END = new TypoScriptTokenType(")");
+  IElementType MODIFICATION_OPERATOR_FUNCTION_ARGUMENT = new TypoScriptTokenType("modification value");
 
-  IElementType OBJECT_PATH_ENTITY = new TypoScriptTokenType("OBJECT_PATH_ENTITY");
-  IElementType OBJECT_PATH_SEPARATOR = new TypoScriptTokenType("OBJECT_PATH_SEPARATOR");
+  IElementType OBJECT_PATH_ENTITY = new TypoScriptTokenType("object path entity");
+  IElementType OBJECT_PATH_SEPARATOR = new TypoScriptTokenType(".");
 
   IElementType INCLUDE_STATEMENT = new TypoScriptTokenType("INCLUDE");
   IElementType CONDITION = new TypoScriptTokenType("CONDITION");
