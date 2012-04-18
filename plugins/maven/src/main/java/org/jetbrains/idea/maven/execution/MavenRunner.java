@@ -22,6 +22,7 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -40,6 +41,9 @@ import java.util.List;
 
 @State(name = "MavenRunner", storages = {@Storage( file = "$WORKSPACE_FILE$")})
 public class MavenRunner implements PersistentStateComponent<MavenRunnerSettings> {
+
+  private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.maven.execution.MavenRunner");
+
   private MavenRunnerSettings mySettings = new MavenRunnerSettings();
   private final Project myProject;
 
@@ -119,7 +123,7 @@ public class MavenRunner implements PersistentStateComponent<MavenRunnerSettings
                           @Nullable MavenRunnerSettings runnerSettings,
                           @Nullable final String action,
                           @Nullable ProgressIndicator indicator) {
-    assert !ApplicationManager.getApplication().isReadAccessAllowed();
+    LOG.assertTrue(!ApplicationManager.getApplication().isReadAccessAllowed());
 
     if (commands.isEmpty()) return true;
 
