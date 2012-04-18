@@ -101,7 +101,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
 
   public boolean equals(Object obj) {
     if (obj == this) return true;
-    if (!(obj instanceof DfaMemoryState)) return false;
+    if (!(obj instanceof DfaMemoryStateImpl)) return false;
     DfaMemoryStateImpl that = (DfaMemoryStateImpl)obj;
 
     if (myStateSize != that.myStateSize) return false;
@@ -693,14 +693,12 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   }
 
   public boolean applyNotNull(DfaValue value) {
-    /*
     if (value instanceof DfaVariableValue) {
       PsiVariable variable = ((DfaVariableValue)value).getPsiVariable();
       if (variable != null && variable.getType() instanceof PsiPrimitiveType) {
         return true;
       }
     }
-    */
 
     return checkNotNullable(value) && applyCondition(compareToNull(value, true));
   }
@@ -795,10 +793,32 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
           }
         }
       }
+      else if (containsConstantsOnly(varClassIndex)) {
+        for (long pair : myDistinctClasses.toArray()) {
+          if (low(pair) == varClassIndex && containsConstantsOnly(high(pair)) ||
+              high(pair) == varClassIndex && containsConstantsOnly(low(pair))) {
+            myDistinctClasses.remove(pair);
+          }
+        }
+      }
     }
 
     myVariableStates.remove(varPlain);
     myVariableStates.remove(varNegated);
+  }
+
+  private boolean containsConstantsOnly(int id) {
+    SortedIntSet varClass = myEqClasses.get(id);
+    for (int i = 0; i < varClass.size(); i++) {
+      int cl = varClass.get(i);
+      DfaValue value = myFactory.getValue(cl);
+      if (!(value instanceof DfaConstValue) &&
+          !(value instanceof DfaBoxedValue && ((DfaBoxedValue)value).getWrappedValue() instanceof DfaConstValue)) {
+        return false;
+      }
+    }
+
+    return true;
   }
 
   private static boolean mine(int id, DfaValue value) {
