@@ -631,45 +631,43 @@ public class UnusedDeclarationInspection extends FilteringInspectionTool {
     return myComposer;
   }
 
-  public void exportResults(@NotNull final Element parentNode) {
+  @Override
+  public void exportResults(@NotNull final Element parentNode, RefEntity refEntity) {
+    if (!(refEntity instanceof RefJavaElement)) return;
     final WeakUnreferencedFilter filter = new WeakUnreferencedFilter(this);
-    getRefManager().iterate(new RefJavaVisitor() {
-      @Override public void visitElement(RefEntity refEntity) {
-        if (!(refEntity instanceof RefJavaElement)) return;
-        if (!getIgnoredRefElements().contains(refEntity) && filter.accepts((RefJavaElement)refEntity)) {
-          if (refEntity instanceof RefImplicitConstructor) refEntity = ((RefImplicitConstructor)refEntity).getOwnerClass();
-          Element element = refEntity.getRefManager().export(refEntity, parentNode, -1);
-          @NonNls Element problemClassElement = new Element(InspectionsBundle.message("inspection.export.results.problem.element.tag"));
+    if (!getIgnoredRefElements().contains(refEntity) && filter.accepts((RefJavaElement)refEntity)) {
+      if (refEntity instanceof RefImplicitConstructor) refEntity = ((RefImplicitConstructor)refEntity).getOwnerClass();
+      Element element = refEntity.getRefManager().export(refEntity, parentNode, -1);
+      @NonNls Element problemClassElement = new Element(InspectionsBundle.message("inspection.export.results.problem.element.tag"));
 
-          if (refEntity instanceof RefElement) {
-            final RefElement refElement = (RefElement)refEntity;
-            final HighlightSeverity severity = getCurrentSeverity(refElement);
-            final String attributeKey = getTextAttributeKey(refElement.getElement().getProject(), severity, ProblemHighlightType.LIKE_UNUSED_SYMBOL);
-            problemClassElement.setAttribute("severity", severity.myName);
-            problemClassElement.setAttribute("attribute_key", attributeKey);
-          }
-
-          problemClassElement.addContent(InspectionsBundle.message("inspection.export.results.dead.code"));
-          element.addContent(problemClassElement);
-
-          @NonNls Element hintsElement = new Element("hints");
-
-          for (String hint : HINTS) {
-            @NonNls Element hintElement = new Element("hint");
-            hintElement.setAttribute("value", hint);
-            hintsElement.addContent(hintElement);
-          }
-          element.addContent(hintsElement);
-
-
-          Element descriptionElement = new Element(InspectionsBundle.message("inspection.export.results.description.tag"));
-          StringBuffer buf = new StringBuffer();
-          DeadHTMLComposer.appendProblemSynopsis((RefElement)refEntity, buf);
-          descriptionElement.addContent(buf.toString());
-          element.addContent(descriptionElement);
-        }
+      if (refEntity instanceof RefElement) {
+        final RefElement refElement = (RefElement)refEntity;
+        final HighlightSeverity severity = getCurrentSeverity(refElement);
+        final String attributeKey =
+          getTextAttributeKey(refElement.getRefManager().getProject(), severity, ProblemHighlightType.LIKE_UNUSED_SYMBOL);
+        problemClassElement.setAttribute("severity", severity.myName);
+        problemClassElement.setAttribute("attribute_key", attributeKey);
       }
-    });
+
+      problemClassElement.addContent(InspectionsBundle.message("inspection.export.results.dead.code"));
+      element.addContent(problemClassElement);
+
+      @NonNls Element hintsElement = new Element("hints");
+
+      for (String hint : HINTS) {
+        @NonNls Element hintElement = new Element("hint");
+        hintElement.setAttribute("value", hint);
+        hintsElement.addContent(hintElement);
+      }
+      element.addContent(hintsElement);
+
+
+      Element descriptionElement = new Element(InspectionsBundle.message("inspection.export.results.description.tag"));
+      StringBuffer buf = new StringBuffer();
+      DeadHTMLComposer.appendProblemSynopsis((RefElement)refEntity, buf);
+      descriptionElement.addContent(buf.toString());
+      element.addContent(descriptionElement);
+    }
   }
 
   public QuickFixAction[] getQuickFixes(final RefEntity[] refElements) {

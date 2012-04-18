@@ -80,7 +80,7 @@ public class HtmlLanguageLevelForm {
   }
 
   public void resetFromDoctype(String doctype) {
-    if (doctype == null || doctype.length() == 0 || doctype.equals(XmlUtil.XHTML_URI)) {
+    if (doctype == null || doctype.length() == 0 || doctype.equals(XmlUtil.XHTML4_SCHEMA_LOCATION)) {
       myHtml4RadioButton.setSelected(true);
       myDoctypeTextField.setEnabled(false);
     }

@@ -92,7 +92,7 @@ public class GriffonToolWindowFactory extends MvcToolWindowDescriptor {
 
   @Override
   public Icon getModuleNodeIcon() {
-    return GriffonFramework.GRIFFON_TOOLWINDOW_ICON;
+    return GriffonFramework.GRIFFON_ICON;
   }
 
 

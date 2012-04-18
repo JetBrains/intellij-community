@@ -30,12 +30,20 @@ public class RadCaptionTableColumn extends RadVisualComponent {
   private final RadTableLayoutComponent myContainer;
   private final int myColumnOffset;
   private final int myColumnWidth;
-  private final StaticDecorator myDecorator = new CaptionStaticDecorator(this);
+  private final StaticDecorator myDecorator;
 
-  public RadCaptionTableColumn(RadTableLayoutComponent container, int columnOffset, int columnWidth) {
+  public RadCaptionTableColumn(RadTableLayoutComponent container, int columnOffset, int columnWidth, boolean empty) {
     myContainer = container;
     myColumnOffset = columnOffset;
     myColumnWidth = columnWidth;
+
+    if (empty) {
+      myDecorator = new CaptionStaticDecorator(this, Color.PINK);
+    }
+    else {
+      myDecorator = new CaptionStaticDecorator(this);
+    }
+
     setNativeComponent(container.getNativeComponent());
   }
 

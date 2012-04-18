@@ -206,7 +206,7 @@ public class FileChooserDescriptor implements Cloneable {
 
   @Nullable
   public final VirtualFile getFileToSelect(VirtualFile file) {
-    if (file.isDirectory() && myChooseFolders) {
+    if (file.isDirectory() && (myChooseFolders || isFileSelectable(file))) {
       return file;
     }
     boolean isJar = file.getFileType() == FileTypes.ARCHIVE;

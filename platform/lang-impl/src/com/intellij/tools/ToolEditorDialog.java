@@ -21,9 +21,10 @@ import com.intellij.ide.macro.MacroManager;
 import com.intellij.ide.macro.MacrosDialog;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
+import com.intellij.openapi.fileChooser.FileChooserFactory;
+import com.intellij.openapi.fileChooser.PathChooserDialog;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
@@ -34,6 +35,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.IdeBorderFactory;
+import com.intellij.util.Consumer;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -42,6 +44,7 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
+import java.util.List;
 
 public class ToolEditorDialog extends DialogWrapper {
   private final JTextField myNameField = new JTextField();
@@ -179,7 +182,7 @@ public class ToolEditorDialog extends DialogWrapper {
   }
 
   private JPanel createCommandPane() {
-    JPanel pane = new JPanel(new GridBagLayout());
+    final JPanel pane = new JPanel(new GridBagLayout());
     pane.setBorder(IdeBorderFactory.createTitledBorder(ToolsBundle.message("tools.tool.group"), true));
     GridBagConstraints constr;
 
@@ -196,18 +199,24 @@ public class ToolEditorDialog extends DialogWrapper {
     browseCommandButton.addActionListener(
       new ActionListener() {
         public void actionPerformed(ActionEvent e) {
-          FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor();
-          VirtualFile file = FileChooser.chooseFile(descriptor, myProject, null);
-          if (file != null) {
-            myTfCommand.setText(file.getPresentableUrl());
-            String workingDirectory = myTfCommandWorkingDirectory.getText();
-            if (workingDirectory == null || workingDirectory.length() == 0){
-              VirtualFile parent = file.getParent();
-              if (parent != null && parent.isDirectory()) {
-                myTfCommandWorkingDirectory.setText(parent.getPresentableUrl());
+          FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFileOrExecutableAppDescriptor();
+          PathChooserDialog chooser = FileChooserFactory.getInstance().createPathChooser(descriptor, myProject, pane);
+          chooser.choose(null, new Consumer<List<VirtualFile>>() {
+            @Override
+            public void consume(List<VirtualFile> files) {
+              VirtualFile file = files.size() > 0 ? files.get(0) : null;
+              if (file != null) {
+                myTfCommand.setText(file.getPresentableUrl());
+                String workingDirectory = myTfCommandWorkingDirectory.getText();
+                if (workingDirectory == null || workingDirectory.length() == 0){
+                  VirtualFile parent = file.getParent();
+                  if (parent != null && parent.isDirectory()) {
+                    myTfCommandWorkingDirectory.setText(parent.getPresentableUrl());
+                  }
+                }
               }
             }
-          }
+          });
         }
       }
     );
@@ -276,10 +285,17 @@ public class ToolEditorDialog extends DialogWrapper {
       new ActionListener() {
         public void actionPerformed(ActionEvent e) {
           FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
-          VirtualFile file = FileChooser.chooseFile(descriptor, myProject, null);
-          if (file != null) {
-            myTfCommandWorkingDirectory.setText(file.getPresentableUrl());
-          }
+          PathChooserDialog chooser = FileChooserFactory.getInstance().createPathChooser(descriptor, myProject, pane);
+
+          chooser.choose(null, new Consumer<List<VirtualFile>>() {
+            @Override
+            public void consume(List<VirtualFile> files) {
+              VirtualFile file = files.size() > 0 ? files.get(0) : null;
+              if (file != null) {
+                myTfCommandWorkingDirectory.setText(file.getPresentableUrl());
+              }
+            }
+          });
         }
       }
     );

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.fixes.AddToIgnoreIfAnnotatedByListQuickFix;
 import com.siyeh.ig.fixes.EncapsulateVariableFix;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.ui.ExternalizableStringSet;
@@ -31,6 +32,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.ArrayList;
+import java.util.List;
 
 public class PublicFieldInspection extends BaseInspection {
 
@@ -66,10 +69,14 @@ public class PublicFieldInspection extends BaseInspection {
     return panel;
   }
 
+  @NotNull
   @Override
-  protected InspectionGadgetsFix buildFix(Object... infos) {
+  protected InspectionGadgetsFix[] buildFixes(Object... infos) {
+    final List<InspectionGadgetsFix> fixes = new ArrayList();
     final PsiField field = (PsiField)infos[0];
-    return new EncapsulateVariableFix(field.getName());
+    fixes.add(new EncapsulateVariableFix(field.getName()));
+    AddToIgnoreIfAnnotatedByListQuickFix.build(field, ignorableAnnotations, fixes);
+    return fixes.toArray(new InspectionGadgetsFix[fixes.size()]);
   }
 
   @Override

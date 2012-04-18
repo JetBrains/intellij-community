@@ -18,6 +18,7 @@ package git4idea.ui;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -173,27 +174,18 @@ public class GitUnstashDialog extends DialogWrapper {
           ProgressManager.getInstance().run(new Task.Modal(myProject, "Removing stash " + stash.getStash(), false) {
             @Override
             public void run(@NotNull ProgressIndicator indicator) {
-              GitSimpleHandler h = dropHandler(stash.getStash());
+              final GitSimpleHandler h = dropHandler(stash.getStash());
               try {
                 h.run();
                 h.unsilence();
               }
-              catch (VcsException ex) {
-                try {
-                  //noinspection HardCodedStringLiteral
-                  if (ex.getMessage().startsWith("fatal: Needed a single revision")) {
-                    h = dropHandler(translateStash(stash.getStash()));
-                    h.run();
+              catch (final VcsException ex) {
+                ApplicationManager.getApplication().invokeLater(new Runnable() {
+                  @Override
+                  public void run() {
+                    GitUIUtil.showOperationError(myProject, ex, h.printableCommandLine());
                   }
-                  else {
-                    h.unsilence();
-                    throw ex;
-                  }
-                }
-                catch (VcsException ex2) {
-                  GitUIUtil.showOperationError(myProject, ex, h.printableCommandLine());
-                  return;
-                }
+                });
               }
             }
           });
@@ -205,7 +197,8 @@ public class GitUnstashDialog extends DialogWrapper {
       private GitSimpleHandler dropHandler(String stash) {
         GitSimpleHandler h = new GitSimpleHandler(myProject, getGitRoot(), GitCommand.STASH);
         h.setNoSSH(true);
-        h.addParameters("drop", stash);
+        h.addParameters("drop");
+        addStashParameter(h, stash);
         return h;
       }
     });
@@ -215,23 +208,18 @@ public class GitUnstashDialog extends DialogWrapper {
         String resolvedStash;
         String selectedStash = getSelectedStash().getStash();
         try {
-          resolvedStash = GitRevisionNumber.resolve(myProject, root, selectedStash).asString();
+          GitSimpleHandler h = new GitSimpleHandler(project, root, GitCommand.REV_LIST);
+          h.setNoSSH(true);
+          h.setSilent(true);
+          h.addParameters("--timestamp", "--max-count=1");
+          addStashParameter(h, selectedStash);
+          h.endOptions();
+          final String output = h.run();
+          resolvedStash = GitRevisionNumber.parseRevlistOutputAsRevisionNumber(h, output).asString();
         }
         catch (VcsException ex) {
-          try {
-            //noinspection HardCodedStringLiteral
-            if (ex.getMessage().startsWith("fatal: bad revision 'stash@")) {
-              selectedStash = translateStash(selectedStash);
-              resolvedStash = GitRevisionNumber.resolve(myProject, root, selectedStash).asString();
-            }
-            else {
-              throw ex;
-            }
-          }
-          catch (VcsException ex2) {
-            GitUIUtil.showOperationError(myProject, ex, "resolving revision");
-            return;
-          }
+          GitUIUtil.showOperationError(myProject, ex, "resolving revision");
+          return;
         }
         GitShowAllSubmittedFilesAction.showSubmittedFiles(myProject, resolvedStash, root);
       }
@@ -241,13 +229,16 @@ public class GitUnstashDialog extends DialogWrapper {
   }
 
   /**
-   * Translate stash name so that { } are escaped.
-   *
-   * @param selectedStash a selected stash
-   * @return translated name
+   * Adds {@code stash@{x}} parameter to the handler, quotes it if needed.
    */
-  private static String translateStash(String selectedStash) {
-    return selectedStash.replaceAll("([\\{}])", "\\\\$1");
+  private void addStashParameter(@NotNull GitHandler handler, @NotNull String stash) {
+    if (GitVersionSpecialty.NEEDS_QUOTES_IN_STASH_NAME.existsIn(myVcs.getVersion())) {
+      handler.addParameters("\"" + stash + "\"");
+      handler.dontEscapeQuotes();
+    }
+    else {
+      handler.addParameters(stash);
+    }
   }
 
   /**
@@ -329,6 +320,7 @@ public class GitUnstashDialog extends DialogWrapper {
     catch (VcsException e) {
       // ignore error
     }
+    myStashList.setSelectedIndex(0);
   }
 
   /**
@@ -339,10 +331,9 @@ public class GitUnstashDialog extends DialogWrapper {
   }
 
   /**
-   * @param escaped if true stash name will be escaped
    * @return unstash handler
    */
-  private GitLineHandler handler(boolean escaped) {
+  private GitLineHandler handler() {
     GitLineHandler h = new GitLineHandler(myProject, getGitRoot(), GitCommand.STASH);
     h.setNoSSH(true);
     String branch = myBranchTextField.getText();
@@ -356,12 +347,7 @@ public class GitUnstashDialog extends DialogWrapper {
       h.addParameters("branch", branch);
     }
     String selectedStash = getSelectedStash().getStash();
-    if (escaped) {
-      selectedStash = translateStash(selectedStash);
-    } else if (GitVersionSpecialty.NEEDS_QUOTES_IN_STASH_NAME.existsIn(myVcs.getVersion())) { // else if, because escaping {} also solves the issue
-      selectedStash = "\"" + selectedStash + "\"";
-    }
-    h.addParameters(selectedStash);
+    addStashParameter(h, selectedStash);
     return h;
   }
 
@@ -396,6 +382,11 @@ public class GitUnstashDialog extends DialogWrapper {
     return "reference.VersionControl.Git.Unstash";
   }
 
+  @Override
+  public JComponent getPreferredFocusedComponent() {
+    return myStashList;
+  }
+
   /**
    * Show unstash dialog and process its result
    *
@@ -414,32 +405,22 @@ public class GitUnstashDialog extends DialogWrapper {
       return;
     }
     affectedRoots.add(d.getGitRoot());
-    GitLineHandler h = d.handler(false);
-    final AtomicBoolean needToEscapedBraces = new AtomicBoolean(false);
+    GitLineHandler h = d.handler();
     final AtomicBoolean conflict = new AtomicBoolean();
 
     h.addLineListener(new GitLineHandlerAdapter() {
       public void onLineAvailable(String line, Key outputType) {
-        if (line.startsWith("fatal: Needed a single revision")) {
-          needToEscapedBraces.set(true);
-        } else if (line.contains("Merge conflict")) {
+        if (line.contains("Merge conflict")) {
           conflict.set(true);
         }
       }
     });
     int rc = GitHandlerUtil.doSynchronously(h, GitBundle.getString("unstash.unstashing"), h.printableCommandLine(), false);
-    if (needToEscapedBraces.get()) {
-      h = d.handler(true);
-      rc = GitHandlerUtil.doSynchronously(h, GitBundle.getString("unstash.unstashing"), h.printableCommandLine(), false);
-    }
 
     if (conflict.get()) {
       VirtualFile root = d.getGitRoot();
       boolean conflictsResolved = new UnstashConflictResolver(project, root, d.getSelectedStash()).merge();
-      if (conflictsResolved) {
-        LOG.info("loadRoot " + root + " conflicts resolved, dropping stash");
-        GitStashUtils.dropStash(project, root);
-      }
+      LOG.info("loadRoot " + root + ", conflictsResolved: " + conflictsResolved);
     } else if (rc != 0) {
       GitUIUtil.showOperationErrors(project, h.errors(), h.printableCommandLine());
     }

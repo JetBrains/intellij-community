@@ -78,6 +78,7 @@ com.siyeh.ig.classlayout.EmptyClassInspection
 com.siyeh.ig.classlayout.InnerClassOnInterfaceInspection
 com.siyeh.ig.classlayout.ListenerMayUseAdapterInspection
 com.siyeh.ig.classlayout.MissingOverrideAnnotationInspection
+com.siyeh.ig.classlayout.UtilityClassInspection
 com.siyeh.ig.classlayout.UtilityClassWithoutPrivateConstructorInspection
 com.siyeh.ig.classmetrics.AnonymousClassComplexityInspection
 com.siyeh.ig.classmetrics.AnonymousClassMethodCountInspection

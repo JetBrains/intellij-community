@@ -36,6 +36,10 @@ public class RadTableRowLayout extends RadLinearLayout {
     return LAYOUT_PARAMS;
   }
 
+  public static boolean is(RadComponent component) {
+    return component.getLayout() instanceof RadTableRowLayout;
+  }
+
   private boolean isTableParent() {
     return myContainer.getParent() instanceof RadTableLayoutComponent;
   }

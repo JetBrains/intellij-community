@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -133,28 +133,34 @@ public class DaemonTooltipRendererProvider implements ErrorStripTooltipRendererP
 
     @Override
     protected boolean dressDescription(@NotNull final Editor editor) {
-      final String[] problems = UIUtil.getHtmlBody(myText).split(BORDER_LINE);
+      final List<String> problems = StringUtil.split(UIUtil.getHtmlBody(myText), BORDER_LINE);
       String text = "";
       for (String problem : problems) {
         final String ref = getLinkRef(problem);
         if (ref != null) {
           String description = TooltipLinkHandlerEP.getDescription(ref, editor);
           if (description != null) {
-            final Pattern pattern = Pattern.compile(".*Use.*(the (panel|checkbox|checkboxes|field|button|controls).*below).*", Pattern.DOTALL);
-            final Matcher matcher = pattern.matcher(description);
-            int startFindIdx = 0;
-            while (matcher.find(startFindIdx)) {
-              final int end = matcher.end(1);
-              startFindIdx = end;
-              description = description.substring(0, matcher.start(1)) + " inspection settings " + description.substring(end);
+            description = UIUtil.getHtmlBody(description);
+            final int descriptionEnd = description.indexOf("<!-- tooltip end -->");
+            if (descriptionEnd < 0) {
+              final Pattern pattern = Pattern.compile(".*Use.*(the (panel|checkbox|checkboxes|field|button|controls).*below).*", Pattern.DOTALL);
+              final Matcher matcher = pattern.matcher(description);
+              int startFindIdx = 0;
+              while (matcher.find(startFindIdx)) {
+                final int end = matcher.end(1);
+                startFindIdx = end;
+                description = description.substring(0, matcher.start(1)) + " inspection settings " + description.substring(end);
+              }
+            } else {
+              description = description.substring(0, descriptionEnd);
             }
             text += UIUtil.getHtmlBody(problem).replace(DaemonBundle.message("inspection.extended.description"),
                                                         DaemonBundle.message("inspection.collapse.description")) +
-                    BORDER_LINE + UIUtil.getHtmlBody(description) + BORDER_LINE;
+                    BORDER_LINE + description + BORDER_LINE;
           }
         }
       }
-      if (text.length() > 0) { //otherwise do not change anything
+      if (!text.isEmpty()) { //otherwise do not change anything
         myText = "<html><body>" +  StringUtil.trimEnd(text, BORDER_LINE) + "</body></html>";
         return true;
       }

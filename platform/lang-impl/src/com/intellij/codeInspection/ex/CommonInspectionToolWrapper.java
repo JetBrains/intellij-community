@@ -20,6 +20,7 @@ import com.intellij.codeInspection.GlobalInspectionContext;
 import com.intellij.codeInspection.InspectionEP;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.reference.RefEntity;
+import com.intellij.codeInspection.reference.RefVisitor;
 import com.intellij.codeInspection.ui.InspectionNode;
 import com.intellij.codeInspection.ui.InspectionTreeNode;
 import org.jdom.Element;
@@ -111,7 +112,7 @@ public class CommonInspectionToolWrapper extends InspectionToolWrapper<Inspectio
   }
 
   @Override
-  public void exportResults(@NotNull Element parentNode) {
-    getTool().exportResults(parentNode);
+  public void exportResults(@NotNull Element parentNode, RefEntity refEntity) {
+    getTool().exportResults(parentNode, refEntity);
   }
 }

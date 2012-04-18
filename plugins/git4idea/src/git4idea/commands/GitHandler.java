@@ -728,4 +728,9 @@ public abstract class GitHandler {
   public String toString() {
     return myCommandLine.toString();
   }
+
+  public void dontEscapeQuotes() {
+    myCommandLine.putUserData(GeneralCommandLine.DO_NOT_ESCAPE_QUOTES, true);
+  }
+
 }

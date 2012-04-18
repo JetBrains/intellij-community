@@ -1,0 +1,135 @@
+package org.jetbrains.jpsservice;
+
+option java_package = "org.jetbrains.jps.api";
+option optimize_for = LITE_RUNTIME;
+
+message Message {
+
+  message UUID {
+    required sint64 most_sig_bits = 1;
+    required sint64 least_sig_bits = 2;
+  }
+
+  message KeyValuePair {
+    required string key = 1;
+    required string value = 2;
+  }
+
+  enum Type {
+    CONTROLLER_MESSAGE = 1;
+    BUILDER_MESSAGE = 2;
+    FAILURE = 3;
+  }
+
+  message Failure {
+    optional int32 error_code = 1;
+    optional string description = 2;
+    optional string stacktrace = 3;
+  }
+
+  message ControllerMessage {
+    enum Type {
+      BUILD_PARAMETERS = 1;
+      CANCEL_BUILD_COMMAND = 2;
+    }
+
+    message GlobalSettings {
+
+      message GlobalLibrary {
+        required string name = 1;
+        optional string homePath = 2;
+        optional string type_name = 3;
+        optional string additional_data_xml = 4;
+        repeated string path = 5;
+        optional string version = 6;
+      }
+
+      repeated KeyValuePair path_variable = 1;
+      repeated GlobalLibrary global_library = 2;
+      optional string global_encoding = 3;
+      optional string ignored_files_patterns = 4;
+    }
+
+    message ParametersMessage {
+      enum Type {
+        REBUILD = 1;
+        MAKE = 2;
+        CLEAN = 3;
+        FORCED_COMPILATION = 4;
+      }
+
+      required Type build_type = 1;
+      optional GlobalSettings global_settings = 2;
+      optional string project_id = 3;
+      repeated string module_name = 4;
+      repeated string file_path = 5;
+      repeated string artifact_name = 6;
+      repeated KeyValuePair builder_parameter = 7;
+    }
+
+    required Type type = 1;
+    optional ParametersMessage params_message = 2;
+  }
+
+  message BuilderMessage {
+    enum Type {
+      PARAM_REQUEST = 1;
+      BUILD_EVENT = 2;
+      COMPILE_MESSAGE = 3;
+    }
+
+    message BuildEvent {
+      enum Type {
+        BUILD_COMPLETED = 1;
+        FILES_GENERATED = 2;
+      }
+
+      enum Status {
+        CANCELED = 1;
+        ERRORS = 2;
+        SUCCESS = 3;
+        UP_TO_DATE = 4;
+      }
+
+      message GeneratedFile {
+        required string output_root = 1;
+        required string relative_path = 2;
+      }
+
+      required Type event_type = 1;
+      optional string description = 2;
+      optional Status completion_status = 3;
+      repeated GeneratedFile generated_files = 4;
+    }
+
+    message CompileMessage {
+      enum Kind {
+        ERROR = 1;
+        WARNING = 2;
+        INFO = 3;
+        PROGRESS = 4;
+      }
+      required Kind kind = 1;
+      optional string text = 2;
+      optional string source_file_path = 3;
+      optional uint64 problem_begin_offset = 4;
+      optional uint64 problem_end_offset = 5;
+      optional uint64 problem_location_offset = 6;
+      optional uint64 line = 7;
+      optional uint64 column = 8;
+      optional float  done = 9;
+    }
+
+    required Type type = 1;
+    optional BuildEvent build_event = 2;
+    optional CompileMessage compile_message = 3;
+  }
+
+  required UUID session_id = 1;
+  required Type type = 2;
+  optional ControllerMessage controller_message = 3;
+  optional BuilderMessage builder_message = 4;
+  optional Failure failure = 5;
+}
+
+

@@ -17,11 +17,14 @@ package com.intellij.codeInsight.lookup.impl;
 
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.ui.HeavyweightHint;
+import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
 
 /**
  * @author Konstantin Bulenkov
@@ -36,6 +39,17 @@ public class CompletionExtender extends HeavyweightHint {
     myElement = element;
     myLookup = lookup;
     myIndex = myLookup.getList().getSelectedIndex();
+    myLookup.getComponent().addComponentListener(new ComponentAdapter() {
+      @Override
+      public void componentResized(ComponentEvent e) {
+        recalculateLocation();
+      }
+
+      @Override
+      public void componentMoved(ComponentEvent e) {
+        recalculateLocation();
+      }
+    });
   }
 
   public LookupElement getLookupElement() {
@@ -72,6 +86,18 @@ public class CompletionExtender extends HeavyweightHint {
       }
     }
     return false;
+  }
+
+  void recalculateLocation() {
+    if (!isVisible()) return;
+    final JList list = myLookup.getList();
+    final Point p = list.getLocationOnScreen();
+    p.y += list.indexToLocation(list.getSelectedIndex()).y;
+    final JComponent rootPane = UIUtil.getRootPane(myLookup.getEditor().getContentComponent());
+    if (rootPane != null) {
+      SwingUtilities.convertPointFromScreen(p, rootPane);
+      setLocation(new RelativePoint(rootPane, p));
+    }
   }
 
   @Override

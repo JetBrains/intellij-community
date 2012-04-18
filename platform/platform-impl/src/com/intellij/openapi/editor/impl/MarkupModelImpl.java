@@ -91,7 +91,7 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
     return addRangeHighlighterAndChangeAttributes(offset, offset, layer, textAttributes, HighlighterTargetArea.LINES_IN_RANGE, true, null);
   }
 
-  static int getFirstNonspaceCharOffset(@NotNull Document doc, int lineNumber) {
+  private static int getFirstNonspaceCharOffset(@NotNull Document doc, int lineNumber) {
     int lineStart = doc.getLineStartOffset(lineNumber);
     int lineEnd = doc.getLineEndOffset(lineNumber);
     CharSequence text = doc.getCharsSequence();

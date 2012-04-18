@@ -105,6 +105,7 @@ public class GlobalInspectionContextImpl extends UserDataHolderBase implements G
   private final Map<String, Tools> myTools = new THashMap<String, Tools>();
 
   private AnalysisUIOptions myUIOptions;
+  @NonNls static final String LOCAL_TOOL_ATTRIBUTE = "is_local_tool";
 
   public GlobalInspectionContextImpl(Project project, NotNullLazyValue<ContentManager> contentManager) {
     myProject = project;
@@ -296,43 +297,67 @@ public class GlobalInspectionContextImpl extends UserDataHolderBase implements G
         public void run() {
           performInspectionsWithProgress(scope, manager);
           @NonNls final String ext = ".xml";
+          final Map<Element, Tools> globalTools = new HashMap<Element, Tools>();
           for (Map.Entry<String,Tools> stringSetEntry : myTools.entrySet()) {
-            final Element root = new Element(InspectionsBundle.message("inspection.problems"));
-            final Document doc = new Document(root);
             final Tools sameTools = stringSetEntry.getValue();
             boolean hasProblems = false;
-            boolean isLocalTool = false;
             String toolName = stringSetEntry.getKey();
             if (sameTools != null) {
               for (ScopeToolState toolDescr : sameTools.getTools()) {
                 final InspectionTool tool = (InspectionTool)toolDescr.getTool();
                 if (tool instanceof LocalInspectionToolWrapper) {
                   hasProblems = new File(outputPath, toolName + ext).exists();
-                  isLocalTool = true;
                 }
                 else {
                   tool.updateContent();
                   if (tool.hasReportedProblems()) {
-                    hasProblems = true;
-                    tool.exportResults(root);
+                    final Element root = new Element(InspectionsBundle.message("inspection.problems"));
+                    globalTools.put(root, sameTools);
+                    LOG.assertTrue(!hasProblems, toolName);
+                    break;
                   }
                 }
               }
             }
             if (!hasProblems) continue;
-            @NonNls final String isLocalToolAttribute = "is_local_tool";
-            root.setAttribute(isLocalToolAttribute, String.valueOf(isLocalTool));
             try {
               new File(outputPath).mkdirs();
               final File file = new File(outputPath, toolName + ext);
               inspectionsResults.add(file);
-              if (isLocalTool) {
-                FileUtil.writeToFile(file, ("</" + InspectionsBundle.message("inspection.problems") + ">").getBytes("UTF-8"), true);
+              FileUtil.writeToFile(file, ("</" + InspectionsBundle.message("inspection.problems") + ">").getBytes("UTF-8"), true);
+            }
+            catch (IOException e) {
+              LOG.error(e);
+            }
+          }
+
+          getRefManager().iterate(new RefVisitor() {
+            @Override
+            public void visitElement(final RefEntity refEntity) {
+              for (Element element : globalTools.keySet()) {
+                final Tools tools = globalTools.get(element);
+                for (ScopeToolState state : tools.getTools()) {
+                  try {
+                    ((InspectionTool)state.getTool()).exportResults(element, refEntity);
+                  }
+                  catch (Exception e) {
+                    LOG.error("Problem when exporting: " + refEntity.getExternalName(), e);
+                  }
+                }
               }
-              else {
-                PathMacroManager.getInstance(getProject()).collapsePaths(doc.getRootElement());
-                JDOMUtil.writeDocument(doc, file, "\n");
-              }
+            }
+          });
+          
+          for (Element element : globalTools.keySet()) {
+            final String toolName = globalTools.get(element).getShortName();
+            element.setAttribute(LOCAL_TOOL_ATTRIBUTE, Boolean.toString(false));
+            final Document doc = new Document(element);
+            PathMacroManager.getInstance(getProject()).collapsePaths(doc.getRootElement());
+            try {
+              new File(outputPath).mkdirs();
+              final File file = new File(outputPath, toolName + ext);
+              inspectionsResults.add(file);
+              JDOMUtil.writeDocument(doc, file, "\n");
             }
             catch (IOException e) {
               LOG.error(e);

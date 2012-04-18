@@ -29,10 +29,17 @@ import java.util.List;
  */
 public class RadCaptionTableRow extends RadVisualComponent {
   private final RadViewComponent myComponent;
-  private final StaticDecorator myDecorator = new CaptionStaticDecorator(this);
+  private final StaticDecorator myDecorator;
 
   public RadCaptionTableRow(RadViewComponent component) {
     myComponent = component;
+
+    if (RadTableRowLayout.is(component)) {
+      myDecorator = new CaptionStaticDecorator(this);
+    } else {
+      myDecorator = new CaptionStaticDecorator(this, Color.PINK);
+    }
+
     setNativeComponent(component.getNativeComponent());
   }
 
