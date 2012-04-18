@@ -143,7 +143,7 @@ public class MavenResumeAction extends AnAction {
           case STATE_WAIT_FOR_BUILD:
             if (textWithoutInfo.startsWith("Building ")) {
               String projectName = textWithoutInfo.substring("Building ".length());
-              if (myBuildingProjectIndex > myMavenProjectNames.size() ||
+              if (myBuildingProjectIndex >= myMavenProjectNames.size() ||
                   !projectName.startsWith(myMavenProjectNames.get(myBuildingProjectIndex))) {
                 myState = STATE_WTF;
                 log(String.format("Invalid project building order. Defined order: %s, error index: %d, invalid line: %s",
