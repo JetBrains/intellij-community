@@ -97,7 +97,9 @@ public class FileWatcher {
         startupProcess(false);
       }
     }
-    catch (IOException ignore) { }
+    catch (IOException e) {
+      LOG.warn(e.getMessage());
+    }
 
     if (notifierProcess != null) {
       LOG.info("Native file watcher is operational.");
@@ -228,7 +230,7 @@ public class FileWatcher {
     }
 
     LOG.info("Starting file watcher: " + executable);
-    notifierProcess = Runtime.getRuntime().exec(executable.getAbsolutePath());
+    notifierProcess = Runtime.getRuntime().exec(new String[]{executable.getAbsolutePath()});
     notifierReader = new BufferedReader(new InputStreamReader(notifierProcess.getInputStream()));
     notifierWriter = new BufferedWriter(new OutputStreamWriter(notifierProcess.getOutputStream()));
 

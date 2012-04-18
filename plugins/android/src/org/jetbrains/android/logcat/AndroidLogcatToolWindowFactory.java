@@ -96,6 +96,7 @@ public class AndroidLogcatToolWindowFactory implements ToolWindowFactory {
 
     final Content logcatContent =
       contentManager.getFactory().createContent(contentPanel, AndroidBundle.message("android.logcat.tab.title"), false);
+    logcatContent.putUserData(AndroidLogcatToolWindowView.ANDROID_LOGCAT_VIEW_KEY, view);
     logcatContent.setDisposer(view);
     logcatContent.setCloseable(false);
     logcatContent.setPreferredFocusableComponent(contentPanel);

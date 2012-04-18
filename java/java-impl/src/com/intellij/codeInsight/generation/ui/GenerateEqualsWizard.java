@@ -191,6 +191,15 @@ public class GenerateEqualsWizard extends AbstractWizard {
     if (stepComponent instanceof MemberSelectionPanel) {
       ((MemberSelectionPanel)stepComponent).getTable().requestFocus();
     }
+
+    if (SystemInfo.isMac) {
+      getFinishButton().setVisible(false);
+
+      final JButton nextButton = getNextButton();
+      if (nextButton.isEnabled()) {
+        getRootPane().setDefaultButton(nextButton);
+      }
+    }
   }
 
   protected String getHelpID() {

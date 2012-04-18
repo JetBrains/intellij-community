@@ -282,10 +282,10 @@
     </action>
 
     <action id="Refresh">
-      <keyboard-shortcut first-keystroke="control F5"/>
+      <keyboard-shortcut first-keystroke="meta R"/>
     </action>
     <action id="Rerun">
-      <keyboard-shortcut first-keystroke="control F5"/>
+      <keyboard-shortcut first-keystroke="meta R"/>
     </action>
     <action id="RunClass">
       <keyboard-shortcut first-keystroke="control shift F10"/>

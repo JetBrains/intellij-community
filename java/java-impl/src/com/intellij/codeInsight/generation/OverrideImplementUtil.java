@@ -262,7 +262,7 @@ public class OverrideImplementUtil {
       }
     }
     if (results.isEmpty()) {
-      PsiMethod method1 = GenerateMembersUtil.substituteGenericMethod(method, substitutor);
+      PsiMethod method1 = GenerateMembersUtil.substituteGenericMethod(method, substitutor, aClass);
 
       PsiElementFactory factory = JavaPsiFacade.getInstance(method.getProject()).getElementFactory();
       PsiMethod result = (PsiMethod)factory.createClass("Dummy").add(method1);

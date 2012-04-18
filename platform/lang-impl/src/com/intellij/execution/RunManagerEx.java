@@ -48,8 +48,6 @@ public abstract class RunManagerEx extends RunManager {
 
   public abstract void setTemporaryConfiguration(@Nullable RunnerAndConfigurationSettings tempConfiguration);
 
-  public abstract void setEditBeforeRun(RunConfiguration settings, boolean edit);
-
   public abstract RunManagerConfig getConfig();
 
   @NotNull
