@@ -618,7 +618,8 @@ public class GlobalInspectionContextImpl extends UserDataHolderBase implements G
     for (Tools tools : globalSimpleTools) {
       GlobalInspectionToolWrapper toolWrapper = (GlobalInspectionToolWrapper)tools.getTool();
       GlobalSimpleInspectionTool tool = (GlobalSimpleInspectionTool)toolWrapper.getTool();
-      tool.inspectionFinished(manager, this, toolWrapper);
+      GlobalInspectionToolWrapper problemDescriptionProcessor = getProblemDescriptionProcessor(toolWrapper, localTools);
+      tool.inspectionFinished(manager, this, problemDescriptionProcessor);
     }
   }
 
@@ -638,7 +639,11 @@ public class GlobalInspectionContextImpl extends UserDataHolderBase implements G
             String problemGroup = ((ProblemDescriptor)problemDescriptor).getProblemGroup();
 
             if (problemGroup != null) {
-              dummyWrappersMap.get(problemGroup).addProblemElement(refEntity, problemDescriptor);
+              DescriptorProviderInspection dummyWrapper = dummyWrappersMap.get(problemGroup);
+
+              if (dummyWrapper != null) { // Else it's switched off
+                dummyWrapper.addProblemElement(refEntity, problemDescriptor);
+              }
             }
             else {
               toolWrapper.addProblemElement(refEntity, commonProblemDescriptors);
