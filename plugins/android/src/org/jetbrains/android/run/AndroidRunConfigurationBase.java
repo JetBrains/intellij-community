@@ -238,7 +238,7 @@ public abstract class AndroidRunConfigurationBase extends ModuleBasedConfigurati
     AndroidApplicationLauncher applicationLauncher = getApplicationLauncher(facet);
     if (applicationLauncher != null) {
       return new AndroidRunningState(env, facet, targetChooser, computeCommandLine(), aPackage, applicationLauncher,
-                                     depModule2PackageName, supportMultipleDevices()) {
+                                     depModule2PackageName, supportMultipleDevices(), CLEAR_LOGCAT) {
 
         @NotNull
         @Override
