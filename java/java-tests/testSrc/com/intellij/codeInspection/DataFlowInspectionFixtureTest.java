@@ -57,4 +57,6 @@ public class DataFlowInspectionFixtureTest extends JavaCodeInsightFixtureTestCas
   public void testTryCatchInForNotComplex() throws Throwable { doTest(); }
   public void testFieldChangedBetweenSynchronizedBlocks() throws Throwable { doTest(); }
 
+  public void testIDEA84489() throws Throwable { doTest(); }
+
 }
