@@ -44,11 +44,12 @@ public class OpenFileDescriptor implements Navigatable {
 
   @NotNull
   private final VirtualFile myFile;
-  private final int         myOffset;
-  private final int         myLogicalLine;
-  private final int         myLogicalColumn;
+  private final int myOffset;
+  private final int myLogicalLine;
+  private final int myLogicalColumn;
   private final RangeMarker myRangeMarker;
-  private final Project     myProject;
+  @NotNull
+  private final Project myProject;
 
   private boolean myUseCurrentWindow = false;
 
@@ -121,8 +122,8 @@ public class OpenFileDescriptor implements Navigatable {
     navigateInProjectView();
   }
 
-  private boolean navigateInEditor(Project project, boolean requestFocus) {
-    FileType type = FileTypeManager.getInstance().getKnownFileTypeOrAssociate(myFile);
+  private boolean navigateInEditor(@NotNull Project project, boolean requestFocus) {
+    FileType type = FileTypeManager.getInstance().getKnownFileTypeOrAssociate(myFile,project);
     if (type == null || !myFile.isValid()) return false;
 
     if (type instanceof INativeFileType && requestFocus) {

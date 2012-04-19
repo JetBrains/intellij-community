@@ -243,21 +243,4 @@ public abstract class PsiTestCase extends ModuleTestCase {
   public void commitDocument(com.intellij.openapi.editor.Document document) {
     PsiDocumentManager.getInstance(getProject()).commitDocument(document);
   }
-
-  protected static VirtualFile createChildData(final VirtualFile dir, @NonNls final String name) {
-    return new WriteAction<VirtualFile>() {
-      @Override
-      protected void run(Result<VirtualFile> result) throws Throwable {
-        result.setResult(dir.createChildData(null, name));
-      }
-    }.execute().throwException().getResultObject();
-  }
-  protected static VirtualFile createChildDirectory(final VirtualFile dir, @NonNls final String name) {
-    return new WriteAction<VirtualFile>() {
-      @Override
-      protected void run(Result<VirtualFile> result) throws Throwable {
-        result.setResult(dir.createChildDirectory(null, name));
-      }
-    }.execute().throwException().getResultObject();
-  }
 }

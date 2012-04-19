@@ -31,6 +31,7 @@ import com.intellij.openapi.options.BaseSchemeProcessor;
 import com.intellij.openapi.options.ExternalInfo;
 import com.intellij.openapi.options.SchemesManager;
 import com.intellij.openapi.options.SchemesManagerFactory;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.ByteSequence;
 import com.intellij.openapi.util.io.FileUtil;
@@ -1080,6 +1081,13 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
   @Override
   @Nullable
   public FileType getKnownFileTypeOrAssociate(@NotNull VirtualFile file) {
-    return FileTypeChooser.getKnownFileTypeOrAssociate(file);
+    FileType type = file.getFileType();
+    if (type != UnknownFileType.INSTANCE) return type;
+    return FileTypeChooser.getKnownFileTypeOrAssociate(file.getName());
+  }
+
+  @Override
+  public FileType getKnownFileTypeOrAssociate(@NotNull VirtualFile file, @NotNull Project project) {
+    return FileTypeChooser.getKnownFileTypeOrAssociate(file, project);
   }
 }

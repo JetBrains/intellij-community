@@ -773,4 +773,21 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
   @Retention(RetentionPolicy.RUNTIME)
   @Target({ElementType.METHOD, ElementType.TYPE})
   public @interface WrapInCommand {}
+
+  protected static VirtualFile createChildData(@NotNull final VirtualFile dir, @NotNull @NonNls final String name) {
+    return new WriteAction<VirtualFile>() {
+      @Override
+      protected void run(Result<VirtualFile> result) throws Throwable {
+        result.setResult(dir.createChildData(null, name));
+      }
+    }.execute().throwException().getResultObject();
+  }
+  protected static VirtualFile createChildDirectory(@NotNull final VirtualFile dir, @NotNull @NonNls final String name) {
+    return new WriteAction<VirtualFile>() {
+      @Override
+      protected void run(Result<VirtualFile> result) throws Throwable {
+        result.setResult(dir.createChildDirectory(null, name));
+      }
+    }.execute().throwException().getResultObject();
+  }
 }

@@ -19,10 +19,13 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.fileTypes.impl.FileTypeRenderer;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.ui.ListScrollingUtil;
 import com.intellij.util.ArrayUtil;
@@ -58,6 +61,7 @@ public class FileTypeChooser extends DialogWrapper {
 
     FileType[] fileTypes = FileTypeManager.getInstance().getRegisteredFileTypes();
     Arrays.sort(fileTypes, new Comparator<FileType>() {
+      @Override
       public int compare(final FileType fileType1, final FileType fileType2) {
         if (fileType1 == null){
           return 1;
@@ -82,6 +86,7 @@ public class FileTypeChooser extends DialogWrapper {
     init();
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     myTitleLabel.setText(FileTypesBundle.message("filetype.chooser.prompt", myFileName));
 
@@ -90,6 +95,7 @@ public class FileTypeChooser extends DialogWrapper {
 
     myList.addMouseListener(
       new MouseAdapter() {
+        @Override
         public void mouseClicked(MouseEvent e) {
           if (e.getClickCount() == 2){
             doOKAction();
@@ -100,6 +106,7 @@ public class FileTypeChooser extends DialogWrapper {
 
     myList.getSelectionModel().addListSelectionListener(
       new ListSelectionListener() {
+        @Override
         public void valueChanged(ListSelectionEvent e) {
           updateButtonsState();
         }
@@ -111,6 +118,7 @@ public class FileTypeChooser extends DialogWrapper {
     return myPanel;
   }
 
+  @Override
   public JComponent getPreferredFocusedComponent() {
     return myList;
   }
@@ -119,6 +127,7 @@ public class FileTypeChooser extends DialogWrapper {
     setOKActionEnabled(myList.getSelectedIndex() != -1 || myOpenAsNative.isSelected());
   }
 
+  @Override
   protected String getDimensionServiceKey(){
     return "#com.intellij.fileTypes.FileTypeChooser";
   }
@@ -133,7 +142,8 @@ public class FileTypeChooser extends DialogWrapper {
    * @return Known file type or null. Never returns {@link com.intellij.openapi.fileTypes.FileTypes#UNKNOWN}.
    */
   @Nullable
-  public static FileType getKnownFileTypeOrAssociate(@NotNull VirtualFile file) {
+  public static FileType getKnownFileTypeOrAssociate(@NotNull VirtualFile file, @NotNull Project project) {
+    ((PsiManagerEx)PsiManager.getInstance(project)).getFileManager().findFile(file); // autodetect text file if needed
     FileType type = file.getFileType();
     if (type == FileTypes.UNKNOWN) {
         type = getKnownFileTypeOrAssociate(file.getName());
@@ -142,7 +152,7 @@ public class FileTypeChooser extends DialogWrapper {
   }
 
   @Nullable
-  public static FileType getKnownFileTypeOrAssociate(String fileName) {
+  public static FileType getKnownFileTypeOrAssociate(@NotNull String fileName) {
     FileTypeManager fileTypeManager = FileTypeManager.getInstance();
     FileType type = fileTypeManager.getFileTypeByFileName(fileName);
     if (type == FileTypes.UNKNOWN) {
@@ -160,6 +170,7 @@ public class FileTypeChooser extends DialogWrapper {
     if (type == FileTypes.UNKNOWN) return null;
 
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         FileTypeManagerEx.getInstanceEx().associatePattern(type, (String)chooser.myPattern.getSelectedItem());
       }
@@ -171,8 +182,8 @@ public class FileTypeChooser extends DialogWrapper {
   @NotNull
   static String[] suggestPatterns(@NotNull final String fileName) {
     final Deque<String> patterns = new LinkedList<String>();
-    int i = -1;
     patterns.addFirst(fileName);
+    int i = -1;
     while ((i = fileName.indexOf('.', i + 1)) > 0) {
       final String extension = fileName.substring(i);
       if (!StringUtil.isEmpty(extension)) {

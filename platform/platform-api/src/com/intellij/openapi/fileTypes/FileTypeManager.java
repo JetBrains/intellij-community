@@ -18,6 +18,7 @@ package com.intellij.openapi.fileTypes;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.CachedSingletonsRegistry;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.messages.Topic;
@@ -146,7 +147,10 @@ public abstract class FileTypeManager extends FileTypeRegistry {
    * @return Known file type or null. Never returns {@link FileTypes#UNKNOWN}.
    */
   @Nullable
+  @Deprecated() // use getKnownFileTypeOrAssociate(VirtualFile file, Project project) instead
   public abstract FileType getKnownFileTypeOrAssociate(@NotNull VirtualFile file);
+  @Nullable
+  public abstract FileType getKnownFileTypeOrAssociate(@NotNull VirtualFile file, @NotNull Project project);
 
   /**
    * Returns the semicolon-delimited list of patterns for files and folders

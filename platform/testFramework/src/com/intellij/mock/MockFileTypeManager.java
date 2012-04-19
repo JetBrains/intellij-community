@@ -4,6 +4,7 @@ import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
 import com.intellij.openapi.fileTypes.impl.AbstractFileType;
 import com.intellij.openapi.options.SchemesManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -116,6 +117,11 @@ public class MockFileTypeManager extends FileTypeManagerEx {
   @Override
   public FileType getKnownFileTypeOrAssociate(@NotNull VirtualFile file) {
     return file.getFileType();
+  }
+
+  @Override
+  public FileType getKnownFileTypeOrAssociate(@NotNull VirtualFile file, @NotNull Project project) {
+    return getKnownFileTypeOrAssociate(file);
   }
 
   @Override
