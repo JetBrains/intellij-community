@@ -135,19 +135,17 @@ public final class IdeMouseEventDispatcher {
       ignore = true;
     }
 
+    patchClickCount(e);
+
     if (e.isConsumed()
         || e.isPopupTrigger()
-        || MouseEvent.MOUSE_RELEASED != e.getID()
-        || e.getClickCount() < 1 // TODO[vova,anton] is it possible. it seems that yes! but how???
+        || (e.getButton() > 3 ? e.getID() != MOUSE_PRESSED : e.getID() != MOUSE_RELEASED)
+        || e.getClickCount() < 1
         || e.getButton() == MouseEvent.NOBUTTON) { // See #16995. It did happen
       ignore = true;
     }
 
-    if (e.getID() == MouseEvent.MOUSE_PRESSED && e.getButton() > 3) {
-      return true;
-    }
-
-    final JRootPane root = findRoot(e);
+   final JRootPane root = findRoot(e);
     if (root != null) {
       final Integer lastId = myRootPane2BlockedId.get(root);
       if (lastId != null) {
@@ -213,7 +211,7 @@ public final class IdeMouseEventDispatcher {
       if (actions.length > 0 && e.isConsumed())
         return true;
     }
-    return false;
+    return e.getButton() > 3;
   }
 
   private static void resetPopupTrigger(final MouseEvent e) {
@@ -223,6 +221,18 @@ public final class IdeMouseEventDispatcher {
       popupTrigger.set(e, false);
     }
     catch (Exception ignored) { }
+  }
+
+  private static void patchClickCount(final MouseEvent e) {
+    if (e.getClickCount() == 0 && e.getButton() > 3) {
+      try {
+        final Field clickCount = e.getClass().getDeclaredField("clickCount");
+        clickCount.setAccessible(true);
+        clickCount.set(e, 1);
+      }
+      catch (Exception ignored) {
+      }
+    }
   }
 
   private boolean doHorizontalScrolling(Component c, MouseWheelEvent me) {
