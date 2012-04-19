@@ -3,26 +3,30 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.JavaTestUtil;
 
-public class TabCompletionTest extends LightCompletionTestCase {
-
+public class TabCompletionTest extends LightFixtureCompletionTestCase {
   @Override
-  protected String getTestDataPath() {
-    return JavaTestUtil.getJavaTestDataPath();
+  protected String getBasePath() {
+    return JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/completion/normal";
   }
 
   public void testMethodCallCompletionWithTab() throws Exception {
-    configureByFile("/codeInsight/completion/normal/MethodLookup3.java");
-    checkResultByFile("/codeInsight/completion/normal/MethodLookup3_After.java");
+    configureByFile("MethodLookup3.java");
+    checkResultByFile("MethodLookup3_After.java");
+  }
+
+  public void testReplaceThisWithSuper() throws Throwable {
+    configureByFile("ReplaceThisWithSuper.java");
+    checkResultByFile("ReplaceThisWithSuper_After.java");
   }
 
   public void testTabInXml() throws Throwable {
-    configureByFile("/codeInsight/completion/normal/TabInXml.xml");
-    checkResultByFile("/codeInsight/completion/normal/TabInXml_After.xml");
+    configureByFile("TabInXml.xml");
+    checkResultByFile("TabInXml_After.xml");
   }
-  
+
   public void testTabInXml2() throws Throwable {
-    configureByFile("/codeInsight/completion/normal/TabInXml2.xml");
-    checkResultByFile("/codeInsight/completion/normal/TabInXml2_After.xml");
+    configureByFile("TabInXml2.xml");
+    checkResultByFile("TabInXml2_After.xml");
   }
 
   @Override

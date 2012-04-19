@@ -90,6 +90,7 @@ public abstract class ParenthesesInsertHandler<T extends LookupElement> implemen
   public void handleInsert(final InsertionContext context, final T item) {
     final Editor editor = context.getEditor();
     final Document document = editor.getDocument();
+    context.commitDocument();
     PsiElement element = findNextToken(context);
 
     final char completionChar = context.getCompletionChar();
