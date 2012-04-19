@@ -316,6 +316,10 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
   }
 
   public final void showError(@NotNull String message, @NotNull Throwable e) {
+    if (getProject().isDisposed()) {
+      return;
+    }
+
     while (e instanceof InvocationTargetException) {
       if (e.getCause() == null) {
         break;

@@ -193,7 +193,7 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
     }
     catch (RuntimeException e) {
       myPSIChangeListener.clear();
-      showError("Parsing error", e.getCause());
+      showError("Parsing error", e.getCause() == null ? e : e.getCause());
     }
   }
 
@@ -289,7 +289,7 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
             RenderUtil.renderLayout(myModule, layoutXmlText, myFile, null, target, facet, config, xdpi, ydpi, theme, 10000, true);
 
           if (ApplicationManagerEx.getApplicationEx().isInternal()) {
-            System.out.println("Render time: " + (System.currentTimeMillis() - time));
+            System.out.println("Render time: " + (System.currentTimeMillis() - time)); // XXX
           }
 
           if (result == null) {
@@ -303,8 +303,10 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
             @Override
             public void run() {
               try {
-                hideProgress();
-                runnable.run();
+                if (!getProject().isDisposed()) {
+                  hideProgress();
+                  runnable.run();
+                }
               }
               catch (Throwable e) {
                 myPSIChangeListener.clear();

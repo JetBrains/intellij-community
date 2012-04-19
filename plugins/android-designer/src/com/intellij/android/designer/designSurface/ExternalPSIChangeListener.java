@@ -54,14 +54,14 @@ public class ExternalPSIChangeListener extends PsiTreeChangeAdapter {
   public void start() {
     if (!myRunState) {
       myRunState = true;
-      PsiManager.getInstance(myFile.getProject()).addPsiTreeChangeListener(this);
+      PsiManager.getInstance(myDesigner.getProject()).addPsiTreeChangeListener(this);
     }
   }
 
   public void stop() {
     if (myRunState) {
       myRunState = false;
-      PsiManager.getInstance(myFile.getProject()).removePsiTreeChangeListener(this);
+      PsiManager.getInstance(myDesigner.getProject()).removePsiTreeChangeListener(this);
       clear();
     }
   }
@@ -107,7 +107,7 @@ public class ExternalPSIChangeListener extends PsiTreeChangeAdapter {
     myAlarm.addRequest(new Runnable() {
       @Override
       public void run() {
-        if (myRunState && myInitialize) {
+        if (myRunState && myInitialize && !myDesigner.getProject().isDisposed()) {
           runnable.run();
         }
       }
