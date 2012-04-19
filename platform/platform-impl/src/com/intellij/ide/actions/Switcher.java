@@ -175,8 +175,8 @@ public class Switcher extends AnAction implements DumbAware {
     private final int MAX_FILES_IN_SWITCHER;
     final JBPopup myPopup;
     final Map<ToolWindow, String> ids = new HashMap<ToolWindow, String>();
-    final JList toolWindows;
-    final JList files;
+    final MyList toolWindows;
+    final MyList files;
     final JPanel separator;
     final ToolWindowManager twManager;
     final JLabel pathLabel = new JLabel(" ");
@@ -237,7 +237,7 @@ public class Switcher extends AnAction implements DumbAware {
         twModel.addElement(window);
       }
 
-      toolWindows = new JBList(twModel);
+      toolWindows = new MyList(twModel);
       if (pinned) {
         new NameFilteringListModel<ToolWindow>(toolWindows, new Function<ToolWindow, String>() {
           @Override
@@ -380,7 +380,7 @@ public class Switcher extends AnAction implements DumbAware {
         }
       };
 
-      files = new JBList(filesModel);
+      files = new MyList(filesModel);
       if (pinned) {
         new NameFilteringListModel<FileInfo>(files, new Function<FileInfo, String>() {
           @Override
@@ -511,7 +511,7 @@ public class Switcher extends AnAction implements DumbAware {
       return keymap;
     }
 
-    private int getModifiers(ShortcutSet shortcutSet) {
+    private static int getModifiers(ShortcutSet shortcutSet) {
       if (shortcutSet == null
           || shortcutSet.getShortcuts().length == 0
           || !(shortcutSet.getShortcuts()[0] instanceof KeyboardShortcut)) return Event.CTRL_MASK;
@@ -533,15 +533,24 @@ public class Switcher extends AnAction implements DumbAware {
       }
     }
 
+    KeyEvent lastEvent;
     public void keyPressed(KeyEvent e) {
-      if (mySpeedSearch != null && mySpeedSearch.isPopupActive()) return;
-
+      if ((mySpeedSearch != null && mySpeedSearch.isPopupActive()) || lastEvent == e) return;
+      lastEvent = e;
       switch (e.getKeyCode()) {
         case VK_UP:
-          goBack();
+          if (!isPinnedMode()) {
+            goBack();
+          } else {
+            getSelectedList().processKeyEvent(e);
+          }
           break;
         case VK_DOWN:
-          goForward();
+          if (!isPinnedMode()) {
+            goForward();
+          } else {
+            getSelectedList().processKeyEvent(e);
+          }
           break;
         case VK_ESCAPE:
           cancel();
@@ -690,11 +699,11 @@ public class Switcher extends AnAction implements DumbAware {
       list.ensureIndexIsVisible(index);
     }
 
-    public JList getSelectedList() {
+    public MyList getSelectedList() {
       return getSelectedList(files);
     }
 
-    JList getSelectedList(JList preferable) {
+    MyList getSelectedList(MyList preferable) {
       if (toolWindows.isSelectionEmpty() && files.isSelectionEmpty()) {
         if (preferable != null && preferable.getModel().getSize() > 0) {
           preferable.setSelectedIndex(0);
@@ -715,25 +724,29 @@ public class Switcher extends AnAction implements DumbAware {
     }
 
     void navigate() {
-      final Object value = getSelectedList().getSelectedValue();
+      final Object[] values = getSelectedList().getSelectedValues();
       myPopup.closeOk(null);
-      if (value instanceof ToolWindow) {
-        ((ToolWindow)value).activate(null, true, true);
-      }
-      else if (value instanceof FileInfo) {
-        final FileInfo info = (FileInfo)value;
+      if (values.length > 0 && values[0] instanceof ToolWindow) {
+        ((ToolWindow)values[0]).activate(null, true, true);
+      } else{
         IdeFocusManager.getInstance(project).doWhenFocusSettlesDown(new Runnable() {
           @Override
           public void run() {
             final FileEditorManagerImpl manager = (FileEditorManagerImpl)FileEditorManager.getInstance(project);
-            if (info.second != null) {
-              EditorWindow wnd = findAppropriateWindow(info);
-              if (wnd != null) {
-                manager.openFileImpl2(wnd, info.first, true);
-                manager.addSelectionRecord(info.first, wnd);
+            for (Object value : values) {
+              if (value instanceof FileInfo) {
+                final FileInfo info = (FileInfo)value;
+
+                if (info.second != null) {
+                  EditorWindow wnd = findAppropriateWindow(info);
+                  if (wnd != null) {
+                    manager.openFileImpl2(wnd, info.first, true);
+                    manager.addSelectionRecord(info.first, wnd);
+                  }
+                } else {
+                  manager.openFile(info.first, true);
+                }
               }
-            } else {
-              manager.openFile(info.first, true);
             }
           }
         });
@@ -741,7 +754,7 @@ public class Switcher extends AnAction implements DumbAware {
     }
 
     @Nullable
-    private EditorWindow findAppropriateWindow(FileInfo info) {
+    private static EditorWindow findAppropriateWindow(FileInfo info) {
       if (info.second == null) return null;
       final EditorWindow[] windows = info.second.getOwner().getWindows();
       return ArrayUtil.contains(info.second, windows) ? info.second : windows.length > 0 ? windows[0] : null;
@@ -863,7 +876,7 @@ public class Switcher extends AnAction implements DumbAware {
 
       @Override
       public void propertyChange(PropertyChangeEvent evt) {
-        final JList list = getSelectedList();
+        final MyList list = getSelectedList();
         final Object value = list.getSelectedValue();
         ((NameFilteringListModel)files.getModel()).refilter();
         ((NameFilteringListModel)toolWindows.getModel()).refilter();
@@ -910,6 +923,17 @@ public class Switcher extends AnAction implements DumbAware {
   private static class FileInfo extends Pair<VirtualFile, EditorWindow> {
     public FileInfo(VirtualFile first, EditorWindow second) {
       super(first, second);
+    }
+  }
+
+  private static class MyList extends JBList {
+    public MyList(DefaultListModel model) {
+      super(model);
+    }
+
+    @Override
+    public void processKeyEvent(KeyEvent e) {
+      super.processKeyEvent(e);
     }
   }
 }
