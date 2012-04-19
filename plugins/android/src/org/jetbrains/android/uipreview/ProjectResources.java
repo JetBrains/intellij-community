@@ -110,8 +110,8 @@ public class ProjectResources extends ResourceRepository {
   }
 
   @Override
-  protected void postUpdate() {
-    super.postUpdate();
+  public void postUpdateCleanUp() {
+    super.postUpdateCleanUp();
     mergeIdResources();
   }
 
