@@ -37,28 +37,30 @@ public class LightFilePointer implements VirtualFilePointer {
     myFile = file;
   }
 
+  @Override
   @Nullable
   public VirtualFile getFile() {
     refreshFile();
     return myFile;
   }
 
+  @Override
   @NotNull
   public String getUrl() {
     return myUrl;
   }
 
+  @Override
   @NotNull
   public String getFileName() {
     if (myFile != null) {
       return myFile.getName();
     }
-    else {
-      int index = myUrl.lastIndexOf('/');
-      return index >= 0 ? myUrl.substring(index + 1) : myUrl;
-    }
+    int index = myUrl.lastIndexOf('/');
+    return index >= 0 ? myUrl.substring(index + 1) : myUrl;
   }
 
+  @Override
   @NotNull
   public String getPresentableUrl() {
     VirtualFile file = getFile();
@@ -74,6 +76,7 @@ public class LightFilePointer implements VirtualFilePointer {
     return path.replace('/', File.separatorChar);
   }
 
+  @Override
   public boolean isValid() {
     return getFile() != null;
   }

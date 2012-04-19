@@ -21,6 +21,7 @@ import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.objectTree.ObjectNode;
@@ -41,17 +42,17 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
 
-public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager implements ApplicationComponent{
+public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager implements ApplicationComponent, ModificationTracker {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.impl.VirtualFilePointerManagerImpl");
-
+  private long myVfsModificationCounter;
   // guarded by this
   private final Map<VirtualFilePointerListener, TreeMap<String, VirtualFilePointerImpl>> myUrlToPointerMaps = new LinkedHashMap<VirtualFilePointerListener, TreeMap<String, VirtualFilePointerImpl>>();
 
   // compare by identity because VirtualFilePointerContainer has too smart equals
   // guarded by myContainers
   private final Set<VirtualFilePointerContainerImpl> myContainers = new THashSet<VirtualFilePointerContainerImpl>(TObjectHashingStrategy.IDENTITY);
-  private final VirtualFileManagerEx myVirtualFileManager;
-  private final MessageBus myBus;
+  @NotNull private final VirtualFileManagerEx myVirtualFileManager;
+  @NotNull private final MessageBus myBus;
   private static final Comparator<String> URL_COMPARATOR = SystemInfo.isFileSystemCaseSensitive ? new Comparator<String>() {
     @Override
     public int compare(@NotNull String url1, @NotNull String url2) {
@@ -64,19 +65,24 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
     }
   };
 
-  VirtualFilePointerManagerImpl(@NotNull VirtualFileManagerEx virtualFileManagerEx, MessageBus bus) {
+  VirtualFilePointerManagerImpl(@NotNull VirtualFileManagerEx virtualFileManagerEx, @NotNull MessageBus bus) {
     myVirtualFileManager = virtualFileManagerEx;
     myBus = bus;
     bus.connect().subscribe(VirtualFileManager.VFS_CHANGES, new VFSEventsProcessor());
   }
 
-  synchronized void clearPointerCaches(VirtualFile file, String url, VirtualFilePointerListener listener) {
+  synchronized void clearPointerCaches(@Nullable VirtualFile file, @Nullable String url, VirtualFilePointerListener listener) {
     if (file != null) {
       removeFromMap(file.getUrl(), listener);
     }
     if (url != null && (file == null || URL_COMPARATOR.compare(url, file.getUrl()) != 0)) {
       removeFromMap(url, listener);
     }
+  }
+
+  @Override
+  public long getModificationCount() {
+    return myVfsModificationCounter;
   }
 
   private void removeFromMap(String url, VirtualFilePointerListener listener) {
@@ -89,7 +95,7 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
   }
 
   private class EventDescriptor {
-    private final VirtualFilePointerListener myListener;
+    @NotNull private final VirtualFilePointerListener myListener;
     private final VirtualFilePointer[] myPointers;
 
     private EventDescriptor(@NotNull VirtualFilePointerListener listener, @NotNull List<VirtualFilePointer> pointers) {
@@ -115,7 +121,7 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
     }
   }
 
-  private void addPointersUnder(String path, boolean allowSameFSOptimization, List<VirtualFilePointer> pointers) {
+  private void addPointersUnder(@NotNull String path, boolean allowSameFSOptimization, @NotNull List<VirtualFilePointer> pointers) {
     final boolean urlFromJarFS = allowSameFSOptimization && path.indexOf(JarFileSystem.JAR_SEPARATOR) > 0;
     for (TreeMap<String, VirtualFilePointerImpl> urlToPointer : myUrlToPointerMaps.values()) {
       for (String pointerUrl : urlToPointer.keySet()) {
@@ -133,7 +139,7 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
     }
   }
 
-  private static boolean startsWith(final String url, final String pointerUrl) {
+  private static boolean startsWith(@NotNull final String url, @NotNull final String pointerUrl) {
     String urlSuffix = substringAfterJarSeparator(url);
     String pointerPrefix = substringBeforeJarSeparator(pointerUrl);
     if (!urlSuffix.isEmpty()) {
@@ -144,13 +150,13 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
     return FileUtil.startsWith(pointerPrefix, substringBeforeJarSeparator(url));
   }
 
-  private static String substringBeforeJarSeparator(String url) {
+  private static String substringBeforeJarSeparator(@NotNull String url) {
     int separatorIndex = url.indexOf(JarFileSystem.JAR_SEPARATOR);
     if (separatorIndex < 0) return url;
     return url.substring(0, separatorIndex);
   }
 
-  private static String substringAfterJarSeparator(String url) {
+  private static String substringAfterJarSeparator(@NotNull String url) {
     int separatorIndex = url.indexOf(JarFileSystem.JAR_SEPARATOR);
     if (separatorIndex < 0) return "";
     return url.substring(separatorIndex + JarFileSystem.JAR_SEPARATOR.length());
@@ -159,9 +165,10 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
   /**
    * @see #create(String, com.intellij.openapi.Disposable, com.intellij.openapi.vfs.pointers.VirtualFilePointerListener)
    */
+  @NotNull
   @Override
   @Deprecated
-  public synchronized VirtualFilePointer create(String url, VirtualFilePointerListener listener) {
+  public synchronized VirtualFilePointer create(@NotNull String url, VirtualFilePointerListener listener) {
     return create(url, this, listener);
   }
 
@@ -174,9 +181,10 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
   /**
    * @see #create(com.intellij.openapi.vfs.VirtualFile, com.intellij.openapi.Disposable, com.intellij.openapi.vfs.pointers.VirtualFilePointerListener)
    */
+  @NotNull
   @Override
   @Deprecated
-  public synchronized VirtualFilePointer create(VirtualFile file, VirtualFilePointerListener listener) {
+  public synchronized VirtualFilePointer create(@NotNull VirtualFile file, VirtualFilePointerListener listener) {
     return create(file, this, listener);
   }
 
@@ -246,7 +254,7 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
     return pointer;
   }
 
-  private static void register(Disposable parentDisposable, VirtualFilePointerImpl pointer) {
+  private static void register(@NotNull Disposable parentDisposable, @NotNull VirtualFilePointerImpl pointer) {
     DelegatingDisposable delegating = new DelegatingDisposable(pointer);
     DelegatingDisposable registered = Disposer.findRegisteredObject(parentDisposable, delegating);
     if (registered == null) {
@@ -257,7 +265,7 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
     }
   }
 
-  private static String cleanupPath(String path, String protocol) {
+  private static String cleanupPath(String path, @NotNull String protocol) {
     path = FileUtil.toSystemIndependentName(path);
 
     path = stripTrailingPathSeparator(path, protocol);
@@ -265,7 +273,8 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
     return path;
   }
 
-  private static String removeDoubleSlashes(String path) {
+  @NotNull
+  private static String removeDoubleSlashes(@NotNull String path) {
     while(true) {
       int i = path.lastIndexOf("//");
       if (i != -1) {
@@ -278,7 +287,8 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
     return path;
   }
 
-  private synchronized VirtualFilePointerImpl getOrCreate(VirtualFile file, @NotNull String url, Disposable parentDisposable, @Nullable VirtualFilePointerListener listener, String path) {
+  @Nullable
+  private synchronized VirtualFilePointerImpl getOrCreate(VirtualFile file, @NotNull String url, @NotNull Disposable parentDisposable, @Nullable VirtualFilePointerListener listener, String path) {
     TreeMap<String, VirtualFilePointerImpl> urlToPointer = myUrlToPointerMaps.get(listener);
     if (urlToPointer == null) {
       urlToPointer = new TreeMap<String, VirtualFilePointerImpl>(URL_COMPARATOR);
@@ -293,7 +303,8 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
     return pointer;
   }
 
-  private static String stripTrailingPathSeparator(String path, String protocol) {
+  @NotNull
+  private static String stripTrailingPathSeparator(@NotNull String path, @NotNull String protocol) {
     while (path.endsWith("/") && !(protocol.equals(JarFileSystem.PROTOCOL) && path.endsWith(JarFileSystem.JAR_SEPARATOR))) {
       path = StringUtil.trimEnd(path, "/");
     }
@@ -303,9 +314,10 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
   /**
    * @see #duplicate(com.intellij.openapi.vfs.pointers.VirtualFilePointer, com.intellij.openapi.Disposable, com.intellij.openapi.vfs.pointers.VirtualFilePointerListener)
    */
+  @NotNull
   @Override
   @Deprecated
-  public synchronized VirtualFilePointer duplicate(VirtualFilePointer pointer, VirtualFilePointerListener listener) {
+  public synchronized VirtualFilePointer duplicate(@NotNull VirtualFilePointer pointer, VirtualFilePointerListener listener) {
     return duplicate(pointer, this, listener);
   }
 
@@ -365,17 +377,14 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
     return "SmartVirtualPointerManager";
   }
 
-  private void cleanContainerCaches() {
-    synchronized (myContainers) {
-      for (VirtualFilePointerContainerImpl container : myContainers) {
-        container.dropCaches();
-      }
-    }
+  private void incModificationCounter() {
+    myVfsModificationCounter++;
   }
 
   /**
    * @see #createContainer(com.intellij.openapi.Disposable)
    */
+  @NotNull
   @Override
   @Deprecated
   public synchronized VirtualFilePointerContainer createContainer() {
@@ -385,9 +394,10 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
   /**
    * @see #createContainer(com.intellij.openapi.Disposable, com.intellij.openapi.vfs.pointers.VirtualFilePointerListener)
    */
+  @NotNull
   @Override
   @Deprecated
-  public synchronized VirtualFilePointerContainer createContainer(final VirtualFilePointerFactory factory) {
+  public synchronized VirtualFilePointerContainer createContainer(@NotNull final VirtualFilePointerFactory factory) {
     final VirtualFilePointerContainerImpl virtualFilePointerContainer = new VirtualFilePointerContainerImpl(this, this, null){
       @Override
       protected VirtualFilePointer create(@NotNull VirtualFile file) {
@@ -419,6 +429,7 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
     return registerContainer(parent, new VirtualFilePointerContainerImpl(this, parent, listener));
   }
 
+  @NotNull
   private VirtualFilePointerContainer registerContainer(@NotNull Disposable parent, @NotNull final VirtualFilePointerContainerImpl virtualFilePointerContainer) {
     synchronized (myContainers) {
       myContainers.add(virtualFilePointerContainer);
@@ -436,6 +447,7 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
         }
       }
 
+      @NotNull
       public String toString() {
         return "Disposing container " + virtualFilePointerContainer;
       }
@@ -444,17 +456,18 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
   }
 
   private class VFSEventsProcessor implements BulkFileListener {
-    private List<EventDescriptor> myEvents = null;
-    private List<String> myUrlsToUpdate = null;
-    private List<VirtualFilePointer> myPointersToUpdate = null;
+    @Nullable private List<EventDescriptor> myEvents = null;
+    @Nullable private List<String> myUrlsToUpdate = null;
+    @Nullable private List<VirtualFilePointer> myPointersToUpdate = null;
 
     @Override
     public void before(@NotNull final List<? extends VFileEvent> events) {
-      cleanContainerCaches();
+      //ApplicationManager.getApplication().assertWriteAccessAllowed();
       List<VirtualFilePointer> toFireEvents = new ArrayList<VirtualFilePointer>();
       List<String> toUpdateUrl = new ArrayList<String>();
 
       synchronized (VirtualFilePointerManagerImpl.this) {
+        incModificationCounter();
         for (VFileEvent event : events) {
           if (event instanceof VFileDeleteEvent) {
             final VFileDeleteEvent deleteEvent = (VFileDeleteEvent)event;
@@ -520,7 +533,8 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
 
     @Override
     public void after(@NotNull final List<? extends VFileEvent> events) {
-      cleanContainerCaches();
+      //ApplicationManager.getApplication().assertWriteAccessAllowed();
+      incModificationCounter();
 
       if (myUrlsToUpdate == null) {
         return;
@@ -557,7 +571,7 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
   }
 
   private static class DelegatingDisposable implements Disposable {
-    private final VirtualFilePointerImpl myPointer;
+    @NotNull private final VirtualFilePointerImpl myPointer;
     private int disposeCount = 1;
 
     private DelegatingDisposable(@NotNull VirtualFilePointerImpl pointer) {
@@ -571,6 +585,7 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
       myPointer.dispose();
     }
 
+    @NotNull
     @Override
     public String toString() {
       return "D:" + myPointer.toString();
@@ -624,7 +639,7 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
     return result;
   }
 
-  private static int calcMaxRefCount(Disposable disposable, int result) {
+  private static int calcMaxRefCount(@NotNull Disposable disposable, int result) {
     if (disposable instanceof DelegatingDisposable) {
       result = Math.max(((DelegatingDisposable)disposable).disposeCount, result);
     }

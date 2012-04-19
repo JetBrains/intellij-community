@@ -18,6 +18,8 @@ package com.intellij.openapi.vfs.impl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
@@ -28,8 +30,8 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -46,6 +48,9 @@ public class VirtualFilePointerContainerImpl implements VirtualFilePointerContai
   @NotNull private final Disposable myParent;
   private final VirtualFilePointerListener myListener;
   private VirtualFile[] myCachedDirectories;
+  private String[] myCachedUrls;
+  private VirtualFile[] myCachedFiles;
+  private long myTimeStampOfCachedThings = -1;
   @NonNls private static final String URL_ATTR = "url";
   private boolean myDisposed;
 
@@ -150,78 +155,87 @@ public class VirtualFilePointerContainerImpl implements VirtualFilePointerContai
     }
   }
 
-  void dropCaches() {
-    myCachedDirectories = null;
-    myCachedFiles = null;
-    myCachedUrls = null;
+  private void dropCaches() {
+    myTimeStampOfCachedThings = -1; // make it never equal to myVirtualFilePointerManager.getModificationCount()
   }
 
-  private String[] myCachedUrls;
   @Override
   @NotNull
   public String[] getUrls() {
     assert !myDisposed;
-    if (myCachedUrls == null) {
-      myCachedUrls = calcUrls();
+    String[] cachedUrls = myCachedUrls;
+    if (!isCacheUpToDate()) {
+      Trinity<String[], VirtualFile[], VirtualFile[]> cached = cacheThings();
+      cachedUrls = cached.first;
     }
-    return myCachedUrls;
+    return cachedUrls;
   }
 
+  private static final Trinity<String[], VirtualFile[], VirtualFile[]> EMPTY = Trinity.create(ArrayUtil.EMPTY_STRING_ARRAY, VirtualFile.EMPTY_ARRAY, VirtualFile.EMPTY_ARRAY);
   @NotNull
-  private String[] calcUrls() {
-    if (myList.isEmpty()) return ArrayUtil.EMPTY_STRING_ARRAY;
-    final ArrayList<String> result = new ArrayList<String>(myList.size());
-    for (VirtualFilePointer smartVirtualFilePointer : myList) {
-      result.add(smartVirtualFilePointer.getUrl());
+  private Trinity<String[], VirtualFile[], VirtualFile[]> cacheThings() {
+    if (myList.isEmpty()) {
+      myTimeStampOfCachedThings = myVirtualFilePointerManager.getModificationCount();
+      myCachedDirectories = VirtualFile.EMPTY_ARRAY;
+      myCachedFiles = VirtualFile.EMPTY_ARRAY;
+      myCachedUrls = ArrayUtil.EMPTY_STRING_ARRAY;
+      return EMPTY;
     }
-    return ArrayUtil.toStringArray(result);
+    Object[] vf = myList.toArray();
+    List<VirtualFile> cachedFiles = new ArrayList<VirtualFile>(vf.length);
+    List<String> cachedUrls = new ArrayList<String>(vf.length);
+    List<VirtualFile> cachedDirectories = new ArrayList<VirtualFile>(vf.length/3);
+
+    for (Object v : vf) {
+      Pair<VirtualFile, String> pair = v instanceof VirtualFilePointerImpl ? ((VirtualFilePointerImpl)v).update() : Pair.create(
+        ((VirtualFilePointer)v).getFile(), ((VirtualFilePointer)v).getUrl());
+      if (pair == null) continue;
+      VirtualFile file = pair.first;
+      String url = pair.second;
+      if (url == null) url = file.getUrl();
+      cachedUrls.add(url);
+      if (file != null) {
+        cachedFiles.add(file);
+        if (file.isDirectory()) {
+          cachedDirectories.add(file);
+        }
+      }
+    }
+    VirtualFile[] directories = VfsUtil.toVirtualFileArray(cachedDirectories);
+    myCachedDirectories = directories;
+    VirtualFile[] filesArray;
+    myCachedFiles = filesArray = VfsUtil.toVirtualFileArray(cachedFiles);
+    String[] urlsArray;
+    myCachedUrls = urlsArray = ArrayUtil.toStringArray(cachedUrls);
+    return Trinity.create(urlsArray, filesArray, directories);
   }
 
-  private VirtualFile[] myCachedFiles;
   @Override
   @NotNull
   public VirtualFile[] getFiles() {
     assert !myDisposed;
-    if (myCachedFiles == null) {
-      myCachedFiles = calcFiles();
+    VirtualFile[] cachedFiles = myCachedFiles;
+    if (!isCacheUpToDate()) {
+      Trinity<String[], VirtualFile[], VirtualFile[]> cached = cacheThings();
+      cachedFiles = cached.second;
     }
-    return myCachedFiles;
-  }
-
-  @NotNull
-  private VirtualFile[] calcFiles() {
-    if (myList.isEmpty()) return VirtualFile.EMPTY_ARRAY;
-    final ArrayList<VirtualFile> result = new ArrayList<VirtualFile>(myList.size());
-    for (VirtualFilePointer pointer : myList) {
-      final VirtualFile file = pointer.getFile();
-      if (file != null) {
-        result.add(file);
-      }
-    }
-    return VfsUtil.toVirtualFileArray(result);
+    return cachedFiles;
   }
 
   @Override
   @NotNull
   public VirtualFile[] getDirectories() {
     assert !myDisposed;
-    if (myCachedDirectories == null) {
-      myCachedDirectories = calcDirectories();
+    VirtualFile[] directories = myCachedDirectories;
+    if (!isCacheUpToDate()) {
+      Trinity<String[], VirtualFile[], VirtualFile[]> cached = cacheThings();
+      directories = cached.third;
     }
-    return myCachedDirectories;
+    return directories;
   }
 
-  private VirtualFile[] calcDirectories() {
-    if (myList.isEmpty()) return VirtualFile.EMPTY_ARRAY;
-    final ArrayList<VirtualFile> result = new ArrayList<VirtualFile>(myList.size());
-    for (VirtualFilePointer smartVirtualFilePointer : myList) {
-      final VirtualFile file = smartVirtualFilePointer.getFile();
-      if (file != null && file.isDirectory()) {
-        LOG.assertTrue(file.isValid());
-        result.add(file);
-      }
-    }
-    return VfsUtil.toVirtualFileArray(result);
+  private boolean isCacheUpToDate() {
+    return myTimeStampOfCachedThings == myVirtualFilePointerManager.getModificationCount();
   }
 
   @Override
@@ -229,7 +243,7 @@ public class VirtualFilePointerContainerImpl implements VirtualFilePointerContai
   public VirtualFilePointer findByUrl(@NotNull String url) {
     assert !myDisposed;
     for (VirtualFilePointer pointer : myList) {
-      if (pointer.getUrl().equals(url)) return pointer;
+      if (url.equals(pointer.getUrl())) return pointer;
     }
     return null;
   }

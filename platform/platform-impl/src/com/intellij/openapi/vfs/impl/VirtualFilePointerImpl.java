@@ -97,6 +97,7 @@ public class VirtualFilePointerImpl extends UserDataHolderBase implements Virtua
     return getUrlFromPair(myFileAndUrl);
   }
 
+  @NotNull
   private static String getUrlFromPair(Pair<VirtualFile, String> fileAndUrl) {
     VirtualFile file = fileAndUrl.first;
     String url = fileAndUrl.second;
