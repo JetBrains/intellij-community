@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -64,7 +64,7 @@ import java.util.Collection;
 
 public class MergePanel2 implements DiffViewer {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.diff.impl.incrementalMerge.ui.MergePanel2");
-  private final DiffPanelOutterComponent myPanel;
+  private final DiffPanelOuterComponent myPanel;
   private DiffRequest myData;
   private MergeList myMergeList;
   private boolean myDuringCreation = false;
@@ -109,7 +109,7 @@ public class MergePanel2 implements DiffViewer {
       myEditorsPanels[i].setComponent(editorPlace);
     }
     FontSizeSynchronizer.attachTo(editorPlaces);
-    myPanel = new DiffPanelOutterComponent(TextDiffType.MERGE_TYPES, TOOLBAR);
+    myPanel = new DiffPanelOuterComponent(TextDiffType.MERGE_TYPES, TOOLBAR);
     myPanel.insertDiffComponent(new ThreePanels(myEditorsPanels, myDividers), new MyScrollingPanel());
     myProvider = new MyDataProvider();
     myPanel.setDataProvider(myProvider);
@@ -328,7 +328,7 @@ public class MergePanel2 implements DiffViewer {
     }
   }
 
-  private class MyScrollingPanel implements DiffPanelOutterComponent.ScrollingPanel {
+  private class MyScrollingPanel implements DiffPanelOuterComponent.ScrollingPanel {
     public void scrollEditors() {
       Editor centerEditor = getEditor(1);
       JComponent centerComponent = centerEditor.getContentComponent();
@@ -504,9 +504,9 @@ public class MergePanel2 implements DiffViewer {
   }
 
   private static class StatusUpdater implements ChangeCounter.Listener {
-    private final DiffPanelOutterComponent myPanel;
+    private final DiffPanelOuterComponent myPanel;
 
-    private StatusUpdater(DiffPanelOutterComponent panel) {
+    private StatusUpdater(DiffPanelOuterComponent panel) {
       myPanel = panel;
     }
 
@@ -527,7 +527,7 @@ public class MergePanel2 implements DiffViewer {
       ChangeCounter.getOrCreate(mergeList).removeListener(this);
     }
 
-    public static StatusUpdater install(MergeList mergeList, DiffPanelOutterComponent panel) {
+    public static StatusUpdater install(MergeList mergeList, DiffPanelOuterComponent panel) {
       ChangeCounter counters = ChangeCounter.getOrCreate(mergeList);
       StatusUpdater updater = new StatusUpdater(panel);
       counters.addListener(updater);

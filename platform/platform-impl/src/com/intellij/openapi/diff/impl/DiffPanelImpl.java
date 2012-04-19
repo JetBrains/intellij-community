@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -75,7 +75,7 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.diff.impl.DiffPanelImpl");
 
   private final DiffSplitterI mySplitter;
-  private final DiffPanelOutterComponent myPanel;
+  private final DiffPanelOuterComponent myPanel;
 
   private final Window myOwnerWindow;
   private final DiffPanelOptions myOptions;
@@ -91,7 +91,7 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
   private final FontSizeSynchronizer myFontSizeSynchronizer = new FontSizeSynchronizer();
   private DiffRequest myDiffRequest;
   private boolean myIsRequestFocus = true;
-  private boolean myIsSynchScroll;
+  private boolean myIsSyncScroll;
 
   private static final DiffRequest.ToolbarAddons TOOL_BAR = new DiffRequest.ToolbarAddons() {
     public void customize(DiffToolbar toolbar) {
@@ -102,20 +102,19 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
   private boolean myDisposed = false;
   private final GenericDataProvider myDataProvider;
   private final Project myProject;
-  private final boolean myIsHorisontal;
+  private final boolean myIsHorizontal;
   private CanNotCalculateDiffPanel myNotCalculateDiffPanel;
-  private DiffIsApproximate myDiffIsApproximate;
   private final VisibleAreaListener myVisibleAreaListener;
 
-  public DiffPanelImpl(final Window owner, Project project, boolean enableToolbar, boolean horisontal) {
+  public DiffPanelImpl(final Window owner, Project project, boolean enableToolbar, boolean horizontal) {
     myProject = project;
-    myIsHorisontal = horisontal;
+    myIsHorizontal = horizontal;
     myOptions = new DiffPanelOptions(this);
-    myPanel = new DiffPanelOutterComponent(TextDiffType.DIFF_TYPES, TOOL_BAR);
+    myPanel = new DiffPanelOuterComponent(TextDiffType.DIFF_TYPES, TOOL_BAR);
     myPanel.disableToolbar(!enableToolbar);
     if (enableToolbar) myPanel.resetToolbar();
     myOwnerWindow = owner;
-    myIsSynchScroll = true;
+    myIsSyncScroll = true;
     myLeftSide = new DiffSideView("", this);
     myRightSide = new DiffSideView("", this);
     myLeftSide.becomeMaster();
@@ -123,9 +122,9 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
 
     myData = createDiffPanelState(this);
 
-    if (horisontal) {
+    if (horizontal) {
       mySplitter = new DiffSplitter(myLeftSide.getComponent(), myRightSide.getComponent(),
-                                  new DiffDividerPaint(this, FragmentSide.SIDE1), myData);
+                                    new DiffDividerPaint(this, FragmentSide.SIDE1), myData);
     }
     else {
       mySplitter = new HorizontalDiffSplitter(myLeftSide.getComponent(), myRightSide.getComponent());
@@ -164,7 +163,7 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
   }
 
   public boolean isHorisontal() {
-    return myIsHorisontal;
+    return myIsHorizontal;
   }
 
   public DiffPanelState getDiffPanelState() {
@@ -172,7 +171,7 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
   }
 
   public void noSynchScroll() {
-    myIsSynchScroll = false;
+    myIsSyncScroll = false;
   }
 
   public DiffSplitterI getSplitter() {
@@ -298,8 +297,7 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
 
   public void setPatchAppliedApproximately() {
     if (myNotCalculateDiffPanel == null) {
-      myDiffIsApproximate = new DiffIsApproximate();
-      myPanel.insertTopComponent(myDiffIsApproximate);
+      myPanel.insertTopComponent(new DiffIsApproximate());
     }
   }
 
@@ -402,7 +400,7 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
   public void onContentChangedIn(EditorSource source) {
     myDiffUpdater.contentRemoved(source);
     final EditorEx editor = source.getEditor();
-    if (myIsHorisontal && source.getSide() == FragmentSide.SIDE1 && editor != null) {
+    if (myIsHorizontal && source.getSide() == FragmentSide.SIDE1 && editor != null) {
       editor.setVerticalScrollbarOrientation(EditorEx.VERTICAL_SCROLLBAR_LEFT);
     }
     DiffSideView viewSide = getSideView(source.getSide());
@@ -425,7 +423,7 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
 
     Editor editor1 = getEditor(FragmentSide.SIDE1);
     Editor editor2 = getEditor(FragmentSide.SIDE2);
-    if (editor1 != null && editor2 != null && myIsSynchScroll) {
+    if (editor1 != null && editor2 != null && myIsSyncScroll) {
       myScrollSupport.install(new EditingSides[]{this});
     }
 
@@ -572,7 +570,7 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
     myIsRequestFocus = isRequestFocus;
   }
 
-  private class MyScrollingPanel implements DiffPanelOutterComponent.ScrollingPanel {
+  private class MyScrollingPanel implements DiffPanelOuterComponent.ScrollingPanel {
 
     public void scrollEditors() {
       getOptions().onNewContent(myCurrentSide);
