@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.diff.actions;
 
+import com.intellij.CommonBundle;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
@@ -40,16 +41,15 @@ public class IgnoreWhiteSpacesAction extends ComboBoxAction implements DumbAware
     ComparisonPolicy.IGNORE_SPACE};
 
   public IgnoreWhiteSpacesAction() {
-    myActions.put(ComparisonPolicy.DEFAULT, new IgnoringPolicyAction(DiffBundle.message("diff.acton.ignore.qhitespace.policy.do.not.ignore"), ComparisonPolicy.DEFAULT));
-    myActions.put(ComparisonPolicy.TRIM_SPACE, new IgnoringPolicyAction(
-      DiffBundle.message("diff.acton.ignore.qhitespace.policy.leading.and.trailing"), ComparisonPolicy.TRIM_SPACE));
-    myActions.put(ComparisonPolicy.IGNORE_SPACE, new IgnoringPolicyAction(DiffBundle.message("diff.acton.ignore.qhitespace.policy.all"), ComparisonPolicy.IGNORE_SPACE));
+    myActions.put(ComparisonPolicy.DEFAULT, new IgnoringPolicyAction(DiffBundle.message("diff.acton.ignore.whitespace.policy.do.not.ignore"), ComparisonPolicy.DEFAULT));
+    myActions.put(ComparisonPolicy.TRIM_SPACE, new IgnoringPolicyAction(DiffBundle.message("diff.acton.ignore.whitespace.policy.leading.and.trailing"), ComparisonPolicy.TRIM_SPACE));
+    myActions.put(ComparisonPolicy.IGNORE_SPACE, new IgnoringPolicyAction(DiffBundle.message("diff.acton.ignore.whitespace.policy.all"), ComparisonPolicy.IGNORE_SPACE));
   }
 
   @Override
   public JComponent createCustomComponent(final Presentation presentation) {
     JPanel panel = new JPanel(new BorderLayout());
-    final JLabel label = new JLabel(DiffBundle.message("comparison.ignore.whitespace.acton.name"));
+    final JLabel label = new JLabel(CommonBundle.message("comparison.ignore.whitespace.acton.name"));
     label.setBorder(BorderFactory.createEmptyBorder(0, 4, 0, 4));
     panel.add(label, BorderLayout.WEST);
     panel.add(super.createCustomComponent(presentation), BorderLayout.CENTER);
@@ -77,7 +77,7 @@ public class IgnoreWhiteSpacesAction extends ComboBoxAction implements DumbAware
       presentation.setEnabled(true);
     } else {
       presentation.setIcon(null);
-      presentation.setText(DiffBundle.message("ignore.whitespace.action.not.avaliable.action.name"));
+      presentation.setText(DiffBundle.message("ignore.whitespace.action.not.available.action.name"));
       presentation.setEnabled(false);
     }
   }
