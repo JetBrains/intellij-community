@@ -170,9 +170,5 @@ public class PossibleHeapPollutionVarargsInspection extends BaseJavaLocalInspect
     }
 
     protected abstract void registerProblem(PsiMethod method, PsiIdentifier nameIdentifier);
-
-    @Override
-    public void visitReferenceExpression(PsiReferenceExpression expression) {
-    }
   }
 }

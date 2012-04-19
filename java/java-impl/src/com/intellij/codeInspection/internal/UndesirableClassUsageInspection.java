@@ -61,10 +61,6 @@ public class UndesirableClassUsageInspection extends InternalInspection {
     if (!ApplicationManagerEx.getApplicationEx().isInternal()) return new JavaElementVisitor() {};
     return new JavaElementVisitor() {
       @Override
-      public void visitReferenceExpression(PsiReferenceExpression expression) {
-      }
-
-      @Override
       public void visitNewExpression(PsiNewExpression expression) {
         PsiJavaCodeReferenceElement ref = expression.getClassReference();
         if (ref == null) return;

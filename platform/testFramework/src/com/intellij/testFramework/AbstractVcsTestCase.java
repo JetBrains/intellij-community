@@ -48,6 +48,8 @@ import java.io.OutputStream;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static junit.framework.Assert.assertTrue;
+
 /**
  * @author yole
  */
@@ -343,6 +345,8 @@ public abstract class AbstractVcsTestCase {
   }
 
   public static void editFileInCommand(final Project project, final VirtualFile file, final String newContent) {
+    assertTrue(file.isValid());
+    file.getTimeStamp();
     new WriteCommandAction.Simple(project) {
       @Override
       protected void run() throws Throwable {

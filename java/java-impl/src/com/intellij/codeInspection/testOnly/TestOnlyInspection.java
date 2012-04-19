@@ -50,9 +50,6 @@ public class TestOnlyInspection extends BaseJavaLocalInspectionTool {
       @Override public void visitCallExpression(PsiCallExpression e) {
         validate(e, h);
       }
-
-      @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
-      }
     };
   }
 

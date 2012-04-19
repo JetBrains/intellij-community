@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.List;
 
-public class DiffPanelOutterComponent extends JPanel implements DataProvider {
+public class DiffPanelOuterComponent extends JPanel implements DataProvider {
   private final DiffStatusBar myStatusBar;
   private final DiffToolbarComponent myToolbar;
   private final DiffRequest.ToolbarAddons myDefaultActions;
@@ -43,7 +43,7 @@ public class DiffPanelOutterComponent extends JPanel implements DataProvider {
   private int myPrefferedWidth;
   private Getter<Integer> myDefaultHeight;
 
-  public DiffPanelOutterComponent(List<TextDiffType> diffTypes, DiffRequest.ToolbarAddons defaultActions) {
+  public DiffPanelOuterComponent(List<TextDiffType> diffTypes, DiffRequest.ToolbarAddons defaultActions) {
     super(new BorderLayout());
     myStatusBar = new DiffStatusBar(diffTypes);
     myBottomContainer = new JPanel(new BorderLayout());
@@ -203,7 +203,7 @@ public class DiffPanelOutterComponent extends JPanel implements DataProvider {
   private interface DeferScrollToFirstDiff {
     DeferScrollToFirstDiff scrollNow(ScrollingPanel panel, JComponent component);
 
-    void deferScroll(DiffPanelOutterComponent outter);
+    void deferScroll(DiffPanelOuterComponent outer);
   }
 
   public interface ScrollingPanel {
@@ -215,7 +215,7 @@ public class DiffPanelOutterComponent extends JPanel implements DataProvider {
       return NO_SCROLL_NEEDED;
     }
 
-    public void deferScroll(DiffPanelOutterComponent outter) {
+    public void deferScroll(DiffPanelOuterComponent outer) {
     }
   };
 
@@ -226,11 +226,11 @@ public class DiffPanelOutterComponent extends JPanel implements DataProvider {
       return NO_SCROLL_NEEDED;
     }
 
-    public void deferScroll(final DiffPanelOutterComponent outter) {
-      if (!outter.isDisplayable()) return;
+    public void deferScroll(final DiffPanelOuterComponent outer) {
+      if (!outer.isDisplayable()) return;
       SwingUtilities.invokeLater(new Runnable() {
         public void run() {
-          outter.performScroll();
+          outer.performScroll();
         }
       });
     }

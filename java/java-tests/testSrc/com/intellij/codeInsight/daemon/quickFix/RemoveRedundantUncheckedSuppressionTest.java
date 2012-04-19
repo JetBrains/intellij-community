@@ -68,10 +68,6 @@ public class RemoveRedundantUncheckedSuppressionTest extends LightQuickFixTestCa
                                               @NotNull LocalInspectionToolSession session) {
           return new JavaElementVisitor() {
             @Override
-            public void visitReferenceExpression(PsiReferenceExpression expression) {
-            }
-
-            @Override
             public void visitClass(PsiClass aClass) {
               checkMember(aClass, inspection, holder);
             }

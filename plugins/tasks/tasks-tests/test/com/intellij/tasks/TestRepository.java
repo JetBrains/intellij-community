@@ -44,11 +44,6 @@ class TestRepository extends BaseRepository {
   }
 
   @Override
-  public String extractId(String taskName) {
-    return null;
-  }
-
-  @Override
   public boolean isConfigured() {
     return true;
   }

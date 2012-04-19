@@ -146,8 +146,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   private boolean myEmptyLookup;
 
   private InspectionProfileEntry[] myInspections;
-  private final Map<String, InspectionProfileEntry> myAvailableTools = new THashMap<String, InspectionProfileEntry>();
-  private final Map<String, InspectionTool> myAvailableLocalTools = new THashMap<String, InspectionTool>();
+  private final Map<String, InspectionTool> myAvailableTools = new THashMap<String, InspectionTool>();
 
   private final TempDirTestFixture myTempDirFixture;
   protected final IdeaProjectTestFixture myProjectFixture;
@@ -272,7 +271,6 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   @Override
   public void disableInspections(InspectionProfileEntry... inspections) {
     myAvailableTools.clear();
-    myAvailableLocalTools.clear();
     final ArrayList<InspectionProfileEntry> tools = new ArrayList<InspectionProfileEntry>(Arrays.asList(myInspections));
     for (Iterator<InspectionProfileEntry> i = tools.iterator(); i.hasNext();) {
       final InspectionProfileEntry tool = i.next();
@@ -1069,8 +1067,8 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     myEditor = null;
     myFile = null;
     myPsiManager = null;
+
     myInspections = null;
-    myAvailableLocalTools.clear();
     myAvailableTools.clear();
 
     myProjectFixture.tearDown();
@@ -1086,7 +1084,6 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       String id = tool instanceof LocalInspectionTool ? ((LocalInspectionTool)tool).getID() : shortName;
       HighlightDisplayKey.register(shortName, tool.getDisplayName(), id);
     }
-    myAvailableTools.put(shortName, tool);
     InspectionTool inspectionTool;
     if (tool instanceof LocalInspectionTool) {
       LocalInspectionEP ep = myExtensions.get(tool.getShortName());
@@ -1095,7 +1092,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     else {
       inspectionTool = (InspectionTool)tool;
     }
-    myAvailableLocalTools.put(shortName, inspectionTool);
+    myAvailableTools.put(shortName, inspectionTool);
   }
 
   private void configureInspections(final InspectionProfileEntry[] tools) {
@@ -1114,7 +1111,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       @Override
       @NotNull
       public InspectionProfileEntry[] getInspectionTools(PsiElement element) {
-        final Collection<InspectionTool> tools = myAvailableLocalTools.values();
+        final Collection<InspectionTool> tools = myAvailableTools.values();
         return tools.toArray(new InspectionTool[tools.size()]);
       }
 
@@ -1148,8 +1145,8 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       }
 
       @Override
-      public InspectionTool getInspectionTool(@NotNull String shortName, @NotNull PsiElement element) {
-        return myAvailableLocalTools.get(shortName);
+      public InspectionProfileEntry getInspectionTool(@NotNull String shortName, @NotNull PsiElement element) {
+        return myAvailableTools.get(shortName);
       }
     };
     final InspectionProfileManager inspectionProfileManager = InspectionProfileManager.getInstance();

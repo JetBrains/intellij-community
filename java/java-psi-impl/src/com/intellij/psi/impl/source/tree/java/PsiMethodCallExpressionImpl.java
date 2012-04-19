@@ -200,8 +200,9 @@ public class PsiMethodCallExpressionImpl extends ExpressionPsiElement implements
             Map<PsiTypeParameter, PsiType> map = new HashMap<PsiTypeParameter, PsiType>();
             map.put(javaLangClass.getTypeParameters()[0], PsiWildcardType.createExtends(manager, qualifierType));
             PsiSubstitutor substitutor = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createSubstitutor(map);
-            return JavaPsiFacade.getInstance(manager.getProject()).getElementFactory()
+            final PsiClassType classType = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory()
               .createType(javaLangClass, substitutor, languageLevel);
+            return PsiUtil.captureToplevelWildcards(classType, methodExpression);
           }
         }
       }

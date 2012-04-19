@@ -40,7 +40,8 @@ public class TypesDistinctProver {
       }
 
       if (type2 instanceof PsiCapturedWildcardType) {
-        return provablyDistinct((PsiWildcardType)type1, ((PsiCapturedWildcardType)type2).getWildcard());
+        return ((PsiWildcardType)type1).isExtends() ||
+               provablyDistinct((PsiWildcardType)type1, ((PsiCapturedWildcardType)type2).getWildcard());
       }
 
       if (type2 instanceof PsiClassType) {

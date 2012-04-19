@@ -1075,7 +1075,8 @@ public class GenericsHighlightUtil {
     }
   }
 
-  public static boolean isUncheckedWarning(PsiJavaCodeReferenceElement expression, PsiElement resolve) {
+  public static boolean isUncheckedWarning(PsiJavaCodeReferenceElement expression, JavaResolveResult resolveResult) {
+    final PsiElement resolve = resolveResult.getElement();
     if (resolve instanceof PsiMethod) {
       final PsiMethod psiMethod = (PsiMethod)resolve;
 
@@ -1087,7 +1088,7 @@ public class GenericsHighlightUtil {
           final PsiParameter varargParameter =
             psiMethod.getParameterList().getParameters()[parametersCount - 1];
           final PsiType componentType = ((PsiEllipsisType)varargParameter.getType()).getComponentType();
-          if (!isReifiableType(componentType)) {
+          if (!isReifiableType(resolveResult.getSubstitutor().substitute(componentType))) {
             final PsiElement parent = expression.getParent();
             if (parent instanceof PsiCall) {
               final PsiExpressionList argumentList = ((PsiCall)parent).getArgumentList();
@@ -1109,7 +1110,7 @@ public class GenericsHighlightUtil {
                   }
                 }
                 for (int i = parametersCount - 1; i < args.length; i++) {
-                  if (!isReifiableType(args[i].getType())){
+                  if (!isReifiableType(resolveResult.getSubstitutor().substitute(args[i].getType()))){
                     return true;
                   }
                 }

@@ -393,10 +393,6 @@ public class ProjectNameWithTypeStep extends ProjectNameStep {
     return !myWizardContext.isCreatingNewProject() || super.validate();
   }
 
-  public void disposeUIResources() {
-    super.disposeUIResources();
-  }
-
   private static class PermanentSingleSelectionModel extends DefaultListSelectionModel {
     public PermanentSingleSelectionModel() {
       super.setSelectionMode(SINGLE_SELECTION);

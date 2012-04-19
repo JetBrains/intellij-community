@@ -117,10 +117,6 @@ public class SuspiciousNameCombinationInspection extends BaseLocalInspectionTool
     public MyVisitor(final ProblemsHolder problemsHolder) {
       myProblemsHolder = problemsHolder;
     }
-
-    @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
-    }
-
     @Override public void visitVariable(PsiVariable variable) {
       if (variable.hasInitializer()) {
         PsiExpression expr = variable.getInitializer();

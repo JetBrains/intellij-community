@@ -25,6 +25,7 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.messages.MessageBus;
 
 import javax.swing.event.HyperlinkEvent;
@@ -61,7 +62,9 @@ public class NotificationTestAction extends AnAction implements DumbAware {
     };
 
     final Notification notification = new Notification(TEST_GROUP_ID, "This is a test notification", //"a",
-      "You can<br> close this very<p> very very very long notification by clicking <a href=\"close\">this link</a>. Long long long long. It should be long. Very long. Too long. And even longer.",
+      "You can<br> close this very<p> very very very long notification by clicking <a href=\"close\">this link</a>. Long long long long. It should be long. Very long. Too long." +
+      StringUtil.repeat("<br>line", 100) +
+      " And even longer.",
       type, listener);
 
     ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {

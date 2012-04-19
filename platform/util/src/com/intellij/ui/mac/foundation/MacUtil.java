@@ -15,10 +15,10 @@
  */
 package com.intellij.ui.mac.foundation;
 
+import com.intellij.openapi.util.Comparing;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-
 import java.awt.*;
 
 import static com.intellij.ui.mac.foundation.Foundation.invoke;
@@ -52,11 +52,9 @@ public class MacUtil {
         final ID windowTitle = invoke(window, "title");
         if (windowTitle != null && windowTitle.intValue() != 0) {
           final String titleString = toStringViaUTF8(windowTitle);
-          if (titleString.equals(title)) {
-            if (1 == invoke(window, "isVisible").intValue()) {
-              focusedWindow = window;
-              break;
-            }
+          if (Comparing.equal(titleString, title)) {
+            focusedWindow = window;
+            break;
           }
         }
       }

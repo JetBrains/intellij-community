@@ -44,10 +44,6 @@ public class SegmentedOutputStream extends OutputStream implements PacketProcess
     flush();
   }
 
-  public synchronized void write(byte[] b, int off, int len) throws IOException {
-    super.write(b, off, len);
-  }
-
   public synchronized void flush() throws IOException {
     myPrintStream.flush();
   }

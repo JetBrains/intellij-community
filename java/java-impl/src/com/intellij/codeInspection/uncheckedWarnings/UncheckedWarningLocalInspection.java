@@ -188,7 +188,8 @@ public class UncheckedWarningLocalInspection extends BaseJavaLocalInspectionTool
     public void visitReferenceExpression(PsiReferenceExpression expression) {
       if (IGNORE_UNCHECKED_GENERICS_ARRAY_CREATION) return;
       if (!PsiUtil.isLanguageLevel5OrHigher(expression)) return;
-      if (GenericsHighlightUtil.isUncheckedWarning(expression, expression.resolve())) {
+      final JavaResolveResult result = expression.advancedResolve(false);
+      if (GenericsHighlightUtil.isUncheckedWarning(expression, result)) {
         registerProblem("Unchecked generics array creation for varargs parameter", expression, LocalQuickFix.EMPTY_ARRAY);
       }
     }
@@ -199,7 +200,7 @@ public class UncheckedWarningLocalInspection extends BaseJavaLocalInspectionTool
       if (IGNORE_UNCHECKED_GENERICS_ARRAY_CREATION) return;
       if (!PsiUtil.isLanguageLevel5OrHigher(expression)) return;
       final PsiJavaCodeReferenceElement classReference = expression.getClassOrAnonymousClassReference();
-      if (GenericsHighlightUtil.isUncheckedWarning(classReference, expression.resolveConstructor())) {
+      if (GenericsHighlightUtil.isUncheckedWarning(classReference, expression.resolveMethodGenerics())) {
         registerProblem("Unchecked generics array creation for varargs parameter", classReference, LocalQuickFix.EMPTY_ARRAY);
       }
     }

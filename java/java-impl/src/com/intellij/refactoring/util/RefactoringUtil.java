@@ -945,7 +945,7 @@ public class RefactoringUtil {
     return false;
   }
 
-  public static interface ImplicitConstructorUsageVisitor {
+  public interface ImplicitConstructorUsageVisitor {
     void visitConstructor(PsiMethod constructor, PsiMethod baseConstructor);
 
     void visitClassWithoutConstructors(PsiClass aClass);

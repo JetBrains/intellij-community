@@ -11,8 +11,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * Base class for HTTP-based repositories.
@@ -26,8 +24,6 @@ public abstract class BaseRepositoryImpl extends BaseRepository {
     Protocol.registerProtocol(EASY_HTTPS, new Protocol(EASY_HTTPS, (ProtocolSocketFactory)new EasySSLProtocolSocketFactory(), 443));
   }
 
-  private static final Pattern PATTERN = Pattern.compile("[A-Z]+\\-\\d+");
-
   protected BaseRepositoryImpl() {
   }
 
@@ -37,12 +33,6 @@ public abstract class BaseRepositoryImpl extends BaseRepository {
 
   protected BaseRepositoryImpl(BaseRepository other) {
     super(other);
-  }
-
-  @Nullable
-  public String extractId(String taskName) {
-    Matcher matcher = PATTERN.matcher(taskName);
-    return matcher.find() ? matcher.group() : null;
   }
 
   protected static String encodeUrl(String s) {

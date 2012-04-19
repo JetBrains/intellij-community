@@ -146,6 +146,7 @@ public class OrderRootsEnumeratorImpl implements OrderRootsEnumerator {
     return result;
   }
 
+  @NotNull
   private Collection<String> computeRootsUrls() {
     final Collection<String> result = new LinkedHashSet<String>();
     myOrderEnumerator.forEach(new Processor<OrderEntry>() {

@@ -111,45 +111,29 @@ public class MavenDomProjectProcessorUtils {
   public static XmlTag searchProperty(@NotNull final String propertyName,
                                       @NotNull MavenDomProjectModel projectDom,
                                       @NotNull final Project project) {
-    return doSearchPropertyInProfile(propertyName, projectDom, null, project);
-  }
-
-  @Nullable
-  public static XmlTag searchPropertyInProfile(@NotNull final String propertyName,
-                                               @NotNull MavenDomProfile profileDom) {
-    return doSearchPropertyInProfile(propertyName, null, profileDom, null);
-  }
-
-  @Nullable
-  private static XmlTag doSearchPropertyInProfile(@NotNull final String propertyName,
-                                                  @Nullable MavenDomProjectModel projectDom,
-                                                  @Nullable MavenDomProfile profileDom,
-                                                  @Nullable final Project project) {
-    final XmlTag[] property = new XmlTag[]{null};
-
-    Processor<MavenDomProperties> searchProcessor = new Processor<MavenDomProperties>() {
-      public boolean process(MavenDomProperties mavenDomProperties) {
-        XmlTag propertiesTag = mavenDomProperties.getXmlTag();
-        if (propertiesTag != null) {
-          for (XmlTag each : propertiesTag.getSubTags()) {
-            if (each.getName().equals(propertyName)) {
-              property[0] = each;
-              return true;
-            }
-          }
-        }
-        return false;
+    SearchProcessor<XmlTag, MavenDomProperties> searchProcessor = new SearchProcessor<XmlTag, MavenDomProperties>() {
+      @Override
+      protected XmlTag find(MavenDomProperties element) {
+        return findProperty(element, propertyName);
       }
     };
 
-    if (projectDom != null) {
-      processProperties(projectDom, searchProcessor, project);
-    }
-    else {
-      processPropertiesInProfile(profileDom, searchProcessor);
+    processProperties(projectDom, searchProcessor, project);
+    return searchProcessor.myResult;
+  }
+
+  @Nullable
+  public static XmlTag findProperty(@NotNull MavenDomProperties mavenDomProperties, @NotNull String propertyName) {
+    XmlTag propertiesTag = mavenDomProperties.getXmlTag();
+    if (propertiesTag == null) return null;
+
+    for (XmlTag each : propertiesTag.getSubTags()) {
+      if (each.getName().equals(propertyName)) {
+        return each;
+      }
     }
 
-    return property[0];
+    return null;
   }
 
   public static Set<XmlTag> collectProperties(@NotNull MavenDomProjectModel projectDom, @NotNull final Project project) {
@@ -280,33 +264,31 @@ public class MavenDomProjectProcessorUtils {
 
   @Nullable
   public static MavenDomDependency searchManagingDependency(@NotNull final MavenDomDependency dependency, @NotNull final Project project) {
-    final MavenDomDependency[] parent = new MavenDomDependency[]{null};
-
     final String artifactId = dependency.getArtifactId().getStringValue();
     final String groupId = dependency.getGroupId().getStringValue();
-    if (artifactId != null && groupId != null) {
-      final MavenDomProjectModel model = dependency.getParentOfType(MavenDomProjectModel.class, false);
-      if (model != null) {
-        Processor<MavenDomDependencies> processor = new Processor<MavenDomDependencies>() {
-          public boolean process(MavenDomDependencies mavenDomDependencies) {
-            if (!model.equals(mavenDomDependencies.getParentOfType(MavenDomProjectModel.class, true))) {
-              for (MavenDomDependency domDependency : mavenDomDependencies.getDependencies()) {
-                if (domDependency.equals(dependency)) continue;
-                if (artifactId.equals(domDependency.getArtifactId().getStringValue()) &&
-                    groupId.equals(domDependency.getGroupId().getStringValue())) {
-                  parent[0] = domDependency;
-                  return true;
-                }
-              }
-            }
-            return false;
-          }
-        };
-        processDependenciesInDependencyManagement(model, processor, project);
-      }
-    }
+    if (artifactId == null || groupId == null) return null;
 
-    return parent[0];
+    final MavenDomProjectModel model = dependency.getParentOfType(MavenDomProjectModel.class, false);
+    if (model == null) return null;
+
+    SearchProcessor<MavenDomDependency, MavenDomDependencies> processor = new SearchProcessor<MavenDomDependency, MavenDomDependencies>() {
+      @Override
+      protected MavenDomDependency find(MavenDomDependencies mavenDomDependencies) {
+        if (!model.equals(mavenDomDependencies.getParentOfType(MavenDomProjectModel.class, true))) {
+          for (MavenDomDependency domDependency : mavenDomDependencies.getDependencies()) {
+            if (artifactId.equals(domDependency.getArtifactId().getStringValue()) &&
+                groupId.equals(domDependency.getGroupId().getStringValue())) {
+              return domDependency;
+            }
+          }
+        }
+
+        return null;
+      }
+    };
+    processDependenciesInDependencyManagement(model, processor, project);
+
+    return processor.myResult;
   }
 
 
@@ -344,16 +326,6 @@ public class MavenDomProjectProcessorUtils {
     };
 
     return process(projectDom, processor, project, domProfileFunction, projectDomFunction);
-  }
-
-  public static boolean processPropertiesInProfile(@NotNull MavenDomProfile profileDom,
-                                                   @NotNull final Processor<MavenDomProperties> processor) {
-    return processProfile(profileDom, processor, new Function<MavenDomProfile, MavenDomProperties>() {
-      @Override
-      public MavenDomProperties fun(MavenDomProfile mavenDomProfile) {
-        return mavenDomProfile.getProperties();
-      }
-    });
   }
 
   public static <T> boolean process(@NotNull MavenDomProjectModel projectDom,
@@ -499,5 +471,24 @@ public class MavenDomProjectProcessorUtils {
 
       return process(myManager.getGeneralSettings(), MavenDomUtil.getVirtualFile(projectDom), parentDesc);
     }
+  }
+
+  private abstract static class SearchProcessor<R, T> implements Processor<T> {
+
+    private R myResult;
+
+    @Override
+    public final boolean process(T t) {
+      R res = find(t);
+      if (res != null) {
+        myResult = res;
+        return true;
+      }
+
+      return false;
+    }
+
+    @Nullable
+    protected abstract R find(T element);
   }
 }

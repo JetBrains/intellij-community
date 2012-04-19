@@ -46,6 +46,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -1042,7 +1043,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
         }
         oldItem = item;
 
-        if (item != null && LookupImpl.this.isVisible()) {
+        if (item != null && LookupImpl.this.isVisible() && LookupImpl.this.isFocused() && !Registry.is("jeka")) {
           if (extender == null || !extender.isVisible() || !extender.sameAsFor(item)) {
             if (extender != null) extender.hide();
             extender = new CompletionExtender(item, LookupImpl.this);

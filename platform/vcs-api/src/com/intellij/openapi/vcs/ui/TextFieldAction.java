@@ -13,10 +13,12 @@
 package com.intellij.openapi.vcs.ui;
 
 import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.IdeBorderFactory;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -36,14 +38,17 @@ public abstract class TextFieldAction extends AnAction implements CustomComponen
     myField = new JTextField(initSize);
     myField.addKeyListener(new KeyAdapter() {
       @Override
-      public void keyTyped(KeyEvent e) {
-        if ('\n' == e.getKeyChar()) {
+      public void keyPressed(KeyEvent e) {
+        if (e.getKeyCode() == KeyEvent.VK_ENTER) {
           e.consume();
           actionPerformed(null);
         }
       }
     });
   }
+
+  @Override
+  public abstract void actionPerformed(@Nullable AnActionEvent e);
 
   public JComponent createCustomComponent(Presentation presentation) {
     // honestly borrowed from SearchTextField

@@ -20,11 +20,16 @@ import com.intellij.tasks.TaskRepository;
 import com.intellij.tasks.TaskRepositoryType;
 import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.util.xmlb.annotations.Transient;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * @author Dmitry Avdeev
  */
 public abstract class BaseRepository extends TaskRepository {
+  private static final Pattern PATTERN = Pattern.compile("[A-Z]+\\-\\d+");
   protected String myUsername = "";
   protected String myPassword = "";
   protected boolean myUseProxy;
@@ -109,5 +114,11 @@ public abstract class BaseRepository extends TaskRepository {
 
   public void setUseHttpAuthentication(boolean useHttpAuthentication) {
     myUseHttpAuthentication = useHttpAuthentication;
+  }
+
+  @Nullable
+  public String extractId(String taskName) {
+    Matcher matcher = PATTERN.matcher(taskName);
+    return matcher.find() ? matcher.group() : null;
   }
 }

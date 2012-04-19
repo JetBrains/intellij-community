@@ -227,6 +227,11 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
   }
 
   @Override
+  public LocalTask findTask(String id) {
+    return myTasks.get(id);
+  }
+
+  @Override
   public List<Task> getIssues(String query) {
     return getIssues(query, true);
   }

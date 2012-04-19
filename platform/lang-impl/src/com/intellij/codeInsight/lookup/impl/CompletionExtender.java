@@ -92,12 +92,17 @@ public class CompletionExtender extends HeavyweightHint {
     if (!isVisible()) return;
     final JList list = myLookup.getList();
     final Point p = list.getLocationOnScreen();
-    p.y += list.indexToLocation(list.getSelectedIndex()).y;
-    final JComponent rootPane = UIUtil.getRootPane(myLookup.getEditor().getContentComponent());
-    if (rootPane != null) {
-      SwingUtilities.convertPointFromScreen(p, rootPane);
-      setLocation(new RelativePoint(rootPane, p));
+    final Point point = list.indexToLocation(list.getSelectedIndex());
+    if (point != null) {
+      p.y += point.y;
+      final JComponent rootPane = UIUtil.getRootPane(myLookup.getEditor().getContentComponent());
+      if (rootPane != null) {
+        SwingUtilities.convertPointFromScreen(p, rootPane);
+        setLocation(new RelativePoint(rootPane, p));
+        return;
+      }
     }
+    hide();
   }
 
   @Override

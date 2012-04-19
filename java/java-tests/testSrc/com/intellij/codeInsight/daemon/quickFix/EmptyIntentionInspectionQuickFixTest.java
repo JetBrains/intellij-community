@@ -8,7 +8,6 @@ import com.intellij.codeInspection.defUse.DefUseInspection;
 import com.intellij.psi.JavaElementVisitor;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiLiteralExpression;
-import com.intellij.psi.PsiReferenceExpression;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -53,9 +52,6 @@ public class EmptyIntentionInspectionQuickFixTest extends LightQuickFixTestCase{
       @NotNull
       public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
         return new JavaElementVisitor() {
-          @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
-
-          }
           @Override public void visitLiteralExpression(PsiLiteralExpression expression) {
             final String s = (String)expression.getValue();
             if (s.contains("a")) holder.registerProblem(expression, "Look ma! This String contains 'a'");

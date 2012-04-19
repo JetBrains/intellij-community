@@ -16,13 +16,12 @@
 package com.intellij.debugger.ui.breakpoints.actions;
 
 import com.intellij.debugger.ui.breakpoints.BreakpointPanel;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
-import com.intellij.ide.IdeBundle;
 
-import javax.swing.*;
 import java.awt.event.ActionEvent;
 
 /**
@@ -46,9 +45,6 @@ public class GotoSourceAction extends BreakpointPanelAction {
     if (editSourceDescriptor != null) {
       FileEditorManager.getInstance(myProject).openTextEditor(editSourceDescriptor, true);
     }
-  }
-  public void setButton(AbstractButton button) {
-    super.setButton(button);
   }
 
   public void setPanel(BreakpointPanel panel) {
