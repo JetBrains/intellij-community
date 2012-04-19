@@ -119,3 +119,12 @@ class OCM<T> {
       this(s, false, c);
     }
 }
+
+class TPSubstitution<T> {
+    public void f(T... args) {
+    }
+
+    public void g() {
+        new TPSubstitution<String>().f();
+    }
+}
