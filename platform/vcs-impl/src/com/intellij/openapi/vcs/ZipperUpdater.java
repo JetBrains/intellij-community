@@ -41,6 +41,7 @@ public class ZipperUpdater {
 
   public void queue(final Runnable runnable, final boolean urgent) {
     synchronized (myLock) {
+      if (myAlarm.isDisposed()) return;
       final boolean wasRaised = myRaised;
       myRaised = true;
       if (! wasRaised) {

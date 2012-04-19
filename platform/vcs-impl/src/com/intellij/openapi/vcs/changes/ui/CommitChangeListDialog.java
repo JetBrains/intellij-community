@@ -155,7 +155,12 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     CommitChangeListDialog dialog =
       new CommitChangeListDialog(project, changes, initialSelection, executors, showVcsCommit, defaultList, changeLists, null, false,
                                  comment);
-    dialog.show();
+    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+      dialog.show();
+    }
+    else {
+      dialog.doOKAction();
+    }
     return dialog.isOK();
   }
 
@@ -193,7 +198,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
 
   public static boolean commitChanges(final Project project, final Collection<Change> changes, final LocalChangeList initialSelection,
                                    final List<CommitExecutor> executors, final boolean showVcsCommit, final String comment) {
-    if (changes.isEmpty()) {
+    if (changes.isEmpty() && !ApplicationManager.getApplication().isUnitTestMode()) {
       Messages.showInfoMessage(project, VcsBundle.message("commit.dialog.no.changes.detected.text") ,
                                  VcsBundle.message("commit.dialog.no.changes.detected.title"));
       return false;

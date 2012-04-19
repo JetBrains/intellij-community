@@ -581,8 +581,8 @@ public void addMessageToConsoleWindow(final String message, final TextAttributes
   }
 
   public void stopBackgroundVcsOperation() {
-    // in fact, the condition is "should not be called under ApplicationManager.invokeLater() and similiar"
-    assert ! ApplicationManager.getApplication().isDispatchThread();
+    // in fact, the condition is "should not be called under ApplicationManager.invokeLater() and similar"
+    assert !ApplicationManager.getApplication().isDispatchThread() || ApplicationManager.getApplication().isUnitTestMode();
     LOG.assertTrue(myBackgroundOperationCounter > 0, "myBackgroundOperationCounter > 0");
     myBackgroundOperationCounter--;
   }
