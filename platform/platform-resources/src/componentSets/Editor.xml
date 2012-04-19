@@ -32,7 +32,7 @@
     </component>
     <component>
       <implementation-class>com.intellij.openapi.editor.LazyRangeMarkerFactory</implementation-class>
+      <loadForDefaultProject/>
     </component>
-
   </project-components>
 </components>
