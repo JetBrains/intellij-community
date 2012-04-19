@@ -122,6 +122,7 @@ class OCM<T> {
 
 class TPSubstitution<T> {
     public void f(T... args) {
+      System.out.println(args);
     }
 
     public void g() {
