@@ -28,10 +28,12 @@ import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.ui.BalloonImpl;
+import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.UIUtil;
@@ -203,7 +205,7 @@ public class NotificationsManagerImpl extends NotificationsManager implements No
       final ProjectManager projectManager = ProjectManager.getInstance();
       final boolean noProjects = projectManager.getOpenProjects().length == 0;
       final boolean sticky = NotificationDisplayType.STICKY_BALLOON == displayType || noProjects;
-      final Balloon balloon = createBalloon(notification, false, false);
+      final Balloon balloon = createBalloon((IdeFrameImpl)window, notification, false, false);
       Disposer.register(project != null ? project : ApplicationManager.getApplication(), balloon);
 
       if (notification.isExpired()) {
@@ -251,7 +253,7 @@ public class NotificationsManagerImpl extends NotificationsManager implements No
     return frame;
   }
 
-  public static Balloon createBalloon(final Notification notification, final boolean showCallout, final boolean hideOnClickOutside) {
+  public static Balloon createBalloon(@NotNull final IdeFrame window, final Notification notification, final boolean showCallout, final boolean hideOnClickOutside) {
     final JEditorPane text = new JEditorPane();
     text.setEditorKit(UIUtil.getHTMLEditorKit());
 
@@ -273,15 +275,26 @@ public class NotificationsManagerImpl extends NotificationsManager implements No
 
     final JPanel content = new NonOpaquePanel(new BorderLayout((int)(label.getIconTextGap() * 1.5), (int)(label.getIconTextGap() * 1.5)));
 
-    final NonOpaquePanel textWrapper = new NonOpaquePanel(new GridBagLayout());
-    textWrapper.add(text);
-    content.add(textWrapper, BorderLayout.CENTER);
+    text.setCaretPosition(0);
+    JScrollPane pane = ScrollPaneFactory.createScrollPane(text,
+                                                          ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
+                                                          ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+    pane.setBorder(null);
+    pane.setOpaque(false);
+    pane.getViewport().setOpaque(false);
+    content.add(pane, BorderLayout.CENTER);
 
     final NonOpaquePanel north = new NonOpaquePanel(new BorderLayout());
     north.add(new JLabel(NotificationsUtil.getIcon(notification)), BorderLayout.NORTH);
     content.add(north, BorderLayout.WEST);
 
     content.setBorder(new EmptyBorder(2, 4, 2, 4));
+
+    Dimension preferredSize = pane.getPreferredSize();
+    int maxHeight = Math.min(400, window.getComponent().getHeight() - 20);
+    if (preferredSize.height > maxHeight) {
+      pane.setPreferredSize(new Dimension(preferredSize.width, maxHeight));
+    }
 
     final BalloonBuilder builder = JBPopupFactory.getInstance().createBalloonBuilder(content);
     builder.setFillColor(NotificationsUtil.getBackground(notification)).setCloseButtonEnabled(true).setShowCallout(showCallout)

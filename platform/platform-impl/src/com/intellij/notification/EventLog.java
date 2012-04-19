@@ -41,9 +41,7 @@ import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.wm.ToolWindow;
-import com.intellij.openapi.wm.ToolWindowFactory;
-import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.openapi.wm.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
@@ -532,7 +530,9 @@ public class EventLog implements Notifications {
 
       RelativePoint target = EventLog.getProjectComponent(project).myConsole.getHyperlinkLocation(this);
       if (target != null) {
-        Balloon balloon = NotificationsManagerImpl.createBalloon(myNotification, true, true);
+        IdeFrame frame = WindowManager.getInstance().getIdeFrame(project);
+        assert frame != null;
+        Balloon balloon = NotificationsManagerImpl.createBalloon(frame, myNotification, true, true);
         Disposer.register(project, balloon);
         balloon.show(target, Balloon.Position.above);
       }
