@@ -489,4 +489,9 @@ public class JavaLanguageInjectionSupport extends AbstractLanguageInjectionSuppo
       super.setupPresentation(injection, presentation, isSelected);
     }
   }
+
+  @Override
+  public String getHelpId() {
+    return "reference.settings.injection.language.injection.settings.java.parameter";
+  }
 }
