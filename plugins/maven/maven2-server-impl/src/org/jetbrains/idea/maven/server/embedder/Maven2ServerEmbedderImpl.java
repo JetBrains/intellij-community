@@ -285,19 +285,30 @@ public class Maven2ServerEmbedderImpl extends MavenRemoteObject implements Maven
           MavenProject project = RemoteNativeMavenProjectHolder.findProjectById(nativeMavenProjectId);
           PluginDescriptor result = getComponent(PluginManager.class).verifyPlugin(mavenPlugin, project,
                                                                                    myImpl.getSettings(), myImpl.getLocalRepository());
-          if (!transitive) return Collections.emptyList();
-
-          // todo try to use parallel downloading
 
           Map<MavenArtifactInfo, MavenArtifact> resolvedArtifacts = new THashMap<MavenArtifactInfo, MavenArtifact>();
-          for (Artifact each : (Iterable<Artifact>)result.getIntroducedDependencyArtifacts()) {
-            resolveIfNecessary(new MavenArtifactInfo(each.getGroupId(), each.getArtifactId(), each.getVersion(), each.getType(), null),
-                               repositories, resolvedArtifacts);
+
+          Artifact pluginArtifact = result.getPluginArtifact();
+
+          MavenArtifactInfo artifactInfo = new MavenArtifactInfo(pluginArtifact.getGroupId(),
+                                                                 pluginArtifact.getArtifactId(),
+                                                                 pluginArtifact.getVersion(),
+                                                                 pluginArtifact.getType(), null);
+
+          resolveIfNecessary(artifactInfo, repositories, resolvedArtifacts);
+
+          if (transitive) {
+            // todo try to use parallel downloading
+            for (Artifact each : (Iterable<Artifact>)result.getIntroducedDependencyArtifacts()) {
+              resolveIfNecessary(new MavenArtifactInfo(each.getGroupId(), each.getArtifactId(), each.getVersion(), each.getType(), null),
+                                 repositories, resolvedArtifacts);
+            }
+            for (ComponentDependency each : (List<ComponentDependency>)result.getDependencies()) {
+              resolveIfNecessary(new MavenArtifactInfo(each.getGroupId(), each.getArtifactId(), each.getVersion(), each.getType(), null),
+                                 repositories, resolvedArtifacts);
+            }
           }
-          for (ComponentDependency each : (List<ComponentDependency>)result.getDependencies()) {
-            resolveIfNecessary(new MavenArtifactInfo(each.getGroupId(), each.getArtifactId(), each.getVersion(), each.getType(), null),
-                               repositories, resolvedArtifacts);
-          }
+
           return new THashSet<MavenArtifact>(resolvedArtifacts.values());
         }
         catch (Exception e) {
