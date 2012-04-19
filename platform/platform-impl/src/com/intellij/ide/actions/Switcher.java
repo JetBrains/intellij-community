@@ -327,9 +327,9 @@ public class Switcher extends AnAction implements DumbAware {
             }
           }
         }
+        if (editors.size() == 1) selectionIndex++;
         if (editors.size() == 1 && (filesData.isEmpty() || !editors.get(0).getFirst().equals(filesData.get(0).getFirst()))) {
           filesData.add(0, editors.get(0));
-          selectionIndex--;
         }
       } else {
         for (int i = 0; i < Math.min(MAX_FILES_IN_SWITCHER, editors.size()); i++) {
@@ -397,7 +397,7 @@ public class Switcher extends AnAction implements DumbAware {
         }, mySpeedSearch);
       }
 
-      files.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+      files.setSelectionMode(pinned ? ListSelectionModel.MULTIPLE_INTERVAL_SELECTION : ListSelectionModel.SINGLE_SELECTION);
       files.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
         public void valueChanged(ListSelectionEvent e) {
           if (!files.isSelectionEmpty() && !toolWindows.isSelectionEmpty()) {
