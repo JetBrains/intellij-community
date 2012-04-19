@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -110,10 +110,11 @@ public class DiffApplication implements ApplicationStarterEx {
       final DirDiffSettings settings = new DirDiffSettings();
       settings.showInFrame = false;
       diffManager.showDiff(d1, d2, settings, null);
-    } else {
+    }
+    else {
       file1.refresh(false, false);
       file2.refresh(false, false);
-      SimpleDiffRequest request = SimpleDiffRequest.compareFiles(file1, file2, null);
+      SimpleDiffRequest request = SimpleDiffRequest.compareFiles(file1, file2, ProjectManager.getInstance().getDefaultProject());
       request.addHint(DiffTool.HINT_SHOW_MODAL_DIALOG);
       DiffManager.getInstance().getIdeaDiffTool().show(request);
       FileDocumentManager.getInstance().saveAllDocuments();
