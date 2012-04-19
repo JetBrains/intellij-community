@@ -1,6 +1,7 @@
 <extensions>
   <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
   <appStarter implementation="com.intellij.openapi.diff.DiffApplication"/>
+  <appStarter implementation="com.intellij.openapi.diff.impl.MergeApplication"/>
 
   <applicationService serviceInterface="com.intellij.ide.util.PropertiesComponent"
                       serviceImplementation="com.intellij.ide.util.AppPropertiesComponentImpl"/>
@@ -102,7 +103,7 @@
   <applicationService serviceInterface="com.intellij.util.InstanceofCheckerGenerator"
                       serviceImplementation="com.intellij.util.InstanceofCheckerGeneratorImpl"/>
   <applicationService serviceInterface="com.intellij.internal.psiView.PsiViewerSettings"
-                  serviceImplementation="com.intellij.internal.psiView.PsiViewerSettings"/>
+                      serviceImplementation="com.intellij.internal.psiView.PsiViewerSettings"/>
 
   <applicationService serviceInterface="com.intellij.util.graph.GraphAlgorithms"
                       serviceImplementation="com.intellij.util.graph.impl.GraphAlgorithmsImpl"/>
@@ -128,7 +129,7 @@
 
   <applicationService serviceInterface="com.intellij.openapi.editor.colors.ex.DefaultColorSchemesManager"
                       serviceImplementation="com.intellij.openapi.editor.colors.ex.DefaultColorSchemesManager"/>
-  <applicationService serviceInterface="com.intellij.openapi.editor.colors.EditorColorsManager"                 
+  <applicationService serviceInterface="com.intellij.openapi.editor.colors.EditorColorsManager"
                       serviceImplementation="com.intellij.openapi.editor.colors.impl.EditorColorsManagerImpl"/>
   <exportable serviceInterface="com.intellij.openapi.editor.colors.EditorColorsManager"/>
   <schemeOwner serviceInterface="com.intellij.openapi.editor.colors.EditorColorsManager"/>
@@ -142,7 +143,8 @@
                   serviceImplementation="com.intellij.openapi.vcs.readOnlyHandler.ReadonlyStatusHandlerImpl"/>
   <projectService serviceInterface="com.intellij.openapi.startup.StartupManager"
                   serviceImplementation="com.intellij.ide.startup.impl.StartupManagerImpl"/>
-  <projectService serviceInterface="com.intellij.openapi.ui.MasterDetailsStateService" serviceImplementation="com.intellij.openapi.ui.MasterDetailsStateService"/>
+  <projectService serviceInterface="com.intellij.openapi.ui.MasterDetailsStateService"
+                  serviceImplementation="com.intellij.openapi.ui.MasterDetailsStateService"/>
   <projectService serviceInterface="com.intellij.ide.SelectInManager" serviceImplementation="com.intellij.ide.SelectInManager"/>
 
   <projectService serviceInterface="com.intellij.ide.errorTreeView.impl.ErrorTreeViewConfiguration"
@@ -161,12 +163,13 @@
   <projectService serviceInterface="com.intellij.ui.tabs.FileColorSharedConfigurationManager"
                   serviceImplementation="com.intellij.ui.tabs.FileColorSharedConfigurationManager"/>
 
-  <projectService serviceInterface="com.intellij.openapi.project.DumbService" serviceImplementation="com.intellij.openapi.project.DumbServiceImpl"/>
+  <projectService serviceInterface="com.intellij.openapi.project.DumbService"
+                  serviceImplementation="com.intellij.openapi.project.DumbServiceImpl"/>
 
-  <projectService serviceInterface="com.intellij.psi.util.CachedValuesManager" 
+  <projectService serviceInterface="com.intellij.psi.util.CachedValuesManager"
                   serviceImplementation="com.intellij.util.CachedValuesManagerImpl"/>
 
-  <projectService serviceInterface="com.intellij.openapi.vcs.impl.projectlevelman.AllVcsesI" 
+  <projectService serviceInterface="com.intellij.openapi.vcs.impl.projectlevelman.AllVcsesI"
                   serviceImplementation="com.intellij.openapi.vcs.impl.projectlevelman.AllVcses"/>
 
   <projectService serviceInterface="com.intellij.openapi.vcs.changes.RemoteRevisionsCache"
@@ -207,7 +210,7 @@
 
   <fileTypeFactory implementation="com.intellij.openapi.fileTypes.impl.PlatformFileTypeFactory"/>
   <applicationService serviceInterface="com.intellij.openapi.options.colors.ColorSettingsPages"
-                        serviceImplementation="com.intellij.openapi.options.colors.pages.ColorSettingsPagesImpl"/>
+                      serviceImplementation="com.intellij.openapi.options.colors.pages.ColorSettingsPagesImpl"/>
 
   <applicationConfigurable instance="com.intellij.openapi.updateSettings.impl.UpdateSettingsConfigurable"/>
 
@@ -218,7 +221,8 @@
                       serviceImplementation="com.intellij.ui.ColorChooserServiceImpl"/>
 
   <scopeParserExtension implementation="com.intellij.psi.search.scope.packageSet.FilePackageSetParserExtension"/>
-  <applicationService serviceInterface="com.intellij.openapi.ui.popup.StackingPopupDispatcher" serviceImplementation="com.intellij.ui.popup.StackingPopupDispatcherImpl"/>
+  <applicationService serviceInterface="com.intellij.openapi.ui.popup.StackingPopupDispatcher"
+                      serviceImplementation="com.intellij.ui.popup.StackingPopupDispatcherImpl"/>
 
   <fileEditorProvider implementation="com.intellij.openapi.fileEditor.impl.http.HttpFileEditorProvider"/>
   <componentConfigurationMerger implementation="com.intellij.openapi.vcs.changes.shelf.ShelfManagerConfigurationMerger"/>
@@ -232,8 +236,8 @@
   <bundledKeymapProvider implementation="com.intellij.openapi.keymap.impl.DefaultBundledKeymaps"/>
   <!-- <checkinHandlerFactory implementation="com.intellij.openapi.vcs.CheckRemoteStatusCheckinHandlerFactory"/> -->
 
-  <statistics.usagesCollector  implementation="com.intellij.ide.plugins.DisabledPluginsUsagesCollector"/>
-  <statistics.usagesCollector  implementation="com.intellij.ide.plugins.NonBundledPluginsUsagesCollector"/>
+  <statistics.usagesCollector implementation="com.intellij.ide.plugins.DisabledPluginsUsagesCollector"/>
+  <statistics.usagesCollector implementation="com.intellij.ide.plugins.NonBundledPluginsUsagesCollector"/>
   <statistics.usagesCollector implementation="com.intellij.featureStatistics.FeaturesUsageCollector"/>
   <statistics.usagesCollector implementation="com.intellij.openapi.vcs.statistics.VcsUsagesCollector"/>
   <statistics.usagesCollector implementation="com.intellij.internal.statistic.UsageTrigger$MyCollector"/>
