@@ -66,6 +66,9 @@ public abstract class TaskManager {
   @NotNull
   public abstract LocalTask getActiveTask();
 
+  @Nullable
+  public abstract LocalTask findTask(String id);
+
   /**
    * Update issue cache asynchronously
    * @param onComplete callback to be invoked after updating

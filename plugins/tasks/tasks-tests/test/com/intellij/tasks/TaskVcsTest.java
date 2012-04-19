@@ -16,10 +16,12 @@
 package com.intellij.tasks;
 
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vcs.changes.committed.MockAbstractVcs;
+import com.intellij.openapi.vcs.changes.ui.CommitChangeListDialog;
 import com.intellij.openapi.vcs.impl.projectlevelman.AllVcses;
 import com.intellij.tasks.impl.LocalTaskImpl;
 import org.jetbrains.annotations.NotNull;
@@ -68,6 +70,28 @@ public class TaskVcsTest extends TaskManagerTestCase {
     assertNotNull(task);
     ChangeListInfo info = createChangelist(task);
     assertEquals("TEST-001 Summary 001 TEST", info.comment);
+  }
+
+  public void testSaveContextOnCommit() throws Exception {
+    Task task = myRepository.findTask("TEST-001");
+    assertNotNull(task);
+    myManager.activateTask(task, false, true);
+
+    assertEquals(2, myManager.getLocalTasks().length); // default + new one
+    LocalTask localTask = myManager.getActiveTask();
+    List<ChangeListInfo> changelists = myManager.getOpenChangelists(localTask);
+
+    ChangeListInfo info = changelists.get(0);
+    LocalChangeList changeList = ChangeListManager.getInstance(getProject()).getChangeList(info.id);
+    assertNotNull(changeList);
+    assertEquals(changeList.getId(), localTask.getAssociatedChangelistId());
+
+    CommitChangeListDialog.commitChanges(getProject(), Collections.<Change>emptyList(), changeList, null, changeList.getName());
+
+    assertEquals(2, myManager.getLocalTasks().length); // no extra task created
+
+    LocalTask associatedTask = myManager.getAssociatedTask(changeList);
+    assertNotNull(associatedTask); // association should survive
   }
 
   private ChangeListInfo createChangelist(Task task) {

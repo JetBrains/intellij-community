@@ -69,14 +69,17 @@ public class TaskCheckinHandlerFactory extends CheckinHandlerFactory {
   }
 
   @Nullable
-  private static Task findTask(String message, TaskManager manager) {
+  private static LocalTask findTask(String message, TaskManager manager) {
     TaskRepository[] repositories = manager.getAllRepositories();
     for (TaskRepository repository : repositories) {
       String id = repository.extractId(message);
+      if (id == null) continue;
+      LocalTask localTask = manager.findTask(id);
+      if (localTask != null) return localTask;
       try {
         Task task = repository.findTask(id);
         if (task != null) {
-          return task;
+          return manager.addTask(task);
         }
       }
       catch (Exception ignore) {
