@@ -94,10 +94,6 @@ public class ClassesScopeTreeStructureExpander implements ScopeTreeStructureExpa
                       @Override public void visitField(PsiField field) {
                         classNode.add(new FieldNode(field));
                       }
-
-                      @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
-                      }
-
                     });
                   }
                 }

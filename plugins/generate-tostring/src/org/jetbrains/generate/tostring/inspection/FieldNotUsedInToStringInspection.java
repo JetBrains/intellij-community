@@ -56,9 +56,6 @@ public class FieldNotUsedInToStringInspection extends AbstractToStringInspection
     @Override
     public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
         return new JavaElementVisitor() {
-            public void visitReferenceExpression(PsiReferenceExpression expression) {
-            }
-
             @Override
             public void visitClass(PsiClass clazz) {
                 checkFields(holder, clazz);

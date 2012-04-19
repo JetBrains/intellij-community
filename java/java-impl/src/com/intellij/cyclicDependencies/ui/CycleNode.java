@@ -17,12 +17,7 @@ package com.intellij.cyclicDependencies.ui;
 
 import com.intellij.analysis.AnalysisScopeBundle;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packageDependencies.ui.PackageDependenciesNode;
-import com.intellij.psi.PsiFile;
-
-import javax.swing.*;
-import java.util.Set;
 
 /**
  * User: anna
@@ -31,26 +26,6 @@ import java.util.Set;
 public class CycleNode extends PackageDependenciesNode{
   public CycleNode(Project project) {
     super(project);
-  }
-
-  public void fillFiles(Set<PsiFile> set, boolean recursively) {
-    super.fillFiles(set, recursively);
-  }
-
-  public void addFile(VirtualFile file, boolean isMarked) {
-    super.addFile(file, isMarked);
-  }
-
-  public Icon getOpenIcon() {
-    return super.getOpenIcon();
-  }
-
-  public Icon getClosedIcon() {
-    return super.getClosedIcon();
-  }
-
-  public int getWeight() {
-    return super.getWeight();
   }
 
   public String toString() {

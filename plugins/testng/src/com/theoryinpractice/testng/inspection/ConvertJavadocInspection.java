@@ -64,9 +64,6 @@ public class ConvertJavadocInspection extends BaseJavaLocalInspectionTool {
   @NotNull
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
     return new JavaElementVisitor() {
-      @Override public void visitReferenceExpression(final PsiReferenceExpression expression) {
-      }
-
       @Override public void visitDocTag(final PsiDocTag tag) {
         if (tag.getName().startsWith(TESTNG_PREFIX)) {
           holder.registerProblem(tag, DISPLAY_NAME, new ConvertJavadocQuickfix());

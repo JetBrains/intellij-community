@@ -397,13 +397,7 @@ public class ConfigurationErrorsComponent extends JPanel implements Disposable, 
 
       myList = list;
 
-      myText = new JTextPane() {
-        @Override
-        public void setCursor(Cursor cursor) {
-          super.setCursor(cursor);
-          //onCursorChanged(cursor);
-        }
-      };
+      myText = new JTextPane();
 
       myButtonsPanel = new JPanel(new BorderLayout());
       myButtonsPanel.setBorder(BorderFactory.createEmptyBorder(5, 3, 5, 3));

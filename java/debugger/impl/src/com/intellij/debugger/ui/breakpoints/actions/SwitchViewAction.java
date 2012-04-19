@@ -15,8 +15,8 @@
  */
 package com.intellij.debugger.ui.breakpoints.actions;
 
-import com.intellij.debugger.ui.breakpoints.BreakpointPanel;
 import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.ui.breakpoints.BreakpointPanel;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -30,9 +30,6 @@ public class SwitchViewAction extends BreakpointPanelAction {
     super(DebuggerBundle.message("button.switch.view"));
   }
 
-  public void setButton(AbstractButton button) {
-    super.setButton(button);
-  }
 
   public void actionPerformed(ActionEvent e) {
     getPanel().switchViews();

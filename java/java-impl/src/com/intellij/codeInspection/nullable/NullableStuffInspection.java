@@ -67,9 +67,6 @@ public class NullableStuffInspection extends BaseLocalInspectionTool {
   @NotNull
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
-      @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
-      }
-
       @Override public void visitMethod(PsiMethod method) {
         if (!PsiUtil.isLanguageLevel5OrHigher(method)) return;
         checkNullableStuffForMethod(method, holder);

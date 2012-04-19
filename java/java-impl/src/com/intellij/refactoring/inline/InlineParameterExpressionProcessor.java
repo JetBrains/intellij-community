@@ -75,9 +75,6 @@ public class InlineParameterExpressionProcessor extends BaseRefactoringProcessor
     return InlineParameterHandler.REFACTORING_NAME;
   }
 
-  @Override
-  protected void refreshElements(PsiElement[] elements) {
-  }
 
   @NotNull
   @Override

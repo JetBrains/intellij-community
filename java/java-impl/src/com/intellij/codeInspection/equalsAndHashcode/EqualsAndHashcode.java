@@ -95,10 +95,6 @@ public class EqualsAndHashcode extends BaseJavaLocalInspectionTool {
                                  (LocalQuickFix[])null);
         }
       }
-
-      @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
-        //do nothing
-      }
     };
   }
 

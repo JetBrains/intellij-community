@@ -23,11 +23,6 @@ import com.intellij.JavaTestUtil;
 public class JavaReflectionCompletionTest extends LightFixtureCompletionTestCase {
 
   @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-  }
-
-  @Override
   protected String getBasePath() {
     return JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/completion/reflection/";
   }

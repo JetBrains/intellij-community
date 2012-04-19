@@ -39,9 +39,6 @@ public class ConvertAnnotationInspection extends BaseJavaLocalInspectionTool {
   @NotNull
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
     return new JavaElementVisitor() {
-      @Override public void visitReferenceExpression(final PsiReferenceExpression expression) {
-      }
-
       @Override public void visitAnnotation(final PsiAnnotation annotation) {
         final @NonNls String qualifiedName = annotation.getQualifiedName();
         if (qualifiedName != null && qualifiedName.startsWith("org.testng.annotations")) {

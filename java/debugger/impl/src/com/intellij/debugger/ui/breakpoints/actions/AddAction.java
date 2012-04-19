@@ -29,10 +29,6 @@ import java.awt.event.KeyEvent;
     super(IdeBundle.message("button.add"));
   }
 
-  public void setButton(AbstractButton button) {
-    super.setButton(button);
-  }
-
   public void setPanel(BreakpointPanel panel) {
     super.setPanel(panel);
     getPanel().getTable().registerKeyboardAction(this, KeyStroke.getKeyStroke(KeyEvent.VK_INSERT, 0), JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);

@@ -48,12 +48,6 @@ public class LightAdvHighlightingJdk7Test extends LightDaemonAnalyzerTestCase {
   }
 
   @Override
-  protected void setUp() throws Exception {
-
-    super.setUp();
-  }
-
-  @Override
   protected LocalInspectionTool[] configureLocalInspectionTools() {
     return new LocalInspectionTool[]{
       new UnusedSymbolLocalInspection(),

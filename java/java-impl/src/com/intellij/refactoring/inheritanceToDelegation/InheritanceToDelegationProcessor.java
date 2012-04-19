@@ -961,14 +961,6 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
       myInstanceVisitor = instanceScanner;
     }
 
-    @Override public void visitTypeElement(PsiTypeElement type) {
-      super.visitTypeElement (type);
-    }
-
-    @Override public void visitReferenceElement(PsiJavaCodeReferenceElement element) {
-      super.visitReferenceElement (element);
-    }
-
     protected void visitClassMemberReferenceElement(PsiMember classMember, PsiJavaCodeReferenceElement classMemberReference) {
       if ("super".equals(classMemberReference.getText()) && classMemberReference.getParent() instanceof PsiMethodCallExpression) {
         return;

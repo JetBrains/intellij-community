@@ -71,9 +71,6 @@ public class ClassHasNoToStringMethodInspection extends AbstractToStringInspecti
     @Override
     public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
         return new JavaElementVisitor() {
-            public void visitReferenceExpression(PsiReferenceExpression expression) {
-            }
-
             @Override
             public void visitClass(PsiClass clazz) {
                 if (log.isDebugEnabled()) log.debug("checkClass: clazz=" + clazz);

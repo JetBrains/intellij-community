@@ -29,7 +29,6 @@ import com.intellij.codeInspection.dataFlow.DfaInstructionState;
 import com.intellij.codeInspection.dataFlow.DfaMemoryState;
 import com.intellij.codeInspection.dataFlow.InstructionVisitor;
 import com.intellij.openapi.progress.ProgressManager;
-import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
 
@@ -70,10 +69,5 @@ public abstract class Instruction {
 
   public int getIndex() {
     return myIndex;
-  }
-
-  @NonNls
-  public String toString() {
-    return super.toString();
   }
 }

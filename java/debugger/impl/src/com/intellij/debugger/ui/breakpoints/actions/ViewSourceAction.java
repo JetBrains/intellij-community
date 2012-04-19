@@ -15,12 +15,11 @@
  */
 package com.intellij.debugger.ui.breakpoints.actions;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
-import com.intellij.ide.IdeBundle;
 
-import javax.swing.*;
 import java.awt.event.ActionEvent;
 
 /**
@@ -35,9 +34,6 @@ public class ViewSourceAction extends BreakpointPanelAction {
     myProject = project;
   }
 
-  public void setButton(AbstractButton button) {
-    super.setButton(button);
-  }
 
   public void actionPerformed(ActionEvent e) {
     OpenFileDescriptor editSourceDescriptor = getPanel().createEditSourceDescriptor(myProject);
