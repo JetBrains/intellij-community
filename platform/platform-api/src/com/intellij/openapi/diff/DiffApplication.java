@@ -60,10 +60,12 @@ public class DiffApplication implements ApplicationStarterEx {
       System.err.println(e.getMessage());
       System.exit(1);
     }
-    catch (Exception e) {
-      e.printStackTrace();
-      System.exit(1);
+    catch (Throwable t) {
+      t.printStackTrace();
+      System.exit(2);
     }
+
+    System.exit(0);
   }
 
   @Override
