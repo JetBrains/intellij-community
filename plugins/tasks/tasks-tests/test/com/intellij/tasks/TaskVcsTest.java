@@ -77,7 +77,7 @@ public class TaskVcsTest extends TaskManagerTestCase {
     assertNotNull(task);
     myManager.activateTask(task, false, true);
 
-    assertEquals(2, myManager.getLocalTasks().length); // default + new one
+    assertEquals(1, myManager.getLocalTasks().length);
     LocalTask localTask = myManager.getActiveTask();
     List<ChangeListInfo> changelists = myManager.getOpenChangelists(localTask);
 
@@ -88,7 +88,7 @@ public class TaskVcsTest extends TaskManagerTestCase {
 
     CommitChangeListDialog.commitChanges(getProject(), Collections.<Change>emptyList(), changeList, null, changeList.getName());
 
-    assertEquals(2, myManager.getLocalTasks().length); // no extra task created
+    assertEquals(1, myManager.getLocalTasks().length); // no extra task created
 
     LocalTask associatedTask = myManager.getAssociatedTask(changeList);
     assertNotNull(associatedTask); // association should survive
