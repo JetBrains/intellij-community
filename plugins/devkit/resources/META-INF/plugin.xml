@@ -69,7 +69,7 @@
                      groupKey="inspections.group.name"
                      displayName="&lt;inspection&gt; tag consistency"
                      enabledByDefault="true"
-                     level="ERROR"
+                     level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.InspectionMappingConsistencyInspection"/>
 
     <moduleConfigurationEditorProvider implementation="org.jetbrains.idea.devkit.module.PluginModuleEditorsProvider"/>
