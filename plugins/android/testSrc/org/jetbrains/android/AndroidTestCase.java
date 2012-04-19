@@ -32,6 +32,7 @@ import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.testFramework.IdeaTestCase;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.*;
@@ -56,6 +57,7 @@ public abstract class AndroidTestCase extends UsefulTestCase {
 
   public AndroidTestCase(boolean createManifest) {
     this.myCreateManifest = createManifest;
+    IdeaTestCase.initPlatformPrefix();
   }
 
   public AndroidTestCase() {
