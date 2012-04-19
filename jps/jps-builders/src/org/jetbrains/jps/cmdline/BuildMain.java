@@ -1,6 +1,9 @@
 package org.jetbrains.jps.cmdline;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.io.FileUtil;
+import org.apache.log4j.Level;
+import org.apache.log4j.xml.DOMConfigurator;
 import org.jboss.netty.bootstrap.ClientBootstrap;
 import org.jboss.netty.channel.*;
 import org.jboss.netty.channel.socket.nio.NioClientSocketChannelFactory;
@@ -8,9 +11,12 @@ import org.jboss.netty.handler.codec.protobuf.ProtobufDecoder;
 import org.jboss.netty.handler.codec.protobuf.ProtobufEncoder;
 import org.jboss.netty.handler.codec.protobuf.ProtobufVarint32FrameDecoder;
 import org.jboss.netty.handler.codec.protobuf.ProtobufVarint32LengthFieldPrepender;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.api.CmdlineProtoUtil;
 import org.jetbrains.jps.api.CmdlineRemoteProto;
 import org.jetbrains.jps.api.SharedThreadPool;
+import org.jetbrains.jps.incremental.Utils;
 
 import java.io.File;
 import java.net.InetSocketAddress;
@@ -21,14 +27,17 @@ import java.util.UUID;
  *         Date: 4/16/12
  */
 public class BuildMain {
+  private static final String LOG_FILE_NAME = "log.xml";
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.cmdline.BuildMain");
 
   public static void main(String[] args){
     final String host = args[0];
     final int port = Integer.parseInt(args[1]);
     final UUID sessionId = UUID.fromString(args[2]);
-    final File systemDir = new File(args[3]);
-    systemDir.mkdirs();
+    final File systemDir = new File(FileUtil.toCanonicalPath(args[3]));
+    Utils.setSystemRoot(systemDir);
+
+    initLoggers();
 
     final ClientBootstrap bootstrap = new ClientBootstrap(new NioClientSocketChannelFactory(SharedThreadPool.INSTANCE, SharedThreadPool.INSTANCE, 1));
     bootstrap.setPipelineFactory(new ChannelPipelineFactory() {
@@ -141,4 +150,65 @@ public class BuildMain {
       }
     });
   }
+
+  private static void initLoggers() {
+    if (new File(LOG_FILE_NAME).exists()) {
+      DOMConfigurator.configure(LOG_FILE_NAME);
+    }
+
+    Logger.setFactory(new Logger.Factory() {
+      @Override
+      public Logger getLoggerInstance(String category) {
+        final org.apache.log4j.Logger logger = org.apache.log4j.Logger.getLogger(category);
+
+        return new Logger() {
+          @Override
+          public boolean isDebugEnabled() {
+            return logger.isDebugEnabled();
+          }
+
+          @Override
+          public void debug(@NonNls String message) {
+            logger.debug(message);
+          }
+
+          @Override
+          public void debug(@Nullable Throwable t) {
+            logger.debug("", t);
+          }
+
+          @Override
+          public void debug(@NonNls String message, @Nullable Throwable t) {
+            logger.debug(message, t);
+          }
+
+          @Override
+          public void error(@NonNls String message, @Nullable Throwable t, @NonNls String... details) {
+            logger.debug(message, t);
+          }
+
+          @Override
+          public void info(@NonNls String message) {
+            logger.info(message);
+          }
+
+          @Override
+          public void info(@NonNls String message, @Nullable Throwable t) {
+            logger.info(message, t);
+          }
+
+          @Override
+          public void warn(@NonNls String message, @Nullable Throwable t) {
+            logger.warn(message, t);
+          }
+
+          @Override
+          public void setLevel(Level level) {
+            logger.setLevel(level);
+          }
+        };
+      }
+    });
+  }
+
 }

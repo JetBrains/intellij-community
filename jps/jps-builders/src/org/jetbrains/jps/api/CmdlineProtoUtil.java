@@ -7,6 +7,8 @@ import org.jetbrains.jps.incremental.messages.BuildMessage;
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -14,6 +16,86 @@ import java.util.UUID;
  *         Date: 4/17/12
  */
 public class CmdlineProtoUtil {
+
+  public static CmdlineRemoteProto.Message.ControllerMessage createMakeRequest(String project,
+                                                                               Collection<String> modules,
+                                                                               Collection<String> artifacts,
+                                                                               final Map<String, String> userData,
+                                                                               final CmdlineRemoteProto.Message.ControllerMessage.GlobalSettings globals) {
+    return createBuildParametersMessage(CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.Type.MAKE, project, modules, artifacts,
+                                userData, Collections.<String>emptyList(),
+                                globals);
+  }
+
+  public static CmdlineRemoteProto.Message.ControllerMessage createForceCompileRequest(String project,
+                                                                                       Collection<String> modules,
+                                                                                       Collection<String> artifacts,
+                                                                                       Collection<String> paths,
+                                                                                       final Map<String, String> userData,
+                                                                                       final CmdlineRemoteProto.Message.ControllerMessage.GlobalSettings globals) {
+    return createBuildParametersMessage(CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.Type.FORCED_COMPILATION, project, modules,
+                                        artifacts,
+                                        userData, paths, globals);
+  }
+
+  public static CmdlineRemoteProto.Message.ControllerMessage createRebuildRequest(String project,
+                                                                                  final Map<String, String> userData,
+                                                                                  final CmdlineRemoteProto.Message.ControllerMessage.GlobalSettings globals) {
+    return createBuildParametersMessage(CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.Type.REBUILD, project,
+                                        Collections.<String>emptyList(),
+                                        Collections.<String>emptyList(), userData, Collections.<String>emptyList(),
+                                        globals);
+  }
+
+  public static CmdlineRemoteProto.Message.ControllerMessage createCleanRequest(String project,
+                                                                                Collection<String> modules,
+                                                                                Collection<String> artifacts,
+                                                                                final Map<String, String> userData,
+                                                                                final CmdlineRemoteProto.Message.ControllerMessage.GlobalSettings globals) {
+    return createBuildParametersMessage(
+      CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.Type.CLEAN, project, modules, artifacts, userData, Collections.<String>emptyList(),
+      globals
+    );
+  }
+
+  public static CmdlineRemoteProto.Message.ControllerMessage createBuildParametersMessage(CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.Type buildType,
+                                                                                          String project,
+                                                                                          Collection<String> modules,
+                                                                                          Collection<String> artifacts,
+                                                                                          Map<String, String> userData,
+                                                                                          Collection<String> paths,
+                                                                                          final CmdlineRemoteProto.Message.ControllerMessage.GlobalSettings globals) {
+    final CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.Builder
+      builder = CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.newBuilder();
+    builder.setGlobalSettings(globals);
+    builder.setBuildType(buildType);
+    builder.setProjectId(project);
+    if (!modules.isEmpty()) {
+      builder.addAllModuleName(modules);
+    }
+    if (!artifacts.isEmpty()) {
+      builder.addAllArtifactName(artifacts);
+    }
+    if (!userData.isEmpty()) {
+      for (Map.Entry<String, String> entry : userData.entrySet()) {
+        final String key = entry.getKey();
+        final String value = entry.getValue();
+        if (key != null && value != null) {
+          builder.addBuilderParameter(createPair(key, value));
+        }
+      }
+    }
+    if (!paths.isEmpty()) {
+      builder.addAllFilePath(paths);
+    }
+    return CmdlineRemoteProto.Message.ControllerMessage.newBuilder().setType(CmdlineRemoteProto.Message.ControllerMessage.Type.BUILD_PARAMETERS).setParamsMessage(builder.build()).build();
+  }
+
+  public static CmdlineRemoteProto.Message.KeyValuePair createPair(String key, String value) {
+    return CmdlineRemoteProto.Message.KeyValuePair.newBuilder().setKey(key).setValue(value).build();
+  }
+
+
   public static CmdlineRemoteProto.Message.Failure createFailure(String description, Throwable cause) {
     final CmdlineRemoteProto.Message.Failure.Builder builder = CmdlineRemoteProto.Message.Failure.newBuilder();
     builder.setDescription(description);
@@ -25,15 +107,20 @@ public class CmdlineProtoUtil {
     return builder.build();
   }
 
-  public static CmdlineRemoteProto.Message.BuilderMessage createCompileProgressMessageResponse(String text, float done) {
-    return createCompileMessageResponse(BuildMessage.Kind.PROGRESS, text, null, -1L, -1L, -1L, -1, -1, done);
+  public static CmdlineRemoteProto.Message.ControllerMessage createCancelCommand() {
+    return CmdlineRemoteProto.Message.ControllerMessage.newBuilder()
+      .setType(CmdlineRemoteProto.Message.ControllerMessage.Type.CANCEL_BUILD_COMMAND).build();
   }
 
-  public static CmdlineRemoteProto.Message.BuilderMessage createCompileMessageResponse(final BuildMessage.Kind kind,
-                                                                             String text,
-                                                                             String path,
-                                                                             long beginOffset, long endOffset, long offset, long line,
-                                                                             long column, float done) {
+  public static CmdlineRemoteProto.Message.BuilderMessage createCompileProgressMessageResponse(String text, float done) {
+    return createCompileMessage(BuildMessage.Kind.PROGRESS, text, null, -1L, -1L, -1L, -1, -1, done);
+  }
+
+  public static CmdlineRemoteProto.Message.BuilderMessage createCompileMessage(final BuildMessage.Kind kind,
+                                                                               String text,
+                                                                               String path,
+                                                                               long beginOffset, long endOffset, long offset, long line,
+                                                                               long column, float done) {
 
     final CmdlineRemoteProto.Message.BuilderMessage.CompileMessage.Builder builder = CmdlineRemoteProto.Message.BuilderMessage.CompileMessage.newBuilder();
     switch (kind) {
@@ -108,6 +195,11 @@ public class CmdlineProtoUtil {
 
   public static CmdlineRemoteProto.Message toMessage(UUID sessionId, CmdlineRemoteProto.Message.BuilderMessage builderMessage) {
     return CmdlineRemoteProto.Message.newBuilder().setSessionId(toProtoUUID(sessionId)).setType(CmdlineRemoteProto.Message.Type.BUILDER_MESSAGE).setBuilderMessage(builderMessage).build();
+  }
+
+  public static CmdlineRemoteProto.Message toMessage(UUID sessionId, CmdlineRemoteProto.Message.ControllerMessage builderMessage) {
+    return CmdlineRemoteProto.Message.newBuilder().setSessionId(toProtoUUID(sessionId)).setType(CmdlineRemoteProto.Message.Type.CONTROLLER_MESSAGE).setControllerMessage(
+      builderMessage).build();
   }
 
   public static CmdlineRemoteProto.Message toMessage(UUID sessionId, CmdlineRemoteProto.Message.Failure failure) {
