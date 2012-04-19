@@ -20,20 +20,22 @@ import com.intellij.ide.diff.DirDiffSettings;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ApplicationStarterEx;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileTypes.UnknownFileType;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.PropertyKey;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 
 /**
  * @author max
  * @author Konstantin Bulenkov
  */
-@SuppressWarnings({"UseOfSystemOutOrSystemErr"})
+@SuppressWarnings({"UseOfSystemOutOrSystemErr", "CallToPrintStackTrace"})
 public class DiffApplication implements ApplicationStarterEx {
   public String getCommandName() {
     return "diff";
@@ -54,16 +56,13 @@ public class DiffApplication implements ApplicationStarterEx {
     try {
       processDiffCommand(args);
     }
-    catch (FileNotFoundException e) {
+    catch (OperationFailedException e) {
       System.err.println(e.getMessage());
       System.exit(1);
     }
     catch (Exception e) {
       e.printStackTrace();
       System.exit(1);
-    }
-    finally {
-      System.exit(0);
     }
   }
 
@@ -83,28 +82,25 @@ public class DiffApplication implements ApplicationStarterEx {
     }
   }
 
-  private static void processDiffCommand(String[] args) throws FileNotFoundException {
+  private static void processDiffCommand(String[] args) throws OperationFailedException {
     final String path1 = args[1];
     final String path2 = args[2];
     final VirtualFile file1 = findFile(path1);
     final VirtualFile file2 = findFile(path2);
-    final boolean isDirs = isDirs(file1, file2);
-    final boolean isJars = isJars(file1, file2);
-    if (isDirs || isJars) {
+    final boolean areDirs = areDirs(file1, file2);
+    final boolean areJars = areJars(file1, file2);
+    if (areDirs || areJars) {
       final DirDiffManager diffManager = DirDiffManager.getInstance(ProjectManager.getInstance().getDefaultProject());
       final DiffElement d1 = diffManager.createDiffElement(file1);
       final DiffElement d2 = diffManager.createDiffElement(file2);
       if (d1 == null) {
-        System.err.println("Can't create diff element from " + path1);
-        return;
+        throw new OperationFailedException("cannot.create.diff.error", path1);
       }
       if (d2 == null) {
-        System.err.println("Can't create diff element from " + path2);
-        return;
+        throw new OperationFailedException("cannot.create.diff.error", path1);
       }
-      if (!diffManager.canShow(d1, d2)) {
-        System.err.println("Diff manager can't compare '" + path1 + "' and '" + path2 + "'");
-        return;
+      else if (!diffManager.canShow(d1, d2)) {
+        throw new OperationFailedException("cannot.compare.error", path1, path2);
       }
 
       final DirDiffSettings settings = new DirDiffSettings();
@@ -114,6 +110,14 @@ public class DiffApplication implements ApplicationStarterEx {
     else {
       file1.refresh(false, false);
       file2.refresh(false, false);
+
+      if (file1.getFileType() == UnknownFileType.INSTANCE) {
+        throw new OperationFailedException("unknown.file.type.error", path1);
+      }
+      else if (file2.getFileType() == UnknownFileType.INSTANCE) {
+        throw new OperationFailedException("unknown.file.type.error", path2);
+      }
+
       SimpleDiffRequest request = SimpleDiffRequest.compareFiles(file1, file2, ProjectManager.getInstance().getDefaultProject());
       request.addHint(DiffTool.HINT_SHOW_MODAL_DIALOG);
       DiffManager.getInstance().getIdeaDiffTool().show(request);
@@ -121,20 +125,26 @@ public class DiffApplication implements ApplicationStarterEx {
     }
   }
 
-  private static boolean isJars(VirtualFile file1, VirtualFile file2) {
-    return JarFileSystem.PROTOCOL.equalsIgnoreCase(file1.getExtension())
-      && JarFileSystem.PROTOCOL.equalsIgnoreCase(file2.getExtension());
+  private static boolean areJars(VirtualFile file1, VirtualFile file2) {
+    return JarFileSystem.PROTOCOL.equalsIgnoreCase(file1.getExtension()) && JarFileSystem.PROTOCOL.equalsIgnoreCase(file2.getExtension());
   }
 
-  private static boolean isDirs(VirtualFile file1, VirtualFile file2) {
+  private static boolean areDirs(VirtualFile file1, VirtualFile file2) {
     return file1.isDirectory() && file2.isDirectory();
   }
 
-  private static VirtualFile findFile(final String path) throws FileNotFoundException {
+  @NotNull
+  private static VirtualFile findFile(final String path) throws OperationFailedException {
     final VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(path));
     if (file == null) {
-      throw new FileNotFoundException(DiffBundle.message("cannot.file.file.error.message", path));
+      throw new OperationFailedException("cannot.file.file.error", path);
     }
     return file;
+  }
+
+  private static class OperationFailedException extends Exception {
+    public OperationFailedException(@NotNull @PropertyKey(resourceBundle = "messages.DiffBundle") String key, Object... params) {
+      super(DiffBundle.message(key, params));
+    }
   }
 }
