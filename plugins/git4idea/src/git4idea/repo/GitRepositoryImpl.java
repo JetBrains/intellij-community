@@ -16,6 +16,7 @@
 package git4idea.repo;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -26,6 +27,7 @@ import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
 import git4idea.GitBranch;
 import git4idea.GitUtil;
+import git4idea.PlatformFacade;
 import git4idea.branch.GitBranchesCollection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -231,7 +233,7 @@ public class GitRepositoryImpl implements GitRepository, Disposable {
 
   private void updateConfig() {
     File configFile = new File(VfsUtil.virtualToIoFile(myGitDir), "config");
-    myConfig = GitConfig.read(configFile);
+    myConfig = GitConfig.read(ServiceManager.getService(PlatformFacade.class), configFile);
   }
 
   /**
