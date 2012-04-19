@@ -4,8 +4,8 @@
 package com.intellij.lexer;
 
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.*;
-import com.intellij.psi.xml.*;
+import com.intellij.psi.xml.XmlElementType;
+import com.intellij.psi.xml.XmlTokenType;
 
 
 /**
@@ -748,7 +748,7 @@ public class __XmlLexer implements FlexLexer {
           }
         case 57: break;
         case 28: 
-          { return XmlElementType.XML_MARKUP;
+          { return XmlElementType.XML_MARKUP_DECL;
           }
         case 58: break;
         case 32: 

@@ -706,7 +706,7 @@ public class XmlUtil {
   }
 
   private static PsiElement parseEntityRef(PsiFile targetFile, XmlEntityRef ref, boolean cacheValue) {
-    int type = getContextType(ref);
+    XmlEntityDecl.EntityContextType type = getContextType(ref);
 
     {
       final XmlEntityDecl entityDecl = ref.resolve(targetFile);
@@ -744,27 +744,27 @@ public class XmlUtil {
     return null;
   }
 
-  private static int getContextType(XmlEntityRef ref) {
-    int type = XmlEntityDecl.CONTEXT_GENERIC_XML;
+  private static XmlEntityDecl.EntityContextType getContextType(XmlEntityRef ref) {
+    XmlEntityDecl.EntityContextType type = XmlEntityDecl.EntityContextType.GENERIC_XML;
     PsiElement temp = ref;
     while (temp != null) {
       if (temp instanceof XmlAttributeDecl) {
-        type = XmlEntityDecl.CONTEXT_ATTRIBUTE_SPEC;
+        type = XmlEntityDecl.EntityContextType.ATTRIBUTE_SPEC;
       }
       else if (temp instanceof XmlElementDecl) {
-        type = XmlEntityDecl.CONTEXT_ELEMENT_CONTENT_SPEC;
+        type = XmlEntityDecl.EntityContextType.ELEMENT_CONTENT_SPEC;
       }
       else if (temp instanceof XmlAttlistDecl) {
-        type = XmlEntityDecl.CONTEXT_ATTLIST_SPEC;
+        type = XmlEntityDecl.EntityContextType.ATTLIST_SPEC;
       }
       else if (temp instanceof XmlEntityDecl) {
-        type = XmlEntityDecl.CONTEXT_ENTITY_DECL_CONTENT;
+        type = XmlEntityDecl.EntityContextType.ENTITY_DECL_CONTENT;
       }
       else if (temp instanceof XmlEnumeratedType) {
-        type = XmlEntityDecl.CONTEXT_ENUMERATED_TYPE;
+        type = XmlEntityDecl.EntityContextType.ENUMERATED_TYPE;
       }
       else if (temp instanceof XmlAttributeValue) {
-        type = XmlEntityDecl.CONTEXT_ATTR_VALUE;
+        type = XmlEntityDecl.EntityContextType.ATTR_VALUE;
       }
       else {
         temp = temp.getContext();
@@ -779,7 +779,7 @@ public class XmlUtil {
 
   private static PsiElement parseEntityDecl(final XmlEntityDecl entityDecl,
                                             final PsiFile targetFile,
-                                            final int type,
+                                            final XmlEntityDecl.EntityContextType type,
                                             boolean cacheValue,
                                             final XmlEntityRef entityRef) {
     if (!cacheValue) return entityDecl.parse(targetFile, type, entityRef);

@@ -15,26 +15,17 @@
  */
 package com.intellij.psi.impl.source.xml;
 
-import com.intellij.lang.ASTFactory;
 import com.intellij.lang.ASTNode;
-import com.intellij.lexer.FilterLexer;
-import com.intellij.lexer.Lexer;
-import com.intellij.lexer._OldXmlLexer;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.ElementManipulators;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiNamedElement;
-import com.intellij.psi.impl.source.DummyHolderFactory;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
-import com.intellij.psi.impl.source.parsing.xml.OldXmlParsing;
-import com.intellij.psi.impl.source.parsing.xml.XmlParsingContext;
-import com.intellij.psi.impl.source.parsing.xml.XmlPsiLexer;
+import com.intellij.psi.impl.source.parsing.xml.OldXmlParser;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.URIReferenceProvider;
-import com.intellij.psi.impl.source.tree.CompositeElement;
-import com.intellij.psi.impl.source.tree.FileElement;
+import com.intellij.psi.impl.source.tree.SharedImplUtil;
 import com.intellij.psi.tree.xml.IXmlLeafElementType;
 import com.intellij.psi.xml.*;
 import com.intellij.util.IncorrectOperationException;
@@ -49,8 +40,6 @@ import java.util.Set;
  * @author mike
  */
 public class XmlEntityDeclImpl extends XmlElementImpl implements XmlEntityDecl, XmlElementType {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.xml.XmlEntityDeclImpl");
-
   public XmlEntityDeclImpl() {
     super(XML_ENTITY_DECL);
   }
@@ -104,7 +93,7 @@ public class XmlEntityDeclImpl extends XmlElementImpl implements XmlEntityDecl, 
     return null;
   }
 
-  public PsiElement parse(PsiFile baseFile, int context, final XmlEntityRef originalElement) {
+  public PsiElement parse(PsiFile baseFile, EntityContextType context, final XmlEntityRef originalElement) {
     PsiElement dep = XmlElement.DEPENDING_ELEMENT.get(getParent());
     PsiElement dependsOnElement = getValueElement(dep instanceof PsiFile ? (PsiFile)dep : baseFile);
     String value = null;
@@ -118,86 +107,30 @@ public class XmlEntityDeclImpl extends XmlElementImpl implements XmlEntityDecl, 
     }
 
     if (value == null) return null;
-    final FileElement holderElement = DummyHolderFactory.createHolder(originalElement.getManager(), originalElement).getTreeElement();
 
-    Lexer lexer = getLexer(context, value);
-    final XmlParsingContext parsingContext = new XmlParsingContext(holderElement.getCharTable());
-    final CompositeElement element = ASTFactory.composite(XML_ELEMENT_DECL);
-    holderElement.rawAddChildren(element);
 
-    switch (context) {
-      default :
-        LOG.error("Entity: " + getName() + " context: " + context);
-        return null;
+    Set<String> names = null;
 
-      case CONTEXT_ELEMENT_CONTENT_SPEC:
-        {
-          parsingContext.getXmlParsing().parseElementContentSpec(element, lexer);
-          final PsiElement generated = SourceTreeToPsiMap.treeElementToPsi(element).getFirstChild().getFirstChild();
-          setDependsOnElement(generated, dependsOnElement);
-          return setOriginalElement(generated, originalElement);
+    if (context == EntityContextType.GENERIC_XML) {
+      names = new HashSet<String>();
+      // calculating parent names
+      PsiElement parent = originalElement;
+      while(parent != null){
+        if(parent instanceof XmlTag){
+          names.add(((XmlTag)parent).getName());
         }
-
-      case CONTEXT_ATTRIBUTE_SPEC:
-        {
-          parsingContext.getXmlParsing().parseAttributeContentSpec(element, lexer);
-          final PsiElement generated = SourceTreeToPsiMap.treeElementToPsi(element).getFirstChild();
-          setDependsOnElement(generated, dependsOnElement);
-          return setOriginalElement(generated, originalElement);
-        }
-
-      case CONTEXT_ATTLIST_SPEC:
-        {
-          parsingContext.getXmlParsing().parseAttlistContent(element, lexer);
-          final PsiElement generated = SourceTreeToPsiMap.treeElementToPsi(element).getFirstChild();
-          setDependsOnElement(generated, dependsOnElement);
-          return setOriginalElement(generated, originalElement);
-        }
-
-      case CONTEXT_ATTR_VALUE:
-        {
-          parsingContext.getXmlParsing().parseAttrValue(element, lexer);
-          final PsiElement generated = SourceTreeToPsiMap.treeElementToPsi(element).getFirstChild();
-          setDependsOnElement(generated, dependsOnElement);
-          return setOriginalElement(generated, originalElement);
-        }
-
-      case CONTEXT_ENTITY_DECL_CONTENT:
-        {
-          parsingContext.getXmlParsing().parseEntityDeclContent(element, lexer);
-          final PsiElement generated = SourceTreeToPsiMap.treeElementToPsi(element).getFirstChild();
-          setDependsOnElement(generated, dependsOnElement);
-          return setOriginalElement(generated, originalElement);
-        }
-
-      case CONTEXT_GENERIC_XML:
-        {
-
-          Set<String> names = new HashSet<String>();
-          {
-            // calculating parent names
-            PsiElement parent = originalElement;
-            while(parent != null){
-              if(parent instanceof XmlTag){
-                names.add(((XmlTag)parent).getName());
-              }
-              parent = parent.getParent();
-            }
-          }
-          parsingContext.getXmlParsing().parseGenericXml(lexer, element, names);
-          final PsiElement generated = SourceTreeToPsiMap.treeElementToPsi(element).getFirstChild();
-          setDependsOnElement(generated, dependsOnElement);
-          return setOriginalElement(generated, originalElement);
-        }
-
-      case CONTEXT_ENUMERATED_TYPE:
-        {
-          parsingContext.getXmlParsing().parseEnumeratedTypeContent(element, lexer);
-          final PsiElement generated = SourceTreeToPsiMap.treeElementToPsi(element).getFirstChild();
-          setDependsOnElement(generated, dependsOnElement);
-          return setOriginalElement(generated, originalElement);
-        }
+        parent = parent.getParent();
+      }
     }
+
+    OldXmlParser oldXmlParser = new OldXmlParser(value, XML_ELEMENT_DECL, context, SharedImplUtil.findCharTableByTree(this), getManager(), names,
+                                                 originalElement);
+    PsiElement generated = oldXmlParser.parse().getPsi().getFirstChild();
+    if (context == EntityContextType.ELEMENT_CONTENT_SPEC) {
+      generated = generated.getFirstChild();
+    }
+    setDependsOnElement(generated, dependsOnElement);
+    return setOriginalElement(generated, originalElement);
   }
 
   private PsiElement setDependsOnElement(PsiElement generated, PsiElement dependsOnElement) {
@@ -216,35 +149,6 @@ public class XmlEntityDeclImpl extends XmlElementImpl implements XmlEntityDecl, 
       e = e.getNextSibling();
     }
     return element;
-  }
-
-  public static Lexer getLexer(int context, CharSequence buffer) {
-    Lexer lexer = new XmlPsiLexer();
-    FilterLexer filterLexer = new FilterLexer(lexer, new FilterLexer.SetFilter(OldXmlParsing.XML_WHITE_SPACE_OR_COMMENT_BIT_SET));
-    short state = 0;
-
-    switch (context) {
-      case CONTEXT_ELEMENT_CONTENT_SPEC:
-      case CONTEXT_ATTRIBUTE_SPEC:
-      case CONTEXT_ATTLIST_SPEC:
-      case CONTEXT_ENUMERATED_TYPE:
-      case CONTEXT_ENTITY_DECL_CONTENT:
-        {
-          state = _OldXmlLexer.DOCTYPE_MARKUP;
-          break;
-        }
-
-      case CONTEXT_ATTR_VALUE:
-      case CONTEXT_GENERIC_XML: {
-        break;
-      }
-
-
-      default: LOG.error("context: " + context);
-    }
-
-    filterLexer.start(buffer, 0, buffer.length(), state);
-    return filterLexer;
   }
 
   @Nullable

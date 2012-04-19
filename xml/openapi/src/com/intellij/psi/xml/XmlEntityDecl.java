@@ -23,17 +23,14 @@ import com.intellij.psi.PsiNamedElement;
  * @author mike
  */
 public interface XmlEntityDecl extends XmlElement, PsiNamedElement {
-  int CONTEXT_ELEMENT_CONTENT_SPEC = 1;
-  int CONTEXT_ATTRIBUTE_SPEC = 2;
-  int CONTEXT_ATTLIST_SPEC = 3;
-  int CONTEXT_ENTITY_DECL_CONTENT = 4;
-  int CONTEXT_GENERIC_XML = 5;
-  int CONTEXT_ENUMERATED_TYPE = 6;
-  int CONTEXT_ATTR_VALUE = 7;
+  enum EntityContextType {
+    ELEMENT_CONTENT_SPEC, ATTRIBUTE_SPEC, ATTLIST_SPEC, ENTITY_DECL_CONTENT, GENERIC_XML,
+    ENUMERATED_TYPE, ATTR_VALUE
+  }
 
   String getName();
   PsiElement getNameElement();
   XmlAttributeValue getValueElement();
-  PsiElement parse(PsiFile baseFile, int context, XmlEntityRef originalElement);
+  PsiElement parse(PsiFile baseFile, EntityContextType context, XmlEntityRef originalElement);
   boolean isInternalReference();
 }

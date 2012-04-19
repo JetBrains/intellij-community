@@ -18,8 +18,12 @@ package com.intellij.psi.impl.source.parsing.xml;
 import com.intellij.codeInsight.daemon.XmlErrorMessages;
 import com.intellij.lang.ASTFactory;
 import com.intellij.lang.ASTNode;
-import com.intellij.lexer.*;
+import com.intellij.lexer.FilterLexer;
+import com.intellij.lexer.Lexer;
+import com.intellij.lexer.LexerUtil;
+import com.intellij.lexer._OldXmlLexer;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.source.DummyHolderFactory;
 import com.intellij.psi.impl.source.tree.*;
@@ -27,55 +31,145 @@ import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.xml.XmlElementType;
+import com.intellij.psi.xml.XmlEntityDecl;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.CharTable;
 import com.intellij.xml.XmlBundle;
+import gnu.trove.THashSet;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.HashSet;
 import java.util.Set;
 
 /**
  * @author Mike
  */
-public class OldXmlParsing implements XmlElementType {
+public class OldXmlParser implements XmlElementType {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.parsing.xml.XmlParser");
 
-  public static final TokenSet XML_WHITE_SPACE_OR_COMMENT_BIT_SET =
+  private static final TokenSet XML_WHITE_SPACE_OR_COMMENT_BIT_SET =
     TokenSet.create(new IElementType[]{XML_WHITE_SPACE, XML_COMMENT_START, XML_COMMENT_CHARACTERS,
                                                                                         XML_COMMENT_END, XML_BAD_CHARACTER});
 
-  public static final TokenSet XML_COMMENT_BIT_SET =
+  private static final TokenSet XML_COMMENT_BIT_SET =
     TokenSet.create(new IElementType[]{XML_COMMENT_START, XML_COMMENT_CHARACTERS, XML_COMMENT_END});
 
-  private final XmlParsingContext myContext;
   private int myLastTokenEnd = -1;
+  private final IElementType myRootType;
+  private final CharTable myCharTable;
+  private final PsiManager myManager;
+  private final CharSequence myBuffer;
+  private final Set<String> myNames;
+  private final XmlEntityDecl.EntityContextType myContextType;
+  private PsiElement myContext;
+  public static final XmlEntityDecl.EntityContextType TYPE_FOR_MARKUP_DECL = XmlEntityDecl.EntityContextType.ELEMENT_CONTENT_SPEC;
 
-  public OldXmlParsing(XmlParsingContext context) {
+  public OldXmlParser(CharSequence chars,
+                      IElementType type,
+                      XmlEntityDecl.EntityContextType contextType,
+                      CharTable charTable,
+                      @Nullable PsiManager manager) {
+    this(chars, type, contextType, charTable, manager, null, null);
+  }
+
+  public OldXmlParser(CharSequence chars,
+                      IElementType type,
+                      XmlEntityDecl.EntityContextType contextType,
+                      CharTable charTable,
+                      @Nullable PsiManager manager,
+                      @Nullable Set<String> names,
+                      @Nullable PsiElement context) {
+    myCharTable = charTable;
+    myRootType = type;
+    myManager = manager;
+    myContextType = contextType;
+    myNames = names;
+    myBuffer = chars;
     myContext = context;
   }
 
+  public ASTNode parse() {
+    final FileElement holderElement = myManager != null ? DummyHolderFactory.createHolder(myManager, myContext).getTreeElement():null;
 
-  public TreeElement parse(Lexer originalLexer, CharSequence buffer, int startOffset, int endOffset, PsiManager manager) {
-    final Lexer lexer = new FilterLexer(originalLexer, new FilterLexer.SetFilter(XML_WHITE_SPACE_OR_COMMENT_BIT_SET));
-    lexer.start(buffer, startOffset, endOffset);
+    Lexer lexer = getLexer(myContextType, myBuffer);
+    int state = lexer.getState();
+    final CompositeElement root = ASTFactory.composite(myRootType);
+    if (holderElement != null) holderElement.rawAddChildren(root);
 
-    final FileElement dummyRoot = DummyHolderFactory.createHolder(manager, null, myContext.getCharTable()).getTreeElement();
+    XmlEntityDecl.EntityContextType contextType = myContextType;
 
-    CompositeElement root = ASTFactory.composite(XML_DOCUMENT);
-    dummyRoot.rawAddChildren(root);
-    root.rawAddChildren(parseProlog(lexer));
-    parseGenericXml(lexer, root, new HashSet<String>());
+    if (myRootType == XML_DOCUMENT) {
+      root.rawAddChildren(parseProlog(lexer));
+    } else if (myRootType == XML_MARKUP_DECL) {
+      parseMarkupDecl(lexer, root);
+      contextType = null;
+    }
 
-    insertMissingTokens(root,
-                                  originalLexer,
-                                  startOffset,
-                                  endOffset,
-                                  -1, WhiteSpaceAndCommentsProcessor.INSTANCE, myContext);
+    if (contextType != null) {
+      switch (contextType) {
+        case GENERIC_XML:
+          parseGenericXml(lexer, root, myNames != null ? myNames : new THashSet<String>());
+          break;
+        case ELEMENT_CONTENT_SPEC:
+          parseElementContentSpec(root, lexer);
+          break;
+        case ATTLIST_SPEC:
+          parseAttlistContent(root, lexer);
+          break;
+        case ATTR_VALUE:
+          parseAttrValue(root, lexer);
+        case ATTRIBUTE_SPEC:
+          parseAttributeContentSpec(root, lexer);
+          break;
+        case ENTITY_DECL_CONTENT:
+          parseEntityDeclContent(root, lexer);
+          break;
+        case ENUMERATED_TYPE:
+          parseEnumeratedTypeContent(root, lexer);
+          break;
+      }
+    }
+
+    if (myContext == null && contextType != XmlEntityDecl.EntityContextType.ELEMENT_CONTENT_SPEC) {  // TODO: FIXME code for tests compatibility
+      insertMissingTokens(root, ((FilterLexer)lexer).getOriginal(), 0, myBuffer.length(), state, new WhiteSpaceAndCommentsProcessor());
+    }
     return root;
   }
 
-  public void parseGenericXml(Lexer lexer, CompositeElement root, Set<String> names) {
-    boolean rootTagChecked = false;
+  private Lexer getLexer(XmlEntityDecl.EntityContextType context, CharSequence buffer) {
+    Lexer lexer = new XmlPsiLexer();
+    FilterLexer filterLexer = new FilterLexer(lexer, new FilterLexer.SetFilter(OldXmlParser.XML_WHITE_SPACE_OR_COMMENT_BIT_SET));
+    short state = 0;
+
+    switch (context) {
+      case ELEMENT_CONTENT_SPEC:
+      case ATTRIBUTE_SPEC:
+      case ATTLIST_SPEC:
+      case ENUMERATED_TYPE:
+      case ENTITY_DECL_CONTENT:
+      {
+        state = _OldXmlLexer.DOCTYPE_MARKUP;
+        break;
+      }
+
+      case ATTR_VALUE:
+      case GENERIC_XML: {
+        break;
+      }
+
+
+      default: LOG.error("context: " + context);
+    }
+
+    if (myRootType == XML_MARKUP_DECL && context == TYPE_FOR_MARKUP_DECL) {
+      state = _OldXmlLexer.DOCTYPE;
+    }
+
+    filterLexer.start(buffer, 0, buffer.length(), state);
+    return filterLexer;
+  }
+
+
+  private void parseGenericXml(Lexer lexer, CompositeElement root, Set<String> names) {
     IElementType tokenType;
 
     while ((tokenType = lexer.getTokenType()) != null) {
@@ -101,27 +195,12 @@ public class OldXmlParsing implements XmlElementType {
       else if (parseConditionalSection(root, lexer)) {
       }
       else if (tokenType != null) {
-        if (!rootTagChecked) {
-          //checkRootTag(root);
-          rootTagChecked = true;
-        }
-
         addToken(root, lexer);
       }
     }
-
-    if (!rootTagChecked) {
-      //checkRootTag(root);
-      rootTagChecked = true;
-    }
-
-    insertMissingTokens(root, ((FilterLexer)lexer).getOriginal(),
-                                  0,
-                                  lexer.getBufferEnd(),
-                                  -1, WhiteSpaceAndCommentsProcessor.INSTANCE, myContext);
   }
 
-  public TreeElement parseNotationDecl(Lexer lexer) {
+  private TreeElement parseNotationDecl(Lexer lexer) {
     CompositeElement decl = ASTFactory.composite(XML_NOTATION_DECL);
 
     if (lexer.getTokenType() != XML_NOTATION_DECL_START) {
@@ -179,7 +258,7 @@ public class OldXmlParsing implements XmlElementType {
     return false;
   }
 
-  public void parseEntityDeclContent(CompositeElement decl, Lexer lexer) {
+  private void parseEntityDeclContent(CompositeElement decl, Lexer lexer) {
     IElementType tokenType = lexer.getTokenType();
     if (tokenType != XML_ATTRIBUTE_VALUE_START_DELIMITER &&
         tokenType != XML_DOCTYPE_PUBLIC &&
@@ -325,7 +404,7 @@ public class OldXmlParsing implements XmlElementType {
 
         return false;
       }
-      TreeElement endTagStart = createTokenElement(lexer, myContext.getCharTable());
+      TreeElement endTagStart = createTokenElement(lexer, myCharTable);
       lexer.advance();
 
       if (lexer.getTokenType() != XML_TAG_NAME) {
@@ -368,7 +447,7 @@ public class OldXmlParsing implements XmlElementType {
     return true;
   }
 
-  public static TreeElement createTokenElement(Lexer lexer, CharTable table) {
+  private static TreeElement createTokenElement(Lexer lexer, CharTable table) {
     IElementType tokenType = lexer.getTokenType();
     if (tokenType == null) return null;
     return ASTFactory.leaf(tokenType, LexerUtil.internToken(lexer, table));
@@ -533,7 +612,7 @@ public class OldXmlParsing implements XmlElementType {
     return false;
   }
 
-  public ASTNode parseElementContentSpec(CompositeElement parent, Lexer lexer) {
+  private ASTNode parseElementContentSpec(CompositeElement parent, Lexer lexer) {
     return doParseContentSpec(parent, lexer, true);
   }
 
@@ -668,7 +747,7 @@ public class OldXmlParsing implements XmlElementType {
     return decl;
   }
 
-  public void parseAttlistContent(CompositeElement parent, Lexer lexer) {
+  private void parseAttlistContent(CompositeElement parent, Lexer lexer) {
     while (true) {
       if (lexer.getTokenType() == XML_ENTITY_REF_TOKEN) {
         parent.rawAddChildren(parseEntityRef(lexer));
@@ -694,7 +773,7 @@ public class OldXmlParsing implements XmlElementType {
     return parseAttributeContentSpec(decl, lexer);
   }
 
-  public boolean parseAttributeContentSpec(CompositeElement parent, Lexer lexer) {
+  private boolean parseAttributeContentSpec(CompositeElement parent, Lexer lexer) {
     if (parseName(parent, lexer)) {
     }
     else if (lexer.getTokenType() == XML_LEFT_PAREN) {
@@ -737,7 +816,7 @@ public class OldXmlParsing implements XmlElementType {
     return enumeratedType;
   }
 
-  public void parseEnumeratedTypeContent(CompositeElement enumeratedType, Lexer lexer) {
+  private void parseEnumeratedTypeContent(CompositeElement enumeratedType, Lexer lexer) {
     while (true) {
       if (lexer.getTokenType() == XML_ENTITY_REF_TOKEN) {
         enumeratedType.rawAddChildren(parseEntityRef(lexer));
@@ -749,7 +828,7 @@ public class OldXmlParsing implements XmlElementType {
     }
   }
 
-  TreeElement parseDecl(Lexer lexer) {
+  private TreeElement parseDecl(Lexer lexer) {
     CompositeElement decl = ASTFactory.composite(XML_DECL);
 
     if (lexer.getTokenType() != XML_DECL_START) {
@@ -877,7 +956,7 @@ public class OldXmlParsing implements XmlElementType {
   }
 
   private TreeElement addToken(CompositeElement decl, Lexer lexer) {
-    final TreeElement element = createTokenElement(lexer, myContext.getCharTable());
+    final TreeElement element = createTokenElement(lexer, myCharTable);
     if (element != null) {
       decl.rawAddChildren(element);
       myLastTokenEnd = lexer.getTokenEnd();
@@ -886,13 +965,7 @@ public class OldXmlParsing implements XmlElementType {
     return element;
   }
 
-  public TreeElement parseMarkupDecl(CharSequence text) {
-    CompositeElement root = ASTFactory.composite(XML_MARKUP_DECL);
-
-    OldXmlLexer originalLexer = new OldXmlLexer();
-    final Lexer lexer = new FilterLexer(originalLexer, new FilterLexer.SetFilter(XML_WHITE_SPACE_OR_COMMENT_BIT_SET));
-    lexer.start(text, 0, text.length(), _OldXmlLexer.DOCTYPE);
-
+  private TreeElement parseMarkupDecl(Lexer lexer, CompositeElement root) {
     parseMarkupContent(lexer, root);
     while (lexer.getTokenType() != null) {
       final TreeElement children;
@@ -904,21 +977,17 @@ public class OldXmlParsing implements XmlElementType {
         children = parseEntityDecl(lexer);
       }
       else {
-        children = createTokenElement(lexer, myContext.getCharTable());
+        children = createTokenElement(lexer, myCharTable);
         lexer.advance();
       }
 
       root.rawAddChildren(children);
     }
 
-    originalLexer.start(text, 0, text.length(), _OldXmlLexer.DOCTYPE);
-    insertMissingTokens(root, originalLexer, 0, text.length(), _OldXmlLexer.DOCTYPE, WhiteSpaceAndCommentsProcessor.INSTANCE, myContext);
-
     return root;
-
   }
 
-  public void parseAttrValue(CompositeElement element, Lexer lexer) {
+  private void parseAttrValue(CompositeElement element, Lexer lexer) {
     while(lexer.getTokenType() != null) {
       if (lexer.getTokenType() == XML_ENTITY_REF_TOKEN) {
         final TreeElement children = parseEntityRef(lexer);
@@ -929,13 +998,9 @@ public class OldXmlParsing implements XmlElementType {
     }
   }
 
-  public static class WhiteSpaceAndCommentsProcessor {
-    public static final WhiteSpaceAndCommentsProcessor INSTANCE = new WhiteSpaceAndCommentsProcessor();
+  private class WhiteSpaceAndCommentsProcessor {
 
-    private WhiteSpaceAndCommentsProcessor() {
-    }
-
-    public TreeElement process(Lexer lexer, XmlParsingContext context) {
+    private TreeElement process(Lexer lexer) {
       TreeElement first = null;
       TreeElement last = null;
       while (isTokenValid(lexer.getTokenType())) {
@@ -948,10 +1013,10 @@ public class OldXmlParsing implements XmlElementType {
         }
 
         if (lexer.getTokenType() == XML_COMMENT_START) {
-          tokenElement = parseComment(lexer, context);
+          tokenElement = parseComment(lexer);
         }
         else {
-          tokenElement = createTokenElement(lexer, context.getCharTable());
+          tokenElement = createTokenElement(lexer, myCharTable);
           lexer.advance();
         }
 
@@ -966,15 +1031,15 @@ public class OldXmlParsing implements XmlElementType {
       return first;
     }
 
-    public boolean isTokenValid(IElementType tokenType) {
+    private boolean isTokenValid(IElementType tokenType) {
       return tokenType != null && XML_WHITE_SPACE_OR_COMMENT_BIT_SET.contains(tokenType);
     }
 
-    private TreeElement parseComment(Lexer lexer, XmlParsingContext context) {
+    private TreeElement parseComment(Lexer lexer) {
       final CompositeElement comment = ASTFactory.composite(XML_COMMENT);
 
       while (lexer.getTokenType() != null && XML_COMMENT_BIT_SET.contains(lexer.getTokenType())) {
-        final TreeElement tokenElement = createTokenElement(lexer, context.getCharTable());
+        final TreeElement tokenElement = createTokenElement(lexer, myCharTable);
         lexer.advance();
         comment.rawAddChildren(tokenElement);
       }
@@ -983,13 +1048,12 @@ public class OldXmlParsing implements XmlElementType {
     }
   }
 
-  public static void insertMissingTokens(CompositeElement root,
+  private void insertMissingTokens(CompositeElement root,
                                          Lexer lexer,
                                          int startOffset,
                                          int endOffset,
                                          int state,
-                                         WhiteSpaceAndCommentsProcessor processor,
-                                         XmlParsingContext context) {
+                                         WhiteSpaceAndCommentsProcessor processor) {
     if (state < 0) {
       lexer.start(lexer.getBufferSequence(), startOffset, endOffset);
     }
@@ -999,7 +1063,7 @@ public class OldXmlParsing implements XmlElementType {
 
     LeafElement leaf = TreeUtil.findFirstLeaf(root);
     if (leaf == null) {
-      final TreeElement firstMissing = processor.process(lexer, context);
+      final TreeElement firstMissing = processor.process(lexer);
       if (firstMissing != null) {
         root.rawAddChildren(firstMissing);
       }
@@ -1009,7 +1073,7 @@ public class OldXmlParsing implements XmlElementType {
       // Missing in the begining
       final IElementType tokenType = lexer.getTokenType();
       if (tokenType != leaf.getElementType() && processor.isTokenValid(tokenType)) {
-        final TreeElement firstMissing = processor.process(lexer, context);
+        final TreeElement firstMissing = processor.process(lexer);
         if (firstMissing != null) {
           root.getFirstChildNode().rawInsertBeforeMe(firstMissing);
         }
@@ -1017,10 +1081,10 @@ public class OldXmlParsing implements XmlElementType {
       passTokenOrChameleon(leaf, lexer);
     }
     // Missing in tree body
-    insertMissingTokensInTreeBody(leaf, lexer, processor, context, null);
+    insertMissingTokensInTreeBody(leaf, lexer, processor, null);
     if (lexer.getTokenType() != null) {
       // whitespaces at the end of the file
-      final TreeElement firstMissing = processor.process(lexer, context);
+      final TreeElement firstMissing = processor.process(lexer);
       if (firstMissing != null) {
         ASTNode current = root;
         while (current instanceof CompositeElement) {
@@ -1039,7 +1103,6 @@ public class OldXmlParsing implements XmlElementType {
 
   private static void insertMissingTokensInTreeBody(TreeElement leaf, Lexer lexer,
                                                    WhiteSpaceAndCommentsProcessor processor,
-                                                   XmlParsingContext context,
                                                    ASTNode endToken) {
     final TreeUtil.CommonParentState commonParents = new TreeUtil.CommonParentState();
     while (leaf != null) {
@@ -1049,7 +1112,7 @@ public class OldXmlParsing implements XmlElementType {
 
       if (next == null || tokenType == null || next == endToken) break;
       if (tokenType != next.getElementType() && processor.isTokenValid(tokenType)) {
-        final TreeElement firstMissing = processor.process(lexer, context);
+        final TreeElement firstMissing = processor.process(lexer);
         final CompositeElement unclosedElement = commonParents.strongWhiteSpaceHolder;
         if (unclosedElement != null) {
           if (commonParents.isStrongElementOnRisingSlope || unclosedElement.getFirstChildNode() == null) {
@@ -1093,6 +1156,4 @@ public class OldXmlParsing implements XmlElementType {
     }
     lexer.advance();
   }
-
-
 }

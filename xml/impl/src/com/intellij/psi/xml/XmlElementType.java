@@ -21,9 +21,8 @@ import com.intellij.lang.dtd.DTDLanguage;
 import com.intellij.lang.html.HTMLLanguage;
 import com.intellij.lang.xhtml.XHTMLLanguage;
 import com.intellij.lang.xml.XMLLanguage;
-import com.intellij.lexer.OldXmlLexer;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.impl.source.parsing.xml.XmlParsingContext;
+import com.intellij.psi.impl.source.parsing.xml.OldXmlParser;
 import com.intellij.psi.impl.source.tree.SharedImplUtil;
 import com.intellij.psi.tree.CustomParsingType;
 import com.intellij.psi.tree.IElementType;
@@ -55,8 +54,6 @@ public interface XmlElementType extends XmlTokenType {
   IElementType XML_ENUMERATED_TYPE = new IXmlElementType("XML_ENUMERATED_TYPE");
   IElementType XML_PROCESSING_INSTRUCTION = new IXmlElementType("XML_PROCESSING_INSTRUCTION");
   IElementType XML_CDATA = new IXmlElementType("XML_CDATA");
-  IElementType XML_DTD_DECL = new IXmlElementType("XML_DTD_DECL");
-  IElementType XML_WHITE_SPACE_HOLDER = new IXmlElementType("XML_WHITE_SPACE_HOLDER");
 
   //todo: move to html
   IElementType HTML_DOCUMENT = new IXmlElementType("HTML_DOCUMENT");
@@ -71,20 +68,20 @@ public interface XmlElementType extends XmlTokenType {
 
   IElementType DTD_FILE = new IReparseableElementType("DTD_FILE", DTDLanguage.INSTANCE){
     public ASTNode parseContents(ASTNode chameleon) {
-      final CharSequence chars = chameleon.getChars();
-      final CharTable table = SharedImplUtil.findCharTableByTree(chameleon);
-      final XmlParsingContext parsingContext = new XmlParsingContext(table);
-      return parsingContext.getXmlParsing().parse(new OldXmlLexer(), chars, 0, chars.length(), SharedImplUtil.getManagerByTree(chameleon));
+      return new OldXmlParser(chameleon.getChars(),
+                              XML_DOCUMENT,
+                              XmlEntityDecl.EntityContextType.GENERIC_XML,
+                              SharedImplUtil.findCharTableByTree(chameleon),
+                              SharedImplUtil.getManagerByTree(chameleon)
+      ).parse();
     }
     public boolean isParsable(CharSequence buffer, Language fileLanguage, final Project project) {return true;}
   };
 
-  IElementType XML_MARKUP = new CustomParsingType("XML_MARKUP_DECL", XMLLanguage.INSTANCE){
+  IElementType XML_MARKUP_DECL = new CustomParsingType("XML_MARKUP_DECL", XMLLanguage.INSTANCE){
     public ASTNode parse(CharSequence text, CharTable table) {
-      final XmlParsingContext parsingContext = new XmlParsingContext(table);
-      return parsingContext.getXmlParsing().parseMarkupDecl(text);
+      // TODO
+      return new OldXmlParser(text, XML_MARKUP_DECL, OldXmlParser.TYPE_FOR_MARKUP_DECL, table, null).parse();
     }
   };
-
-  IElementType XML_MARKUP_DECL = XmlElementType.XML_MARKUP;
 }
