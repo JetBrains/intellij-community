@@ -892,7 +892,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
   @Override
   public void addButtonToLowerPane(@NotNull Runnable runnable, @NotNull String text) {
     int index = myButtonPanel.getComponentCount();
-    if (index > 0 && myPresentation.isShowCancelButton()) index--;
+    if (!SystemInfo.isMac && index > 0 && myPresentation.isShowCancelButton()) index--;
     myButtonPanel.addButtonRunnable(index, runnable, text);
   }
 
