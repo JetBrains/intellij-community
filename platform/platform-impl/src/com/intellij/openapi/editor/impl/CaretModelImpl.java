@@ -196,7 +196,6 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
       for (CaretListener listener : myCaretListeners) {
         listener.caretPositionChanged(event);
       }
-      EditorActionUtil.selectNonexpandableFold(myEditor);
     }
   }
 

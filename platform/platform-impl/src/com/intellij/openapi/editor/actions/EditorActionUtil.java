@@ -619,12 +619,12 @@ public class EditorActionUtil {
     selectNonexpandableFold(editor);
   }
 
-  private final static Key<LogicalPosition> PREV_POS = Key.create("PREV_POS");
+  private final static Key<VisualPosition> PREV_POS = Key.create("PREV_POS");
   public static void selectNonexpandableFold(Editor editor) {
     final CaretModel caretModel = editor.getCaretModel();
-    final LogicalPosition pos = caretModel.getLogicalPosition();
+    final VisualPosition pos = caretModel.getVisualPosition();
 
-    LogicalPosition prevPos = editor.getUserData(PREV_POS);
+    VisualPosition prevPos = editor.getUserData(PREV_POS);
 
     if (prevPos != null) {
       int columnShift = pos.line == prevPos.line ? pos.column - prevPos.column : 0;
