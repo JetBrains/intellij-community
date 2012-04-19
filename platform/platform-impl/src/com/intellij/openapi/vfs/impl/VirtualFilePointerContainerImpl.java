@@ -174,8 +174,8 @@ public class VirtualFilePointerContainerImpl implements VirtualFilePointerContai
   private static final Trinity<String[], VirtualFile[], VirtualFile[]> EMPTY = Trinity.create(ArrayUtil.EMPTY_STRING_ARRAY, VirtualFile.EMPTY_ARRAY, VirtualFile.EMPTY_ARRAY);
   @NotNull
   private Trinity<String[], VirtualFile[], VirtualFile[]> cacheThings() {
+    myTimeStampOfCachedThings = myVirtualFilePointerManager.getModificationCount();
     if (myList.isEmpty()) {
-      myTimeStampOfCachedThings = myVirtualFilePointerManager.getModificationCount();
       myCachedDirectories = VirtualFile.EMPTY_ARRAY;
       myCachedFiles = VirtualFile.EMPTY_ARRAY;
       myCachedUrls = ArrayUtil.EMPTY_STRING_ARRAY;
