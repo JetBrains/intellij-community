@@ -66,6 +66,7 @@ import pydevd_tracing
 import pydevd_io
 import pydev_log
 import pydev_localhost
+import pydev_monkey
 from pydevd_additional_thread_info import PyDBAdditionalThreadInfo
 import time
 import os
@@ -1372,7 +1373,6 @@ if __name__ == '__main__':
                 pydev_log.debug("Received port %d\n" %port)
                 pydev_log.info("pydev debugger: process %d is connecting\n"% os.getpid())
 
-                import pydev_monkey
                 try:
                     pydev_monkey.patch_new_process_functions()
                 except:
