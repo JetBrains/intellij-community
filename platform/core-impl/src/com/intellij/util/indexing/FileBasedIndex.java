@@ -83,7 +83,7 @@ public abstract class FileBasedIndex {
   private FileBasedIndexLimitsChecker myLimitsChecker;
   private final AbstractVfsAdapter myVfsAdapter;
 
-  private static final int ALREADY_PROCESSED = 0x02;
+  private static final int ALREADY_PROCESSED = 0x04;
   @Nullable private final String myConfigPath;
   @Nullable private final String mySystemPath;
   private final boolean myIsUnitTestMode;
