@@ -13,9 +13,6 @@ import com.intellij.psi.*;
 public class DeclarationFilter extends JavaElementVisitor implements NodeFilter {
   protected boolean result;
 
-  public void visitReferenceExpression(final PsiReferenceExpression expression) {
-  }
-
   @Override public void visitDeclarationStatement(PsiDeclarationStatement dcl) {
     result = true;
   }

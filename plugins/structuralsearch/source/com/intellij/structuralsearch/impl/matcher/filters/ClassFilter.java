@@ -1,7 +1,10 @@
 package com.intellij.structuralsearch.impl.matcher.filters;
 
 import com.intellij.dupLocator.util.NodeFilter;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaElementVisitor;
+import com.intellij.psi.PsiAnonymousClass;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
 
 /**
  * Created by IntelliJ IDEA.
@@ -12,9 +15,6 @@ import com.intellij.psi.*;
  */
 public class ClassFilter extends JavaElementVisitor implements NodeFilter {
   protected boolean result;
-
-  public void visitReferenceExpression(final PsiReferenceExpression expression) {
-  }
 
   @Override public void visitAnonymousClass(PsiAnonymousClass psiAnonymousClass) {
     result = true;

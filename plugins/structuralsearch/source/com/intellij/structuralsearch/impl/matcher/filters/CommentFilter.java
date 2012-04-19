@@ -13,9 +13,6 @@ import com.intellij.psi.*;
 public class CommentFilter extends JavaElementVisitor implements NodeFilter {
   protected boolean result;
 
-  public void visitReferenceExpression(final PsiReferenceExpression expression) {
-  }
-
   @Override public void visitComment(PsiComment comment) {
     result = true;
   }

@@ -9,9 +9,6 @@ import com.intellij.psi.*;
 public class TypedSymbolNodeFilter extends JavaElementVisitor implements NodeFilter {
   private boolean result;
 
-  public void visitReferenceExpression(final PsiReferenceExpression expression) {
-  }
-
   @Override public void visitMethod(PsiMethod psiMethod) {
     result = psiMethod.hasTypeParameters();
   }

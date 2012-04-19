@@ -1,7 +1,10 @@
 package com.intellij.structuralsearch.impl.matcher.filters;
 
 import com.intellij.dupLocator.util.NodeFilter;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaElementVisitor;
+import com.intellij.psi.PsiBlockStatement;
+import com.intellij.psi.PsiCodeBlock;
+import com.intellij.psi.PsiElement;
 
 /**
  * Filters block related nodes
@@ -13,9 +16,6 @@ public class BlockFilter extends JavaElementVisitor implements NodeFilter {
     result = false;
     if (element!=null) element.accept(this);
     return result;
-  }
-
-  public void visitReferenceExpression(final PsiReferenceExpression expression) {
   }
 
   @Override

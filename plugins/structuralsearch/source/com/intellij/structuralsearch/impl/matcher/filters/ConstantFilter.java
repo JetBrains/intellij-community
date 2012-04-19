@@ -4,7 +4,6 @@ import com.intellij.dupLocator.util.NodeFilter;
 import com.intellij.psi.JavaElementVisitor;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLiteralExpression;
-import com.intellij.psi.PsiReferenceExpression;
 
 /**
  * Created by IntelliJ IDEA.
@@ -15,9 +14,6 @@ import com.intellij.psi.PsiReferenceExpression;
  */
 public class ConstantFilter extends JavaElementVisitor implements NodeFilter {
   protected boolean result;
-
-  public void visitReferenceExpression(final PsiReferenceExpression expression) {
-  }
 
   @Override public void visitLiteralExpression(PsiLiteralExpression  psiLiteral) {
     result = true;

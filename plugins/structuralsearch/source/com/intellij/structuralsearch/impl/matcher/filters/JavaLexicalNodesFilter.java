@@ -13,9 +13,6 @@ public class JavaLexicalNodesFilter extends JavaElementVisitor {
     this.myLexicalNodesFilter = lexicalNodesFilter;
   }
 
-  public void visitReferenceExpression(final PsiReferenceExpression expression) {
-  }
-
   @Override public void visitJavaToken(final PsiJavaToken t) {
     myLexicalNodesFilter.setResult(true);
   }
