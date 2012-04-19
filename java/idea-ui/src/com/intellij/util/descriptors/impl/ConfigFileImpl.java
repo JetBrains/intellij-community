@@ -64,7 +64,7 @@ public class ConfigFileImpl implements ConfigFile {
   @Override
   @Nullable
   public VirtualFile getVirtualFile() {
-    return myFilePointer.getFile();
+    return myFilePointer.isValid() ? myFilePointer.getFile() : null;
   }
 
   @Override
