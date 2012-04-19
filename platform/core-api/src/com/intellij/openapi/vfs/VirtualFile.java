@@ -316,7 +316,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    */
   @Nullable
   public VirtualFile findFileByRelativePath(@NotNull @NonNls String relPath) {
-    if (relPath.length() == 0) return this;
+    if (relPath.isEmpty()) return this;
     relPath = StringUtil.trimStart(relPath, "/");
 
     int index = relPath.indexOf('/');
@@ -498,15 +498,15 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
     return getUserData(CHARSET_KEY) != null;
   }
 
-  public final void setBinaryContent(byte[] content) throws IOException {
+  public final void setBinaryContent(@NotNull byte[] content) throws IOException {
     setBinaryContent(content, -1, -1);
   }
 
-  public void setBinaryContent(final byte[] content, long newModificationStamp, long newTimeStamp) throws IOException {
+  public void setBinaryContent(@NotNull byte[] content, long newModificationStamp, long newTimeStamp) throws IOException {
     setBinaryContent(content, newModificationStamp, newTimeStamp, this);
   }
 
-  public void setBinaryContent(final byte[] content, long newModificationStamp, long newTimeStamp, Object requestor) throws IOException {
+  public void setBinaryContent(@NotNull byte[] content, long newModificationStamp, long newTimeStamp, Object requestor) throws IOException {
     OutputStream outputStream = null;
     try {
       outputStream = getOutputStream(requestor, newModificationStamp, newTimeStamp);
