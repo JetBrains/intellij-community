@@ -115,7 +115,7 @@ public class PyTestRunConfiguration extends AbstractPythonTestRunConfiguration i
     if (StringUtil.isEmptyOrSpaces(myTestToRun)) {
       throw new RuntimeConfigurationError("Please specify target folder or script");
     }
-    if (!VFSTestFrameworkListener.getInstance().isPyTestInstalled(getSdkHome()))
+    if (!VFSTestFrameworkListener.getInstance().isPyTestInstalled(getInterpreterPath()))
       throw new RuntimeConfigurationWarning(PyBundle.message("runcfg.testing.no.test.framework", "py.test"));
   }
 

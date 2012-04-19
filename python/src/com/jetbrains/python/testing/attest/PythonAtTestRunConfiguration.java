@@ -62,7 +62,7 @@ public class PythonAtTestRunConfiguration extends AbstractPythonTestRunConfigura
   @Override
   public void checkConfiguration() throws RuntimeConfigurationException {
     super.checkConfiguration();
-    if (!VFSTestFrameworkListener.getInstance().isAtTestInstalled(getSdkHome()))
+    if (!VFSTestFrameworkListener.getInstance().isAtTestInstalled(getInterpreterPath()))
       throw new RuntimeConfigurationWarning(PyBundle.message("runcfg.testing.no.test.framework", "attest"));
   }
 }
