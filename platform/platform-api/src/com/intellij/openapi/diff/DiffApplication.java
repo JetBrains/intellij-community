@@ -37,21 +37,20 @@ import java.io.File;
  */
 @SuppressWarnings({"UseOfSystemOutOrSystemErr", "CallToPrintStackTrace"})
 public class DiffApplication implements ApplicationStarterEx {
+  @Override
   public String getCommandName() {
     return "diff";
   }
 
+  @Override
   public void premain(String[] args) {
     if (args.length != 3) {
-      printHelp();
+      System.err.println(getUsageMessage());
+      System.exit(1);
     }
   }
 
-  private static void printHelp() {
-    System.err.println(DiffBundle.message("diff.application.usage.parameters.and.description"));
-    System.exit(1);
-  }
-
+  @Override
   public void main(String[] args) {
     try {
       processDiffCommand(args);
@@ -71,17 +70,20 @@ public class DiffApplication implements ApplicationStarterEx {
   @Override
   public void processExternalCommandLine(String[] args) {
     if (args.length != 3) {
-      String productName = ApplicationNamesInfo.getInstance().getProductName();
-      Messages.showMessageDialog("Usage: " + productName.toLowerCase() + " diff <file1> <file2>",
-                                 "Diff", Messages.getInformationIcon());
+      Messages.showMessageDialog(getUsageMessage(), "Diff", Messages.getInformationIcon());
       return;
     }
     try {
       processDiffCommand(args);
     }
-    catch(Exception e) {
+    catch (Exception e) {
       Messages.showMessageDialog("Error showing diff: " + e.getMessage(), "Diff", Messages.getErrorIcon());
     }
+  }
+
+  private static String getUsageMessage() {
+    final String scriptName = ApplicationNamesInfo.getInstance().getScriptName();
+    return DiffBundle.message("diff.application.usage.parameters.and.description", scriptName);
   }
 
   private static void processDiffCommand(String[] args) throws OperationFailedException {
