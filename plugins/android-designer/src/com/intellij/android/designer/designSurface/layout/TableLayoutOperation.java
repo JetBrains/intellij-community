@@ -16,17 +16,26 @@
 package com.intellij.android.designer.designSurface.layout;
 
 import com.intellij.android.designer.designSurface.AbstractEditOperation;
+import com.intellij.android.designer.model.ModelParser;
+import com.intellij.android.designer.model.RadViewComponent;
+import com.intellij.android.designer.model.ViewsMetaManager;
 import com.intellij.android.designer.model.table.GridInfo;
 import com.intellij.android.designer.model.table.GridInsertType;
 import com.intellij.android.designer.model.table.RadTableLayoutComponent;
+import com.intellij.android.designer.model.table.RadTableRowLayout;
 import com.intellij.designer.designSurface.FeedbackLayer;
 import com.intellij.designer.designSurface.OperationContext;
 import com.intellij.designer.designSurface.feedbacks.AlphaFeedback;
 import com.intellij.designer.designSurface.feedbacks.InsertFeedback;
+import com.intellij.designer.designSurface.feedbacks.TextFeedback;
+import com.intellij.designer.model.MetaManager;
+import com.intellij.designer.model.MetaModel;
 import com.intellij.designer.model.RadComponent;
+import com.intellij.ui.IdeBorderFactory;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.List;
 
 /**
  * @author Alexander Lobas
@@ -36,6 +45,8 @@ public class TableLayoutOperation extends AbstractEditOperation {
 
   private GridFeedback myFeedback;
   private InsertFeedback myInsertFeedback;
+  private TextFeedback myTextFeedback;
+  private Rectangle myBounds;
   private int myColumn;
   private int myRow;
   private GridInsertType myInsertType;
@@ -49,23 +60,80 @@ public class TableLayoutOperation extends AbstractEditOperation {
     return ((RadTableLayoutComponent)myContainer).getVirtualGridInfo();
   }
 
-  @Override
-  public void showFeedback() {
+  private void createFeedback() {
     if (myFeedback == null) {
       FeedbackLayer layer = myContext.getArea().getFeedbackLayer();
 
-      myFeedback = new GridFeedback();
-      myFeedback.setBounds(myContainer.getBounds(layer));
-
       myInsertFeedback = new InsertFeedback(Color.green);
-
       layer.add(myInsertFeedback);
+
+      myBounds = myContainer.getBounds(layer);
+
+      myFeedback = new GridFeedback();
+      myFeedback.setBounds(myBounds);
       layer.add(myFeedback);
+
+      myTextFeedback = new TextFeedback();
+      myTextFeedback.setBorder(IdeBorderFactory.createEmptyBorder(0, 3, 2, 0));
+      layer.add(myTextFeedback);
+
       layer.repaint();
     }
+  }
 
+  @Override
+  public void showFeedback() {
+    createFeedback();
     calculateGridInfo();
+    configureTextFeedback();
     myFeedback.repaint();
+  }
+
+  private void configureTextFeedback() {
+    myTextFeedback.clear();
+
+    int row = myRow;
+    int column = myColumn;
+
+    myTextFeedback.append("[");
+
+    if (myInsertType == GridInsertType.before_h_cell) {
+      myTextFeedback.append("before ");
+    }
+    else if (myInsertType == GridInsertType.after_h_cell) {
+      myTextFeedback.append("after ");
+    }
+    else if (myInsertType != GridInsertType.in_cell) {
+      myTextFeedback.append("insert: ");
+
+      if (myInsertType == GridInsertType.corner_top_right) {
+        column++;
+      }
+      else if (myInsertType == GridInsertType.corner_bottom_left) {
+        row++;
+      }
+      else if (myInsertType == GridInsertType.corner_bottom_right) {
+        row++;
+        column++;
+      }
+    }
+
+    myTextFeedback.append("row ");
+    myTextFeedback.bold(Integer.toString(row));
+    myTextFeedback.append(", ");
+
+    if (myInsertType == GridInsertType.before_v_cell) {
+      myTextFeedback.append("before ");
+    }
+    else if (myInsertType == GridInsertType.after_v_cell) {
+      myTextFeedback.append("after ");
+    }
+
+    myTextFeedback.append("column ");
+    myTextFeedback.bold(Integer.toString(column));
+    myTextFeedback.append("]");
+
+    myTextFeedback.centerTop(myBounds);
   }
 
   @Override
@@ -74,9 +142,11 @@ public class TableLayoutOperation extends AbstractEditOperation {
       FeedbackLayer layer = myContext.getArea().getFeedbackLayer();
       layer.remove(myInsertFeedback);
       layer.remove(myFeedback);
+      layer.remove(myTextFeedback);
       layer.repaint();
       myFeedback = null;
       myInsertFeedback = null;
+      myTextFeedback = null;
     }
   }
 
@@ -95,58 +165,59 @@ public class TableLayoutOperation extends AbstractEditOperation {
       myExist = isExist(myRow, myColumn);
       myInsertType = GridInsertType.in_cell;
 
-      Rectangle bounds = myContainer.getBounds(myContext.getArea().getFeedbackLayer());
       Rectangle cellRect = getInsertRect(myExist);
       Rectangle inCellRect = getInsertInRect(cellRect);
-      boolean isExistCell = myRow < gridInfo.components.length && myColumn < gridInfo.components[0].length;
+      boolean isExistCell = gridInfo.components != null && myRow < gridInfo.components.length && myColumn < gridInfo.components[0].length;
 
       if (!inCellRect.contains(location)) {
         if (location.x <= inCellRect.x) {
           if (location.y <= inCellRect.y) {
             if (isExistCell) {
               myInsertType = GridInsertType.corner_top_left;
-              myInsertFeedback.cross(bounds.x + cellRect.x, bounds.y + cellRect.y, CROSS_SIZE);
+              myInsertFeedback.cross(myBounds.x + cellRect.x, myBounds.y + cellRect.y, CROSS_SIZE);
             }
           }
           else if (inCellRect.y < location.y && location.y < inCellRect.getMaxY()) {
             if (myExist && (myColumn == 0 || isExist(myRow, myColumn - 1))) {
               myInsertType = GridInsertType.before_v_cell;
-              myInsertFeedback.vertical(bounds.x + cellRect.x, bounds.y + cellRect.y, cellRect.height);
+              myInsertFeedback.vertical(myBounds.x + cellRect.x, myBounds.y + cellRect.y, cellRect.height);
             }
           }
           else if (isExistCell) {
             myInsertType = GridInsertType.corner_bottom_left;
-            myInsertFeedback.cross(bounds.x + cellRect.x, bounds.y + cellRect.y + cellRect.height, CROSS_SIZE);
+            myInsertFeedback.cross(myBounds.x + cellRect.x, myBounds.y + cellRect.y + cellRect.height, CROSS_SIZE);
           }
         }
         else if (location.x >= inCellRect.getMaxX()) {
           if (location.y <= inCellRect.y) {
             if (isExistCell) {
               myInsertType = GridInsertType.corner_top_right;
-              myInsertFeedback.cross(bounds.x + cellRect.x + cellRect.width, bounds.y + cellRect.y, CROSS_SIZE);
+              myInsertFeedback.cross(myBounds.x + cellRect.x + cellRect.width, myBounds.y + cellRect.y, CROSS_SIZE);
             }
           }
           else if (inCellRect.y < location.y && location.y < inCellRect.getMaxY()) {
             if (myExist && (myColumn == gridInfo.lastColumn || isExist(myRow, myColumn + 1))) {
               myInsertType = GridInsertType.after_v_cell;
-              myInsertFeedback.vertical(bounds.x + cellRect.x + cellRect.width, bounds.y + cellRect.y, cellRect.height);
+              myInsertFeedback.vertical(myBounds.x + cellRect.x + cellRect.width, myBounds.y + cellRect.y, cellRect.height);
             }
           }
           else if (isExistCell) {
             myInsertType = GridInsertType.corner_bottom_right;
-            myInsertFeedback.cross(bounds.x + cellRect.x + cellRect.width, bounds.y + cellRect.y + cellRect.height, CROSS_SIZE);
+            myInsertFeedback.cross(myBounds.x + cellRect.x + cellRect.width, myBounds.y + cellRect.y + cellRect.height, CROSS_SIZE);
           }
         }
         else if (location.y <= inCellRect.y) {
           if (myExist && (myRow == 0 || isExist(myRow - 1, myColumn))) {
             myInsertType = GridInsertType.before_h_cell;
-            myInsertFeedback.horizontal(bounds.x + cellRect.x, bounds.y + cellRect.y, cellRect.width);
+            cellRect = getInsertRect(false);
+            myInsertFeedback.horizontal(myBounds.x + cellRect.x, myBounds.y + cellRect.y, cellRect.width);
           }
         }
         else if (location.y >= inCellRect.getMaxY()) {
           if (myExist && (myRow == gridInfo.lastRow || isExist(myRow + 1, myColumn))) {
             myInsertType = GridInsertType.after_h_cell;
-            myInsertFeedback.horizontal(bounds.x + cellRect.x, bounds.y + cellRect.y + cellRect.height, cellRect.width);
+            cellRect = getInsertRect(false);
+            myInsertFeedback.horizontal(myBounds.x + cellRect.x, myBounds.y + cellRect.y + cellRect.height, cellRect.width);
           }
         }
       }
@@ -222,12 +293,101 @@ public class TableLayoutOperation extends AbstractEditOperation {
 
   @Override
   public boolean canExecute() {
-    return myInsertType != GridInsertType.in_cell || !myExist;
+    return myComponents.size() == 1 && (myInsertType != GridInsertType.in_cell || !myExist);
   }
 
   @Override
   public void execute() throws Exception {
-    super.execute(); // TODO: Auto-generated method stub
+    GridInfo gridInfo = getGridInfo();
+
+    RadViewComponent container = (RadViewComponent)myContainer;
+    List<RadComponent> rows = myContainer.getChildren();
+    RadComponent editComponent = myComponents.get(0);
+
+    MetaManager metaManager = ViewsMetaManager.getInstance(container.getTag().getProject());
+    MetaModel tableRowModel = metaManager.getModelByTag("TableRow");
+
+    if (myInsertType == GridInsertType.in_cell) {
+      if (gridInfo.components != null && myRow < gridInfo.components.length) {
+        RadViewComponent rowComponent = (RadViewComponent)rows.get(myRow);
+        if (RadTableRowLayout.is(rowComponent)) {
+          RadComponent[] rowComponents = gridInfo.components[myRow];
+          RadComponent insertBefore = null;
+
+          for (int i = myColumn + 1; i < rowComponents.length; i++) {
+            insertBefore = rowComponents[i];
+            if (insertBefore != null) {
+              break;
+            }
+          }
+
+          if (editComponent != insertBefore) {
+            execute(myContext, rowComponent, myComponents, (RadViewComponent)insertBefore);
+          }
+
+          RadTableLayoutComponent.setCellConstraints(editComponent, myColumn, 1);
+        }
+        else {
+          RadViewComponent newRowComponent = ModelParser.createComponent(null, tableRowModel);
+          ModelParser.addComponent(container, newRowComponent, rowComponent);
+
+          ModelParser.moveComponent(newRowComponent, rowComponent, null);
+
+          execute(myContext, newRowComponent, myComponents, null);
+
+          if (myColumn > 1) {
+            RadTableLayoutComponent.setCellConstraints(editComponent, myColumn, 1);
+          }
+        }
+      }
+      else {
+        for (int i = rows.size(); i <= myRow; i++) {
+          RadViewComponent rowComponent = ModelParser.createComponent(null, tableRowModel);
+          ModelParser.addComponent(container, rowComponent, null);
+        }
+
+        execute(myContext, (RadViewComponent)myContainer.getChildren().get(myRow), myComponents, null);
+        RadTableLayoutComponent.setCellConstraints(editComponent, myColumn, 1);
+      }
+    }
+    else if (myInsertType == GridInsertType.before_h_cell || myInsertType == GridInsertType.after_h_cell) {
+      RadViewComponent rowComponent = ModelParser.createComponent(null, tableRowModel);
+      RadComponent insertBefore = null;
+
+      if (myInsertType == GridInsertType.before_h_cell) {
+        insertBefore = rows.get(myRow);
+      }
+      else if (myRow + 1 < rows.size()) {
+        insertBefore = rows.get(myRow + 1);
+      }
+
+      ModelParser.addComponent(container, rowComponent, (RadViewComponent)insertBefore);
+
+      execute(myContext, rowComponent, myComponents, null);
+      RadTableLayoutComponent.setCellConstraints(editComponent, myColumn, 1);
+    }
+    else if (myInsertType == GridInsertType.before_v_cell || myInsertType == GridInsertType.after_v_cell) {
+      int column = myColumn;
+      if (myInsertType == GridInsertType.after_v_cell) {
+        column++;
+      }
+      shiftColumns(column);
+    }
+    else {
+      // XXX
+    }
+  }
+
+  private void shiftColumns(int startColumn) {
+    RadComponent[][] components = getGridInfo().components;
+    for (RadComponent[] rowComponents : components) {
+      for (int j = startColumn; j < rowComponents.length; j++) {
+        RadComponent cellComponent = rowComponents[j];
+        if (cellComponent != null) {
+          RadTableLayoutComponent.setCellConstraints(cellComponent, j + 1, 1);
+        }
+      }
+    }
   }
 
   //////////////////////////////////////////////////////////////////////////////////////////

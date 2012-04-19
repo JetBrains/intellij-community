@@ -19,6 +19,8 @@ import com.android.ide.common.rendering.api.ViewInfo;
 import com.intellij.android.designer.model.RadViewComponent;
 import com.intellij.android.designer.model.RadViewContainer;
 import com.intellij.designer.model.RadComponent;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ArrayUtil;
 
 import java.awt.*;
@@ -176,6 +178,19 @@ public class RadTableLayoutComponent extends RadViewContainer {
       return oldLines;
     }
     return oldLines;
+  }
+
+  public static void setCellConstraints(final RadComponent component, final int column, final int span) {
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
+      public void run() {
+        XmlTag tag = ((RadViewComponent)component).getTag();
+        tag.setAttribute("android:layout_column", Integer.toString(column));
+        if (span > 1) {
+          tag.setAttribute("android:layout_span", Integer.toString(span));
+        }
+      }
+    });
   }
 
   private static int getCellIndex(RadComponent component) {

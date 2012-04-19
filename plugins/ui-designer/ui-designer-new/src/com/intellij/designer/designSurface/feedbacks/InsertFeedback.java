@@ -31,11 +31,11 @@ public class InsertFeedback extends LineInsertFeedback {
   protected void paintLines(Graphics g) {
     if (myCross) {
       int size = getWidth();
-      int size2 = size / 2;
-      AlphaFeedback.fillRect1(g, 0, size2 - 1, size, 3, myColor);
-      AlphaFeedback.fillRect1(g, size2 - 1, 0, 3, size, myColor);
-      g.drawLine(0, size2, size, size2);
-      g.drawLine(size2, 0, size2, size);
+      int size2 = (size - 3) / 2;
+      AlphaFeedback.fillRect2(g, 0, size2, size, 3, myColor);
+      AlphaFeedback.fillRect2(g, size2, 0, 3, size, myColor);
+      g.drawLine(0, size2 + 1, size, size2 + 1);
+      g.drawLine(size2 + 1, 0, size2 + 1, size);
     }
     else {
       super.paintLines(g);
@@ -44,7 +44,7 @@ public class InsertFeedback extends LineInsertFeedback {
 
   public void cross(int xCenter, int yCenter, int size) {
     myCross = true;
-    setBounds(xCenter - size, yCenter - size, 2 * size, 2 * size);
+    setBounds(xCenter - size - 1, yCenter - size - 1, 2 * size + 3, 2 * size + 3);
     setVisible(true);
   }
 
