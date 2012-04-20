@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2009 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 
 public class NameUtil {
@@ -499,28 +498,26 @@ public class NameUtil {
 
     @Nullable
     private FList<TextRange> matchAfterFragment(String name, int patternIndex, int nameIndex, int nextStart, int lastUpper, int matchLen) {
-      int star = patternIndex + matchLen < myPattern.length && myPattern[patternIndex + matchLen] == '*' ? matchLen : -1;
+      boolean star = patternIndex + matchLen < myPattern.length && myPattern[patternIndex + matchLen] == '*';
       if (lastUpper >= 0) {
-        FList<TextRange> ranges = matchName(name, patternIndex + lastUpper + 1, lastUpper == star ? nameIndex + lastUpper : nextStart);
+        FList<TextRange> ranges = matchName(name, patternIndex + lastUpper + 1, star && matchLen == lastUpper ? nameIndex + lastUpper : nextStart);
         if (ranges != null) {
           return prependRange(ranges, nameIndex, lastUpper + 1);
         }
       }
 
-      int startMatchLen = matchLen;
-      while (matchLen > 0) {
-        if (matchLen != lastUpper) {
-          FList<TextRange> ranges = matchName(name, patternIndex + matchLen, matchLen == star ? matchLen + lastUpper : nextStart);
-          if (ranges != null) {
-            return prependRange(ranges, nameIndex, matchLen);
-          }
+      int trial = matchLen;
+      while (trial > 0) {
+        FList<TextRange> ranges = matchName(name, patternIndex + trial, nextStart);
+        if (ranges != null) {
+          return prependRange(ranges, nameIndex, trial);
         }
-        matchLen--;
+        trial--;
       }
 
-      FList<TextRange> ranges = matchName(name, patternIndex + startMatchLen, nameIndex + startMatchLen);
+      FList<TextRange> ranges = matchName(name, patternIndex + matchLen, nameIndex + matchLen);
       if (ranges != null) {
-        return prependRange(ranges, nameIndex, startMatchLen);
+        return prependRange(ranges, nameIndex, matchLen);
       }
       return null;
     }
@@ -636,18 +633,7 @@ public class NameUtil {
         return myPattern.length == 0 ? Collections.<TextRange>emptyList() : null;
       }
 
-      final FList<TextRange> ranges = matchName(name, 0, 0);
-      if (ranges != null) {
-        final List<TextRange> list = new ArrayList<TextRange>(ranges);
-        Collections.sort(list, new Comparator<TextRange>() {
-          @Override
-          public int compare(TextRange o1, TextRange o2) {
-            return o1.getStartOffset() - o2.getStartOffset();
-          }
-        });
-        return list;
-      }
-      return ranges;
+      return matchName(name, 0, 0);
     }
   }
 }
