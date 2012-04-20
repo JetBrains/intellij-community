@@ -48,15 +48,22 @@ import java.util.regex.Pattern;
  * @author Kirill Likhodedov
  */
 public class GitConfig {
-  
+
+  /**
+   * Special remote typical for git-svn configuration:
+   * <pre>[branch "trunk]
+   *   remote = .
+   *   merge = refs/remotes/trunk
+   * </pre>
+   */
+  public static final String DOT_REMOTE = ".";
+
   private static final Logger LOG = Logger.getInstance(GitConfig.class);
 
   private static final Pattern REMOTE_SECTION = Pattern.compile("(?:svn-)?remote \"(.*)\"");
   private static final Pattern URL_SECTION = Pattern.compile("url \"(.*)\"");
   private static final Pattern BRANCH_INFO_SECTION = Pattern.compile("branch \"(.*)\"");
   private static final Pattern BRANCH_COMMON_PARAMS_SECTION = Pattern.compile("branch");
-
-  private static final String DOT_REMOTE = "."; // used in git-svn "remote = . "
 
   private final Collection<GitRemote> myRemotes;
   private final Collection<GitBranchTrackInfo> myBranchTrackInfos;

@@ -330,7 +330,7 @@ class GitBranchPopupActions {
       private String guessBranchName() {
         // TODO: check if we already have a branch with that name; check if that branch tracks this remote branch. Show different messages
         int slashPosition = myRemoteBranchName.indexOf("/");
-        LOG.assertTrue(slashPosition > 0, "Remote branch name should have a slash separator: [" + myRemoteBranchName + "]");
+        // if no slash is found (for example, in the case of git-svn remote branches), propose the whole name.
         return myRemoteBranchName.substring(slashPosition+1);
       }
     }

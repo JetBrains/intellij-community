@@ -20,6 +20,7 @@ import git4idea.GitBranch;
 import git4idea.GitUtil;
 import git4idea.branch.GitBranchesCollection;
 import git4idea.repo.GitBranchTrackInfo;
+import git4idea.repo.GitConfig;
 import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -108,7 +109,13 @@ public class GitMultiRootBranchConfig {
         return null;
       }
     }
-    return trackedRemote + "/" + trackedBranch;
+    if (GitConfig.DOT_REMOTE.equals(trackedRemote)) {
+      // for git-svn branches: to display "refs/remotes/trunk" instead of "./refs/remotes/trunk"
+      return trackedBranch;
+    }
+    else {
+      return trackedRemote + "/" + trackedBranch;
+    }
   }
 
   /**
