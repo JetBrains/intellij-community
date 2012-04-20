@@ -15,6 +15,7 @@
  */
 package git4idea;
 
+import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -22,6 +23,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * IntelliJ code provides a lot of statical bindings to the interested pieces of data. For example we need to execute code
@@ -61,4 +63,8 @@ public interface PlatformFacade {
   <T> T runReadAction(@NotNull Computable<T> computable);
 
   void runReadAction(@NotNull Runnable runnable);
+
+  @Nullable
+  IdeaPluginDescriptor getPluginByClassName(@NotNull String name);
+
 }
