@@ -57,6 +57,6 @@ public class DictionarySuggestionProvider extends PreferrableNameSuggestionProvi
     Set<String> set = new TreeSet<String>();
     set.addAll(manager.getSuggestions(text));
     result.addAll(set);
-    return null;
+    return SuggestedNameInfo.NULL_INFO;
   }
 }
