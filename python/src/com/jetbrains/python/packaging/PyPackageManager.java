@@ -16,6 +16,7 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkAdditionalData;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
@@ -27,6 +28,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.net.HttpConfigurable;
+import com.intellij.util.ui.UIUtil;
 import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyListLiteralExpression;
@@ -550,7 +552,28 @@ public class PyPackageManager {
           if (askForSudo) {
             askForSudo = !manager.ensureCanWrite(null, remoteSdkData, remoteSdkData.getInterpreterPath());
           }
-          return manager.runRemoteProcess(null, remoteSdkData, ArrayUtil.toStringArray(cmdline), askForSudo);
+          ProcessOutput processOutput;
+          do {
+            processOutput = manager.runRemoteProcess(null, remoteSdkData, ArrayUtil.toStringArray(cmdline), askForSudo);
+            if (askForSudo && processOutput.getStderr().contains("sudo: 3 incorrect password attempts")) {
+              final Ref<Boolean> cont = Ref.create(false);
+              UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+                @Override
+                public void run() {
+                  if (Messages.showOkCancelDialog("Incorrect sudo password", "Incorrect Password Attempt", Messages.getErrorIcon()) ==
+                      Messages.OK) {
+                    cont.set(true);
+                  }
+                }
+              });
+              if (cont.get()) {
+                continue;
+              }
+            }
+            break;
+          }
+          while (true);
+          return processOutput;
         }
         catch (PyRemoteInterpreterException e) {
           throw new PyExternalProcessException(ERROR_INVALID_SDK, helperPath, args, "Error running SDK");
