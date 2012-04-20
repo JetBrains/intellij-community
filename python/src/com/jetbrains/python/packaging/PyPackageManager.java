@@ -75,6 +75,7 @@ public class PyPackageManager {
   // Sdk instances are re-created by ProjectSdksModel on every refresh so we cannot use them as keys for caching
   private static final Map<String, PyPackageManager> ourInstances = new HashMap<String, PyPackageManager>();
   private static final String BUILD_DIR_OPTION = "--build-dir";
+  public static final String USE_USER_SITE = "--user";
 
   private List<PyPackage> myPackagesCache = null;
   private PyExternalProcessException myExceptionCache = null;
@@ -139,8 +140,7 @@ public class PyPackageManager {
               indicator.setFraction((double)i / size);
             }
             try {
-              final boolean useUserSite = PyPackageService.getInstance().useUserSite(mySdk.getHomePath());
-              manager.install(list(requirement), extraArgs, useUserSite);
+              manager.install(list(requirement), extraArgs);
             }
             catch (PyExternalProcessException e) {
               exceptions.add(e);
@@ -304,7 +304,7 @@ public class PyPackageManager {
     return mySdk;
   }
 
-  public void install(@NotNull List<PyRequirement> requirements, @NotNull List<String> extraArgs, final boolean useUserSite)
+  public void install(@NotNull List<PyRequirement> requirements, @NotNull List<String> extraArgs)
     throws PyExternalProcessException {
     final List<String> args = new ArrayList<String>();
     args.add("install");
@@ -318,6 +318,9 @@ public class PyPackageManager {
     if (!extraArgs.contains(BUILD_DIR_OPTION)) {
       args.addAll(list(BUILD_DIR_OPTION, buildDir.getAbsolutePath()));
     }
+
+    boolean useUserSite = extraArgs.contains(USE_USER_SITE);
+
     final String proxyString = getProxyString();
     if (proxyString != null) {
       args.add("--proxy");
