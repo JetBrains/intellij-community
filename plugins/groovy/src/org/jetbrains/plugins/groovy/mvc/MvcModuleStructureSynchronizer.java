@@ -422,7 +422,7 @@ public class MvcModuleStructureSynchronizer extends AbstractProjectComponent {
 
                 if (shouldShow && toolWindow == null) {
                   toolWindow = toolWindowManager.registerToolWindow(id, true, ToolWindowAnchor.LEFT, myProject, true);
-                  toolWindow.setIcon(IconLoader.getIcon(ep.icon));
+                  toolWindow.setIcon(descriptor.getFramework().getToolWindowIcon());
                   descriptor.createToolWindowContent(myProject, toolWindow);
                 }
                 else if (!shouldShow && toolWindow != null) {
