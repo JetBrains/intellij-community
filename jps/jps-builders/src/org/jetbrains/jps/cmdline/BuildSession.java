@@ -114,7 +114,7 @@ final class BuildSession implements Runnable, CanceledStatus {
             if (kind == BuildMessage.Kind.ERROR) {
               hasErrors.set(true);
             }
-            response = CmdlineProtoUtil.createCompileMessageResponse(
+            response = CmdlineProtoUtil.createCompileMessage(
               kind, text, compilerMessage.getSourcePath(),
               compilerMessage.getProblemBeginOffset(), compilerMessage.getProblemEndOffset(),
               compilerMessage.getProblemLocationOffset(), compilerMessage.getLine(), compilerMessage.getColumn(),
@@ -267,39 +267,8 @@ final class BuildSession implements Runnable, CanceledStatus {
     final long start = System.currentTimeMillis();
     try {
       final Project project = new Project();
-      // setup JDKs and global libraries
-      final MethodClosure fakeClosure = new MethodClosure(new Object(), "hashCode");
-      for (GlobalLibrary library : myGlobalLibraries) {
-        if (library instanceof SdkLibrary) {
-          final SdkLibrary sdk = (SdkLibrary)library;
-          Node additionalData = null;
-          final String additionalXml = sdk.getAdditionalDataXml();
-          if (additionalXml != null) {
-            try {
-              additionalData = new XmlParser(false, false).parseText(additionalXml);
-            }
-            catch (Exception e) {
-              LOG.info(e);
-            }
-          }
-          final Sdk jdk = project.createSdk(sdk.getTypeName(), sdk.getName(), sdk.getVersion(), sdk.getHomePath(), additionalData);
-          if (jdk != null) {
-            jdk.setClasspath(sdk.getPaths());
-          }
-          else {
-            LOG.info("Failed to load SDK " + sdk.getName() + ", type: " + sdk.getTypeName());
-          }
-        }
-        else {
-          final Library lib = project.createGlobalLibrary(library.getName(), fakeClosure);
-          if (lib != null) {
-            lib.setClasspath(library.getPaths());
-          }
-          else {
-            LOG.info("Failed to load global library " + library.getName());
-          }
-        }
-      }
+
+      initSdksAndGlobalLibraries(project);
 
       final File projectFile = new File(projectPath);
 
@@ -317,6 +286,41 @@ final class BuildSession implements Runnable, CanceledStatus {
     finally {
       final long loadTime = System.currentTimeMillis() - start;
       LOG.info("Project " + projectPath + " loaded in " + loadTime + " ms");
+    }
+  }
+
+  private void initSdksAndGlobalLibraries(Project project) {
+    final MethodClosure fakeClosure = new MethodClosure(new Object(), "hashCode");
+    for (GlobalLibrary library : myGlobalLibraries) {
+      if (library instanceof SdkLibrary) {
+        final SdkLibrary sdk = (SdkLibrary)library;
+        Node additionalData = null;
+        final String additionalXml = sdk.getAdditionalDataXml();
+        if (additionalXml != null) {
+          try {
+            additionalData = new XmlParser(false, false).parseText(additionalXml);
+          }
+          catch (Exception e) {
+            LOG.info(e);
+          }
+        }
+        final Sdk jdk = project.createSdk(sdk.getTypeName(), sdk.getName(), sdk.getVersion(), sdk.getHomePath(), additionalData);
+        if (jdk != null) {
+          jdk.setClasspath(sdk.getPaths());
+        }
+        else {
+          LOG.info("Failed to load SDK " + sdk.getName() + ", type: " + sdk.getTypeName());
+        }
+      }
+      else {
+        final Library lib = project.createGlobalLibrary(library.getName(), fakeClosure);
+        if (lib != null) {
+          lib.setClasspath(library.getPaths());
+        }
+        else {
+          LOG.info("Failed to load global library " + library.getName());
+        }
+      }
     }
   }
 

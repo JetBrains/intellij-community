@@ -66,6 +66,7 @@ public class CreateFieldFromParameterAction implements IntentionAction {
   private static final Object LOCK = new Object();
 
   private String myName = "";
+  private boolean myConstructor = false;
 
   @Nullable
   private static PsiType[] getTypes(final PsiParameter parameter) {
@@ -101,7 +102,9 @@ public class CreateFieldFromParameterAction implements IntentionAction {
   @Override
   @NotNull
   public String getText() {
-    if (myName == null) return CodeInsightBundle.message("intention.create.fields.from.parameters.text");
+    if (myName == null) {
+      return CodeInsightBundle.message("intention.create.fields.from.parameters.text", myConstructor ? "Constructor" : "Method") ;
+    }
     return CodeInsightBundle.message("intention.create.field.from.parameter.text", myName);
   }
 
@@ -144,6 +147,7 @@ public class CreateFieldFromParameterAction implements IntentionAction {
         LOG.assertTrue(psiParameter != null);
       }
       myName = params.size() > 1 && !ApplicationManager.getApplication().isUnitTestMode() ? null : psiParameter.getName();
+      myConstructor = method.isConstructor();
     }
     return isAvailable(psiParameter);
   }
@@ -270,7 +274,7 @@ public class CreateFieldFromParameterAction implements IntentionAction {
       if (selection != null) {
         chooser.selectElements(new ClassMember[] {selection});
       }
-      chooser.setTitle("Choose Constructor Parameters to Generate Fields");
+      chooser.setTitle("Choose " + (method.isConstructor() ? "Constructor" : "Method") + " Parameters to Generate Fields");
       chooser.setCopyJavadocVisible(false);
       chooser.show();
       if (chooser.getExitCode() != DialogWrapper.OK_EXIT_CODE) return;
@@ -342,7 +346,7 @@ public class CreateFieldFromParameterAction implements IntentionAction {
       suggestedNameInfo.nameChoosen(fieldNameToCalc);
     }
     else {
-      isFinalToCalc = !isMethodStatic;
+      isFinalToCalc = !isMethodStatic && method.isConstructor();
       fieldNameToCalc = names[0];
       type= types[0];
     }

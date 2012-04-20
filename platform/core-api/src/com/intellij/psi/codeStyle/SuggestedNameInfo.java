@@ -16,6 +16,7 @@
 package com.intellij.psi.codeStyle;
 
 import com.intellij.openapi.util.Key;
+import com.intellij.util.ArrayUtil;
 
 /**
  * Represents an array of suggested variable names and allows to keep statistics on
@@ -25,6 +26,11 @@ import com.intellij.openapi.util.Key;
  */
 public abstract class SuggestedNameInfo {
   public static final Key<SuggestedNameInfo> SUGGESTED_NAME_INFO_KEY = Key.create("SUGGESTED_NAME_INFO_KEY");
+  public static final SuggestedNameInfo NULL_INFO = new SuggestedNameInfo(ArrayUtil.EMPTY_STRING_ARRAY) {
+    @Override
+    public void nameChoosen(String name) {}
+  };
+
   /**
    * The suggested names.
    */

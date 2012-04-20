@@ -13,17 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.compiler;
+package com.intellij.compiler.server;
 
 import com.intellij.ProjectTopics;
 import com.intellij.application.options.PathMacrosImpl;
+import com.intellij.compiler.CompilerWorkspaceConfiguration;
 import com.intellij.compiler.server.impl.CompileServerClasspathManager;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
-import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.notification.Notification;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathMacros;
@@ -47,7 +47,6 @@ import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
@@ -59,14 +58,24 @@ import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.problems.Problem;
 import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.util.Alarm;
-import com.intellij.util.concurrency.Semaphore;
+import com.intellij.util.containers.ConcurrentHashSet;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.net.NetUtils;
+import org.jboss.netty.bootstrap.ServerBootstrap;
+import org.jboss.netty.channel.*;
+import org.jboss.netty.channel.group.ChannelGroup;
+import org.jboss.netty.channel.group.ChannelGroupFuture;
+import org.jboss.netty.channel.group.DefaultChannelGroup;
+import org.jboss.netty.channel.socket.nio.NioServerSocketChannelFactory;
+import org.jboss.netty.handler.codec.protobuf.ProtobufDecoder;
+import org.jboss.netty.handler.codec.protobuf.ProtobufEncoder;
+import org.jboss.netty.handler.codec.protobuf.ProtobufVarint32FrameDecoder;
+import org.jboss.netty.handler.codec.protobuf.ProtobufVarint32LengthFieldPrepender;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.api.*;
-import org.jetbrains.jps.client.CompileServerClient;
+import org.jetbrains.jps.cmdline.BuildMain;
 import org.jetbrains.jps.server.ClasspathBootstrap;
 import org.jetbrains.jps.server.Server;
 
@@ -75,23 +84,23 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.InetSocketAddress;
 import java.util.*;
-import java.util.concurrent.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executor;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * @author Eugene Zhuravlev
  *         Date: 9/6/11
  */
-public class CompileServerManager implements ApplicationComponent{
-  private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.CompileServerManager");
-  private static final String COMPILE_SERVER_SYSTEM_ROOT = "compile-server";
+public class BuildManager implements ApplicationComponent{
+  private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.server.BuildManager");
+  private static final String SYSTEM_ROOT = "compile-server";
   private static final String LOGGER_CONFIG = "log.xml";
   private static final String DEFAULT_LOGGER_CONFIG = "defaultLogConfig.xml";
-  private volatile OSProcessHandler myProcessHandler;
   private final File mySystemDirectory;
-  @Nullable
-  private volatile CompileServerClient myClient;
   private final ProjectManager myProjectManager;
   private static final int MAKE_TRIGGER_DELAY = 5 * 1000 /*5 seconds*/;
   private final Map<RequestFuture, Project> myAutomakeFutures = new HashMap<RequestFuture, Project>();
@@ -102,9 +111,14 @@ public class CompileServerManager implements ApplicationComponent{
       ApplicationManager.getApplication().executeOnPooledThread(command);
     }
   };
-  private final SequentialTaskExecutor myTaskExecutor = new SequentialTaskExecutor(myPooledThreadExecutor);
+  private final Map<String, SequentialTaskExecutor> myProjectToExecutorMap = Collections.synchronizedMap(new HashMap<String, SequentialTaskExecutor>());
 
-  public CompileServerManager(final ProjectManager projectManager) {
+  private final ChannelGroup myAllOpenChannels = new DefaultChannelGroup("compile-manager");
+  private final BuildMessageDispatcher myMessageDispatcher = new BuildMessageDispatcher();
+  private int myListenPort = -1;
+  private volatile CmdlineRemoteProto.Message.ControllerMessage.GlobalSettings myGlobals;
+
+  public BuildManager(final ProjectManager projectManager) {
     myProjectManager = projectManager;
     final String systemPath = PathManager.getSystemPath();
     File system = new File(systemPath);
@@ -175,110 +189,41 @@ public class CompileServerManager implements ApplicationComponent{
     ShutDownTracker.getInstance().registerShutdownTask(new Runnable() {
       @Override
       public void run() {
-        shutdownServer(myClient, myProcessHandler);
+        stopListening();
       }
     });
   }
 
-  public static CompileServerManager getInstance() {
-    return ApplicationManager.getApplication().getComponent(CompileServerManager.class);
+  public static BuildManager getInstance() {
+    return ApplicationManager.getApplication().getComponent(BuildManager.class);
   }
 
   public void notifyFilesChanged(Collection<String> paths) {
-    sendNotification(paths, false);
+    // todo: update state
   }
 
   public void notifyFilesDeleted(Collection<String> paths) {
-    sendNotification(paths, true);
+    // todo: update state
   }
 
   @Nullable
   private static String getProjectPath(final Project project) {
     final String path = project.getPresentableUrl();
-    if (path == null) return path;
+    if (path == null) {
+      return null;
+    }
     final VirtualFile vFile = LocalFileSystem.getInstance().findFileByPath(path);
     return vFile != null ? vFile.getPath() : null;
   }
 
-  public void sendReloadRequest(final Project project) {
-    if (!project.isDefault() && project.isOpen()) {
-      myTaskExecutor.submit(new Runnable() {
-        @Override
-        public void run() {
-          try {
-            if (!project.isDisposed()) {
-              final CompileServerClient client = ensureServerRunningAndClientConnected(false);
-              if (client != null) {
-                client.sendProjectReloadRequest(Collections.singletonList(getProjectPath(project)));
-              }
-            }
-          }
-          catch (Throwable e) {
-            LOG.info(e);
-          }
-        }
-      });
-    }
-  }
-
-  public void sendCancelBuildRequest(final UUID sessionId) {
-    myTaskExecutor.submit(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          final CompileServerClient client = ensureServerRunningAndClientConnected(false);
-          if (client != null) {
-            client.sendCancelBuildRequest(sessionId);
-          }
-        }
-        catch (Throwable e) {
-          LOG.info(e);
-        }
-      }
-    });
-  }
-
-  private void sendNotification(final Collection<String> paths, final boolean isDeleted) {
-    if (paths.isEmpty()) {
-      return;
-    }
-    try {
-      final CompileServerClient client = ensureServerRunningAndClientConnected(false);
-      if (client != null) {
-        myTaskExecutor.submit(new Runnable() {
-          @Override
-          public void run() {
-            final Project[] openProjects = myProjectManager.getOpenProjects();
-            if (openProjects.length > 0) {
-              final Collection<String> changed, deleted;
-              if (isDeleted) {
-                changed = Collections.emptyList();
-                deleted = paths;
-              }
-              else {
-                changed = paths;
-                deleted = Collections.emptyList();
-              }
-              for (Project project : openProjects) {
-                try {
-                  client.sendFSEvent(getProjectPath(project), changed, deleted);
-                }
-                catch (Exception e) {
-                  LOG.info(e);
-                }
-              }
-            }
-          }
-        });
-      }
-    }
-    catch (Throwable th) {
-      LOG.error(th); // should not happen
-    }
+  private void clearGlobalsCache() {
+    myGlobals = null;
   }
 
   private void runAutoMake() {
-    if (ApplicationManager.getApplication().isUnitTestMode()) return;
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      return;
+    }
     final Project[] openProjects = myProjectManager.getOpenProjects();
     if (openProjects.length > 0) {
       final List<RequestFuture> futures = new ArrayList<RequestFuture>();
@@ -290,8 +235,10 @@ public class CompileServerManager implements ApplicationComponent{
         if (!config.useCompileServer() || !config.MAKE_PROJECT_ON_SAVE) {
           continue;
         }
-        final RequestFuture future = submitCompilationTask(project, false, true, Collections.<String>emptyList(), Collections.<String>emptyList(),
-                                                           Collections.<String>emptyList(), Collections.<String, String>emptyMap(), new AutoMakeResponseHandler(project)
+        final List<String> emptyList = Collections.emptyList();
+        final RequestFuture future = scheduleBuild(
+          project, false, true, emptyList, emptyList, emptyList, Collections.<String, String>emptyMap(),
+          new AutoMakeMessageHandler(project)
         );
         if (future != null) {
           futures.add(future);
@@ -323,45 +270,114 @@ public class CompileServerManager implements ApplicationComponent{
     }
   }
 
+
+  // todo: avoid FS scan on every start
+
   @Nullable
-  public RequestFuture submitCompilationTask(final Project project, final boolean isRebuild, final boolean isMake,
-                                             final Collection<String> modules, final Collection<String> artifacts,
-                                             final Collection<String> paths,
-                                             final Map<String, String> userData, final JpsServerResponseHandler handler) {
-    final String projectId = getProjectPath(project);
-    final Ref<RequestFuture> futureRef = new Ref<RequestFuture>(null);
-    final RunnableFuture future = myTaskExecutor.submit(new Runnable() {
+  public RequestFuture scheduleBuild(
+    final Project project, final boolean isRebuild,
+    final boolean isMake,
+    final Collection<String> modules,
+    final Collection<String> artifacts,
+    final Collection<String> paths,
+    final Map<String, String> userData, final BuildMessageHandler handler) {
+
+    final String projectPath = getProjectPath(project);
+    final UUID sessionId = UUID.randomUUID();
+    final CmdlineRemoteProto.Message.ControllerMessage params;
+    CmdlineRemoteProto.Message.ControllerMessage.GlobalSettings globals = myGlobals;
+    if (globals == null) {
+      globals = buildGlobalSettings();
+      myGlobals = globals;
+    }
+    if (isRebuild) {
+      params = CmdlineProtoUtil.createRebuildRequest(projectPath, userData, globals);
+    }
+    else {
+      params = isMake ?
+               CmdlineProtoUtil.createMakeRequest(projectPath, modules, artifacts, userData, globals) :
+               CmdlineProtoUtil.createForceCompileRequest(projectPath, modules, artifacts, paths, userData, globals);
+    }
+
+    myMessageDispatcher.registerBuildMessageHandler(sessionId, handler, params);
+
+    // ensure server is listening
+    if (myListenPort < 0) {
+      try {
+        myListenPort = startListening();
+      }
+      catch (Exception e) {
+        myMessageDispatcher.unregisterBuildMessageHandler(sessionId);
+        handler.handleFailure(CmdlineProtoUtil.createFailure(e.getMessage(), null));
+        handler.sessionTerminated();
+        return null;
+      }
+    }
+
+    final RequestFuture<BuildMessageHandler> future = new RequestFuture<BuildMessageHandler>(handler, sessionId, new RequestFuture.CancelAction<com.intellij.compiler.server.BuildMessageHandler>() {
+      @Override
+      public void cancel(RequestFuture<BuildMessageHandler> future) throws Exception {
+        myMessageDispatcher.cancelSession(future.getRequestID());
+      }
+    });
+
+    SequentialTaskExecutor sequential;
+    synchronized (myProjectToExecutorMap) {
+      sequential = myProjectToExecutorMap.get(projectPath);
+      if (sequential == null) {
+        sequential = new SequentialTaskExecutor(myPooledThreadExecutor);
+        myProjectToExecutorMap.put(projectPath, sequential);
+      }
+    }
+
+    sequential.submit(new Runnable() {
       @Override
       public void run() {
         try {
-          final CompileServerClient client = ensureServerRunningAndClientConnected(true);
-          if (client != null) {
-            final RequestFuture requestFuture = isRebuild ?
-              client.sendRebuildRequest(projectId, handler, userData) :
-              client.sendCompileRequest(isMake, projectId, modules, artifacts, paths, userData, handler);
-            futureRef.set(requestFuture);
+          if (project.isDisposed()) {
+            future.cancel(false);
+            return;
           }
-          else {
-            handler.sessionTerminated();
-          }
+          final Process process = launchBuildProcess(myListenPort, sessionId);
+          final OSProcessHandler processHandler = new OSProcessHandler(process, null) {
+            @Override
+            protected boolean shouldDestroyProcessRecursively() {
+              return true;
+            }
+          };
+          processHandler.addProcessListener(new ProcessAdapter() {
+            @Override
+            public void processTerminated(ProcessEvent event) {
+              final BuildMessageHandler handler = myMessageDispatcher.unregisterBuildMessageHandler(sessionId);
+              if (handler != null) {
+                handler.sessionTerminated();
+              }
+            }
+
+            @Override
+            public void onTextAvailable(ProcessEvent event, Key outputType) {
+              // re-translate builder's output to idea.log
+              final String text = event.getText();
+              if (!StringUtil.isEmpty(text)) {
+                LOG.info("BUILDER_PROCESS [" +outputType.toString() +"]: "+ text.trim());
+              }
+            }
+          });
+          processHandler.startNotify();
+          processHandler.waitFor();
         }
-        catch (Throwable e) {
-          try {
-            handler.handleFailure(ProtoUtil.createFailure(e.getMessage(), e));
-          }
-          finally {
-            handler.sessionTerminated();
-          }
+        catch (ExecutionException e) {
+          myMessageDispatcher.unregisterBuildMessageHandler(sessionId);
+          handler.handleFailure(CmdlineProtoUtil.createFailure(e.getMessage(), e));
+          handler.sessionTerminated();
+        }
+        finally {
+          future.setDone();
         }
       }
     });
-    try {
-      future.get();
-    }
-    catch (Throwable e) {
-      LOG.info(e);
-    }
-    return futureRef.get();
+
+    return future;
   }
 
   @Override
@@ -370,117 +386,16 @@ public class CompileServerManager implements ApplicationComponent{
 
   @Override
   public void disposeComponent() {
-    shutdownServer(myClient, myProcessHandler);
+    stopListening();
   }
 
   @NotNull
   @Override
   public String getComponentName() {
-    return "com.intellij.compiler.CompileServerManager";
+    return "com.intellij.compiler.server.BuildManager";
   }
 
-  // executed in one thread at a time
-  @Nullable
-  private CompileServerClient ensureServerRunningAndClientConnected(boolean forceRestart) throws Throwable {
-    final OSProcessHandler ph = myProcessHandler;
-    final CompileServerClient cl = myClient;
-    final boolean processNotRunning = ph == null || ph.isProcessTerminated() || ph.isProcessTerminating();
-    final boolean clientNotConnected = cl == null || !cl.isConnected();
-
-    if (processNotRunning || clientNotConnected) {
-      // cleanup; ensure the process is not running
-      shutdownServer(cl, ph);
-      myProcessHandler = null;
-      myClient = null;
-
-      if (!forceRestart) {
-        return null;
-      }
-
-      final int port = NetUtils.findAvailableSocketPort();
-      final long serverPingInterval = Registry.intValue("compiler.server.ping.interval", -1) * 1000L; 
-      final Process process = launchServer(port, serverPingInterval);
-
-      final OSProcessHandler processHandler = new OSProcessHandler(process, null) {
-        @Override
-        protected boolean shouldDestroyProcessRecursively() {
-          return true;
-        }
-      };
-      final StringBuilder serverStartMessage = new StringBuilder();
-      final Semaphore semaphore  = new Semaphore();
-      semaphore.down();
-      processHandler.addProcessListener(new ProcessAdapter() {
-        @Override
-        public void onTextAvailable(ProcessEvent event, Key outputType) {
-          // re-translate server's output to idea.log
-          final String text = event.getText();
-          if (!StringUtil.isEmpty(text)) {
-            LOG.info("COMPILE_SERVER [" +outputType.toString() +"]: "+ text.trim());
-          }
-        }
-      });
-      processHandler.addProcessListener(new ProcessAdapter() {
-        @Override
-        public void processTerminated(ProcessEvent event) {
-          try {
-            processHandler.removeProcessListener(this);
-          }
-          finally {
-            semaphore.up();
-          }
-        }
-
-        @Override
-        public void onTextAvailable(ProcessEvent event, Key outputType) {
-          if (outputType == ProcessOutputTypes.STDERR) {
-            try {
-              final String text = event.getText();
-              if (text != null) {
-                if (text.contains(Server.SERVER_SUCCESS_START_MESSAGE) || text.contains(Server.SERVER_ERROR_START_MESSAGE)) {
-                  processHandler.removeProcessListener(this);
-                }
-                if (serverStartMessage.length() > 0) {
-                  serverStartMessage.append("\n");
-                }
-                serverStartMessage.append(text);
-              }
-            }
-            finally {
-              semaphore.up();
-            }
-          }
-        }
-      });
-      processHandler.startNotify();
-      semaphore.waitFor();
-
-      final String startupMsg = serverStartMessage.toString();
-      if (!startupMsg.contains(Server.SERVER_SUCCESS_START_MESSAGE)) {
-        throw new Exception("Server startup failed: " + startupMsg);
-      }
-
-      CompileServerClient client = new CompileServerClient(serverPingInterval, myPooledThreadExecutor);
-      boolean connected = false;
-      try {
-        connected = client.connect(NetUtils.getLocalHostString(), port);
-        if (connected) {
-          final RequestFuture setupFuture = sendSetupRequest(client);
-          setupFuture.waitFor();
-          myProcessHandler = processHandler;
-          myClient = client;
-        }
-      }
-      finally {
-        if (!connected) {
-          shutdownServer(cl, processHandler);
-        }
-      }
-    }
-    return myClient;
-  }
-
-  private static RequestFuture sendSetupRequest(final @NotNull CompileServerClient client) throws Exception {
+  private static CmdlineRemoteProto.Message.ControllerMessage.GlobalSettings buildGlobalSettings() {
     final Map<String, String> data = new HashMap<String, String>();
 
     for (Map.Entry<String, String> entry : PathMacrosImpl.getGlobalSystemMacros().entrySet()) {
@@ -500,8 +415,49 @@ public class CompileServerManager implements ApplicationComponent{
     fillSdks(globals);
     fillGlobalLibraries(globals);
 
+    final CmdlineRemoteProto.Message.ControllerMessage.GlobalSettings.Builder cmdBuilder =
+      CmdlineRemoteProto.Message.ControllerMessage.GlobalSettings.newBuilder();
+
+    if (!data.isEmpty()) {
+      for (Map.Entry<String, String> entry : data.entrySet()) {
+        final String var = entry.getKey();
+        final String value = entry.getValue();
+        if (var != null && value != null) {
+          cmdBuilder.addPathVariable(CmdlineProtoUtil.createPair(var, value));
+        }
+      }
+    }
+
+    if (!globals.isEmpty()) {
+      for (GlobalLibrary lib : globals) {
+        final CmdlineRemoteProto.Message.ControllerMessage.GlobalSettings.GlobalLibrary.Builder libBuilder =
+          CmdlineRemoteProto.Message.ControllerMessage.GlobalSettings.GlobalLibrary.newBuilder();
+        libBuilder.setName(lib.getName()).addAllPath(lib.getPaths());
+        if (lib instanceof SdkLibrary) {
+          final SdkLibrary sdk = (SdkLibrary)lib;
+          libBuilder.setHomePath(sdk.getHomePath());
+          libBuilder.setTypeName(sdk.getTypeName());
+          final String additional = sdk.getAdditionalDataXml();
+          if (additional != null) {
+            libBuilder.setAdditionalDataXml(additional);
+          }
+          final String version = sdk.getVersion();
+          if (version != null) {
+            libBuilder.setVersion(version);
+          }
+        }
+        cmdBuilder.addGlobalLibrary(libBuilder.build());
+      }
+    }
+
+    final String defaultCharset = EncodingManager.getInstance().getDefaultCharsetName();
+    if (defaultCharset != null) {
+      cmdBuilder.setGlobalEncoding(defaultCharset);
+    }
+
     final String ignoredFilesList = FileTypeManager.getInstance().getIgnoredFilesList();
-    return client.sendSetupRequest(data, globals, EncodingManager.getInstance().getDefaultCharsetName(), ignoredFilesList);
+    cmdBuilder.setIgnoredFilesPatterns(ignoredFilesList);
+    return cmdBuilder.build();
   }
 
   private static void fillSdks(List<GlobalLibrary> globals) {
@@ -557,12 +513,8 @@ public class CompileServerManager implements ApplicationComponent{
     return paths;
   }
 
-  //public static void addLocaleOptions(final List<String> commandLine, final boolean launcherUsed) {
-  //  // need to specify default encoding so that javac outputs messages in 'correct' language
-  //  commandLine.add((launcherUsed? "-J" : "") + "-D" + CharsetToolkit.FILE_ENCODING_PROPERTY + "=" + CharsetToolkit.getDefaultSystemCharset().name());
-  //}
-
-  private Process launchServer(final int port, long pingInterval) throws ExecutionException {
+  private Process launchBuildProcess(final int port, final UUID sessionId) throws ExecutionException {
+    // todo: add code for choosing the jdk with which to run
     // validate tools.jar presence
     final JavaCompiler systemCompiler = ToolProvider.getSystemJavaCompiler();
     if (systemCompiler == null) {
@@ -583,15 +535,6 @@ public class CompileServerManager implements ApplicationComponent{
     if (shouldGenerateIndex != null) {
       cmdLine.addParameter("-D"+ GlobalOptions.GENERATE_CLASSPATH_INDEX_OPTION +"=" + shouldGenerateIndex);
     }
-    //noinspection ConstantConditions
-    if (pingInterval > 0L) {
-      cmdLine.addParameter("-D" + GlobalOptions.PING_INTERVAL_MS_OPTION + "=" + pingInterval);
-    }
-
-    final String maxBuilds = Registry.stringValue("compiler.server.max.simultaneous.builds");
-    if (!StringUtil.isEmpty(maxBuilds)) {
-      cmdLine.addParameter("-D" + GlobalOptions.MAX_SIMULTANEOUS_BUILDS_OPTION + "=" + maxBuilds);
-    }
 
     final String additionalOptions = Registry.stringValue("compiler.server.vm.options");
     if (!StringUtil.isEmpty(additionalOptions)) {
@@ -605,7 +548,7 @@ public class CompileServerManager implements ApplicationComponent{
     final int debugPort = Registry.intValue("compiler.server.debug.port");
     if (debugPort > 0) {
       cmdLine.addParameter("-XX:+HeapDumpOnOutOfMemoryError");
-      cmdLine.addParameter("-Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=" + debugPort);
+      cmdLine.addParameter("-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=" + debugPort);
     }
 
     if (Registry.is("compiler.server.use.memory.temp.cache")) {
@@ -614,7 +557,8 @@ public class CompileServerManager implements ApplicationComponent{
     if (Registry.is("compiler.server.use.external.javac.process")) {
       cmdLine.addParameter("-D"+ GlobalOptions.USE_EXTERNAL_JAVAC_OPTION);
     }
-    cmdLine.addParameter("-D"+ GlobalOptions.HOSTNAME_OPTION + "=" + NetUtils.getLocalHostString());
+    final String host = NetUtils.getLocalHostString();
+    cmdLine.addParameter("-D"+ GlobalOptions.HOSTNAME_OPTION + "=" + host);
 
     // javac's VM should use the same default locale that IDEA uses in order for javac to print messages in 'correct' language
     final String lang = System.getProperty("user.language");
@@ -641,17 +585,18 @@ public class CompileServerManager implements ApplicationComponent{
 
     cmdLine.addParameter(classpathToString(cp));
 
-    cmdLine.addParameter(org.jetbrains.jps.server.Server.class.getName());
+    cmdLine.addParameter(BuildMain.class.getName());
+    cmdLine.addParameter(host);
     cmdLine.addParameter(Integer.toString(port));
+    cmdLine.addParameter(sessionId.toString());
 
-    final File workDirectory = new File(mySystemDirectory, COMPILE_SERVER_SYSTEM_ROOT);
+    final File workDirectory = new File(mySystemDirectory, SYSTEM_ROOT);
     workDirectory.mkdirs();
     ensureLogConfigExists(workDirectory);
 
     cmdLine.addParameter(FileUtil.toSystemIndependentName(workDirectory.getPath()));
 
     cmdLine.setWorkDirectory(workDirectory);
-
 
     return cmdLine.createProcess();
   }
@@ -683,26 +628,45 @@ public class CompileServerManager implements ApplicationComponent{
     }
   }
 
-  public void shutdownServer() {
-    shutdownServer(myClient, myProcessHandler);
+  public void stopListening() {
+    final ChannelGroupFuture closeFuture = myAllOpenChannels.close();
+    closeFuture.awaitUninterruptibly();
   }
 
-  private static void shutdownServer(final CompileServerClient client, final OSProcessHandler processHandler) {
-    try {
-      if (client != null && client.isConnected()) {
-        final Future future = client.sendShutdownRequest();
-        future.get(500, TimeUnit.MILLISECONDS);
-        client.disconnect();
+  private int startListening() throws Exception {
+    final ChannelFactory channelFactory = new NioServerSocketChannelFactory(myPooledThreadExecutor, myPooledThreadExecutor);
+    final SimpleChannelUpstreamHandler channelRegistrar = new SimpleChannelUpstreamHandler() {
+      public void channelOpen(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception {
+        myAllOpenChannels.add(e.getChannel());
+        super.channelOpen(ctx, e);
       }
-    }
-    catch (Throwable ignored) {
-      LOG.info(ignored);
-    }
-    finally {
-      if (processHandler != null) {
-        processHandler.destroyProcess();
+
+      @Override
+      public void channelClosed(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception {
+        myAllOpenChannels.remove(e.getChannel());
+        super.channelClosed(ctx, e);
       }
-    }
+    };
+    ChannelPipelineFactory pipelineFactory = new ChannelPipelineFactory() {
+      public ChannelPipeline getPipeline() throws Exception {
+        return Channels.pipeline(
+          channelRegistrar,
+          new ProtobufVarint32FrameDecoder(),
+          new ProtobufDecoder(CmdlineRemoteProto.Message.getDefaultInstance()),
+          new ProtobufVarint32LengthFieldPrepender(),
+          new ProtobufEncoder(),
+          myMessageDispatcher
+        );
+      }
+    };
+    final ServerBootstrap bootstrap = new ServerBootstrap(channelFactory);
+    bootstrap.setPipelineFactory(pipelineFactory);
+    bootstrap.setOption("child.tcpNoDelay", true);
+    bootstrap.setOption("child.keepAlive", true);
+    final int listenPort = NetUtils.findAvailableSocketPort();
+    final Channel serverChannel = bootstrap.bind(new InetSocketAddress(listenPort));
+    myAllOpenChannels.add(serverChannel);
+    return listenPort;
   }
 
   private static String classpathToString(List<File> cp) {
@@ -716,56 +680,56 @@ public class CompileServerManager implements ApplicationComponent{
     return builder.toString();
   }
 
-  private static class AutoMakeResponseHandler extends JpsServerResponseHandler {
-    private JpsRemoteProto.Message.Response.BuildEvent.Status myBuildStatus;
+  private static class AutoMakeMessageHandler extends BuildMessageHandler {
+    private CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.Status myBuildStatus;
     private final Project myProject;
     private final WolfTheProblemSolver myWolf;
 
-    public AutoMakeResponseHandler(Project project) {
+    public AutoMakeMessageHandler(Project project) {
       myProject = project;
-      myBuildStatus = JpsRemoteProto.Message.Response.BuildEvent.Status.SUCCESS;
+      myBuildStatus = CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.Status.SUCCESS;
       myWolf = WolfTheProblemSolver.getInstance(project);
     }
 
     @Override
-    public boolean handleBuildEvent(JpsRemoteProto.Message.Response.BuildEvent event) {
+    protected void handleBuildEvent(CmdlineRemoteProto.Message.BuilderMessage.BuildEvent event) {
       if (myProject.isDisposed()) {
-        return true;
+        return;
       }
       switch (event.getEventType()) {
         case BUILD_COMPLETED:
           if (event.hasCompletionStatus()) {
             myBuildStatus = event.getCompletionStatus();
           }
-          return true;
+          return;
 
         case FILES_GENERATED:
           final CompilationStatusListener publisher = myProject.getMessageBus().syncPublisher(CompilerTopics.COMPILATION_STATUS);
-          for (JpsRemoteProto.Message.Response.BuildEvent.GeneratedFile generatedFile : event.getGeneratedFilesList()) {
+          for (CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.GeneratedFile generatedFile : event.getGeneratedFilesList()) {
             final String root = FileUtil.toSystemIndependentName(generatedFile.getOutputRoot());
             final String relativePath = FileUtil.toSystemIndependentName(generatedFile.getRelativePath());
             publisher.fileGenerated(root, relativePath);
           }
-          return false;
+          return;
 
         default:
-          return false;
+          return;
       }
     }
 
     @Override
-    public void handleCompileMessage(JpsRemoteProto.Message.Response.CompileMessage compileResponse) {
+    protected void handleCompileMessage(CmdlineRemoteProto.Message.BuilderMessage.CompileMessage message) {
       if (myProject.isDisposed()) {
         return;
       }
-      final JpsRemoteProto.Message.Response.CompileMessage.Kind kind = compileResponse.getKind();
-      if (kind == JpsRemoteProto.Message.Response.CompileMessage.Kind.ERROR) {
-        informWolf(myProject, compileResponse);
+      final CmdlineRemoteProto.Message.BuilderMessage.CompileMessage.Kind kind = message.getKind();
+      if (kind == CmdlineRemoteProto.Message.BuilderMessage.CompileMessage.Kind.ERROR) {
+        informWolf(myProject, message);
       }
     }
 
     @Override
-    public void handleFailure(JpsRemoteProto.Message.Failure failure) {
+    public void handleFailure(CmdlineRemoteProto.Message.Failure failure) {
       CompilerManager.NOTIFICATION_GROUP.createNotification("Auto make failure: " + failure.getDescription(), MessageType.INFO);
     }
 
@@ -794,7 +758,7 @@ public class CompileServerManager implements ApplicationComponent{
       }
     }
 
-    private void informWolf(Project project, JpsRemoteProto.Message.Response.CompileMessage message) {
+    private void informWolf(Project project, CmdlineRemoteProto.Message.BuilderMessage.CompileMessage message) {
       final String srcPath = message.getSourceFilePath();
       if (srcPath != null && !project.isDisposed()) {
         final VirtualFile vFile = LocalFileSystem.getInstance().findFileByPath(srcPath);
@@ -823,41 +787,170 @@ public class CompileServerManager implements ApplicationComponent{
       conn.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
         @Override
         public void beforeRootsChange(final ModuleRootEvent event) {
-          sendReloadRequest(project);
         }
 
         @Override
         public void rootsChanged(final ModuleRootEvent event) {
-          myTaskExecutor.submit(new Runnable() {
-            @Override
-            public void run() {
-              try {
-                // this will reload sdks and global libraries
-                final CompileServerClient client = ensureServerRunningAndClientConnected(false);
-                if (client != null) {
-                  sendSetupRequest(client);
-                }
-              }
-              catch (Throwable e) {
-                LOG.info(e);
-              }
-            }
-          });
+          clearGlobalsCache();
         }
       });
     }
 
     @Override
     public void projectClosing(Project project) {
-      sendReloadRequest(project);
     }
 
     @Override
     public void projectClosed(Project project) {
+      myProjectToExecutorMap.remove(getProjectPath(project));
       final MessageBusConnection conn = myConnections.remove(project);
       if (conn != null) {
         conn.disconnect();
       }
     }
   }
+
+  private static class BuildMessageDispatcher extends SimpleChannelHandler {
+    private final Map<UUID, SessionData> myMessageHandlers = new ConcurrentHashMap<UUID, SessionData>();
+    private final Set<UUID> myCanceledSessions = new ConcurrentHashSet<UUID>();
+
+    public void registerBuildMessageHandler(UUID sessionId,
+                                            BuildMessageHandler handler,
+                                            CmdlineRemoteProto.Message.ControllerMessage params) {
+      myMessageHandlers.put(sessionId, new SessionData(sessionId, handler, params));
+    }
+
+    @Nullable
+    public BuildMessageHandler unregisterBuildMessageHandler(UUID sessionId) {
+      myCanceledSessions.remove(sessionId);
+      final SessionData data = myMessageHandlers.remove(sessionId);
+      return data != null? data.handler : null;
+    }
+
+    public void cancelSession(UUID sessionId) {
+      if (myCanceledSessions.add(sessionId)) {
+        final SessionData data = myMessageHandlers.get(sessionId);
+        if (data != null) {
+          final Channel channel = data.channel;
+          if (channel != null) {
+            Channels.write(channel, CmdlineProtoUtil.toMessage(sessionId, CmdlineProtoUtil.createCancelCommand()));
+          }
+        }
+      }
+    }
+
+    @Override
+    public void messageReceived(ChannelHandlerContext ctx, MessageEvent e) throws Exception {
+      final CmdlineRemoteProto.Message message = (CmdlineRemoteProto.Message)e.getMessage();
+
+      SessionData sessionData = (SessionData)ctx.getAttachment();
+
+      UUID sessionId;
+      if (sessionData == null) {
+        // this is the first message for this session, so fill session data with missing info
+        final CmdlineRemoteProto.Message.UUID id = message.getSessionId();
+        sessionId = new UUID(id.getMostSigBits(), id.getLeastSigBits());
+
+        sessionData = myMessageHandlers.get(sessionId);
+        if (sessionData != null) {
+          sessionData.channel = ctx.getChannel();
+          ctx.setAttachment(sessionData);
+        }
+        if (myCanceledSessions.contains(sessionId)) {
+          Channels.write(ctx.getChannel(), CmdlineProtoUtil.toMessage(sessionId, CmdlineProtoUtil.createCancelCommand()));
+        }
+      }
+      else {
+        sessionId = sessionData.sessionId;
+      }
+
+      final BuildMessageHandler handler = sessionData != null? sessionData.handler : null;
+      if (handler == null) {
+        // todo
+        LOG.info("No message handler registered for session " + sessionId);
+        return;
+      }
+
+      final CmdlineRemoteProto.Message.Type messageType = message.getType();
+      switch (messageType) {
+        case FAILURE:
+          handler.handleFailure(message.getFailure());
+          break;
+
+        case BUILDER_MESSAGE:
+          final CmdlineRemoteProto.Message.BuilderMessage builderMessage = message.getBuilderMessage();
+          final CmdlineRemoteProto.Message.BuilderMessage.Type responseType = builderMessage.getType();
+          if (responseType == CmdlineRemoteProto.Message.BuilderMessage.Type.PARAM_REQUEST) {
+            final CmdlineRemoteProto.Message.ControllerMessage params = sessionData.params;
+            if (params != null) {
+              sessionData.params = null;
+              Channels.write(ctx.getChannel(), CmdlineProtoUtil.toMessage(sessionId, params));
+            }
+            else {
+              cancelSession(sessionId);
+            }
+          }
+          else {
+            handler.handleBuildMessage(builderMessage);
+          }
+          break;
+
+        default:
+          LOG.info("Unsupported message type " + messageType);
+          break;
+      }
+    }
+
+    @Override
+    public void channelClosed(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception {
+      try {
+        super.channelClosed(ctx, e);
+      }
+      finally {
+        final SessionData sessionData = (SessionData)ctx.getAttachment();
+        if (sessionData != null) {
+          final BuildMessageHandler handler = unregisterBuildMessageHandler(sessionData.sessionId);
+          if (handler != null) {
+            // notify the handler only if it has not been notified yet
+            handler.sessionTerminated();
+          }
+        }
+      }
+    }
+
+
+    @Override
+    public void channelDisconnected(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception {
+      try {
+        super.channelDisconnected(ctx, e);
+      }
+      finally {
+        final SessionData sessionData = (SessionData)ctx.getAttachment();
+        if (sessionData != null) { // this is the context corresponding to some session
+          final Channel channel = e.getChannel();
+          ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+            @Override
+            public void run() {
+              channel.close();
+            }
+          });
+        }
+      }
+    }
+  }
+
+
+  private static final class SessionData {
+    final UUID sessionId;
+    final BuildMessageHandler handler;
+    volatile CmdlineRemoteProto.Message.ControllerMessage params;
+    volatile Channel channel;
+
+    private SessionData(UUID sessionId, BuildMessageHandler handler, CmdlineRemoteProto.Message.ControllerMessage params) {
+      this.sessionId = sessionId;
+      this.handler = handler;
+      this.params = params;
+    }
+  }
+
 }

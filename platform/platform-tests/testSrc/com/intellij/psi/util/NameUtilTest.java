@@ -1,4 +1,20 @@
 /*
+ * Copyright 2000-2012 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/*
  * @author max
  */
 package com.intellij.psi.util;
@@ -14,6 +30,10 @@ import org.jetbrains.annotations.NonNls;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * @author peter
+ * @author Konstantin Bulenkov
+ */
 public class NameUtilTest extends UsefulTestCase {
 
   public void testSimpleCases() throws Exception {
@@ -61,7 +81,38 @@ public class NameUtilTest extends UsefulTestCase {
     assertDoesntMatch("ORGS-ACC", "ORGS-POSITION_ACCOUNTABILITY");
     assertDoesntMatch("ORGS.ACC", "ORGS.POSITION_ACCOUNTABILITY");
   }
-  
+
+  public void testRangesSorted() throws Exception {
+    checkMinusculeRanges("ar*l*p", NameUtil.MatchingCaseSensitivity.NONE, "AbstractResponseHandler", "(0,1)(8,9)(11,12)(20,21)");
+  }
+
+  private static void checkMinusculeRanges(String pattern, NameUtil.MatchingCaseSensitivity option, String text, String... ranges) {
+    final NameUtil.MinusculeMatcher matcher = new NameUtil.MinusculeMatcher(pattern, option);
+    StringBuilder actual = new StringBuilder();
+    for (TextRange range : matcher.matchingFragments(text)) {
+      actual.append("(").append(range.getStartOffset()).append(",").append(range.getEndOffset()).append(")");
+    }
+    StringBuilder expected = new StringBuilder();
+    for (String range : ranges) {
+      expected.append(range);
+    }
+
+    assertEquals(expected.toString(), actual.toString());
+
+  }
+
+  private static String rangesDontMatch(Iterable<TextRange> it, String[] ranges) {
+    StringBuilder buf = new StringBuilder("Actual: ");
+    for (TextRange range : it) {
+      buf.append("(").append(range.getStartOffset()).append(",").append(range.getEndOffset()).append(") ");
+    }
+    buf.append(" Expected: ");
+    for (String range : ranges) {
+      buf.append(range);
+    }
+    return buf.toString();
+  }
+
   public void testUnderscoreStyle() throws Exception {
     assertMatches("N_U_T", "NAME_UTIL_TEST");
     assertMatches("NUT", "NAME_UTIL_TEST");

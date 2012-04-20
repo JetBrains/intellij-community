@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 public class NameUtil {
@@ -635,7 +636,18 @@ public class NameUtil {
         return myPattern.length == 0 ? Collections.<TextRange>emptyList() : null;
       }
 
-      return matchName(name, 0, 0);
+      final FList<TextRange> ranges = matchName(name, 0, 0);
+      if (ranges != null) {
+        final List<TextRange> list = new ArrayList<TextRange>(ranges);
+        Collections.sort(list, new Comparator<TextRange>() {
+          @Override
+          public int compare(TextRange o1, TextRange o2) {
+            return o1.getStartOffset() - o2.getStartOffset();
+          }
+        });
+        return list;
+      }
+      return ranges;
     }
   }
 }
