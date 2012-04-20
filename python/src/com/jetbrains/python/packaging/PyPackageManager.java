@@ -261,15 +261,16 @@ public class PyPackageManager {
       throw new PyExternalProcessException(output.getExitCode(), PACKAGING_TOOL,
                                            Lists.newArrayList("untar"), output.getStderr());
     }
-    final String dirName = output.getStdout().trim();
-    final String fileName = dirName + File.separatorChar + name + File.separatorChar + "setup.py";
-    final File setupFile = new File(fileName);
-    name = setupFile.getAbsolutePath();
+    String dirName = FileUtil.toSystemDependentName(output.getStdout().trim());
+    if (!dirName.endsWith(File.separator)) {
+      dirName += File.separator;
+    }
+    final String fileName = dirName + name + File.separatorChar + "setup.py";
     try {
-      output = getProcessOutput(setupFile.getAbsolutePath(), Collections.<String>singletonList("install"), true, setupFile.getParent());
+      output = getProcessOutput(fileName, Collections.<String>singletonList("install"), true, dirName);
       final int retcode = output.getExitCode();
       if (output.isTimeout()) {
-        throw new PyExternalProcessException(ERROR_TIMEOUT, name, Lists.newArrayList("install"), "Timed out");
+        throw new PyExternalProcessException(ERROR_TIMEOUT, fileName, Lists.newArrayList("install"), "Timed out");
       }
       else if (retcode != 0) {
         final String stdout = output.getStdout();
@@ -277,11 +278,11 @@ public class PyPackageManager {
         if (message.trim().isEmpty()) {
           message = stdout;
         }
-        throw new PyExternalProcessException(retcode, name, Lists.newArrayList("install"), message);
+        throw new PyExternalProcessException(retcode, fileName, Lists.newArrayList("install"), message);
       }
     }
     finally {
-      FileUtil.delete(new File(dirName));
+      FileUtil.delete(new File(dirName)); //TODO: remove temp directory for remote interpreter
     }
   }
 
