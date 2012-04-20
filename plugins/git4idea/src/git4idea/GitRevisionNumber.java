@@ -223,6 +223,11 @@ public class GitRevisionNumber implements ShortVcsRevisionNumber {
     h.addParameters("--timestamp", "--max-count=1", rev);
     h.endOptions();
     final String output = h.run();
+    return parseRevlistOutputAsRevisionNumber(h, output);
+  }
+
+  @NotNull
+  public static GitRevisionNumber parseRevlistOutputAsRevisionNumber(@NotNull GitSimpleHandler h, @NotNull String output) {
     StringTokenizer tokenizer = new StringTokenizer(output, "\n\r \t", false);
     Date timestamp = GitUtil.parseTimestampWithNFEReport(tokenizer.nextToken(), h, output);
     return new GitRevisionNumber(tokenizer.nextToken(), timestamp);
