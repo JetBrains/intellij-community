@@ -196,8 +196,7 @@ public class GitFetcher {
     String remoteName = remote.getName();
     h.addParameters(remoteName);
     if (branch != null) {
-      branch = getRidOfPrefixIfExists(branch);
-      h.addParameters(REFS_HEADS_PREFIX + branch + ":" + REFS_REMOTES_PREFIX + remoteName + "/" + branch);
+      h.addParameters(getFetchSpecForBranch(branch, remoteName));
     }
 
     final GitTask fetchTask = new GitTask(myProject, h, "Fetching...");
@@ -241,6 +240,12 @@ public class GitFetcher {
       return branch.substring(REFS_HEADS_PREFIX.length());
     }
     return branch;
+  }
+
+  @NotNull
+  public static String getFetchSpecForBranch(@NotNull String branch, @NotNull String remoteName) {
+    branch = getRidOfPrefixIfExists(branch);
+    return REFS_HEADS_PREFIX + branch + ":" + REFS_REMOTES_PREFIX + remoteName + "/" + branch;
   }
 
   @NotNull
