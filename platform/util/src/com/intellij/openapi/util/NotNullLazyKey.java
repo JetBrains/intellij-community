@@ -25,7 +25,7 @@ import com.intellij.util.NotNullFunction;
 public class NotNullLazyKey<T,H extends UserDataHolder> extends Key<T>{
   private final NotNullFunction<H,T> myFunction;
 
-  private NotNullLazyKey(@NonNls String name, final NotNullFunction<H, T> function) {
+  private NotNullLazyKey(@NotNull @NonNls String name, @NotNull NotNullFunction<H, T> function) {
     super(name);
     myFunction = function;
   }

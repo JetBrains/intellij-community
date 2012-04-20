@@ -42,10 +42,12 @@ public class Disposer {
   }
 
   private static final ObjectTreeAction<Disposable> ourDisposeAction = new ObjectTreeAction<Disposable>() {
+    @Override
     public void execute(final Disposable each) {
       each.dispose();
     }
 
+    @Override
     public void beforeTreeExecution(final Disposable parent) {
       if (parent instanceof Disposable.Parent) {
         ((Disposable.Parent)parent).beforeTreeDispose();
@@ -61,6 +63,7 @@ public class Disposer {
   @NotNull
   public static Disposable newDisposable() {
     return new Disposable() {
+      @Override
       public void dispose() {
       }
     };
@@ -81,6 +84,7 @@ public class Disposer {
       assert get(key) == null;
       ourKeyDisposables.put(key, child);
       register(child, new Disposable() {
+        @Override
         public void dispose() {
           ourKeyDisposables.remove(key);
         }

@@ -29,7 +29,7 @@ import java.util.List;
 
 public class LanguageExtension<T> extends KeyedExtensionCollector<T, Language> {
   private final T myDefaultImplementation;
-  private final /* non static!!! */ Key<T> IN_LANGUAGE_CACHE = new Key<T>("EXTENSIONS_IN_LANGUAGE");
+  private final /* non static!!! */ Key<T> IN_LANGUAGE_CACHE;
 
   public LanguageExtension(@NonNls final String epName) {
     this(epName, null);
@@ -38,6 +38,7 @@ public class LanguageExtension<T> extends KeyedExtensionCollector<T, Language> {
   public LanguageExtension(@NonNls final String epName, @Nullable final T defaultImplementation) {
     super(epName);
     myDefaultImplementation = defaultImplementation;
+    IN_LANGUAGE_CACHE = Key.create("EXTENSIONS_IN_LANGUAGE_"+epName);
   }
 
   @Override
@@ -59,8 +60,8 @@ public class LanguageExtension<T> extends KeyedExtensionCollector<T, Language> {
     else {
       result = extensions.get(0);
     }
-    if (result == null) return result;
-    l.putUserDataIfAbsent(IN_LANGUAGE_CACHE, result);
+    if (result == null) return null;
+    result = l.putUserDataIfAbsent(IN_LANGUAGE_CACHE, result);
     return result;
   }
 
