@@ -7,6 +7,7 @@ import org.jetbrains.ether.dependencyView.Mappings;
 import org.jetbrains.jps.Module;
 import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.ProjectPaths;
+import org.jetbrains.jps.incremental.fs.RootDescriptor;
 import org.jetbrains.jps.incremental.messages.ProgressMessage;
 
 import java.io.File;
@@ -110,11 +111,11 @@ public abstract class ModuleLevelBuilder extends Builder {
           if (!newlyAffectedFiles.isEmpty()) {
 
             if (LOG.isDebugEnabled()) {
-              final List<Pair<File, Module>> wrongFiles = checkAffectedFilesInCorrectModules(context, newlyAffectedFiles, moduleBasedFilter);
+              final List<Pair<File, String>> wrongFiles = checkAffectedFilesInCorrectModules(context, newlyAffectedFiles, moduleBasedFilter);
               if (!wrongFiles.isEmpty()) {
                 LOG.debug("Wrong affected files for module chunk " + chunk.getName() + ": ");
-                for (Pair<File, Module> pair : wrongFiles) {
-                  final String name = pair.second != null? pair.second.getName() : "null";
+                for (Pair<File, String> pair : wrongFiles) {
+                  final String name = pair.second != null? pair.second : "null";
                   LOG.debug("\t[" + name + "] " + pair.first.getPath());
                 }
               }
@@ -154,11 +155,11 @@ public abstract class ModuleLevelBuilder extends Builder {
     }
   }
 
-  private static List<Pair<File, Module>> checkAffectedFilesInCorrectModules(CompileContext context, Collection<File> affected, ModulesBasedFileFilter moduleBasedFilter) {
+  private static List<Pair<File, String>> checkAffectedFilesInCorrectModules(CompileContext context, Collection<File> affected, ModulesBasedFileFilter moduleBasedFilter) {
     if (affected.isEmpty()) {
       return Collections.emptyList();
     }
-    final List<Pair<File, Module>> result = new ArrayList<Pair<File, Module>>();
+    final List<Pair<File, String>> result = new ArrayList<Pair<File, String>>();
     for (File file : affected) {
       if (!moduleBasedFilter.accept(file)) {
         final RootDescriptor moduleAndRoot = context.getModuleAndRoot(file);
@@ -169,7 +170,10 @@ public abstract class ModuleLevelBuilder extends Builder {
   }
 
   private static boolean chunkContainsAffectedFiles(CompileContext context, ModuleChunk chunk, final Set<File> affected) throws IOException {
-    final Set<Module> chunkModules = new HashSet<Module>(chunk.getModules());
+    final Set<String> chunkModules = new HashSet<String>();
+    for (Module module : chunk.getModules()) {
+      chunkModules.add(module.getName());
+    }
     if (!chunkModules.isEmpty()) {
       for (File file : affected) {
         final RootDescriptor moduleAndRoot = context.getModuleAndRoot(file);
@@ -216,11 +220,11 @@ public abstract class ModuleLevelBuilder extends Builder {
 
     @Override
     public boolean accept(File file) {
-      final RootDescriptor moduleAndRoot = myContext.getModuleAndRoot(file);
-      if (moduleAndRoot == null) {
+      final RootDescriptor rd = myContext.getModuleAndRoot(file);
+      if (rd == null) {
         return true;
       }
-      final Module moduleOfFile = moduleAndRoot.module;
+      final Module moduleOfFile = myContext.getRootsIndex().getModuleByName(rd.module);
       if (myChunkModules.contains(moduleOfFile)) {
         return true;
       }

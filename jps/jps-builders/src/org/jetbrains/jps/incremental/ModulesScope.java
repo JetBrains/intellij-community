@@ -6,6 +6,7 @@ import org.jetbrains.jps.Project;
 import org.jetbrains.jps.artifacts.Artifact;
 
 import java.io.File;
+import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -14,24 +15,27 @@ import java.util.Set;
  */
 public class ModulesScope extends CompileScope {
 
-  private final Set<Module> myModules;
+  private final Set<String> myModules;
   private final boolean myForcedCompilation;
 
   public ModulesScope(Project project, Set<Module> modules, Set<Artifact> artifacts, boolean isForcedCompilation) {
     super(project, artifacts);
-    myModules = modules;
+    myModules = new HashSet<String>();
+    for (Module module : modules) {
+      myModules.add(module.getName());
+    }
     myForcedCompilation = isForcedCompilation;
   }
 
-  public boolean isRecompilationForced(@NotNull Module module) {
-    return myForcedCompilation && isAffected(module);
+  public boolean isRecompilationForced(@NotNull String moduleName) {
+    return myForcedCompilation && isAffected(moduleName);
   }
 
-  public boolean isAffected(@NotNull Module module) {
-    return myModules.contains(module);
+  public boolean isAffected(@NotNull String moduleName) {
+    return myModules.contains(moduleName);
   }
 
-  public boolean isAffected(Module module, @NotNull File file) {
+  public boolean isAffected(String moduleName, @NotNull File file) {
     return true; // for speed reasons
   }
 

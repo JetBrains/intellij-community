@@ -6,6 +6,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.Module;
 import org.jetbrains.jps.PathUtil;
 import org.jetbrains.jps.Project;
+import org.jetbrains.jps.incremental.fs.RootDescriptor;
 
 import java.io.File;
 import java.util.*;
@@ -17,13 +18,18 @@ import java.util.*;
 public class ModuleRootsIndex {
   private final Map<File, RootDescriptor> myRootToModuleMap = new HashMap<File, RootDescriptor>();
   private final Map<Module, List<RootDescriptor>> myModuleToRootsMap = new HashMap<Module, List<RootDescriptor>>();
+  private final Map<String, Module> myNameToModuleMap = new HashMap<String, Module>();
   private final int myTotalModuleCount;
   private final Set<File> myExcludedRoots = new HashSet<File>();
 
   public ModuleRootsIndex(Project project) {
     final Collection<Module> allModules = project.getModules().values();
     myTotalModuleCount = allModules.size();
-    for (Module module : allModules) {
+    for (final Module module : allModules) {
+      final String moduleName = module.getName();
+
+      myNameToModuleMap.put(moduleName, module);
+
       List<RootDescriptor> moduleRoots = myModuleToRootsMap.get(module);
       if (moduleRoots == null) {
         moduleRoots = new ArrayList<RootDescriptor>();
@@ -35,13 +41,13 @@ public class ModuleRootsIndex {
       }
       for (String r : module.getSourceRoots()) {
         final File root = new File(FileUtil.toCanonicalPath(r));
-        final RootDescriptor descriptor = new RootDescriptor(module, root, false, generatedRoots.contains(r));
+        final RootDescriptor descriptor = new RootDescriptor(moduleName, root, false, generatedRoots.contains(r));
         myRootToModuleMap.put(root, descriptor);
         moduleRoots.add(descriptor);
       }
       for (String r : module.getTestRoots()) {
         final File root = new File(FileUtil.toCanonicalPath(r));
-        final RootDescriptor descriptor = new RootDescriptor(module, root, true, generatedRoots.contains(r));
+        final RootDescriptor descriptor = new RootDescriptor(moduleName, root, true, generatedRoots.contains(r));
         myRootToModuleMap.put(root, descriptor);
         moduleRoots.add(descriptor);
       }
@@ -54,6 +60,11 @@ public class ModuleRootsIndex {
 
   public int getTotalModuleCount() {
     return myTotalModuleCount;
+  }
+
+  @Nullable
+  public Module getModuleByName(String module) {
+    return myNameToModuleMap.get(module);
   }
 
   @NotNull
@@ -78,7 +89,7 @@ public class ModuleRootsIndex {
       moduleRoots = new ArrayList<RootDescriptor>();
       myModuleToRootsMap.put(module, moduleRoots);
     }
-    final RootDescriptor descriptor = new RootDescriptor(module, root, isTestRoot, isForGeneratedSources);
+    final RootDescriptor descriptor = new RootDescriptor(module.getName(), root, isTestRoot, isForGeneratedSources);
     myRootToModuleMap.put(root, descriptor);
     moduleRoots.add(descriptor);
     return descriptor;

@@ -7,6 +7,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.ether.dependencyView.Mappings;
 import org.jetbrains.jps.*;
 import org.jetbrains.jps.api.CanceledStatus;
+import org.jetbrains.jps.incremental.fs.RootDescriptor;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.ProgressMessage;
 import org.jetbrains.jps.incremental.messages.UptoDateFilesSavedEvent;
@@ -308,7 +309,7 @@ public class CompileContext extends UserDataHolderBase implements MessageHandler
         }
         else {
           // forced compilation mode
-          if (getScope().isRecompilationForced(module)) {
+          if (getScope().isRecompilationForced(module.getName())) {
             markDirtyFiles(module, myTsStorage, true, isCompilingTests() ? DirtyMarkScope.TESTS : DirtyMarkScope.PRODUCTION, null);
           }
         }
@@ -326,7 +327,7 @@ public class CompileContext extends UserDataHolderBase implements MessageHandler
       // can check if the file exists
       final File file = new File(path);
       if (!currentFiles.contains(file)) {
-        myProjectDescriptor.fsState.registerDeleted(module, file, isCompilingTests(), myTsStorage);
+        myProjectDescriptor.fsState.registerDeleted(module.getName(), file, isCompilingTests(), myTsStorage);
       }
     }
   }
@@ -341,6 +342,15 @@ public class CompileContext extends UserDataHolderBase implements MessageHandler
     return getRootsIndex().getModuleAndRoot(file);
   }
 
+  @NotNull
+  public List<RootDescriptor> getModuleRoots(String moduleName) {
+    final ModuleRootsIndex index = getRootsIndex();
+    final Module module = index.getModuleByName(moduleName);
+    if (module == null) {
+      return Collections.emptyList();
+    }
+    return index.getModuleRoots(module);
+  }
   @NotNull
   public List<RootDescriptor> getModuleRoots(Module module) {
     return getRootsIndex().getModuleRoots(module);
@@ -368,7 +378,11 @@ public class CompileContext extends UserDataHolderBase implements MessageHandler
     for (String excludePath : module.getExcludes()) {
       excludes.add(new File(excludePath));
     }
+    final Collection<RootDescriptor> roots = new ArrayList<RootDescriptor>();
     for (RootDescriptor rd : getModuleRoots(module)) {
+      roots.add(rd);
+    }
+    for (RootDescriptor rd : roots) {
       if (scope == DirtyMarkScope.TESTS) {
         if (!rd.isTestRoot) {
           continue;
@@ -383,7 +397,7 @@ public class CompileContext extends UserDataHolderBase implements MessageHandler
         continue;
       }
       myProjectDescriptor.fsState.clearRecompile(rd);
-      myProjectDescriptor.fsState.clearDeletedPaths(module, isCompilingTests());
+      myProjectDescriptor.fsState.clearDeletedPaths(module.getName(), isCompilingTests());
       traverseRecursively(rd, rd.root, excludes, tsStorage, forceMarkDirty, currentFiles);
     }
   }

@@ -12,6 +12,7 @@ import org.jetbrains.jps.api.CanceledStatus;
 import org.jetbrains.jps.api.GlobalOptions;
 import org.jetbrains.jps.api.RequestFuture;
 import org.jetbrains.jps.api.SharedThreadPool;
+import org.jetbrains.jps.incremental.fs.RootDescriptor;
 import org.jetbrains.jps.incremental.java.ExternalJavacDescriptor;
 import org.jetbrains.jps.incremental.java.JavaBuilder;
 import org.jetbrains.jps.incremental.java.JavaBuilderLogger;
@@ -422,7 +423,7 @@ public class IncProjectBuilder {
       final Set<String> allChunkRemovedSources = new HashSet<String>();
 
       for (Module module : chunk.getModules()) {
-        final Collection<String> deletedPaths = myProjectDescriptor.fsState.getDeletedPaths(module, context.isCompilingTests());
+        final Collection<String> deletedPaths = myProjectDescriptor.fsState.getDeletedPaths(module.getName(), context.isCompilingTests());
         if (deletedPaths.isEmpty()) {
           continue;
         }
@@ -478,7 +479,7 @@ public class IncProjectBuilder {
         }
         Utils.CHUNK_REMOVED_SOURCES_KEY.set(context, allChunkRemovedSources);
         for (Module module : chunk.getModules()) {
-          myProjectDescriptor.fsState.clearDeletedPaths(module, context.isCompilingTests());
+          myProjectDescriptor.fsState.clearDeletedPaths(module.getName(), context.isCompilingTests());
         }
       }
     }

@@ -20,6 +20,7 @@ import org.jetbrains.jps.idea.IdeaProjectLoader;
 import org.jetbrains.jps.idea.SystemOutErrorReporter;
 import org.jetbrains.jps.incremental.*;
 import org.jetbrains.jps.incremental.fs.BuildFSState;
+import org.jetbrains.jps.incremental.fs.RootDescriptor;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
 import org.jetbrains.jps.incremental.storage.BuildDataManager;
@@ -233,9 +234,9 @@ class ServerState {
 
       final TimestampStorage tsStorage = pd.timestamps.getStorage();
 
-      final Map<Module, Set<File>> filesToCompile;
+      final Map<String, Set<File>> filesToCompile;
       if (!paths.isEmpty()) {
-        filesToCompile = new HashMap<Module, Set<File>>();
+        filesToCompile = new HashMap<String, Set<File>>();
         for (String path : paths) {
           final File file = new File(path);
           final RootDescriptor rd = pd.rootsIndex.getModuleAndRoot(file);

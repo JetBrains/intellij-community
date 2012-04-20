@@ -14,6 +14,7 @@ import org.jetbrains.ether.dependencyView.Mappings;
 import org.jetbrains.groovy.compiler.rt.GroovyCompilerWrapper;
 import org.jetbrains.jps.*;
 import org.jetbrains.jps.incremental.*;
+import org.jetbrains.jps.incremental.fs.RootDescriptor;
 import org.jetbrains.jps.incremental.java.JavaBuilder;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
 import org.jetbrains.jps.incremental.messages.FileGeneratedEvent;
@@ -166,7 +167,7 @@ public class GroovyBuilder extends ModuleLevelBuilder {
         final String outputPath = FileUtil.toSystemIndependentName(item.outputPath);
         final RootDescriptor moduleAndRoot = context.getModuleAndRoot(new File(sourcePath));
         if (moduleAndRoot != null) {
-          final String moduleName = moduleAndRoot.module.getName();
+          final String moduleName = moduleAndRoot.module;
           context.getDataManager().getSourceToOutputMap(moduleName, moduleAndRoot.isTestRoot).appendData(sourcePath, outputPath);
         }
         callback.associate(outputPath, sourcePath, new ClassReader(FileUtil.loadFileBytes(new File(outputPath))));

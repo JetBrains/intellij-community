@@ -27,15 +27,15 @@ public abstract class CompileScope {
     return myArtifacts.contains(artifact);
   }
 
-  public abstract boolean isAffected(Module module, @NotNull File file);
+  public abstract boolean isAffected(String moduleName, @NotNull File file);
 
-  public abstract boolean isAffected(@NotNull Module module);
+  public abstract boolean isAffected(@NotNull String moduleName);
 
-  public abstract boolean isRecompilationForced(@NotNull Module module);
+  public abstract boolean isRecompilationForced(@NotNull String moduleName);
 
   public final boolean isAffected(ModuleChunk chunk) {
     for (Module module : chunk.getModules()) {
-      if (isAffected(module)) {
+      if (isAffected(module.getName())) {
         return true;
       }
     }

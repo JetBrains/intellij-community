@@ -17,34 +17,37 @@ import java.util.Set;
  */
 public class ModulesAndFilesScope extends CompileScope {
 
-  private final Set<Module> myModules;
-  private final Map<Module, Set<File>> myFiles;
+  private final Set<String> myModules;
+  private final Map<String, Set<File>> myFiles;
   private final boolean myForcedCompilation;
 
-  public ModulesAndFilesScope(Project project, Collection<Module> modules, Map<Module, Set<File>> files, Set<Artifact> artifacts,
+  public ModulesAndFilesScope(Project project, Collection<Module> modules, Map<String, Set<File>> files, Set<Artifact> artifacts,
                               boolean isForcedCompilation) {
     super(project, artifacts);
     myFiles = files;
     myForcedCompilation = isForcedCompilation;
-    myModules = new HashSet<Module>(modules);
+    myModules = new HashSet<String>();
+    for (Module module : modules) {
+      myModules.add(module.getName());
+    }
   }
 
-  public boolean isRecompilationForced(@NotNull Module module) {
-    return myForcedCompilation && myModules.contains(module);
+  public boolean isRecompilationForced(@NotNull String moduleName) {
+    return myForcedCompilation && myModules.contains(moduleName);
   }
 
-  public boolean isAffected(@NotNull Module module) {
-    if (myModules.contains(module) || myFiles.containsKey(module)) {
+  public boolean isAffected(@NotNull String moduleName) {
+    if (myModules.contains(moduleName) || myFiles.containsKey(moduleName)) {
       return true;
     }
     return false;
   }
 
-  public boolean isAffected(Module module, @NotNull File file) {
-    if (myModules.contains(module)) {
+  public boolean isAffected(String moduleName, @NotNull File file) {
+    if (myModules.contains(moduleName)) {
       return true;
     }
-    final Set<File> files = myFiles.get(module);
+    final Set<File> files = myFiles.get(moduleName);
     return files != null && files.contains(file);
   }
 

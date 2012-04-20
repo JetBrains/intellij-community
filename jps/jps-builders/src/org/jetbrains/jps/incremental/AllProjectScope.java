@@ -1,7 +1,6 @@
 package org.jetbrains.jps.incremental;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.jps.Module;
 import org.jetbrains.jps.Project;
 import org.jetbrains.jps.artifacts.Artifact;
 
@@ -21,15 +20,15 @@ public class AllProjectScope extends CompileScope {
     myIsForcedCompilation = forcedCompilation;
   }
 
-  public boolean isRecompilationForced(@NotNull Module module) {
+  public boolean isRecompilationForced(@NotNull String moduleName) {
     return myIsForcedCompilation;
   }
 
-  public boolean isAffected(@NotNull Module module) {
+  public boolean isAffected(@NotNull String moduleName) {
     return true;
   }
 
-  public boolean isAffected(Module module, @NotNull File file) {
+  public boolean isAffected(String moduleName, @NotNull File file) {
     return true;
   }
 

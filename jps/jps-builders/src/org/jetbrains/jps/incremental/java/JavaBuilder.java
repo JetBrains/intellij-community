@@ -30,6 +30,7 @@ import org.jetbrains.jps.*;
 import org.jetbrains.jps.api.GlobalOptions;
 import org.jetbrains.jps.api.RequestFuture;
 import org.jetbrains.jps.incremental.*;
+import org.jetbrains.jps.incremental.fs.RootDescriptor;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
 import org.jetbrains.jps.incremental.messages.ProgressMessage;
@@ -92,7 +93,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
             final BuildDataManager dataManager = context.getDataManager();
             if (moduleAndRoot != null) {
               try {
-                final String moduleName = moduleAndRoot.module.getName();
+                final String moduleName = moduleAndRoot.module;
                 dataManager.getSourceToOutputMap(moduleName, context.isCompilingTests()).appendData(sourcePath, outputPath);
               }
               catch (Exception e) {

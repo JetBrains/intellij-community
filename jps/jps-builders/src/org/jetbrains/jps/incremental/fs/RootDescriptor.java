@@ -1,7 +1,6 @@
-package org.jetbrains.jps.incremental;
+package org.jetbrains.jps.incremental.fs;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.jps.Module;
 
 import java.io.File;
 
@@ -11,17 +10,14 @@ import java.io.File;
 */
 public final class RootDescriptor {
   @NotNull
-  public final Module module;
+  public final String module;
   @NotNull
   public final File root;
   public final boolean isTestRoot;
   public final boolean isGeneratedSources;
 
-  RootDescriptor(@NotNull Module module, @NotNull File root, boolean isTestRoot) {
-    this(module, root, isTestRoot, false);
-  }
-  RootDescriptor(@NotNull Module module, @NotNull File root, boolean isTestRoot, boolean isGenerated) {
-    this.module = module;
+  public RootDescriptor(@NotNull final String moduleName, @NotNull File root, boolean isTestRoot, boolean isGenerated) {
+    this.module = moduleName;
     this.root = root;
     this.isTestRoot = isTestRoot;
     this.isGeneratedSources = isGenerated;
