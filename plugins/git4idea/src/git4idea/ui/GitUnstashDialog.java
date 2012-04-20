@@ -19,6 +19,7 @@ import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -171,6 +172,7 @@ public class GitUnstashDialog extends DialogWrapper {
         if (Messages.YES == Messages.showYesNoDialog(GitUnstashDialog.this.getContentPane(),
                                                      GitBundle.message("git.unstash.drop.confirmation.message", stash.getStash(), stash.getMessage()),
                                                      GitBundle.message("git.unstash.drop.confirmation.title", stash.getStash()), Messages.getQuestionIcon())) {
+          final ModalityState current = ModalityState.current();
           ProgressManager.getInstance().run(new Task.Modal(myProject, "Removing stash " + stash.getStash(), false) {
             @Override
             public void run(@NotNull ProgressIndicator indicator) {
@@ -185,7 +187,7 @@ public class GitUnstashDialog extends DialogWrapper {
                   public void run() {
                     GitUIUtil.showOperationError(myProject, ex, h.printableCommandLine());
                   }
-                });
+                }, current);
               }
             }
           });
