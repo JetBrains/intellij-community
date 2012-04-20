@@ -23,6 +23,8 @@
     <lang.braceMatcher language="TypoScript" implementationClass="com.jetbrains.typoscript.lang.TypoScriptBraceMatcher"/>
 
     <lang.foldingBuilder language="TypoScript" implementationClass="com.jetbrains.typoscript.lang.TypoScriptFoldingBuilder"/>
+
+    <lang.psiStructureViewFactory language="TypoScript" implementationClass="com.jetbrains.typoscript.lang.TypoScriptStructureViewFactory"/>
   </extensions>
 
 </idea-plugin>
