@@ -32,6 +32,7 @@ import com.intellij.designer.model.MetaManager;
 import com.intellij.designer.model.MetaModel;
 import com.intellij.designer.model.RadComponent;
 import com.intellij.ui.IdeBorderFactory;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -311,80 +312,135 @@ public class TableLayoutOperation extends AbstractEditOperation {
       if (gridInfo.components != null && myRow < gridInfo.components.length) {
         RadViewComponent rowComponent = (RadViewComponent)rows.get(myRow);
         if (RadTableRowLayout.is(rowComponent)) {
-          RadComponent[] rowComponents = gridInfo.components[myRow];
-          RadComponent insertBefore = null;
-
-          for (int i = myColumn + 1; i < rowComponents.length; i++) {
-            insertBefore = rowComponents[i];
-            if (insertBefore != null) {
-              break;
-            }
-          }
-
-          if (editComponent != insertBefore) {
-            execute(myContext, rowComponent, myComponents, (RadViewComponent)insertBefore);
-          }
-
-          RadTableLayoutComponent.setCellConstraints(editComponent, myColumn, 1);
+          insertInRow(rowComponent, null, true, myColumn + 1, myColumn);
         }
         else {
-          RadViewComponent newRowComponent = ModelParser.createComponent(null, tableRowModel);
-          ModelParser.addComponent(container, newRowComponent, rowComponent);
-
-          ModelParser.moveComponent(newRowComponent, rowComponent, null);
-
-          execute(myContext, newRowComponent, myComponents, null);
-
-          if (myColumn > 1) {
-            RadTableLayoutComponent.setCellConstraints(editComponent, myColumn, 1);
-          }
+          convertToTableRowAndExecute(rowComponent, null, tableRowModel, myColumn);
         }
       }
       else {
+        RadViewComponent newRowComponent = null;
         for (int i = rows.size(); i <= myRow; i++) {
-          RadViewComponent rowComponent = ModelParser.createComponent(null, tableRowModel);
-          ModelParser.addComponent(container, rowComponent, null);
+          newRowComponent = ModelParser.createComponent(null, tableRowModel);
+          ModelParser.addComponent(container, newRowComponent, null);
         }
 
-        execute(myContext, (RadViewComponent)myContainer.getChildren().get(myRow), myComponents, null);
+        execute(myContext, newRowComponent, myComponents, null);
         RadTableLayoutComponent.setCellConstraints(editComponent, myColumn, 1);
       }
     }
     else if (myInsertType == GridInsertType.before_h_cell || myInsertType == GridInsertType.after_h_cell) {
-      RadViewComponent rowComponent = ModelParser.createComponent(null, tableRowModel);
-      RadComponent insertBefore = null;
-
-      if (myInsertType == GridInsertType.before_h_cell) {
-        insertBefore = rows.get(myRow);
-      }
-      else if (myRow + 1 < rows.size()) {
-        insertBefore = rows.get(myRow + 1);
-      }
-
-      ModelParser.addComponent(container, rowComponent, (RadViewComponent)insertBefore);
-
-      execute(myContext, rowComponent, myComponents, null);
-      RadTableLayoutComponent.setCellConstraints(editComponent, myColumn, 1);
+      insertInNewRow(tableRowModel, myInsertType == GridInsertType.before_h_cell, myRow, myColumn);
     }
     else if (myInsertType == GridInsertType.before_v_cell || myInsertType == GridInsertType.after_v_cell) {
       int column = myColumn;
       if (myInsertType == GridInsertType.after_v_cell) {
         column++;
       }
+
       shiftColumns(column);
+
+      RadViewComponent rowComponent = (RadViewComponent)rows.get(myRow);
+      if (RadTableRowLayout.is(rowComponent)) {
+        insertInRow(rowComponent,
+                    myInsertType == GridInsertType.before_v_cell ? gridInfo.components[myRow][column] : null,
+                    myInsertType == GridInsertType.after_v_cell,
+                    column, column);
+      }
+      else {
+        convertToTableRowAndExecute(rowComponent,
+                                    myInsertType == GridInsertType.before_v_cell ? rowComponent : null,
+                                    tableRowModel,
+                                    column);
+      }
     }
     else {
-      // XXX
+      int column = myColumn;
+      if (myInsertType == GridInsertType.corner_top_right || myInsertType == GridInsertType.corner_bottom_right) {
+        column++;
+      }
+
+      shiftColumns(column);
+
+      insertInNewRow(tableRowModel,
+                     myInsertType == GridInsertType.corner_top_left || myInsertType == GridInsertType.corner_top_right,
+                     myRow, column);
+    }
+  }
+
+  private void insertInRow(RadViewComponent rowComponent,
+                           @Nullable RadComponent insertBefore,
+                           boolean calculateInsert,
+                           int startColumn,
+                           int column) throws Exception {
+    if (calculateInsert) {
+      GridInfo gridInfo = getGridInfo();
+      RadComponent[] rowComponents = gridInfo.components[myRow];
+
+      for (int i = startColumn; i < rowComponents.length; i++) {
+        insertBefore = rowComponents[i];
+        if (insertBefore != null) {
+          break;
+        }
+      }
+    }
+
+    RadComponent editComponent = myComponents.get(0);
+    if (editComponent != insertBefore) {
+      execute(myContext, rowComponent, myComponents, (RadViewComponent)insertBefore);
+    }
+
+    RadTableLayoutComponent.setCellConstraints(editComponent, column, 1);
+  }
+
+  private void insertInNewRow(MetaModel tableRowModel, boolean before, int row, int column) throws Exception {
+    List<RadComponent> rows = myContainer.getChildren();
+    RadComponent insertBefore = null;
+
+    if (before) {
+      insertBefore = rows.get(row);
+    }
+    else if (row + 1 < rows.size()) {
+      insertBefore = rows.get(row + 1);
+    }
+
+    RadViewComponent newRowComponent = ModelParser.createComponent(null, tableRowModel);
+    ModelParser.addComponent((RadViewComponent)myContainer, newRowComponent, (RadViewComponent)insertBefore);
+
+    execute(myContext, newRowComponent, myComponents, null);
+    RadTableLayoutComponent.setCellConstraints(myComponents.get(0), column, 1);
+  }
+
+  private void convertToTableRowAndExecute(RadViewComponent rowComponent,
+                                           @Nullable RadViewComponent insertBefore,
+                                           MetaModel tableRowModel,
+                                           int column)
+    throws Exception {
+    RadViewComponent newRowComponent = ModelParser.createComponent(null, tableRowModel);
+    ModelParser.addComponent((RadViewComponent)myContainer, newRowComponent, rowComponent);
+    ModelParser.moveComponent(newRowComponent, rowComponent, null);
+
+    execute(myContext, newRowComponent, myComponents, insertBefore);
+
+    if (column > 1) {
+      RadTableLayoutComponent.setCellConstraints(myComponents.get(0), column, 1);
     }
   }
 
   private void shiftColumns(int startColumn) {
+    List<RadComponent> rows = myContainer.getChildren();
     RadComponent[][] components = getGridInfo().components;
-    for (RadComponent[] rowComponents : components) {
-      for (int j = startColumn; j < rowComponents.length; j++) {
-        RadComponent cellComponent = rowComponents[j];
-        if (cellComponent != null) {
-          RadTableLayoutComponent.setCellConstraints(cellComponent, j + 1, 1);
+
+    for (int i = 0; i < components.length; i++) {
+      if (RadTableRowLayout.is(rows.get(i))) {
+        RadComponent[] rowComponents = components[i];
+
+        for (int j = startColumn; j < rowComponents.length; j++) {
+          RadComponent cellComponent = rowComponents[j];
+
+          if (cellComponent != null) {
+            RadTableLayoutComponent.setCellConstraints(cellComponent, j + 1, 1);
+          }
         }
       }
     }
