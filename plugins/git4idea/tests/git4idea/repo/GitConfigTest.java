@@ -79,9 +79,8 @@ public class GitConfigTest {
 
   private static GitRemote getRemote(String remoteString) {
     String[] remoteInfo = remoteString.split(" ");
-    return new GitRemote(getOrEmpty(remoteInfo, 0), Collections.singletonList(getOrEmpty(remoteInfo, 1)),
-                         Collections.singletonList(getOrEmpty(remoteInfo, 2)), Collections.singletonList(getOrEmpty(remoteInfo, 3)),
-                         Collections.singletonList(getOrEmpty(remoteInfo, 4)));
+    return new GitRemote(remoteInfo[0], getSingletonOrEmpty(remoteInfo, 1), getSingletonOrEmpty(remoteInfo, 2),
+                         getSingletonOrEmpty(remoteInfo, 3), getSingletonOrEmpty(remoteInfo, 4));
   }
 
   private static Set<GitRemote> readRemoteResults(File resultFile) throws IOException {
@@ -111,8 +110,8 @@ public class GitConfigTest {
     return Arrays.asList(line.split(" "));
   }
 
-  private static String getOrEmpty(String[] array, int i) {
-    return array.length < i + 1 ? "" : array[i];
+  private static List<String> getSingletonOrEmpty(String[] array, int i) {
+    return array.length < i + 1 ? Collections.<String>emptyList() : Collections.singletonList(array[i]);
   }
 
 }

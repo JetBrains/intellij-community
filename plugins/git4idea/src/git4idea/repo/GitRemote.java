@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -58,6 +59,15 @@ import java.util.List;
  * @author Kirill Likhodedov
  */
 public final class GitRemote implements Comparable<GitRemote> {
+
+  /**
+   * This is a special instance of GitRemote used in typical git-svn configurations like:
+   * [branch "trunk"]
+   *   remote = .
+   *   merge = refs/remotes/git-svn
+   */
+  public static final GitRemote DOT = new GitRemote(".", Collections.singletonList("."), Collections.<String>emptyList(),
+                                                         Collections.<String>emptyList(), Collections.<String>emptyList());
 
   private final String myName;
   private final List<String> myUrls;
