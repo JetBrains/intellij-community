@@ -77,6 +77,10 @@ public class PyPackageManager {
   private static final String BUILD_DIR_OPTION = "--build-dir";
   public static final String USE_USER_SITE = "--user";
 
+  public static final String INSTALL = "install";
+  public static final String UNINSTALL = "uninstall";
+  public static final String UNTAR = "untar";
+
   private List<PyPackage> myPackagesCache = null;
   private PyExternalProcessException myExceptionCache = null;
 
@@ -255,11 +259,11 @@ public class PyPackageManager {
 
     String helpersPath = getHelperPath(name);
 
-    ProcessOutput output = getHelperOutput(PACKAGING_TOOL, Lists.newArrayList("untar", helpersPath), false, helperFile.getParent());
+    ProcessOutput output = getHelperOutput(PACKAGING_TOOL, Lists.newArrayList(UNTAR, helpersPath), false, helperFile.getParent());
 
     if (output.getExitCode() != 0) {
       throw new PyExternalProcessException(output.getExitCode(), PACKAGING_TOOL,
-                                           Lists.newArrayList("untar"), output.getStderr());
+                                           Lists.newArrayList(UNTAR), output.getStderr());
     }
     String dirName = FileUtil.toSystemDependentName(output.getStdout().trim());
     if (!dirName.endsWith(File.separator)) {
@@ -267,10 +271,10 @@ public class PyPackageManager {
     }
     final String fileName = dirName + name + File.separatorChar + "setup.py";
     try {
-      output = getProcessOutput(fileName, Collections.<String>singletonList("install"), true, dirName);
+      output = getProcessOutput(fileName, Collections.<String>singletonList(INSTALL), true, dirName);
       final int retcode = output.getExitCode();
       if (output.isTimeout()) {
-        throw new PyExternalProcessException(ERROR_TIMEOUT, fileName, Lists.newArrayList("install"), "Timed out");
+        throw new PyExternalProcessException(ERROR_TIMEOUT, fileName, Lists.newArrayList(INSTALL), "Timed out");
       }
       else if (retcode != 0) {
         final String stdout = output.getStdout();
@@ -278,7 +282,7 @@ public class PyPackageManager {
         if (message.trim().isEmpty()) {
           message = stdout;
         }
-        throw new PyExternalProcessException(retcode, fileName, Lists.newArrayList("install"), message);
+        throw new PyExternalProcessException(retcode, fileName, Lists.newArrayList(INSTALL), message);
       }
     }
     finally {
@@ -308,10 +312,10 @@ public class PyPackageManager {
   public void install(@NotNull List<PyRequirement> requirements, @NotNull List<String> extraArgs)
     throws PyExternalProcessException {
     final List<String> args = new ArrayList<String>();
-    args.add("install");
+    args.add(INSTALL);
     final File buildDir;
     try {
-      buildDir = FileUtil.createTempDirectory("packaging", null);
+      buildDir = FileUtil.createTempDirectory("pycharm-packaging", null);
     }
     catch (IOException e) {
       throw new PyExternalProcessException(ERROR_ACCESS_DENIED, PACKAGING_TOOL, args, "Cannot create temporary build directory");
@@ -343,7 +347,7 @@ public class PyPackageManager {
   public void uninstall(@NotNull List<PyPackage> packages) throws PyExternalProcessException {
     try {
       final List<String> args = new ArrayList<String>();
-      args.add("uninstall");
+      args.add(UNINSTALL);
       boolean canModify = true;
       for (PyPackage pkg : packages) {
         if (canModify) {
