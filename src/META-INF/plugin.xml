@@ -7,7 +7,9 @@
 
   <description>Typo3 language TypoScript support</description>
 
-  <version>1.0</version>
+  <version>0.1.0</version>
+  <idea-version since-build="107.89"/>
+
   <vendor logo="/general/ijLogo.png">JetBrains</vendor>
   <depends>com.intellij.modules.lang</depends>
   <resource-bundle>resources.messages.TypoScriptBundle</resource-bundle>

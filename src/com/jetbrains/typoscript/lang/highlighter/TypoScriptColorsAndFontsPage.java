@@ -41,7 +41,8 @@ public class TypoScriptColorsAndFontsPage implements ColorSettingsPage, DisplayP
                                                   "page = PAGE\n" +
                                                   "[GLOBAL]\n" +
                                                   "page.typeNum = 0\n" +
-                                                  "page.10 < temp.menu ";
+                                                  "page.10 < temp.menu \n" +
+                                                  "&text = my text";
 
 
   private static final AttributesDescriptor[] ATTRIBUTES =
