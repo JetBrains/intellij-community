@@ -365,6 +365,9 @@ public class GitBranch extends GitReference {
     if (branch.startsWith(REFS_HEADS_PREFIX)) {
       branch = branch.substring(REFS_HEADS_PREFIX.length());
     }
+    else if (branch.startsWith(REFS_REMOTES_PREFIX)) {
+      branch = branch.substring(REFS_REMOTES_PREFIX.length());
+    }
     boolean remoteFlag;
     if (!".".equals(remote)) {
       branch = remote + "/" + branch;

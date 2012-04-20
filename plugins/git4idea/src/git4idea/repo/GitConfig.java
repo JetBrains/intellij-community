@@ -16,9 +16,9 @@
 package git4idea.repo;
 
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
-import com.intellij.ide.plugins.PluginManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
+import git4idea.PlatformFacade;
 import org.ini4j.Ini;
 import org.ini4j.Profile;
 import org.jetbrains.annotations.NotNull;
@@ -51,10 +51,12 @@ public class GitConfig {
   
   private static final Logger LOG = Logger.getInstance(GitConfig.class);
 
-  private static final Pattern REMOTE_SECTION = Pattern.compile("remote \"(.*)\"");
+  private static final Pattern REMOTE_SECTION = Pattern.compile("(?:svn-)?remote \"(.*)\"");
   private static final Pattern URL_SECTION = Pattern.compile("url \"(.*)\"");
   private static final Pattern BRANCH_INFO_SECTION = Pattern.compile("branch \"(.*)\"");
   private static final Pattern BRANCH_COMMON_PARAMS_SECTION = Pattern.compile("branch");
+
+  private static final String DOT_REMOTE = "."; // used in git-svn "remote = . "
 
   private final Collection<GitRemote> myRemotes;
   private final Collection<GitBranchTrackInfo> myBranchTrackInfos;
@@ -102,7 +104,7 @@ public class GitConfig {
    * If it has valid format in general, but some sections are invalid, it skips invalid sections, but reports an error.
    */
   @NotNull
-  static GitConfig read(@NotNull File configFile) {
+  static GitConfig read(@NotNull PlatformFacade platformFacade, @NotNull File configFile) {
     Ini ini = new Ini();
     ini.getConfig().setMultiOption(true);  // duplicate keys (e.g. url in [remote])
     ini.getConfig().setTree(false);        // don't need tree structure: it corrupts url in section name (e.g. [url "http://github.com/"]
@@ -114,7 +116,7 @@ public class GitConfig {
       return new GitConfig(Collections.<GitRemote>emptyList(), Collections.<GitBranchTrackInfo>emptyList());
     }
 
-    IdeaPluginDescriptor plugin = PluginManager.getPlugin(PluginManager.getPluginByClassName(GitConfig.class.getName()));
+    IdeaPluginDescriptor plugin = platformFacade.getPluginByClassName(GitConfig.class.getName());
     ClassLoader classLoader = plugin == null ? null : plugin.getPluginClassLoader(); // null if IDEA is started from IDEA
 
     Collection<GitRemote> gitRemotes = parseRemotes(ini, classLoader);
@@ -161,17 +163,21 @@ public class GitConfig {
     final String remoteBranch = (merge ? mergeName : rebaseName);
 
     GitRemote branchRemote = null;
-    for (GitRemote remote : remotes) {
-      if (remote.getName().equals(remoteName)) {
-        branchRemote = remote;
-        break;
+    if (DOT_REMOTE.equals(remoteName)) {
+      branchRemote = GitRemote.DOT;
+    }
+    else {
+      for (GitRemote remote : remotes) {
+        if (remote.getName().equals(remoteName)) {
+          branchRemote = remote;
+          break;
+        }
+      }
+      if (branchRemote == null) {
+        LOG.info("No remote found with name " + remoteName);
+        return null;
       }
     }
-    if (branchRemote == null) {
-      LOG.info("No remote found with name " + remoteName);
-      return null;
-    }
-
     assert remoteBranch != null; // this is checked in StringUtil.isEmptyOrSpaces
     return new GitBranchTrackInfo(branchName, branchRemote, remoteBranch, merge);
   }
@@ -198,7 +204,7 @@ public class GitConfig {
       String sectionName = stringSectionEntry.getKey();
       Profile.Section section = stringSectionEntry.getValue();
 
-      if (sectionName.startsWith("remote")) {
+      if (sectionName.startsWith("remote") || sectionName.startsWith("svn-remote")) {
         Remote remote = parseRemoteSection(sectionName, section, classLoader);
         if (remote != null) {
           remotes.add(remote);
@@ -401,8 +407,8 @@ public class GitConfig {
   }
 
   private interface RemoteBean {
-    @Nullable String[]   getFetch();
-    @Nullable String[]   getPush();
+    @Nullable String[] getFetch();
+    @Nullable String[] getPush();
     @Nullable String[] getUrl();
     @Nullable String[] getPushUrl();
   }

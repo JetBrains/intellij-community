@@ -15,6 +15,7 @@
  */
 package git4idea;
 
+import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -27,6 +28,7 @@ import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * IntelliJ code provides a lot of statical bindings to the interested pieces of data. For example we need to execute code
@@ -80,4 +82,8 @@ public interface PlatformFacade {
 
   @NotNull
   GitRepositoryManager getRepositoryManager(@NotNull Project project);
+
+  @Nullable
+  IdeaPluginDescriptor getPluginByClassName(@NotNull String name);
+
 }

@@ -15,6 +15,7 @@
  */
 package git4idea.test;
 
+import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.mock.MockLocalFileSystem;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
@@ -32,6 +33,7 @@ import git4idea.PlatformFacade;
 import git4idea.repo.GitRepositoryManager;
 import git4idea.tests.TestDialogManager;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * 
@@ -135,6 +137,12 @@ public class GitTestPlatformFacade implements PlatformFacade {
   @Override
   public GitRepositoryManager getRepositoryManager(@NotNull Project project) {
     return myRepositoryManager;
+  }
+
+  @Nullable
+  @Override
+  public IdeaPluginDescriptor getPluginByClassName(@NotNull String name) {
+    return null;
   }
 
   @NotNull

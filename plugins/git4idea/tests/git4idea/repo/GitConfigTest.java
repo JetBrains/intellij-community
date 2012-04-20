@@ -17,6 +17,7 @@ package git4idea.repo;
 
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import git4idea.test.GitTestPlatformFacade;
 import git4idea.test.GitTestUtil;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
@@ -47,13 +48,13 @@ public class GitConfigTest {
 
   @Test(dataProvider = "remote")
   public void testRemotes(String testName, File configFile, File resultFile) throws IOException {
-    GitConfig config = GitConfig.read(configFile);
+    GitConfig config = GitConfig.read(new GitTestPlatformFacade(), configFile);
     GitTestUtil.assertEqualCollections(config.getRemotes(), readRemoteResults(resultFile));
   }
   
   @Test(dataProvider = "branch")
   public void testBranches(String testName, File configFile, File resultFile) throws IOException {
-    GitConfig config = GitConfig.read(configFile);
+    GitConfig config = GitConfig.read(new GitTestPlatformFacade(), configFile);
     GitTestUtil.assertEqualCollections(config.getBranchTrackInfos(), readBranchResults(resultFile));
   }
 
@@ -78,9 +79,8 @@ public class GitConfigTest {
 
   private static GitRemote getRemote(String remoteString) {
     String[] remoteInfo = remoteString.split(" ");
-    return new GitRemote(getOrEmpty(remoteInfo, 0), Collections.singletonList(getOrEmpty(remoteInfo, 1)),
-                         Collections.singletonList(getOrEmpty(remoteInfo, 2)), Collections.singletonList(getOrEmpty(remoteInfo, 3)),
-                         Collections.singletonList(getOrEmpty(remoteInfo, 4)));
+    return new GitRemote(remoteInfo[0], getSingletonOrEmpty(remoteInfo, 1), getSingletonOrEmpty(remoteInfo, 2),
+                         getSingletonOrEmpty(remoteInfo, 3), getSingletonOrEmpty(remoteInfo, 4));
   }
 
   private static Set<GitRemote> readRemoteResults(File resultFile) throws IOException {
@@ -110,8 +110,8 @@ public class GitConfigTest {
     return Arrays.asList(line.split(" "));
   }
 
-  private static String getOrEmpty(String[] array, int i) {
-    return array.length < i + 1 ? "" : array[i];
+  private static List<String> getSingletonOrEmpty(String[] array, int i) {
+    return array.length < i + 1 ? Collections.<String>emptyList() : Collections.singletonList(array[i]);
   }
 
 }

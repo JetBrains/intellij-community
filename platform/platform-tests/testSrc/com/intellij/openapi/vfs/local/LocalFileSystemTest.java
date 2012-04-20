@@ -25,6 +25,7 @@ import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent;
+import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.testFramework.PlatformLangTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
@@ -325,7 +326,15 @@ public class LocalFileSystemTest extends PlatformLangTestCase {
   public void testWindowsVirtualDirectory() throws Exception {
     if (!SystemInfo.isWindows) return;
     File file = new File("c:\\Documents and Settings\\desktop.ini");
-    VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
+    String parent = FileUtil.toSystemIndependentName(file.getParent());
+    VirtualDirectoryImpl.allowRootAccess(parent);
+    VirtualFile virtualFile;
+    try {
+      virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
+    }
+    finally {
+      VirtualDirectoryImpl.disallowRootAccess(parent);
+    }
     if (virtualFile == null) {
       System.out.println("NO LUCK: " + file);
       return;
