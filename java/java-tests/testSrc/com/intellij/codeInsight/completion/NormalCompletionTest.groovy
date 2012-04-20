@@ -942,8 +942,8 @@ public class ListUtils {
     assertNotNull(getLookup());
     type('*fz');
     final List<LookupElement> list = getLookup().getItems();
-    assertEquals("azzzfzzz", list.get(0).getLookupString());
-    assertEquals("fzazzz", list.get(1).getLookupString());
+    assertEquals("azzzfzzz", list.get(1).getLookupString());
+    assertEquals("fzazzz", list.get(0).getLookupString());
   }
 
   public void testTabReplacesMethodNameWithLocalVariableName() throws Throwable { doTest('\t'); }

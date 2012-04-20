@@ -4,6 +4,8 @@ package com.intellij.codeInsight.completion.impl;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.completion.PrefixMatcher;
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.util.containers.hash.LinkedHashMap;
@@ -64,7 +66,7 @@ public class CamelHumpMatcher extends PrefixMatcher {
     String key = relax + myPrefix + caseSensitive;
     Matcher pattern = ourPatternCache.get(key);
     if (pattern == null) {
-      pattern = createCamelHumpsMatcher(relax, caseSensitive);
+      pattern = createCamelHumpsMatcher(relax, caseSensitive, myPrefix);
       ourPatternCache.put(key, pattern);
     }
     return pattern;
@@ -102,26 +104,35 @@ public class CamelHumpMatcher extends PrefixMatcher {
     return new CamelHumpMatcher(prefix, myCaseSensitive, myRelaxedMatching);
   }
 
-  private Matcher createCamelHumpsMatcher(final boolean relaxedMatching, final boolean caseSensitive) {
+  private static Matcher createCamelHumpsMatcher(final boolean relaxedMatching, final boolean caseSensitive, String prefix) {
+    prefix = applyMiddleMatching(prefix);
+
     if (!caseSensitive) {
-      return NameUtil.buildCompletionMatcher(myPrefix, 0, true, true);
+      return NameUtil.buildCompletionMatcher(prefix, 0, true, true);
     }
 
     if (relaxedMatching) {
-      return NameUtil.buildCompletionMatcher(myPrefix, 0, true, true);
+      return NameUtil.buildCompletionMatcher(prefix, 0, true, true);
     }
 
     switch (CodeInsightSettings.getInstance().COMPLETION_CASE_SENSITIVE) {
       case CodeInsightSettings.NONE:
-        return NameUtil.buildCompletionMatcher(myPrefix, 0, true, true);
+        return NameUtil.buildCompletionMatcher(prefix, 0, true, true);
       case CodeInsightSettings.FIRST_LETTER:
-        int exactPrefixLen = myPrefix.startsWith("*") ? 0 : 1;
-        return NameUtil.buildCompletionMatcher(myPrefix, exactPrefixLen, true, true);
+        int exactPrefixLen = prefix.startsWith("*") ? 0 : 1;
+        return NameUtil.buildCompletionMatcher(prefix, exactPrefixLen, true, true);
       case CodeInsightSettings.ALL:
-        return NameUtil.buildCompletionMatcher(myPrefix, 1, false, false);
+        return NameUtil.buildCompletionMatcher(prefix, 1, false, false);
       default:
-        return NameUtil.buildCompletionMatcher(myPrefix, 0, true, false);
+        return NameUtil.buildCompletionMatcher(prefix, 0, true, false);
     }
+  }
+
+  public static String applyMiddleMatching(String prefix) {
+    if (Registry.is("ide.completion.middle.matching") && !ApplicationManager.getApplication().isUnitTestMode()) {
+      return " " + prefix;
+    }
+    return prefix;
   }
 
   @Override

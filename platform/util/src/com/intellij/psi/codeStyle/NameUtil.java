@@ -335,6 +335,9 @@ public class NameUtil {
     if (isWordStart(text.charAt(i))) {
       return true;
     }
+    if (!Character.isLetterOrDigit(text.charAt(i))) {
+      return false;
+    }
     if (i > 0 && MinusculeMatcher.isWordSeparator(text.charAt(i - 1))) {
       return true;
     }
@@ -600,7 +603,7 @@ public class NameUtil {
         }
       }
 
-      if (isWordStart(name, nameIndex)) {
+      if (nameIndex == 0 || isWordStart(name, nameIndex)) {
         FList<TextRange> ranges = matchName(name, patternIndex, nameIndex);
         if (ranges != null) {
           return ranges;
@@ -657,7 +660,7 @@ public class NameUtil {
       boolean prefixMatching = first != null && first.getStartOffset() == 0;
       boolean middleWordStart = first != null && first.getStartOffset() > 0 && isWordStart(name, first.getStartOffset());
 
-      return -fragmentCount + matchingCaps * 10 + commonStart * 2 + (prefixMatching ? 2 : middleWordStart ? 1 : 0);
+      return -fragmentCount + matchingCaps * 10 + commonStart + (prefixMatching ? 2 : middleWordStart ? 1 : 0) * 100;
     }
 
     @Override

@@ -119,6 +119,8 @@ public class NameUtilTest extends UsefulTestCase {
     assertMatches("foo bar", "fooGooBar");
     assertMatches("foo bar", "fooGoo bar");
     assertDoesntMatch(" b", "fbi");
+    assertTrue(NameUtil.buildCompletionMatcher(" us", 0, true, true).matches("getUsage"));
+    assertTrue(NameUtil.buildCompletionMatcher(" us", 0, true, true).matches("getMyUsage"));
   }
 
   public void testIDEADEV15503() throws Exception {
@@ -211,6 +213,8 @@ public class NameUtilTest extends UsefulTestCase {
     assertMatches("*Git*", "AtpGenerationItem");
     assertMatches("Collec*Util*", "CollectionUtils");
     assertMatches("Collec*Util*", "CollectionUtilsTest");
+    assertTrue(NameUtil.buildCompletionMatcher("*us", 0, true, true).matches("usage"));
+    assertTrue(NameUtil.buildCompletionMatcher(" us", 0, true, true).matches("usage"));
   }
 
   public void testSpaceInCompletionPrefix() throws Exception {
@@ -358,6 +362,7 @@ public class NameUtilTest extends UsefulTestCase {
     assertPreference("*f", "barfoo", "barFoo");
     assertPreference("*f", "barfoo", "foo");
     assertPreference("*f", "asdf", "Foo", NameUtil.MatchingCaseSensitivity.NONE);
+    assertPreference(" sto", "ArrayStoreException", "StackOverflowError", NameUtil.MatchingCaseSensitivity.NONE);
   }
 
   private static void assertPreference(@NonNls String pattern,
