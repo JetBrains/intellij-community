@@ -175,6 +175,11 @@ public abstract class LeafElement extends TreeElement {
   }
 
   @Override
+  public ASTNode findChildByType(IElementType type, @Nullable ASTNode anchor) {
+    return null;
+  }
+
+  @Override
   @Nullable
   public ASTNode findChildByType(@NotNull TokenSet typesSet) {
     return null;
