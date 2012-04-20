@@ -184,8 +184,9 @@ public class NameUtilTest extends UsefulTestCase {
   }
 
   public void testObjectiveCCases() throws Exception {
-    assertMatches("textField:sh", "textField:shouldChangeCharactersInRange:replacementString:");
     assertMatches("text:sh", "textField:shouldChangeCharactersInRange:replacementString:");
+    assertMatches("abc", "aaa:bbb:ccc");
+    assertMatches("textField:sh", "textField:shouldChangeCharactersInRange:replacementString:");
     assertMatches("text*:sh", "textField:shouldChangeCharactersInRange:replacementString:");
   }
 

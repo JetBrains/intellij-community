@@ -331,6 +331,16 @@ public class NameUtil {
     return suggestion;
   }
 
+  private static boolean isWordStart(String text, int i) {
+    if (isWordStart(text.charAt(i))) {
+      return true;
+    }
+    if (i > 0 && MinusculeMatcher.isWordSeparator(text.charAt(i - 1))) {
+      return true;
+    }
+    return false;
+  }
+
   private static boolean isWordStart(char p) {
     return Character.isUpperCase(p) || Character.isDigit(p);
   }
@@ -341,7 +351,7 @@ public class NameUtil {
     }
 
     int i = start;
-    while (i < text.length() && isWordStart(text.charAt(i))) {
+    while (i < text.length() && isWordStart(text, i)) {
       i++;
     }
     if (i > start + 1) {
@@ -350,7 +360,7 @@ public class NameUtil {
       }
       return i - 1;
     }
-    while (i < text.length() && !isWordStart(text.charAt(i)) && !!Character.isLetterOrDigit(text.charAt(i))) {
+    while (i < text.length() && !isWordStart(text, i) && !!Character.isLetterOrDigit(text.charAt(i))) {
       i++;
     }
     return i;
@@ -398,26 +408,12 @@ public class NameUtil {
   }
 
   public static class MinusculeMatcher implements com.intellij.util.text.Matcher {
-    public static final Function<Character,Boolean> BASE_SEPARATOR_FUNCTION = new Function<Character, Boolean>() {
-      @Override
-      public Boolean fun(Character character) {
-        final char c = character.charValue();
-        return Character.isWhitespace(c) || c == '_' || c == '-';
-      }
-    };
-
     private final char[] myPattern;
     private final MatchingCaseSensitivity myOptions;
-    private final Function<Character, Boolean> mySeparatorFunction;
 
     public MinusculeMatcher(String pattern, MatchingCaseSensitivity options) {
-      this(pattern, options, BASE_SEPARATOR_FUNCTION);
-    }
-
-    public MinusculeMatcher(String pattern, MatchingCaseSensitivity options, Function<Character, Boolean> separatorFunction) {
       myOptions = options;
       myPattern = StringUtil.trimEnd(pattern, "* ").replaceAll(":", "\\*:").toCharArray();
-      mySeparatorFunction = separatorFunction;
     }
 
     @Nullable
@@ -530,8 +526,8 @@ public class NameUtil {
       return ranges.prepend(TextRange.from(from, length));
     }
 
-    private boolean isWordSeparator(char c) {
-      return mySeparatorFunction.fun(c);
+    private static boolean isWordSeparator(char c) {
+      return Character.isWhitespace(c) || c == '_' || c == '-' || c == ':';
     }
 
     @Nullable

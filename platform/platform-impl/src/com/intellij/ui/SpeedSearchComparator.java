@@ -18,8 +18,6 @@ package com.intellij.ui;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.NameUtil;
-import com.intellij.util.Function;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -45,7 +43,7 @@ public class SpeedSearchComparator {
   }
 
   @Nullable
-  public Iterable<TextRange> matchingFragments(String pattern, String text, @NotNull Function<Character, Boolean> separators) {
+  public Iterable<TextRange> matchingFragments(String pattern, String text) {
     if (myRecentSearchText == null || !myRecentSearchText.equals(pattern)) {
       myRecentSearchText = pattern;
       if (myShouldMatchCamelCase) {
@@ -54,14 +52,9 @@ public class SpeedSearchComparator {
       if (!myShouldMatchFromTheBeginning && !pattern.startsWith("*")) {
         pattern = "*" + pattern;
       }
-      myMinusculeMatcher = new NameUtil.MinusculeMatcher(pattern, NameUtil.MatchingCaseSensitivity.NONE, separators);
+      myMinusculeMatcher = new NameUtil.MinusculeMatcher(pattern, NameUtil.MatchingCaseSensitivity.NONE);
     }
     return myMinusculeMatcher.matchingFragments(text);
-  }
-
-  @Nullable
-  public Iterable<TextRange> matchingFragments(String pattern, String text) {
-    return matchingFragments(pattern, text, NameUtil.MinusculeMatcher.BASE_SEPARATOR_FUNCTION);
   }
 
   public String getRecentSearchText() {
