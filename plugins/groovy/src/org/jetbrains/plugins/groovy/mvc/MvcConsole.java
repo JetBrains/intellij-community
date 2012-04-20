@@ -310,7 +310,7 @@ public class MvcConsole implements Disposable {
     myKillAction.setHandler(handler);
 
     final MvcFramework framework = MvcFramework.getInstance(module);
-    myToolWindow.setIcon(framework == null ? GroovyIcons.GROOVY_ICON_16x16 : framework.getIcon());
+    myToolWindow.setIcon(framework == null ? GroovyIcons.GROOVY_ICON_16x16 : framework.getToolWindowIcon());
 
     myContent.setDisplayName((framework == null ? "" : framework.getDisplayName() + ":") + "Executing...");
     myConsole.scrollToEnd();
