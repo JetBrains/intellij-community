@@ -19,6 +19,7 @@ package com.intellij.application.options.colors;
 import com.intellij.application.options.ExportSchemeAction;
 import com.intellij.application.options.SaveSchemeDialog;
 import com.intellij.application.options.SchemesToImportPopup;
+import com.intellij.application.options.SkipSelfSearchComponent;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -34,7 +35,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
 
-public class SchemesPanel extends JPanel {
+public class SchemesPanel extends JPanel implements SkipSelfSearchComponent {
   private final ColorAndFontOptions myOptions;
 
   private JComboBox mySchemeComboBox;

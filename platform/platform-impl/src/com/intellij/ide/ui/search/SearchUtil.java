@@ -16,6 +16,7 @@
 
 package com.intellij.ide.ui.search;
 
+import com.intellij.application.options.SkipSelfSearchComponent;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableGroup;
 import com.intellij.openapi.options.MasterDetails;
@@ -109,6 +110,7 @@ public class SearchUtil {
   }
 
   public static void processComponent(final JComponent component, final Set<OptionDescription> configurableOptions, @NonNls String path) {
+    if (component instanceof SkipSelfSearchComponent) return;
     final Border border = component.getBorder();
     if (border instanceof TitledBorder) {
       final TitledBorder titledBorder = (TitledBorder)border;
