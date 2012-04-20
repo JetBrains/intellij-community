@@ -118,6 +118,7 @@ public class NameUtilTest extends UsefulTestCase {
     assertMatches("foo bar", "fooBar");
     assertMatches("foo bar", "fooGooBar");
     assertMatches("foo bar", "fooGoo bar");
+    assertDoesntMatch(" b", "fbi");
   }
 
   public void testIDEADEV15503() throws Exception {
@@ -352,6 +353,13 @@ public class NameUtilTest extends UsefulTestCase {
     assertPreference("cL", "class", "classLoader");
   }
 
+  public void testPreferStartMatchToMiddleMatch() {
+    assertPreference("*foo", "barFoo", "foobar");
+    assertPreference("*f", "barfoo", "barFoo");
+    assertPreference("*f", "barfoo", "foo");
+    assertPreference("*f", "asdf", "Foo", NameUtil.MatchingCaseSensitivity.NONE);
+  }
+
   private static void assertPreference(@NonNls String pattern,
                                        @NonNls String less,
                                        @NonNls String more) {
@@ -363,7 +371,9 @@ public class NameUtilTest extends UsefulTestCase {
                                        @NonNls String more,
                                        NameUtil.MatchingCaseSensitivity sensitivity) {
     NameUtil.MinusculeMatcher matcher = new NameUtil.MinusculeMatcher(pattern, sensitivity);
-    assertTrue(less + ">=" + more, matcher.matchingDegree(less) < matcher.matchingDegree(more));
+    int iLess = matcher.matchingDegree(less);
+    int iMore = matcher.matchingDegree(more);
+    assertTrue(iLess + ">=" + iMore + "; " + less + ">=" + more, iLess < iMore);
   }
 
   public void testPerformance() {

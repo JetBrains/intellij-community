@@ -631,7 +631,11 @@ public class NameUtil {
       int matchingCaps = 0;
       CharArrayCharSequence seq = new CharArrayCharSequence(myPattern);
       int p = -1;
+      TextRange first = null;
       for (TextRange range : iterable) {
+        if (first == null) {
+          first = range;
+        }
         for (int i = range.getStartOffset(); i < range.getEndOffset(); i++) {
           char c = name.charAt(i);
           p = StringUtil.indexOf(seq, c, p + 1, myPattern.length, false);
@@ -650,7 +654,10 @@ public class NameUtil {
         commonStart++;
       }
 
-      return -fragmentCount + matchingCaps * 10 + commonStart;
+      boolean prefixMatching = first != null && first.getStartOffset() == 0;
+      boolean middleWordStart = first != null && first.getStartOffset() > 0 && isWordStart(name, first.getStartOffset());
+
+      return -fragmentCount + matchingCaps * 10 + commonStart * 2 + (prefixMatching ? 2 : middleWordStart ? 1 : 0);
     }
 
     @Override
