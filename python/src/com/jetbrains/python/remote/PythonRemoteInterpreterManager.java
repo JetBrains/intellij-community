@@ -53,7 +53,7 @@ public abstract class PythonRemoteInterpreterManager {
   @NotNull
   public abstract PyRemoteSshProcess createRemoteProcess(@Nullable Project project,
                                                          @NotNull PythonRemoteSdkAdditionalData data,
-                                                         @NotNull GeneralCommandLine commandLine, boolean printPidInFirstLine)
+                                                         @NotNull GeneralCommandLine commandLine, boolean allocatePty)
     throws PyRemoteInterpreterException;
 
   public abstract boolean editSdk(@NotNull Project project, @NotNull SdkModificator sdkModificator, Sdk[] existingSdks);
