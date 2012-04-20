@@ -129,7 +129,8 @@ public class OldXmlParser implements XmlElementType {
       }
     }
 
-    if (myContext == null && contextType != XmlEntityDecl.EntityContextType.ELEMENT_CONTENT_SPEC) {  // TODO: FIXME code for tests compatibility
+    if ((myContext == null || contextType == XmlEntityDecl.EntityContextType.GENERIC_XML) &&
+        contextType != XmlEntityDecl.EntityContextType.ELEMENT_CONTENT_SPEC) {  // TODO: FIXME code for tests compatibility
       insertMissingTokens(root, ((FilterLexer)lexer).getOriginal(), 0, myBuffer.length(), state, new WhiteSpaceAndCommentsProcessor());
     }
     return root;

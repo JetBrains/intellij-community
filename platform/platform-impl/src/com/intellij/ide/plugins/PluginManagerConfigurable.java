@@ -45,6 +45,8 @@ import java.util.List;
 public class PluginManagerConfigurable extends BaseConfigurable implements SearchableConfigurable, Configurable.NoScroll {
 
   @NonNls private static final String POSTPONE = "&Postpone";
+  public static final String ID = "preferences.pluginManager";
+  public static final String DISPLAY_NAME = IdeBundle.message("title.plugins");
   public boolean EXPANDED = false;
   public String FIND = "";
   public boolean TREE_VIEW = false;
@@ -63,7 +65,7 @@ public class PluginManagerConfigurable extends BaseConfigurable implements Searc
   }
 
   public String getDisplayName() {
-    return IdeBundle.message("title.plugins");
+    return DISPLAY_NAME;
   }
 
   public void reset() {
@@ -87,7 +89,7 @@ public class PluginManagerConfigurable extends BaseConfigurable implements Searc
   }
 
   public String getHelpTopic() {
-    return "preferences.pluginManager";
+    return ID;
   }
 
   public void disposeUIResources() {

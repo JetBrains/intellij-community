@@ -200,6 +200,20 @@ public class CompositeElement extends TreeElement {
   }
 
   @Override
+  public ASTNode findChildByType(IElementType type, ASTNode anchor) {
+    if (DebugUtil.CHECK_INSIDE_ATOMIC_ACTION_ENABLED){
+      ApplicationManager.getApplication().assertReadAccessAllowed();
+    }
+
+    ASTNode child = anchor;
+    while (true) {
+      if (child == null) return null;
+      if (type == child.getElementType()) return child;
+      child = child.getTreeNext();
+    }
+  }
+
+  @Override
   @Nullable
   public ASTNode findChildByType(@NotNull TokenSet types) {
     if (DebugUtil.CHECK_INSIDE_ATOMIC_ACTION_ENABLED){
@@ -214,6 +228,9 @@ public class CompositeElement extends TreeElement {
   @Override
   @Nullable
   public ASTNode findChildByType(@NotNull TokenSet typesSet, ASTNode anchor) {
+    if (DebugUtil.CHECK_INSIDE_ATOMIC_ACTION_ENABLED){
+      ApplicationManager.getApplication().assertReadAccessAllowed();
+    }
     ASTNode child = anchor;
     while (true) {
       if (child == null) return null;

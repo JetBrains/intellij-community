@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2009 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 
 public class NameUtil {
@@ -332,6 +331,16 @@ public class NameUtil {
     return suggestion;
   }
 
+  private static boolean isWordStart(String text, int i) {
+    if (isWordStart(text.charAt(i))) {
+      return true;
+    }
+    if (i > 0 && MinusculeMatcher.isWordSeparator(text.charAt(i - 1))) {
+      return true;
+    }
+    return false;
+  }
+
   private static boolean isWordStart(char p) {
     return Character.isUpperCase(p) || Character.isDigit(p);
   }
@@ -342,7 +351,7 @@ public class NameUtil {
     }
 
     int i = start;
-    while (i < text.length() && isWordStart(text.charAt(i))) {
+    while (i < text.length() && isWordStart(text, i)) {
       i++;
     }
     if (i > start + 1) {
@@ -351,7 +360,7 @@ public class NameUtil {
       }
       return i - 1;
     }
-    while (i < text.length() && !isWordStart(text.charAt(i)) && !!Character.isLetterOrDigit(text.charAt(i))) {
+    while (i < text.length() && !isWordStart(text, i) && !!Character.isLetterOrDigit(text.charAt(i))) {
       i++;
     }
     return i;
@@ -399,26 +408,12 @@ public class NameUtil {
   }
 
   public static class MinusculeMatcher implements com.intellij.util.text.Matcher {
-    public static final Function<Character,Boolean> BASE_SEPARATOR_FUNCTION = new Function<Character, Boolean>() {
-      @Override
-      public Boolean fun(Character character) {
-        final char c = character.charValue();
-        return Character.isWhitespace(c) || c == '_' || c == '-';
-      }
-    };
-
     private final char[] myPattern;
     private final MatchingCaseSensitivity myOptions;
-    private final Function<Character, Boolean> mySeparatorFunction;
 
     public MinusculeMatcher(String pattern, MatchingCaseSensitivity options) {
-      this(pattern, options, BASE_SEPARATOR_FUNCTION);
-    }
-
-    public MinusculeMatcher(String pattern, MatchingCaseSensitivity options, Function<Character, Boolean> separatorFunction) {
       myOptions = options;
       myPattern = StringUtil.trimEnd(pattern, "* ").replaceAll(":", "\\*:").toCharArray();
-      mySeparatorFunction = separatorFunction;
     }
 
     @Nullable
@@ -443,6 +438,9 @@ public class NameUtil {
 
       if (isWordSeparator(name.charAt(nameIndex))) {
         return skipSeparators(name, patternIndex, nameIndex);
+      }
+      if (' ' == myPattern[patternIndex]) {
+        return skipWords(name, patternIndex, nameIndex);
       }
 
       if (StringUtil.toLowerCase(name.charAt(nameIndex)) != StringUtil.toLowerCase(myPattern[patternIndex])) {
@@ -499,28 +497,26 @@ public class NameUtil {
 
     @Nullable
     private FList<TextRange> matchAfterFragment(String name, int patternIndex, int nameIndex, int nextStart, int lastUpper, int matchLen) {
-      int star = patternIndex + matchLen < myPattern.length && myPattern[patternIndex + matchLen] == '*' ? matchLen : -1;
+      boolean star = patternIndex + matchLen < myPattern.length && myPattern[patternIndex + matchLen] == '*';
       if (lastUpper >= 0) {
-        FList<TextRange> ranges = matchName(name, patternIndex + lastUpper + 1, lastUpper == star ? nameIndex + lastUpper : nextStart);
+        FList<TextRange> ranges = matchName(name, patternIndex + lastUpper + 1, star && matchLen == lastUpper ? nameIndex + lastUpper : nextStart);
         if (ranges != null) {
           return prependRange(ranges, nameIndex, lastUpper + 1);
         }
       }
 
-      int startMatchLen = matchLen;
-      while (matchLen > 0) {
-        if (matchLen != lastUpper) {
-          FList<TextRange> ranges = matchName(name, patternIndex + matchLen, matchLen == star ? matchLen + lastUpper : nextStart);
-          if (ranges != null) {
-            return prependRange(ranges, nameIndex, matchLen);
-          }
+      int trial = matchLen;
+      while (trial > 0) {
+        FList<TextRange> ranges = matchName(name, patternIndex + trial, nextStart);
+        if (ranges != null) {
+          return prependRange(ranges, nameIndex, trial);
         }
-        matchLen--;
+        trial--;
       }
 
-      FList<TextRange> ranges = matchName(name, patternIndex + startMatchLen, nameIndex + startMatchLen);
+      FList<TextRange> ranges = matchName(name, patternIndex + matchLen, nameIndex + matchLen);
       if (ranges != null) {
-        return prependRange(ranges, nameIndex, startMatchLen);
+        return prependRange(ranges, nameIndex, matchLen);
       }
       return null;
     }
@@ -533,8 +529,8 @@ public class NameUtil {
       return ranges.prepend(TextRange.from(from, length));
     }
 
-    private boolean isWordSeparator(char c) {
-      return mySeparatorFunction.fun(c);
+    private static boolean isWordSeparator(char c) {
+      return Character.isWhitespace(c) || c == '_' || c == '-' || c == ':';
     }
 
     @Nullable
@@ -595,6 +591,38 @@ public class NameUtil {
       return null;
     }
 
+    @Nullable
+    private FList<TextRange> skipWords(String name, int patternIndex, int nameIndex) {
+      while (' ' == myPattern[patternIndex]) {
+        patternIndex++;
+        if (patternIndex == myPattern.length) {
+          return null;
+        }
+      }
+
+      if (isWordStart(name, nameIndex)) {
+        FList<TextRange> ranges = matchName(name, patternIndex, nameIndex);
+        if (ranges != null) {
+          return ranges;
+        }
+      }
+
+      int fromIndex = nameIndex;
+      while (fromIndex < name.length()) {
+        int next = nextWord(name, fromIndex);
+        if (next < 0) {
+          break;
+        }
+
+        FList<TextRange> ranges = matchName(name, patternIndex, next);
+        if (ranges != null) {
+          return ranges;
+        }
+        fromIndex = next;
+      }
+      return null;
+    }
+
     public int matchingDegree(String name) {
       Iterable<TextRange> iterable = matchingFragments(name);
       if (iterable == null) return Integer.MIN_VALUE;
@@ -636,18 +664,7 @@ public class NameUtil {
         return myPattern.length == 0 ? Collections.<TextRange>emptyList() : null;
       }
 
-      final FList<TextRange> ranges = matchName(name, 0, 0);
-      if (ranges != null) {
-        final List<TextRange> list = new ArrayList<TextRange>(ranges);
-        Collections.sort(list, new Comparator<TextRange>() {
-          @Override
-          public int compare(TextRange o1, TextRange o2) {
-            return o1.getStartOffset() - o2.getStartOffset();
-          }
-        });
-        return list;
-      }
-      return ranges;
+      return matchName(name, 0, 0);
     }
   }
 }

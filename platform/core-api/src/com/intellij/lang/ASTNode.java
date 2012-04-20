@@ -249,7 +249,17 @@ public interface ASTNode extends UserDataHolder {
   @Nullable
   ASTNode findChildByType(IElementType type);
 
-   /**
+  /**
+   * Returns the first child after anchor of the specified node which has the specified type.
+   *
+   * @param type the type of the node to return.
+   * @param anchor to start search from
+   * @return the found node, or null if none was found.
+   */
+  @Nullable
+  ASTNode findChildByType(IElementType type, @Nullable ASTNode anchor);
+
+  /**
    * Returns the first child of the specified node which has type from specified set.
    *
    * @param typesSet the token set used to filter the returned children.

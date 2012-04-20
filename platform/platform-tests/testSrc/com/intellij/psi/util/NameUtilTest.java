@@ -71,7 +71,7 @@ public class NameUtilTest extends UsefulTestCase {
     assertMatches("na ut te", "name util test");
 
     assertMatches("na ut", "name_util_test");
-    assertDoesntMatch("na te", "name_util_test");
+    assertMatches("na te", "name_util_test");
     assertDoesntMatch("na ti", "name_util_test");
   }
   
@@ -82,35 +82,8 @@ public class NameUtilTest extends UsefulTestCase {
     assertDoesntMatch("ORGS.ACC", "ORGS.POSITION_ACCOUNTABILITY");
   }
 
-  public void testRangesSorted() throws Exception {
-    checkMinusculeRanges("ar*l*p", NameUtil.MatchingCaseSensitivity.NONE, "AbstractResponseHandler", "(0,1)(8,9)(11,12)(20,21)");
-  }
-
-  private static void checkMinusculeRanges(String pattern, NameUtil.MatchingCaseSensitivity option, String text, String... ranges) {
-    final NameUtil.MinusculeMatcher matcher = new NameUtil.MinusculeMatcher(pattern, option);
-    StringBuilder actual = new StringBuilder();
-    for (TextRange range : matcher.matchingFragments(text)) {
-      actual.append("(").append(range.getStartOffset()).append(",").append(range.getEndOffset()).append(")");
-    }
-    StringBuilder expected = new StringBuilder();
-    for (String range : ranges) {
-      expected.append(range);
-    }
-
-    assertEquals(expected.toString(), actual.toString());
-
-  }
-
-  private static String rangesDontMatch(Iterable<TextRange> it, String[] ranges) {
-    StringBuilder buf = new StringBuilder("Actual: ");
-    for (TextRange range : it) {
-      buf.append("(").append(range.getStartOffset()).append(",").append(range.getEndOffset()).append(") ");
-    }
-    buf.append(" Expected: ");
-    for (String range : ranges) {
-      buf.append(range);
-    }
-    return buf.toString();
+  public void testStarFalsePositive() throws Exception {
+    assertDoesntMatch("ar*l*p", "AbstractResponseHandler");
   }
 
   public void testUnderscoreStyle() throws Exception {
@@ -138,6 +111,13 @@ public class NameUtilTest extends UsefulTestCase {
     assertDoesntMatch("ARS.j", "activity_report_summary_justsometingwrong.xml");
 
     assertDoesntMatch("foo.goo", "foo.bar.goo");
+  }
+
+  public void testSpaceForAnyWordsInBetween() {
+    assertMatches("fo bar", "fooBar");
+    assertMatches("foo bar", "fooBar");
+    assertMatches("foo bar", "fooGooBar");
+    assertMatches("foo bar", "fooGoo bar");
   }
 
   public void testIDEADEV15503() throws Exception {
@@ -211,8 +191,9 @@ public class NameUtilTest extends UsefulTestCase {
   }
 
   public void testObjectiveCCases() throws Exception {
-    assertMatches("textField:sh", "textField:shouldChangeCharactersInRange:replacementString:");
     assertMatches("text:sh", "textField:shouldChangeCharactersInRange:replacementString:");
+    assertMatches("abc", "aaa:bbb:ccc");
+    assertMatches("textField:sh", "textField:shouldChangeCharactersInRange:replacementString:");
     assertMatches("text*:sh", "textField:shouldChangeCharactersInRange:replacementString:");
   }
 
@@ -343,6 +324,13 @@ public class NameUtilTest extends UsefulTestCase {
                         TextRange.from(0, 1));
     assertOrderedEquals(new NameUtil.MinusculeMatcher("_t", NameUtil.MatchingCaseSensitivity.NONE).matchingFragments(sample),
                         TextRange.from(0, 2));
+  }
+
+  public void testMatchingFragmentsSorted() {
+    @NonNls String sample = "SWUPGRADEHDLRFSPR7TEST";
+    //                       0        9  12
+    assertOrderedEquals(new NameUtil.MinusculeMatcher("SWU*H*R", NameUtil.MatchingCaseSensitivity.NONE).matchingFragments(sample),
+                        TextRange.from(0, 3), TextRange.from(9, 1), TextRange.from(12, 1));
   }
 
   public void testPreferCapsMatching() {

@@ -19,6 +19,7 @@ import com.intellij.openapi.ui.InputValidatorEx;
 import git4idea.GitBranch;
 import git4idea.GitUtil;
 import git4idea.branch.GitBranchesCollection;
+import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NotNull;
 
@@ -88,6 +89,9 @@ public final class GitNewBranchNameValidator implements InputValidatorEx {
       GitBranchesCollection branchesCollection = repository.getBranches();
       Collection<GitBranch> branches = local ? branchesCollection.getLocalBranches() : branchesCollection.getRemoteBranches();
       for (GitBranch branch : branches) {
+        if (!local && possibleGitSvnRemoteBranch(repository, branch)) {
+          continue;
+        }
         if (branch.getName().equals(inputString)) {
           myErrorText = "Branch name " + inputString + message;
           if (myRepositories.size() > 1 && !allReposHaveBranch(inputString, local)) {
@@ -98,6 +102,23 @@ public final class GitNewBranchNameValidator implements InputValidatorEx {
       }
     }
     return false;
+  }
+
+  private static boolean possibleGitSvnRemoteBranch(@NotNull GitRepository repository, @NotNull GitBranch remoteBranch) {
+    String branchName = remoteBranch.getName();
+    if (!branchName.contains("/")) { // no slash in short remote branch name (origin/master) => definitely git-svn
+      return true;
+    }
+
+    String nameBeforeFirstSlash = branchName.substring(0, branchName.indexOf('/'));
+    for (GitRemote remote : repository.getRemotes()) {
+      // there is a remote defined with the start of this branch name (origin for origin/master, for example) => most probably simple git
+      if (nameBeforeFirstSlash.equals(remote.getName())) {
+        return false;
+      }
+    }
+    // there are no remotes starting with the branch name => even if it is not a git-svn branch, there is no clash anyway.
+    return true;
   }
 
   private boolean allReposHaveBranch(String inputString, boolean local) {

@@ -29,6 +29,7 @@ import git4idea.remote.GitRememberedInputs;
 import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
 import git4idea.update.GitFetchResult;
+import git4idea.update.GitFetcher;
 import git4idea.util.NetrcData;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.InvalidRemoteException;
@@ -114,10 +115,7 @@ public final class GitHttpAdapter {
         specs = remote.getFetchRefSpecs();
       }
       else {
-        if (!remoteBranch.startsWith(GitBranch.REFS_HEADS_PREFIX)) {
-          remoteBranch = GitBranch.REFS_HEADS_PREFIX + remoteBranch;
-        }
-        specs = Collections.singletonList(remoteBranch);
+        specs = Collections.singletonList(GitFetcher.getFetchSpecForBranch(remoteBranch, remote.getName()));
       }
 
       GeneralResult result = callWithAuthRetry(new GitHttpRemoteCommand.Fetch(git, provider, remoteUrl, convertRefSpecs(specs)),
