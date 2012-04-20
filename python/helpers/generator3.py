@@ -2312,7 +2312,7 @@ def zip_sources(zip_path):
     if not os.path.exists(zip_path):
         os.makedirs(zip_path)
 
-    zip_filename = os.path.normpath(os.path.sep.join([zip_path, "skeletons.zip"]))
+    zip_filename = os.path.normpath(os.path.sep.join([zip_path, "skeletons"]))
 
     try:
         zip = zipfile.ZipFile(zip_filename, 'w', zipfile.ZIP_DEFLATED)
