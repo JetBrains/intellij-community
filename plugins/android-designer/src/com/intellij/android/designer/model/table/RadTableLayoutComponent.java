@@ -20,6 +20,7 @@ import com.intellij.android.designer.model.RadViewComponent;
 import com.intellij.android.designer.model.RadViewContainer;
 import com.intellij.designer.model.RadComponent;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ArrayUtil;
 
@@ -116,9 +117,6 @@ public class RadTableLayoutComponent extends RadViewContainer {
       List<RadComponent> rows = getChildren();
       if (!rows.isEmpty()) {
         int columnSize = Math.max(1, gridInfo.vLines.length - 1);
-        RadComponent[][] components = new RadComponent[rows.size()][columnSize];
-        myVirtualGridInfo.components = components;
-
         if (deltaWidth < 2) {
           myVirtualGridInfo.lastColumn = columnSize - 1;
         }
@@ -126,30 +124,47 @@ public class RadTableLayoutComponent extends RadViewContainer {
           myVirtualGridInfo.lastRow = rows.size() - 1;
         }
 
-        for (int i = 0; i < components.length; i++) {
-          RadComponent row = rows.get(i);
-
-          if (RadTableRowLayout.is(row)) {
-            int index = 0;
-            for (RadComponent column : row.getChildren()) {
-              int cellIndex = getCellIndex(column);
-              if (cellIndex > index) {
-                index = cellIndex;
-              }
-
-              int cellSpan = getCellSnap(column);
-              for (int j = 0; j < cellSpan; j++) {
-                components[i][index++] = column;
-              }
-            }
-          }
-          else {
-            components[i][0] = row;
-          }
-        }
+        myVirtualGridInfo.components = getGridComponents(true);
       }
     }
     return myVirtualGridInfo;
+  }
+
+  public RadComponent[][] getGridComponents(boolean useSpan) {
+    GridInfo gridInfo = getGridInfo();
+    List<RadComponent> rows = getChildren();
+    int columnSize = Math.max(1, gridInfo.vLines.length - 1);
+    RadComponent[][] components = new RadComponent[rows.size()][columnSize];
+
+    for (int i = 0; i < components.length; i++) {
+      RadComponent row = rows.get(i);
+
+      if (RadTableRowLayout.is(row)) {
+        int index = 0;
+        for (RadComponent column : row.getChildren()) {
+          int cellIndex = getCellIndex(column);
+          if (cellIndex > index) {
+            index = cellIndex;
+          }
+
+          int cellSpan = getCellSnap(column);
+          if (useSpan) {
+            for (int j = 0; j < cellSpan; j++) {
+              components[i][index++] = column;
+            }
+          }
+          else {
+            components[i][index] = column;
+            index += cellSpan;
+          }
+        }
+      }
+      else {
+        components[i][0] = row;
+      }
+    }
+
+    return components;
   }
 
   private static final int NEW_CELL_SIZE = 32;
@@ -180,14 +195,16 @@ public class RadTableLayoutComponent extends RadViewContainer {
     return oldLines;
   }
 
-  public static void setCellConstraints(final RadComponent component, final int column, final int span) {
+  public static void setCellIndex(final RadComponent component, final int column) {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override
       public void run() {
         XmlTag tag = ((RadViewComponent)component).getTag();
         tag.setAttribute("android:layout_column", Integer.toString(column));
-        if (span > 1) {
-          tag.setAttribute("android:layout_span", Integer.toString(span));
+
+        XmlAttribute span = tag.getAttribute("android:layout_span");
+        if (span != null) {
+          span.delete();
         }
       }
     });

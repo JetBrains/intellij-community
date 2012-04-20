@@ -28,12 +28,14 @@ import java.util.List;
  */
 public class RadCaptionTableColumn extends RadVisualComponent {
   private final RadTableLayoutComponent myContainer;
+  private final int myColumnIndex;
   private final int myColumnOffset;
   private final int myColumnWidth;
   private final StaticDecorator myDecorator;
 
-  public RadCaptionTableColumn(RadTableLayoutComponent container, int columnOffset, int columnWidth, boolean empty) {
+  public RadCaptionTableColumn(RadTableLayoutComponent container, int columnIndex, int columnOffset, int columnWidth, boolean empty) {
     myContainer = container;
+    myColumnIndex = columnIndex;
     myColumnOffset = columnOffset;
     myColumnWidth = columnWidth;
 
@@ -45,6 +47,10 @@ public class RadCaptionTableColumn extends RadVisualComponent {
     }
 
     setNativeComponent(container.getNativeComponent());
+  }
+
+  public int getColumnIndex() {
+    return myColumnIndex;
   }
 
   @Override
@@ -67,12 +73,24 @@ public class RadCaptionTableColumn extends RadVisualComponent {
   }
 
   @Override
-  public boolean canDelete() {
-    return false; // TODO: Auto-generated method stub
-  }
-
-  @Override
   public void delete() throws Exception {
-    // TODO: Auto-generated method stub
+    GridInfo info = myContainer.getVirtualGridInfo();
+    RadComponent[][] components = info.components;
+
+    for (RadComponent[] rowComponents : components) {
+      RadComponent component = rowComponents[myColumnIndex];
+      if (component != null) {
+        component.delete();
+        rowComponents[myColumnIndex] = null;
+      }
+
+      for (int i = myColumnIndex + 1; i < rowComponents.length; i++) {
+        RadComponent cellComponent = rowComponents[i];
+
+        if (cellComponent != null) {
+          RadTableLayoutComponent.setCellIndex(cellComponent, i - 1);
+        }
+      }
+    }
   }
 }

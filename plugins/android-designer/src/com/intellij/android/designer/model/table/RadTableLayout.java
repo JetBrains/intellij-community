@@ -15,11 +15,8 @@
  */
 package com.intellij.android.designer.model.table;
 
-import com.intellij.android.designer.designSurface.AbstractEditOperation;
 import com.intellij.android.designer.designSurface.TreeDropToOperation;
-import com.intellij.android.designer.designSurface.layout.ResizeOperation;
-import com.intellij.android.designer.designSurface.layout.TableLayoutDecorator;
-import com.intellij.android.designer.designSurface.layout.TableLayoutOperation;
+import com.intellij.android.designer.designSurface.layout.*;
 import com.intellij.android.designer.model.RadViewComponent;
 import com.intellij.android.designer.model.RadViewLayout;
 import com.intellij.android.designer.model.RadViewLayoutWithData;
@@ -29,9 +26,7 @@ import com.intellij.designer.designSurface.selection.ResizeSelectionDecorator;
 import com.intellij.designer.model.RadComponent;
 import com.intellij.designer.model.RadLayout;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -148,6 +143,7 @@ public class RadTableLayout extends RadViewLayoutWithData implements ILayoutDeco
 
       for (int i = 0; i < lines.length - 1; i++) {
         components.add(new RadCaptionTableColumn(container,
+                                                 i,
                                                  lines[i],
                                                  lines[i + 1] - lines[i],
                                                  emptyColumns[i]));
@@ -162,14 +158,25 @@ public class RadTableLayout extends RadViewLayoutWithData implements ILayoutDeco
     return components;
   }
 
-  private RadLayout myCaptionColumnLayout = RadViewLayout.INSTANCE;
+  private RadLayout myCaptionColumnLayout;
   private RadLayout myCaptionRowLayout;
 
   @Override
   @NotNull
   public RadLayout getCaptionLayout(final EditableArea mainArea, boolean horizontal) {
     if (horizontal) {
-      // TODO
+      if (myCaptionColumnLayout == null) {
+        myCaptionColumnLayout = new RadViewLayout() {
+          @Override
+          public EditOperation processChildOperation(OperationContext context) {
+            if (context.isMove()) {
+              return new HorizontalCaptionFlowBaseOperation((RadTableLayoutComponent)RadTableLayout.this.myContainer,
+                                                            myContainer, context, mainArea);
+            }
+            return null;
+          }
+        };
+      }
       return myCaptionColumnLayout;
     }
 
@@ -178,90 +185,13 @@ public class RadTableLayout extends RadViewLayoutWithData implements ILayoutDeco
         @Override
         public EditOperation processChildOperation(OperationContext context) {
           if (context.isMove()) {
-            return new CaptionFlowBaseOperation(myContainer, context, false, mainArea) {
-              @Override
-              public void setComponents(List<RadComponent> components) {
-                super.setComponents(components);
-                myMainContext.setComponents(getRowComponents(components));
-              }
-
-              @Override
-              public void showFeedback() {
-                myMainContext.setLocation(SwingUtilities.convertPoint(myContext.getArea().getFeedbackLayer(), myContext.getLocation(),
-                                                                      myMainContext.getArea().getFeedbackLayer()));
-                super.showFeedback();
-              }
-
-              @Override
-              protected void execute(@Nullable RadComponent insertBefore) throws Exception {
-                super.execute(insertBefore);
-                AbstractEditOperation.execute(myMainContext,
-                                              (RadViewComponent)RadTableLayout.this.myContainer,
-                                              getRowComponents(myComponents),
-                                              getRowComponent(insertBefore));
-              }
-            };
+            return new VerticalCaptionFlowBaseOperation((RadTableLayoutComponent)RadTableLayout.this.myContainer,
+                                                        myContainer, context, mainArea);
           }
           return null;
         }
       };
     }
     return myCaptionRowLayout;
-  }
-
-  private static List<RadComponent> getRowComponents(List<RadComponent> components) {
-    List<RadComponent> rowComponents = new ArrayList<RadComponent>();
-    for (RadComponent component : components) {
-      rowComponents.add(((RadCaptionTableRow)component).getComponent());
-    }
-    return rowComponents;
-  }
-
-  @Nullable
-  private static RadViewComponent getRowComponent(@Nullable RadComponent component) {
-    RadCaptionTableRow row = (RadCaptionTableRow)component;
-    return row == null ? null : row.getComponent();
-  }
-
-  private abstract class CaptionFlowBaseOperation extends FlowBaseOperation {
-    protected OperationContext myMainContext;
-    protected FlowBaseOperation myMainOperation;
-
-    public CaptionFlowBaseOperation(RadComponent container, OperationContext context, boolean horizontal, EditableArea mainArea) {
-      super(container, context, horizontal);
-      myMainContext = new OperationContext(context.getType());
-      myMainContext.setArea(mainArea);
-      myMainOperation = new MainFlowBaseOperation(RadTableLayout.this.myContainer, myMainContext, horizontal);
-    }
-
-    @Override
-    public void showFeedback() {
-      super.showFeedback();
-      myMainOperation.showFeedback();
-    }
-
-    @Override
-    public void eraseFeedback() {
-      super.eraseFeedback();
-      myMainOperation.eraseFeedback();
-    }
-
-    @Override
-    protected void execute(@Nullable RadComponent insertBefore) throws Exception {
-      for (RadComponent component : myComponents) {
-        component.removeFromParent();
-        myContainer.add(component, insertBefore);
-      }
-    }
-  }
-
-  private static class MainFlowBaseOperation extends FlowBaseOperation {
-    public MainFlowBaseOperation(RadComponent container, OperationContext context, boolean horizontal) {
-      super(container, context, horizontal);
-    }
-
-    @Override
-    protected void execute(@Nullable RadComponent insertBefore) throws Exception {
-    }
   }
 }

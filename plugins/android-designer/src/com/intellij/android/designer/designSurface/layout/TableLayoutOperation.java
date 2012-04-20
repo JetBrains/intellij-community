@@ -315,7 +315,7 @@ public class TableLayoutOperation extends AbstractEditOperation {
           insertInRow(rowComponent, null, true, myColumn + 1, myColumn);
         }
         else {
-          convertToTableRowAndExecute(rowComponent, null, tableRowModel, myColumn);
+          convertToTableRowAndExecute(rowComponent, false, tableRowModel, myColumn);
         }
       }
       else {
@@ -326,7 +326,7 @@ public class TableLayoutOperation extends AbstractEditOperation {
         }
 
         execute(myContext, newRowComponent, myComponents, null);
-        RadTableLayoutComponent.setCellConstraints(editComponent, myColumn, 1);
+        RadTableLayoutComponent.setCellIndex(editComponent, myColumn);
       }
     }
     else if (myInsertType == GridInsertType.before_h_cell || myInsertType == GridInsertType.after_h_cell) {
@@ -349,7 +349,7 @@ public class TableLayoutOperation extends AbstractEditOperation {
       }
       else {
         convertToTableRowAndExecute(rowComponent,
-                                    myInsertType == GridInsertType.before_v_cell ? rowComponent : null,
+                                    myInsertType == GridInsertType.before_v_cell,
                                     tableRowModel,
                                     column);
       }
@@ -390,7 +390,7 @@ public class TableLayoutOperation extends AbstractEditOperation {
       execute(myContext, rowComponent, myComponents, (RadViewComponent)insertBefore);
     }
 
-    RadTableLayoutComponent.setCellConstraints(editComponent, column, 1);
+    RadTableLayoutComponent.setCellIndex(editComponent, column);
   }
 
   private void insertInNewRow(MetaModel tableRowModel, boolean before, int row, int column) throws Exception {
@@ -408,11 +408,11 @@ public class TableLayoutOperation extends AbstractEditOperation {
     ModelParser.addComponent((RadViewComponent)myContainer, newRowComponent, (RadViewComponent)insertBefore);
 
     execute(myContext, newRowComponent, myComponents, null);
-    RadTableLayoutComponent.setCellConstraints(myComponents.get(0), column, 1);
+    RadTableLayoutComponent.setCellIndex(myComponents.get(0), column);
   }
 
   private void convertToTableRowAndExecute(RadViewComponent rowComponent,
-                                           @Nullable RadViewComponent insertBefore,
+                                           boolean insertBefore,
                                            MetaModel tableRowModel,
                                            int column)
     throws Exception {
@@ -420,10 +420,13 @@ public class TableLayoutOperation extends AbstractEditOperation {
     ModelParser.addComponent((RadViewComponent)myContainer, newRowComponent, rowComponent);
     ModelParser.moveComponent(newRowComponent, rowComponent, null);
 
-    execute(myContext, newRowComponent, myComponents, insertBefore);
+    RadComponent editComponent = myComponents.get(0);
+    if (!insertBefore || editComponent != rowComponent) {
+      execute(myContext, newRowComponent, myComponents, insertBefore ? rowComponent : null);
+    }
 
     if (column > 1) {
-      RadTableLayoutComponent.setCellConstraints(myComponents.get(0), column, 1);
+      RadTableLayoutComponent.setCellIndex(editComponent, column);
     }
   }
 
@@ -439,7 +442,7 @@ public class TableLayoutOperation extends AbstractEditOperation {
           RadComponent cellComponent = rowComponents[j];
 
           if (cellComponent != null) {
-            RadTableLayoutComponent.setCellConstraints(cellComponent, j + 1, 1);
+            RadTableLayoutComponent.setCellIndex(cellComponent, j + 1);
           }
         }
       }

@@ -521,6 +521,8 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
   }
 
   protected void storeState() {
+    // TODO: store selection state (listener) for source code key
+
     if (myRootComponent != null && myExpandedState == null && mySelectionState == null) {
       myExpandedState = new int[myExpandedComponents == null ? 0 : myExpandedComponents.size()][];
       for (int i = 0; i < myExpandedState.length; i++) {
