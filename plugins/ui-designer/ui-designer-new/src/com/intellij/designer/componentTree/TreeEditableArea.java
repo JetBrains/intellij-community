@@ -40,14 +40,12 @@ public final class TreeEditableArea implements EditableArea, FeedbackTreeLayer, 
   private final EventListenerList myListenerList = new EventListenerList();
   private final ComponentTree myTree;
   private final AbstractTreeBuilder myTreeBuilder;
+  private boolean mySelectionMode;
+  private int mySelectionOperation;
 
   public TreeEditableArea(ComponentTree tree, AbstractTreeBuilder treeBuilder) {
     myTree = tree;
     myTreeBuilder = treeBuilder;
-    hookSelection();
-  }
-
-  private void hookSelection() {
     myTree.getSelectionModel().addTreeSelectionListener(this);
   }
 
@@ -79,7 +77,9 @@ public final class TreeEditableArea implements EditableArea, FeedbackTreeLayer, 
 
   @Override
   public void valueChanged(TreeSelectionEvent e) {
-    fireSelectionChanged();
+    if (!myTreeBuilder.isSelectionBeingAdjusted() && !mySelectionMode) {
+      fireSelectionChanged();
+    }
   }
 
   @NotNull
@@ -127,26 +127,29 @@ public final class TreeEditableArea implements EditableArea, FeedbackTreeLayer, 
   }
 
   private void setRawSelection(@Nullable Object value) {
-    unhookSelection();
+    mySelectionMode = true;
+    final int selectionOperation = ++mySelectionOperation;
+
     myTreeBuilder.queueUpdate();
 
-    // skip Tree.clearSelection() echo
-    Runnable onDone = new Runnable() {
+    Runnable done = new Runnable() {
       @Override
       public void run() {
-        hookSelection();
-        fireSelectionChanged();
+        if (selectionOperation == mySelectionOperation) {
+          mySelectionMode = false;
+          fireSelectionChanged();
+        }
       }
     };
 
     if (value == null) {
-      myTreeBuilder.select(ArrayUtil.EMPTY_OBJECT_ARRAY, onDone);
+      myTreeBuilder.select(ArrayUtil.EMPTY_OBJECT_ARRAY, done);
     }
     else if (value instanceof RadComponent) {
-      myTreeBuilder.select(value, onDone);
+      myTreeBuilder.select(value, done);
     }
     else {
-      myTreeBuilder.select(((Collection)value).toArray(), onDone);
+      myTreeBuilder.select(((Collection)value).toArray(), done);
     }
   }
 

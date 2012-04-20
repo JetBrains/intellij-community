@@ -78,7 +78,7 @@ public final class ComponentTreeBuilder extends AbstractTreeBuilder implements C
     try {
       removeListeners();
       if (mySurfaceArea == area) {
-        myTreeArea.setSelection(mySurfaceArea.getSelection());
+        selectFromSurface();
       }
       else {
         mySurfaceArea.setSelection(myTreeArea.getSelection());
@@ -87,6 +87,10 @@ public final class ComponentTreeBuilder extends AbstractTreeBuilder implements C
     finally {
       addListeners();
     }
+  }
+
+  public void selectFromSurface() {
+    myTreeArea.setSelection(mySurfaceArea.getSelection());
   }
 
   public void expandFromState() {

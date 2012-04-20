@@ -124,17 +124,14 @@ public final class DesignerToolWindowManager implements ProjectComponent {
     }
   }
 
-  public void refresh(final boolean updateProperties) {
+  public void refresh(boolean updateProperties) {
     if (myTreeBuilder != null) {
-      myTreeBuilder.queueUpdate().doWhenDone(new Runnable() {
-        @Override
-        public void run() {
-          myComponentTree.repaint();
-          if (updateProperties) {
-            myPropertyTablePanel.getPropertyTable().updateProperties();
-          }
-        }
-      });
+      if (updateProperties) {
+        myTreeBuilder.selectFromSurface();
+      }
+      else {
+        myComponentTree.repaint();
+      }
     }
   }
 

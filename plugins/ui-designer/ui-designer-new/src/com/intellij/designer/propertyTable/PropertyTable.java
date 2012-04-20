@@ -208,7 +208,7 @@ public final class PropertyTable extends JBTable implements ComponentSelectionLi
   //
   //////////////////////////////////////////////////////////////////////////////////////////
 
-  public void updateProperties() {
+  private void updateProperties() {
     if (mySkipUpdate) {
       return;
     }
