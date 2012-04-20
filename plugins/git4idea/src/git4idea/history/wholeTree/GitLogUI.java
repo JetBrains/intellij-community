@@ -1343,7 +1343,7 @@ public class GitLogUI implements Disposable {
         //setBackground(getLogicBackground(selected, row));
         if (value instanceof GitCommit) {
           final GitCommit gitCommit = (GitCommit)value;
-          myIssueLinkRenderer.appendTextWithLinks(gitCommit.getDescription(), SimpleTextAttributes.REGULAR_ATTRIBUTES, myConsumer);
+          myIssueLinkRenderer.appendTextWithLinks(gitCommit.getSubject(), SimpleTextAttributes.REGULAR_ATTRIBUTES, myConsumer);
           //super.customizeCellRenderer(table, ((GitCommit) value).getDescription(), selected, hasFocus, row, column);
         } else {
           super.customizeCellRenderer(table, value, selected, hasFocus, row, column);
