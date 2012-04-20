@@ -71,7 +71,7 @@ public class NameUtilTest extends UsefulTestCase {
     assertMatches("na ut te", "name util test");
 
     assertMatches("na ut", "name_util_test");
-    assertDoesntMatch("na te", "name_util_test");
+    assertMatches("na te", "name_util_test");
     assertDoesntMatch("na ti", "name_util_test");
   }
   
@@ -111,6 +111,13 @@ public class NameUtilTest extends UsefulTestCase {
     assertDoesntMatch("ARS.j", "activity_report_summary_justsometingwrong.xml");
 
     assertDoesntMatch("foo.goo", "foo.bar.goo");
+  }
+
+  public void testSpaceForAnyWordsInBetween() {
+    assertMatches("fo bar", "fooBar");
+    assertMatches("foo bar", "fooBar");
+    assertMatches("foo bar", "fooGooBar");
+    assertMatches("foo bar", "fooGoo bar");
   }
 
   public void testIDEADEV15503() throws Exception {

@@ -439,6 +439,9 @@ public class NameUtil {
       if (isWordSeparator(name.charAt(nameIndex))) {
         return skipSeparators(name, patternIndex, nameIndex);
       }
+      if (' ' == myPattern[patternIndex]) {
+        return skipWords(name, patternIndex, nameIndex);
+      }
 
       if (StringUtil.toLowerCase(name.charAt(nameIndex)) != StringUtil.toLowerCase(myPattern[patternIndex])) {
         if (Character.isDigit(name.charAt(nameIndex)) || (name.charAt(nameIndex) == '.' && name.indexOf('.', nameIndex + 1) > 0)) {
@@ -584,6 +587,38 @@ public class NameUtil {
           return null;
         }
         fromIndex = next + 1;
+      }
+      return null;
+    }
+
+    @Nullable
+    private FList<TextRange> skipWords(String name, int patternIndex, int nameIndex) {
+      while (' ' == myPattern[patternIndex]) {
+        patternIndex++;
+        if (patternIndex == myPattern.length) {
+          return null;
+        }
+      }
+
+      if (isWordStart(name, nameIndex)) {
+        FList<TextRange> ranges = matchName(name, patternIndex, nameIndex);
+        if (ranges != null) {
+          return ranges;
+        }
+      }
+
+      int fromIndex = nameIndex;
+      while (fromIndex < name.length()) {
+        int next = nextWord(name, fromIndex);
+        if (next < 0) {
+          break;
+        }
+
+        FList<TextRange> ranges = matchName(name, patternIndex, next);
+        if (ranges != null) {
+          return ranges;
+        }
+        fromIndex = next;
       }
       return null;
     }
