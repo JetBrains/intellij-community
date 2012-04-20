@@ -27,6 +27,7 @@ import org.jetbrains.jps.artifacts.Artifact;
 import org.jetbrains.jps.idea.IdeaProjectLoader;
 import org.jetbrains.jps.incremental.*;
 import org.jetbrains.jps.incremental.artifacts.ArtifactBuilderLoggerImpl;
+import org.jetbrains.jps.incremental.fs.BuildFSState;
 import org.jetbrains.jps.incremental.java.JavaBuilderLogger;
 import org.jetbrains.jps.incremental.storage.BuildDataManager;
 import org.jetbrains.jps.incremental.storage.ProjectTimestamps;
@@ -204,7 +205,7 @@ public abstract class IncrementalTestCase extends TestCase {
     final File dataStorageRoot = Utils.getDataStorageRoot(project);
     final TestJavaBuilderLogger javaBuilderLogger = new TestJavaBuilderLogger(FileUtil.toSystemIndependentName(getWorkDir() + File.separator));
     final ProjectDescriptor projectDescriptor =
-      new ProjectDescriptor(project, new FSState(true), new ProjectTimestamps(dataStorageRoot),
+      new ProjectDescriptor(project, new BuildFSState(true), new ProjectTimestamps(dataStorageRoot),
                             new BuildDataManager(dataStorageRoot, true), new BuildLoggingManager(new ArtifactBuilderLoggerImpl(), javaBuilderLogger));
     try {
       new IncProjectBuilder(

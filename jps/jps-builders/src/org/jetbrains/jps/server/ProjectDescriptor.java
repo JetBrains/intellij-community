@@ -5,8 +5,8 @@ import org.jetbrains.jps.Module;
 import org.jetbrains.jps.Project;
 import org.jetbrains.jps.Sdk;
 import org.jetbrains.jps.incremental.BuildLoggingManager;
-import org.jetbrains.jps.incremental.FSState;
 import org.jetbrains.jps.incremental.ModuleRootsIndex;
+import org.jetbrains.jps.incremental.fs.BuildFSState;
 import org.jetbrains.jps.incremental.storage.BuildDataManager;
 import org.jetbrains.jps.incremental.storage.ProjectTimestamps;
 
@@ -20,7 +20,7 @@ import java.util.Set;
 */
 public final class ProjectDescriptor {
   public final Project project;
-  public final FSState fsState;
+  public final BuildFSState fsState;
   public final ProjectTimestamps timestamps;
   public final BuildDataManager dataManager;
   private final BuildLoggingManager myLoggingManager;
@@ -29,7 +29,7 @@ public final class ProjectDescriptor {
   private Set<JavaSdk> myProjectJavaSdks;
 
   public ProjectDescriptor(Project project,
-                           FSState fsState,
+                           BuildFSState fsState,
                            ProjectTimestamps timestamps,
                            BuildDataManager dataManager,
                            BuildLoggingManager loggingManager) {

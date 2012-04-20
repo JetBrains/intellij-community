@@ -19,6 +19,7 @@ import org.jetbrains.jps.artifacts.Artifact;
 import org.jetbrains.jps.idea.IdeaProjectLoader;
 import org.jetbrains.jps.idea.SystemOutErrorReporter;
 import org.jetbrains.jps.incremental.*;
+import org.jetbrains.jps.incremental.fs.BuildFSState;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
 import org.jetbrains.jps.incremental.storage.BuildDataManager;
@@ -134,7 +135,7 @@ class ServerState {
       pd = myProjects.get(projectPath);
       if (pd == null) {
         final Project project = loadProject(projectPath);
-        final FSState fsState = new FSState(false);
+        final BuildFSState fsState = new BuildFSState(false);
         ProjectTimestamps timestamps = null;
         BuildDataManager dataManager = null;
         final File dataStorageRoot = Utils.getDataStorageRoot(project);

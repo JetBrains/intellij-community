@@ -21,6 +21,7 @@ import org.jetbrains.jps.artifacts.Artifact;
 import org.jetbrains.jps.idea.IdeaProjectLoader;
 import org.jetbrains.jps.idea.SystemOutErrorReporter;
 import org.jetbrains.jps.incremental.*;
+import org.jetbrains.jps.incremental.fs.BuildFSState;
 import org.jetbrains.jps.incremental.messages.*;
 import org.jetbrains.jps.incremental.storage.BuildDataManager;
 import org.jetbrains.jps.incremental.storage.ProjectTimestamps;
@@ -145,7 +146,7 @@ final class BuildSession implements Runnable, CanceledStatus {
   private void runBuild(String projectPath, BuildType buildType, Set<String> modules, Collection<String> artifacts, Map<String, String> builderParams, Collection<String> paths, final MessageHandler msgHandler, CanceledStatus cs) throws Throwable{
     ProjectDescriptor pd;
     final Project project = loadProject(projectPath);
-    final FSState fsState = new FSState(false);
+    final BuildFSState fsState = new BuildFSState(false);
     ProjectTimestamps timestamps = null;
     BuildDataManager dataManager = null;
     final File dataStorageRoot = Utils.getDataStorageRoot(project);

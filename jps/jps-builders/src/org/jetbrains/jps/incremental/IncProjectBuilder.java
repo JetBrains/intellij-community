@@ -255,7 +255,7 @@ public class IncProjectBuilder {
     catch (IOException e) {
       throw new ProjectBuildException("Error cleaning compiler storages", e);
     }
-    myProjectDescriptor.fsState.onRebuild();
+    myProjectDescriptor.fsState.clearAll();
 
     final Collection<Module> modulesToClean = context.getProject().getModules().values();
     final Set<File> rootsToDelete = new HashSet<File>();
