@@ -145,37 +145,26 @@ public class DomFileEditor<T extends BasicDomElementComponent> extends Perspecti
   }
 
   public static DomFileEditor createDomFileEditor(final String name,
+                                                  @Nullable final Icon icon,
                                                   final DomElement element,
-                                                  final CaptionComponent captionComponent,
-                                                  final CommittablePanel committablePanel) {
-    final DomFileEditor editor = createDomFileEditor(name, element, captionComponent, new Factory<CommittablePanel>() {
-      public CommittablePanel create() {
-        return committablePanel;
-      }
-    });
-    Disposer.register(editor, committablePanel);
-    return editor;
-  }
-
-  public static DomFileEditor createDomFileEditor(final String name,
-                                                  final DomElement element,
-                                                  final CaptionComponent captionComponent,
                                                   final Factory<? extends CommittablePanel> committablePanel) {
 
     final XmlFile file = DomUtil.getFile(element);
     final Factory<BasicDomElementComponent> factory = new Factory<BasicDomElementComponent>() {
       public BasicDomElementComponent create() {
-        return createComponentWithCaption(committablePanel.create(), captionComponent, element);
+
+        CaptionComponent captionComponent = new CaptionComponent(name, icon);
+        captionComponent.initErrorPanel(element);
+        BasicDomElementComponent component = createComponentWithCaption(committablePanel.create(), captionComponent, element);
+        Disposer.register(component, captionComponent);
+        return component;
       }
     };
-    final DomFileEditor<BasicDomElementComponent> editor =
-      new DomFileEditor<BasicDomElementComponent>(file.getProject(), file.getVirtualFile(), name, factory) {
-        public JComponent getPreferredFocusedComponent() {
-          return null;
-        }
-      };
-    Disposer.register(editor, captionComponent);
-    return editor;
+    return new DomFileEditor<BasicDomElementComponent>(file.getProject(), file.getVirtualFile(), name, factory) {
+      public JComponent getPreferredFocusedComponent() {
+        return null;
+      }
+    };
   }
 
   public static BasicDomElementComponent createComponentWithCaption(final CommittablePanel committablePanel,
