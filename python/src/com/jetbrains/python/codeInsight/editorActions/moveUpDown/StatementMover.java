@@ -280,7 +280,7 @@ public class StatementMover extends LineMover {
         if (tmp != null &&
             (editor.offsetToLogicalPosition(tmp.getTextRange().getStartOffset()).line == info.toMove2.startLine ||
             tmp.getNode().getElementType() == PyTokenTypes.ELSE_KEYWORD || tmp.getNode().getElementType() == PyTokenTypes.EXCEPT_KEYWORD ||
-            tmp.getNode().getElementType() == PyTokenTypes.FINALLY_KEYWORD))
+            tmp.getNode().getElementType() == PyTokenTypes.FINALLY_KEYWORD || tmp.getNode().getElementType() == PyTokenTypes.ELIF_KEYWORD))
           element2 = tmp;
       } else {
         final PsiElement tmp = PyPsiUtils.getSignificantToTheRight(element2, false);
