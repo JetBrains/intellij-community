@@ -41,6 +41,7 @@ import javax.swing.Timer;
 import javax.swing.event.HyperlinkEvent;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
 import java.text.DecimalFormat;
 import java.util.*;
@@ -736,7 +737,13 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
         ContainerUtil.addAll(issues, tasks);
       }
       catch (Exception e) {
-        LOG.warn("Cannot connect to " + repository, e);
+        //noinspection InstanceofCatchParameter
+        if (e instanceof SocketTimeoutException) {
+          LOG.warn("Socket timeout from " + repository);
+        }
+        else {
+          LOG.warn("Cannot connect to " + repository, e);
+        }
         myBadRepositories.add(repository);
         if (forceRequest) {
           notifyAboutConnectionFailure(repository);
