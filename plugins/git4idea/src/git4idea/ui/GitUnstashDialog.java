@@ -18,6 +18,8 @@ package git4idea.ui;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -171,13 +173,18 @@ public class GitUnstashDialog extends DialogWrapper {
           ProgressManager.getInstance().run(new Task.Modal(myProject, "Removing stash " + stash.getStash(), false) {
             @Override
             public void run(@NotNull ProgressIndicator indicator) {
-              GitSimpleHandler h = dropHandler(stash.getStash());
+              final GitSimpleHandler h = dropHandler(stash.getStash());
               try {
                 h.run();
                 h.unsilence();
               }
-              catch (VcsException ex) {
-                GitUIUtil.showOperationError(myProject, ex, h.printableCommandLine());
+              catch (final VcsException ex) {
+                ApplicationManager.getApplication().invokeLater(new Runnable() {
+                  @Override
+                  public void run() {
+                    GitUIUtil.showOperationError(myProject, ex, h.printableCommandLine());
+                  }
+                });
               }
             }
           });
