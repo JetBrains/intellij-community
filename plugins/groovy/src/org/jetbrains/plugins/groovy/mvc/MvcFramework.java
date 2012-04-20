@@ -438,7 +438,7 @@ public abstract class MvcFramework {
     }
   }
 
-  private static void extractPlugins(Project project, @Nullable VirtualFile pluginRoot, Map<String, VirtualFile> res) {
+  private void extractPlugins(Project project, @Nullable VirtualFile pluginRoot, Map<String, VirtualFile> res) {
     if (pluginRoot != null) {
       VirtualFile[] children = pluginRoot.getChildren();
       if (children != null) {
@@ -605,7 +605,7 @@ public abstract class MvcFramework {
   }
 
   @Nullable
-  public static String getInstalledPluginNameByPath(Project project, @NotNull VirtualFile pluginPath) {
+  public String getInstalledPluginNameByPath(Project project, @NotNull VirtualFile pluginPath) {
     VirtualFile pluginXml = pluginPath.findChild("plugin.xml");
     if (pluginXml == null) return null;
 
