@@ -202,7 +202,9 @@ public class PsiMethodCallExpressionImpl extends ExpressionPsiElement implements
             PsiSubstitutor substitutor = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createSubstitutor(map);
             final PsiClassType classType = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory()
               .createType(javaLangClass, substitutor, languageLevel);
-            return PsiUtil.captureToplevelWildcards(classType, methodExpression);
+            final PsiElement parent = call.getParent();
+            return parent instanceof PsiReferenceExpression && parent.getParent() instanceof PsiMethodCallExpression 
+                   ? PsiUtil.captureToplevelWildcards(classType, methodExpression) : classType;
           }
         }
       }
