@@ -84,7 +84,9 @@ public final class ComponentTreeBuilder extends AbstractTreeBuilder implements C
       myTreeArea.setRawSelection(mySurfaceArea.getSelection(), new Runnable() {
         @Override
         public void run() {
-          mySelectionMode = selectionOperation == mySelectionOperation;
+          if (selectionOperation == mySelectionOperation) {
+            mySelectionMode = false;
+          }
         }
       });
     }
