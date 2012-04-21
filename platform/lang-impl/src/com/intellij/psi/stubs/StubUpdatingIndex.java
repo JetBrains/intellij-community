@@ -121,7 +121,7 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
             SerializationManager.getInstance().serialize(rootStub, bytes);
 
             final int key = Math.abs(FileBasedIndex.getFileId(inputData.getFile()));
-            result.put(key, new SerializedStubTree(bytes.getInternalBuffer(), bytes.size()));
+            result.put(key, new SerializedStubTree(bytes.getInternalBuffer(), bytes.size(), rootStub));
           }
         });
 

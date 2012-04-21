@@ -28,15 +28,18 @@ import java.io.IOException;
 public class SerializedStubTree {
   private final byte[] myBytes;
   private final int myLength;
+  private final StubElement myStubElement;
 
-  public SerializedStubTree(final byte[] bytes, int length) {
+  public SerializedStubTree(final byte[] bytes, int length, StubElement stubElement) {
     myBytes = bytes;
     myLength = length;
+    myStubElement = stubElement;
   }
   
   public SerializedStubTree(DataInput in) throws IOException {
     myLength = in.readInt();
     myBytes = new byte[myLength];
+    myStubElement = null;
     in.readFully(myBytes);
   }
 
@@ -46,7 +49,8 @@ public class SerializedStubTree {
   }
 
   public StubElement getStub() {
-    return SerializationManager.getInstance().deserialize(new UnsyncByteArrayInputStream(myBytes));
+    return myStubElement != null ?
+           myStubElement : SerializationManager.getInstance().deserialize(new UnsyncByteArrayInputStream(myBytes));
   }
 
   public boolean equals(final Object that) {
