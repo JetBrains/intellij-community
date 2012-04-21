@@ -20,8 +20,6 @@ import com.intellij.designer.designSurface.FeedbackTreeLayer;
 import com.intellij.designer.model.RadComponent;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.ui.ColoredTreeCellRenderer;
-import com.intellij.ui.IdeBorderFactory;
-import com.intellij.ui.SideBorder;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NonNls;
@@ -60,6 +58,8 @@ public final class ComponentTree extends Tree implements DataProvider {
     // TODO: Popup menu
 
     // TODO: F2 should start inplace editing
+
+    setDragEnabled(true);
   }
 
   public void newModel() {

@@ -45,7 +45,7 @@ public final class ComponentTreeBuilder extends AbstractTreeBuilder implements C
 
     designer.updateTreeArea(myTreeArea);
 
-    select(mySurfaceArea.getSelection().toArray(), null);
+    selectFromSurface();
     expandFromState();
 
     addListeners();
