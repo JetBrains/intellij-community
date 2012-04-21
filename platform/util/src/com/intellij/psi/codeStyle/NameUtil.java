@@ -439,11 +439,11 @@ public class NameUtil {
         return null;
       }
 
+      if (' ' == myPattern[patternIndex] && patternIndex != myPattern.length - 1) {
+        return skipWords(name, patternIndex, nameIndex);
+      }
       if (isWordSeparator(name.charAt(nameIndex))) {
         return skipSeparators(name, patternIndex, nameIndex);
-      }
-      if (' ' == myPattern[patternIndex]) {
-        return skipWords(name, patternIndex, nameIndex);
       }
 
       if (StringUtil.toLowerCase(name.charAt(nameIndex)) != StringUtil.toLowerCase(myPattern[patternIndex])) {
@@ -612,7 +612,7 @@ public class NameUtil {
 
       int fromIndex = nameIndex;
       while (fromIndex < name.length()) {
-        int next = nextWord(name, fromIndex);
+        int next = isWordSeparator(myPattern[patternIndex]) ? name.indexOf(myPattern[patternIndex], fromIndex) : nextWord(name, fromIndex);
         if (next < 0) {
           break;
         }
