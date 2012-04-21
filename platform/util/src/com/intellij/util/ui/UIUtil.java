@@ -862,6 +862,9 @@ public class UIUtil {
     return UIManager.getLookAndFeel().getName().contains("GTK");
   }
 
+  public static final Color GTK_AMBIANCE_TEXT_COLOR = new Color(223, 219, 210);
+  public static final Color GTK_AMBIANCE_BACKGROUND_COLOR = new Color(67, 66, 63);
+
   @SuppressWarnings({"HardCodedStringLiteral"})
   @Nullable
   public static String getGtkThemeName() {
