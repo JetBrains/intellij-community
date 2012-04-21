@@ -215,6 +215,7 @@ public class NameUtilTest extends UsefulTestCase {
     assertMatches("Collec*Util*", "CollectionUtilsTest");
     assertTrue(NameUtil.buildCompletionMatcher("*us", 0, true, true).matches("usage"));
     assertTrue(NameUtil.buildCompletionMatcher(" us", 0, true, true).matches("usage"));
+    assertTrue(NameUtil.buildCompletionMatcher(" fo. ba", 0, true, true).matches("getFoo.getBar"));
   }
 
   public void testSpaceInCompletionPrefix() throws Exception {
