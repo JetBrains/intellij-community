@@ -30,6 +30,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -102,24 +103,39 @@ public class HorizontalCaptionFlowBaseOperation extends FlowBaseOperation {
       if (RadTableRowLayout.is(container)) {
         RadComponent[] rowComponents = components[i];
 
+        List<RadViewComponent> editComponents = new ArrayList<RadViewComponent>();
+        for (RadComponent component : myComponents) {
+          int column = ((RadCaptionTableColumn)component).getColumnIndex();
+          RadViewComponent editComponent = (RadViewComponent)rowComponents[column];
+          if (editComponent != null) {
+            editComponents.add(editComponent);
+          }
+        }
+
+        if (editComponents.isEmpty()) {
+          continue;
+        }
+
         RadViewComponent insertBeforeColumn = null;
         if (insertBefore != null) {
           int column = ((RadCaptionTableColumn)insertBefore).getColumnIndex();
           for (int j = column; j < rowComponents.length; j++) {
             insertBeforeColumn = (RadViewComponent)rowComponents[j];
             if (insertBeforeColumn != null) {
-              // XXX
+              if (!editComponents.isEmpty() && insertBeforeColumn == editComponents.get(0)) {
+                editComponents.remove(0);
+                insertBeforeColumn = null;
+                continue;
+              }
               break;
             }
           }
         }
 
         if (insertBefore == null || insertBeforeColumn != null) {
-          for (RadComponent component : myComponents) {
-            int column = ((RadCaptionTableColumn)component).getColumnIndex();
-            RadViewComponent cellComponent = (RadViewComponent)rowComponents[column];
-            if (cellComponent != null && cellComponent != insertBeforeColumn) {
-              ModelParser.moveComponent(container, cellComponent, insertBeforeColumn);
+          for (RadViewComponent component : editComponents) {
+            if (component != insertBeforeColumn) {
+              ModelParser.moveComponent(container, component, insertBeforeColumn);
             }
           }
         }
