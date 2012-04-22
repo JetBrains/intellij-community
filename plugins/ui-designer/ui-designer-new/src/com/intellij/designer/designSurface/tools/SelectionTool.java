@@ -116,7 +116,9 @@ public class SelectionTool extends InputTool {
     if (myTracker != null) {
       myTracker.deactivate();
       myTracker = null;
-      myArea.showSelection(true);
+      if (myArea != null) {
+        myArea.showSelection(true);
+      }
     }
   }
 

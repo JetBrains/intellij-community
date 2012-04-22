@@ -100,12 +100,17 @@ public final class OperationContext {
     return myComponents;
   }
 
-  public void setComponents(List<RadComponent> components) {
+  public void setComponents(@Nullable List<RadComponent> components) {
     myComponents = components;
   }
 
   public boolean isMoveEnabled() {
     return myMoveEnabled;
+  }
+
+  public void resetMoveAddEnabled() {
+    myMoveEnabled = true;
+    myAddEnabled = true;
   }
 
   public void setMoveEnabled(boolean enabled) {

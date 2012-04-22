@@ -43,6 +43,8 @@ public final class ComponentTreeBuilder extends AbstractTreeBuilder implements C
     myGlassLayer = new TreeGlassLayer(tree, designer.getToolProvider(), myTreeArea);
     myExpandStateHandler = new ExpandStateHandler(tree, designer, this);
 
+    new TreeDropListener(tree, myTreeArea, designer.getToolProvider());
+
     designer.updateTreeArea(myTreeArea);
 
     selectFromSurface();

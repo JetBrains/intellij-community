@@ -58,8 +58,6 @@ public final class ComponentTree extends Tree implements DataProvider {
     // TODO: Popup menu
 
     // TODO: F2 should start inplace editing
-
-    setDragEnabled(true);
   }
 
   public void newModel() {

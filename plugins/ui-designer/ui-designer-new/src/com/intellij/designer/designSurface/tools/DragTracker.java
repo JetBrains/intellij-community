@@ -20,7 +20,6 @@ import com.intellij.designer.model.RadComponent;
 import com.intellij.designer.utils.Cursors;
 
 import java.awt.*;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 

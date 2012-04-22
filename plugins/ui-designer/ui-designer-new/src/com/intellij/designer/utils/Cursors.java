@@ -27,6 +27,15 @@ public final class Cursors {
   public static final Cursor CROSS = Cursor.getPredefinedCursor(Cursor.CROSSHAIR_CURSOR);
   public static Cursor NO_CURSOR;
 
+  public static Cursor getSystemNoCursor() {
+    try {
+      return Cursor.getSystemCustomCursor("MoveNoDrop.32x32");
+    }
+    catch (Exception ex) {
+      return Cursor.getDefaultCursor();
+    }
+  }
+
   // TODO: all platform???
   public static Cursor getNoCursor() {
     if (NO_CURSOR == null) {
