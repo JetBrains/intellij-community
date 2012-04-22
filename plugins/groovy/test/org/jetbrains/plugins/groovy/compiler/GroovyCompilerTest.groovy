@@ -17,16 +17,17 @@
 package org.jetbrains.plugins.groovy.compiler;
 
 
+import com.intellij.compiler.CompileServerManager
 import com.intellij.compiler.CompilerConfiguration
-import com.intellij.openapi.module.Module
-import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.psi.PsiFile
-import junit.framework.AssertionFailedError
-import com.intellij.testFramework.PsiTestUtil
-import com.intellij.openapi.compiler.options.ExcludedEntriesConfiguration
 import com.intellij.compiler.CompilerConfigurationImpl
 import com.intellij.openapi.compiler.options.ExcludeEntryDescription
-import com.intellij.compiler.CompileServerManager
+import com.intellij.openapi.compiler.options.ExcludedEntriesConfiguration
+import com.intellij.openapi.module.Module
+import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.psi.PsiFile
+import com.intellij.testFramework.PsiTestUtil
+import junit.framework.AssertionFailedError
 
 /**
  * @author peter
@@ -620,6 +621,23 @@ public class Main {
 
   public static class JpsModeTest extends GroovyCompilerTest {
     @Override protected boolean useJps() { true }
+
+    @Override
+    protected void tearDown() {
+      File systemRoot = CompileServerManager.getInstance().getCompileServerSystemRoot()
+      try {
+        super.tearDown()
+      }
+      finally {
+        File[] files = systemRoot.listFiles()
+        if (files != null) {
+          for (File file : files) {
+            FileUtil.delete(file);
+          }
+        }
+      }
+    }
+
   }
 
 }

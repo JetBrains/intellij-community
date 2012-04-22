@@ -106,17 +106,16 @@ public abstract class IncrementalTestCase extends TestCase {
   }
 
   private static void delete(final File file) throws Exception {
-    if (file.isDirectory()) {
-      final File[] files = file.listFiles();
-
-      if (files != null) {
-        for (File f : files) {
-          delete(f);
-        }
+    final File[] files = file.listFiles();
+    if (files != null) {
+      // is directory
+      for (File f : files) {
+        delete(f);
       }
     }
-
-    if (!file.delete()) throw new IOException("could not delete file or directory " + file.getPath());
+    if (!file.delete()) {
+      throw new IOException("could not delete file or directory " + file.getPath());
+    }
   }
 
   private static void copy(final File input, final File output) throws Exception {

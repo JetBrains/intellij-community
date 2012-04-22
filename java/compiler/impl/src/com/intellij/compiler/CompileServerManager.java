@@ -184,6 +184,10 @@ public class CompileServerManager implements ApplicationComponent{
     return ApplicationManager.getApplication().getComponent(CompileServerManager.class);
   }
 
+  public final File getCompileServerSystemRoot() {
+    return new File(mySystemDirectory, COMPILE_SERVER_SYSTEM_ROOT);
+  }
+
   public void notifyFilesChanged(Collection<String> paths) {
     sendNotification(paths, false);
   }
@@ -644,7 +648,7 @@ public class CompileServerManager implements ApplicationComponent{
     cmdLine.addParameter(org.jetbrains.jps.server.Server.class.getName());
     cmdLine.addParameter(Integer.toString(port));
 
-    final File workDirectory = new File(mySystemDirectory, COMPILE_SERVER_SYSTEM_ROOT);
+    final File workDirectory = getCompileServerSystemRoot();
     workDirectory.mkdirs();
     ensureLogConfigExists(workDirectory);
 
