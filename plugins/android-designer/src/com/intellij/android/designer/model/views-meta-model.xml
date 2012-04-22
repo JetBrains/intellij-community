@@ -1137,6 +1137,29 @@
     </creation>
   </meta>
 
+  <meta model="com.intellij.android.designer.model.grid.RadGridLayoutComponent"
+        layout="com.intellij.android.designer.model.grid.RadGridLayout"
+        class="android.widget.GridLayout"
+        tag="GridLayout">
+
+    <properties important="orientation rowCount columnCount"
+                top="rowCount columnCount orientation"
+                expert="layout:gravity.clip_vertical layout:gravity.clip_horizontal"
+        />
+
+    <palette title="GridLayout" icon="/com/intellij/android/designer/icons/GridLayout.png"
+             tooltip="A layout that places its children in a rectangular grid."/>
+
+    <creation>
+      <![CDATA[
+          <GridLayout
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent">
+          </GridLayout>
+      ]]>
+    </creation>
+  </meta>
+
   <!-- ================= Palette ================= -->
 
   <palette>
@@ -1200,6 +1223,7 @@
       <item tag="LinearLayout"/>
       <item tag="TableLayout"/>
       <item tag="TableRow"/>
+      <item tag="GridLayout"/>
     </group>
   </palette>
 
