@@ -295,9 +295,7 @@ public class ResizeOperation implements EditOperation {
       layer.remove(myTextFeedback);
       layer.remove(myWrapFeedback);
       layer.remove(myFillFeedback);
-
       layer.repaint();
-
       myFeedback = null;
       myTextFeedback = null;
       myWrapFeedback = null;

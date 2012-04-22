@@ -32,6 +32,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.XmlElementFactory;
 import com.intellij.psi.XmlRecursiveElementVisitor;
+import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.xml.util.XmlUtil;
@@ -300,6 +301,17 @@ public class ModelParser extends XmlRecursiveElementVisitor {
     }
     catch (Throwable e) {
       return false;
+    }
+  }
+
+  public static void deleteAttribute(RadComponent component, String name) {
+    deleteAttribute(((RadViewComponent)component).getTag(), name);
+  }
+
+  public static void deleteAttribute(XmlTag tag, String name) {
+    XmlAttribute attribute = tag.getAttribute(name);
+    if (attribute != null) {
+      attribute.delete();
     }
   }
 

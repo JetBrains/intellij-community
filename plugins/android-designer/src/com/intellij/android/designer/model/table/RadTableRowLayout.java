@@ -15,21 +15,24 @@
  */
 package com.intellij.android.designer.model.table;
 
+import com.intellij.android.designer.designSurface.layout.LayoutSpanOperation;
+import com.intellij.android.designer.model.ModelParser;
 import com.intellij.android.designer.model.RadViewComponent;
 import com.intellij.android.designer.model.layout.AbstractGravityAction;
 import com.intellij.android.designer.model.layout.Gravity;
 import com.intellij.android.designer.model.layout.RadLinearLayout;
 import com.intellij.designer.designSurface.*;
+import com.intellij.designer.designSurface.selection.ResizeSelectionDecorator;
 import com.intellij.designer.model.RadComponent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.awt.*;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
@@ -39,6 +42,8 @@ import java.util.List;
  */
 public class RadTableRowLayout extends RadLinearLayout {
   private static final String[] LAYOUT_PARAMS = {"TableRow_Cell", "LinearLayout_Layout", "ViewGroup_MarginLayout"};
+
+  private ResizeSelectionDecorator mySelectionDecorator;
 
   @Override
   @NotNull
@@ -64,6 +69,9 @@ public class RadTableRowLayout extends RadLinearLayout {
     if (!isTableParent() || context.isTree()) {
       return super.processChildOperation(context);
     }
+    if (context.is(LayoutSpanOperation.TYPE)) {
+      return new LayoutSpanOperation(context);
+    }
     return null;
   }
 
@@ -76,7 +84,18 @@ public class RadTableRowLayout extends RadLinearLayout {
 
   @Override
   public ComponentDecorator getChildSelectionDecorator(RadComponent component, List<RadComponent> selection) {
-    return isTableParent() ? NON_RESIZE_DECORATOR : super.getChildSelectionDecorator(component, selection);
+    if (isTableParent()) {
+      if (mySelectionDecorator == null) {
+        mySelectionDecorator = new ResizeSelectionDecorator(Color.red, 1);
+      }
+
+      mySelectionDecorator.clear();
+      if (selection.size() == 1) {
+        LayoutSpanOperation.points(mySelectionDecorator);
+      }
+      return mySelectionDecorator;
+    }
+    return super.getChildSelectionDecorator(component, selection);
   }
 
   //////////////////////////////////////////////////////////////////////////////////////////
@@ -151,10 +170,7 @@ public class RadTableRowLayout extends RadLinearLayout {
             public void run() {
               if (mySelection.isEmpty()) {
                 for (RadComponent component : myComponents) {
-                  XmlAttribute attribute = ((RadViewComponent)component).getTag().getAttribute("android:layout_gravity");
-                  if (attribute != null) {
-                    attribute.delete();
-                  }
+                  ModelParser.deleteAttribute(component, "android:layout_gravity");
                 }
               }
               else {

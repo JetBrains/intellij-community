@@ -15,6 +15,7 @@
  */
 package com.intellij.android.designer.designSurface.layout;
 
+import com.intellij.android.designer.model.ModelParser;
 import com.intellij.android.designer.model.RadViewComponent;
 import com.intellij.android.designer.model.layout.Gravity;
 import com.intellij.designer.designSurface.FeedbackLayer;
@@ -168,12 +169,7 @@ public class LinearLayoutOperation extends FlowBaseOperation {
     if (gravity == null) {
       for (RadComponent component : components) {
         XmlTag tag = ((RadViewComponent)component).getTag();
-
-        XmlAttribute attribute = tag.getAttribute("android:layout_gravity");
-        if (attribute != null) {
-          attribute.delete();
-        }
-
+        ModelParser.deleteAttribute(tag, "android:layout_gravity");
         tag.setAttribute(horizontal ? "android:layout_height" : "android:layout_width", "fill_parent");
       }
     }

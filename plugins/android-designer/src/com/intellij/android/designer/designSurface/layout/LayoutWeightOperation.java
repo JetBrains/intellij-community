@@ -15,12 +15,12 @@
  */
 package com.intellij.android.designer.designSurface.layout;
 
+import com.intellij.android.designer.model.ModelParser;
 import com.intellij.designer.designSurface.OperationContext;
 import com.intellij.designer.designSurface.selection.ResizeSelectionDecorator;
 import com.intellij.designer.model.RadComponent;
 import com.intellij.designer.utils.Position;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.psi.xml.XmlAttribute;
 
 import java.awt.*;
 import java.text.DecimalFormat;
@@ -98,10 +98,7 @@ public class LayoutWeightOperation extends LayoutMarginOperation {
   private void setWeight(int value) {
     float weight = myWeight + value / 100f;
     if (weight <= 0) {
-      XmlAttribute attribute = myComponent.getTag().getAttribute("android:layout_weight");
-      if (attribute != null) {
-        attribute.delete();
-      }
+      ModelParser.deleteAttribute(myComponent, "android:layout_weight");
     }
     else {
       myComponent.getTag().setAttribute("android:layout_weight", FORMAT.format(weight).replace(',', '.'));

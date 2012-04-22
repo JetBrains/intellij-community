@@ -38,7 +38,7 @@ public class RadTableLayout extends RadViewLayoutWithData implements ILayoutDeco
   private static final String[] LAYOUT_PARAMS = {"", "LinearLayout_Layout", "ViewGroup_MarginLayout"};
 
   private TableLayoutDecorator myGridDecorator;
-  private ResizeSelectionDecorator myResizeDecorator;
+  private ResizeSelectionDecorator mySelectionDecorator;
 
   @Override
   @NotNull
@@ -95,11 +95,11 @@ public class RadTableLayout extends RadViewLayoutWithData implements ILayoutDeco
       return super.getChildSelectionDecorator(component, selection);
     }
 
-    if (myResizeDecorator == null) {
-      myResizeDecorator = new ResizeSelectionDecorator(Color.red, 1);
-      ResizeOperation.height(myResizeDecorator);
+    if (mySelectionDecorator == null) {
+      mySelectionDecorator = new ResizeSelectionDecorator(Color.red, 1);
+      ResizeOperation.height(mySelectionDecorator);
     }
-    return myResizeDecorator;
+    return mySelectionDecorator;
   }
 
   //////////////////////////////////////////////////////////////////////////////////////////

@@ -16,11 +16,11 @@
 package com.intellij.android.designer.model.table;
 
 import com.android.ide.common.rendering.api.ViewInfo;
+import com.intellij.android.designer.model.ModelParser;
 import com.intellij.android.designer.model.RadViewComponent;
 import com.intellij.android.designer.model.RadViewContainer;
 import com.intellij.designer.model.RadComponent;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ArrayUtil;
 
@@ -147,7 +147,7 @@ public class RadTableLayoutComponent extends RadViewContainer {
             index = cellIndex;
           }
 
-          int cellSpan = getCellSnap(column);
+          int cellSpan = getCellSpan(column);
           if (useSpan) {
             for (int j = 0; j < cellSpan; j++) {
               components[i][index++] = column;
@@ -201,11 +201,7 @@ public class RadTableLayoutComponent extends RadViewContainer {
       public void run() {
         XmlTag tag = ((RadViewComponent)component).getTag();
         tag.setAttribute("android:layout_column", Integer.toString(column));
-
-        XmlAttribute span = tag.getAttribute("android:layout_span");
-        if (span != null) {
-          span.delete();
-        }
+        ModelParser.deleteAttribute(tag, "android:layout_span");
       }
     });
   }
@@ -220,7 +216,7 @@ public class RadTableLayoutComponent extends RadViewContainer {
     }
   }
 
-  private static int getCellSnap(RadComponent component) {
+  public static int getCellSpan(RadComponent component) {
     try {
       String span = ((RadViewComponent)component).getTag().getAttributeValue("android:layout_span");
       return Integer.parseInt(span);

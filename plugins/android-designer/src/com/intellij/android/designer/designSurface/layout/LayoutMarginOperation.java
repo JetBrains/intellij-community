@@ -15,6 +15,7 @@
  */
 package com.intellij.android.designer.designSurface.layout;
 
+import com.intellij.android.designer.model.ModelParser;
 import com.intellij.android.designer.model.RadViewComponent;
 import com.intellij.designer.designSurface.DecorationLayer;
 import com.intellij.designer.designSurface.EditOperation;
@@ -48,6 +49,7 @@ public class LayoutMarginOperation implements EditOperation {
   protected RadViewComponent myComponent;
   protected RectangleFeedback myFeedback;
   protected TextFeedback myTextFeedback;
+  private Rectangle myBounds;
   protected Rectangle myMargins;
 
   public LayoutMarginOperation(OperationContext context) {
@@ -57,6 +59,7 @@ public class LayoutMarginOperation implements EditOperation {
   @Override
   public void setComponent(RadComponent component) {
     myComponent = (RadViewComponent)component;
+    myBounds = myComponent.getBounds(myContext.getArea().getFeedbackLayer());
     myMargins = myComponent.getMargins();
   }
 
@@ -87,7 +90,7 @@ public class LayoutMarginOperation implements EditOperation {
   public void showFeedback() {
     createFeedback();
 
-    Rectangle bounds = myContext.getTransformedRectangle(myComponent.getBounds(myContext.getArea().getFeedbackLayer()));
+    Rectangle bounds = myContext.getTransformedRectangle(myBounds);
     applyMargins(bounds, myMargins);
     myFeedback.setBounds(bounds);
 
@@ -123,9 +126,7 @@ public class LayoutMarginOperation implements EditOperation {
       FeedbackLayer layer = myContext.getArea().getFeedbackLayer();
       layer.remove(myTextFeedback);
       layer.remove(myFeedback);
-
       layer.repaint();
-
       myTextFeedback = null;
       myFeedback = null;
     }
@@ -178,10 +179,7 @@ public class LayoutMarginOperation implements EditOperation {
 
   private static void setValue(XmlTag tag, String name, int value) {
     if (value == 0) {
-      XmlAttribute attribute = tag.getAttribute(name);
-      if (attribute != null) {
-        attribute.delete();
-      }
+      ModelParser.deleteAttribute(tag, name);
     }
     else {
       tag.setAttribute(name, Integer.toString(value) + "dp");
