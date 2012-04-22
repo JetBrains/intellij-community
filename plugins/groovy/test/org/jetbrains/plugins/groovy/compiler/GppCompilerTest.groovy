@@ -17,6 +17,8 @@
 package org.jetbrains.plugins.groovy.compiler;
 
 
+import com.intellij.compiler.CompileServerManager
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.testFramework.PsiTestUtil
 import org.jetbrains.plugins.groovy.util.TestUtils
@@ -132,6 +134,22 @@ class A {
     @Override
     void testRecompileDependentGroovyClasses() {
       super.testRecompileDependentGroovyClasses()
+    }
+
+    @Override
+    protected void tearDown() {
+      File systemRoot = CompileServerManager.getInstance().getCompileServerSystemRoot()
+      try {
+        super.tearDown()
+      }
+      finally {
+        File[] files = systemRoot.listFiles()
+        if (files != null) {
+          for (File file : files) {
+            FileUtil.delete(file);
+          }
+        }
+      }
     }
   }
 
