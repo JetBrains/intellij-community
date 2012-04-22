@@ -517,6 +517,16 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
   }
 
   @Override
+  public String getEditorText() {
+    return ApplicationManager.getApplication().runReadAction(new Computable<String>() {
+      @Override
+      public String compute() {
+        return myXmlFile.getText();
+      }
+    });
+  }
+
+  @Override
   protected boolean execute(ThrowableRunnable<Exception> operation, boolean updateProperties) {
     try {
       myPSIChangeListener.stop();

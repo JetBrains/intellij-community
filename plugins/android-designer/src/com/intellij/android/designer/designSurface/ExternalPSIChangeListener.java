@@ -15,9 +15,7 @@
  */
 package com.intellij.android.designer.designSurface;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.util.Computable;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiTreeChangeAdapter;
@@ -44,7 +42,7 @@ public class ExternalPSIChangeListener extends PsiTreeChangeAdapter {
     myFile = file;
     myDelayMillis = delayMillis;
     myRunnable = runnable;
-    myContent = getContent();
+    myContent = myDesigner.getEditorText();
   }
 
   public void setInitialize() {
@@ -69,7 +67,7 @@ public class ExternalPSIChangeListener extends PsiTreeChangeAdapter {
   public void activate() {
     if (!myRunState) {
       start();
-      if (!ComparatorUtil.equalsNullable(myContent, getContent()) || myDesigner.getRootComponent() == null) {
+      if (!ComparatorUtil.equalsNullable(myContent, myDesigner.getEditorText()) || myDesigner.getRootComponent() == null) {
         addRequest();
       }
       myContent = null;
@@ -79,17 +77,8 @@ public class ExternalPSIChangeListener extends PsiTreeChangeAdapter {
   public void deactivate() {
     if (myRunState) {
       stop();
-      myContent = getContent();
+      myContent = myDesigner.getEditorText();
     }
-  }
-
-  private String getContent() {
-    return ApplicationManager.getApplication().runReadAction(new Computable<String>() {
-      @Override
-      public String compute() {
-        return myFile.getText();
-      }
-    });
   }
 
   private void updatePsi(PsiTreeChangeEvent event) {

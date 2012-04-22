@@ -60,7 +60,7 @@ import java.awt.*;
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.lang.reflect.InvocationTargetException;
-import java.util.ArrayList;
+import java.util.*;
 import java.util.List;
 
 /**
@@ -108,6 +108,8 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
   private Property mySelectionProperty;
   private int[][] myExpandedState;
   private int[][] mySelectionState;
+  private final Map<String, int[][]> mySourceSelectionState = new FixedHashMap<String, int[][]>(16);
+  private ComponentSelectionListener mySourceSelectionListener;
 
   private JPanel myErrorPanel;
   private JPanel myErrorMessages;
@@ -286,6 +288,14 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
     add(myDesignerCard, DESIGNER_CARD);
 
     PaletteManager.getInstance(getProject()).addSelectionListener(myPaletteListener);
+
+    mySourceSelectionListener = new ComponentSelectionListener() {
+      @Override
+      public void selectionChanged(EditableArea area) {
+        storeSourceSelectionState();
+      }
+    };
+    mySurfaceArea.addSelectionListener(mySourceSelectionListener);
   }
 
   protected final void showDesignerCard() {
@@ -521,8 +531,6 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
   }
 
   protected void storeState() {
-    // TODO: store selection state (listener) for source code key
-
     if (myRootComponent != null && myExpandedState == null && mySelectionState == null) {
       myExpandedState = new int[myExpandedComponents == null ? 0 : myExpandedComponents.size()][];
       for (int i = 0; i < myExpandedState.length; i++) {
@@ -531,18 +539,32 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
         myExpandedState[i] = path.toArray();
       }
 
-      List<RadComponent> selection = mySurfaceArea.getSelection();
-      mySelectionState = new int[selection.size()][];
-      for (int i = 0; i < mySelectionState.length; i++) {
-        IntArrayList path = new IntArrayList();
-        componentToPath(selection.get(i), path);
-        mySelectionState[i] = path.toArray();
-      }
+      mySelectionState = getSelectionState();
 
       myExpandedComponents = null;
       myToolProvider.loadDefaultTool();
+
+      mySurfaceArea.removeSelectionListener(mySourceSelectionListener);
       mySurfaceArea.deselectAll();
+      mySurfaceArea.addSelectionListener(mySourceSelectionListener);
     }
+  }
+
+  private void storeSourceSelectionState() {
+    mySourceSelectionState.put(getEditorText(), getSelectionState());
+  }
+
+  private int[][] getSelectionState() {
+    List<RadComponent> selection = mySurfaceArea.getSelection();
+    int[][] selectionState = new int[selection.size()][];
+
+    for (int i = 0; i < selectionState.length; i++) {
+      IntArrayList path = new IntArrayList();
+      componentToPath(selection.get(i), path);
+      selectionState[i] = path.toArray();
+    }
+
+    return selectionState;
   }
 
   private static void componentToPath(RadComponent component, IntArrayList path) {
@@ -557,25 +579,40 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
   protected void restoreState() {
     DesignerToolWindowManager toolManager = DesignerToolWindowManager.getInstance(getProject());
 
-    if (myExpandedState == null || mySelectionProperty == null || myRootComponent == null) {
-      toolManager.refresh(true);
-    }
-    else {
+    if (myExpandedState != null) {
       List<RadComponent> expanded = new ArrayList<RadComponent>();
       for (int[] path : myExpandedState) {
         pathToComponent(expanded, myRootComponent, path, 0);
       }
       myExpandedComponents = expanded;
       toolManager.expandFromState();
+      myExpandedState = null;
+    }
 
-      List<RadComponent> selection = new ArrayList<RadComponent>();
-      for (int[] path : mySelectionState) {
+    List<RadComponent> selection = new ArrayList<RadComponent>();
+
+    int[][] selectionState = mySourceSelectionState.get(getEditorText());
+    if (selectionState != null) {
+      for (int[] path : selectionState) {
         pathToComponent(selection, myRootComponent, path, 0);
       }
+    }
+
+    if (selection.isEmpty()) {
+      if (mySelectionState != null) {
+        for (int[] path : mySelectionState) {
+          pathToComponent(selection, myRootComponent, path, 0);
+        }
+      }
+    }
+
+    if (selection.isEmpty()) {
+      toolManager.refresh(true);
+    }
+    else {
       mySurfaceArea.setSelection(selection);
     }
 
-    myExpandedState = null;
     mySelectionState = null;
   }
 
@@ -617,6 +654,8 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
 
   @Nullable
   public abstract ComponentPasteFactory createPasteFactory(String xmlComponents);
+
+  public abstract String getEditorText();
 
   public void activate() {
   }
@@ -810,6 +849,37 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
       myAfterLinkText = afterLinkText;
       myQuickFix = quickFix;
       myAdditionalFixes = additionalFixes;
+    }
+  }
+
+  private static class FixedHashMap<K, V> extends HashMap<K, V> {
+    private final int mySize;
+    private final List<K> myKeys = new LinkedList<K>();
+
+    public FixedHashMap(int size) {
+      mySize = size;
+    }
+
+    @Override
+    public V put(K key, V value) {
+      if (!myKeys.contains(key)) {
+        if (myKeys.size() >= mySize) {
+          remove(myKeys.remove(0));
+        }
+        myKeys.add(key);
+      }
+      return super.put(key, value);
+    }
+
+    @Override
+    public V get(Object key) {
+      if (myKeys.contains(key)) {
+        int index = myKeys.indexOf(key);
+        int last = myKeys.size() - 1;
+        myKeys.set(index, myKeys.get(last));
+        myKeys.set(last, (K)key);
+      }
+      return super.get(key);
     }
   }
 }
