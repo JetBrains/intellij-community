@@ -195,7 +195,12 @@ public abstract class ArtifactBuilderTestCase extends UsefulTestCase {
         }
       }
     });
-    builder.build(new AllProjectScope(myDescriptor.project, new HashSet<Artifact>(Arrays.asList(artifacts)), force), !force, false);
+    try {
+      builder.build(new AllProjectScope(myDescriptor.project, new HashSet<Artifact>(Arrays.asList(artifacts)), force), !force, false, false);
+    }
+    catch (RebuildRequestedException e) {
+      fail(e.getMessage());
+    }
     if (shouldFail) {
       assertFalse("Build not failed as expected", errorMessages.isEmpty());
     }

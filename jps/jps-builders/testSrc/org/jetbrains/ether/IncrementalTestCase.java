@@ -210,7 +210,7 @@ public abstract class IncrementalTestCase extends TestCase {
       new IncProjectBuilder(
         projectDescriptor, BuilderRegistry.getInstance(), Collections.<String, String>emptyMap(), CanceledStatus.NULL
       ).build(
-        new AllProjectScope(project, Collections.<Artifact>emptySet(), true), false, true
+        new AllProjectScope(project, Collections.<Artifact>emptySet(), true), false, true, false
       );
 
       modify();
@@ -222,7 +222,7 @@ public abstract class IncrementalTestCase extends TestCase {
       new IncProjectBuilder(
         projectDescriptor, BuilderRegistry.getInstance(), Collections.<String, String>emptyMap(), CanceledStatus.NULL
       ).build(
-        new AllProjectScope(project, Collections.<Artifact>emptySet(), false), true, false
+        new AllProjectScope(project, Collections.<Artifact>emptySet(), false), true, false, false
       );
 
       final String expected = StringUtil.convertLineSeparators(FileUtil.loadFile(new File(getBaseDir() + ".log")));

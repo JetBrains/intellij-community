@@ -145,6 +145,7 @@ final class BuildSession implements Runnable, CanceledStatus {
   }
 
   private void runBuild(String projectPath, BuildType buildType, Set<String> modules, Collection<String> artifacts, Map<String, String> builderParams, Collection<String> paths, final MessageHandler msgHandler, CanceledStatus cs) throws Throwable{
+    boolean forceCleanCaches = false;
     ProjectDescriptor pd;
     final Project project = loadProject(projectPath);
     final BuildFSState fsState = new BuildFSState(false);
@@ -154,49 +155,70 @@ final class BuildSession implements Runnable, CanceledStatus {
     try {
       timestamps = new ProjectTimestamps(dataStorageRoot);
       dataManager = new BuildDataManager(dataStorageRoot, true);
+      if (dataManager.versionDiffers()) {
+        forceCleanCaches = true;
+        msgHandler.processMessage(new CompilerMessage("build", BuildMessage.Kind.INFO, "Dependency data format has changed, project rebuild required"));
+      }
     }
     catch (Exception e) {
       // second try
-      e.printStackTrace(System.err);
+      LOG.info(e);
       if (timestamps != null) {
         timestamps.close();
       }
       if (dataManager != null) {
         dataManager.close();
       }
-      buildType = BuildType.PROJECT_REBUILD; // force project rebuild
+      forceCleanCaches = true;
       FileUtil.delete(dataStorageRoot);
       timestamps = new ProjectTimestamps(dataStorageRoot);
       dataManager = new BuildDataManager(dataStorageRoot, true);
       // second attempt succeded
-      msgHandler.processMessage(new CompilerMessage("compile-server", BuildMessage.Kind.INFO, "Project rebuild forced: " + e.getMessage()));
+      msgHandler.processMessage(new CompilerMessage("build", BuildMessage.Kind.INFO, "Project rebuild forced: " + e.getMessage()));
     }
 
     pd = new ProjectDescriptor(project, fsState, timestamps, dataManager, BuildLoggingManager.DEFAULT);
 
     try {
-      final CompileScope compileScope = createCompilationScope(buildType, pd, modules, artifacts, paths);
-      final IncProjectBuilder builder = new IncProjectBuilder(pd, BuilderRegistry.getInstance(), builderParams, cs);
-      if (msgHandler != null) {
+      for (int attempt = 0; attempt < 2; attempt++) {
+        if (forceCleanCaches && modules.isEmpty() && paths.isEmpty()) {
+          // if compilation scope is the whole project and cache rebuild is forced, use PROJECT_REBUILD for faster compilation
+          buildType = BuildType.PROJECT_REBUILD;
+        }
+        final CompileScope compileScope = createCompilationScope(buildType, pd, modules, artifacts, paths);
+        final IncProjectBuilder builder = new IncProjectBuilder(pd, BuilderRegistry.getInstance(), builderParams, cs);
         builder.addMessageHandler(msgHandler);
-      }
-      switch (buildType) {
-        case PROJECT_REBUILD:
-          builder.build(compileScope, false, true);
-          break;
+        try {
+          switch (buildType) {
+            case PROJECT_REBUILD:
+              builder.build(compileScope, false, true, forceCleanCaches);
+              break;
 
-        case FORCED_COMPILATION:
-          builder.build(compileScope, false, false);
-          break;
+            case FORCED_COMPILATION:
+              builder.build(compileScope, false, false, forceCleanCaches);
+              break;
 
-        case MAKE:
-          builder.build(compileScope, true, false);
-          break;
+            case MAKE:
+              builder.build(compileScope, true, false, forceCleanCaches);
+              break;
 
-        case CLEAN:
-          //todo[nik]
-  //        new ProjectBuilder(new GantBinding(), project).clean();
-          break;
+            case CLEAN:
+              //todo[nik]
+      //        new ProjectBuilder(new GantBinding(), project).clean();
+              break;
+          }
+          break; // break attempts loop
+        }
+        catch (RebuildRequestedException e) {
+          // todo: do not try second attempt here; just notify the calling process about "rebuild requested" and end the session
+          if (attempt == 0) {
+            LOG.info(e);
+            forceCleanCaches = true;
+          }
+          else {
+            throw e;
+          }
+        }
       }
     }
     finally {

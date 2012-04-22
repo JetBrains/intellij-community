@@ -79,7 +79,7 @@ public class IncProjectBuilder {
     myMessageHandlers.add(handler);
   }
 
-  public void build(CompileScope scope, final boolean isMake, final boolean isProjectRebuild) {
+  public void build(CompileScope scope, final boolean isMake, final boolean isProjectRebuild, boolean forceCleanCaches) throws RebuildRequestedException{
     final LowMemoryWatcher memWatcher = LowMemoryWatcher.register(new Forceable() {
       @Override
       public boolean isDirty() {
@@ -94,47 +94,30 @@ public class IncProjectBuilder {
     });
     CompileContext context = null;
     try {
-      try {
-        if (myProjectDescriptor.dataManager.versionDiffers()) {
-          myMessageDispatcher.processMessage(new CompilerMessage(
-            COMPILE_SERVER_NAME, BuildMessage.Kind.INFO, "Dependency data format has changed, project rebuild required"
-          ));
-          context = createContextForForcedRebuild(scope, isMake, isProjectRebuild);
-        }
-        else {
-          context = createContext(scope, isMake, isProjectRebuild);
-        }
-        runBuild(context);
-      }
-      catch (ProjectBuildException e) {
-        final Throwable cause = e.getCause();
-        if (cause instanceof PersistentEnumerator.CorruptedException || cause instanceof MappingFailedException || cause instanceof IOException) {
-          // force rebuild
-          myMessageDispatcher.processMessage(new CompilerMessage(
-            COMPILE_SERVER_NAME, BuildMessage.Kind.INFO,
-            "Internal caches are corrupted or have outdated format, forcing project rebuild: " +
-            e.getMessage())
-          );
-          flushContext(context);
-          context = createContextForForcedRebuild(scope, isMake, isProjectRebuild);
-          runBuild(context);
-        }
-        else {
-          throw e;
-        }
-      }
+      context = createContext(scope, isMake, isProjectRebuild);
+      runBuild(context, forceCleanCaches);
       myProjectDescriptor.dataManager.saveVersion();
     }
     catch (ProjectBuildException e) {
       final Throwable cause = e.getCause();
-      if (cause == null) {
-        final String msg = e.getMessage();
-        if (!StringUtil.isEmpty(msg)) {
-          myMessageDispatcher.processMessage(new ProgressMessage(msg));
-        }
+      if (cause instanceof PersistentEnumerator.CorruptedException || cause instanceof MappingFailedException || cause instanceof IOException) {
+        myMessageDispatcher.processMessage(new CompilerMessage(
+          COMPILE_SERVER_NAME, BuildMessage.Kind.INFO,
+          "Internal caches are corrupted or have outdated format, forcing project rebuild: " +
+          e.getMessage())
+        );
+        throw new RebuildRequestedException(cause);
       }
       else {
-        myMessageDispatcher.processMessage(new CompilerMessage(COMPILE_SERVER_NAME, cause));
+        if (cause == null) {
+          final String msg = e.getMessage();
+          if (!StringUtil.isEmpty(msg)) {
+            myMessageDispatcher.processMessage(new ProgressMessage(msg));
+          }
+        }
+        else {
+          myMessageDispatcher.processMessage(new CompilerMessage(COMPILE_SERVER_NAME, cause));
+        }
       }
     }
     finally {
@@ -150,19 +133,6 @@ public class IncProjectBuilder {
         }
       }
     }
-  }
-
-  private CompileContext createContextForForcedRebuild(CompileScope scope, boolean isMake, boolean isProjectRebuild) throws ProjectBuildException {
-    final CompileContext context;
-    if (isMake || isProjectRebuild) {
-      context = createContext(new AllProjectScope(scope.getProject(), scope.getArtifacts(), true), false, true);
-    }
-    else {
-      //in case of forced compilation keep the scope, but remove all caches
-      context = createContext(scope, false, false);
-      cleanOutputRoots(context);
-    }
-    return context;
   }
 
   private static void flushContext(CompileContext context) {
@@ -206,12 +176,12 @@ public class IncProjectBuilder {
     return myModulesProcessed / myTotalModulesWork;
   }
 
-  private void runBuild(CompileContext context) throws ProjectBuildException {
+  private void runBuild(CompileContext context, boolean forceCleanCaches) throws ProjectBuildException {
     context.setDone(0.0f);
 
     LOG.info("Building project '" + context.getProject().getProjectName() + "'; isRebuild:" +context.isProjectRebuild() + "; isMake:" + context.isMake());
 
-    if (context.isProjectRebuild()) {
+    if (context.isProjectRebuild() || forceCleanCaches) {
       cleanOutputRoots(context);
     }
 
