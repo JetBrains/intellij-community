@@ -103,7 +103,7 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
 
   private final AntMessageCustomizer[] myMessageCustomizers = AntMessageCustomizer.EP_NAME.getExtensions();
 
-  private final Alarm myAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
+  private final Alarm myAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
   private final Runnable myFlushLogRunnable = new Runnable() {
     @Override
     public void run() {
