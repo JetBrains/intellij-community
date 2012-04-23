@@ -935,7 +935,7 @@ public class ChangesCacheFile {
     // a previous incoming changes refresh. So we try to search for the deletion of this file through all
     // subsequent committed changelists, regardless of whether they are in "incoming" status.
     private boolean wasSubsequentlyDeleted(final FilePath file, long indexOffset) {
-      try {
+      try {                  // todo should be fixed here
         indexOffset += INDEX_ENTRY_SIZE;
         while(indexOffset < myIndexStream.length()) {
           IndexEntry e = getIndexEntryAtOffset(indexOffset);
@@ -949,11 +949,13 @@ public class ChangesCacheFile {
                 debug("Found subsequent deletion for file " + file);
                 return true;
               }
-            } else if ((beforeRevision != null) && (c.getAfterRevision() != null) &&
-                       (beforeRevision.getFile().getIOFile().getAbsolutePath().equals(
-                         c.getAfterRevision().getFile().getIOFile().getAbsolutePath()))) {
-              if (file.isUnder(beforeRevision.getFile(), true) && c.isIsReplaced()) {
+            } else if ((beforeRevision != null) && (c.getAfterRevision() != null)) {
+              boolean underBefore = file.isUnder(beforeRevision.getFile(), false);
+              if (underBefore && c.isIsReplaced() && (! file.equals(beforeRevision.getFile()))) {
                 debug("For " + file + "some of parents is replaced: " + beforeRevision.getFile());
+                return true;
+              } else if (underBefore && (c.isMoved() || c.isRenamed())) {
+                debug("For " + file + "some of parents was renamed/moved: " + beforeRevision.getFile());
                 return true;
               }
             }
