@@ -25,7 +25,7 @@ import gnu.trove.TIntIntProcedure;
  * Time: 0:00
  * To change this template use File | Settings | File Templates.
  */
-public class IntIntTransientMaplet implements IntIntMaplet {
+public class IntIntTransientMaplet extends IntIntMaplet {
   private final TIntIntHashMap myMap = new TIntIntHashMap();
   
   @Override

@@ -19,6 +19,8 @@ import com.android.ide.common.rendering.api.ViewInfo;
 import com.intellij.android.designer.model.ModelParser;
 import com.intellij.android.designer.model.RadViewComponent;
 import com.intellij.android.designer.model.RadViewContainer;
+import com.intellij.android.designer.model.agrid.GridInfo;
+import com.intellij.android.designer.model.agrid.IGridProvider;
 import com.intellij.designer.model.RadComponent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.xml.XmlTag;
@@ -31,7 +33,7 @@ import java.util.List;
 /**
  * @author Alexander Lobas
  */
-public class RadTableLayoutComponent extends RadViewContainer {
+public class RadTableLayoutComponent extends RadViewContainer implements IGridProvider {
   private GridInfo myGridInfo;
   private GridInfo myVirtualGridInfo;
 

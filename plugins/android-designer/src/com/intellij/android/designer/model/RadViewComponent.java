@@ -82,15 +82,19 @@ public class RadViewComponent extends RadVisualComponent {
         Object layoutParams = myViewInfo.getLayoutParamsObject();
         Class<?> layoutClass = layoutParams.getClass();
 
-        myMargins.x = layoutClass.getField("leftMargin").getInt(layoutParams);
-        myMargins.y = layoutClass.getField("topMargin").getInt(layoutParams);
-        myMargins.width = layoutClass.getField("rightMargin").getInt(layoutParams);
-        myMargins.height = layoutClass.getField("bottomMargin").getInt(layoutParams);
+        myMargins.x = fixDefault(layoutClass.getField("leftMargin").getInt(layoutParams));
+        myMargins.y = fixDefault(layoutClass.getField("topMargin").getInt(layoutParams));
+        myMargins.width = fixDefault(layoutClass.getField("rightMargin").getInt(layoutParams));
+        myMargins.height = fixDefault(layoutClass.getField("bottomMargin").getInt(layoutParams));
       }
       catch (Throwable e) {
       }
     }
     return myMargins;
+  }
+
+  private static int fixDefault(int value) {
+    return value == Integer.MIN_VALUE ? 0 : value;
   }
 
   @Override

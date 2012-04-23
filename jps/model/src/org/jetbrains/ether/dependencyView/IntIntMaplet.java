@@ -24,13 +24,26 @@ import gnu.trove.TIntIntProcedure;
  * Time: 23:48
  * To change this template use File | Settings | File Templates.
  */
-interface IntIntMaplet {
-  boolean containsKey(final int key);
-  int get(final int key);
-  void put(final int key, final int value);
-  void putAll(IntIntMaplet m);
-  void remove(final int key);
-  void close();
-  void forEachEntry(TIntIntProcedure proc);
-  void flush(boolean memoryCachesOnly);
+abstract class IntIntMaplet {
+  abstract boolean containsKey(final int key);
+  abstract int get(final int key);
+  abstract void put(final int key, final int value);
+  abstract void putAll(IntIntMaplet m);
+  abstract void remove(final int key);
+  abstract void close();
+  abstract void forEachEntry(TIntIntProcedure proc);
+  abstract void flush(boolean memoryCachesOnly);
+  void toBuffer (final DependencyContext context, final StringBuffer buf) {
+    forEachEntry(new TIntIntProcedure() {
+      @Override
+      public boolean execute(final int a, final int b) {
+        buf.append("  ");
+        buf.append(context.getValue(a));
+        buf.append(" -> ");
+        buf.append(context.getValue(b));
+        buf.append("\n");
+        return true;
+      }
+    });
+  }
 }

@@ -25,9 +25,8 @@ import com.intellij.designer.designSurface.feedbacks.LineMarginBorder;
 import com.intellij.designer.designSurface.feedbacks.RectangleFeedback;
 import com.intellij.designer.designSurface.feedbacks.TextFeedback;
 import com.intellij.designer.designSurface.selection.DirectionResizePoint;
-import com.intellij.designer.designSurface.selection.ResizePoint;
+import com.intellij.designer.designSurface.selection.EmptyPoint;
 import com.intellij.designer.designSurface.selection.ResizeSelectionDecorator;
-import com.intellij.designer.designSurface.tools.InputTool;
 import com.intellij.designer.model.RadComponent;
 import com.intellij.designer.utils.Position;
 import com.intellij.openapi.application.ApplicationManager;
@@ -192,8 +191,6 @@ public class LayoutMarginOperation implements EditOperation {
   //
   //////////////////////////////////////////////////////////////////////////////////////////
 
-  private static final BasicStroke STROKE = new BasicStroke(1, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER, 1, new float[]{1, 2}, 0);
-
   public static void points(ResizeSelectionDecorator decorator) {
     pointFeedback(decorator);
 
@@ -220,8 +217,10 @@ public class LayoutMarginOperation implements EditOperation {
     pointBottom(decorator, Color.orange, 0.25, TYPE, "Change layout:margin.bottom");
   }
 
+  public static final BasicStroke STROKE = new BasicStroke(1, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER, 1, new float[]{1, 2}, 0);
+
   protected static void pointFeedback(ResizeSelectionDecorator decorator) {
-    decorator.addPoint(new ResizePoint() {
+    decorator.addPoint(new EmptyPoint() {
       @Override
       protected void paint(DecorationLayer layer, Graphics2D g, RadComponent component) {
         Rectangle bounds = component.getBounds(layer);
@@ -230,26 +229,6 @@ public class LayoutMarginOperation implements EditOperation {
         g.setStroke(STROKE);
         g.setColor(Color.red);
         g.drawRect(bounds.x, bounds.y, bounds.width, bounds.height);
-      }
-
-      @Override
-      public InputTool findTargetTool(DecorationLayer layer, RadComponent component, int x, int y) {
-        return null;
-      }
-
-      @Override
-      public Object getType() {
-        return null;
-      }
-
-      @Override
-      protected InputTool createTool(RadComponent component) {
-        return null;
-      }
-
-      @Override
-      protected Point getLocation(DecorationLayer layer, RadComponent component) {
-        return null;
       }
     });
   }

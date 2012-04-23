@@ -105,7 +105,7 @@ public class HorizontalCaptionFlowBaseOperation extends FlowBaseOperation {
 
         List<RadViewComponent> editComponents = new ArrayList<RadViewComponent>();
         for (RadComponent component : myComponents) {
-          int column = ((RadCaptionTableColumn)component).getColumnIndex();
+          int column = ((RadCaptionTableColumn)component).getIndex();
           RadViewComponent editComponent = (RadViewComponent)rowComponents[column];
           if (editComponent != null) {
             editComponents.add(editComponent);
@@ -118,7 +118,7 @@ public class HorizontalCaptionFlowBaseOperation extends FlowBaseOperation {
 
         RadViewComponent insertBeforeColumn = null;
         if (insertBefore != null) {
-          int column = ((RadCaptionTableColumn)insertBefore).getColumnIndex();
+          int column = ((RadCaptionTableColumn)insertBefore).getIndex();
           for (int j = column; j < rowComponents.length; j++) {
             insertBeforeColumn = (RadViewComponent)rowComponents[j];
             if (insertBeforeColumn != null) {
@@ -150,7 +150,7 @@ public class HorizontalCaptionFlowBaseOperation extends FlowBaseOperation {
     List<RadComponent> columns = myContainer.getChildren();
     int size = columns.size();
     for (int i = 0; i < size; i++) {
-      int index = ((RadCaptionTableColumn)columns.get(i)).getColumnIndex();
+      int index = ((RadCaptionTableColumn)columns.get(i)).getIndex();
 
       for (int j = 0; j < components.length; j++) {
         if (RadTableRowLayout.is(rows.get(j))) {

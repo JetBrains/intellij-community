@@ -18,6 +18,7 @@ package com.intellij.compiler.server;
 import com.intellij.ProjectTopics;
 import com.intellij.application.options.PathMacrosImpl;
 import com.intellij.compiler.CompilerWorkspaceConfiguration;
+import com.intellij.compiler.impl.CompileDriver;
 import com.intellij.compiler.server.impl.CompileServerClasspathManager;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
@@ -177,6 +178,9 @@ public class BuildManager implements ApplicationComponent{
       }
 
       private boolean shouldTriggerMake(List<? extends VFileEvent> events) {
+        if (CompileDriver.runOutOfProcessMakeAsServer()) {
+          return false;
+        }
         for (VFileEvent event : events) {
           if (event.isFromRefresh() || event.getRequestor() instanceof SavingRequestor) {
             return true;

@@ -19,10 +19,10 @@ import java.util.*;
  */
 public class ClassRepr extends Proto {
   private final DependencyContext context;
-  public final int fileName;
+  private final int fileName;
   public final TypeRepr.AbstractType superClass;
   public final Set<TypeRepr.AbstractType> interfaces;
-  public final Set<TypeRepr.AbstractType> nestedClasses;
+  //public final Set<TypeRepr.AbstractType> nestedClasses;
   public final Set<ElemType> targets;
   public final RetentionPolicy policy;
 
@@ -32,14 +32,14 @@ public class ClassRepr extends Proto {
   public final int outerClassName;
   public final boolean isLocal;
 
-  public String getFileName() {
-    return context.getValue(fileName);
-  }
+  //public String getFileName() {
+  //  return context.getValue(fileName);
+  //}
 
   public abstract static class Diff extends Difference {
     public abstract Specifier<TypeRepr.AbstractType> interfaces();
 
-    public abstract Specifier<TypeRepr.AbstractType> nestedClasses();
+    //public abstract Specifier<TypeRepr.AbstractType> nestedClasses();
 
     public abstract Specifier<FieldRepr> fields();
 
@@ -54,7 +54,7 @@ public class ClassRepr extends Proto {
     public boolean no() {
       return base() == NONE &&
              interfaces().unchanged() &&
-             nestedClasses().unchanged() &&
+             //nestedClasses().unchanged() &&
              fields().unchanged() &&
              methods().unchanged() &&
              targets().unchanged() &&
@@ -100,10 +100,10 @@ public class ClassRepr extends Proto {
         return Difference.make(pastClass.interfaces, interfaces);
       }
 
-      @Override
-      public Difference.Specifier<TypeRepr.AbstractType> nestedClasses() {
-        return Difference.make(pastClass.nestedClasses, nestedClasses);
-      }
+      //@Override
+      //public Difference.Specifier<TypeRepr.AbstractType> nestedClasses() {
+      //  return Difference.make(pastClass.nestedClasses, nestedClasses);
+      //}
 
       @Override
       public Difference.Specifier<FieldRepr> fields() {
@@ -188,7 +188,7 @@ public class ClassRepr extends Proto {
     fileName = fn;
     superClass = TypeRepr.createClassType(context, sup);
     interfaces = (Set<TypeRepr.AbstractType>)TypeRepr.createClassType(context, i, new HashSet<TypeRepr.AbstractType>());
-    nestedClasses = (Set<TypeRepr.AbstractType>)TypeRepr.createClassType(context, ns, new HashSet<TypeRepr.AbstractType>());
+    //nestedClasses = (Set<TypeRepr.AbstractType>)TypeRepr.createClassType(context, ns, new HashSet<TypeRepr.AbstractType>());
     fields = f;
     methods = m;
     this.targets = targets;
@@ -204,7 +204,7 @@ public class ClassRepr extends Proto {
       fileName = in.readInt();
       superClass = TypeRepr.externalizer(context).read(in);
       interfaces = (Set<TypeRepr.AbstractType>)RW.read(TypeRepr.externalizer(context), new HashSet<TypeRepr.AbstractType>(), in);
-      nestedClasses = (Set<TypeRepr.AbstractType>)RW.read(TypeRepr.externalizer(context), new HashSet<TypeRepr.AbstractType>(), in);
+      //nestedClasses = (Set<TypeRepr.AbstractType>)RW.read(TypeRepr.externalizer(context), new HashSet<TypeRepr.AbstractType>(), in);
       fields = (Set<FieldRepr>)RW.read(FieldRepr.externalizer(context), new HashSet<FieldRepr>(), in);
       methods = (Set<MethodRepr>)RW.read(MethodRepr.externalizer(context), new HashSet<MethodRepr>(), in);
       targets = (Set<ElemType>)RW.read(UsageRepr.AnnotationUsage.elementTypeExternalizer, EnumSet.noneOf(ElemType.class), in);
@@ -228,7 +228,7 @@ public class ClassRepr extends Proto {
       out.writeInt(fileName);
       superClass.save(out);
       RW.save(interfaces, out);
-      RW.save(nestedClasses, out);
+      //RW.save(nestedClasses, out);
       RW.save(fields, out);
       RW.save(methods, out);
       RW.save(targets, UsageRepr.AnnotationUsage.elementTypeExternalizer, out);
