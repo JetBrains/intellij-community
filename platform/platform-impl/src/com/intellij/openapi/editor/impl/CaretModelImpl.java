@@ -117,8 +117,7 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
       public void updateFinished(@NotNull Document doc) {
         if (doc != myEditor.getDocument() || myIsInUpdate) return;
         if (savedBeforeBulkCaretMarker != null && savedBeforeBulkCaretMarker.isValid()
-            && savedBeforeBulkCaretMarker.getStartOffset() != myOffset && !myReportCaretMoves)
-        {
+            && savedBeforeBulkCaretMarker.getStartOffset() != myOffset && !myReportCaretMoves) {
           moveToOffset(savedBeforeBulkCaretMarker.getStartOffset());
         }
         releaseBulkCaretMarker();
@@ -738,7 +737,7 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
     myVisualLineEnd = myEditor.logicalPositionToOffset(myEditor.visualToLogicalPosition(new VisualPosition(myVisibleCaret.line + 1, 0)));
   }
 
-  public void finishUpdate() {
+  private void finishUpdate() {
     myIsInUpdate = false;
   }
 
