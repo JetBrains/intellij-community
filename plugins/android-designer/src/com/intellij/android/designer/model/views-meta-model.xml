@@ -1044,7 +1044,7 @@
              tooltip="A Layout that arranges its children in a single column or a single row."/>
 
     <properties important="orientation gravity baselineAligned measureWithLargestChild showDividers"
-                expert="layout:gravity.fill layout:gravity.fill_horizontal layout:gravity.fill_vertical layout:gravity.clip_vertical layout:gravity.clip_horizontal"
+                expert="layout:gravity.fill layout:gravity.clip"
                 top="gravity orientation"
         />
 
@@ -1068,7 +1068,7 @@
              tooltip="FrameLayout is designed to block out an area on the screen to display a single item."/>
 
     <properties important="foreground foregroundGravity"
-                expert="layout:gravity.fill layout:gravity.fill_horizontal layout:gravity.fill_vertical layout:gravity.clip_vertical layout:gravity.clip_horizontal"
+                expert="layout:gravity.fill layout:gravity.clip"
         />
 
     <creation>
@@ -1144,7 +1144,7 @@
 
     <properties important="orientation rowCount columnCount"
                 top="rowCount columnCount orientation"
-                expert="layout:gravity.clip_vertical layout:gravity.clip_horizontal"
+                expert="layout:gravity.clip"
         />
 
     <palette title="GridLayout" icon="/com/intellij/android/designer/icons/GridLayout.png"

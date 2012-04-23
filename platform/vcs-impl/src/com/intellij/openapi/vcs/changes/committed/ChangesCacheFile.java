@@ -935,7 +935,7 @@ public class ChangesCacheFile {
     // a previous incoming changes refresh. So we try to search for the deletion of this file through all
     // subsequent committed changelists, regardless of whether they are in "incoming" status.
     private boolean wasSubsequentlyDeleted(final FilePath file, long indexOffset) {
-      try {                  // todo should be fixed here
+      try {
         indexOffset += INDEX_ENTRY_SIZE;
         while(indexOffset < myIndexStream.length()) {
           IndexEntry e = getIndexEntryAtOffset(indexOffset);

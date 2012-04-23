@@ -68,7 +68,7 @@ public class GitPull extends GitRepositoryAction {
     final Label beforeLabel = LocalHistory.getInstance().putSystemLabel(project, "Before update");
     
     final AtomicReference<GitLineHandler> handlerReference = new AtomicReference<GitLineHandler>();
-    new Task.Modal(project, GitBundle.message("pulling.title", dialog.getRemote()), true) {
+    new Task.Backgroundable(project, GitBundle.message("pulling.title", dialog.getRemote()), true) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         final GitRepositoryManager repositoryManager = GitUtil.getRepositoryManager(myProject);

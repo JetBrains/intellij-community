@@ -898,6 +898,17 @@ public final class PropertyTable extends JBTable implements ComponentSelectionLi
     }
   }
 
+  public static void updateRenderer(JComponent component, boolean selected) {
+    if (selected) {
+      component.setForeground(UIUtil.getTableSelectionForeground());
+      component.setBackground(UIUtil.getTableSelectionBackground());
+    }
+    else {
+      component.setForeground(UIUtil.getTableForeground());
+      component.setBackground(UIUtil.getTableBackground());
+    }
+  }
+
   private class PropertyCellRenderer implements TableCellRenderer {
     private final ColoredTableCellRenderer myPropertyNameRenderer;
     private final ColoredTableCellRenderer myErrorRenderer;

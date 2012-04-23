@@ -17,7 +17,7 @@ package com.intellij.designer.propertyTable.renderers;
 
 import com.intellij.designer.model.RadComponent;
 import com.intellij.designer.propertyTable.PropertyRenderer;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.designer.propertyTable.PropertyTable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,15 +30,7 @@ import javax.swing.*;
 public class BooleanRenderer extends JCheckBox implements PropertyRenderer {
   @NotNull
   public JComponent getComponent(@Nullable RadComponent component, @Nullable Object value, boolean selected, boolean hasFocus) {
-    if (selected) {
-      setForeground(UIUtil.getTableSelectionForeground());
-      setBackground(UIUtil.getTableSelectionBackground());
-    }
-    else {
-      setForeground(UIUtil.getTableForeground());
-      setBackground(UIUtil.getTableBackground());
-    }
-
+    PropertyTable.updateRenderer(this, selected);
     setSelected(value != null && (Boolean)value);
     return this;
   }
