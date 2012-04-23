@@ -147,9 +147,12 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
       PsiElement definition = instruction.getElement();
       NameDefiner definer = null;
       // TODO: This check may slow down resolving, but it is the current solution to the comprehension scopes problem
-      final PyComprehensionElement defComprh = PsiTreeUtil.getParentOfType(definition, PyComprehensionElement.class);
-      if (defComprh != null && defComprh != PsiTreeUtil.getParentOfType(element, PyComprehensionElement.class)) {
-        continue;
+      final PyComprehensionElement definitionComprehension = PsiTreeUtil.getParentOfType(definition, PyComprehensionElement.class);
+      if (definitionComprehension != null) {
+        final PyComprehensionElement elementComprehension = PsiTreeUtil.getParentOfType(element, PyComprehensionElement.class);
+        if (elementComprehension == null || !PsiTreeUtil.isAncestor(definitionComprehension, elementComprehension, false)) {
+          continue;
+        }
       }
       if (definition instanceof NameDefiner && !(definition instanceof PsiNamedElement)) {
         definer = (NameDefiner)definition;
