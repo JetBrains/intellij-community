@@ -164,7 +164,7 @@ public class CompileServerManager implements ApplicationComponent{
       }
 
       private boolean shouldTriggerMake(List<? extends VFileEvent> events) {
-        if (!CompileDriver.OUT_OF_PROCESS_MAKE_AS_SERVER) {
+        if (!CompileDriver.runOutOfProcessMakeAsServer()) {
           return false;
         }
         for (VFileEvent event : events) {
