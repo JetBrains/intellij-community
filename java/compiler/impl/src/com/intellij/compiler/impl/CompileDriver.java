@@ -107,7 +107,7 @@ public class CompileDriver {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.impl.CompileDriver");
   // to be used in tests only for debug output
   public static volatile boolean ourDebugMode = false;
-  private static final boolean OUT_OF_PROCESS_MAKE_AS_SERVER = true; // out-of-process make implementation switch (server / per-project build process)
+  public static final boolean OUT_OF_PROCESS_MAKE_AS_SERVER = true; // out-of-process make implementation switch (server / per-project build process)
 
   private final Project myProject;
   private final Map<Pair<IntermediateOutputCompiler, Module>, Pair<VirtualFile, VirtualFile>> myGenerationCompilerModuleToOutputDirMap; // [IntermediateOutputCompiler, Module] -> [ProductionSources, TestSources]
