@@ -35,7 +35,7 @@ import java.io.*;
  * Time: 15:38
  * To change this template use File | Settings | File Templates.
  */
-class IntIntPersistentMultiMaplet implements IntIntMultiMaplet {
+class IntIntPersistentMultiMaplet extends IntIntMultiMaplet {
   private static final TIntHashSet NULL_COLLECTION = new TIntHashSet();
   private static final int CACHE_SIZE = 128;
   private final PersistentHashMap<Integer, TIntHashSet> myMap;
@@ -256,7 +256,6 @@ class IntIntPersistentMultiMaplet implements IntIntMultiMaplet {
   }
 
   private static class IntSetExternalizer implements DataExternalizer<TIntHashSet> {
-
     @Override
     public void save(final DataOutput out, final TIntHashSet value) throws IOException {
       final Ref<IOException> exRef = new Ref<IOException>(null);
