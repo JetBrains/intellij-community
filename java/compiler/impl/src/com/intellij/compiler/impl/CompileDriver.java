@@ -109,7 +109,7 @@ public class CompileDriver {
   public static volatile boolean ourDebugMode = false;
 
   // todo: temp option
-  private static final boolean OUT_OF_PROCESS_MAKE_AS_SERVER = false; // out-of-process make implementation switch (server / per-project build process)
+  private static final boolean OUT_OF_PROCESS_MAKE_AS_SERVER = true; // out-of-process make implementation switch (server / per-project build process)
   public static boolean runOutOfProcessMakeAsServer() {
     return OUT_OF_PROCESS_MAKE_AS_SERVER;
   }
