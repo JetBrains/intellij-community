@@ -47,6 +47,7 @@ setProperty("paths", paths)
 
 target(compile: "Compile project") {
   loadProject()
+  project.builder.arrangeModuleCyclesOutputs = true
 
   project.stage("Cleaning up sandbox folder")
   forceDelete(paths.sandbox)
