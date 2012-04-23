@@ -17,13 +17,13 @@ package com.intellij.android.designer.propertyTable.renderers;
 
 import com.intellij.designer.model.RadComponent;
 import com.intellij.designer.propertyTable.PropertyRenderer;
+import com.intellij.designer.propertyTable.PropertyTable;
 import com.intellij.designer.propertyTable.renderers.BooleanRenderer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.EmptyIcon;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.android.dom.attrs.AttributeFormat;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -65,17 +65,7 @@ public class ResourceRenderer implements PropertyRenderer {
     }
 
     myColoredComponent.clear();
-
-    if (selected) {
-      myColoredComponent.setForeground(UIUtil.getTableSelectionForeground());
-      Color background = UIUtil.getTableSelectionBackground();
-      myColoredComponent.setBackground(background);
-    }
-    else {
-      myColoredComponent.setForeground(UIUtil.getTableForeground());
-      myColoredComponent.setBackground(UIUtil.getTableBackground());
-    }
-
+    PropertyTable.updateRenderer(myColoredComponent, selected);
     formatValue(value);
 
     return myColoredComponent;
