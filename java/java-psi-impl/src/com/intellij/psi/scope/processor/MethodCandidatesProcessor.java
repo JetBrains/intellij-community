@@ -79,7 +79,7 @@ public class MethodCandidatesProcessor extends MethodsProcessor{
 
   protected boolean isShadowed(final PsiMethod candidate) {
     if (myCurrentFileContext instanceof PsiImportStaticStatement) {
-      for (JavaResolveResult result : getResult()) {
+      for (JavaResolveResult result : getResults()) {
         if (result.getElement() != candidate &&
             result.isAccessible() &&
             !(result.getCurrentFileResolveScope() instanceof PsiImportStaticStatement)) return true;

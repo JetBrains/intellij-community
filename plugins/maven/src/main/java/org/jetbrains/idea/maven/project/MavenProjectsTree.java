@@ -1021,16 +1021,33 @@ public class MavenProjectsTree {
     embedder.customizeForResolve(console, process);
     embedder.clearCachesFor(mavenProject.getMavenId());
 
+    Set<File> filesToRefresh = new HashSet<File>();
+
     try {
+      process.setText(ProjectBundle.message("maven.downloading.pom.plugins", mavenProject.getDisplayName()));
+
       for (MavenPlugin each : mavenProject.getDeclaredPlugins()) {
         process.checkCanceled();
-        process.setText(ProjectBundle.message("maven.downloading.pom.plugins", mavenProject.getDisplayName()));
-        embedder.resolvePlugin(each, mavenProject.getRemoteRepositories(), nativeMavenProject, false);
+
+        Collection<MavenArtifact> artifacts = embedder.resolvePlugin(each, mavenProject.getRemoteRepositories(), nativeMavenProject, false);
+
+        for (MavenArtifact artifact : artifacts) {
+          File pluginJar = artifact.getFile();
+          File pluginDir = pluginJar.getParentFile();
+          if (pluginDir != null) {
+            filesToRefresh.add(pluginDir); // Refresh both *.pom and *.jar files.
+          }
+        }
       }
+
       mavenProject.resetCache();
       firePluginsResolved(mavenProject);
     }
     finally {
+      if (filesToRefresh.size() > 0) {
+        LocalFileSystem.getInstance().refreshIoFiles(filesToRefresh);
+      }
+
       embeddersManager.release(embedder);
     }
   }

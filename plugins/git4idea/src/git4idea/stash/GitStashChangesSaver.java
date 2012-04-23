@@ -77,21 +77,12 @@ public class GitStashChangesSaver extends GitChangesSaver {
   }
 
   public void load() throws VcsException {
-    Collection<VirtualFile> conflictedRoots = new ArrayList<VirtualFile>();
     for (VirtualFile root : myStashedRoots) {
-      boolean conflict = loadRoot(root);
-      if (conflict) {
-        conflictedRoots.add(root);
-      }
+      loadRoot(root);
     }
 
     boolean conflictsResolved = new UnstashConflictResolver(myProject, myStashedRoots, myParams).merge();
-    if (conflictsResolved) {
-      LOG.info("load: all conflicts resolved, dropping stash in " + myStashedRoots);
-      for (VirtualFile root : conflictedRoots) {
-        GitStashUtils.dropStash(myProject, root);
-      }
-    }
+    LOG.info("load: conflicts resolved status is " + conflictsResolved + " in roots " + myStashedRoots);
   }
 
   @Override

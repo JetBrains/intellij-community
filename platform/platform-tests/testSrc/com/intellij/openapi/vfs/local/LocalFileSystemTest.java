@@ -22,6 +22,9 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
+import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
+import com.intellij.openapi.vfs.newvfs.RefreshQueue;
+import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.testFramework.PlatformLangTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
@@ -240,24 +243,31 @@ public class LocalFileSystemTest extends PlatformLangTestCase {
   }
 
   public void testFindRoot() {
-    VirtualFile file = LocalFileSystem.getInstance().findFileByPath("wrong_path");
-    assertNull(file);
+    VirtualFile root;
+
+    root = LocalFileSystem.getInstance().findFileByPath("wrong_path");
+    assertNull(root);
 
     if (SystemInfo.isWindows) {
-      assertNotNull(LocalFileSystem.getInstance().findFileByPath("\\\\unit-133"));
-      assertNotNull(LocalFileSystem.getInstance().findFileByIoFile(new File("\\\\unit-133")));
-    }
+      root = LocalFileSystem.getInstance().findFileByPath("\\\\unit-133");
+      assertNotNull(root);
+      RefreshQueue.getInstance().processSingleEvent(new VFileDeleteEvent(this, root, false));
 
-    if (SystemInfo.isWindows && new File("c:").exists()) {
-      VirtualFile root = LocalFileSystem.getInstance().findFileByPath("c:");
+      root = LocalFileSystem.getInstance().findFileByIoFile(new File("\\\\unit-133"));
+      assertNotNull(root);
+      RefreshQueue.getInstance().processSingleEvent(new VFileDeleteEvent(this, root, false));
+
+      if (new File("c:").exists()) {
+        root = LocalFileSystem.getInstance().findFileByPath("c:");
+        assertNotNull(root);
+      }
+    }
+    else if (SystemInfo.isUnix) {
+      root = LocalFileSystem.getInstance().findFileByPath("/");
       assertNotNull(root);
     }
-    if (SystemInfo.isUnix) {
-      VirtualFile root = LocalFileSystem.getInstance().findFileByPath("/");
-      assertNotNull(root);
-    }
 
-    VirtualFile root = LocalFileSystem.getInstance().findFileByPath("");
+    root = LocalFileSystem.getInstance().findFileByPath("");
     assertNotNull(root);
   }
 
@@ -310,5 +320,19 @@ public class LocalFileSystemTest extends PlatformLangTestCase {
       GeneralSettings.getInstance().setUseSafeWrite(safeWrite);
       FileUtil.delete(dir);
     }
+  }
+
+  public void testWindowsVirtualDirectory() throws Exception {
+    if (!SystemInfo.isWindows) return;
+    File file = new File("c:\\Documents and Settings\\desktop.ini");
+    VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
+    assertNotNull("File not found: " + file, virtualFile);
+
+    NewVirtualFileSystem system = (NewVirtualFileSystem)virtualFile.getFileSystem();
+    system = PersistentFS.replaceWithNativeFS(system);
+
+    assertTrue(system.exists(virtualFile));
+    int childAttributes = system.getBooleanAttributes(virtualFile, -1);
+    assertTrue((childAttributes & FileUtil.BA_EXISTS) != 0);
   }
 }

@@ -36,6 +36,7 @@ import com.intellij.openapi.vcs.changes.IgnoredBeanFactory;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -47,19 +48,26 @@ import org.jetbrains.plugins.groovy.mvc.MvcProjectStructure;
 
 import javax.swing.*;
 import java.io.File;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * @author peter
  */
 public class GriffonFramework extends MvcFramework {
   public static final Icon GRIFFON_ICON = IconLoader.getIcon("/icons/griffon/griffon.png");
+  public static final Icon GRIFFON_ICON_13 = IconLoader.getIcon("/icons/griffon/griffonToolWindow.png");
 
   @NonNls private static final String GRIFFON_COMMON_PLUGINS = "-griffonPlugins";
   private static final String GLOBAL_PLUGINS_MODULE_NAME = "GriffonGlobalPlugins";
 
   public static final String GRIFFON_USER_LIBRARY = "Griffon:lib";
+
+  private static final Pattern PLUGIN_NAME_JSON_PATTERN = Pattern.compile("\"name\"\\s*:\\s*\"([^\"]+)\"");
+  private static final Pattern PLUGIN_VERSION_JSON_PATTERN = Pattern.compile("\"version\"\\s*:\\s*\"([^\"]+)\"");
 
   private GriffonFramework() {
   }
@@ -99,8 +107,8 @@ public class GriffonFramework extends MvcFramework {
       MvcModuleStructureUtil.updateModuleStructure(module, createProjectStructure(module, false), root);
 
       if (hasSupport(module)) {
-        MvcModuleStructureUtil.updateAuxiliaryPluginsModuleRoots(module, getInstance());
-        MvcModuleStructureUtil.updateGlobalPluginModule(module.getProject(), getInstance());
+        MvcModuleStructureUtil.updateAuxiliaryPluginsModuleRoots(module, this);
+        MvcModuleStructureUtil.updateGlobalPluginModule(module.getProject(), this);
       }
     }
     finally {
@@ -117,6 +125,64 @@ public class GriffonFramework extends MvcFramework {
     if (root != null) {
       ensureRunConfigurationExists(module, GriffonRunConfigurationType.getInstance(), "Griffon:" + root.getName());
     }
+  }
+
+  @Override
+  public String getInstalledPluginNameByPath(Project project, @NotNull VirtualFile pluginPath) {
+    String nameFromPluginXml = super.getInstalledPluginNameByPath(project, pluginPath);
+    if (nameFromPluginXml != null) {
+      return nameFromPluginXml;
+    }
+
+    VirtualFile pluginJson = pluginPath.findChild("plugin.json");
+    if (pluginJson != null) {
+      String pluginAndVersion = pluginPath.getName(); // pluginName-version
+
+      TIntArrayList separatorIndexes = new TIntArrayList();
+      int start = -1;
+      while (true) {
+        start = pluginAndVersion.indexOf('-', start + 1);
+        if (start == -1) break;
+        separatorIndexes.add(start);
+      }
+
+      if (separatorIndexes.size() == 1) {
+        return pluginAndVersion.substring(0, separatorIndexes.get(0));
+      }
+
+      if (separatorIndexes.size() > 0) {
+        String json;
+        try {
+          json = VfsUtil.loadText(pluginJson);
+        }
+        catch (IOException e) {
+          return null;
+        }
+
+        for (int i = 0; i < separatorIndexes.size(); i++) {
+          int idx = separatorIndexes.get(i);
+          String name = pluginAndVersion.substring(0, idx);
+          String version = pluginAndVersion.substring(idx + 1);
+
+          if (hasValue(PLUGIN_NAME_JSON_PATTERN, json, name) && hasValue(PLUGIN_VERSION_JSON_PATTERN, json, version)) {
+            return name;
+          }
+        }
+      }
+    }
+
+    return null;
+  }
+
+  private static boolean hasValue(Pattern pattern, String text, String value) {
+    Matcher matcher = pattern.matcher(text);
+    while (matcher.find()) {
+      if (matcher.group(1).equals(value)) {
+        return true;
+      }
+    }
+
+    return false;
   }
 
   @Override
@@ -260,6 +326,11 @@ public class GriffonFramework extends MvcFramework {
   @Override
   public Icon getIcon() {
     return GRIFFON_ICON;
+  }
+
+  @Override
+  public Icon getToolWindowIcon() {
+    return GRIFFON_ICON_13;
   }
 
   @Override

@@ -328,12 +328,18 @@ public class ClipboardSynchronizer implements ApplicationComponent {
         return currentContent.isDataFlavorSupported(dataFlavor);
       }
 
-      final Collection<DataFlavor> flavors = checkContentsQuick();
-      if (flavors != null) {
-        return flavors.contains(dataFlavor);
-      }
+      try {
+        final Collection<DataFlavor> flavors = checkContentsQuick();
+        if (flavors != null) {
+          return flavors.contains(dataFlavor);
+        }
 
-      return super.isDataFlavorAvailable(dataFlavor);
+        return super.isDataFlavorAvailable(dataFlavor);
+      }
+      catch (NullPointerException e) {
+        LOG.warn("Sun bug #6322854", e);
+        return false;
+      }
     }
 
     @Override
@@ -343,12 +349,18 @@ public class ClipboardSynchronizer implements ApplicationComponent {
         return currentContent;
       }
 
-      final Collection<DataFlavor> flavors = checkContentsQuick();
-      if (flavors != null && flavors.isEmpty()) {
+      try {
+        final Collection<DataFlavor> flavors = checkContentsQuick();
+        if (flavors != null && flavors.isEmpty()) {
+          return null;
+        }
+
+        return super.getContents();
+      }
+      catch (NullPointerException e) {
+        LOG.warn("Sun bug #6322854", e);
         return null;
       }
-
-      return super.getContents();
     }
 
     @Override
@@ -369,7 +381,7 @@ public class ClipboardSynchronizer implements ApplicationComponent {
      *         collection of available data flavors otherwise.
      */
     @Nullable
-    public static Collection<DataFlavor> checkContentsQuick() {
+    private static Collection<DataFlavor> checkContentsQuick() {
       final Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
       final Class<? extends Clipboard> aClass = clipboard.getClass();
       if (!"sun.awt.X11.XClipboard".equals(aClass.getName())) return null;
@@ -391,14 +403,9 @@ public class ClipboardSynchronizer implements ApplicationComponent {
         if (formats == null || formats.length == 0) {
           return Collections.emptySet();
         }
-        try {
-          @SuppressWarnings({"unchecked", "UnnecessaryLocalVariable"})
-          final Set<DataFlavor> set = DataTransferer.getInstance().getFlavorsForFormats(formats, FLAVOR_MAP).keySet();
-          return set;
-        }
-        catch (NullPointerException e) {
-          LOG.warn("Sun bug #6322854", e);
-        }
+        @SuppressWarnings({"unchecked", "UnnecessaryLocalVariable"})
+        final Set<DataFlavor> set = DataTransferer.getInstance().getFlavorsForFormats(formats, FLAVOR_MAP).keySet();
+        return set;
       }
       catch (IllegalAccessException ignore) { }
       catch (IllegalArgumentException ignore) { }

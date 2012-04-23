@@ -226,8 +226,6 @@ public class MacFileChooserDialogImpl implements PathChooserDialog {
                  directory, file, types, focusedWindow, self, Foundation.createSelector("openPanelDidEnd:returnCode:contextInfo:"), null);
         }
       }
-
-      Foundation.cfRelease(directory, file, types);
     }
   };
 

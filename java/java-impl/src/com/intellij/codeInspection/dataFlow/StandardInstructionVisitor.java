@@ -289,8 +289,6 @@ public class StandardInstructionVisitor extends InstructionVisitor {
       }
       else if (JavaTokenType.PLUS == opSign) {
         memState.push(instruction.getNonNullStringValue(factory));
-        instruction.setTrueReachable();  // Not a branching instruction actually.
-        instruction.setFalseReachable();
       }
       else {
         if (instruction instanceof InstanceofInstruction) {
@@ -318,6 +316,9 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     else {
       memState.push(DfaUnknownValue.getInstance());
     }
+
+    instruction.setTrueReachable();  // Not a branching instruction actually.
+    instruction.setFalseReachable();
 
     return nextInstruction(instruction, runner, memState);
   }

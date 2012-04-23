@@ -26,6 +26,7 @@ import javax.swing.*;
 public interface GroovyIcons {
 
   Icon FILE_TYPE = IconLoader.getIcon("/org/jetbrains/plugins/groovy/images/groovy_fileType.png");
+  Icon GROOVY_ICON_13x13 = IconLoader.getIcon("/org/jetbrains/plugins/groovy/images/groovy_13x13.png");
   Icon GROOVY_ICON_16x16 = IconLoader.getIcon("/org/jetbrains/plugins/groovy/images/groovy_16x16.png");
   Icon GROOVY_ICON_32x32 = IconLoader.getIcon("/org/jetbrains/plugins/groovy/images/groovy_32x32.png");
   Icon CLASS = IconLoader.getIcon("/org/jetbrains/plugins/groovy/images/class.png");

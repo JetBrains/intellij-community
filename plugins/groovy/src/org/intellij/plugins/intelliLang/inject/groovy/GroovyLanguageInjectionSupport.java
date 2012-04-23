@@ -42,4 +42,9 @@ public class GroovyLanguageInjectionSupport extends AbstractLanguageInjectionSup
   public boolean useDefaultInjector(final PsiElement host) {
     return host instanceof GroovyPsiElement;
   }
+
+  @Override
+  public String getHelpId() {
+    return "reference.settings.language.injection.groovy";
+  }
 }

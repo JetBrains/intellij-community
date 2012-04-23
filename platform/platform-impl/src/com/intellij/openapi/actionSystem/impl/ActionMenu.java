@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -117,6 +117,11 @@ public final class ActionMenu extends JMenu {
   public void updateUI() {
     if (UIUtil.isStandardMenuLAF()) {
       super.updateUI();
+
+      if (myTopLevel && UIUtil.isUnderGTKLookAndFeel() && "Ambiance".equalsIgnoreCase(UIUtil.getGtkThemeName())) {
+        setForeground(UIUtil.GTK_AMBIANCE_TEXT_COLOR);
+        setBackground(UIUtil.GTK_AMBIANCE_BACKGROUND_COLOR);
+      }
     }
     else {
       setUI(IdeaMenuUI.createUI(this));
@@ -131,12 +136,8 @@ public final class ActionMenu extends JMenu {
 
   @Override
   public void setUI(final MenuItemUI ui) {
-    final MenuItemUI newUi = !isTopLevel() && UIUtil.isUnderGTKLookAndFeel() && GtkMenuUI.isUiAcceptable(ui) ? new GtkMenuUI(ui) : ui;
+    final MenuItemUI newUi = !myTopLevel && UIUtil.isUnderGTKLookAndFeel() && GtkMenuUI.isUiAcceptable(ui) ? new GtkMenuUI(ui) : ui;
     super.setUI(newUi);
-  }
-
-  private boolean isTopLevel() {
-    return myTopLevel;
   }
 
   private void init() {

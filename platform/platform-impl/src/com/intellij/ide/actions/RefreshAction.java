@@ -41,6 +41,11 @@ public class RefreshAction extends AnAction implements DumbAware {
     // empty
   }
 
+  @Override
+  public void update(AnActionEvent e) {
+    e.getPresentation().setEnabled(false);
+  }
+
   public void registerShortcutOn(JComponent component) {
     final ShortcutSet shortcutSet = ActionManager.getInstance().getAction(IdeActions.ACTION_REFRESH).getShortcutSet();
     registerCustomShortcutSet(shortcutSet, component);

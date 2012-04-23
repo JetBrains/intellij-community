@@ -116,7 +116,10 @@ public abstract class AbstractLanguageInjectionSupport extends LanguageInjection
     final BaseInjectionPanel panel = new BaseInjectionPanel(injection, project);
     panel.reset();
     final DialogBuilder builder = new DialogBuilder(project);
-    builder.setHelpId("reference.settings.injection.language.injection.settings.java.parameter");
+    LanguageInjectionSupport support = InjectorUtils.findInjectionSupport(injection.getSupportId());
+    if (support != null && support instanceof AbstractLanguageInjectionSupport) {
+      builder.setHelpId(((AbstractLanguageInjectionSupport)support).getHelpId());
+    }
     builder.addOkAction();
     builder.addCancelAction();
     builder.setDimensionServiceKey("#org.intellij.plugins.intelliLang.inject.config.ui.BaseInjectionDialog");
@@ -149,5 +152,10 @@ public abstract class AbstractLanguageInjectionSupport extends LanguageInjection
   @Override
   public boolean equals(Object obj) {
     return obj instanceof LanguageInjectionSupport && getId().equals(((LanguageInjectionSupport)obj).getId());
+  }
+
+  @Nullable
+  public String getHelpId() {
+    return null;
   }
 }

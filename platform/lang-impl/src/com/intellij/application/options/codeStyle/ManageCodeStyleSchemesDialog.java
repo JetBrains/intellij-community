@@ -290,7 +290,7 @@ public class ManageCodeStyleSchemesDialog extends DialogWrapper {
         CodeStyleScheme newScheme = mySchemesModel.exportProjectScheme(name);
         updateSchemes();
         int switchToGlobal = Messages
-          .showYesNoDialog("Project scheme was copied to global scheme list as '" + newScheme.getName() + ".\n" +
+          .showYesNoDialog("Project scheme was copied to global scheme list as '" + newScheme.getName() + "'.\n" +
                            "Switch to this created scheme?",
                            "Copy Project Scheme to Global List", Messages.getQuestionIcon());
         if (switchToGlobal == 0) {

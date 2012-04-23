@@ -363,7 +363,9 @@ public abstract class MvcFramework {
   public String getDisplayName() {
     return getFrameworkName();
   }
-  public abstract Icon getIcon();
+  public abstract Icon getIcon(); // 16*16
+
+  public abstract Icon getToolWindowIcon(); // 13*13
 
   public abstract String getSdkHomePropertyName();
 
@@ -444,7 +446,7 @@ public abstract class MvcFramework {
     }
   }
 
-  private static void extractPlugins(Project project, @Nullable VirtualFile pluginRoot, Map<String, VirtualFile> res) {
+  private void extractPlugins(Project project, @Nullable VirtualFile pluginRoot, Map<String, VirtualFile> res) {
     if (pluginRoot != null) {
       VirtualFile[] children = pluginRoot.getChildren();
       if (children != null) {
@@ -611,7 +613,7 @@ public abstract class MvcFramework {
   }
 
   @Nullable
-  public static String getInstalledPluginNameByPath(Project project, @NotNull VirtualFile pluginPath) {
+  public String getInstalledPluginNameByPath(Project project, @NotNull VirtualFile pluginPath) {
     VirtualFile pluginXml = pluginPath.findChild("plugin.xml");
     if (pluginXml == null) return null;
 

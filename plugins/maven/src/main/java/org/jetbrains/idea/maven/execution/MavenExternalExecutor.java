@@ -19,6 +19,7 @@
 package org.jetbrains.idea.maven.execution;
 
 import com.intellij.execution.ExecutionException;
+import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.process.DefaultJavaProcessHandler;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.openapi.application.ApplicationManager;
@@ -26,6 +27,8 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.project.MavenConsole;
 import org.jetbrains.idea.maven.project.MavenGeneralSettings;
 import org.jetbrains.idea.maven.server.MavenServerConsole;
@@ -36,24 +39,35 @@ public class MavenExternalExecutor extends MavenExecutor {
 
   @NonNls private static final String PHASE_INFO_REGEXP = "\\[INFO\\] \\[.*:.*\\]";
   @NonNls private static final int INFO_PREFIX_SIZE = "[INFO] ".length();
-  private final Project myProject;
+
+  private JavaParameters myJavaParameters;
+  private ExecutionException myParameterCreationError;
 
   public MavenExternalExecutor(Project project,
-                               MavenRunnerParameters parameters,
-                               MavenGeneralSettings coreSettings,
-                               MavenRunnerSettings runnerSettings,
-                               MavenConsole console) {
-    super(parameters, coreSettings, runnerSettings, RunnerBundle.message("external.executor.caption"), console);
-    myProject = project;
+                               @NotNull MavenRunnerParameters parameters,
+                               @Nullable MavenGeneralSettings coreSettings,
+                               @Nullable MavenRunnerSettings runnerSettings,
+                               @NotNull MavenConsole console) {
+    super(parameters, RunnerBundle.message("external.executor.caption"), console);
+
+    try {
+      myJavaParameters = MavenExternalParameters.createJavaParameters(project, myParameters, coreSettings, runnerSettings);
+    }
+    catch (ExecutionException e) {
+      myParameterCreationError = e;
+    }
   }
 
   public boolean execute(final ProgressIndicator indicator) {
     displayProgress();
 
     try {
+      if (myParameterCreationError != null) {
+        throw myParameterCreationError;
+      }
+
       myProcessHandler =
-        new DefaultJavaProcessHandler(
-          MavenExternalParameters.createJavaParameters(myProject, myParameters, myCoreSettings, myRunnerSettings)) {
+        new DefaultJavaProcessHandler(myJavaParameters) {
           public void notifyTextAvailable(String text, Key outputType) {
             // todo move this logic to ConsoleAdapter class
             if (!myConsole.isSuppressed(text)) {
@@ -91,7 +105,7 @@ public class MavenExternalExecutor extends MavenExecutor {
     myProcessHandler.waitFor();
   }
 
-  private void updateProgress(final ProgressIndicator indicator, final String text) {
+  private void updateProgress(@Nullable final ProgressIndicator indicator, final String text) {
     if (indicator != null) {
       if (indicator.isCanceled()) {
         if (!isCancelled()) {
