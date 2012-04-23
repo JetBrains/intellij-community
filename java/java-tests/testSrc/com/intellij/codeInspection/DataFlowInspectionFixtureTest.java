@@ -61,5 +61,6 @@ public class DataFlowInspectionFixtureTest extends JavaCodeInsightFixtureTestCas
   public void testGeneratedEquals() throws Throwable { doTest(); }
 
   public void testIDEA84489() throws Throwable { doTest(); }
+  public void testComparingToNotNullShouldNotAffectNullity() throws Throwable { doTest(); }
 
 }
