@@ -26,7 +26,7 @@ import gnu.trove.TIntProcedure;
  * Time: 21:01
  * To change this template use File | Settings | File Templates.
  */
-abstract class IntIntMultiMaplet {
+abstract class IntIntMultiMaplet implements StringBufferizable{
   abstract boolean containsKey(final int key);
 
   abstract TIntHashSet get(final int key);
@@ -53,7 +53,7 @@ abstract class IntIntMultiMaplet {
 
   abstract void flush(boolean memoryCachesOnly);
 
-  void toBuffer(final DependencyContext context, final StringBuffer buf) {
+  public void toBuffer(final DependencyContext context, final StringBuffer buf) {
     forEachEntry(new TIntObjectProcedure<TIntHashSet>() {
       @Override
       public boolean execute(final int a, final TIntHashSet b) {

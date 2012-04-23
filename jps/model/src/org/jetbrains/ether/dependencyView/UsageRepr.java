@@ -35,7 +35,7 @@ class UsageRepr {
 
   }
 
-  public static class Cluster implements RW.Savable {
+  public static class Cluster implements RW.Savable, StringBufferizable {
     private final Map<Usage, TIntHashSet> myUsageToDependenciesMap = new HashMap<Usage, TIntHashSet>(DEFAULT_SET_CAPACITY, DEFAULT_SET_LOAD_FACTOR);
 
     public Cluster() {
@@ -126,10 +126,20 @@ class UsageRepr {
     public int hashCode() {
       return myUsageToDependenciesMap.hashCode();
     }
+
+    @Override
+    public void toBuffer(DependencyContext context, StringBuffer buf) {
+      //To change body of implemented methods use File | Settings | File Templates.
+    }
   }
 
-  public static abstract class Usage implements RW.Savable {
+  public static abstract class Usage implements RW.Savable, StringBufferizable {
     public abstract int getOwner();
+
+    @Override
+    public void toBuffer(DependencyContext context, StringBuffer buf) {
+      //To change body of implemented methods use File | Settings | File Templates.
+    }
   }
 
   public static abstract class FMUsage extends Usage {

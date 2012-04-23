@@ -8,6 +8,7 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -19,7 +20,6 @@ import java.util.Set;
  * To change this template use File | Settings | File Templates.
  */
 class MethodRepr extends ProtoMember {
-
   interface Predicate {
     boolean satisfy(MethodRepr m);
   }
@@ -107,7 +107,13 @@ class MethodRepr extends ProtoMember {
     }
   }
 
-  public MethodRepr(final DependencyContext context, final int a, final int n, final int s, final String d, final String[] e, final Object value) {
+  public MethodRepr(final DependencyContext context,
+                    final int a,
+                    final int n,
+                    final int s,
+                    final String d,
+                    final String[] e,
+                    final Object value) {
     super(a, s, n, TypeRepr.getType(context, Type.getReturnType(d)), value);
     exceptions = (Set<TypeRepr.AbstractType>)TypeRepr.createClassType(context, e, new HashSet<TypeRepr.AbstractType>());
     argumentTypes = TypeRepr.getType(context, Type.getArgumentTypes(d));
@@ -193,5 +199,30 @@ class MethodRepr extends ProtoMember {
 
   public UsageRepr.Usage createMetaUsage(final DependencyContext context, final int owner) {
     return UsageRepr.createMetaMethodUsage(context, name, owner, getDescr(context));
+  }
+
+  @Override
+  public void toBuffer(final DependencyContext context, final StringBuffer buf) {
+    super.toBuffer(context, buf);
+    buf.append(" Arguments : ");
+    for (TypeRepr.AbstractType t : argumentTypes) {
+      buf.append(t.getDescr(context));
+      buf.append("; ");
+    }
+    buf.append("\n");
+
+    final TypeRepr.AbstractType[] es = exceptions.toArray(new TypeRepr.AbstractType[exceptions.size()]);
+    Arrays.sort(es, new Comparator<TypeRepr.AbstractType>() {
+          @Override
+          public int compare(final TypeRepr.AbstractType o1, final TypeRepr.AbstractType o2) {
+            return o1.getDescr(context).compareTo(o2.getDescr(context));
+          }
+        });
+    buf.append(" Exceptions: ");
+    for (final TypeRepr.AbstractType e : es) {
+      buf.append(e.getDescr(context));
+      buf.append("; ");
+    }
+    buf.append("\n");
   }
 }

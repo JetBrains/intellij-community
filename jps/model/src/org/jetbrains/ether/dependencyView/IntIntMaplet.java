@@ -24,7 +24,7 @@ import gnu.trove.TIntIntProcedure;
  * Time: 23:48
  * To change this template use File | Settings | File Templates.
  */
-abstract class IntIntMaplet {
+abstract class IntIntMaplet implements StringBufferizable{
   abstract boolean containsKey(final int key);
   abstract int get(final int key);
   abstract void put(final int key, final int value);
@@ -33,7 +33,8 @@ abstract class IntIntMaplet {
   abstract void close();
   abstract void forEachEntry(TIntIntProcedure proc);
   abstract void flush(boolean memoryCachesOnly);
-  void toBuffer (final DependencyContext context, final StringBuffer buf) {
+
+  public void toBuffer (final DependencyContext context, final StringBuffer buf) {
     forEachEntry(new TIntIntProcedure() {
       @Override
       public boolean execute(final int a, final int b) {
