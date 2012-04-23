@@ -127,7 +127,6 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
 
   private GitVFSListener myVFSListener; // a VFS listener that tracks file addition, deletion, and renaming.
 
-  private final BackgroundTaskQueue myTaskQueue; // The queue that is used to schedule background task from actions
   private final ReadWriteLock myCommandLock = new ReentrantReadWriteLock(true); // The command read/write lock
   private final TreeDiffProvider myTreeDiffProvider;
   private final GitCommitAndPushExecutor myCommitAndPushExecutor;
@@ -172,7 +171,6 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
     myOutgoingChangesProvider = new GitOutgoingChangesProvider(myProject);
     myTreeDiffProvider = new GitTreeDiffProvider(myProject);
     myCommitAndPushExecutor = new GitCommitAndPushExecutor(myCheckinEnvironment);
-    myTaskQueue = new BackgroundTaskQueue(myProject, GitBundle.getString("task.queue.title"));
     myExecutableValidator = new GitExecutableValidator(myProject, this);
     myPlatformFacade = ServiceManager.getService(myProject, PlatformFacade.class);
   }
@@ -187,10 +185,7 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
    * @param task the task to run
    */
   public static void runInBackground(Task.Backgroundable task) {
-    GitVcs vcs = getInstance(task.getProject());
-    if (vcs != null) {
-      vcs.myTaskQueue.run(task);
-    }
+    task.queue();
   }
 
   /**
