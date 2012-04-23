@@ -949,11 +949,13 @@ public class ChangesCacheFile {
                 debug("Found subsequent deletion for file " + file);
                 return true;
               }
-            } else if ((beforeRevision != null) && (c.getAfterRevision() != null) &&
-                       (beforeRevision.getFile().getIOFile().getAbsolutePath().equals(
-                         c.getAfterRevision().getFile().getIOFile().getAbsolutePath()))) {
-              if (file.isUnder(beforeRevision.getFile(), true) && c.isIsReplaced()) {
+            } else if ((beforeRevision != null) && (c.getAfterRevision() != null)) {
+              boolean underBefore = file.isUnder(beforeRevision.getFile(), false);
+              if (underBefore && c.isIsReplaced() && (! file.equals(beforeRevision.getFile()))) {
                 debug("For " + file + "some of parents is replaced: " + beforeRevision.getFile());
+                return true;
+              } else if (underBefore && (c.isMoved() || c.isRenamed())) {
+                debug("For " + file + "some of parents was renamed/moved: " + beforeRevision.getFile());
                 return true;
               }
             }

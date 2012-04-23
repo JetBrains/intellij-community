@@ -38,8 +38,8 @@ import java.util.*;
  */
 public class FlagProperty extends Property<RadViewComponent> implements IPropertyDecorator {
   private final PropertyRenderer myRenderer = new LabelPropertyRenderer(null);
-  private final AttributeDefinition myDefinition;
-  private final List<Property<RadViewComponent>> myOptions = new ArrayList<Property<RadViewComponent>>();
+  protected final AttributeDefinition myDefinition;
+  protected final List<Property<RadViewComponent>> myOptions = new ArrayList<Property<RadViewComponent>>();
 
   public FlagProperty(@NotNull String name, @NotNull AttributeDefinition definition) {
     super(null, name);
@@ -114,11 +114,11 @@ public class FlagProperty extends Property<RadViewComponent> implements IPropert
   }
 
   @Nullable
-  private XmlAttribute getAttribute(RadViewComponent component) {
+  protected XmlAttribute getAttribute(RadViewComponent component) {
     return component.getTag().getAttribute("android:" + myDefinition.getName());
   }
 
-  private Set<String> getOptions(RadViewComponent component) throws Exception {
+  protected Set<String> getOptions(RadViewComponent component) throws Exception {
     String value = component.getTag().getAttributeValue("android:" + myDefinition.getName());
     if (value == null) {
       return Collections.emptySet();
@@ -167,9 +167,9 @@ public class FlagProperty extends Property<RadViewComponent> implements IPropert
   //
   //////////////////////////////////////////////////////////////////////////////////////////
 
-  private class OptionProperty extends Property<RadViewComponent> {
-    private PropertyRenderer myRenderer = new BooleanRenderer();
-    private PropertyEditor myEditor = new BooleanEditor();
+  protected class OptionProperty extends Property<RadViewComponent> {
+    private final PropertyRenderer myRenderer = new BooleanRenderer();
+    private final PropertyEditor myEditor = new BooleanEditor();
     private final String myValueName;
 
     public OptionProperty(@Nullable Property parent, @NotNull String name, @NotNull String valueName) {

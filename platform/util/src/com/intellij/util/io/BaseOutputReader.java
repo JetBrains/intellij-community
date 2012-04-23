@@ -35,16 +35,20 @@ public abstract class BaseOutputReader {
   private final char[] myBuffer = new char[8192];
   private boolean skipLF = false;
 
-  private final Future<?> myFinishedFuture;
+  private Future<?> myFinishedFuture = null;
 
   public BaseOutputReader(@NotNull Reader reader) {
     myReader = reader;
+  }
 
-    myFinishedFuture = executeOnPooledThread(new Runnable() {
-      public void run() {
-        doRun();
-      }
-    });
+  protected void start() {
+    if (myFinishedFuture == null) {
+      myFinishedFuture = executeOnPooledThread(new Runnable() {
+        public void run() {
+          doRun();
+        }
+      });
+    }
   }
 
   protected abstract Future<?> executeOnPooledThread(Runnable runnable);
