@@ -190,6 +190,11 @@ public class AndroidPrecompileTask implements CompileTask {
       sourceRootSet.remove(rsGenRoot);
     }
 
+    final VirtualFile buildconfigGenDir = AndroidRootUtil.getBuildconfigGenDir(facet);
+    if (buildconfigGenDir != null) {
+      sourceRootSet.remove(buildconfigGenDir);
+    }
+
     final ExcludeEntryDescription[] descriptions = configuration.getExcludeEntryDescriptions();
     configuration.removeAllExcludeEntryDescriptions();
 

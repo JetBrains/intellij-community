@@ -26,8 +26,6 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.containers.HashSet;
 import org.jetbrains.android.compiler.tools.AndroidApt;
 import org.jetbrains.android.dom.manifest.Manifest;
 import org.jetbrains.android.facet.AndroidFacet;
@@ -260,7 +258,7 @@ public class AndroidAptCompiler implements SourceGeneratingCompiler {
                                  -1, -1);
             continue;
           }
-          final String[] libPackages = getLibPackages(module, packageName);
+          final String[] libPackages = AndroidCompileUtil.getLibPackages(module, packageName);
 
           final Module circularDepLibWithSamePackage = AndroidCompileUtil.findCircularDependencyOnLibraryWithSamePackage(facet);
           if (circularDepLibWithSamePackage != null && !facet.getConfiguration().LIBRARY_PROJECT) {
@@ -303,22 +301,6 @@ public class AndroidAptCompiler implements SourceGeneratingCompiler {
         }
       }
       return false;
-    }
-
-    @NotNull
-    private static String[] getLibPackages(@NotNull Module module, @NotNull String packageName) {
-      final Set<String> packageSet = new HashSet<String>();
-      packageSet.add(packageName);
-
-      final List<String> result = new ArrayList<String>();
-
-      for (String libPackage : AndroidUtils.getDepLibsPackages(module)) {
-        if (packageSet.add(libPackage)) {
-          result.add(libPackage);
-        }
-      }
-
-      return ArrayUtil.toStringArray(result);
     }
   }
 
