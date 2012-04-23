@@ -171,6 +171,14 @@ public class PyRequirement {
         }
         results.add(component);
       }
+      for (int i = results.size() - 1; i > 0; i--) {
+        if ("00000000".equals(results.get(i))) {
+          results.remove(i);
+        }
+        else {
+          break;
+        }
+      }
       results.add("*final");
       return results;
     }
