@@ -75,6 +75,10 @@ public abstract class ProjectView {
 
   public abstract void setAbbreviatePackageNames(boolean abbreviatePackageNames, String paneId);
 
+  /**
+   * e.g. {@link com.intellij.ide.projectView.impl.ProjectViewPane#ID}
+   * @see com.intellij.ide.projectView.impl.AbstractProjectViewPane#getId()
+   */
   public abstract String getCurrentViewId();
 
   public abstract void selectPsiElement(PsiElement element, boolean requestFocus);
