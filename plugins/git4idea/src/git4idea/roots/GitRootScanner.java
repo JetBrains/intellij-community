@@ -129,9 +129,13 @@ public class GitRootScanner implements BulkFileListener, ModuleRootListener, Dis
         return;
       }
       myScanning = true;
-      myRootProblemNotifier.rescanAndNotifyIfNeeded();
-      myExecuteAfterScan.run();
-      myScanning = false;
+      try {
+        myRootProblemNotifier.rescanAndNotifyIfNeeded();
+        myExecuteAfterScan.run();
+      }
+      finally {
+        myScanning = false;
+      }
     }
   }
 
