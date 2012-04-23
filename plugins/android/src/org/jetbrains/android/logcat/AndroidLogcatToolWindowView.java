@@ -33,6 +33,7 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.ui.CollectionListModel;
 import com.intellij.ui.components.JBList;
@@ -64,6 +65,7 @@ import java.util.regex.PatternSyntaxException;
 public abstract class AndroidLogcatToolWindowView implements Disposable {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.android.logcat.AndroidLogcatToolWindowView");
   static final String EMPTY_CONFIGURED_FILTER = "All messages";
+  public static final Key<AndroidLogcatToolWindowView> ANDROID_LOGCAT_VIEW_KEY = Key.create("ANDROID_LOGCAT_VIEW_KEY");
 
   private final Project myProject;
   private JComboBox myDeviceCombo;
@@ -252,7 +254,7 @@ public abstract class AndroidLogcatToolWindowView implements Disposable {
     Disposer.register(this, myLogConsole);
     myClearLogButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
-        IDevice device = (IDevice)myDeviceCombo.getSelectedItem();
+        IDevice device = getSelectedDevice();
         if (device != null) {
           AndroidLogcatUtil.clearLogcat(project, device);
           myLogConsole.clear();
@@ -328,7 +330,7 @@ public abstract class AndroidLogcatToolWindowView implements Disposable {
   }
 
   private void updateLogConsole() {
-    IDevice device = (IDevice)myDeviceCombo.getSelectedItem();
+    IDevice device = getSelectedDevice();
     if (myDevice != device) {
       synchronized (myLock) {
         myDevice = device;
@@ -362,6 +364,11 @@ public abstract class AndroidLogcatToolWindowView implements Disposable {
         }
       }
     }
+  }
+
+  @Nullable
+  public IDevice getSelectedDevice() {
+    return (IDevice)myDeviceCombo.getSelectedItem();
   }
 
   @Nullable
