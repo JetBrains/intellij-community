@@ -198,7 +198,7 @@ public class GitChangeUtils {
     String output = handler.run();
     StringTokenizer stk = new StringTokenizer(output, "\n\r \t", false);
     if (!stk.hasMoreTokens()) {
-      throw new VcsException("The string '" + revisionNumber + "' does not represents a revision number.");
+      throw new VcsException("The string '" + revisionNumber + "' does not represents a revision number. Output: [" + output + "]");
     }
     Date timestamp = GitUtil.parseTimestampWithNFEReport(stk.nextToken(), handler, output);
     return new GitRevisionNumber(stk.nextToken(), timestamp);
@@ -236,18 +236,7 @@ public class GitChangeUtils {
                     revisionName, "--");
     String output = h.run();
     StringScanner s = new StringScanner(output);
-    try {
-      return parseChangeList(project, root, s, skipDiffsForMerge, h);
-    }
-    catch (RuntimeException e) {
-      throw e;
-    }
-    catch (VcsException e) {
-      throw e;
-    }
-    catch (Exception e) {
-      throw new VcsException(e);
-    }
+    return parseChangeList(project, root, s, skipDiffsForMerge, h);
   }
 
   @Nullable

@@ -58,14 +58,15 @@ public class CapturingProcessHandler extends OSProcessHandler {
     startNotify();
     if (waitFor()) {
       myOutput.setExitCode(getProcess().exitValue());
-    } else {
+    }
+    else {
       LOG.info("runProcess: exit value unavailable");
     }
     return myOutput;
   }
 
   /**
-   *  Starts process with specified timeout
+   * Starts process with specified timeout
    *
    * @param timeoutInMilliseconds non-positive means infinity
    * @return
@@ -74,15 +75,17 @@ public class CapturingProcessHandler extends OSProcessHandler {
     if (timeoutInMilliseconds <= 0) {
       return runProcess();
     }
-    startNotify();
-    if (waitFor(timeoutInMilliseconds)) {
-      myOutput.setExitCode(getProcess().exitValue());
-    }
     else {
-      destroyProcess();
-      myOutput.setTimeout();
+      startNotify();
+      if (waitFor(timeoutInMilliseconds)) {
+        myOutput.setExitCode(getProcess().exitValue());
+      }
+      else {
+        destroyProcess();
+        myOutput.setTimeout();
+      }
+      return myOutput;
     }
-    return myOutput;
   }
 
   @Override

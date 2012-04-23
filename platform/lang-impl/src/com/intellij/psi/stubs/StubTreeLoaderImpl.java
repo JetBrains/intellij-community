@@ -77,7 +77,7 @@ public class StubTreeLoaderImpl extends StubTreeLoader {
       final int size = datas.size();
 
       if (size == 1) {
-        StubElement stub = datas.get(0).getStub();
+        StubElement stub = datas.get(0).getStub(false);
         return new StubTree((PsiFileStub)stub);
       }
       else if (size != 0) {

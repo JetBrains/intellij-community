@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,14 +30,12 @@ public class ClassUtils {
   /**
    * @noinspection StaticCollection
    */
-  private static final Set<String> immutableTypes =
-    new HashSet<String>(19);
+  private static final Set<String> immutableTypes = new HashSet<String>(19);
 
   /**
    * @noinspection StaticCollection
    */
-  private static final Set<PsiType> primitiveNumericTypes =
-    new HashSet<PsiType>(7);
+  private static final Set<PsiType> primitiveNumericTypes = new HashSet<PsiType>(7);
 
   /**
    * @noinspection StaticCollection
@@ -168,6 +166,20 @@ public class ClassUtils {
         return outerClass;
       }
     }
+  }
+
+  @Nullable
+  public static PsiClass getContainingStaticClass(PsiElement element) {
+    PsiClass aClass = PsiTreeUtil.getParentOfType(element, PsiClass.class);
+    if (aClass == null) {
+      return null;
+    }
+    PsiClass containingClass = PsiTreeUtil.getParentOfType(aClass, PsiClass.class);
+    while (containingClass != null && !containingClass.hasModifierProperty(PsiModifier.STATIC) && !containingClass.isInterface()) {
+      aClass = containingClass;
+      containingClass = aClass.getContainingClass();
+    }
+    return aClass;
   }
 
   public static boolean isClassVisibleFromClass(PsiClass baseClass,

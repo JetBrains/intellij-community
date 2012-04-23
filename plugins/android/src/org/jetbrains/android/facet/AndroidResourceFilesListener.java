@@ -39,6 +39,9 @@ import org.jetbrains.android.util.ResourceEntry;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Set;
 
 import static org.jetbrains.android.util.AndroidUtils.findSourceRoot;
@@ -144,59 +147,61 @@ class AndroidResourceFilesListener extends VirtualFileAdapter {
         return;
       }
 
-      final AndroidAutogeneratorMode autogenerationMode =
-        ApplicationManager.getApplication().runReadAction(new Computable<AndroidAutogeneratorMode>() {
+      final List<AndroidAutogeneratorMode> autogenerationModes =
+        ApplicationManager.getApplication().runReadAction(new Computable<List<AndroidAutogeneratorMode>>() {
           @Nullable
-          public AndroidAutogeneratorMode compute() {
-            return computeCompilerToRunAndInvalidateLocalAttributesMap();
+          public List<AndroidAutogeneratorMode> compute() {
+            return computeCompilersToRunAndInvalidateLocalAttributesMap();
           }
         });
 
-      if (autogenerationMode == null) {
+      if (autogenerationModes.isEmpty()) {
         return;
       }
 
-      if (autogenerationMode == AndroidAutogeneratorMode.AAPT &&
-          AndroidRootUtil.getManifestFile(myFacet) != myEvent.getFile()) {
+      for (AndroidAutogeneratorMode autogenerationMode : autogenerationModes) {
+        if (autogenerationMode == AndroidAutogeneratorMode.AAPT &&
+            AndroidRootUtil.getManifestFile(myFacet) != myEvent.getFile()) {
 
-        final HashSet<ResourceEntry> resourceSet = new HashSet<ResourceEntry>();
+          final HashSet<ResourceEntry> resourceSet = new HashSet<ResourceEntry>();
 
-        DumbService.getInstance(myFacet.getModule().getProject()).waitForSmartMode();
+          DumbService.getInstance(myFacet.getModule().getProject()).waitForSmartMode();
 
-        AndroidCompileUtil.collectAllResources(myFacet, resourceSet);
+          AndroidCompileUtil.collectAllResources(myFacet, resourceSet);
 
-        synchronized (RESOURCES_SET_LOCK) {
-          if (resourceSet.equals(myResourceSet) &&
-              !myFacet.areSourcesGeneratedWithErrors(AndroidAutogeneratorMode.AAPT)) {
-            return;
+          synchronized (RESOURCES_SET_LOCK) {
+            if (resourceSet.equals(myResourceSet) &&
+                !myFacet.areSourcesGeneratedWithErrors(AndroidAutogeneratorMode.AAPT)) {
+              return;
+            }
+            myResourceSet = resourceSet;
           }
-          myResourceSet = resourceSet;
         }
+        AndroidCompileUtil.generate(myFacet.getModule(), autogenerationMode, true);
       }
-      AndroidCompileUtil.generate(myFacet.getModule(), autogenerationMode, true);
     }
 
-    @Nullable
-    private AndroidAutogeneratorMode computeCompilerToRunAndInvalidateLocalAttributesMap() {
+    @NotNull
+    private List<AndroidAutogeneratorMode> computeCompilersToRunAndInvalidateLocalAttributesMap() {
       if (myFacet.isDisposed()) {
-        return null;
+        return Collections.emptyList();
       }
       final Module myModule = myFacet.getModule();
       final Project project = myModule.getProject();
 
       if (project.isDisposed()) {
-        return null;
+        return Collections.emptyList();
       }
       final VirtualFile file = myEvent.getFile();
       final Module module = ModuleUtil.findModuleForFile(file, project);
 
       if (module != myModule) {
-        return null;
+        return Collections.emptyList();
       }
 
       VirtualFile parent = myEvent.getParent();
       if (parent == null) {
-        return null;
+        return Collections.emptyList();
       }
 
       final VirtualFile gp = parent.getParent();
@@ -207,10 +212,13 @@ class AndroidResourceFilesListener extends VirtualFileAdapter {
           ResourceFolderType.VALUES.getName().equals(AndroidCommonUtils.getResourceTypeByDirName(parent.getName()))) {
         myFacet.getLocalResourceManager().invalidateAttributeDefinitions();
       }
+      final VirtualFile manifestFile = AndroidRootUtil.getManifestFile(myFacet);
+
+      final List<AndroidAutogeneratorMode> modes = new ArrayList<AndroidAutogeneratorMode>();
 
       if (AndroidAptCompiler.isToCompileModule(module, myFacet.getConfiguration()) &&
           (myFacet.getConfiguration().REGENERATE_R_JAVA && (gp == resourceDir ||
-           AndroidRootUtil.getManifestFile(myFacet) == file))) {
+           manifestFile == file))) {
         final Manifest manifest = myFacet.getManifest();
         final String aPackage = manifest != null ? manifest.getPackage().getValue() : null;
 
@@ -219,23 +227,27 @@ class AndroidResourceFilesListener extends VirtualFileAdapter {
           AndroidCompileUtil.removeDuplicatingClasses(myModule, myCachedPackage, AndroidUtils.R_CLASS_NAME, null, aptGenDirPath);
         }
         myCachedPackage = aPackage;
-        return AndroidAutogeneratorMode.AAPT;
+        modes.add(AndroidAutogeneratorMode.AAPT);
       }
 
       if (myFacet.getConfiguration().REGENERATE_JAVA_BY_AIDL && file.getFileType() == AndroidIdlFileType.ourFileType) {
         VirtualFile sourceRoot = findSourceRoot(myModule, file);
         if (sourceRoot != null && AndroidRootUtil.getAidlGenDir(myFacet) != sourceRoot) {
-          return AndroidAutogeneratorMode.AIDL;
+          modes.add(AndroidAutogeneratorMode.AIDL);
         }
       }
 
       if (file.getFileType() == AndroidRenderscriptFileType.INSTANCE) {
         final VirtualFile sourceRoot = findSourceRoot(myModule, file);
         if (sourceRoot != null && AndroidRootUtil.getRenderscriptGenDir(myFacet) != sourceRoot) {
-          return AndroidAutogeneratorMode.RENDERSCRIPT;
+          modes.add(AndroidAutogeneratorMode.RENDERSCRIPT);
         }
       }
-      return null;
+
+      if (manifestFile == file) {
+        modes.add(AndroidAutogeneratorMode.BUILDCONFIG);
+      }
+      return modes;
     }
 
     @Override

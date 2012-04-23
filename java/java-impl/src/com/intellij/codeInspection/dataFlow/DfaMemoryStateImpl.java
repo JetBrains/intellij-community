@@ -595,16 +595,6 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     }
 
     if (dfaRight instanceof DfaNotNullValue) {
-      if (dfaLeft instanceof DfaVariableValue) {
-        DfaVariableState varState = getVariableState((DfaVariableValue)dfaLeft);
-        DfaVariableValue dfaVar = (DfaVariableValue)dfaLeft;
-        DfaTypeValue type = myFactory.getTypeFactory().create(((DfaNotNullValue)dfaRight).getType());
-        if (isNegated) {
-          return applyCondition(myFactory.getRelationFactory().create(dfaVar, DfaUnknownValue.getInstance(), JavaTokenType.EQEQ, false));
-        }
-        return applyCondition(compareToNull(dfaVar, false)) && varState.setInstanceofValue(type);
-
-      }
       return true;
     }
 

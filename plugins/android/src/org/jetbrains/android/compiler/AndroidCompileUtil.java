@@ -654,6 +654,8 @@ public class AndroidCompileUtil {
     final Module module = facet.getModule();
     final GlobalSearchScope moduleScope = facet.getModule().getModuleScope();
 
+    initializeGenSourceRoot(module, AndroidRootUtil.getBuildconfigGenSourceRootPath(facet), true, true);
+
     initializeGenSourceRoot(module, AndroidRootUtil.getRenderscriptGenSourceRootPath(facet),
                             FileTypeIndex.getFiles(AndroidRenderscriptFileType.INSTANCE, moduleScope).size() > 0, true);
 
@@ -899,5 +901,21 @@ public class AndroidCompileUtil {
       }
     }
     return null;
+  }
+
+  @NotNull
+  public static String[] getLibPackages(@NotNull Module module, @NotNull String packageName) {
+    final Set<String> packageSet = new HashSet<String>();
+    packageSet.add(packageName);
+
+    final List<String> result = new ArrayList<String>();
+
+    for (String libPackage : AndroidUtils.getDepLibsPackages(module)) {
+      if (packageSet.add(libPackage)) {
+        result.add(libPackage);
+      }
+    }
+
+    return ArrayUtil.toStringArray(result);
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2010 Bas Leijdekkers
+ * Copyright 2009-2012 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,13 +19,13 @@ import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.HighlightUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -34,12 +34,10 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collection;
 import java.util.HashSet;
 
-public class DynamicRegexReplaceableByCompiledPatternInspection
-  extends BaseInspection {
+public class DynamicRegexReplaceableByCompiledPatternInspection extends BaseInspection {
 
   @NonNls
-  private static final Collection<String> regexMethodNames =
-    new HashSet(4);
+  private static final Collection<String> regexMethodNames = new HashSet(4);
 
   static {
     regexMethodNames.add("matches");
@@ -73,8 +71,7 @@ public class DynamicRegexReplaceableByCompiledPatternInspection
     return new DynamicRegexReplaceableByCompiledPatternFix();
   }
 
-  private static class DynamicRegexReplaceableByCompiledPatternFix
-    extends InspectionGadgetsFix {
+  private static class DynamicRegexReplaceableByCompiledPatternFix extends InspectionGadgetsFix {
 
     @NotNull
     public String getName() {
@@ -86,8 +83,7 @@ public class DynamicRegexReplaceableByCompiledPatternInspection
     protected void doFix(Project project, ProblemDescriptor descriptor)
       throws IncorrectOperationException {
       final PsiElement element = descriptor.getPsiElement();
-      final PsiClass aClass = PsiTreeUtil.getParentOfType(element,
-                                                          PsiClass.class);
+      final PsiClass aClass = ClassUtils.getContainingStaticClass(element);
       if (aClass == null) {
         return;
       }
@@ -95,38 +91,28 @@ public class DynamicRegexReplaceableByCompiledPatternInspection
       if (!(parent instanceof PsiReferenceExpression)) {
         return;
       }
-      final PsiReferenceExpression methodExpression =
-        (PsiReferenceExpression)parent;
+      final PsiReferenceExpression methodExpression = (PsiReferenceExpression)parent;
       final PsiElement grandParent = methodExpression.getParent();
       if (!(grandParent instanceof PsiMethodCallExpression)) {
         return;
       }
-      final PsiMethodCallExpression methodCallExpression =
-        (PsiMethodCallExpression)grandParent;
-      final PsiExpressionList list =
-        methodCallExpression.getArgumentList();
+      final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)grandParent;
+      final PsiExpressionList list = methodCallExpression.getArgumentList();
       final PsiExpression[] expressions = list.getExpressions();
       @NonNls final StringBuilder fieldText =
-        new StringBuilder(
-          "private static final java.util.regex.Pattern PATTERN = " +
-          "java.util.regex.Pattern.compile(");
+        new StringBuilder("private static final java.util.regex.Pattern PATTERN = java.util.regex.Pattern.compile(");
       final int expressionsLength = expressions.length;
       if (expressionsLength > 0) {
         fieldText.append(expressions[0].getText());
       }
       fieldText.append(");");
-      final PsiElementFactory factory =
-        JavaPsiFacade.getElementFactory(project);
-      final PsiField newField =
-        factory.createFieldFromText(fieldText.toString(), element);
+      final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
+      final PsiField newField = factory.createFieldFromText(fieldText.toString(), element);
       final PsiElement field = aClass.add(newField);
 
-      @NonNls final StringBuilder expressionText =
-        new StringBuilder("PATTERN.");
-      @NonNls final String methodName =
-        methodExpression.getReferenceName();
-      final PsiExpression qualifier =
-        methodExpression.getQualifierExpression();
+      @NonNls final StringBuilder expressionText = new StringBuilder("PATTERN.");
+      @NonNls final String methodName = methodExpression.getReferenceName();
+      final PsiExpression qualifier = methodExpression.getQualifierExpression();
       @NonNls final String qualifierText;
       if (qualifier == null) {
         qualifierText = "this";
@@ -160,30 +146,18 @@ public class DynamicRegexReplaceableByCompiledPatternInspection
         expressionText.append(')');
       }
 
-      final PsiExpression newExpression =
-        factory.createExpressionFromText(expressionText.toString(),
-                                         element);
-      PsiMethodCallExpression newMethodCallExpression =
-        (PsiMethodCallExpression)methodCallExpression.replace(
-          newExpression);
-      newMethodCallExpression =
-        CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(
-          newMethodCallExpression);
-      final PsiReferenceExpression reference =
-        getReference(newMethodCallExpression);
-      HighlightUtils.showRenameTemplate(aClass,
-                                        (PsiNameIdentifierOwner)field, reference);
+      final PsiExpression newExpression = factory.createExpressionFromText(expressionText.toString(), element);
+      PsiMethodCallExpression newMethodCallExpression = (PsiMethodCallExpression)methodCallExpression.replace(newExpression);
+      newMethodCallExpression = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(newMethodCallExpression);
+      final PsiReferenceExpression reference = getReference(newMethodCallExpression);
+      HighlightUtils.showRenameTemplate(aClass, (PsiNameIdentifierOwner)field, reference);
     }
 
-    private static PsiReferenceExpression getReference(
-      PsiMethodCallExpression newMethodCallExpression) {
-      final PsiReferenceExpression methodExpression =
-        newMethodCallExpression.getMethodExpression();
-      final PsiExpression qualifierExpression =
-        methodExpression.getQualifierExpression();
+    private static PsiReferenceExpression getReference(PsiMethodCallExpression newMethodCallExpression) {
+      final PsiReferenceExpression methodExpression = newMethodCallExpression.getMethodExpression();
+      final PsiExpression qualifierExpression = methodExpression.getQualifierExpression();
       if (qualifierExpression instanceof PsiMethodCallExpression) {
-        final PsiMethodCallExpression methodCallExpression =
-          (PsiMethodCallExpression)qualifierExpression;
+        final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)qualifierExpression;
         return getReference(methodCallExpression);
       }
       if (!(qualifierExpression instanceof PsiReferenceExpression)) {
@@ -198,12 +172,10 @@ public class DynamicRegexReplaceableByCompiledPatternInspection
     return new DynamicRegexReplaceableByCompiledPatternVisitor();
   }
 
-  private static class DynamicRegexReplaceableByCompiledPatternVisitor
-    extends BaseInspectionVisitor {
+  private static class DynamicRegexReplaceableByCompiledPatternVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitMethodCallExpression(
-      PsiMethodCallExpression expression) {
+    public void visitMethodCallExpression(PsiMethodCallExpression expression) {
       super.visitMethodCallExpression(expression);
       if (!isCallToRegexMethod(expression)) {
         return;
@@ -212,10 +184,8 @@ public class DynamicRegexReplaceableByCompiledPatternInspection
     }
 
 
-    private static boolean isCallToRegexMethod(
-      PsiMethodCallExpression expression) {
-      final PsiReferenceExpression methodExpression =
-        expression.getMethodExpression();
+    private static boolean isCallToRegexMethod(PsiMethodCallExpression expression) {
+      final PsiReferenceExpression methodExpression = expression.getMethodExpression();
       final String name = methodExpression.getReferenceName();
       if (!regexMethodNames.contains(name)) {
         return false;
