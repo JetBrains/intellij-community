@@ -269,7 +269,12 @@ public class PropertyParser {
             property = new AttributePropertyWithDefault(name, definition, "wrap_content");
           }
           else if (formats.contains(AttributeFormat.Flag)) {
-            property = new FlagProperty(name, definition);
+            if ("layout:gravity".equals(name)) {
+              property = new GravityProperty(name, definition);
+            }
+            else {
+              property = new FlagProperty(name, definition);
+            }
           }
           else {
             property = new AttributeProperty(name, definition);

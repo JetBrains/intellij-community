@@ -17,7 +17,7 @@ package com.intellij.designer.propertyTable.renderers;
 
 import com.intellij.designer.model.RadComponent;
 import com.intellij.designer.propertyTable.PropertyRenderer;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.designer.propertyTable.PropertyTable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -47,14 +47,7 @@ public class LabelPropertyRenderer extends JLabel implements PropertyRenderer {
     setIcon(null);
 
     // Background and foreground
-    if (selected) {
-      setForeground(UIUtil.getTableSelectionForeground());
-      setBackground(UIUtil.getTableSelectionBackground());
-    }
-    else {
-      setForeground(UIUtil.getTableForeground());
-      setBackground(UIUtil.getTableBackground());
-    }
+    PropertyTable.updateRenderer(this, selected);
 
     if (value != null) {
       customize(value);
