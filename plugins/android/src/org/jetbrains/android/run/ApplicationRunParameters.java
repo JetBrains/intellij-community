@@ -53,6 +53,9 @@ class ApplicationRunParameters implements ConfigurationSpecificEditor<AndroidRun
   ApplicationRunParameters(final Project project, final ConfigurationModuleSelector moduleSelector) {
     myActivityField.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
+        if (!project.isInitialized()) {
+          return;
+        }
         final JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
         PsiClass activityBaseClass = facade.findClass(AndroidUtils.ACTIVITY_BASE_CLASS_NAME, ProjectScope.getAllScope(project));
         if (activityBaseClass == null) {
