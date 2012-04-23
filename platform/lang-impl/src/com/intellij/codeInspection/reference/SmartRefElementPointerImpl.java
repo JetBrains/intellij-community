@@ -81,12 +81,12 @@ public class SmartRefElementPointerImpl implements SmartRefElementPointer {
     Element element = new Element(ENTRY_POINT);
     element.setAttribute(TYPE_ATTR, myType);
     element.setAttribute(FQNAME_ATTR, getFQName());
-    if (myRefElement != null) {
+    /*if (myRefElement != null) {
       final RefEntity entity = myRefElement.getOwner();
       if (entity != null) {
         new SmartRefElementPointerImpl(entity, myIsPersistent).writeExternal(element);
       }
-    }
+    }*/
     parentNode.addContent(element);
   }
 
