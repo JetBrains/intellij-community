@@ -37,15 +37,15 @@ public class ProcessOutput {
     myExitCode = exitCode;
   }
 
-  void appendStdout(String text) {
+  public void appendStdout(String text) {
     myStdoutBuilder.append(text);
   }
 
-  void appendStderr(String text) {
+  public void appendStderr(String text) {
     myStderrBuilder.append(text);
   }
 
-  void setExitCode(int exitCode) {
+  public void setExitCode(int exitCode) {
     myExitCode = exitCode;
   }
 
@@ -61,7 +61,7 @@ public class ProcessOutput {
     return myExitCode;
   }
 
-  void setTimeout() {
+  public void setTimeout() {
     myTimeout = true;
   }
 
