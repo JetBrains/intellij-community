@@ -216,7 +216,7 @@ public class PyPIPackageUtil {
         new ParserDelegator().parse(reader, callback, true);
       }
       catch (IOException e) {
-        e.printStackTrace();
+        LOG.warn(e);
       }
       finally {
         reader.close();
