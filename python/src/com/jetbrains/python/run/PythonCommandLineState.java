@@ -25,7 +25,6 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkAdditionalData;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -120,7 +119,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
 
   private TextConsoleBuilder createConsoleBuilder(Project project) {
     if (isDebug()) {
-      return new PyDebugConsoleBuilder(project, PythonSdkType.findSdkByPath(myConfig.getSdkHome()));
+      return new PyDebugConsoleBuilder(project, PythonSdkType.findSdkByPath(myConfig.getInterpreterPath()));
     }
     else {
       return TextConsoleBuilderFactory.getInstance().createBuilder(project);
@@ -272,7 +271,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
   }
 
   private void buildPythonPath(GeneralCommandLine commandLine, boolean passParentEnvs) {
-    Sdk pythonSdk = PythonSdkType.findSdkByPath(myConfig.getSdkHome());
+    Sdk pythonSdk = PythonSdkType.findSdkByPath(myConfig.getInterpreterPath());
     if (pythonSdk != null) {
       List<String> pathList = Lists.newArrayList(getAddedPaths(pythonSdk));
       pathList.addAll(collectPythonPath());

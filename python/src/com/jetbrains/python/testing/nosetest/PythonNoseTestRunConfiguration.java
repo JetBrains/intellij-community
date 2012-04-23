@@ -79,7 +79,7 @@ public class PythonNoseTestRunConfiguration extends AbstractPythonTestRunConfigu
   @Override
   public void checkConfiguration() throws RuntimeConfigurationException {
     super.checkConfiguration();
-    if (!VFSTestFrameworkListener.getInstance().isNoseTestInstalled(getSdkHome()))
+    if (!VFSTestFrameworkListener.getInstance().isNoseTestInstalled(getInterpreterPath()))
       throw new RuntimeConfigurationWarning(PyBundle.message("runcfg.testing.no.test.framework", "nosetest"));
   }
 

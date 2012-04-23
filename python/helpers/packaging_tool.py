@@ -10,20 +10,25 @@ def exit(retcode):
     version = major * 10 + minor
     if version < 25:
         import os
+
         os._exit(retcode)
     else:
         sys.exit(retcode)
+
 
 def usage():
     sys.stderr.write('Usage: packaging_tool.py <list|install|uninstall>\n')
     exit(ERROR_WRONG_USAGE)
 
+
 def error(message, retcode):
     sys.stderr.write('Error: %s\n' % message)
     exit(retcode)
 
+
 def error_no_pip():
     error("Python package management tool 'pip' not found. <a href=\"installPip\">Install 'pip'</a>", ERROR_NO_PACKAGING_TOOLS)
+
 
 def do_list():
     try:
@@ -34,12 +39,14 @@ def do_list():
         requires = ':'.join([str(x) for x in pkg.requires()])
         print('\t'.join([pkg.project_name, pkg.version, pkg.location, requires]))
 
+
 def do_install(pkgs):
     try:
         import pip
     except ImportError:
         error_no_pip()
     return pip.main(['install'] + pkgs)
+
 
 def do_uninstall(pkgs):
     try:
@@ -48,18 +55,36 @@ def do_uninstall(pkgs):
         error_no_pip()
     return pip.main(['uninstall', '-y'] + pkgs)
 
+
 def untarDirectory(name):
     import os
     import tempfile
-    directory_name = tempfile.mkdtemp("management")
+
+    directory_name = tempfile.mkdtemp("pycharm-management")
 
     import tarfile
+
     filename = name + ".tar.gz"
     tar = tarfile.open(filename)
     for item in tar:
         tar.extract(item, directory_name)
 
     print (directory_name)
+
+
+def mkdtemp_ifneeded():
+    try:
+        ind = sys.argv.index('--build-dir')
+        if not os.path.exists(sys.argv[ind + 1]):
+            import tempfile
+
+            sys.argv[ind + 1] = tempfile.mkdtemp('pycharm-packaging')
+            return sys.argv[ind + 1]
+    except:
+        pass
+
+    return None
+
 
 def main():
     retcode = 0
@@ -74,8 +99,17 @@ def main():
         elif cmd == 'install':
             if len(sys.argv) < 2:
                 usage()
+
+            rmdir = mkdtemp_ifneeded()
+
             pkgs = sys.argv[2:]
             retcode = do_install(pkgs)
+
+            if rmdir is not None:
+                import shutil
+                shutil.rmtree(rmdir)
+
+
         elif cmd == 'untar':
             if len(sys.argv) < 2:
                 usage()
