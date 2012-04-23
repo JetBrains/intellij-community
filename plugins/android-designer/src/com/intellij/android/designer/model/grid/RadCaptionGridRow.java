@@ -13,23 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.android.designer.model.table;
+package com.intellij.android.designer.model.grid;
 
-import com.intellij.designer.model.RadComponent;
-import com.intellij.util.ArrayUtil;
+import com.intellij.android.designer.model.agrid.RadCaptionRow;
 
 /**
  * @author Alexander Lobas
  */
-public class GridInfo {
-  public int width;
-  public int height;
-
-  public int[] hLines = ArrayUtil.EMPTY_INT_ARRAY;
-  public int[] vLines = ArrayUtil.EMPTY_INT_ARRAY;
-  public boolean[] emptyColumns = ArrayUtil.EMPTY_BOOLEAN_ARRAY;
-
-  public RadComponent[][] components;
-  public int lastRow = -1;
-  public int lastColumn = -1;
+public class RadCaptionGridRow extends RadCaptionRow<RadGridLayoutComponent> {
+  public RadCaptionGridRow(RadGridLayoutComponent container, int index, int offset, int width) {
+    super(container, index, offset, width, false);
+  }
 }

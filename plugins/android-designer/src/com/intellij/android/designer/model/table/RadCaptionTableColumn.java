@@ -15,61 +15,16 @@
  */
 package com.intellij.android.designer.model.table;
 
-import com.intellij.android.designer.designSurface.layout.CaptionStaticDecorator;
-import com.intellij.designer.designSurface.StaticDecorator;
+import com.intellij.android.designer.model.agrid.GridInfo;
+import com.intellij.android.designer.model.agrid.RadCaptionColumn;
 import com.intellij.designer.model.RadComponent;
-import com.intellij.designer.model.RadVisualComponent;
-
-import java.awt.*;
-import java.util.List;
 
 /**
  * @author Alexander Lobas
  */
-public class RadCaptionTableColumn extends RadVisualComponent {
-  private final RadTableLayoutComponent myContainer;
-  private final int myColumnIndex;
-  private final int myColumnOffset;
-  private final int myColumnWidth;
-  private final StaticDecorator myDecorator;
-
-  public RadCaptionTableColumn(RadTableLayoutComponent container, int columnIndex, int columnOffset, int columnWidth, boolean empty) {
-    myContainer = container;
-    myColumnIndex = columnIndex;
-    myColumnOffset = columnOffset;
-    myColumnWidth = columnWidth;
-
-    if (empty) {
-      myDecorator = new CaptionStaticDecorator(this, Color.PINK);
-    }
-    else {
-      myDecorator = new CaptionStaticDecorator(this);
-    }
-
-    setNativeComponent(container.getNativeComponent());
-  }
-
-  public int getColumnIndex() {
-    return myColumnIndex;
-  }
-
-  @Override
-  public Rectangle getBounds() {
-    Rectangle bounds = myContainer.getBounds();
-    return new Rectangle(bounds.x + myColumnOffset, 2, myColumnWidth, 10);
-  }
-
-  @Override
-  public Rectangle getBounds(Component relativeTo) {
-    Rectangle bounds = super.getBounds(relativeTo);
-    bounds.y = 2;
-    bounds.height = 10;
-    return bounds;
-  }
-
-  @Override
-  public void addStaticDecorators(List<StaticDecorator> decorators, List<RadComponent> selection) {
-    decorators.add(myDecorator);
+public class RadCaptionTableColumn extends RadCaptionColumn<RadTableLayoutComponent> {
+  public RadCaptionTableColumn(RadTableLayoutComponent container, int index, int offset, int width, boolean empty) {
+    super(container, index, offset, width, empty);
   }
 
   @Override
@@ -78,13 +33,13 @@ public class RadCaptionTableColumn extends RadVisualComponent {
     RadComponent[][] components = info.components;
 
     for (RadComponent[] rowComponents : components) {
-      RadComponent component = rowComponents[myColumnIndex];
+      RadComponent component = rowComponents[myIndex];
       if (component != null) {
         component.delete();
-        rowComponents[myColumnIndex] = null;
+        rowComponents[myIndex] = null;
       }
 
-      for (int i = myColumnIndex + 1; i < rowComponents.length; i++) {
+      for (int i = myIndex + 1; i < rowComponents.length; i++) {
         RadComponent cellComponent = rowComponents[i];
 
         if (cellComponent != null) {

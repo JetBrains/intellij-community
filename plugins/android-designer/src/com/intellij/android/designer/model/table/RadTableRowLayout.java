@@ -91,7 +91,7 @@ public class RadTableRowLayout extends RadLinearLayout {
 
       mySelectionDecorator.clear();
       if (selection.size() == 1) {
-        LayoutSpanOperation.points(mySelectionDecorator);
+        LayoutSpanOperation.tablePoints(mySelectionDecorator);
       }
       return mySelectionDecorator;
     }

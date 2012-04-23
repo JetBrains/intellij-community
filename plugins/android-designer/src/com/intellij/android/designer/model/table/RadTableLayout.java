@@ -20,6 +20,7 @@ import com.intellij.android.designer.designSurface.layout.*;
 import com.intellij.android.designer.model.RadViewComponent;
 import com.intellij.android.designer.model.RadViewLayout;
 import com.intellij.android.designer.model.RadViewLayoutWithData;
+import com.intellij.android.designer.model.agrid.GridInfo;
 import com.intellij.designer.componentTree.TreeEditOperation;
 import com.intellij.designer.designSurface.*;
 import com.intellij.designer.designSurface.selection.ResizeSelectionDecorator;
@@ -37,7 +38,7 @@ import java.util.List;
 public class RadTableLayout extends RadViewLayoutWithData implements ILayoutDecorator, ICaption, ICaptionDecorator {
   private static final String[] LAYOUT_PARAMS = {"", "LinearLayout_Layout", "ViewGroup_MarginLayout"};
 
-  private TableLayoutDecorator myGridDecorator;
+  private GridDecorator myGridDecorator;
   private ResizeSelectionDecorator mySelectionDecorator;
 
   @Override
@@ -65,7 +66,7 @@ public class RadTableLayout extends RadViewLayoutWithData implements ILayoutDeco
 
   private StaticDecorator getGridDecorator() {
     if (myGridDecorator == null) {
-      myGridDecorator = new TableLayoutDecorator(myContainer);
+      myGridDecorator = new GridDecorator(myContainer);
     }
     return myGridDecorator;
   }

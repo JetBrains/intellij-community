@@ -15,8 +15,8 @@
  */
 package com.intellij.android.designer.designSurface.layout;
 
-import com.intellij.android.designer.model.table.GridInfo;
-import com.intellij.android.designer.model.table.RadTableLayoutComponent;
+import com.intellij.android.designer.model.agrid.GridInfo;
+import com.intellij.android.designer.model.agrid.IGridProvider;
 import com.intellij.designer.designSurface.DecorationLayer;
 import com.intellij.designer.designSurface.StaticDecorator;
 import com.intellij.designer.model.RadComponent;
@@ -26,8 +26,8 @@ import java.awt.*;
 /**
  * @author Alexander Lobas
  */
-public class TableLayoutDecorator extends StaticDecorator {
-  public TableLayoutDecorator(RadComponent component) {
+public class GridDecorator extends StaticDecorator {
+  public GridDecorator(RadComponent component) {
     super(component);
   }
 
@@ -38,7 +38,7 @@ public class TableLayoutDecorator extends StaticDecorator {
     g.setStroke(FlowStaticDecorator.STROKE);
 
     Rectangle bounds = component.getBounds(layer);
-    GridInfo gridInfo = ((RadTableLayoutComponent)component).getGridInfo();
+    GridInfo gridInfo = ((IGridProvider)component).getGridInfo();
 
     for (int x : gridInfo.vLines) {
       g.drawLine(bounds.x + x, bounds.y, bounds.x + x, bounds.y + gridInfo.height);

@@ -15,10 +15,78 @@
  */
 package com.intellij.android.designer.model.grid;
 
+import com.android.ide.common.rendering.api.ViewInfo;
 import com.intellij.android.designer.model.RadViewContainer;
+import com.intellij.android.designer.model.agrid.GridInfo;
+import com.intellij.android.designer.model.agrid.IGridProvider;
+import com.intellij.designer.model.RadComponent;
+
+import java.awt.*;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 
 /**
  * @author Alexander Lobas
  */
-public class RadGridLayoutComponent extends RadViewContainer {
+public class RadGridLayoutComponent extends RadViewContainer implements IGridProvider {
+  private GridInfo myGridInfo;
+
+  @Override
+  public void setViewInfo(ViewInfo viewInfo) {
+    super.setViewInfo(viewInfo);
+    myGridInfo = null;
+  }
+
+  @Override
+  public GridInfo getGridInfo() {
+    if (myGridInfo == null) {
+      myGridInfo = new GridInfo();
+
+      try {
+        Object viewObject = myViewInfo.getViewObject();
+        Class<?> viewClass = viewObject.getClass();
+
+        Method getColumnCount = viewClass.getMethod("getColumnCount");
+        myGridInfo.lastColumn = (Integer)getColumnCount.invoke(viewObject) - 1;
+
+        Method getRowCount = viewClass.getMethod("getRowCount");
+        myGridInfo.lastRow = (Integer)getRowCount.invoke(viewObject) - 1;
+
+        Field field_horizontalAxis = viewClass.getDeclaredField("horizontalAxis");
+        field_horizontalAxis.setAccessible(true);
+        Object horizontalAxis = field_horizontalAxis.get(viewObject);
+
+        Class<?> class_Axis = horizontalAxis.getClass();
+
+        Field field_locations = class_Axis.getField("locations");
+        field_locations.setAccessible(true);
+
+        myGridInfo.vLines = (int[])field_locations.get(horizontalAxis);
+
+        Field field_verticalAxis = viewClass.getDeclaredField("verticalAxis");
+        field_verticalAxis.setAccessible(true);
+        Object verticalAxis = field_verticalAxis.get(viewObject);
+
+        myGridInfo.hLines = (int[])field_locations.get(verticalAxis);
+
+        Rectangle bounds = getBounds();
+
+        for (RadComponent child : getChildren()) {
+          Rectangle childBounds = child.getBounds();
+          myGridInfo.width = Math.max(myGridInfo.width, childBounds.x + childBounds.width - bounds.x);
+          myGridInfo.height = Math.max(myGridInfo.height, childBounds.y + childBounds.height - bounds.y);
+        }
+
+        if (myGridInfo.vLines != null && myGridInfo.vLines.length > 0) {
+          myGridInfo.vLines[myGridInfo.vLines.length - 1] = myGridInfo.width;
+        }
+        if (myGridInfo.hLines != null && myGridInfo.hLines.length > 0) {
+          myGridInfo.hLines[myGridInfo.hLines.length - 1] = myGridInfo.height;
+        }
+      }
+      catch (Throwable e) {
+      }
+    }
+    return myGridInfo;
+  }
 }
