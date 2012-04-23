@@ -1,17 +1,17 @@
 def foo(a, b = 345, c = 1):
     pass
 
-foo(1, <warning descr="Argument equals to default parameter value">345</warning>, 22)
+foo(1, <weak_warning descr="Argument equals to default parameter value">345</weak_warning>, 22)
 
 def foo(a = None):
     pass
-foo(<warning descr="Argument equals to default parameter value">a = None</warning>)
+foo(<weak_warning descr="Argument equals to default parameter value">a = None</weak_warning>)
 
 def bar(a = 2, b = 3):
   pass
 
 #PY-3260
-bar(<warning descr="Argument equals to default parameter value">a = 2</warning>, <warning descr="Argument equals to default parameter value">b = 3</warning>)
+bar(<weak_warning descr="Argument equals to default parameter value">a = 2</weak_warning>, <weak_warning descr="Argument equals to default parameter value">b = 3</weak_warning>)
 
 class A:
   @classmethod
@@ -20,7 +20,7 @@ class A:
 
 a = A()
 
-a.foo(<warning descr="Argument equals to default parameter value">1</warning>)
+a.foo(<weak_warning descr="Argument equals to default parameter value">1</weak_warning>)
 
 
 class C(object):
@@ -34,7 +34,7 @@ class C(object):
     def delx(self):
         del self._x
 
-    x = property(getx, <warning descr="Argument equals to default parameter value">None</warning>, fdel = delx, doc = "I'm the 'x' property.")
+    x = property(getx, <weak_warning descr="Argument equals to default parameter value">None</weak_warning>, fdel = delx, doc = "I'm the 'x' property.")
 
 
 # PY-3455
@@ -52,7 +52,7 @@ class OptionParser(optparse.OptionParser):
 def bar(a = "qwer"):
   pass
 
-bar(<warning descr="Argument equals to default parameter value">a = 'qwer'</warning>)
+bar(<weak_warning descr="Argument equals to default parameter value">a = 'qwer'</weak_warning>)
 
 getattr(bar, "__doc__", None) # None is not highlighted
 
@@ -63,7 +63,7 @@ class a:
 kw = a()
 
 kw['customerPaymentProfileId'] = kw.get("customerPaymentProfileId",
-                                                 <warning descr="Argument equals to default parameter value">None</warning>)
+                                                 <weak_warning descr="Argument equals to default parameter value">None</weak_warning>)
 
 {1: 2}.get('foo', None) #pass
 {1: 2}.pop('foo', None) #pass

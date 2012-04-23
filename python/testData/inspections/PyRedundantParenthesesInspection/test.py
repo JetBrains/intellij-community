@@ -1,16 +1,16 @@
-if <warning descr="Remove redundant parentheses">((True or <warning descr="Remove redundant parentheses">(False)</warning>))</warning>:
+if <weak_warning descr="Remove redundant parentheses">((True or <weak_warning descr="Remove redundant parentheses">(False)</weak_warning>))</weak_warning>:
     pass
-elif <warning descr="Remove redundant parentheses">(True)</warning>:
+elif <weak_warning descr="Remove redundant parentheses">(True)</weak_warning>:
     pass
 
-while <warning descr="Remove redundant parentheses">(True)</warning>:
+while <weak_warning descr="Remove redundant parentheses">(True)</weak_warning>:
     pass
 
 try:
     foo()
-except (<warning descr="Remove redundant parentheses">(A)</warning>):
+except (<weak_warning descr="Remove redundant parentheses">(A)</weak_warning>):
     pass
-except <warning descr="Remove redundant parentheses">(A)</warning> :
+except <weak_warning descr="Remove redundant parentheses">(A)</weak_warning> :
     pass
 
 try:
@@ -23,7 +23,7 @@ if (A and
     C):
     pass
 
-if <warning descr="Remove redundant parentheses">("\n")</warning>:
+if <weak_warning descr="Remove redundant parentheses">("\n")</weak_warning>:
     pass
 
 result = (

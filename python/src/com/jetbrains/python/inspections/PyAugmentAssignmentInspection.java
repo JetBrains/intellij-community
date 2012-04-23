@@ -61,6 +61,8 @@ public class PyAugmentAssignmentInspection extends PyInspection {
           leftExpression = tmp;
           changedParts = true;
         }
+        if (changedParts && rightExpression instanceof PyStringLiteralExpression) return;  // PY-6331  a = "str" + a
+
         final PyElementType op = expression.getOperator();
         final TokenSet operations = TokenSet.create(PyTokenTypes.PLUS, PyTokenTypes.MINUS, PyTokenTypes.MULT,
                          PyTokenTypes.FLOORDIV, PyTokenTypes.DIV, PyTokenTypes.PERC, PyTokenTypes.AND, PyTokenTypes.OR,

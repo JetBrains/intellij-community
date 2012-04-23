@@ -21,7 +21,7 @@ import java.util.regex.Pattern;
 public class PyRequirement {
   private static final Pattern NAME = Pattern.compile("\\s*(\\w(\\w|[-.])*)\\s*(.*)");
   private static final Pattern VERSION_SPEC = Pattern.compile("\\s*(<=?|>=?|==|!=)\\s*((\\w|[-.])+)");
-  private static final Pattern EDITABLE_EGG = Pattern.compile("\\s*-e\\s+([^#]*)#egg=(.*)");
+  private static final Pattern EDITABLE_EGG = Pattern.compile("\\s*(-e)?\\s*([^#]*)#egg=(.*)");
   private static final Pattern RECURSIVE_REQUIREMENT = Pattern.compile("\\s*-r\\s+(.*)");
   private static final Pattern NAME_VERSION = Pattern.compile("\\s*(\\w(\\w|[.])*)-((\\w|[-.])+)");
 
@@ -119,6 +119,7 @@ public class PyRequirement {
   @NotNull private final String myName;
   @NotNull private final List<VersionSpec> myVersionSpecs;
   @Nullable private final String myURL;
+  private final boolean myEditable;
 
   public static final Comparator<String> VERSION_COMPARATOR = new Comparator<String>() {
     @Override
@@ -171,6 +172,14 @@ public class PyRequirement {
         }
         results.add(component);
       }
+      for (int i = results.size() - 1; i > 0; i--) {
+        if ("00000000".equals(results.get(i))) {
+          results.remove(i);
+        }
+        else {
+          break;
+        }
+      }
       results.add("*final");
       return results;
     }
@@ -188,17 +197,19 @@ public class PyRequirement {
     myName = name;
     myVersionSpecs = versionSpecs;
     myURL = null;
+    myEditable = false;
   }
 
-  public PyRequirement(@NotNull String name, @Nullable String version, @NotNull String url) {
+  public PyRequirement(@NotNull String name, @Nullable String version, @NotNull String url, boolean editable) {
     myName = name;
     if (version != null) {
-      myVersionSpecs = Collections.singletonList(new VersionSpec(Relation.GTE, version));
+      myVersionSpecs = Collections.singletonList(new VersionSpec(Relation.EQ, version));
     }
     else {
       myVersionSpecs = Collections.emptyList();
     }
     myURL = url;
+    myEditable = editable;
   }
 
   @NotNull
@@ -216,11 +227,13 @@ public class PyRequirement {
 
   @NotNull
   public List<String> toOptions() {
+    final List<String> results = new ArrayList<String>();
+    if (myEditable) {
+      results.add("-e");
+    }
     if (myURL != null) {
       final int size = myVersionSpecs.size();
       assert size <= 1;
-      final List<String> results = new ArrayList<String>();
-      results.add("-e");
       final String urlAndName = myURL + "#egg=" + myName;
       if (size == 0) {
         results.add(urlAndName);
@@ -233,8 +246,9 @@ public class PyRequirement {
       return results;
     }
     else {
-      return Collections.singletonList(toString());
+      results.add(toString());
     }
+    return results;
   }
 
   @Override
@@ -372,8 +386,9 @@ public class PyRequirement {
     if (!editableEggMatcher.matches()) {
       return null;
     }
-    final String url = editableEggMatcher.group(1);
-    final String egg = editableEggMatcher.group(2);
+    final boolean editable = editableEggMatcher.group(1) != null;
+    final String url = editableEggMatcher.group(2);
+    final String egg = editableEggMatcher.group(3);
     if (url == null) {
       return null;
     }
@@ -381,7 +396,7 @@ public class PyRequirement {
     if (nameVersionMatcher.matches()) {
       final String name = normalizeName(nameVersionMatcher.group(1));
       final String version = normalizeVersion(nameVersionMatcher.group(3));
-      return new PyRequirement(name, version, url);
+      return new PyRequirement(name, version, url, editable);
     }
     else {
       final Matcher nameMatcher = NAME.matcher(egg);
@@ -389,7 +404,7 @@ public class PyRequirement {
         return null;
       }
       final String name = normalizeName(nameMatcher.group(1));
-      return new PyRequirement(name, null, url);
+      return new PyRequirement(name, null, url, editable);
     }
   }
 
