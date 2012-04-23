@@ -1,22 +1,22 @@
 def foo1():
-  <warning descr="Local variable 'aaa' value is not used">aaa</warning> = 1 #fail
-  <warning descr="Local variable 'aaa' value is not used">aaa</warning> = 2 #fail
+  <weak_warning descr="Local variable 'aaa' value is not used">aaa</weak_warning> = 1 #fail
+  <weak_warning descr="Local variable 'aaa' value is not used">aaa</weak_warning> = 2 #fail
 
   bbb = 1 #pass
-  <warning descr="Local variable 'bbb' value is not used">bbb</warning> += 2 #fail
+  <weak_warning descr="Local variable 'bbb' value is not used">bbb</weak_warning> += 2 #fail
 
-def bar(<warning descr="Parameter 'self' value is not used">self</warning>): #fail
+def bar(<weak_warning descr="Parameter 'self' value is not used">self</weak_warning>): #fail
   print("Foo")
 
-def baz(<warning descr="Parameter 'a' value is not used">a</warning>): #fail
+def baz(<weak_warning descr="Parameter 'a' value is not used">a</weak_warning>): #fail
   a = 12
   print(a)
 
 def boo():
-  <warning descr="Local variable 'k' value is not used">k</warning> = 1 #fail
+  <weak_warning descr="Local variable 'k' value is not used">k</weak_warning> = 1 #fail
   [k for k in [1,3] if True]
 
-  <warning descr="Local variable 'i' value is not used">i</warning> = 1 #fail
+  <weak_warning descr="Local variable 'i' value is not used">i</weak_warning> = 1 #fail
   for i in [1,2]:
     print(i)
 
@@ -46,7 +46,7 @@ def main():
 
 def bar(arg): #pass
   foo = 1 #pass
-  def <warning descr="Local function 'test' is not used">test</warning>(): #fail
+  def <weak_warning descr="Local function 'test' is not used">test</weak_warning>(): #fail
     print arg
     return foo #pass
 
@@ -79,7 +79,7 @@ def foo():
         if status is not None:
             status.close()
 
-foo  = lambda <warning descr="Parameter 'x' value is not used">x</warning>: False
+foo  = lambda <weak_warning descr="Parameter 'x' value is not used">x</weak_warning>: False
 
 
 class MySuperClass:
@@ -111,7 +111,7 @@ def test():
     finally:
         print v
 
-def foo(<warning descr="Parameter 'a' value is not used">a = 123</warning>): # fail Do not use getText() as parameter name
+def foo(<weak_warning descr="Parameter 'a' value is not used">a = 123</weak_warning>): # fail Do not use getText() as parameter name
     pass
 
 def loopie():
@@ -124,7 +124,7 @@ def locals_inside():
 
 class Stat(object):
   @staticmethod
-  def woof(<warning descr="Parameter 'dog' value is not used">dog="bark"</warning>): # fail
+  def woof(<weak_warning descr="Parameter 'dog' value is not used">dog="bark"</weak_warning>): # fail
     pass
 
 class A:
@@ -201,7 +201,7 @@ def f(g):
 
 # PY-4154
 def a1():
-    <warning descr="Local variable 'a' value is not used">a</warning> = 1 #fail
+    <weak_warning descr="Local variable 'a' value is not used">a</weak_warning> = 1 #fail
     try:
         a = 2
     except Exception:
@@ -258,6 +258,6 @@ def test_same_named_variable_inside_class():
 # PY-5086
 def test_only_name_in_local_class():
     x = 1
-    class <warning descr="Local class 'C' is not used">C</warning>:
+    class <weak_warning descr="Local class 'C' is not used">C</weak_warning>:
         pass
     return x
