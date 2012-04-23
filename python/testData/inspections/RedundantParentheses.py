@@ -1,2 +1,2 @@
-if <warning descr="Remove redundant parentheses"><caret>(True)</warning>:
+if <weak_warning descr="Remove redundant parentheses"><caret>(True)</weak_warning>:
     pass
