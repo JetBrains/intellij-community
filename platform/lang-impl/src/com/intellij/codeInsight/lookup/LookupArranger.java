@@ -43,28 +43,25 @@ public abstract class LookupArranger {
 
   public abstract LookupArranger createEmptyCopy();
 
-  protected static void addPrefixItems(Lookup lookup, LinkedHashSet<LookupElement> result, boolean caseSensitive, Collection<LookupElement> items) {
+  protected static void addPrefixItems(Lookup lookup, LinkedHashSet<LookupElement> result, boolean exactly, Collection<LookupElement> items) {
     for (LookupElement element : items) {
-      if (isExactPrefixItem(lookup, element, caseSensitive)) {
+      if (isPrefixItem(lookup, element, exactly)) {
         result.add(element);
       }
     }
   }
 
-  protected static boolean isExactPrefixItem(Lookup lookup, LookupElement item, final boolean caseSensitive) {
+  protected static boolean isPrefixItem(Lookup lookup, LookupElement item, final boolean exactly) {
     final String pattern = lookup.itemPattern(item);
-    final Set<String> strings = item.getAllLookupStrings();
-    if (strings.contains(pattern)) {
-      return caseSensitive; //to not add the same elements twice to the model, as sensitive and then as insensitive
+    if (pattern.equals(item.getLookupString())) {
+      return true;
     }
 
-    if (caseSensitive) {
-      return false;
-    }
-
-    for (String s : strings) {
-      if (s.equalsIgnoreCase(pattern)) {
-        return true;
+    if (!exactly) {
+      for (String s : item.getAllLookupStrings()) {
+        if (s.equalsIgnoreCase(pattern)) {
+          return true;
+        }
       }
     }
     return false;
