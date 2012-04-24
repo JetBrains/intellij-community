@@ -1,6 +1,7 @@
 package com.intellij.tasks.impl;
 
 import com.intellij.tasks.TaskRepositoryType;
+import com.intellij.tasks.config.TaskSettings;
 import com.intellij.util.net.HttpConfigurable;
 import org.apache.commons.httpclient.*;
 import org.apache.commons.httpclient.auth.AuthScope;
@@ -62,7 +63,7 @@ public abstract class BaseRepositoryImpl extends BaseRepository {
 
   protected void configureHttpClient(HttpClient client) {
     client.getParams().setConnectionManagerTimeout(3000);
-    client.getParams().setSoTimeout(3000);
+    client.getParams().setSoTimeout(TaskSettings.getInstance().CONNECTION_TIMEOUT);
     if (isUseProxy()) {
       HttpConfigurable proxy = HttpConfigurable.getInstance();
       client.getHostConfiguration().setProxy(proxy.PROXY_HOST, proxy.PROXY_PORT);
