@@ -17,6 +17,7 @@ package org.jetbrains.idea.maven.importing;
 
 import com.intellij.compiler.impl.javaCompiler.javac.JavacSettings;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.LibraryOrderEntry;
@@ -48,6 +49,9 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class MavenProjectImporter {
+
+  private static final Logger LOG = Logger.getInstance("#" + MavenProjectImporter.class.getName());
+
   private final Project myProject;
   private final MavenProjectsTree myProjectsTree;
   private final Map<VirtualFile, Module> myFileToModuleMapping;
@@ -434,6 +438,7 @@ public class MavenProjectImporter {
       MavenModuleImporter moduleImporter = createModuleImporter(module, Pair.create(project, each.getValue()));
       moduleImporters.put(module, moduleImporter);
 
+      LOG.info("Configure module: " + module.getName());
       moduleImporter.config(isNewModule);
     }
 

@@ -22,6 +22,7 @@ package com.intellij.openapi.roots.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.project.ProjectManager;
@@ -46,6 +47,8 @@ public class LanguageLevelProjectExtensionImpl extends LanguageLevelProjectExten
 
   private final Project myProject;
   private volatile Runnable myReloadProjectRequest;
+
+  private static final Logger LOG = Logger.getInstance("#" + LanguageLevelProjectExtensionImpl.class.getName());
 
   public LanguageLevelProjectExtensionImpl(final Project project) {
     myProject = project;
@@ -117,6 +120,7 @@ public class LanguageLevelProjectExtensionImpl extends LanguageLevelProjectExten
             // obsolete, another request has already replaced this one
             return;
           }
+          LOG.info("Reloading dialog showing");
           if (!forceReload && myOriginalLanguageLevel.equals(getLanguageLevel())) {
             // the question does not make sense now
             return;

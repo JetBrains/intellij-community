@@ -18,6 +18,7 @@ package org.jetbrains.idea.maven.importing;
 import com.intellij.facet.FacetManager;
 import com.intellij.facet.ModifiableFacetModel;
 import com.intellij.openapi.application.*;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -37,6 +38,8 @@ import java.util.Collection;
 
 public class MavenDefaultModifiableModelsProvider extends MavenBaseModifiableModelsProvider {
   private final LibraryTable.ModifiableModel myLibrariesModel;
+
+  private static final Logger LOG = Logger.getInstance("#" + MavenDefaultModifiableModelsProvider.class.getName());
 
   public MavenDefaultModifiableModelsProvider(Project project) {
     super(project);
@@ -117,6 +120,7 @@ public class MavenDefaultModifiableModelsProvider extends MavenBaseModifiableMod
 
             ProjectRootManager.getInstance(myProject).multiCommit(myModuleModel,
                                                                   rootModels.toArray(new ModifiableRootModel[rootModels.size()]));
+            LOG.info("Commit end");
 
             for (ModifiableFacetModel each : myFacetModels.values()) {
               each.commit();
@@ -126,6 +130,8 @@ public class MavenDefaultModifiableModelsProvider extends MavenBaseModifiableMod
             }
           }
         });
+        LOG.info("Commit write action end");
+        ModuleManager.getInstance(myProject).getModules();
       }
     });
   }

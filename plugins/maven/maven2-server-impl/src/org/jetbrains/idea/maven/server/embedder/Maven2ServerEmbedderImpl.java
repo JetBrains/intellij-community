@@ -437,7 +437,7 @@ public class Maven2ServerEmbedderImpl extends MavenRemoteObject implements Maven
         if (expandedProfilesCache == null) expandedProfilesCache = doInterpolate(nativeModel, basedir).getProfiles();
         Profile eachExpandedProfile = expandedProfilesCache.get(i);
 
-        for (ProfileActivator eachActivator : getProfileActivators()) {
+        for (ProfileActivator eachActivator : getProfileActivators(basedir)) {
           try {
             if (eachActivator.canDetermineActivation(eachExpandedProfile) && eachActivator.isActive(eachExpandedProfile)) {
               shouldAdd = true;
@@ -471,7 +471,7 @@ public class Maven2ServerEmbedderImpl extends MavenRemoteObject implements Maven
                                         collectProfilesIds(activatedProfiles));
   }
 
-  private static ProfileActivator[] getProfileActivators() throws RemoteException {
+  private static ProfileActivator[] getProfileActivators(File basedir) throws RemoteException {
     SystemPropertyProfileActivator sysPropertyActivator = new SystemPropertyProfileActivator();
     DefaultContext context = new DefaultContext();
     context.put("SystemProperties", MavenServerUtil.collectSystemProperties());
@@ -483,7 +483,7 @@ public class Maven2ServerEmbedderImpl extends MavenRemoteObject implements Maven
       return new ProfileActivator[0];
     }
 
-    return new ProfileActivator[]{new FileProfileActivator(),
+    return new ProfileActivator[]{new MyFileProfileActivator(basedir),
       sysPropertyActivator,
       new JdkPrefixProfileActivator(),
       new OperatingSystemProfileActivator()};
