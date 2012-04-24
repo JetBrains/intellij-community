@@ -38,6 +38,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.FixedSizeButton;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.FieldPanel;
@@ -59,6 +60,7 @@ import java.util.List;
 public abstract class BreakpointPropertiesPanel {
   protected final Project myProject;
   private final Key<? extends Breakpoint> myBreakpointCategory;
+  private boolean myCompact;
   private JPanel myPanel;
   private final DebuggerExpressionComboBox myConditionCombo;
   private final DebuggerExpressionComboBox myLogExpressionCombo;
@@ -109,6 +111,20 @@ public abstract class BreakpointPropertiesPanel {
 
   public boolean isMoreOptionsVisible() {
     return myMoreOptionsVisible;
+  }
+
+  private void createUIComponents() {
+    myPanel = new JPanel() {
+      @Override
+      public boolean requestFocus(boolean b) {
+        return super.requestFocus(b);    //To change body of overridden methods use File | Settings | File Templates.
+      }
+
+      @Override
+      public void requestFocus() {
+        super.requestFocus();    //To change body of overridden methods use File | Settings | File Templates.
+      }
+    };
   }
 
   public interface Delegate {
@@ -181,9 +197,10 @@ public abstract class BreakpointPropertiesPanel {
     panel.add(component, BorderLayout.CENTER);
   }
 
-  public BreakpointPropertiesPanel(Project project, final Key<? extends Breakpoint> breakpointCategory) {
+  public BreakpointPropertiesPanel(Project project, final Key<? extends Breakpoint> breakpointCategory, boolean compact) {
     myProject = project;
     myBreakpointCategory = breakpointCategory;
+    myCompact = compact;
 
     mySuspendPolicyGroup = new ButtonGroup();
     mySuspendPolicyGroup.add(mySuspendAllRadio);
@@ -230,6 +247,15 @@ public abstract class BreakpointPropertiesPanel {
     });
 
     myConditionCombo = new DebuggerExpressionComboBox(project, "LineBreakpoint condition");
+    if (myCompact) {
+      myPanel.addFocusListener(new FocusAdapter() {
+        @Override
+        public void focusGained(FocusEvent event) {
+          IdeFocusManager.findInstance().requestFocus(myConditionCombo, true);
+        }
+      });
+    }
+
     myLogExpressionCombo = new DebuggerExpressionComboBox(project, "LineBreakpoint logMessage");
     
     final ComboBox baseBreakpointCombo = new ComboBox(100);

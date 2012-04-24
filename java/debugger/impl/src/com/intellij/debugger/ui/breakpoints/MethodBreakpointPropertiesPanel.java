@@ -34,8 +34,8 @@ public class MethodBreakpointPropertiesPanel extends BreakpointPropertiesPanel {
   private JCheckBox myWatchEntryCheckBox;
   private JCheckBox myWatchExitCheckBox;
 
-  public MethodBreakpointPropertiesPanel(final Project project) {
-    super(project, MethodBreakpoint.CATEGORY);
+  public MethodBreakpointPropertiesPanel(final Project project, boolean compact) {
+    super(project, MethodBreakpoint.CATEGORY, compact);
   }
 
   protected JComponent createSpecialBox() {

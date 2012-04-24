@@ -54,8 +54,8 @@ public class LineBreakpointFactory extends BreakpointFactory {
   }
 
   @Override
-  public BreakpointPropertiesPanel createBreakpointPropertiesPanel(Project project) {
-    return new LineBreakpointPropertiesPanel(project);
+  public BreakpointPropertiesPanel createBreakpointPropertiesPanel(Project project, boolean compact) {
+    return new LineBreakpointPropertiesPanel(project, compact);
   }
 
   @Override
