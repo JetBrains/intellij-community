@@ -46,12 +46,12 @@ public class AndroidLibraryPackagingCompiler implements ClassPostProcessingCompi
           final CompilerModuleExtension extension = CompilerModuleExtension.getInstance(module);
           LOG.assertTrue(extension != null);
           
-          final VirtualFile outputDir = extension.getCompilerOutputPath();
-          if (outputDir == null) {
+          final VirtualFile classesDir = extension.getCompilerOutputPath();
+          if (classesDir == null) {
             continue;
           }
           final HashSet<VirtualFile> firstPackageDirs = new HashSet<VirtualFile>();
-          AndroidDexCompiler.addModuleOutputDir(firstPackageDirs, outputDir);
+          AndroidDexCompiler.addModuleOutputDir(firstPackageDirs, classesDir);
           
           if (firstPackageDirs.size() == 0) {
             continue;
@@ -62,8 +62,7 @@ public class AndroidLibraryPackagingCompiler implements ClassPostProcessingCompi
             LOG.error("Cannot find output directory for dex");
             continue;
           }
-          
-          result.add(new MyProcessingItem(module, firstPackageDirs.toArray(new VirtualFile[firstPackageDirs.size()]), outputDir));
+          result.add(new MyProcessingItem(module, firstPackageDirs.toArray(new VirtualFile[firstPackageDirs.size()]), outputDirectory));
         }
         return result.toArray(new ProcessingItem[result.size()]);
       }
