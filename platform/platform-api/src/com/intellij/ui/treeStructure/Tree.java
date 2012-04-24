@@ -298,15 +298,17 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
 
     for (int row = firstVisibleRow; row <= lastVisibleRow; row++) {
       final TreePath path = getPathForRow(row);
-      final Rectangle bounds = getRowBounds(row);
-      final Object component = path.getLastPathComponent();
-      final Object object = ((DefaultMutableTreeNode)component).getUserObject();
+      if (path != null) {
+        final Rectangle bounds = getRowBounds(row);
+        final Object component = path.getLastPathComponent();
+        final Object object = ((DefaultMutableTreeNode)component).getUserObject();
 
-      Color color = getFileColorFor(object);
+        Color color = getFileColorFor(object);
         if (color != null) {
           g.setColor(color);
           g.fillRect(0, bounds.y, getWidth(), bounds.height);
         }
+      }
     }
     config.restore();
   }
