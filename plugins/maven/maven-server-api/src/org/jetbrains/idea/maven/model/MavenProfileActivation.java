@@ -17,7 +17,7 @@ package org.jetbrains.idea.maven.model;
 
 import java.io.Serializable;
 
-public class MavenProfileActivation implements Serializable {
+public class MavenProfileActivation implements Serializable, Cloneable {
   private boolean myActiveByDefault;
   private MavenProfileActivationOS myOs;
   private String myJdk;
@@ -62,5 +62,15 @@ public class MavenProfileActivation implements Serializable {
 
   public void setFile(MavenProfileActivationFile file) {
     myFile = file;
+  }
+
+  @Override
+  public MavenProfileActivation clone() {
+    try {
+      return (MavenProfileActivation)super.clone();
+    }
+    catch (CloneNotSupportedException e) {
+      throw new InternalError();
+    }
   }
 }
