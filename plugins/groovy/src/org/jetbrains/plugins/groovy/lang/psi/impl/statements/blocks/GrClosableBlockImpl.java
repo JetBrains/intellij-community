@@ -194,10 +194,10 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
       parameterList.delete();
       ASTNode next = newParamList.getNode().getTreeNext();
       getNode().addLeaf(GroovyTokenTypes.mCLOSABLE_BLOCK_OP, "->", next);
-      return newParamList.addParameterToEnd(parameter);
+      return (GrParameter)newParamList.add(parameter);
     }
 
-    return parameterList.addParameterToEnd(parameter);
+    return (GrParameter)parameterList.add(parameter);
   }
 
   public boolean hasParametersSection() {
