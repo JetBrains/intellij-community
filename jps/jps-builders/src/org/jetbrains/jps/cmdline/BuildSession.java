@@ -26,7 +26,7 @@ import org.jetbrains.jps.incremental.fs.RootDescriptor;
 import org.jetbrains.jps.incremental.messages.*;
 import org.jetbrains.jps.incremental.storage.BuildDataManager;
 import org.jetbrains.jps.incremental.storage.ProjectTimestamps;
-import org.jetbrains.jps.incremental.storage.TimestampStorage;
+import org.jetbrains.jps.incremental.storage.Timestamps;
 import org.jetbrains.jps.server.ProjectDescriptor;
 
 import java.io.ByteArrayOutputStream;
@@ -385,7 +385,7 @@ final class BuildSession implements Runnable, CanceledStatus {
         forcedModules = Collections.emptySet();
       }
 
-      final TimestampStorage tsStorage = pd.timestamps.getStorage();
+      final Timestamps tsStorage = pd.timestamps.getStorage();
 
       final Map<String, Set<File>> filesToCompile;
       if (!paths.isEmpty()) {

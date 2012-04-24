@@ -25,7 +25,7 @@ import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
 import org.jetbrains.jps.incremental.storage.BuildDataManager;
 import org.jetbrains.jps.incremental.storage.ProjectTimestamps;
-import org.jetbrains.jps.incremental.storage.TimestampStorage;
+import org.jetbrains.jps.incremental.storage.Timestamps;
 
 import java.io.File;
 import java.lang.reflect.Method;
@@ -252,7 +252,7 @@ class ServerState {
         forcedModules = Collections.emptySet();
       }
 
-      final TimestampStorage tsStorage = pd.timestamps.getStorage();
+      final Timestamps marker = pd.timestamps.getStorage();
 
       final Map<String, Set<File>> filesToCompile;
       if (!paths.isEmpty()) {
@@ -268,7 +268,7 @@ class ServerState {
             }
             files.add(file);
             if (buildType == BuildType.FORCED_COMPILATION) {
-              pd.fsState.markDirty(file, rd, tsStorage);
+              pd.fsState.markDirty(file, rd, marker);
             }
           }
         }
