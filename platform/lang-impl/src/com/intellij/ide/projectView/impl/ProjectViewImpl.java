@@ -530,21 +530,15 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
 
     if (toolWindow != null) {
       myContentManager = toolWindow.getContentManager();
-      toolWindow.setContentUiType(ToolWindowContentUiType.getInstance("combo"), null);
-      ((ToolWindowEx)toolWindow).setAdditionalGearActions(myActionGroup);
-      toolWindow.getComponent().putClientProperty(ToolWindowContentUi.HIDE_ID_LABEL, "true");
+      if (!ApplicationManager.getApplication().isUnitTestMode()) {
+        toolWindow.setContentUiType(ToolWindowContentUiType.getInstance("combo"), null);
+        ((ToolWindowEx)toolWindow).setAdditionalGearActions(myActionGroup);
+        toolWindow.getComponent().putClientProperty(ToolWindowContentUi.HIDE_ID_LABEL, "true");
+      }
     } else {
       final ContentFactory contentFactory = ServiceManager.getService(ContentFactory.class);
       myContentManager = contentFactory.createContentManager(false, myProject);
     }
-    myContentManager.addContentManagerListener(new ContentManagerAdapter() {
-      @Override
-      public void selectionChanged(ContentManagerEvent event) {
-        if (event.getOperation() == ContentManagerEvent.ContentOperation.add) {
-          viewSelectionChanged();
-        }
-      }
-    });
 
     GuiUtils.replaceJSplitPaneWithIDEASplitter(myPanel);
     SwingUtilities.invokeLater(new Runnable() {
@@ -558,6 +552,15 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     }
     isInitialized = true;
     doAddUninitializedPanes();
+
+    myContentManager.addContentManagerListener(new ContentManagerAdapter() {
+      @Override
+      public void selectionChanged(ContentManagerEvent event) {
+        if (event.getOperation() == ContentManagerEvent.ContentOperation.add) {
+          viewSelectionChanged();
+        }
+      }
+    });
   }
 
   private void ensurePanesLoaded() {
@@ -590,6 +593,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     if (newPane == null) return false;
     newPane.setSubId(subId);
     showPane(newPane);
+    myAutoScrollFromSourceHandler.scrollFromSource();
     return true;
   }
 
@@ -919,6 +923,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
       super(new BorderLayout());
     }
 
+    @Nullable
     private Object getSelectedNodeElement() {
       final AbstractProjectViewPane currentProjectViewPane = getCurrentProjectViewPane();
       if (currentProjectViewPane == null) { // can happen if not initialized yet
@@ -962,7 +967,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
         if (psiElements == null) return null;
         Set<VirtualFile> files = new LinkedHashSet<VirtualFile>();
         for (PsiElement element : psiElements) {
-          final VirtualFile virtualFile = PsiUtilBase.getVirtualFile(element);
+          final VirtualFile virtualFile = PsiUtilCore.getVirtualFile(element);
           if (virtualFile != null) {
             files.add(virtualFile);
           }
@@ -1061,6 +1066,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
       return null;
     }
 
+    @Nullable
     private LibraryOrderEntry getSelectedLibrary() {
       final AbstractProjectViewPane viewPane = getCurrentProjectViewPane();
       DefaultMutableTreeNode node = viewPane != null ? viewPane.getSelectedNode() : null;
@@ -1154,6 +1160,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     }
   }
 
+  @Nullable
   private Module moduleByContentRoot(VirtualFile file) {
     if (ProjectRootsUtil.isModuleContentRoot(file, myProject)) {
       Module module = ProjectRootManager.getInstance(myProject).getFileIndex().getModuleForFile(file);
@@ -1363,7 +1370,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     return getPaneOptionValue(myAutoscrollFromSource, paneId, ourAutoscrollFromSourceDefaults);
   }
 
-  private void setAutoscrollFromSource(boolean autoscrollMode, String paneId) {
+  public void setAutoscrollFromSource(boolean autoscrollMode, String paneId) {
     setPaneOption(myAutoscrollFromSource, autoscrollMode, paneId, false);
   }
 

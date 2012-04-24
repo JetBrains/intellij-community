@@ -491,18 +491,24 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
 
     final ActionCallback activation = toolWindow.setActivation(new ActionCallback());
 
-    UiNotifyConnector.doWhenFirstShown(label, new Runnable() {
+    final DumbAwareRunnable runnable = new DumbAwareRunnable() {
       public void run() {
-        ApplicationManager.getApplication().invokeLater(new DumbAwareRunnable() {
-          public void run() {
-            if (toolWindow.isDisposed()) return;
+        if (toolWindow.isDisposed()) return;
 
-            toolWindow.ensureContentInitialized();
-            activation.setDone();
-          }
-        });
+        toolWindow.ensureContentInitialized();
+        activation.setDone();
       }
-    });
+    };
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      runnable.run();
+    }
+    else {
+      UiNotifyConnector.doWhenFirstShown(label, new Runnable() {
+        public void run() {
+          ApplicationManager.getApplication().invokeLater(runnable);
+        }
+      });
+    }
   }
 
   public void projectClosed() {
