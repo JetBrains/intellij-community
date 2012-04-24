@@ -16,7 +16,6 @@
 
 package com.intellij.codeInsight.completion;
 
-import com.google.common.collect.Maps;
 import com.intellij.codeInsight.completion.impl.CompletionSorterImpl;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
@@ -35,7 +34,6 @@ import com.intellij.psi.WeighingService;
 import com.intellij.psi.statistics.StatisticsInfo;
 import com.intellij.psi.statistics.StatisticsManager;
 import com.intellij.util.Alarm;
-import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.containers.MultiMap;
 import gnu.trove.THashMap;
 import gnu.trove.TObjectHashingStrategy;
@@ -66,18 +64,7 @@ public class CompletionLookupArranger extends LookupArranger {
   private final CompletionParameters myParameters;
   private final CompletionProgressIndicator myProcess;
   @SuppressWarnings({"MismatchedQueryAndUpdateOfCollection"})
-  private final FactoryMap<CompletionSorterImpl, Classifier<LookupElement>> myClassifiers =
-    new FactoryMap<CompletionSorterImpl, Classifier<LookupElement>>() {
-      @Override
-      protected Map<CompletionSorterImpl, Classifier<LookupElement>> createMap() {
-        return Maps.newLinkedHashMap();
-      }
-
-      @Override
-      protected Classifier<LookupElement> create(CompletionSorterImpl key) {
-        return key.buildClassifier();
-      }
-    };
+  private final Map<CompletionSorterImpl, Classifier<LookupElement>> myClassifiers = new LinkedHashMap<CompletionSorterImpl, Classifier<LookupElement>>();
 
   public CompletionLookupArranger(final CompletionParameters parameters, CompletionProgressIndicator process) {
     myParameters = parameters;
@@ -117,7 +104,10 @@ public class CompletionLookupArranger extends LookupArranger {
       for (LookupElement element : inputBySorter.get(sorter)) {
         subMap.put(element, map.get(element));
       }
-      myClassifiers.get(sorter).describeItems(subMap);
+      Classifier<LookupElement> classifier = myClassifiers.get(sorter);
+      if (classifier != null) {
+        classifier.describeItems(subMap);
+      }
     }
 
     return map;
@@ -127,7 +117,12 @@ public class CompletionLookupArranger extends LookupArranger {
   @Override
   public void addElement(Lookup lookup, LookupElement element, LookupElementPresentation presentation) {
     mySortingWeights.put(element, WeighingService.weigh(CompletionService.SORTING_KEY, element, myLocation));
-    myClassifiers.get(obtainSorter(element)).addElement(element);
+    CompletionSorterImpl sorter = obtainSorter(element);
+    Classifier<LookupElement> classifier = myClassifiers.get(sorter);
+    if (classifier == null) {
+      myClassifiers.put(sorter, classifier = sorter.buildClassifier());
+    }
+    classifier.addElement(element);
 
     final String invariant = presentation.getItemText() + "###" + presentation.getTailText() + "###" + presentation.getTypeText();
     element.putUserData(PRESENTATION_INVARIANT, invariant);
