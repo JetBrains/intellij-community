@@ -24,6 +24,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.keymap.impl.IdeKeyEventDispatcher;
@@ -608,7 +609,7 @@ public class IdeEventQueue extends EventQueue {
       if (focusOwner == null || !focusOwner.isShowing() || focusOwner instanceof JFrame || focusOwner instanceof JDialog) {
 
         final Application app = ApplicationManager.getApplication();
-        if (app instanceof ApplicationImpl && !((ApplicationImpl) app).isComponentsCreated()) {
+        if (app instanceof ApplicationEx && !((ApplicationEx) app).isLoaded()) {
           return;
         }
 

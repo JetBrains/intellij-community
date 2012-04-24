@@ -164,6 +164,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     }
   );
   private boolean myIsFiringLoadingEvent = false;
+  private boolean myLoaded = false;
   @NonNls private static final String WAS_EVER_SHOWN = "was.ever.shown";
 
   private Boolean myActive;
@@ -550,6 +551,12 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     finally {
       HeavyProcessLatch.INSTANCE.processFinished();
     }
+    myLoaded = true;
+  }
+
+  @Override
+  public boolean isLoaded() {
+    return myLoaded;
   }
 
   @Override
