@@ -20,4 +20,6 @@ package com.intellij.android.designer.model.agrid;
  */
 public interface IGridProvider {
   GridInfo getGridInfo();
+
+  GridInfo getVirtualGridInfo();
 }

@@ -32,4 +32,32 @@ public class GridInfo {
   public RadComponent[][] components;
   public int lastRow = -1;
   public int lastColumn = -1;
+
+  private static final int NEW_CELL_SIZE = 32;
+
+  public static int[] addLineInfo(int[] oldLines, int delta) {
+    if (delta > 0) {
+      int newLength = oldLines.length + delta / NEW_CELL_SIZE;
+
+      if (newLength > oldLines.length) {
+        int[] newLines = new int[newLength];
+        int startIndex = oldLines.length;
+
+        if (oldLines.length > 0) {
+          System.arraycopy(oldLines, 0, newLines, 0, oldLines.length);
+        }
+        else {
+          startIndex = 1;
+        }
+
+        for (int i = startIndex; i < newLength; i++) {
+          newLines[i] = newLines[i - 1] + NEW_CELL_SIZE;
+        }
+
+        return newLines;
+      }
+      return oldLines;
+    }
+    return oldLines;
+  }
 }

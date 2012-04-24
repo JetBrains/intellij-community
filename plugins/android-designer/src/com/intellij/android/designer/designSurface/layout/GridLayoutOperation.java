@@ -15,25 +15,19 @@
  */
 package com.intellij.android.designer.designSurface.layout;
 
-import com.intellij.android.designer.designSurface.AbstractEditOperation;
 import com.intellij.designer.designSurface.OperationContext;
 import com.intellij.designer.model.RadComponent;
 
 /**
  * @author Alexander Lobas
  */
-public class GridLayoutOperation extends AbstractEditOperation {
+public class GridLayoutOperation extends GridOperation {
   public GridLayoutOperation(RadComponent container, OperationContext context) {
     super(container, context);
   }
 
   @Override
-  public void showFeedback() {
-    // TODO: Auto-generated method stub
-  }
-
-  @Override
-  public void eraseFeedback() {
+  public void execute() throws Exception {
     // TODO: Auto-generated method stub
   }
 }

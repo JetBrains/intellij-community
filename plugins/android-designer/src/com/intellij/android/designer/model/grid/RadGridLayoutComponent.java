@@ -16,6 +16,7 @@
 package com.intellij.android.designer.model.grid;
 
 import com.android.ide.common.rendering.api.ViewInfo;
+import com.intellij.android.designer.model.RadViewComponent;
 import com.intellij.android.designer.model.RadViewContainer;
 import com.intellij.android.designer.model.agrid.GridInfo;
 import com.intellij.android.designer.model.agrid.IGridProvider;
@@ -30,11 +31,13 @@ import java.lang.reflect.Method;
  */
 public class RadGridLayoutComponent extends RadViewContainer implements IGridProvider {
   private GridInfo myGridInfo;
+  private GridInfo myVirtualGridInfo;
 
   @Override
   public void setViewInfo(ViewInfo viewInfo) {
     super.setViewInfo(viewInfo);
     myGridInfo = null;
+    myVirtualGridInfo = null;
   }
 
   @Override
@@ -88,5 +91,83 @@ public class RadGridLayoutComponent extends RadViewContainer implements IGridPro
       }
     }
     return myGridInfo;
+  }
+
+  @Override
+  public GridInfo getVirtualGridInfo() {
+    if (myVirtualGridInfo == null) {
+      myVirtualGridInfo = new GridInfo();
+      GridInfo gridInfo = getGridInfo();
+      Rectangle bounds = getBounds();
+
+      myVirtualGridInfo.lastColumn = gridInfo.lastColumn;
+      myVirtualGridInfo.lastRow = gridInfo.lastRow;
+
+      myVirtualGridInfo.width = bounds.width;
+      myVirtualGridInfo.height = bounds.height;
+
+      myVirtualGridInfo.vLines = GridInfo.addLineInfo(gridInfo.vLines, bounds.width - gridInfo.width);
+      myVirtualGridInfo.hLines = GridInfo.addLineInfo(gridInfo.hLines, bounds.height - gridInfo.height);
+
+      myVirtualGridInfo.components = getGridComponents(true);
+    }
+
+    return myVirtualGridInfo;
+  }
+
+  public RadComponent[][] getGridComponents(boolean fillSpans) {
+    GridInfo gridInfo = getGridInfo();
+    RadComponent[][] components = new RadComponent[gridInfo.lastRow + 1][gridInfo.lastColumn + 1];
+
+    for (RadComponent child : getChildren()) {
+      Rectangle cellInfo = getCellInfo(child);
+
+      if (fillSpans) {
+        for (int row = 0; row < cellInfo.height; row++) {
+          for (int column = 0; column < cellInfo.width; column++) {
+            components[cellInfo.y + row][cellInfo.x + column] = child;
+          }
+        }
+      }
+      else {
+        components[cellInfo.y][cellInfo.x] = child;
+      }
+    }
+
+    return components;
+  }
+
+  public static Rectangle getCellInfo(RadComponent component) {
+    Rectangle cellInfo = new Rectangle();
+
+    try {
+      Object layoutParams = ((RadViewComponent)component).getViewInfo().getLayoutParamsObject();
+      Class<?> layoutParamsClass = layoutParams.getClass();
+
+      Object columnSpec = layoutParamsClass.getField("columnSpec").get(layoutParams);
+      Object rowSpec = layoutParamsClass.getField("rowSpec").get(layoutParams);
+
+      Class<?> class_Spec = columnSpec.getClass();
+      Field field_span = class_Spec.getDeclaredField("span");
+      field_span.setAccessible(true);
+
+      Object columnSpan = field_span.get(columnSpec);
+      Object rowSpan = field_span.get(rowSpec);
+
+      Class<?> class_Interval = columnSpan.getClass();
+      Field field_min = class_Interval.getField("min");
+      field_min.setAccessible(true);
+      Field field_max = class_Interval.getField("max");
+      field_max.setAccessible(true);
+
+      cellInfo.x = field_min.getInt(columnSpan);
+      cellInfo.y = field_min.getInt(rowSpan);
+      cellInfo.width = field_max.getInt(columnSpan) - cellInfo.x;
+      cellInfo.height = field_max.getInt(rowSpan) - cellInfo.y;
+    }
+    catch (Throwable e) {
+    }
+
+    return cellInfo;
   }
 }

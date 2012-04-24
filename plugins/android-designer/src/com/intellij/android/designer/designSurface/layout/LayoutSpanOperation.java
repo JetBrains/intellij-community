@@ -19,7 +19,6 @@ import com.intellij.android.designer.model.ModelParser;
 import com.intellij.android.designer.model.RadViewComponent;
 import com.intellij.android.designer.model.agrid.GridInfo;
 import com.intellij.android.designer.model.table.RadTableLayoutComponent;
-import com.intellij.designer.designSurface.DecorationLayer;
 import com.intellij.designer.designSurface.EditOperation;
 import com.intellij.designer.designSurface.FeedbackLayer;
 import com.intellij.designer.designSurface.OperationContext;
@@ -27,7 +26,6 @@ import com.intellij.designer.designSurface.feedbacks.LineMarginBorder;
 import com.intellij.designer.designSurface.feedbacks.RectangleFeedback;
 import com.intellij.designer.designSurface.feedbacks.TextFeedback;
 import com.intellij.designer.designSurface.selection.DirectionResizePoint;
-import com.intellij.designer.designSurface.selection.EmptyPoint;
 import com.intellij.designer.designSurface.selection.ResizeSelectionDecorator;
 import com.intellij.designer.model.RadComponent;
 import com.intellij.designer.utils.Position;
@@ -267,17 +265,6 @@ public class LayoutSpanOperation implements EditOperation {
   }
 
   public static void gridPoints(ResizeSelectionDecorator decorator) {
-    decorator.addPoint(new EmptyPoint() {
-      @Override
-      protected void paint(DecorationLayer layer, Graphics2D g, RadComponent component) {
-        Rectangle bounds = component.getBounds(layer);
-
-        g.setStroke(LayoutMarginOperation.STROKE);
-        g.setColor(COLOR);
-        g.drawRect(bounds.x, bounds.y, bounds.width, bounds.height);
-      }
-    });
-
     decorator.addPoint(new DirectionResizePoint(COLOR,
                                                 Color.black,
                                                 Position.WEST,
