@@ -253,7 +253,8 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
       return existing;
     }
 
-    LookupImpl lookup = (LookupImpl)LookupManager.getInstance(editor.getProject()).createLookup(editor, LookupElement.EMPTY_ARRAY, "", LookupArranger.DEFAULT);
+    LookupImpl lookup = (LookupImpl)LookupManager.getInstance(editor.getProject()).createLookup(editor, LookupElement.EMPTY_ARRAY, "",
+                                                                                                new LookupArranger.DefaultArranger());
     if (editor.isOneLineMode()) {
       lookup.setCancelOnClickOutside(true);
       lookup.setCancelOnOtherWindowOpen(true);
