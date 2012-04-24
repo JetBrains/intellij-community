@@ -282,8 +282,38 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
       paintNodeContent(g);
     }
 
+    if (isFileColorsEnabled()) {
+      paintFileColorGutter(g);
+    }
+
     super.paintComponent(g);
     myEmptyText.paint(this, g);
+  }
+
+  protected void paintFileColorGutter(final Graphics g) {
+    final GraphicsConfig config = new GraphicsConfig(g);
+    final Rectangle rect = getVisibleRect();
+    final int firstVisibleRow = getClosestRowForLocation(rect.x, rect.y);
+    final int lastVisibleRow = getClosestRowForLocation(rect.x, rect.y + rect.height);
+
+    for (int row = firstVisibleRow; row <= lastVisibleRow; row++) {
+      final TreePath path = getPathForRow(row);
+      final Rectangle bounds = getRowBounds(row);
+      final Object component = path.getLastPathComponent();
+      final Object object = ((DefaultMutableTreeNode)component).getUserObject();
+
+      Color color = getFileColorFor(object);
+        if (color != null) {
+          g.setColor(color);
+          g.fillRect(0, bounds.y, getWidth(), bounds.height);
+        }
+    }
+    config.restore();
+  }
+
+  @Nullable
+  protected Color getFileColorFor(Object object) {
+    return null;
   }
 
   @Override

@@ -17,21 +17,20 @@
 package com.intellij.ide.projectView.impl;
 
 import com.intellij.ide.dnd.aware.DnDAwareTree;
-import com.intellij.ide.projectView.impl.nodes.BasePsiNode;
+import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.ide.util.treeView.NodeRenderer;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.wm.impl.content.GraphicsConfig;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiDirectoryContainer;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.FileColorManager;
 import com.intellij.ui.tabs.FileColorManagerImpl;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeModel;
-import javax.swing.tree.TreePath;
 import java.awt.*;
 
 /**
@@ -66,65 +65,39 @@ public abstract class ProjectViewTree extends DnDAwareTree {
   }
 
   @Override
-  protected void paintComponent(Graphics g) {
-    g.setColor(getBackground());
-    g.fillRect(0, 0, getWidth(), getHeight());
-    if (isFileColorsEnabled()) {
-      paintFileColorGutter(g);
-    }
-
-    super.paintComponent(g);
-  }
-
-  @Override
   public boolean isFileColorsEnabled() {
     return FileColorManagerImpl._isEnabled() && FileColorManagerImpl._isEnabledForProjectView();
   }
 
-  protected void paintFileColorGutter(final Graphics g) {
-    final GraphicsConfig config = new GraphicsConfig(g);
-    final Rectangle rect = getVisibleRect();
-    final int firstVisibleRow = getClosestRowForLocation(rect.x, rect.y);
-    final int lastVisibleRow = getClosestRowForLocation(rect.x, rect.y + rect.height);
+  @Nullable
+  @Override
+  protected Color getFileColorFor(Object object) {
+    Color color = null;
+    if (object instanceof AbstractTreeNode) {
+      final Object element = ((AbstractTreeNode)object).getValue();
+      if (element instanceof PsiElement) {
+        final PsiElement psi = (PsiElement)element;
+        final Project project = psi.getProject();
+        final PsiFile file = psi.getContainingFile();
 
-    for (int row = firstVisibleRow; row <= lastVisibleRow; row++) {
-      final TreePath path = getPathForRow(row);
-      final Rectangle bounds = getRowBounds(row);
-      final Object component = path.getLastPathComponent();
-      final Object object = ((DefaultMutableTreeNode)component).getUserObject();
-
-      if (object instanceof BasePsiNode) {
-        final Object element = ((BasePsiNode)object).getValue();
-        Color color = null;
-        if (element instanceof PsiElement) {
-          final PsiElement psi = (PsiElement)element;
-          final Project project = psi.getProject();
-          final PsiFile file = psi.getContainingFile();
-
-          if (file != null) {
-            color = FileColorManager.getInstance(project).getFileColor(file);
-          } else if (psi instanceof PsiDirectory) {
-            color = FileColorManager.getInstance(project).getFileColor(((PsiDirectory)psi).getVirtualFile());
-          } else if (psi instanceof PsiDirectoryContainer) {
-            final PsiDirectory[] dirs = ((PsiDirectoryContainer)psi).getDirectories();
-            for (PsiDirectory dir : dirs) {
-              Color c = FileColorManager.getInstance(project).getFileColor(dir.getVirtualFile());
-              if (c != null && color == null) {
-                color = c;
-              } else if (c != null && color != null) {
-                color = null;
-                break;
-              }
+        if (file != null) {
+          color = FileColorManager.getInstance(project).getFileColor(file);
+        } else if (psi instanceof PsiDirectory) {
+          color = FileColorManager.getInstance(project).getFileColor(((PsiDirectory)psi).getVirtualFile());
+        } else if (psi instanceof PsiDirectoryContainer) {
+          final PsiDirectory[] dirs = ((PsiDirectoryContainer)psi).getDirectories();
+          for (PsiDirectory dir : dirs) {
+            Color c = FileColorManager.getInstance(project).getFileColor(dir.getVirtualFile());
+            if (c != null && color == null) {
+              color = c;
+            } else if (c != null && color != null) {
+              color = null;
+              break;
             }
           }
         }
-
-        if (color != null) {
-          g.setColor(color);
-          g.fillRect(0, bounds.y, getWidth(), bounds.height);
-        }
       }
     }
-    config.restore();
+    return color;
   }
 }
