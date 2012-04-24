@@ -20,6 +20,7 @@ import com.intellij.psi.PsiClassType;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.StubBasedPsiElement;
 import com.intellij.psi.stubs.IStubElementType;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
@@ -88,16 +89,20 @@ public abstract class GrReferenceListImpl extends GrStubElementBase<GrReferenceL
 
   @Override
   public PsiElement add(@NotNull PsiElement element) throws IncorrectOperationException {
-    if (element instanceof GrCodeReferenceElement && findChildByClass(GrCodeReferenceElement.class) != null) {
-      PsiElement lastChild = getLastChild();
-      lastChild = PsiUtil.skipWhitespaces(lastChild, false);
-      if (!lastChild.getNode().getElementType().equals(GroovyTokenTypes.mCOMMA)) {
-        getNode().addLeaf(GroovyTokenTypes.mCOMMA, ",", null);
+    if (element instanceof GrCodeReferenceElement) {
+      if (findChildByType(getKeywordType()) == null) {
+        getNode().addLeaf(getKeywordType(), getKeywordType().toString(), null);
       }
-      return super.add(element);
+      else if (findChildByClass(GrCodeReferenceElement.class) != null) {
+        PsiElement lastChild = getLastChild();
+        lastChild = PsiUtil.skipWhitespaces(lastChild, false);
+        if (!lastChild.getNode().getElementType().equals(GroovyTokenTypes.mCOMMA)) {
+          getNode().addLeaf(GroovyTokenTypes.mCOMMA, ",", null);
+        }
+      }
     }
-    else {
-      return super.add(element);
-    }
+    return super.add(element);
   }
+
+  protected abstract IElementType getKeywordType();
 }
