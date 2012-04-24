@@ -1043,7 +1043,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
         }
         oldItem = item;
 
-        if (item != null && LookupImpl.this.isVisible() && LookupImpl.this.isFocused() && !Registry.is("jeka")) {
+        if (item != null && LookupImpl.this.isVisible() && LookupImpl.this.isFocused()) {
           if (extender == null || !extender.isVisible() || !extender.sameAsFor(item)) {
             if (extender != null) extender.hide();
             extender = new CompletionExtender(item, LookupImpl.this);
