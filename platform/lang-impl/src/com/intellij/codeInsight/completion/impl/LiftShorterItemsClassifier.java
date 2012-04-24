@@ -73,44 +73,32 @@ class LiftShorterItemsClassifier extends Classifier<LookupElement> {
   }
 
   @Override
-  public Iterable<List<LookupElement>> classify(List<LookupElement> source) {
+  public Iterable<LookupElement> classify(List<LookupElement> source) {
     return liftShorterElements(source, new THashSet<LookupElement>(TObjectHashingStrategy.IDENTITY));
   }
 
-  private Iterable<List<LookupElement>> liftShorterElements(List<LookupElement> source, THashSet<LookupElement> lifted) {
+  private List<LookupElement> liftShorterElements(List<LookupElement> source, THashSet<LookupElement> lifted) {
     final Set<LookupElement> srcSet = new THashSet<LookupElement>(source, TObjectHashingStrategy.IDENTITY);
-    final Iterable<List<LookupElement>> classified = myNext.classify(source);
     final Set<LookupElement> processed = new THashSet<LookupElement>(TObjectHashingStrategy.IDENTITY);
 
-    final ArrayList<List<LookupElement>> result = new ArrayList<List<LookupElement>>();
-    for (List<LookupElement> list : classified) {
-      final ArrayList<LookupElement> group = new ArrayList<LookupElement>();
-      for (LookupElement element : list) {
-        assert srcSet.contains(element) : myNext;
-        if (processed.add(element)) {
-          for (String prefix : getSortedPrefixes(element)) {
-            List<LookupElement> shorter = new SmartList<LookupElement>();
-            for (LookupElement shorterElement : myElements.get(prefix)) {
-              if (srcSet.contains(shorterElement) && processed.add(shorterElement)) {
-                shorter.add(shorterElement);
-              }
+    final List<LookupElement> result = new ArrayList<LookupElement>();
+    for (LookupElement element : myNext.classify(source)) {
+      assert srcSet.contains(element) : myNext;
+      if (processed.add(element)) {
+        for (String prefix : getSortedPrefixes(element)) {
+          List<LookupElement> shorter = new SmartList<LookupElement>();
+          for (LookupElement shorterElement : myElements.get(prefix)) {
+            if (srcSet.contains(shorterElement) && processed.add(shorterElement)) {
+              shorter.add(shorterElement);
             }
-
-            lifted.addAll(shorter);
-
-            final Iterable<List<LookupElement>> shorterClassified = myNext.classify(shorter);
-            if (group.isEmpty()) {
-              ContainerUtil.addAll(result, shorterClassified);
-            } else {
-              group.addAll(ContainerUtil.flatten(shorterClassified));
-            }
-
           }
 
-          group.add(element);
+          lifted.addAll(shorter);
+
+          ContainerUtil.addAll(result, myNext.classify(shorter));
         }
+        result.add(element);
       }
-      result.add(group);
     }
     return result;
   }
