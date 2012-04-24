@@ -13,12 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.android.designer.designSurface.layout;
+package com.intellij.android.designer.designSurface.layout.caption;
 
 import com.intellij.android.designer.designSurface.AbstractEditOperation;
 import com.intellij.android.designer.model.RadViewComponent;
-import com.intellij.android.designer.model.table.RadCaptionTableRow;
-import com.intellij.android.designer.model.table.RadTableLayoutComponent;
+import com.intellij.android.designer.model.layout.table.RadCaptionTableRow;
+import com.intellij.android.designer.model.layout.table.RadTableLayoutComponent;
 import com.intellij.designer.designSurface.EditableArea;
 import com.intellij.designer.designSurface.FlowBaseOperation;
 import com.intellij.designer.designSurface.OperationContext;

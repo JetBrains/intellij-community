@@ -13,10 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.android.designer.designSurface.layout;
+package com.intellij.android.designer.designSurface.layout.grid;
 
-import com.intellij.android.designer.model.agrid.GridInfo;
-import com.intellij.android.designer.model.agrid.IGridProvider;
+import com.intellij.android.designer.designSurface.layout.BorderStaticDecorator;
+import com.intellij.android.designer.designSurface.layout.flow.FlowStaticDecorator;
+import com.intellij.android.designer.model.grid.GridInfo;
+import com.intellij.android.designer.model.grid.IGridProvider;
 import com.intellij.designer.designSurface.DecorationLayer;
 import com.intellij.designer.designSurface.StaticDecorator;
 import com.intellij.designer.model.RadComponent;

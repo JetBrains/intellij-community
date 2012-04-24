@@ -13,13 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.android.designer.model.grid;
+package com.intellij.android.designer.model.layout.grid;
 
 import com.android.ide.common.rendering.api.ViewInfo;
 import com.intellij.android.designer.model.RadViewComponent;
 import com.intellij.android.designer.model.RadViewContainer;
-import com.intellij.android.designer.model.agrid.GridInfo;
-import com.intellij.android.designer.model.agrid.IGridProvider;
+import com.intellij.android.designer.model.grid.GridInfo;
+import com.intellij.android.designer.model.grid.IGridProvider;
 import com.intellij.designer.model.RadComponent;
 
 import java.awt.*;

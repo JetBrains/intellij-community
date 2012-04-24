@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.android.designer.model.agrid;
+package com.intellij.android.designer.model.grid;
 
 /**
  * @author Alexander Lobas

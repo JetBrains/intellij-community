@@ -13,15 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.android.designer.model.grid;
+package com.intellij.android.designer.model.layout.grid;
 
-import com.intellij.android.designer.model.agrid.RadCaptionRow;
+import com.intellij.android.designer.model.grid.RadCaptionColumn;
 
 /**
  * @author Alexander Lobas
  */
-public class RadCaptionGridRow extends RadCaptionRow<RadGridLayoutComponent> {
-  public RadCaptionGridRow(RadGridLayoutComponent container, int index, int offset, int width) {
+public class RadCaptionGridColumn extends RadCaptionColumn<RadGridLayoutComponent> {
+  public RadCaptionGridColumn(RadGridLayoutComponent container, int index, int offset, int width) {
     super(container, index, offset, width, false);
   }
 }

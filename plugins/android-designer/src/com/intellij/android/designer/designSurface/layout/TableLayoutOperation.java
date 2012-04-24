@@ -15,13 +15,14 @@
  */
 package com.intellij.android.designer.designSurface.layout;
 
+import com.intellij.android.designer.designSurface.layout.grid.GridOperation;
 import com.intellij.android.designer.model.ModelParser;
 import com.intellij.android.designer.model.RadViewComponent;
 import com.intellij.android.designer.model.ViewsMetaManager;
-import com.intellij.android.designer.model.agrid.GridInfo;
-import com.intellij.android.designer.model.agrid.GridInsertType;
-import com.intellij.android.designer.model.table.RadTableLayoutComponent;
-import com.intellij.android.designer.model.table.RadTableRowLayout;
+import com.intellij.android.designer.model.grid.GridInfo;
+import com.intellij.android.designer.model.grid.GridInsertType;
+import com.intellij.android.designer.model.layout.table.RadTableLayoutComponent;
+import com.intellij.android.designer.model.layout.table.RadTableRowLayout;
 import com.intellij.designer.designSurface.OperationContext;
 import com.intellij.designer.model.MetaManager;
 import com.intellij.designer.model.MetaModel;
