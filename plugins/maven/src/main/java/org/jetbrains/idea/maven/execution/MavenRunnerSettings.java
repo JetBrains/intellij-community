@@ -38,7 +38,7 @@ public class MavenRunnerSettings implements Cloneable {
   @NonNls public static final String USE_JAVA_HOME = "#JAVA_HOME";
 
   private boolean runMavenInBackground = true;
-  @NotNull private String jreName = "";
+  @NotNull private String jreName = USE_PROJECT_JDK;
   @NotNull private String vmOptions = "";
   private boolean skipTests = false;
   private Map<String, String> mavenProperties = new LinkedHashMap<String, String>();
@@ -55,9 +55,6 @@ public class MavenRunnerSettings implements Cloneable {
 
   @NotNull
   public String getJreName() {
-    if (StringUtil.isEmpty(jreName)) {
-      jreName = getDefaultJdkName();
-    }
     return jreName;
   }
 
@@ -94,12 +91,6 @@ public class MavenRunnerSettings implements Cloneable {
   @SuppressWarnings({"UnusedDeclaration"})
   public void setMavenProperties(Map<String, String> mavenProperties) {
     this.mavenProperties = mavenProperties;
-  }
-
-  public String getDefaultJdkName() {
-    Sdk recent = ProjectJdkTable.getInstance().findMostRecentSdkOfType(JavaSdk.getInstance());
-    if (recent == null) return USE_INTERNAL_JAVA;
-    return recent.getName();
   }
 
   public void addListener(Listener l) {
