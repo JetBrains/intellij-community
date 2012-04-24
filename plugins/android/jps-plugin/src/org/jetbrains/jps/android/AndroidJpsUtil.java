@@ -57,6 +57,32 @@ class AndroidJpsUtil {
   }
 
   @Nullable
+  public static Module findCircularDependencyOnLibraryWithSamePackage(@NotNull AndroidFacet facet,
+                                                                      @NotNull Map<Module, String> packageMap) {
+    final String aPackage = packageMap.get(facet.getModule());
+    if (aPackage == null || aPackage.length() == 0) {
+      return null;
+    }
+
+    for (AndroidFacet depFacet : getAllAndroidDependencies(facet.getModule(), true)) {
+      if (aPackage.equals(packageMap.get(depFacet.getModule()))) {
+        final List<AndroidFacet> depDependencies = getAllAndroidDependencies(depFacet.getModule(), false);
+
+        if (depDependencies.contains(facet)) {
+          // circular dependency on library with the same package
+          return depFacet.getModule();
+        }
+      }
+    }
+    return null;
+  }
+
+  public static boolean isMavenizedModule(Module module) {
+    // todo: implement
+    return false;
+  }
+
+  @Nullable
   public static File getMainContentRoot(@NotNull AndroidFacet facet) throws IOException {
     final Module module = facet.getModule();
 
@@ -389,7 +415,7 @@ class AndroidJpsUtil {
       result.add(generatedResourcesStorage.getPath());
     }
 
-    for (AndroidFacet depFacet : getAllDependentAndroidLibraries(facet.getModule())) {
+    for (AndroidFacet depFacet : getAllAndroidDependencies(facet.getModule(), true)) {
       final File depResDir = getResourceDirForCompilationPath(depFacet);
       if (depResDir != null) {
         result.add(depResDir.getPath());
@@ -406,22 +432,23 @@ class AndroidJpsUtil {
   }
 
   @NotNull
-  static List<AndroidFacet> getAllDependentAndroidLibraries(@NotNull Module module) {
+  static List<AndroidFacet> getAllAndroidDependencies(@NotNull Module module, boolean librariesOnly) {
     final List<AndroidFacet> result = new ArrayList<AndroidFacet>();
-    collectDependentAndroidLibraries(module, result, new HashSet<String>());
+    collectDependentAndroidLibraries(module, result, new HashSet<String>(), librariesOnly);
     return result;
   }
 
   private static void collectDependentAndroidLibraries(@NotNull Module module,
                                                        @NotNull List<AndroidFacet> result,
-                                                       @NotNull Set<String> visitedSet) {
+                                                       @NotNull Set<String> visitedSet,
+                                                       boolean librariesOnly) {
     for (ClasspathItem item : module.getClasspath(ClasspathKind.PRODUCTION_RUNTIME, false)) {
       if (item instanceof Module) {
         final Module depModule = (Module)item;
         final AndroidFacet depFacet = getFacet(depModule);
 
-        if (depFacet != null && depFacet.getLibrary() && visitedSet.add(module.getName())) {
-          collectDependentAndroidLibraries(depModule, result, visitedSet);
+        if (depFacet != null && (!librariesOnly || depFacet.getLibrary()) && visitedSet.add(depModule.getName())) {
+          collectDependentAndroidLibraries(depModule, result, visitedSet, librariesOnly);
           result.add(0, depFacet);
         }
       }

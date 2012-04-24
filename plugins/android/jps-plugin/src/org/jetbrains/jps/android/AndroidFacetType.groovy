@@ -60,6 +60,9 @@ class AndroidFacetType extends FacetTypeService {
         case "LIBS_FOLDER_RELATIVE_PATH":
           facet.nativeLibsFolderRelativePath = value
           break
+        case "RUN_PROCESS_RESOURCES_MAVEN_TASK":
+          facet.runProcessResourcesMavenTask = Boolean.parseBoolean(value)
+          break
       }
     }
     return facet;
