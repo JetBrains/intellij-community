@@ -459,6 +459,7 @@ public class AndroidFacet extends Facet<AndroidFacetConfiguration> {
               AndroidCompileUtil.generate(module, AndroidAutogeneratorMode.AIDL);
             }
             AndroidCompileUtil.generate(module, AndroidAutogeneratorMode.RENDERSCRIPT);
+            AndroidCompileUtil.generate(module, AndroidAutogeneratorMode.BUILDCONFIG);
 
             activateSourceAutogenerating();
           }

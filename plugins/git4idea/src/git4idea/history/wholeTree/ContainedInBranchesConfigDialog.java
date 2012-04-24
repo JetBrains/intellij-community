@@ -48,7 +48,7 @@ public class ContainedInBranchesConfigDialog extends DialogWrapper {
                                          Collection<String> remoteBranches, final String currentLocal, final String currentRemote) {
     super(project, true);
     myProject = project;
-    setTitle("Configure branches presentation");
+    setTitle("Configure Branches Presentation");
     initUi(project, localBranches, remoteBranches, currentLocal, currentRemote);
     Disposer.register(myProject, getDisposable());
     init();

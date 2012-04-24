@@ -49,11 +49,17 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.wm.ToolWindow;
+import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.ui.content.Content;
 import com.intellij.util.ArrayUtil;
 import com.intellij.xdebugger.DefaultDebugProcessHandler;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.facet.AndroidRootUtil;
 import org.jetbrains.android.facet.AvdsNotSupportedException;
+import org.jetbrains.android.logcat.AndroidLogcatToolWindowFactory;
+import org.jetbrains.android.logcat.AndroidLogcatToolWindowView;
+import org.jetbrains.android.logcat.AndroidLogcatUtil;
 import org.jetbrains.android.sdk.AndroidSdkUtils;
 import org.jetbrains.android.util.AndroidBundle;
 import org.jetbrains.android.util.AndroidOutputReceiver;
@@ -119,6 +125,7 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
   private Runnable myRestarter;
   private TargetChooser myTargetChooser;
   private final boolean mySupportMultipleDevices;
+  private final boolean myClearLogcatBeforeStart;
 
   public void setDebugMode(boolean debugMode) {
     myDebugMode = debugMode;
@@ -274,7 +281,8 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
                              @NotNull String packageName,
                              AndroidApplicationLauncher applicationLauncher,
                              Map<AndroidFacet, String> additionalFacet2PackageName,
-                             boolean supportMultipleDevices) throws ExecutionException {
+                             boolean supportMultipleDevices,
+                             boolean clearLogcatBeforeStart) throws ExecutionException {
     myFacet = facet;
     myCommandLine = commandLine;
     
@@ -290,6 +298,7 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
     myPackageName = packageName;
     myTargetPackageName = packageName;
     myAdditionalFacet2PackageName = additionalFacet2PackageName;
+    myClearLogcatBeforeStart = clearLogcatBeforeStart;
   }
 
   public void setDeploy(boolean deploy) {
@@ -606,6 +615,10 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
   }
 
   private boolean prepareAndStartApp(IDevice device) {
+    if (myClearLogcatBeforeStart) {
+      clearLogcatAndConsole(getModule().getProject(), device);
+    }
+
     message("Target device: " + getDevicePresentableName(device), STDOUT);
     try {
       if (myDeploy) {
@@ -647,6 +660,22 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
       message("I/O Error" + (message != null ? ": " + message : ""), STDERR);
       return false;
     }
+  }
+
+  protected static void clearLogcatAndConsole(@NotNull Project project, @NotNull IDevice device) {
+    final ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(AndroidLogcatToolWindowFactory.TOOL_WINDOW_ID);
+    if (toolWindow == null) {
+      return;
+    }
+
+    for (Content content : toolWindow.getContentManager().getContents()) {
+      final AndroidLogcatToolWindowView view = content.getUserData(AndroidLogcatToolWindowView.ANDROID_LOGCAT_VIEW_KEY);
+
+      if (view != null && device == view.getSelectedDevice()) {
+        view.getLogConsole().clear();
+      }
+    }
+    AndroidLogcatUtil.clearLogcat(project, device);
   }
 
   @NotNull

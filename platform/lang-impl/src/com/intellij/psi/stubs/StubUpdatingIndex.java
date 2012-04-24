@@ -121,7 +121,7 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
             SerializationManager.getInstance().serialize(rootStub, bytes);
 
             final int key = Math.abs(FileBasedIndex.getFileId(inputData.getFile()));
-            result.put(key, new SerializedStubTree(bytes.getInternalBuffer(), bytes.size()));
+            result.put(key, new SerializedStubTree(bytes.getInternalBuffer(), bytes.size(), rootStub));
           }
         });
 
@@ -306,7 +306,7 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
       final Map<StubIndexKey, Map<Object, TIntArrayList>> stubTree;
       if (!data.isEmpty()) {
         final SerializedStubTree stub = data.values().iterator().next();
-        stubTree = new StubTree((PsiFileStub)stub.getStub()).indexStubTree();
+        stubTree = new StubTree((PsiFileStub)stub.getStub(true)).indexStubTree();
       }
       else {
         stubTree = Collections.emptyMap();

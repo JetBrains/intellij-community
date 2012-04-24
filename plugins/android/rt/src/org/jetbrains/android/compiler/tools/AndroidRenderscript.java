@@ -42,7 +42,11 @@ public class AndroidRenderscript {
     command.add(FileUtil.toSystemDependentName(rawDirPath));
 
     command.add("-target-api");
-    command.add(Integer.toString(target.getVersion().getApiLevel()));
+    int targetApi = target.getVersion().getApiLevel();
+    if (targetApi < 11) {
+      targetApi = 11;
+    }
+    command.add(Integer.toString(targetApi));
 
     if (depFolderPath != null) {
       command.add("-d");
