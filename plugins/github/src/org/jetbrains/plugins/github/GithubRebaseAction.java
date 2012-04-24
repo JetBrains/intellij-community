@@ -141,7 +141,7 @@ public class GithubRebaseAction extends DumbAwareAction {
     final Ref<String> remoteForForkParentRepo = new Ref<String>();
     for (GitRemote gitRemote : gitRepository.getRemotes()) {
       for (String url : gitRemote.getUrls()) {
-        if (url.endsWith(parent + ".git")) {
+        if (url.endsWith("/" + parent + ".git")) {
           remoteForForkParentRepo.set(gitRemote.getName());
           break;
         }
