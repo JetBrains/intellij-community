@@ -19,6 +19,8 @@ import com.intellij.android.designer.model.grid.GridInfo;
 import com.intellij.android.designer.model.grid.RadCaptionColumn;
 import com.intellij.designer.model.RadComponent;
 
+import java.util.Arrays;
+
 /**
  * @author Alexander Lobas
  */
@@ -34,16 +36,35 @@ public class RadCaptionTableColumn extends RadCaptionColumn<RadTableLayoutCompon
 
     for (RadComponent[] rowComponents : components) {
       RadComponent component = rowComponents[myIndex];
+      int nextIndex = myIndex + 1;
+
       if (component != null) {
-        component.delete();
-        rowComponents[myIndex] = null;
+        while (nextIndex < rowComponents.length && component == rowComponents[nextIndex]) {
+          nextIndex++;
+        }
+
+        if (myIndex > 0 && component == rowComponents[myIndex - 1]) {
+          RadTableLayoutComponent.setCellSpan(component, RadTableLayoutComponent.getCellSpan(component) - 1);
+        }
+        else {
+          Arrays.fill(rowComponents, myIndex, nextIndex, null);
+
+          RadComponent parent = component.getParent();
+          component.delete();
+          if (parent.getChildren().isEmpty()) {
+            parent.delete();
+          }
+        }
       }
 
-      for (int i = myIndex + 1; i < rowComponents.length; i++) {
+      for (int i = nextIndex; i < rowComponents.length; i++) {
         RadComponent cellComponent = rowComponents[i];
-
         if (cellComponent != null) {
           RadTableLayoutComponent.setCellIndex(cellComponent, i - 1);
+
+          while (i + 1 < rowComponents.length && cellComponent == rowComponents[i + 1]) {
+            i++;
+          }
         }
       }
     }

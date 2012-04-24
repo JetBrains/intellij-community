@@ -169,17 +169,6 @@ public class RadTableLayoutComponent extends RadViewContainer implements IGridPr
     return components;
   }
 
-  public static void setCellIndex(final RadComponent component, final int column) {
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        XmlTag tag = ((RadViewComponent)component).getTag();
-        tag.setAttribute("android:layout_column", Integer.toString(column));
-        ModelParser.deleteAttribute(tag, "android:layout_span");
-      }
-    });
-  }
-
   private static int getCellIndex(RadComponent component) {
     try {
       String column = ((RadViewComponent)component).getTag().getAttributeValue("android:layout_column");
@@ -198,5 +187,26 @@ public class RadTableLayoutComponent extends RadViewContainer implements IGridPr
     catch (Throwable e) {
       return 1;
     }
+  }
+
+  public static void setCellIndex(final RadComponent component, final int column) {
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
+      public void run() {
+        XmlTag tag = ((RadViewComponent)component).getTag();
+        tag.setAttribute("android:layout_column", Integer.toString(column));
+        ModelParser.deleteAttribute(tag, "android:layout_span");
+      }
+    });
+  }
+
+  public static void setCellSpan(final RadComponent component, final int span) {
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
+      public void run() {
+        XmlTag tag = ((RadViewComponent)component).getTag();
+        tag.setAttribute("android:layout_span", Integer.toString(span));
+      }
+    });
   }
 }

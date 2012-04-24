@@ -184,7 +184,16 @@ public class TableLayoutOperation extends GridOperation {
           RadComponent cellComponent = rowComponents[j];
 
           if (cellComponent != null) {
-            RadTableLayoutComponent.setCellIndex(cellComponent, j + 1);
+            if (j == startColumn && startColumn > 0 && cellComponent == rowComponents[j - 1]) {
+              RadTableLayoutComponent.setCellSpan(cellComponent, RadTableLayoutComponent.getCellSpan(cellComponent) + 1);
+            }
+            else {
+              RadTableLayoutComponent.setCellIndex(cellComponent, j + 1);
+            }
+
+            while (j + 1 < rowComponents.length && cellComponent == rowComponents[j + 1]) {
+              j++;
+            }
           }
         }
       }

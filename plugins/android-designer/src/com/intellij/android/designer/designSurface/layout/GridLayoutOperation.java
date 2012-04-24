@@ -16,8 +16,13 @@
 package com.intellij.android.designer.designSurface.layout;
 
 import com.intellij.android.designer.designSurface.layout.grid.GridOperation;
+import com.intellij.android.designer.model.RadViewComponent;
+import com.intellij.android.designer.model.grid.GridInfo;
+import com.intellij.android.designer.model.grid.GridInsertType;
+import com.intellij.android.designer.model.layout.grid.RadGridLayoutComponent;
 import com.intellij.designer.designSurface.OperationContext;
 import com.intellij.designer.model.RadComponent;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Alexander Lobas
@@ -29,6 +34,57 @@ public class GridLayoutOperation extends GridOperation {
 
   @Override
   public void execute() throws Exception {
+    GridInfo gridInfo = getGridInfo();
+
+    RadViewComponent container = (RadViewComponent)myContainer;
+    RadComponent editComponent = myComponents.get(0);
+
+    if (myInsertType == GridInsertType.in_cell) {
+      if (myRow <= gridInfo.lastRow && myColumn <= gridInfo.lastColumn) {
+        RadComponent insertBefore = getNextComponent(myRow, myColumn);
+
+        if (editComponent != insertBefore) {
+          execute(myContext, container, myComponents, (RadViewComponent)insertBefore);
+        }
+        RadGridLayoutComponent.setCellIndex(editComponent, myRow, myColumn);
+      }
+      else {
+        execute(myContext, container, myComponents, null);
+        RadGridLayoutComponent.setCellIndex(editComponent, myRow, myColumn);
+        RadGridLayoutComponent.setGridSize(container,
+                                           Math.max(myRow + 1, gridInfo.lastRow + 1),
+                                           Math.max(myColumn + 1, gridInfo.lastColumn + 1));
+      }
+    }
+
     // TODO: Auto-generated method stub
+  }
+
+  @Nullable
+  private RadComponent getNextComponent(int row, int column) {
+    GridInfo gridInfo = getGridInfo();
+    RadComponent[][] components = gridInfo.components;
+
+    RadComponent[] rowComponents = components[row];
+
+    for (int i = column + 1; i < rowComponents.length; i++) {
+      RadComponent component = rowComponents[i];
+      if (component != null) {
+        return component;
+      }
+    }
+
+    for (int i = row + 1; i < components.length; i++) {
+      rowComponents = components[i];
+
+      for (int j = 0; i < rowComponents.length; j++) {
+        RadComponent component = rowComponents[j];
+        if (component != null) {
+          return component;
+        }
+      }
+    }
+
+    return null;
   }
 }
