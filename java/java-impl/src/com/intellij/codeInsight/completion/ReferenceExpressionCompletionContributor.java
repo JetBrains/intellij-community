@@ -436,7 +436,13 @@ public class ReferenceExpressionCompletionContributor {
     final ElementFilter filter = getReferenceFilter(place, true);
     for (final LookupElement item : completeFinalReference(place, mockRef, filter, parameters)) {
       if (shouldChain(place, qualifierType, expectedType, item)) {
-        result.consume(new JavaChainLookupElement(qualifierItem, item));
+        result.consume(new JavaChainLookupElement(qualifierItem, item) {
+          @Override
+          public void handleInsert(InsertionContext context) {
+            FeatureUsageTracker.getInstance().triggerFeatureUsed(JavaCompletionFeatures.SECOND_SMART_COMPLETION_CHAIN);
+            super.handleInsert(context);
+          }
+        });
       }
     }
   }

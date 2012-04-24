@@ -1329,10 +1329,12 @@ public class ListUtils {
   public void testListArrayListCast() { doTest('\n') }
   public void testInterfaceImplementationNoCast() { doTest() }
   public void testStaticallyImportedMethodsBeforeExpression() { doTest() }
+  public void testInnerChainedReturnType() { doTest() }
 
   public void testCompatibleInterfacesCast() {
     configure()
     assert myFixture.lookupElementStrings.containsAll(['foo', 'bar'])
   }
+
 
 }
