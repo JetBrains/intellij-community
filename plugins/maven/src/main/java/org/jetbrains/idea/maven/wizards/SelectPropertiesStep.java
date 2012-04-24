@@ -16,21 +16,21 @@
 package org.jetbrains.idea.maven.wizards;
 
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
+import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.util.containers.hash.HashMap;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.execution.MavenPropertiesPanel;
-import org.jetbrains.idea.maven.indices.MavenIndex;
 import org.jetbrains.idea.maven.model.MavenArchetype;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.project.MavenEnvironmentForm;
-import org.jetbrains.idea.maven.project.MavenGeneralSettings;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
+import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.Collections;
+import java.io.File;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -98,6 +98,20 @@ public class SelectPropertiesStep extends ModuleWizardStep {
   @Override
   public boolean isStepVisible() {
     return myBuilder.getArchetype() != null;
+  }
+
+  @Override
+  public boolean validate() throws ConfigurationException {
+    File mavenHome = MavenUtil.resolveMavenHomeDirectory(myEnvironmentForm.getMavenHome());
+    if (mavenHome == null) {
+      throw new ConfigurationException("Maven home directory is not specified");
+    }
+
+    if (!MavenUtil.isValidMavenHome(mavenHome)) {
+      throw new ConfigurationException("Maven home directory is invalid: " + mavenHome);
+    }
+
+    return true;
   }
 
   @Override

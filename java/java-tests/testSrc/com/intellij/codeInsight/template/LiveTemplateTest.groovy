@@ -310,9 +310,14 @@ public class LiveTemplateTest extends LightCodeInsightFixtureTestCase {
     
     myFixture.type('it')
     assert myFixture.lookupElementStrings[0].startsWith('it')
+    assert LookupManager.getInstance(project).activeLookup.currentItem == myFixture.getLookupElements()[0]
+
+    myFixture.type('e')
+    assert myFixture.lookupElementStrings[0].startsWith('ite')
+    assert LookupManager.getInstance(project).activeLookup.currentItem == myFixture.getLookupElements()[0]
     LookupManager.getInstance(project).hideActiveLookup()
 
-    myFixture.type('\b')
+    myFixture.type('\b\b')
     new ListTemplatesHandler().invoke(project, editor, myFixture.file);
     assert myFixture.lookupElementStrings.containsAll(['iter', 'itco'])
     LookupManager.getInstance(project).hideActiveLookup()
