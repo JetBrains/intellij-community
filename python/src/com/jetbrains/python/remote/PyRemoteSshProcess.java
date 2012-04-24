@@ -12,8 +12,6 @@ abstract public class PyRemoteSshProcess extends Process {
 
   public abstract Pair<String, Integer> obtainRemoteSocket(String interpreterPath) throws PyRemoteInterpreterException;
 
-  public abstract PyRemoteSshProcess exec(String command) throws PyRemoteInterpreterException;
-
   public abstract boolean hasPty();
 
   public abstract boolean sendCtrlC();

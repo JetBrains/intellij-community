@@ -31,8 +31,9 @@ public abstract class PyTypeReferenceImpl implements PyTypeReference {
     return ArrayUtil.EMPTY_OBJECT_ARRAY;
   }
 
+  @Nullable
   @Override
-  public PyType resolve(@Nullable PsiElement context, TypeEvalContext typeEvalContext) {
+  public PyType resolve(@Nullable PsiElement context, @NotNull TypeEvalContext typeEvalContext) {
     Set<PyTypeReferenceImpl> seen = new HashSet<PyTypeReferenceImpl>();
     seen.add(this);
     PyType resolved;
