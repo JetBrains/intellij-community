@@ -67,76 +67,37 @@ public class CompletionLookupArranger extends LookupArranger {
   @SuppressWarnings("unchecked") private final Map<LookupElement, Comparable> mySortingWeights = new THashMap<LookupElement, Comparable>(TObjectHashingStrategy.IDENTITY);
   private final CompletionParameters myParameters;
   private final CompletionProgressIndicator myProcess;
-  private final Classifier<LookupElement> myClassifier;
+  @SuppressWarnings({"MismatchedQueryAndUpdateOfCollection"})
+  private final FactoryMap<CompletionSorterImpl, Classifier<LookupElement>> myClassifiers =
+    new FactoryMap<CompletionSorterImpl, Classifier<LookupElement>>() {
+      @Override
+      protected Map<CompletionSorterImpl, Classifier<LookupElement>> createMap() {
+        return Maps.newLinkedHashMap();
+      }
+
+      @Override
+      protected Classifier<LookupElement> create(CompletionSorterImpl key) {
+        return key.buildClassifier();
+      }
+    };
 
   public CompletionLookupArranger(final CompletionParameters parameters, CompletionProgressIndicator process) {
     myParameters = parameters;
     myProcess = process;
     myLocation = new CompletionLocation(parameters);
-    myClassifier = new Classifier<LookupElement>() {
-      @SuppressWarnings({"MismatchedQueryAndUpdateOfCollection"})
-      private final FactoryMap<CompletionSorterImpl, Classifier<LookupElement>> myClassifiers =
-        new FactoryMap<CompletionSorterImpl, Classifier<LookupElement>>() {
-          @Override
-          protected Map<CompletionSorterImpl, Classifier<LookupElement>> createMap() {
-            return Maps.newLinkedHashMap();
-          }
+  }
 
-          @Override
-          protected Classifier<LookupElement> create(CompletionSorterImpl key) {
-            return key.buildClassifier();
-          }
-        };
+  private MultiMap<CompletionSorterImpl, LookupElement> groupInputBySorter(List<LookupElement> source) {
+    MultiMap<CompletionSorterImpl, LookupElement> inputBySorter = new MultiMap<CompletionSorterImpl, LookupElement>();
+    for (LookupElement element : source) {
+      inputBySorter.putValue(obtainSorter(element), element);
+    }
+    return inputBySorter;
+  }
 
-      @Override
-      public void addElement(LookupElement element) {
-        mySortingWeights.put(element, WeighingService.weigh(CompletionService.SORTING_KEY, element, myLocation));
-        myClassifiers.get(obtainSorter(element)).addElement(element);
-      }
-
-      @Override
-      public Iterable<List<LookupElement>> classify(List<LookupElement> source) {
-        MultiMap<CompletionSorterImpl, LookupElement> inputBySorter = groupInputBySorter(source);
-
-        final ArrayList<List<LookupElement>> result = new ArrayList<List<LookupElement>>();
-        for (CompletionSorterImpl sorter : myClassifiers.keySet()) {
-          ContainerUtil.addAll(result, myClassifiers.get(sorter).classify((List<LookupElement>)inputBySorter.get(sorter)));
-        }
-        return result;
-      }
-
-      private MultiMap<CompletionSorterImpl, LookupElement> groupInputBySorter(List<LookupElement> source) {
-        MultiMap<CompletionSorterImpl, LookupElement> inputBySorter = new MultiMap<CompletionSorterImpl, LookupElement>();
-        for (LookupElement element : source) {
-          inputBySorter.putValue(obtainSorter(element), element);
-        }
-        return inputBySorter;
-      }
-
-      @NotNull
-      private CompletionSorterImpl obtainSorter(LookupElement element) {
-        return myProcess.getSorter(element);
-      }
-
-      @Override
-      public void describeItems(LinkedHashMap<LookupElement, StringBuilder> map) {
-        final MultiMap<CompletionSorterImpl, LookupElement> inputBySorter = groupInputBySorter(new ArrayList<LookupElement>(map.keySet()));
-
-        if (inputBySorter.size() > 1) {
-          for (LookupElement element : map.keySet()) {
-            map.get(element).append(obtainSorter(element)).append(": ");
-          }
-        }
-
-        for (CompletionSorterImpl sorter : inputBySorter.keySet()) {
-          final LinkedHashMap<LookupElement, StringBuilder> subMap = new LinkedHashMap<LookupElement, StringBuilder>();
-          for (LookupElement element : inputBySorter.get(sorter)) {
-            subMap.put(element, map.get(element));
-          }
-          myClassifiers.get(sorter).describeItems(subMap);
-        }
-      }
-    };
+  @NotNull
+  private CompletionSorterImpl obtainSorter(LookupElement element) {
+    return myProcess.getSorter(element);
   }
 
   @Override
@@ -145,17 +106,34 @@ public class CompletionLookupArranger extends LookupArranger {
     for (LookupElement item : myItems) {
       map.put(item, new StringBuilder());
     }
-    myClassifier.describeItems(map);
+    final MultiMap<CompletionSorterImpl, LookupElement> inputBySorter = groupInputBySorter(new ArrayList<LookupElement>(map.keySet()));
+
+    if (inputBySorter.size() > 1) {
+      for (LookupElement element : map.keySet()) {
+        map.get(element).append(obtainSorter(element)).append(": ");
+      }
+    }
+
+    for (CompletionSorterImpl sorter : inputBySorter.keySet()) {
+      final LinkedHashMap<LookupElement, StringBuilder> subMap = new LinkedHashMap<LookupElement, StringBuilder>();
+      for (LookupElement element : inputBySorter.get(sorter)) {
+        subMap.put(element, map.get(element));
+      }
+      myClassifiers.get(sorter).describeItems(subMap);
+    }
+
     return map;
 
   }
 
   @Override
-  public void addElement(Lookup lookup, LookupElement item, LookupElementPresentation presentation) {
-    myClassifier.addElement(item);
+  public void addElement(Lookup lookup, LookupElement element, LookupElementPresentation presentation) {
+    mySortingWeights.put(element, WeighingService.weigh(CompletionService.SORTING_KEY, element, myLocation));
+    myClassifiers.get(obtainSorter(element)).addElement(element);
+
     final String invariant = presentation.getItemText() + "###" + presentation.getTailText() + "###" + presentation.getTypeText();
-    item.putUserData(PRESENTATION_INVARIANT, invariant);
-    super.addElement(lookup, item, presentation);
+    element.putUserData(PRESENTATION_INVARIANT, invariant);
+    super.addElement(lookup, element, presentation);
   }
 
   private static boolean isAlphaSorted() {
@@ -171,7 +149,13 @@ public class CompletionLookupArranger extends LookupArranger {
         return mySortingWeights.get(o1).compareTo(mySortingWeights.get(o2));
       }
     });
-    Iterable<List<LookupElement>> groups = myClassifier.classify(items);
+
+    MultiMap<CompletionSorterImpl, LookupElement> inputBySorter = groupInputBySorter(items);
+
+    final List<List<LookupElement>> groups = new ArrayList<List<LookupElement>>();
+    for (CompletionSorterImpl sorter : myClassifiers.keySet()) {
+      ContainerUtil.addAll(groups, myClassifiers.get(sorter).classify((List<LookupElement>)inputBySorter.get(sorter)));
+    }
 
     LinkedHashSet<LookupElement> model = new LinkedHashSet<LookupElement>();
     for (List<LookupElement> group : groups) {
