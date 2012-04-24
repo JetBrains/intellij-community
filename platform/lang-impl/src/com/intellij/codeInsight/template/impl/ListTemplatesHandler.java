@@ -190,7 +190,7 @@ public class ListTemplatesHandler implements CodeInsightActionHandler {
       }
       result.addAll(items);
       ArrayList<LookupElement> list = new ArrayList<LookupElement>(result);
-      int selected = list.indexOf(lookup.getCurrentItem());
+      int selected = lookup.isSelectionTouched() ? list.indexOf(lookup.getCurrentItem()) : 0;
       return new Pair<List<LookupElement>, Integer>(list, selected >= 0 ? selected : 0);
     }
 
