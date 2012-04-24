@@ -20,6 +20,7 @@
 package com.intellij.psi.stubs;
 
 import com.intellij.util.io.UnsyncByteArrayInputStream;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -28,15 +29,18 @@ import java.io.IOException;
 public class SerializedStubTree {
   private final byte[] myBytes;
   private final int myLength;
+  private StubElement myStubElement;
 
-  public SerializedStubTree(final byte[] bytes, int length) {
+  public SerializedStubTree(final byte[] bytes, int length, @Nullable StubElement stubElement) {
     myBytes = bytes;
     myLength = length;
+    myStubElement = stubElement;
   }
   
   public SerializedStubTree(DataInput in) throws IOException {
     myLength = in.readInt();
     myBytes = new byte[myLength];
+    myStubElement = null;
     in.readFully(myBytes);
   }
 
@@ -45,7 +49,15 @@ public class SerializedStubTree {
     out.write(myBytes, 0, myLength);
   }
 
-  public StubElement getStub() {
+  // willIndexStub is one time optimization hint, once can safely pass false
+  public StubElement getStub(boolean willIndexStub) {
+    StubElement stubElement = myStubElement;
+    if (stubElement != null) {
+      // not null myStubElement means we just built SerializedStubTree for indexing,
+      // if we request stub for indexing we can safely use it
+      myStubElement = null;
+      if (willIndexStub) return stubElement;
+    }
     return SerializationManager.getInstance().deserialize(new UnsyncByteArrayInputStream(myBytes));
   }
 

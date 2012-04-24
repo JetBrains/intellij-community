@@ -38,8 +38,9 @@ public class AndroidCommonUtils {
   private static final Pattern ERROR_PATTERN = Pattern.compile(".*error.*");
   private static final Pattern EXCEPTION_PATTERN = Pattern.compile(".*exception.*");
 
-  private static Pattern R_PATTERN = Pattern.compile("R(\\$.*)?\\.class");
-  private static Pattern MANIFEST_PATTERN = Pattern.compile("Manifest(\\$.*)?\\.class");
+  private static final Pattern R_PATTERN = Pattern.compile("R(\\$.*)?\\.class");
+  private static final Pattern MANIFEST_PATTERN = Pattern.compile("Manifest(\\$.*)?\\.class");
+  private static final String BUILD_CONFIG_CLASS_NAME = "BuildConfig.class";
 
   public static final Pattern COMPILER_MESSAGE_PATTERN = Pattern.compile("(.+):(\\d+):.+");
 
@@ -211,7 +212,8 @@ public class AndroidCommonUtils {
 
       if (!packRAndManifestClasses &&
           (R_PATTERN.matcher(file.getName()).matches() ||
-           MANIFEST_PATTERN.matcher(file.getName()).matches())) {
+           MANIFEST_PATTERN.matcher(file.getName()).matches() ||
+           BUILD_CONFIG_CLASS_NAME.equals(file.getName()))) {
         return;
       }
 

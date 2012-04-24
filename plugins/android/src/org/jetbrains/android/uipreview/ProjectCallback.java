@@ -252,7 +252,7 @@ class ProjectCallback extends LegacyCallback implements IProjectCallback {
       int first = fqcn.indexOf('.');
       first = fqcn.indexOf('.', first + 1);
       int last = fqcn.lastIndexOf('.');
-      if (last > first) {
+      if (last > first && first >= 0) {
         return fqcn.substring(0, first) + ".." + fqcn.substring(last);
       }
     }

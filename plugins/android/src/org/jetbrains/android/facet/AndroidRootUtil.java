@@ -178,6 +178,12 @@ public class AndroidRootUtil {
     return path != null ? LocalFileSystem.getInstance().findFileByPath(path) : null;
   }
 
+  @Nullable
+  public static VirtualFile getBuildconfigGenDir(@NotNull AndroidFacet facet) {
+    final String path = getBuildconfigGenSourceRootPath(facet);
+    return path != null ? LocalFileSystem.getInstance().findFileByPath(path) : null;
+  }
+
   // works even if there is no Android facet in a module
 
   @Nullable
@@ -355,14 +361,25 @@ public class AndroidRootUtil {
 
   @Nullable
   public static String getRenderscriptGenSourceRootPath(@NotNull AndroidFacet facet) {
-    // todo: return correct path for mavenized module
+    // todo: return correct path for mavenized module when it'll be supported
+    return getDefaultGenSourceRoot(facet);
+  }
+
+  @Nullable
+  public static String getBuildconfigGenSourceRootPath(@NotNull AndroidFacet facet) {
+    // todo: return correct path for mavenized module when it'll be supported
+    return getDefaultGenSourceRoot(facet);
+  }
+
+  @Nullable
+  private static String getDefaultGenSourceRoot(AndroidFacet facet) {
     final VirtualFile mainContentRoot = getMainContentRoot(facet);
     final String moduleDirPath = mainContentRoot != null ? mainContentRoot.getPath() : null;
     return moduleDirPath != null
            ? moduleDirPath + '/' + SdkConstants.FD_GEN_SOURCES
            : null;
   }
-  
+
   @Nullable
   public static VirtualFile getMainContentRoot(@NotNull AndroidFacet facet) {
     final Module module = facet.getModule();
