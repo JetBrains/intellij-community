@@ -187,4 +187,9 @@ public class AndroidManifestDomTest extends AndroidDomTest {
     copyFileToProject("MyActivity.java", "src/p1/p2/MyActivity.java");
     doTestHighlighting();
   }
+
+  public void testIntegerRefAsEnumValue() throws Throwable {
+    copyFileToProject("myIntResource.xml", "res/values/myIntResource.xml");
+    doTestCompletion();
+  }
 }
