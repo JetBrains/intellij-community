@@ -11,20 +11,13 @@ import javax.swing.*;
  *         Date: 03.04.12
  */
 public class TypoScriptFileType extends LanguageFileType {
-  private static final Icon ICON = IconLoader.getIcon("/icons/typo3.png");   //todo[lene]
+  private static final Icon ICON = IconLoader.getIcon("/icons/typo3.png");
 
   public static final TypoScriptFileType INSTANCE = new TypoScriptFileType();
+  public static final String DEFAULT_EXTENSION = "ts";
 
   private TypoScriptFileType() {
     super(TypoScriptLanguage.INSTANCE);
-   /* FileTypeEditorHighlighterProviders.INSTANCE.addExplicitExtension(this, new EditorHighlighterProvider() {//todo[lene]
-      @Override
-      public EditorHighlighter getEditorHighlighter(@Nullable Project project,
-                                                    @NotNull FileType fileType, @Nullable VirtualFile virtualFile,
-                                                    @NotNull EditorColorsScheme colors) {
-        return new TypoScriptEditorHighlighter(project, virtualFile, colors);
-      }
-    });*/
   }
 
   @NotNull
@@ -42,12 +35,12 @@ public class TypoScriptFileType extends LanguageFileType {
   @NotNull
   @Override
   public String getDefaultExtension() {
-    return "ts";
+    return DEFAULT_EXTENSION;
   }
 
   @Override
   public Icon getIcon() {
-    return ICON;//todo[lene]
+    return ICON;
   }
 }
 

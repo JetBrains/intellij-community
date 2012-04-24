@@ -27,4 +27,9 @@
     <lang.psiStructureViewFactory language="TypoScript" implementationClass="com.jetbrains.typoscript.lang.TypoScriptStructureViewFactory"/>
   </extensions>
 
+  <application-components>
+    <component>
+      <implementation-class>com.jetbrains.typoscript.TypoScriptExtensionMappingChecker</implementation-class>
+    </component>
+  </application-components>
 </idea-plugin>

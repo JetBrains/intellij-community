@@ -16,9 +16,9 @@ import java.io.Reader;
 %public
 %class _TypoScriptLexer
 %implements FlexLexer
-%function advance                //todo[lene] ?
+%function advance
 %type IElementType
-%unicode                          //todo[lene] ? doc says ascii only
+%unicode
 %eof{  return;
 %eof}
 
@@ -70,7 +70,7 @@ OBJECT_PATH_ENTITY = [A-Za-z0-9\-_]*
 <EXPRESSION_SIGN>   ">"                               { yybegin(ONE_LINE_IGNORED_ZONE); return TypoScriptTokenTypes.UNSETTING_OPERATOR; }
 <EXPRESSION_SIGN>   "<"                               { yybegin(COPYING_OPERATOR_VALUE); return TypoScriptTokenTypes.COPYING_OPERATOR; }
 <YYINITIAL>         "<"{ENDTRIMMED_STRING_TAIL}       { return TypoScriptTokenTypes.INCLUDE_STATEMENT; }
-            //todo[lene] create "=<" reference sign for typoscript templates; or handle < in assignment value
+            //todo create "=<" reference sign for typoscript templates; or handle < in assignment value
 <EXPRESSION_SIGN>   "("                               { yybegin(MULTILINE_AFTER_SIGN_ONE_LINE_IGNORED_ZONE);
                                                       return TypoScriptTokenTypes.MULTILINE_VALUE_OPERATOR_BEGIN; }
 <EXPRESSION_SIGN>   "{"                               { yybegin(ONE_LINE_IGNORED_ZONE); return TypoScriptTokenTypes.CODE_BLOCK_OPERATOR_BEGIN; }

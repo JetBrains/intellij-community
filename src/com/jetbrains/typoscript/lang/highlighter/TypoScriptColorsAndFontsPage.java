@@ -52,7 +52,6 @@ public class TypoScriptColorsAndFontsPage implements ColorSettingsPage, DisplayP
       new AttributesDescriptor(TypoScriptBundle.message("color.settings.ignored.text"), TypoScriptHighlightingData.IGNORED_TEXT),
       new AttributesDescriptor(TypoScriptBundle.message("color.settings.operator"), TypoScriptHighlightingData.OPERATOR_SIGN),
       new AttributesDescriptor(TypoScriptBundle.message("color.settings.string"), TypoScriptHighlightingData.STRING_VALUE),
-      //todo[lene] name?
       new AttributesDescriptor(TypoScriptBundle.message("color.settings.object.path"), TypoScriptHighlightingData.OBJECT_PATH_ENTITY),
       new AttributesDescriptor(TypoScriptBundle.message("color.settings.object.path.separator"),
                                TypoScriptHighlightingData.OBJECT_PATH_SEPARATOR),
