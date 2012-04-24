@@ -26,11 +26,12 @@ import org.jetbrains.jps.incremental.fs.RootDescriptor;
 import org.jetbrains.jps.incremental.messages.*;
 import org.jetbrains.jps.incremental.storage.BuildDataManager;
 import org.jetbrains.jps.incremental.storage.ProjectTimestamps;
-import org.jetbrains.jps.incremental.storage.TimestampStorage;
+import org.jetbrains.jps.incremental.storage.Timestamps;
 import org.jetbrains.jps.server.ProjectDescriptor;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.IOException;
 import java.io.PrintStream;
 import java.util.*;
 
@@ -149,11 +150,11 @@ final class BuildSession implements Runnable, CanceledStatus {
     ProjectDescriptor pd;
     final Project project = loadProject(projectPath);
     final BuildFSState fsState = new BuildFSState(false);
-    ProjectTimestamps timestamps = null;
+    ProjectTimestamps projectTimestamps = null;
     BuildDataManager dataManager = null;
     final File dataStorageRoot = Utils.getDataStorageRoot(project);
     try {
-      timestamps = new ProjectTimestamps(dataStorageRoot);
+      projectTimestamps = new ProjectTimestamps(dataStorageRoot);
       dataManager = new BuildDataManager(dataStorageRoot, true);
       if (dataManager.versionDiffers()) {
         forceCleanCaches = true;
@@ -163,21 +164,21 @@ final class BuildSession implements Runnable, CanceledStatus {
     catch (Exception e) {
       // second try
       LOG.info(e);
-      if (timestamps != null) {
-        timestamps.close();
+      if (projectTimestamps != null) {
+        projectTimestamps.close();
       }
       if (dataManager != null) {
         dataManager.close();
       }
       forceCleanCaches = true;
       FileUtil.delete(dataStorageRoot);
-      timestamps = new ProjectTimestamps(dataStorageRoot);
+      projectTimestamps = new ProjectTimestamps(dataStorageRoot);
       dataManager = new BuildDataManager(dataStorageRoot, true);
       // second attempt succeded
       msgHandler.processMessage(new CompilerMessage("build", BuildMessage.Kind.INFO, "Project rebuild forced: " + e.getMessage()));
     }
 
-    pd = new ProjectDescriptor(project, fsState, timestamps, dataManager, BuildLoggingManager.DEFAULT);
+    pd = new ProjectDescriptor(project, fsState, projectTimestamps, dataManager, BuildLoggingManager.DEFAULT);
 
     try {
       for (int attempt = 0; attempt < 2; attempt++) {
@@ -185,8 +186,19 @@ final class BuildSession implements Runnable, CanceledStatus {
           // if compilation scope is the whole project and cache rebuild is forced, use PROJECT_REBUILD for faster compilation
           buildType = BuildType.PROJECT_REBUILD;
         }
-        final CompileScope compileScope = createCompilationScope(buildType, pd, modules, artifacts, paths);
-        final IncProjectBuilder builder = new IncProjectBuilder(pd, BuilderRegistry.getInstance(), builderParams, cs);
+
+        if (buildType == BuildType.PROJECT_REBUILD || forceCleanCaches) {
+          try {
+            pd.timestamps.clean();
+          }
+          catch (IOException e) {
+            throw new ProjectBuildException("Error cleaning timestamps storage", e);
+          }
+        }
+
+        final Timestamps timestamps = pd.timestamps.getStorage();
+        final CompileScope compileScope = createCompilationScope(buildType, pd, timestamps, modules, artifacts, paths);
+        final IncProjectBuilder builder = new IncProjectBuilder(pd, BuilderRegistry.getInstance(), timestamps, builderParams, cs);
         builder.addMessageHandler(msgHandler);
         try {
           switch (buildType) {
@@ -352,7 +364,11 @@ final class BuildSession implements Runnable, CanceledStatus {
     return !(projectFile.isFile() && projectFile.getName().endsWith(".ipr"));
   }
 
-  private static CompileScope createCompilationScope(BuildType buildType, ProjectDescriptor pd, Set<String> modules, Collection<String> artifactNames, Collection<String> paths) throws Exception {
+  private static CompileScope createCompilationScope(BuildType buildType,
+                                                     ProjectDescriptor pd,
+                                                     final Timestamps timestamps, Set<String> modules,
+                                                     Collection<String> artifactNames,
+                                                     Collection<String> paths) throws Exception {
     Set<Artifact> artifacts = new HashSet<Artifact>();
     if (artifactNames.isEmpty() && buildType == BuildType.PROJECT_REBUILD) {
       artifacts.addAll(pd.project.getArtifacts().values());
@@ -385,8 +401,6 @@ final class BuildSession implements Runnable, CanceledStatus {
         forcedModules = Collections.emptySet();
       }
 
-      final TimestampStorage tsStorage = pd.timestamps.getStorage();
-
       final Map<String, Set<File>> filesToCompile;
       if (!paths.isEmpty()) {
         filesToCompile = new HashMap<String, Set<File>>();
@@ -401,7 +415,7 @@ final class BuildSession implements Runnable, CanceledStatus {
             }
             files.add(file);
             if (buildType == BuildType.FORCED_COMPILATION) {
-              pd.fsState.markDirty(file, rd, tsStorage);
+              pd.fsState.markDirty(file, rd, timestamps);
             }
           }
         }

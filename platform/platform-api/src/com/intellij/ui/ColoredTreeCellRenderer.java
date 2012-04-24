@@ -17,6 +17,7 @@ package com.intellij.ui;
 
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.tree.MacTreeUI;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -63,7 +64,7 @@ public abstract class ColoredTreeCellRenderer extends SimpleColoredComponent imp
     if (UIUtil.isFullRowSelectionLAF()) {
         setBackground(selected ? UIUtil.getTreeSelectionBackground() : null);
     }
-    else if (UIUtil.isUnderAquaLookAndFeel() && tree.getUI() instanceof UIUtil.MacTreeUI && ((UIUtil.MacTreeUI)tree.getUI()).isWideSelection()) {
+    else if (UIUtil.isUnderAquaLookAndFeel() && tree.getUI() instanceof MacTreeUI && ((MacTreeUI)tree.getUI()).isWideSelection()) {
       setPaintFocusBorder(false);
       //setBackground(selected ? UIUtil.getTreeSelectionBackground() : null);
     }
@@ -99,7 +100,7 @@ public abstract class ColoredTreeCellRenderer extends SimpleColoredComponent imp
       super.setOpaque(false);  // avoid erasing Nimbus focus frame
       super.setIconOpaque(false);
     }
-    else if (UIUtil.isUnderAquaLookAndFeel() && tree.getUI() instanceof UIUtil.MacTreeUI && ((UIUtil.MacTreeUI)tree.getUI()).isWideSelection()) {
+    else if (UIUtil.isUnderAquaLookAndFeel() && tree.getUI() instanceof MacTreeUI && ((MacTreeUI)tree.getUI()).isWideSelection()) {
       super.setOpaque(false);  // avoid erasing Nimbus focus frame
       super.setIconOpaque(false);
     }
@@ -107,7 +108,7 @@ public abstract class ColoredTreeCellRenderer extends SimpleColoredComponent imp
       super.setOpaque(myOpaque || selected && hasFocus || selected && isFocused()); // draw selection background even for non-opaque tree
     }
 
-    if (tree.getUI() instanceof UIUtil.MacTreeUI) {
+    if (tree.getUI() instanceof MacTreeUI) {
       setMyBorder(null);
       setIpad(new Insets(0, 2,  0, 2));
     }

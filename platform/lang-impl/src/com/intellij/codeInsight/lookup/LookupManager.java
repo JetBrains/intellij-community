@@ -46,12 +46,12 @@ public abstract class LookupManager {
 
   @Nullable
   public LookupEx showLookup(Editor editor, @NotNull LookupElement... items) {
-    return showLookup(editor, items, "", LookupArranger.DEFAULT);
+    return showLookup(editor, items, "", new LookupArranger.DefaultArranger());
   }
 
   @Nullable
   public LookupEx showLookup(Editor editor, @NotNull LookupElement[] items, @NotNull String prefix) {
-    return showLookup(editor, items, prefix, LookupArranger.DEFAULT);
+    return showLookup(editor, items, prefix, new LookupArranger.DefaultArranger());
   }
 
   @Nullable

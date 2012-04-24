@@ -37,6 +37,7 @@ import com.intellij.ui.treeStructure.treetable.TreeTableModel;
 import com.intellij.util.Alarm;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.tree.MacTreeUI;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -93,7 +94,7 @@ public class ActionsTree {
     myTree.setRootVisible(false);
     myTree.setShowsRootHandles(true);
 
-    myTree.putClientProperty(UIUtil.MacTreeUI.STRIPED_CLIENT_PROPERTY, Boolean.TRUE);
+    myTree.putClientProperty(MacTreeUI.STRIPED_CLIENT_PROPERTY, Boolean.TRUE);
     myTree.setCellRenderer(new KeymapsRenderer());
 
     myTree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);

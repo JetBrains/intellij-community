@@ -16,6 +16,7 @@
 package com.intellij.openapi.wm.impl.content;
 
 import com.intellij.openapi.ui.popup.ListPopup;
+import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManagerEvent;
@@ -145,8 +146,8 @@ class ComboContentLayout extends ContentLayout {
   @Override
   public void showContentPopup(ListPopup listPopup) {
     final int width = myComboLabel.getSize().width;
-    listPopup.setMinimumSize(new Dimension(isIdVisible() ? width : width - 2, 0));
-    listPopup.showUnderneathOf(myComboLabel);
+    listPopup.setMinimumSize(new Dimension(width, 0));
+    listPopup.show(new RelativePoint(myComboLabel, new Point(-2, myComboLabel.getHeight())));
   }
 
   @Override

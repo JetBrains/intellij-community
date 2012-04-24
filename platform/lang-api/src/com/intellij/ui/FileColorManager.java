@@ -40,6 +40,8 @@ public abstract class FileColorManager {
 
   public abstract boolean isEnabledForTabs();
 
+  public abstract boolean isEnabledForProjectView();
+
   @SuppressWarnings({"MethodMayBeStatic"})
   @Nullable
   public abstract Color getColor(@NotNull String name);
@@ -49,6 +51,8 @@ public abstract class FileColorManager {
 
   @Nullable
   public abstract Color getFileColor(@NotNull final PsiFile file);
+
+  public abstract Color getFileColor(@NotNull final VirtualFile file);
 
   public abstract boolean isShared(@NotNull final String scopeName);
 

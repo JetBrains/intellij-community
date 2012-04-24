@@ -34,8 +34,7 @@ import org.jetbrains.idea.maven.utils.MavenLog;
 import org.jetbrains.idea.maven.utils.MavenProcessCanceledException;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.util.*;
 
 import static com.intellij.openapi.util.text.StringUtil.isEmptyOrSpaces;
@@ -440,7 +439,12 @@ public class MavenProjectReader {
       // todo: it is a quick-hack here - we add inherited dummy profiles to correctly collect activated profiles in 'applyProfiles'.
       List<MavenProfile> profiles = model.getProfiles();
       for (MavenProfile each : parentModel.getProfiles()) {
-        addProfileIfDoesNotExist(new MavenProfile(each.getId(), each.getSource()), profiles);
+        MavenProfile copyProfile = new MavenProfile(each.getId(), each.getSource());
+        if (each.getActivation() != null) {
+          copyProfile.setActivation(each.getActivation().clone());
+        }
+
+        addProfileIfDoesNotExist(copyProfile, profiles);
       }
       return model;
     }

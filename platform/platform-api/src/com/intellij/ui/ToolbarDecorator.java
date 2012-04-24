@@ -274,6 +274,10 @@ public abstract class ToolbarDecorator implements DataProvider, CommonActionsPan
     return this;
   }
 
+  public ToolbarDecorator setVisibleRowCount(int rowCount) {
+    return this;//do nothing by default
+  }
+
   public JPanel createPanel() {
     final CommonActionsPanel.Buttons[] buttons = getButtons();
     final JComponent contextComponent = getComponent();

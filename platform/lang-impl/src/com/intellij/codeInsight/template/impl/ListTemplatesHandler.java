@@ -31,6 +31,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.CollectionFactory;
@@ -78,31 +79,8 @@ public class ListTemplatesHandler implements CodeInsightActionHandler {
   public static void showTemplatesLookup(final Project project, final Editor editor,
                                          @NotNull String prefix, List<TemplateImpl> matchingTemplates) {
 
-    final LookupImpl lookup = (LookupImpl)LookupManager.getInstance(project).createLookup(editor, LookupElement.EMPTY_ARRAY, prefix, LookupArranger.DEFAULT);
-    lookup.setArranger(new LookupArranger() {
-      /*
-      @Override
-      public Comparator<LookupElement> getItemComparator() {
-        return new Comparator<LookupElement>() {
-          @Override
-          public int compare(LookupElement o1, LookupElement o2) {
-            return o1.getLookupString().compareToIgnoreCase(o2.getLookupString());
-          }
-        };
-      }
-      */
-
-      @Override
-      public Classifier<LookupElement> createRelevanceClassifier() {
-        return new ComparingClassifier<LookupElement>(ClassifierFactory.<LookupElement>listClassifier(), "preferPrefix") {
-          @NotNull
-          @Override
-          public Comparable getWeight(LookupElement element) {
-            return !element.getLookupString().startsWith(lookup.itemPattern(element));
-          }
-        };
-      }
-    });
+    final LookupImpl lookup = (LookupImpl)LookupManager.getInstance(project).createLookup(editor, LookupElement.EMPTY_ARRAY, prefix,
+                                                                                          new TemplatesArranger());
     for (TemplateImpl template : matchingTemplates) {
       lookup.addItem(createTemplateElement(template), new PlainPrefixMatcher(prefix));
     }
@@ -135,7 +113,8 @@ public class ListTemplatesHandler implements CodeInsightActionHandler {
   }
 
   public static void showTemplatesLookup(final Project project, final Editor editor, Map<TemplateImpl, String> template2Argument) {
-    final LookupImpl lookup = (LookupImpl)LookupManager.getInstance(project).createLookup(editor, LookupElement.EMPTY_ARRAY, "", LookupArranger.DEFAULT);
+    final LookupImpl lookup = (LookupImpl)LookupManager.getInstance(project).createLookup(editor, LookupElement.EMPTY_ARRAY, "",
+                                                                                          new LookupArranger.DefaultArranger());
     for (TemplateImpl template : template2Argument.keySet()) {
       String prefix = computePrefix(template, template2Argument.get(template));
       lookup.addItem(createTemplateElement(template), new PlainPrefixMatcher(prefix));
@@ -196,5 +175,29 @@ public class ListTemplatesHandler implements CodeInsightActionHandler {
         }.execute();
       }
     }
+  }
+
+  private static class TemplatesArranger extends LookupArranger {
+
+    @Override
+    public Pair<List<LookupElement>, Integer> arrangeItems(@NotNull Lookup lookup) {
+      LinkedHashSet<LookupElement> result = new LinkedHashSet<LookupElement>();
+      List<LookupElement> items = matchingItems(lookup);
+      for (LookupElement item : items) {
+        if (item.getLookupString().startsWith(lookup.itemPattern(item))) {
+          result.add(item);
+        }
+      }
+      result.addAll(items);
+      ArrayList<LookupElement> list = new ArrayList<LookupElement>(result);
+      int selected = list.indexOf(lookup.getCurrentItem());
+      return new Pair<List<LookupElement>, Integer>(list, selected >= 0 ? selected : 0);
+    }
+
+    @Override
+    public LookupArranger createEmptyCopy() {
+      return new TemplatesArranger();
+    }
+
   }
 }

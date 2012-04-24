@@ -19,6 +19,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsImplUtil;
 import org.apache.commons.lang.StringUtils;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgGlobalSettings;
 import org.zmlx.hg4idea.HgVcs;
@@ -97,7 +98,8 @@ public final class HgCommandExecutor {
   }
 
   @Nullable
-  public HgCommandResult executeInCurrentThread(@Nullable final VirtualFile repo, final String operation, final List<String> arguments) {
+  public HgCommandResult executeInCurrentThread(@Nullable final VirtualFile repo, @NotNull final String operation,
+                                                @Nullable final List<String> arguments) {
     //LOG.assertTrue(!ApplicationManager.getApplication().isDispatchThread()); disabled for release
     if (myProject == null || myProject.isDisposed() || myVcs == null) {
       return null;
@@ -177,14 +179,14 @@ public final class HgCommandExecutor {
   }
 
   // logging to the Version Control console (without extensions and configs)
-  private void log(String operation, List<String> arguments, HgCommandResult result) {
+  private void log(@NotNull String operation, @Nullable List<String> arguments, @NotNull HgCommandResult result) {
     final HgGlobalSettings settings = myVcs.getGlobalSettings();
     String exeName;
     final int lastSlashIndex = settings.getHgExecutable().lastIndexOf(File.separator);
     exeName = settings.getHgExecutable().substring(lastSlashIndex + 1);
 
     final String executable = settings.isRunViaBash() ? "bash -c " + exeName : exeName;
-    final String cmdString = String.format("%s %s %s", executable, operation, StringUtils.join(arguments, " "));
+    final String cmdString = String.format("%s %s %s", executable, operation, arguments == null ? "" : StringUtils.join(arguments, " "));
 
     // log command
     LOG.info(cmdString);

@@ -23,6 +23,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
@@ -35,6 +36,7 @@ public abstract class ProjectView {
 
   public abstract ActionCallback selectCB(Object element, VirtualFile file, boolean requestFocus);
 
+  @Nullable
   public abstract PsiElement getParentOfCurrentSelection();
 
   // show pane identified by id using default(or currently selected) subId
@@ -75,6 +77,10 @@ public abstract class ProjectView {
 
   public abstract void setAbbreviatePackageNames(boolean abbreviatePackageNames, String paneId);
 
+  /**
+   * e.g. {@link com.intellij.ide.projectView.impl.ProjectViewPane#ID}
+   * @see com.intellij.ide.projectView.impl.AbstractProjectViewPane#getId()
+   */
   public abstract String getCurrentViewId();
 
   public abstract void selectPsiElement(PsiElement element, boolean requestFocus);

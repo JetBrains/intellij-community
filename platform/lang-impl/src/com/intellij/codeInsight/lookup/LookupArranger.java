@@ -16,31 +16,89 @@
 
 package com.intellij.codeInsight.lookup;
 
-import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.util.Pair;
+import org.jetbrains.annotations.NotNull;
 
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author peter
  */
 public abstract class LookupArranger {
-  public static final LookupArranger DEFAULT = new LookupArranger() {
+  protected final List<LookupElement> myItems = new ArrayList<LookupElement>();
 
-    @Override
-    public Classifier<LookupElement> createRelevanceClassifier() {
-      return ClassifierFactory.listClassifier();
-    }
-  };
-
-  public int suggestPreselectedItem(List<LookupElement> sorted, Iterable<List<LookupElement>> groups) {
-    return 0;
+  public void addElement(Lookup lookup, LookupElement item, LookupElementPresentation presentation) {
+    myItems.add(item);
   }
 
-  public abstract Classifier<LookupElement> createRelevanceClassifier();
+  public void prefixChanged() {
+  }
 
-  @Nullable
-  public Comparator<LookupElement> getItemComparator() {
-    return null; //don't sort
+  public abstract Pair<List<LookupElement>, Integer> arrangeItems(@NotNull Lookup lookup);
+
+  public final void clearItems() {
+    prefixChanged();
+    myItems.clear();
+  }
+
+  public abstract LookupArranger createEmptyCopy();
+
+  protected static void addPrefixItems(Lookup lookup, LinkedHashSet<LookupElement> result, boolean caseSensitive, Collection<LookupElement> items) {
+    for (LookupElement element : items) {
+      if (isExactPrefixItem(lookup, element, caseSensitive)) {
+        result.add(element);
+      }
+    }
+  }
+
+  protected static boolean isExactPrefixItem(Lookup lookup, LookupElement item, final boolean caseSensitive) {
+    final String pattern = lookup.itemPattern(item);
+    final Set<String> strings = item.getAllLookupStrings();
+    if (strings.contains(pattern)) {
+      return caseSensitive; //to not add the same elements twice to the model, as sensitive and then as insensitive
+    }
+
+    if (caseSensitive) {
+      return false;
+    }
+
+    for (String s : strings) {
+      if (s.equalsIgnoreCase(pattern)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  protected List<LookupElement> matchingItems(Lookup lookup) {
+    final List<LookupElement> items = new ArrayList<LookupElement>();
+    for (LookupElement element : myItems) {
+      if (lookup.prefixMatches(element)) {
+        items.add(element);
+      }
+    }
+    return items;
+  }
+
+  public Map<LookupElement,StringBuilder> getRelevanceStrings() {
+    return Collections.emptyMap();
+  }
+
+  public static class DefaultArranger extends LookupArranger {
+    public Pair<List<LookupElement>, Integer> arrangeItems(@NotNull Lookup lookup) {
+      LinkedHashSet<LookupElement> result = new LinkedHashSet<LookupElement>();
+      List<LookupElement> items = matchingItems(lookup);
+      addPrefixItems(lookup, result, true, items);
+      addPrefixItems(lookup, result, false, items);
+      result.addAll(items);
+      ArrayList<LookupElement> list = new ArrayList<LookupElement>(result);
+      int selected = list.indexOf(lookup.getCurrentItem());
+      return new Pair<List<LookupElement>, Integer>(list, selected >= 0 ? selected : 0);
+    }
+
+    @Override
+    public LookupArranger createEmptyCopy() {
+      return new DefaultArranger();
+    }
   }
 }

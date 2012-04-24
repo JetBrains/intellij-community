@@ -31,12 +31,20 @@
  */
 package com.intellij.projectView;
 
+import com.intellij.ide.DataManager;
+import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.projectView.impl.AbstractProjectViewPSIPane;
+import com.intellij.ide.projectView.impl.ProjectViewImpl;
+import com.intellij.ide.projectView.impl.ProjectViewPane;
+import com.intellij.ide.projectView.impl.ProjectViewToolWindowFactory;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.JavaDirectoryService;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiJavaFile;
+import com.intellij.openapi.wm.ToolWindow;
+import com.intellij.openapi.wm.ToolWindowId;
+import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.psi.*;
 import com.intellij.testFramework.PlatformTestUtil;
 
 import javax.swing.*;
@@ -90,6 +98,28 @@ public class NavigateFromSourceTest extends BaseProjectViewTestCase {
                                                                                           " +External Libraries\n");
 
     doTestMultipleSelection(pane, ((PsiJavaFile)containingFile).getClasses()[0]);
+  }
+
+  public void testAutoscrollFromSourceOnOpening() throws Exception {
+    final PsiClass[] classes = JavaDirectoryService.getInstance().getClasses(getPackageDirectory());
+    PsiClass psiClass = classes[0];
+
+    FileEditorManager.getInstance(getProject()).openFile(psiClass.getContainingFile().getVirtualFile(), true);
+
+    ProjectView projectView = ProjectView.getInstance(getProject());
+
+    ((ProjectViewImpl)projectView).setAutoscrollFromSource(true, ProjectViewPane.ID);
+
+    ToolWindow toolWindow = ToolWindowManager.getInstance(getProject()).getToolWindow(ToolWindowId.PROJECT_VIEW);
+
+    new ProjectViewToolWindowFactory().createToolWindowContent(getProject(), toolWindow);
+
+    projectView.changeView(ProjectViewPane.ID);
+
+    JComponent component = ((ProjectViewImpl)projectView).getComponent();
+    DataContext context = DataManager.getInstance().getDataContext(component);
+    PsiElement element = LangDataKeys.PSI_ELEMENT.getData(context);
+    assertEquals("Class1.java", ((PsiJavaFile)element).getName());
   }
 
   private static void doTestMultipleSelection(final AbstractProjectViewPSIPane pane, final PsiClass psiClass) {

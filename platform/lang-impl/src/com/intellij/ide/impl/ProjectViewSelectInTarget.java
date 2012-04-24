@@ -23,6 +23,8 @@ import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.projectView.SelectableTreeStructureProvider;
 import com.intellij.ide.projectView.TreeStructureProvider;
 import com.intellij.ide.projectView.impl.AbstractProjectViewPane;
+import com.intellij.ide.projectView.impl.ProjectViewPane;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
@@ -62,7 +64,13 @@ public abstract class ProjectViewSelectInTarget extends SelectInTargetPsiWrapper
 
 
     final ProjectView projectView = ProjectView.getInstance(project);
-    ToolWindowManager windowManager=ToolWindowManager.getInstance(project);
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      AbstractProjectViewPane pane = projectView.getProjectViewPaneById(ProjectViewPane.ID);
+      pane.select(toSelect, virtualFile, requestFocus);
+      return result;
+    }
+
+    ToolWindowManager windowManager = ToolWindowManager.getInstance(project);
     final ToolWindow projectViewToolWindow = windowManager.getToolWindow(ToolWindowId.PROJECT_VIEW);
     final Runnable runnable = new Runnable() {
       public void run() {

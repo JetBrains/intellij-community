@@ -63,10 +63,12 @@ public interface Lookup {
   boolean isFocused();
 
   @NotNull
-  String itemPattern(LookupElement element);
+  String itemPattern(@NotNull LookupElement element);
 
   @NotNull
-  PrefixMatcher itemMatcher(LookupElement item);
+  PrefixMatcher itemMatcher(@NotNull LookupElement item);
 
   boolean isSelectionTouched();
+
+  boolean prefixMatches(@NotNull LookupElement item);
 }

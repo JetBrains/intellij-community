@@ -110,6 +110,11 @@ public class ChangesCacheFile {
     return false;
   }
 
+  public void delete() {
+    FileUtil.delete(myPath);
+    FileUtil.delete(myIndexPath);
+  }
+
   public List<CommittedChangeList> writeChanges(final List<CommittedChangeList> changes) throws IOException {
     List<CommittedChangeList> result = new ArrayList<CommittedChangeList>(changes.size());
     boolean wasEmpty = isEmpty();

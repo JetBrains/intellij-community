@@ -23,15 +23,17 @@
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.ActionCallback;
-import com.intellij.openapi.util.ActiveRunnable;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.*;
+import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
 import com.intellij.ui.content.Content;
@@ -47,8 +49,10 @@ import javax.swing.*;
 import javax.swing.event.HyperlinkListener;
 import java.awt.*;
 import java.awt.event.InputEvent;
+import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 
 @SuppressWarnings({"ConstantConditions"})
@@ -57,7 +61,7 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
   public void notifyByBalloon(@NotNull final String toolWindowId, @NotNull final MessageType type, @NotNull final String htmlBody) {
   }
 
-  public static final ToolWindow HEADLESS_WINDOW = new ToolWindow(){
+  public static final ToolWindow HEADLESS_WINDOW = new ToolWindowEx(){
     public boolean isActive() {
       return false;
     }
@@ -177,9 +181,51 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
     public ActionCallback getActivation() {
       return new ActionCallback.Done();
     }
+
+    @Override
+    public void removePropertyChangeListener(PropertyChangeListener l) {
+    }
+
+    @Override
+    public ToolWindowType getInternalType() {
+      return ToolWindowType.DOCKED;
+    }
+
+    @Override
+    public void stretchWidth(int value) {
+    }
+
+    @Override
+    public void stretchHeight(int value) {
+    }
+
+    @Override
+    public InternalDecorator getDecorator() {
+      return null;
+    }
+
+    @Override
+    public void setAdditionalGearActions(ActionGroup additionalGearActions) {
+    }
+
+    @Override
+    public void setTitleActions(AnAction... actions) {
+    }
+
+    @Override
+    public void setUseLastFocusedOnActivation(boolean focus) {
+    }
+
+    @Override
+    public boolean isUseLastFocusedOnActivation() {
+      return false;
+    }
   };
 
   @NonNls private static final ContentManager MOCK_CONTENT_MANAGER = new ContentManager() {
+
+    private final ArrayList<Content> myContents = new ArrayList<Content>();
+    private Content mySelected;
 
     @Override
     public ActionCallback getReady(@NotNull Object requestor) {
@@ -187,7 +233,9 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
     }
 
     public void addContent(@NotNull final Content content) { }
-    public void addContent(@NotNull Content content, int order) { }
+    public void addContent(@NotNull Content content, int order) {
+      myContents.add(order, content);
+    }
     public void addContent(@NotNull final Content content, final Object constraints) { }
     public void addContentManagerListener(@NotNull final ContentManagerListener l) { }
     public void addDataProvider(@NotNull final DataProvider provider) { }
@@ -215,15 +263,24 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
     public Content getContent(final int index) { return null; }
     public int getContentCount() { return 0; }
     @NotNull
-    public Content[] getContents() { return new Content[0]; }
+    public Content[] getContents() { return myContents.toArray(new Content[myContents.size()]); }
     public int getIndexOfContent(final Content content) { return -1; }
     @Nullable
-    public Content getSelectedContent() { return null; }
+    public Content getSelectedContent() { return mySelected; }
     @NotNull
     public Content[] getSelectedContents() { return new Content[0]; }
     public boolean isSelected(@NotNull final Content content) { return false; }
-    public void removeAllContents(final boolean dispose) { }
-    public boolean removeContent(@NotNull final Content content, final boolean dispose) { return false; }
+    public void removeAllContents(final boolean dispose) {
+      for (Iterator<Content> iterator = myContents.iterator(); iterator.hasNext(); ) {
+        Content content = iterator.next();
+        Disposer.dispose(content);
+        iterator.remove();
+      }
+    }
+    public boolean removeContent(@NotNull final Content content, final boolean dispose) {
+      Disposer.dispose(content);
+      return myContents.remove(content);
+    }
 
     public ActionCallback removeContent(@NotNull Content content, boolean dispose, boolean trackFocus, boolean implicitFocus) {
       return new ActionCallback.Done();
@@ -233,7 +290,7 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
     public void removeFromSelection(@NotNull final Content content) { }
     public ActionCallback selectNextContent() { return new ActionCallback.Done();}
     public ActionCallback selectPreviousContent() { return new ActionCallback.Done();}
-    public void setSelectedContent(@NotNull final Content content) { }
+    public void setSelectedContent(@NotNull final Content content) { mySelected = content; }
     public ActionCallback setSelectedContentCB(@NotNull Content content) { return new ActionCallback.Done(); }
     public void setSelectedContent(@NotNull final Content content, final boolean requestFocus) { }
     public ActionCallback setSelectedContentCB(@NotNull final Content content, final boolean requestFocus) { return new ActionCallback.Done();}
@@ -253,7 +310,9 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
       return new ActionCallback.Done(); 
     }
 
-    public void dispose() {}
+    public void dispose() {
+      removeAllContents(true);
+    }
 
     public boolean isDisposed() {
       return false;
@@ -318,18 +377,6 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
     return false;
   }
 
-  public ActionCallback requestFocus(final Component c, final boolean forced) {
-    return new ActionCallback.Done();
-  }
-
-  public ActionCallback requestFocus(final ActiveRunnable command, final boolean forced) {
-    return new ActionCallback.Done();
-  }
-
-  public JComponent getFocusTargetFor(final JComponent comp) {
-    return null;
-  }
-
   public String[] getToolWindowIds() {
     return ArrayUtil.EMPTY_STRING_ARRAY;
   }
@@ -350,7 +397,7 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
   }
 
   @Override
-  public void notifyByBalloon(@NotNull final String toolWindowId, final MessageType type, @NotNull final String text, @Nullable final Icon icon,
+  public void notifyByBalloon(@NotNull final String toolWindowId, @NotNull final MessageType type, @NotNull final String text, @Nullable final Icon icon,
                               @Nullable final HyperlinkListener listener) {
   }
 

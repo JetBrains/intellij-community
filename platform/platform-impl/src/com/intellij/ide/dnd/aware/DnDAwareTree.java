@@ -19,7 +19,7 @@ import com.intellij.ide.dnd.DnDAware;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.treeStructure.Tree;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.tree.MacTreeUI;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -58,7 +58,7 @@ public class DnDAwareTree extends Tree implements DnDAware {
 
   public final boolean isOverSelection(final Point point) {
     final TreeUI ui = getUI();
-    final TreePath path = ui instanceof UIUtil.MacTreeUI && ((UIUtil.MacTreeUI)ui).isWideSelection()
+    final TreePath path = ui instanceof MacTreeUI && ((MacTreeUI)ui).isWideSelection()
                           ? getClosestPathForLocation(point.x, point.y) : getPathForLocation(point.x, point.y);
     if (path == null) return false;
     return isPathSelected(path);

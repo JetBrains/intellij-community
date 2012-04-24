@@ -19,9 +19,12 @@
 
 package org.jetbrains.idea.maven.dom.model;
 
+import com.intellij.openapi.paths.PathReference;
+import com.intellij.util.xml.Convert;
 import com.intellij.util.xml.GenericDomValue;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.dom.MavenDomElement;
+import org.jetbrains.idea.maven.dom.references.MavenDirectoryPathReferenceConverter;
 
 /**
  * http://maven.apache.org/POM/4.0.0:ActivationFile interface.
@@ -42,7 +45,8 @@ public interface MavenDomActivationFile extends MavenDomElement {
    * @return the value of the missing child.
    */
   @NotNull
-  GenericDomValue<String> getMissing();
+  @Convert(value = MavenDirectoryPathReferenceConverter.class, soft = true)
+  GenericDomValue<PathReference> getMissing();
 
   /**
    * Returns the value of the exists child.
@@ -54,5 +58,6 @@ public interface MavenDomActivationFile extends MavenDomElement {
    * @return the value of the exists child.
    */
   @NotNull
-  GenericDomValue<String> getExists();
+  @Convert(value = MavenDirectoryPathReferenceConverter.class, soft = true)
+  GenericDomValue<PathReference> getExists();
 }

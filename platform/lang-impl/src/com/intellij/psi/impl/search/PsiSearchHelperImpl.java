@@ -47,6 +47,7 @@ import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.indexing.FileBasedIndex;
+import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.StringSearcher;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -455,7 +456,8 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
         @Override
         public void run() {
           CharSequence text = psiFile.getViewProvider().getContents();
-          for (int index = LowLevelSearchUtil.searchWord(text, 0, text.length(), searcher, progress); index >= 0;) {
+          final char[] textArray = CharArrayUtil.fromSequenceWithoutCopying(text);
+          for (int index = LowLevelSearchUtil.searchWord(text, textArray, 0, text.length(), searcher, progress); index >= 0;) {
             PsiReference referenceAt = psiFile.findReferenceAt(index);
             if (referenceAt == null || useScope == null ||
                 !PsiSearchScopeUtil.isInScope(useScope.intersectWith(finalScope), psiFile)) {
@@ -465,7 +467,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
               }
             }
 
-            index = LowLevelSearchUtil.searchWord(text, index + searcher.getPattern().length(), text.length(), searcher, progress);
+            index = LowLevelSearchUtil.searchWord(text, textArray, index + searcher.getPattern().length(), text.length(), searcher, progress);
           }
         }
       });
