@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -116,10 +116,10 @@ public class CompositeShortNamesCache extends PsiShortNamesCache {
   public PsiMethod[] getMethodsByName(@NotNull String name, @NotNull GlobalSearchScope scope) {
     Merger<PsiMethod> merger = null;
     for (PsiShortNamesCache cache : myCacheArray) {
-      PsiMethod[] classes = cache.getMethodsByName(name, scope);
-      if (classes.length != 0) {
+      PsiMethod[] methods = cache.getMethodsByName(name, scope);
+      if (methods.length != 0) {
         if (merger == null) merger = new Merger<PsiMethod>();
-        merger.add(classes);
+        merger.add(methods);
       }
     }
     PsiMethod[] result = merger == null ? null : merger.getResult();
@@ -147,11 +147,11 @@ public class CompositeShortNamesCache extends PsiShortNamesCache {
   public PsiField[] getFieldsByNameIfNotMoreThan(@NonNls @NotNull String name, @NotNull GlobalSearchScope scope, int maxCount) {
     Merger<PsiField> merger = null;
     for (PsiShortNamesCache cache : myCacheArray) {
-      PsiField[] methods = cache.getFieldsByNameIfNotMoreThan(name, scope, maxCount);
-      if (methods.length == maxCount) return methods;
-      if (methods.length != 0) {
+      PsiField[] fields = cache.getFieldsByNameIfNotMoreThan(name, scope, maxCount);
+      if (fields.length == maxCount) return fields;
+      if (fields.length != 0) {
         if (merger == null) merger = new Merger<PsiField>();
-        merger.add(methods);
+        merger.add(fields);
       }
     }
     PsiField[] result = merger == null ? null : merger.getResult();
