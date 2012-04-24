@@ -61,6 +61,10 @@ public class LoadedRevisionsCache implements Disposable {
         });
       }
 
+      @Override
+      public void changesCleared() {
+      }
+
       public void incomingChangesUpdated(@Nullable final List<CommittedChangeList> receivedChanges) {
       }
 

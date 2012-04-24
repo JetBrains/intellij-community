@@ -151,6 +151,8 @@
       <reference ref="ChangesView.CreatePatchFromChanges"/>
       <action id="CommittedChanges.Revert" class="com.intellij.openapi.vcs.changes.actions.RevertChangeListAction"
               icon="/actions/rollback.png"/>
+      <action id="CommittedChanges.Clear" class="com.intellij.openapi.vcs.changes.committed.ClearCommittedAction"
+              icon="/vcs/remove.png"/>
     </group>
     
     <group id="RepositoryChangesBrowserToolbar">

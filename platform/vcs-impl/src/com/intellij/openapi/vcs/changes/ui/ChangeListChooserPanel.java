@@ -25,9 +25,7 @@ import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangeListRenderer;
 import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkRenderer;
-import com.intellij.ui.CollectionComboBoxModel;
-import com.intellij.ui.HtmlListCellRenderer;
-import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.*;
 import com.intellij.util.Consumer;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -100,6 +98,8 @@ public class ChangeListChooserPanel extends JPanel {
       }
     });
     myNewListPanel.init(null);
+    final ComboboxSpeedSearch search = new ComboboxSpeedSearch(myExistingListsCombo);
+    search.setComparator(new SpeedSearchComparator(true, false));
   }
 
   public void setChangeLists(Collection<? extends ChangeList> changeLists) {

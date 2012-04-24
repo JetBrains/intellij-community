@@ -67,6 +67,11 @@ public class OutdatedVersionNotifier implements ProjectComponent {
           updateAllEditorsLater();
         }
       }
+
+      @Override
+      public void changesCleared() {
+        updateAllEditorsLater();
+      }
     });
   }
 
