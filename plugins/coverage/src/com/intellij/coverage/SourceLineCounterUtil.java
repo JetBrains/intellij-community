@@ -3,7 +3,7 @@ package com.intellij.coverage;
 import com.intellij.rt.coverage.instrumentation.SourceLineCounter;
 import gnu.trove.TIntObjectHashMap;
 import gnu.trove.TIntProcedure;
-import org.jetbrains.coverage.asm.ClassReader;
+import org.jetbrains.asm4.ClassReader;
 
 import java.util.List;
 
