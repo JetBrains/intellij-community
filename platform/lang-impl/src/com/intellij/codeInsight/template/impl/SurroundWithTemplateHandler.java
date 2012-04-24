@@ -19,13 +19,10 @@ package com.intellij.codeInsight.template.impl;
 import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.CodeInsightUtilBase;
-import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.template.CustomLiveTemplate;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -124,21 +121,9 @@ public class SurroundWithTemplateHandler implements CodeInsightActionHandler {
   }
 
   public static PsiFile insertDummyIdentifier(final Editor editor, PsiFile file) {
-    file = (PsiFile)file.copy();
-    final Document document = file.getViewProvider().getDocument();
-    assert document != null;
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
-        int offset = editor.getCaretModel().getOffset();
-        if (editor.getSelectionModel().hasSelection()) {
-          offset = editor.getSelectionModel().getSelectionStart();
-          document.deleteString(offset, editor.getSelectionModel().getSelectionEnd());
-        }
-        document.insertString(offset, CompletionUtil.DUMMY_IDENTIFIER_TRIMMED);
-      }
-    });
-
-    PsiDocumentManager.getInstance(file.getProject()).commitDocument(document);
-    return file;
+    boolean selection = editor.getSelectionModel().hasSelection();
+    final int startOffset = selection ? editor.getSelectionModel().getSelectionStart() : editor.getCaretModel().getOffset();
+    final int endOffset = selection ? editor.getSelectionModel().getSelectionEnd() : startOffset;
+    return TemplateManagerImpl.insertDummyIdentifier(file, startOffset, endOffset);
   }
 }
