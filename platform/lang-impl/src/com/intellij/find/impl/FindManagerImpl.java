@@ -61,6 +61,7 @@ import com.intellij.ui.LightweightHint;
 import com.intellij.ui.ReplacePromptDialog;
 import com.intellij.usages.UsageViewManager;
 import com.intellij.util.messages.MessageBus;
+import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.StringSearcher;
 import gnu.trove.THashSet;
 import org.jdom.Element;
@@ -287,8 +288,10 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
       LOG.debug(model.toString());
     }
 
+    final char[] textArray = CharArrayUtil.fromSequenceWithoutCopying(text);
+
     while(true){
-      FindResult result = doFindString(text, offset, model, file);
+      FindResult result = doFindString(text, textArray, offset, model, file);
 
       if (!model.isWholeWordsOnly()) {
         return result;
@@ -339,7 +342,8 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
     return findmodel;
   }
 
-  private static FindResult doFindString(CharSequence text, int offset, final FindModel findmodel, @Nullable VirtualFile file) {
+  private static FindResult doFindString(CharSequence text, @Nullable char[] textArray, int offset, final FindModel findmodel,
+                                         @Nullable VirtualFile file) {
     FindModel model = normalizeIfMultilined(findmodel);
     String toFind = model.getStringToFind();
     if (toFind.length() == 0){
@@ -347,7 +351,7 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
     }
 
     if (model.isInCommentsOnly() || model.isInStringLiteralsOnly()) {
-      return findInCommentsAndLiterals(text, offset, model, file);
+      return findInCommentsAndLiterals(text, textArray, offset, model, file);
     }
 
     if (model.isRegularExpressions()){
@@ -358,11 +362,11 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
 
     int index;
     if (model.isForward()){
-      final int res = searcher.scan(text.subSequence(offset, text.length()));
-      index = res < 0 ? -1 : res + offset;
+      final int res = searcher.scan(text, textArray, offset, text.length());
+      index = res < 0 ? -1 : res;
     }
     else{
-      index = searcher.scan(text.subSequence(0, offset));
+      index = searcher.scan(text, textArray, 0, offset);
     }
     if (index < 0){
       return NOT_FOUND_RESULT;
@@ -397,7 +401,7 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
 
   private static final Key<CommentsLiteralsSearchData> ourCommentsLiteralsSearchDataKey = Key.create("comments.literals.search.data");
 
-  private static FindResult findInCommentsAndLiterals(CharSequence text, int offset, FindModel model, final VirtualFile file) {
+  private static FindResult findInCommentsAndLiterals(CharSequence text, char[] textArray, int offset, FindModel model, final VirtualFile file) {
     if (file == null) return NOT_FOUND_RESULT;
 
     FileType ftype = file.getFileType();
@@ -481,7 +485,7 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
           FindResultImpl findResult = null;
 
           if (data.searcher != null) {
-            int i = data.searcher.scan(text, start, lexer.getTokenEnd());
+            int i = data.searcher.scan(text, textArray, start, lexer.getTokenEnd());
             if (i != -1) findResult = new FindResultImpl(i, i + model.getStringToFind().length());
           } else {
             data.matcher.reset(text.subSequence(start, lexer.getTokenEnd()));

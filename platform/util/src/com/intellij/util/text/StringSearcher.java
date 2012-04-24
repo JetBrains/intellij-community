@@ -18,6 +18,7 @@ package com.intellij.util.text;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 
@@ -68,10 +69,15 @@ public class StringSearcher {
   public int scan(@NotNull CharSequence text) {
     return scan(text,0,text.length());
   }
-  
+
   public int scan(@NotNull CharSequence text, int _start, int _end) {
+    return scan(text, null, _start, _end);
+  }
+
+  public int scan(@NotNull CharSequence text, @Nullable char[] textArray, int _start, int _end) {
     LOG.assertTrue(_start <= _end, _start - _end);
-    LOG.assertTrue(_end <= text.length(), text.length() - _end);
+    final int textLength = text.length();
+    LOG.assertTrue(_end <= textLength, textLength - _end);
     if (myForwardDirection) {
       if (myPatternLength == 1) {
         // optimization
@@ -82,14 +88,14 @@ public class StringSearcher {
 
       while (start <= end) {
         int i = myPatternLength - 1;
-        char lastChar = text.charAt(start + i);
+        char lastChar = textArray != null ? textArray[start + i]:text.charAt(start + i);
         if (!myCaseSensitive) {
           lastChar = StringUtil.toLowerCase(lastChar);
         }
         if (myPatternArray[i] == lastChar) {
           i--;
           while (i >= 0) {
-            char c = text.charAt(start + i);
+            char c = textArray != null ? textArray[start + i]:text.charAt(start + i);
             if (!myCaseSensitive) {
               c = StringUtil.toLowerCase(c);
             }
@@ -118,24 +124,24 @@ public class StringSearcher {
     }
     else {
       int start = 1;
-      int end = text.length() - myPatternLength + 1;
+      int end = textLength - myPatternLength + 1;
       while (start <= end) {
         int i = myPatternLength - 1;
-        char lastChar = text.charAt(text.length() - (start + i));
+        char lastChar = textArray != null ? textArray[textLength - (start + i)]:text.charAt(textLength - (start + i));
         if (!myCaseSensitive) {
           lastChar = StringUtil.toLowerCase(lastChar);
         }
         if (myPatternArray[myPatternLength - 1 - i] == lastChar) {
           i--;
           while (i >= 0) {
-            char c = text.charAt(text.length() - (start + i));
+            char c = textArray != null ? textArray[textLength - (start + i)]:text.charAt(textLength - (start + i));
             if (!myCaseSensitive) {
               c = StringUtil.toLowerCase(c);
             }
             if (myPatternArray[myPatternLength - 1 - i] != c) break;
             i--;
           }
-          if (i < 0) return text.length() - start - myPatternLength + 1;
+          if (i < 0) return textLength - start - myPatternLength + 1;
         }
 
         int step = 0 <= lastChar && lastChar < 128 ? mySearchTable[lastChar] : 1;
@@ -164,7 +170,7 @@ public class StringSearcher {
    * @return
    */
   public int scan(char[] text, int startOffset, int endOffset){
-    final int res = scan(new CharArrayCharSequence(text),startOffset, endOffset);
+    final int res = scan(new CharArrayCharSequence(text),text, startOffset, endOffset);
     return res >= 0 ? res: -1;
   }
 }
