@@ -15,15 +15,14 @@
  */
 package org.jetbrains.idea.maven.wizards;
 
-import com.intellij.ide.util.projectWizard.ModuleBuilder;
-import com.intellij.ide.util.projectWizard.ModuleWizardStep;
-import com.intellij.ide.util.projectWizard.SourcePathsBuilder;
-import com.intellij.ide.util.projectWizard.WizardContext;
+import com.intellij.ide.util.projectWizard.*;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.JavaSdk;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.util.IconLoader;
@@ -105,9 +104,17 @@ public class MavenModuleBuilder extends ModuleBuilder implements SourcePathsBuil
   }
 
   @Override
+  public boolean isSuitableSdk(Sdk sdk) {
+    return sdk.getSdkType() == JavaSdk.getInstance();
+  }
+
+  @Override
   public ModuleWizardStep[] createWizardSteps(WizardContext wizardContext, ModulesProvider modulesProvider) {
-    return new ModuleWizardStep[]{new MavenModuleWizardStep(wizardContext.getProject(), this),
-      new SelectPropertiesStep(wizardContext.getProject(), this)};
+    return new ModuleWizardStep[]{
+      new MavenModuleWizardStep(wizardContext.getProject(), this),
+      new SelectPropertiesStep(wizardContext.getProject(), this),
+      ProjectWizardStepFactory.getInstance().createProjectJdkStep(wizardContext)
+    };
   }
 
   public MavenProject findPotentialParentProject(Project project) {

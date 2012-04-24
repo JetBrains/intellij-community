@@ -13,13 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.android.designer.model.agrid;
+package com.intellij.android.designer.model.grid;
 
 /**
  * @author Alexander Lobas
  */
-public interface IGridProvider {
-  GridInfo getGridInfo();
-
-  GridInfo getVirtualGridInfo();
+public enum GridInsertType {
+  in_cell,
+  before_h_cell,
+  after_h_cell,
+  before_v_cell,
+  after_v_cell,
+  corner_top_left,
+  corner_top_right,
+  corner_bottom_left,
+  corner_bottom_right
 }

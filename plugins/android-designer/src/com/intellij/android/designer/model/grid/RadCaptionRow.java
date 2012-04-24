@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.android.designer.model.agrid;
+package com.intellij.android.designer.model.grid;
 
 import com.intellij.android.designer.model.RadViewComponent;
 
@@ -22,22 +22,22 @@ import java.awt.*;
 /**
  * @author Alexander Lobas
  */
-public abstract class RadCaptionColumn<T extends RadViewComponent> extends RadCaptionComponent<T> {
-  public RadCaptionColumn(T container, int index, int offset, int width, boolean empty) {
+public abstract class RadCaptionRow<T extends RadViewComponent> extends RadCaptionComponent<T> {
+  public RadCaptionRow(T container, int index, int offset, int width, boolean empty) {
     super(container, index, offset, width, empty);
   }
 
   @Override
   public Rectangle getBounds() {
     Rectangle bounds = myContainer.getBounds();
-    return new Rectangle(bounds.x + myOffset, 2, myWidth, 10);
+    return new Rectangle(2, bounds.y + myOffset, 10, myWidth);
   }
 
   @Override
   public Rectangle getBounds(Component relativeTo) {
     Rectangle bounds = super.getBounds(relativeTo);
-    bounds.y = 2;
-    bounds.height = 10;
+    bounds.x = 2;
+    bounds.width = 10;
     return bounds;
   }
 }

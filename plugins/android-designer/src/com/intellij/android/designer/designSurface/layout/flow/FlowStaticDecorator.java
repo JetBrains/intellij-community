@@ -13,8 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.android.designer.designSurface.layout;
+package com.intellij.android.designer.designSurface.layout.flow;
 
+import com.intellij.android.designer.designSurface.layout.BorderStaticDecorator;
 import com.intellij.android.designer.model.RadViewComponent;
 import com.intellij.designer.designSurface.DecorationLayer;
 import com.intellij.designer.designSurface.StaticDecorator;

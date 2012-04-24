@@ -13,10 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.android.designer.model.table;
+package com.intellij.android.designer.model.layout.table;
 
-import com.intellij.android.designer.model.agrid.GridInfo;
-import com.intellij.android.designer.model.agrid.RadCaptionColumn;
+import com.intellij.android.designer.model.grid.GridInfo;
+import com.intellij.android.designer.model.grid.RadCaptionColumn;
 import com.intellij.designer.model.RadComponent;
 
 /**

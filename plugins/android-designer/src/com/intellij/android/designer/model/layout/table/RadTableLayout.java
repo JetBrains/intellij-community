@@ -13,14 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.android.designer.model.table;
+package com.intellij.android.designer.model.layout.table;
 
 import com.intellij.android.designer.designSurface.TreeDropToOperation;
 import com.intellij.android.designer.designSurface.layout.*;
+import com.intellij.android.designer.designSurface.layout.actions.ResizeOperation;
+import com.intellij.android.designer.designSurface.layout.caption.HorizontalCaptionFlowBaseOperation;
+import com.intellij.android.designer.designSurface.layout.caption.VerticalCaptionFlowBaseOperation;
+import com.intellij.android.designer.designSurface.layout.grid.GridDecorator;
 import com.intellij.android.designer.model.RadViewComponent;
 import com.intellij.android.designer.model.RadViewLayout;
 import com.intellij.android.designer.model.RadViewLayoutWithData;
-import com.intellij.android.designer.model.agrid.GridInfo;
+import com.intellij.android.designer.model.grid.GridInfo;
 import com.intellij.designer.componentTree.TreeEditOperation;
 import com.intellij.designer.designSurface.*;
 import com.intellij.designer.designSurface.selection.ResizeSelectionDecorator;

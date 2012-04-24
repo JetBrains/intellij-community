@@ -1099,8 +1099,8 @@
     </creation>
   </meta>
 
-  <meta model="com.intellij.android.designer.model.table.RadTableLayoutComponent"
-        layout="com.intellij.android.designer.model.table.RadTableLayout"
+  <meta model="com.intellij.android.designer.model.layout.table.RadTableLayoutComponent"
+        layout="com.intellij.android.designer.model.layout.table.RadTableLayout"
         class="android.widget.TableLayout"
         tag="TableLayout">
 
@@ -1120,7 +1120,7 @@
   </meta>
 
   <meta model="com.intellij.android.designer.model.RadViewContainer"
-        layout="com.intellij.android.designer.model.table.RadTableRowLayout"
+        layout="com.intellij.android.designer.model.layout.table.RadTableRowLayout"
         class="android.widget.TableRow"
         tag="TableRow">
 
@@ -1137,8 +1137,8 @@
     </creation>
   </meta>
 
-  <meta model="com.intellij.android.designer.model.grid.RadGridLayoutComponent"
-        layout="com.intellij.android.designer.model.grid.RadGridLayout"
+  <meta model="com.intellij.android.designer.model.layout.grid.RadGridLayoutComponent"
+        layout="com.intellij.android.designer.model.layout.grid.RadGridLayout"
         class="android.widget.GridLayout"
         tag="GridLayout">
 

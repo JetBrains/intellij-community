@@ -13,15 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.android.designer.model.grid;
-
-import com.intellij.android.designer.model.agrid.RadCaptionRow;
+package com.intellij.ui;
 
 /**
- * @author Alexander Lobas
+ * @author Konstantin Bulenkov
  */
-public class RadCaptionGridRow extends RadCaptionRow<RadGridLayoutComponent> {
-  public RadCaptionGridRow(RadGridLayoutComponent container, int index, int offset, int width) {
-    super(container, index, offset, width, false);
-  }
+public interface ComponentWithFileColors {
+  boolean isFileColorsEnabled();
 }
