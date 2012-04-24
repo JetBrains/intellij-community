@@ -21,6 +21,10 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.JavaSdk;
+import com.intellij.openapi.projectRoots.ProjectJdkTable;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.RawCommandLineEditor;
 import org.jetbrains.annotations.Nls;
@@ -50,7 +54,7 @@ public abstract class MavenRunnerConfigurable implements SearchableConfigurable,
 
   private Map<String, String> myProperties;
 
-  public MavenRunnerConfigurable(Project p, boolean isRunConfiguration) {
+  public MavenRunnerConfigurable(@NotNull Project p, boolean isRunConfiguration) {
     myProject = p;
     myRunConfigurationMode = isRunConfiguration;
   }
@@ -189,7 +193,7 @@ public abstract class MavenRunnerConfigurable implements SearchableConfigurable,
     myVMParametersEditor.setText(data.getVmOptions());
     mySkipTestsCheckBox.setSelected(data.isSkipTests());
 
-    Map<String, String> jdkMap = data.collectJdkNamesAndDescriptions();
+    Map<String, String> jdkMap = collectJdkNamesAndDescriptions();
     if (!jdkMap.containsKey(data.getJreName())) {
       jdkMap.put(data.getJreName(), data.getJreName());
     }
@@ -202,6 +206,32 @@ public abstract class MavenRunnerConfigurable implements SearchableConfigurable,
     ComboBoxUtil.select(myJdkComboModel, data.getJreName());
 
     myPropertiesPanel.setDataFromMap(data.getMavenProperties());
+  }
+
+  private Map<String, String> collectJdkNamesAndDescriptions() {
+    Map<String, String> result = new LinkedHashMap<String, String>();
+
+    for (Sdk projectJdk : ProjectJdkTable.getInstance().getSdksOfType(JavaSdk.getInstance())) {
+      String name = projectJdk.getName();
+      result.put(name, name);
+    }
+
+    result.put(MavenRunnerSettings.USE_INTERNAL_JAVA, RunnerBundle.message("maven.java.internal"));
+
+    String projectJdkTitle;
+
+    String projectJdk = ProjectRootManager.getInstance(myProject).getProjectSdkName();
+    if (projectJdk == null) {
+      projectJdkTitle = "Use Project JDK (not defined yet)";
+    }
+    else {
+      projectJdkTitle = "Use Project JDK (" + projectJdk + ')';
+    }
+
+    result.put(MavenRunnerSettings.USE_PROJECT_JDK, projectJdkTitle);
+    result.put(MavenRunnerSettings.USE_JAVA_HOME, RunnerBundle.message("maven.java.home.env"));
+
+    return result;
   }
 
   void setData(MavenRunnerSettings data) {

@@ -21,15 +21,12 @@ package org.jetbrains.idea.maven.execution;
 import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.SdkType;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -37,6 +34,7 @@ import java.util.Map;
 public class MavenRunnerSettings implements Cloneable {
 
   @NonNls public static final String USE_INTERNAL_JAVA = "#JAVA_INTERNAL";
+  @NonNls public static final String USE_PROJECT_JDK = "#USE_PROJECT_JDK";
   @NonNls public static final String USE_JAVA_HOME = "#JAVA_HOME";
 
   private boolean runMavenInBackground = true;
@@ -98,26 +96,8 @@ public class MavenRunnerSettings implements Cloneable {
     this.mavenProperties = mavenProperties;
   }
 
-  public Map<String, String> collectJdkNamesAndDescriptions() {
-    Map<String, String> result = new LinkedHashMap<String, String>();
-
-    for (Sdk projectJdk : ProjectJdkTable.getInstance().getSdksOfType(getSdkType())) {
-      String name = projectJdk.getName();
-      result.put(name, name);
-    }
-
-    result.put(USE_INTERNAL_JAVA, RunnerBundle.message("maven.java.internal"));
-    result.put(USE_JAVA_HOME, RunnerBundle.message("maven.java.home.env"));
-
-    return result;
-  }
-
-  private SdkType getSdkType() {
-    return JavaSdk.getInstance();
-  }
-
   public String getDefaultJdkName() {
-    Sdk recent = ProjectJdkTable.getInstance().findMostRecentSdkOfType(getSdkType());
+    Sdk recent = ProjectJdkTable.getInstance().findMostRecentSdkOfType(JavaSdk.getInstance());
     if (recent == null) return USE_INTERNAL_JAVA;
     return recent.getName();
   }
