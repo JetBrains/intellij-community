@@ -40,6 +40,8 @@ public abstract class FileColorManager {
 
   public abstract boolean isEnabledForTabs();
 
+  public abstract boolean isEnabledForProjectView();
+
   @SuppressWarnings({"MethodMayBeStatic"})
   @Nullable
   public abstract Color getColor(@NotNull String name);

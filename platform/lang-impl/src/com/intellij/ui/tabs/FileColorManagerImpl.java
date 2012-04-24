@@ -48,6 +48,7 @@ import java.util.List;
 public class FileColorManagerImpl extends FileColorManager implements PersistentStateComponent<Element> {
   public static final String FC_ENABLED = "FileColorsEnabled";
   public static final String FC_TABS_ENABLED = "FileColorsForTabsEnabled";
+  public static final String FC_PROJECT_VIEW_ENABLED = "FileColorsForProjectViewEnabled";
   private final Project myProject;
   private final FileColorsModel myModel;
   private FileColorSharedConfigurationManager mySharedConfigurationManager;
@@ -76,6 +77,10 @@ public class FileColorManagerImpl extends FileColorManager implements Persistent
   }
 
   public boolean isEnabled() {
+    return _isEnabled();
+  }
+
+  public static boolean _isEnabled() {
     return PropertiesComponent.getInstance().getBoolean(FC_ENABLED, true);
   }
 
@@ -88,7 +93,24 @@ public class FileColorManagerImpl extends FileColorManager implements Persistent
   }
 
   public boolean isEnabledForTabs() {
+    return _isEnabledForTabs();
+  }
+
+  public static boolean _isEnabledForTabs() {
     return PropertiesComponent.getInstance().getBoolean(FC_TABS_ENABLED, true);
+  }
+
+  @Override
+  public boolean isEnabledForProjectView() {
+    return _isEnabledForProjectView();
+  }
+
+  public static boolean _isEnabledForProjectView() {
+    return PropertiesComponent.getInstance().getBoolean(FC_PROJECT_VIEW_ENABLED, true);
+  }
+
+  public static void setEnabledForProjectView(boolean enabled) {
+    PropertiesComponent.getInstance().setValue(FC_PROJECT_VIEW_ENABLED, Boolean.toString(enabled));
   }
 
   public Element getState(final boolean shared) {

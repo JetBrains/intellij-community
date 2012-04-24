@@ -42,6 +42,7 @@ public class FileColorsConfigurablePanel extends JPanel implements Disposable {
   private FileColorManagerImpl myManager;
   private final JCheckBox myEnabledCheckBox;
   private final JCheckBox myTabsEnabledCheckBox;
+  private final JCheckBox myProjectViewEnabledCheckBox;
   private final FileColorSettingsTable myLocalTable;
   private final FileColorSettingsTable mySharedTable;
 
@@ -60,9 +61,13 @@ public class FileColorsConfigurablePanel extends JPanel implements Disposable {
     myEnabledCheckBox.setMnemonic('F');
     topPanel.add(myEnabledCheckBox);
 
-    myTabsEnabledCheckBox = new JCheckBox("Use colors in Editor Tabs");
+    myTabsEnabledCheckBox = new JCheckBox("Use in Editor Tabs");
     myTabsEnabledCheckBox.setMnemonic('T');
     topPanel.add(myTabsEnabledCheckBox);
+
+    myProjectViewEnabledCheckBox = new JCheckBox("Use in Project View");
+    myProjectViewEnabledCheckBox.setMnemonic('P');
+    topPanel.add(myProjectViewEnabledCheckBox);
 
     topPanel.add(Box.createHorizontalGlue());
 
@@ -191,6 +196,7 @@ public class FileColorsConfigurablePanel extends JPanel implements Disposable {
 
     modified = myEnabledCheckBox.isSelected() != myManager.isEnabled();
     modified |= myTabsEnabledCheckBox.isSelected() != myManager.isEnabledForTabs();
+    modified |= myProjectViewEnabledCheckBox.isSelected() != myManager.isEnabledForProjectView();
     modified |= myLocalTable.isModified() || mySharedTable.isModified();
 
     return modified;
@@ -199,6 +205,7 @@ public class FileColorsConfigurablePanel extends JPanel implements Disposable {
   public void apply() {
     myManager.setEnabled(myEnabledCheckBox.isSelected());
     myManager.setEnabledForTabs(myTabsEnabledCheckBox.isSelected());
+    myManager.setEnabledForProjectView(myProjectViewEnabledCheckBox.isSelected());
 
     myLocalTable.apply();
     mySharedTable.apply();
@@ -209,6 +216,7 @@ public class FileColorsConfigurablePanel extends JPanel implements Disposable {
   public void reset() {
     myEnabledCheckBox.setSelected(myManager.isEnabled());
     myTabsEnabledCheckBox.setSelected(myManager.isEnabledForTabs());
+    myProjectViewEnabledCheckBox.setSelected(myManager.isEnabledForProjectView());
 
     if (myLocalTable.isModified()) myLocalTable.reset();
     if (mySharedTable.isModified()) mySharedTable.reset();

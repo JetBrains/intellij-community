@@ -18,7 +18,6 @@ package com.intellij.ide.projectView.impl;
 
 import com.intellij.ide.dnd.aware.DnDAwareTree;
 import com.intellij.ide.projectView.impl.nodes.BasePsiNode;
-import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.ide.util.treeView.NodeRenderer;
 import com.intellij.openapi.project.Project;
@@ -28,6 +27,7 @@ import com.intellij.psi.PsiDirectoryContainer;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.FileColorManager;
+import com.intellij.ui.tabs.FileColorManagerImpl;
 
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeModel;
@@ -75,7 +75,7 @@ public abstract class ProjectViewTree extends DnDAwareTree {
 
   @Override
   protected boolean isFileColorsEnabled() {
-    return UISettings.getInstance().FILE_COLORS_IN_PROJECT_VIEW;
+    return FileColorManagerImpl._isEnabled() && FileColorManagerImpl._isEnabledForProjectView();
   }
 
   protected void paintFileColorGutter(final Graphics g) {
