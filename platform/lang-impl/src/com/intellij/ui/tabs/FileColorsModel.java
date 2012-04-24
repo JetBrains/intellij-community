@@ -18,13 +18,12 @@ package com.intellij.ui.tabs;
 
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packageDependencies.DefaultScopesProvider;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.scope.NonProjectFilesScope;
 import com.intellij.psi.search.scope.TestsScope;
-import com.intellij.psi.search.scope.packageSet.NamedScope;
-import com.intellij.psi.search.scope.packageSet.NamedScopeManager;
-import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
+import com.intellij.psi.search.scope.packageSet.*;
 import com.intellij.ui.ColorUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -203,6 +202,19 @@ public class FileColorsModel implements Cloneable {
   }
 
   @Nullable
+  public String getColor(@NotNull VirtualFile file, Project project) {
+    if (!file.isValid()) {
+      return null;
+    }
+
+    final FileColorConfiguration configuration = findConfiguration(file);
+    if (configuration != null && configuration.isValid(project)) {
+      return configuration.getColorName();
+    }
+    return null;
+  }
+
+  @Nullable
   private FileColorConfiguration findConfiguration(@NotNull final PsiFile colored) {
     for (final FileColorConfiguration configuration : myConfigurations) {
       final NamedScope scope = NamedScopeManager.getScope(myProject, configuration.getScopeName());
@@ -226,6 +238,34 @@ public class FileColorsModel implements Cloneable {
 
     return null;
   }
+
+  @Nullable
+  private FileColorConfiguration findConfiguration(@NotNull final VirtualFile colored) {
+    for (final FileColorConfiguration configuration : myConfigurations) {
+      final NamedScope scope = NamedScopesHolder.getScope(myProject, configuration.getScopeName());
+      if (scope != null) {
+        final NamedScopesHolder namedScopesHolder = NamedScopesHolder.getHolder(myProject, configuration.getScopeName(), null);
+        final PackageSet packageSet = scope.getValue();
+        if (packageSet instanceof PackageSetBase && namedScopesHolder != null && ((PackageSetBase)packageSet).contains(colored, namedScopesHolder)) {
+          return configuration;
+        }
+      }
+    }
+
+    for (FileColorConfiguration configuration : mySharedConfigurations) {
+      final NamedScope scope = NamedScopesHolder.getScope(myProject, configuration.getScopeName());
+      if (scope != null) {
+        final NamedScopesHolder namedScopesHolder = NamedScopesHolder.getHolder(myProject, configuration.getScopeName(), null);
+        final PackageSet packageSet = scope.getValue();
+        if (packageSet instanceof PackageSetBase && namedScopesHolder != null && ((PackageSetBase)packageSet).contains(colored, namedScopesHolder)) {
+          return configuration;
+        }
+      }
+    }
+
+    return null;
+  }
+
 
   public boolean isShared(FileColorConfiguration configuration) {
     return mySharedConfigurations.contains(configuration);

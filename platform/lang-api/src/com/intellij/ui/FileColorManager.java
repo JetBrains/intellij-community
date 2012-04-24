@@ -50,6 +50,8 @@ public abstract class FileColorManager {
   @Nullable
   public abstract Color getFileColor(@NotNull final PsiFile file);
 
+  public abstract Color getFileColor(@NotNull final VirtualFile file);
+
   public abstract boolean isShared(@NotNull final String scopeName);
 
   public abstract boolean isColored(@NotNull String scopeName, final boolean shared);

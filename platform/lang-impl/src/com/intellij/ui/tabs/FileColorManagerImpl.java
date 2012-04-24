@@ -194,6 +194,18 @@ public class FileColorManagerImpl extends FileColorManager implements Persistent
     return colorName == null ? null : getColor(colorName);
   }
 
+  @Nullable
+  public Color getFileColor(@NotNull final VirtualFile file) {
+    initSharedConfigurations();
+    final PsiFile psiFile = PsiManager.getInstance(getProject()).findFile(file);
+    if (psiFile != null) {
+      return getFileColor(psiFile);
+    } else {
+      final String colorName = myModel.getColor(file, getProject());
+      return colorName == null ? null : getColor(colorName);
+    }
+  }
+
   public boolean isShared(@NotNull final String scopeName) {
     return myModel.isShared(scopeName);
   }

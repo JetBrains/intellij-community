@@ -30,6 +30,7 @@ import com.intellij.util.ui.AsyncProcessIcon;
 import com.intellij.util.ui.ComponentWithEmptyText;
 import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.tree.MacTreeUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -97,8 +98,8 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
   public void setUI(final TreeUI ui) {
     TreeUI actualUI = ui;
     if (!isCustomUI()) {
-      if (!(ui instanceof UIUtil.MacTreeUI) && UIUtil.isUnderAquaLookAndFeel()) {
-        actualUI = new UIUtil.MacTreeUI(isMacWideSelection());
+      if (!(ui instanceof MacTreeUI) && UIUtil.isUnderAquaLookAndFeel()) {
+        actualUI = new MacTreeUI(isMacWideSelection(), !isFileColorsEnabled());
       }
     }
     super.setUI(actualUI);
@@ -129,6 +130,10 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
 
   protected boolean isMacWideSelection() {
     return true;
+  }
+
+  protected boolean isFileColorsEnabled() {
+    return false;
   }
 
   @Override
