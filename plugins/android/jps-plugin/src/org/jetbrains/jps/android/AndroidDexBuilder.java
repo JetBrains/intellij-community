@@ -318,7 +318,7 @@ public class AndroidDexBuilder extends ProjectLevelBuilder {
 
     final AndroidFileSetState newState = new AndroidFileSetState(allFiles, AndroidJpsUtil.CLASSES_AND_JARS_FILTER, true);
     final AndroidFileSetState oldState = proguardStateStorage.getState(module.getName());
-    if (context.getTimestampStorage().getStamp(proguardCfgFile) == proguardCfgFile.lastModified() &&
+    if (context.getTimestamps().getStamp(proguardCfgFile) == proguardCfgFile.lastModified() &&
         newState.equalsTo(oldState)) {
       return true;
     }
@@ -349,7 +349,7 @@ public class AndroidDexBuilder extends ProjectLevelBuilder {
     proguardStateStorage.update(module.getName(), success ? newState : null);
 
     if (success) {
-      context.getTimestampStorage().saveStamp(proguardCfgFile, proguardCfgFile.lastModified());
+      context.getTimestamps().saveStamp(proguardCfgFile, proguardCfgFile.lastModified());
     }
     return success;
   }

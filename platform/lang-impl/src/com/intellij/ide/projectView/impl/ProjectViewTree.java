@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,6 +45,7 @@ public abstract class ProjectViewTree extends DnDAwareTree {
     cellRenderer.setOpaque(false);
     cellRenderer.setIconOpaque(false);
     setCellRenderer(cellRenderer);
+    cellRenderer.setTransparentIconBackground(true);
     setOpaque(false);
   }
 
@@ -66,6 +67,8 @@ public abstract class ProjectViewTree extends DnDAwareTree {
 
   @Override
   protected void paintComponent(Graphics g) {
+    g.setColor(getBackground());
+    g.fillRect(0, 0, getWidth(), getHeight());
     if (isFileColorsEnabled()) {
       paintFileColorGutter(g);
     }
@@ -74,7 +77,7 @@ public abstract class ProjectViewTree extends DnDAwareTree {
   }
 
   @Override
-  protected boolean isFileColorsEnabled() {
+  public boolean isFileColorsEnabled() {
     return FileColorManagerImpl._isEnabled() && FileColorManagerImpl._isEnabledForProjectView();
   }
 

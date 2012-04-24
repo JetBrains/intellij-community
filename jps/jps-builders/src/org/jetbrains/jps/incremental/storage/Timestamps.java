@@ -8,6 +8,7 @@ import java.io.IOException;
  *         Date: 4/24/12
  */
 public interface Timestamps {
+  void force();
 
   void saveStamp(File file, long timestamp) throws IOException;
 

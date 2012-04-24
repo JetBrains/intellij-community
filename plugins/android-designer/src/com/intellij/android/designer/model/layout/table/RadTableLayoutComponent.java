@@ -13,14 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.android.designer.model.table;
+package com.intellij.android.designer.model.layout.table;
 
 import com.android.ide.common.rendering.api.ViewInfo;
 import com.intellij.android.designer.model.ModelParser;
 import com.intellij.android.designer.model.RadViewComponent;
 import com.intellij.android.designer.model.RadViewContainer;
-import com.intellij.android.designer.model.agrid.GridInfo;
-import com.intellij.android.designer.model.agrid.IGridProvider;
+import com.intellij.android.designer.model.grid.GridInfo;
+import com.intellij.android.designer.model.grid.IGridProvider;
 import com.intellij.designer.model.RadComponent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.xml.XmlTag;
@@ -111,10 +111,10 @@ public class RadTableLayoutComponent extends RadViewContainer implements IGridPr
       myVirtualGridInfo.height = bounds.height;
 
       int deltaWidth = bounds.width - (gridInfo.vLines.length == 0 ? 0 : gridInfo.width);
-      myVirtualGridInfo.vLines = addLineInfo(gridInfo.vLines, deltaWidth);
+      myVirtualGridInfo.vLines = GridInfo.addLineInfo(gridInfo.vLines, deltaWidth);
 
       int deltaHeight = bounds.height - gridInfo.height;
-      myVirtualGridInfo.hLines = addLineInfo(gridInfo.hLines, deltaHeight);
+      myVirtualGridInfo.hLines = GridInfo.addLineInfo(gridInfo.hLines, deltaHeight);
 
       List<RadComponent> rows = getChildren();
       if (!rows.isEmpty()) {
@@ -132,7 +132,7 @@ public class RadTableLayoutComponent extends RadViewContainer implements IGridPr
     return myVirtualGridInfo;
   }
 
-  public RadComponent[][] getGridComponents(boolean useSpan) {
+  public RadComponent[][] getGridComponents(boolean fillSpans) {
     GridInfo gridInfo = getGridInfo();
     List<RadComponent> rows = getChildren();
     int columnSize = Math.max(1, gridInfo.vLines.length - 1);
@@ -150,7 +150,7 @@ public class RadTableLayoutComponent extends RadViewContainer implements IGridPr
           }
 
           int cellSpan = getCellSpan(column);
-          if (useSpan) {
+          if (fillSpans) {
             for (int j = 0; j < cellSpan; j++) {
               components[i][index++] = column;
             }
@@ -167,34 +167,6 @@ public class RadTableLayoutComponent extends RadViewContainer implements IGridPr
     }
 
     return components;
-  }
-
-  private static final int NEW_CELL_SIZE = 32;
-
-  private static int[] addLineInfo(int[] oldLines, int delta) {
-    if (delta > 0) {
-      int newLength = oldLines.length + delta / NEW_CELL_SIZE;
-
-      if (newLength > oldLines.length) {
-        int[] newLines = new int[newLength];
-        int startIndex = oldLines.length;
-
-        if (oldLines.length > 0) {
-          System.arraycopy(oldLines, 0, newLines, 0, oldLines.length);
-        }
-        else {
-          startIndex = 1;
-        }
-
-        for (int i = startIndex; i < newLength; i++) {
-          newLines[i] = newLines[i - 1] + NEW_CELL_SIZE;
-        }
-
-        return newLines;
-      }
-      return oldLines;
-    }
-    return oldLines;
   }
 
   public static void setCellIndex(final RadComponent component, final int column) {

@@ -13,22 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.android.designer.designSurface.layout;
-
-import com.intellij.android.designer.designSurface.layout.grid.GridOperation;
-import com.intellij.designer.designSurface.OperationContext;
-import com.intellij.designer.model.RadComponent;
+package com.intellij.android.designer.model.grid;
 
 /**
  * @author Alexander Lobas
  */
-public class GridLayoutOperation extends GridOperation {
-  public GridLayoutOperation(RadComponent container, OperationContext context) {
-    super(container, context);
-  }
+public interface IGridProvider {
+  GridInfo getGridInfo();
 
-  @Override
-  public void execute() throws Exception {
-    // TODO: Auto-generated method stub
-  }
+  GridInfo getVirtualGridInfo();
 }

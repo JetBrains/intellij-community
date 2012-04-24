@@ -17,8 +17,8 @@ package com.intellij.android.designer.model.layout;
 
 import com.intellij.android.designer.designSurface.TreeDropToOperation;
 import com.intellij.android.designer.designSurface.layout.FrameLayoutOperation;
-import com.intellij.android.designer.designSurface.layout.LayoutMarginOperation;
-import com.intellij.android.designer.designSurface.layout.ResizeOperation;
+import com.intellij.android.designer.designSurface.layout.actions.LayoutMarginOperation;
+import com.intellij.android.designer.designSurface.layout.actions.ResizeOperation;
 import com.intellij.android.designer.model.RadViewComponent;
 import com.intellij.android.designer.model.RadViewLayoutWithData;
 import com.intellij.designer.componentTree.TreeEditOperation;

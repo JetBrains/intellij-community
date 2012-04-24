@@ -21,10 +21,7 @@ import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.impl.content.GraphicsConfig;
-import com.intellij.ui.ComponentWithExpandableItems;
-import com.intellij.ui.ExpandableItemsHandler;
-import com.intellij.ui.ExpandableItemsHandlerFactory;
-import com.intellij.ui.LoadingNode;
+import com.intellij.ui.*;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ui.AsyncProcessIcon;
 import com.intellij.util.ui.ComponentWithEmptyText;
@@ -48,7 +45,8 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Map;
 
-public class Tree extends JTree implements ComponentWithEmptyText, ComponentWithExpandableItems<Integer>, Autoscroll, Queryable {
+public class Tree extends JTree implements ComponentWithEmptyText, ComponentWithExpandableItems<Integer>, Autoscroll, Queryable,
+                                           ComponentWithFileColors {
   private StatusText myEmptyText;
   private ExpandableItemsHandler<Integer> myExpandableItemsHandler;
 
@@ -132,7 +130,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
     return true;
   }
 
-  protected boolean isFileColorsEnabled() {
+  public boolean isFileColorsEnabled() {
     return false;
   }
 
