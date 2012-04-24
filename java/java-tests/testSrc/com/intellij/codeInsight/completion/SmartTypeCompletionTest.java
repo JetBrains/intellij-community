@@ -1044,6 +1044,7 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
 
   public void testArrayInitializerBeforeVarargs() throws Throwable { doTest(); }
   public void testDuplicateMembersFromSuperClass() throws Throwable { doTest(); }
+  public void testInnerAfterNew() throws Throwable { doTest(); }
 
   public void testMemberImportStatically() {
     configureByTestName();
