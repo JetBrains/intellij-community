@@ -1,5 +1,7 @@
 package org.jetbrains.jps.android;
 
+import com.android.resources.ResourceFolderType;
+import com.android.resources.ResourceType;
 import com.android.sdklib.IAndroidTarget;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
@@ -12,10 +14,7 @@ import com.intellij.util.containers.HashSet;
 import org.jetbrains.android.compiler.tools.AndroidApt;
 import org.jetbrains.android.compiler.tools.AndroidIdl;
 import org.jetbrains.android.compiler.tools.AndroidRenderscript;
-import org.jetbrains.android.util.AndroidCommonUtils;
-import org.jetbrains.android.util.AndroidCompilerMessageKind;
-import org.jetbrains.android.util.ResourceEntry;
-import org.jetbrains.android.util.ValueResourcesFileParser;
+import org.jetbrains.android.util.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,9 +34,6 @@ import java.util.*;
 /**
  * @author Eugene.Kudelevsky
  */
-
-// todo: change output folders
-
 public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.incremental.android.AndroidSourceGeneratingBuilder");
 
@@ -313,8 +309,9 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
       final MyModuleData moduleData = entry.getValue();
       final AndroidFacet facet = moduleData.getFacet();
 
-      // todo: check if we need special strategy for maven apksources
-
+      if (!needToRunAaptCompilation(facet)) {
+        continue;
+      }
       final IAndroidTarget target = moduleData.getAndroidTarget();
 
       try {
@@ -347,11 +344,24 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
           continue;
         }
 
+        final Module circularDepLibWithSamePackage = AndroidJpsUtil.findCircularDependencyOnLibraryWithSamePackage(facet, packageMap);
+        if (circularDepLibWithSamePackage != null && !facet.isLibrary()) {
+          final String message = "Generated fields in " +
+                                 packageName +
+                                 ".R class in module '" +
+                                 module.getName() +
+                                 "' won't be final, because of circular dependency on module '" +
+                                 circularDepLibWithSamePackage.getName() +
+                                 "'";
+          context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.WARNING, message));
+        }
+        final boolean generateNonFinalFields = facet.isLibrary() || circularDepLibWithSamePackage != null;
+
         final Set<String> depLibPackagesSet = new HashSet<String>(depLibPackageMap.values());
         depLibPackagesSet.remove(packageName);
 
-        final Set<ResourceEntry> resources = collectResources(resPaths);
-        final Set<ResourceEntry> manifestElements = collectManifestElements(manifestFile);
+        final Map<String, ResourceFileData> resources = collectResources(resPaths);
+        final List<ResourceEntry> manifestElements = collectManifestElements(manifestFile);
         final AndroidAptValidityState newState = new AndroidAptValidityState(resources, manifestElements, depLibPackagesSet, packageName);
 
         if (context.isMake()) {
@@ -380,7 +390,7 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
 
         final Map<AndroidCompilerMessageKind, List<String>> messages =
           AndroidApt.compile(target, -1, manifestFile.getPath(), packageName, aptOutputDirectory.getPath(), resPaths,
-                             ArrayUtil.toStringArray(depLibPackagesSet), facet.getLibrary());
+                             ArrayUtil.toStringArray(depLibPackagesSet), generateNonFinalFields);
 
         AndroidJpsUtil.addMessages(context, messages, BUILDER_NAME);
 
@@ -399,6 +409,11 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
       }
     }
     return success;
+  }
+
+  private static boolean needToRunAaptCompilation(AndroidFacet facet) {
+    return !facet.isRunProcessResourcesMavenTask() ||
+           !AndroidJpsUtil.isMavenizedModule(facet.getModule());
   }
 
   private static boolean deleteAndMarkRecursively(@NotNull File dir, @NotNull CompileContext context) throws IOException {
@@ -458,7 +473,7 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
   private static Map<Module, String> getDepLibPackages(@NotNull Module module) throws IOException {
     final Map<Module, String> result = new HashMap<Module, String>();
 
-    for (AndroidFacet depFacet : AndroidJpsUtil.getAllDependentAndroidLibraries(module)) {
+    for (AndroidFacet depFacet : AndroidJpsUtil.getAllAndroidDependencies(module, true)) {
       final File depManifestFile = AndroidJpsUtil.getManifestFileForCompilationPath(depFacet);
 
       if (depManifestFile != null) {
@@ -510,8 +525,8 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
   }
 
   @NotNull
-  private static Set<ResourceEntry> collectResources(@NotNull String[] resPaths) throws IOException {
-    final Set<ResourceEntry> result = new HashSet<ResourceEntry>();
+  private static Map<String, ResourceFileData> collectResources(@NotNull String[] resPaths) throws IOException {
+    final Map<String, ResourceFileData> result = new HashMap<String, ResourceFileData>();
 
     for (String resDirPath : resPaths) {
       final File[] resSubdirs = new File(resDirPath).listFiles();
@@ -521,17 +536,22 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
           final String resType = AndroidCommonUtils.getResourceTypeByDirName(resSubdir.getName());
 
           if (resType != null) {
-            final boolean valueResDir = "values".equals(resType);
             final File[] resFiles = resSubdir.listFiles();
 
             if (resFiles != null) {
               for (File resFile : resFiles) {
-                if (valueResDir && "xml".equals(FileUtil.getExtension(resFile.getName()))) {
-                  collectValueResources(resFile, result);
+                if (ResourceFolderType.VALUES.getName().equals(resType) && "xml".equals(FileUtil.getExtension(resFile.getName()))) {
+                  final ArrayList<ResourceEntry> entries = new ArrayList<ResourceEntry>();
+                  collectValueResources(resFile, entries);
+                  result.put(FileUtil.toSystemIndependentName(resFile.getPath()), new ResourceFileData(entries, 0));
                 }
                 else {
-                  final String resName = AndroidCommonUtils.getResourceName(resType, resFile.getName());
-                  result.add(new ResourceEntry(resType, resName));
+                  final ResourceType resTypeObj = ResourceType.getEnum(resType);
+                  final boolean idProvidingType =
+                    resTypeObj != null && ArrayUtil.find(AndroidCommonUtils.ID_PROVIDING_RESOURCE_TYPES, resTypeObj) >= 0;
+                  final ResourceFileData data =
+                    new ResourceFileData(Collections.<ResourceEntry>emptyList(), idProvidingType ? resFile.lastModified() : 0);
+                  result.put(FileUtil.toSystemIndependentName(resFile.getPath()), data);
                 }
               }
             }
@@ -542,7 +562,7 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
     return result;
   }
 
-  private static void collectValueResources(@NotNull File valueResXmlFile, @NotNull final Set<ResourceEntry> result)
+  private static void collectValueResources(@NotNull File valueResXmlFile, @NotNull final List<ResourceEntry> result)
     throws IOException {
     final InputStream inputStream = new BufferedInputStream(new FileInputStream(valueResXmlFile));
     try {
@@ -565,10 +585,10 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
   }
 
   @NotNull
-  private static Set<ResourceEntry> collectManifestElements(@NotNull File manifestFile) throws IOException {
+  private static List<ResourceEntry> collectManifestElements(@NotNull File manifestFile) throws IOException {
     final InputStream inputStream = new BufferedInputStream(new FileInputStream(manifestFile));
     try {
-      final Set<ResourceEntry> result = new HashSet<ResourceEntry>();
+      final List<ResourceEntry> result = new ArrayList<ResourceEntry>();
 
       FormsParsing.parse(inputStream, new FormsParsing.IXMLBuilderAdapter() {
         String myLastName;
@@ -670,26 +690,21 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
     return "Android Source Generating Builder";
   }
 
+  // support for lib<->lib and app<->lib circular dependencies
   // see IDEA-79737 for details
   private static boolean hasBadCircularDependencies(@NotNull AndroidFacet facet, @NotNull Map<Module, String> packages) throws IOException {
     final String aPackage = packages.get(facet.getModule());
     if (aPackage == null || aPackage.length() == 0) {
       return false;
     }
-
-    final List<AndroidFacet> dependencies = AndroidJpsUtil.getAllDependentAndroidLibraries(facet.getModule());
+    final List<AndroidFacet> dependencies = AndroidJpsUtil.getAllAndroidDependencies(facet.getModule(), false);
 
     for (AndroidFacet depFacet : dependencies) {
-      final String depPackage = packages.get(depFacet.getModule());
-
-      if (!aPackage.equals(depPackage)) {
-        continue;
-      }
-      final List<AndroidFacet> depDependencies = AndroidJpsUtil.getAllDependentAndroidLibraries(depFacet.getModule());
+      final List<AndroidFacet> depDependencies = AndroidJpsUtil.getAllAndroidDependencies(depFacet.getModule(), true);
 
       if (depDependencies.contains(facet) &&
           dependencies.contains(depFacet) &&
-          depFacet.getModule().getName().compareTo(facet.getModule().getName()) < 0) {
+          (depFacet.getModule().getName().compareTo(facet.getModule().getName()) < 0 || !depFacet.isLibrary())) {
         return true;
       }
     }

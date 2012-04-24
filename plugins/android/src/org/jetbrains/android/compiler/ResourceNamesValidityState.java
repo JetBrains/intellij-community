@@ -16,10 +16,11 @@ import org.jetbrains.android.dom.resources.Resources;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.facet.AndroidRootUtil;
 import org.jetbrains.android.resourceManagers.LocalResourceManager;
-import org.jetbrains.android.resourceManagers.ResourceManager;
 import org.jetbrains.android.sdk.AndroidPlatform;
+import org.jetbrains.android.util.AndroidCommonUtils;
 import org.jetbrains.android.util.AndroidResourceUtil;
 import org.jetbrains.android.util.ResourceEntry;
+import org.jetbrains.android.util.ResourceFileData;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.DataInput;
@@ -34,7 +35,7 @@ import java.util.Map;
  * @author Eugene.Kudelevsky
  */
 public class ResourceNamesValidityState implements ValidityState {
-  private final Map<String, MyResourceFileData> myResources = new HashMap<String, MyResourceFileData>();
+  private final Map<String, ResourceFileData> myResources = new HashMap<String, ResourceFileData>();
 
   private final String myAndroidTargetHashString;
   private final long myManifestTimestamp;
@@ -68,15 +69,15 @@ public class ResourceNamesValidityState implements ValidityState {
       final int index = subdirName.indexOf('-');
       final String typeName = index >= 0 ? subdirName.substring(0, index) : subdirName;
       final ResourceType type = ResourceType.getEnum(typeName);
-      final boolean idProvidingResource = type != null && ArrayUtil.find(ResourceManager.ID_PROVIDING_RESOURCE_TYPES, type) >= 0;
+      final boolean idProvidingResource = type != null && ArrayUtil.find(AndroidCommonUtils.ID_PROVIDING_RESOURCE_TYPES, type) >= 0;
 
       FileIndexImplUtil.iterateRecursively(subdir, VirtualFileFilter.ALL, new ContentIterator() {
         @Override
         public boolean processFile(VirtualFile fileOrDir) {
           if (!fileOrDir.isDirectory()) {
-            MyResourceFileData data = myResources.get(fileOrDir.getPath());
+            ResourceFileData data = myResources.get(fileOrDir.getPath());
             if (data == null) {
-              data = new MyResourceFileData();
+              data = new ResourceFileData();
               myResources.put(fileOrDir.getPath(), data);
             }
 
@@ -93,14 +94,14 @@ public class ResourceNamesValidityState implements ValidityState {
   private static void addValueResources(VirtualFile file,
                                         ResourceType resType,
                                         Collection<? extends ResourceElement> resourceElements,
-                                        Map<String, MyResourceFileData> result) {
+                                        Map<String, ResourceFileData> result) {
     for (ResourceElement element : resourceElements) {
       final String name = element.getName().getValue();
 
       if (name != null) {
-        MyResourceFileData data = result.get(file.getPath());
+        ResourceFileData data = result.get(file.getPath());
         if (data == null) {
-          data = new MyResourceFileData();
+          data = new ResourceFileData();
           result.put(file.getPath(), data);
         }
         data.addValueResource(new ResourceEntry(resType.getName(), name));
@@ -126,7 +127,7 @@ public class ResourceNamesValidityState implements ValidityState {
         valueResources.add(new ResourceEntry(resType, resName));
       }
       final long fileTimestamp = in.readLong();
-      myResources.put(filePath, new MyResourceFileData(valueResources, fileTimestamp));
+      myResources.put(filePath, new ResourceFileData(valueResources, fileTimestamp));
     }
   }
 
@@ -150,10 +151,10 @@ public class ResourceNamesValidityState implements ValidityState {
 
     out.writeInt(myResources.size());
 
-    for (Map.Entry<String, MyResourceFileData> entry : myResources.entrySet()) {
+    for (Map.Entry<String, ResourceFileData> entry : myResources.entrySet()) {
       out.writeUTF(entry.getKey());
 
-      final MyResourceFileData data = entry.getValue();
+      final ResourceFileData data = entry.getValue();
       final List<ResourceEntry> valueResources = data.getValueResources();
       out.writeInt(valueResources.size());
 
@@ -162,59 +163,6 @@ public class ResourceNamesValidityState implements ValidityState {
         out.writeUTF(resource.getName());
       }
       out.writeLong(data.getTimestamp());
-    }
-  }
-
-  private static class MyResourceFileData {
-    // order matters because of id assigning in R.java
-    private final List<ResourceEntry> myValueResources;
-
-    private long myTimestamp;
-
-    MyResourceFileData() {
-      this(new ArrayList<ResourceEntry>(), 0);
-    }
-
-    private MyResourceFileData(@NotNull List<ResourceEntry> valueResources, long timestamp) {
-      myValueResources = valueResources;
-      myTimestamp = timestamp;
-    }
-
-    @NotNull
-    List<ResourceEntry> getValueResources() {
-      return myValueResources;
-    }
-
-    long getTimestamp() {
-      return myTimestamp;
-    }
-
-    public void setTimestamp(long timestamp) {
-      myTimestamp = timestamp;
-    }
-
-    public void addValueResource(@NotNull ResourceEntry entry) {
-      myValueResources.add(entry);
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-
-      MyResourceFileData data = (MyResourceFileData)o;
-
-      if (myTimestamp != data.myTimestamp) return false;
-      if (!myValueResources.equals(data.myValueResources)) return false;
-
-      return true;
-    }
-
-    @Override
-    public int hashCode() {
-      int result = myValueResources.hashCode();
-      result = 31 * result + (int)(myTimestamp ^ (myTimestamp >>> 32));
-      return result;
     }
   }
 }

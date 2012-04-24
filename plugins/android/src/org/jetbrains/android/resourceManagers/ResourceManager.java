@@ -53,10 +53,6 @@ import static java.util.Collections.addAll;
  * @author coyote
  */
 public abstract class ResourceManager {
-  public static final ResourceType[] ID_PROVIDING_RESOURCE_TYPES = new ResourceType[] {
-    ResourceType.LAYOUT, ResourceType.MENU
-  };
-
   protected final Module myModule;
   protected final AndroidFacet myFacet;
 
@@ -344,7 +340,7 @@ public abstract class ResourceManager {
   @NotNull
   public List<VirtualFile> getResourceSubdirsToSearchIds() {
     final List<VirtualFile> resSubdirs = new ArrayList<VirtualFile>();
-    for (ResourceType type : ID_PROVIDING_RESOURCE_TYPES) {
+    for (ResourceType type : AndroidCommonUtils.ID_PROVIDING_RESOURCE_TYPES) {
       resSubdirs.addAll(getResourceSubdirs(type.getName()));
     }
     return resSubdirs;

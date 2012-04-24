@@ -16,11 +16,14 @@
 package com.intellij.android.designer.model.layout.grid;
 
 import com.android.ide.common.rendering.api.ViewInfo;
+import com.intellij.android.designer.model.ModelParser;
 import com.intellij.android.designer.model.RadViewComponent;
 import com.intellij.android.designer.model.RadViewContainer;
 import com.intellij.android.designer.model.grid.GridInfo;
 import com.intellij.android.designer.model.grid.IGridProvider;
 import com.intellij.designer.model.RadComponent;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.psi.xml.XmlTag;
 
 import java.awt.*;
 import java.lang.reflect.Field;
@@ -169,5 +172,29 @@ public class RadGridLayoutComponent extends RadViewContainer implements IGridPro
     }
 
     return cellInfo;
+  }
+
+  public static void setGridSize(final RadViewComponent container, final int rowCount, final int columnCount) {
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
+      public void run() {
+        XmlTag tag = container.getTag();
+        tag.setAttribute("android:rowCount", Integer.toString(rowCount));
+        tag.setAttribute("android:columnCount", Integer.toString(columnCount));
+      }
+    });
+  }
+
+  public static void setCellIndex(final RadComponent component, final int row, final int column) {
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
+      public void run() {
+        XmlTag tag = ((RadViewComponent)component).getTag();
+        tag.setAttribute("android:layout_row", Integer.toString(row));
+        tag.setAttribute("android:layout_column", Integer.toString(column));
+        ModelParser.deleteAttribute(tag, "android:layout_rowSpan");
+        ModelParser.deleteAttribute(tag, "android:layout_columnSpan");
+      }
+    });
   }
 }

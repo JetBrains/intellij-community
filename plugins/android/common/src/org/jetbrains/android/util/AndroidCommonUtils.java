@@ -16,6 +16,7 @@
 package org.jetbrains.android.util;
 
 import com.android.resources.ResourceFolderType;
+import com.android.resources.ResourceType;
 import com.android.sdklib.IAndroidTarget;
 import com.android.sdklib.ISdkLog;
 import com.android.sdklib.SdkConstants;
@@ -70,6 +71,9 @@ public class AndroidCommonUtils {
   @NonNls public static final String INCLUDE_SYSTEM_PROGUARD_FILE_OPTION = "INCLUDE_SYSTEM_PROGUARD_FILE";
   @NonNls public static final String SYSTEM_PROGUARD_CFG_FILE_NAME = "proguard-android.txt";
   @NonNls private static final String PROGUARD_HOME_ENV_VARIABLE = "PROGUARD_HOME";
+  public static final ResourceType[] ID_PROVIDING_RESOURCE_TYPES = new ResourceType[] {
+    ResourceType.LAYOUT, ResourceType.MENU
+  };
 
   private AndroidCommonUtils() {
   }
@@ -176,14 +180,14 @@ public class AndroidCommonUtils {
     for (String path : firstPackageDirPaths) {
       final File firstPackageDir = new File(path);
       if (firstPackageDir.exists()) {
-        addFileToJar(firstPackageDir, firstPackageDir.getParentFile(), true, files);
+        packClassFilesIntoJar(firstPackageDir, firstPackageDir.getParentFile(), true, files);
       }
     }
 
     for (String path : libFirstPackageDirPaths) {
       final File firstPackageDir = new File(path);
       if (firstPackageDir.exists()) {
-        addFileToJar(firstPackageDir, firstPackageDir.getParentFile(), false, files);
+        packClassFilesIntoJar(firstPackageDir, firstPackageDir.getParentFile(), false, files);
       }
     }
 
@@ -205,10 +209,10 @@ public class AndroidCommonUtils {
     }
   }
 
-  private static void addFileToJar(@NotNull File file,
-                                   @NotNull File rootDirectory,
-                                   boolean packRAndManifestClasses,
-                                   @NotNull List<Pair<File, String>> files)
+  private static void packClassFilesIntoJar(@NotNull File file,
+                                            @NotNull File rootDirectory,
+                                            boolean packRAndManifestClasses,
+                                            @NotNull List<Pair<File, String>> files)
     throws IOException {
 
     if (file.isDirectory()) {
@@ -216,7 +220,7 @@ public class AndroidCommonUtils {
 
       if (children != null) {
         for (File child : children) {
-          addFileToJar(child, rootDirectory, packRAndManifestClasses, files);
+          packClassFilesIntoJar(child, rootDirectory, packRAndManifestClasses, files);
         }
       }
     }

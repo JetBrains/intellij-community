@@ -391,7 +391,7 @@ public class AndroidPackagingBuilder extends ProjectLevelBuilder {
       result.add(libsDir.getPath());
     }
 
-    for (AndroidFacet depFacet : AndroidJpsUtil.getAllDependentAndroidLibraries(facet.getModule())) {
+    for (AndroidFacet depFacet : AndroidJpsUtil.getAllAndroidDependencies(facet.getModule(), true)) {
       final File depLibsDir = depFacet.getNativeLibsDir();
       if (depLibsDir != null) {
         result.add(depLibsDir.getPath());
@@ -409,7 +409,7 @@ public class AndroidPackagingBuilder extends ProjectLevelBuilder {
       return false;
     }
 
-    for (AndroidFacet libFacet : AndroidJpsUtil.getAllDependentAndroidLibraries(module)) {
+    for (AndroidFacet libFacet : AndroidJpsUtil.getAllAndroidDependencies(module, true)) {
       final Module libModule = libFacet.getModule();
       final AndroidFileSetState currentLibState = module2state.get(libModule);
       final AndroidFileSetState savedLibState = storage.getState(libModule.getName());
@@ -500,7 +500,7 @@ public class AndroidPackagingBuilder extends ProjectLevelBuilder {
       result.add(assetsDir.getPath());
     }
 
-    for (AndroidFacet depFacet : AndroidJpsUtil.getAllDependentAndroidLibraries(facet.getModule())) {
+    for (AndroidFacet depFacet : AndroidJpsUtil.getAllAndroidDependencies(facet.getModule(), true)) {
       final File depAssetsDir = depFacet.getAssetsDir();
 
       if (depAssetsDir != null) {

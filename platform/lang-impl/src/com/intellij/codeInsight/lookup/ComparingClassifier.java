@@ -55,8 +55,8 @@ public abstract class ComparingClassifier<T> extends Classifier<T> {
   }
 
   @Override
-  public Iterable<List<T>> classify(List<T> source) {
-    List<List<T>> result = new ArrayList<List<T>>();
+  public Iterable<T> classify(List<T> source) {
+    List<T> result = new ArrayList<T>();
     for (List<T> list : groupByWeights(source).values()) {
       ContainerUtil.addAll(result, myNext.classify(list));
     }

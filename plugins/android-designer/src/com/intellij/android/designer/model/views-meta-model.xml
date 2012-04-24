@@ -1163,6 +1163,13 @@
   <!-- ================= Palette ================= -->
 
   <palette>
+    <group name="Layouts">
+      <item tag="FrameLayout"/>
+      <item tag="LinearLayout"/>
+      <item tag="TableLayout"/>
+      <item tag="TableRow"/>
+      <item tag="GridLayout"/>
+    </group>
     <group name="Widgets">
       <item tag="Button"/>
       <item tag="RadioButton"/>
@@ -1217,13 +1224,6 @@
       <item tag="ImageSwitcher"/>
       <item tag="TextSwitcher"/>
       <item tag="AdapterViewFlipper"/>
-    </group>
-    <group name="Layouts">
-      <item tag="FrameLayout"/>
-      <item tag="LinearLayout"/>
-      <item tag="TableLayout"/>
-      <item tag="TableRow"/>
-      <item tag="GridLayout"/>
     </group>
   </palette>
 

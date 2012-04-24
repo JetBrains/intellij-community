@@ -40,35 +40,12 @@ public abstract class ClassifierFactory<T> {
       }
 
       @Override
-      public Iterable<List<T>> classify(List<T> source) {
-        return Collections.singleton(source);
+      public Iterable<T> classify(List<T> source) {
+        return source;
       }
 
       @Override
       public void describeItems(LinkedHashMap<T, StringBuilder> map) {
-      }
-    };
-  }
-
-  public static <T> Classifier<T> sortingListClassifier(final Comparator<T> comparator) {
-    return new Classifier<T>() {
-      @Override
-      public void addElement(T t) {
-      }
-
-      @Override
-      public Iterable<List<T>> classify(List<T> source) {
-        final List<T> copy = new ArrayList<T>(source);
-        Collections.sort(source, comparator);
-        return Collections.singletonList(copy);
-      }
-
-      @Override
-      public void describeItems(LinkedHashMap<T, StringBuilder> map) {
-        final String str = "sorted by " + comparator;
-        for (StringBuilder builder : map.values()) {
-          builder.append(str);
-        }
       }
     };
   }

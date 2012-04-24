@@ -27,6 +27,8 @@ class AndroidFacet extends Facet {
   String customDebugKeyStorePath;
   String nativeLibsFolderRelativePath;
 
+  boolean runProcessResourcesMavenTask;
+
   AndroidFacet(Module module, String name) {
     this.module = module
     this.name = name;

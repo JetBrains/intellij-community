@@ -611,13 +611,13 @@
     <group id="DebugMainMenu">
       <separator/>
       <action id="StepOver" class="com.intellij.xdebugger.impl.actions.StepOverAction" icon="/actions/traceOver.png"/>
+      <action id="ForceStepOver" class="com.intellij.xdebugger.impl.actions.ForceStepOverAction" icon="/debugger/actions/force_step_over.png"/>
       <action id="StepInto" class="com.intellij.xdebugger.impl.actions.StepIntoAction" icon="/actions/traceInto.png"/>
+      <action id="ForceStepInto" class="com.intellij.xdebugger.impl.actions.ForceStepIntoAction" icon="/debugger/actions/force_step_into.png"/>
       <action id="SmartStepInto" class="com.intellij.xdebugger.impl.actions.SmartStepIntoAction" icon="/actions/traceInto.png"/>
       <action id="StepOut" class="com.intellij.xdebugger.impl.actions.StepOutAction" icon="/actions/stepOut.png"/>
-      <action id="ForceStepOver" class="com.intellij.xdebugger.impl.actions.ForceStepOverAction" icon="/actions/traceOver.png"/>
-      <action id="ForceStepInto" class="com.intellij.xdebugger.impl.actions.ForceStepIntoAction" icon="/actions/forceStepInto.png"/>
       <action id="RunToCursor" class="com.intellij.xdebugger.impl.actions.RunToCursorAction" icon="/actions/runToCursor.png"/>
-      <action id="ForceRunToCursor" class="com.intellij.xdebugger.impl.actions.ForceRunToCursorAction"/>
+      <action id="ForceRunToCursor" class="com.intellij.xdebugger.impl.actions.ForceRunToCursorAction" icon="/debugger/actions/force_run_to_cursor.png"/>
       <action id="Pause" class="com.intellij.xdebugger.impl.actions.PauseAction" icon="/actions/pause.png"/>
       <action id="Resume" class="com.intellij.xdebugger.impl.actions.ResumeAction" icon="/actions/resume.png"/>
       <separator/>
