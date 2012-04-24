@@ -264,7 +264,7 @@ public class Graphics2DLog extends Graphics2D {
   @Override
   public Graphics create(int x, int y, int width, int height) {
     log(String.format("create(%d, %d %d, %d)", x, y, width, height));
-    return myPeer.create(x, y, width, height);
+    return new Graphics2DLog(myPeer.create(x, y, width, height));
   }
 
   @Override
