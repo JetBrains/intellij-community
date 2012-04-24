@@ -139,9 +139,6 @@ public class PyCodeFragmentBuilder extends PyRecursiveElementVisitor {
         }
         // If declaration is before we look for modifications inside
         if (pos == Position.BEFORE) {
-          if (!isTopLevel(element)) {
-            inElements.add(name);
-          }
           final List<PyElement> list = modifiedInsideMap.get(name);
           boolean modificationSeen = false;
           if (list != null) {
@@ -154,6 +151,9 @@ public class PyCodeFragmentBuilder extends PyRecursiveElementVisitor {
               }
             }
             if (modificationSeen) {
+              if (!isTopLevel(element)) {
+                inElements.add(name);
+              }
               break;
             }
           }

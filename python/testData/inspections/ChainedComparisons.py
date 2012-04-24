@@ -1,1 +1,1 @@
-<warning descr="Simplify chained comparison">a < b <caret>and b < c</warning>
+<weak_warning descr="Simplify chained comparison">a < b <caret>and b < c</weak_warning>

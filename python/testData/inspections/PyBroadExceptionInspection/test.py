@@ -3,7 +3,7 @@ class ExceptionKlass(Exception):
 
 try:
     function_throws_exception()
-except <warning descr="Too broad exception clause">Exception</warning>:
+except <weak_warning descr="Too broad exception clause">Exception</weak_warning>:
     pass
 
 try:
@@ -13,7 +13,7 @@ except ExceptionKlass:
 
 try:
     function_throws_exception()
-<warning descr="Too broad exception clause">except</warning>:
+<weak_warning descr="Too broad exception clause">except</weak_warning>:
     pass
 
 class Exception:

@@ -7,6 +7,7 @@ import com.intellij.openapi.ui.DialogBuilder;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBLabel;
+import org.apache.xmlrpc.AsyncCallback;
 import org.apache.xmlrpc.DefaultXmlRpcTransportFactory;
 import org.apache.xmlrpc.XmlRpcClient;
 import org.jetbrains.annotations.NonNls;
@@ -40,14 +41,13 @@ public class PyPIPackageUtil {
   public static PyPIPackageUtil INSTANCE = new PyPIPackageUtil();
   private Map<String, Hashtable> packageToDetails = new HashMap<String, Hashtable>();
   private Map<String, List<String>> packageToReleases = new HashMap<String, List<String>>();
-  private List<String> errorMessages;
   private Pattern PYPI_PATTERN = Pattern.compile("/pypi/([^/]*)/(.*)");
   private Set<ComparablePair> myAdditionalPackageNames;
   @Nullable private volatile Set<String> myPackageNames = null;
 
-  public Set<String> getPackageNames(final String url) throws IOException {
+  public static Set<String> getPackageNames(final String url) throws IOException {
     final TreeSet<String> names = new TreeSet<String>();
-    HTMLEditorKit.ParserCallback callback =
+    final HTMLEditorKit.ParserCallback callback =
         new HTMLEditorKit.ParserCallback() {
           HTML.Tag myTag;
           @Override
@@ -65,14 +65,14 @@ public class PyPIPackageUtil {
         };
 
     try {
-      URL repositoryUrl = new URL(url);
-      InputStream is = repositoryUrl.openStream();
-      Reader reader = new InputStreamReader(is);
+      final URL repositoryUrl = new URL(url);
+      final InputStream is = repositoryUrl.openStream();
+      final Reader reader = new InputStreamReader(is);
       try{
         new ParserDelegator().parse(reader, callback, true);
       }
       catch (IOException e) {
-        e.printStackTrace();
+        LOG.warn(e);
       }
       finally {
         reader.close();
@@ -80,7 +80,6 @@ public class PyPIPackageUtil {
     }
     catch (MalformedURLException e) {
       LOG.warn(e);
-      errorMessages.add("Package list from "+ url + " was not loaded. " + e.getMessage());
     }
 
     return names;
@@ -104,34 +103,52 @@ public class PyPIPackageUtil {
     return myAdditionalPackageNames;
   }
 
-  public XmlRpcClient getXmlRpcClient() {
-    return myXmlRpcClient;
-  }
-
   public void addPackageDetails(@NonNls String packageName, Hashtable details) {
     packageToDetails.put(packageName, details);
   }
+
   @Nullable
   public Hashtable getPackageDetails(@NonNls String packageName) {
     if (packageToDetails.containsKey(packageName)) return packageToDetails.get(packageName);
     return null;
   }
 
-  @NotNull
+  public void fillPackageDetails(@NonNls String packageName, final AsyncCallback callback) {
+    final Hashtable details = getPackageDetails(packageName);
+    if (details == null) {
+      final Vector<String> params = new Vector<String>();
+      params.add(packageName);
+      try {
+        params.add(getPyPIPackages().get(packageName));
+        myXmlRpcClient.executeAsync("release_data", params, callback);
+      }
+      catch (Exception ignored) {
+      }
+    }
+    else
+      callback.handleResult(details, null, "");
+  }
+
+  public void addPackageReleases(@NotNull final String packageName, @NotNull final List<String> releases) {
+    packageToReleases.put(packageName, releases);
+  }
+
+  public void usePackageReleases(@NonNls String packageName, final AsyncCallback callback) {
+    final List<String> releases = getPackageReleases(packageName);
+    if (releases == null) {
+      final Vector<String> params = new Vector<String>();
+      params.add(packageName);
+      myXmlRpcClient.executeAsync("package_releases", params, callback);
+    }
+    else {
+      callback.handleResult(releases, null, "");
+    }
+  }
+
+  @Nullable
   public List<String> getPackageReleases(@NonNls String packageName) {
     if (packageToReleases.containsKey(packageName)) return packageToReleases.get(packageName);
-    Vector<String> params = new Vector<String>();
-    params.add(packageName);
-    try {
-      List<String> releases = (List<String>)myXmlRpcClient.execute("package_releases", params);
-      packageToReleases.put(packageName, releases);
-      return releases;
-
-    }
-    catch (Exception e) {
-      LOG.warn(e);
-    }
-    return Collections.emptyList();
+    return null;
   }
 
   private PyPIPackageUtil() {
@@ -139,7 +156,6 @@ public class PyPIPackageUtil {
       DefaultXmlRpcTransportFactory factory = new DefaultXmlRpcTransportFactory(new URL(PYPI_URL));
       factory.setProperty("timeout", 1000);
       myXmlRpcClient = new XmlRpcClient(new URL(PYPI_URL), factory);
-      errorMessages = new ArrayList<String>();
     }
     catch (MalformedURLException e) {
       LOG.warn(e);
@@ -200,7 +216,7 @@ public class PyPIPackageUtil {
         new ParserDelegator().parse(reader, callback, true);
       }
       catch (IOException e) {
-        e.printStackTrace();
+        LOG.warn(e);
       }
       finally {
         reader.close();

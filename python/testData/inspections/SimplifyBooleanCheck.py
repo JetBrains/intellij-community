@@ -1,1 +1,1 @@
-if <warning descr="Expression can be simplified"><caret>b != False</warning>: pass
+if <weak_warning descr="Expression can be simplified"><caret>b != False</weak_warning>: pass

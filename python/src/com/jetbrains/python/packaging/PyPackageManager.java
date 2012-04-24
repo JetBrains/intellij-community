@@ -16,6 +16,7 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkAdditionalData;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
@@ -27,6 +28,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.net.HttpConfigurable;
+import com.intellij.util.ui.UIUtil;
 import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyListLiteralExpression;
@@ -73,8 +75,15 @@ public class PyPackageManager {
   // Sdk instances are re-created by ProjectSdksModel on every refresh so we cannot use them as keys for caching
   private static final Map<String, PyPackageManager> ourInstances = new HashMap<String, PyPackageManager>();
   private static final String BUILD_DIR_OPTION = "--build-dir";
+  public static final String USE_USER_SITE = "--user";
+
+  public static final String INSTALL = "install";
+  public static final String UNINSTALL = "uninstall";
+  public static final String UNTAR = "untar";
 
   private List<PyPackage> myPackagesCache = null;
+  private PyExternalProcessException myExceptionCache = null;
+
   private Sdk mySdk;
 
   public static class UI {
@@ -135,8 +144,7 @@ public class PyPackageManager {
               indicator.setFraction((double)i / size);
             }
             try {
-              final boolean useUserSite = PyPackageService.getInstance().useUserSite(mySdk.getHomePath());
-              manager.install(list(requirement), extraArgs, useUserSite);
+              manager.install(list(requirement), extraArgs);
             }
             catch (PyExternalProcessException e) {
               exceptions.add(e);
@@ -251,21 +259,22 @@ public class PyPackageManager {
 
     String helpersPath = getHelperPath(name);
 
-    ProcessOutput output = getHelperOutput(PACKAGING_TOOL, Lists.newArrayList("untar", helpersPath), false, helperFile.getParent());
+    ProcessOutput output = getHelperOutput(PACKAGING_TOOL, Lists.newArrayList(UNTAR, helpersPath), false, helperFile.getParent());
 
     if (output.getExitCode() != 0) {
       throw new PyExternalProcessException(output.getExitCode(), PACKAGING_TOOL,
-                                           Lists.newArrayList("untar"), output.getStderr());
+                                           Lists.newArrayList(UNTAR), output.getStderr());
     }
-    final String dirName = output.getStdout().trim();
-    final String fileName = dirName + File.separatorChar + name + File.separatorChar + "setup.py";
-    final File setupFile = new File(fileName);
-    name = setupFile.getAbsolutePath();
+    String dirName = FileUtil.toSystemDependentName(output.getStdout().trim());
+    if (!dirName.endsWith(File.separator)) {
+      dirName += File.separator;
+    }
+    final String fileName = dirName + name + File.separatorChar + "setup.py";
     try {
-      output = getProcessOutput(setupFile.getAbsolutePath(), Collections.<String>singletonList("install"), true, setupFile.getParent());
+      output = getProcessOutput(fileName, Collections.<String>singletonList(INSTALL), true, dirName);
       final int retcode = output.getExitCode();
       if (output.isTimeout()) {
-        throw new PyExternalProcessException(ERROR_TIMEOUT, name, Lists.newArrayList("install"), "Timed out");
+        throw new PyExternalProcessException(ERROR_TIMEOUT, fileName, Lists.newArrayList(INSTALL), "Timed out");
       }
       else if (retcode != 0) {
         final String stdout = output.getStdout();
@@ -273,11 +282,11 @@ public class PyPackageManager {
         if (message.trim().isEmpty()) {
           message = stdout;
         }
-        throw new PyExternalProcessException(retcode, name, Lists.newArrayList("install"), message);
+        throw new PyExternalProcessException(retcode, fileName, Lists.newArrayList(INSTALL), message);
       }
     }
     finally {
-      FileUtil.delete(new File(dirName));
+      FileUtil.delete(new File(dirName)); //TODO: remove temp directory for remote interpreter
     }
   }
 
@@ -300,13 +309,13 @@ public class PyPackageManager {
     return mySdk;
   }
 
-  public void install(@NotNull List<PyRequirement> requirements, @NotNull List<String> extraArgs, final boolean useUserSite)
+  public void install(@NotNull List<PyRequirement> requirements, @NotNull List<String> extraArgs)
     throws PyExternalProcessException {
     final List<String> args = new ArrayList<String>();
-    args.add("install");
+    args.add(INSTALL);
     final File buildDir;
     try {
-      buildDir = FileUtil.createTempDirectory("packaging", null);
+      buildDir = FileUtil.createTempDirectory("pycharm-packaging", null);
     }
     catch (IOException e) {
       throw new PyExternalProcessException(ERROR_ACCESS_DENIED, PACKAGING_TOOL, args, "Cannot create temporary build directory");
@@ -314,6 +323,9 @@ public class PyPackageManager {
     if (!extraArgs.contains(BUILD_DIR_OPTION)) {
       args.addAll(list(BUILD_DIR_OPTION, buildDir.getAbsolutePath()));
     }
+
+    boolean useUserSite = extraArgs.contains(USE_USER_SITE);
+
     final String proxyString = getProxyString();
     if (proxyString != null) {
       args.add("--proxy");
@@ -335,7 +347,7 @@ public class PyPackageManager {
   public void uninstall(@NotNull List<PyPackage> packages) throws PyExternalProcessException {
     try {
       final List<String> args = new ArrayList<String>();
-      args.add("uninstall");
+      args.add(UNINSTALL);
       boolean canModify = true;
       for (PyPackage pkg : packages) {
         if (canModify) {
@@ -349,7 +361,7 @@ public class PyPackageManager {
       clearCaches();
     }
   }
-  
+
   public static String getUserSite() {
     if (SystemInfo.isWindows) {
       final String appdata = System.getenv("APPDATA");
@@ -360,7 +372,7 @@ public class PyPackageManager {
       return userHome + File.separator + ".local";
     }
   }
-  
+
 
   public boolean cacheIsNotNull() {
     return myPackagesCache != null;
@@ -369,14 +381,24 @@ public class PyPackageManager {
   @NotNull
   public List<PyPackage> getPackages() throws PyExternalProcessException {
     if (myPackagesCache == null) {
-      final String output = runPythonHelper(PACKAGING_TOOL, list("list"));
-      myPackagesCache = parsePackagingToolOutput(output);
-      Collections.sort(myPackagesCache, new Comparator<PyPackage>() {
-        @Override
-        public int compare(PyPackage aPackage, PyPackage aPackage1) {
-          return aPackage.getName().compareTo(aPackage1.getName());
-        }
-      });
+      if (myExceptionCache != null) {
+        throw myExceptionCache;
+      }
+
+      try {
+        final String output = runPythonHelper(PACKAGING_TOOL, list("list"));
+        myPackagesCache = parsePackagingToolOutput(output);
+        Collections.sort(myPackagesCache, new Comparator<PyPackage>() {
+          @Override
+          public int compare(PyPackage aPackage, PyPackage aPackage1) {
+            return aPackage.getName().compareTo(aPackage1.getName());
+          }
+        });
+      }
+      catch (PyExternalProcessException e) {
+        myExceptionCache = e;
+        throw e;
+      }
     }
     return myPackagesCache;
   }
@@ -448,6 +470,7 @@ public class PyPackageManager {
 
   public void clearCaches() {
     myPackagesCache = null;
+    myExceptionCache = null;
   }
 
   private static <T> List<T> list(T... xs) {
@@ -537,7 +560,28 @@ public class PyPackageManager {
           if (askForSudo) {
             askForSudo = !manager.ensureCanWrite(null, remoteSdkData, remoteSdkData.getInterpreterPath());
           }
-          return manager.runRemoteProcess(null, remoteSdkData, ArrayUtil.toStringArray(cmdline), askForSudo);
+          ProcessOutput processOutput;
+          do {
+            processOutput = manager.runRemoteProcess(null, remoteSdkData, ArrayUtil.toStringArray(cmdline), askForSudo);
+            if (askForSudo && processOutput.getStderr().contains("sudo: 3 incorrect password attempts")) {
+              final Ref<Boolean> cont = Ref.create(false);
+              UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+                @Override
+                public void run() {
+                  if (Messages.showOkCancelDialog("Incorrect sudo password", "Incorrect Password Attempt", Messages.getErrorIcon()) ==
+                      Messages.OK) {
+                    cont.set(true);
+                  }
+                }
+              });
+              if (cont.get()) {
+                continue;
+              }
+            }
+            break;
+          }
+          while (true);
+          return processOutput;
         }
         catch (PyRemoteInterpreterException e) {
           throw new PyExternalProcessException(ERROR_INVALID_SDK, helperPath, args, "Error running SDK");

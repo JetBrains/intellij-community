@@ -1,12 +1,12 @@
 """ file's docstring """
-def foo(a, <warning descr="Missing parameter b in docstring"><caret>b</warning>, <warning descr="Missing parameter f in docstring">f</warning>):
+def foo(a, <weak_warning descr="Missing parameter b in docstring"><caret>b</weak_warning>, <weak_warning descr="Missing parameter f in docstring">f</weak_warning>):
   """
   some description
   another line of description
 
   @param a: some description
             of param
-  @param <warning descr="Unexpected parameter c in docstring">c</warning>: another description
+  @param <weak_warning descr="Unexpected parameter c in docstring">c</weak_warning>: another description
             of param
   @return:
   """

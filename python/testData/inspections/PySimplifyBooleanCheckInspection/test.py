@@ -1,7 +1,7 @@
-if <warning descr="Expression can be simplified">a == True</warning>:
-  if <warning descr="Expression can be simplified">b == False</warning>:
-    if <warning descr="Expression can be simplified">c != True</warning>:
-      if <warning descr="Expression can be simplified">d != False</warning>:
+if <weak_warning descr="Expression can be simplified">a == True</weak_warning>:
+  if <weak_warning descr="Expression can be simplified">b == False</weak_warning>:
+    if <weak_warning descr="Expression can be simplified">c != True</weak_warning>:
+      if <weak_warning descr="Expression can be simplified">d != False</weak_warning>:
         pass
 if a is False:
   pass

@@ -33,7 +33,7 @@ public class PyLocalPositionConverter implements PyPositionConverter {
   }
 
   protected static class PyRemoteSourcePosition extends PySourcePosition {
-    PyRemoteSourcePosition(final String file, final int line) {
+    public PyRemoteSourcePosition(final String file, final int line) {
       super(file, line);
     }
 

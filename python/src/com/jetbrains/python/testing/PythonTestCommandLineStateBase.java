@@ -49,7 +49,7 @@ public abstract class PythonTestCommandLineStateBase extends PythonCommandLineSt
                                                                                       consoleProperties,
                                                                                       getRunnerSettings(),
                                                                                       getConfigurationSettings());
-      final ConsoleView consoleView = new PythonDebugLanguageConsoleView(project, PythonSdkType.findSdkByPath(myConfiguration.getSdkHome()), testsOutputConsoleView);
+      final ConsoleView consoleView = new PythonDebugLanguageConsoleView(project, PythonSdkType.findSdkByPath(myConfiguration.getInterpreterPath()), testsOutputConsoleView);
       consoleView.addMessageFilter(new PythonTracebackFilter(project, myConfiguration.getWorkingDirectory()));
       consoleView.attachToProcess(processHandler);
       return consoleView;
