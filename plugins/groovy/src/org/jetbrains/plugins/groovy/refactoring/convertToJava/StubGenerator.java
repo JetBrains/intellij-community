@@ -376,6 +376,16 @@ public class StubGenerator implements ClassItemGenerator {
   private static String getVariableInitializer(GrVariable variable, PsiType declaredType) {
     if (declaredType instanceof PsiPrimitiveType) {
       Object eval = GroovyConstantExpressionEvaluator.evaluate(variable.getInitializerGroovy());
+      if (eval instanceof Float) {
+        return eval.toString() + "f";
+      }
+      else if (eval instanceof Character) {
+        StringBuilder buffer = new StringBuilder();
+        buffer.append('\'');
+        StringUtil.escapeStringCharacters(1, Character.toString(((Character)eval).charValue()), buffer);
+        buffer.append('\'');
+        return buffer.toString();
+      }
       if (eval instanceof Number || eval instanceof Boolean) {
         return eval.toString();
       }
