@@ -15,6 +15,8 @@
  */
 package com.intellij.ui;
 
+import org.jetbrains.annotations.Nullable;
+
 import java.awt.*;
 import java.awt.font.FontRenderContext;
 import java.awt.font.GlyphVector;
@@ -232,7 +234,7 @@ public class Graphics2DLog extends Graphics2D {
 
   @Override
   public void setBackground(Color color) {
-    log(String.format("setBackground(%s)", ColorUtil.toHex(color)));
+    log(String.format("setBackground(%s)", toHex(color)));
     myPeer.setBackground(color);
   }
 
@@ -274,7 +276,7 @@ public class Graphics2DLog extends Graphics2D {
 
   @Override
   public void setColor(Color c) {
-    log(String.format("setColor(%s)", ColorUtil.toHex(c)));
+    log(String.format("setColor(%s)", toHex(c)));
     myPeer.setColor(c);
   }
 
@@ -286,7 +288,7 @@ public class Graphics2DLog extends Graphics2D {
 
   @Override
   public void setXORMode(Color c1) {
-    log(String.format("setXORMode(%s)", ColorUtil.toHex(c1)));
+    log(String.format("setXORMode(%s)", toHex(c1)));
     myPeer.setXORMode(c1);
   }
 
@@ -506,5 +508,10 @@ public class Graphics2DLog extends Graphics2D {
   @Override
   public Rectangle getClipBounds(Rectangle r) {
     return myPeer.getClipBounds(r);
+  }
+
+  @Nullable
+  private static String toHex(Color c) {
+    return c == null ? null : ColorUtil.toHex(c);
   }
 }
