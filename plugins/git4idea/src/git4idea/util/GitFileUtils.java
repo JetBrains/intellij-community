@@ -17,6 +17,7 @@ package git4idea.util;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -149,14 +150,42 @@ public class GitFileUtils {
     return files;
   }
 
-  private static void addPaths(Project project, VirtualFile root, List<List<String>> chunkedPaths) throws VcsException {
+  private static void addPaths(@NotNull Project project, @NotNull VirtualFile root,
+                               @NotNull List<List<String>> chunkedPaths) throws VcsException {
     for (List<String> paths : chunkedPaths) {
+      paths = excludeIgnoredFiles(project, root, paths);
+
+      if (paths.isEmpty()) {
+        continue;
+      }
       GitSimpleHandler handler = new GitSimpleHandler(project, root, GitCommand.ADD);
+      handler.addParameters("--ignore-errors");
       handler.endOptions();
       handler.addParameters(paths);
       handler.setNoSSH(true);
       handler.run();
     }
+  }
+
+  @NotNull
+  private static List<String> excludeIgnoredFiles(@NotNull Project project, @NotNull VirtualFile root,
+                                                  @NotNull List<String> paths) throws VcsException {
+    GitSimpleHandler handler = new GitSimpleHandler(project, root, GitCommand.LS_FILES);
+    handler.setNoSSH(true);
+    handler.setSilent(true);
+    handler.addParameters("--ignored", "--others", "--exclude-standard");
+    handler.endOptions();
+    handler.addParameters(paths);
+    String output = handler.run();
+
+    List<String> nonIgnoredFiles = new ArrayList<String>(paths.size());
+    List<String> ignoredPaths = Arrays.asList(StringUtil.splitByLines(output));
+    for (String pathToCheck : paths) {
+      if (!ignoredPaths.contains(pathToCheck)) {
+        nonIgnoredFiles.add(pathToCheck);
+      }
+    }
+    return nonIgnoredFiles;
   }
 
   /**
