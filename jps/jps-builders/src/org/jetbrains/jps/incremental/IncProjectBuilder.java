@@ -1,6 +1,8 @@
 package org.jetbrains.jps.incremental;
 
+import com.intellij.openapi.Forceable;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.LowMemoryWatcher;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.io.MappingFailedException;
@@ -81,6 +83,18 @@ public class IncProjectBuilder {
   }
 
   public void build(CompileScope scope, final boolean isMake, final boolean isProjectRebuild, boolean forceCleanCaches) throws RebuildRequestedException{
+    final LowMemoryWatcher memWatcher = LowMemoryWatcher.register(new Forceable() {
+      @Override
+      public boolean isDirty() {
+        return true; // always perform flush when not enough memory
+      }
+
+      @Override
+      public void force() {
+        myProjectDescriptor.dataManager.flush(false);
+        myTimestamps.force();
+      }
+    });
     CompileContext context = null;
     try {
       context = createContext(scope, isMake, isProjectRebuild);
@@ -110,6 +124,7 @@ public class IncProjectBuilder {
       }
     }
     finally {
+      memWatcher.stop();
       flushContext(context);
       // wait for the async tasks
       for (Future task : myAsyncTasks) {

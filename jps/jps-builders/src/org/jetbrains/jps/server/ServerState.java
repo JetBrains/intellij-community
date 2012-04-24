@@ -1,8 +1,6 @@
 package org.jetbrains.jps.server;
 
-import com.intellij.openapi.Forceable;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.LowMemoryWatcher;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import groovy.util.Node;
@@ -175,19 +173,6 @@ class ServerState {
     }
 
     final ProjectDescriptor finalPd = pd;
-    final LowMemoryWatcher memWatcher = LowMemoryWatcher.register(new Forceable() {
-      @Override
-      public boolean isDirty() {
-        return true; // always perform flush when not enough memory
-      }
-
-      @Override
-      public void force() {
-        finalPd.dataManager.flush(false);
-        finalPd.timestamps.getStorage().force();
-      }
-    });
-
     try {
       for (int attempt = 0; attempt < 2; attempt++) {
         if (forceCleanCaches && modules.isEmpty() && paths.isEmpty()) {
@@ -241,7 +226,6 @@ class ServerState {
       }
     }
     finally {
-      memWatcher.stop();
       pd.release();
       clearZipIndexCache();
     }
