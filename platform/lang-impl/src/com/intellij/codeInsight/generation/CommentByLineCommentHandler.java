@@ -153,7 +153,7 @@ public class CommentByLineCommentHandler implements CodeInsightActionHandler {
         // Don't tweak caret position if we're already located on the last document line.
         LogicalPosition position = myEditor.getCaretModel().getLogicalPosition();
         if (position.line < myDocument.getLineCount() - 1) {
-          int verticalShift = 1 + myEditor.getSoftWrapModel().getSoftWrapsForLine(position.line).size() 
+          int verticalShift = 1 + myEditor.getSoftWrapModel().getSoftWrapsForLine(position.line).size()
                               - position.softWrapLinesOnCurrentLogicalLine;
           myEditor.getCaretModel().moveCaretRelatively(0, verticalShift, false, false, true);
         }
@@ -504,9 +504,10 @@ public class CommentByLineCommentHandler implements CodeInsightActionHandler {
       int charsToDelete = skipNewLine ? prefix.trim().length() : prefix.length();
       int theEnd = endOffset > 0 ? endOffset : chars.length();
       // if there's exactly one space after line comment prefix and before the text that follows in the same line, delete the space too
-      if (startOffset + charsToDelete < theEnd - 2 && chars.charAt(startOffset + charsToDelete) == ' ' &&
-          chars.charAt(startOffset + charsToDelete + 1) != ' ') {
-        charsToDelete++;
+      if (startOffset + charsToDelete < theEnd - 1 && chars.charAt(startOffset + charsToDelete) == ' ') {
+        if (startOffset + charsToDelete == theEnd - 2 || chars.charAt(startOffset + charsToDelete + 1) != ' ') {
+          charsToDelete++;
+        }
       }
       myDocument.deleteString(startOffset, startOffset + charsToDelete);
       return;
@@ -521,7 +522,7 @@ public class CommentByLineCommentHandler implements CodeInsightActionHandler {
 
     IntArrayList prefixes = new IntArrayList();
     IntArrayList suffixes = new IntArrayList();
-    for (int position = 0; position < text.length();) {
+    for (int position = 0; position < text.length(); ) {
       int prefixPos = text.indexOf(prefix, position);
       if (prefixPos == -1) {
         break;
@@ -595,7 +596,7 @@ public class CommentByLineCommentHandler implements CodeInsightActionHandler {
       final IntArrayList suffixes = new IntArrayList();
       final String commentedSuffix = commenter.getCommentedBlockCommentSuffix();
       final String commentedPrefix = commenter.getCommentedBlockCommentPrefix();
-      for (int position = 0; position < text.length();) {
+      for (int position = 0; position < text.length(); ) {
         int nearestPrefix = text.indexOf(prefix, position);
         if (nearestPrefix == -1) {
           nearestPrefix = text.length();
