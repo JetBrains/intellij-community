@@ -28,7 +28,6 @@ import org.jetbrains.jps.incremental.storage.ProjectTimestamps;
 import org.jetbrains.jps.incremental.storage.Timestamps;
 
 import java.io.File;
-import java.io.IOException;
 import java.lang.reflect.Method;
 import java.util.*;
 
@@ -173,20 +172,12 @@ class ServerState {
     }
 
     final ProjectDescriptor finalPd = pd;
+    assert pd.timestamps != null;
     try {
       for (int attempt = 0; attempt < 2; attempt++) {
         if (forceCleanCaches && modules.isEmpty() && paths.isEmpty()) {
           // if compilation scope is the whole project and cache rebuild is forced, use PROJECT_REBUILD for faster compilation
           buildType = BuildType.PROJECT_REBUILD;
-        }
-
-        if (buildType == BuildType.PROJECT_REBUILD || forceCleanCaches) {
-          try {
-            pd.timestamps.clean();
-          }
-          catch (IOException e) {
-            throw new ProjectBuildException("Error cleaning timestamps storage", e);
-          }
         }
 
         final Timestamps timestamps = pd.timestamps.getStorage();

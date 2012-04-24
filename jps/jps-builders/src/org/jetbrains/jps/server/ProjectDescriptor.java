@@ -1,5 +1,6 @@
 package org.jetbrains.jps.server;
 
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.JavaSdk;
 import org.jetbrains.jps.Module;
 import org.jetbrains.jps.Project;
@@ -21,6 +22,7 @@ import java.util.Set;
 public final class ProjectDescriptor {
   public final Project project;
   public final BuildFSState fsState;
+  @Nullable
   public final ProjectTimestamps timestamps;
   public final BuildDataManager dataManager;
   private final BuildLoggingManager myLoggingManager;
@@ -30,7 +32,7 @@ public final class ProjectDescriptor {
 
   public ProjectDescriptor(Project project,
                            BuildFSState fsState,
-                           ProjectTimestamps timestamps,
+                           @Nullable ProjectTimestamps timestamps,
                            BuildDataManager dataManager,
                            BuildLoggingManager loggingManager) {
     this.project = project;
@@ -71,7 +73,9 @@ public final class ProjectDescriptor {
     }
     if (shouldClose) {
       try {
-        timestamps.close();
+        if (timestamps != null) {
+          timestamps.close();
+        }
       }
       finally {
         try {

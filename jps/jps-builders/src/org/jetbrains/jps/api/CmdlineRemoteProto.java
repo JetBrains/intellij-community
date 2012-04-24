@@ -879,6 +879,399 @@ public final class CmdlineRemoteProto {
       // @@protoc_insertion_point(class_scope:org.jetbrains.jpsservice.Message.KeyValuePair)
     }
     
+    public interface PathStampPairOrBuilder
+        extends com.google.protobuf.MessageLiteOrBuilder {
+      
+      // required string path = 1;
+      boolean hasPath();
+      String getPath();
+      
+      // required uint64 stamp = 2;
+      boolean hasStamp();
+      long getStamp();
+    }
+    public static final class PathStampPair extends
+        com.google.protobuf.GeneratedMessageLite
+        implements PathStampPairOrBuilder {
+      // Use PathStampPair.newBuilder() to construct.
+      private PathStampPair(Builder builder) {
+        super(builder);
+      }
+      private PathStampPair(boolean noInit) {}
+      
+      private static final PathStampPair defaultInstance;
+      public static PathStampPair getDefaultInstance() {
+        return defaultInstance;
+      }
+      
+      public PathStampPair getDefaultInstanceForType() {
+        return defaultInstance;
+      }
+      
+      private int bitField0_;
+      // required string path = 1;
+      public static final int PATH_FIELD_NUMBER = 1;
+      private java.lang.Object path_;
+      public boolean hasPath() {
+        return ((bitField0_ & 0x00000001) == 0x00000001);
+      }
+      public String getPath() {
+        java.lang.Object ref = path_;
+        if (ref instanceof String) {
+          return (String) ref;
+        } else {
+          com.google.protobuf.ByteString bs = 
+              (com.google.protobuf.ByteString) ref;
+          String s = bs.toStringUtf8();
+          if (com.google.protobuf.Internal.isValidUtf8(bs)) {
+            path_ = s;
+          }
+          return s;
+        }
+      }
+      private com.google.protobuf.ByteString getPathBytes() {
+        java.lang.Object ref = path_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8((String) ref);
+          path_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      
+      // required uint64 stamp = 2;
+      public static final int STAMP_FIELD_NUMBER = 2;
+      private long stamp_;
+      public boolean hasStamp() {
+        return ((bitField0_ & 0x00000002) == 0x00000002);
+      }
+      public long getStamp() {
+        return stamp_;
+      }
+      
+      private void initFields() {
+        path_ = "";
+        stamp_ = 0L;
+      }
+      private byte memoizedIsInitialized = -1;
+      public final boolean isInitialized() {
+        byte isInitialized = memoizedIsInitialized;
+        if (isInitialized != -1) return isInitialized == 1;
+        
+        if (!hasPath()) {
+          memoizedIsInitialized = 0;
+          return false;
+        }
+        if (!hasStamp()) {
+          memoizedIsInitialized = 0;
+          return false;
+        }
+        memoizedIsInitialized = 1;
+        return true;
+      }
+      
+      public void writeTo(com.google.protobuf.CodedOutputStream output)
+                          throws java.io.IOException {
+        getSerializedSize();
+        if (((bitField0_ & 0x00000001) == 0x00000001)) {
+          output.writeBytes(1, getPathBytes());
+        }
+        if (((bitField0_ & 0x00000002) == 0x00000002)) {
+          output.writeUInt64(2, stamp_);
+        }
+      }
+      
+      private int memoizedSerializedSize = -1;
+      public int getSerializedSize() {
+        int size = memoizedSerializedSize;
+        if (size != -1) return size;
+      
+        size = 0;
+        if (((bitField0_ & 0x00000001) == 0x00000001)) {
+          size += com.google.protobuf.CodedOutputStream
+            .computeBytesSize(1, getPathBytes());
+        }
+        if (((bitField0_ & 0x00000002) == 0x00000002)) {
+          size += com.google.protobuf.CodedOutputStream
+            .computeUInt64Size(2, stamp_);
+        }
+        memoizedSerializedSize = size;
+        return size;
+      }
+      
+      private static final long serialVersionUID = 0L;
+      @java.lang.Override
+      protected java.lang.Object writeReplace()
+          throws java.io.ObjectStreamException {
+        return super.writeReplace();
+      }
+      
+      public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.PathStampPair parseFrom(
+          com.google.protobuf.ByteString data)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return newBuilder().mergeFrom(data).buildParsed();
+      }
+      public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.PathStampPair parseFrom(
+          com.google.protobuf.ByteString data,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return newBuilder().mergeFrom(data, extensionRegistry)
+                 .buildParsed();
+      }
+      public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.PathStampPair parseFrom(byte[] data)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return newBuilder().mergeFrom(data).buildParsed();
+      }
+      public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.PathStampPair parseFrom(
+          byte[] data,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return newBuilder().mergeFrom(data, extensionRegistry)
+                 .buildParsed();
+      }
+      public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.PathStampPair parseFrom(java.io.InputStream input)
+          throws java.io.IOException {
+        return newBuilder().mergeFrom(input).buildParsed();
+      }
+      public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.PathStampPair parseFrom(
+          java.io.InputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        return newBuilder().mergeFrom(input, extensionRegistry)
+                 .buildParsed();
+      }
+      public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.PathStampPair parseDelimitedFrom(java.io.InputStream input)
+          throws java.io.IOException {
+        Builder builder = newBuilder();
+        if (builder.mergeDelimitedFrom(input)) {
+          return builder.buildParsed();
+        } else {
+          return null;
+        }
+      }
+      public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.PathStampPair parseDelimitedFrom(
+          java.io.InputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        Builder builder = newBuilder();
+        if (builder.mergeDelimitedFrom(input, extensionRegistry)) {
+          return builder.buildParsed();
+        } else {
+          return null;
+        }
+      }
+      public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.PathStampPair parseFrom(
+          com.google.protobuf.CodedInputStream input)
+          throws java.io.IOException {
+        return newBuilder().mergeFrom(input).buildParsed();
+      }
+      public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.PathStampPair parseFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        return newBuilder().mergeFrom(input, extensionRegistry)
+                 .buildParsed();
+      }
+      
+      public static Builder newBuilder() { return Builder.create(); }
+      public Builder newBuilderForType() { return newBuilder(); }
+      public static Builder newBuilder(org.jetbrains.jps.api.CmdlineRemoteProto.Message.PathStampPair prototype) {
+        return newBuilder().mergeFrom(prototype);
+      }
+      public Builder toBuilder() { return newBuilder(this); }
+      
+      public static final class Builder extends
+          com.google.protobuf.GeneratedMessageLite.Builder<
+            org.jetbrains.jps.api.CmdlineRemoteProto.Message.PathStampPair, Builder>
+          implements org.jetbrains.jps.api.CmdlineRemoteProto.Message.PathStampPairOrBuilder {
+        // Construct using org.jetbrains.jps.api.CmdlineRemoteProto.Message.PathStampPair.newBuilder()
+        private Builder() {
+          maybeForceBuilderInitialization();
+        }
+        
+        private void maybeForceBuilderInitialization() {
+        }
+        private static Builder create() {
+          return new Builder();
+        }
+        
+        public Builder clear() {
+          super.clear();
+          path_ = "";
+          bitField0_ = (bitField0_ & ~0x00000001);
+          stamp_ = 0L;
+          bitField0_ = (bitField0_ & ~0x00000002);
+          return this;
+        }
+        
+        public Builder clone() {
+          return create().mergeFrom(buildPartial());
+        }
+        
+        public org.jetbrains.jps.api.CmdlineRemoteProto.Message.PathStampPair getDefaultInstanceForType() {
+          return org.jetbrains.jps.api.CmdlineRemoteProto.Message.PathStampPair.getDefaultInstance();
+        }
+        
+        public org.jetbrains.jps.api.CmdlineRemoteProto.Message.PathStampPair build() {
+          org.jetbrains.jps.api.CmdlineRemoteProto.Message.PathStampPair result = buildPartial();
+          if (!result.isInitialized()) {
+            throw newUninitializedMessageException(result);
+          }
+          return result;
+        }
+        
+        private org.jetbrains.jps.api.CmdlineRemoteProto.Message.PathStampPair buildParsed()
+            throws com.google.protobuf.InvalidProtocolBufferException {
+          org.jetbrains.jps.api.CmdlineRemoteProto.Message.PathStampPair result = buildPartial();
+          if (!result.isInitialized()) {
+            throw newUninitializedMessageException(
+              result).asInvalidProtocolBufferException();
+          }
+          return result;
+        }
+        
+        public org.jetbrains.jps.api.CmdlineRemoteProto.Message.PathStampPair buildPartial() {
+          org.jetbrains.jps.api.CmdlineRemoteProto.Message.PathStampPair result = new org.jetbrains.jps.api.CmdlineRemoteProto.Message.PathStampPair(this);
+          int from_bitField0_ = bitField0_;
+          int to_bitField0_ = 0;
+          if (((from_bitField0_ & 0x00000001) == 0x00000001)) {
+            to_bitField0_ |= 0x00000001;
+          }
+          result.path_ = path_;
+          if (((from_bitField0_ & 0x00000002) == 0x00000002)) {
+            to_bitField0_ |= 0x00000002;
+          }
+          result.stamp_ = stamp_;
+          result.bitField0_ = to_bitField0_;
+          return result;
+        }
+        
+        public Builder mergeFrom(org.jetbrains.jps.api.CmdlineRemoteProto.Message.PathStampPair other) {
+          if (other == org.jetbrains.jps.api.CmdlineRemoteProto.Message.PathStampPair.getDefaultInstance()) return this;
+          if (other.hasPath()) {
+            setPath(other.getPath());
+          }
+          if (other.hasStamp()) {
+            setStamp(other.getStamp());
+          }
+          return this;
+        }
+        
+        public final boolean isInitialized() {
+          if (!hasPath()) {
+            
+            return false;
+          }
+          if (!hasStamp()) {
+            
+            return false;
+          }
+          return true;
+        }
+        
+        public Builder mergeFrom(
+            com.google.protobuf.CodedInputStream input,
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+            throws java.io.IOException {
+          while (true) {
+            int tag = input.readTag();
+            switch (tag) {
+              case 0:
+                
+                return this;
+              default: {
+                if (!parseUnknownField(input, extensionRegistry, tag)) {
+                  
+                  return this;
+                }
+                break;
+              }
+              case 10: {
+                bitField0_ |= 0x00000001;
+                path_ = input.readBytes();
+                break;
+              }
+              case 16: {
+                bitField0_ |= 0x00000002;
+                stamp_ = input.readUInt64();
+                break;
+              }
+            }
+          }
+        }
+        
+        private int bitField0_;
+        
+        // required string path = 1;
+        private java.lang.Object path_ = "";
+        public boolean hasPath() {
+          return ((bitField0_ & 0x00000001) == 0x00000001);
+        }
+        public String getPath() {
+          java.lang.Object ref = path_;
+          if (!(ref instanceof String)) {
+            String s = ((com.google.protobuf.ByteString) ref).toStringUtf8();
+            path_ = s;
+            return s;
+          } else {
+            return (String) ref;
+          }
+        }
+        public Builder setPath(String value) {
+          if (value == null) {
+    throw new NullPointerException();
+  }
+  bitField0_ |= 0x00000001;
+          path_ = value;
+          
+          return this;
+        }
+        public Builder clearPath() {
+          bitField0_ = (bitField0_ & ~0x00000001);
+          path_ = getDefaultInstance().getPath();
+          
+          return this;
+        }
+        void setPath(com.google.protobuf.ByteString value) {
+          bitField0_ |= 0x00000001;
+          path_ = value;
+          
+        }
+        
+        // required uint64 stamp = 2;
+        private long stamp_ ;
+        public boolean hasStamp() {
+          return ((bitField0_ & 0x00000002) == 0x00000002);
+        }
+        public long getStamp() {
+          return stamp_;
+        }
+        public Builder setStamp(long value) {
+          bitField0_ |= 0x00000002;
+          stamp_ = value;
+          
+          return this;
+        }
+        public Builder clearStamp() {
+          bitField0_ = (bitField0_ & ~0x00000002);
+          stamp_ = 0L;
+          
+          return this;
+        }
+        
+        // @@protoc_insertion_point(builder_scope:org.jetbrains.jpsservice.Message.PathStampPair)
+      }
+      
+      static {
+        defaultInstance = new PathStampPair(true);
+        defaultInstance.initFields();
+      }
+      
+      // @@protoc_insertion_point(class_scope:org.jetbrains.jpsservice.Message.PathStampPair)
+    }
+    
     public interface FailureOrBuilder
         extends com.google.protobuf.MessageLiteOrBuilder {
       
@@ -4371,6 +4764,10 @@ public final class CmdlineRemoteProto {
       // optional .org.jetbrains.jpsservice.Message.BuilderMessage.CompileMessage compile_message = 3;
       boolean hasCompileMessage();
       org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.CompileMessage getCompileMessage();
+      
+      // optional .org.jetbrains.jpsservice.Message.BuilderMessage.TimestampsMessage timestamps_message = 4;
+      boolean hasTimestampsMessage();
+      org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.TimestampsMessage getTimestampsMessage();
     }
     public static final class BuilderMessage extends
         com.google.protobuf.GeneratedMessageLite
@@ -4395,11 +4792,15 @@ public final class CmdlineRemoteProto {
         PARAM_REQUEST(0, 1),
         BUILD_EVENT(1, 2),
         COMPILE_MESSAGE(2, 3),
+        TIMESTAMPS_EVENT(3, 4),
+        CLEAN_TIMESTAMPS(4, 5),
         ;
         
         public static final int PARAM_REQUEST_VALUE = 1;
         public static final int BUILD_EVENT_VALUE = 2;
         public static final int COMPILE_MESSAGE_VALUE = 3;
+        public static final int TIMESTAMPS_EVENT_VALUE = 4;
+        public static final int CLEAN_TIMESTAMPS_VALUE = 5;
         
         
         public final int getNumber() { return value; }
@@ -4409,6 +4810,8 @@ public final class CmdlineRemoteProto {
             case 1: return PARAM_REQUEST;
             case 2: return BUILD_EVENT;
             case 3: return COMPILE_MESSAGE;
+            case 4: return TIMESTAMPS_EVENT;
+            case 5: return CLEAN_TIMESTAMPS;
             default: return null;
           }
         }
@@ -6442,6 +6845,499 @@ public final class CmdlineRemoteProto {
         // @@protoc_insertion_point(class_scope:org.jetbrains.jpsservice.Message.BuilderMessage.CompileMessage)
       }
       
+      public interface TimestampsMessageOrBuilder
+          extends com.google.protobuf.MessageLiteOrBuilder {
+        
+        // repeated .org.jetbrains.jpsservice.Message.PathStampPair to_update = 1;
+        java.util.List<org.jetbrains.jps.api.CmdlineRemoteProto.Message.PathStampPair> 
+            getToUpdateList();
+        org.jetbrains.jps.api.CmdlineRemoteProto.Message.PathStampPair getToUpdate(int index);
+        int getToUpdateCount();
+        
+        // repeated string to_remove = 2;
+        java.util.List<String> getToRemoveList();
+        int getToRemoveCount();
+        String getToRemove(int index);
+      }
+      public static final class TimestampsMessage extends
+          com.google.protobuf.GeneratedMessageLite
+          implements TimestampsMessageOrBuilder {
+        // Use TimestampsMessage.newBuilder() to construct.
+        private TimestampsMessage(Builder builder) {
+          super(builder);
+        }
+        private TimestampsMessage(boolean noInit) {}
+        
+        private static final TimestampsMessage defaultInstance;
+        public static TimestampsMessage getDefaultInstance() {
+          return defaultInstance;
+        }
+        
+        public TimestampsMessage getDefaultInstanceForType() {
+          return defaultInstance;
+        }
+        
+        // repeated .org.jetbrains.jpsservice.Message.PathStampPair to_update = 1;
+        public static final int TO_UPDATE_FIELD_NUMBER = 1;
+        private java.util.List<org.jetbrains.jps.api.CmdlineRemoteProto.Message.PathStampPair> toUpdate_;
+        public java.util.List<org.jetbrains.jps.api.CmdlineRemoteProto.Message.PathStampPair> getToUpdateList() {
+          return toUpdate_;
+        }
+        public java.util.List<? extends org.jetbrains.jps.api.CmdlineRemoteProto.Message.PathStampPairOrBuilder> 
+            getToUpdateOrBuilderList() {
+          return toUpdate_;
+        }
+        public int getToUpdateCount() {
+          return toUpdate_.size();
+        }
+        public org.jetbrains.jps.api.CmdlineRemoteProto.Message.PathStampPair getToUpdate(int index) {
+          return toUpdate_.get(index);
+        }
+        public org.jetbrains.jps.api.CmdlineRemoteProto.Message.PathStampPairOrBuilder getToUpdateOrBuilder(
+            int index) {
+          return toUpdate_.get(index);
+        }
+        
+        // repeated string to_remove = 2;
+        public static final int TO_REMOVE_FIELD_NUMBER = 2;
+        private com.google.protobuf.LazyStringList toRemove_;
+        public java.util.List<String>
+            getToRemoveList() {
+          return toRemove_;
+        }
+        public int getToRemoveCount() {
+          return toRemove_.size();
+        }
+        public String getToRemove(int index) {
+          return toRemove_.get(index);
+        }
+        
+        private void initFields() {
+          toUpdate_ = java.util.Collections.emptyList();
+          toRemove_ = com.google.protobuf.LazyStringArrayList.EMPTY;
+        }
+        private byte memoizedIsInitialized = -1;
+        public final boolean isInitialized() {
+          byte isInitialized = memoizedIsInitialized;
+          if (isInitialized != -1) return isInitialized == 1;
+          
+          for (int i = 0; i < getToUpdateCount(); i++) {
+            if (!getToUpdate(i).isInitialized()) {
+              memoizedIsInitialized = 0;
+              return false;
+            }
+          }
+          memoizedIsInitialized = 1;
+          return true;
+        }
+        
+        public void writeTo(com.google.protobuf.CodedOutputStream output)
+                            throws java.io.IOException {
+          getSerializedSize();
+          for (int i = 0; i < toUpdate_.size(); i++) {
+            output.writeMessage(1, toUpdate_.get(i));
+          }
+          for (int i = 0; i < toRemove_.size(); i++) {
+            output.writeBytes(2, toRemove_.getByteString(i));
+          }
+        }
+        
+        private int memoizedSerializedSize = -1;
+        public int getSerializedSize() {
+          int size = memoizedSerializedSize;
+          if (size != -1) return size;
+        
+          size = 0;
+          for (int i = 0; i < toUpdate_.size(); i++) {
+            size += com.google.protobuf.CodedOutputStream
+              .computeMessageSize(1, toUpdate_.get(i));
+          }
+          {
+            int dataSize = 0;
+            for (int i = 0; i < toRemove_.size(); i++) {
+              dataSize += com.google.protobuf.CodedOutputStream
+                .computeBytesSizeNoTag(toRemove_.getByteString(i));
+            }
+            size += dataSize;
+            size += 1 * getToRemoveList().size();
+          }
+          memoizedSerializedSize = size;
+          return size;
+        }
+        
+        private static final long serialVersionUID = 0L;
+        @java.lang.Override
+        protected java.lang.Object writeReplace()
+            throws java.io.ObjectStreamException {
+          return super.writeReplace();
+        }
+        
+        public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.TimestampsMessage parseFrom(
+            com.google.protobuf.ByteString data)
+            throws com.google.protobuf.InvalidProtocolBufferException {
+          return newBuilder().mergeFrom(data).buildParsed();
+        }
+        public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.TimestampsMessage parseFrom(
+            com.google.protobuf.ByteString data,
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+            throws com.google.protobuf.InvalidProtocolBufferException {
+          return newBuilder().mergeFrom(data, extensionRegistry)
+                   .buildParsed();
+        }
+        public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.TimestampsMessage parseFrom(byte[] data)
+            throws com.google.protobuf.InvalidProtocolBufferException {
+          return newBuilder().mergeFrom(data).buildParsed();
+        }
+        public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.TimestampsMessage parseFrom(
+            byte[] data,
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+            throws com.google.protobuf.InvalidProtocolBufferException {
+          return newBuilder().mergeFrom(data, extensionRegistry)
+                   .buildParsed();
+        }
+        public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.TimestampsMessage parseFrom(java.io.InputStream input)
+            throws java.io.IOException {
+          return newBuilder().mergeFrom(input).buildParsed();
+        }
+        public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.TimestampsMessage parseFrom(
+            java.io.InputStream input,
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+            throws java.io.IOException {
+          return newBuilder().mergeFrom(input, extensionRegistry)
+                   .buildParsed();
+        }
+        public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.TimestampsMessage parseDelimitedFrom(java.io.InputStream input)
+            throws java.io.IOException {
+          Builder builder = newBuilder();
+          if (builder.mergeDelimitedFrom(input)) {
+            return builder.buildParsed();
+          } else {
+            return null;
+          }
+        }
+        public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.TimestampsMessage parseDelimitedFrom(
+            java.io.InputStream input,
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+            throws java.io.IOException {
+          Builder builder = newBuilder();
+          if (builder.mergeDelimitedFrom(input, extensionRegistry)) {
+            return builder.buildParsed();
+          } else {
+            return null;
+          }
+        }
+        public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.TimestampsMessage parseFrom(
+            com.google.protobuf.CodedInputStream input)
+            throws java.io.IOException {
+          return newBuilder().mergeFrom(input).buildParsed();
+        }
+        public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.TimestampsMessage parseFrom(
+            com.google.protobuf.CodedInputStream input,
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+            throws java.io.IOException {
+          return newBuilder().mergeFrom(input, extensionRegistry)
+                   .buildParsed();
+        }
+        
+        public static Builder newBuilder() { return Builder.create(); }
+        public Builder newBuilderForType() { return newBuilder(); }
+        public static Builder newBuilder(org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.TimestampsMessage prototype) {
+          return newBuilder().mergeFrom(prototype);
+        }
+        public Builder toBuilder() { return newBuilder(this); }
+        
+        public static final class Builder extends
+            com.google.protobuf.GeneratedMessageLite.Builder<
+              org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.TimestampsMessage, Builder>
+            implements org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.TimestampsMessageOrBuilder {
+          // Construct using org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.TimestampsMessage.newBuilder()
+          private Builder() {
+            maybeForceBuilderInitialization();
+          }
+          
+          private void maybeForceBuilderInitialization() {
+          }
+          private static Builder create() {
+            return new Builder();
+          }
+          
+          public Builder clear() {
+            super.clear();
+            toUpdate_ = java.util.Collections.emptyList();
+            bitField0_ = (bitField0_ & ~0x00000001);
+            toRemove_ = com.google.protobuf.LazyStringArrayList.EMPTY;
+            bitField0_ = (bitField0_ & ~0x00000002);
+            return this;
+          }
+          
+          public Builder clone() {
+            return create().mergeFrom(buildPartial());
+          }
+          
+          public org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.TimestampsMessage getDefaultInstanceForType() {
+            return org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.TimestampsMessage.getDefaultInstance();
+          }
+          
+          public org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.TimestampsMessage build() {
+            org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.TimestampsMessage result = buildPartial();
+            if (!result.isInitialized()) {
+              throw newUninitializedMessageException(result);
+            }
+            return result;
+          }
+          
+          private org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.TimestampsMessage buildParsed()
+              throws com.google.protobuf.InvalidProtocolBufferException {
+            org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.TimestampsMessage result = buildPartial();
+            if (!result.isInitialized()) {
+              throw newUninitializedMessageException(
+                result).asInvalidProtocolBufferException();
+            }
+            return result;
+          }
+          
+          public org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.TimestampsMessage buildPartial() {
+            org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.TimestampsMessage result = new org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.TimestampsMessage(this);
+            int from_bitField0_ = bitField0_;
+            if (((bitField0_ & 0x00000001) == 0x00000001)) {
+              toUpdate_ = java.util.Collections.unmodifiableList(toUpdate_);
+              bitField0_ = (bitField0_ & ~0x00000001);
+            }
+            result.toUpdate_ = toUpdate_;
+            if (((bitField0_ & 0x00000002) == 0x00000002)) {
+              toRemove_ = new com.google.protobuf.UnmodifiableLazyStringList(
+                  toRemove_);
+              bitField0_ = (bitField0_ & ~0x00000002);
+            }
+            result.toRemove_ = toRemove_;
+            return result;
+          }
+          
+          public Builder mergeFrom(org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.TimestampsMessage other) {
+            if (other == org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.TimestampsMessage.getDefaultInstance()) return this;
+            if (!other.toUpdate_.isEmpty()) {
+              if (toUpdate_.isEmpty()) {
+                toUpdate_ = other.toUpdate_;
+                bitField0_ = (bitField0_ & ~0x00000001);
+              } else {
+                ensureToUpdateIsMutable();
+                toUpdate_.addAll(other.toUpdate_);
+              }
+              
+            }
+            if (!other.toRemove_.isEmpty()) {
+              if (toRemove_.isEmpty()) {
+                toRemove_ = other.toRemove_;
+                bitField0_ = (bitField0_ & ~0x00000002);
+              } else {
+                ensureToRemoveIsMutable();
+                toRemove_.addAll(other.toRemove_);
+              }
+              
+            }
+            return this;
+          }
+          
+          public final boolean isInitialized() {
+            for (int i = 0; i < getToUpdateCount(); i++) {
+              if (!getToUpdate(i).isInitialized()) {
+                
+                return false;
+              }
+            }
+            return true;
+          }
+          
+          public Builder mergeFrom(
+              com.google.protobuf.CodedInputStream input,
+              com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+              throws java.io.IOException {
+            while (true) {
+              int tag = input.readTag();
+              switch (tag) {
+                case 0:
+                  
+                  return this;
+                default: {
+                  if (!parseUnknownField(input, extensionRegistry, tag)) {
+                    
+                    return this;
+                  }
+                  break;
+                }
+                case 10: {
+                  org.jetbrains.jps.api.CmdlineRemoteProto.Message.PathStampPair.Builder subBuilder = org.jetbrains.jps.api.CmdlineRemoteProto.Message.PathStampPair.newBuilder();
+                  input.readMessage(subBuilder, extensionRegistry);
+                  addToUpdate(subBuilder.buildPartial());
+                  break;
+                }
+                case 18: {
+                  ensureToRemoveIsMutable();
+                  toRemove_.add(input.readBytes());
+                  break;
+                }
+              }
+            }
+          }
+          
+          private int bitField0_;
+          
+          // repeated .org.jetbrains.jpsservice.Message.PathStampPair to_update = 1;
+          private java.util.List<org.jetbrains.jps.api.CmdlineRemoteProto.Message.PathStampPair> toUpdate_ =
+            java.util.Collections.emptyList();
+          private void ensureToUpdateIsMutable() {
+            if (!((bitField0_ & 0x00000001) == 0x00000001)) {
+              toUpdate_ = new java.util.ArrayList<org.jetbrains.jps.api.CmdlineRemoteProto.Message.PathStampPair>(toUpdate_);
+              bitField0_ |= 0x00000001;
+             }
+          }
+          
+          public java.util.List<org.jetbrains.jps.api.CmdlineRemoteProto.Message.PathStampPair> getToUpdateList() {
+            return java.util.Collections.unmodifiableList(toUpdate_);
+          }
+          public int getToUpdateCount() {
+            return toUpdate_.size();
+          }
+          public org.jetbrains.jps.api.CmdlineRemoteProto.Message.PathStampPair getToUpdate(int index) {
+            return toUpdate_.get(index);
+          }
+          public Builder setToUpdate(
+              int index, org.jetbrains.jps.api.CmdlineRemoteProto.Message.PathStampPair value) {
+            if (value == null) {
+              throw new NullPointerException();
+            }
+            ensureToUpdateIsMutable();
+            toUpdate_.set(index, value);
+            
+            return this;
+          }
+          public Builder setToUpdate(
+              int index, org.jetbrains.jps.api.CmdlineRemoteProto.Message.PathStampPair.Builder builderForValue) {
+            ensureToUpdateIsMutable();
+            toUpdate_.set(index, builderForValue.build());
+            
+            return this;
+          }
+          public Builder addToUpdate(org.jetbrains.jps.api.CmdlineRemoteProto.Message.PathStampPair value) {
+            if (value == null) {
+              throw new NullPointerException();
+            }
+            ensureToUpdateIsMutable();
+            toUpdate_.add(value);
+            
+            return this;
+          }
+          public Builder addToUpdate(
+              int index, org.jetbrains.jps.api.CmdlineRemoteProto.Message.PathStampPair value) {
+            if (value == null) {
+              throw new NullPointerException();
+            }
+            ensureToUpdateIsMutable();
+            toUpdate_.add(index, value);
+            
+            return this;
+          }
+          public Builder addToUpdate(
+              org.jetbrains.jps.api.CmdlineRemoteProto.Message.PathStampPair.Builder builderForValue) {
+            ensureToUpdateIsMutable();
+            toUpdate_.add(builderForValue.build());
+            
+            return this;
+          }
+          public Builder addToUpdate(
+              int index, org.jetbrains.jps.api.CmdlineRemoteProto.Message.PathStampPair.Builder builderForValue) {
+            ensureToUpdateIsMutable();
+            toUpdate_.add(index, builderForValue.build());
+            
+            return this;
+          }
+          public Builder addAllToUpdate(
+              java.lang.Iterable<? extends org.jetbrains.jps.api.CmdlineRemoteProto.Message.PathStampPair> values) {
+            ensureToUpdateIsMutable();
+            super.addAll(values, toUpdate_);
+            
+            return this;
+          }
+          public Builder clearToUpdate() {
+            toUpdate_ = java.util.Collections.emptyList();
+            bitField0_ = (bitField0_ & ~0x00000001);
+            
+            return this;
+          }
+          public Builder removeToUpdate(int index) {
+            ensureToUpdateIsMutable();
+            toUpdate_.remove(index);
+            
+            return this;
+          }
+          
+          // repeated string to_remove = 2;
+          private com.google.protobuf.LazyStringList toRemove_ = com.google.protobuf.LazyStringArrayList.EMPTY;
+          private void ensureToRemoveIsMutable() {
+            if (!((bitField0_ & 0x00000002) == 0x00000002)) {
+              toRemove_ = new com.google.protobuf.LazyStringArrayList(toRemove_);
+              bitField0_ |= 0x00000002;
+             }
+          }
+          public java.util.List<String>
+              getToRemoveList() {
+            return java.util.Collections.unmodifiableList(toRemove_);
+          }
+          public int getToRemoveCount() {
+            return toRemove_.size();
+          }
+          public String getToRemove(int index) {
+            return toRemove_.get(index);
+          }
+          public Builder setToRemove(
+              int index, String value) {
+            if (value == null) {
+    throw new NullPointerException();
+  }
+  ensureToRemoveIsMutable();
+            toRemove_.set(index, value);
+            
+            return this;
+          }
+          public Builder addToRemove(String value) {
+            if (value == null) {
+    throw new NullPointerException();
+  }
+  ensureToRemoveIsMutable();
+            toRemove_.add(value);
+            
+            return this;
+          }
+          public Builder addAllToRemove(
+              java.lang.Iterable<String> values) {
+            ensureToRemoveIsMutable();
+            super.addAll(values, toRemove_);
+            
+            return this;
+          }
+          public Builder clearToRemove() {
+            toRemove_ = com.google.protobuf.LazyStringArrayList.EMPTY;
+            bitField0_ = (bitField0_ & ~0x00000002);
+            
+            return this;
+          }
+          void addToRemove(com.google.protobuf.ByteString value) {
+            ensureToRemoveIsMutable();
+            toRemove_.add(value);
+            
+          }
+          
+          // @@protoc_insertion_point(builder_scope:org.jetbrains.jpsservice.Message.BuilderMessage.TimestampsMessage)
+        }
+        
+        static {
+          defaultInstance = new TimestampsMessage(true);
+          defaultInstance.initFields();
+        }
+        
+        // @@protoc_insertion_point(class_scope:org.jetbrains.jpsservice.Message.BuilderMessage.TimestampsMessage)
+      }
+      
       private int bitField0_;
       // required .org.jetbrains.jpsservice.Message.BuilderMessage.Type type = 1;
       public static final int TYPE_FIELD_NUMBER = 1;
@@ -6473,10 +7369,21 @@ public final class CmdlineRemoteProto {
         return compileMessage_;
       }
       
+      // optional .org.jetbrains.jpsservice.Message.BuilderMessage.TimestampsMessage timestamps_message = 4;
+      public static final int TIMESTAMPS_MESSAGE_FIELD_NUMBER = 4;
+      private org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.TimestampsMessage timestampsMessage_;
+      public boolean hasTimestampsMessage() {
+        return ((bitField0_ & 0x00000008) == 0x00000008);
+      }
+      public org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.TimestampsMessage getTimestampsMessage() {
+        return timestampsMessage_;
+      }
+      
       private void initFields() {
         type_ = org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.Type.PARAM_REQUEST;
         buildEvent_ = org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.getDefaultInstance();
         compileMessage_ = org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.CompileMessage.getDefaultInstance();
+        timestampsMessage_ = org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.TimestampsMessage.getDefaultInstance();
       }
       private byte memoizedIsInitialized = -1;
       public final boolean isInitialized() {
@@ -6499,6 +7406,12 @@ public final class CmdlineRemoteProto {
             return false;
           }
         }
+        if (hasTimestampsMessage()) {
+          if (!getTimestampsMessage().isInitialized()) {
+            memoizedIsInitialized = 0;
+            return false;
+          }
+        }
         memoizedIsInitialized = 1;
         return true;
       }
@@ -6514,6 +7427,9 @@ public final class CmdlineRemoteProto {
         }
         if (((bitField0_ & 0x00000004) == 0x00000004)) {
           output.writeMessage(3, compileMessage_);
+        }
+        if (((bitField0_ & 0x00000008) == 0x00000008)) {
+          output.writeMessage(4, timestampsMessage_);
         }
       }
       
@@ -6534,6 +7450,10 @@ public final class CmdlineRemoteProto {
         if (((bitField0_ & 0x00000004) == 0x00000004)) {
           size += com.google.protobuf.CodedOutputStream
             .computeMessageSize(3, compileMessage_);
+        }
+        if (((bitField0_ & 0x00000008) == 0x00000008)) {
+          size += com.google.protobuf.CodedOutputStream
+            .computeMessageSize(4, timestampsMessage_);
         }
         memoizedSerializedSize = size;
         return size;
@@ -6643,6 +7563,8 @@ public final class CmdlineRemoteProto {
           bitField0_ = (bitField0_ & ~0x00000002);
           compileMessage_ = org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.CompileMessage.getDefaultInstance();
           bitField0_ = (bitField0_ & ~0x00000004);
+          timestampsMessage_ = org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.TimestampsMessage.getDefaultInstance();
+          bitField0_ = (bitField0_ & ~0x00000008);
           return this;
         }
         
@@ -6688,6 +7610,10 @@ public final class CmdlineRemoteProto {
             to_bitField0_ |= 0x00000004;
           }
           result.compileMessage_ = compileMessage_;
+          if (((from_bitField0_ & 0x00000008) == 0x00000008)) {
+            to_bitField0_ |= 0x00000008;
+          }
+          result.timestampsMessage_ = timestampsMessage_;
           result.bitField0_ = to_bitField0_;
           return result;
         }
@@ -6702,6 +7628,9 @@ public final class CmdlineRemoteProto {
           }
           if (other.hasCompileMessage()) {
             mergeCompileMessage(other.getCompileMessage());
+          }
+          if (other.hasTimestampsMessage()) {
+            mergeTimestampsMessage(other.getTimestampsMessage());
           }
           return this;
         }
@@ -6719,6 +7648,12 @@ public final class CmdlineRemoteProto {
           }
           if (hasCompileMessage()) {
             if (!getCompileMessage().isInitialized()) {
+              
+              return false;
+            }
+          }
+          if (hasTimestampsMessage()) {
+            if (!getTimestampsMessage().isInitialized()) {
               
               return false;
             }
@@ -6768,6 +7703,15 @@ public final class CmdlineRemoteProto {
                 }
                 input.readMessage(subBuilder, extensionRegistry);
                 setCompileMessage(subBuilder.buildPartial());
+                break;
+              }
+              case 34: {
+                org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.TimestampsMessage.Builder subBuilder = org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.TimestampsMessage.newBuilder();
+                if (hasTimestampsMessage()) {
+                  subBuilder.mergeFrom(getTimestampsMessage());
+                }
+                input.readMessage(subBuilder, extensionRegistry);
+                setTimestampsMessage(subBuilder.buildPartial());
                 break;
               }
             }
@@ -6883,6 +7827,49 @@ public final class CmdlineRemoteProto {
           compileMessage_ = org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.CompileMessage.getDefaultInstance();
           
           bitField0_ = (bitField0_ & ~0x00000004);
+          return this;
+        }
+        
+        // optional .org.jetbrains.jpsservice.Message.BuilderMessage.TimestampsMessage timestamps_message = 4;
+        private org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.TimestampsMessage timestampsMessage_ = org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.TimestampsMessage.getDefaultInstance();
+        public boolean hasTimestampsMessage() {
+          return ((bitField0_ & 0x00000008) == 0x00000008);
+        }
+        public org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.TimestampsMessage getTimestampsMessage() {
+          return timestampsMessage_;
+        }
+        public Builder setTimestampsMessage(org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.TimestampsMessage value) {
+          if (value == null) {
+            throw new NullPointerException();
+          }
+          timestampsMessage_ = value;
+          
+          bitField0_ |= 0x00000008;
+          return this;
+        }
+        public Builder setTimestampsMessage(
+            org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.TimestampsMessage.Builder builderForValue) {
+          timestampsMessage_ = builderForValue.build();
+          
+          bitField0_ |= 0x00000008;
+          return this;
+        }
+        public Builder mergeTimestampsMessage(org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.TimestampsMessage value) {
+          if (((bitField0_ & 0x00000008) == 0x00000008) &&
+              timestampsMessage_ != org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.TimestampsMessage.getDefaultInstance()) {
+            timestampsMessage_ =
+              org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.TimestampsMessage.newBuilder(timestampsMessage_).mergeFrom(value).buildPartial();
+          } else {
+            timestampsMessage_ = value;
+          }
+          
+          bitField0_ |= 0x00000008;
+          return this;
+        }
+        public Builder clearTimestampsMessage() {
+          timestampsMessage_ = org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.TimestampsMessage.getDefaultInstance();
+          
+          bitField0_ = (bitField0_ & ~0x00000008);
           return this;
         }
         

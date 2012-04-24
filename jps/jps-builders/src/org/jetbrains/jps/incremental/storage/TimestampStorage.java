@@ -20,6 +20,16 @@ public class TimestampStorage extends AbstractStateStorage<File, TimestampValidi
   }
 
   @Override
+  public void force() {
+    super.force();
+  }
+
+  @Override
+  public void clean() throws IOException {
+    super.clean();
+  }
+
+  @Override
   public long getStamp(File file) throws IOException {
     final TimestampValidityState state = getState(file);
     return state != null? state.getTimestamp() : -1L;

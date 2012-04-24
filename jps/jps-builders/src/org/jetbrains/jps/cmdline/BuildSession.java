@@ -25,13 +25,13 @@ import org.jetbrains.jps.incremental.fs.BuildFSState;
 import org.jetbrains.jps.incremental.fs.RootDescriptor;
 import org.jetbrains.jps.incremental.messages.*;
 import org.jetbrains.jps.incremental.storage.BuildDataManager;
+import org.jetbrains.jps.incremental.storage.NetworkStamps;
 import org.jetbrains.jps.incremental.storage.ProjectTimestamps;
 import org.jetbrains.jps.incremental.storage.Timestamps;
 import org.jetbrains.jps.server.ProjectDescriptor;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.IOException;
 import java.io.PrintStream;
 import java.util.*;
 
@@ -154,7 +154,8 @@ final class BuildSession implements Runnable, CanceledStatus {
     BuildDataManager dataManager = null;
     final File dataStorageRoot = Utils.getDataStorageRoot(project);
     try {
-      projectTimestamps = new ProjectTimestamps(dataStorageRoot);
+      // todo: create optionally
+      //projectTimestamps = new ProjectTimestamps(dataStorageRoot);
       dataManager = new BuildDataManager(dataStorageRoot, true);
       if (dataManager.versionDiffers()) {
         forceCleanCaches = true;
@@ -172,7 +173,8 @@ final class BuildSession implements Runnable, CanceledStatus {
       }
       forceCleanCaches = true;
       FileUtil.delete(dataStorageRoot);
-      projectTimestamps = new ProjectTimestamps(dataStorageRoot);
+      // todo: create optionally
+      //projectTimestamps = new ProjectTimestamps(dataStorageRoot);
       dataManager = new BuildDataManager(dataStorageRoot, true);
       // second attempt succeded
       msgHandler.processMessage(new CompilerMessage("build", BuildMessage.Kind.INFO, "Project rebuild forced: " + e.getMessage()));
@@ -187,16 +189,8 @@ final class BuildSession implements Runnable, CanceledStatus {
           buildType = BuildType.PROJECT_REBUILD;
         }
 
-        if (buildType == BuildType.PROJECT_REBUILD || forceCleanCaches) {
-          try {
-            pd.timestamps.clean();
-          }
-          catch (IOException e) {
-            throw new ProjectBuildException("Error cleaning timestamps storage", e);
-          }
-        }
+        final Timestamps timestamps = projectTimestamps != null? projectTimestamps.getStorage() : new NetworkStamps(mySessionId, myChannel);
 
-        final Timestamps timestamps = pd.timestamps.getStorage();
         final CompileScope compileScope = createCompilationScope(buildType, pd, timestamps, modules, artifacts, paths);
         final IncProjectBuilder builder = new IncProjectBuilder(pd, BuilderRegistry.getInstance(), timestamps, builderParams, cs);
         builder.addMessageHandler(msgHandler);

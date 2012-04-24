@@ -236,6 +236,12 @@ public class IncProjectBuilder {
   private void cleanOutputRoots(CompileContext context) throws ProjectBuildException {
     // whole project is affected
     try {
+      context.getTimestamps().clean();
+    }
+    catch (IOException e) {
+      throw new ProjectBuildException("Error cleaning timestamps storage", e);
+    }
+    try {
       context.getDataManager().clean();
     }
     catch (IOException e) {

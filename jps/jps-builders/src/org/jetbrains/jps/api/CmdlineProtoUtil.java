@@ -1,10 +1,12 @@
 package org.jetbrains.jps.api;
 
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.PrintStream;
 import java.util.Collection;
 import java.util.Collections;
@@ -209,5 +211,24 @@ public class CmdlineProtoUtil {
   private static CmdlineRemoteProto.Message.UUID toProtoUUID(UUID sessionId) {
     final CmdlineRemoteProto.Message.UUID.Builder uuidBuilder = CmdlineRemoteProto.Message.UUID.newBuilder();
     return uuidBuilder.setMostSigBits(sessionId.getMostSignificantBits()).setLeastSigBits(sessionId.getLeastSignificantBits()).build();
+  }
+
+  public static CmdlineRemoteProto.Message.BuilderMessage createTimestampsMessage(Collection<Pair<File, Long>> toUpdate, Collection<File> toRemove) {
+    final CmdlineRemoteProto.Message.BuilderMessage.TimestampsMessage.Builder tsBuilder =
+      CmdlineRemoteProto.Message.BuilderMessage.TimestampsMessage.newBuilder();
+
+    for (Pair<File, Long> p : toUpdate) {
+      final File file = p.first;
+      final Long timestamp = p.second;
+      final CmdlineRemoteProto.Message.PathStampPair pair = CmdlineRemoteProto.Message.PathStampPair.newBuilder().setPath(
+        FileUtil.toSystemIndependentName(file.getPath())).setStamp(timestamp).build();
+      tsBuilder.addToUpdate(pair);
+    }
+
+    for (File file : toRemove) {
+      tsBuilder.addToRemove(FileUtil.toSystemIndependentName(file.getPath()));
+    }
+
+    return CmdlineRemoteProto.Message.BuilderMessage.newBuilder().setType(CmdlineRemoteProto.Message.BuilderMessage.Type.TIMESTAMPS_EVENT).setTimestampsMessage(tsBuilder.build()).build();
   }
 }
