@@ -51,9 +51,9 @@ public class CompileContext extends UserDataHolderBase implements MessageHandler
                         ProjectChunks testChunks,
                         MessageHandler delegateMessageHandler,
                         Map<String, String> builderParams,
-                        CanceledStatus cancelStatus) throws ProjectBuildException {
+                        final Timestamps timestamps, CanceledStatus cancelStatus) throws ProjectBuildException {
     myProjectDescriptor = pd;
-    myTimestamps = myProjectDescriptor.timestamps.getStorage();
+    myTimestamps = timestamps;
     myBuilderParams = Collections.unmodifiableMap(builderParams);
     myCancelStatus = cancelStatus;
     myCompilationStartStamp = System.currentTimeMillis();
@@ -272,7 +272,7 @@ public class CompileContext extends UserDataHolderBase implements MessageHandler
     return myProjectDescriptor.dataManager;
   }
 
-  public Timestamps getTimestampStorage() {
+  public Timestamps getTimestamps() {
     return myTimestamps;
   }
 

@@ -1,6 +1,8 @@
 package org.jetbrains.jps.server;
 
+import com.intellij.openapi.Forceable;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.LowMemoryWatcher;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import groovy.util.Node;
@@ -28,6 +30,7 @@ import org.jetbrains.jps.incremental.storage.ProjectTimestamps;
 import org.jetbrains.jps.incremental.storage.Timestamps;
 
 import java.io.File;
+import java.io.IOException;
 import java.lang.reflect.Method;
 import java.util.*;
 
@@ -171,14 +174,39 @@ class ServerState {
       pd.incUsageCounter();
     }
 
+    final ProjectDescriptor finalPd = pd;
+    final LowMemoryWatcher memWatcher = LowMemoryWatcher.register(new Forceable() {
+      @Override
+      public boolean isDirty() {
+        return true; // always perform flush when not enough memory
+      }
+
+      @Override
+      public void force() {
+        finalPd.dataManager.flush(false);
+        finalPd.timestamps.getStorage().force();
+      }
+    });
+
     try {
       for (int attempt = 0; attempt < 2; attempt++) {
         if (forceCleanCaches && modules.isEmpty() && paths.isEmpty()) {
           // if compilation scope is the whole project and cache rebuild is forced, use PROJECT_REBUILD for faster compilation
           buildType = BuildType.PROJECT_REBUILD;
         }
-        final CompileScope compileScope = createCompilationScope(buildType, pd, modules, artifacts, paths);
-        final IncProjectBuilder builder = new IncProjectBuilder(pd, BuilderRegistry.getInstance(), builderParams, cs);
+
+        if (buildType == BuildType.PROJECT_REBUILD || forceCleanCaches) {
+          try {
+            pd.timestamps.clean();
+          }
+          catch (IOException e) {
+            throw new ProjectBuildException("Error cleaning timestamps storage", e);
+          }
+        }
+
+        final Timestamps timestamps = pd.timestamps.getStorage();
+        final CompileScope compileScope = createCompilationScope(buildType, pd, timestamps, modules, artifacts, paths);
+        final IncProjectBuilder builder = new IncProjectBuilder(pd, BuilderRegistry.getInstance(), timestamps, builderParams, cs);
         builder.addMessageHandler(msgHandler);
         try {
           switch (buildType) {
@@ -213,13 +241,18 @@ class ServerState {
       }
     }
     finally {
+      memWatcher.stop();
       pd.release();
       clearZipIndexCache();
     }
   }
 
-  private static CompileScope createCompilationScope(BuildType buildType, ProjectDescriptor pd, Set<String> modules,
-                                                     Collection<String> artifactNames, Collection<String> paths) throws Exception {
+  private static CompileScope createCompilationScope(BuildType buildType,
+                                                     ProjectDescriptor pd,
+                                                     final Timestamps timestamps,
+                                                     Set<String> modules,
+                                                     Collection<String> artifactNames,
+                                                     Collection<String> paths) throws Exception {
     Set<Artifact> artifacts = new HashSet<Artifact>();
     if (artifactNames.isEmpty() && buildType == BuildType.PROJECT_REBUILD) {
       artifacts.addAll(pd.project.getArtifacts().values());
@@ -252,8 +285,6 @@ class ServerState {
         forcedModules = Collections.emptySet();
       }
 
-      final Timestamps marker = pd.timestamps.getStorage();
-
       final Map<String, Set<File>> filesToCompile;
       if (!paths.isEmpty()) {
         filesToCompile = new HashMap<String, Set<File>>();
@@ -268,7 +299,7 @@ class ServerState {
             }
             files.add(file);
             if (buildType == BuildType.FORCED_COMPILATION) {
-              pd.fsState.markDirty(file, rd, marker);
+              pd.fsState.markDirty(file, rd, timestamps);
             }
           }
         }

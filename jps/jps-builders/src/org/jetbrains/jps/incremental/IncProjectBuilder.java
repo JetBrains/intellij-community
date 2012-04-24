@@ -1,8 +1,6 @@
 package org.jetbrains.jps.incremental;
 
-import com.intellij.openapi.Forceable;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.LowMemoryWatcher;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.io.MappingFailedException;
@@ -22,6 +20,7 @@ import org.jetbrains.jps.incremental.messages.ProgressMessage;
 import org.jetbrains.jps.incremental.storage.BuildDataManager;
 import org.jetbrains.jps.incremental.storage.SourceToFormMapping;
 import org.jetbrains.jps.incremental.storage.SourceToOutputMapping;
+import org.jetbrains.jps.incremental.storage.Timestamps;
 import org.jetbrains.jps.server.ProjectDescriptor;
 
 import java.io.BufferedWriter;
@@ -63,8 +62,9 @@ public class IncProjectBuilder {
   private final float myTotalModulesWork;
   private final int myTotalModuleLevelBuilderCount;
   private final List<Future> myAsyncTasks = new ArrayList<Future>();
+  private final Timestamps myTimestamps;
 
-  public IncProjectBuilder(ProjectDescriptor pd, BuilderRegistry builderRegistry, Map<String, String> builderParams, CanceledStatus cs) {
+  public IncProjectBuilder(ProjectDescriptor pd, BuilderRegistry builderRegistry, final Timestamps timestamps, Map<String, String> builderParams, CanceledStatus cs) {
     myProjectDescriptor = pd;
     myBuilderRegistry = builderRegistry;
     myBuilderParams = builderParams;
@@ -73,6 +73,7 @@ public class IncProjectBuilder {
     myTestChunks = new ProjectChunks(pd.project, ClasspathKind.TEST_COMPILE);
     myTotalModulesWork = (float)pd.rootsIndex.getTotalModuleCount() * 2;  /* multiply by 2 to reflect production and test sources */
     myTotalModuleLevelBuilderCount = builderRegistry.getModuleLevelBuilderCount();
+    myTimestamps = timestamps;
   }
 
   public void addMessageHandler(MessageHandler handler) {
@@ -80,18 +81,6 @@ public class IncProjectBuilder {
   }
 
   public void build(CompileScope scope, final boolean isMake, final boolean isProjectRebuild, boolean forceCleanCaches) throws RebuildRequestedException{
-    final LowMemoryWatcher memWatcher = LowMemoryWatcher.register(new Forceable() {
-      @Override
-      public boolean isDirty() {
-        return true; // always perform flush when not enough memory
-      }
-
-      @Override
-      public void force() {
-        myProjectDescriptor.dataManager.flush(false);
-        myProjectDescriptor.timestamps.getStorage().force();
-      }
-    });
     CompileContext context = null;
     try {
       context = createContext(scope, isMake, isProjectRebuild);
@@ -121,7 +110,6 @@ public class IncProjectBuilder {
       }
     }
     finally {
-      memWatcher.stop();
       flushContext(context);
       // wait for the async tasks
       for (Future task : myAsyncTasks) {
@@ -137,7 +125,7 @@ public class IncProjectBuilder {
 
   private static void flushContext(CompileContext context) {
     if (context != null) {
-      context.getProjectDescriptor().timestamps.getStorage().force();
+      context.getTimestamps().force();
       context.getDataManager().flush(false);
     }
     final ExternalJavacDescriptor descriptor = ExternalJavacDescriptor.KEY.get(context);
@@ -208,18 +196,12 @@ public class IncProjectBuilder {
   private CompileContext createContext(CompileScope scope, boolean isMake, final boolean isProjectRebuild) throws ProjectBuildException {
     return new CompileContext(
       scope, myProjectDescriptor, isMake, isProjectRebuild, myProductionChunks, myTestChunks, myMessageDispatcher,
-      myBuilderParams, myCancelStatus
+      myBuilderParams, myTimestamps, myCancelStatus
     );
   }
 
   private void cleanOutputRoots(CompileContext context) throws ProjectBuildException {
     // whole project is affected
-    try {
-      myProjectDescriptor.timestamps.clean();
-    }
-    catch (IOException e) {
-      throw new ProjectBuildException("Error cleaning timestamps storage", e);
-    }
     try {
       context.getDataManager().clean();
     }
