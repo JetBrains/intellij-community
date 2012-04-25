@@ -17,13 +17,13 @@ package org.jetbrains.idea.maven.dom.converters;
 
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.openapi.paths.PathReferenceManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.PsiReference;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.xml.*;
@@ -33,7 +33,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.dom.MavenDomBundle;
 import org.jetbrains.idea.maven.dom.MavenDomUtil;
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
-import org.jetbrains.idea.maven.dom.references.MavenDirectoryPathReferenceConverter;
+import org.jetbrains.idea.maven.dom.references.MavenPathReferenceConverter;
 import org.jetbrains.idea.maven.model.MavenConstants;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.project.MavenProject;
@@ -119,6 +119,11 @@ public class MavenParentRelativePathConverter extends ResolvingConverter<PsiFile
 
   @NotNull
   public PsiReference[] createReferences(final GenericDomValue genericDomValue, final PsiElement element, final ConvertContext context) {
-    return new MavenDirectoryPathReferenceConverter().createReferences(genericDomValue, element, context);
+    return new MavenPathReferenceConverter(new Condition<PsiFileSystemItem>() {
+      @Override
+      public boolean value(PsiFileSystemItem item) {
+        return item.isDirectory() || item.getName().equals("pom.xml");
+      }
+    }).createReferences(genericDomValue, element, context);
   }
 }

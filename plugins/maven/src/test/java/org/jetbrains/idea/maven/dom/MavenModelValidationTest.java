@@ -18,6 +18,8 @@ package org.jetbrains.idea.maven.dom;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 
+import java.io.IOException;
+
 public class MavenModelValidationTest extends MavenDomWithIndicesTestCase {
   @Override
   protected void setUpInWriteAction() throws Exception {
@@ -25,6 +27,21 @@ public class MavenModelValidationTest extends MavenDomWithIndicesTestCase {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>");
+  }
+
+  public void testCompletionRelativePath() throws Exception {
+    createProjectSubDir("src");
+    createProjectSubFile("a.txt", "");
+
+    VirtualFile modulePom = createModulePom("module1",
+                                            "<groupId>test</groupId>" +
+                                            "<artifactId>module1</artifactId>" +
+                                            "<version>1</version>" +
+                                            "<parent>" +
+                                            "<relativePath>../<caret></relativePath>" +
+                                            "</parent>");
+
+    assertCompletionVariants(modulePom, "src", "module1", "pom.xml");
   }
 
   public void testUnderstandingProjectSchemaWithoutNamespace() throws Exception {
