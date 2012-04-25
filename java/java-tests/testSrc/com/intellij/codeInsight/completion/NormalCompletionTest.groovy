@@ -632,6 +632,12 @@ public class ListUtils {
   public void testQualifierAsPackage3() throws Throwable {
     doTest();
   }
+
+  public void testPreselectEditorSelection() {
+    configure()
+    assert lookup.currentItem != myFixture.lookupElements[0]
+    assert 'finalize' == lookup.currentItem.lookupString
+  }
   
   public void testPackageNamedVariableBeforeAssignment() throws Throwable {
     doTest();
