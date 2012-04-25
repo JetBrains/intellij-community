@@ -15,6 +15,8 @@
  */
 package com.intellij.codeInsight.navigation.actions;
 
+import com.intellij.codeInsight.TargetElementUtilBase;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.Nullable;
@@ -22,9 +24,15 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author yole
  */
-public class JavaTypeDeclarationProvider implements TypeDeclarationProvider {
+public class JavaTypeDeclarationProvider implements TypeDeclarationPlaceAwareProvider {
+  @Override
+  public PsiElement[] getSymbolTypeDeclarations(PsiElement symbol) {
+    return getSymbolTypeDeclarations(symbol, null, -1);
+  }
+
   @Nullable
-  public PsiElement[] getSymbolTypeDeclarations(final PsiElement targetElement) {
+  @Override
+  public PsiElement[] getSymbolTypeDeclarations(PsiElement targetElement, Editor editor, int offset) {
     PsiType type;
     if (targetElement instanceof PsiVariable){
       type = ((PsiVariable)targetElement).getType();
@@ -36,6 +44,13 @@ public class JavaTypeDeclarationProvider implements TypeDeclarationProvider {
       return null;
     }
     if (type == null) return null;
+    if (editor != null) {
+      final PsiReference reference = TargetElementUtilBase.findReference(editor, offset);
+      if (reference instanceof PsiJavaReference) {
+        final JavaResolveResult resolveResult = ((PsiJavaReference)reference).advancedResolve(true);
+        type = resolveResult.getSubstitutor().substitute(type);
+      }
+    }
     PsiClass psiClass = PsiUtil.resolveClassInType(type);
     return psiClass == null ? null : new PsiElement[] {psiClass};
   }
