@@ -550,4 +550,17 @@ public class PythonCompletionTest extends PyTestCase {
   public void testQualifiedAssignment() {  // PY-6121
     doTest();
   }
+
+  public void testRelativeImportExcludeToplevel() {  // PY-6304
+    setLanguageLevel(LanguageLevel.PYTHON27);
+    try {
+      myFixture.copyDirectoryToProject("completion/relativeImportExcludeToplevel", "");
+      myFixture.configureByFile("pack/subpack/modX.py");
+      myFixture.completeBasic();
+      assertFalse(myFixture.getLookupElementStrings().contains("sys"));
+    }
+    finally {
+      setLanguageLevel(null);
+    }
+  }
 }
