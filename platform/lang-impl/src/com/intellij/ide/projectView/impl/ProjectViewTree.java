@@ -49,7 +49,6 @@ public abstract class ProjectViewTree extends DnDAwareTree {
     cellRenderer.setIconOpaque(false);
     setCellRenderer(cellRenderer);
     cellRenderer.setTransparentIconBackground(true);
-    setOpaque(false);
   }
 
   public abstract DefaultMutableTreeNode getSelectedNode();
@@ -73,7 +72,14 @@ public abstract class ProjectViewTree extends DnDAwareTree {
 
   @Override
   public boolean isFileColorsEnabled() {
-    return FileColorManagerImpl._isEnabled() && FileColorManagerImpl._isEnabledForProjectView();
+    final boolean enabled = FileColorManagerImpl._isEnabled() && FileColorManagerImpl._isEnabledForProjectView();
+    final boolean opaque = isOpaque();
+    if (enabled && opaque) {
+      setOpaque(false);
+    } else if (!enabled && !opaque) {
+      setOpaque(true);
+    }
+    return enabled;
   }
 
   @Nullable

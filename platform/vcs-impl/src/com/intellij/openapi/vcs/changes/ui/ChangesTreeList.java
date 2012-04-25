@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -110,9 +110,16 @@ public abstract class ChangesTreeList<T> extends JPanel {
 
       @Override
       public boolean isFileColorsEnabled() {
-        return Registry.is("file.colors.in.commit.dialog")
-          && FileColorManager.getInstance(project).isEnabled()
-          && FileColorManager.getInstance(project).isEnabledForProjectView();
+        final boolean enabled = Registry.is("file.colors.in.commit.dialog")
+                          && FileColorManager.getInstance(project).isEnabled()
+                          && FileColorManager.getInstance(project).isEnabledForProjectView();
+        final boolean opaque = isOpaque();
+        if (enabled && opaque) {
+          setOpaque(false);
+        } else if (!enabled && !opaque) {
+          setOpaque(true);
+        }
+        return enabled;
       }
 
       @Override
