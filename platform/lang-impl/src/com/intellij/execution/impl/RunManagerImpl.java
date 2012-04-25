@@ -712,7 +712,8 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
     final List<T> tasks = new ArrayList<T>();
     if (includeOnlyActiveTasks) {
       final List<RunnerAndConfigurationSettings> checkedTemplates = new ArrayList<RunnerAndConfigurationSettings>();
-      for (RunnerAndConfigurationSettings settings : myConfigurations.values()) {
+      List<RunnerAndConfigurationSettings> settingsList = new ArrayList<RunnerAndConfigurationSettings>(myConfigurations.values());
+      for (RunnerAndConfigurationSettings settings : settingsList) {
         final List<BeforeRunTask> runTasks = getBeforeRunTasks(settings.getConfiguration());
         for (BeforeRunTask task : runTasks) {
           if (task != null && task.isEnabled() && task.getProviderId() == taskProviderID) {
@@ -822,7 +823,10 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
     if (tasks != null) {
       return getCopies(tasks, includeOnlyActiveTasks);
     }
+    return getTemplateBeforeRunTask(settings, includeOnlyActiveTasks);
+  }
 
+  private List<BeforeRunTask> getTemplateBeforeRunTask(RunConfiguration settings, boolean includeOnlyActiveTasks) {
     final RunnerAndConfigurationSettings template = getConfigurationTemplate(settings.getFactory());
     final List<BeforeRunTask> templateTasks = myConfigurationToBeforeTasksMap.get(template.getConfiguration());
     if (templateTasks != null) {
@@ -868,7 +872,7 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
   }
 
   public final void setBeforeRunTasks(final RunConfiguration runConfiguration, List<BeforeRunTask> tasks) {
-    List<BeforeRunTask> templates = getBeforeRunTasks(runConfiguration);//here may be some disabled templates
+    List<BeforeRunTask> templates = getTemplateBeforeRunTask(runConfiguration, false);
     Set<Key<BeforeRunTask>> idsToSet = new HashSet<Key<BeforeRunTask>>();
     List<BeforeRunTask> result = new ArrayList<BeforeRunTask>(tasks);
     for (BeforeRunTask task : tasks) {
