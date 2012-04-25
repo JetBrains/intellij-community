@@ -22,6 +22,11 @@ package com.intellij.codeInspection;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 
+/**
+ * This will be removed in future versions.
+ * Please use {@link InspectionEP} for inspection registration
+ */
+@Deprecated
 public interface InspectionToolsFactory {
   ExtensionPointName<InspectionToolsFactory> EXTENSION_POINT_NAME = ExtensionPointName.create("com.intellij.inspectionToolsFactory");
 
