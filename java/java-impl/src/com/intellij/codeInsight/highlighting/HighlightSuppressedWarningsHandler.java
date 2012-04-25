@@ -135,7 +135,7 @@ public class HighlightSuppressedWarningsHandler extends HighlightUsagesHandlerBa
       Runnable inspect = new Runnable() {
         @Override
         public void run() {
-          pass.doInspectInBatch(managerEx, Collections.<InspectionProfileEntry>singletonList(tool));
+          pass.doInspectInBatch(managerEx, Collections.<LocalInspectionToolWrapper>singletonList(tool));
         }
       };
       if (indicator == null) {
