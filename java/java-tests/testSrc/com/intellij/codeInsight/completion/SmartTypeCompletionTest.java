@@ -234,6 +234,7 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
   }
 
   public void testCastInThrow() throws Exception { doTest(); }
+  public void _testNonExistentGenericAfterNew() throws Exception { doTest(); }
 
   public void testParenAfterNewWithinInnerExpr() throws Exception {
     String path = "/afterNew";
