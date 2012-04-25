@@ -17,6 +17,8 @@ package org.jetbrains.ether.dependencyView;
 
 import gnu.trove.TIntIntProcedure;
 
+import java.io.PrintStream;
+
 /**
  * Created by IntelliJ IDEA.
  * User: db
@@ -24,7 +26,7 @@ import gnu.trove.TIntIntProcedure;
  * Time: 23:48
  * To change this template use File | Settings | File Templates.
  */
-abstract class IntIntMaplet implements StringBufferizable{
+abstract class IntIntMaplet implements Streamable {
   abstract boolean containsKey(final int key);
   abstract int get(final int key);
   abstract void put(final int key, final int value);
@@ -34,15 +36,14 @@ abstract class IntIntMaplet implements StringBufferizable{
   abstract void forEachEntry(TIntIntProcedure proc);
   abstract void flush(boolean memoryCachesOnly);
 
-  public void toBuffer (final DependencyContext context, final StringBuffer buf) {
+  public void toStream(final DependencyContext context, final PrintStream stream) {
     forEachEntry(new TIntIntProcedure() {
       @Override
       public boolean execute(final int a, final int b) {
-        buf.append("  ");
-        buf.append(context.getValue(a));
-        buf.append(" -> ");
-        buf.append(context.getValue(b));
-        buf.append("\n");
+        stream.print("  ");
+        stream.print(context.getValue(a));
+        stream.print(" -> ");
+        stream.println(context.getValue(b));
         return true;
       }
     });

@@ -17,6 +17,7 @@ package org.jetbrains.ether.dependencyView;
 
 import gnu.trove.TIntObjectProcedure;
 
+import java.io.PrintStream;
 import java.util.Collection;
 
 /**
@@ -26,7 +27,7 @@ import java.util.Collection;
  * Time: 21:01
  * To change this template use File | Settings | File Templates.
  */
-abstract class IntObjectMultiMaplet<V extends StringBufferizable> implements StringBufferizable {
+abstract class IntObjectMultiMaplet<V extends Streamable> implements Streamable {
   abstract boolean containsKey(final int key);
 
   abstract Collection<V> get(final int key);
@@ -53,19 +54,19 @@ abstract class IntObjectMultiMaplet<V extends StringBufferizable> implements Str
 
   abstract void flush(boolean memoryCachesOnly);
 
-  public void toBuffer(final DependencyContext context, final StringBuffer buf) {
+  public void toStream(final DependencyContext context, final PrintStream stream) {
     forEachEntry(new TIntObjectProcedure<Collection<V>>() {
       @Override
       public boolean execute(final int a, final Collection<V> b) {
-        buf.append("  Key: ");
-        buf.append(context.getValue(a));
-        buf.append("\n  Values:\n");
+        stream.print("  Key: ");
+        stream.println(context.getValue(a));
+        stream.println("  Values:");
 
         for (final V value : b) {
-          value.toBuffer(context, buf);
+          value.toStream(context, stream);
         }
 
-        buf.append("  End Of Values\n");
+        stream.println("  End Of Values");
         return true;
       }
     });

@@ -12,7 +12,7 @@ import java.util.Collection;
  * Time: 15:38
  * To change this template use File | Settings | File Templates.
  */
-class IntObjectTransientMultiMaplet<V extends StringBufferizable> extends IntObjectMultiMaplet<V> {
+class IntObjectTransientMultiMaplet<V extends Streamable> extends IntObjectMultiMaplet<V> {
 
   private final TIntObjectHashMap<Collection<V>> myMap = new TIntObjectHashMap<Collection<V>>();
   private final CollectionFactory<V> myCollectionFactory;

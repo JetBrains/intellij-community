@@ -34,7 +34,7 @@ import java.util.Collections;
  * Time: 15:38
  * To change this template use File | Settings | File Templates.
  */
-class IntObjectPersistentMultiMaplet<V extends StringBufferizable> extends IntObjectMultiMaplet<V> {
+class IntObjectPersistentMultiMaplet<V extends Streamable> extends IntObjectMultiMaplet<V> {
   private static final Collection NULL_COLLECTION = Collections.emptySet();
   private static final int CACHE_SIZE = 128;
   private final PersistentHashMap<Integer, Collection<V>> myMap;

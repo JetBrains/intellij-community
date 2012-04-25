@@ -19,6 +19,8 @@ import gnu.trove.TIntHashSet;
 import gnu.trove.TIntObjectProcedure;
 import gnu.trove.TIntProcedure;
 
+import java.io.PrintStream;
+
 /**
  * Created by IntelliJ IDEA.
  * User: db
@@ -26,7 +28,7 @@ import gnu.trove.TIntProcedure;
  * Time: 21:01
  * To change this template use File | Settings | File Templates.
  */
-abstract class IntIntMultiMaplet implements StringBufferizable{
+abstract class IntIntMultiMaplet implements Streamable {
   abstract boolean containsKey(final int key);
 
   abstract TIntHashSet get(final int key);
@@ -53,25 +55,24 @@ abstract class IntIntMultiMaplet implements StringBufferizable{
 
   abstract void flush(boolean memoryCachesOnly);
 
-  public void toBuffer(final DependencyContext context, final StringBuffer buf) {
+  public void toStream(final DependencyContext context, final PrintStream stream) {
     forEachEntry(new TIntObjectProcedure<TIntHashSet>() {
       @Override
       public boolean execute(final int a, final TIntHashSet b) {
-        buf.append("  Key: ");
-        buf.append(context.getValue(a));
-        buf.append("\n  Values:\n");
+        stream.print("  Key: ");
+        stream.println(context.getValue(a));
+        stream.println("  Values:");
 
         b.forEach(new TIntProcedure() {
           @Override
           public boolean execute(final int value) {
-            buf.append("    ");
-            buf.append(context.getValue(value));
-            buf.append("\n");
+            stream.print("    ");
+            stream.println(context.getValue(value));
 
             return true;
           }
         });
-        buf.append("  End Of Values\n");
+        stream.println("  End Of Values");
         return true;
       }
     });
