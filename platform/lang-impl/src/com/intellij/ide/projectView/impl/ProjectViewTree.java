@@ -21,10 +21,11 @@ import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.ide.util.treeView.NodeRenderer;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiDirectoryContainer;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.FileColorManager;
 import com.intellij.ui.tabs.FileColorManagerImpl;
 import org.jetbrains.annotations.Nullable;
@@ -37,8 +38,11 @@ import java.awt.*;
  * @author Konstantin Bulenkov
  */
 public abstract class ProjectViewTree extends DnDAwareTree {
-  protected ProjectViewTree(TreeModel model) {
+  private final Project myProject;
+
+  protected ProjectViewTree(Project project, TreeModel model) {
     super(model);
+    myProject = project;
 
     final NodeRenderer cellRenderer = new NodeRenderer();
     cellRenderer.setOpaque(false);
@@ -49,6 +53,9 @@ public abstract class ProjectViewTree extends DnDAwareTree {
   }
 
   public abstract DefaultMutableTreeNode getSelectedNode();
+  public Project getProject() {
+    return myProject;
+  }
 
   public final int getToggleClickCount() {
     final DefaultMutableTreeNode selectedNode = getSelectedNode();
@@ -77,17 +84,18 @@ public abstract class ProjectViewTree extends DnDAwareTree {
       final Object element = ((AbstractTreeNode)object).getValue();
       if (element instanceof PsiElement) {
         final PsiElement psi = (PsiElement)element;
-        final Project project = psi.getProject();
-        final PsiFile file = psi.getContainingFile();
+        if (!psi.isValid()) return null;
+
+        final VirtualFile file = PsiUtilCore.getVirtualFile(psi);
 
         if (file != null) {
-          color = FileColorManager.getInstance(project).getFileColor(file);
+          color = FileColorManager.getInstance(getProject()).getFileColor(file);
         } else if (psi instanceof PsiDirectory) {
-          color = FileColorManager.getInstance(project).getFileColor(((PsiDirectory)psi).getVirtualFile());
+          color = FileColorManager.getInstance(getProject()).getFileColor(((PsiDirectory)psi).getVirtualFile());
         } else if (psi instanceof PsiDirectoryContainer) {
           final PsiDirectory[] dirs = ((PsiDirectoryContainer)psi).getDirectories();
           for (PsiDirectory dir : dirs) {
-            Color c = FileColorManager.getInstance(project).getFileColor(dir.getVirtualFile());
+            Color c = FileColorManager.getInstance(getProject()).getFileColor(dir.getVirtualFile());
             if (c != null && color == null) {
               color = c;
             } else if (c != null && color != null) {
