@@ -211,7 +211,7 @@ public class GenerateConstructorHandler extends GenerateMembersHandlerBase {
 
   public static PsiMethod generateConstructorPrototype(PsiClass aClass, PsiMethod baseConstructor, boolean copyJavaDoc, PsiField[] fields) throws IncorrectOperationException {
     PsiManager manager = aClass.getManager();
-    PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
+    JVMElementFactory factory = JVMElementFactories.getFactory(aClass.getLanguage(), aClass.getProject());
     CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(manager.getProject());
 
     PsiMethod constructor = factory.createConstructor();
@@ -235,37 +235,28 @@ public class GenerateConstructorHandler extends GenerateMembersHandlerBase {
       }
     }
 
-    @NonNls StringBuilder body = new StringBuilder();
-    body.append("{\n");
-
+    boolean isNotEnum = false;
     if (baseConstructor != null){
       PsiClass superClass = aClass.getSuperClass();
       LOG.assertTrue(superClass != null);
       if (!CommonClassNames.JAVA_LANG_ENUM.equals(superClass.getQualifiedName())) {
+        isNotEnum = true;
         if (baseConstructor instanceof PsiCompiledElement){ // to get some parameter names
-          PsiClass dummyClass = factory.createClass("Dummy");
+          PsiClass dummyClass = JVMElementFactories.getFactory(baseConstructor.getLanguage(), baseConstructor.getProject()).createClass("Dummy");
           baseConstructor = (PsiMethod)dummyClass.add(baseConstructor);
         }
         PsiParameter[] parms = baseConstructor.getParameterList().getParameters();
         for (PsiParameter parm : parms) {
-          constructor.getParameterList().add(parm);
-        }
-        if (parms.length > 0){
-          body.append("super(");
-          for(int j = 0; j < parms.length; j++) {
-            PsiParameter parm = parms[j];
-            if (j > 0){
-              body.append(",");
-            }
-            body.append(parm.getName());
-          }
-          body.append(");\n");
+          PsiParameter newParam = factory.createParameter(parm.getName(), parm.getType());
+          copyModifierList(factory, parm, newParam);
+          constructor.getParameterList().add(newParam);
         }
       }
     }
 
     JavaCodeStyleManager javaStyle = JavaCodeStyleManager.getInstance(aClass.getProject());
 
+    List<PsiParameter> fieldParams = new ArrayList<PsiParameter>();
     for (PsiField field : fields) {
       String fieldName = field.getName();
       String name = javaStyle.variableNameToPropertyName(fieldName, VariableKind.FIELD);
@@ -280,20 +271,37 @@ public class GenerateConstructorHandler extends GenerateMembersHandlerBase {
       }
 
       constructor.getParameterList().add(parm);
-      if (fieldName.equals(parmName)) {
-        body.append("this.");
-      }
-      body.append(fieldName);
-      body.append("=");
-      body.append(parmName);
-      body.append(";\n");
+      fieldParams.add(parm);
     }
 
-    body.append("}");
-    PsiCodeBlock bodyBlock = factory.createCodeBlockFromText(body.toString(), null);
-    constructor.getBody().replace(bodyBlock);
+    ConstructorBodyGenerator generator = ConstructorBodyGenerator.INSTANCE.forLanguage(aClass.getLanguage());
+    if (generator != null) {
+      @NonNls StringBuilder buffer = new StringBuilder();
+      generator.start(buffer, constructor.getName(), PsiParameter.EMPTY_ARRAY);
+      if (isNotEnum) {
+        generator.generateSuperCallIfNeeded(buffer, baseConstructor.getParameterList().getParameters());
+      }
+      generator.generateFieldInitialization(buffer, fields, fieldParams.toArray(new PsiParameter[fieldParams.size()]));
+      generator.finish(buffer);
+      PsiMethod stub = factory.createMethodFromText(buffer.toString(), aClass);
+      constructor.getBody().replace(stub.getBody());
+    }
+
     constructor = (PsiMethod)codeStyleManager.reformat(constructor);
     return constructor;
+  }
+
+  static void copyModifierList(JVMElementFactory factory, PsiParameter parm, PsiParameter newParam) {
+    PsiModifierList modifierList = parm.getModifierList();
+    PsiModifierList newMList = newParam.getModifierList();
+    if (modifierList != null && newMList != null) {
+      for (PsiAnnotation annotation : modifierList.getAnnotations()) {
+        newMList.add(factory.createAnnotationFromText(annotation.getText(), newParam));
+      }
+      for (@PsiModifier.ModifierConstant String m : PsiModifier.MODIFIERS) {
+        newMList.setModifierProperty(m, parm.hasModifierProperty(m));
+      }
+    }
   }
 
   @PsiModifier.ModifierConstant

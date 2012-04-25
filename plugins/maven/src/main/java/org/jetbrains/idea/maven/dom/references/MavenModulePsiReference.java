@@ -130,6 +130,7 @@ public class MavenModulePsiReference extends MavenPsiReference implements LocalQ
                                                      modulePom,
                                                      new MavenId(groupId, artifactId, version),
                                                      myWithParent ? id : null,
+                                                     myPsiFile.getVirtualFile(),
                                                      true);
       }
       catch (IOException e) {

@@ -918,4 +918,36 @@ public class AndroidCompileUtil {
 
     return ArrayUtil.toStringArray(result);
   }
+
+  // support for lib<->lib and app<->lib circular dependencies
+  // see IDEA-79737 for details
+  public static boolean isLibraryWithBadCircularDependency(@NotNull AndroidFacet facet) {
+    if (!facet.getConfiguration().LIBRARY_PROJECT) {
+      return false;
+    }
+
+    final List<AndroidFacet> dependencies = AndroidUtils.getAllAndroidDependencies(facet.getModule(), false);
+
+    final Manifest manifest = facet.getManifest();
+    if (manifest == null) {
+      return false;
+    }
+
+    final String aPackage = manifest.getPackage().getValue();
+    if (aPackage == null || aPackage.length() == 0) {
+      return false;
+    }
+
+    for (AndroidFacet depFacet : dependencies) {
+      final List<AndroidFacet> depDependencies = AndroidUtils.getAllAndroidDependencies(depFacet.getModule(), true);
+
+      if (depDependencies.contains(facet) &&
+          dependencies.contains(depFacet) &&
+          (depFacet.getModule().getName().compareTo(facet.getModule().getName()) < 0 ||
+           !depFacet.getConfiguration().LIBRARY_PROJECT)) {
+        return true;
+      }
+    }
+    return false;
+  }
 }

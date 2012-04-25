@@ -7,6 +7,7 @@ import org.jetbrains.ether.RW;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
+import java.io.PrintStream;
 import java.lang.annotation.RetentionPolicy;
 import java.util.*;
 
@@ -322,18 +323,16 @@ public class ClassRepr extends Proto {
   }
 
   @Override
-  public void toBuffer(final DependencyContext context, final StringBuffer buf) {
-    super.toBuffer(context, buf);
+  public void toStream(final DependencyContext context, final PrintStream stream) {
+    super.toStream(context, stream);
 
-    buf.append("  Filename   : ");
-    buf.append(context.getValue(fileName));
-    buf.append("\n");
+    stream.print("  Filename   : ");
+    stream.println(context.getValue(fileName));
 
-    buf.append("  Superclass : ");
-    buf.append(superClass == null ? "<null>" : superClass.getDescr(context));
-    buf.append("\n");
+    stream.print("  Superclass : ");
+    stream.println(superClass == null ? "<null>" : superClass.getDescr(context));
 
-    buf.append("  Interfaces : ");
+    stream.print("  Interfaces : ");
     final TypeRepr.AbstractType[] is = interfaces.toArray(new TypeRepr.AbstractType[interfaces.size()]);
     Arrays.sort(is, new Comparator<TypeRepr.AbstractType>() {
       @Override
@@ -342,33 +341,30 @@ public class ClassRepr extends Proto {
       }
     });
     for (final TypeRepr.AbstractType t : is) {
-      buf.append(t.getDescr(context));
-      buf.append("; ");
+      stream.print(t.getDescr(context));
+      stream.print("; ");
     }
-    buf.append("\n");
+    stream.println();
 
-    buf.append("  Targets    : ");
+    stream.print("  Targets    : ");
     final ElemType[] es = targets.toArray(new ElemType[targets.size()]);
     Arrays.sort(es);
     for (final ElemType e : es) {
-      buf.append(e);
-      buf.append("; ");
+      stream.print(e);
+      stream.print("; ");
     }
-    buf.append("\n");
+    stream.println();
 
-    buf.append("  Policy     : ");
-    buf.append(policy);
-    buf.append("\n");
+    stream.print("  Policy     : ");
+    stream.println(policy);
 
-    buf.append("  Outer class: ");
-    buf.append(context.getValue(outerClassName));
-    buf.append("\n");
+    stream.print("  Outer class: ");
+    stream.println(context.getValue(outerClassName));
 
-    buf.append("  Local class: ");
-    buf.append(isLocal);
-    buf.append("\n");
+    stream.print("  Local class: ");
+    stream.println(isLocal);
 
-    buf.append("  Fields:\n");
+    stream.println("  Fields:");
     final FieldRepr[] fs = fields.toArray(new FieldRepr[fields.size()]);
     Arrays.sort(fs, new Comparator<FieldRepr>() {
       @Override
@@ -381,11 +377,11 @@ public class ClassRepr extends Proto {
       }
     });
     for (final FieldRepr f : fs) {
-      f.toBuffer(context, buf);
+      f.toStream(context, stream);
     }
-    buf.append("  End Of Fields\n");
+    stream.println("  End Of Fields");
 
-    buf.append("  Methods:\n");
+    stream.println("  Methods:");
     final MethodRepr[] ms = methods.toArray(new MethodRepr[methods.size()]);
     Arrays.sort(ms, new Comparator<MethodRepr>() {
       @Override
@@ -425,8 +421,8 @@ public class ClassRepr extends Proto {
       }
     });
     for (final MethodRepr m : ms) {
-      m.toBuffer(context, buf);
+      m.toStream(context, stream);
     }
-    buf.append("  End Of Methods\n");
+    stream.println("  End Of Methods");
   }
 }

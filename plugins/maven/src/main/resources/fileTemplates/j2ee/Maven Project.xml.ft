@@ -9,6 +9,9 @@
         <groupId>${PARENT_GROUP_ID}</groupId>
         <artifactId>${PARENT_ARTIFACT_ID}</artifactId>
         <version>${PARENT_VERSION}</version>
+#if (${HAS_RELATIVE_PATH})
+        <relativePath>${PARENT_RELATIVE_PATH}</relativePath>
+#end
     </parent>
 
 #end

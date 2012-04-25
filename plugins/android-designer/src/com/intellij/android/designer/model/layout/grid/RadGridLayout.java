@@ -159,20 +159,26 @@ public class RadGridLayout extends RadViewLayoutWithData implements ILayoutDecor
 
     if (horizontal) {
       int[] lines = gridInfo.vLines;
+      boolean[] emptyColumns = gridInfo.emptyColumns;
+
       for (int i = 0; i < lines.length - 1; i++) {
         components.add(new RadCaptionGridColumn(container,
                                                 i,
                                                 lines[i],
-                                                lines[i + 1] - lines[i]));
+                                                lines[i + 1] - lines[i],
+                                                emptyColumns[i]));
       }
     }
     else {
       int[] lines = gridInfo.hLines;
+      boolean[] emptyRows = gridInfo.emptyRows;
+
       for (int i = 0; i < lines.length - 1; i++) {
         components.add(new RadCaptionGridRow(container,
                                              i,
                                              lines[i],
-                                             lines[i + 1] - lines[i]));
+                                             lines[i + 1] - lines[i],
+                                             emptyRows[i]));
       }
     }
 

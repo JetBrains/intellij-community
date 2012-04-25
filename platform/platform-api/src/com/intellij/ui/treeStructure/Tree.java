@@ -283,6 +283,9 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
     }
 
     if (isFileColorsEnabled()) {
+      g.setColor(getBackground());
+      g.fillRect(0, 0, getWidth(), getHeight());
+
       paintFileColorGutter(g);
     }
 

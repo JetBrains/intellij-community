@@ -7,6 +7,7 @@ import org.jetbrains.ether.RW;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
+import java.io.PrintStream;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashSet;
@@ -202,14 +203,14 @@ class MethodRepr extends ProtoMember {
   }
 
   @Override
-  public void toBuffer(final DependencyContext context, final StringBuffer buf) {
-    super.toBuffer(context, buf);
-    buf.append(" Arguments : ");
+  public void toStream(final DependencyContext context, final PrintStream stream) {
+    super.toStream(context, stream);
+    stream.print("    Arguments : ");
     for (TypeRepr.AbstractType t : argumentTypes) {
-      buf.append(t.getDescr(context));
-      buf.append("; ");
+      stream.print(t.getDescr(context));
+      stream.print("; ");
     }
-    buf.append("\n");
+    stream.println();
 
     final TypeRepr.AbstractType[] es = exceptions.toArray(new TypeRepr.AbstractType[exceptions.size()]);
     Arrays.sort(es, new Comparator<TypeRepr.AbstractType>() {
@@ -218,11 +219,11 @@ class MethodRepr extends ProtoMember {
             return o1.getDescr(context).compareTo(o2.getDescr(context));
           }
         });
-    buf.append(" Exceptions: ");
+    stream.print("    Exceptions: ");
     for (final TypeRepr.AbstractType e : es) {
-      buf.append(e.getDescr(context));
-      buf.append("; ");
+      stream.print(e.getDescr(context));
+      stream.print("; ");
     }
-    buf.append("\n");
+    stream.println();
   }
 }

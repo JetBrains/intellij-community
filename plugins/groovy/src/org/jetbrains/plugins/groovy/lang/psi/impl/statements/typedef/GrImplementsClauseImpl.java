@@ -17,7 +17,9 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrImplementsClause;
@@ -31,6 +33,11 @@ public class GrImplementsClauseImpl extends GrReferenceListImpl implements GrImp
 
   public GrImplementsClauseImpl(@NotNull ASTNode node) {
     super(node);
+  }
+
+  @Override
+  protected IElementType getKeywordType() {
+    return GroovyTokenTypes.kIMPLEMENTS;
   }
 
   public GrImplementsClauseImpl(final GrReferenceListStub stub) {

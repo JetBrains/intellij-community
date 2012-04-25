@@ -36,8 +36,8 @@ public class ExceptionBreakpointPropertiesPanel extends BreakpointPropertiesPane
   private JCheckBox myNotifyUncaughtCheckBox;
   private ExceptionBreakpoint myExceptionBreakpoint;
 
-  public ExceptionBreakpointPropertiesPanel(Project project) {
-    super(project, ExceptionBreakpoint.CATEGORY);
+  public ExceptionBreakpointPropertiesPanel(Project project, boolean compact) {
+    super(project, ExceptionBreakpoint.CATEGORY, compact);
   }
 
   protected ClassFilter createClassConditionFilter() {

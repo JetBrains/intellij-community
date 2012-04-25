@@ -94,7 +94,7 @@ public class MavenModuleBuilderHelper {
         VirtualFile file;
         try {
           file = root.createChildData(this, MavenConstants.POM_XML);
-          MavenUtil.runOrApplyMavenProjectFileTemplate(project, file, myProjectId, null, isInteractive);
+          MavenUtil.runOrApplyMavenProjectFileTemplate(project, file, myProjectId, isInteractive);
           result.setResult(file);
         }
         catch (IOException e) {

@@ -53,7 +53,7 @@ public class AnyExceptionBreakpointFactory extends BreakpointFactory{
   }
 
   @Override
-  public BreakpointPropertiesPanel createBreakpointPropertiesPanel(Project project) {
+  public BreakpointPropertiesPanel createBreakpointPropertiesPanel(Project project, boolean compact) {
     return null;  //To change body of implemented methods use File | Settings | File Templates.
   }
 

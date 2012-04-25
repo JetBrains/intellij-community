@@ -21,7 +21,7 @@ import com.intellij.android.designer.model.grid.RadCaptionRow;
  * @author Alexander Lobas
  */
 public class RadCaptionGridRow extends RadCaptionRow<RadGridLayoutComponent> {
-  public RadCaptionGridRow(RadGridLayoutComponent container, int index, int offset, int width) {
-    super(container, index, offset, width, false);
+  public RadCaptionGridRow(RadGridLayoutComponent container, int index, int offset, int width, boolean empty) {
+    super(container, index, offset, width, empty);
   }
 }

@@ -6,6 +6,7 @@ import org.jetbrains.ether.RW;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
+import java.io.PrintStream;
 
 /**
  * Created by IntelliJ IDEA.
@@ -14,7 +15,7 @@ import java.io.IOException;
  * Time: 17:57
  * To change this template use File | Settings | File Templates.
  */
-class Proto implements RW.Savable, StringBufferizable {
+class Proto implements RW.Savable, Streamable {
   public final int access;
   public final int signature;
   public final int name;
@@ -102,17 +103,19 @@ class Proto implements RW.Savable, StringBufferizable {
     };
   }
 
-  public void toBuffer (final DependencyContext context, final StringBuffer buf) {
-    buf.append("  Access   : ");
-    buf.append(access);
-    buf.append("\n");
+  public void toStream(final DependencyContext context, final PrintStream stream) {
+    final String d = this instanceof ClassRepr ? "  " : "    ";
 
-    buf.append("  Signature: ");
-    buf.append(context.getValue(signature));
-    buf.append("\n");
+    stream.print(d);
+    stream.print("Access   : ");
+    stream.println(access);
 
-    buf.append("  Name     : ");
-    buf.append(context.getValue(name));
-    buf.append("\n");
+    stream.print(d);
+    stream.print("Signature: ");
+    stream.println(context.getValue(signature));
+
+    stream.print(d);
+    stream.print("Name     : ");
+    stream.println(context.getValue(name));
   }
 }

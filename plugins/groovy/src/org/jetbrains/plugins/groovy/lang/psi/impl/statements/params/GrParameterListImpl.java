@@ -21,10 +21,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiParameter;
 import com.intellij.psi.StubBasedPsiElement;
-import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.stubs.EmptyStub;
-import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
@@ -75,28 +73,6 @@ public class GrParameterListImpl extends GrStubElementBase<EmptyStub> implements
     return getParameters().length;
   }
 
-  public GrParameter addParameterToEnd(GrParameter parameter) {
-    GrParameter[] params = getParameters();
-    if (params.length == 0) {
-      return (GrParameter)add(parameter);
-    }
-    else {
-      GrParameter last = params[params.length - 1];
-      return (GrParameter)addAfter(parameter, last);
-    }
-  }
-
-  public void addParameterToHead(GrParameter parameter) {
-    GrParameter[] params = getParameters();
-    if (params.length == 0) {
-      add(parameter);
-    }
-    else {
-      GrParameter first = params[0];
-      addBefore(parameter, first);
-    }
-  }
-
   public int getParameterNumber(final GrParameter parameter) {
     GrParameter[] parameters = getParameters();
     for (int i = 0; i < parameters.length; i++) {
@@ -108,7 +84,7 @@ public class GrParameterListImpl extends GrStubElementBase<EmptyStub> implements
     return -1;
   }
 
-  @Override
+  /*@Override
   public PsiElement addAfter(@NotNull PsiElement element, PsiElement anchor) throws IncorrectOperationException {
     GrParameter[] params = getParameters();
 
@@ -150,6 +126,28 @@ public class GrParameterListImpl extends GrStubElementBase<EmptyStub> implements
     }
 
     return element;
-  }
+  }*/
 
+
+  @Override
+  public ASTNode addInternal(ASTNode first, ASTNode last, ASTNode anchor, Boolean before) {
+    GrParameter[] params = getParameters();
+
+    ASTNode result = super.addInternal(first, last, anchor, before);
+    if (first == last && first.getPsi() instanceof GrParameter && params.length > 0) {
+      if (before.booleanValue() && anchor != null) {
+        getNode().addLeaf(mCOMMA, ",", anchor);
+      }
+      else if (before.booleanValue() && anchor == null) {
+        getNode().addLeaf(mCOMMA, ",", result);
+      }
+      else if (!before.booleanValue() && anchor != null) {
+        getNode().addLeaf(mCOMMA, ",", result);
+      }
+      else if (!before.booleanValue() && anchor == null) {
+        getNode().addLeaf(mCOMMA, ",", result.getTreeNext());
+      }
+    }
+    return result;
+  }
 }

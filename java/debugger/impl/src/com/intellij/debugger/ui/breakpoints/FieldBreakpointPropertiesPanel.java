@@ -34,8 +34,8 @@ public class FieldBreakpointPropertiesPanel extends BreakpointPropertiesPanel {
   private JCheckBox myWatchAccessCheckBox;
   private JCheckBox myWatchModificationCheckBox;
 
-  public FieldBreakpointPropertiesPanel(final Project project) {
-    super(project, FieldBreakpoint.CATEGORY);
+  public FieldBreakpointPropertiesPanel(final Project project, boolean compact) {
+    super(project, FieldBreakpoint.CATEGORY, compact);
   }
 
   protected JComponent createSpecialBox() {

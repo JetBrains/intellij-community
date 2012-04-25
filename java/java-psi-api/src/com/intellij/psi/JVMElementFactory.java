@@ -127,4 +127,6 @@ public interface JVMElementFactory {
 
   @NotNull
   PsiElement createExpressionFromText(@NotNull @NonNls String text, @Nullable PsiElement context) throws IncorrectOperationException;
+
+  PsiElement createReferenceElementByType(PsiClassType type);
 }

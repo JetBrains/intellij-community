@@ -28,9 +28,5 @@ public interface GrParameterList extends GroovyPsiElement, PsiParameterList {
   @NotNull
   GrParameter[] getParameters();
 
-  GrParameter addParameterToEnd(GrParameter parameter);
-
-  void addParameterToHead(GrParameter parameter);
-
   int getParameterNumber(GrParameter parameter);
 }

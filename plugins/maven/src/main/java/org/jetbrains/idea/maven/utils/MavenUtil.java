@@ -288,7 +288,15 @@ public class MavenUtil {
   public static void runOrApplyMavenProjectFileTemplate(Project project,
                                                         VirtualFile file,
                                                         MavenId projectId,
+                                                        boolean interactive) throws IOException {
+    runOrApplyMavenProjectFileTemplate(project, file, projectId, null, null, interactive);
+  }
+
+  public static void runOrApplyMavenProjectFileTemplate(Project project,
+                                                        VirtualFile file,
+                                                        MavenId projectId,
                                                         MavenId parentId,
+                                                        VirtualFile parentFile,
                                                         boolean interactive) throws IOException {
     Properties properties = new Properties();
     Properties conditions = new Properties();
@@ -300,6 +308,21 @@ public class MavenUtil {
       properties.setProperty("PARENT_GROUP_ID", parentId.getGroupId());
       properties.setProperty("PARENT_ARTIFACT_ID", parentId.getArtifactId());
       properties.setProperty("PARENT_VERSION", parentId.getVersion());
+
+      if (parentFile != null) {
+        VirtualFile modulePath = file.getParent();
+        VirtualFile parentModulePath = parentFile.getParent();
+
+        if (modulePath.getParent() != parentModulePath) {
+          String relativePath = VfsUtil.getPath(file, parentModulePath, '/');
+          if (relativePath != null) {
+            if (relativePath.endsWith("/")) relativePath = relativePath.substring(0, relativePath.length() - 1);
+
+            conditions.setProperty("HAS_RELATIVE_PATH", "true");
+            properties.setProperty("PARENT_RELATIVE_PATH", relativePath);
+          }
+        }
+      }
     }
     runOrApplyFileTemplate(project, file, MavenFileTemplateGroupFactory.MAVEN_PROJECT_XML_TEMPLATE, properties, conditions, interactive);
   }

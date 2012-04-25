@@ -23,12 +23,12 @@ package com.intellij.codeInspection.ex;
 import com.intellij.codeInspection.CommonProblemDescriptor;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.ui.*;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.Function;
-import com.intellij.util.containers.HashSet;
 import com.intellij.util.ui.tree.TreeUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.Nullable;
@@ -165,7 +165,7 @@ public abstract class InspectionRVContentProvider {
             }
             LOG.assertTrue(childNode instanceof RefElementNode, childNode.getClass().getName());
             final RefElementNode elementNode = (RefElementNode)childNode;
-            final Set<RefElementNode> parentNodes = new HashSet<RefElementNode>();
+            final Set<RefElementNode> parentNodes = new LinkedHashSet<RefElementNode>();
             if (pNode.getPackageName() != null) {
               parentNodes.add(elementNode);
             } else {
@@ -231,18 +231,18 @@ public abstract class InspectionRVContentProvider {
               return refElementNode;
             }
             else {
-              refElementNode.add(prevNode);
+              insertByIndex(prevNode, refElementNode);
               return nodeToBeAdded;
             }
           }
         }
       }
       if (!firstLevel) {
-        currentNode.add(prevNode);
+        insertByIndex(prevNode, currentNode);
       }
       final UserObjectContainer owner = container.getOwner();
       if (owner == null) {
-        parentNode.add(currentNode);
+        insertByIndex(currentNode, parentNode);
         return nodeToBeAdded;
       }
       container = owner;
@@ -290,13 +290,26 @@ public abstract class InspectionRVContentProvider {
 
   protected static void add(@Nullable final DefaultTreeModel model, final InspectionTreeNode child, final InspectionTreeNode parent) {
     if (model == null) {
-      parent.add(child);
+      insertByIndex(child, parent);
     }
     else {
       if (parent.getIndex(child) < 0) {
         model.insertNodeInto(child, parent, child.getParent() == parent ? parent.getChildCount() - 1 : parent.getChildCount());
       }
     }
+  }
+
+  private static void insertByIndex(InspectionTreeNode child, InspectionTreeNode parent) {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      parent.add(child);
+      return;
+    }
+    final int i = TreeUtil.indexedBinarySearch(parent, child, InspectionResultsViewComparator.getInstance());
+    if (i >= 0){
+      parent.add(child);
+      return;
+    }
+    parent.insert(child, -i -1);
   }
 
   private static void processDepth(@Nullable DefaultTreeModel model, final InspectionTreeNode child, final InspectionTreeNode current) {

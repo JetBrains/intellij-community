@@ -15,20 +15,25 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.impl.synthetic;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.reference.SoftReference;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
+import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 
 /**
  * @author Medvedev Max
  */
 public class GrSyntheticCodeBlock extends LightElement implements PsiCodeBlock {
+  private static final Logger LOG = Logger.getInstance(GrSyntheticCodeBlock.class);
   private GrCodeBlock myCodeBlock;
   private static final Key<SoftReference<PsiJavaToken>> PSI_JAVA_TOKEN = Key.create("psi_java_token");
 
@@ -84,6 +89,17 @@ public class GrSyntheticCodeBlock extends LightElement implements PsiCodeBlock {
     final LightJavaToken newToken = new LightJavaToken(element, type);
     element.putUserData(PSI_JAVA_TOKEN, new SoftReference<PsiJavaToken>(newToken));
     return newToken;
+  }
+
+  @Override
+  public PsiElement replace(@NotNull PsiElement newElement) throws IncorrectOperationException {
+    if (newElement instanceof GrSyntheticCodeBlock) {
+      GrSyntheticCodeBlock other = (GrSyntheticCodeBlock)newElement;
+      PsiElement replaced = myCodeBlock.replace(other.myCodeBlock);
+      LOG.assertTrue(replaced instanceof GrOpenBlock);
+      return PsiImplUtil.getOrCreatePsiCodeBlock((GrOpenBlock)replaced);
+    }
+    return super.replace(newElement);
   }
 
   @Override

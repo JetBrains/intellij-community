@@ -7,6 +7,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.io.MappingFailedException;
 import com.intellij.util.io.PersistentEnumerator;
+import org.jetbrains.ether.dependencyView.Mappings;
 import org.jetbrains.jps.*;
 import org.jetbrains.jps.api.CanceledStatus;
 import org.jetbrains.jps.api.GlobalOptions;
@@ -25,11 +26,9 @@ import org.jetbrains.jps.incremental.storage.SourceToOutputMapping;
 import org.jetbrains.jps.incremental.storage.Timestamps;
 import org.jetbrains.jps.server.ProjectDescriptor;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
+import java.io.*;
 import java.lang.reflect.Field;
+import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -40,6 +39,7 @@ import java.util.concurrent.TimeUnit;
  */
 public class IncProjectBuilder {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.incremental.IncProjectBuilder");
+  private static final Logger LocalLOG = Logger.getInstance("#org.jetbrains.jps.incremental.Builder");
 
   public static final String COMPILE_SERVER_NAME = "COMPILE SERVER";
   private static final String CLASSPATH_INDEX_FINE_NAME = "classpath.index";
@@ -204,6 +204,24 @@ public class IncProjectBuilder {
 
     context.processMessage(new ProgressMessage("Running 'after' tasks"));
     runTasks(context, myBuilderRegistry.getAfterTasks());
+
+    if (/*LocalLOG.isDebugEnabled()*/ false) {
+      final Mappings mappings = myProjectDescriptor.dataManager.getMappings();
+      final String fileName = Utils.getSystemRoot() + File.separator + "snapshot-" + new SimpleDateFormat("dd-MM-yy(hh:mm:ss)").format(new Date()) + ".log";
+
+      try {
+        final PrintStream stream = new PrintStream(fileName);
+
+        stream.println("Mappings:");
+        mappings.toStream(stream);
+        stream.println("End Of Mappings");
+
+        stream.close();
+      }
+      catch (FileNotFoundException e) {
+        e.printStackTrace();
+      }
+    }
 
     context.processMessage(new ProgressMessage("Finished, saving caches..."));
   }

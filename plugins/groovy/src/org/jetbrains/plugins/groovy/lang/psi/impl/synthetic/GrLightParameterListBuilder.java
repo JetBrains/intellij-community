@@ -77,17 +77,6 @@ public class GrLightParameterListBuilder extends LightElement implements GrParam
   }
 
   @Override
-  public GrParameter addParameterToEnd(GrParameter parameter) {
-    return addParameter(parameter);
-  }
-
-  @Override
-  public void addParameterToHead(GrParameter parameter) {
-    myParameters.add(0, parameter);
-    myCachedParameters = null;
-  }
-
-  @Override
   public int getParameterNumber(GrParameter parameter) {
     return getParameterIndex(parameter);
   }

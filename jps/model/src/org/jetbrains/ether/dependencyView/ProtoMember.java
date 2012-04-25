@@ -5,6 +5,7 @@ import org.jetbrains.asm4.Type;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
+import java.io.PrintStream;
 
 /**
  * Created by IntelliJ IDEA.
@@ -180,14 +181,12 @@ abstract class ProtoMember extends Proto {
     };
   }
 
-  public void toBuffer (final DependencyContext context, final StringBuffer buf) {
-    super.toBuffer(context, buf);
-    buf.append("  Type     : ");
-    buf.append(type.getDescr(context));
-    buf.append("\n");
+  public void toStream(final DependencyContext context, final PrintStream stream) {
+    super.toStream(context, stream);
+    stream.print("    Type     : ");
+    stream.println(type.getDescr(context));
 
-    buf.append("  Value    : ");
-    buf.append(value == null ? "<null>" : value.toString());
-    buf.append("\n");
+    stream.print("    Value    : ");
+    stream.println(value == null ? "<null>" : value.toString());
   }
 }

@@ -1,5 +1,7 @@
 package org.jetbrains.ether.dependencyView;
 
+import java.io.PrintStream;
+
 /**
  * Created with IntelliJ IDEA.
  * User: db
@@ -8,6 +10,6 @@ package org.jetbrains.ether.dependencyView;
  * To change this template use File | Settings | File Templates.
  */
 
-interface StringBufferizable {
-  void toBuffer(DependencyContext context, StringBuffer buf);
+interface Streamable {
+  void toStream(DependencyContext context, PrintStream stream);
 }

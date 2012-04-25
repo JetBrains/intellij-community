@@ -16,6 +16,7 @@ import org.jetbrains.asm4.Opcodes;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.PrintStream;
 import java.lang.annotation.RetentionPolicy;
 import java.util.*;
 
@@ -2050,8 +2051,8 @@ public class Mappings {
     myDebugS.debug(comment, s);
   }
 
-  public void toBuffer(final StringBuffer buf) {
-    final StringBufferizable[] data = {
+  public void toStream (final PrintStream stream) {
+    final Streamable[] data = {
       myClassToSubclasses,
       myClassToClassDependency,
       mySourceFileToClasses,
@@ -2070,15 +2071,13 @@ public class Mappings {
     };
 
     for (int i = 0; i<data.length; i++) {
-      buf.append("Begin Of ");
-      buf.append(info[i]);
-      buf.append("\n");
+      stream.print("Begin Of ");
+      stream.println(info[i]);
 
-      data[i].toBuffer(myContext, buf);
+      data[i].toStream(myContext, stream);
 
-      buf.append("End Of ");
-      buf.append(info[i]);
-      buf.append("\n");
+      stream.print("End Of ");
+      stream.println(info[i]);
     }
   }
 }

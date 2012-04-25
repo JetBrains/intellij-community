@@ -65,8 +65,8 @@ public class FieldBreakpointFactory extends BreakpointFactory{
   }
 
   @Override
-  public BreakpointPropertiesPanel createBreakpointPropertiesPanel(Project project) {
-    return new FieldBreakpointPropertiesPanel(project);
+  public BreakpointPropertiesPanel createBreakpointPropertiesPanel(Project project, boolean compact) {
+    return new FieldBreakpointPropertiesPanel(project, compact);
   }
 
   @Override

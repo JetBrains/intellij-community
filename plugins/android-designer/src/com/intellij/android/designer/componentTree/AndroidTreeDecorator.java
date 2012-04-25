@@ -17,6 +17,7 @@ package com.intellij.android.designer.componentTree;
 
 import com.intellij.android.designer.model.RadViewComponent;
 import com.intellij.designer.componentTree.TreeComponentDecorator;
+import com.intellij.designer.model.IComponentDecorator;
 import com.intellij.designer.model.MetaModel;
 import com.intellij.designer.model.RadComponent;
 import com.intellij.designer.palette.Item;
@@ -76,6 +77,10 @@ public final class AndroidTreeDecorator extends TreeComponentDecorator {
 
     renderer.append(fullTitle.toString());
     renderer.setIcon(metaModel.getIcon());
+
+    if (component instanceof IComponentDecorator) {
+      ((IComponentDecorator)component).decorateTree(renderer);
+    }
   }
 
   @Nullable

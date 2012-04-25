@@ -134,7 +134,7 @@ public class GroovyOverrideImplementUtil {
     for (int i = 0; i < parameters.length; i++) {
       if (i > 0) buffer.append(", ");
       PsiParameter parameter = parameters[i];
-      if (!(parameter instanceof GrParameter && parameter.getTypeElement() == null)) {
+      if (!(parameter instanceof GrParameter && ((GrParameter)parameter).getTypeElementGroovy() == null)) {
         final PsiType parameterType = substitutor.substitute(parameter.getType());
         buffer.append(parameterType.getCanonicalText());
         buffer.append(" ");

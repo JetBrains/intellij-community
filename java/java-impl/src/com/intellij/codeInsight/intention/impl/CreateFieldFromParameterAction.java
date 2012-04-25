@@ -284,8 +284,9 @@ public class CreateFieldFromParameterAction implements IntentionAction {
         processParameter(project, ((ParameterClassMember)selectedElements.get(0)).getParameter(), isInteractive);
       } else {
         //do not ask for names in batch
+        final HashSet<String> usedNames = new HashSet<String>();
         for (ClassMember selectedElement : selectedElements) {
-          processParameter(project, ((ParameterClassMember)selectedElement).getParameter(), false);
+          processParameter(project, ((ParameterClassMember)selectedElement).getParameter(), false, usedNames);
         }
       }
     }
@@ -300,6 +301,13 @@ public class CreateFieldFromParameterAction implements IntentionAction {
   private static void processParameter(final Project project,
                                        final PsiParameter myParameter,
                                        boolean isInteractive) {
+    processParameter(project, myParameter, isInteractive, new HashSet<String>());
+  }
+
+  private static void processParameter(final Project project,
+                                       final PsiParameter myParameter,
+                                       boolean isInteractive,
+                                       final Set<String> usedNames) {
     IdeDocumentHistory.getInstance(project).includeCurrentPlaceAsChangePlace();
     final PsiType[] types = getTypes(myParameter);
     final JavaCodeStyleManager styleManager = JavaCodeStyleManager.getInstance(project);
@@ -347,7 +355,12 @@ public class CreateFieldFromParameterAction implements IntentionAction {
     }
     else {
       isFinalToCalc = !isMethodStatic && method.isConstructor();
-      fieldNameToCalc = names[0];
+      if (usedNames.add(names[0])) {
+        fieldNameToCalc = names[0];
+      }
+      else {
+        fieldNameToCalc = JavaCodeStyleManager.getInstance(project).suggestUniqueVariableName(names[0], myParameter, true);
+      }
       type= types[0];
     }
 

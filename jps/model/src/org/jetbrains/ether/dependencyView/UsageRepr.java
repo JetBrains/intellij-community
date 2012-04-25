@@ -9,6 +9,7 @@ import org.jetbrains.ether.RW;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
+import java.io.PrintStream;
 import java.util.*;
 
 /**
@@ -35,7 +36,7 @@ class UsageRepr {
 
   }
 
-  public static class Cluster implements RW.Savable, StringBufferizable {
+  public static class Cluster implements RW.Savable, Streamable {
     private final Map<Usage, TIntHashSet> myUsageToDependenciesMap = new HashMap<Usage, TIntHashSet>(DEFAULT_SET_CAPACITY, DEFAULT_SET_LOAD_FACTOR);
 
     public Cluster() {
@@ -128,16 +129,16 @@ class UsageRepr {
     }
 
     @Override
-    public void toBuffer(DependencyContext context, StringBuffer buf) {
+    public void toStream(DependencyContext context, PrintStream stream) {
       //To change body of implemented methods use File | Settings | File Templates.
     }
   }
 
-  public static abstract class Usage implements RW.Savable, StringBufferizable {
+  public static abstract class Usage implements RW.Savable, Streamable {
     public abstract int getOwner();
 
     @Override
-    public void toBuffer(DependencyContext context, StringBuffer buf) {
+    public void toStream(DependencyContext context, PrintStream stream) {
       //To change body of implemented methods use File | Settings | File Templates.
     }
   }

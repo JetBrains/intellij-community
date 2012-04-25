@@ -106,7 +106,7 @@ public class ClosureGenerator {
       LOG.assertTrue(allParameters.length == 1);
       final GrParameter itParameter = allParameters[0];
       final GrParameter parameter = factory.createParameter("it", itParameter.getType().getCanonicalText(), "null", block);
-      method.getParameterList().addParameterToEnd(parameter);
+      method.getParameterList().add(parameter);
     }
     ((GroovyFileImpl)method.getContainingFile()).setContextNullable(null);
     return method;

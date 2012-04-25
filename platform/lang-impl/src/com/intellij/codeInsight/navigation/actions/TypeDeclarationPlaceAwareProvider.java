@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,17 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.intellij.codeInsight.navigation.actions;
 
-/*
- * Class LineBreakpointPropertiesPanel
- * @author Jeka
+import com.intellij.openapi.editor.Editor;
+import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.Nullable;
+
+/**
+ * User: anna
+ * Date: 4/25/12
  */
-package com.intellij.debugger.ui.breakpoints;
-
-import com.intellij.openapi.project.Project;
-
-public class LineBreakpointPropertiesPanel extends BreakpointPropertiesPanel {
-  public LineBreakpointPropertiesPanel(Project project, boolean compact) {
-    super(project, LineBreakpoint.CATEGORY, compact);
-  }
+public interface TypeDeclarationPlaceAwareProvider extends TypeDeclarationProvider {
+  @Nullable
+  PsiElement[] getSymbolTypeDeclarations(PsiElement symbol, Editor editor, int offset);
 }
