@@ -23,7 +23,6 @@ import com.intellij.ui.CheckboxTree;
 import com.intellij.ui.CheckedTreeNode;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ui.tree.TreeUtil;
-import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XBreakpointManager;
 import com.intellij.xdebugger.breakpoints.XBreakpointType;
@@ -61,7 +60,7 @@ public class XBreakpointsTree<B extends XBreakpoint<?>> extends CheckboxTree {
     myComparator = new TreeNodeComparator<B>(type, breakpointManager);
     setGroupingRulesInternal(groupingRules);
 
-    getEmptyText().setText(XDebuggerBundle.message("debugger.no.breakpoints"));
+    getEmptyText().setText("No " + type.getTitle());
   }
 
   private void setGroupingRulesInternal(final Collection<XBreakpointGroupingRule<B, ?>> groupingRules) {
