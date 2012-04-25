@@ -38,7 +38,7 @@ public abstract class BreakpointFactory {
 
   public BreakpointPanel createBreakpointPanel(final Project project, final DialogWrapper parentDialog) {
     BreakpointPanel panel = new BreakpointPanel(project,
-                                                createBreakpointPropertiesPanel(project),
+                                                createBreakpointPropertiesPanel(project, false),
                                                 createBreakpointPanelActions(project, parentDialog),
                                                 getBreakpointCategory(), getDisplayName(), getHelpID());
     configureBreakpointPanel(panel);
@@ -66,7 +66,7 @@ public abstract class BreakpointFactory {
 
   public abstract String getDisplayName();
 
-  public abstract BreakpointPropertiesPanel createBreakpointPropertiesPanel(Project project);
+  public abstract BreakpointPropertiesPanel createBreakpointPropertiesPanel(Project project, boolean compact);
 
   protected abstract BreakpointPanelAction[] createBreakpointPanelActions(Project project, DialogWrapper parentDialog);
 }

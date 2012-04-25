@@ -32,7 +32,7 @@ import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.util.PsiUtilCore;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -107,16 +107,17 @@ public class GotoTypeDeclarationAction extends BaseCodeInsightAction implements 
       offset);
 
     if (targetElement != null) {
-      final PsiElement[] symbolType = getSymbolTypeDeclarations(targetElement);
+      final PsiElement[] symbolType = getSymbolTypeDeclarations(targetElement, editor, offset);
       return symbolType == null ? PsiElement.EMPTY_ARRAY : symbolType;
     }
+
     final PsiReference psiReference = TargetElementUtilBase.findReference(editor, offset);
     if (psiReference instanceof PsiPolyVariantReference) {
       final ResolveResult[] results = ((PsiPolyVariantReference)psiReference).multiResolve(false);
       Set<PsiElement> types = new THashSet<PsiElement>();
 
       for(ResolveResult r: results) {
-        final PsiElement[] declarations = getSymbolTypeDeclarations(r.getElement());
+        final PsiElement[] declarations = getSymbolTypeDeclarations(r.getElement(), editor, offset);
         if (declarations != null) {
           for (PsiElement declaration : declarations) {
             assert declaration != null;
@@ -125,16 +126,22 @@ public class GotoTypeDeclarationAction extends BaseCodeInsightAction implements 
         }
       }
 
-      if (!types.isEmpty()) return PsiUtilBase.toPsiElementArray(types);
+      if (!types.isEmpty()) return PsiUtilCore.toPsiElementArray(types);
     }
 
     return null;
   }
 
   @Nullable
-  private static PsiElement[] getSymbolTypeDeclarations(final PsiElement targetElement) {
+  private static PsiElement[] getSymbolTypeDeclarations(final PsiElement targetElement, Editor editor, int offset) {
     for(TypeDeclarationProvider provider: Extensions.getExtensions(TypeDeclarationProvider.EP_NAME)) {
-      PsiElement[] result = provider.getSymbolTypeDeclarations(targetElement);
+      PsiElement[] result;
+      if (provider instanceof TypeDeclarationPlaceAwareProvider) {
+        result = ((TypeDeclarationPlaceAwareProvider)provider).getSymbolTypeDeclarations(targetElement, editor, offset);
+      }
+      else {
+        result = provider.getSymbolTypeDeclarations(targetElement);
+      }
       if (result != null) return result;
     }
 

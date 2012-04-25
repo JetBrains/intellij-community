@@ -54,7 +54,7 @@ public class JavaEditBreakpointAction extends EditBreakpointAction {
     }
     assert breakpointFactory != null : "can't find factory for breakpoint " + myBreakpointWithHighlighter;
 
-    final BreakpointPropertiesPanel propertiesPanel = breakpointFactory.createBreakpointPropertiesPanel(project);
+    final BreakpointPropertiesPanel propertiesPanel = breakpointFactory.createBreakpointPropertiesPanel(project, true);
     propertiesPanel.initFrom(myBreakpointWithHighlighter, false);
 
     final JComponent mainPanel = propertiesPanel.getPanel();

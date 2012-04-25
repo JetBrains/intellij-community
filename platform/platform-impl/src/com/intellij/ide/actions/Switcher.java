@@ -191,7 +191,7 @@ public class Switcher extends AnAction implements DumbAware {
     SwitcherPanel(Project project, String title, boolean pinned) {
       super(new BorderLayout(0, 0));
       this.project = project;
-      MAX_FILES_IN_SWITCHER = pinned ? UISettings.getInstance().RECENT_FILES_LIMIT + UISettings.getInstance().EDITOR_TAB_LIMIT : 30;
+      MAX_FILES_IN_SWITCHER = pinned ? UISettings.getInstance().RECENT_FILES_LIMIT : 30;
       myPinned = pinned;
       mySpeedSearch =  pinned ? new SwitcherSpeedSearch() : null;
 
@@ -297,8 +297,10 @@ public class Switcher extends AnAction implements DumbAware {
       final FileEditorManagerImpl editorManager = (FileEditorManagerImpl)FileEditorManager.getInstance(project);
       final ArrayList<FileInfo> filesData = new ArrayList<FileInfo>();
       final ArrayList<FileInfo> editors = new ArrayList<FileInfo>();
-      for (Pair<VirtualFile, EditorWindow> pair : editorManager.getSelectionHistory()) {
-        editors.add(new FileInfo(pair.first, pair.second));
+      if (!pinned) {
+        for (Pair<VirtualFile, EditorWindow> pair : editorManager.getSelectionHistory()) {
+          editors.add(new FileInfo(pair.first, pair.second));
+        }
       }
       if (editors.size() < 2 || isPinnedMode()) {
         if (isPinnedMode() && editors.size() > 1) {
@@ -306,7 +308,7 @@ public class Switcher extends AnAction implements DumbAware {
         }
         final VirtualFile[] recentFiles = ArrayUtil.reverseArray(EditorHistoryManager.getInstance(project).getFiles());
         final int maxFiles = Math.max(editors.size(), recentFiles.length);
-        final int len = isPinnedMode() ? maxFiles : Math.min(toolWindows.getModel().getSize(), maxFiles);
+        final int len = isPinnedMode() ? recentFiles.length : Math.min(toolWindows.getModel().getSize(), maxFiles);
         boolean firstRecentMarked = false;
         for (int i = 0; i < len; i++) {
           final FileInfo info = new FileInfo(recentFiles[i], null);

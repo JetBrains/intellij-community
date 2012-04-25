@@ -172,7 +172,7 @@ public class GenerateMembersUtil {
     editor.getSelectionModel().removeSelection();
   }
 
-  public static PsiElement insert(PsiClass aClass, PsiMember member, PsiElement anchor, boolean before) throws IncorrectOperationException {
+  public static PsiElement insert(@NotNull PsiClass aClass, @NotNull PsiMember member, @Nullable PsiElement anchor, boolean before) throws IncorrectOperationException {
     if (member instanceof PsiMethod) {
       if (!aClass.isInterface()) {
         final PsiParameter[] parameters = ((PsiMethod)member).getParameterList().getParameters();
@@ -228,9 +228,15 @@ public class GenerateMembersUtil {
 
   public static PsiMethod substituteGenericMethod(PsiMethod method,
                                                   final PsiSubstitutor substitutor,
-                                                  final PsiElement target) {
+                                                  @Nullable final PsiElement target) {
     Project project = method.getProject();
-    final PsiElementFactory factory = JavaPsiFacade.getInstance(method.getProject()).getElementFactory();
+    final JVMElementFactory factory;
+    if (target != null) {
+      factory = JVMElementFactories.getFactory(target.getLanguage(), method.getProject());
+    }
+    else {
+      factory = JavaPsiFacade.getInstance(method.getProject()).getElementFactory();
+    }
 
     try {
       PsiType returnType = method.getReturnType();
@@ -238,7 +244,7 @@ public class GenerateMembersUtil {
       PsiMethod newMethod;
       if (method.isConstructor()) {
         newMethod = factory.createConstructor();
-        newMethod.getNameIdentifier().replace(factory.createIdentifier(method.getName()));
+        newMethod.setName(method.getName());
       }
       else {
         final PsiType substitutedReturnType = substituteType(substitutor, returnType);
@@ -292,10 +298,15 @@ public class GenerateMembersUtil {
         if (paramName == null) paramName = "p" + i;
 
         PsiParameter newParameter = factory.createParameter(paramName, substituted);
-        if (parameter.getLanguage() == JavaLanguage.INSTANCE) {
+        if (parameter.getLanguage() == newParameter.getLanguage()) {
           PsiModifierList modifierList = newParameter.getModifierList();
           modifierList = (PsiModifierList)modifierList.replace(parameter.getModifierList());
-          processAnnotations(project, modifierList, moduleScope);
+          if (parameter.getLanguage() == JavaLanguage.INSTANCE) {
+            processAnnotations(project, modifierList, moduleScope);
+          }
+        }
+        else {
+          GenerateConstructorHandler.copyModifierList(factory, parameter, newParameter);
         }
         newMethod.getParameterList().add(newParameter);
       }

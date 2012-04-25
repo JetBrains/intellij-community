@@ -55,7 +55,7 @@ public class MavenPathReferenceConverter extends PathReferenceConverter {
     TextRange range = manipulator.getRangeInElement(element);
     String text = range.substring(element.getText());
 
-    FileReferenceSet set = new FileReferenceSet(text, element, range.getStartOffset(), null, SystemInfo.isFileSystemCaseSensitive, true) {
+    FileReferenceSet set = new FileReferenceSet(text, element, range.getStartOffset(), null, SystemInfo.isFileSystemCaseSensitive, false) {
 
       private MavenDomProjectModel model;
 

@@ -69,8 +69,8 @@ public class ExceptionBreakpointFactory extends BreakpointFactory{
   }
 
   @Override
-  public BreakpointPropertiesPanel createBreakpointPropertiesPanel(Project project) {
-    return new ExceptionBreakpointPropertiesPanel(project);
+  public BreakpointPropertiesPanel createBreakpointPropertiesPanel(Project project, boolean compact) {
+    return new ExceptionBreakpointPropertiesPanel(project, compact);
   }
 
   @Override
@@ -99,7 +99,7 @@ public class ExceptionBreakpointFactory extends BreakpointFactory{
 
   public BreakpointPanel createBreakpointPanel(final Project project, final DialogWrapper parentDialog) {
     BreakpointPanel panel = new BreakpointPanel(project,
-                                                createBreakpointPropertiesPanel(project),
+                                                createBreakpointPropertiesPanel(project, false),
                                                 createBreakpointPanelActions(project, parentDialog),
                                                 getBreakpointCategory(), getDisplayName(), getHelpID()){
       public void resetBreakpoints() {

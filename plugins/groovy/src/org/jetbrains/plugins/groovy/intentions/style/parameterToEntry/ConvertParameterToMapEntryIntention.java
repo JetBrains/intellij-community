@@ -314,7 +314,7 @@ public class ConvertParameterToMapEntryIntention extends Intention {
         if (createNewFirstParam) {
           try {
             final GrParameter newParam = factory.createParameter(mapName, specifyMapType ? MAP_TYPE_TEXT : "", null);
-            list.addParameterToHead(newParam);
+            list.addAfter(newParam, null);
           }
           catch (IncorrectOperationException e) {
             LOG.error(e);

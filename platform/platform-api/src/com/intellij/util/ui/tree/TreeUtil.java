@@ -967,4 +967,24 @@ public final class TreeUtil {
     }
   }
 
+  public static int indexedBinarySearch(@NotNull TreeNode parent, @NotNull TreeNode key, Comparator comparator) {
+    int low = 0;
+    int high = parent.getChildCount() - 1;
+
+    while (low <= high) {
+      int mid = (low + high) / 2;
+      TreeNode treeNode = parent.getChildAt(mid);
+      int cmp = comparator.compare(treeNode, key);
+      if (cmp < 0) {
+        low = mid + 1;
+      }
+      else if (cmp > 0) {
+        high = mid - 1;
+      }
+      else {
+        return mid; // key found
+      }
+    }
+    return -(low + 1);  // key not found
+  }
 }

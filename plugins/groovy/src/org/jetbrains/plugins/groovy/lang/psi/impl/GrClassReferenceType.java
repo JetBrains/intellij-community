@@ -151,4 +151,8 @@ public class GrClassReferenceType extends PsiClassType {
   public PsiClassType setLanguageLevel(@NotNull final LanguageLevel languageLevel) {
     return new GrClassReferenceType(myReferenceElement,languageLevel);
   }
+
+  public GrReferenceElement getReference() {
+    return myReferenceElement;
+  }
 }

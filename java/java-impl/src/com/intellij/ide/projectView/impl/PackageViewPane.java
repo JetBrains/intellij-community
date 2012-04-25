@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -197,7 +197,7 @@ public final class PackageViewPane extends AbstractProjectViewPSIPane {
   }
 
   protected ProjectViewTree createTree(DefaultTreeModel treeModel) {
-    return new ProjectViewTree(treeModel) {
+    return new ProjectViewTree(myProject, treeModel) {
       public String toString() {
         return getTitle() + " " + super.toString();
       }

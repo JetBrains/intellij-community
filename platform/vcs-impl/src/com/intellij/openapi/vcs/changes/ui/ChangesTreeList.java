@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -110,9 +110,16 @@ public abstract class ChangesTreeList<T> extends JPanel {
 
       @Override
       public boolean isFileColorsEnabled() {
-        return Registry.is("file.colors.in.commit.dialog")
-          && FileColorManager.getInstance(project).isEnabled()
-          && FileColorManager.getInstance(project).isEnabledForProjectView();
+        final boolean enabled = Registry.is("file.colors.in.commit.dialog")
+                          && FileColorManager.getInstance(project).isEnabled()
+                          && FileColorManager.getInstance(project).isEnabledForProjectView();
+        final boolean opaque = isOpaque();
+        if (enabled && opaque) {
+          setOpaque(false);
+        } else if (!enabled && !opaque) {
+          setOpaque(true);
+        }
+        return enabled;
       }
 
       @Override
@@ -783,6 +790,30 @@ public abstract class ChangesTreeList<T> extends JPanel {
           for (Pair<String, ChangeNodeDecorator.Stress> part : parts) {
             append(part.getFirst(), part.getSecond().derive(SimpleTextAttributes.GRAYED_ATTRIBUTES));
           }
+        }
+
+        @Override
+        public Component getListCellRendererComponent(JList list,
+                                                      Object value,
+                                                      int index,
+                                                      boolean selected,
+                                                      boolean hasFocus) {
+          final Component component = super.getListCellRendererComponent(list, value, index, selected, hasFocus);
+          final FileColorManager colorManager = FileColorManager.getInstance(myProject);
+          if (!selected) {
+            if (Registry.is("file.colors.in.commit.dialog") && colorManager.isEnabled() && colorManager.isEnabledForProjectView()) {
+              if (value instanceof Change) {
+                final VirtualFile file = ((Change)value).getVirtualFile();
+                if (file != null) {
+                  final Color color = colorManager.getFileColor(file);
+                  if (color != null) {
+                      component.setBackground(color);
+                  }
+                }
+              }
+            }
+          }
+          return component;
         }
       };
 

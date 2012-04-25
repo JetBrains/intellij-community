@@ -18,13 +18,17 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrThrowsClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrClassReferenceType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 /**
  * @author: Dmitry.Krasilschikov
@@ -63,4 +67,22 @@ public class GrThrowsClauseImpl extends GroovyPsiElementImpl implements GrThrows
   public Role getRole() {
     return Role.THROWS_LIST;
   }
+
+  @Override
+  public PsiElement add(@NotNull PsiElement element) throws IncorrectOperationException {
+    if (element instanceof GrCodeReferenceElement) {
+      if (findChildByClass(GrCodeReferenceElement.class) == null) {
+        getNode().addLeaf(GroovyTokenTypes.kTHROWS, "throws", null);
+      }
+      else {
+        PsiElement lastChild = getLastChild();
+        lastChild = PsiUtil.skipWhitespaces(lastChild, false);
+        if (!lastChild.getNode().getElementType().equals(GroovyTokenTypes.mCOMMA)) {
+          getNode().addLeaf(GroovyTokenTypes.mCOMMA, ",", null);
+        }
+      }
+    }
+    return super.add(element);
+  }
+
 }

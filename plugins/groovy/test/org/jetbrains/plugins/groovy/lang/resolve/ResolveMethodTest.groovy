@@ -992,4 +992,38 @@ def foo(Integer a) {
 ''')
     assertNotNull(ref.resolve())
   }
+
+  public void testStaticImportFromSuperClass() {
+    def ref = configureByText('''\
+import static Derived.fo<caret>o
+
+class Base {
+    static foo(){print 'foo'}
+}
+
+class Derived extends Base {
+}
+
+foo()
+''')
+
+    assertNotNull(ref.resolve())
+  }
+
+  public void testUsageOfStaticImportFromSuperClass() {
+    def ref = configureByText('''\
+import static Derived.foo
+
+class Base {
+    static foo(){print 'foo'}
+}
+
+class Derived extends Base {
+}
+
+fo<caret>o()
+''')
+
+    assertNotNull(ref.resolve())
+  }
 }

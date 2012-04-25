@@ -154,6 +154,21 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
     return (GrExpression) topStatements[0];
   }
 
+  @Override
+  public GrCodeReferenceElement createReferenceElementByType(PsiClassType type) {
+    if (type instanceof GrClassReferenceType) {
+      GrReferenceElement reference = ((GrClassReferenceType)type).getReference();
+      if (reference instanceof GrCodeReferenceElement) {
+        return (GrCodeReferenceElement)reference;
+      }
+    }
+
+    final PsiClassType.ClassResolveResult resolveResult = type.resolveGenerics();
+    final PsiClass refClass = resolveResult.getElement();
+    assert refClass != null : type;
+    return createCodeReferenceElementFromText(type.getPresentableText());
+  }
+
   public GrVariableDeclaration createVariableDeclaration(@Nullable String[] modifiers,
                                                          @Nullable GrExpression initializer,
                                                          @Nullable PsiType type,
@@ -397,12 +412,19 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
     return createConstructorFromText(constructorName, text, context);
   }
 
-  public GrMethod createConstructorFromText(String constructorName, String text, @Nullable PsiElement context) {
-    GroovyFileImpl file = createDummyFile("class " + constructorName + "{" + text + "}");
+  public GrMethod createConstructorFromText(String constructorName, String constructorText, @Nullable PsiElement context) {
+    GroovyFileImpl file = createDummyFile("class " + constructorName + "{" + constructorText + "}");
     file.setContext(context);
     GrTopLevelDefinition definition = file.getTopLevelDefinitions()[0];
-    assert definition != null && definition instanceof GrClassDefinition;
-    return ((GrClassDefinition) definition).getGroovyMethods()[0];
+
+    if (!( definition != null && definition instanceof GrClassDefinition)) {
+      throw new IncorrectOperationException("constructorName: " + constructorName + ", text: " + constructorText);
+    }
+    GrMethod[] methods = ((GrClassDefinition)definition).getGroovyMethods();
+    if (methods.length != 1) {
+      throw new IncorrectOperationException("constructorName: " + constructorName + ", text: " + constructorText);
+    }
+    return methods[0];
   }
 
   @Override
@@ -842,7 +864,7 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
   @NotNull
   @Override
   public PsiMethod createConstructor() {
-    return createConstructorFromText("Foo", "", null);
+    return createConstructorFromText("Foo", "Foo(){}", null);
   }
 
   @NotNull

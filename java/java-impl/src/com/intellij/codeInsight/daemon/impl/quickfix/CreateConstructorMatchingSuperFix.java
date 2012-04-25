@@ -17,6 +17,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
+import com.intellij.codeInsight.generation.ConstructorBodyGenerator;
 import com.intellij.codeInsight.generation.GenerateMembersUtil;
 import com.intellij.codeInsight.generation.PsiMethodMember;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
@@ -27,6 +28,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -34,7 +36,6 @@ import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -101,7 +102,7 @@ public class CreateConstructorMatchingSuperFix extends BaseIntentionAction {
       MemberChooser<PsiMethodMember> chooser = new MemberChooser<PsiMethodMember>(constructors, false, true, project);
       chooser.setTitle(QuickFixBundle.message("super.class.constructors.chooser.title"));
       chooser.show();
-      if (chooser.getExitCode() != MemberChooser.OK_EXIT_CODE) return;
+      if (chooser.getExitCode() != DialogWrapper.OK_EXIT_CODE) return;
       constructors = chooser.getSelectedElements(new PsiMethodMember[0]);
       isCopyJavadoc = chooser.isCopyJavadoc();
     }
@@ -117,12 +118,12 @@ public class CreateConstructorMatchingSuperFix extends BaseIntentionAction {
               PsiClass psiClass = JavaPsiFacade.getInstance(targetClass.getProject()).getElementFactory().createClass("X");
               targetClass.addRangeAfter(psiClass.getLBrace(), psiClass.getRBrace(), targetClass.getLastChild());
             }
-            PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
-            CodeStyleManager reformatter = CodeStyleManager.getInstance(project);
+            JVMElementFactory factory = JVMElementFactories.getFactory(targetClass.getLanguage(), project);
+            CodeStyleManager formatter = CodeStyleManager.getInstance(project);
             PsiMethod derived = null;
             for (PsiMethodMember candidate : constructors1) {
               PsiMethod base = candidate.getElement();
-              derived = GenerateMembersUtil.substituteGenericMethod(base, candidate.getSubstitutor());
+              derived = GenerateMembersUtil.substituteGenericMethod(base, candidate.getSubstitutor(), targetClass);
 
               if (!isCopyJavadoc1) {
                 final PsiDocComment docComment = derived.getDocComment();
@@ -131,23 +132,18 @@ public class CreateConstructorMatchingSuperFix extends BaseIntentionAction {
                 }
               }
 
-              final PsiIdentifier identifier = targetClass.getNameIdentifier();
-              LOG.assertTrue(identifier != null, targetClass);
-              derived.getNameIdentifier().replace(identifier);
-              @NonNls StringBuffer buffer = new StringBuffer();
-              buffer.append("void foo () {\nsuper(");
+              derived.setName(targetClass.getName());
 
-              PsiParameter[] params = derived.getParameterList().getParameters();
-              for (int j = 0; j < params.length; j++) {
-                PsiParameter param = params[j];
-                buffer.append(param.getName());
-                if (j < params.length - 1) buffer.append(",");
+              ConstructorBodyGenerator generator = ConstructorBodyGenerator.INSTANCE.forLanguage(derived.getLanguage());
+              if (generator != null) {
+                StringBuilder buffer = new StringBuilder();
+                generator.start(buffer, derived.getName(), PsiParameter.EMPTY_ARRAY);
+                generator.generateSuperCallIfNeeded(buffer, derived.getParameterList().getParameters());
+                generator.finish(buffer);
+                PsiMethod stub = factory.createMethodFromText(buffer.toString(), targetClass);
+                derived.getBody().replace(stub.getBody());
               }
-              buffer.append(");\n}");
-              PsiMethod stub = factory.createMethodFromText(buffer.toString(), targetClass);
-
-              derived.getBody().replace(stub.getBody());
-              derived = (PsiMethod)reformatter.reformat(derived);
+              derived = (PsiMethod)formatter.reformat(derived);
               derived = (PsiMethod)JavaCodeStyleManager.getInstance(project).shortenClassReferences(derived);
               derived = (PsiMethod)GenerateMembersUtil.insert(targetClass, derived, null, true);
             }
