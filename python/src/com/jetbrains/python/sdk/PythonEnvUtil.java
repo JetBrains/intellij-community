@@ -62,7 +62,7 @@ public class PythonEnvUtil {
       assert source != null;
       Set<String> vals = Sets.newHashSet(source.split(File.pathSeparator));
       if (!vals.contains(value)) {
-        return value + File.pathSeparatorChar + source;
+        return source + File.pathSeparatorChar + value;
       }
       else {
         return source;
