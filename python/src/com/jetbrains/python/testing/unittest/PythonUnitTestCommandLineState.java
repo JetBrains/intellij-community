@@ -42,7 +42,7 @@ public class PythonUnitTestCommandLineState extends
       pythonPath.add(1, myConfig.getFolderName());
     }
     else {
-      pythonPath.add(1, new File(myConfig.getWorkingDirectory(), myConfig.getScriptName()).getParent());
+      pythonPath.add(1, new File(myConfig.getScriptName()).getParent());
     }
     return pythonPath;
   }
