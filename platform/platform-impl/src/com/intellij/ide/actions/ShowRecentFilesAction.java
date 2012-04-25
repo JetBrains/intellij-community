@@ -35,7 +35,7 @@ public class ShowRecentFilesAction extends DumbAwareAction {
     final Project project = e.getData(PlatformDataKeys.PROJECT);
     if (project != null) {
       FeatureUsageTracker.getInstance().triggerFeatureUsed("navigation.recent.files");
-      Switcher.createAndShowSwitcher(project, IdeBundle.message("title.popup.recent.files"), true);
+      Switcher.createAndShowSwitcher(project, IdeBundle.message("title.popup.recent.files"), true).goForward();
     }
   }
 }
