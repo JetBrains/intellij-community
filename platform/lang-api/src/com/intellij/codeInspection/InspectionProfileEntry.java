@@ -58,6 +58,7 @@ public abstract class InspectionProfileEntry {
    */
   @Nls @NotNull
   public String getGroupDisplayName() {
+    LOG.error(getClass() + ": group display name should be overridden or configured via XML " + getClass());
     return "";
   }
 
@@ -80,6 +81,7 @@ public abstract class InspectionProfileEntry {
    */
   @Nls @NotNull
   public String getDisplayName() {
+    LOG.error(getClass() + ": display name should be overridden or configured via XML " + getClass());
     return "";
   }
 

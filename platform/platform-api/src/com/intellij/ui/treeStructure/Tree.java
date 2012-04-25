@@ -21,15 +21,13 @@ import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.impl.content.GraphicsConfig;
-import com.intellij.ui.ComponentWithExpandableItems;
-import com.intellij.ui.ExpandableItemsHandler;
-import com.intellij.ui.ExpandableItemsHandlerFactory;
-import com.intellij.ui.LoadingNode;
+import com.intellij.ui.*;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ui.AsyncProcessIcon;
 import com.intellij.util.ui.ComponentWithEmptyText;
 import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.tree.MacTreeUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -47,7 +45,8 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Map;
 
-public class Tree extends JTree implements ComponentWithEmptyText, ComponentWithExpandableItems<Integer>, Autoscroll, Queryable {
+public class Tree extends JTree implements ComponentWithEmptyText, ComponentWithExpandableItems<Integer>, Autoscroll, Queryable,
+                                           ComponentWithFileColors {
   private StatusText myEmptyText;
   private ExpandableItemsHandler<Integer> myExpandableItemsHandler;
 
@@ -97,8 +96,8 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
   public void setUI(final TreeUI ui) {
     TreeUI actualUI = ui;
     if (!isCustomUI()) {
-      if (!(ui instanceof UIUtil.MacTreeUI) && UIUtil.isUnderAquaLookAndFeel()) {
-        actualUI = new UIUtil.MacTreeUI(isMacWideSelection());
+      if (!(ui instanceof MacTreeUI) && UIUtil.isUnderAquaLookAndFeel()) {
+        actualUI = new MacTreeUI(isMacWideSelection(), !isFileColorsEnabled());
       }
     }
     super.setUI(actualUI);
@@ -129,6 +128,10 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
 
   protected boolean isMacWideSelection() {
     return true;
+  }
+
+  public boolean isFileColorsEnabled() {
+    return false;
   }
 
   @Override
@@ -279,8 +282,40 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
       paintNodeContent(g);
     }
 
+    if (isFileColorsEnabled()) {
+      paintFileColorGutter(g);
+    }
+
     super.paintComponent(g);
     myEmptyText.paint(this, g);
+  }
+
+  protected void paintFileColorGutter(final Graphics g) {
+    final GraphicsConfig config = new GraphicsConfig(g);
+    final Rectangle rect = getVisibleRect();
+    final int firstVisibleRow = getClosestRowForLocation(rect.x, rect.y);
+    final int lastVisibleRow = getClosestRowForLocation(rect.x, rect.y + rect.height);
+
+    for (int row = firstVisibleRow; row <= lastVisibleRow; row++) {
+      final TreePath path = getPathForRow(row);
+      if (path != null) {
+        final Rectangle bounds = getRowBounds(row);
+        final Object component = path.getLastPathComponent();
+        final Object object = ((DefaultMutableTreeNode)component).getUserObject();
+
+        Color color = getFileColorFor(object);
+        if (color != null) {
+          g.setColor(color);
+          g.fillRect(0, bounds.y, getWidth(), bounds.height);
+        }
+      }
+    }
+    config.restore();
+  }
+
+  @Nullable
+  protected Color getFileColorFor(Object object) {
+    return null;
   }
 
   @Override

@@ -113,6 +113,12 @@ public class IncomingChangesViewProvider implements ChangesViewContentProvider {
       updateModel(true);
     }
 
+    @Override
+    public void changesCleared() {
+      myBrowser.getEmptyText().setText(VcsBundle.message("incoming.changes.empty.message"));
+      myBrowser.setItems(Collections.<CommittedChangeList>emptyList(), CommittedChangesBrowserUseCase.INCOMING);
+    }
+
     public void refreshErrorStatusChanged(@Nullable final VcsException lastError) {
       if (lastError != null) {
         VcsBalloonProblemNotifier.showOverChangesView(myProject, lastError.getMessage(), MessageType.ERROR);

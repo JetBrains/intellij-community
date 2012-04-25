@@ -19,6 +19,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.tree.MacTreeUI;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
@@ -130,7 +131,7 @@ public abstract class MultilineTreeCellRenderer extends JComponent implements Tr
     }
 
     // fill background
-    if (!(myTree.getUI() instanceof UIUtil.MacTreeUI) || !((UIUtil.MacTreeUI)myTree.getUI()).isWideSelection()) {
+    if (!(myTree.getUI() instanceof MacTreeUI) || !((MacTreeUI)myTree.getUI()).isWideSelection()) {
       g.setColor(bgColor);
       g.fillRect(borderX, borderY, borderW, borderH);
 

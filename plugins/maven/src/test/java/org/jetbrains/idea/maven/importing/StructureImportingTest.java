@@ -1063,6 +1063,61 @@ public class StructureImportingTest extends MavenImportingTestCase {
     assertModules("project", "m");
   }
 
+  public void testFileProfileActivationInParentPom() throws Exception {
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+                     "<packaging>pom</packaging>" +
+
+                     "  <profiles>" +
+                     "    <profile>" +
+                     "      <id>xxx</id>" +
+                     "      <dependencies>" +
+                     "        <dependency>" +
+                     "          <groupId>junit</groupId>" +
+                     "          <artifactId>junit</artifactId>" +
+                     "          <version>4.0</version>" +
+                     "        </dependency>" +
+                     "      </dependencies>" +
+                     "      <activation>" +
+                     "        <file>" +
+                     "          <exists>src/io.properties</exists>" +
+                     "        </file>" +
+                     "      </activation>" +
+                     "    </profile>" +
+                     "  </profiles>" +
+
+                     "<modules>" +
+                     "  <module>m1</module>" +
+                     "  <module>m2</module>" +
+                     "</modules>");
+
+    createModulePom("m1", "<groupId>test</groupId>" +
+                          "<artifactId>m1</artifactId>" +
+
+                          "<parent>" +
+                          "  <groupId>test</groupId>" +
+                          "  <artifactId>project</artifactId>" +
+                          "  <version>1</version>" +
+                          "</parent>");
+
+    createModulePom("m2", "<groupId>test</groupId>" +
+                          "<artifactId>m2</artifactId>" +
+
+                          "<parent>" +
+                          "  <groupId>test</groupId>" +
+                          "  <artifactId>project</artifactId>" +
+                          "  <version>1</version>" +
+                          "</parent>");
+    createProjectSubFile("m2/src/io.properties", "");
+
+    importProject();
+
+    assertModules("project", "m1", "m2");
+    assertModuleLibDeps("m1");
+    assertModuleLibDeps("m2", "Maven: junit:junit:4.0");
+  }
+
   public void testProjectWithProfilesXmlFile() throws Exception {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +

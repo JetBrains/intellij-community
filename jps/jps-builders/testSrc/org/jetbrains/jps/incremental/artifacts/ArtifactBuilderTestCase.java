@@ -31,6 +31,7 @@ import org.jetbrains.jps.incremental.java.JavaBuilderLoggerImpl;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.storage.BuildDataManager;
 import org.jetbrains.jps.incremental.storage.ProjectTimestamps;
+import org.jetbrains.jps.incremental.storage.Timestamps;
 import org.jetbrains.jps.server.ClasspathBootstrap;
 import org.jetbrains.jps.server.ProjectDescriptor;
 
@@ -181,7 +182,8 @@ public abstract class ArtifactBuilderTestCase extends UsefulTestCase {
       myDescriptor.incUsageCounter();
     }
     myArtifactBuilderLogger.clear();
-    IncProjectBuilder builder = new IncProjectBuilder(myDescriptor, BuilderRegistry.getInstance(), Collections.<String, String>emptyMap(), CanceledStatus.NULL);
+    final Timestamps timestamps = myDescriptor.timestamps.getStorage();
+    IncProjectBuilder builder = new IncProjectBuilder(myDescriptor, BuilderRegistry.getInstance(), timestamps, Collections.<String, String>emptyMap(), CanceledStatus.NULL);
     final List<BuildMessage> errorMessages = new ArrayList<BuildMessage>();
     final List<BuildMessage> infoMessages = new ArrayList<BuildMessage>();
     builder.addMessageHandler(new MessageHandler() {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -94,6 +94,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible {
   private AccessibleContext myContext = new MyAccessibleContext();
 
   private boolean myIconOnTheRight = false;
+  private boolean myTransparentIconBackground;
 
   public SimpleColoredComponent() {
     myFragments = new ArrayList<String>(3);
@@ -465,7 +466,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible {
   protected void doPaintIcon(Graphics2D g, Icon icon, int offset) {
     final Container parent = getParent();
     Color iconBackgroundColor = null;
-    if (isOpaque() || isIconOpaque()) {
+    if ((isOpaque() || isIconOpaque()) && !isTransparentIconBackground()) {
       if (parent != null && !myFocusBorderAroundIcon && !UIUtil.isFullRowSelectionLAF()) {
         iconBackgroundColor = parent.getBackground();
       }
@@ -629,6 +630,14 @@ public class SimpleColoredComponent extends JComponent implements Accessible {
   public int getBaseline(int width, int height) {
     super.getBaseline(width, height);
     return getTextBaseLine(getFontMetrics(getFont()), height);
+  }
+
+  public boolean isTransparentIconBackground() {
+    return myTransparentIconBackground;
+  }
+
+  public void setTransparentIconBackground(boolean transparentIconBackground) {
+    myTransparentIconBackground = transparentIconBackground;
   }
 
   private static int getTextBaseLine(FontMetrics metrics, final int height) {

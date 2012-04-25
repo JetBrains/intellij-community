@@ -342,7 +342,7 @@ public class Switcher extends AnAction implements DumbAware {
         filesModel.addElement(editor);
       }
 
-      final VirtualFilesRenderer filesRenderer = new VirtualFilesRenderer(project);
+      final VirtualFilesRenderer filesRenderer = new VirtualFilesRenderer(project, pinned);
 
       final ListSelectionListener filesSelectionListener = new ListSelectionListener() {
         private String getTitle2Text(String fullText) {
@@ -897,9 +897,11 @@ public class Switcher extends AnAction implements DumbAware {
 
   private static class VirtualFilesRenderer extends ColoredListCellRenderer {
     private final Project myProject;
+    private final boolean myPinned;
 
-    public VirtualFilesRenderer(Project project) {
+    public VirtualFilesRenderer(Project project, boolean pinned) {
       myProject = project;
+      myPinned = pinned;
     }
 
     protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
@@ -913,7 +915,7 @@ public class Switcher extends AnAction implements DumbAware {
                                                        Font.PLAIN);
         append(name, SimpleTextAttributes.fromTextAttributes(attributes));
 
-        if (!selected && FileEditorManager.getInstance(myProject).isFileOpen(virtualFile)) {
+        if (!selected &&  myPinned && FileEditorManager.getInstance(myProject).isFileOpen(virtualFile)) {
           setBackground(LightColors.SLIGHTLY_GREEN);
         }
       }

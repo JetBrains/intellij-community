@@ -24,6 +24,7 @@ package com.intellij.openapi.vcs.changes.committed;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -180,6 +181,21 @@ public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvide
           myInLoad = false;
           myBrowser.setLoading(false);
         }
+      }
+    });
+  }
+
+  public void clearCaches() {
+    final CommittedChangesCache cache = CommittedChangesCache.getInstance(myProject);
+    cache.clearCaches(new Runnable() {
+      @Override
+      public void run() {
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
+          @Override
+          public void run() {
+            updateFilteredModel(Collections.<CommittedChangeList>emptyList());
+          }
+        }, ModalityState.NON_MODAL, myProject.getDisposed());
       }
     });
   }

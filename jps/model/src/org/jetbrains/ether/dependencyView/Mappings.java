@@ -2049,4 +2049,36 @@ public class Mappings {
   private void debug(final String comment, final boolean s) {
     myDebugS.debug(comment, s);
   }
+
+  public void toBuffer(final StringBuffer buf) {
+    final StringBufferizable[] data = {
+      myClassToSubclasses,
+      myClassToClassDependency,
+      mySourceFileToClasses,
+      mySourceFileToAnnotationUsages,
+      mySourceFileToUsages,
+      myClassToSourceFile
+    };
+
+    final String[] info = {
+      "ClassToSubclasses",
+      "ClassToClassDependency",
+      "SourceFileToClasses",
+      "SourceFileToAnnotationUsages",
+      "SourceFileToUsages",
+      "ClassToSourceFile"
+    };
+
+    for (int i = 0; i<data.length; i++) {
+      buf.append("Begin Of ");
+      buf.append(info[i]);
+      buf.append("\n");
+
+      data[i].toBuffer(myContext, buf);
+
+      buf.append("End Of ");
+      buf.append(info[i]);
+      buf.append("\n");
+    }
+  }
 }

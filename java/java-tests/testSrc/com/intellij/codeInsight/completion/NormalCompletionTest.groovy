@@ -1320,6 +1320,7 @@ public class ListUtils {
   public void testListArrayListCast() { doTest('\n') }
   public void testInterfaceImplementationNoCast() { doTest() }
   public void testStaticallyImportedMethodsBeforeExpression() { doTest() }
+  public void testInnerChainedReturnType() { doTest() }
 
   private CommonCodeStyleSettings getCodeStyleSettings() {
     return CodeStyleSettingsManager.getSettings(getProject()).getCommonSettings(JavaLanguage.INSTANCE);
@@ -1329,5 +1330,6 @@ public class ListUtils {
     configure()
     assert myFixture.lookupElementStrings.containsAll(['foo', 'bar'])
   }
+
 
 }

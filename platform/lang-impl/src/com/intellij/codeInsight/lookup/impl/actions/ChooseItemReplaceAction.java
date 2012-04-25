@@ -22,10 +22,7 @@ import com.intellij.codeInsight.completion.CompletionService;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
-import com.intellij.codeInsight.template.impl.ListTemplatesHandler;
-import com.intellij.codeInsight.template.impl.LiveTemplateCompletionContributor;
-import com.intellij.codeInsight.template.impl.TemplateImpl;
-import com.intellij.codeInsight.template.impl.TemplateSettings;
+import com.intellij.codeInsight.template.impl.*;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
@@ -90,8 +87,17 @@ public class ChooseItemReplaceAction extends EditorAction {
     final int end = editor.getCaretModel().getOffset();
     final int start = lookup.getLookupStart();
     final String prefix = !lookup.getItems().isEmpty() ? editor.getDocument().getText(TextRange.create(start, end)) : ListTemplatesHandler.getPrefix(editor.getDocument(), end);
-    final TemplateImpl template = LiveTemplateCompletionContributor.findApplicableTemplate(file, start, prefix);
-    return template != null && shortcutChar == TemplateSettings.getInstance().getShortcutChar(template);
+
+    if (TemplateSettings.getInstance().getTemplates(prefix).isEmpty()) {
+      return false;
+    }
+
+    for (TemplateImpl template : SurroundWithTemplateHandler.getApplicableTemplates(editor, file, false)) {
+      if (prefix.equals(template.getKey()) && shortcutChar == TemplateSettings.getInstance().getShortcutChar(template)) {
+        return true;
+      }
+    }
+    return false;
   }
 
 }

@@ -16,6 +16,7 @@
 package com.intellij.ui;
 
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.tree.MacTreeUI;
 
 import javax.swing.*;
 import javax.swing.tree.TreeCellRenderer;
@@ -35,7 +36,7 @@ public class HighlightableCellRenderer extends HighlightableComponent implements
     setFont(UIUtil.getTreeFont());
     setIcon(null);
 
-    if (tree.getUI() instanceof UIUtil.MacTreeUI && ((UIUtil.MacTreeUI)tree.getUI()).isWideSelection()) {
+    if (tree.getUI() instanceof MacTreeUI && ((MacTreeUI)tree.getUI()).isWideSelection()) {
       setOpaque(false);
       myIsSelected = false;
       myHasFocus = false;

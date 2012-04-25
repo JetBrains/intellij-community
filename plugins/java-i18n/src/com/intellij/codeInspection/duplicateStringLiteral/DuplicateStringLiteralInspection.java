@@ -43,6 +43,7 @@ import com.intellij.util.CommonProcessors;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SmartList;
+import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.StringSearcher;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
@@ -132,10 +133,11 @@ public class DuplicateStringLiteralInspection extends BaseLocalInspectionTool {
     for (PsiFile file : resultFiles) {
       progress.checkCanceled();
       CharSequence text = file.getViewProvider().getContents();
+      final char[] textArray = CharArrayUtil.fromSequenceWithoutCopying(text);
       StringSearcher searcher = new StringSearcher(stringToFind, true, true);
-      for (int offset = LowLevelSearchUtil.searchWord(text, 0, text.length(), searcher, progress);
+      for (int offset = LowLevelSearchUtil.searchWord(text, textArray, 0, text.length(), searcher, progress);
            offset >= 0;
-           offset = LowLevelSearchUtil.searchWord(text, offset + searcher.getPattern().length(), text.length(), searcher, progress)
+           offset = LowLevelSearchUtil.searchWord(text, textArray, offset + searcher.getPattern().length(), text.length(), searcher, progress)
         ) {
         progress.checkCanceled();
         PsiElement element = file.findElementAt(offset);

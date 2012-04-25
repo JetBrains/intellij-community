@@ -35,7 +35,7 @@ import java.io.IOException;
  * Time: 0:05
  * To change this template use File | Settings | File Templates.
  */
-public class IntIntPersistentMaplet implements IntIntMaplet {
+public class IntIntPersistentMaplet extends IntIntMaplet {
   private static final Object NULL_OBJ = new Object();
   private static final int CACHE_SIZE = 512;
   private final PersistentHashMap<Integer, Integer> myMap;

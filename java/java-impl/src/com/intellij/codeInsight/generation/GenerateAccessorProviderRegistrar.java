@@ -15,21 +15,33 @@
  */
 package com.intellij.codeInsight.generation;
 
+import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.psi.PsiClass;
 import com.intellij.util.Function;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.containers.ContainerUtil;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
-import java.util.ArrayList;
 
 /**
  * @author peter
  */
 public class GenerateAccessorProviderRegistrar {
+
+  public final static ExtensionPointName<NotNullFunction<PsiClass, Collection<EncapsulatableClassMember>>> EP_NAME = ExtensionPointName.create("com.intellij.generateAccessorProvider");
+
   private static final List<NotNullFunction<PsiClass, Collection<EncapsulatableClassMember>>> ourProviders = new ArrayList<NotNullFunction<PsiClass, Collection<EncapsulatableClassMember>>>();
 
+  static {
+    ourProviders.addAll(Arrays.asList(Extensions.getExtensions(EP_NAME)));
+  }
+
+  /** @see #EP_NAME */
+  @Deprecated
   public static void registerProvider(NotNullFunction<PsiClass, Collection<EncapsulatableClassMember>> function) {
     ourProviders.add(function);
   }
@@ -41,5 +53,4 @@ public class GenerateAccessorProviderRegistrar {
       }
     });
   }
-
 }

@@ -18,6 +18,7 @@ package com.intellij.execution.impl;
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.UnknownRunConfiguration;
+import com.intellij.openapi.actionSystem.ActionToolbarPosition;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
@@ -28,6 +29,7 @@ import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.containers.hash.HashSet;
@@ -57,9 +59,12 @@ class BeforeRunStepsPanel extends JPanel {
     myListener = listener;
     myModel = new CollectionListModel<BeforeRunTask>();
     myList = new JBList(myModel);
+    myList.getEmptyText().setText(ExecutionBundle.message("before.launch.panel.empty"));
     myList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     myList.setCellRenderer(new MyListCellRenderer());
-    ToolbarDecorator myDecorator = ToolbarDecorator.createDecorator(myList);
+    ToolbarDecorator myDecorator = ToolbarDecorator.createDecorator(myList).setVisibleRowCount(4);
+    if (!SystemInfo.isMac)
+      myDecorator.setToolbarPosition(ActionToolbarPosition.TOP);
     myDecorator.setEditAction(new AnActionButtonRunnable() {
       @Override
       public void run(AnActionButton button) {

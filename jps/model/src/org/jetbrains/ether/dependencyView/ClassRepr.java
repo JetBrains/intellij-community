@@ -19,10 +19,10 @@ import java.util.*;
  */
 public class ClassRepr extends Proto {
   private final DependencyContext context;
-  public final int fileName;
+  private final int fileName;
   public final TypeRepr.AbstractType superClass;
   public final Set<TypeRepr.AbstractType> interfaces;
-  public final Set<TypeRepr.AbstractType> nestedClasses;
+  //public final Set<TypeRepr.AbstractType> nestedClasses;
   public final Set<ElemType> targets;
   public final RetentionPolicy policy;
 
@@ -32,14 +32,14 @@ public class ClassRepr extends Proto {
   public final int outerClassName;
   public final boolean isLocal;
 
-  public String getFileName() {
-    return context.getValue(fileName);
-  }
+  //public String getFileName() {
+  //  return context.getValue(fileName);
+  //}
 
   public abstract static class Diff extends Difference {
     public abstract Specifier<TypeRepr.AbstractType> interfaces();
 
-    public abstract Specifier<TypeRepr.AbstractType> nestedClasses();
+    //public abstract Specifier<TypeRepr.AbstractType> nestedClasses();
 
     public abstract Specifier<FieldRepr> fields();
 
@@ -54,7 +54,7 @@ public class ClassRepr extends Proto {
     public boolean no() {
       return base() == NONE &&
              interfaces().unchanged() &&
-             nestedClasses().unchanged() &&
+             //nestedClasses().unchanged() &&
              fields().unchanged() &&
              methods().unchanged() &&
              targets().unchanged() &&
@@ -100,10 +100,10 @@ public class ClassRepr extends Proto {
         return Difference.make(pastClass.interfaces, interfaces);
       }
 
-      @Override
-      public Difference.Specifier<TypeRepr.AbstractType> nestedClasses() {
-        return Difference.make(pastClass.nestedClasses, nestedClasses);
-      }
+      //@Override
+      //public Difference.Specifier<TypeRepr.AbstractType> nestedClasses() {
+      //  return Difference.make(pastClass.nestedClasses, nestedClasses);
+      //}
 
       @Override
       public Difference.Specifier<FieldRepr> fields() {
@@ -188,7 +188,7 @@ public class ClassRepr extends Proto {
     fileName = fn;
     superClass = TypeRepr.createClassType(context, sup);
     interfaces = (Set<TypeRepr.AbstractType>)TypeRepr.createClassType(context, i, new HashSet<TypeRepr.AbstractType>());
-    nestedClasses = (Set<TypeRepr.AbstractType>)TypeRepr.createClassType(context, ns, new HashSet<TypeRepr.AbstractType>());
+    //nestedClasses = (Set<TypeRepr.AbstractType>)TypeRepr.createClassType(context, ns, new HashSet<TypeRepr.AbstractType>());
     fields = f;
     methods = m;
     this.targets = targets;
@@ -204,7 +204,7 @@ public class ClassRepr extends Proto {
       fileName = in.readInt();
       superClass = TypeRepr.externalizer(context).read(in);
       interfaces = (Set<TypeRepr.AbstractType>)RW.read(TypeRepr.externalizer(context), new HashSet<TypeRepr.AbstractType>(), in);
-      nestedClasses = (Set<TypeRepr.AbstractType>)RW.read(TypeRepr.externalizer(context), new HashSet<TypeRepr.AbstractType>(), in);
+      //nestedClasses = (Set<TypeRepr.AbstractType>)RW.read(TypeRepr.externalizer(context), new HashSet<TypeRepr.AbstractType>(), in);
       fields = (Set<FieldRepr>)RW.read(FieldRepr.externalizer(context), new HashSet<FieldRepr>(), in);
       methods = (Set<MethodRepr>)RW.read(MethodRepr.externalizer(context), new HashSet<MethodRepr>(), in);
       targets = (Set<ElemType>)RW.read(UsageRepr.AnnotationUsage.elementTypeExternalizer, EnumSet.noneOf(ElemType.class), in);
@@ -228,7 +228,7 @@ public class ClassRepr extends Proto {
       out.writeInt(fileName);
       superClass.save(out);
       RW.save(interfaces, out);
-      RW.save(nestedClasses, out);
+      //RW.save(nestedClasses, out);
       RW.save(fields, out);
       RW.save(methods, out);
       RW.save(targets, UsageRepr.AnnotationUsage.elementTypeExternalizer, out);
@@ -273,7 +273,6 @@ public class ClassRepr extends Proto {
 
   public String getPackageName(final int s) {
     return getPackageName(context.getValue(s));
-
   }
 
   public static String getPackageName(final String raw) {
@@ -296,8 +295,8 @@ public class ClassRepr extends Proto {
     return null;
   }
 
-  public Collection<MethodRepr> findMethods (final MethodRepr.Predicate p) {
-    final Collection<MethodRepr> result = new LinkedList<MethodRepr> ();
+  public Collection<MethodRepr> findMethods(final MethodRepr.Predicate p) {
+    final Collection<MethodRepr> result = new LinkedList<MethodRepr>();
 
     for (MethodRepr mm : methods) {
       if (p.satisfy(mm)) {
@@ -320,5 +319,114 @@ public class ClassRepr extends Proto {
         return new ClassRepr(context, in);
       }
     };
+  }
+
+  @Override
+  public void toBuffer(final DependencyContext context, final StringBuffer buf) {
+    super.toBuffer(context, buf);
+
+    buf.append("  Filename   : ");
+    buf.append(context.getValue(fileName));
+    buf.append("\n");
+
+    buf.append("  Superclass : ");
+    buf.append(superClass == null ? "<null>" : superClass.getDescr(context));
+    buf.append("\n");
+
+    buf.append("  Interfaces : ");
+    final TypeRepr.AbstractType[] is = interfaces.toArray(new TypeRepr.AbstractType[interfaces.size()]);
+    Arrays.sort(is, new Comparator<TypeRepr.AbstractType>() {
+      @Override
+      public int compare(final TypeRepr.AbstractType o1, final TypeRepr.AbstractType o2) {
+        return o1.getDescr(context).compareTo(o2.getDescr(context));
+      }
+    });
+    for (final TypeRepr.AbstractType t : is) {
+      buf.append(t.getDescr(context));
+      buf.append("; ");
+    }
+    buf.append("\n");
+
+    buf.append("  Targets    : ");
+    final ElemType[] es = targets.toArray(new ElemType[targets.size()]);
+    Arrays.sort(es);
+    for (final ElemType e : es) {
+      buf.append(e);
+      buf.append("; ");
+    }
+    buf.append("\n");
+
+    buf.append("  Policy     : ");
+    buf.append(policy);
+    buf.append("\n");
+
+    buf.append("  Outer class: ");
+    buf.append(context.getValue(outerClassName));
+    buf.append("\n");
+
+    buf.append("  Local class: ");
+    buf.append(isLocal);
+    buf.append("\n");
+
+    buf.append("  Fields:\n");
+    final FieldRepr[] fs = fields.toArray(new FieldRepr[fields.size()]);
+    Arrays.sort(fs, new Comparator<FieldRepr>() {
+      @Override
+      public int compare(final FieldRepr o1, final FieldRepr o2) {
+        if (o1.name == o2.name) {
+          return o1.type.getDescr(context).compareTo(o2.type.getDescr(context));
+        }
+
+        return o1.name - o2.name;
+      }
+    });
+    for (final FieldRepr f : fs) {
+      f.toBuffer(context, buf);
+    }
+    buf.append("  End Of Fields\n");
+
+    buf.append("  Methods:\n");
+    final MethodRepr[] ms = methods.toArray(new MethodRepr[methods.size()]);
+    Arrays.sort(ms, new Comparator<MethodRepr>() {
+      @Override
+      public int compare(final MethodRepr o1, final MethodRepr o2) {
+        if (o1.name == o2.name) {
+          final String d1 = o1.type.getDescr(context);
+          final String d2 = o2.type.getDescr(context);
+
+          final int c = d1.compareTo(d2);
+
+          if (c == 0) {
+            final int l1 = o1.argumentTypes.length;
+            final int l2 = o2.argumentTypes.length;
+
+            if (l1 == l2) {
+              for (int i = 0; i<l1; i++) {
+                final String d11 = o1.argumentTypes[i].getDescr(context);
+                final String d22 = o2.argumentTypes[i].getDescr(context);
+
+                final int cc = d11.compareTo(d22);
+
+                if (cc != 0) {
+                  return cc;
+                }
+              }
+
+              return 0;
+            }
+
+            return l1 -l2;
+          }
+
+          return c;
+        }
+
+        return o1.name - o2.name;
+      }
+    });
+    for (final MethodRepr m : ms) {
+      m.toBuffer(context, buf);
+    }
+    buf.append("  End Of Methods\n");
   }
 }

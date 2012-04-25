@@ -96,10 +96,10 @@ public class VcsDirectoryConfigurationPanel extends PanelWithButtons implements 
         String directory = mapping.getDirectory();
         VirtualFile baseDir = myProject.getBaseDir();
         if (baseDir != null) {
-          final File directoryFile = new File(directory);
+          final File directoryFile = new File(StringUtil.trimEnd(StringUtil.trimEnd(directory, "/"), "\\") + "/");
           File ioBase = new File(baseDir.getPath());
           if (directoryFile.isAbsolute() && !FileUtil.isAncestor(ioBase, directoryFile, false)) {
-            append(directoryFile.getPath());
+            append(new File(directory).getPath());
             return;
           }
           String relativePath = FileUtil.getRelativePath(ioBase, directoryFile);

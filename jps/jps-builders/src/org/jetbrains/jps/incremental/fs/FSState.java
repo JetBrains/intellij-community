@@ -2,7 +2,7 @@ package org.jetbrains.jps.incremental.fs;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.incremental.storage.TimestampStorage;
+import org.jetbrains.jps.incremental.storage.Timestamps;
 
 import java.io.File;
 import java.io.IOException;
@@ -23,27 +23,27 @@ public class FSState {
     getDelta(rd.module).clearRecompile(rd.root, rd.isTestRoot);
   }
 
-  public boolean markDirty(final File file, final RootDescriptor rd, final @Nullable TimestampStorage tsStorage) throws IOException {
+  public boolean markDirty(final File file, final RootDescriptor rd, final @Nullable Timestamps marker) throws IOException {
     final FilesDelta mainDelta = getDelta(rd.module);
     final boolean marked = mainDelta.markRecompile(rd.root, rd.isTestRoot, file);
-    if (marked && tsStorage != null) {
-      tsStorage.markDirty(file);
+    if (marked && marker != null) {
+      marker.removeStamp(file);
     }
     return marked;
   }
 
-  public boolean markDirtyIfNotDeleted(final File file, final RootDescriptor rd, final @Nullable TimestampStorage tsStorage) throws IOException {
+  public boolean markDirtyIfNotDeleted(final File file, final RootDescriptor rd, final @Nullable Timestamps marker) throws IOException {
     final boolean marked = getDelta(rd.module).markRecompileIfNotDeleted(rd.root, rd.isTestRoot, file);
-    if (marked && tsStorage != null) {
-      tsStorage.markDirty(file);
+    if (marked && marker != null) {
+      marker.removeStamp(file);
     }
     return marked;
   }
 
-  public void registerDeleted(final String moduleName, final File file, final boolean forTests, @Nullable TimestampStorage tsStorage) throws IOException {
+  public void registerDeleted(final String moduleName, final File file, final boolean forTests, @Nullable Timestamps tsStorage) throws IOException {
     getDelta(moduleName).addDeleted(file, forTests);
     if (tsStorage != null) {
-      tsStorage.remove(file);
+      tsStorage.removeStamp(file);
     }
   }
 

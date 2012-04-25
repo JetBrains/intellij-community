@@ -14,7 +14,7 @@ import java.io.IOException;
  * Time: 17:57
  * To change this template use File | Settings | File Templates.
  */
-class Proto implements RW.Savable {
+class Proto implements RW.Savable, StringBufferizable {
   public final int access;
   public final int signature;
   public final int name;
@@ -100,5 +100,19 @@ class Proto implements RW.Savable {
         return Difference.weakerAccess(past.access, access);
       }
     };
+  }
+
+  public void toBuffer (final DependencyContext context, final StringBuffer buf) {
+    buf.append("  Access   : ");
+    buf.append(access);
+    buf.append("\n");
+
+    buf.append("  Signature: ");
+    buf.append(context.getValue(signature));
+    buf.append("\n");
+
+    buf.append("  Name     : ");
+    buf.append(context.getValue(name));
+    buf.append("\n");
   }
 }

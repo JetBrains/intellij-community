@@ -31,6 +31,8 @@ import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
+import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
@@ -99,7 +101,7 @@ public class MavenExternalParameters {
 
     params.setWorkingDirectory(parameters.getWorkingDirFile());
 
-    params.setJdk(getJdk(runnerSettings, project != null && MavenRunner.getInstance(project).getState() == runnerSettings));
+    params.setJdk(getJdk(project, runnerSettings, project != null && MavenRunner.getInstance(project).getState() == runnerSettings));
 
     final String mavenHome = resolveMavenHome(coreSettings, project, runConfiguration);
 
@@ -121,10 +123,27 @@ public class MavenExternalParameters {
   }
 
   @NotNull
-  private static Sdk getJdk(MavenRunnerSettings runnerSettings, boolean isGlobalRunnerSettings) throws ExecutionException {
+  private static Sdk getJdk(@Nullable Project project, MavenRunnerSettings runnerSettings, boolean isGlobalRunnerSettings) throws ExecutionException {
     String name = runnerSettings.getJreName();
     if (name.equals(MavenRunnerSettings.USE_INTERNAL_JAVA)) {
       return JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk();
+    }
+
+    if (name.equals(MavenRunnerSettings.USE_PROJECT_JDK)) {
+      if (project != null) {
+        Sdk res = ProjectRootManager.getInstance(project).getProjectSdk();
+        if (res != null) {
+          return res;
+        }
+      }
+
+      if (project == null) {
+        Sdk recent = ProjectJdkTable.getInstance().findMostRecentSdkOfType(JavaSdk.getInstance());
+        if (recent != null) return recent;
+        return JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk();
+      }
+
+      throw new ProjectJdkSettingsOpenerExecutionException("Project JDK is not specified. <a href='#'>Configure</a>", project);
     }
 
     if (name.equals(MavenRunnerSettings.USE_JAVA_HOME)) {
@@ -352,6 +371,23 @@ public class MavenExternalParameters {
       if (e.getEventType() != HyperlinkEvent.EventType.ACTIVATED) return;
 
       ShowSettingsUtil.getInstance().showSettingsDialog(myProject, MavenSettings.DISPLAY_NAME);
+    }
+  }
+
+  private static class ProjectJdkSettingsOpenerExecutionException extends ExecutionException implements HyperlinkListener {
+
+    private final Project myProject;
+
+    public ProjectJdkSettingsOpenerExecutionException(final String s, Project project) {
+      super(s);
+      myProject = project;
+    }
+
+    @Override
+    public void hyperlinkUpdate(HyperlinkEvent e) {
+      if (e.getEventType() != HyperlinkEvent.EventType.ACTIVATED) return;
+
+      ProjectSettingsService.getInstance(myProject).openProjectSettings();
     }
   }
 

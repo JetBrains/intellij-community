@@ -20,6 +20,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.Gray;
 import com.intellij.ui.mac.foundation.Foundation;
+import com.intellij.util.ui.tree.MacTreeUI;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -250,8 +251,8 @@ public class MacUIUtil {
 
   public static void doNotFillBackground(@NotNull final JTree tree, @NotNull final DefaultTreeCellRenderer renderer) {
     TreeUI ui = tree.getUI();
-    if (ui instanceof UIUtil.MacTreeUI) {
-      if (((UIUtil.MacTreeUI)ui).isWideSelection()) {
+    if (ui instanceof MacTreeUI) {
+      if (((MacTreeUI)ui).isWideSelection()) {
         renderer.setOpaque(false);
         try {
           final Field fillBackground = DefaultTreeCellRenderer.class.getDeclaredField("fillBackground");

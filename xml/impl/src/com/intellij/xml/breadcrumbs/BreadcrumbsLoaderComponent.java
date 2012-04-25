@@ -2,7 +2,6 @@
 package com.intellij.xml.breadcrumbs;
 
 import com.intellij.application.options.editor.WebEditorOptions;
-import com.intellij.lang.html.HTMLLanguage;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.fileEditor.*;
@@ -11,15 +10,11 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.impl.http.HttpVirtualFile;
 import com.intellij.psi.FileViewProvider;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
-import com.intellij.psi.xml.XmlDocument;
-import com.intellij.psi.xml.XmlFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.util.List;
 
 /**
  * @author spleaner
@@ -73,23 +68,7 @@ public class BreadcrumbsLoaderComponent extends AbstractProjectComponent {
 
       final FileViewProvider provider = PsiManager.getInstance(project).findViewProvider(file);
 
-      return provider != null
-             && hasNonEmptyHtml(provider)
-             && BreadcrumbsXmlWrapper.findInfoProvider(provider) != null;
-    }
-
-    public static boolean hasNonEmptyHtml(FileViewProvider viewProvider) {
-      final List<PsiFile> files = viewProvider.getAllFiles();
-
-      if (files.size() < 2) return true; // There is only HTML Language
-
-      for (PsiFile file : files) {
-        if (file.getLanguage() == HTMLLanguage.INSTANCE && file instanceof XmlFile) {
-          final XmlDocument xml = ((XmlFile)file).getDocument();
-          return xml != null && xml.getRootTag() != null;
-        }
-      }
-      return false;
+      return provider != null && BreadcrumbsXmlWrapper.findInfoProvider(provider) != null;
     }
   }
 }

@@ -25,13 +25,13 @@ import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.lookup.*;
-import com.intellij.codeInsight.template.impl.LiveTemplateLookupElement;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.lang.LangBundle;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
@@ -40,7 +40,6 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.event.*;
-import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
@@ -54,7 +53,9 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.DebugUtil;
-import com.intellij.ui.*;
+import com.intellij.ui.LightweightHint;
+import com.intellij.ui.ListScrollingUtil;
+import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBScrollPane;
@@ -63,7 +64,6 @@ import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.util.Alarm;
 import com.intellij.util.CollectConsumer;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.SmartList;
 import com.intellij.util.containers.ConcurrentHashMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.AbstractLayoutManager;
@@ -88,9 +88,7 @@ import java.util.List;
 
 public class LookupImpl extends LightweightHint implements LookupEx, Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.lookup.impl.LookupImpl");
-  private static final int MAX_PREFERRED_COUNT = 5;
 
-  private static final LookupItem EMPTY_LOOKUP_ITEM = LookupItem.fromString("preselect");
   private static final Icon relevanceSortIcon = IconLoader.getIcon("/ide/lookupRelevance.png");
   private static final Icon lexiSortIcon = IconLoader.getIcon("/ide/lookupAlphanumeric.png");
 
@@ -127,8 +125,6 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
   private boolean myShown = false;
   private boolean myDisposed = false;
   private boolean myHidden = false;
-  private final List<LookupElement> myFrozenItems = new ArrayList<LookupElement>();
-  private String mySelectionInvariant = null;
   private boolean mySelectionTouched;
   private boolean myFocused = true;
   private String myAdditionalPrefix = "";
@@ -139,8 +135,8 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
   private volatile String myAdText;
   private volatile int myLookupTextWidth = 50;
   private boolean myChangeGuard;
-  private volatile LookupModel myModel = new LookupModel(EMPTY_LOOKUP_ITEM);
-  private LookupModel myPresentableModel = myModel;
+  private volatile LookupArranger myArranger;
+  private LookupArranger myPresentableArranger;
   @SuppressWarnings("unchecked") private final Map<LookupElement, PrefixMatcher> myMatchers = new ConcurrentHashMap<LookupElement, PrefixMatcher>(TObjectHashingStrategy.IDENTITY);
   private LookupHint myElementHint = null;
   private Alarm myHintAlarm = new Alarm();
@@ -153,7 +149,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
   private int myMaximumHeight = Integer.MAX_VALUE;
   private boolean myFinishing;
 
-  public LookupImpl(Project project, Editor editor, @NotNull LookupArranger arranger){
+  public LookupImpl(Project project, Editor editor, @NotNull LookupArranger arranger) {
     super(new JPanel(new BorderLayout()));
     setForceShowAsPopup(true);
     setCancelOnClickOutside(false);
@@ -162,6 +158,8 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
 
     myProject = project;
     myEditor = editor;
+    myArranger = arranger;
+    myPresentableArranger = arranger;
 
     myIconPanel.setVisible(false);
     myCellRenderer = new LookupCellRenderer(this);
@@ -211,7 +209,6 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     addEmptyItem((DefaultListModel)model);
     updateListHeight(model);
 
-    setArranger(arranger);
 
     addListeners();
 
@@ -257,7 +254,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
   }
 
   public void setArranger(LookupArranger arranger) {
-    myModel.setArranger(arranger);
+    myArranger = arranger;
   }
 
   @Override
@@ -299,7 +296,6 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
       ApplicationManager.getApplication().assertIsDispatchThread();
     }
     mySelectionTouched = true;
-    myPresentableModel.preselectedItem = null;
     myList.repaint();
   }
 
@@ -309,15 +305,13 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
   }
 
   public void resort() {
-    myFrozenItems.clear();
-    
-    myPresentableModel.preselectedItem = EMPTY_LOOKUP_ITEM;
+    final List<LookupElement> items = getItems();
+
     synchronized (myList) {
+      myPresentableArranger.prefixChanged();
       ((DefaultListModel)myList.getModel()).clear();
     }
 
-    final List<LookupElement> items = myPresentableModel.getItems();
-    myPresentableModel.clearItems();
     for (final LookupElement item : items) {
       addItem(item, itemMatcher(item));
     }
@@ -326,17 +320,17 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
 
   public void addItem(LookupElement item, PrefixMatcher matcher) {
     myMatchers.put(item, matcher);
-    myModel.addItem(item);
-
-    updateLookupWidth(item);
+    LookupElementPresentation presentation = updateLookupWidth(item);
+    synchronized (myList) {
+      myArranger.addElement(this, item, presentation);
+    }
   }
 
-  public void updateLookupWidth(LookupElement item) {
+  public LookupElementPresentation updateLookupWidth(LookupElement item) {
     final LookupElementPresentation presentation = renderItemApproximately(item);
     int maxWidth = myCellRenderer.updateMaximumWidth(presentation);
     myLookupTextWidth = Math.max(maxWidth, myLookupTextWidth);
-
-    myModel.setItemPresentation(item, presentation);
+    return presentation;
   }
 
   public void requestResize() {
@@ -390,7 +384,9 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     checkValid();
     myAdditionalPrefix += c;
     myInitialPrefix = null;
-    myFrozenItems.clear();
+    synchronized (myList) {
+      myPresentableArranger.prefixChanged();
+    }
     requestResize();
     refreshUi(false);
     ensureSelectionVisible();
@@ -420,9 +416,13 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
 
     myAdditionalPrefix = myAdditionalPrefix.substring(0, len - 1);
     myInitialPrefix = null;
-    myFrozenItems.clear();
+    boolean shouldUpdate;
+    synchronized (myList) {
+      shouldUpdate = myPresentableArranger == myArranger;
+      myPresentableArranger.prefixChanged();
+    }
     requestResize();
-    if (myPresentableModel == myModel) {
+    if (shouldUpdate) {
       refreshUi(false);
       ensureSelectionVisible();
     }
@@ -436,108 +436,49 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     }
     checkValid();
 
-    final Trinity<List<LookupElement>, Iterable<List<LookupElement>>, Boolean> snapshot = myPresentableModel.getModelSnapshot();
-
-    final LinkedHashSet<LookupElement> items = matchingItems(snapshot.first);
-
-    checkMinPrefixLengthChanges(items);
-
-    boolean hasPreselected = !mySelectionTouched && items.contains(myPresentableModel.preselectedItem);
-    LookupElement oldSelected = mySelectionTouched ? (LookupElement)myList.getSelectedValue() : null;
-    String oldInvariant = mySelectionInvariant;
-
-    LinkedHashSet<LookupElement> model = new LinkedHashSet<LookupElement>();
-    model.addAll(getPrefixItems(items, true));
-    model.addAll(getPrefixItems(items, false));
-
-    myFrozenItems.retainAll(items);
-    model.addAll(myFrozenItems);
-
-    if (!isAlphaSorted()) {
-      addMostRelevantItems(model, snapshot.second);
-      if (hasPreselected) {
-        model.add(myPresentableModel.preselectedItem);
-      }
-    }
-
-    myFrozenItems.clear();
-    if (myShown) {
-      myFrozenItems.addAll(model);
-    }
-
-    if (isAlphaSorted()) {
-      final ArrayList<LookupElement> elements = new ArrayList<LookupElement>(items);
-      Collections.sort(elements, new Comparator<LookupElement>() {
-        @Override
-        public int compare(LookupElement o1, LookupElement o2) {
-          return o1.getLookupString().compareToIgnoreCase(o2.getLookupString());
-        }
-      });
-      model.addAll(elements);
-    } else  {
-      for (List<LookupElement> group : snapshot.second) {
-        for (LookupElement element : group) {
-          if (prefixMatches(element)) {
-            model.add(element);
-          }
-        }
-      }
-    }
-
     DefaultListModel listModel = (DefaultListModel)myList.getModel();
     synchronized (myList) {
-      listModel.clear();
+      Pair<List<LookupElement>, Integer> pair = myPresentableArranger.arrangeItems(this);
+      List<LookupElement> items = pair.first;
+      Integer toSelect = pair.second;
+      if (toSelect == null || toSelect < 0 || items.size() > 0 && toSelect >= items.size()) {
+        LOG.error("Arranger " + myPresentableArranger + " returned invalid selection index=" + toSelect + "; items=" + items);
+      }
 
-      if (!model.isEmpty()) {
-        for (LookupElement element : model) {
+      checkMinPrefixLengthChanges(items);
+      Object[] oldModel = listModel.toArray();
+
+      listModel.clear();
+      if (!items.isEmpty()) {
+        for (LookupElement element : items) {
           listModel.addElement(element);
         }
       }
       else {
         addEmptyItem(listModel);
       }
+
+      updateListHeight(listModel);
+
+      myList.setSelectedIndex(toSelect);
+      return Arrays.equals(oldModel, items.toArray());
     }
 
-    updateListHeight(listModel);
-
-    if (!model.isEmpty()) {
-      LookupElement first = model.iterator().next();
-      if (isFocused() && (!isExactPrefixItem(first, true) || mySelectionTouched || shouldSkip(first))) {
-        restoreSelection(oldSelected, hasPreselected, oldInvariant, snapshot.second);
-      }
-      else {
-        myList.setSelectedIndex(0);
-      }
-    }
-    return snapshot.third;
-  }
-
-  private static boolean shouldSkip(LookupElement element) {
-    return element instanceof LiveTemplateLookupElement && ((LiveTemplateLookupElement)element).sudden;
   }
 
   private boolean isSelectionVisible() {
     return myList.getFirstVisibleIndex() <= myList.getSelectedIndex() && myList.getSelectedIndex() <= myList.getLastVisibleIndex();
   }
 
-  private LinkedHashSet<LookupElement> matchingItems(final List<LookupElement> elements) {
-    final LinkedHashSet<LookupElement> items = new LinkedHashSet<LookupElement>();
-    for (LookupElement element : elements) {
-      if (prefixMatches(element)) {
-        items.add(element);
-      }
-    }
-    return items;
-  }
-
   private boolean checkReused() {
-    if (myPresentableModel != myModel) {
-      myAdditionalPrefix = "";
-      myFrozenItems.clear();
-      myPresentableModel = myModel;
-      return true;
+    synchronized (myList) {
+      if (myPresentableArranger != myArranger) {
+        myPresentableArranger = myArranger;
+        myPresentableArranger.prefixChanged();
+        return true;
+      }
+      return false;
     }
-    return false;
   }
 
   private void checkMinPrefixLengthChanges(Collection<LookupElement> items) {
@@ -552,39 +493,6 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     }
 
     updateLookupStart(minPrefixLength);
-  }
-
-  private void restoreSelection(@Nullable LookupElement oldSelected, boolean choosePreselectedItem, @Nullable String oldInvariant, Iterable<List<LookupElement>> groups) {
-    if (oldSelected != null) {
-      if (oldSelected.isValid()) {
-        myList.setSelectedValue(oldSelected, false);
-        if (myList.getSelectedValue() == oldSelected) {
-          return;
-        }
-      }
-
-      if (oldInvariant != null) {
-        for (LookupElement element : getItems()) {
-          if (oldInvariant.equals(myPresentableModel.getItemPresentationInvariant(element))) {
-            myList.setSelectedValue(element, false);
-            if (myList.getSelectedValue() == element) {
-              return;
-            }
-          }
-        }
-      }
-    }
-
-    LookupElement preselected = myPresentableModel.preselectedItem;
-    if (choosePreselectedItem) {
-      myList.setSelectedValue(preselected, false);
-    } else {
-      myList.setSelectedIndex(doSelectMostPreferableItem(getItems(), groups));
-    }
-
-    if (preselected != null && myShown) {
-      myPresentableModel.preselectedItem = getCurrentItem();
-    }
   }
 
   private void updateListHeight(ListModel model) {
@@ -608,85 +516,19 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     return p;
   }
 
-  private void addMostRelevantItems(final Set<LookupElement> model, final Iterable<List<LookupElement>> sortedItems) {
-    if (model.size() > MAX_PREFERRED_COUNT) return;
-
-    for (final List<LookupElement> elements : sortedItems) {
-      final List<LookupElement> suitable = new SmartList<LookupElement>();
-      for (final LookupElement item : elements) {
-        if (!model.contains(item) && prefixMatches(item)) {
-          suitable.add(item);
-        }
-      }
-
-      if (model.size() + suitable.size() > MAX_PREFERRED_COUNT) break;
-      model.addAll(suitable);
-    }
-  }
-
-  public boolean isFrozen(@NotNull LookupElement element) {
-    return myFrozenItems.contains(element);
-  }
-
-  private List<LookupElement> getPrefixItems(final Collection<LookupElement> elements, final boolean caseSensitive) {
-    List<LookupElement> better = new ArrayList<LookupElement>();
-    for (LookupElement element : elements) {
-      if (isExactPrefixItem(element, caseSensitive)) {
-        better.add(element);
-      }
-    }
-
-    final Comparator<LookupElement> itemComparator = myPresentableModel.getArranger().getItemComparator();
-    if (itemComparator != null) {
-      Collections.sort(better, itemComparator);
-    }
-
-    List<LookupElement> classified = myPresentableModel.classifyByRelevance(better);
-    List<LookupElement> result = new ArrayList<LookupElement>(classified.size());
-    for (LookupElement element : classified) {
-      if (element.getLookupString().equals(itemPattern(element))) {
-        result.add(element);
-      }
-    }
-    for (LookupElement element : classified) {
-      if (!element.getLookupString().equals(itemPattern(element))) {
-        result.add(element);
-      }
-    }
-    return result;
-  }
-
   @NotNull
   @Override
-  public String itemPattern(LookupElement element) {
+  public String itemPattern(@NotNull LookupElement element) {
     return itemMatcher(element).getPrefix() + myAdditionalPrefix;
   }
 
-  private boolean isAlphaSorted() {
-    return isCompletion() && UISettings.getInstance().SORT_LOOKUP_ELEMENTS_LEXICOGRAPHICALLY;
-  }
-
-  private boolean isExactPrefixItem(LookupElement item, final boolean caseSensitive) {
-    final String pattern = itemPattern(item);
-    final Set<String> strings = item.getAllLookupStrings();
-    if (strings.contains(pattern)) {
-      return caseSensitive; //to not add the same elements twice to the model, as sensitive and then as insensitive
-    }
-
-    if (caseSensitive) {
+  @Override
+  public boolean prefixMatches(@NotNull final LookupElement item) {
+    PrefixMatcher matcher = myMatchers.get(item);
+    if (matcher == null) {
       return false;
     }
 
-    for (String s : strings) {
-      if (s.equalsIgnoreCase(pattern)) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  private boolean prefixMatches(final LookupElement item) {
-    PrefixMatcher matcher = itemMatcher(item);
     if (myAdditionalPrefix.length() > 0) {
       matcher = matcher.cloneWithPrefix(itemPattern(item));
     }
@@ -695,7 +537,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
 
   @Override
   @NotNull
-  public PrefixMatcher itemMatcher(LookupElement item) {
+  public PrefixMatcher itemMatcher(@NotNull LookupElement item) {
     PrefixMatcher matcher = myMatchers.get(item);
     if (matcher == null) {
       throw new AssertionError("Item not in lookup: item=" + item + "; lookup items=" + getItems());
@@ -1032,7 +874,6 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
 
         final LookupElement item = getCurrentItem();
         if (oldItem != item) {
-          mySelectionInvariant = item == null ? null : myPresentableModel.getItemPresentationInvariant(item);
           fireCurrentItemChanged(item);
           if (myDisposed) { //a listener may have decided to close us, what can we do?
             return;
@@ -1043,7 +884,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
         }
         oldItem = item;
 
-        if (item != null && LookupImpl.this.isVisible() && LookupImpl.this.isFocused() && !Registry.is("jeka")) {
+        if (item != null && LookupImpl.this.isVisible() && LookupImpl.this.isFocused()) {
           if (extender == null || !extender.isVisible() || !extender.sameAsFor(item)) {
             if (extender != null) extender.hide();
             extender = new CompletionExtender(item, LookupImpl.this);
@@ -1266,9 +1107,17 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
         final int start = offset - presentPrefix.length();
         myEditor.getDocument().replaceString(start, offset, newPrefix);
 
-        Map<LookupElement, PrefixMatcher> newItems = myPresentableModel.retainMatchingItems(newPrefix, LookupImpl.this);
+        Map<LookupElement, PrefixMatcher> newMatchers = new HashMap<LookupElement, PrefixMatcher>();
+        for (LookupElement item : getItems()) {
+          if (item.isValid()) {
+            PrefixMatcher matcher = itemMatcher(item).cloneWithPrefix(newPrefix);
+            if (matcher.prefixMatches(item)) {
+              newMatchers.put(item, matcher);
+            }
+          }
+        }
         myMatchers.clear();
-        myMatchers.putAll(newItems);
+        myMatchers.putAll(newMatchers);
 
         myAdditionalPrefix = "";
 
@@ -1286,7 +1135,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
   }
 
   public boolean isCompletion() {
-    return myModel.getArranger() instanceof CompletionLookupArranger;
+    return myArranger instanceof CompletionLookupArranger;
   }
 
   public PsiElement getPsiElement() {
@@ -1388,29 +1237,11 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     staticDisposeTrace = disposeTrace;
   }
 
-  private int doSelectMostPreferableItem(List<LookupElement> items, Iterable<List<LookupElement>> groups) {
-    if (items.isEmpty()) {
-      return -1;
-    }
-
-    if (items.size() == 1) {
-      return 0;
-    }
-
-    for (int i = 0; i < items.size(); i++) {
-      LookupElement item = items.get(i);
-      if (isExactPrefixItem(item, true) && !shouldSkip(item)) {
-        return i;
-      }
-    }
-
-    final int index = myModel.getArranger().suggestPreselectedItem(items, groups);
-    assert index >= 0 && index < items.size();
-    return index;
-  }
-
   public void refreshUi(boolean mayCheckReused) {
     final boolean reused = mayCheckReused && checkReused();
+    if (reused) {
+      myAdditionalPrefix = "";
+    }
 
     boolean selectionVisible = isSelectionVisible();
 
@@ -1457,7 +1288,9 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
 
   public void markReused() {
     myAdComponent.clearAdvertisements();
-    myModel = new LookupModel(null);
+    synchronized (myList) {
+      myArranger = myArranger.createEmptyCopy();
+    }
     requestResize();
   }
 
@@ -1614,8 +1447,10 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     }
   }
 
-  public LinkedHashMap<LookupElement,StringBuilder> getRelevanceStrings() {
-    return myPresentableModel.getRelevanceStrings();
+  public Map<LookupElement,StringBuilder> getRelevanceStrings() {
+    synchronized (myList) {
+      return myPresentableArranger.getRelevanceStrings();
+    }
   }
 
 }

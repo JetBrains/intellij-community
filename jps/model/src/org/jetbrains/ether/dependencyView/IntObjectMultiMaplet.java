@@ -26,19 +26,48 @@ import java.util.Collection;
  * Time: 21:01
  * To change this template use File | Settings | File Templates.
  */
-interface IntObjectMultiMaplet<V> {
-  boolean containsKey(final int key);
-  Collection<V> get(final int key);
-  void put(final int key, final V value);
-  void put(final int key, final Collection<V> value);
-  void replace(final int key, final Collection<V> value);
-  void putAll(IntObjectMultiMaplet<V> m);
-  void replaceAll(IntObjectMultiMaplet<V> m);
-  void remove(final int key);
-  void removeFrom(final int key, final V value);
-  void removeAll(final int key, final Collection<V> value);
-  void close();
+abstract class IntObjectMultiMaplet<V extends StringBufferizable> implements StringBufferizable {
+  abstract boolean containsKey(final int key);
 
-  void forEachEntry(TIntObjectProcedure<Collection<V>> procedure);
-  void flush(boolean memoryCachesOnly);
+  abstract Collection<V> get(final int key);
+
+  abstract void put(final int key, final V value);
+
+  abstract void put(final int key, final Collection<V> value);
+
+  abstract void replace(final int key, final Collection<V> value);
+
+  abstract void putAll(IntObjectMultiMaplet<V> m);
+
+  abstract void replaceAll(IntObjectMultiMaplet<V> m);
+
+  abstract void remove(final int key);
+
+  abstract void removeFrom(final int key, final V value);
+
+  abstract void removeAll(final int key, final Collection<V> value);
+
+  abstract void close();
+
+  abstract void forEachEntry(TIntObjectProcedure<Collection<V>> procedure);
+
+  abstract void flush(boolean memoryCachesOnly);
+
+  public void toBuffer(final DependencyContext context, final StringBuffer buf) {
+    forEachEntry(new TIntObjectProcedure<Collection<V>>() {
+      @Override
+      public boolean execute(final int a, final Collection<V> b) {
+        buf.append("  Key: ");
+        buf.append(context.getValue(a));
+        buf.append("\n  Values:\n");
+
+        for (final V value : b) {
+          value.toBuffer(context, buf);
+        }
+
+        buf.append("  End Of Values\n");
+        return true;
+      }
+    });
+  }
 }

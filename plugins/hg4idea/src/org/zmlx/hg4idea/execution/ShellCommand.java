@@ -36,6 +36,7 @@ public final class ShellCommand {
     myRunViaBash = runViaBash;
   }
 
+  @NotNull
   public HgCommandResult execute(List<String> commandLine, String dir, Charset charset) throws ShellCommandException, InterruptedException {
     if (commandLine == null || commandLine.isEmpty()) {
       throw new IllegalArgumentException("commandLine is empty");

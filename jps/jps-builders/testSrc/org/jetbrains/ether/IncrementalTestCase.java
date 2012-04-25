@@ -208,7 +208,7 @@ public abstract class IncrementalTestCase extends TestCase {
                             new BuildDataManager(dataStorageRoot, true), new BuildLoggingManager(new ArtifactBuilderLoggerImpl(), javaBuilderLogger));
     try {
       new IncProjectBuilder(
-        projectDescriptor, BuilderRegistry.getInstance(), Collections.<String, String>emptyMap(), CanceledStatus.NULL
+        projectDescriptor, BuilderRegistry.getInstance(), projectDescriptor.timestamps.getStorage(), Collections.<String, String>emptyMap(), CanceledStatus.NULL
       ).build(
         new AllProjectScope(project, Collections.<Artifact>emptySet(), true), false, true, false
       );
@@ -220,7 +220,7 @@ public abstract class IncrementalTestCase extends TestCase {
       }
 
       new IncProjectBuilder(
-        projectDescriptor, BuilderRegistry.getInstance(), Collections.<String, String>emptyMap(), CanceledStatus.NULL
+        projectDescriptor, BuilderRegistry.getInstance(), projectDescriptor.timestamps.getStorage(), Collections.<String, String>emptyMap(), CanceledStatus.NULL
       ).build(
         new AllProjectScope(project, Collections.<Artifact>emptySet(), false), true, false, false
       );

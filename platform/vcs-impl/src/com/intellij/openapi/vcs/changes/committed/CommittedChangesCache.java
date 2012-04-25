@@ -660,6 +660,18 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
     myTaskQueue.run(task);
   }
 
+  public void clearCaches(final Runnable continuation) {
+    myTaskQueue.run(new Runnable() {
+      @Override
+      public void run() {
+        myCachesHolder.clearAllCaches();
+        myCachedIncomingChangeLists.clear();
+        continuation.run();
+        myBus.syncPublisher(COMMITTED_TOPIC).changesCleared();
+      }
+    });
+  }
+
   @Nullable
   public List<CommittedChangeList> getCachedIncomingChanges() {
     return myCachedIncomingChangeLists;
@@ -805,16 +817,20 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
       public void run() {
         refreshIncomingChanges();
 
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          public void run() {
-            myRefreshingIncomingChanges = false;
-            debug("Incoming changes refresh complete, clearing cached incoming changes");
-            notifyReloadIncomingChanges();
-          }
-        }, ModalityState.NON_MODAL, myProject.getDisposed());
+        refreshIncomingUi();
       }
     };
     myTaskQueue.run(task);    
+  }
+
+  private void refreshIncomingUi() {
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
+      public void run() {
+        myRefreshingIncomingChanges = false;
+        debug("Incoming changes refresh complete, clearing cached incoming changes");
+        notifyReloadIncomingChanges();
+      }
+    }, ModalityState.NON_MODAL, myProject.getDisposed());
   }
 
   public void refreshAllCachesAsync(final boolean initIfEmpty, final boolean inBackground) {
@@ -824,13 +840,10 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
         final RefreshResultConsumer notifyConsumer = new RefreshResultConsumer() {
           private VcsException myError = null;
           private int myCount = 0;
+          private int totalChangesCount = 0;
 
           public void receivedChanges(List<CommittedChangeList> changes) {
-            if (changes.size() > 0) {
-              notifyReloadIncomingChanges();
-            } else {
-              myProject.getMessageBus().syncPublisher(CommittedChangesTreeBrowser.ITEMS_RELOADED).emptyRefresh();
-            }
+            totalChangesCount += changes.size();
             checkDone();
           }
 
@@ -842,6 +855,16 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
           private void checkDone() {
             myCount++;
             if (myCount == files.size()) {
+              myTaskQueue.run(new Runnable() {
+                @Override
+                public void run() {
+                  if (totalChangesCount > 0) {
+                    notifyReloadIncomingChanges();
+                  } else {
+                    myProject.getMessageBus().syncPublisher(CommittedChangesTreeBrowser.ITEMS_RELOADED).emptyRefresh();
+                  }
+                }
+              });
               notifyRefreshError(myError);
             }
           }

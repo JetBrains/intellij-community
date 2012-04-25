@@ -575,9 +575,9 @@ public class GlobalInspectionContextImpl extends UserDataHolderBase implements G
         final LocalInspectionsPass pass = new LocalInspectionsPass(file, document, 0,
                                                                    file.getTextLength(), LocalInspectionsPass.EMPTY_PRIORITY_RANGE, true);
         try {
-          final List<InspectionProfileEntry> lTools = new ArrayList<InspectionProfileEntry>();
+          final List<LocalInspectionToolWrapper> lTools = new ArrayList<LocalInspectionToolWrapper>();
           for (Tools tool : localTools) {
-            final InspectionTool enabledTool = (InspectionTool)tool.getEnabledTool(file);
+            final LocalInspectionToolWrapper enabledTool = (LocalInspectionToolWrapper)tool.getEnabledTool(file);
             if (enabledTool != null) {
               lTools.add(enabledTool);
             }

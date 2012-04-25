@@ -15,8 +15,10 @@
  */
 package com.intellij.codeInsight.completion;
 
-import com.intellij.codeInsight.lookup.*;
-import com.intellij.featureStatistics.FeatureUsageTracker;
+import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.LookupElementDecorator;
+import com.intellij.codeInsight.lookup.LookupElementPresentation;
+import com.intellij.codeInsight.lookup.TypedLookupItem;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.ClassConditionKey;
 import com.intellij.openapi.util.text.StringUtil;
@@ -97,8 +99,6 @@ public class JavaChainLookupElement extends LookupElementDecorator<LookupElement
 
   @Override
   public void handleInsert(InsertionContext context) {
-    FeatureUsageTracker.getInstance().triggerFeatureUsed(JavaCompletionFeatures.SECOND_SMART_COMPLETION_CHAIN);
-
     final Document document = context.getEditor().getDocument();
     document.replaceString(context.getStartOffset(), context.getTailOffset(), ";");
     final InsertionContext qualifierContext = CompletionUtil.emulateInsertion(context, context.getStartOffset(), myQualifier);
@@ -138,8 +138,11 @@ public class JavaChainLookupElement extends LookupElementDecorator<LookupElement
       last = element;
       element = element.getParent();
     }
-    PsiExpression expr = PsiTreeUtil.getParentOfType(last, PsiExpression.class, false);
-    if (expr == null || expr.getTextRange().getEndOffset() > endOffset) {
+    PsiExpression expr = PsiTreeUtil.getParentOfType(last, PsiExpression.class, false, PsiClass.class);
+    if (expr == null) {
+      return false;
+    }
+    if (expr.getTextRange().getEndOffset() > endOffset) {
       return true;
     }
 

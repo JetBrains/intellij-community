@@ -29,6 +29,7 @@ import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.search.TextOccurenceProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.StringSearcher;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -154,9 +155,11 @@ public class LowLevelSearchUtil {
       LOG.error("Range for element: '"+scope+"' = "+range+" is out of file '" + file + "' range: " + file.getTextLength());
     }
 
+    final char[] bufferArray = CharArrayUtil.fromSequenceWithoutCopying(buffer);
+
     do {
       if (progress != null) progress.checkCanceled();
-      startOffset  = searchWord(buffer, startOffset, endOffset, searcher, progress);
+      startOffset  = searchWord(buffer, bufferArray, startOffset, endOffset, searcher, progress);
       if (startOffset < 0) {
         return true;
       }
@@ -169,29 +172,42 @@ public class LowLevelSearchUtil {
     return true;
   }
 
-  public static int searchWord(@NotNull CharSequence text, int startOffset, int endOffset, @NotNull StringSearcher searcher, @Nullable ProgressIndicator progress) {
+  public static int searchWord(@NotNull CharSequence text,
+                               int startOffset,
+                               int endOffset,
+                               @NotNull StringSearcher searcher,
+                               @Nullable ProgressIndicator progress) {
+    return searchWord(text, null, startOffset, endOffset, searcher, progress);
+  }
+
+  public static int searchWord(@NotNull CharSequence text,
+                               char[] textArray, int startOffset,
+                               int endOffset,
+                               @NotNull StringSearcher searcher,
+                               @Nullable ProgressIndicator progress) {
     LOG.assertTrue(endOffset <= text.length());
+
     for (int index = startOffset; index < endOffset; index++) {
       if (progress != null) progress.checkCanceled();
       //noinspection AssignmentToForLoopParameter
-      index = searcher.scan(text, index, endOffset);
+      index = searcher.scan(text, textArray, index, endOffset);
       if (index < 0) return -1;
       if (!searcher.isJavaIdentifier()) {
         return index;
       }
 
       if (index > startOffset) {
-        char c = text.charAt(index - 1);
+        char c = textArray != null ? textArray[index - 1]:text.charAt(index - 1);
         if (Character.isJavaIdentifierPart(c) && c != '$') {
-          if (index < 2 || text.charAt(index - 2) != '\\') { //escape sequence
+          if (index < 2 || (textArray != null ? textArray[index - 2]:text.charAt(index - 2)) != '\\') { //escape sequence
             continue;
           }
         }
       }
 
-      String pattern = searcher.getPattern();
-      if (index + pattern.length() < endOffset) {
-        char c = text.charAt(index + pattern.length());
+      final int patternLength = searcher.getPattern().length();
+      if (index + patternLength < endOffset) {
+        char c = textArray != null ? textArray[index + patternLength]:text.charAt(index + patternLength);
         if (Character.isJavaIdentifierPart(c) && c != '$') {
           continue;
         }

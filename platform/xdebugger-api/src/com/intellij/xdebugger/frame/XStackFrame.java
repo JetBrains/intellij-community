@@ -16,7 +16,6 @@
 
 package com.intellij.xdebugger.frame;
 
-import com.intellij.ui.FileColorManager;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.xdebugger.XDebuggerBundle;

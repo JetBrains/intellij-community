@@ -33,7 +33,7 @@
       <action id="tasks.open.in.browser" class="com.intellij.tasks.actions.OpenTaskInBrowserAction" text="Open in _Browser">
         <keyboard-shortcut keymap="$default" first-keystroke="alt shift B"/>
       </action>
-      <action id="tasks.analyze.stacktrace" class="com.intellij.tasks.actions.AnalyzeTaskStacktraceAction" text="Analyze _Stacktrace..."/>
+      <action id="tasks.analyze.stacktrace" class="com.intellij.tasks.actions.AnalyzeTaskStacktraceAction" text="Analyze _Stacktrace From Task..."/>
     </group>
 
     <group id="working.context">

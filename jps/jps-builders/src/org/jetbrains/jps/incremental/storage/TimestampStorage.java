@@ -13,23 +13,25 @@ import java.io.IOException;
  * @author Eugene Zhuravlev
  *         Date: 10/7/11
  */
-public class TimestampStorage extends AbstractStateStorage<File, TimestampValidityState> {
+public class TimestampStorage extends AbstractStateStorage<File, TimestampValidityState> implements Timestamps {
 
   public TimestampStorage(File storePath) throws IOException {
     super(storePath, new FileKeyDescriptor(), new StateExternalizer());
   }
 
+  @Override
   public long getStamp(File file) throws IOException {
     final TimestampValidityState state = getState(file);
     return state != null? state.getTimestamp() : -1L;
   }
 
+  @Override
   public void saveStamp(File file, long timestamp) throws IOException {
     update(file, new TimestampValidityState(timestamp));
   }
 
-  public void markDirty(File file) throws IOException {
-    update(file, null);
+  public void removeStamp(File file) throws IOException {
+    remove(file);
   }
 
   private static class FileKeyDescriptor implements KeyDescriptor<File> {

@@ -179,4 +179,15 @@ abstract class ProtoMember extends Proto {
       }
     };
   }
+
+  public void toBuffer (final DependencyContext context, final StringBuffer buf) {
+    super.toBuffer(context, buf);
+    buf.append("  Type     : ");
+    buf.append(type.getDescr(context));
+    buf.append("\n");
+
+    buf.append("  Value    : ");
+    buf.append(value == null ? "<null>" : value.toString());
+    buf.append("\n");
+  }
 }

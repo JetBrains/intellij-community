@@ -72,6 +72,13 @@ public class CachesHolder {
     }
   }
 
+  public void clearAllCaches() {
+    for (Map.Entry<String, ChangesCacheFile> entry : myCacheFiles.entrySet()) {
+      entry.getValue().delete();
+    }
+    myCacheFiles.clear();
+  }
+
   public List<ChangesCacheFile> getAllCaches() {
     final List<ChangesCacheFile> result = new ArrayList<ChangesCacheFile>();
     iterateAllCaches(new NotNullFunction<ChangesCacheFile, Boolean>() {

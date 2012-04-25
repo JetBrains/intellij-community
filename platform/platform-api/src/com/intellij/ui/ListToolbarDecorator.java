@@ -105,4 +105,10 @@ class ListToolbarDecorator extends ToolbarDecorator {
       }
     }
   }
+
+  @Override
+  public ToolbarDecorator setVisibleRowCount(int rowCount) {
+    myList.setVisibleRowCount(rowCount);
+    return this;
+  }
 }

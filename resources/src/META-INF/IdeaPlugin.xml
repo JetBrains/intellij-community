@@ -47,6 +47,9 @@
 
     <extensionPoint name="overrideImplementsAnnotationsHandler"
                     interface="com.intellij.codeInsight.generation.OverrideImplementsAnnotationsHandler"/>
+    <extensionPoint name="generateAccessorProvider"
+                    interface="com.intellij.util.NotNullFunction"/>
+
     <extensionPoint name="junitPatcher"
                     interface="com.intellij.execution.JUnitPatcher"/>
 

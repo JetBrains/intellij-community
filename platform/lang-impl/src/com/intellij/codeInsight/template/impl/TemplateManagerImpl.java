@@ -17,6 +17,7 @@
 package com.intellij.codeInsight.template.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.codeInsight.template.*;
 import com.intellij.lang.Language;
 import com.intellij.openapi.Disposable;
@@ -435,10 +436,16 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
     }, CodeInsightBundle.message("insert.code.template.command"), null);
   }
 
-  public static List<TemplateImpl> filterApplicableCandidates(PsiFile file, int caretOffset, List<TemplateImpl> candidates) {
+  private static List<TemplateImpl> filterApplicableCandidates(PsiFile file, int caretOffset, List<TemplateImpl> candidates) {
+    if (candidates.isEmpty()) {
+      return candidates;
+    }
+
+    PsiFile copy = insertDummyIdentifier(file, caretOffset, caretOffset);
+
     List<TemplateImpl> result = new ArrayList<TemplateImpl>();
     for (TemplateImpl candidate : candidates) {
-      if (isApplicable(file, caretOffset - candidate.getKey().length(), candidate)) {
+      if (isApplicable(copy, caretOffset - candidate.getKey().length(), candidate)) {
         result.add(candidate);
       }
     }
@@ -539,5 +546,19 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
     }
 
     return result;
+  }
+
+  public static PsiFile insertDummyIdentifier(PsiFile file, final int startOffset, final int endOffset) {
+    file = (PsiFile)file.copy();
+    final Document document = file.getViewProvider().getDocument();
+    assert document != null;
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      public void run() {
+        document.replaceString(startOffset, endOffset, CompletionUtil.DUMMY_IDENTIFIER_TRIMMED);
+      }
+    });
+
+    PsiDocumentManager.getInstance(file.getProject()).commitDocument(document);
+    return file;
   }
 }

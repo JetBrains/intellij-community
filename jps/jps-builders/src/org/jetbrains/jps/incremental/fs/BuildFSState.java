@@ -8,7 +8,7 @@ import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.incremental.CompileContext;
 import org.jetbrains.jps.incremental.CompileScope;
 import org.jetbrains.jps.incremental.FileProcessor;
-import org.jetbrains.jps.incremental.storage.TimestampStorage;
+import org.jetbrains.jps.incremental.storage.Timestamps;
 
 import java.io.File;
 import java.io.IOException;
@@ -55,7 +55,7 @@ public class BuildFSState extends FSState {
   }
 
   @Override
-  public boolean markDirty(File file, final RootDescriptor rd, @Nullable TimestampStorage tsStorage) throws IOException {
+  public boolean markDirty(File file, final RootDescriptor rd, @Nullable Timestamps tsStorage) throws IOException {
     final FilesDelta roundDelta = myCurrentRoundDelta;
     if (roundDelta != null) {
       if (myContextModules.contains(rd.module)) {
@@ -66,7 +66,7 @@ public class BuildFSState extends FSState {
   }
 
   @Override
-  public boolean markDirtyIfNotDeleted(File file, final RootDescriptor rd, @Nullable TimestampStorage tsStorage) throws IOException {
+  public boolean markDirtyIfNotDeleted(File file, final RootDescriptor rd, @Nullable Timestamps tsStorage) throws IOException {
     final boolean marked = super.markDirtyIfNotDeleted(file, rd, tsStorage);
     if (marked) {
       final FilesDelta roundDelta = myCurrentRoundDelta;
@@ -135,7 +135,7 @@ public class BuildFSState extends FSState {
   /**
    * @return true if marked something, false otherwise
    */
-  public boolean markAllUpToDate(CompileScope scope, final RootDescriptor rd, final TimestampStorage tsStorage, final long compilationStartStamp) throws IOException {
+  public boolean markAllUpToDate(CompileScope scope, final RootDescriptor rd, final Timestamps stamps, final long compilationStartStamp) throws IOException {
     boolean marked = false;
     final FilesDelta delta = getDelta(rd.module);
     final Set<File> files = delta.clearRecompile(rd.root, rd.isTestRoot);
@@ -152,7 +152,7 @@ public class BuildFSState extends FSState {
             }
             else {
               marked = true;
-              tsStorage.saveStamp(file, stamp);
+              stamps.saveStamp(file, stamp);
             }
           }
           else {
@@ -160,7 +160,7 @@ public class BuildFSState extends FSState {
           }
         }
         else {
-          tsStorage.remove(file);
+          stamps.removeStamp(file);
         }
       }
     }

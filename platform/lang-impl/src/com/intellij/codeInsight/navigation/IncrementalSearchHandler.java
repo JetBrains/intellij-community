@@ -271,11 +271,11 @@ public class IncrementalSearchHandler {
         StringSearcher searcher = new StringSearcher(prefix, caseSensitive, !searchBack);
 
         if (searchBack) {
-          index = searcher.scan(text.subSequence(0, data.searchStart));
+          index = searcher.scan(text, 0, data.searchStart);
         }
         else {
-          index = searcher.scan(text.subSequence(data.searchStart, length));
-          index = index < 0 ? -1 : index + data.searchStart;
+          index = searcher.scan(text, data.searchStart, length);
+          index = index < 0 ? -1 : index;
         }
         if (index < 0 && !nothingIfFailed) {
           index = searcher.scan(text);

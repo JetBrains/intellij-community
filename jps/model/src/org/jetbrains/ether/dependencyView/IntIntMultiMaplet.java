@@ -17,6 +17,7 @@ package org.jetbrains.ether.dependencyView;
 
 import gnu.trove.TIntHashSet;
 import gnu.trove.TIntObjectProcedure;
+import gnu.trove.TIntProcedure;
 
 /**
  * Created by IntelliJ IDEA.
@@ -25,18 +26,54 @@ import gnu.trove.TIntObjectProcedure;
  * Time: 21:01
  * To change this template use File | Settings | File Templates.
  */
-interface IntIntMultiMaplet {
-  boolean containsKey(final int key);
-  TIntHashSet get(final int key);
-  void put(final int key, final int value);
-  void put(final int key, final TIntHashSet value);
-  void replace(final int key, final TIntHashSet value);
-  void putAll(IntIntMultiMaplet m);
-  void replaceAll(IntIntMultiMaplet m);
-  void remove(final int key);
-  void removeFrom(final int key, final int value);
-  void removeAll(final int key, final TIntHashSet values);
-  void close();
-  void forEachEntry(TIntObjectProcedure<TIntHashSet> proc);
-  void flush(boolean memoryCachesOnly);
+abstract class IntIntMultiMaplet implements StringBufferizable{
+  abstract boolean containsKey(final int key);
+
+  abstract TIntHashSet get(final int key);
+
+  abstract void put(final int key, final int value);
+
+  abstract void put(final int key, final TIntHashSet value);
+
+  abstract void replace(final int key, final TIntHashSet value);
+
+  abstract void putAll(IntIntMultiMaplet m);
+
+  abstract void replaceAll(IntIntMultiMaplet m);
+
+  abstract void remove(final int key);
+
+  abstract void removeFrom(final int key, final int value);
+
+  abstract void removeAll(final int key, final TIntHashSet values);
+
+  abstract void close();
+
+  abstract void forEachEntry(TIntObjectProcedure<TIntHashSet> proc);
+
+  abstract void flush(boolean memoryCachesOnly);
+
+  public void toBuffer(final DependencyContext context, final StringBuffer buf) {
+    forEachEntry(new TIntObjectProcedure<TIntHashSet>() {
+      @Override
+      public boolean execute(final int a, final TIntHashSet b) {
+        buf.append("  Key: ");
+        buf.append(context.getValue(a));
+        buf.append("\n  Values:\n");
+
+        b.forEach(new TIntProcedure() {
+          @Override
+          public boolean execute(final int value) {
+            buf.append("    ");
+            buf.append(context.getValue(value));
+            buf.append("\n");
+
+            return true;
+          }
+        });
+        buf.append("  End Of Values\n");
+        return true;
+      }
+    });
+  }
 }

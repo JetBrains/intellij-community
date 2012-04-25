@@ -26,12 +26,15 @@ import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.changes.ContentRevision;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
@@ -104,6 +107,29 @@ public abstract class ChangesTreeList<T> extends JPanel {
 
     final int checkboxWidth = new JCheckBox().getPreferredSize().width;
     myTree = new Tree(ChangesBrowserNode.create(myProject, ROOT)) {
+
+      @Override
+      public boolean isFileColorsEnabled() {
+        return Registry.is("file.colors.in.commit.dialog")
+          && FileColorManager.getInstance(project).isEnabled()
+          && FileColorManager.getInstance(project).isEnabledForProjectView();
+      }
+
+      @Override
+      protected Color getFileColorFor(Object object) {
+        VirtualFile file = null;
+        if (object instanceof FilePathImpl) {
+          file = LocalFileSystem.getInstance().findFileByPath(((FilePathImpl)object).getPath());
+        } else if (object instanceof Change) {
+          file = ((Change)object).getVirtualFile();
+        }
+
+        if (file != null) {
+          return FileColorManager.getInstance(project).getFileColor(file);
+        }
+        return super.getFileColorFor(object);
+      }
+
       public Dimension getPreferredScrollableViewportSize() {
         Dimension size = super.getPreferredScrollableViewportSize();
         size = new Dimension(size.width + 10, size.height);
@@ -133,7 +159,7 @@ public abstract class ChangesTreeList<T> extends JPanel {
 
     myTree.setRootVisible(false);
     myTree.setShowsRootHandles(true);
-
+    myTree.setOpaque(false);
     myTree.setCellRenderer(new MyTreeCellRenderer());
     new TreeSpeedSearch(myTree, new Convertor<TreePath, String>() {
       public String convert(TreePath o) {
@@ -667,6 +693,7 @@ public abstract class ChangesTreeList<T> extends JPanel {
       }
 
       add(myTextRenderer, BorderLayout.CENTER);
+      setOpaque(false);
     }
 
     public Component getTreeCellRendererComponent(JTree tree,
@@ -683,9 +710,11 @@ public abstract class ChangesTreeList<T> extends JPanel {
       } else {
         setBackground(null);
         myCheckBox.setBackground(null);
+        myCheckBox.setOpaque(false);
       }
 
-
+      myTextRenderer.setOpaque(false);
+      myTextRenderer.setTransparentIconBackground(true);
       myTextRenderer.getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row, hasFocus);
       if (myShowCheckboxes) {
         ChangesBrowserNode node = (ChangesBrowserNode)value;

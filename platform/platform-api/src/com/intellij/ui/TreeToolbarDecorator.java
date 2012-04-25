@@ -43,4 +43,10 @@ class TreeToolbarDecorator extends ToolbarDecorator {
   @Override
   protected void updateButtons() {
   }
+
+  @Override
+  public ToolbarDecorator setVisibleRowCount(int rowCount) {
+    myTree.setVisibleRowCount(rowCount);
+    return this;
+  }
 }
