@@ -784,6 +784,30 @@ public abstract class ChangesTreeList<T> extends JPanel {
             append(part.getFirst(), part.getSecond().derive(SimpleTextAttributes.GRAYED_ATTRIBUTES));
           }
         }
+
+        @Override
+        public Component getListCellRendererComponent(JList list,
+                                                      Object value,
+                                                      int index,
+                                                      boolean selected,
+                                                      boolean hasFocus) {
+          final Component component = super.getListCellRendererComponent(list, value, index, selected, hasFocus);
+          final FileColorManager colorManager = FileColorManager.getInstance(myProject);
+          if (!selected) {
+            if (Registry.is("file.colors.in.commit.dialog") && colorManager.isEnabled() && colorManager.isEnabledForProjectView()) {
+              if (value instanceof Change) {
+                final VirtualFile file = ((Change)value).getVirtualFile();
+                if (file != null) {
+                  final Color color = colorManager.getFileColor(file);
+                  if (color != null) {
+                      component.setBackground(color);
+                  }
+                }
+              }
+            }
+          }
+          return component;
+        }
       };
 
       myCheckbox.setBackground(null);
