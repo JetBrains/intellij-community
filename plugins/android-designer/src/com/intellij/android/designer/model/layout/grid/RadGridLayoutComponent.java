@@ -21,9 +21,12 @@ import com.intellij.android.designer.model.RadViewComponent;
 import com.intellij.android.designer.model.RadViewContainer;
 import com.intellij.android.designer.model.grid.GridInfo;
 import com.intellij.android.designer.model.grid.IGridProvider;
+import com.intellij.designer.model.IComponentDecorator;
 import com.intellij.designer.model.RadComponent;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.ui.ColoredTreeCellRenderer;
 
 import java.awt.*;
 import java.lang.reflect.Field;
@@ -32,9 +35,26 @@ import java.lang.reflect.Method;
 /**
  * @author Alexander Lobas
  */
-public class RadGridLayoutComponent extends RadViewContainer implements IGridProvider {
+public class RadGridLayoutComponent extends RadViewContainer implements IComponentDecorator, IGridProvider {
   private GridInfo myGridInfo;
   private GridInfo myVirtualGridInfo;
+
+  @Override
+  public void decorateTree(ColoredTreeCellRenderer renderer) {
+    XmlTag tag = getTag();
+    StringBuilder value = new StringBuilder(" (");
+
+    String rowCount = tag.getAttributeValue("android:rowCount");
+    value.append(StringUtil.isEmpty(rowCount) ? "?" : rowCount).append(", ");
+
+    String columnCount = tag.getAttributeValue("android:columnCount");
+    value.append(StringUtil.isEmpty(columnCount) ? "?" : columnCount).append(", ");
+
+    String orientation = tag.getAttributeValue("android:orientation");
+    value.append(StringUtil.isEmpty(orientation) ? "horizontal" : orientation);
+
+    renderer.append(value.append(")").toString());
+  }
 
   @Override
   public void setViewInfo(ViewInfo viewInfo) {
@@ -68,12 +88,14 @@ public class RadGridLayoutComponent extends RadViewContainer implements IGridPro
         field_locations.setAccessible(true);
 
         myGridInfo.vLines = (int[])field_locations.get(horizontalAxis);
+        myGridInfo.emptyColumns = configureEmptyLines(myGridInfo.vLines);
 
         Field field_verticalAxis = viewClass.getDeclaredField("verticalAxis");
         field_verticalAxis.setAccessible(true);
         Object verticalAxis = field_verticalAxis.get(viewObject);
 
         myGridInfo.hLines = (int[])field_locations.get(verticalAxis);
+        myGridInfo.emptyRows = configureEmptyLines(myGridInfo.hLines);
 
         Rectangle bounds = getBounds();
 
@@ -94,6 +116,32 @@ public class RadGridLayoutComponent extends RadViewContainer implements IGridPro
       }
     }
     return myGridInfo;
+  }
+
+  private static boolean[] configureEmptyLines(int[] lines) {
+    boolean[] empty = new boolean[lines.length - 1];
+
+    for (int i = 0; i < empty.length; i++) {
+      int line_i = lines[i];
+      int length = lines[i + 1] - line_i;
+      empty[i] = length == 0;
+
+      if (length == 0) {
+        int startMove = i + 1;
+        while (startMove < lines.length && line_i == lines[startMove]) {
+          startMove++;
+        }
+
+        for (int j = i + 1; j < startMove; j++) {
+          lines[j] += 3;
+        }
+        for (int j = startMove; j < lines.length; j++) {
+          lines[j] -= 3;
+        }
+      }
+    }
+
+    return empty;
   }
 
   @Override

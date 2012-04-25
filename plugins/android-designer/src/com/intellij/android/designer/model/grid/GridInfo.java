@@ -27,7 +27,9 @@ public class GridInfo {
 
   public int[] hLines = ArrayUtil.EMPTY_INT_ARRAY;
   public int[] vLines = ArrayUtil.EMPTY_INT_ARRAY;
+
   public boolean[] emptyColumns = ArrayUtil.EMPTY_BOOLEAN_ARRAY;
+  public boolean[] emptyRows = ArrayUtil.EMPTY_BOOLEAN_ARRAY;
 
   public RadComponent[][] components;
   public int lastRow = -1;

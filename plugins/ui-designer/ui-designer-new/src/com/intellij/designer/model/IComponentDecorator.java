@@ -13,15 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.android.designer.model.layout.grid;
+package com.intellij.designer.model;
 
-import com.intellij.android.designer.model.grid.RadCaptionRow;
+import com.intellij.ui.ColoredTreeCellRenderer;
 
 /**
  * @author Alexander Lobas
  */
-public class RadCaptionGridRow extends RadCaptionRow<RadGridLayoutComponent> {
-  public RadCaptionGridRow(RadGridLayoutComponent container, int index, int offset, int width, boolean empty) {
-    super(container, index, offset, width, empty);
-  }
+public interface IComponentDecorator {
+  void decorateTree(ColoredTreeCellRenderer renderer);
 }
