@@ -529,6 +529,10 @@ public class PythonCompletionTest extends PyTestCase {
     doTest();
   }
 
+  public void testDunderAllReferenceImport() {  // PY-6306
+    doTest();
+  }
+
   public void testOldStyleClassAttributes() {
     doTest();
   }
