@@ -102,6 +102,10 @@ public class PyUnresolvedReferencesInspectionTest extends PyTestCase {
     doTest();
   }
 
+  public void testCompoundDunderAll() {  // PY-6370
+    doTest();
+  }
+
   private void doMultiFileTest() {
     myFixture.copyFileToProject("inspections/PyUnresolvedReferencesInspection/__init__.py", "PyUnresolvedReferencesInspection/__init__.py");
     myFixture.copyFileToProject("inspections/PyUnresolvedReferencesInspection/" + getTestName(true) + ".py",
