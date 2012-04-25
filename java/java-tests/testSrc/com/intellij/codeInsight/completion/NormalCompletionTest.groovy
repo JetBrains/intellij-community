@@ -638,6 +638,13 @@ public class ListUtils {
     assert lookup.currentItem != myFixture.lookupElements[0]
     assert 'finalize' == lookup.currentItem.lookupString
   }
+
+  public void testNoMethodsInNonStaticImports() {
+    configure()
+    assertStringItems("*")
+  }
+
+  public void testMembersInStaticImports() { doTest() }
   
   public void testPackageNamedVariableBeforeAssignment() throws Throwable {
     doTest();

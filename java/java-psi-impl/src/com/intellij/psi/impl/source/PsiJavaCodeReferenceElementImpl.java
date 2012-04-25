@@ -764,7 +764,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
   @Override
   public void processVariants(final PsiScopeProcessor processor) {
     final OrFilter filter = new OrFilter();
-    if (isInCode()) {
+    if (isInCode() && !(getParent() instanceof PsiImportStatement)) {
       filter.addFilter(new AndFilter(ElementClassFilter.METHOD, new NotFilter(new ConstructorFilter())));
       filter.addFilter(ElementClassFilter.VARIABLE);
     }

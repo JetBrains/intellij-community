@@ -449,7 +449,7 @@ public class JavaCompletionUtil {
 
     final Set<PsiMember> mentioned = new THashSet<PsiMember>();
     for (CompletionElement completionElement : processor.getResults()) {
-      LookupElement item = createLookupElement(completionElement);
+      LookupElement item = createLookupElement(completionElement, javaReference);
       if (item != null) {
         item.putUserData(QUALIFIER_TYPE_ATTR, qualifierType);
         final Object o = item.getObject();
@@ -603,10 +603,15 @@ public class JavaCompletionUtil {
       }), 1);
   }
 
-  private static LookupElement createLookupElement(CompletionElement completionElement) {
+  private static LookupElement createLookupElement(CompletionElement completionElement, PsiJavaReference reference) {
     Object completion = completionElement.getElement();
     assert !(completion instanceof LookupElement);
 
+    if (completion instanceof PsiMethod &&
+        reference instanceof PsiJavaCodeReferenceElement &&
+        ((PsiJavaCodeReferenceElement)reference).getParent() instanceof PsiImportStaticStatement) {
+      return JavaLookupElementBuilder.forMethod((PsiMethod)completion, PsiSubstitutor.EMPTY);
+    }
 
     LookupElement _ret = LookupItemUtil.objectToLookupItem(completion);
     if (_ret == null || !(_ret instanceof LookupItem)) return null;
