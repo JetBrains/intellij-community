@@ -1288,6 +1288,10 @@ public abstract class ChooseByNameBase {
     }
 
     private void fillInCommonPrefix(@NotNull final String pattern) {
+      if (StringUtil.isEmpty(pattern) && !canShowListForEmptyPattern()) {
+        return;
+      }
+
       final List<String> list = myProvider.filterNames(ChooseByNameBase.this, getNames(myCheckBox.isSelected()), pattern);
 
       if (isComplexPattern(pattern)) return; //TODO: support '*'

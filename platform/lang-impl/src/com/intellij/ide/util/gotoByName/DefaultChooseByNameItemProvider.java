@@ -197,7 +197,7 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
                                  String pattern)
     throws ProcessCanceledException {
     if (!base.canShowListForEmptyPattern()) {
-      LOG.assertTrue(!pattern.isEmpty());
+      LOG.assertTrue(!pattern.isEmpty(), base);
     }
 
     if (pattern.startsWith("@")) {
