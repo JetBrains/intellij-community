@@ -289,7 +289,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
       paintFileColorGutter(g);
     }
 
-    super.paintComponent(new Graphics2DLog(g));
+    super.paintComponent(g);
     myEmptyText.paint(this, g);
   }
 
