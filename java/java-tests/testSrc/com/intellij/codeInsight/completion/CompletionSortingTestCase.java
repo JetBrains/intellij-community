@@ -8,6 +8,7 @@ import com.intellij.codeInsight.completion.impl.CompletionServiceImpl;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
+import com.intellij.ide.ui.UISettings;
 import com.intellij.testFramework.TestDataPath;
 import org.jetbrains.annotations.NonNls;
 
@@ -26,6 +27,7 @@ public abstract class CompletionSortingTestCase extends LightFixtureCompletionTe
   @Override
   protected void tearDown() throws Exception {
     LookupManager.getInstance(getProject()).hideActiveLookup();
+    UISettings.getInstance().SORT_LOOKUP_ELEMENTS_LEXICOGRAPHICALLY = false;
     super.tearDown();
   }
 

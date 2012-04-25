@@ -12,6 +12,7 @@ import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.ide.ui.UISettings
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiMethod
+import com.intellij.codeInsight.lookup.LookupElementPresentation
 
 public class NormalCompletionOrderingTest extends CompletionSortingTestCase {
   private static final String BASE_PATH = "/codeInsight/completion/normalSorting";
@@ -251,29 +252,32 @@ public class NormalCompletionOrderingTest extends CompletionSortingTestCase {
   public void testPreselectMostRelevantInTheMiddleAlpha() {
     UISettings.getInstance().SORT_LOOKUP_ELEMENTS_LEXICOGRAPHICALLY = true;
 
-    try {
-      myFixture.addClass("package foo; public class Elaaaaaaaaaaaaaaaaaaaa {}");
-      invokeCompletion(getTestName(false) + ".java");
-      myFixture.completeBasic();
-      LookupImpl lookup = getLookup();
-      assertPreferredItems(lookup.getList().getSelectedIndex());
-      assertEquals("Elaaaaaaaaaaaaaaaaaaaa", lookup.getItems().get(0).getLookupString());
-      assertEquals("ELEMENT_A", lookup.getCurrentItem().getLookupString());
-    }
-    finally {
-      UISettings.getInstance().SORT_LOOKUP_ELEMENTS_LEXICOGRAPHICALLY = false;
-    }
+    myFixture.addClass("package foo; public class Elaaaaaaaaaaaaaaaaaaaa {}");
+    invokeCompletion(getTestName(false) + ".java");
+    myFixture.completeBasic();
+    LookupImpl lookup = getLookup();
+    assertPreferredItems(lookup.getList().getSelectedIndex());
+    assertEquals("Elaaaaaaaaaaaaaaaaaaaa", lookup.getItems().get(0).getLookupString());
+    assertEquals("ELEMENT_A", lookup.getCurrentItem().getLookupString());
   }
 
   public void testReallyAlphaSorting() {
     UISettings.getInstance().SORT_LOOKUP_ELEMENTS_LEXICOGRAPHICALLY = true;
 
-    try {
-      invokeCompletion(getTestName(false) + ".java");
-      assert myFixture.lookupElementStrings.sort() == myFixture.lookupElementStrings
+    invokeCompletion(getTestName(false) + ".java");
+    assert myFixture.lookupElementStrings.sort() == myFixture.lookupElementStrings
+  }
+
+  public void testAlphaSortPackages() {
+    UISettings.getInstance().SORT_LOOKUP_ELEMENTS_LEXICOGRAPHICALLY = true
+
+    def pkgs = ['bar', 'foo', 'goo', 'roo', 'zoo']
+    for (s in pkgs) {
+      myFixture.addClass("package $s; public class Foox {}")
     }
-    finally {
-      UISettings.getInstance().SORT_LOOKUP_ELEMENTS_LEXICOGRAPHICALLY = false;
+    invokeCompletion(getTestName(false) + ".java")
+    for (i in 0..<pkgs.size()) {
+      assert LookupElementPresentation.renderElement(myFixture.lookupElements[i]).tailText?.contains(pkgs[i])
     }
   }
 

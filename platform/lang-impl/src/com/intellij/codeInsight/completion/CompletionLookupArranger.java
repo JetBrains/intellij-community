@@ -139,6 +139,11 @@ public class CompletionLookupArranger extends LookupArranger {
     List<LookupElement> items = matchingItems(lookup);
     Collections.sort(items, new Comparator<LookupElement>() {
       public int compare(LookupElement o1, LookupElement o2) {
+        if (isAlphaSorted()) {
+          String invariant = PRESENTATION_INVARIANT.get(o1);
+          assert invariant != null;
+          return invariant.compareToIgnoreCase(PRESENTATION_INVARIANT.get(o2));
+        }
         //noinspection unchecked
         return mySortingWeights.get(o1).compareTo(mySortingWeights.get(o2));
       }
@@ -175,12 +180,6 @@ public class CompletionLookupArranger extends LookupArranger {
     }
 
     if (isAlphaSorted()) {
-      Collections.sort(items, new Comparator<LookupElement>() {
-        @Override
-        public int compare(LookupElement o1, LookupElement o2) {
-          return o1.getLookupString().compareToIgnoreCase(o2.getLookupString());
-        }
-      });
       model.addAll(items);
     } else  {
       model.addAll(byRelevance);
