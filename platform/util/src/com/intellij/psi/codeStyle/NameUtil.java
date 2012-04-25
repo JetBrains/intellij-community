@@ -402,7 +402,7 @@ public class NameUtil {
     return buildMatcher(pattern, options);
   }
 
-  private static com.intellij.util.text.Matcher buildMatcher(final String pattern, MatchingCaseSensitivity options) {
+  public static MinusculeMatcher buildMatcher(final String pattern, MatchingCaseSensitivity options) {
     return new MinusculeMatcher(pattern, options);
   }
 

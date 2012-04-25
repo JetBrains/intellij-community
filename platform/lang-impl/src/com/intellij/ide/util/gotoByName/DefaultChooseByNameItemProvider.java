@@ -23,7 +23,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.codeStyle.NameUtil;
-import com.intellij.psi.codeStyle.NameUtil.Matcher;
 import com.intellij.psi.util.proximity.PsiProximityComparator;
 import com.intellij.util.Function;
 import com.intellij.util.Processor;
@@ -102,6 +101,7 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
   private void sortByProximity(ChooseByNameBase base, final List<Object> sameNameElements) {
     final ChooseByNameModel model = base.getModel();
     if (model instanceof Comparator) {
+      //noinspection unchecked
       Collections.sort(sameNameElements, (Comparator)model);
     } else {
       Collections.sort(sameNameElements, new PathProximityComparator(model, myContext.get()));
@@ -110,11 +110,11 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
 
   private static String getQualifierPattern(ChooseByNameBase base, String pattern) {
     final String[] separators = base.getModel().getSeparators();
-    int lastSeparatorOccurence = 0;
+    int lastSeparatorOccurrence = 0;
     for (String separator : separators) {
-      lastSeparatorOccurence = Math.max(lastSeparatorOccurence, pattern.lastIndexOf(separator));
+      lastSeparatorOccurrence = Math.max(lastSeparatorOccurrence, pattern.lastIndexOf(separator));
     }
-    return pattern.substring(0, lastSeparatorOccurence);
+    return pattern.substring(0, lastSeparatorOccurrence);
   }
 
   public static String getNamePattern(ChooseByNameBase base, String pattern) {
@@ -122,13 +122,13 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
 
     ChooseByNameModel model = base.getModel();
     final String[] separators = model.getSeparators();
-    int lastSeparatorOccurence = 0;
+    int lastSeparatorOccurrence = 0;
     for (String separator : separators) {
       final int idx = pattern.lastIndexOf(separator);
-      lastSeparatorOccurence = Math.max(lastSeparatorOccurence, idx == -1 ? idx : idx + separator.length());
+      lastSeparatorOccurrence = Math.max(lastSeparatorOccurrence, idx == -1 ? idx : idx + separator.length());
     }
 
-    return pattern.substring(lastSeparatorOccurence);
+    return pattern.substring(lastSeparatorOccurrence);
   }
 
   private static List<String> split(String s, ChooseByNameBase base) {
@@ -147,14 +147,11 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
     if (name == null) return false;
 
     final List<String> suspects = split(name, base);
-    final List<Pair<String, Matcher>> patternsAndMatchers =
-      ContainerUtil.map2List(split(qualifierPattern, base), new Function<String, Pair<String, Matcher>>() {
+    final List<Pair<String, NameUtil.MinusculeMatcher>> patternsAndMatchers =
+      ContainerUtil.map2List(split(qualifierPattern, base), new Function<String, Pair<String, NameUtil.MinusculeMatcher>>() {
         @Override
-        public Pair<String, NameUtil.Matcher> fun(String s) {
-          final String pattern = getNamePattern(base, s);
-          final NameUtil.Matcher matcher = buildPatternMatcher(pattern);
-
-          return new Pair<String, NameUtil.Matcher>(pattern, matcher);
+        public Pair<String, NameUtil.MinusculeMatcher> fun(String s) {
+          return Pair.create(getNamePattern(base, s), buildPatternMatcher(getNamePattern(base, s)));
         }
       });
 
@@ -162,9 +159,9 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
 
     try {
       patterns:
-      for (Pair<String, NameUtil.Matcher> patternAndMatcher : patternsAndMatchers) {
+      for (Pair<String, NameUtil.MinusculeMatcher> patternAndMatcher : patternsAndMatchers) {
         final String pattern = patternAndMatcher.first;
-        final NameUtil.Matcher matcher = patternAndMatcher.second;
+        final NameUtil.MinusculeMatcher matcher = patternAndMatcher.second;
         if (!pattern.isEmpty()) {
           for (int j = matchPosition; j < suspects.size() - 1; j++) {
             String suspect = suspects.get(j);
@@ -195,7 +192,7 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
 
   private static void getNamesByPattern(ChooseByNameBase base,
                                  String[] names,
-                                 Computable<Boolean> cancelled,
+                                 @Nullable Computable<Boolean> cancelled,
                                  final List<String> list,
                                  String pattern)
     throws ProcessCanceledException {
@@ -207,7 +204,7 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
       pattern = pattern.substring(1);
     }
 
-    final NameUtil.Matcher matcher = buildPatternMatcher(pattern);
+    final NameUtil.MinusculeMatcher matcher = buildPatternMatcher(pattern);
 
     try {
       for (String name : names) {
@@ -224,7 +221,7 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
     }
   }
 
-  private static boolean matches(ChooseByNameBase base, String pattern, Matcher matcher, String name) {
+  private static boolean matches(ChooseByNameBase base, String pattern, NameUtil.MinusculeMatcher matcher, String name) {
     boolean matches = false;
     if (name != null) {
       if (base.getModel() instanceof CustomMatcherModel) {
@@ -239,8 +236,8 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
     return matches;
   }
 
-  private static NameUtil.Matcher buildPatternMatcher(String pattern) {
-    return NameUtil.buildMatcher(pattern, 0, true, true, pattern.toLowerCase().equals(pattern));
+  private static NameUtil.MinusculeMatcher buildPatternMatcher(String pattern) {
+    return NameUtil.buildMatcher(pattern, NameUtil.MatchingCaseSensitivity.NONE);
   }
 
   private static class MatchesComparator implements Comparator<String> {
