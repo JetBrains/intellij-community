@@ -31,6 +31,7 @@ import com.intellij.ui.ColoredTreeCellRenderer;
 import java.awt.*;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.util.Arrays;
 
 /**
  * @author Alexander Lobas
@@ -118,12 +119,15 @@ public class RadGridLayoutComponent extends RadViewContainer implements ICompone
     return myGridInfo;
   }
 
+  private static final int EMPTY_CELL = 5;
+
   private static boolean[] configureEmptyLines(int[] lines) {
     boolean[] empty = new boolean[lines.length - 1];
+    int[] originalLines = Arrays.copyOf(lines, lines.length);
 
     for (int i = 0; i < empty.length; i++) {
-      int line_i = lines[i];
-      int length = lines[i + 1] - line_i;
+      int line_i = originalLines[i];
+      int length = originalLines[i + 1] - line_i;
       empty[i] = length == 0;
 
       if (length == 0) {
@@ -132,11 +136,13 @@ public class RadGridLayoutComponent extends RadViewContainer implements ICompone
           startMove++;
         }
 
-        for (int j = i + 1; j < startMove; j++) {
-          lines[j] += 3;
+        for (int j = i + 1; j < lines.length; j++) {
+          lines[j] += EMPTY_CELL;
         }
         for (int j = startMove; j < lines.length; j++) {
-          lines[j] -= 3;
+          if (lines[j - 1] < lines[j] - 2 * EMPTY_CELL) {
+            lines[j] -= 2 * EMPTY_CELL;
+          }
         }
       }
     }
@@ -222,17 +228,6 @@ public class RadGridLayoutComponent extends RadViewContainer implements ICompone
     return cellInfo;
   }
 
-  public static void setGridSize(final RadViewComponent container, final int rowCount, final int columnCount) {
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        XmlTag tag = container.getTag();
-        tag.setAttribute("android:rowCount", Integer.toString(rowCount));
-        tag.setAttribute("android:columnCount", Integer.toString(columnCount));
-      }
-    });
-  }
-
   public static void setCellIndex(final RadComponent component, final int row, final int column) {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override
@@ -240,6 +235,37 @@ public class RadGridLayoutComponent extends RadViewContainer implements ICompone
         XmlTag tag = ((RadViewComponent)component).getTag();
         tag.setAttribute("android:layout_row", Integer.toString(row));
         tag.setAttribute("android:layout_column", Integer.toString(column));
+        ModelParser.deleteAttribute(tag, "android:layout_rowSpan");
+        ModelParser.deleteAttribute(tag, "android:layout_columnSpan");
+      }
+    });
+  }
+
+  public static int getSpan(RadComponent component, boolean row) {
+    try {
+      String span = ((RadViewComponent)component).getTag().getAttributeValue(row ? "android:layout_rowSpan" : "android:layout_columnSpan");
+      return Integer.parseInt(span);
+    }
+    catch (Throwable e) {
+      return 1;
+    }
+  }
+
+  public static void setSpan(final RadComponent component, final int span, final boolean row) {
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
+      public void run() {
+        XmlTag tag = ((RadViewComponent)component).getTag();
+        tag.setAttribute(row ? "android:layout_rowSpan" : "android:layout_columnSpan", Integer.toString(span));
+      }
+    });
+  }
+
+  public static void clearCellSpans(final RadComponent component) {
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
+      public void run() {
+        XmlTag tag = ((RadViewComponent)component).getTag();
         ModelParser.deleteAttribute(tag, "android:layout_rowSpan");
         ModelParser.deleteAttribute(tag, "android:layout_columnSpan");
       }
