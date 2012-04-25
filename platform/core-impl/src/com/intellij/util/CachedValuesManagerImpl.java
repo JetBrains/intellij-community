@@ -49,10 +49,9 @@ public class CachedValuesManagerImpl extends CachedValuesManager {
   @Override
   @Nullable
   public <T, D extends UserDataHolder> T getCachedValue(@NotNull D dataHolder,
-                              @NotNull Key<CachedValue<T>> key,
-                              @NotNull CachedValueProvider<T> provider,
-                              boolean trackValue) {
-
+                                                        @NotNull Key<CachedValue<T>> key,
+                                                        @NotNull CachedValueProvider<T> provider,
+                                                        boolean trackValue) {
     CachedValue<T> value;
     if (dataHolder instanceof UserDataHolderEx) {
       UserDataHolderEx dh = (UserDataHolderEx)dataHolder;

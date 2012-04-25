@@ -21,8 +21,11 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NotNullLazyKey;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.UserDataHolderEx;
-import org.jetbrains.annotations.NonNls;
+import com.intellij.util.ConcurrencyUtil;
+import com.intellij.util.containers.ConcurrentHashMap;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.concurrent.ConcurrentMap;
 
 public abstract class CachedValuesManager {
   private static final NotNullLazyKey<CachedValuesManager, Project> INSTANCE_KEY = ServiceManager.createLazyKey(CachedValuesManager.class);
@@ -83,31 +86,21 @@ public abstract class CachedValuesManager {
    * @return up-to-date value.
    */
   public abstract <T, D extends UserDataHolder> T getCachedValue(@NotNull D dataHolder,
-                              @NotNull Key<CachedValue<T>> key,
-                              @NotNull CachedValueProvider<T> provider,
-                              boolean trackValue);
+                                                                 @NotNull Key<CachedValue<T>> key,
+                                                                 @NotNull CachedValueProvider<T> provider,
+                                                                 boolean trackValue);
 
-  public <T, D extends UserDataHolder> T getCachedValue(@NotNull D dataHolder,
-                              @NotNull CachedValueProvider<T> provider) {
-    return getCachedValue(dataHolder, new MemoizationKey<CachedValue<T>>(provider.getClass().getName()), provider, false);
+  public <T, D extends UserDataHolder> T getCachedValue(@NotNull D dataHolder, @NotNull CachedValueProvider<T> provider) {
+    return getCachedValue(dataHolder, getKey(provider), provider, false);
   }
 
-  public static class MemoizationKey<T> extends Key<T> {
-    private final String myName;
-
-    public MemoizationKey(@NotNull @NonNls String name) {
-      super(name);
-      myName = name;
+  private final ConcurrentMap<String, Key<CachedValue>> keyForProvider = new ConcurrentHashMap<String, Key<CachedValue>>();
+  private <T> Key<CachedValue<T>> getKey(@NotNull CachedValueProvider<T> provider) {
+    String name = provider.getClass().getName();
+    Key<CachedValue> key = keyForProvider.get(name);
+    if (key == null) {
+      key = ConcurrencyUtil.cacheOrGet(keyForProvider, name, Key.<CachedValue>create(name));
     }
-
-    public int hashCode() {
-      return myName.hashCode();
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-      return obj instanceof MemoizationKey && myName.equals(((MemoizationKey)obj).myName);
-    }
+    return (Key)key;
   }
-
 }
