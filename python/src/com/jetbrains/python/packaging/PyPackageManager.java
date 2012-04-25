@@ -269,7 +269,7 @@ public class PyPackageManager {
     }
     final String fileName = dirName + name + File.separatorChar + "setup.py";
     try {
-      output = getProcessOutput(fileName, Collections.<String>singletonList(INSTALL), true, dirName);
+      output = getProcessOutput(fileName, Collections.<String>singletonList(INSTALL), true, dirName + name);
       final int retcode = output.getExitCode();
       if (output.isTimeout()) {
         throw new PyExternalProcessException(ERROR_TIMEOUT, fileName, Lists.newArrayList(INSTALL), "Timed out");
