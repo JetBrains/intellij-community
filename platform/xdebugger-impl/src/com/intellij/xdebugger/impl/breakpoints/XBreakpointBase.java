@@ -79,9 +79,11 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
     myProperties = type.createProperties();
     if (myProperties != null) {
       //noinspection unchecked
-      Object state = XmlSerializer.deserialize(myState.getPropertiesElement(), XDebuggerUtilImpl.getStateClass(myProperties.getClass()));
-      //noinspection unchecked
-      myProperties.loadState(state);
+      Element element = myState.getPropertiesElement();
+      if (element != null) {
+        //noinspection unchecked
+        myProperties.loadState(XmlSerializer.deserialize(element, XDebuggerUtilImpl.getStateClass(myProperties.getClass())));
+      }
     }
   }
 
