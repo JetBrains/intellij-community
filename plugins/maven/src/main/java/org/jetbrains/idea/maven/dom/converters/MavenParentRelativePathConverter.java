@@ -33,6 +33,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.dom.MavenDomBundle;
 import org.jetbrains.idea.maven.dom.MavenDomUtil;
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
+import org.jetbrains.idea.maven.dom.references.MavenDirectoryPathReferenceConverter;
 import org.jetbrains.idea.maven.model.MavenConstants;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.project.MavenProject;
@@ -53,7 +54,7 @@ public class MavenParentRelativePathConverter extends ResolvingConverter<PsiFile
     VirtualFile f = contextFile.getParent().findFileByRelativePath(s);
     if (f == null) return null;
 
-    if (f.isDirectory()) f = f.findFileByRelativePath(MavenConstants.POM_XML);
+    if (f.isDirectory()) f = f.findChild(MavenConstants.POM_XML);
     if (f == null) return null;
 
     return context.getPsiManager().findFile(f);
@@ -86,7 +87,7 @@ public class MavenParentRelativePathConverter extends ResolvingConverter<PsiFile
     return ArrayUtil.append(super.getQuickFixes(context), new RelativePathFix(context));
   }
 
-  private class RelativePathFix implements LocalQuickFix {
+  private static class RelativePathFix implements LocalQuickFix {
     private final ConvertContext myContext;
 
     public RelativePathFix(ConvertContext context) {
@@ -118,11 +119,6 @@ public class MavenParentRelativePathConverter extends ResolvingConverter<PsiFile
 
   @NotNull
   public PsiReference[] createReferences(final GenericDomValue genericDomValue, final PsiElement element, final ConvertContext context) {
-    return createReferences(element, true);
-  }
-
-  @NotNull
-  public PsiReference[] createReferences(@NotNull final PsiElement psiElement, final boolean soft) {
-    return PathReferenceManager.getInstance().createReferences(psiElement, soft);
+    return new MavenDirectoryPathReferenceConverter().createReferences(genericDomValue, element, context);
   }
 }
