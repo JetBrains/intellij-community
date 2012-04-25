@@ -20,6 +20,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 
 public class MavenModuleCompletionAndResolutionTest extends MavenDomWithIndicesTestCase {
@@ -457,6 +458,95 @@ public class MavenModuleCompletionAndResolutionTest extends MavenDomWithIndicesT
       "        <groupId>test</groupId>\n" +
       "        <artifactId>project</artifactId>\n" +
       "        <version>1</version>\n" +
+      "    </parent>\n" +
+      "\n" +
+      "    <groupId>test</groupId>\n" +
+      "    <artifactId>newModule</artifactId>\n" +
+      "    <version>1</version>\n" +
+      "\n" +
+      "    \n" +
+      "</project>");
+  }
+
+  public void testCreateModuleWithParentQuickFix2() throws Throwable {
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+                     "<packaging>pom</packaging>");
+    importProject();
+
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+                     "<packaging>pom</packaging>" +
+
+                     "<modules>" +
+                     "  <module>ppp/new<caret>Module</module>" +
+                     "</modules>");
+
+    IntentionAction i = getIntentionAtCaret(CREATE_MODULE_WITH_PARENT_INTENTION);
+    assertNotNull(i);
+    myFixture.launchAction(i);
+
+    assertCreateModuleFixResult(
+      "ppp/newModule/pom.xml",
+      "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
+      "<project xmlns=\"http://maven.apache.org/POM/4.0.0\"\n" +
+      "         xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
+      "         xsi:schemaLocation=\"http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd\">\n" +
+      "    <modelVersion>4.0.0</modelVersion>\n" +
+      "\n" +
+      "    <parent>\n" +
+      "        <groupId>test</groupId>\n" +
+      "        <artifactId>project</artifactId>\n" +
+      "        <version>1</version>\n" +
+      "        <relativePath>../..</relativePath>\n" +
+      "    </parent>\n" +
+      "\n" +
+      "    <groupId>test</groupId>\n" +
+      "    <artifactId>newModule</artifactId>\n" +
+      "    <version>1</version>\n" +
+      "\n" +
+      "    \n" +
+      "</project>");
+  }
+
+  public void testCreateModuleWithParentQuickFix3() throws Throwable {
+    VirtualFile parentPom = createModulePom("parent",
+                                         "<groupId>test</groupId>" +
+                                         "<artifactId>project</artifactId>" +
+                                         "<version>1</version>" +
+                                         "<packaging>pom</packaging>");
+
+    importProject(parentPom);
+
+    VfsUtil.saveText(parentPom, createPomXml(
+                                "<groupId>test</groupId>" +
+                                "<artifactId>project</artifactId>" +
+                                "<version>1</version>" +
+                                "<packaging>pom</packaging>" +
+
+                                "<modules>" +
+                                "  <module>../ppp/new<caret>Module</module>" +
+                                "</modules>"));
+
+    IntentionAction i = getIntentionAtCaret(parentPom, CREATE_MODULE_WITH_PARENT_INTENTION);
+    assertNotNull(i);
+    myFixture.launchAction(i);
+
+    assertCreateModuleFixResult(
+      "ppp/newModule/pom.xml",
+      "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
+      "<project xmlns=\"http://maven.apache.org/POM/4.0.0\"\n" +
+      "         xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
+      "         xsi:schemaLocation=\"http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd\">\n" +
+      "    <modelVersion>4.0.0</modelVersion>\n" +
+      "\n" +
+      "    <parent>\n" +
+      "        <groupId>test</groupId>\n" +
+      "        <artifactId>project</artifactId>\n" +
+      "        <version>1</version>\n" +
+      "        <relativePath>../../parent</relativePath>\n" +
       "    </parent>\n" +
       "\n" +
       "    <groupId>test</groupId>\n" +

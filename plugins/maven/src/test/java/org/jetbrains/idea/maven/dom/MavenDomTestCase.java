@@ -303,7 +303,11 @@ public abstract class MavenDomTestCase extends MavenImportingTestCase {
   }
 
   protected IntentionAction getIntentionAtCaret(String intentionName) throws IOException {
-    configTest(myProjectPom);
+    return getIntentionAtCaret(myProjectPom, intentionName);
+  }
+
+  protected IntentionAction getIntentionAtCaret(VirtualFile pomFile, String intentionName) throws IOException {
+    configTest(pomFile);
     try {
       List<IntentionAction> intentions = myFixture.getAvailableIntentions();
 
