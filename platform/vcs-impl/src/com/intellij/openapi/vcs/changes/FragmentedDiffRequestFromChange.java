@@ -117,7 +117,8 @@ public class FragmentedDiffRequestFromChange {
             myOldDocument = documentFromRevision(change.getBeforeRevision());
             final String convertedPath = FilePathsHelper.convertPath(filePath);
             if (filePath.getVirtualFile() != null) {
-              myDocument = FileDocumentManager.getInstance().getDocument(filePath.getVirtualFile());
+              myDocument = FileStatus.DELETED.equals(change.getFileStatus()) ? new DocumentImpl("") :
+                           FileDocumentManager.getInstance().getDocument(filePath.getVirtualFile());
               if (myDocument != null) {
                 final List<BeforeAfter<TextRange>> cached = cache.get(new Pair<Long, String>(myDocument.getModificationStamp(), convertedPath));
                 if (cached != null) {
