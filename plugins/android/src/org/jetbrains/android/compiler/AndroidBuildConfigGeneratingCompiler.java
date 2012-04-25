@@ -44,7 +44,7 @@ public class AndroidBuildConfigGeneratingCompiler implements SourceGeneratingCom
 
         for (Module module : ModuleManager.getInstance(context.getProject()).getModules()) {
           final AndroidFacet facet = AndroidFacet.getInstance(module);
-          if (facet == null) {
+          if (facet == null || AndroidCompileUtil.isLibraryWithBadCircularDependency(facet)) {
             continue;
           }
 
