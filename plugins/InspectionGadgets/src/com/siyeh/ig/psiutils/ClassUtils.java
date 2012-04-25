@@ -170,16 +170,32 @@ public class ClassUtils {
 
   @Nullable
   public static PsiClass getContainingStaticClass(PsiElement element) {
-    PsiClass aClass = PsiTreeUtil.getParentOfType(element, PsiClass.class);
-    if (aClass == null) {
-      return null;
-    }
-    PsiClass containingClass = PsiTreeUtil.getParentOfType(aClass, PsiClass.class);
-    while (containingClass != null && !containingClass.hasModifierProperty(PsiModifier.STATIC) && !containingClass.isInterface()) {
-      aClass = containingClass;
-      containingClass = aClass.getContainingClass();
+    PsiClass aClass = PsiTreeUtil.getParentOfType(element, PsiClass.class, false, PsiFile.class);
+    while (isNonStaticClass(aClass)) {
+      aClass = PsiTreeUtil.getParentOfType(aClass, PsiClass.class, true, PsiFile.class);
     }
     return aClass;
+  }
+
+  public static boolean isNonStaticClass(@Nullable PsiClass aClass) {
+    if (aClass == null) {
+      return false;
+    }
+    if (aClass.hasModifierProperty(PsiModifier.STATIC) || aClass.isInterface() || aClass.isEnum()) {
+      return false;
+    }
+    if (aClass instanceof PsiAnonymousClass) {
+      return true;
+    }
+    final PsiElement parent = aClass.getParent();
+    if (parent == null || parent instanceof PsiFile) {
+      return false;
+    }
+    if (!(parent instanceof PsiClass)) {
+      return true;
+    }
+    final PsiClass parentClass = (PsiClass)parent;
+    return !parentClass.isInterface();
   }
 
   public static boolean isClassVisibleFromClass(PsiClass baseClass,
