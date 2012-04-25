@@ -21,7 +21,8 @@ import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.facet.AndroidRootUtil;
 import org.jetbrains.android.fileTypes.AndroidRenderscriptFileType;
 import org.jetbrains.android.sdk.AndroidPlatform;
-import org.jetbrains.android.util.*;
+import org.jetbrains.android.util.AndroidBundle;
+import org.jetbrains.android.util.AndroidUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -182,6 +183,8 @@ public class AndroidRenderscriptCompiler implements SourceGeneratingCompiler {
           continue;
         }
 
+        boolean success = true;
+
         for (final VirtualFile sourceFile : genItem.myFiles) {
           final String depFolderOsPath = getDependencyFolder(context.getProject(), sourceFile, outputRootDirectory);
 
@@ -201,8 +204,8 @@ public class AndroidRenderscriptCompiler implements SourceGeneratingCompiler {
               }
             });
 
-            if (messages.get(CompilerMessageCategory.ERROR).isEmpty()) {
-              results.add(genItem);
+            if (messages.get(CompilerMessageCategory.ERROR).size() > 0) {
+              success = false;
             }
           }
           catch (final IOException e) {
@@ -212,7 +215,12 @@ public class AndroidRenderscriptCompiler implements SourceGeneratingCompiler {
                 context.addMessage(CompilerMessageCategory.ERROR, e.getMessage(), sourceFile.getUrl(), -1, -1);
               }
             });
+            success = false;
           }
+        }
+
+        if (success) {
+          results.add(genItem);
         }
       }
     }
