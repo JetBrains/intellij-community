@@ -524,7 +524,6 @@ public class PsiImplUtil {
     return AstBufferUtil.getTextSkippingWhitespaceComments(node);
   }
 
-  @Nullable
   public static PsiCodeBlock getOrCreatePsiCodeBlock(GrOpenBlock block) {
     if (block == null) return null;
 

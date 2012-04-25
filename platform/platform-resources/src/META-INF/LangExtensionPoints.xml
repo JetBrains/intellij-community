@@ -430,6 +430,9 @@
   <extensionPoint name="testCreator"
                   beanClass="com.intellij.lang.LanguageExtensionPoint"/>
 
+  <extensionPoint name="constructorBodyGenerator"
+                  beanClass="com.intellij.lang.LanguageExtensionPoint"/>
+
   <extensionPoint name="testGenerator"
                   beanClass="com.intellij.lang.LanguageExtensionPoint"/>
 

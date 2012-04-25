@@ -16,11 +16,10 @@
 
 package org.jetbrains.plugins.groovy.intentions;
 
-import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.psi.impl.source.PostprocessReformattingAspect;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 
-import java.util.List;
+import com.intellij.codeInsight.intention.IntentionAction
+import com.intellij.psi.impl.source.PostprocessReformattingAspect
+import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 
 /**
  * @author Maxim.Medvedev
@@ -31,14 +30,14 @@ public abstract class GrIntentionTestCase extends LightCodeInsightFixtureTestCas
     final List<IntentionAction> list = myFixture.filterAvailableIntentions(hint);
     if (intentionExists) {
       myFixture.launchAction(assertOneElement(list));
-      PostprocessReformattingAspect.getInstance(getProject()).doPostponedFormatting();
+      PostprocessReformattingAspect.getInstance(project).doPostponedFormatting();
       myFixture.checkResultByFile(getTestName(false) + "_after.groovy");
     }
     else {
       if (list.size() > 0) {
         StringBuilder text = new StringBuilder("available intentions:");
         for (IntentionAction intentionAction : list) {
-          text.append(intentionAction.getFamilyName()).append(", ");
+          text.append(intentionAction.familyName).append(", ");
         }
         fail(text.toString());
       }
@@ -49,7 +48,7 @@ public abstract class GrIntentionTestCase extends LightCodeInsightFixtureTestCas
     myFixture.configureByText("a.groovy", before);
     final List<IntentionAction> list = myFixture.filterAvailableIntentions(hint);
     myFixture.launchAction(assertOneElement(list));
-    PostprocessReformattingAspect.getInstance(getProject()).doPostponedFormatting();
+    PostprocessReformattingAspect.getInstance(project).doPostponedFormatting();
     myFixture.checkResult(after);
   }
 
