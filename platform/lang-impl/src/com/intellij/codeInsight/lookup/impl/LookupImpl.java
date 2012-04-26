@@ -45,7 +45,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.*;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -142,7 +141,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
   private Alarm myHintAlarm = new Alarm();
   private JLabel mySortingLabel = new JLabel();
   private final JScrollPane myScrollPane;
-  private final LookupLayeredPane myLayeredPane = new LookupLayeredPane();
+  final LookupLayeredPane myLayeredPane = new LookupLayeredPane();
   private JButton myScrollBarIncreaseButton;
   private boolean myStartCompletionWhenNothingMatches;
   private boolean myResizePending;

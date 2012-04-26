@@ -16,7 +16,8 @@
 package com.intellij.codeInsight.lookup.impl;
 
 import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.ui.HeavyweightHint;
+import com.intellij.ui.HintHint;
+import com.intellij.ui.LightweightHint;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -29,13 +30,14 @@ import java.awt.event.ComponentEvent;
 /**
  * @author Konstantin Bulenkov
  */
-public class CompletionExtender extends HeavyweightHint {
+public class CompletionExtender extends LightweightHint {
   private LookupElement myElement;
   private LookupImpl myLookup;
   private int myIndex;
 
   public CompletionExtender(@NotNull LookupElement element, @NotNull LookupImpl lookup) {
-    super(createComponent(element, lookup), false);
+    super(createComponent(element, lookup));
+    setForceHideShadow(true);
     myElement = element;
     myLookup = lookup;
     myIndex = myLookup.getList().getSelectedIndex();
@@ -74,14 +76,15 @@ public class CompletionExtender extends HeavyweightHint {
   public boolean show() {
     final JList list = myLookup.getList();
     if (getComponent().getWidth() > list.getWidth()) {
-      final JComponent rootPane = UIUtil.getRootPane(myLookup.getEditor().getContentComponent());
+      final JComponent rootPane = myLookup.myLayeredPane;
 
       final Point p = list.getLocationOnScreen();
       p.y += list.indexToLocation(list.getSelectedIndex()).y;
       SwingUtilities.convertPointFromScreen(p, rootPane);
 
       if (rootPane != null) {
-        show(rootPane, p);
+        final HintHint hint = new HintHint();
+        show(rootPane, p.x, p.y, null, hint);
         return true;
       }
     }

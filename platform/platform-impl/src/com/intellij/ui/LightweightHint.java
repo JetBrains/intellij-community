@@ -64,6 +64,8 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
   private HintHint myHintHint;
   private JComponent myFocusRequestor;
 
+  private boolean myForceHideShadow = false;
+
   public LightweightHint(@NotNull final JComponent component) {
     myComponent = component;
   }
@@ -207,7 +209,7 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
         .setMovable(myTitle != null)
         .setTitle(myTitle)
         .setModalContext(false)
-        .setShowShadow(isRealPopup())
+        .setShowShadow(isRealPopup() && !isForceHideShadow())
         .setCancelKeyEnabled(false)
         .setCancelOnClickOutside(myCancelOnClickOutside)
         .setCancelCallback(new Computable<Boolean>() {
@@ -257,6 +259,14 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
 
   public boolean vetoesHiding() {
     return false;
+  }
+
+  public boolean isForceHideShadow() {
+    return myForceHideShadow;
+  }
+
+  public void setForceHideShadow(boolean forceHideShadow) {
+    myForceHideShadow = forceHideShadow;
   }
 
   private static boolean fitsLayeredPane(JLayeredPane pane, JComponent component, RelativePoint desiredLocation, HintHint hintHint) {
