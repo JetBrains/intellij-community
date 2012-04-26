@@ -202,11 +202,11 @@ public class TypesUtil {
     RANK_TO_TYPE.put(9, JAVA_LANG_NUMBER);
   }
 
-  public static boolean isAssignable(PsiType lType, PsiType rType, PsiManager manager, GlobalSearchScope scope) {
+  public static boolean isAssignable(PsiType lType, PsiType rType, @NotNull PsiManager manager, @NotNull GlobalSearchScope scope) {
     return isAssignable(lType, rType, manager, scope, true);
   }
 
-  public static boolean isAssignable(PsiType lType, PsiType rType, PsiManager manager, GlobalSearchScope scope, boolean allowConversion) {
+  public static boolean isAssignable(PsiType lType, PsiType rType, @NotNull PsiManager manager, @NotNull GlobalSearchScope scope, boolean allowConversion) {
     if (allowConversion && isAssignableByMethodCallConversion(lType, rType, manager, scope)) {
       return true;
     }
@@ -214,11 +214,11 @@ public class TypesUtil {
     return _isAssignable(lType, rType, manager, scope, allowConversion);
   }
 
-  public static boolean isAssignable(@NotNull PsiType lType, @NotNull PsiType rType, GroovyPsiElement context) {
+  public static boolean isAssignable(@NotNull PsiType lType, @NotNull PsiType rType, @NotNull GroovyPsiElement context) {
     return isAssignable(lType, rType, context, true);
   }
 
-  public static boolean isAssignable(@NotNull PsiType lType, @NotNull PsiType rType, GroovyPsiElement context, boolean allowConversion) {
+  public static boolean isAssignable(@NotNull PsiType lType, @NotNull PsiType rType, @NotNull GroovyPsiElement context, boolean allowConversion) {
     if (rType instanceof PsiIntersectionType) {
       for (PsiType child : ((PsiIntersectionType)rType).getConjuncts()) {
         if (isAssignable(lType, child, context, allowConversion)) {
@@ -248,7 +248,7 @@ public class TypesUtil {
            _isAssignable(lType, rType, context.getManager(), context.getResolveScope(), true);
   }
 
-  private static boolean _isAssignable(PsiType lType, PsiType rType, PsiManager manager, GlobalSearchScope scope, boolean allowConversion) {
+  private static boolean _isAssignable(@Nullable PsiType lType, @Nullable PsiType rType, @NotNull PsiManager manager, @NotNull GlobalSearchScope scope, boolean allowConversion) {
     if (lType == null || rType == null) {
       return false;
     }
@@ -271,7 +271,7 @@ public class TypesUtil {
     return lType.isAssignableFrom(rType);
   }
 
-  public static boolean isAssignableByMethodCallConversion(PsiType lType, PsiType rType, GroovyPsiElement context) {
+  public static boolean isAssignableByMethodCallConversion(@Nullable PsiType lType, @Nullable PsiType rType, @NotNull GroovyPsiElement context) {
     if (lType == null || rType == null) return false;
 
     if (isAssignableByMethodCallConversion(lType, rType, context.getManager(), context.getResolveScope())) {
@@ -288,7 +288,10 @@ public class TypesUtil {
     return false;
   }
 
-  public static boolean isAssignableByMethodCallConversion(PsiType lType, PsiType rType, PsiManager manager, GlobalSearchScope scope) {
+  public static boolean isAssignableByMethodCallConversion(@Nullable PsiType lType,
+                                                           @Nullable PsiType rType,
+                                                           @NotNull PsiManager manager,
+                                                           @NotNull GlobalSearchScope scope) {
     if (lType == null || rType == null) return false;
 
     if (rType instanceof GrTupleType && ((GrTupleType)rType).getComponentTypes().length == 0) {
@@ -395,7 +398,7 @@ public class TypesUtil {
     return type;
   }
 
-  public static PsiType boxPrimitiveType(PsiType result, PsiManager manager, GlobalSearchScope resolveScope, boolean boxVoid) {
+  public static PsiType boxPrimitiveType(PsiType result, @NotNull PsiManager manager, @NotNull GlobalSearchScope resolveScope, boolean boxVoid) {
     if (result instanceof PsiPrimitiveType && (boxVoid || result != PsiType.VOID)) {
       PsiPrimitiveType primitive = (PsiPrimitiveType)result;
       String boxedTypeName = primitive.getBoxedTypeName();
@@ -407,7 +410,7 @@ public class TypesUtil {
     return result;
   }
 
-  public static PsiType boxPrimitiveType(PsiType result, PsiManager manager, GlobalSearchScope resolveScope) {
+  public static PsiType boxPrimitiveType(PsiType result, @NotNull PsiManager manager, @NotNull GlobalSearchScope resolveScope) {
     return boxPrimitiveType(result, manager, resolveScope, false);
   }
   @NotNull
@@ -416,12 +419,12 @@ public class TypesUtil {
   }
 
   @NotNull
-  public static PsiClassType getJavaLangObject(PsiElement context) {
+  public static PsiClassType getJavaLangObject(@NotNull PsiElement context) {
     return PsiType.getJavaLangObject(context.getManager(), context.getResolveScope());
   }
 
   @Nullable
-  public static PsiType getLeastUpperBoundNullable(@Nullable PsiType type1, @Nullable PsiType type2, PsiManager manager) {
+  public static PsiType getLeastUpperBoundNullable(@Nullable PsiType type1, @Nullable PsiType type2, @NotNull PsiManager manager) {
     if (type1 == null) return type2;
     if (type2 == null) return type1;
     return getLeastUpperBound(type1, type2, manager);
