@@ -462,4 +462,9 @@ public class PyResolveTest extends PyResolveTestCase {
   public void testLambdaParameterInDecorator() {
     assertResolvesTo(PyNamedParameter.class, "xx");
   }
+
+  // PY-6435
+  public void testLambdaParameterInDefaultValue() {
+    assertResolvesTo(PyNamedParameter.class, "xx");
+  }
 }

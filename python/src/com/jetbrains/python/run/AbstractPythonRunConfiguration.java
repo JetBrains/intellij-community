@@ -24,7 +24,6 @@ import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PythonModuleTypeBase;
 import com.jetbrains.python.debugger.remote.PyPathMappingSettings;
 import com.jetbrains.python.sdk.PythonEnvUtil;
-import com.jetbrains.python.sdk.PythonSdkFlavor;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nullable;
@@ -184,12 +183,6 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractRunConfig
       sdkHome = getSdkHome();
     }
     return sdkHome;
-  }
-
-  @Nullable
-  public PythonSdkFlavor getSdkFlavor() {
-    final String path = getInterpreterPath();
-    return path == null ? null : PythonSdkFlavor.getFlavor(path);
   }
 
   public void readExternal(Element element) throws InvalidDataException {

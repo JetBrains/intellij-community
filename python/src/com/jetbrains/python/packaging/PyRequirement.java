@@ -271,7 +271,7 @@ public class PyRequirement {
   @Nullable
   public PyPackage match(@NotNull List<PyPackage> packages) {
     for (PyPackage pkg : packages) {
-      if (myName.equalsIgnoreCase(pkg.getName())) {
+      if (normalizeName(myName).equalsIgnoreCase(pkg.getName())) {
         for (VersionSpec spec : myVersionSpecs) {
           final int cmp = VERSION_COMPARATOR.compare(pkg.getVersion(), spec.getVersion());
           final Relation relation = spec.getRelation();
