@@ -38,12 +38,12 @@ public class Key<T> {
     myName = name;
   }
 
-  public int hashCode() {
+  public final int hashCode() {
     return myIndex;
   }
 
   @Override
-  public boolean equals(Object obj) {
+  public final boolean equals(Object obj) {
     return obj == this;
   }
 
@@ -61,7 +61,7 @@ public class Key<T> {
   }
 
   @Nullable
-  public T get(@Nullable Map<Key, Object> holder) {
+  public T get(@Nullable Map<Key, ?> holder) {
     return holder == null ? null : (T)holder.get(this);
   }
 

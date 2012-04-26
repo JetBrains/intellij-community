@@ -109,8 +109,11 @@ public class InspectionToolRegistrar {
     }
   }
 
-  protected static InspectionToolWrapper wrapTool(InspectionProfileEntry profileEntry) {
-    if (profileEntry instanceof LocalInspectionTool) {
+  public static InspectionToolWrapper wrapTool(InspectionProfileEntry profileEntry) {
+    if (profileEntry instanceof InspectionToolWrapper) {
+      return (InspectionToolWrapper)profileEntry;
+    }
+    else if (profileEntry instanceof LocalInspectionTool) {
       return new LocalInspectionToolWrapper((LocalInspectionTool)profileEntry);
     }
     else if (profileEntry instanceof GlobalInspectionTool) {

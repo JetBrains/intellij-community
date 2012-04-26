@@ -26,6 +26,7 @@ import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageNamesValidation;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.lang.refactoring.NamesValidator;
 import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.application.ApplicationManager;
@@ -213,7 +214,7 @@ public abstract class InplaceRefactoring {
                                           final Collection<Pair<PsiElement, TextRange>> stringUsages,
                                           final PsiElement scope,
                                           final PsiFile containingFile) {
-    final PsiElement context = containingFile.getContext();
+    final PsiElement context = InjectedLanguageManager.getInstance(containingFile.getProject()).getInjectionHost(containingFile);
     myScope = context != null ? context.getContainingFile() : scope;
     final TemplateBuilderImpl builder = new TemplateBuilderImpl(myScope);
 
@@ -353,7 +354,7 @@ public abstract class InplaceRefactoring {
   }
 
   protected int restoreCaretOffset(int offset) {
-    return offset;
+    return myCaretRangeMarker.isValid() ? myCaretRangeMarker.getStartOffset() : offset;
   }
 
   protected void navigateToAlreadyStarted(Document oldDocument, int exitCode) {

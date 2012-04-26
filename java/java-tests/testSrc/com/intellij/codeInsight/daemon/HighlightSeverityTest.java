@@ -16,7 +16,7 @@
 package com.intellij.codeInsight.daemon;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
-import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspection;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -24,21 +24,15 @@ import org.jetbrains.annotations.NotNull;
 public class HighlightSeverityTest extends LightDaemonAnalyzerTestCase {
   @NonNls static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/highlightSeverity";
 
-  @Override
-  protected LocalInspectionTool[] configureLocalInspectionTools() {
-    return new LocalInspectionTool[]{
-       new UnusedSymbolLocalInspection() {
-         @NotNull
-         @Override
-         public HighlightDisplayLevel getDefaultLevel() {
-           return HighlightDisplayLevel.ERROR;
-         }
-       }
-    };
-  }
-
 
   public void testErrorLikeUnusedSymbol() throws Exception {
+    enableInspectionTool(new LocalInspectionToolWrapper(new UnusedSymbolLocalInspection()) {
+      @NotNull
+      @Override
+      public HighlightDisplayLevel getDefaultLevel() {
+        return HighlightDisplayLevel.ERROR;
+      }
+    });
     doTest(BASE_PATH + "/" + getTestName(false) + ".java", true, false);
   }
 }

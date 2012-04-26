@@ -163,7 +163,7 @@ public class ToolsImpl implements Tools {
         }
         final String errorLevel = scopeElement.getAttributeValue(InspectionProfileImpl.LEVEL_TAG);
         final String enabledInScope = scopeElement.getAttributeValue(InspectionProfileImpl.ENABLED_TAG);
-        final InspectionProfileEntry copyTool = tool.createCopy(tool);
+        final InspectionProfileEntry copyTool = tool.createCopy();
         copyTool.readSettings(scopeElement);
         HighlightDisplayLevel scopeLevel = errorLevel != null ?
                                            HighlightDisplayLevel

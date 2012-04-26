@@ -21,6 +21,7 @@ import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.compiler.CompilerIOUtil;
 import com.intellij.compiler.CompilerWorkspaceConfiguration;
 import com.intellij.compiler.make.MakeUtil;
+import com.intellij.compiler.server.BuildManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -1426,7 +1427,7 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
             toMark = Collections.singleton(root);
           }
           if (!toMark.isEmpty()) {
-            CompileServerManager.getInstance().notifyFilesDeleted(toMark);
+            notifyFilesDeleted(toMark);
           }
         }
         markDirtyIfSource(eventFile, false);
@@ -1544,7 +1545,7 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
       });
 
       if (!pathsToMark.isEmpty()) {
-        CompileServerManager.getInstance().notifyFilesDeleted(pathsToMark);
+        notifyFilesDeleted(pathsToMark);
       }
     }
 
@@ -1583,10 +1584,10 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
         }
       });
       if (fromMove) {
-        CompileServerManager.getInstance().notifyFilesDeleted(pathsToMark);
+        notifyFilesDeleted(pathsToMark);
       }
       else {
-        CompileServerManager.getInstance().notifyFilesChanged(pathsToMark);
+        notifyFilesChanged(pathsToMark);
       }
     }
 
@@ -1637,9 +1638,19 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
         }
       });
       if (notifyServer) {
-        CompileServerManager.getInstance().notifyFilesChanged(pathsToMark);
+        notifyFilesChanged(pathsToMark);
       }
     }
+  }
+
+  private static void notifyFilesChanged(Collection<String> paths) {
+    CompileServerManager.getInstance().notifyFilesChanged(paths);
+    BuildManager.getInstance().notifyFilesChanged(paths);
+  }
+
+  private static void notifyFilesDeleted(Collection<String> paths) {
+    CompileServerManager.getInstance().notifyFilesDeleted(paths);
+    BuildManager.getInstance().notifyFilesDeleted(paths);
   }
 
   private boolean belongsToIntermediateSources(VirtualFile file, Project project) {

@@ -273,7 +273,14 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
   protected void updateTitle(@Nullable V variable, String value) {
     if (variable == null) return;
 
-    setPreviewText(variable.getText().replace(variable.getName(), value));
+    final String variableText = variable.getText();
+    final PsiElement identifier = variable.getNameIdentifier();
+    if (identifier != null) {
+      final int startOffsetInParent = identifier.getStartOffsetInParent();
+      setPreviewText(variableText.substring(0, startOffsetInParent) + value + variableText.substring(startOffsetInParent + identifier.getTextLength()));
+    } else {
+      setPreviewText(variableText.replaceFirst(variable.getName(), value));
+    }
     revalidate();
   }
 

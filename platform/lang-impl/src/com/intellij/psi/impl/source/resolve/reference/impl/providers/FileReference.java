@@ -23,6 +23,7 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.LocalQuickFixProvider;
 import com.intellij.lang.LangBundle;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
@@ -414,7 +415,7 @@ public class FileReference implements FileReferenceOwner, PsiPolyVariantReferenc
     if (dstVFile == null) throw new IncorrectOperationException("Cannot bind to non-physical element:" + element);
 
     PsiFile file = getElement().getContainingFile();
-    PsiElement contextPsiFile = file.getContext();
+    PsiElement contextPsiFile = InjectedLanguageManager.getInstance(file.getProject()).getInjectionHost(file);
     if (contextPsiFile != null) file = contextPsiFile.getContainingFile(); // use host file!
     final VirtualFile curVFile = file.getVirtualFile();
     if (curVFile == null) throw new IncorrectOperationException("Cannot bind from non-physical element:" + file);

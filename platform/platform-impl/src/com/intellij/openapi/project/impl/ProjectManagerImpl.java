@@ -1070,13 +1070,9 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
   @Override
   public void removeProjectManagerListener(@NotNull Project project, @NotNull ProjectManagerListener listener) {
     List<ProjectManagerListener> listeners = project.getUserData(LISTENERS_IN_PROJECT_KEY);
-    if (listeners != null) {
-      boolean removed = listeners.remove(listener);
-      LOG.assertTrue(removed);
-    }
-    else {
-      LOG.assertTrue(false);
-    }
+    LOG.assertTrue(listeners != null);
+    boolean removed = listeners.remove(listener);
+    LOG.assertTrue(removed);
   }
 
   private void fireProjectOpened(Project project) {

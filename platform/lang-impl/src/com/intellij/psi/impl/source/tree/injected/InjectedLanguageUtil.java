@@ -121,7 +121,7 @@ public class InjectedLanguageUtil {
                                @NotNull PsiLanguageInjectionHost.InjectedPsiVisitor visitor) {
     //do not inject into nonphysical files except during completion
     if (!containingFile.isPhysical() && containingFile.getOriginalFile() == containingFile) {
-      final PsiElement context = containingFile.getContext();
+      final PsiElement context = InjectedLanguageManager.getInstance(containingFile.getProject()).getInjectionHost(containingFile);
       if (context == null) return;
 
       final PsiFile file = context.getContainingFile();
@@ -349,7 +349,7 @@ public class InjectedLanguageUtil {
     PsiManagerEx psiManagerEx = (PsiManagerEx)injected.getManager();
     if (psiManagerEx.getProject().isDisposed()) return;
     psiManagerEx.getFileManager().setViewProvider(virtualFile, null);
-    PsiElement context = injected.getContext();
+    PsiElement context = InjectedLanguageManager.getInstance(injected.getProject()).getInjectionHost(injected);
     PsiFile hostFile;
     if (context != null) {
       hostFile = context.getContainingFile();
@@ -397,7 +397,7 @@ public class InjectedLanguageUtil {
     PsiFile containingFile = element.getContainingFile();
     Document document = PsiDocumentManager.getInstance(element.getProject()).getCachedDocument(containingFile);
     if (document instanceof DocumentWindow) {
-      PsiElement host = containingFile.getContext();
+      PsiElement host = InjectedLanguageManager.getInstance(containingFile.getProject()).getInjectionHost(containingFile);
       if (host != null) containingFile = host.getContainingFile();
     }
     return containingFile;

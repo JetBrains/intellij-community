@@ -20,7 +20,6 @@ import com.intellij.codeInspection.GlobalInspectionContext;
 import com.intellij.codeInspection.InspectionEP;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.reference.RefEntity;
-import com.intellij.codeInspection.reference.RefVisitor;
 import com.intellij.codeInspection.ui.InspectionNode;
 import com.intellij.codeInspection.ui.InspectionTreeNode;
 import org.jdom.Element;
@@ -38,14 +37,13 @@ public class CommonInspectionToolWrapper extends InspectionToolWrapper<Inspectio
     super(tool);
   }
 
-  CommonInspectionToolWrapper(InspectionEP ep, InspectionTool tool) {
-    super(ep, tool);
+  private CommonInspectionToolWrapper(CommonInspectionToolWrapper other) {
+    super(other);
   }
 
-
   @Override
-  public CommonInspectionToolWrapper createCopy(InspectionToolWrapper<InspectionTool, InspectionEP> from) {
-    return new CommonInspectionToolWrapper(from.myEP, from.myTool);
+  public CommonInspectionToolWrapper createCopy() {
+    return new CommonInspectionToolWrapper(this);
   }
 
   @Override

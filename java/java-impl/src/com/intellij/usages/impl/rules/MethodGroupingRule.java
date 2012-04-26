@@ -15,6 +15,7 @@
  */
 package com.intellij.usages.impl.rules;
 
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.navigation.NavigationItemFileStatus;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.actionSystem.DataSink;
@@ -52,7 +53,8 @@ public class MethodGroupingRule implements UsageGroupingRule {
     PsiFile containingFile = psiElement.getContainingFile();
     PsiFile topLevelFile = InjectedLanguageUtil.getTopLevelFile(containingFile);
     if (topLevelFile instanceof PsiJavaFile) {
-      PsiElement containingMethod = topLevelFile == containingFile ? psiElement : containingFile.getContext();
+      PsiElement containingMethod = topLevelFile == containingFile ? psiElement : InjectedLanguageManager
+              .getInstance(containingFile.getProject()).getInjectionHost(containingFile);
       if (usage instanceof UsageInfo2UsageAdapter && topLevelFile == containingFile) {
         int offset = ((UsageInfo2UsageAdapter)usage).getUsageInfo().getNavigationOffset();
         containingMethod = containingFile.findElementAt(offset);

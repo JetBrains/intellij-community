@@ -89,7 +89,8 @@ public class InjectedFileViewProvider extends SingleRootFileViewProvider impleme
     final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(getManager().getProject());
     PsiFile hostFile = documentManager.getPsiFile(hostDocument);
     Language language = getBaseLanguage();
-    final Language hostFileLanguage = getPsi(language).getContext().getContainingFile().getLanguage();
+    PsiFile file = getPsi(language);
+    final Language hostFileLanguage = InjectedLanguageUtil.getTopLevelFile(file).getLanguage();
     PsiFile hostPsiFileCopy = (PsiFile)hostFile.copy();
     Segment firstTextRange = oldDocumentWindow.getHostRanges()[0];
     PsiElement hostElementCopy = hostPsiFileCopy.getViewProvider().findElementAt(firstTextRange.getStartOffset(), hostFileLanguage);

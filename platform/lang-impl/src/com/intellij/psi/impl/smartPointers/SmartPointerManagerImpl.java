@@ -18,6 +18,7 @@ package com.intellij.psi.impl.smartPointers;
 
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.lang.Language;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -81,7 +82,7 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
   }
 
   private static RangeMarker getCachedRangeMarkerToInjectedFragment(@NotNull PsiFile injectedFile) {
-    PsiElement hostContext = injectedFile.getContext();
+    PsiElement hostContext = InjectedLanguageManager.getInstance(injectedFile.getProject()).getInjectionHost(injectedFile);
     RangeMarker cachedMarker = null;
     if (hostContext != null) {
       SmartPsiElementPointer<PsiElement> cachedPointer = getCachedPointer(hostContext);

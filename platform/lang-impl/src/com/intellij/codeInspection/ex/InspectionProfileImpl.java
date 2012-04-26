@@ -530,7 +530,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
     @NonNls String tempRoot = "config";
     Element config = new Element(tempRoot);
     tool.writeSettings(config);
-    final InspectionTool inspectionTool = tool.createCopy(tool);
+    final InspectionTool inspectionTool = tool.createCopy();
     inspectionTool.readSettings(config);
     return inspectionTool;
   }

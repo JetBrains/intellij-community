@@ -15,6 +15,7 @@
  */
 package com.intellij.lang.properties.references;
 
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.PropertiesFileProcessor;
 import com.intellij.lang.properties.PropertiesReferenceManager;
@@ -40,7 +41,7 @@ public class I18nUtil {
   @NotNull
   public static List<PropertiesFile> propertiesFilesByBundleName(final String resourceBundleName, final PsiElement context) {
     PsiFile containingFile = context.getContainingFile();
-    PsiElement containingFileContext = containingFile.getContext();
+    PsiElement containingFileContext = InjectedLanguageManager.getInstance(containingFile.getProject()).getInjectionHost(containingFile);
     if (containingFileContext != null) containingFile = containingFileContext.getContainingFile();
     
     VirtualFile virtualFile = containingFile.getVirtualFile();

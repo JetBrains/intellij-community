@@ -15,6 +15,7 @@
  */
 package com.intellij.usages.impl.rules;
 
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.navigation.NavigationItemFileStatus;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.actionSystem.DataSink;
@@ -52,7 +53,8 @@ public class ClassGroupingRule implements UsageGroupingRule {
     if (!(topLevelFile instanceof PsiJavaFile) || topLevelFile instanceof JspFile) {
       return null;
     }
-    PsiElement containingClass = topLevelFile == containingFile ? psiElement : containingFile.getContext();
+    PsiElement containingClass = topLevelFile == containingFile ? psiElement : InjectedLanguageManager
+          .getInstance(containingFile.getProject()).getInjectionHost(containingFile);
     do {
       containingClass = PsiTreeUtil.getParentOfType(containingClass, PsiClass.class, true);
       if (containingClass == null || ((PsiClass)containingClass).getQualifiedName() != null) break;

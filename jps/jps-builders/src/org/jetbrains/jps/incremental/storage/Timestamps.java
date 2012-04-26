@@ -14,5 +14,7 @@ public interface Timestamps {
 
   void removeStamp(File file) throws IOException;
 
+  void clean() throws IOException;
+
   long getStamp(File file) throws IOException;
 }

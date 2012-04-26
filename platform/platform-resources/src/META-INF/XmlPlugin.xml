@@ -308,7 +308,8 @@
     <localInspection language="XML" shortName="CheckTagEmptyBody" bundle="messages.XmlBundle" key="xml.inspections.check.tag.empty.body"
                      groupKey="xml.inspections.group.name" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.xml.util.CheckTagEmptyBodyInspection"/>
-    <localInspection language="XML" shortName="CheckDtdRefs" bundle="messages.XmlBundle" key="xml.inspections.check.dtd.references" groupName="XML"
+    <!-- TODO: assign it to XML & DTD -->
+    <localInspection shortName="CheckDtdRefs" bundle="messages.XmlBundle" key="xml.inspections.check.dtd.references" groupName="XML"
                      enabledByDefault="true" level="ERROR" implementationClass="com.intellij.xml.util.CheckDtdReferencesInspection"/>
     <localInspection language="XML" shortName="CheckEmptyScriptTag" bundle="messages.XmlBundle" key="html.inspections.check.empty.tag" groupName="HTML"
                      enabledByDefault="true" level="WARNING" implementationClass="com.intellij.xml.util.CheckEmptyTagInspection"/>

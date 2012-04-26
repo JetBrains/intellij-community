@@ -24,6 +24,7 @@ import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.Commenter;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageCommenters;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.editor.*;
@@ -70,7 +71,7 @@ public class CommentByLineCommentHandler implements CodeInsightActionHandler {
     myFile = file.getViewProvider().getPsi(file.getViewProvider().getBaseLanguage());
     myEditor = editor;
 
-    PsiElement context = myFile.getContext();
+    PsiElement context = InjectedLanguageManager.getInstance(myFile.getProject()).getInjectionHost(myFile);
 
     if (context != null && (context.textContains('\'') || context.textContains('\"'))) {
       String s = context.getText();

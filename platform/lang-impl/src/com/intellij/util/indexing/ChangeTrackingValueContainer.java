@@ -42,7 +42,7 @@ class ChangeTrackingValueContainer<Value> extends UpdatableValueContainer<Value>
     myInitializer = initializer;
     myAdded = new ValueContainerImpl<Value>();
     myRemoved = new ValueContainerImpl<Value>();
-    myInvalidated = new TIntHashSet();
+    myInvalidated = new TIntHashSet(1);
   }
 
   //public void log(String op, int id, final Value value) {

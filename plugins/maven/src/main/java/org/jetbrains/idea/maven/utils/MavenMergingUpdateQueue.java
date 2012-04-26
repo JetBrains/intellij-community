@@ -88,19 +88,21 @@ public class MavenMergingUpdateQueue extends MergingUpdateQueue {
           }, MavenMergingUpdateQueue.this);
 
         ProjectRootManager.getInstance(project).addModuleRootListener(new ModuleRootListener() {
-            boolean beforeCalled = false;
+            int beforeCalled;
 
             public void beforeRootsChange(ModuleRootEvent event) {
-              suspend();
-              beforeCalled = true;
+              if (beforeCalled++ == 0) {
+                suspend();
+              }
             }
 
             public void rootsChanged(ModuleRootEvent event) {
-              if (!beforeCalled) return;
-              beforeCalled = false;
+              if (beforeCalled == 0) return; // This may occur if listener has been added between beforeRootsChange() and rootsChanged() calls.
 
-              resume();
-              MavenMergingUpdateQueue.this.restartTimer();
+              if (--beforeCalled == 0) {
+                resume();
+                MavenMergingUpdateQueue.this.restartTimer();
+              }
             }
           }, MavenMergingUpdateQueue.this);
       }

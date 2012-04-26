@@ -126,7 +126,7 @@ public class HighlightSuppressedWarningsHandler extends HighlightUsagesHandlerBa
       if (!(toolById instanceof LocalInspectionToolWrapper)) {
         continue;
       }
-      final LocalInspectionToolWrapper tool = new LocalInspectionToolWrapper(((LocalInspectionToolWrapper)toolById).getTool());
+      final LocalInspectionToolWrapper tool = ((LocalInspectionToolWrapper)toolById).createCopy();
       final InspectionManagerEx managerEx = (InspectionManagerEx)InspectionManager.getInstance(project);
       final GlobalInspectionContextImpl context = managerEx.createNewGlobalContext(false);
       tool.initialize(context);

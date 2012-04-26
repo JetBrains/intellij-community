@@ -402,7 +402,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
             future.cancel(false);
           }
         }
-        rc = future.getResponseHandler().isTerminatedSuccessfully();
+        rc = future.getMessageHandler().isTerminatedSuccessfully();
       }
       return rc;
     }

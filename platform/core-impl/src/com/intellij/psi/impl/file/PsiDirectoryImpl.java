@@ -398,6 +398,7 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory, Qu
       else {
         copyVFile = VfsUtilCore.copyFile(this, vFile, parent, newName);
       }
+      LOG.assertTrue(copyVFile != null, "File was not copied: " + vFile);
       final PsiFile copyPsi = myManager.findFile(copyVFile);
       if (copyPsi == null) {
         LOG.error("Could not find file '" + copyVFile + "' after copying '" + vFile + "'");

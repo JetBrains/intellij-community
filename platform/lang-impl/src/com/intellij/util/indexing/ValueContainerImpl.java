@@ -17,6 +17,7 @@
 package com.intellij.util.indexing;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.EmptyIterator;
 import gnu.trove.THashMap;
 import gnu.trove.TIntHashSet;
@@ -31,10 +32,12 @@ import java.util.*;
  */
 class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implements Cloneable{
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.indexing.ValueContainerImpl");
+  private final static Object myNullValue = new Object();
   private THashMap<Value, Object> myInputIdMapping;
 
   public ValueContainerImpl() {
-    myInputIdMapping = new THashMap<Value, Object>();
+    // per statistic most maps (80%) has one value
+    myInputIdMapping = new THashMap<Value, Object>(1);
   }
 
   @Override
@@ -66,16 +69,20 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
 
   @Override
   public void removeAssociatedValue(int inputId) {
-    final List<Value> toRemove = new ArrayList<Value>(1);
+    if (myInputIdMapping.isEmpty()) return;
+    List<Value> toRemove = null;
     for (final Iterator<Value> valueIterator = getValueIterator(); valueIterator.hasNext();) {
       final Value value = valueIterator.next();
       if (isAssociated(value, inputId)) {
-        LOG.assertTrue(toRemove.isEmpty(), "Expected only one value per-inputId");
-        toRemove.add(value);
+        if (toRemove == null) toRemove = new SmartList<Value>(value);
+        else {
+          LOG.error("Expected only one value per-inputId");
+          toRemove.add(value);
+        }
       }
     }
 
-    if (!toRemove.isEmpty()) {
+    if (toRemove != null) {
       for (Value value : toRemove) {
         removeValue(inputId, value);
       }
@@ -108,7 +115,6 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
     return true;
   }
 
-  private final static Object myNullValue = new Object();
   private Value maskNull(Value value) {
     if (value == null) {
       return (Value)myNullValue;
@@ -122,9 +128,8 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
       return EmptyIterator.getInstance();
     }
 
-    final Set<Value> values = Collections.unmodifiableSet(myInputIdMapping.keySet());
     return new Iterator<Value>() {
-      final Iterator<Value> iterator = values.iterator();
+      final Iterator<Value> iterator = myInputIdMapping.keySet().iterator();
       
       @Override
       public boolean hasNext() {
@@ -140,7 +145,7 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
 
       @Override
       public void remove() {
-        iterator.remove();
+        throw new UnsupportedOperationException();
       }
     };
   }

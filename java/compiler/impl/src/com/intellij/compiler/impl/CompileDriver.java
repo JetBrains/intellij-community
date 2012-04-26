@@ -29,7 +29,7 @@ import com.intellij.compiler.make.ChangedConstantsDependencyProcessor;
 import com.intellij.compiler.make.DependencyCache;
 import com.intellij.compiler.progress.CompilerTask;
 import com.intellij.compiler.server.BuildManager;
-import com.intellij.compiler.server.BuildMessageHandler;
+import com.intellij.compiler.server.DefaultMessageHandler;
 import com.intellij.diagnostic.IdeErrorsDialog;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.openapi.application.ApplicationManager;
@@ -549,7 +549,7 @@ public class CompileDriver {
     else {
       final BuildManager buildManager = BuildManager.getInstance();
       buildManager.cancelAutoMakeTasks(myProject);
-      return buildManager.scheduleBuild(myProject, compileContext.isRebuild(), compileContext.isMake(), moduleNames, artifactNames, paths, builderParams, new BuildMessageHandler() {
+      return buildManager.scheduleBuild(myProject, compileContext.isRebuild(), compileContext.isMake(), moduleNames, artifactNames, paths, builderParams, new DefaultMessageHandler() {
         @Override
         public void sessionTerminated() {
           final ExitStatus status = COMPILE_SERVER_BUILD_STATUS.get(compileContext);

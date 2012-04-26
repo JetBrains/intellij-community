@@ -33,7 +33,7 @@ final class ProtobufClientMessageHandler<T extends ProtobufResponseHandler> exte
   public final void messageReceived(ChannelHandlerContext ctx, MessageEvent e) throws Exception {
     final UUID messageUUID = myUuidGetter.getSessionUUID(e);
     final RequestFuture<T> future = myHandlers.get(messageUUID);
-    final T handler = future != null ? future.getResponseHandler() : null;
+    final T handler = future != null ? future.getMessageHandler() : null;
     if (handler == null) {
       terminateSession(messageUUID);
     }
@@ -57,7 +57,7 @@ final class ProtobufClientMessageHandler<T extends ProtobufResponseHandler> exte
   private void terminateSession(UUID sessionId) {
     final RequestFuture<T> future = removeFuture(sessionId);
     if (future != null) {
-      final T handler = future.getResponseHandler();
+      final T handler = future.getMessageHandler();
       try {
         if (handler != null) {
           try {

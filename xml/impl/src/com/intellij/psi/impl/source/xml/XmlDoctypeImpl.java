@@ -16,6 +16,7 @@
 package com.intellij.psi.impl.source.xml;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -104,7 +105,8 @@ public class XmlDoctypeImpl extends XmlElementImpl implements XmlDoctype {
   private static boolean hasInjectedEscapingQuotes(PsiElement element, String text) {
     if (text.startsWith("\\") && text.length() >= 4) {
       char escapedChar = text.charAt(1);
-      PsiElement context = element.getContainingFile().getContext();
+      PsiElement context =
+        InjectedLanguageManager.getInstance(element.getContainingFile().getProject()).getInjectionHost(element.getContainingFile());
       
       if (context != null && 
           context.textContains(escapedChar) && 

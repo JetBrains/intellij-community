@@ -725,7 +725,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
                                     @NotNull final ProgressIndicator indicator,
                                     @NotNull InspectionManagerEx iManager,
                                     final boolean inVisibleRange, List<LocalInspectionToolWrapper> wrappers, boolean checkDumbAwareness) {
-    final PsiElement host = injectedPsi.getContext();
+    final PsiElement host = InjectedLanguageManager.getInstance(injectedPsi.getProject()).getInjectionHost(injectedPsi);
 
     final List<PsiElement> elements = getElementsFrom(injectedPsi);
     if (elements.isEmpty()) {

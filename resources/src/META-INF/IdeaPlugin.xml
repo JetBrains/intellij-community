@@ -492,7 +492,7 @@
                      level="WARNING" implementationClass="com.intellij.codeInspection.unusedImport.UnusedImportLocalInspection" />
 
     <localInspection language="JAVA" suppressId="unchecked" shortName="UNCHECKED_WARNING" displayName="Unchecked warning" groupName=""
-                     enabledByDefault="true" level="WARNING" unfair="true"
+                     enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.uncheckedWarnings.UncheckedWarningLocalInspection" />
     <localInspection language="JAVA" shortName="SuspiciousNameCombination" bundle="messages.InspectionsBundle"
                      key="suspicious.name.combination.display.name" groupName="Probable bugs" enabledByDefault="true" level="WARNING"
