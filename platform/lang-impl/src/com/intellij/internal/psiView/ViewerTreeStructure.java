@@ -24,6 +24,7 @@ package com.intellij.internal.psiView;
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -138,10 +139,14 @@ public class ViewerTreeStructure extends AbstractTreeStructure {
     if (element == myRootPsiElement) {
       return myRootElement;
     }
-    if (element instanceof PsiFile && ((PsiFile)element).getContext() != null) {
-      return new Inject(((PsiFile)element).getContext(), (PsiElement)element);
+    if (element instanceof PsiFile &&
+        InjectedLanguageManager.getInstance(((PsiFile)element).getProject()).getInjectionHost(((PsiFile)element)) != null) {
+      return new Inject(InjectedLanguageManager.getInstance(((PsiFile)element).getProject()).getInjectionHost(((PsiFile)element)),
+                        (PsiElement)element);
     }
-    return element instanceof Inject ? ((Inject)element).getParent() :((PsiElement)element).getContext();
+    return element instanceof Inject
+           ? ((Inject)element).getParent()
+           : InjectedLanguageManager.getInstance(((PsiElement)element).getProject()).getInjectionHost(((PsiElement)element));
   }
 
   @Override

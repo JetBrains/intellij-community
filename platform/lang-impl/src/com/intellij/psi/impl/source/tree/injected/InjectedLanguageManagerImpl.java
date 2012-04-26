@@ -47,6 +47,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiDocumentManagerImpl;
+import com.intellij.psi.impl.source.resolve.FileContextUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ConcurrentHashMap;
@@ -225,7 +226,7 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager impleme
     final PsiFile file = element.getContainingFile();
     final VirtualFile virtualFile = file == null ? null : file.getVirtualFile();
     if (virtualFile instanceof VirtualFileWindow) {
-      PsiElement host = file.getContext();
+      PsiElement host = FileContextUtil.getFileContext(file); // use utility method in case the file's overridden getContext()
       if (host instanceof PsiLanguageInjectionHost) {
         return (PsiLanguageInjectionHost)host;
       }

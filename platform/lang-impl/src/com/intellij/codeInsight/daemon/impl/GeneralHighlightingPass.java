@@ -298,7 +298,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
       if (!documentRange.isValid()) continue;
       PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(documentRange);
       if (file == null) continue;
-      PsiElement context = file.getContext();
+      PsiElement context = InjectedLanguageManager.getInstance(file.getProject()).getInjectionHost(file);
       if (context != null
           && context.isValid()
           && !file.getProject().isDisposed()

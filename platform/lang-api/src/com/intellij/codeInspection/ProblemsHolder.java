@@ -18,6 +18,7 @@ package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.daemon.EmptyResolveMessageProvider;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -77,8 +78,8 @@ public class ProblemsHolder {
       }
 
       PsiFile containingFile = element.getContainingFile();
-      PsiElement context = containingFile.getContext();
-      PsiElement myContext = myFile.getContext();
+      PsiElement context = InjectedLanguageManager.getInstance(containingFile.getProject()).getInjectionHost(containingFile);
+      PsiElement myContext = InjectedLanguageManager.getInstance(myFile.getProject()).getInjectionHost(myFile);
       LOG.error("Reported element " + element + " is not from the file '" + myFile + "' the inspection was invoked for. Message: '" + problemDescriptor.getDescriptionTemplate()+"'.\n" +
                 "Element' containing file: "+ containingFile +"; context: "+(context == null ? null : context.getContainingFile())+"\n"
                 +"Inspection invoked for file: "+ myFile +"; context: "+(myContext == null ? null : myContext.getContainingFile())+"\n"

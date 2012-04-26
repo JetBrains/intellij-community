@@ -765,7 +765,7 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
       error += "psi: '" +  psiFile.getText() + "'\n";
       error += "ast: '" + psiFile.getNode().getText() + "'\n";
       error += psiFile.getLanguage()+"\n";
-      PsiElement context = psiFile.getContext();
+      PsiElement context = InjectedLanguageManager.getInstance(psiFile.getProject()).getInjectionHost(psiFile);
       if (context != null) {
         error += "context: " + context +"; text: '" + context.getText() + "'\n";
         error += "context file: " + context.getContainingFile() + "\n";

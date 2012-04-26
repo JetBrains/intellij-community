@@ -403,7 +403,8 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
   }
 
   private static boolean isInjectedHtmlTagForWhichNoProblemsReporting(HtmlTag tag) {
-    PsiElement context = tag.getContainingFile().getContext();
+    PsiElement context =
+      InjectedLanguageManager.getInstance(tag.getContainingFile().getProject()).getInjectionHost(tag.getContainingFile());
     return context != null && skipValidation(context);
   }
 
@@ -698,7 +699,7 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
         addElementsForTagWithManyQuickFixes((XmlTag)context, message, defaultInfoType, fixes);
       }
       else {
-        final PsiElement contextOfFile = containingFile.getContext();
+        final PsiElement contextOfFile = InjectedLanguageManager.getInstance(containingFile.getProject()).getInjectionHost(containingFile);
         final HighlightInfo highlightInfo;
 
         if (contextOfFile != null) {

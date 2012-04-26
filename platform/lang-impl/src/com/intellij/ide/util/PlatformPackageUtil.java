@@ -16,6 +16,7 @@
 package com.intellij.ide.util;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
@@ -274,7 +275,7 @@ public class PlatformPackageUtil {
   @Nullable
   public static PsiDirectory getDirectory(PsiElement element) {
     PsiFile file = element.getContainingFile();
-    final PsiElement context = file.getContext();
+    final PsiElement context = InjectedLanguageManager.getInstance(file.getProject()).getInjectionHost(file);
     if (context != null) {
       file = context.getContainingFile();
     }

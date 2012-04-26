@@ -113,7 +113,7 @@ public class UsageViewUtil {
         PsiFile file = usage.getFile();
         
         if (file != null) {
-          PsiElement context = file.getContext();
+          PsiElement context = InjectedLanguageManager.getInstance(file.getProject()).getInjectionHost(file);
           if (context != null) {
   
             PsiElement usageElement = usage.getElement();

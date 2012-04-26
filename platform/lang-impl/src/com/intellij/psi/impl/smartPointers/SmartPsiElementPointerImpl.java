@@ -16,6 +16,7 @@
 
 package com.intellij.psi.impl.smartPointers;
 
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -163,7 +164,7 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
 
     FileViewProvider viewProvider = containingFile.getViewProvider();
     if (viewProvider instanceof InjectedFileViewProvider) {
-      PsiElement hostContext = containingFile.getContext();
+      PsiElement hostContext = InjectedLanguageManager.getInstance(containingFile.getProject()).getInjectionHost(containingFile);
       if (hostContext != null) return new InjectedSelfElementInfo(project, element, hostContext);
     }
 

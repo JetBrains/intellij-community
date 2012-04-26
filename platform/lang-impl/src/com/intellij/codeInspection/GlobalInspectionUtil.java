@@ -17,6 +17,7 @@
 package com.intellij.codeInspection;
 
 import com.intellij.codeInspection.reference.RefElement;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -34,7 +35,7 @@ public class GlobalInspectionUtil {
     PsiFile elementFile = element.getContainingFile();
     RefElement refElement = globalContext.getRefManager().getReference(elementFile);
     if (refElement == null) {
-      PsiElement context = elementFile.getContext();
+      PsiElement context = InjectedLanguageManager.getInstance(elementFile.getProject()).getInjectionHost(elementFile);
       if (context != null) refElement = globalContext.getRefManager().getReference(context.getContainingFile());
     }
     return refElement;
