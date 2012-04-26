@@ -55,6 +55,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
+import org.jetbrains.plugins.groovy.lang.psi.impl.types.GrClosureSignatureUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyConstantExpressionEvaluator;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
@@ -264,8 +265,7 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
       final PsiElement constructor = constructorResolveResult.getElement();
 
       if (constructor != null) {
-        if (!checkConstructorApplicability(constructorResolveResult, refElement)) return;
-        if (!checkUnknownParams(refElement)) return;
+        if (!checkConstructorApplicability(constructorResolveResult, refElement, true)) return;
       }
       else {
         final GroovyResolveResult[] results = constructorCall.multiResolve(false);
@@ -273,10 +273,9 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
           for (GroovyResolveResult result : results) {
             PsiElement resolved = result.getElement();
             if (resolved instanceof PsiMethod) {
-              if (!checkConstructorApplicability(result, refElement)) return;
+              if (!checkConstructorApplicability(result, refElement, false)) return;
             }
           }
-          if (!checkUnknownParams(refElement)) return;
           registerError(getElementToHighlight(refElement, argList), GroovyBundle.message("constructor.call.is.ambiguous"));
         }
         else {
@@ -336,21 +335,21 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
           }
         }
         else if (element instanceof PsiMethod && ((PsiMethod)element).isConstructor()){
-          checkLiteralConstructorApplicability(result, listOrMap);
+          checkLiteralConstructorApplicability(result, listOrMap, true);
         }
       }
       else {
         for (GroovyResolveResult result : results) {
           PsiElement resolved = result.getElement();
           if (resolved instanceof PsiMethod) {
-            if (!checkLiteralConstructorApplicability(result, listOrMap)) return;
+            if (!checkLiteralConstructorApplicability(result, listOrMap, false)) return;
           }
           registerError(listOrMap, GroovyBundle.message("constructor.call.is.ambiguous"));
         }
       }
     }
 
-    private boolean checkLiteralConstructorApplicability(GroovyResolveResult result, GrListOrMap listOrMap) {
+    private boolean checkLiteralConstructorApplicability(GroovyResolveResult result, GrListOrMap listOrMap, boolean checkUnknownArgs) {
       final PsiElement element = result.getElement();
       LOG.assertTrue(element instanceof PsiMethod && ((PsiMethod)element).isConstructor());
       final PsiMethod constructor = (PsiMethod)element;
@@ -373,15 +372,23 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
         argumentTypes = new PsiType[]{listOrMap.getType()};
       }
 
-      if (PsiUtil.isApplicable(argumentTypes, constructor, result.getSubstitutor(), listOrMap, false)) {
-        return true;
+      GrClosureSignatureUtil.ApplicabilityResult applicable =
+        PsiUtil.isApplicableConcrete(argumentTypes, constructor, result.getSubstitutor(), listOrMap, false);
+      switch (applicable) {
+        case inapplicable:
+          highlightInapplicableMethodUsage(result, listOrMap, constructor, argumentTypes);
+          return false;
+        case canBeApplicable:
+          if (checkUnknownArgs) {
+            highlightUnknownArgs(listOrMap);
+          }
+          return !checkUnknownArgs;
+        default:
+          return true;
       }
-
-      highlightInapplicableMethodUsage(result, listOrMap, constructor, argumentTypes);
-      return false;
     }
 
-    private  boolean checkConstructorApplicability(GroovyResolveResult constructorResolveResult, GroovyPsiElement place) {
+    private  boolean checkConstructorApplicability(GroovyResolveResult constructorResolveResult, GroovyPsiElement place, boolean checkUnknownArgs) {
       final PsiElement element = constructorResolveResult.getElement();
       LOG.assertTrue(element instanceof PsiMethod && ((PsiMethod)element).isConstructor());
       final PsiMethod constructor = (PsiMethod)element;
@@ -392,7 +399,7 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
 
         if (exprArgs.length == 0 &&  !PsiUtil.isConstructorHasRequiredParameters(constructor)) return true;
       }
-      return checkMethodApplicability(constructorResolveResult, place);
+      return checkMethodApplicability(constructorResolveResult, place, checkUnknownArgs);
     }
 
     @Override
@@ -422,25 +429,22 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
         final PsiType type = referenceExpression.getType();
         if (resolved != null) {
           if (resolved instanceof PsiMethod && !resolveResult.isInvokedOnProperty()) {
-            if (!checkMethodApplicability(resolveResult, referenceExpression)) return;
+            if (!checkMethodApplicability(resolveResult, referenceExpression, true)) return;
           }
           else {
-            if (!checkCallApplicability(type, referenceExpression)) return;
+            if (!checkCallApplicability(type, referenceExpression, true)) return;
           }
-
-          if (!checkUnknownParams(referenceExpression)) return;
         }
         else if (results.length > 0) {
           for (GroovyResolveResult result : results) {
             resolved = result.getElement();
             if (resolved instanceof PsiMethod && !resolveResult.isInvokedOnProperty()) {
-              if (!checkMethodApplicability(result, referenceExpression)) return;
+              if (!checkMethodApplicability(result, referenceExpression, false)) return;
             }
             else {
-              if (!checkCallApplicability(type, referenceExpression)) return;
+              if (!checkCallApplicability(type, referenceExpression, false)) return;
             }
           }
-          if (!checkUnknownParams(referenceExpression)) return;
 
           registerError(getElementToHighlight(referenceExpression, PsiUtil.getArgumentsList(referenceExpression)),
                         GroovyBundle.message("method.call.is.ambiguous"));
@@ -448,14 +452,13 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
       }
     }
 
-    private boolean checkUnknownParams(PsiElement place) {
+    private boolean checkUnknownParams(PsiElement place, PsiElement resolved) {
       PsiType[] args = PsiUtil.getArgumentTypes(place, true);
       if (args == null) return true;
 
       for (PsiType arg : args) {
         if (arg == null) {
-          registerError(getElementToHighlight(place, PsiUtil.getArgumentsList(place)), GroovyBundle.message("cannot.infer.argument.types"),
-                        LocalQuickFix.EMPTY_ARRAY, ProblemHighlightType.WEAK_WARNING);
+
           return false;
         }
       }
@@ -523,7 +526,7 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
       final GrExpression expression = call.getInvokedExpression();
       if (!(expression instanceof GrReferenceExpression)) { //it checks in visitRefExpr(...)
         final PsiType type = expression.getType();
-        checkCallApplicability(type, expression);
+        checkCallApplicability(type, expression, true);
       }
 
       checkNamedArgumentsType(call);
@@ -555,29 +558,36 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
     }
 
 
-    private boolean checkCallApplicability(PsiType type, GroovyPsiElement invokedExpr) {
+    private boolean checkCallApplicability(PsiType type, GroovyPsiElement invokedExpr, boolean checkUnknownArgs) {
 
       PsiType[] argumentTypes = PsiUtil.getArgumentTypes(invokedExpr, true);
       if (type instanceof GrClosureType) {
         if (argumentTypes == null) return true;
 
-        if (PsiUtil.isApplicable(argumentTypes, (GrClosureType)type, invokedExpr)) return true;
-
-        registerCannotApplyError(invokedExpr, argumentTypes, invokedExpr.getText());
-        return false;
+        GrClosureSignatureUtil.ApplicabilityResult result = PsiUtil.isApplicableConcrete(argumentTypes, (GrClosureType)type, invokedExpr);
+        switch (result) {
+          case inapplicable:
+            registerCannotApplyError(invokedExpr, argumentTypes, invokedExpr.getText());
+            return false;
+          case canBeApplicable:
+            if (checkUnknownArgs) {
+              highlightUnknownArgs(invokedExpr);
+            }
+            return !checkUnknownArgs;
+          default:
+            return true;
+        }
       }
       else if (type != null) {
         final GroovyResolveResult[] calls = ResolveUtil.getMethodCandidates(type, "call", invokedExpr, argumentTypes);
         for (GroovyResolveResult result : calls) {
           PsiElement resolved = result.getElement();
           if (resolved instanceof PsiMethod && !result.isInvokedOnProperty()) {
-            if (!checkMethodApplicability(result, invokedExpr)) return false;
-            if (!checkUnknownParams(invokedExpr)) return false;
+            if (!checkMethodApplicability(result, invokedExpr, checkUnknownArgs && calls.length == 1)) return false;
           }
           else if (resolved instanceof PsiField) {
-            if (!checkCallApplicability(((PsiField)resolved).getType(), invokedExpr)) return false;
+            if (!checkCallApplicability(((PsiField)resolved).getType(), invokedExpr, checkUnknownArgs && calls.length == 1)) return false;
           }
-          if (!checkUnknownParams(invokedExpr)) return false;
         }
         if (calls.length == 0 && !(invokedExpr instanceof GrString)) {
           registerCannotApplyError(invokedExpr, argumentTypes, invokedExpr.getText());
@@ -609,7 +619,7 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
       return builder.toString();
     }
 
-    private boolean checkMethodApplicability(GroovyResolveResult methodResolveResult, GroovyPsiElement place) {
+    private boolean checkMethodApplicability(GroovyResolveResult methodResolveResult, GroovyPsiElement place, boolean checkUnknownArgs) {
       final PsiElement element = methodResolveResult.getElement();
       if (!(element instanceof PsiMethod)) return true;
       if (element instanceof GrBuilderMethod) return true;
@@ -621,39 +631,61 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
         if (qualifierExpression != null) {
           final PsiType type = qualifierExpression.getType();
           if (type instanceof GrClosureType) {
-            if (!PsiUtil.isApplicable(argumentTypes, (GrClosureType)type, place)) {
-              highlightInapplicableMethodUsage(methodResolveResult, place, method, argumentTypes);
-              return false;
+            GrClosureSignatureUtil.ApplicabilityResult result = PsiUtil.isApplicableConcrete(argumentTypes, (GrClosureType)type, place);
+            switch (result) {
+              case inapplicable:
+                highlightInapplicableMethodUsage(methodResolveResult, place, method, argumentTypes);
+                return false;
+              case canBeApplicable:
+                if (checkUnknownArgs) {
+                  highlightUnknownArgs(place);
+                }
+                return !checkUnknownArgs;
+              default:
+                return true;
             }
           }
         }
       }
-      if (argumentTypes != null &&
-          !PsiUtil.isApplicable(argumentTypes, method, methodResolveResult.getSubstitutor(), place, false)) {
+      if (argumentTypes == null) return true;
 
-        //check for implicit use of property getter which returns closure
-        if (GroovyPropertyUtils.isSimplePropertyGetter(method)) {
-          if (method instanceof GrMethod || method instanceof GrAccessorMethod) {
-            final PsiType returnType = PsiUtil.getSmartReturnType(method);
-            if (returnType instanceof GrClosureType) {
-              if (PsiUtil.isApplicable(argumentTypes, ((GrClosureType)returnType), place)) {
+      GrClosureSignatureUtil.ApplicabilityResult applicable = PsiUtil.isApplicableConcrete(argumentTypes, method, methodResolveResult.getSubstitutor(), place, false);
+      switch (applicable) {
+        case inapplicable:
+          //check for implicit use of property getter which returns closure
+          if (GroovyPropertyUtils.isSimplePropertyGetter(method)) {
+            if (method instanceof GrMethod || method instanceof GrAccessorMethod) {
+              final PsiType returnType = PsiUtil.getSmartReturnType(method);
+              if (returnType instanceof GrClosureType) {
+                if (PsiUtil.isApplicable(argumentTypes, ((GrClosureType)returnType), place)) {
+                  return true;
+                }
+              }
+            }
+
+            PsiType returnType = method.getReturnType();
+            if (returnType != null) {
+              if (TypesUtil.isAssignable(TypesUtil.createType(GroovyCommonClassNames.GROOVY_LANG_CLOSURE, element), returnType, place)) {
                 return true;
               }
             }
           }
 
-          PsiType returnType = method.getReturnType();
-          if (returnType != null) {
-            if (TypesUtil.isAssignable(TypesUtil.createType(GroovyCommonClassNames.GROOVY_LANG_CLOSURE, element), returnType, place)) {
-              return true;
-            }
+          highlightInapplicableMethodUsage(methodResolveResult, place, method, argumentTypes);
+          return false;
+        case canBeApplicable:
+          if (checkUnknownArgs) {
+            highlightUnknownArgs(place);
           }
-        }
-
-        highlightInapplicableMethodUsage(methodResolveResult, place, method, argumentTypes);
-        return false;
+          return !checkUnknownArgs;
+        default:
+          return true;
       }
-      return true;
+    }
+
+    private void highlightUnknownArgs(GroovyPsiElement place) {
+      registerError(getElementToHighlight(place, PsiUtil.getArgumentsList(place)), GroovyBundle.message("cannot.infer.argument.types"),
+                    LocalQuickFix.EMPTY_ARRAY, ProblemHighlightType.WEAK_WARNING);
     }
   }
 

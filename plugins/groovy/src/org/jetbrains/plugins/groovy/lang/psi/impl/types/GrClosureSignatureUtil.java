@@ -167,26 +167,56 @@ public class GrClosureSignatureUtil {
     return new GrClosureSignatureImpl(parameters, returnType);
   }
 
-  public static boolean isSignatureApplicable(GrClosureSignature signature, PsiType[] args, GroovyPsiElement context) {
-    if (mapArgTypesToParameters(signature, args, context, false) != null) return true;
+  public static boolean isSignatureApplicable(@NotNull GrClosureSignature signature, @NotNull PsiType[] args, @NotNull GroovyPsiElement context) {
+    return isSignatureApplicableConcrete(signature, args, context) != ApplicabilityResult.inapplicable;
+  }
+
+  public static ApplicabilityResult isSignatureApplicableConcrete(@NotNull GrClosureSignature signature, @NotNull PsiType[] args, @NotNull GroovyPsiElement context) {
+    ArgInfo<PsiType>[] map = mapArgTypesToParameters(signature, args, context, false);
+    if (map != null) return isSignatureApplicableInner(map, signature);
 
     // check for the case foo([1, 2, 3]) if foo(int, int, int)
     if (args.length == 1 && PsiUtil.isInMethodCallContext(context)) {
       final GrClosureParameter[] parameters = signature.getParameters();
-      if (parameters.length == 1 && parameters[0].getType() instanceof PsiArrayType) return false;
+      if (parameters.length == 1 && parameters[0].getType() instanceof PsiArrayType) return ApplicabilityResult.inapplicable;
       PsiType arg = args[0];
       if (arg instanceof GrTupleType) {
         args = ((GrTupleType)arg).getComponentTypes();
-        if (mapArgTypesToParameters(signature, args, context, false) != null) return true;
+        map = mapArgTypesToParameters(signature, args, context, false);
+        if (map != null) return isSignatureApplicableInner(map, signature);
       }
     }
-    return false;
+    return ApplicabilityResult.inapplicable;
+  }
+
+  private static ApplicabilityResult isSignatureApplicableInner(@NotNull ArgInfo<PsiType>[] infos, @NotNull GrClosureSignature signature) {
+    GrClosureParameter[] parameters = signature.getParameters();
+    for (int i = 0; i < infos.length; i++) {
+      ArgInfo<PsiType> info = infos[i];
+      if (info.args.size() != 1 || info.isMultiArg) continue;
+      PsiType type = info.args.get(0);
+      if (type != null) continue;
+
+      PsiType pType = parameters[i].getType();
+      if (pType != null && !pType.equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) {
+        return ApplicabilityResult.canBeApplicable;
+      }
+    }
+    return ApplicabilityResult.applicable;
+  }
+
+  public enum ApplicabilityResult {
+    applicable, inapplicable, canBeApplicable;
+
+    public static boolean isApplicable(ApplicabilityResult r) {
+      return r != inapplicable;
+    }
   }
 
   @Nullable
   public static ArgInfo<PsiType>[] mapArgTypesToParameters(@NotNull GrClosureSignature signature,
-                                                           PsiType[] args,
-                                                           GroovyPsiElement context,
+                                                           @NotNull PsiType[] args,
+                                                           @NotNull GroovyPsiElement context,
                                                            boolean partial) {
     return mapParametersToArguments(signature, args, FunctionUtil.<PsiType>id(), context, partial);
   }
@@ -211,9 +241,9 @@ public class GrClosureSignatureUtil {
   }
 
   @Nullable
-  private static <Arg> ArgWrapper<Arg>[] getActualArgs(GrCurriedClosureSignature signature,
-                                                       Arg[] args,
-                                                       Function<Arg, PsiType> typeComputer) {
+  private static <Arg> ArgWrapper<Arg>[] getActualArgs(@NotNull GrCurriedClosureSignature signature,
+                                                       @NotNull Arg[] args,
+                                                       @NotNull Function<Arg, PsiType> typeComputer) {
     List<ArgWrapper<Arg>> actual = new ArrayList<ArgWrapper<Arg>>(signature.getParameterCount());
     for (Arg arg : args) {
       actual.add(new ArgWrapper<Arg>(typeComputer.fun(arg), arg));
@@ -243,8 +273,8 @@ public class GrClosureSignatureUtil {
 
   @Nullable
   private static <Arg> ArgInfo<Arg>[] mapParametersToArguments(@NotNull GrClosureSignature signature,
-                                                               Arg[] args,
-                                                               Function<Arg, PsiType> typeComputer,
+                                                               @NotNull Arg[] args,
+                                                               @NotNull Function<Arg, PsiType> typeComputer,
                                                                @NotNull GroovyPsiElement context,
                                                                boolean partial) {
     if (signature instanceof GrCurriedClosureSignature) {
@@ -291,10 +321,10 @@ public class GrClosureSignatureUtil {
   }
 
   @Nullable
-  private static <Arg> ArgInfo<Arg>[] mapSimple(GrClosureParameter[] params,
-                                                Arg[] args,
-                                                Function<Arg, PsiType> typeComputer,
-                                                GroovyPsiElement context) {
+  private static <Arg> ArgInfo<Arg>[] mapSimple(@NotNull GrClosureParameter[] params,
+                                                @NotNull Arg[] args,
+                                                @NotNull Function<Arg, PsiType> typeComputer,
+                                                @NotNull GroovyPsiElement context) {
     ArgInfo<Arg>[] map = new ArgInfo[params.length];
     int optional = getOptionalParamCount(params, false);
     int notOptional = params.length - optional;
@@ -315,7 +345,7 @@ public class GrClosureSignatureUtil {
     return map;
   }
 
-  private static boolean isAssignableByConversion(PsiType paramType, PsiType argType, GroovyPsiElement context) {
+  private static boolean isAssignableByConversion(@Nullable PsiType paramType, @Nullable PsiType argType, @NotNull GroovyPsiElement context) {
     if (argType == null) {
       return true;
     }
