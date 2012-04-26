@@ -4,10 +4,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiNamedElement;
-import com.intellij.psi.PsiReference;
+import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.ui.UsageViewDescriptorAdapter;
@@ -100,10 +97,10 @@ public class PyMoveClassOrFunctionProcessor extends BaseRefactoringProcessor {
               PyClassRefactoringUtil.rememberNamedReferences(oldElement);
               final PsiNamedElement newElement = (PsiNamedElement)(dest.add(oldElement));
               for (UsageInfo usage : usages) {
-                final PsiElement oldExpr = usage.getElement();
+                final PsiElement usageElement = usage.getElement();
                 // TODO: Respect the qualified import style
-                if (oldExpr instanceof PyQualifiedExpression) {
-                  PyQualifiedExpression qexpr = (PyQualifiedExpression)oldExpr;
+                if (usageElement instanceof PyQualifiedExpression) {
+                  PyQualifiedExpression qexpr = (PyQualifiedExpression)usageElement;
                   if (oldElement instanceof PyClass && PyNames.INIT.equals(qexpr.getName())) {
                     continue;
                   }
@@ -112,21 +109,24 @@ public class PyMoveClassOrFunctionProcessor extends BaseRefactoringProcessor {
                     PyClassRefactoringUtil.insertImport(newExpr, newElement, null, true);
                   }
                 }
-                if (oldExpr instanceof PyStringLiteralExpression) {
-                  final PsiReference[] references = oldExpr.getReferences();
-                  for (PsiReference ref : references) {
+                if (usageElement instanceof PyStringLiteralExpression) {
+                  for (PsiReference ref : usageElement.getReferences()) {
                     if (ref instanceof DocStringTypeReference && ref.isReferenceTo(oldElement)) {
                       ref.bindToElement(newElement);
                     }
                   }
                 }
                 else {
-                  final PyImportStatementBase importStmt = PsiTreeUtil.getParentOfType(usage.getElement(), PyImportStatementBase.class);
+                  final PyImportStatementBase importStmt = PsiTreeUtil.getParentOfType(usageElement, PyImportStatementBase.class);
                   if (importStmt != null) {
                     PyClassRefactoringUtil.updateImportOfElement(importStmt, newElement);
                   }
-                  if (usage.getFile() == oldFile && (oldExpr == null || !PsiTreeUtil.isAncestor(oldElement, oldExpr, false))) {
+                  if (usage.getFile() == oldFile && (usageElement == null || !PsiTreeUtil.isAncestor(oldElement, usageElement, false))) {
                     PyClassRefactoringUtil.insertImport(oldElement, newElement);
+                  }
+                  if (usageElement != null && resolvesToLocalStarImport(usageElement)) {
+                    PyClassRefactoringUtil.insertImport(usageElement, newElement);
+                    new PyImportOptimizer().processFile(usageElement.getContainingFile()).run();
                   }
                 }
               }
@@ -141,16 +141,38 @@ public class PyMoveClassOrFunctionProcessor extends BaseRefactoringProcessor {
     }, REFACTORING_NAME, null);
   }
 
+  @Override
+  protected String getCommandName() {
+    return REFACTORING_NAME;
+  }
+
+  private boolean resolvesToLocalStarImport(@NotNull PsiElement element) {
+    final PsiReference ref = element.getReference();
+    final List<PsiElement> resolvedElements = new ArrayList<PsiElement>();
+    if (ref instanceof PsiPolyVariantReference) {
+      for (ResolveResult result : ((PsiPolyVariantReference)ref).multiResolve(false)) {
+        resolvedElements.add(result.getElement());
+      }
+    }
+    else if (ref != null) {
+      resolvedElements.add(ref.resolve());
+    }
+    final PsiFile containingFile = element.getContainingFile();
+    if (containingFile != null) {
+      for (PsiElement resolved : resolvedElements) {
+        if (resolved instanceof PyStarImportElement && resolved.getContainingFile() == containingFile) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
   private static void checkValidImportableFile(PsiElement anchor, VirtualFile file) {
     final PyQualifiedName qName = ResolveImportUtil.findShortestImportableQName(anchor, file);
     if (!PyClassRefactoringUtil.isValidQualifiedName(qName)) {
       throw new IncorrectOperationException(PyBundle.message("refactoring.move.class.or.function.error.cannot.use.module.name.$0", qName));
     }
-  }
-
-  @Override
-  protected String getCommandName() {
-    return REFACTORING_NAME;
   }
 }
 
