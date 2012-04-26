@@ -2,10 +2,15 @@ package com.jetbrains.python;
 
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.project.DumbServiceImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.stubs.StubUpdatingIndex;
@@ -16,6 +21,7 @@ import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyFileImpl;
 import com.jetbrains.python.psi.impl.PyQualifiedName;
 import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
+import com.jetbrains.python.psi.stubs.PyClassNameIndex;
 import com.jetbrains.python.psi.stubs.PyClassStub;
 import com.jetbrains.python.psi.stubs.PyVariableNameIndex;
 import com.jetbrains.python.toolbox.Maybe;
@@ -364,5 +370,33 @@ public class PyStubsTest extends PyTestCase {
     assert sourceFile != null;
     PsiFile psiFile = myFixture.getPsiManager().findFile(sourceFile);
     return (PyFile)psiFile;
+  }
+
+  public void testStubIndexMismatch() {
+    VirtualFile vFile = myFixture.getTempDirFixture().createFile("foo.py");
+    final Project project = myFixture.getProject();
+    PsiFileImpl fooPyFile = (PsiFileImpl) PsiManager.getInstance(project).findFile(vFile);
+    final Document fooDocument = fooPyFile.getViewProvider().getDocument();
+    Collection<PyClass> classes = PyClassNameIndex.find("Foo", project, GlobalSearchScope.allScope(project));
+    assertEquals(classes.size(), 0);
+    new WriteCommandAction.Simple(project, fooPyFile) {
+      public void run() {
+        fooDocument.setText("class Foo: pass");
+      }
+    }.execute();
+    PsiDocumentManager.getInstance(project).commitDocument(fooDocument);
+    fooPyFile.setTreeElementPointer(null);
+    //classes = PyClassNameIndex.find("Foo", project, GlobalSearchScope.allScope(project));
+    //fooPyFile.unloadContent();
+    DumbServiceImpl.getInstance(project).setDumb(true);
+    try {
+      assertEquals(1, ((PyFile) fooPyFile).getTopLevelClasses().size());
+    }
+    finally {
+      DumbServiceImpl.getInstance(project).setDumb(false);
+    }
+    classes = PyClassNameIndex.find("Foo", project, GlobalSearchScope.allScope(project));
+    assertEquals(classes.size(), 1);
+
   }
 }
