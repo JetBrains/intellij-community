@@ -76,6 +76,7 @@ public class AndroidCommonUtils {
   public static final ResourceType[] ID_PROVIDING_RESOURCE_TYPES = new ResourceType[] {
     ResourceType.LAYOUT, ResourceType.MENU
   };
+  @NonNls public static final String INCLUDE_SYSTEM_PROGUARD_FILE_ELEMENT_NAME = "includeSystemProguardFile";
 
   private AndroidCommonUtils() {
   }

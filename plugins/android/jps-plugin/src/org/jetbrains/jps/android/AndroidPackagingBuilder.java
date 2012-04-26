@@ -20,6 +20,8 @@ import org.jetbrains.jps.incremental.ProjectLevelBuilder;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
 import org.jetbrains.jps.incremental.messages.ProgressMessage;
+import org.jetbrains.jps.incremental.storage.TimestampStorage;
+import org.jetbrains.jps.incremental.storage.TimestampValidityState;
 
 import java.io.File;
 import java.io.FileFilter;
@@ -52,15 +54,16 @@ public class AndroidPackagingBuilder extends ProjectLevelBuilder {
     final Collection<Module> modules = context.getProject().getModules().values();
     final Map<Module, AndroidFileSetState> resourcesStates = new HashMap<Module, AndroidFileSetState>();
     final Map<Module, AndroidFileSetState> assetsStates = new HashMap<Module, AndroidFileSetState>();
+    final Map<Module, File> manifestFiles = new HashMap<Module, File>();
 
     try {
-      fillStates(modules, resourcesStates, assetsStates);
+      fillStates(modules, resourcesStates, assetsStates, manifestFiles);
 
       if (!doCaching(context, modules, resourcesStates)) {
         throw new ProjectBuildException();
       }
 
-      if (!doResourcePackaging(context, modules, resourcesStates, assetsStates)) {
+      if (!doResourcePackaging(context, modules, resourcesStates, assetsStates, manifestFiles)) {
         throw new ProjectBuildException();
       }
 
@@ -79,7 +82,8 @@ public class AndroidPackagingBuilder extends ProjectLevelBuilder {
   @SuppressWarnings("unchecked")
   private static void fillStates(@NotNull Collection<Module> modules,
                                  @NotNull Map<Module, AndroidFileSetState> resourcesStates,
-                                 @NotNull Map<Module, AndroidFileSetState> assetsStates) throws IOException {
+                                 @NotNull Map<Module, AndroidFileSetState> assetsStates,
+                                 @NotNull Map<Module, File> manifestFiles) throws IOException {
     for (Module module : modules) {
       final AndroidFacet facet = AndroidJpsUtil.getFacet(module);
 
@@ -95,6 +99,11 @@ public class AndroidPackagingBuilder extends ProjectLevelBuilder {
                                        ? Arrays.asList(assetsDir.getPath())
                                        : Collections.<String>emptyList();
         assetsStates.put(module, new AndroidFileSetState(assetDirs, Condition.TRUE, true));
+
+        final File manifestFile = AndroidJpsUtil.getManifestFileForCompilationPath(facet);
+        if (manifestFile != null) {
+          manifestFiles.put(module, manifestFile);
+        }
       }
     }
   }
@@ -179,13 +188,15 @@ public class AndroidPackagingBuilder extends ProjectLevelBuilder {
   private static boolean doResourcePackaging(@NotNull CompileContext context,
                                              @NotNull Collection<Module> modules,
                                              @NotNull Map<Module, AndroidFileSetState> resourcesStates,
-                                             @NotNull Map<Module, AndroidFileSetState> assetsStates) throws IOException {
+                                             @NotNull Map<Module, AndroidFileSetState> assetsStates,
+                                             @NotNull Map<Module, File> manifestFiles) throws IOException {
     boolean success = true;
 
     final File dataStorageRoot = context.getDataManager().getDataStorageRoot();
     final boolean releaseBuild = AndroidJpsUtil.isReleaseBuild(context);
     AndroidFileSetStorage resourcesStorage = null;
     AndroidFileSetStorage assetsStorage = null;
+    TimestampStorage manifestStorage = null;
 
     try {
       final String resourcesStorageName = releaseBuild ? "resources_packaging_release" : "resources_packaging_dev";
@@ -193,6 +204,9 @@ public class AndroidPackagingBuilder extends ProjectLevelBuilder {
 
       final String assetsStorageName = releaseBuild ? "assets_packaging_release" : "assets_packaging_dev";
       assetsStorage = new AndroidFileSetStorage(dataStorageRoot, assetsStorageName);
+
+      final String manifestStorageName = releaseBuild ? "manifest_packaging_release" : "manifest_packaging_dev";
+      manifestStorage = new TimestampStorage(AndroidJpsUtil.getStorageFile(dataStorageRoot, manifestStorageName));
 
       final Set<Module> modulesToUpdateState = new HashSet<Module>();
 
@@ -202,14 +216,23 @@ public class AndroidPackagingBuilder extends ProjectLevelBuilder {
           continue;
         }
 
+        final File manifestFile = manifestFiles.get(module);
+        if (manifestFile == null) {
+          context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR,
+                                                     AndroidJpsBundle.message("android.jps.errors.manifest.not.found", module.getName())));
+          success = false;
+          continue;
+        }
+
         boolean updateState = true;
 
         if (!facet.isLibrary() &&
             !(context.isMake() &&
               checkUpToDate(module, resourcesStates, resourcesStorage) &&
-              checkUpToDate(module, assetsStates, assetsStorage))) {
+              checkUpToDate(module, assetsStates, assetsStorage) &&
+              manifestFile.lastModified() == manifestStorage.getStamp(manifestFile))) {
 
-          updateState = packageResources(facet, context);
+          updateState = packageResources(facet, manifestFile, context);
 
           if (!updateState) {
             success = false;
@@ -224,6 +247,11 @@ public class AndroidPackagingBuilder extends ProjectLevelBuilder {
         final boolean updateState = modulesToUpdateState.contains(module);
         resourcesStorage.update(module.getName(), updateState ? resourcesStates.get(module) : null);
         assetsStorage.update(module.getName(), updateState ? assetsStates.get(module) : null);
+
+        final File manifestFile = manifestFiles.get(module);
+        if (manifestFile != null) {
+          manifestStorage.update(manifestFile, new TimestampValidityState(manifestFile.lastModified()));
+        }
       }
     }
     finally {
@@ -233,6 +261,10 @@ public class AndroidPackagingBuilder extends ProjectLevelBuilder {
 
       if (assetsStorage != null) {
         assetsStorage.close();
+      }
+
+      if (manifestStorage != null) {
+        manifestStorage.close();
       }
     }
     return success;
@@ -420,18 +452,12 @@ public class AndroidPackagingBuilder extends ProjectLevelBuilder {
     return true;
   }
 
-  private static boolean packageResources(@NotNull AndroidFacet facet, @NotNull CompileContext context) {
+  private static boolean packageResources(@NotNull AndroidFacet facet, @NotNull File manifestFile, @NotNull CompileContext context) {
     final Module module = facet.getModule();
 
     try {
       context.processMessage(new ProgressMessage(AndroidJpsBundle.message("android.jps.progress.packaging.resources", module.getName())));
 
-      final File manifestFile = AndroidJpsUtil.getManifestFileForCompilationPath(facet);
-      if (manifestFile == null) {
-        context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR,
-                                                   AndroidJpsBundle.message("android.jps.errors.manifest.not.found", module.getName())));
-        return false;
-      }
       final ArrayList<String> assetsDirPaths = new ArrayList<String>();
       collectAssetDirs(facet, assetsDirPaths);
 

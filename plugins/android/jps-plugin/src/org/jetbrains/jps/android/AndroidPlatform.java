@@ -9,11 +9,13 @@ public class AndroidPlatform {
   private final AndroidSdk mySdk;
   private final IAndroidTarget myTarget;
   private final int myPlatformToolsRevision;
+  private final int mySdkToolsRevision;
 
   public AndroidPlatform(@NotNull AndroidSdk sdk, @NotNull IAndroidTarget target) {
     mySdk = sdk;
     myTarget = target;
     myPlatformToolsRevision = AndroidCommonUtils.parsePackageRevision(sdk.getSdkPath(), SdkConstants.FD_PLATFORM_TOOLS);
+    mySdkToolsRevision = AndroidCommonUtils.parsePackageRevision(sdk.getSdkPath(), SdkConstants.FD_TOOLS);
   }
 
   @NotNull
@@ -28,5 +30,9 @@ public class AndroidPlatform {
 
   public int getPlatformToolsRevision() {
     return myPlatformToolsRevision;
+  }
+
+  public int getSdkToolsRevision() {
+    return mySdkToolsRevision;
   }
 }

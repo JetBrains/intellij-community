@@ -1,5 +1,6 @@
 package org.jetbrains.jps.android
 
+import org.jetbrains.android.util.AndroidCommonUtils
 import org.jetbrains.jps.MacroExpander
 import org.jetbrains.jps.Module
 import org.jetbrains.jps.idea.Facet
@@ -21,6 +22,10 @@ class AndroidFacetType extends FacetTypeService {
     def facet = new AndroidFacet(module, name);
 
     facetConfiguration.each {Node child ->
+      if (AndroidCommonUtils.INCLUDE_SYSTEM_PROGUARD_FILE_ELEMENT_NAME.equals(child.name())) {
+        facet.includeSystemProguardCfgFile = Boolean.parseBoolean((String)child.text())
+      }
+
       String value = child."@value"
 
       switch (child."@name") {
@@ -62,6 +67,12 @@ class AndroidFacetType extends FacetTypeService {
           break
         case "RUN_PROCESS_RESOURCES_MAVEN_TASK":
           facet.runProcessResourcesMavenTask = Boolean.parseBoolean(value)
+          break
+        case "RUN_PROGUARD":
+          facet.runProguard = Boolean.parseBoolean(value)
+          break
+        case "PROGUARD_CFG_PATH":
+          facet.proguardConfigFileRelativePath = value
           break
       }
     }

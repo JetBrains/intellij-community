@@ -19,13 +19,7 @@ public class AndroidAptStateStorage extends AbstractStateStorage<String, Android
   @NonNls private static final String RESOURCE_NAMES_STORAGE = "resource_names";
 
   public AndroidAptStateStorage(@NotNull File dataStorageRoot) throws IOException {
-    super(getStorageFile(dataStorageRoot), new EnumeratorStringDescriptor(), new MyDataExternalizer());
-  }
-
-  @NotNull
-  private static File getStorageFile(@NotNull File dataStorageRoot) {
-    return new File(new File(new File(dataStorageRoot, AndroidJpsUtil.ANDROID_STORAGE_DIR), RESOURCE_NAMES_STORAGE),
-                    RESOURCE_NAMES_STORAGE);
+    super(AndroidJpsUtil.getStorageFile(dataStorageRoot, RESOURCE_NAMES_STORAGE), new EnumeratorStringDescriptor(), new MyDataExternalizer());
   }
 
   private static class MyDataExternalizer implements DataExternalizer<AndroidAptValidityState> {

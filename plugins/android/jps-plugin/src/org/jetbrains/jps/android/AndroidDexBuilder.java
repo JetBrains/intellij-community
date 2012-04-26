@@ -92,7 +92,7 @@ public class AndroidDexBuilder extends ProjectLevelBuilder {
 
   private static boolean doDexBuild(@NotNull CompileContext context,
                                     @NotNull AndroidFileSetStorage dexStateStorage,
-                                    @NotNull AndroidFileSetStorage proguardStateStorage) {
+                                    @NotNull AndroidFileSetStorage proguardStateStorage) throws IOException {
     boolean success = true;
 
     for (Module module : context.getProject().getModules().values()) {
@@ -125,11 +125,26 @@ public class AndroidDexBuilder extends ProjectLevelBuilder {
       }
       final Set<String> externalLibraries = AndroidJpsUtil.getExternalLibraries(projectPaths, module);
 
-      // todo: read proguard options from Android facet settings if there is no settings in the context
+      boolean includeSystemProguardCfg = false;
+      String proguardCfgPath = context.getBuilderParameter(AndroidCommonUtils.PROGUARD_CFG_PATH_OPTION);
 
-      final String proguardCfgPath = context.getBuilderParameter(AndroidCommonUtils.PROGUARD_CFG_PATH_OPTION);
-      final String includeSystemProguardCfgOption = context.getBuilderParameter(AndroidCommonUtils.INCLUDE_SYSTEM_PROGUARD_FILE_OPTION);
-      final boolean includeSystemProguardCfg = Boolean.parseBoolean(includeSystemProguardCfgOption);
+      if (proguardCfgPath != null) {
+        final String includeSystemProguardCfgOption = context.getBuilderParameter(AndroidCommonUtils.INCLUDE_SYSTEM_PROGUARD_FILE_OPTION);
+        includeSystemProguardCfg = Boolean.parseBoolean(includeSystemProguardCfgOption);
+      }
+      else if (facet.isRunProguard()) {
+        final File proguardCfgFile = facet.getProguardConfigFile();
+        if (proguardCfgFile == null) {
+          context.processMessage(
+            new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR, "Cannot find proguard config file for module " + module.getName()));
+          success = false;
+          continue;
+        }
+
+        proguardCfgPath = proguardCfgFile != null ? proguardCfgFile.getPath() : null;
+        includeSystemProguardCfg = facet.isIncludeSystemProguardCfgFile();
+      }
+
       final Set<String> fileSet;
 
       try {
@@ -334,7 +349,7 @@ public class AndroidDexBuilder extends ProjectLevelBuilder {
     context.processMessage(new ProgressMessage(AndroidJpsBundle.message("android.jps.progress.proguard", module.getName())));
 
     final Map<AndroidCompilerMessageKind, List<String>> messages =
-      AndroidCommonUtils.launchProguard(platform.getTarget(), platform.getPlatformToolsRevision(), platform.getSdk().getSdkPath(),
+      AndroidCommonUtils.launchProguard(platform.getTarget(), platform.getSdkToolsRevision(), platform.getSdk().getSdkPath(),
                                         proguardCfgPath, includeSystemProguardCfg, inputJarOsPath, externalJarOsPaths, outputJarPath,
                                         logsDirOsPath);
     AndroidJpsUtil.addMessages(context, messages, BUILDER_NAME);

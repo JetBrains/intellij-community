@@ -3,6 +3,7 @@ package org.jetbrains.jps.android;
 import com.android.resources.ResourceFolderType;
 import com.android.resources.ResourceType;
 import com.android.sdklib.IAndroidTarget;
+import com.android.sdklib.internal.build.BuildConfigGenerator;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
@@ -128,17 +129,120 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
       success = false;
     }
 
-    final AndroidAptStateStorage storage = new AndroidAptStateStorage(context.getDataManager().getDataStorageRoot());
+    final File dataStorageRoot = context.getDataManager().getDataStorageRoot();
+
+    final AndroidAptStateStorage aptStorage = new AndroidAptStateStorage(dataStorageRoot);
     try {
-      if (!runAaptCompiler(context, moduleDataMap, storage)) {
+      if (!runAaptCompiler(context, moduleDataMap, aptStorage)) {
         success = false;
       }
     }
     finally {
-      storage.close();
+      aptStorage.close();
+    }
+
+    final AndroidBuildConfigStateStorage buildConfigStorage = new AndroidBuildConfigStateStorage(dataStorageRoot);
+    try {
+      if (!runBuildConfigGeneration(context, moduleDataMap, buildConfigStorage)) {
+        success = false;
+      }
+    }
+    finally {
+      buildConfigStorage.close();
     }
 
     return success ? ExitCode.OK : ExitCode.ABORT;
+  }
+
+  private static boolean runBuildConfigGeneration(@NotNull CompileContext context,
+                                                  @NotNull Map<Module, MyModuleData> moduleDataMap,
+                                                  @NotNull AndroidBuildConfigStateStorage storage) {
+    boolean success = true;
+
+    for (Map.Entry<Module, MyModuleData> entry : moduleDataMap.entrySet()) {
+      final Module module = entry.getKey();
+      final MyModuleData moduleData = entry.getValue();
+      final AndroidFacet facet = AndroidJpsUtil.getFacet(module);
+
+      final File generatedSourcesDir = AndroidJpsUtil.getGeneratedSourcesStorage(module);
+      final File outputDirectory = new File(generatedSourcesDir, AndroidJpsUtil.BUILD_CONFIG_GENERATED_SOURCE_ROOT_NAME);
+
+      try {
+        if (facet == null || isLibraryWithBadCircularDependency(facet)) {
+          if (!clearDirectoryIfNotEmpty(outputDirectory, context)) {
+            success = false;
+          }
+          continue;
+        }
+        final String packageName = moduleData.getPackage();
+        final boolean debug = !AndroidJpsUtil.isReleaseBuild(context);
+        final Set<String> libPackages = new HashSet<String>(getDepLibPackages(module).values());
+        libPackages.remove(packageName);
+
+        final AndroidBuildConfigState newState = new AndroidBuildConfigState(packageName, libPackages, debug);
+
+        if (context.isMake()) {
+          final AndroidBuildConfigState oldState = storage.getState(module.getName());
+          if (newState.equalsTo(oldState)) {
+            continue;
+          }
+        }
+
+        // clear directory, because it may contain obsolete files (ex. if package name was changed)
+        if (!clearDirectory(outputDirectory, context)) {
+          success = false;
+          continue;
+        }
+
+        context.processMessage(new ProgressMessage(AndroidJpsBundle.message("android.jps.progress.build.config", module.getName())));
+
+        if (doBuildConfigGeneration(packageName, libPackages, debug, outputDirectory, context)) {
+          storage.update(module.getName(), newState);
+          markDirtyRecursively(outputDirectory, context);
+        }
+        else {
+          storage.update(module.getName(), null);
+          success = false;
+        }
+      }
+      catch (IOException e) {
+        AndroidJpsUtil.reportExceptionError(context, null, e, BUILDER_NAME);
+        success = false;
+      }
+    }
+    return success;
+  }
+
+  private static boolean doBuildConfigGeneration(@NotNull String packageName,
+                                                 @NotNull Collection<String> libPackages,
+                                                 boolean debug,
+                                                 @NotNull File outputDirectory,
+                                                 @NotNull CompileContext context) {
+    if (!doBuildConfigGeneration(packageName, debug, outputDirectory.getPath(), context)) {
+      return false;
+    }
+
+    for (String libPackage : libPackages) {
+      if (!doBuildConfigGeneration(libPackage, debug, outputDirectory.getPath(), context)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  private static boolean doBuildConfigGeneration(@NotNull String packageName,
+                                                 boolean debug,
+                                                 @NotNull String outputDirOsPath,
+                                                 @NotNull CompileContext context) {
+    final BuildConfigGenerator generator = new BuildConfigGenerator(outputDirOsPath, packageName, debug);
+    try {
+      generator.generate();
+      return true;
+    }
+    catch (IOException e) {
+      AndroidJpsUtil.reportExceptionError(context, null, e, BUILDER_NAME);
+      return false;
+    }
   }
 
   private static boolean runAidlCompiler(@NotNull final CompileContext context,
@@ -308,42 +412,39 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
       final MyModuleData moduleData = entry.getValue();
       final AndroidFacet facet = moduleData.getFacet();
 
-      if (!needToRunAaptCompilation(facet)) {
-        continue;
-      }
+      final File generatedSourcesDir = AndroidJpsUtil.getGeneratedSourcesStorage(module);
+      final File aptOutputDirectory = new File(generatedSourcesDir, AndroidJpsUtil.AAPT_GENERATED_SOURCE_ROOT_NAME);
       final IAndroidTarget target = moduleData.getAndroidTarget();
 
       try {
+        if (!needToRunAaptCompilation(facet)) {
+          if (!clearDirectoryIfNotEmpty(aptOutputDirectory, context)) {
+            success = false;
+          }
+          continue;
+        }
+
         final String[] resPaths = AndroidJpsUtil.collectResourceDirsForCompilation(facet, false, context);
         if (resPaths.length == 0) {
           // there is no resources in the module
+          if (!clearDirectoryIfNotEmpty(aptOutputDirectory, context)) {
+            success = false;
+          }
           continue;
         }
+        final String packageName = moduleData.getPackage();
+        final File manifestFile = moduleData.getManifestFileForCompiler();
 
-        final File manifestFile = AndroidJpsUtil.getManifestFileForCompilationPath(facet);
-        if (manifestFile == null || !manifestFile.exists()) {
-          context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR,
-                                                     AndroidJpsBundle.message("android.jps.errors.manifest.not.found", module.getName())));
-          success = false;
+        if (isLibraryWithBadCircularDependency(facet)) {
+          if (!clearDirectoryIfNotEmpty(aptOutputDirectory, context)) {
+            success = false;
+          }
           continue;
         }
-        final String packageName = parsePackageNameFromManifestFile(manifestFile);
-        if (packageName == null || packageName.length() == 0) {
-          context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR, AndroidJpsBundle
-            .message("android.jps.errors.package.not.specified", module.getName())));
-          success = false;
-          continue;
-        }
-
-        final Map<Module, String> depLibPackageMap = getDepLibPackages(module);
-        final Map<Module, String> packageMap = new HashMap<Module, String>(depLibPackageMap);
+        final Map<Module, String> packageMap = getDepLibPackages(module);
         packageMap.put(module, packageName);
 
-        if (hasBadCircularDependencies(facet, packageMap)) {
-          continue;
-        }
-
-        final Module circularDepLibWithSamePackage = AndroidJpsUtil.findCircularDependencyOnLibraryWithSamePackage(facet, packageMap);
+        final Module circularDepLibWithSamePackage = findCircularDependencyOnLibraryWithSamePackage(facet, packageMap);
         if (circularDepLibWithSamePackage != null && !facet.isLibrary()) {
           final String message = "Generated fields in " +
                                  packageName +
@@ -356,11 +457,12 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
         }
         final boolean generateNonFinalFields = facet.isLibrary() || circularDepLibWithSamePackage != null;
 
-        final Set<String> depLibPackagesSet = new HashSet<String>(depLibPackageMap.values());
-        depLibPackagesSet.remove(packageName);
-
         final Map<String, ResourceFileData> resources = collectResources(resPaths);
         final List<ResourceEntry> manifestElements = collectManifestElements(manifestFile);
+
+        final Set<String> depLibPackagesSet = new HashSet<String>(packageMap.values());
+        depLibPackagesSet.remove(packageName);
+
         final AndroidAptValidityState newState = new AndroidAptValidityState(resources, manifestElements, depLibPackagesSet, packageName);
 
         if (context.isMake()) {
@@ -369,18 +471,9 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
             continue;
           }
         }
-        final File generatedSourcesDir = AndroidJpsUtil.getGeneratedSourcesStorage(module);
-        final File aptOutputDirectory = new File(generatedSourcesDir, AndroidJpsUtil.AAPT_GENERATED_SOURCE_ROOT_NAME);
 
         // clear directory, because it may contain obsolete files (ex. if package name was changed)
-        if (!deleteAndMarkRecursively(aptOutputDirectory, context)) {
-          success = false;
-          continue;
-        }
-
-        if (!aptOutputDirectory.mkdirs()) {
-          context.processMessage(
-            new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR, "Cannot create directory " + aptOutputDirectory.getPath()));
+        if (!clearDirectory(aptOutputDirectory, context)) {
           success = false;
           continue;
         }
@@ -408,6 +501,29 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
       }
     }
     return success;
+  }
+
+  private static boolean clearDirectory(File dir, CompileContext context) throws IOException {
+    if (!deleteAndMarkRecursively(dir, context)) {
+      return false;
+    }
+
+    if (!dir.mkdirs()) {
+      context.processMessage(
+        new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR, "Cannot create directory " + dir.getPath()));
+      return false;
+    }
+    return true;
+  }
+
+  private static boolean clearDirectoryIfNotEmpty(@NotNull File dir, @NotNull CompileContext context) throws IOException {
+    if (dir.isDirectory()) {
+      final String[] list = dir.list();
+      if (list != null && list.length > 0) {
+        return clearDirectory(dir, context);
+      }
+    }
+    return true;
   }
 
   private static boolean needToRunAaptCompilation(AndroidFacet facet) {
@@ -644,7 +760,8 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
   }
 
   @Nullable
-  private static Map<Module, MyModuleData> computeModuleDatas(@NotNull Collection<Module> modules, @NotNull CompileContext context) {
+  private static Map<Module, MyModuleData> computeModuleDatas(@NotNull Collection<Module> modules, @NotNull CompileContext context)
+    throws IOException {
     final Map<Module, MyModuleData> moduleDataMap = new HashMap<Module, MyModuleData>();
 
     boolean success = true;
@@ -663,7 +780,23 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
       final AndroidSdk androidSdk = platform.getSdk();
       final IAndroidTarget target = platform.getTarget();
 
-      moduleDataMap.put(module, new MyModuleData(androidSdk.getSdkPath(), target, facet));
+      final File manifestFile = AndroidJpsUtil.getManifestFileForCompilationPath(facet);
+      if (manifestFile == null || !manifestFile.exists()) {
+        context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR,
+                                                   AndroidJpsBundle.message("android.jps.errors.manifest.not.found", module.getName())));
+        success = false;
+        continue;
+      }
+
+      final String packageName = parsePackageNameFromManifestFile(manifestFile);
+      if (packageName == null || packageName.length() == 0) {
+        context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR, AndroidJpsBundle
+          .message("android.jps.errors.package.not.specified", module.getName())));
+        success = false;
+        continue;
+      }
+
+      moduleDataMap.put(module, new MyModuleData(androidSdk.getSdkPath(), target, facet, manifestFile, packageName));
     }
 
     return success ? moduleDataMap : null;
@@ -691,9 +824,9 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
 
   // support for lib<->lib and app<->lib circular dependencies
   // see IDEA-79737 for details
-  private static boolean hasBadCircularDependencies(@NotNull AndroidFacet facet, @NotNull Map<Module, String> packages) throws IOException {
-    final String aPackage = packages.get(facet.getModule());
-    if (aPackage == null || aPackage.length() == 0) {
+  private static boolean isLibraryWithBadCircularDependency(@NotNull AndroidFacet facet)
+    throws IOException {
+    if (!facet.isLibrary()) {
       return false;
     }
     final List<AndroidFacet> dependencies = AndroidJpsUtil.getAllAndroidDependencies(facet.getModule(), false);
@@ -728,17 +861,44 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
     }
   }
 
+  @Nullable
+  public static Module findCircularDependencyOnLibraryWithSamePackage(@NotNull AndroidFacet facet,
+                                                                      @NotNull Map<Module, String> packageMap) {
+    final String aPackage = packageMap.get(facet.getModule());
+    if (aPackage == null || aPackage.length() == 0) {
+      return null;
+    }
+
+    for (AndroidFacet depFacet : AndroidJpsUtil.getAllAndroidDependencies(facet.getModule(), true)) {
+      if (aPackage.equals(packageMap.get(depFacet.getModule()))) {
+        final List<AndroidFacet> depDependencies = AndroidJpsUtil.getAllAndroidDependencies(depFacet.getModule(), false);
+
+        if (depDependencies.contains(facet)) {
+          // circular dependency on library with the same package
+          return depFacet.getModule();
+        }
+      }
+    }
+    return null;
+  }
+
   private static class MyModuleData {
     private final String mySdkLocation;
     private final IAndroidTarget myAndroidTarget;
     private final AndroidFacet myFacet;
+    private final File myManifestFileForCompiler;
+    private final String myPackage;
 
     private MyModuleData(@NotNull String sdkLocation,
                          @NotNull IAndroidTarget androidTarget,
-                         @NotNull AndroidFacet facet) {
+                         @NotNull AndroidFacet facet,
+                         @NotNull File manifestFileForCompiler,
+                         @NotNull String aPackage) {
       mySdkLocation = sdkLocation;
       myAndroidTarget = androidTarget;
       myFacet = facet;
+      myManifestFileForCompiler = manifestFileForCompiler;
+      myPackage = aPackage;
     }
 
     @NotNull
@@ -754,6 +914,16 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
     @NotNull
     public AndroidFacet getFacet() {
       return myFacet;
+    }
+
+    @NotNull
+    public File getManifestFileForCompiler() {
+      return myManifestFileForCompiler;
+    }
+
+    @NotNull
+    public String getPackage() {
+      return myPackage;
     }
   }
 }
