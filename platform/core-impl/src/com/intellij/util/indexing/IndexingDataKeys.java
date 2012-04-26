@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ public class IndexingDataKeys {
   public static final Key<VirtualFile> VIRTUAL_FILE = new Key<VirtualFile>("Context virtual file");
   public static final Key<Project> PROJECT = new Key<Project>("Context project");
   public static final Key<PsiFile> PSI_FILE = new Key<PsiFile>("PSI for stubs");
+  public static final Key<CharSequence> FILE_TEXT_CONTENT_KEY = Key.create("file text content cached by stub indexer");
 
   private IndexingDataKeys() {
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,10 +33,10 @@ import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.JavaDocElementType;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.impl.source.tree.TreeUtil;
-import com.intellij.psi.stubs.StubTreeLoader;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.indexing.IndexingDataKeys;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
@@ -174,7 +174,7 @@ public class JavaParserUtil {
       text = chameleon.getChars();
     }
     else {
-      text = psi.getUserData(StubTreeLoader.FILE_TEXT_CONTENT_KEY);
+      text = psi.getUserData(IndexingDataKeys.FILE_TEXT_CONTENT_KEY);
       if (text == null) text = chameleon.getChars();
     }
 

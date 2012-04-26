@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,11 +22,13 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.tree.IStubFileElementType;
 import com.intellij.util.indexing.FileContent;
 import com.intellij.util.indexing.FileContentImpl;
 import com.intellij.util.indexing.IndexingDataKeys;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 
@@ -35,7 +37,7 @@ import java.io.IOException;
  */
 public class CoreStubTreeLoader extends StubTreeLoader {
   @Override
-  public StubTree readOrBuild(Project project, VirtualFile vFile) {
+  public StubTree readOrBuild(Project project, VirtualFile vFile, @Nullable PsiFile psiFile) {
     if (!canHaveStub(vFile)) {
       return null;
     }
