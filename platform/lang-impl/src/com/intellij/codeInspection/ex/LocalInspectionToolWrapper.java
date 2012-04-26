@@ -27,6 +27,8 @@ import com.intellij.codeInspection.ui.InspectionTreeNode;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.psi.*;
 import com.intellij.util.TripleFunction;
 import com.intellij.util.containers.HashSet;
@@ -41,11 +43,12 @@ import java.util.*;
 /**
  * @author max
  */
-public final class LocalInspectionToolWrapper extends InspectionToolWrapper<LocalInspectionTool, LocalInspectionEP> {
+public class LocalInspectionToolWrapper extends InspectionToolWrapper<LocalInspectionTool, LocalInspectionEP> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.ex.LocalInspectionToolWrapper");
 
+  /** This should be used in tests primarily */
   public LocalInspectionToolWrapper(@NotNull LocalInspectionTool tool) {
-    super(tool);
+    super(tool, ourEPMap.getValue().get(tool.getShortName()));
   }
 
   public LocalInspectionToolWrapper(LocalInspectionEP ep) {
@@ -57,13 +60,13 @@ public final class LocalInspectionToolWrapper extends InspectionToolWrapper<Loca
     super(tool, ep);
   }
 
-  public LocalInspectionToolWrapper(LocalInspectionEP ep, LocalInspectionTool tool) {
-    super(ep, tool);
+  private LocalInspectionToolWrapper(LocalInspectionToolWrapper other) {
+    super(other);
   }
 
   @Override
-  public InspectionToolWrapper<LocalInspectionTool, LocalInspectionEP> createCopy(InspectionToolWrapper<LocalInspectionTool, LocalInspectionEP> from) {
-    return new LocalInspectionToolWrapper(from.myEP, from.myTool);
+  public LocalInspectionToolWrapper createCopy() {
+    return new LocalInspectionToolWrapper(this);
   }
 
   public void processFile(PsiFile file, final boolean filterSuppressed, final InspectionManager manager) {
@@ -215,4 +218,16 @@ public final class LocalInspectionToolWrapper extends InspectionToolWrapper<Loca
   public boolean runForWholeFile() {
     return myEP == null ? getTool().runForWholeFile() : myEP.runForWholeFile;
   }
+
+  private final static NotNullLazyValue<Map<String, LocalInspectionEP>> ourEPMap = new NotNullLazyValue<Map<String, LocalInspectionEP>>() {
+    @NotNull
+    @Override
+    protected Map<String, LocalInspectionEP> compute() {
+      HashMap<String, LocalInspectionEP> map = new HashMap<String, LocalInspectionEP>();
+      for (LocalInspectionEP ep : Extensions.getExtensions(LocalInspectionEP.LOCAL_INSPECTION)) {
+        map.put(ep.shortName, ep);
+      }
+      return map;
+    }
+  };
 }

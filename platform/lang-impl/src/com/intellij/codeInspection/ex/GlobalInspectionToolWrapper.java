@@ -29,13 +29,13 @@ public class GlobalInspectionToolWrapper extends InspectionToolWrapper<GlobalIns
     super(ep);
   }
 
-  public GlobalInspectionToolWrapper(InspectionEP ep, GlobalInspectionTool tool) {
-    super(ep, tool);
+  private GlobalInspectionToolWrapper(GlobalInspectionToolWrapper other) {
+    super(other);
   }
 
   @Override
-  public InspectionToolWrapper<GlobalInspectionTool, InspectionEP> createCopy(InspectionToolWrapper<GlobalInspectionTool, InspectionEP> from) {
-    return new GlobalInspectionToolWrapper(from.myEP, from.myTool);
+  public InspectionToolWrapper<GlobalInspectionTool, InspectionEP> createCopy() {
+    return new GlobalInspectionToolWrapper(this);
   }
 
   public void initialize(@NotNull GlobalInspectionContextImpl context) {

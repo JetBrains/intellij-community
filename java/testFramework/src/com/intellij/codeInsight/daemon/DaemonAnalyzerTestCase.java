@@ -28,10 +28,7 @@ import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.InspectionToolProvider;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ModifiableModel;
-import com.intellij.codeInspection.ex.InspectionProfileImpl;
-import com.intellij.codeInspection.ex.InspectionTool;
-import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
-import com.intellij.codeInspection.ex.ToolsImpl;
+import com.intellij.codeInspection.ex.*;
 import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.ide.startup.impl.StartupManagerImpl;
 import com.intellij.lang.ExternalAnnotatorsFilter;
@@ -98,7 +95,7 @@ import java.util.List;
 import java.util.Map;
 
 public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
-  private final Map<String, InspectionProfileEntry> myAvailableTools = new THashMap<String, InspectionProfileEntry>();
+  private final Map<String, LocalInspectionToolWrapper> myAvailableTools = new THashMap<String, LocalInspectionToolWrapper>();
   private final FileTreeAccessFilter myFileTreeAccessFilter = new FileTreeAccessFilter();
 
   @Override
@@ -125,14 +122,9 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
 
       @Override
       @NotNull
-      public InspectionProfileEntry[] getInspectionTools(PsiElement element) {
-        Collection<InspectionProfileEntry> values = myAvailableTools.values();
-        List<InspectionTool> result = new ArrayList<InspectionTool>();
-        for (InspectionProfileEntry value : values) {
-          InspectionTool tool = value instanceof InspectionTool ? (InspectionTool)value : new LocalInspectionToolWrapper((LocalInspectionTool)value);
-          result.add(tool);
-        }
-        return result.toArray(new InspectionTool[result.size()]);
+      public InspectionTool[] getInspectionTools(PsiElement element) {
+        Collection<LocalInspectionToolWrapper> values = myAvailableTools.values();
+        return values.toArray(new InspectionTool[values.size()]);
       }
 
       @Override
@@ -162,8 +154,7 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
 
       @Override
       public InspectionTool getInspectionTool(@NotNull String shortName, @NotNull PsiElement element) {
-        InspectionProfileEntry entry = myAvailableTools.get(shortName);
-        return entry == null ? null : entry instanceof InspectionTool ? (InspectionTool)entry : new LocalInspectionToolWrapper((LocalInspectionTool)entry);
+        return myAvailableTools.get(shortName);
       }
     };
     final InspectionProfileManager inspectionProfileManager = InspectionProfileManager.getInstance();
@@ -210,13 +201,13 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
   }
 
   protected void enableInspectionTool(InspectionProfileEntry tool){
-    final String shortName = tool.getShortName();
+    LocalInspectionToolWrapper wrapper = new LocalInspectionToolWrapper((LocalInspectionTool)tool);
+    final String shortName = wrapper.getShortName();
     final HighlightDisplayKey key = HighlightDisplayKey.find(shortName);
     if (key == null) {
-      assert tool instanceof LocalInspectionTool;
-      HighlightDisplayKey.register(shortName, tool.getDisplayName(), ((LocalInspectionTool)tool).getID());
+      HighlightDisplayKey.register(shortName, wrapper.getDisplayName(), wrapper.getID());
     }
-    myAvailableTools.put(shortName, tool);
+    myAvailableTools.put(shortName, wrapper);
   }
 
   protected void enableInspectionToolsFromProvider(InspectionToolProvider toolProvider){
