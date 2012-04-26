@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,20 +17,20 @@ package com.intellij.psi.stubs;
 
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author yole
  */
 public abstract class StubTreeLoader {
-  public static final Key<CharSequence> FILE_TEXT_CONTENT_KEY = Key.create("file text content cached by stub indexer");
 
   public static StubTreeLoader getInstance() {
     return ServiceManager.getService(StubTreeLoader.class);
   }
 
-  public abstract StubTree readOrBuild(Project project, final VirtualFile vFile);
+  public abstract StubTree readOrBuild(Project project, final VirtualFile vFile, @Nullable final PsiFile psiFile);
 
   public abstract StubTree readFromVFile(Project project, final VirtualFile vFile);
   

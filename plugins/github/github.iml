@@ -12,8 +12,8 @@
     <orderEntry type="module" module-name="git4idea" />
     <orderEntry type="library" name="http-client-3.1" level="project" />
     <orderEntry type="module" module-name="vcs-impl" />
-    <orderEntry type="module" module-name="tasks-core" />
-    <orderEntry type="module" module-name="tasks-api" />
+    <orderEntry type="module" module-name="tasks-core" exported="" />
+    <orderEntry type="module" module-name="tasks-api" exported="" />
     <orderEntry type="module" module-name="platform-impl" />
     <orderEntry type="module" module-name="util" />
     <orderEntry type="library" name="gson" level="project" />
