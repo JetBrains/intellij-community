@@ -17,6 +17,7 @@ package com.intellij.android.designer.model.grid;
 
 import com.intellij.designer.model.RadComponent;
 import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Alexander Lobas
@@ -68,7 +69,7 @@ public class GridInfo {
   }
 
   public static void setNull(RadComponent[][] components1,
-                             RadComponent[][] components2,
+                             @Nullable RadComponent[][] components2,
                              int startRow,
                              int endRow,
                              int startColumn,
@@ -79,7 +80,9 @@ public class GridInfo {
     for (int i = startRow; i < endRow; i++) {
       for (int j = startColumn; j < endColumn; j++) {
         components1[i][j] = null;
-        components2[i][j] = null;
+        if (components2 != null) {
+          components2[i][j] = null;
+        }
       }
     }
   }
