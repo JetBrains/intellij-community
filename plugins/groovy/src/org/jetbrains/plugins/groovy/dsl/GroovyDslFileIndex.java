@@ -346,11 +346,13 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
 
         List<GroovyDslScript> result = new ArrayList<GroovyDslScript>();
 
-        for (Pair<File, GroovyDslExecutor> pair : getStandardScripts()) {
-          result.add(new GroovyDslScript(project, null, pair.second, pair.first.getPath()));
-        }
+        List<Pair<File, GroovyDslExecutor>> standardScripts = getStandardScripts();
         if (stopGdsl) {
           return Result.create(Collections.<GroovyDslScript>emptyList());
+        }
+        assert standardScripts != null;
+        for (Pair<File, GroovyDslExecutor> pair : standardScripts) {
+          result.add(new GroovyDslScript(project, null, pair.second, pair.first.getPath()));
         }
 
         final LinkedBlockingQueue<Pair<VirtualFile, GroovyDslExecutor>> queue =
