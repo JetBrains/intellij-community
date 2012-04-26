@@ -113,7 +113,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     }
   }
 
-  public final void invokeCompletion(final Project project, final Editor editor, int time, boolean hasModifiers) {
+  public final void invokeCompletion(@NotNull final Project project, @NotNull final Editor editor, int time, boolean hasModifiers) {
     final PsiFile psiFile = PsiUtilBase.getPsiFileInEditor(editor, project);
     assert psiFile != null : "no PSI file: " + FileDocumentManager.getInstance().getFile(editor.getDocument());
 
