@@ -436,8 +436,9 @@ public class JavaCompletionUtil {
 
     PsiType runtimeQualifier = getQualifierCastType(javaReference, parameters);
     if (runtimeQualifier != null) {
-      javaReference = (PsiReferenceExpression) JavaPsiFacade.getElementFactory(element.getProject()).createExpressionFromText("xxx.xxx", createContextWithXxxVariable(element,
-                                                                                                                                                                      PsiIntersectionType.createIntersection(qualifierType, runtimeQualifier)));
+      PsiType composite = qualifierType == null ? runtimeQualifier : PsiIntersectionType.createIntersection(qualifierType, runtimeQualifier);
+      PsiElement ctx = createContextWithXxxVariable(element, composite);
+      javaReference = (PsiReferenceExpression) JavaPsiFacade.getElementFactory(element.getProject()).createExpressionFromText("xxx.xxx", ctx);
       qualifierType = runtimeQualifier;
     }
 
