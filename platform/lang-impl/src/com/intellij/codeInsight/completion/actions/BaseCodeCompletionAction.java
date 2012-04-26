@@ -49,6 +49,8 @@ public abstract class BaseCodeCompletionAction extends AnAction implements HintM
     DataContext dataContext = e.getDataContext();
     Project project = PlatformDataKeys.PROJECT.getData(dataContext);
     Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
+    assert project != null;
+    assert editor != null;
 
     switch (myCompletionType) {
       case BASIC: FeatureUsageTracker.getInstance().triggerFeatureUsed(CodeCompletionFeatures.EDITING_COMPLETION_BASIC); break;

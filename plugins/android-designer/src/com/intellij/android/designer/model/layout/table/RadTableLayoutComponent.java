@@ -120,10 +120,10 @@ public class RadTableLayoutComponent extends RadViewContainer implements IGridPr
       if (!rows.isEmpty()) {
         int columnSize = Math.max(1, gridInfo.vLines.length - 1);
         if (deltaWidth < 2) {
-          myVirtualGridInfo.lastColumn = columnSize - 1;
+          myVirtualGridInfo.lastInsertColumn = columnSize - 1;
         }
         if (deltaHeight < 2) {
-          myVirtualGridInfo.lastRow = rows.size() - 1;
+          myVirtualGridInfo.lastInsertRow = rows.size() - 1;
         }
 
         myVirtualGridInfo.components = getGridComponents(true);
@@ -169,7 +169,7 @@ public class RadTableLayoutComponent extends RadViewContainer implements IGridPr
     return components;
   }
 
-  private static int getCellIndex(RadComponent component) {
+  public static int getCellIndex(RadComponent component) {
     try {
       String column = ((RadViewComponent)component).getTag().getAttributeValue("android:layout_column");
       return Integer.parseInt(column);

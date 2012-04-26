@@ -15,8 +15,10 @@
  */
 package com.intellij.codeInsight.completion.impl;
 
+import com.intellij.codeInsight.completion.CompletionLookupArranger;
 import com.intellij.codeInsight.lookup.Classifier;
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.util.ProcessingContext;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -73,19 +75,28 @@ class LiftShorterItemsClassifier extends Classifier<LookupElement> {
   }
 
   @Override
-  public Iterable<LookupElement> classify(List<LookupElement> source) {
-    return liftShorterElements(source, new THashSet<LookupElement>(TObjectHashingStrategy.IDENTITY));
+  public Iterable<LookupElement> classify(Iterable<LookupElement> source, ProcessingContext context) {
+    if (context.get(CompletionLookupArranger.PURE_RELEVANCE) == Boolean.TRUE) {
+      return myNext.classify(source, context);
+    }
+    return liftShorterElements(source, new THashSet<LookupElement>(TObjectHashingStrategy.IDENTITY), context);
   }
 
-  private List<LookupElement> liftShorterElements(List<LookupElement> source, THashSet<LookupElement> lifted) {
-    final Set<LookupElement> srcSet = new THashSet<LookupElement>(source, TObjectHashingStrategy.IDENTITY);
+  private List<LookupElement> liftShorterElements(Iterable<LookupElement> source, THashSet<LookupElement> lifted, ProcessingContext context) {
+    final Set<LookupElement> srcSet = new THashSet<LookupElement>(TObjectHashingStrategy.IDENTITY);
+    ContainerUtil.addAll(srcSet, source);
     final Set<LookupElement> processed = new THashSet<LookupElement>(TObjectHashingStrategy.IDENTITY);
 
     final List<LookupElement> result = new ArrayList<LookupElement>();
-    for (LookupElement element : myNext.classify(source)) {
+    for (LookupElement element : myNext.classify(source, context)) {
       assert srcSet.contains(element) : myNext;
       if (processed.add(element)) {
-        for (String prefix : getSortedPrefixes(element)) {
+        final List<String> prefixes = new SmartList<String>();
+        for (String string : getAllLookupStrings(element)) {
+          prefixes.addAll(myPrefixes.get(string));
+        }
+        Collections.sort(prefixes);
+        for (String prefix : prefixes) {
           List<LookupElement> shorter = new SmartList<LookupElement>();
           for (LookupElement shorterElement : myElements.get(prefix)) {
             if (srcSet.contains(shorterElement) && processed.add(shorterElement)) {
@@ -95,21 +106,11 @@ class LiftShorterItemsClassifier extends Classifier<LookupElement> {
 
           lifted.addAll(shorter);
 
-          ContainerUtil.addAll(result, myNext.classify(shorter));
+          ContainerUtil.addAll(result, myNext.classify(shorter, context));
         }
         result.add(element);
       }
     }
-    return result;
-  }
-
-  private String[] getSortedPrefixes(LookupElement element) {
-    final List<String> prefixes = new SmartList<String>();
-    for (String string : getAllLookupStrings(element)) {
-      prefixes.addAll(myPrefixes.get(string));
-    }
-    String[] result = prefixes.toArray(new String[prefixes.size()]);
-    Arrays.sort(result);
     return result;
   }
 
@@ -118,9 +119,9 @@ class LiftShorterItemsClassifier extends Classifier<LookupElement> {
   }
 
   @Override
-  public void describeItems(LinkedHashMap<LookupElement, StringBuilder> map) {
-    final HashSet<LookupElement> lifted = new HashSet<LookupElement>();
-    liftShorterElements(new ArrayList<LookupElement>(map.keySet()), new THashSet<LookupElement>(TObjectHashingStrategy.IDENTITY));
+  public void describeItems(LinkedHashMap<LookupElement, StringBuilder> map, ProcessingContext context) {
+    final THashSet<LookupElement> lifted = new THashSet<LookupElement>(TObjectHashingStrategy.IDENTITY);
+    liftShorterElements(new ArrayList<LookupElement>(map.keySet()), lifted, new ProcessingContext());
     if (!lifted.isEmpty()) {
       for (LookupElement element : map.keySet()) {
         final StringBuilder builder = map.get(element);
@@ -131,6 +132,6 @@ class LiftShorterItemsClassifier extends Classifier<LookupElement> {
         builder.append("liftShorter=").append(lifted.contains(element));
       }
     }
-    myNext.describeItems(map);
+    myNext.describeItems(map, context);
   }
 }

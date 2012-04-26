@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,20 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.codeInsight.lookup;
+package com.intellij.designer.model;
 
-import com.intellij.util.ProcessingContext;
-
-import java.util.LinkedHashMap;
+import java.util.List;
 
 /**
- * @author peter
+ * @author Alexander Lobas
  */
-public abstract class Classifier<T> {
-  public abstract void addElement(T t);
-
-  public abstract Iterable<T> classify(Iterable<T> source, ProcessingContext context);
-
-  public abstract void describeItems(LinkedHashMap<T, StringBuilder> map, ProcessingContext context);
-
+public interface IGroupDeleteComponent {
+  void delete(List<RadComponent> components) throws Exception;
 }

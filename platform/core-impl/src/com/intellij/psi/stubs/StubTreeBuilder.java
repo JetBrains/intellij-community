@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.tree.IStubFileElementType;
 import com.intellij.util.indexing.FileContent;
+import com.intellij.util.indexing.IndexingDataKeys;
 import com.intellij.util.indexing.SubstitutedFileType;
 import org.jetbrains.annotations.Nullable;
 
@@ -58,7 +59,7 @@ public class StubTreeBuilder {
 
         PsiFile psi = inputData.getPsiFile();
         CharSequence contentAsText = inputData.getContentAsText();
-        psi.putUserData(StubTreeLoader.FILE_TEXT_CONTENT_KEY, contentAsText);
+        psi.putUserData(IndexingDataKeys.FILE_TEXT_CONTENT_KEY, contentAsText);
 
         try {
           if (type instanceof IStubFileElementType) {
@@ -72,7 +73,7 @@ public class StubTreeBuilder {
           }
         }
         finally {
-          psi.putUserData(StubTreeLoader.FILE_TEXT_CONTENT_KEY, null);
+          psi.putUserData(IndexingDataKeys.FILE_TEXT_CONTENT_KEY, null);
         }
       }
 

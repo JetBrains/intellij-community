@@ -30,7 +30,6 @@ import com.intellij.ui.ColoredTreeCellRenderer;
 
 import java.awt.*;
 import java.lang.reflect.Field;
-import java.lang.reflect.Method;
 import java.util.Arrays;
 
 /**
@@ -73,11 +72,8 @@ public class RadGridLayoutComponent extends RadViewContainer implements ICompone
         Object viewObject = myViewInfo.getViewObject();
         Class<?> viewClass = viewObject.getClass();
 
-        Method getColumnCount = viewClass.getMethod("getColumnCount");
-        myGridInfo.lastColumn = (Integer)getColumnCount.invoke(viewObject) - 1;
-
-        Method getRowCount = viewClass.getMethod("getRowCount");
-        myGridInfo.lastRow = (Integer)getRowCount.invoke(viewObject) - 1;
+        myGridInfo.rowCount = (Integer)viewClass.getMethod("getRowCount").invoke(viewObject);
+        myGridInfo.columnCount = (Integer)viewClass.getMethod("getColumnCount").invoke(viewObject);
 
         Field field_horizontalAxis = viewClass.getDeclaredField("horizontalAxis");
         field_horizontalAxis.setAccessible(true);
@@ -157,14 +153,25 @@ public class RadGridLayoutComponent extends RadViewContainer implements ICompone
       GridInfo gridInfo = getGridInfo();
       Rectangle bounds = getBounds();
 
-      myVirtualGridInfo.lastColumn = gridInfo.lastColumn;
-      myVirtualGridInfo.lastRow = gridInfo.lastRow;
+      myVirtualGridInfo.rowCount = gridInfo.rowCount;
+      myVirtualGridInfo.columnCount = gridInfo.columnCount;
 
       myVirtualGridInfo.width = bounds.width;
       myVirtualGridInfo.height = bounds.height;
 
-      myVirtualGridInfo.vLines = GridInfo.addLineInfo(gridInfo.vLines, bounds.width - gridInfo.width);
-      myVirtualGridInfo.hLines = GridInfo.addLineInfo(gridInfo.hLines, bounds.height - gridInfo.height);
+      int deltaWidth = bounds.width - gridInfo.width;
+      myVirtualGridInfo.vLines = GridInfo.addLineInfo(gridInfo.vLines, deltaWidth);
+
+      if (deltaWidth < 2) {
+        myVirtualGridInfo.lastInsertColumn = gridInfo.columnCount - 1;
+      }
+
+      int deltaHeight = bounds.height - gridInfo.height;
+      myVirtualGridInfo.hLines = GridInfo.addLineInfo(gridInfo.hLines, deltaHeight);
+
+      if (deltaHeight < 2) {
+        myVirtualGridInfo.lastInsertRow = gridInfo.rowCount - 1;
+      }
 
       myVirtualGridInfo.components = getGridComponents(true);
     }
@@ -174,7 +181,7 @@ public class RadGridLayoutComponent extends RadViewContainer implements ICompone
 
   public RadComponent[][] getGridComponents(boolean fillSpans) {
     GridInfo gridInfo = getGridInfo();
-    RadComponent[][] components = new RadComponent[gridInfo.lastRow + 1][gridInfo.lastColumn + 1];
+    RadComponent[][] components = new RadComponent[gridInfo.rowCount][gridInfo.columnCount];
 
     for (RadComponent child : getChildren()) {
       Rectangle cellInfo = getCellInfo(child);
@@ -228,15 +235,17 @@ public class RadGridLayoutComponent extends RadViewContainer implements ICompone
     return cellInfo;
   }
 
-  public static void setCellIndex(final RadComponent component, final int row, final int column) {
+  public static void setCellIndex(final RadComponent component, final int row, final int column, final boolean clearSpans) {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override
       public void run() {
         XmlTag tag = ((RadViewComponent)component).getTag();
         tag.setAttribute("android:layout_row", Integer.toString(row));
         tag.setAttribute("android:layout_column", Integer.toString(column));
-        ModelParser.deleteAttribute(tag, "android:layout_rowSpan");
-        ModelParser.deleteAttribute(tag, "android:layout_columnSpan");
+        if (clearSpans) {
+          ModelParser.deleteAttribute(tag, "android:layout_rowSpan");
+          ModelParser.deleteAttribute(tag, "android:layout_columnSpan");
+        }
       }
     });
   }

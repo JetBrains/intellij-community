@@ -17,6 +17,7 @@ package com.intellij.android.designer.model.grid;
 
 import com.intellij.designer.model.RadComponent;
 import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Alexander Lobas
@@ -32,8 +33,12 @@ public class GridInfo {
   public boolean[] emptyRows = ArrayUtil.EMPTY_BOOLEAN_ARRAY;
 
   public RadComponent[][] components;
-  public int lastRow = -1;
-  public int lastColumn = -1;
+
+  public int rowCount;
+  public int columnCount;
+
+  public int lastInsertRow = -1;
+  public int lastInsertColumn = -1;
 
   private static final int NEW_CELL_SIZE = 32;
 
@@ -61,5 +66,24 @@ public class GridInfo {
       return oldLines;
     }
     return oldLines;
+  }
+
+  public static void setNull(RadComponent[][] components1,
+                             @Nullable RadComponent[][] components2,
+                             int startRow,
+                             int endRow,
+                             int startColumn,
+                             int endColumn) {
+    endRow = Math.min(endRow, components1.length);
+    endColumn = Math.min(endColumn, components1[0].length);
+
+    for (int i = startRow; i < endRow; i++) {
+      for (int j = startColumn; j < endColumn; j++) {
+        components1[i][j] = null;
+        if (components2 != null) {
+          components2[i][j] = null;
+        }
+      }
+    }
   }
 }

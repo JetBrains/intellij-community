@@ -15,89 +15,77 @@
  */
 package com.intellij.android.designer.designSurface.layout.caption;
 
-import com.intellij.android.designer.designSurface.AbstractEditOperation;
 import com.intellij.android.designer.model.RadViewComponent;
-import com.intellij.android.designer.model.layout.table.RadCaptionTableRow;
-import com.intellij.android.designer.model.layout.table.RadTableLayoutComponent;
 import com.intellij.designer.designSurface.EditableArea;
+import com.intellij.designer.designSurface.FeedbackLayer;
 import com.intellij.designer.designSurface.FlowBaseOperation;
 import com.intellij.designer.designSurface.OperationContext;
+import com.intellij.designer.designSurface.feedbacks.LineInsertFeedback;
 import com.intellij.designer.model.RadComponent;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.ArrayList;
+import java.awt.*;
 import java.util.List;
 
 /**
  * @author Alexander Lobas
  */
-public class VerticalCaptionFlowBaseOperation extends FlowBaseOperation {
-  private final RadTableLayoutComponent myTableComponent;
-  private final OperationContext myMainContext;
-  private final FlowBaseOperation myMainOperation;
+public abstract class VerticalCaptionFlowBaseOperation<T extends RadViewComponent> extends FlowBaseOperation {
+  protected final T myMainContainer;
+  private final EditableArea myMainArea;
+  private LineInsertFeedback myMainInsertFeedback;
+  private int myMainXLocation;
 
-  public VerticalCaptionFlowBaseOperation(RadTableLayoutComponent tableComponent,
+  public VerticalCaptionFlowBaseOperation(T mainContainer,
                                           RadComponent container,
                                           OperationContext context,
                                           EditableArea mainArea) {
     super(container, context, false);
-    myTableComponent = tableComponent;
-    myMainContext = new OperationContext(context.getType());
-    myMainContext.setArea(mainArea);
-
-    myMainOperation = new FlowBaseOperation(tableComponent, myMainContext, false) {
-      @Override
-      protected void execute(@Nullable RadComponent insertBefore) throws Exception {
-      }
-    };
+    myMainContainer = mainContainer;
+    myMainArea = mainArea;
   }
 
   @Override
-  public void setComponents(List<RadComponent> components) {
-    super.setComponents(components);
-    myMainContext.setComponents(getRowComponents(components));
+  protected void createFeedback() {
+    super.createFeedback();
+
+    if (myMainInsertFeedback == null) {
+      FeedbackLayer layer = myMainArea.getFeedbackLayer();
+
+      Rectangle bounds = myMainContainer.getBounds(layer);
+      myMainXLocation = bounds.x;
+
+      myMainInsertFeedback = new LineInsertFeedback(Color.green, true);
+      myMainInsertFeedback.size(getMainFeedbackWidth(layer, myMainXLocation), 0);
+
+      layer.add(myMainInsertFeedback);
+      layer.repaint();
+    }
+  }
+
+  protected int getMainFeedbackWidth(FeedbackLayer layer, int mainXLocation) {
+    List<RadComponent> children = myMainContainer.getChildren();
+    Rectangle lastChildBounds = children.get(children.size() - 1).getBounds(layer);
+    return lastChildBounds.x + lastChildBounds.width - mainXLocation;
   }
 
   @Override
   public void showFeedback() {
     super.showFeedback();
-    myMainContext.setLocation(SwingUtilities.convertPoint(myContext.getArea().getFeedbackLayer(),
-                                                          myContext.getLocation(),
-                                                          myMainContext.getArea().getFeedbackLayer()));
-    myMainOperation.showFeedback();
+    Point location = SwingUtilities.convertPoint(myInsertFeedback.getParent(),
+                                                 myInsertFeedback.getLocation(),
+                                                 myMainArea.getFeedbackLayer());
+    myMainInsertFeedback.setLocation(myMainXLocation, location.y);
   }
 
   @Override
   public void eraseFeedback() {
     super.eraseFeedback();
-    myMainOperation.eraseFeedback();
-  }
-
-  @Override
-  protected void execute(@Nullable RadComponent insertBefore) throws Exception {
-    for (RadComponent component : myComponents) {
-      component.removeFromParent();
-      myContainer.add(component, insertBefore);
+    if (myMainInsertFeedback != null) {
+      FeedbackLayer layer = myMainArea.getFeedbackLayer();
+      layer.remove(myMainInsertFeedback);
+      layer.repaint();
+      myMainInsertFeedback = null;
     }
-
-    AbstractEditOperation.execute(myMainContext,
-                                  myTableComponent,
-                                  getRowComponents(myComponents),
-                                  getRowComponent(insertBefore));
-  }
-
-  private static List<RadComponent> getRowComponents(List<RadComponent> components) {
-    List<RadComponent> rowComponents = new ArrayList<RadComponent>();
-    for (RadComponent component : components) {
-      rowComponents.add(((RadCaptionTableRow)component).getComponent());
-    }
-    return rowComponents;
-  }
-
-  @Nullable
-  private static RadViewComponent getRowComponent(@Nullable RadComponent component) {
-    RadCaptionTableRow row = (RadCaptionTableRow)component;
-    return row == null ? null : row.getComponent();
   }
 }

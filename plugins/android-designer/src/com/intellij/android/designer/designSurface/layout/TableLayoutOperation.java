@@ -27,6 +27,7 @@ import com.intellij.designer.designSurface.OperationContext;
 import com.intellij.designer.model.MetaManager;
 import com.intellij.designer.model.MetaModel;
 import com.intellij.designer.model.RadComponent;
+import com.intellij.designer.model.RadComponentVisitor;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -37,6 +38,85 @@ import java.util.List;
 public class TableLayoutOperation extends GridOperation {
   public TableLayoutOperation(RadComponent container, OperationContext context) {
     super(container, context);
+  }
+
+  @Override
+  protected boolean isMoveOperation() {
+    if (myContext.isPaste() || myContext.isCreate()) {
+      return false;
+    }
+    if (myContext.isMove()) {
+      return true;
+    }
+
+    final RadComponent editComponent = myContext.getComponents().get(0);
+    final boolean[] move = new boolean[1];
+
+    myContainer.accept(new RadComponentVisitor() {
+      @Override
+      public boolean visit(RadComponent component) {
+        if (editComponent == component) {
+          move[0] = true;
+          return false;
+        }
+
+        return true;
+      }
+
+      @Override
+      public void endVisit(RadComponent component) {
+      }
+    }, true);
+
+    return move[0];
+  }
+
+  @Override
+  protected int getMovedIndex(boolean row) {
+    RadComponent movedComponent = myContext.getComponents().get(0);
+
+    if (row) {
+      List<RadComponent> children = myContainer.getChildren();
+
+      if (movedComponent.getParent() == myContainer) {
+        return children.indexOf(movedComponent);
+      }
+      return children.indexOf(movedComponent.getParent());
+    }
+
+    return RadTableLayoutComponent.getCellIndex(movedComponent);
+  }
+
+  @Override
+  protected boolean isSingleMovedAxis(boolean row) {
+    RadComponent movedComponent = myContext.getComponents().get(0);
+    RadComponent[][] components = getGridInfo().components;
+
+    if (row) {
+      if (movedComponent.getParent() == myContainer) {
+        return true;
+      }
+      int rowIndex = myContainer.getChildren().indexOf(movedComponent.getParent());
+      return getSizeInRow(rowIndex, movedComponent) == 0;
+    }
+    else {
+      int columnCount = components[0].length;
+
+      if (movedComponent.getParent() == myContainer) {
+        return getSizeInColumn(0, columnCount, movedComponent) == 0;
+      }
+
+      int columnIndex = RadTableLayoutComponent.getCellIndex(movedComponent);
+      int span = RadTableLayoutComponent.getCellSpan(movedComponent);
+
+      for (int i = 0; i < span; i++) {
+        if (getSizeInColumn(columnIndex + i, columnCount, movedComponent) > 0) {
+          return false;
+        }
+      }
+    }
+
+    return true;
   }
 
   @Override

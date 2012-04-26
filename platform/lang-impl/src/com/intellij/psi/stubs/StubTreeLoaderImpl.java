@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.indexing.*;
 import org.jetbrains.annotations.Nullable;
@@ -38,7 +39,7 @@ public class StubTreeLoaderImpl extends StubTreeLoader {
 
   @Override
   @Nullable
-  public StubTree readOrBuild(Project project, final VirtualFile vFile) {
+  public StubTree readOrBuild(Project project, final VirtualFile vFile, @Nullable PsiFile psiFile) {
     final StubTree fromIndices = readFromVFile(project, vFile);
     if (fromIndices != null) {
       return fromIndices;
@@ -51,6 +52,12 @@ public class StubTreeLoaderImpl extends StubTreeLoader {
     try {
       final FileContent fc = new FileContentImpl(vFile, vFile.contentsToByteArray());
       fc.putUserData(IndexingDataKeys.PROJECT, project);
+      if (psiFile != null) {
+        fc.putUserData(IndexingDataKeys.PSI_FILE, psiFile);
+        if (!vFile.getFileType().isBinary()) {
+          fc.putUserData(IndexingDataKeys.FILE_TEXT_CONTENT_KEY, psiFile.getViewProvider().getContents());
+        }
+      }
       final StubElement element = StubTreeBuilder.buildStubTree(fc);
       if (element instanceof PsiFileStub) {
         return new StubTree((PsiFileStub)element);

@@ -16,10 +16,12 @@
 package com.intellij.android.designer.model.layout.grid;
 
 import com.intellij.android.designer.designSurface.TreeDropToOperation;
-import com.intellij.android.designer.designSurface.layout.grid.GridDecorator;
 import com.intellij.android.designer.designSurface.layout.GridLayoutOperation;
 import com.intellij.android.designer.designSurface.layout.actions.LayoutSpanOperation;
 import com.intellij.android.designer.designSurface.layout.actions.ResizeOperation;
+import com.intellij.android.designer.designSurface.layout.caption.GridHorizontalCaptionOperation;
+import com.intellij.android.designer.designSurface.layout.caption.GridVerticalCaptionOperation;
+import com.intellij.android.designer.designSurface.layout.grid.GridDecorator;
 import com.intellij.android.designer.model.RadViewLayout;
 import com.intellij.android.designer.model.RadViewLayoutWithData;
 import com.intellij.android.designer.model.grid.GridInfo;
@@ -185,10 +187,40 @@ public class RadGridLayout extends RadViewLayoutWithData implements ILayoutDecor
     return components;
   }
 
+  private RadLayout myCaptionColumnLayout;
+  private RadLayout myCaptionRowLayout;
+
   @NotNull
   @Override
-  public RadLayout getCaptionLayout(EditableArea mainArea, boolean horizontal) {
-    // XXX
-    return RadViewLayout.INSTANCE;
+  public RadLayout getCaptionLayout(final EditableArea mainArea, boolean horizontal) {
+    if (horizontal) {
+      if (myCaptionColumnLayout == null) {
+        myCaptionColumnLayout = new RadViewLayout() {
+          @Override
+          public EditOperation processChildOperation(OperationContext context) {
+            if (context.isMove()) {
+              return new GridHorizontalCaptionOperation((RadGridLayoutComponent)RadGridLayout.this.myContainer,
+                                                        myContainer, context, mainArea);
+            }
+            return null;
+          }
+        };
+      }
+      return myCaptionColumnLayout;
+    }
+
+    if (myCaptionRowLayout == null) {
+      myCaptionRowLayout = new RadViewLayout() {
+        @Override
+        public EditOperation processChildOperation(OperationContext context) {
+          if (context.isMove()) {
+            return new GridVerticalCaptionOperation((RadGridLayoutComponent)RadGridLayout.this.myContainer,
+                                                    myContainer, context, mainArea);
+          }
+          return null;
+        }
+      };
+    }
+    return myCaptionRowLayout;
   }
 }

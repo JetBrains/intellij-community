@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,8 @@
  */
 package com.intellij.psi.stubs;
 
+import com.intellij.diagnostic.LogMessageEx;
+import com.intellij.diagnostic.errordialog.Attachment;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -289,7 +291,26 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
             else {
               final List<StubElement<?>> plained = stubTree.getPlainList();
               for (int i = 0; i < value.size(); i++) {
-                Psi psi = (Psi)plained.get(value.get(i)).getPsi();
+                final int stubTreeIndex = value.get(i);
+                if (stubTreeIndex >= plained.size()) {
+                  final VirtualFile virtualFile = psiFile.getVirtualFile();
+                  StubTree stubTreeFromIndex = StubTreeLoader.getInstance().readFromVFile(project, file);
+                  LOG.error(LogMessageEx.createEvent("PSI and index do not match: PSI " + psiFile + ", first stub " + plained.get(0),
+                                                     "Please report the problem to JetBrains with the file attached",
+                                                     new Attachment(virtualFile != null ? virtualFile.getPath() : "vFile.txt", psiFile.getText()),
+                                                     new Attachment("stubTree.txt", ((PsiFileStubImpl)stubTree.getRoot()).printTree()),
+                                                     new Attachment("stubTreeFromIndex.txt", stubTreeFromIndex == null ? "null" : ((PsiFileStubImpl)stubTreeFromIndex.getRoot()).printTree())));
+
+                  ApplicationManager.getApplication().invokeLater(new Runnable() {
+                    @Override
+                    public void run() {
+                      fileBasedIndex.requestReindex(file);
+                    }
+                  }, ModalityState.NON_MODAL);
+
+                  break;
+                }
+                Psi psi = (Psi)plained.get(stubTreeIndex).getPsi();
                 if (!processor.process(psi)) return false;
               }
             }

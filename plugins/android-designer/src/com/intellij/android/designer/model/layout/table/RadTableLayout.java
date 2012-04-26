@@ -16,10 +16,10 @@
 package com.intellij.android.designer.model.layout.table;
 
 import com.intellij.android.designer.designSurface.TreeDropToOperation;
-import com.intellij.android.designer.designSurface.layout.*;
+import com.intellij.android.designer.designSurface.layout.TableLayoutOperation;
 import com.intellij.android.designer.designSurface.layout.actions.ResizeOperation;
-import com.intellij.android.designer.designSurface.layout.caption.HorizontalCaptionFlowBaseOperation;
-import com.intellij.android.designer.designSurface.layout.caption.VerticalCaptionFlowBaseOperation;
+import com.intellij.android.designer.designSurface.layout.caption.TableHorizontalCaptionOperation;
+import com.intellij.android.designer.designSurface.layout.caption.TableVerticalCaptionOperation;
 import com.intellij.android.designer.designSurface.layout.grid.GridDecorator;
 import com.intellij.android.designer.model.RadViewComponent;
 import com.intellij.android.designer.model.RadViewLayout;
@@ -175,8 +175,8 @@ public class RadTableLayout extends RadViewLayoutWithData implements ILayoutDeco
           @Override
           public EditOperation processChildOperation(OperationContext context) {
             if (context.isMove()) {
-              return new HorizontalCaptionFlowBaseOperation((RadTableLayoutComponent)RadTableLayout.this.myContainer,
-                                                            myContainer, context, mainArea);
+              return new TableHorizontalCaptionOperation((RadTableLayoutComponent)RadTableLayout.this.myContainer,
+                                                         myContainer, context, mainArea);
             }
             return null;
           }
@@ -190,8 +190,8 @@ public class RadTableLayout extends RadViewLayoutWithData implements ILayoutDeco
         @Override
         public EditOperation processChildOperation(OperationContext context) {
           if (context.isMove()) {
-            return new VerticalCaptionFlowBaseOperation((RadTableLayoutComponent)RadTableLayout.this.myContainer,
-                                                        myContainer, context, mainArea);
+            return new TableVerticalCaptionOperation((RadTableLayoutComponent)RadTableLayout.this.myContainer,
+                                                     myContainer, context, mainArea);
           }
           return null;
         }

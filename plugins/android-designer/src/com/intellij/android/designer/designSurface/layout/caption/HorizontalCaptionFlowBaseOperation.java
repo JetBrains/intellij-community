@@ -15,39 +15,33 @@
  */
 package com.intellij.android.designer.designSurface.layout.caption;
 
-import com.intellij.android.designer.model.ModelParser;
 import com.intellij.android.designer.model.RadViewComponent;
-import com.intellij.android.designer.model.layout.table.RadCaptionTableColumn;
-import com.intellij.android.designer.model.layout.table.RadTableLayoutComponent;
-import com.intellij.android.designer.model.layout.table.RadTableRowLayout;
 import com.intellij.designer.designSurface.EditableArea;
 import com.intellij.designer.designSurface.FeedbackLayer;
 import com.intellij.designer.designSurface.FlowBaseOperation;
 import com.intellij.designer.designSurface.OperationContext;
 import com.intellij.designer.designSurface.feedbacks.LineInsertFeedback;
 import com.intellij.designer.model.RadComponent;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.ArrayList;
 import java.util.List;
 
 /**
  * @author Alexander Lobas
  */
-public class HorizontalCaptionFlowBaseOperation extends FlowBaseOperation {
-  private final RadTableLayoutComponent myTableComponent;
+public abstract class HorizontalCaptionFlowBaseOperation<T extends RadViewComponent> extends FlowBaseOperation {
+  protected final T myMainContainer;
   private final EditableArea myMainArea;
   private LineInsertFeedback myMainInsertFeedback;
   private int myMainYLocation;
 
-  public HorizontalCaptionFlowBaseOperation(RadTableLayoutComponent tableComponent,
+  public HorizontalCaptionFlowBaseOperation(T mainContainer,
                                             RadComponent container,
                                             OperationContext context,
                                             EditableArea mainArea) {
     super(container, context, true);
-    myTableComponent = tableComponent;
+    myMainContainer = mainContainer;
     myMainArea = mainArea;
   }
 
@@ -58,10 +52,10 @@ public class HorizontalCaptionFlowBaseOperation extends FlowBaseOperation {
     if (myMainInsertFeedback == null) {
       FeedbackLayer layer = myMainArea.getFeedbackLayer();
 
-      Rectangle bounds = myTableComponent.getBounds(layer);
+      Rectangle bounds = myMainContainer.getBounds(layer);
       myMainYLocation = bounds.y;
 
-      List<RadComponent> children = myTableComponent.getChildren();
+      List<RadComponent> children = myMainContainer.getChildren();
       Rectangle lastChildBounds = children.get(children.size() - 1).getBounds(layer);
 
       myMainInsertFeedback = new LineInsertFeedback(Color.green, false);
@@ -89,77 +83,6 @@ public class HorizontalCaptionFlowBaseOperation extends FlowBaseOperation {
       layer.remove(myMainInsertFeedback);
       layer.repaint();
       myMainInsertFeedback = null;
-    }
-  }
-
-  @Override
-  protected void execute(@Nullable RadComponent insertBefore) throws Exception {
-    List<RadComponent> rows = myTableComponent.getChildren();
-    RadComponent[][] components = myTableComponent.getGridComponents(false);
-
-    for (int i = 0; i < components.length; i++) {
-      RadViewComponent container = (RadViewComponent)rows.get(i);
-
-      if (RadTableRowLayout.is(container)) {
-        RadComponent[] rowComponents = components[i];
-
-        List<RadViewComponent> editComponents = new ArrayList<RadViewComponent>();
-        for (RadComponent component : myComponents) {
-          int column = ((RadCaptionTableColumn)component).getIndex();
-          RadViewComponent editComponent = (RadViewComponent)rowComponents[column];
-          if (editComponent != null) {
-            editComponents.add(editComponent);
-          }
-        }
-
-        if (editComponents.isEmpty()) {
-          continue;
-        }
-
-        RadViewComponent insertBeforeColumn = null;
-        if (insertBefore != null) {
-          int column = ((RadCaptionTableColumn)insertBefore).getIndex();
-          for (int j = column; j < rowComponents.length; j++) {
-            insertBeforeColumn = (RadViewComponent)rowComponents[j];
-            if (insertBeforeColumn != null) {
-              if (!editComponents.isEmpty() && insertBeforeColumn == editComponents.get(0)) {
-                editComponents.remove(0);
-                insertBeforeColumn = null;
-                continue;
-              }
-              break;
-            }
-          }
-        }
-
-        if (insertBefore == null || insertBeforeColumn != null) {
-          for (RadViewComponent component : editComponents) {
-            if (component != insertBeforeColumn) {
-              ModelParser.moveComponent(container, component, insertBeforeColumn);
-            }
-          }
-        }
-      }
-    }
-
-    for (RadComponent component : myComponents) {
-      component.removeFromParent();
-      myContainer.add(component, insertBefore);
-    }
-
-    List<RadComponent> columns = myContainer.getChildren();
-    int size = columns.size();
-    for (int i = 0; i < size; i++) {
-      int index = ((RadCaptionTableColumn)columns.get(i)).getIndex();
-
-      for (int j = 0; j < components.length; j++) {
-        if (RadTableRowLayout.is(rows.get(j))) {
-          RadComponent cellComponent = components[j][index];
-          if (cellComponent != null) {
-            RadTableLayoutComponent.setCellIndex(cellComponent, i);
-          }
-        }
-      }
     }
   }
 }

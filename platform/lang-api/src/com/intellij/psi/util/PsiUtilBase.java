@@ -176,7 +176,7 @@ public class PsiUtilBase extends PsiUtilCore {
   }
 
   @Nullable
-  public static PsiFile getPsiFileInEditor(final Editor editor, final Project project) {
+  public static PsiFile getPsiFileInEditor(@NotNull final Editor editor, @NotNull final Project project) {
     final PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
     if (file == null) return null;
 

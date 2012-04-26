@@ -35,54 +35,92 @@ public class GridLayoutOperation extends GridOperation {
   }
 
   @Override
+  protected int getMovedIndex(boolean row) {
+    RadComponent movedComponent = myContext.getComponents().get(0);
+    Rectangle movedCellInfo = RadGridLayoutComponent.getCellInfo(movedComponent);
+
+    return row ? movedCellInfo.y : movedCellInfo.x;
+  }
+
+  @Override
+  protected boolean isSingleMovedAxis(boolean row) {
+    RadComponent movedComponent = myContext.getComponents().get(0);
+    Rectangle movedCellInfo = RadGridLayoutComponent.getCellInfo(movedComponent);
+
+    if (row) {
+      for (int i = 0; i < movedCellInfo.height; i++) {
+        if (getSizeInRow(movedCellInfo.y + i, movedComponent) > 0) {
+          return false;
+        }
+      }
+    }
+    else {
+      GridInfo gridInfo = getGridInfo();
+      for (int i = 0; i < movedCellInfo.width; i++) {
+        if (getSizeInColumn(movedCellInfo.x + i, gridInfo.columnCount, movedComponent) > 0) {
+          return false;
+        }
+      }
+    }
+
+    return true;
+  }
+
+  @Override
   public void execute() throws Exception {
     GridInfo gridInfo = getGridInfo();
 
     RadGridLayoutComponent container = (RadGridLayoutComponent)myContainer;
     RadComponent[][] components = container.getGridComponents(false);
     RadComponent editComponent = myComponents.get(0);
+
+    if (myInsertType == GridInsertType.in_cell && (myRow >= gridInfo.rowCount || myColumn >= gridInfo.columnCount)) {
+      execute(myContext, container, myComponents, null);
+      RadGridLayoutComponent.setCellIndex(editComponent, myRow, myColumn, true);
+      return;
+    }
+
     RadViewComponent nextComponent = getNextComponent(components, myRow, myColumn);
 
     if (myInsertType == GridInsertType.in_cell) {
-      if (myRow <= gridInfo.lastRow && myColumn <= gridInfo.lastColumn) {
-        if (myContext.isMove()) {
-          Rectangle cellInfo = RadGridLayoutComponent.getCellInfo(editComponent);
-          components[cellInfo.y][cellInfo.x] = null;
-          components[myRow][myColumn] = editComponent;
-        }
-        else {
-          execute(myContext, container, myComponents, nextComponent);
-          RadGridLayoutComponent.setCellIndex(editComponent, myRow, myColumn);
-          return;
-        }
-      }
-      else {
-        execute(myContext, container, myComponents, null);
-        RadGridLayoutComponent.setCellIndex(editComponent, myRow, myColumn);
+      if (!myContext.isMove()) {
+        execute(myContext, container, myComponents, nextComponent);
+        RadGridLayoutComponent.setCellIndex(editComponent, myRow, myColumn, true);
         return;
       }
+
+      components = insertComponent(components, nextComponent, false, false, false, false);
     }
     else if (myInsertType == GridInsertType.before_h_cell || myInsertType == GridInsertType.after_h_cell) {
-      insertComponent(components, nextComponent, true, myInsertType == GridInsertType.after_h_cell, false, false);
+      components = insertComponent(components, nextComponent,
+                                   true, myInsertType == GridInsertType.after_h_cell,
+                                   false, false);
     }
     else if (myInsertType == GridInsertType.before_v_cell || myInsertType == GridInsertType.after_v_cell) {
-      insertComponent(components, nextComponent, false, false, true, myInsertType == GridInsertType.after_v_cell);
+      components = insertComponent(components, nextComponent, false, false,
+                                   true, myInsertType == GridInsertType.after_v_cell);
     }
     else {
-      insertComponent(components, nextComponent,
-                      true, myInsertType == GridInsertType.corner_bottom_left || myInsertType == GridInsertType.corner_bottom_right,
-                      true, myInsertType == GridInsertType.corner_top_right || myInsertType == GridInsertType.corner_bottom_right);
+      components = insertComponent(components, nextComponent,
+                                   true,
+                                   myInsertType == GridInsertType.corner_bottom_left || myInsertType == GridInsertType.corner_bottom_right,
+                                   true,
+                                   myInsertType == GridInsertType.corner_top_right || myInsertType == GridInsertType.corner_bottom_right);
     }
 
     validateLayoutParams(components);
-
-    if (myContext.isMove()) {
-      RadGridLayoutComponent.clearCellSpans(editComponent);
-    }
   }
 
-  private void validateLayoutParams(RadComponent[][] components) throws Exception {
-    // TODO: Auto-generated method stub
+  public static void validateLayoutParams(RadComponent[][] components) throws Exception {
+    for (int i = 0; i < components.length; i++) {
+      RadComponent[] rowComponents = components[i];
+      for (int j = 0; j < rowComponents.length; j++) {
+        RadComponent cellComponent = rowComponents[j];
+        if (cellComponent != null) {
+          RadGridLayoutComponent.setCellIndex(cellComponent, i, j, false);
+        }
+      }
+    }
   }
 
   private RadComponent[][] insertComponent(RadComponent[][] components,
@@ -91,6 +129,14 @@ public class GridLayoutOperation extends GridOperation {
                                            boolean afterRow,
                                            boolean insertColumn,
                                            boolean afterColumn) throws Exception {
+    RadComponent editComponent = myComponents.get(0);
+
+    if (myContext.isMove()) {
+      Rectangle cellInfo = RadGridLayoutComponent.getCellInfo(editComponent);
+      components[cellInfo.y][cellInfo.x] = null;
+      RadGridLayoutComponent.clearCellSpans(editComponent);
+    }
+
     int row = myRow;
     if (insertRow && afterRow) {
       row++;
@@ -101,11 +147,13 @@ public class GridLayoutOperation extends GridOperation {
       column++;
     }
 
+    GridInfo gridInfo = getGridInfo();
+
     if (insertRow) {
-      shiftRowSpan(row);
+      shiftRowSpan(gridInfo, row, 1);
     }
     if (insertColumn) {
-      shiftColumnSpan(column);
+      shiftColumnSpan(gridInfo, column, 1);
     }
     if (insertRow) {
       components = insertRow(components, row);
@@ -114,26 +162,17 @@ public class GridLayoutOperation extends GridOperation {
       insertColumn(components, column);
     }
 
-    RadGridLayoutComponent container = (RadGridLayoutComponent)myContainer;
-    RadComponent editComponent = myComponents.get(0);
-
     components[row][column] = editComponent;
 
-    if (myContext.isMove()) {
-      Rectangle cellInfo = RadGridLayoutComponent.getCellInfo(editComponent);
-      components[cellInfo.y][cellInfo.x] = null;
-    }
-
     if (editComponent != nextComponent) {
-      execute(myContext, container, myComponents, nextComponent);
+      execute(myContext, (RadGridLayoutComponent)myContainer, myComponents, nextComponent);
     }
 
     return components;
   }
 
-  private void shiftRowSpan(int row) {
-    GridInfo gridInfo = getGridInfo();
-    if (row == gridInfo.lastRow) {
+  public static void shiftRowSpan(GridInfo gridInfo, int row, int inc) {
+    if (row >= gridInfo.rowCount - 1) {
       return;
     }
 
@@ -144,7 +183,7 @@ public class GridLayoutOperation extends GridOperation {
       RadComponent cellComponent = rowComponents[i];
       if (cellComponent != null) {
         if (cellComponent == rowComponents1[i]) {
-          RadGridLayoutComponent.setSpan(cellComponent, RadGridLayoutComponent.getSpan(cellComponent, true) + 1, true);
+          RadGridLayoutComponent.setSpan(cellComponent, RadGridLayoutComponent.getSpan(cellComponent, true) + inc, true);
         }
 
         while (i + 1 < rowComponents.length && cellComponent == rowComponents[i + 1]) {
@@ -165,9 +204,8 @@ public class GridLayoutOperation extends GridOperation {
     return newComponents;
   }
 
-  private void shiftColumnSpan(int column) {
-    GridInfo gridInfo = getGridInfo();
-    if (column == gridInfo.lastColumn) {
+  public static void shiftColumnSpan(GridInfo gridInfo, int column, int inc) {
+    if (column >= gridInfo.columnCount - 1) {
       return;
     }
 
@@ -178,7 +216,7 @@ public class GridLayoutOperation extends GridOperation {
 
       if (cellComponent != null) {
         if (cellComponent == rowComponents[column + 1]) {
-          RadGridLayoutComponent.setSpan(cellComponent, RadGridLayoutComponent.getSpan(cellComponent, false) + 1, false);
+          RadGridLayoutComponent.setSpan(cellComponent, RadGridLayoutComponent.getSpan(cellComponent, false) + inc, false);
         }
 
         while (i + 1 < components.length && cellComponent == components[i + 1][column]) {
@@ -202,6 +240,10 @@ public class GridLayoutOperation extends GridOperation {
 
   @Nullable
   private static RadViewComponent getNextComponent(RadComponent[][] components, int row, int column) {
+    if (components.length == 0) {
+      return null;
+    }
+
     RadComponent[] rowComponents = components[row];
 
     for (int i = column + 1; i < rowComponents.length; i++) {
