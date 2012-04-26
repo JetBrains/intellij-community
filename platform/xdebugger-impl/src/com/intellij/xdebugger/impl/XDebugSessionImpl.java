@@ -63,6 +63,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * @author nik
@@ -82,7 +83,7 @@ public class XDebugSessionImpl implements XDebugSession {
   private XExecutionStack myCurrentExecutionStack;
   private XStackFrame myCurrentStackFrame;
   private XSourcePosition myCurrentPosition;
-  private boolean myPaused;
+  private final AtomicBoolean myPaused = new AtomicBoolean();
   private MyDependentBreakpointListener myDependentBreakpointListener;
   private XValueMarkers<?,?> myValueMarkers;
   private final String mySessionName;
@@ -167,11 +168,11 @@ public class XDebugSessionImpl implements XDebugSession {
   }
 
   public boolean isSuspended() {
-    return myPaused && mySuspendContext != null;
+    return myPaused.get() && mySuspendContext != null;
   }
 
   public boolean isPaused() {
-    return myPaused;
+    return myPaused.get();
   }
 
   @Nullable
@@ -427,6 +428,8 @@ public class XDebugSessionImpl implements XDebugSession {
   }
 
   private void doResume() {
+    if (!myPaused.getAndSet(false)) return;
+
     myDispatcher.getMulticaster().beforeSessionResume();
     myDebuggerManager.setActiveSession(this, null, false, null);
     mySuspendContext = null;
@@ -434,7 +437,6 @@ public class XDebugSessionImpl implements XDebugSession {
     myCurrentStackFrame = null;
     myCurrentPosition = null;
     myActiveNonLineBreakpoint = null;
-    myPaused = false;
     UIUtil.invokeLaterIfNeeded(new Runnable() {
       @Override
       public void run() {
@@ -624,7 +626,8 @@ public class XDebugSessionImpl implements XDebugSession {
     myCurrentStackFrame = myCurrentExecutionStack != null ? myCurrentExecutionStack.getTopFrame() : null;
     myCurrentPosition = myCurrentStackFrame != null ? myCurrentStackFrame.getSourcePosition() : null;
 
-    myPaused = true;
+    myPaused.set(true);
+
     if (myCurrentPosition != null) {
       myDebuggerManager.setActiveSession(this, myCurrentPosition, false, getPositionIconRenderer(true));
     }
