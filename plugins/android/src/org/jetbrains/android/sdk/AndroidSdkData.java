@@ -20,7 +20,6 @@ import com.android.ddmlib.AndroidDebugBridge;
 import com.android.ddmlib.DdmPreferences;
 import com.android.ddmlib.Log;
 import com.android.sdklib.*;
-import com.android.sdklib.internal.project.ProjectProperties;
 import com.intellij.CommonBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -37,7 +36,6 @@ import org.jetbrains.android.actions.AndroidEnableAdbServiceAction;
 import org.jetbrains.android.logcat.AdbErrors;
 import org.jetbrains.android.util.AndroidCommonUtils;
 import org.jetbrains.android.util.AndroidUtils;
-import org.jetbrains.android.util.BufferingFileWrapper;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -68,28 +66,8 @@ public class AndroidSdkData {
 
   public AndroidSdkData(@NotNull SdkManager sdkManager, @NotNull String sdkDirOsPath) {
     mySdkManager = sdkManager;
-    myPlatformToolsRevision = parsePackageRevision(sdkDirOsPath, SdkConstants.FD_PLATFORM_TOOLS);
-    mySdkToolsRevision = parsePackageRevision(sdkDirOsPath, SdkConstants.FD_TOOLS);
-  }
-
-  private static int parsePackageRevision(@NotNull String sdkDirOsPath, @NotNull String packageDirName) {
-    final File propFile =
-      new File(sdkDirOsPath + File.separatorChar + packageDirName + File.separatorChar + SdkConstants.FN_SOURCE_PROP);
-    int revisionNumber = -1;
-    if (propFile.exists() && propFile.isFile()) {
-      final Map<String, String> map =
-        ProjectProperties.parsePropertyFile(new BufferingFileWrapper(propFile), new MessageBuildingSdkLog());
-      final String revision = map.get("Pkg.Revision");
-      if (revision != null) {
-        try {
-          revisionNumber = Integer.parseInt(revision);
-        }
-        catch (NumberFormatException e) {
-          LOG.info(e);
-        }
-      }
-    }
-    return revisionNumber > 0 ? revisionNumber : -1;
+    myPlatformToolsRevision = AndroidCommonUtils.parsePackageRevision(sdkDirOsPath, SdkConstants.FD_PLATFORM_TOOLS);
+    mySdkToolsRevision = AndroidCommonUtils.parsePackageRevision(sdkDirOsPath, SdkConstants.FD_TOOLS);
   }
 
   @NotNull

@@ -17,7 +17,6 @@ package org.jetbrains.jps.android;
 
 import com.android.sdklib.IAndroidTarget;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.util.ArrayUtil;
@@ -102,13 +101,11 @@ public class AndroidDexBuilder extends ProjectLevelBuilder {
         continue;
       }
 
-      final Pair<AndroidSdk, IAndroidTarget> pair = AndroidJpsUtil.getAndroidPlatform(module, context, BUILDER_NAME);
-      if (pair == null) {
+      final AndroidPlatform platform = AndroidJpsUtil.getAndroidPlatform(module, context, BUILDER_NAME);
+      if (platform == null) {
         success = false;
         continue;
       }
-      final AndroidSdk androidSdk = pair.getFirst();
-      final IAndroidTarget target = pair.getSecond();
 
       final ProjectPaths projectPaths = context.getProjectPaths();
       final File dexOutputDir = AndroidJpsUtil.getOutputDirectoryForPackagedFiles(projectPaths, module);
@@ -140,8 +137,8 @@ public class AndroidDexBuilder extends ProjectLevelBuilder {
           final String outputJarPath =
             FileUtil.toSystemDependentName(dexOutputDir.getPath() + '/' + AndroidCommonUtils.PROGUARD_OUTPUT_JAR_NAME);
 
-          if (!runProguardIfNecessary(facet, classesDir, androidSdk, target, externalLibraries, context,
-                                      outputJarPath, proguardCfgPath, includeSystemProguardCfg, proguardStateStorage)) {
+          if (!runProguardIfNecessary(facet, classesDir, platform, externalLibraries, context, outputJarPath, proguardCfgPath,
+                                      includeSystemProguardCfg, proguardStateStorage)) {
             success = false;
             continue;
           }
@@ -187,7 +184,7 @@ public class AndroidDexBuilder extends ProjectLevelBuilder {
 
         context.processMessage(new ProgressMessage(AndroidJpsBundle.message("android.jps.progress.dex", module.getName())));
 
-        if (!runDex(androidSdk, target, dexOutputDir.getPath(), files, context)) {
+        if (!runDex(platform, dexOutputDir.getPath(), files, context)) {
           success = false;
           dexStateStorage.update(module.getName(), null);
         }
@@ -213,13 +210,12 @@ public class AndroidDexBuilder extends ProjectLevelBuilder {
     return "Android Dex Builder";
   }
 
-  private static boolean runDex(@NotNull AndroidSdk sdk,
-                                @NotNull IAndroidTarget target,
+  private static boolean runDex(@NotNull AndroidPlatform platform,
                                 @NotNull String outputDir,
                                 @NotNull String[] compileTargets,
                                 @NotNull CompileContext context) throws IOException {
     @SuppressWarnings("deprecation")
-    final String dxJarPath = FileUtil.toSystemDependentName(target.getPath(IAndroidTarget.DX_JAR));
+    final String dxJarPath = FileUtil.toSystemDependentName(platform.getTarget().getPath(IAndroidTarget.DX_JAR));
 
     final File dxJar = new File(dxJarPath);
     if (!dxJar.isFile()) {
@@ -248,7 +244,7 @@ public class AndroidDexBuilder extends ProjectLevelBuilder {
     // todo: pass additional vm params and max heap size from settings
 
     final List<String> commandLine = ExternalProcessUtil
-      .buildJavaCommandLine(sdk.getJavaExecutable(), AndroidDxRunner.class.getName(), Collections.<String>emptyList(), classPath,
+      .buildJavaCommandLine(platform.getSdk().getJavaExecutable(), AndroidDxRunner.class.getName(), Collections.<String>emptyList(), classPath,
                             Arrays.asList("-Xmx1024M"), programParamList);
 
     LOG.info(AndroidCommonUtils.command2string(commandLine));
@@ -269,8 +265,7 @@ public class AndroidDexBuilder extends ProjectLevelBuilder {
 
   private static boolean runProguardIfNecessary(@NotNull AndroidFacet facet,
                                                 @NotNull File classesDir,
-                                                @NotNull AndroidSdk sdk,
-                                                @NotNull IAndroidTarget target,
+                                                @NotNull AndroidPlatform platform,
                                                 @NotNull Set<String> externalJars,
                                                 @NotNull CompileContext context,
                                                 @NotNull String outputJarPath,
@@ -338,11 +333,10 @@ public class AndroidDexBuilder extends ProjectLevelBuilder {
 
     context.processMessage(new ProgressMessage(AndroidJpsBundle.message("android.jps.progress.proguard", module.getName())));
 
-    // todo: pass sdk revision
     final Map<AndroidCompilerMessageKind, List<String>> messages =
-      AndroidCommonUtils.launchProguard(target, -1, sdk.getSdkPath(), proguardCfgPath, includeSystemProguardCfg, inputJarOsPath,
-                                        externalJarOsPaths, outputJarPath, logsDirOsPath);
-
+      AndroidCommonUtils.launchProguard(platform.getTarget(), platform.getPlatformToolsRevision(), platform.getSdk().getSdkPath(),
+                                        proguardCfgPath, includeSystemProguardCfg, inputJarOsPath, externalJarOsPaths, outputJarPath,
+                                        logsDirOsPath);
     AndroidJpsUtil.addMessages(context, messages, BUILDER_NAME);
     final boolean success = messages.get(AndroidCompilerMessageKind.ERROR).isEmpty();
 

@@ -2,7 +2,6 @@ package org.jetbrains.jps.android;
 
 import com.android.sdklib.IAndroidTarget;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashMap;
@@ -150,8 +149,8 @@ public class AndroidPackagingBuilder extends ProjectLevelBuilder {
       return true;
     }
 
-    final Pair<AndroidSdk, IAndroidTarget> pair = AndroidJpsUtil.getAndroidPlatform(module, context, BUILDER_NAME);
-    if (pair == null) {
+    final AndroidPlatform platform = AndroidJpsUtil.getAndroidPlatform(module, context, BUILDER_NAME);
+    if (platform == null) {
       return false;
     }
 
@@ -165,7 +164,7 @@ public class AndroidPackagingBuilder extends ProjectLevelBuilder {
       }
     }
 
-    final IAndroidTarget target = pair.second;
+    final IAndroidTarget target = platform.getTarget();
 
     final Map<AndroidCompilerMessageKind, List<String>> messages =
       AndroidApt.crunch(target, Collections.singletonList(resourceDir.getPath()), resCacheDir.getPath());
@@ -299,8 +298,8 @@ public class AndroidPackagingBuilder extends ProjectLevelBuilder {
       return false;
     }
 
-    final Pair<AndroidSdk, IAndroidTarget> pair = AndroidJpsUtil.getAndroidPlatform(module, context, BUILDER_NAME);
-    if (pair == null) {
+    final AndroidPlatform platform = AndroidJpsUtil.getAndroidPlatform(module, context, BUILDER_NAME);
+    if (platform == null) {
       return false;
     }
 
@@ -309,7 +308,7 @@ public class AndroidPackagingBuilder extends ProjectLevelBuilder {
 
     final File classesDexFile = new File(outputDir.getPath(), AndroidCommonUtils.CLASSES_FILE_NAME);
 
-    final String sdkPath = pair.getFirst().getSdkPath();
+    final String sdkPath = platform.getSdk().getSdkPath();
     final String outputPath = AndroidJpsUtil.getApkPath(facet, outputDir);
     if (outputPath == null) {
       context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR,
@@ -443,11 +442,11 @@ public class AndroidPackagingBuilder extends ProjectLevelBuilder {
         return false;
       }
 
-      final Pair<AndroidSdk, IAndroidTarget> pair = AndroidJpsUtil.getAndroidPlatform(module, context, BUILDER_NAME);
-      if (pair == null) {
+      final AndroidPlatform platform = AndroidJpsUtil.getAndroidPlatform(module, context, BUILDER_NAME);
+      if (platform == null) {
         return false;
       }
-      final IAndroidTarget target = pair.getSecond();
+      final IAndroidTarget target = platform.getTarget();
 
       final String outputFilePath = getPackagedResourcesFile(module, outputDir).getPath();
       final String[] resourceDirPaths = AndroidJpsUtil.collectResourceDirsForCompilation(facet, true, context);

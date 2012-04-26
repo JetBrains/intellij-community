@@ -4,7 +4,6 @@ import com.android.resources.ResourceFolderType;
 import com.android.resources.ResourceType;
 import com.android.sdklib.IAndroidTarget;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.ArrayUtil;
@@ -656,13 +655,13 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
         continue;
       }
 
-      final Pair<AndroidSdk, IAndroidTarget> pair = AndroidJpsUtil.getAndroidPlatform(module, context, BUILDER_NAME);
-      if (pair == null) {
+      final AndroidPlatform platform = AndroidJpsUtil.getAndroidPlatform(module, context, BUILDER_NAME);
+      if (platform == null) {
         success = false;
         continue;
       }
-      final AndroidSdk androidSdk = pair.getFirst();
-      final IAndroidTarget target = pair.getSecond();
+      final AndroidSdk androidSdk = platform.getSdk();
+      final IAndroidTarget target = platform.getTarget();
 
       moduleDataMap.put(module, new MyModuleData(androidSdk.getSdkPath(), target, facet));
     }

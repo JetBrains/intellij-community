@@ -4,7 +4,6 @@ import com.android.sdklib.IAndroidTarget;
 import com.android.sdklib.SdkManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Processor;
@@ -373,9 +372,9 @@ class AndroidJpsUtil {
   }
 
   @Nullable
-  public static Pair<AndroidSdk, IAndroidTarget> getAndroidPlatform(@NotNull Module module,
-                                                                    @NotNull CompileContext context,
-                                                                    @NotNull String builderName) {
+  public static AndroidPlatform getAndroidPlatform(@NotNull Module module,
+                                                   @NotNull CompileContext context,
+                                                   @NotNull String builderName) {
     final Sdk sdk = module.getSdk();
     if (!(sdk instanceof AndroidSdk)) {
       context.processMessage(new CompilerMessage(builderName, BuildMessage.Kind.ERROR,
@@ -390,7 +389,7 @@ class AndroidJpsUtil {
                                                  AndroidJpsBundle.message("android.jps.errors.sdk.invalid", module.getName())));
       return null;
     }
-    return Pair.create(androidSdk, target);
+    return new AndroidPlatform(androidSdk, target);
   }
 
   public static String[] collectResourceDirsForCompilation(@NotNull AndroidFacet facet,
