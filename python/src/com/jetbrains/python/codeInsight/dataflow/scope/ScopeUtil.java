@@ -56,20 +56,21 @@ public class ScopeUtil {
   }
 
   @Nullable
-  public static ScopeOwner getResolveScopeOwner(PsiElement element) {
-    // References in default values of parameters are defined somewhere in outer scopes, as well as references in decorators (if they are
-    // not inside a lambda, see PY-6083) and superclasses
-    final ScopeOwner initialScopeOwner = getScopeOwner(element);
-    if (!(initialScopeOwner instanceof PyLambdaExpression && PsiTreeUtil.getParentOfType(element, PyDecorator.class) != null) &&
-        PsiTreeUtil.getParentOfType(element, PyParameter.class, PyDecorator.class) != null) {
-      element = initialScopeOwner;
+  public static ScopeOwner getResolveScopeOwner(@NotNull PsiElement element) {
+    final ScopeOwner firstOwner = getScopeOwner(element);
+    if (firstOwner == null) {
+      return null;
+    }
+    final ScopeOwner nextOwner = getScopeOwner(firstOwner);
+    final PyElement decoratorOrParameterAncestor = PsiTreeUtil.getParentOfType(element, PyDecorator.class, PyParameter.class);
+    if (decoratorOrParameterAncestor != null && !PsiTreeUtil.isAncestor(decoratorOrParameterAncestor, firstOwner, true)) {
+      return nextOwner;
     }
     final PyClass containingClass = PsiTreeUtil.getParentOfType(element, PyClass.class);
-    if (containingClass != null && element != null &&
-        PsiTreeUtil.isAncestor(containingClass.getSuperClassExpressionList(), element, false)) {
-      element = containingClass;
+    if (containingClass != null && PsiTreeUtil.isAncestor(containingClass.getSuperClassExpressionList(), element, false)) {
+      return nextOwner;
     }
-    return PsiTreeUtil.getParentOfType(element, ScopeOwner.class);
+    return firstOwner;
   }
 
   @Nullable
