@@ -90,6 +90,11 @@ public class PyMoveTest extends PyTestCase {
     doMoveFileTest("p1/p2/m1.py", "nonp3");
   }
 
+  // PY-6432
+  public void testStarImportUsage() {
+    doMoveSymbolTest("f", "c.py");
+  }
+
   private void doMoveFileTest(String fileName, String toDirName)  {
     Project project = myFixture.getProject();
     PsiManager manager = PsiManager.getInstance(project);
