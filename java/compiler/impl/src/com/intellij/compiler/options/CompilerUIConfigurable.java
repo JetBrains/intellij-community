@@ -17,6 +17,7 @@ package com.intellij.compiler.options;
 
 import com.intellij.compiler.*;
 import com.intellij.compiler.impl.TranslatingCompilerFilesMonitor;
+import com.intellij.compiler.server.BuildManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.options.Configurable;
@@ -124,6 +125,7 @@ public class CompilerUIConfigurable implements SearchableConfigurable, Configura
       SwingUtilities.invokeLater(new Runnable() {
         public void run() {
           CompileServerManager.getInstance().sendReloadRequest(myProject);
+          BuildManager.getInstance().clearState(myProject);
         }
       });
     }

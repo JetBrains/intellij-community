@@ -249,7 +249,7 @@ public class CompileContext extends UserDataHolderBase implements MessageHandler
           myNonIncrementalModules.remove(new Pair<Module, DirtyMarkScope>(module, dirtyScope));
         }
         if (isProjectRebuild()) {
-          myProjectDescriptor.fsState.markInitialScanPerformed(module, compilingTests);
+          myProjectDescriptor.fsState.markInitialScanPerformed(module.getName(), compilingTests);
         }
         final List<RootDescriptor> roots = myProjectDescriptor.rootsIndex.getModuleRoots(module);
         for (RootDescriptor descriptor : roots) {
@@ -303,7 +303,7 @@ public class CompileContext extends UserDataHolderBase implements MessageHandler
       }
       else {
         if (isMake()) {
-          if (myProjectDescriptor.fsState.markInitialScanPerformed(module, isCompilingTests())) {
+          if (myProjectDescriptor.fsState.markInitialScanPerformed(module.getName(), isCompilingTests())) {
             initModuleFSState(module);
           }
         }

@@ -25,7 +25,6 @@ import org.jetbrains.jps.incremental.fs.BuildFSState;
 import org.jetbrains.jps.incremental.fs.RootDescriptor;
 import org.jetbrains.jps.incremental.messages.*;
 import org.jetbrains.jps.incremental.storage.BuildDataManager;
-import org.jetbrains.jps.incremental.storage.NetworkStamps;
 import org.jetbrains.jps.incremental.storage.ProjectTimestamps;
 import org.jetbrains.jps.incremental.storage.Timestamps;
 import org.jetbrains.jps.server.ProjectDescriptor;
@@ -57,6 +56,7 @@ final class BuildSession implements Runnable, CanceledStatus {
   private final List<String> myFilePaths;
   private final Map<String, String> myBuilderParams;
   private String myProjectPath;
+  private List<CmdlineRemoteProto.Message.FSStateMessage> myModuleFSStates;
 
   // todo pass FSState in order not to scan FS from scratch
 
@@ -91,6 +91,7 @@ final class BuildSession implements Runnable, CanceledStatus {
     for (CmdlineRemoteProto.Message.KeyValuePair pair : params.getBuilderParameterList()) {
       myBuilderParams.put(pair.getKey(), pair.getValue());
     }
+    myModuleFSStates = params.getFsStateList();
   }
 
   public void run() {
@@ -150,12 +151,30 @@ final class BuildSession implements Runnable, CanceledStatus {
     ProjectDescriptor pd;
     final Project project = loadProject(projectPath);
     final BuildFSState fsState = new BuildFSState(false);
+
+    for (CmdlineRemoteProto.Message.FSStateMessage state : myModuleFSStates) {
+      final Map<File, Set<File>> recompileProduction = new HashMap<File, Set<File>>();
+      final Map<File, Set<File>> recompileTests = new HashMap<File, Set<File>>();
+      for (CmdlineRemoteProto.Message.FSStateMessage.RootDelta delta : state.getRecompileDeltaList()) {
+        final Map<File, Set<File>> map = delta.getTestSources()? recompileTests : recompileProduction;
+        final File root = new File(delta.getRoot());
+        Set<File> files = map.get(root);
+        if (files == null) {
+          files = new HashSet<File>();
+          map.put(root, files);
+        }
+        for (String path : delta.getPathList()) {
+          files.add(new File(path));
+        }
+      }
+      fsState.init(state.getModuleName(), state.getDeletedProductionList(), state.getDeletedTestsList(), recompileProduction, recompileTests);
+    }
+
     ProjectTimestamps projectTimestamps = null;
     BuildDataManager dataManager = null;
     final File dataStorageRoot = Utils.getDataStorageRoot(project);
     try {
-      // todo: create optionally
-      //projectTimestamps = new ProjectTimestamps(dataStorageRoot);
+      projectTimestamps = new ProjectTimestamps(dataStorageRoot);
       dataManager = new BuildDataManager(dataStorageRoot, true);
       if (dataManager.versionDiffers()) {
         forceCleanCaches = true;
@@ -189,7 +208,7 @@ final class BuildSession implements Runnable, CanceledStatus {
           buildType = BuildType.PROJECT_REBUILD;
         }
 
-        final Timestamps timestamps = projectTimestamps != null? projectTimestamps.getStorage() : new NetworkStamps(mySessionId, myChannel);
+        final Timestamps timestamps = pd.timestamps.getStorage();
 
         final CompileScope compileScope = createCompilationScope(buildType, pd, timestamps, modules, artifacts, paths);
         final IncProjectBuilder builder = new IncProjectBuilder(pd, BuilderRegistry.getInstance(), timestamps, builderParams, cs);
@@ -216,7 +235,6 @@ final class BuildSession implements Runnable, CanceledStatus {
           break; // break attempts loop
         }
         catch (RebuildRequestedException e) {
-          // todo: do not try second attempt here; just notify the calling process about "rebuild requested" and end the session
           if (attempt == 0) {
             LOG.info(e);
             forceCleanCaches = true;
@@ -224,6 +242,13 @@ final class BuildSession implements Runnable, CanceledStatus {
           else {
             throw e;
           }
+        }
+      }
+      // save initialized FS state for future use
+      for (Module module : pd.project.getModules().values()) {
+        if (fsState.isInitialized(module.getName())) {
+          Channels.write(myChannel, CmdlineProtoUtil.toMessage(mySessionId, CmdlineProtoUtil.createFSStateBuilderMessage(module.getName(),
+                                                                                                                         fsState)));
         }
       }
     }

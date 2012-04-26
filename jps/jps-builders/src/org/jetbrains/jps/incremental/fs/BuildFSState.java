@@ -12,7 +12,6 @@ import org.jetbrains.jps.incremental.storage.Timestamps;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -22,8 +21,6 @@ import java.util.Set;
  *         Date: 12/16/11
  */
 public class BuildFSState extends FSState {
-  private final Set<Module> myInitialTestsScanPerformed = Collections.synchronizedSet(new HashSet<Module>());
-  private final Set<Module> myInitialProductionScanPerformed = Collections.synchronizedSet(new HashSet<Module>());
 
   private final Set<String> myContextModules = new HashSet<String>();
   private volatile FilesDelta myCurrentRoundDelta;
@@ -37,12 +34,14 @@ public class BuildFSState extends FSState {
     myAlwaysScanFS = alwaysScanFS;
   }
 
-  public boolean markInitialScanPerformed(Module module, boolean forTests) {
-    if (myAlwaysScanFS) {
-      return true;
-    }
-    final Set<Module> map = forTests ? myInitialTestsScanPerformed : myInitialProductionScanPerformed;
-    return map.add(module);
+  @Override
+  public boolean isInitialized(String moduleName) {
+    return myAlwaysScanFS || super.isInitialized(moduleName);
+  }
+
+  @Override
+  public boolean markInitialScanPerformed(String moduleName, boolean forTests) {
+    return myAlwaysScanFS || super.markInitialScanPerformed(moduleName, forTests);
   }
 
   @Override

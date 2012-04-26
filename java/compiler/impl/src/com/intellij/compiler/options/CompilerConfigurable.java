@@ -20,6 +20,7 @@ import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.compiler.CompilerConfigurationImpl;
 import com.intellij.compiler.CompilerSettingsFactory;
 import com.intellij.compiler.impl.rmiCompiler.RmicConfiguration;
+import com.intellij.compiler.server.BuildManager;
 import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.compiler.options.ExcludedEntriesConfigurable;
 import com.intellij.openapi.diagnostic.Logger;
@@ -181,6 +182,7 @@ public class CompilerConfigurable implements SearchableConfigurable.Parent, Conf
         SwingUtilities.invokeLater(new Runnable() {
           public void run() {
             CompileServerManager.getInstance().sendReloadRequest(project);
+            BuildManager.getInstance().clearState(project);
           }
         });
       }

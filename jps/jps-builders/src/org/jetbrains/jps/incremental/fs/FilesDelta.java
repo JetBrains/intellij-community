@@ -13,6 +13,18 @@ final class FilesDelta {
   private final Map<File, Set<File>> mySourcesToRecompile = Collections.synchronizedMap(new HashMap<File, Set<File>>()); // srcRoot -> set of sources
   private final Map<File, Set<File>> myTestsToRecompile = Collections.synchronizedMap(new HashMap<File, Set<File>>());   // srcRoot -> set of sources
 
+  public void init(Collection<String> deletedProduction, Collection<String> deletedTests, Map<File, Set<File>> recompileProduction, Map<File, Set<File>> recompileTests) {
+    myDeletedProduction.clear();
+    myDeletedProduction.addAll(deletedProduction);
+    myDeletedTests.clear();
+    myDeletedTests.addAll(deletedTests);
+    mySourcesToRecompile.clear();
+    mySourcesToRecompile.putAll(recompileProduction);
+    myTestsToRecompile.clear();
+    myTestsToRecompile.putAll(recompileTests);
+  }
+
+
   public boolean markRecompile(File root, boolean isTestRoot, File file) {
     final boolean added = _addToRecompiled(root, isTestRoot, file);
     if (added) {

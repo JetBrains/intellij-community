@@ -25,29 +25,24 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
-import com.intellij.notification.Notification;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathMacros;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.compiler.CompilationStatusListener;
-import com.intellij.openapi.compiler.CompilerManager;
-import com.intellij.openapi.compiler.CompilerTopics;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerAdapter;
 import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
-import com.intellij.openapi.roots.ModuleRootEvent;
-import com.intellij.openapi.roots.ModuleRootListener;
-import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
-import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
@@ -56,10 +51,7 @@ import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
-import com.intellij.problems.Problem;
-import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.util.Alarm;
-import com.intellij.util.containers.ConcurrentHashSet;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.net.NetUtils;
 import org.jboss.netty.bootstrap.ServerBootstrap;
@@ -77,6 +69,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.api.*;
 import org.jetbrains.jps.cmdline.BuildMain;
+import org.jetbrains.jps.incremental.fs.FSState;
+import org.jetbrains.jps.incremental.fs.RootDescriptor;
 import org.jetbrains.jps.server.ClasspathBootstrap;
 import org.jetbrains.jps.server.Server;
 
@@ -87,7 +81,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.InetSocketAddress;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -101,9 +94,11 @@ public class BuildManager implements ApplicationComponent{
   private static final String SYSTEM_ROOT = "compile-server";
   private static final String LOGGER_CONFIG = "log.xml";
   private static final String DEFAULT_LOGGER_CONFIG = "defaultLogConfig.xml";
+  private static final int MAKE_TRIGGER_DELAY = 5 * 1000 /*5 seconds*/;
+
   private final File mySystemDirectory;
   private final ProjectManager myProjectManager;
-  private static final int MAKE_TRIGGER_DELAY = 5 * 1000 /*5 seconds*/;
+
   private final Map<RequestFuture, Project> myAutomakeFutures = new HashMap<RequestFuture, Project>();
   private final CompileServerClasspathManager myClasspathManager = new CompileServerClasspathManager();
   private final Executor myPooledThreadExecutor = new Executor() {
@@ -112,9 +107,9 @@ public class BuildManager implements ApplicationComponent{
       ApplicationManager.getApplication().executeOnPooledThread(command);
     }
   };
-  private final Map<String, SequentialTaskExecutor> myProjectToExecutorMap = Collections.synchronizedMap(new HashMap<String, SequentialTaskExecutor>());
+  private final Map<String, ProjectData> myProjectDataMap = Collections.synchronizedMap(new HashMap<String, ProjectData>());
 
-  private final ChannelGroup myAllOpenChannels = new DefaultChannelGroup("compile-manager");
+  private final ChannelGroup myAllOpenChannels = new DefaultChannelGroup("build-manager");
   private final BuildMessageDispatcher myMessageDispatcher = new BuildMessageDispatcher();
   private int myListenPort = -1;
   private volatile CmdlineRemoteProto.Message.ControllerMessage.GlobalSettings myGlobals;
@@ -202,12 +197,89 @@ public class BuildManager implements ApplicationComponent{
     return ApplicationManager.getApplication().getComponent(BuildManager.class);
   }
 
-  public void notifyFilesChanged(Collection<String> paths) {
-    // todo: update state
+  public void notifyFilesChanged(final Collection<String> paths) {
+    // todo: temporarily commented
+    //doNotify(paths, false);
   }
 
   public void notifyFilesDeleted(Collection<String> paths) {
-    // todo: update state
+    // todo: temporarily commented
+    //doNotify(paths, true);
+  }
+
+  private void doNotify(final Collection<String> paths, final boolean notifyDeletion) {
+    final Project[] openProjects = myProjectManager.getOpenProjects();
+    myPooledThreadExecutor.execute(new Runnable() {
+      @Override
+      public void run() {
+        List<Pair<ProjectFileIndex, ProjectData>> activeProjects = new ArrayList<Pair<ProjectFileIndex, ProjectData>>();
+        for (Project project : openProjects) {
+          if (project.isDisposed() || project.isDefault()) {
+            continue;
+          }
+          final String projectPath = getProjectPath(project);
+          final ProjectData data = myProjectDataMap.get(projectPath);
+          if (data != null) {
+            activeProjects.add(Pair.create(ProjectRootManager.getInstance(project).getFileIndex(), data));
+          }
+        }
+        final LocalFileSystem lfs = LocalFileSystem.getInstance();
+        for (final Pair<ProjectFileIndex, ProjectData> pair : activeProjects) {
+          final ProjectFileIndex fileIndex = pair.first;
+          final FSState fsState = pair.second.fsState;
+          pair.second.requestQueue.submit(new Runnable() {
+            @Override
+            public void run() {
+              ApplicationManager.getApplication().runReadAction(new Runnable() {
+                @Override
+                public void run() {
+                  for (String filePath : paths) {
+                    // todo: estimate performance, probably add a way to obtain all data from file index in a single call
+                    final VirtualFile vFile = lfs.findFileByPath(filePath);
+                    if (vFile == null) {
+                      continue;
+                    }
+                    final Module module = fileIndex.getModuleForFile(vFile);
+                    if (module == null) {
+                      continue;
+                    }
+                    final String moduleName = module.getName();
+                    if (!fsState.isInitialized(moduleName)) {   // todo: proper sync!
+                      continue;
+                    }
+                    final VirtualFile srcRoot = fileIndex.getSourceRootForFile(vFile);
+                    if (srcRoot == null) {
+                      return;
+                    }
+                    final boolean inTestSources = fileIndex.isInTestSourceContent(vFile);
+                    if (!inTestSources && !fileIndex.isInSourceContent(vFile)) {
+                      continue;
+                    }
+                    try {
+                      final File file = new File(vFile.getPath());
+                      if (notifyDeletion) {
+                        fsState.registerDeleted(moduleName, file, inTestSources, null);
+                      }
+                      else {
+                        fsState.markDirty(file, new RootDescriptor(moduleName, new File(srcRoot.getPath()), inTestSources, false), null);
+                      }
+                    }
+                    catch (IOException e) {
+                      LOG.error(e);
+                    }
+                  }
+                }
+              });
+            }
+          });
+        }
+      }
+    });
+  }
+
+  public void clearState(Project project) {
+    final String projectPath = getProjectPath(project);
+    myProjectDataMap.remove(projectPath);
   }
 
   @Nullable
@@ -274,7 +346,6 @@ public class BuildManager implements ApplicationComponent{
     }
   }
 
-
   // todo: avoid FS scan on every start
 
   @Nullable
@@ -284,7 +355,7 @@ public class BuildManager implements ApplicationComponent{
     final Collection<String> modules,
     final Collection<String> artifacts,
     final Collection<String> paths,
-    final Map<String, String> userData, final BuildMessageHandler handler) {
+    final Map<String, String> userData, DefaultMessageHandler handler) {
 
     final String projectPath = getProjectPath(project);
     final UUID sessionId = UUID.randomUUID();
@@ -294,13 +365,27 @@ public class BuildManager implements ApplicationComponent{
       globals = buildGlobalSettings();
       myGlobals = globals;
     }
+
+    final SequentialTaskExecutor sequential;
+    final FSState fsState;
+    synchronized (myProjectDataMap) {
+      ProjectData data = myProjectDataMap.get(projectPath);
+      if (data == null) {
+        data = new ProjectData(new SequentialTaskExecutor(myPooledThreadExecutor), new FSState());
+        myProjectDataMap.put(projectPath, data);
+      }
+      sequential = data.requestQueue;
+      fsState = data.fsState;
+      handler = new FSStateMessageHandler(data.fsState, handler);
+    }
+
     if (isRebuild) {
-      params = CmdlineProtoUtil.createRebuildRequest(projectPath, userData, globals);
+      params = CmdlineProtoUtil.createRebuildRequest(projectPath, userData, globals, fsState);
     }
     else {
       params = isMake ?
-               CmdlineProtoUtil.createMakeRequest(projectPath, modules, artifacts, userData, globals) :
-               CmdlineProtoUtil.createForceCompileRequest(projectPath, modules, artifacts, paths, userData, globals);
+               CmdlineProtoUtil.createMakeRequest(projectPath, modules, artifacts, userData, globals, fsState) :
+               CmdlineProtoUtil.createForceCompileRequest(projectPath, modules, artifacts, paths, userData, globals, fsState);
     }
 
     myMessageDispatcher.registerBuildMessageHandler(sessionId, handler, params);
@@ -318,21 +403,12 @@ public class BuildManager implements ApplicationComponent{
       }
     }
 
-    final RequestFuture<BuildMessageHandler> future = new RequestFuture<BuildMessageHandler>(handler, sessionId, new RequestFuture.CancelAction<com.intellij.compiler.server.BuildMessageHandler>() {
+    final RequestFuture<BuilderMessageHandler> future = new RequestFuture<BuilderMessageHandler>(handler, sessionId, new RequestFuture.CancelAction<BuilderMessageHandler>() {
       @Override
-      public void cancel(RequestFuture<BuildMessageHandler> future) throws Exception {
+      public void cancel(RequestFuture<BuilderMessageHandler> future) throws Exception {
         myMessageDispatcher.cancelSession(future.getRequestID());
       }
     });
-
-    SequentialTaskExecutor sequential;
-    synchronized (myProjectToExecutorMap) {
-      sequential = myProjectToExecutorMap.get(projectPath);
-      if (sequential == null) {
-        sequential = new SequentialTaskExecutor(myPooledThreadExecutor);
-        myProjectToExecutorMap.put(projectPath, sequential);
-      }
-    }
 
     sequential.submit(new Runnable() {
       @Override
@@ -352,7 +428,7 @@ public class BuildManager implements ApplicationComponent{
           processHandler.addProcessListener(new ProcessAdapter() {
             @Override
             public void processTerminated(ProcessEvent event) {
-              final BuildMessageHandler handler = myMessageDispatcher.unregisterBuildMessageHandler(sessionId);
+              final BuilderMessageHandler handler = myMessageDispatcher.unregisterBuildMessageHandler(sessionId);
               if (handler != null) {
                 handler.sessionTerminated();
               }
@@ -372,8 +448,8 @@ public class BuildManager implements ApplicationComponent{
         }
         catch (ExecutionException e) {
           myMessageDispatcher.unregisterBuildMessageHandler(sessionId);
-          handler.handleFailure(CmdlineProtoUtil.createFailure(e.getMessage(), e));
-          handler.sessionTerminated();
+          future.getMessageHandler().handleFailure(CmdlineProtoUtil.createFailure(e.getMessage(), e));
+          future.getMessageHandler().sessionTerminated();
         }
         finally {
           future.setDone();
@@ -684,103 +760,6 @@ public class BuildManager implements ApplicationComponent{
     return builder.toString();
   }
 
-  private static class AutoMakeMessageHandler extends BuildMessageHandler {
-    private CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.Status myBuildStatus;
-    private final Project myProject;
-    private final WolfTheProblemSolver myWolf;
-
-    public AutoMakeMessageHandler(Project project) {
-      myProject = project;
-      myBuildStatus = CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.Status.SUCCESS;
-      myWolf = WolfTheProblemSolver.getInstance(project);
-    }
-
-    @Override
-    protected void handleBuildEvent(CmdlineRemoteProto.Message.BuilderMessage.BuildEvent event) {
-      if (myProject.isDisposed()) {
-        return;
-      }
-      switch (event.getEventType()) {
-        case BUILD_COMPLETED:
-          if (event.hasCompletionStatus()) {
-            myBuildStatus = event.getCompletionStatus();
-          }
-          return;
-
-        case FILES_GENERATED:
-          final CompilationStatusListener publisher = myProject.getMessageBus().syncPublisher(CompilerTopics.COMPILATION_STATUS);
-          for (CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.GeneratedFile generatedFile : event.getGeneratedFilesList()) {
-            final String root = FileUtil.toSystemIndependentName(generatedFile.getOutputRoot());
-            final String relativePath = FileUtil.toSystemIndependentName(generatedFile.getRelativePath());
-            publisher.fileGenerated(root, relativePath);
-          }
-          return;
-
-        default:
-          return;
-      }
-    }
-
-    @Override
-    protected void handleCompileMessage(CmdlineRemoteProto.Message.BuilderMessage.CompileMessage message) {
-      if (myProject.isDisposed()) {
-        return;
-      }
-      final CmdlineRemoteProto.Message.BuilderMessage.CompileMessage.Kind kind = message.getKind();
-      if (kind == CmdlineRemoteProto.Message.BuilderMessage.CompileMessage.Kind.ERROR) {
-        informWolf(myProject, message);
-      }
-    }
-
-    @Override
-    public void handleFailure(CmdlineRemoteProto.Message.Failure failure) {
-      CompilerManager.NOTIFICATION_GROUP.createNotification("Auto make failure: " + failure.getDescription(), MessageType.INFO);
-    }
-
-    @Override
-    public void sessionTerminated() {
-      String statusMessage = null/*"Auto make completed"*/;
-      switch (myBuildStatus) {
-        case SUCCESS:
-          //statusMessage = "Auto make completed successfully";
-          break;
-        case UP_TO_DATE:
-          //statusMessage = "All files are up-to-date";
-          break;
-        case ERRORS:
-          statusMessage = "Auto make completed with errors";
-          break;
-        case CANCELED:
-          //statusMessage = "Auto make has been canceled";
-          break;
-      }
-      if (statusMessage != null) {
-        final Notification notification = CompilerManager.NOTIFICATION_GROUP.createNotification(statusMessage, MessageType.INFO);
-        if (!myProject.isDisposed()) {
-          notification.notify(myProject);
-        }
-      }
-    }
-
-    private void informWolf(Project project, CmdlineRemoteProto.Message.BuilderMessage.CompileMessage message) {
-      final String srcPath = message.getSourceFilePath();
-      if (srcPath != null && !project.isDisposed()) {
-        final VirtualFile vFile = LocalFileSystem.getInstance().findFileByPath(srcPath);
-        if (vFile != null) {
-          final int line = (int)message.getLine();
-          final int column = (int)message.getColumn();
-          if (line > 0 && column > 0) {
-            final Problem problem = myWolf.convertToProblem(vFile, line, column, new String[]{message.getText()});
-            myWolf.weHaveGotProblems(vFile, Collections.singletonList(problem));
-          }
-          else {
-            myWolf.queue(vFile);
-          }
-        }
-      }
-    }
-  }
-
   private class ProjectWatcher extends ProjectManagerAdapter {
     private final Map<Project, MessageBusConnection> myConnections = new HashMap<Project, MessageBusConnection>();
 
@@ -806,7 +785,7 @@ public class BuildManager implements ApplicationComponent{
 
     @Override
     public void projectClosed(Project project) {
-      myProjectToExecutorMap.remove(getProjectPath(project));
+      clearState(project);
       final MessageBusConnection conn = myConnections.remove(project);
       if (conn != null) {
         conn.disconnect();
@@ -814,146 +793,13 @@ public class BuildManager implements ApplicationComponent{
     }
   }
 
-  private static class BuildMessageDispatcher extends SimpleChannelHandler {
-    private final Map<UUID, SessionData> myMessageHandlers = new ConcurrentHashMap<UUID, SessionData>();
-    private final Set<UUID> myCanceledSessions = new ConcurrentHashSet<UUID>();
+  private static class ProjectData {
+    final SequentialTaskExecutor requestQueue;
+    final FSState fsState;
 
-    public void registerBuildMessageHandler(UUID sessionId,
-                                            BuildMessageHandler handler,
-                                            CmdlineRemoteProto.Message.ControllerMessage params) {
-      myMessageHandlers.put(sessionId, new SessionData(sessionId, handler, params));
-    }
-
-    @Nullable
-    public BuildMessageHandler unregisterBuildMessageHandler(UUID sessionId) {
-      myCanceledSessions.remove(sessionId);
-      final SessionData data = myMessageHandlers.remove(sessionId);
-      return data != null? data.handler : null;
-    }
-
-    public void cancelSession(UUID sessionId) {
-      if (myCanceledSessions.add(sessionId)) {
-        final SessionData data = myMessageHandlers.get(sessionId);
-        if (data != null) {
-          final Channel channel = data.channel;
-          if (channel != null) {
-            Channels.write(channel, CmdlineProtoUtil.toMessage(sessionId, CmdlineProtoUtil.createCancelCommand()));
-          }
-        }
-      }
-    }
-
-    @Override
-    public void messageReceived(ChannelHandlerContext ctx, MessageEvent e) throws Exception {
-      final CmdlineRemoteProto.Message message = (CmdlineRemoteProto.Message)e.getMessage();
-
-      SessionData sessionData = (SessionData)ctx.getAttachment();
-
-      UUID sessionId;
-      if (sessionData == null) {
-        // this is the first message for this session, so fill session data with missing info
-        final CmdlineRemoteProto.Message.UUID id = message.getSessionId();
-        sessionId = new UUID(id.getMostSigBits(), id.getLeastSigBits());
-
-        sessionData = myMessageHandlers.get(sessionId);
-        if (sessionData != null) {
-          sessionData.channel = ctx.getChannel();
-          ctx.setAttachment(sessionData);
-        }
-        if (myCanceledSessions.contains(sessionId)) {
-          Channels.write(ctx.getChannel(), CmdlineProtoUtil.toMessage(sessionId, CmdlineProtoUtil.createCancelCommand()));
-        }
-      }
-      else {
-        sessionId = sessionData.sessionId;
-      }
-
-      final BuildMessageHandler handler = sessionData != null? sessionData.handler : null;
-      if (handler == null) {
-        // todo
-        LOG.info("No message handler registered for session " + sessionId);
-        return;
-      }
-
-      final CmdlineRemoteProto.Message.Type messageType = message.getType();
-      switch (messageType) {
-        case FAILURE:
-          handler.handleFailure(message.getFailure());
-          break;
-
-        case BUILDER_MESSAGE:
-          final CmdlineRemoteProto.Message.BuilderMessage builderMessage = message.getBuilderMessage();
-          final CmdlineRemoteProto.Message.BuilderMessage.Type responseType = builderMessage.getType();
-          if (responseType == CmdlineRemoteProto.Message.BuilderMessage.Type.PARAM_REQUEST) {
-            final CmdlineRemoteProto.Message.ControllerMessage params = sessionData.params;
-            if (params != null) {
-              sessionData.params = null;
-              Channels.write(ctx.getChannel(), CmdlineProtoUtil.toMessage(sessionId, params));
-            }
-            else {
-              cancelSession(sessionId);
-            }
-          }
-          else {
-            handler.handleBuildMessage(builderMessage);
-          }
-          break;
-
-        default:
-          LOG.info("Unsupported message type " + messageType);
-          break;
-      }
-    }
-
-    @Override
-    public void channelClosed(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception {
-      try {
-        super.channelClosed(ctx, e);
-      }
-      finally {
-        final SessionData sessionData = (SessionData)ctx.getAttachment();
-        if (sessionData != null) {
-          final BuildMessageHandler handler = unregisterBuildMessageHandler(sessionData.sessionId);
-          if (handler != null) {
-            // notify the handler only if it has not been notified yet
-            handler.sessionTerminated();
-          }
-        }
-      }
-    }
-
-
-    @Override
-    public void channelDisconnected(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception {
-      try {
-        super.channelDisconnected(ctx, e);
-      }
-      finally {
-        final SessionData sessionData = (SessionData)ctx.getAttachment();
-        if (sessionData != null) { // this is the context corresponding to some session
-          final Channel channel = e.getChannel();
-          ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-            @Override
-            public void run() {
-              channel.close();
-            }
-          });
-        }
-      }
-    }
-  }
-
-
-  private static final class SessionData {
-    final UUID sessionId;
-    final BuildMessageHandler handler;
-    volatile CmdlineRemoteProto.Message.ControllerMessage params;
-    volatile Channel channel;
-
-    private SessionData(UUID sessionId, BuildMessageHandler handler, CmdlineRemoteProto.Message.ControllerMessage params) {
-      this.sessionId = sessionId;
-      this.handler = handler;
-      this.params = params;
+    private ProjectData(SequentialTaskExecutor requestQueue, FSState fsState) {
+      this.requestQueue = requestQueue;
+      this.fsState = fsState;
     }
   }
 

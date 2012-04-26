@@ -172,7 +172,6 @@ class ServerState {
     }
 
     final ProjectDescriptor finalPd = pd;
-    assert pd.timestamps != null;
     try {
       for (int attempt = 0; attempt < 2; attempt++) {
         if (forceCleanCaches && modules.isEmpty() && paths.isEmpty()) {
