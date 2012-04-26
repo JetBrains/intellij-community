@@ -49,7 +49,7 @@ public abstract class PythonSdkFlavor {
 
   public static List<PythonSdkFlavor> getApplicableFlavors() {
     List<PythonSdkFlavor> result = new ArrayList<PythonSdkFlavor>();
-    result.add(VirtualEnvSdkFlavor.INSTANCE);
+
     if (SystemInfo.isWindows) {
       result.add(WinPythonSdkFlavor.INSTANCE);
     }
@@ -71,6 +71,9 @@ public abstract class PythonSdkFlavor {
     result.add(JythonSdkFlavor.INSTANCE);
     result.add(IronPythonSdkFlavor.INSTANCE);
     result.add(PyPySdkFlavor.INSTANCE);
+    result.add(VirtualEnvSdkFlavor.INSTANCE);
+    result.add(PyRemoteSdkFlavor.INSTANCE);
+
     return result;
   }
 
