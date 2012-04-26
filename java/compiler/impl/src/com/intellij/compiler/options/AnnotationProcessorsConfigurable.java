@@ -17,6 +17,7 @@ package com.intellij.compiler.options;
 
 import com.intellij.compiler.CompileServerManager;
 import com.intellij.compiler.CompilerConfiguration;
+import com.intellij.compiler.server.BuildManager;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
@@ -253,6 +254,7 @@ public class AnnotationProcessorsConfigurable implements SearchableConfigurable,
     SwingUtilities.invokeLater(new Runnable() {
       public void run() {
         CompileServerManager.getInstance().sendReloadRequest(myProject);
+        BuildManager.getInstance().clearState(myProject);
       }
     });
   }

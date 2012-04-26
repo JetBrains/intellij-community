@@ -21,12 +21,8 @@ import org.jetbrains.jps.api.CmdlineRemoteProto;
  * @author Eugene Zhuravlev
  *         Date: 4/18/12
  */
-public abstract class BuildMessageHandler {
-
-  public abstract void sessionTerminated();
-
-  public abstract void handleFailure(CmdlineRemoteProto.Message.Failure failure);
-
+public abstract class DefaultMessageHandler implements BuilderMessageHandler {
+  @Override
   public final void handleBuildMessage(CmdlineRemoteProto.Message.BuilderMessage msg) {
     switch (msg.getType()) {
       case BUILD_EVENT:
@@ -35,7 +31,13 @@ public abstract class BuildMessageHandler {
       case COMPILE_MESSAGE:
         handleCompileMessage(msg.getCompileMessage());
         break;
+      case FS_STATE:
+        handleFSStateMessage(msg.getFsstateMessage());
+        break;
     }
+  }
+
+  protected void handleFSStateMessage(CmdlineRemoteProto.Message.FSStateMessage message) {
   }
 
   protected abstract void handleCompileMessage(CmdlineRemoteProto.Message.BuilderMessage.CompileMessage message);

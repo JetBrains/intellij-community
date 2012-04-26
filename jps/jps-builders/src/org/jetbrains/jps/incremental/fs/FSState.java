@@ -14,9 +14,23 @@ import java.util.*;
  */
 public class FSState {
   private final Map<String, FilesDelta> myDeltas = Collections.synchronizedMap(new HashMap<String, FilesDelta>());
+  protected final Set<String> myInitialTestsScanPerformed = Collections.synchronizedSet(new HashSet<String>());
+  protected final Set<String> myInitialProductionScanPerformed = Collections.synchronizedSet(new HashSet<String>());
 
   public void clearAll() {
     myDeltas.clear();
+  }
+
+  public Set<String> getInitializedModules() {
+    final HashSet<String> result = new HashSet<String>(myInitialProductionScanPerformed);
+    result.retainAll(myInitialTestsScanPerformed);
+    return result;
+  }
+
+  public void init(String moduleName, final Collection<String> deleteProduction, final Collection<String> deletedTests, final Map<File, Set<File>> recompileProduction, final Map<File, Set<File>> recompileTests) {
+    getDelta(moduleName).init(deleteProduction, deletedTests, recompileProduction, recompileTests);
+    myInitialTestsScanPerformed.add(moduleName);
+    myInitialProductionScanPerformed.add(moduleName);
   }
 
   public final void clearRecompile(final RootDescriptor rd) {
@@ -76,5 +90,13 @@ public class FSState {
       }
       return delta;
     }
+  }
+
+  public boolean isInitialized(String moduleName) {
+    return myInitialTestsScanPerformed.contains(moduleName) && myInitialProductionScanPerformed.contains(moduleName);
+  }
+
+  public boolean markInitialScanPerformed(final String moduleName, boolean forTests) {
+    return (forTests ? myInitialTestsScanPerformed : myInitialProductionScanPerformed).add(moduleName);
   }
 }

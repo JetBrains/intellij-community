@@ -31,7 +31,6 @@ import org.jetbrains.jps.server.ProjectDescriptor;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.IOException;
 import java.io.PrintStream;
 import java.util.*;
 
@@ -57,6 +56,7 @@ final class BuildSession implements Runnable, CanceledStatus {
   private final List<String> myFilePaths;
   private final Map<String, String> myBuilderParams;
   private String myProjectPath;
+  private List<CmdlineRemoteProto.Message.FSStateMessage> myModuleFSStates;
 
   // todo pass FSState in order not to scan FS from scratch
 
@@ -91,6 +91,7 @@ final class BuildSession implements Runnable, CanceledStatus {
     for (CmdlineRemoteProto.Message.KeyValuePair pair : params.getBuilderParameterList()) {
       myBuilderParams.put(pair.getKey(), pair.getValue());
     }
+    myModuleFSStates = params.getFsStateList();
   }
 
   public void run() {
@@ -150,6 +151,25 @@ final class BuildSession implements Runnable, CanceledStatus {
     ProjectDescriptor pd;
     final Project project = loadProject(projectPath);
     final BuildFSState fsState = new BuildFSState(false);
+
+    for (CmdlineRemoteProto.Message.FSStateMessage state : myModuleFSStates) {
+      final Map<File, Set<File>> recompileProduction = new HashMap<File, Set<File>>();
+      final Map<File, Set<File>> recompileTests = new HashMap<File, Set<File>>();
+      for (CmdlineRemoteProto.Message.FSStateMessage.RootDelta delta : state.getRecompileDeltaList()) {
+        final Map<File, Set<File>> map = delta.getTestSources()? recompileTests : recompileProduction;
+        final File root = new File(delta.getRoot());
+        Set<File> files = map.get(root);
+        if (files == null) {
+          files = new HashSet<File>();
+          map.put(root, files);
+        }
+        for (String path : delta.getPathList()) {
+          files.add(new File(path));
+        }
+      }
+      fsState.init(state.getModuleName(), state.getDeletedProductionList(), state.getDeletedTestsList(), recompileProduction, recompileTests);
+    }
+
     ProjectTimestamps projectTimestamps = null;
     BuildDataManager dataManager = null;
     final File dataStorageRoot = Utils.getDataStorageRoot(project);
@@ -172,7 +192,8 @@ final class BuildSession implements Runnable, CanceledStatus {
       }
       forceCleanCaches = true;
       FileUtil.delete(dataStorageRoot);
-      projectTimestamps = new ProjectTimestamps(dataStorageRoot);
+      // todo: create optionally
+      //projectTimestamps = new ProjectTimestamps(dataStorageRoot);
       dataManager = new BuildDataManager(dataStorageRoot, true);
       // second attempt succeded
       msgHandler.processMessage(new CompilerMessage("build", BuildMessage.Kind.INFO, "Project rebuild forced: " + e.getMessage()));
@@ -187,16 +208,8 @@ final class BuildSession implements Runnable, CanceledStatus {
           buildType = BuildType.PROJECT_REBUILD;
         }
 
-        if (buildType == BuildType.PROJECT_REBUILD || forceCleanCaches) {
-          try {
-            pd.timestamps.clean();
-          }
-          catch (IOException e) {
-            throw new ProjectBuildException("Error cleaning timestamps storage", e);
-          }
-        }
-
         final Timestamps timestamps = pd.timestamps.getStorage();
+
         final CompileScope compileScope = createCompilationScope(buildType, pd, timestamps, modules, artifacts, paths);
         final IncProjectBuilder builder = new IncProjectBuilder(pd, BuilderRegistry.getInstance(), timestamps, builderParams, cs);
         builder.addMessageHandler(msgHandler);
@@ -222,7 +235,6 @@ final class BuildSession implements Runnable, CanceledStatus {
           break; // break attempts loop
         }
         catch (RebuildRequestedException e) {
-          // todo: do not try second attempt here; just notify the calling process about "rebuild requested" and end the session
           if (attempt == 0) {
             LOG.info(e);
             forceCleanCaches = true;
@@ -230,6 +242,13 @@ final class BuildSession implements Runnable, CanceledStatus {
           else {
             throw e;
           }
+        }
+      }
+      // save initialized FS state for future use
+      for (Module module : pd.project.getModules().values()) {
+        if (fsState.isInitialized(module.getName())) {
+          Channels.write(myChannel, CmdlineProtoUtil.toMessage(mySessionId, CmdlineProtoUtil.createFSStateBuilderMessage(module.getName(),
+                                                                                                                         fsState)));
         }
       }
     }

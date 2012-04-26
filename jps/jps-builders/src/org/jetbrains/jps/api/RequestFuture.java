@@ -110,7 +110,7 @@ public class RequestFuture<T> implements Future {
     return null;
   }
 
-  public T getResponseHandler() {
+  public T getMessageHandler() {
     return myHandler;
   }
 }

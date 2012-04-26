@@ -354,7 +354,7 @@ public abstract class InplaceRefactoring {
   }
 
   protected int restoreCaretOffset(int offset) {
-    return offset;
+    return myCaretRangeMarker.isValid() ? myCaretRangeMarker.getStartOffset() : offset;
   }
 
   protected void navigateToAlreadyStarted(Document oldDocument, int exitCode) {

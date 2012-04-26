@@ -34,6 +34,7 @@ import com.intellij.psi.WeighingService;
 import com.intellij.psi.statistics.StatisticsInfo;
 import com.intellij.psi.statistics.StatisticsManager;
 import com.intellij.util.Alarm;
+import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import gnu.trove.THashMap;
@@ -107,7 +108,7 @@ public class CompletionLookupArranger extends LookupArranger {
       }
       Classifier<LookupElement> classifier = myClassifiers.get(sorter);
       if (classifier != null) {
-        classifier.describeItems(subMap);
+        classifier.describeItems(subMap, new ProcessingContext());
       }
     }
 
@@ -153,7 +154,7 @@ public class CompletionLookupArranger extends LookupArranger {
 
     final List<LookupElement> byRelevance = new ArrayList<LookupElement>();
     for (CompletionSorterImpl sorter : myClassifiers.keySet()) {
-      ContainerUtil.addAll(byRelevance, myClassifiers.get(sorter).classify((List<LookupElement>)inputBySorter.get(sorter)));
+      ContainerUtil.addAll(byRelevance, myClassifiers.get(sorter).classify(inputBySorter.get(sorter), new ProcessingContext()));
     }
 
     LinkedHashSet<LookupElement> model = new LinkedHashSet<LookupElement>();

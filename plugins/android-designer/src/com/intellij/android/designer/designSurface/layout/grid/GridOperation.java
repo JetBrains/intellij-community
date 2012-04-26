@@ -187,8 +187,19 @@ public abstract class GridOperation extends AbstractEditOperation {
           }
           else if (inCellRect.y < location.y && location.y < inCellRect.getMaxY()) {
             if (myExist && (myColumn == 0 || isExist(myRow, myColumn - 1))) {
-              myInsertType = GridInsertType.before_v_cell;
-              myInsertFeedback.vertical(myBounds.x + cellRect.x, myBounds.y + cellRect.y, cellRect.height);
+              boolean insert = true;
+
+              if (isMoveOperation()) {
+                if (myColumn != 0 || getMovedIndex(false) == 0) {
+                  insert = !isSingleMovedAxis(false);
+                }
+              }
+
+              if (insert) {
+                myInsertType = GridInsertType.before_v_cell;
+                cellRect = getInsertRect(false);
+                myInsertFeedback.vertical(myBounds.x + cellRect.x, myBounds.y + cellRect.y, cellRect.height);
+              }
             }
           }
           else if (isExistCell) {
@@ -204,9 +215,12 @@ public abstract class GridOperation extends AbstractEditOperation {
             }
           }
           else if (inCellRect.y < location.y && location.y < inCellRect.getMaxY()) {
-            if (myExist && (myColumn == gridInfo.lastColumn || isExist(myRow, myColumn + 1))) {
-              myInsertType = GridInsertType.after_v_cell;
-              myInsertFeedback.vertical(myBounds.x + cellRect.x + cellRect.width, myBounds.y + cellRect.y, cellRect.height);
+            if (myExist && (myColumn == gridInfo.lastInsertColumn || isExist(myRow, myColumn + 1))) {
+              if (!isMoveOperation() || !isSingleMovedAxis(false)) {
+                myInsertType = GridInsertType.after_v_cell;
+                cellRect = getInsertRect(false);
+                myInsertFeedback.vertical(myBounds.x + cellRect.x + cellRect.width, myBounds.y + cellRect.y, cellRect.height);
+              }
             }
           }
           else if (isExistCell) {
@@ -216,16 +230,28 @@ public abstract class GridOperation extends AbstractEditOperation {
         }
         else if (location.y <= inCellRect.y) {
           if (myExist && (myRow == 0 || isExist(myRow - 1, myColumn))) {
-            myInsertType = GridInsertType.before_h_cell;
-            cellRect = getInsertRect(false);
-            myInsertFeedback.horizontal(myBounds.x + cellRect.x, myBounds.y + cellRect.y, cellRect.width);
+            boolean insert = true;
+
+            if (isMoveOperation()) {
+              if (myRow != 0 || getMovedIndex(true) == 0) {
+                insert = !isSingleMovedAxis(true);
+              }
+            }
+
+            if (insert) {
+              myInsertType = GridInsertType.before_h_cell;
+              cellRect = getInsertRect(false);
+              myInsertFeedback.horizontal(myBounds.x + cellRect.x, myBounds.y + cellRect.y, cellRect.width);
+            }
           }
         }
         else if (location.y >= inCellRect.getMaxY()) {
-          if (myExist && (myRow == gridInfo.lastRow || isExist(myRow + 1, myColumn))) {
-            myInsertType = GridInsertType.after_h_cell;
-            cellRect = getInsertRect(false);
-            myInsertFeedback.horizontal(myBounds.x + cellRect.x, myBounds.y + cellRect.y + cellRect.height, cellRect.width);
+          if (myExist && (myRow == gridInfo.lastInsertRow || isExist(myRow + 1, myColumn))) {
+            if (!isMoveOperation() || !isSingleMovedAxis(true)) {
+              myInsertType = GridInsertType.after_h_cell;
+              cellRect = getInsertRect(false);
+              myInsertFeedback.horizontal(myBounds.x + cellRect.x, myBounds.y + cellRect.y + cellRect.height, cellRect.width);
+            }
           }
         }
       }
@@ -234,6 +260,10 @@ public abstract class GridOperation extends AbstractEditOperation {
     if (myInsertType == GridInsertType.in_cell) {
       myInsertFeedback.setVisible(false);
     }
+  }
+
+  protected boolean isMoveOperation() {
+    return myContext.isMove();
   }
 
   private static int getLineIndex(int[] line, int location) {
@@ -315,6 +345,57 @@ public abstract class GridOperation extends AbstractEditOperation {
     int borderHeight = Math.min(cellRect.height / 3, 10);
     return new Rectangle(cellRect.x + borderWidth, cellRect.y + borderHeight, cellRect.width - 2 * borderWidth,
                          cellRect.height - 2 * borderHeight);
+  }
+
+  protected abstract int getMovedIndex(boolean row);
+
+  protected abstract boolean isSingleMovedAxis(boolean row);
+
+  protected final int getSizeInRow(int rowIndex, RadComponent excludeComponent) {
+    int size = 0;
+    RadComponent[][] components = getGridInfo().components;
+
+    if (rowIndex < components.length) {
+      RadComponent[] rowComponents = components[rowIndex];
+
+      for (int j = 0; j < rowComponents.length; j++) {
+        RadComponent cellComponent = rowComponents[j];
+        if (cellComponent != null) {
+          if (cellComponent != excludeComponent) {
+            size++;
+          }
+
+          while (j + 1 < rowComponents.length && cellComponent == rowComponents[j + 1]) {
+            j++;
+          }
+        }
+      }
+    }
+
+    return size;
+  }
+
+  protected final int getSizeInColumn(int columnIndex, int columnCount, RadComponent excludeComponent) {
+    int size = 0;
+    RadComponent[][] components = getGridInfo().components;
+
+    if (columnIndex < columnCount) {
+      for (int j = 0; j < components.length; j++) {
+        RadComponent cellComponent = components[j][columnIndex];
+
+        if (cellComponent != null) {
+          if (cellComponent != excludeComponent) {
+            size++;
+          }
+
+          while (j + 1 < components.length && cellComponent == components[j + 1][columnIndex]) {
+            j++;
+          }
+        }
+      }
+    }
+
+    return size;
   }
 
   //////////////////////////////////////////////////////////////////////////////////////////

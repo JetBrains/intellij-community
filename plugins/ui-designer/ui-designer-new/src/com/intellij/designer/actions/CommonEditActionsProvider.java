@@ -21,6 +21,7 @@ import com.intellij.designer.designSurface.DesignerEditorPanel;
 import com.intellij.designer.designSurface.EditableArea;
 import com.intellij.designer.designSurface.tools.ComponentPasteFactory;
 import com.intellij.designer.designSurface.tools.PasteTool;
+import com.intellij.designer.model.IGroupDeleteComponent;
 import com.intellij.designer.model.RadComponent;
 import com.intellij.ide.CopyProvider;
 import com.intellij.ide.CutProvider;
@@ -84,11 +85,21 @@ public class CommonEditActionsProvider implements DeleteProvider, CopyProvider, 
       public void run() throws Exception {
         EditableArea area = getArea();
         List<RadComponent> selection = area.getSelection();
+
+        if (selection.isEmpty()) {
+          return;
+        }
+
         List<RadComponent> components = RadComponent.getPureSelection(selection);
         RadComponent newSelection = getNewSelection(components.get(0), selection);
 
-        for (RadComponent component : components) {
-          component.delete();
+        if (components.get(0) instanceof IGroupDeleteComponent) {
+          ((IGroupDeleteComponent)components.get(0)).delete(components);
+        }
+        else {
+          for (RadComponent component : components) {
+            component.delete();
+          }
         }
 
         if (newSelection == null) {

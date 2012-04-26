@@ -15,6 +15,8 @@
  */
 package com.intellij.codeInsight.lookup;
 
+import com.intellij.util.ProcessingContext;
+
 import java.util.*;
 
 /**
@@ -40,12 +42,12 @@ public abstract class ClassifierFactory<T> {
       }
 
       @Override
-      public Iterable<T> classify(List<T> source) {
+      public Iterable<T> classify(Iterable<T> source, ProcessingContext context) {
         return source;
       }
 
       @Override
-      public void describeItems(LinkedHashMap<T, StringBuilder> map) {
+      public void describeItems(LinkedHashMap<T, StringBuilder> map, ProcessingContext context) {
       }
     };
   }
