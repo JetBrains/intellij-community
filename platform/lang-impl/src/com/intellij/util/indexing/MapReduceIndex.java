@@ -18,10 +18,13 @@ package com.intellij.util.indexing;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Factory;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
 import com.intellij.util.io.PersistentHashMap;
+import gnu.trove.THashMap;
+import gnu.trove.TObjectObjectProcedure;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -232,8 +235,27 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
         throw new StorageException(e);
       }
       // add new values
-      for (Map.Entry<Key, Value> entry : newData.entrySet()) {
-        myStorage.addValue(entry.getKey(), inputId, entry.getValue());
+      if (newData instanceof THashMap) {
+        // such map often (from IdIndex) contain 100x (avg ~240) of entries, also THashMap have no Entry inside so we optimize for gc too
+        final Ref<StorageException> exceptionRef = new Ref<StorageException>();
+        final boolean b = ((THashMap<Key, Value>)newData).forEachEntry(new TObjectObjectProcedure<Key, Value>() {
+          @Override
+          public boolean execute(Key key, Value value) {
+            try {
+              myStorage.addValue(key, inputId, value);
+            }
+            catch (StorageException ex) {
+              exceptionRef.set(ex);
+              return false;
+            }
+            return true;
+          }
+        });
+        if (!b) throw exceptionRef.get();
+      } else {
+        for (Map.Entry<Key, Value> entry : newData.entrySet()) {
+          myStorage.addValue(entry.getKey(), inputId, entry.getValue());
+        }
       }
       if (myInputsIndex != null) {
         try {
