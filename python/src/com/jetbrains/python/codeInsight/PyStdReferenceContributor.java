@@ -4,6 +4,7 @@ import com.intellij.psi.*;
 import com.intellij.util.ProcessingContext;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.PyAssignmentStatement;
+import com.jetbrains.python.psi.PySequenceExpression;
 import com.jetbrains.python.psi.PyStringLiteralExpression;
 import com.jetbrains.python.psi.PyTargetExpression;
 import org.jetbrains.annotations.NotNull;
@@ -38,8 +39,9 @@ public class PyStdReferenceContributor extends PsiReferenceContributor {
   private static void registerClassAttributeReference(PsiReferenceRegistrar registrar,
                                                       final String name,
                                                       final PsiReferenceProvider provider) {
-    registrar.registerReferenceProvider(psiElement(PyStringLiteralExpression.class).inside(
-                                          psiElement(PyAssignmentStatement.class).withFirstChild(
-                                            psiElement(PyTargetExpression.class).withName(name))), provider);
-  }
+    registrar.registerReferenceProvider(psiElement(PyStringLiteralExpression.class).withParent(
+                                          psiElement(PySequenceExpression.class).withParent(
+                                            psiElement(PyAssignmentStatement.class).withFirstChild(
+                                              psiElement(PyTargetExpression.class).withName(name)))), provider);
+   }
 }

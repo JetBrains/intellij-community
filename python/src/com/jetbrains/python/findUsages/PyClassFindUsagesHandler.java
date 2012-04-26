@@ -7,6 +7,9 @@ import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFunction;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collection;
+import java.util.Collections;
+
 /**
  * @author yole
  */
@@ -31,5 +34,13 @@ public class PyClassFindUsagesHandler extends FindUsagesHandler {
   @Override
   protected boolean isSearchForTextOccurencesAvailable(PsiElement psiElement, boolean isSingleFile) {
     return true;
+  }
+
+  @Override
+  protected Collection<String> getStringsToSearch(PsiElement element) {
+    if (element instanceof PyFunction && PyNames.INIT.equals(((PyFunction) element).getName())) {
+      return Collections.emptyList();
+    }
+    return super.getStringsToSearch(element);
   }
 }

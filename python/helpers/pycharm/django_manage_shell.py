@@ -15,14 +15,17 @@ def run():
   if not manage_file:
       manage_file = 'manage'
 
-  execute_manager_original = management.execute_manager
-
-  def execute_manager(settings_mod):
+  def execute_manager(settings_mod, argv = None):
       management.setup_environ(settings_mod)
 
   management.execute_manager = execute_manager
 
+  def execute_from_command_line(argv=None):
+    pass
+
+  management.execute_from_command_line = execute_from_command_line
+
   fixGetpass()
 
-#  run_module(manage_file, None, '__main__', True)
+  run_module(manage_file, None, '__main__', True)
 

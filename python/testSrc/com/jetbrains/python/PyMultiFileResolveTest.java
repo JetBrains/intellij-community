@@ -96,6 +96,14 @@ public class PyMultiFileResolveTest extends PyResolveTestCase {
     assertTrue("is target?", elt instanceof PyTargetExpression);
   }
 
+  public void testFromPackageImportIntoInit() {  // PY-6305
+    myFixture.copyDirectoryToProject("fromPackageImportIntoInit/pack", "pack");
+    final PsiFile psiFile = myFixture.configureByFile("pack/__init__.py");
+    final PsiElement result = doResolve(psiFile);
+    assertInstanceOf(result, PyFile.class);
+    assertEquals("mod.py", ((PyFile) result).getName());
+  }
+
   public void testResolveInPkg() {
     ResolveResult[] results = doMultiResolve();
     assertTrue(results.length == 2); // func and import stmt

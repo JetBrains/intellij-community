@@ -167,7 +167,7 @@ public class PyImportReference extends PyReferenceImpl {
     }
 
     public Object[] execute() {
-      int relative_level = -1;
+      int relativeLevel = -1;
       InsertHandler<LookupElement> insertHandler = null;
 
       // NOTE: could use getPointInImport()
@@ -191,9 +191,9 @@ public class PyImportReference extends PyReferenceImpl {
           }
         }
         else { // null source, must be a "from ... import"
-          relative_level = from_import.getRelativeLevel();
-          if (relative_level > 0) {
-            PsiDirectory relative_dir = ResolveImportUtil.stepBackFrom(myCurrentFile, relative_level);
+          relativeLevel = from_import.getRelativeLevel();
+          if (relativeLevel > 0) {
+            PsiDirectory relative_dir = ResolveImportUtil.stepBackFrom(myCurrentFile, relativeLevel);
             if (relative_dir != null) {
               addImportedNames(from_import.getImportElements());
               fillFromDir(relative_dir, null);
@@ -204,7 +204,7 @@ public class PyImportReference extends PyReferenceImpl {
       else { // in "import _" or "from _ import"
         ASTNode n = myElement.getNode().getTreePrev();
         while (n != null && n.getElementType() == PyTokenTypes.DOT) {
-          relative_level += 1;
+          relativeLevel += 1;
           n = n.getTreePrev();
         }
         if (from_import != null) {
@@ -221,21 +221,21 @@ public class PyImportReference extends PyReferenceImpl {
           }
         }
         // look at dir by level
-        if (myCurrentFile != null && (relative_level >= 0 || !ResolveImportUtil.isAbsoluteImportEnabledFor(myCurrentFile))) {
+        if (myCurrentFile != null && (relativeLevel >= 0 || !ResolveImportUtil.isAbsoluteImportEnabledFor(myCurrentFile))) {
           final PsiDirectory containingDirectory = myCurrentFile.getContainingDirectory();
           if (containingDirectory != null) {
             PyQualifiedName thisQName = ResolveImportUtil.findShortestImportableQName(containingDirectory);
-            if (thisQName == null) {
-              fillFromDir(ResolveImportUtil.stepBackFrom(myCurrentFile, relative_level), insertHandler);
+            if (thisQName == null || thisQName.getComponentCount() == relativeLevel) {
+              fillFromDir(ResolveImportUtil.stepBackFrom(myCurrentFile, relativeLevel), insertHandler);
             }
-            else if (thisQName.getComponentCount() >= relative_level) {
-              thisQName = thisQName.removeTail(relative_level);
+            else if (thisQName.getComponentCount() > relativeLevel) {
+              thisQName = thisQName.removeTail(relativeLevel);
               fillFromQName(thisQName, insertHandler);
             }
           }
         }
       }
-      if (relative_level == -1) {
+      if (relativeLevel == -1) {
         fillFromQName(PyQualifiedName.fromComponents(), insertHandler);
       }
 

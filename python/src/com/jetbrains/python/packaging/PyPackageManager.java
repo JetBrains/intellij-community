@@ -255,7 +255,7 @@ public class PyPackageManager {
   private void installManagement(String name) throws PyExternalProcessException {
     final File helperFile = PythonHelpersLocator.getHelperFile(name + ".tar.gz");
 
-    String helpersPath = getHelperPath(name);
+    final String helpersPath = getHelperPath(name);
 
     ProcessOutput output = getHelperOutput(PACKAGING_TOOL, Lists.newArrayList(UNTAR, helpersPath), false, helperFile.getParent());
 
