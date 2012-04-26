@@ -15,8 +15,9 @@
  */
 package com.intellij.codeInsight.lookup;
 
+import com.intellij.util.ProcessingContext;
+
 import java.util.LinkedHashMap;
-import java.util.List;
 
 /**
  * @author peter
@@ -24,8 +25,8 @@ import java.util.List;
 public abstract class Classifier<T> {
   public abstract void addElement(T t);
 
-  public abstract Iterable<T> classify(List<T> source);
+  public abstract Iterable<T> classify(Iterable<T> source, ProcessingContext context);
 
-  public abstract void describeItems(LinkedHashMap<T, StringBuilder> map);
+  public abstract void describeItems(LinkedHashMap<T, StringBuilder> map, ProcessingContext context);
 
 }

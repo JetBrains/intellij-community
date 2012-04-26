@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.lookup;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.util.ProcessingContext;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -41,7 +42,7 @@ public abstract class ComparingClassifier<T> extends Classifier<T> {
     myNext.addElement(t);
   }
 
-  private TreeMap<Comparable, List<T>> groupByWeights(List<T> source) {
+  private TreeMap<Comparable, List<T>> groupByWeights(Iterable<T> source) {
     TreeMap<Comparable, List<T>> map = new TreeMap<Comparable, List<T>>();
     for (T t : source) {
       final Comparable weight = getWeight(t);
@@ -55,16 +56,16 @@ public abstract class ComparingClassifier<T> extends Classifier<T> {
   }
 
   @Override
-  public Iterable<T> classify(List<T> source) {
+  public Iterable<T> classify(Iterable<T> source, ProcessingContext context) {
     List<T> result = new ArrayList<T>();
     for (List<T> list : groupByWeights(source).values()) {
-      ContainerUtil.addAll(result, myNext.classify(list));
+      ContainerUtil.addAll(result, myNext.classify(list, context));
     }
     return result;
   }
 
   @Override
-  public void describeItems(LinkedHashMap<T, StringBuilder> map) {
+  public void describeItems(LinkedHashMap<T, StringBuilder> map, ProcessingContext context) {
     final TreeMap<Comparable, List<T>> treeMap = groupByWeights(new ArrayList<T>(map.keySet()));
     if (treeMap.size() > 1 || ApplicationManager.getApplication().isUnitTestMode()) {
       for (Map.Entry<Comparable, List<T>> entry: treeMap.entrySet()){
@@ -78,6 +79,6 @@ public abstract class ComparingClassifier<T> extends Classifier<T> {
         }
       }
     }
-    myNext.describeItems(map);
+    myNext.describeItems(map, context);
   }
 }
