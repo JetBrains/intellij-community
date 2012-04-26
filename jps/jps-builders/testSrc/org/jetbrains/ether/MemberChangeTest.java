@@ -64,7 +64,7 @@ public class MemberChangeTest extends IncrementalTestCase {
     doTest();
   }
 
-  public void testAddMethodWithCovariantReturnType() throws Exception {
+  public void _testAddMethodWithCovariantReturnType() throws Exception {
     doTest();
   }
 
