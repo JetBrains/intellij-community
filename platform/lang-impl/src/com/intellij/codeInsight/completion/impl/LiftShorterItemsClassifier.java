@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.completion.impl;
 
+import com.intellij.codeInsight.completion.CompletionLookupArranger;
 import com.intellij.codeInsight.lookup.Classifier;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.util.ProcessingContext;
@@ -75,6 +76,9 @@ class LiftShorterItemsClassifier extends Classifier<LookupElement> {
 
   @Override
   public Iterable<LookupElement> classify(Iterable<LookupElement> source, ProcessingContext context) {
+    if (context.get(CompletionLookupArranger.PURE_RELEVANCE) == Boolean.TRUE) {
+      return myNext.classify(source, context);
+    }
     return liftShorterElements(source, new THashSet<LookupElement>(TObjectHashingStrategy.IDENTITY), context);
   }
 
@@ -116,8 +120,8 @@ class LiftShorterItemsClassifier extends Classifier<LookupElement> {
 
   @Override
   public void describeItems(LinkedHashMap<LookupElement, StringBuilder> map, ProcessingContext context) {
-    final HashSet<LookupElement> lifted = new HashSet<LookupElement>();
-    liftShorterElements(new ArrayList<LookupElement>(map.keySet()), new THashSet<LookupElement>(TObjectHashingStrategy.IDENTITY), new ProcessingContext());
+    final THashSet<LookupElement> lifted = new THashSet<LookupElement>(TObjectHashingStrategy.IDENTITY);
+    liftShorterElements(new ArrayList<LookupElement>(map.keySet()), lifted, new ProcessingContext());
     if (!lifted.isEmpty()) {
       for (LookupElement element : map.keySet()) {
         final StringBuilder builder = map.get(element);

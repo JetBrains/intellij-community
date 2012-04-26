@@ -49,6 +49,7 @@ public class CompletionLookupArranger extends LookupArranger {
   private static final Alarm ourStatsAlarm = new Alarm(ApplicationManager.getApplication());
   private static final Key<String> PRESENTATION_INVARIANT = Key.create("PRESENTATION_INVARIANT");
   private static final int MAX_PREFERRED_COUNT = 5;
+  public static final Key<Boolean> PURE_RELEVANCE = Key.create("PURE_RELEVANCE");
   private final List<LookupElement> myFrozenItems = new ArrayList<LookupElement>();
   private static final String SELECTED = "selected";
   static final String IGNORED = "ignored";
@@ -187,7 +188,7 @@ public class CompletionLookupArranger extends LookupArranger {
     }
     ArrayList<LookupElement> listModel = new ArrayList<LookupElement>(model);
 
-    return new Pair<List<LookupElement>, Integer>(listModel, getItemToSelect(lookup, byRelevance, listModel));
+    return new Pair<List<LookupElement>, Integer>(listModel, getItemToSelect(lookup, listModel, inputBySorter));
   }
 
 
@@ -196,7 +197,7 @@ public class CompletionLookupArranger extends LookupArranger {
     return new CompletionLookupArranger(myParameters, myProcess);
   }
 
-  private int getItemToSelect(Lookup lookup, List<LookupElement> byRelevance, List<LookupElement> items) {
+  private int getItemToSelect(Lookup lookup, List<LookupElement> items, MultiMap<CompletionSorterImpl, LookupElement> inputBySorter) {
     if (items.isEmpty() || !lookup.isFocused()) {
       return 0;
     }
@@ -226,10 +227,13 @@ public class CompletionLookupArranger extends LookupArranger {
     }
 
     final CompletionPreselectSkipper[] skippers = CompletionPreselectSkipper.EP_NAME.getExtensions();
-
-    for (LookupElement element : byRelevance) {
-      if (!shouldSkip(skippers, element)) {
-        return items.indexOf(element);
+    for (CompletionSorterImpl sorter : myClassifiers.keySet()) {
+      ProcessingContext context = new ProcessingContext();
+      context.put(PURE_RELEVANCE, Boolean.TRUE);
+      for (LookupElement element : myClassifiers.get(sorter).classify(inputBySorter.get(sorter), context)) {
+        if (!shouldSkip(skippers, element)) {
+          return items.indexOf(element);
+        }
       }
     }
 
