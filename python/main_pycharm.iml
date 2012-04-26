@@ -25,6 +25,9 @@
     <orderEntry type="module" module-name="JavaScriptDebugger" />
     <orderEntry type="module" module-name="webDeployment" />
     <orderEntry type="module" module-name="python-remote-interpreter" />
+    <orderEntry type="module" module-name="htmltools" />
+    <orderEntry type="module" module-name="github" />
+    <orderEntry type="module" module-name="jira-connector" />
   </component>
 </module>
 
