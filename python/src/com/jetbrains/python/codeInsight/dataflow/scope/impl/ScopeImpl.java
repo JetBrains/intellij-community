@@ -54,7 +54,7 @@ public class ScopeImpl implements Scope {
     return null;
   }
 
-  private synchronized List<DFAMap<ScopeVariable>> computeScopeVariables() throws DFALimitExceededException {
+  private synchronized void computeScopeVariables() throws DFALimitExceededException {
     computeFlow();
     if (myCachedScopeVariables == null) {
       final PyReachingDefsDfaInstance dfaInstance = new PyReachingDefsDfaInstance();
@@ -62,7 +62,6 @@ public class ScopeImpl implements Scope {
       final DFAMapEngine<ScopeVariable> engine = new DFAMapEngine<ScopeVariable>(myFlow, dfaInstance, semilattice);
       myCachedScopeVariables = engine.performDFA();
     }
-    return myCachedScopeVariables;
   }
 
   public boolean isGlobal(final String name) {
