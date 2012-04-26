@@ -15,13 +15,62 @@
  */
 package com.intellij.android.designer.model.layout.grid;
 
+import com.intellij.android.designer.designSurface.layout.GridLayoutOperation;
+import com.intellij.android.designer.model.grid.GridInfo;
 import com.intellij.android.designer.model.grid.RadCaptionRow;
+import com.intellij.designer.model.IGroupDeleteComponent;
+import com.intellij.designer.model.RadComponent;
+
+import java.awt.*;
+import java.util.List;
 
 /**
  * @author Alexander Lobas
  */
-public class RadCaptionGridRow extends RadCaptionRow<RadGridLayoutComponent> {
+public class RadCaptionGridRow extends RadCaptionRow<RadGridLayoutComponent> implements IGroupDeleteComponent {
   public RadCaptionGridRow(RadGridLayoutComponent container, int index, int offset, int width, boolean empty) {
     super(container, index, offset, width, empty);
+  }
+
+  @Override
+  public void delete(List<RadComponent> rows) throws Exception {
+    GridInfo gridInfo = myContainer.getVirtualGridInfo();
+    RadComponent[][] components = myContainer.getGridComponents(false);
+
+    for (RadComponent row : rows) {
+      delete(gridInfo, components, (RadCaptionGridRow)row);
+    }
+
+    RadComponent[][] newComponents = new RadComponent[components.length - rows.size()][];
+
+    for (int i = 0, index = 0; i < components.length; i++) {
+      boolean add = true;
+      for (RadComponent row : rows) {
+        if (i == ((RadCaptionGridRow)row).myIndex) {
+          add = false;
+          break;
+        }
+      }
+      if (add) {
+        newComponents[index++] = components[i];
+      }
+    }
+
+    GridLayoutOperation.validateLayoutParams(newComponents);
+  }
+
+  private static void delete(GridInfo gridInfo, RadComponent[][] components, RadCaptionGridRow row) throws Exception {
+    if (row.myIndex > 0) {
+      GridLayoutOperation.shiftRowSpan(gridInfo, row.myIndex - 1, -1);
+    }
+
+    for (RadComponent component : components[row.myIndex]) {
+      if (component != null) {
+        Rectangle cellIndex = RadGridLayoutComponent.getCellInfo(component);
+        GridInfo.setNull(components, gridInfo.components, cellIndex.y, cellIndex.y + cellIndex.height, cellIndex.x,
+                         cellIndex.x + cellIndex.width);
+        component.delete();
+      }
+    }
   }
 }
