@@ -28,7 +28,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.extensions.GroovyScriptTypeDetector;
@@ -127,28 +126,9 @@ public class GroovyScriptRunConfigurationProducer extends RuntimeConfigurationPr
     configuration.setScriptPath(vFile.getPath());
     RunConfigurationModule module = configuration.getConfigurationModule();
 
-
-    String name = getConfigurationName(aClass, module);
+    String name = GroovyRunnerUtil.getConfigurationName(aClass, module);
     configuration.setName(name);
     configuration.setModule(JavaExecutionUtil.findModule(aClass));
     return settings;
-  }
-
-  private static String getConfigurationName(PsiClass aClass, RunConfigurationModule module) {
-    String qualifiedName = aClass.getQualifiedName();
-    Project project = module.getProject();
-    if (qualifiedName != null) {
-      PsiClass psiClass = JavaPsiFacade.getInstance(project).findClass(qualifiedName.replace('$', '.'), GlobalSearchScope.projectScope(project));
-      if (psiClass != null) {
-        return psiClass.getName();
-      } else {
-        int lastDot = qualifiedName.lastIndexOf('.');
-        if (lastDot == -1 || lastDot == qualifiedName.length() - 1) {
-          return qualifiedName;
-        }
-        return qualifiedName.substring(lastDot + 1, qualifiedName.length());
-      }
-    }
-    return module.getModuleName();
   }
 }
