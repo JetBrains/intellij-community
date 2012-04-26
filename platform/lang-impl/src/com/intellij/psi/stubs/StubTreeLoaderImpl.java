@@ -54,7 +54,9 @@ public class StubTreeLoaderImpl extends StubTreeLoader {
       fc.putUserData(IndexingDataKeys.PROJECT, project);
       if (psiFile != null) {
         fc.putUserData(IndexingDataKeys.PSI_FILE, psiFile);
-        fc.putUserData(IndexingDataKeys.FILE_TEXT_CONTENT_KEY, psiFile.getViewProvider().getContents());
+        if (!vFile.getFileType().isBinary()) {
+          fc.putUserData(IndexingDataKeys.FILE_TEXT_CONTENT_KEY, psiFile.getViewProvider().getContents());
+        }
       }
       final StubElement element = StubTreeBuilder.buildStubTree(fc);
       if (element instanceof PsiFileStub) {
