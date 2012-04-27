@@ -46,6 +46,9 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
   @NonNls private static final String PERMISSION_GROUP_TAG = "permission-group";
   @NonNls private static final String NAME_ATTRIBUTE = "name";
 
+  private static final int MIN_PLATFORM_TOOLS_REVISION = 11;
+  private static final int MIN_SDK_TOOLS_REVISION = 19;
+
   public AndroidSourceGeneratingBuilder() {
     super(BuilderCategory.SOURCE_GENERATOR);
   }
@@ -70,6 +73,15 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
   }
 
   private static ModuleLevelBuilder.ExitCode doBuild(CompileContext context, ModuleChunk chunk) throws IOException {
+    final Map<Module, MyModuleData> moduleDataMap = computeModuleDatas(chunk.getModules(), context);
+    if (moduleDataMap == null || moduleDataMap.size() == 0) {
+      return ExitCode.ABORT;
+    }
+
+    if (!checkVersions(moduleDataMap, context)) {
+      return ExitCode.ABORT;
+    }
+
     final Map<File, Module> idlFilesToCompile = new HashMap<File, Module>();
     final Map<File, Module> rsFilesToCompile = new HashMap<File, Module>();
 
@@ -93,12 +105,6 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
         return true;
       }
     });
-
-    final Map<Module, MyModuleData> moduleDataMap = computeModuleDatas(chunk.getModules(), context);
-
-    if (moduleDataMap == null || moduleDataMap.size() == 0) {
-      return ExitCode.ABORT;
-    }
     boolean success = true;
 
     if (context.isProjectRebuild()) {
@@ -152,6 +158,43 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
     }
 
     return success ? ExitCode.OK : ExitCode.ABORT;
+  }
+
+  private static boolean checkVersions(@NotNull Map<Module, MyModuleData> dataMap, @NotNull CompileContext context) {
+    for (Map.Entry<Module, MyModuleData> entry : dataMap.entrySet()) {
+      final Module module = entry.getKey();
+      final AndroidPlatform platform = entry.getValue().getPlatform();
+
+      boolean success = true;
+
+      final int platformToolsRevision = platform.getPlatformToolsRevision();
+      if (platformToolsRevision >= 0 && platformToolsRevision < MIN_PLATFORM_TOOLS_REVISION) {
+        final String message = '[' +
+                            module.getName() +
+                            "] Incompatible version of Android SDK Platform-tools package. Min version is " +
+                            MIN_PLATFORM_TOOLS_REVISION +
+                            ". Please, update it though SDK manager";
+        context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR, message));
+        success = false;
+      }
+
+      final int sdkToolsRevision = platform.getSdkToolsRevision();
+      if (sdkToolsRevision >= 0 && sdkToolsRevision < MIN_SDK_TOOLS_REVISION) {
+        final String message = '[' +
+                               module.getName() +
+                               "] Incompatible version of Android SDK Tools package. Min version is " +
+                               MIN_SDK_TOOLS_REVISION +
+                               ". Please, update it though SDK manager";
+        context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR, message));
+        success = false;
+      }
+
+      // show error message only for first module, because all modules usualy have the same sdk specified
+      if (!success) {
+        return false;
+      }
+    }
+    return true;
   }
 
   private static boolean runBuildConfigGeneration(@NotNull CompileContext context,
@@ -276,7 +319,7 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
         continue;
       }
 
-      final IAndroidTarget target = moduleData.getAndroidTarget();
+      final IAndroidTarget target = moduleData.getPlatform().getTarget();
 
       try {
         final File[] sourceRoots = AndroidJpsUtil.getSourceRootsForModuleAndDependencies(module);
@@ -353,8 +396,9 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
         continue;
       }
 
-      final IAndroidTarget target = moduleData.getAndroidTarget();
-      final String sdkLocation = moduleData.getSdkLocation();
+      final AndroidPlatform platform = moduleData.getPlatform();
+      final IAndroidTarget target = platform.getTarget();
+      final String sdkLocation = platform.getSdk().getSdkPath();
       final String filePath = file.getPath();
 
       File tmpOutputDirectory = null;
@@ -414,7 +458,7 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
 
       final File generatedSourcesDir = AndroidJpsUtil.getGeneratedSourcesStorage(module);
       final File aptOutputDirectory = new File(generatedSourcesDir, AndroidJpsUtil.AAPT_GENERATED_SOURCE_ROOT_NAME);
-      final IAndroidTarget target = moduleData.getAndroidTarget();
+      final IAndroidTarget target = moduleData.getPlatform().getTarget();
 
       try {
         if (!needToRunAaptCompilation(facet)) {
@@ -777,8 +821,6 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
         success = false;
         continue;
       }
-      final AndroidSdk androidSdk = platform.getSdk();
-      final IAndroidTarget target = platform.getTarget();
 
       final File manifestFile = AndroidJpsUtil.getManifestFileForCompilationPath(facet);
       if (manifestFile == null || !manifestFile.exists()) {
@@ -796,7 +838,7 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
         continue;
       }
 
-      moduleDataMap.put(module, new MyModuleData(androidSdk.getSdkPath(), target, facet, manifestFile, packageName));
+      moduleDataMap.put(module, new MyModuleData(platform, facet, manifestFile, packageName));
     }
 
     return success ? moduleDataMap : null;
@@ -883,32 +925,24 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
   }
 
   private static class MyModuleData {
-    private final String mySdkLocation;
-    private final IAndroidTarget myAndroidTarget;
+    private final AndroidPlatform myPlatform;
     private final AndroidFacet myFacet;
     private final File myManifestFileForCompiler;
     private final String myPackage;
 
-    private MyModuleData(@NotNull String sdkLocation,
-                         @NotNull IAndroidTarget androidTarget,
+    private MyModuleData(@NotNull AndroidPlatform platform,
                          @NotNull AndroidFacet facet,
                          @NotNull File manifestFileForCompiler,
                          @NotNull String aPackage) {
-      mySdkLocation = sdkLocation;
-      myAndroidTarget = androidTarget;
+      myPlatform = platform;
       myFacet = facet;
       myManifestFileForCompiler = manifestFileForCompiler;
       myPackage = aPackage;
     }
 
     @NotNull
-    public IAndroidTarget getAndroidTarget() {
-      return myAndroidTarget;
-    }
-
-    @NotNull
-    public String getSdkLocation() {
-      return mySdkLocation;
+    public AndroidPlatform getPlatform() {
+      return myPlatform;
     }
 
     @NotNull
