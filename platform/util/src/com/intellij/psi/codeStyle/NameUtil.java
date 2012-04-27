@@ -637,7 +637,7 @@ public class NameUtil {
       if (iterable == null) return Integer.MIN_VALUE;
 
       int fragmentCount = 0;
-      int matchingCaps = 0;
+      int matchingCase = 0;
       CharArrayCharSequence seq = new CharArrayCharSequence(myPattern);
       int p = -1;
       TextRange first = null;
@@ -651,9 +651,7 @@ public class NameUtil {
           if (p < 0) {
             break;
           }
-          if (Character.isUpperCase(myPattern[p])) {
-            matchingCaps += c == myPattern[p] ? 1 : -1;
-          }
+          matchingCase += c == myPattern[p] ? 1 : 0;
         }
         fragmentCount++;
       }
@@ -666,7 +664,7 @@ public class NameUtil {
       boolean prefixMatching = first != null && first.getStartOffset() == 0;
       boolean middleWordStart = first != null && first.getStartOffset() > 0 && isWordStart(name, first.getStartOffset());
 
-      return -fragmentCount + matchingCaps * 10 + commonStart + (prefixMatching ? 2 : middleWordStart ? 1 : 0) * 100;
+      return -fragmentCount + matchingCase * 10 + commonStart + (prefixMatching ? 2 : middleWordStart ? 1 : 0) * 100;
     }
 
     @Override

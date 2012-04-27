@@ -376,7 +376,9 @@ public class NameUtilTest extends UsefulTestCase {
     assertPreference("*f", "barfoo", "foo");
     assertPreference("*f", "asdf", "Foo", NameUtil.MatchingCaseSensitivity.NONE);
     assertPreference(" sto", "ArrayStoreException", "StackOverflowError", NameUtil.MatchingCaseSensitivity.NONE);
-    assertPreference(" EUC-", "x-EUC-TW", "EUC-JP", NameUtil.MatchingCaseSensitivity.FIRST_LETTER);
+    assertPreference(" EUC-", "x-EUC-TW", "EUC-JP");
+    assertPreference(" boo", "Boolean", "boolean", NameUtil.MatchingCaseSensitivity.NONE);
+    assertPreference(" Boo", "boolean", "Boolean", NameUtil.MatchingCaseSensitivity.NONE);
   }
 
   public void testMeaningfulMatchingDegree() {
