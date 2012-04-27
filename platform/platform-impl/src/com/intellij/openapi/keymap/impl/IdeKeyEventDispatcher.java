@@ -701,7 +701,9 @@ public final class IdeKeyEventDispatcher implements Disposable {
 
   private static KeyboardShortcut CONTROL_ENTER = KeyboardShortcut.fromString("control ENTER");
   private static boolean isControlEnterOnDialog(Component component, Shortcut sc) {
-    return CONTROL_ENTER.equals(sc) && DialogWrapper.findInstance(component) != null;
+    return CONTROL_ENTER.equals(sc)
+           && !IdeEventQueue.getInstance().isPopupActive() //avoid Control+Enter in completion
+           && DialogWrapper.findInstance(component) != null;
   }
 
   /**
