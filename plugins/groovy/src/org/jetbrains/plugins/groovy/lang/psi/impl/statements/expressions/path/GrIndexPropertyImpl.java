@@ -166,10 +166,6 @@ public class GrIndexPropertyImpl extends GrExpressionImpl implements GrIndexProp
       }
     }
 
-    if (PsiImplUtil.isSimpleArrayAccess(thisType, argTypes, manager, resolveScope, PsiUtil.isLValue(this))) {
-      return GroovyResolveResult.EMPTY_ARRAY;
-    }
-
     GroovyResolveResult[] candidates;
     final String name;
     if (PsiUtil.isLValue(this)) {
@@ -181,6 +177,11 @@ public class GrIndexPropertyImpl extends GrExpressionImpl implements GrIndexProp
     else {
       name = "getAt";
     }
+
+    if (PsiImplUtil.isSimpleArrayAccess(thisType, argTypes, manager, resolveScope, PsiUtil.isLValue(this))) {
+      return GroovyResolveResult.EMPTY_ARRAY;
+    }
+
     candidates = ResolveUtil.getMethodCandidates(thisType, name, this, true, incompleteCode, false, argTypes);
 
     //hack for remove DefaultGroovyMethods.getAt(Object, ...)
