@@ -1,5 +1,5 @@
-class Test {
-  Tes<caret>
+class MyTest {
+  MyTes<caret>
 }
 -----
-Test
+MyTest

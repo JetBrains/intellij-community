@@ -1,12 +1,12 @@
-import static Super.FOO;
+import static Super.XFOO;
 
 class Super {
-    public static final Super FOO = null;
-    public static final Super FOX = true;
+    public static final Super XFOO = null;
+    public static final Super XFOX = true;
 }
 
 class Intermediate {
-    Super s = FO<caret>
+    Super s = XFO<caret>
 }
 
 

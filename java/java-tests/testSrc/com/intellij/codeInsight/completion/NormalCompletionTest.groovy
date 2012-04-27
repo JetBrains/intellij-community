@@ -565,7 +565,7 @@ public class ListUtils {
 
   public void testDoubleConstant() throws Throwable {
     configure()
-    assertStringItems("FOO", "Float")
+    assertStringItems("XFOO")
   }
 
   public void testNotOnlyKeywordsInsideSwitch() throws Throwable {
@@ -993,7 +993,7 @@ public class ListUtils {
 
   public void testExpectedTypeMembersVersusStaticImports() throws Throwable {
     configure()
-    assertStringItems('FOO', 'FOX')
+    assertStringItems('XFOO', 'XFOX')
   }
 
   public void testDoubleExpectedTypeFactoryMethod() throws Throwable {
