@@ -1076,6 +1076,7 @@ public class Mappings {
                         ((m.access & Opcodes.ACC_STATIC) == 0 && (mm.access & Opcodes.ACC_STATIC) > 0) ||
                         ((m.access & Opcodes.ACC_FINAL) > 0) ||
                         !m.exceptions.equals(mm.exceptions) ||
+                        (subtypeOf.isValue() && subtypeOf.value()) ||
                         (subtypeOf.isNone() || !subtypeOf.value()) ||
                         !empty(mm.signature) || !empty(m.signature)) {
                       final int file = myClassToSourceFile.get(cc.name);
