@@ -11,11 +11,13 @@ if not manage_file:
 
 settings_file = os.getenv('DJANGO_SETTINGS_MODULE')
 if not settings_file:
-    settings_file = 'settings'
+  settings_file = 'settings'
 
-proj_name = sys.argv[-1]
+
+base_path = sys.argv.pop()
+proj_name = base_path.split("/")[-1]
+sys.path.insert(0, base_path)
 os.environ.setdefault('DJANGO_SETTINGS_MODULE',proj_name+".settings")
-
 from django.core import management
 from django.core.management.commands.test import Command
 from django.conf import settings
@@ -37,9 +39,9 @@ class PycharmTestCommand(Command):
     # handle south migration in tests
     management.get_commands()
     if hasattr(settings, "SOUTH_TESTS_MIGRATE") and not settings.SOUTH_TESTS_MIGRATE:
-        # point at the core syncdb command when creating tests
-        # tests should always be up to date with the most recent model structure
-        management._commands['syncdb'] = 'django.core'
+      # point at the core syncdb command when creating tests
+      # tests should always be up to date with the most recent model structure
+      management._commands['syncdb'] = 'django.core'
     else:
       try:
         from south.management.commands import MigrateAndSyncCommand
@@ -97,7 +99,7 @@ if __name__ == "__main__":
     subcommand = 'help' # Display help if no arguments were given.
 
   if subcommand == 'test':
-    utility = PycharmTestManagementUtility(sys.argv[:-1])
+    utility = PycharmTestManagementUtility(sys.argv)
   else:
     utility = ManagementUtility()
   utility.execute()
