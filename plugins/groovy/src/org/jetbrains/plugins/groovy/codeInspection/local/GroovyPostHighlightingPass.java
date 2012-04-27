@@ -21,6 +21,7 @@ import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.impl.*;
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightMethodUtil;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.daemon.impl.quickfix.SafeDeleteFix;
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -42,6 +43,9 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.PsiClassImplUtil;
+import com.intellij.psi.search.searches.OverridingMethodsSearch;
+import com.intellij.psi.search.searches.SuperMethodsSearch;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle;
@@ -55,15 +59,14 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author ilyas
@@ -107,15 +110,21 @@ public class GroovyPostHighlightingPass extends TextEditorHighlightingPass {
 
     final List<HighlightInfo> unusedDeclarations = new ArrayList<HighlightInfo>();
     final Set<GrImportStatement> unusedImports = new HashSet<GrImportStatement>(PsiUtil.getValidImportStatements(myFile));
+
+    final Map<GrParameter, Boolean> usedParams = new HashMap<GrParameter, Boolean>();
     myFile.accept(new PsiRecursiveElementWalkingVisitor() {
       @Override
       public void visitElement(PsiElement element) {
         if (element instanceof GrReferenceElement) {
           for (GroovyResolveResult result : ((GrReferenceElement)element).multiResolve(true)) {
             GroovyPsiElement context = result.getCurrentFileResolveContext();
+            PsiElement resolved = result.getElement();
             if (context instanceof GrImportStatement) {
               GrImportStatement importStatement = (GrImportStatement)context;
               unusedImports.remove(importStatement);
+            }
+            if (resolved instanceof GrParameter && resolved.getContainingFile() == myFile) {
+              usedParams.put((GrParameter)resolved, Boolean.TRUE);
             }
           }
         }
@@ -144,6 +153,11 @@ public class GroovyPostHighlightingPass extends TextEditorHighlightingPass {
               QuickFixAction.registerQuickFixAction(highlightInfo, new SafeDeleteFix(element));
               unusedDeclarations.add(highlightInfo);
             }
+            else if (element instanceof GrParameter) {
+              if (!usedParams.containsKey(element)) {
+                usedParams.put((GrParameter)element, Boolean.FALSE);
+              }
+            }
           }
         }
 
@@ -151,6 +165,34 @@ public class GroovyPostHighlightingPass extends TextEditorHighlightingPass {
       }
     });
     myUnusedImports = unusedImports;
+
+    if (deadCodeEnabled) {
+      for (GrParameter parameter : usedParams.keySet()) {
+        if (usedParams.get(parameter)) continue;
+
+        PsiElement scope = parameter.getDeclarationScope();
+        if (scope instanceof GrMethod) {
+          GrMethod method = (GrMethod)scope;
+          if ((method.isConstructor() ||
+               method.hasModifierProperty(PsiModifier.PRIVATE) ||
+               method.hasModifierProperty(PsiModifier.STATIC) ||
+               !method.hasModifierProperty(PsiModifier.ABSTRACT) &&
+               !isOverriddenOrOverrides(method)) &&
+              !method.hasModifierProperty(PsiModifier.NATIVE) &&
+              !HighlightMethodUtil.isSerializationRelatedMethod(method, method.getContainingClass()) &&
+              !PsiClassImplUtil.isMainMethod(method)) {
+            HighlightInfo highlightInfo = PostHighlightingPass
+              .createUnusedSymbolInfo(parameter.getNameIdentifierGroovy(), "Parameter " + parameter.getName() + " is unused",
+                                      HighlightInfoType.UNUSED_SYMBOL);
+            QuickFixAction.registerQuickFixAction(highlightInfo, new SafeDeleteFix(parameter));
+            unusedDeclarations.add(highlightInfo);
+          }
+        }
+        else if (scope instanceof GrClosableBlock) {
+          //todo Max Medvedev
+        }
+      }
+    }
     myUnusedDeclarations = unusedDeclarations;
     if (!unusedImports.isEmpty() && CodeInsightSettings.getInstance().OPTIMIZE_IMPORTS_ON_THE_FLY) {
       final VirtualFile vfile = myFile.getVirtualFile();
@@ -167,6 +209,11 @@ public class GroovyPostHighlightingPass extends TextEditorHighlightingPass {
       }
     }
 
+  }
+
+  private static boolean isOverriddenOrOverrides(PsiMethod method) {
+    boolean overrides = SuperMethodsSearch.search(method, null, true, false).findFirst() != null;
+    return overrides || OverridingMethodsSearch.search(method).findFirst() != null;
   }
 
   private static IntentionAction createUnusedImportIntention() {

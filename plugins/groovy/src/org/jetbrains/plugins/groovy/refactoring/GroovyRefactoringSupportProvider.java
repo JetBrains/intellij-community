@@ -22,6 +22,7 @@ import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.changeSignature.ChangeSignatureHandler;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.refactoring.changeSignature.GrChangeSignatureHandler;
@@ -41,7 +42,8 @@ public class GroovyRefactoringSupportProvider extends RefactoringSupportProvider
   public boolean isSafeDeleteAvailable(PsiElement element) {
     return element instanceof GrTypeDefinition ||
            element instanceof GrField ||
-           element instanceof GrMethod;
+           element instanceof GrMethod ||
+           element instanceof GrParameter;
   }
 
   /**

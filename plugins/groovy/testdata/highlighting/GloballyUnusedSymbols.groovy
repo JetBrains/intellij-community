@@ -7,10 +7,10 @@ class Bar<T, <warning descr="Class Unused is unused">Unused</warning>> {
   int usedProperty3 = 39
   def <warning descr="Method unusedMethod is unused">unusedMethod</warning>() {}
   Bar usedMethod() { this }
-  Object getAt(int key) {}
+  Object getAt(int <warning descr="Parameter key is unused">key</warning>) {}
 
   Object call() {}
-  Object call(String param) {}
+  Object call(String <warning descr="Parameter param is unused">param</warning>) {}
 
   Bar getUsedPropertyGetter() {}
 

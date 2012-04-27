@@ -3,6 +3,7 @@ package org.jetbrains.plugins.groovy.lang
 import com.intellij.codeInsight.generation.OverrideImplementUtil
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.codeInsight.navigation.GotoImplementationHandler
+import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ContentEntry
 import com.intellij.openapi.roots.ModifiableRootModel
@@ -14,14 +15,13 @@ import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import junit.framework.ComparisonFailure
 import org.jetbrains.annotations.NotNull
+import org.jetbrains.plugins.groovy.codeInspection.GroovyUnusedDeclarationInspection
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection
 import org.jetbrains.plugins.groovy.codeInspection.unassignedVariable.UnassignedVariableAccessInspection
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 import org.jetbrains.plugins.groovy.util.TestUtils
 import com.intellij.psi.*
-import org.jetbrains.plugins.groovy.codeInspection.GroovyUnusedDeclarationInspection
-import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection
 
 /**
  * @author peter
@@ -586,12 +586,12 @@ def bar() {
   public void testUsedInterceptors() {
     configureGppScript '''
 class Bar {
-  Object getUnresolvedProperty(String name) {}
-  Object <warning descr="Method getUnresolvedProperty is unused">getUnresolvedProperty</warning>(int name) {}
-  void setUnresolvedProperty(String name, String value) {}
-  int invokeUnresolvedMethod(String name, String arg1, boolean arg2, Object... args) {}
-  int invokeUnresolvedMethod(String name, Object... args) {}
-  int <warning descr="Method invokeUnresolvedMethod is unused">invokeUnresolvedMethod</warning>(Object... args) {}
+  Object getUnresolvedProperty(String <warning descr="Parameter name is unused">name</warning>) {}
+  Object <warning descr="Method getUnresolvedProperty is unused">getUnresolvedProperty</warning>(int <warning descr="Parameter name is unused">name</warning>) {}
+  void setUnresolvedProperty(String <warning descr="Parameter name is unused">name</warning>, String <warning descr="Parameter value is unused">value</warning>) {}
+  int invokeUnresolvedMethod(String <warning descr="Parameter name is unused">name</warning>, String <warning descr="Parameter arg1 is unused">arg1</warning>, boolean <warning descr="Parameter arg2 is unused">arg2</warning>, Object... <warning descr="Parameter args is unused">args</warning>) {}
+  int invokeUnresolvedMethod(String <warning descr="Parameter name is unused">name</warning>, Object... <warning descr="Parameter args is unused">args</warning>) {}
+  int <warning descr="Method invokeUnresolvedMethod is unused">invokeUnresolvedMethod</warning>(Object... <warning descr="Parameter args is unused">args</warning>) {}
 }
 println new Bar().zzz
 '''

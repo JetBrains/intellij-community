@@ -690,6 +690,10 @@ List<?> list2
     doTest(new GroovyUnusedDeclarationInspection(), new UnusedDeclarationInspection())
   }
 
+  public void testUnusedParameter() {
+    doTest(new GroovyUnusedDeclarationInspection(), new UnusedDeclarationInspection())
+  }
+
   public void testAliasInParameterType() {
     myFixture.configureByText('a_.groovy', '''\
 import java.awt.event.ActionListener
