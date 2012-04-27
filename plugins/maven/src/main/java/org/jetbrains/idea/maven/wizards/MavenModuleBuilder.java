@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -91,7 +91,8 @@ public class MavenModuleBuilder extends ModuleBuilder implements SourcePathsBuil
 
   @Override
   public String getDescription() {
-    return "Creates a blank Maven module or from Maven Archetype";
+    return "Maven modules are used for developing <b>JVM-based</b> applications with dependencies managed by <b>Maven</b>. " +
+           "You can create either a blank Maven module or a module based on a <b>Maven archetype</b>.";
   }
 
   @Override
