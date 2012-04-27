@@ -59,7 +59,6 @@ public class GroovyImportOptimizerRefactoringHelper implements RefactoringHelper
   }
 
   public void performOperation(final Project project, final Set<GroovyFile> files) {
-    final GroovyImportOptimizer optimizer = new GroovyImportOptimizer();
     final ProgressManager progressManager = ProgressManager.getInstance();
     final Map<GroovyFile, Pair<List<GrImportStatement>, Set<GrImportStatement>>> redundants = new HashMap<GroovyFile, Pair<List<GrImportStatement>, Set<GrImportStatement>>>();
     final Runnable findUnusedImports = new Runnable() {
@@ -77,12 +76,11 @@ public class GroovyImportOptimizerRefactoringHelper implements RefactoringHelper
             progressIndicator.setText2(virtualFile.getPresentableUrl());
             progressIndicator.setFraction((double)i++/total);
           }
-          final Set<GrImportStatement> usedImports = new HashSet<GrImportStatement>();
           ApplicationManager.getApplication().runReadAction(new Runnable() {
             public void run() {
-              optimizer.findUnusedImports(file, usedImports);
-              final List<GrImportStatement> perFile = GroovyImportOptimizer.getValidImportStatements(file);
-              redundants.put(file, Pair.create(perFile, usedImports));
+              final Set<GrImportStatement> usedImports = GroovyImportOptimizer.findUsedImports(file);
+              final List<GrImportStatement> validImports = GroovyImportOptimizer.getValidImportStatements(file);
+              redundants.put(file, Pair.create(validImports, usedImports));
             }
           });
         }
@@ -99,10 +97,10 @@ public class GroovyImportOptimizerRefactoringHelper implements RefactoringHelper
       for (GroovyFile groovyFile : redundants.keySet()) {
         if (!groovyFile.isValid()) continue;
         final Pair<List<GrImportStatement>, Set<GrImportStatement>> pair = redundants.get(groovyFile);
-        final List<GrImportStatement> redundantPerFile = pair.getFirst();
-        final Set<GrImportStatement> usedInFile = pair.getSecond();
-        for (GrImportStatement importStatement : redundantPerFile) {
-          if (!usedInFile.contains(importStatement)) {
+        final List<GrImportStatement> validImports = pair.getFirst();
+        final Set<GrImportStatement> usedImports = pair.getSecond();
+        for (GrImportStatement importStatement : validImports) {
+          if (!usedImports.contains(importStatement)) {
             groovyFile.removeImport(importStatement);
           }
         }
