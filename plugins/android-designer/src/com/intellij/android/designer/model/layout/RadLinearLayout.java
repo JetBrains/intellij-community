@@ -16,13 +16,15 @@
 package com.intellij.android.designer.model.layout;
 
 import com.intellij.android.designer.designSurface.TreeDropToOperation;
-import com.intellij.android.designer.designSurface.layout.*;
+import com.intellij.android.designer.designSurface.layout.LinearLayoutOperation;
 import com.intellij.android.designer.designSurface.layout.actions.LayoutMarginOperation;
 import com.intellij.android.designer.designSurface.layout.actions.LayoutWeightOperation;
 import com.intellij.android.designer.designSurface.layout.actions.ResizeOperation;
 import com.intellij.android.designer.designSurface.layout.flow.FlowStaticDecorator;
 import com.intellij.android.designer.model.RadViewComponent;
 import com.intellij.android.designer.model.RadViewLayoutWithData;
+import com.intellij.android.designer.model.layout.actions.AbstractGravityAction;
+import com.intellij.android.designer.model.layout.actions.OrientationAction;
 import com.intellij.designer.componentTree.TreeEditOperation;
 import com.intellij.designer.designSurface.*;
 import com.intellij.designer.designSurface.selection.DirectionResizePoint;
@@ -30,14 +32,9 @@ import com.intellij.designer.designSurface.selection.ResizePoint;
 import com.intellij.designer.designSurface.selection.ResizeSelectionDecorator;
 import com.intellij.designer.model.RadComponent;
 import com.intellij.designer.utils.Position;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
-import com.intellij.util.ThrowableRunnable;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -51,10 +48,6 @@ import java.util.List;
  */
 public class RadLinearLayout extends RadViewLayoutWithData implements ILayoutDecorator {
   private static final String[] LAYOUT_PARAMS = {"LinearLayout_Layout", "ViewGroup_MarginLayout"};
-
-  private static final Icon myHorizontalIcon = IconLoader.getIcon("/com/intellij/android/designer/icons/LinearLayout.png");
-  private static final Icon myVerticalIcon = IconLoader.getIcon("/com/intellij/android/designer/icons/LinearLayout2.png");
-  private static final Icon myHorizontalOverrideIcon = IconLoader.getIcon("/com/intellij/android/designer/icons/LinearLayout3.png");
 
   private ResizeSelectionDecorator mySelectionDecorator;
   private FlowStaticDecorator myLineDecorator;
@@ -286,56 +279,5 @@ public class RadLinearLayout extends RadViewLayoutWithData implements ILayoutDec
     }
 
     actionGroup.add(new OrientationAction(designer, components, horizontal, override));
-  }
-
-  private static class OrientationAction extends AnAction {
-    private final DesignerEditorPanel myDesigner;
-    private final List<RadComponent> myComponents;
-    private boolean mySelection;
-
-    public OrientationAction(DesignerEditorPanel designer, List<RadComponent> components, boolean horizontal, boolean override) {
-      myDesigner = designer;
-      myComponents = components;
-      mySelection = horizontal;
-      update(getTemplatePresentation(), override);
-    }
-
-    @Override
-    public void actionPerformed(AnActionEvent e) {
-      mySelection = !mySelection;
-      update(e.getPresentation(), false);
-      myDesigner.getToolProvider().execute(new ThrowableRunnable<Exception>() {
-        @Override
-        public void run() throws Exception {
-          ApplicationManager.getApplication().runWriteAction(new Runnable() {
-            @Override
-            public void run() {
-              String value = mySelection ? "horizontal" : "vertical";
-              for (RadComponent component : myComponents) {
-                ((RadViewComponent)component).getTag().setAttribute("android:orientation", value);
-              }
-            }
-          });
-        }
-      }, "Change attribute 'orientation'", true);
-    }
-
-    public void update(Presentation presentation, boolean override) {
-      String text;
-      Icon icon;
-
-      if (override) {
-        text = "Override orientation to horizontal";
-        icon = myHorizontalOverrideIcon;
-      }
-      else {
-        text = "Convert orientation to " + (mySelection ? "vertical" : "horizontal");
-        icon = mySelection ? myHorizontalIcon : myVerticalIcon;
-      }
-
-      presentation.setText(text);
-      presentation.setDescription(text);
-      presentation.setIcon(icon);
-    }
   }
 }

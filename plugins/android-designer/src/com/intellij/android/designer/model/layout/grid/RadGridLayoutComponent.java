@@ -50,10 +50,13 @@ public class RadGridLayoutComponent extends RadViewContainer implements ICompone
     String columnCount = tag.getAttributeValue("android:columnCount");
     value.append(StringUtil.isEmpty(columnCount) ? "?" : columnCount).append(", ");
 
-    String orientation = tag.getAttributeValue("android:orientation");
-    value.append(StringUtil.isEmpty(orientation) ? "horizontal" : orientation);
+    value.append(isHorizontal() ? "horizontal" : "vertical");
 
     renderer.append(value.append(")").toString());
+  }
+
+  public boolean isHorizontal() {
+    return !"vertical".equals(getTag().getAttributeValue("android:orientation"));
   }
 
   @Override

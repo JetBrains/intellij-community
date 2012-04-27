@@ -25,6 +25,8 @@ import com.intellij.android.designer.designSurface.layout.grid.GridDecorator;
 import com.intellij.android.designer.model.RadViewLayout;
 import com.intellij.android.designer.model.RadViewLayoutWithData;
 import com.intellij.android.designer.model.grid.GridInfo;
+import com.intellij.android.designer.model.layout.actions.AllGravityAction;
+import com.intellij.android.designer.model.layout.actions.OrientationAction;
 import com.intellij.designer.componentTree.TreeEditOperation;
 import com.intellij.designer.designSurface.*;
 import com.intellij.designer.designSurface.selection.ResizeSelectionDecorator;
@@ -36,6 +38,8 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -124,7 +128,16 @@ public class RadGridLayout extends RadViewLayoutWithData implements ILayoutDecor
                                            DefaultActionGroup actionGroup,
                                            JComponent shortcuts,
                                            List<RadComponent> selection) {
-    super.addContainerSelectionActions(designer, actionGroup, shortcuts, selection); // TODO: Auto-generated method stub
+    if (selection.get(selection.size() - 1) != myContainer) {
+      return;
+    }
+    for (RadComponent component : selection) {
+      if (!(component.getLayout() instanceof RadGridLayout)) {
+        return;
+      }
+    }
+
+    createOrientationAction(designer, actionGroup, shortcuts, selection);
   }
 
   @Override
@@ -132,7 +145,36 @@ public class RadGridLayout extends RadViewLayoutWithData implements ILayoutDecor
                                   DefaultActionGroup actionGroup,
                                   JComponent shortcuts,
                                   List<RadComponent> selection) {
-    super.addSelectionActions(designer, actionGroup, shortcuts, selection); // TODO: Auto-generated method stub
+    if (selection.get(selection.size() - 1).getParent() != myContainer) {
+      return;
+    }
+    for (RadComponent component : selection) {
+      if (!(component.getParent() instanceof RadGridLayoutComponent)) {
+        return;
+      }
+    }
+
+    createOrientationAction(designer, actionGroup, shortcuts, Arrays.asList(myContainer));
+    actionGroup.add(new AllGravityAction(designer, selection));
+  }
+
+  private static void createOrientationAction(DesignerEditorPanel designer,
+                                              DefaultActionGroup actionGroup,
+                                              JComponent shortcuts,
+                                              List<RadComponent> components) {
+    boolean override = false;
+    Iterator<RadComponent> I = components.iterator();
+    boolean horizontal = ((RadGridLayoutComponent)I.next()).isHorizontal();
+
+    while (I.hasNext()) {
+      boolean next = ((RadGridLayoutComponent)I.next()).isHorizontal();
+      if (horizontal != next) {
+        override = true;
+        break;
+      }
+    }
+
+    actionGroup.add(new OrientationAction(designer, components, horizontal, override));
   }
 
   //////////////////////////////////////////////////////////////////////////////////////////

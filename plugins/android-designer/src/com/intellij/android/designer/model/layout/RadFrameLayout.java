@@ -21,6 +21,7 @@ import com.intellij.android.designer.designSurface.layout.actions.LayoutMarginOp
 import com.intellij.android.designer.designSurface.layout.actions.ResizeOperation;
 import com.intellij.android.designer.model.RadViewComponent;
 import com.intellij.android.designer.model.RadViewLayoutWithData;
+import com.intellij.android.designer.model.layout.actions.AbstractGravityAction;
 import com.intellij.designer.componentTree.TreeEditOperation;
 import com.intellij.designer.designSurface.ComponentDecorator;
 import com.intellij.designer.designSurface.DesignerEditorPanel;

@@ -13,8 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.android.designer.model.layout;
+package com.intellij.android.designer.model.layout.actions;
 
+import com.intellij.android.designer.model.layout.Gravity;
 import com.intellij.designer.actions.AbstractComboBoxAction;
 import com.intellij.designer.designSurface.DesignerEditorPanel;
 import com.intellij.designer.model.RadComponent;
