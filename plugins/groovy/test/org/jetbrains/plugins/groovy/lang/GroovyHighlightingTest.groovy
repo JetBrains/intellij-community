@@ -430,6 +430,10 @@ class A {
     doTest(new UnusedDefInspection());
   }
 
+  public void testUsedInCatch() {
+    doTest(new UnusedDefInspection())
+  }
+
   public void testStringAssignableToChar() {
     doTest(new GroovyAssignabilityCheckInspection());
   }
