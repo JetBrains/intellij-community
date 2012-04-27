@@ -15,6 +15,9 @@
  */
 package com.intellij.psi.search.scope;
 
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.search.scope.packageSet.AbstractPackageSet;
@@ -37,9 +40,20 @@ public class NonProjectFilesScope extends NamedScope {
     super(NAME, new AbstractPackageSet("NonProject") {
       public boolean contains(VirtualFile file, NamedScopesHolder holder) {
         if (file == null) return true;
+        if (isInsideProjectContent(holder.getProject(), file)) return false;
         return !ProjectScope.getProjectScope(holder.getProject()).contains(file);
       }
     });
+  }
+
+  private static boolean isInsideProjectContent(Project project, VirtualFile file) {
+    if (file.getFileSystem() instanceof LocalFileSystem) {
+      final String projectBaseDir = project.getBasePath();
+      if (projectBaseDir != null) {
+        return !FileUtil.isAncestor(projectBaseDir, file.getPath(), false);
+      }
+    }
+    return false;
   }
 
   public static NamedScope[] removeFromList(NamedScope[] scopes) {
