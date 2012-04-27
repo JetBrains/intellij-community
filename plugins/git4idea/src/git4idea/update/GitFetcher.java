@@ -98,6 +98,30 @@ public class GitFetcher {
     return fetchResult;
   }
 
+  @NotNull
+  public GitFetchResult fetch(@NotNull VirtualFile root, @NotNull String remoteName) {
+    GitRepository repository = myRepositoryManager.getRepositoryForRoot(root);
+    if (repository == null) {
+      return logError("Repository can't be null for " + root, myRepositoryManager.toString());
+    }
+    GitRemote remote = GitUtil.findRemoteByName(repository, remoteName);
+    if (remote == null) {
+      return logError("Couldn't find remote with the name " + remoteName, null);
+    }
+    String url = remote.getFirstUrl();
+    if (url == null) {
+      return logError("URL is null for remote " + remote.getName(), null);
+    }
+    return fetchRemote(repository, remote, url);
+  }
+
+  private static GitFetchResult logError(@NotNull String message, @Nullable String additionalInfo) {
+    String addInfo = additionalInfo != null ? "\n" + additionalInfo : "";
+    LOG.error(message + addInfo);
+    return GitFetchResult.error(message);
+  }
+
+  @NotNull
   private GitFetchResult fetchCurrentRemote(@NotNull GitRepository repository) {
     FetchParams fetchParams = getFetchParams(repository);
     if (fetchParams.isError()) {
@@ -106,7 +130,11 @@ public class GitFetcher {
 
     GitRemote remote = fetchParams.getRemote();
     String url = fetchParams.getUrl();
+    return fetchRemote(repository, remote, url);
+  }
 
+  @NotNull
+  private GitFetchResult fetchRemote(@NotNull GitRepository repository, @NotNull GitRemote remote, @NotNull String url) {
     if (GitHttpAdapter.shouldUseJGit(url)) {
       return GitHttpAdapter.fetch(repository, remote, url, null);
     }
