@@ -32,7 +32,6 @@ import com.intellij.openapi.roots.DependencyScope;
 import com.intellij.openapi.roots.ModuleOrderEntry;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderEntry;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -41,7 +40,6 @@ import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.facet.AndroidRootUtil;
 import org.jetbrains.android.maven.AndroidMavenUtil;
 import org.jetbrains.android.sdk.AndroidPlatform;
-import org.jetbrains.android.util.AndroidCommonUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -54,7 +52,6 @@ import java.util.Set;
  */
 public class AndroidPrecompileTask implements CompileTask {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.android.compiler.AndroidPrecompileTask");
-  private static final Key<String> LIGHT_BUILD_KEY = Key.create(AndroidCommonUtils.LIGHT_BUILD_OPTION);
 
   @Override
   public boolean execute(CompileContext context) {
@@ -105,10 +102,6 @@ public class AndroidPrecompileTask implements CompileTask {
     if (addedEntries.size() > 0) {
       LOG.debug("Files excluded by Android: " + addedEntries.size());
       CompilerManager.getInstance(project).addCompilationStatusListener(new MyCompilationStatusListener(project, addedEntries), project);
-    }
-
-    if (!AndroidCompileUtil.isFullBuild(context)) {
-      context.getCompileScope().putUserData(LIGHT_BUILD_KEY, Boolean.toString(true));
     }
     return true;
   }
