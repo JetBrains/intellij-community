@@ -53,7 +53,7 @@ public class StubTreeLoaderImpl extends StubTreeLoader {
       final FileContent fc = new FileContentImpl(vFile, vFile.contentsToByteArray());
       fc.putUserData(IndexingDataKeys.PROJECT, project);
       if (psiFile != null) {
-        fc.putUserData(IndexingDataKeys.PSI_FILE, psiFile);
+        //fc.putUserData(IndexingDataKeys.PSI_FILE, psiFile);
         if (!vFile.getFileType().isBinary()) {
           fc.putUserData(IndexingDataKeys.FILE_TEXT_CONTENT_KEY, psiFile.getViewProvider().getContents());
         }
