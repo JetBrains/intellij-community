@@ -12,22 +12,26 @@ class AndroidFacet extends Facet {
 
   boolean library;
 
-  String assetsFolderRelativePath;
+  String assetsFolderRelativePath = ""
 
-  String resFolderRelativePath
-  String resFolderForCompilationRelativePath
-  boolean useCustomResFolderForCompilation;
+  String resFolderRelativePath = ""
+  String resFolderForCompilationRelativePath = ""
+  boolean useCustomResFolderForCompilation
 
-  String manifestRelativePath;
-  String manifestForCompilationRelativePath;
-  boolean useCustomManifestForCompilation;
+  String manifestRelativePath = ""
+  String manifestForCompilationRelativePath = ""
+  boolean useCustomManifestForCompilation
   boolean packTestCode;
 
-  String apkRelativePath;
-  String customDebugKeyStorePath;
-  String nativeLibsFolderRelativePath;
+  String apkRelativePath = ""
+  String customDebugKeyStorePath = ""
+  String nativeLibsFolderRelativePath = ""
 
-  boolean runProcessResourcesMavenTask;
+  boolean runProcessResourcesMavenTask
+
+  String proguardConfigFileRelativePath
+  boolean runProguard
+  boolean includeSystemProguardCfgFile
 
   AndroidFacet(Module module, String name) {
     this.module = module
@@ -55,6 +59,11 @@ class AndroidFacet extends Facet {
     return manifestFile != null ? manifestFile.getCanonicalFile() : null;
   }
 
+  File getProguardConfigFile() throws IOException {
+    def proguardFile = findFileByRelativeModulePath(proguardConfigFileRelativePath, false);
+    return proguardFile != null ? proguardFile.getCanonicalFile() : null;
+  }
+
   File getAssetsDir() throws IOException {
     def manifestFile = findFileByRelativeModulePath(assetsFolderRelativePath, false);
     return manifestFile != null ? manifestFile.getCanonicalFile() : null;
@@ -66,6 +75,10 @@ class AndroidFacet extends Facet {
   }
 
   private File findFileByRelativeModulePath(String relativePath, boolean lookInContentRoot) {
+    if (relativePath == null) {
+      return null
+    }
+
     if (module.basePath != null) {
       def absPath = FileUtil.toSystemIndependentName(module.basePath + relativePath)
       def f = new File(absPath)

@@ -21,7 +21,7 @@ finally {
 6(13) AFTER CALL 5
 7(8) element: Open block
 8(9) READ i
-9(10,13) THROW. element: Method call
+9(10,12) THROW. element: Method call
 10(11) element: Catch clause
 11(12) WRITE ignored
 12(6)  RETURN

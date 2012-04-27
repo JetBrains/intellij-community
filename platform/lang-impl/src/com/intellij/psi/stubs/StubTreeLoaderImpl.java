@@ -24,6 +24,7 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.indexing.*;
 import org.jetbrains.annotations.Nullable;
@@ -57,8 +58,17 @@ public class StubTreeLoaderImpl extends StubTreeLoader {
         if (!vFile.getFileType().isBinary()) {
           fc.putUserData(IndexingDataKeys.FILE_TEXT_CONTENT_KEY, psiFile.getViewProvider().getContents());
         }
+        psiFile.putUserData(PsiFileImpl.BUILDING_STUB, true);
       }
-      final StubElement element = StubTreeBuilder.buildStubTree(fc);
+      StubElement element;
+      try {
+        element = StubTreeBuilder.buildStubTree(fc);
+      }
+      finally {
+        if (psiFile != null) {
+          psiFile.putUserData(PsiFileImpl.BUILDING_STUB, null);
+        }
+      }
       if (element instanceof PsiFileStub) {
         return new StubTree((PsiFileStub)element);
       }

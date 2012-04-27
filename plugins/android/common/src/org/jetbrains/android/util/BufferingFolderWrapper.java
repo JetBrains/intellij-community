@@ -1,6 +1,9 @@
 package org.jetbrains.android.util;
 
-import com.android.io.*;
+import com.android.io.FolderWrapper;
+import com.android.io.IAbstractFile;
+import com.android.io.IAbstractFolder;
+import com.android.io.IAbstractResource;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

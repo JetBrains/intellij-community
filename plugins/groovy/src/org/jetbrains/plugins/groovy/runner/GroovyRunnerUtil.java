@@ -15,7 +15,10 @@
  */
 package org.jetbrains.plugins.groovy.runner;
 
+import com.intellij.execution.configurations.RunConfigurationModule;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiMethodUtil;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
@@ -57,5 +60,25 @@ public class GroovyRunnerUtil {
     return psiClass instanceof GroovyScriptClass ||
            isRunnable(psiClass) ||
            psiClass instanceof GrTypeDefinition && PsiMethodUtil.hasMainMethod(psiClass);
+  }
+
+  public static String getConfigurationName(PsiClass aClass, RunConfigurationModule module) {
+    String qualifiedName = aClass.getQualifiedName();
+    Project project = module.getProject();
+    if (qualifiedName == null) {
+      return module.getModuleName();
+    }
+
+    PsiClass psiClass = JavaPsiFacade.getInstance(project).findClass(qualifiedName.replace('$', '.'), GlobalSearchScope.projectScope(project));
+    if (psiClass != null) {
+      return psiClass.getName();
+    }
+    else {
+      int lastDot = qualifiedName.lastIndexOf('.');
+      if (lastDot == -1 || lastDot == qualifiedName.length() - 1) {
+        return qualifiedName;
+      }
+      return qualifiedName.substring(lastDot + 1, qualifiedName.length());
+    }
   }
 }

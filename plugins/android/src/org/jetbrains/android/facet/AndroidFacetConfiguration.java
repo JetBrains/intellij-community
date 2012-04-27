@@ -35,6 +35,7 @@ import org.jetbrains.android.sdk.AndroidPlatform;
 import org.jetbrains.android.sdk.AndroidSdkAdditionalData;
 import org.jetbrains.android.sdk.AndroidSdkData;
 import org.jetbrains.android.sdk.AndroidSdkType;
+import org.jetbrains.android.util.AndroidCommonUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -49,7 +50,6 @@ import java.util.List;
 public class AndroidFacetConfiguration implements FacetConfiguration {
   @NonNls private static final String RES_OVERLAY_FOLDERS_ELEMENT_NAME = "resOverlayFolders";
   @NonNls private static final String PATH_ELEMENT_NAME = "path";
-  @NonNls private static final String INCLUDE_SYSTEM_PROGUARD_FILE_ELEMENT_NAME = "includeSystemProguardFile";
 
   public String GEN_FOLDER_RELATIVE_PATH_APT = "/" + SdkConstants.FD_GEN_SOURCES;
   public String GEN_FOLDER_RELATIVE_PATH_AIDL = "/" + SdkConstants.FD_GEN_SOURCES;
@@ -153,7 +153,7 @@ public class AndroidFacetConfiguration implements FacetConfiguration {
     DefaultJDOMExternalizer.readExternal(this, element);
     readResOverlayFolders(element);
 
-    final Element includeSystemProguardFile = element.getChild(INCLUDE_SYSTEM_PROGUARD_FILE_ELEMENT_NAME);
+    final Element includeSystemProguardFile = element.getChild(AndroidCommonUtils.INCLUDE_SYSTEM_PROGUARD_FILE_ELEMENT_NAME);
     if (includeSystemProguardFile != null) {
       final String includeSystemProguardFileValue = includeSystemProguardFile.getValue();
 
@@ -169,7 +169,7 @@ public class AndroidFacetConfiguration implements FacetConfiguration {
     DefaultJDOMExternalizer.writeExternal(this, element);
     writeResOverlayFolders(element);
 
-    final Element includeSystemProguerdFile = new Element(INCLUDE_SYSTEM_PROGUARD_FILE_ELEMENT_NAME);
+    final Element includeSystemProguerdFile = new Element(AndroidCommonUtils.INCLUDE_SYSTEM_PROGUARD_FILE_ELEMENT_NAME);
     includeSystemProguerdFile.setText(Boolean.toString(myIncludeSystemProguardCfgPath));
     element.addContent(includeSystemProguerdFile);
   }

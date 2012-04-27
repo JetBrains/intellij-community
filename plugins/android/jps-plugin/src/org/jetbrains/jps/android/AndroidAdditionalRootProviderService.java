@@ -22,6 +22,7 @@ public class AndroidAdditionalRootProviderService extends AdditionalRootsProvide
     result.add(new File(generatedSourcesRoot, AndroidJpsUtil.AAPT_GENERATED_SOURCE_ROOT_NAME).getPath());
     result.add(new File(generatedSourcesRoot, AndroidJpsUtil.AIDL_GENERATED_SOURCE_ROOT_NAME).getPath());
     result.add(new File(generatedSourcesRoot, AndroidJpsUtil.RENDERSCRIPT_GENERATED_SOURCE_ROOT_NAME).getPath());
+    result.add(new File(generatedSourcesRoot, AndroidJpsUtil.BUILD_CONFIG_GENERATED_SOURCE_ROOT_NAME).getPath());
 
     return result;
   }

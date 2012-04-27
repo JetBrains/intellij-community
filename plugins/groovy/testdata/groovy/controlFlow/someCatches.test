@@ -1,0 +1,34 @@
+String s = '';
+try {
+    print 2
+}
+catch (UnsupportedOperationException ignored) {
+    s=''
+}
+catch (RuntimeException ignored) {
+    s = ''
+}
+catch (Exception ignored) {
+    s = ''
+}
+print s
+-----
+0(1) element: null
+1(2) WRITE s
+2(3) element: Open block
+3(4) READ print
+4(5,8,11,14) THROW. element: Call expression
+5(6) element: Catch clause
+6(7) WRITE ignored
+7(14) WRITE s
+8(9) element: Catch clause
+9(10) WRITE ignored
+10(14) WRITE s
+11(12) element: Catch clause
+12(13) WRITE ignored
+13(14) WRITE s
+14(15) READ print
+15(16) READ s
+16(17) ARGUMENT element: Reference expression
+17(18) element: Call expression MAYBE_RETURN
+18() element: null

@@ -213,10 +213,10 @@ public class CompositePrintable implements Printable, Disposable {
     }
 
     public void printOn(final Printer console, final List<Printable> printables) {
-      final File file = hasOutput() ? getFile() : null;
       final Runnable request = new Runnable() {
         @Override
         public void run() {
+          final File file = hasOutput() ? getFile() : null;
           final MyFileContentPrinter printer = new MyFileContentPrinter();
           printer.printFileContent(console, file, printables);
         }

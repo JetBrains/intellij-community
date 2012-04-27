@@ -432,6 +432,10 @@ class A {
     doTest(new UnusedDefInspection(), new GrUnusedIncDecInspection())
   }
 
+  public void testUsedInCatch() {
+    doTest(new UnusedDefInspection())
+  }
+
   public void testStringAssignableToChar() {
     doTest(new GroovyAssignabilityCheckInspection());
   }
@@ -786,6 +790,21 @@ class C {
   }
 }''')
     myFixture.testHighlighting(true, false, false)
+  }
+
+  public void testNonInferrableArgsOfDefParams() {
+    myFixture.configureByText('_.groovy', '''\
+def foo0(def a) { }
+def bar0(def b) { foo0(b) }
+
+def foo1(Object a) { }
+def bar1(def b) { foo1(b) }
+
+def foo2(String a) { }
+def bar2(def b) { foo2<weak_warning descr="Cannot infer argument types">(b)</weak_warning> }
+''')
+    myFixture.enableInspections(new GroovyAssignabilityCheckInspection())
+    myFixture.testHighlighting(true, false, true)
   }
 
 }

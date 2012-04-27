@@ -265,7 +265,7 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
     return tooltip;
   }
 
-  private void show(final IdeTooltip tooltip, Runnable beforeShow, boolean animationEnabled) {
+  private void show(final IdeTooltip tooltip, @Nullable Runnable beforeShow, boolean animationEnabled) {
     boolean toCenterX;
     boolean toCenterY;
 
@@ -393,11 +393,11 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
     return useSystem;
   }
 
-  public boolean hideCurrent(@Nullable MouseEvent me, AnAction action, AnActionEvent event) {
+  public boolean hideCurrent(@Nullable MouseEvent me, @Nullable AnAction action, @Nullable AnActionEvent event) {
     return hideCurrent(me, action, event, true);
   }
 
-  public boolean hideCurrent(@Nullable MouseEvent me, AnAction action, AnActionEvent event, final boolean animationEnabled) {
+  public boolean hideCurrent(@Nullable MouseEvent me, @Nullable AnAction action, @Nullable AnActionEvent event, final boolean animationEnabled) {
     myShowRequest = null;
     myQueuedComponent = null;
     myQueuedTooltip = null;
@@ -488,7 +488,7 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
     return false;
   }
 
-  public void hide(IdeTooltip tooltip) {
+  public void hide(@Nullable IdeTooltip tooltip) {
     if (myCurrentTooltip == tooltip || tooltip == null || tooltip == myQueuedTooltip) {
       hideCurrent(null, null, null);
     }
