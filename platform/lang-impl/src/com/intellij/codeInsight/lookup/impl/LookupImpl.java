@@ -138,11 +138,11 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
   private LookupArranger myPresentableArranger;
   @SuppressWarnings("unchecked") private final Map<LookupElement, PrefixMatcher> myMatchers = new ConcurrentHashMap<LookupElement, PrefixMatcher>(TObjectHashingStrategy.IDENTITY);
   private LookupHint myElementHint = null;
-  private Alarm myHintAlarm = new Alarm();
-  private JLabel mySortingLabel = new JLabel();
+  private final Alarm myHintAlarm = new Alarm();
+  private final JLabel mySortingLabel = new JLabel();
   private final JScrollPane myScrollPane;
   final LookupLayeredPane myLayeredPane = new LookupLayeredPane();
-  private JButton myScrollBarIncreaseButton;
+  private final JButton myScrollBarIncreaseButton;
   private boolean myStartCompletionWhenNothingMatches;
   private boolean myResizePending;
   private int myMaximumHeight = Integer.MAX_VALUE;
