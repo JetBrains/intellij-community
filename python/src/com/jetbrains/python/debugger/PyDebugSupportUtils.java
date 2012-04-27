@@ -84,13 +84,20 @@ public class PyDebugSupportUtils {
     });
   }
 
-  public static boolean isContinuationLine(@NotNull Document document, int line) {
+  @Nullable
+  private static String getLineText(@NotNull Document document, int line) {
     if (line > 0 && line < document.getLineCount()) {
-      String text = document.getText(TextRange.create(document.getLineStartOffset(line), document.getLineEndOffset(line)));
-      if (text.trim().endsWith("\\")) {
-        return true;
-      }
+      return document.getText(TextRange.create(document.getLineStartOffset(line), document.getLineEndOffset(line)));
     }
+    return null;
+  }
+
+  public static boolean isContinuationLine(@NotNull Document document, int line) {
+    String text = getLineText(document, line);
+    if (text != null && text.trim().endsWith("\\")) {
+      return true;
+    }
+
     return false;
   }
 }
