@@ -222,6 +222,14 @@ public class NameUtilTest extends UsefulTestCase {
     assertMatches(" _fo", "_foo");
   }
 
+  public void testMiddleMatchingFirstLetterSensitive() {
+    assertTrue(NameUtil.buildCompletionMatcher(" EUC-", 1, true, true).matches("x-EUC-TW"));
+    assertTrue(NameUtil.buildCompletionMatcher(" a", 1, true, true).matches("aaa"));
+    assertFalse(NameUtil.buildCompletionMatcher(" a", 1, true, true).matches("Aaa"));
+    assertFalse(NameUtil.buildCompletionMatcher(" a", 1, true, true).matches("Aaa"));
+    assertFalse(NameUtil.buildCompletionMatcher(" _bl", 1, true, true).matches("_top"));
+  }
+
   public void testSpaceInCompletionPrefix() throws Exception {
     assertTrue(NameUtil.buildCompletionMatcher("create ", 0, true, true).matches("create module"));
   }
@@ -368,6 +376,11 @@ public class NameUtilTest extends UsefulTestCase {
     assertPreference("*f", "barfoo", "foo");
     assertPreference("*f", "asdf", "Foo", NameUtil.MatchingCaseSensitivity.NONE);
     assertPreference(" sto", "ArrayStoreException", "StackOverflowError", NameUtil.MatchingCaseSensitivity.NONE);
+    assertPreference(" EUC-", "x-EUC-TW", "EUC-JP", NameUtil.MatchingCaseSensitivity.FIRST_LETTER);
+  }
+
+  public void testMeaningfulMatchingDegree() {
+    assertTrue(new NameUtil.MinusculeMatcher(" EUC-", NameUtil.MatchingCaseSensitivity.FIRST_LETTER).matchingDegree("x-EUC-TW") > Integer.MIN_VALUE);
   }
 
   private static void assertPreference(@NonNls String pattern,

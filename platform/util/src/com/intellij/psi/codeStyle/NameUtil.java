@@ -435,13 +435,15 @@ public class NameUtil {
         return skipChars(name, patternIndex, nameIndex, false);
       }
 
-      if (patternIndex == 0 && myOptions != MatchingCaseSensitivity.NONE && name.charAt(nameIndex) != myPattern[0]) {
-        return null;
-      }
-
       if (' ' == myPattern[patternIndex] && patternIndex != myPattern.length - 1) {
         return skipWords(name, patternIndex, nameIndex);
       }
+
+      if ((patternIndex == 0 || patternIndex == 1 && myPattern[0] == ' ') &&
+          myOptions != MatchingCaseSensitivity.NONE && name.charAt(nameIndex) != myPattern[patternIndex]) {
+        return null;
+      }
+
       if (isWordSeparator(name.charAt(nameIndex))) {
         return skipSeparators(name, patternIndex, nameIndex);
       }
@@ -610,9 +612,10 @@ public class NameUtil {
         }
       }
 
+      boolean separatorInPattern = isWordSeparator(myPattern[patternIndex]);
       int fromIndex = nameIndex;
       while (fromIndex < name.length()) {
-        int next = isWordSeparator(myPattern[patternIndex]) ? name.indexOf(myPattern[patternIndex], fromIndex) : nextWord(name, fromIndex);
+        int next = separatorInPattern ? name.indexOf(myPattern[patternIndex], fromIndex) : nextWord(name, fromIndex);
         if (next < 0) {
           break;
         }
@@ -622,6 +625,9 @@ public class NameUtil {
           return ranges;
         }
         fromIndex = next;
+        if (separatorInPattern) {
+          fromIndex++;
+        }
       }
       return null;
     }
