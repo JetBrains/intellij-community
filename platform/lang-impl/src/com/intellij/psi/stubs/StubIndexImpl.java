@@ -305,7 +305,7 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
                   ApplicationManager.getApplication().invokeLater(new Runnable() {
                     @Override
                     public void run() {
-                      fileBasedIndex.requestReindex(file);
+                      FileBasedIndex.getInstance().requestReindex(file);
                     }
                   }, ModalityState.NON_MODAL);
 
