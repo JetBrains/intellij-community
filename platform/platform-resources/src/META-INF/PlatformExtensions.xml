@@ -155,9 +155,6 @@
   <projectService serviceInterface="com.intellij.ui.content.MessageView"
                   serviceImplementation="com.intellij.ui.content.impl.MessageViewImpl"/>
 
-  <projectService serviceInterface="com.intellij.ui.FileColorManager"
-                  serviceImplementation="com.intellij.ui.tabs.FileColorManagerImpl"/>
-
   <projectService serviceInterface="com.intellij.ui.tabs.FileColorSharedConfigurationManager"
                   serviceImplementation="com.intellij.ui.tabs.FileColorSharedConfigurationManager"/>
 

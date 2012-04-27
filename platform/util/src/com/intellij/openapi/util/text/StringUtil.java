@@ -95,12 +95,11 @@ public class StringUtil extends StringUtilRt {
     }
   };
 
-  @Nullable
-  public static String replace(@NonNls @NotNull String text, @NonNls @NotNull String oldS, @NonNls @Nullable String newS) {
+  @NotNull public static String replace(@NonNls @NotNull String text, @NonNls @NotNull String oldS, @NonNls @Nullable String newS) {
     return replace(text, oldS, newS, false);
   }
 
-  @Nullable
+  @NotNull
   public static String replaceIgnoreCase(@NotNull String text, @NotNull String oldS, @Nullable String newS) {
     return replace(text, oldS, newS, true);
   }
@@ -134,7 +133,7 @@ public class StringUtil extends StringUtilRt {
     return newBuffer == null ? buffer : newBuffer.toString();
   }
 
-  @Nullable
+  @NotNull
   public static String replace(@NotNull final String text, @NotNull final String oldS, @Nullable final String newS, boolean ignoreCase) {
     if (text.length() < oldS.length()) return text;
 

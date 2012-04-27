@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.controlFlow;
 
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrFinallyClause;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.InstructionImpl;
 
 import java.util.ArrayDeque;
@@ -25,8 +26,8 @@ import java.util.Deque;
 * @author peter
 */
 public class ReturnInstruction extends InstructionImpl {
-  public ReturnInstruction(int num) {
-    super(null, num);
+  public ReturnInstruction(GrFinallyClause finallyClause, int num) {
+    super(finallyClause, num);
   }
 
   public String toString() {

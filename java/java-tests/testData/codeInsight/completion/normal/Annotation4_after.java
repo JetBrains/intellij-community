@@ -1,5 +1,5 @@
 enum Setup {
-  NO_CONNECTION,
+  NONE,
   CONNECTION
 }
 

@@ -1,8 +1,8 @@
-interface Intf { Intf FOO = null; }
-interface Intf2 extends Intf { Intf2 FOO = null; }
+interface Intf { Intf XFOO = null; }
+interface Intf2 extends Intf { Intf2 XFOO = null; }
 
 public class Bar implements Intf2 {
   public static void fpp() {
-    F<caret>
+    XF<caret>x
   }
 }

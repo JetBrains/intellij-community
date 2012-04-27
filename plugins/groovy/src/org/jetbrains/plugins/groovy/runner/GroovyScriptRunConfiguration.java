@@ -46,8 +46,11 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.refactoring.listeners.RefactoringElementAdapter;
+import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.util.PathUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.hash.LinkedHashMap;
@@ -69,7 +72,7 @@ import java.util.Map;
  * @author peter
  */
 public class GroovyScriptRunConfiguration extends ModuleBasedConfiguration<RunConfigurationModule>
-  implements CommonJavaRunConfigurationParameters {
+  implements CommonJavaRunConfigurationParameters, RefactoringListenerProvider {
   
   private static final Logger LOG = Logger.getInstance(GroovyScriptRunConfiguration.class);
   private String vmParams;
@@ -219,6 +222,58 @@ public class GroovyScriptRunConfiguration extends ModuleBasedConfiguration<RunCo
 
   public void setScriptParameters(String scriptParameters) {
     scriptParams = scriptParameters;
+  }
+
+  @Override
+  public RefactoringElementListener getRefactoringElementListener(PsiElement element) {
+    if (scriptPath == null || !scriptPath.equals(getPathByElement(element))) {
+      return null;
+    }
+
+    final PsiClass classToRun = GroovyRunnerUtil.getRunningClass(element);
+
+    if (element instanceof GroovyFile) {
+      return new RefactoringElementAdapter() {
+        @Override
+        protected void elementRenamedOrMoved(@NotNull PsiElement newElement) {
+          GroovyFile file = (GroovyFile)newElement;
+          setScriptPath(file.getVirtualFile().getPath());
+
+          final PsiClass newClassToRun = GroovyRunnerUtil.getRunningClass(newElement);
+          if (newClassToRun instanceof GroovyScriptClass) {
+            setName(GroovyRunnerUtil.getConfigurationName(file.getScriptClass(), getConfigurationModule()));
+          }
+        }
+
+        @Override
+        public void undoElementMovedOrRenamed(@NotNull PsiElement newElement, @NotNull String oldQualifiedName) {
+          elementRenamedOrMoved(newElement);
+        }
+      };
+    }
+    else if (element instanceof PsiClass && element.getManager().areElementsEquivalent(element, classToRun)) {
+      return new RefactoringElementAdapter() {
+        @Override
+        protected void elementRenamedOrMoved(@NotNull PsiElement newElement) {
+          setName(((PsiClass)newElement).getName());
+        }
+
+        @Override
+        public void undoElementMovedOrRenamed(@NotNull PsiElement newElement, @NotNull String oldQualifiedName) {
+          elementRenamedOrMoved(newElement);
+        }
+      };
+    }
+    return null;
+  }
+
+  @Nullable
+  private static String getPathByElement(@NotNull PsiElement element) {
+    PsiFile file = element.getContainingFile();
+    if (file == null) return null;
+    VirtualFile vfile = file.getVirtualFile();
+    if (vfile == null) return null;
+    return vfile.getPath();
   }
 
   public static JavaParameters createJavaParametersWithSdk(@Nullable Module module) {

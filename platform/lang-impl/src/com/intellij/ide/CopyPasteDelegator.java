@@ -22,6 +22,7 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiDirectory;
@@ -32,7 +33,6 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.copy.CopyHandler;
 import com.intellij.refactoring.move.MoveCallback;
 import com.intellij.refactoring.move.MoveHandler;
-import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -197,6 +197,8 @@ public abstract class CopyPasteDelegator implements CopyPasteSupport {
       if (project == null) {
         return false;
       }
+
+      if (DumbService.isDumb(project)) return false;
 
       Object target = LangDataKeys.PASTE_TARGET_PSI_ELEMENT.getData(dataContext);
       if (target == null) {

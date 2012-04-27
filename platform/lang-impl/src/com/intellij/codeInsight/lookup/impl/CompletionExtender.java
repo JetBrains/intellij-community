@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.lookup.impl;
 
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.HintHint;
 import com.intellij.ui.LightweightHint;
 import com.intellij.ui.awt.RelativePoint;
@@ -64,8 +65,7 @@ public class CompletionExtender extends LightweightHint {
   }
 
   private static JComponent createComponent(LookupElement element, LookupImpl lookup) {
-    final LookupCellRenderer renderer = new LookupCellRenderer(lookup);
-    renderer.setFullSize(true);
+    final LookupCellRenderer renderer = ((LookupCellRenderer)lookup.getList().getCellRenderer()).createExtenderRenderer();
     final JComponent component = (JComponent)renderer.getListCellRendererComponent(lookup.getList(), element,
                                                                                    lookup.getList().getSelectedIndex(),
                                                                                    true, false);
@@ -74,6 +74,11 @@ public class CompletionExtender extends LightweightHint {
   }
 
   public boolean show() {
+    if (SystemInfo.isUnix) {
+      //TODO[kb]: fix shadow. This hint is always heavyweight window and has a shadow
+      hide();
+      return false;
+    }
     final JList list = myLookup.getList();
     if (getComponent().getWidth() > list.getWidth()) {
       final JComponent rootPane = myLookup.myLayeredPane;

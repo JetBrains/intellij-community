@@ -21,6 +21,7 @@ import com.android.sdklib.IAndroidTarget;
 import com.android.sdklib.ISdkLog;
 import com.android.sdklib.SdkConstants;
 import com.android.sdklib.SdkManager;
+import com.android.sdklib.internal.project.ProjectProperties;
 import com.intellij.execution.process.BaseOSProcessHandler;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
@@ -30,6 +31,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.ArrayUtil;
+import org.jetbrains.android.sdk.MessageBuildingSdkLog;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -74,6 +76,7 @@ public class AndroidCommonUtils {
   public static final ResourceType[] ID_PROVIDING_RESOURCE_TYPES = new ResourceType[] {
     ResourceType.LAYOUT, ResourceType.MENU
   };
+  @NonNls public static final String INCLUDE_SYSTEM_PROGUARD_FILE_ELEMENT_NAME = "includeSystemProguardFile";
 
   private AndroidCommonUtils() {
   }
@@ -397,5 +400,25 @@ public class AndroidCommonUtils {
 
   public static boolean isIncludingInProguardSupported(int sdkToolsRevision) {
     return sdkToolsRevision == -1 || sdkToolsRevision >= 17;
+  }
+
+  public static int parsePackageRevision(@NotNull String sdkDirOsPath, @NotNull String packageDirName) {
+    final File propFile =
+      new File(sdkDirOsPath + File.separatorChar + packageDirName + File.separatorChar + SdkConstants.FN_SOURCE_PROP);
+    int revisionNumber = -1;
+    if (propFile.exists() && propFile.isFile()) {
+      final Map<String, String> map =
+        ProjectProperties.parsePropertyFile(new BufferingFileWrapper(propFile), new MessageBuildingSdkLog());
+      final String revision = map.get("Pkg.Revision");
+      if (revision != null) {
+        try {
+          revisionNumber = Integer.parseInt(revision);
+        }
+        catch (NumberFormatException e) {
+          LOG.info(e);
+        }
+      }
+    }
+    return revisionNumber > 0 ? revisionNumber : -1;
   }
 }

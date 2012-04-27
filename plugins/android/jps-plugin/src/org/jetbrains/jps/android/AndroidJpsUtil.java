@@ -4,7 +4,6 @@ import com.android.sdklib.IAndroidTarget;
 import com.android.sdklib.SdkManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Processor;
@@ -51,30 +50,10 @@ class AndroidJpsUtil {
   @NonNls public static final String AAPT_GENERATED_SOURCE_ROOT_NAME = "aapt";
   @NonNls public static final String AIDL_GENERATED_SOURCE_ROOT_NAME = "aidl";
   @NonNls public static final String RENDERSCRIPT_GENERATED_SOURCE_ROOT_NAME = "rs";
+  @NonNls public static final String BUILD_CONFIG_GENERATED_SOURCE_ROOT_NAME = "build_config";
   @NonNls private static final String GENERATED_SOURCES_FOLDER_NAME = "generated_sources";
 
   private AndroidJpsUtil() {
-  }
-
-  @Nullable
-  public static Module findCircularDependencyOnLibraryWithSamePackage(@NotNull AndroidFacet facet,
-                                                                      @NotNull Map<Module, String> packageMap) {
-    final String aPackage = packageMap.get(facet.getModule());
-    if (aPackage == null || aPackage.length() == 0) {
-      return null;
-    }
-
-    for (AndroidFacet depFacet : getAllAndroidDependencies(facet.getModule(), true)) {
-      if (aPackage.equals(packageMap.get(depFacet.getModule()))) {
-        final List<AndroidFacet> depDependencies = getAllAndroidDependencies(depFacet.getModule(), false);
-
-        if (depDependencies.contains(facet)) {
-          // circular dependency on library with the same package
-          return depFacet.getModule();
-        }
-      }
-    }
-    return null;
   }
 
   public static boolean isMavenizedModule(Module module) {
@@ -373,9 +352,9 @@ class AndroidJpsUtil {
   }
 
   @Nullable
-  public static Pair<AndroidSdk, IAndroidTarget> getAndroidPlatform(@NotNull Module module,
-                                                                    @NotNull CompileContext context,
-                                                                    @NotNull String builderName) {
+  public static AndroidPlatform getAndroidPlatform(@NotNull Module module,
+                                                   @NotNull CompileContext context,
+                                                   @NotNull String builderName) {
     final Sdk sdk = module.getSdk();
     if (!(sdk instanceof AndroidSdk)) {
       context.processMessage(new CompilerMessage(builderName, BuildMessage.Kind.ERROR,
@@ -390,7 +369,7 @@ class AndroidJpsUtil {
                                                  AndroidJpsBundle.message("android.jps.errors.sdk.invalid", module.getName())));
       return null;
     }
-    return Pair.create(androidSdk, target);
+    return new AndroidPlatform(androidSdk, target);
   }
 
   public static String[] collectResourceDirsForCompilation(@NotNull AndroidFacet facet,
@@ -522,7 +501,7 @@ class AndroidJpsUtil {
     final String apkRelativePath = facet.getApkRelativePath();
     final Module module = facet.getModule();
 
-    if (apkRelativePath.length() == 0) {
+    if (apkRelativePath == null || apkRelativePath.length() == 0) {
       return new File(outputDirForPackagedArtifacts, getApkName(module)).getPath();
     }
     final String moduleDirPath = module.getBasePath();
@@ -551,5 +530,10 @@ class AndroidJpsUtil {
     final File androidStorageRoot = new File(dataStorageRoot, ANDROID_STORAGE_DIR);
     final File generatedSourcesRoot = new File(androidStorageRoot, GENERATED_RESOURCES_DIR_NAME);
     return new File(generatedSourcesRoot, module.getName());
+  }
+
+  @NotNull
+  public static File getStorageFile(@NotNull File dataStorageRoot, @NotNull String storageName) {
+    return new File(new File(new File(dataStorageRoot, ANDROID_STORAGE_DIR), storageName), storageName);
   }
 }

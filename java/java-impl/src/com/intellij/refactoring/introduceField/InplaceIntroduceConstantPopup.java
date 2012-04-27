@@ -114,7 +114,9 @@ public class InplaceIntroduceConstantPopup extends AbstractInplaceIntroduceField
 
 
   private String getSelectedVisibility() {
-
+    if (myParentClass != null && myParentClass.isInterface()) {
+      return PsiModifier.PUBLIC;
+    }
     String initialVisibility = JavaRefactoringSettings.getInstance().INTRODUCE_CONSTANT_VISIBILITY;
     if (initialVisibility == null) {
       initialVisibility = PsiModifier.PUBLIC;

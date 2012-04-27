@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,11 @@ import java.lang.annotation.Annotation;
  */
 public class ColorUtil {
   private ColorUtil() {
+  }
+
+  public static Color softer(@NotNull Color color) {
+    final float[] hsb = Color.RGBtoHSB(color.getRed(), color.getGreen(), color.getBlue(), null);
+    return Color.getHSBColor(hsb[0], 0.4f *hsb[1], hsb[2]);
   }
 
   private static int shift(int colorComponent, double d) {

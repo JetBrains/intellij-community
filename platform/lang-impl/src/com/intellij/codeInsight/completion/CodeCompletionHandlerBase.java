@@ -475,7 +475,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     LOG.assertTrue(!indicator.isRunning(), "running");
     LOG.assertTrue(!indicator.isCanceled(), "canceled");
 
-    indicator.getLookup().refreshUi(true);
+    indicator.getLookup().refreshUi(true, false);
     final AutoCompletionDecision decision = shouldAutoComplete(indicator, items);
     if (decision == AutoCompletionDecision.SHOW_LOOKUP) {
       CompletionServiceImpl.setCompletionPhase(new CompletionPhase.ItemsCalculated(indicator));

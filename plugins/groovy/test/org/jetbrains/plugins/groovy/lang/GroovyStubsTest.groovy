@@ -15,13 +15,22 @@
  */
 package org.jetbrains.plugins.groovy.lang
 
+import com.intellij.openapi.command.WriteCommandAction
+import com.intellij.openapi.editor.Document
+import com.intellij.openapi.project.DumbServiceImpl
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.psi.JavaPsiFacade
+import com.intellij.psi.PsiDocumentManager
+import com.intellij.psi.PsiManager
 import com.intellij.psi.impl.source.PsiFileImpl
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.PsiShortNamesCache
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrEnumDefinitionBody
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstant
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrEnumDefinitionBody
 
 /**
  * @author peter
@@ -40,4 +49,28 @@ class GroovyStubsTest extends LightCodeInsightFixtureTestCase {
     assert ec in ((GrEnumDefinitionBody)((GrTypeDefinition)ec.containingClass).body).enumConstantList.enumConstants
     assert file.stub
   }
+
+  public void testStubIndexMismatch() {
+    VirtualFile vFile = myFixture.getTempDirFixture().createFile("foo.groovy");
+    final Project project = myFixture.getProject();
+    PsiFileImpl fooFile = (PsiFileImpl) PsiManager.getInstance(project).findFile(vFile);
+    final Document fooDocument = fooFile.getViewProvider().getDocument();
+    assert !JavaPsiFacade.getInstance(project).findClass("Fooxx", GlobalSearchScope.allScope(project))
+    new WriteCommandAction.Simple(project, fooFile) {
+      public void run() {
+        fooDocument.setText("class Fooxx {}");
+      }
+    }.execute();
+    PsiDocumentManager.getInstance(project).commitDocument(fooDocument);
+    fooFile.setTreeElementPointer(null);
+    DumbServiceImpl.getInstance(project).setDumb(true);
+    try {
+      assertOneElement(((GroovyFile) fooFile).classes);
+    }
+    finally {
+      DumbServiceImpl.getInstance(project).setDumb(false);
+    }
+    assert JavaPsiFacade.getInstance(project).findClass("Fooxx", GlobalSearchScope.allScope(project))
+  }
+
 }

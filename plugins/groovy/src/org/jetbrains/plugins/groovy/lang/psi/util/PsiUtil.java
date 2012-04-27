@@ -33,6 +33,7 @@ import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.HashSet;
@@ -71,10 +72,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClosureSignature;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrNamedArgumentsOwner;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GrMapType;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GrTupleType;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.*;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.JavaIdentifier;
@@ -135,11 +133,20 @@ public class PsiUtil {
   }
 
   public static boolean isApplicable(@Nullable PsiType[] argumentTypes,
-                                     PsiMethod method,
-                                     PsiSubstitutor substitutor,
-                                     GroovyPsiElement place,
-                                     final boolean eraseParameterTypes) {
-    if (argumentTypes == null) return true;
+                                                                        PsiMethod method,
+                                                                        PsiSubstitutor substitutor,
+                                                                        GroovyPsiElement place,
+                                                                        final boolean eraseParameterTypes) {
+    return isApplicableConcrete(argumentTypes, method, substitutor, place, eraseParameterTypes) !=
+           GrClosureSignatureUtil.ApplicabilityResult.inapplicable;
+  }
+
+  public static GrClosureSignatureUtil.ApplicabilityResult isApplicableConcrete(@Nullable PsiType[] argumentTypes,
+                                                                        PsiMethod method,
+                                                                        PsiSubstitutor substitutor,
+                                                                        GroovyPsiElement place,
+                                                                        final boolean eraseParameterTypes) {
+    if (argumentTypes == null) return GrClosureSignatureUtil.ApplicabilityResult.canBeApplicable;
 
     GrClosureSignature signature = eraseParameterTypes
                                    ? GrClosureSignatureUtil.createSignatureWithErasedParameterTypes(method)
@@ -149,34 +156,45 @@ public class PsiUtil {
     if (method.isConstructor()) {
       final PsiParameter[] parameters = method.getParameterList().getParameters();
       if (parameters.length == 0 && argumentTypes.length == 1) {
-        return InheritanceUtil.isInheritor(argumentTypes[0], CommonClassNames.JAVA_UTIL_MAP);
+        return InheritanceUtil.isInheritor(argumentTypes[0], CommonClassNames.JAVA_UTIL_MAP)
+               ? GrClosureSignatureUtil.ApplicabilityResult.applicable
+               : GrClosureSignatureUtil.ApplicabilityResult.inapplicable;
       }
       if (parameters.length == 1 &&
           argumentTypes.length == 0 &&
           InheritanceUtil.isInheritor(parameters[0].getType(), CommonClassNames.JAVA_UTIL_MAP)) {
-        return false;
+        return GrClosureSignatureUtil.ApplicabilityResult.inapplicable;
       }
     }
     LOG.assertTrue(signature != null);
-    if (GrClosureSignatureUtil.isSignatureApplicable(signature, argumentTypes, place)) {
-      return true;
+    GrClosureSignatureUtil.ApplicabilityResult result = GrClosureSignatureUtil.isSignatureApplicableConcrete(signature, argumentTypes, place);
+    if (result != GrClosureSignatureUtil.ApplicabilityResult.inapplicable) {
+      return result;
     }
 
     if (method instanceof GrBuilderMethod &&!((GrBuilderMethod)method).hasObligatoryNamedArguments()) {
       final PsiParameter[] parameters = method.getParameterList().getParameters();
       if (parameters.length > 0 && parameters[0].getType() instanceof GrMapType &&
           (argumentTypes.length == 0 || !(argumentTypes[0] instanceof GrMapType))) {
-        return GrClosureSignatureUtil.isSignatureApplicable(GrClosureSignatureUtil.removeParam(signature, 0), argumentTypes, place);
+        return GrClosureSignatureUtil.isSignatureApplicableConcrete(GrClosureSignatureUtil.removeParam(signature, 0), argumentTypes, place);
       }
     }
-    return false;
+    return GrClosureSignatureUtil.ApplicabilityResult.inapplicable;
   }
 
-  public static boolean isApplicable(@Nullable PsiType[] argumentTypes, GrClosureType type, GroovyPsiElement context) {
-    if (argumentTypes == null) return true;
+  public static boolean isApplicable(@Nullable PsiType[] argumentTypes,
+                                     GrClosureType type,
+                                     GroovyPsiElement context) {
+    return isApplicableConcrete(argumentTypes, type, context) != GrClosureSignatureUtil.ApplicabilityResult.inapplicable;
+  }
+
+  public static GrClosureSignatureUtil.ApplicabilityResult isApplicableConcrete(@Nullable PsiType[] argumentTypes,
+                                                                                GrClosureType type,
+                                                                                GroovyPsiElement context) {
+    if (argumentTypes == null) return GrClosureSignatureUtil.ApplicabilityResult.canBeApplicable;
 
     GrClosureSignature signature = type.getSignature();
-    return GrClosureSignatureUtil.isSignatureApplicable(signature, argumentTypes, context);
+    return GrClosureSignatureUtil.isSignatureApplicableConcrete(signature, argumentTypes, context);
   }
 
   @Nullable
@@ -200,6 +218,16 @@ public class PsiUtil {
   public static PsiType[] getArgumentTypes(PsiElement place, boolean nullAsBottom, @Nullable GrExpression stopAt) {
     PsiElement parent = place instanceof GrEnumConstant ? place : place.getParent();
 
+    if (parent instanceof GrIndexProperty) {
+      GrIndexProperty index = (GrIndexProperty)parent;
+      PsiType[] argTypes = getArgumentTypes(index.getNamedArguments(), index.getExpressionArguments(), index.getClosureArguments(), false, null);
+      if (isLValue(index) && argTypes != null) {
+        return ArrayUtil.append(argTypes, TypeInferenceHelper.getInitializerFor(index));
+      }
+      else {
+        return argTypes;
+      }
+    }
     if (parent instanceof GrCall) {
       GrCall call = (GrCall)parent;
       GrNamedArgument[] namedArgs = call.getNamedArguments();
@@ -223,7 +251,7 @@ public class PsiUtil {
 
   @Nullable
   public static PsiType[] getArgumentTypes(GrArgumentList argList) {
-    return getArgumentTypes(argList.getNamedArguments(), argList.getExpressionArguments(), GrClosableBlock.EMPTY_ARRAY, false, null);
+    return getArgumentTypes(argList, false, null);
   }
 
   @Nullable

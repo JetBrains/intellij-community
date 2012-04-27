@@ -406,6 +406,11 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
     doTest();
   }
 
+  public void testNoForceBraces() {
+    codeStyleSettings.IF_BRACE_FORCE = CommonCodeStyleSettings.FORCE_BRACES_ALWAYS
+    doTest()
+  }
+
   public void testExcludeStringBuffer() throws Throwable {
     CodeInsightSettings.getInstance().EXCLUDED_PACKAGES = [StringBuffer.name] as String[]
     try {
@@ -560,7 +565,7 @@ public class ListUtils {
 
   public void testDoubleConstant() throws Throwable {
     configure()
-    assertStringItems("FOO", "Float")
+    assertStringItems("XFOO")
   }
 
   public void testNotOnlyKeywordsInsideSwitch() throws Throwable {
@@ -988,7 +993,7 @@ public class ListUtils {
 
   public void testExpectedTypeMembersVersusStaticImports() throws Throwable {
     configure()
-    assertStringItems('FOO', 'FOX')
+    assertStringItems('XFOO', 'XFOX')
   }
 
   public void testDoubleExpectedTypeFactoryMethod() throws Throwable {

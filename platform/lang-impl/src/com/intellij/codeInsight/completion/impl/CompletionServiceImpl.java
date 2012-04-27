@@ -249,7 +249,7 @@ public class CompletionServiceImpl extends CompletionService{
           @Override
           public Comparable weigh(@NotNull LookupElement element) {
             for (String itemString : element.getAllLookupStrings()) {
-              if (StringUtil.capitalsOnly(itemString).startsWith(prefixHumps)) {
+              if (StringUtil.capitalsOnly(itemString).startsWith(prefixHumps) && StringUtil.isCapitalized(itemString)) {
                 return false;
               }
             }

@@ -18,6 +18,7 @@ package com.intellij.psi.impl.source.codeStyle;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -42,7 +43,7 @@ public class PostFormatProcessorHelper {
                                       myResultTextRange.getEndOffset()  - oldTextLength + newTextLength);
   }
 
-  public boolean isElementPartlyInRange(final PsiElement element) {
+  public boolean isElementPartlyInRange(@NotNull final PsiElement element) {
     if (myResultTextRange == null) return true;
 
     final TextRange elementRange = element.getTextRange();

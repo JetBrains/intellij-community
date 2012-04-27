@@ -16,12 +16,7 @@ import java.io.IOException;
 public class AndroidFileSetStorage extends AbstractStateStorage<String, AndroidFileSetState> {
 
   public AndroidFileSetStorage(@NotNull File dataStorageRoot, @NotNull String storageName) throws IOException {
-    super(getStorageFile(dataStorageRoot, storageName), new EnumeratorStringDescriptor(), new MyDataExternalizer());
-  }
-
-  @NotNull
-  private static File getStorageFile(@NotNull File dataStorageRoot, @NotNull String storageName) {
-    return new File(new File(new File(dataStorageRoot, AndroidJpsUtil.ANDROID_STORAGE_DIR), storageName), storageName);
+    super(AndroidJpsUtil.getStorageFile(dataStorageRoot, storageName), new EnumeratorStringDescriptor(), new MyDataExternalizer());
   }
 
   private static class MyDataExternalizer implements DataExternalizer<AndroidFileSetState> {

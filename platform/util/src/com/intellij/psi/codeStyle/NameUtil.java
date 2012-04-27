@@ -338,7 +338,7 @@ public class NameUtil {
     if (!Character.isLetterOrDigit(text.charAt(i))) {
       return false;
     }
-    if (i > 0 && MinusculeMatcher.isWordSeparator(text.charAt(i - 1))) {
+    if (i > 0 && (MinusculeMatcher.isWordSeparator(text.charAt(i - 1)) || text.charAt(i - 1) == '.')) {
       return true;
     }
     return false;
@@ -435,13 +435,15 @@ public class NameUtil {
         return skipChars(name, patternIndex, nameIndex, false);
       }
 
-      if (patternIndex == 0 && myOptions != MatchingCaseSensitivity.NONE && name.charAt(nameIndex) != myPattern[0]) {
-        return null;
-      }
-
       if (' ' == myPattern[patternIndex] && patternIndex != myPattern.length - 1) {
         return skipWords(name, patternIndex, nameIndex);
       }
+
+      if ((patternIndex == 0 || patternIndex == 1 && myPattern[0] == ' ') &&
+          myOptions != MatchingCaseSensitivity.NONE && name.charAt(nameIndex) != myPattern[patternIndex]) {
+        return null;
+      }
+
       if (isWordSeparator(name.charAt(nameIndex))) {
         return skipSeparators(name, patternIndex, nameIndex);
       }
@@ -610,9 +612,10 @@ public class NameUtil {
         }
       }
 
+      boolean separatorInPattern = isWordSeparator(myPattern[patternIndex]);
       int fromIndex = nameIndex;
       while (fromIndex < name.length()) {
-        int next = isWordSeparator(myPattern[patternIndex]) ? name.indexOf(myPattern[patternIndex], fromIndex) : nextWord(name, fromIndex);
+        int next = separatorInPattern ? name.indexOf(myPattern[patternIndex], fromIndex) : nextWord(name, fromIndex);
         if (next < 0) {
           break;
         }
@@ -622,6 +625,9 @@ public class NameUtil {
           return ranges;
         }
         fromIndex = next;
+        if (separatorInPattern) {
+          fromIndex++;
+        }
       }
       return null;
     }
@@ -631,7 +637,7 @@ public class NameUtil {
       if (iterable == null) return Integer.MIN_VALUE;
 
       int fragmentCount = 0;
-      int matchingCaps = 0;
+      int matchingCase = 0;
       CharArrayCharSequence seq = new CharArrayCharSequence(myPattern);
       int p = -1;
       TextRange first = null;
@@ -645,9 +651,7 @@ public class NameUtil {
           if (p < 0) {
             break;
           }
-          if (Character.isUpperCase(myPattern[p])) {
-            matchingCaps += c == myPattern[p] ? 1 : -1;
-          }
+          matchingCase += c == myPattern[p] ? 1 : 0;
         }
         fragmentCount++;
       }
@@ -660,7 +664,7 @@ public class NameUtil {
       boolean prefixMatching = first != null && first.getStartOffset() == 0;
       boolean middleWordStart = first != null && first.getStartOffset() > 0 && isWordStart(name, first.getStartOffset());
 
-      return -fragmentCount + matchingCaps * 10 + commonStart + (prefixMatching ? 2 : middleWordStart ? 1 : 0) * 100;
+      return -fragmentCount + matchingCase * 10 + commonStart + (prefixMatching ? 2 : middleWordStart ? 1 : 0) * 100;
     }
 
     @Override
