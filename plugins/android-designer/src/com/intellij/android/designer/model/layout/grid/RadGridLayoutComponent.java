@@ -235,15 +235,21 @@ public class RadGridLayoutComponent extends RadViewContainer implements ICompone
     return cellInfo;
   }
 
-  public static void setCellIndex(final RadComponent component, final int row, final int column, final boolean clearSpans) {
+  public static void setCellIndex(final RadComponent component,
+                                  final int row,
+                                  final int column,
+                                  final boolean clearRowSpan,
+                                  final boolean clearColumnSpan) {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override
       public void run() {
         XmlTag tag = ((RadViewComponent)component).getTag();
         tag.setAttribute("android:layout_row", Integer.toString(row));
         tag.setAttribute("android:layout_column", Integer.toString(column));
-        if (clearSpans) {
+        if (clearRowSpan) {
           ModelParser.deleteAttribute(tag, "android:layout_rowSpan");
+        }
+        if (clearColumnSpan) {
           ModelParser.deleteAttribute(tag, "android:layout_columnSpan");
         }
       }

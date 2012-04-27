@@ -55,15 +55,18 @@ public abstract class HorizontalCaptionFlowBaseOperation<T extends RadViewCompon
       Rectangle bounds = myMainContainer.getBounds(layer);
       myMainYLocation = bounds.y;
 
-      List<RadComponent> children = myMainContainer.getChildren();
-      Rectangle lastChildBounds = children.get(children.size() - 1).getBounds(layer);
-
       myMainInsertFeedback = new LineInsertFeedback(Color.green, false);
-      myMainInsertFeedback.size(0, lastChildBounds.y + lastChildBounds.height - myMainYLocation);
+      myMainInsertFeedback.size(0, getMainFeedbackHeight(layer, myMainYLocation));
 
       layer.add(myMainInsertFeedback);
       layer.repaint();
     }
+  }
+
+  protected int getMainFeedbackHeight(FeedbackLayer layer, int mainYLocation) {
+    List<RadComponent> children = myMainContainer.getChildren();
+    Rectangle lastChildBounds = children.get(children.size() - 1).getBounds(layer);
+    return lastChildBounds.y + lastChildBounds.height - mainYLocation;
   }
 
   @Override

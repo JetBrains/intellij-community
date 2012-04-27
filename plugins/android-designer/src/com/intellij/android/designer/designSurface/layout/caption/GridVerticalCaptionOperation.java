@@ -15,12 +15,15 @@
  */
 package com.intellij.android.designer.designSurface.layout.caption;
 
+import com.intellij.android.designer.model.layout.grid.RadCaptionGridRow;
 import com.intellij.android.designer.model.layout.grid.RadGridLayoutComponent;
 import com.intellij.designer.designSurface.EditableArea;
 import com.intellij.designer.designSurface.FeedbackLayer;
 import com.intellij.designer.designSurface.OperationContext;
 import com.intellij.designer.model.RadComponent;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 /**
  * @author Alexander Lobas
@@ -40,6 +43,25 @@ public class GridVerticalCaptionOperation extends VerticalCaptionFlowBaseOperati
 
   @Override
   protected void execute(@Nullable RadComponent insertBefore) throws Exception {
-    // TODO: Auto-generated method stub
+    RadComponent[][] components = myMainContainer.getGridComponents(false);
+
+    for (RadComponent component : myComponents) {
+      component.removeFromParent();
+      myContainer.add(component, insertBefore);
+    }
+
+    List<RadComponent> rows = myContainer.getChildren();
+    int size = rows.size();
+    for (int i = 0; i < size; i++) {
+      int index = ((RadCaptionGridRow)rows.get(i)).getIndex();
+      RadComponent[] rowComponents = components[i];
+
+      for (int j = 0; j < rowComponents.length; j++) {
+        RadComponent cellComponent = components[index][j];
+        if (cellComponent != null) {
+          RadGridLayoutComponent.setCellIndex(cellComponent, i, j, true, false);
+        }
+      }
+    }
   }
 }

@@ -76,7 +76,7 @@ public class GridLayoutOperation extends GridOperation {
 
     if (myInsertType == GridInsertType.in_cell && (myRow >= gridInfo.rowCount || myColumn >= gridInfo.columnCount)) {
       execute(myContext, container, myComponents, null);
-      RadGridLayoutComponent.setCellIndex(editComponent, myRow, myColumn, true);
+      RadGridLayoutComponent.setCellIndex(editComponent, myRow, myColumn, true, true);
       return;
     }
 
@@ -85,7 +85,7 @@ public class GridLayoutOperation extends GridOperation {
     if (myInsertType == GridInsertType.in_cell) {
       if (!myContext.isMove()) {
         execute(myContext, container, myComponents, nextComponent);
-        RadGridLayoutComponent.setCellIndex(editComponent, myRow, myColumn, true);
+        RadGridLayoutComponent.setCellIndex(editComponent, myRow, myColumn, true, true);
         return;
       }
 
@@ -117,7 +117,7 @@ public class GridLayoutOperation extends GridOperation {
       for (int j = 0; j < rowComponents.length; j++) {
         RadComponent cellComponent = rowComponents[j];
         if (cellComponent != null) {
-          RadGridLayoutComponent.setCellIndex(cellComponent, i, j, false);
+          RadGridLayoutComponent.setCellIndex(cellComponent, i, j, false, false);
         }
       }
     }
@@ -239,11 +239,7 @@ public class GridLayoutOperation extends GridOperation {
   }
 
   @Nullable
-  private static RadViewComponent getNextComponent(RadComponent[][] components, int row, int column) {
-    if (components.length == 0) {
-      return null;
-    }
-
+  public static RadViewComponent getNextComponent(RadComponent[][] components, int row, int column) {
     RadComponent[] rowComponents = components[row];
 
     for (int i = column + 1; i < rowComponents.length; i++) {
