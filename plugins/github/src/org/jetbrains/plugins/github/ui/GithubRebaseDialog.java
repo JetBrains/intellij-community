@@ -41,6 +41,7 @@ public class GithubRebaseDialog extends GitRebaseDialog {
   public void configure(final String originName) {
     setTitle("Rebase GitHub");
 
+    myInteractiveCheckBox.setSelected(false);
     myShowRemoteBranchesCheckBox.setSelected(true);
     myShowRemoteBranchesCheckBox.getParent().remove(myShowRemoteBranchesCheckBox);
     myGitRootComboBox.setEnabled(false);
