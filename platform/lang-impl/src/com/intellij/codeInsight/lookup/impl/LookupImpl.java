@@ -161,7 +161,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     myPresentableArranger = arranger;
 
     myIconPanel.setVisible(false);
-    myCellRenderer = new LookupCellRenderer(this);
+    myCellRenderer = new LookupCellRenderer(this, false);
     myList.setCellRenderer(myCellRenderer);
 
     myList.setFocusable(false);

@@ -64,8 +64,7 @@ public class CompletionExtender extends LightweightHint {
   }
 
   private static JComponent createComponent(LookupElement element, LookupImpl lookup) {
-    final LookupCellRenderer renderer = new LookupCellRenderer(lookup);
-    renderer.setFullSize(true);
+    final LookupCellRenderer renderer = ((LookupCellRenderer)lookup.getList().getCellRenderer()).createExtenderRenderer();
     final JComponent component = (JComponent)renderer.getListCellRendererComponent(lookup.getList(), element,
                                                                                    lookup.getList().getSelectedIndex(),
                                                                                    true, false);
