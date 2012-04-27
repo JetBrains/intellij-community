@@ -61,8 +61,7 @@ public class GroovyImportOptimizerRefactoringHelper implements RefactoringHelper
   public void performOperation(final Project project, final Set<GroovyFile> files) {
     final GroovyImportOptimizer optimizer = new GroovyImportOptimizer();
     final ProgressManager progressManager = ProgressManager.getInstance();
-    final Map<GroovyFile, Pair<List<GrImportStatement>, Set<GrImportStatement>>> redundants =
-      new HashMap<GroovyFile, Pair<List<GrImportStatement>, Set<GrImportStatement>>>();
+    final Map<GroovyFile, Pair<List<GrImportStatement>, Set<GrImportStatement>>> redundants = new HashMap<GroovyFile, Pair<List<GrImportStatement>, Set<GrImportStatement>>>();
     final Runnable findUnusedImports = new Runnable() {
       public void run() {
         final ProgressIndicator progressIndicator = progressManager.getProgressIndicator();
@@ -81,10 +80,9 @@ public class GroovyImportOptimizerRefactoringHelper implements RefactoringHelper
           final Set<GrImportStatement> usedImports = new HashSet<GrImportStatement>();
           ApplicationManager.getApplication().runReadAction(new Runnable() {
             public void run() {
-              final List<GrImportStatement> perFile = optimizer.findUnusedImports(file, usedImports);
-              if (perFile != null) {
-                redundants.put(file, Pair.create(perFile, usedImports));
-              }
+              optimizer.findUnusedImports(file, usedImports);
+              final List<GrImportStatement> perFile = GroovyImportOptimizer.getValidImportStatements(file);
+              redundants.put(file, Pair.create(perFile, usedImports));
             }
           });
         }
