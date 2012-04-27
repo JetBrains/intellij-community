@@ -299,7 +299,9 @@ public class GitFetcher {
         additionalInfo.put(root, ai);
       }
       if (!result.isSuccess()) {
-        displayFetchResult(myProject, result, errorNotificationTitle, getErrors());
+        Collection<Exception> errors = new ArrayList<Exception>(getErrors());
+        errors.addAll(result.getErrors());
+        displayFetchResult(myProject, result, errorNotificationTitle, errors);
         return false;
       }
     }

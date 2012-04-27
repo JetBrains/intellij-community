@@ -146,7 +146,7 @@ public final class GitHttpAdapter {
   }
 
   private static void logException(GitRepository repository, String remoteName, String remoteUrl, Exception e, String operation) {
-    LOG.info("Exception while " + operation + " " + remoteName + "(" + remoteUrl + ")" + " in " + repository.toLogString(), e);
+    LOG.error("Exception while " + operation + " " + remoteName + "(" + remoteUrl + ")" + " in " + repository.toLogString(), e);
   }
 
   private static GitFetchResult.Type convertToFetchResultType(GeneralResult result) {
