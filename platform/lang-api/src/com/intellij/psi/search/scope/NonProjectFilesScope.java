@@ -50,7 +50,7 @@ public class NonProjectFilesScope extends NamedScope {
     if (file.getFileSystem() instanceof LocalFileSystem) {
       final String projectBaseDir = project.getBasePath();
       if (projectBaseDir != null) {
-        return !FileUtil.isAncestor(projectBaseDir, file.getPath(), false);
+        return FileUtil.isAncestor(projectBaseDir, file.getPath(), false);
       }
     }
     return false;
