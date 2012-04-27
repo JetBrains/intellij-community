@@ -30,6 +30,7 @@ public abstract class OutputReader extends BaseOutputReader {
 
   public OutputReader(@NotNull Reader reader) {
     super(reader);
+    start();
   }
 
   protected void doRun() {
