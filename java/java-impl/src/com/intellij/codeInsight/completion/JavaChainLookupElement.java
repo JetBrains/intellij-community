@@ -121,7 +121,7 @@ public class JavaChainLookupElement extends LookupElementDecorator<LookupElement
     int formatStart = context.getOffset(oldStart);
     int formatEnd = context.getTailOffset();
     if (formatStart >= 0 && formatEnd >= 0) {
-      CodeStyleManager.getInstance(context.getProject()).reformatRange(context.getFile(), formatStart, formatEnd);
+      CodeStyleManager.getInstance(context.getProject()).reformatText(context.getFile(), formatStart, formatEnd);
     }
   }
 

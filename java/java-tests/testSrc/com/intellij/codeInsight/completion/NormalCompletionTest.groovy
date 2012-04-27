@@ -406,6 +406,11 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
     doTest();
   }
 
+  public void testNoForceBraces() {
+    codeStyleSettings.IF_BRACE_FORCE = CommonCodeStyleSettings.FORCE_BRACES_ALWAYS
+    doTest()
+  }
+
   public void testExcludeStringBuffer() throws Throwable {
     CodeInsightSettings.getInstance().EXCLUDED_PACKAGES = [StringBuffer.name] as String[]
     try {
