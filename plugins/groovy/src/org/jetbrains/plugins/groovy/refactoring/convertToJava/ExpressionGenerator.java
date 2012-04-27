@@ -1154,7 +1154,7 @@ public class ExpressionGenerator extends Generator {
     final GrExpression[] exprArgs = argList.getExpressionArguments();
     final GrNamedArgument[] namedArgs = argList.getNamedArguments();
 
-    if (!PsiImplUtil.isSimpleArrayAccess(thisType, argTypes, manager, resolveScope)) {
+    if (!PsiImplUtil.isSimpleArrayAccess(thisType, argTypes, manager, resolveScope, PsiUtil.isLValue(expression))) {
       final GroovyResolveResult candidate = PsiImplUtil.extractUniqueResult(expression.multiResolve(false));
       PsiElement element = candidate.getElement();
       if (element != null || !PsiUtil.isLValue(expression)) {                     //see the case of l-value in assignment expression
