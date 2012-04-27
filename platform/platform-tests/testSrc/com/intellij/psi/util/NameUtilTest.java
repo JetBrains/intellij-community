@@ -216,6 +216,9 @@ public class NameUtilTest extends UsefulTestCase {
     assertTrue(NameUtil.buildCompletionMatcher("*us", 0, true, true).matches("usage"));
     assertTrue(NameUtil.buildCompletionMatcher(" us", 0, true, true).matches("usage"));
     assertTrue(NameUtil.buildCompletionMatcher(" fo. ba", 0, true, true).matches("getFoo.getBar"));
+    assertMatches(" File. sepa", "File.separator");
+    assertMatches(" File. sepa", "File._separator");
+    assertMatches(" File. _sepa", "File._separator");
     assertMatches(" _fo", "_foo");
   }
 

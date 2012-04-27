@@ -338,7 +338,7 @@ public class NameUtil {
     if (!Character.isLetterOrDigit(text.charAt(i))) {
       return false;
     }
-    if (i > 0 && MinusculeMatcher.isWordSeparator(text.charAt(i - 1))) {
+    if (i > 0 && (MinusculeMatcher.isWordSeparator(text.charAt(i - 1)) || text.charAt(i - 1) == '.')) {
       return true;
     }
     return false;
