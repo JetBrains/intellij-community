@@ -159,6 +159,7 @@
     <action id="GotoPreviousError">
       <keyboard-shortcut first-keystroke="shift F1" />
     </action>
+    <action id="GotoSuperMethod"/>
     <action id="GotoTypeDeclaration"/>
     <action id="Graph.Faces.OpenSelectedPages">
       <keyboard-shortcut first-keystroke="F12" />
