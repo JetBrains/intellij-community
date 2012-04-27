@@ -12,8 +12,8 @@
     <action id="ActivateNavBar">
       <keyboard-shortcut first-keystroke="alt F11" />
     </action>
-    <action id="ActivateStructureToolWindow">
-      <keyboard-shortcut first-keystroke="control O" second-keystroke="alt 7" />
+    <action id="AutoIndentLines">
+      <keyboard-shortcut first-keystroke="control I"/>
     </action>
     <action id="Back">
       <keyboard-shortcut first-keystroke="alt LEFT" />
@@ -72,9 +72,10 @@
       <keyboard-shortcut first-keystroke="control alt DOWN" />
     </action>
     <action id="EditorIndentSelection">
-      <keyboard-shortcut first-keystroke="control I" />
       <keyboard-shortcut first-keystroke="TAB" />
     </action>
+    <action id="EditorMoveToPageBottom" />
+    <action id="EditorMoveToPageTop" />
     <action id="EditorNextWordWithSelection">
       <keyboard-shortcut first-keystroke="shift alt RIGHT" />
       <keyboard-shortcut first-keystroke="shift control RIGHT" />
@@ -111,13 +112,11 @@
     </action>
     <action id="FileStructurePopup">
       <keyboard-shortcut first-keystroke="control F3" />
+      <keyboard-shortcut first-keystroke="control O" />
     </action>
-    <action id="Find">
-      <keyboard-shortcut first-keystroke="control H" />
-      <keyboard-shortcut first-keystroke="control I"/>
-    </action>
+    <action id="Find"/>
     <action id="FindInPath">
-      <keyboard-shortcut first-keystroke="control alt G" />
+      <keyboard-shortcut first-keystroke="control H" />
     </action>
     <action id="FindNext">
       <keyboard-shortcut first-keystroke="control K" />
@@ -228,6 +227,7 @@
     <action id="NextTab">
       <keyboard-shortcut first-keystroke="control F6" />
       <keyboard-shortcut first-keystroke="control alt LEFT" />
+      <keyboard-shortcut first-keystroke="control PAGE_DOWN" />
     </action>
     <action id="NextEditorTab">
       <keyboard-shortcut first-keystroke="control shift alt LEFT" />
@@ -242,6 +242,7 @@
     <action id="PreviousTab">
       <keyboard-shortcut first-keystroke="shift control F6" />
       <keyboard-shortcut first-keystroke="control alt RIGHT" />
+      <keyboard-shortcut first-keystroke="control PAGE_UP" />
     </action>
     <action id="PreviousEditorTab">
       <keyboard-shortcut first-keystroke="control alt shift RIGHT" />
@@ -301,7 +302,9 @@
     <action id="SmartTypeCompletion">
       <keyboard-shortcut first-keystroke="shift alt SPACE" />
     </action>
-    <action id="StepInto" />
+    <action id="StepInto">
+      <keyboard-shortcut first-keystroke="F5"/>
+     </action>
     <action id="StepOut">
       <keyboard-shortcut first-keystroke="F7" />
       <keyboard-shortcut first-keystroke="shift F8" />
@@ -314,9 +317,7 @@
       <keyboard-shortcut first-keystroke="shift alt Z" />
       <keyboard-shortcut first-keystroke="control alt T" />
     </action>
-    <action id="Synchronize">
-      <keyboard-shortcut first-keystroke="F5" />
-    </action>
+    <action id="Synchronize"/>
     <action id="ToggleBookmark">
       <keyboard-shortcut first-keystroke="shift control F11" />
     </action>
