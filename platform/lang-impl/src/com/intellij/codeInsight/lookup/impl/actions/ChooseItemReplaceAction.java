@@ -67,7 +67,7 @@ public class ChooseItemReplaceAction extends EditorAction {
   }
 
   public static boolean hasTemplatePrefix(LookupImpl lookup, char shortcutChar) {
-    lookup.refreshUi(false); // to bring the list model up to date
+    lookup.refreshUi(false, false); // to bring the list model up to date
 
     CompletionProcess completion = CompletionService.getCompletionService().getCurrentCompletion();
     if (completion == null || !completion.isAutopopupCompletion()) {

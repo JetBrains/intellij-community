@@ -34,7 +34,7 @@ public abstract class LookupArranger {
   public void prefixChanged() {
   }
 
-  public abstract Pair<List<LookupElement>, Integer> arrangeItems(@NotNull Lookup lookup);
+  public abstract Pair<List<LookupElement>, Integer> arrangeItems(@NotNull Lookup lookup, boolean onExplicitAction);
 
   public final void clearItems() {
     prefixChanged();
@@ -82,7 +82,7 @@ public abstract class LookupArranger {
   }
 
   public static class DefaultArranger extends LookupArranger {
-    public Pair<List<LookupElement>, Integer> arrangeItems(@NotNull Lookup lookup) {
+    public Pair<List<LookupElement>, Integer> arrangeItems(@NotNull Lookup lookup, boolean onExplicitAction) {
       LinkedHashSet<LookupElement> result = new LinkedHashSet<LookupElement>();
       List<LookupElement> items = matchingItems(lookup);
       addPrefixItems(lookup, result, true, items);

@@ -527,7 +527,7 @@ public interface Test {
     myFixture.completeBasic()
     while (!lookup.items) {
       Thread.sleep(10)
-      edt { lookup.refreshUi(false) }
+      edt { lookup.refreshUi(false, false) }
     }
     edt { myFixture.type '\t' }
     myFixture.checkResult 'public interface Test { RuntimeException<caret>x }'

@@ -84,7 +84,7 @@ public abstract class LookupActionHandler extends EditorActionHandler {
       if (!lookup.isFocused()) {
         lookup.setFocused(true);
         lookup.getList().setSelectedIndex(0);
-        lookup.refreshUi(false);
+        lookup.refreshUi(false, true);
       } else {
         ListScrollingUtil.moveDown(lookup.getList(), 0);
       }
@@ -146,7 +146,7 @@ public abstract class LookupActionHandler extends EditorActionHandler {
 
         lookup.setFocused(true);
         lookup.getList().setSelectedIndex(0);
-        lookup.refreshUi(false);
+        lookup.refreshUi(false, true);
       }
       ListScrollingUtil.moveUp(lookup.getList(), 0);
       return true;

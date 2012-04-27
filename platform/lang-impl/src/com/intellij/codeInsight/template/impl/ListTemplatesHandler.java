@@ -127,7 +127,7 @@ public class ListTemplatesHandler implements CodeInsightActionHandler {
     Editor editor = lookup.getEditor();
     Project project = editor.getProject();
     lookup.addLookupListener(new MyLookupAdapter(project, editor, template2Argument));
-    lookup.refreshUi(false);
+    lookup.refreshUi(false, true);
     lookup.showLookup();
   }
 
@@ -180,7 +180,7 @@ public class ListTemplatesHandler implements CodeInsightActionHandler {
   private static class TemplatesArranger extends LookupArranger {
 
     @Override
-    public Pair<List<LookupElement>, Integer> arrangeItems(@NotNull Lookup lookup) {
+    public Pair<List<LookupElement>, Integer> arrangeItems(@NotNull Lookup lookup, boolean onExplicitAction) {
       LinkedHashSet<LookupElement> result = new LinkedHashSet<LookupElement>();
       List<LookupElement> items = matchingItems(lookup);
       for (LookupElement item : items) {
