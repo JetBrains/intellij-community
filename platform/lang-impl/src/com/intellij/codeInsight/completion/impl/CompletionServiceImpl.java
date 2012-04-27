@@ -90,7 +90,7 @@ public class CompletionServiceImpl extends CompletionService{
       throw new AssertionError("createResultSet may be invoked only from completion thread: " + indicator + "!=" + getCurrentCompletion() + "; phase set at " + ourPhaseTrace);
     }
     CompletionProgressIndicator process = (CompletionProgressIndicator)indicator;
-    CamelHumpMatcher matcher = new CamelHumpMatcher(prefix, true, parameters.isRelaxedMatching());
+    CamelHumpMatcher matcher = new CamelHumpMatcher(prefix);
     CompletionSorterImpl sorter = defaultSorter(parameters, matcher);
     return new CompletionResultSetImpl(consumer, textBeforePosition, matcher, contributor,parameters, sorter, process, null);
   }
@@ -157,8 +157,7 @@ public class CompletionServiceImpl extends CompletionService{
 
     @NotNull
     public CompletionResultSet withPrefixMatcher(@NotNull final String prefix) {
-      boolean relaxed = getPrefixMatcher() instanceof CamelHumpMatcher && ((CamelHumpMatcher)getPrefixMatcher()).isRelaxedMatching();
-      return withPrefixMatcher(new CamelHumpMatcher(prefix, true, relaxed));
+      return withPrefixMatcher(new CamelHumpMatcher(prefix));
     }
 
     @NotNull
@@ -170,8 +169,7 @@ public class CompletionServiceImpl extends CompletionService{
     @NotNull
     @Override
     public CompletionResultSet caseInsensitive() {
-      boolean relaxed = getPrefixMatcher() instanceof CamelHumpMatcher && ((CamelHumpMatcher)getPrefixMatcher()).isRelaxedMatching();
-      return withPrefixMatcher(new CamelHumpMatcher(getPrefixMatcher().getPrefix(), false, relaxed));
+      return withPrefixMatcher(new CamelHumpMatcher(getPrefixMatcher().getPrefix(), false));
     }
 
     @Override
@@ -249,7 +247,7 @@ public class CompletionServiceImpl extends CompletionService{
           @Override
           public Comparable weigh(@NotNull LookupElement element) {
             for (String itemString : element.getAllLookupStrings()) {
-              if (StringUtil.capitalsOnly(itemString).startsWith(prefixHumps)) {
+              if (StringUtil.capitalsOnly(itemString).startsWith(prefixHumps) && StringUtil.isCapitalized(itemString)) {
                 return false;
               }
             }

@@ -379,7 +379,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     PsiFile originalFile = fileCopy.getOriginalFile();
     final PsiElement insertedElement = findCompletionPositionLeaf(newContext, offset, fileCopy, originalFile);
     insertedElement.putUserData(CompletionContext.COMPLETION_CONTEXT_KEY, newContext);
-    return new CompletionParameters(insertedElement, originalFile, myCompletionType, offset, invocationCount, obtainLookup(initContext.getEditor()), false);
+    return new CompletionParameters(insertedElement, originalFile, myCompletionType, offset, invocationCount, obtainLookup(initContext.getEditor()));
   }
 
   @NotNull
@@ -475,7 +475,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     LOG.assertTrue(!indicator.isRunning(), "running");
     LOG.assertTrue(!indicator.isCanceled(), "canceled");
 
-    indicator.getLookup().refreshUi(true);
+    indicator.getLookup().refreshUi(true, false);
     final AutoCompletionDecision decision = shouldAutoComplete(indicator, items);
     if (decision == AutoCompletionDecision.SHOW_LOOKUP) {
       CompletionServiceImpl.setCompletionPhase(new CompletionPhase.ItemsCalculated(indicator));

@@ -138,11 +138,11 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
   private LookupArranger myPresentableArranger;
   @SuppressWarnings("unchecked") private final Map<LookupElement, PrefixMatcher> myMatchers = new ConcurrentHashMap<LookupElement, PrefixMatcher>(TObjectHashingStrategy.IDENTITY);
   private LookupHint myElementHint = null;
-  private Alarm myHintAlarm = new Alarm();
-  private JLabel mySortingLabel = new JLabel();
+  private final Alarm myHintAlarm = new Alarm();
+  private final JLabel mySortingLabel = new JLabel();
   private final JScrollPane myScrollPane;
   final LookupLayeredPane myLayeredPane = new LookupLayeredPane();
-  private JButton myScrollBarIncreaseButton;
+  private final JButton myScrollBarIncreaseButton;
   private boolean myStartCompletionWhenNothingMatches;
   private boolean myResizePending;
   private int myMaximumHeight = Integer.MAX_VALUE;
@@ -161,7 +161,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     myPresentableArranger = arranger;
 
     myIconPanel.setVisible(false);
-    myCellRenderer = new LookupCellRenderer(this);
+    myCellRenderer = new LookupCellRenderer(this, false);
     myList.setCellRenderer(myCellRenderer);
 
     myList.setFocusable(false);
@@ -314,7 +314,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     for (final LookupElement item : items) {
       addItem(item, itemMatcher(item));
     }
-    refreshUi(true);
+    refreshUi(true, true);
   }
 
   public void addItem(LookupElement item, PrefixMatcher matcher) {
@@ -387,7 +387,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
       myPresentableArranger.prefixChanged();
     }
     requestResize();
-    refreshUi(false);
+    refreshUi(false, true);
     ensureSelectionVisible();
   }
 
@@ -422,14 +422,14 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     }
     requestResize();
     if (shouldUpdate) {
-      refreshUi(false);
+      refreshUi(false, true);
       ensureSelectionVisible();
     }
 
     return true;
   }
 
-  private boolean updateList() {
+  private boolean updateList(boolean onExplicitAction) {
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       ApplicationManager.getApplication().assertIsDispatchThread();
     }
@@ -437,7 +437,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
 
     DefaultListModel listModel = (DefaultListModel)myList.getModel();
     synchronized (myList) {
-      Pair<List<LookupElement>, Integer> pair = myPresentableArranger.arrangeItems(this);
+      Pair<List<LookupElement>, Integer> pair = myPresentableArranger.arrangeItems(this, onExplicitAction);
       List<LookupElement> items = pair.first;
       Integer toSelect = pair.second;
       if (toSelect == null || toSelect < 0 || items.size() > 0 && toSelect >= items.size()) {
@@ -1125,7 +1125,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     })) {
       return;
     }
-    refreshUi(true);
+    refreshUi(true, true);
   }
 
   @Nullable
@@ -1236,7 +1236,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     staticDisposeTrace = disposeTrace;
   }
 
-  public void refreshUi(boolean mayCheckReused) {
+  public void refreshUi(boolean mayCheckReused, boolean onExplicitAction) {
     final boolean reused = mayCheckReused && checkReused();
     if (reused) {
       myAdditionalPrefix = "";
@@ -1244,7 +1244,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
 
     boolean selectionVisible = isSelectionVisible();
 
-    boolean itemsChanged = updateList();
+    boolean itemsChanged = updateList(onExplicitAction);
 
     if (isVisible()) {
       LOG.assertTrue(!ApplicationManager.getApplication().isUnitTestMode());
@@ -1300,7 +1300,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
         if (!myDisposed) {
           myAdComponent.addAdvertisement(text);
           requestResize();
-          refreshUi(false);
+          refreshUi(false, false);
         }
       }
     });

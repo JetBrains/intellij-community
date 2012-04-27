@@ -24,17 +24,16 @@ import com.intellij.psi.PsiFile;
 /**
  * @author peter
  */
-public class CompletionParameters {
+public final class CompletionParameters {
   private final PsiElement myPosition;
   private final PsiFile myOriginalFile;
   private final CompletionType myCompletionType;
   private final Lookup myLookup;
   private final int myOffset;
   private final int myInvocationCount;
-  private final boolean myRelaxedMatching;
 
-  protected CompletionParameters(@NotNull final PsiElement position, @NotNull final PsiFile originalFile,
-                                 final CompletionType completionType, int offset, final int invocationCount, Lookup lookup, final boolean relaxedMatching) {
+  CompletionParameters(@NotNull final PsiElement position, @NotNull final PsiFile originalFile,
+                                 final CompletionType completionType, int offset, final int invocationCount, Lookup lookup) {
     assert offset >= position.getTextRange().getStartOffset();
     myPosition = position;
     assert position.isValid();
@@ -42,20 +41,15 @@ public class CompletionParameters {
     myCompletionType = completionType;
     myOffset = offset;
     myInvocationCount = invocationCount;
-    myRelaxedMatching = relaxedMatching;
     myLookup = lookup;
   }
 
   public CompletionParameters withType(CompletionType type) {
-    return new CompletionParameters(myPosition, myOriginalFile, type, myOffset, myInvocationCount, myLookup, myRelaxedMatching);
+    return new CompletionParameters(myPosition, myOriginalFile, type, myOffset, myInvocationCount, myLookup);
   }
 
   public CompletionParameters withInvocationCount(int newCount) {
-    return new CompletionParameters(myPosition, myOriginalFile, myCompletionType, myOffset, newCount, myLookup, myRelaxedMatching);
-  }
-
-  public CompletionParameters withRelaxedMatching() {
-    return new CompletionParameters(myPosition, myOriginalFile, myCompletionType, myOffset, myInvocationCount, myLookup, true);
+    return new CompletionParameters(myPosition, myOriginalFile, myCompletionType, myOffset, newCount, myLookup);
   }
 
   @NotNull
@@ -101,11 +95,7 @@ public class CompletionParameters {
     return myInvocationCount == 0;
   }
 
-  public boolean isRelaxedMatching() {
-    return myRelaxedMatching;
-  }
-
   public CompletionParameters withPosition(PsiElement element, int offset) {
-    return new CompletionParameters(element, myOriginalFile, myCompletionType, offset, myInvocationCount, myLookup, myRelaxedMatching);
+    return new CompletionParameters(element, myOriginalFile, myCompletionType, offset, myInvocationCount, myLookup);
   }
 }

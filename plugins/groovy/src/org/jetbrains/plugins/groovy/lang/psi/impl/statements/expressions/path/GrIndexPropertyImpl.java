@@ -96,7 +96,7 @@ public class GrIndexPropertyImpl extends GrExpressionImpl implements GrIndexProp
         }
       }
 
-      if (PsiImplUtil.isSimpleArrayAccess(thisType, argTypes, manager, resolveScope)) {
+      if (PsiImplUtil.isSimpleArrayAccess(thisType, argTypes, manager, resolveScope, PsiUtil.isLValue(index))) {
         return TypesUtil.boxPrimitiveType(((PsiArrayType)thisType).getComponentType(), manager, resolveScope);
       }
 
@@ -138,7 +138,8 @@ public class GrIndexPropertyImpl extends GrExpressionImpl implements GrIndexProp
     GrArgumentList argList = getArgumentList();
     if (argList == null) return GroovyResolveResult.EMPTY_ARRAY;
 
-    PsiType[] argTypes = PsiUtil.getArgumentTypes(argList, true, upToArgument);
+    PsiType[] argTypes = PsiUtil
+      .getArgumentTypes(argList.getNamedArguments(), argList.getExpressionArguments(), GrClosableBlock.EMPTY_ARRAY, true, upToArgument);
     if (argTypes == null) return GroovyResolveResult.EMPTY_ARRAY;
 
     final PsiManager manager = getManager();
@@ -165,10 +166,6 @@ public class GrIndexPropertyImpl extends GrExpressionImpl implements GrIndexProp
       }
     }
 
-    if (PsiImplUtil.isSimpleArrayAccess(thisType, argTypes, manager, resolveScope)) {
-      return GroovyResolveResult.EMPTY_ARRAY;
-    }
-
     GroovyResolveResult[] candidates;
     final String name;
     if (PsiUtil.isLValue(this)) {
@@ -180,6 +177,11 @@ public class GrIndexPropertyImpl extends GrExpressionImpl implements GrIndexProp
     else {
       name = "getAt";
     }
+
+    if (PsiImplUtil.isSimpleArrayAccess(thisType, argTypes, manager, resolveScope, PsiUtil.isLValue(this))) {
+      return GroovyResolveResult.EMPTY_ARRAY;
+    }
+
     candidates = ResolveUtil.getMethodCandidates(thisType, name, this, true, incompleteCode, false, argTypes);
 
     //hack for remove DefaultGroovyMethods.getAt(Object, ...)

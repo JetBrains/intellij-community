@@ -4,94 +4,44 @@ package com.intellij.codeInsight.completion.impl;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.completion.PrefixMatcher;
 import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.NameUtil;
-import com.intellij.util.containers.hash.LinkedHashMap;
 import com.intellij.util.text.Matcher;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.Map;
 
 /**
  * @author peter
 */
 public class CamelHumpMatcher extends PrefixMatcher {
-  private static int ourLastCompletionCaseSetting = -1;
-  private static final Map<String, Matcher> ourPatternCache = new LinkedHashMap<String, Matcher>() {
-    @Override
-    protected boolean removeEldestEntry(Map.Entry<String, Matcher> eldest) {
-      return size() > 10;
-    }
-  };
-  private Matcher myMatcher;
+  private final Matcher myMatcher;
   private final boolean myCaseSensitive;
-  private final int currentSetting;
-  private final boolean myRelaxedMatching;
 
   public CamelHumpMatcher(@NotNull final String prefix) {
-    this(prefix, true, false);
+    this(prefix, true);
   }
 
-  public CamelHumpMatcher(String prefix, boolean caseSensitive, boolean relaxedMatching) {
+  public CamelHumpMatcher(String prefix, boolean caseSensitive) {
     super(prefix);
-    myRelaxedMatching = relaxedMatching;
-    currentSetting = CodeInsightSettings.getInstance().COMPLETION_CASE_SENSITIVE;
     myCaseSensitive = caseSensitive;
+    myMatcher = createMatcher(myCaseSensitive);
   }
 
   public boolean prefixMatches(@NotNull final String name) {
-    synchronized (ourPatternCache) {
-      if (myMatcher == null) {
-        if (ourLastCompletionCaseSetting != currentSetting) {
-          ourPatternCache.clear();
-          ourLastCompletionCaseSetting = currentSetting;
-        }
-
-        myMatcher = obtainMatcher(myRelaxedMatching, myCaseSensitive);
-      }
-      if (myMatcher.matches(name)) {
-        if (myRelaxedMatching && obtainMatcher(false, myCaseSensitive).matches(name)) {
-          return false;
-        }
-
-        return true;
-      }
-      return false;
-    }
+    return myMatcher.matches(name);
   }
-
-  private Matcher obtainMatcher(final boolean relax, final boolean caseSensitive) {
-    String key = relax + myPrefix + caseSensitive;
-    Matcher pattern = ourPatternCache.get(key);
-    if (pattern == null) {
-      pattern = createCamelHumpsMatcher(relax, caseSensitive, myPrefix);
-      ourPatternCache.put(key, pattern);
-    }
-    return pattern;
-  }
-
 
   public boolean prefixMatches(@NotNull final LookupElement element) {
     return prefixMatchersInternal(element, !element.isCaseSensitive());
   }
 
   private boolean prefixMatchersInternal(final LookupElement element, final boolean itemCaseInsensitive) {
-    if (itemCaseInsensitive && myRelaxedMatching) {
-      return false;
-    }
-
     for (final String name : element.getAllLookupStrings()) {
       if (itemCaseInsensitive && StringUtil.startsWithIgnoreCase(name, myPrefix) || prefixMatches(name)) {
         return true;
       }
       if (itemCaseInsensitive && CodeInsightSettings.ALL != CodeInsightSettings.getInstance().COMPLETION_CASE_SENSITIVE) {
-        Matcher matcher;
-        synchronized (ourPatternCache) {
-          matcher = obtainMatcher(false, false);
-        }
-        if (matcher.matches(name)) {
+        if (createMatcher(false).matches(name)) {
           return true;
         }
       }
@@ -101,17 +51,13 @@ public class CamelHumpMatcher extends PrefixMatcher {
 
   @NotNull
   public PrefixMatcher cloneWithPrefix(@NotNull final String prefix) {
-    return new CamelHumpMatcher(prefix, myCaseSensitive, myRelaxedMatching);
+    return new CamelHumpMatcher(prefix, myCaseSensitive);
   }
 
-  private static Matcher createCamelHumpsMatcher(final boolean relaxedMatching, final boolean caseSensitive, String prefix) {
-    prefix = applyMiddleMatching(prefix);
+  private Matcher createMatcher(final boolean caseSensitive) {
+    String prefix = applyMiddleMatching(myPrefix);
 
     if (!caseSensitive) {
-      return NameUtil.buildCompletionMatcher(prefix, 0, true, true);
-    }
-
-    if (relaxedMatching) {
       return NameUtil.buildCompletionMatcher(prefix, 0, true, true);
     }
 
@@ -129,8 +75,8 @@ public class CamelHumpMatcher extends PrefixMatcher {
   }
 
   public static String applyMiddleMatching(String prefix) {
-    if (Registry.is("ide.completion.middle.matching") && !ApplicationManager.getApplication().isUnitTestMode() && !prefix.isEmpty()) {
-      return " " + StringUtil.replace(prefix, ".", ". ");
+    if (Registry.is("ide.completion.middle.matching") && !prefix.isEmpty()) {
+      return " " + StringUtil.replace(prefix, ".", ". ").trim();
     }
     return prefix;
   }
@@ -140,7 +86,4 @@ public class CamelHumpMatcher extends PrefixMatcher {
     return myPrefix;
   }
 
-  public boolean isRelaxedMatching() {
-    return myRelaxedMatching;
-  }
 }

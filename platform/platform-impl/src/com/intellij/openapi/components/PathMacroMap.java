@@ -43,11 +43,7 @@ public abstract class PathMacroMap {
   }
 
   public void putAll(PathMacroMap pathMacroMap) {
-    putAll(pathMacroMap.myMacroMap);
-  }
-
-  public void putAll(Map<String, String> macroMap) {
-    myMacroMap.putAll(macroMap);
+    myMacroMap.putAll(pathMacroMap.myMacroMap);
   }
 
   public void put(String fromText, String toText) {

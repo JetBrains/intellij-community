@@ -337,10 +337,13 @@ print fou<caret>nd''', 'java.util.ArrayList<java.lang.String>')
   }
 
   void testFindAllForSet() {
+    myFixture.addClass('''\
+package java.util;
+class HashSet<T> implements Set<T> {} ''')
     doTest('''\
 def arr =  ['1', '2', '3'] as Set<String>
 def found = arr.findAll({it==1})
-print fou<caret>nd''', 'java.util.Set<java.lang.String>')
+print fou<caret>nd''', 'java.util.HashSet<java.lang.String>')
   }
 
   void testInferArgumentTypeFromMethod1() {

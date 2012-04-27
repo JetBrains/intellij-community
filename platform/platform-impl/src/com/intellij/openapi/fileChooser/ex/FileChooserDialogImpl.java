@@ -578,4 +578,9 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
   protected String getDimensionServiceKey() {
     return "FileChooserDialogImpl";
   }
+
+  @Override
+  protected String getHelpId() {
+    return "select.path.dialog";
+  }
 }

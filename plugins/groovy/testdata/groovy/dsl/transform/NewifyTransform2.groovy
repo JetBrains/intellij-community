@@ -9,5 +9,5 @@ class Leaf extends Tree {
 
 @Newify([Tree, Leaf])
 buildTree() {
-  Tree(Tree(Leaf(1), Leaf(2)), Le<caret>)
+  Tree(Tree(Leaf(1), Leaf(2)), Lea<caret>)
 }

@@ -21,6 +21,7 @@ import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.ex.DescriptorProviderInspection;
 import com.intellij.codeInspection.ex.JobDescriptor;
 import com.intellij.codeInspection.ex.UnfairLocalInspectionTool;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -31,6 +32,13 @@ public class GroovyUnusedDeclarationInspection extends DescriptorProviderInspect
 
   @Override
   public void runInspection(@NotNull AnalysisScope scope, @NotNull InspectionManager manager) {
+  }
+
+  @Nls
+  @NotNull
+  @Override
+  public String getDisplayName() {
+    return "Unused declaration";
   }
 
   @NotNull

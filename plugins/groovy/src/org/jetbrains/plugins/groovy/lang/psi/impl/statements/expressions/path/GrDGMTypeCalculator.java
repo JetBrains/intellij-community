@@ -18,6 +18,8 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.path;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.hash.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -72,8 +74,15 @@ public class GrDGMTypeCalculator extends GrCallExpressionTypeCalculator {
         PsiClass rr = ((PsiClassType)returnType).resolve();
         if (rr != null && CommonClassNames.JAVA_UTIL_COLLECTION.equals(rr.getQualifiedName())) {
           PsiType type = qualifier.getType();
-          if (type instanceof PsiArrayType) return createArrayList(((PsiArrayType)type).getComponentType(), callExpression.getProject());
-          return type;
+          PsiType itemType = getItemType(type);
+          if ("flatten".equals(name) && itemType!=null) {
+            while (true) {
+              PsiType iitype = getItemType(itemType);
+              if (iitype == null) break;
+              itemType = iitype;
+            }
+          }
+          return createSimilarCollection(type, callExpression.getProject(), itemType);
         }
       }
     }
@@ -82,16 +91,56 @@ public class GrDGMTypeCalculator extends GrCallExpressionTypeCalculator {
   }
 
   @Nullable
-  private static PsiType createArrayList(PsiType type, Project project) {
-    PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
-    PsiClass arrayList =
-      JavaPsiFacade.getInstance(project).findClass(CommonClassNames.JAVA_UTIL_ARRAY_LIST, GlobalSearchScope.allScope(project));
-    if (arrayList == null) return null;
+  private static PsiType getItemType(PsiType type) {
+    if (type instanceof PsiArrayType) {
+      return ((PsiArrayType)type).getComponentType();
+    }
+    else {
+      return PsiUtil.extractIterableTypeParameter(type, true);
+    }
+  }
 
-    PsiTypeParameter[] parameters = arrayList.getTypeParameters();
+  @Nullable
+  private static PsiType createSimilarCollection(PsiType collection, Project project, PsiType... itemType) {
+    if (InheritanceUtil.isInheritor(collection, "java.util.SortedSet")) {
+      return createCollection(project, "java.util.SortedSet", itemType);
+    }
+    if (InheritanceUtil.isInheritor(collection, "java.util.LinkedHashSet")) {
+      return createCollection(project, "java.util.LinkedHashSet", itemType);
+    }
+    if (InheritanceUtil.isInheritor(collection, "java.util.Set")) {
+      return createCollection(project, "java.util.HashSet", itemType);
+    }
+    if (InheritanceUtil.isInheritor(collection, "java.util.LinkedList")) {
+      return createCollection(project, "java.util.LInkedList", itemType);
+    }
+    if (InheritanceUtil.isInheritor(collection, "java.util.Stack")) {
+      return createCollection(project, "java.util.Stack", itemType);
+    }
+    if (InheritanceUtil.isInheritor(collection, "java.util.Vector")) {
+      return createCollection(project, "java.util.Vector", itemType);
+    }
+    if (InheritanceUtil.isInheritor(collection, "java.util.List")) {
+      return createCollection(project, "java.util.ArrayList", itemType);
+    }
+    if (InheritanceUtil.isInheritor(collection, "java.util.Queue")) {
+      return createCollection(project, "java.util.LinkedList", itemType);
+    }
+
+    return createCollection(project, "java.util.ArrayList", itemType);
+  }
+
+  @Nullable
+  private static PsiType createCollection(Project project, String collectionName, PsiType... item) {
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
+    PsiClass collection =
+      JavaPsiFacade.getInstance(project).findClass(collectionName, GlobalSearchScope.allScope(project));
+    if (collection == null) return null;
+
+    PsiTypeParameter[] parameters = collection.getTypeParameters();
     if (parameters.length != 1) return null;
 
-    return factory.createType(arrayList, type);
+    return factory.createType(collection, item);
   }
 
   private static boolean isSimilarCollectionReturner(PsiMethod resolved) {

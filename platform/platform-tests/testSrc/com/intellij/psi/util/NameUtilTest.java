@@ -216,7 +216,18 @@ public class NameUtilTest extends UsefulTestCase {
     assertTrue(NameUtil.buildCompletionMatcher("*us", 0, true, true).matches("usage"));
     assertTrue(NameUtil.buildCompletionMatcher(" us", 0, true, true).matches("usage"));
     assertTrue(NameUtil.buildCompletionMatcher(" fo. ba", 0, true, true).matches("getFoo.getBar"));
+    assertMatches(" File. sepa", "File.separator");
+    assertMatches(" File. sepa", "File._separator");
+    assertMatches(" File. _sepa", "File._separator");
     assertMatches(" _fo", "_foo");
+  }
+
+  public void testMiddleMatchingFirstLetterSensitive() {
+    assertTrue(NameUtil.buildCompletionMatcher(" EUC-", 1, true, true).matches("x-EUC-TW"));
+    assertTrue(NameUtil.buildCompletionMatcher(" a", 1, true, true).matches("aaa"));
+    assertFalse(NameUtil.buildCompletionMatcher(" a", 1, true, true).matches("Aaa"));
+    assertFalse(NameUtil.buildCompletionMatcher(" a", 1, true, true).matches("Aaa"));
+    assertFalse(NameUtil.buildCompletionMatcher(" _bl", 1, true, true).matches("_top"));
   }
 
   public void testSpaceInCompletionPrefix() throws Exception {
@@ -365,6 +376,13 @@ public class NameUtilTest extends UsefulTestCase {
     assertPreference("*f", "barfoo", "foo");
     assertPreference("*f", "asdf", "Foo", NameUtil.MatchingCaseSensitivity.NONE);
     assertPreference(" sto", "ArrayStoreException", "StackOverflowError", NameUtil.MatchingCaseSensitivity.NONE);
+    assertPreference(" EUC-", "x-EUC-TW", "EUC-JP");
+    assertPreference(" boo", "Boolean", "boolean", NameUtil.MatchingCaseSensitivity.NONE);
+    assertPreference(" Boo", "boolean", "Boolean", NameUtil.MatchingCaseSensitivity.NONE);
+  }
+
+  public void testMeaningfulMatchingDegree() {
+    assertTrue(new NameUtil.MinusculeMatcher(" EUC-", NameUtil.MatchingCaseSensitivity.FIRST_LETTER).matchingDegree("x-EUC-TW") > Integer.MIN_VALUE);
   }
 
   private static void assertPreference(@NonNls String pattern,

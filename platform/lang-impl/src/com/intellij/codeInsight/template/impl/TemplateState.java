@@ -513,7 +513,7 @@ public class TemplateState implements Disposable {
     }
 
     lookup.setAdvertisementText(advertisingText);
-    lookup.refreshUi(true);
+    lookup.refreshUi(true, true);
     ourLookupShown = true;
     lookup.addLookupListener(new LookupAdapter() {
       public void lookupCanceled(LookupEvent event) {

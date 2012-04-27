@@ -514,9 +514,9 @@ public class PsiImplUtil {
     }
   }
 
-  public static boolean isSimpleArrayAccess(PsiType exprType, PsiType[] argTypes, PsiManager manager, GlobalSearchScope resolveScope) {
+  public static boolean isSimpleArrayAccess(PsiType exprType, PsiType[] argTypes, PsiManager manager, GlobalSearchScope resolveScope, boolean isLValue) {
     return exprType instanceof PsiArrayType &&
-           argTypes.length == 1 &&
+           (isLValue && argTypes.length == 2 || !isLValue && argTypes.length == 1) &&
            TypesUtil.isAssignable(PsiType.INT, argTypes[0], manager, resolveScope);
   }
 

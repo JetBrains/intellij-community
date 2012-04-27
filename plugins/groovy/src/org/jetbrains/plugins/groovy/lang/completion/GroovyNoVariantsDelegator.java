@@ -51,7 +51,7 @@ public class GroovyNoVariantsDelegator extends CompletionContributor {
   private static void delegate(CompletionParameters parameters, CompletionResultSet result) {
     if (parameters.getCompletionType() == CompletionType.BASIC) {
       if (parameters.getInvocationCount() <= 1 &&
-          JavaCompletionContributor.mayStartClassName(result, false) &&
+          JavaCompletionContributor.mayStartClassName(result) &&
           GroovyCompletionContributor.isClassNamePossible(parameters.getPosition()) &&
           !MapArgumentCompletionProvider.isMapKeyCompletion(parameters)) {
         suggestNonImportedClasses(parameters, result);

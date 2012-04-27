@@ -203,12 +203,12 @@ public class LookupManagerImpl extends LookupManager {
       }
     });
 
-    CamelHumpMatcher matcher = new CamelHumpMatcher(prefix == null ? "" : prefix);
+    CamelHumpMatcher matcher = new CamelHumpMatcher(prefix);
     if (items.length > 0) {
       for (final LookupElement item : items) {
         myActiveLookup.addItem(item, matcher);
       }
-      myActiveLookup.refreshUi(true);
+      myActiveLookup.refreshUi(true, true);
     } else {
       alarm.cancelAllRequests(); // no items -> no doc
     }

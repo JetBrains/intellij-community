@@ -308,7 +308,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
 
         Color color = getFileColorFor(object);
         if (color != null) {
-          g.setColor(color);
+          g.setColor(ColorUtil.softer(color));
           g.fillRect(0, bounds.y, getWidth(), bounds.height);
         }
       }

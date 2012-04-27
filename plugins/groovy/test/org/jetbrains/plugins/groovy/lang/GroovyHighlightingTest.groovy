@@ -807,4 +807,12 @@ def bar2(def b) { foo2<weak_warning descr="Cannot infer argument types">(b)</wea
     myFixture.testHighlighting(true, false, true)
   }
 
+  public void testPutAtApplicability() {
+    myFixture.configureByText('_.groovy', '''\
+LinkedHashMap<File, List<File>> files = [:]
+files[new File('a')] = [new File('b')]
+files<warning descr="'putAt' in 'org.codehaus.groovy.runtime.DefaultGroovyMethods' cannot be applied to '(java.io.File, java.io.File)'">[new File('a')] = new File('b')
+''')
+  }
+
 }
