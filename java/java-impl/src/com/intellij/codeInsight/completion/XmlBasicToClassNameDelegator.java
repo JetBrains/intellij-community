@@ -28,7 +28,7 @@ public class XmlBasicToClassNameDelegator extends AbstractBasicToClassNameDelega
 
   @Override
   protected boolean isClassNameCompletionSupported(CompletionResultSet result, PsiFile file, PsiElement position) {
-    if (!JavaCompletionContributor.mayStartClassName(result, false)) return false;
+    if (!JavaCompletionContributor.mayStartClassName(result)) return false;
 
     return file.getLanguage().isKindOf(StdLanguages.XML);
   }

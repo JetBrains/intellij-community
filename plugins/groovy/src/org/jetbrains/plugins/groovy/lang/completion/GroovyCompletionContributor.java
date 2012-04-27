@@ -332,7 +332,7 @@ public class GroovyCompletionContributor extends CompletionContributor {
         if (reference.getQualifier() == null) {
           GroovySmartCompletionContributor.addExpectedClassMembers(parameters, result);
 
-          if (isClassNamePossible(position) && JavaCompletionContributor.mayStartClassName(result, parameters.isRelaxedMatching())) {
+          if (isClassNamePossible(position) && JavaCompletionContributor.mayStartClassName(result)) {
             if (JavaCompletionContributor.mayShowAllClasses(parameters)) {
               addAllClasses(parameters, result, inheritors);
             } else {

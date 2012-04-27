@@ -379,7 +379,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     PsiFile originalFile = fileCopy.getOriginalFile();
     final PsiElement insertedElement = findCompletionPositionLeaf(newContext, offset, fileCopy, originalFile);
     insertedElement.putUserData(CompletionContext.COMPLETION_CONTEXT_KEY, newContext);
-    return new CompletionParameters(insertedElement, originalFile, myCompletionType, offset, invocationCount, obtainLookup(initContext.getEditor()), false);
+    return new CompletionParameters(insertedElement, originalFile, myCompletionType, offset, invocationCount, obtainLookup(initContext.getEditor()));
   }
 
   @NotNull

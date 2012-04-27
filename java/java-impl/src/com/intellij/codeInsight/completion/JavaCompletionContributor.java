@@ -241,7 +241,7 @@ public class JavaCompletionContributor extends CompletionContributor {
   public static void addAllClasses(CompletionParameters parameters,
                                    final CompletionResultSet result,
                                    final InheritorsHolder inheritors) {
-    if (!isClassNamePossible(parameters.getPosition()) || !mayStartClassName(result, parameters.isRelaxedMatching())) return;
+    if (!isClassNamePossible(parameters.getPosition()) || !mayStartClassName(result)) return;
 
     if (mayShowAllClasses(parameters)) {
       JavaClassNameCompletionContributor.addAllClasses(parameters, parameters.getInvocationCount() <= 2, result.getPrefixMatcher(), new Consumer<LookupElement>() {
@@ -385,14 +385,13 @@ public class JavaCompletionContributor extends CompletionContributor {
     return Registry.is("show.all.classes.on.first.completion") || parameters.getInvocationCount() >= 2;
   }
 
-  public static boolean mayStartClassName(CompletionResultSet result, final boolean relaxedMatching) {
+  public static boolean mayStartClassName(CompletionResultSet result) {
     String prefix = result.getPrefixMatcher().getPrefix();
     if (StringUtil.isEmpty(prefix)) {
       return false;
     }
 
     return StringUtil.isCapitalized(prefix) ||
-           relaxedMatching ||
            CodeInsightSettings.getInstance().COMPLETION_CASE_SENSITIVE == CodeInsightSettings.NONE;
   }
 
