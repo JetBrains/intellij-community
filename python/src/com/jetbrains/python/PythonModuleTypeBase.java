@@ -25,7 +25,7 @@ public abstract class PythonModuleTypeBase<T extends ModuleBuilder> extends Modu
   }
 
   public String getDescription() {
-    return "Provides facilities for developing Python, Django and Google App Engine applications";
+    return "Python modules are used for developing <b>Python</b> applications. Supported technologies include <b>Django, Google App Engine, Mako, Jinja2</b> and others.";
   }
 
   public Icon getBigIcon() {
