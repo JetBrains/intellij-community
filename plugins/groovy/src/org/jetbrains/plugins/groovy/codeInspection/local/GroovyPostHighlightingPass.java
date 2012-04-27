@@ -58,6 +58,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -105,7 +106,7 @@ public class GroovyPostHighlightingPass extends TextEditorHighlightingPass {
     };
 
     final List<HighlightInfo> unusedDeclarations = new ArrayList<HighlightInfo>();
-    final Set<GrImportStatement> unusedImports = new HashSet<GrImportStatement>(GroovyImportOptimizer.getValidImportStatements(myFile));
+    final Set<GrImportStatement> unusedImports = new HashSet<GrImportStatement>(PsiUtil.getValidImportStatements(myFile));
     myFile.accept(new PsiRecursiveElementWalkingVisitor() {
       @Override
       public void visitElement(PsiElement element) {
@@ -145,7 +146,7 @@ public class GroovyPostHighlightingPass extends TextEditorHighlightingPass {
             }
           }
         }
-        
+
         super.visitElement(element);
       }
     });

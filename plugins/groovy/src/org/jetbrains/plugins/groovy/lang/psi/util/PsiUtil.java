@@ -69,6 +69,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousC
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrMemberOwner;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.*;
+import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClosureSignature;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrNamedArgumentsOwner;
@@ -1256,5 +1257,17 @@ public class PsiUtil {
       parent = parent.getParent();
     }
     return ((GrMemberOwner) parent);
+  }
+
+  @NotNull
+  public static List<GrImportStatement> getValidImportStatements(final GroovyFile file) {
+    final List<GrImportStatement> oldImports = new ArrayList<GrImportStatement>();
+    for (GrImportStatement statement : file.getImportStatements()) {
+      final GrCodeReferenceElement reference = statement.getImportReference();
+      if (reference != null && reference.multiResolve(false).length > 0) {
+        oldImports.add(statement);
+      }
+    }
+    return oldImports;
   }
 }

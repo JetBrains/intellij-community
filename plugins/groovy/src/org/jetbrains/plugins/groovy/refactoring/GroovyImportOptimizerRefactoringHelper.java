@@ -33,6 +33,7 @@ import com.intellij.util.containers.hash.HashSet;
 import org.jetbrains.plugins.groovy.lang.editor.GroovyImportOptimizer;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import java.util.HashMap;
 import java.util.List;
@@ -79,7 +80,7 @@ public class GroovyImportOptimizerRefactoringHelper implements RefactoringHelper
           ApplicationManager.getApplication().runReadAction(new Runnable() {
             public void run() {
               final Set<GrImportStatement> usedImports = GroovyImportOptimizer.findUsedImports(file);
-              final List<GrImportStatement> validImports = GroovyImportOptimizer.getValidImportStatements(file);
+              final List<GrImportStatement> validImports = PsiUtil.getValidImportStatements(file);
               redundants.put(file, Pair.create(validImports, usedImports));
             }
           });

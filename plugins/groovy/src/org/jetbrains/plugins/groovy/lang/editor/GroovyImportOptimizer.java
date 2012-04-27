@@ -52,7 +52,7 @@ public class GroovyImportOptimizer implements ImportOptimizer {
 
   public static Set<GrImportStatement> findUsedImports(GroovyFile file) {
     Set<GrImportStatement> usedImports = new HashSet<GrImportStatement>();
-    findUnusedImports(file, null, null, usedImports, null, null);
+    processFile(file, null, null, usedImports, null, null);
     return usedImports;
   }
 
@@ -60,12 +60,12 @@ public class GroovyImportOptimizer implements ImportOptimizer {
     return file instanceof GroovyFile;
   }
 
-  private static void findUnusedImports(@Nullable PsiFile file,
-                                        @Nullable final Set<String> importedClasses,
-                                        @Nullable final Set<String> staticallyImportedMembers,
-                                        @Nullable final Set<GrImportStatement> usedImports,
-                                        @Nullable final Set<String> implicitlyImported,
-                                        @Nullable final Set<String> innerClasses) {
+  private static void processFile(@Nullable PsiFile file,
+                                  @Nullable final Set<String> importedClasses,
+                                  @Nullable final Set<String> staticallyImportedMembers,
+                                  @Nullable final Set<GrImportStatement> usedImports,
+                                  @Nullable final Set<String> implicitlyImported,
+                                  @Nullable final Set<String> innerClasses) {
     if (!(file instanceof GroovyFile)) return;
 
     ((GroovyFile)file).accept(new GroovyRecursiveElementVisitor() {
@@ -188,8 +188,8 @@ public class GroovyImportOptimizer implements ImportOptimizer {
       final Set<GrImportStatement> usedImports = new HashSet<GrImportStatement>();
       final Set<String> implicitlyImported = new LinkedHashSet<String>();
       final HashSet<String> innerClasses = new HashSet<String>();
-      findUnusedImports(myFile, importedClasses, staticallyImportedMembers, usedImports, implicitlyImported, innerClasses);
-      final List<GrImportStatement> oldImports = getValidImportStatements(file);
+      processFile(myFile, importedClasses, staticallyImportedMembers, usedImports, implicitlyImported, innerClasses);
+      final List<GrImportStatement> oldImports = PsiUtil.getValidImportStatements(file);
       if (myRemoveUnusedOnly) {
         for (GrImportStatement oldImport : oldImports) {
           if (!usedImports.contains(oldImport)) {
@@ -363,17 +363,5 @@ public class GroovyImportOptimizer implements ImportOptimizer {
       explicated.addAll(result);
       return explicated.toArray(new GrImportStatement[explicated.size()]);
     }
-  }
-
-  @NotNull
-  public static List<GrImportStatement> getValidImportStatements(final GroovyFile file) {
-    final List<GrImportStatement> oldImports = new ArrayList<GrImportStatement>();
-    for (GrImportStatement statement : file.getImportStatements()) {
-      final GrCodeReferenceElement reference = statement.getImportReference();
-      if (reference != null && reference.multiResolve(false).length > 0) {
-        oldImports.add(statement);
-      }
-    }
-    return oldImports;
   }
 }
