@@ -36,6 +36,17 @@ public class PyQuickFixTest extends PyTestCase {
                      PyUnresolvedReferencesInspection.class, PyBundle.message("ACT.NAME.use.import"), true, true);
   }
 
+  public void testImportFromModuleStar() {  // PY-6302
+    myFixture.enableInspections(PyUnresolvedReferencesInspection.class);
+    myFixture.copyDirectoryToProject("importFromModuleStar", "");
+    myFixture.configureFromTempProjectFile("source.py");
+    myFixture.checkHighlighting(true, false, false);
+    final IntentionAction intentionAction = myFixture.findSingleIntention(PyBundle.message("ACT.NAME.use.import"));
+    assertNotNull(intentionAction);
+    myFixture.launchAction(intentionAction);
+    myFixture.checkResultByFile("importFromModuleStar/source_after.py");
+  }
+
   public void testQualifyByImport() {
     final PyCodeInsightSettings settings = PyCodeInsightSettings.getInstance();
     boolean oldPreferFrom = settings.PREFER_FROM_IMPORT;

@@ -4,20 +4,20 @@ import com.google.common.collect.Maps;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
-import com.intellij.util.Processor;
 import com.jetbrains.python.PythonHelpersLocator;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 
 import static com.jetbrains.python.sdk.SkeletonVersionChecker.fromVersionString;
 
@@ -36,7 +36,11 @@ public class PySkeletonGenerator {
   public void finishSkeletonsGeneration() {
   }
 
-  static class ListBinariesResult {
+  public boolean exists(String name) {
+    return new File(name).exists();
+  }
+
+  protected static class ListBinariesResult {
     public final int generatorVersion;
     public final Map<String, PySkeletonRefresher.PyBinaryItem> modules;
 

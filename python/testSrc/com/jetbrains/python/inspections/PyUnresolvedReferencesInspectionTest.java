@@ -32,6 +32,10 @@ public class PyUnresolvedReferencesInspectionTest extends PyTestCase {
     doTest();
   }
 
+  public void testSlotsSubclass() {  // PY-5939
+    doTest();
+  }
+
   public void testImportExceptImportError() {
     doTest();
   }
@@ -99,6 +103,10 @@ public class PyUnresolvedReferencesInspectionTest extends PyTestCase {
 
   // PY-6316
   public void testNestedComprehensions() {
+    doTest();
+  }
+
+  public void testCompoundDunderAll() {  // PY-6370
     doTest();
   }
 

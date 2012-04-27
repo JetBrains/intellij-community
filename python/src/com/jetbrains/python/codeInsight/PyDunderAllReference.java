@@ -1,5 +1,8 @@
 package com.jetbrains.python.codeInsight;
 
+import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.LookupElementBuilder;
+import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
@@ -9,6 +12,7 @@ import com.intellij.psi.ResolveState;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.util.ArrayUtil;
 import com.jetbrains.python.psi.PyFile;
+import com.jetbrains.python.psi.PyImportElement;
 import com.jetbrains.python.psi.PyStringLiteralExpression;
 import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.impl.LightNamedElement;
@@ -41,7 +45,7 @@ public class PyDunderAllReference extends PsiReferenceBase<PyStringLiteralExpres
   @NotNull
   @Override
   public Object[] getVariants() {
-    final List<PsiElement> result = new ArrayList<PsiElement>();
+    final List<LookupElement> result = new ArrayList<LookupElement>();
     PyFile containingFile = (PyFile) getElement().getContainingFile().getOriginalFile();
     final List<String> dunderAll = containingFile.getDunderAll();
     containingFile.processDeclarations(new PsiScopeProcessor() {
@@ -50,7 +54,13 @@ public class PyDunderAllReference extends PsiReferenceBase<PyStringLiteralExpres
         if (element instanceof PsiNamedElement && !(element instanceof LightNamedElement)) {
           final String name = ((PsiNamedElement)element).getName();
           if (name != null && PyUtil.getInitialUnderscores(name) == 0 && (dunderAll == null || !dunderAll.contains(name))) {
-            result.add(element);
+            result.add(LookupElementBuilder.create((PsiNamedElement) element).setIcon(element.getIcon(Iconable.ICON_FLAG_CLOSED)));
+          }
+        }
+        else if (element instanceof PyImportElement) {
+          final String visibleName = ((PyImportElement)element).getVisibleName();
+          if (visibleName != null && (dunderAll == null || !dunderAll.contains(visibleName))) {
+            result.add(LookupElementBuilder.create(element, visibleName));
           }
         }
         return true;

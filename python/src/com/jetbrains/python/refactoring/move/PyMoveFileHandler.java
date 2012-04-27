@@ -4,6 +4,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.refactoring.RefactoringSettings;
 import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFileHandler;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
@@ -38,7 +39,8 @@ public class PyMoveFileHandler extends MoveFileHandler {
       while (root != null && !roots.contains(root.getVirtualFile())) {
         root = root.getParentDirectory();
       }
-      if (moveDestination != root && root != null) {
+      final boolean searchForReferences = RefactoringSettings.getInstance().MOVE_SEARCH_FOR_REFERENCES_FOR_FILE;
+      if (moveDestination != root && root != null && searchForReferences) {
         CreatePackageAction.createInitPyInHierarchy(moveDestination, root);
       }
     }

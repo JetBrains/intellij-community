@@ -54,7 +54,7 @@ public class ScopeImpl implements Scope {
     return null;
   }
 
-  private synchronized List<DFAMap<ScopeVariable>> computeScopeVariables() throws DFALimitExceededException {
+  private synchronized void computeScopeVariables() throws DFALimitExceededException {
     computeFlow();
     if (myCachedScopeVariables == null) {
       final PyReachingDefsDfaInstance dfaInstance = new PyReachingDefsDfaInstance();
@@ -62,7 +62,6 @@ public class ScopeImpl implements Scope {
       final DFAMapEngine<ScopeVariable> engine = new DFAMapEngine<ScopeVariable>(myFlow, dfaInstance, semilattice);
       myCachedScopeVariables = engine.performDFA();
     }
-    return myCachedScopeVariables;
   }
 
   public boolean isGlobal(final String name) {
@@ -196,6 +195,21 @@ public class ScopeImpl implements Scope {
         }
       }
     });
+
+    Collections.sort(nameDefiners, new Comparator<NameDefiner>() {
+      @Override
+      public int compare(NameDefiner d1, NameDefiner d2) {
+        return getPriority(d2) - getPriority(d1);
+      };
+
+      private int getPriority(NameDefiner nameDefiner) {
+        if (nameDefiner instanceof PyStarImportElement) {
+          return -10;
+        }
+        return 0;
+      }
+    });
+
     myNamedElements = namedElements;
     myNameDefiners = nameDefiners;
     myNestedScopes = nestedScopes;

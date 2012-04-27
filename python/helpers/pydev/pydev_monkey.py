@@ -63,7 +63,14 @@ def patch_args(args):
     return new_args
 
 def args_to_str(args):
-    return ' '.join(x if x.startswith('"') and x.endswith('"') else '"%s"' % x  for x in args)
+    quoted_args = []
+    for x in args:
+        if x.startswith('"') and x.endswith('"'):
+            quoted_args.append(x)
+        else:
+            quoted_args.append('"%s"' % x)
+
+    return ' '.join(quoted_args)
 
 def remove_quotes(str):
     if str.startswith('"') and str.endswith('"'):

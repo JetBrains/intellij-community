@@ -18,7 +18,6 @@ import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
-import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
 import com.intellij.util.io.ZipUtil;
 import com.jetbrains.python.PyBundle;
@@ -425,7 +424,8 @@ public class PySkeletonRefresher {
         boolean canLive = headerMatcher != null && headerMatcher.matches();
         if (canLive) {
           String sourceName = headerMatcher.group(1);
-          canLive = sourceName != null && (SkeletonVersionChecker.BUILTIN_NAME.equals(sourceName) || new File(sourceName).exists());
+          canLive =
+            sourceName != null && (SkeletonVersionChecker.BUILTIN_NAME.equals(sourceName) || mySkeletonsGenerator.exists(sourceName));
         }
         if (!canLive) {
           mySkeletonsGenerator.deleteOrLog(item);
@@ -566,7 +566,7 @@ public class PySkeletonRefresher {
     return false;
   }
 
-  static class PyBinaryItem {
+  public static class PyBinaryItem {
     private String myPath;
     private String myModule;
     private long myLength;
@@ -647,6 +647,11 @@ public class PySkeletonRefresher {
     if (versionString == null) {
       return null;
     }
+
+    if (PySdkUtil.isRemote(mySdk)) {
+      return null;
+    }
+
     String version = versionString.toLowerCase().replace(" ", "-");
     File f;
     if (SystemInfo.isMac) {

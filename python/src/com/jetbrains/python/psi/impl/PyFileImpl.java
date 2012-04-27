@@ -183,9 +183,11 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
       return null;
     }
 
+    @Nullable
     private PsiElement resolveDeclaration(String name, PsiElement result) {
       if (result instanceof PyImportElement) {
-        return findNameInImportElement(name, (PyImportElement)result);
+        final PyImportElement importElement = (PyImportElement)result;
+        return findNameInImportElement(name, importElement, importElement.getContainingImportStatement() instanceof PyFromImportStatement);
       }
       else if (result instanceof PyFromImportStatement) {
         return ((PyFromImportStatement) result).resolveImportSource();
@@ -557,7 +559,7 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
   @Nullable
   private PsiElement findNameInImportStatement(String name, PyImportStatement child) {
     for (PyImportElement importElement: child.getImportElements()) {
-      final PsiElement result = findNameInImportElement(name, importElement);
+      final PsiElement result = findNameInImportElement(name, importElement, false);
       if (result != null) {
         return result;
       }
@@ -566,8 +568,8 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
   }
 
   @Nullable
-  private PsiElement findNameInImportElement(String name, PyImportElement importElement) {
-    final PsiElement result = importElement.getElementNamed(name, false);
+  private PsiElement findNameInImportElement(String name, PyImportElement importElement, final boolean resolveImportElement) {
+    final PsiElement result = importElement.getElementNamed(name, resolveImportElement);
     if (result != null) {
       return result;
     }
