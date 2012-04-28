@@ -405,7 +405,8 @@ public class GitUnstashDialog extends DialogWrapper {
     if (!d.isOK()) {
       return;
     }
-    affectedRoots.add(d.getGitRoot());
+    VirtualFile root = d.getGitRoot();
+    affectedRoots.add(root);
     GitLineHandler h = d.handler();
     final AtomicBoolean conflict = new AtomicBoolean();
 
@@ -417,9 +418,9 @@ public class GitUnstashDialog extends DialogWrapper {
       }
     });
     int rc = GitHandlerUtil.doSynchronously(h, GitBundle.getString("unstash.unstashing"), h.printableCommandLine(), false);
+    root.refresh(true, true);
 
     if (conflict.get()) {
-      VirtualFile root = d.getGitRoot();
       boolean conflictsResolved = new UnstashConflictResolver(project, root, d.getSelectedStash()).merge();
       LOG.info("loadRoot " + root + ", conflictsResolved: " + conflictsResolved);
     } else if (rc != 0) {
