@@ -312,7 +312,6 @@ public final class GitHttpAdapter {
             i--;
             command.cleanup();
           }
-          throw e;
         }
         catch (JGitInternalException e) {
           if (authError(e)) {
