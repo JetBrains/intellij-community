@@ -94,6 +94,7 @@ public class AndroidPrecompileTask implements CompileTask {
           excludeAllSourceRoots(module, configuration, addedEntries);
         }
         else {
+          // todo: support this by project converter to use on compile-server
           unexcludeAllSourceRoots(facet, configuration);
         }
       }
