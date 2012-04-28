@@ -123,6 +123,13 @@ public class NameUtilTest extends UsefulTestCase {
     assertTrue(NameUtil.buildCompletionMatcher(" us", 0, true, true).matches("getMyUsage"));
   }
 
+  public void testStartDot() {
+    assertMatches("A*.html", "A.html");
+    assertMatches("A*.html", "Abc.html");
+    assertMatches("A*.html", "after.html");
+    assertDoesntMatch("A*.html", "10_after.html");
+  }
+
   public void testIDEADEV15503() throws Exception {
     assertMatches("AR.jsp", "add_relationship.jsp");
     assertMatches("AR.jsp", "advanced_rule.jsp");

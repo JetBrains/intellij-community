@@ -449,7 +449,7 @@ public class NameUtil {
       }
 
       if (StringUtil.toLowerCase(name.charAt(nameIndex)) != StringUtil.toLowerCase(myPattern[patternIndex])) {
-        if (Character.isDigit(name.charAt(nameIndex)) || (name.charAt(nameIndex) == '.' && name.indexOf('.', nameIndex + 1) > 0)) {
+        if (Character.isDigit(name.charAt(nameIndex)) && nameIndex > 0 || (name.charAt(nameIndex) == '.' && name.indexOf('.', nameIndex + 1) > 0)) {
           return matchName(name, patternIndex, nameIndex + 1);
         }
         return null;
