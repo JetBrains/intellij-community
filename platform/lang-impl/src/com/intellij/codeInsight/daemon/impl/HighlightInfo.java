@@ -519,7 +519,7 @@ public class HighlightInfo implements Segment {
         if (myAction instanceof QuickFixWrapper) {
           aClass = ((QuickFixWrapper)myAction).getFix().getClass();
         }
-        newOptions.add(new CleanupInspectionIntention((LocalInspectionTool)wrappedTool, aClass));
+        newOptions.add(new CleanupInspectionIntention((LocalInspectionToolWrapper)tool, aClass));
       } else if (tool instanceof GlobalInspectionToolWrapper) {
         wrappedTool = ((GlobalInspectionToolWrapper)tool).getTool();
       }

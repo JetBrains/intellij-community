@@ -41,10 +41,10 @@ import java.util.List;
  * Date: 21-Feb-2006
  */
 public class CleanupInspectionIntention implements IntentionAction, HighPriorityAction {
-  private final LocalInspectionTool myTool;
+  private final LocalInspectionToolWrapper myTool;
   private final Class myQuickfixClass;
 
-  public CleanupInspectionIntention(final LocalInspectionTool tool, Class quickFixClass) {
+  public CleanupInspectionIntention(final LocalInspectionToolWrapper tool, Class quickFixClass) {
     myTool = tool;
     myQuickfixClass = quickFixClass;
   }
@@ -64,7 +64,7 @@ public class CleanupInspectionIntention implements IntentionAction, HighPriority
     final List<CommonProblemDescriptor> descriptions = ProgressManager.getInstance().runProcess(new Computable<List<CommonProblemDescriptor>>() {
       @Override
       public List<CommonProblemDescriptor> compute() {
-        return InspectionRunningUtil.runInspectionOnFile(file, myTool);
+        return InspectionRunningUtil.runInspectionOnFile(file, myTool.getTool());
       }
     }, new EmptyProgressIndicator());
 

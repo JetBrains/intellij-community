@@ -1072,20 +1072,15 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   }
 
   private void enableInspectionTool(InspectionProfileEntry tool) {
+    InspectionToolWrapper wrapper = InspectionToolRegistrar.wrapTool(tool);
     final String shortName = tool.getShortName();
     final HighlightDisplayKey key = HighlightDisplayKey.find(shortName);
+
     if (key == null) {
       String id = tool instanceof LocalInspectionTool ? ((LocalInspectionTool)tool).getID() : shortName;
-      HighlightDisplayKey.register(shortName, tool.getDisplayName(), id);
+      HighlightDisplayKey.register(shortName, wrapper.getDisplayName(), id);
     }
-    InspectionTool inspectionTool;
-    if (tool instanceof LocalInspectionTool) {
-      inspectionTool = new LocalInspectionToolWrapper((LocalInspectionTool)tool);
-    }
-    else {
-      inspectionTool = (InspectionTool)tool;
-    }
-    myAvailableTools.put(shortName, inspectionTool);
+    myAvailableTools.put(shortName, wrapper);
   }
 
   private void configureInspections(final InspectionProfileEntry[] tools) {
