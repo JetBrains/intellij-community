@@ -287,8 +287,12 @@ public class DumbServiceImpl extends DumbService {
         public void run(@NotNull final ProgressIndicator indicator) {
           if (indicator instanceof ProgressIndicatorEx) {
             ((ProgressIndicatorEx)indicator).addStateDelegate(new ProgressIndicatorBase() {
+              double lastFraction;
+
               @Override
               public void setFraction(final double fraction) {
+                if (fraction - lastFraction < 0.01d) return;
+                lastFraction = fraction;
                 UIUtil.invokeLaterIfNeeded(new Runnable() {
                   public void run() {
                     AppIcon.getInstance().setProgress("indexUpdate", AppIconScheme.Progress.INDEXING, fraction, true);
