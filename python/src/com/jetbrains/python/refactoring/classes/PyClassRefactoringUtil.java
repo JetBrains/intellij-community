@@ -14,7 +14,10 @@ import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import com.jetbrains.python.codeInsight.imports.AddImportHelper;
 import com.jetbrains.python.documentation.DocStringTypeReference;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.impl.*;
+import com.jetbrains.python.psi.impl.PyBuiltinCache;
+import com.jetbrains.python.psi.impl.PyImportedModule;
+import com.jetbrains.python.psi.impl.PyPsiUtils;
+import com.jetbrains.python.psi.impl.PyQualifiedName;
 import com.jetbrains.python.psi.resolve.ResolveImportUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -315,7 +318,7 @@ public class PyClassRefactoringUtil {
     return null;
   }
 
-  public static void updateImportOfElement(PyImportStatementBase importStatement, PsiNamedElement element) {
+  public static void updateImportOfElement(@NotNull PyImportStatementBase importStatement, @NotNull PsiNamedElement element) {
     final String name = getOriginalName(element);
     if (name != null) {
       PyImportElement importElement = null;
@@ -325,7 +328,16 @@ public class PyClassRefactoringUtil {
         }
       }
       if (importElement != null) {
-        if (insertImport(importStatement, element, importElement.getAsName())) {
+        final PsiFile file = importStatement.getContainingFile();
+        final PsiFile newFile = element.getContainingFile();
+        boolean deleteImportElement = false;
+        if (newFile == file) {
+          deleteImportElement = true;
+        }
+        else if (insertImport(importStatement, element, importElement.getAsName())) {
+          deleteImportElement = true;
+        }
+        if (deleteImportElement) {
           if (importStatement.getImportElements().length == 1) {
             importStatement.delete();
           }
@@ -338,7 +350,7 @@ public class PyClassRefactoringUtil {
   }
 
   @Nullable
-  public static String getOriginalName(PsiNamedElement element) {
+  public static String getOriginalName(@NotNull PsiNamedElement element) {
     if (element instanceof PyFile) {
       final PsiElement e = PyUtil.turnInitIntoDir(element);
       if (e instanceof PsiFileSystemItem) {
