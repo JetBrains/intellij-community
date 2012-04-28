@@ -22,21 +22,24 @@ import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.projectView.impl.nodes.PsiFileNode;
 import com.intellij.ide.todo.*;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
+import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiFile;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.*;
+import com.intellij.psi.impl.search.TodoItemImpl;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
+import com.intellij.psi.search.PsiTodoSearchHelper;
 import com.intellij.psi.search.TodoItem;
 import com.intellij.ui.HighlightedRegion;
 import com.intellij.usageView.UsageTreeColors;
 import com.intellij.usageView.UsageTreeColorsScheme;
+import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
+import java.util.*;
 
 public final class TodoFileNode extends PsiFileNode implements HighlightedRegionProvider{
   private final TodoTreeBuilder myBuilder;
@@ -68,20 +71,23 @@ public final class TodoFileNode extends PsiFileNode implements HighlightedRegion
   }
 
   private Collection<AbstractTreeNode> createListForSingleFile() {
-    TodoItem[] items=myBuilder.getTodoTreeStructure().getSearchHelper().findTodoItems(getValue());
+    PsiFile psiFile = getValue();
+    TodoItem[] items= findAllTodos(psiFile, myBuilder.getTodoTreeStructure().getSearchHelper());
     ArrayList<AbstractTreeNode> children=new ArrayList<AbstractTreeNode>(items.length);
-    for (TodoItem todoItem : items) {
-      Document document = PsiDocumentManager.getInstance(getProject()).getDocument(getValue());
-      if (document != null && todoItem.getTextRange().getEndOffset() < document.getTextLength() + 1) {
-        SmartTodoItemPointer pointer = new SmartTodoItemPointer(todoItem, document);
-        TodoFilter toDoFilter = getToDoFilter();
-        if (toDoFilter != null) {
-          TodoItemNode itemNode = new TodoItemNode(getProject(), pointer, myBuilder);
-          if (toDoFilter.contains(todoItem.getPattern())) {
-            children.add(itemNode);
+    Document document = PsiDocumentManager.getInstance(getProject()).getDocument(psiFile);
+    if (document != null) {
+      for (TodoItem todoItem : items) {
+        if (todoItem.getTextRange().getEndOffset() < document.getTextLength() + 1) {
+          SmartTodoItemPointer pointer = new SmartTodoItemPointer(todoItem, document);
+          TodoFilter toDoFilter = getToDoFilter();
+          if (toDoFilter != null) {
+            TodoItemNode itemNode = new TodoItemNode(getProject(), pointer, myBuilder);
+            if (toDoFilter.contains(todoItem.getPattern())) {
+              children.add(itemNode);
+            }
+          } else {
+            children.add(new TodoItemNode(getProject(), pointer, myBuilder));
           }
-        } else {
-          children.add(new TodoItemNode(getProject(), pointer, myBuilder));
         }
       }
     }
@@ -89,22 +95,52 @@ public final class TodoFileNode extends PsiFileNode implements HighlightedRegion
     return children;
   }
 
+  public static TodoItem[] findAllTodos(final PsiFile psiFile, final PsiTodoSearchHelper helper) {
+    final List<TodoItem> todoItems = new ArrayList<TodoItem>(Arrays.asList(helper.findTodoItems(psiFile)));
+
+    psiFile.accept(new PsiRecursiveElementWalkingVisitor() {
+      @Override
+      public void visitElement(PsiElement element) {
+        if (element instanceof PsiLanguageInjectionHost) {
+          InjectedLanguageUtil.enumerate(element, new PsiLanguageInjectionHost.InjectedPsiVisitor() {
+            @Override
+            public void visit(@NotNull PsiFile injectedPsi, @NotNull List<PsiLanguageInjectionHost.Shred> places) {
+              if (places.size() == 1) {
+                Document document = PsiDocumentManager.getInstance(injectedPsi.getProject()).getCachedDocument(injectedPsi);
+                if (!(document instanceof DocumentWindow)) return;
+                for(TodoItem item: helper.findTodoItems(injectedPsi)) {
+                  TextRange rangeInHost = ((DocumentWindow)document).injectedToHost(item.getTextRange());
+                  todoItems.add(new TodoItemImpl(psiFile, rangeInHost.getStartOffset(), rangeInHost.getEndOffset(), item.getPattern()));
+                }
+              }
+            }
+          });
+        }
+        super.visitElement(element);
+      }
+    });
+    return todoItems.toArray(new TodoItem[todoItems.size()]);
+  }
+
   private Collection<AbstractTreeNode> createGeneralList() {
     ArrayList<AbstractTreeNode> children = new ArrayList<AbstractTreeNode>();
 
     PsiFile psiFile = getValue();
-    final TodoItem[] items = myBuilder.getTodoTreeStructure().getSearchHelper().findTodoItems(psiFile);
-    for (final TodoItem todoItem : items) {
-      final Document document = PsiDocumentManager.getInstance(getProject()).getDocument(psiFile);
-      if (document != null && todoItem.getTextRange().getEndOffset() < document.getTextLength() + 1) {
-        final SmartTodoItemPointer pointer = new SmartTodoItemPointer(todoItem, document);
-        TodoFilter todoFilter = getToDoFilter();
-        if (todoFilter != null) {
-          if (todoFilter.contains(todoItem.getPattern())) {
+    final TodoItem[] items = findAllTodos(psiFile, myBuilder.getTodoTreeStructure().getSearchHelper());
+    final Document document = PsiDocumentManager.getInstance(getProject()).getDocument(psiFile);
+
+    if (document != null) {
+      for (final TodoItem todoItem : items) {
+        if (todoItem.getTextRange().getEndOffset() < document.getTextLength() + 1) {
+          final SmartTodoItemPointer pointer = new SmartTodoItemPointer(todoItem, document);
+          TodoFilter todoFilter = getToDoFilter();
+          if (todoFilter != null) {
+            if (todoFilter.contains(todoItem.getPattern())) {
+              children.add(new TodoItemNode(getProject(), pointer, myBuilder));
+            }
+          } else {
             children.add(new TodoItemNode(getProject(), pointer, myBuilder));
           }
-        } else {
-          children.add(new TodoItemNode(getProject(), pointer, myBuilder));
         }
       }
     }
