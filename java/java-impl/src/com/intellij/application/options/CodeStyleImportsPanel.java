@@ -70,6 +70,7 @@ public class CodeStyleImportsPanel extends JPanel {
   public CodeStyleImportsPanel(CodeStyleSettings settings){
     mySettings = settings;
     setLayout(new BorderLayout());
+    setBorder(IdeBorderFactory.createEmptyBorder(2, 2, 2, 2));
     add(myWholePanel, BorderLayout.CENTER);
 
     myGeneralPanel.add(createGeneralOptionsPanel(), BorderLayout.CENTER);

@@ -22,6 +22,7 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.components.JBList;
 
@@ -59,6 +60,7 @@ public class CodeStyleGenerationConfigurable implements Configurable {
   public CodeStyleGenerationConfigurable(CodeStyleSettings settings) {
     mySettings = settings;
     myMembersOrderList = new MembersOrderList();
+    myPanel.setBorder(IdeBorderFactory.createEmptyBorder(2, 2, 2, 2));
   }
 
   public JComponent createComponent() {
