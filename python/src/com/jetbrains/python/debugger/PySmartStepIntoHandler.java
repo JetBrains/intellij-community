@@ -16,7 +16,6 @@ import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.PyCallExpression;
 import com.jetbrains.python.psi.PyElement;
 import com.jetbrains.python.psi.PyExpression;
-import com.jetbrains.python.psi.PyFunction;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,14 +39,15 @@ public class PySmartStepIntoHandler extends XSmartStepIntoHandler<PySmartStepInt
     final Document document = FileDocumentManager.getInstance().getDocument(position.getFile());
     final List<PySmartStepIntoVariant> variants = Lists.newArrayList();
     final Set<PyCallExpression> visitedCalls = Sets.newHashSet();
-    final Set<PyFunction> addedFunctions = Sets.newHashSet();
 
-    XDebuggerUtil.getInstance().iterateLine(mySession.getProject(), document, position.getLine(), new Processor<PsiElement>() {
+    final int line = position.getLine();
+    XDebuggerUtil.getInstance().iterateLine(mySession.getProject(), document, line, new Processor<PsiElement>() {
       public boolean process(PsiElement psiElement) {
-        addVariants(psiElement, variants, visitedCalls, addedFunctions);
+        addVariants(document, line, psiElement, variants, visitedCalls);
         return true;
       }
     });
+
     return variants;
   }
 
@@ -60,15 +60,16 @@ public class PySmartStepIntoHandler extends XSmartStepIntoHandler<PySmartStepInt
     return PyBundle.message("debug.popup.title.step.into.function");
   }
 
-  private static void addVariants(@Nullable PsiElement element,
+  private static void addVariants(Document document, int line, @Nullable PsiElement element,
                                   List<PySmartStepIntoVariant> variants,
-                                  Set<PyCallExpression> visited,
-                                  Set<PyFunction> addedFunctions) {
+                                  Set<PyCallExpression> visited) {
     if (element == null) return;
 
     final PyCallExpression expression = PsiTreeUtil.getParentOfType(element, PyCallExpression.class);
-    if (expression != null && visited.add(expression)) {
-      addVariants(expression.getParent(), variants, visited, addedFunctions);
+    if (expression != null &&
+        expression.getTextRange().getEndOffset() <= document.getLineEndOffset(line) &&
+        visited.add(expression)) {
+      addVariants(document, line, expression.getParent(), variants, visited);
       PyExpression ref = expression.getCallee();
 
       variants.add(new PySmartStepIntoVariant(ref));
