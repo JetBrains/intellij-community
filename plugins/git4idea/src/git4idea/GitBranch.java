@@ -101,7 +101,9 @@ public class GitBranch extends GitReference {
    */
   public static Pair<String, String> splitNameOfRemoteBranch(String branchName) {
     int firstSlash = branchName.indexOf('/');
-    return Pair.create(branchName.substring(0, firstSlash), branchName.substring(firstSlash + 1));
+    String remoteName = firstSlash > -1 ? branchName.substring(0, firstSlash) : branchName;
+    String remoteBranchName = branchName.substring(firstSlash + 1);
+    return Pair.create(remoteName, remoteBranchName);
   }
 
   /**

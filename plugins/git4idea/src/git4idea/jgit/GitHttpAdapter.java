@@ -146,7 +146,7 @@ public final class GitHttpAdapter {
   }
 
   private static void logException(GitRepository repository, String remoteName, String remoteUrl, Exception e, String operation) {
-    LOG.info("Exception while " + operation + " " + remoteName + "(" + remoteUrl + ")" + " in " + repository.toLogString(), e);
+    LOG.error("Exception while " + operation + " " + remoteName + "(" + remoteUrl + ")" + " in " + repository.toLogString(), e);
   }
 
   private static GitFetchResult.Type convertToFetchResultType(GeneralResult result) {
@@ -300,6 +300,18 @@ public final class GitHttpAdapter {
           command.run();
           rememberPassword(provider);
           return GeneralResult.SUCCESS;
+        }
+        catch (InvalidRemoteException e) {
+          if (!noRemoteWithoutGitErrorFixTried && isNoRemoteWithoutDotGitError(e, url)) {
+            url += ".git";
+            command.setUrl(url);
+            provider.setUrl(url);
+            noRemoteWithoutGitErrorFixTried = true;
+            // don't "eat" one password entering attempt
+            //noinspection AssignmentToForLoopParameter
+            i--;
+            command.cleanup();
+          }
         }
         catch (JGitInternalException e) {
           if (authError(e)) {

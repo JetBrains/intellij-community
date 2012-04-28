@@ -435,7 +435,8 @@ class AndroidJpsUtil {
   }
 
   public static boolean isLightBuild(@NotNull CompileContext context) {
-    return Boolean.parseBoolean(context.getBuilderParameter(AndroidCommonUtils.LIGHT_BUILD_OPTION));
+    final String typeId = context.getBuilderParameter("RUN_CONFIGURATION_TYPE_ID");
+    return typeId != null && AndroidCommonUtils.isTestConfiguration(typeId);
   }
 
   public static boolean isReleaseBuild(@NotNull CompileContext context) {

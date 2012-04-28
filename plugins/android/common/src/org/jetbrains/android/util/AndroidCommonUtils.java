@@ -66,7 +66,6 @@ public class AndroidCommonUtils {
   private static final String[] DRAWABLE_EXTENSIONS = new String[]{PNG_EXTENSION, "jpg", "gif"};
 
   @NonNls public static final String RELEASE_BUILD_OPTION = "RELEASE_BUILD_KEY";
-  @NonNls public static final String LIGHT_BUILD_OPTION = "LIGHT_BUILD_KEY";
   @NonNls public static final String PROGUARD_CFG_PATH_OPTION = "ANDROID_PROGUARD_CFG_PATH";
   @NonNls public static final String DIRECTORY_FOR_LOGS_NAME = "proguard_logs";
   @NonNls public static final String PROGUARD_OUTPUT_JAR_NAME = "obfuscated_sources.jar";
@@ -78,7 +77,14 @@ public class AndroidCommonUtils {
   };
   @NonNls public static final String INCLUDE_SYSTEM_PROGUARD_FILE_ELEMENT_NAME = "includeSystemProguardFile";
 
+  private static final String[] TEST_CONFIGURATION_TYPE_IDS =
+    {"JUnit", "TestNG", "ScalaTestRunConfiguration", "SpecsRunConfiguration", "Specs2RunConfiguration"};
+
   private AndroidCommonUtils() {
+  }
+
+  public static boolean isTestConfiguration(@NotNull String typeId) {
+    return ArrayUtil.find(TEST_CONFIGURATION_TYPE_IDS, typeId) >= 0;
   }
 
   public static String command2string(@NotNull Collection<String> command) {

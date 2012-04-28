@@ -23,6 +23,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.CustomCodeStyleSettings;
 import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
+import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.OptionGroup;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBLabel;
@@ -54,6 +55,7 @@ public class CodeStyleBlankLinesPanel extends MultilanguageCodeStyleAbstractPane
 
   public CodeStyleBlankLinesPanel(CodeStyleSettings settings) {
     super(settings);
+    myPanel.setBorder(IdeBorderFactory.createEmptyBorder(2, 2, 2, 2));
     init();
   }
 

@@ -35,16 +35,20 @@ class AlignmentProvider {
 
   private final Map<PsiElement, Set<PsiElement>> myTree = new HashMap<PsiElement, Set<PsiElement>>();
   private final Map<Set<PsiElement>, Alignment> myAlignments = new HashMap<Set<PsiElement>, Alignment>();
+  private final Map<Set<PsiElement>, Boolean> myAllowBackwardShift = new HashMap<Set<PsiElement>, Boolean>();
 
-  public void addPair(PsiElement e1, PsiElement e2) {
+  public void addPair(PsiElement e1, PsiElement e2, Boolean allowBackwardShift) {
     LOG.assertTrue(e1 != e2);
 
     final Set<PsiElement> set1 = myTree.get(e1);
     final Set<PsiElement> set2 = myTree.get(e2);
 
-    LOG.assertTrue(set1 == null || set2 == null || !myAlignments.containsKey(set1) || !myAlignments.containsKey(set2));
-
     if (set1 != null && set2 != null) {
+      LOG.assertTrue(!myAlignments.containsKey(set1) || !myAlignments.containsKey(set2));
+      LOG.assertTrue(myAllowBackwardShift.get(set1).booleanValue() == myAllowBackwardShift.get(set2).booleanValue());
+      if (allowBackwardShift != null) {
+        LOG.assertTrue(myAllowBackwardShift.get(set1).booleanValue() == allowBackwardShift.booleanValue());
+      }
       if (myAlignments.containsKey(set2)) {
         for (Iterator<PsiElement> iterator = set1.iterator(); iterator.hasNext(); ) {
           PsiElement element = iterator.next();
@@ -64,15 +68,23 @@ class AlignmentProvider {
       }
     }
     else if (set1 != null) {
+      if (allowBackwardShift != null) {
+        LOG.assertTrue(myAllowBackwardShift.get(set1).booleanValue() == allowBackwardShift.booleanValue());
+      }
       addInternal(set1, e2);
     }
     else if (set2 != null) {
+      if (allowBackwardShift != null) {
+        LOG.assertTrue(myAllowBackwardShift.get(set2).booleanValue() == allowBackwardShift.booleanValue());
+      }
       addInternal(set2, e1);
     }
     else {
       final HashSet<PsiElement> set = createHashSet();
       addInternal(set, e1);
       addInternal(set, e2);
+      myAllowBackwardShift.put(set, allowBackwardShift);
+
     }
   }
 
@@ -92,16 +104,17 @@ class AlignmentProvider {
     };
   }
 
-  public void addPair(ASTNode node1, ASTNode node2) {
-    addPair(node1.getPsi(), node2.getPsi());
+  public void addPair(ASTNode node1, ASTNode node2, boolean allowBackwardShift) {
+    addPair(node1.getPsi(), node2.getPsi(), allowBackwardShift);
   }
 
-  private void add(PsiElement element) {
+  private void add(PsiElement element, boolean allowBackwardShift) {
     if (myTree.get(element) != null) return;
 
     final HashSet<PsiElement> set = createHashSet();
     set.add(element);
     myTree.put(element, set);
+    myAllowBackwardShift.put(set, allowBackwardShift);
   }
 
   @Nullable
@@ -114,17 +127,19 @@ class AlignmentProvider {
     Alignment alignment = myAlignments.get(set);
     if (alignment != null) return alignment;
 
-    alignment = Alignment.createAlignment(true);
+    alignment = Alignment.createAlignment(myAllowBackwardShift.get(set));
     myAlignments.put(set, alignment);
     return alignment;
   }
 
-  public Aligner createAligner(PsiElement expression) {
-    return new Aligner(expression);
+  public Aligner createAligner(PsiElement expression, boolean allowBackwardShift) {
+    Aligner aligner = new Aligner(allowBackwardShift);
+    aligner.append(expression);
+    return aligner;
   }
 
-  public Aligner createAligner() {
-    return new Aligner();
+  public Aligner createAligner(boolean allowBackwardShift) {
+    return new Aligner(allowBackwardShift);
   }
 
   /**
@@ -135,12 +150,10 @@ class AlignmentProvider {
    */
   class Aligner {
     private PsiElement myRef = null;
+    private boolean allowBackwardShift = true;
 
-    private Aligner() {
-    }
-
-    private Aligner(PsiElement initial) {
-      myRef = initial;
+    Aligner(boolean allowBackwardShift) {
+      this.allowBackwardShift = allowBackwardShift;
     }
 
     void append(@Nullable PsiElement element) {
@@ -148,10 +161,10 @@ class AlignmentProvider {
 
       if (myRef == null) {
         myRef = element;
-        add(element);
+        add(element, allowBackwardShift);
       }
       else {
-        addPair(myRef, element);
+        addPair(myRef, element, allowBackwardShift);
       }
     }
   }

@@ -30,10 +30,7 @@ import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 
 /**
  * File utilities for the git
@@ -179,7 +176,7 @@ public class GitFileUtils {
     String output = handler.run();
 
     List<String> nonIgnoredFiles = new ArrayList<String>(paths.size());
-    List<String> ignoredPaths = Arrays.asList(StringUtil.splitByLines(output));
+    Set<String> ignoredPaths = new HashSet<String>(Arrays.asList(StringUtil.splitByLines(output)));
     for (String pathToCheck : paths) {
       if (!ignoredPaths.contains(pathToCheck)) {
         nonIgnoredFiles.add(pathToCheck);

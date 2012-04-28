@@ -24,7 +24,6 @@ import com.intellij.compiler.impl.ModuleCompileScope;
 import com.intellij.compiler.options.CompileStepBeforeRun;
 import com.intellij.compiler.progress.CompilerTask;
 import com.intellij.execution.configurations.RunConfiguration;
-import com.intellij.execution.junit.JUnitConfiguration;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.compiler.*;
@@ -87,10 +86,6 @@ public class AndroidCompileUtil {
 
   @NonNls public static final String PROGUARD_CFG_FILE_NAME = "proguard-project.txt";
   @NonNls public static final String OLD_PROGUARD_CFG_FILE_NAME = "proguard.cfg";
-
-  @NonNls
-  private static final String[] SCALA_TEST_CONFIGURATIONS =
-    {"ScalaTestRunConfiguration", "SpecsRunConfiguration", "Specs2RunConfiguration"};
 
   private AndroidCompileUtil() {
   }
@@ -622,23 +617,8 @@ public class AndroidCompileUtil {
   }
 
   public static boolean isFullBuild(@NotNull CompileContext context) {
-    final RunConfiguration runConfiguration = CompileStepBeforeRun.getRunConfiguration(context);
-
-    if (runConfiguration == null) {
-      return true;
-    }
-
-    if (runConfiguration instanceof JUnitConfiguration) {
-      return false;
-    }
-
-    for (AndroidLightBuildProvider provider : AndroidLightBuildProvider.EP_NAME.getExtensions()) {
-      if (provider.toPerformLightBuild(runConfiguration)) {
-        return false;
-      }
-    }
-    final String id = runConfiguration.getType().getId();
-    return ArrayUtil.find(SCALA_TEST_CONFIGURATIONS, id) < 0;
+    final RunConfiguration c = CompileStepBeforeRun.getRunConfiguration(context);
+    return c == null || !AndroidCommonUtils.isTestConfiguration(c.getType().getId());
   }
 
   public static boolean isReleaseBuild(@NotNull CompileContext context) {

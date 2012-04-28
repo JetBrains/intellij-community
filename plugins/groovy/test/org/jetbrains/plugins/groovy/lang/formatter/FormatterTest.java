@@ -235,6 +235,12 @@ public class FormatterTest extends GroovyFormatterTestCase {
   public void testGeese7() {doGeeseTest();}
   public void testGeese8() {doGeeseTest();}
 
+  public void testMapInArgumentList() {doTest();}
+  public void testMapInArgumentList2() {
+    myTempSettings.getCustomSettings(GroovyCodeStyleSettings.class).ALIGN_NAMED_ARGS_IN_MAP = true;
+    doTest();
+  }
+
   private void doGeeseTest() {
     GroovyCodeStyleSettings customSettings = myTempSettings.getCustomSettings(GroovyCodeStyleSettings.class);
     boolean oldvalue = customSettings.USE_FLYING_GEESE_BRACES;

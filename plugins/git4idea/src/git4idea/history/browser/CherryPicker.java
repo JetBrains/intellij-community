@@ -34,6 +34,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.WaitForProgressToShow;
 import git4idea.PlatformFacade;
+import git4idea.checkin.GitCheckinEnvironment;
 import git4idea.commands.Git;
 import git4idea.commands.GitCommandResult;
 import git4idea.commands.GitMessageWithFilesDetector;
@@ -58,6 +59,12 @@ import static git4idea.commands.GitSimpleEventDetector.Event.CHERRY_PICK_CONFLIC
 import static git4idea.commands.GitSimpleEventDetector.Event.LOCAL_CHANGES_OVERWRITTEN_BY_CHERRY_PICK;
 
 public class CherryPicker {
+
+  /**
+   * Name of the {@code .git/CHERRY_PICK_HEAD} file which is stored under {@code .git} when cherry-pick is in progress,
+   * and contains the hash of the commit being cherry-picked.
+   */
+  private static final String CHERRY_PICK_HEAD_FILE = "CHERRY_PICK_HEAD";
 
   private static final Logger LOG = Logger.getInstance(CherryPicker.class);
 
@@ -254,7 +261,7 @@ public class CherryPicker {
   }
 
   private void removeCherryPickHead(@NotNull GitRepository repository) {
-    File cherryPickHeadFile = new File(repository.getGitDir().getPath(), "CHERRY_PICK_HEAD");
+    File cherryPickHeadFile = new File(repository.getGitDir().getPath(), CHERRY_PICK_HEAD_FILE);
     final VirtualFile cherryPickHead = myPlatformFacade.getLocalFileSystem().refreshAndFindFileByIoFile(cherryPickHeadFile);
 
     if (cherryPickHead != null && cherryPickHead.exists()) {
@@ -486,8 +493,9 @@ public class CherryPicker {
         final Collection<Document> committingDocs = markCommittingDocs();
         try {
           CheckinEnvironment ce = myPlatformFacade.getVcs(myProject).getCheckinEnvironment();
-          if (ce != null) {
+          if (ce != null && ce instanceof GitCheckinEnvironment) {
             try {
+              ((GitCheckinEnvironment)ce).reset();
               List<VcsException> exceptions = ce.commit(myChanges, myCommitMessage);
               VcsDirtyScopeManager.getInstance(myProject).filePathsDirty(ChangesUtil.getPaths(myChanges), null);
               if (exceptions != null && !exceptions.isEmpty()) {

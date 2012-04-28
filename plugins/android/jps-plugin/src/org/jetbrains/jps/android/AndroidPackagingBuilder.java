@@ -138,8 +138,7 @@ public class AndroidPackagingBuilder extends ProjectLevelBuilder {
   private static boolean runPngCaching(@NotNull CompileContext context,
                                        @NotNull Module module,
                                        @NotNull AndroidFileSetStorage storage,
-                                       @Nullable AndroidFileSetState state)
-    throws IOException {
+                                       @Nullable AndroidFileSetState state) throws IOException {
     final AndroidFileSetState savedState = storage.getState(module.getName());
     if (context.isMake() && savedState != null && savedState.equalsTo(state)) {
       return true;
@@ -164,6 +163,14 @@ public class AndroidPackagingBuilder extends ProjectLevelBuilder {
     }
 
     final File resCacheDir = AndroidJpsUtil.getResourcesCacheDir(context, module);
+
+    if (context.isProjectRebuild() && resCacheDir.exists()) {
+      if (!FileUtil.delete(resCacheDir)) {
+        context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR,
+                                                   "Cannot delete directory " + resCacheDir.getPath()));
+        return false;
+      }
+    }
 
     if (!resCacheDir.exists()) {
       if (!resCacheDir.mkdirs()) {

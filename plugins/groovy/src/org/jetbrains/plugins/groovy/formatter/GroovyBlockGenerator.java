@@ -49,7 +49,9 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrLabeledStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentLabel;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression;
@@ -137,7 +139,7 @@ public class GroovyBlockGenerator implements GroovyElementTypes {
         if (childNode.getTextRange().getLength() > 0) {
           final Indent indent = GroovyIndentProcessor.getChildIndent(myBlock, childNode);
           if (myAlignment != null) {
-            myAlignmentProvider.addPair(myNode, childNode);
+            myAlignmentProvider.addPair(myNode, childNode, true);
           }
           subBlocks.add(new GroovyBlock(childNode, indent, myWrap, mySettings, myGroovySettings, myAlignmentProvider));
         }
@@ -148,9 +150,23 @@ public class GroovyBlockGenerator implements GroovyElementTypes {
     // chained properties, calls, indexing, etc
     if (NESTED.contains(myNode.getElementType()) && blockPsi.getParent() != null && !NESTED.contains(blockPsi.getParent().getNode().getElementType())) {
       final List<Block> subBlocks = new ArrayList<Block>();
-      AlignmentProvider.Aligner dotsAligner = mySettings.ALIGN_MULTILINE_CHAINED_METHODS ? myAlignmentProvider.createAligner() : null;
+      AlignmentProvider.Aligner dotsAligner = mySettings.ALIGN_MULTILINE_CHAINED_METHODS ? myAlignmentProvider.createAligner(true) : null;
       addNestedChildren(myNode.getPsi(), subBlocks, dotsAligner, true);
       return subBlocks;
+    }
+
+    if (blockPsi instanceof GrListOrMap && ((GrListOrMap)blockPsi).isMap() && myGroovySettings.ALIGN_NAMED_ARGS_IN_MAP) {
+      AlignmentProvider.Aligner labels = myAlignmentProvider.createAligner(false);
+      AlignmentProvider.Aligner exprs = myAlignmentProvider.createAligner(true);
+      GrNamedArgument[] namedArgs = ((GrListOrMap)blockPsi).getNamedArguments();
+      for (GrNamedArgument arg : namedArgs) {
+        GrArgumentLabel label = arg.getLabel();
+        if (label != null) labels.append(label);
+
+        PsiElement colon = arg.getColon();
+        if (colon == null) colon = arg.getExpression();
+        if (colon != null) exprs.append(colon);
+      }
     }
 
     // For Parameter lists
@@ -159,7 +175,7 @@ public class GroovyBlockGenerator implements GroovyElementTypes {
       List<ASTNode> astNodes = visibleChildren(myNode);
 
       if (mustAlign(blockPsi, astNodes)) {
-        final AlignmentProvider.Aligner aligner = myAlignmentProvider.createAligner();
+        final AlignmentProvider.Aligner aligner = myAlignmentProvider.createAligner(false);
         for (ASTNode node : astNodes) {
           if (!isKeyword(node)) aligner.append(node.getPsi());
         }
@@ -178,7 +194,7 @@ public class GroovyBlockGenerator implements GroovyElementTypes {
       final ArrayList<Block> subBlocks = new ArrayList<Block>();
 
       if (classLevel && myAlignment != null) {
-        final AlignmentProvider.Aligner aligner = myAlignmentProvider.createAligner();
+        final AlignmentProvider.Aligner aligner = myAlignmentProvider.createAligner(true);
         for (ASTNode child : children) {
           aligner.append(child.getPsi());
         }
@@ -212,7 +228,7 @@ public class GroovyBlockGenerator implements GroovyElementTypes {
         else {
           currentGroup = new ArrayList<AlignmentProvider.Aligner>();
           for (LeafPsiElement expression : table) {
-            currentGroup.add(myAlignmentProvider.createAligner(expression));
+            currentGroup.add(myAlignmentProvider.createAligner(expression, true));
           }
         }
       }
@@ -228,9 +244,9 @@ public class GroovyBlockGenerator implements GroovyElementTypes {
         if (variables.length > 0) {
           if (!classLevel || currentGroup == null || fieldGroupEnded(psi)) {
             currentGroup = new ArrayList<AlignmentProvider.Aligner>();
-            currentGroup.add(myAlignmentProvider.createAligner());
-            currentGroup.add(myAlignmentProvider.createAligner());
-            currentGroup.add(myAlignmentProvider.createAligner());
+            currentGroup.add(myAlignmentProvider.createAligner(true));
+            currentGroup.add(myAlignmentProvider.createAligner(true));
+            currentGroup.add(myAlignmentProvider.createAligner(true));
           }
 
           AlignmentProvider.Aligner varName = currentGroup.get(1);
@@ -304,8 +320,10 @@ public class GroovyBlockGenerator implements GroovyElementTypes {
     //       println 'xxx'
     //     })
     if (blockPsi instanceof GrArgumentList && mySettings.ALIGN_MULTILINE_PARAMETERS_IN_CALLS) {
-      return children.size() != 3 || children.get(0).getElementType() != mLPAREN
-             || children.get(1).getElementType() != CLOSABLE_BLOCK || children.get(2).getElementType() != mRPAREN;
+      return !(children.size() == 3 &&
+               children.get(0).getElementType() == mLPAREN &&
+               (children.get(1).getElementType() == CLOSABLE_BLOCK || children.get(1).getElementType() == LIST_OR_MAP) &&
+               children.get(2).getElementType() == mRPAREN);
     }
 
     if (blockPsi instanceof GrAssignmentExpression && ((GrAssignmentExpression)blockPsi).getRValue() instanceof GrAssignmentExpression) {
@@ -426,7 +444,7 @@ public class GroovyBlockGenerator implements GroovyElementTypes {
   private List<Block> generateForBinaryExpr() {
     final ArrayList<Block> subBlocks = new ArrayList<Block>();
     AlignmentProvider.Aligner
-      alignment = mySettings.ALIGN_MULTILINE_BINARY_OPERATION ? myAlignmentProvider.createAligner() : null;
+      alignment = mySettings.ALIGN_MULTILINE_BINARY_OPERATION ? myAlignmentProvider.createAligner(true) : null;
 
     GrBinaryExpression binary = (GrBinaryExpression)myNode.getPsi();
     LOG.assertTrue(binary != null);
