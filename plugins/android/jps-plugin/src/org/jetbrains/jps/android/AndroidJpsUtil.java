@@ -186,7 +186,6 @@ class AndroidJpsUtil {
     }
 
     if (libraries != null) {
-      // todo: do not include provided libs there
       for (ClasspathItem item : module.getClasspath(ClasspathKind.PRODUCTION_RUNTIME, exportedLibrariesOnly)) {
         if (item instanceof Library && !(item instanceof Sdk)) {
           for (Object filePathObj : ((Library)item).getClasspath()) {
