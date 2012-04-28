@@ -24,6 +24,12 @@ import java.util.Collection;
  * @author vlan
  */
 public class PyMoveTest extends PyTestCase {
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+    SystemProperties.setTestUserName("user1");
+  }
+
   public void testFunction() {
     doMoveSymbolTest("f", "b.py");
   }
@@ -45,7 +51,6 @@ public class PyMoveTest extends PyTestCase {
 
   // PY-4074
   public void testNewModule() {
-    SystemProperties.setTestUserName("user1");
     doMoveSymbolTest("f", "b.py");
   }
 
