@@ -15,6 +15,7 @@
  */
 package git4idea.changes;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -49,6 +50,8 @@ public class GitChangeUtils {
    * the pattern for committed changelist assumed by {@link #parseChangeList(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile, git4idea.util.StringScanner,boolean)}
    */
   public static final String COMMITTED_CHANGELIST_FORMAT = "%ct%n%H%n%P%n%an%x20%x3C%ae%x3E%n%cn%x20%x3C%ce%x3E%n%s%n%x03%n%b%n%x03";
+
+  private static final Logger LOG = Logger.getInstance(GitChangeUtils.class);
 
   /**
    * A private constructor for utility class
@@ -194,11 +197,17 @@ public class GitChangeUtils {
     handler.endOptions();
     handler.setNoSSH(true);
     handler.setSilent(true);
-    //handler.setSilent(true);
     String output = handler.run();
     StringTokenizer stk = new StringTokenizer(output, "\n\r \t", false);
     if (!stk.hasMoreTokens()) {
-      throw new VcsException("The string '" + revisionNumber + "' does not represents a revision number. Output: [" + output + "]");
+      GitSimpleHandler dh = new GitSimpleHandler(project, vcsRoot, GitCommand.LOG);
+      dh.addParameters("-1", "HEAD");
+      dh.setNoSSH(true);
+      dh.setSilent(true);
+      String out = dh.run();
+      LOG.info("Diagnostic output from 'git log -1 HEAD': [" + out + "]");
+      throw new VcsException(String.format("The string '%s' does not represent a revision number. Output: [%s]\n Root: %s",
+                                           revisionNumber, output, vcsRoot));
     }
     Date timestamp = GitUtil.parseTimestampWithNFEReport(stk.nextToken(), handler, output);
     return new GitRevisionNumber(stk.nextToken(), timestamp);
