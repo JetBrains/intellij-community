@@ -39,7 +39,7 @@ public class NonResizeSelectionDecorator extends ComponentDecorator {
 
   @Override
   public InputTool findTargetTool(DecorationLayer layer, RadComponent component, int x, int y) {
-    Rectangle bounds = component.getBounds(layer);
+    Rectangle bounds = getBounds(layer, component);
     int lineWidth = Math.max(myLineWidth, 2);
 
     Rectangle top = new Rectangle(bounds.x, bounds.y, bounds.width, lineWidth);
@@ -61,7 +61,11 @@ public class NonResizeSelectionDecorator extends ComponentDecorator {
       g.setStroke(myStroke);
     }
 
-    Rectangle bounds = component.getBounds(layer);
+    Rectangle bounds = getBounds(layer, component);
     g.drawRect(bounds.x, bounds.y, bounds.width, bounds.height);
+  }
+
+  protected Rectangle getBounds(DecorationLayer layer, RadComponent component) {
+    return component.getBounds(layer);
   }
 }

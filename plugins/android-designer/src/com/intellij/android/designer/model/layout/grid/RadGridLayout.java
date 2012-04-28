@@ -17,11 +17,13 @@ package com.intellij.android.designer.model.layout.grid;
 
 import com.intellij.android.designer.designSurface.TreeDropToOperation;
 import com.intellij.android.designer.designSurface.layout.GridLayoutOperation;
+import com.intellij.android.designer.designSurface.layout.actions.GridLayoutSpanOperation;
 import com.intellij.android.designer.designSurface.layout.actions.LayoutSpanOperation;
 import com.intellij.android.designer.designSurface.layout.actions.ResizeOperation;
 import com.intellij.android.designer.designSurface.layout.caption.GridHorizontalCaptionOperation;
 import com.intellij.android.designer.designSurface.layout.caption.GridVerticalCaptionOperation;
 import com.intellij.android.designer.designSurface.layout.grid.GridDecorator;
+import com.intellij.android.designer.designSurface.layout.grid.GridSelectionDecorator;
 import com.intellij.android.designer.model.RadViewLayout;
 import com.intellij.android.designer.model.RadViewLayoutWithData;
 import com.intellij.android.designer.model.grid.GridInfo;
@@ -29,7 +31,6 @@ import com.intellij.android.designer.model.layout.actions.AllGravityAction;
 import com.intellij.android.designer.model.layout.actions.OrientationAction;
 import com.intellij.designer.componentTree.TreeEditOperation;
 import com.intellij.designer.designSurface.*;
-import com.intellij.designer.designSurface.selection.ResizeSelectionDecorator;
 import com.intellij.designer.model.RadComponent;
 import com.intellij.designer.model.RadLayout;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
@@ -49,7 +50,7 @@ public class RadGridLayout extends RadViewLayoutWithData implements ILayoutDecor
   private static final String[] LAYOUT_PARAMS = {"GridLayout_Layout", "ViewGroup_MarginLayout"};
 
   private GridDecorator myGridDecorator;
-  private ResizeSelectionDecorator mySelectionDecorator;
+  private GridSelectionDecorator mySelectionDecorator;
 
   @NotNull
   @Override
@@ -72,7 +73,7 @@ public class RadGridLayout extends RadViewLayoutWithData implements ILayoutDecor
       return new ResizeOperation(context);
     }
     if (context.is(LayoutSpanOperation.TYPE)) {
-      return new LayoutSpanOperation(context);
+      return new GridLayoutSpanOperation(context, mySelectionDecorator);
     }
     return null;
   }
@@ -105,14 +106,24 @@ public class RadGridLayout extends RadViewLayoutWithData implements ILayoutDecor
   @Override
   public ComponentDecorator getChildSelectionDecorator(RadComponent component, List<RadComponent> selection) {
     if (mySelectionDecorator == null) {
-      mySelectionDecorator = new ResizeSelectionDecorator(Color.red, 1);
+      mySelectionDecorator = new GridSelectionDecorator(Color.red, 1) {
+        @Override
+        public Rectangle getCellBounds(Component layer, RadComponent component) {
+          RadGridLayoutComponent parent = (RadGridLayoutComponent)component.getParent();
+          GridInfo gridInfo = parent.getGridInfo();
+          Rectangle cellInfo = RadGridLayoutComponent.getCellInfo(component);
+
+          return calculateBounds(layer, gridInfo, parent, component, cellInfo.y, cellInfo.x, cellInfo.height, cellInfo.width);
+        }
+      };
     }
 
     mySelectionDecorator.clear();
     if (selection.size() == 1) {
-      LayoutSpanOperation.gridPoints(mySelectionDecorator);
+      GridLayoutSpanOperation.points(mySelectionDecorator);
     }
-    ResizeOperation.points(mySelectionDecorator);
+    ResizeOperation.width(mySelectionDecorator);
+    ResizeOperation.height(mySelectionDecorator);
 
     return mySelectionDecorator;
   }

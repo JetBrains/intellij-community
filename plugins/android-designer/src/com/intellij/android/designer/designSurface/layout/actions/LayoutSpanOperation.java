@@ -15,10 +15,12 @@
  */
 package com.intellij.android.designer.designSurface.layout.actions;
 
+import com.intellij.android.designer.designSurface.layout.grid.GridSelectionDecorator;
 import com.intellij.android.designer.model.ModelParser;
 import com.intellij.android.designer.model.RadViewComponent;
 import com.intellij.android.designer.model.grid.GridInfo;
-import com.intellij.android.designer.model.layout.table.RadTableLayoutComponent;
+import com.intellij.android.designer.model.grid.IGridProvider;
+import com.intellij.designer.designSurface.DecorationLayer;
 import com.intellij.designer.designSurface.EditOperation;
 import com.intellij.designer.designSurface.FeedbackLayer;
 import com.intellij.designer.designSurface.OperationContext;
@@ -26,13 +28,12 @@ import com.intellij.designer.designSurface.feedbacks.LineMarginBorder;
 import com.intellij.designer.designSurface.feedbacks.RectangleFeedback;
 import com.intellij.designer.designSurface.feedbacks.TextFeedback;
 import com.intellij.designer.designSurface.selection.DirectionResizePoint;
-import com.intellij.designer.designSurface.selection.ResizeSelectionDecorator;
 import com.intellij.designer.model.RadComponent;
 import com.intellij.designer.utils.Position;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.IntArrayList;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.util.List;
@@ -40,38 +41,40 @@ import java.util.List;
 /**
  * @author Alexander Lobas
  */
-public class LayoutSpanOperation implements EditOperation {
+public abstract class LayoutSpanOperation implements EditOperation {
   public static final String TYPE = "layout_span";
 
-  private static final Color COLOR = Color.green.darker();
+  protected static final Color COLOR = Color.green.darker();
 
-  private final OperationContext myContext;
-  private RadViewComponent myComponent;
+  protected final OperationContext myContext;
+  private final GridSelectionDecorator myDecorator;
+  protected RadViewComponent myComponent;
   private RectangleFeedback myFeedback;
   private TextFeedback myTextFeedback;
   private Rectangle myBounds;
-  private Rectangle myTableBounds;
-  private int mySpan;
+  private Rectangle myContainerBounds;
+  protected int mySpan;
   private int[] mySpans;
   private int[] myOffsets;
-  private int[] myColumns;
+  private int[] myCells;
   private int myIndex = -1;
 
-  public LayoutSpanOperation(OperationContext context) {
+  public LayoutSpanOperation(OperationContext context, GridSelectionDecorator decorator) {
     myContext = context;
+    myDecorator = decorator;
   }
 
   @Override
   public void setComponent(RadComponent component) {
     myComponent = (RadViewComponent)component;
-    myBounds = myComponent.getBounds(myContext.getArea().getFeedbackLayer());
+    myBounds = myDecorator.getCellBounds(myContext.getArea().getFeedbackLayer(), myComponent);
   }
 
   @Override
   public void setComponents(List<RadComponent> components) {
   }
 
-  private void createFeedback() {
+  protected void createFeedback() {
     if (myFeedback == null) {
       FeedbackLayer layer = myContext.getArea().getFeedbackLayer();
 
@@ -90,11 +93,87 @@ public class LayoutSpanOperation implements EditOperation {
   public void showFeedback() {
     createFeedback();
 
-    Rectangle bounds = myContext.getTransformedRectangle(myBounds);
-    boolean right = myContext.getResizeDirection() == Position.EAST;
+    int direction = myContext.getResizeDirection();
+    if (direction == Position.WEST || direction == Position.EAST) {
+      handleColumns(direction == Position.EAST);
+    }
+    else {
+      handleRows(direction == Position.SOUTH);
+    }
+  }
 
+  @Override
+  public void eraseFeedback() {
+    if (myFeedback != null) {
+      FeedbackLayer layer = myContext.getArea().getFeedbackLayer();
+      layer.remove(myTextFeedback);
+      layer.remove(myFeedback);
+      layer.repaint();
+      myTextFeedback = null;
+      myFeedback = null;
+    }
+  }
+
+  protected abstract String getColumnAttribute(boolean asName);
+
+  protected abstract String getColumnSpanAttribute(boolean asName);
+
+  protected abstract String getRowAttribute(boolean asName);
+
+  protected abstract String getRowSpanAttribute(boolean asName);
+
+  private void handleRows(boolean bottom) {
+    calculateRows(bottom);
+
+    Rectangle bounds = myContext.getTransformedRectangle(myBounds);
+    int location = bottom ? bounds.y + bounds.height : bounds.y;
+
+    if (location < myOffsets[0]) {
+      myIndex = 0;
+    }
+    else {
+      myIndex = -1;
+
+      for (int i = 0; i < myOffsets.length - 1; i++) {
+        if (myOffsets[i] <= location && location <= myOffsets[i + 1]) {
+          int delta1 = location - myOffsets[i];
+          int delta2 = myOffsets[i + 1] - location;
+          myIndex = delta2 >= delta1 ? i : i + 1;
+          break;
+        }
+      }
+
+      if (myIndex == -1) {
+        myIndex = myOffsets.length - 1;
+      }
+    }
+
+    if (bottom) {
+      myFeedback.setBounds(myBounds.x, myBounds.y, myBounds.width, myOffsets[myIndex] - myBounds.y);
+    }
+    else {
+      myFeedback.setBounds(myBounds.x, myOffsets[myIndex], myBounds.width, myBounds.y + myBounds.height - myOffsets[myIndex]);
+    }
+
+    myTextFeedback.clear();
+
+    if (!bottom) {
+      myTextFeedback.append(getRowAttribute(true));
+      myTextFeedback.append(" ");
+      myTextFeedback.append(Integer.toString(myCells[myIndex]));
+      myTextFeedback.append(", ");
+    }
+
+    myTextFeedback.append(getRowSpanAttribute(true));
+    myTextFeedback.append(" ");
+    myTextFeedback.append(Integer.toString(mySpans[myIndex]));
+    myTextFeedback.centerTop(myContainerBounds);
+  }
+
+  private void handleColumns(boolean right) {
     calculateColumns(right);
 
+    Rectangle bounds = myContext.getTransformedRectangle(myBounds);
     int location = right ? bounds.x + bounds.width : bounds.x;
 
     if (location < myOffsets[0]) {
@@ -127,14 +206,86 @@ public class LayoutSpanOperation implements EditOperation {
     myTextFeedback.clear();
 
     if (!right) {
-      myTextFeedback.append("layout:column ");
-      myTextFeedback.append(Integer.toString(myColumns[myIndex]));
+      myTextFeedback.append(getColumnAttribute(true));
+      myTextFeedback.append(" ");
+      myTextFeedback.append(Integer.toString(myCells[myIndex]));
       myTextFeedback.append(", ");
     }
 
-    myTextFeedback.append("layout:span ");
+    myTextFeedback.append(getColumnSpanAttribute(true));
+    myTextFeedback.append(" ");
     myTextFeedback.append(Integer.toString(mySpans[myIndex]));
-    myTextFeedback.centerTop(myTableBounds);
+    myTextFeedback.centerTop(myContainerBounds);
+  }
+
+  protected RadComponent getContainer() {
+    return myComponent.getParent();
+  }
+
+  protected abstract Point getCellInfo();
+
+  private void calculateRows(boolean bottom) {
+    if (mySpans != null) {
+      return;
+    }
+
+    RadComponent container = getContainer();
+    GridInfo gridInfo = ((IGridProvider)container).getVirtualGridInfo();
+    RadComponent[][] components = gridInfo.components;
+    Point cellInfo = getCellInfo();
+    int row = cellInfo.y;
+
+    myContainerBounds = container.getBounds(myContext.getArea().getFeedbackLayer());
+
+    IntArrayList spans = new IntArrayList();
+    IntArrayList offsets = new IntArrayList();
+
+    if (bottom) {
+      int span = 1;
+
+      for (int i = row; i < row + mySpan; i++) {
+        spans.add(span++);
+        offsets.add(myContainerBounds.y + gridInfo.hLines[i + 1]);
+      }
+
+      for (int i = row + mySpan; i < components.length; i++) {
+        if (components[i][cellInfo.x] == null) {
+          spans.add(span++);
+          offsets.add(myContainerBounds.y + gridInfo.hLines[i + 1]);
+        }
+        else {
+          break;
+        }
+      }
+    }
+    else {
+      IntArrayList columns = new IntArrayList();
+      int span = mySpan;
+
+      for (int i = row; i < row + mySpan; i++) {
+        spans.add(span--);
+        offsets.add(myContainerBounds.y + gridInfo.hLines[i]);
+        columns.add(i);
+      }
+
+      span = mySpan;
+
+      for (int i = row - 1; i >= 0; i--) {
+        if (components[i][cellInfo.x] == null) {
+          spans.add(0, ++span);
+          offsets.add(0, myContainerBounds.y + gridInfo.hLines[i]);
+          columns.add(0, i);
+        }
+        else {
+          break;
+        }
+      }
+
+      myCells = columns.toArray();
+    }
+
+    mySpans = spans.toArray();
+    myOffsets = offsets.toArray();
   }
 
   private void calculateColumns(boolean right) {
@@ -142,13 +293,13 @@ public class LayoutSpanOperation implements EditOperation {
       return;
     }
 
-    RadTableLayoutComponent tableComponent = (RadTableLayoutComponent)myComponent.getParent().getParent();
-    GridInfo gridInfo = tableComponent.getVirtualGridInfo();
-    RadComponent[] rowComponents = gridInfo.components[tableComponent.getChildren().indexOf(myComponent.getParent())];
-    int column = ArrayUtil.indexOf(rowComponents, myComponent);
+    RadComponent container = getContainer();
+    GridInfo gridInfo = ((IGridProvider)container).getVirtualGridInfo();
+    Point cellInfo = getCellInfo();
+    RadComponent[] rowComponents = gridInfo.components[cellInfo.y];
+    int column = cellInfo.x;
 
-    mySpan = RadTableLayoutComponent.getCellSpan(myComponent);
-    myTableBounds = tableComponent.getBounds(myContext.getArea().getFeedbackLayer());
+    myContainerBounds = container.getBounds(myContext.getArea().getFeedbackLayer());
 
     IntArrayList spans = new IntArrayList();
     IntArrayList offsets = new IntArrayList();
@@ -158,13 +309,13 @@ public class LayoutSpanOperation implements EditOperation {
 
       for (int i = column; i < column + mySpan; i++) {
         spans.add(span++);
-        offsets.add(myTableBounds.x + gridInfo.vLines[i + 1]);
+        offsets.add(myContainerBounds.x + gridInfo.vLines[i + 1]);
       }
 
       for (int i = column + mySpan; i < rowComponents.length; i++) {
         if (rowComponents[i] == null) {
           spans.add(span++);
-          offsets.add(myTableBounds.x + gridInfo.vLines[i + 1]);
+          offsets.add(myContainerBounds.x + gridInfo.vLines[i + 1]);
         }
         else {
           break;
@@ -177,7 +328,7 @@ public class LayoutSpanOperation implements EditOperation {
 
       for (int i = column; i < column + mySpan; i++) {
         spans.add(span--);
-        offsets.add(myTableBounds.x + gridInfo.vLines[i]);
+        offsets.add(myContainerBounds.x + gridInfo.vLines[i]);
         columns.add(i);
       }
 
@@ -186,7 +337,7 @@ public class LayoutSpanOperation implements EditOperation {
       for (int i = column - 1; i >= 0; i--) {
         if (rowComponents[i] == null) {
           spans.add(0, ++span);
-          offsets.add(0, myTableBounds.x + gridInfo.vLines[i]);
+          offsets.add(0, myContainerBounds.x + gridInfo.vLines[i]);
           columns.add(0, i);
         }
         else {
@@ -194,23 +345,11 @@ public class LayoutSpanOperation implements EditOperation {
         }
       }
 
-      myColumns = columns.toArray();
+      myCells = columns.toArray();
     }
 
     mySpans = spans.toArray();
     myOffsets = offsets.toArray();
-  }
-
-  @Override
-  public void eraseFeedback() {
-    if (myFeedback != null) {
-      FeedbackLayer layer = myContext.getArea().getFeedbackLayer();
-      layer.remove(myTextFeedback);
-      layer.remove(myFeedback);
-      layer.repaint();
-      myTextFeedback = null;
-      myFeedback = null;
-    }
   }
 
   @Override
@@ -227,21 +366,31 @@ public class LayoutSpanOperation implements EditOperation {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override
       public void run() {
-        XmlTag tag = myComponent.getTag();
-
-        if (myContext.getResizeDirection() == Position.WEST) {
-          tag.setAttribute("android:layout_column", Integer.toString(myColumns[myIndex]));
-        }
-
-        int span = mySpans[myIndex];
-        if (span == 1) {
-          ModelParser.deleteAttribute(tag, "android:layout_span");
+        int direction = myContext.getResizeDirection();
+        if (direction == Position.WEST || direction == Position.EAST) {
+          execute(getColumnAttribute(false), getColumnSpanAttribute(false), direction == Position.WEST);
         }
         else {
-          tag.setAttribute("android:layout_span", Integer.toString(span));
+          execute(getRowAttribute(false), getRowSpanAttribute(false), direction == Position.NORTH);
         }
       }
     });
+  }
+
+  private void execute(String cell, String span, boolean cellFix) {
+    XmlTag tag = myComponent.getTag();
+
+    if (cellFix) {
+      tag.setAttribute(cell, Integer.toString(myCells[myIndex]));
+    }
+
+    int spanValue = mySpans[myIndex];
+    if (spanValue == 1) {
+      ModelParser.deleteAttribute(tag, span);
+    }
+    else {
+      tag.setAttribute(span, Integer.toString(spanValue));
+    }
   }
 
   //////////////////////////////////////////////////////////////////////////////////////////
@@ -250,43 +399,22 @@ public class LayoutSpanOperation implements EditOperation {
   //
   //////////////////////////////////////////////////////////////////////////////////////////
 
-  public static void tablePoints(ResizeSelectionDecorator decorator) {
-    decorator.addPoint(new DirectionResizePoint(COLOR,
-                                                Color.black,
-                                                Position.WEST,
-                                                TYPE,
-                                                "Change layout:column x layout:span")); // left
+  protected static class SpanPoint extends DirectionResizePoint {
+    private final GridSelectionDecorator myDecorator;
 
-    decorator.addPoint(new DirectionResizePoint(COLOR,
-                                                Color.black,
-                                                Position.EAST,
-                                                TYPE,
-                                                "Change layout:span")); // right
-  }
+    public SpanPoint(Color color,
+                     Color border,
+                     int direction,
+                     Object type,
+                     @Nullable String description,
+                     GridSelectionDecorator decorator) {
+      super(color, border, direction, type, description);
+      myDecorator = decorator;
+    }
 
-  public static void gridPoints(ResizeSelectionDecorator decorator) {
-    decorator.addPoint(new DirectionResizePoint(COLOR,
-                                                Color.black,
-                                                Position.WEST,
-                                                TYPE,
-                                                "Change layout:column x layout:columnSpan")); // left
-
-    decorator.addPoint(new DirectionResizePoint(COLOR,
-                                                Color.black,
-                                                Position.EAST,
-                                                TYPE,
-                                                "Change layout:columnSpan").move(1, 0.25)); // right
-
-    decorator.addPoint(new DirectionResizePoint(COLOR,
-                                                Color.black,
-                                                Position.NORTH,
-                                                TYPE,
-                                                "Change layout:row x layout:rowSpan")); // top
-
-    decorator.addPoint(new DirectionResizePoint(COLOR,
-                                                Color.black,
-                                                Position.SOUTH,
-                                                TYPE,
-                                                "Change layout:rowSpan").move(0.25, 1)); // bottom
+    @Override
+    protected Rectangle getBounds(DecorationLayer layer, RadComponent component) {
+      return myDecorator.getCellBounds(layer, component);
+    }
   }
 }

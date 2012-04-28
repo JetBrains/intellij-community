@@ -16,12 +16,15 @@
 package com.intellij.android.designer.model.layout.table;
 
 import com.intellij.android.designer.designSurface.layout.actions.LayoutSpanOperation;
-import com.intellij.android.designer.model.layout.actions.AllGravityAction;
+import com.intellij.android.designer.designSurface.layout.actions.TableLayoutSpanOperation;
+import com.intellij.android.designer.designSurface.layout.grid.GridSelectionDecorator;
+import com.intellij.android.designer.model.grid.GridInfo;
 import com.intellij.android.designer.model.layout.RadLinearLayout;
+import com.intellij.android.designer.model.layout.actions.AllGravityAction;
 import com.intellij.designer.designSurface.*;
-import com.intellij.designer.designSurface.selection.ResizeSelectionDecorator;
 import com.intellij.designer.model.RadComponent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -34,7 +37,7 @@ import java.util.List;
 public class RadTableRowLayout extends RadLinearLayout {
   private static final String[] LAYOUT_PARAMS = {"TableRow_Cell", "LinearLayout_Layout", "ViewGroup_MarginLayout"};
 
-  private ResizeSelectionDecorator mySelectionDecorator;
+  private GridSelectionDecorator mySelectionDecorator;
 
   @Override
   @NotNull
@@ -61,7 +64,7 @@ public class RadTableRowLayout extends RadLinearLayout {
       return super.processChildOperation(context);
     }
     if (context.is(LayoutSpanOperation.TYPE)) {
-      return new LayoutSpanOperation(context);
+      return new TableLayoutSpanOperation(context, mySelectionDecorator);
     }
     return null;
   }
@@ -77,12 +80,33 @@ public class RadTableRowLayout extends RadLinearLayout {
   public ComponentDecorator getChildSelectionDecorator(RadComponent component, List<RadComponent> selection) {
     if (isTableParent()) {
       if (mySelectionDecorator == null) {
-        mySelectionDecorator = new ResizeSelectionDecorator(Color.red, 1);
+        mySelectionDecorator = new GridSelectionDecorator(Color.red, 1) {
+          @Override
+          public Rectangle getCellBounds(Component layer, RadComponent component) {
+            RadTableLayoutComponent tableComponent = (RadTableLayoutComponent)component.getParent().getParent();
+            GridInfo gridInfo = tableComponent.getVirtualGridInfo();
+            int row = tableComponent.getChildren().indexOf(component.getParent());
+            RadComponent[] rowComponents = gridInfo.components[row];
+            int column = ArrayUtil.indexOf(rowComponents, component);
+            int columnSpan = 1;
+
+            for (int i = column + 1; i < rowComponents.length; i++) {
+              if (rowComponents[i] == component) {
+                columnSpan++;
+              }
+              else {
+                break;
+              }
+            }
+
+            return calculateBounds(layer, gridInfo, tableComponent, component, row, column, 1, columnSpan);
+          }
+        };
       }
 
       mySelectionDecorator.clear();
       if (selection.size() == 1) {
-        LayoutSpanOperation.tablePoints(mySelectionDecorator);
+        TableLayoutSpanOperation.points(mySelectionDecorator);
       }
       return mySelectionDecorator;
     }
