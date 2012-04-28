@@ -18,6 +18,7 @@ import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.impl.PyPsiUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -71,7 +72,7 @@ public class PyMoveClassOrFunctionDelegate extends MoveHandlerDelegate {
                            @Nullable Editor editor) {
     final PsiNamedElement e = getElementToMove(element);
     if (e instanceof PyClass || e instanceof PyFunction) {
-      if (isTopLevel(e)) {
+      if (PyPsiUtils.isTopLevel(e)) {
         doMove(project, new PsiElement[] {e}, null, null);
       }
       else {
@@ -87,10 +88,5 @@ public class PyMoveClassOrFunctionDelegate extends MoveHandlerDelegate {
   public static PsiNamedElement getElementToMove(@NotNull PsiElement element) {
     final ScopeOwner owner = (element instanceof ScopeOwner) ? (ScopeOwner)element : ScopeUtil.getScopeOwner(element);
     return (owner instanceof PsiNamedElement) ? (PsiNamedElement)owner : null;
-  }
-
-  private static boolean isTopLevel(@NotNull PsiElement element) {
-    return (element instanceof PyFunction && ((PyFunction)element).isTopLevel()) ||
-           (element instanceof PyClass && ((PyClass)element).isTopLevel());
   }
 }

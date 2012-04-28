@@ -227,10 +227,6 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
     return name;
   }
 
-  public boolean isTopLevel() {
-    return getParentByStub() instanceof PsiFile;
-  }
-
   @Override
   public List<String> getSlots() {
     List<String> slots = getOwnSlots();

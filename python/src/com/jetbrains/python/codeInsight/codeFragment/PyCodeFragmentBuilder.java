@@ -7,11 +7,9 @@ import com.intellij.psi.PsiReference;
 import com.intellij.psi.ResolveResult;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
-import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyImportStatementNavigator;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -151,7 +149,7 @@ public class PyCodeFragmentBuilder extends PyRecursiveElementVisitor {
               }
             }
             if (modificationSeen) {
-              if (!isTopLevel(element)) {
+              if (!PyPsiUtils.isTopLevel(element)) {
                 inElements.add(name);
               }
               break;
@@ -160,10 +158,6 @@ public class PyCodeFragmentBuilder extends PyRecursiveElementVisitor {
         }
       }
     }
-  }
-
-  private static boolean isTopLevel(@NotNull PyElement element) {
-    return ScopeUtil.getScopeOwner(element) instanceof PyFile;
   }
 
   private void processDeclaration(final PyElement element) {

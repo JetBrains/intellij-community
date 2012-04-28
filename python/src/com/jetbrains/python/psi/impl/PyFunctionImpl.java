@@ -145,10 +145,6 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
     return getStubOrPsiChild(PyElementTypes.DECORATOR_LIST); // PsiTreeUtil.getChildOfType(this, PyDecoratorList.class);
   }
 
-  public boolean isTopLevel() {
-    return getParentByStub() instanceof PsiFile;
-  }
-
   @Nullable
   @Override
   public PyType getReturnType(@NotNull TypeEvalContext context, @Nullable PyQualifiedExpression callSite) {
