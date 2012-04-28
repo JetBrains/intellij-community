@@ -27,9 +27,9 @@ import git4idea.commands.GitCommand;
 import git4idea.commands.GitSimpleHandler;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
-import git4idea.repo.GitUntrackedFilesHolder;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -101,76 +101,61 @@ public class GitFileUtils {
   }
 
   /**
-   * Add/index files
-   *
-   * @param project the project
-   * @param root    a vcs root
-   * @param files   files to add
-   * @return a result of operation
-   * @throws VcsException in case of git problem
+   * Add files to the Git index.
    */
-  public static void addFiles(Project project, VirtualFile root, Collection<VirtualFile> files) throws VcsException {
-    for (List<String> paths : VcsFileUtil.chunkFiles(root, files)) {
-      GitSimpleHandler handler = new GitSimpleHandler(project, root, GitCommand.ADD);
-      handler.endOptions();
-      handler.addParameters(paths);
-      handler.setNoSSH(true);
-      handler.run();
-    }
+  public static void addFiles(@NotNull Project project, @NotNull VirtualFile root,
+                              @NotNull Collection<VirtualFile> files) throws VcsException {
+    addPaths(project, root, VcsFileUtil.chunkFiles(root, files));
+    updateUntrackedFilesHolderOnFileAdd(project, root, files);
+  }
+
+  private static void updateUntrackedFilesHolderOnFileAdd(@NotNull Project project, @NotNull VirtualFile root,
+                                                          @NotNull Collection<VirtualFile> addedFiles) {
     GitRepositoryManager manager = GitUtil.getRepositoryManager(project);
     if (manager == null) {
       return;
     }
     final GitRepository repository = manager.getRepositoryForRoot(root);
     if (repository != null) {
-      repository.getUntrackedFilesHolder().remove(files);
+      repository.getUntrackedFilesHolder().remove(addedFiles);
     }
   }
 
   /**
-   * Add/index files
-   *
-   * @param project the project
-   * @param root    a vcs root
-   * @param files   files to add
-   * @return a result of operation
-   * @throws VcsException in case of git problem
+   * Add files to the Git index.
    */
   public static void addFiles(Project project, VirtualFile root, VirtualFile... files) throws VcsException {
     addFiles(project, root, Arrays.asList(files));
   }
 
   /**
-   * Add/index files
-   *
-   * @param project the project
-   * @param root    a vcs root
-   * @param files   files to add
-   * @return a result of operation
-   * @throws VcsException in case of git problem
+   * Add files to the Git index.
    */
-  public static void addPaths(Project project, VirtualFile root, Collection<FilePath> files) throws VcsException {
-    GitRepositoryManager manager = GitUtil.getRepositoryManager(project);
-    if (manager == null) {
-      return;
+  public static void addPaths(@NotNull Project project, @NotNull VirtualFile root,
+                              @NotNull Collection<FilePath> files) throws VcsException {
+    addPaths(project, root, VcsFileUtil.chunkPaths(root, files));
+    updateUntrackedFilesHolderOnFileAdd(project, root, getVirtualFilesFromFilePaths(files));
+  }
+
+  @NotNull
+  private static Collection<VirtualFile> getVirtualFilesFromFilePaths(@NotNull Collection<FilePath> paths) {
+    Collection<VirtualFile> files = new ArrayList<VirtualFile>(paths.size());
+    for (FilePath path : paths) {
+      VirtualFile file = path.getVirtualFile();
+      if (file != null) {
+        files.add(file);
+      }
     }
+    return files;
+  }
 
-    final GitRepository repository = manager.getRepositoryForRoot(root);
-    final GitUntrackedFilesHolder untrackedFilesHolder = (repository == null ? null : repository.getUntrackedFilesHolder());
-
-    for (List<String> paths : VcsFileUtil.chunkPaths(root, files)) {
+  private static void addPaths(Project project, VirtualFile root, List<List<String>> chunkedPaths) throws VcsException {
+    for (List<String> paths : chunkedPaths) {
       GitSimpleHandler handler = new GitSimpleHandler(project, root, GitCommand.ADD);
       handler.endOptions();
       handler.addParameters(paths);
       handler.setNoSSH(true);
       handler.run();
-    }
-
-    for (FilePath path : files) {
-      VirtualFile vf = path.getVirtualFile();
-      if (untrackedFilesHolder != null && vf != null) {
-        untrackedFilesHolder.remove(vf);
-      }
     }
   }
 
