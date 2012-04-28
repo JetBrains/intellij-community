@@ -86,10 +86,12 @@ public class PyMoveClassOrFunctionProcessor extends BaseRefactoringProcessor {
               CommonRefactoringUtil.checkReadOnlyStatus(myProject, e);
               assert e instanceof PyClass || e instanceof PyFunction;
               if (e instanceof PyClass && destination.findTopLevelClass(e.getName()) != null) {
-                throw new IncorrectOperationException(PyBundle.message("refactoring.move.class.or.function.error.destination.file.contains.class.$0", e.getName()));
+                throw new IncorrectOperationException(PyBundle.message("refactoring.move.class.or.function.error.destination.file.contains.class.$0",
+                                                                       e.getName()));
               }
               if (e instanceof PyFunction && destination.findTopLevelFunction(e.getName()) != null) {
-                throw new IncorrectOperationException(PyBundle.message("refactoring.move.class.or.function.error.destination.file.contains.function.$0", e.getName()));
+                throw new IncorrectOperationException(PyBundle.message("refactoring.move.class.or.function.error.destination.file.contains.function.$0",
+                                                                       e.getName()));
               }
               checkValidImportableFile(destination, e.getContainingFile().getVirtualFile());
               checkValidImportableFile(e, destination.getVirtualFile());
@@ -110,47 +112,62 @@ public class PyMoveClassOrFunctionProcessor extends BaseRefactoringProcessor {
   }
 
   private static void moveElement(@NotNull PsiNamedElement element, @NotNull Collection<UsageInfo> usages, @NotNull PyFile destination) {
-    final PsiFile oldFile = element.getContainingFile();
+    final PsiFile file = element.getContainingFile();
     PyClassRefactoringUtil.rememberNamedReferences(element);
     final PsiNamedElement newElement = (PsiNamedElement)(destination.add(element));
     for (UsageInfo usage : usages) {
       final PsiElement usageElement = usage.getElement();
-      // TODO: Respect the qualified import style
-      if (usageElement instanceof PyQualifiedExpression) {
-        PyQualifiedExpression expr = (PyQualifiedExpression)usageElement;
-        if (element instanceof PyClass && PyNames.INIT.equals(expr.getName())) {
-          continue;
-        }
-        if (expr.getQualifier() != null) {
-          final PsiElement newExpr = expr.replace(new PyReferenceExpressionImpl(expr.getNameElement()));
-          PyClassRefactoringUtil.insertImport(newExpr, newElement, null, true);
-        }
-      }
-      if (usageElement instanceof PyStringLiteralExpression) {
-        for (PsiReference ref : usageElement.getReferences()) {
-          if (ref instanceof DocStringTypeReference && ref.isReferenceTo(element)) {
-            ref.bindToElement(newElement);
-          }
-        }
-      }
-      else {
-        final PyImportStatementBase importStmt = PsiTreeUtil.getParentOfType(usageElement, PyImportStatementBase.class);
-        if (importStmt != null) {
-          PyClassRefactoringUtil.updateImportOfElement(importStmt, newElement);
-        }
-        if (usage.getFile() == oldFile && (usageElement == null || !PsiTreeUtil.isAncestor(element, usageElement, false))) {
-          PyClassRefactoringUtil.insertImport(element, newElement);
-        }
-        if (usageElement != null && resolvesToLocalStarImport(usageElement)) {
-          PyClassRefactoringUtil.insertImport(usageElement, newElement);
-          new PyImportOptimizer().processFile(usageElement.getContainingFile()).run();
-        }
+      if (usageElement != null) {
+        updateUsage(usageElement, element, newElement);
       }
     }
     PyClassRefactoringUtil.restoreNamedReferences(newElement, element);
     // TODO: Remove extra empty lines after the removed element
     element.delete();
-    new PyImportOptimizer().processFile(oldFile).run();
+    if (file != null) {
+      optimizeImports(file);
+    }
+  }
+
+  private static void updateUsage(@NotNull PsiElement usage, @NotNull PsiNamedElement oldElement, @NotNull PsiNamedElement newElement) {
+    // TODO: Respect the qualified import style
+    if (usage instanceof PyQualifiedExpression) {
+      PyQualifiedExpression expr = (PyQualifiedExpression)usage;
+      if (oldElement instanceof PyClass && PyNames.INIT.equals(expr.getName())) {
+        return;
+      }
+      if (expr.getQualifier() != null) {
+        final PsiElement newExpr = expr.replace(new PyReferenceExpressionImpl(expr.getNameElement()));
+        PyClassRefactoringUtil.insertImport(newExpr, newElement, null, true);
+      }
+    }
+    if (usage instanceof PyStringLiteralExpression) {
+      for (PsiReference ref : usage.getReferences()) {
+        if (ref instanceof DocStringTypeReference && ref.isReferenceTo(oldElement)) {
+          ref.bindToElement(newElement);
+        }
+      }
+    }
+    else {
+      final PyImportStatementBase importStmt = PsiTreeUtil.getParentOfType(usage, PyImportStatementBase.class);
+      if (importStmt != null) {
+        PyClassRefactoringUtil.updateImportOfElement(importStmt, newElement);
+      }
+      final PsiFile usageFile = usage.getContainingFile();
+      if (usageFile == oldElement.getContainingFile() && !PsiTreeUtil.isAncestor(oldElement, usage, false)) {
+        PyClassRefactoringUtil.insertImport(oldElement, newElement);
+      }
+      if (resolvesToLocalStarImport(usage)) {
+        PyClassRefactoringUtil.insertImport(usage, newElement);
+        if (usageFile != null) {
+          optimizeImports(usageFile);
+        }
+      }
+    }
+  }
+
+  private static void optimizeImports(@NotNull PsiFile file) {
+    new PyImportOptimizer().processFile(file).run();
   }
 
   private static boolean resolvesToLocalStarImport(@NotNull PsiElement element) {
