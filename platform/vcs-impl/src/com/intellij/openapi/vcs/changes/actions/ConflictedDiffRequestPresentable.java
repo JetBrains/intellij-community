@@ -25,11 +25,11 @@ import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePathImpl;
-import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.changes.MergeTexts;
+import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.merge.MergeData;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -97,8 +97,9 @@ public class ConflictedDiffRequestPresentable implements DiffRequestPresentable 
                                  CharsetToolkit.bytesToString(mergeData.ORIGINAL, charset), myProject, null, null);
         request.setWindowTitle(FileUtil.toSystemDependentName(myFile.getPresentableUrl()));
         // todo titles?
-        request.setVersionTitles(new String[] {myChange.getAfterRevision().getRevisionNumber().asString(),
-          "Base Version", mergeData.LAST_REVISION_NUMBER.asString()});
+        VcsRevisionNumber lastRevisionNumber = mergeData.LAST_REVISION_NUMBER;
+        request.setVersionTitles(new String[]{myChange.getAfterRevision().getRevisionNumber().asString(),
+          "Base Version", lastRevisionNumber != null ? lastRevisionNumber.asString() : ""});
         return new MyResult(request, DiffPresentationReturnValue.useRequest);
       }
       catch (VcsException e) {
