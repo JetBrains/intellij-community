@@ -47,7 +47,7 @@ public class SequentialTaskExecutor {
     return futureTask;
   }
 
-  private void processQueue() {
+  protected void processQueue() {
     if (!myInProgress.getAndSet(true)) {
       myExecutor.execute(USER_TASK_RUNNER);
     }

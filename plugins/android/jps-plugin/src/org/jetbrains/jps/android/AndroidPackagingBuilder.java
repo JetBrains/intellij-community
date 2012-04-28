@@ -342,7 +342,7 @@ public class AndroidPackagingBuilder extends ProjectLevelBuilder {
       return false;
     }
 
-    final Set<String> externalJarsSet = AndroidJpsUtil.getExternalLibraries(paths, module);
+    final Set<String> externalJarsSet = AndroidJpsUtil.getExternalLibraries(paths, module, platform);
     final File resPackage = getPackagedResourcesFile(module, outputDir);
 
     final File classesDexFile = new File(outputDir.getPath(), AndroidCommonUtils.CLASSES_FILE_NAME);

@@ -543,7 +543,7 @@ public class AndroidFacet extends Facet<AndroidFacetConfiguration> {
     if (platform.needToAddAnnotationsJarToClasspath()) {
       final String sdkHomePath = FileUtil.toSystemIndependentName(platform.getSdkData().getLocation());
       final VirtualFile annotationsJar = JarFileSystem.getInstance().findFileByPath(
-        sdkHomePath + AndroidSdkUtils.ANNOTATIONS_JAR_RELATIVE_PATH + JarFileSystem.JAR_SEPARATOR);
+        sdkHomePath + AndroidCommonUtils.ANNOTATIONS_JAR_RELATIVE_PATH + JarFileSystem.JAR_SEPARATOR);
       if (annotationsJar != null) {
         filesToAdd.add(annotationsJar);
       }

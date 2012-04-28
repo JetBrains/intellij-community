@@ -1,9 +1,12 @@
 package org.jetbrains.jps.incremental.fs;
 
+import com.intellij.util.io.IOUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.incremental.storage.Timestamps;
 
+import java.io.DataInput;
+import java.io.DataOutput;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
@@ -16,6 +19,36 @@ public class FSState {
   private final Map<String, FilesDelta> myDeltas = Collections.synchronizedMap(new HashMap<String, FilesDelta>());
   protected final Set<String> myInitialTestsScanPerformed = Collections.synchronizedSet(new HashSet<String>());
   protected final Set<String> myInitialProductionScanPerformed = Collections.synchronizedSet(new HashSet<String>());
+
+  public void save(DataOutput out) throws IOException {
+    out.writeInt(myInitialTestsScanPerformed.size());
+    for (String moduleName : myInitialTestsScanPerformed) {
+      IOUtil.writeString(moduleName, out);
+      getDelta(moduleName).save(out, true);
+    }
+
+    out.writeInt(myInitialProductionScanPerformed.size());
+    for (String moduleName : myInitialProductionScanPerformed) {
+      IOUtil.writeString(moduleName, out);
+      getDelta(moduleName).save(out, false);
+    }
+  }
+
+  public void load(DataInput in) throws IOException {
+    int testsDeltaCount = in.readInt();
+    while (testsDeltaCount-- > 0) {
+      final String moduleName = IOUtil.readString(in);
+      getDelta(moduleName).load(in, true);
+      myInitialTestsScanPerformed.add(moduleName);
+    }
+
+    int productionDeltaCount = in.readInt();
+    while (productionDeltaCount-- > 0) {
+      final String moduleName = IOUtil.readString(in);
+      getDelta(moduleName).load(in, false);
+      myInitialProductionScanPerformed.add(moduleName);
+    }
+  }
 
   public void clearAll() {
     myDeltas.clear();

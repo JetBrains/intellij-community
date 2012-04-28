@@ -135,12 +135,7 @@ public class GitMergeProvider implements MergeProvider2 {
   @Nullable
   private VcsRevisionNumber findLastRevisionNumber(@NotNull VirtualFile root) {
     if (myReverse) {
-      try {
-        return GitRevisionNumber.resolve(myProject, root, "HEAD");
-      }
-      catch (VcsException e) {
-        log.error("Couldn't resolve the HEAD in " + root, e);
-      }
+      return resolveHead(root);
     }
     else {
       try {
@@ -152,11 +147,23 @@ public class GitMergeProvider implements MergeProvider2 {
           return GitRevisionNumber.resolve(myProject, root, "CHERRY_PICK_HEAD");
         }
         catch (VcsException e1) {
-          log.error("Couldn't resolve neither MERGE_HEAD, nor the CHERRY_PICK_HEAD in " + root, e1);
+          log.info("Couldn't resolve neither MERGE_HEAD, nor the CHERRY_PICK_HEAD in " + root, e1);
+          // for now, we don't know: maybe it is a conflicted file from rebase => then resolve the head.
+          return resolveHead(root);
         }
       }
     }
-    return null;
+  }
+
+  @Nullable
+  private GitRevisionNumber resolveHead(@NotNull VirtualFile root) {
+    try {
+      return GitRevisionNumber.resolve(myProject, root, "HEAD");
+    }
+    catch (VcsException e) {
+      log.error("Couldn't resolve the HEAD in " + root, e);
+      return null;
+    }
   }
 
   private byte[] loadRevisionCatchingErrors(final GitFileRevision revision) throws VcsException, IOException {

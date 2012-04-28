@@ -1,15 +1,15 @@
 package org.jetbrains.jps.api;
 
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.incremental.fs.FSState;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 
 import java.io.ByteArrayOutputStream;
-import java.io.File;
 import java.io.PrintStream;
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Map;
+import java.util.UUID;
 
 /**
  * @author Eugene Zhuravlev
@@ -17,21 +17,15 @@ import java.util.*;
  */
 public class CmdlineProtoUtil {
 
-  public static CmdlineRemoteProto.Message.BuilderMessage createFSStateBuilderMessage(String moduleName, FSState fsState) {
-    final CmdlineRemoteProto.Message.FSStateMessage fsStateMessage = createFSStateMessage(moduleName, fsState);
-    return CmdlineRemoteProto.Message.BuilderMessage.newBuilder().setType(CmdlineRemoteProto.Message.BuilderMessage.Type.FS_STATE).setFsstateMessage(
-      fsStateMessage).build();
-  }
-
   public static CmdlineRemoteProto.Message.ControllerMessage createMakeRequest(String project,
                                                                                Collection<String> modules,
                                                                                Collection<String> artifacts,
                                                                                final Map<String, String> userData,
                                                                                final CmdlineRemoteProto.Message.ControllerMessage.GlobalSettings globals,
-                                                                               final FSState fsState) {
+                                                                               final CmdlineRemoteProto.Message.ControllerMessage.FSEvent event) {
     return createBuildParametersMessage(CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.Type.MAKE, project, modules, artifacts,
                                 userData, Collections.<String>emptyList(),
-                                globals, fsState);
+                                globals, event);
   }
 
   public static CmdlineRemoteProto.Message.ControllerMessage createForceCompileRequest(String project,
@@ -40,31 +34,29 @@ public class CmdlineProtoUtil {
                                                                                        Collection<String> paths,
                                                                                        final Map<String, String> userData,
                                                                                        final CmdlineRemoteProto.Message.ControllerMessage.GlobalSettings globals,
-                                                                                       final FSState fsState) {
+                                                                                       final CmdlineRemoteProto.Message.ControllerMessage.FSEvent event) {
     return createBuildParametersMessage(CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.Type.FORCED_COMPILATION, project, modules,
                                         artifacts,
-                                        userData, paths, globals, fsState);
+                                        userData, paths, globals, event);
   }
 
   public static CmdlineRemoteProto.Message.ControllerMessage createRebuildRequest(String project,
                                                                                   final Map<String, String> userData,
-                                                                                  final CmdlineRemoteProto.Message.ControllerMessage.GlobalSettings globals,
-                                                                                  final FSState fsState) {
+                                                                                  final CmdlineRemoteProto.Message.ControllerMessage.GlobalSettings globals) {
     return createBuildParametersMessage(CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.Type.REBUILD, project,
                                         Collections.<String>emptyList(),
                                         Collections.<String>emptyList(), userData, Collections.<String>emptyList(),
-                                        globals, fsState);
+                                        globals, null);
   }
 
   public static CmdlineRemoteProto.Message.ControllerMessage createCleanRequest(String project,
                                                                                 Collection<String> modules,
                                                                                 Collection<String> artifacts,
                                                                                 final Map<String, String> userData,
-                                                                                final CmdlineRemoteProto.Message.ControllerMessage.GlobalSettings globals,
-                                                                                final FSState fsState) {
+                                                                                final CmdlineRemoteProto.Message.ControllerMessage.GlobalSettings globals) {
     return createBuildParametersMessage(
-      CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.Type.CLEAN, project, modules, artifacts, userData, Collections.<String>emptyList(), globals, fsState
-    );
+      CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.Type.CLEAN, project, modules, artifacts, userData, Collections.<String>emptyList(), globals,
+      null);
   }
 
   public static CmdlineRemoteProto.Message.ControllerMessage createBuildParametersMessage(CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.Type buildType,
@@ -74,7 +66,7 @@ public class CmdlineProtoUtil {
                                                                                           Map<String, String> userData,
                                                                                           Collection<String> paths,
                                                                                           final CmdlineRemoteProto.Message.ControllerMessage.GlobalSettings globals,
-                                                                                          FSState fsState) {
+                                                                                          CmdlineRemoteProto.Message.ControllerMessage.FSEvent initialEvent) {
     final CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.Builder
       builder = CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.newBuilder();
     builder.setGlobalSettings(globals);
@@ -98,12 +90,12 @@ public class CmdlineProtoUtil {
     if (!paths.isEmpty()) {
       builder.addAllFilePath(paths);
     }
-
-    for (String moduleName : fsState.getInitializedModules()) {
-      builder.addFsState(createFSStateMessage(moduleName, fsState));
+    final CmdlineRemoteProto.Message.ControllerMessage.Builder controlMessageBuilder =
+      CmdlineRemoteProto.Message.ControllerMessage.newBuilder();
+    if (initialEvent != null) {
+      controlMessageBuilder.setFsEvent(initialEvent);
     }
-
-    return CmdlineRemoteProto.Message.ControllerMessage.newBuilder().setType(CmdlineRemoteProto.Message.ControllerMessage.Type.BUILD_PARAMETERS).setParamsMessage(builder.build()).build();
+    return controlMessageBuilder.setType(CmdlineRemoteProto.Message.ControllerMessage.Type.BUILD_PARAMETERS).setParamsMessage(builder.build()).build();
   }
 
   public static CmdlineRemoteProto.Message.KeyValuePair createPair(String key, String value) {
@@ -224,28 +216,6 @@ public class CmdlineProtoUtil {
   private static CmdlineRemoteProto.Message.UUID toProtoUUID(UUID sessionId) {
     final CmdlineRemoteProto.Message.UUID.Builder uuidBuilder = CmdlineRemoteProto.Message.UUID.newBuilder();
     return uuidBuilder.setMostSigBits(sessionId.getMostSignificantBits()).setLeastSigBits(sessionId.getLeastSignificantBits()).build();
-  }
-
-  private static CmdlineRemoteProto.Message.FSStateMessage createFSStateMessage(String moduleName, FSState fsState) {
-    final CmdlineRemoteProto.Message.FSStateMessage.Builder stateBuilder = CmdlineRemoteProto.Message.FSStateMessage.newBuilder();
-    stateBuilder.setModuleName(moduleName);
-    stateBuilder.addAllDeletedProduction(fsState.getDeletedPaths(moduleName, false));
-    stateBuilder.addAllDeletedTests(fsState.getDeletedPaths(moduleName, true));
-    fillRecompilePaths(moduleName, fsState, false, stateBuilder);
-    fillRecompilePaths(moduleName, fsState, true, stateBuilder);
-    return stateBuilder.build();
-  }
-
-  private static void fillRecompilePaths(String moduleName, FSState fsState, final boolean forTests, CmdlineRemoteProto.Message.FSStateMessage.Builder stateBuilder) {
-    for (Map.Entry<File, Set<File>> entry : fsState.getSourcesToRecompile(moduleName, forTests).entrySet()) {
-      final CmdlineRemoteProto.Message.FSStateMessage.RootDelta.Builder deltaBuilder = CmdlineRemoteProto.Message.FSStateMessage.RootDelta.newBuilder();
-      deltaBuilder.setTestSources(forTests);
-      deltaBuilder.setRoot(FileUtil.toSystemIndependentName(entry.getKey().getPath()));
-      for (File file : entry.getValue()) {
-        deltaBuilder.addPath(FileUtil.toSystemIndependentName(file.getPath()));
-      }
-      stateBuilder.addRecompileDelta(deltaBuilder.build());
-    }
   }
 
 }

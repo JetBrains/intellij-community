@@ -52,15 +52,25 @@ class BuildMessageDispatcher extends SimpleChannelHandler {
 
   public void cancelSession(UUID sessionId) {
     if (myCanceledSessions.add(sessionId)) {
-      final SessionData data = myMessageHandlers.get(sessionId);
-      if (data != null) {
-        final Channel channel = data.channel;
-        if (channel != null) {
-          Channels.write(channel, CmdlineProtoUtil.toMessage(sessionId, CmdlineProtoUtil.createCancelCommand()));
-        }
+      final Channel channel = getConnectedChannel(sessionId);
+      if (channel != null) {
+        Channels.write(channel, CmdlineProtoUtil.toMessage(sessionId, CmdlineProtoUtil.createCancelCommand()));
       }
     }
   }
+
+  @Nullable
+  public Channel getConnectedChannel(final UUID sessionId) {
+    final SessionData data = myMessageHandlers.get(sessionId);
+    if (data != null) {
+      final Channel channel = data.channel;
+      if (channel != null && channel.isConnected()) {
+        return channel;
+      }
+    }
+    return null;
+  }
+
 
   @Override
   public void messageReceived(ChannelHandlerContext ctx, MessageEvent e) throws Exception {

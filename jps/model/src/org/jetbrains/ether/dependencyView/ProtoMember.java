@@ -183,10 +183,10 @@ abstract class ProtoMember extends Proto {
 
   public void toStream(final DependencyContext context, final PrintStream stream) {
     super.toStream(context, stream);
-    stream.print("    Type     : ");
+    stream.print("          Type       : ");
     stream.println(type.getDescr(context));
 
-    stream.print("    Value    : ");
+    stream.print("          Value      : ");
     stream.println(value == null ? "<null>" : value.toString());
   }
 }

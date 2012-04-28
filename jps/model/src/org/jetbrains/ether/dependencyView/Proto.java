@@ -104,18 +104,29 @@ class Proto implements RW.Savable, Streamable {
   }
 
   public void toStream(final DependencyContext context, final PrintStream stream) {
-    final String d = this instanceof ClassRepr ? "  " : "    ";
+    final String d = this instanceof ClassRepr ? "      " : "          ";
+
+    if (this instanceof ClassRepr) {
+      stream.print("    Class ");
+      stream.println(context.getValue(name));
+    }
+
+    if (this instanceof MethodRepr) {
+      stream.print("        Method ");
+      stream.println(context.getValue(name));
+    }
+
+    if (this instanceof FieldRepr) {
+      stream.print("        Field ");
+      stream.println(context.getValue(name));
+    }
 
     stream.print(d);
-    stream.print("Access   : ");
+    stream.print("Access     : ");
     stream.println(access);
 
     stream.print(d);
-    stream.print("Signature: ");
+    stream.print("Signature  : ");
     stream.println(context.getValue(signature));
-
-    stream.print(d);
-    stream.print("Name     : ");
-    stream.println(context.getValue(name));
   }
 }

@@ -160,12 +160,22 @@ class AndroidJpsUtil {
   }
 
   @NotNull
-  public static Set<String> getExternalLibraries(@NotNull ProjectPaths paths, @NotNull Module module) {
+  public static Set<String> getExternalLibraries(@NotNull ProjectPaths paths, @NotNull Module module, @NotNull AndroidPlatform platform) {
     final Set<String> result = new HashSet<String>();
     fillClasspath(paths, module, null, result, new HashSet<String>(), false);
-
-    // todo: add annotations.jar to result
+    addAnnotationsJarIfNecessary(platform, result);
     return result;
+  }
+
+  private static void addAnnotationsJarIfNecessary(@NotNull AndroidPlatform platform, @NotNull Set<String> libs) {
+    if (platform.needToAddAnnotationsJarToClasspath()) {
+      final String sdkHomePath = platform.getSdk().getSdkPath();
+      final String annotationsJarPath = FileUtil.toSystemIndependentName(sdkHomePath) + AndroidCommonUtils.ANNOTATIONS_JAR_RELATIVE_PATH;
+
+      if (new File(annotationsJarPath).exists()) {
+        libs.add(annotationsJarPath);
+      }
+    }
   }
 
   @NotNull
@@ -186,7 +196,6 @@ class AndroidJpsUtil {
     }
 
     if (libraries != null) {
-      // todo: do not include provided libs there
       for (ClasspathItem item : module.getClasspath(ClasspathKind.PRODUCTION_RUNTIME, exportedLibrariesOnly)) {
         if (item instanceof Library && !(item instanceof Sdk)) {
           for (Object filePathObj : ((Library)item).getClasspath()) {

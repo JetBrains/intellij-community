@@ -3,8 +3,10 @@ package org.jetbrains.jps.cmdline;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.io.DataOutputStream;
 import groovy.util.Node;
 import groovy.util.XmlParser;
 import org.codehaus.groovy.runtime.MethodClosure;
@@ -12,6 +14,7 @@ import org.jboss.netty.channel.Channel;
 import org.jboss.netty.channel.ChannelFuture;
 import org.jboss.netty.channel.ChannelFutureListener;
 import org.jboss.netty.channel.Channels;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.Library;
 import org.jetbrains.jps.Module;
 import org.jetbrains.jps.Project;
@@ -29,10 +32,9 @@ import org.jetbrains.jps.incremental.storage.ProjectTimestamps;
 import org.jetbrains.jps.incremental.storage.Timestamps;
 import org.jetbrains.jps.server.ProjectDescriptor;
 
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.PrintStream;
+import java.io.*;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
 * @author Eugene Zhuravlev
@@ -41,6 +43,7 @@ import java.util.*;
 final class BuildSession implements Runnable, CanceledStatus {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.cmdline.BuildSession");
   public static final String IDEA_PROJECT_DIRNAME = ".idea";
+  private static final String FS_STATE_FILE = "fs_state.dat";
   private final UUID mySessionId;
   private final Channel myChannel;
   private volatile boolean myCanceled = false;
@@ -56,11 +59,17 @@ final class BuildSession implements Runnable, CanceledStatus {
   private final List<String> myFilePaths;
   private final Map<String, String> myBuilderParams;
   private String myProjectPath;
-  private List<CmdlineRemoteProto.Message.FSStateMessage> myModuleFSStates;
+  @Nullable
+  private CmdlineRemoteProto.Message.ControllerMessage.FSEvent myInitialFSDelta;
+  // state
+  private EventsProcessor myEventsProcessor = new EventsProcessor();
+  private volatile long myLastEventOrdinal;
+  private volatile ProjectDescriptor myProjectDescriptor;
 
-  // todo pass FSState in order not to scan FS from scratch
-
-  BuildSession(UUID sessionId, Channel channel, CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage params) {
+  BuildSession(UUID sessionId,
+               Channel channel,
+               CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage params,
+               @Nullable CmdlineRemoteProto.Message.ControllerMessage.FSEvent delta) {
     mySessionId = sessionId;
     myChannel = channel;
 
@@ -91,7 +100,7 @@ final class BuildSession implements Runnable, CanceledStatus {
     for (CmdlineRemoteProto.Message.KeyValuePair pair : params.getBuilderParameterList()) {
       myBuilderParams.put(pair.getKey(), pair.getValue());
     }
-    myModuleFSStates = params.getFsStateList();
+    myInitialFSDelta = delta;
   }
 
   public void run() {
@@ -150,29 +159,10 @@ final class BuildSession implements Runnable, CanceledStatus {
     boolean forceCleanCaches = false;
     ProjectDescriptor pd;
     final Project project = loadProject(projectPath);
-    final BuildFSState fsState = new BuildFSState(false);
-
-    for (CmdlineRemoteProto.Message.FSStateMessage state : myModuleFSStates) {
-      final Map<File, Set<File>> recompileProduction = new HashMap<File, Set<File>>();
-      final Map<File, Set<File>> recompileTests = new HashMap<File, Set<File>>();
-      for (CmdlineRemoteProto.Message.FSStateMessage.RootDelta delta : state.getRecompileDeltaList()) {
-        final Map<File, Set<File>> map = delta.getTestSources()? recompileTests : recompileProduction;
-        final File root = new File(delta.getRoot());
-        Set<File> files = map.get(root);
-        if (files == null) {
-          files = new HashSet<File>();
-          map.put(root, files);
-        }
-        for (String path : delta.getPathList()) {
-          files.add(new File(path));
-        }
-      }
-      fsState.init(state.getModuleName(), state.getDeletedProductionList(), state.getDeletedTestsList(), recompileProduction, recompileTests);
-    }
+    final File dataStorageRoot = Utils.getDataStorageRoot(project);
 
     ProjectTimestamps projectTimestamps = null;
     BuildDataManager dataManager = null;
-    final File dataStorageRoot = Utils.getDataStorageRoot(project);
     try {
       projectTimestamps = new ProjectTimestamps(dataStorageRoot);
       dataManager = new BuildDataManager(dataStorageRoot, true);
@@ -192,14 +182,21 @@ final class BuildSession implements Runnable, CanceledStatus {
       }
       forceCleanCaches = true;
       FileUtil.delete(dataStorageRoot);
-      // todo: create optionally
-      //projectTimestamps = new ProjectTimestamps(dataStorageRoot);
+      projectTimestamps = new ProjectTimestamps(dataStorageRoot);
       dataManager = new BuildDataManager(dataStorageRoot, true);
       // second attempt succeded
       msgHandler.processMessage(new CompilerMessage("build", BuildMessage.Kind.INFO, "Project rebuild forced: " + e.getMessage()));
     }
 
+    final BuildFSState fsState = new BuildFSState(false);
     pd = new ProjectDescriptor(project, fsState, projectTimestamps, dataManager, BuildLoggingManager.DEFAULT);
+    myProjectDescriptor = pd;
+
+    loadFsState(myProjectDescriptor, dataStorageRoot, myInitialFSDelta);
+    // free memory
+    myInitialFSDelta = null;
+    // ensure events from controller are processed after FSState initialization
+    myEventsProcessor.startProcessing();
 
     try {
       for (int attempt = 0; attempt < 2; attempt++) {
@@ -244,16 +241,135 @@ final class BuildSession implements Runnable, CanceledStatus {
           }
         }
       }
-      // save initialized FS state for future use
-      for (Module module : pd.project.getModules().values()) {
-        if (fsState.isInitialized(module.getName())) {
-          Channels.write(myChannel, CmdlineProtoUtil.toMessage(mySessionId, CmdlineProtoUtil.createFSStateBuilderMessage(module.getName(),
-                                                                                                                         fsState)));
-        }
-      }
     }
     finally {
+      saveFsState(dataStorageRoot, pd.fsState, myLastEventOrdinal);
       pd.release();
+    }
+  }
+
+  public void processFSEvent(final CmdlineRemoteProto.Message.ControllerMessage.FSEvent event) {
+    myEventsProcessor.submit(new Runnable() {
+      @Override
+      public void run() {
+        try {
+          applyFSEvent(myProjectDescriptor, event);
+        }
+        catch (IOException e) {
+          LOG.error(e);
+        }
+      }
+    });
+  }
+
+  private void applyFSEvent(ProjectDescriptor pd, @Nullable CmdlineRemoteProto.Message.ControllerMessage.FSEvent event) throws IOException {
+    if (event == null) {
+      return;
+    }
+
+    final Timestamps timestamps = pd.timestamps.getStorage();
+
+    for (String deleted : event.getDeletedPathsList()) {
+      final File file = new File(deleted);
+      final RootDescriptor rd = pd.rootsIndex.getModuleAndRoot(file);
+      if (rd != null) {
+        pd.fsState.registerDeleted(rd.module, file, rd.isTestRoot, timestamps);
+      }
+    }
+    for (String changed : event.getChangedPathsList()) {
+      final File file = new File(changed);
+      final RootDescriptor rd = pd.rootsIndex.getModuleAndRoot(file);
+      if (rd != null) {
+        pd.fsState.markDirty(file, rd, timestamps);
+      }
+    }
+
+    myLastEventOrdinal += 1;
+  }
+
+  private static void saveFsState(File dataStorageRoot, BuildFSState state, long lastEventOrdinal) {
+    final File file = new File(dataStorageRoot, FS_STATE_FILE);
+    if (lastEventOrdinal < 0L) {
+      FileUtil.delete(file);
+      return;
+    }
+
+    BufferExposingByteArrayOutputStream bytes = new BufferExposingByteArrayOutputStream();
+    try {
+      final DataOutputStream out = new DataOutputStream(bytes);
+      out.writeLong(lastEventOrdinal);
+      try {
+        state.save(out);
+      }
+      finally {
+        out.close();
+      }
+    }
+    catch (IOException e) {
+      LOG.error(e);
+      return;
+    }
+
+    FileOutputStream fos = null;
+    try {
+      fos = new FileOutputStream(file);
+    }
+    catch (FileNotFoundException e) {
+      FileUtil.createIfDoesntExist(file);
+    }
+
+    try {
+      if (fos == null) {
+        fos = new FileOutputStream(file);
+      }
+      try {
+        fos.write(bytes.getInternalBuffer(), 0, bytes.size());
+      }
+      finally {
+        fos.close();
+      }
+    }
+    catch (IOException e) {
+      LOG.error(e);
+      FileUtil.delete(file);
+    }
+  }
+
+  private void loadFsState(final ProjectDescriptor pd, File dataStorageRoot, CmdlineRemoteProto.Message.ControllerMessage.FSEvent initialEvent) {
+    final File file = new File(dataStorageRoot, FS_STATE_FILE);
+    try {
+      final InputStream fs = new FileInputStream(file);
+      byte[] bytes;
+      try {
+        bytes = FileUtil.loadBytes(fs, (int)file.length());
+      }
+      finally {
+        fs.close();
+      }
+      final DataInputStream in = new DataInputStream(new ByteArrayInputStream(bytes));
+      try {
+        final long savedOrdinal = in.readLong();
+        if (initialEvent != null && (savedOrdinal + 1L == initialEvent.getOrdinal())) {
+          pd.fsState.load(in);
+          myLastEventOrdinal = savedOrdinal;
+          applyFSEvent(pd, initialEvent);
+        }
+        else {
+          // either the first start or some events were lost, forcing scan
+          pd.fsState.clearAll();
+          myLastEventOrdinal = initialEvent != null? initialEvent.getOrdinal() : 0L;
+        }
+      }
+      finally {
+        in.close();
+      }
+    }
+    catch (FileNotFoundException ignored) {
+    }
+    catch (IOException e) {
+      pd.fsState.clearAll();
+      myLastEventOrdinal = initialEvent != null? initialEvent.getOrdinal() : 0L;
+      LOG.error(e);
     }
   }
 
@@ -464,4 +580,24 @@ final class BuildSession implements Runnable, CanceledStatus {
     return BuildType.MAKE; // use make by default
   }
 
+  private static class EventsProcessor extends SequentialTaskExecutor {
+    private final AtomicBoolean myProcessingEnabled = new AtomicBoolean(false);
+
+    EventsProcessor() {
+      super(SharedThreadPool.INSTANCE);
+    }
+
+    public void startProcessing() {
+      if (!myProcessingEnabled.getAndSet(true)) {
+        super.processQueue();
+      }
+    }
+
+    @Override
+    protected void processQueue() {
+      if (myProcessingEnabled.get()) {
+        super.processQueue();
+      }
+    }
+  }
 }

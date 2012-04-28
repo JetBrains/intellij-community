@@ -89,9 +89,10 @@ public class BuildMain {
         final CmdlineRemoteProto.Message.ControllerMessage controllerMessage = message.getControllerMessage();
         switch (controllerMessage.getType()) {
 
-          case BUILD_PARAMETERS:
+          case BUILD_PARAMETERS: {
             if (mySession == null) {
-              final BuildSession session = new BuildSession(mySessionId, ctx.getChannel(), controllerMessage.getParamsMessage());
+              final CmdlineRemoteProto.Message.ControllerMessage.FSEvent delta = controllerMessage.hasFsEvent()? controllerMessage.getFsEvent() : null;
+              final BuildSession session = new BuildSession(mySessionId, ctx.getChannel(), controllerMessage.getParamsMessage(), delta);
               mySession = session;
               SharedThreadPool.INSTANCE.submit(session);
             }
@@ -99,8 +100,17 @@ public class BuildMain {
               LOG.info("Cannot start another build session because one is already running");
             }
             return;
+          }
 
-          case CANCEL_BUILD_COMMAND:
+          case FS_EVENT: {
+            final BuildSession session = mySession;
+            if (session != null) {
+              session.processFSEvent(controllerMessage.getFsEvent());
+            }
+            return;
+          }
+
+          case CANCEL_BUILD_COMMAND: {
             final BuildSession session = mySession;
             if (session != null) {
               session.cancel();
@@ -110,6 +120,7 @@ public class BuildMain {
               closeChannel(ctx.getChannel());
             }
             return;
+          }
         }
       }
 
