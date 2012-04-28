@@ -1590,46 +1590,51 @@ public class FileBasedIndex implements ApplicationComponent {
 
     PsiFile psiFile = null;
 
-    for (final ID<?, ?> indexId : myIndices.keySet()) {
-      if (shouldIndexFile(file, indexId)) {
-        if (fc == null) {
-          byte[] currentBytes;
+    FileTypeManagerImpl.cacheFileType(file, file.getFileType());
+    try {
+      for (final ID<?, ?> indexId : myIndices.keySet()) {
+        if (shouldIndexFile(file, indexId)) {
+          if (fc == null) {
+            byte[] currentBytes;
+            try {
+              currentBytes = content.getBytes();
+            }
+            catch (IOException e) {
+              currentBytes = ArrayUtil.EMPTY_BYTE_ARRAY;
+            }
+            fc = new FileContentImpl(file, currentBytes);
+
+            psiFile = content.getUserData(IndexingDataKeys.PSI_FILE);
+            if (psiFile != null) {
+              psiFile.putUserData(PsiFileImpl.BUILDING_STUB, true);
+              fc.putUserData(IndexingDataKeys.PSI_FILE, psiFile);
+            }
+            if (project == null) {
+              project = ProjectUtil.guessProjectForFile(file);
+            }
+            fc.putUserData(IndexingDataKeys.PROJECT, project);
+          }
+
           try {
-            currentBytes = content.getBytes();
+            ProgressManager.checkCanceled();
+            updateSingleIndex(indexId, file, fc);
           }
-          catch (IOException e) {
-            currentBytes = ArrayUtil.EMPTY_BYTE_ARRAY;
+          catch (ProcessCanceledException e) {
+            myChangedFilesCollector.scheduleForUpdate(file);
+            throw e;
           }
-          fc = new FileContentImpl(file, currentBytes);
-
-          psiFile = content.getUserData(IndexingDataKeys.PSI_FILE);
-          if (psiFile != null) {
-            psiFile.putUserData(PsiFileImpl.BUILDING_STUB, true);
-            fc.putUserData(IndexingDataKeys.PSI_FILE, psiFile);
+          catch (StorageException e) {
+            requestRebuild(indexId);
+            LOG.info(e);
           }
-          if (project == null) {
-            project = ProjectUtil.guessProjectForFile(file);
-          }
-          fc.putUserData(IndexingDataKeys.PROJECT, project);
-        }
-
-        try {
-          ProgressManager.checkCanceled();
-          updateSingleIndex(indexId, file, fc);
-        }
-        catch (ProcessCanceledException e) {
-          myChangedFilesCollector.scheduleForUpdate(file);
-          throw e;
-        }
-        catch (StorageException e) {
-          requestRebuild(indexId);
-          LOG.info(e);
         }
       }
-    }
 
-    if (psiFile != null) {
-      psiFile.putUserData(PsiFileImpl.BUILDING_STUB, null);
+      if (psiFile != null) {
+        psiFile.putUserData(PsiFileImpl.BUILDING_STUB, null);
+      }
+    } finally {
+      FileTypeManagerImpl.cacheFileType(file, null);
     }
   }
 
