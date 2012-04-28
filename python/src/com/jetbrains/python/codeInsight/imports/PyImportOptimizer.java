@@ -19,7 +19,7 @@ public class PyImportOptimizer implements ImportOptimizer {
   }
 
   @NotNull
-  public Runnable processFile(PsiFile file) {
+  public Runnable processFile(@NotNull PsiFile file) {
     final LocalInspectionToolSession session = new LocalInspectionToolSession(file, 0, file.getTextLength());
     final PyUnresolvedReferencesInspection.Visitor visitor = new PyUnresolvedReferencesInspection.Visitor(null,
                                                                                                           session,
