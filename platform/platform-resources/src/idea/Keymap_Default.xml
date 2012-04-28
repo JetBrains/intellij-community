@@ -828,7 +828,6 @@
   <action id="Refresh">
     <keyboard-shortcut first-keystroke="control F5"/>
   </action>
-  <action id="CloseWindow"/>
   <action id="Rerun">
     <keyboard-shortcut first-keystroke="control F5"/>
   </action>

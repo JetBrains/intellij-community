@@ -30,7 +30,6 @@
       <keyboard-shortcut first-keystroke="shift control W" />
     </action>
     <action id="CloseEditor" />
-    <action id="CloseWindow" />
     <action id="CodeInspection.OnEditor" />
     <action id="CollapseAllRegions">
       <keyboard-shortcut first-keystroke="shift control DIVIDE" />
