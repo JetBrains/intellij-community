@@ -3,9 +3,11 @@ package com.jetbrains.python.refactoring.move;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.ui.UsageViewDescriptorAdapter;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
@@ -14,6 +16,7 @@ import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
+import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.codeInsight.imports.PyImportOptimizer;
 import com.jetbrains.python.documentation.DocStringTypeReference;
 import com.jetbrains.python.psi.*;
@@ -24,10 +27,9 @@ import com.jetbrains.python.refactoring.PyRefactoringUtil;
 import com.jetbrains.python.refactoring.classes.PyClassRefactoringUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
+
+import static com.jetbrains.python.psi.impl.PyImportStatementNavigator.getImportStatementByElement;
 
 /**
  * @author vlan
@@ -114,7 +116,7 @@ public class PyMoveClassOrFunctionProcessor extends BaseRefactoringProcessor {
   private static void moveElement(@NotNull PsiNamedElement element, @NotNull Collection<UsageInfo> usages, @NotNull PyFile destination) {
     final PsiFile file = element.getContainingFile();
     PyClassRefactoringUtil.rememberNamedReferences(element);
-    final PsiNamedElement newElement = (PsiNamedElement)(destination.add(element));
+    final PsiNamedElement newElement = addToFile(element, destination, usages);
     for (UsageInfo usage : usages) {
       final PsiElement usageElement = usage.getElement();
       if (usageElement != null) {
@@ -126,6 +128,38 @@ public class PyMoveClassOrFunctionProcessor extends BaseRefactoringProcessor {
     element.delete();
     if (file != null) {
       optimizeImports(file);
+    }
+  }
+
+  private static PsiNamedElement addToFile(@NotNull PsiNamedElement element, @NotNull final PyFile destination,
+                                           @NotNull Collection<UsageInfo> usages) {
+    List<PsiElement> topLevelAtDestination = new ArrayList<PsiElement>();
+    for (UsageInfo usage : usages) {
+      final PsiElement e = usage.getElement();
+      if (e != null && ScopeUtil.getResolveScopeOwner(e) == destination && getImportStatementByElement(e) == null) {
+        PsiElement topLevel = PsiTreeUtil.findFirstParent(e, new Condition<PsiElement>() {
+          @Override
+          public boolean value(PsiElement element) {
+            return element.getParent() == destination;
+          }
+        });
+        if (topLevel != null) {
+          topLevelAtDestination.add(topLevel);
+        }
+      }
+    }
+    if (topLevelAtDestination.isEmpty()) {
+      return (PsiNamedElement)(destination.add(element));
+    }
+    else {
+      Collections.sort(topLevelAtDestination, new Comparator<PsiElement>() {
+        @Override
+        public int compare(PsiElement e1, PsiElement e2) {
+          return PsiUtilCore.compareElementsByPosition(e1, e2);
+        };
+      });
+      final PsiElement firstUsage = topLevelAtDestination.get(0);
+      return (PsiNamedElement)destination.addBefore(element, firstUsage);
     }
   }
 
@@ -149,7 +183,7 @@ public class PyMoveClassOrFunctionProcessor extends BaseRefactoringProcessor {
       }
     }
     else {
-      final PyImportStatementBase importStmt = PsiTreeUtil.getParentOfType(usage, PyImportStatementBase.class);
+      final PyImportStatementBase importStmt = getImportStatementByElement(usage);
       if (importStmt != null) {
         PyClassRefactoringUtil.updateImportOfElement(importStmt, newElement);
       }
