@@ -1069,23 +1069,12 @@ public class Mappings {
                   if (overrides.satisfy(mm) && inheritorOf.isValue() && inheritorOf.value()) {
                     debug("Current method overrides that found");
 
-                    final Option<Boolean> subtypeOf = u.isSubtypeOf(mm.type, m.type);
+                    final int file = myClassToSourceFile.get(cc.name);
 
-                    if (Difference.weakerAccess(mm.access, m.access) ||
-                        ((m.access & Opcodes.ACC_STATIC) > 0 && (mm.access & Opcodes.ACC_STATIC) == 0) ||
-                        ((m.access & Opcodes.ACC_STATIC) == 0 && (mm.access & Opcodes.ACC_STATIC) > 0) ||
-                        ((m.access & Opcodes.ACC_FINAL) > 0) ||
-                        !m.exceptions.equals(mm.exceptions) ||
-                        (subtypeOf.isValue() && subtypeOf.value()) ||
-                        (subtypeOf.isNone() || !subtypeOf.value()) ||
-                        !empty(mm.signature) || !empty(m.signature)) {
-                      final int file = myClassToSourceFile.get(cc.name);
-
-                      if (file > 0) {
-                        final String f = myContext.getValue(file);
-                        debug("Complex condition is satisfied, affecting file ", f);
-                        affectedFiles.add(new File(f));
-                      }
+                    if (file > 0) {
+                      final String f = myContext.getValue(file);
+                      debug("Affecting file ", f);
+                      affectedFiles.add(new File(f));
                     }
                   }
                   else {
@@ -2052,7 +2041,7 @@ public class Mappings {
     myDebugS.debug(comment, s);
   }
 
-  public void toStream (final PrintStream stream) {
+  public void toStream(final PrintStream stream) {
     final Streamable[] data = {
       myClassToSubclasses,
       myClassToClassDependency,
@@ -2071,7 +2060,7 @@ public class Mappings {
       "ClassToSourceFile"
     };
 
-    for (int i = 0; i<data.length; i++) {
+    for (int i = 0; i < data.length; i++) {
       stream.print("Begin Of ");
       stream.println(info[i]);
 

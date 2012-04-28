@@ -48,6 +48,7 @@ public class CompileStepBeforeRun extends BeforeRunTaskProvider<CompileStepBefor
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.options.CompileStepBeforeRun");
   public static final Key<MakeBeforeRunTask> ID = Key.create("Make");
   private static final Key<RunConfiguration> RUN_CONFIGURATION = Key.create("RUN_CONFIGURATION");
+  private static final Key<String> RUN_CONFIGURATION_TYPE_ID = Key.create("RUN_CONFIGURATION_TYPE_ID");
 
   @NonNls protected static final String MAKE_PROJECT_ON_RUN_KEY = "makeProjectOnRun";
 
@@ -148,6 +149,7 @@ public class CompileStepBeforeRun extends BeforeRunTaskProvider<CompileStepBefor
           if (!myProject.isDisposed()) {
             done.down();
             scope.putUserData(RUN_CONFIGURATION, configuration);
+            scope.putUserData(RUN_CONFIGURATION_TYPE_ID, configuration.getType().getId());
             compilerManager.make(scope, callback);
           }
         }

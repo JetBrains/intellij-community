@@ -61,7 +61,7 @@ public class GitRebaseLineListener extends GitLineHandlerAdapter {
         assert myStatus == null;
         myStatus = Status.FINISHED;
       }
-      else if (line.startsWith("Automatic cherry-pick failed. ")) {
+      else if (line.startsWith("Automatic cherry-pick failed") || line.startsWith("When you have resolved this problem")) {
         assert myStatus == null || myStatus == Status.ERROR;
         myStatus = Status.CONFLICT;
       }
@@ -69,7 +69,7 @@ public class GitRebaseLineListener extends GitLineHandlerAdapter {
         assert myStatus == null;
         myStatus = myProgressLine == null ? Status.CANCELLED : Status.ERROR;
       }
-      else if (line.startsWith("fatal") || line.startsWith("error: ")) {
+      else if (line.startsWith("fatal") || line.startsWith("error: ") || line.startsWith("Cannot rebase")) {
         if (myStatus != Status.CONFLICT) {
           myStatus = Status.ERROR;
         }
@@ -97,7 +97,7 @@ public class GitRebaseLineListener extends GitLineHandlerAdapter {
     else {
       total = current = 0;
     }
-    return new Result(myStatus == null ? Status.ERROR : myStatus, total, current);
+    return new Result(myStatus == null ? Status.FINISHED : myStatus, total, current);
   }
 
   /**

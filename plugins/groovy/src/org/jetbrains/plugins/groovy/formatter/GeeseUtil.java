@@ -139,7 +139,7 @@ public class GeeseUtil {
         break;
       }
     }
-    alignments.addPair(rBrace, cur);
+    alignments.addPair(rBrace, cur, true);
   }
 
   public static boolean isClosureContainLF(PsiElement rBrace) {

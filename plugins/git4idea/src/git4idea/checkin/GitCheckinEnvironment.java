@@ -557,6 +557,12 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     myDirtyScopeManager.dirDirtyRecursively(root);
   }
 
+  public void reset() {
+    myNextCommitAmend = false;
+    myNextCommitAuthor = null;
+    myNextCommitIsPushed = null;
+  }
+
   /**
    * Checkin options for git
    */
@@ -642,9 +648,8 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
      */
     public void refresh() {
       myAuthor.setSelectedItem("");
-      myNextCommitAuthor = null;
       myAmend.setSelected(false);
-      myNextCommitIsPushed = null;
+      reset();
     }
 
     /**

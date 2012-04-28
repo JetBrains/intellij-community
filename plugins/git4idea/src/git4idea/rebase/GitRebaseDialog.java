@@ -76,7 +76,7 @@ public class GitRebaseDialog extends DialogWrapper {
   /**
    * If selected, rebase is interactive
    */
-  private JCheckBox myInteractiveCheckBox;
+  protected JCheckBox myInteractiveCheckBox;
   /**
    * No merges are performed if selected.
    */

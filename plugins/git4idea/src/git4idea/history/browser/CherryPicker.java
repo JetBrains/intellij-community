@@ -34,6 +34,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.WaitForProgressToShow;
 import git4idea.PlatformFacade;
+import git4idea.checkin.GitCheckinEnvironment;
 import git4idea.commands.Git;
 import git4idea.commands.GitCommandResult;
 import git4idea.commands.GitMessageWithFilesDetector;
@@ -486,8 +487,9 @@ public class CherryPicker {
         final Collection<Document> committingDocs = markCommittingDocs();
         try {
           CheckinEnvironment ce = myPlatformFacade.getVcs(myProject).getCheckinEnvironment();
-          if (ce != null) {
+          if (ce != null && ce instanceof GitCheckinEnvironment) {
             try {
+              ((GitCheckinEnvironment)ce).reset();
               List<VcsException> exceptions = ce.commit(myChanges, myCommitMessage);
               VcsDirtyScopeManager.getInstance(myProject).filePathsDirty(ChangesUtil.getPaths(myChanges), null);
               if (exceptions != null && !exceptions.isEmpty()) {
