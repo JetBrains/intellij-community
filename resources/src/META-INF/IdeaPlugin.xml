@@ -111,10 +111,6 @@
                     interface="com.intellij.openapi.compiler.util.InspectionValidator"
                     area="IDEA_PROJECT"/>
 
-    <!-- to be moved to a dedicated com.intellij.jpa plugin when available -->
-    <extensionPoint name="jpa.ql.persistenceModelProvider"
-                    interface="com.intellij.jpa.ql.model.PersistenceModelProvider"/>
-
     <extensionPoint name="javaExpressionSurrounder"
                     interface="com.intellij.codeInsight.generation.surroundWith.JavaExpressionSurrounder"/>
 
