@@ -114,6 +114,14 @@ public class GitUtil {
     else {
       pathToDir = content;
     }
+
+    if (!FileUtil.isAbsolute(pathToDir)) {
+      String canonicalPath = FileUtil.toCanonicalPath(FileUtil.join(rootDir.getPath(), pathToDir));
+      if (canonicalPath == null) {
+        return null;
+      }
+      pathToDir = FileUtil.toSystemIndependentName(canonicalPath);
+    }
     return VcsUtil.getVirtualFile(pathToDir);
   }
 
