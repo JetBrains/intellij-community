@@ -304,8 +304,10 @@ public class GroovyBlockGenerator implements GroovyElementTypes {
     //       println 'xxx'
     //     })
     if (blockPsi instanceof GrArgumentList && mySettings.ALIGN_MULTILINE_PARAMETERS_IN_CALLS) {
-      return children.size() != 3 || children.get(0).getElementType() != mLPAREN
-             || children.get(1).getElementType() != CLOSABLE_BLOCK || children.get(2).getElementType() != mRPAREN;
+      return !(children.size() == 3 &&
+               children.get(0).getElementType() == mLPAREN &&
+               (children.get(1).getElementType() == CLOSABLE_BLOCK || children.get(1).getElementType() == LIST_OR_MAP) &&
+               children.get(2).getElementType() == mRPAREN);
     }
 
     if (blockPsi instanceof GrAssignmentExpression && ((GrAssignmentExpression)blockPsi).getRValue() instanceof GrAssignmentExpression) {
