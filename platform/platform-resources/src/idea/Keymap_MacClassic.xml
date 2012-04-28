@@ -237,7 +237,6 @@
       <keyboard-shortcut first-keystroke="END"/>
       <keyboard-shortcut first-keystroke="meta RIGHT"/>
     </action>
-    <action id="CloseWindow"/>
     <action id="Exit">
       <keyboard-shortcut first-keystroke="meta Q"/>
     </action>

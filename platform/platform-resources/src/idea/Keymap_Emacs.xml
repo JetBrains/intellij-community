@@ -1,8 +1,5 @@
 <component>
   <keymap name="Emacs" parent="$default" version="1" disable-mnemonics="false">
-    <action id="CloseWindow">
-      <keyboard-shortcut first-keystroke="ESCAPE" second-keystroke="ESCAPE"/>
-    </action>
     <action id="EditorEscape">
       <keyboard-shortcut first-keystroke="ESCAPE" second-keystroke="ESCAPE"/>
     </action>

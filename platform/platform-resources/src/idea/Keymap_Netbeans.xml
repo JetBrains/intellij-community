@@ -51,7 +51,6 @@
       <keyboard-shortcut first-keystroke="control F4" />
       <keyboard-shortcut first-keystroke="control W" />
     </action>
-    <action id="CloseWindow" />
     <action id="CodeCompletion">
       <keyboard-shortcut first-keystroke="control SPACE" />
       <keyboard-shortcut first-keystroke="control BACK_SLASH" />
