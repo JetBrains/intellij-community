@@ -105,4 +105,10 @@ public class CommonShortcuts {
   public static ShortcutSet getContextHelp() {
     return new CustomShortcutSet(KeymapManager.getInstance().getActiveKeymap().getShortcuts(IdeActions.ACTION_CONTEXT_HELP));
   }
+
+  public static ShortcutSet getCloseActiveWindow() {
+    return new CustomShortcutSet(KeymapManager.getInstance().getActiveKeymap().getShortcuts(IdeActions.ACTION_CLOSE));
+  }
+
+
 }

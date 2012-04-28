@@ -1400,7 +1400,7 @@ public abstract class DialogWrapper {
   }
 
   private void registerKeyboardShortcuts() {
-    getRootPane().registerKeyboardAction(new ActionListener() {
+    ActionListener cancelKeyboardAction = new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         MenuSelectionManager menuSelectionManager = MenuSelectionManager.defaultManager();
         MenuElement[] selectedPath = menuSelectionManager.getSelectedPath();
@@ -1411,30 +1411,19 @@ public abstract class DialogWrapper {
           doCancelAction(e);
         }
       }
-    }, KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_IN_FOCUSED_WINDOW);
+    };
+    getRootPane().registerKeyboardAction(cancelKeyboardAction, KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_IN_FOCUSED_WINDOW);
+    registerForEveryKeyboardShortcut(cancelKeyboardAction, CommonShortcuts.getCloseActiveWindow());
 
     if (ApplicationInfo.contextHelpAvailable()) {
-      ShortcutSet help = CommonShortcuts.getContextHelp();
-      for (Shortcut shortcut : help.getShortcuts()) {
-        if (shortcut instanceof KeyboardShortcut) {
-          KeyboardShortcut ks = (KeyboardShortcut)shortcut;
-          KeyStroke first = ks.getFirstKeyStroke();
-          KeyStroke second = ks.getSecondKeyStroke();
-          if (second == null) {
-            getRootPane().registerKeyboardAction(new ActionListener() {
-              public void actionPerformed(ActionEvent e) {
-                doHelpAction();
-              }
-            }, first, JComponent.WHEN_IN_FOCUSED_WINDOW);
-          }
-        }
-      }
-
-      getRootPane().registerKeyboardAction(new ActionListener() {
+      ActionListener helpAction = new ActionListener() {
         public void actionPerformed(ActionEvent e) {
           doHelpAction();
         }
-      }, KeyStroke.getKeyStroke(KeyEvent.VK_HELP, 0), JComponent.WHEN_IN_FOCUSED_WINDOW);
+      };
+
+      registerForEveryKeyboardShortcut(helpAction, CommonShortcuts.getContextHelp());
+      getRootPane().registerKeyboardAction(helpAction, KeyStroke.getKeyStroke(KeyEvent.VK_HELP, 0), JComponent.WHEN_IN_FOCUSED_WINDOW);
     }
 
     if (myButtons != null) {
@@ -1456,6 +1445,19 @@ public abstract class DialogWrapper {
 
     if (myNoAction != null) {
       getRootPane().registerKeyboardAction(myNoAction, KeyStroke.getKeyStroke(KeyEvent.VK_N, 0), JComponent.WHEN_IN_FOCUSED_WINDOW);
+    }
+  }
+
+  private void registerForEveryKeyboardShortcut(ActionListener action, ShortcutSet shortcuts) {
+    for (Shortcut shortcut : shortcuts.getShortcuts()){
+      if (shortcut instanceof KeyboardShortcut) {
+        KeyboardShortcut ks = (KeyboardShortcut)shortcut;
+        KeyStroke first = ks.getFirstKeyStroke();
+        KeyStroke second = ks.getSecondKeyStroke();
+        if (second == null) {
+          getRootPane().registerKeyboardAction(action, first, JComponent.WHEN_IN_FOCUSED_WINDOW);
+        }
+      }
     }
   }
 
