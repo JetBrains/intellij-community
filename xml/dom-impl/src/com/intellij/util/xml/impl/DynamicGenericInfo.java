@@ -18,11 +18,14 @@ package com.intellij.util.xml.impl;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
-import com.intellij.psi.xml.XmlElement;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.RecursionGuard;
 import com.intellij.openapi.util.RecursionManager;
+import com.intellij.psi.xml.XmlElement;
+import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Processor;
+import com.intellij.util.containers.ConcurrentWeakHashMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.GenericDomValue;
@@ -42,6 +45,7 @@ import java.util.Set;
  * @author peter
  */
 public class DynamicGenericInfo extends DomGenericInfoEx {
+  private static final Key<ConcurrentWeakHashMap<ChildrenDescriptionsHolder, ChildrenDescriptionsHolder>> HOLDERS_CACHE = Key.create("DOM_CHILDREN_HOLDERS_CACHE");
   private static final RecursionGuard ourGuard = RecursionManager.createGuard("dynamicGenericInfo");
   private final StaticGenericInfo myStaticGenericInfo;
   @NotNull private final DomInvocationHandler myInvocationHandler;
@@ -91,6 +95,8 @@ public class DynamicGenericInfo extends DomGenericInfoEx {
   }
 
   private void applyExtensions(DomExtensionsRegistrarImpl registrar) {
+    XmlFile file = myInvocationHandler.getFile();
+
     final List<DomExtensionImpl> fixeds = registrar.getFixeds();
     final List<DomExtensionImpl> collections = registrar.getCollections();
     final List<DomExtensionImpl> attributes = registrar.getAttributes();
@@ -99,7 +105,7 @@ public class DynamicGenericInfo extends DomGenericInfoEx {
       for (final DomExtensionImpl extension : attributes) {
         newAttributes.addDescription(extension.addAnnotations(new AttributeChildDescriptionImpl(extension.getXmlName(), extension.getType())));
       }
-      myAttributes = newAttributes;
+      myAttributes = internChildrenHolder(file, newAttributes);
     }
 
     if (!fixeds.isEmpty()) {
@@ -108,7 +114,7 @@ public class DynamicGenericInfo extends DomGenericInfoEx {
         //noinspection unchecked
         newFixeds.addDescription(extension.addAnnotations(new FixedChildDescriptionImpl(extension.getXmlName(), extension.getType(), extension.getCount(), ArrayUtil.EMPTY_COLLECTION_ARRAY)));
       }
-      myFixeds = newFixeds;
+      myFixeds = internChildrenHolder(file, newFixeds);
     }
     if (!collections.isEmpty()) {
       ChildrenDescriptionsHolder<CollectionChildDescriptionImpl> newCollections = new ChildrenDescriptionsHolder<CollectionChildDescriptionImpl>(myStaticGenericInfo.getCollections());
@@ -117,13 +123,27 @@ public class DynamicGenericInfo extends DomGenericInfoEx {
                                                                                                   Collections.<JavaMethod>emptyList()
         )));
       }
-      myCollections = newCollections;
+      myCollections = internChildrenHolder(file, newCollections);
     }
 
     final DomExtensionImpl extension = registrar.getCustomChildrenType();
     if (extension != null) {
       myCustomChildren = new CustomDomChildrenDescriptionImpl(null, extension.getType(), extension.getTagNameDescriptor());
     }
+  }
+
+  private static <T extends DomChildDescriptionImpl> ChildrenDescriptionsHolder<T> internChildrenHolder(XmlFile file, ChildrenDescriptionsHolder<T> holder) {
+    ConcurrentWeakHashMap<ChildrenDescriptionsHolder, ChildrenDescriptionsHolder> cache = file.getUserData(HOLDERS_CACHE);
+    if (cache == null) {
+      file.putUserData(HOLDERS_CACHE, cache = new ConcurrentWeakHashMap<ChildrenDescriptionsHolder, ChildrenDescriptionsHolder>());
+    }
+    ChildrenDescriptionsHolder existing = cache.get(holder);
+    if (existing != null) {
+      //noinspection unchecked
+      return existing;
+    }
+    cache.put(holder, holder);
+    return holder;
   }
 
   @Nullable
