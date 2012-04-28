@@ -43,8 +43,10 @@ public class GroovyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSe
                                 @NotNull SettingsType settingsType) {
     if (settingsType == SettingsType.WRAPPING_AND_BRACES_SETTINGS) {
       consumer.showAllStandardOptions();
-      consumer.showCustomOption(GroovyCodeStyleSettings.class, "USE_FLYING_GEESE_BRACES", "Use flying geese braces", CodeStyleSettingsCustomizable.WRAPPING_BRACES);
+      consumer.showCustomOption(GroovyCodeStyleSettings.class, "USE_FLYING_GEESE_BRACES", "Use flying geese braces",
+                                CodeStyleSettingsCustomizable.WRAPPING_BRACES);
       consumer.showCustomOption(GroovyCodeStyleSettings.class, "ALIGN_MULTILINE_LIST_OR_MAP", "Align when multiple", "List and map literals");
+      consumer.showCustomOption(GroovyCodeStyleSettings.class, "ALIGN_NAMED_ARGS_IN_MAP", "Align named arguments", "List and map literals");
       return;
     }
     if (settingsType == SettingsType.SPACING_SETTINGS) {
@@ -268,6 +270,10 @@ public class GroovyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSe
     "    label: " +
     "    if (2 < 3) return else if (2 > 3) return else return\n" +
     "    for (int i = 0; i < 0xFFFFFF; i += 2) System.out.println(i)\n" +
+    "    print([\n" +
+    "       l1: expr1,\n" +
+    "       label2: expr2\n" +
+    "    ])\n" +
     "    while (x < 50000) x++\n" +
     "    switch (a) {\n" +
     "    case 0:\n" +

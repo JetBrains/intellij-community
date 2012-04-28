@@ -49,7 +49,9 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrLabeledStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentLabel;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression;
@@ -151,6 +153,20 @@ public class GroovyBlockGenerator implements GroovyElementTypes {
       AlignmentProvider.Aligner dotsAligner = mySettings.ALIGN_MULTILINE_CHAINED_METHODS ? myAlignmentProvider.createAligner() : null;
       addNestedChildren(myNode.getPsi(), subBlocks, dotsAligner, true);
       return subBlocks;
+    }
+
+    if (blockPsi instanceof GrListOrMap && ((GrListOrMap)blockPsi).isMap() && myGroovySettings.ALIGN_NAMED_ARGS_IN_MAP) {
+      AlignmentProvider.Aligner labels = myAlignmentProvider.createAligner();
+      AlignmentProvider.Aligner exprs = myAlignmentProvider.createAligner();
+      GrNamedArgument[] namedArgs = ((GrListOrMap)blockPsi).getNamedArguments();
+      for (GrNamedArgument arg : namedArgs) {
+        GrArgumentLabel label = arg.getLabel();
+        if (label != null) labels.append(label);
+
+        PsiElement colon = arg.getColon();
+        if (colon == null) colon = arg.getExpression();
+        if (colon != null) exprs.append(colon);
+      }
     }
 
     // For Parameter lists
