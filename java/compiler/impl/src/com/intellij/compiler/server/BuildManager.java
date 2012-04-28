@@ -239,7 +239,12 @@ public class BuildManager implements ApplicationComponent{
 
   public void clearState(Project project) {
     final String projectPath = getProjectPath(project);
-    myProjectDataMap.remove(projectPath);
+    synchronized (myProjectDataMap) {
+      final ProjectData data = myProjectDataMap.get(projectPath);
+      if (data != null) {
+        data.dropChanges();
+      }
+    }
   }
 
   @Nullable
@@ -332,14 +337,10 @@ public class BuildManager implements ApplicationComponent{
         data = new ProjectData(new SequentialTaskExecutor(myPooledThreadExecutor));
         myProjectDataMap.put(projectPath, data);
       }
-      else {
-        if (!isRebuild) {
-          currentFSChanges = data.createNextEvent();
-        }
-        else {
-          data.clearFSChanges();
-        }
+      if (isRebuild) {
+        data.dropChanges();
       }
+      currentFSChanges = data.getAndResetRescanFlag() ? null : data.createNextEvent();
       projectTaskQueue = data.taskQueue;
     }
 
@@ -751,7 +752,7 @@ public class BuildManager implements ApplicationComponent{
 
     @Override
     public void projectClosed(Project project) {
-      clearState(project);
+      myProjectDataMap.remove(getProjectPath(project));
       final MessageBusConnection conn = myConnections.remove(project);
       if (conn != null) {
         conn.disconnect();
@@ -764,6 +765,7 @@ public class BuildManager implements ApplicationComponent{
     private final Set<String> myChanged = new HashSet<String>();
     private final Set<String> myDeleted = new HashSet<String>();
     private long myNextEventOrdinal = 0L;
+    private boolean myNeedRescan = true;
 
     private ProjectData(SequentialTaskExecutor taskQueue) {
       this.taskQueue = taskQueue;
@@ -790,7 +792,14 @@ public class BuildManager implements ApplicationComponent{
       return builder.build();
     }
 
-    public void clearFSChanges() {
+    public boolean getAndResetRescanFlag() {
+      final boolean rescan = myNeedRescan;
+      myNeedRescan = false;
+      return rescan;
+    }
+
+    public void dropChanges() {
+      myNeedRescan = true;
       myNextEventOrdinal = 0L;
       myChanged.clear();
       myDeleted.clear();
