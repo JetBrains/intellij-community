@@ -19,7 +19,9 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -35,7 +37,12 @@ import git4idea.commands.GitSimpleHandler;
 import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
+import git4idea.update.GitFetchResult;
+import git4idea.update.GitFetcher;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.github.ui.GithubLoginDialog;
+
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Created by IntelliJ IDEA.
@@ -194,12 +201,33 @@ public class GithubRebaseAction extends DumbAwareAction {
       });
     }
 
+    boolean fetchedSuccessfully = fetchParentOrNotifyError(project, gitRepository, remoteForForkParentRepo.get());
+    if (!fetchedSuccessfully) {
+      return;
+    }
     BasicAction.saveAll();
     final GithubRebase action = (GithubRebase) ActionManager.getInstance().getAction("Github.Rebase.Internal");
     action.setRebaseOrigin(remoteForForkParentRepo.get());
     final AnActionEvent actionEvent =
       new AnActionEvent(e.getInputEvent(), e.getDataContext(), e.getPlace(), e.getPresentation(), e.getActionManager(), e.getModifiers());
     action.actionPerformed(actionEvent);
+  }
+
+  private static boolean fetchParentOrNotifyError(@NotNull final Project project, @NotNull final GitRepository repository,
+                                                  @NotNull final String remote) {
+    final AtomicReference<GitFetchResult> fetchResult = new AtomicReference<GitFetchResult>();
+    ProgressManager.getInstance().run(new Task.Modal(project, "Fetching " + remote, false) {
+      @Override
+      public void run(@NotNull ProgressIndicator indicator) {
+        fetchResult.set(new GitFetcher(project, indicator, false).fetch(repository.getRoot(), remote));
+      }
+    });
+    GitFetchResult result = fetchResult.get();
+    if (!result.isSuccess()) {
+      GitFetcher.displayFetchResult(project, result, null, result.getErrors());
+      return false;
+    }
+    return true;
   }
 
   private void showErrorMessageInEDT(final Project project, final String message) {
