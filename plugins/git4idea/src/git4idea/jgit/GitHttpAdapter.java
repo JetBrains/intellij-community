@@ -303,6 +303,19 @@ public final class GitHttpAdapter {
           rememberPassword(provider);
           return GeneralResult.SUCCESS;
         }
+        catch (InvalidRemoteException e) {
+          if (!noRemoteWithoutGitErrorFixTried && isNoRemoteWithoutDotGitError(e, url)) {
+            url += ".git";
+            command.setUrl(url);
+            provider.setUrl(url);
+            noRemoteWithoutGitErrorFixTried = true;
+            // don't "eat" one password entering attempt
+            //noinspection AssignmentToForLoopParameter
+            i--;
+            command.cleanup();
+          }
+          throw e;
+        }
         catch (JGitInternalException e) {
           if (authError(e)) {
             if (provider.wasCancelled()) {  // if user cancels the dialog, just return
