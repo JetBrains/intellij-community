@@ -28,6 +28,7 @@ import com.intellij.lang.Language;
 import com.intellij.lang.LanguageNamesValidation;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.lang.refactoring.NamesValidator;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -38,6 +39,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.impl.EditorImpl;
@@ -54,10 +56,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.ui.popup.Balloon;
+import com.intellij.openapi.ui.popup.BalloonBuilder;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
@@ -68,13 +70,18 @@ import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
+import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.containers.Stack;
+import com.intellij.util.ui.PositionTracker;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
+import javax.swing.*;
+import java.awt.*;
 import java.util.*;
+import java.util.List;
 
 /**
  * User: anna
@@ -86,6 +93,8 @@ public abstract class InplaceRefactoring {
   @NonNls protected static final String OTHER_VARIABLE_NAME = "OtherVariable";
   protected static final Stack<InplaceRefactoring> ourRenamersStack = new Stack<InplaceRefactoring>();
   public static final Key<InplaceRefactoring> INPLACE_RENAMER = Key.create("EditorInplaceRenamer");
+  public static final Key<Boolean> INTRODUCE_RESTART = Key.create("INTRODUCE_RESTART");
+  
   protected PsiNamedElement myElementToRename;
   protected final Editor myEditor;
   protected final Project myProject;
@@ -102,6 +111,11 @@ public abstract class InplaceRefactoring {
   protected PsiElement myScope;
   
   protected RangeMarker myCaretRangeMarker;
+  
+  
+  protected Balloon myBalloon;
+  protected String myTitle;
+  protected RelativePoint myTarget;
 
   public InplaceRefactoring(Editor editor, PsiNamedElement elementToRename, Project project) {
     this(editor, elementToRename, project, elementToRename != null ? elementToRename.getName() : null,
@@ -260,6 +274,10 @@ public abstract class InplaceRefactoring {
         startTemplate(builder);
       }
     }.execute();
+
+    if (myBalloon == null) {
+      showBalloon();
+    }
     return true;
   }
 
@@ -453,7 +471,7 @@ public abstract class InplaceRefactoring {
     final Keymap keymap = KeymapManager.getInstance().getActiveKeymap();
     final Shortcut[] shortcuts = keymap.getShortcuts(actionId);
     if (shortcuts.length > 0) {
-      setAdvertisementText("Press " + KeymapUtil.getShortcutText(shortcuts[0]) + " to show dialog");
+      setAdvertisementText("Press " + KeymapUtil.getShortcutText(shortcuts[0]) + " to show dialog with more options");
     }
   }
 
@@ -512,6 +530,11 @@ public abstract class InplaceRefactoring {
       myHighlighters = null;
       myEditor.putUserData(INPLACE_RENAMER, null);
     }
+    if (myBalloon != null) {
+           if (!isRestart()) {
+             myBalloon.hide();
+           }
+         }
   }
 
   protected void addHighlights(@NotNull Map<TextRange, TextAttributes> ranges,
@@ -617,6 +640,54 @@ public abstract class InplaceRefactoring {
 
   private static boolean contains(final TextRange range, final int offset) {
     return range.getStartOffset() <= offset && offset <= range.getEndOffset();
+  }
+
+  protected boolean isRestart() {
+    final Boolean isRestart = myEditor.getUserData(INTRODUCE_RESTART);
+    return isRestart != null && isRestart;
+  }
+
+  protected void releaseResources() {
+  }
+
+  @Nullable
+  protected JComponent getComponent() {
+    return null;
+  }
+
+  protected void showBalloon() {
+    final JComponent component = getComponent();
+    if (component == null) return;
+    if (ApplicationManager.getApplication().isHeadlessEnvironment()) return;
+    final BalloonBuilder balloonBuilder = JBPopupFactory.getInstance().createDialogBalloonBuilder(component, null).setSmallVariant(true);
+    myBalloon = balloonBuilder.createBalloon();
+    Disposer.register(myProject, myBalloon);
+    Disposer.register(myBalloon, new Disposable() {
+      @Override
+      public void dispose() {
+        releaseIfNotRestart();
+      }
+    });
+    myEditor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
+    myBalloon.show(new PositionTracker<Balloon>(myEditor.getContentComponent()) {
+      @Override
+      public RelativePoint recalculateLocation(Balloon object) {
+        final RelativePoint target = JBPopupFactory.getInstance().guessBestPopupLocation(myEditor);
+        final Point screenPoint = target.getScreenPoint();
+        int y = screenPoint.y;
+        if (target.getPoint().getY() > myEditor.getLineHeight() + myBalloon.getPreferredSize().getHeight()) {
+          y -= myEditor.getLineHeight();
+        }
+        myTarget = new RelativePoint(new Point(screenPoint.x, y));
+        return myTarget;
+      }
+    }, Balloon.Position.above);
+  }
+
+  protected void releaseIfNotRestart() {
+    if (!isRestart()) {
+      releaseResources();
+    }
   }
 
   private abstract class MyTemplateListener extends TemplateEditingAdapter {
