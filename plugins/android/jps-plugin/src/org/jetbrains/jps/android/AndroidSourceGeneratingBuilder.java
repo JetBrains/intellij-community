@@ -18,6 +18,8 @@ import org.jetbrains.android.util.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.ClasspathItem;
+import org.jetbrains.jps.ClasspathKind;
 import org.jetbrains.jps.Module;
 import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.incremental.*;
@@ -81,6 +83,7 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
     if (!checkVersions(moduleDataMap, context)) {
       return ExitCode.ABORT;
     }
+    checkAndroidDependencies(moduleDataMap, context);
 
     final Map<File, Module> idlFilesToCompile = new HashMap<File, Module>();
     final Map<File, Module> rsFilesToCompile = new HashMap<File, Module>();
@@ -170,10 +173,10 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
       final int platformToolsRevision = platform.getPlatformToolsRevision();
       if (platformToolsRevision >= 0 && platformToolsRevision < MIN_PLATFORM_TOOLS_REVISION) {
         final String message = '[' +
-                            module.getName() +
-                            "] Incompatible version of Android SDK Platform-tools package. Min version is " +
-                            MIN_PLATFORM_TOOLS_REVISION +
-                            ". Please, update it though SDK manager";
+                               module.getName() +
+                               "] Incompatible version of Android SDK Platform-tools package. Min version is " +
+                               MIN_PLATFORM_TOOLS_REVISION +
+                               ". Please, update it though SDK manager";
         context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR, message));
         success = false;
       }
@@ -195,6 +198,38 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
       }
     }
     return true;
+  }
+
+  private static void checkAndroidDependencies(@NotNull Map<Module, MyModuleData> moduleDataMap, @NotNull CompileContext context) {
+    for (Map.Entry<Module, MyModuleData> entry : moduleDataMap.entrySet()) {
+      final Module module = entry.getKey();
+      final MyModuleData moduleData = entry.getValue();
+      final AndroidFacet facet = moduleData.getFacet();
+
+      if (facet.isLibrary()) {
+        continue;
+      }
+
+      for (ClasspathItem item : module.getClasspath(ClasspathKind.PRODUCTION_RUNTIME, false)) {
+        if (item instanceof Module) {
+          final Module depModule = (Module)item;
+          final AndroidFacet depFacet = AndroidJpsUtil.getFacet(depModule);
+
+          if (depFacet != null && !depFacet.isLibrary()) {
+            String message = "Suspicious module dependency " +
+                             module.getName() +
+                             " -> " +
+                             depModule.getName() +
+                             ": Android application module depends on other application module. Possibly, you should ";
+            if (AndroidJpsUtil.isMavenizedModule(depModule)) {
+              message += "change packaging type of module " + depModule.getName() + " to 'apklib' in pom.xml file or ";
+            }
+            message += "change dependency scope to 'Provided'.";
+            context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.WARNING, message));
+          }
+        }
+      }
+    }
   }
 
   private static boolean runBuildConfigGeneration(@NotNull CompileContext context,
