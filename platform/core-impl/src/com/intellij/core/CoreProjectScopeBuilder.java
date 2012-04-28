@@ -56,7 +56,7 @@ public class CoreProjectScopeBuilder extends ProjectScopeBuilder {
 
   @Override
   public GlobalSearchScope buildContentScope() {
-    return new ContentSearchScope(myFileIndexFacade);
+    return new ContentSearchScope(myProject, myFileIndexFacade);
   }
 
   private class CoreLibrariesScope extends GlobalSearchScope {
@@ -85,7 +85,8 @@ public class CoreProjectScopeBuilder extends ProjectScopeBuilder {
 
     private final FileIndexFacade myFileIndexFacade;
 
-    public ContentSearchScope(FileIndexFacade fileIndexFacade) {
+    public ContentSearchScope(Project project, FileIndexFacade fileIndexFacade) {
+      super(project);
       myFileIndexFacade = fileIndexFacade;
     }
 

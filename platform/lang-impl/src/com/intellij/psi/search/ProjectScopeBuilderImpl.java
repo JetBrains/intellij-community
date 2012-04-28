@@ -72,6 +72,6 @@ public class ProjectScopeBuilderImpl extends ProjectScopeBuilder {
 
   @Override
   public GlobalSearchScope buildContentScope() {
-    return new CoreProjectScopeBuilder.ContentSearchScope(FileIndexFacade.getInstance(myProject));
+    return new CoreProjectScopeBuilder.ContentSearchScope(myProject, FileIndexFacade.getInstance(myProject));
   }
 }
