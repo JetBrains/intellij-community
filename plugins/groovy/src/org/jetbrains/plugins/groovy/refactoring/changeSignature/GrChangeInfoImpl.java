@@ -66,7 +66,7 @@ public class GrChangeInfoImpl implements JavaChangeInfo {
                           @Nullable String visibilityModifier,
                           @Nullable CanonicalTypes.Type returnType,
                           String newName,
-                          List<GrParameterInfo> parameters, ThrownExceptionInfo[] exceptions, boolean generateDelegate) {
+                          List<GrParameterInfo> parameters, @Nullable ThrownExceptionInfo[] exceptions, boolean generateDelegate) {
     this.method = method;
     this.visibilityModifier = visibilityModifier;
     this.returnType = returnType;
@@ -177,22 +177,28 @@ public class GrChangeInfoImpl implements JavaChangeInfo {
     }
 
     myThrownExceptions = exceptions;
-    final PsiClassType[] thrownTypes = method.getThrowsList().getReferencedTypes();
-    if (thrownTypes.length != myThrownExceptions.length) {
-      myExceptionSetChanged = true;
-      myExceptionSetOrOrderChanged = true;
+    if (exceptions == null) {
+      myExceptionSetChanged = false;
+      myExceptionSetOrOrderChanged = false;
     }
     else {
-      myExceptionSetChanged = false;
-      for (int i = 0; i < myThrownExceptions.length; i++) {
-        ThrownExceptionInfo info = myThrownExceptions[i];
-        if (info.getOldIndex() < 0 || !thrownTypes[info.getOldIndex()].equals(info.createType(method, method.getManager()))) {
-          myExceptionSetChanged = true;
-          myExceptionSetOrOrderChanged = true;
-          break;
-        }
-        else if (info.getOldIndex() != i) {
-          myExceptionSetOrOrderChanged = true;
+      final PsiClassType[] thrownTypes = method.getThrowsList().getReferencedTypes();
+      if (thrownTypes.length != myThrownExceptions.length) {
+        myExceptionSetChanged = true;
+        myExceptionSetOrOrderChanged = true;
+      }
+      else {
+        myExceptionSetChanged = false;
+        for (int i = 0; i < myThrownExceptions.length; i++) {
+          ThrownExceptionInfo info = myThrownExceptions[i];
+          if (info.getOldIndex() < 0 || !thrownTypes[info.getOldIndex()].equals(info.createType(method, method.getManager()))) {
+            myExceptionSetChanged = true;
+            myExceptionSetOrOrderChanged = true;
+            break;
+          }
+          else if (info.getOldIndex() != i) {
+            myExceptionSetOrOrderChanged = true;
+          }
         }
       }
     }

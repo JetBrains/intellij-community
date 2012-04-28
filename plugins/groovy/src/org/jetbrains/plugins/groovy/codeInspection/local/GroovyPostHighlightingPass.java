@@ -184,7 +184,7 @@ public class GroovyPostHighlightingPass extends TextEditorHighlightingPass {
             HighlightInfo highlightInfo = PostHighlightingPass
               .createUnusedSymbolInfo(parameter.getNameIdentifierGroovy(), "Parameter " + parameter.getName() + " is unused",
                                       HighlightInfoType.UNUSED_SYMBOL);
-            QuickFixAction.registerQuickFixAction(highlightInfo, new SafeDeleteFix(parameter));
+            QuickFixAction.registerQuickFixAction(highlightInfo, new RemoveUnusedGrParameterFix(parameter));
             unusedDeclarations.add(highlightInfo);
           }
         }
