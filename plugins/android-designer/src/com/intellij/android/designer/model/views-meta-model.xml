@@ -1160,6 +1160,26 @@
     </creation>
   </meta>
 
+  <meta model="com.intellij.android.designer.model.RadViewContainer"
+        layout="com.intellij.android.designer.model.layout.RadRelativeLayout"
+        class="android.widget.RelativeLayout"
+        tag="RelativeLayout">
+
+    <properties important="gravity"/>
+
+    <palette title="RelativeLayout" icon="/com/intellij/android/designer/icons/RelativeLayout.png"
+             tooltip="A Layout where the positions of the children can be described in relation to each other or to the parent."/>
+
+    <creation>
+      <![CDATA[
+          <RelativeLayout
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent">
+          </RelativeLayout>
+      ]]>
+    </creation>
+  </meta>
+
   <!-- ================= Palette ================= -->
 
   <palette>
@@ -1169,6 +1189,7 @@
       <item tag="TableLayout"/>
       <item tag="TableRow"/>
       <item tag="GridLayout"/>
+      <item tag="RelativeLayout"/>
     </group>
     <group name="Widgets">
       <item tag="Button"/>
