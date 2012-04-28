@@ -21,6 +21,7 @@ import com.intellij.pom.xml.events.*;
 /**
  * @author peter
  */
+@Deprecated
 public interface XmlChangeVisitor {
   void visitXmlAttributeSet(final XmlAttributeSet xmlAttributeSet);
 

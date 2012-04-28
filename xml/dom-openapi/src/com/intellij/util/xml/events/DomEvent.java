@@ -16,7 +16,7 @@
 package com.intellij.util.xml.events;
 
 import com.intellij.util.xml.DomElement;
-import com.intellij.util.xml.DomEventVisitor;
+import com.intellij.util.xml.DomUtil;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -30,7 +30,7 @@ public class DomEvent {
 
   public DomEvent(@NotNull final DomElement element, boolean defined) {
     myDefined = defined;
-    myElement = element;
+    myElement = DomUtil.getFileElement(element);
   }
 
   public final DomElement getElement() {

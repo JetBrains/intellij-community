@@ -18,6 +18,7 @@ package com.intellij.util.xml.impl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.NullableComputable;
 import com.intellij.openapi.util.RecursionGuard;
+import com.intellij.openapi.util.RecursionManager;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.ElementPattern;
@@ -26,10 +27,11 @@ import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlElementType;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.semantic.*;
+import com.intellij.semantic.SemContributor;
+import com.intellij.semantic.SemRegistrar;
+import com.intellij.semantic.SemService;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.Processor;
-import com.intellij.openapi.util.RecursionManager;
 import com.intellij.util.xml.EvaluatedXmlName;
 import com.intellij.util.xml.XmlName;
 import com.intellij.util.xml.reflect.CustomDomChildrenDescription;
@@ -70,7 +72,6 @@ public class DomSemContributor extends SemContributor {
         if (element != null) {
           final DomRootInvocationHandler handler = element.getRootHandler();
           if (handler.getXmlTag() == xmlTag) {
-            xmlTag.putUserData(DomManagerImpl.CACHED_DOM_HANDLER, handler);
             return handler;
           }
         }
@@ -115,11 +116,8 @@ public class DomSemContributor extends SemContributor {
           }
 
           final DomManagerImpl myDomManager = parent.getManager();
-          final IndexedElementInvocationHandler handler =
-            new IndexedElementInvocationHandler(parent.createEvaluatedXmlName(description.getXmlName()), (FixedChildDescriptionImpl)description, index,
-                                                new PhysicalDomParentStrategy(tag, myDomManager), myDomManager);
-          tag.putUserData(DomManagerImpl.CACHED_DOM_HANDLER, handler);
-          return handler;
+          return new IndexedElementInvocationHandler(parent.createEvaluatedXmlName(description.getXmlName()), (FixedChildDescriptionImpl)description, index,
+                                              new PhysicalDomParentStrategy(tag, myDomManager), myDomManager);
         }
         return null;
       }
@@ -134,10 +132,7 @@ public class DomSemContributor extends SemContributor {
 
         final DomCollectionChildDescription description = findChildrenDescription(parent.getGenericInfo().getCollectionChildrenDescriptions(), tag, parent);
         if (description != null) {
-          final CollectionElementInvocationHandler handler =
-            new CollectionElementInvocationHandler(description.getType(), tag, (AbstractCollectionChildDescription)description, parent);
-          tag.putUserData(DomManagerImpl.CACHED_DOM_HANDLER, handler);
-          return handler;
+          return new CollectionElementInvocationHandler(description.getType(), tag, (AbstractCollectionChildDescription)description, parent);
         }
         return null;
       }
@@ -178,9 +173,7 @@ public class DomSemContributor extends SemContributor {
 
           AbstractCollectionChildDescription desc = (AbstractCollectionChildDescription)customDescription;
           Type type = customDescription.getType();
-          final CollectionElementInvocationHandler handler = new CollectionElementInvocationHandler(type, tag, desc, parent);
-          tag.putUserData(DomManagerImpl.CACHED_DOM_HANDLER, handler);
-          return handler;
+          return new CollectionElementInvocationHandler(type, tag, desc, parent);
         }
 
         return null;
@@ -208,7 +201,6 @@ public class DomSemContributor extends SemContributor {
                 final AttributeChildInvocationHandler attributeHandler =
                   new AttributeChildInvocationHandler(evaluatedXmlName, description, myDomManager,
                                                       new PhysicalDomParentStrategy(attribute, myDomManager));
-                attribute.putUserData(DomManagerImpl.CACHED_DOM_HANDLER, attributeHandler);
                 result.set(attributeHandler);
                 return false;
               }

@@ -19,5 +19,6 @@ import com.intellij.pom.xml.XmlChangeVisitor;
 
 
 public interface XmlChange {
+  @Deprecated
   void accept(XmlChangeVisitor visitor);
 }

@@ -57,7 +57,6 @@ public final class DomManagerImpl extends DomManager {
   private static final Key<Object> MOCK = Key.create("MockElement");
   static final Key<WeakReference<DomFileElementImpl>> CACHED_FILE_ELEMENT = Key.create("CACHED_FILE_ELEMENT");
   static final Key<DomFileDescription> MOCK_DESCRIPTION = Key.create("MockDescription");
-  static final Key<DomInvocationHandler> CACHED_DOM_HANDLER = Key.create("CACHED_DOM_HANDLER");
 
   static final SemKey<FileDescriptionCachedValueProvider> FILE_DESCRIPTION_KEY = SemKey.createKey("FILE_DESCRIPTION_KEY");
   public static final SemKey<DomInvocationHandler> DOM_HANDLER_KEY = SemKey.createKey("DOM_HANDLER_KEY");
@@ -89,9 +88,12 @@ public final class DomManagerImpl extends DomManager {
     pomModel.addModelListener(new PomModelListener() {
       public void modelChanged(PomModelEvent event) {
         final XmlChangeSet changeSet = (XmlChangeSet)event.getChangeSet(xmlAspect);
-        if (changeSet != null) {
-          if (!myChanging) {
-            new ExternalChangeProcessor(DomManagerImpl.this, changeSet).processChanges();
+        if (changeSet != null && !myChanging) {
+          for (XmlFile file : changeSet.getChangedFiles()) {
+            DomFileElementImpl<DomElement> element = getCachedFileElement(file);
+            if (element != null) {
+              fireEvent(new DomEvent(element, false));
+            }
           }
         }
       }
@@ -184,8 +186,6 @@ public final class DomManagerImpl extends DomManager {
 
   public <T extends DomInvocationHandler> void cacheHandler(SemKey<T> key, XmlElement element, T handler) {
     mySemService.setCachedSemElement(key, element, handler);
-
-    element.putUserData(CACHED_DOM_HANDLER, handler);
   }
 
   private void processFileChange(final VirtualFile file) {
