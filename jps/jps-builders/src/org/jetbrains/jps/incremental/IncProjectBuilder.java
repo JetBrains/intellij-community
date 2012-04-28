@@ -205,7 +205,7 @@ public class IncProjectBuilder {
     context.processMessage(new ProgressMessage("Running 'after' tasks"));
     runTasks(context, myBuilderRegistry.getAfterTasks());
 
-    if (/*LocalLOG.isDebugEnabled()*/ false) {
+    if (false) { //LocalLOG.isDebugEnabled()) {
       final Mappings mappings = myProjectDescriptor.dataManager.getMappings();
       final String fileName = Utils.getSystemRoot() + File.separator + "snapshot-" + new SimpleDateFormat("dd-MM-yy(hh:mm:ss)").format(new Date()) + ".log";
 

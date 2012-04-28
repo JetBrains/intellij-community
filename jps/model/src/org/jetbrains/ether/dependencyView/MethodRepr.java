@@ -205,7 +205,7 @@ class MethodRepr extends ProtoMember {
   @Override
   public void toStream(final DependencyContext context, final PrintStream stream) {
     super.toStream(context, stream);
-    stream.print("    Arguments : ");
+    stream.print("          Arguments  : ");
     for (TypeRepr.AbstractType t : argumentTypes) {
       stream.print(t.getDescr(context));
       stream.print("; ");
@@ -219,7 +219,7 @@ class MethodRepr extends ProtoMember {
             return o1.getDescr(context).compareTo(o2.getDescr(context));
           }
         });
-    stream.print("    Exceptions: ");
+    stream.print("          Exceptions : ");
     for (final TypeRepr.AbstractType e : es) {
       stream.print(e.getDescr(context));
       stream.print("; ");
