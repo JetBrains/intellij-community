@@ -36,7 +36,6 @@ import org.jetbrains.android.compiler.AndroidCompileUtil;
 import org.jetbrains.android.sdk.AndroidPlatform;
 import org.jetbrains.android.sdk.AndroidSdkAdditionalData;
 import org.jetbrains.android.sdk.AndroidSdkType;
-import org.jetbrains.android.sdk.AndroidSdkUtils;
 import org.jetbrains.android.util.AndroidCommonUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -318,7 +317,7 @@ public class AndroidRootUtil {
     final AndroidPlatform platform = data.getAndroidPlatform();
 
     if (platform != null && platform.needToAddAnnotationsJarToClasspath()) {
-      final String annotationsJarPath = FileUtil.toSystemIndependentName(sdkHomePath) + AndroidSdkUtils.ANNOTATIONS_JAR_RELATIVE_PATH;
+      final String annotationsJarPath = FileUtil.toSystemIndependentName(sdkHomePath) + AndroidCommonUtils.ANNOTATIONS_JAR_RELATIVE_PATH;
       final VirtualFile annotationsJar = LocalFileSystem.getInstance().findFileByPath(annotationsJarPath);
 
       if (annotationsJar != null) {

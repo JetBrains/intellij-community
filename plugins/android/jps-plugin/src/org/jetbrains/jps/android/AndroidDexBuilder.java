@@ -123,7 +123,7 @@ public class AndroidDexBuilder extends ProjectLevelBuilder {
           .message("android.jps.warnings.dex.no.compiled.files", module.getName())));
         continue;
       }
-      final Set<String> externalLibraries = AndroidJpsUtil.getExternalLibraries(projectPaths, module);
+      final Set<String> externalLibraries = AndroidJpsUtil.getExternalLibraries(projectPaths, module, platform);
 
       boolean includeSystemProguardCfg = false;
       String proguardCfgPath = context.getBuilderParameter(AndroidCommonUtils.PROGUARD_CFG_PATH_OPTION);

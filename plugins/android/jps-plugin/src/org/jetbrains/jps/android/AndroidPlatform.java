@@ -35,4 +35,8 @@ public class AndroidPlatform {
   public int getSdkToolsRevision() {
     return mySdkToolsRevision;
   }
+
+  public boolean needToAddAnnotationsJarToClasspath() {
+    return myTarget.getVersion().getApiLevel() <= 15;
+  }
 }

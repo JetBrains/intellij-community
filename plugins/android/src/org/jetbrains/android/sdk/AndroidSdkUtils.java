@@ -56,6 +56,7 @@ import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.facet.AndroidRootUtil;
 import org.jetbrains.android.logcat.AndroidLogcatToolWindowFactory;
 import org.jetbrains.android.util.AndroidBundle;
+import org.jetbrains.android.util.AndroidCommonUtils;
 import org.jetbrains.android.util.AndroidUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -73,7 +74,6 @@ public class AndroidSdkUtils {
 
   public static final String DEFAULT_PLATFORM_NAME_PROPERTY = "AndroidPlatformName";
   @NonNls public static final String ANDROID_HOME_ENV = "ANDROID_HOME";
-  @NonNls public static final String ANNOTATIONS_JAR_RELATIVE_PATH = "/tools/support/annotations.jar";
 
   private AndroidSdkUtils() {
   }
@@ -133,7 +133,7 @@ public class AndroidSdkUtils {
     if (sdkPath != null) {
       // todo: check if we should do it for new android platforms (api_level >= 15)
       final VirtualFile annotationsJar = JarFileSystem.getInstance()
-        .findFileByPath(FileUtil.toSystemIndependentName(sdkPath) + ANNOTATIONS_JAR_RELATIVE_PATH + JarFileSystem.JAR_SEPARATOR);
+        .findFileByPath(FileUtil.toSystemIndependentName(sdkPath) + AndroidCommonUtils.ANNOTATIONS_JAR_RELATIVE_PATH + JarFileSystem.JAR_SEPARATOR);
       if (annotationsJar != null) {
         result.add(new OrderRoot(annotationsJar, OrderRootType.CLASSES));
       }

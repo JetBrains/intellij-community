@@ -79,6 +79,7 @@ public class AndroidCommonUtils {
 
   private static final String[] TEST_CONFIGURATION_TYPE_IDS =
     {"JUnit", "TestNG", "ScalaTestRunConfiguration", "SpecsRunConfiguration", "Specs2RunConfiguration"};
+  @NonNls public static final String ANNOTATIONS_JAR_RELATIVE_PATH = "/tools/support/annotations.jar";
 
   private AndroidCommonUtils() {
   }
