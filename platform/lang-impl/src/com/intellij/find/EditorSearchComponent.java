@@ -180,10 +180,10 @@ public class EditorSearchComponent extends EditorHeaderComponent implements Data
 
   @Override
   public void searchResultsUpdated(SearchResults sr) {
-    int count = sr.getActualFound();
     if (mySearchField.getText().isEmpty()) {
       updateUIWithEmptyResults();
     } else {
+      int count = sr.getMatchesCount();
       if (count <= mySearchResults.getMatchesLimit()) {
         myClickToHighlightLabel.setVisible(false);
 
