@@ -31,13 +31,7 @@ public abstract class DefaultMessageHandler implements BuilderMessageHandler {
       case COMPILE_MESSAGE:
         handleCompileMessage(msg.getCompileMessage());
         break;
-      case FS_STATE:
-        handleFSStateMessage(msg.getFsstateMessage());
-        break;
     }
-  }
-
-  protected void handleFSStateMessage(CmdlineRemoteProto.Message.FSStateMessage message) {
   }
 
   protected abstract void handleCompileMessage(CmdlineRemoteProto.Message.BuilderMessage.CompileMessage message);

@@ -31,18 +31,18 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerAdapter;
 import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
-import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.ModuleRootEvent;
+import com.intellij.openapi.roots.ModuleRootListener;
+import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
@@ -69,8 +69,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.api.*;
 import org.jetbrains.jps.cmdline.BuildMain;
-import org.jetbrains.jps.incremental.fs.FSState;
-import org.jetbrains.jps.incremental.fs.RootDescriptor;
 import org.jetbrains.jps.server.ClasspathBootstrap;
 import org.jetbrains.jps.server.Server;
 
@@ -100,6 +98,7 @@ public class BuildManager implements ApplicationComponent{
   private final ProjectManager myProjectManager;
 
   private final Map<RequestFuture, Project> myAutomakeFutures = new HashMap<RequestFuture, Project>();
+  private final Map<String, RequestFuture> myBuildsInProgress = Collections.synchronizedMap(new HashMap<String, RequestFuture>());
   private final CompileServerClasspathManager myClasspathManager = new CompileServerClasspathManager();
   private final Executor myPooledThreadExecutor = new Executor() {
     @Override
@@ -107,6 +106,8 @@ public class BuildManager implements ApplicationComponent{
       ApplicationManager.getApplication().executeOnPooledThread(command);
     }
   };
+  private final SequentialTaskExecutor myEventsProcessor = new SequentialTaskExecutor(myPooledThreadExecutor);
+
   private final Map<String, ProjectData> myProjectDataMap = Collections.synchronizedMap(new HashMap<String, ProjectData>());
 
   private final ChannelGroup myAllOpenChannels = new DefaultChannelGroup("build-manager");
@@ -198,80 +199,39 @@ public class BuildManager implements ApplicationComponent{
   }
 
   public void notifyFilesChanged(final Collection<String> paths) {
-    // todo: temporarily commented
-    //doNotify(paths, false);
+    doNotify(paths, false);
   }
 
   public void notifyFilesDeleted(Collection<String> paths) {
-    // todo: temporarily commented
-    //doNotify(paths, true);
+    doNotify(paths, true);
   }
 
   private void doNotify(final Collection<String> paths, final boolean notifyDeletion) {
-    final Project[] openProjects = myProjectManager.getOpenProjects();
-    myPooledThreadExecutor.execute(new Runnable() {
+    // ensure events processed in the order they arrived
+    myEventsProcessor.submit(new Runnable() {
       @Override
       public void run() {
-        List<Pair<ProjectFileIndex, ProjectData>> activeProjects = new ArrayList<Pair<ProjectFileIndex, ProjectData>>();
-        for (Project project : openProjects) {
-          if (project.isDisposed() || project.isDefault()) {
-            continue;
-          }
-          final String projectPath = getProjectPath(project);
-          final ProjectData data = myProjectDataMap.get(projectPath);
-          if (data != null) {
-            activeProjects.add(Pair.create(ProjectRootManager.getInstance(project).getFileIndex(), data));
-          }
-        }
-        final LocalFileSystem lfs = LocalFileSystem.getInstance();
-        for (final Pair<ProjectFileIndex, ProjectData> pair : activeProjects) {
-          final ProjectFileIndex fileIndex = pair.first;
-          final FSState fsState = pair.second.fsState;
-          pair.second.requestQueue.submit(new Runnable() {
-            @Override
-            public void run() {
-              ApplicationManager.getApplication().runReadAction(new Runnable() {
-                @Override
-                public void run() {
-                  for (String filePath : paths) {
-                    // todo: estimate performance, probably add a way to obtain all data from file index in a single call
-                    final VirtualFile vFile = lfs.findFileByPath(filePath);
-                    if (vFile == null) {
-                      continue;
-                    }
-                    final Module module = fileIndex.getModuleForFile(vFile);
-                    if (module == null) {
-                      continue;
-                    }
-                    final String moduleName = module.getName();
-                    if (!fsState.isInitialized(moduleName)) {   // todo: proper sync!
-                      continue;
-                    }
-                    final VirtualFile srcRoot = fileIndex.getSourceRootForFile(vFile);
-                    if (srcRoot == null) {
-                      return;
-                    }
-                    final boolean inTestSources = fileIndex.isInTestSourceContent(vFile);
-                    if (!inTestSources && !fileIndex.isInSourceContent(vFile)) {
-                      continue;
-                    }
-                    try {
-                      final File file = new File(vFile.getPath());
-                      if (notifyDeletion) {
-                        fsState.registerDeleted(moduleName, file, inTestSources, null);
-                      }
-                      else {
-                        fsState.markDirty(file, new RootDescriptor(moduleName, new File(srcRoot.getPath()), inTestSources, false), null);
-                      }
-                    }
-                    catch (IOException e) {
-                      LOG.error(e);
-                    }
-                  }
-                }
-              });
+        synchronized (myProjectDataMap) {
+          for (Map.Entry<String, ProjectData> entry : myProjectDataMap.entrySet()) {
+            final ProjectData data = entry.getValue();
+            if (notifyDeletion) {
+              data.addDeleted(paths);
             }
-          });
+            else {
+              data.addChanged(paths);
+            }
+            final RequestFuture future = myBuildsInProgress.get(entry.getKey());
+            if (future != null && !future.isCancelled() && !future.isDone()) {
+              final UUID sessionId = future.getRequestID();
+              final Channel channel = myMessageDispatcher.getConnectedChannel(sessionId);
+              if (channel != null) {
+                final CmdlineRemoteProto.Message.ControllerMessage message =
+                  CmdlineRemoteProto.Message.ControllerMessage.newBuilder().setType(
+                    CmdlineRemoteProto.Message.ControllerMessage.Type.FS_EVENT).setFsEvent(data.createNextEvent()).build();
+                Channels.write(channel, CmdlineProtoUtil.toMessage(sessionId, message));
+              }
+            }
+          }
         }
       }
     });
@@ -346,8 +306,6 @@ public class BuildManager implements ApplicationComponent{
     }
   }
 
-  // todo: avoid FS scan on every start
-
   @Nullable
   public RequestFuture scheduleBuild(
     final Project project, final boolean isRebuild,
@@ -366,26 +324,32 @@ public class BuildManager implements ApplicationComponent{
       myGlobals = globals;
     }
 
-    final SequentialTaskExecutor sequential;
-    final FSState fsState;
+    CmdlineRemoteProto.Message.ControllerMessage.FSEvent currentFSChanges = null;
+    final SequentialTaskExecutor projectTaskQueue;
     synchronized (myProjectDataMap) {
       ProjectData data = myProjectDataMap.get(projectPath);
       if (data == null) {
-        data = new ProjectData(new SequentialTaskExecutor(myPooledThreadExecutor), new FSState());
+        data = new ProjectData(new SequentialTaskExecutor(myPooledThreadExecutor));
         myProjectDataMap.put(projectPath, data);
       }
-      sequential = data.requestQueue;
-      fsState = data.fsState;
-      handler = new FSStateMessageHandler(data.fsState, handler);
+      else {
+        if (!isRebuild) {
+          currentFSChanges = data.createNextEvent();
+        }
+        else {
+          data.clearFSChanges();
+        }
+      }
+      projectTaskQueue = data.taskQueue;
     }
 
     if (isRebuild) {
-      params = CmdlineProtoUtil.createRebuildRequest(projectPath, userData, globals, fsState);
+      params = CmdlineProtoUtil.createRebuildRequest(projectPath, userData, globals);
     }
     else {
       params = isMake ?
-               CmdlineProtoUtil.createMakeRequest(projectPath, modules, artifacts, userData, globals, fsState) :
-               CmdlineProtoUtil.createForceCompileRequest(projectPath, modules, artifacts, paths, userData, globals, fsState);
+               CmdlineProtoUtil.createMakeRequest(projectPath, modules, artifacts, userData, globals, currentFSChanges) :
+               CmdlineProtoUtil.createForceCompileRequest(projectPath, modules, artifacts, paths, userData, globals, currentFSChanges);
     }
 
     myMessageDispatcher.registerBuildMessageHandler(sessionId, handler, params);
@@ -410,7 +374,7 @@ public class BuildManager implements ApplicationComponent{
       }
     });
 
-    sequential.submit(new Runnable() {
+    projectTaskQueue.submit(new Runnable() {
       @Override
       public void run() {
         try {
@@ -418,6 +382,7 @@ public class BuildManager implements ApplicationComponent{
             future.cancel(false);
             return;
           }
+          myBuildsInProgress.put(projectPath, future);
           final Process process = launchBuildProcess(myListenPort, sessionId);
           final OSProcessHandler processHandler = new OSProcessHandler(process, null) {
             @Override
@@ -452,6 +417,7 @@ public class BuildManager implements ApplicationComponent{
           future.getMessageHandler().sessionTerminated();
         }
         finally {
+          myBuildsInProgress.remove(projectPath);
           future.setDone();
         }
       }
@@ -794,12 +760,40 @@ public class BuildManager implements ApplicationComponent{
   }
 
   private static class ProjectData {
-    final SequentialTaskExecutor requestQueue;
-    final FSState fsState;
+    final SequentialTaskExecutor taskQueue;
+    private final Set<String> myChanged = new HashSet<String>();
+    private final Set<String> myDeleted = new HashSet<String>();
+    private long myNextEventOrdinal = 0L;
 
-    private ProjectData(SequentialTaskExecutor requestQueue, FSState fsState) {
-      this.requestQueue = requestQueue;
-      this.fsState = fsState;
+    private ProjectData(SequentialTaskExecutor taskQueue) {
+      this.taskQueue = taskQueue;
+    }
+
+    public void addChanged(Collection<String> paths) {
+      myDeleted.removeAll(paths);
+      myChanged.addAll(paths);
+    }
+
+    public void addDeleted(Collection<String> paths) {
+      myChanged.removeAll(paths);
+      myDeleted.addAll(paths);
+    }
+
+    public CmdlineRemoteProto.Message.ControllerMessage.FSEvent createNextEvent() {
+      final CmdlineRemoteProto.Message.ControllerMessage.FSEvent.Builder builder =
+        CmdlineRemoteProto.Message.ControllerMessage.FSEvent.newBuilder();
+      builder.setOrdinal(++myNextEventOrdinal);
+      builder.addAllChangedPaths(myChanged);
+      myChanged.clear();
+      builder.addAllDeletedPaths(myDeleted);
+      myDeleted.clear();
+      return builder.build();
+    }
+
+    public void clearFSChanges() {
+      myNextEventOrdinal = 0L;
+      myChanged.clear();
+      myDeleted.clear();
     }
   }
 

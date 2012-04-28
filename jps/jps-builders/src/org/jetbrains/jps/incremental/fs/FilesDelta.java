@@ -1,9 +1,13 @@
 package org.jetbrains.jps.incremental.fs;
 
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.util.io.IOUtil;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.DataInput;
+import java.io.DataOutput;
 import java.io.File;
+import java.io.IOException;
 import java.util.*;
 
 /** @noinspection SynchronizationOnLocalVariableOrMethodParameter*/
@@ -12,6 +16,49 @@ final class FilesDelta {
   private final Set<String> myDeletedTests = Collections.synchronizedSet(new HashSet<String>());
   private final Map<File, Set<File>> mySourcesToRecompile = Collections.synchronizedMap(new HashMap<File, Set<File>>()); // srcRoot -> set of sources
   private final Map<File, Set<File>> myTestsToRecompile = Collections.synchronizedMap(new HashMap<File, Set<File>>());   // srcRoot -> set of sources
+
+  public void save(DataOutput out, final boolean tests) throws IOException {
+    final Set<String> deleted = tests? myDeletedTests : myDeletedProduction;
+    out.writeInt(deleted.size());
+    for (String path : deleted) {
+      IOUtil.writeString(path, out);
+    }
+    final Map<File, Set<File>> recompile = tests? myTestsToRecompile : mySourcesToRecompile;
+    out.writeInt(recompile.size());
+    for (Map.Entry<File, Set<File>> entry : recompile.entrySet()) {
+      final File root = entry.getKey();
+      IOUtil.writeString(FileUtil.toSystemIndependentName(root.getPath()), out);
+      final Set<File> files = entry.getValue();
+      out.writeInt(files.size());
+      for (File file : files) {
+        IOUtil.writeString(FileUtil.toSystemIndependentName(file.getPath()), out);
+      }
+    }
+  }
+
+  public void load(DataInput in, final boolean tests) throws IOException {
+    final Set<String> deleted = tests? myDeletedTests : myDeletedProduction;
+    deleted.clear();
+    int deletedCount = in.readInt();
+    while (deletedCount-- > 0) {
+      deleted.add(IOUtil.readString(in));
+    }
+    final Map<File, Set<File>> recompile = tests? myTestsToRecompile : mySourcesToRecompile;
+    recompile.clear();
+    int recompileCount = in.readInt();
+    while (recompileCount-- > 0) {
+      final File root = new File(IOUtil.readString(in));
+      Set<File> files = recompile.get(root);
+      if (files == null) {
+        files = new HashSet<File>();
+        recompile.put(root, files);
+      }
+      int filesCount = in.readInt();
+      while (filesCount-- > 0) {
+        files.add(new File(IOUtil.readString(in)));
+      }
+    }
+  }
 
   public void init(Collection<String> deletedProduction, Collection<String> deletedTests, Map<File, Set<File>> recompileProduction, Map<File, Set<File>> recompileTests) {
     myDeletedProduction.clear();

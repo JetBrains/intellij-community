@@ -879,1219 +879,6 @@ public final class CmdlineRemoteProto {
       // @@protoc_insertion_point(class_scope:org.jetbrains.jpsservice.Message.KeyValuePair)
     }
     
-    public interface FSStateMessageOrBuilder
-        extends com.google.protobuf.MessageLiteOrBuilder {
-      
-      // required string module_name = 1;
-      boolean hasModuleName();
-      String getModuleName();
-      
-      // repeated .org.jetbrains.jpsservice.Message.FSStateMessage.RootDelta recompile_delta = 2;
-      java.util.List<org.jetbrains.jps.api.CmdlineRemoteProto.Message.FSStateMessage.RootDelta> 
-          getRecompileDeltaList();
-      org.jetbrains.jps.api.CmdlineRemoteProto.Message.FSStateMessage.RootDelta getRecompileDelta(int index);
-      int getRecompileDeltaCount();
-      
-      // repeated string deleted_production = 3;
-      java.util.List<String> getDeletedProductionList();
-      int getDeletedProductionCount();
-      String getDeletedProduction(int index);
-      
-      // repeated string deleted_tests = 4;
-      java.util.List<String> getDeletedTestsList();
-      int getDeletedTestsCount();
-      String getDeletedTests(int index);
-    }
-    public static final class FSStateMessage extends
-        com.google.protobuf.GeneratedMessageLite
-        implements FSStateMessageOrBuilder {
-      // Use FSStateMessage.newBuilder() to construct.
-      private FSStateMessage(Builder builder) {
-        super(builder);
-      }
-      private FSStateMessage(boolean noInit) {}
-      
-      private static final FSStateMessage defaultInstance;
-      public static FSStateMessage getDefaultInstance() {
-        return defaultInstance;
-      }
-      
-      public FSStateMessage getDefaultInstanceForType() {
-        return defaultInstance;
-      }
-      
-      public interface RootDeltaOrBuilder
-          extends com.google.protobuf.MessageLiteOrBuilder {
-        
-        // required bool test_sources = 1;
-        boolean hasTestSources();
-        boolean getTestSources();
-        
-        // required string root = 2;
-        boolean hasRoot();
-        String getRoot();
-        
-        // repeated string path = 3;
-        java.util.List<String> getPathList();
-        int getPathCount();
-        String getPath(int index);
-      }
-      public static final class RootDelta extends
-          com.google.protobuf.GeneratedMessageLite
-          implements RootDeltaOrBuilder {
-        // Use RootDelta.newBuilder() to construct.
-        private RootDelta(Builder builder) {
-          super(builder);
-        }
-        private RootDelta(boolean noInit) {}
-        
-        private static final RootDelta defaultInstance;
-        public static RootDelta getDefaultInstance() {
-          return defaultInstance;
-        }
-        
-        public RootDelta getDefaultInstanceForType() {
-          return defaultInstance;
-        }
-        
-        private int bitField0_;
-        // required bool test_sources = 1;
-        public static final int TEST_SOURCES_FIELD_NUMBER = 1;
-        private boolean testSources_;
-        public boolean hasTestSources() {
-          return ((bitField0_ & 0x00000001) == 0x00000001);
-        }
-        public boolean getTestSources() {
-          return testSources_;
-        }
-        
-        // required string root = 2;
-        public static final int ROOT_FIELD_NUMBER = 2;
-        private java.lang.Object root_;
-        public boolean hasRoot() {
-          return ((bitField0_ & 0x00000002) == 0x00000002);
-        }
-        public String getRoot() {
-          java.lang.Object ref = root_;
-          if (ref instanceof String) {
-            return (String) ref;
-          } else {
-            com.google.protobuf.ByteString bs = 
-                (com.google.protobuf.ByteString) ref;
-            String s = bs.toStringUtf8();
-            if (com.google.protobuf.Internal.isValidUtf8(bs)) {
-              root_ = s;
-            }
-            return s;
-          }
-        }
-        private com.google.protobuf.ByteString getRootBytes() {
-          java.lang.Object ref = root_;
-          if (ref instanceof String) {
-            com.google.protobuf.ByteString b = 
-                com.google.protobuf.ByteString.copyFromUtf8((String) ref);
-            root_ = b;
-            return b;
-          } else {
-            return (com.google.protobuf.ByteString) ref;
-          }
-        }
-        
-        // repeated string path = 3;
-        public static final int PATH_FIELD_NUMBER = 3;
-        private com.google.protobuf.LazyStringList path_;
-        public java.util.List<String>
-            getPathList() {
-          return path_;
-        }
-        public int getPathCount() {
-          return path_.size();
-        }
-        public String getPath(int index) {
-          return path_.get(index);
-        }
-        
-        private void initFields() {
-          testSources_ = false;
-          root_ = "";
-          path_ = com.google.protobuf.LazyStringArrayList.EMPTY;
-        }
-        private byte memoizedIsInitialized = -1;
-        public final boolean isInitialized() {
-          byte isInitialized = memoizedIsInitialized;
-          if (isInitialized != -1) return isInitialized == 1;
-          
-          if (!hasTestSources()) {
-            memoizedIsInitialized = 0;
-            return false;
-          }
-          if (!hasRoot()) {
-            memoizedIsInitialized = 0;
-            return false;
-          }
-          memoizedIsInitialized = 1;
-          return true;
-        }
-        
-        public void writeTo(com.google.protobuf.CodedOutputStream output)
-                            throws java.io.IOException {
-          getSerializedSize();
-          if (((bitField0_ & 0x00000001) == 0x00000001)) {
-            output.writeBool(1, testSources_);
-          }
-          if (((bitField0_ & 0x00000002) == 0x00000002)) {
-            output.writeBytes(2, getRootBytes());
-          }
-          for (int i = 0; i < path_.size(); i++) {
-            output.writeBytes(3, path_.getByteString(i));
-          }
-        }
-        
-        private int memoizedSerializedSize = -1;
-        public int getSerializedSize() {
-          int size = memoizedSerializedSize;
-          if (size != -1) return size;
-        
-          size = 0;
-          if (((bitField0_ & 0x00000001) == 0x00000001)) {
-            size += com.google.protobuf.CodedOutputStream
-              .computeBoolSize(1, testSources_);
-          }
-          if (((bitField0_ & 0x00000002) == 0x00000002)) {
-            size += com.google.protobuf.CodedOutputStream
-              .computeBytesSize(2, getRootBytes());
-          }
-          {
-            int dataSize = 0;
-            for (int i = 0; i < path_.size(); i++) {
-              dataSize += com.google.protobuf.CodedOutputStream
-                .computeBytesSizeNoTag(path_.getByteString(i));
-            }
-            size += dataSize;
-            size += 1 * getPathList().size();
-          }
-          memoizedSerializedSize = size;
-          return size;
-        }
-        
-        private static final long serialVersionUID = 0L;
-        @java.lang.Override
-        protected java.lang.Object writeReplace()
-            throws java.io.ObjectStreamException {
-          return super.writeReplace();
-        }
-        
-        public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.FSStateMessage.RootDelta parseFrom(
-            com.google.protobuf.ByteString data)
-            throws com.google.protobuf.InvalidProtocolBufferException {
-          return newBuilder().mergeFrom(data).buildParsed();
-        }
-        public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.FSStateMessage.RootDelta parseFrom(
-            com.google.protobuf.ByteString data,
-            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-            throws com.google.protobuf.InvalidProtocolBufferException {
-          return newBuilder().mergeFrom(data, extensionRegistry)
-                   .buildParsed();
-        }
-        public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.FSStateMessage.RootDelta parseFrom(byte[] data)
-            throws com.google.protobuf.InvalidProtocolBufferException {
-          return newBuilder().mergeFrom(data).buildParsed();
-        }
-        public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.FSStateMessage.RootDelta parseFrom(
-            byte[] data,
-            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-            throws com.google.protobuf.InvalidProtocolBufferException {
-          return newBuilder().mergeFrom(data, extensionRegistry)
-                   .buildParsed();
-        }
-        public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.FSStateMessage.RootDelta parseFrom(java.io.InputStream input)
-            throws java.io.IOException {
-          return newBuilder().mergeFrom(input).buildParsed();
-        }
-        public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.FSStateMessage.RootDelta parseFrom(
-            java.io.InputStream input,
-            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-            throws java.io.IOException {
-          return newBuilder().mergeFrom(input, extensionRegistry)
-                   .buildParsed();
-        }
-        public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.FSStateMessage.RootDelta parseDelimitedFrom(java.io.InputStream input)
-            throws java.io.IOException {
-          Builder builder = newBuilder();
-          if (builder.mergeDelimitedFrom(input)) {
-            return builder.buildParsed();
-          } else {
-            return null;
-          }
-        }
-        public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.FSStateMessage.RootDelta parseDelimitedFrom(
-            java.io.InputStream input,
-            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-            throws java.io.IOException {
-          Builder builder = newBuilder();
-          if (builder.mergeDelimitedFrom(input, extensionRegistry)) {
-            return builder.buildParsed();
-          } else {
-            return null;
-          }
-        }
-        public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.FSStateMessage.RootDelta parseFrom(
-            com.google.protobuf.CodedInputStream input)
-            throws java.io.IOException {
-          return newBuilder().mergeFrom(input).buildParsed();
-        }
-        public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.FSStateMessage.RootDelta parseFrom(
-            com.google.protobuf.CodedInputStream input,
-            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-            throws java.io.IOException {
-          return newBuilder().mergeFrom(input, extensionRegistry)
-                   .buildParsed();
-        }
-        
-        public static Builder newBuilder() { return Builder.create(); }
-        public Builder newBuilderForType() { return newBuilder(); }
-        public static Builder newBuilder(org.jetbrains.jps.api.CmdlineRemoteProto.Message.FSStateMessage.RootDelta prototype) {
-          return newBuilder().mergeFrom(prototype);
-        }
-        public Builder toBuilder() { return newBuilder(this); }
-        
-        public static final class Builder extends
-            com.google.protobuf.GeneratedMessageLite.Builder<
-              org.jetbrains.jps.api.CmdlineRemoteProto.Message.FSStateMessage.RootDelta, Builder>
-            implements org.jetbrains.jps.api.CmdlineRemoteProto.Message.FSStateMessage.RootDeltaOrBuilder {
-          // Construct using org.jetbrains.jps.api.CmdlineRemoteProto.Message.FSStateMessage.RootDelta.newBuilder()
-          private Builder() {
-            maybeForceBuilderInitialization();
-          }
-          
-          private void maybeForceBuilderInitialization() {
-          }
-          private static Builder create() {
-            return new Builder();
-          }
-          
-          public Builder clear() {
-            super.clear();
-            testSources_ = false;
-            bitField0_ = (bitField0_ & ~0x00000001);
-            root_ = "";
-            bitField0_ = (bitField0_ & ~0x00000002);
-            path_ = com.google.protobuf.LazyStringArrayList.EMPTY;
-            bitField0_ = (bitField0_ & ~0x00000004);
-            return this;
-          }
-          
-          public Builder clone() {
-            return create().mergeFrom(buildPartial());
-          }
-          
-          public org.jetbrains.jps.api.CmdlineRemoteProto.Message.FSStateMessage.RootDelta getDefaultInstanceForType() {
-            return org.jetbrains.jps.api.CmdlineRemoteProto.Message.FSStateMessage.RootDelta.getDefaultInstance();
-          }
-          
-          public org.jetbrains.jps.api.CmdlineRemoteProto.Message.FSStateMessage.RootDelta build() {
-            org.jetbrains.jps.api.CmdlineRemoteProto.Message.FSStateMessage.RootDelta result = buildPartial();
-            if (!result.isInitialized()) {
-              throw newUninitializedMessageException(result);
-            }
-            return result;
-          }
-          
-          private org.jetbrains.jps.api.CmdlineRemoteProto.Message.FSStateMessage.RootDelta buildParsed()
-              throws com.google.protobuf.InvalidProtocolBufferException {
-            org.jetbrains.jps.api.CmdlineRemoteProto.Message.FSStateMessage.RootDelta result = buildPartial();
-            if (!result.isInitialized()) {
-              throw newUninitializedMessageException(
-                result).asInvalidProtocolBufferException();
-            }
-            return result;
-          }
-          
-          public org.jetbrains.jps.api.CmdlineRemoteProto.Message.FSStateMessage.RootDelta buildPartial() {
-            org.jetbrains.jps.api.CmdlineRemoteProto.Message.FSStateMessage.RootDelta result = new org.jetbrains.jps.api.CmdlineRemoteProto.Message.FSStateMessage.RootDelta(this);
-            int from_bitField0_ = bitField0_;
-            int to_bitField0_ = 0;
-            if (((from_bitField0_ & 0x00000001) == 0x00000001)) {
-              to_bitField0_ |= 0x00000001;
-            }
-            result.testSources_ = testSources_;
-            if (((from_bitField0_ & 0x00000002) == 0x00000002)) {
-              to_bitField0_ |= 0x00000002;
-            }
-            result.root_ = root_;
-            if (((bitField0_ & 0x00000004) == 0x00000004)) {
-              path_ = new com.google.protobuf.UnmodifiableLazyStringList(
-                  path_);
-              bitField0_ = (bitField0_ & ~0x00000004);
-            }
-            result.path_ = path_;
-            result.bitField0_ = to_bitField0_;
-            return result;
-          }
-          
-          public Builder mergeFrom(org.jetbrains.jps.api.CmdlineRemoteProto.Message.FSStateMessage.RootDelta other) {
-            if (other == org.jetbrains.jps.api.CmdlineRemoteProto.Message.FSStateMessage.RootDelta.getDefaultInstance()) return this;
-            if (other.hasTestSources()) {
-              setTestSources(other.getTestSources());
-            }
-            if (other.hasRoot()) {
-              setRoot(other.getRoot());
-            }
-            if (!other.path_.isEmpty()) {
-              if (path_.isEmpty()) {
-                path_ = other.path_;
-                bitField0_ = (bitField0_ & ~0x00000004);
-              } else {
-                ensurePathIsMutable();
-                path_.addAll(other.path_);
-              }
-              
-            }
-            return this;
-          }
-          
-          public final boolean isInitialized() {
-            if (!hasTestSources()) {
-              
-              return false;
-            }
-            if (!hasRoot()) {
-              
-              return false;
-            }
-            return true;
-          }
-          
-          public Builder mergeFrom(
-              com.google.protobuf.CodedInputStream input,
-              com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-              throws java.io.IOException {
-            while (true) {
-              int tag = input.readTag();
-              switch (tag) {
-                case 0:
-                  
-                  return this;
-                default: {
-                  if (!parseUnknownField(input, extensionRegistry, tag)) {
-                    
-                    return this;
-                  }
-                  break;
-                }
-                case 8: {
-                  bitField0_ |= 0x00000001;
-                  testSources_ = input.readBool();
-                  break;
-                }
-                case 18: {
-                  bitField0_ |= 0x00000002;
-                  root_ = input.readBytes();
-                  break;
-                }
-                case 26: {
-                  ensurePathIsMutable();
-                  path_.add(input.readBytes());
-                  break;
-                }
-              }
-            }
-          }
-          
-          private int bitField0_;
-          
-          // required bool test_sources = 1;
-          private boolean testSources_ ;
-          public boolean hasTestSources() {
-            return ((bitField0_ & 0x00000001) == 0x00000001);
-          }
-          public boolean getTestSources() {
-            return testSources_;
-          }
-          public Builder setTestSources(boolean value) {
-            bitField0_ |= 0x00000001;
-            testSources_ = value;
-            
-            return this;
-          }
-          public Builder clearTestSources() {
-            bitField0_ = (bitField0_ & ~0x00000001);
-            testSources_ = false;
-            
-            return this;
-          }
-          
-          // required string root = 2;
-          private java.lang.Object root_ = "";
-          public boolean hasRoot() {
-            return ((bitField0_ & 0x00000002) == 0x00000002);
-          }
-          public String getRoot() {
-            java.lang.Object ref = root_;
-            if (!(ref instanceof String)) {
-              String s = ((com.google.protobuf.ByteString) ref).toStringUtf8();
-              root_ = s;
-              return s;
-            } else {
-              return (String) ref;
-            }
-          }
-          public Builder setRoot(String value) {
-            if (value == null) {
-    throw new NullPointerException();
-  }
-  bitField0_ |= 0x00000002;
-            root_ = value;
-            
-            return this;
-          }
-          public Builder clearRoot() {
-            bitField0_ = (bitField0_ & ~0x00000002);
-            root_ = getDefaultInstance().getRoot();
-            
-            return this;
-          }
-          void setRoot(com.google.protobuf.ByteString value) {
-            bitField0_ |= 0x00000002;
-            root_ = value;
-            
-          }
-          
-          // repeated string path = 3;
-          private com.google.protobuf.LazyStringList path_ = com.google.protobuf.LazyStringArrayList.EMPTY;
-          private void ensurePathIsMutable() {
-            if (!((bitField0_ & 0x00000004) == 0x00000004)) {
-              path_ = new com.google.protobuf.LazyStringArrayList(path_);
-              bitField0_ |= 0x00000004;
-             }
-          }
-          public java.util.List<String>
-              getPathList() {
-            return java.util.Collections.unmodifiableList(path_);
-          }
-          public int getPathCount() {
-            return path_.size();
-          }
-          public String getPath(int index) {
-            return path_.get(index);
-          }
-          public Builder setPath(
-              int index, String value) {
-            if (value == null) {
-    throw new NullPointerException();
-  }
-  ensurePathIsMutable();
-            path_.set(index, value);
-            
-            return this;
-          }
-          public Builder addPath(String value) {
-            if (value == null) {
-    throw new NullPointerException();
-  }
-  ensurePathIsMutable();
-            path_.add(value);
-            
-            return this;
-          }
-          public Builder addAllPath(
-              java.lang.Iterable<String> values) {
-            ensurePathIsMutable();
-            super.addAll(values, path_);
-            
-            return this;
-          }
-          public Builder clearPath() {
-            path_ = com.google.protobuf.LazyStringArrayList.EMPTY;
-            bitField0_ = (bitField0_ & ~0x00000004);
-            
-            return this;
-          }
-          void addPath(com.google.protobuf.ByteString value) {
-            ensurePathIsMutable();
-            path_.add(value);
-            
-          }
-          
-          // @@protoc_insertion_point(builder_scope:org.jetbrains.jpsservice.Message.FSStateMessage.RootDelta)
-        }
-        
-        static {
-          defaultInstance = new RootDelta(true);
-          defaultInstance.initFields();
-        }
-        
-        // @@protoc_insertion_point(class_scope:org.jetbrains.jpsservice.Message.FSStateMessage.RootDelta)
-      }
-      
-      private int bitField0_;
-      // required string module_name = 1;
-      public static final int MODULE_NAME_FIELD_NUMBER = 1;
-      private java.lang.Object moduleName_;
-      public boolean hasModuleName() {
-        return ((bitField0_ & 0x00000001) == 0x00000001);
-      }
-      public String getModuleName() {
-        java.lang.Object ref = moduleName_;
-        if (ref instanceof String) {
-          return (String) ref;
-        } else {
-          com.google.protobuf.ByteString bs = 
-              (com.google.protobuf.ByteString) ref;
-          String s = bs.toStringUtf8();
-          if (com.google.protobuf.Internal.isValidUtf8(bs)) {
-            moduleName_ = s;
-          }
-          return s;
-        }
-      }
-      private com.google.protobuf.ByteString getModuleNameBytes() {
-        java.lang.Object ref = moduleName_;
-        if (ref instanceof String) {
-          com.google.protobuf.ByteString b = 
-              com.google.protobuf.ByteString.copyFromUtf8((String) ref);
-          moduleName_ = b;
-          return b;
-        } else {
-          return (com.google.protobuf.ByteString) ref;
-        }
-      }
-      
-      // repeated .org.jetbrains.jpsservice.Message.FSStateMessage.RootDelta recompile_delta = 2;
-      public static final int RECOMPILE_DELTA_FIELD_NUMBER = 2;
-      private java.util.List<org.jetbrains.jps.api.CmdlineRemoteProto.Message.FSStateMessage.RootDelta> recompileDelta_;
-      public java.util.List<org.jetbrains.jps.api.CmdlineRemoteProto.Message.FSStateMessage.RootDelta> getRecompileDeltaList() {
-        return recompileDelta_;
-      }
-      public java.util.List<? extends org.jetbrains.jps.api.CmdlineRemoteProto.Message.FSStateMessage.RootDeltaOrBuilder> 
-          getRecompileDeltaOrBuilderList() {
-        return recompileDelta_;
-      }
-      public int getRecompileDeltaCount() {
-        return recompileDelta_.size();
-      }
-      public org.jetbrains.jps.api.CmdlineRemoteProto.Message.FSStateMessage.RootDelta getRecompileDelta(int index) {
-        return recompileDelta_.get(index);
-      }
-      public org.jetbrains.jps.api.CmdlineRemoteProto.Message.FSStateMessage.RootDeltaOrBuilder getRecompileDeltaOrBuilder(
-          int index) {
-        return recompileDelta_.get(index);
-      }
-      
-      // repeated string deleted_production = 3;
-      public static final int DELETED_PRODUCTION_FIELD_NUMBER = 3;
-      private com.google.protobuf.LazyStringList deletedProduction_;
-      public java.util.List<String>
-          getDeletedProductionList() {
-        return deletedProduction_;
-      }
-      public int getDeletedProductionCount() {
-        return deletedProduction_.size();
-      }
-      public String getDeletedProduction(int index) {
-        return deletedProduction_.get(index);
-      }
-      
-      // repeated string deleted_tests = 4;
-      public static final int DELETED_TESTS_FIELD_NUMBER = 4;
-      private com.google.protobuf.LazyStringList deletedTests_;
-      public java.util.List<String>
-          getDeletedTestsList() {
-        return deletedTests_;
-      }
-      public int getDeletedTestsCount() {
-        return deletedTests_.size();
-      }
-      public String getDeletedTests(int index) {
-        return deletedTests_.get(index);
-      }
-      
-      private void initFields() {
-        moduleName_ = "";
-        recompileDelta_ = java.util.Collections.emptyList();
-        deletedProduction_ = com.google.protobuf.LazyStringArrayList.EMPTY;
-        deletedTests_ = com.google.protobuf.LazyStringArrayList.EMPTY;
-      }
-      private byte memoizedIsInitialized = -1;
-      public final boolean isInitialized() {
-        byte isInitialized = memoizedIsInitialized;
-        if (isInitialized != -1) return isInitialized == 1;
-        
-        if (!hasModuleName()) {
-          memoizedIsInitialized = 0;
-          return false;
-        }
-        for (int i = 0; i < getRecompileDeltaCount(); i++) {
-          if (!getRecompileDelta(i).isInitialized()) {
-            memoizedIsInitialized = 0;
-            return false;
-          }
-        }
-        memoizedIsInitialized = 1;
-        return true;
-      }
-      
-      public void writeTo(com.google.protobuf.CodedOutputStream output)
-                          throws java.io.IOException {
-        getSerializedSize();
-        if (((bitField0_ & 0x00000001) == 0x00000001)) {
-          output.writeBytes(1, getModuleNameBytes());
-        }
-        for (int i = 0; i < recompileDelta_.size(); i++) {
-          output.writeMessage(2, recompileDelta_.get(i));
-        }
-        for (int i = 0; i < deletedProduction_.size(); i++) {
-          output.writeBytes(3, deletedProduction_.getByteString(i));
-        }
-        for (int i = 0; i < deletedTests_.size(); i++) {
-          output.writeBytes(4, deletedTests_.getByteString(i));
-        }
-      }
-      
-      private int memoizedSerializedSize = -1;
-      public int getSerializedSize() {
-        int size = memoizedSerializedSize;
-        if (size != -1) return size;
-      
-        size = 0;
-        if (((bitField0_ & 0x00000001) == 0x00000001)) {
-          size += com.google.protobuf.CodedOutputStream
-            .computeBytesSize(1, getModuleNameBytes());
-        }
-        for (int i = 0; i < recompileDelta_.size(); i++) {
-          size += com.google.protobuf.CodedOutputStream
-            .computeMessageSize(2, recompileDelta_.get(i));
-        }
-        {
-          int dataSize = 0;
-          for (int i = 0; i < deletedProduction_.size(); i++) {
-            dataSize += com.google.protobuf.CodedOutputStream
-              .computeBytesSizeNoTag(deletedProduction_.getByteString(i));
-          }
-          size += dataSize;
-          size += 1 * getDeletedProductionList().size();
-        }
-        {
-          int dataSize = 0;
-          for (int i = 0; i < deletedTests_.size(); i++) {
-            dataSize += com.google.protobuf.CodedOutputStream
-              .computeBytesSizeNoTag(deletedTests_.getByteString(i));
-          }
-          size += dataSize;
-          size += 1 * getDeletedTestsList().size();
-        }
-        memoizedSerializedSize = size;
-        return size;
-      }
-      
-      private static final long serialVersionUID = 0L;
-      @java.lang.Override
-      protected java.lang.Object writeReplace()
-          throws java.io.ObjectStreamException {
-        return super.writeReplace();
-      }
-      
-      public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.FSStateMessage parseFrom(
-          com.google.protobuf.ByteString data)
-          throws com.google.protobuf.InvalidProtocolBufferException {
-        return newBuilder().mergeFrom(data).buildParsed();
-      }
-      public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.FSStateMessage parseFrom(
-          com.google.protobuf.ByteString data,
-          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-          throws com.google.protobuf.InvalidProtocolBufferException {
-        return newBuilder().mergeFrom(data, extensionRegistry)
-                 .buildParsed();
-      }
-      public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.FSStateMessage parseFrom(byte[] data)
-          throws com.google.protobuf.InvalidProtocolBufferException {
-        return newBuilder().mergeFrom(data).buildParsed();
-      }
-      public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.FSStateMessage parseFrom(
-          byte[] data,
-          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-          throws com.google.protobuf.InvalidProtocolBufferException {
-        return newBuilder().mergeFrom(data, extensionRegistry)
-                 .buildParsed();
-      }
-      public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.FSStateMessage parseFrom(java.io.InputStream input)
-          throws java.io.IOException {
-        return newBuilder().mergeFrom(input).buildParsed();
-      }
-      public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.FSStateMessage parseFrom(
-          java.io.InputStream input,
-          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-          throws java.io.IOException {
-        return newBuilder().mergeFrom(input, extensionRegistry)
-                 .buildParsed();
-      }
-      public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.FSStateMessage parseDelimitedFrom(java.io.InputStream input)
-          throws java.io.IOException {
-        Builder builder = newBuilder();
-        if (builder.mergeDelimitedFrom(input)) {
-          return builder.buildParsed();
-        } else {
-          return null;
-        }
-      }
-      public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.FSStateMessage parseDelimitedFrom(
-          java.io.InputStream input,
-          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-          throws java.io.IOException {
-        Builder builder = newBuilder();
-        if (builder.mergeDelimitedFrom(input, extensionRegistry)) {
-          return builder.buildParsed();
-        } else {
-          return null;
-        }
-      }
-      public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.FSStateMessage parseFrom(
-          com.google.protobuf.CodedInputStream input)
-          throws java.io.IOException {
-        return newBuilder().mergeFrom(input).buildParsed();
-      }
-      public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.FSStateMessage parseFrom(
-          com.google.protobuf.CodedInputStream input,
-          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-          throws java.io.IOException {
-        return newBuilder().mergeFrom(input, extensionRegistry)
-                 .buildParsed();
-      }
-      
-      public static Builder newBuilder() { return Builder.create(); }
-      public Builder newBuilderForType() { return newBuilder(); }
-      public static Builder newBuilder(org.jetbrains.jps.api.CmdlineRemoteProto.Message.FSStateMessage prototype) {
-        return newBuilder().mergeFrom(prototype);
-      }
-      public Builder toBuilder() { return newBuilder(this); }
-      
-      public static final class Builder extends
-          com.google.protobuf.GeneratedMessageLite.Builder<
-            org.jetbrains.jps.api.CmdlineRemoteProto.Message.FSStateMessage, Builder>
-          implements org.jetbrains.jps.api.CmdlineRemoteProto.Message.FSStateMessageOrBuilder {
-        // Construct using org.jetbrains.jps.api.CmdlineRemoteProto.Message.FSStateMessage.newBuilder()
-        private Builder() {
-          maybeForceBuilderInitialization();
-        }
-        
-        private void maybeForceBuilderInitialization() {
-        }
-        private static Builder create() {
-          return new Builder();
-        }
-        
-        public Builder clear() {
-          super.clear();
-          moduleName_ = "";
-          bitField0_ = (bitField0_ & ~0x00000001);
-          recompileDelta_ = java.util.Collections.emptyList();
-          bitField0_ = (bitField0_ & ~0x00000002);
-          deletedProduction_ = com.google.protobuf.LazyStringArrayList.EMPTY;
-          bitField0_ = (bitField0_ & ~0x00000004);
-          deletedTests_ = com.google.protobuf.LazyStringArrayList.EMPTY;
-          bitField0_ = (bitField0_ & ~0x00000008);
-          return this;
-        }
-        
-        public Builder clone() {
-          return create().mergeFrom(buildPartial());
-        }
-        
-        public org.jetbrains.jps.api.CmdlineRemoteProto.Message.FSStateMessage getDefaultInstanceForType() {
-          return org.jetbrains.jps.api.CmdlineRemoteProto.Message.FSStateMessage.getDefaultInstance();
-        }
-        
-        public org.jetbrains.jps.api.CmdlineRemoteProto.Message.FSStateMessage build() {
-          org.jetbrains.jps.api.CmdlineRemoteProto.Message.FSStateMessage result = buildPartial();
-          if (!result.isInitialized()) {
-            throw newUninitializedMessageException(result);
-          }
-          return result;
-        }
-        
-        private org.jetbrains.jps.api.CmdlineRemoteProto.Message.FSStateMessage buildParsed()
-            throws com.google.protobuf.InvalidProtocolBufferException {
-          org.jetbrains.jps.api.CmdlineRemoteProto.Message.FSStateMessage result = buildPartial();
-          if (!result.isInitialized()) {
-            throw newUninitializedMessageException(
-              result).asInvalidProtocolBufferException();
-          }
-          return result;
-        }
-        
-        public org.jetbrains.jps.api.CmdlineRemoteProto.Message.FSStateMessage buildPartial() {
-          org.jetbrains.jps.api.CmdlineRemoteProto.Message.FSStateMessage result = new org.jetbrains.jps.api.CmdlineRemoteProto.Message.FSStateMessage(this);
-          int from_bitField0_ = bitField0_;
-          int to_bitField0_ = 0;
-          if (((from_bitField0_ & 0x00000001) == 0x00000001)) {
-            to_bitField0_ |= 0x00000001;
-          }
-          result.moduleName_ = moduleName_;
-          if (((bitField0_ & 0x00000002) == 0x00000002)) {
-            recompileDelta_ = java.util.Collections.unmodifiableList(recompileDelta_);
-            bitField0_ = (bitField0_ & ~0x00000002);
-          }
-          result.recompileDelta_ = recompileDelta_;
-          if (((bitField0_ & 0x00000004) == 0x00000004)) {
-            deletedProduction_ = new com.google.protobuf.UnmodifiableLazyStringList(
-                deletedProduction_);
-            bitField0_ = (bitField0_ & ~0x00000004);
-          }
-          result.deletedProduction_ = deletedProduction_;
-          if (((bitField0_ & 0x00000008) == 0x00000008)) {
-            deletedTests_ = new com.google.protobuf.UnmodifiableLazyStringList(
-                deletedTests_);
-            bitField0_ = (bitField0_ & ~0x00000008);
-          }
-          result.deletedTests_ = deletedTests_;
-          result.bitField0_ = to_bitField0_;
-          return result;
-        }
-        
-        public Builder mergeFrom(org.jetbrains.jps.api.CmdlineRemoteProto.Message.FSStateMessage other) {
-          if (other == org.jetbrains.jps.api.CmdlineRemoteProto.Message.FSStateMessage.getDefaultInstance()) return this;
-          if (other.hasModuleName()) {
-            setModuleName(other.getModuleName());
-          }
-          if (!other.recompileDelta_.isEmpty()) {
-            if (recompileDelta_.isEmpty()) {
-              recompileDelta_ = other.recompileDelta_;
-              bitField0_ = (bitField0_ & ~0x00000002);
-            } else {
-              ensureRecompileDeltaIsMutable();
-              recompileDelta_.addAll(other.recompileDelta_);
-            }
-            
-          }
-          if (!other.deletedProduction_.isEmpty()) {
-            if (deletedProduction_.isEmpty()) {
-              deletedProduction_ = other.deletedProduction_;
-              bitField0_ = (bitField0_ & ~0x00000004);
-            } else {
-              ensureDeletedProductionIsMutable();
-              deletedProduction_.addAll(other.deletedProduction_);
-            }
-            
-          }
-          if (!other.deletedTests_.isEmpty()) {
-            if (deletedTests_.isEmpty()) {
-              deletedTests_ = other.deletedTests_;
-              bitField0_ = (bitField0_ & ~0x00000008);
-            } else {
-              ensureDeletedTestsIsMutable();
-              deletedTests_.addAll(other.deletedTests_);
-            }
-            
-          }
-          return this;
-        }
-        
-        public final boolean isInitialized() {
-          if (!hasModuleName()) {
-            
-            return false;
-          }
-          for (int i = 0; i < getRecompileDeltaCount(); i++) {
-            if (!getRecompileDelta(i).isInitialized()) {
-              
-              return false;
-            }
-          }
-          return true;
-        }
-        
-        public Builder mergeFrom(
-            com.google.protobuf.CodedInputStream input,
-            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-            throws java.io.IOException {
-          while (true) {
-            int tag = input.readTag();
-            switch (tag) {
-              case 0:
-                
-                return this;
-              default: {
-                if (!parseUnknownField(input, extensionRegistry, tag)) {
-                  
-                  return this;
-                }
-                break;
-              }
-              case 10: {
-                bitField0_ |= 0x00000001;
-                moduleName_ = input.readBytes();
-                break;
-              }
-              case 18: {
-                org.jetbrains.jps.api.CmdlineRemoteProto.Message.FSStateMessage.RootDelta.Builder subBuilder = org.jetbrains.jps.api.CmdlineRemoteProto.Message.FSStateMessage.RootDelta.newBuilder();
-                input.readMessage(subBuilder, extensionRegistry);
-                addRecompileDelta(subBuilder.buildPartial());
-                break;
-              }
-              case 26: {
-                ensureDeletedProductionIsMutable();
-                deletedProduction_.add(input.readBytes());
-                break;
-              }
-              case 34: {
-                ensureDeletedTestsIsMutable();
-                deletedTests_.add(input.readBytes());
-                break;
-              }
-            }
-          }
-        }
-        
-        private int bitField0_;
-        
-        // required string module_name = 1;
-        private java.lang.Object moduleName_ = "";
-        public boolean hasModuleName() {
-          return ((bitField0_ & 0x00000001) == 0x00000001);
-        }
-        public String getModuleName() {
-          java.lang.Object ref = moduleName_;
-          if (!(ref instanceof String)) {
-            String s = ((com.google.protobuf.ByteString) ref).toStringUtf8();
-            moduleName_ = s;
-            return s;
-          } else {
-            return (String) ref;
-          }
-        }
-        public Builder setModuleName(String value) {
-          if (value == null) {
-    throw new NullPointerException();
-  }
-  bitField0_ |= 0x00000001;
-          moduleName_ = value;
-          
-          return this;
-        }
-        public Builder clearModuleName() {
-          bitField0_ = (bitField0_ & ~0x00000001);
-          moduleName_ = getDefaultInstance().getModuleName();
-          
-          return this;
-        }
-        void setModuleName(com.google.protobuf.ByteString value) {
-          bitField0_ |= 0x00000001;
-          moduleName_ = value;
-          
-        }
-        
-        // repeated .org.jetbrains.jpsservice.Message.FSStateMessage.RootDelta recompile_delta = 2;
-        private java.util.List<org.jetbrains.jps.api.CmdlineRemoteProto.Message.FSStateMessage.RootDelta> recompileDelta_ =
-          java.util.Collections.emptyList();
-        private void ensureRecompileDeltaIsMutable() {
-          if (!((bitField0_ & 0x00000002) == 0x00000002)) {
-            recompileDelta_ = new java.util.ArrayList<org.jetbrains.jps.api.CmdlineRemoteProto.Message.FSStateMessage.RootDelta>(recompileDelta_);
-            bitField0_ |= 0x00000002;
-           }
-        }
-        
-        public java.util.List<org.jetbrains.jps.api.CmdlineRemoteProto.Message.FSStateMessage.RootDelta> getRecompileDeltaList() {
-          return java.util.Collections.unmodifiableList(recompileDelta_);
-        }
-        public int getRecompileDeltaCount() {
-          return recompileDelta_.size();
-        }
-        public org.jetbrains.jps.api.CmdlineRemoteProto.Message.FSStateMessage.RootDelta getRecompileDelta(int index) {
-          return recompileDelta_.get(index);
-        }
-        public Builder setRecompileDelta(
-            int index, org.jetbrains.jps.api.CmdlineRemoteProto.Message.FSStateMessage.RootDelta value) {
-          if (value == null) {
-            throw new NullPointerException();
-          }
-          ensureRecompileDeltaIsMutable();
-          recompileDelta_.set(index, value);
-          
-          return this;
-        }
-        public Builder setRecompileDelta(
-            int index, org.jetbrains.jps.api.CmdlineRemoteProto.Message.FSStateMessage.RootDelta.Builder builderForValue) {
-          ensureRecompileDeltaIsMutable();
-          recompileDelta_.set(index, builderForValue.build());
-          
-          return this;
-        }
-        public Builder addRecompileDelta(org.jetbrains.jps.api.CmdlineRemoteProto.Message.FSStateMessage.RootDelta value) {
-          if (value == null) {
-            throw new NullPointerException();
-          }
-          ensureRecompileDeltaIsMutable();
-          recompileDelta_.add(value);
-          
-          return this;
-        }
-        public Builder addRecompileDelta(
-            int index, org.jetbrains.jps.api.CmdlineRemoteProto.Message.FSStateMessage.RootDelta value) {
-          if (value == null) {
-            throw new NullPointerException();
-          }
-          ensureRecompileDeltaIsMutable();
-          recompileDelta_.add(index, value);
-          
-          return this;
-        }
-        public Builder addRecompileDelta(
-            org.jetbrains.jps.api.CmdlineRemoteProto.Message.FSStateMessage.RootDelta.Builder builderForValue) {
-          ensureRecompileDeltaIsMutable();
-          recompileDelta_.add(builderForValue.build());
-          
-          return this;
-        }
-        public Builder addRecompileDelta(
-            int index, org.jetbrains.jps.api.CmdlineRemoteProto.Message.FSStateMessage.RootDelta.Builder builderForValue) {
-          ensureRecompileDeltaIsMutable();
-          recompileDelta_.add(index, builderForValue.build());
-          
-          return this;
-        }
-        public Builder addAllRecompileDelta(
-            java.lang.Iterable<? extends org.jetbrains.jps.api.CmdlineRemoteProto.Message.FSStateMessage.RootDelta> values) {
-          ensureRecompileDeltaIsMutable();
-          super.addAll(values, recompileDelta_);
-          
-          return this;
-        }
-        public Builder clearRecompileDelta() {
-          recompileDelta_ = java.util.Collections.emptyList();
-          bitField0_ = (bitField0_ & ~0x00000002);
-          
-          return this;
-        }
-        public Builder removeRecompileDelta(int index) {
-          ensureRecompileDeltaIsMutable();
-          recompileDelta_.remove(index);
-          
-          return this;
-        }
-        
-        // repeated string deleted_production = 3;
-        private com.google.protobuf.LazyStringList deletedProduction_ = com.google.protobuf.LazyStringArrayList.EMPTY;
-        private void ensureDeletedProductionIsMutable() {
-          if (!((bitField0_ & 0x00000004) == 0x00000004)) {
-            deletedProduction_ = new com.google.protobuf.LazyStringArrayList(deletedProduction_);
-            bitField0_ |= 0x00000004;
-           }
-        }
-        public java.util.List<String>
-            getDeletedProductionList() {
-          return java.util.Collections.unmodifiableList(deletedProduction_);
-        }
-        public int getDeletedProductionCount() {
-          return deletedProduction_.size();
-        }
-        public String getDeletedProduction(int index) {
-          return deletedProduction_.get(index);
-        }
-        public Builder setDeletedProduction(
-            int index, String value) {
-          if (value == null) {
-    throw new NullPointerException();
-  }
-  ensureDeletedProductionIsMutable();
-          deletedProduction_.set(index, value);
-          
-          return this;
-        }
-        public Builder addDeletedProduction(String value) {
-          if (value == null) {
-    throw new NullPointerException();
-  }
-  ensureDeletedProductionIsMutable();
-          deletedProduction_.add(value);
-          
-          return this;
-        }
-        public Builder addAllDeletedProduction(
-            java.lang.Iterable<String> values) {
-          ensureDeletedProductionIsMutable();
-          super.addAll(values, deletedProduction_);
-          
-          return this;
-        }
-        public Builder clearDeletedProduction() {
-          deletedProduction_ = com.google.protobuf.LazyStringArrayList.EMPTY;
-          bitField0_ = (bitField0_ & ~0x00000004);
-          
-          return this;
-        }
-        void addDeletedProduction(com.google.protobuf.ByteString value) {
-          ensureDeletedProductionIsMutable();
-          deletedProduction_.add(value);
-          
-        }
-        
-        // repeated string deleted_tests = 4;
-        private com.google.protobuf.LazyStringList deletedTests_ = com.google.protobuf.LazyStringArrayList.EMPTY;
-        private void ensureDeletedTestsIsMutable() {
-          if (!((bitField0_ & 0x00000008) == 0x00000008)) {
-            deletedTests_ = new com.google.protobuf.LazyStringArrayList(deletedTests_);
-            bitField0_ |= 0x00000008;
-           }
-        }
-        public java.util.List<String>
-            getDeletedTestsList() {
-          return java.util.Collections.unmodifiableList(deletedTests_);
-        }
-        public int getDeletedTestsCount() {
-          return deletedTests_.size();
-        }
-        public String getDeletedTests(int index) {
-          return deletedTests_.get(index);
-        }
-        public Builder setDeletedTests(
-            int index, String value) {
-          if (value == null) {
-    throw new NullPointerException();
-  }
-  ensureDeletedTestsIsMutable();
-          deletedTests_.set(index, value);
-          
-          return this;
-        }
-        public Builder addDeletedTests(String value) {
-          if (value == null) {
-    throw new NullPointerException();
-  }
-  ensureDeletedTestsIsMutable();
-          deletedTests_.add(value);
-          
-          return this;
-        }
-        public Builder addAllDeletedTests(
-            java.lang.Iterable<String> values) {
-          ensureDeletedTestsIsMutable();
-          super.addAll(values, deletedTests_);
-          
-          return this;
-        }
-        public Builder clearDeletedTests() {
-          deletedTests_ = com.google.protobuf.LazyStringArrayList.EMPTY;
-          bitField0_ = (bitField0_ & ~0x00000008);
-          
-          return this;
-        }
-        void addDeletedTests(com.google.protobuf.ByteString value) {
-          ensureDeletedTestsIsMutable();
-          deletedTests_.add(value);
-          
-        }
-        
-        // @@protoc_insertion_point(builder_scope:org.jetbrains.jpsservice.Message.FSStateMessage)
-      }
-      
-      static {
-        defaultInstance = new FSStateMessage(true);
-        defaultInstance.initFields();
-      }
-      
-      // @@protoc_insertion_point(class_scope:org.jetbrains.jpsservice.Message.FSStateMessage)
-    }
-    
     public interface FailureOrBuilder
         extends com.google.protobuf.MessageLiteOrBuilder {
       
@@ -2573,6 +1360,10 @@ public final class CmdlineRemoteProto {
       // optional .org.jetbrains.jpsservice.Message.ControllerMessage.ParametersMessage params_message = 2;
       boolean hasParamsMessage();
       org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage getParamsMessage();
+      
+      // optional .org.jetbrains.jpsservice.Message.ControllerMessage.FSEvent fs_event = 3;
+      boolean hasFsEvent();
+      org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.FSEvent getFsEvent();
     }
     public static final class ControllerMessage extends
         com.google.protobuf.GeneratedMessageLite
@@ -2596,10 +1387,12 @@ public final class CmdlineRemoteProto {
           implements com.google.protobuf.Internal.EnumLite {
         BUILD_PARAMETERS(0, 1),
         CANCEL_BUILD_COMMAND(1, 2),
+        FS_EVENT(2, 3),
         ;
         
         public static final int BUILD_PARAMETERS_VALUE = 1;
         public static final int CANCEL_BUILD_COMMAND_VALUE = 2;
+        public static final int FS_EVENT_VALUE = 3;
         
         
         public final int getNumber() { return value; }
@@ -2608,6 +1401,7 @@ public final class CmdlineRemoteProto {
           switch (value) {
             case 1: return BUILD_PARAMETERS;
             case 2: return CANCEL_BUILD_COMMAND;
+            case 3: return FS_EVENT;
             default: return null;
           }
         }
@@ -2631,6 +1425,519 @@ public final class CmdlineRemoteProto {
         }
         
         // @@protoc_insertion_point(enum_scope:org.jetbrains.jpsservice.Message.ControllerMessage.Type)
+      }
+      
+      public interface FSEventOrBuilder
+          extends com.google.protobuf.MessageLiteOrBuilder {
+        
+        // required uint64 ordinal = 1;
+        boolean hasOrdinal();
+        long getOrdinal();
+        
+        // repeated string changed_paths = 2;
+        java.util.List<String> getChangedPathsList();
+        int getChangedPathsCount();
+        String getChangedPaths(int index);
+        
+        // repeated string deleted_paths = 3;
+        java.util.List<String> getDeletedPathsList();
+        int getDeletedPathsCount();
+        String getDeletedPaths(int index);
+      }
+      public static final class FSEvent extends
+          com.google.protobuf.GeneratedMessageLite
+          implements FSEventOrBuilder {
+        // Use FSEvent.newBuilder() to construct.
+        private FSEvent(Builder builder) {
+          super(builder);
+        }
+        private FSEvent(boolean noInit) {}
+        
+        private static final FSEvent defaultInstance;
+        public static FSEvent getDefaultInstance() {
+          return defaultInstance;
+        }
+        
+        public FSEvent getDefaultInstanceForType() {
+          return defaultInstance;
+        }
+        
+        private int bitField0_;
+        // required uint64 ordinal = 1;
+        public static final int ORDINAL_FIELD_NUMBER = 1;
+        private long ordinal_;
+        public boolean hasOrdinal() {
+          return ((bitField0_ & 0x00000001) == 0x00000001);
+        }
+        public long getOrdinal() {
+          return ordinal_;
+        }
+        
+        // repeated string changed_paths = 2;
+        public static final int CHANGED_PATHS_FIELD_NUMBER = 2;
+        private com.google.protobuf.LazyStringList changedPaths_;
+        public java.util.List<String>
+            getChangedPathsList() {
+          return changedPaths_;
+        }
+        public int getChangedPathsCount() {
+          return changedPaths_.size();
+        }
+        public String getChangedPaths(int index) {
+          return changedPaths_.get(index);
+        }
+        
+        // repeated string deleted_paths = 3;
+        public static final int DELETED_PATHS_FIELD_NUMBER = 3;
+        private com.google.protobuf.LazyStringList deletedPaths_;
+        public java.util.List<String>
+            getDeletedPathsList() {
+          return deletedPaths_;
+        }
+        public int getDeletedPathsCount() {
+          return deletedPaths_.size();
+        }
+        public String getDeletedPaths(int index) {
+          return deletedPaths_.get(index);
+        }
+        
+        private void initFields() {
+          ordinal_ = 0L;
+          changedPaths_ = com.google.protobuf.LazyStringArrayList.EMPTY;
+          deletedPaths_ = com.google.protobuf.LazyStringArrayList.EMPTY;
+        }
+        private byte memoizedIsInitialized = -1;
+        public final boolean isInitialized() {
+          byte isInitialized = memoizedIsInitialized;
+          if (isInitialized != -1) return isInitialized == 1;
+          
+          if (!hasOrdinal()) {
+            memoizedIsInitialized = 0;
+            return false;
+          }
+          memoizedIsInitialized = 1;
+          return true;
+        }
+        
+        public void writeTo(com.google.protobuf.CodedOutputStream output)
+                            throws java.io.IOException {
+          getSerializedSize();
+          if (((bitField0_ & 0x00000001) == 0x00000001)) {
+            output.writeUInt64(1, ordinal_);
+          }
+          for (int i = 0; i < changedPaths_.size(); i++) {
+            output.writeBytes(2, changedPaths_.getByteString(i));
+          }
+          for (int i = 0; i < deletedPaths_.size(); i++) {
+            output.writeBytes(3, deletedPaths_.getByteString(i));
+          }
+        }
+        
+        private int memoizedSerializedSize = -1;
+        public int getSerializedSize() {
+          int size = memoizedSerializedSize;
+          if (size != -1) return size;
+        
+          size = 0;
+          if (((bitField0_ & 0x00000001) == 0x00000001)) {
+            size += com.google.protobuf.CodedOutputStream
+              .computeUInt64Size(1, ordinal_);
+          }
+          {
+            int dataSize = 0;
+            for (int i = 0; i < changedPaths_.size(); i++) {
+              dataSize += com.google.protobuf.CodedOutputStream
+                .computeBytesSizeNoTag(changedPaths_.getByteString(i));
+            }
+            size += dataSize;
+            size += 1 * getChangedPathsList().size();
+          }
+          {
+            int dataSize = 0;
+            for (int i = 0; i < deletedPaths_.size(); i++) {
+              dataSize += com.google.protobuf.CodedOutputStream
+                .computeBytesSizeNoTag(deletedPaths_.getByteString(i));
+            }
+            size += dataSize;
+            size += 1 * getDeletedPathsList().size();
+          }
+          memoizedSerializedSize = size;
+          return size;
+        }
+        
+        private static final long serialVersionUID = 0L;
+        @java.lang.Override
+        protected java.lang.Object writeReplace()
+            throws java.io.ObjectStreamException {
+          return super.writeReplace();
+        }
+        
+        public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.FSEvent parseFrom(
+            com.google.protobuf.ByteString data)
+            throws com.google.protobuf.InvalidProtocolBufferException {
+          return newBuilder().mergeFrom(data).buildParsed();
+        }
+        public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.FSEvent parseFrom(
+            com.google.protobuf.ByteString data,
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+            throws com.google.protobuf.InvalidProtocolBufferException {
+          return newBuilder().mergeFrom(data, extensionRegistry)
+                   .buildParsed();
+        }
+        public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.FSEvent parseFrom(byte[] data)
+            throws com.google.protobuf.InvalidProtocolBufferException {
+          return newBuilder().mergeFrom(data).buildParsed();
+        }
+        public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.FSEvent parseFrom(
+            byte[] data,
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+            throws com.google.protobuf.InvalidProtocolBufferException {
+          return newBuilder().mergeFrom(data, extensionRegistry)
+                   .buildParsed();
+        }
+        public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.FSEvent parseFrom(java.io.InputStream input)
+            throws java.io.IOException {
+          return newBuilder().mergeFrom(input).buildParsed();
+        }
+        public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.FSEvent parseFrom(
+            java.io.InputStream input,
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+            throws java.io.IOException {
+          return newBuilder().mergeFrom(input, extensionRegistry)
+                   .buildParsed();
+        }
+        public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.FSEvent parseDelimitedFrom(java.io.InputStream input)
+            throws java.io.IOException {
+          Builder builder = newBuilder();
+          if (builder.mergeDelimitedFrom(input)) {
+            return builder.buildParsed();
+          } else {
+            return null;
+          }
+        }
+        public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.FSEvent parseDelimitedFrom(
+            java.io.InputStream input,
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+            throws java.io.IOException {
+          Builder builder = newBuilder();
+          if (builder.mergeDelimitedFrom(input, extensionRegistry)) {
+            return builder.buildParsed();
+          } else {
+            return null;
+          }
+        }
+        public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.FSEvent parseFrom(
+            com.google.protobuf.CodedInputStream input)
+            throws java.io.IOException {
+          return newBuilder().mergeFrom(input).buildParsed();
+        }
+        public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.FSEvent parseFrom(
+            com.google.protobuf.CodedInputStream input,
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+            throws java.io.IOException {
+          return newBuilder().mergeFrom(input, extensionRegistry)
+                   .buildParsed();
+        }
+        
+        public static Builder newBuilder() { return Builder.create(); }
+        public Builder newBuilderForType() { return newBuilder(); }
+        public static Builder newBuilder(org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.FSEvent prototype) {
+          return newBuilder().mergeFrom(prototype);
+        }
+        public Builder toBuilder() { return newBuilder(this); }
+        
+        public static final class Builder extends
+            com.google.protobuf.GeneratedMessageLite.Builder<
+              org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.FSEvent, Builder>
+            implements org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.FSEventOrBuilder {
+          // Construct using org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.FSEvent.newBuilder()
+          private Builder() {
+            maybeForceBuilderInitialization();
+          }
+          
+          private void maybeForceBuilderInitialization() {
+          }
+          private static Builder create() {
+            return new Builder();
+          }
+          
+          public Builder clear() {
+            super.clear();
+            ordinal_ = 0L;
+            bitField0_ = (bitField0_ & ~0x00000001);
+            changedPaths_ = com.google.protobuf.LazyStringArrayList.EMPTY;
+            bitField0_ = (bitField0_ & ~0x00000002);
+            deletedPaths_ = com.google.protobuf.LazyStringArrayList.EMPTY;
+            bitField0_ = (bitField0_ & ~0x00000004);
+            return this;
+          }
+          
+          public Builder clone() {
+            return create().mergeFrom(buildPartial());
+          }
+          
+          public org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.FSEvent getDefaultInstanceForType() {
+            return org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.FSEvent.getDefaultInstance();
+          }
+          
+          public org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.FSEvent build() {
+            org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.FSEvent result = buildPartial();
+            if (!result.isInitialized()) {
+              throw newUninitializedMessageException(result);
+            }
+            return result;
+          }
+          
+          private org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.FSEvent buildParsed()
+              throws com.google.protobuf.InvalidProtocolBufferException {
+            org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.FSEvent result = buildPartial();
+            if (!result.isInitialized()) {
+              throw newUninitializedMessageException(
+                result).asInvalidProtocolBufferException();
+            }
+            return result;
+          }
+          
+          public org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.FSEvent buildPartial() {
+            org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.FSEvent result = new org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.FSEvent(this);
+            int from_bitField0_ = bitField0_;
+            int to_bitField0_ = 0;
+            if (((from_bitField0_ & 0x00000001) == 0x00000001)) {
+              to_bitField0_ |= 0x00000001;
+            }
+            result.ordinal_ = ordinal_;
+            if (((bitField0_ & 0x00000002) == 0x00000002)) {
+              changedPaths_ = new com.google.protobuf.UnmodifiableLazyStringList(
+                  changedPaths_);
+              bitField0_ = (bitField0_ & ~0x00000002);
+            }
+            result.changedPaths_ = changedPaths_;
+            if (((bitField0_ & 0x00000004) == 0x00000004)) {
+              deletedPaths_ = new com.google.protobuf.UnmodifiableLazyStringList(
+                  deletedPaths_);
+              bitField0_ = (bitField0_ & ~0x00000004);
+            }
+            result.deletedPaths_ = deletedPaths_;
+            result.bitField0_ = to_bitField0_;
+            return result;
+          }
+          
+          public Builder mergeFrom(org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.FSEvent other) {
+            if (other == org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.FSEvent.getDefaultInstance()) return this;
+            if (other.hasOrdinal()) {
+              setOrdinal(other.getOrdinal());
+            }
+            if (!other.changedPaths_.isEmpty()) {
+              if (changedPaths_.isEmpty()) {
+                changedPaths_ = other.changedPaths_;
+                bitField0_ = (bitField0_ & ~0x00000002);
+              } else {
+                ensureChangedPathsIsMutable();
+                changedPaths_.addAll(other.changedPaths_);
+              }
+              
+            }
+            if (!other.deletedPaths_.isEmpty()) {
+              if (deletedPaths_.isEmpty()) {
+                deletedPaths_ = other.deletedPaths_;
+                bitField0_ = (bitField0_ & ~0x00000004);
+              } else {
+                ensureDeletedPathsIsMutable();
+                deletedPaths_.addAll(other.deletedPaths_);
+              }
+              
+            }
+            return this;
+          }
+          
+          public final boolean isInitialized() {
+            if (!hasOrdinal()) {
+              
+              return false;
+            }
+            return true;
+          }
+          
+          public Builder mergeFrom(
+              com.google.protobuf.CodedInputStream input,
+              com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+              throws java.io.IOException {
+            while (true) {
+              int tag = input.readTag();
+              switch (tag) {
+                case 0:
+                  
+                  return this;
+                default: {
+                  if (!parseUnknownField(input, extensionRegistry, tag)) {
+                    
+                    return this;
+                  }
+                  break;
+                }
+                case 8: {
+                  bitField0_ |= 0x00000001;
+                  ordinal_ = input.readUInt64();
+                  break;
+                }
+                case 18: {
+                  ensureChangedPathsIsMutable();
+                  changedPaths_.add(input.readBytes());
+                  break;
+                }
+                case 26: {
+                  ensureDeletedPathsIsMutable();
+                  deletedPaths_.add(input.readBytes());
+                  break;
+                }
+              }
+            }
+          }
+          
+          private int bitField0_;
+          
+          // required uint64 ordinal = 1;
+          private long ordinal_ ;
+          public boolean hasOrdinal() {
+            return ((bitField0_ & 0x00000001) == 0x00000001);
+          }
+          public long getOrdinal() {
+            return ordinal_;
+          }
+          public Builder setOrdinal(long value) {
+            bitField0_ |= 0x00000001;
+            ordinal_ = value;
+            
+            return this;
+          }
+          public Builder clearOrdinal() {
+            bitField0_ = (bitField0_ & ~0x00000001);
+            ordinal_ = 0L;
+            
+            return this;
+          }
+          
+          // repeated string changed_paths = 2;
+          private com.google.protobuf.LazyStringList changedPaths_ = com.google.protobuf.LazyStringArrayList.EMPTY;
+          private void ensureChangedPathsIsMutable() {
+            if (!((bitField0_ & 0x00000002) == 0x00000002)) {
+              changedPaths_ = new com.google.protobuf.LazyStringArrayList(changedPaths_);
+              bitField0_ |= 0x00000002;
+             }
+          }
+          public java.util.List<String>
+              getChangedPathsList() {
+            return java.util.Collections.unmodifiableList(changedPaths_);
+          }
+          public int getChangedPathsCount() {
+            return changedPaths_.size();
+          }
+          public String getChangedPaths(int index) {
+            return changedPaths_.get(index);
+          }
+          public Builder setChangedPaths(
+              int index, String value) {
+            if (value == null) {
+    throw new NullPointerException();
+  }
+  ensureChangedPathsIsMutable();
+            changedPaths_.set(index, value);
+            
+            return this;
+          }
+          public Builder addChangedPaths(String value) {
+            if (value == null) {
+    throw new NullPointerException();
+  }
+  ensureChangedPathsIsMutable();
+            changedPaths_.add(value);
+            
+            return this;
+          }
+          public Builder addAllChangedPaths(
+              java.lang.Iterable<String> values) {
+            ensureChangedPathsIsMutable();
+            super.addAll(values, changedPaths_);
+            
+            return this;
+          }
+          public Builder clearChangedPaths() {
+            changedPaths_ = com.google.protobuf.LazyStringArrayList.EMPTY;
+            bitField0_ = (bitField0_ & ~0x00000002);
+            
+            return this;
+          }
+          void addChangedPaths(com.google.protobuf.ByteString value) {
+            ensureChangedPathsIsMutable();
+            changedPaths_.add(value);
+            
+          }
+          
+          // repeated string deleted_paths = 3;
+          private com.google.protobuf.LazyStringList deletedPaths_ = com.google.protobuf.LazyStringArrayList.EMPTY;
+          private void ensureDeletedPathsIsMutable() {
+            if (!((bitField0_ & 0x00000004) == 0x00000004)) {
+              deletedPaths_ = new com.google.protobuf.LazyStringArrayList(deletedPaths_);
+              bitField0_ |= 0x00000004;
+             }
+          }
+          public java.util.List<String>
+              getDeletedPathsList() {
+            return java.util.Collections.unmodifiableList(deletedPaths_);
+          }
+          public int getDeletedPathsCount() {
+            return deletedPaths_.size();
+          }
+          public String getDeletedPaths(int index) {
+            return deletedPaths_.get(index);
+          }
+          public Builder setDeletedPaths(
+              int index, String value) {
+            if (value == null) {
+    throw new NullPointerException();
+  }
+  ensureDeletedPathsIsMutable();
+            deletedPaths_.set(index, value);
+            
+            return this;
+          }
+          public Builder addDeletedPaths(String value) {
+            if (value == null) {
+    throw new NullPointerException();
+  }
+  ensureDeletedPathsIsMutable();
+            deletedPaths_.add(value);
+            
+            return this;
+          }
+          public Builder addAllDeletedPaths(
+              java.lang.Iterable<String> values) {
+            ensureDeletedPathsIsMutable();
+            super.addAll(values, deletedPaths_);
+            
+            return this;
+          }
+          public Builder clearDeletedPaths() {
+            deletedPaths_ = com.google.protobuf.LazyStringArrayList.EMPTY;
+            bitField0_ = (bitField0_ & ~0x00000004);
+            
+            return this;
+          }
+          void addDeletedPaths(com.google.protobuf.ByteString value) {
+            ensureDeletedPathsIsMutable();
+            deletedPaths_.add(value);
+            
+          }
+          
+          // @@protoc_insertion_point(builder_scope:org.jetbrains.jpsservice.Message.ControllerMessage.FSEvent)
+        }
+        
+        static {
+          defaultInstance = new FSEvent(true);
+          defaultInstance.initFields();
+        }
+        
+        // @@protoc_insertion_point(class_scope:org.jetbrains.jpsservice.Message.ControllerMessage.FSEvent)
       }
       
       public interface GlobalSettingsOrBuilder
@@ -4215,12 +3522,6 @@ public final class CmdlineRemoteProto {
             getBuilderParameterList();
         org.jetbrains.jps.api.CmdlineRemoteProto.Message.KeyValuePair getBuilderParameter(int index);
         int getBuilderParameterCount();
-        
-        // repeated .org.jetbrains.jpsservice.Message.FSStateMessage fs_state = 8;
-        java.util.List<org.jetbrains.jps.api.CmdlineRemoteProto.Message.FSStateMessage> 
-            getFsStateList();
-        org.jetbrains.jps.api.CmdlineRemoteProto.Message.FSStateMessage getFsState(int index);
-        int getFsStateCount();
       }
       public static final class ParametersMessage extends
           com.google.protobuf.GeneratedMessageLite
@@ -4403,27 +3704,6 @@ public final class CmdlineRemoteProto {
           return builderParameter_.get(index);
         }
         
-        // repeated .org.jetbrains.jpsservice.Message.FSStateMessage fs_state = 8;
-        public static final int FS_STATE_FIELD_NUMBER = 8;
-        private java.util.List<org.jetbrains.jps.api.CmdlineRemoteProto.Message.FSStateMessage> fsState_;
-        public java.util.List<org.jetbrains.jps.api.CmdlineRemoteProto.Message.FSStateMessage> getFsStateList() {
-          return fsState_;
-        }
-        public java.util.List<? extends org.jetbrains.jps.api.CmdlineRemoteProto.Message.FSStateMessageOrBuilder> 
-            getFsStateOrBuilderList() {
-          return fsState_;
-        }
-        public int getFsStateCount() {
-          return fsState_.size();
-        }
-        public org.jetbrains.jps.api.CmdlineRemoteProto.Message.FSStateMessage getFsState(int index) {
-          return fsState_.get(index);
-        }
-        public org.jetbrains.jps.api.CmdlineRemoteProto.Message.FSStateMessageOrBuilder getFsStateOrBuilder(
-            int index) {
-          return fsState_.get(index);
-        }
-        
         private void initFields() {
           buildType_ = org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.Type.REBUILD;
           globalSettings_ = org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.GlobalSettings.getDefaultInstance();
@@ -4432,7 +3712,6 @@ public final class CmdlineRemoteProto {
           filePath_ = com.google.protobuf.LazyStringArrayList.EMPTY;
           artifactName_ = com.google.protobuf.LazyStringArrayList.EMPTY;
           builderParameter_ = java.util.Collections.emptyList();
-          fsState_ = java.util.Collections.emptyList();
         }
         private byte memoizedIsInitialized = -1;
         public final boolean isInitialized() {
@@ -4451,12 +3730,6 @@ public final class CmdlineRemoteProto {
           }
           for (int i = 0; i < getBuilderParameterCount(); i++) {
             if (!getBuilderParameter(i).isInitialized()) {
-              memoizedIsInitialized = 0;
-              return false;
-            }
-          }
-          for (int i = 0; i < getFsStateCount(); i++) {
-            if (!getFsState(i).isInitialized()) {
               memoizedIsInitialized = 0;
               return false;
             }
@@ -4488,9 +3761,6 @@ public final class CmdlineRemoteProto {
           }
           for (int i = 0; i < builderParameter_.size(); i++) {
             output.writeMessage(7, builderParameter_.get(i));
-          }
-          for (int i = 0; i < fsState_.size(); i++) {
-            output.writeMessage(8, fsState_.get(i));
           }
         }
         
@@ -4542,10 +3812,6 @@ public final class CmdlineRemoteProto {
           for (int i = 0; i < builderParameter_.size(); i++) {
             size += com.google.protobuf.CodedOutputStream
               .computeMessageSize(7, builderParameter_.get(i));
-          }
-          for (int i = 0; i < fsState_.size(); i++) {
-            size += com.google.protobuf.CodedOutputStream
-              .computeMessageSize(8, fsState_.get(i));
           }
           memoizedSerializedSize = size;
           return size;
@@ -4663,8 +3929,6 @@ public final class CmdlineRemoteProto {
             bitField0_ = (bitField0_ & ~0x00000020);
             builderParameter_ = java.util.Collections.emptyList();
             bitField0_ = (bitField0_ & ~0x00000040);
-            fsState_ = java.util.Collections.emptyList();
-            bitField0_ = (bitField0_ & ~0x00000080);
             return this;
           }
           
@@ -4733,11 +3997,6 @@ public final class CmdlineRemoteProto {
               bitField0_ = (bitField0_ & ~0x00000040);
             }
             result.builderParameter_ = builderParameter_;
-            if (((bitField0_ & 0x00000080) == 0x00000080)) {
-              fsState_ = java.util.Collections.unmodifiableList(fsState_);
-              bitField0_ = (bitField0_ & ~0x00000080);
-            }
-            result.fsState_ = fsState_;
             result.bitField0_ = to_bitField0_;
             return result;
           }
@@ -4793,16 +4052,6 @@ public final class CmdlineRemoteProto {
               }
               
             }
-            if (!other.fsState_.isEmpty()) {
-              if (fsState_.isEmpty()) {
-                fsState_ = other.fsState_;
-                bitField0_ = (bitField0_ & ~0x00000080);
-              } else {
-                ensureFsStateIsMutable();
-                fsState_.addAll(other.fsState_);
-              }
-              
-            }
             return this;
           }
           
@@ -4819,12 +4068,6 @@ public final class CmdlineRemoteProto {
             }
             for (int i = 0; i < getBuilderParameterCount(); i++) {
               if (!getBuilderParameter(i).isInitialized()) {
-                
-                return false;
-              }
-            }
-            for (int i = 0; i < getFsStateCount(); i++) {
-              if (!getFsState(i).isInitialized()) {
                 
                 return false;
               }
@@ -4891,12 +4134,6 @@ public final class CmdlineRemoteProto {
                   org.jetbrains.jps.api.CmdlineRemoteProto.Message.KeyValuePair.Builder subBuilder = org.jetbrains.jps.api.CmdlineRemoteProto.Message.KeyValuePair.newBuilder();
                   input.readMessage(subBuilder, extensionRegistry);
                   addBuilderParameter(subBuilder.buildPartial());
-                  break;
-                }
-                case 66: {
-                  org.jetbrains.jps.api.CmdlineRemoteProto.Message.FSStateMessage.Builder subBuilder = org.jetbrains.jps.api.CmdlineRemoteProto.Message.FSStateMessage.newBuilder();
-                  input.readMessage(subBuilder, extensionRegistry);
-                  addFsState(subBuilder.buildPartial());
                   break;
                 }
               }
@@ -5265,95 +4502,6 @@ public final class CmdlineRemoteProto {
             return this;
           }
           
-          // repeated .org.jetbrains.jpsservice.Message.FSStateMessage fs_state = 8;
-          private java.util.List<org.jetbrains.jps.api.CmdlineRemoteProto.Message.FSStateMessage> fsState_ =
-            java.util.Collections.emptyList();
-          private void ensureFsStateIsMutable() {
-            if (!((bitField0_ & 0x00000080) == 0x00000080)) {
-              fsState_ = new java.util.ArrayList<org.jetbrains.jps.api.CmdlineRemoteProto.Message.FSStateMessage>(fsState_);
-              bitField0_ |= 0x00000080;
-             }
-          }
-          
-          public java.util.List<org.jetbrains.jps.api.CmdlineRemoteProto.Message.FSStateMessage> getFsStateList() {
-            return java.util.Collections.unmodifiableList(fsState_);
-          }
-          public int getFsStateCount() {
-            return fsState_.size();
-          }
-          public org.jetbrains.jps.api.CmdlineRemoteProto.Message.FSStateMessage getFsState(int index) {
-            return fsState_.get(index);
-          }
-          public Builder setFsState(
-              int index, org.jetbrains.jps.api.CmdlineRemoteProto.Message.FSStateMessage value) {
-            if (value == null) {
-              throw new NullPointerException();
-            }
-            ensureFsStateIsMutable();
-            fsState_.set(index, value);
-            
-            return this;
-          }
-          public Builder setFsState(
-              int index, org.jetbrains.jps.api.CmdlineRemoteProto.Message.FSStateMessage.Builder builderForValue) {
-            ensureFsStateIsMutable();
-            fsState_.set(index, builderForValue.build());
-            
-            return this;
-          }
-          public Builder addFsState(org.jetbrains.jps.api.CmdlineRemoteProto.Message.FSStateMessage value) {
-            if (value == null) {
-              throw new NullPointerException();
-            }
-            ensureFsStateIsMutable();
-            fsState_.add(value);
-            
-            return this;
-          }
-          public Builder addFsState(
-              int index, org.jetbrains.jps.api.CmdlineRemoteProto.Message.FSStateMessage value) {
-            if (value == null) {
-              throw new NullPointerException();
-            }
-            ensureFsStateIsMutable();
-            fsState_.add(index, value);
-            
-            return this;
-          }
-          public Builder addFsState(
-              org.jetbrains.jps.api.CmdlineRemoteProto.Message.FSStateMessage.Builder builderForValue) {
-            ensureFsStateIsMutable();
-            fsState_.add(builderForValue.build());
-            
-            return this;
-          }
-          public Builder addFsState(
-              int index, org.jetbrains.jps.api.CmdlineRemoteProto.Message.FSStateMessage.Builder builderForValue) {
-            ensureFsStateIsMutable();
-            fsState_.add(index, builderForValue.build());
-            
-            return this;
-          }
-          public Builder addAllFsState(
-              java.lang.Iterable<? extends org.jetbrains.jps.api.CmdlineRemoteProto.Message.FSStateMessage> values) {
-            ensureFsStateIsMutable();
-            super.addAll(values, fsState_);
-            
-            return this;
-          }
-          public Builder clearFsState() {
-            fsState_ = java.util.Collections.emptyList();
-            bitField0_ = (bitField0_ & ~0x00000080);
-            
-            return this;
-          }
-          public Builder removeFsState(int index) {
-            ensureFsStateIsMutable();
-            fsState_.remove(index);
-            
-            return this;
-          }
-          
           // @@protoc_insertion_point(builder_scope:org.jetbrains.jpsservice.Message.ControllerMessage.ParametersMessage)
         }
         
@@ -5386,9 +4534,20 @@ public final class CmdlineRemoteProto {
         return paramsMessage_;
       }
       
+      // optional .org.jetbrains.jpsservice.Message.ControllerMessage.FSEvent fs_event = 3;
+      public static final int FS_EVENT_FIELD_NUMBER = 3;
+      private org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.FSEvent fsEvent_;
+      public boolean hasFsEvent() {
+        return ((bitField0_ & 0x00000004) == 0x00000004);
+      }
+      public org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.FSEvent getFsEvent() {
+        return fsEvent_;
+      }
+      
       private void initFields() {
         type_ = org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.Type.BUILD_PARAMETERS;
         paramsMessage_ = org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.getDefaultInstance();
+        fsEvent_ = org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.FSEvent.getDefaultInstance();
       }
       private byte memoizedIsInitialized = -1;
       public final boolean isInitialized() {
@@ -5401,6 +4560,12 @@ public final class CmdlineRemoteProto {
         }
         if (hasParamsMessage()) {
           if (!getParamsMessage().isInitialized()) {
+            memoizedIsInitialized = 0;
+            return false;
+          }
+        }
+        if (hasFsEvent()) {
+          if (!getFsEvent().isInitialized()) {
             memoizedIsInitialized = 0;
             return false;
           }
@@ -5418,6 +4583,9 @@ public final class CmdlineRemoteProto {
         if (((bitField0_ & 0x00000002) == 0x00000002)) {
           output.writeMessage(2, paramsMessage_);
         }
+        if (((bitField0_ & 0x00000004) == 0x00000004)) {
+          output.writeMessage(3, fsEvent_);
+        }
       }
       
       private int memoizedSerializedSize = -1;
@@ -5433,6 +4601,10 @@ public final class CmdlineRemoteProto {
         if (((bitField0_ & 0x00000002) == 0x00000002)) {
           size += com.google.protobuf.CodedOutputStream
             .computeMessageSize(2, paramsMessage_);
+        }
+        if (((bitField0_ & 0x00000004) == 0x00000004)) {
+          size += com.google.protobuf.CodedOutputStream
+            .computeMessageSize(3, fsEvent_);
         }
         memoizedSerializedSize = size;
         return size;
@@ -5540,6 +4712,8 @@ public final class CmdlineRemoteProto {
           bitField0_ = (bitField0_ & ~0x00000001);
           paramsMessage_ = org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.getDefaultInstance();
           bitField0_ = (bitField0_ & ~0x00000002);
+          fsEvent_ = org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.FSEvent.getDefaultInstance();
+          bitField0_ = (bitField0_ & ~0x00000004);
           return this;
         }
         
@@ -5581,6 +4755,10 @@ public final class CmdlineRemoteProto {
             to_bitField0_ |= 0x00000002;
           }
           result.paramsMessage_ = paramsMessage_;
+          if (((from_bitField0_ & 0x00000004) == 0x00000004)) {
+            to_bitField0_ |= 0x00000004;
+          }
+          result.fsEvent_ = fsEvent_;
           result.bitField0_ = to_bitField0_;
           return result;
         }
@@ -5593,6 +4771,9 @@ public final class CmdlineRemoteProto {
           if (other.hasParamsMessage()) {
             mergeParamsMessage(other.getParamsMessage());
           }
+          if (other.hasFsEvent()) {
+            mergeFsEvent(other.getFsEvent());
+          }
           return this;
         }
         
@@ -5603,6 +4784,12 @@ public final class CmdlineRemoteProto {
           }
           if (hasParamsMessage()) {
             if (!getParamsMessage().isInitialized()) {
+              
+              return false;
+            }
+          }
+          if (hasFsEvent()) {
+            if (!getFsEvent().isInitialized()) {
               
               return false;
             }
@@ -5643,6 +4830,15 @@ public final class CmdlineRemoteProto {
                 }
                 input.readMessage(subBuilder, extensionRegistry);
                 setParamsMessage(subBuilder.buildPartial());
+                break;
+              }
+              case 26: {
+                org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.FSEvent.Builder subBuilder = org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.FSEvent.newBuilder();
+                if (hasFsEvent()) {
+                  subBuilder.mergeFrom(getFsEvent());
+                }
+                input.readMessage(subBuilder, extensionRegistry);
+                setFsEvent(subBuilder.buildPartial());
                 break;
               }
             }
@@ -5718,6 +4914,49 @@ public final class CmdlineRemoteProto {
           return this;
         }
         
+        // optional .org.jetbrains.jpsservice.Message.ControllerMessage.FSEvent fs_event = 3;
+        private org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.FSEvent fsEvent_ = org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.FSEvent.getDefaultInstance();
+        public boolean hasFsEvent() {
+          return ((bitField0_ & 0x00000004) == 0x00000004);
+        }
+        public org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.FSEvent getFsEvent() {
+          return fsEvent_;
+        }
+        public Builder setFsEvent(org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.FSEvent value) {
+          if (value == null) {
+            throw new NullPointerException();
+          }
+          fsEvent_ = value;
+          
+          bitField0_ |= 0x00000004;
+          return this;
+        }
+        public Builder setFsEvent(
+            org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.FSEvent.Builder builderForValue) {
+          fsEvent_ = builderForValue.build();
+          
+          bitField0_ |= 0x00000004;
+          return this;
+        }
+        public Builder mergeFsEvent(org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.FSEvent value) {
+          if (((bitField0_ & 0x00000004) == 0x00000004) &&
+              fsEvent_ != org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.FSEvent.getDefaultInstance()) {
+            fsEvent_ =
+              org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.FSEvent.newBuilder(fsEvent_).mergeFrom(value).buildPartial();
+          } else {
+            fsEvent_ = value;
+          }
+          
+          bitField0_ |= 0x00000004;
+          return this;
+        }
+        public Builder clearFsEvent() {
+          fsEvent_ = org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.FSEvent.getDefaultInstance();
+          
+          bitField0_ = (bitField0_ & ~0x00000004);
+          return this;
+        }
+        
         // @@protoc_insertion_point(builder_scope:org.jetbrains.jpsservice.Message.ControllerMessage)
       }
       
@@ -5743,10 +4982,6 @@ public final class CmdlineRemoteProto {
       // optional .org.jetbrains.jpsservice.Message.BuilderMessage.CompileMessage compile_message = 3;
       boolean hasCompileMessage();
       org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.CompileMessage getCompileMessage();
-      
-      // optional .org.jetbrains.jpsservice.Message.FSStateMessage fsstate_message = 4;
-      boolean hasFsstateMessage();
-      org.jetbrains.jps.api.CmdlineRemoteProto.Message.FSStateMessage getFsstateMessage();
     }
     public static final class BuilderMessage extends
         com.google.protobuf.GeneratedMessageLite
@@ -5771,13 +5006,11 @@ public final class CmdlineRemoteProto {
         PARAM_REQUEST(0, 1),
         BUILD_EVENT(1, 2),
         COMPILE_MESSAGE(2, 3),
-        FS_STATE(3, 4),
         ;
         
         public static final int PARAM_REQUEST_VALUE = 1;
         public static final int BUILD_EVENT_VALUE = 2;
         public static final int COMPILE_MESSAGE_VALUE = 3;
-        public static final int FS_STATE_VALUE = 4;
         
         
         public final int getNumber() { return value; }
@@ -5787,7 +5020,6 @@ public final class CmdlineRemoteProto {
             case 1: return PARAM_REQUEST;
             case 2: return BUILD_EVENT;
             case 3: return COMPILE_MESSAGE;
-            case 4: return FS_STATE;
             default: return null;
           }
         }
@@ -7852,21 +7084,10 @@ public final class CmdlineRemoteProto {
         return compileMessage_;
       }
       
-      // optional .org.jetbrains.jpsservice.Message.FSStateMessage fsstate_message = 4;
-      public static final int FSSTATE_MESSAGE_FIELD_NUMBER = 4;
-      private org.jetbrains.jps.api.CmdlineRemoteProto.Message.FSStateMessage fsstateMessage_;
-      public boolean hasFsstateMessage() {
-        return ((bitField0_ & 0x00000008) == 0x00000008);
-      }
-      public org.jetbrains.jps.api.CmdlineRemoteProto.Message.FSStateMessage getFsstateMessage() {
-        return fsstateMessage_;
-      }
-      
       private void initFields() {
         type_ = org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.Type.PARAM_REQUEST;
         buildEvent_ = org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.getDefaultInstance();
         compileMessage_ = org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.CompileMessage.getDefaultInstance();
-        fsstateMessage_ = org.jetbrains.jps.api.CmdlineRemoteProto.Message.FSStateMessage.getDefaultInstance();
       }
       private byte memoizedIsInitialized = -1;
       public final boolean isInitialized() {
@@ -7889,12 +7110,6 @@ public final class CmdlineRemoteProto {
             return false;
           }
         }
-        if (hasFsstateMessage()) {
-          if (!getFsstateMessage().isInitialized()) {
-            memoizedIsInitialized = 0;
-            return false;
-          }
-        }
         memoizedIsInitialized = 1;
         return true;
       }
@@ -7910,9 +7125,6 @@ public final class CmdlineRemoteProto {
         }
         if (((bitField0_ & 0x00000004) == 0x00000004)) {
           output.writeMessage(3, compileMessage_);
-        }
-        if (((bitField0_ & 0x00000008) == 0x00000008)) {
-          output.writeMessage(4, fsstateMessage_);
         }
       }
       
@@ -7933,10 +7145,6 @@ public final class CmdlineRemoteProto {
         if (((bitField0_ & 0x00000004) == 0x00000004)) {
           size += com.google.protobuf.CodedOutputStream
             .computeMessageSize(3, compileMessage_);
-        }
-        if (((bitField0_ & 0x00000008) == 0x00000008)) {
-          size += com.google.protobuf.CodedOutputStream
-            .computeMessageSize(4, fsstateMessage_);
         }
         memoizedSerializedSize = size;
         return size;
@@ -8046,8 +7254,6 @@ public final class CmdlineRemoteProto {
           bitField0_ = (bitField0_ & ~0x00000002);
           compileMessage_ = org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.CompileMessage.getDefaultInstance();
           bitField0_ = (bitField0_ & ~0x00000004);
-          fsstateMessage_ = org.jetbrains.jps.api.CmdlineRemoteProto.Message.FSStateMessage.getDefaultInstance();
-          bitField0_ = (bitField0_ & ~0x00000008);
           return this;
         }
         
@@ -8093,10 +7299,6 @@ public final class CmdlineRemoteProto {
             to_bitField0_ |= 0x00000004;
           }
           result.compileMessage_ = compileMessage_;
-          if (((from_bitField0_ & 0x00000008) == 0x00000008)) {
-            to_bitField0_ |= 0x00000008;
-          }
-          result.fsstateMessage_ = fsstateMessage_;
           result.bitField0_ = to_bitField0_;
           return result;
         }
@@ -8111,9 +7313,6 @@ public final class CmdlineRemoteProto {
           }
           if (other.hasCompileMessage()) {
             mergeCompileMessage(other.getCompileMessage());
-          }
-          if (other.hasFsstateMessage()) {
-            mergeFsstateMessage(other.getFsstateMessage());
           }
           return this;
         }
@@ -8131,12 +7330,6 @@ public final class CmdlineRemoteProto {
           }
           if (hasCompileMessage()) {
             if (!getCompileMessage().isInitialized()) {
-              
-              return false;
-            }
-          }
-          if (hasFsstateMessage()) {
-            if (!getFsstateMessage().isInitialized()) {
               
               return false;
             }
@@ -8186,15 +7379,6 @@ public final class CmdlineRemoteProto {
                 }
                 input.readMessage(subBuilder, extensionRegistry);
                 setCompileMessage(subBuilder.buildPartial());
-                break;
-              }
-              case 34: {
-                org.jetbrains.jps.api.CmdlineRemoteProto.Message.FSStateMessage.Builder subBuilder = org.jetbrains.jps.api.CmdlineRemoteProto.Message.FSStateMessage.newBuilder();
-                if (hasFsstateMessage()) {
-                  subBuilder.mergeFrom(getFsstateMessage());
-                }
-                input.readMessage(subBuilder, extensionRegistry);
-                setFsstateMessage(subBuilder.buildPartial());
                 break;
               }
             }
@@ -8310,49 +7494,6 @@ public final class CmdlineRemoteProto {
           compileMessage_ = org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.CompileMessage.getDefaultInstance();
           
           bitField0_ = (bitField0_ & ~0x00000004);
-          return this;
-        }
-        
-        // optional .org.jetbrains.jpsservice.Message.FSStateMessage fsstate_message = 4;
-        private org.jetbrains.jps.api.CmdlineRemoteProto.Message.FSStateMessage fsstateMessage_ = org.jetbrains.jps.api.CmdlineRemoteProto.Message.FSStateMessage.getDefaultInstance();
-        public boolean hasFsstateMessage() {
-          return ((bitField0_ & 0x00000008) == 0x00000008);
-        }
-        public org.jetbrains.jps.api.CmdlineRemoteProto.Message.FSStateMessage getFsstateMessage() {
-          return fsstateMessage_;
-        }
-        public Builder setFsstateMessage(org.jetbrains.jps.api.CmdlineRemoteProto.Message.FSStateMessage value) {
-          if (value == null) {
-            throw new NullPointerException();
-          }
-          fsstateMessage_ = value;
-          
-          bitField0_ |= 0x00000008;
-          return this;
-        }
-        public Builder setFsstateMessage(
-            org.jetbrains.jps.api.CmdlineRemoteProto.Message.FSStateMessage.Builder builderForValue) {
-          fsstateMessage_ = builderForValue.build();
-          
-          bitField0_ |= 0x00000008;
-          return this;
-        }
-        public Builder mergeFsstateMessage(org.jetbrains.jps.api.CmdlineRemoteProto.Message.FSStateMessage value) {
-          if (((bitField0_ & 0x00000008) == 0x00000008) &&
-              fsstateMessage_ != org.jetbrains.jps.api.CmdlineRemoteProto.Message.FSStateMessage.getDefaultInstance()) {
-            fsstateMessage_ =
-              org.jetbrains.jps.api.CmdlineRemoteProto.Message.FSStateMessage.newBuilder(fsstateMessage_).mergeFrom(value).buildPartial();
-          } else {
-            fsstateMessage_ = value;
-          }
-          
-          bitField0_ |= 0x00000008;
-          return this;
-        }
-        public Builder clearFsstateMessage() {
-          fsstateMessage_ = org.jetbrains.jps.api.CmdlineRemoteProto.Message.FSStateMessage.getDefaultInstance();
-          
-          bitField0_ = (bitField0_ & ~0x00000008);
           return this;
         }
         
