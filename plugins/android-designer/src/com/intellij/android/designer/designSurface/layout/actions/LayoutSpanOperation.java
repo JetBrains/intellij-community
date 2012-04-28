@@ -24,6 +24,7 @@ import com.intellij.designer.designSurface.DecorationLayer;
 import com.intellij.designer.designSurface.EditOperation;
 import com.intellij.designer.designSurface.FeedbackLayer;
 import com.intellij.designer.designSurface.OperationContext;
+import com.intellij.designer.designSurface.feedbacks.AlphaFeedback;
 import com.intellij.designer.designSurface.feedbacks.LineMarginBorder;
 import com.intellij.designer.designSurface.feedbacks.RectangleFeedback;
 import com.intellij.designer.designSurface.feedbacks.TextFeedback;
@@ -51,8 +52,10 @@ public abstract class LayoutSpanOperation implements EditOperation {
   protected RadViewComponent myComponent;
   private RectangleFeedback myFeedback;
   private TextFeedback myTextFeedback;
+  private ErrorFeedback myErrorFeedback;
   private Rectangle myBounds;
   private Rectangle myContainerBounds;
+  private boolean myShowErrorFeedback;
   protected int mySpan;
   private int[] mySpans;
   private int[] myOffsets;
@@ -85,6 +88,9 @@ public abstract class LayoutSpanOperation implements EditOperation {
       myFeedback = new RectangleFeedback(COLOR, 2);
       layer.add(myFeedback);
 
+      myErrorFeedback = new ErrorFeedback();
+      layer.add(myErrorFeedback);
+
       layer.repaint();
     }
   }
@@ -108,9 +114,11 @@ public abstract class LayoutSpanOperation implements EditOperation {
       FeedbackLayer layer = myContext.getArea().getFeedbackLayer();
       layer.remove(myTextFeedback);
       layer.remove(myFeedback);
+      layer.remove(myErrorFeedback);
       layer.repaint();
       myTextFeedback = null;
       myFeedback = null;
+      myErrorFeedback = null;
     }
   }
 
@@ -130,6 +138,7 @@ public abstract class LayoutSpanOperation implements EditOperation {
 
     if (location < myOffsets[0]) {
       myIndex = 0;
+      myErrorFeedback.setVisible(!bottom && myShowErrorFeedback);
     }
     else {
       myIndex = -1;
@@ -145,6 +154,10 @@ public abstract class LayoutSpanOperation implements EditOperation {
 
       if (myIndex == -1) {
         myIndex = myOffsets.length - 1;
+        myErrorFeedback.setVisible(bottom && myShowErrorFeedback);
+      }
+      else {
+        myErrorFeedback.setVisible(false);
       }
     }
 
@@ -178,6 +191,7 @@ public abstract class LayoutSpanOperation implements EditOperation {
 
     if (location < myOffsets[0]) {
       myIndex = 0;
+      myErrorFeedback.setVisible(!right && myShowErrorFeedback);
     }
     else {
       myIndex = -1;
@@ -193,6 +207,10 @@ public abstract class LayoutSpanOperation implements EditOperation {
 
       if (myIndex == -1) {
         myIndex = myOffsets.length - 1;
+        myErrorFeedback.setVisible(right && myShowErrorFeedback);
+      }
+      else {
+        myErrorFeedback.setVisible(false);
       }
     }
 
@@ -235,7 +253,8 @@ public abstract class LayoutSpanOperation implements EditOperation {
     Point cellInfo = getCellInfo();
     int row = cellInfo.y;
 
-    myContainerBounds = container.getBounds(myContext.getArea().getFeedbackLayer());
+    FeedbackLayer layer = myContext.getArea().getFeedbackLayer();
+    myContainerBounds = container.getBounds(layer);
 
     IntArrayList spans = new IntArrayList();
     IntArrayList offsets = new IntArrayList();
@@ -254,6 +273,8 @@ public abstract class LayoutSpanOperation implements EditOperation {
           offsets.add(myContainerBounds.y + gridInfo.hLines[i + 1]);
         }
         else {
+          myErrorFeedback.setBounds(myDecorator.getCellBounds(layer, components[i][cellInfo.x]));
+          myShowErrorFeedback = true;
           break;
         }
       }
@@ -277,6 +298,8 @@ public abstract class LayoutSpanOperation implements EditOperation {
           columns.add(0, i);
         }
         else {
+          myErrorFeedback.setBounds(myDecorator.getCellBounds(layer, components[i][cellInfo.x]));
+          myShowErrorFeedback = true;
           break;
         }
       }
@@ -299,7 +322,8 @@ public abstract class LayoutSpanOperation implements EditOperation {
     RadComponent[] rowComponents = gridInfo.components[cellInfo.y];
     int column = cellInfo.x;
 
-    myContainerBounds = container.getBounds(myContext.getArea().getFeedbackLayer());
+    FeedbackLayer layer = myContext.getArea().getFeedbackLayer();
+    myContainerBounds = container.getBounds(layer);
 
     IntArrayList spans = new IntArrayList();
     IntArrayList offsets = new IntArrayList();
@@ -318,6 +342,8 @@ public abstract class LayoutSpanOperation implements EditOperation {
           offsets.add(myContainerBounds.x + gridInfo.vLines[i + 1]);
         }
         else {
+          myErrorFeedback.setBounds(myDecorator.getCellBounds(layer, rowComponents[i]));
+          myShowErrorFeedback = true;
           break;
         }
       }
@@ -341,6 +367,8 @@ public abstract class LayoutSpanOperation implements EditOperation {
           columns.add(0, i);
         }
         else {
+          myErrorFeedback.setBounds(myDecorator.getCellBounds(layer, rowComponents[i]));
+          myShowErrorFeedback = true;
           break;
         }
       }
@@ -390,6 +418,21 @@ public abstract class LayoutSpanOperation implements EditOperation {
     }
     else {
       tag.setAttribute(span, Integer.toString(spanValue));
+    }
+  }
+
+  private static class ErrorFeedback extends AlphaFeedback {
+    public ErrorFeedback() {
+      super(Color.pink);
+    }
+
+    @Override
+    protected void paintOther1(Graphics2D g2d) {
+    }
+
+    @Override
+    protected void paintOther2(Graphics2D g2d) {
+      g2d.fillRect(0, 0, getWidth(), getHeight());
     }
   }
 
