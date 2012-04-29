@@ -30,6 +30,7 @@ import java.util.*;
 public class PyClassRefactoringUtil {
   private static final Logger LOG = Logger.getInstance(PyClassRefactoringUtil.class.getName());
   private static final Key<PsiNamedElement> ENCODED_IMPORT = Key.create("PyEncodedImport");
+  private static final Key<Boolean> ENCODED_USE_FROM_IMPORT = Key.create("PyEncodedUseFromImport");
   private static final Key<String> ENCODED_IMPORT_AS = Key.create("PyEncodedImportAs");
 
   private PyClassRefactoringUtil() {}
@@ -183,7 +184,8 @@ public class PyClassRefactoringUtil {
 
   private static void restoreReference(final PyReferenceExpression node) {
     PsiNamedElement target = node.getCopyableUserData(ENCODED_IMPORT);
-    String asName = node.getCopyableUserData(ENCODED_IMPORT_AS);
+    final String asName = node.getCopyableUserData(ENCODED_IMPORT_AS);
+    final Boolean useFromImport = node.getCopyableUserData(ENCODED_USE_FROM_IMPORT);
     if (target instanceof PsiDirectory) {
       target = (PsiNamedElement)PyUtil.turnDirIntoInit(target);
     }
@@ -198,13 +200,14 @@ public class PyClassRefactoringUtil {
     if (PyBuiltinCache.getInstance(target).hasInBuiltins(target)) return;
     if (PsiTreeUtil.isAncestor(node.getContainingFile(), target, false)) return;
     if (target instanceof PyFile) {
-      insertImport(node, target, asName, false);
+      insertImport(node, target, asName, useFromImport != null ? useFromImport : true);
     }
     else {
       insertImport(node, target, asName);
     }
     node.putCopyableUserData(ENCODED_IMPORT, null);
     node.putCopyableUserData(ENCODED_IMPORT_AS, null);
+    node.putCopyableUserData(ENCODED_USE_FROM_IMPORT, null);
   }
 
   public static void insertImport(PsiElement anchor, Collection<PsiNamedElement> elements) {
@@ -296,6 +299,7 @@ public class PyClassRefactoringUtil {
       if (importElement != null) {
         node.putCopyableUserData(ENCODED_IMPORT_AS, importElement.getAsName());
       }
+      node.putCopyableUserData(ENCODED_USE_FROM_IMPORT, qualifier == null);
     }
   }
 
