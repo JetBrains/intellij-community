@@ -1,11 +1,12 @@
 package com.jetbrains.python.refactoring.move;
 
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiNamedElement;
-import com.intellij.psi.PsiReference;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.*;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.move.MoveCallback;
@@ -16,7 +17,6 @@ import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.psi.PyClass;
-import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import org.jetbrains.annotations.NotNull;
@@ -40,20 +40,20 @@ public class PyMoveClassOrFunctionDelegate extends MoveHandlerDelegate {
       }
       elementsToMove[i] = e;
     }
-    boolean previewUsages = false;
-    final String destination;
-    if (targetContainer instanceof PyFile) {
-      destination = targetContainer.getText();
-    }
-    else {
-      final PyMoveClassOrFunctionDialog dialog = new PyMoveClassOrFunctionDialog(project, elementsToMove);
-      dialog.show();
-      if (!dialog.isOK()) {
-        return;
+    String initialDestination = null;
+    if (targetContainer instanceof PsiFile) {
+      final VirtualFile virtualFile = ((PsiFile)targetContainer).getVirtualFile();
+      if (virtualFile != null) {
+        initialDestination = FileUtil.toSystemDependentName(virtualFile.getPath());
       }
-      destination = dialog.getTargetPath();
-      previewUsages = dialog.isPreviewUsages();
     }
+    final PyMoveClassOrFunctionDialog dialog = new PyMoveClassOrFunctionDialog(project, elementsToMove, initialDestination);
+    dialog.show();
+    if (!dialog.isOK()) {
+      return;
+    }
+    final String destination = dialog.getTargetPath();
+    final boolean previewUsages = dialog.isPreviewUsages();
     try {
       final BaseRefactoringProcessor processor = new PyMoveClassOrFunctionProcessor(project, elementsToMove, destination, previewUsages);
       processor.run();
@@ -73,7 +73,12 @@ public class PyMoveClassOrFunctionDelegate extends MoveHandlerDelegate {
     final PsiNamedElement e = getElementToMove(element);
     if (e instanceof PyClass || e instanceof PyFunction) {
       if (PyPsiUtils.isTopLevel(e)) {
-        doMove(project, new PsiElement[] {e}, null, null);
+        PsiElement targetContainer = null;
+        if (editor != null) {
+          final Document document = editor.getDocument();
+          targetContainer = PsiDocumentManager.getInstance(project).getPsiFile(document);
+        }
+        doMove(project, new PsiElement[] {e}, targetContainer, null);
       }
       else {
         CommonRefactoringUtil.showErrorHint(project, editor, PyBundle.message("refactoring.move.class.or.function.error.selection"),

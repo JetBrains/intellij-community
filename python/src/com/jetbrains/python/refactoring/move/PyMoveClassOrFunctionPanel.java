@@ -1,7 +1,6 @@
 package com.jetbrains.python.refactoring.move;
 
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
-import com.intellij.psi.PsiNamedElement;
 
 import javax.swing.*;
 import java.awt.*;
