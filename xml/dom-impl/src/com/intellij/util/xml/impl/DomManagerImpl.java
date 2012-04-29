@@ -345,7 +345,7 @@ public final class DomManagerImpl extends DomManager {
   }
 
   @Nullable
-  static <T extends DomElement> DomFileElementImpl<T> getCachedFileElement(XmlFile file) {
+  static <T extends DomElement> DomFileElementImpl<T> getCachedFileElement(@NotNull XmlFile file) {
     WeakReference<DomFileElementImpl> ref = file.getUserData(CACHED_FILE_ELEMENT);
     return ref == null ? null : ref.get();
   }

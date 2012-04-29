@@ -36,5 +36,5 @@ public interface XmlChangeSet extends PomChangeSet {
   @NotNull
   Iterable<XmlFile> getChangedFiles();
 
-  void addChangedFile(XmlFile xmlFile);
+  void addChangedFile(@NotNull XmlFile xmlFile);
 }

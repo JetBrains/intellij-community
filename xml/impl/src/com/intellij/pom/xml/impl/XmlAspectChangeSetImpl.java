@@ -23,6 +23,7 @@ import com.intellij.pom.xml.XmlChangeSet;
 import com.intellij.pom.xml.events.XmlChange;
 import com.intellij.psi.xml.XmlFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -38,9 +39,11 @@ public class XmlAspectChangeSetImpl implements XmlChangeSet {
     myModel = model;
   }
 
-  public XmlAspectChangeSetImpl(final PomModel model, final XmlFile xmlFile) {
+  public XmlAspectChangeSetImpl(final PomModel model, @Nullable final XmlFile xmlFile) {
     this(model);
-    addChangedFile(xmlFile);
+    if (xmlFile != null) {
+      addChangedFile(xmlFile);
+    }
   }
 
   public List<XmlChange> getChanges(){
@@ -85,7 +88,7 @@ public class XmlAspectChangeSetImpl implements XmlChangeSet {
     return buffer.toString();
   }
 
-  public void addChangedFile(final XmlFile xmlFile) {
+  public void addChangedFile(@NotNull final XmlFile xmlFile) {
     myChangedFiles.add(xmlFile);
   }
 }
