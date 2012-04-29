@@ -229,6 +229,7 @@ public class HighlightNamesUtil {
     PsiElement endElement = aClass instanceof PsiAnonymousClass ?
                             ((PsiAnonymousClass)aClass).getBaseClassReference() :
                             aClass.getImplementsList();
+    if (endElement == null) endElement = aClass.getNameIdentifier();
     TextRange endTextRange = endElement == null ? null : endElement.getTextRange();
     int end = endTextRange == null ? start : endTextRange.getEndOffset();
     return new TextRange(start, end);

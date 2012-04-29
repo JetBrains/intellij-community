@@ -36,6 +36,7 @@ import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateBuilderFactory;
 import com.intellij.codeInsight.template.TemplateBuilderImpl;
 import com.intellij.codeInsight.template.TemplateEditingAdapter;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -86,6 +87,7 @@ public class CreateSubclassAction extends BaseIntentionAction {
         psiClass.hasModifierProperty(PsiModifier.FINAL)) {
       return false;
     }
+    if (!isSupportedLanguage(psiClass)) return false;
     final PsiMethod[] constructors = psiClass.getConstructors();
     if (constructors.length > 0) {
       boolean hasNonPrivateConstructor = false;
@@ -114,7 +116,11 @@ public class CreateSubclassAction extends BaseIntentionAction {
     return true;
   }
 
-  private static String getTitle(PsiClass psiClass) {
+  protected boolean isSupportedLanguage(PsiClass aClass) {
+    return aClass.getLanguage() == JavaLanguage.INSTANCE;
+  }
+
+  protected static String getTitle(PsiClass psiClass) {
     return psiClass.isInterface()
              ? CodeInsightBundle.message("intention.implement.abstract.class.interface.text")
              : psiClass.hasModifierProperty(PsiModifier.ABSTRACT)
@@ -150,7 +156,7 @@ public class CreateSubclassAction extends BaseIntentionAction {
     }.execute();
   }
 
-  private static void createTopLevelClass(PsiClass psiClass) {
+  protected void createTopLevelClass(PsiClass psiClass) {
     final CreateClassDialog dlg = chooseSubclassToCreate(psiClass);
     if (dlg != null) {
       createSubclass(psiClass, dlg.getTargetDirectory(), dlg.getClassName());
@@ -287,7 +293,7 @@ public class CreateSubclassAction extends BaseIntentionAction {
     return typeParameterList.replace(oldTypeParameterList);
   }
 
-  private static void chooseAndImplement(PsiClass psiClass, Project project, PsiClass targetClass, Editor editor) {
+  protected static void chooseAndImplement(PsiClass psiClass, Project project, PsiClass targetClass, Editor editor) {
     boolean hasNonTrivialConstructor = false;
     final PsiMethod[] constructors = psiClass.getConstructors();
     for (PsiMethod constructor : constructors) {
