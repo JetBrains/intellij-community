@@ -197,7 +197,6 @@ public class PyClassRefactoringUtil {
       }
     }
     if (target == null) return;
-    if (PyBuiltinCache.getInstance(target).hasInBuiltins(target)) return;
     if (PsiTreeUtil.isAncestor(node.getContainingFile(), target, false)) return;
     if (target instanceof PyFile) {
       insertImport(node, target, asName, useFromImport != null ? useFromImport : true);
@@ -294,8 +293,11 @@ public class PyClassRefactoringUtil {
     }
     final PsiElement target = resolveExpression(node);
     if (target instanceof PsiNamedElement && !PsiTreeUtil.isAncestor(element, target, false)) {
-      node.putCopyableUserData(ENCODED_IMPORT, (PsiNamedElement)target);
       final PyImportElement importElement = getImportElement(node);
+      if (importElement == null && !(target instanceof PsiFileSystemItem)) {
+        return;
+      }
+      node.putCopyableUserData(ENCODED_IMPORT, (PsiNamedElement)target);
       if (importElement != null) {
         node.putCopyableUserData(ENCODED_IMPORT_AS, importElement.getAsName());
       }
