@@ -39,7 +39,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameterList;
-import org.jetbrains.plugins.groovy.lang.psi.api.types.GrWildcardTypeArgument;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrStubElementBase;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrTypeParameterStub;
@@ -77,10 +76,6 @@ public class GrTypeParameterImpl extends GrStubElementBase<GrTypeParameterStub> 
   @NotNull
   public GrMembersDeclaration[] getMemberDeclarations() {
     return GrMembersDeclaration.EMPTY_ARRAY;
-  }
-
-  public GrWildcardTypeArgument[] getTypeParametersGroovy() {
-    return GrWildcardTypeArgument.EMPTY_ARRAY;
   }
 
   public GrExtendsClause getExtendsClause() {
@@ -365,7 +360,7 @@ public class GrTypeParameterImpl extends GrStubElementBase<GrTypeParameterStub> 
   }
 
   @Nullable
-  public PsiTypeParameterList getTypeParameterList() {
+  public GrTypeParameterList getTypeParameterList() {
     return null;
   }
 

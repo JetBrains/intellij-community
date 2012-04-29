@@ -32,7 +32,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMembersDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.types.GrWildcardTypeArgument;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameterList;
 
 /**
  * @autor: Dmitry.Krasilschikov
@@ -73,8 +73,6 @@ public interface GrTypeDefinition extends GrTopStatement, NavigatablePsiElement,
   @Nullable
   String getQualifiedName();
 
-  GrWildcardTypeArgument[] getTypeParametersGroovy();
-
   @Nullable
   GrExtendsClause getExtendsClause();
 
@@ -96,4 +94,7 @@ public interface GrTypeDefinition extends GrTopStatement, NavigatablePsiElement,
 
   @Nullable
   String getName();
+
+  @Override
+  GrTypeParameterList getTypeParameterList();
 }
