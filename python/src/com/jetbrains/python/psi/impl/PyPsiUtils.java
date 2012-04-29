@@ -13,6 +13,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 import com.jetbrains.python.PyTokenTypes;
+import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -316,6 +317,19 @@ public class PyPsiUtils {
       }
     }
     return -1;
+  }
+
+  public static boolean isTopLevel(@NotNull PsiElement element) {
+    if (element instanceof StubBasedPsiElement) {
+      final StubElement stub = ((StubBasedPsiElement)element).getStub();
+      if (stub != null) {
+        final StubElement parentStub = stub.getParentStub();
+        if (parentStub != null) {
+          return parentStub.getPsi() instanceof PsiFile;
+        }
+      }
+    }
+    return ScopeUtil.getScopeOwner(element) instanceof PsiFile;
   }
 
   private static abstract class TopLevelVisitor extends PyRecursiveElementVisitor {

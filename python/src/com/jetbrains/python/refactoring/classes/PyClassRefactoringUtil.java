@@ -14,7 +14,10 @@ import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import com.jetbrains.python.codeInsight.imports.AddImportHelper;
 import com.jetbrains.python.documentation.DocStringTypeReference;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.impl.*;
+import com.jetbrains.python.psi.impl.PyBuiltinCache;
+import com.jetbrains.python.psi.impl.PyImportedModule;
+import com.jetbrains.python.psi.impl.PyPsiUtils;
+import com.jetbrains.python.psi.impl.PyQualifiedName;
 import com.jetbrains.python.psi.resolve.ResolveImportUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -27,6 +30,7 @@ import java.util.*;
 public class PyClassRefactoringUtil {
   private static final Logger LOG = Logger.getInstance(PyClassRefactoringUtil.class.getName());
   private static final Key<PsiNamedElement> ENCODED_IMPORT = Key.create("PyEncodedImport");
+  private static final Key<Boolean> ENCODED_USE_FROM_IMPORT = Key.create("PyEncodedUseFromImport");
   private static final Key<String> ENCODED_IMPORT_AS = Key.create("PyEncodedImportAs");
 
   private PyClassRefactoringUtil() {}
@@ -180,7 +184,8 @@ public class PyClassRefactoringUtil {
 
   private static void restoreReference(final PyReferenceExpression node) {
     PsiNamedElement target = node.getCopyableUserData(ENCODED_IMPORT);
-    String asName = node.getCopyableUserData(ENCODED_IMPORT_AS);
+    final String asName = node.getCopyableUserData(ENCODED_IMPORT_AS);
+    final Boolean useFromImport = node.getCopyableUserData(ENCODED_USE_FROM_IMPORT);
     if (target instanceof PsiDirectory) {
       target = (PsiNamedElement)PyUtil.turnDirIntoInit(target);
     }
@@ -192,16 +197,16 @@ public class PyClassRefactoringUtil {
       }
     }
     if (target == null) return;
-    if (PyBuiltinCache.getInstance(target).hasInBuiltins(target)) return;
     if (PsiTreeUtil.isAncestor(node.getContainingFile(), target, false)) return;
     if (target instanceof PyFile) {
-      insertImport(node, target, asName, false);
+      insertImport(node, target, asName, useFromImport != null ? useFromImport : true);
     }
     else {
       insertImport(node, target, asName);
     }
     node.putCopyableUserData(ENCODED_IMPORT, null);
     node.putCopyableUserData(ENCODED_IMPORT_AS, null);
+    node.putCopyableUserData(ENCODED_USE_FROM_IMPORT, null);
   }
 
   public static void insertImport(PsiElement anchor, Collection<PsiNamedElement> elements) {
@@ -288,11 +293,15 @@ public class PyClassRefactoringUtil {
     }
     final PsiElement target = resolveExpression(node);
     if (target instanceof PsiNamedElement && !PsiTreeUtil.isAncestor(element, target, false)) {
-      node.putCopyableUserData(ENCODED_IMPORT, (PsiNamedElement)target);
       final PyImportElement importElement = getImportElement(node);
+      if (importElement == null && !(target instanceof PsiFileSystemItem)) {
+        return;
+      }
+      node.putCopyableUserData(ENCODED_IMPORT, (PsiNamedElement)target);
       if (importElement != null) {
         node.putCopyableUserData(ENCODED_IMPORT_AS, importElement.getAsName());
       }
+      node.putCopyableUserData(ENCODED_USE_FROM_IMPORT, qualifier == null);
     }
   }
 
@@ -315,7 +324,7 @@ public class PyClassRefactoringUtil {
     return null;
   }
 
-  public static void updateImportOfElement(PyImportStatementBase importStatement, PsiNamedElement element) {
+  public static void updateImportOfElement(@NotNull PyImportStatementBase importStatement, @NotNull PsiNamedElement element) {
     final String name = getOriginalName(element);
     if (name != null) {
       PyImportElement importElement = null;
@@ -325,7 +334,16 @@ public class PyClassRefactoringUtil {
         }
       }
       if (importElement != null) {
-        if (insertImport(importStatement, element, importElement.getAsName())) {
+        final PsiFile file = importStatement.getContainingFile();
+        final PsiFile newFile = element.getContainingFile();
+        boolean deleteImportElement = false;
+        if (newFile == file) {
+          deleteImportElement = true;
+        }
+        else if (insertImport(importStatement, element, importElement.getAsName())) {
+          deleteImportElement = true;
+        }
+        if (deleteImportElement) {
           if (importStatement.getImportElements().length == 1) {
             importStatement.delete();
           }
@@ -338,7 +356,7 @@ public class PyClassRefactoringUtil {
   }
 
   @Nullable
-  public static String getOriginalName(PsiNamedElement element) {
+  public static String getOriginalName(@NotNull PsiNamedElement element) {
     if (element instanceof PyFile) {
       final PsiElement e = PyUtil.turnInitIntoDir(element);
       if (e instanceof PsiFileSystemItem) {

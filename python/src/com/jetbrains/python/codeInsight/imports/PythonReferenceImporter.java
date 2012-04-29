@@ -26,6 +26,7 @@ import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyFileImpl;
+import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.impl.PyQualifiedName;
 import com.jetbrains.python.psi.resolve.CollectProcessor;
 import com.jetbrains.python.psi.resolve.PyResolveUtil;
@@ -131,7 +132,7 @@ public class PythonReferenceImporter implements ReferenceImporter {
     }
     if (symbols.size() > 0) {
       for (PsiElement symbol : symbols) {
-        if (isTopLevel(symbol)) { // we only want top-level symbols
+        if (isIndexableTopLevel(symbol)) { // we only want top-level symbols
           PsiFileSystemItem srcfile = symbol instanceof PsiFileSystemItem ? ((PsiFileSystemItem)symbol).getParent() : symbol.getContainingFile();
           if (srcfile != null && srcfile != existing_import_file && srcfile != node.getContainingFile() &&
               (ImportFromExistingAction.isRoot(project, srcfile) || PyNames.isIdentifier(FileUtil.getNameWithoutExtension(srcfile.getName()))) &&
@@ -215,15 +216,12 @@ public class PythonReferenceImporter implements ReferenceImporter {
     return result;
   }
 
-  private static boolean isTopLevel(PsiElement symbol) {
+  private static boolean isIndexableTopLevel(PsiElement symbol) {
     if (symbol instanceof PsiFileSystemItem) {
       return true;
     }
-    if (symbol instanceof PyClass) {
-      return ((PyClass)symbol).isTopLevel();
-    }
-    if (symbol instanceof PyFunction) {
-      return ((PyFunction)symbol).isTopLevel();
+    if (symbol instanceof PyClass || symbol instanceof PyFunction) {
+      return PyPsiUtils.isTopLevel(symbol);
     }
     // only top-level target expressions are included in VariableNameIndex
     return symbol instanceof PyTargetExpression;
