@@ -748,4 +748,44 @@ new Test().with() {
     assertFalse ref.resolve() instanceof GrField
     assertTrue ref.resolve() instanceof GrVariable
   }
+
+  void testCapitalizedProperty1() {
+    def ref = configureByText('''\
+class A {
+  def Prop
+}
+
+new A().Pro<caret>p''')
+    assertNotNull ref.resolve()
+  }
+
+  void testCapitalizedProperty2() {
+    def ref = configureByText('''\
+class A {
+  def Prop
+}
+
+new A().pro<caret>p''')
+    assertNotNull ref.resolve()
+  }
+
+  void testCapitalizedProperty3() {
+    def ref = configureByText('''\
+class A {
+  def prop
+}
+
+new A().Pro<caret>p''')
+    assertNull ref.resolve()
+  }
+
+  void testCapitalizedProperty4() {
+    def ref = configureByText('''\
+class A {
+  def prop
+}
+
+new A().pro<caret>p''')
+    assertNotNull ref.resolve()
+  }
 }

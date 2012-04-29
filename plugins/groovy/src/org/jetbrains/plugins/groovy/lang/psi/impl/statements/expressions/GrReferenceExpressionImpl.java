@@ -182,7 +182,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
       GrReferenceResolveUtil.resolveImpl(accessorResolver, this);
       final GroovyResolveResult[] candidates = accessorResolver.getCandidates(); //can be only one correct candidate
       if (candidates.length > 0 && candidates[candidates.length - 1].isStaticsOK()) {
-        if (isPropertyName || candidates[candidates.length - 1].getElement() instanceof GrAccessorMethod) {
+        if (isPropertyName || isCorrectRefNameForResolved(candidates, name)) {
           if (candidates.length == 1) return candidates;
           return new GroovyResolveResult[]{candidates[candidates.length - 1]};
         }
@@ -200,6 +200,18 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
     if (classCandidates.length > 0) return classCandidates;
     if (accessorResults.size() > 0) return new GroovyResolveResult[]{accessorResults.get(0)};
     return GroovyResolveResult.EMPTY_ARRAY;
+  }
+
+  /**
+   * It is allowed to use capitalized property name if the field is capitalized
+   */
+  private static boolean isCorrectRefNameForResolved(GroovyResolveResult[] candidates, String name) {
+    assert !GroovyPropertyUtils.isPropertyName(name);
+    PsiElement element = candidates[candidates.length - 1].getElement();
+    if (!(element instanceof GrAccessorMethod)) return false;
+
+    String fname = ((GrAccessorMethod)element).getProperty().getName();
+    return name.equals(fname);
   }
 
   public GroovyResolveResult[] getCallVariants(GrExpression upToArgument) {

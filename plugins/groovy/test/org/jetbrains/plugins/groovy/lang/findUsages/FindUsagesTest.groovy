@@ -15,31 +15,29 @@
 
 package org.jetbrains.plugins.groovy.lang.findUsages;
 
-import com.intellij.codeInsight.TargetElementUtilBase;
-import com.intellij.find.FindManager;
-import com.intellij.find.findUsages.FindUsagesHandler;
-import com.intellij.find.findUsages.FindUsagesManager;
-import com.intellij.find.findUsages.FindUsagesOptions;
-import com.intellij.find.impl.FindManagerImpl;
-import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.searches.DirectClassInheritorsSearch;
-import com.intellij.psi.search.searches.MethodReferencesSearch;
-import com.intellij.psi.search.searches.ReferencesSearch;
-import com.intellij.psi.search.searches.SuperMethodsSearch;
-import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.usageView.UsageInfo;
-import com.intellij.util.CommonProcessors;
-import com.intellij.util.Query;
-import org.jetbrains.plugins.groovy.LightGroovyTestCase;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
-import org.jetbrains.plugins.groovy.util.TestUtils;
 
-import java.util.Collection;
-import java.util.Iterator;
+import com.intellij.codeInsight.TargetElementUtilBase
+import com.intellij.find.FindManager
+import com.intellij.find.findUsages.FindUsagesHandler
+import com.intellij.find.findUsages.FindUsagesManager
+import com.intellij.find.findUsages.FindUsagesOptions
+import com.intellij.find.impl.FindManagerImpl
+import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.psi.search.searches.DirectClassInheritorsSearch
+import com.intellij.psi.search.searches.MethodReferencesSearch
+import com.intellij.psi.search.searches.ReferencesSearch
+import com.intellij.psi.search.searches.SuperMethodsSearch
+import com.intellij.psi.util.MethodSignatureBackedByPsiMethod
+import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.usageView.UsageInfo
+import com.intellij.util.CommonProcessors
+import com.intellij.util.Query
+import org.jetbrains.plugins.groovy.LightGroovyTestCase
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
+import org.jetbrains.plugins.groovy.util.TestUtils
+import com.intellij.psi.*
 
 /**
  * @author ven
@@ -47,15 +45,15 @@ import java.util.Iterator;
 public class FindUsagesTest extends LightGroovyTestCase {
   @Override
   protected String getBasePath() {
-    return TestUtils.getTestDataPath() + "findUsages/" + getTestName(true) + "/";
+    return "${TestUtils.testDataPath}findUsages/${getTestName(true)}/";
   }
 
   private void doConstructorTest(String filePath, int expectedCount) throws Throwable {
     myFixture.configureByFile(filePath);
-    final PsiElement elementAt = myFixture.getFile().findElementAt(myFixture.getEditor().getCaretModel().getOffset());
+    final PsiElement elementAt = myFixture.file.findElementAt(myFixture.editor.caretModel.offset);
     final PsiMethod method = PsiTreeUtil.getParentOfType(elementAt, PsiMethod.class);
     assertNotNull(method);
-    assertTrue(method.isConstructor());
+    assertTrue(method.constructor);
     final Query<PsiReference> query = ReferencesSearch.search(method);
 
     assertEquals(expectedCount, query.findAll().size());
@@ -63,11 +61,11 @@ public class FindUsagesTest extends LightGroovyTestCase {
 
   public void testDerivedClass() throws Throwable {
     myFixture.configureByFiles("p/B.java", "A.groovy");
-    final PsiElement elementAt = myFixture.getFile().findElementAt(myFixture.getEditor().getCaretModel().getOffset());
+    final PsiElement elementAt = myFixture.file.findElementAt(myFixture.editor.caretModel.offset);
     final PsiClass clazz = PsiTreeUtil.getParentOfType(elementAt, PsiClass.class);
     assertNotNull(clazz);
 
-    final GlobalSearchScope projectScope = GlobalSearchScope.projectScope(myFixture.getProject());
+    final GlobalSearchScope projectScope = GlobalSearchScope.projectScope(myFixture.project);
     final Query<PsiClass> query = DirectClassInheritorsSearch.search(clazz, projectScope);
 
     assertEquals(1, query.findAll().size());
@@ -79,21 +77,20 @@ public class FindUsagesTest extends LightGroovyTestCase {
 
   public void testConstructorUsageInNewExpression() throws Throwable {
     myFixture.configureByFile("ConstructorUsageInNewExpression.groovy");
-    final PsiElement resolved = TargetElementUtilBase.findTargetElement(myFixture.getEditor(),
-                                                                        TargetElementUtilBase.getInstance().getReferenceSearchFlags());
+    final PsiElement resolved = TargetElementUtilBase.findTargetElement(myFixture.editor, TargetElementUtilBase.instance.referenceSearchFlags);
     assertNotNull("Could not resolve reference", resolved);
-    final GlobalSearchScope projectScope = GlobalSearchScope.projectScope(myFixture.getProject());
+    final GlobalSearchScope projectScope = GlobalSearchScope.projectScope(myFixture.project);
     assertEquals(2, MethodReferencesSearch.search((PsiMethod)resolved, projectScope, true).findAll().size());
     assertEquals(4, MethodReferencesSearch.search((PsiMethod)resolved, projectScope, false).findAll().size());
   }
 
   public void testGotoConstructor() throws Throwable {
     myFixture.configureByFile("GotoConstructor.groovy");
-    final PsiElement target = TargetElementUtilBase.findTargetElement(myFixture.getEditor(), TargetElementUtilBase.getInstance().getReferenceSearchFlags());
+    final PsiElement target = TargetElementUtilBase.findTargetElement(myFixture.editor, TargetElementUtilBase.instance.referenceSearchFlags);
     assertNotNull(target);
     assertInstanceOf(target, PsiMethod.class);
-    assertTrue(((PsiMethod)target).isConstructor());
-    assertTrue(((PsiMethod)target).getParameterList().getParametersCount() == 0);
+    assertTrue(((PsiMethod)target).constructor);
+    assertTrue(((PsiMethod)target).parameterList.parametersCount == 0);
   }
 
   public void testSetter1() throws Throwable {
@@ -221,6 +218,46 @@ public class FindUsagesTest extends LightGroovyTestCase {
 
   public void testConstructorUsageInAnonymousClass() {
     doTestImpl("A.groovy", 1);
+  }
+
+  void testCapitalizedProperty1() {
+    myFixture.configureByText('_.groovy', '''\
+class A {
+  def Pro<caret>p
+}
+
+new A().Prop''')
+    assertUsageCount(1);
+  }
+
+  void testCapitalizedProperty2() {
+    myFixture.configureByText('_.groovy', '''\
+class A {
+  def Pro<caret>p
+}
+
+new A().prop''')
+    assertUsageCount(1)
+  }
+
+  void testCapitalizedProperty3() {
+    myFixture.configureByText('_.groovy', '''\
+class A {
+  def pro<caret>p
+}
+
+new A().Prop''')
+    assertUsageCount(0)
+  }
+
+  void testCapitalizedProperty4() {
+    myFixture.configureByText('_.groovy', '''\
+class A {
+  def p<caret>rop
+}
+
+new A().prop''')
+    assertUsageCount(1)
   }
 
   private void doSuperMethodTest(String... firstParameterTypes) {

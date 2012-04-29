@@ -17,6 +17,7 @@
 package org.jetbrains.plugins.groovy.findUsages;
 
 import com.intellij.openapi.application.QueryExecutorBase;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.UsageSearchContext;
@@ -42,6 +43,10 @@ public class AccessorMethodReferencesSearcher extends QueryExecutorBase<PsiRefer
     if (propertyName == null) return;
 
     queryParameters.getOptimizer().searchWord(propertyName, PsiUtil.restrictScopeToGroovyFiles(queryParameters.getScope()), UsageSearchContext.IN_CODE, true, method);
+
+    if (!GroovyPropertyUtils.isPropertyName(propertyName)) {
+      queryParameters.getOptimizer().searchWord(StringUtil.decapitalize(propertyName), PsiUtil.restrictScopeToGroovyFiles(queryParameters.getScope()), UsageSearchContext.IN_CODE, true, method);
+    }
   }
 
 }
