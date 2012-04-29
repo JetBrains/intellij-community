@@ -77,7 +77,7 @@ public class MethodOrClosureScopeChooser {
    * @param callback is invoked if any scope was chosen. The first arg is this scope and the second arg is a psielement to search for (super method of chosen method or
    *                 variable if the scope is a closure)
    */
-  public static JBPopup create(List<GrParametersOwner> scopes,
+  public static JBPopup create(List<? extends GrParametersOwner> scopes,
                                final Editor editor,
                                final JBPopupOwner popupRef,
                                final PairFunction<GrParametersOwner, PsiElement, Object> callback) {

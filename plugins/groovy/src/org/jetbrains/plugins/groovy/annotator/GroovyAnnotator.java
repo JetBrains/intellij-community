@@ -1660,6 +1660,9 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
       if (!(owner instanceof GroovyFileBase) || ((GroovyFileBase)owner).isScript()) {
         annotation.registerFix(new CreateLocalVariableFromUsageFix(refExpr, owner));
       }
+      if (PsiTreeUtil.getParentOfType(refExpr, GrMethod.class)!=null) {
+        annotation.registerFix(new CreateParameterFromUsageFix(refExpr));
+      }
     }
   }
 

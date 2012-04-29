@@ -176,7 +176,7 @@ public class GrChangeSignatureDialog extends RefactoringDialog {
   }
 
   private JPanel createParametersPanel() {
-    myParameterModel = new GrParameterTableModel(myMethod, myProject);
+    myParameterModel = createParameterTableModel();
     myParameterModel.addTableModelListener(new TableModelListener() {
       public void tableChanged(TableModelEvent e) {
         updateSignature();
@@ -206,6 +206,10 @@ public class GrChangeSignatureDialog extends RefactoringDialog {
     }
 
     return ToolbarDecorator.createDecorator(myParameterTable).createPanel();
+  }
+
+  protected GrParameterTableModel createParameterTableModel() {
+    return new GrParameterTableModel(myMethod, myProject);
   }
 
   private JPanel createExceptionsPanel() {
