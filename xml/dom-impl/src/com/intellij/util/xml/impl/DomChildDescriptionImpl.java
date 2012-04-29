@@ -39,20 +39,18 @@ public abstract class DomChildDescriptionImpl extends AbstractDomChildDescriptio
 
   public boolean equals(final Object o) {
     if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
+    if (!super.equals(o)) return false;
 
     final DomChildDescriptionImpl that = (DomChildDescriptionImpl)o;
 
     if (myTagName != null ? !myTagName.equals(that.myTagName) : that.myTagName != null) return false;
-    if (!getType().equals(that.getType())) return false;
 
     return true;
   }
 
   public int hashCode() {
-    int result;
-    result = (myTagName != null ? myTagName.hashCode() : 0);
-    result = 31 * result + getType().hashCode();
+    int result = super.hashCode();
+    result = 31 * result + (myTagName != null ? myTagName.hashCode() : 0);
     return result;
   }
 

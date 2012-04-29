@@ -62,6 +62,29 @@ public abstract class AbstractDomChildDescriptionImpl implements AbstractDomChil
     myCustomAnnotations.put(annotation.annotationType(), annotation);
   }
 
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    AbstractDomChildDescriptionImpl that = (AbstractDomChildDescriptionImpl)o;
+
+    if (myCustomAnnotations != null ? !myCustomAnnotations.equals(that.myCustomAnnotations) : that.myCustomAnnotations != null)
+      return false;
+    if (!myType.equals(that.myType)) return false;
+    if (myUserMap != null ? !myUserMap.equals(that.myUserMap) : that.myUserMap != null) return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    int result = myType.hashCode();
+    result = 31 * result + (myCustomAnnotations != null ? myCustomAnnotations.hashCode() : 0);
+    result = 31 * result + (myUserMap != null ? myUserMap.hashCode() : 0);
+    return result;
+  }
+
   public void setUserMap(final Map userMap) {
     myUserMap = userMap;
   }
