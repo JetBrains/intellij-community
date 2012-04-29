@@ -25,6 +25,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.actions.NewGroovyClassAction;
 import org.jetbrains.plugins.groovy.intentions.base.IntentionUtils;
@@ -35,7 +36,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrMemberOwner;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.SupertypeConstraint;
 import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.TypeConstraint;
@@ -49,7 +50,6 @@ public abstract class CreateClassFix {
 
   public static IntentionAction createClassFromNewAction(final GrNewExpression expression) {
     return new CreateClassActionBase(expression.getReferenceElement()) {
-      GrNewExpression myNewExpression = expression;
 
       public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
         if (!(file instanceof GroovyFileBase)) return;
@@ -62,12 +62,10 @@ public abstract class CreateClassFix {
         PsiDirectory targetDirectory = getTargetDirectory(project, qualifier, name, module);
         if (targetDirectory == null) return;
 
-        PsiClass targetClass = createClassByType(targetDirectory, name, manager, myRefElement, NewGroovyClassAction.GROOVY_CLASS);
+        GrTypeDefinition targetClass = createClassByType(targetDirectory, name, manager, myRefElement, NewGroovyClassAction.GROOVY_CLASS);
 
         GrArgumentList argList = expression.getArgumentList();
-        if (argList != null &&
-            argList.getNamedArguments().length + argList.getExpressionArguments().length > 0 &&
-            targetClass instanceof GrMemberOwner) {
+        if (argList != null && argList.getNamedArguments().length + argList.getExpressionArguments().length > 0 && targetClass != null) {
 
           PsiType[] argTypes = PsiUtil.getArgumentTypes(myRefElement, false);
           assert argTypes != null;
@@ -85,9 +83,8 @@ public abstract class CreateClassFix {
           }
 
           GrMethod method = GroovyPsiElementFactory.getInstance(project).createConstructorFromText(name, paramTypes, paramNames, "{\n}");
-          GrMemberOwner owner = (GrMemberOwner) targetClass;
-          method = owner.addMemberDeclaration(method, null);
-          IntentionUtils.createTemplateForMethod(argTypes, paramTypesExpressions, method, owner, new TypeConstraint[0], true);
+          method = targetClass.addMemberDeclaration(method, null);
+          IntentionUtils.createTemplateForMethod(argTypes, paramTypesExpressions, method, targetClass, new TypeConstraint[0], true);
         } else {
           putCursor(project, targetClass.getContainingFile(), targetClass);
         }
@@ -111,6 +108,7 @@ public abstract class CreateClassFix {
         if (targetDirectory == null) return;
 
         String templateName = shouldCreateInterface() ? NewGroovyClassAction.GROOVY_INTERFACE : NewGroovyClassAction.GROOVY_CLASS;
+        assert name != null;
         PsiClass targetClass = createClassByType(targetDirectory, name, manager, myRefElement, templateName);
         if (targetClass != null) {
           addImportForClass(groovyFile, qualifier, targetClass);
@@ -121,6 +119,7 @@ public abstract class CreateClassFix {
     };
   }
 
+  @Nullable
   private static PsiDirectory getTargetDirectory(Project project, String qualifier, String name, Module module) {
     String title = GroovyBundle.message("create.class.family.name");
     GroovyCreateClassDialog dialog = new GroovyCreateClassDialog(project, title, name, qualifier, module);

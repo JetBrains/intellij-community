@@ -37,6 +37,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrExtendsClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrImplementsClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrInterfaceDefinition;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 
 /**
  * @author ilyas
@@ -74,7 +75,7 @@ public abstract class CreateClassActionBase implements IntentionAction {
   }
 
   @Nullable
-  public static PsiClass createClassByType(@NotNull  final PsiDirectory directory,
+  public static GrTypeDefinition createClassByType(@NotNull  final PsiDirectory directory,
                                            @NotNull  final String name,
                                            @NotNull  final PsiManager manager,
                                            @Nullable final PsiElement contextElement,
@@ -82,12 +83,12 @@ public abstract class CreateClassActionBase implements IntentionAction {
     AccessToken accessToken = WriteAction.start();
 
     try {
-      PsiClass targetClass = null;
+      GrTypeDefinition targetClass = null;
       try {
         PsiFile file = GroovyTemplatesFactory.createFromTemplate(directory, name, name + ".groovy", templateName);
         for (PsiElement element : file.getChildren()) {
-          if (element instanceof PsiClass) {
-            targetClass = ((PsiClass)element);
+          if (element instanceof GrTypeDefinition) {
+            targetClass = ((GrTypeDefinition)element);
             break;
           }
         }

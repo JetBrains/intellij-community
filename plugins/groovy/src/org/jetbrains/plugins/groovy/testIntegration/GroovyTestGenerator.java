@@ -64,7 +64,7 @@ public class GroovyTestGenerator implements TestGenerator {
             try {
               IdeDocumentHistory.getInstance(project).includeCurrentPlaceAsChangePlace();
 
-              GrTypeDefinition targetClass = (GrTypeDefinition)CreateClassActionBase.createClassByType(
+              GrTypeDefinition targetClass = CreateClassActionBase.createClassByType(
                 d.getTargetDirectory(),
                 d.getClassName(),
                 PsiManager.getInstance(project),
