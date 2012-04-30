@@ -1097,7 +1097,7 @@ public class ExpressionGenerator extends Generator {
     builder.append(" instanceof ");
 
     if (typeElement != null) {
-      typeElement.accept(this);
+      writeType(builder, typeElement.getType(), expression);
     }
   }
 
