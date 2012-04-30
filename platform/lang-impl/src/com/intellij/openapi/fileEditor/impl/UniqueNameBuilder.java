@@ -73,7 +73,6 @@ public class UniqueNameBuilder<T> {
     Collections.reverse(segments);
     shortPath = StringUtil.join(segments, mySeparator);
     if (myShortPaths.containsValue(shortPath)) {
-      System.out.println("Found non-unique value " + shortPath);
       return true;
     }
     myShortPaths.put(key, shortPath);
@@ -95,9 +94,6 @@ public class UniqueNameBuilder<T> {
         continue;
       }
       String segment = entry.getValue().get(index);
-      if (segment.equals("gogaruco")) {
-        System.out.println("here");
-      }
       for (int i = 1; i < segment.length(); i++) {
         String truncated = segment.substring(0, i);
         String existing = truncatedSegments.get(truncated);
