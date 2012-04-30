@@ -363,7 +363,7 @@ public class DirectoryChooser extends DialogWrapper {
         final PsiDirectory directory = getDirectory();
         final VirtualFile virtualFile = directory != null ? directory.getVirtualFile() : null;
         myRelativeToProjectPath = virtualFile != null
-               ? ProjectUtil.calcRelativeToProjectPath(virtualFile, directory.getProject(), true, true)
+               ? ProjectUtil.calcRelativeToProjectPath(virtualFile, directory.getProject(), true, false, true)
                : getPresentableUrl();
       }
       return myRelativeToProjectPath;

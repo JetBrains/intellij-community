@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.wm.impl;
 
+import com.intellij.openapi.fileEditor.UniqueVFilePathBuilder;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
@@ -42,7 +43,10 @@ public class PlatformFrameTitleBuilder extends FrameTitleBuilder {
 
   @Override
   public String getFileTitle(@NotNull final Project project, @NotNull final VirtualFile file) {
-    if (SystemInfo.isMac) return file.getName();
+    if (SystemInfo.isMac) {
+      return UniqueVFilePathBuilder.getInstance().getUniqueVirtualFilePath(project, file);
+    }
+
     if (file instanceof VirtualFilePathWrapper) {
       return ((VirtualFilePathWrapper)file).getPresentablePath();
     }

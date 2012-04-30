@@ -28,6 +28,6 @@ import org.jetbrains.annotations.NotNull;
 public class IdeaFrameTitleBuilder extends PlatformFrameTitleBuilder {
   @Override
   public String getFileTitle(@NotNull final Project project, @NotNull final VirtualFile file) {
-    return ProjectUtil.calcRelativeToProjectPath(file, project, !SystemInfo.isMac);
+    return ProjectUtil.calcRelativeToProjectPath(file, project, !SystemInfo.isMac, true, false);
   }
 }
