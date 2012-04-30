@@ -132,7 +132,7 @@ public class CompilerPaths {
       projectName = projectName.substring(0, projectName.length() - ProjectFileType.DOT_DEFAULT_EXTENSION.length());
     }
     
-    projectName = projectName.toLowerCase(Locale.US);
+    projectName = projectName.toLowerCase(Locale.US).replace(':', '_'); // replace ':' from windows drive names
     return projectName;
   }
 
