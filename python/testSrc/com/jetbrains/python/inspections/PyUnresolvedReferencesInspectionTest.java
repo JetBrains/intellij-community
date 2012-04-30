@@ -1,6 +1,7 @@
 package com.jetbrains.python.inspections;
 
 import com.jetbrains.python.fixtures.PyTestCase;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author yole
@@ -45,11 +46,7 @@ public class PyUnresolvedReferencesInspectionTest extends PyTestCase {
   }
 
   public void testConditionalImports() { // PY-983
-    myFixture.configureByFiles(TEST_DIRECTORY + getTestName(true) + ".py",
-                               TEST_DIRECTORY + "lib1.py",
-                               TEST_DIRECTORY + "lib2.py");
-    myFixture.enableInspections(PyUnresolvedReferencesInspection.class);
-    myFixture.checkHighlighting(true, false, false);
+    doMultiFileTest("a.py");
   }
 
   public void testHasattrGuard() { // PY-2309
@@ -86,15 +83,15 @@ public class PyUnresolvedReferencesInspectionTest extends PyTestCase {
   }
 
   public void testImportToContainingFile() {  // PY-4372
-    doMultiFileTest();
+    doMultiFileTest("p1/m1.py");
   }
 
   public void testFromImportToContainingFile() {  // PY-4371
-    doMultiFileTest();
+    doMultiFileTest("p1/m1.py");
   }
 
   public void testFromImportToContainingFile2() {  // PY-5945
-    doMultiFileTest();
+    doMultiFileTest("p1/m1.py");
   }
 
   public void testPropertyType() {  // PY-5915
@@ -110,24 +107,20 @@ public class PyUnresolvedReferencesInspectionTest extends PyTestCase {
     doTest();
   }
 
-  private void doMultiFileTest() {
-    myFixture.copyFileToProject("inspections/PyUnresolvedReferencesInspection/__init__.py", "PyUnresolvedReferencesInspection/__init__.py");
-    myFixture.copyFileToProject("inspections/PyUnresolvedReferencesInspection/" + getTestName(true) + ".py",
-                                "PyUnresolvedReferencesInspection/" + getTestName(true) + ".py");
-    myFixture.configureFromTempProjectFile("PyUnresolvedReferencesInspection/" + getTestName(true) + ".py");
-    myFixture.enableInspections(PyUnresolvedReferencesInspection.class);
-    myFixture.checkHighlighting(true, false, false);
-  }
-
   public void testFromPackageImportBuiltin() {
-    myFixture.copyDirectoryToProject("inspections/PyUnresolvedReferencesInspection/fromPackageImportBuiltin", "");
-    myFixture.configureFromTempProjectFile("fromPackageImportBuiltin.py");
-    myFixture.enableInspections(PyUnresolvedReferencesInspection.class);
-    myFixture.checkHighlighting(true, false, false);
+    doMultiFileTest("a.py");
   }
 
   private void doTest() {
     myFixture.configureByFile(TEST_DIRECTORY + getTestName(true) + ".py");
+    myFixture.enableInspections(PyUnresolvedReferencesInspection.class);
+    myFixture.checkHighlighting(true, false, false);
+  }
+
+  private void doMultiFileTest(@NotNull String filename) {
+    final String testName = getTestName(false);
+    myFixture.copyDirectoryToProject(TEST_DIRECTORY + testName, "");
+    myFixture.configureFromTempProjectFile(filename);
     myFixture.enableInspections(PyUnresolvedReferencesInspection.class);
     myFixture.checkHighlighting(true, false, false);
   }
