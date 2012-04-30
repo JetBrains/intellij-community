@@ -79,7 +79,7 @@ public final class GitCompoundResult {
       GitCommandResult result = entry.getValue();
       if (!result.success()) {
         sb.append("<p>");
-        if (!onlyOneRepositoryInTheProject()) {
+        if (!GitUtil.justOneGitRepository(myProject)) {
           sb.append("<code>" + repository.getPresentableUrl() + "</code>:<br/>");
         }
         sb.append(result.getErrorOutputAsHtmlString());
@@ -87,9 +87,5 @@ public final class GitCompoundResult {
       }
     }
     return sb.toString();
-  }
-  
-  private boolean onlyOneRepositoryInTheProject() {
-    return !GitUtil.getRepositoryManager(myProject).moreThanOneRoot();
   }
 }
