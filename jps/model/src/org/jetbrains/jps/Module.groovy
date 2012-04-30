@@ -73,8 +73,11 @@ class Module extends LazyInitializeableObject implements ClasspathItem {//}, Com
       excludes = new ArrayList<String>(ownExcludes)
       Set<String> allContentRoots = project.modules.values().collect { it.contentRoots }.flatten() as Set
       Set<File> myRoots = contentRoots.collect { new File(it) } as Set
-      Collection<String> newExcludes = (allContentRoots - contentRoots).findAll { PathUtil.isUnder(myRoots, new File(it)) }.collect { FileUtil.toCanonicalPath(it) }
-      excludes.addAll(newExcludes)
+      for (root in allContentRoots) {
+        if (!(root in contentRoots) && PathUtil.isUnder(myRoots, new File(root))) {
+          excludes << FileUtil.toCanonicalPath(root)
+        }
+      }
     }
     return excludes
   }
