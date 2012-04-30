@@ -365,13 +365,12 @@ public class IdeaProjectLoader {
       imlPaths << imlPath
     }
     imlPaths.each { loadModule(it) }
-    Set<String> allContentRoots = project.modules.values().collect { it.contentRoots }.flatten() as Set
+    Set<File> allContentRoots = project.modules.values().collect { it.contentRoots }.flatten().collect { new File(it) } as Set
     project.modules.values().each { module ->
-      def ownRootPaths = module.contentRoots
-      Set<File> myRoots = ownRootPaths.collect { new File(it) } as Set
+      Set<File> myRoots = module.contentRoots.collect { new File(it) } as Set
       for (root in allContentRoots) {
-        if (!(root in ownRootPaths) && PathUtil.isUnder(myRoots, new File(root))) {
-          module.excludes << FileUtil.toCanonicalPath(root)
+        if (!(root in myRoots) && PathUtil.isUnder(myRoots, root)) {
+          module.excludes << FileUtil.toCanonicalPath(root.path)
         }
       }
     }
