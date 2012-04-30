@@ -17,6 +17,7 @@ public class IdeaProjectLoader {
   private ProjectMacroExpander projectMacroExpander
   private ProjectLoadingErrorReporter errorReporter
   private static final OwnServiceLoader<AdditionalRootsProviderService> rootsProviderLoader = OwnServiceLoader.load(AdditionalRootsProviderService.class)
+  private XmlParser xmlParser = new XmlParser(false, false)
 
   public static String guessHome(Script script) {
     File home = new File(script["gant.file"].substring("file:".length()))
@@ -101,7 +102,7 @@ public class IdeaProjectLoader {
     project.locationHash = iprFile.absolutePath.hashCode()
     projectMacroExpander = new ProjectMacroExpander(pathVariables, iprFile.parentFile.absolutePath)
 
-    def root = new XmlParser(false, false).parse(iprFile)
+    def root = xmlParser.parse(iprFile)
     loadProjectJdkAndOutput(root)
     loadCompilerConfiguration(root)
     loadProjectFileEncodings(root)
@@ -119,7 +120,7 @@ public class IdeaProjectLoader {
     projectMacroExpander = new ProjectMacroExpander(pathVariables, dir.parentFile.absolutePath)
     def miscXml = new File(dir, "misc.xml")
     if (miscXml.exists()) {
-      loadProjectJdkAndOutput(new XmlParser(false, false).parse(miscXml))
+      loadProjectJdkAndOutput(xmlParser.parse(miscXml))
     }
     else {
       errorReporter.error("Cannot find misc.xml in $dir")
@@ -127,12 +128,12 @@ public class IdeaProjectLoader {
 
     def encodingsXml = new File(dir, "encodings.xml")
     if (encodingsXml.exists()) {
-      loadProjectFileEncodings(new XmlParser(false, false).parse(encodingsXml))
+      loadProjectFileEncodings(xmlParser.parse(encodingsXml))
     }
 
     def compilerXml = new File(dir, "compiler.xml")
     if (compilerXml.exists()) {
-      loadCompilerConfiguration(new XmlParser(false, false).parse(compilerXml))
+      loadCompilerConfiguration(xmlParser.parse(compilerXml))
     }
     loadWorkspaceConfiguration(new File(dir, "workspace.xml"))
 
@@ -140,7 +141,7 @@ public class IdeaProjectLoader {
     if (librariesFolder.isDirectory()) {
       librariesFolder.eachFile {File file ->
         if (isXmlFile(file)) {
-          Node librariesComponent = new XmlParser(false, false).parse(file)
+          Node librariesComponent = xmlParser.parse(file)
           loadProjectLibraries(librariesComponent)
         }
       }
@@ -148,7 +149,7 @@ public class IdeaProjectLoader {
 
     def modulesXml = new File(dir, "modules.xml")
     if (modulesXml.exists()) {
-      Node modulesXmlRoot = new XmlParser(false, false).parse(modulesXml)
+      Node modulesXmlRoot = xmlParser.parse(modulesXml)
       loadModules(modulesXmlRoot.component[0])
     }
     else {
@@ -157,14 +158,14 @@ public class IdeaProjectLoader {
 
     def uiDesignerXml = new File(dir, "uiDesigner.xml")
     if (uiDesignerXml.exists()) {
-      loadUiDesignerConfiguration(new XmlParser(false, false).parse(uiDesignerXml))
+      loadUiDesignerConfiguration(xmlParser.parse(uiDesignerXml))
     }
 
     def artifactsFolder = new File(dir, "artifacts")
     if (artifactsFolder.isDirectory()) {
       artifactsFolder.eachFile {File file ->
         if (isXmlFile(file)) {
-          def artifactsComponent = new XmlParser(false, false).parse(file)
+          def artifactsComponent = xmlParser.parse(file)
           loadArtifacts(artifactsComponent)
         }
       }
@@ -174,7 +175,7 @@ public class IdeaProjectLoader {
     if (runConfFolder.isDirectory()) {
       runConfFolder.eachFile {File file ->
         if (isXmlFile(file)) {
-          def runConfManager = new XmlParser(false, false).parse(file);
+          def runConfManager = xmlParser.parse(file);
           loadRunConfigurations(runConfManager);
         }
       }
@@ -196,7 +197,7 @@ public class IdeaProjectLoader {
   private def loadWorkspaceConfiguration(File workspaceFile) {
     if (!workspaceFile.exists()) return
 
-    def root = new XmlParser(false, false).parse(workspaceFile)
+    def root = xmlParser.parse(workspaceFile)
     def options = loadOptions(getComponent(root, "CompilerWorkspaceConfiguration"))
     // compatibility: in older projects this setting was stored in workspace
     if (project.compilerConfiguration.addNotNullAssertions == true) { // if is the same as default value
@@ -357,9 +358,13 @@ public class IdeaProjectLoader {
   }
 
   private def loadModules(Node modulesComponent) {
+    List<String> imlPaths = []
     modulesComponent?.modules?.module?.each {Node moduleTag ->
-      loadModule(projectMacroExpander.expandMacros(moduleTag.@filepath))
+      def imlPath = projectMacroExpander.expandMacros(moduleTag.@filepath)
+      project.createModule(moduleName(imlPath), {})
+      imlPaths << imlPath
     }
+    imlPaths.each { loadModule(it) }
     Set<String> allContentRoots = project.modules.values().collect { it.contentRoots }.flatten() as Set
     project.modules.values().each { module ->
       Set<File> myRoots = module.contentRoots.collect { new File(it) } as Set
@@ -414,121 +419,29 @@ public class IdeaProjectLoader {
     }
   }
 
-  private def loadModule(String imlPath) {
+  private void loadModule(String imlPath) {
     def moduleFile = new File(imlPath)
     if (!moduleFile.exists()) {
       errorReporter.error("Module file $imlPath not found")
       return
     }
-
     def moduleBasePath = FileUtil.toSystemIndependentName(moduleFile.getParentFile().getAbsolutePath())
     MacroExpander moduleMacroExpander = new ModuleMacroExpander(projectMacroExpander, moduleBasePath)
     def currentModuleName = moduleName(imlPath)
-    project.createModule(currentModuleName) {
       Module currentModule = project.modules[currentModuleName]
       currentModule.basePath = moduleBasePath
-      def root = new XmlParser(false, false).parse(moduleFile)
+      def root = xmlParser.parse(moduleFile)
       def componentTag = getComponent(root, "NewModuleRootManager")
       if (componentTag != null) {
-        componentTag.orderEntry.each {Node entryTag ->
-          String type = entryTag.@type
-          DependencyScope scope = getScopeById(entryTag.@scope)
-          boolean exported = entryTag.@exported != null
-          switch (type) {
-            case "module":
-              def moduleName = entryTag.attribute("module-name")
-              def module = project.modules[moduleName]
-              if (module == null) {
-                errorReporter.warning("Cannot resolve module $moduleName in $currentModuleName")
-              }
-              else {
-                dependency(module, scope, exported)
-              }
-              break
-
-            case "sourceFolder":
-              moduleSource()
-              break
-
-            case "module-library":
-              def libraryTag = entryTag.library[0]
-              def libraryName = libraryTag."@name"
-              def moduleLibrary = loadLibrary(project, libraryName != null ? libraryName : "moduleLibrary#${libraryCount++}",
-                                              libraryTag, moduleMacroExpander)
-              dependency(moduleLibrary, scope, exported)
-
-              if (libraryName != null) {
-                currentModule.libraries[libraryName] = moduleLibrary
-              }
-              break;
-
-            case "library":
-              def name = entryTag.attribute("name")
-              def library = null
-              if (entryTag.@level == "project") {
-                library = project.libraries[name]
-                if (library == null) {
-                  errorReporter.warning("Cannot resolve project library '$name' in module '$currentModuleName'")
-                }
-              } else {
-                library = project.globalLibraries[name]
-                if (library == null) {
-                  errorReporter.warning("Cannot resolve global library '$name' in module '$currentModuleName'")
-                }
-              }
-
-              if (library != null) {
-                dependency(library, scope, exported)
-              }
-              break
-
-            case "jdk":
-              def name = entryTag.@jdkName
-              def sdk = project.sdks[name]
-              if (sdk == null) {
-                errorReporter.warning("Cannot resolve SDK '$name' in module '$currentModuleName'. Embedded javac will be used")
-              }
-              else {
-                currentModule.sdk = sdk
-                dependency(sdk, PredefinedDependencyScopes.COMPILE, false)
-              }
-              break
-
-            case "inheritedJdk":
-              def sdk = project.projectSdk
-              if (sdk != null) {
-                currentModule.sdk = sdk
-                dependency(sdk, PredefinedDependencyScopes.COMPILE, false)
-              }
-              break
-          }
-        }
+        loadModuleOrderEntries(componentTag, currentModule, moduleMacroExpander, currentModuleName)
 
         def srcFolderExists = componentTag.content.sourceFolder[0] != null;
 
-        componentTag.content.each {Node contentTag ->
-          content moduleMacroExpander.expandMacros(IdeaProjectLoadingUtil.pathFromUrl(contentTag.@url))
-        }
-
-        componentTag.content.sourceFolder.each {Node folderTag ->
-          String path = moduleMacroExpander.expandMacros(IdeaProjectLoadingUtil.pathFromUrl(folderTag.@url))
-          String prefix = folderTag.@packagePrefix
-
-          if (folderTag.attribute("isTestSource") == "true") {
-            testSrc path
-          }
-          else {
-            src path
-          }
-
-          if (prefix != null && prefix != "") {
-            currentModule.sourceRootPrefixes[path] = (prefix.replace('.', '/'))
-          }
-        }
+        loadSrcFolders(componentTag, moduleMacroExpander, currentModule)
 
         componentTag.content.excludeFolder.each {Node exTag ->
           String path = moduleMacroExpander.expandMacros(IdeaProjectLoadingUtil.pathFromUrl(exTag.@url))
-          exclude path
+          currentModule.exclude path
         }
 
         def languageLevel = componentTag."@LANGUAGE_LEVEL"
@@ -548,22 +461,7 @@ public class IdeaProjectLoader {
           }
         }
         if (srcFolderExists) {
-          if (componentTag."@inherit-compiler-output" == "true") {
-            if (projectOutputPath == null) {
-              errorReporter.error("Module '$currentModuleName' uses output path inherited from project but project output path is not specified")
-            }
-            else {
-              currentModule.outputPath = FileUtil.toSystemIndependentName(new File(new File(projectOutputPath, "production"), currentModuleName).absolutePath)
-              currentModule.testOutputPath = FileUtil.toSystemIndependentName(new File(new File(projectOutputPath, "test"), currentModuleName).absolutePath)
-            }
-          }
-          else {
-            currentModule.outputPath = FileUtil.toCanonicalPath(moduleMacroExpander.expandMacros(IdeaProjectLoadingUtil.pathFromUrl(componentTag.output[0]?.@url)))
-            currentModule.testOutputPath = FileUtil.toCanonicalPath(moduleMacroExpander.expandMacros(IdeaProjectLoadingUtil.pathFromUrl(componentTag."output-test"[0]?.'@url')))
-            if (currentModule.testOutputPath == null) {
-              currentModule.testOutputPath = currentModule.outputPath
-            }
-          }
+          loadOutputPaths(componentTag, currentModuleName, currentModule, moduleMacroExpander)
         }
       }
 
@@ -571,6 +469,123 @@ public class IdeaProjectLoader {
       if (facetManagerTag != null) {
         def facetLoader = new FacetLoader(currentModule, moduleMacroExpander)
         facetLoader.loadFacets(facetManagerTag)
+      }
+  }
+
+  public void loadOutputPaths(Node componentTag, String currentModuleName, Module currentModule, ModuleMacroExpander moduleMacroExpander) {
+    if (componentTag."@inherit-compiler-output" == "true") {
+      if (projectOutputPath == null) {
+        errorReporter.error("Module '$currentModuleName' uses output path inherited from project but project output path is not specified")
+      }
+      else {
+        currentModule.outputPath = FileUtil.toSystemIndependentName(new File(new File(projectOutputPath, "production"), currentModuleName).absolutePath)
+        currentModule.testOutputPath = FileUtil.toSystemIndependentName(new File(new File(projectOutputPath, "test"), currentModuleName).absolutePath)
+      }
+    }
+    else {
+      currentModule.outputPath = FileUtil.toCanonicalPath(moduleMacroExpander.expandMacros(IdeaProjectLoadingUtil.pathFromUrl(componentTag.output[0]?.@url)))
+      currentModule.testOutputPath = FileUtil.toCanonicalPath(moduleMacroExpander.expandMacros(IdeaProjectLoadingUtil.pathFromUrl(componentTag."output-test"[0]?.'@url')))
+      if (currentModule.testOutputPath == null) {
+        currentModule.testOutputPath = currentModule.outputPath
+      }
+    }
+  }
+
+  public void loadSrcFolders(Node componentTag, moduleMacroExpander, currentModule) {
+    componentTag.content.each {Node contentTag ->
+      currentModule.content moduleMacroExpander.expandMacros(IdeaProjectLoadingUtil.pathFromUrl(contentTag.@url))
+    }
+
+    componentTag.content.sourceFolder.each {Node folderTag ->
+      String path = moduleMacroExpander.expandMacros(IdeaProjectLoadingUtil.pathFromUrl(folderTag.@url))
+      String prefix = folderTag.@packagePrefix
+
+      if (folderTag.attribute("isTestSource") == "true") {
+        currentModule.testSrc path
+      }
+      else {
+        currentModule.src path
+      }
+
+      if (prefix != null && prefix != "") {
+        currentModule.sourceRootPrefixes[path] = (prefix.replace('.', '/'))
+      }
+    }
+  }
+
+  public void loadModuleOrderEntries(Node componentTag, currentModule, MacroExpander moduleMacroExpander, currentModuleName) {
+    componentTag.orderEntry.each {Node entryTag ->
+      String type = entryTag.@type
+      DependencyScope scope = getScopeById(entryTag.@scope)
+      boolean exported = entryTag.@exported != null
+      switch (type) {
+        case "module":
+          def moduleName = entryTag.attribute("module-name")
+          def module = project.modules[moduleName]
+          if (module == null) {
+            errorReporter.warning("Cannot resolve module $moduleName in $currentModuleName")
+          }
+          else {
+            currentModule.dependency(module, scope, exported)
+          }
+          break
+
+        case "sourceFolder":
+          currentModule.moduleSource()
+          break
+
+        case "module-library":
+          def libraryTag = entryTag.library[0]
+          def libraryName = libraryTag."@name"
+          def moduleLibrary = loadLibrary(project, libraryName != null ? libraryName : "moduleLibrary#${libraryCount++}",
+                                          libraryTag, moduleMacroExpander)
+          currentModule.dependency(moduleLibrary, scope, exported)
+
+          if (libraryName != null) {
+            currentModule.libraries[libraryName] = moduleLibrary
+          }
+          break;
+
+        case "library":
+          def name = entryTag.attribute("name")
+          def library = null
+          if (entryTag.@level == "project") {
+            library = project.libraries[name]
+            if (library == null) {
+              errorReporter.warning("Cannot resolve project library '$name' in module '$currentModuleName'")
+            }
+          }
+          else {
+            library = project.globalLibraries[name]
+            if (library == null) {
+              errorReporter.warning("Cannot resolve global library '$name' in module '$currentModuleName'")
+            }
+          }
+
+          if (library != null) {
+            currentModule.dependency(library, scope, exported)
+          }
+          break
+
+        case "jdk":
+          def name = entryTag.@jdkName
+          def sdk = project.sdks[name]
+          if (sdk == null) {
+            errorReporter.warning("Cannot resolve SDK '$name' in module '$currentModuleName'. Embedded javac will be used")
+          }
+          else {
+            currentModule.sdk = sdk
+            currentModule.dependency(sdk, PredefinedDependencyScopes.COMPILE, false)
+          }
+          break
+
+        case "inheritedJdk":
+          def sdk = project.projectSdk
+          if (sdk != null) {
+            currentModule.sdk = sdk
+            currentModule.dependency(sdk, PredefinedDependencyScopes.COMPILE, false)
+          }
+          break
       }
     }
   }
