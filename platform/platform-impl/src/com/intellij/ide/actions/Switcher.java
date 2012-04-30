@@ -23,6 +23,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.UniqueVFilePathBuilder;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.impl.EditorHistoryManager;
 import com.intellij.openapi.fileEditor.impl.EditorWindow;
@@ -909,7 +910,7 @@ public class Switcher extends AnAction implements DumbAware {
     protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
       if (value instanceof FileInfo) {
         VirtualFile virtualFile = ((FileInfo)value).getFirst();
-        String name = virtualFile.getPresentableName();
+        String name = UniqueVFilePathBuilder.getInstance().getUniqueVirtualFilePath(myProject, virtualFile);
         setIcon(IconUtil.getIcon(virtualFile, Iconable.ICON_FLAG_READ_STATUS, myProject));
 
         FileStatus fileStatus = FileStatusManager.getInstance(myProject).getStatus(virtualFile);
