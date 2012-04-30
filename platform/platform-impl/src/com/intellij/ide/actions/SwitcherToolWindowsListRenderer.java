@@ -19,7 +19,7 @@ import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindow;
-import com.intellij.openapi.wm.impl.content.GraphicsConfig;
+import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.SpeedSearchBase;

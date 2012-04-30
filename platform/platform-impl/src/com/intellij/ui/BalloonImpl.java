@@ -34,7 +34,7 @@ import com.intellij.openapi.wm.FocusRequestor;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeGlassPaneUtil;
 import com.intellij.openapi.wm.impl.IdeGlassPaneEx;
-import com.intellij.openapi.wm.impl.content.GraphicsConfig;
+import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.Wrapper;

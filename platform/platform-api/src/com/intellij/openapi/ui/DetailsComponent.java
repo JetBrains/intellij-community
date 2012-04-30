@@ -16,7 +16,6 @@
 
 package com.intellij.openapi.ui;
 
-import com.intellij.openapi.wm.impl.content.GraphicsConfig;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.treeStructure.Tree;

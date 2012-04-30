@@ -24,7 +24,7 @@ import com.intellij.openapi.ui.ShadowAction;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.*;
-import com.intellij.openapi.wm.impl.content.GraphicsConfig;
+import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.ui.CaptionPanel;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.Gray;

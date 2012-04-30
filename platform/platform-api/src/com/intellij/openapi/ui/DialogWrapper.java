@@ -33,7 +33,6 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeGlassPaneUtil;
-import com.intellij.openapi.wm.impl.content.GraphicsConfig;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.UIBundle;
 import com.intellij.ui.components.JBOptionButton;
@@ -1135,7 +1134,8 @@ public abstract class DialogWrapper {
         final ValidationInfo result = doValidate();
         if (result == null) {
           clearProblems();
-        } else {
+        }
+        else {
           reportProblem(result);
         }
 
