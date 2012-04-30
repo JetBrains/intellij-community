@@ -5,7 +5,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.search.ProjectScope;
 
@@ -160,18 +159,15 @@ public class UniqueNameBuilder<T> {
     return myShortPaths.get(key);
   }
 
-
   public static String getUniqueVirtualFilePath(Project project, VirtualFile file) {
-    final PsiFile[] filesWithSameName = FilenameIndex.getFilesByName(project, file.getName(), ProjectScope.getProjectScope(project));
-    if (filesWithSameName.length > 1) {
+    final Collection<VirtualFile> filesWithSameName = FilenameIndex.getVirtualFilesByName(project, file.getName(),
+                                                                                          ProjectScope.getProjectScope(project));
+    if (filesWithSameName.size() > 1) {
       String path = project.getBasePath();
       path = path == null ? "" : FileUtil.toSystemIndependentName(path);
       UniqueNameBuilder<VirtualFile> builder = new UniqueNameBuilder<VirtualFile>(path, File.separator, 25);
-      for (PsiFile psiFile : filesWithSameName) {
-        final VirtualFile virtualFile = psiFile.getVirtualFile();
-        if (virtualFile != null) {
-          builder.addPath(virtualFile, virtualFile.getPath());
-        }
+      for (VirtualFile virtualFile: filesWithSameName) {
+        builder.addPath(virtualFile, virtualFile.getPath());
       }
       return builder.getShortPath(file);
     }
