@@ -16,7 +16,7 @@ public class IdeaProjectLoader {
   private Map<String, String> pathVariables
   private ProjectMacroExpander projectMacroExpander
   private ProjectLoadingErrorReporter errorReporter
-  private static final OwnServiceLoader<AdditionalRootsProviderService> rootsProviderLoader = OwnServiceLoader.load(AdditionalRootsProviderService.class)
+  private static final List<AdditionalRootsProviderService> rootsProviderLoader = OwnServiceLoader.load(AdditionalRootsProviderService.class).collect()
   private XmlParser xmlParser = new XmlParser(false, false)
 
   public static String guessHome(Script script) {
