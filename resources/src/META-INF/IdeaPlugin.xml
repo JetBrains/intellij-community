@@ -78,7 +78,7 @@
     <extensionPoint name="canBeEmpty"
                     interface="com.intellij.openapi.util.Condition"/>
 
-    <extensionPoint name="safeDelete.ImportSearcher"
+    <extensionPoint name="safeDelete.importSearcher"
                     interface="com.intellij.refactoring.safeDelete.ImportSearcher"/>
 
     <extensionPoint name="visibility"
