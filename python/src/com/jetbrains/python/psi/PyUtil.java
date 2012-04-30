@@ -628,6 +628,17 @@ public class PyUtil {
     return target;
   }
 
+  public static boolean isPackage(@NotNull PsiDirectory directory) {
+    if (turnDirIntoInit(directory) != null) {
+      return true;
+    }
+    return hasNamespacePackageFile(directory);
+  }
+
+  public static boolean isPackage(@NotNull PsiFile file) {
+    return turnInitIntoDir(file) != null;
+  }
+
   /**
    * Counts initial underscores of an identifier.
    *
