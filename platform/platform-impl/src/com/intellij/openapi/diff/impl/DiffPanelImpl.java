@@ -117,8 +117,9 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
     if (enableToolbar) myPanel.resetToolbar();
     myOwnerWindow = owner;
     myIsSyncScroll = true;
-    myLeftSide =  new DiffSideView("", this, new CustomLineBorder(UIUtil.getBorderColor(), 1, 0, 1, 1));
-    myRightSide = new DiffSideView("", this, new CustomLineBorder(UIUtil.getBorderColor(), 1, 1, 1, 0));
+    final boolean v = !horizontal;
+    myLeftSide =  new DiffSideView("", this, new CustomLineBorder(UIUtil.getBorderColor(), 1, 0, v ? 0 : 1, v ? 0 : 1));
+    myRightSide = new DiffSideView("", this, new CustomLineBorder(UIUtil.getBorderColor(), v ? 0 : 1, v ? 0 : 1, 1, 0));
     myLeftSide.becomeMaster();
     myDiffUpdater = new Rediffers(this);
 
