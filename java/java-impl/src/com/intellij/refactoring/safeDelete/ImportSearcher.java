@@ -23,7 +23,7 @@ import org.jetbrains.annotations.Nullable;
  * @author Max Medvedev
  */
 public abstract class ImportSearcher {
-  private static final ExtensionPointName<ImportSearcher> EP_NAME = ExtensionPointName.create("com.intellij.safeDelete.importChecker");
+  private static final ExtensionPointName<ImportSearcher> EP_NAME = ExtensionPointName.create("com.intellij.safeDelete.importSearcher");
 
   /**
    * @return found import or null

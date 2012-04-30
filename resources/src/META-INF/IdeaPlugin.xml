@@ -78,8 +78,8 @@
     <extensionPoint name="canBeEmpty"
                     interface="com.intellij.openapi.util.Condition"/>
 
-    <extensionPoint name="safeDelete.importChecker"
-                    interface="com.intellij.refactoring.safeDelete.ImportChecker"/>
+    <extensionPoint name="safeDelete.ImportSearcher"
+                    interface="com.intellij.refactoring.safeDelete.ImportSearcher"/>
 
     <extensionPoint name="visibility"
                     interface="com.intellij.codeInspection.visibility.VisibilityExtension"/>
@@ -1020,7 +1020,7 @@
     <refactoring.moveInnerHandler language="JAVA" implementationClass="com.intellij.refactoring.move.moveInner.MoveJavaInnerHandler" id="java"/>
 
     <refactoring.safeDeleteProcessor implementation="com.intellij.refactoring.safeDelete.JavaSafeDeleteProcessor" id="javaProcessor"/>
-    <safeDelete.importChecker implementation="com.intellij.refactoring.safeDelete.JavaImportChecker"/>
+    <safeDelete.ImportSearcher implementation="com.intellij.refactoring.safeDelete.JavaImportSearcher"/>
 
     <refactoring.introduceParameterMethodUsagesProcessor implementation="com.intellij.refactoring.introduceParameter.JavaIntroduceParameterMethodUsagesProcessor"/>
     <refactoring.changeSignatureUsageProcessor implementation="com.intellij.refactoring.changeSignature.JavaChangeSignatureUsageProcessor" id="javaProcessor"/>
