@@ -19,8 +19,8 @@ class Library implements ClasspathItem {
     this.name = name;
   }
 
-  void addClasspath(Object[] arg) {
-    arg.each { classpath << FileUtil.toCanonicalPath(it.toString()) }
+  void addClasspath(String arg) {
+    classpath << FileUtil.toCanonicalPath(arg)
   }
 
   void src(Object[] arg) {

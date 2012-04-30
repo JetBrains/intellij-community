@@ -16,7 +16,7 @@ library("groovy") {}.addClasspath("$libs/groovy-all-1.7.1.jar")
 
 def gantLib = library("gant") {}
 new File("$gantHome/lib").eachFile {
-  gantLib.addClasspath it
+  gantLib.addClasspath it.toString()
 }
 
 
