@@ -7,7 +7,7 @@ import org.jetbrains.annotations.TestOnly
 /**
  * @author max
  */
-class Module extends LazyInitializeableObject implements ClasspathItem {//}, Comparable {
+class Module implements ClasspathItem {//}, Comparable {
   Project project;
   String name;
   Sdk sdk;
@@ -109,7 +109,6 @@ class Module extends LazyInitializeableObject implements ClasspathItem {//}, Com
   }
 
   def List<ClasspathItem> getClasspath(ClasspathKind kind, boolean exportedOnly) {
-    forceInit()
     return dependencies.findAll({it.scope.isIncludedIn(kind) && (!exportedOnly || it.exported)})*.item;
   }
 

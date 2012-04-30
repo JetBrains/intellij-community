@@ -329,8 +329,8 @@ public class IdeaProjectLoader {
   }
 
   private NodeList loadProjectLibraries(Node librariesComponent) {
-    return librariesComponent?.library?.each {Node libTag ->
-      project.createLibrary(libTag."@name", libraryInitializer(libTag, projectMacroExpander))
+    return (NodeList)librariesComponent?.library?.each {Node libTag ->
+      initLibrary(libTag, projectMacroExpander, project.createLibrary(libTag."@name", Closure.IDENTITY))
     }
   }
 
@@ -378,11 +378,10 @@ public class IdeaProjectLoader {
   }
 
   private Library loadLibrary(Project project, String name, Node libraryTag, MacroExpander macroExpander) {
-    return new Library(project, name, true, libraryInitializer(libraryTag, macroExpander))
+    return initLibrary(new Library(project, name))
   }
 
-  private Closure libraryInitializer(Node libraryTag, MacroExpander macroExpander) {
-    return {
+  private Library initLibrary(Node libraryTag, MacroExpander macroExpander, Library library) {
       Map<String, Boolean> jarDirs = [:]
       libraryTag.jarDirectory.each {Node dirNode ->
         jarDirs[dirNode.@url] = Boolean.parseBoolean(dirNode.@recursive)
@@ -395,18 +394,18 @@ public class IdeaProjectLoader {
           def paths = []
           collectChildJars(path, jarDirs[url], paths)
           paths.each {
-            classpath it
+            library.addClasspath it
           }
         }
         else {
-          classpath path
+          library.addClasspath path
         }
       }
 
       libraryTag.SOURCES.root.each {Node rootTag ->
-        src macroExpander.expandMacros(rootTag.@url)
+        library.src macroExpander.expandMacros(rootTag.@url)
       }
-    }
+    return library
   }
 
   private def collectChildJars(String path, boolean recursively, List<String> paths) {

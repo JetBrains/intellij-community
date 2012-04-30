@@ -10,19 +10,15 @@ def gantHome = GANT_HOME
 
 projectBuilder.targetFolder = "${projectHome}/build"
     
-library("ANT") {
-  classpath "$libs/ant-1.7.1.jar"
+library("ANT") {}.addClasspath("$libs/ant-1.7.1.jar")
+
+library("groovy") {}.addClasspath("$libs/groovy-all-1.7.1.jar")
+
+def gantLib = library("gant") {}
+new File("$gantHome/lib").eachFile {
+  gantLib.addClasspath it
 }
 
-library("groovy") {
-  classpath "$libs/groovy-all-1.7.1.jar"
-}
-
-library("gant") {
-  new File("$gantHome/lib").eachFile {
-    classpath it
-  }
-}
 
 module("JPS") {
   targetLevel ="1.5"

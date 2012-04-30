@@ -41,7 +41,7 @@ class Project {
   }
 
   protected def Library createLibrary(String name, Closure initializer, Map<String, Library> libraries, String accessor) {
-    Library lib = new Library(this, name, initializer)
+    Library lib = new Library(this, name)
     libraries.put(name, lib)
     lib
   }

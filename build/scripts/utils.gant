@@ -112,10 +112,9 @@ binding.setVariable("guessHome", {
 binding.setVariable("loadProject", {
   requireProperty("jdkHome", requireProperty("jdk16.home", guessJdk()))
   def mac = isMac()
-  jdk("IDEA jdk", jdkHome) {
-    if (!mac) {
-      classpath "$jdkHome/lib/tools.jar"
-    }
+  def sdk = jdk("IDEA jdk", jdkHome) { }
+  if (!mac) {
+    sdk.addClaspath "$jdkHome/lib/tools.jar"
   }
   IdeaProjectLoader.loadFromPath(project, "${home}")
 })
