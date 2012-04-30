@@ -15,11 +15,10 @@
  */
 package com.intellij.refactoring.safeDelete.usageInfo;
 
-import com.intellij.util.IncorrectOperationException;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiImportStatementBase;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.psi.PsiElement;
+import com.intellij.refactoring.safeDelete.ImportSearcher;
+import com.intellij.util.IncorrectOperationException;
 
 /**
  * @author yole
@@ -31,19 +30,26 @@ public class SafeDeleteReferenceJavaDeleteUsageInfo extends SafeDeleteReferenceS
     super(element, referencedElement, isSafeDelete);
   }
 
-  public SafeDeleteReferenceJavaDeleteUsageInfo(final PsiElement element, final PsiElement referencedElement, final int startOffset, final int endOffset,
+  public SafeDeleteReferenceJavaDeleteUsageInfo(final PsiElement element,
+                                                final PsiElement referencedElement,
+                                                final int startOffset,
+                                                final int endOffset,
                                                 final boolean isNonCodeUsage,
                                                 final boolean isSafeDelete) {
     super(element, referencedElement, startOffset, endOffset, isNonCodeUsage, isSafeDelete);
   }
 
   public void deleteElement() throws IncorrectOperationException {
-    if(isSafeDelete()) {
+    if (isSafeDelete()) {
       PsiElement element = getElement();
       LOG.assertTrue(element != null);
-      PsiImportStatementBase importStatement = PsiTreeUtil.getParentOfType(element, PsiImportStatementBase.class);
-      if (importStatement != null) importStatement.delete();
-      else element.delete();
+      PsiElement importStatement = ImportSearcher.getImport(element);
+      if (importStatement != null) {
+        importStatement.delete();
+      }
+      else {
+        element.delete();
+      }
     }
   }
 }
