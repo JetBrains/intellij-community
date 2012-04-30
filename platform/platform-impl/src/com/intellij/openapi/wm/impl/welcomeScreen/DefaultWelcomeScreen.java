@@ -22,7 +22,6 @@ import com.intellij.ide.ReopenProjectAction;
 import com.intellij.ide.dnd.FileCopyPasteUtil;
 import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.ide.plugins.*;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionButtonLook;
 import com.intellij.openapi.actionSystem.impl.PresentationFactory;
@@ -34,6 +33,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.wm.WelcomeScreen;
 import com.intellij.openapi.wm.impl.IdeRootPane;
 import com.intellij.ui.*;
 import com.intellij.util.containers.ContainerUtil;
@@ -57,7 +57,7 @@ import static java.awt.GridBagConstraints.*;
 /**
  * @author pti
  */
-public class WelcomeScreen implements Disposable {
+public class DefaultWelcomeScreen implements WelcomeScreen {
   private static final Insets ACTION_GROUP_CAPTION_INSETS = new Insets(20, 30, 5, 0);
   private static final Insets PLUGINS_CAPTION_INSETS = new Insets(20, 25, 0, 0);
   private static final Insets ACTION_ICON_INSETS = new Insets(5, 20, 15, 0);
@@ -122,7 +122,7 @@ public class WelcomeScreen implements Disposable {
     return myWelcomePanel;
   }
 
-  public WelcomeScreen(IdeRootPane rootPane) {
+  public DefaultWelcomeScreen(IdeRootPane rootPane) {
     initApplicationSpecificImages();
 
     myWelcomePanel = new JPanel(new GridBagLayout());

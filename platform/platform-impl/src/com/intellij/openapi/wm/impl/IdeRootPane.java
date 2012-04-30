@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,7 +41,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl;
 import com.intellij.openapi.wm.impl.status.MemoryUsagePanel;
-import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreen;
+import com.intellij.openapi.wm.impl.welcomeScreen.DefaultWelcomeScreen;
 import com.intellij.ui.PopupHandler;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
@@ -81,7 +81,7 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
   private final UISettings myUISettings;
 
   private WelcomeScreen myWelcomeScreen;
-  private Component myWelcomePane;
+  private JComponent myWelcomePane;
   private final boolean myGlassPaneInitialized;
   private final IdeGlassPaneImpl myGlassPane;
 
@@ -129,7 +129,13 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
   }
 
   void showWelcomeScreen() {
-    myWelcomeScreen = new WelcomeScreen(this);
+    for (WelcomeScreenProvider provider : WelcomeScreenProvider.EP_NAME.getExtensions()) {
+      myWelcomeScreen = provider.createWelcomeScreen(this);
+      if (myWelcomeScreen != null) break;
+    }
+    if (myWelcomeScreen == null) {
+      myWelcomeScreen = new DefaultWelcomeScreen(this);
+    }
     Disposer.register(myDisposable, myWelcomeScreen);
     myWelcomePane = myWelcomeScreen.getWelcomePanel();
     myContentPane.add(myWelcomePane);
