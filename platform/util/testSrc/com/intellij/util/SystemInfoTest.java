@@ -19,12 +19,16 @@ import com.intellij.openapi.util.SystemInfo;
 import junit.framework.TestCase;
 
 public class SystemInfoTest extends TestCase {
-  public void testMacOsVersion() throws Exception {
+  public void testMacOsVersions() throws Exception {
     // see http://developer.apple.com/library/mac/#documentation/Carbon/Reference/Gestalt_Manager/Reference/reference.html#//apple_ref/doc/uid/TP30000036-CH1g-F01632
     // System Version Selectors
 
     assertEquals("1.2", SystemInfo.getMacOSMajorVersion("1.2.3"));
     assertEquals("20.30", SystemInfo.getMacOSMajorVersion("20.30.40"));
+
+    assertEquals("1.0", SystemInfo.getMacOSMajorVersion("1"));
+    assertEquals("1.2", SystemInfo.getMacOSMajorVersion("1.2"));
+    assertEquals("1.2", SystemInfo.getMacOSMajorVersion("1.2.3.4"));
   }
 
   public void testMacOsVersionCode() throws Exception {
@@ -36,9 +40,9 @@ public class SystemInfoTest extends TestCase {
     assertVersions("10.15.15", "1099", "1090", "1515");
 
     assertVersions("", "0000", "0000", "0000");
-    assertVersions("1.1", "0000", "0000", "0000");
-    assertVersions("1.1.1.1", "0000", "0000", "0000");
-    assertVersions("a.b.c.", "0000", "0000", "0000");
+    assertVersions("1.2", "0120", "0120", "0200");
+    assertVersions("1.2.3.4", "0123", "0120", "0203");
+    assertVersions("a.b.c", "0000", "0000", "0000");
   }
 
   private void assertVersions(String version, String full, String major, String minor) {
