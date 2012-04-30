@@ -165,6 +165,9 @@
   <applicationService serviceInterface="com.intellij.psi.search.searches.IndexPatternSearch"
                       serviceImplementation="com.intellij.psi.impl.search.IndexPatternSearchImpl"/>
 
+  <applicationService serviceInterface="com.intellij.openapi.fileEditor.UniqueVFilePathBuilder"
+                      serviceImplementation="com.intellij.openapi.fileEditor.impl.UniqueVFilePathBuilderImpl"/>
+
   <projectService serviceInterface="com.intellij.ui.EditorTextFieldProvider"
                   serviceImplementation="com.intellij.ui.EditorTextFieldProviderImpl"/>
 

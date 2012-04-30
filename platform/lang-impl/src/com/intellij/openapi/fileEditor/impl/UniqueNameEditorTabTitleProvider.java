@@ -1,6 +1,7 @@
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.ide.ui.UISettings;
+import com.intellij.openapi.fileEditor.UniqueVFilePathBuilder;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -14,6 +15,6 @@ public class UniqueNameEditorTabTitleProvider implements EditorTabTitleProvider 
     if (!UISettings.getInstance().SHOW_DIRECTORY_FOR_NON_UNIQUE_FILENAMES || DumbService.isDumb(project)) {
       return null;
     }
-    return UniqueNameBuilder.getUniqueVirtualFilePath(project, file);
+    return UniqueVFilePathBuilder.getInstance().getUniqueVirtualFilePath(project, file);
   }
 }

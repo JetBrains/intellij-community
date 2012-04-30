@@ -1,14 +1,8 @@
 package com.intellij.openapi.fileEditor.impl;
 
 import com.google.common.collect.Maps;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.search.FilenameIndex;
-import com.intellij.psi.search.ProjectScope;
 
-import java.io.File;
 import java.util.*;
 
 /**
@@ -157,20 +151,5 @@ public class UniqueNameBuilder<T> {
       buildShortPaths();
     }
     return myShortPaths.get(key);
-  }
-
-  public static String getUniqueVirtualFilePath(Project project, VirtualFile file) {
-    final Collection<VirtualFile> filesWithSameName = FilenameIndex.getVirtualFilesByName(project, file.getName(),
-                                                                                          ProjectScope.getProjectScope(project));
-    if (filesWithSameName.size() > 1) {
-      String path = project.getBasePath();
-      path = path == null ? "" : FileUtil.toSystemIndependentName(path);
-      UniqueNameBuilder<VirtualFile> builder = new UniqueNameBuilder<VirtualFile>(path, File.separator, 25);
-      for (VirtualFile virtualFile: filesWithSameName) {
-        builder.addPath(virtualFile, virtualFile.getPath());
-      }
-      return builder.getShortPath(file);
-    }
-    return null;
   }
 }
