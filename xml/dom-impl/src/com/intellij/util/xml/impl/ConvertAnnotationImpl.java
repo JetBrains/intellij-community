@@ -48,4 +48,23 @@ public class ConvertAnnotationImpl implements Convert {
     return mySoft;
   }
 
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (!(o instanceof ConvertAnnotationImpl)) return false;
+
+    ConvertAnnotationImpl that = (ConvertAnnotationImpl)o;
+
+    if (mySoft != that.mySoft) return false;
+    if (!myConverter.getClass().equals(that.myConverter.getClass())) return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    int result = myConverter.getClass().hashCode();
+    result = 31 * result + (mySoft ? 1 : 0);
+    return result;
+  }
 }
