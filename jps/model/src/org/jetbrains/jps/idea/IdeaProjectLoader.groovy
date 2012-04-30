@@ -394,7 +394,7 @@ public class IdeaProjectLoader {
           def paths = []
           collectChildJars(path, jarDirs[url], paths)
           paths.each {
-            library.addClasspath it
+            library.addClasspath it.toString()
           }
         }
         else {

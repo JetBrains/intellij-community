@@ -23,6 +23,11 @@ class Library implements ClasspathItem {
     classpath << FileUtil.toCanonicalPath(arg)
   }
 
+  void addClasspath(GString arg) {
+    new Throwable().printStackTrace()
+    addClasspath(arg.toString())
+  }
+
   void src(Object[] arg) {
     arg.each { sourceRoots << FileUtil.toCanonicalPath(it.toString()) }
   }
