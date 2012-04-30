@@ -189,9 +189,12 @@ public final class HgCommandExecutor {
     final String cmdString = String.format("%s %s %s", executable, operation, arguments == null ? "" : StringUtils.join(arguments, " "));
 
     // log command
-    LOG.info(cmdString);
     if (!myIsSilent) {
+      LOG.info(cmdString);
       myVcs.showMessageInConsole(cmdString, ConsoleViewContentType.NORMAL_OUTPUT.getAttributes());
+    }
+    else {
+      LOG.debug(cmdString);
     }
 
     // log output if needed
@@ -199,11 +202,17 @@ public final class HgCommandExecutor {
       LOG.info(result.getRawOutput());
       myVcs.showMessageInConsole(result.getRawOutput(), ConsoleViewContentType.SYSTEM_OUTPUT.getAttributes());
     }
+    else {
+      LOG.debug(result.getRawOutput());
+    }
 
     // log error
     if (!myIsSilent) {
       LOG.info(result.getRawError());
       myVcs.showMessageInConsole(result.getRawError(), ConsoleViewContentType.ERROR_OUTPUT.getAttributes());
+    }
+    else {
+      LOG.debug(result.getRawError());
     }
   }
 
