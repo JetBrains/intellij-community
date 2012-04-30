@@ -39,6 +39,7 @@ public class LevelChooser extends ComboboxWithBrowseButton {
     final DefaultComboBoxModel model = new DefaultComboBoxModel();
     comboBox.setModel(model);
     fillModel(model, severityRegistrar);
+    getButton().setToolTipText("Edit severities (" + getButton().getToolTipText(null) + ")");
 
     comboBox.setRenderer(new ListCellRendererWrapper<HighlightSeverity>(comboBox.getRenderer()) {
       @Override

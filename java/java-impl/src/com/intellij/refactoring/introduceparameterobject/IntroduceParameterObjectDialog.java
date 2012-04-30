@@ -107,6 +107,9 @@ public class IntroduceParameterObjectDialog extends RefactoringDialog {
     buttonGroup.add(createNewClassButton);
     buttonGroup.add(myCreateInnerClassRadioButton);
     createNewClassButton.setSelected(true);
+    if (containingClass != null && containingClass.getQualifiedName() == null) {
+      myCreateInnerClassRadioButton.setEnabled(false);
+    }
     init();
 
     final ActionListener listener = new ActionListener() {

@@ -117,7 +117,7 @@ public class SystemProperties {
    *
    * @param key          the property name
    * @param defaultValue default value
-   * @return the property value as integer, or default value.
+   * @return the property value as boolean, or default value.
    */
   public static boolean getBooleanProperty(@NotNull final String key, final boolean defaultValue) {
     final String value = System.getProperty(key);

@@ -156,9 +156,12 @@ public class AddSingleMemberStaticImportAction extends PsiElementBaseIntentionAc
             if (referent instanceof PsiMember && referent != reference.resolve()) {
               PsiElementFactory factory = JavaPsiFacade.getInstance(reference.getProject()).getElementFactory();
               try {
-                PsiReferenceExpression copy = (PsiReferenceExpression)factory.createExpressionFromText("A." + reference.getReferenceName(), null);
-                reference = (PsiReferenceExpression)reference.replace(copy);
-                ((PsiReferenceExpression)reference.getQualifier()).bindToElement(((PsiMember)referent).getContainingClass());
+                final PsiClass containingClass = ((PsiMember)referent).getContainingClass();
+                if (containingClass != null) {
+                  PsiReferenceExpression copy = (PsiReferenceExpression)factory.createExpressionFromText("A." + reference.getReferenceName(), null);
+                  reference = (PsiReferenceExpression)reference.replace(copy);
+                  ((PsiReferenceExpression)reference.getQualifier()).bindToElement(containingClass);
+                }
               }
               catch (IncorrectOperationException e) {
                 LOG.error (e);

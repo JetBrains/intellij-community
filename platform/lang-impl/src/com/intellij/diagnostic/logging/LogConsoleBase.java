@@ -599,8 +599,9 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
 
               int i = 0;
               while (i++ < 1000) {
-                if (myRunning && myReader != null && myReader.ready()) {
-                  addMessage(myReader.readLine());
+                final BufferedReader reader = myReader;
+                if (myRunning && reader != null && reader.ready()) {
+                  addMessage(reader.readLine());
                 }
                 else {
                   break;

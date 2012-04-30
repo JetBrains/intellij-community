@@ -329,11 +329,15 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
             }
           }
           LOG.assertTrue(element.getTextRange() != null);
-          usages.add(new SafeDeleteReferenceJavaDeleteUsageInfo(element, psiClass, parent instanceof PsiImportStatement));
+          usages.add(new SafeDeleteReferenceJavaDeleteUsageInfo(element, psiClass, isInImport(element)));
         }
         return true;
       }
     });
+  }
+
+  private static boolean isInImport(PsiElement element) {
+    return ImportSearcher.getImport(element) != null;
   }
 
   private static boolean containsOnlyPrivates(final PsiClass aClass) {

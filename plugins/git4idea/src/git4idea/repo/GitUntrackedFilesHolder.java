@@ -104,8 +104,10 @@ public class GitUntrackedFilesHolder implements Disposable, BulkFileListener {
   }
 
   void setupVfsListener(@NotNull Project project) {
-    MessageBusConnection connection = project.getMessageBus().connect(this);
-    connection.subscribe(VirtualFileManager.VFS_CHANGES, this);
+    if (!project.isDisposed()) {
+      MessageBusConnection connection = project.getMessageBus().connect(this);
+      connection.subscribe(VirtualFileManager.VFS_CHANGES, this);
+    }
   }
 
   @Override

@@ -20,7 +20,7 @@ import com.intellij.ide.util.treeView.*;
 import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.wm.impl.content.GraphicsConfig;
+import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.ui.*;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ui.AsyncProcessIcon;

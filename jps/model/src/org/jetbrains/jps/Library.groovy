@@ -5,7 +5,7 @@ import com.intellij.openapi.util.io.FileUtil
 /**
  * @author max
  */
-class Library extends LazyInitializeableObject implements ClasspathItem {
+class Library implements ClasspathItem {
   Project project;
   String name;
 
@@ -14,42 +14,22 @@ class Library extends LazyInitializeableObject implements ClasspathItem {
 
   private Map<String, Object> props = [:]
 
-  def Library(project, name, initializer) {
-    this(project, name, false, initializer)
-  }
-
-  def Library(project, name, forceInitialization, initializer) {
+  def Library(project, name) {
     this.project = project;
     this.name = name;
+  }
 
-    Closure lazyInit = {
-      def meta = new InitializingExpando()
-      meta.classpath = {Object[] arg ->
-        arg.each { classpath << FileUtil.toCanonicalPath(it.toString()) }
-      }
+  void addClasspath(String arg) {
+    classpath << FileUtil.toCanonicalPath(arg)
+  }
 
-      meta.src = {Object[] arg ->
-        arg.each { sourceRoots << FileUtil.toCanonicalPath(it.toString()) }
-      }
+  void addClasspath(GString arg) {
+    new Throwable().printStackTrace()
+    addClasspath(arg.toString())
+  }
 
-      initializer.delegate = meta
-      initializer.setResolveStrategy Closure.DELEGATE_FIRST
-      initializer.call()
-
-      def wrongProperties = ["classpath", "src"] as Set
-      meta.getProperties().each {String key, Object value ->
-        if (!wrongProperties.contains(key)) {
-          props[key] = value
-        }
-      }
-    }
-
-    if (forceInitialization) {
-      lazyInit.call()
-    }
-    else {
-      setInitializer(lazyInit)
-    }
+  void src(Object[] arg) {
+    arg.each { sourceRoots << FileUtil.toCanonicalPath(it.toString()) }
   }
 
   def String toString() {
@@ -57,7 +37,6 @@ class Library extends LazyInitializeableObject implements ClasspathItem {
   }
 
   def List<String> getClasspathRoots(ClasspathKind kind) {
-    forceInit()
     classpath
   }
   

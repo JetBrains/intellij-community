@@ -20,7 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.wm.impl.content.GraphicsConfig;
+import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBScrollPane;

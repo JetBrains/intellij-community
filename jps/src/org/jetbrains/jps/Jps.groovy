@@ -20,10 +20,6 @@ final class Jps {
       return project.createLibrary(name, initializer)
     })
 
-    binding.setVariable("globalLibrary", {String name, Closure initializer ->
-      return project.createGlobalLibrary(name, initializer)
-    })
-
     binding.setVariable("jdk", {Object[] args ->
       if (!(args.length in [2,3])) {
         projectBuilder.error("expected 2 to 3 parameters for jdk() but ${args.length} found")

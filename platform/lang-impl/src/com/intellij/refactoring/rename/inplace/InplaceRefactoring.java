@@ -486,6 +486,7 @@ public abstract class InplaceRefactoring {
   }
 
   protected void revertState() {
+    if (myOldName == null) return;
     CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
       public void run() {
         final Editor topLevelEditor = InjectedLanguageUtil.getTopLevelEditor(myEditor);

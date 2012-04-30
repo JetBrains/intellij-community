@@ -608,6 +608,9 @@ public class GitUtil {
   }
   
   public static boolean justOneGitRepository(Project project) {
+    if (project.isDisposed()) {
+      return true;
+    }
     GitRepositoryManager manager = getRepositoryManager(project);
     if (manager == null) {
       return true;

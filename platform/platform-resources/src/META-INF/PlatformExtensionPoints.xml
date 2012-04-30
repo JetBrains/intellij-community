@@ -98,6 +98,7 @@
   <extensionPoint name="bundledKeymapProvider" interface="com.intellij.openapi.keymap.impl.BundledKeymapProvider"/>
 
   <extensionPoint name="toolWindow" beanClass="com.intellij.openapi.wm.ToolWindowEP"/>
+  <extensionPoint name="welcomeScreen" interface="com.intellij.openapi.wm.WelcomeScreenProvider"/>
 
   <extensionPoint name="productivityFeaturesProvider" interface="com.intellij.featureStatistics.ProductivityFeaturesProvider"/>
 

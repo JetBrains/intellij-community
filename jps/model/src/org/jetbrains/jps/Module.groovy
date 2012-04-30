@@ -7,7 +7,7 @@ import org.jetbrains.annotations.TestOnly
 /**
  * @author max
  */
-class Module extends LazyInitializeableObject implements ClasspathItem {//}, Comparable {
+class Module implements ClasspathItem {//}, Comparable {
   Project project;
   String name;
   Sdk sdk;
@@ -31,64 +31,37 @@ class Module extends LazyInitializeableObject implements ClasspathItem {//}, Com
 
   String languageLevel
 
-  /*int compareTo(Object o) {
-      if (o instanceof Module) {
-          ((Module) o).name.compareTo(name);
-      }
-
-      return -1
-  }*/
-
   def Module(project, name, initializer) {
     this.project = project;
     this.name = name;
+  }
 
-    setInitializer({
-      def meta = new InitializingExpando()
+  void dependency(Object item, DependencyScope scope, boolean exported) {
+    dependencies << new ModuleDependency(project.resolve(item), scope, exported)
+  }
 
-      meta.dependency = {Object item, DependencyScope scope, boolean exported ->
-        dependencies << new ModuleDependency(project.resolve(item), scope, exported)
-      }
+  void classpath(Object[] arg) {
+    arg.each { dependencies << new ModuleDependency(project.resolve(it), PredefinedDependencyScopes.COMPILE, false) }
+  }
 
-      meta.classpath = {Object[] arg ->
-        arg.each { dependencies << new ModuleDependency(project.resolve(it), PredefinedDependencyScopes.COMPILE, false) }
-      }
+  void moduleSource() {
+    dependencies << new ModuleDependency(new ModuleSourceEntry(module: this), PredefinedDependencyScopes.COMPILE, true)
+  }
 
-      meta.testclasspath = {Object[] arg ->
-        arg.each { dependencies << new ModuleDependency(project.resolve(it), PredefinedDependencyScopes.TEST, false) }
-      }
+  void content(Object[] arg) {
+    arg.each { contentRoots << FileUtil.toCanonicalPath(it) }
+  }
 
-      meta.moduleSource = {
-        dependencies << new ModuleDependency(new ModuleSourceEntry(module: this), PredefinedDependencyScopes.COMPILE, true)
-      }
+  void src(Object[] arg) {
+    arg.each { sourceRoots << FileUtil.toCanonicalPath(it) }
+  }
 
-      meta.content = {Object[] arg ->
-        arg.each { contentRoots << FileUtil.toCanonicalPath(it) }
-      }
+  void testSrc(Object[] arg) {
+    arg.each { testRoots << FileUtil.toCanonicalPath(it) }
+  }
 
-      meta.src = {Object[] arg ->
-        arg.each { sourceRoots << FileUtil.toCanonicalPath(it) }
-      }
-
-      meta.testSrc = {Object[] arg ->
-        arg.each { testRoots << FileUtil.toCanonicalPath(it) }
-      }
-
-      meta.exclude = {Object[] arg ->
-        arg.each { addExcludedRoot(FileUtil.toCanonicalPath(it)) }
-      }
-
-      initializer.delegate = meta
-      initializer.setResolveStrategy Closure.DELEGATE_FIRST
-      initializer.call()
-
-      def wrongProperties = ["dependency", "classpath", "testclasspath", "src", "testSrc", "exclude"] as Set
-      meta.getProperties().each {String key, Object value ->
-        if (!wrongProperties.contains(key)) {
-          props[key] = value
-        }
-      }
-    })
+  void exclude(Object[] arg) {
+    arg.each { addExcludedRoot(FileUtil.toCanonicalPath(it)) }
   }
 
   List<String> getOwnExcludes() {
@@ -100,8 +73,11 @@ class Module extends LazyInitializeableObject implements ClasspathItem {//}, Com
       excludes = new ArrayList<String>(ownExcludes)
       Set<String> allContentRoots = project.modules.values().collect { it.contentRoots }.flatten() as Set
       Set<File> myRoots = contentRoots.collect { new File(it) } as Set
-      Collection<String> newExcludes = (allContentRoots - contentRoots).findAll { PathUtil.isUnder(myRoots, new File(it)) }.collect { FileUtil.toCanonicalPath(it) }
-      excludes.addAll(newExcludes)
+      for (root in allContentRoots) {
+        if (!(root in contentRoots) && PathUtil.isUnder(myRoots, new File(root))) {
+          excludes << FileUtil.toCanonicalPath(root)
+        }
+      }
     }
     return excludes
   }
@@ -133,7 +109,6 @@ class Module extends LazyInitializeableObject implements ClasspathItem {//}, Com
   }
 
   def List<ClasspathItem> getClasspath(ClasspathKind kind, boolean exportedOnly) {
-    forceInit()
     return dependencies.findAll({it.scope.isIncludedIn(kind) && (!exportedOnly || it.exported)})*.item;
   }
 

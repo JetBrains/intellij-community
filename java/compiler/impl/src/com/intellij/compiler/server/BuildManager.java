@@ -81,6 +81,7 @@ import java.net.InetSocketAddress;
 import java.util.*;
 import java.util.concurrent.Executor;
 import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -301,14 +302,18 @@ public class BuildManager implements ApplicationComponent{
     }
   }
 
-  public void cancelAutoMakeTasks(Project project) {
+  public Collection<RequestFuture> cancelAutoMakeTasks(Project project) {
+    final Collection<RequestFuture> futures = new ArrayList<RequestFuture>();
     synchronized (myAutomakeFutures) {
       for (Map.Entry<RequestFuture, Project> entry : myAutomakeFutures.entrySet()) {
         if (entry.getValue().equals(project)) {
-          entry.getKey().cancel(false);
+          final RequestFuture future = entry.getKey();
+          future.cancel(false);
+          futures.add(future);
         }
       }
     }
+    return futures;
   }
 
   @Nullable
@@ -747,7 +752,16 @@ public class BuildManager implements ApplicationComponent{
     }
 
     @Override
+    public boolean canCloseProject(Project project) {
+      cancelAutoMakeTasks(project);
+      return super.canCloseProject(project);
+    }
+
+    @Override
     public void projectClosing(Project project) {
+      for (RequestFuture future : cancelAutoMakeTasks(project)) {
+        future.waitFor(500, TimeUnit.MILLISECONDS);
+      }
     }
 
     @Override

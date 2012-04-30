@@ -130,7 +130,6 @@ public abstract class ArtifactBuilderTestCase extends UsefulTestCase {
       }
     }
     final Module module = myProject.createModule(moduleName, Closure.IDENTITY);
-    module.forceInit();
     module.setSdk(myJdk);
     module.addDependency(myJdk, PredefinedDependencyScopes.getCOMPILE(), false);
     if (srcPaths.length > 0) {
@@ -145,7 +144,6 @@ public abstract class ArtifactBuilderTestCase extends UsefulTestCase {
 
   protected Library addProjectLibrary(String name, String jarPath) {
     final Library library = myProject.createLibrary(name, Closure.IDENTITY);
-    library.forceInit();
     library.getClasspath().add(jarPath);
     return library;
   }

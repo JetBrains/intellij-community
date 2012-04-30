@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,6 +40,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import java.awt.*;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
@@ -51,7 +52,7 @@ public class DiffSideView {
   }
 
   private static final DiffHighlighterFactory DUMMY_HIGHLIGHTER_FACTORY = new DiffHighlighterFactoryImpl(null, null, null);
-  private final LabeledEditor myPanel = new LabeledEditor();
+  private final LabeledEditor myPanel;
 
   private final DiffSidesContainer myContainer;
   private final CurrentLineMarker myLineMarker = new CurrentLineMarker();
@@ -61,10 +62,15 @@ public class DiffSideView {
   private boolean myIsMaster = false;
   private String myTitle;
 
-  public DiffSideView(String title, DiffSidesContainer container) {
+  public DiffSideView(String title, DiffSidesContainer container, @Nullable Border editorBorder) {
     myTitle = title;
     myContainer = container;
+    myPanel = new LabeledEditor(editorBorder);
     insertComponent(MOCK_COMPONENT);
+  }
+
+  public DiffSideView(String title, DiffSidesContainer container) {
+    this(title, container, null);
   }
 
   public JComponent getComponent() {

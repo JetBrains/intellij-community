@@ -222,14 +222,29 @@ public class CodeBlockGenerator extends Generator {
   }
 
   @Override
-  public void visitAssertStatement(GrAssertStatement assertStatement) {
+  public void visitAssertStatement(final GrAssertStatement assertStatement) {
     final GrExpression assertion = assertStatement.getAssertion();
+    final GrExpression message = assertStatement.getErrorMessage();
     if (assertion != null) {
       GenerationUtil.writeStatement(builder, context, assertStatement, new StatementWriter() {
         @Override
         public void writeStatement(StringBuilder builder, ExpressionContext context) {
           builder.append("assert ");
           assertion.accept(new ExpressionGenerator(builder, context));
+          if (message != null) {
+            builder.append(" : ");
+            message.accept(new ExpressionGenerator(builder, context));
+          }
+          builder.append(';');
+        }
+      });
+    }
+    else if (message != null) {
+      GenerationUtil.writeStatement(builder, context, assertStatement, new StatementWriter() {
+        @Override
+        public void writeStatement(StringBuilder builder, ExpressionContext context) {
+          builder.append("assert : ");
+          message.accept(new ExpressionGenerator(builder, context));
           builder.append(';');
         }
       });
