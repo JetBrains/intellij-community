@@ -108,12 +108,6 @@ public class CompileDriver {
   // to be used in tests only for debug output
   public static volatile boolean ourDebugMode = false;
 
-  // todo: temp option
-  private static final boolean OUT_OF_PROCESS_MAKE_AS_SERVER = true; // out-of-process make implementation switch (server / per-project build process)
-  public static boolean runOutOfProcessMakeAsServer() {
-    return OUT_OF_PROCESS_MAKE_AS_SERVER;
-  }
-
   private final Project myProject;
   private final Map<Pair<IntermediateOutputCompiler, Module>, Pair<VirtualFile, VirtualFile>> myGenerationCompilerModuleToOutputDirMap; // [IntermediateOutputCompiler, Module] -> [ProductionSources, TestSources]
   private final String myCachesDirectoryPath;
@@ -161,7 +155,7 @@ public class CompileDriver {
 
     myGenerationCompilerModuleToOutputDirMap = new HashMap<Pair<IntermediateOutputCompiler, Module>, Pair<VirtualFile, VirtualFile>>();
 
-    if (!useCompileServer()) {
+    if (!useOutOfProcessBuild()) {
       final LocalFileSystem lfs = LocalFileSystem.getInstance();
       final IntermediateOutputCompiler[] generatingCompilers = CompilerManager.getInstance(myProject).getCompilers(IntermediateOutputCompiler.class, myCompilerFilter);
       final Module[] allModules = ModuleManager.getInstance(myProject).getModules();
@@ -193,12 +187,12 @@ public class CompileDriver {
   public void rebuild(CompileStatusNotification callback) {
     CompileScope projectScope = ArtifactCompileScope.createScopeWithArtifacts(new ProjectCompileScope(myProject),
                                                                               ArtifactUtil.getArtifactWithOutputPaths(myProject), false);
-    final CompileScope compileScope = useCompileServer() ? projectScope : addAdditionalRoots(projectScope, ALL_EXCEPT_SOURCE_PROCESSING);
+    final CompileScope compileScope = useOutOfProcessBuild() ? projectScope : addAdditionalRoots(projectScope, ALL_EXCEPT_SOURCE_PROCESSING);
     doRebuild(callback, null, true, compileScope);
   }
 
   public void make(CompileScope scope, CompileStatusNotification callback) {
-    if (!useCompileServer()) {
+    if (!useOutOfProcessBuild()) {
       scope = addAdditionalRoots(scope, ALL_EXCEPT_SOURCE_PROCESSING);
     }
     if (validateCompilerConfiguration(scope, false)) {
@@ -454,7 +448,7 @@ public class CompileDriver {
 
     final MessageBus messageBus = myProject.getMessageBus();
 
-    if (OUT_OF_PROCESS_MAKE_AS_SERVER) {
+    if (!CompilerWorkspaceConfiguration.useServerlessOutOfProcessBuild()) {
       final CompileServerManager csManager = CompileServerManager.getInstance();
       csManager.cancelAutoMakeTasks(myProject);
       return csManager.submitCompilationTask(myProject, compileContext.isRebuild(), compileContext.isMake(), moduleNames, artifactNames, paths,
@@ -649,7 +643,7 @@ public class CompileDriver {
                        final boolean checkCachesVersion) {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
-    final boolean useServer = useCompileServer();
+    final boolean useServer = useOutOfProcessBuild();
 
     final String contentName =
       forceCompile ? CompilerBundle.message("compiler.content.name.compile") : CompilerBundle.message("compiler.content.name.make");
@@ -694,7 +688,7 @@ public class CompileDriver {
             if (myProject.isDisposed()) {
               return;
             }
-            LOG.info("COMPILATION STARTED " + (OUT_OF_PROCESS_MAKE_AS_SERVER? "(COMPILE SERVER)" : "(BUILD PROCESS)"));
+            LOG.info("COMPILATION STARTED " + (CompilerWorkspaceConfiguration.useServerlessOutOfProcessBuild() ? "(BUILD PROCESS)" : "(COMPILE SERVER)"));
             if (message != null) {
               compileContext.addMessage(message);
             }
@@ -720,7 +714,7 @@ public class CompileDriver {
           finally {
             final long finish = System.currentTimeMillis();
             CompilerUtil.logDuration(
-              "\tCOMPILATION FINISHED " + (OUT_OF_PROCESS_MAKE_AS_SERVER? "(COMPILE SERVER)" : "(BUILD PROCESS)") + "; Errors: " +
+              "\tCOMPILATION FINISHED " + (CompilerWorkspaceConfiguration.useServerlessOutOfProcessBuild() ? "(BUILD PROCESS)" : "(COMPILE SERVER)") + "; Errors: " +
               compileContext.getMessageCount(CompilerMessageCategory.ERROR) +
               "; warnings: " +
               compileContext.getMessageCount(CompilerMessageCategory.WARNING),
@@ -2310,7 +2304,7 @@ public class CompileDriver {
   }
 
   private boolean validateCompilerConfiguration(final CompileScope scope, boolean checkOutputAndSourceIntersection) {
-    if (useCompileServer()) {
+    if (useOutOfProcessBuild()) {
       return true;
     }
     try {
@@ -2504,8 +2498,8 @@ public class CompileDriver {
     }
   }
 
-  private boolean useCompileServer() {
-    return CompilerWorkspaceConfiguration.getInstance(myProject).useCompileServer();
+  private boolean useOutOfProcessBuild() {
+    return CompilerWorkspaceConfiguration.getInstance(myProject).useOutOfProcessBuild();
   }
 
   private void showCyclicModulesHaveDifferentLanguageLevel(Module[] modulesInChunk) {

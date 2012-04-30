@@ -56,7 +56,11 @@ public class CompilerWorkspaceConfiguration implements PersistentStateComponent<
     XmlSerializerUtil.copyBean(state, this);
   }
 
-  public boolean useCompileServer() {
-    return USE_COMPILE_SERVER && (Registry.is("compiler.server.enabled") || ApplicationManager.getApplication().isInternal());
+  public boolean useOutOfProcessBuild() {
+    return USE_COMPILE_SERVER && (Registry.is("compiler.out-of-process.build.enabled") || ApplicationManager.getApplication().isInternal());
+  }
+
+  public static boolean useServerlessOutOfProcessBuild() {
+    return !Registry.is("compiler.out-of-process.as-server");
   }
 }

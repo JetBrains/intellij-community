@@ -49,7 +49,7 @@ public class CompilerUIConfigurable implements SearchableConfigurable, Configura
 
   public CompilerUIConfigurable(final Project project) {
     myProject = project;
-    final boolean isServerOptionEnabled = Registry.is("compiler.server.enabled") || ApplicationManager.getApplication().isInternal();
+    final boolean isServerOptionEnabled = Registry.is("compiler.out-of-process.build.enabled") || ApplicationManager.getApplication().isInternal();
     myCbUseCompileServer.setVisible(isServerOptionEnabled);
     myCbMakeProjectOnSave.setVisible(isServerOptionEnabled);
 

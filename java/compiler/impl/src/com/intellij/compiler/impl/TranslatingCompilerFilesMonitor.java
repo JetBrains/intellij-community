@@ -1300,7 +1300,7 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
       final ProjectRef projRef = new ProjectRef(project);
       final int projectId = getProjectId(project);
 
-      if (CompilerWorkspaceConfiguration.getInstance(project).useCompileServer()) {
+      if (CompilerWorkspaceConfiguration.getInstance(project).useOutOfProcessBuild()) {
         suspendProject(project);
       }
       else {
