@@ -50,6 +50,9 @@ public class GitFileSeparatorConverter {
                                                   final GitVcsSettings settings,
                                                   Map<VirtualFile, Collection<Change>> sortedChanges,
                                                   final List<VcsException> exceptions) {
+    if (project.isDisposed()) {
+      return true;
+    }
     final GitVcsSettings.ConversionPolicy conversionPolicy = settings.getLineSeparatorsConversion();
     if (conversionPolicy != GitVcsSettings.ConversionPolicy.NONE) {
       LocalFileSystem lfs = LocalFileSystem.getInstance();
@@ -77,10 +80,10 @@ public class GitFileSeparatorConverter {
         }
       }
       // check crlf for real
-      for (Iterator<Map.Entry<VirtualFile, Set<VirtualFile>>> i = files.entrySet().iterator(); i.hasNext();) {
+      for (Iterator<Map.Entry<VirtualFile, Set<VirtualFile>>> i = files.entrySet().iterator(); i.hasNext(); ) {
         Map.Entry<VirtualFile, Set<VirtualFile>> e = i.next();
         Set<VirtualFile> fs = e.getValue();
-        for (Iterator<VirtualFile> j = fs.iterator(); j.hasNext();) {
+        for (Iterator<VirtualFile> j = fs.iterator(); j.hasNext(); ) {
           VirtualFile f = j.next();
           String detectedLineSeparator = LoadTextUtil.detectLineSeparator(f, true);
           if (detectedLineSeparator == null || nl.equals(detectedLineSeparator)) {
@@ -105,15 +108,18 @@ public class GitFileSeparatorConverter {
                 settings.setLineSeparatorsConversion(GitVcsSettings.ConversionPolicy.CONVERT);
               }
               selectedFiles = d.getSelectedFiles();
-            } else if (d.getExitCode() == GitConvertFilesDialog.DO_NOT_CONVERT) {
+            }
+            else if (d.getExitCode() == GitConvertFilesDialog.DO_NOT_CONVERT) {
               if (d.isDontShowAgainChosen()) {
                 settings.setLineSeparatorsConversion(GitVcsSettings.ConversionPolicy.NONE);
               }
-            } else {
+            }
+            else {
               //noinspection ThrowableInstanceNeverThrown
               exceptions.add(new VcsException("Commit was cancelled in file conversion dialog"));
             }
-          } else {
+          }
+          else {
             ArrayList<VirtualFile> fileList = new ArrayList<VirtualFile>();
             for (Set<VirtualFile> fileSet : files.values()) {
               fileList.addAll(fileSet);
@@ -127,7 +133,8 @@ public class GitFileSeparatorConverter {
               }
               try {
                 LoadTextUtil.changeLineSeparator(project, GitConvertFilesDialog.class.getName(), f, nl);
-              } catch (IOException e) {
+              }
+              catch (IOException e) {
                 //noinspection ThrowableInstanceNeverThrown
                 exceptions.add(new VcsException("Failed to change line separators for the file: " + f.getPresentableUrl(), e));
               }

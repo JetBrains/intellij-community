@@ -16,6 +16,7 @@
 package git4idea.repo;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -54,9 +55,15 @@ final class GitRepositoryUpdater implements Disposable, BulkFileListener {
     myHeadsDir = VcsUtil.getVirtualFile(myRepositoryFiles.getRefsHeadsPath());
     myRemotesDir = VcsUtil.getVirtualFile(myRepositoryFiles.getRefsRemotesPath());
 
-    myUpdateQueue = new QueueProcessor<GitRepository.TrackedTopic>(new Updater(repository), repository.getProject().getDisposed());
-    myMessageBusConnection = repository.getProject().getMessageBus().connect();
-    myMessageBusConnection.subscribe(VirtualFileManager.VFS_CHANGES, this);
+    Project project = repository.getProject();
+    myUpdateQueue = new QueueProcessor<GitRepository.TrackedTopic>(new Updater(repository), project.getDisposed());
+    if (!project.isDisposed()) {
+      myMessageBusConnection = project.getMessageBus().connect();
+      myMessageBusConnection.subscribe(VirtualFileManager.VFS_CHANGES, this);
+    }
+    else {
+      myMessageBusConnection = null;
+    }
   }
 
   private static void visitGitDirVfs(@NotNull VirtualFile gitDir) {
@@ -85,7 +92,9 @@ final class GitRepositoryUpdater implements Disposable, BulkFileListener {
     if (myWatchRequest != null) {
       LocalFileSystem.getInstance().removeWatchedRoot(myWatchRequest);
     }
-    myMessageBusConnection.disconnect();
+    if (myMessageBusConnection != null) {
+      myMessageBusConnection.disconnect();
+    }
   }
 
   @Override

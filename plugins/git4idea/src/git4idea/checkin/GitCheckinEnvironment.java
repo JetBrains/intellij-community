@@ -476,9 +476,11 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       handler.addParameters(paths);
       handler.run();
     }
-    GitRepositoryManager manager = GitUtil.getRepositoryManager(project);
-    if (manager != null) {
-      manager.updateRepository(root, GitRepository.TrackedTopic.CURRENT_REVISION, GitRepository.TrackedTopic.STATE);
+    if (!project.isDisposed()) {
+      GitRepositoryManager manager = GitUtil.getRepositoryManager(project);
+      if (manager != null) {
+        manager.updateRepository(root, GitRepository.TrackedTopic.CURRENT_REVISION, GitRepository.TrackedTopic.STATE);
+      }
     }
   }
 
