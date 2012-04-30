@@ -326,8 +326,12 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       // real document content will be cleared on next flush;
       myContentSize = 0;
       myBuffer.clear();
-      myHyperlinks.clearHyperlinks();
       myFolding.clear();
+
+      final EditorHyperlinkSupport hyperlinks = myHyperlinks;
+      if (hyperlinks != null) {
+        hyperlinks.clearHyperlinks();
+      }
     }
     if (myFlushAlarm.isDisposed()) return;
     cancelAllFlushRequests();
