@@ -31,6 +31,7 @@ import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.profile.ProfileManager;
 import com.intellij.profile.codeInspection.SeverityProvider;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.intellij.psi.search.scope.packageSet.PackageSet;
@@ -88,8 +89,11 @@ public class ToolsImpl implements Tools {
           final NamedScope scope = state.getScope(project);
           if (scope != null) {
             final PackageSet packageSet = scope.getValue();
-            if (packageSet != null && packageSet.contains(element.getContainingFile(), validationManager)) {
-              return state.getTool();
+            if (packageSet != null) {
+              final PsiFile containingFile = element.getContainingFile();
+              if (containingFile != null && packageSet.contains(containingFile, validationManager)) {
+                return state.getTool();
+              }
             }
           }
         }
