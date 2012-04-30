@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -114,6 +114,7 @@ class DividerPolygon {
   }
 
   private static DividerPolygon createPolygon(Transformation[] transformations, Trapezium trapezium, Color color, FragmentSide left) {
+    final int offset = 3; //IDEA-85146
     Interval base1 = trapezium.getBase(left);
     Interval base2 = trapezium.getBase(left.otherSide());
     Transformation leftTransform = transformations[left.getIndex()];
@@ -122,7 +123,7 @@ class DividerPolygon {
     int end1 = leftTransform.transform(base1.getEnd());
     int start2 = rightTransform.transform(base2.getStart());
     int end2 = rightTransform.transform(base2.getEnd());
-    return new DividerPolygon(start1, start2, end1, end2, color);
+    return new DividerPolygon(start1 - offset, start2 - offset, end1 - offset, end2 - offset, color);
   }
 
   static Interval getVisibleInterval(Editor editor) {
