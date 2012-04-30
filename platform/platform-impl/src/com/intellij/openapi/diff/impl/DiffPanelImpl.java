@@ -57,9 +57,11 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.pom.Navigatable;
 import com.intellij.ui.EditorNotificationPanel;
 import com.intellij.ui.PopupHandler;
+import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.util.containers.CacheOneStepIterator;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.diff.FilesTooBigForDiffException;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -115,8 +117,8 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
     if (enableToolbar) myPanel.resetToolbar();
     myOwnerWindow = owner;
     myIsSyncScroll = true;
-    myLeftSide = new DiffSideView("", this);
-    myRightSide = new DiffSideView("", this);
+    myLeftSide =  new DiffSideView("", this, new CustomLineBorder(UIUtil.getBorderColor(), 1, 0, 1, 1));
+    myRightSide = new DiffSideView("", this, new CustomLineBorder(UIUtil.getBorderColor(), 1, 1, 1, 0));
     myLeftSide.becomeMaster();
     myDiffUpdater = new Rediffers(this);
 

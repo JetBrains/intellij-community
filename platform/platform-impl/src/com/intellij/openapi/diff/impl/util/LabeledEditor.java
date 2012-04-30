@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,17 +16,26 @@
 package com.intellij.openapi.diff.impl.util;
 
 import com.intellij.openapi.diff.DiffBundle;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import java.awt.*;
 
 public class LabeledEditor extends JPanel {
   private final JLabel myLabel = new JLabel();
+  private final Border myEditorBorder;
 
-  public LabeledEditor() {
+  public LabeledEditor(@Nullable Border editorBorder) {
     super(new BorderLayout());
     myLabel.setBorder(BorderFactory.createEmptyBorder(0, 4, 0, 0));
+    myEditorBorder = editorBorder;
   }
+
+  public LabeledEditor() {
+    this(null);
+  }
+
 
   private static String addReadOnly(String title, boolean readonly) {
     if (readonly) title += " " + DiffBundle.message("diff.content.read.only.content.title.suffix");
@@ -35,7 +44,12 @@ public class LabeledEditor extends JPanel {
 
   public void setComponent(JComponent component, String title) {
     removeAll();
-    add(component, BorderLayout.CENTER);
+    final JPanel p = new JPanel(new BorderLayout());
+    if (myEditorBorder != null) {
+      p.setBorder(myEditorBorder);
+    }
+    p.add(component, BorderLayout.CENTER);
+    add(p, BorderLayout.CENTER);
     add(myLabel, BorderLayout.NORTH);
     setLabelTitle(title);
     revalidate();
