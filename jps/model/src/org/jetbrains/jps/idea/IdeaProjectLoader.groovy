@@ -378,7 +378,7 @@ public class IdeaProjectLoader {
   }
 
   private Library loadLibrary(Project project, String name, Node libraryTag, MacroExpander macroExpander) {
-    return initLibrary(new Library(project, name))
+    return initLibrary(libraryTag, macroExpander, new Library(project, name))
   }
 
   private Library initLibrary(Node libraryTag, MacroExpander macroExpander, Library library) {
