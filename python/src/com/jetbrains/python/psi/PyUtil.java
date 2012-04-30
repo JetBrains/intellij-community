@@ -639,6 +639,32 @@ public class PyUtil {
     return turnInitIntoDir(file) != null;
   }
 
+  @Nullable
+  public static PsiElement getPackageElement(@NotNull PsiDirectory directory) {
+    if (isPackage(directory)) {
+      final PsiElement init = turnDirIntoInit(directory);
+      if (init != null) {
+        return init;
+      }
+      return directory;
+    }
+    return null;
+  }
+
+  private static boolean hasNamespacePackageFile(@NotNull PsiDirectory directory) {
+    final String name = directory.getName().toLowerCase();
+    final PsiDirectory parent = directory.getParent();
+    if (parent != null) {
+      for (PsiFile file : parent.getFiles()) {
+        final String filename = file.getName().toLowerCase();
+        if (filename.startsWith(name) && filename.endsWith("-nspkg.pth")) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
   /**
    * Counts initial underscores of an identifier.
    *

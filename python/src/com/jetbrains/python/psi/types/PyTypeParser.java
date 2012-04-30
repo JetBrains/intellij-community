@@ -190,8 +190,10 @@ public class PyTypeParser {
         final TextRange first = ranges.get(0);
         for (TextRange range : ranges) {
           final PyQualifiedName moduleName = PyQualifiedName.fromDottedString(first.union(range).substring(type));
-          moduleType = new PyImportedModuleType(new PyImportedModule(null, anchor.getContainingFile(), moduleName));
-          types.put(range.shiftRight(offset), moduleType);
+          if (anchorFile instanceof PyFile) {
+            moduleType = new PyImportedModuleType(new PyImportedModule(null, (PyFile)anchorFile, moduleName));
+            types.put(range.shiftRight(offset), moduleType);
+          }
         }
       }
       final String shortName = classRange.substring(type);

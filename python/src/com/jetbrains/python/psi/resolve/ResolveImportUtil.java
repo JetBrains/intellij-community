@@ -132,7 +132,10 @@ public class ResolveImportUtil {
       if (!candidate.isValid()) {
         throw new PsiInvalidElementAccessException(candidate, "Got an invalid candidate from resolveImportSourceCandidates(): " + candidate.getClass());
       }
-      PsiElement result = resolveChild(PyUtil.turnDirIntoInit(candidate), name, file, false, true);
+      if (candidate instanceof PsiDirectory) {
+        candidate = PyUtil.getPackageElement((PsiDirectory)candidate);
+      }
+      PsiElement result = resolveChild(candidate, name, file, false, true);
       if (result != null) {
         if (!result.isValid()) {
           throw new PsiInvalidElementAccessException(result, "Got an invalid candidate from resolveChild(): " + result.getClass());
@@ -322,7 +325,7 @@ public class ResolveImportUtil {
     if (referencedName == null) return null;
 
     final PsiDirectory subdir = dir.findSubdirectory(referencedName);
-    if (subdir != null && (!checkForPackage || subdir.findFile(PyNames.INIT_DOT_PY) != null)) {
+    if (subdir != null && (!checkForPackage || PyUtil.isPackage(subdir))) {
       return subdir;
     }
 
@@ -357,8 +360,10 @@ public class ResolveImportUtil {
   public static ResolveResultList rateResults(List<? extends PsiElement> targets) {
     ResolveResultList ret = new ResolveResultList();
     for (PsiElement target : targets) {
-      target = PyUtil.turnDirIntoInit(target);
-      if (target != null) {   // ignore dirs without __init__.py, worthless
+      if (target instanceof PsiDirectory) {
+        target = PyUtil.getPackageElement((PsiDirectory)target);
+      }
+      if (target != null) {   // Ignore non-package dirs, worthless
         int rate = RatedResolveResult.RATE_HIGH;
         if (target instanceof PyFile) {
           VirtualFile vFile = ((PyFile)target).getVirtualFile();

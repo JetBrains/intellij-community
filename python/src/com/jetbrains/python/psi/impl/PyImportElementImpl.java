@@ -4,8 +4,9 @@ import com.intellij.lang.ASTNode;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.EmptyIterable;
@@ -200,10 +201,16 @@ public class PyImportElementImpl extends PyBaseElementImpl<PyImportElementStub> 
         return null;
       }
       if (qName.getComponentCount() == 1) {
-        return resolveImportElement ? ResolveImportUtil.resolveImportElement(this, PyQualifiedName.fromComponents(name)) : this;
+        if (resolveImportElement) {
+          final PsiElement element = ResolveImportUtil.resolveImportElement(this, PyQualifiedName.fromComponents(name));
+          if (element instanceof PsiDirectory) {
+            return createImportedModule(name);
+          }
+          return element;
+        }
+        return this;
       }
-      final PsiNamedElement container = getStubOrPsiParentOfType(PsiNamedElement.class);
-      return new PyImportedModule(this, container, PyQualifiedName.fromComponents(name));
+      return createImportedModule(name);
     }
   }
 
@@ -220,5 +227,14 @@ public class PyImportElementImpl extends PyBaseElementImpl<PyImportElementStub> 
   public String toString() {
     final PyQualifiedName qName = getImportedQName();
     return String.format("%s:%s", super.toString(), qName != null ? qName : "null");
+  }
+
+  @Nullable
+  private PsiElement createImportedModule(String name) {
+    final PsiFile file = getContainingFile();
+    if (file instanceof PyFile) {
+      return new PyImportedModule(this, (PyFile)file, PyQualifiedName.fromComponents(name));
+    }
+    return null;
   }
 }
