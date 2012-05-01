@@ -74,6 +74,17 @@ public class RadViewComponent extends RadVisualComponent {
     myMargins = null;
   }
 
+  public int getBaseline() {
+    try {
+      Object viewObject = myViewInfo.getViewObject();
+      return (Integer)viewObject.getClass().getMethod("getBaseline").invoke(viewObject);
+    }
+    catch (Throwable e) {
+    }
+
+    return -1;
+  }
+
   public Rectangle getMargins() {
     if (myMargins == null) {
       myMargins = new Rectangle();

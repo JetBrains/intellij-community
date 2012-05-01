@@ -16,6 +16,7 @@
 package com.intellij.android.designer.model.layout;
 
 import com.intellij.android.designer.designSurface.TreeDropToOperation;
+import com.intellij.android.designer.designSurface.layout.RelativeLayoutOperation;
 import com.intellij.android.designer.model.RadViewLayoutWithData;
 import com.intellij.designer.componentTree.TreeEditOperation;
 import com.intellij.designer.designSurface.EditOperation;
@@ -43,10 +44,8 @@ public class RadRelativeLayout extends RadViewLayoutWithData {
         }
         return null;
       }
-      // XXX
-      return null;
+      return new RelativeLayoutOperation(myContainer, context);
     }
-    // XXX
     return null;
   }
 }
