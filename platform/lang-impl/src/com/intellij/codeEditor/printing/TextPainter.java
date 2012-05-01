@@ -75,8 +75,21 @@ public class TextPainter implements Printable {
   @NonNls private static final String HEADER_TOKEN_PAGE = "PAGE";
   @NonNls private static final String HEADER_TOKEN_FILE = "FILE";
 
-  public TextPainter(DocumentEx editorDocument, EditorHighlighter highlighter, String fileName, final PsiFile psiFile,
-                     final Project project) {
+  public TextPainter(DocumentEx editorDocument,
+                     EditorHighlighter highlighter,
+                     String fileName,
+                     final PsiFile psiFile,
+                     final Project project,
+                     final FileType fileType) {
+    this(editorDocument, highlighter, fileName, project, fileType,
+         FileSeparatorProvider.getInstance().getFileSeparators(psiFile, editorDocument));
+  }
+
+  public TextPainter(DocumentEx editorDocument,
+                     EditorHighlighter highlighter,
+                     String fileName,
+                     final Project project,
+                     final FileType fileType, final List<LineMarkerInfo> separators) {
     myCodeStyleSettings = CodeStyleSettingsManager.getSettings(project);
     myDocument = editorDocument;
     myPrintSettings = PrintSettings.getInstance();
@@ -91,12 +104,8 @@ public class TextPainter implements Printable {
                             myPrintSettings.FOOTER_HEADER_FONT_SIZE);
     myFileName = fileName;
     mySegmentEnd = myDocument.getTextLength();
-
-    myFileType = psiFile.getFileType();
-
-
-    final List<LineMarkerInfo> methodSeparators = FileSeparatorProvider.getInstance().getFileSeparators(psiFile, editorDocument);
-    myMethodSeparators = methodSeparators != null ? methodSeparators.toArray(new LineMarkerInfo[methodSeparators.size()]) : new LineMarkerInfo[0];
+    myFileType = fileType;
+    myMethodSeparators = separators != null ? separators.toArray(new LineMarkerInfo[separators.size()]) : new LineMarkerInfo[0];
     myCurrentMethodSeparator = 0;
   }
 

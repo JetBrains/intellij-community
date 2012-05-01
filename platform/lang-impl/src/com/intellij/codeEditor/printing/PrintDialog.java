@@ -74,6 +74,8 @@ class PrintDialog extends DialogWrapper {
 
   private static final Map<Object, String> PLACEMENT_MAP = new HashMap<Object, String>();
   private static final Map<Object, String> ALIGNMENT_MAP = new HashMap<Object, String>();
+  private final String mySelectedText;
+
   static {
     PLACEMENT_MAP.put(PrintSettings.HEADER, CodeEditorBundle.message("print.header.placement.header"));
     PLACEMENT_MAP.put(PrintSettings.FOOTER, CodeEditorBundle.message("print.header.placement.footer"));
@@ -84,12 +86,13 @@ class PrintDialog extends DialogWrapper {
   }
 
 
-  public PrintDialog(String fileName, String directoryName, boolean isSelectedTextEnabled, Project project) {
+  public PrintDialog(String fileName, String directoryName, String selectedText, Project project) {
     super(project, true);
+    mySelectedText = selectedText;
     setOKButtonText(CodeEditorBundle.message("print.print.button"));
     myFileName = fileName;
     myDirectoryName = directoryName;
-    this.isSelectedTextEnabled = isSelectedTextEnabled;
+    this.isSelectedTextEnabled = selectedText != null;
     setTitle(CodeEditorBundle.message("print.title"));
     init();
   }
@@ -111,7 +114,7 @@ class PrintDialog extends DialogWrapper {
     myRbCurrentFile = new JRadioButton(CodeEditorBundle.message("print.file.name.radio", (myFileName != null ? myFileName : "")));
     panel.add(myRbCurrentFile, gbConstraints);
 
-    myRbSelectedText = new JRadioButton(CodeEditorBundle.message("print.selected.text.radio"));
+    myRbSelectedText = new JRadioButton(mySelectedText != null ? mySelectedText : CodeEditorBundle.message("print.selected.text.radio"));
     gbConstraints.gridy++;
     gbConstraints.insets = new Insets(0,0,0,0);
     panel.add(myRbSelectedText, gbConstraints);
