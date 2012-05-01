@@ -3,6 +3,11 @@ package org.jetbrains.jps.idea
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import org.jetbrains.jps.artifacts.Artifact
+
+import java.util.concurrent.ExecutorService
+import java.util.concurrent.Executors
+import java.util.concurrent.Future
+
 import org.jetbrains.jps.*
 
 /**
@@ -17,7 +22,8 @@ public class IdeaProjectLoader {
   private ProjectMacroExpander projectMacroExpander
   private ProjectLoadingErrorReporter errorReporter
   private static final List<AdditionalRootsProviderService> rootsProviderLoader = OwnServiceLoader.load(AdditionalRootsProviderService.class).collect()
-  private XmlParser xmlParser = new XmlParser(false, false)
+  private final XmlParser xmlParser = new XmlParser(false, false)
+  private static final ExecutorService ourThreadPool = Executors.newFixedThreadPool(2 * Runtime.getRuntime().availableProcessors())
 
   public static String guessHome(Script script) {
     File home = new File(script["gant.file"].substring("file:".length()))
@@ -364,16 +370,27 @@ public class IdeaProjectLoader {
       project.createModule(moduleName(imlPath), {})
       imlPaths << imlPath
     }
-    imlPaths.each { loadModule(it) }
-    Set<File> allContentRoots = project.modules.values().collect { it.contentRoots }.flatten().collect { new File(it) } as Set
-    project.modules.values().each { module ->
-      Set<File> myRoots = module.contentRoots.collect { new File(it) } as Set
-      for (root in allContentRoots) {
-        if (!(root in myRoots) && PathUtil.isUnder(myRoots, root)) {
-          module.excludes << FileUtil.toCanonicalPath(root.path)
-        }
-      }
+
+    List<Future> futures = []
+    imlPaths.each { String path ->
+      futures << (ourThreadPool.submit { loadModule(path) })
     }
+    futures.each { it.run(); it.get() }
+
+    Set<File> allContentRoots = project.modules.values().collect { it.contentRoots }.flatten().collect { new File(it) } as Set
+
+    futures.clear()
+    project.modules.values().each { module ->
+      futures << (ourThreadPool.submit {
+        Set<File> myRoots = module.contentRoots.collect { new File(it) } as Set
+        for (root in allContentRoots) {
+          if (!(root in myRoots) && PathUtil.isUnder(myRoots, root)) {
+            module.excludes << FileUtil.toCanonicalPath(root.path)
+          }
+        }
+      })
+    }
+    futures.each { it.run(); it.get() }
   }
 
   private Library loadLibrary(Project project, String name, Node libraryTag, MacroExpander macroExpander) {
@@ -432,7 +449,10 @@ public class IdeaProjectLoader {
     def currentModuleName = moduleName(imlPath)
       Module currentModule = project.modules[currentModuleName]
       currentModule.basePath = moduleBasePath
-      def root = xmlParser.parse(moduleFile)
+      def root
+      synchronized (xmlParser) {
+        root = xmlParser.parse(moduleFile);
+      }
       def componentTag = getComponent(root, "NewModuleRootManager")
       if (componentTag != null) {
         loadModuleOrderEntries(componentTag, currentModule, moduleMacroExpander, currentModuleName)

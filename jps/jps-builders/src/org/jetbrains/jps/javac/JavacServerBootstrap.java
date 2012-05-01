@@ -25,10 +25,13 @@ public class JavacServerBootstrap {
   public static BaseOSProcessHandler launchJavacServer(String sdkHomePath, int heapSize, int port, File workingDir, List<String> vmOptions) throws Exception {
     final List<String> cmdLine = new ArrayList<String>();
     appendParam(cmdLine, getVMExecutablePath(sdkHomePath));
-    appendParam(cmdLine, "-server");
     appendParam(cmdLine, "-XX:MaxPermSize=150m");
     //appendParam(cmdLine, "-XX:ReservedCodeCacheSize=64m");
     appendParam(cmdLine, "-Djava.awt.headless=true");
+    final int xms = heapSize / 2;
+    if (xms > 32) {
+      appendParam(cmdLine, "-Xms" + xms + "m");
+    }
     appendParam(cmdLine, "-Xmx" + heapSize + "m");
 
     // debugging
