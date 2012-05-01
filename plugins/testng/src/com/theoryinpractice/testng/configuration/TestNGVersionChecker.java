@@ -52,7 +52,7 @@ public class TestNGVersionChecker {
   private static final Logger LOG = Logger.getInstance("#" + TestNGVersionChecker.class.getName());
 
   private static final String TEST_NG_VERSIONS_INCOMPATIBILITY = "<html><b>!!!TestNG protocol incompatibility!!!</b><br>";
-  private static final String COPY_MESSAGE = "In order to use your project testng.jar, please, <a href=\"copy\">copy</a> it in the plugin lib directory.</html>";
+  private static final String COPY_MESSAGE = "In order to use your project testng.jar, please, <a href=\"copy\">copy</a> it in the plugin lib directory.";
 
   @Nullable
   public static String getVersionIncompatibilityMessage(Project project, GlobalSearchScope scope, String pathToBundledJar) {
@@ -85,7 +85,8 @@ public class TestNGVersionChecker {
   @Nullable
   private static String getIncompatibilityMessage(Project project, GlobalSearchScope scope, String pathToBundledJar) {
     final String protocolClassMessageClass = TestResultMessage.class.getName();
-    final PsiClass psiProtocolClass = JavaPsiFacade.getInstance(project).findClass(protocolClassMessageClass, scope);
+    final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
+    final PsiClass psiProtocolClass = psiFacade.findClass(protocolClassMessageClass, scope);
     if (psiProtocolClass != null) {
       final ZipFile workingLibrary = getZipLibrary(project, scope);
       if (workingLibrary != null) {
@@ -101,11 +102,14 @@ public class TestNGVersionChecker {
           catch (IOException e) {
             return null;
           }
+          final boolean ableToStartWithUserJar = psiFacade.findClass("com.beust.jcommander.JCommander", scope) != null;
           return TEST_NG_VERSIONS_INCOMPATIBILITY +
                  "Right now " + ApplicationNamesInfo.getInstance().getFullProductName() +
                  " does not support testng version (v." + jarVersion + ") used in your project due to the protocol changes on the TestNG side.<br>" +
                  "Bundled jar (v." + bundledVersion + ") was used instead to run your tests.<br>" +
-                 COPY_MESSAGE;
+                 (ableToStartWithUserJar ? COPY_MESSAGE 
+                                         : "In order to use your project testng.jar, please, download & copy it in the plugin lib directory.") +
+                 "</html>";
         }
       }
     }

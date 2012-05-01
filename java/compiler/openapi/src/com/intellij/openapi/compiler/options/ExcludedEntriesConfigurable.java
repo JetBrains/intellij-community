@@ -149,7 +149,7 @@ public class ExcludedEntriesConfigurable implements UnnamedConfigurable {
     }
 
     private void addPath(FileChooserDescriptor descriptor) {
-      int selected = myExcludedTable.getSelectedRow() + 1;
+      int selected = -1 /*myExcludedTable.getSelectedRow() + 1*/;
       if(selected < 0) {
         selected = myExcludeEntryDescriptions.size();
       }

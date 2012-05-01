@@ -292,7 +292,7 @@ public def layoutCommunityPlugins(String home) {
 
     pluginDir("testng") {
       dir("lib") {
-        jar("testng.jar") {
+        jar("testng-plugin.jar") {
           noResources("testng")
           noResources("testng_rt")
         }
@@ -300,13 +300,7 @@ public def layoutCommunityPlugins(String home) {
         resources("testng")
 
         fileset(dir: "$home/plugins/testng/lib") {
-          include(name: "testng-jdk15.jar")
-        }
-      }
-
-      dir("lib-jdk14") {
-        fileset(dir: "$home/plugins/testng/lib") {
-          include(name: "testng-jdk14.jar")
+          include(name: "testng.jar")
         }
       }
     }
@@ -529,7 +523,7 @@ def layout_core(String home, String target) {
       include(name: "trove4j.jar")
       include(name: "asm.jar")
       include(name: "asm-commons.jar")
-      include(name: "cli-10.jar")
+      include(name: "cli-parser-1.1.jar")
     }
   }
 }

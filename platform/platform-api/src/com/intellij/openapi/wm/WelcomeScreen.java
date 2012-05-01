@@ -15,19 +15,13 @@
  */
 package com.intellij.openapi.wm;
 
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectUtil;
-import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.impl.PlatformFrameTitleBuilder;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.openapi.Disposable;
+
+import javax.swing.*;
 
 /**
- * @author yole
+ * @author Konstantin Bulenkov
  */
-public class IdeaFrameTitleBuilder extends PlatformFrameTitleBuilder {
-  @Override
-  public String getFileTitle(@NotNull final Project project, @NotNull final VirtualFile file) {
-    return ProjectUtil.calcRelativeToProjectPath(file, project, !SystemInfo.isMac, true, false);
-  }
+public interface WelcomeScreen extends Disposable {
+  JComponent getWelcomePanel();
 }

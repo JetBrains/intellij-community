@@ -13,12 +13,8 @@ public class ModuleClasspathTest extends JpsBuildTestCase {
   protected void setUp() {
     super.setUp()
     project = loadProject(getProjectPath(), [:], {Project project ->
-      project.createJavaSdk("1.6", "jdk16") {
-        classpath "/jdk.jar"
-      }
-      project.createJavaSdk("1.5", "jdk15") {
-        classpath "/jdk15.jar"
-      }
+      project.createJavaSdk("1.6", "jdk16") { }.addClasspath("/jdk.jar")
+      project.createJavaSdk("1.5", "jdk15") { }.addClasspath("/jdk15.jar")
     })
     builder = createBuilder(project)
   }

@@ -17,7 +17,6 @@ package com.intellij.compiler;
 
 import com.intellij.ProjectTopics;
 import com.intellij.application.options.PathMacrosImpl;
-import com.intellij.compiler.impl.CompileDriver;
 import com.intellij.compiler.server.impl.CompileServerClasspathManager;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
@@ -164,7 +163,7 @@ public class CompileServerManager implements ApplicationComponent{
       }
 
       private boolean shouldTriggerMake(List<? extends VFileEvent> events) {
-        if (!CompileDriver.runOutOfProcessMakeAsServer()) {
+        if (CompilerWorkspaceConfiguration.useServerlessOutOfProcessBuild()) {
           return false;
         }
         for (VFileEvent event : events) {
@@ -295,7 +294,7 @@ public class CompileServerManager implements ApplicationComponent{
           continue;
         }
         final CompilerWorkspaceConfiguration config = CompilerWorkspaceConfiguration.getInstance(project);
-        if (!config.useCompileServer() || !config.MAKE_PROJECT_ON_SAVE) {
+        if (!config.useOutOfProcessBuild() || !config.MAKE_PROJECT_ON_SAVE) {
           continue;
         }
         final RequestFuture future = submitCompilationTask(project, false, true, Collections.<String>emptyList(), Collections.<String>emptyList(),
@@ -584,7 +583,7 @@ public class CompileServerManager implements ApplicationComponent{
     cmdLine.addParameter("-server");
     cmdLine.addParameter("-XX:MaxPermSize=150m");
     cmdLine.addParameter("-XX:ReservedCodeCacheSize=64m");
-    cmdLine.addParameter("-Xmx" + Registry.intValue("compiler.server.heap.size") + "m");
+    cmdLine.addParameter("-Xmx" + Registry.intValue("compiler.process.heap.size") + "m");
     cmdLine.addParameter("-Djava.awt.headless=true");
 
     final String shouldGenerateIndex = System.getProperty(GlobalOptions.GENERATE_CLASSPATH_INDEX_OPTION);
@@ -601,7 +600,7 @@ public class CompileServerManager implements ApplicationComponent{
       cmdLine.addParameter("-D" + GlobalOptions.MAX_SIMULTANEOUS_BUILDS_OPTION + "=" + maxBuilds);
     }
 
-    final String additionalOptions = Registry.stringValue("compiler.server.vm.options");
+    final String additionalOptions = Registry.stringValue("compiler.process.vm.options");
     if (!StringUtil.isEmpty(additionalOptions)) {
       final StringTokenizer tokenizer = new StringTokenizer(additionalOptions, " ", false);
       while (tokenizer.hasMoreTokens()) {
@@ -610,16 +609,16 @@ public class CompileServerManager implements ApplicationComponent{
     }
 
     // debugging
-    final int debugPort = Registry.intValue("compiler.server.debug.port");
+    final int debugPort = Registry.intValue("compiler.process.debug.port");
     if (debugPort > 0) {
       cmdLine.addParameter("-XX:+HeapDumpOnOutOfMemoryError");
       cmdLine.addParameter("-Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=" + debugPort);
     }
 
-    if (Registry.is("compiler.server.use.memory.temp.cache")) {
+    if (Registry.is("compiler.process.use.memory.temp.cache")) {
       cmdLine.addParameter("-D"+ GlobalOptions.USE_MEMORY_TEMP_CACHE_OPTION);
     }
-    if (Registry.is("compiler.server.use.external.javac.process")) {
+    if (Registry.is("compiler.process.use.external.javac")) {
       cmdLine.addParameter("-D"+ GlobalOptions.USE_EXTERNAL_JAVAC_OPTION);
     }
     cmdLine.addParameter("-D"+ GlobalOptions.HOSTNAME_OPTION + "=" + NetUtils.getLocalHostString());

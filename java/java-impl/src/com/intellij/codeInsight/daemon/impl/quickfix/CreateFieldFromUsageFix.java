@@ -126,7 +126,7 @@ public class CreateFieldFromUsageFix extends CreateVarFromUsageFix {
     final Editor newEditor = positionCursor(project, targetFile, field);
     TextRange range = field.getTextRange();
     newEditor.getDocument().deleteString(range.getStartOffset(), range.getEndOffset());
-    template.setToShortenLongNames(false);
+    if (expectedTypes.length > 1) template.setToShortenLongNames(false);
 
     startTemplate(newEditor, template, project, new TemplateEditingAdapter() {
       @Override

@@ -195,7 +195,10 @@ public class CreateFromUsageUtils {
         if (end < start) {
           newEditor.getCaretModel().moveToOffset(end + 1);
           CodeStyleManager styleManager = CodeStyleManager.getInstance(method.getProject());
-          final String lineIndent = styleManager.getLineIndent(method.getContainingFile(), Math.min(start, end));
+          PsiFile containingFile = method.getContainingFile();
+          final String lineIndent = styleManager.getLineIndent(containingFile, Math.min(start, end));
+          PsiDocumentManager manager = PsiDocumentManager.getInstance(method.getProject());
+          manager.doPostponedOperationsAndUnblockDocument(manager.getDocument(containingFile));
           EditorModificationUtil.insertStringAtCaret(newEditor, lineIndent);
         } else {
           newEditor.getSelectionModel().setSelection(Math.min(start, end), Math.max(start, end));

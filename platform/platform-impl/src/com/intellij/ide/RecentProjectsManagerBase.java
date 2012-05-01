@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,8 +32,9 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFrame;
+import com.intellij.openapi.wm.WelcomeScreen;
 import com.intellij.openapi.wm.impl.IdeRootPane;
-import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreen;
+import com.intellij.openapi.wm.impl.welcomeScreen.DefaultWelcomeScreen;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NotNull;
@@ -214,9 +215,9 @@ public abstract class RecentProjectsManagerBase implements PersistentStateCompon
             IdeFrame frame = e.getData(IdeFrame.KEY);
             if (frame != null) {
               IdeRootPane rootPane = (IdeRootPane) frame.getComponent();
-              WelcomeScreen welcomeScreen = rootPane.getWelcomeScreen();
-              if (welcomeScreen != null) {
-                welcomeScreen.hideRecentProjectsPanel();
+              final WelcomeScreen welcomeScreen = rootPane.getWelcomeScreen();
+              if (welcomeScreen instanceof DefaultWelcomeScreen) {
+                ((DefaultWelcomeScreen)welcomeScreen).hideRecentProjectsPanel();
               }
             }
           }

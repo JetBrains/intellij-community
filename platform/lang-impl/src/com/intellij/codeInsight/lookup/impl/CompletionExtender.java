@@ -19,6 +19,7 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.HintHint;
 import com.intellij.ui.LightweightHint;
+import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -79,6 +80,10 @@ public class CompletionExtender extends LightweightHint {
       hide();
       return false;
     }
+    if (!checkComponentBounds()) {
+      hide();
+      return false;
+    }
     final JList list = myLookup.getList();
     if (getComponent().getWidth() > list.getWidth()) {
       final JComponent rootPane = myLookup.myLayeredPane;
@@ -94,6 +99,15 @@ public class CompletionExtender extends LightweightHint {
       }
     }
     return false;
+  }
+
+  private boolean checkComponentBounds() {
+    final Dimension size = getComponent().getPreferredSize();
+    final JList list = myLookup.getList();
+    final Point p = list.getLocationOnScreen();
+    p.y += list.indexToLocation(list.getSelectedIndex()).y;
+    final Rectangle rectangle = new Rectangle(p, size);
+    return !ScreenUtil.isOutsideOnTheRightOFScreen(rectangle);
   }
 
   void recalculateLocation() {

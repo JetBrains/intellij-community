@@ -53,6 +53,11 @@ public class TypeExpression extends Expression {
       public void handleRecalc(PsiFile psiFile, Document document, int segmentStart, int segmentEnd) {
         if (myItems.size() <= 1) super.handleRecalc(psiFile, document, segmentStart, segmentEnd);
       }
+
+      @Override
+      public String toString() {
+        return myItems.size() == 1 ? type.getCanonicalText() : super.toString();
+      }
     };
   }
 

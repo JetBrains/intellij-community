@@ -146,15 +146,15 @@ public class HotSwapUIImpl extends HotSwapUI implements ProjectComponent{
       return;
     }
 
-    final boolean isServerMode = CompilerWorkspaceConfiguration.getInstance(myProject).useCompileServer();
-    final boolean shouldPerformScan = !isServerMode || generatedPaths == null;
+    final boolean isOutOfProcessMode = CompilerWorkspaceConfiguration.getInstance(myProject).useOutOfProcessBuild();
+    final boolean shouldPerformScan = !isOutOfProcessMode || generatedPaths == null;
 
     final HotSwapProgressImpl findClassesProgress = shouldPerformScan ? new HotSwapProgressImpl(myProject) : null;
     
     ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
       public void run() {
         final Map<DebuggerSession, Map<String, HotSwapFile>> modifiedClasses = shouldPerformScan?
-          scanForModifiedClassesWithProgress(sessions, findClassesProgress, !isServerMode) :
+          scanForModifiedClassesWithProgress(sessions, findClassesProgress, !isOutOfProcessMode) :
           HotSwapManager.findModifiedClasses(sessions, generatedPaths);
 
         final Application application = ApplicationManager.getApplication();

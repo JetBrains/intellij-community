@@ -16,15 +16,21 @@
 package com.intellij.codeInspection.ex;
 
 import com.intellij.analysis.AnalysisScope;
-import com.intellij.codeInspection.GlobalInspectionContext;
-import com.intellij.codeInspection.InspectionEP;
-import com.intellij.codeInspection.InspectionManager;
+import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
+import com.intellij.codeInspection.reference.RefManager;
+import com.intellij.codeInspection.reference.RefModule;
 import com.intellij.codeInspection.ui.InspectionNode;
 import com.intellij.codeInspection.ui.InspectionTreeNode;
+import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.openapi.vcs.FileStatus;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 
@@ -49,6 +55,11 @@ public class CommonInspectionToolWrapper extends InspectionToolWrapper<Inspectio
   @Override
   public void runInspection(@NotNull AnalysisScope scope, @NotNull InspectionManager manager) {
     getTool().runInspection(scope, manager);
+  }
+
+  @Override
+  public RefManager getRefManager() {
+    return getTool().getRefManager();
   }
 
   @Override
@@ -93,6 +104,21 @@ public class CommonInspectionToolWrapper extends InspectionToolWrapper<Inspectio
   }
 
   @Override
+  public void finalCleanup() {
+    getTool().finalCleanup();
+  }
+
+  @Override
+  public void cleanup() {
+    getTool().cleanup();
+  }
+
+  public boolean isEnabledByDefault() {
+    return getTool().isEnabledByDefault();
+  }
+
+  @Nullable
+  @Override
   public QuickFixAction[] getQuickFixes(RefEntity[] refElements) {
     return getTool().getQuickFixes(refElements);
   }
@@ -105,6 +131,45 @@ public class CommonInspectionToolWrapper extends InspectionToolWrapper<Inspectio
   }
 
   @Override
+  @SuppressWarnings({"UnusedDeclaration"})
+  @Nullable
+  public IntentionAction findQuickFixes(CommonProblemDescriptor descriptor, String hint) {
+    return getTool().findQuickFixes(descriptor, hint);
+  }
+
+  @Override
+  public HighlightSeverity getCurrentSeverity(RefElement element) {
+    return getTool().getCurrentSeverity(element);
+  }
+
+  @Override
+  public FileStatus getElementStatus(RefEntity element) {
+    return getTool().getElementStatus(element);
+  }
+
+  @Override
+  public boolean isElementIgnored(RefEntity element) {
+    return getTool().isElementIgnored(element);
+  }
+
+  @Override
+  @Nullable
+  public Set<RefModule> getModuleProblems() {
+    return getTool().getModuleProblems();
+  }
+
+  @Override
+  public boolean isOldProblemsIncluded() {
+    return getTool().isOldProblemsIncluded();
+  }
+
+  @Override
+  @Nullable
+  public Map<String, Set<RefEntity>> getOldContent() {
+    return getTool().getOldContent();
+  }
+
+  @Override
   public boolean queryExternalUsagesRequests(InspectionManager manager) {
     return getTool().queryExternalUsagesRequests(manager);
   }
@@ -112,5 +177,30 @@ public class CommonInspectionToolWrapper extends InspectionToolWrapper<Inspectio
   @Override
   public void exportResults(@NotNull Element parentNode, RefEntity refEntity) {
     getTool().exportResults(parentNode, refEntity);
+  }
+
+  @Override
+  public void exportResults(@NotNull Element parentNode) {
+    getTool().exportResults(parentNode);
+  }
+
+  @Override
+  public void amnesty(RefEntity refEntity) {
+    getTool().amnesty(refEntity);
+  }
+
+  @Override
+  public void ignoreCurrentElement(RefEntity refElement) {
+    getTool().ignoreCurrentElement(refElement);
+  }
+
+  @Override
+  public Collection<RefEntity> getIgnoredRefElements() {
+    return getTool().getIgnoredRefElements();
+  }
+
+  @Nullable
+  public SuppressIntentionAction[] getSuppressActions() {
+    return getTool().getSuppressActions();
   }
 }

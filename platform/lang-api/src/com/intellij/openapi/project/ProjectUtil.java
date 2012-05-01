@@ -19,6 +19,7 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.highlighter.InternalFileType;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.fileEditor.UniqueVFilePathBuilder;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
@@ -53,18 +54,28 @@ public class ProjectUtil {
   public static String calcRelativeToProjectPath(@NotNull final VirtualFile file,
                                                  @Nullable final Project project,
                                                  final boolean includeFilePath) {
-    return calcRelativeToProjectPath(file, project, includeFilePath, false);
+    return calcRelativeToProjectPath(file, project, includeFilePath, false, false);
   }
 
   @NotNull
   public static String calcRelativeToProjectPath(@NotNull final VirtualFile file,
                                                  @Nullable final Project project,
                                                  final boolean includeFilePath,
+                                                 final boolean includeUniqueFilePath,
                                                  final boolean keepModuleAlwaysOnTheLeft) {
     if (file instanceof VirtualFilePathWrapper) {
       return includeFilePath ? ((VirtualFilePathWrapper)file).getPresentablePath() : file.getName();
     }    
-    String url = includeFilePath ? file.getPresentableUrl() : file.getName();
+    String url;
+    if (includeFilePath) {
+      url = file.getPresentableUrl();
+    }
+    else if (includeUniqueFilePath) {
+      url = UniqueVFilePathBuilder.getInstance().getUniqueVirtualFilePath(project, file);
+    }
+    else {
+      url = file.getName();
+    }
     if (project == null) {
       return url;
     }

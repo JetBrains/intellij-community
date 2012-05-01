@@ -21,8 +21,14 @@ import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
-import com.intellij.codeInspection.*;
-import com.intellij.codeInspection.ex.*;
+import com.intellij.codeInspection.InspectionProfile;
+import com.intellij.codeInspection.InspectionProfileEntry;
+import com.intellij.codeInspection.InspectionsBundle;
+import com.intellij.codeInspection.ModifiableModel;
+import com.intellij.codeInspection.ex.Descriptor;
+import com.intellij.codeInspection.ex.InspectionProfileImpl;
+import com.intellij.codeInspection.ex.InspectionToolRegistrar;
+import com.intellij.codeInspection.ex.ScopeToolState;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.DefaultTreeExpander;
 import com.intellij.ide.IdeTooltipManager;
@@ -569,7 +575,7 @@ public class SingleInspectionProfilePanel extends JPanel {
   }
 
   static String renderSeverity(HighlightSeverity severity) {
-    return InspectionsBundle.message("inspection.as", severity.toString().toLowerCase());
+    return severity.toString().toLowerCase();
   }
 
   private void toggleToolNode(final InspectionConfigTreeNode toolNode) {
@@ -865,6 +871,7 @@ public class SingleInspectionProfilePanel extends JPanel {
 
     myBrowser = new JEditorPane(UIUtil.HTML_MIME, EMPTY_HTML);
     myBrowser.setEditable(false);
+    myBrowser.setBorder(IdeBorderFactory.createEmptyBorder(5, 5, 5, 5));
     myBrowser.addHyperlinkListener(new BrowserHyperlinkListener());
 
     initDescriptors();

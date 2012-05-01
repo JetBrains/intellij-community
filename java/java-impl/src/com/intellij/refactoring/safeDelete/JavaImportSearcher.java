@@ -13,21 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.wm;
+package com.intellij.refactoring.safeDelete;
 
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectUtil;
-import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.impl.PlatformFrameTitleBuilder;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiImportList;
+import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.util.PsiTreeUtil;
 
 /**
- * @author yole
+ * @author Max Medvedev
  */
-public class IdeaFrameTitleBuilder extends PlatformFrameTitleBuilder {
+public class JavaImportSearcher extends ImportSearcher {
   @Override
-  public String getFileTitle(@NotNull final Project project, @NotNull final VirtualFile file) {
-    return ProjectUtil.calcRelativeToProjectPath(file, project, !SystemInfo.isMac, true, false);
+  public PsiElement findImport(PsiElement element) {
+    final PsiFile containingFile = element.getContainingFile();
+    if (containingFile instanceof PsiJavaFile) {
+      return PsiTreeUtil.getParentOfType(element, PsiImportList.class, true);
+    }
+    return null;
   }
 }

@@ -5,6 +5,6 @@ package org.jetbrains.jps
  */
 class Sdk extends Library {
   Sdk(project, name, initializer) {
-    super(project, name, true, initializer);
+    super(project, name);
   }
 }
