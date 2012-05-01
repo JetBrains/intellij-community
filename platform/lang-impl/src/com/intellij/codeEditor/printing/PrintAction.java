@@ -17,13 +17,18 @@
 package com.intellij.codeEditor.printing;
 
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.project.Project;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 
 public class PrintAction extends AnAction implements DumbAware {
+  public PrintAction() {
+    super();
+    
+  }
 
   public void actionPerformed(AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
@@ -42,8 +47,9 @@ public class PrintAction extends AnAction implements DumbAware {
       presentation.setEnabled(true);
       return;
     }
+    Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
     PsiFile psiFile = LangDataKeys.PSI_FILE.getData(dataContext);
-    presentation.setEnabled(psiFile != null);
+    presentation.setEnabled(psiFile != null || editor != null);
   }
 
 }

@@ -25,6 +25,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
+import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.progress.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
@@ -68,11 +69,15 @@ class PrintManager {
     }
 
     Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
-    boolean isSelectedTextEnabled = false;
-    if(editor != null && editor.getSelectionModel().hasSelection()) {
-      isSelectedTextEnabled = true;
+    String text = null;
+    if(editor != null) {
+      if(editor.getSelectionModel().hasSelection()) {
+        text = CodeEditorBundle.message("print.selected.text.radio");
+      } else {
+        text = psiFile == null ? "Console text" : null;
+      }
     }
-    PrintDialog printDialog = new PrintDialog(shortFileName[0], directoryName[0], isSelectedTextEnabled, project);
+    PrintDialog printDialog = new PrintDialog(shortFileName[0], directoryName[0], text, project);
     printDialog.reset();
     printDialog.show();
     if(!printDialog.isOK()) {
@@ -85,10 +90,8 @@ class PrintManager {
     Printable painter;
 
     if(printSettings.getPrintScope() != PrintSettings.PRINT_DIRECTORY) {
-      if(psiFile == null) {
-        return;
-      }
-      TextPainter textPainter = initTextPainter(psiFile, project);
+      if (psiFile == null && editor == null) return;
+      TextPainter textPainter = psiFile != null ? initTextPainter(psiFile, project) : initTextPainter((DocumentEx)editor.getDocument(), project);
       if (textPainter == null) return;
 
       if(printSettings.getPrintScope() == PrintSettings.PRINT_SELECTED_TEXT && editor != null && editor.getSelectionModel().hasSelection()) {
@@ -220,6 +223,24 @@ class PrintManager {
     if (doc == null) return null;
     EditorHighlighter highlighter = HighlighterFactory.createHighlighter(project, psiFile.getVirtualFile());
     highlighter.setText(doc.getCharsSequence());
-    return new TextPainter(doc, highlighter, fileName, psiFile, project);
+    return new TextPainter(doc, highlighter, fileName, psiFile, project, psiFile.getFileType());
   }
+
+  public static TextPainter initTextPainter(@NotNull final DocumentEx doc, final Project project) {
+    final TextPainter[] res = new TextPainter[1];
+    ApplicationManager.getApplication().runReadAction(
+      new Runnable() {
+        public void run() {
+          res[0] = doInitTextPainter(doc, project);
+        }
+      }
+    );
+    return res[0];
+  }
+  
+  private static TextPainter doInitTextPainter(@NotNull final DocumentEx doc, Project project) {
+     EditorHighlighter highlighter = HighlighterFactory.createHighlighter(project, FileTypes.PLAIN_TEXT);
+     highlighter.setText(doc.getCharsSequence());
+     return new TextPainter(doc, highlighter, "unknown", project, FileTypes.PLAIN_TEXT, null);
+   }
 }

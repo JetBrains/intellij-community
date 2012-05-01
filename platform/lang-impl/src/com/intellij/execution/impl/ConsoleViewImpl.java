@@ -1468,15 +1468,16 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     final AnAction autoScrollToTheEndAction = new ScrollToTheEndToolbarAction(myEditor);
 
     //Initializing custom actions
-    final AnAction[] consoleActions = new AnAction[5 + customActions.size()];
+    final AnAction[] consoleActions = new AnAction[6 + customActions.size()];
     consoleActions[0] = prevAction;
     consoleActions[1] = nextAction;
     consoleActions[2] = switchSoftWrapsAction;
     consoleActions[3] = autoScrollToTheEndAction;
-    consoleActions[4] = new ClearAllAction();
+    consoleActions[4] = ActionManager.getInstance().getAction("Print");
+    consoleActions[5] = new ClearAllAction();
     //consoleActions[4] = new ShowRecentlyChanged();
     for (int i = 0; i < customActions.size(); ++i) {
-      consoleActions[i + 5] = customActions.get(i);
+      consoleActions[i + 6] = customActions.get(i);
     }
     ConsoleActionsPostProcessor[] postProcessors = Extensions.getExtensions(ConsoleActionsPostProcessor.EP_NAME);
     AnAction[] result = consoleActions;
