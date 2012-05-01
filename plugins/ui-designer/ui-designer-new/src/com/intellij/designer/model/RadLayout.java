@@ -16,6 +16,7 @@
 package com.intellij.designer.model;
 
 import com.intellij.designer.designSurface.*;
+import com.intellij.designer.propertyTable.Property;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,6 +31,9 @@ public abstract class RadLayout {
 
   public void setContainer(RadComponent container) {
     myContainer = container;
+  }
+
+  public void configureProperties(List<Property> properties) {
   }
 
   public void addComponentToContainer(RadComponent component, int index) {

@@ -1161,7 +1161,7 @@
   </meta>
 
   <meta model="com.intellij.android.designer.model.RadViewContainer"
-        layout="com.intellij.android.designer.model.layout.RadRelativeLayout"
+        layout="com.intellij.android.designer.model.layout.relative.RadRelativeLayout"
         class="android.widget.RelativeLayout"
         tag="RelativeLayout">
 

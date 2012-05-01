@@ -13,15 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.android.designer.model.layout;
+package com.intellij.android.designer.model.layout.relative;
 
 import com.intellij.android.designer.designSurface.TreeDropToOperation;
 import com.intellij.android.designer.designSurface.layout.RelativeLayoutOperation;
+import com.intellij.android.designer.model.PropertyParser;
 import com.intellij.android.designer.model.RadViewLayoutWithData;
+import com.intellij.android.designer.propertyTable.CompoundProperty;
 import com.intellij.designer.componentTree.TreeEditOperation;
 import com.intellij.designer.designSurface.EditOperation;
 import com.intellij.designer.designSurface.OperationContext;
+import com.intellij.designer.propertyTable.Property;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 /**
  * @author Alexander Lobas
@@ -33,6 +38,19 @@ public class RadRelativeLayout extends RadViewLayoutWithData {
   @Override
   public String[] getLayoutParams() {
     return LAYOUT_PARAMS;
+  }
+
+  @Override
+  public void configureProperties(List<Property> properties) {
+    CompoundProperty alignParent = new CompoundProperty("layout:alignParent");
+    alignParent.setImportant(true);
+    PropertyParser.moveProperties(properties, alignParent,
+                                  "layout:alignParentTop", "top",
+                                  "layout:alignParentLeft", "left",
+                                  "layout:alignParentBottom", "bottom",
+                                  "layout:alignParentRight", "right",
+                                  "layout:alignWithParentIfMissing", "missing");
+    properties.add(alignParent);
   }
 
   @Override

@@ -20,6 +20,8 @@ import com.intellij.designer.model.MetaModel;
 import com.intellij.designer.propertyTable.IPropertyDecorator;
 import com.intellij.designer.propertyTable.Property;
 import com.intellij.designer.propertyTable.PropertyEditor;
+import com.intellij.designer.propertyTable.PropertyRenderer;
+import com.intellij.designer.propertyTable.renderers.LabelPropertyRenderer;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -30,8 +32,9 @@ import java.util.List;
 /**
  * @author Alexander Lobas
  */
-public abstract class CompoundProperty extends Property<RadViewComponent> implements IPropertyDecorator {
-  private List<Property<RadViewComponent>> myChildren = new ArrayList<Property<RadViewComponent>>();
+public class CompoundProperty extends Property<RadViewComponent> implements IPropertyDecorator {
+  private final List<Property<RadViewComponent>> myChildren = new ArrayList<Property<RadViewComponent>>();
+  private PropertyRenderer myRenderer;
 
   public CompoundProperty(@NotNull String name) {
     super(null, name);
@@ -60,7 +63,9 @@ public abstract class CompoundProperty extends Property<RadViewComponent> implem
     return myChildren;
   }
 
-  protected abstract CompoundProperty createForNewPresentation(@NotNull String name);
+  protected CompoundProperty createForNewPresentation(@NotNull String name) {
+    return new CompoundProperty(name);
+  }
 
   @Override
   public Object getValue(RadViewComponent component) throws Exception {
@@ -101,6 +106,15 @@ public abstract class CompoundProperty extends Property<RadViewComponent> implem
     for (Property<RadViewComponent> childProperty : myChildren) {
       childProperty.setDefaultValue(component);
     }
+  }
+
+  @NotNull
+  @Override
+  public PropertyRenderer getRenderer() {
+    if (myRenderer == null) {
+      myRenderer = new LabelPropertyRenderer(null);
+    }
+    return myRenderer;
   }
 
   @Override

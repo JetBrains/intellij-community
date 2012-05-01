@@ -131,6 +131,10 @@ public class PropertyParser {
 
         List<Property> properties = loadLayoutProperties(layoutParams, 0, models);
         if (!properties.isEmpty()) {
+          if (layout != null) {
+            layout.configureProperties(properties);
+          }
+
           properties = new ArrayList<Property>(properties);
           properties.addAll(component.getProperties());
           component.setProperties(properties);
@@ -337,7 +341,7 @@ public class PropertyParser {
     return properties;
   }
 
-  private static void moveProperties(List<Property> source, Property destination, String... names) {
+  public static void moveProperties(List<Property> source, Property destination, String... names) {
     List<Property> children = destination.getChildren(null);
     for (int i = 0; i < names.length; i += 2) {
       Property property = PropertyTable.extractProperty(source, names[i]);
