@@ -576,10 +576,14 @@ public class BuildManager implements ApplicationComponent{
     final GeneralCommandLine cmdLine = new GeneralCommandLine();
     final String vmExecutablePath = ((JavaSdkType)projectJdk.getSdkType()).getVMExecutablePath(projectJdk);
     cmdLine.setExePath(vmExecutablePath);
-    cmdLine.addParameter("-server");
     cmdLine.addParameter("-XX:MaxPermSize=150m");
     cmdLine.addParameter("-XX:ReservedCodeCacheSize=64m");
-    cmdLine.addParameter("-Xmx" + Registry.intValue("compiler.process.heap.size") + "m");
+    final int heapSize = Registry.intValue("compiler.process.heap.size");
+    final int xms = heapSize / 2;
+    if (xms > 32) {
+      cmdLine.addParameter("-Xms" + xms + "m");
+    }
+    cmdLine.addParameter("-Xmx" + heapSize + "m");
     cmdLine.addParameter("-Djava.awt.headless=true");
 
     final String shouldGenerateIndex = System.getProperty(GlobalOptions.GENERATE_CLASSPATH_INDEX_OPTION);

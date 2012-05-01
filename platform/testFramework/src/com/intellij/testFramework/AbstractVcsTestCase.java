@@ -115,7 +115,7 @@ public abstract class AbstractVcsTestCase {
     return result;
   }
 
-  protected void setVcsMappings(VcsDirectoryMapping... mappings) {
+  public void setVcsMappings(VcsDirectoryMapping... mappings) {
     setVcsMappings(Arrays.asList(mappings));
   }
     protected void setVcsMappings(List<VcsDirectoryMapping> mappings) {
@@ -174,7 +174,7 @@ public abstract class AbstractVcsTestCase {
     return createFileInCommand(myWorkingCopyDir, name, content);
   }
 
-  protected VirtualFile createFileInCommand(final VirtualFile parent, final String name, @Nullable final String content) {
+  public VirtualFile createFileInCommand(final VirtualFile parent, final String name, @Nullable final String content) {
     final Ref<VirtualFile> result = new Ref<VirtualFile>();
     new WriteCommandAction.Simple(myProject) {
       @Override
@@ -201,7 +201,7 @@ public abstract class AbstractVcsTestCase {
    * @param name   Name of the directory.
    * @return reference to the created or already existing directory.
    */
-  protected VirtualFile createDirInCommand(final VirtualFile parent, final String name) {
+  public VirtualFile createDirInCommand(final VirtualFile parent, final String name) {
     final Ref<VirtualFile> result = new Ref<VirtualFile>();
     new WriteCommandAction.Simple(myProject) {
       @Override
@@ -234,8 +234,8 @@ public abstract class AbstractVcsTestCase {
     }
   }
 
-  protected void setStandardConfirmation(final String vcsName, final VcsConfiguration.StandardConfirmation op,
-                                         final VcsShowConfirmationOption.Value value) {
+  public void setStandardConfirmation(final String vcsName, final VcsConfiguration.StandardConfirmation op,
+                                      final VcsShowConfirmationOption.Value value) {
     ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(myProject);
     final AbstractVcs vcs = vcsManager.findVcsByName(vcsName);
     VcsShowConfirmationOption option = vcsManager.getStandardConfirmation(op, vcs);
@@ -436,6 +436,10 @@ public abstract class AbstractVcsTestCase {
     else {
       verifyRevision(c.getAfterRevision(), afterPath);
     }
+  }
+
+  public VirtualFile getWorkingCopyDir() {
+    return myWorkingCopyDir;
   }
 
   private void verifyRevision(final ContentRevision beforeRevision, final String beforePath) {
