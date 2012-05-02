@@ -1301,6 +1301,7 @@ public class CompileDriver {
           final Function<Pair<int[], Set<VirtualFile>>, Pair<int[], Set<VirtualFile>>> dependencyFilter = new DependentClassesCumulativeFilter();
           
           do {
+            generatedTypes.clear();
             for (int currentCompiler = 0, translatorsLength = translators.length; currentCompiler < translatorsLength; currentCompiler++) {
               sink.setCurrentCompilerIndex(currentCompiler);
               final TranslatingCompiler compiler = translators[currentCompiler];
@@ -1310,18 +1311,16 @@ public class CompileDriver {
 
               dumbService.waitForSmartMode();
   
-              if (round == 0) {
-                if (snapshot == null || ContainerUtil.intersects(generatedTypes, compilerManager.getRegisteredInputTypes(compiler))) {
-                  // rescan snapshot if previously generated files may influence the input of this compiler
-                  snapshot = ApplicationManager.getApplication().runReadAction(new Computable<VirtualFile[]>() {
-                    public VirtualFile[] compute() {
-                      return context.getCompileScope().getFiles(null, true);
-                    }
-                  });
-                  recalculateChunkToFilesMap(context, sortedChunks, snapshot, chunkMap);
-                  chunkFiles = chunkMap.get(currentChunk);
-                  total = snapshot.length * translatorsLength;
-                }
+              if (snapshot == null || ContainerUtil.intersects(generatedTypes, compilerManager.getRegisteredInputTypes(compiler))) {
+                // rescan snapshot if previously generated files may influence the input of this compiler
+                snapshot = ApplicationManager.getApplication().runReadAction(new Computable<VirtualFile[]>() {
+                  public VirtualFile[] compute() {
+                    return context.getCompileScope().getFiles(null, true);
+                  }
+                });
+                recalculateChunkToFilesMap(context, sortedChunks, snapshot, chunkMap);
+                chunkFiles = chunkMap.get(currentChunk);
+                total = snapshot.length * translatorsLength;
               }
   
               final CompileContextEx _context;
