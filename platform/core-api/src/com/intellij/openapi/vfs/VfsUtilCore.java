@@ -166,6 +166,7 @@ public class VfsUtilCore {
                                                @NotNull VirtualFileVisitor visitor,
                                                @Nullable Set<VirtualFile> visitedSymlinks) {
 
+    if (!file.isValid()) return;
     if (!visitor.visitFile(file)) return;
     if (file.isSymLink()) {
       if (visitedSymlinks == null) {
