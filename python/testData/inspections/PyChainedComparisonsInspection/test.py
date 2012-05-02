@@ -14,7 +14,7 @@ q = <weak_warning descr="Simplify chained comparison">a >= b >= c and c > d</wea
 if <weak_warning descr="Simplify chained comparison">b > a and b < c</weak_warning>:
   print ("a")
 
-if <weak_warning descr="Simplify chained comparison">c > a and b < c</weak_warning>:
+if c > a and b < c:
   print("b")
 
 if <weak_warning descr="Simplify chained comparison">a > c and b < c</weak_warning>:
