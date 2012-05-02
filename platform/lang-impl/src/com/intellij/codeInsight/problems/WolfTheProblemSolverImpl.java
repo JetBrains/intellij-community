@@ -417,7 +417,7 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
     synchronized (myFilters) {
       if (!myFiltersLoaded) {
         myFiltersLoaded = true;
-        Collections.addAll(myFilters, Extensions.getExtensions(FILTER_EP_NAME, myProject));
+        myFilters.addAll(Arrays.asList(Extensions.getExtensions(FILTER_EP_NAME, myProject)));
       }
     }
     for (final Condition<VirtualFile> filter : myFilters) {
