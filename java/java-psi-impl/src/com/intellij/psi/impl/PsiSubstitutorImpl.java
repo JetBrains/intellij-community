@@ -283,6 +283,14 @@ public class PsiSubstitutorImpl implements PsiSubstitutor {
         if (original == null) {
           substMap.put(param, null);
         } else {
+          /*boolean alreadyFound = false;
+          for (Map.Entry<PsiTypeParameter, PsiType> entry : substMap.entrySet()) {
+            if (original.equals(originalSubstitutor.substitute(entry.getKey()))) {
+              substMap.put(param, entry.getValue());
+              alreadyFound = true;
+            }
+          }
+          if (alreadyFound) continue;*/
           final PsiType substituted = substituteInternal(original);
           if (substituted == null) return false;
           substMap.put(param, substituted);
@@ -297,6 +305,7 @@ public class PsiSubstitutorImpl implements PsiSubstitutor {
   }
 
   private PsiType addBounds(PsiType substituted, final PsiTypeParameter typeParameter) {
+    PsiType oldSubstituted = substituted;
     PsiElement captureContext = null;
     if (substituted instanceof PsiCapturedWildcardType) {
       final PsiCapturedWildcardType captured = (PsiCapturedWildcardType)substituted;
@@ -331,7 +340,8 @@ public class PsiSubstitutorImpl implements PsiSubstitutor {
 
     if (captureContext != null) {
       LOG.assertTrue(substituted instanceof PsiWildcardType);
-      substituted = PsiCapturedWildcardType.create((PsiWildcardType)substituted, captureContext);
+      substituted = oldSubstituted instanceof PsiCapturedWildcardType && substituted == ((PsiCapturedWildcardType)oldSubstituted).getWildcard() 
+                    ? oldSubstituted : PsiCapturedWildcardType.create((PsiWildcardType)substituted, captureContext);
     }
     return substituted;
   }

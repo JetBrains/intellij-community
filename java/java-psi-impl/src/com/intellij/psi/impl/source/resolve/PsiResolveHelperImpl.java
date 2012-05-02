@@ -606,6 +606,19 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
         PsiType paramType = paramResult.getSubstitutor().substitute(typeParameter);
         PsiType argType = argResult.getSubstitutor().substituteWithBoundsPromotion(typeParameter);
 
+        if (wildcardCaptured != null) {
+          boolean alreadyFound = false;
+          for (PsiTypeParameter typeParam : PsiUtil.typeParametersIterable(paramClass)) {
+            if (typeParam != typeParameter &&
+                paramType != null &&
+                argResult.getSubstitutor().substituteWithBoundsPromotion(typeParam) == argType &&
+                paramType.equals(paramResult.getSubstitutor().substitute(typeParam))) {
+              alreadyFound = true;
+            }
+          }
+          if (alreadyFound) continue;
+        }
+
         Pair<PsiType,ConstraintType> res = getSubstitutionForTypeParameterInner(paramType, argType, patternType, ConstraintType.EQUALS, depth + 1);
 
         if (res != null) {
