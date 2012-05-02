@@ -15,10 +15,16 @@
  */
 package com.intellij.android.designer.model.layout.relative;
 
+import com.intellij.android.designer.model.ModelParser;
 import com.intellij.android.designer.model.RadViewComponent;
+import com.intellij.android.designer.propertyTable.editors.StringsComboEditor;
 import com.intellij.designer.propertyTable.Property;
 import com.intellij.designer.propertyTable.PropertyEditor;
 import com.intellij.designer.propertyTable.PropertyRenderer;
+import com.intellij.designer.propertyTable.renderers.LabelPropertyRenderer;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.psi.xml.XmlTag;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,23 +32,78 @@ import org.jetbrains.annotations.Nullable;
  * @author Alexander Lobas
  */
 public class CenterProperty extends Property<RadViewComponent> {
+  private static final String[] COMBO_ITEMS = {"horizontal", "vertical", "both"};
+  private static final String[] ATTR_ITEMS =
+    {"android:layout_centerHorizontal", "android:layout_centerVertical", "android:layout_centerInParent"};
+
+  private final PropertyRenderer myRenderer = new LabelPropertyRenderer(null);
+  private final PropertyEditor myEditor = new StringsComboEditor(COMBO_ITEMS);
+
   public CenterProperty() {
-    super(null, "layout:center");
+    super(null, "layout:centerInParent");
+    setImportant(true);
+  }
+
+  @Override
+  public Object getValue(RadViewComponent component) throws Exception {
+    XmlTag tag = component.getTag();
+    for (int i = ATTR_ITEMS.length - 1; i >= 0; i--) {
+      String value = tag.getAttributeValue(ATTR_ITEMS[i]);
+      if ("true".equals(value)) {
+        return COMBO_ITEMS[i];
+      }
+    }
+    return null;
+  }
+
+  @Override
+  public void setValue(final RadViewComponent component, Object value) throws Exception {
+    final int index = ArrayUtil.indexOf(COMBO_ITEMS, value);
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
+      public void run() {
+        XmlTag tag = component.getTag();
+        for (int i = 0; i < ATTR_ITEMS.length; i++) {
+          if (i == index) {
+            tag.setAttribute(ATTR_ITEMS[i], "true");
+          }
+          else {
+            ModelParser.deleteAttribute(tag, ATTR_ITEMS[i]);
+          }
+        }
+      }
+    });
+  }
+
+  @Override
+  public boolean isDefaultValue(RadViewComponent component) throws Exception {
+    XmlTag tag = component.getTag();
+    for (String attribute : ATTR_ITEMS) {
+      if (tag.getAttribute(attribute) != null) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  @Override
+  public void setDefaultValue(RadViewComponent component) throws Exception {
+    setValue(component, null);
   }
 
   @Override
   public Property<RadViewComponent> createForNewPresentation(@Nullable Property parent, @NotNull String name) {
-    return null;  // TODO: Auto-generated method stub
+    return null;
   }
 
   @NotNull
   @Override
   public PropertyRenderer getRenderer() {
-    return null;  // TODO: Auto-generated method stub
+    return myRenderer;
   }
 
   @Override
   public PropertyEditor getEditor() {
-    return null;  // TODO: Auto-generated method stub
+    return myEditor;
   }
 }

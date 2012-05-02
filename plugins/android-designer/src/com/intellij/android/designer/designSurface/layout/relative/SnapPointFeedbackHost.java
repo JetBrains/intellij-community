@@ -41,6 +41,13 @@ public class SnapPointFeedbackHost extends JComponent {
     myLines.clear();
   }
 
+  private static final int EXPAND_SIZE = 10;
+
+  @Override
+  public void setBounds(int x, int y, int width, int height) {
+    super.setBounds(x - EXPAND_SIZE, y - EXPAND_SIZE, width + 2 * EXPAND_SIZE, height + 2 * EXPAND_SIZE);
+  }
+
   @Override
   protected void paintComponent(Graphics g) {
     super.paintComponent(g);

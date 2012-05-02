@@ -46,7 +46,7 @@ public class ContainerSnapPoint extends SnapPoint {
     int targetX = targetBounds.x;
     if (startX <= targetX && targetX <= endX) {
       targetBounds.x = myBounds.x;
-      feedback.addVerticalLine(myBounds.x + 2, myBounds.y, myBounds.height);
+      feedback.addVerticalLine(myBounds.x, myBounds.y, myBounds.height);
       return true;
     }
 
@@ -60,7 +60,7 @@ public class ContainerSnapPoint extends SnapPoint {
     int targetX = targetBounds.x + targetBounds.width;
     if (startX <= targetX && targetX <= endX) {
       targetBounds.x = myBounds.x + myBounds.width - targetBounds.width;
-      feedback.addVerticalLine(myBounds.x + myBounds.width - 2, myBounds.y, myBounds.height);
+      feedback.addVerticalLine(myBounds.x + myBounds.width, myBounds.y, myBounds.height);
       return true;
     }
 
@@ -74,7 +74,7 @@ public class ContainerSnapPoint extends SnapPoint {
     int targetY = targetBounds.y;
     if (startY <= targetY && targetY <= endY) {
       targetBounds.y = myBounds.y;
-      feedback.addHorizontalLine(myBounds.x, myBounds.y + 2, myBounds.width);
+      feedback.addHorizontalLine(myBounds.x, myBounds.y, myBounds.width);
       return true;
     }
 
@@ -88,7 +88,7 @@ public class ContainerSnapPoint extends SnapPoint {
     int targetY = targetBounds.y + targetBounds.height;
     if (startY <= targetY && targetY <= endY) {
       targetBounds.y = myBounds.y + myBounds.height - targetBounds.height;
-      feedback.addHorizontalLine(myBounds.x, myBounds.y + myBounds.height - 2, myBounds.width);
+      feedback.addHorizontalLine(myBounds.x, myBounds.y + myBounds.height, myBounds.width);
       return true;
     }
 

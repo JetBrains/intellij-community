@@ -131,10 +131,6 @@ public class PropertyParser {
 
         List<Property> properties = loadLayoutProperties(layoutParams, 0, models);
         if (!properties.isEmpty()) {
-          if (layout != null) {
-            layout.configureProperties(properties);
-          }
-
           properties = new ArrayList<Property>(properties);
           properties.addAll(component.getProperties());
           component.setProperties(properties);
@@ -335,6 +331,13 @@ public class PropertyParser {
         PropertyTable.moveProperty(properties, "layout:gravity", properties, 0);
         PropertyTable.moveProperty(properties, "layout:height", properties, 0);
         PropertyTable.moveProperty(properties, "layout:width", properties, 0);
+      }
+
+      if (model != null) {
+        Class<RadLayout> layout = model.getLayout();
+        if (layout != null) {
+          layout.newInstance().configureProperties(properties);
+        }
       }
     }
 

@@ -71,6 +71,7 @@ public class RelativeLayoutOperation extends AbstractEditOperation {
         }
       }
 
+      // XXX
       myBoundsFeedback = new AlphaFeedback(myComponents.size() == 1 ? Color.green : Color.orange);
       myBoundsFeedback.setSize(myBounds.width, myBounds.height);
 
