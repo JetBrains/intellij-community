@@ -1,4 +1,5 @@
 import java.util.*;
+import java.util.Comparator;
 
 
 /**
@@ -246,4 +247,23 @@ class IDEA79360 {
         map.put<error descr="'put(capture<?>, capture<?>)' in 'java.util.Map' cannot be applied to '(java.lang.Object, java.lang.Object)'">(new Object(), new Object())</error>;
         map = new HashMap<Object, Object>(test);
     }
+}
+
+class GenericFailureExample {
+
+ interface Descriptor<T extends Comparable<T>> {
+   Class<T> getType();
+ }
+
+ void isMarkedFaultyButCompilesClean(Descriptor<?> n) {
+   bar(n.getType());
+ }
+
+ <T extends Comparable<T>> void butThisWorks(Descriptor<T> n) {
+   bar(n.getType());
+ }
+
+ <T extends Comparable<T>> Comparator<T> bar(Class<T> type) {
+   return null;
+ }
 }

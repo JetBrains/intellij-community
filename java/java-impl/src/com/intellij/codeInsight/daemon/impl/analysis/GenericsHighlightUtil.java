@@ -67,6 +67,19 @@ public class GenericsHighlightUtil {
       PsiClassType[] extendsTypes = typeParameter.getExtendsListTypes();
       for (PsiClassType type : extendsTypes) {
         PsiType extendsType = substitutor.substitute(type);
+        if (substituted instanceof PsiWildcardType && TypeConversionUtil.erasure(extendsType).equals(TypeConversionUtil.erasure(((PsiWildcardType)substituted).getExtendsBound()))){
+          PsiType extendsBound = ((PsiWildcardType)substituted).getExtendsBound();
+          if (extendsBound instanceof PsiClassType) {
+            PsiType[] parameters = ((PsiClassType)extendsBound).getParameters();
+            if (parameters.length == 1) {
+              PsiType argType = parameters[0];
+              if (argType instanceof PsiCapturedWildcardType) {
+                argType = ((PsiCapturedWildcardType)argType).getWildcard();
+              }
+              if (argType instanceof PsiWildcardType && !((PsiWildcardType)argType).isBounded()) continue;
+            }
+          }
+        }
         if (!TypeConversionUtil.isAssignable(extendsType, substituted, false)) {
           PsiClass boundClass = extendsType instanceof PsiClassType ? ((PsiClassType)extendsType).resolve() : null;
 
@@ -228,7 +241,7 @@ public class GenericsHighlightUtil {
   }
 
   @Nullable
-  private static HighlightInfo checkTypeParameterWithinItsBound(final PsiTypeParameter classParameter,
+  private static HighlightInfo checkTypeParameterWithinItsBound(PsiTypeParameter classParameter,
                                                                 final PsiSubstitutor substitutor,
                                                                 final PsiType type,
                                                                 final PsiElement typeElement2Highlight) {
