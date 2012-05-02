@@ -151,13 +151,6 @@ public interface PyClass extends PsiNameIdentifierOwner, PyStatement, NameDefine
   String getQualifiedName();
 
   /**
-   * Returns true if the class is a top-level class (its parent is its containing file).
-   *
-   * @return true if the class is top-level, false otherwise.
-   */
-  boolean isTopLevel();
-
-  /**
    * Returns the list of names in the class' __slots__ attribute, or null if the class
    * does not define such an attribute.
    *

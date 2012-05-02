@@ -563,4 +563,9 @@ public class PythonCompletionTest extends PyTestCase {
       setLanguageLevel(null);
     }
   }
+
+  // PY-2813
+  public void testFromNamespacePackageImport() {
+    doMultiFileTest();
+  }
 }

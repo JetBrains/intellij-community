@@ -189,6 +189,10 @@ public class PyImportReference extends PyReferenceImpl {
             }
             return myObjects.toArray();
           }
+          else if (mod_candidate instanceof PsiDirectory) {
+            fillFromDir((PsiDirectory)mod_candidate, ImportKeywordHandler.INSTANCE);
+            return myObjects.toArray();
+          }
         }
         else { // null source, must be a "from ... import"
           relativeLevel = from_import.getRelativeLevel();

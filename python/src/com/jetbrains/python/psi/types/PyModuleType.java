@@ -61,7 +61,7 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
     if (attribute != null) {
       return ResolveResultList.to(attribute);
     }
-    if (location != null && isPackage(myModule)) {
+    if (location != null && PyUtil.isPackage(myModule)) {
       return resolveImplicitPackageMember(name, location);
     }
     return null;
@@ -126,10 +126,6 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
       }
     }, owner, null);
     return visibleImports;
-  }
-
-  private static boolean isPackage(@NotNull PyFile file) {
-    return PyUtil.turnInitIntoDir(file) != null;
   }
 
   /**

@@ -2,6 +2,8 @@ package com.jetbrains.python.psi.types;
 
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
 import com.intellij.util.ProcessingContext;
 import com.jetbrains.python.psi.AccessDirection;
 import com.jetbrains.python.psi.PyExpression;
@@ -11,10 +13,12 @@ import com.jetbrains.python.psi.impl.PyImportedModule;
 import com.jetbrains.python.psi.impl.PyQualifiedName;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
+import com.jetbrains.python.psi.resolve.ResolveImportUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -33,9 +37,14 @@ public class PyImportedModuleType implements PyType {
                                                           PyExpression location,
                                                           AccessDirection direction,
                                                           PyResolveContext resolveContext) {
-    final PyFile file = myImportedModule.resolve();
-    if (file != null) {
+    final PsiElement resolved = myImportedModule.resolve();
+    if (resolved instanceof PyFile) {
+      final PyFile file = (PyFile)resolved;
       return new PyModuleType(file).resolveMember(name, location, direction, resolveContext);
+    }
+    else if (resolved instanceof PsiDirectory) {
+      final List<PsiElement> elements = Collections.singletonList(ResolveImportUtil.resolveChild(resolved, name, null, true, true));
+      return ResolveImportUtil.rateResults(elements);
     }
     return null;
   }

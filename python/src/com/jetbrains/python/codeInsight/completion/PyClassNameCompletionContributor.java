@@ -22,6 +22,7 @@ import com.jetbrains.python.codeInsight.imports.AddImportHelper;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyElement;
 import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.stubs.PyClassNameIndex;
 import com.jetbrains.python.psi.stubs.PyFunctionNameIndex;
 import org.jetbrains.annotations.NotNull;
@@ -49,7 +50,7 @@ public class PyClassNameCompletionContributor extends CompletionContributor {
   private static Condition<PyFunction> TOPLEVEL_FUNCTION = new Condition<PyFunction>() {
     @Override
     public boolean value(PyFunction pyFunction) {
-      return pyFunction.isTopLevel();
+      return PyPsiUtils.isTopLevel(pyFunction);
     }
   };
 
