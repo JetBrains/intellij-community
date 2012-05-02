@@ -210,10 +210,9 @@ public final class GuiEditor extends JPanel implements DataProvider {
    * @param file file to be edited
    * @throws java.lang.IllegalArgumentException
    *          if the <code>file</code>
-   *          is <code>null</code> or <code>file</code> is not falid PsiFile
+   *          is <code>null</code> or <code>file</code> is not valid PsiFile
    */
   public GuiEditor(@NotNull final Module module, @NotNull final VirtualFile file) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
     LOG.assertTrue(file.isValid());
 
     myModule = module;
