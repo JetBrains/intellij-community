@@ -24,6 +24,7 @@ import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.IconLoader;
 
 import javax.swing.*;
 
@@ -31,10 +32,13 @@ import javax.swing.*;
  * @author dyoma
  */
 public class RestartAction extends AnAction implements DumbAware {
+  private static final Icon STOP_AND_START_ICON = IconLoader.getIcon("/actions/restart.png");
+
   private ProcessHandler myProcessHandler;
   private final ProgramRunner myRunner;
   private final RunContentDescriptor myDescriptor;
   private final Executor myExecutor;
+  private final Icon myIcon;
   private final ExecutionEnvironment myEnvironment;
 
   public RestartAction(final Executor executor,
@@ -44,6 +48,7 @@ public class RestartAction extends AnAction implements DumbAware {
                        final RunContentDescriptor descritor,
                        final ExecutionEnvironment env) {
     super(null, null, icon);
+    myIcon = icon;
     myEnvironment = env;
     getTemplatePresentation().setEnabled(false);
     myProcessHandler = processHandler;
@@ -55,6 +60,7 @@ public class RestartAction extends AnAction implements DumbAware {
 
   public void actionPerformed(final AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
+    ActionManager.getInstance().getAction(IdeActions.ACTION_STOP_PROGRAM).actionPerformed(e);
     doRestart(dataContext);
   }
 
@@ -65,7 +71,7 @@ public class RestartAction extends AnAction implements DumbAware {
   private void doRestart(final DataContext dataContext) {
     final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
     if (ExecutorRegistry.getInstance().isStarting(project, myExecutor.getId(), myRunner.getRunnerId())) {
-      return;   
+      return;
     }
     try {
       final ExecutionEnvironment old = myEnvironment;
@@ -86,8 +92,9 @@ public class RestartAction extends AnAction implements DumbAware {
     if (myProcessHandler != null && !isRunning) {
       myProcessHandler = null; // already terminated
     }
+    presentation.setIcon(isRunning ? STOP_AND_START_ICON : myIcon);
 
-    presentation.setEnabled(!isRunning /*&& myRunner.canRun(, myProfile)*/ && !ExecutorRegistry.getInstance().isStarting(myEnvironment.getProject(), myExecutor.getId(), myRunner.getRunnerId()));
+    presentation.setEnabled(true);
   }
 
   public void registerShortcut(final JComponent component) {

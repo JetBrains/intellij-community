@@ -39,7 +39,6 @@ import java.util.concurrent.TimeUnit;
  */
 public class IncProjectBuilder {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.incremental.IncProjectBuilder");
-  private static final Logger LocalLOG = Logger.getInstance("#org.jetbrains.jps.incremental.Builder");
 
   public static final String COMPILE_SERVER_NAME = "COMPILE SERVER";
   private static final String CLASSPATH_INDEX_FINE_NAME = "classpath.index";
