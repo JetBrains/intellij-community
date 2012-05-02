@@ -91,8 +91,8 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
       }
     }
 
-    if (element == null) return;
-    PsiFile containingFile = element.getContainingFile();
+    if (element == null && file == null) return;
+    PsiFile containingFile = element != null ? element.getContainingFile() : file;
     if (containingFile == null || !containingFile.getViewProvider().isPhysical()) return;
 
     String text = "";
