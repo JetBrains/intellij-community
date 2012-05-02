@@ -259,8 +259,8 @@ public class RecursionManager {
 
       if (depth == 0) {
         intermediateCache.clear();
-        LOG.assertTrue(key2ReentrancyDuringItsCalculation.isEmpty(), "non-empty key2ReentrancyDuringItsCalculation");
-        LOG.assertTrue(toMemoize.isEmpty(), "non-empty toMemoize");
+        LOG.assertTrue(key2ReentrancyDuringItsCalculation.isEmpty(), "non-empty key2ReentrancyDuringItsCalculation: " + new HashMap(key2ReentrancyDuringItsCalculation));
+        LOG.assertTrue(toMemoize.isEmpty(), "non-empty toMemoize: " + new HashSet(toMemoize));
       }
 
       if (sizeBefore != progressMap.size()) {
