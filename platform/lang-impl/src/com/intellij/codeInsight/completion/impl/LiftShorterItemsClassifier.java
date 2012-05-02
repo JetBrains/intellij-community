@@ -30,14 +30,16 @@ import java.util.*;
 /**
 * @author peter
 */
-class LiftShorterItemsClassifier extends Classifier<LookupElement> {
+public class LiftShorterItemsClassifier extends Classifier<LookupElement> {
   private final TreeSet<String> mySortedStrings;
   private final MultiMap<String, LookupElement> myElements;
   private final MultiMap<String, String> myPrefixes;
   private final Classifier<LookupElement> myNext;
+  private final LiftingCondition myCondition;
 
-  public LiftShorterItemsClassifier(Classifier<LookupElement> next) {
+  public LiftShorterItemsClassifier(Classifier<LookupElement> next, LiftingCondition condition) {
     myNext = next;
+    myCondition = condition;
     mySortedStrings = new TreeSet<String>();
     myElements = new MultiMap<String, LookupElement>();
     myPrefixes = new MultiMap<String, String>();
@@ -76,9 +78,6 @@ class LiftShorterItemsClassifier extends Classifier<LookupElement> {
 
   @Override
   public Iterable<LookupElement> classify(Iterable<LookupElement> source, ProcessingContext context) {
-    if (context.get(CompletionLookupArranger.PURE_RELEVANCE) == Boolean.TRUE) {
-      return myNext.classify(source, context);
-    }
     return liftShorterElements(source, new THashSet<LookupElement>(TObjectHashingStrategy.IDENTITY), context);
   }
 
@@ -99,7 +98,7 @@ class LiftShorterItemsClassifier extends Classifier<LookupElement> {
         for (String prefix : prefixes) {
           List<LookupElement> shorter = new SmartList<LookupElement>();
           for (LookupElement shorterElement : myElements.get(prefix)) {
-            if (srcSet.contains(shorterElement) && processed.add(shorterElement)) {
+            if (srcSet.contains(shorterElement) && myCondition.shouldLift(shorterElement, element, context) && processed.add(shorterElement)) {
               shorter.add(shorterElement);
             }
           }
@@ -133,5 +132,11 @@ class LiftShorterItemsClassifier extends Classifier<LookupElement> {
       }
     }
     myNext.describeItems(map, context);
+  }
+
+  public static class LiftingCondition {
+    public boolean shouldLift(LookupElement shorterElement, LookupElement longerElement, ProcessingContext context) {
+      return context.get(CompletionLookupArranger.PURE_RELEVANCE) != Boolean.TRUE;
+    }
   }
 }

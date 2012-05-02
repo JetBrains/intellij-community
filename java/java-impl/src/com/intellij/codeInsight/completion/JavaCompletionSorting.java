@@ -17,10 +17,13 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.ExpectedTypeInfoImpl;
-import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.codeInsight.lookup.LookupElementWeigher;
-import com.intellij.codeInsight.lookup.PsiTypeLookupItem;
+import com.intellij.codeInsight.completion.impl.CompletionSorterImpl;
+import com.intellij.codeInsight.completion.impl.LiftShorterItemsClassifier;
+import com.intellij.codeInsight.lookup.*;
+import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.patterns.PsiJavaPatterns;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -31,6 +34,7 @@ import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
@@ -75,6 +79,32 @@ public class JavaCompletionSorting {
     CompletionSorter sorter = CompletionSorter.defaultSorter(parameters, result.getPrefixMatcher());
     if (!smart && afterNew) {
       sorter = sorter.weighBefore("liftShorter", new PreferExpected(true, expectedTypes));
+    } else {
+      final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(position.getProject()).getFileIndex();
+      sorter = ((CompletionSorterImpl)sorter).withClassifier("liftShorter", true, new ClassifierFactory<LookupElement>("liftShorterClasses") {
+        @Override
+        public Classifier<LookupElement> createClassifier(Classifier<LookupElement> next) {
+          return new LiftShorterItemsClassifier(next, new LiftShorterItemsClassifier.LiftingCondition() {
+            @Override
+            public boolean shouldLift(LookupElement shorterElement, LookupElement longerElement, ProcessingContext context) {
+              if (super.shouldLift(shorterElement, longerElement, context)) {
+                return true;
+              }
+              Object object = shorterElement.getObject();
+              if (object instanceof PsiClass) {
+                PsiFile file = ((PsiClass)object).getContainingFile();
+                if (file != null) {
+                  VirtualFile vFile = file.getOriginalFile().getVirtualFile();
+                  if (vFile != null && fileIndex.isInSource(vFile)) {
+                    return true;
+                  }
+                }
+              }
+              return false;
+            }
+          });
+        }
+      });
     }
     if (smart) {
       sorter = sorter.weighBefore("negativeStats", new PreferDefaultTypeWeigher(expectedTypes, parameters));
