@@ -15,7 +15,6 @@
  */
 package com.intellij.refactoring.move.moveClassesOrPackages;
 
-import com.intellij.codeInsight.ChangeContextUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -24,8 +23,6 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
-import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiElementFilter;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -55,6 +52,7 @@ import java.util.*;
  */
 public class MoveClassToInnerProcessor extends BaseRefactoringProcessor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.move.moveClassesOrPackages.MoveClassToInnerProcessor");
+  public static final Key<List<NonCodeUsageInfo>> ourNonCodeUsageKey = Key.create("MoveClassToInner.NonCodeUsage");
 
   private PsiClass[] myClassesToMove;
   private final PsiClass myTargetClass;
@@ -64,7 +62,6 @@ public class MoveClassToInnerProcessor extends BaseRefactoringProcessor {
   private final boolean mySearchInComments;
   private final boolean mySearchInNonJavaFiles;
   private NonCodeUsageInfo[] myNonCodeUsages;
-  private static final Key<List<NonCodeUsageInfo>> ourNonCodeUsageKey = Key.create("MoveClassToInner.NonCodeUsage");
   private final MoveCallback myMoveCallback;
 
   public MoveClassToInnerProcessor(Project project,
@@ -103,8 +100,7 @@ public class MoveClassToInnerProcessor extends BaseRefactoringProcessor {
     final List<UsageInfo> usages = new ArrayList<UsageInfo>();
     for (PsiClass classToMove : myClassesToMove) {
       final String newName = myTargetClass.getQualifiedName() + "." + classToMove.getName();
-      Collections.addAll(usages, MoveClassesOrPackagesUtil.findUsages(classToMove, mySearchInComments,
-                                                                      mySearchInNonJavaFiles, newName));
+      Collections.addAll(usages, MoveClassesOrPackagesUtil.findUsages(classToMove, mySearchInComments, mySearchInNonJavaFiles, newName));
     }
     return usages.toArray(new UsageInfo[usages.size()]);
   }
@@ -128,44 +124,48 @@ public class MoveClassToInnerProcessor extends BaseRefactoringProcessor {
 
   protected void performRefactoring(UsageInfo[] usages) {
     if (!prepareWritable(usages)) return;
-    final List<PsiElement> importStatements = new ArrayList<PsiElement>();
-    if (!CodeStyleSettingsManager.getSettings(myProject).INSERT_INNER_CLASS_IMPORTS) {
-      usages = filterUsagesInImportStatements(usages, importStatements);
-    } else {
-      //rebind imports first
-      Arrays.sort(usages, new Comparator<UsageInfo>() {
-        public int compare(UsageInfo o1, UsageInfo o2) {
-          return PsiUtil.BY_POSITION.compare(o1.getElement(), o2.getElement());
-        }
-      });
+
+    MoveClassToInnerHandler[] handlers = MoveClassToInnerHandler.EP_NAME.getExtensions();
+
+    ArrayList<UsageInfo> usageList = new ArrayList<UsageInfo>(Arrays.asList(usages));
+    List<PsiElement> importStatements = new ArrayList<PsiElement>();
+    for (MoveClassToInnerHandler handler : handlers) {
+      importStatements.addAll(handler.filterImports(usageList, myProject));
     }
+
+    usages = usageList.toArray(new UsageInfo[usageList.size()]);
+
     saveNonCodeUsages(usages);
     final Map<PsiElement, PsiElement> oldToNewElementsMapping = new HashMap<PsiElement, PsiElement>();
     try {
       for (PsiClass classToMove : myClassesToMove) {
-        ChangeContextUtil.encodeContextInfo(classToMove, true);
-        PsiClass newClass = (PsiClass)myTargetClass.addBefore(classToMove, myTargetClass.getRBrace());
-        if (myTargetClass.isInterface()) {
-          PsiUtil.setModifierProperty(newClass, PsiModifier.PACKAGE_LOCAL, true);
+        PsiClass newClass = null;
+        for (MoveClassToInnerHandler handler : handlers) {
+          newClass = handler.moveClass(classToMove, myTargetClass);
+          if (newClass != null) break;
         }
-        else {
-          PsiUtil.setModifierProperty(newClass, PsiModifier.STATIC, true);
-        }
-        newClass = (PsiClass)ChangeContextUtil.decodeContextInfo(newClass, null, null);
+        LOG.assertTrue(newClass != null, "There is no appropriate MoveClassToInnerHandler!");
         oldToNewElementsMapping.put(classToMove, newClass);
       }
 
       myNonCodeUsages = CommonMoveUtil.retargetUsages(usages, oldToNewElementsMapping);
-      retargetNonCodeUsages(oldToNewElementsMapping);
+      for (MoveClassToInnerHandler handler : handlers) {
+        handler.retargetNonCodeUsages(oldToNewElementsMapping, myNonCodeUsages);
+      }
 
-      retargetClassRefsInMoved(oldToNewElementsMapping);
+      for (MoveClassToInnerHandler handler : handlers) {
+        handler.retargetClassRefsInMoved(oldToNewElementsMapping);
+      }
 
-      JavaCodeStyleManager.getInstance(myProject).removeRedundantImports((PsiJavaFile)myTargetClass.getContainingFile());
+      for (MoveClassToInnerHandler handler : handlers) {
+        handler.removeRedundantImports(myTargetClass.getContainingFile());
+      }
+
       for (PsiClass classToMove : myClassesToMove) {
         classToMove.delete();
       }
 
-      for (PsiElement element: importStatements) {
+      for (PsiElement element : importStatements) {
         if (element.isValid()) {
           element.delete();
         }
@@ -211,28 +211,6 @@ public class MoveClassToInnerProcessor extends BaseRefactoringProcessor {
     }
   }
 
-  private void retargetNonCodeUsages(final Map<PsiElement, PsiElement> oldToNewElementMap) {
-    for (PsiElement newClass : oldToNewElementMap.values()) {
-      newClass.accept(new PsiRecursiveElementVisitor() {
-        @Override public void visitElement(final PsiElement element) {
-          super.visitElement(element);
-          List<NonCodeUsageInfo> list = element.getCopyableUserData(ourNonCodeUsageKey);
-          if (list != null) {
-            for(NonCodeUsageInfo info: list) {
-              for(int i=0; i<myNonCodeUsages.length; i++) {
-                if (myNonCodeUsages [i] == info) {
-                  myNonCodeUsages [i] = info.replaceElement(element);
-                  break;
-                }
-              }
-            }
-            element.putCopyableUserData(ourNonCodeUsageKey, null);
-          }
-        }
-      });
-    }
-  }
-
   protected void performPsiSpoilingRefactoring() {
     if (myNonCodeUsages != null) {
       RenameUtil.renameNonCodeUsages(myProject, myNonCodeUsages);
@@ -243,57 +221,6 @@ public class MoveClassToInnerProcessor extends BaseRefactoringProcessor {
       }
       myMoveCallback.refactoringCompleted();
     }
-  }
-
-  private static void retargetClassRefsInMoved(final Map<PsiElement, PsiElement> oldToNewElementsMapping) {
-    for (final PsiElement newClass : oldToNewElementsMapping.values()) {
-      newClass.accept(new JavaRecursiveElementVisitor() {
-        @Override public void visitReferenceElement(final PsiJavaCodeReferenceElement reference) {
-          PsiElement element = reference.resolve();
-          if (element instanceof PsiClass) {
-            for (PsiElement oldClass : oldToNewElementsMapping.keySet()) {
-              if (PsiTreeUtil.isAncestor(oldClass, element, false)) {
-                PsiClass newInnerClass = findMatchingClass((PsiClass)oldClass, (PsiClass)oldToNewElementsMapping.get(oldClass), (PsiClass)element);
-                try {
-                  reference.bindToElement(newInnerClass);
-                  return;
-                }
-                catch (IncorrectOperationException ex) {
-                  LOG.error(ex);
-                }
-              }
-            }
-          }
-          super.visitReferenceElement(reference);
-        }
-      });
-    }
-  }
-
-  private static PsiClass findMatchingClass(final PsiClass classToMove, final PsiClass newClass, final PsiClass innerClass) {
-    if (classToMove == innerClass) {
-      return newClass;
-    }
-    PsiClass parentClass = findMatchingClass(classToMove, newClass, innerClass.getContainingClass());
-    PsiClass newInnerClass = parentClass.findInnerClassByName(innerClass.getName(), false);
-    assert newInnerClass != null;
-    return newInnerClass;
-  }
-
-  private static UsageInfo[] filterUsagesInImportStatements(final UsageInfo[] usages, final List<PsiElement> importStatements) {
-    List<UsageInfo> remainingUsages = new ArrayList<UsageInfo>();
-    for(UsageInfo usage: usages) {
-      PsiElement element = usage.getElement();
-      if (element == null) continue;
-      PsiImportStatement stmt = PsiTreeUtil.getParentOfType(element, PsiImportStatement.class);
-      if (stmt != null) {
-        importStatements.add(stmt);
-      }
-      else {
-        remainingUsages.add(usage);
-      }
-    }
-    return remainingUsages.toArray(new UsageInfo[remainingUsages.size()]);
   }
 
   protected String getCommandName() {

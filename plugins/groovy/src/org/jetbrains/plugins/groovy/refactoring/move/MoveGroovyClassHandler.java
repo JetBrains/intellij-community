@@ -232,8 +232,7 @@ public class MoveGroovyClassHandler implements MoveClassHandler {
       final GroovyPsiElement context = resolveResult.getCurrentFileResolveContext();
       if (!(context instanceof GrImportStatement)) continue;
 
-      final String importedName = ((GrImportStatement)context).getImportedName();
-      if (importedName == null) continue;
+      if (!((GrImportStatement)context).isAliasedImport()) continue;
 
       iterator.remove();
     }

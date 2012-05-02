@@ -31,7 +31,7 @@ import java.util.ArrayList;
  * @author Max Medvedev
  */
 public abstract class GroovyMoveTestBase extends JavaCodeInsightFixtureTestCase {
-  protected void doTest(String newPackageName, String... names) {
+  protected void doTest(String destination, String... names) {
     try {
       String root = PathManager.getHomePath().replace(File.separatorChar, '/') + getBasePath() + getTestName(true);
 
@@ -40,11 +40,11 @@ public abstract class GroovyMoveTestBase extends JavaCodeInsightFixtureTestCase 
       ArrayList<File> filesToDelete = new ArrayList<File>();
       VirtualFile rootDir = PsiTestUtil.createTestProjectStructure(myFixture.getProject(), myModule, rootBefore, filesToDelete);
 
-      perform(rootDir, newPackageName, names);
+      perform(rootDir, destination, names);
 
       String rootAfter = root + "/after";
       VirtualFile rootDir2 = LocalFileSystem.getInstance().findFileByPath(rootAfter.replace(File.separatorChar, '/'));
-      myFixture.getProject().getComponent(PostprocessReformattingAspect.class).doPostponedFormatting();
+      PostprocessReformattingAspect.getInstance(myFixture.getProject()).doPostponedFormatting();
       PlatformTestUtil.assertDirectoriesEqual(rootDir2, rootDir, PlatformTestUtil.CVS_FILE_FILTER);
     }
     catch (Exception e) {
