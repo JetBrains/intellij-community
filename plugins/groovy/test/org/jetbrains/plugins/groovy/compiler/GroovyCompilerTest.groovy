@@ -615,6 +615,20 @@ public class Main {
     shouldFail { compileModule(myModule) }
   }
 
+  public void "test stubs generated while processing groovy class file dependencies"() {
+    def foo = myFixture.addFileToProject('Foo.groovy', 'class Foo { }')
+    def bar = myFixture.addFileToProject('Bar.groovy', 'class Bar extends Foo { }')
+    def client = myFixture.addFileToProject('Client.groovy', 'class Client { Bar bar = new Bar() }')
+    def java = myFixture.addFileToProject('Java.java', 'class Java extends Client { String getName(Bar bar) { return bar.toString();  } }')
+
+    assertEmpty(make())
+
+    setFileText(bar, 'class Bar { }')
+
+    assertEmpty(make())
+    assert findClassFile("Client")
+  }
+
   public static class IdeaModeTest extends GroovyCompilerTest {
     @Override protected boolean useJps() { false }
   }
