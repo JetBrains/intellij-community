@@ -18,6 +18,7 @@ package org.intellij.plugins.intelliLang.inject.quickedit;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.LowPriorityAction;
 import com.intellij.codeInsight.lookup.LookupManager;
+import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.lang.Language;
 import com.intellij.lang.injection.InjectedLanguageManager;
@@ -209,7 +210,9 @@ public class QuickEditAction implements IntentionAction, LowPriorityAction {
               @Override
               public void update(AnActionEvent e) {
                 Editor editor = PlatformDataKeys.EDITOR.getData(e.getDataContext());
-                e.getPresentation().setEnabled(editor != null && LookupManager.getActiveLookup(editor) == null);
+                e.getPresentation().setEnabled(
+                  editor != null && LookupManager.getActiveLookup(editor) == null &&
+                  TemplateManager.getInstance(myProject).getActiveTemplate(editor) == null);
               }
 
               @Override
