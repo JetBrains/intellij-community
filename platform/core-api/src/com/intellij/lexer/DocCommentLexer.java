@@ -16,7 +16,6 @@
 package com.intellij.lexer;
 
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.text.CharArrayUtil;
 
 import java.io.IOException;
@@ -24,7 +23,7 @@ import java.io.IOException;
 public class DocCommentLexer extends MergingLexerAdapter {
   public DocCommentLexer(final DocCommentTokenTypes tokenTypes, final boolean isJdk15Enabled) {
     super(new AsteriskStripperLexer(new _JavaDocLexer(isJdk15Enabled, tokenTypes), tokenTypes),
-          TokenSet.create(tokenTypes.commentData(), tokenTypes.space()));
+          tokenTypes.spaceCommentsTokenSet());
   }
 
   private static class AsteriskStripperLexer extends LexerBase {
