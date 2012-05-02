@@ -454,7 +454,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
     final int port = findFreePort();
     final int heapSize = getJavacServerHeapSize(context);
 
-    // defaulting to the same jdk that used to run the server
+    // defaulting to the same jdk that used to run the build process
     String javaHome = SystemProperties.getJavaHome();
     int javaVersion = convertToNumber(SystemProperties.getJavaVersion());
 

@@ -30,6 +30,8 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerAdapter;
@@ -37,6 +39,7 @@ import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
+import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
@@ -388,7 +391,7 @@ public class BuildManager implements ApplicationComponent{
             return;
           }
           myBuildsInProgress.put(projectPath, future);
-          final Process process = launchBuildProcess(myListenPort, sessionId);
+          final Process process = launchBuildProcess(project, myListenPort, sessionId);
           final OSProcessHandler processHandler = new OSProcessHandler(process, null) {
             @Override
             protected boolean shouldDestroyProcessRecursively() {
@@ -564,15 +567,42 @@ public class BuildManager implements ApplicationComponent{
     return paths;
   }
 
-  private Process launchBuildProcess(final int port, final UUID sessionId) throws ExecutionException {
-    // todo: add code for choosing the jdk with which to run
+  private Process launchBuildProcess(Project project, final int port, final UUID sessionId) throws ExecutionException {
     // validate tools.jar presence
     final JavaCompiler systemCompiler = ToolProvider.getSystemJavaCompiler();
     if (systemCompiler == null) {
       throw new ExecutionException("No system java compiler is provided by the JRE. Make sure tools.jar is present in IntelliJ IDEA classpath.");
     }
 
-    final Sdk projectJdk = JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk();
+    // choosing sdk with which the build process should be run
+    Sdk projectJdk = JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk();
+    final String versionString = projectJdk.getVersionString();
+    if (versionString != null) {
+      JavaSdkVersion sdkVersion = ((JavaSdk)projectJdk.getSdkType()).getVersion(versionString);
+      if (sdkVersion != null) {
+        final Set<Sdk> candidates = new HashSet<Sdk>();
+        for (Module module : ModuleManager.getInstance(project).getModules()) {
+          final Sdk sdk = ModuleRootManager.getInstance(module).getSdk();
+          if (sdk != null && sdk.getSdkType() instanceof JavaSdk) {
+            candidates.add(sdk);
+          }
+        }
+        // now select the latest version from the sdks that are used in the project, but not older than the internal sdk version
+        for (Sdk candidate : candidates) {
+          final String vs = candidate.getVersionString();
+          if (vs != null) {
+            final JavaSdkVersion candidateVersion = ((JavaSdk)candidate.getSdkType()).getVersion(vs);
+            if (candidateVersion != null) {
+              if (candidateVersion.compareTo(sdkVersion) > 0) {
+                sdkVersion = candidateVersion;
+                projectJdk = candidate;
+              }
+            }
+          }
+        }
+      }
+    }
+
     final GeneralCommandLine cmdLine = new GeneralCommandLine();
     final String vmExecutablePath = ((JavaSdkType)projectJdk.getSdkType()).getVMExecutablePath(projectJdk);
     cmdLine.setExePath(vmExecutablePath);
