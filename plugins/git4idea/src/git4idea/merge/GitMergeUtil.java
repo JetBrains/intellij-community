@@ -31,6 +31,7 @@ import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ui.UIUtil;
 import git4idea.GitRevisionNumber;
 import git4idea.GitVcs;
 import git4idea.actions.GitRepositoryAction;
@@ -143,10 +144,15 @@ public class GitMergeUtil {
     }
     action.delayTask(new TransactionRunnable() {
       public void run(List<VcsException> exceptionList) {
-        ProjectLevelVcsManagerEx manager = (ProjectLevelVcsManagerEx)ProjectLevelVcsManager.getInstance(project);
-        UpdateInfoTree tree = manager.showUpdateProjectInfo(files, actionName, actionInfo, false);
-        tree.setBefore(beforeLabel);
-        tree.setAfter(LocalHistory.getInstance().putSystemLabel(project, "After update"));
+        UIUtil.invokeLaterIfNeeded(new Runnable() {
+          @Override
+          public void run() {
+            ProjectLevelVcsManagerEx manager = (ProjectLevelVcsManagerEx)ProjectLevelVcsManager.getInstance(project);
+            UpdateInfoTree tree = manager.showUpdateProjectInfo(files, actionName, actionInfo, false);
+            tree.setBefore(beforeLabel);
+            tree.setAfter(LocalHistory.getInstance().putSystemLabel(project, "After update"));
+          }
+        });
       }
     });
     final Collection<String> unmergedNames = files.getGroupById(FileGroup.MERGED_WITH_CONFLICT_ID).getFiles();
@@ -161,7 +167,15 @@ public class GitMergeUtil {
               unmerged.add(f);
             }
           }
-          AbstractVcsHelper.getInstance(project).showMergeDialog(unmerged, GitVcs.getInstance(project).getMergeProvider());
+          UIUtil.invokeLaterIfNeeded(new Runnable() {
+            @Override
+            public void run() {
+              GitVcs vcs = GitVcs.getInstance(project);
+              if (vcs != null) {
+                AbstractVcsHelper.getInstance(project).showMergeDialog(unmerged, vcs.getMergeProvider());
+              }
+            }
+          });
         }
       });
     }

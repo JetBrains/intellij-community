@@ -25,6 +25,7 @@ import com.intellij.openapi.vcs.update.ActionInfo;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitRevisionNumber;
 import git4idea.GitUtil;
+import git4idea.GitVcs;
 import git4idea.commands.GitLineHandler;
 import git4idea.commands.GitStandardProgressAnalyzer;
 import git4idea.commands.GitTask;
@@ -114,6 +115,7 @@ public class GitPull extends GitRepositoryAction {
           protected void onSuccess() {
             GitMergeUtil.showUpdates(GitPull.this, project, exceptions, root, currentRev, beforeLabel, getActionName(), ActionInfo.UPDATE);
             repositoryManager.updateRepository(root, GitRepository.TrackedTopic.ALL);
+            runFinalTasks(project, GitVcs.getInstance(project), affectedRoots, getActionName(), exceptions);
           }
     
           @Override
@@ -126,4 +128,8 @@ public class GitPull extends GitRepositoryAction {
     }.queue();
   }
 
+  @Override
+  protected boolean executeFinalTasksSynchronously() {
+    return false;
+  }
 }
