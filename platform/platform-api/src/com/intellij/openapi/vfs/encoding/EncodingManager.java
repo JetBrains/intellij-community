@@ -18,7 +18,6 @@ package com.intellij.openapi.vfs.encoding;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -32,14 +31,6 @@ import java.util.Collection;
  * @author cdr
  */
 public abstract class EncodingManager extends EncodingRegistry {
-  static {
-    EncodingRegistry.ourInstanceGetter = new Getter<EncodingRegistry>() {
-      @Override
-      public EncodingRegistry get() {
-        return EncodingManager.getInstance();
-      }
-    };
-  }
 
   @NonNls public static final String PROP_NATIVE2ASCII_SWITCH = "native2ascii";
   @NonNls public static final String PROP_PROPERTIES_FILES_ENCODING = "propertiesFilesEncoding";

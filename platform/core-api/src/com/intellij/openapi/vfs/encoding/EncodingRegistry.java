@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vfs.encoding;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.ThrowableComputable;
@@ -53,6 +54,9 @@ public abstract class EncodingRegistry {
   public abstract void setEncoding(@Nullable VirtualFile virtualFileOrDir, @Nullable Charset charset);
 
   public static EncodingRegistry getInstance() {
+    if (ourInstanceGetter == null) {
+      return (EncodingRegistry)ApplicationManager.getApplication().getPicoContainer().getComponentInstance("com.intellij.openapi.vfs.encoding.EncodingManager");
+    }
     return ourInstanceGetter.get();
   }
 

@@ -22,10 +22,10 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ModalityStateListener;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.impl.ProjectLifecycleListener;
 import com.intellij.openapi.util.BusyObject;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,7 +35,32 @@ import java.util.*;
 
 public class UiActivityMonitorImpl extends UiActivityMonitor implements ModalityStateListener, Disposable {
 
-  private final Map<Object, BusyContainer> myObjects = new HashMap<Object, BusyContainer>();
+  private final FactoryMap<Project, BusyContainer> myObjects = new FactoryMap<Project, BusyContainer>() {
+    @Override
+    protected BusyContainer create(Project key) {
+      if (isEmpty()) {
+        installListener();
+      }
+      return key == null ? new BusyContainer(key) : new BusyContainer(null) {
+            @Override
+            protected BusyImpl createBusyImpl(HashSet<UiActivity> key) {
+              return new BusyImpl(key, this) {
+                @Override
+                public boolean isReady() {
+                  for (Map.Entry<Project, BusyContainer> entry : myObjects.entrySet()) {
+                    final BusyContainer eachContainer = entry.getValue();
+                    final BusyImpl busy = eachContainer.getOrCreateBusy(myToWatchArray);
+                    if (busy == this) continue;
+                    if (!busy.isOwnReady()) return false;
+                  }
+                  return isOwnReady();
+                }
+              };
+            }
+      };
+    }
+  };
+
   private boolean myActive;
 
   private BusyObject myEmptyBusy = new BusyObject.Impl() {
@@ -45,50 +70,16 @@ public class UiActivityMonitorImpl extends UiActivityMonitor implements Modality
     }
   };
 
-  public UiActivityMonitorImpl(Application application) {
-    myObjects.put(null, new BusyContainer() {
-      @Override
-      protected BusyImpl createBusyImpl(HashSet<UiActivity> key) {
-        return new BusyImpl(key, this) {
-            @Override
-            public boolean isReady() {
-              for (Map.Entry<Object, BusyContainer> entry : myObjects.entrySet()) {
-                final BusyContainer eachContainer = entry.getValue();
-                final BusyImpl busy = eachContainer.getOrCreateBusy(myToWatchArray);
-                if (busy == this) continue;
-                if (!busy.isOwnReady()) return false;
-              }
-              return isOwnReady();
-            }
-        };
-      }
-    });
-    application.getMessageBus().connect().subscribe(ProjectLifecycleListener.TOPIC, new ProjectLifecycleListener() {
-      @Override
-      public void projectComponentsInitialized(Project project) {
-      }
-
-      @Override
-      public void beforeProjectLoaded(@NotNull Project project) {
-      }
-
-      @Override
-      public void afterProjectClosed(@NotNull Project project) {
-        myObjects.remove(project);
-      }
-    });
+  public UiActivityMonitorImpl() {
   }
 
-  @Override
-  public void initComponent() {
-    ProjectManager pm = ProjectManager.getInstance();
-    initBusyObjectFor(pm.getDefaultProject());
-
+  public void installListener() {
     LaterInvocator.addModalityStateListener(this, this);
   }
 
   @Override
   public void dispose() {
+    myObjects.clear();
   }
 
   @Override
@@ -107,8 +98,7 @@ public class UiActivityMonitorImpl extends UiActivityMonitor implements Modality
   }
 
   public void maybeReady() {
-    final Collection<BusyContainer> values = myObjects.values();
-    for (BusyContainer each : values) {
+    for (BusyContainer each : myObjects.values()) {
       each.onReady();
     }
   }
@@ -142,16 +132,6 @@ public class UiActivityMonitorImpl extends UiActivityMonitor implements Modality
     invokeLaterIfNeeded(new MyRunnable() {
       @Override
       public void run(Throwable allocation) {
-        if (!hasObjectFor(project)) {
-          Project[] open = ProjectManager.getInstance().getOpenProjects();
-          for (Project each : open) {
-            if (each == project) {
-              initBusyObjectFor(project);
-              break;
-            }
-          }
-        }
-
         getBusyContainer(project).addActivity(activity, allocation, effectiveModalityState);
       }
     });
@@ -202,18 +182,18 @@ public class UiActivityMonitorImpl extends UiActivityMonitor implements Modality
     });
   }
 
-  private BusyImpl _getBusy(@Nullable Object key, UiActivity... toWatch) {
+  private BusyImpl _getBusy(@Nullable Project key, UiActivity... toWatch) {
     return getBusyContainer(key).getOrCreateBusy(toWatch);
   }
 
-  private BusyContainer getBusyContainer(@Nullable Object key) {
+  @NotNull
+  private BusyContainer getBusyContainer(@Nullable Project key) {
     BusyContainer container = myObjects.get(key);
     return container != null ? container : getGlobalBusy();
   }
 
-  void initBusyObjectFor(@Nullable Object key) {
-    BusyContainer object = new BusyContainer();
-    myObjects.put(key, object);
+  void initBusyObjectFor(@Nullable Project key) {
+    myObjects.put(key, new BusyContainer(key));
   }
 
   boolean hasObjectFor(Project project) {
@@ -225,9 +205,8 @@ public class UiActivityMonitorImpl extends UiActivityMonitor implements Modality
   }
 
   public void clear() {
-    final Set<Object> keys = myObjects.keySet();
-    for (Iterator<Object> iterator = keys.iterator(); iterator.hasNext(); ) {
-      Object each = iterator.next();
+    final Set<Project> keys = myObjects.keySet();
+    for (Project each : keys) {
       myObjects.get(each).clear();
     }
   }
@@ -245,17 +224,6 @@ public class UiActivityMonitorImpl extends UiActivityMonitor implements Modality
 
   public boolean isActive() {
     return myActive;
-  }
-
-  @Override
-  public void disposeComponent() {
-    myObjects.clear();
-  }
-
-  @NotNull
-  @Override
-  public String getComponentName() {
-    return "UiActivityMonitor";
   }
 
   private static class ActivityInfo {
@@ -406,7 +374,7 @@ public class UiActivityMonitorImpl extends UiActivityMonitor implements Modality
     return app == null || app.isUnitTestMode();
   }
 
-  public class BusyContainer {
+  public class BusyContainer implements Disposable {
 
     private Map<Set<UiActivity>, BusyImpl> myActivities2Object = new HashMap<Set<UiActivity>, BusyImpl>();
     private Map<BusyImpl, Set<UiActivity>> myObject2Activities = new HashMap<BusyImpl, Set<UiActivity>>();
@@ -416,9 +384,14 @@ public class UiActivityMonitorImpl extends UiActivityMonitor implements Modality
     private BusyImpl myDefault;
 
     private boolean myRemovingActivityNow;
+    @Nullable private final Project myProject;
 
-    public BusyContainer() {
+    public BusyContainer(@Nullable Project project) {
+      myProject = project;
       myDefault = registerBusyObject(new HashSet<UiActivity>());
+      if (project != null) {
+        Disposer.register(project, this);
+      }
     }
 
     public BusyImpl getOrCreateBusy(UiActivity... activities) {
@@ -429,8 +402,7 @@ public class UiActivityMonitorImpl extends UiActivityMonitor implements Modality
         return myActivities2Object.get(key);
       }
       else {
-        final BusyImpl busy = registerBusyObject(key);
-        return busy;
+        return registerBusyObject(key);
       }
     }
 
@@ -506,6 +478,11 @@ public class UiActivityMonitorImpl extends UiActivityMonitor implements Modality
       for (BusyImpl each : busies) {
         each.addActivity(activity, allocation, state);
       }
+    }
+
+    @Override
+    public void dispose() {
+      myObjects.remove(myProject);
     }
   }
 }

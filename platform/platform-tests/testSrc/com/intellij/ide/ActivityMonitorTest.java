@@ -57,7 +57,7 @@ public class ActivityMonitorTest extends UsefulTestCase {
         return any;
       }
     }, getTestRootDisposable());
-    myMonitor = new UiActivityMonitorImpl(new MockApplication(getTestRootDisposable()));
+    myMonitor = new UiActivityMonitorImpl();
     myMonitor.setActive(true);
     disposeOnTearDown(myMonitor);
   }
@@ -67,11 +67,9 @@ public class ActivityMonitorTest extends UsefulTestCase {
 
     MockProject project1 = new MockProjectEx(getTestRootDisposable());
     assertReady(project1);
-    assertFalse(myMonitor.hasObjectFor(project1));
 
     MockProject project2 = new MockProjectEx(getTestRootDisposable());
     assertReady(project2);
-    assertFalse(myMonitor.hasObjectFor(project2));
 
     myMonitor.initBusyObjectFor(project1);
     assertTrue(myMonitor.hasObjectFor(project1));
@@ -97,7 +95,7 @@ public class ActivityMonitorTest extends UsefulTestCase {
 
 
     myMonitor.addActivity(project1, new UiActivity("p1"), ModalityState.any());
-    assertBusy(null);
+    assertReady(null);
     assertBusy(project1);
     assertReady(project2);
 
@@ -107,7 +105,7 @@ public class ActivityMonitorTest extends UsefulTestCase {
     assertBusy(project2);
 
     myMonitor.removeActivity(new UiActivity("global"));
-    assertBusy(null);
+    assertReady(null);
     assertBusy(project1);
     assertReady(project2);
 

@@ -15,23 +15,13 @@
  */
 package com.intellij.ide;
 
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.components.ApplicationComponent;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.ProjectManagerAdapter;
 import com.intellij.openapi.util.BusyObject;
-import com.intellij.openapi.util.registry.Registry;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.util.*;
-
-public abstract class UiActivityMonitor implements ApplicationComponent {
+public abstract class UiActivityMonitor {
 
   public abstract BusyObject getBusy(@NotNull Project project, UiActivity ... toWatch);
 
@@ -54,7 +44,7 @@ public abstract class UiActivityMonitor implements ApplicationComponent {
   public abstract void setActive(boolean active);
 
   public static UiActivityMonitor getInstance() {
-    return ApplicationManager.getApplication().getComponent(UiActivityMonitor.class);
+    return ServiceManager.getService(UiActivityMonitor.class);
   }
 
 }
