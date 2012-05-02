@@ -434,8 +434,14 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
       group.add(new FavoritesShowMembersAction(myProject, myBuilder));
     }
 
-    if (ProjectViewDirectoryHelper.getInstance(myProject).supportsFlattenPackages()) {
+    final ProjectViewDirectoryHelper helper = ProjectViewDirectoryHelper.getInstance(myProject);
+
+    if (helper.supportsFlattenPackages()) {
       group.add(new FavoritesFlattenPackagesAction(myProject, myBuilder));
+    }
+
+    if (helper.supportsHideEmptyMiddlePackages()) {
+      group.add(new FavoritesCompactEmptyMiddlePackagesAction(myProject, myBuilder));
     }
 
     group.add(new FavoritesAutoScrollToSourceAction(myProject, myAutoScrollToSourceHandler, myBuilder));

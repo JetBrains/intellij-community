@@ -24,6 +24,7 @@ public class FavoritesViewSettings implements ViewSettings {
   private boolean myShowMembers = false;
   private boolean myFlattenPackages = false;
   private boolean myAutoScrollToSource = false;
+  private boolean myHideEmptyMiddlePackages = true;
 
   @Override
   public boolean isShowMembers() {
@@ -60,7 +61,7 @@ public class FavoritesViewSettings implements ViewSettings {
 
   @Override
   public boolean isHideEmptyMiddlePackages() {
-    return false;
+    return myHideEmptyMiddlePackages;
   }
 
   @Override
@@ -74,5 +75,9 @@ public class FavoritesViewSettings implements ViewSettings {
 
   public void setAutoScrollToSource(boolean autoScrollToSource) {
     myAutoScrollToSource = autoScrollToSource;
+  }
+
+  public void setHideEmptyMiddlePackages(boolean hide) {
+    myHideEmptyMiddlePackages = hide;
   }
 }
