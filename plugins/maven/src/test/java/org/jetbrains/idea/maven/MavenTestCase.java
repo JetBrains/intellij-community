@@ -15,7 +15,6 @@
  */
 package org.jetbrains.idea.maven;
 
-import com.intellij.compiler.CompilerWorkspaceConfiguration;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
@@ -67,7 +66,6 @@ public abstract class MavenTestCase extends UsefulTestCase {
 
   protected VirtualFile myProjectPom;
   protected List<VirtualFile> myAllPoms = new ArrayList<VirtualFile>();
-  private boolean myCompileInBackground;
 
   static {
     IdeaTestCase.initPlatformPrefix();
@@ -112,8 +110,6 @@ public abstract class MavenTestCase extends UsefulTestCase {
       }
     });
 
-    myCompileInBackground = CompilerWorkspaceConfiguration.getInstance(myProject).COMPILE_IN_BACKGROUND;
-    CompilerWorkspaceConfiguration.getInstance(myProject).COMPILE_IN_BACKGROUND = false;
   }
 
   private static void ensureTempDirCreated() {
@@ -137,8 +133,6 @@ public abstract class MavenTestCase extends UsefulTestCase {
 
   @Override
   protected void tearDown() throws Exception {
-    CompilerWorkspaceConfiguration.getInstance(myProject).COMPILE_IN_BACKGROUND = myCompileInBackground;
-
     myProject = null;
     UIUtil.invokeAndWaitIfNeeded(new Runnable() {
       @Override
