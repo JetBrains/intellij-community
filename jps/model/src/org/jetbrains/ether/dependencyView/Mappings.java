@@ -859,12 +859,6 @@ public class Mappings {
             this.affection = affection;
           }
 
-          private Triple(final int owner, final FieldRepr field) {
-            this.owner = owner;
-            this.field = field;
-            this.affection = null;
-          }
-
           Callbacks.ConstantAffection getAffection() {
             if (affection == null) {
               return null;
@@ -882,9 +876,7 @@ public class Mappings {
         final Collection<Triple> myQueue = new LinkedList<Triple>();
 
         void addConstantWork(final int owner, final FieldRepr field) {
-          myQueue.add(lastResort != null
-                      ? new Triple(owner, field, lastResort.request(myContext.getValue(owner), myContext.getValue(field.name)))
-                      : new Triple(owner, field));
+          myQueue.add(new Triple(owner, field, lastResort.request(myContext.getValue(owner), myContext.getValue(field.name))));
         }
 
         boolean doWork(final Collection<File> affectedFiles) {
@@ -896,7 +888,7 @@ public class Mappings {
             debug("Class: ", t.owner);
             debug("Field: ", t.field.name);
 
-            if (affection == null || ! affection.isKnown()) {
+            if (!affection.isKnown()) {
               debug("No external dependency information available.");
               debug("Trying to soften non-incremental decision.");
               if (!incrementalDecision(t.owner, t.field, affectedFiles, filter)) {
@@ -904,7 +896,8 @@ public class Mappings {
                 debug("End of delayed work, returning false.");
                 return false;
               }
-            } else {
+            }
+            else {
               debug("External dependency information retrieved.");
               affectedFiles.addAll(affection.getAffectedFiles());
             }
@@ -1479,12 +1472,15 @@ public class Mappings {
 
             if ((f.access & Opcodes.ACC_PRIVATE) == 0 && (f.access & mask) == mask && f.hasValue()) {
               debug("Field had value and was (non-private) final static => a switch to non-incremental mode requested");
-              works.addConstantWork(it.name, f);
-
-              //if (!incrementalDecision(it.name, f, affectedFiles, filter)) {
-              //  debug("End of Differentiate, returning false");
-              //  return false;         // Here!
-              //}
+              if (lastResort != null) {
+                works.addConstantWork(it.name, f);
+              }
+              else {
+                if (!incrementalDecision(it.name, f, affectedFiles, filter)) {
+                  debug("End of Differentiate, returning false");
+                  return false;
+                }
+              }
             }
 
             final TIntHashSet propagated = u.propagateFieldAccess(f.name, it.name);
@@ -1507,12 +1503,15 @@ public class Mappings {
 
               if (harmful || valueChanged || (accessChanged && !d.weakedAccess())) {
                 debug("Inline field changed it's access or value => a switch to non-incremental mode requested");
-                works.addConstantWork(it.name, field);
-
-                //if (!incrementalDecision(it.name, field, affectedFiles, filter)) {
-                //  debug("End of Differentiate, returning false");
-                //  return false; // Here!
-                //}
+                if (lastResort != null) {
+                  works.addConstantWork(it.name, field);
+                }
+                else {
+                  if (!incrementalDecision(it.name, field, affectedFiles, filter)) {
+                    debug("End of Differentiate, returning false");
+                    return false;
+                  }
+                }
               }
             }
 

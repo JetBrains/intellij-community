@@ -66,7 +66,11 @@ public class IncProjectBuilder {
   private final List<Future> myAsyncTasks = new ArrayList<Future>();
   private final Timestamps myTimestamps;
 
-  public IncProjectBuilder(ProjectDescriptor pd, BuilderRegistry builderRegistry, final Timestamps timestamps, Map<String, String> builderParams, CanceledStatus cs) {
+  public IncProjectBuilder(ProjectDescriptor pd,
+                           BuilderRegistry builderRegistry,
+                           final Timestamps timestamps,
+                           Map<String, String> builderParams,
+                           CanceledStatus cs) {
     myProjectDescriptor = pd;
     myBuilderRegistry = builderRegistry;
     myBuilderParams = builderParams;
@@ -82,7 +86,8 @@ public class IncProjectBuilder {
     myMessageHandlers.add(handler);
   }
 
-  public void build(CompileScope scope, final boolean isMake, final boolean isProjectRebuild, boolean forceCleanCaches) throws RebuildRequestedException{
+  public void build(CompileScope scope, final boolean isMake, final boolean isProjectRebuild, boolean forceCleanCaches)
+    throws RebuildRequestedException {
     final LowMemoryWatcher memWatcher = LowMemoryWatcher.register(new Forceable() {
       @Override
       public boolean isDirty() {
@@ -103,7 +108,9 @@ public class IncProjectBuilder {
     }
     catch (ProjectBuildException e) {
       final Throwable cause = e.getCause();
-      if (cause instanceof PersistentEnumerator.CorruptedException || cause instanceof MappingFailedException || cause instanceof IOException) {
+      if (cause instanceof PersistentEnumerator.CorruptedException ||
+          cause instanceof MappingFailedException ||
+          cause instanceof IOException) {
         myMessageDispatcher.processMessage(new CompilerMessage(
           COMPILE_SERVER_NAME, BuildMessage.Kind.INFO,
           "Internal caches are corrupted or have outdated format, forcing project rebuild: " +
@@ -182,7 +189,12 @@ public class IncProjectBuilder {
   private void runBuild(CompileContext context, boolean forceCleanCaches) throws ProjectBuildException {
     context.setDone(0.0f);
 
-    LOG.info("Building project '" + context.getProject().getProjectName() + "'; isRebuild:" +context.isProjectRebuild() + "; isMake:" + context.isMake());
+    LOG.info("Building project '" +
+             context.getProject().getProjectName() +
+             "'; isRebuild:" +
+             context.isProjectRebuild() +
+             "; isMake:" +
+             context.isMake());
 
     if (context.isProjectRebuild() || forceCleanCaches) {
       cleanOutputRoots(context);
@@ -205,21 +217,28 @@ public class IncProjectBuilder {
     context.processMessage(new ProgressMessage("Running 'after' tasks"));
     runTasks(context, myBuilderRegistry.getAfterTasks());
 
-    if (false) { //LocalLOG.isDebugEnabled()) {
-      final Mappings mappings = myProjectDescriptor.dataManager.getMappings();
-      final String fileName = Utils.getSystemRoot() + File.separator + "snapshot-" + new SimpleDateFormat("dd-MM-yy(hh:mm:ss)").format(new Date()) + ".log";
+    final JavaBuilderLogger logger = context.getLoggingManager().getJavaBuilderLogger();
 
-      try {
-        final PrintStream stream = new PrintStream(fileName);
+    if (logger.isEnabled()) {
+      final File flag = new File(Utils.getSystemRoot() + File.separator + "dumpSnapshot");
 
-        stream.println("Mappings:");
-        mappings.toStream(stream);
-        stream.println("End Of Mappings");
+      if (flag.exists()) {
+        final Mappings mappings = myProjectDescriptor.dataManager.getMappings();
+        final String fileName =
+          Utils.getSystemRoot() + File.separator + "snapshot-" + new SimpleDateFormat("dd-MM-yy(hh:mm:ss)").format(new Date()) + ".log";
 
-        stream.close();
-      }
-      catch (FileNotFoundException e) {
-        e.printStackTrace();
+        try {
+          final PrintStream stream = new PrintStream(fileName);
+
+          stream.println("Mappings:");
+          mappings.toStream(stream);
+          stream.println("End Of Mappings");
+
+          stream.close();
+        }
+        catch (FileNotFoundException e) {
+          e.printStackTrace();
+        }
       }
     }
 
@@ -281,7 +300,8 @@ public class IncProjectBuilder {
 
   private static void clearOutputs(CompileContext context) throws ProjectBuildException, IOException {
     final Collection<Module> modulesToClean = context.getProject().getModules().values();
-    final Map<File, Set<Pair<String, Boolean>>> rootsToDelete = new HashMap<File, Set<Pair<String, Boolean>>>(); // map: outputRoot-> setOfPairs([module, isTest])
+    final Map<File, Set<Pair<String, Boolean>>> rootsToDelete =
+      new HashMap<File, Set<Pair<String, Boolean>>>(); // map: outputRoot-> setOfPairs([module, isTest])
     final Set<File> allSourceRoots = new HashSet<File>();
 
     for (Module module : modulesToClean) {
@@ -325,7 +345,9 @@ public class IncProjectBuilder {
         }
       }
       else {
-        context.processMessage(new CompilerMessage(COMPILE_SERVER_NAME, BuildMessage.Kind.WARNING, "Output path " + outputRoot.getPath() + " intersects with a source root. The output cannot be cleaned."));
+        context.processMessage(new CompilerMessage(COMPILE_SERVER_NAME, BuildMessage.Kind.WARNING, "Output path " +
+                                                                                                   outputRoot.getPath() +
+                                                                                                   " intersects with a source root. The output cannot be cleaned."));
         // clean only those files we are aware of
         for (Pair<String, Boolean> info : entry.getValue()) {
           clearOutputFiles(context, info.first, info.second);
@@ -419,7 +441,7 @@ public class IncProjectBuilder {
   private static void createClasspathIndex(final ModuleChunk chunk, boolean forTests) {
     final Set<File> outputPaths = new LinkedHashSet<File>();
     for (Module module : chunk.getModules()) {
-      final String out = forTests? module.getTestOutputPath() : module.getOutputPath();
+      final String out = forTests ? module.getTestOutputPath() : module.getOutputPath();
       if (out != null) {
         outputPaths.add(new File(out));
       }
@@ -446,7 +468,7 @@ public class IncProjectBuilder {
     final File[] files = file.listFiles();
     if (files != null) {
       for (File child : files) {
-        final String _path = path.isEmpty()? child.getName() : path + "/" + child.getName();
+        final String _path = path.isEmpty() ? child.getName() : path + "/" + child.getName();
         writeIndex(writer, child, _path);
       }
     }
@@ -483,7 +505,7 @@ public class IncProjectBuilder {
                 }
                 Arrays.sort(buffer);
                 logger.log("Cleaning output files:");
-                for(final String o : buffer) {
+                for (final String o : buffer) {
                   logger.log(o);
                 }
                 logger.log("End of files");
