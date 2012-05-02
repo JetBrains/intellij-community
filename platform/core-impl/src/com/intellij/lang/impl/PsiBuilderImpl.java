@@ -53,6 +53,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Field;
+import java.util.AbstractList;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -1137,7 +1138,10 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder, AS
   }
 
   private void balanceWhiteSpaces() {
-    for (int i = 1; i < myProduction.size() - 1; i++) {
+    RelativeTokenTypesView wsTokens = null;
+    RelativeTokenTextView tokenTextGetter = null;
+
+    for (int i = 1, size = myProduction.size() - 1; i < size; i++) {
       final ProductionMarker item = myProduction.get(i);
 
       if (item instanceof StartMarker && ((StartMarker)item).myDoneMarker == null) {
@@ -1152,15 +1156,45 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder, AS
       int wsEndIndex = item.myLexemeIndex;
       while (wsEndIndex < myLexemeCount && whitespaceOrComment(myLexTypes[wsEndIndex])) wsEndIndex++;
 
-      final List<IElementType> wsTokens = CollectionFactory.arrayList(myLexTypes, wsStartIndex, wsEndIndex);
+      if (wsTokens == null) wsTokens = new RelativeTokenTypesView();
+      wsTokens.configure(wsStartIndex, wsEndIndex);
       final boolean atEnd = wsStartIndex == 0 || wsEndIndex == myLexemeCount;
-      final WhitespacesAndCommentsBinder.TokenTextGetter getter = new WhitespacesAndCommentsBinder.TokenTextGetter() {
-        @Override
-        public CharSequence get(final int i) {
-          return myText.subSequence(myLexStarts[wsStartIndex + i], myLexStarts[wsStartIndex + i + 1]);
-        }
-      };
-      item.myLexemeIndex = wsStartIndex + item.myEdgeTokenBinder.getEdgePosition(wsTokens, atEnd, getter);
+      if (tokenTextGetter == null) tokenTextGetter = new RelativeTokenTextView();
+      tokenTextGetter.configure(wsStartIndex);
+
+      item.myLexemeIndex = wsStartIndex + item.myEdgeTokenBinder.getEdgePosition(wsTokens, atEnd, tokenTextGetter);
+    }
+  }
+
+  private final class RelativeTokenTypesView extends AbstractList<IElementType> {
+    private int start, size;
+
+    private void configure(int _start, int _end) {
+      size = _end - _start;
+      start = _start;
+    }
+
+    @Override
+    public IElementType get(final int index) {
+      return myLexTypes[start + index];
+    }
+
+    @Override
+    public int size() {
+      return size;
+    }
+  }
+
+  private final class RelativeTokenTextView implements WhitespacesAndCommentsBinder.TokenTextGetter {
+    private int start;
+
+    private void configure(int _start) {
+      start = _start;
+    }
+
+    @Override
+    public CharSequence get(final int i) {
+      return myText.subSequence(myLexStarts[start + i], myLexStarts[start + i + 1]);
     }
   }
 
@@ -1431,6 +1465,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder, AS
     }
 
     private int count;
+    private LighterASTNode[] nodes;
 
     @Override
     public int getChildren(@NotNull final LighterASTNode item, @NotNull final Ref<LighterASTNode[]> into) {
@@ -1447,15 +1482,15 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder, AS
       ProductionMarker child = marker.myFirstChild;
       int lexIndex = marker.myLexemeIndex;
       while (child != null) {
-        lexIndex = insertLeaves(lexIndex, child.myLexemeIndex, into, marker.myBuilder);
+        lexIndex = insertLeaves(lexIndex, child.myLexemeIndex, marker.myBuilder);
 
         if (child instanceof StartMarker && ((StartMarker)child).myDoneMarker.myCollapse) {
           int lastIndex = ((StartMarker)child).myDoneMarker.myLexemeIndex;
-          insertLeaf(into, child.getTokenType(), marker.myBuilder, child.myLexemeIndex, lastIndex);
+          insertLeaf(child.getTokenType(), marker.myBuilder, child.myLexemeIndex, lastIndex);
         }
         else {
-          ensureCapacity(into);
-          into.get()[count++] = child;
+          ensureCapacity();
+          nodes[count++] = child;
         }
 
         if (child instanceof StartMarker) {
@@ -1464,7 +1499,9 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder, AS
         child = child.myNext;
       }
 
-      insertLeaves(lexIndex, marker.myDoneMarker.myLexemeIndex, into, marker.myBuilder);
+      insertLeaves(lexIndex, marker.myDoneMarker.myLexemeIndex, marker.myBuilder);
+      into.set(nodes);
+      nodes = null;
 
       return count;
     }
@@ -1483,30 +1520,30 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder, AS
       }
     }
 
-    private void ensureCapacity(final Ref<LighterASTNode[]> into) {
-      LighterASTNode[] old = into.get();
+    private void ensureCapacity() {
+      LighterASTNode[] old = nodes;
       if (old == null) {
         old = new LighterASTNode[10];
-        into.set(old);
+        nodes = old;
       }
       else if (count >= old.length) {
         LighterASTNode[] newStore = new LighterASTNode[count * 3 / 2];
         System.arraycopy(old, 0, newStore, 0, count);
-        into.set(newStore);
+        nodes = newStore;
       }
     }
 
-    private int insertLeaves(int curToken, int lastIdx, Ref<LighterASTNode[]> into, PsiBuilderImpl builder) {
+    private int insertLeaves(int curToken, int lastIdx, PsiBuilderImpl builder) {
       lastIdx = Math.min(lastIdx, builder.myLexemeCount);
       while (curToken < lastIdx) {
-        insertLeaf(into, builder.myLexTypes[curToken], builder, curToken, curToken + 1);
+        insertLeaf(builder.myLexTypes[curToken], builder, curToken, curToken + 1);
 
         curToken++;
       }
       return curToken;
     }
 
-    private void insertLeaf(Ref<LighterASTNode[]> into, IElementType type, PsiBuilderImpl builder, int startLexemIndex, int endLexemIndex) {
+    private void insertLeaf(IElementType type, PsiBuilderImpl builder, int startLexemIndex, int endLexemIndex) {
       final int start = builder.myLexStarts[startLexemIndex];
       final int end = builder.myLexStarts[endLexemIndex];
       if (start > end || ((start == end) && !(type instanceof ILeafElementType))) return;
@@ -1526,8 +1563,8 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder, AS
       lexeme.myTokenType = type;
       lexeme.myTokenStart = start;
       lexeme.myTokenEnd = end;
-      ensureCapacity(into);
-      into.get()[count++] = lexeme;
+      ensureCapacity();
+      nodes[count++] = lexeme;
     }
   }
 
