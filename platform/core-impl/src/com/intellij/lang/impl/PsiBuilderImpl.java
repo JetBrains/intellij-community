@@ -1075,7 +1075,9 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder, AS
     markTokenTypeChecked();
     balanceWhiteSpaces();
 
-    LOG.assertTrue(!myProduction.isEmpty(), "Parser produced no markers. Text:\n" + myText);
+    if (myProduction.isEmpty()) {
+      LOG.error("Parser produced no markers. Text:\n" + myText);
+    }
 
     final StartMarker rootMarker = (StartMarker)myProduction.get(0);
     rootMarker.myParent = rootMarker.myFirstChild = rootMarker.myLastChild = rootMarker.myNext = null;
