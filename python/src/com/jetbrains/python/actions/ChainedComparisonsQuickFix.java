@@ -19,9 +19,12 @@ import org.jetbrains.annotations.Nullable;
 public class ChainedComparisonsQuickFix implements LocalQuickFix {
   boolean myIsLeftLeft;
   boolean myIsRightLeft;
-  public ChainedComparisonsQuickFix(boolean isLeft, boolean isRight) {
+  Boolean getInnerRight;
+
+  public ChainedComparisonsQuickFix(boolean isLeft, boolean isRight, @Nullable Boolean getInner) {
     myIsLeftLeft = isLeft;
     myIsRightLeft = isRight;
+    getInnerRight = getInner;
   }
 
   @NotNull
@@ -42,6 +45,10 @@ public class ChainedComparisonsQuickFix implements LocalQuickFix {
         PyExpression rightExpression = ((PyBinaryExpression)expression).getRightExpression();
         if (rightExpression instanceof PyBinaryExpression && leftExpression instanceof PyBinaryExpression) {
           if (((PyBinaryExpression)expression).getOperator() == PyTokenTypes.AND_KEYWORD) {
+            if (getInnerRight && ((PyBinaryExpression)leftExpression).getRightExpression() instanceof PyBinaryExpression
+                && PyTokenTypes.AND_KEYWORD == ((PyBinaryExpression)leftExpression).getOperator()) {
+              leftExpression = ((PyBinaryExpression)leftExpression).getRightExpression();
+            }
             checkOperator((PyBinaryExpression)leftExpression, (PyBinaryExpression)rightExpression, project);
           }
         }

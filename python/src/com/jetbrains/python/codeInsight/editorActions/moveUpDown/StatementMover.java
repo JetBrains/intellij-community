@@ -394,13 +394,14 @@ public class StatementMover extends LineMover {
     PyElement statementPart1 = statementParts.first;
     PyElement statementPart2 = statementParts.second;
     if (statementPart2 instanceof PyStatementPart) {
-      PyStatementList stList = ((PyStatementPart)statementParts.second).getStatementList();
+      PyStatementList stList = ((PyStatementPart)statementPart2).getStatementList();
       if (stList != null && stList.getStatements().length == 1 && stList.getStatements()[0] instanceof PyPassStatement ||
         moveToEmptyLine) {
         myStatementPartToRemovePass = (PyStatementPart)statementParts.second;
       }
     }
-    return !(statementPart1 instanceof PyExceptPart) &&
+    final boolean fromExceptToElse = statementPart1 instanceof PyExceptPart && statementPart2 instanceof PyTryPart;
+    return !fromExceptToElse &&
            statementPart2 != null &&
            statementPart1 != null &&
            statementPart1.getParent() == statementPart2.getParent() ||
