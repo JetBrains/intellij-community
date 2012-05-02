@@ -83,7 +83,7 @@ public abstract class ModuleLevelBuilder extends Builder {
 
         final ModulesBasedFileFilter moduleBasedFilter = new ModulesBasedFileFilter(context, chunk);
         final boolean incremental = globalMappings.differentiate(
-          delta, removedPaths, filesToCompile, allCompiledFiles, allAffectedFiles, moduleBasedFilter
+          delta, removedPaths, filesToCompile, allCompiledFiles, allAffectedFiles, moduleBasedFilter, null
         );
 
         if (LOG.isDebugEnabled()) {

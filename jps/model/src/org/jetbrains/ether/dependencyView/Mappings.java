@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.lang.annotation.RetentionPolicy;
 import java.util.*;
+import java.util.concurrent.Future;
 
 /**
  * Created by IntelliJ IDEA.
@@ -842,8 +843,80 @@ public class Mappings {
                                final Collection<File> filesToCompile,
                                final Collection<File> compiledFiles,
                                final Collection<File> affectedFiles,
-                               DependentFilesFilter filter) {
+                               final DependentFilesFilter filter,
+                               final Callbacks.ConstantAffectionResolver lastResort) {
     synchronized (myLock) {
+
+      class DelayedWorks {
+        class Triple {
+          final int owner;
+          final FieldRepr field;
+          final Future<Callbacks.ConstantAffection> affection;
+
+          private Triple(final int owner, final FieldRepr field, final Future<Callbacks.ConstantAffection> affection) {
+            this.owner = owner;
+            this.field = field;
+            this.affection = affection;
+          }
+
+          private Triple(final int owner, final FieldRepr field) {
+            this.owner = owner;
+            this.field = field;
+            this.affection = null;
+          }
+
+          Callbacks.ConstantAffection getAffection() {
+            if (affection == null) {
+              return null;
+            }
+
+            try {
+              return affection.get();
+            }
+            catch (Exception e) {
+              throw new RuntimeException(e);
+            }
+          }
+        }
+
+        final Collection<Triple> myQueue = new LinkedList<Triple>();
+
+        void addConstantWork(final int owner, final FieldRepr field) {
+          myQueue.add(lastResort != null
+                      ? new Triple(owner, field, lastResort.request(myContext.getValue(owner), myContext.getValue(field.name)))
+                      : new Triple(owner, field));
+        }
+
+        boolean doWork(final Collection<File> affectedFiles) {
+          debug("Starting delayed works.");
+
+          for (final Triple t : myQueue) {
+            final Callbacks.ConstantAffection affection = t.getAffection();
+
+            debug("Class: ", t.owner);
+            debug("Field: ", t.field.name);
+
+            if (affection == null || ! affection.isKnown()) {
+              debug("No external dependency information available.");
+              debug("Trying to soften non-incremental decision.");
+              if (!incrementalDecision(t.owner, t.field, affectedFiles, filter)) {
+                debug("No luck.");
+                debug("End of delayed work, returning false.");
+                return false;
+              }
+            } else {
+              debug("External dependency information retrieved.");
+              affectedFiles.addAll(affection.getAffectedFiles());
+            }
+          }
+
+          debug("End of delayed work, returning true.");
+          return true;
+        }
+      }
+
+      final DelayedWorks works = new DelayedWorks();
+
       debug("Begin of Differentiate:");
 
       delta.runPostPasses();
@@ -1406,10 +1479,12 @@ public class Mappings {
 
             if ((f.access & Opcodes.ACC_PRIVATE) == 0 && (f.access & mask) == mask && f.hasValue()) {
               debug("Field had value and was (non-private) final static => a switch to non-incremental mode requested");
-              if (!incrementalDecision(it.name, f, affectedFiles, filter)) {
-                debug("End of Differentiate, returning false");
-                return false;
-              }
+              works.addConstantWork(it.name, f);
+
+              //if (!incrementalDecision(it.name, f, affectedFiles, filter)) {
+              //  debug("End of Differentiate, returning false");
+              //  return false;         // Here!
+              //}
             }
 
             final TIntHashSet propagated = u.propagateFieldAccess(f.name, it.name);
@@ -1432,10 +1507,12 @@ public class Mappings {
 
               if (harmful || valueChanged || (accessChanged && !d.weakedAccess())) {
                 debug("Inline field changed it's access or value => a switch to non-incremental mode requested");
-                if (!incrementalDecision(it.name, field, affectedFiles, filter)) {
-                  debug("End of Differentiate, returning false");
-                  return false;
-                }
+                works.addConstantWork(it.name, field);
+
+                //if (!incrementalDecision(it.name, field, affectedFiles, filter)) {
+                //  debug("End of Differentiate, returning false");
+                //  return false; // Here!
+                //}
               }
             }
 
@@ -1604,8 +1681,8 @@ public class Mappings {
         }
       }
 
-      debug("End of Differentiate, returning true");
-      return true;
+      debug("End of Differentiate.");
+      return works.doWork(affectedFiles);
     }
   }
 
@@ -1809,22 +1886,6 @@ public class Mappings {
 
   public Callbacks.Backend getCallback() {
     return new Callbacks.Backend() {
-      public Collection<String> getClassFiles() {
-        final Set<String> result = new HashSet<String>();
-
-        synchronized (myLock) {
-          myClassToSourceFile.forEachEntry(new TIntIntProcedure() {
-            @Override
-            public boolean execute(int s, int b) {
-              result.add(myContext.getValue(s));
-              return true;
-            }
-          });
-        }
-
-        return result;
-      }
-
       public void associate(final String classFileName, final String sourceFileName, final ClassReader cr) {
         synchronized (myLock) {
           final int classFileNameS = myContext.get(classFileName);
@@ -1872,11 +1933,6 @@ public class Mappings {
             mySourceFileToAnnotationUsages.put(sourceFileNameS, localAnnotationUsages);
           }
         }
-      }
-
-      @Override
-      public void registerConstantUsage(final String className, final String fieldName, final String fieldOwner) {
-        //To change body of implemented methods use File | Settings | File Templates.
       }
 
       @Override
