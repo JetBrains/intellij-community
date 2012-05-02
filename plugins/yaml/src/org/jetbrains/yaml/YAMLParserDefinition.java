@@ -21,6 +21,7 @@ import org.jetbrains.yaml.psi.impl.*;
  * @author oleg
  */
 public class YAMLParserDefinition implements ParserDefinition, YAMLElementTypes {
+  private static final TokenSet myCommentTokens = TokenSet.create(YAMLTokenTypes.COMMENT);
 
   @NotNull
   public Lexer createLexer(final Project project) {
@@ -43,7 +44,7 @@ public class YAMLParserDefinition implements ParserDefinition, YAMLElementTypes 
 
   @NotNull
   public TokenSet getCommentTokens() {
-    return TokenSet.create(YAMLTokenTypes.COMMENT);
+    return myCommentTokens;
   }
 
   @NotNull
