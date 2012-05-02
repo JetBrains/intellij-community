@@ -35,7 +35,7 @@ public class UniqueVFilePathBuilderImpl extends UniqueVFilePathBuilder {
   public String getUniqueVirtualFilePath(Project project, VirtualFile file) {
     final Collection<VirtualFile> filesWithSameName = FilenameIndex.getVirtualFilesByName(project, file.getName(),
                                                                                           ProjectScope.getProjectScope(project));
-    if (filesWithSameName.size() > 1) {
+    if (filesWithSameName.size() > 1 && filesWithSameName.contains(file)) {
       String path = project.getBasePath();
       path = path == null ? "" : FileUtil.toSystemIndependentName(path);
       UniqueNameBuilder<VirtualFile> builder = new UniqueNameBuilder<VirtualFile>(path, File.separator, 25);
