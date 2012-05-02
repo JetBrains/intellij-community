@@ -44,7 +44,6 @@ public class XDebuggerUIConstants {
   @NonNls public static final String EQ_TEXT = " = ";
 
   public static final Icon DEBUG_AGAIN_ICON = IconLoader.getIcon("/actions/startDebugger.png");
-  public static final Icon STOP_AND_START_ICON = IconLoader.getIcon("/actions/restart.png");
   public static final Icon FRAMES_TAB_ICON = IconLoader.getIcon("/debugger/frame.png");
   public static final Icon THREADS_TAB_ICON = IconLoader.getIcon("/debugger/threads.png");
   public static final Icon VARIABLES_TAB_ICON = IconLoader.getIcon("/debugger/value.png");
