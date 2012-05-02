@@ -39,7 +39,7 @@ import java.util.Set;
 /**
  * <p>
  *   Stores files which are untracked by the Git repository.
- *   Should be updated by calling {@link #add(com.intellij.openapi.vfs.VirtualFile)} and {@link #remove(com.intellij.openapi.vfs.VirtualFile)}
+ *   Should be updated by calling {@link #add(com.intellij.openapi.vfs.VirtualFile)} and {@link #remove(java.util.Collection)}
  *   whenever the list of unversioned files changes.
  *   Able to get the list of unversioned files from Git.
  * </p>
@@ -126,28 +126,6 @@ public class GitUntrackedFilesHolder implements Disposable, BulkFileListener {
     synchronized (LOCK) {
       if (myReady) {
         myDefinitelyUntrackedFiles.add(file);
-      }
-    }
-  }
-
-  /**
-   * Adds several files to the list of untracked.
-   */
-  public void add(@NotNull Collection<VirtualFile> files) {
-    synchronized (LOCK) {
-      if (myReady) {
-        myDefinitelyUntrackedFiles.addAll(files);
-      }
-    }
-  }
-
-  /**
-   * Removes the file from untracked.
-   */
-  public void remove(@NotNull VirtualFile file) {
-    synchronized (LOCK) {
-      if (myReady) {
-        myDefinitelyUntrackedFiles.remove(file);
       }
     }
   }
