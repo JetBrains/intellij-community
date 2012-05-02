@@ -91,6 +91,7 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
 
   @Override
   public boolean removeValue(int inputId, Value value) {
+    if (myInputIdMapping.isEmpty()) return false; // skipping hash code for value
     value = maskNull(value);
     final Object input = myInputIdMapping.get(value);
     if (input == null) {
@@ -124,7 +125,7 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
 
   @Override
   public Iterator<Value> getValueIterator() {
-    if (myInputIdMapping.size() == 0) {
+    if (myInputIdMapping.isEmpty()) {
       return EmptyIterator.getInstance();
     }
 
