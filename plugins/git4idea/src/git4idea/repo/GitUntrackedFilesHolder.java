@@ -86,7 +86,6 @@ public class GitUntrackedFilesHolder implements Disposable, BulkFileListener {
 
   private Set<VirtualFile> myDefinitelyUntrackedFiles = new HashSet<VirtualFile>();
   private Set<VirtualFile> myPossiblyUntrackedFiles = new HashSet<VirtualFile>();
-  private Set<VirtualFile> myPossiblyTrackedFiles = new HashSet<VirtualFile>();
   private boolean myReady;   // if false, total refresh is needed
   private final Object LOCK = new Object();
   private final GitRepositoryManager myRepositoryManager;
@@ -115,7 +114,6 @@ public class GitUntrackedFilesHolder implements Disposable, BulkFileListener {
     synchronized (LOCK) {
       myDefinitelyUntrackedFiles.clear();
       myPossiblyUntrackedFiles.clear();
-      myPossiblyTrackedFiles.clear();
     }
   }
 
@@ -173,7 +171,6 @@ public class GitUntrackedFilesHolder implements Disposable, BulkFileListener {
     synchronized (LOCK) {
       myDefinitelyUntrackedFiles = untrackedFiles;
       myPossiblyUntrackedFiles.clear();
-      myPossiblyTrackedFiles.clear();
       myReady = true;
     }
   }
@@ -194,7 +191,6 @@ public class GitUntrackedFilesHolder implements Disposable, BulkFileListener {
     Set<VirtualFile> suspiciousFiles = new HashSet<VirtualFile>();
     synchronized (LOCK) {
       suspiciousFiles.addAll(myPossiblyUntrackedFiles);
-      suspiciousFiles.addAll(myPossiblyTrackedFiles);
     }
 
     Set<VirtualFile> untrackedFiles = myGit.untrackedFiles(myProject, myRoot, suspiciousFiles);
@@ -204,7 +200,6 @@ public class GitUntrackedFilesHolder implements Disposable, BulkFileListener {
 
     synchronized (LOCK) {
       myPossiblyUntrackedFiles.clear();
-      myPossiblyTrackedFiles.clear();
       myDefinitelyUntrackedFiles.addAll(untrackedFiles);
       myDefinitelyUntrackedFiles.removeAll(trackedFiles);
     }
