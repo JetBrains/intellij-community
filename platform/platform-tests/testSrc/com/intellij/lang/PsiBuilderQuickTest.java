@@ -268,7 +268,7 @@ public class PsiBuilderQuickTest extends LightPlatformTestCase {
                    while(!builder.eof()) builder.advanceLexer();
                  }
                },
-               "Assertion failed: Parser produced no markers. Text:\naa");
+               "Parser produced no markers. Text:\naa");
   }
 
   public void testValidityChecksOnTreeBuild2() {
