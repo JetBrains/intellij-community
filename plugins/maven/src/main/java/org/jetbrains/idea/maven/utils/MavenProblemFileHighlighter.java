@@ -15,8 +15,6 @@
  */
 package org.jetbrains.idea.maven.utils;
 
-import com.intellij.openapi.application.AccessToken;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -32,13 +30,7 @@ public class MavenProblemFileHighlighter implements Condition<VirtualFile> {
   }
 
   public boolean value(final VirtualFile file) {
-    AccessToken accessToken = ApplicationManager.getApplication().acquireReadActionLock();
-    try {
-      PsiFile psiFile = PsiManager.getInstance(myProject).findFile(file);
-      return psiFile != null && MavenDomUtil.isMavenFile(psiFile);
-    }
-    finally {
-      accessToken.finish();
-    }
+    PsiFile psiFile = PsiManager.getInstance(myProject).findFile(file);
+    return psiFile != null && MavenDomUtil.isMavenFile(psiFile);
   }
 }
