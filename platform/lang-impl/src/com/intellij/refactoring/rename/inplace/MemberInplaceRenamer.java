@@ -55,11 +55,12 @@ import java.util.List;
 public class MemberInplaceRenamer extends VariableInplaceRenamer {
   private final PsiElement mySubstituted;
   private RangeMarker mySubstitutedRange;
-  public MemberInplaceRenamer(@NotNull PsiNameIdentifierOwner elementToRename, PsiElement substituted, Editor editor) {
+
+  public MemberInplaceRenamer(@NotNull PsiNamedElement elementToRename, PsiElement substituted, Editor editor) {
     this(elementToRename, substituted, editor, elementToRename.getName(), elementToRename.getName());
   }
 
-  public MemberInplaceRenamer(@NotNull PsiNameIdentifierOwner elementToRename, PsiElement substituted, Editor editor, String initialName, String oldName) {
+  public MemberInplaceRenamer(@NotNull PsiNamedElement elementToRename, PsiElement substituted, Editor editor, String initialName, String oldName) {
     super(elementToRename, editor, elementToRename.getProject(), initialName, oldName);
     mySubstituted = substituted;
     if (mySubstituted != null && mySubstituted != myElementToRename && mySubstituted.getTextRange() != null) {
@@ -77,7 +78,7 @@ public class MemberInplaceRenamer extends VariableInplaceRenamer {
 
   @Override
   protected VariableInplaceRenamer createInplaceRenamerToRestart(PsiNamedElement variable, Editor editor, String initialName) {
-    return new MemberInplaceRenamer((PsiNameIdentifierOwner)variable, getSubstituted(), editor, initialName, myOldName);
+    return new MemberInplaceRenamer(variable, getSubstituted(), editor, initialName, myOldName);
   }
 
   @Override
