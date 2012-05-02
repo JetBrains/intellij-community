@@ -107,6 +107,7 @@ public class InspectionEP extends LanguageExtensionPoint {
   public String level;
 
   public HighlightDisplayLevel getDefaultLevel() {
+    if (level == null) return HighlightDisplayLevel.WARNING;
     HighlightDisplayLevel displayLevel = HighlightDisplayLevel.find(level);
     if (displayLevel == null) {
       LOG.error("Can't find highlight display level: " + level);
