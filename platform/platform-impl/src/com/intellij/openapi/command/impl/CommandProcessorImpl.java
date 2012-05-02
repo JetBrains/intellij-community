@@ -182,7 +182,7 @@ public class CommandProcessorImpl extends CommandProcessorEx {
           undoManager.undo(editor);
         }
       }
-      Messages.showErrorDialog(project, "Cannot perform operation. Too complex, sorry.", "Failed to perform operation");
+      Messages.showErrorDialog(project, "Cannot perform operation. Too complex, sorry.", "Failed to Perform Operation");
     }
   }
 
