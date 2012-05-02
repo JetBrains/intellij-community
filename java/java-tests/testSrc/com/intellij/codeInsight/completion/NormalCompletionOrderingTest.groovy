@@ -101,7 +101,7 @@ public class NormalCompletionOrderingTest extends CompletionSortingTestCase {
   public void testDispreferImpls() throws Throwable {
     myFixture.addClass("package foo; public class Xxx {}");
     configureSecondCompletion();
-    assertPreferredItems(1, "Xxx", "XxxEx", "XxxImpl", "Xxy");
+    assertPreferredItems(0, "Xxx", "XxxEx", "XxxImpl", "Xxy");
   }
 
   public void testPreferOwnInnerClasses() throws Throwable {
@@ -128,7 +128,7 @@ public class NormalCompletionOrderingTest extends CompletionSortingTestCase {
     myFixture.addClass("package foo; public interface XaYa {}");
     myFixture.addClass("package foo; public interface XyYa {}");
     configureSecondCompletion();
-    assertPreferredItems(1, "XaYa", "XaYaEx", "XaYaImpl", "XyYa", "XyYaXa");
+    assertPreferredItems(0, "XaYa", "XaYaEx", "XaYaImpl", "XyYa", "XyYaXa");
   }
 
   public void testPreferLessParameters() throws Throwable {
@@ -219,7 +219,7 @@ public class NormalCompletionOrderingTest extends CompletionSortingTestCase {
   }
 
   public void testPreferClassStaticMembers() {
-    checkPreferredItems(1, "Zoo", "Zoo.A", "Zoo.B", "Zoo.C", "Zoo.D", "Zoo.E", "Zoo.F", "Zoo.G", "Zoo.H");
+    checkPreferredItems(0, "Zoo", "Zoo.A", "Zoo.B", "Zoo.C", "Zoo.D", "Zoo.E", "Zoo.F", "Zoo.G", "Zoo.H");
   }
 
   public void testPreferFinallyToFinal() {

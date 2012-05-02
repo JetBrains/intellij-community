@@ -210,10 +210,9 @@ public final class GuiEditor extends JPanel implements DataProvider {
    * @param file file to be edited
    * @throws java.lang.IllegalArgumentException
    *          if the <code>file</code>
-   *          is <code>null</code> or <code>file</code> is not falid PsiFile
+   *          is <code>null</code> or <code>file</code> is not valid PsiFile
    */
   public GuiEditor(@NotNull final Module module, @NotNull final VirtualFile file) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
     LOG.assertTrue(file.isValid());
 
     myModule = module;
@@ -474,7 +473,9 @@ public final class GuiEditor extends JPanel implements DataProvider {
     }
 
     // Standard Swing cut/copy/paste actions should work if user is editing something inside property inspector
-    final UIDesignerToolWindowManager manager = UIDesignerToolWindowManager.getInstance(getProject());
+    Project project = getProject();
+    if (project.isDisposed()) return null;
+    final UIDesignerToolWindowManager manager = UIDesignerToolWindowManager.getInstance(project);
     final PropertyInspector inspector = manager.getPropertyInspector();
     if (inspector != null && inspector.isEditing()) {
       return null;

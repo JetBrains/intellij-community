@@ -77,7 +77,7 @@ public interface FileEditor extends UserDataHolder, Disposable {
   void setState(@NotNull FileEditorState state);
 
   /**
-   * @return whether the editor's content is modified in comparision with its file. 
+   * @return whether the editor's content is modified in comparison with its file.
    */
   boolean isModified();
 
