@@ -20,10 +20,10 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.indexing.*;
 import com.intellij.util.io.EnumeratorIntegerDescriptor;
 import com.intellij.util.io.KeyDescriptor;
+import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.xml.NanoXmlUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.StringReader;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -41,8 +41,8 @@ public class AntImportsIndex extends ScalarIndexExtension<Integer>{
     @NotNull
     public Map<Integer, Void> map(final FileContent inputData) {
       final Map<Integer, Void> map = new HashMap<Integer, Void>();
-      
-      NanoXmlUtil.parse(new StringReader(inputData.getContentAsText().toString()), new NanoXmlUtil.IXMLBuilderAdapter() {
+
+      NanoXmlUtil.parse(CharArrayUtil.readerFromCharSequence(inputData.getContentAsText()), new NanoXmlUtil.IXMLBuilderAdapter() {
         private boolean isFirstElement = true;
         @Override
         public void startElement(final String elemName, final String nsPrefix, final String nsURI, final String systemID, final int lineNr) throws Exception {
