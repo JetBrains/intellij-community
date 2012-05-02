@@ -190,7 +190,7 @@ public class Switcher extends AnAction implements DumbAware {
 
     @SuppressWarnings({"ManualArrayToCollectionCopy"})
     SwitcherPanel(Project project, String title, boolean pinned) {
-      super(new BorderLayout(0, 0));
+      setLayout(new SwitcherLayouter());
       this.project = project;
       MAX_FILES_IN_SWITCHER = pinned ? UISettings.getInstance().RECENT_FILES_LIMIT : 30;
       myPinned = pinned;
@@ -289,7 +289,7 @@ public class Switcher extends AnAction implements DumbAware {
         protected void paintComponent(Graphics g) {
           super.paintComponent(g);
           g.setColor(SEPARATOR_COLOR);
-          g.drawLine(getWidth() - 1, 0, getWidth() - 1, getHeight());
+          g.drawLine(0, 0, 0, getHeight());
         }
       };
       separator.setBackground(Color.WHITE);
@@ -416,7 +416,6 @@ public class Switcher extends AnAction implements DumbAware {
       files.addKeyListener(this);
       files.addMouseListener(this);
       files.addMouseMotionListener(this);
-
 
       this.add(toolWindows, BorderLayout.WEST);
       if (filesModel.size() > 0) {
@@ -895,6 +894,39 @@ public class Switcher extends AnAction implements DumbAware {
 
     public boolean isPinnedMode() {
       return myPinned;
+    }
+
+    private class SwitcherLayouter extends BorderLayout {
+      private Rectangle sBounds;
+      private Rectangle tBounds;
+      private Rectangle fBounds;
+      private Rectangle dBounds;
+
+      @Override
+      public void layoutContainer(Container target) {
+        final JScrollPane scrollPane = UIUtil.getParentOfType(JScrollPane.class, files);
+        JComponent filesPane = scrollPane != null ? scrollPane : files;
+        if (sBounds == null) {
+          super.layoutContainer(target);
+          sBounds = separator.getBounds();
+          tBounds = toolWindows.getBounds();
+          fBounds = filesPane.getBounds();
+          dBounds = descriptions.getBounds();
+        } else {
+          final int h = target.getHeight();
+          final int w = target.getWidth();
+          sBounds.height = h - dBounds.height;
+          tBounds.height = h - dBounds.height;
+          fBounds.height = h - dBounds.height;
+          fBounds.width =  w - sBounds.width - tBounds.width;
+          dBounds.width = w;
+          dBounds.y = h - dBounds.height;
+          separator.setBounds(sBounds);
+          toolWindows.setBounds(tBounds);
+          filesPane.setBounds(fBounds);
+          descriptions.setBounds(dBounds);
+        }
+      }
     }
   }
 
