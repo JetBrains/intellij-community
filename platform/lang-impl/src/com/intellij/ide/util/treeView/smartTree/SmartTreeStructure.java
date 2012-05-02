@@ -32,11 +32,9 @@ public class SmartTreeStructure extends AbstractTreeStructure {
   public SmartTreeStructure(@NotNull Project project, @NotNull TreeModel model) {
     myModel = model;
     myProject = project;
-
   }
 
   public void commit() {
-    PsiDocumentManager.getInstance(myProject).commitAllDocuments();
   }
 
   @NotNull
@@ -54,7 +52,6 @@ public class SmartTreeStructure extends AbstractTreeStructure {
 
   public Object getRootElement() {
     if (myRootElementWrapper == null){
-      PsiDocumentManager.getInstance(myProject).commitAllDocuments();
       myRootElementWrapper = createTree();
     }
     return myRootElementWrapper;
