@@ -119,3 +119,10 @@ class Example {
       void foo(T t);
     }
 }
+
+abstract class IDEA57337<<warning descr="Type parameter 'S' is never used">S</warning>> {
+    abstract <T> void foo(IDEA57337<? super IDEA57337<T>> x);
+    void bar(IDEA57337<? super IDEA57337<?>> x){
+        foo(x);
+    }
+}
