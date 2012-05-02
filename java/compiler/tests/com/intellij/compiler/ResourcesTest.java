@@ -57,7 +57,15 @@ public class ResourcesTest extends CompilerTestCase {
 
   @Override
   protected void doCompile(final CompileStatusNotification notification, int pass) {
-    CompilerManager.getInstance(myProject).rebuild(notification);
+    final CompilerWorkspaceConfiguration config = CompilerWorkspaceConfiguration.getInstance(myProject);
+    final boolean shouldClear = config.CLEAR_OUTPUT_DIRECTORY;
+    try {
+      config.CLEAR_OUTPUT_DIRECTORY = false;
+      CompilerManager.getInstance(myProject).rebuild(notification);
+    }
+    finally {
+      config.CLEAR_OUTPUT_DIRECTORY = shouldClear;
+    }
   }
 
   public void testNoResourceDelete() throws Exception  {doTest();}
