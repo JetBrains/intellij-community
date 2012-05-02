@@ -2069,6 +2069,8 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
      * tool window depending on decoration type.
      */
     public void resized(final InternalDecorator source) {
+      if (!source.isShowing()) return; // do not recalculate the tool window size if it is not yet shown (and, therefore, has 0,0,0,0 bounds)
+
       final WindowInfoImpl info = getInfo(source.getToolWindow().getId());
       if (info.isFloating()) {
         final Window owner = SwingUtilities.getWindowAncestor(source);
