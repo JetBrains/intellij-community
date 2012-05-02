@@ -45,27 +45,22 @@ public class GitQuickListContentProvider implements VcsQuickListContentProvider 
     final ActionManager manager = ActionManager.getInstance();
     final List<AnAction> actions = new ArrayList<AnAction>();
 
-    // Basic
     actions.add(new Separator(activeVcs.getDisplayName()));
-    add("ChangesView.AddUnversioned", manager, actions);
     add("CheckinProject", manager, actions);
-    add("CheckinFiles", manager, actions);
     add("ChangesView.Rollback", manager, actions);
-
-    // History, Diff
-    addSeparator(actions);
     add("Vcs.ShowTabbedFileHistory", manager, actions);
     add("Annotate", manager, actions);
     add("Compare.SameVersion", manager, actions);
 
-    // Pull/Push
     addSeparator(actions);
     add("Git.Branches", manager, actions);
+    add("Git.Fetch", manager, actions);
     add("Git.Push", manager, actions);
-
-    // misc
     add("Git.Stash", manager, actions);
     add("Git.Unstash", manager, actions);
+
+    add("ChangesView.AddUnversioned", manager, actions);
+    add("Git.ResolveConflicts", manager, actions);
 
     // Github
     addSeparator(actions);
@@ -90,11 +85,11 @@ public class GitQuickListContentProvider implements VcsQuickListContentProvider 
     return true;
   }
 
-  private void addSeparator(@NotNull final List<AnAction> actions) {
+  private static void addSeparator(@NotNull final List<AnAction> actions) {
     actions.add(new Separator());
   }
 
-  private void add(String actionName, ActionManager manager, List<AnAction> actions) {
+  private static void add(String actionName, ActionManager manager, List<AnAction> actions) {
     final AnAction action = manager.getAction(actionName);
     assert action != null;
     actions.add(action);
