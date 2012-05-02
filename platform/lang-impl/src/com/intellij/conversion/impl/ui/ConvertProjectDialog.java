@@ -36,6 +36,7 @@ import javax.swing.event.HyperlinkListener;
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
@@ -122,14 +123,16 @@ public class ConvertProjectDialog extends DialogWrapper {
       }
 
       ProjectConversionUtil.backupFiles(myAffectedFiles, myContext.getProjectBaseDir(), myBackupDir);
+      List<ConversionRunner> usedRunners = new ArrayList<ConversionRunner>();
       for (ConversionRunner runner : myConversionRunners) {
         if (runner.isConversionNeeded()) {
           runner.preProcess();
           runner.process();
           runner.postProcess();
+          usedRunners.add(runner);
         }
       }
-      myContext.saveFiles(myAffectedFiles);
+      myContext.saveFiles(myAffectedFiles, usedRunners);
       myConverted = true;
       super.doOKAction();
     }

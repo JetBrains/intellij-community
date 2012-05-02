@@ -92,14 +92,16 @@ public class ConversionServiceImpl extends ConversionService {
         return ConversionResultImpl.ERROR_OCCURRED;
       }
       final File backupDir = ProjectConversionUtil.backupFiles(affectedFiles, context.getProjectBaseDir());
+      List<ConversionRunner> usedRunners = new ArrayList<ConversionRunner>();
       for (ConversionRunner runner : runners) {
         if (runner.isConversionNeeded()) {
           runner.preProcess();
           runner.process();
           runner.postProcess();
+          usedRunners.add(runner);
         }
       }
-      context.saveFiles(affectedFiles);
+      context.saveFiles(affectedFiles, usedRunners);
       listener.successfullyConverted(backupDir);
       saveConversionResult(context);
       return new ConversionResultImpl(runners);
@@ -318,12 +320,14 @@ public class ConversionServiceImpl extends ConversionService {
       ConversionContextImpl context = new ConversionContextImpl(projectPath);
       final List<ConversionRunner> runners = createConversionRunners(context, Collections.<String>emptySet());
       final File backupFile = ProjectConversionUtil.backupFile(moduleFile);
+      List<ConversionRunner> usedRunners = new ArrayList<ConversionRunner>();
       for (ConversionRunner runner : runners) {
         if (runner.isModuleConversionNeeded(moduleFile)) {
           runner.convertModule(moduleFile);
+          usedRunners.add(runner);
         }
       }
-      context.saveFiles(Collections.singletonList(moduleFile));
+      context.saveFiles(Collections.singletonList(moduleFile), usedRunners);
       Messages.showInfoMessage(project, IdeBundle.message("message.your.module.was.successfully.converted.br.old.version.was.saved.to.0", backupFile.getAbsolutePath()),
                                IdeBundle.message("dialog.title.convert.module"));
       return new ConversionResultImpl(runners);
@@ -358,7 +362,8 @@ public class ConversionServiceImpl extends ConversionService {
 
   @Tag("conversion")
   public static class CachedConversionResult {
-    @Tag("applied-converters") @AbstractCollection(surroundWithTag = false, elementTag = "converter", elementValueAttribute = "id")
+    @Tag("applied-converters")
+    @AbstractCollection(surroundWithTag = false, elementTag = "converter", elementValueAttribute = "id")
     public Set<String> myAppliedConverters = new HashSet<String>();
 
     @Tag("project-files")
