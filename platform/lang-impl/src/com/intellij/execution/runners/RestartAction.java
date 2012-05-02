@@ -94,7 +94,7 @@ public class RestartAction extends AnAction implements DumbAware {
     }
     presentation.setIcon(isRunning ? STOP_AND_START_ICON : myIcon);
 
-    presentation.setEnabled(true);
+    presentation.setEnabled(!ExecutorRegistry.getInstance().isStarting(myEnvironment.getProject(), myExecutor.getId(), myRunner.getRunnerId()));
   }
 
   public void registerShortcut(final JComponent component) {
