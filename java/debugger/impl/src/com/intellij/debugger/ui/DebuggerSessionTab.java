@@ -40,6 +40,7 @@ import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.runners.RestartAction;
+import com.intellij.execution.runners.StopAndRunAction;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ExecutionConsoleEx;
 import com.intellij.execution.ui.RunContentDescriptor;
@@ -263,9 +264,9 @@ public class DebuggerSessionTab extends DebuggerSessionTabBase implements Dispos
 
     DefaultActionGroup group = new DefaultActionGroup();
     final Executor executor = DefaultDebugExecutor.getDebugExecutorInstance();
-    RestartAction restarAction = new RestartAction(executor,
-                                                   myRunner, myRunContentDescriptor.getProcessHandler(), XDebuggerUIConstants.DEBUG_AGAIN_ICON,
-                                                   myRunContentDescriptor, myEnvironment);
+    final RestartAction restarAction = new RestartAction(
+      executor, myRunner, myRunContentDescriptor.getProcessHandler(), XDebuggerUIConstants.DEBUG_AGAIN_ICON, myRunContentDescriptor, myEnvironment
+    );
     group.add(restarAction);
     restarAction.registerShortcut(myUi.getComponent());
 
@@ -284,6 +285,11 @@ public class DebuggerSessionTab extends DebuggerSessionTabBase implements Dispos
     addActionToGroup(group, XDebuggerActions.RESUME);
     addActionToGroup(group, XDebuggerActions.PAUSE);
     addActionToGroup(group, IdeActions.ACTION_STOP_PROGRAM);
+    final StopAndRunAction stopAndRunAction = new StopAndRunAction(
+      executor, myRunner, myRunContentDescriptor.getProcessHandler(), XDebuggerUIConstants.STOP_AND_START_ICON, myRunContentDescriptor, myEnvironment
+    );
+    group.add(stopAndRunAction);
+    stopAndRunAction.registerShortcut(myUi.getComponent());
     if (executionResult instanceof DefaultExecutionResult) {
       group.addAll(((DefaultExecutionResult)executionResult).getAdditionalStopActions());
     }
