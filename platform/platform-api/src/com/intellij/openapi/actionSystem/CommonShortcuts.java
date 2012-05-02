@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.actionSystem;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.util.SystemInfo;
 
@@ -65,32 +66,32 @@ public class CommonShortcuts {
   }
 
   public static ShortcutSet getCopy() {
-    return new CustomShortcutSet(KeymapManager.getInstance().getActiveKeymap().getShortcuts(IdeActions.ACTION_COPY));
+    return shortcutsById(IdeActions.ACTION_COPY);
   }
 
   public static ShortcutSet getRerun() {
-    return new CustomShortcutSet(KeymapManager.getInstance().getActiveKeymap().getShortcuts(IdeActions.ACTION_RERUN));
+    return shortcutsById(IdeActions.ACTION_RERUN);
   }
 
   public static ShortcutSet getEditSource() {
-    return new CustomShortcutSet(KeymapManager.getInstance().getActiveKeymap().getShortcuts(IdeActions.ACTION_EDIT_SOURCE));
+    return shortcutsById(IdeActions.ACTION_EDIT_SOURCE);
   }
 
   public static ShortcutSet getViewSource() {
-    return new CustomShortcutSet(KeymapManager.getInstance().getActiveKeymap().getShortcuts(IdeActions.ACTION_VIEW_SOURCE));
+    return shortcutsById(IdeActions.ACTION_VIEW_SOURCE);
   }
 
   public static ShortcutSet getNew() {
-    return new CustomShortcutSet(KeymapManager.getInstance().getActiveKeymap().getShortcuts(IdeActions.ACTION_NEW_ELEMENT));
+    return shortcutsById(IdeActions.ACTION_NEW_ELEMENT);
   }
 
   public static ShortcutSet getMove() {
-    return new CustomShortcutSet(KeymapManager.getInstance().getActiveKeymap().getShortcuts(IdeActions.ACTION_MOVE));
+    return shortcutsById(IdeActions.ACTION_MOVE);
   }
 
 
   public static ShortcutSet getRename() {
-    return new CustomShortcutSet(KeymapManager.getInstance().getActiveKeymap().getShortcuts(IdeActions.ACTION_RENAME));
+    return shortcutsById(IdeActions.ACTION_RENAME);
   }
 
   public static ShortcutSet getDiff() {
@@ -99,16 +100,20 @@ public class CommonShortcuts {
   }
 
   public static ShortcutSet getFind() {
-    return new CustomShortcutSet(KeymapManager.getInstance().getActiveKeymap().getShortcuts(IdeActions.ACTION_FIND));
+    return shortcutsById(IdeActions.ACTION_FIND);
   }
 
   public static ShortcutSet getContextHelp() {
-    return new CustomShortcutSet(KeymapManager.getInstance().getActiveKeymap().getShortcuts(IdeActions.ACTION_CONTEXT_HELP));
+    return shortcutsById(IdeActions.ACTION_CONTEXT_HELP);
   }
 
   public static ShortcutSet getCloseActiveWindow() {
-    return new CustomShortcutSet(KeymapManager.getInstance().getActiveKeymap().getShortcuts(IdeActions.ACTION_CLOSE));
+    return shortcutsById(IdeActions.ACTION_CLOSE);
   }
 
+  private static CustomShortcutSet shortcutsById(String actionId) {
+    if (ApplicationManager.getApplication() == null) return new CustomShortcutSet(Shortcut.EMPTY_ARRAY);
 
+    return new CustomShortcutSet(KeymapManager.getInstance().getActiveKeymap().getShortcuts(actionId));
+  }
 }
