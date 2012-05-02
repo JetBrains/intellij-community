@@ -1021,7 +1021,7 @@
     <refactoring.moveInnerHandler language="JAVA" implementationClass="com.intellij.refactoring.move.moveInner.MoveJavaInnerHandler" id="java"/>
 
     <refactoring.safeDeleteProcessor implementation="com.intellij.refactoring.safeDelete.JavaSafeDeleteProcessor" id="javaProcessor"/>
-    <safeDelete.ImportSearcher implementation="com.intellij.refactoring.safeDelete.JavaImportSearcher"/>
+    <safeDelete.importSearcher implementation="com.intellij.refactoring.safeDelete.JavaImportSearcher"/>
 
     <refactoring.introduceParameterMethodUsagesProcessor implementation="com.intellij.refactoring.introduceParameter.JavaIntroduceParameterMethodUsagesProcessor"/>
     <refactoring.changeSignatureUsageProcessor implementation="com.intellij.refactoring.changeSignature.JavaChangeSignatureUsageProcessor" id="javaProcessor"/>

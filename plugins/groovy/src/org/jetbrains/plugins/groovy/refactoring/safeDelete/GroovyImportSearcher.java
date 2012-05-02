@@ -27,10 +27,13 @@ import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatem
  */
 public class GroovyImportSearcher extends ImportSearcher {
   @Override
-  public PsiElement findImport(PsiElement element) {
+  public PsiElement findImport(PsiElement element, boolean onlyNonStatic) {
     PsiFile file = element.getContainingFile();
     if (file instanceof GroovyFile) {
-      return PsiTreeUtil.getParentOfType(element, GrImportStatement.class);
+      GrImportStatement anImport = PsiTreeUtil.getParentOfType(element, GrImportStatement.class);
+      if (!(anImport == null || anImport.isStatic() && onlyNonStatic)) {
+        return anImport;
+      }
     }
     return null;
   }

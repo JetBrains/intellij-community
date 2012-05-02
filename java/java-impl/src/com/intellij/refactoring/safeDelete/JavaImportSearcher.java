@@ -15,23 +15,26 @@
  */
 package com.intellij.refactoring.safeDelete;
 
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiImportStatement;
-import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 
 /**
  * @author Max Medvedev
  */
 public class JavaImportSearcher extends ImportSearcher {
   @Override
-  public PsiElement findImport(PsiElement element) {
+  public PsiElement findImport(PsiElement element, boolean onlyNonStatic) {
     final PsiFile containingFile = element.getContainingFile();
-    if (containingFile instanceof PsiJavaFile) {
+    if (!(containingFile instanceof PsiJavaFile)) return null;
+
+    if (onlyNonStatic) {
       PsiElement parent = element.getParent();
       if (parent instanceof PsiImportStatement) {
         return parent;
       }
+    }
+    else {
+      return PsiTreeUtil.getParentOfType(element, PsiImportStatementBase.class);
     }
     return null;
   }

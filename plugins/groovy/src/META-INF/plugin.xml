@@ -137,7 +137,7 @@
     <editorNotificationProvider implementation="org.jetbrains.plugins.groovy.annotator.ConfigureGroovyLibraryNotificationProvider"/>
     <refactoring.introduceParameterMethodUsagesProcessor implementation="org.jetbrains.plugins.groovy.refactoring.introduce.parameter.java2groovy.GroovyIntroduceParameterMethodUsagesProcessor"/>
     <refactoring.changeSignatureUsageProcessor implementation="org.jetbrains.plugins.groovy.refactoring.changeSignature.GrChangeSignatureUsageProcessor" id="groovyProcessor" order="before javaProcessor"/>
-    <safeDelete.ImportSearcher implementation="org.jetbrains.plugins.groovy.refactoring.safeDelete.GroovyImportSearcher"/>
+    <safeDelete.importSearcher implementation="org.jetbrains.plugins.groovy.refactoring.safeDelete.GroovyImportSearcher"/>
 
     <constantExpressionEvaluator language="Groovy" implementationClass="org.jetbrains.plugins.groovy.lang.psi.util.GroovyConstantExpressionEvaluator"/>
     <annotationSupport language="Groovy" implementationClass="org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.annotation.GroovyAnnotationSupport"/>
