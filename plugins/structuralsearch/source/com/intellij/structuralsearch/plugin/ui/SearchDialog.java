@@ -249,7 +249,7 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
       )
     );
 
-    maxMatches.setMaximumSize(new Dimension(50, 25));
+    maxMatches.setMinimumSize(new Dimension(50, -1));
 
     //noinspection HardCodedStringLiteral
     Set<String> typeNames = new HashSet<String>();
