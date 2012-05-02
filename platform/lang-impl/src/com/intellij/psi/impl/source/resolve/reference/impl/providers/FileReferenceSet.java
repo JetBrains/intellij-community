@@ -39,19 +39,21 @@ public class FileReferenceSet {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceSet");
 
   private static final FileType[] EMPTY_FILE_TYPES = {};
-  private static final char SEPARATOR = '/';
-  private static final String SEPARATOR_STRING = "/";
-  public static final CustomizableReferenceProvider.CustomizationKey<Function<PsiFile, Collection<PsiFileSystemItem>>> DEFAULT_PATH_EVALUATOR_OPTION =
-    new CustomizableReferenceProvider.CustomizationKey<Function<PsiFile, Collection<PsiFileSystemItem>>>(PsiBundle.message("default.path.evaluator.option"));
-  public static final Function<PsiFile, Collection<PsiFileSystemItem>> ABSOLUTE_TOP_LEVEL = new Function<PsiFile, Collection<PsiFileSystemItem>>() {
-          @Override
-          @Nullable
-          public Collection<PsiFileSystemItem> fun(final PsiFile file) {
-            return getAbsoluteTopLevelDirLocations(file);
-          }
-        };
 
-   public static final Condition<PsiFileSystemItem> FILE_FILTER = new Condition<PsiFileSystemItem>() {
+  public static final CustomizableReferenceProvider.CustomizationKey<Function<PsiFile, Collection<PsiFileSystemItem>>>
+    DEFAULT_PATH_EVALUATOR_OPTION =
+    new CustomizableReferenceProvider.CustomizationKey<Function<PsiFile, Collection<PsiFileSystemItem>>>(
+      PsiBundle.message("default.path.evaluator.option"));
+  public static final Function<PsiFile, Collection<PsiFileSystemItem>> ABSOLUTE_TOP_LEVEL =
+    new Function<PsiFile, Collection<PsiFileSystemItem>>() {
+      @Override
+      @Nullable
+      public Collection<PsiFileSystemItem> fun(final PsiFile file) {
+        return getAbsoluteTopLevelDirLocations(file);
+      }
+    };
+
+  public static final Condition<PsiFileSystemItem> FILE_FILTER = new Condition<PsiFileSystemItem>() {
     @Override
     public boolean value(final PsiFileSystemItem item) {
       return item instanceof PsiFile;
@@ -114,7 +116,14 @@ public class FileReferenceSet {
     return absoluteUrlNeedsStartSlash() ? "/" + relativePath : relativePath;
   }
 
-  public static FileReferenceSet createSet(PsiElement element, final boolean soft, boolean endingSlashNotAllowed, final boolean urlEncoded) {
+  public String getSeparatorString() {
+    return "/";
+  }
+
+  public static FileReferenceSet createSet(PsiElement element,
+                                           final boolean soft,
+                                           boolean endingSlashNotAllowed,
+                                           final boolean urlEncoded) {
 
     String text;
     int offset;
@@ -202,23 +211,34 @@ public class FileReferenceSet {
     String str = myPathStringNonTrimmed;
 
     final List<FileReference> referencesList = new ArrayList<FileReference>();
+
+
+    String separatorString = getSeparatorString(); // separator's length can be more then 1 char
+    int sepLen = separatorString.length();
+    int currentSlash = -sepLen;
+
     // skip white space
-    int currentSlash = -1;
-    while (currentSlash + 1 < str.length() && Character.isWhitespace(str.charAt(currentSlash + 1))) currentSlash++;
-    if (currentSlash + 1 < str.length() && str.charAt(currentSlash + 1) == SEPARATOR) currentSlash++;
+    while (currentSlash + sepLen < str.length() && Character.isWhitespace(str.charAt(currentSlash + sepLen))) {
+      currentSlash++;
+    }
+
+    if (currentSlash + sepLen + sepLen < str.length() &&
+        str.substring(currentSlash + sepLen, currentSlash + sepLen + sepLen).equals(separatorString)) {
+      currentSlash+=sepLen;
+    }
     int index = 0;
 
-    if (str.equals(SEPARATOR_STRING)) {
+    if (str.equals(separatorString)) {
       final FileReference fileReference =
-        createFileReference(new TextRange(myStartInElement, myStartInElement + 1), index++, SEPARATOR_STRING);
+        createFileReference(new TextRange(myStartInElement, myStartInElement + 1), index++, separatorString);
       referencesList.add(fileReference);
     }
 
     while (true) {
-      final int nextSlash = str.indexOf(SEPARATOR, currentSlash + 1);
-      final String subreferenceText = nextSlash > 0 ? str.substring(currentSlash + 1, nextSlash) : str.substring(currentSlash + 1);
+      final int nextSlash = str.indexOf(separatorString, currentSlash + sepLen);
+      final String subreferenceText = nextSlash > 0 ? str.substring(currentSlash + sepLen, nextSlash) : str.substring(currentSlash + sepLen);
       final FileReference ref = createFileReference(
-        new TextRange(myStartInElement + currentSlash + 1, myStartInElement + (nextSlash > 0 ? nextSlash : str.length())),
+        new TextRange(myStartInElement + currentSlash + sepLen, myStartInElement + (nextSlash > 0 ? nextSlash : str.length())),
         index++,
         subreferenceText);
       referencesList.add(ref);
@@ -259,7 +279,7 @@ public class FileReferenceSet {
   public Collection<PsiFileSystemItem> computeDefaultContexts() {
     final PsiFile file = getContainingFile();
     if (file == null) return Collections.emptyList();
-    
+
     if (myOptions != null) {
       final Function<PsiFile, Collection<PsiFileSystemItem>> value = DEFAULT_PATH_EVALUATOR_OPTION.getValue(myOptions);
 
@@ -294,7 +314,7 @@ public class FileReferenceSet {
   private Collection<PsiFileSystemItem> getContextByFile(@NotNull PsiFile file) {
     final PsiElement context = file.getContext();
     if (context != null) file = context.getContainingFile();
-    
+
     if (useIncludingFileAsContext()) {
       final FileContextProvider contextProvider = FileContextProvider.getProvider(file);
       if (contextProvider != null) {
@@ -317,7 +337,7 @@ public class FileReferenceSet {
       final Project project = file.getProject();
       for (FileReferenceHelper helper : helpers) {
         if (helper.isMine(project, virtualFile)) {
-          list.addAll(helper.getContexts(project, virtualFile));  
+          list.addAll(helper.getContexts(project, virtualFile));
         }
       }
       if (list.size() > 0) {
@@ -339,7 +359,7 @@ public class FileReferenceSet {
   }
 
   public boolean isAbsolutePathReference() {
-    return myPathString.startsWith(SEPARATOR_STRING);
+    return myPathString.startsWith(getSeparatorString());
   }
 
   protected boolean useIncludingFileAsContext() {

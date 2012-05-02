@@ -300,7 +300,12 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
   private final Alarm myUpdateEditorAlarm = new Alarm();
   private void selectionChanged() {
     myBackSlashPressed.clear();
-    updateEditorsFromProperties();
+    UIUtil.invokeLaterIfNeeded(new Runnable() {
+      @Override
+      public void run() {
+        updateEditorsFromProperties();
+      }
+    });
   }
 
   private void updateEditorsFromProperties() {

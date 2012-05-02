@@ -3,6 +3,7 @@ package org.jetbrains.jps.incremental;
 import com.intellij.openapi.Forceable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.LowMemoryWatcher;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.io.MappingFailedException;
@@ -39,7 +40,6 @@ import java.util.concurrent.TimeUnit;
  */
 public class IncProjectBuilder {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.incremental.IncProjectBuilder");
-  private static final Logger LocalLOG = Logger.getInstance("#org.jetbrains.jps.incremental.Builder");
 
   public static final String COMPILE_SERVER_NAME = "COMPILE SERVER";
   private static final String CLASSPATH_INDEX_FINE_NAME = "classpath.index";
@@ -235,6 +235,23 @@ public class IncProjectBuilder {
 
   private void cleanOutputRoots(CompileContext context) throws ProjectBuildException {
     // whole project is affected
+    final boolean shouldClear = context.getProject().getCompilerConfiguration().isClearOutputDirectoryOnRebuild();
+    try {
+      if (shouldClear) {
+        clearOutputs(context);
+      }
+      else {
+        for (Module module : context.getProject().getModules().values()) {
+          final String moduleName = module.getName();
+          clearOutputFiles(context, moduleName, true);
+          clearOutputFiles(context, moduleName, false);
+        }
+      }
+    }
+    catch (IOException e) {
+      throw new ProjectBuildException("Error cleaning output files", e);
+    }
+
     try {
       context.getTimestamps().clean();
     }
@@ -248,19 +265,33 @@ public class IncProjectBuilder {
       throw new ProjectBuildException("Error cleaning compiler storages", e);
     }
     myProjectDescriptor.fsState.clearAll();
+  }
 
+  private static void clearOutputFiles(CompileContext context, final String moduleName, boolean forTests) throws IOException {
+    final SourceToOutputMapping map = context.getDataManager().getSourceToOutputMap(moduleName, forTests);
+    for (String srcPath : map.getKeys()) {
+      final Collection<String> outs = map.getState(srcPath);
+      if (outs != null) {
+        for (String out : outs) {
+          new File(out).delete();
+        }
+      }
+    }
+  }
+
+  private static void clearOutputs(CompileContext context) throws ProjectBuildException, IOException {
     final Collection<Module> modulesToClean = context.getProject().getModules().values();
-    final Set<File> rootsToDelete = new HashSet<File>();
+    final Map<File, Set<Pair<String, Boolean>>> rootsToDelete = new HashMap<File, Set<Pair<String, Boolean>>>(); // map: outputRoot-> setOfPairs([module, isTest])
     final Set<File> allSourceRoots = new HashSet<File>();
 
     for (Module module : modulesToClean) {
       final File out = context.getProjectPaths().getModuleOutputDir(module, false);
       if (out != null) {
-        rootsToDelete.add(out);
+        appendRootInfo(rootsToDelete, out, module, false);
       }
       final File testOut = context.getProjectPaths().getModuleOutputDir(module, true);
       if (testOut != null) {
-        rootsToDelete.add(testOut);
+        appendRootInfo(rootsToDelete, testOut, module, true);
       }
       final List<RootDescriptor> moduleRoots = context.getModuleRoots(module);
       for (RootDescriptor d : moduleRoots) {
@@ -270,9 +301,10 @@ public class IncProjectBuilder {
 
     // check that output and source roots are not overlapping
     final List<File> filesToDelete = new ArrayList<File>();
-    for (File outputRoot : rootsToDelete) {
+    for (Map.Entry<File, Set<Pair<String, Boolean>>> entry : rootsToDelete.entrySet()) {
       context.checkCanceled();
       boolean okToDelete = true;
+      final File outputRoot = entry.getKey();
       if (PathUtil.isUnder(allSourceRoots, outputRoot)) {
         okToDelete = false;
       }
@@ -294,11 +326,24 @@ public class IncProjectBuilder {
       }
       else {
         context.processMessage(new CompilerMessage(COMPILE_SERVER_NAME, BuildMessage.Kind.WARNING, "Output path " + outputRoot.getPath() + " intersects with a source root. The output cannot be cleaned."));
+        // clean only those files we are aware of
+        for (Pair<String, Boolean> info : entry.getValue()) {
+          clearOutputFiles(context, info.first, info.second);
+        }
       }
     }
 
     context.processMessage(new ProgressMessage("Cleaning output directories..."));
     FileUtil.asyncDelete(filesToDelete);
+  }
+
+  private static void appendRootInfo(Map<File, Set<Pair<String, Boolean>>> rootsToDelete, File out, Module module, boolean isTest) {
+    Set<Pair<String, Boolean>> infos = rootsToDelete.get(out);
+    if (infos == null) {
+      infos = new HashSet<Pair<String, Boolean>>();
+      rootsToDelete.put(out, infos);
+    }
+    infos.add(Pair.create(module.getName(), isTest));
   }
 
   private static void runTasks(CompileContext context, final List<BuildTask> tasks) throws ProjectBuildException {

@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.lookup.LookupManager;
+import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.lang.Language;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.Disposable;
@@ -126,7 +127,9 @@ public class QuickEditHandler extends DocumentAdapter implements Disposable {
             @Override
             public void update(AnActionEvent e) {
               Editor editor = PlatformDataKeys.EDITOR.getData(e.getDataContext());
-              e.getPresentation().setEnabled(editor != null && LookupManager.getActiveLookup(editor) == null);
+              e.getPresentation().setEnabled(
+                editor != null && LookupManager.getActiveLookup(editor) == null &&
+                TemplateManager.getInstance(myProject).getActiveTemplate(editor) == null);
             }
 
             @Override

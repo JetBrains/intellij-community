@@ -608,9 +608,9 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       c.weightx = 1;
       c.fill = GridBagConstraints.HORIZONTAL;
       final List<String> usersList = getUsersList(project, roots);
-      final List<String> authors = usersList == null ? new ArrayList<String>() : new ArrayList<String>(usersList);
+      final Set<String> authors = usersList == null ? new HashSet<String>() : new HashSet<String>(usersList);
       ContainerUtil.addAll(authors, mySettings.getCommitAuthors());
-      Collections.sort(authors);
+      Collections.sort(new ArrayList<String>(authors));
       myAuthor = new JComboBox(ArrayUtil.toObjectArray(authors));
       myAuthor.insertItemAt("", 0);
       myAuthor.setSelectedItem("");

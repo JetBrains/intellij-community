@@ -26,6 +26,7 @@ import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.vfs.PersistentFSConstants;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.pom.Navigatable;
@@ -179,6 +180,9 @@ public abstract class AutoScrollToSourceHandler {
           // Attempt to navigate to the virtual file with unknown file type will show a modal dialog
           // asking to register some file type for this file. This behaviour is undesirable when autoscrolling.
           if (vFile.getFileType() == FileTypes.UNKNOWN) return;
+
+          //IDEA-84881 Don't autoscroll to very large files
+          if (vFile.getLength() > PersistentFSConstants.getMaxIntellisenseFileSize()) return;
         }
         Navigatable[] navigatables = PlatformDataKeys.NAVIGATABLE_ARRAY.getData(context);
         if (navigatables != null) {
