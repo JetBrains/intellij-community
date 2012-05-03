@@ -543,7 +543,7 @@ public class CompileDriver {
     else {
       final BuildManager buildManager = BuildManager.getInstance();
       buildManager.cancelAutoMakeTasks(myProject);
-      return buildManager.scheduleBuild(myProject, compileContext.isRebuild(), compileContext.isMake(), moduleNames, artifactNames, paths, builderParams, new DefaultMessageHandler() {
+      return buildManager.scheduleBuild(myProject, compileContext.isRebuild(), compileContext.isMake(), moduleNames, artifactNames, paths, builderParams, new DefaultMessageHandler(myProject) {
         @Override
         public void sessionTerminated() {
           final ExitStatus status = COMPILE_SERVER_BUILD_STATUS.get(compileContext);

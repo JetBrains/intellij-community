@@ -41,6 +41,7 @@ class AutoMakeMessageHandler extends DefaultMessageHandler {
   private final WolfTheProblemSolver myWolf;
 
   public AutoMakeMessageHandler(Project project) {
+    super(project);
     myProject = project;
     myBuildStatus = CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.Status.SUCCESS;
     myWolf = WolfTheProblemSolver.getInstance(project);

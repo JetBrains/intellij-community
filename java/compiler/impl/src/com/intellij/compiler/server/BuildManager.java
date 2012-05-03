@@ -281,8 +281,7 @@ public class BuildManager implements ApplicationComponent{
         }
         final List<String> emptyList = Collections.emptyList();
         final RequestFuture future = scheduleBuild(
-          project, false, true, emptyList, emptyList, emptyList, Collections.<String, String>emptyMap(),
-          new AutoMakeMessageHandler(project)
+          project, false, true, emptyList, emptyList, emptyList, Collections.<String, String>emptyMap(), new AutoMakeMessageHandler(project)
         );
         if (future != null) {
           futures.add(future);
