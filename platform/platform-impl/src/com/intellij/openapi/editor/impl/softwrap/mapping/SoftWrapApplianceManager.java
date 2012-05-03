@@ -342,10 +342,18 @@ public class SoftWrapApplianceManager implements SoftWrapFoldingListener, Docume
     }
 
     myContext.logicalLineData.update(foldRegion.getStartOffset());
-    SoftWrap softWrap = registerSoftWrap(
-      myContext.softWrapStartOffset, myContext.tokenStartOffset, myContext.tokenStartOffset, myContext.getSpaceWidth(),
-      myContext.logicalLineData
-    );
+    
+    SoftWrap softWrap;
+    if (myContext.exceedsVisualEdge(myContext.currentPosition.x + myContext.reservedWidthInPixels)) {
+      softWrap = registerSoftWrap(
+        myContext.softWrapStartOffset, myContext.tokenStartOffset, myContext.tokenStartOffset, myContext.getSpaceWidth(),
+        myContext.logicalLineData
+      );
+    }
+    else {
+      softWrap = registerSoftWrap(foldRegion.getStartOffset(), myContext.getSpaceWidth(), myContext.logicalLineData);
+    }
+    
     if (softWrap == null) {
       // If we're here that means that we can't find appropriate soft wrap offset before the fold region.
       // However, we expect that it's always possible to wrap collapsed fold region placeholder text
@@ -524,10 +532,7 @@ public class SoftWrapApplianceManager implements SoftWrapFoldingListener, Docume
       EditorPosition wrapPosition = null;
       
       // Try to insert soft wrap after the last collapsed fold region that is located on the current visual line.
-      if (myContext.lastFoldEndPosition != null && myStorage.getSoftWrap(myContext.lastFoldEndPosition.offset) == null
-          && myContext.lastFoldEndPosition.offset + 1/* reserve one visual column for the soft wrap sign */
-             < myContext.currentPosition.offset)
-      {
+      if (myContext.lastFoldEndPosition != null && myStorage.getSoftWrap(myContext.lastFoldEndPosition.offset) == null) {
         wrapPosition = myContext.lastFoldEndPosition;
       }
 
@@ -637,10 +642,10 @@ public class SoftWrapApplianceManager implements SoftWrapFoldingListener, Docume
   }
 
   /**
-   * This method is assumed to be called in situation when visible area width is exceeded. It tries to create and register
+   * This method is assumed to be called in a situation when visible area width is exceeded. It tries to create and register
    * new soft wrap which data is defined in accordance with the given parameters.
    * <p/>
-   * There is a possible case that no soft wrap is created and registered. That is true, for example, for situation when
+   * There is a possible case that no soft wrap is created and registered. That is true, for example, for a situation when
    * we have a long line of text that doesn't contain white spaces, operators or any other symbols that may be used
    * as a <code>'wrap points'</code>. We just left such lines as-is.
    *

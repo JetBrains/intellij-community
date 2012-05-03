@@ -938,6 +938,20 @@ public class SoftWrapApplianceOnDocumentModificationTest extends AbstractEditorP
     
     checkSoftWraps(start, end);
   }
+
+  public void testFoldRegionWithLongPlaceholderText() throws IOException {
+    final String text =
+      "this is a string with(fold region), end)\n" +
+      "second string";
+    init(40, text);
+
+    int start = text.indexOf("fold");
+    int end = text.indexOf(',');
+    addCollapsedFoldRegion(start, end, "this is a really long fold region placeholder");
+    
+    checkSoftWraps(start, end);
+    assertEquals(new VisualPosition(3, 0), myEditor.offsetToVisualPosition(text.indexOf("second")));
+  }
   
   private void init(final int visibleWidthInColumns, @NotNull String fileText) throws IOException {
     int symbolWidthInPixels = 7;
