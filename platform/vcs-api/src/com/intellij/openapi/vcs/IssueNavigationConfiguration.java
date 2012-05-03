@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,10 +17,7 @@
 package com.intellij.openapi.vcs;
 
 import com.intellij.lifecycle.PeriodicalTasksCloser;
-import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
-import com.intellij.openapi.components.StorageScheme;
+import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.util.xmlb.XmlSerializerUtil;
@@ -40,9 +37,9 @@ import java.util.regex.Pattern;
   name = "IssueNavigationConfiguration",
   storages = {
     @Storage(
-      file = "$PROJECT_FILE$"
+      file = StoragePathMacros.PROJECT_FILE
     )
-    ,@Storage( file = "$PROJECT_CONFIG_DIR$/vcs.xml", scheme = StorageScheme.DIRECTORY_BASED)
+    ,@Storage( file = StoragePathMacros.PROJECT_CONFIG_DIR + "/vcs.xml", scheme = StorageScheme.DIRECTORY_BASED)
     }
 )
 public class IssueNavigationConfiguration implements PersistentStateComponent<IssueNavigationConfiguration> {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,10 +21,8 @@ import com.intellij.codeInspection.ui.InspectionResultsView;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
-import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.AutoScrollToSourceHandler;
@@ -39,7 +37,7 @@ import com.intellij.util.xmlb.XmlSerializerUtil;
   name = "AnalysisUIOptions",
   storages = {
     @Storage(
-      file = "$WORKSPACE_FILE$"
+      file = StoragePathMacros.WORKSPACE_FILE
     )}
 )
 public class AnalysisUIOptions implements PersistentStateComponent<AnalysisUIOptions> {

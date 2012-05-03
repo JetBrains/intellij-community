@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.intellij.ide;
 import com.intellij.openapi.components.RoamingType;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
@@ -35,7 +36,7 @@ import org.jetbrains.annotations.NotNull;
   roamingType = RoamingType.DISABLED,
   storages = {
     @Storage(
-      file = "$APP_CONFIG$/other.xml"
+      file = StoragePathMacros.APP_CONFIG + "/other.xml"
     )}
 )
 public class RecentDirectoryProjectsManagerEx extends RecentDirectoryProjectsManager {

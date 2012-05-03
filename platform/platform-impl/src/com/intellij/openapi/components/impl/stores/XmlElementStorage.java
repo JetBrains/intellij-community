@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -93,7 +93,7 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
     myFileSpec = fileSpec;
     myComponentRoamingManager = componentRoamingManager;
     Disposer.register(parentDisposable, this);
-    myIsProjectSettings = "$PROJECT_FILE$".equals(myFileSpec) || myFileSpec.startsWith("$PROJECT_CONFIG_DIR$");
+    myIsProjectSettings = StoragePathMacros.PROJECT_FILE.equals(myFileSpec) || myFileSpec.startsWith(StoragePathMacros.PROJECT_CONFIG_DIR);
 
     myLocalVersionProvider = localComponentVersionsProvider;
 

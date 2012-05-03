@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import com.intellij.ide.GeneralSettings;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.components.StorageScheme;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
@@ -55,8 +56,8 @@ import java.util.*;
 @State(
   name = "Encoding",
   storages = {
-    @Storage( file = "$PROJECT_FILE$"),
-    @Storage( file = "$PROJECT_CONFIG_DIR$/encodings.xml", scheme = StorageScheme.DIRECTORY_BASED)
+    @Storage( file = StoragePathMacros.PROJECT_FILE),
+    @Storage( file = StoragePathMacros.PROJECT_CONFIG_DIR + "/encodings.xml", scheme = StorageScheme.DIRECTORY_BASED)
     }
 )
 public class EncodingProjectManagerImpl extends EncodingProjectManager {

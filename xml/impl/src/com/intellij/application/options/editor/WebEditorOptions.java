@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,7 +33,7 @@ import java.io.File;
   name="XmlEditorOptions",
   storages= {
     @Storage(
-      file = "$APP_CONFIG$/editor.xml"
+      file = StoragePathMacros.APP_CONFIG + "/editor.xml"
     )}
 )
 public class WebEditorOptions implements PersistentStateComponent<WebEditorOptions>, ExportableComponent {

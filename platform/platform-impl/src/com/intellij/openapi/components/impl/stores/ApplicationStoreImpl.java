@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,7 +38,6 @@ class ApplicationStoreImpl extends ComponentStoreImpl implements IApplicationSto
 
   private final ApplicationImpl myApplication;
   private final StateStorageManager myStateStorageManager;
-  @NonNls private static final String APP_CONFIG_STORAGE_MACRO = "APP_CONFIG";
   @NonNls private static final String OPTIONS_MACRO = "OPTIONS";
   @NonNls private static final String CONFIG_MACRO = "ROOT_CONFIG";
   private final DefaultsStateStorage myDefaultsStateStorage;
@@ -57,7 +56,7 @@ class ApplicationStoreImpl extends ComponentStoreImpl implements IApplicationSto
         final String fileName;
 
         if (component instanceof NamedJDOMExternalizable) {
-          fileName = "$" + APP_CONFIG_STORAGE_MACRO + "$/" + ((NamedJDOMExternalizable)component).getExternalFileName() + XML_EXTENSION;
+          fileName = StoragePathMacros.APP_CONFIG + "/" + ((NamedJDOMExternalizable)component).getExternalFileName() + XML_EXTENSION;
         }
         else {
           fileName = DEFAULT_STORAGE_SPEC;
@@ -71,7 +70,7 @@ class ApplicationStoreImpl extends ComponentStoreImpl implements IApplicationSto
       }
 
       protected TrackingPathMacroSubstitutor getMacroSubstitutor(@NotNull final String fileSpec) {
-        if (fileSpec.equals("$" + APP_CONFIG_STORAGE_MACRO + "$/" + PathMacrosImpl.EXT_FILE_NAME + XML_EXTENSION)) return null;
+        if (fileSpec.equals(StoragePathMacros.APP_CONFIG + "/" + PathMacrosImpl.EXT_FILE_NAME + XML_EXTENSION)) return null;
         return super.getMacroSubstitutor(fileSpec);
       }
     };
@@ -87,7 +86,7 @@ class ApplicationStoreImpl extends ComponentStoreImpl implements IApplicationSto
   }
 
   public void setOptionsPath(final String path) {
-    myStateStorageManager.addMacro(APP_CONFIG_STORAGE_MACRO, path);
+    myStateStorageManager.addMacro(StoragePathMacros.getMacroName(StoragePathMacros.APP_CONFIG), path);
     myStateStorageManager.addMacro(OPTIONS_MACRO, path);
   }
 
@@ -145,7 +144,7 @@ class ApplicationStoreImpl extends ComponentStoreImpl implements IApplicationSto
 
   }
 
-  public static final String DEFAULT_STORAGE_SPEC = "$" + APP_CONFIG_STORAGE_MACRO + "$/" + PathManager.DEFAULT_OPTIONS_FILE_NAME + XML_EXTENSION;
+  public static final String DEFAULT_STORAGE_SPEC = StoragePathMacros.APP_CONFIG + "/" + PathManager.DEFAULT_OPTIONS_FILE_NAME + XML_EXTENSION;
 
   public StateStorageManager getStateStorageManager() {
     return myStateStorageManager;

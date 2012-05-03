@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,7 @@
  */
 package com.intellij.psi.codeStyle;
 
-import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
-import com.intellij.openapi.components.StorageScheme;
+import com.intellij.openapi.components.*;
 import org.jdom.Element;
 
 /**
@@ -29,8 +26,8 @@ import org.jdom.Element;
 @State(
   name = "CodeStyleSettingsManager",
   storages = {
-    @Storage( file = "$PROJECT_FILE$")
-   ,@Storage( file = "$PROJECT_CONFIG_DIR$/projectCodeStyle.xml", scheme = StorageScheme.DIRECTORY_BASED)
+    @Storage( file = StoragePathMacros.PROJECT_FILE)
+   ,@Storage( file = StoragePathMacros.PROJECT_CONFIG_DIR + "/projectCodeStyle.xml", scheme = StorageScheme.DIRECTORY_BASED)
     }
 )
 public class LegacyCodeStyleSettingsManager implements PersistentStateComponent<Element> {

@@ -57,13 +57,8 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
 
   @NonNls private static final String OLD_PROJECT_SUFFIX = "_old.";
   @NonNls static final String OPTION_WORKSPACE = "workspace";
-  @NonNls static final String PROJECT_FILE_MACRO = "PROJECT_FILE";
-  @NonNls static final String WS_FILE_MACRO = "WORKSPACE_FILE";
-  @NonNls private static final String PROJECT_CONFIG_DIR = "PROJECT_CONFIG_DIR";
 
-  @NonNls static final String PROJECT_FILE_STORAGE = "$" + PROJECT_FILE_MACRO + "$";
-  @NonNls static final String WS_FILE_STORAGE = "$" + WS_FILE_MACRO + "$";
-  @NonNls static final String DEFAULT_STATE_STORAGE = PROJECT_FILE_STORAGE;
+  @NonNls static final String DEFAULT_STATE_STORAGE = StoragePathMacros.PROJECT_FILE;
 
   static final Storage DEFAULT_STORAGE_ANNOTATION = new MyStorage();
   private static int originalVersion = -1;
@@ -175,26 +170,26 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
       FileBasedStorage.syncRefreshPathRecursively(dirStore.getPath(), null);
 
       myScheme = StorageScheme.DIRECTORY_BASED;
-      stateStorageManager.addMacro(PROJECT_FILE_MACRO, new File(dirStore, "misc.xml").getPath());
+      stateStorageManager.addMacro(StoragePathMacros.getMacroName(StoragePathMacros.PROJECT_FILE), new File(dirStore, "misc.xml").getPath());
 
       final File ws = new File(dirStore, "workspace.xml");
-      stateStorageManager.addMacro(WS_FILE_MACRO, ws.getPath());
+      stateStorageManager.addMacro(StoragePathMacros.getMacroName(StoragePathMacros.WORKSPACE_FILE), ws.getPath());
 
       if (!ws.exists() && !file.isDirectory()) {
         useOldWsContent(filePath, ws);
       }
 
-      stateStorageManager.addMacro(PROJECT_CONFIG_DIR, dirStore.getPath());
+      stateStorageManager.addMacro(StoragePathMacros.getMacroName(StoragePathMacros.PROJECT_CONFIG_DIR), dirStore.getPath());
     }
     else {
       LocalFileSystem.getInstance().refreshAndFindFileByPath(filePath);
 
       myScheme = StorageScheme.DEFAULT;
-      stateStorageManager.addMacro(PROJECT_FILE_MACRO, filePath);
+      stateStorageManager.addMacro(StoragePathMacros.getMacroName(StoragePathMacros.PROJECT_FILE), filePath);
 
       final String workspacePath = composeWsPath(filePath);
       LocalFileSystem.getInstance().refreshAndFindFileByPath(workspacePath);
-      stateStorageManager.addMacro(WS_FILE_MACRO, workspacePath);
+      stateStorageManager.addMacro(StoragePathMacros.getMacroName(StoragePathMacros.WORKSPACE_FILE), workspacePath);
     }
     
     myCachedLocation = null;
@@ -258,7 +253,7 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
     }
 
     //we are not yet initialized completely ("open directory", etc)
-    final StateStorage s = getStateStorageManager().getFileStateStorage(PROJECT_FILE_STORAGE);
+    final StateStorage s = getStateStorageManager().getFileStateStorage(StoragePathMacros.PROJECT_FILE);
     if (!(s instanceof FileBasedStorage)) return null;
     final FileBasedStorage storage = (FileBasedStorage)s;
 
@@ -350,7 +345,7 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
   @Override
   public VirtualFile getProjectFile() {
     if (myProject.isDefault()) return null;
-    final FileBasedStorage storage = (FileBasedStorage)getStateStorageManager().getFileStateStorage(PROJECT_FILE_STORAGE);
+    final FileBasedStorage storage = (FileBasedStorage)getStateStorageManager().getFileStateStorage(StoragePathMacros.PROJECT_FILE);
     assert storage != null;
     return storage.getVirtualFile();
   }
@@ -358,7 +353,7 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
   @Override
   public VirtualFile getWorkspaceFile() {
     if (myProject.isDefault()) return null;
-    final FileBasedStorage storage = (FileBasedStorage)getStateStorageManager().getFileStateStorage(WS_FILE_STORAGE);
+    final FileBasedStorage storage = (FileBasedStorage)getStateStorageManager().getFileStateStorage(StoragePathMacros.WORKSPACE_FILE);
     assert storage != null;
     return storage.getVirtualFile();
   }
@@ -383,7 +378,7 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
   @NotNull
   @Override
   public String getProjectFileName() {
-    final FileBasedStorage storage = (FileBasedStorage)getStateStorageManager().getFileStateStorage(PROJECT_FILE_STORAGE);
+    final FileBasedStorage storage = (FileBasedStorage)getStateStorageManager().getFileStateStorage(StoragePathMacros.PROJECT_FILE);
     assert storage != null;
     return storage.getFileName();
   }
@@ -392,7 +387,7 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
   @Override
   public String getProjectFilePath() {
     if (myProject.isDefault()) return "";
-    final FileBasedStorage storage = (FileBasedStorage)getStateStorageManager().getFileStateStorage(PROJECT_FILE_STORAGE);
+    final FileBasedStorage storage = (FileBasedStorage)getStateStorageManager().getFileStateStorage(StoragePathMacros.PROJECT_FILE);
     assert storage != null;
     return storage.getFilePath();
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.intellij.ide.passwordSafe.config;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.StoragePathMacros;
 
 /**
  * The password safe settings
@@ -28,7 +29,7 @@ import com.intellij.openapi.components.Storage;
 @State(
   name = "PasswordSafe",
   storages = {@Storage(
-    file = "$APP_CONFIG$/security.xml")})
+    file = StoragePathMacros.APP_CONFIG + "/security.xml")})
 public class PasswordSafeSettings implements PersistentStateComponent<PasswordSafeSettings.State> {
   /**
    * The selected provider type

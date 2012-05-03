@@ -15,6 +15,7 @@ package org.zmlx.hg4idea;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.util.containers.HashMap;
 import org.apache.commons.lang.StringUtils;
 import org.jetbrains.annotations.NotNull;
@@ -24,7 +25,7 @@ import java.util.Map;
 
 @State(
   name = "HgGlobalSettings",
-  storages = @Storage( file = "$APP_CONFIG$/vcs.xml")
+  storages = @Storage( file = StoragePathMacros.APP_CONFIG + "/vcs.xml")
 )
 public class HgGlobalSettings implements PersistentStateComponent<HgGlobalSettings.State> {
 

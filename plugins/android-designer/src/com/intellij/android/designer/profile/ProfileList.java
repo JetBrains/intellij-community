@@ -19,10 +19,8 @@ import com.intellij.ProjectTopics;
 import com.intellij.android.designer.designSurface.AndroidDesignerEditorPanel;
 import com.intellij.designer.DesignerToolWindowManager;
 import com.intellij.designer.designSurface.DesignerEditorPanel;
-import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
@@ -43,7 +41,7 @@ import java.util.Map;
  * @author Alexander Lobas
  * @author Eugene.Kudelevsky
  */
-@State(name = "AndroidDesignerProfile", storages = {@Storage(file = "$WORKSPACE_FILE$")})
+@State(name = "AndroidDesignerProfile", storages = {@Storage(file = StoragePathMacros.WORKSPACE_FILE)})
 public class ProfileList implements PersistentStateComponent<ProfileList.ProfileState> {
   private final LayoutDeviceManager myLayoutDeviceManager = new LayoutDeviceManager();
   private final Map<Module, Sdk> myModule2Sdk = new HashMap<Module, Sdk>();

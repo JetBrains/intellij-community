@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.ide.passwordSafe.impl.providers.ByteArrayWrapper;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.diagnostic.Logger;
 import org.apache.commons.codec.DecoderException;
 import org.apache.commons.codec.binary.Hex;
@@ -35,7 +36,7 @@ import java.util.TreeMap;
 @State(
   name = "PasswordDatabase",
   storages = {@Storage(
-    file = "$APP_CONFIG$/security.xml")})
+    file = StoragePathMacros.APP_CONFIG + "/security.xml")})
 public class PasswordDatabase implements PersistentStateComponent<PasswordDatabase.State> {
   /**
    * The name of logger

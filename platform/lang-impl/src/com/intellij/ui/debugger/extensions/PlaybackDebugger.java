@@ -18,10 +18,7 @@ package com.intellij.ui.debugger.extensions;
 
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
@@ -491,7 +488,7 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
       name = "PlaybackDebugger",
       storages = {
           @Storage(
-              file="$APP_CONFIG$/other.xml")}
+              file = StoragePathMacros.APP_CONFIG + "/other.xml")}
   )
   public static class PlaybackDebuggerState implements PersistentStateComponent<Element> {
     private static final String ATTR_CURRENT_SCRIPT = "currentScript";

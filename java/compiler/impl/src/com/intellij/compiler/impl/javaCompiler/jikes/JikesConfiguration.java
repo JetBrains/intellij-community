@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,8 +22,8 @@ import com.intellij.util.xmlb.XmlSerializerUtil;
 @State(
   name = "JikesSettings",
   storages = {
-    @Storage( file = "$PROJECT_FILE$")
-   ,@Storage( file = "$PROJECT_CONFIG_DIR$/compiler.xml", scheme = StorageScheme.DIRECTORY_BASED)
+    @Storage( file = StoragePathMacros.PROJECT_FILE)
+   ,@Storage( file = StoragePathMacros.PROJECT_CONFIG_DIR + "/compiler.xml", scheme = StorageScheme.DIRECTORY_BASED)
     }
 )
 public class JikesConfiguration implements PersistentStateComponent<JikesSettings> {

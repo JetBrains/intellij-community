@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,10 +16,7 @@
 
 package org.jetbrains.plugins.groovy.settings;
 
-import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.*;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 
 /**
@@ -30,7 +27,7 @@ import com.intellij.util.xmlb.XmlSerializerUtil;
     name = "GroovyApplicationSettings",
     storages = {
     @Storage(
-        file = "$APP_CONFIG$/groovy_config.xml"
+        file = StoragePathMacros.APP_CONFIG + "/groovy_config.xml"
     )}
 )
 public class GroovyApplicationSettings implements PersistentStateComponent<GroovyApplicationSettings> {

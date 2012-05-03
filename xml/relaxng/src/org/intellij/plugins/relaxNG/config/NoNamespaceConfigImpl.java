@@ -19,6 +19,7 @@ package org.intellij.plugins.relaxNG.config;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.editor.HectorComponentPanel;
 import com.intellij.openapi.editor.HectorComponentPanelsProvider;
 import com.intellij.openapi.project.Project;
@@ -43,7 +44,7 @@ import java.util.Map;
 @State(
         name = "NoNamespaceConfig.Mappings",
         storages = { @Storage(
-                file = "$WORKSPACE_FILE$") })
+                file = StoragePathMacros.WORKSPACE_FILE) })
 class NoNamespaceConfigImpl extends NoNamespaceConfig implements PersistentStateComponent<NoNamespaceConfigImpl.Mappings> {
 
   private final Map<VirtualFilePointer, VirtualFilePointer> myMappings = new HashMap<VirtualFilePointer, VirtualFilePointer>();

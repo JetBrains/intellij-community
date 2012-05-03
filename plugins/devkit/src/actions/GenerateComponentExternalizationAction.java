@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package org.jetbrains.idea.devkit.actions;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -83,7 +84,8 @@ public class GenerateComponentExternalizationAction extends AnAction {
               annotation = (PsiAnnotation)formatter.reformat(annotation.replace(
                 factory.createAnnotationFromText("@" + STATE +
                                                  "(name = \"" + qualifiedName + "\", " +
-                                                 "storages = {@" + STORAGE + "(file = \"$WORKSPACE_FILE$\"\n )})", target)));
+                                                 "storages = {@" + STORAGE + "(file = \"" + StoragePathMacros.WORKSPACE_FILE + "\"\n )})",
+                                                 target)));
               styler.shortenClassReferences(annotation);
             }
             catch (IncorrectOperationException e1) {

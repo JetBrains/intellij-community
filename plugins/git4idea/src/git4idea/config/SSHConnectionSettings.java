@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,7 @@
  */
 package git4idea.config;
 
-import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.*;
 import com.intellij.util.xmlb.annotations.MapAnnotation;
 import com.intellij.util.xmlb.annotations.Property;
 import gnu.trove.THashMap;
@@ -32,7 +29,7 @@ import java.util.TreeMap;
 @State(
   name = "SSHConnectionSettings",
   storages = {@Storage(
-    file = "$APP_CONFIG$/security.xml")})
+    file = StoragePathMacros.APP_CONFIG + "/security.xml")})
 public class SSHConnectionSettings implements PersistentStateComponent<SSHConnectionSettings.State> {
   /**
    * The last successful hosts, the entries are sorted to save on efforts on sorting during saving and loading

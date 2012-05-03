@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,10 +18,7 @@ package com.intellij.notification.impl;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationDisplayType;
 import com.intellij.notification.NotificationsConfiguration;
-import com.intellij.openapi.components.ApplicationComponent;
-import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
@@ -39,7 +36,7 @@ import java.util.*;
  * @author spleaner
  */
 @State(name = "NotificationConfiguration",
-       storages = {@Storage( file = "$APP_CONFIG$/notifications.xml")})
+       storages = {@Storage( file = StoragePathMacros.APP_CONFIG + "/notifications.xml")})
 public class NotificationsConfigurationImpl extends NotificationsConfiguration implements ApplicationComponent,
                                                                                           PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.notification.impl.NotificationsConfiguration");

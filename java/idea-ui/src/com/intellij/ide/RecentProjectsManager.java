@@ -19,6 +19,7 @@ import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.openapi.components.RoamingType;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.util.messages.MessageBus;
@@ -28,7 +29,7 @@ import com.intellij.util.messages.MessageBus;
   roamingType = RoamingType.DISABLED,
   storages = {
     @Storage(
-      file = "$APP_CONFIG$/other.xml"
+      file = StoragePathMacros.APP_CONFIG + "/other.xml"
     )}
 )
 public class RecentProjectsManager extends RecentProjectsManagerBase {

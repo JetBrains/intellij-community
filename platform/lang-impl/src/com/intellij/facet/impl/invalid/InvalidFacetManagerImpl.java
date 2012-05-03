@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.facet.pointers.FacetPointersManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.xmlb.annotations.AbstractCollection;
 import com.intellij.util.xmlb.annotations.Tag;
@@ -36,7 +37,7 @@ import java.util.Set;
     name = InvalidFacetManagerImpl.COMPONENT_NAME,
     storages = {
         @Storage(
-            file = "$WORKSPACE_FILE$"
+            file = StoragePathMacros.WORKSPACE_FILE
         )
     }
 )

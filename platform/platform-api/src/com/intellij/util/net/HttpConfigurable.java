@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,7 @@
  */
 package com.intellij.util.net;
 
-import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.*;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
@@ -46,7 +43,7 @@ import java.util.List;
 @State(
   name = "HttpConfigurable",
   storages = {
-    @Storage( file = "$APP_CONFIG$/other.xml")
+    @Storage( file = StoragePathMacros.APP_CONFIG + "/other.xml")
   }
 )
 public class HttpConfigurable implements PersistentStateComponent<HttpConfigurable>, JDOMExternalizable {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,10 +16,7 @@
 
 package com.intellij.execution.ui.layout.impl;
 
-import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.*;
 import org.jdom.Element;
 
 import java.util.LinkedHashMap;
@@ -29,7 +26,7 @@ import java.util.Map;
 @State(
   name = "RunnerLayoutSettings",
   storages = {@Storage(
-    file = "$APP_CONFIG$/runner.layout.xml")})
+    file = StoragePathMacros.APP_CONFIG + "/runner.layout.xml")})
 public class RunnerLayoutSettings implements PersistentStateComponent<Element> {
   public static RunnerLayoutSettings getInstance() {
     return ServiceManager.getService(RunnerLayoutSettings.class);

@@ -19,10 +19,7 @@ import com.intellij.execution.util.ExecUtil;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.browsers.chrome.ChromeSettings;
 import com.intellij.ide.browsers.firefox.FirefoxSettings;
-import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Condition;
@@ -52,7 +49,7 @@ import java.util.Map;
 /**
  * @author spleaner
  */
-@State(name = "WebBrowsersConfiguration", storages = {@Storage( file = "$APP_CONFIG$/browsers.xml")})
+@State(name = "WebBrowsersConfiguration", storages = {@Storage( file = StoragePathMacros.APP_CONFIG + "/browsers.xml")})
 public class BrowsersConfiguration implements PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.browsers.BrowsersConfiguration");
 

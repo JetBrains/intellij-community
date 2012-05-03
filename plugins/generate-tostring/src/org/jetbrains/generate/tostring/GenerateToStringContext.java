@@ -15,10 +15,7 @@
  */
 package org.jetbrains.generate.tostring;
 
-import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.*;
 import org.jetbrains.generate.tostring.config.Config;
 
 /**
@@ -28,7 +25,7 @@ import org.jetbrains.generate.tostring.config.Config;
   name = "ToStringSettings",
   storages = {
     @Storage(
-      file = "$APP_CONFIG$/other.xml"
+      file = StoragePathMacros.APP_CONFIG + "/other.xml"
     )}
 )
 public class GenerateToStringContext implements PersistentStateComponent<Config> {

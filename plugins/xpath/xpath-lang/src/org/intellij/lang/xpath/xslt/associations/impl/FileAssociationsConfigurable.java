@@ -19,10 +19,8 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.ide.util.treeView.TreeState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.Result;
-import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.options.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
@@ -102,7 +100,7 @@ public class FileAssociationsConfigurable implements SearchableConfigurable, Non
     }
 
     @State(name = "XSLT-Support.FileAssociations.UIState",
-            storages = @Storage( file = "$WORKSPACE_FILE$")
+            storages = @Storage( file = StoragePathMacros.WORKSPACE_FILE)
     )
     public static class UIState implements PersistentStateComponent<TreeState> {
         private TreeState state;

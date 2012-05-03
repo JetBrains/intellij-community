@@ -15,10 +15,11 @@ package org.zmlx.hg4idea;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.StoragePathMacros;
 
 @State(
   name = "hg4idea.settings",
-  storages = @Storage(file = "$WORKSPACE_FILE$")
+  storages = @Storage(file = StoragePathMacros.WORKSPACE_FILE)
 )
 public class HgProjectSettings implements PersistentStateComponent<HgProjectSettings.State> {
 

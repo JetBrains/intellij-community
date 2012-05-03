@@ -37,6 +37,7 @@ import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
@@ -81,7 +82,7 @@ import java.util.regex.PatternSyntaxException;
   name = "FindManager",
   storages = {
     @Storage(
-      file = "$WORKSPACE_FILE$"
+      file = StoragePathMacros.WORKSPACE_FILE
     )}
 )
 public class FindManagerImpl extends FindManager implements PersistentStateComponent<Element> {

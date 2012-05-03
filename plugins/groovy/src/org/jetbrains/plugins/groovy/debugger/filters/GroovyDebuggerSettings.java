@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package org.jetbrains.plugins.groovy.debugger.filters;
 
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.xmlb.XmlSerializerUtil;
@@ -30,7 +31,7 @@ import org.jetbrains.annotations.NotNull;
     name = "GroovyDebuggerSettings",
     storages = {
     @Storage(
-        file = "$APP_CONFIG$/groovy_debug.xml"
+        file = StoragePathMacros.APP_CONFIG + "/groovy_debug.xml"
     )}
 )
 public class GroovyDebuggerSettings extends XDebuggerSettings<GroovyDebuggerSettings> {

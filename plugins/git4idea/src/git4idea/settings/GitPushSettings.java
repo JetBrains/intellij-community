@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,17 +15,15 @@
  */
 package git4idea.settings;
 
-import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.project.Project;
 import git4idea.config.UpdateMethod;
 
 /**
  * @author Kirill Likhodedov
  */
-@State(name = "Git.Push.Settings", storages = {@Storage(file = "$WORKSPACE_FILE$")})
+@State(name = "Git.Push.Settings", storages = {@Storage(file = StoragePathMacros.WORKSPACE_FILE)})
 public class GitPushSettings implements PersistentStateComponent<GitPushSettings.State> {
 
   private State myState = new State();

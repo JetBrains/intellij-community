@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,8 +33,8 @@ class ProjectStateStorageManager extends StateStorageManagerImpl {
   }
 
   protected XmlElementStorage.StorageData createStorageData(String storageSpec) {
-    if (storageSpec.equals(ProjectStoreImpl.PROJECT_FILE_STORAGE)) return createIprStorageData();
-    if (storageSpec.equals(ProjectStoreImpl.WS_FILE_STORAGE)) return createWsStorageData();
+    if (storageSpec.equals(StoragePathMacros.PROJECT_FILE)) return createIprStorageData();
+    if (storageSpec.equals(StoragePathMacros.WORKSPACE_FILE)) return createWsStorageData();
     return new ProjectStoreImpl.ProjectStorageData(ROOT_TAG_NAME, myProject);
   }
 
@@ -51,12 +51,12 @@ class ProjectStateStorageManager extends StateStorageManagerImpl {
     final ComponentConfig config = myProject.getConfig(component.getClass());
     assert config != null : "Couldn't find old storage for " + component.getClass().getName();
 
-    String macro = ProjectStoreImpl.PROJECT_FILE_MACRO;
+    String macro = StoragePathMacros.getMacroName(StoragePathMacros.PROJECT_FILE);
 
     final boolean workspace = isWorkspace(config.options);
 
     if (workspace) {
-      macro = ProjectStoreImpl.WS_FILE_MACRO;
+      macro = StoragePathMacros.getMacroName(StoragePathMacros.WORKSPACE_FILE);
     }
 
     String name = "$" + macro + "$";
@@ -64,7 +64,7 @@ class ProjectStateStorageManager extends StateStorageManagerImpl {
     StateStorage storage = getFileStateStorage(name);
 
     if (operation == StateStorageOperation.READ && storage != null && workspace && !storage.hasState(component, componentName, Element.class, false)) {
-      name = "$" + ProjectStoreImpl.PROJECT_FILE_MACRO + "$";
+      name = StoragePathMacros.PROJECT_FILE;
     }
 
     return name;

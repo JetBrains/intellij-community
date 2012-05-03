@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,7 +44,7 @@ import java.util.*;
   roamingType = RoamingType.PER_PLATFORM,
   storages = {
     @Storage(
-        file = "$APP_CONFIG$/keymap.xml"
+        file = StoragePathMacros.APP_CONFIG + "/keymap.xml"
     )}
 )
 public class KeymapManagerImpl extends KeymapManagerEx implements PersistentStateComponent<Element>, ExportableApplicationComponent {

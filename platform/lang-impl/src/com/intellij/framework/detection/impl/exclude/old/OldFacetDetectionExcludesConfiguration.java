@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,10 +17,7 @@ package com.intellij.framework.detection.impl.exclude.old;
 
 import com.intellij.framework.detection.impl.exclude.ExcludedFileState;
 import com.intellij.framework.detection.impl.exclude.ExcludesConfigurationState;
-import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.*;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
@@ -40,7 +37,7 @@ import java.util.Set;
   name = "FacetAutodetectingManager",
   storages = {
     @Storage(
-      file = "$PROJECT_FILE$"
+      file = StoragePathMacros.PROJECT_FILE
     )
   }
 )
