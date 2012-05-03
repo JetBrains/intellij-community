@@ -18,99 +18,40 @@ package org.jetbrains.jps.api;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.UUID;
-import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
 * @author Eugene Zhuravlev
 *         Date: 9/13/11
 */
-public class RequestFuture<T> implements Future {
-  private final Semaphore mySemaphore = new Semaphore(1);
-  private final AtomicBoolean myDone = new AtomicBoolean(false);
+public class RequestFuture<T> extends BasicFuture<T> {
   private final T myHandler;
   private final UUID myRequestID;
   @Nullable private final CancelAction<T> myCancelAction;
-  private final AtomicBoolean myCanceledState = new AtomicBoolean(false);
 
   public interface CancelAction<T> {
     void cancel(RequestFuture<T> future) throws Exception;
   }
 
   public RequestFuture(T handler, UUID requestID, @Nullable CancelAction<T> cancelAction) {
+    super();
+    myCancelAction = cancelAction;
     myHandler = handler;
     myRequestID = requestID;
-    myCancelAction = cancelAction;
     mySemaphore.acquireUninterruptibly();
-  }
-
-  public void setDone() {
-    if (!myDone.getAndSet(true)) {
-      mySemaphore.release();
-    }
   }
 
   public UUID getRequestID() {
     return myRequestID;
   }
 
-  public boolean cancel(boolean mayInterruptIfRunning) {
-    if (isDone()) {
-      return false;
-    }
-    if (!myCanceledState.getAndSet(true)) {
-      try {
-        if (myCancelAction != null) {
-          myCancelAction.cancel(this);
-        }
-      }
-      catch (Exception e) {
-        throw new RuntimeException(e);
-      }
-    }
-    return true;
-  }
-
-  public boolean isCancelled() {
-    return myCanceledState.get();
-  }
-
-  public boolean isDone() {
-    return myDone.get();
-  }
-
-  public void waitFor() {
-    try {
-      while (!isDone()) {
-        mySemaphore.tryAcquire(100L, TimeUnit.MILLISECONDS);
-      }
-    }
-    catch (InterruptedException ignored) {
-    }
-  }
-
-  public boolean waitFor(long timeout, TimeUnit unit) {
-    try {
-      if (!isDone()) {
-        mySemaphore.tryAcquire(timeout, unit);
-      }
-    }
-    catch (InterruptedException ignored) {
-    }
-    return isDone();
-  }
-
-  public Object get() throws InterruptedException, ExecutionException {
-    waitFor();
-    return null;
-  }
-
-  public Object get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
-    waitFor(timeout, unit);
-    return null;
-  }
-
   public T getMessageHandler() {
     return myHandler;
+  }
+
+  @Override
+  protected void performCancel() throws Exception {
+    if (myCancelAction != null) {
+      myCancelAction.cancel(this);
+    }
   }
 }

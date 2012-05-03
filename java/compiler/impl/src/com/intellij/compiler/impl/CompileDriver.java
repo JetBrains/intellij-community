@@ -553,7 +553,7 @@ public class CompileDriver {
         }
 
         @Override
-        public void handleFailure(CmdlineRemoteProto.Message.Failure failure) {
+        public void handleFailure(UUID sessionId, CmdlineRemoteProto.Message.Failure failure) {
           compileContext.addMessage(CompilerMessageCategory.ERROR, failure.getDescription(), null, -1, -1);
           final String trace = failure.getStacktrace();
           if (trace != null) {

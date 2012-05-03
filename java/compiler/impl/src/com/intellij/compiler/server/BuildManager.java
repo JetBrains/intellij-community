@@ -369,7 +369,7 @@ public class BuildManager implements ApplicationComponent{
       }
       catch (Exception e) {
         myMessageDispatcher.unregisterBuildMessageHandler(sessionId);
-        handler.handleFailure(CmdlineProtoUtil.createFailure(e.getMessage(), null));
+        handler.handleFailure(sessionId, CmdlineProtoUtil.createFailure(e.getMessage(), null));
         handler.sessionTerminated();
         return null;
       }
@@ -421,7 +421,7 @@ public class BuildManager implements ApplicationComponent{
         }
         catch (ExecutionException e) {
           myMessageDispatcher.unregisterBuildMessageHandler(sessionId);
-          future.getMessageHandler().handleFailure(CmdlineProtoUtil.createFailure(e.getMessage(), e));
+          future.getMessageHandler().handleFailure(sessionId, CmdlineProtoUtil.createFailure(e.getMessage(), e));
           future.getMessageHandler().sessionTerminated();
         }
         finally {

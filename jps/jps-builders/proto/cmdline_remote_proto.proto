@@ -32,6 +32,7 @@ message Message {
       BUILD_PARAMETERS = 1;
       CANCEL_BUILD_COMMAND = 2;
       FS_EVENT = 3;
+      CONSTANT_SEARCH_RESULT = 4;
     }
 
     message FSEvent {
@@ -74,9 +75,17 @@ message Message {
       repeated KeyValuePair builder_parameter = 7;
     }
 
+    message ConstantSearchResult {
+      required string owner_class_name = 1;
+      required string field_name = 2;
+      required bool is_success = 3;
+      repeated string path = 4;
+    }
+
     required Type type = 1;
     optional ParametersMessage params_message = 2;
     optional FSEvent fs_event = 3;
+    optional ConstantSearchResult constant_search_result = 4;
   }
 
   message BuilderMessage {
@@ -84,6 +93,7 @@ message Message {
       PARAM_REQUEST = 1;
       BUILD_EVENT = 2;
       COMPILE_MESSAGE = 3;
+      CONSTANT_SEARCH_TASK = 4;
     }
 
     message BuildEvent {
@@ -128,9 +138,18 @@ message Message {
       optional float  done = 9;
     }
 
+    message ConstantSearchTask {
+      required string owner_class_name = 1;
+      required string field_name = 2;
+      required int32 access_flags = 3;
+      optional bool is_access_changed = 4 [default = false];
+      optional bool is_field_removed = 5  [default = false];
+    }
+
     required Type type = 1;
     optional BuildEvent build_event = 2;
     optional CompileMessage compile_message = 3;
+    optional ConstantSearchTask constant_search_task = 4;
   }
 
   required UUID session_id = 1;
