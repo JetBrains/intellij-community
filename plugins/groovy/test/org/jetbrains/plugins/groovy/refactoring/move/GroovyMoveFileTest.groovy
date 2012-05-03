@@ -16,8 +16,6 @@
 package org.jetbrains.plugins.groovy.refactoring.move;
 
 
-import com.intellij.openapi.application.AccessToken
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFile
 import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesProcessor
@@ -37,17 +35,12 @@ public class GroovyMoveFileTest extends GroovyMoveTestBase {
   }
 
   @Override
-  void perform(VirtualFile root, String moveTo, String... names) {
+  boolean perform(VirtualFile root, String moveTo, String... names) {
     def pack1 = root.findChild('pack1')
     PsiFile[] files = myFixture.psiManager.findDirectory(pack1).files.findAll {file -> names.find {name -> name == file.name}}
     def dir = myFixture.psiManager.findDirectory(root.findChild(moveTo))
 
-    AccessToken token = ApplicationManager.application.acquireWriteActionLock(this.class)
-    try {
-      new MoveFilesOrDirectoriesProcessor(myFixture.project, files, dir, false, false, false, null, null).run()
-    }
-    finally {
-      token.finish()
-    }
+    new MoveFilesOrDirectoriesProcessor(myFixture.project, files, dir, false, false, false, null, null).run()
+    return true
   }
 }

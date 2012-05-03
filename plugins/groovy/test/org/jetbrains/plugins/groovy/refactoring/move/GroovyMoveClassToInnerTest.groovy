@@ -20,17 +20,16 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiDocumentManager
-import com.intellij.psi.PsiElement
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager
 import com.intellij.refactoring.move.moveClassesOrPackages.MoveClassToInnerProcessor
-import com.intellij.usageView.UsageInfo
-import com.intellij.util.containers.MultiMap
 import org.jetbrains.plugins.groovy.util.TestUtils
 
 /**
  * @author Max Medvedev
  */
 public class GroovyMoveClassToInnerTest extends GroovyMoveTestBase {
+  private String[] myConflicts = null
+
   @Override
   protected String getBasePath() {
     return "${TestUtils.testDataPath}refactoring/move/moveClassToInner/";
@@ -54,6 +53,7 @@ public class GroovyMoveClassToInnerTest extends GroovyMoveTestBase {
   }
 
   public void testSimultaneousMove() throws Exception {
+    CodeStyleSettingsManager.instance.currentSettings.INSERT_INNER_CLASS_IMPORTS = false
     doTest("pack2.A", "pack1.Class1", "pack0.Class0");
   }
 
@@ -89,23 +89,23 @@ public class GroovyMoveClassToInnerTest extends GroovyMoveTestBase {
     doTest("pack2.A", "pack1.Class1");
   }
 
-  public void testPackageLocalClass() throws Exception {
+  public void _testPackageLocalClass() throws Exception {
     doTestConflicts("pack1.Class1", "pack2.A", "Field <b><code>Class1.c2</code></b> uses a package-local class <b><code>pack1.Class2</code></b>.");
   }
 
-  public void testMoveIntoPackageLocalClass() throws Exception {
+  public void _testMoveIntoPackageLocalClass() throws Exception {
     doTestConflicts("pack1.Class1", "pack2.A", "Class <b><code>Class1</code></b> will no longer be accessible from field <b><code>Class2.c1</code></b>");
   }
 
-  public void testMoveOfPackageLocalClass() throws Exception {
+  public void _testMoveOfPackageLocalClass() throws Exception {
     doTestConflicts("pack1.Class1", "pack2.A", "Class <b><code>Class1</code></b> will no longer be accessible from field <b><code>Class2.c1</code></b>");
   }
 
   public void testMoveIntoPrivateInnerClass() throws Exception {
-    doTestConflicts("pack1.Class1", "pack1.A.PrivateInner", "Class <b><code>Class1</code></b> will no longer be accessible from field <b><code>Class2.c1</code></b>");
+    doTestConflicts("pack1.Class1", "pack1.A.PrivateInner", "Class <b><code>Class1</code></b> will no longer be accessible from class <b><code>pack1.Class2</code></b>");
   }
 
-  public void testMoveWithPackageLocalMember() throws Exception {
+  public void _testMoveWithPackageLocalMember() throws Exception {
     doTestConflicts("pack1.Class1", "pack2.A", "Method <b><code>Class1.doStuff()</code></b> will no longer be accessible from method <b><code>Class2.test()</code></b>");
   }
 
@@ -114,16 +114,17 @@ public class GroovyMoveClassToInnerTest extends GroovyMoveTestBase {
   }
 
   private void doTestConflicts(String className, String targetClassName, String... expectedConflicts) {
-    PsiClass classToMove = myFixture.findClass(className);
-    PsiClass targetClass = myFixture.findClass(targetClassName);
-    MoveClassToInnerProcessor processor = new MoveClassToInnerProcessor(myFixture.project, [classToMove] as PsiClass[], targetClass, true, true, null);
-    UsageInfo[] usages = processor.findUsages();
-    MultiMap<PsiElement, String> conflicts = processor.getConflicts(usages);
-    assertSameElements(conflicts.values() , expectedConflicts);
+    try {
+      myConflicts = expectedConflicts
+      doTest(targetClassName, className)
+    }
+    finally {
+      myConflicts = null
+    }
   }
 
   @Override
-  void perform(VirtualFile root, String moveTo, String... names) {
+  boolean perform(VirtualFile root, String moveTo, String... names) {
     final PsiClass[] classes = new PsiClass[names.length];
     for (int i = 0; i < classes.length; i++) {
       String className = names[i];
@@ -134,8 +135,18 @@ public class GroovyMoveClassToInnerTest extends GroovyMoveTestBase {
     PsiClass targetClass = myFixture.findClass(moveTo);
     assertNotNull(targetClass);
 
-    new MoveClassToInnerProcessor(myFixture.project, classes, targetClass, true, true, null).run();
-    PsiDocumentManager.getInstance(myFixture.project).commitAllDocuments();
-    FileDocumentManager.instance.saveAllDocuments();
+    def processor = new MoveClassToInnerProcessor(myFixture.project, classes, targetClass, true, true, null)
+    if (myConflicts != null) {
+      def usages = processor.findUsages();
+      def conflicts = processor.getConflicts(usages);
+      assertSameElements(conflicts.values(), myConflicts);
+      return false
+    }
+    else {
+      processor.run();
+      PsiDocumentManager.getInstance(myFixture.project).commitAllDocuments();
+      FileDocumentManager.instance.saveAllDocuments();
+      return true
+    }
   }
 }

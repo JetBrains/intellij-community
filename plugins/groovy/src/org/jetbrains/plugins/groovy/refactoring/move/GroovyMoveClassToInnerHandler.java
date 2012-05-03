@@ -31,6 +31,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.editor.GroovyImportOptimizer;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
@@ -54,9 +55,22 @@ public class GroovyMoveClassToInnerHandler implements MoveClassToInnerHandler {
 
 
     PsiDocComment doc = aClass.getDocComment();
-    PsiClass newClass = (PsiClass)targetClass.addBefore(aClass, targetClass.getRBrace());
+
+    PsiElement brace = targetClass.getRBrace();
+    PsiClass newClass = (PsiClass)targetClass.addBefore(aClass, brace);
+    PsiElement sibling = newClass.getPrevSibling();
+    GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(targetClass.getProject());
+    if (!org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.isNewLine(sibling)) {
+      targetClass.addBefore(factory.createLineTerminator("\n "), newClass);
+    }
+    else if (doc != null) {
+      LOG.assertTrue(sibling != null);
+      sibling.replace(factory.createLineTerminator(sibling.getText() + " "));
+    }
+
     if (doc != null) {
       targetClass.addBefore(doc, newClass);
+      targetClass.addBefore(factory.createLineTerminator("\n"), newClass);
     }
 
     if (targetClass.isInterface()) {
@@ -122,7 +136,8 @@ public class GroovyMoveClassToInnerHandler implements MoveClassToInnerHandler {
           if (element instanceof PsiClass) {
             for (PsiElement oldClass : oldToNewElementsMapping.keySet()) {
               if (PsiTreeUtil.isAncestor(oldClass, element, false)) {
-                PsiClass newInnerClass = findMatchingClass((PsiClass)oldClass, (PsiClass)oldToNewElementsMapping.get(oldClass), (PsiClass)element);
+                PsiClass newInnerClass =
+                  findMatchingClass((PsiClass)oldClass, (PsiClass)oldToNewElementsMapping.get(oldClass), (PsiClass)element);
                 try {
                   reference.bindToElement(newInnerClass);
                   return true;
@@ -150,7 +165,8 @@ public class GroovyMoveClassToInnerHandler implements MoveClassToInnerHandler {
     return newInnerClass;
   }
 
-  public void retargetNonCodeUsages(@NotNull final Map<PsiElement, PsiElement> oldToNewElementMap, @NotNull final NonCodeUsageInfo[] nonCodeUsages) {
+  public void retargetNonCodeUsages(@NotNull final Map<PsiElement, PsiElement> oldToNewElementMap,
+                                    @NotNull final NonCodeUsageInfo[] nonCodeUsages) {
     for (PsiElement newClass : oldToNewElementMap.values()) {
       if (!(newClass instanceof GrTypeDefinition)) continue;
 
