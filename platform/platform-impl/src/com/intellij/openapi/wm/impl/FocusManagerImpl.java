@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import com.intellij.openapi.application.ApplicationActivationListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
+import com.intellij.openapi.components.impl.ServiceManagerImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.*;
@@ -51,7 +52,6 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.List;
 
-@SuppressWarnings("SSBasedInspection")
 public class FocusManagerImpl extends IdeFocusManager implements Disposable {
   private static final Logger LOG = Logger.getInstance(FocusManagerImpl.class);
   private static final UiActivity FOCUS = new UiActivity.Focus("awtFocusRequest");
@@ -130,10 +130,11 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
 
   private IdeFrame myLastFocusedFrame;
 
-  public FocusManagerImpl(WindowManager wm) {
+  @SuppressWarnings("UnusedParameters")  // the dependencies are needed to ensure correct loading order
+  public FocusManagerImpl(ServiceManagerImpl serviceManager, WindowManager wm, UiActivityMonitor monitor) {
     myApp = ApplicationManager.getApplication();
     myQueue = IdeEventQueue.getInstance();
-    myActivityMonitor = UiActivityMonitor.getInstance();
+    myActivityMonitor = monitor;
 
     myFocusedComponentAlaram = new EdtAlarm();
     myForcedFocusRequestsAlarm = new EdtAlarm();
