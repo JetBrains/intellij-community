@@ -429,6 +429,7 @@ public class IncProjectBuilder {
         }
         finally {
           Utils.CHUNK_REMOVED_SOURCES_KEY.set(context, null);
+          Utils.CHUNK_PER_MODULE_REMOVED_SOURCES_KEY.set(context, null);
           if (doneSomething && GENERATE_CLASSPATH_INDEX) {
             final boolean forTests = context.isCompilingTests();
             final Future<?> future = SharedThreadPool.INSTANCE.submit(new Runnable() {
@@ -485,6 +486,7 @@ public class IncProjectBuilder {
     try {
       // cleanup outputs
       final Set<String> allChunkRemovedSources = new HashSet<String>();
+      final Map<String, Collection<String>> perModuleRemovedSources = new HashMap<String, Collection<String>>();
 
       for (Module module : chunk.getModules()) {
         final Collection<String> deletedPaths = myProjectDescriptor.fsState.getDeletedPaths(module.getName(), context.isCompilingTests());
@@ -492,6 +494,7 @@ public class IncProjectBuilder {
           continue;
         }
         allChunkRemovedSources.addAll(deletedPaths);
+        perModuleRemovedSources.put(module.getName(), deletedPaths);
 
         final SourceToOutputMapping sourceToOutputStorage =
           context.getDataManager().getSourceToOutputMap(module.getName(), context.isCompilingTests());
@@ -521,8 +524,8 @@ public class IncProjectBuilder {
             for (String output : outputs) {
               new File(output).delete();
             }
-            sourceToOutputStorage.remove(deletedSource);
           }
+          //sourceToOutputStorage.remove(deletedSource);
 
           // check if deleted source was associated with a form
           final SourceToFormMapping sourceToFormMap = context.getDataManager().getSourceToFormMap();
@@ -542,6 +545,7 @@ public class IncProjectBuilder {
           allChunkRemovedSources.addAll(currentData);
         }
         Utils.CHUNK_REMOVED_SOURCES_KEY.set(context, allChunkRemovedSources);
+        Utils.CHUNK_PER_MODULE_REMOVED_SOURCES_KEY.set(context, perModuleRemovedSources);
         for (Module module : chunk.getModules()) {
           myProjectDescriptor.fsState.clearDeletedPaths(module.getName(), context.isCompilingTests());
         }
