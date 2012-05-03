@@ -20,7 +20,6 @@ import com.intellij.ProjectTopics;
 import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryAction;
 import com.intellij.ide.*;
-import com.intellij.ide.FileEditorProvider;
 import com.intellij.ide.actions.CollapseAllToolbarAction;
 import com.intellij.ide.impl.ProjectViewSelectInTarget;
 import com.intellij.ide.projectView.HelpID;
@@ -38,7 +37,6 @@ import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
@@ -47,7 +45,9 @@ import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.fileEditor.*;
+import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
@@ -241,7 +241,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
             myAutoScrollToSourceHandler.onMouseClicked(getCurrentProjectViewPane().getTree());
           }
           if (isAutoscrollFromSource(id)) {
-            myAutoScrollFromSourceHandler.setAutoScrollMode(true);
+            myAutoScrollFromSourceHandler.setAutoScrollEnabled(true);
           }
         }
         toolWindowVisible = window.isVisible();
@@ -664,7 +664,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     myActionGroup.addAction(myAutoScrollFromSourceHandler.createToggleAction()).setAsSecondary(true);
     myActionGroup.addAction(new SortByTypeAction()).setAsSecondary(true);
 
-    if (!myAutoScrollFromSourceHandler.isAutoScrollMode()) {
+    if (!myAutoScrollFromSourceHandler.isAutoScrollEnabled()) {
       myActionGroup.addAction(new ScrollFromSourceAction());
     }
     AnAction collapseAllAction = CommonActionsManager.getInstance().createCollapseAllAction(new TreeExpander() {
@@ -1522,51 +1522,39 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   }
 
   private class MyAutoScrollFromSourceHandler extends AutoScrollFromSourceHandler {
-    private final Alarm myAlarm = new Alarm(myProject);
-
     private MyAutoScrollFromSourceHandler() {
-      super(ProjectViewImpl.this.myProject, ProjectViewImpl.this);
+      super(ProjectViewImpl.this.myProject,ProjectViewImpl.this.myViewContentPanel, ProjectViewImpl.this);
     }
 
-    public void install() {
-      FileEditorManagerAdapter myEditorManagerListener = new FileEditorManagerAdapter() {
-        public void selectionChanged(final FileEditorManagerEvent event) {
-          final FileEditor newEditor = event.getNewEditor();
-          myAlarm.cancelAllRequests();
-          myAlarm.addRequest(new Runnable() {
-            public void run() {
-              if (myProject.isDisposed() || !myViewContentPanel.isShowing()) return;
-              if (isAutoscrollFromSource(getCurrentViewId())) {
-                if (newEditor instanceof TextEditor) {
-                  Editor editor = ((TextEditor)newEditor).getEditor();
-                  selectElementAtCaretNotLosingFocus(editor);
-                } else if (newEditor != null) {
-                  final VirtualFile file = FileEditorManagerEx.getInstanceEx(myProject).getFile(newEditor);
-                  if (file != null) {
-                    final PsiFile psiFile = PsiManager.getInstance(myProject).findFile(file);
-                    if (psiFile != null) {
-                      final SelectInTarget target = mySelectInTargets.get(getCurrentViewId());
-                      if (target != null) {
-                        final MySelectInContext selectInContext = new MySelectInContext(psiFile, null) {
-                          @Override
-                          public Object getSelectorInFile() {
-                            return psiFile;
-                          }
-                        };
-
-                        if (target.canSelect(selectInContext)) {
-                          target.selectIn(selectInContext, false);
-                        }
-                      }
-                    }
+    @Override
+    protected void selectElementFromEditor(@NotNull FileEditor fileEditor) {
+      if (myProject.isDisposed() || !myViewContentPanel.isShowing()) return;
+      if (isAutoscrollFromSource(getCurrentViewId())) {
+        if (fileEditor instanceof TextEditor) {
+          Editor editor = ((TextEditor)fileEditor).getEditor();
+          selectElementAtCaretNotLosingFocus(editor);
+        } else {
+          final VirtualFile file = FileEditorManagerEx.getInstanceEx(myProject).getFile(fileEditor);
+          if (file != null) {
+            final PsiFile psiFile = PsiManager.getInstance(myProject).findFile(file);
+            if (psiFile != null) {
+              final SelectInTarget target = mySelectInTargets.get(getCurrentViewId());
+              if (target != null) {
+                final MySelectInContext selectInContext = new MySelectInContext(psiFile, null) {
+                  @Override
+                  public Object getSelectorInFile() {
+                    return psiFile;
                   }
+                };
+
+                if (target.canSelect(selectInContext)) {
+                  target.selectIn(selectInContext, false);
                 }
               }
             }
-          }, 300, ModalityState.NON_MODAL);
+          }
         }
-      };
-      myFileEditorManager.addFileEditorManagerListener(myEditorManagerListener, this);
+      }
     }
 
     public void scrollFromSource() {
@@ -1614,14 +1602,11 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
       }
     }
 
-    public void dispose() {
-    }
-
-    protected boolean isAutoScrollMode() {
+    protected boolean isAutoScrollEnabled() {
       return isAutoscrollFromSource(myCurrentViewId);
     }
 
-    protected void setAutoScrollMode(boolean state) {
+    protected void setAutoScrollEnabled(boolean state) {
       setAutoscrollFromSource(state, myCurrentViewId);
       if (state) {
         final Editor editor = myFileEditorManager.getSelectedTextEditor();
