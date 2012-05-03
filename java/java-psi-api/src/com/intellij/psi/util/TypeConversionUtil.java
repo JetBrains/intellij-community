@@ -889,16 +889,28 @@ public class TypeConversionUtil {
       }
       else {
         if (leftWildcard.isExtends()) {
-          return isAssignable(leftBound, typeRight, allowUncheckedConversion && !leftBound.accept(new WildcardDetector()));
+          return isAssignable(leftBound, typeRight, allowUncheckedConversion && !containsWildcards(leftBound));
         }
         else { // isSuper
-          return isAssignable(typeRight, leftBound, allowUncheckedConversion && !leftBound.accept(new WildcardDetector()));
+          return isAssignable(typeRight, leftBound, allowUncheckedConversion && !containsWildcards(leftBound));
         }
       }
     }
     else {
       return typeLeft.equals(typeRight);
     }
+  }
+
+  private static Boolean containsWildcards(PsiType leftBound) {
+    final WildcardDetector wildcardDetector = new WildcardDetector();
+    if (leftBound instanceof PsiIntersectionType) {
+      for (PsiType conjunctType :((PsiIntersectionType)leftBound).getConjuncts()) {
+        if (!conjunctType.accept(wildcardDetector)) return false;
+      }
+      return true;
+    }
+    
+    return leftBound.accept(wildcardDetector);
   }
 
   @Nullable
@@ -1712,6 +1724,7 @@ public class TypeConversionUtil {
 
     @Override
     public Boolean visitType(PsiType type) {
+      //todo intersection types
       return false;
     }
   }
