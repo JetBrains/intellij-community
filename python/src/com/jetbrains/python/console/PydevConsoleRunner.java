@@ -102,8 +102,7 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
     myPorts = ports;
   }
 
-  public static Map<String, String> createDefaultEnvironmentVariables(Sdk sdk) {
-    Map<String, String> envs = Maps.newHashMap();
+  public static Map<String, String> addDefaultEnvironments(Sdk sdk, Map<String, String> envs) {
     setPythonIOEncoding(setPythonUnbuffered(envs), "utf-8");
     PythonSdkFlavor.initPythonPath(envs, true, PythonCommandLineState.getAddedPaths(sdk));
     return envs;
@@ -154,13 +153,13 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
                                           Sdk sdk,
                                           PyConsoleType consoleType,
                                           String workingDirectory) {
-    return create(project, sdk, consoleType, workingDirectory, createDefaultEnvironmentVariables(sdk));
+    return create(project, sdk, consoleType, workingDirectory, Maps.<String, String>newHashMap());
   }
 
-  private static PydevConsoleRunner create(@NotNull Project project,
-                                           @NotNull Sdk sdk,
-                                           @NotNull PyConsoleType consoleType,
-                                           @Nullable String workingDirectory,
+  private static PydevConsoleRunner create(@NotNull final Project project,
+                                           @NotNull final Sdk sdk,
+                                           @NotNull final PyConsoleType consoleType,
+                                           @Nullable final String workingDirectory,
                                            @NotNull final Map<String, String> environmentVariables) {
     final int[] ports;
     try {
@@ -192,7 +191,7 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
       }
 
       public Map<String, String> getAdditionalEnvs() {
-        return environmentVariables;
+        return addDefaultEnvironments(sdk, environmentVariables);
       }
     };
 
