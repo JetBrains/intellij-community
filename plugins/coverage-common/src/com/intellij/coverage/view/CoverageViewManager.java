@@ -5,10 +5,8 @@ import com.intellij.coverage.CoverageOptionsProvider;
 import com.intellij.coverage.CoverageSuitesBundle;
 import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.ide.impl.ContentManagerWatcher;
-import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
@@ -29,7 +27,7 @@ import java.util.Map;
  */
 @State(
     name = "CoverageViewManager",
-    storages = {@Storage( file = "$WORKSPACE_FILE$")}
+    storages = {@Storage( file = StoragePathMacros.WORKSPACE_FILE)}
 )
 public class CoverageViewManager implements PersistentStateComponent<CoverageViewManager.StateBean> {
   private static final Logger LOG = Logger.getInstance("#" + CoverageViewManager.class.getName());
