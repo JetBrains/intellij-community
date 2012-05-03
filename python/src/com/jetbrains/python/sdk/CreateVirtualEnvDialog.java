@@ -4,7 +4,6 @@ import com.intellij.facet.ui.FacetEditorValidator;
 import com.intellij.facet.ui.FacetValidatorsManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.impl.SdkListCellRenderer;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -44,7 +43,6 @@ public class CreateVirtualEnvDialog extends IdeaDialog {
     myProject = project;
     init();
     setTitle("Create Virtual Environment");
-    mySdkCombo.setRenderer(new SdkListCellRenderer("<None>", mySdkCombo.getRenderer()));
     updateSdkList(sdk, allSdks);
 
     myAssociateCheckbox.setBorder(BorderFactory.createEmptyBorder(8, 0, 0, 0));
