@@ -1301,8 +1301,6 @@ public class CompileDriver {
           final Function<Pair<int[], Set<VirtualFile>>, Pair<int[], Set<VirtualFile>>> dependencyFilter = new DependentClassesCumulativeFilter();
           
           do {
-            generatedTypes.clear();
-            snapshot = null;
             for (int currentCompiler = 0, translatorsLength = translators.length; currentCompiler < translatorsLength; currentCompiler++) {
               sink.setCurrentCompilerIndex(currentCompiler);
               final TranslatingCompiler compiler = translators[currentCompiler];
