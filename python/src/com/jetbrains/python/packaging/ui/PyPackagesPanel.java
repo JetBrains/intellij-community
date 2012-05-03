@@ -11,6 +11,7 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.table.JBTable;
+import com.intellij.util.Consumer;
 import com.jetbrains.python.packaging.*;
 import com.jetbrains.python.sdk.IronPythonSdkFlavor;
 import com.jetbrains.python.sdk.PythonSdkFlavor;
@@ -38,6 +39,9 @@ public class PyPackagesPanel extends JPanel {
   public static final String INSTALL_DISTRIBUTE = "installDistribute";
   public static final String INSTALL_PIP = "installPip";
   public static final String CREATE_VENV = "createVEnv";
+  private static final String DISTRIBUTE = "distribute-0.6.24";
+  private static final String PIP = "pip-1.0.2";
+
   private final JButton myInstallButton;
   private final JButton myUninstallButton;
   private final JButton myUpgradeButton;
@@ -49,6 +53,7 @@ public class PyPackagesPanel extends JPanel {
   private final PyPackagesNotificationPanel myNotificationArea;
   private boolean myHasDistribute;
   private boolean myHasPip = true;
+  private final List<Consumer<Sdk>> myPathChangedListeners = new ArrayList<Consumer<Sdk>>();
 
   public PyPackagesPanel(Project project, PyPackagesNotificationPanel area) {
     super(new GridBagLayout());
@@ -135,6 +140,29 @@ public class PyPackagesPanel extends JPanel {
         }
       }
     });
+
+    myNotificationArea.addLinkHandler(INSTALL_DISTRIBUTE, new Runnable() {
+      @Override
+      public void run() {
+        final Sdk sdk = mySelectedSdk;
+        if (sdk != null) {
+          installManagementTool(sdk, DISTRIBUTE);
+        }
+      }
+    });
+    myNotificationArea.addLinkHandler(INSTALL_PIP, new Runnable() {
+      @Override
+      public void run() {
+        final Sdk sdk = mySelectedSdk;
+        if (sdk != null) {
+          installManagementTool(sdk, PIP);
+        }
+      }
+    });
+  }
+
+  public void addPathChangedListener(Consumer<Sdk> consumer) {
+    myPathChangedListeners.add(consumer);
   }
 
   public JBTable getPackagesTable() {
@@ -406,6 +434,33 @@ public class PyPackagesPanel extends JPanel {
       }
     });
   }
+
+  private void installManagementTool(@NotNull final Sdk sdk, final String name) {
+    final PyPackageManager.UI ui = new PyPackageManager.UI(myProject, sdk, new PyPackageManager.UI.Listener() {
+      @Override
+      public void started() {
+        myPackagesTable.setPaintBusy(true);
+      }
+
+      @Override
+      public void finished(List<PyExternalProcessException> exceptions) {
+        myPackagesTable.setPaintBusy(false);
+        if (!exceptions.isEmpty()) {
+          final String firstLine = "Install package failed. ";
+          final String description = PyPackageManager.UI.createDescription(exceptions, firstLine);
+          PyPIPackageUtil.showError(myProject, "Failed to install " + name, description);
+        }
+        PyPackageManager.getInstance(sdk).clearCaches();
+        updatePackages(sdk);
+        for (Consumer<Sdk> listener : myPathChangedListeners) {
+          listener.consume(sdk);
+        }
+        updateNotifications(sdk);
+      }
+    });
+    ui.installManagement(name);
+  }
+
 
   private static class MyTableCellRenderer extends DefaultTableCellRenderer {
     @Override
