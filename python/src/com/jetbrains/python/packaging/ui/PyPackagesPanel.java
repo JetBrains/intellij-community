@@ -400,7 +400,7 @@ public class PyPackagesPanel extends JPanel {
               final PythonSdkFlavor flavor = PythonSdkFlavor.getFlavor(selectedSdk);
               final boolean invalid = PythonSdkType.isInvalid(selectedSdk);
               boolean allowCreateVirtualEnv =
-                !(PythonSdkType.isRemote(selectedSdk) || flavor instanceof IronPythonSdkFlavor);
+                !(PythonSdkType.isRemote(selectedSdk) || flavor instanceof IronPythonSdkFlavor) && myNotificationArea.hasLinkHandler(CREATE_VENV);
               final String createVirtualEnvLink = "<a href=\"" + CREATE_VENV + "\">create new VirtualEnv</a>";
               myNotificationArea.hide();
               if (!invalid) {

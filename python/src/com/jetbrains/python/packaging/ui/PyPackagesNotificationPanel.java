@@ -75,4 +75,8 @@ public class PyPackagesNotificationPanel {
   public void hide() {
     myEditorPane.setVisible(false);
   }
+
+  public boolean hasLinkHandler(String key) {
+    return myLinkHandlers.containsKey(key);
+  }
 }
