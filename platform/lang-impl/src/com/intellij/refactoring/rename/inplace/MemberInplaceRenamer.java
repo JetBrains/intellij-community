@@ -142,8 +142,8 @@ public class MemberInplaceRenamer extends VariableInplaceRenamer {
   }
 
   @Override
-  protected boolean appendAdditionalElement(Collection<Pair<PsiElement, TextRange>> stringUsages) {
-    boolean showChooser = super.appendAdditionalElement(stringUsages);
+  protected boolean appendAdditionalElement(Collection<PsiReference> refs, Collection<Pair<PsiElement, TextRange>> stringUsages) {
+    boolean showChooser = super.appendAdditionalElement(refs, stringUsages);
     PsiNamedElement variable = getVariable();
     if (variable != null) {
       final PsiElement substituted = getSubstituted();
@@ -195,18 +195,7 @@ public class MemberInplaceRenamer extends VariableInplaceRenamer {
             .message("renaming.0.1.to.2", UsageViewUtil.getType(variable), UsageViewUtil.getDescriptiveName(variable), newName);
           CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
             public void run() {
-
-              final RenamePsiElementProcessor elementProcessor = RenamePsiElementProcessor.forElement(substituted);
-              final RenameProcessor
-                renameProcessor = new RenameProcessor(myProject, substituted, newName,
-                                                      elementProcessor.isToSearchInComments(substituted),
-                                                      elementProcessor.isToSearchForTextOccurrences(substituted));
-              for (AutomaticRenamerFactory factory : Extensions.getExtensions(AutomaticRenamerFactory.EP_NAME)) {
-                if (factory.isApplicable(substituted)) {
-                  renameProcessor.addRenamerFactory(factory);
-                }
-              }
-              renameProcessor.run();
+              performRenameInner(substituted, newName);
               PsiDocumentManager.getInstance(myProject).commitAllDocuments();
             }
           }, commandName, null);
@@ -225,6 +214,20 @@ public class MemberInplaceRenamer extends VariableInplaceRenamer {
         }
       }
     }
+  }
+
+  protected void performRenameInner(PsiElement element, String newName) {
+    final RenamePsiElementProcessor elementProcessor = RenamePsiElementProcessor.forElement(element);
+    final RenameProcessor
+      renameProcessor = new RenameProcessor(myProject, element, newName,
+                                            elementProcessor.isToSearchInComments(element),
+                                            elementProcessor.isToSearchForTextOccurrences(element));
+    for (AutomaticRenamerFactory factory : Extensions.getExtensions(AutomaticRenamerFactory.EP_NAME)) {
+      if (factory.isApplicable(element)) {
+        renameProcessor.addRenamerFactory(factory);
+      }
+    }
+    renameProcessor.run();
   }
 
   @Override
