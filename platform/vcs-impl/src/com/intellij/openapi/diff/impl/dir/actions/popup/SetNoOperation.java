@@ -19,61 +19,38 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.diff.impl.dir.DirDiffElement;
 import com.intellij.openapi.diff.impl.dir.DirDiffOperation;
-import com.intellij.openapi.diff.impl.dir.DirDiffPanel;
 import com.intellij.openapi.diff.impl.dir.DirDiffTableModel;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
 /**
- * @author Konstantin Bulenkov
+ * @author lene
+ *         Date: 23.04.12
  */
-public abstract class SetOperationToBase extends AnAction {
+public class SetNoOperation extends AnAction {
   @Override
   public void actionPerformed(AnActionEvent e) {
-    DirDiffOperation operation = getOperation();
-    boolean setToDefault = operation == DirDiffOperation.NONE;
-    final DirDiffTableModel model = getModel(e);
-    final JTable table = getTable(e);
+    final DirDiffTableModel model = SetOperationToBase.getModel(e);
+    final JTable table = SetOperationToBase.getTable(e);
     assert model != null && table != null;
     for (DirDiffElement element : model.getSelectedElements()) {
-      if (isEnabledFor(element)) {
-        element.setOperation(setToDefault ? element.getDefaultOperation() : operation);
-      } else {
         element.setOperation(DirDiffOperation.NONE);
-      }
     }
     table.repaint();
   }
 
-  @NotNull
-  protected abstract DirDiffOperation getOperation();
-
   @Override
   public final void update(AnActionEvent e) {
-    final DirDiffTableModel model = getModel(e);
-    final JTable table = getTable(e);
+    final DirDiffTableModel model = SetOperationToBase.getModel(e);
+    final JTable table = SetOperationToBase.getTable(e);
     if (table != null && model != null) {
       for (DirDiffElement element : model.getSelectedElements()) {
-        if (isEnabledFor(element)) {
+        if (element.getOperation() != DirDiffOperation.NONE) {
           e.getPresentation().setEnabled(true);
           return;
         }
       }
     }
     e.getPresentation().setEnabled(false);
-  }
-
-  protected abstract boolean isEnabledFor(DirDiffElement element);
-
-  @Nullable
-  static JTable getTable(AnActionEvent e) {
-    return e.getData(DirDiffPanel.DIR_DIFF_TABLE);
-  }
-
-  @Nullable
-  public static DirDiffTableModel getModel(AnActionEvent e) {
-    return e.getData(DirDiffPanel.DIR_DIFF_MODEL);
   }
 }
