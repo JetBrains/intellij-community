@@ -34,6 +34,10 @@ public class RenameMembersInplaceTest extends LightCodeInsightTestCase {
     return JavaTestUtil.getJavaTestDataPath();
   }
 
+  public void testInnerClass() throws Exception {
+    doTestInplaceRename("NEW_NAME");
+  }
+  
   public void testConstructor() throws Exception {
     doTestInplaceRename("Bar");
   }
