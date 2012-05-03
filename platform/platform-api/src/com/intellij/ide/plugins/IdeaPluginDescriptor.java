@@ -31,6 +31,7 @@ import java.util.List;
 public interface IdeaPluginDescriptor extends PluginDescriptor {
   File getPath();
 
+  @Nullable
   String getDescription();
 
   String getChangeNotes();

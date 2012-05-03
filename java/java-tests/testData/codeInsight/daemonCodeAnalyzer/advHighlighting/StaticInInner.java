@@ -48,7 +48,7 @@ public class a {
     <error descr="Inner classes cannot have static declarations">static</error> 
       final int f2 = x instanceof Integer ? 1 : 0;
 
-    <error descr="Inner classes cannot have static declarations">static</error> 
+    <error descr="Modifier 'static' not allowed here">static</error> 
       class a_ic_c2 {}
 
     <error descr="Inner classes cannot have static declarations">static</error> 
@@ -75,7 +75,7 @@ public class a {
     <error descr="Inner classes cannot have static declarations">static</error> 
       final int f2 = x instanceof Integer ? 1 : 0;
 
-    <error descr="Inner classes cannot have static declarations">static</error> 
+    <error descr="Modifier 'static' not allowed here">static</error> 
       class a_ic_c2 {}
 
     <error descr="Inner classes cannot have static declarations">static</error> 

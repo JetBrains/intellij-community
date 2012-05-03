@@ -453,6 +453,16 @@ public class SingleInspectionProfilePanel extends JPanel {
       protected void onNodeStateChanged(final CheckedTreeNode node) {
         toggleToolNode((InspectionConfigTreeNode)node);
       }
+
+      @Override
+      protected void onDoubleClick(CheckedTreeNode node) {
+        final TreePath treePath = new TreePath(node.getPath());
+        if (myTree.isCollapsed(treePath)) {
+          myTree.expandPath(treePath);
+        } else {
+          myTree.collapsePath(treePath);
+        }
+      }
     };
 
 

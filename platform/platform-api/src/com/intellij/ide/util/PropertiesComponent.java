@@ -72,38 +72,63 @@ public abstract class PropertiesComponent {
     return getValue(name);
   }
 
-  public final void saveFields(@NotNull Object object) throws IllegalAccessException {
-    for (Field field : object.getClass().getDeclaredFields()) {
-      field.setAccessible(true);
-      if (field.isAnnotationPresent(PropertyName.class)) {
-        final String name = field.getAnnotation(PropertyName.class).value();
-        setValue(name, String.valueOf(field.get(object)));
+  public final boolean saveFields(@NotNull Object object) {
+    try {
+      for (Field field : object.getClass().getDeclaredFields()) {
+        field.setAccessible(true);
+        if (field.isAnnotationPresent(PropertyName.class)) {
+          final String name = field.getAnnotation(PropertyName.class).value();
+          setValue(name, String.valueOf(field.get(object)));
+        }
       }
+      return true;
+    }
+    catch (IllegalAccessException e) {
+      return false;
     }
   }
 
-  public final void loadFields(@NotNull Object object) throws IllegalAccessException {
-    for (Field field : object.getClass().getDeclaredFields()) {
-      field.setAccessible(true);
-      if (field.isAnnotationPresent(PropertyName.class)) {
-        final PropertyName annotation = field.getAnnotation(PropertyName.class);
-        final String stringValue = getValue(annotation.value(), annotation.defaultValue());
-        Object value = null;
-        final Class<?> type = field.getType();
+  public final boolean loadFields(@NotNull Object object) {
+    try {
+      for (Field field : object.getClass().getDeclaredFields()) {
+        field.setAccessible(true);
+        if (field.isAnnotationPresent(PropertyName.class)) {
+          final Class<?> type = field.getType();
 
-        if (type.equals(boolean.class))     {value = Boolean.valueOf(stringValue);}
-        else if (type.equals(long.class))   {value = Long.parseLong(stringValue);}
-        else if (type.equals(int.class))    {value = Integer.parseInt(stringValue);}
-        else if (type.equals(short.class))  {value = Short.parseShort(stringValue);}
-        else if (type.equals(byte.class))   {value = Byte.parseByte(stringValue);}
-        else if (type.equals(double.class)) {value = Double.parseDouble(stringValue);}
-        else if (type.equals(float.class))  {value = Float.parseFloat(stringValue);}
-        else if (type.equals(String.class)) {value = stringValue;}
+          final PropertyName annotation = field.getAnnotation(PropertyName.class);
+          String defaultValue = annotation.defaultValue();
+          if (PropertyName.NOT_SET.equals(defaultValue)) {
+            if (type.equals(boolean.class))     {defaultValue = String.valueOf(field.getBoolean(object));}
+            else if (type.equals(long.class))   {defaultValue = String.valueOf(field.getLong(object));}
+            else if (type.equals(int.class))    {defaultValue = String.valueOf(field.getInt(object));}
+            else if (type.equals(short.class))  {defaultValue = String.valueOf(field.getShort(object));}
+            else if (type.equals(byte.class))   {defaultValue = String.valueOf(field.getByte(object));}
+            else if (type.equals(double.class)) {defaultValue = String.valueOf(field.getDouble(object));}
+            else if (type.equals(float.class))  {defaultValue = String.valueOf(field.getFloat(object));}
+            else if (type.equals(String.class)) {defaultValue = String.valueOf(field.get(object));}
 
-        if (value != null) {
-          field.set(object, value);
+          }
+          final String stringValue = getValue(annotation.value(), defaultValue);
+          Object value = null;
+
+          if (type.equals(boolean.class))     {value = Boolean.valueOf(stringValue);}
+          else if (type.equals(long.class))   {value = Long.parseLong(stringValue);}
+          else if (type.equals(int.class))    {value = Integer.parseInt(stringValue);}
+          else if (type.equals(short.class))  {value = Short.parseShort(stringValue);}
+          else if (type.equals(byte.class))   {value = Byte.parseByte(stringValue);}
+          else if (type.equals(double.class)) {value = Double.parseDouble(stringValue);}
+          else if (type.equals(float.class))  {value = Float.parseFloat(stringValue);}
+          else if (type.equals(String.class)) {value = stringValue;}
+
+          if (value != null) {
+            field.set(object, value);
+          }
         }
       }
+      return true;
+    }
+    catch (IllegalAccessException e) {
+      return false;
     }
   }
 }

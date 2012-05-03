@@ -444,6 +444,10 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
       group.add(new FavoritesCompactEmptyMiddlePackagesAction(myProject, myBuilder));
     }
 
+    final FavoritesAutoscrollFromSourceHandler handler = new FavoritesAutoscrollFromSourceHandler(myProject, myBuilder);
+    handler.install();
+    group.add(handler.createToggleAction());
+
     group.add(new FavoritesAutoScrollToSourceAction(myProject, myAutoScrollToSourceHandler, myBuilder));
     window.setAdditionalGearActions(group);
   }
