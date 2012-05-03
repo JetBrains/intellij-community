@@ -237,7 +237,7 @@ public abstract class CoverageEnabledConfiguration implements JDOMExternalizable
 
     @NonNls final String coverageRootPath = PathManager.getSystemPath() + File.separator + "coverage";
     final String path = coverageRootPath + File.separator + myProject.getName() + coverageFileNameSeparator()
-                        + FileUtil.sanitizeFileName(myConfiguration.getName()) + "." + myCoverageRunner.getDataFileExtension();
+                        + FileUtil.sanitizeFileName(myConfiguration.getName()) + ".coverage";
 
     new File(coverageRootPath).mkdirs();
     return path;
