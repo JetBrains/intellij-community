@@ -16,19 +16,20 @@
 
 package org.jetbrains.plugins.groovy.refactoring.move;
 
-import com.intellij.ide.fileTemplates.FileTemplate;
-import com.intellij.ide.fileTemplates.FileTemplateManager;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.refactoring.PackageWrapper;
-import com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackagesProcessor;
-import com.intellij.refactoring.move.moveClassesOrPackages.SingleSourceRootMoveDestination;
-import org.jetbrains.plugins.groovy.util.TestUtils;
+
+import com.intellij.ide.fileTemplates.FileTemplate
+import com.intellij.ide.fileTemplates.FileTemplateManager
+import com.intellij.openapi.application.Application
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.command.CommandProcessor
+import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.refactoring.PackageWrapper
+import com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackagesProcessor
+import com.intellij.refactoring.move.moveClassesOrPackages.SingleSourceRootMoveDestination
+import org.jetbrains.plugins.groovy.util.TestUtils
+import com.intellij.psi.*
 
 /**
  * @author Maxim.Medvedev
@@ -41,18 +42,26 @@ public class GroovyMoveClassTest extends GroovyMoveTestBase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    final FileTemplateManager templateManager = FileTemplateManager.getInstance();
+    final FileTemplateManager templateManager = FileTemplateManager.instance
     FileTemplate temp = templateManager.getTemplate("GroovyClass.groovyForTest");
     if (temp != null) templateManager.removeTemplate(temp);
 
     temp = templateManager.addTemplate("GroovyClass.groovyForTest", "groovy");
-    temp.setText("#if ( $PACKAGE_NAME != \"\" )package ${PACKAGE_NAME}\n" + "#end\n" + "class ${NAME} {\n" + "}");
+    temp.text = '''\
+#if ( $PACKAGE_NAME != \"\" )package ${PACKAGE_NAME}
+#end
+class ${NAME} {
+}''';
 
     temp = templateManager.getTemplate("GroovyClass.groovy");
     if (temp != null) templateManager.removeTemplate(temp);
 
     temp = templateManager.addTemplate("GroovyClass.groovy", "groovy");
-    temp.setText("#if ( $PACKAGE_NAME != \"\" )package ${PACKAGE_NAME}\n" + "#end\n" + "class ${NAME} {\n" + "}");
+    temp.text = '''\
+#if ( $PACKAGE_NAME != \"\" )package ${PACKAGE_NAME}
+#end
+class ${NAME} {
+}''';
   }
 
   @Override
@@ -110,7 +119,7 @@ public class GroovyMoveClassTest extends GroovyMoveTestBase {
     doTest("p2", "p1.C1");
   }
 
-  public void perform(VirtualFile root, String newPackageName, String... classNames) {
+  public boolean perform(VirtualFile root, String newPackageName, String... classNames) {
     final PsiClass[] classes = new PsiClass[classNames.length];
     for (int i = 0; i < classes.length; i++) {
       String className = classNames[i];
@@ -140,5 +149,7 @@ public class GroovyMoveClassTest extends GroovyMoveTestBase {
 
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
     FileDocumentManager.getInstance().saveAllDocuments();
+
+    return true
   }
 }

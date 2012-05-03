@@ -908,6 +908,7 @@ public class StringUtil extends StringUtilRt {
     return ExceptionUtil.getThrowableText(aThrowable, stackFrameSkipPattern);
   }
 
+  @Nullable
   public static String getMessage(@NotNull Throwable e) {
     return ExceptionUtil.getMessage(e);
   }
@@ -2119,6 +2120,26 @@ public class StringUtil extends StringUtilRt {
     }
     for (int i = 0; i < s1.length(); i++) {
       if (s1.charAt(i) != s2.charAt(i)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  public static boolean equalsIgnoreCase(@Nullable CharSequence s1, @Nullable CharSequence s2) {
+    if (s1 == null ^ s2 == null) {
+      return false;
+    }
+
+    if (s1 == null) {
+      return true;
+    }
+
+    if (s1.length() != s2.length()) {
+      return false;
+    }
+    for (int i = 0; i < s1.length(); i++) {
+      if (!charsMatch(s1.charAt(i),s2.charAt(i), true)) {
         return false;
       }
     }

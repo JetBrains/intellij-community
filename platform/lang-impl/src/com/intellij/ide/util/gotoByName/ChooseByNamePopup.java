@@ -127,8 +127,14 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
     String adText = myMayRequestCurrentWindow ? "Press " + KeymapUtil.getKeystrokeText(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, KeyEvent.SHIFT_MASK)) + " to open in current window" : null;
     if (myDropdownPopup == null) {
       ComponentPopupBuilder builder = JBPopupFactory.getInstance().createComponentPopupBuilder(myListScrollPane, myListScrollPane);
-      builder.setFocusable(false).setRequestFocus(false).setCancelKeyEnabled(false).setFocusOwners(new JComponent[] {myTextField}).setBelongsToGlobalPopupStack(false)
-        .setModalContext(false).setAdText(adText).setMayBeParent(true);
+      builder.setFocusable(false)
+        .setRequestFocus(false)
+        .setCancelKeyEnabled(false)
+        .setFocusOwners(new JComponent[] {myTextField})
+        .setBelongsToGlobalPopupStack(false)
+        .setModalContext(false)
+        .setAdText(adText)
+        .setMayBeParent(true);
       builder.setCancelCallback(new Computable<Boolean>() {
         @Override
         public Boolean compute() {
@@ -212,8 +218,6 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
     if (myProject != null) {
       myProject.putUserData(CHOOSE_BY_NAME_POPUP_IN_PROJECT_KEY, null);
     }
-
-    //LaterInvocator.leaveModal(myTextFieldPanel);
 
     cleanupUI(isOk);
     myActionListener.onClose ();

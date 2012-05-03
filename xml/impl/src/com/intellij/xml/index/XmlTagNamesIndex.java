@@ -20,7 +20,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.indexing.*;
 import com.intellij.util.io.DataExternalizer;
-import com.intellij.util.io.UnsyncByteArrayInputStream;
+import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -55,7 +55,7 @@ public class XmlTagNamesIndex extends XmlIndex<Void> {
       @Override
       @NotNull
       public Map<String, Void> map(final FileContent inputData) {
-        final Collection<String> tags = XsdTagNameBuilder.computeTagNames(new UnsyncByteArrayInputStream(inputData.getContent()));
+        final Collection<String> tags = XsdTagNameBuilder.computeTagNames(CharArrayUtil.readerFromCharSequence(inputData.getContentAsText()));
         if (tags != null && !tags.isEmpty()) {
           final HashMap<String, Void> map = new HashMap<String, Void>(tags.size());
           for (String tag : tags) {

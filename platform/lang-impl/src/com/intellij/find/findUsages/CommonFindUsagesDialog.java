@@ -32,7 +32,7 @@ import javax.swing.*;
  * @author max
  */
 public class CommonFindUsagesDialog extends AbstractFindUsagesDialog {
-  private final PsiElement myPsiElement;
+  protected final PsiElement myPsiElement;
 
   public CommonFindUsagesDialog(PsiElement element,
                                 Project project,

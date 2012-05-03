@@ -52,6 +52,8 @@ public class ConversionRunner {
   }
 
   public boolean isConversionNeeded() throws CannotConvertException {
+    if (myContext.isConversionAlreadyPerformed(myProvider)) return false;
+    
     myProcessProjectFile = myContext.getStorageScheme() == StorageScheme.DEFAULT && myProjectFileConverter != null
                            && myProjectFileConverter.isConversionNeeded(myContext.getProjectSettings());
 
@@ -104,7 +106,13 @@ public class ConversionRunner {
     }
     catch (CannotConvertException ignored) {
     }
-
+    if (!myProvider.canDetermineIfConversionAlreadyPerformedByProjectFiles()) {
+      final ComponentManagerSettings settings = myContext.getProjectFileVersionSettings();
+      if (settings != null) {
+        affectedFiles.add(settings.getFile());
+      }
+    }
+    
     affectedFiles.addAll(myConverter.getAdditionalAffectedFiles());
     return affectedFiles;
   }

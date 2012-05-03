@@ -1364,6 +1364,10 @@ public final class CmdlineRemoteProto {
       // optional .org.jetbrains.jpsservice.Message.ControllerMessage.FSEvent fs_event = 3;
       boolean hasFsEvent();
       org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.FSEvent getFsEvent();
+      
+      // optional .org.jetbrains.jpsservice.Message.ControllerMessage.ConstantSearchResult constant_search_result = 4;
+      boolean hasConstantSearchResult();
+      org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ConstantSearchResult getConstantSearchResult();
     }
     public static final class ControllerMessage extends
         com.google.protobuf.GeneratedMessageLite
@@ -1388,11 +1392,13 @@ public final class CmdlineRemoteProto {
         BUILD_PARAMETERS(0, 1),
         CANCEL_BUILD_COMMAND(1, 2),
         FS_EVENT(2, 3),
+        CONSTANT_SEARCH_RESULT(3, 4),
         ;
         
         public static final int BUILD_PARAMETERS_VALUE = 1;
         public static final int CANCEL_BUILD_COMMAND_VALUE = 2;
         public static final int FS_EVENT_VALUE = 3;
+        public static final int CONSTANT_SEARCH_RESULT_VALUE = 4;
         
         
         public final int getNumber() { return value; }
@@ -1402,6 +1408,7 @@ public final class CmdlineRemoteProto {
             case 1: return BUILD_PARAMETERS;
             case 2: return CANCEL_BUILD_COMMAND;
             case 3: return FS_EVENT;
+            case 4: return CONSTANT_SEARCH_RESULT;
             default: return null;
           }
         }
@@ -4513,6 +4520,612 @@ public final class CmdlineRemoteProto {
         // @@protoc_insertion_point(class_scope:org.jetbrains.jpsservice.Message.ControllerMessage.ParametersMessage)
       }
       
+      public interface ConstantSearchResultOrBuilder
+          extends com.google.protobuf.MessageLiteOrBuilder {
+        
+        // required string owner_class_name = 1;
+        boolean hasOwnerClassName();
+        String getOwnerClassName();
+        
+        // required string field_name = 2;
+        boolean hasFieldName();
+        String getFieldName();
+        
+        // required bool is_success = 3;
+        boolean hasIsSuccess();
+        boolean getIsSuccess();
+        
+        // repeated string path = 4;
+        java.util.List<String> getPathList();
+        int getPathCount();
+        String getPath(int index);
+      }
+      public static final class ConstantSearchResult extends
+          com.google.protobuf.GeneratedMessageLite
+          implements ConstantSearchResultOrBuilder {
+        // Use ConstantSearchResult.newBuilder() to construct.
+        private ConstantSearchResult(Builder builder) {
+          super(builder);
+        }
+        private ConstantSearchResult(boolean noInit) {}
+        
+        private static final ConstantSearchResult defaultInstance;
+        public static ConstantSearchResult getDefaultInstance() {
+          return defaultInstance;
+        }
+        
+        public ConstantSearchResult getDefaultInstanceForType() {
+          return defaultInstance;
+        }
+        
+        private int bitField0_;
+        // required string owner_class_name = 1;
+        public static final int OWNER_CLASS_NAME_FIELD_NUMBER = 1;
+        private java.lang.Object ownerClassName_;
+        public boolean hasOwnerClassName() {
+          return ((bitField0_ & 0x00000001) == 0x00000001);
+        }
+        public String getOwnerClassName() {
+          java.lang.Object ref = ownerClassName_;
+          if (ref instanceof String) {
+            return (String) ref;
+          } else {
+            com.google.protobuf.ByteString bs = 
+                (com.google.protobuf.ByteString) ref;
+            String s = bs.toStringUtf8();
+            if (com.google.protobuf.Internal.isValidUtf8(bs)) {
+              ownerClassName_ = s;
+            }
+            return s;
+          }
+        }
+        private com.google.protobuf.ByteString getOwnerClassNameBytes() {
+          java.lang.Object ref = ownerClassName_;
+          if (ref instanceof String) {
+            com.google.protobuf.ByteString b = 
+                com.google.protobuf.ByteString.copyFromUtf8((String) ref);
+            ownerClassName_ = b;
+            return b;
+          } else {
+            return (com.google.protobuf.ByteString) ref;
+          }
+        }
+        
+        // required string field_name = 2;
+        public static final int FIELD_NAME_FIELD_NUMBER = 2;
+        private java.lang.Object fieldName_;
+        public boolean hasFieldName() {
+          return ((bitField0_ & 0x00000002) == 0x00000002);
+        }
+        public String getFieldName() {
+          java.lang.Object ref = fieldName_;
+          if (ref instanceof String) {
+            return (String) ref;
+          } else {
+            com.google.protobuf.ByteString bs = 
+                (com.google.protobuf.ByteString) ref;
+            String s = bs.toStringUtf8();
+            if (com.google.protobuf.Internal.isValidUtf8(bs)) {
+              fieldName_ = s;
+            }
+            return s;
+          }
+        }
+        private com.google.protobuf.ByteString getFieldNameBytes() {
+          java.lang.Object ref = fieldName_;
+          if (ref instanceof String) {
+            com.google.protobuf.ByteString b = 
+                com.google.protobuf.ByteString.copyFromUtf8((String) ref);
+            fieldName_ = b;
+            return b;
+          } else {
+            return (com.google.protobuf.ByteString) ref;
+          }
+        }
+        
+        // required bool is_success = 3;
+        public static final int IS_SUCCESS_FIELD_NUMBER = 3;
+        private boolean isSuccess_;
+        public boolean hasIsSuccess() {
+          return ((bitField0_ & 0x00000004) == 0x00000004);
+        }
+        public boolean getIsSuccess() {
+          return isSuccess_;
+        }
+        
+        // repeated string path = 4;
+        public static final int PATH_FIELD_NUMBER = 4;
+        private com.google.protobuf.LazyStringList path_;
+        public java.util.List<String>
+            getPathList() {
+          return path_;
+        }
+        public int getPathCount() {
+          return path_.size();
+        }
+        public String getPath(int index) {
+          return path_.get(index);
+        }
+        
+        private void initFields() {
+          ownerClassName_ = "";
+          fieldName_ = "";
+          isSuccess_ = false;
+          path_ = com.google.protobuf.LazyStringArrayList.EMPTY;
+        }
+        private byte memoizedIsInitialized = -1;
+        public final boolean isInitialized() {
+          byte isInitialized = memoizedIsInitialized;
+          if (isInitialized != -1) return isInitialized == 1;
+          
+          if (!hasOwnerClassName()) {
+            memoizedIsInitialized = 0;
+            return false;
+          }
+          if (!hasFieldName()) {
+            memoizedIsInitialized = 0;
+            return false;
+          }
+          if (!hasIsSuccess()) {
+            memoizedIsInitialized = 0;
+            return false;
+          }
+          memoizedIsInitialized = 1;
+          return true;
+        }
+        
+        public void writeTo(com.google.protobuf.CodedOutputStream output)
+                            throws java.io.IOException {
+          getSerializedSize();
+          if (((bitField0_ & 0x00000001) == 0x00000001)) {
+            output.writeBytes(1, getOwnerClassNameBytes());
+          }
+          if (((bitField0_ & 0x00000002) == 0x00000002)) {
+            output.writeBytes(2, getFieldNameBytes());
+          }
+          if (((bitField0_ & 0x00000004) == 0x00000004)) {
+            output.writeBool(3, isSuccess_);
+          }
+          for (int i = 0; i < path_.size(); i++) {
+            output.writeBytes(4, path_.getByteString(i));
+          }
+        }
+        
+        private int memoizedSerializedSize = -1;
+        public int getSerializedSize() {
+          int size = memoizedSerializedSize;
+          if (size != -1) return size;
+        
+          size = 0;
+          if (((bitField0_ & 0x00000001) == 0x00000001)) {
+            size += com.google.protobuf.CodedOutputStream
+              .computeBytesSize(1, getOwnerClassNameBytes());
+          }
+          if (((bitField0_ & 0x00000002) == 0x00000002)) {
+            size += com.google.protobuf.CodedOutputStream
+              .computeBytesSize(2, getFieldNameBytes());
+          }
+          if (((bitField0_ & 0x00000004) == 0x00000004)) {
+            size += com.google.protobuf.CodedOutputStream
+              .computeBoolSize(3, isSuccess_);
+          }
+          {
+            int dataSize = 0;
+            for (int i = 0; i < path_.size(); i++) {
+              dataSize += com.google.protobuf.CodedOutputStream
+                .computeBytesSizeNoTag(path_.getByteString(i));
+            }
+            size += dataSize;
+            size += 1 * getPathList().size();
+          }
+          memoizedSerializedSize = size;
+          return size;
+        }
+        
+        private static final long serialVersionUID = 0L;
+        @java.lang.Override
+        protected java.lang.Object writeReplace()
+            throws java.io.ObjectStreamException {
+          return super.writeReplace();
+        }
+        
+        public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ConstantSearchResult parseFrom(
+            com.google.protobuf.ByteString data)
+            throws com.google.protobuf.InvalidProtocolBufferException {
+          return newBuilder().mergeFrom(data).buildParsed();
+        }
+        public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ConstantSearchResult parseFrom(
+            com.google.protobuf.ByteString data,
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+            throws com.google.protobuf.InvalidProtocolBufferException {
+          return newBuilder().mergeFrom(data, extensionRegistry)
+                   .buildParsed();
+        }
+        public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ConstantSearchResult parseFrom(byte[] data)
+            throws com.google.protobuf.InvalidProtocolBufferException {
+          return newBuilder().mergeFrom(data).buildParsed();
+        }
+        public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ConstantSearchResult parseFrom(
+            byte[] data,
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+            throws com.google.protobuf.InvalidProtocolBufferException {
+          return newBuilder().mergeFrom(data, extensionRegistry)
+                   .buildParsed();
+        }
+        public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ConstantSearchResult parseFrom(java.io.InputStream input)
+            throws java.io.IOException {
+          return newBuilder().mergeFrom(input).buildParsed();
+        }
+        public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ConstantSearchResult parseFrom(
+            java.io.InputStream input,
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+            throws java.io.IOException {
+          return newBuilder().mergeFrom(input, extensionRegistry)
+                   .buildParsed();
+        }
+        public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ConstantSearchResult parseDelimitedFrom(java.io.InputStream input)
+            throws java.io.IOException {
+          Builder builder = newBuilder();
+          if (builder.mergeDelimitedFrom(input)) {
+            return builder.buildParsed();
+          } else {
+            return null;
+          }
+        }
+        public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ConstantSearchResult parseDelimitedFrom(
+            java.io.InputStream input,
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+            throws java.io.IOException {
+          Builder builder = newBuilder();
+          if (builder.mergeDelimitedFrom(input, extensionRegistry)) {
+            return builder.buildParsed();
+          } else {
+            return null;
+          }
+        }
+        public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ConstantSearchResult parseFrom(
+            com.google.protobuf.CodedInputStream input)
+            throws java.io.IOException {
+          return newBuilder().mergeFrom(input).buildParsed();
+        }
+        public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ConstantSearchResult parseFrom(
+            com.google.protobuf.CodedInputStream input,
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+            throws java.io.IOException {
+          return newBuilder().mergeFrom(input, extensionRegistry)
+                   .buildParsed();
+        }
+        
+        public static Builder newBuilder() { return Builder.create(); }
+        public Builder newBuilderForType() { return newBuilder(); }
+        public static Builder newBuilder(org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ConstantSearchResult prototype) {
+          return newBuilder().mergeFrom(prototype);
+        }
+        public Builder toBuilder() { return newBuilder(this); }
+        
+        public static final class Builder extends
+            com.google.protobuf.GeneratedMessageLite.Builder<
+              org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ConstantSearchResult, Builder>
+            implements org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ConstantSearchResultOrBuilder {
+          // Construct using org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ConstantSearchResult.newBuilder()
+          private Builder() {
+            maybeForceBuilderInitialization();
+          }
+          
+          private void maybeForceBuilderInitialization() {
+          }
+          private static Builder create() {
+            return new Builder();
+          }
+          
+          public Builder clear() {
+            super.clear();
+            ownerClassName_ = "";
+            bitField0_ = (bitField0_ & ~0x00000001);
+            fieldName_ = "";
+            bitField0_ = (bitField0_ & ~0x00000002);
+            isSuccess_ = false;
+            bitField0_ = (bitField0_ & ~0x00000004);
+            path_ = com.google.protobuf.LazyStringArrayList.EMPTY;
+            bitField0_ = (bitField0_ & ~0x00000008);
+            return this;
+          }
+          
+          public Builder clone() {
+            return create().mergeFrom(buildPartial());
+          }
+          
+          public org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ConstantSearchResult getDefaultInstanceForType() {
+            return org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ConstantSearchResult.getDefaultInstance();
+          }
+          
+          public org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ConstantSearchResult build() {
+            org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ConstantSearchResult result = buildPartial();
+            if (!result.isInitialized()) {
+              throw newUninitializedMessageException(result);
+            }
+            return result;
+          }
+          
+          private org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ConstantSearchResult buildParsed()
+              throws com.google.protobuf.InvalidProtocolBufferException {
+            org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ConstantSearchResult result = buildPartial();
+            if (!result.isInitialized()) {
+              throw newUninitializedMessageException(
+                result).asInvalidProtocolBufferException();
+            }
+            return result;
+          }
+          
+          public org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ConstantSearchResult buildPartial() {
+            org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ConstantSearchResult result = new org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ConstantSearchResult(this);
+            int from_bitField0_ = bitField0_;
+            int to_bitField0_ = 0;
+            if (((from_bitField0_ & 0x00000001) == 0x00000001)) {
+              to_bitField0_ |= 0x00000001;
+            }
+            result.ownerClassName_ = ownerClassName_;
+            if (((from_bitField0_ & 0x00000002) == 0x00000002)) {
+              to_bitField0_ |= 0x00000002;
+            }
+            result.fieldName_ = fieldName_;
+            if (((from_bitField0_ & 0x00000004) == 0x00000004)) {
+              to_bitField0_ |= 0x00000004;
+            }
+            result.isSuccess_ = isSuccess_;
+            if (((bitField0_ & 0x00000008) == 0x00000008)) {
+              path_ = new com.google.protobuf.UnmodifiableLazyStringList(
+                  path_);
+              bitField0_ = (bitField0_ & ~0x00000008);
+            }
+            result.path_ = path_;
+            result.bitField0_ = to_bitField0_;
+            return result;
+          }
+          
+          public Builder mergeFrom(org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ConstantSearchResult other) {
+            if (other == org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ConstantSearchResult.getDefaultInstance()) return this;
+            if (other.hasOwnerClassName()) {
+              setOwnerClassName(other.getOwnerClassName());
+            }
+            if (other.hasFieldName()) {
+              setFieldName(other.getFieldName());
+            }
+            if (other.hasIsSuccess()) {
+              setIsSuccess(other.getIsSuccess());
+            }
+            if (!other.path_.isEmpty()) {
+              if (path_.isEmpty()) {
+                path_ = other.path_;
+                bitField0_ = (bitField0_ & ~0x00000008);
+              } else {
+                ensurePathIsMutable();
+                path_.addAll(other.path_);
+              }
+              
+            }
+            return this;
+          }
+          
+          public final boolean isInitialized() {
+            if (!hasOwnerClassName()) {
+              
+              return false;
+            }
+            if (!hasFieldName()) {
+              
+              return false;
+            }
+            if (!hasIsSuccess()) {
+              
+              return false;
+            }
+            return true;
+          }
+          
+          public Builder mergeFrom(
+              com.google.protobuf.CodedInputStream input,
+              com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+              throws java.io.IOException {
+            while (true) {
+              int tag = input.readTag();
+              switch (tag) {
+                case 0:
+                  
+                  return this;
+                default: {
+                  if (!parseUnknownField(input, extensionRegistry, tag)) {
+                    
+                    return this;
+                  }
+                  break;
+                }
+                case 10: {
+                  bitField0_ |= 0x00000001;
+                  ownerClassName_ = input.readBytes();
+                  break;
+                }
+                case 18: {
+                  bitField0_ |= 0x00000002;
+                  fieldName_ = input.readBytes();
+                  break;
+                }
+                case 24: {
+                  bitField0_ |= 0x00000004;
+                  isSuccess_ = input.readBool();
+                  break;
+                }
+                case 34: {
+                  ensurePathIsMutable();
+                  path_.add(input.readBytes());
+                  break;
+                }
+              }
+            }
+          }
+          
+          private int bitField0_;
+          
+          // required string owner_class_name = 1;
+          private java.lang.Object ownerClassName_ = "";
+          public boolean hasOwnerClassName() {
+            return ((bitField0_ & 0x00000001) == 0x00000001);
+          }
+          public String getOwnerClassName() {
+            java.lang.Object ref = ownerClassName_;
+            if (!(ref instanceof String)) {
+              String s = ((com.google.protobuf.ByteString) ref).toStringUtf8();
+              ownerClassName_ = s;
+              return s;
+            } else {
+              return (String) ref;
+            }
+          }
+          public Builder setOwnerClassName(String value) {
+            if (value == null) {
+    throw new NullPointerException();
+  }
+  bitField0_ |= 0x00000001;
+            ownerClassName_ = value;
+            
+            return this;
+          }
+          public Builder clearOwnerClassName() {
+            bitField0_ = (bitField0_ & ~0x00000001);
+            ownerClassName_ = getDefaultInstance().getOwnerClassName();
+            
+            return this;
+          }
+          void setOwnerClassName(com.google.protobuf.ByteString value) {
+            bitField0_ |= 0x00000001;
+            ownerClassName_ = value;
+            
+          }
+          
+          // required string field_name = 2;
+          private java.lang.Object fieldName_ = "";
+          public boolean hasFieldName() {
+            return ((bitField0_ & 0x00000002) == 0x00000002);
+          }
+          public String getFieldName() {
+            java.lang.Object ref = fieldName_;
+            if (!(ref instanceof String)) {
+              String s = ((com.google.protobuf.ByteString) ref).toStringUtf8();
+              fieldName_ = s;
+              return s;
+            } else {
+              return (String) ref;
+            }
+          }
+          public Builder setFieldName(String value) {
+            if (value == null) {
+    throw new NullPointerException();
+  }
+  bitField0_ |= 0x00000002;
+            fieldName_ = value;
+            
+            return this;
+          }
+          public Builder clearFieldName() {
+            bitField0_ = (bitField0_ & ~0x00000002);
+            fieldName_ = getDefaultInstance().getFieldName();
+            
+            return this;
+          }
+          void setFieldName(com.google.protobuf.ByteString value) {
+            bitField0_ |= 0x00000002;
+            fieldName_ = value;
+            
+          }
+          
+          // required bool is_success = 3;
+          private boolean isSuccess_ ;
+          public boolean hasIsSuccess() {
+            return ((bitField0_ & 0x00000004) == 0x00000004);
+          }
+          public boolean getIsSuccess() {
+            return isSuccess_;
+          }
+          public Builder setIsSuccess(boolean value) {
+            bitField0_ |= 0x00000004;
+            isSuccess_ = value;
+            
+            return this;
+          }
+          public Builder clearIsSuccess() {
+            bitField0_ = (bitField0_ & ~0x00000004);
+            isSuccess_ = false;
+            
+            return this;
+          }
+          
+          // repeated string path = 4;
+          private com.google.protobuf.LazyStringList path_ = com.google.protobuf.LazyStringArrayList.EMPTY;
+          private void ensurePathIsMutable() {
+            if (!((bitField0_ & 0x00000008) == 0x00000008)) {
+              path_ = new com.google.protobuf.LazyStringArrayList(path_);
+              bitField0_ |= 0x00000008;
+             }
+          }
+          public java.util.List<String>
+              getPathList() {
+            return java.util.Collections.unmodifiableList(path_);
+          }
+          public int getPathCount() {
+            return path_.size();
+          }
+          public String getPath(int index) {
+            return path_.get(index);
+          }
+          public Builder setPath(
+              int index, String value) {
+            if (value == null) {
+    throw new NullPointerException();
+  }
+  ensurePathIsMutable();
+            path_.set(index, value);
+            
+            return this;
+          }
+          public Builder addPath(String value) {
+            if (value == null) {
+    throw new NullPointerException();
+  }
+  ensurePathIsMutable();
+            path_.add(value);
+            
+            return this;
+          }
+          public Builder addAllPath(
+              java.lang.Iterable<String> values) {
+            ensurePathIsMutable();
+            super.addAll(values, path_);
+            
+            return this;
+          }
+          public Builder clearPath() {
+            path_ = com.google.protobuf.LazyStringArrayList.EMPTY;
+            bitField0_ = (bitField0_ & ~0x00000008);
+            
+            return this;
+          }
+          void addPath(com.google.protobuf.ByteString value) {
+            ensurePathIsMutable();
+            path_.add(value);
+            
+          }
+          
+          // @@protoc_insertion_point(builder_scope:org.jetbrains.jpsservice.Message.ControllerMessage.ConstantSearchResult)
+        }
+        
+        static {
+          defaultInstance = new ConstantSearchResult(true);
+          defaultInstance.initFields();
+        }
+        
+        // @@protoc_insertion_point(class_scope:org.jetbrains.jpsservice.Message.ControllerMessage.ConstantSearchResult)
+      }
+      
       private int bitField0_;
       // required .org.jetbrains.jpsservice.Message.ControllerMessage.Type type = 1;
       public static final int TYPE_FIELD_NUMBER = 1;
@@ -4544,10 +5157,21 @@ public final class CmdlineRemoteProto {
         return fsEvent_;
       }
       
+      // optional .org.jetbrains.jpsservice.Message.ControllerMessage.ConstantSearchResult constant_search_result = 4;
+      public static final int CONSTANT_SEARCH_RESULT_FIELD_NUMBER = 4;
+      private org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ConstantSearchResult constantSearchResult_;
+      public boolean hasConstantSearchResult() {
+        return ((bitField0_ & 0x00000008) == 0x00000008);
+      }
+      public org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ConstantSearchResult getConstantSearchResult() {
+        return constantSearchResult_;
+      }
+      
       private void initFields() {
         type_ = org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.Type.BUILD_PARAMETERS;
         paramsMessage_ = org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.getDefaultInstance();
         fsEvent_ = org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.FSEvent.getDefaultInstance();
+        constantSearchResult_ = org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ConstantSearchResult.getDefaultInstance();
       }
       private byte memoizedIsInitialized = -1;
       public final boolean isInitialized() {
@@ -4570,6 +5194,12 @@ public final class CmdlineRemoteProto {
             return false;
           }
         }
+        if (hasConstantSearchResult()) {
+          if (!getConstantSearchResult().isInitialized()) {
+            memoizedIsInitialized = 0;
+            return false;
+          }
+        }
         memoizedIsInitialized = 1;
         return true;
       }
@@ -4585,6 +5215,9 @@ public final class CmdlineRemoteProto {
         }
         if (((bitField0_ & 0x00000004) == 0x00000004)) {
           output.writeMessage(3, fsEvent_);
+        }
+        if (((bitField0_ & 0x00000008) == 0x00000008)) {
+          output.writeMessage(4, constantSearchResult_);
         }
       }
       
@@ -4605,6 +5238,10 @@ public final class CmdlineRemoteProto {
         if (((bitField0_ & 0x00000004) == 0x00000004)) {
           size += com.google.protobuf.CodedOutputStream
             .computeMessageSize(3, fsEvent_);
+        }
+        if (((bitField0_ & 0x00000008) == 0x00000008)) {
+          size += com.google.protobuf.CodedOutputStream
+            .computeMessageSize(4, constantSearchResult_);
         }
         memoizedSerializedSize = size;
         return size;
@@ -4714,6 +5351,8 @@ public final class CmdlineRemoteProto {
           bitField0_ = (bitField0_ & ~0x00000002);
           fsEvent_ = org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.FSEvent.getDefaultInstance();
           bitField0_ = (bitField0_ & ~0x00000004);
+          constantSearchResult_ = org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ConstantSearchResult.getDefaultInstance();
+          bitField0_ = (bitField0_ & ~0x00000008);
           return this;
         }
         
@@ -4759,6 +5398,10 @@ public final class CmdlineRemoteProto {
             to_bitField0_ |= 0x00000004;
           }
           result.fsEvent_ = fsEvent_;
+          if (((from_bitField0_ & 0x00000008) == 0x00000008)) {
+            to_bitField0_ |= 0x00000008;
+          }
+          result.constantSearchResult_ = constantSearchResult_;
           result.bitField0_ = to_bitField0_;
           return result;
         }
@@ -4773,6 +5416,9 @@ public final class CmdlineRemoteProto {
           }
           if (other.hasFsEvent()) {
             mergeFsEvent(other.getFsEvent());
+          }
+          if (other.hasConstantSearchResult()) {
+            mergeConstantSearchResult(other.getConstantSearchResult());
           }
           return this;
         }
@@ -4790,6 +5436,12 @@ public final class CmdlineRemoteProto {
           }
           if (hasFsEvent()) {
             if (!getFsEvent().isInitialized()) {
+              
+              return false;
+            }
+          }
+          if (hasConstantSearchResult()) {
+            if (!getConstantSearchResult().isInitialized()) {
               
               return false;
             }
@@ -4839,6 +5491,15 @@ public final class CmdlineRemoteProto {
                 }
                 input.readMessage(subBuilder, extensionRegistry);
                 setFsEvent(subBuilder.buildPartial());
+                break;
+              }
+              case 34: {
+                org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ConstantSearchResult.Builder subBuilder = org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ConstantSearchResult.newBuilder();
+                if (hasConstantSearchResult()) {
+                  subBuilder.mergeFrom(getConstantSearchResult());
+                }
+                input.readMessage(subBuilder, extensionRegistry);
+                setConstantSearchResult(subBuilder.buildPartial());
                 break;
               }
             }
@@ -4957,6 +5618,49 @@ public final class CmdlineRemoteProto {
           return this;
         }
         
+        // optional .org.jetbrains.jpsservice.Message.ControllerMessage.ConstantSearchResult constant_search_result = 4;
+        private org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ConstantSearchResult constantSearchResult_ = org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ConstantSearchResult.getDefaultInstance();
+        public boolean hasConstantSearchResult() {
+          return ((bitField0_ & 0x00000008) == 0x00000008);
+        }
+        public org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ConstantSearchResult getConstantSearchResult() {
+          return constantSearchResult_;
+        }
+        public Builder setConstantSearchResult(org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ConstantSearchResult value) {
+          if (value == null) {
+            throw new NullPointerException();
+          }
+          constantSearchResult_ = value;
+          
+          bitField0_ |= 0x00000008;
+          return this;
+        }
+        public Builder setConstantSearchResult(
+            org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ConstantSearchResult.Builder builderForValue) {
+          constantSearchResult_ = builderForValue.build();
+          
+          bitField0_ |= 0x00000008;
+          return this;
+        }
+        public Builder mergeConstantSearchResult(org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ConstantSearchResult value) {
+          if (((bitField0_ & 0x00000008) == 0x00000008) &&
+              constantSearchResult_ != org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ConstantSearchResult.getDefaultInstance()) {
+            constantSearchResult_ =
+              org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ConstantSearchResult.newBuilder(constantSearchResult_).mergeFrom(value).buildPartial();
+          } else {
+            constantSearchResult_ = value;
+          }
+          
+          bitField0_ |= 0x00000008;
+          return this;
+        }
+        public Builder clearConstantSearchResult() {
+          constantSearchResult_ = org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ConstantSearchResult.getDefaultInstance();
+          
+          bitField0_ = (bitField0_ & ~0x00000008);
+          return this;
+        }
+        
         // @@protoc_insertion_point(builder_scope:org.jetbrains.jpsservice.Message.ControllerMessage)
       }
       
@@ -4982,6 +5686,10 @@ public final class CmdlineRemoteProto {
       // optional .org.jetbrains.jpsservice.Message.BuilderMessage.CompileMessage compile_message = 3;
       boolean hasCompileMessage();
       org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.CompileMessage getCompileMessage();
+      
+      // optional .org.jetbrains.jpsservice.Message.BuilderMessage.ConstantSearchTask constant_search_task = 4;
+      boolean hasConstantSearchTask();
+      org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.ConstantSearchTask getConstantSearchTask();
     }
     public static final class BuilderMessage extends
         com.google.protobuf.GeneratedMessageLite
@@ -5006,11 +5714,13 @@ public final class CmdlineRemoteProto {
         PARAM_REQUEST(0, 1),
         BUILD_EVENT(1, 2),
         COMPILE_MESSAGE(2, 3),
+        CONSTANT_SEARCH_TASK(3, 4),
         ;
         
         public static final int PARAM_REQUEST_VALUE = 1;
         public static final int BUILD_EVENT_VALUE = 2;
         public static final int COMPILE_MESSAGE_VALUE = 3;
+        public static final int CONSTANT_SEARCH_TASK_VALUE = 4;
         
         
         public final int getNumber() { return value; }
@@ -5020,6 +5730,7 @@ public final class CmdlineRemoteProto {
             case 1: return PARAM_REQUEST;
             case 2: return BUILD_EVENT;
             case 3: return COMPILE_MESSAGE;
+            case 4: return CONSTANT_SEARCH_TASK;
             default: return null;
           }
         }
@@ -7053,6 +7764,615 @@ public final class CmdlineRemoteProto {
         // @@protoc_insertion_point(class_scope:org.jetbrains.jpsservice.Message.BuilderMessage.CompileMessage)
       }
       
+      public interface ConstantSearchTaskOrBuilder
+          extends com.google.protobuf.MessageLiteOrBuilder {
+        
+        // required string owner_class_name = 1;
+        boolean hasOwnerClassName();
+        String getOwnerClassName();
+        
+        // required string field_name = 2;
+        boolean hasFieldName();
+        String getFieldName();
+        
+        // required int32 access_flags = 3;
+        boolean hasAccessFlags();
+        int getAccessFlags();
+        
+        // optional bool is_access_changed = 4 [default = false];
+        boolean hasIsAccessChanged();
+        boolean getIsAccessChanged();
+        
+        // optional bool is_field_removed = 5 [default = false];
+        boolean hasIsFieldRemoved();
+        boolean getIsFieldRemoved();
+      }
+      public static final class ConstantSearchTask extends
+          com.google.protobuf.GeneratedMessageLite
+          implements ConstantSearchTaskOrBuilder {
+        // Use ConstantSearchTask.newBuilder() to construct.
+        private ConstantSearchTask(Builder builder) {
+          super(builder);
+        }
+        private ConstantSearchTask(boolean noInit) {}
+        
+        private static final ConstantSearchTask defaultInstance;
+        public static ConstantSearchTask getDefaultInstance() {
+          return defaultInstance;
+        }
+        
+        public ConstantSearchTask getDefaultInstanceForType() {
+          return defaultInstance;
+        }
+        
+        private int bitField0_;
+        // required string owner_class_name = 1;
+        public static final int OWNER_CLASS_NAME_FIELD_NUMBER = 1;
+        private java.lang.Object ownerClassName_;
+        public boolean hasOwnerClassName() {
+          return ((bitField0_ & 0x00000001) == 0x00000001);
+        }
+        public String getOwnerClassName() {
+          java.lang.Object ref = ownerClassName_;
+          if (ref instanceof String) {
+            return (String) ref;
+          } else {
+            com.google.protobuf.ByteString bs = 
+                (com.google.protobuf.ByteString) ref;
+            String s = bs.toStringUtf8();
+            if (com.google.protobuf.Internal.isValidUtf8(bs)) {
+              ownerClassName_ = s;
+            }
+            return s;
+          }
+        }
+        private com.google.protobuf.ByteString getOwnerClassNameBytes() {
+          java.lang.Object ref = ownerClassName_;
+          if (ref instanceof String) {
+            com.google.protobuf.ByteString b = 
+                com.google.protobuf.ByteString.copyFromUtf8((String) ref);
+            ownerClassName_ = b;
+            return b;
+          } else {
+            return (com.google.protobuf.ByteString) ref;
+          }
+        }
+        
+        // required string field_name = 2;
+        public static final int FIELD_NAME_FIELD_NUMBER = 2;
+        private java.lang.Object fieldName_;
+        public boolean hasFieldName() {
+          return ((bitField0_ & 0x00000002) == 0x00000002);
+        }
+        public String getFieldName() {
+          java.lang.Object ref = fieldName_;
+          if (ref instanceof String) {
+            return (String) ref;
+          } else {
+            com.google.protobuf.ByteString bs = 
+                (com.google.protobuf.ByteString) ref;
+            String s = bs.toStringUtf8();
+            if (com.google.protobuf.Internal.isValidUtf8(bs)) {
+              fieldName_ = s;
+            }
+            return s;
+          }
+        }
+        private com.google.protobuf.ByteString getFieldNameBytes() {
+          java.lang.Object ref = fieldName_;
+          if (ref instanceof String) {
+            com.google.protobuf.ByteString b = 
+                com.google.protobuf.ByteString.copyFromUtf8((String) ref);
+            fieldName_ = b;
+            return b;
+          } else {
+            return (com.google.protobuf.ByteString) ref;
+          }
+        }
+        
+        // required int32 access_flags = 3;
+        public static final int ACCESS_FLAGS_FIELD_NUMBER = 3;
+        private int accessFlags_;
+        public boolean hasAccessFlags() {
+          return ((bitField0_ & 0x00000004) == 0x00000004);
+        }
+        public int getAccessFlags() {
+          return accessFlags_;
+        }
+        
+        // optional bool is_access_changed = 4 [default = false];
+        public static final int IS_ACCESS_CHANGED_FIELD_NUMBER = 4;
+        private boolean isAccessChanged_;
+        public boolean hasIsAccessChanged() {
+          return ((bitField0_ & 0x00000008) == 0x00000008);
+        }
+        public boolean getIsAccessChanged() {
+          return isAccessChanged_;
+        }
+        
+        // optional bool is_field_removed = 5 [default = false];
+        public static final int IS_FIELD_REMOVED_FIELD_NUMBER = 5;
+        private boolean isFieldRemoved_;
+        public boolean hasIsFieldRemoved() {
+          return ((bitField0_ & 0x00000010) == 0x00000010);
+        }
+        public boolean getIsFieldRemoved() {
+          return isFieldRemoved_;
+        }
+        
+        private void initFields() {
+          ownerClassName_ = "";
+          fieldName_ = "";
+          accessFlags_ = 0;
+          isAccessChanged_ = false;
+          isFieldRemoved_ = false;
+        }
+        private byte memoizedIsInitialized = -1;
+        public final boolean isInitialized() {
+          byte isInitialized = memoizedIsInitialized;
+          if (isInitialized != -1) return isInitialized == 1;
+          
+          if (!hasOwnerClassName()) {
+            memoizedIsInitialized = 0;
+            return false;
+          }
+          if (!hasFieldName()) {
+            memoizedIsInitialized = 0;
+            return false;
+          }
+          if (!hasAccessFlags()) {
+            memoizedIsInitialized = 0;
+            return false;
+          }
+          memoizedIsInitialized = 1;
+          return true;
+        }
+        
+        public void writeTo(com.google.protobuf.CodedOutputStream output)
+                            throws java.io.IOException {
+          getSerializedSize();
+          if (((bitField0_ & 0x00000001) == 0x00000001)) {
+            output.writeBytes(1, getOwnerClassNameBytes());
+          }
+          if (((bitField0_ & 0x00000002) == 0x00000002)) {
+            output.writeBytes(2, getFieldNameBytes());
+          }
+          if (((bitField0_ & 0x00000004) == 0x00000004)) {
+            output.writeInt32(3, accessFlags_);
+          }
+          if (((bitField0_ & 0x00000008) == 0x00000008)) {
+            output.writeBool(4, isAccessChanged_);
+          }
+          if (((bitField0_ & 0x00000010) == 0x00000010)) {
+            output.writeBool(5, isFieldRemoved_);
+          }
+        }
+        
+        private int memoizedSerializedSize = -1;
+        public int getSerializedSize() {
+          int size = memoizedSerializedSize;
+          if (size != -1) return size;
+        
+          size = 0;
+          if (((bitField0_ & 0x00000001) == 0x00000001)) {
+            size += com.google.protobuf.CodedOutputStream
+              .computeBytesSize(1, getOwnerClassNameBytes());
+          }
+          if (((bitField0_ & 0x00000002) == 0x00000002)) {
+            size += com.google.protobuf.CodedOutputStream
+              .computeBytesSize(2, getFieldNameBytes());
+          }
+          if (((bitField0_ & 0x00000004) == 0x00000004)) {
+            size += com.google.protobuf.CodedOutputStream
+              .computeInt32Size(3, accessFlags_);
+          }
+          if (((bitField0_ & 0x00000008) == 0x00000008)) {
+            size += com.google.protobuf.CodedOutputStream
+              .computeBoolSize(4, isAccessChanged_);
+          }
+          if (((bitField0_ & 0x00000010) == 0x00000010)) {
+            size += com.google.protobuf.CodedOutputStream
+              .computeBoolSize(5, isFieldRemoved_);
+          }
+          memoizedSerializedSize = size;
+          return size;
+        }
+        
+        private static final long serialVersionUID = 0L;
+        @java.lang.Override
+        protected java.lang.Object writeReplace()
+            throws java.io.ObjectStreamException {
+          return super.writeReplace();
+        }
+        
+        public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.ConstantSearchTask parseFrom(
+            com.google.protobuf.ByteString data)
+            throws com.google.protobuf.InvalidProtocolBufferException {
+          return newBuilder().mergeFrom(data).buildParsed();
+        }
+        public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.ConstantSearchTask parseFrom(
+            com.google.protobuf.ByteString data,
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+            throws com.google.protobuf.InvalidProtocolBufferException {
+          return newBuilder().mergeFrom(data, extensionRegistry)
+                   .buildParsed();
+        }
+        public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.ConstantSearchTask parseFrom(byte[] data)
+            throws com.google.protobuf.InvalidProtocolBufferException {
+          return newBuilder().mergeFrom(data).buildParsed();
+        }
+        public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.ConstantSearchTask parseFrom(
+            byte[] data,
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+            throws com.google.protobuf.InvalidProtocolBufferException {
+          return newBuilder().mergeFrom(data, extensionRegistry)
+                   .buildParsed();
+        }
+        public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.ConstantSearchTask parseFrom(java.io.InputStream input)
+            throws java.io.IOException {
+          return newBuilder().mergeFrom(input).buildParsed();
+        }
+        public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.ConstantSearchTask parseFrom(
+            java.io.InputStream input,
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+            throws java.io.IOException {
+          return newBuilder().mergeFrom(input, extensionRegistry)
+                   .buildParsed();
+        }
+        public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.ConstantSearchTask parseDelimitedFrom(java.io.InputStream input)
+            throws java.io.IOException {
+          Builder builder = newBuilder();
+          if (builder.mergeDelimitedFrom(input)) {
+            return builder.buildParsed();
+          } else {
+            return null;
+          }
+        }
+        public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.ConstantSearchTask parseDelimitedFrom(
+            java.io.InputStream input,
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+            throws java.io.IOException {
+          Builder builder = newBuilder();
+          if (builder.mergeDelimitedFrom(input, extensionRegistry)) {
+            return builder.buildParsed();
+          } else {
+            return null;
+          }
+        }
+        public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.ConstantSearchTask parseFrom(
+            com.google.protobuf.CodedInputStream input)
+            throws java.io.IOException {
+          return newBuilder().mergeFrom(input).buildParsed();
+        }
+        public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.ConstantSearchTask parseFrom(
+            com.google.protobuf.CodedInputStream input,
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+            throws java.io.IOException {
+          return newBuilder().mergeFrom(input, extensionRegistry)
+                   .buildParsed();
+        }
+        
+        public static Builder newBuilder() { return Builder.create(); }
+        public Builder newBuilderForType() { return newBuilder(); }
+        public static Builder newBuilder(org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.ConstantSearchTask prototype) {
+          return newBuilder().mergeFrom(prototype);
+        }
+        public Builder toBuilder() { return newBuilder(this); }
+        
+        public static final class Builder extends
+            com.google.protobuf.GeneratedMessageLite.Builder<
+              org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.ConstantSearchTask, Builder>
+            implements org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.ConstantSearchTaskOrBuilder {
+          // Construct using org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.ConstantSearchTask.newBuilder()
+          private Builder() {
+            maybeForceBuilderInitialization();
+          }
+          
+          private void maybeForceBuilderInitialization() {
+          }
+          private static Builder create() {
+            return new Builder();
+          }
+          
+          public Builder clear() {
+            super.clear();
+            ownerClassName_ = "";
+            bitField0_ = (bitField0_ & ~0x00000001);
+            fieldName_ = "";
+            bitField0_ = (bitField0_ & ~0x00000002);
+            accessFlags_ = 0;
+            bitField0_ = (bitField0_ & ~0x00000004);
+            isAccessChanged_ = false;
+            bitField0_ = (bitField0_ & ~0x00000008);
+            isFieldRemoved_ = false;
+            bitField0_ = (bitField0_ & ~0x00000010);
+            return this;
+          }
+          
+          public Builder clone() {
+            return create().mergeFrom(buildPartial());
+          }
+          
+          public org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.ConstantSearchTask getDefaultInstanceForType() {
+            return org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.ConstantSearchTask.getDefaultInstance();
+          }
+          
+          public org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.ConstantSearchTask build() {
+            org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.ConstantSearchTask result = buildPartial();
+            if (!result.isInitialized()) {
+              throw newUninitializedMessageException(result);
+            }
+            return result;
+          }
+          
+          private org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.ConstantSearchTask buildParsed()
+              throws com.google.protobuf.InvalidProtocolBufferException {
+            org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.ConstantSearchTask result = buildPartial();
+            if (!result.isInitialized()) {
+              throw newUninitializedMessageException(
+                result).asInvalidProtocolBufferException();
+            }
+            return result;
+          }
+          
+          public org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.ConstantSearchTask buildPartial() {
+            org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.ConstantSearchTask result = new org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.ConstantSearchTask(this);
+            int from_bitField0_ = bitField0_;
+            int to_bitField0_ = 0;
+            if (((from_bitField0_ & 0x00000001) == 0x00000001)) {
+              to_bitField0_ |= 0x00000001;
+            }
+            result.ownerClassName_ = ownerClassName_;
+            if (((from_bitField0_ & 0x00000002) == 0x00000002)) {
+              to_bitField0_ |= 0x00000002;
+            }
+            result.fieldName_ = fieldName_;
+            if (((from_bitField0_ & 0x00000004) == 0x00000004)) {
+              to_bitField0_ |= 0x00000004;
+            }
+            result.accessFlags_ = accessFlags_;
+            if (((from_bitField0_ & 0x00000008) == 0x00000008)) {
+              to_bitField0_ |= 0x00000008;
+            }
+            result.isAccessChanged_ = isAccessChanged_;
+            if (((from_bitField0_ & 0x00000010) == 0x00000010)) {
+              to_bitField0_ |= 0x00000010;
+            }
+            result.isFieldRemoved_ = isFieldRemoved_;
+            result.bitField0_ = to_bitField0_;
+            return result;
+          }
+          
+          public Builder mergeFrom(org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.ConstantSearchTask other) {
+            if (other == org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.ConstantSearchTask.getDefaultInstance()) return this;
+            if (other.hasOwnerClassName()) {
+              setOwnerClassName(other.getOwnerClassName());
+            }
+            if (other.hasFieldName()) {
+              setFieldName(other.getFieldName());
+            }
+            if (other.hasAccessFlags()) {
+              setAccessFlags(other.getAccessFlags());
+            }
+            if (other.hasIsAccessChanged()) {
+              setIsAccessChanged(other.getIsAccessChanged());
+            }
+            if (other.hasIsFieldRemoved()) {
+              setIsFieldRemoved(other.getIsFieldRemoved());
+            }
+            return this;
+          }
+          
+          public final boolean isInitialized() {
+            if (!hasOwnerClassName()) {
+              
+              return false;
+            }
+            if (!hasFieldName()) {
+              
+              return false;
+            }
+            if (!hasAccessFlags()) {
+              
+              return false;
+            }
+            return true;
+          }
+          
+          public Builder mergeFrom(
+              com.google.protobuf.CodedInputStream input,
+              com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+              throws java.io.IOException {
+            while (true) {
+              int tag = input.readTag();
+              switch (tag) {
+                case 0:
+                  
+                  return this;
+                default: {
+                  if (!parseUnknownField(input, extensionRegistry, tag)) {
+                    
+                    return this;
+                  }
+                  break;
+                }
+                case 10: {
+                  bitField0_ |= 0x00000001;
+                  ownerClassName_ = input.readBytes();
+                  break;
+                }
+                case 18: {
+                  bitField0_ |= 0x00000002;
+                  fieldName_ = input.readBytes();
+                  break;
+                }
+                case 24: {
+                  bitField0_ |= 0x00000004;
+                  accessFlags_ = input.readInt32();
+                  break;
+                }
+                case 32: {
+                  bitField0_ |= 0x00000008;
+                  isAccessChanged_ = input.readBool();
+                  break;
+                }
+                case 40: {
+                  bitField0_ |= 0x00000010;
+                  isFieldRemoved_ = input.readBool();
+                  break;
+                }
+              }
+            }
+          }
+          
+          private int bitField0_;
+          
+          // required string owner_class_name = 1;
+          private java.lang.Object ownerClassName_ = "";
+          public boolean hasOwnerClassName() {
+            return ((bitField0_ & 0x00000001) == 0x00000001);
+          }
+          public String getOwnerClassName() {
+            java.lang.Object ref = ownerClassName_;
+            if (!(ref instanceof String)) {
+              String s = ((com.google.protobuf.ByteString) ref).toStringUtf8();
+              ownerClassName_ = s;
+              return s;
+            } else {
+              return (String) ref;
+            }
+          }
+          public Builder setOwnerClassName(String value) {
+            if (value == null) {
+    throw new NullPointerException();
+  }
+  bitField0_ |= 0x00000001;
+            ownerClassName_ = value;
+            
+            return this;
+          }
+          public Builder clearOwnerClassName() {
+            bitField0_ = (bitField0_ & ~0x00000001);
+            ownerClassName_ = getDefaultInstance().getOwnerClassName();
+            
+            return this;
+          }
+          void setOwnerClassName(com.google.protobuf.ByteString value) {
+            bitField0_ |= 0x00000001;
+            ownerClassName_ = value;
+            
+          }
+          
+          // required string field_name = 2;
+          private java.lang.Object fieldName_ = "";
+          public boolean hasFieldName() {
+            return ((bitField0_ & 0x00000002) == 0x00000002);
+          }
+          public String getFieldName() {
+            java.lang.Object ref = fieldName_;
+            if (!(ref instanceof String)) {
+              String s = ((com.google.protobuf.ByteString) ref).toStringUtf8();
+              fieldName_ = s;
+              return s;
+            } else {
+              return (String) ref;
+            }
+          }
+          public Builder setFieldName(String value) {
+            if (value == null) {
+    throw new NullPointerException();
+  }
+  bitField0_ |= 0x00000002;
+            fieldName_ = value;
+            
+            return this;
+          }
+          public Builder clearFieldName() {
+            bitField0_ = (bitField0_ & ~0x00000002);
+            fieldName_ = getDefaultInstance().getFieldName();
+            
+            return this;
+          }
+          void setFieldName(com.google.protobuf.ByteString value) {
+            bitField0_ |= 0x00000002;
+            fieldName_ = value;
+            
+          }
+          
+          // required int32 access_flags = 3;
+          private int accessFlags_ ;
+          public boolean hasAccessFlags() {
+            return ((bitField0_ & 0x00000004) == 0x00000004);
+          }
+          public int getAccessFlags() {
+            return accessFlags_;
+          }
+          public Builder setAccessFlags(int value) {
+            bitField0_ |= 0x00000004;
+            accessFlags_ = value;
+            
+            return this;
+          }
+          public Builder clearAccessFlags() {
+            bitField0_ = (bitField0_ & ~0x00000004);
+            accessFlags_ = 0;
+            
+            return this;
+          }
+          
+          // optional bool is_access_changed = 4 [default = false];
+          private boolean isAccessChanged_ ;
+          public boolean hasIsAccessChanged() {
+            return ((bitField0_ & 0x00000008) == 0x00000008);
+          }
+          public boolean getIsAccessChanged() {
+            return isAccessChanged_;
+          }
+          public Builder setIsAccessChanged(boolean value) {
+            bitField0_ |= 0x00000008;
+            isAccessChanged_ = value;
+            
+            return this;
+          }
+          public Builder clearIsAccessChanged() {
+            bitField0_ = (bitField0_ & ~0x00000008);
+            isAccessChanged_ = false;
+            
+            return this;
+          }
+          
+          // optional bool is_field_removed = 5 [default = false];
+          private boolean isFieldRemoved_ ;
+          public boolean hasIsFieldRemoved() {
+            return ((bitField0_ & 0x00000010) == 0x00000010);
+          }
+          public boolean getIsFieldRemoved() {
+            return isFieldRemoved_;
+          }
+          public Builder setIsFieldRemoved(boolean value) {
+            bitField0_ |= 0x00000010;
+            isFieldRemoved_ = value;
+            
+            return this;
+          }
+          public Builder clearIsFieldRemoved() {
+            bitField0_ = (bitField0_ & ~0x00000010);
+            isFieldRemoved_ = false;
+            
+            return this;
+          }
+          
+          // @@protoc_insertion_point(builder_scope:org.jetbrains.jpsservice.Message.BuilderMessage.ConstantSearchTask)
+        }
+        
+        static {
+          defaultInstance = new ConstantSearchTask(true);
+          defaultInstance.initFields();
+        }
+        
+        // @@protoc_insertion_point(class_scope:org.jetbrains.jpsservice.Message.BuilderMessage.ConstantSearchTask)
+      }
+      
       private int bitField0_;
       // required .org.jetbrains.jpsservice.Message.BuilderMessage.Type type = 1;
       public static final int TYPE_FIELD_NUMBER = 1;
@@ -7084,10 +8404,21 @@ public final class CmdlineRemoteProto {
         return compileMessage_;
       }
       
+      // optional .org.jetbrains.jpsservice.Message.BuilderMessage.ConstantSearchTask constant_search_task = 4;
+      public static final int CONSTANT_SEARCH_TASK_FIELD_NUMBER = 4;
+      private org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.ConstantSearchTask constantSearchTask_;
+      public boolean hasConstantSearchTask() {
+        return ((bitField0_ & 0x00000008) == 0x00000008);
+      }
+      public org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.ConstantSearchTask getConstantSearchTask() {
+        return constantSearchTask_;
+      }
+      
       private void initFields() {
         type_ = org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.Type.PARAM_REQUEST;
         buildEvent_ = org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.getDefaultInstance();
         compileMessage_ = org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.CompileMessage.getDefaultInstance();
+        constantSearchTask_ = org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.ConstantSearchTask.getDefaultInstance();
       }
       private byte memoizedIsInitialized = -1;
       public final boolean isInitialized() {
@@ -7110,6 +8441,12 @@ public final class CmdlineRemoteProto {
             return false;
           }
         }
+        if (hasConstantSearchTask()) {
+          if (!getConstantSearchTask().isInitialized()) {
+            memoizedIsInitialized = 0;
+            return false;
+          }
+        }
         memoizedIsInitialized = 1;
         return true;
       }
@@ -7125,6 +8462,9 @@ public final class CmdlineRemoteProto {
         }
         if (((bitField0_ & 0x00000004) == 0x00000004)) {
           output.writeMessage(3, compileMessage_);
+        }
+        if (((bitField0_ & 0x00000008) == 0x00000008)) {
+          output.writeMessage(4, constantSearchTask_);
         }
       }
       
@@ -7145,6 +8485,10 @@ public final class CmdlineRemoteProto {
         if (((bitField0_ & 0x00000004) == 0x00000004)) {
           size += com.google.protobuf.CodedOutputStream
             .computeMessageSize(3, compileMessage_);
+        }
+        if (((bitField0_ & 0x00000008) == 0x00000008)) {
+          size += com.google.protobuf.CodedOutputStream
+            .computeMessageSize(4, constantSearchTask_);
         }
         memoizedSerializedSize = size;
         return size;
@@ -7254,6 +8598,8 @@ public final class CmdlineRemoteProto {
           bitField0_ = (bitField0_ & ~0x00000002);
           compileMessage_ = org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.CompileMessage.getDefaultInstance();
           bitField0_ = (bitField0_ & ~0x00000004);
+          constantSearchTask_ = org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.ConstantSearchTask.getDefaultInstance();
+          bitField0_ = (bitField0_ & ~0x00000008);
           return this;
         }
         
@@ -7299,6 +8645,10 @@ public final class CmdlineRemoteProto {
             to_bitField0_ |= 0x00000004;
           }
           result.compileMessage_ = compileMessage_;
+          if (((from_bitField0_ & 0x00000008) == 0x00000008)) {
+            to_bitField0_ |= 0x00000008;
+          }
+          result.constantSearchTask_ = constantSearchTask_;
           result.bitField0_ = to_bitField0_;
           return result;
         }
@@ -7313,6 +8663,9 @@ public final class CmdlineRemoteProto {
           }
           if (other.hasCompileMessage()) {
             mergeCompileMessage(other.getCompileMessage());
+          }
+          if (other.hasConstantSearchTask()) {
+            mergeConstantSearchTask(other.getConstantSearchTask());
           }
           return this;
         }
@@ -7330,6 +8683,12 @@ public final class CmdlineRemoteProto {
           }
           if (hasCompileMessage()) {
             if (!getCompileMessage().isInitialized()) {
+              
+              return false;
+            }
+          }
+          if (hasConstantSearchTask()) {
+            if (!getConstantSearchTask().isInitialized()) {
               
               return false;
             }
@@ -7379,6 +8738,15 @@ public final class CmdlineRemoteProto {
                 }
                 input.readMessage(subBuilder, extensionRegistry);
                 setCompileMessage(subBuilder.buildPartial());
+                break;
+              }
+              case 34: {
+                org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.ConstantSearchTask.Builder subBuilder = org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.ConstantSearchTask.newBuilder();
+                if (hasConstantSearchTask()) {
+                  subBuilder.mergeFrom(getConstantSearchTask());
+                }
+                input.readMessage(subBuilder, extensionRegistry);
+                setConstantSearchTask(subBuilder.buildPartial());
                 break;
               }
             }
@@ -7494,6 +8862,49 @@ public final class CmdlineRemoteProto {
           compileMessage_ = org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.CompileMessage.getDefaultInstance();
           
           bitField0_ = (bitField0_ & ~0x00000004);
+          return this;
+        }
+        
+        // optional .org.jetbrains.jpsservice.Message.BuilderMessage.ConstantSearchTask constant_search_task = 4;
+        private org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.ConstantSearchTask constantSearchTask_ = org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.ConstantSearchTask.getDefaultInstance();
+        public boolean hasConstantSearchTask() {
+          return ((bitField0_ & 0x00000008) == 0x00000008);
+        }
+        public org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.ConstantSearchTask getConstantSearchTask() {
+          return constantSearchTask_;
+        }
+        public Builder setConstantSearchTask(org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.ConstantSearchTask value) {
+          if (value == null) {
+            throw new NullPointerException();
+          }
+          constantSearchTask_ = value;
+          
+          bitField0_ |= 0x00000008;
+          return this;
+        }
+        public Builder setConstantSearchTask(
+            org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.ConstantSearchTask.Builder builderForValue) {
+          constantSearchTask_ = builderForValue.build();
+          
+          bitField0_ |= 0x00000008;
+          return this;
+        }
+        public Builder mergeConstantSearchTask(org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.ConstantSearchTask value) {
+          if (((bitField0_ & 0x00000008) == 0x00000008) &&
+              constantSearchTask_ != org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.ConstantSearchTask.getDefaultInstance()) {
+            constantSearchTask_ =
+              org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.ConstantSearchTask.newBuilder(constantSearchTask_).mergeFrom(value).buildPartial();
+          } else {
+            constantSearchTask_ = value;
+          }
+          
+          bitField0_ |= 0x00000008;
+          return this;
+        }
+        public Builder clearConstantSearchTask() {
+          constantSearchTask_ = org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.ConstantSearchTask.getDefaultInstance();
+          
+          bitField0_ = (bitField0_ & ~0x00000008);
           return this;
         }
         

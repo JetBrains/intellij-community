@@ -8,6 +8,8 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.io.MappingFailedException;
 import com.intellij.util.io.PersistentEnumerator;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.ether.dependencyView.Callbacks;
 import org.jetbrains.ether.dependencyView.Mappings;
 import org.jetbrains.jps.*;
 import org.jetbrains.jps.api.CanceledStatus;
@@ -49,6 +51,7 @@ public class IncProjectBuilder {
   private final BuilderRegistry myBuilderRegistry;
   private final Map<String, String> myBuilderParams;
   private final CanceledStatus myCancelStatus;
+  @Nullable private final Callbacks.ConstantAffectionResolver myConstantSearch;
   private ProjectChunks myProductionChunks;
   private ProjectChunks myTestChunks;
   private final List<MessageHandler> myMessageHandlers = new ArrayList<MessageHandler>();
@@ -70,11 +73,12 @@ public class IncProjectBuilder {
                            BuilderRegistry builderRegistry,
                            final Timestamps timestamps,
                            Map<String, String> builderParams,
-                           CanceledStatus cs) {
+                           CanceledStatus cs, @Nullable Callbacks.ConstantAffectionResolver constantSearch) {
     myProjectDescriptor = pd;
     myBuilderRegistry = builderRegistry;
     myBuilderParams = builderParams;
     myCancelStatus = cs;
+    myConstantSearch = constantSearch;
     myProductionChunks = new ProjectChunks(pd.project, ClasspathKind.PRODUCTION_COMPILE);
     myTestChunks = new ProjectChunks(pd.project, ClasspathKind.TEST_COMPILE);
     myTotalModulesWork = (float)pd.rootsIndex.getTotalModuleCount() * 2;  /* multiply by 2 to reflect production and test sources */
@@ -246,10 +250,12 @@ public class IncProjectBuilder {
   }
 
   private CompileContext createContext(CompileScope scope, boolean isMake, final boolean isProjectRebuild) throws ProjectBuildException {
-    return new CompileContext(
+    final CompileContext context = new CompileContext(
       scope, myProjectDescriptor, isMake, isProjectRebuild, myProductionChunks, myTestChunks, myMessageDispatcher,
       myBuilderParams, myTimestamps, myCancelStatus
     );
+    ModuleLevelBuilder.CONSTANT_SEARCH_SERVICE.set(context, myConstantSearch);
+    return context;
   }
 
   private void cleanOutputRoots(CompileContext context) throws ProjectBuildException {

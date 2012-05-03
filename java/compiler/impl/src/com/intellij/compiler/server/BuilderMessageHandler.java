@@ -15,16 +15,19 @@
  */
 package com.intellij.compiler.server;
 
+import org.jboss.netty.channel.Channel;
 import org.jetbrains.jps.api.CmdlineRemoteProto;
+
+import java.util.UUID;
 
 /**
  * @author Eugene Zhuravlev
  *         Date: 4/25/12
  */
 public interface BuilderMessageHandler {
-  void handleBuildMessage(CmdlineRemoteProto.Message.BuilderMessage msg);
+  void handleBuildMessage(Channel channel, UUID sessionId, CmdlineRemoteProto.Message.BuilderMessage msg);
 
-  void handleFailure(CmdlineRemoteProto.Message.Failure failure);
+  void handleFailure(UUID sessionId, CmdlineRemoteProto.Message.Failure failure);
 
   void sessionTerminated();
 }

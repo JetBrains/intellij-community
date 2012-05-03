@@ -25,6 +25,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.xmlb.XmlSerializerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -39,10 +40,11 @@ import org.jetbrains.annotations.NotNull;
     )
   }
 )
-public class ProjectFileVersionImpl extends ProjectFileVersion implements ProjectComponent, PersistentStateComponent<ProjectFileVersionImpl.ProjectFileVersionState> {
+public class ProjectFileVersionImpl extends ProjectFileVersion implements ProjectComponent, PersistentStateComponent<ProjectFileVersionState> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.impl.convert.ProjectFileVersionImpl");
   @NonNls public static final String COMPONENT_NAME = "ProjectFileVersion";
   private final Project myProject;
+  private final ProjectFileVersionState myState = new ProjectFileVersionState();
 
   public ProjectFileVersionImpl(Project project) {
     myProject = project;
@@ -83,12 +85,13 @@ public class ProjectFileVersionImpl extends ProjectFileVersion implements Projec
   }
 
   public ProjectFileVersionState getState() {
+    if (myState != null && !myState.getPerformedConversionIds().isEmpty()) {
+      return myState;
+    }
     return null;
   }
 
-  public void loadState(final ProjectFileVersionState object) {
-  }
-
-  public static class ProjectFileVersionState {
+  public void loadState(final ProjectFileVersionState state) {
+    XmlSerializerUtil.copyBean(state, myState);
   }
 }

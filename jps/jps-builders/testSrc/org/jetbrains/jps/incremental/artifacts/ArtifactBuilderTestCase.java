@@ -181,7 +181,8 @@ public abstract class ArtifactBuilderTestCase extends UsefulTestCase {
     }
     myArtifactBuilderLogger.clear();
     final Timestamps timestamps = myDescriptor.timestamps.getStorage();
-    IncProjectBuilder builder = new IncProjectBuilder(myDescriptor, BuilderRegistry.getInstance(), timestamps, Collections.<String, String>emptyMap(), CanceledStatus.NULL);
+    IncProjectBuilder builder = new IncProjectBuilder(myDescriptor, BuilderRegistry.getInstance(), timestamps, Collections.<String, String>emptyMap(), CanceledStatus.NULL,
+                                                      null);
     final List<BuildMessage> errorMessages = new ArrayList<BuildMessage>();
     final List<BuildMessage> infoMessages = new ArrayList<BuildMessage>();
     builder.addMessageHandler(new MessageHandler() {

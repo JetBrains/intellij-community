@@ -22,6 +22,8 @@ import com.intellij.conversion.*;
 import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.ide.highlighter.WorkspaceFileType;
 import com.intellij.ide.impl.convert.JDomConvertingUtil;
+import com.intellij.ide.impl.convert.ProjectFileVersionImpl;
+import com.intellij.ide.impl.convert.ProjectFileVersionState;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ExpandMacroToPathMap;
 import com.intellij.openapi.components.StorageScheme;
@@ -38,6 +40,7 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.xmlb.XmlSerializer;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -69,6 +72,8 @@ public class ConversionContextImpl implements ConversionContext {
   private ComponentManagerSettings myProjectRootManagerSettings;
   private ComponentManagerSettingsImpl myModulesSettings;
   private ProjectLibrariesSettingsImpl myProjectLibrariesSettings;
+  private ComponentManagerSettings myProjectFileVersionSettings;
+  private final Set<String> myPerformedConversionIds;
 
   public ConversionContextImpl(String projectPath) throws CannotConvertException {
     myProjectFile = new File(projectPath);
@@ -89,6 +94,7 @@ public class ConversionContextImpl implements ConversionContext {
     }
 
     myModuleFiles = modulesFile.exists() ? findModuleFiles(JDomConvertingUtil.loadDocument(modulesFile).getRootElement()) : new File[0];
+    myPerformedConversionIds = loadPerformedConversionIds();
   }
 
   public Set<File> getAllProjectFiles() {
@@ -115,6 +121,10 @@ public class ConversionContextImpl implements ConversionContext {
     else if (StringUtil.endsWithIgnoreCase(file.getName(), ".xml") && !file.getName().startsWith(".")) {
       files.add(file);
     }
+  }
+
+  public boolean isConversionAlreadyPerformed(ConverterProvider provider) {
+    return myPerformedConversionIds.contains(provider.getId());
   }
 
   @NotNull
@@ -206,7 +216,7 @@ public class ConversionContextImpl implements ConversionContext {
   }
 
   @NotNull
-  public List<File> getClassRoots(Element libraryElement, ModuleSettingsImpl moduleSettings) {
+  public List<File> getClassRoots(Element libraryElement, @Nullable ModuleSettingsImpl moduleSettings) {
     List<File> files = new ArrayList<File>();
     //todo[nik] support jar directories
     final Element classesChild = libraryElement.getChild("CLASSES");
@@ -244,6 +254,14 @@ public class ConversionContextImpl implements ConversionContext {
     return myModulesSettings;
   }
   
+  @Nullable
+  public ComponentManagerSettings getProjectFileVersionSettings() {
+    if (myProjectFileVersionSettings == null) {
+      myProjectFileVersionSettings = createProjectSettings("misc.xml");
+    }
+    return myProjectFileVersionSettings;
+  }
+
   @Nullable
   private ComponentManagerSettingsImpl createProjectSettings(final String fileName) {
     try {
@@ -373,13 +391,49 @@ public class ConversionContextImpl implements ConversionContext {
     return myWorkspaceFile;
   }
 
-  public void saveFiles(Collection<File> files) throws IOException {
+  public void saveFiles(Collection<File> files, List<ConversionRunner> usedRunners) throws IOException {
+    Set<String> performedConversions = new HashSet<String>();
+    for (ConversionRunner runner : usedRunners) {
+      final ConverterProvider provider = runner.getProvider();
+      if (!provider.canDetermineIfConversionAlreadyPerformedByProjectFiles()) {
+        performedConversions.add(provider.getId());
+      }
+    }
+    if (!performedConversions.isEmpty()) {
+      performedConversions.addAll(myPerformedConversionIds);
+      final ProjectFileVersionState state = new ProjectFileVersionState();
+      final List<String> performedConversionsList = new ArrayList<String>(performedConversions);
+      Collections.sort(performedConversionsList, String.CASE_INSENSITIVE_ORDER);
+      state.setPerformedConversionIds(performedConversionsList);
+      final ComponentManagerSettings settings = getProjectFileVersionSettings();
+      if (settings != null) {
+        final Element element = JDomConvertingUtil.findOrCreateComponentElement(settings.getRootElement(), ProjectFileVersionImpl.COMPONENT_NAME);
+        XmlSerializer.serializeInto(state, element);
+      }
+    }
+
     for (File file : files) {
       final SettingsXmlFile xmlFile = mySettingsFiles.get(file);
       if (xmlFile != null) {
         xmlFile.save();
       }
     }
+  }
+
+  private Set<String> loadPerformedConversionIds() {
+    final ComponentManagerSettings component = getProjectFileVersionSettings();
+    if (component != null) {
+      final Element componentElement = component.getComponentElement(ProjectFileVersionImpl.COMPONENT_NAME);
+      if (componentElement != null) {
+        Set<String> performedConversionIds = new HashSet<String>();
+        final ProjectFileVersionState state = XmlSerializer.deserialize(componentElement, ProjectFileVersionState.class);
+        if (state != null) {
+          performedConversionIds.addAll(state.getPerformedConversionIds());
+        }
+        return performedConversionIds;
+      }
+    }
+    return Collections.emptySet();
   }
 
   public SettingsXmlFile getOrCreateFile(File file) throws CannotConvertException {

@@ -68,6 +68,20 @@ public class GrClassImplUtil {
   private GrClassImplUtil() {
   }
 
+  @Nullable
+  public static PsiClass findInnerClassByName(GrTypeDefinition grType, String name, boolean checkBases) {
+    if (!checkBases) {
+      for (PsiClass inner : grType.getInnerClasses()) {
+        if (name.equals(inner.getName())) return inner;
+      }
+      return null;
+    }
+    else {
+      Map<String, CandidateInfo> innerClasses = CollectClassMembersUtil.getAllInnerClasses(grType, true);
+      final CandidateInfo info = innerClasses.get(name);
+      return info == null ? null : (PsiClass)info.getElement();
+    }
+  }
 
   @Nullable
   public static PsiClass getSuperClass(GrTypeDefinition grType) {

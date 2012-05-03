@@ -110,7 +110,7 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
                                           Collection<Pair<PsiElement, TextRange>> stringUsages,
                                           final PsiElement scope,
                                           final PsiFile containingFile) {
-    if (appendAdditionalElement(stringUsages)) {
+    if (appendAdditionalElement(refs, stringUsages)) {
       return super.buildTemplateAndStart(refs, stringUsages, scope, containingFile);
     }
     else {
@@ -125,7 +125,7 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
     return true;
   }
 
-  protected boolean appendAdditionalElement(Collection<Pair<PsiElement, TextRange>> stringUsages) {
+  protected boolean appendAdditionalElement(Collection<PsiReference> refs, Collection<Pair<PsiElement, TextRange>> stringUsages) {
     return stringUsages.isEmpty();
   }
 

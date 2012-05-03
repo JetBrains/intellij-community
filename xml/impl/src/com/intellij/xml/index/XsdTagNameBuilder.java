@@ -16,14 +16,13 @@
 package com.intellij.xml.index;
 
 import com.intellij.util.xml.NanoXmlUtil;
-import com.intellij.util.NullableFunction;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VfsUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
 import java.util.ArrayList;
 import java.util.Collection;
 
@@ -34,30 +33,26 @@ public class XsdTagNameBuilder extends NanoXmlUtil.IXMLBuilderAdapter {
 
   @Nullable
   public static Collection<String> computeTagNames(final InputStream is) {
+    return computeTagNames(new InputStreamReader(is));
+  }
+
+  @Nullable
+  public static Collection<String> computeTagNames(final Reader reader) {
     try {
       final XsdTagNameBuilder builder = new XsdTagNameBuilder();
-      NanoXmlUtil.parse(is, builder);
+      NanoXmlUtil.parse(reader, builder);
       return builder.myTagNames;
     }
     finally {
       try {
-        if (is != null) {
-          is.close();
+        if (reader != null) {
+          reader.close();
         }
       }
       catch (IOException e) {
         // can never happen
       }
     }
-  }
-
-  @Nullable
-  public static Collection<String> computeTagNames(final VirtualFile file) {
-    return VfsUtil.processInputStream(file, new NullableFunction<InputStream, Collection<String>>() {
-      public Collection<String> fun(final InputStream inputStream) {
-        return computeTagNames(inputStream);
-      }
-    });
   }
 
   private final Collection<String> myTagNames = new ArrayList<String>();

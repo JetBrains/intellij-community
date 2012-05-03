@@ -24,6 +24,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.*;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.StringInterner;
@@ -51,7 +52,12 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
   public static final IdeaPluginDescriptorImpl[] EMPTY_ARRAY = new IdeaPluginDescriptorImpl[0];
   private String myName;
   private PluginId myId;
-  private String myDescription;
+  private final NullableLazyValue<String> myDescription = new NullableLazyValue<String>() {
+    @Override
+    protected String compute() {
+      return computeDescription();
+    }
+  };
   private String myResourceBundleBaseName;
   private String myChangeNotes;
   private String myVersion;
@@ -227,14 +233,6 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     return null;
   }
 
-  private static String loadDescription(final String descriptionChildText, @Nullable final ResourceBundle bundle, final PluginId id) {
-    if (bundle == null) {
-      return descriptionChildText;
-    }
-
-    return CommonBundle.messageOrDefault(bundle, createDescriptionKey(id), descriptionChildText == null ? "" : descriptionChildText);
-  }
-
   @SuppressWarnings({"HardCodedStringLiteral"})
   private static String createDescriptionKey(final PluginId id) {
     return "plugin." + id + ".description";
@@ -256,7 +254,7 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
   }
 
   public String getDescription() {
-    return myDescription == null ? myDescriptionChildText : myDescription;
+    return myDescription.getValue();
   }
 
   public String getChangeNotes() {
@@ -375,12 +373,9 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     myLoader = loader;
 
     //Now we're ready to load root area extensions
-
     if (registerExtensions) {
       Extensions.getRootArea().registerAreaExtensionsAndPoints(this, myExtensionsPoints, myExtensions);
     }
-
-    initialize(getPluginClassLoader());
   }
 
   public boolean equals(Object o) {
@@ -483,18 +478,22 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     myVendorLogoPath = vendorLogoPath;
   }
 
-  public void initialize(@NotNull ClassLoader classLoader) {
+  private String computeDescription() {
     ResourceBundle bundle = null;
     if (myResourceBundleBaseName != null) {
       try {
-        bundle = AbstractBundle.getResourceBundle(myResourceBundleBaseName, classLoader);
+        bundle = AbstractBundle.getResourceBundle(myResourceBundleBaseName, getPluginClassLoader());
       }
       catch (MissingResourceException e) {
         LOG.info("Cannot find plugin " + myId + " resource-bundle: " + myResourceBundleBaseName);
       }
     }
 
-    myDescription = loadDescription(myDescriptionChildText, bundle, myId);
+    if (bundle == null) {
+      return myDescriptionChildText;
+    }
+
+    return CommonBundle.messageOrDefault(bundle, createDescriptionKey(myId), myDescriptionChildText == null ? "" : myDescriptionChildText);
   }
 
   public void insertDependency(final IdeaPluginDescriptor d) {

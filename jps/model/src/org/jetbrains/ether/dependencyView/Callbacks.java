@@ -21,6 +21,7 @@ public class Callbacks {
   }
 
   public static class ConstantAffection {
+    public static final ConstantAffection EMPTY = new ConstantAffection();
     private final boolean myKnown;
     private final Collection<File> myAffectedFiles;
 
@@ -44,6 +45,10 @@ public class Callbacks {
   }
 
   public interface ConstantAffectionResolver {
-    Future<ConstantAffection> request(final String owner, final String name);
+    Future<ConstantAffection> request(final String ownerClassName,
+                                      final String fieldName,
+                                      int accessFlags,
+                                      boolean fieldRemoved,
+                                      boolean accessChanged);
   }
 }

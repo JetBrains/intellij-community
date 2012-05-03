@@ -620,7 +620,11 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
     private FileEditorPositionListener myFileEditorPositionListener;
 
     private MyAutoScrollFromSourceHandler(Project project, Disposable parentDisposable) {
-      super(project, parentDisposable);
+      super(project, getTree(), parentDisposable);
+    }
+
+    @Override
+    protected void selectElementFromEditor(@NotNull FileEditor editor) {
     }
 
     public void install() {
@@ -640,12 +644,12 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
       myTreeModel.addEditorPositionListener(myFileEditorPositionListener);
     }
 
-    protected boolean isAutoScrollMode() {
+    protected boolean isAutoScrollEnabled() {
       StructureViewFactoryImpl structureViewFactory = (StructureViewFactoryImpl)StructureViewFactory.getInstance(myProject);
       return structureViewFactory.getState().AUTOSCROLL_FROM_SOURCE;
     }
 
-    protected void setAutoScrollMode(boolean state) {
+    protected void setAutoScrollEnabled(boolean state) {
       StructureViewFactoryImpl structureViewFactory = (StructureViewFactoryImpl)StructureViewFactory.getInstance(myProject);
       structureViewFactory.getState().AUTOSCROLL_FROM_SOURCE = state;
       final FileEditor[] selectedEditors = FileEditorManager.getInstance(myProject).getSelectedEditors();

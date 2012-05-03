@@ -181,7 +181,7 @@ class ServerState {
 
         final Timestamps timestamps = pd.timestamps.getStorage();
         final CompileScope compileScope = createCompilationScope(buildType, pd, timestamps, modules, artifacts, paths);
-        final IncProjectBuilder builder = new IncProjectBuilder(pd, BuilderRegistry.getInstance(), timestamps, builderParams, cs);
+        final IncProjectBuilder builder = new IncProjectBuilder(pd, BuilderRegistry.getInstance(), timestamps, builderParams, cs, null);
         builder.addMessageHandler(msgHandler);
         try {
           switch (buildType) {

@@ -51,4 +51,13 @@ public abstract class ConverterProvider {
   public String getConversionDialogText(ConversionContext context) {
     return null;
   }
+
+  /**
+   * @return {@code false} if the converter cannot determine that the conversion was already performed using project files only.
+   * In such case the information about performed conversion will be stored in .ipr file so the converter will not be asked to perform
+   * the conversion again.
+   */
+  public boolean canDetermineIfConversionAlreadyPerformedByProjectFiles() {
+    return true;
+  }
 }

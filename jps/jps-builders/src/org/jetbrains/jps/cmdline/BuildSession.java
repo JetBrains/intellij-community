@@ -15,6 +15,7 @@ import org.jboss.netty.channel.ChannelFuture;
 import org.jboss.netty.channel.ChannelFutureListener;
 import org.jboss.netty.channel.Channels;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.ether.dependencyView.Callbacks;
 import org.jetbrains.jps.Library;
 import org.jetbrains.jps.Module;
 import org.jetbrains.jps.Project;
@@ -34,6 +35,10 @@ import org.jetbrains.jps.server.ProjectDescriptor;
 
 import java.io.*;
 import java.util.*;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -65,6 +70,8 @@ final class BuildSession implements Runnable, CanceledStatus {
   private EventsProcessor myEventsProcessor = new EventsProcessor();
   private volatile long myLastEventOrdinal;
   private volatile ProjectDescriptor myProjectDescriptor;
+  private final Map<Pair<String, String>, ConstantSearchFuture> mySearchTasks = Collections.synchronizedMap(new HashMap<Pair<String, String>, ConstantSearchFuture>());
+  private final ConstantSearch myConstantSearch = new ConstantSearch();
 
   BuildSession(UUID sessionId,
                Channel channel,
@@ -208,7 +215,7 @@ final class BuildSession implements Runnable, CanceledStatus {
         final Timestamps timestamps = pd.timestamps.getStorage();
 
         final CompileScope compileScope = createCompilationScope(buildType, pd, timestamps, modules, artifacts, paths);
-        final IncProjectBuilder builder = new IncProjectBuilder(pd, BuilderRegistry.getInstance(), timestamps, builderParams, cs);
+        final IncProjectBuilder builder = new IncProjectBuilder(pd, BuilderRegistry.getInstance(), timestamps, builderParams, cs, myConstantSearch);
         builder.addMessageHandler(msgHandler);
         try {
           switch (buildType) {
@@ -260,6 +267,23 @@ final class BuildSession implements Runnable, CanceledStatus {
         }
       }
     });
+  }
+
+  public void processConstantSearchResult(CmdlineRemoteProto.Message.ControllerMessage.ConstantSearchResult result) {
+    final ConstantSearchFuture future = mySearchTasks.remove(Pair.create(result.getOwnerClassName(), result.getFieldName()));
+    if (future != null) {
+      if (result.getIsSuccess()) {
+        final List<String> paths = result.getPathList();
+        final List<File> files = new ArrayList<File>(paths.size());
+        for (String path : paths) {
+          files.add(new File(path));
+        }
+        future.setResult(files);
+      }
+      else {
+        future.setDone();
+      }
+    }
   }
 
   private void applyFSEvent(ProjectDescriptor pd, @Nullable CmdlineRemoteProto.Message.ControllerMessage.FSEvent event) throws IOException {
@@ -598,6 +622,54 @@ final class BuildSession implements Runnable, CanceledStatus {
       if (myProcessingEnabled.get()) {
         super.processQueue();
       }
+    }
+  }
+
+  private class ConstantSearch implements Callbacks.ConstantAffectionResolver {
+    @Nullable @Override
+    public Future<Callbacks.ConstantAffection> request(String ownerClassName, String fieldName, int accessFlags, boolean fieldRemoved, boolean accessChanged) {
+      final CmdlineRemoteProto.Message.BuilderMessage.ConstantSearchTask.Builder task =
+        CmdlineRemoteProto.Message.BuilderMessage.ConstantSearchTask.newBuilder();
+      task.setOwnerClassName(ownerClassName);
+      task.setFieldName(fieldName);
+      task.setAccessFlags(accessFlags);
+      task.setIsAccessChanged(accessChanged);
+      task.setIsFieldRemoved(fieldRemoved);
+      final ConstantSearchFuture future = new ConstantSearchFuture();
+      final ConstantSearchFuture prev = mySearchTasks.put(new Pair<String, String>(ownerClassName, fieldName), future);
+      if (prev != null) {
+        prev.setDone();
+      }
+      Channels.write(myChannel,
+        CmdlineProtoUtil.toMessage(
+          mySessionId, CmdlineRemoteProto.Message.BuilderMessage.newBuilder().setType(CmdlineRemoteProto.Message.BuilderMessage.Type.CONSTANT_SEARCH_TASK).setConstantSearchTask(task.build()).build()
+        )
+      );
+      return future;
+    }
+  }
+
+  private static class ConstantSearchFuture extends BasicFuture<Callbacks.ConstantAffection> {
+    private volatile Callbacks.ConstantAffection myResult = Callbacks.ConstantAffection.EMPTY;
+
+    private ConstantSearchFuture() {
+    }
+
+    public void setResult(final Collection<File> affectedFiles) {
+      myResult = new Callbacks.ConstantAffection(affectedFiles);
+      setDone();
+    }
+
+    @Override
+    public Callbacks.ConstantAffection get() throws InterruptedException, ExecutionException {
+      super.get();
+      return myResult;
+    }
+
+    @Override
+    public Callbacks.ConstantAffection get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
+      super.get(timeout, unit);
+      return myResult;
     }
   }
 }

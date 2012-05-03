@@ -22,7 +22,6 @@ import com.intellij.psi.impl.include.FileIncludeInfo;
 import com.intellij.psi.impl.include.FileIncludeProvider;
 import com.intellij.util.indexing.FileContent;
 import com.intellij.util.text.CharArrayUtil;
-import com.intellij.util.text.CharSequenceReader;
 import com.intellij.util.xml.NanoXmlUtil;
 import org.intellij.lang.xpath.xslt.XsltSupport;
 import org.jetbrains.annotations.NotNull;
@@ -77,7 +76,7 @@ public class XsltIncludeProvider extends FileIncludeProvider {
       }
     };
 
-    NanoXmlUtil.parse(new CharSequenceReader(contentAsText), builder);
+    NanoXmlUtil.parse(CharArrayUtil.readerFromCharSequence(contentAsText), builder);
     return infos.toArray(new FileIncludeInfo[infos.size()]);
   }
 }

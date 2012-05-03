@@ -40,7 +40,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.event.InputEvent;
 
-abstract class SelectInContextImpl implements SelectInContext {
+public abstract class SelectInContextImpl implements SelectInContext {
   protected final PsiFile myPsiFile;
 
   protected SelectInContextImpl(PsiFile psiFile) {
@@ -109,6 +109,10 @@ abstract class SelectInContextImpl implements SelectInContext {
   private static SelectInContext createEditorContext(DataContext dataContext) {
     final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
     final FileEditor editor = PlatformDataKeys.FILE_EDITOR.getData(dataContext);
+    return createEditorContext(project, editor);
+  }
+
+  public static SelectInContext createEditorContext(Project project, FileEditor editor) {
     if (project == null || editor == null) {
       return null;
     }

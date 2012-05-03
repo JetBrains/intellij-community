@@ -772,10 +772,7 @@ public class Mappings {
     }
   }
 
-  private boolean incrementalDecision(final int owner,
-                                      final Proto member,
-                                      final Collection<File> affectedFiles,
-                                      final DependentFilesFilter filter) {
+  private boolean incrementalDecision(final int owner, final Proto member, final Collection<File> affectedFiles, final DependentFilesFilter filter) {
     final boolean isField = member instanceof FieldRepr;
     final Util self = new Util(this);
 
@@ -844,28 +841,25 @@ public class Mappings {
                                final Collection<File> compiledFiles,
                                final Collection<File> affectedFiles,
                                final DependentFilesFilter filter,
-                               final Callbacks.ConstantAffectionResolver lastResort) {
+                               @Nullable final Callbacks.ConstantAffectionResolver constantSearch) {
     synchronized (myLock) {
 
       class DelayedWorks {
         class Triple {
           final int owner;
           final FieldRepr field;
+          @Nullable
           final Future<Callbacks.ConstantAffection> affection;
 
-          private Triple(final int owner, final FieldRepr field, final Future<Callbacks.ConstantAffection> affection) {
+          private Triple(final int owner, final FieldRepr field, @Nullable final Future<Callbacks.ConstantAffection> affection) {
             this.owner = owner;
             this.field = field;
             this.affection = affection;
           }
 
           Callbacks.ConstantAffection getAffection() {
-            if (affection == null) {
-              return null;
-            }
-
             try {
-              return affection.get();
+              return affection != null? affection.get() : Callbacks.ConstantAffection.EMPTY;
             }
             catch (Exception e) {
               throw new RuntimeException(e);
@@ -875,35 +869,46 @@ public class Mappings {
 
         final Collection<Triple> myQueue = new LinkedList<Triple>();
 
-        void addConstantWork(final int owner, final FieldRepr field) {
-          myQueue.add(new Triple(owner, field, lastResort.request(myContext.getValue(owner), myContext.getValue(field.name))));
+        void addConstantWork(final int ownerClass, final FieldRepr changedField, final boolean isRemoved, boolean accessChanged) {
+          final Future<Callbacks.ConstantAffection> future;
+          if (constantSearch == null) {
+            future = null;
+          }
+          else {
+            final String className = myContext.getValue(ownerClass);
+            final String fieldName = myContext.getValue(changedField.name);
+            future = constantSearch.request(className.replace('/', '.'), fieldName, changedField.access, isRemoved, accessChanged);
+          }
+          myQueue.add(new Triple(ownerClass, changedField, future));
         }
 
         boolean doWork(final Collection<File> affectedFiles) {
-          debug("Starting delayed works.");
+          if (!myQueue.isEmpty()) {
+            debug("Starting delayed works.");
 
-          for (final Triple t : myQueue) {
-            final Callbacks.ConstantAffection affection = t.getAffection();
+            for (final Triple t : myQueue) {
+              final Callbacks.ConstantAffection affection = t.getAffection();
 
-            debug("Class: ", t.owner);
-            debug("Field: ", t.field.name);
+              debug("Class: ", t.owner);
+              debug("Field: ", t.field.name);
 
-            if (!affection.isKnown()) {
-              debug("No external dependency information available.");
-              debug("Trying to soften non-incremental decision.");
-              if (!incrementalDecision(t.owner, t.field, affectedFiles, filter)) {
-                debug("No luck.");
-                debug("End of delayed work, returning false.");
-                return false;
+              if (!affection.isKnown()) {
+                debug("No external dependency information available.");
+                debug("Trying to soften non-incremental decision.");
+                if (!incrementalDecision(t.owner, t.field, affectedFiles, filter)) {
+                  debug("No luck.");
+                  debug("End of delayed work, returning false.");
+                  return false;
+                }
+              }
+              else {
+                debug("External dependency information retrieved.");
+                affectedFiles.addAll(affection.getAffectedFiles());
               }
             }
-            else {
-              debug("External dependency information retrieved.");
-              affectedFiles.addAll(affection.getAffectedFiles());
-            }
-          }
 
-          debug("End of delayed work, returning true.");
+            debug("End of delayed work, returning true.");
+          }
           return true;
         }
       }
@@ -1472,8 +1477,8 @@ public class Mappings {
 
             if ((f.access & Opcodes.ACC_PRIVATE) == 0 && (f.access & mask) == mask && f.hasValue()) {
               debug("Field had value and was (non-private) final static => a switch to non-incremental mode requested");
-              if (lastResort != null) {
-                works.addConstantWork(it.name, f);
+              if (constantSearch != null) {
+                works.addConstantWork(it.name, f, true, false);
               }
               else {
                 if (!incrementalDecision(it.name, f, affectedFiles, filter)) {
@@ -1503,8 +1508,8 @@ public class Mappings {
 
               if (harmful || valueChanged || (accessChanged && !d.weakedAccess())) {
                 debug("Inline field changed it's access or value => a switch to non-incremental mode requested");
-                if (lastResort != null) {
-                  works.addConstantWork(it.name, field);
+                if (constantSearch != null) {
+                  works.addConstantWork(it.name, field, false, accessChanged);
                 }
                 else {
                   if (!incrementalDecision(it.name, field, affectedFiles, filter)) {
