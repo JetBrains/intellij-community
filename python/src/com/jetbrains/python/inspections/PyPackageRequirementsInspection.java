@@ -26,6 +26,7 @@ import com.jetbrains.cython.psi.CythonCImportStatement;
 import com.jetbrains.cython.psi.CythonFromCImportStatement;
 import com.jetbrains.python.codeInsight.stdlib.PyStdlibUtil;
 import com.jetbrains.python.packaging.*;
+import com.jetbrains.python.packaging.ui.PyChooseRequirementsDialog;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveUtil;
 import com.jetbrains.python.sdk.PythonSdkType;
