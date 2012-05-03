@@ -17,14 +17,13 @@
 package com.intellij.xml.index;
 
 import com.intellij.util.xml.NanoXmlUtil;
-import com.intellij.util.NullableFunction;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VfsUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
 
 /**
  * @author Dmitry Avdeev
@@ -33,30 +32,26 @@ public class XsdNamespaceBuilder extends NanoXmlUtil.IXMLBuilderAdapter {
 
   @Nullable
   public static String computeNamespace(final InputStream is) {
+    return computeNamespace(new InputStreamReader(is));
+  }
+
+  @Nullable
+  public static String computeNamespace(final Reader reader) {
     try {
       final XsdNamespaceBuilder builder = new XsdNamespaceBuilder();
-      NanoXmlUtil.parse(is, builder);
+      NanoXmlUtil.parse(reader, builder);
       return builder.myNamespace;
     }
     finally {
       try {
-        if (is != null) {
-          is.close();
+        if (reader != null) {
+          reader.close();
         }
       }
       catch (IOException e) {
         // can never happen
       }
     }
-  }
-  
-  @Nullable
-  public static String computeNamespace(final VirtualFile file) {
-    return VfsUtil.processInputStream(file, new NullableFunction<InputStream, String>() {
-      public String fun(final InputStream inputStream) {
-        return computeNamespace(inputStream);
-      }
-    });
   }
 
   private String myNamespace;
