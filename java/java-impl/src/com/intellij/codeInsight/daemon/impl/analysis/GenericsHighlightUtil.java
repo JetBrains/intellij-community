@@ -988,7 +988,7 @@ public class GenericsHighlightUtil {
 
     if (resolved instanceof PsiClass) {
       final PsiClass containingClass = ((PsiClass)resolved).getContainingClass();
-      if (containingClass != null && ref.getQualifier() == null && containingClass.getTypeParameters().length > 0) {
+      if (containingClass != null && ref.getQualifier() == null && containingClass.getTypeParameters().length > 0 && !((PsiClass)resolved).hasModifierProperty(PsiModifier.STATIC)) {
         return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, typeElement, JavaErrorMessages.message("illegal.generic.type.for.instanceof"));
       }
     }

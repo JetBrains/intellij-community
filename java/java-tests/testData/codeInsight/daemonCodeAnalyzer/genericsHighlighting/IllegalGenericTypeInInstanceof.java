@@ -25,3 +25,15 @@ class A1 {
   private class B1 {
   }
 }
+
+class BreakpointTree<TP> {
+    void foo(Node node) {
+        if (node instanceof BNode<?>) {
+
+        }
+    }
+
+    static class BNode<B extends XBreakpoint<?>> extends Node{}
+}
+class Node {}
+class XBreakpoint<SR>{}
