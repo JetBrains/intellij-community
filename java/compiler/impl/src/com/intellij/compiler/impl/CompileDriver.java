@@ -553,7 +553,7 @@ public class CompileDriver {
         }
 
         @Override
-        public void handleFailure(CmdlineRemoteProto.Message.Failure failure) {
+        public void handleFailure(UUID sessionId, CmdlineRemoteProto.Message.Failure failure) {
           compileContext.addMessage(CompilerMessageCategory.ERROR, failure.getDescription(), null, -1, -1);
           final String trace = failure.getStacktrace();
           if (trace != null) {
@@ -1309,19 +1309,33 @@ public class CompileDriver {
               }
 
               dumbService.waitForSmartMode();
-  
+
               if (snapshot == null || ContainerUtil.intersects(generatedTypes, compilerManager.getRegisteredInputTypes(compiler))) {
                 // rescan snapshot if previously generated files may influence the input of this compiler
+                final Set<VirtualFile> prevSnapshot = round > 0 && snapshot != null? new HashSet<VirtualFile>(Arrays.asList(snapshot)) : Collections.<VirtualFile>emptySet();
                 snapshot = ApplicationManager.getApplication().runReadAction(new Computable<VirtualFile[]>() {
                   public VirtualFile[] compute() {
                     return context.getCompileScope().getFiles(null, true);
                   }
                 });
                 recalculateChunkToFilesMap(context, sortedChunks, snapshot, chunkMap);
-                chunkFiles = chunkMap.get(currentChunk);
+                if (round == 0) {
+                  chunkFiles = chunkMap.get(currentChunk);
+                }
+                else {
+                  final Set<VirtualFile> newFiles = new HashSet<VirtualFile>(chunkMap.get(currentChunk));
+                  newFiles.removeAll(prevSnapshot);
+                  newFiles.removeAll(chunkFiles);
+                  if (!newFiles.isEmpty()) {
+                    final ArrayList<VirtualFile> merged = new ArrayList<VirtualFile>(chunkFiles.size() + newFiles.size());
+                    merged.addAll(chunkFiles);
+                    merged.addAll(newFiles);
+                    chunkFiles = merged;
+                  }
+                }
                 total = snapshot.length * translatorsLength;
               }
-  
+
               final CompileContextEx _context;
               if (compiler instanceof IntermediateOutputCompiler) {
                 // wrap compile context so that output goes into intermediate directories

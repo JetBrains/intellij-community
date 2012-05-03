@@ -16,6 +16,10 @@
 package com.intellij.codeInspection.actions;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
+import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
+import com.intellij.lang.Language;
+import com.intellij.openapi.fileTypes.LanguageFileType;
+import com.intellij.openapi.fileTypes.UnknownFileType;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
@@ -66,15 +70,38 @@ public class InspectionListCellRenderer extends DefaultListCellRenderer implemen
       SpeedSearchUtil.appendColoredFragmentForMatcher("  " + tool.getDisplayName(), c, attr, myMatcher, bg, sel);
       panel.add(c, BorderLayout.WEST);
 
-      //final JLabel groupLabel = new JLabel(tool.getGroupDisplayName() + "  ", EMPTY_ICON, LEFT);
-      final SimpleColoredComponent g = new SimpleColoredComponent();
-      SpeedSearchUtil.appendColoredFragmentForMatcher(tool.getGroupDisplayName() + "  ", g, attr, myMatcher, bg, sel);
-      //groupLabel.setBackground(bg);
-      //groupLabel.setForeground(fg);
-      panel.add(g, BorderLayout.EAST);
+      final SimpleColoredComponent group = new SimpleColoredComponent();
+      SpeedSearchUtil.appendColoredFragmentForMatcher(tool.getGroupDisplayName() + "  ", group, attr, myMatcher, bg, sel);
+      final JPanel right = new JPanel(new BorderLayout());
+      right.setBackground(bg);
+      right.setForeground(fg);
+      right.add(group, BorderLayout.CENTER);
+      final JLabel icon = new JLabel(getIcon(tool));
+      icon.setBackground(bg);
+      icon.setForeground(fg);
+      right.add(icon, BorderLayout.EAST);
+      panel.add(right, BorderLayout.EAST);
     }
 
     return panel;
+  }
+
+  private static Icon getIcon(InspectionProfileEntry tool) {
+    Icon icon = null;
+    if (tool instanceof LocalInspectionToolWrapper) {
+      final Language language = Language.findLanguageByID(((LocalInspectionToolWrapper)tool).getLanguage());
+      if (language != null) {
+        final LanguageFileType fileType = language.getAssociatedFileType();
+        if (fileType != null) {
+          icon = fileType.getIcon();
+        }
+      }
+    }
+    if (icon == null) {
+      icon = UnknownFileType.INSTANCE.getIcon();
+    }
+    assert icon != null;
+    return icon;
   }
 
   @Override

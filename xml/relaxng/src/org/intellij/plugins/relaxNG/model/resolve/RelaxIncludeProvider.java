@@ -7,7 +7,6 @@ import com.intellij.psi.impl.include.FileIncludeInfo;
 import com.intellij.psi.impl.include.FileIncludeProvider;
 import com.intellij.util.indexing.FileContent;
 import com.intellij.util.text.CharArrayUtil;
-import com.intellij.util.text.CharSequenceReader;
 import com.intellij.util.xml.NanoXmlUtil;
 import org.intellij.plugins.relaxNG.ApplicationLoader;
 import org.intellij.plugins.relaxNG.compact.RncFileType;
@@ -45,7 +44,7 @@ public class RelaxIncludeProvider extends FileIncludeProvider {
       CharSequence inputDataContentAsText = content.getContentAsText();
       if (CharArrayUtil.indexOf(inputDataContentAsText, ApplicationLoader.RNG_NAMESPACE, 0) == -1) return FileIncludeInfo.EMPTY;
       infos = new ArrayList<FileIncludeInfo>();
-      NanoXmlUtil.parse(new CharSequenceReader(inputDataContentAsText), new RngBuilderAdapter(infos));
+      NanoXmlUtil.parse(CharArrayUtil.readerFromCharSequence(content.getContentAsText()), new RngBuilderAdapter(infos));
     } else if (content.getFileType() == RncFileType.getInstance()) {
       infos = new ArrayList<FileIncludeInfo>();
       content.getPsiFile().acceptChildren(new RncElementVisitor() {

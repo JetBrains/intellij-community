@@ -95,7 +95,7 @@ public class XsltSymbolIndex extends FileBasedIndexExtension<String, XsltSymbolI
                   return Collections.emptyMap();
                 }
                 final HashMap<String, Kind> map = new HashMap<String, Kind>();
-                NanoXmlUtil.parse(new UnsyncByteArrayInputStream(inputData.getContent()), new NanoXmlUtil.IXMLBuilderAdapter() {
+                NanoXmlUtil.parse(CharArrayUtil.readerFromCharSequence(inputData.getContentAsText()), new NanoXmlUtil.IXMLBuilderAdapter() {
                     NanoXmlUtil.IXMLBuilderAdapter attributeHandler;
                     int depth;
 

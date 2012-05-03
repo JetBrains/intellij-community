@@ -429,10 +429,10 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
         final PsiType type = referenceExpression.getType();
         if (resolved != null) {
           if (resolved instanceof PsiMethod && !resolveResult.isInvokedOnProperty()) {
-            if (!checkMethodApplicability(resolveResult, referenceExpression, true)) return;
+            checkMethodApplicability(resolveResult, referenceExpression, true);
           }
           else {
-            if (!checkCallApplicability(type, referenceExpression, true)) return;
+            checkCallApplicability(type, referenceExpression, true);
           }
         }
         else if (results.length > 0) {
@@ -450,19 +450,6 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
                         GroovyBundle.message("method.call.is.ambiguous"));
         }
       }
-    }
-
-    private boolean checkUnknownParams(PsiElement place, PsiElement resolved) {
-      PsiType[] args = PsiUtil.getArgumentTypes(place, true);
-      if (args == null) return true;
-
-      for (PsiType arg : args) {
-        if (arg == null) {
-
-          return false;
-        }
-      }
-      return true;
     }
 
     private boolean checkCannotInferArgumentTypes(PsiElement referenceExpression) {

@@ -16,7 +16,10 @@
 package com.intellij.android.designer.designSurface.layout.relative;
 
 import com.intellij.android.designer.model.RadViewComponent;
+import com.intellij.designer.designSurface.feedbacks.TextFeedback;
 import com.intellij.designer.model.RadComponent;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.psi.xml.XmlTag;
 
 import java.awt.*;
 import java.util.List;
@@ -27,9 +30,16 @@ import java.util.List;
 public class BaselineSnapPoint extends SnapPoint {
   private final int myBaseline;
 
-  public BaselineSnapPoint(RadComponent component) {
+  public BaselineSnapPoint(RadViewComponent component) {
     super(component, false);
     myBaseline = ((RadViewComponent)component).getBaseline();
+  }
+
+  @Override
+  public void addTextInfo(TextFeedback feedback) {
+    feedback.append("baseline", SnapPointFeedbackHost.SNAP_ATTRIBUTES);
+    feedback.append(" to ");
+    getComponentDecorator().decorate(myComponent, feedback, false);
   }
 
   @Override
@@ -56,5 +66,16 @@ public class BaselineSnapPoint extends SnapPoint {
     }
 
     return false;
+  }
+
+  @Override
+  public void execute(final List<RadComponent> components) throws Exception {
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
+      public void run() {
+        XmlTag tag = ((RadViewComponent)components.get(0)).getTag();
+        tag.setAttribute("android:layout_alignBaseline", getComponentId());
+      }
+    });
   }
 }

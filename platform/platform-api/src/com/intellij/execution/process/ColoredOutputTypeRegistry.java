@@ -56,7 +56,7 @@ public class ColoredOutputTypeRegistry {
      46	Make background cyan
      47	Make background white (you may need 0 instead, or in addition)
 
-     see full doc at http://www.linux-mag.com/downloads/2003-09/power/escape_sequences.html
+     see full doc at http://en.wikipedia.org/wiki/ANSI_escape_code
   */
 
   public Key getOutputKey(@NonNls String attribute) {
@@ -93,11 +93,11 @@ public class ColoredOutputTypeRegistry {
       else if (value == 1) {
         attrs.setFontType(Font.BOLD);
       }
-      else if (value >= 30 && value <= 36) {
-        attrs.setForegroundColor(EditorColorsManager.getInstance().getGlobalScheme().getAttributes(myAnsiColorKeys [value-30]).getForegroundColor());
+      else if (value >= 30 && value <= 37) {
+        attrs.setForegroundColor(getAnsiColor(value - 30));
       }
-      else if (value == 37) {
-        attrs.setForegroundColor(Color.WHITE);
+      else if (value >= 40 && value <= 47) {
+        attrs.setBackgroundColor(getAnsiColor(value - 40));
       }
       else if (value == 90) {
         // black, high intensity
@@ -116,5 +116,12 @@ public class ColoredOutputTypeRegistry {
     ConsoleViewContentType.registerNewConsoleViewType(newKey, contentType);
     myRegisteredKeys.put(completeAttribute, newKey);
     return newKey;
+  }
+
+  private Color getAnsiColor(final int value) {
+    if (value == 7) {
+      return Color.WHITE;
+    }
+    return EditorColorsManager.getInstance().getGlobalScheme().getAttributes(myAnsiColorKeys[value]).getForegroundColor();
   }
 }

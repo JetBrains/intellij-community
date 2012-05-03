@@ -3,6 +3,7 @@ package org.jetbrains.jps.incremental;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
+import org.jetbrains.ether.dependencyView.Callbacks;
 import org.jetbrains.ether.dependencyView.Mappings;
 import org.jetbrains.jps.Module;
 import org.jetbrains.jps.ModuleChunk;
@@ -25,6 +26,7 @@ public abstract class ModuleLevelBuilder extends Builder {
 
   private static final Key<Set<File>> ALL_AFFECTED_FILES_KEY = Key.create("_all_affected_files_");
   private static final Key<Set<File>> ALL_COMPILED_FILES_KEY = Key.create("_all_compiled_files_");
+  static final Key<Callbacks.ConstantAffectionResolver> CONSTANT_SEARCH_SERVICE = Key.create("_constant_search_service_");
 
   private final BuilderCategory myCategory;
 
@@ -83,7 +85,7 @@ public abstract class ModuleLevelBuilder extends Builder {
 
         final ModulesBasedFileFilter moduleBasedFilter = new ModulesBasedFileFilter(context, chunk);
         final boolean incremental = globalMappings.differentiate(
-          delta, removedPaths, filesToCompile, allCompiledFiles, allAffectedFiles, moduleBasedFilter, null
+          delta, removedPaths, filesToCompile, allCompiledFiles, allAffectedFiles, moduleBasedFilter, CONSTANT_SEARCH_SERVICE.get(context)
         );
 
         if (LOG.isDebugEnabled()) {

@@ -279,7 +279,8 @@ public class ChangedConstantsDependencyProcessor {
   }
   */
 
-  private PsiField getOwnerField(PsiElement element) {
+  @Nullable
+  private static PsiField getOwnerField(PsiElement element) {
     while (!(element instanceof PsiFile)) {
       if (element instanceof PsiClass) {
         break;
@@ -292,6 +293,7 @@ public class ChangedConstantsDependencyProcessor {
     return null;
   }
 
+  @Nullable
   private FieldChangeInfo findChangeInfo(PsiField field) throws CacheCorruptedException {
     String name = field.getName();
     for (final FieldChangeInfo changeInfo : myChangedFields) {

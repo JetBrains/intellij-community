@@ -16,11 +16,15 @@
 package com.intellij.designer.componentTree;
 
 import com.intellij.designer.model.RadComponent;
-import com.intellij.ui.ColoredTreeCellRenderer;
+import com.intellij.ui.SimpleColoredComponent;
 
 /**
  * @author Alexander Lobas
  */
 public abstract class TreeComponentDecorator {
-  public abstract void decorate(RadComponent component, ColoredTreeCellRenderer renderer); // TODO: more parameters and attributes
+  public static final String KEY = "TreeComponentDecorator";
+
+  public abstract void decorate(RadComponent component,
+                                SimpleColoredComponent renderer,
+                                boolean full);
 }

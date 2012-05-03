@@ -526,7 +526,7 @@ public abstract class GrTypeDefinitionImpl extends GrStubElementBase<GrTypeDefin
 
   @Nullable
   public PsiClass findInnerClassByName(String name, boolean checkBases) {
-    return null;
+    return GrClassImplUtil.findInnerClassByName(this, name, checkBases);
   }
 
   @Nullable

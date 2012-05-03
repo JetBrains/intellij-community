@@ -44,9 +44,10 @@ public class SLRUMap<K,V> {
     myProbationalQueueSize = probationalQueueSize * FACTOR;
 
     myProtectedQueue = new LinkedHashMap<K,V>(10, 0.6f) {
-      protected boolean removeEldestEntry(final Map.Entry<K, V> eldest) {
+      @Override
+      protected boolean removeEldestEntry(Map.Entry<K, V> eldest, K key, V value) {
         if (size() > myProtectedQueueSize) {
-          myProbationalQueue.put(eldest.getKey(), eldest.getValue());
+          myProbationalQueue.put(key, value);
           return true;
         }
 
@@ -55,9 +56,9 @@ public class SLRUMap<K,V> {
     };
 
     myProbationalQueue = new LinkedHashMap<K,V>(10, 0.6f) {
-      protected boolean removeEldestEntry(final Map.Entry<K, V> eldest) {
+      protected boolean removeEldestEntry(final Map.Entry<K, V> eldest, K key, V value) {
         if (size() > myProbationalQueueSize) {
-          onDropFromCache(eldest.getKey(), eldest.getValue());
+          onDropFromCache(key, value);
           return true;
         }
         return false;

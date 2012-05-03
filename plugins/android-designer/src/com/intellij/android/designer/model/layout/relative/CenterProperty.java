@@ -47,11 +47,18 @@ public class CenterProperty extends Property<RadViewComponent> {
   @Override
   public Object getValue(RadViewComponent component) throws Exception {
     XmlTag tag = component.getTag();
-    for (int i = ATTR_ITEMS.length - 1; i >= 0; i--) {
-      String value = tag.getAttributeValue(ATTR_ITEMS[i]);
-      if ("true".equals(value)) {
-        return COMBO_ITEMS[i];
-      }
+    boolean[] values = new boolean[3];
+    for (int i = 0; i < ATTR_ITEMS.length; i++) {
+      values[i] = "true".equals(tag.getAttributeValue(ATTR_ITEMS[i]));
+    }
+    if (values[2] || (values[0] && values[1])) {
+      return COMBO_ITEMS[2];
+    }
+    if (values[0]) {
+      return COMBO_ITEMS[0];
+    }
+    if (values[1]) {
+      return COMBO_ITEMS[1];
     }
     return null;
   }

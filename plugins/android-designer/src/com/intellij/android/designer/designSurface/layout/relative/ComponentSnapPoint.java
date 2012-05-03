@@ -15,7 +15,11 @@
  */
 package com.intellij.android.designer.designSurface.layout.relative;
 
+import com.intellij.android.designer.model.RadViewComponent;
+import com.intellij.designer.designSurface.feedbacks.TextFeedback;
 import com.intellij.designer.model.RadComponent;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.psi.xml.XmlTag;
 
 import java.awt.*;
 import java.util.List;
@@ -24,13 +28,27 @@ import java.util.List;
  * @author Alexander Lobas
  */
 public class ComponentSnapPoint extends SnapPoint {
-  public ComponentSnapPoint(RadComponent component, boolean horizontal) {
+  private Side myBeginSide;
+  private Side myEndSide;
+
+  public ComponentSnapPoint(RadViewComponent component, boolean horizontal) {
     super(component, horizontal);
+  }
+
+  @Override
+  public void addTextInfo(TextFeedback feedback) {
+    feedback.append(myBeginSide.name(), SnapPointFeedbackHost.SNAP_ATTRIBUTES);
+    feedback.append(" to ");
+    feedback.append(myEndSide.name(), SnapPointFeedbackHost.SNAP_ATTRIBUTES);
+    feedback.append(" of ");
+    getComponentDecorator().decorate(myComponent, feedback, false);
   }
 
   @Override
   public boolean processBounds(List<RadComponent> components, Rectangle bounds, SnapPointFeedbackHost feedback) {
     super.processBounds(components, bounds, feedback);
+
+    myEndSide = myBeginSide = null;
 
     if (myHorizontal) {
       return processLeft(bounds, feedback) || processRight(bounds, feedback);
@@ -47,6 +65,7 @@ public class ComponentSnapPoint extends SnapPoint {
     if (startX <= targetX && targetX <= endX) {
       targetBounds.x = myBounds.x;
       addVerticalFeedback(feedback, myBounds, targetBounds, true);
+      side(Side.left, Side.left);
       return true;
     }
 
@@ -54,6 +73,7 @@ public class ComponentSnapPoint extends SnapPoint {
     if (startX <= targetX && targetX <= endX) {
       targetBounds.x = myBounds.x - targetBounds.width;
       addVerticalFeedback(feedback, myBounds, targetBounds, true);
+      side(Side.left, Side.right);
       return true;
     }
 
@@ -68,6 +88,7 @@ public class ComponentSnapPoint extends SnapPoint {
     if (startX <= targetX && targetX <= endX) {
       targetBounds.x = myBounds.x + myBounds.width;
       addVerticalFeedback(feedback, myBounds, targetBounds, false);
+      side(Side.right, Side.left);
       return true;
     }
 
@@ -75,6 +96,7 @@ public class ComponentSnapPoint extends SnapPoint {
     if (startX <= targetX && targetX <= endX) {
       targetBounds.x = myBounds.x + myBounds.width - targetBounds.width;
       addVerticalFeedback(feedback, myBounds, targetBounds, false);
+      side(Side.right, Side.right);
       return true;
     }
 
@@ -89,6 +111,7 @@ public class ComponentSnapPoint extends SnapPoint {
     if (startY <= targetY && targetY <= endY) {
       targetBounds.y = myBounds.y;
       addHorizontalFeedback(feedback, myBounds, targetBounds, true);
+      side(Side.top, Side.top);
       return true;
     }
 
@@ -96,6 +119,7 @@ public class ComponentSnapPoint extends SnapPoint {
     if (startY <= targetY && targetY <= endY) {
       targetBounds.y = myBounds.y - targetBounds.height;
       addHorizontalFeedback(feedback, myBounds, targetBounds, true);
+      side(Side.top, Side.bottom);
       return true;
     }
 
@@ -110,6 +134,7 @@ public class ComponentSnapPoint extends SnapPoint {
     if (startY <= targetY && targetY <= endY) {
       targetBounds.y = myBounds.y + myBounds.height;
       addHorizontalFeedback(feedback, myBounds, targetBounds, false);
+      side(Side.bottom, Side.top);
       return true;
     }
 
@@ -117,9 +142,60 @@ public class ComponentSnapPoint extends SnapPoint {
     if (startY <= targetY && targetY <= endY) {
       targetBounds.y = myBounds.y + myBounds.height - targetBounds.height;
       addHorizontalFeedback(feedback, myBounds, targetBounds, false);
+      side(Side.bottom, Side.bottom);
       return true;
     }
 
     return false;
+  }
+
+  private void side(Side end, Side begin) {
+    myEndSide = end;
+    myBeginSide = begin;
+  }
+
+  @Override
+  public void execute(final List<RadComponent> components) throws Exception {
+    final String attribute;
+
+    if (myBeginSide == Side.left && myEndSide == Side.left) {
+      attribute = "android:layout_alignLeft";
+    }
+    else if (myBeginSide == Side.right && myEndSide == Side.right) {
+      attribute = "android:layout_alignRight";
+    }
+    else if (myBeginSide == Side.left && myEndSide == Side.right) {
+      attribute = "android:layout_toRightOf";
+    }
+    else if (myBeginSide == Side.right && myEndSide == Side.left) {
+      attribute = "android:layout_toLeftOf";
+    }
+    else if (myBeginSide == Side.top && myEndSide == Side.top) {
+      attribute = "android:layout_alignTop";
+    }
+    else if (myBeginSide == Side.bottom && myEndSide == Side.bottom) {
+      attribute = "android:layout_alignBottom";
+    }
+    else if (myBeginSide == Side.top && myEndSide == Side.bottom) {
+      attribute = "android:layout_below";
+    }
+    else if (myBeginSide == Side.bottom && myEndSide == Side.top) {
+      attribute = "android:layout_above";
+    }
+    else {
+      return;
+    }
+
+    final String componentId = getComponentId();
+
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
+      public void run() {
+        for (RadComponent component : components) {
+          XmlTag tag = ((RadViewComponent)component).getTag();
+          tag.setAttribute(attribute, componentId);
+        }
+      }
+    });
   }
 }

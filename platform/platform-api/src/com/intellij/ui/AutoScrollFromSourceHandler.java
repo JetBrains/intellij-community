@@ -19,28 +19,84 @@ package com.intellij.ui;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.fileEditor.FileEditorManagerAdapter;
+import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
+import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.util.Alarm;
+import com.intellij.util.messages.MessageBusConnection;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
+
+/**
+ * @author Konstantin Bulenkov
+ */
+@SuppressWarnings("MethodMayBeStatic")
 public abstract class AutoScrollFromSourceHandler implements Disposable {
   protected final Project myProject;
+  protected final Alarm myAlarm;
+  private JComponent myComponent;
 
-  protected AutoScrollFromSourceHandler(Project project) {
-    this(project, null);
+  public AutoScrollFromSourceHandler(@NotNull Project project, @NotNull JComponent view) {
+    this(project, view, null);
   }
 
-  protected AutoScrollFromSourceHandler(Project project, Disposable parentDisposable) {
+  public AutoScrollFromSourceHandler(@NotNull Project project, @NotNull JComponent view, @Nullable Disposable parentDisposable) {
     myProject = project;
+
     if (parentDisposable != null) {
       Disposer.register(parentDisposable, this);
     }
+    myComponent = view;
+    myAlarm = new Alarm(this);
   }
 
-  protected abstract boolean isAutoScrollMode();
-  protected abstract void setAutoScrollMode(boolean state);
-  public abstract void install();
+  protected abstract boolean isAutoScrollEnabled();
+
+  protected abstract void setAutoScrollEnabled(boolean enabled);
+
+  protected abstract void selectElementFromEditor(@NotNull FileEditor editor);
+
+  protected ModalityState getModalityState() {
+    return ModalityState.current();
+  }
+
+  protected long getAlarmDelay() {
+    return 500;
+  }
+
+  public void install() {
+    final MessageBusConnection connection = myProject.getMessageBus().connect(myProject);
+    connection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerAdapter() {
+      @Override
+      public void selectionChanged(FileEditorManagerEvent event) {
+        final FileEditor editor = event.getNewEditor();
+        if (editor != null && myComponent.isShowing() && isAutoScrollEnabled()) {
+          myAlarm.cancelAllRequests();
+          myAlarm.addRequest(new Runnable() {
+            @Override
+            public void run() {
+              selectElementFromEditor(editor);
+            }
+          }, getAlarmDelay(), getModalityState());
+        }
+      }
+    });
+  }
+
+  @Override
+  public void dispose() {
+    if (!myAlarm.isDisposed()) {
+      myAlarm.cancelAllRequests();
+    }
+  }
 
   public ToggleAction createToggleAction() {
     return new AutoScrollFromSourceAction();
@@ -48,16 +104,17 @@ public abstract class AutoScrollFromSourceHandler implements Disposable {
 
   private class AutoScrollFromSourceAction extends ToggleAction implements DumbAware {
     public AutoScrollFromSourceAction() {
-      super(UIBundle.message("autoscroll.from.source.action.name"), UIBundle.message("autoscroll.from.source.action.description"),
+      super(UIBundle.message("autoscroll.from.source.action.name"),
+            UIBundle.message("autoscroll.from.source.action.description"),
             IconLoader.getIcon("/general/autoscrollFromSource.png"));
     }
 
-    public boolean isSelected(AnActionEvent event) {
-      return isAutoScrollMode();
+    public boolean isSelected(final AnActionEvent event) {
+      return isAutoScrollEnabled();
     }
 
-    public void setSelected(AnActionEvent event, boolean flag) {
-      setAutoScrollMode(flag);
+    public void setSelected(final AnActionEvent event, final boolean flag) {
+      setAutoScrollEnabled(flag);
     }
   }
 }

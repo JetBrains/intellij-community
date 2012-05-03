@@ -349,7 +349,7 @@ public class HighlightClassUtil {
       return null;
     }
     PsiClass aClass = (PsiClass)keyword.getParent();
-    if (PsiUtilCore.hasErrorElementChild(aClass)) return null;
+    if (PsiUtilCore.hasErrorElementChild(aClass) || (aClass.getQualifiedName() == null && !aClass.isInterface())) return null;
     // highlight 'static' keyword if any, or class or interface if not
     PsiElement context = null;
     PsiModifierList modifierList = aClass.getModifierList();

@@ -258,6 +258,18 @@ public class CompileContext extends UserDataHolderBase implements MessageHandler
           }
         }
       }
+
+      // clean mapping only after everything else is processed
+      final Map<String, Collection<String>> map = Utils.CHUNK_PER_MODULE_REMOVED_SOURCES_KEY.get(this);
+      if (map != null) {
+        for (Map.Entry<String, Collection<String>> entry : map.entrySet()) {
+          final SourceToOutputMapping mapping = getDataManager().getSourceToOutputMap(entry.getKey(), isCompilingTests());
+          for (String path : entry.getValue()) {
+            mapping.remove(path);
+          }
+        }
+      }
+
       if (marked) {
         processMessage(UptoDateFilesSavedEvent.INSTANCE);
       }

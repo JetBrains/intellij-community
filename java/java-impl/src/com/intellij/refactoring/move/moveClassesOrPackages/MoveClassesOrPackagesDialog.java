@@ -41,7 +41,10 @@ import com.intellij.refactoring.ui.ClassNameReferenceEditor;
 import com.intellij.refactoring.ui.PackageNameReferenceEditorCombo;
 import com.intellij.refactoring.ui.RefactoringDialog;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
-import com.intellij.ui.*;
+import com.intellij.ui.ComboboxWithBrowseButton;
+import com.intellij.ui.RecentsManager;
+import com.intellij.ui.ReferenceEditorComboWithBrowseButton;
+import com.intellij.ui.ReferenceEditorWithBrowseButton;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ui.UIUtil;
@@ -68,7 +71,6 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
   private JCheckBox myCbSearchTextOccurences;
   private String myHelpID;
   private final boolean mySearchTextOccurencesEnabled;
-  private PsiDirectory myInitialTargetDirectory;
   private final PsiManager myManager;
   private JPanel myMainPanel;
   private JRadioButton myToPackageRadioButton;
@@ -229,7 +231,6 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
                       boolean searchInComments,
                       boolean searchForTextOccurences,
                       String helpID) {
-    myInitialTargetDirectory = initialTargetDirectory;
     myTargetDirectoryFixed = isTargetDirectoryFixed;
     if (targetPackageName.length() != 0) {
       myWithBrowseButtonReference.prependItem(targetPackageName);
@@ -264,7 +265,7 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
     myCbSearchInComments.setSelected(searchInComments);
     myCbSearchTextOccurences.setSelected(searchForTextOccurences);
 
-    ((DestinationFolderComboBox)myDestinationFolderCB).setData(myProject, myInitialTargetDirectory,
+    ((DestinationFolderComboBox)myDestinationFolderCB).setData(myProject, initialTargetDirectory,
                                                                new Pass<String>() {
                                                                  @Override
                                                                  public void pass(String s) {
@@ -397,9 +398,7 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
   //for scala plugin
   protected MoveClassesOrPackagesProcessor createMoveToPackageProcessor(MoveDestination destination, final PsiElement[] elementsToMove,
                                                                         final MoveCallback callback) {
-    return new MoveClassesOrPackagesProcessor(getProject(), elementsToMove, destination,
-                                                                                  isSearchInComments(), isSearchInNonJavaFiles(),
-                                                                                  callback);
+    return new MoveClassesOrPackagesProcessor(getProject(), elementsToMove, destination, isSearchInComments(), isSearchInNonJavaFiles(), callback);
   }
 
   private void saveRefactoringSettings() {
@@ -422,12 +421,8 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
       }
       final Language targetClassLanguage = targetClass.getLanguage();
       if (!element.getLanguage().equals(targetClassLanguage)) {
-        return RefactoringBundle
-          .message("move.to.different.language", UsageViewUtil.getType(element), ((PsiClass)element).getQualifiedName(),
-                   targetClass.getQualifiedName());
-      }
-      if (element.getLanguage().equals(Language.findLanguageByID("Groovy"))) {
-        return RefactoringBundle.message("dont.support.inner.classes", "Groovy");
+        return RefactoringBundle.message("move.to.different.language", UsageViewUtil.getType(element),
+                                         ((PsiClass)element).getQualifiedName(), targetClass.getQualifiedName());
       }
     }
 

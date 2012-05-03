@@ -26,6 +26,7 @@ import java.lang.annotation.*;
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.FIELD})
 public @interface PropertyName {
+  String NOT_SET = "";
   String value();
-  String defaultValue() default "";
+  String defaultValue() default NOT_SET;
 }

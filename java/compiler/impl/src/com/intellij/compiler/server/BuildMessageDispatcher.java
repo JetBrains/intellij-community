@@ -107,7 +107,7 @@ class BuildMessageDispatcher extends SimpleChannelHandler {
     final CmdlineRemoteProto.Message.Type messageType = message.getType();
     switch (messageType) {
       case FAILURE:
-        handler.handleFailure(message.getFailure());
+        handler.handleFailure(sessionId, message.getFailure());
         break;
 
       case BUILDER_MESSAGE:
@@ -124,7 +124,7 @@ class BuildMessageDispatcher extends SimpleChannelHandler {
           }
         }
         else {
-          handler.handleBuildMessage(builderMessage);
+          handler.handleBuildMessage(ctx.getChannel(), sessionId, builderMessage);
         }
         break;
 

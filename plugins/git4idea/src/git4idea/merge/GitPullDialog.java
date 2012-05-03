@@ -22,6 +22,7 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.util.ArrayUtil;
+import git4idea.GitBranch;
 import git4idea.GitDeprecatedRemote;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
@@ -206,11 +207,8 @@ public class GitPullDialog extends DialogWrapper {
       if (line.length() == 0) {
         continue;
       }
-      int pos = line.lastIndexOf('/');
-      if (pos == -1) {
-        pos = line.lastIndexOf('\t');
-      }
-      remoteBranches.add(line.substring(pos + 1));
+      line = line.trim().substring(line.indexOf(GitBranch.REFS_HEADS_PREFIX) + GitBranch.REFS_HEADS_PREFIX.length());
+      remoteBranches.add(line);
     }
     return remoteBranches;
   }

@@ -41,7 +41,6 @@ public class AntBeforeRunTaskProvider extends BeforeRunTaskProvider<AntBeforeRun
 
   public AntBeforeRunTaskProvider(Project project) {
     myProject = project;
-    AntConfigurationImpl.getInstance(myProject);//Prevent too lazy initialization
   }
 
   public Key<AntBeforeRunTask> getId() {

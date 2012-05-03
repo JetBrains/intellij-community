@@ -16,15 +16,33 @@
 package com.intellij.ide.favoritesTreeView;
 
 import com.intellij.ide.projectView.ViewSettings;
+import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.ide.util.PropertyName;
 
 /**
  * @author Konstantin Bulenkov
  */
 public class FavoritesViewSettings implements ViewSettings {
-  private boolean myShowMembers = false;
-  private boolean myFlattenPackages = false;
-  private boolean myAutoScrollToSource = false;
-  private boolean myHideEmptyMiddlePackages = true;
+
+  @PropertyName("favorites.view.settings.show.members")
+  public boolean myShowMembers = false;
+
+  @PropertyName("favorites.view.settings.flatten.packages")
+  public boolean myFlattenPackages = false;
+
+  @PropertyName("favorites.view.settings.autoscroll.to.source")
+  public boolean myAutoScrollToSource = false;
+
+  @PropertyName("favorites.view.settings.autoscroll.from.source")
+  public boolean myAutoScrollFromSource = false;
+
+  @PropertyName("favorites.view.settings.hide.empty.middle.packages")
+  public boolean myHideEmptyMiddlePackages = true;
+
+
+  public FavoritesViewSettings() {
+    PropertiesComponent.getInstance().loadFields(this);
+  }
 
   @Override
   public boolean isShowMembers() {
@@ -33,6 +51,11 @@ public class FavoritesViewSettings implements ViewSettings {
 
   public void setShowMembers(boolean showMembers) {
     myShowMembers = showMembers;
+    save();
+  }
+
+  private void save() {
+    PropertiesComponent.getInstance().saveFields(this);
   }
 
   @Override
@@ -50,8 +73,18 @@ public class FavoritesViewSettings implements ViewSettings {
     return myFlattenPackages;
   }
 
+  public boolean isAutoScrollFromSource() {
+    return myAutoScrollFromSource;
+  }
+
+  public void setAutoScrollFromSource(boolean autoScrollFromSource) {
+    myAutoScrollFromSource = autoScrollFromSource;
+    save();
+  }
+
   public void setFlattenPackages(boolean flattenPackages) {
     myFlattenPackages = flattenPackages;
+    save();
   }
 
   @Override
@@ -75,9 +108,11 @@ public class FavoritesViewSettings implements ViewSettings {
 
   public void setAutoScrollToSource(boolean autoScrollToSource) {
     myAutoScrollToSource = autoScrollToSource;
+    save();
   }
 
   public void setHideEmptyMiddlePackages(boolean hide) {
     myHideEmptyMiddlePackages = hide;
+    save();
   }
 }

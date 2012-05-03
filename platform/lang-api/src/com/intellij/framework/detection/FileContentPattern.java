@@ -18,7 +18,7 @@ package com.intellij.framework.detection;
 import com.intellij.patterns.*;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.indexing.FileContent;
-import com.intellij.util.text.CharSequenceReader;
+import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.xml.NanoXmlUtil;
 import com.intellij.util.xml.XmlFileHeader;
 import org.jetbrains.annotations.NotNull;
@@ -101,7 +101,7 @@ public class FileContentPattern extends ObjectPattern<FileContent, FileContentPa
   @NotNull
   private static XmlFileHeader parseHeaderWithException(FileContent fileContent) throws IOException {
     //noinspection IOResourceOpenedButNotSafelyClosed
-    return NanoXmlUtil.parseHeaderWithException(new CharSequenceReader(fileContent.getContentAsText()));
+    return NanoXmlUtil.parseHeaderWithException(CharArrayUtil.readerFromCharSequence(fileContent.getContentAsText()));
   }
 
 }

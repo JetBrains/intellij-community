@@ -134,6 +134,7 @@ public class NanoXmlUtil {
     return parseHeader(new MyXMLReader(file.getInputStream()));
   }
 
+  @Deprecated  // TODO: remove
   @NotNull
   public static XmlFileHeader parseHeader(final InputStream inputStream) {
     try {
@@ -143,6 +144,11 @@ public class NanoXmlUtil {
       LOG.error(e);
       return null;
     }
+  }
+
+  @NotNull
+  public static XmlFileHeader parseHeader(final Reader reader) {
+    return parseHeader(new MyXMLReader(reader));
   }
 
   @NotNull

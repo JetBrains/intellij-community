@@ -15,6 +15,9 @@
  */
 package com.intellij.android.designer.designSurface.layout.relative;
 
+import com.intellij.android.designer.model.RadViewComponent;
+import com.intellij.designer.componentTree.TreeComponentDecorator;
+import com.intellij.designer.designSurface.feedbacks.TextFeedback;
 import com.intellij.designer.model.RadComponent;
 
 import java.awt.*;
@@ -27,13 +30,19 @@ public abstract class SnapPoint {
   protected static final int SNAP_SIZE = 5;
   protected static final int SNAP_LINE_BORDER = 15;
 
-  protected final RadComponent myComponent;
+  protected final RadViewComponent myComponent;
   protected final boolean myHorizontal;
   protected Rectangle myBounds;
 
-  protected SnapPoint(RadComponent component, boolean horizontal) {
+  protected SnapPoint(RadViewComponent component, boolean horizontal) {
     myComponent = component;
     myHorizontal = horizontal;
+  }
+
+  public abstract void addTextInfo(TextFeedback feedback);
+
+  protected final TreeComponentDecorator getComponentDecorator() {
+    return myComponent.getRoot().getClientProperty(TreeComponentDecorator.KEY);
   }
 
   public boolean processBounds(List<RadComponent> components, Rectangle bounds, SnapPointFeedbackHost feedback) {
@@ -68,4 +77,12 @@ public abstract class SnapPoint {
                                bounds.y + bounds.height - target.y + 2 * SNAP_LINE_BORDER);
     }
   }
+
+  protected final String getComponentId() {
+    // TODO: ensure id
+    String idValue = myComponent.getTag().getAttributeValue("android:id");
+    return "@id/" + idValue.substring(idValue.indexOf('/') + 1);
+  }
+
+  public abstract void execute(List<RadComponent> components) throws Exception;
 }

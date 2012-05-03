@@ -15,11 +15,11 @@
  */
 package com.intellij.designer.model;
 
-import com.intellij.ui.ColoredTreeCellRenderer;
+import com.intellij.ui.SimpleColoredComponent;
 
 /**
  * @author Alexander Lobas
  */
 public interface IComponentDecorator {
-  void decorateTree(ColoredTreeCellRenderer renderer);
+  void decorateTree(SimpleColoredComponent renderer);
 }

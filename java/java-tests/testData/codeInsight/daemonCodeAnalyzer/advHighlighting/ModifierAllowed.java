@@ -66,3 +66,11 @@ interface i3 {
   <error descr="Modifier 'transient' not allowed here">transient</error> int m2() { return 0; }
   <error descr="Modifier 'synchronized' not allowed here">synchronized</error>  int m3() { return 0; }
 }
+
+class LocalClassWithInner {
+    void foo () {
+          class A {
+             <error descr="Modifier 'private' not allowed here">private</error> class B {}
+        }
+    }
+}

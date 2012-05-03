@@ -95,7 +95,7 @@ public class LinkedHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> 
     }
     this.top = e;
     size++;
-    if (removeEldestEntry(back)) {
+    if (removeEldestEntry(back, back.key, back.value)) {
       doRemoveEldestEntry();
     }
     else if (size > capacity) {
@@ -153,6 +153,10 @@ public class LinkedHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> 
 
   public Set<Map.Entry<K, V>> entrySet() {
     return new EntrySet();
+  }
+
+  protected boolean removeEldestEntry(Map.Entry<K, V> eldest, K key, V value) {
+    return removeEldestEntry(eldest);
   }
 
   protected boolean removeEldestEntry(Map.Entry<K, V> eldest) {

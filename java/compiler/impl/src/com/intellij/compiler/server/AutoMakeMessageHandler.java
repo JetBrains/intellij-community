@@ -29,6 +29,7 @@ import com.intellij.problems.WolfTheProblemSolver;
 import org.jetbrains.jps.api.CmdlineRemoteProto;
 
 import java.util.Collections;
+import java.util.UUID;
 
 /**
 * @author Eugene Zhuravlev
@@ -83,7 +84,7 @@ class AutoMakeMessageHandler extends DefaultMessageHandler {
   }
 
   @Override
-  public void handleFailure(CmdlineRemoteProto.Message.Failure failure) {
+  public void handleFailure(UUID sessionId, CmdlineRemoteProto.Message.Failure failure) {
     CompilerManager.NOTIFICATION_GROUP.createNotification("Auto make failure: " + failure.getDescription(), MessageType.INFO);
   }
 

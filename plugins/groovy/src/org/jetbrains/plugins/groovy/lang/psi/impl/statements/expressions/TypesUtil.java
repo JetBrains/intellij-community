@@ -258,7 +258,7 @@ public class TypesUtil {
     if (allowConversion) {
       //all numeric types are assignable
       if (isNumericType(lType)) {
-        return isNumericType(rType) || rType == PsiType.NULL;
+        if (isNumericType(rType) || rType == PsiType.NULL) return true;
       }
       else if (isClassType(lType, JAVA_LANG_STRING)) {
         return true;
@@ -267,6 +267,10 @@ public class TypesUtil {
 
     rType = boxPrimitiveType(rType, manager, scope);
     lType = boxPrimitiveType(lType, manager, scope);
+
+    if (unboxPrimitiveTypeWrapper(lType) == PsiType.CHAR && (isClassType(rType, GROOVY_LANG_GSTRING) || isClassType(rType, JAVA_LANG_STRING))) {
+      return true;
+    }
 
     return lType.isAssignableFrom(rType);
   }
@@ -319,11 +323,6 @@ public class TypesUtil {
 
       rType = boxPrimitiveType(rType, manager, scope);
       lType = boxPrimitiveType(lType, manager, scope);
-    }
-
-    if (unboxPrimitiveTypeWrapper(lType) == PsiType.CHAR &&
-        (isClassType(rType, GROOVY_LANG_GSTRING) || isClassType(rType, JAVA_LANG_STRING))) {
-      return true;
     }
 
     if (rType instanceof GrMapType || rType instanceof GrTupleType) {

@@ -15,6 +15,8 @@
  */
 package com.intellij.android.designer.designSurface.layout.relative;
 
+import com.intellij.ui.SimpleTextAttributes;
+
 import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
@@ -26,6 +28,9 @@ import java.util.List;
 public class SnapPointFeedbackHost extends JComponent {
   private static final BasicStroke STROKE = new BasicStroke(2, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER, 1, new float[]{3, 1}, 0);
   private static final Color COLOR = new Color(60, 139, 186);
+  private static final int EXPAND_SIZE = 10;
+
+  public static SimpleTextAttributes SNAP_ATTRIBUTES = new SimpleTextAttributes(SimpleTextAttributes.STYLE_BOLD, COLOR);
 
   private final List<Rectangle> myLines = new ArrayList<Rectangle>();
 
@@ -40,8 +45,6 @@ public class SnapPointFeedbackHost extends JComponent {
   public void clearAll() {
     myLines.clear();
   }
-
-  private static final int EXPAND_SIZE = 10;
 
   @Override
   public void setBounds(int x, int y, int width, int height) {

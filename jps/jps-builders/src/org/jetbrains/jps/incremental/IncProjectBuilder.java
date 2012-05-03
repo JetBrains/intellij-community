@@ -8,6 +8,8 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.io.MappingFailedException;
 import com.intellij.util.io.PersistentEnumerator;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.ether.dependencyView.Callbacks;
 import org.jetbrains.ether.dependencyView.Mappings;
 import org.jetbrains.jps.*;
 import org.jetbrains.jps.api.CanceledStatus;
@@ -49,6 +51,7 @@ public class IncProjectBuilder {
   private final BuilderRegistry myBuilderRegistry;
   private final Map<String, String> myBuilderParams;
   private final CanceledStatus myCancelStatus;
+  @Nullable private final Callbacks.ConstantAffectionResolver myConstantSearch;
   private ProjectChunks myProductionChunks;
   private ProjectChunks myTestChunks;
   private final List<MessageHandler> myMessageHandlers = new ArrayList<MessageHandler>();
@@ -70,11 +73,12 @@ public class IncProjectBuilder {
                            BuilderRegistry builderRegistry,
                            final Timestamps timestamps,
                            Map<String, String> builderParams,
-                           CanceledStatus cs) {
+                           CanceledStatus cs, @Nullable Callbacks.ConstantAffectionResolver constantSearch) {
     myProjectDescriptor = pd;
     myBuilderRegistry = builderRegistry;
     myBuilderParams = builderParams;
     myCancelStatus = cs;
+    myConstantSearch = constantSearch;
     myProductionChunks = new ProjectChunks(pd.project, ClasspathKind.PRODUCTION_COMPILE);
     myTestChunks = new ProjectChunks(pd.project, ClasspathKind.TEST_COMPILE);
     myTotalModulesWork = (float)pd.rootsIndex.getTotalModuleCount() * 2;  /* multiply by 2 to reflect production and test sources */
@@ -246,10 +250,12 @@ public class IncProjectBuilder {
   }
 
   private CompileContext createContext(CompileScope scope, boolean isMake, final boolean isProjectRebuild) throws ProjectBuildException {
-    return new CompileContext(
+    final CompileContext context = new CompileContext(
       scope, myProjectDescriptor, isMake, isProjectRebuild, myProductionChunks, myTestChunks, myMessageDispatcher,
       myBuilderParams, myTimestamps, myCancelStatus
     );
+    ModuleLevelBuilder.CONSTANT_SEARCH_SERVICE.set(context, myConstantSearch);
+    return context;
   }
 
   private void cleanOutputRoots(CompileContext context) throws ProjectBuildException {
@@ -423,6 +429,7 @@ public class IncProjectBuilder {
         }
         finally {
           Utils.CHUNK_REMOVED_SOURCES_KEY.set(context, null);
+          Utils.CHUNK_PER_MODULE_REMOVED_SOURCES_KEY.set(context, null);
           if (doneSomething && GENERATE_CLASSPATH_INDEX) {
             final boolean forTests = context.isCompilingTests();
             final Future<?> future = SharedThreadPool.INSTANCE.submit(new Runnable() {
@@ -479,6 +486,7 @@ public class IncProjectBuilder {
     try {
       // cleanup outputs
       final Set<String> allChunkRemovedSources = new HashSet<String>();
+      final Map<String, Collection<String>> perModuleRemovedSources = new HashMap<String, Collection<String>>();
 
       for (Module module : chunk.getModules()) {
         final Collection<String> deletedPaths = myProjectDescriptor.fsState.getDeletedPaths(module.getName(), context.isCompilingTests());
@@ -486,6 +494,7 @@ public class IncProjectBuilder {
           continue;
         }
         allChunkRemovedSources.addAll(deletedPaths);
+        perModuleRemovedSources.put(module.getName(), deletedPaths);
 
         final SourceToOutputMapping sourceToOutputStorage =
           context.getDataManager().getSourceToOutputMap(module.getName(), context.isCompilingTests());
@@ -515,8 +524,8 @@ public class IncProjectBuilder {
             for (String output : outputs) {
               new File(output).delete();
             }
-            sourceToOutputStorage.remove(deletedSource);
           }
+          //sourceToOutputStorage.remove(deletedSource);
 
           // check if deleted source was associated with a form
           final SourceToFormMapping sourceToFormMap = context.getDataManager().getSourceToFormMap();
@@ -536,6 +545,7 @@ public class IncProjectBuilder {
           allChunkRemovedSources.addAll(currentData);
         }
         Utils.CHUNK_REMOVED_SOURCES_KEY.set(context, allChunkRemovedSources);
+        Utils.CHUNK_PER_MODULE_REMOVED_SOURCES_KEY.set(context, perModuleRemovedSources);
         for (Module module : chunk.getModules()) {
           myProjectDescriptor.fsState.clearDeletedPaths(module.getName(), context.isCompilingTests());
         }

@@ -92,7 +92,7 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
 
   public PsiElement createDocMemberReferenceNameFromText(String idText) {
     GrDocMemberReference reference = createDocMemberReferenceFromText("Foo", idText);
-    assert reference != null : "DocMemberReference ponts to null";
+    LOG.assertTrue(reference != null, idText);
     return reference.getReferenceNameElement();
   }
 
@@ -559,7 +559,7 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
   @Override
   public GrStatement createStatementFromText(String text, @Nullable PsiElement context) {
     PsiFile file = createGroovyFile(text, false, context);
-    assert ((GroovyFileBase) file).getTopStatements()[0] instanceof GrStatement;
+    LOG.assertTrue(((GroovyFileBase) file).getTopStatements()[0] instanceof GrStatement, text);
     return (GrStatement) ((GroovyFileBase) file).getTopStatements()[0];
   }
 
@@ -571,7 +571,7 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
     }
     text.append("}");
     PsiFile file = createGroovyFile(text.toString());
-    assert file.getChildren()[0] != null && (file.getChildren()[0] instanceof GrWhileStatement);
+    LOG.assertTrue(file.getChildren()[0] != null && (file.getChildren()[0] instanceof GrWhileStatement), text);
     return (GrBlockStatement) ((GrWhileStatement) file.getChildren()[0]).getBody();
   }
 
@@ -622,6 +622,17 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
     return (GrThisReferenceExpression)dummy.getStatements()[0];
   }
 
+  @Override
+  public GrBlockStatement createBlockStatementFromText(String text, PsiElement context) {
+    GroovyFileImpl file = createDummyFile("if()" + text);
+    GrStatement[] statements = file.getStatements();
+    LOG.assertTrue(statements.length == 1 && statements[0] instanceof GrIfStatement, text);
+
+    GrStatement branch = ((GrIfStatement)statements[0]).getThenBranch();
+    LOG.assertTrue(branch instanceof GrBlockStatement);
+    return (GrBlockStatement)branch;
+  }
+
   public GrImportStatement createImportStatementFromText(String qName, boolean isStatic, boolean isOnDemand, String alias) {
     final String text = "import " + (isStatic ? "static " : "") + qName + (isOnDemand ? ".*" : "") +
         (alias != null && alias.length() > 0 ? " as " + alias : "");
@@ -632,8 +643,7 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
   }
 
   public GrImportStatement createImportStatementFromText(@NotNull String text) {
-    PsiFile dummyFile = PsiFileFactory.getInstance(myProject).createFileFromText(DUMMY + GroovyFileType.GROOVY_FILE_TYPE.getDefaultExtension(),
-        text);
+    PsiFile dummyFile = PsiFileFactory.getInstance(myProject).createFileFromText(DUMMY + GroovyFileType.GROOVY_FILE_TYPE.getDefaultExtension(), text);
     return ((GrImportStatement) dummyFile.getFirstChild());
   }
 

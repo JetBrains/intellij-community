@@ -16,29 +16,21 @@
 
 package org.jetbrains.plugins.groovy.mvc.projectView;
 
-import com.intellij.ide.util.EditorHelper;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileEditor.*;
-import com.intellij.openapi.wm.ex.ToolWindowEx;
-import com.intellij.psi.*;
-import com.intellij.ui.AutoScrollFromSourceHandler;
-import com.intellij.ui.AutoScrollToSourceHandler;
-import com.intellij.ui.content.ContentManager;
-import com.intellij.util.Alarm;
-import com.intellij.util.IJSwingUtilities;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.ide.*;
 import com.intellij.ide.projectView.BaseProjectTreeBuilder;
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.projectView.impl.*;
 import com.intellij.ide.util.DeleteHandler;
 import com.intellij.ide.util.DirectoryChooserUtil;
+import com.intellij.ide.util.EditorHelper;
 import com.intellij.ide.util.treeView.AbstractTreeBuilder;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.AbstractTreeUpdater;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.DumbAware;
@@ -49,8 +41,18 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.openapi.wm.ex.ToolWindowEx;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.util.PsiModificationTracker;
+import com.intellij.ui.AutoScrollFromSourceHandler;
+import com.intellij.ui.AutoScrollToSourceHandler;
 import com.intellij.ui.content.Content;
+import com.intellij.ui.content.ContentManager;
+import com.intellij.util.IJSwingUtilities;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -459,19 +461,17 @@ public class MvcProjectViewPane extends AbstractProjectViewPSIPane implements Id
   }
 
   private class MyAutoScrollFromSourceHandler extends AutoScrollFromSourceHandler {
-    private final Alarm myAlarm = new Alarm(myProject);
-
     protected MyAutoScrollFromSourceHandler() {
-      super(MvcProjectViewPane.this.myProject, MvcProjectViewPane.this);
+      super(MvcProjectViewPane.this.myProject, getTree(), MvcProjectViewPane.this);
     }
 
     @Override
-    protected boolean isAutoScrollMode() {
+    protected boolean isAutoScrollEnabled() {
       return myAutoScrollFromSource;
     }
 
     @Override
-    protected void setAutoScrollMode(boolean state) {
+    protected void setAutoScrollEnabled(boolean state) {
       myAutoScrollFromSource = state;
       if (state) {
         selectElementAtCaretNotLosingFocus();
@@ -479,25 +479,8 @@ public class MvcProjectViewPane extends AbstractProjectViewPSIPane implements Id
     }
 
     @Override
-    public void install() {
-      FileEditorManagerAdapter myEditorManagerListener = new FileEditorManagerAdapter() {
-        public void selectionChanged(final FileEditorManagerEvent event) {
-          myAlarm.cancelAllRequests();
-          myAlarm.addRequest(new Runnable() {
-            public void run() {
-              if (myProject.isDisposed() || !myComponent.isShowing()) return;
-              if (myAutoScrollFromSource) {
-                selectElementAtCaretNotLosingFocus();
-              }
-            }
-          }, 300, ModalityState.NON_MODAL);
-        }
-      };
-      FileEditorManager.getInstance(myProject).addFileEditorManagerListener(myEditorManagerListener, this);
-    }
-
-    @Override
-    public void dispose() {
+    protected void selectElementFromEditor(@NotNull FileEditor editor) {
+     selectElementAtCaretNotLosingFocus();
     }
   }
 

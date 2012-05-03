@@ -8,9 +8,7 @@ import org.jetbrains.jps.Project;
 import java.io.File;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.HashSet;
-import java.util.Locale;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author Eugene Zhuravlev
@@ -18,6 +16,7 @@ import java.util.Set;
  */
 public class Utils {
   public static final Key<Set<String>> CHUNK_REMOVED_SOURCES_KEY = Key.create("_chunk_removed_sources_");
+  public static final Key<Map<String, Collection<String>>> CHUNK_PER_MODULE_REMOVED_SOURCES_KEY = Key.create("_chunk_per_maodule_removed_sources_");
   private static volatile File ourSystemRoot = new File(System.getProperty("user.home", ".jps-server"));
 
   private Utils() {
