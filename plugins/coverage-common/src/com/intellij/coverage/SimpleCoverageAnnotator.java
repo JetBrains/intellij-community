@@ -89,6 +89,8 @@ public abstract class SimpleCoverageAnnotator extends BaseCoverageAnnotator {
     return null;
   }
 
+  // SimpleCoverageAnnotator doesn't require normalized file paths any more
+  // so now coverage report should work w/o usage of this method
   @Deprecated
   public static String getFilePath(final String filePath) {
     return normalizeFilePath(filePath);
