@@ -139,7 +139,7 @@ public class PythonEnterHandler extends EnterHandlerDelegateAdapter {
     }
     if (offset > 0) {
       final PsiElement beforeCaret = file.findElementAt(offset - 1);
-      if (beforeCaret instanceof PsiWhiteSpace && beforeCaret.getText().indexOf('\\') > 0) {
+      if (beforeCaret instanceof PsiWhiteSpace && beforeCaret.getText().indexOf('\\') >= 0) {
         // we've got a backslash at EOL already, don't need another one
         return Result.Continue;
       }
