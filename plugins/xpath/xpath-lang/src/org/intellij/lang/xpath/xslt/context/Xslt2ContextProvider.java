@@ -137,7 +137,7 @@ public class Xslt2ContextProvider extends XsltContextProviderBase {
   private static Map<Pair<QName, Integer>, Function> getCustomFunctions(XmlFile file) {
     final XmlTag rootTag = file.getRootTag();
     // Simplified xslt syntax does not allow to declare custom functions (Saxon 9: "An html element must not contain an xsl:function element")
-    if (rootTag != null && XsltSupport.isXsltTag(rootTag)) {
+    if (rootTag != null && XsltSupport.isXsltRootTag(rootTag)) {
       return ourFunctionCacheProvider.get(FUNCTIONS, file, null).getValue(file);
     }
     return Collections.emptyMap();
