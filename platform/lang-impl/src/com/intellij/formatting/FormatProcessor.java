@@ -17,6 +17,7 @@
 package com.intellij.formatting;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.TextChange;
@@ -24,7 +25,9 @@ import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.impl.BulkChangesMerger;
 import com.intellij.openapi.editor.impl.TextChangeImpl;
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.formatter.DocumentBasedFormattingModel;
@@ -1412,8 +1415,18 @@ class FormatProcessor {
         if (myModel instanceof PsiBasedFormattingModel) {
           PsiBasedFormattingModel psiModel = ((PsiBasedFormattingModel)myModel);
           final ASTNode rootNode = psiModel.getRootNode();
+          if (rootNode == null) {
+            return;
+          }
+          final PsiElement psi = rootNode.getPsi();
+          if (psi == null) {
+            return;
+          }
+          if (ProjectManager.getInstance().getDefaultProject() != psi.getProject()) {
+            return;
+          }
           final Document document = psiModel.getDocumentModel().getDocument();
-          if (rootNode != null && !document.getText().equals(rootNode.getText())) {
+          if (!document.getText().equals(rootNode.getText()) && ApplicationManager.getApplication().isDispatchThread()) {
             document.setText(rootNode.getText());
           }
         }
