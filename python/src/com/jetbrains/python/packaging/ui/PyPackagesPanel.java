@@ -8,9 +8,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.table.JBTable;
 import com.jetbrains.python.packaging.*;
+import com.jetbrains.python.sdk.IronPythonSdkFlavor;
+import com.jetbrains.python.sdk.PythonSdkFlavor;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.apache.xmlrpc.AsyncCallback;
 import org.jetbrains.annotations.NotNull;
@@ -32,6 +35,9 @@ import java.util.*;
 import java.util.List;
 
 public class PyPackagesPanel extends JPanel {
+  public static final String INSTALL_DISTRIBUTE = "installDistribute";
+  public static final String INSTALL_PIP = "installPip";
+  public static final String CREATE_VENV = "createVEnv";
   private final JButton myInstallButton;
   private final JButton myUninstallButton;
   private final JButton myUpgradeButton;
@@ -41,6 +47,7 @@ public class PyPackagesPanel extends JPanel {
   private Sdk mySelectedSdk;
   private final Project myProject;
   private final PyPackagesNotificationPanel myNotificationArea;
+  private boolean myHasDistribute;
   private boolean myHasPip = true;
 
   public PyPackagesPanel(Project project, PyPackagesNotificationPanel area) {
@@ -136,11 +143,6 @@ public class PyPackagesPanel extends JPanel {
 
   public PyPackagesNotificationPanel getNotificationsArea() {
     return myNotificationArea;
-  }
-
-  public void setSdkStatus(boolean sdkValid, boolean hasPip) {
-    myHasPip = hasPip;
-    myInstallButton.setEnabled(sdkValid && hasPip);
   }
 
   private void addUpgradeAction() {
@@ -343,6 +345,64 @@ public class PyPackagesPanel extends JPanel {
             }, ModalityState.any());
           }
         }
+      }
+    });
+  }
+
+  public void updateNotifications(@NotNull final Sdk selectedSdk) {
+    final Application application = ApplicationManager.getApplication();
+    application.executeOnPooledThread(new Runnable() {
+      @Override
+      public void run() {
+        PyExternalProcessException exc = null;
+        try {
+          myHasDistribute = PyPackageManager.getInstance(selectedSdk).findPackage(PyPackageManager.PACKAGE_DISTRIBUTE) != null;
+          if (!myHasDistribute)
+            myHasDistribute = PyPackageManager.getInstance(selectedSdk).findPackage(PyPackageManager.PACKAGE_SETUPTOOLS) != null;
+          myHasPip = PyPackageManager.getInstance(selectedSdk).findPackage(PyPackageManager.PACKAGE_PIP) != null;
+        }
+        catch (PyExternalProcessException e) {
+          exc = e;
+        }
+        final PyExternalProcessException externalProcessException = exc;
+        application.invokeLater(new Runnable() {
+          @Override
+          public void run() {
+            if (selectedSdk == mySelectedSdk) {
+              final PythonSdkFlavor flavor = PythonSdkFlavor.getFlavor(selectedSdk);
+              final boolean invalid = PythonSdkType.isInvalid(selectedSdk);
+              boolean allowCreateVirtualEnv =
+                !(PythonSdkType.isRemote(selectedSdk) || flavor instanceof IronPythonSdkFlavor);
+              final String createVirtualEnvLink = "<a href=\"" + CREATE_VENV + "\">create new VirtualEnv</a>";
+              myNotificationArea.hide();
+              if (!invalid) {
+                String text = null;
+                if (externalProcessException != null) {
+                  text = externalProcessException.getMessage();
+                  allowCreateVirtualEnv &=
+                    externalProcessException.getRetcode() == PyPackageManager.ERROR_NO_PACKAGING_TOOLS;
+                }
+                else if (!myHasDistribute) {
+                  text = "Python package management tools not found. <a href=\"" + INSTALL_DISTRIBUTE + "\">Install 'distribute'</a>";
+                }
+                else if (!myHasPip) {
+                  text = "Python packaging tool 'pip' not found. <a href=\"" + INSTALL_PIP + "\">Install 'pip'</a>";
+                }
+                if (StringUtil.isEmptyOrSpaces(text) && externalProcessException != null) {
+                  text = "Python packaging tool 'pip' not found. <a href=\"" + INSTALL_PIP + "\">Install 'pip'</a>";
+                }
+                if (text != null) {
+                  if (allowCreateVirtualEnv) {
+                    text += " or " + createVirtualEnvLink;
+                  }
+                  myNotificationArea.showWarning(text);
+                }
+              }
+
+              myInstallButton.setEnabled(!invalid && externalProcessException == null && myHasPip);
+            }
+          }
+        }, ModalityState.any());
       }
     });
   }
