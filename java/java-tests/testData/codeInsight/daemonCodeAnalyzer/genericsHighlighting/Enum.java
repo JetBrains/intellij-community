@@ -115,7 +115,7 @@ class X extends <error descr="Classes cannot directly extend 'java.lang.Enum'">E
 
 enum StaticInEnumConstantInitializer {
     AN {
-        <error descr="Inner classes cannot have static declarations">static</error> class s {
+        <error descr="Modifier 'static' not allowed here">static</error> class s {
         }
         private <error descr="Inner classes cannot have static declarations">static</error> final String t = String.valueOf(1);
     };
