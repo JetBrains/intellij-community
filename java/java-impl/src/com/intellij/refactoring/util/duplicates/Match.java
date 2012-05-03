@@ -24,6 +24,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.util.*;
 import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
@@ -311,9 +312,9 @@ public final class Match {
     final PsiElement matchStart = getMatchStart();
     LOG.assertTrue(matchStart == getMatchEnd());
     if (psiExpression instanceof PsiMethodCallExpression && matchStart instanceof PsiReferenceExpression && matchStart.getParent() instanceof PsiMethodCallExpression) {
-      return matchStart.replace(((PsiMethodCallExpression)psiExpression).getMethodExpression());
+      return JavaCodeStyleManager.getInstance(matchStart.getProject()).shortenClassReferences(matchStart.replace(((PsiMethodCallExpression)psiExpression).getMethodExpression()));
     }
-    return matchStart.replace(psiExpression);
+    return JavaCodeStyleManager.getInstance(matchStart.getProject()).shortenClassReferences(matchStart.replace(psiExpression));
   }
 
   TextRange getTextRange() {
