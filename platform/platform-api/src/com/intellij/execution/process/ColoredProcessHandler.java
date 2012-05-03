@@ -28,11 +28,11 @@ import java.nio.charset.Charset;
 
 /**
  * @author Roman Chernyatchik
- * @date Oct 17, 2007
  */
 public class ColoredProcessHandler extends OSProcessHandler {
   public static final char TEXT_ATTRS_PREFIX_CH = '\u001B';
   public static final String TEXT_ATTRS_PREFIX = Character.toString(TEXT_ATTRS_PREFIX_CH) + "[";
+  private static final String TEXT_ATTRS_PATTERN = "m" + TEXT_ATTRS_PREFIX_CH + "\\[";
 
   private Key myCurrentColor;
   @Nullable private final Charset myCharset;
@@ -77,16 +77,33 @@ public class ColoredProcessHandler extends OSProcessHandler {
       if (pos != macroPos) {
         textAvailable(text.substring(pos, macroPos), getCurrentOutputAttributes(outputType));
       }
-      int macroEndPos = text.indexOf('m', macroPos);
-      if (macroEndPos < 0) break;
-      final ColoredOutputTypeRegistry registry = ColoredOutputTypeRegistry.getInstance();
-      final String colorAttribute = text.substring(macroPos, macroEndPos + 1);
-      myCurrentColor = registry.getOutputKey(colorAttribute);
-      pos = macroEndPos+1;
+      final int macroEndPos = getEndMacroPos(text, macroPos);
+      if (macroEndPos < 0) {
+        break;
+      }
+      // this is a simple fix for RUBY-8996:
+      // we replace several consecutive escape sequences with one which contains all these sequences
+      final String colorAttribute = text.substring(macroPos, macroEndPos).replaceAll(TEXT_ATTRS_PATTERN, ";");
+      myCurrentColor = ColoredOutputTypeRegistry.getInstance().getOutputKey(colorAttribute);
+      pos = macroEndPos;
     }
     if (pos < text.length()) {
       textAvailable(text.substring(pos), getCurrentOutputAttributes(outputType));
     }
+  }
+
+  // selects all consecutive escape sequences
+  private static int getEndMacroPos(final String text, int macroPos) {
+    int endMacroPos = text.indexOf('m', macroPos);
+    while (endMacroPos >= 0) {
+      endMacroPos += 1;
+      macroPos = text.indexOf(TEXT_ATTRS_PREFIX, endMacroPos);
+      if (macroPos != endMacroPos) {
+        break;
+      }
+      endMacroPos = text.indexOf('m', macroPos);
+    }
+    return endMacroPos;
   }
 
   protected void textAvailable(final String text, final Key attributes) {
