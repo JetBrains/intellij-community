@@ -492,7 +492,7 @@ class A {
   public void testCallableProperty() {
     doTest(new GroovyAssignabilityCheckInspection());
   }
-  
+
   public void testConstructor() {
     doTest(new GroovyAssignabilityCheckInspection(), new GroovyConstructorNamedArgumentsInspection());
   }
@@ -508,15 +508,15 @@ class A {
   public void testUnnecessaryReturnInSwitch() {
     doTest(new GroovyUnnecessaryReturnInspection());
   }
-  
+
   public void testLiteralConstructorUsages() {
     doTest(new GroovyAssignabilityCheckInspection());
   }
-  
+
   public void testSpreadArguments() {
     doTest(new GroovyAssignabilityCheckInspection());
   }
-  
+
   public void testImmutableConstructorFromJava() {
     myFixture.addFileToProject "a.groovy", '''@groovy.transform.Immutable class Foo { int a; String b }'''
     myFixture.configureByText 'a.java', '''
@@ -577,7 +577,7 @@ class Bar {{
   void testConstructorTypeArgs(){doTest()}
 
   void testIncorrectEscaping() {doTest()}
-  
+
   void testRegexInCommandArg() {doTest()}
   void testOctalInspection() {
     doTest(new GroovyOctalIntegerInspection())
@@ -614,7 +614,7 @@ class A {
 ''')
     myFixture.checkHighlighting(true, false, false)
   }
-  
+
   void testPrivateTopLevelClassInJava() {
     myFixture.addFileToProject('pack/Foo.groovy', 'package pack; private class Foo{}')
     myFixture.configureByText('Abc.java', '''\
@@ -812,11 +812,32 @@ def bar2(def b) { foo2<weak_warning descr="Cannot infer argument types">(b)</wea
   }
 
   public void testPutAtApplicability() {
+    myFixture.addClass("""\
+package java.util;
+public class LinkedHashMap<K,V> extends HashMap<K,V> implements Map<K,V> {}
+""")
+
     myFixture.configureByText('_.groovy', '''\
 LinkedHashMap<File, List<File>> files = [:]
 files[new File('a')] = [new File('b')]
-files<warning descr="'putAt' in 'org.codehaus.groovy.runtime.DefaultGroovyMethods' cannot be applied to '(java.io.File, java.io.File)'">[new File('a')] = new File('b')
+files<warning descr="'putAt' in 'org.codehaus.groovy.runtime.DefaultGroovyMethods' cannot be applied to '(java.io.File, java.io.File)'">[new File('a')]</warning> = new File('b')
 ''')
+    myFixture.enableInspections(new GroovyAssignabilityCheckInspection())
+    myFixture.testHighlighting(true, false, true)
+  }
+
+  public void testStringToCharAssignability() {
+    myFixture.configureByText('_.groovy', '''\
+def foo(char c){}
+
+foo<warning descr="'foo' in '_' cannot be applied to '(java.lang.String)'">('a')</warning>
+foo('a' as char)
+foo('a' as Character)
+
+char c = 'a'
+''')
+    myFixture.enableInspections(new GroovyAssignabilityCheckInspection())
+    myFixture.testHighlighting(true, false, true)
   }
 
 }
