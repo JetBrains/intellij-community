@@ -622,6 +622,17 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
     return (GrThisReferenceExpression)dummy.getStatements()[0];
   }
 
+  @Override
+  public GrBlockStatement createBlockStatementFromText(String text, PsiElement context) {
+    GroovyFileImpl file = createDummyFile("if()" + text);
+    GrStatement[] statements = file.getStatements();
+    LOG.assertTrue(statements.length == 1 && statements[0] instanceof GrIfStatement, text);
+
+    GrStatement branch = ((GrIfStatement)statements[0]).getThenBranch();
+    LOG.assertTrue(branch instanceof GrBlockStatement);
+    return (GrBlockStatement)branch;
+  }
+
   public GrImportStatement createImportStatementFromText(String qName, boolean isStatic, boolean isOnDemand, String alias) {
     final String text = "import " + (isStatic ? "static " : "") + qName + (isOnDemand ? ".*" : "") +
         (alias != null && alias.length() > 0 ? " as " + alias : "");

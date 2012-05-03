@@ -62,6 +62,8 @@ public abstract class GroovyPsiElementFactory implements JVMElementFactory {
 
   public abstract GrThisReferenceExpression createThisExpression(PsiManager manager, PsiClass psiClass);
 
+  public abstract GrBlockStatement createBlockStatementFromText(String text, @Nullable PsiElement context);
+
   public static GroovyPsiElementFactory getInstance(Project project) {
     return ServiceManager.getService(project, GroovyPsiElementFactory.class);
   }
