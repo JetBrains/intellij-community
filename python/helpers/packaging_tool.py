@@ -18,11 +18,13 @@ def exit(retcode):
 
 def usage():
     sys.stderr.write('Usage: packaging_tool.py <list|install|uninstall>\n')
+    sys.stderr.flush()
     exit(ERROR_WRONG_USAGE)
 
 
 def error(message, retcode):
     sys.stderr.write('Error: %s\n' % message)
+    sys.stderr.flush()
     exit(retcode)
 
 
@@ -37,7 +39,8 @@ def do_list():
         error("Python package management tools not found. <a href=\"installDistribute\">Install 'distribute'</a>", ERROR_NO_PACKAGING_TOOLS)
     for pkg in pkg_resources.working_set:
         requires = ':'.join([str(x) for x in pkg.requires()])
-        print('\t'.join([pkg.project_name, pkg.version, pkg.location, requires]))
+        sys.stdout.write('\t'.join([pkg.project_name, pkg.version, pkg.location, requires])+chr(10))
+    sys.stdout.flush()
 
 
 def do_install(pkgs):
@@ -69,7 +72,8 @@ def untarDirectory(name):
     for item in tar:
         tar.extract(item, directory_name)
 
-    print (directory_name)
+    sys.stdout.write(directory_name+chr(10))
+    sys.stdout.flush()
 
 
 def mkdtemp_ifneeded():
