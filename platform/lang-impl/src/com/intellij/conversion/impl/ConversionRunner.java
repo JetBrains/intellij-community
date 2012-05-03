@@ -107,7 +107,10 @@ public class ConversionRunner {
     catch (CannotConvertException ignored) {
     }
     if (!myProvider.canDetermineIfConversionAlreadyPerformedByProjectFiles()) {
-      affectedFiles.add(myContext.getProjectFileVersionSettings().getFile());
+      final ComponentManagerSettings settings = myContext.getProjectFileVersionSettings();
+      if (settings != null) {
+        affectedFiles.add(settings.getFile());
+      }
     }
     
     affectedFiles.addAll(myConverter.getAdditionalAffectedFiles());

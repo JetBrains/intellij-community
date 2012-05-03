@@ -254,6 +254,7 @@ public class ConversionContextImpl implements ConversionContext {
     return myModulesSettings;
   }
   
+  @Nullable
   public ComponentManagerSettings getProjectFileVersionSettings() {
     if (myProjectFileVersionSettings == null) {
       myProjectFileVersionSettings = createProjectSettings("misc.xml");
@@ -421,14 +422,16 @@ public class ConversionContextImpl implements ConversionContext {
 
   private Set<String> loadPerformedConversionIds() {
     final ComponentManagerSettings component = getProjectFileVersionSettings();
-    final Element componentElement = component.getComponentElement(ProjectFileVersionImpl.COMPONENT_NAME);
-    if (componentElement != null) {
-      Set<String> performedConversionIds = new HashSet<String>();
-      final ProjectFileVersionState state = XmlSerializer.deserialize(componentElement, ProjectFileVersionState.class);
-      if (state != null) {
-        performedConversionIds.addAll(state.getPerformedConversionIds());
+    if (component != null) {
+      final Element componentElement = component.getComponentElement(ProjectFileVersionImpl.COMPONENT_NAME);
+      if (componentElement != null) {
+        Set<String> performedConversionIds = new HashSet<String>();
+        final ProjectFileVersionState state = XmlSerializer.deserialize(componentElement, ProjectFileVersionState.class);
+        if (state != null) {
+          performedConversionIds.addAll(state.getPerformedConversionIds());
+        }
+        return performedConversionIds;
       }
-      return performedConversionIds;
     }
     return Collections.emptySet();
   }
