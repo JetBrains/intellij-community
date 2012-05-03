@@ -61,7 +61,6 @@ public class PyAugmentAssignmentInspection extends PyInspection {
           leftExpression = tmp;
           changedParts = true;
         }
-        if (changedParts && rightExpression instanceof PyStringLiteralExpression) return;  // PY-6331  a = "str" + a
 
         final PyElementType op = expression.getOperator();
         final TokenSet operations = TokenSet.create(PyTokenTypes.PLUS, PyTokenTypes.MINUS, PyTokenTypes.MULT,
@@ -80,8 +79,8 @@ public class PyAugmentAssignmentInspection extends PyInspection {
                 if (type != null) {
                   final PyBuiltinCache cache = PyBuiltinCache.getInstance(rightExpression);
                   if (PyTypeChecker.match(cache.getComplexType(), type, myTypeEvalContext) ||
-                      PyTypeChecker.match(cache.getStringType(LanguageLevel.forElement(rightExpression)), type,
-                                          myTypeEvalContext)) {
+                      (PyTypeChecker.match(cache.getStringType(LanguageLevel.forElement(rightExpression)), type,
+                                          myTypeEvalContext) && !changedParts)) {
                     registerProblem(node, "Assignment can be replaced with augmented assignment", new AugmentedAssignmentQuickFix());
                   }
                 }

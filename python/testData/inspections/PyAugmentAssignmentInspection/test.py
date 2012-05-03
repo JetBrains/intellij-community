@@ -29,5 +29,11 @@ var_7 += 2
 #PY-2514
 dy = 1 - dy
 
+#PY-6331
 var = "string"
 var = "some " + var
+
+#PY-6490
+foo = "a"
+bar = "b"
+foo = bar + foo
