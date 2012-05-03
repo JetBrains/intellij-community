@@ -24,6 +24,8 @@ import org.xml.sax.InputSource;
 
 import javax.swing.*;
 import java.io.InputStream;
+import java.io.Reader;
+import java.io.StringReader;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -206,10 +208,18 @@ public class RedmineRepository extends BaseRepositoryImpl {
       url += "&per_page=" + encodeUrl(String.valueOf(max));
     }
     HttpMethod method = doREST(url, false);
-    InputStream stream = method.getResponseBodyAsStream();
-    InputSource source = new InputSource(stream);
+    final String response = method.getResponseBodyAsString();
+    final Reader stream = new StringReader(response);
+    final InputSource source = new InputSource(stream);
     source.setEncoding("UTF-8");
-    Element element = new SAXBuilder(false).build(source).getRootElement();
+    Element element;
+    try {
+      element = new SAXBuilder(false).build(source).getRootElement();
+    } catch (Throwable t) {
+      LOG.error("Error fetching issues for: " + url + ", HTTP status code: " + method.getStatusCode(), t, response);
+      throw new Exception("Error fetching issues for: " + url + ", HTTP status code: " + method.getStatusCode() +
+                          "\n" + response);
+    }
 
     if (!"issues".equals(element.getName())) {
       LOG.warn("Error fetching issues for: " + url + ", HTTP status code: " + method.getStatusCode());
