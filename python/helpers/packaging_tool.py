@@ -10,7 +10,6 @@ def exit(retcode):
     version = major * 10 + minor
     if version < 25:
         import os
-
         os._exit(retcode)
     else:
         sys.exit(retcode)
@@ -74,7 +73,7 @@ def untarDirectory(name):
 
     sys.stdout.write(directory_name+chr(10))
     sys.stdout.flush()
-
+    return 0
 
 def mkdtemp_ifneeded():
     try:
