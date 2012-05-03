@@ -671,6 +671,7 @@
 
     <!-- Mako files -->
     <multiLangCommenter implementation="com.jetbrains.python.templateLanguages.TemplatesCommentProvider"/>
+    <highlightErrorFilter implementation="com.jetbrains.mako.inspection.MakoErrorFilter"/>
 
     <lang.substitutor language="HTML" implementationClass="com.jetbrains.python.templateLanguages.TemplateLanguageSubstitutor"/>
     <lang.substitutor language="XHTML" implementationClass="com.jetbrains.python.templateLanguages.TemplateLanguageSubstitutor"/>
