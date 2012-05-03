@@ -12,8 +12,8 @@ import java.util.List;
  */
 @State(name = "TestRunnerService",
       storages = {
-      @Storage( file = "$PROJECT_FILE$"),
-      @Storage( file = "$PROJECT_CONFIG_DIR$/testrunner.xml", scheme = StorageScheme.DIRECTORY_BASED)
+      @Storage( file = StoragePathMacros.PROJECT_FILE),
+      @Storage( file = StoragePathMacros.PROJECT_CONFIG_DIR + "/testrunner.xml", scheme = StorageScheme.DIRECTORY_BASED)
       }
 )
 public class TestRunnerService implements PersistentStateComponent<TestRunnerService> {

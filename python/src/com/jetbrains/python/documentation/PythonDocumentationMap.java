@@ -2,10 +2,7 @@ package com.jetbrains.python.documentation;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Sets;
-import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.*;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.psi.PyClass;
@@ -26,7 +23,7 @@ import java.util.Map;
   name = "PythonDocumentationMap",
   storages = {
   @Storage(
-    file = "$APP_CONFIG$/other.xml")
+    file = StoragePathMacros.APP_CONFIG + "/other.xml")
     }
 )
 public class PythonDocumentationMap implements PersistentStateComponent<PythonDocumentationMap.State> {
