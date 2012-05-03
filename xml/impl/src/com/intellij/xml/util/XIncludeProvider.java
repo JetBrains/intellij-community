@@ -23,7 +23,6 @@ import com.intellij.psi.impl.include.FileIncludeInfo;
 import com.intellij.psi.impl.include.FileIncludeProvider;
 import com.intellij.util.indexing.FileContent;
 import com.intellij.util.text.CharArrayUtil;
-import com.intellij.util.text.CharSequenceReader;
 import com.intellij.util.xml.NanoXmlUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -51,7 +50,7 @@ public class XIncludeProvider extends FileIncludeProvider {
     CharSequence contentAsText = content.getContentAsText();
     if (CharArrayUtil.indexOf(contentAsText, XmlUtil.XINCLUDE_URI, 0) == -1) return FileIncludeInfo.EMPTY;
     final ArrayList<FileIncludeInfo> infos = new ArrayList<FileIncludeInfo>();
-    NanoXmlUtil.parse(new CharSequenceReader(contentAsText), new NanoXmlUtil.IXMLBuilderAdapter() {
+    NanoXmlUtil.parse(CharArrayUtil.readerFromCharSequence(contentAsText), new NanoXmlUtil.IXMLBuilderAdapter() {
 
       boolean isXInclude;
       @Override

@@ -16,7 +16,6 @@ import org.jetbrains.android.util.ValueResourcesFileParser;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.ByteArrayInputStream;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
@@ -49,7 +48,7 @@ public class AndroidValueResourcesIndex extends FileBasedIndexExtension<Resource
         }
         final Map<ResourceEntry, Set<ResourceEntry>> result = new HashMap<ResourceEntry, Set<ResourceEntry>>();
 
-        NanoXmlUtil.parse(new ByteArrayInputStream(inputData.getContent()), new ValueResourcesFileParser() {
+        NanoXmlUtil.parse(CharArrayUtil.readerFromCharSequence(inputData.getContentAsText()), new ValueResourcesFileParser() {
           @Override
           protected void stop() {
             throw new NanoXmlUtil.ParserStoppedException();

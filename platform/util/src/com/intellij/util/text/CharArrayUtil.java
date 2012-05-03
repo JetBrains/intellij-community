@@ -549,8 +549,8 @@ public class CharArrayUtil {
   public static Reader readerFromCharSequence(CharSequence text) {
     Reader reader;
     char[] chars = fromSequenceWithoutCopying(text);
-    if (chars != null) reader = new CharArrayReader(chars, 0, text.length());
-    else reader = new StringReader(text.toString());
+    if (chars != null) reader = new UnsyncCharArrayReader(chars, 0, text.length());
+    else reader = new CharSequenceReader(text.toString());
     return reader;
   }
 }

@@ -22,7 +22,6 @@ import com.intellij.util.indexing.*;
 import com.intellij.util.io.EnumeratorStringDescriptor;
 import com.intellij.util.io.KeyDescriptor;
 import com.intellij.util.text.CharArrayUtil;
-import com.intellij.util.text.CharSequenceReader;
 import com.intellij.util.xml.NanoXmlUtil;
 import org.intellij.plugins.relaxNG.ApplicationLoader;
 import org.intellij.plugins.relaxNG.compact.RncFileType;
@@ -73,7 +72,7 @@ public class RelaxSymbolIndex extends ScalarIndexExtension<String> {
         if (inputData.getFileType() == XmlFileType.INSTANCE) {
           CharSequence inputDataContentAsText = inputData.getContentAsText();
           if (CharArrayUtil.indexOf(inputDataContentAsText, ApplicationLoader.RNG_NAMESPACE, 0) == -1) return Collections.EMPTY_MAP;
-          NanoXmlUtil.parse(new CharSequenceReader(inputDataContentAsText), new NanoXmlUtil.IXMLBuilderAdapter() {
+          NanoXmlUtil.parse(CharArrayUtil.readerFromCharSequence(inputData.getContentAsText()), new NanoXmlUtil.IXMLBuilderAdapter() {
             NanoXmlUtil.IXMLBuilderAdapter attributeHandler;
             int depth;
 
