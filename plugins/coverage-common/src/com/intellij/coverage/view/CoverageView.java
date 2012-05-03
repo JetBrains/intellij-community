@@ -12,8 +12,8 @@ import com.intellij.ide.actions.ContextHelpAction;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.fileEditor.*;
+import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -27,10 +27,9 @@ import com.intellij.psi.PsiManager;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.table.JBTable;
-import com.intellij.util.Alarm;
-import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.StatusText;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableCellRenderer;
@@ -298,58 +297,39 @@ public class CoverageView extends JPanel implements DataProvider{
   }
 
   private class MyAutoScrollFromSourceHandler extends AutoScrollFromSourceHandler {
-    private final Alarm myAutoscrollAlarm = new Alarm(myProject);
-    
     public MyAutoScrollFromSourceHandler() {
-      super(CoverageView.this.myProject);
+      super(CoverageView.this.myProject, CoverageView.this);
     }
 
     @Override
-    protected boolean isAutoScrollMode() {
+    protected boolean isAutoScrollEnabled() {
       return myStateBean.myAutoScrollFromSource;
     }
 
     @Override
-    protected void setAutoScrollMode(boolean state) {
+    protected void setAutoScrollEnabled(boolean state) {
       myStateBean.myAutoScrollFromSource = state;
     }
 
-    public void install() {
-      final MessageBusConnection connection = myProject.getMessageBus().connect(myProject);
-      connection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerAdapter() {
-        public void selectionChanged(final FileEditorManagerEvent event) {
-          final FileEditor newEditor = event.getNewEditor();
-          if (newEditor == null) return;
-          myAutoscrollAlarm.cancelAllRequests();
-          myAutoscrollAlarm.addRequest(new Runnable() {
-            public void run() {
-              if (myProject.isDisposed() || !CoverageView.this.isShowing()) return;
-              if (myStateBean.myAutoScrollFromSource) {
-                final VirtualFile file = FileEditorManagerEx.getInstanceEx(myProject).getFile(newEditor);
-                if (file != null) {
-                  if (canSelect(file)) {
-                    PsiElement e = null;
-                    if (newEditor instanceof TextEditor) {
-                      final int offset = ((TextEditor)newEditor).getEditor().getCaretModel().getOffset();
-                      PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-                      final PsiFile psiFile = PsiManager.getInstance(myProject).findFile(file);
-                      if (psiFile != null) {
-                        e = psiFile.findElementAt(offset);
-                      }
-                    }
-                    myBuilder.select(e != null ? e : file);
-                  }
-                }
+    @Override
+    protected void selectElementFromEditor(@NotNull FileEditor editor) {
+      if (myProject.isDisposed() || !CoverageView.this.isShowing()) return;
+      if (myStateBean.myAutoScrollFromSource) {
+        final VirtualFile file = FileEditorManagerEx.getInstanceEx(myProject).getFile(editor);
+        if (file != null) {
+          if (canSelect(file)) {
+            PsiElement e = null;
+            if (editor instanceof TextEditor) {
+              final int offset = ((TextEditor)editor).getEditor().getCaretModel().getOffset();
+              PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+              final PsiFile psiFile = PsiManager.getInstance(myProject).findFile(file);
+              if (psiFile != null) {
+                e = psiFile.findElementAt(offset);
               }
             }
-          }, 300, ModalityState.NON_MODAL);
+            myBuilder.select(e != null ? e : file);
+          }
         }
-      });
-    }
-
-    public void dispose() {
-      if (!myAutoscrollAlarm.isDisposed()) {
-        myAutoscrollAlarm.cancelAllRequests();
       }
     }
   }
