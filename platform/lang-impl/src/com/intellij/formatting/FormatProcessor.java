@@ -16,6 +16,7 @@
 
 package com.intellij.formatting;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.TextChange;
@@ -27,6 +28,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.formatter.DocumentBasedFormattingModel;
+import com.intellij.psi.formatter.PsiBasedFormattingModel;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NotNull;
@@ -1408,6 +1410,16 @@ class FormatProcessor {
       
       if (done) {
         myModel.commitChanges();
+        
+        // TODO [cdr] remove when IDEA-85591 is done
+        if (myModel instanceof PsiBasedFormattingModel) {
+          PsiBasedFormattingModel psiModel = ((PsiBasedFormattingModel)myModel);
+          final ASTNode rootNode = psiModel.getRootNode();
+          final Document document = psiModel.getDocumentModel().getDocument();
+          if (rootNode != null && !document.getText().equals(rootNode.getText())) {
+            document.setText(rootNode.getText());
+          }
+        }
       }
     }
 
