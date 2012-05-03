@@ -26,7 +26,7 @@ import com.intellij.designer.model.RadComponent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.ui.ColoredTreeCellRenderer;
+import com.intellij.ui.SimpleColoredComponent;
 
 import java.awt.*;
 import java.lang.reflect.Field;
@@ -40,7 +40,7 @@ public class RadGridLayoutComponent extends RadViewContainer implements ICompone
   private GridInfo myVirtualGridInfo;
 
   @Override
-  public void decorateTree(ColoredTreeCellRenderer renderer) {
+  public void decorateTree(SimpleColoredComponent renderer) {
     XmlTag tag = getTag();
     StringBuilder value = new StringBuilder(" (");
 

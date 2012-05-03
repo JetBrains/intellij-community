@@ -13,13 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.designer.model;
+package com.intellij.android.designer.model.layout.relative;
 
-import com.intellij.ui.SimpleColoredComponent;
+import com.intellij.android.designer.model.RadViewComponent;
 
 /**
  * @author Alexander Lobas
  */
-public interface IComponentDecorator {
-  void decorateTree(SimpleColoredComponent renderer);
+public class RelativeInfo {
+  public RadViewComponent alignTop;
+  public RadViewComponent alignBottom;
+  public RadViewComponent alignLeft;
+  public RadViewComponent alignRight;
+  public RadViewComponent alignBaseline;
+  public RadViewComponent above;
+  public RadViewComponent below;
+  public RadViewComponent toLeftOf;
+  public RadViewComponent toRightOf;
 }

@@ -210,6 +210,7 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
         RadViewComponent newRootComponent = parser.getRootComponent();
 
         newRootComponent.setClientProperty(ModelParser.XML_FILE_KEY, myXmlFile);
+        newRootComponent.setClientProperty(TreeComponentDecorator.KEY, myTreeDecorator);
 
         PropertyParser propertyParser = new PropertyParser(myModule, myProfileAction.getProfileManager().getSelectedTarget());
         newRootComponent.setClientProperty(PropertyParser.KEY, propertyParser);

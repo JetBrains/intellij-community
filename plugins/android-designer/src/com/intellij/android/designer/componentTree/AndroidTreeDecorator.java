@@ -24,7 +24,7 @@ import com.intellij.designer.palette.Item;
 import com.intellij.designer.propertyTable.Property;
 import com.intellij.designer.propertyTable.PropertyTable;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.ColoredTreeCellRenderer;
+import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,7 +33,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public final class AndroidTreeDecorator extends TreeComponentDecorator {
   @Override
-  public void decorate(RadComponent component, ColoredTreeCellRenderer renderer) {
+  public void decorate(RadComponent component, SimpleColoredComponent renderer, boolean full) {
     MetaModel metaModel = component.getMetaModel();
 
     String id = getPropertyValue(component, "id");
@@ -76,10 +76,13 @@ public final class AndroidTreeDecorator extends TreeComponentDecorator {
     }
 
     renderer.append(fullTitle.toString());
-    renderer.setIcon(metaModel.getIcon());
 
-    if (component instanceof IComponentDecorator) {
-      ((IComponentDecorator)component).decorateTree(renderer);
+    if (full) {
+      renderer.setIcon(metaModel.getIcon());
+
+      if (component instanceof IComponentDecorator) {
+        ((IComponentDecorator)component).decorateTree(renderer);
+      }
     }
   }
 

@@ -121,8 +121,7 @@ public final class ComponentTree extends Tree implements DataProvider {
                                         boolean hasFocus) {
         RadComponent component = extractComponent(value);
         if (component != null) {
-          // TODO: support more parameters and attributes
-          myDecorator.decorate(component, this);
+          myDecorator.decorate(component, this, true);
 
           if (myMarkComponent == component) {
             if (myMarkFeedback == FeedbackTreeLayer.INSERT_SELECTION) {

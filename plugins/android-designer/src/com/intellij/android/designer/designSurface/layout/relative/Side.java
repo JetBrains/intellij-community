@@ -13,13 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.designer.model;
-
-import com.intellij.ui.SimpleColoredComponent;
+package com.intellij.android.designer.designSurface.layout.relative;
 
 /**
  * @author Alexander Lobas
  */
-public interface IComponentDecorator {
-  void decorateTree(SimpleColoredComponent renderer);
+public enum Side {
+  top,
+  left,
+  bottom,
+  right,
+  center_horizontal,
+  center_vertical
 }
