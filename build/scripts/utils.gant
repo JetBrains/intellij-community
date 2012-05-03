@@ -599,6 +599,7 @@ binding.setVariable("buildTarGz", { String tarRoot, String tarPath, List paths -
       tarfileset(dir: it, prefix: tarRoot) {
         exclude(name: "bin/*.sh")
         exclude(name: "bin/fsnotifier*")
+        type(type: "file")
       }
     }
 
@@ -606,6 +607,7 @@ binding.setVariable("buildTarGz", { String tarRoot, String tarPath, List paths -
       tarfileset(dir: it, filemode: "755", prefix: tarRoot) {
         include(name: "bin/*.sh")
         include(name: "bin/fsnotifier*")
+        type(type: "file")
       }
     }
   }
