@@ -42,7 +42,7 @@ class PycharmTestCommand(Command):
       # point at the core syncdb command when creating tests
       # tests should always be up to date with the most recent model structure
       management._commands['syncdb'] = 'django.core'
-    else:
+    elif 'south' in settings.INSTALLED_APPS:
       try:
         from south.management.commands import MigrateAndSyncCommand
         management._commands['syncdb'] = MigrateAndSyncCommand()
