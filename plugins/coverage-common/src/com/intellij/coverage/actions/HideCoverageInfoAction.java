@@ -12,7 +12,7 @@ import com.intellij.openapi.util.IconLoader;
 */
 public class HideCoverageInfoAction extends AnAction {
   public HideCoverageInfoAction() {
-    super("Hide coverage information", "Hide coverage information", IconLoader.getIcon("/actions/cancel.png"));
+    super("&Hide Coverage Data", "Hide coverage data", IconLoader.getIcon("/actions/cancel.png"));
   }
 
   public void actionPerformed(final AnActionEvent e) {
