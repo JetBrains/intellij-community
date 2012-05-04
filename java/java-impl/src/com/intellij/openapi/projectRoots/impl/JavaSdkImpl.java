@@ -98,13 +98,16 @@ public class JavaSdkImpl extends JavaSdk {
   public String getDefaultDocumentationUrl(final @NotNull Sdk sdk) {
     final JavaSdkVersion version = getVersion(sdk);
     if (version == JavaSdkVersion.JDK_1_5) {
-      return "http://download.oracle.com/javase/1.5.0/docs/api/";
+      return "http://docs.oracle.com/javase/1.5.0/docs/api/";
     }
     else if (version == JavaSdkVersion.JDK_1_6) {
-      return "http://download.oracle.com/javase/6/docs/api/";
+      return "http://docs.oracle.com/javase/6/docs/api/";
     }
     else if (version == JavaSdkVersion.JDK_1_7) {
-      return "http://download.oracle.com/javase/7/docs/api/";
+      return "http://docs.oracle.com/javase/7/docs/api/";
+    }
+    else if (version == JavaSdkVersion.JDK_1_8) {
+      return "http://download.java.net/jdk8/docs/api/";
     }
     return null;
   }
