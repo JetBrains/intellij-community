@@ -45,6 +45,7 @@ import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.HashSet;
+import com.intellij.util.ui.FormBuilder;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
@@ -89,7 +90,8 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
   public static final String USER_DEFINED = SSRBundle.message("new.template.defaultname");
   protected final ExistingTemplatesComponent existingTemplatesComponent;
 
-  private static final String DEFAULT_FILE_TYPE_SEARCH_VARIANT = StructuralSearchProfile.getTypeName(StructuralSearchUtil.DEFAULT_FILE_TYPE);
+  private static final String DEFAULT_FILE_TYPE_SEARCH_VARIANT =
+    StructuralSearchProfile.getTypeName(StructuralSearchUtil.DEFAULT_FILE_TYPE);
 
   private boolean useLastConfiguration;
 
@@ -178,7 +180,8 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
     }
 
     editor.getDocument().addDocumentListener(new DocumentListener() {
-      public void beforeDocumentChange(final DocumentEvent event) {}
+      public void beforeDocumentChange(final DocumentEvent event) {
+      }
 
       public void documentChanged(final DocumentEvent event) {
         initiateValidation();
@@ -239,17 +242,9 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
     caseSensitiveMatch = new JCheckBox(SSRBundle.message("case.sensitive.checkbox"), true);
     searchOptions.add(caseSensitiveMatch);
 
-    searchOptions.add(
-      UIUtil.createOptionLine(
-        new JComponent[]{
-          maxMatchesSwitch = new JCheckBox(SSRBundle.message("maximum.matches.checkbox"), false),
-          maxMatches = new JTextField(Integer.toString(MatchOptions.DEFAULT_MAX_MATCHES_COUNT), 3),
-          new Box.Filler(new Dimension(0, 0), new Dimension(Short.MAX_VALUE, 0), new Dimension(Short.MAX_VALUE, 0))
-        }
-      )
-    );
-
-    maxMatches.setMinimumSize(new Dimension(50, -1));
+    maxMatchesSwitch = new JCheckBox(SSRBundle.message("maximum.matches.checkbox"), false);
+    maxMatches = new JTextField(Integer.toString(MatchOptions.DEFAULT_MAX_MATCHES_COUNT), 3);
+    searchOptions.add(FormBuilder.createFormBuilder().addLabeledComponent(maxMatchesSwitch, maxMatches).getPanel());
 
     //noinspection HardCodedStringLiteral
     Set<String> typeNames = new HashSet<String>();
@@ -304,7 +299,7 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
           (JComponent)Box.createHorizontalStrut(8),
           jLabel3,
           dialects,
-          new Box.Filler(new Dimension(0, 0), new Dimension(Short.MAX_VALUE, 0), new Dimension(Short.MAX_VALUE, 0))
+          //new Box.Filler(new Dimension(0, 0), new Dimension(Short.MAX_VALUE, 0), new Dimension(Short.MAX_VALUE, 0))
         }
       )
     );
@@ -461,7 +456,7 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
 
     model.getConfig().getMatchOptions().clearVariableConstraints();
     if (matchOptions.hasVariableConstraints()) {
-      for (Iterator<String> i = matchOptions.getVariableConstraintNames(); i.hasNext();) {
+      for (Iterator<String> i = matchOptions.getVariableConstraintNames(); i.hasNext(); ) {
         final MatchVariableConstraint constraint = (MatchVariableConstraint)matchOptions.getVariableConstraint(i.next()).clone();
         model.getConfig().getMatchOptions().addVariableConstraint(constraint);
         if (isReplaceDialog()) constraint.setPartOfSearchResults(false);
@@ -648,10 +643,13 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
     if (myShowScopePanel) {
       JPanel scopePanel = new JPanel(new GridBagLayout());
 
-      TitledSeparatorWithMnemonic separator = new TitledSeparatorWithMnemonic(SSRBundle.message("search.dialog.scope.label"), myScopeChooserCombo.getComboBox());
-      scopePanel.add(separator, new GridBagConstraints(0, 0, 1, 1, 1, 1, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, new Insets(5,0,0,0), 0, 0));
+      TitledSeparatorWithMnemonic separator =
+        new TitledSeparatorWithMnemonic(SSRBundle.message("search.dialog.scope.label"), myScopeChooserCombo.getComboBox());
+      scopePanel.add(separator, new GridBagConstraints(0, 0, 1, 1, 1, 1, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL,
+                                                       new Insets(5, 0, 0, 0), 0, 0));
 
-      scopePanel.add(myScopeChooserCombo, new GridBagConstraints(0, 1, 1, 1, 1, 1, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, new Insets(0,10,0,0), 0, 0));
+      scopePanel.add(myScopeChooserCombo, new GridBagConstraints(0, 1, 1, 1, 1, 1, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL,
+                                                                 new Insets(0, 10, 0, 0), 0, 0));
 
       allOptions.add(
         scopePanel,
@@ -690,8 +688,8 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
     statusPanel.add(super.createSouthPanel(), BorderLayout.NORTH);
     statusPanel.add(statusText = new JLabel(SSRBundle.message("status.message")), BorderLayout.WEST);
     final String s = SSRBundle.message("status.mnemonic");
-    if (s.length() > 0) statusText.setDisplayedMnemonic( s.charAt(0) );
-    statusPanel.add(status = new JLabel(),BorderLayout.CENTER);
+    if (s.length() > 0) statusText.setDisplayedMnemonic(s.charAt(0));
+    statusPanel.add(status = new JLabel(), BorderLayout.CENTER);
 
     return statusPanel;
   }
@@ -973,7 +971,8 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
 
     boolean searchWithinHierarchy = IdeBundle.message("scope.class.hierarchy").equals(myScopeChooserCombo.getSelectedScopeName());
     // We need to reset search within hierarchy scope during online validation since the scope works with user participation
-    options.setScope(searchWithinHierarchy && !myDoingOkAction? GlobalSearchScope.projectScope(getProject()) :myScopeChooserCombo.getSelectedScope());
+    options.setScope(
+      searchWithinHierarchy && !myDoingOkAction ? GlobalSearchScope.projectScope(getProject()) : myScopeChooserCombo.getSelectedScope());
     options.setLooseMatching(true);
     options.setRecursiveSearch(isRecursiveSearchEnabled() && recursiveMatching.isSelected());
     //options.setDistinct( distinctResults.isSelected() );
