@@ -164,7 +164,12 @@ public class PropertyParser {
             property = new FlagProperty(name, definition);
           }
           else {
-            property = new AttributeProperty(name, definition);
+            if ("id".equals(name) && "View".equals(component)) {
+              property = new IdProperty(name, definition);
+            }
+            else {
+              property = new AttributeProperty(name, definition);
+            }
           }
 
           if (model != null) {

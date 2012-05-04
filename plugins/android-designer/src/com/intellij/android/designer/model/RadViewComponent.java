@@ -75,8 +75,15 @@ public class RadViewComponent extends RadVisualComponent {
     myMargins = null;
   }
 
+  public String ensureId() {
+    String id = getId();
+    if (id == null) {
+      id = IdManager.get(this).createId(this);
+    }
+    return id;
+  }
+
   public String getId() {
-    // TODO: ensure id
     return getId(myTag.getAttributeValue("android:id"));
   }
 
@@ -123,6 +130,8 @@ public class RadViewComponent extends RadVisualComponent {
 
   @Override
   public void delete() throws Exception {
+    IdManager.get(this).removeComponent(this, true);
+
     removeFromParent();
 
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
