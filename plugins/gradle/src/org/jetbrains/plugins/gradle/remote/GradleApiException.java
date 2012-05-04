@@ -76,10 +76,26 @@ public class GradleApiException extends RuntimeException {
 
   @Nullable
   private static String extractMessage(@Nullable String message, @Nullable Throwable cause) {
+    StringBuilder buffer = new StringBuilder();
     if (message != null) {
-      return message;
+      buffer.append(message);
     }
-    return cause == null ? "" : cause.getMessage(); 
+    
+    boolean first = true;
+    for (Throwable t = cause; t != null; t = t.getCause()) {
+      final String m = t.getLocalizedMessage();
+      if (m == null) {
+        continue;
+      }
+      if (first) {
+        first = false;
+      }
+      else if (buffer.length() > 0) {
+        buffer.append("\n");
+      }
+      buffer.append(m);
+    }
+    
+    return buffer.toString(); 
   }
-  
 }
