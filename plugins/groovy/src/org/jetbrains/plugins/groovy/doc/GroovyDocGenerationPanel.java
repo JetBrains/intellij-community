@@ -33,9 +33,7 @@ import org.jetbrains.plugins.groovy.doc.actions.GroovyDocReducePackageAction;
 import javax.swing.*;
 import java.awt.*;
 import java.io.File;
-import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 public final class GroovyDocGenerationPanel extends JPanel {
@@ -50,7 +48,6 @@ public final class GroovyDocGenerationPanel extends JPanel {
   private JPanel myPackagesPanel;
 
   private DefaultActionGroup myActionGroup;
-  private final ActionToolbar myActionToolbar;
 
   private GroovyDocAddPackageAction myAddPackageAction;
   private GroovyDocReducePackageAction myReducePackageAction;
@@ -72,11 +69,13 @@ public final class GroovyDocGenerationPanel extends JPanel {
     myPackagesPanel.setLayout(new BorderLayout());
     myPackagesPanel.setBorder(IdeBorderFactory.createTitledBorder("Source packages", false));
 
-    myActionToolbar = ActionManager.getInstance().createActionToolbar("GroovyDoc", getActionGroup(), true);
-    myPackagesPanel.add(myActionToolbar.getComponent(), BorderLayout.NORTH);
+    ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar("GroovyDoc", getActionGroup(), true);
+    myPackagesPanel.add(actionToolbar.getComponent(), BorderLayout.NORTH);
     myPackagesPanel.add(packagesScrollPane, BorderLayout.SOUTH);
 
-    myActionToolbar.updateActionsImmediately();
+    actionToolbar.updateActionsImmediately();
+
+    myPanel.setMinimumSize(new Dimension(-1, 350));
   }
 
   private ActionGroup getActionGroup() {
@@ -97,28 +96,6 @@ public final class GroovyDocGenerationPanel extends JPanel {
   public void setPackagesList(String packagesName) {
     myDataModel.removeAllElements();
     myDataModel.add(0, packagesName);
-  }
-
-  public static class MyPackagesModel extends DefaultListModel {
-    List<String> packagesNames = new ArrayList<String>();
-
-    public int getSize() {
-      return packagesNames.size();
-    }
-
-    public Object getElementAt(final int index) {
-      return packagesNames.get(index);
-    }
-
-    public void add(String packageName) {
-      final int index = getSize();
-      packagesNames.add(packageName);
-      fireContentsChanged(this, 0, index);
-    }
-
-    public Object remove(int index) {
-      return packagesNames.remove(index);
-    }
   }
 
   public DefaultListModel getDataModel() {

@@ -38,7 +38,9 @@ public final class GenerateGroovyDocDialog extends DialogWrapper {
     setTitle(GroovyDocBundle.message("groovydoc.generate.title"));
 
     myPanel = new GroovyDocGenerationPanel();
+    //myPanel.getPanel().setMinimumSize(new Dimension(-1, 1000));
     init();
+    System.out.println(myPanel.getPanel().getSize());
     myPanel.reset(configuration);
   }
 
@@ -98,14 +100,13 @@ public final class GenerateGroovyDocDialog extends DialogWrapper {
 
     File outputDir = new File(inputDirectory);
     if (!outputDir.exists()) {
-      int choice = Messages
-        .showOkCancelDialog(myProject, GroovyDocBundle.message("groovydoc.generate.input.directory.not.exists", inputDirectory),
-                            GroovyDocBundle.message("groovydoc.generate.message.title"), Messages.getWarningIcon());
+      int choice = Messages.showOkCancelDialog(myProject,
+                                               GroovyDocBundle.message("groovydoc.generate.input.directory.not.exists", inputDirectory),
+                                               GroovyDocBundle.message("groovydoc.generate.message.title"), Messages.getWarningIcon());
       if (choice != 0) return false;
       if (!outputDir.mkdirs()) {
-        Messages
-          .showMessageDialog(myProject, GroovyDocBundle.message("groovydoc.generate.input.directory.creation.failed", inputDirectory),
-                             CommonBundle.getErrorTitle(), Messages.getErrorIcon());
+        Messages.showMessageDialog(myProject, GroovyDocBundle.message("groovydoc.generate.input.directory.creation.failed", inputDirectory),
+                                   CommonBundle.getErrorTitle(), Messages.getErrorIcon());
         return false;
       }
     }
