@@ -11,6 +11,7 @@ import com.intellij.ide.actions.CloseTabToolbarAction;
 import com.intellij.ide.actions.ContextHelpAction;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.NodeDescriptor;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.TextEditor;
@@ -40,7 +41,7 @@ import java.awt.event.*;
  * User: anna
  * Date: 1/2/12
  */
-public class CoverageView extends JPanel implements DataProvider{
+public class CoverageView extends JPanel implements DataProvider, Disposable {
   @NonNls private static final String ACTION_DRILL_DOWN = "DrillDown";
   @NonNls private static final String ACTION_GO_UP = "GoUp";
 
@@ -126,6 +127,10 @@ public class CoverageView extends JPanel implements DataProvider{
     final JComponent component =
       ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, createToolbarActions(structure), false).getComponent();
     add(component, BorderLayout.WEST);
+  }
+
+  @Override
+  public void dispose() {
   }
 
   private static ActionGroup createPopupGroup() {
@@ -298,7 +303,7 @@ public class CoverageView extends JPanel implements DataProvider{
 
   private class MyAutoScrollFromSourceHandler extends AutoScrollFromSourceHandler {
     public MyAutoScrollFromSourceHandler() {
-      super(CoverageView.this.myProject, CoverageView.this);
+      super(CoverageView.this.myProject, CoverageView.this, CoverageView.this);
     }
 
     @Override

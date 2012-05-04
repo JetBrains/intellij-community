@@ -9,6 +9,7 @@ import com.intellij.openapi.components.*;
 import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
@@ -97,6 +98,7 @@ public class CoverageViewManager implements PersistentStateComponent<CoverageVie
       if (content != null) {
         myContentManager.removeContent(content, true);
       }
+      Disposer.dispose(oldView);
     }
     setReady(false);
   }
