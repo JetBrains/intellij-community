@@ -241,6 +241,7 @@ public class BuildManager implements ApplicationComponent{
   }
 
   public void clearState(Project project) {
+    myGlobals = null;
     final String projectPath = getProjectPath(project);
     synchronized (myProjectDataMap) {
       final ProjectData data = myProjectDataMap.get(projectPath);
@@ -258,10 +259,6 @@ public class BuildManager implements ApplicationComponent{
     }
     final VirtualFile vFile = LocalFileSystem.getInstance().findFileByPath(path);
     return vFile != null ? vFile.getPath() : null;
-  }
-
-  private void clearGlobalsCache() {
-    myGlobals = null;
   }
 
   private void runAutoMake() {
@@ -778,7 +775,10 @@ public class BuildManager implements ApplicationComponent{
 
         @Override
         public void rootsChanged(final ModuleRootEvent event) {
-          clearGlobalsCache();
+          final Object source = event.getSource();
+          if (source instanceof Project) {
+            clearState((Project)source);
+          }
         }
       });
     }

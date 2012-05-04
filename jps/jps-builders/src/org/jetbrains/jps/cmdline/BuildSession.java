@@ -199,13 +199,13 @@ final class BuildSession implements Runnable, CanceledStatus {
     pd = new ProjectDescriptor(project, fsState, projectTimestamps, dataManager, BuildLoggingManager.DEFAULT);
     myProjectDescriptor = pd;
 
-    loadFsState(myProjectDescriptor, dataStorageRoot, myInitialFSDelta);
-    // free memory
-    myInitialFSDelta = null;
-    // ensure events from controller are processed after FSState initialization
-    myEventsProcessor.startProcessing();
-
     try {
+      loadFsState(myProjectDescriptor, dataStorageRoot, myInitialFSDelta);
+      // free memory
+      myInitialFSDelta = null;
+      // ensure events from controller are processed after FSState initialization
+      myEventsProcessor.startProcessing();
+
       for (int attempt = 0; attempt < 2; attempt++) {
         if (forceCleanCaches && modules.isEmpty() && paths.isEmpty()) {
           // if compilation scope is the whole project and cache rebuild is forced, use PROJECT_REBUILD for faster compilation
@@ -313,10 +313,6 @@ final class BuildSession implements Runnable, CanceledStatus {
 
   private static void saveFsState(File dataStorageRoot, BuildFSState state, long lastEventOrdinal) {
     final File file = new File(dataStorageRoot, FS_STATE_FILE);
-    if (lastEventOrdinal < 0L) {
-      FileUtil.delete(file);
-      return;
-    }
 
     BufferExposingByteArrayOutputStream bytes = new BufferExposingByteArrayOutputStream();
     try {
@@ -370,6 +366,7 @@ final class BuildSession implements Runnable, CanceledStatus {
       finally {
         fs.close();
       }
+
       final DataInputStream in = new DataInputStream(new ByteArrayInputStream(bytes));
       try {
         final long savedOrdinal = in.readLong();
@@ -387,14 +384,16 @@ final class BuildSession implements Runnable, CanceledStatus {
       finally {
         in.close();
       }
+      return; // successfully initialized
+
     }
     catch (FileNotFoundException ignored) {
     }
-    catch (IOException e) {
-      pd.fsState.clearAll();
-      myLastEventOrdinal = initialEvent != null? initialEvent.getOrdinal() : 0L;
+    catch (Throwable e) {
       LOG.error(e);
     }
+    myLastEventOrdinal = initialEvent != null? initialEvent.getOrdinal() : 0L;
+    pd.fsState.clearAll();
   }
 
   private void finishBuild(Throwable error, boolean hadBuildErrors, boolean markedUptodateFiles) {
