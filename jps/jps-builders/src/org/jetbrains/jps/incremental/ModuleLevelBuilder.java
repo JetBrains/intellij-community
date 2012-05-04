@@ -10,6 +10,7 @@ import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.ProjectPaths;
 import org.jetbrains.jps.incremental.fs.RootDescriptor;
 import org.jetbrains.jps.incremental.messages.ProgressMessage;
+import org.jetbrains.jps.incremental.storage.SourceToOutputMapping;
 
 import java.io.File;
 import java.io.IOException;
@@ -65,7 +66,7 @@ public abstract class ModuleLevelBuilder extends Builder {
     try {
       boolean additionalPassRequired = false;
 
-      final Set<String> removedPaths = getRemovedPaths(context);
+      final Set<String> removedPaths = getRemovedPaths(context, chunk);
 
       final Mappings globalMappings = context.getDataManager().getMappings();
 
@@ -143,6 +144,9 @@ public abstract class ModuleLevelBuilder extends Builder {
 
       globalMappings.integrate(delta, removedPaths);
 
+      // save to remove everything that has been integrated
+      dropRemovedPaths(context, chunk);
+
       return additionalPassRequired;
     }
     catch(RuntimeException e) {
@@ -205,9 +209,34 @@ public abstract class ModuleLevelBuilder extends Builder {
     return allCompiledFiles;
   }
 
-  private static Set<String> getRemovedPaths(CompileContext context) {
-    final Set<String> removed = Utils.CHUNK_REMOVED_SOURCES_KEY.get(context);
-    return removed != null? removed : Collections.<String>emptySet();
+  private static Set<String> getRemovedPaths(CompileContext context, ModuleChunk chunk) {
+    final Map<String, Collection<String>> map = Utils.REMOVED_SOURCES_KEY.get(context);
+    if (map == null) {
+      return Collections.emptySet();
+    }
+    final Set<String> removed = new HashSet<String>();
+    for (Module module : chunk.getModules()) {
+      final Collection<String> modulePaths = map.get(module.getName());
+      if (modulePaths != null) {
+        removed.addAll(modulePaths);
+      }
+    }
+    return removed;
+  }
+
+  private static void dropRemovedPaths(CompileContext context, ModuleChunk chunk) throws IOException {
+    final Map<String, Collection<String>> map = Utils.REMOVED_SOURCES_KEY.get(context);
+    if (map != null) {
+      for (Module module : chunk.getModules()) {
+        final Collection<String> paths = map.remove(module.getName());
+        if (paths != null) {
+          final SourceToOutputMapping storage = context.getDataManager().getSourceToOutputMap(module.getName(), context.isCompilingTests());
+          for (String path : paths) {
+            storage.remove(path);
+          }
+        }
+      }
+    }
   }
 
   private static class ModulesBasedFileFilter implements Mappings.DependentFilesFilter{

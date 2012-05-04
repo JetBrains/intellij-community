@@ -15,8 +15,7 @@ import java.util.*;
  *         Date: 10/20/11
  */
 public class Utils {
-  public static final Key<Set<String>> CHUNK_REMOVED_SOURCES_KEY = Key.create("_chunk_removed_sources_");
-  public static final Key<Map<String, Collection<String>>> CHUNK_PER_MODULE_REMOVED_SOURCES_KEY = Key.create("_chunk_per_maodule_removed_sources_");
+  public static final Key<Map<String, Collection<String>>> REMOVED_SOURCES_KEY = Key.create("_removed_sources_");
   private static volatile File ourSystemRoot = new File(System.getProperty("user.home", ".jps-server"));
 
   private Utils() {
