@@ -120,6 +120,9 @@ public class JavaEditBreakpointActionHandler extends EditBreakpointActionHandler
   public boolean isEnabled(@NotNull Project project, AnActionEvent event) {
     DataContext dataContext = event.getDataContext();
     Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
+    if (editor == null) {
+      return false;
+    }
     final Pair<GutterIconRenderer,Object> pair = XBreakpointUtil.findSelectedBreakpoint(project, editor);
     return pair.first != null && pair.second instanceof BreakpointWithHighlighter;
   }
