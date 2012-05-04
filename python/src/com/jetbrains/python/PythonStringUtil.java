@@ -317,7 +317,7 @@ public class PythonStringUtil {
   }
 
   public static String stripQuotesAroundValue(String text) {
-    if (isStringPrefixedBy(text.toLowerCase(), "u") || isStringPrefixedBy(text.toLowerCase(), "r")) {
+    if (isRawOrUnicode(text)) {
       text = text.substring(1);
     }
 
@@ -325,7 +325,20 @@ public class PythonStringUtil {
     return StringUtil.stripQuotesAroundValue(text);
   }
 
+  public static boolean isRawOrUnicode(String text) {
+    return isUnicodeString(text) || isRawString(text);
+  }
+
+  public static boolean isUnicodeString(String text) {
+    return isStringPrefixedBy(text.toLowerCase(), "u");
+  }
+
+  public static boolean isRawString(String text) {
+    return isStringPrefixedBy(text.toLowerCase(), "r");
+  }
+
+
   private static boolean isStringPrefixedBy(String text, String prefix) {
-    return (startsWith(text, "u" + "\"") && endsWith(text, "\"")) || (startsWith(text, prefix + "\'") && endsWith(text, "\'"));
+    return (startsWith(text, prefix + "\"") && endsWith(text, "\"")) || (startsWith(text, prefix + "\'") && endsWith(text, "\'"));
   }
 }
