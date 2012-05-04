@@ -259,17 +259,6 @@ public class CompileContext extends UserDataHolderBase implements MessageHandler
           }
         }
 
-        // clean mapping only after everything else is processed
-        final Map<String, Collection<String>> map = Utils.CHUNK_PER_MODULE_REMOVED_SOURCES_KEY.get(this);
-        if (map != null) {
-          for (Map.Entry<String, Collection<String>> entry : map.entrySet()) {
-          final SourceToOutputMapping mapping = dataManager.getSourceToOutputMap(entry.getKey(), isCompilingTests());
-            for (String path : entry.getValue()) {
-              mapping.remove(path);
-            }
-          }
-        }
-
         if (marked) {
           processMessage(UptoDateFilesSavedEvent.INSTANCE);
         }
@@ -350,7 +339,7 @@ public class CompileContext extends UserDataHolderBase implements MessageHandler
   }
 
   public boolean hasRemovedSources() {
-    final Set<String> removed = Utils.CHUNK_REMOVED_SOURCES_KEY.get(this);
+    final Map<String, Collection<String>> removed = Utils.REMOVED_SOURCES_KEY.get(this);
     return removed != null && !removed.isEmpty();
   }
 

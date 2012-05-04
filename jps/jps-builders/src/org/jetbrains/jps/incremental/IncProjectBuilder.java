@@ -428,8 +428,29 @@ public class IncProjectBuilder {
           throw new ProjectBuildException(e);
         }
         finally {
-          Utils.CHUNK_REMOVED_SOURCES_KEY.set(context, null);
-          Utils.CHUNK_PER_MODULE_REMOVED_SOURCES_KEY.set(context, null);
+
+          try {
+            // restore deleted paths that were not procesesd by 'integrate'
+            final Map<String, Collection<String>> map = Utils.REMOVED_SOURCES_KEY.get(context);
+            if (map != null) {
+              final boolean forTests = context.isCompilingTests();
+              for (Map.Entry<String, Collection<String>> entry : map.entrySet()) {
+                final String moduleName = entry.getKey();
+                final Collection<String> paths = entry.getValue();
+                if (paths != null) {
+                  for (String path : paths) {
+                    myProjectDescriptor.fsState.registerDeleted(moduleName, new File(path), forTests, null);
+                  }
+                }
+              }
+            }
+          }
+          catch (IOException e) {
+            throw new ProjectBuildException(e);
+          }
+
+          Utils.REMOVED_SOURCES_KEY.set(context, null);
+
           if (doneSomething && GENERATE_CLASSPATH_INDEX) {
             final boolean forTests = context.isCompilingTests();
             final Future<?> future = SharedThreadPool.INSTANCE.submit(new Runnable() {
@@ -485,8 +506,7 @@ public class IncProjectBuilder {
   private void processDeletedPaths(CompileContext context, ModuleChunk chunk) throws ProjectBuildException {
     try {
       // cleanup outputs
-      final Set<String> allChunkRemovedSources = new HashSet<String>();
-      final Map<String, Collection<String>> perModuleRemovedSources = new HashMap<String, Collection<String>>();
+      final Map<String, Collection<String>> removedSources = new HashMap<String, Collection<String>>();
 
       for (Module module : chunk.getModules()) {
         final Collection<String> deletedPaths = myProjectDescriptor.fsState.getAndClearDeletedPaths(module.getName(),
@@ -494,11 +514,9 @@ public class IncProjectBuilder {
         if (deletedPaths.isEmpty()) {
           continue;
         }
-        allChunkRemovedSources.addAll(deletedPaths);
-        perModuleRemovedSources.put(module.getName(), deletedPaths);
+        removedSources.put(module.getName(), deletedPaths);
 
-        final SourceToOutputMapping sourceToOutputStorage =
-          context.getDataManager().getSourceToOutputMap(module.getName(), context.isCompilingTests());
+        final SourceToOutputMapping sourceToOutputStorage = context.getDataManager().getSourceToOutputMap(module.getName(), context.isCompilingTests());
         // actually delete outputs associated with removed paths
         for (String deletedSource : deletedPaths) {
           // deleting outputs corresponding to non-existing source
@@ -539,26 +557,20 @@ public class IncProjectBuilder {
           }
         }
       }
-      if (!allChunkRemovedSources.isEmpty()) {
-        final Set<String> currentData = Utils.CHUNK_REMOVED_SOURCES_KEY.get(context);
-        if (currentData != null) {
-          allChunkRemovedSources.addAll(currentData);
-        }
-        Utils.CHUNK_REMOVED_SOURCES_KEY.set(context, allChunkRemovedSources);
-
-        final Map<String, Collection<String>> existing = Utils.CHUNK_PER_MODULE_REMOVED_SOURCES_KEY.get(context);
+      if (!removedSources.isEmpty()) {
+        final Map<String, Collection<String>> existing = Utils.REMOVED_SOURCES_KEY.get(context);
         if (existing != null) {
           for (Map.Entry<String, Collection<String>> entry : existing.entrySet()) {
-            final Collection<String> paths = perModuleRemovedSources.get(entry.getKey());
+            final Collection<String> paths = removedSources.get(entry.getKey());
             if (paths != null) {
               paths.addAll(entry.getValue());
             }
             else {
-              perModuleRemovedSources.put(entry.getKey(), entry.getValue());
+              removedSources.put(entry.getKey(), entry.getValue());
             }
           }
         }
-        Utils.CHUNK_PER_MODULE_REMOVED_SOURCES_KEY.set(context, perModuleRemovedSources);
+        Utils.REMOVED_SOURCES_KEY.set(context, removedSources);
       }
     }
     catch (IOException e) {
