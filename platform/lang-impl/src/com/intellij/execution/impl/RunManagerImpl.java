@@ -282,6 +282,18 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
     fireRunConfigurationsRemoved(removed);
   }
 
+  public void setOrdered(boolean ordered) {
+    myOrdered = ordered;
+  }
+  
+  public void saveOrder() {
+    myOrder.clear();
+    for (RunnerAndConfigurationSettings each : myConfigurations.values()) {
+      if (each.getType() instanceof UnknownConfigurationType) continue;
+      myOrder.add(getUniqueName(each));
+    }
+  }
+
   static String getUniqueName(@NotNull RunnerAndConfigurationSettings settings) {
     RunConfiguration config = settings.getConfiguration();
     return config.getType().getDisplayName() + "." + settings.getName() +

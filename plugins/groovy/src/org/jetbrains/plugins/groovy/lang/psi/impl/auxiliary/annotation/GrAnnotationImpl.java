@@ -102,7 +102,7 @@ public class GrAnnotationImpl extends GrStubElementBase<GrAnnotationStub> implem
     return PsiImplUtil.findDeclaredAttributeValue(this, attributeName);
   }
 
-  public <T extends PsiAnnotationMemberValue>  T setDeclaredAttributeValue(@NonNls String attributeName, T value) {
+  public <T extends PsiAnnotationMemberValue>  T setDeclaredAttributeValue(@Nullable @NonNls String attributeName, T value) {
     return (T)PsiImplUtil.setDeclaredAttributeValue(this, attributeName, value, ANNOTATION_CREATOR);
   }
 

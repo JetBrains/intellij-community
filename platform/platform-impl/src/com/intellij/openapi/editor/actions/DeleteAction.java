@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -106,7 +106,10 @@ public class DeleteAction extends EditorAction {
     Document document = editor.getDocument();
     int offset = editor.getCaretModel().getOffset();
     if (!EditorActionUtil.canEditAtOffset(editor, offset + 1)) return;
-    if (afterLineEnd < 0) {
+    if (afterLineEnd < 0
+        // There is a possible case that caret is located right before the soft wrap position at the last logical line
+        // (popular use case with the soft wraps at the commit message dialog).
+        || (offset < document.getTextLength() - 1 && editor.getSoftWrapModel().getSoftWrap(offset) != null)) {
       FoldRegion region = editor.getFoldingModel().getCollapsedRegionAtOffset(offset);
       if (region != null && region.shouldNeverExpand()) {
         document.deleteString(region.getStartOffset(), region.getEndOffset());

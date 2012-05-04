@@ -41,7 +41,7 @@ public final class GenerateGroovyDocAction extends AnAction implements DumbAware
     final DataContext dataContext = e.getDataContext();
     final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
 
-    final Module module = DataKeys.MODULE.getData(dataContext);
+    final Module module = LangDataKeys.MODULE.getData(dataContext);
     if (module == null) return;
 
     GroovyDocConfiguration configuration = new GroovyDocConfiguration();
@@ -92,7 +92,7 @@ public final class GenerateGroovyDocAction extends AnAction implements DumbAware
         String packages = "";
         for (int i = 0; i < configuration.PACKAGES.length; i++) {
           final String s = configuration.PACKAGES[i];
-          if ("".equals(s)) continue;
+          if (s != null && s.isEmpty()) continue;
 
           if (i > 0) {
             packages += ",";

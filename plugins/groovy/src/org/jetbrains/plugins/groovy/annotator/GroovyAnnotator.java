@@ -133,6 +133,47 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
   }
 
   @Override
+  public void visitTypeArgumentList(GrTypeArgumentList typeArgumentList) {
+    PsiElement parent = typeArgumentList.getParent();
+    final PsiElement resolved;
+    if (parent instanceof GrReferenceElement) {
+      resolved = ((GrReferenceElement)parent).resolve();
+    }
+    else {
+      resolved = null;
+    }
+
+    if (resolved == null) return;
+
+    if (!(resolved instanceof PsiTypeParameterListOwner)) {
+      //myHolder.createErrorAnnotation(typeArgumentList, GroovyBundle.message("type.argument.list.is.no.a"))
+      //todo correct error description
+      return;
+    }
+
+    final PsiTypeParameter[] parameters = ((PsiTypeParameterListOwner)resolved).getTypeParameters();
+    final GrTypeElement[] arguments = typeArgumentList.getTypeArgumentElements();
+
+    if (arguments.length!=parameters.length) {
+      myHolder.createErrorAnnotation(typeArgumentList,
+                                     GroovyBundle.message("wrong.number.of.type.arguments", arguments.length, parameters.length));
+      return;
+    }
+
+    for (int i = 0; i < parameters.length; i++) {
+      PsiTypeParameter parameter = parameters[i];
+      final PsiClassType[] superTypes = parameter.getExtendsListTypes();
+      final PsiType argType = arguments[i].getType();
+      for (PsiClassType superType : superTypes) {
+        if (!superType.isAssignableFrom(argType)) {
+          myHolder.createErrorAnnotation(arguments[i], GroovyBundle.message("type.argument.0.is.not.in.its.bound.should.extend.1", argType.getCanonicalText(), superType.getCanonicalText()));
+          break;
+        }
+      }
+    }
+  }
+
+  @Override
   public void visitApplicationStatement(GrApplicationStatement applicationStatement) {
     super.visitApplicationStatement(applicationStatement);
     checkForCommandExpressionSyntax(applicationStatement);

@@ -22,7 +22,6 @@ import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.SuppressIntentionAction;
 import com.intellij.codeInspection.SuppressManager;
-import com.intellij.codeInspection.SuppressManagerImpl;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -30,6 +29,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocCommentOwner;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
@@ -58,7 +58,17 @@ public class SuppressForMemberFix extends SuppressIntentionAction {
     if (context == null || context instanceof PsiFile) {
       return null;
     }
-    GrDocCommentOwner container = PsiTreeUtil.getParentOfType(context, GrDocCommentOwner.class);
+
+    GrDocCommentOwner container = null;
+
+    GrDocComment docComment = PsiTreeUtil.getParentOfType(context, GrDocComment.class);
+    if (docComment != null) {
+      container = docComment.getOwner();
+    }
+    if (container == null) {
+      container = PsiTreeUtil.getParentOfType(context, GrDocCommentOwner.class);
+    }
+
     while (container instanceof GrAnonymousClassDefinition || container instanceof GrTypeParameter) {
       container = PsiTreeUtil.getParentOfType(container, GrDocCommentOwner.class);
       if (container == null) return null;
@@ -88,10 +98,8 @@ public class SuppressForMemberFix extends SuppressIntentionAction {
 
   public boolean isAvailable(@NotNull final Project project, final Editor editor, @NotNull final PsiElement context) {
     final GrDocCommentOwner container = getContainer(context);
-    myKey = container instanceof PsiClass
-            ? "suppress.inspection.class"
-            : container instanceof PsiMethod ? "suppress.inspection.method" : "suppress.inspection.field";
-    return container != null && context != null && context.getManager().isInProject(context);
+    myKey = container instanceof PsiClass ? "suppress.inspection.class" : container instanceof PsiMethod ? "suppress.inspection.method" : "suppress.inspection.field";
+    return container != null && context.getManager().isInProject(context);
   }
 
   public void invoke(@NotNull final Project project, final Editor editor, @NotNull final PsiElement element) throws IncorrectOperationException {
@@ -106,7 +114,7 @@ public class SuppressForMemberFix extends SuppressIntentionAction {
   }
 
   private static void addSuppressAnnotation(final Project project, final GrModifierList modifierList, final String id) throws IncorrectOperationException {
-    PsiAnnotation annotation = modifierList.findAnnotation(SuppressManagerImpl.SUPPRESS_INSPECTIONS_ANNOTATION_NAME);
+    PsiAnnotation annotation = modifierList.findAnnotation(SuppressManager.SUPPRESS_INSPECTIONS_ANNOTATION_NAME);
     final GrExpression toAdd = GroovyPsiElementFactory.getInstance(project).createExpressionFromText("\"" + id + "\"");
     if (annotation != null) {
       final PsiAnnotationMemberValue value = annotation.findDeclaredAttributeValue(null);

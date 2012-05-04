@@ -17,6 +17,7 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.types;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeArgumentList;
@@ -42,6 +43,18 @@ public class GrTypeArgumentListImpl extends GroovyPsiElementImpl implements GrTy
 
   public GrTypeElement[] getTypeArgumentElements() {
     return findChildrenByClass(GrTypeElement.class);
+  }
+
+  @Override
+  public PsiType[] getTypeArguments() {
+    final GrTypeElement[] elements = getTypeArgumentElements();
+    if (elements.length == 0) return PsiType.EMPTY_ARRAY;
+
+    PsiType[] result = new PsiType[elements.length];
+    for (int i = 0; i < elements.length; i++) {
+      result[i] = elements[i].getType();
+    }
+    return result;
   }
 
   public boolean isDiamond() {
