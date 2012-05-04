@@ -24,6 +24,7 @@ import com.intellij.ide.util.EditSourceUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NonNls;
@@ -241,6 +242,7 @@ public class TestProxy extends AbstractTestProxy {
   }
 
   public void appendStacktrace(TestResultMessage result) {
+    if (result.getResult() == MessageHelper.PASSED_TEST && Registry.is("testng.skip.expected.exceptions")) return;
     final String stackTrace = result.getStackTrace();
     if (stackTrace != null) {
       final List<Printable> printables = getPrintables(result);
