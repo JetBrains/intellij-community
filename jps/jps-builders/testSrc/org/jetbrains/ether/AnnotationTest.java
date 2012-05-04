@@ -56,6 +56,10 @@ public class AnnotationTest extends IncrementalTestCase {
     doTest();
   }
 
+  public void testClassAsArgument() throws Exception {
+    doTest();
+  }
+
   /*  Discussion is needed --- unnecessarily conservative
  public void testMetaAnnotationChanged() throws Exception {
      doTest();
