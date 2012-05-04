@@ -331,13 +331,15 @@ public abstract class PythonCommandLineState extends CommandLineState {
 
   @NotNull
   public static Collection<String> collectPythonPath(@Nullable Module module) {
-    return collectPythonPath(module, true);
+    return collectPythonPath(module, true, true);
   }
 
   @NotNull
-  public static Collection<String> collectPythonPath(@Nullable Module module, final boolean addProjectRoots) {
+  public static Collection<String> collectPythonPath(@Nullable Module module, final boolean addProjectRoots,
+                                                     final boolean addHelpers) {
     Collection<String> pythonPathList = Sets.newLinkedHashSet();
-    pythonPathList.add(PythonHelpersLocator.getHelpersRoot().getPath());
+    if (addHelpers)
+      pythonPathList.add(PythonHelpersLocator.getHelpersRoot().getPath());
     if (module != null && addProjectRoots) {
       addLibrariesFromModule(module, pythonPathList);
       Set<Module> dependencies = new HashSet<Module>();

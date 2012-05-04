@@ -14,6 +14,7 @@ import com.intellij.execution.testframework.autotest.ToggleAutoTestAction;
 import com.intellij.execution.testframework.sm.SMTestRunnerConnectionUtil;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.jetbrains.python.console.PythonDebugLanguageConsoleView;
@@ -24,6 +25,7 @@ import com.jetbrains.python.run.PythonTracebackFilter;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -36,6 +38,12 @@ public abstract class PythonTestCommandLineStateBase extends PythonCommandLineSt
   public PythonTestCommandLineStateBase(AbstractPythonRunConfiguration configuration, ExecutionEnvironment env) {
     super(configuration, env, Collections.<Filter>emptyList());
     myConfiguration = configuration;
+  }
+
+  protected Collection<String> collectPythonPath() {
+    final Module module = myConfiguration.getModule();
+    //we don't need to add helpers manually to PYTHONPATH as "pathToHelpers/pycharm" is added by interpreter
+    return collectPythonPath(module, true, false);
   }
 
   @NotNull
