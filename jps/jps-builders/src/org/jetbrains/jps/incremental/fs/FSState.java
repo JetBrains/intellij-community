@@ -113,6 +113,14 @@ public class FSState {
     }
   }
 
+  public Collection<String> getAndClearDeletedPaths(final String moduleName, final boolean forTests) {
+    final FilesDelta delta = myDeltas.get(moduleName);
+    if (delta != null) {
+      return delta.getAndClearDeletedPaths(forTests);
+    }
+    return Collections.emptyList();
+  }
+
   @NotNull
   protected final FilesDelta getDelta(final String moduleName) {
     synchronized (myDeltas) {
