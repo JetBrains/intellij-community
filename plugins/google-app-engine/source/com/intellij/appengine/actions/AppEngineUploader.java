@@ -21,6 +21,7 @@ import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.RunnerLayoutUi;
 import com.intellij.execution.ui.actions.CloseAction;
+import com.intellij.ide.passwordSafe.PasswordSafeException;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
@@ -32,6 +33,7 @@ import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompileScope;
 import com.intellij.openapi.compiler.CompileStatusNotification;
 import com.intellij.openapi.compiler.CompilerManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -59,6 +61,7 @@ import java.util.Collections;
  * @author nik
  */
 public class AppEngineUploader {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.appengine.actions.AppEngineUploader");
   private Project myProject;
   private final Artifact myArtifact;
   private final AppEngineFacet myAppEngineFacet;
@@ -81,7 +84,7 @@ public class AppEngineUploader {
   }
 
   @Nullable
-  public static AppEngineUploader createUploader(Project project, Artifact artifact) {
+  public static AppEngineUploader createUploader(@NotNull Project project, @NotNull Artifact artifact) {
     final String explodedPath = artifact.getOutputPath();
     if (explodedPath == null) {
       Messages.showErrorDialog(project, "Output path isn't specified for '" + artifact.getName() + "' artifact", CommonBundle.getErrorTitle());
@@ -121,10 +124,18 @@ public class AppEngineUploader {
       }
     }
 
-    String email = appEngineFacet.getConfiguration().getUserEmail();
-    String password = appEngineFacet.getConfiguration().getPassword();
+    String password = null;
+    String email = null;
+    try {
+      email = AppEngineAccountDialog.getStoredEmail(project);
+      password = AppEngineAccountDialog.getStoredPassword(project, email);
+    }
+    catch (PasswordSafeException e) {
+      LOG.info("Cannot load stored password: " + e.getMessage());
+      LOG.info(e);
+    }
     if (StringUtil.isEmpty(email) || StringUtil.isEmpty(password)) {
-      final AppEngineAccountDialog dialog = new AppEngineAccountDialog(project, appEngineFacet.getConfiguration());
+      final AppEngineAccountDialog dialog = new AppEngineAccountDialog(project);
       dialog.show();
       if (!dialog.isOK()) return null;
 
