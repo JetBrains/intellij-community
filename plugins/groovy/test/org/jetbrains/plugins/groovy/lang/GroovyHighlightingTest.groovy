@@ -672,11 +672,10 @@ def result = new Foo().x''')
   }
 
   void testPrimitiveTypeParams() {
-    myFixture.configureByText('a.groovy', '''
-List<<error descr="Primitive type parameters are not allowed">int</error>> list = new ArrayList<int><EOLError descr="'(' expected"></EOLError>
+    myFixture.configureByText('a.groovy', '''\
+List<<error descr="Primitive type parameters are not allowed in type parameter list">int</error>> list = new ArrayList<int><EOLError descr="'(' expected"></EOLError>
 List<? extends <error descr="Primitive bound types are not allowed">double</error>> l = new ArrayList<double>()
 List<?> list2
-
 ''')
     myFixture.testHighlighting(true, false, false)
   }
@@ -853,6 +852,16 @@ class Class2 {
   static main2(args) {}
 }''')
     myFixture.enableInspections(new GroovyDocCheckInspection())
+    myFixture.testHighlighting(true, false, true)
+  }
+
+  public void testIncorrectTypeArguments(){
+    myFixture.configureByText('_.groovy', '''\
+class C <T extends String> {}
+C<<error descr="Type parameter 'java.lang.Double' is not in its bound; should extend 'java.lang.String'">Double</error>> c
+C<String> c2
+C<error descr="Wrong number of type arguments: 2; required: 1"><String, Double></error> c3
+''')
     myFixture.testHighlighting(true, false, true)
   }
 

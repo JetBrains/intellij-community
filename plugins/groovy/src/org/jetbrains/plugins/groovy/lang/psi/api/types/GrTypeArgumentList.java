@@ -16,6 +16,7 @@
 
 package org.jetbrains.plugins.groovy.lang.psi.api.types;
 
+import com.intellij.psi.PsiType;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 
 /**
@@ -24,6 +25,8 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
  */
 public interface GrTypeArgumentList extends GroovyPsiElement {
   GrTypeElement[] getTypeArgumentElements();
+
+  PsiType[] getTypeArguments();
 
   boolean isDiamond();
 }
