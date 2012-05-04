@@ -1100,6 +1100,27 @@ public abstract class DialogWrapper {
     if (!postponeValidation()) {
       startTrackingValidation();
     }
+    if (SystemInfo.isWindows) {
+      installEnterHook(root);
+    }
+  }
+
+  private static void installEnterHook(JComponent root) {
+    new AnAction() {
+      @Override
+      public void actionPerformed(AnActionEvent e) {
+        final Component owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
+        if (owner instanceof JButton && owner.isEnabled()) {
+          ((JButton)owner).doClick();
+        }
+      }
+
+      @Override
+      public void update(AnActionEvent e) {
+        final Component owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
+        e.getPresentation().setEnabled((owner instanceof JButton && owner.isEnabled()));
+      }
+    }.registerCustomShortcutSet(CustomShortcutSet.fromString("ENTER"), root);
   }
 
   private void expandNextOptionButton() {
