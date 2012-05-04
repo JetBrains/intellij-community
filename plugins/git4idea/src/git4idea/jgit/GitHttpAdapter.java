@@ -305,7 +305,7 @@ public final class GitHttpAdapter {
         }
         catch (InvalidRemoteException e) {
           if (!noRemoteWithoutGitErrorFixTried && isNoRemoteWithoutDotGitError(e, url)) {
-            url += ".git";
+            url = addDotGitToUrl(url);
             command.setUrl(url);
             provider.setUrl(url);
             noRemoteWithoutGitErrorFixTried = true;
@@ -334,7 +334,7 @@ public final class GitHttpAdapter {
             command.cleanup();
           }
           else if (!noRemoteWithoutGitErrorFixTried && isNoRemoteWithoutDotGitError(e, url)) {
-            url += ".git";
+            url = addDotGitToUrl(url);
             command.setUrl(url);
             provider.setUrl(url);
             noRemoteWithoutGitErrorFixTried = true;
@@ -357,6 +357,14 @@ public final class GitHttpAdapter {
       log(command, project);
       ProxySelector.setDefault(defaultProxySelector);
     }
+  }
+
+  @NotNull
+  private static String addDotGitToUrl(@NotNull String url) {
+    if (url.endsWith("/")) {
+      url = url.substring(0, url.length() - 1);
+    }
+    return url + ".git";
   }
 
   private static void log(@NotNull GitHttpRemoteCommand command, @NotNull Project project) {
