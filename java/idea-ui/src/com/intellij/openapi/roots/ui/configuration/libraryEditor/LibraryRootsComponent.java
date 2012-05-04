@@ -41,7 +41,6 @@ import com.intellij.openapi.ui.ex.MultiLineLabel;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.AnActionButton;
@@ -187,7 +186,7 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
 
       private AnAction[] getActions() {
         List<AnAction> actions = new ArrayList<AnAction>();
-        actions.add(new AttachFilesAction(ProjectBundle.message("button.text.attach.files")));
+        actions.add(new AttachFilesAction(myDescriptor.getAttachFilesActionName()));
         for (AttachRootButtonDescriptor descriptor : myDescriptor.createAttachButtons()) {
           actions.add(new AttachItemAction(descriptor, descriptor.getButtonText()));
         }
@@ -351,11 +350,8 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
 
     @Override
     protected List<OrderRoot> selectRoots(@Nullable VirtualFile initialSelection) {
-      final FileChooserDescriptor chooserDescriptor = myDescriptor.createAttachFilesChooserDescriptor();
       final String name = getLibraryEditor().getName();
-      chooserDescriptor.setTitle(StringUtil.isEmpty(name) ? ProjectBundle.message("library.attach.files.action")
-                                                          : ProjectBundle.message("library.attach.files.to.library.action", name));
-      chooserDescriptor.setDescription(ProjectBundle.message("library.attach.files.description"));
+      final FileChooserDescriptor chooserDescriptor = myDescriptor.createAttachFilesChooserDescriptor(name);
       if (myContextModule != null) {
         chooserDescriptor.putUserData(LangDataKeys.MODULE_CONTEXT, myContextModule);
       }

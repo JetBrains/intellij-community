@@ -31,6 +31,7 @@ public class BuildMain {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.cmdline.BuildMain");
 
   public static void main(String[] args){
+    System.out.println("Build process started. Classpath: " + System.getProperty("java.class.path"));
     final String host = args[0];
     final int port = Integer.parseInt(args[1]);
     final UUID sessionId = UUID.fromString(args[2]);
@@ -64,10 +65,11 @@ public class BuildMain {
     }
     else {
       final Throwable reason = future.getCause();
+      System.err.println("Error connecting to " + host + ":" + port + "; reason: " + (reason != null? reason.getMessage() : "unknown"));
       if (reason != null) {
-        System.err.println("Error connecting to " + host + ":" + port + "; " + reason.getMessage());
         reason.printStackTrace(System.err);
       }
+      System.err.println("Exiting.");
       System.exit(-1);
     }
   }

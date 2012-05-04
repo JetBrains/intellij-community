@@ -813,6 +813,9 @@
   <action id="ViewBreakpoints">
     <keyboard-shortcut first-keystroke="control shift F8"/>
   </action>
+  <action id="EditBreakpoint">
+    <keyboard-shortcut first-keystroke="control shift F8"/>
+  </action>
   <action id="EditorDeleteToWordEnd">
     <keyboard-shortcut first-keystroke="control DELETE"/>
   </action>

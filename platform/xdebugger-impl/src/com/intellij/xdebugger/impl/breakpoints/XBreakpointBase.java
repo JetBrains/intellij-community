@@ -366,7 +366,7 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
       DefaultActionGroup group = new DefaultActionGroup();
       final XDebuggerManager debuggerManager = XDebuggerManager.getInstance(getProject());
 
-      group.add(new EditBreakpointAction(XBreakpointBase.this, this));
+      group.add(new EditBreakpointAction());
 
       group.add(new Separator());
 

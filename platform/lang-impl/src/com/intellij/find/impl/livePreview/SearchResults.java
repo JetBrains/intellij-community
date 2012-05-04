@@ -47,7 +47,6 @@ public class SearchResults implements DocumentListener {
 
   public enum Direction {UP, DOWN}
 
-  private int myActualFound = 0;
 
   private List<SearchResultsListener> myListeners = new ArrayList<SearchResultsListener>();
 
@@ -87,8 +86,8 @@ public class SearchResults implements DocumentListener {
     FindUtil.processNotFound(myEditor, findModel.getStringToFind(), findModel, getProject());
   }
 
-  public int getActualFound() {
-    return myActualFound;
+  public int getMatchesCount() {
+    return myOccurrences.size();
   }
 
   public boolean hasMatches() {
@@ -191,7 +190,7 @@ public class SearchResults implements DocumentListener {
   }
 
   public void clear() {
-    searchCompleted(new ArrayList<LiveOccurrence>(), 0, getEditor(), null, false, null, getStamp());
+    searchCompleted(new ArrayList<LiveOccurrence>(), getEditor(), null, false, null, getStamp());
   }
   
   private static class BombedCharSequence implements CharSequence {
@@ -268,14 +267,12 @@ public class SearchResults implements DocumentListener {
             }
           }
 
-          if (results.size() < myMatchesLimit) {
-            findResultsToOccurrences(results, occurrences);
-          }
+          findResultsToOccurrences(results, occurrences);
 
           final Runnable searchCompletedRunnable = new Runnable() {
             @Override
             public void run() {
-              searchCompleted(occurrences, results.size(), editor, findModel, toChangeSelection, next, stamp);
+              searchCompleted(occurrences, editor, findModel, toChangeSelection, next, stamp);
             }
           };
 
@@ -346,8 +343,6 @@ public class SearchResults implements DocumentListener {
       if (offset == newOffset || result.getEndOffset() > r.getEndOffset()) break;
       offset = newOffset;
       results.add(result);
-
-      if (results.size() > myMatchesLimit) break;
     }
   }
 
@@ -356,30 +351,30 @@ public class SearchResults implements DocumentListener {
     myEditor.getDocument().removeDocumentListener(this);
   }
 
-  private void searchCompleted(List<LiveOccurrence> occurrences, int size, Editor editor, @Nullable FindModel findModel,
+  private void searchCompleted(List<LiveOccurrence> occurrences, Editor editor, @Nullable FindModel findModel,
                                boolean toChangeSelection, @Nullable TextRange next, int stamp) {
     if (stamp < myLastUpdatedStamp){
       return;
     }
     myLastUpdatedStamp = stamp;
-    if (editor == getEditor() && !myDisposed) {
-      myOccurrences = occurrences;
-      final TextRange oldCursorRange = myCursor != null ? myCursor.getPrimaryRange() : null;
-      Collections.sort(myOccurrences, new Comparator<LiveOccurrence>() {
-        @Override
-        public int compare(LiveOccurrence liveOccurrence, LiveOccurrence liveOccurrence1) {
-          return liveOccurrence.getPrimaryRange().getStartOffset() - liveOccurrence1.getPrimaryRange().getStartOffset();
-        }
-      });
-
-      myFindModel = findModel;
-      updateCursor(oldCursorRange, next);
-      updateExcluded();
-      myActualFound = size;
-      notifyChanged();
-      if (oldCursorRange == null || myCursor == null || !myCursor.getPrimaryRange().equals(oldCursorRange)) {
-        notifyCursorMoved(toChangeSelection);
+    if (editor != getEditor() || myDisposed) {
+      return;
+    }
+    myOccurrences = occurrences;
+    final TextRange oldCursorRange = myCursor != null ? myCursor.getPrimaryRange() : null;
+    Collections.sort(myOccurrences, new Comparator<LiveOccurrence>() {
+      @Override
+      public int compare(LiveOccurrence liveOccurrence, LiveOccurrence liveOccurrence1) {
+        return liveOccurrence.getPrimaryRange().getStartOffset() - liveOccurrence1.getPrimaryRange().getStartOffset();
       }
+    });
+
+    myFindModel = findModel;
+    updateCursor(oldCursorRange, next);
+    updateExcluded();
+    notifyChanged();
+    if (oldCursorRange == null || myCursor == null || !myCursor.getPrimaryRange().equals(oldCursorRange)) {
+      notifyCursorMoved(toChangeSelection);
     }
   }
 

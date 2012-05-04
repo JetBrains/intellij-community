@@ -64,7 +64,7 @@ import java.util.Map;
 import java.util.Set;
 
 /**
-* @author Konstantin Bulenkov
+* @author Gregory Shrago
 */
 public class QuickEditHandler extends DocumentAdapter implements Disposable {
   private final Project myProject;

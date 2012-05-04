@@ -22,17 +22,22 @@ import com.intellij.debugger.settings.*;
 import com.intellij.debugger.ui.breakpoints.Breakpoint;
 import com.intellij.debugger.ui.breakpoints.BreakpointFactory;
 import com.intellij.debugger.ui.breakpoints.BreakpointPanel;
+import com.intellij.debugger.ui.breakpoints.BreakpointWithHighlighter;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.markup.GutterIconRenderer;
+import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.xdebugger.AbstractDebuggerSession;
 import com.intellij.xdebugger.impl.DebuggerSupport;
-import com.intellij.xdebugger.impl.actions.*;
+import com.intellij.xdebugger.impl.actions.DebuggerActionHandler;
+import com.intellij.xdebugger.impl.actions.DebuggerToggleActionHandler;
+import com.intellij.xdebugger.impl.actions.EditBreakpointActionHandler;
 import com.intellij.xdebugger.impl.actions.MarkObjectActionHandler;
 import com.intellij.xdebugger.impl.breakpoints.ui.AbstractBreakpointPanel;
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointPanelProvider;
@@ -66,7 +71,8 @@ public class JavaDebuggerSupport extends DebuggerSupport {
   private final MuteBreakpointsActionHandler myMuteBreakpointsHandler = new MuteBreakpointsActionHandler();
   private final DebuggerActionHandler mySmartStepIntoHandler = new JvmSmartStepIntoActionHandler();
   private final DebuggerActionHandler myAddToWatchedActionHandler = new AddToWatchActionHandler();
-  private JavaMarkObjectActionHandler myMarkObjectActionHandler = new JavaMarkObjectActionHandler();
+  private final JavaMarkObjectActionHandler myMarkObjectActionHandler = new JavaMarkObjectActionHandler();
+  private final JavaEditBreakpointActionHandler myEditBreakpointActionHandler = new JavaEditBreakpointActionHandler();
 
   @NotNull
   public BreakpointPanelProvider<?> getBreakpointPanelProvider() {
@@ -166,6 +172,11 @@ public class JavaDebuggerSupport extends DebuggerSupport {
     return context != null ? context.getDebuggerSession() : null;
   }
 
+  @Override
+  public EditBreakpointActionHandler getEditBreakpointAction() {
+    return myEditBreakpointActionHandler;
+  }
+
   @NotNull
   public DebuggerSettingsPanelProvider getSettingsPanelProvider() {
     return myDebuggerSettingsPanelProvider;
@@ -192,6 +203,17 @@ public class JavaDebuggerSupport extends DebuggerSupport {
 
     public Breakpoint findBreakpoint(@NotNull final Project project, @NotNull final Document document, final int offset) {
       return DebuggerManagerEx.getInstanceEx(project).getBreakpointManager().findBreakpoint(document, offset, null);
+    }
+
+    @Override
+    public GutterIconRenderer getBreakpointGutterIconRenderer(Object breakpoint) {
+      if (breakpoint instanceof BreakpointWithHighlighter) {
+        final RangeHighlighter highlighter = ((BreakpointWithHighlighter)breakpoint).getHighlighter();
+        if (highlighter != null) {
+          return highlighter.getGutterIconRenderer();
+        }
+      }
+      return null;
     }
 
     public void onDialogClosed(final Project project) {

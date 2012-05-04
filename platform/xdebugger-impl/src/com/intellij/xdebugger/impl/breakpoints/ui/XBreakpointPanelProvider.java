@@ -15,6 +15,8 @@
  */
 package com.intellij.xdebugger.impl.breakpoints.ui;
 
+import com.intellij.openapi.editor.markup.GutterIconRenderer;
+import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.editor.Document;
@@ -24,6 +26,7 @@ import com.intellij.xdebugger.breakpoints.*;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.XDebuggerUtil;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil;
+import com.intellij.xdebugger.impl.breakpoints.XLineBreakpointImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -54,6 +57,17 @@ public class XBreakpointPanelProvider extends BreakpointPanelProvider<XBreakpoin
       }
     }
 
+    return null;
+  }
+
+  @Override
+  public GutterIconRenderer getBreakpointGutterIconRenderer(Object breakpoint) {
+    if (breakpoint instanceof XLineBreakpointImpl) {
+      RangeHighlighter highlighter = ((XLineBreakpointImpl)breakpoint).getHighlighter();
+      if (highlighter != null) {
+        return highlighter.getGutterIconRenderer();
+      }
+    }
     return null;
   }
 
