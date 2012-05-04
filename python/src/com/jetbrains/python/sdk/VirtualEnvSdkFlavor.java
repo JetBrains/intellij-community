@@ -63,11 +63,14 @@ public class VirtualEnvSdkFlavor extends CPythonSdkFlavor {
       VirtualFile[] suspects = rootDir.getChildren();
       for (VirtualFile child : suspects) {
         if (child.isDirectory()) {
-          final String childName = child.getName();
-          if (childName.equals("bin") || childName.equals("Scripts"))
-            candidates.addAll(findInterpreter(child));
-          else
-            candidates.addAll(findInDirectory(child));
+          final VirtualFile bin = child.findChild("bin");
+          final VirtualFile scripts = child.findChild("Scripts");
+          if (bin != null) {
+            candidates.addAll(findInterpreter(bin));
+          }
+          if (scripts != null) {
+            candidates.addAll(findInterpreter(scripts));
+          }
         }
       }
     }
@@ -80,12 +83,16 @@ public class VirtualEnvSdkFlavor extends CPythonSdkFlavor {
       if (!child.isDirectory()) {
         final String childName = child.getName();
         for (String name : NAMES) {
-          if (SystemInfo.isWindows && childName.equals(name)) {
-            candidates.add(child.getPath());
+          if (SystemInfo.isWindows) {
+            if (childName.equals(name)) {
+              candidates.add(child.getPath());
+            }
           }
-          else if (childName.startsWith(name)) {
-            if (!childName.endsWith("-config")) candidates.add(child.getPath());
-            break;
+          else {
+            if (childName.startsWith(name)) {
+              if (!childName.endsWith("-config")) candidates.add(child.getPath());
+              break;
+            }
           }
         }
       }
