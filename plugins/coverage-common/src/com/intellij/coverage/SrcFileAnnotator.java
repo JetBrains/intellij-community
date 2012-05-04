@@ -31,10 +31,7 @@ import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
@@ -151,19 +148,21 @@ public class SrcFileAnnotator implements Disposable {
   private
   @NotNull
   String[] getUpToDateLines() {
-    final int lineCount = myDocument.getLineCount();
-    final String[] lines = new String[lineCount];
+    final Ref<String[]> linesRef = new Ref<String[]>();
     final Runnable runnable = new Runnable() {
       public void run() {
+        final int lineCount = myDocument.getLineCount();
+        final String[] lines = new String[lineCount];
         final CharSequence chars = myDocument.getCharsSequence();
         for (int i = 0; i < lineCount; i++) {
           lines[i] = chars.subSequence(myDocument.getLineStartOffset(i), myDocument.getLineEndOffset(i)).toString();
         }
+        linesRef.set(lines);
       }
     };
     ApplicationManager.getApplication().runReadAction(runnable);
 
-    return lines;
+    return linesRef.get();
   }
 
   private static TIntIntHashMap getCoverageVersionToCurrentLineMapping(Diff.Change change, int firstNLines) {
