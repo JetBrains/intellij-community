@@ -230,7 +230,7 @@ public class FileReferenceSet {
 
     if (str.equals(separatorString)) {
       final FileReference fileReference =
-        createFileReference(new TextRange(myStartInElement, myStartInElement + 1), index++, separatorString);
+        createFileReference(new TextRange(myStartInElement, myStartInElement + sepLen), index++, separatorString);
       referencesList.add(fileReference);
     }
 
