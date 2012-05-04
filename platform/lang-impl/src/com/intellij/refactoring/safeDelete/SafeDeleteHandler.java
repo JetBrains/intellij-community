@@ -40,6 +40,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.LinkedHashSet;
 import java.util.Set;
 
 /**
@@ -63,15 +64,15 @@ public class SafeDeleteHandler implements RefactoringActionHandler {
     invoke(project, elements, LangDataKeys.MODULE.getData(dataContext), true, null);
   }
 
-  public static void invoke(final Project project, PsiElement[] elements, boolean checkSuperMethods) {
-    invoke(project, elements, checkSuperMethods, null);
+  public static void invoke(final Project project, PsiElement[] elements, boolean checkDelegates) {
+    invoke(project, elements, checkDelegates, null);
   }
 
-  public static void invoke(final Project project, PsiElement[] elements, boolean checkSuperMethods, @Nullable final Runnable successRunnable) {
-    invoke(project, elements, null, checkSuperMethods, successRunnable);
+  public static void invoke(final Project project, PsiElement[] elements, boolean checkDelegates, @Nullable final Runnable successRunnable) {
+    invoke(project, elements, null, checkDelegates, successRunnable);
   }
 
-  public static void invoke(final Project project, PsiElement[] elements, @Nullable Module module, boolean checkSuperMethods, @Nullable final Runnable successRunnable) {
+  public static void invoke(final Project project, PsiElement[] elements, @Nullable Module module, boolean checkDelegates, @Nullable final Runnable successRunnable) {
     for (PsiElement element : elements) {
       if (!SafeDeleteProcessor.validElement(element)) {
         return;
@@ -79,9 +80,9 @@ public class SafeDeleteHandler implements RefactoringActionHandler {
     }
     final PsiElement[] temptoDelete = PsiTreeUtil.filterAncestors(elements);
     Set<PsiElement> elementsSet = new HashSet<PsiElement>(Arrays.asList(temptoDelete));
-    Set<PsiElement> fullElementsSet = new HashSet<PsiElement>();
+    Set<PsiElement> fullElementsSet = new LinkedHashSet<PsiElement>();
 
-    if (checkSuperMethods) {
+    if (checkDelegates) {
       for (PsiElement element : temptoDelete) {
         boolean found = false;
         for(SafeDeleteProcessorDelegate delegate: Extensions.getExtensions(SafeDeleteProcessorDelegate.EP_NAME)) {
