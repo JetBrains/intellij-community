@@ -574,6 +574,7 @@ class RunConfigurable extends BaseConfigurable {
       }
     }
 
+    manager.saveOrder();
     setModified(false);
   }
 
