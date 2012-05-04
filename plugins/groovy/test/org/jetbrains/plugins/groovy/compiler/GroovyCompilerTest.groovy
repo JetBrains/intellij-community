@@ -646,7 +646,9 @@ public class Main {
         File[] files = systemRoot.listFiles()
         if (files != null) {
           for (File file : files) {
-            FileUtil.delete(file);
+            if (file.isDirectory()) {
+              FileUtil.delete(file);
+            }
           }
         }
       }
