@@ -340,7 +340,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
       if (createChangelist) {
         if (changeLists.isEmpty()) {
           String name = getChangelistName(origin);
-          String comment = TaskUtil.getChangeListComment(this, origin);
+          String comment = TaskUtil.getChangeListComment(origin);
           createChangeList(task, name, comment);
         } else {
           String id = changeLists.get(0).id;
@@ -368,7 +368,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
   }
 
   public void createChangeList(LocalTask task, String name) {
-    String comment = TaskUtil.getChangeListComment(this, task);
+    String comment = TaskUtil.getChangeListComment(task);
     createChangeList(task, name, comment);
   }
 

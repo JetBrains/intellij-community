@@ -33,23 +33,12 @@ public class TaskUtil {
   }
 
   @Nullable
-  public static String getChangeListComment(TaskManagerImpl manager, Task task) {
+  public static String getChangeListComment(Task task) {
     final TaskRepository repository = task.getRepository();
-    if (repository != null) {
-      return getChangeListComment(task, repository);
+    if (repository == null || !repository.isShouldFormatCommitMessage()) {
+      return null;
     }
-    for (TaskRepository repo : manager.getAllRepositories()) {
-      try {
-        final Task origin = repo.findTask(task.getId());
-        if (origin != null) return getChangeListComment(task, repo);
-      } catch (Exception ignored) {}
-    }
-    return null;
-  }
-
-  @Nullable
-  private static String getChangeListComment(Task task, TaskRepository repository) {
-    return repository.isShouldFormatCommitMessage() ? formatTask(task, repository.getCommitMessageFormat()) : null;
+    return formatTask(task, repository.getCommitMessageFormat());
   }
 
   public static String getTrimmedSummary(LocalTask task) {
