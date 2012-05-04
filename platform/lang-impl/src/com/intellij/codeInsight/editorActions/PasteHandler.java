@@ -327,6 +327,31 @@ public class PasteHandler extends EditorActionHandler implements EditorTextInser
     PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
 
     CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(project);
+    final CharSequence text = editor.getDocument().getCharsSequence();
+    if (startOffset > 0 && endOffset > startOffset + 1 && text.charAt(endOffset - 1) == '\n' && text.charAt(startOffset - 1) == '\n') {
+      // There is a possible situation that pasted text ends by a line feed. We don't want to proceed it when a text is
+      // pasted at the first line column.
+      // Example:
+      //    text to paste:
+      //'if (true) {
+      //'
+      //    source:
+      // if (true) {
+      //     int i = 1;
+      //     int j = 1;
+      // }
+      // 
+      //
+      // We get the following on paste then:
+      // if (true) {
+      //     if (true) {
+      //         int i = 1;
+      //     int j = 1;
+      // }
+      //
+      // We don't want line 'int i = 1;' to be indented here.
+      endOffset--;
+    }
     try {
       codeStyleManager.adjustLineIndent(file, new TextRange(startOffset, endOffset));
     }
