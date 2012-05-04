@@ -28,11 +28,13 @@ import com.intellij.util.io.PagePool;
 import com.intellij.util.io.UnsyncByteArrayInputStream;
 
 import java.io.DataInputStream;
+import java.io.EOFException;
 import java.io.File;
 import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.*;
 import java.util.zip.DeflaterOutputStream;
+import java.util.zip.Inflater;
 import java.util.zip.InflaterInputStream;
 
 public class RefCountingStorage extends AbstractStorage {
@@ -70,7 +72,7 @@ public class RefCountingStorage extends AbstractStorage {
     synchronized (myLock) {
 
       byte[] result = super.readBytes(record);
-      InflaterInputStream in = new InflaterInputStream(new UnsyncByteArrayInputStream(result));
+      InflaterInputStream in = new CustomInflaterInputStream(result);
       try {
         final BufferExposingByteArrayOutputStream outputStream = new BufferExposingByteArrayOutputStream();
         StreamUtil.copyStreamContent(in, outputStream);
@@ -79,6 +81,27 @@ public class RefCountingStorage extends AbstractStorage {
       finally {
         in.close();
       }
+    }
+  }
+
+  private static class CustomInflaterInputStream extends InflaterInputStream {
+    public CustomInflaterInputStream(byte[] compressedData) {
+      super(new UnsyncByteArrayInputStream(compressedData), new Inflater(), 1);
+      // force to directly use compressed data, this ensures less round trips with native extraction code and copy streams
+      this.buf = compressedData;
+    }
+
+    @Override
+    protected void fill() throws IOException {
+      if (len > 0) throw new EOFException();
+      len = buf.length;
+      inf.setInput(buf, 0, len);
+    }
+
+    @Override
+    public void close() throws IOException {
+      super.close();
+      inf.end(); // custom inflater need explicit dispose
     }
   }
 
