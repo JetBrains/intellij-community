@@ -19,6 +19,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
+import java.nio.charset.IllegalCharsetNameException;
 import java.nio.charset.UnsupportedCharsetException;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -90,6 +91,9 @@ public class PythonFileType extends LanguageFileType {
     }
     try {
       return Charset.forName(charsetName);
+    }
+    catch (IllegalCharsetNameException e) {
+      return null;
     }
     catch (UnsupportedCharsetException e) {
       return null;

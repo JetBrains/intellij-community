@@ -102,17 +102,7 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
     myPorts = ports;
   }
 
-  @Nullable
-  public static PydevConsoleRunner createAndRun(@NotNull final Project project,
-                                                @NotNull final Sdk sdk,
-                                                final PyConsoleType consoleType,
-                                                final String workingDirectory,
-                                                final String... statements2execute) {
-    return createAndRun(project, sdk, consoleType, workingDirectory, createDefaultEnvironmentVariables(sdk), statements2execute);
-  }
-
-  public static Map<String, String> createDefaultEnvironmentVariables(Sdk sdk) {
-    Map<String, String> envs = Maps.newHashMap();
+  public static Map<String, String> addDefaultEnvironments(Sdk sdk, Map<String, String> envs) {
     setPythonIOEncoding(setPythonUnbuffered(envs), "utf-8");
     PythonSdkFlavor.initPythonPath(envs, true, PythonCommandLineState.getAddedPaths(sdk));
     return envs;
@@ -163,13 +153,13 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
                                           Sdk sdk,
                                           PyConsoleType consoleType,
                                           String workingDirectory) {
-    return create(project, sdk, consoleType, workingDirectory, createDefaultEnvironmentVariables(sdk));
+    return create(project, sdk, consoleType, workingDirectory, Maps.<String, String>newHashMap());
   }
 
-  private static PydevConsoleRunner create(@NotNull Project project,
-                                           @NotNull Sdk sdk,
-                                           @NotNull PyConsoleType consoleType,
-                                           @Nullable String workingDirectory,
+  private static PydevConsoleRunner create(@NotNull final Project project,
+                                           @NotNull final Sdk sdk,
+                                           @NotNull final PyConsoleType consoleType,
+                                           @Nullable final String workingDirectory,
                                            @NotNull final Map<String, String> environmentVariables) {
     final int[] ports;
     try {
@@ -201,7 +191,7 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
       }
 
       public Map<String, String> getAdditionalEnvs() {
-        return environmentVariables;
+        return addDefaultEnvironments(sdk, environmentVariables);
       }
     };
 
@@ -222,7 +212,8 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
       PythonRemoteInterpreterManager manager = PythonRemoteInterpreterManager.getInstance();
       if (manager != null) {
         try {
-          return createRemoteConsoleProcess(manager);
+          return createRemoteConsoleProcess(manager, myCommandLineArgumentsProvider.getArguments(),
+                                            myCommandLineArgumentsProvider.getAdditionalEnvs());
         }
         catch (final PyRemoteInterpreterException e) {
           throw new ExecutionException(e.getMessage(), e);
@@ -244,11 +235,12 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
     }
   }
 
-  private Process createRemoteConsoleProcess(PythonRemoteInterpreterManager manager)
+  private Process createRemoteConsoleProcess(PythonRemoteInterpreterManager manager, String[] command, Map<String, String> envs)
     throws PyRemoteInterpreterException, ExecutionException {
     PythonRemoteSdkAdditionalData data = (PythonRemoteSdkAdditionalData)mySdk.getSdkAdditionalData();
 
-    GeneralCommandLine commandLine = new GeneralCommandLine(myCommandLineArgumentsProvider.getArguments());
+    GeneralCommandLine commandLine = new GeneralCommandLine(command);
+    commandLine.setEnvParams(envs);
 
     commandLine.getParametersList().set(1, PythonRemoteInterpreterManager.toSystemDependent(new File(data.getPyCharmHelpersPath(),
                                                                                                      PYDEV_PYDEVCONSOLE_PY)

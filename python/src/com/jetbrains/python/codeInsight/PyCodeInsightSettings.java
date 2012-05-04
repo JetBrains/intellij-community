@@ -1,9 +1,6 @@
 package com.jetbrains.python.codeInsight;
 
-import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.*;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 
 /**
@@ -13,7 +10,7 @@ import com.intellij.util.xmlb.XmlSerializerUtil;
   name="PyCodeInsightSettings",
   storages = {
     @Storage(
-      file="$APP_CONFIG$/other.xml"
+      file = StoragePathMacros.APP_CONFIG + "/other.xml"
     )}
 )
 public class PyCodeInsightSettings implements PersistentStateComponent<PyCodeInsightSettings> {
