@@ -88,7 +88,7 @@ public class DebuggerUIUtil {
   public static void invokeOnEventDispatch(final Runnable runnable) {
     invokeOnEventDispatch(runnable, null);
   }
-  
+
   public static void invokeOnEventDispatchIfProjectNotDisposed(final Runnable runnable, final Project project) {
     invokeOnEventDispatch(runnable, new Condition<Object>() {
       @Override

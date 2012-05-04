@@ -25,7 +25,6 @@ import com.intellij.debugger.engine.events.DebuggerCommandImpl;
 import com.intellij.debugger.engine.requests.RequestManagerImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.settings.DebuggerSettings;
-import com.intellij.debugger.ui.breakpoints.actions.JavaEditBreakpointAction;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -50,6 +49,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.ui.classFilter.ClassFilter;
 import com.intellij.util.StringBuilderSpinAllocator;
+import com.intellij.xdebugger.impl.actions.EditBreakpointAction;
 import com.intellij.xdebugger.impl.actions.ViewBreakpointsAction;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.intellij.xdebugger.ui.DebuggerColors;
@@ -643,7 +643,7 @@ public abstract class BreakpointWithHighlighter extends Breakpoint {
     DefaultActionGroup group = new DefaultActionGroup();
     RangeHighlighter highlighter = getHighlighter();
     if (highlighter != null) {
-      group.add(new JavaEditBreakpointAction(this, highlighter));
+      group.add(new EditBreakpointAction());
       group.addSeparator();
     }
     group.add(new SetEnabledAction(this, !ENABLED));

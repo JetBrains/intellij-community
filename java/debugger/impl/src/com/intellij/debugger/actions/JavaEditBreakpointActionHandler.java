@@ -13,38 +13,48 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.debugger.ui.breakpoints.actions;
+package com.intellij.debugger.actions;
 
 import com.intellij.debugger.ui.breakpoints.BreakpointFactory;
 import com.intellij.debugger.ui.breakpoints.BreakpointPropertiesPanel;
 import com.intellij.debugger.ui.breakpoints.BreakpointWithHighlighter;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
-import com.intellij.openapi.editor.markup.RangeHighlighter;
+import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.xdebugger.impl.actions.EditBreakpointAction;
+import com.intellij.xdebugger.impl.actions.EditBreakpointActionHandler;
+import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
 
-
-public class JavaEditBreakpointAction extends EditBreakpointAction {
-  private BreakpointWithHighlighter myBreakpointWithHighlighter;
-
-  public JavaEditBreakpointAction(BreakpointWithHighlighter breakpointWithHighlighter, RangeHighlighter highlighter) {
-    super(breakpointWithHighlighter, highlighter.getGutterIconRenderer());
-    myBreakpointWithHighlighter = breakpointWithHighlighter;
-  }
-
+/**
+ * Created with IntelliJ IDEA.
+ * User: zajac
+ * Date: 04.05.12
+ * Time: 4:10
+ * To change this template use File | Settings | File Templates.
+ */
+public class JavaEditBreakpointActionHandler extends EditBreakpointActionHandler {
   @Override
-  protected void doShowPopup(final Project project, final EditorGutterComponentEx gutterComponent, final Point whereToShow) {
-    Key<? extends BreakpointWithHighlighter> category = myBreakpointWithHighlighter.getCategory();
+  protected void doShowPopup(Project project, final EditorGutterComponentEx gutterComponent, final Point whereToShow, Object breakpoint) {
+    if (!(breakpoint instanceof BreakpointWithHighlighter)) return;
+
+    final BreakpointWithHighlighter javaBreakpoint = (BreakpointWithHighlighter)breakpoint;
+    Key<? extends BreakpointWithHighlighter> category = javaBreakpoint.getCategory();
+
     final BreakpointFactory[] allFactories = ApplicationManager.getApplication().getExtensions(BreakpointFactory.EXTENSION_POINT_NAME);
     BreakpointFactory breakpointFactory = null;
     for (BreakpointFactory factory : allFactories) {
@@ -52,13 +62,13 @@ public class JavaEditBreakpointAction extends EditBreakpointAction {
         breakpointFactory = factory;
       }
     }
-    assert breakpointFactory != null : "can't find factory for breakpoint " + myBreakpointWithHighlighter;
+    assert breakpointFactory != null : "can't find factory for breakpoint " + javaBreakpoint;
 
     final BreakpointPropertiesPanel propertiesPanel = breakpointFactory.createBreakpointPropertiesPanel(project, true);
-    propertiesPanel.initFrom(myBreakpointWithHighlighter, false);
+    propertiesPanel.initFrom(javaBreakpoint, false);
 
     final JComponent mainPanel = propertiesPanel.getPanel();
-    final String displayName = myBreakpointWithHighlighter.getDisplayName();
+    final String displayName = javaBreakpoint.getDisplayName();
 
     final JBPopupListener saveOnClose = new JBPopupListener() {
       @Override
@@ -67,7 +77,7 @@ public class JavaEditBreakpointAction extends EditBreakpointAction {
 
       @Override
       public void onClosed(LightweightWindowEvent event) {
-        propertiesPanel.saveTo(myBreakpointWithHighlighter, new Runnable() {
+        propertiesPanel.saveTo(javaBreakpoint, new Runnable() {
           @Override
           public void run() {
           }
@@ -83,7 +93,8 @@ public class JavaEditBreakpointAction extends EditBreakpointAction {
         newBalloon.addListener(saveOnClose);
       }
     };
-    final Balloon balloon = DebuggerUIUtil.showBreakpointEditor(mainPanel, displayName, whereToShow, gutterComponent, propertiesPanel.isMoreOptionsVisible() ? null : showMoreOptions);
+    final Balloon balloon = DebuggerUIUtil.showBreakpointEditor(mainPanel, displayName, whereToShow, gutterComponent,
+                                                                propertiesPanel.isMoreOptionsVisible() ? null : showMoreOptions);
     balloon.addListener(saveOnClose);
 
     propertiesPanel.setDelegate(new BreakpointPropertiesPanel.Delegate() {
@@ -105,4 +116,11 @@ public class JavaEditBreakpointAction extends EditBreakpointAction {
     });
   }
 
+  @Override
+  public boolean isEnabled(@NotNull Project project, AnActionEvent event) {
+    DataContext dataContext = event.getDataContext();
+    Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
+    final Pair<GutterIconRenderer,Object> pair = XBreakpointUtil.findSelectedBreakpoint(project, editor);
+    return pair.first != null && pair.second instanceof BreakpointWithHighlighter;
+  }
 }
