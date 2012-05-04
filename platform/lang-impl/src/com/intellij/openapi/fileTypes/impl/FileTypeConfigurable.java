@@ -404,7 +404,7 @@ public class FileTypeConfigurable extends BaseConfigurable implements Searchable
           }
         }).disableUpDownActions();
 
-      //if (getSchemesManager().isImportAvailable()) {
+      if (getSchemesManager().isImportAvailable()) {
         toolbarDecorator.addExtraAction(new AnActionButton("Import Shared...", IconUtil.getImportIcon()) {
           @Override
           public void actionPerformed(AnActionEvent e) {
@@ -415,9 +415,9 @@ public class FileTypeConfigurable extends BaseConfigurable implements Searchable
             }.show(getSchemesManager(), collectRegisteredFileTypes());
           }
         });
-      //}
+      }
 
-      //if (getSchemesManager().isExportAvailable()) {
+      if (getSchemesManager().isExportAvailable()) {
         toolbarDecorator.addExtraAction(new AnActionButton("Share...", IconUtil.getExportIcon()) {
           @Override
           public void actionPerformed(AnActionEvent e) {
@@ -435,7 +435,7 @@ public class FileTypeConfigurable extends BaseConfigurable implements Searchable
             setEnabled(b && !shared);
           }
         });
-      //}
+      }
 
       add(toolbarDecorator.createPanel(), BorderLayout.CENTER);
       setBorder(IdeBorderFactory.createTitledBorder(FileTypesBundle.message("filetypes.recognized.group"), false));
