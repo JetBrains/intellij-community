@@ -18,7 +18,6 @@ package com.intellij.codeInspection.ex;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
-import com.intellij.codeInspection.DummyInspectionTool;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.WriteExternalException;
@@ -44,7 +43,6 @@ public class Descriptor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.ex.Descriptor");
   private final ScopeToolState myState;
   private final InspectionProfileImpl myInspectionProfile;
-  private boolean myShouldBeShown = true;
 
   public Descriptor(ScopeToolState pair, InspectionProfileImpl inspectionProfile) {
     myState = pair;
@@ -54,18 +52,10 @@ public class Descriptor {
     final String[] groupPath = tool.getGroupPath();
     myGroup = groupPath.length == 0 ? new String[]{InspectionProfileEntry.GENERAL_GROUP_NAME} : groupPath;
     myKey = HighlightDisplayKey.find(tool.getShortName());
-    myLevel = ((InspectionProfileImpl)inspectionProfile).getErrorLevel(myKey, pair.getScope());
-    myEnabled = ((InspectionProfileImpl)inspectionProfile).isToolEnabled(myKey, pair.getScope());
+    myLevel = inspectionProfile.getErrorLevel(myKey, pair.getScope());
+    myEnabled = inspectionProfile.isToolEnabled(myKey, pair.getScope());
     myTool = tool;
     myScope = pair.getScope();
-
-    if (tool instanceof InspectionToolWrapper) {
-      InspectionProfileEntry inspection = ((InspectionToolWrapper)tool).getTool();
-
-      if (inspection instanceof DummyInspectionTool) {
-        myShouldBeShown = ((DummyInspectionTool)inspection).shouldBeShownInInspectionProfile();
-      }
-    }
   }
 
   public boolean equals(Object obj) {
@@ -88,10 +78,6 @@ public class Descriptor {
 
   public void setEnabled(final boolean enabled) {
     myEnabled = enabled;
-  }
-
-  public boolean shouldBeShown() {
-    return myShouldBeShown;
   }
 
   public String getText() {

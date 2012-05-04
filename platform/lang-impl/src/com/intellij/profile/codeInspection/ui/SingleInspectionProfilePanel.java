@@ -229,6 +229,9 @@ public class SingleInspectionProfilePanel extends JPanel {
     List<ScopeToolState> tools = profile.getDefaultStates();
     for (ScopeToolState state : tools) {
       final ArrayList<Descriptor> descriptors = new ArrayList<Descriptor>();
+      if (state.getLevel() == HighlightDisplayLevel.NON_SWITCHABLE_ERROR) {
+        continue;
+      }
       myDescriptors.put(new Descriptor(state, profile), descriptors);
       final List<ScopeToolState> nonDefaultTools = profile.getNonDefaultTools(state.getTool().getShortName());
       if (nonDefaultTools != null) {
@@ -452,16 +455,6 @@ public class SingleInspectionProfilePanel extends JPanel {
       @Override
       protected void onNodeStateChanged(final CheckedTreeNode node) {
         toggleToolNode((InspectionConfigTreeNode)node);
-      }
-
-      @Override
-      protected void onDoubleClick(CheckedTreeNode node) {
-        final TreePath treePath = new TreePath(node.getPath());
-        if (myTree.isCollapsed(treePath)) {
-          myTree.expandPath(treePath);
-        } else {
-          myTree.collapsePath(treePath);
-        }
       }
     };
 
@@ -695,7 +688,7 @@ public class SingleInspectionProfilePanel extends JPanel {
       keySetList.addAll(SearchUtil.findKeys(filter, quated));
     }
     for (Descriptor descriptor : myDescriptors.keySet()) {
-      if (!descriptor.shouldBeShown() || filter != null && filter.length() > 0 && !isDescriptorAccepted(descriptor, filter, forceInclude, keySetList, quated)) {
+      if (filter != null && filter.length() > 0 && !isDescriptorAccepted(descriptor, filter, forceInclude, keySetList, quated)) {
         continue;
       }
       final List<ScopeToolState> nonDefaultTools = mySelectedProfile.getNonDefaultTools(descriptor.getKey().toString());

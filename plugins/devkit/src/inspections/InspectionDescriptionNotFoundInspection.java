@@ -40,7 +40,6 @@ import java.util.List;
  */
 public class InspectionDescriptionNotFoundInspection extends DevKitInspectionBase{
   @NonNls static final String INSPECTION_PROFILE_ENTRY = InspectionProfileEntry.class.getName();
-  @NonNls static final String DUMMY_INSPECTION_TOOL = DummyInspectionTool.class.getName();
   @NonNls private static final String INSPECTION_DESCRIPTIONS = "inspectionDescriptions";
 
   @Override
@@ -52,10 +51,8 @@ public class InspectionDescriptionNotFoundInspection extends DevKitInspectionBas
     if (nameIdentifier == null || module == null || !PsiUtil.isInstantiatable(aClass)) return null;
 
     final PsiClass base = JavaPsiFacade.getInstance(project).findClass(INSPECTION_PROFILE_ENTRY, GlobalSearchScope.allScope(project));
-    final PsiClass dummy = JavaPsiFacade.getInstance(project).findClass(DUMMY_INSPECTION_TOOL, GlobalSearchScope.allScope(project));
 
     if (base == null || ! aClass.isInheritor(base, true) || isPathMethodsAreOverridden(aClass)) return null;
-    if (dummy == null || aClass.isInheritor(dummy, true)) return null;
 
     PsiMethod method = findNearestMethod("getShortName", aClass);
     if (method != null && method.getContainingClass().getQualifiedName().equals(INSPECTION_PROFILE_ENTRY)) {

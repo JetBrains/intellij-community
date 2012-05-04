@@ -559,6 +559,7 @@ public class GlobalInspectionContextImpl extends UserDataHolderBase implements G
       tool.inspectionStarted(manager, this, toolWrapper);
     }
 
+    final Map<String, DescriptorProviderInspection> map = getInspectionWrappersMap(localTools);
     scope.accept(new PsiElementVisitor() {
       @Override
       public void visitFile(final PsiFile file) {
@@ -590,7 +591,7 @@ public class GlobalInspectionContextImpl extends UserDataHolderBase implements G
                 GlobalInspectionToolWrapper toolWrapper = (GlobalInspectionToolWrapper)tools.getTool();
                 GlobalSimpleInspectionTool tool = (GlobalSimpleInspectionTool)toolWrapper.getTool();
                 ProblemsHolder problemsHolder = new ProblemsHolder(manager, file, false);
-                GlobalInspectionToolWrapper problemDescriptionProcessor = getProblemDescriptionProcessor(toolWrapper, localTools);
+                GlobalInspectionToolWrapper problemDescriptionProcessor = getProblemDescriptionProcessor(toolWrapper, map);
                 tool.checkFile(file, manager, problemsHolder, GlobalInspectionContextImpl.this, problemDescriptionProcessor);
                 LocalInspectionToolWrapper.addProblemDescriptors(problemsHolder.getResults(), false, GlobalInspectionContextImpl.this, null,
                                                                  CONVERT, toolWrapper);
@@ -618,18 +619,13 @@ public class GlobalInspectionContextImpl extends UserDataHolderBase implements G
     for (Tools tools : globalSimpleTools) {
       GlobalInspectionToolWrapper toolWrapper = (GlobalInspectionToolWrapper)tools.getTool();
       GlobalSimpleInspectionTool tool = (GlobalSimpleInspectionTool)toolWrapper.getTool();
-      GlobalInspectionToolWrapper problemDescriptionProcessor = getProblemDescriptionProcessor(toolWrapper, localTools);
+      GlobalInspectionToolWrapper problemDescriptionProcessor = getProblemDescriptionProcessor(toolWrapper, map);
       tool.inspectionFinished(manager, this, problemDescriptionProcessor);
     }
   }
 
-  private static GlobalInspectionToolWrapper getProblemDescriptionProcessor(
-    @NotNull final GlobalInspectionToolWrapper toolWrapper, @NotNull List<Tools> localTools) {
-    final Map<String, DescriptorProviderInspection> dummyWrappersMap = getDummyInspectionWrappersMap(localTools);
-
-    if (dummyWrappersMap == null) {
-      return toolWrapper;
-    }
+  private static GlobalInspectionToolWrapper getProblemDescriptionProcessor(@NotNull final GlobalInspectionToolWrapper toolWrapper,
+                                                                            final Map<String, DescriptorProviderInspection> wrappersMap) {
 
     return new GlobalInspectionToolWrapper(toolWrapper.getTool()) {
       @Override
@@ -639,7 +635,7 @@ public class GlobalInspectionContextImpl extends UserDataHolderBase implements G
             String problemGroup = ((ProblemDescriptor)problemDescriptor).getProblemGroup();
 
             if (problemGroup != null) {
-              DescriptorProviderInspection dummyWrapper = dummyWrappersMap.get(problemGroup);
+              DescriptorProviderInspection dummyWrapper = wrappersMap.get(problemGroup);
 
               if (dummyWrapper != null) { // Else it's switched off
                 dummyWrapper.addProblemElement(refEntity, problemDescriptor);
@@ -654,25 +650,14 @@ public class GlobalInspectionContextImpl extends UserDataHolderBase implements G
     };
   }
 
-  @Nullable
-  // Returns null if there's no dummy inspections
-  private static Map<String, DescriptorProviderInspection> getDummyInspectionWrappersMap(List<Tools> tools) {
-    Map<String, DescriptorProviderInspection> toolWrappers = null;
+  @NotNull
+  private static Map<String, DescriptorProviderInspection> getInspectionWrappersMap(List<Tools> tools) {
 
+    Map<String, DescriptorProviderInspection> toolWrappers = new HashMap<String, DescriptorProviderInspection>(tools.size());
     for (Tools tool : tools) {
       InspectionProfileEntry profileEntry = tool.getTool();
-
-      if (profileEntry instanceof InspectionToolWrapper) {
-        InspectionToolWrapper toolWrapper = (InspectionToolWrapper)profileEntry;
-        InspectionProfileEntry inspectionTool = toolWrapper.getTool();
-
-        if (inspectionTool instanceof DummyInspectionTool) {
-          if (toolWrappers == null) {
-            toolWrappers = new HashMap<String, DescriptorProviderInspection>();
-          }
-
-          toolWrappers.put(((DummyInspectionTool)inspectionTool).getProblemGroup(), toolWrapper);
-        }
+      if (profileEntry instanceof DescriptorProviderInspection) {
+        toolWrappers.put(profileEntry.getShortName(), (DescriptorProviderInspection)profileEntry);
       }
     }
 
