@@ -29,7 +29,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.HashMap;
-import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.console.PyDebugConsoleBuilder;
 import com.jetbrains.python.debugger.PyDebugRunner;
 import com.jetbrains.python.facet.LibraryContributingFacet;
@@ -337,7 +336,6 @@ public abstract class PythonCommandLineState extends CommandLineState {
   @NotNull
   public static Collection<String> collectPythonPath(@Nullable Module module, final boolean addProjectRoots) {
     Collection<String> pythonPathList = Sets.newLinkedHashSet();
-    pythonPathList.add(PythonHelpersLocator.getHelpersRoot().getPath());
     if (module != null && addProjectRoots) {
       addLibrariesFromModule(module, pythonPathList);
       Set<Module> dependencies = new HashSet<Module>();

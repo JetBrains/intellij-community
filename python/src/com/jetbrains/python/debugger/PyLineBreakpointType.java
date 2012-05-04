@@ -58,7 +58,8 @@ public class PyLineBreakpointType extends XLineBreakpointType<XBreakpointPropert
   private static boolean notStoppableElementType(IElementType elementType) {
     return elementType == PyTokenTypes.TRIPLE_QUOTED_STRING ||
            elementType == PyTokenTypes.SINGLE_QUOTED_STRING ||
-           elementType == PyTokenTypes.SINGLE_QUOTED_UNICODE
+           elementType == PyTokenTypes.SINGLE_QUOTED_UNICODE ||
+           elementType == PyTokenTypes.DOCSTRING
       ;
   }
 

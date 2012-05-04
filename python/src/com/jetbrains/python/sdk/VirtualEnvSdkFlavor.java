@@ -55,7 +55,10 @@ public class VirtualEnvSdkFlavor extends CPythonSdkFlavor {
 
     final VirtualFile userHome = LocalFileSystem.getInstance().findFileByPath(SystemProperties.getUserHome().replace('\\','/'));
     if (userHome != null) {
-      return userHome.findChild(".virtualenvs");
+      final VirtualFile predefinedFolder = userHome.findChild(".virtualenvs");
+      if (predefinedFolder == null)
+        return userHome;
+      return predefinedFolder;
     }
     return null;
   }
