@@ -71,6 +71,7 @@ class LocalClassWithInner {
     void foo () {
           class A {
              <error descr="Modifier 'private' not allowed here">private</error> class B {}
+             <error descr="Modifier 'public' not allowed here">public</error> class B1 {}
         }
     }
 }

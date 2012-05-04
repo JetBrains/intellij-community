@@ -820,7 +820,7 @@ public class HighlightUtil {
       }
       else {
         if (PsiModifier.PUBLIC.equals(modifier)) {
-          isAllowed = modifierOwnerParent instanceof PsiJavaFile || modifierOwnerParent instanceof PsiClass;
+          isAllowed = modifierOwnerParent instanceof PsiJavaFile || (modifierOwnerParent instanceof PsiClass && ((PsiClass)modifierOwnerParent).getQualifiedName() != null);
         }
         else if (PsiModifier.STATIC.equals(modifier) || PsiModifier.PRIVATE.equals(modifier) || PsiModifier.PROTECTED.equals(modifier) ||
                  PsiModifier.PACKAGE_LOCAL.equals(modifier)) {
