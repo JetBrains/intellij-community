@@ -186,7 +186,7 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
 
       private AnAction[] getActions() {
         List<AnAction> actions = new ArrayList<AnAction>();
-        actions.add(new AttachFilesAction(ProjectBundle.message("button.text.attach.files")));
+        actions.add(new AttachFilesAction(myDescriptor.getAttachFilesActionName()));
         for (AttachRootButtonDescriptor descriptor : myDescriptor.createAttachButtons()) {
           actions.add(new AttachItemAction(descriptor, descriptor.getButtonText()));
         }

@@ -89,4 +89,7 @@ public abstract class LibraryRootsComponentDescriptor {
     return OrderRootType.getAllTypes();
   }
 
+  public String getAttachFilesActionName() {
+    return ProjectBundle.message("button.text.attach.files");
+  }
 }
