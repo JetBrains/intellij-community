@@ -58,7 +58,7 @@ PyFile:ExtendedSlices.py
   PsiWhiteSpace('\n')
   PyAssignmentStatement
     PySliceExpression
-      PyTargetExpression: d
+      PyReferenceExpression: d
         PsiElement(Py:IDENTIFIER)('d')
       PsiElement(Py:LBRACKET)('[')
       PySliceItem
