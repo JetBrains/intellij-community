@@ -186,11 +186,11 @@ public class ComponentSnapPoint extends SnapPoint {
       return;
     }
 
-    final String componentId = myComponent.getId();
-
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override
       public void run() {
+        final String componentId = myComponent.ensureId();
+
         for (RadComponent component : components) {
           XmlTag tag = ((RadViewComponent)component).getTag();
           tag.setAttribute(attribute, componentId);
