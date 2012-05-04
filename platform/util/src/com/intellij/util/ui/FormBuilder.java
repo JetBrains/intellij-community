@@ -175,7 +175,12 @@ public class FormBuilder {
     if (component instanceof JComboBox) {
       return NONE;
     }
-    else if (component instanceof JScrollPane) return BOTH;
+    else if (component instanceof JScrollPane) {
+      return BOTH;
+    }
+    else if (component instanceof JTextField && ((JTextField)component).getColumns() != 0) {
+      return NONE;
+    }
     return HORIZONTAL;
   }
 
