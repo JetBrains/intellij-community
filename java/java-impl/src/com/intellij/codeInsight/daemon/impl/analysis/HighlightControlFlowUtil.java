@@ -288,6 +288,7 @@ public class HighlightControlFlowUtil {
     TextRange range = HighlightNamesUtil.getFieldDeclarationTextRange(field);
     final HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, range.getStartOffset(), range.getEndOffset(), description);
     QuickFixAction.registerQuickFixAction(highlightInfo, HighlightMethodUtil.getFixRange(field), new CreateConstructorParameterFromFieldFix(field));
+    QuickFixAction.registerQuickFixAction(highlightInfo, HighlightMethodUtil.getFixRange(field), new InitializeFinalFieldInConstructorFix(field));
     final PsiClass containingClass = field.getContainingClass();
     if (containingClass != null && !containingClass.isInterface()) {
       IntentionAction fix = QUICK_FIX_FACTORY.createModifierListFix(field, PsiModifier.FINAL, false, false);
@@ -317,7 +318,7 @@ public class HighlightControlFlowUtil {
       if (scope instanceof PsiCodeBlock && scope.getParent() instanceof PsiSwitchStatement) {
         scope = PsiTreeUtil.getParentOfType(scope, PsiCodeBlock.class);
       }
-      
+
       topBlock = JspPsiUtil.isInJspFile(scope) && scope instanceof PsiFile ? scope : PsiUtil.getTopLevelEnclosingCodeBlock(expression, scope);
       if (variable instanceof PsiField) {
         // non final field already initialized with default value
