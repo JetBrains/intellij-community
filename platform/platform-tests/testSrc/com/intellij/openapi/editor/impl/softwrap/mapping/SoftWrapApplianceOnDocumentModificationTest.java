@@ -915,9 +915,9 @@ public class SoftWrapApplianceOnDocumentModificationTest extends AbstractEditorP
     final List<? extends SoftWrap> wraps = getSoftWrapModel().getRegisteredSoftWraps();
     assertEquals(1, wraps.size());
 
-    assertEquals(start, wraps.get(0).getStart());
+    assertEquals(end, wraps.get(0).getStart());
     assertEquals(myEditor.offsetToVisualPosition(start), myEditor.offsetToVisualPosition(start + 1));
-    assertEquals(myEditor.offsetToVisualPosition(start).line, myEditor.offsetToVisualPosition(end).line);
+    assertEquals(myEditor.offsetToVisualPosition(start).line, myEditor.offsetToVisualPosition(end - 1).line);
   }
   
   public void testEnsureBeforeSoftWrapSignIsVisible() throws IOException {
