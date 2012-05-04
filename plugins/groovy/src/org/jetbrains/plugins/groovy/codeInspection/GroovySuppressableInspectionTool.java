@@ -27,6 +27,8 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
+import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocCommentOwner;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationArrayInitializer;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationMemberValue;
@@ -83,7 +85,18 @@ public abstract class GroovySuppressableInspectionTool extends LocalInspectionTo
         }
       }
 
-      GrMember member = PsiTreeUtil.getNonStrictParentOfType(place, GrMember.class);
+      GrMember member = null;
+      GrDocComment docComment = PsiTreeUtil.getParentOfType(place, GrDocComment.class);
+      if (docComment != null) {
+        GrDocCommentOwner owner = docComment.getOwner();
+        if (owner instanceof GrMember) {
+          member = (GrMember)owner;
+        }
+      }
+      if (member == null) {
+        member = PsiTreeUtil.getNonStrictParentOfType(place, GrMember.class);
+      }
+
       while (member != null) {
         GrModifierList modifierList = member.getModifierList();
         for (String ids : getInspectionIdsSuppressedInAnnotation(modifierList)) {

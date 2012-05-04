@@ -840,4 +840,20 @@ char c = 'a'
     myFixture.testHighlighting(true, false, true)
   }
 
+  public void testSuppressedErrorInGroovyDoc() {
+    myFixture.configureByText('_.groovy', '''\
+class Class2 {
+
+
+  /** dependency injection for {@link GrailsFilterInvocationDefinition} */
+  @SuppressWarnings("GroovyDocCheck")
+  static main(args) {}
+
+  /** dependency injection for {@link <error descr="Cannot resolve symbol 'GrailsFilterInvocationDefinition'">GrailsFilterInvocationDefinition</error>} */
+  static main2(args) {}
+}''')
+    myFixture.enableInspections(new GroovyDocCheckInspection())
+    myFixture.testHighlighting(true, false, true)
+  }
+
 }
