@@ -15,10 +15,15 @@
  */
 package com.intellij.xdebugger.impl.actions;
 
+import com.intellij.idea.ActionsBundle;
 import com.intellij.xdebugger.impl.DebuggerSupport;
 import org.jetbrains.annotations.NotNull;
 
 public class EditBreakpointAction extends XDebuggerActionBase {
+
+  public EditBreakpointAction() {
+    getTemplatePresentation().setText(ActionsBundle.actionText("EditBreakpoint"));
+  }
 
   @NotNull
   @Override
