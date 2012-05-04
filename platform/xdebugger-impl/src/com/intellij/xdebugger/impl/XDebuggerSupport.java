@@ -207,6 +207,7 @@ public class XDebuggerSupport extends DebuggerSupport {
     return XDebuggerManager.getInstance(project).getCurrentSession();
   }
 
+  @NotNull
   @Override
   public EditBreakpointActionHandler getEditBreakpointAction() {
     return myEditBreakpointActoinHandler;

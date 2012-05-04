@@ -61,7 +61,7 @@ public class XBreakpointUtil {
   }
 
   @NotNull
-  public static Pair<GutterIconRenderer, Object> findSelectedBreakpoint(final Project project, final Editor editor) {
+  public static Pair<GutterIconRenderer, Object> findSelectedBreakpoint(@NotNull final Project project, @NotNull final Editor editor) {
     int offset = editor.getCaretModel().getOffset();
     Document editorDocument = editor.getDocument();
 

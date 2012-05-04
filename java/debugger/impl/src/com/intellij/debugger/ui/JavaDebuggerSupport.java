@@ -172,6 +172,7 @@ public class JavaDebuggerSupport extends DebuggerSupport {
     return context != null ? context.getDebuggerSession() : null;
   }
 
+  @NotNull
   @Override
   public EditBreakpointActionHandler getEditBreakpointAction() {
     return myEditBreakpointActionHandler;

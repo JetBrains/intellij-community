@@ -234,45 +234,50 @@ public class CompileContext extends UserDataHolderBase implements MessageHandler
   }
 
   void onChunkBuildComplete(@NotNull ModuleChunk chunk) throws IOException {
-    getDataManager().closeSourceToOutputStorages(chunk, isCompilingTests());
-    getDataManager().flush(true);
+    final boolean compilingTests = isCompilingTests();
     myProjectDescriptor.fsState.clearContextRoundData();
     myProjectDescriptor.fsState.clearContextChunk();
 
-    if (!myErrorsFound && !myCancelStatus.isCanceled()) {
-      final boolean compilingTests = isCompilingTests();
-      final DirtyMarkScope dirtyScope = compilingTests ? DirtyMarkScope.TESTS : DirtyMarkScope.PRODUCTION;
-      boolean marked = false;
-      for (Module module : chunk.getModules()) {
-        if (isMake()) {
-          // ensure non-incremental flag cleared
-          myNonIncrementalModules.remove(new Pair<Module, DirtyMarkScope>(module, dirtyScope));
-        }
-        if (isProjectRebuild()) {
-          myProjectDescriptor.fsState.markInitialScanPerformed(module.getName(), compilingTests);
-        }
-        final List<RootDescriptor> roots = myProjectDescriptor.rootsIndex.getModuleRoots(module);
-        for (RootDescriptor descriptor : roots) {
-          if (compilingTests? descriptor.isTestRoot : !descriptor.isTestRoot) {
-            marked |= myProjectDescriptor.fsState.markAllUpToDate(getScope(), descriptor, myTimestamps, myCompilationStartStamp);
+    final BuildDataManager dataManager = getDataManager();
+    try {
+      if (!myErrorsFound && !myCancelStatus.isCanceled()) {
+        final DirtyMarkScope dirtyScope = compilingTests ? DirtyMarkScope.TESTS : DirtyMarkScope.PRODUCTION;
+        boolean marked = false;
+        for (Module module : chunk.getModules()) {
+          if (isMake()) {
+            // ensure non-incremental flag cleared
+            myNonIncrementalModules.remove(new Pair<Module, DirtyMarkScope>(module, dirtyScope));
+          }
+          if (isProjectRebuild()) {
+            myProjectDescriptor.fsState.markInitialScanPerformed(module.getName(), compilingTests);
+          }
+          final List<RootDescriptor> roots = myProjectDescriptor.rootsIndex.getModuleRoots(module);
+          for (RootDescriptor descriptor : roots) {
+            if (compilingTests? descriptor.isTestRoot : !descriptor.isTestRoot) {
+              marked |= myProjectDescriptor.fsState.markAllUpToDate(getScope(), descriptor, myTimestamps, myCompilationStartStamp);
+            }
           }
         }
-      }
 
-      // clean mapping only after everything else is processed
-      final Map<String, Collection<String>> map = Utils.CHUNK_PER_MODULE_REMOVED_SOURCES_KEY.get(this);
-      if (map != null) {
-        for (Map.Entry<String, Collection<String>> entry : map.entrySet()) {
-          final SourceToOutputMapping mapping = getDataManager().getSourceToOutputMap(entry.getKey(), isCompilingTests());
-          for (String path : entry.getValue()) {
-            mapping.remove(path);
+        // clean mapping only after everything else is processed
+        final Map<String, Collection<String>> map = Utils.CHUNK_PER_MODULE_REMOVED_SOURCES_KEY.get(this);
+        if (map != null) {
+          for (Map.Entry<String, Collection<String>> entry : map.entrySet()) {
+          final SourceToOutputMapping mapping = dataManager.getSourceToOutputMap(entry.getKey(), isCompilingTests());
+            for (String path : entry.getValue()) {
+              mapping.remove(path);
+            }
           }
         }
-      }
 
-      if (marked) {
-        processMessage(UptoDateFilesSavedEvent.INSTANCE);
+        if (marked) {
+          processMessage(UptoDateFilesSavedEvent.INSTANCE);
+        }
       }
+    }
+    finally {
+      dataManager.closeSourceToOutputStorages(chunk, compilingTests);
+      dataManager.flush(true);
     }
   }
 

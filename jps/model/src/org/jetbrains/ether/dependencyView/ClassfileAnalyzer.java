@@ -154,6 +154,14 @@ class ClassfileAnalyzer {
         final String methodDescr = getMethodDescr(value);
         final int methodName = context.get(name);
 
+        if (value instanceof Type) {
+          final String className = ((Type)value).getClassName();
+
+          if (className != null) {
+            usages.addUsage(residence, UsageRepr.createClassUsage(context, context.get(className)));
+          }
+        }
+
         usages.addUsage(residence, UsageRepr.createMethodUsage(context, methodName, type.className, methodDescr));
         usages.addUsage(residence, UsageRepr.createMetaMethodUsage(context, methodName, type.className, methodDescr));
 

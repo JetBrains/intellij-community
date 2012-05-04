@@ -19,7 +19,6 @@ import com.intellij.android.designer.model.RadViewComponent;
 import com.intellij.android.designer.propertyTable.editors.ResourceEditor;
 import com.intellij.android.designer.propertyTable.editors.StringsComboEditor;
 import com.intellij.android.designer.propertyTable.renderers.ResourceRenderer;
-import com.intellij.designer.model.RadComponent;
 import com.intellij.designer.propertyTable.Property;
 import com.intellij.designer.propertyTable.PropertyEditor;
 import com.intellij.designer.propertyTable.PropertyRenderer;
@@ -33,7 +32,6 @@ import org.jetbrains.android.dom.attrs.AttributeFormat;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
 import java.util.Set;
 
 /**
@@ -140,10 +138,5 @@ public class AttributeProperty extends Property<RadViewComponent> {
   @Override
   public PropertyEditor getEditor() {
     return myEditor;
-  }
-
-  @Override
-  public boolean availableFor(List<RadComponent> components) {
-    return !"id".equals(getName());
   }
 }

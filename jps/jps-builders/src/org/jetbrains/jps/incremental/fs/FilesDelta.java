@@ -127,6 +127,18 @@ final class FilesDelta {
     deleted.clear();
   }
 
+  public Set<String> getAndClearDeletedPaths(boolean isTest) {
+    final Set<String> deleted = isTest? myDeletedTests : myDeletedProduction;
+    synchronized (deleted) {
+      try {
+        return new HashSet<String>(deleted);
+      }
+      finally {
+        deleted.clear();
+      }
+    }
+  }
+
   public Map<File, Set<File>> getSourcesToRecompile(boolean forTests) {
     return forTests? myTestsToRecompile : mySourcesToRecompile;
   }

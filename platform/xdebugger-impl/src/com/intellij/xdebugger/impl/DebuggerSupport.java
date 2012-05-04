@@ -102,6 +102,6 @@ public abstract class DebuggerSupport {
   @Nullable
   public abstract AbstractDebuggerSession getCurrentSession(@NotNull Project project);
 
-  @Nullable
+  @NotNull
   public abstract EditBreakpointActionHandler getEditBreakpointAction();
 }

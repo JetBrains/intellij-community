@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vcs.changes.ui;
 
+import com.intellij.CommonBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
@@ -117,6 +118,7 @@ public class RollbackChangesDialog extends DialogWrapper {
 
     setTitle(VcsBundle.message("changes.action.rollback.custom.title", operationName).replace("_", ""));
     setOKButtonText(operationName);
+    setCancelButtonText(CommonBundle.getCloseButtonText());
     myBrowser.setToggleActionTitle("Include in " + operationName.toLowerCase());
 
     for (Change c : changes) {

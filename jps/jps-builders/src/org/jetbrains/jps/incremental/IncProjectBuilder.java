@@ -489,7 +489,8 @@ public class IncProjectBuilder {
       final Map<String, Collection<String>> perModuleRemovedSources = new HashMap<String, Collection<String>>();
 
       for (Module module : chunk.getModules()) {
-        final Collection<String> deletedPaths = myProjectDescriptor.fsState.getDeletedPaths(module.getName(), context.isCompilingTests());
+        final Collection<String> deletedPaths = myProjectDescriptor.fsState.getAndClearDeletedPaths(module.getName(),
+                                                                                                    context.isCompilingTests());
         if (deletedPaths.isEmpty()) {
           continue;
         }
@@ -525,7 +526,6 @@ public class IncProjectBuilder {
               new File(output).delete();
             }
           }
-          //sourceToOutputStorage.remove(deletedSource);
 
           // check if deleted source was associated with a form
           final SourceToFormMapping sourceToFormMap = context.getDataManager().getSourceToFormMap();
@@ -545,10 +545,20 @@ public class IncProjectBuilder {
           allChunkRemovedSources.addAll(currentData);
         }
         Utils.CHUNK_REMOVED_SOURCES_KEY.set(context, allChunkRemovedSources);
-        Utils.CHUNK_PER_MODULE_REMOVED_SOURCES_KEY.set(context, perModuleRemovedSources);
-        for (Module module : chunk.getModules()) {
-          myProjectDescriptor.fsState.clearDeletedPaths(module.getName(), context.isCompilingTests());
+
+        final Map<String, Collection<String>> existing = Utils.CHUNK_PER_MODULE_REMOVED_SOURCES_KEY.get(context);
+        if (existing != null) {
+          for (Map.Entry<String, Collection<String>> entry : existing.entrySet()) {
+            final Collection<String> paths = perModuleRemovedSources.get(entry.getKey());
+            if (paths != null) {
+              paths.addAll(entry.getValue());
+            }
+            else {
+              perModuleRemovedSources.put(entry.getKey(), entry.getValue());
+            }
+          }
         }
+        Utils.CHUNK_PER_MODULE_REMOVED_SOURCES_KEY.set(context, perModuleRemovedSources);
       }
     }
     catch (IOException e) {
