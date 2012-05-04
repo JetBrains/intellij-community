@@ -22,9 +22,6 @@ import com.intellij.ui.table.JBTable;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import com.jetbrains.python.packaging.*;
-import com.jetbrains.python.packaging.ui.ManageRepoDialog;
-import com.jetbrains.python.packaging.ui.PyPackagesNotificationPanel;
-import com.jetbrains.python.packaging.ui.PyPackagesPanel;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.apache.xmlrpc.AsyncCallback;
 import org.jetbrains.annotations.NonNls;
@@ -335,30 +332,46 @@ public class ManagePackagesDialog extends DialogWrapper {
       super.add(new ComparablePair(element, urlResource));
     }
 
-    protected void filter(String filter) {
-      try {
-        Collection<String> toProcess = PyPIPackageUtil.INSTANCE.getPackageNames();
-        for (ComparablePair name : PyPIPackageUtil.INSTANCE.getAdditionalPackageNames()) {
-          toProcess.add(name.first);
-        }
+    protected void filter(final String filter) {
+      final Application application = ApplicationManager.getApplication();
+      application.executeOnPooledThread(new Runnable() {
+        @Override
+        public void run() {
+          try {
+            final Collection<String> toProcess = PyPIPackageUtil.INSTANCE.getPackageNames();
 
-        removeAll();
-        if (StringUtil.isEmptyOrSpaces(filter)) {
-          for (String name : toProcess) {
-            add(PyPIPackageUtil.PYPI_URL, name);
+            application.invokeLater(new Runnable() {
+              @Override
+              public void run() {
+                for (ComparablePair name : PyPIPackageUtil.INSTANCE.getAdditionalPackageNames()) {
+                  toProcess.add(name.first);
+                }
+
+                removeAll();
+                if (StringUtil.isEmptyOrSpaces(filter)) {
+                  for (String name : toProcess) {
+                    add(PyPIPackageUtil.PYPI_URL, name);
+                  }
+                  return;
+                }
+                for (String packageName : toProcess) {
+                  if (StringUtil.containsIgnoreCase(packageName, filter)) {
+                    add(PyPIPackageUtil.PYPI_URL, packageName);
+                  }
+                }
+              }
+            }, ModalityState.any());
           }
-          return;
-        }
-        for (String packageName : toProcess) {
-          if (StringUtil.containsIgnoreCase(packageName, filter)) {
-            add(PyPIPackageUtil.PYPI_URL, packageName);
+          catch (final IOException e) {
+            application.invokeLater(new Runnable() {
+              @Override
+              public void run() {
+                Messages.showErrorDialog("IO Error occurred. Could not reach url " + e.getMessage() +
+                                         ". Please, check your internet connection.", "Packages");
+              }
+            }, ModalityState.any());
           }
-        }
-      }
-      catch (IOException e) {
-        Messages.showErrorDialog("IO Error occurred. Could not reach url " + e.getMessage() +
-                                 ". Please, check your internet connection.", "Packages");
-      }
+        }});
     }
   }
 
