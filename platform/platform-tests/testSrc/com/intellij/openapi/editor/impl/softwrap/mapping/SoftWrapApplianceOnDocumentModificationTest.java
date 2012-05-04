@@ -952,6 +952,22 @@ public class SoftWrapApplianceOnDocumentModificationTest extends AbstractEditorP
     checkSoftWraps(start, end);
     assertEquals(new VisualPosition(3, 0), myEditor.offsetToVisualPosition(text.indexOf("second")));
   }
+
+  public void testDeleteWhenCaretBeforeSoftWrap() throws IOException {
+    final String text =
+      "text 1234";
+    init(7, text);
+
+    final int offset = text.indexOf("123");
+    checkSoftWraps(offset);
+
+    final CaretModel caretModel = myEditor.getCaretModel();
+    caretModel.moveToOffset(offset);
+    caretModel.moveCaretRelatively(-1, 0, false, false, false);
+    assertEquals(offset, caretModel.getOffset()); // Navigating from 'after soft wrap' to the 'before soft wrap' position.
+    delete();
+    assertEquals("text 234", myEditor.getDocument().getText());
+  }
   
   private void init(final int visibleWidthInColumns, @NotNull String fileText) throws IOException {
     int symbolWidthInPixels = 7;
