@@ -181,7 +181,7 @@ public class IncProjectBuilder {
     }
     catch (Throwable e) {
       ourClenupFailed = true;
-      LOG.info(e);
+      //LOG.info(e);
     }
   }
 
