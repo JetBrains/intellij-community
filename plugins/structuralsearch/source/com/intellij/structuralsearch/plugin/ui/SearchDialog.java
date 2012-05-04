@@ -299,7 +299,6 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
           (JComponent)Box.createHorizontalStrut(8),
           jLabel3,
           dialects,
-          //new Box.Filler(new Dimension(0, 0), new Dimension(Short.MAX_VALUE, 0), new Dimension(Short.MAX_VALUE, 0))
         }
       )
     );
