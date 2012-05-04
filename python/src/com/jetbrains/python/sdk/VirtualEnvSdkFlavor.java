@@ -5,6 +5,7 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.SystemProperties;
@@ -48,7 +49,9 @@ public class VirtualEnvSdkFlavor extends CPythonSdkFlavor {
   @Nullable
   public static VirtualFile getDefaultLocation() {
     final String path = System.getenv().get("WORKON_HOME");
-    if (path != null) return LocalFileSystem.getInstance().findFileByPath(path.replace('\\','/'));
+    if (!StringUtil.isEmpty(path)) {
+      return LocalFileSystem.getInstance().findFileByPath(path.replace('\\','/'));
+    }
 
     final VirtualFile userHome = LocalFileSystem.getInstance().findFileByPath(SystemProperties.getUserHome().replace('\\','/'));
     if (userHome != null) {
