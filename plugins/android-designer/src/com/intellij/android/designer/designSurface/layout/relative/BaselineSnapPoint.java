@@ -74,7 +74,7 @@ public class BaselineSnapPoint extends SnapPoint {
       @Override
       public void run() {
         XmlTag tag = ((RadViewComponent)components.get(0)).getTag();
-        tag.setAttribute("android:layout_alignBaseline", getComponentId());
+        tag.setAttribute("android:layout_alignBaseline", myComponent.getId());
       }
     });
   }

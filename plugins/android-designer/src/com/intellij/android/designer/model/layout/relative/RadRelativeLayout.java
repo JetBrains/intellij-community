@@ -90,6 +90,11 @@ public class RadRelativeLayout extends RadViewLayoutWithData implements ILayoutD
     return null;
   }
 
+  @Override
+  public void removeComponentFromContainer(RadComponent component) {
+    // TODO: Auto-generated method stub
+  }
+
   private RelativeDecorator getRelativeDecorator() {
     if (myRelativeDecorator == null) {
       myRelativeDecorator = new RelativeDecorator(myContainer);
@@ -114,6 +119,12 @@ public class RadRelativeLayout extends RadViewLayoutWithData implements ILayoutD
   public ComponentDecorator getChildSelectionDecorator(RadComponent component, List<RadComponent> selection) {
     return super.getChildSelectionDecorator(component, selection); // TODO: Auto-generated method stub
   }
+
+  //////////////////////////////////////////////////////////////////////////////////////////
+  //
+  // Actions
+  //
+  //////////////////////////////////////////////////////////////////////////////////////////
 
   @Override
   public void addContainerSelectionActions(DesignerEditorPanel designer,

@@ -186,7 +186,7 @@ public class ComponentSnapPoint extends SnapPoint {
       return;
     }
 
-    final String componentId = getComponentId();
+    final String componentId = myComponent.getId();
 
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override

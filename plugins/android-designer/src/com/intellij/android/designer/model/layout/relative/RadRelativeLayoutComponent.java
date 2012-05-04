@@ -16,7 +16,14 @@
 package com.intellij.android.designer.model.layout.relative;
 
 import com.android.ide.common.rendering.api.ViewInfo;
+import com.intellij.android.designer.model.RadViewComponent;
 import com.intellij.android.designer.model.RadViewContainer;
+import com.intellij.designer.model.RadComponent;
+import com.intellij.psi.xml.XmlTag;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @author Alexander Lobas
@@ -24,6 +31,43 @@ import com.intellij.android.designer.model.RadViewContainer;
 public class RadRelativeLayoutComponent extends RadViewContainer {
   @Override
   public void setViewInfo(ViewInfo viewInfo) {
-    super.setViewInfo(viewInfo); // TODO: Auto-generated method stub
+    super.setViewInfo(viewInfo);
+
+    Map<String, RadViewComponent> idToComponent = new HashMap<String, RadViewComponent>();
+    for (RadComponent child : getChildren()) {
+      RadViewComponent viewChild = (RadViewComponent)child;
+      String id = viewChild.getId();
+      if (id != null) {
+        idToComponent.put(id, viewChild);
+      }
+    }
+
+    Map<RadComponent, RelativeInfo> relativeInfos = new HashMap<RadComponent, RelativeInfo>();
+    setClientProperty(RelativeInfo.KEY, relativeInfos);
+
+    for (RadComponent child : getChildren()) {
+      RelativeInfo info = new RelativeInfo();
+      relativeInfos.put(child, info);
+
+      XmlTag tag = ((RadViewComponent)child).getTag();
+      info.alignTop = getComponent(idToComponent, tag, "android:layout_alignTop");
+      info.alignBottom = getComponent(idToComponent, tag, "android:layout_alignBottom");
+      info.alignLeft = getComponent(idToComponent, tag, "android:layout_alignLeft");
+      info.alignRight = getComponent(idToComponent, tag, "android:layout_alignRight");
+      info.alignBaseline = getComponent(idToComponent, tag, "android:layout_alignBaseline");
+      info.above = getComponent(idToComponent, tag, "android:layout_above");
+      info.below = getComponent(idToComponent, tag, "android:layout_below");
+      info.toLeftOf = getComponent(idToComponent, tag, "android:layout_toLeftOf");
+      info.toRightOf = getComponent(idToComponent, tag, "android:layout_toRightOf");
+    }
+  }
+
+  @Nullable
+  private static RadViewComponent getComponent(Map<String, RadViewComponent> idToComponent, XmlTag tag, String attribute) {
+    String idValue = RadViewComponent.getId(tag.getAttributeValue(attribute));
+    if (idValue != null) {
+      return idToComponent.get(idValue);
+    }
+    return null;
   }
 }

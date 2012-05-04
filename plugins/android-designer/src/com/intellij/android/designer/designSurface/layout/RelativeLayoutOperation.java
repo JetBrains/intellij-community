@@ -19,6 +19,7 @@ import com.intellij.android.designer.designSurface.AbstractEditOperation;
 import com.intellij.android.designer.designSurface.layout.relative.*;
 import com.intellij.android.designer.model.ModelParser;
 import com.intellij.android.designer.model.RadViewComponent;
+import com.intellij.android.designer.model.layout.relative.RelativeInfo;
 import com.intellij.designer.designSurface.FeedbackLayer;
 import com.intellij.designer.designSurface.OperationContext;
 import com.intellij.designer.designSurface.feedbacks.AlphaFeedback;
@@ -32,6 +33,7 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Alexander Lobas
@@ -183,13 +185,27 @@ public class RelativeLayoutOperation extends AbstractEditOperation {
   }
 
   private void createPoints() {
+    List<RadComponent> children = new ArrayList<RadComponent>(myContainer.getChildren());
+    children.removeAll(myComponents);
+
+    Map<RadComponent, RelativeInfo> relativeInfos = myContainer.getClientProperty(RelativeInfo.KEY);
+    for (RadComponent editComponent : myComponents) {
+      for (Iterator<RadComponent> I = children.iterator(); I.hasNext(); ) {
+        RadComponent child = I.next();
+        RelativeInfo info = relativeInfos.get(child);
+        if (info.contains(editComponent)) {
+          I.remove();
+        }
+      }
+    }
+
     myHorizontalPoints = new ArrayList<SnapPoint>();
     myVerticalPoints = new ArrayList<SnapPoint>();
 
-    List<RadComponent> children = new ArrayList<RadComponent>(myContainer.getChildren());
-    removeDepends(children, myComponents);
     for (RadComponent component : children) {
-      createChildPoints((RadViewComponent)component);
+      myHorizontalPoints.add(new ComponentSnapPoint((RadViewComponent)component, true));
+      myVerticalPoints.add(new ComponentSnapPoint((RadViewComponent)component, false));
+      myVerticalPoints.add(new BaselineSnapPoint((RadViewComponent)component));
     }
 
     RadViewComponent container = (RadViewComponent)myContainer;
@@ -201,33 +217,20 @@ public class RelativeLayoutOperation extends AbstractEditOperation {
     myVerticalPoints.add(new AutoSnapPoint(container, false));
   }
 
-  private void createChildPoints(RadViewComponent component) {
-    myHorizontalPoints.add(new ComponentSnapPoint(component, true));
-    myVerticalPoints.add(new ComponentSnapPoint(component, false));
-    myVerticalPoints.add(new BaselineSnapPoint(component));
-  }
-
-  private static void removeDepends(List<RadComponent> allChildren, List<RadComponent> editComponents) {
-    allChildren.removeAll(editComponents);
-    // XXX
-  }
-
   @Override
   public void execute() throws Exception {
     if (myContext.isCreate() || myContext.isPaste() || myContext.isAdd()) {
       super.execute();
     }
 
-    if (!myContext.isCreate() && !myContext.isPaste()) {
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        @Override
-        public void run() {
-          for (RadComponent component : myComponents) {
-            clear((RadViewComponent)component);
-          }
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
+      public void run() {
+        for (RadComponent component : myComponents) {
+          clear((RadViewComponent)component);
         }
-      });
-    }
+      }
+    });
 
     if (myHorizontalPoint != null) {
       myHorizontalPoint.execute(myComponents);
@@ -251,5 +254,7 @@ public class RelativeLayoutOperation extends AbstractEditOperation {
     for (String attribute : ATTRIBUTES) {
       ModelParser.deleteAttribute(tag, attribute);
     }
+
+    // TODO: clear out depends???
   }
 }

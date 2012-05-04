@@ -78,11 +78,5 @@ public abstract class SnapPoint {
     }
   }
 
-  protected final String getComponentId() {
-    // TODO: ensure id
-    String idValue = myComponent.getTag().getAttributeValue("android:id");
-    return "@id/" + idValue.substring(idValue.indexOf('/') + 1);
-  }
-
   public abstract void execute(List<RadComponent> components) throws Exception;
 }

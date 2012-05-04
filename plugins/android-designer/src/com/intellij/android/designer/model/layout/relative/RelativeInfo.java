@@ -16,11 +16,14 @@
 package com.intellij.android.designer.model.layout.relative;
 
 import com.intellij.android.designer.model.RadViewComponent;
+import com.intellij.designer.model.RadComponent;
 
 /**
  * @author Alexander Lobas
  */
 public class RelativeInfo {
+  public static final String KEY = "RelativeInfos";
+
   public RadViewComponent alignTop;
   public RadViewComponent alignBottom;
   public RadViewComponent alignLeft;
@@ -30,4 +33,16 @@ public class RelativeInfo {
   public RadViewComponent below;
   public RadViewComponent toLeftOf;
   public RadViewComponent toRightOf;
+
+  public boolean contains(RadComponent component) {
+    return component == alignTop ||
+           component == alignBottom ||
+           component == alignLeft ||
+           component == alignRight ||
+           component == alignBaseline ||
+           component == above ||
+           component == below ||
+           component == toLeftOf ||
+           component == toRightOf;
+  }
 }
