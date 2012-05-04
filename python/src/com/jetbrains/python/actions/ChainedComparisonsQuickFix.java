@@ -21,7 +21,7 @@ public class ChainedComparisonsQuickFix implements LocalQuickFix {
   boolean myIsRightLeft;
   Boolean getInnerRight;
 
-  public ChainedComparisonsQuickFix(boolean isLeft, boolean isRight, @Nullable Boolean getInner) {
+  public ChainedComparisonsQuickFix(boolean isLeft, boolean isRight, boolean getInner) {
     myIsLeftLeft = isLeft;
     myIsRightLeft = isRight;
     getInnerRight = getInner;
