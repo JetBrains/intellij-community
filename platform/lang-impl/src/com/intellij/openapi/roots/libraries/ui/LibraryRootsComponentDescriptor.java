@@ -14,8 +14,10 @@ package com.intellij.openapi.roots.libraries.ui;
 
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
+import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.ui.impl.LibraryRootsDetectorImpl;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -62,10 +64,15 @@ public abstract class LibraryRootsComponentDescriptor {
 
   /**
    * @return descriptor for the file chooser which will be shown when 'Attach Files' button is pressed
+   * @param libraryName
    */
   @NotNull
-  public FileChooserDescriptor createAttachFilesChooserDescriptor() {
-    return FileChooserDescriptorFactory.createMultipleJavaPathDescriptor();
+  public FileChooserDescriptor createAttachFilesChooserDescriptor(@Nullable String libraryName) {
+    final FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createMultipleJavaPathDescriptor();
+    descriptor.setTitle(StringUtil.isEmpty(libraryName) ? ProjectBundle.message("library.attach.files.action")
+                                                        : ProjectBundle.message("library.attach.files.to.library.action", libraryName));
+    descriptor.setDescription(ProjectBundle.message("library.attach.files.description"));
+    return descriptor;
   }
 
   /**
@@ -82,4 +89,7 @@ public abstract class LibraryRootsComponentDescriptor {
     return OrderRootType.getAllTypes();
   }
 
+  public String getAttachFilesActionName() {
+    return ProjectBundle.message("button.text.attach.files");
+  }
 }

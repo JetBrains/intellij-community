@@ -1426,9 +1426,7 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
           else {
             toMark = Collections.singleton(root);
           }
-          if (!toMark.isEmpty()) {
-            notifyFilesDeleted(toMark);
-          }
+          notifyFilesDeleted(toMark);
         }
         markDirtyIfSource(eventFile, false);
       }
@@ -1544,9 +1542,7 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
         }
       });
 
-      if (!pathsToMark.isEmpty()) {
-        notifyFilesDeleted(pathsToMark);
-      }
+      notifyFilesDeleted(pathsToMark);
     }
 
     public void beforeFileMovement(final VirtualFileMoveEvent event) {
@@ -1644,13 +1640,17 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
   }
 
   private static void notifyFilesChanged(Collection<String> paths) {
-    CompileServerManager.getInstance().notifyFilesChanged(paths);
-    BuildManager.getInstance().notifyFilesChanged(paths);
+    if (!paths.isEmpty()) {
+      CompileServerManager.getInstance().notifyFilesChanged(paths);
+      BuildManager.getInstance().notifyFilesChanged(paths);
+    }
   }
 
   private static void notifyFilesDeleted(Collection<String> paths) {
-    CompileServerManager.getInstance().notifyFilesDeleted(paths);
-    BuildManager.getInstance().notifyFilesDeleted(paths);
+    if (!paths.isEmpty()) {
+      CompileServerManager.getInstance().notifyFilesDeleted(paths);
+      BuildManager.getInstance().notifyFilesDeleted(paths);
+    }
   }
 
   private boolean belongsToIntermediateSources(VirtualFile file, Project project) {

@@ -27,11 +27,14 @@ import com.intellij.util.containers.ConcurrentHashMap;
 import com.intellij.util.io.PagePool;
 import com.intellij.util.io.UnsyncByteArrayInputStream;
 
+import java.io.DataInputStream;
+import java.io.EOFException;
 import java.io.File;
 import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.*;
 import java.util.zip.DeflaterOutputStream;
+import java.util.zip.Inflater;
 import java.util.zip.InflaterInputStream;
 
 public class RefCountingStorage extends AbstractStorage {
@@ -51,22 +54,54 @@ public class RefCountingStorage extends AbstractStorage {
     super(path);
   }
 
+  public DataInputStream readStream(int record) throws IOException {
+    if (myDoNotZipCaches) return super.readStream(record);
+    BufferExposingByteArrayOutputStream stream = internalReadStream(record);
+    return new DataInputStream(new UnsyncByteArrayInputStream(stream.getInternalBuffer(), 0, stream.size()));
+  }
+
   @Override
   protected byte[] readBytes(int record) throws IOException {
-
     if (myDoNotZipCaches) return super.readBytes(record);
+    return internalReadStream(record).toByteArray();
+  }
+
+  private BufferExposingByteArrayOutputStream internalReadStream(int record) throws IOException {
     waitForPendingWriteForRecord(record);
 
     synchronized (myLock) {
 
       byte[] result = super.readBytes(record);
-      InflaterInputStream in = new InflaterInputStream(new UnsyncByteArrayInputStream(result));
+      InflaterInputStream in = new CustomInflaterInputStream(result);
       try {
-        return StreamUtil.loadFromStream(in);
+        final BufferExposingByteArrayOutputStream outputStream = new BufferExposingByteArrayOutputStream();
+        StreamUtil.copyStreamContent(in, outputStream);
+        return outputStream;
       }
       finally {
         in.close();
       }
+    }
+  }
+
+  private static class CustomInflaterInputStream extends InflaterInputStream {
+    public CustomInflaterInputStream(byte[] compressedData) {
+      super(new UnsyncByteArrayInputStream(compressedData), new Inflater(), 1);
+      // force to directly use compressed data, this ensures less round trips with native extraction code and copy streams
+      this.buf = compressedData;
+    }
+
+    @Override
+    protected void fill() throws IOException {
+      if (len > 0) throw new EOFException();
+      len = buf.length;
+      inf.setInput(buf, 0, len);
+    }
+
+    @Override
+    public void close() throws IOException {
+      super.close();
+      inf.end(); // custom inflater need explicit dispose
     }
   }
 

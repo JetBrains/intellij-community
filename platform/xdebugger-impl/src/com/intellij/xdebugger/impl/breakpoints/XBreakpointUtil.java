@@ -15,9 +15,16 @@
  */
 package com.intellij.xdebugger.impl.breakpoints;
 
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.markup.GutterIconRenderer;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XBreakpointType;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.xdebugger.impl.DebuggerSupport;
+import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointPanelProvider;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NonNls;
@@ -51,5 +58,22 @@ public class XBreakpointUtil {
 
   public static XBreakpointType<?,?>[] getBreakpointTypes() {
     return Extensions.getExtensions(XBreakpointType.EXTENSION_POINT_NAME);
+  }
+
+  @NotNull
+  public static Pair<GutterIconRenderer, Object> findSelectedBreakpoint(final Project project, final Editor editor) {
+    int offset = editor.getCaretModel().getOffset();
+    Document editorDocument = editor.getDocument();
+
+    DebuggerSupport[] debuggerSupports = DebuggerSupport.getDebuggerSupports();
+    for (DebuggerSupport debuggerSupport : debuggerSupports) {
+      final BreakpointPanelProvider<?> provider = debuggerSupport.getBreakpointPanelProvider();
+      Object breakpoint = provider.findBreakpoint(project, editorDocument, offset);
+      final GutterIconRenderer iconRenderer = provider.getBreakpointGutterIconRenderer(breakpoint);
+      if (breakpoint != null) {
+        return Pair.create(iconRenderer, breakpoint);
+      }
+    }
+    return Pair.create(null, null);
   }
 }

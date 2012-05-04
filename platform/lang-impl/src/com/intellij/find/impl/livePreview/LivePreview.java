@@ -279,18 +279,20 @@ public class LivePreview extends DocumentAdapter implements ReplacementView.Dele
 
   private void highlightUsages() {
     if (mySearchResults.getEditor() == null) return;
+    if (mySearchResults.getMatchesCount() >= mySearchResults.getMatchesLimit())
+      return;
     for (LiveOccurrence o : mySearchResults.getOccurrences()) {
       for (TextRange textRange : o.getSecondaryRanges()) {
         highlightRange(textRange, OTHER_TARGETS_ATTRIBUTES, myHighlighters);
       }
       final TextRange range = o.getPrimaryRange();
 
-      TextAttributes attrs = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(EditorColors.TEXT_SEARCH_RESULT_ATTRIBUTES);
+      TextAttributes attributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(EditorColors.TEXT_SEARCH_RESULT_ATTRIBUTES);
 
       if (mySearchResults.isExcluded(o)) {
-        highlightRange(range, strikout(attrs), myHighlighters);
+        highlightRange(range, strikout(attributes), myHighlighters);
       } else {
-        highlightRange(range, attrs, myHighlighters);
+        highlightRange(range, attributes, myHighlighters);
       }
     }
     updateInSelectionHighlighters();

@@ -58,7 +58,7 @@ public class LibraryTypeServiceImpl extends LibraryTypeService {
                                                         @Nullable VirtualFile contextDirectory,
                                                         LibraryType<?> type,
                                                         final Project project) {
-    final FileChooserDescriptor chooserDescriptor = descriptor.createAttachFilesChooserDescriptor();
+    final FileChooserDescriptor chooserDescriptor = descriptor.createAttachFilesChooserDescriptor(null);
     chooserDescriptor.setTitle("Select Library Files");
     final VirtualFile[] rootCandidates = FileChooser.chooseFiles(chooserDescriptor, parentComponent, project, contextDirectory);
     if (rootCandidates.length == 0) {

@@ -22,13 +22,11 @@ package com.intellij.xdebugger.impl.actions;
 
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.xdebugger.impl.DebuggerSupport;
+import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil;
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointsConfigurationDialogFactory;
-import org.jetbrains.annotations.Nullable;
 
 public class ViewBreakpointsAction extends AnAction implements AnAction.TransparentUpdate {
   private Object myInitialBreakpoint;
@@ -50,28 +48,13 @@ public class ViewBreakpointsAction extends AnAction implements AnAction.Transpar
     if (myInitialBreakpoint == null) {
     Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
       if (editor != null) {
-        myInitialBreakpoint = findSelectedBreakpoint(project, editor);
+        myInitialBreakpoint = XBreakpointUtil.findSelectedBreakpoint(project, editor).second;
       }
     }
 
     DialogWrapper dialog = BreakpointsConfigurationDialogFactory.getInstance(project).createDialog(myInitialBreakpoint);
     dialog.show();
     myInitialBreakpoint = null;
-  }
-
-  @Nullable
-  private static Object findSelectedBreakpoint(final Project project, final Editor editor) {
-    int offset = editor.getCaretModel().getOffset();
-    Document editorDocument = editor.getDocument();
-
-    DebuggerSupport[] debuggerSupports = DebuggerSupport.getDebuggerSupports();
-    for (DebuggerSupport debuggerSupport : debuggerSupports) {
-      Object breakpoint = debuggerSupport.getBreakpointPanelProvider().findBreakpoint(project, editorDocument, offset);
-      if (breakpoint != null) {
-        return breakpoint;
-      }
-    }
-    return null;
   }
 
   public void update(AnActionEvent event){
