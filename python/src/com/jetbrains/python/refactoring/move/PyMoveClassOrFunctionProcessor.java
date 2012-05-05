@@ -21,7 +21,6 @@ import com.jetbrains.python.codeInsight.imports.PyImportOptimizer;
 import com.jetbrains.python.documentation.DocStringTypeReference;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyQualifiedName;
-import com.jetbrains.python.psi.impl.PyReferenceExpressionImpl;
 import com.jetbrains.python.psi.resolve.ResolveImportUtil;
 import com.jetbrains.python.refactoring.PyRefactoringUtil;
 import com.jetbrains.python.refactoring.classes.PyClassRefactoringUtil;
@@ -171,7 +170,9 @@ public class PyMoveClassOrFunctionProcessor extends BaseRefactoringProcessor {
         return;
       }
       if (expr.getQualifier() != null) {
-        final PsiElement newExpr = expr.replace(new PyReferenceExpressionImpl(expr.getNameElement()));
+        final PyElementGenerator generator = PyElementGenerator.getInstance(expr.getProject());
+        final PyExpression generated = generator.createExpressionFromText(LanguageLevel.forElement(expr), expr.getName());
+        final PsiElement newExpr = expr.replace(generated);
         PyClassRefactoringUtil.insertImport(newExpr, newElement, null, true);
       }
     }

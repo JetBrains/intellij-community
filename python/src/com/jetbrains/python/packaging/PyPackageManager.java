@@ -51,7 +51,8 @@ import java.util.*;
 public class PyPackageManager {
   public static final int OK = 0;
   public static final int ERROR_WRONG_USAGE = 1;
-  public static final int ERROR_NO_PACKAGING_TOOLS = 2;
+  public static final int ERROR_NO_PIP = 2;
+  public static final int ERROR_NO_DISTRIBUTE = 3;
   public static final int ERROR_INVALID_SDK = -1;
   public static final int ERROR_TOOL_NOT_FOUND = -2;
   public static final int ERROR_TIMEOUT = -3;

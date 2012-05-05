@@ -14,8 +14,6 @@ import com.intellij.refactoring.move.MoveHandlerDelegate;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyBundle;
-import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
-import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
@@ -91,7 +89,9 @@ public class PyMoveClassOrFunctionDelegate extends MoveHandlerDelegate {
 
   @Nullable
   public static PsiNamedElement getElementToMove(@NotNull PsiElement element) {
-    final ScopeOwner owner = (element instanceof ScopeOwner) ? (ScopeOwner)element : ScopeUtil.getScopeOwner(element);
-    return (owner instanceof PsiNamedElement) ? (PsiNamedElement)owner : null;
+    if (element instanceof PsiNamedElement) {
+      return (PsiNamedElement)element;
+    }
+    return null;
   }
 }
