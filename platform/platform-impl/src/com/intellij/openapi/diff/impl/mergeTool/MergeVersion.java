@@ -76,9 +76,11 @@ public interface MergeVersion {
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
         public void run() {
           setDocumentText(workingDocument, myOriginalText, DiffBundle.message("merge.init.merge.content.command.name"), project);
-          final UndoManager undoManager = UndoManager.getInstance(project);
-          if (undoManager != null) { //idea.sh merge command
-            undoManager.nonundoableActionPerformed(ref, false);
+          if (project != null) {
+            final UndoManager undoManager = UndoManager.getInstance(project);
+            if (undoManager != null) { //idea.sh merge command
+              undoManager.nonundoableActionPerformed(ref, false);
+            }
           }
         }
       });

@@ -15,7 +15,9 @@
  */
 package com.intellij.openapi.diff;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationStarterEx;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -62,6 +64,14 @@ public abstract class ApplicationStarterBase implements ApplicationStarterEx {
                                  StringUtil.toTitleCase(getCommandName()),
                                  Messages.getErrorIcon());
     }
+    finally {
+      saveAll();
+    }
+  }
+
+  private static void saveAll() {
+    FileDocumentManager.getInstance().saveAllDocuments();
+    ApplicationManager.getApplication().saveSettings();
   }
 
   private boolean checkArguments(String[] args) {
@@ -86,12 +96,15 @@ public abstract class ApplicationStarterBase implements ApplicationStarterEx {
       processCommand(args);
     }
     catch (Exception e) {
-      System.err.println(e.getMessage());
+      e.printStackTrace();
       System.exit(1);
     }
     catch (Throwable t) {
       t.printStackTrace();
       System.exit(2);
+    }
+    finally {
+      saveAll();
     }
 
     System.exit(0);

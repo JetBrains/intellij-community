@@ -18,7 +18,6 @@ package com.intellij.openapi.diff;
 import com.intellij.ide.diff.DiffElement;
 import com.intellij.ide.diff.DirDiffSettings;
 import com.intellij.openapi.application.ApplicationNamesInfo;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.UnknownFileType;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -77,7 +76,6 @@ public class DiffApplication extends ApplicationStarterBase {
       SimpleDiffRequest request = SimpleDiffRequest.compareFiles(file1, file2, ProjectManager.getInstance().getDefaultProject());
       request.addHint(DiffTool.HINT_SHOW_MODAL_DIALOG);
       DiffManager.getInstance().getIdeaDiffTool().show(request);
-      FileDocumentManager.getInstance().saveAllDocuments();
     }
   }
 }
