@@ -555,36 +555,56 @@ public class CreateFromUsageUtils {
     return result.toArray(new PsiVariable[result.size()]);
   }
 
-  private static void getExpectedInformation (PsiExpression expression, List<ExpectedTypeInfo[]> types,
-                                              List<String> expectedMethodNames,
-                                              List<String> expectedFieldNames) {
-    PsiExpression[] expressions = collectExpressions(expression, PsiMember.class, PsiFile.class);
-
-    for (PsiExpression expr : expressions) {
+  private static void getExpectedInformation(PsiExpression expression,
+                                             List<ExpectedTypeInfo[]> types,
+                                             List<String> expectedMethodNames,
+                                             List<String> expectedFieldNames) {
+    for (PsiExpression expr : collectExpressions(expression, PsiMember.class, PsiFile.class)) {
       PsiElement parent = expr.getParent();
-      if (parent instanceof PsiReferenceExpression) {
-        PsiElement pparent = parent.getParent();
-        if (pparent instanceof PsiMethodCallExpression) {
-          String refName = ((PsiReferenceExpression)parent).getReferenceName();
-          if (refName != null) {
-            expectedMethodNames.add(refName);
-          }
-        }
-        else if (pparent instanceof PsiReferenceExpression || pparent instanceof PsiVariable ||
-                 pparent instanceof PsiExpression) {
-          String refName = ((PsiReferenceExpression)parent).getReferenceName();
-          if (refName != null) {
-            expectedFieldNames.add(refName);
-          }
-        }
-      }
-      else {
+
+      if (!(parent instanceof PsiReferenceExpression)) {
         ExpectedTypeInfo[] someExpectedTypes = ExpectedTypesProvider.getExpectedTypes(expr, false);
         if (someExpectedTypes.length > 0) {
           types.add(someExpectedTypes);
         }
+        continue;
+      }
+
+      String refName = ((PsiReferenceExpression)parent).getReferenceName();
+      if (refName == null) {
+        continue;
+      }
+
+      PsiElement pparent = parent.getParent();
+      if (pparent instanceof PsiMethodCallExpression) {
+        expectedMethodNames.add(refName);
+        if (refName.equals("equals")) {
+          ExpectedTypeInfo[] someExpectedTypes = equalsExpectedTypes((PsiMethodCallExpression)pparent);
+          if (someExpectedTypes.length > 0) {
+            types.add(someExpectedTypes);
+          }
+        }
+        continue;
+      }
+
+      if (pparent instanceof PsiReferenceExpression ||
+          pparent instanceof PsiVariable ||
+          pparent instanceof PsiExpression) {
+        expectedFieldNames.add(refName);
       }
     }
+  }
+
+  private static ExpectedTypeInfo[] equalsExpectedTypes(PsiMethodCallExpression methodCall) {
+    final PsiType[] argumentTypes = methodCall.getArgumentList().getExpressionTypes();
+    if (argumentTypes.length != 1) {
+      return ExpectedTypeInfo.EMPTY_ARRAY;
+    }
+    PsiType type = argumentTypes[0];
+    if (type instanceof PsiPrimitiveType) {
+      type = ((PsiPrimitiveType)type).getBoxedType(methodCall);
+    }
+    return new ExpectedTypeInfo[]{ExpectedTypesProvider.createInfo(type, ExpectedTypeInfo.TYPE_STRICTLY, type, TailType.NONE)};
   }
 
   public static ExpectedTypeInfo[] guessExpectedTypes (PsiExpression expression, boolean allowVoidType) {
