@@ -80,7 +80,7 @@ public class InitializeFinalFieldInConstructorFix implements IntentionAction {
       createDefaultConstructor(myClass, project, editor, file);
     }
 
-    final List<PsiMethod> constructors = choose(sort(filterIfFieldAlreadyAssigned(myField, myClass.getConstructors())), project);
+    final List<PsiMethod> constructors = choose(filterIfFieldAlreadyAssigned(myField, myClass.getConstructors()), project);
 
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override
@@ -101,7 +101,7 @@ public class InitializeFinalFieldInConstructorFix implements IntentionAction {
   }
 
   @Nullable
-  private <T extends PsiElement> T getHighestElement(@NotNull List<T> elements) {
+  private static <T extends PsiElement> T getHighestElement(@NotNull List<T> elements) {
     T highest = null;
     int highestTextOffset = Integer.MAX_VALUE;
     for (T element : elements) {
@@ -160,6 +160,10 @@ public class InitializeFinalFieldInConstructorFix implements IntentionAction {
 
   @NotNull
   private static List<PsiMethod> choose(@NotNull PsiMethod[] ctors, @NotNull final Project project) {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      return Arrays.asList(ctors);
+    }
+
     if (ctors.length == 1) {
       return Arrays.asList(ctors[0]);
     }
@@ -214,26 +218,6 @@ public class InitializeFinalFieldInConstructorFix implements IntentionAction {
       }
     }
     return result.toArray(new PsiMethod[result.size()]);
-  }
-
-  @NotNull
-  private static PsiMethod[] sort(@NotNull PsiMethod[] ctors) {
-    Arrays.sort(ctors, new Comparator<PsiMethod>() {
-      @Override
-      public int compare(PsiMethod c1, PsiMethod c2) {
-        final PsiMethod cc1 = RefactoringUtil.getChainedConstructor(c1);
-        final PsiMethod cc2 = RefactoringUtil.getChainedConstructor(c2);
-        if (cc1 == c2) return 1;
-        if (cc2 == c1) return -1;
-        if (cc1 == null) {
-          return cc2 == null ? 0 : compare(c1, cc2);
-        } else {
-          return cc2 == null ? compare(cc1, c2) : compare(cc1, cc2);
-        }
-      }
-    });
-
-    return ctors;
   }
 
   private static String suggestInitValue(@NotNull PsiField field) {
