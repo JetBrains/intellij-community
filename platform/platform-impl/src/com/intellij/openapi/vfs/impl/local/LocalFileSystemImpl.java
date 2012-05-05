@@ -20,6 +20,7 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.openapi.util.io.FileUtil;
@@ -31,6 +32,7 @@ import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
+import com.intellij.util.Consumer;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NonNls;
@@ -44,7 +46,7 @@ import java.util.*;
 public final class LocalFileSystemImpl extends LocalFileSystemBase implements ApplicationComponent {
   private final Object myLock = new Object();
   private final List<WatchRequestImpl> myRootsToWatch = new ArrayList<WatchRequestImpl>();
-  private WatchRequestImpl[] myCachedNormalizedRequests = null;
+  private TreeNode myNormalizedTree = null;
   private final FileWatcher myWatcher;
 
   private static class WatchRequestImpl implements WatchRequest {
@@ -98,6 +100,11 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
     }
   }
 
+  private static class TreeNode {
+    private WatchRequestImpl watchRequest = null;
+    private Map<String, TreeNode> nodes = new HashMap<String, TreeNode>();
+  }
+
   public LocalFileSystemImpl() {
     myWatcher = FileWatcher.getInstance();
     if (myWatcher.isOperational()) {
@@ -139,36 +146,114 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
   }
 
   private WatchRequestImpl[] normalizeRootsForRefresh() {
-    if (myCachedNormalizedRequests != null) return myCachedNormalizedRequests;
-    List<WatchRequestImpl> result = new ArrayList<WatchRequestImpl>();
+    final List<WatchRequestImpl> result = new ArrayList<WatchRequestImpl>();
 
-    // No need to call for a read action here since we're only called with it on hands already.
+    // no need to call for a read action here since we're only called with it on hands already
     synchronized (myLock) {
-      NextRoot:
+      TreeNode rootNode = new TreeNode();
       for (WatchRequestImpl request : myRootsToWatch) {
         String rootPath = request.getRootPath();
-        boolean recursively = request.isToWatchRecursively();
-
-        for (Iterator<WatchRequestImpl> iterator1 = result.iterator(); iterator1.hasNext();) {
-          final WatchRequestImpl otherRequest = iterator1.next();
-          final String otherRootPath = otherRequest.getRootPath();
-          final boolean otherRecursively = otherRequest.isToWatchRecursively();
-          if ((rootPath.equals(otherRootPath) && (!recursively || otherRecursively)) ||
-              (FileUtil.startsWith(rootPath, otherRootPath) && otherRecursively)) {
-            continue NextRoot;
+        TreeNode currentNode = rootNode;
+        MainLoop:
+        for (String subPath : rootPath.split("/")) {
+          if (!SystemInfo.isFileSystemCaseSensitive) {
+            subPath = subPath.toLowerCase();
           }
-          else if (FileUtil.startsWith(otherRootPath, rootPath) && (recursively || !otherRecursively)) {
-            otherRequest.myDominated = true;
-            iterator1.remove();
+          TreeNode nextNode = currentNode.nodes.get(subPath);
+          if (nextNode != null) {
+            currentNode = nextNode;
+            if (currentNode.watchRequest != null && currentNode.watchRequest.isToWatchRecursively()) {
+              // a parent path of this request is already being watched recursively - do not need to add this one
+              request.myDominated = true;
+              break MainLoop;
+            }
+          }
+          else {
+            TreeNode newNode = new TreeNode();
+            currentNode.nodes.put(subPath, newNode);
+            currentNode = newNode;
           }
         }
-        result.add(request);
-        request.myDominated = false;
+        if (currentNode.watchRequest == null) {
+          currentNode.watchRequest = request;
+        }
+        else {
+          // we already have a watchRequest configured - select the better of the two
+          if (!currentNode.watchRequest.isToWatchRecursively()) {
+            currentNode.watchRequest.myDominated = true;
+            currentNode.watchRequest = request;
+          }
+          else {
+            request.myDominated = true;
+          }
+        }
+
+        if (currentNode.watchRequest.isToWatchRecursively() && currentNode.nodes.size() > 0) {
+          // since we are watching this node recursively, we can remove it's children
+          visitTree(currentNode, new Consumer<TreeNode>() {
+            @Override
+            public void consume(final TreeNode node) {
+              if (node.watchRequest != null) {
+                node.watchRequest.myDominated = true;
+              }
+            }
+          });
+          currentNode.nodes.clear();
+        }
       }
+
+      visitTree(rootNode, new Consumer<TreeNode>() {
+        @Override
+        public void consume(final TreeNode node) {
+          if (node.watchRequest != null) {
+            result.add(node.watchRequest);
+          }
+        }
+      });
+      myNormalizedTree = rootNode;
     }
 
-    myCachedNormalizedRequests = result.toArray(new WatchRequestImpl[result.size()]);
-    return myCachedNormalizedRequests;
+    return result.toArray(new WatchRequestImpl[result.size()]);
+  }
+
+  private static void visitTree(TreeNode rootNode, Consumer<TreeNode> consumer) {
+    for (TreeNode node : rootNode.nodes.values()) {
+      consumer.consume(node);
+      visitTree(node, consumer);
+    }
+  }
+
+  private boolean isAlreadyWatched(final WatchRequestImpl request) {
+    if (myNormalizedTree == null) {
+      normalizeRootsForRefresh();
+    }
+
+    String rootPath = request.getRootPath();
+    TreeNode currentNode = myNormalizedTree;
+    for (String subPath : rootPath.split("/")) {
+      if (!SystemInfo.isFileSystemCaseSensitive) {
+        subPath = subPath.toLowerCase();
+      }
+      TreeNode nextNode = currentNode.nodes.get(subPath);
+      if (nextNode == null) {
+        return false;
+      }
+      currentNode = nextNode;
+      if (currentNode.watchRequest != null && currentNode.watchRequest.isToWatchRecursively()) {
+        return true;
+      }
+    }
+    // if we reach here it means that the exact path is already present in the graph -
+    // then this request is assumed to be present only if it is not being watched recursively
+    return !request.isToWatchRecursively() && currentNode.watchRequest != null;
+  }
+
+  private static boolean dominates(final WatchRequestImpl request, final WatchRequestImpl other) {
+    if (request.myToWatchRecursively) {
+      return other.myRootPath.startsWith(request.myRootPath);
+    }
+
+    return !other.myToWatchRecursively && request.myRootPath.equals(other.myRootPath);
   }
 
   private void storeRefreshStatusToFiles() {
@@ -283,21 +368,6 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
     }
   }
 
-  private boolean isAlreadyWatched(final WatchRequestImpl request) {
-    for (final WatchRequestImpl current : normalizeRootsForRefresh()) {
-      if (dominates(current, request)) return true;
-    }
-    return false;
-  }
-
-  private static boolean dominates(final WatchRequestImpl request, final WatchRequestImpl other) {
-    if (request.myToWatchRecursively) {
-      return other.myRootPath.startsWith(request.myRootPath);
-    }
-
-    return !other.myToWatchRecursively && request.myRootPath.equals(other.myRootPath);
-  }
-
   @Override
   @NotNull
   public Set<WatchRequest> addRootsToWatch(@NotNull final Collection<String> rootPaths, final boolean watchRecursively) {
@@ -318,7 +388,7 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
       synchronized (myLock) {
         final boolean update = doRemoveWatchedRoots(watchRequests);
         if (update) {
-          myCachedNormalizedRequests = null;
+          myNormalizedTree = null;
           setUpFileWatcher();
         }
       }
@@ -346,7 +416,7 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
         final boolean update = doAddRootsToWatch(rootPaths, watchRecursively, result, filesToSync) ||
                                doRemoveWatchedRoots(watchRequests);
         if (update) {
-          myCachedNormalizedRequests = null;
+          myNormalizedTree = null;
           setUpFileWatcher();
         }
       }
