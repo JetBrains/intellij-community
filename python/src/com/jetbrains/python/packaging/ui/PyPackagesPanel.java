@@ -40,7 +40,7 @@ public class PyPackagesPanel extends JPanel {
   public static final String INSTALL_PIP = "installPip";
   public static final String CREATE_VENV = "createVEnv";
   private static final String DISTRIBUTE = "distribute-0.6.24";
-  private static final String PIP = "pip-1.0.2";
+  private static final String PIP = "pip-1.1";
 
   private final JButton myInstallButton;
   private final JButton myUninstallButton;
