@@ -53,8 +53,11 @@ public class LocalTaskImpl extends LocalTask {
   private Date myCreated;
   protected Date myUpdated;
   private List<ChangeListInfo> myChangeLists = new ArrayList<ChangeListInfo>();
+
   private boolean myIssue;
+  private TaskRepository myRepository;
   private String myIssueUrl;
+
   private TaskType myType = TaskType.OTHER;
   private String myDescription;
   private Comment[] myComments = new Comment[0];
@@ -75,6 +78,7 @@ public class LocalTaskImpl extends LocalTask {
 
     myId = origin.getId();
     myIssue = origin.isIssue();
+    myRepository = origin.getRepository();
 
     copy(origin);
 
@@ -176,6 +180,11 @@ public class LocalTaskImpl extends LocalTask {
 
   public void setIssue(boolean issue) {
     myIssue = issue;
+  }
+
+  @Override
+  public TaskRepository getRepository() {
+    return myRepository;
   }
 
   public void setCreated(Date created) {
