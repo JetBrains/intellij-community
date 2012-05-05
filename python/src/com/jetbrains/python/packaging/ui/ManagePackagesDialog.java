@@ -1,6 +1,5 @@
 package com.jetbrains.python.packaging.ui;
 
-import com.google.common.collect.Lists;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.Application;
@@ -92,7 +91,6 @@ public class ManagePackagesDialog extends DialogWrapper {
     init();
     final JBTable table = myPackageListPanel.getPackagesTable();
     setTitle("Available Packages");
-    myPackagesModel = new PackagesModel(project);
     myPackages = new JBList();
     myNotificationArea = new PyPackagesNotificationPanel(project);
     myNotificationsAreaPlaceholder.add(myNotificationArea.getComponent(), BorderLayout.CENTER);
@@ -119,7 +117,7 @@ public class ManagePackagesDialog extends DialogWrapper {
                                            "Update Package List Failed");
                   myPackages.setPaintBusy(false);
                 }
-              }, ModalityState.stateForComponent(myPackages));
+              }, ModalityState.any());
             }
           }
         });
@@ -130,7 +128,6 @@ public class ManagePackagesDialog extends DialogWrapper {
     myPackagesPanel.setPreferredSize(new Dimension(400, -1));
     mySplitPane.setLeftComponent(myPackagesPanel);
 
-    myPackages.setModel(myPackagesModel);
     myPackages.addListSelectionListener(new MyPackageSelectionListener());
     if (myInstallToUser.isEnabled())
       myInstallToUser.setSelected(PyPackageService.getInstance().useUserSite(sdk.getHomePath()));
@@ -270,18 +267,21 @@ public class ManagePackagesDialog extends DialogWrapper {
       @Override
       public void run() {
         try {
+          List<Pair> packages = new ArrayList<Pair>();
           final Collection<String> packageNames = PyPIPackageUtil.INSTANCE.getPackageNames();
+          for (String name : packageNames) {
+            packages.add(new ComparablePair(name, PyPIPackageUtil.PYPI_URL));
+          }
+          packages.addAll(PyPIPackageUtil.INSTANCE.getAdditionalPackageNames());
+          myPackagesModel = new PackagesModel(packages);
+
           application.invokeLater(new Runnable() {
             @Override
             public void run() {
-              for (String name : packageNames) {
-                myPackagesModel.add(PyPIPackageUtil.PYPI_URL, name);
-              }
-
-              myPackagesModel.add(Lists.newArrayList(PyPIPackageUtil.INSTANCE.getAdditionalPackageNames()));
+              myPackages.setModel(myPackagesModel);
               setDownloadStatus(false);
             }
-          }, ModalityState.stateForComponent(myPackages));
+          }, ModalityState.any());
         }
         catch (final IOException e) {
           application.invokeLater(new Runnable() {
@@ -291,7 +291,7 @@ public class ManagePackagesDialog extends DialogWrapper {
                                        ". Please, check your internet connection.", "Packages");
               setDownloadStatus(false);
             }
-          }, ModalityState.stateForComponent(myPackages));
+          }, ModalityState.any());
         }
       }
     });
@@ -321,11 +321,13 @@ public class ManagePackagesDialog extends DialogWrapper {
     }
   }
 
-  private static class PackagesModel extends CollectionListModel<Pair> {
-    private Project myProject;
+  private class PackagesModel extends CollectionListModel<Pair> {
+    protected final List<Pair> myFilteredOut = new ArrayList<Pair>();
+    protected List<Pair> myView = new ArrayList<Pair>();
 
-    public PackagesModel(Project project) {
-      myProject = project;
+    public PackagesModel(List<Pair> packages) {
+      super(packages);
+      myView = packages;
     }
 
     public void add(String urlResource, String element) {
@@ -333,45 +335,52 @@ public class ManagePackagesDialog extends DialogWrapper {
     }
 
     protected void filter(final String filter) {
-      final Application application = ApplicationManager.getApplication();
-      application.executeOnPooledThread(new Runnable() {
+      final Collection<Pair> toProcess = toProcess();
+
+      toProcess.addAll(myFilteredOut);
+      myFilteredOut.clear();
+
+      final ArrayList<Pair> filtered = new ArrayList<Pair>();
+
+      for (Pair pair : toProcess) {
+        if (StringUtil.containsIgnoreCase((String)pair.first, filter)) {
+          filtered.add(pair);
+        }
+        else {
+          myFilteredOut.add(pair);
+        }
+      }
+      filter(filtered);
+    }
+
+    public void filter(List<Pair> filtered){
+      myView.clear();
+      for (Pair pair : filtered) {
+        myView.add(pair);
+      }
+      Collections.sort(myView, new Comparator<Pair>() {
         @Override
-        public void run() {
-          try {
-            final Collection<String> toProcess = PyPIPackageUtil.INSTANCE.getPackageNames();
+        public int compare(Pair pair, Pair pair1) {
+          if (pair instanceof ComparablePair)
+            return ((ComparablePair)pair).compareTo(pair1);
+          return 0;
+        }
+      });
+      fireContentsChanged(this, 0, myView.size());
+    }
 
-            application.invokeLater(new Runnable() {
-              @Override
-              public void run() {
-                for (ComparablePair name : PyPIPackageUtil.INSTANCE.getAdditionalPackageNames()) {
-                  toProcess.add(name.first);
-                }
+    @Override
+    public Pair getElementAt(int index) {
+      return myView.get(index);
+    }
 
-                removeAll();
-                if (StringUtil.isEmptyOrSpaces(filter)) {
-                  for (String name : toProcess) {
-                    add(PyPIPackageUtil.PYPI_URL, name);
-                  }
-                  return;
-                }
-                for (String packageName : toProcess) {
-                  if (StringUtil.containsIgnoreCase(packageName, filter)) {
-                    add(PyPIPackageUtil.PYPI_URL, packageName);
-                  }
-                }
-              }
-            }, ModalityState.any());
-          }
-          catch (final IOException e) {
-            application.invokeLater(new Runnable() {
-              @Override
-              public void run() {
-                Messages.showErrorDialog("IO Error occurred. Could not reach url " + e.getMessage() +
-                                         ". Please, check your internet connection.", "Packages");
-              }
-            }, ModalityState.any());
-          }
-        }});
+    protected ArrayList<Pair> toProcess() {
+      return new ArrayList<Pair>(myView);
+    }
+
+    @Override
+    public int getSize() {
+      return myView.size();
     }
   }
 
