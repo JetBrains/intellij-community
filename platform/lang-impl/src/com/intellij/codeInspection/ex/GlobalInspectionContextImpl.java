@@ -642,7 +642,7 @@ public class GlobalInspectionContextImpl extends UserDataHolderBase implements G
               }
             }
             else {
-              toolWrapper.addProblemElement(refEntity, commonProblemDescriptors);
+              toolWrapper.addProblemElement(refEntity, problemDescriptor);
             }
           }
         }
