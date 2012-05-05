@@ -302,8 +302,11 @@ public class FrameWrapper implements Disposable, DataProvider {
       ((RootPaneContainer)frame).getRootPane().revalidate();
     }
     else {
-      frame.pack();
-      frame.setBounds(WindowManagerEx.getInstanceEx().getIdeFrame(myProject).suggestChildFrameBounds());
+      final IdeFrame ideFrame = WindowManagerEx.getInstanceEx().getIdeFrame(myProject);
+      if (ideFrame != null) {
+        frame.pack();
+        frame.setBounds(ideFrame.suggestChildFrameBounds());
+      }
     }
 
     if (extendedState == Frame.ICONIFIED || extendedState == Frame.MAXIMIZED_BOTH && frame instanceof JFrame) {

@@ -18,75 +18,27 @@ package com.intellij.openapi.diff;
 import com.intellij.ide.diff.DiffElement;
 import com.intellij.ide.diff.DirDiffSettings;
 import com.intellij.openapi.application.ApplicationNamesInfo;
-import com.intellij.openapi.application.ApplicationStarterEx;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.UnknownFileType;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.vfs.JarFileSystem;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.PropertyKey;
-
-import java.io.File;
 
 /**
  * @author max
  * @author Konstantin Bulenkov
  */
 @SuppressWarnings({"UseOfSystemOutOrSystemErr", "CallToPrintStackTrace"})
-public class DiffApplication implements ApplicationStarterEx {
-  @Override
-  public String getCommandName() {
-    return "diff";
+public class DiffApplication extends ApplicationStarterBase {
+  public DiffApplication() {
+    super("diff", 2);
   }
 
-  @Override
-  public void premain(String[] args) {
-    if (args.length != 3) {
-      System.err.println(getUsageMessage());
-      System.exit(1);
-    }
-  }
-
-  @Override
-  public void main(String[] args) {
-    try {
-      processDiffCommand(args);
-    }
-    catch (OperationFailedException e) {
-      System.err.println(e.getMessage());
-      System.exit(1);
-    }
-    catch (Throwable t) {
-      t.printStackTrace();
-      System.exit(2);
-    }
-
-    System.exit(0);
-  }
-
-  @Override
-  public void processExternalCommandLine(String[] args) {
-    if (args.length != 3) {
-      Messages.showMessageDialog(getUsageMessage(), "Diff", Messages.getInformationIcon());
-      return;
-    }
-    try {
-      processDiffCommand(args);
-    }
-    catch (Exception e) {
-      Messages.showMessageDialog("Error showing diff: " + e.getMessage(), "Diff", Messages.getErrorIcon());
-    }
-  }
-
-  private static String getUsageMessage() {
+  public String getUsageMessage() {
     final String scriptName = ApplicationNamesInfo.getInstance().getScriptName();
     return DiffBundle.message("diff.application.usage.parameters.and.description", scriptName);
   }
 
-  private static void processDiffCommand(String[] args) throws OperationFailedException {
+  public void processCommand(String[] args) throws OperationFailedException {
     final String path1 = args[1];
     final String path2 = args[2];
     final VirtualFile file1 = findFile(path1);
@@ -98,13 +50,13 @@ public class DiffApplication implements ApplicationStarterEx {
       final DiffElement d1 = diffManager.createDiffElement(file1);
       final DiffElement d2 = diffManager.createDiffElement(file2);
       if (d1 == null) {
-        throw new OperationFailedException("cannot.create.diff.error", path1);
+        throw new OperationFailedException(DiffBundle.message("cannot.create.diff.error", path1));
       }
       if (d2 == null) {
-        throw new OperationFailedException("cannot.create.diff.error", path1);
+        throw new OperationFailedException(DiffBundle.message("cannot.create.diff.error", path1));
       }
       else if (!diffManager.canShow(d1, d2)) {
-        throw new OperationFailedException("cannot.compare.error", path1, path2);
+        throw new OperationFailedException(DiffBundle.message("cannot.compare.error", path1, path2));
       }
 
       final DirDiffSettings settings = new DirDiffSettings();
@@ -116,39 +68,16 @@ public class DiffApplication implements ApplicationStarterEx {
       file2.refresh(false, false);
 
       if (file1.getFileType() == UnknownFileType.INSTANCE) {
-        throw new OperationFailedException("unknown.file.type.error", path1);
+        throw new OperationFailedException(DiffBundle.message("unknown.file.type.error", path1));
       }
       else if (file2.getFileType() == UnknownFileType.INSTANCE) {
-        throw new OperationFailedException("unknown.file.type.error", path2);
+        throw new OperationFailedException(DiffBundle.message("unknown.file.type.error", path2));
       }
 
       SimpleDiffRequest request = SimpleDiffRequest.compareFiles(file1, file2, ProjectManager.getInstance().getDefaultProject());
       request.addHint(DiffTool.HINT_SHOW_MODAL_DIALOG);
       DiffManager.getInstance().getIdeaDiffTool().show(request);
       FileDocumentManager.getInstance().saveAllDocuments();
-    }
-  }
-
-  private static boolean areJars(VirtualFile file1, VirtualFile file2) {
-    return JarFileSystem.PROTOCOL.equalsIgnoreCase(file1.getExtension()) && JarFileSystem.PROTOCOL.equalsIgnoreCase(file2.getExtension());
-  }
-
-  private static boolean areDirs(VirtualFile file1, VirtualFile file2) {
-    return file1.isDirectory() && file2.isDirectory();
-  }
-
-  @NotNull
-  private static VirtualFile findFile(final String path) throws OperationFailedException {
-    final VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(path));
-    if (file == null) {
-      throw new OperationFailedException("cannot.file.file.error", path);
-    }
-    return file;
-  }
-
-  private static class OperationFailedException extends Exception {
-    public OperationFailedException(@NotNull @PropertyKey(resourceBundle = "messages.DiffBundle") String key, Object... params) {
-      super(DiffBundle.message(key, params));
     }
   }
 }
