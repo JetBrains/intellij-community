@@ -55,6 +55,7 @@ import com.intellij.openapi.module.EmptyModuleType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleType;
+import com.intellij.openapi.project.ModuleAdapter;
 import com.intellij.openapi.project.ModuleListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -278,22 +279,10 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
           }
         });
 
-        connection.subscribe(ProjectTopics.MODULES, new ModuleListener() {
+        connection.subscribe(ProjectTopics.MODULES, new ModuleAdapter() {
           @Override
           public void moduleAdded(Project project, Module module) {
             fail("Adding modules is not permitted in LightIdeaTestCase.");
-          }
-
-          @Override
-          public void beforeModuleRemoved(Project project, Module module) {
-          }
-
-          @Override
-          public void moduleRemoved(Project project, Module module) {
-          }
-
-          @Override
-          public void modulesRenamed(Project project, List<Module> modules) {
           }
         });
 

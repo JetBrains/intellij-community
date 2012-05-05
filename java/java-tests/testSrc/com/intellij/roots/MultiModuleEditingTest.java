@@ -7,9 +7,12 @@ import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.StdModuleTypes;
-import com.intellij.openapi.project.ModuleListener;
+import com.intellij.openapi.project.ModuleAdapter;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.ContentEntry;
+import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -186,7 +189,7 @@ public class MultiModuleEditingTest extends ModuleTestCase {
   }
 
 
-  private class MyModuleListener implements ModuleListener {
+  private static class MyModuleListener extends ModuleAdapter {
     private final List<String> myLog = new ArrayList<String>();
 
     @Override
@@ -195,17 +198,8 @@ public class MultiModuleEditingTest extends ModuleTestCase {
     }
 
     @Override
-    public void modulesRenamed(Project project, List<Module> modules) {
-      // write something
-    }
-
-    @Override
     public void moduleAdded(Project project, Module module) {
       myLog.add("+" + module.getName());
-    }
-
-    @Override
-    public void beforeModuleRemoved(Project project, Module module) {
     }
 
     public void assertCorrectEvents(String[][] expected) {

@@ -25,11 +25,14 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.DumbAwareRunnable;
-import com.intellij.openapi.project.ModuleListener;
+import com.intellij.openapi.project.ModuleAdapter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.startup.StartupManager;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.ModificationTracker;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.impl.BulkVirtualFileListenerAdapter;
 import com.intellij.openapi.wm.ToolWindow;
@@ -89,19 +92,10 @@ public class MvcModuleStructureSynchronizer extends AbstractProjectComponent {
       }
     });
 
-    connection.subscribe(ProjectTopics.MODULES, new ModuleListener() {
+    connection.subscribe(ProjectTopics.MODULES, new ModuleAdapter() {
       public void moduleAdded(Project project, Module module) {
         queue(SyncAction.UpdateProjectStructure, module);
         queue(SyncAction.CreateAppStructureIfNeeded, module);
-      }
-
-      public void beforeModuleRemoved(Project project, Module module) {
-      }
-
-      public void moduleRemoved(Project project, Module module) {
-      }
-
-      public void modulesRenamed(Project project, List<Module> modules) {
       }
     });
 

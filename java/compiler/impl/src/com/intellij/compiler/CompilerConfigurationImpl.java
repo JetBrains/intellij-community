@@ -41,6 +41,7 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.project.ModuleAdapter;
 import com.intellij.openapi.project.ModuleListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -110,13 +111,7 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
     myModuleManager = moduleManager;
     myExcludedEntriesConfiguration = new ExcludedEntriesConfiguration();
     Disposer.register(project, myExcludedEntriesConfiguration);
-    project.getMessageBus().connect(project).subscribe(ProjectTopics.MODULES, new ModuleListener() {
-      public void modulesRenamed(Project project, List<Module> modules) {
-      }
-
-      public void moduleRemoved(Project project, Module module) {
-      }
-
+    project.getMessageBus().connect(project).subscribe(ProjectTopics.MODULES, new ModuleAdapter() {
       public void beforeModuleRemoved(Project project, Module module) {
         myProcessedModules.remove(module);
         myModuleNames.remove(module.getName());
