@@ -32,6 +32,10 @@ public class PyCopyPasteTest extends PyTestCase {
     doTest();
   }
 
+  public void testIndent3() {
+    doTest();
+  }
+
   public void testIndentIncrease() {
     doTest();
   }
