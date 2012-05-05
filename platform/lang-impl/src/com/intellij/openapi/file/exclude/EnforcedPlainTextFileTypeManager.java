@@ -52,20 +52,25 @@ public class EnforcedPlainTextFileTypeManager extends PersistentFileSetManager {
     return true;
   }
 
-  public void markAsPlainText(VirtualFile file) {
-    if (addFile(file)) {
-      updateIndex(file);
+  public void markAsPlainText(VirtualFile... files) {
+    for (VirtualFile file : files) {
+      if (addFile(file)) {
+        FileBasedIndex.getInstance().requestReindex(file);
+      }
     }
+    fireRootsChanged();
   }
   
-  public void unmarkPlainText(VirtualFile file) {
-    if (removeFile(file)) {
-      updateIndex(file);
+  public void unmarkPlainText(VirtualFile... files) {
+    for (VirtualFile file : files) {
+      if (removeFile(file)) {
+        FileBasedIndex.getInstance().requestReindex(file);
+      }
     }
+    fireRootsChanged();
   }
 
-  private static void updateIndex(VirtualFile file) {
-    FileBasedIndex.getInstance().requestReindex(file);
+  private static void fireRootsChanged() {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override
       public void run() {

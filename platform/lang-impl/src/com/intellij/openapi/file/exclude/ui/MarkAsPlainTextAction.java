@@ -21,6 +21,9 @@ import com.intellij.openapi.file.exclude.EnforcedPlainTextFileTypeManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
+import java.util.Collection;
+
 /**
  * @author Rustam Vishnyakov
  */
@@ -30,16 +33,18 @@ public class MarkAsPlainTextAction extends AnAction {
     DataContext dataContext = e.getDataContext();
     final VirtualFile[] selectedFiles = PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext);
     if (selectedFiles == null || selectedFiles.length == 0) return;
+    EnforcedPlainTextFileTypeManager typeManager = EnforcedPlainTextFileTypeManager.getInstance();
+    assert typeManager != null;
+    Collection<VirtualFile> filesToMark = new ArrayList<VirtualFile>();
     for (VirtualFile file : selectedFiles) {
-      if (file != null && !file.isDirectory()) {
-        markAsPlainText(file);
+      if (file != null &&
+          !file.isDirectory() &&
+          EnforcedPlainTextFileTypeManager.isApplicableFor(file) &&
+          !typeManager.isMarkedAsPlainText(file)) {
+        filesToMark.add(file);
       }
     }
-  }
-
-  private static void markAsPlainText(@NotNull VirtualFile file) {
-    EnforcedPlainTextFileTypeManager typeManager = EnforcedPlainTextFileTypeManager.getInstance();
-    if (typeManager != null && !typeManager.isMarkedAsPlainText(file)) typeManager.markAsPlainText(file);
+    typeManager.markAsPlainText(filesToMark.toArray(new VirtualFile[filesToMark.size()]));
   }
 
   @Override
