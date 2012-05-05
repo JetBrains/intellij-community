@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -65,8 +65,9 @@ public abstract class Wrap {
    * Creates a block wrap setting of the legacy representation of specified wrap type (see {@link WrapType#getLegacyRepresentation()}).
    *
    * @param type                the type of the wrap setting.
-   * @param wrapFirstElement    if <code>true</code>, the first element in a sequence of elements of the same type is also wrapped.
+   * @param wrapFirstElement    determines if first block between the multiple blocks that use the same wrap object should be wrapped
    * @return                    the wrap setting instance.
+   * @see #createWrap(WrapType, boolean)
    */
   public static Wrap createWrap(final int type, final boolean wrapFirstElement) {
     return myFactory.createWrap(WrapType.byLegacyRepresentation(type), wrapFirstElement);
@@ -74,11 +75,37 @@ public abstract class Wrap {
 
   /**
    * Creates a block wrap setting of the specified type.
+   * <p/>
+   * The wrap created may be customized by the <code>'wrap first element'</code> flag. It affects a situation
+   * when there are multiple blocks that share the same wrap object. It determines if the first block
+   * should be wrapped when subsequent blocks exceeds right margin.
+   * <p/>
+   * Example:
+   * <pre>
+   *             |   
+   *   foo(123, 4|56
+   *             |
+   *             | &lt;- right margin
+   * </pre>
+   * Consider that blocks <code>'123'</code> and <code>'456'</code> share the same wrap object. The wrap is made on the block
+   * <code>'123'</code> if <code>'wrap first element'</code> flag is <code>true</code>; on the block <code>'456'</code> otherwise
+   * <p/>
+   * <b>Note:</b> giving <code>'false'</code> argument doesn't mean that a single block that uses that wrap can't be wrapped.
+   * <p/>
+   * Example:
+   * <pre>
+   *         |
+   *   foo(12|3);
+   *         |
+   *         | &lt;- right margin
+   * </pre>
+   * Let block <code>'123'</code> use a wrap that was created with <code>false</code> as a <code>'wrap first element'</code> argument.
+   * The block is wrapped by the formatter then because there is no other block that uses the same wrap object and right margin is
+   * exceeded.
    *
    * @param type             the type of the wrap setting.
-   * @param wrapFirstElement if true, the first element in a sequence of elements of the same type
-   *                         is also wrapped.
-   * @return the wrap setting instance.
+   * @param wrapFirstElement determines if first block between the multiple blocks that use the same wrap object should be wrapped
+   * @return                 the wrap setting instance.
    */
   public static Wrap createWrap(final WrapType type, final boolean wrapFirstElement) {
     return myFactory.createWrap(type, wrapFirstElement);
