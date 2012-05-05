@@ -6,6 +6,7 @@ import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.indexing.*;
 import com.intellij.util.io.*;
+import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.xml.NanoXmlUtil;
 import net.n3.nanoxml.StdXMLReader;
 import org.jetbrains.annotations.NotNull;
@@ -74,33 +75,27 @@ public class XmlPropertiesIndex extends FileBasedIndexExtension<XmlPropertiesInd
   @NotNull
   @Override
   public Map<Key, String> map(FileContent inputData) {
-    MyIXMLBuilderAdapter builder = parse(inputData.getContent(), false);
+    MyIXMLBuilderAdapter builder = parse(inputData.getContentAsText(), false);
     if (builder == null) return Collections.emptyMap();
     HashMap<Key, String> map = builder.myMap;
     if (builder.accepted) map.put(MARKER_KEY, "");
     return map;
   }
 
-  static boolean isAccepted(byte[] bytes) {
+  static boolean isAccepted(CharSequence bytes) {
     MyIXMLBuilderAdapter builder = parse(bytes, true);
     return builder != null && builder.accepted;
   }
 
   @Nullable
-  private static MyIXMLBuilderAdapter parse(byte[] bytes, boolean stopIfAccepted) {
-    StdXMLReader reader;
-    try {
-      reader = new StdXMLReader(new UnsyncByteArrayInputStream(bytes)) {
-        @Override
-        public Reader openStream(String publicID, String systemID) throws IOException {
-          if (!"http://java.sun.com/dtd/properties.dtd".equals(systemID)) throw new IOException();
-          return new StringReader(" ");
-        }
-      };
-    }
-    catch (IOException e) {
-      return null;
-    }
+  private static MyIXMLBuilderAdapter parse(CharSequence text, boolean stopIfAccepted) {
+    StdXMLReader reader = new StdXMLReader(CharArrayUtil.readerFromCharSequence(text)) {
+      @Override
+      public Reader openStream(String publicID, String systemID) throws IOException {
+        if (!"http://java.sun.com/dtd/properties.dtd".equals(systemID)) throw new IOException();
+        return new StringReader(" ");
+      }
+    };
     MyIXMLBuilderAdapter builder = new MyIXMLBuilderAdapter(stopIfAccepted);
     NanoXmlUtil.parse(reader, builder);
     return builder;

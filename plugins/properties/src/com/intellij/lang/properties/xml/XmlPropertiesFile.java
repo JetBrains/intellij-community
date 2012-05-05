@@ -47,7 +47,7 @@ public class XmlPropertiesFile implements PropertiesFile {
                                   new CachedValueProvider<PropertiesFile>() {
                                     @Override
                                     public Result<PropertiesFile> compute() {
-                                      PropertiesFile value = !XmlPropertiesIndex.isAccepted(file.getText().getBytes()) ? null : new XmlPropertiesFile(file);
+                                      PropertiesFile value = !XmlPropertiesIndex.isAccepted(file.getText()) ? null : new XmlPropertiesFile(file);
                                       return Result.create(value, file);
                                     }
                                   }, false);
