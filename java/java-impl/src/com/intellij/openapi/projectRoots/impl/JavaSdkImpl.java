@@ -24,6 +24,7 @@ import com.intellij.openapi.roots.JavadocOrderRootType;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.util.containers.HashMap;
 import org.jdom.Element;
@@ -39,7 +40,7 @@ import java.util.regex.Pattern;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Sep 17, 2004
+ * @since Sep 17, 2004
  */
 public class JavaSdkImpl extends JavaSdk {
   // do not use javaw.exe for Windows because of issues with encoding
@@ -450,25 +451,26 @@ public class JavaSdkImpl extends JavaSdk {
   }
 
   private static VirtualFile[] findClasses(File file, boolean isJre) {
-    FileFilter jarFileFilter = new FileFilter(){
+    FileFilter jarFileFilter = new FileFilter() {
       @Override
       @SuppressWarnings({"HardCodedStringLiteral"})
-      public boolean accept(File f){
+      public boolean accept(File f) {
         return !f.isDirectory() && f.getName().endsWith(".jar");
       }
     };
 
     File[] jarDirs;
-    if(SystemInfo.isMac && /*!ApplicationManager.getApplication().isUnitTestMode()) &&*/ !file.getName().startsWith("mockJDK")){
+    if (SystemInfo.isMac && !file.getName().startsWith("mockJDK")) {
       final File openJdkRtJar = new File(new File(new File(file, "jre"), "lib"), "rt.jar");
       if (openJdkRtJar.exists() && !openJdkRtJar.isDirectory()) {
-        // openjdk
+        // OpenJDK
         File libFile = new File(file, "lib");
         @NonNls File classesFile = openJdkRtJar.getParentFile();
         @NonNls File libExtFile = new File(openJdkRtJar.getParentFile(), "ext");
         @NonNls File libEndorsedFile = new File(libFile, "endorsed");
         jarDirs = new File[]{libEndorsedFile, libFile, classesFile, libExtFile};
-      } else {
+      }
+      else {
         File libFile = new File(file, "lib");
         @NonNls File classesFile = new File(file, "../Classes");
         @NonNls File libExtFile = new File(libFile, "ext");
@@ -476,7 +478,7 @@ public class JavaSdkImpl extends JavaSdk {
         jarDirs = new File[]{libEndorsedFile, libFile, classesFile, libExtFile};
       }
     }
-    else{
+    else {
       @NonNls final String jre = "jre";
       File jreLibFile = isJre ? new File(file, "lib") : new File(new File(file, jre), "lib");
       @NonNls File jreLibExtFile = new File(jreLibFile, "ext");
@@ -506,19 +508,27 @@ public class JavaSdkImpl extends JavaSdk {
 
     ArrayList<VirtualFile> result = new ArrayList<VirtualFile>();
     for (File child : children) {
-      String url = JarFileSystem.PROTOCOL_PREFIX + child.getAbsolutePath().replace(File.separatorChar, '/') + JarFileSystem.JAR_SEPARATOR;
+      String url = JarFileSystem.PROTOCOL_PREFIX + FileUtil.toSystemIndependentName(child.getAbsolutePath()) + JarFileSystem.JAR_SEPARATOR;
       VirtualFile vFile = VirtualFileManager.getInstance().findFileByUrl(url);
       if (vFile != null) {
         result.add(vFile);
       }
     }
-    
-    @NonNls File classesZipFile = new File(new File(file, "lib"), "classes.zip");
-    if(!classesZipFile.isDirectory() && classesZipFile.exists()){
-      String url =
-        JarFileSystem.PROTOCOL_PREFIX + classesZipFile.getAbsolutePath().replace(File.separatorChar, '/') + JarFileSystem.JAR_SEPARATOR;
+
+    File classesZip = new File(new File(file, "lib"), "classes.zip");
+    if (classesZip.isFile()) {
+      String url = JarFileSystem.PROTOCOL_PREFIX + FileUtil.toSystemIndependentName(classesZip.getAbsolutePath()) + JarFileSystem.JAR_SEPARATOR;
       VirtualFile vFile = VirtualFileManager.getInstance().findFileByUrl(url);
-      if (vFile != null){
+      if (vFile != null) {
+        result.add(vFile);
+      }
+    }
+
+    File classesDir = new File(file, "classes");
+    if (result.isEmpty() && classesDir.isDirectory()) {
+      String url = LocalFileSystem.PROTOCOL_PREFIX + FileUtil.toSystemIndependentName(classesDir.getAbsolutePath());
+      VirtualFile vFile = VirtualFileManager.getInstance().findFileByUrl(url);
+      if (vFile != null) {
         result.add(vFile);
       }
     }

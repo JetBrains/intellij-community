@@ -149,10 +149,11 @@ public class JdkUtil {
   }
 
   public static boolean checkForRuntime(final String homePath) {
-    return new File(homePath + File.separator + "jre" + File.separator + "lib" + File.separator + "rt.jar").exists() ||
-           new File(homePath + File.separator + "lib" + File.separator + "rt.jar").exists() ||
-           new File(homePath + File.separator + ".." + File.separator + "Classes" + File.separator + "classes.jar").exists() ||
-           new File(homePath + File.separator + "jre" + File.separator + "lib" + File.separator + "vm.jar").exists();
+    return new File(new File(new File(homePath, "jre"), "lib"), "rt.jar").exists() ||
+           new File(new File(homePath, "lib"), "rt.jar").exists() ||
+           new File(new File(new File(homePath, ".."), "Classes"), "classes.jar").exists() ||  // Apple JDK
+           new File(new File(new File(homePath, "jre"), "lib"), "vm.jar").exists() ||  // IBM JDK
+           new File(homePath, "classes").isDirectory();  // custom build
   }
 
   public static GeneralCommandLine setupJVMCommandLine(final String exePath,
