@@ -67,7 +67,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
   private final ComponentManagerConfigurator myConfigurator = new ComponentManagerConfigurator(this);
   private final ComponentManager myParentComponentManager;
   private Boolean myHeadless;
-  protected ComponentsRegistry myComponentsRegistry = new ComponentsRegistry();
+  private ComponentsRegistry myComponentsRegistry = new ComponentsRegistry();
   private final Condition myDisposedCondition = new Condition() {
     @Override
     public boolean value(final Object o) {
@@ -231,6 +231,10 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
   protected static ProgressIndicator getProgressIndicator() {
     final ProgressIndicatorProvider progressManager = ProgressIndicatorProvider.getInstance();
     return progressManager != null ? progressManager.getProgressIndicator() : null;
+  }
+
+  protected double getPercentageOfComponentsLoaded() {
+    return myComponentsRegistry.getPercentageOfComponentsLoaded();
   }
 
   @Override

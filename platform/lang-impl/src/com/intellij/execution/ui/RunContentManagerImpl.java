@@ -326,6 +326,7 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
 
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
+        if (myProject.isDisposed()) return;
         ToolWindow window = ToolWindowManager.getInstance(myProject).getToolWindow(executor.getToolWindowId());
         // let's activate tool window, but don't move focus
         //
