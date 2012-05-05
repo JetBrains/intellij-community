@@ -12,6 +12,9 @@ import com.intellij.util.NotNullFunction;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.impl.PyBuiltinCache;
+import com.jetbrains.python.psi.types.PyTypeChecker;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -46,9 +49,12 @@ public class PyStringConcatenationToFormatIntention extends BaseIntentionAction 
       return false;
     }
     boolean hasReferenceOrCall = false;
+    final PyBuiltinCache cache = PyBuiltinCache.getInstance(element);
     for (PyExpression expression: expressions) {
-      if (expression instanceof PyReferenceExpression
-            || expression instanceof PyCallExpression)
+      if ((expression instanceof PyReferenceExpression
+            || expression instanceof PyCallExpression) &&
+          PyTypeChecker.match(cache.getStringType(LanguageLevel.forElement(expression)),
+                              expression.getType(TypeEvalContext.fast()), TypeEvalContext.fast()))
         hasReferenceOrCall = true;
       else if (!(expression instanceof PyStringLiteralExpression))
         return false;
