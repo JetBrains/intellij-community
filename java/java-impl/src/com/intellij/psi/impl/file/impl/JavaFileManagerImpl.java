@@ -84,11 +84,7 @@ public class JavaFileManagerImpl implements JavaFileManager, Disposable {
     });
 
     final MessageBusConnection connection = bus.connect();
-    connection.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
-      @Override
-      public void beforeRootsChange(final ModuleRootEvent event) {
-      }
-
+    connection.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootAdapter() {
       @Override
       public void rootsChanged(final ModuleRootEvent event) {
         myNontrivialPackagePrefixes = null;

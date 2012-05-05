@@ -70,11 +70,7 @@ public class AttachSourcesNotificationProvider implements EditorNotifications.Pr
 
   public AttachSourcesNotificationProvider(Project project, final EditorNotifications notifications) {
     myProject = project;
-    myProject.getMessageBus().connect(project).subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
-
-      public void beforeRootsChange(ModuleRootEvent event) {
-      }
-
+    myProject.getMessageBus().connect(project).subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootAdapter() {
       public void rootsChanged(ModuleRootEvent event) {
         notifications.updateAllNotifications();
       }

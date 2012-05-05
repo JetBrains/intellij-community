@@ -39,11 +39,7 @@ public class PackagePrefixIndex {
 
   public PackagePrefixIndex(Project project) {
     myProject = project;
-    project.getMessageBus().connect(project).subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
-      @Override
-      public void beforeRootsChange(final ModuleRootEvent event) {
-      }
-
+    project.getMessageBus().connect(project).subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootAdapter() {
       @Override
       public void rootsChanged(final ModuleRootEvent event) {
         synchronized (LOCK) {

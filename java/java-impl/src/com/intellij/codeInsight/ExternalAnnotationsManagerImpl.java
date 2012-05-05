@@ -93,11 +93,7 @@ public class ExternalAnnotationsManagerImpl extends ExternalAnnotationsManager {
   public ExternalAnnotationsManagerImpl(@NotNull final Project project, final PsiManager psiManager) {
     myPsiManager = psiManager;
     final MessageBusConnection connection = project.getMessageBus().connect(project);
-    connection.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
-      @Override
-      public void beforeRootsChange(ModuleRootEvent event) {
-      }
-
+    connection.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootAdapter() {
       @Override
       public void rootsChanged(ModuleRootEvent event) {
         myExternalAnnotations.clear();

@@ -47,6 +47,7 @@ import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.impl.ProjectImpl;
+import com.intellij.openapi.roots.ModuleRootAdapter;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.startup.StartupManager;
@@ -1622,10 +1623,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
     }
   }
 
-  private class MyRootsListener implements ModuleRootListener {
-    public void beforeRootsChange(ModuleRootEvent event) {
-    }
-
+  private class MyRootsListener extends ModuleRootAdapter {
     public void rootsChanged(ModuleRootEvent event) {
       EditorFileSwapper[] swappers = Extensions.getExtensions(EditorFileSwapper.EP_NAME);
 

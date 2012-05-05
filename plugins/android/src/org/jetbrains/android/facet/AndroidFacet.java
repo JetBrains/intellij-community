@@ -46,10 +46,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkAdditionalData;
 import com.intellij.openapi.projectRoots.SdkModificator;
-import com.intellij.openapi.roots.ModuleRootEvent;
-import com.intellij.openapi.roots.ModuleRootListener;
-import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.roots.*;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
@@ -467,12 +464,9 @@ public class AndroidFacet extends Facet<AndroidFacetConfiguration> {
       }
     });
 
-    getModule().getMessageBus().connect(this).subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
+    getModule().getMessageBus().connect(this).subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootAdapter() {
       private Sdk myPrevSdk;
       private String[] myDependencies;
-
-      public void beforeRootsChange(final ModuleRootEvent event) {
-      }
 
       public void rootsChanged(final ModuleRootEvent event) {
         ApplicationManager.getApplication().invokeLater(new Runnable() {

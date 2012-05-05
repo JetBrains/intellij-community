@@ -26,8 +26,8 @@ import com.intellij.facet.ProjectFacetManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ModuleRootAdapter;
 import com.intellij.openapi.roots.ModuleRootEvent;
-import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowFactory;
@@ -208,7 +208,7 @@ public class AndroidLogcatToolWindowFactory implements ToolWindowFactory {
     }
   }
 
-  private static class MyAndroidPlatformListener implements ModuleRootListener {
+  private static class MyAndroidPlatformListener extends ModuleRootAdapter {
     private final Project myProject;
     private final AndroidLogcatToolWindowView myView;
     
@@ -218,10 +218,6 @@ public class AndroidLogcatToolWindowFactory implements ToolWindowFactory {
       myProject = view.getProject();
       myView = view;
       myPrevPlatform = getPlatform();
-    }
-
-    @Override
-    public void beforeRootsChange(ModuleRootEvent event) {
     }
 
     @Override

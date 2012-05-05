@@ -20,13 +20,12 @@ import com.intellij.android.designer.designSurface.AndroidDesignerEditorPanel;
 import com.intellij.designer.DesignerToolWindowManager;
 import com.intellij.designer.designSurface.DesignerEditorPanel;
 import com.intellij.openapi.components.*;
-import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.roots.ModuleRootAdapter;
 import com.intellij.openapi.roots.ModuleRootEvent;
-import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.util.xmlb.annotations.AbstractCollection;
 import com.intellij.util.xmlb.annotations.Tag;
@@ -52,11 +51,7 @@ public class ProfileList implements PersistentStateComponent<ProfileList.Profile
   public ProfileList(Project project) {
     myProject = project;
     updateModules();
-    project.getMessageBus().connect(project).subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
-      @Override
-      public void beforeRootsChange(ModuleRootEvent event) {
-      }
-
+    project.getMessageBus().connect(project).subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootAdapter() {
       @Override
       public void rootsChanged(ModuleRootEvent event) {
         updatePlatform();

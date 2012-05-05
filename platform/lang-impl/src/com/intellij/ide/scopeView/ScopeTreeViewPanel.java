@@ -47,6 +47,7 @@ import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ModuleRootAdapter;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.roots.ui.configuration.actions.ModuleDeleteProvider;
@@ -742,10 +743,7 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
     }
   }
 
-  private class MyModuleRootListener implements ModuleRootListener {
-    public void beforeRootsChange(ModuleRootEvent event) {
-    }
-
+  private class MyModuleRootListener extends ModuleRootAdapter {
     public void rootsChanged(ModuleRootEvent event) {
       myUpdateQueue.cancelAllUpdates();
       myUpdateQueue.queue(new Update("RootsChanged") {

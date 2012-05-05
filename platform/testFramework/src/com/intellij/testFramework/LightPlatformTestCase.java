@@ -269,16 +269,12 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
         rootModel.commit();
 
         final MessageBusConnection connection = ourProject.getMessageBus().connect();
-        connection.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
+        connection.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootAdapter() {
           @Override
           public void beforeRootsChange(ModuleRootEvent event) {
             if (!event.isCausedByFileTypesChange()) {
               //TODO: uncomment fail("Root modification in LightIdeaTestCase is not allowed.");
             }
-          }
-
-          @Override
-          public void rootsChanged(ModuleRootEvent event) {
           }
         });
 

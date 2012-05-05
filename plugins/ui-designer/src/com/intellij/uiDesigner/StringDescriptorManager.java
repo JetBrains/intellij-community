@@ -21,6 +21,7 @@ import com.intellij.lang.properties.PropertiesUtil;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleServiceManager;
+import com.intellij.openapi.roots.ModuleRootAdapter;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.roots.ModuleRootEvent;
@@ -46,10 +47,7 @@ public class StringDescriptorManager {
 
   public StringDescriptorManager(final Module module, MessageBus bus) {
     myModule = module;
-    bus.connect().subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
-      public void beforeRootsChange(final ModuleRootEvent event) {
-      }
-
+    bus.connect().subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootAdapter() {
       public void rootsChanged(final ModuleRootEvent event) {
         synchronized(myPropertiesFileCache) {
           myPropertiesFileCache.clear();

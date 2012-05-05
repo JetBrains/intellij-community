@@ -37,10 +37,7 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerAdapter;
 import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
-import com.intellij.openapi.roots.ModuleRootEvent;
-import com.intellij.openapi.roots.ModuleRootListener;
-import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.util.JDOMUtil;
@@ -768,11 +765,7 @@ public class BuildManager implements ApplicationComponent{
     public void projectOpened(final Project project) {
       final MessageBusConnection conn = project.getMessageBus().connect();
       myConnections.put(project, conn);
-      conn.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
-        @Override
-        public void beforeRootsChange(final ModuleRootEvent event) {
-        }
-
+      conn.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootAdapter() {
         @Override
         public void rootsChanged(final ModuleRootEvent event) {
           final Object source = event.getSource();

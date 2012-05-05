@@ -59,8 +59,7 @@ public final class LoaderFactory {
     myProject = project;
     myModule2ClassLoader = new WeakHashMap<Module, ClassLoader>();
     myConnection = myProject.getMessageBus().connect();
-    myConnection.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
-      public void beforeRootsChange(final ModuleRootEvent event) {}
+    myConnection.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootAdapter() {
       public void rootsChanged(final ModuleRootEvent event) {
         clearClassLoaderCache();
       }

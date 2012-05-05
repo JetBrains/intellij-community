@@ -63,10 +63,7 @@ public class PushedFilePropertiesUpdater {
         LOG.info("File properties pushed in " + (System.currentTimeMillis() - l) + " ms");
 
         final MessageBusConnection connection = bus.connect();
-        connection.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
-          public void beforeRootsChange(final ModuleRootEvent event) {
-          }
-
+        connection.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootAdapter() {
           public void rootsChanged(final ModuleRootEvent event) {
             pushAll(myPushers);
             for (FilePropertyPusher pusher : myPushers) {

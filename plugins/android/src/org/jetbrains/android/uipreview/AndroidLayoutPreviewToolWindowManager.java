@@ -21,6 +21,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.roots.ModuleRootAdapter;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -551,17 +552,13 @@ public class AndroidLayoutPreviewToolWindowManager implements ProjectComponent {
     }
   }
 
-  private class MyAndroidPlatformListener implements ModuleRootListener {
+  private class MyAndroidPlatformListener extends ModuleRootAdapter {
     private final Map<Module, Sdk> myModule2Sdk = new HashMap<Module, Sdk>();
     private final Project myProject;
 
     private MyAndroidPlatformListener(@NotNull Project project) {
       myProject = project;
       updateMap();
-    }
-
-    @Override
-    public void beforeRootsChange(ModuleRootEvent event) {
     }
 
     @Override
