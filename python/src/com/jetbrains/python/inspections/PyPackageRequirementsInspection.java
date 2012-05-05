@@ -434,8 +434,9 @@ public class PyPackageRequirementsInspection extends PyInspection {
                 final PyElementGenerator generator = PyElementGenerator.getInstance(project);
                 if (mySetupPyRequires != null) {
                   if (mySetupPyRequires.getContainingFile().isWritable()) {
-                    final PyStringLiteralExpression literal = generator.createStringLiteralFromString(myPackageName);
-                    mySetupPyRequires.add(literal);
+                    final String text = String.format("'%s'", myPackageName);
+                    final PyExpression generated = generator.createExpressionFromText(myLanguageLevel, text);
+                    mySetupPyRequires.add(generated);
                   }
                 }
                 else if (mySetupArgumentList != null) {
