@@ -20,9 +20,13 @@ import com.jetbrains.python.console.PyConsoleUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyCallExpressionHelper;
-import com.jetbrains.python.psi.resolve.*;
+import com.jetbrains.python.psi.resolve.PyResolveContext;
+import com.jetbrains.python.psi.resolve.QualifiedResolveResult;
+import com.jetbrains.python.psi.resolve.RootVisitor;
+import com.jetbrains.python.psi.resolve.RootVisitorHost;
 import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.psi.types.PyTypeParser;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.toolbox.ChainIterable;
 import com.jetbrains.python.toolbox.Maybe;
@@ -356,7 +360,14 @@ class DocumentationBuilder {
         final String name = followed.getName();
         final String type = structuredDocString.getParamType(name);
         if (type != null) {
-          myBody.addItem(": ").addItem(type);
+          final PyType pyType = PyTypeParser.getTypeByName(followed, type);
+          if (pyType instanceof PyClassType && ((PyClassType)pyType).getPyClass() != null) {
+            myBody.addItem(": ").
+                addWith(new DocumentationBuilderKit.LinkWrapper(PythonDocumentationProvider.LINK_TYPE_PARAM),
+                        $(pyType.getName()));
+          }
+          else
+            myBody.addItem(": ").addItem(type);
         }
         final String desc = structuredDocString.getParamDescription(name);
         if (desc != null) {
