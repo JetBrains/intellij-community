@@ -69,10 +69,8 @@ public class MavenBeforeRunTasksProvider extends BeforeRunTaskProvider<MavenBefo
   @Override
   public String getDescription(MavenBeforeRunTask task) {
     String desc = null;
-    if (task.isEnabled()) {
-      Pair<MavenProject, String> projectAndGoal = getProjectAndGoalChecked(task);
-      if (projectAndGoal != null) desc = projectAndGoal.first.getDisplayName() + ":" + projectAndGoal.second;
-    }
+    Pair<MavenProject, String> projectAndGoal = getProjectAndGoalChecked(task);
+    if (projectAndGoal != null) desc = projectAndGoal.first.getDisplayName() + ":" + projectAndGoal.second;
     return desc == null
            ? TasksBundle.message("maven.tasks.before.run.empty")
            : TasksBundle.message("maven.tasks.before.run", desc);

@@ -47,7 +47,6 @@ public abstract class BeforeRunTask<T extends BeforeRunTask> implements Cloneabl
   }
 
   public void writeExternal(Element element) {
-    element.setAttribute("enabled", String.valueOf(myIsEnabled));
   }
   
   public void readExternal(Element element) {
@@ -55,6 +54,8 @@ public abstract class BeforeRunTask<T extends BeforeRunTask> implements Cloneabl
     if (attribValue == null) {
       attribValue = element.getAttributeValue("value"); // maintain compatibility with old format
     }
+    if (attribValue == null)
+      attribValue = "true";
     myIsEnabled = Boolean.valueOf(attribValue).booleanValue();
   }
 
