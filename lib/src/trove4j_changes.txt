@@ -1,3 +1,6 @@
+Date: 5 May 2012
+   Changed classes:
+     gnu.trove.TPrimitiveHash - fixed manual setUp in constructor (capacity, load_fator) as proper super call will do it properly
 Date: 16 Apr 2012
    Changed classes:
      gnu.trove.THash
