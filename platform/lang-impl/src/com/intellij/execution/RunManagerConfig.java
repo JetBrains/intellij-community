@@ -26,6 +26,7 @@ public class RunManagerConfig {
   private final StoringPropertyContainer myProperties;
   private final PropertiesComponent myPropertiesComponent;
   @NonNls private static final String RECENTS_LIMIT = "recentsLimit";
+  @NonNls private static final String RESTART_REQUIRES_CONFIRMATION = "restartRequiresConfirmation";
 
   public RunManagerConfig(PropertiesComponent propertiesComponent,
                           RunManagerImpl manager) {
@@ -44,5 +45,13 @@ public class RunManagerConfig {
 
   public void setRecentsLimit(int recentsLimit) {
     myPropertiesComponent.setValue(RECENTS_LIMIT, Integer.toString(recentsLimit));
+  }
+
+  public boolean isRestartRequiresConfirmation() {
+    return myPropertiesComponent.getBoolean(RESTART_REQUIRES_CONFIRMATION, true);
+  }
+
+  public void setRestartRequiresConfirmation (boolean restartRequiresConfirmation) {
+    myPropertiesComponent.setValue(RESTART_REQUIRES_CONFIRMATION, String.valueOf(restartRequiresConfirmation));
   }
 }

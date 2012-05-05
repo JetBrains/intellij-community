@@ -15,7 +15,9 @@
  */
 package com.intellij.execution.runners;
 
+import com.intellij.CommonBundle;
 import com.intellij.execution.*;
+import com.intellij.execution.impl.RunManagerImpl;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.ide.DataManager;
@@ -23,8 +25,10 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.util.Alarm;
 
 import javax.swing.*;
 
@@ -40,6 +44,7 @@ public class RestartAction extends AnAction implements DumbAware {
   private final Executor myExecutor;
   private final Icon myIcon;
   private final ExecutionEnvironment myEnvironment;
+  private final Alarm awaitingTerminationAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
 
   public RestartAction(final Executor executor,
                        final ProgramRunner runner,
@@ -60,8 +65,60 @@ public class RestartAction extends AnAction implements DumbAware {
 
   public void actionPerformed(final AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
+    final RunManagerConfig config = RunManagerImpl.getInstanceImpl(myEnvironment.getProject()).getConfig();
+    if (myProcessHandler != null && !myProcessHandler.isProcessTerminated() && config.isRestartRequiresConfirmation()) {
+      DialogWrapper.DoNotAskOption option = new DialogWrapper.DoNotAskOption() {
+        @Override
+        public boolean isToBeShown() {
+          return config.isRestartRequiresConfirmation();
+        }
+
+        @Override
+        public void setToBeShown(boolean value, int exitCode) {
+          config.setRestartRequiresConfirmation(value);
+        }
+
+        @Override
+        public boolean canBeHidden() {
+          return true;
+        }
+
+        @Override
+        public boolean shouldSaveOptionsOnCancel() {
+          return false;
+        }
+
+        @Override
+        public String getDoNotShowMessage() {
+          return CommonBundle.message("dialog.options.do.not.show");
+        }
+      };
+      if (Messages.OK != Messages.showOkCancelDialog(ExecutionBundle.message("rerun.confirmation.message", myEnvironment.getRunProfile().getName()),
+                                  ExecutionBundle.message("rerun.confirmation.title"), CommonBundle.message("button.ok"),
+                                  CommonBundle.message("button.cancel"),
+                                  Messages.getQuestionIcon(), option)) {
+        return;
+      }
+    }
     ActionManager.getInstance().getAction(IdeActions.ACTION_STOP_PROGRAM).actionPerformed(e);
-    doRestart(dataContext);
+    update(e);
+    if (myProcessHandler != null) {
+      Runnable runnable = new Runnable() {
+        @Override
+        public void run() {
+          if (myProcessHandler == null || myProcessHandler.isProcessTerminated()) {
+            doRestart(dataContext);
+          }
+          else {
+            awaitingTerminationAlarm.addRequest(this, 100);
+          }
+        }
+      };
+      awaitingTerminationAlarm.addRequest(runnable, 100);
+    }
+    else {
+      doRestart(dataContext);
+    }
   }
 
   public void restart() {
@@ -93,8 +150,9 @@ public class RestartAction extends AnAction implements DumbAware {
       myProcessHandler = null; // already terminated
     }
     presentation.setIcon(isRunning ? STOP_AND_START_ICON : myIcon);
-
-    presentation.setEnabled(!ExecutorRegistry.getInstance().isStarting(myEnvironment.getProject(), myExecutor.getId(), myRunner.getRunnerId()));
+    boolean isTerminating = myProcessHandler != null && myProcessHandler.isProcessTerminating();
+    boolean isStarting = ExecutorRegistry.getInstance().isStarting(myEnvironment.getProject(), myExecutor.getId(), myRunner.getRunnerId());
+    presentation.setEnabled(!isStarting && !isTerminating);
   }
 
   public void registerShortcut(final JComponent component) {

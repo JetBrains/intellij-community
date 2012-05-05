@@ -46,6 +46,7 @@ import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import gnu.trove.THashSet;
+import net.miginfocom.swing.MigLayout;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -91,7 +92,8 @@ class RunConfigurable extends BaseConfigurable {
   private final StorageAccessors myProperties = StorageAccessors.createGlobal("RunConfigurable");
   private Configurable mySelectedConfigurable = null;
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.impl.RunConfigurable");
-  private final JTextField myRecentsLimit = new JTextField("5");
+  private final JTextField myRecentsLimit = new JTextField("5", 2);
+  private final JCheckBox myConfirmation = new JCheckBox(ExecutionBundle.message("rerun.confirmation.checkbox"), true);
   private Map<ConfigurationFactory, Configurable> myStoredComponents = new HashMap<ConfigurationFactory, Configurable>();
 
   public RunConfigurable(final Project project) {
@@ -449,18 +451,20 @@ class RunConfigurable extends BaseConfigurable {
   }
 
   private JPanel createRecentLimitPanel() {
-    final JPanel bottomPanel = new JPanel(new FlowLayout(FlowLayout.LEADING));
+    final JPanel bottomPanel = new JPanel(new MigLayout("ins 5, gap 5"));
 
-//    box.setBorder(BorderFactory.createEmptyBorder(10, 0, 0, 0));
     bottomPanel.add(new JLabel("<html>Temporary configurations limit:</html>"));
-    Dimension size = new Dimension(25, myRecentsLimit.getPreferredSize().height);
-    myRecentsLimit.setPreferredSize(size);
-    myRecentsLimit.setMaximumSize(size);
-    myRecentsLimit.setMinimumSize(size);
-    bottomPanel.add(myRecentsLimit);
+    bottomPanel.add(myRecentsLimit, "wrap, h pref!, w pref!");
+    bottomPanel.add(myConfirmation, "spanx 2");
     myRecentsLimit.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
       protected void textChanged(DocumentEvent e) {
+        setModified(true);
+      }
+    });
+    myConfirmation.addChangeListener(new ChangeListener() {
+      @Override
+      public void stateChanged(ChangeEvent e) {
         setModified(true);
       }
     });
@@ -534,6 +538,7 @@ class RunConfigurable extends BaseConfigurable {
     final RunManagerEx manager = getRunManager();
     final RunManagerConfig config = manager.getConfig();
     myRecentsLimit.setText(Integer.toString(config.getRecentsLimit()));
+    myConfirmation.setSelected(config.isRestartRequiresConfirmation());
     setModified(false);
   }
 
@@ -562,6 +567,7 @@ class RunConfigurable extends BaseConfigurable {
     catch (NumberFormatException e) {
       // ignore
     }
+    manager.getConfig().setRestartRequiresConfirmation(myConfirmation.isSelected());
 
     for (Configurable configurable : myStoredComponents.values()) {
       if (configurable.isModified()){
