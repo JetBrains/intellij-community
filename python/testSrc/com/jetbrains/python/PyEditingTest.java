@@ -243,6 +243,12 @@ public class PyEditingTest extends PyTestCase {
                 "    \"bar\")");
   }
 
+  public void testSlashAfterSlash() {
+    doTestEnter("a = a+\\<caret>b",
+                "a = a+\\\n" +
+                "    b");
+  }
+
   public void testComprehensionInReturn() {
     doTestEnter("def dbl():\n" +
                 "    return (<caret>(a, a) for a in [])",
