@@ -25,6 +25,7 @@ import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.CharTable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class Factory  {
   private Factory() {}
@@ -55,7 +56,7 @@ public class Factory  {
     return createSingleLeafElement(type, buffer, 0, buffer.length(), table, manager);
   }
 
-  public static LeafElement createSingleLeafElement(IElementType type, CharSequence buffer, int startOffset, int endOffset, CharTable table, PsiManager manager) {
+  public static LeafElement createSingleLeafElement(IElementType type, CharSequence buffer, int startOffset, int endOffset, @Nullable CharTable table, PsiManager manager) {
     return createSingleLeafElement(type, buffer, startOffset, endOffset, table, manager, true);
   }
 

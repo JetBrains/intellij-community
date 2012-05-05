@@ -27,6 +27,7 @@ import com.intellij.codeInsight.template.macro.CompleteSmartMacro;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -67,6 +68,7 @@ import java.util.List;
 public class GenerateXmlTagAction extends SimpleCodeInsightAction {
 
   public static final ThreadLocal<String> TEST_THREAD_LOCAL = new ThreadLocal<String>();
+  private final static Logger LOG = Logger.getInstance(GenerateXmlTagAction.class);
 
   @Override
   public void invoke(@NotNull final Project project, @NotNull final Editor editor, @NotNull final PsiFile file) {
@@ -166,22 +168,25 @@ public class GenerateXmlTagAction extends SimpleCodeInsightAction {
   }
 
   public static void generateTag(XmlTag newTag) {
-    newTag = generateRaw(newTag);
-    newTag = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(newTag);
-    TemplateBuilder builder = TemplateBuilderFactory.getInstance().createTemplateBuilder(newTag);
-    replaceElements(newTag, builder);
+    generateRaw(newTag);
+    final XmlTag restored = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(newTag);
+    if (restored == null) {
+      LOG.error("Could not restore tag: " + newTag.getText());
+    }
+    TemplateBuilder builder = TemplateBuilderFactory.getInstance().createTemplateBuilder(restored);
+    replaceElements(restored, builder);
     builder.run();
   }
 
-  private static XmlTag generateRaw(XmlTag newTag) {
+  private static void generateRaw(final XmlTag newTag) {
     XmlElementDescriptor selected = newTag.getDescriptor();
-    if (selected == null) return newTag;
+    if (selected == null) return;
     switch (selected.getContentType()) {
       case XmlElementDescriptor.CONTENT_TYPE_EMPTY:
         newTag.collapseIfEmpty();
         ASTNode node = newTag.getNode();
         assert node != null;
-        ASTNode elementEnd = node.findChildByType(XmlElementType.XML_EMPTY_ELEMENT_END);
+        ASTNode elementEnd = node.findChildByType(XmlTokenType.XML_EMPTY_ELEMENT_END);
         if (elementEnd == null) {
           LeafElement emptyTagEnd = Factory.createSingleLeafElement(XmlTokenType.XML_EMPTY_ELEMENT_END, "/>", 0, 2, null, newTag.getManager());
           node.addChild(emptyTagEnd);
@@ -206,7 +211,6 @@ public class GenerateXmlTagAction extends SimpleCodeInsightAction {
         generateRaw(subTag);
       }
     }
-    return newTag;
   }
 
   public static List<XmlElementDescriptor> getRequiredSubTags(XmlElementDescriptor selected) {
