@@ -17,6 +17,7 @@ package org.jetbrains.plugins.groovy.lang;
 
 
 import com.intellij.codeInspection.InspectionProfileEntry
+import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ContentEntry
@@ -865,4 +866,26 @@ C<error descr="Wrong number of type arguments: 2; required: 1"><String, Double><
     myFixture.testHighlighting(true, false, true)
   }
 
+  public void testRawClosureReturnType() {
+    myFixture.configureByText('_.groovy', '''\
+class A<T> {
+  A(T t) {this.t = t}
+
+  T t
+  def cl = {
+    return t
+  }
+}
+
+
+def a = new A(new Date())
+Date d = <warning descr="Cannot assign 'Object' to 'Date'">a.cl()</warning>
+''')
+    testHighlighting(GroovyUncheckedAssignmentOfMemberOfRawTypeInspection)
+  }
+
+  private void testHighlighting(Class<? extends LocalInspectionTool>... inspections) {
+    myFixture.enableInspections(inspections)
+    myFixture.testHighlighting(true, false, true)
+  }
 }

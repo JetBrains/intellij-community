@@ -604,7 +604,7 @@ public class PsiUtil {
       if (expression instanceof GrReferenceExpression && result.isInvokedOnProperty()) {
         if (returnType instanceof GrClosureType) {
           final GrClosureSignature signature = ((GrClosureType)returnType).getSignature();
-          return isRawType(signature.getReturnType(), signature.getSubstitutor());
+          return isRawType(signature.getReturnType(), TypesUtil.composeSubstitutors(signature.getSubstitutor(), result.getSubstitutor()));
         }
       }
       else {
@@ -615,7 +615,7 @@ public class PsiUtil {
       final PsiType type = call.getInvokedExpression().getType();
       if (type instanceof GrClosureType) {
         final GrClosureSignature signature = ((GrClosureType)type).getSignature();
-        return isRawType(signature.getReturnType(), signature.getSubstitutor());
+        return isRawType(signature.getReturnType(), TypesUtil.composeSubstitutors(signature.getSubstitutor(), result.getSubstitutor()));
       }
     }
 

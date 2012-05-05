@@ -591,6 +591,12 @@ public class TypesUtil {
     for (PsiTypeParameter parameter : map.keySet()) {
       result.put(parameter, s2.substitute(map.get(parameter)));
     }
+    final Map<PsiTypeParameter, PsiType> map2 = s2.getSubstitutionMap();
+    for (PsiTypeParameter parameter : map2.keySet()) {
+      if (!result.containsKey(parameter)) {
+        result.put(parameter, map2.get(parameter));
+      }
+    }
     return PsiSubstitutorImpl.createSubstitutor(result);
   }
 
