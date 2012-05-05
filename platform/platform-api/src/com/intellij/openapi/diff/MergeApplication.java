@@ -30,8 +30,8 @@ public class MergeApplication extends ApplicationStarterBase {
 
   @Override
   public String getUsageMessage() {
-    final String scriptName = ApplicationNamesInfo.getInstance().getScriptName();
-    return DiffBundle.message("merge.application.usage.parameters.and.description", scriptName);
+    final String script = ApplicationNamesInfo.getInstance().getScriptName();
+    return String.format("Usage:\n\t%s merge <file1> <file2> <original>\n\t%s merge <file1> <file2> <original> <output>", script, script);
   }
 
   @Override
