@@ -159,7 +159,9 @@ public abstract class LanguagePerFileMappings<T> implements PersistentStateCompo
       }
       PushedFilePropertiesUpdater updater = PushedFilePropertiesUpdater.getInstance(myProject);
       if (updater == null) {
-        LOG.error("updater = null. project=" + myProject.getName()+", this="+getClass().getSimpleName());
+        if (!myProject.isDefault()) {
+          LOG.error("updater = null. project=" + myProject.getName()+", this="+getClass().getSimpleName());
+        }
       }
       else {
         updater.pushAll(pusher);
