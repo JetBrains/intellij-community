@@ -54,6 +54,7 @@ public class PyPackagesPanel extends JPanel {
   private boolean myHasDistribute;
   private boolean myHasPip = true;
   private final List<Consumer<Sdk>> myPathChangedListeners = new ArrayList<Consumer<Sdk>>();
+  private Set<String> currentlyInstalling = new HashSet<String>();
 
   public PyPackagesPanel(Project project, PyPackagesNotificationPanel area) {
     super(new GridBagLayout());
@@ -204,6 +205,7 @@ public class PyPackagesPanel extends JPanel {
                           @Override
                           public void started() {
                             myPackagesTable.setPaintBusy(true);
+                            currentlyInstalling.add(packageName);
                           }
 
                           @Override
@@ -211,7 +213,7 @@ public class PyPackagesPanel extends JPanel {
                             myPackagesTable.clearSelection();
                             updatePackages(selectedSdk);
                             myPackagesTable.setPaintBusy(false);
-
+                            currentlyInstalling.remove(packageName);
                             if (exceptions.isEmpty()) {
                               myNotificationArea.showSuccess("Package successfully upgraded");
                             }
@@ -223,6 +225,7 @@ public class PyPackagesPanel extends JPanel {
                           }
                         });
                       ui.install(requirements, Collections.singletonList("-U"));
+                      myUpgradeButton.setEnabled(false);
                     }
                   }, ModalityState.any());
                 }
@@ -264,7 +267,8 @@ public class PyPackagesPanel extends JPanel {
               final PyPackage pyPackage = (PyPackage)value;
               final String pyPackageName = pyPackage.getName();
               final String availableVersion = (String)myPackagesTable.getValueAt(index, 2);
-              upgradeAvailable = PyRequirement.VERSION_COMPARATOR.compare(pyPackage.getVersion(), availableVersion) < 0;
+              upgradeAvailable = PyRequirement.VERSION_COMPARATOR.compare(pyPackage.getVersion(), availableVersion) < 0 &&
+                                  !currentlyInstalling.contains(pyPackageName);
               isPipOrDistribute = "pip".equals(pyPackageName) || "distribute".equals(pyPackageName);
               isAvailabe = !isPipOrDistribute;
 

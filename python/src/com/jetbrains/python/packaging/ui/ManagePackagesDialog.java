@@ -81,6 +81,8 @@ public class ManagePackagesDialog extends DialogWrapper {
   private final Set<String> myInstalledPackages;
   private final PyPackagesPanel myPackageListPanel;
 
+  private Set<String> currentlyInstalling = new HashSet<String>();
+
   public ManagePackagesDialog(@NotNull Project project, @NotNull final Sdk sdk, @NotNull final PyPackagesPanel packageListPanel) {
     super(false);
 
@@ -227,6 +229,7 @@ public class ManagePackagesDialog extends DialogWrapper {
             public void started() {
               setDownloadStatus(true);
               table.setPaintBusy(true);
+              currentlyInstalling.add(packageName);
             }
 
             @Override
@@ -235,9 +238,11 @@ public class ManagePackagesDialog extends DialogWrapper {
               setDownloadStatus(false);
               addNotifications(exceptions, packageName, myNotificationArea, myPackageListPanel.getNotificationsArea());
               myPackageListPanel.updatePackages(sdk, myInstalledPackages);
+              currentlyInstalling.remove(packageName);
             }
           });
           ui.install(Collections.singletonList(req), extraArgs);
+          myInstallButton.setEnabled(false);
         }
       }
     });
@@ -445,7 +450,7 @@ public class ManagePackagesDialog extends DialogWrapper {
             }
           });
         }
-        myInstallButton.setEnabled(true);
+        myInstallButton.setEnabled(!currentlyInstalling.contains(packageName));
 
         PyPIPackageUtil.INSTANCE.fillPackageDetails(packageName, new AsyncCallback() {
           @Override
