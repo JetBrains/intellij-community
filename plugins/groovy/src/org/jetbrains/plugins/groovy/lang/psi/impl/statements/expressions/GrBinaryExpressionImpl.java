@@ -51,11 +51,16 @@ public abstract class GrBinaryExpressionImpl extends GrExpressionImpl implements
         final PsiType lType = binary.getLeftOperand().getType();
         if (lType == null) return GroovyResolveResult.EMPTY_ARRAY;
 
-        final GrExpression rightOperand = binary.getRightOperand();
-        PsiType rType = rightOperand == null ? null : rightOperand.getType();
+        PsiType rType = getRightType(binary);
         return TypesUtil.getOverloadedOperatorCandidates(lType, opType, binary, new PsiType[]{rType});
       }
     };
+
+  @Nullable
+  private static PsiType getRightType(GrBinaryExpressionImpl binary) {
+    final GrExpression rightOperand = binary.getRightOperand();
+    return rightOperand == null ? null : rightOperand.getType();
+  }
 
   private static final Function<GrBinaryExpressionImpl,PsiType> TYPE_CALCULATOR = new Function<GrBinaryExpressionImpl, PsiType>() {
     @Nullable
@@ -68,7 +73,7 @@ public abstract class GrBinaryExpressionImpl extends GrExpressionImpl implements
       }
 
       final GroovyResolveResult resolveResult = PsiImplUtil.extractUniqueResult(binary.multiResolve(false));
-      final PsiType substituted = ResolveUtil.extractReturnTypeFromCandidate(resolveResult, binary);
+      final PsiType substituted = ResolveUtil.extractReturnTypeFromCandidate(resolveResult, binary, new PsiType[]{getRightType(binary)});
       return TypesUtil.boxPrimitiveType(substituted, binary.getManager(), binary.getResolveScope());
     }
   };

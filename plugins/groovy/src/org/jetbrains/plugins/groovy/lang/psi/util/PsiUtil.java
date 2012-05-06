@@ -21,6 +21,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -51,6 +52,8 @@ import org.jetbrains.plugins.groovy.lang.psi.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
+import org.jetbrains.plugins.groovy.lang.psi.api.signatures.GrClosureSignature;
+import org.jetbrains.plugins.groovy.lang.psi.api.signatures.GrSignature;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
@@ -70,14 +73,13 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrMemberOwne
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClosureSignature;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrNamedArgumentsOwner;
 import org.jetbrains.plugins.groovy.lang.psi.impl.*;
+import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.JavaIdentifier;
-import org.jetbrains.plugins.groovy.lang.psi.impl.types.GrClosureSignatureUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.MethodResolverProcessor;
 
@@ -194,7 +196,7 @@ public class PsiUtil {
                                                                                 GroovyPsiElement context) {
     if (argumentTypes == null) return GrClosureSignatureUtil.ApplicabilityResult.canBeApplicable;
 
-    GrClosureSignature signature = type.getSignature();
+    GrSignature signature = type.getSignature();
     return GrClosureSignatureUtil.isSignatureApplicableConcrete(signature, argumentTypes, context);
   }
 
@@ -603,8 +605,7 @@ public class PsiUtil {
       final GrExpression expression = call.getInvokedExpression();
       if (expression instanceof GrReferenceExpression && result.isInvokedOnProperty()) {
         if (returnType instanceof GrClosureType) {
-          final GrClosureSignature signature = ((GrClosureType)returnType).getSignature();
-          return isRawType(signature.getReturnType(), TypesUtil.composeSubstitutors(signature.getSubstitutor(), result.getSubstitutor()));
+          return isRawClosureCall(call, result, (GrClosureType)returnType);
         }
       }
       else {
@@ -614,11 +615,28 @@ public class PsiUtil {
     if (element instanceof PsiVariable) {
       final PsiType type = call.getInvokedExpression().getType();
       if (type instanceof GrClosureType) {
-        final GrClosureSignature signature = ((GrClosureType)type).getSignature();
-        return isRawType(signature.getReturnType(), TypesUtil.composeSubstitutors(signature.getSubstitutor(), result.getSubstitutor()));
+        return isRawClosureCall(call, result, (GrClosureType)type);
       }
     }
 
+    return false;
+  }
+
+  private static boolean isRawClosureCall(GrMethodCallExpression call, GroovyResolveResult result, GrClosureType returnType) {
+    final GrSignature signature = returnType.getSignature();
+    GrClosureSignature _signature;
+    if (signature instanceof GrClosureSignature) {
+      _signature = (GrClosureSignature)signature;
+    }
+    else {
+      final PsiType[] types = getArgumentTypes(call.getInvokedExpression(), true);
+      final Trinity<GrClosureSignature, GrClosureSignatureUtil.ArgInfo<PsiType>[], GrClosureSignatureUtil.ApplicabilityResult>
+        resultTrinity = types != null ? GrClosureSignatureUtil.getApplicableSignature(signature, types, call) : null;
+      _signature = resultTrinity != null ? resultTrinity.first : null;
+    }
+    if (_signature != null) {
+      return isRawType(_signature.getReturnType(), TypesUtil.composeSubstitutors(_signature.getSubstitutor(), result.getSubstitutor()));
+    }
     return false;
   }
 

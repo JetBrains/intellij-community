@@ -23,24 +23,29 @@ import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
+import org.jetbrains.plugins.groovy.lang.psi.api.signatures.GrClosureSignature;
+import org.jetbrains.plugins.groovy.lang.psi.api.signatures.GrSignature;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
-import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClosureParameter;
-import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClosureSignature;
+import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
-import org.jetbrains.plugins.groovy.lang.psi.impl.types.GrClosureSignatureUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author ven
  */
 public class GrClosureType extends GrLiteralClassType {
-  private final @NotNull GrClosureSignature mySignature;
+  private final @NotNull GrSignature mySignature;
   private PsiType[] myTypeArgs = null;
 
   private GrClosureType(LanguageLevel languageLevel,
                         GlobalSearchScope scope,
                         JavaPsiFacade facade,
-                        @NotNull GrClosureSignature closureSignature,
+                        @NotNull GrSignature closureSignature,
                         boolean shouldInferTypeParameters) {
     super(languageLevel, scope, facade);
     mySignature = closureSignature;
@@ -67,7 +72,8 @@ public class GrClosureType extends GrLiteralClassType {
     if (myTypeArgs == null) {
       final PsiClass psiClass = resolve();
       if (psiClass != null && psiClass.getTypeParameters().length == 1) {
-        myTypeArgs = new PsiType[]{TypesUtil.boxPrimitiveType(mySignature.getReturnType(), getPsiManager(), getResolveScope(), true)};
+        final PsiType type = GrClosureSignatureUtil.getReturnType(mySignature);
+        myTypeArgs = new PsiType[]{TypesUtil.boxPrimitiveType(type, getPsiManager(), getResolveScope(), true)};
       }
       else {
         myTypeArgs = PsiType.EMPTY_ARRAY;
@@ -75,6 +81,8 @@ public class GrClosureType extends GrLiteralClassType {
     }
     return myTypeArgs;
   }
+
+
 
   @NotNull
   @Override
@@ -108,7 +116,7 @@ public class GrClosureType extends GrLiteralClassType {
     return super.equals(obj);
   }
 
-  public boolean isAssignableFrom(@NotNull PsiType type) {
+  /*public boolean isAssignableFrom(@NotNull PsiType type) {
     if (type instanceof GrClosureType) {
       GrClosureType other = (GrClosureType)type;
       GrClosureSignature otherSignature = other.mySignature;
@@ -137,7 +145,7 @@ public class GrClosureType extends GrLiteralClassType {
       return true;
     }
     return super.isAssignableFrom(type);
-  }
+  }*/
 
   public boolean equalsToText(@NonNls String text) {
     return text.equals(GroovyCommonClassNames.GROOVY_LANG_CLOSURE);
@@ -148,6 +156,25 @@ public class GrClosureType extends GrLiteralClassType {
     final GrClosureType result = create(mySignature, myScope, myFacade, languageLevel, true);
     result.myTypeArgs = this.myTypeArgs;
     return result;
+  }
+
+  public static GrClosureType create(GroovyResolveResult[] results, GroovyPsiElement context) {
+    List<GrClosureSignature> signatures = new ArrayList<GrClosureSignature>();
+    for (GroovyResolveResult result : results) {
+      if (result.getElement() instanceof PsiMethod) {
+        signatures.add(GrClosureSignatureUtil.createSignature((PsiMethod)result.getElement(), result.getSubstitutor()));
+      }
+    }
+
+    final GlobalSearchScope resolveScope = context.getResolveScope();
+    final JavaPsiFacade facade = JavaPsiFacade.getInstance(context.getProject());
+    if (signatures.size() == 1) {
+      return create(signatures.get(0), resolveScope, facade, LanguageLevel.JDK_1_5, true);
+    }
+    else {
+      return create(GrClosureSignatureUtil.createMultiSignature(signatures.toArray(new GrClosureSignature[signatures.size()])),
+                    resolveScope, facade, LanguageLevel.JDK_1_5, true);
+    }
   }
 
   public static GrClosureType create(@NotNull GrClosableBlock closure, boolean shouldInferTypeParameters) {
@@ -172,7 +199,7 @@ public class GrClosureType extends GrLiteralClassType {
     return create(GrClosureSignatureUtil.createSignature(parameters, returnType), scope, facade, languageLevel, true);
   }
 
-  public static GrClosureType create(@NotNull GrClosureSignature signature,
+  public static GrClosureType create(@NotNull GrSignature signature,
                                      GlobalSearchScope scope,
                                      JavaPsiFacade facade,
                                      LanguageLevel languageLevel,
@@ -181,8 +208,8 @@ public class GrClosureType extends GrLiteralClassType {
   }
 
   @Nullable
-  public PsiType curry(PsiType[] args, int position) {
-    final GrClosureSignature newSignature = mySignature.curry(args, position);
+  public PsiType curry(PsiType[] args, int position, GroovyPsiElement context) {
+    final GrSignature newSignature = mySignature.curry(args, position, context);
     if (newSignature == null) return null;
     final GrClosureType result = create(newSignature, myScope, myFacade, myLanguageLevel, true);
     result.myTypeArgs = this.myTypeArgs;
@@ -190,16 +217,16 @@ public class GrClosureType extends GrLiteralClassType {
   }
 
   @NotNull
-  public GrClosureSignature getSignature() {
+  public GrSignature getSignature() {
     return mySignature;
   }
 
-  public PsiType[] getClosureParameterTypes() {
+  /*public PsiType[] getClosureParameterTypes() {
     final GrClosureParameter[] parameters = mySignature.getParameters();
     final PsiType[] types = new PsiType[parameters.length];
     for (int i = 0; i < types.length; i++) {
       types[i] = parameters[i].getType();
     }
     return types;
-  }
+  }*/
 }

@@ -20,14 +20,15 @@ import com.intellij.psi.util.MethodSignature;
 import com.intellij.refactoring.util.RefactoringUIUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.plugins.groovy.lang.documentation.GroovyPresentationUtil;
-import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
+import org.jetbrains.plugins.groovy.lang.psi.api.signatures.GrClosureSignature;
+import org.jetbrains.plugins.groovy.lang.psi.api.signatures.GrRecursiveSignatureVisitor;
+import org.jetbrains.plugins.groovy.lang.psi.api.signatures.GrSignature;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClosureParameter;
-import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClosureSignature;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType;
+import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
-import org.jetbrains.plugins.groovy.lang.psi.impl.types.GrClosureSignatureUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
 
@@ -45,18 +46,18 @@ public class GrMethodConflictUtil {
                                           GrMethod refactoredMethod,
                                           final MultiMap<PsiElement, String> conflicts, boolean excludeJavaConflicts) {
     List<MethodSignature> prototypeSignatures = GrClosureSignatureUtil.generateAllSignaturesForMethod(prototype, PsiSubstitutor.EMPTY);
-    checkForClosurePropertySignatrureOverload(clazz, prototype, refactoredMethod, conflicts, prototypeSignatures);
+    checkForClosurePropertySignatureOverload(clazz, prototype, refactoredMethod, conflicts, prototypeSignatures);
     checkForMethodSignatureOverload(clazz, prototype, refactoredMethod, conflicts, excludeJavaConflicts, prototypeSignatures);
 
     checkForAccessorOverloading(clazz, prototype, conflicts);
   }
 
-  private static void checkForClosurePropertySignatrureOverload(PsiClass clazz,
-                                                                GrMethod prototype,
-                                                                GrMethod refactoredMethod,
-                                                                MultiMap<PsiElement, String> conflicts,
-                                                                List<MethodSignature> prototypeSignatures) {
-    final boolean isStatic = prototype.hasModifierProperty(GrModifier.STATIC);
+  private static void checkForClosurePropertySignatureOverload(PsiClass clazz,
+                                                               GrMethod prototype,
+                                                               final GrMethod refactoredMethod,
+                                                               final MultiMap<PsiElement, String> conflicts,
+                                                               final List<MethodSignature> prototypeSignatures) {
+    final boolean isStatic = prototype.hasModifierProperty(PsiModifier.STATIC);
     final String name = prototype.getName();
     if (!GroovyPropertyUtils.isProperty(clazz, name, isStatic)) return;
 
@@ -74,20 +75,26 @@ public class GrMethodConflictUtil {
     }
     if (!(returnType instanceof GrClosureType)) return;
 
-    final GrClosureSignature signature = ((GrClosureType)returnType).getSignature();
-
-    NextSignature:
-    for (MethodSignature prototypeSignature : prototypeSignatures) {
-      final GrClosureParameter[] params = signature.getParameters();
-      final PsiType[] types = prototypeSignature.getParameterTypes();
-      if (types.length != params.length) continue;
-      for (int i = 0; i < types.length; i++) {
-        if (!TypesUtil.isAssignableByMethodCallConversion(types[i], params[i].getType(), refactoredMethod.getParameterList())) {
-          continue NextSignature;
+    final GrSignature signature = ((GrClosureType)returnType).getSignature();
+    signature.accept(new GrRecursiveSignatureVisitor() {
+      @Override
+      public void visitClosureSignature(GrClosureSignature signature) {
+        NextSignature:
+        for (MethodSignature prototypeSignature : prototypeSignatures) {
+          final GrClosureParameter[] params = signature.getParameters();
+          final PsiType[] types = prototypeSignature.getParameterTypes();
+          if (types.length != params.length) continue;
+          for (int i = 0; i < types.length; i++) {
+            if (!TypesUtil.isAssignableByMethodCallConversion(types[i], params[i].getType(), refactoredMethod.getParameterList())) {
+              continue NextSignature;
+            }
+          }
+          conflicts.putValue(getter, GroovyRefactoringBundle.message("refactored.method.will.cover.closure.property", name, RefactoringUIUtil.getDescription(getter.getContainingClass(), false)));
         }
       }
-      conflicts.putValue(getter, GroovyRefactoringBundle.message("refactored.method.will.cover.closure.property", name, RefactoringUIUtil.getDescription(getter.getContainingClass(), false)));
-    }
+    });
+
+
   }
 
   private static void checkForMethodSignatureOverload(PsiClass clazz,
@@ -121,13 +128,13 @@ public class GrMethodConflictUtil {
     if (GroovyPropertyUtils.isSimplePropertySetter(prototype)) {
       String propertyName = GroovyPropertyUtils.getPropertyNameBySetter(prototype);
       PsiMethod setter =
-        GroovyPropertyUtils.findPropertySetter(clazz, propertyName, prototype.hasModifierProperty(GrModifier.STATIC), false);
+        GroovyPropertyUtils.findPropertySetter(clazz, propertyName, prototype.hasModifierProperty(PsiModifier.STATIC), false);
       if (setter instanceof GrAccessorMethod) {
         conflicts.putValue(setter, GroovyRefactoringBundle.message("replace.setter.for.property", propertyName));
       }
     }
     else if (GroovyPropertyUtils.isSimplePropertyGetter(prototype)) {
-      boolean isStatic = prototype.hasModifierProperty(GrModifier.STATIC);
+      boolean isStatic = prototype.hasModifierProperty(PsiModifier.STATIC);
       String propertyName = GroovyPropertyUtils.getPropertyNameByGetter(prototype);
       PsiMethod getter = GroovyPropertyUtils.findPropertyGetter(clazz, propertyName, isStatic, false);
       if (getter instanceof GrAccessorMethod) {

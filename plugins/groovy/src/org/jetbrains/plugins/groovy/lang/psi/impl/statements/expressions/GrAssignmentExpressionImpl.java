@@ -62,7 +62,7 @@ public class GrAssignmentExpressionImpl extends GrExpressionImpl implements GrAs
         PsiType returnType = null;
         final PsiManager manager = assignment.getManager();
         for (GroovyResolveResult result : results) {
-          final PsiType substituted = ResolveUtil.extractReturnTypeFromCandidate(result, assignment);
+          final PsiType substituted = ResolveUtil.extractReturnTypeFromCandidate(result, assignment, new PsiType[]{getRValueType(assignment)});
           returnType = TypesUtil.getLeastUpperBoundNullable(returnType, substituted, manager);
         }
         return returnType;
@@ -218,12 +218,16 @@ public class GrAssignmentExpressionImpl extends GrExpressionImpl implements GrAs
         }
         if (lType == null) return GroovyResolveResult.EMPTY_ARRAY;
 
-        final GrExpression rightOperand = assignmentExpression.getRValue();
-        PsiType rType = rightOperand == null ? null : rightOperand.getType();
+        PsiType rType = getRValueType(assignmentExpression);
 
         final IElementType operatorToken = TokenSets.ASSIGNMENTS_TO_OPERATORS.get(opType);
         return TypesUtil.getOverloadedOperatorCandidates(lType, operatorToken, assignmentExpression, new PsiType[]{rType});
       }
     };
 
+  @Nullable
+  private static PsiType getRValueType(GrAssignmentExpressionImpl assignmentExpression) {
+    final GrExpression rightOperand = assignmentExpression.getRValue();
+    return rightOperand == null ? null : rightOperand.getType();
+  }
 }

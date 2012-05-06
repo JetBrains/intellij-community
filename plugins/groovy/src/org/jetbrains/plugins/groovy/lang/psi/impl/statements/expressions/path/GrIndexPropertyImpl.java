@@ -101,9 +101,21 @@ public class GrIndexPropertyImpl extends GrExpressionImpl implements GrIndexProp
       }
 
       final GroovyResolveResult[] candidates = index.multiResolve(false);
-      PsiType overloadedOperatorType = ResolveUtil.extractReturnTypeFromCandidate(PsiImplUtil.extractUniqueResult(candidates), index);
 
-      PsiType componentType = extractMapValueType(thisType, argTypes, manager, resolveScope);
+
+      PsiType[] args = PsiUtil
+        .getArgumentTypes(argList.getNamedArguments(), argList.getExpressionArguments(), GrClosableBlock.EMPTY_ARRAY, true, null);
+      final GroovyResolveResult candidate = PsiImplUtil.extractUniqueResult(candidates);
+      final PsiElement element = candidate.getElement();
+      if (element instanceof PsiNamedElement) {
+        final String name = ((PsiNamedElement)element).getName();
+        if ("putAt".equals(name) && args != null) {
+          args = ArrayUtil.append(args, TypeInferenceHelper.getInitializerFor(index), PsiType.class);
+        }
+      }
+      PsiType overloadedOperatorType = ResolveUtil.extractReturnTypeFromCandidate(candidate, index, args);
+
+      PsiType componentType = extractMapValueType(thisType, args, manager, resolveScope);
 
       if (overloadedOperatorType != null &&
           (componentType == null || !TypesUtil.isAssignable(overloadedOperatorType, componentType, manager, resolveScope))) {

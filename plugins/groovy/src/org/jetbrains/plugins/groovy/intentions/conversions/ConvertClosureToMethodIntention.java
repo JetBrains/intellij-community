@@ -39,6 +39,7 @@ import org.jetbrains.plugins.groovy.lang.documentation.GroovyPresentationUtil;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
+import org.jetbrains.plugins.groovy.lang.psi.api.signatures.GrSignature;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentLabel;
@@ -47,9 +48,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
-import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClosureSignature;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType;
-import org.jetbrains.plugins.groovy.lang.psi.impl.types.GrClosureSignatureUtil;
+import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import java.util.Collection;
@@ -123,8 +123,8 @@ public class ConvertClosureToMethodIntention extends Intention {
     LOG.assertTrue(initializer != null);
     final PsiType type = initializer.getType();
     LOG.assertTrue(type instanceof GrClosureType);
-    final GrClosureSignature signature = ((GrClosureType)type).getSignature();
-    final List<MethodSignature> signatures = GrClosureSignatureUtil.generateAllMethodSignaturesByClosureSignature(fieldName, signature);
+    final GrSignature signature = ((GrClosureType)type).getSignature();
+    final List<MethodSignature> signatures = GrClosureSignatureUtil.generateAllMethodSignaturesBySignature(fieldName, signature);
     for (MethodSignature s : signatures) {
       final PsiMethod method = MethodSignatureUtil.findMethodBySignature(containingClass, s, true);
       if (method != null) {

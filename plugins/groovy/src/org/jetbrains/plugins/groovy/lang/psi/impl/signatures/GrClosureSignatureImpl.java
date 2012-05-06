@@ -13,22 +13,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.groovy.lang.psi.impl.types;
+package org.jetbrains.plugins.groovy.lang.psi.impl.signatures;
 
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.signatures.GrClosureSignature;
+import org.jetbrains.plugins.groovy.lang.psi.api.signatures.GrMultiSignature;
+import org.jetbrains.plugins.groovy.lang.psi.api.signatures.GrSignature;
+import org.jetbrains.plugins.groovy.lang.psi.api.signatures.GrSignatureVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClosureParameter;
-import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClosureSignature;
-import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCurriedClosureSignature;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
+import org.jetbrains.plugins.groovy.lang.psi.impl.types.GrClosureParameterImpl;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Maxim.Medvedev
  */
 public class GrClosureSignatureImpl implements GrClosureSignature {
   private final boolean myIsVarargs;
+  private final boolean myCurried;
   @Nullable private final PsiType myReturnType;
   @NotNull private final GrClosureParameter[] myParameters;
   @NotNull private final PsiSubstitutor mySubstitutor;
@@ -47,19 +55,20 @@ public class GrClosureSignatureImpl implements GrClosureSignature {
       myIsVarargs = false;
     }
     mySubstitutor = substitutor;
+    myCurried = false;
   }
 
   public GrClosureSignatureImpl(PsiParameter[] parameters, @Nullable PsiType returnType) {
     this(parameters, returnType, PsiSubstitutor.EMPTY);
   }
 
-  GrClosureSignatureImpl(@NotNull GrClosureParameter[] params, @Nullable PsiType returnType, boolean isVarArgs) {
+  GrClosureSignatureImpl(@NotNull GrClosureParameter[] params, @Nullable PsiType returnType, boolean isVarArgs, boolean isCurried) {
     myParameters = params;
     myReturnType = returnType;
     myIsVarargs = isVarArgs;
+    myCurried = isCurried;
     mySubstitutor = PsiSubstitutor.EMPTY;
   }
-
 
   public boolean isVarargs() {
     return myIsVarargs;
@@ -89,8 +98,44 @@ public class GrClosureSignatureImpl implements GrClosureSignature {
   }
 
   @Nullable
-  public GrCurriedClosureSignature curry(PsiType[] args, int position) {
-    return new GrCurriedClosureSignatureImpl(this, args, position);
+  public GrSignature curry(@NotNull PsiType[] args, int position, @NotNull GroovyPsiElement context) {
+    GrClosureParameter[] params = myParameters;
+
+    List<GrClosureParameter> newParams = new ArrayList<GrClosureParameter>(params.length);
+    List<GrClosureParameter> opts = new ArrayList<GrClosureParameter>(params.length);
+    List<Integer> optInds = new ArrayList<Integer>(params.length);
+
+    if (position == -1) {
+      position = params.length - args.length;
+    }
+
+    if (position < 0 || position >= params.length) return GrMultiSignature.EMPTY_SIGNATURE;
+
+    for (int i = 0; i < params.length; i++) {
+      if (params[i].isOptional()) {
+        opts.add(params[i]);
+        optInds.add(i);
+      }
+      else {
+        newParams.add(params[i]);
+      }
+    }
+
+    final PsiType rtype = getReturnType();
+    final ArrayList<GrClosureSignature> result = new ArrayList<GrClosureSignature>();
+    GrClosureSignatureUtil.checkAndAddSignature(result, args, position, newParams, rtype, context);
+
+    for (int i = 0; i < opts.size(); i++) {
+      newParams.add(optInds.get(i), opts.get(i));
+      GrClosureSignatureUtil.checkAndAddSignature(result, args, position, newParams, rtype, context);
+    }
+
+    if (result.size() == 1) {
+      return result.get(0);
+    }
+    else {
+      return new GrMultiSignatureImpl(result.toArray(new GrClosureSignature[result.size()]));
+    }
   }
 
   public boolean isValid() {
@@ -108,6 +153,10 @@ public class GrClosureSignatureImpl implements GrClosureSignature {
              Comparing.equal(myIsVarargs, ((GrClosureSignature)obj).isVarargs());
     }
     return super.equals(obj);
+  }
+
+  public boolean isCurried() {
+    return myCurried;
   }
 
   @Nullable
@@ -131,9 +180,14 @@ public class GrClosureSignatureImpl implements GrClosureSignature {
         returnType = TypesUtil.getLeastUpperBound(s1type, s2type, manager);
       }
       boolean isVarArgs = signature1.isVarargs() && signature2.isVarargs();
-      return new GrClosureSignatureImpl(params, returnType, isVarArgs);
+      return new GrClosureSignatureImpl(params, returnType, isVarArgs, false);
     }
     return null; //todo
+  }
+
+  @Override
+  public void accept(GrSignatureVisitor visitor) {
+    visitor.visitClosureSignature(this);
   }
 }
 

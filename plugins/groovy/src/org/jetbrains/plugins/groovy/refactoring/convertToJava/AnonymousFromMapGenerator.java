@@ -18,22 +18,22 @@ package org.jetbrains.plugins.groovy.refactoring.convertToJava;
 import com.intellij.psi.*;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
+import org.jetbrains.plugins.groovy.lang.psi.api.signatures.GrClosureSignature;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
-import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClosureSignature;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
-import org.jetbrains.plugins.groovy.lang.psi.impl.types.GrClosureSignatureUtil;
+import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureUtil;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import static org.jetbrains.plugins.groovy.refactoring.convertToJava.ModifierListGenerator.JAVA_MODIFIERS_WITHOUT_ABSTRACT;
 import static org.jetbrains.plugins.groovy.refactoring.convertToJava.GenerationUtil.writeType;
+import static org.jetbrains.plugins.groovy.refactoring.convertToJava.ModifierListGenerator.JAVA_MODIFIERS_WITHOUT_ABSTRACT;
 
 /**
  * @author Maxim.Medvedev

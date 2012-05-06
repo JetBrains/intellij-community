@@ -487,10 +487,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
     }
 
     if (dotType == mMEMBER_POINTER) {
-      if (resolved instanceof PsiMethod) {
-        return GrClosureType.create((PsiMethod) resolved, resolveResult.getSubstitutor());
-      }
-      return TypesUtil.createTypeByFQClassName(GroovyCommonClassNames.GROOVY_LANG_CLOSURE, this);
+      return GrClosureType.create(multiResolve(false), this);
     }
     PsiType result = null;
     JavaPsiFacade facade = JavaPsiFacade.getInstance(getProject());

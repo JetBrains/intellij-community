@@ -58,7 +58,7 @@ public class GrUnaryExpressionImpl extends GrExpressionImpl implements GrUnaryEx
       if (opType == null) return null;
 
       final GroovyResolveResult resolveResult = PsiImplUtil.extractUniqueResult(unary.multiResolve(false));
-      final PsiType substituted = ResolveUtil.extractReturnTypeFromCandidate(resolveResult, unary);
+      final PsiType substituted = ResolveUtil.extractReturnTypeFromCandidate(resolveResult, unary, PsiType.EMPTY_ARRAY);
       if (substituted != null) {
         return TypesUtil.boxPrimitiveType(substituted, unary.getManager(), unary.getResolveScope());
       }

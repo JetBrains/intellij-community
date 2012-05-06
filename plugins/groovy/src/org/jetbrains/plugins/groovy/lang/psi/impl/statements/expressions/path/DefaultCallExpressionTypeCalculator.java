@@ -31,6 +31,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrLiteralClassType;
+import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrCallExpressionTypeCalculator;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
@@ -99,7 +100,7 @@ public class DefaultCallExpressionTypeCalculator extends GrCallExpressionTypeCal
   private static PsiType extractReturnTypeFromType(PsiType type, boolean returnTypeIfFail, GrMethodCall callExpression) {
     PsiType returnType = returnTypeIfFail ? type: null;
     if (type instanceof GrClosureType) {
-      returnType = ((GrClosureType) type).getSignature().getReturnType();
+      returnType = GrClosureSignatureUtil.getReturnType(((GrClosureType)type).getSignature(), callExpression);
     }
     else if (isPsiClassTypeToClosure(type)) {
       assert type instanceof PsiClassType;
@@ -114,7 +115,7 @@ public class DefaultCallExpressionTypeCalculator extends GrCallExpressionTypeCal
       returnType = null;
       final PsiManager manager = callExpression.getManager();
       for (GroovyResolveResult call : calls) {
-        final PsiType substituted = ResolveUtil.extractReturnTypeFromCandidate(call, callExpression);
+        final PsiType substituted = ResolveUtil.extractReturnTypeFromCandidate(call, callExpression, PsiUtil.getArgumentTypes(callExpression.getInvokedExpression(), true));
         returnType = TypesUtil.getLeastUpperBoundNullable(returnType, substituted, manager);
       }
     }
@@ -154,16 +155,16 @@ public class DefaultCallExpressionTypeCalculator extends GrCallExpressionTypeCal
     if (!(qType instanceof GrClosureType)) return null;
 
     if ("call".equals(resolved.getName())) {
-      return ((GrClosureType)qType).getSignature().getReturnType();
+      return GrClosureSignatureUtil.getReturnType(((GrClosureType)qType).getSignature(), callExpression);
     }
     else if ("curry".equals(resolved.getName()) || "trampoline".equals(resolved.getName())) {
-      return ((GrClosureType)qType).curry(PsiUtil.getArgumentTypes(refExpr, false), 0);
+      return ((GrClosureType)qType).curry(PsiUtil.getArgumentTypes(refExpr, false), 0, callExpression);
     }
     else if ("memoize".equals(resolved.getName())) {
       return qType;
     }
     else if ("rcurry".equals(resolved.getName())) {
-      return ((GrClosureType)qType).curry(PsiUtil.getArgumentTypes(refExpr, false), -1);
+      return ((GrClosureType)qType).curry(PsiUtil.getArgumentTypes(refExpr, false), -1, callExpression);
     }
     else if ("ncurry".equals(resolved.getName())) {
       final GrArgumentList argList = callExpression.getArgumentList();
@@ -176,7 +177,7 @@ public class DefaultCallExpressionTypeCalculator extends GrCallExpressionTypeCal
             if (value instanceof Integer) {
               final PsiType[] argTypes = PsiUtil.getArgumentTypes(refExpr, false);
               if (argTypes != null) {
-                return ((GrClosureType)qType).curry(ArrayUtil.remove(argTypes, 0), (Integer)value);
+                return ((GrClosureType)qType).curry(ArrayUtil.remove(argTypes, 0), (Integer)value, callExpression);
               }
             }
           }

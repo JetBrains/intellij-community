@@ -37,6 +37,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
+import org.jetbrains.plugins.groovy.lang.psi.api.signatures.GrSignature;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
@@ -51,11 +52,10 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousC
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
-import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClosureSignature;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
-import org.jetbrains.plugins.groovy.lang.psi.impl.types.GrClosureSignatureUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GdkMethodUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
@@ -679,12 +679,12 @@ public class ResolveUtil {
   private static boolean isApplicableClosureType(PsiType type, PsiType[] argTypes, GroovyPsiElement place) {
     if (!(type instanceof GrClosureType)) return false;
 
-    final GrClosureSignature signature = ((GrClosureType)type).getSignature();
+    final GrSignature signature = ((GrClosureType)type).getSignature();
     return GrClosureSignatureUtil.isSignatureApplicable(signature, argTypes, place);
   }
 
   @Nullable
-  public static PsiType extractReturnTypeFromCandidate(GroovyResolveResult candidate, GrExpression expression) {
+  public static PsiType extractReturnTypeFromCandidate(GroovyResolveResult candidate, GrExpression expression, @Nullable PsiType[] args) {
     final PsiElement element = candidate.getElement();
     if (element instanceof PsiMethod && !candidate.isInvokedOnProperty()) {
       return TypesUtil.substituteBoxAndNormalizeType(getSmartReturnType((PsiMethod)element), candidate.getSubstitutor(), expression);
@@ -701,7 +701,8 @@ public class ResolveUtil {
       return null;
     }
     if (type instanceof GrClosureType) {
-      PsiType returnType = ((GrClosureType)type).getSignature().getReturnType();
+      final GrSignature signature = ((GrClosureType)type).getSignature();
+      PsiType returnType = GrClosureSignatureUtil.getReturnType(signature, args, expression);
       return TypesUtil.substituteBoxAndNormalizeType(returnType, candidate.getSubstitutor(), expression);
     }
     return null;

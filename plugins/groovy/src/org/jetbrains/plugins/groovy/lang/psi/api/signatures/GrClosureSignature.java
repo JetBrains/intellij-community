@@ -13,17 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.groovy.lang.psi.api.types;
+package org.jetbrains.plugins.groovy.lang.psi.api.signatures;
 
 import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClosureParameter;
 
 /**
  * @author Maxim.Medvedev
  */
-public interface GrClosureSignature {
+public interface GrClosureSignature extends GrSignature {
+
   @NotNull PsiSubstitutor getSubstitutor();
 
   @NotNull
@@ -36,8 +38,7 @@ public interface GrClosureSignature {
   @Nullable
   PsiType getReturnType();
 
-  @Nullable
-  GrCurriedClosureSignature curry(PsiType[] args, int position);
+  GrClosureSignature[] EMPTY_ARRAY = new GrClosureSignature[0];
 
-  boolean isValid();
+  boolean isCurried();
 }

@@ -15,7 +15,7 @@ import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.GroovyExpectedTypesPr
 import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.SubtypeConstraint;
 import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.TypeConstraint;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrTupleType;
-import org.jetbrains.plugins.groovy.lang.psi.impl.types.GrClosureSignatureUtil;
+import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import java.util.ArrayList;

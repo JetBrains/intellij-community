@@ -888,4 +888,40 @@ Date d = <warning descr="Cannot assign 'Object' to 'Date'">a.cl()</warning>
     myFixture.enableInspections(inspections)
     myFixture.testHighlighting(true, false, true)
   }
+
+  void testMethodRefs1() {
+    myFixture.configureByText('_.groovy', '''\
+class A {
+  int foo(){2}
+
+  Date foo(int x) {null}
+}
+
+def foo = new A().&foo
+
+int i = foo()
+int i2 = <warning descr="Cannot assign 'Date' to 'int'">foo(2)</warning>
+Date d = foo(2)
+Date d2 = <warning descr="Cannot assign 'Integer' to 'Date'">foo()</warning>
+''')
+    testHighlighting(GroovyAssignabilityCheckInspection)
+  }
+
+  void testMethodRefs2() {
+    myFixture.configureByText('_.groovy', '''\
+class Bar {
+  def foo(int i, String s2) {s2}
+  def foo(int i, int i2) {i2}
+}
+
+def cl = new Bar<error descr="'(' expected">.</error>&foo
+cl = cl.curry(1)
+String s = cl("2")
+int s2 = <warning descr="Cannot assign 'String' to 'int'">cl("2")</warning>
+int i = cl(3)
+String i2 = cl(3)
+''')
+    testHighlighting(GroovyAssignabilityCheckInspection)
+  }
+
 }

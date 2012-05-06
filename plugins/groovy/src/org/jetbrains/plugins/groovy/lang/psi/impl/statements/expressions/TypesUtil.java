@@ -35,11 +35,12 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GrTypeConverter;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
+import org.jetbrains.plugins.groovy.lang.psi.api.signatures.GrClosureSignature;
+import org.jetbrains.plugins.groovy.lang.psi.api.signatures.GrSignature;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClosureSignature;
 import org.jetbrains.plugins.groovy.lang.psi.impl.*;
-import org.jetbrains.plugins.groovy.lang.psi.impl.types.GrClosureSignatureImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureImpl;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.util.LightCacheKey;
@@ -482,15 +483,18 @@ public class TypesUtil {
     else if (type1 instanceof GrClosureType && type2 instanceof GrClosureType) {
       GrClosureType clType1 = (GrClosureType)type1;
       GrClosureType clType2 = (GrClosureType)type2;
-      GrClosureSignature signature1 = clType1.getSignature();
-      GrClosureSignature signature2 = clType2.getSignature();
+      GrSignature signature1 = clType1.getSignature();
+      GrSignature signature2 = clType2.getSignature();
 
-      if (signature1.getParameterCount() == signature2.getParameterCount()) {
-        final GrClosureSignature signature = GrClosureSignatureImpl.getLeastUpperBound(signature1, signature2, manager);
-        if (signature != null) {
-          GlobalSearchScope scope = clType1.getResolveScope().intersectWith(clType2.getResolveScope());
-          final LanguageLevel languageLevel = ComparatorUtil.max(clType1.getLanguageLevel(), clType2.getLanguageLevel());
-          return GrClosureType.create(signature, scope, JavaPsiFacade.getInstance(manager.getProject()), languageLevel, true);
+      if (signature1 instanceof GrClosureSignature && signature2 instanceof GrClosureSignature) {
+        if (((GrClosureSignature)signature1).getParameterCount() == ((GrClosureSignature)signature2).getParameterCount()) {
+          final GrClosureSignature signature = GrClosureSignatureImpl.getLeastUpperBound(((GrClosureSignature)signature1),
+                                                                                         ((GrClosureSignature)signature2), manager);
+          if (signature != null) {
+            GlobalSearchScope scope = clType1.getResolveScope().intersectWith(clType2.getResolveScope());
+            final LanguageLevel languageLevel = ComparatorUtil.max(clType1.getLanguageLevel(), clType2.getLanguageLevel());
+            return GrClosureType.create(signature, scope, JavaPsiFacade.getInstance(manager.getProject()), languageLevel, true);
+          }
         }
       }
     }

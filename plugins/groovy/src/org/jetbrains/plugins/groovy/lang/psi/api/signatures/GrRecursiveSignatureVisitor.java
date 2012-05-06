@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,23 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.groovy.lang.psi.api.types;
-
-import com.intellij.psi.PsiType;
+package org.jetbrains.plugins.groovy.lang.psi.api.signatures;
 
 /**
- * @author Maxim.Medvedev
+ * @author Max Medvedev
  */
-public interface GrCurriedClosureSignature extends GrClosureSignature{
+public abstract class GrRecursiveSignatureVisitor extends GrSignatureVisitor {
+  @Override
+  public void visitMultiSignature(GrMultiSignature  signature) {
+    super.visitMultiSignature(signature);
 
-  PsiType[] getCurriedArgs();
-
-  /**
-   *
-   * @return position or -1 if position is right
-   */
-  int getCurriedPosition();
-
-  GrClosureSignature getOriginalSignature();
-
+    for (GrClosureSignature s : signature.getAllSignatures()) {
+      s.accept(this);
+    }
+  }
 }
