@@ -867,7 +867,7 @@ C<error descr="Wrong number of type arguments: 2; required: 1"><String, Double><
   }
 
   public void testRawClosureReturnType() {
-    myFixture.configureByText('_.groovy', '''\
+    testHighlighting('''\
 class A<T> {
   A(T t) {this.t = t}
 
@@ -880,17 +880,17 @@ class A<T> {
 
 def a = new A(new Date())
 Date d = <warning descr="Cannot assign 'Object' to 'Date'">a.cl()</warning>
-''')
-    testHighlighting(GroovyUncheckedAssignmentOfMemberOfRawTypeInspection)
+''', GroovyUncheckedAssignmentOfMemberOfRawTypeInspection)
   }
 
-  private void testHighlighting(Class<? extends LocalInspectionTool>... inspections) {
+  private void testHighlighting(String text, Class<? extends LocalInspectionTool>... inspections) {
+    myFixture.configureByText('_.groovy', text)
     myFixture.enableInspections(inspections)
     myFixture.testHighlighting(true, false, true)
   }
 
   void testMethodRefs1() {
-    myFixture.configureByText('_.groovy', '''\
+    testHighlighting('''\
 class A {
   int foo(){2}
 
@@ -903,12 +903,11 @@ int i = foo()
 int i2 = <warning descr="Cannot assign 'Date' to 'int'">foo(2)</warning>
 Date d = foo(2)
 Date d2 = <warning descr="Cannot assign 'Integer' to 'Date'">foo()</warning>
-''')
-    testHighlighting(GroovyAssignabilityCheckInspection)
+''', GroovyAssignabilityCheckInspection)
   }
 
   void testMethodRefs2() {
-    myFixture.configureByText('_.groovy', '''\
+    testHighlighting('''\
 class Bar {
   def foo(int i, String s2) {s2}
   def foo(int i, int i2) {i2}
@@ -920,8 +919,21 @@ String s = cl("2")
 int s2 = <warning descr="Cannot assign 'String' to 'int'">cl("2")</warning>
 int i = cl(3)
 String i2 = cl(3)
-''')
-    testHighlighting(GroovyAssignabilityCheckInspection)
+''', GroovyAssignabilityCheckInspection)
   }
 
+  void testThrowObject() {
+    testHighlighting('''\
+def foo() {
+  throw new RuntimeException()
+}
+def bar () {
+  throw <warning descr="Cannot assign 'Object' to 'Throwable'">new Object()</warning>
+}
+
+def test() {
+  throw new Throwable()
+}
+''', GroovyAssignabilityCheckInspection)
+  }
 }
