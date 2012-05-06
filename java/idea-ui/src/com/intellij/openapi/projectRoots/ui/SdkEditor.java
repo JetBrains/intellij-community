@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,14 +53,13 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-/*
+/**
  * @author: MYakovlev
- * Date: Aug 15, 2002
- * Time: 1:27:59 PM
+ * @since Aug 15, 2002
  */
-
 public class SdkEditor implements Configurable, Place.Navigator {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.projectRoots.ui.SdkEditor");
+
   private Sdk mySdk;
   private final Map<OrderRootType, SdkPathEditor> myPathEditors = new HashMap<OrderRootType, SdkPathEditor>();
 
@@ -133,6 +132,7 @@ public class SdkEditor implements Configurable, Place.Navigator {
       if (mySdk == null || showTabForType(type)) {
         final SdkPathEditor pathEditor = OrderRootTypeUIFactory.FACTORY.getByKey(type).createPathEditor(mySdk);
         if (pathEditor != null) {
+          pathEditor.setAddBaseDir(mySdk.getHomeDirectory());
           myTabbedPane.addTab(pathEditor.getDisplayName(), pathEditor.createComponent());
           myPathEditors.put(type, pathEditor);
         }

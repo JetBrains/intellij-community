@@ -39,6 +39,7 @@ import com.intellij.util.containers.HashSet;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -52,7 +53,10 @@ import java.util.Set;
  */
 public class PathEditor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.projectRoots.ui.PathEditor");
+
   public static final Color INVALID_COLOR = new Color(210, 0, 0);
+  private static final Icon ICON_INVALID = IconLoader.getIcon("/nodes/ppInvalid.png");
+  private static final Icon ICON_EMPTY = IconLoader.getIcon("/nodes/emptyNode.png");
 
   protected JPanel myPanel;
   private JBList myList;
@@ -60,8 +64,6 @@ public class PathEditor {
   private final Set<VirtualFile> myAllFiles = new HashSet<VirtualFile>();
   private boolean myModified = false;
   protected boolean myEnabled = false;
-  private static final Icon ICON_INVALID = IconLoader.getIcon("/nodes/ppInvalid.png");
-  private static final Icon ICON_EMPTY = IconLoader.getIcon("/nodes/emptyNode.png");
   private final FileChooserDescriptor myDescriptor;
   private VirtualFile myAddBaseDir;
 
@@ -71,7 +73,7 @@ public class PathEditor {
     myModel = createListModel();
   }
 
-  public void setAddBaseDir(VirtualFile addBaseDir) {
+  public void setAddBaseDir(@Nullable VirtualFile addBaseDir) {
     myAddBaseDir = addBaseDir;
   }
 
