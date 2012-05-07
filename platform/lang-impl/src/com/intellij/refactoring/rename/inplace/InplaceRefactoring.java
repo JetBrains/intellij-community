@@ -94,7 +94,7 @@ public abstract class InplaceRefactoring {
   protected static final Stack<InplaceRefactoring> ourRenamersStack = new Stack<InplaceRefactoring>();
   public static final Key<InplaceRefactoring> INPLACE_RENAMER = Key.create("EditorInplaceRenamer");
   public static final Key<Boolean> INTRODUCE_RESTART = Key.create("INTRODUCE_RESTART");
-  
+
   protected PsiNamedElement myElementToRename;
   protected final Editor myEditor;
   protected final Project myProject;
@@ -109,10 +109,10 @@ public abstract class InplaceRefactoring {
 
   protected StartMarkAction myMarkAction;
   protected PsiElement myScope;
-  
+
   protected RangeMarker myCaretRangeMarker;
-  
-  
+
+
   protected Balloon myBalloon;
   protected String myTitle;
   protected RelativePoint myTarget;
@@ -250,11 +250,13 @@ public abstract class InplaceRefactoring {
     catch (final StartMarkAction.AlreadyStartedException e) {
       final Document oldDocument = e.getDocument();
       if (oldDocument != myEditor.getDocument()) {
-        final int exitCode = Messages.showOkCancelDialog(myProject, e.getMessage(), getCommandName(),
-                                                         "Navigate to continue", "Cancel started", Messages.getErrorIcon());
-        if (exitCode == -1) return true;
-        navigateToAlreadyStarted(oldDocument, exitCode);
-        return true;
+        final int exitCode = Messages.showYesNoCancelDialog(myProject, e.getMessage(), getCommandName(),
+                                                            "Navigate to Started", "Cancel Started", "Cancel", Messages.getErrorIcon());
+        if (exitCode == -1 || exitCode == Messages.CANCEL) return true;
+        //todo ann: //if (exitCode == Messages.YES ) {
+          navigateToAlreadyStarted(oldDocument, exitCode);
+          return true;
+        //}
       }
       else {
         revertState();

@@ -106,7 +106,7 @@ public class StartMarkAction extends BasicUndoableAction {
     public AlreadyStartedException(String commandName,
                                    Document document,
                                    DocumentReference[] documentRefs) {
-      super("Unable to start inplace refactoring. "+ commandName + " is not finished yet.");
+      super("Unable to start inplace refactoring:\n"+ commandName + " is not finished yet.");
       myAffectedDocuments = documentRefs;
       myDocument = document;
     }
