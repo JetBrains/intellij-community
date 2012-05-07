@@ -25,7 +25,6 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.DataManager;
-import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.gotoByName.ChooseByNameBase;
 import com.intellij.lang.Language;
@@ -50,15 +49,13 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.*;
-import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
+import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.presentation.java.SymbolPresentationUtil;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtilBase;
-import com.intellij.ui.content.*;
+import com.intellij.ui.content.Content;
 import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.ui.popup.NotLookupOrSearchCondition;
 import com.intellij.ui.popup.PopupPositionManager;
@@ -66,8 +63,6 @@ import com.intellij.ui.popup.PopupUpdateProcessor;
 import com.intellij.util.Alarm;
 import com.intellij.util.Consumer;
 import com.intellij.util.Processor;
-import com.intellij.util.ui.update.Activatable;
-import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -80,7 +75,7 @@ import java.lang.ref.WeakReference;
 import java.util.*;
 import java.util.List;
 
-public class DocumentationManager {
+public class DocumentationManager extends DockablePopupManager<DocumentationComponent> {
 
   @NonNls public static final String JAVADOC_LOCATION_AND_SIZE = "javadoc.popup";
   public static final DataKey<String> SELECTED_QUICK_DOC_TEXT = DataKey.create("QUICK_DOC.SELECTED_TEXT");
@@ -88,8 +83,7 @@ public class DocumentationManager {
   private static final Logger LOG = Logger.getInstance("#" + DocumentationManager.class.getName());
   private static final String SHOW_DOCUMENTATION_IN_TOOL_WINDOW = "ShowDocumentationInToolWindow";
   private static final String DOCUMENTATION_AUTO_UPDATE_ENABLED = "DocumentationAutoUpdateEnabled";
-  
-  private final Project myProject;
+
   private Editor myEditor = null;
   private ParameterInfoController myParameterInfoController;
   private final Alarm myUpdateDocAlarm;
@@ -98,20 +92,37 @@ public class DocumentationManager {
   public static final Key<SmartPsiElementPointer> ORIGINAL_ELEMENT_KEY = Key.create("Original element");
   @NonNls public static final String PSI_ELEMENT_PROTOCOL = "psi_element://";
   @NonNls private static final String DOC_ELEMENT_PROTOCOL = "doc_element://";
-  private ToolWindow myToolWindow = null;
 
   private final ActionManagerEx myActionManagerEx;
 
   private static final int ourFlagsForTargetElements = TargetElementUtilBase.getInstance().getAllAccepted();
-  private boolean myAutoUpdateDocumentation = PropertiesComponent.getInstance().isTrueValue(DOCUMENTATION_AUTO_UPDATE_ENABLED);
-  private Runnable myAutoUpdateRequest;
+
+  protected String getToolwindowId() {
+    return ToolWindowId.DOCUMENTATION;
+  }
+
+  protected DocumentationComponent createComponent() {
+    return new DocumentationComponent(this, createActions());
+  }
+
+  protected String getRestorePopupDescription() {
+    return "Restore documentation popup behavior";
+  }
+
+  protected String getAutoUpdateDescription() {
+    return "Show documentation for current element automatically";
+  }
+
+  protected String getAutoUpdateTitle() {
+    return "Auto Show Documentation for Selected Element";
+  }
 
   public static DocumentationManager getInstance(Project project) {
     return ServiceManager.getService(project, DocumentationManager.class);
   }
 
   public DocumentationManager(Project project, ActionManagerEx managerEx) {
-    myProject = project;
+    super(project);
     myActionManagerEx = managerEx;
     final AnActionListener actionListener = new AnActionListener() {
       public void beforeActionPerformed(AnAction action, DataContext dataContext, AnActionEvent event) {
@@ -360,144 +371,6 @@ public class DocumentationManager {
       if (fromQuickSearch()) {
         ((ChooseByNameBase.JPanelProvider)myPreviouslyFocused.getParent()).registerHint(hint);
       }
-  }
-
-  private void createToolWindow(final PsiElement element, PsiElement originalElement) {
-    assert myToolWindow == null;
-
-    final DocumentationComponent component = new DocumentationComponent(this, new AnAction[]{
-      new ToggleAction("Auto Show Documentation for Selected Element", "Show documentation for current element automatically",
-                          IconLoader.getIcon("/general/autoscrollFromSource.png")) {
-        @Override
-        public boolean isSelected(AnActionEvent e) {
-          return myAutoUpdateDocumentation;
-        }
-
-        @Override
-        public void setSelected(AnActionEvent e, boolean state) {
-          PropertiesComponent.getInstance().setValue(DOCUMENTATION_AUTO_UPDATE_ENABLED, Boolean.TRUE.toString());
-          myAutoUpdateDocumentation = state;
-          restartAutoUpdate(state);
-        }
-      },
-      new AnAction("Restore Popup", "Restore documentation popup behavior", IconLoader.getIcon("/actions/cancel.png")) {
-        @Override
-        public void actionPerformed(AnActionEvent e) {
-          restorePopupBehavior();
-        }
-      }});
-
-    final ToolWindowManagerEx toolWindowManagerEx = ToolWindowManagerEx.getInstanceEx(myProject);
-    final ToolWindow toolWindow = toolWindowManagerEx.getToolWindow(ToolWindowId.DOCUMENTATION);
-    myToolWindow = toolWindow == null ? toolWindowManagerEx.registerToolWindow(ToolWindowId.DOCUMENTATION, true, ToolWindowAnchor.RIGHT, myProject) : toolWindow;
-    myToolWindow.setIcon(IconLoader.getIcon("/general/documentation.png"));
-
-    myToolWindow.setAvailable(true, null);
-    myToolWindow.setToHideOnEmptyContent(false);
-    myToolWindow.setAutoHide(false);
-
-    final Rectangle rectangle = WindowManager.getInstance().getIdeFrame(myProject).suggestChildFrameBounds();
-    myToolWindow.setDefaultState(ToolWindowAnchor.RIGHT, ToolWindowType.FLOATING, rectangle);
-
-    final ContentManager contentManager = myToolWindow.getContentManager();
-    final ContentFactory contentFactory = ContentFactory.SERVICE.getInstance();
-    final Content content = contentFactory.createContent(component, getTitle(element, true), false);
-    contentManager.addContent(content);
-
-    contentManager.addContentManagerListener(new ContentManagerAdapter() {
-      @Override
-      public void contentRemoved(ContentManagerEvent event) {
-        if (contentManager.getContentCount() == 0) {
-          final JComponent c = event.getContent().getComponent();
-          if (c instanceof DocumentationComponent) {
-            Disposer.dispose((DocumentationComponent) c);
-          }
-          
-          restorePopupBehavior();
-        }
-      }
-    });
-
-    new UiNotifyConnector(component, new Activatable() {
-      public void showNotify() {
-        restartAutoUpdate(myAutoUpdateDocumentation);
-      }
-
-      public void hideNotify() {
-        restartAutoUpdate(false);
-      }
-    });
-
-    myToolWindow.show(null);
-    PropertiesComponent.getInstance().setValue(SHOW_DOCUMENTATION_IN_TOOL_WINDOW, Boolean.TRUE.toString());
-    restartAutoUpdate(PropertiesComponent.getInstance().getBoolean(DOCUMENTATION_AUTO_UPDATE_ENABLED, true));
-    fetchDocInfo(getDefaultCollector(element, originalElement), component);
-  }
-
-  private void restartAutoUpdate(final boolean state) {
-    if (state && myToolWindow != null) {
-      if (myAutoUpdateRequest == null) {
-        myAutoUpdateRequest = new Runnable() {
-          public void run() {
-            if (myProject.isDisposed()) return;
-
-            AsyncResult<DataContext> asyncResult = DataManager.getInstance().getDataContextFromFocus();
-            DataContext dataContext = asyncResult.getResult();
-            if (dataContext == null) {
-              return;
-            }
-            final Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
-            if (editor == null) {
-              return;
-            }
-
-            if (PlatformDataKeys.PROJECT.getData(dataContext) != myProject) {
-              return;
-            }
-
-            final PsiFile file = PsiUtilBase.getPsiFileInEditor(editor, myProject);
-
-            final Editor injectedEditor = InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(editor, file);
-            if (injectedEditor != null) {
-              final PsiFile psiFile = PsiUtilBase.getPsiFileInEditor(injectedEditor, myProject);
-              if (psiFile != null) {
-                showJavaDocInfo(injectedEditor, psiFile, false, true);
-                return;
-              }
-            }
-
-            if (file != null) {
-              showJavaDocInfo(editor, file, false, true);
-            }
-          }
-        };
-
-        IdeEventQueue.getInstance().addIdleListener(myAutoUpdateRequest, 500);
-      }
-    } else {
-      if (myAutoUpdateRequest != null) {
-        IdeEventQueue.getInstance().removeIdleListener(myAutoUpdateRequest);
-        myAutoUpdateRequest = null;
-      }
-    }
-  }
-
-  private void restorePopupBehavior() {
-    if (myToolWindow != null) {
-      PropertiesComponent.getInstance().setValue(SHOW_DOCUMENTATION_IN_TOOL_WINDOW, Boolean.FALSE.toString());
-
-      final Content[] contents = myToolWindow.getContentManager().getContents();
-      for (final Content content : contents) {
-        final JComponent c = content.getComponent();
-        if (c instanceof DocumentationComponent) {
-          Disposer.dispose((DocumentationComponent) c);
-        }
-      }
-
-      ToolWindowManagerEx.getInstanceEx(myProject).unregisterToolWindow(ToolWindowId.DOCUMENTATION);
-      myToolWindow = null;
-      restartAutoUpdate(false);
-    }
   }
 
   private static String getTitle(@NotNull final PsiElement element, final boolean _short) {
@@ -973,6 +846,34 @@ public class DocumentationManager {
       buffer.append("</code>");
     }
     buffer.append("</a>");
+  }
+
+  @Override
+  public String getShowInToolWindowProperty() {
+    return SHOW_DOCUMENTATION_IN_TOOL_WINDOW;
+  }
+
+  @Override
+  public String getAutoUpdateEnabledProperty() {
+    return DOCUMENTATION_AUTO_UPDATE_ENABLED;
+  }
+
+  protected void doUpdateComponent(PsiElement element, PsiElement originalElement, DocumentationComponent component) {
+    fetchDocInfo(getDefaultCollector(element, originalElement), component);
+  }
+  
+  protected void doUpdateComponent(Editor injectedEditor, PsiFile psiFile) {
+    showJavaDocInfo(injectedEditor, psiFile, false, true);
+  }
+
+  @Override
+  protected void doUpdateComponent(@NotNull PsiElement element) {
+    showJavaDocInfo(element, element);
+  }
+
+  @Override
+  protected String getTitle(PsiElement element) {
+    return getTitle(element, true);
   }
 
   private interface DocumentationCollector {
