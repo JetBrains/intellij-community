@@ -430,7 +430,7 @@ public class DocumentationManager {
 
     myToolWindow.show(null);
     PropertiesComponent.getInstance().setValue(SHOW_DOCUMENTATION_IN_TOOL_WINDOW, Boolean.TRUE.toString());
-    restartAutoUpdate(PropertiesComponent.getInstance().isTrueValue(DOCUMENTATION_AUTO_UPDATE_ENABLED));
+    restartAutoUpdate(PropertiesComponent.getInstance().getBoolean(DOCUMENTATION_AUTO_UPDATE_ENABLED, true));
     fetchDocInfo(getDefaultCollector(element, originalElement), component);
   }
 
