@@ -303,7 +303,11 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
       final TreePath path = getPathForRow(row);
       if (path != null) {
         final Rectangle bounds = getRowBounds(row);
-        final Object component = path.getLastPathComponent();
+        Object component = path.getLastPathComponent();
+        final Object[] pathObjects = path.getPath();
+        if (component instanceof LoadingNode && pathObjects.length > 1) {
+          component = pathObjects[pathObjects.length - 2];
+        }
         final Object object = ((DefaultMutableTreeNode)component).getUserObject();
 
         Color color = getFileColorFor(object);
