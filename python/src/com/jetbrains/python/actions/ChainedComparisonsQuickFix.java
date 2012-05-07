@@ -19,7 +19,7 @@ import org.jetbrains.annotations.Nullable;
 public class ChainedComparisonsQuickFix implements LocalQuickFix {
   boolean myIsLeftLeft;
   boolean myIsRightLeft;
-  Boolean getInnerRight;
+  boolean getInnerRight;
 
   public ChainedComparisonsQuickFix(boolean isLeft, boolean isRight, boolean getInner) {
     myIsLeftLeft = isLeft;
