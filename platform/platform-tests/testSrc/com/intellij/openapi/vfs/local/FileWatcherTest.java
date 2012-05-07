@@ -19,6 +19,7 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.idea.Bombed;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.*;
@@ -30,8 +31,8 @@ import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
 import com.intellij.testFramework.PlatformLangTestCase;
+import com.intellij.util.Alarm;
 import com.intellij.util.Function;
-import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
@@ -46,16 +47,36 @@ public class FileWatcherTest extends PlatformLangTestCase {
   private FileWatcher myWatcher;
   private LocalFileSystem myFileSystem;
   private MessageBusConnection myConnection;
+  private final Alarm myAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
+  private final Runnable myNotifier = new Runnable() {
+    @Override
+    public void run() {
+      synchronized (myAlarm) {
+        myAlarm.cancelAllRequests();
+        myAlarm.addRequest(new Runnable() {
+          @Override
+          public void run() {
+            synchronized (myWaiter) {
+              myWaiter.notifyAll();
+            }
+          }
+        }, NATIVE_PROCESS_DELAY);
+      }
+    }
+  };
+  private final Object myWaiter = new Object();
   private final List<VFileEvent> myEvents = new ArrayList<VFileEvent>();
 
   @Override
   protected void setUp() throws Exception {
     super.setUp();
 
+    Disposer.register(getProject(), myAlarm);
+
     myWatcher = FileWatcher.getInstance();
     assertNotNull(myWatcher);
     assertFalse(myWatcher.isOperational());
-    myWatcher.startup();
+    myWatcher.startup(myNotifier);
     assertTrue(myWatcher.isOperational());
 
     myFileSystem = LocalFileSystem.getInstance();
@@ -69,10 +90,7 @@ public class FileWatcherTest extends PlatformLangTestCase {
 
       @Override
       public void after(@NotNull List<? extends VFileEvent> events) {
-        synchronized (myEvents) {
-          myEvents.addAll(events);
-          myEvents.notifyAll();
-        }
+        myEvents.addAll(events);
       }
     });
   }
@@ -377,13 +395,17 @@ public class FileWatcherTest extends PlatformLangTestCase {
 
 
   private List<VFileEvent> getEvents() throws InterruptedException {
-    TimeoutUtil.sleep(NATIVE_PROCESS_DELAY);
+    waitForResponse();
     myFileSystem.refresh(false);
+    final ArrayList<VFileEvent> result = new ArrayList<VFileEvent>(myEvents);
+    myEvents.clear();
+    return result;
+  }
 
-    synchronized (myEvents) {
-      final ArrayList<VFileEvent> result = new ArrayList<VFileEvent>(myEvents);
-      myEvents.clear();
-      return result;
+  private void waitForResponse() throws InterruptedException {
+    synchronized (myWaiter) {
+      //noinspection WaitNotInLoop
+      myWaiter.wait(NATIVE_PROCESS_DELAY);
     }
   }
 
@@ -403,14 +425,14 @@ public class FileWatcherTest extends PlatformLangTestCase {
   private LocalFileSystem.WatchRequest watch(final File watchFile, final boolean recursive) throws InterruptedException {
     final LocalFileSystem.WatchRequest request = myFileSystem.addRootToWatch(watchFile.getAbsolutePath(), recursive);
     assertNotNull(request);
-    TimeoutUtil.sleep(NATIVE_PROCESS_DELAY);
+    waitForResponse();
     clearEvents();
     return request;
   }
 
   private void unwatch(final LocalFileSystem.WatchRequest request) throws InterruptedException {
     myFileSystem.removeWatchedRoot(request);
-    TimeoutUtil.sleep(NATIVE_PROCESS_DELAY);
+    waitForResponse();
     clearEvents();
   }
 

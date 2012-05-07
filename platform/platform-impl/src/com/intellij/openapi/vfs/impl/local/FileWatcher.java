@@ -316,7 +316,7 @@ public class FileWatcher {
   }
 
   @TestOnly
-  public void startup() throws IOException {
+  public void startup(@Nullable final Runnable notifier) throws IOException {
     final Application app = ApplicationManager.getApplication();
     assert app != null && app.isUnitTestMode() : app;
 
@@ -327,6 +327,8 @@ public class FileWatcher {
     if (notifierProcess != null) {
       new WatchForChangesThread().start();
     }
+
+    myNotifier = notifier;
   }
 
   @TestOnly
@@ -334,10 +336,21 @@ public class FileWatcher {
     final Application app = ApplicationManager.getApplication();
     assert app != null && app.isUnitTestMode() : app;
 
+    myNotifier = null;
+
     final Process process = notifierProcess;
     if (process != null) {
       shutdownProcess();
       process.waitFor();
+    }
+  }
+
+  private volatile Runnable myNotifier = null;
+
+  private void notifyOnEvent() {
+    final Runnable notifier = myNotifier;
+    if (notifier != null) {
+      notifier.run();
     }
   }
 
@@ -381,6 +394,8 @@ public class FileWatcher {
             synchronized (LOCK) {
               myManualWatchRoots = roots;
             }
+
+            notifyOnEvent();
           }
           else if (MESSAGE_COMMAND.equals(command)) {
             final String message = readLine();
@@ -570,6 +585,8 @@ public class FileWatcher {
         reset();
         break;
     }
+
+    notifyOnEvent();
   }
 
   private void reset() {
