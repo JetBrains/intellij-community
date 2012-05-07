@@ -53,7 +53,8 @@ public class SdkListCellRenderer extends HtmlListCellRenderer<Sdk> {
       // text
       append(sdk.getName());
       if (myShowHomePath) {
-        append(" (" + FileUtil.toSystemDependentName(sdk.getHomePath()) + ")", SimpleTextAttributes.GRAYED_ATTRIBUTES);
+        append(" (" + FileUtil.toSystemDependentName(sdk.getHomePath()) + ")",
+               selected ? SimpleTextAttributes.REGULAR_ATTRIBUTES : SimpleTextAttributes.GRAYED_ATTRIBUTES);
       }
     }
     else {
