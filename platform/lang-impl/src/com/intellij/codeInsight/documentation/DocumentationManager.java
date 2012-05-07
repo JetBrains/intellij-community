@@ -366,7 +366,7 @@ public class DocumentationManager {
     assert myToolWindow == null;
 
     final DocumentationComponent component = new DocumentationComponent(this, new AnAction[]{
-      new ToggleAction("Auto show documentation for selected element", "Show documentation for current element automatically",
+      new ToggleAction("Auto Show Documentation for Selected Element", "Show documentation for current element automatically",
                           IconLoader.getIcon("/general/autoscrollFromSource.png")) {
         @Override
         public boolean isSelected(AnActionEvent e) {
@@ -380,7 +380,7 @@ public class DocumentationManager {
           restartAutoUpdate(state);
         }
       },
-      new AnAction("Restore popup behavior", "Restore documentation popup behavior", IconLoader.getIcon("/actions/cancel.png")) {
+      new AnAction("Restore Popup", "Restore documentation popup behavior", IconLoader.getIcon("/actions/cancel.png")) {
         @Override
         public void actionPerformed(AnActionEvent e) {
           restorePopupBehavior();
