@@ -75,8 +75,8 @@ public class UtilityClassWithPublicConstructorInspection
     @Override
     public void doFix(Project project, ProblemDescriptor descriptor)
       throws IncorrectOperationException {
-      final PsiElement classNameIdentifer = descriptor.getPsiElement();
-      final PsiClass psiClass = (PsiClass)classNameIdentifer.getParent();
+      final PsiElement classNameIdentifier = descriptor.getPsiElement();
+      final PsiClass psiClass = (PsiClass)classNameIdentifier.getParent();
       if (psiClass == null) {
         return;
       }
