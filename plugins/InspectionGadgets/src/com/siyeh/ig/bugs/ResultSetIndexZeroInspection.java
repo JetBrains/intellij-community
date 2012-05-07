@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,11 +16,11 @@
 package com.siyeh.ig.bugs;
 
 import com.intellij.psi.*;
-import com.intellij.psi.util.ConstantExpressionUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -36,15 +36,17 @@ public class ResultSetIndexZeroInspection extends BaseInspection {
   @Override
   @NotNull
   public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "use.0index.in.jdbc.resultset.display.name");
+    return InspectionGadgetsBundle.message("use.0index.in.jdbc.resultset.display.name");
   }
 
   @Override
   @NotNull
   public String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "use.0index.in.jdbc.resultset.problem.descriptor");
+    if (((Boolean)infos[0]).booleanValue()) {
+      return InspectionGadgetsBundle.message("use.0index.in.jdbc.resultset.problem.descriptor");
+    } else {
+      return InspectionGadgetsBundle.message("use.0index.in.jdbc.prepared.statement.problem.descriptor");
+    }
   }
 
   @Override
@@ -52,22 +54,22 @@ public class ResultSetIndexZeroInspection extends BaseInspection {
     return new ResultSetIndexZeroVisitor();
   }
 
-  private static class ResultSetIndexZeroVisitor
-    extends BaseInspectionVisitor {
+  private static class ResultSetIndexZeroVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitMethodCallExpression(
-      @NotNull PsiMethodCallExpression expression) {
+    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
       super.visitMethodCallExpression(expression);
-      final PsiReferenceExpression methodExpression =
-        expression.getMethodExpression();
-      @NonNls final String methodName =
-        methodExpression.getReferenceName();
+      final PsiReferenceExpression methodExpression = expression.getMethodExpression();
+      @NonNls final String methodName = methodExpression.getReferenceName();
       if (methodName == null) {
         return;
       }
-      if (!methodName.startsWith("get") &&
-          !methodName.startsWith("update")) {
+      final boolean resultSet;
+      if (methodName.startsWith("get") || methodName.startsWith("update")) {
+        resultSet = true;
+      } else if (methodName.startsWith("set")) {
+        resultSet = false;
+      } else {
         return;
       }
       final PsiExpressionList argumentList = expression.getArgumentList();
@@ -82,19 +84,20 @@ public class ResultSetIndexZeroInspection extends BaseInspection {
       if (!PsiUtil.isConstantExpression(argument)) {
         return;
       }
-      final Integer val =
-        (Integer)ConstantExpressionUtil.computeCastTo(argument,
-                                                      PsiType.INT);
-      if (val == null || val.intValue() != 0) {
+      final Object val = ExpressionUtils.computeConstantExpression(argument);
+      if (!(val instanceof Integer) || ((Integer)val).intValue() != 0) {
         return;
       }
-      final PsiExpression qualifier =
-        methodExpression.getQualifierExpression();
-      if (!TypeUtils.expressionHasTypeOrSubtype(qualifier,
-                                                "java.sql.ResultSet")) {
-        return;
+      final PsiExpression qualifier = methodExpression.getQualifierExpression();
+      if (resultSet) {
+        if (TypeUtils.expressionHasTypeOrSubtype(qualifier, "java.sql.ResultSet")) {
+          registerError(argument, Boolean.valueOf(resultSet));
+        }
+      } else {
+        if (TypeUtils.expressionHasTypeOrSubtype(qualifier, "java.sql.PreparedStatement")) {
+          registerError(argument, Boolean.valueOf(resultSet));
+        }
       }
-      registerError(argument);
     }
   }
 }
