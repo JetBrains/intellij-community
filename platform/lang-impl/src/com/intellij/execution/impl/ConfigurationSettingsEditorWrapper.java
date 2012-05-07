@@ -125,7 +125,7 @@ public class ConfigurationSettingsEditorWrapper extends SettingsEditor<RunnerAnd
   }
 
   public List<BeforeRunTask> getStepsBeforeLaunch() {
-    return Collections.unmodifiableList(myBeforeRunStepsPanel.getTasks(true));
+    return Collections.unmodifiableList(myBeforeRunStepsPanel.getTasks(false));
   }
 
   public boolean isStoreProjectConfiguration() {

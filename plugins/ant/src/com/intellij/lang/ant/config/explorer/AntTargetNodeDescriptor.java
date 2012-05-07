@@ -97,7 +97,7 @@ final class AntTargetNodeDescriptor extends AntNodeDescriptor {
     final RunManagerEx runManager = RunManagerEx.getInstanceEx(myProject);
     final VirtualFile vFile = buildFile.getVirtualFile();
     if (vFile != null) {
-      for (AntBeforeRunTask task : runManager.getBeforeRunTasks(AntBeforeRunTaskProvider.ID)) {
+      for (AntBeforeRunTask task : runManager.getBeforeRunTasks(AntBeforeRunTaskProvider.ID, true)) {
         if (task.isRunningTarget(myTarget)) {
           myHighlightedText.getEnding().addText(" (Before Run/Debug)", ourPostfixAttributes);
           break;

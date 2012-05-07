@@ -98,9 +98,4 @@ public class CollectionListModel<T> extends AbstractListModel {
     removeAll();
     add(elements);
   }
-
-  @Override
-  public String toString() {
-    return getClass().getName() + " (" + getSize() + " elements)";
-  }
 }

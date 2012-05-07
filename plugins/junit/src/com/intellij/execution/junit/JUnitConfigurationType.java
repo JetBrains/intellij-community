@@ -17,6 +17,7 @@
 package com.intellij.execution.junit;
 
 import com.intellij.execution.ExecutionBundle;
+import com.intellij.execution.RunConfigurationExtension;
 import com.intellij.execution.configuration.ConfigurationFactoryEx;
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.ConfigurationType;
@@ -40,6 +41,11 @@ public class JUnitConfigurationType implements ConfigurationType {
     myFactory = new ConfigurationFactoryEx(this) {
       public RunConfiguration createTemplateConfiguration(Project project) {
         return new JUnitConfiguration("", project, this);
+      }
+
+      @Override
+      public Icon getIcon(@NotNull final RunConfiguration configuration) {
+        return getIcon();
       }
 
       @Override

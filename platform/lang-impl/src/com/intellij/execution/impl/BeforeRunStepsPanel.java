@@ -117,7 +117,7 @@ class BeforeRunStepsPanel extends JPanel {
     myRunConfiguration = settings.getConfiguration();
 
     originalTasks.clear();
-    originalTasks.addAll(RunManagerImpl.getInstanceImpl(myRunConfiguration.getProject()).getBeforeRunTasks(myRunConfiguration));
+    originalTasks.addAll(RunManagerImpl.getInstanceImpl(myRunConfiguration.getProject()).getBeforeRunTasks(myRunConfiguration, true));
     myModel.replaceAll(originalTasks);
     myShowSettingsBeforeRunCheckBox.setSelected(settings.isEditBeforeRun());
     myShowSettingsBeforeRunCheckBox.setEnabled(!(myRunConfiguration instanceof UnknownRunConfiguration));
@@ -202,11 +202,11 @@ class BeforeRunStepsPanel extends JPanel {
         = (RunConfigurationBeforeRunProvider.RunConfigurableBeforeRunTask)task;
       RunConfiguration configuration = runTask.getSettings().getConfiguration();
 
-      List<BeforeRunTask> tasks = RunManagerImpl.getInstanceImpl(configuration.getProject()).getBeforeRunTasks(configuration);
+      List<BeforeRunTask> tasks = RunManagerImpl.getInstanceImpl(configuration.getProject()).getBeforeRunTasks(configuration, true);
       for (BeforeRunTask beforeRunTask : tasks) {
         if (beforeRunTask instanceof RunConfigurationBeforeRunProvider.RunConfigurableBeforeRunTask) {
-          if (configurationSet.add(((RunConfigurationBeforeRunProvider.RunConfigurableBeforeRunTask)beforeRunTask).getSettings().getConfiguration()))
-            getAllRunBeforeRuns(beforeRunTask, configurationSet);
+          configurationSet.add(((RunConfigurationBeforeRunProvider.RunConfigurableBeforeRunTask)beforeRunTask).getSettings().getConfiguration());
+          getAllRunBeforeRuns(beforeRunTask, configurationSet);
         }
       }
     }

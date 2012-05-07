@@ -40,8 +40,8 @@ public class ToggleBeforeRunTaskAction extends MavenToggleAction {
     final DataContext context = e.getDataContext();
     final Pair<MavenProject, String> desc = getTaskDesc(context);
     if (desc != null) {
-      for (MavenBeforeRunTask each : getRunManager(context).getBeforeRunTasks(MavenBeforeRunTasksProvider.ID)) {
-        if (each.isFor(desc.first, desc.second)) return true;
+      for (MavenBeforeRunTask each : getRunManager(context).getBeforeRunTasks(MavenBeforeRunTasksProvider.ID, true)) {
+        if (each.isEnabled() && each.isFor(desc.first, desc.second)) return true;
       }
     }
     return false;

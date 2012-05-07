@@ -69,6 +69,9 @@ public class AntBeforeRunTask extends BeforeRunTask<AntBeforeRunTask>{
   }
 
   public boolean isRunningTarget(AntBuildTarget target) {
+    if (!isEnabled()) {
+      return false;
+    }
     final VirtualFile vFile = target.getModel().getBuildFile().getVirtualFile();
     if (vFile == null) {
       return false;

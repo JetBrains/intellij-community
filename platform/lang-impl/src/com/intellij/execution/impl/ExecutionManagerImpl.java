@@ -97,7 +97,12 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
       final RunManagerImpl runManager = RunManagerImpl.getInstanceImpl(myProject);
 
       final List<BeforeRunTask> activeTasks = new ArrayList<BeforeRunTask>();
-      activeTasks.addAll(runManager.getBeforeRunTasks(runConfiguration));
+        final List<BeforeRunTask> tasks = runManager.getBeforeRunTasks(runConfiguration);
+        for (BeforeRunTask task : tasks) {
+          if (task != null && task.isEnabled()) {
+            activeTasks.add(task);
+          }
+        }
 
       ConfigurationPerRunnerSettings configurationSettings = state != null ? state.getConfigurationSettings() : null;
       final DataContext projectContext = SimpleDataContext.getProjectContext(myProject);
