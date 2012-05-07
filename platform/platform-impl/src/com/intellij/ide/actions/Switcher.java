@@ -942,7 +942,9 @@ public class Switcher extends AnAction implements DumbAware {
     protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
       if (value instanceof FileInfo) {
         VirtualFile virtualFile = ((FileInfo)value).getFirst();
-        String name = UniqueVFilePathBuilder.getInstance().getUniqueVirtualFilePath(myProject, virtualFile);
+        String name = UISettings.getInstance().SHOW_DIRECTORY_FOR_NON_UNIQUE_FILENAMES
+                      ? UniqueVFilePathBuilder.getInstance().getUniqueVirtualFilePath(myProject, virtualFile)
+                      : virtualFile.getName();
         setIcon(IconUtil.getIcon(virtualFile, Iconable.ICON_FLAG_READ_STATUS, myProject));
 
         FileStatus fileStatus = FileStatusManager.getInstance(myProject).getStatus(virtualFile);
