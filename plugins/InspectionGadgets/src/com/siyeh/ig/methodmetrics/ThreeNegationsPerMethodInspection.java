@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,12 +15,12 @@
  */
 package com.siyeh.ig.methodmetrics;
 
+import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.psi.PsiMethod;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.MethodUtils;
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -32,24 +32,31 @@ public class ThreeNegationsPerMethodInspection extends BaseInspection {
    */
   public boolean m_ignoreInEquals = true;
 
+  @SuppressWarnings("UnusedDeclaration")
+  public boolean ignoreInAssert = false;
+
+  @Override
   @NotNull
   public String getID() {
     return "MethodWithMoreThanThreeNegations";
   }
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionGadgetsBundle.message(
       "three.negations.per.method.display.name");
   }
 
+  @Override
   public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(
-      InspectionGadgetsBundle.message(
-        "three.negations.per.method.ignore.option"),
-      this, "m_ignoreInEquals");
+    final MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
+    panel.addCheckbox(InspectionGadgetsBundle.message("three.negations.per.method.ignore.option"), "m_ignoreInEquals");
+    panel.addCheckbox(InspectionGadgetsBundle.message("three.negations.per.method.ignore.assert.option"), "ignoreInAssert");
+    return panel;
   }
 
+  @Override
   @NotNull
   public String buildErrorString(Object... infos) {
     final Integer negationCount = (Integer)infos[0];
@@ -57,6 +64,7 @@ public class ThreeNegationsPerMethodInspection extends BaseInspection {
       "three.negations.per.method.problem.descriptor", negationCount);
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new ThreeNegationsPerMethodVisitor();
   }
@@ -69,7 +77,7 @@ public class ThreeNegationsPerMethodInspection extends BaseInspection {
       if (method.getNameIdentifier() == null) {
         return;
       }
-      final NegationCountVisitor visitor = new NegationCountVisitor();
+      final NegationCountVisitor visitor = new NegationCountVisitor(ignoreInAssert);
       method.accept(visitor);
       final int negationCount = visitor.getCount();
       if (negationCount <= 3) {

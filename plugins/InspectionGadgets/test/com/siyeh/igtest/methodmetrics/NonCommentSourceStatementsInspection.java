@@ -1,4 +1,4 @@
-package com.siyeh.igtest.metrics;
+package com.siyeh.igtest.methodmetrics;
 
 public class NonCommentSourceStatementsInspection
 {

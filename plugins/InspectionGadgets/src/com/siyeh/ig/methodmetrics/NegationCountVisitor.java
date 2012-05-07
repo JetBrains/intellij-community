@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith
+ * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,12 @@ import org.jetbrains.annotations.NotNull;
 
 class NegationCountVisitor extends JavaRecursiveElementVisitor {
 
+  private final boolean myIgnoreInAssertStatements;
   private int m_count = 0;
+
+  public NegationCountVisitor(boolean ignoreInAssertStatements) {
+    myIgnoreInAssertStatements = ignoreInAssertStatements;
+  }
 
   @Override
   public void visitBinaryExpression(@NotNull PsiBinaryExpression expression) {
@@ -42,6 +47,15 @@ class NegationCountVisitor extends JavaRecursiveElementVisitor {
     super.visitPrefixExpression(expression);
     if (expression.getOperationTokenType().equals(JavaTokenType.EXCL)) {
       m_count++;
+    }
+  }
+
+  @Override
+  public void visitAssertStatement(PsiAssertStatement statement) {
+    final int count = m_count;
+    super.visitAssertStatement(statement);
+    if (myIgnoreInAssertStatements) {
+      m_count = count;
     }
   }
 
