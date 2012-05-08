@@ -2,6 +2,7 @@ package com.jetbrains.python.sdk;
 
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkModificator;
+import com.intellij.openapi.projectRoots.SdkType;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.HtmlListCellRenderer;
 import com.intellij.ui.LayeredIcon;
@@ -21,7 +22,7 @@ public class PySdkListCellRenderer extends HtmlListCellRenderer<Sdk> {
   protected void doCustomize(final JList list, final Sdk sdk, final int index, final boolean selected, final boolean hasFocus) {
     if (sdk != null) {
       final PythonSdkFlavor flavor = PythonSdkFlavor.getPlatformIndependentFlavor(sdk.getHomePath());
-      final Icon icon = flavor != null ? flavor.getIcon() : sdk.getSdkType().getIcon();
+      final Icon icon = flavor != null ? flavor.getIcon() : ((SdkType) sdk.getSdkType()).getIcon();
       final String name;
       if (mySdkModificators != null && mySdkModificators.containsKey(sdk)) {
         name = mySdkModificators.get(sdk).getName();

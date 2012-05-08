@@ -4,7 +4,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.SdkType;
+import com.intellij.openapi.projectRoots.SdkTypeId;
 import com.intellij.openapi.roots.JdkOrderEntry;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -100,8 +100,8 @@ public class PyBuiltinCache {
 
   @Nullable
   public static PyFile getBuiltinsForSdk(Project project, Sdk sdk) {
-    SdkType sdk_type = sdk.getSdkType();
-    if (sdk_type instanceof PythonSdkType) {
+    SdkTypeId sdkType = sdk.getSdkType();
+    if (sdkType instanceof PythonSdkType) {
       // dig out the builtins file, create an instance based on it
       final String[] urls = sdk.getRootProvider().getUrls(PythonSdkType.BUILTIN_ROOT_TYPE);
       for (String url : urls) {
