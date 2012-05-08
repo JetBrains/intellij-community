@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,6 +44,8 @@ import com.intellij.openapi.vfs.local.CoreLocalFileSystem;
 import com.intellij.openapi.vfs.newvfs.FileSystemPersistence;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiReferenceService;
+import com.intellij.psi.PsiReferenceServiceImpl;
 import com.intellij.psi.impl.*;
 import com.intellij.psi.impl.file.PsiDirectoryFactory;
 import com.intellij.psi.impl.file.PsiDirectoryFactoryImpl;
@@ -122,6 +124,7 @@ public class CoreEnvironment {
     myApplication.registerService(PsiBuilderFactory.class, new PsiBuilderFactoryImpl());
     myApplication.registerService(ReferenceProvidersRegistry.class, new MockReferenceProvidersRegistry());
     myApplication.registerService(StubTreeLoader.class, new CoreStubTreeLoader());
+    myApplication.registerService(PsiReferenceService.class, new PsiReferenceServiceImpl());
 
     registerExtensionPoint(Extensions.getRootArea(), ContentBasedFileSubstitutor.EP_NAME, ContentBasedFileSubstitutor.class);
     registerExtensionPoint(Extensions.getRootArea(), BinaryFileStubBuilders.EP_NAME, FileTypeExtensionPoint.class);
