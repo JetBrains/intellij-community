@@ -75,4 +75,21 @@ public class GotoRelatedItem {
     }
     return items;
   }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    GotoRelatedItem item = (GotoRelatedItem)o;
+
+    if (myElement != null ? !myElement.equals(item.myElement) : item.myElement != null) return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    return myElement != null ? myElement.hashCode() : 0;
+  }
 }
