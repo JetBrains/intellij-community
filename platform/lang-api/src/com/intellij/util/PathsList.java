@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +16,10 @@
 package com.intellij.util;
 
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -51,7 +52,7 @@ public class PathsList  {
 
   private static final Function<String, VirtualFile> PATH_TO_DIR = new NullableFunction<String, VirtualFile>() {
     public VirtualFile fun(String s) {
-      final FileType fileType = FileTypeManager.getInstance().getFileTypeByFileName(s);
+      final FileType fileType = FileTypeRegistry.getInstance().getFileTypeByFileName(s);
       final VirtualFile localFile = PATH_TO_LOCAL_VFILE.fun(s);
       if (localFile == null) return null;
 
@@ -178,7 +179,7 @@ public class PathsList  {
   }
 
   public void add(File file) {
-    add(PathUtil.getCanonicalPath(file.getAbsolutePath()).replace('/', File.separatorChar));
+    add(FileUtil.toCanonicalPath(file.getAbsolutePath()).replace('/', File.separatorChar));
   }
 
   public void addVirtualFiles(Collection<VirtualFile> files) {
