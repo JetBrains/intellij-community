@@ -32,21 +32,23 @@ import java.util.List;
  * @author peter
  */
 public class PrattBuilderImpl extends PrattBuilder {
-  private final PrattBuilder myParentBuilder;
   private final PsiBuilder myBuilder;
+  private final PrattBuilder myParentBuilder;
+  private final PrattRegistry myRegistry;
   private final LinkedList<IElementType> myLeftSiblings = new LinkedList<IElementType>();
   private boolean myParsingStarted;
   private String myExpectedMessage;
   private int myPriority = Integer.MIN_VALUE;
   private MutableMarker myStartMarker;
 
-  private PrattBuilderImpl(final PsiBuilder builder, final PrattBuilder parent) {
+  private PrattBuilderImpl(final PsiBuilder builder, final PrattBuilder parent, final PrattRegistry registry) {
     myBuilder = builder;
     myParentBuilder = parent;
+    myRegistry = registry;
   }
 
-  public static PrattBuilder createBuilder(final PsiBuilder builder) {
-    return new PrattBuilderImpl(builder, null);
+  public static PrattBuilder createBuilder(final PsiBuilder builder, final PrattRegistry registry) {
+    return new PrattBuilderImpl(builder, null, registry);
   }
 
   public PrattBuilder expecting(final String expectedMessage) {
@@ -79,7 +81,7 @@ public class PrattBuilderImpl extends PrattBuilder {
 
   protected PrattBuilder createChildBuilder() {
     assert myParsingStarted;
-    return new PrattBuilderImpl(myBuilder, this) {
+    return new PrattBuilderImpl(myBuilder, this, myRegistry) {
       protected void doParse() {
         super.doParse();
         PrattBuilderImpl.this.myLeftSiblings.addAll(getResultTypes());
@@ -116,7 +118,7 @@ public class PrattBuilderImpl extends PrattBuilder {
   @Nullable
   private TokenParser findParser() {
     final IElementType tokenType = getTokenType();
-    for (final Trinity<Integer, PathPattern, TokenParser> trinity : PrattRegistry.getParsers(tokenType)) {
+    for (final Trinity<Integer, PathPattern, TokenParser> trinity : myRegistry.getParsers(tokenType)) {
       if (trinity.first > myPriority && trinity.second.accepts(this)) {
         return trinity.third;
       }
