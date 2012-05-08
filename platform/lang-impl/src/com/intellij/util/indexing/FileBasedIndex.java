@@ -37,6 +37,7 @@ import java.util.Set;
  * Author: dmitrylomov
  */
 public abstract class FileBasedIndex implements ApplicationComponent {
+
   public abstract void iterateIndexableFiles(@NotNull ContentIterator processor, @NotNull Project project, ProgressIndicator indicator);
 
   public abstract void registerIndexableSet(@NotNull IndexableFileSet set, @Nullable Project project);
@@ -90,6 +91,11 @@ public abstract class FileBasedIndex implements ApplicationComponent {
   public abstract <K> Collection<K> getAllKeys(@NotNull ID<K, ?> indexId, @NotNull Project project);
 
   public abstract <K> void ensureUpToDate(@NotNull ID<K, ?> indexId, @Nullable Project project, @Nullable GlobalSearchScope filter);
+
+  protected abstract <K> void ensureUpToDate(@NotNull ID<K, ?> indexId,
+                                             @Nullable Project project,
+                                             @Nullable GlobalSearchScope filter,
+                                             @Nullable VirtualFile restrictedFile);
 
   public abstract void requestRebuild(ID<?, ?> indexId, Throwable throwable);
 
