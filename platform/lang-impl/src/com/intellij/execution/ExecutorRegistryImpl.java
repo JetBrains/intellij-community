@@ -33,10 +33,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author spleaner
@@ -55,7 +52,7 @@ public class ExecutorRegistryImpl extends ExecutorRegistry {
   private final Map<String, AnAction> myContextActionId2Action = new HashMap<String, AnAction>();
 
   // [Project, ExecutorId, RunnerId]
-  private final Set<Trinity<Project, String, String>> myInProgress = new java.util.HashSet<Trinity<Project, String, String>>(); 
+  private final Set<Trinity<Project, String, String>> myInProgress = Collections.synchronizedSet(new java.util.HashSet<Trinity<Project, String, String>>());
 
   public ExecutorRegistryImpl(ActionManager actionManager) {
     myActionManager = actionManager;
@@ -143,6 +140,19 @@ public class ExecutorRegistryImpl extends ExecutorRegistry {
             myInProgress.remove(createExecutionId(executorId, env, project));
           }
         });
+      }
+
+      @Override
+      public void projectClosed(final Project project) {
+        // perform cleanup
+        synchronized (myInProgress) {
+          for (Iterator<Trinity<Project, String, String>> it = myInProgress.iterator(); it.hasNext(); ) {
+            final Trinity<Project, String, String> trinity = it.next();
+            if (project.equals(trinity.first)) {
+              it.remove();
+            }
+          }
+        }
       }
     });
     
