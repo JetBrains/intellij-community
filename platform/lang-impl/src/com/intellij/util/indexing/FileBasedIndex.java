@@ -132,10 +132,6 @@ public class FileBasedIndex implements ApplicationComponent {
     myChangedFilesCollector.invalidateIndices(file, false);
   }
 
-  public interface InputFilter {
-    boolean acceptInput(VirtualFile file);
-  }
-
   public FileBasedIndex(final VirtualFileManagerEx vfManager, FileDocumentManager fdm,
                         FileTypeManager fileTypeManager, @NotNull MessageBus bus, SerializationManager sm /*need this parameter to ensure component dependency*/) throws IOException {
     myVfManager = vfManager;

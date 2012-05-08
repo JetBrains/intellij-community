@@ -135,8 +135,8 @@ public class RelaxSymbolIndex extends ScalarIndexExtension<String> {
   }
 
   @Override
-  public FileBasedIndex.InputFilter getInputFilter() {
-    return new FileBasedIndex.InputFilter() {
+  public InputFilter getInputFilter() {
+    return new InputFilter() {
       @Override
       public boolean acceptInput(VirtualFile file) {
         if (file.getFileSystem() instanceof JarFileSystem) {
