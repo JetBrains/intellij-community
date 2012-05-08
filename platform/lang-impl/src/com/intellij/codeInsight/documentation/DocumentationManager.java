@@ -862,8 +862,8 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     fetchDocInfo(getDefaultCollector(element, originalElement), component);
   }
   
-  protected void doUpdateComponent(Editor injectedEditor, PsiFile psiFile) {
-    showJavaDocInfo(injectedEditor, psiFile, false, true);
+  protected void doUpdateComponent(Editor editor, PsiFile psiFile) {
+    showJavaDocInfo(editor, psiFile, false, true);
   }
 
   @Override

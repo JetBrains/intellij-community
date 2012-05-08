@@ -65,7 +65,7 @@ public abstract class DockablePopupManager<T extends JComponent & Disposable> {
 
   protected abstract T createComponent();
   protected abstract void doUpdateComponent(PsiElement element, PsiElement originalElement, T component);
-  protected abstract void doUpdateComponent(Editor injectedEditor, PsiFile psiFile);
+  protected abstract void doUpdateComponent(Editor editor, PsiFile psiFile);
   protected abstract void doUpdateComponent(@NotNull PsiElement element);
 
   protected abstract String getTitle(PsiElement element);
