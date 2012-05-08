@@ -232,7 +232,7 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
       }
       catch (StorageException e) {
         LOG.info(e);
-        FileBasedIndex.requestRebuild(INDEX_ID);
+        FileBasedIndex.getInstance().requestRebuild(INDEX_ID);
       }
     }
 

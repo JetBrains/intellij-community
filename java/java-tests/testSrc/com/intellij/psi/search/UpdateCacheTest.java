@@ -44,6 +44,7 @@ import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.indexing.FileBasedIndex;
+import com.intellij.util.indexing.FileBasedIndexImpl;
 import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
@@ -55,8 +56,8 @@ public class UpdateCacheTest extends PsiTestCase{
   protected void setUp() throws Exception {
     super.setUp();
 
-    FileBasedIndex.requestRebuild(IdIndex.NAME);
-    FileBasedIndex.requestRebuild(TodoIndex.NAME);
+    FileBasedIndex.getInstance().requestRebuild(IdIndex.NAME);
+    FileBasedIndex.getInstance().requestRebuild(TodoIndex.NAME);
   }
 
   @Override
