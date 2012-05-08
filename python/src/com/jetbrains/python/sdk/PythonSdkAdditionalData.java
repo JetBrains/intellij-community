@@ -93,11 +93,6 @@ public class PythonSdkAdditionalData implements SdkAdditionalData {
     }
   }
 
-  @Override
-  public void checkValid(SdkModel sdkModel) throws ConfigurationException {
-
-  }
-
   public void save(@NotNull final Element rootElement) {
     for (VirtualFile addedPath : myAddedPaths) {
       final Element child = new Element(PATHS_ADDED_BY_USER_ROOT);
