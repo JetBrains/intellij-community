@@ -1,8 +1,6 @@
 package com.intellij.compiler;
 
 import com.intellij.compiler.impl.javaCompiler.javac.JavacSettings;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 
 import java.io.File;
 
