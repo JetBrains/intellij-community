@@ -54,7 +54,7 @@ public class TodoIndex extends FileBasedIndexExtension<TodoIndexEntry, Integer> 
     messageBus.connect().subscribe(IndexPatternProvider.INDEX_PATTERNS_CHANGED, new PropertyChangeListener() {
       @Override
       public void propertyChange(PropertyChangeEvent evt) {
-        FileBasedIndex.requestRebuild(NAME);
+        FileBasedIndex.getInstance().requestRebuild(NAME);
       }
     });
   }

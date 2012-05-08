@@ -21,6 +21,7 @@ import com.intellij.psi.search.UsageSearchContext;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.indexing.FileBasedIndex;
+import com.intellij.util.indexing.FileBasedIndexImpl;
 
 import java.io.File;
 import java.util.Arrays;
@@ -35,9 +36,8 @@ public class IdCacheTest extends CodeInsightTestCase{
   protected void setUp() throws Exception {
     super.setUp();
 
-    final FileBasedIndex fileBasedIndex = FileBasedIndex.getInstance();
-    fileBasedIndex.requestRebuild(IdIndex.NAME);
-    fileBasedIndex.requestRebuild(TodoIndex.NAME);
+    FileBasedIndex.getInstance().requestRebuild(IdIndex.NAME);
+    FileBasedIndex.getInstance().requestRebuild(TodoIndex.NAME);
 
     String root = JavaTestUtil.getJavaTestDataPath()+ "/psi/impl/cache/";
 

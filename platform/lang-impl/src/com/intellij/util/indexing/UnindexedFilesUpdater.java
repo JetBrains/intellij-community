@@ -33,11 +33,11 @@ import java.util.List;
  */
 public class UnindexedFilesUpdater implements CacheUpdater {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.indexing.UnindexedFilesUpdater");
-  private final FileBasedIndex myIndex;
+  private final FileBasedIndexImpl myIndex;
   private final Project myProject;
   private long myStarted;
 
-  public UnindexedFilesUpdater(final Project project, FileBasedIndex index) {
+  public UnindexedFilesUpdater(final Project project, FileBasedIndexImpl index) {
     myIndex = index;
     myProject = project;
   }
@@ -51,7 +51,7 @@ public class UnindexedFilesUpdater implements CacheUpdater {
   public VirtualFile[] queryNeededFiles(ProgressIndicator indicator) {
     CollectingContentIterator finder = myIndex.createContentIterator();
     long l = System.currentTimeMillis();
-    FileBasedIndex.iterateIndexableFiles(finder, myProject, indicator);
+    FileBasedIndexImpl.iterateIndexableFiles(finder, myProject, indicator);
     LOG.info("Indexable files iterated in " + (System.currentTimeMillis() - l) + " ms");
     List<VirtualFile> files = finder.getFiles();
     LOG.info("Unindexed files update started: " + files.size() + " files to update");
