@@ -15,9 +15,19 @@
  */
 package com.intellij.openapi.projectRoots;
 
+import com.intellij.openapi.options.ConfigurationException;
+
 /**
- * Container for the SDK properties specific to a particular SDK type.
+ * @author yole
  */
-public interface SdkAdditionalData {
-  Object clone() throws CloneNotSupportedException;
+public interface ValidatableSdkAdditionalData extends SdkAdditionalData {
+  /**
+   * Checks if the SDK properties are configured correctly, and throws an exception
+   * if they are not.
+   *
+   * @param sdkModel the model containing all configured SDKs.
+   * @throws com.intellij.openapi.options.ConfigurationException if the SDK is not configured correctly.
+   * @since 5.0.1
+   */
+  void checkValid(SdkModel sdkModel) throws ConfigurationException;
 }

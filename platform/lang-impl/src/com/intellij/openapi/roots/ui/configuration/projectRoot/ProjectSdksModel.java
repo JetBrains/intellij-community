@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -175,9 +175,9 @@ public class ProjectSdksModel implements SdkModel {
         break;
       }
       final SdkAdditionalData sdkAdditionalData = currItem.getSdkAdditionalData();
-      if (sdkAdditionalData != null) {
+      if (sdkAdditionalData instanceof ValidatableSdkAdditionalData) {
         try {
-          sdkAdditionalData.checkValid(this);
+          ((ValidatableSdkAdditionalData) sdkAdditionalData).checkValid(this);
         }
         catch (ConfigurationException e) {
           if (rootConfigurable != null) {
