@@ -15,10 +15,12 @@
  */
 package com.intellij.execution.impl;
 
-import com.intellij.execution.*;
+import com.intellij.execution.BeforeRunTask;
+import com.intellij.execution.BeforeRunTaskProvider;
+import com.intellij.execution.ExecutionBundle;
+import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.UnknownRunConfiguration;
-import com.intellij.openapi.actionSystem.ActionToolbarPosition;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
@@ -63,8 +65,9 @@ class BeforeRunStepsPanel extends JPanel {
     myList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     myList.setCellRenderer(new MyListCellRenderer());
     ToolbarDecorator myDecorator = ToolbarDecorator.createDecorator(myList).setVisibleRowCount(4);
-    if (!SystemInfo.isMac)
-      myDecorator.setToolbarPosition(ActionToolbarPosition.TOP);
+    if (!SystemInfo.isMac) {
+      myDecorator.setAsTopToolbar();
+    }
     myDecorator.setEditAction(new AnActionButtonRunnable() {
       @Override
       public void run(AnActionButton button) {

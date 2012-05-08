@@ -32,9 +32,9 @@ import java.util.*;
  */
 public class CommonActionsPanel extends JPanel {
   public static enum Buttons {
-    ADD, EDIT, REMOVE, UP, DOWN;
+    ADD, REMOVE, EDIT,  UP, DOWN;
 
-    public static Buttons[] ALL = {ADD, EDIT, REMOVE, UP, DOWN};
+    public static Buttons[] ALL = {ADD, REMOVE, EDIT,  UP, DOWN};
 
     Icon getIcon() {
       switch (this) {

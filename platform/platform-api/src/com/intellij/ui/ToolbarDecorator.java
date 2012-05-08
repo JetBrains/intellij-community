@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.intellij.ui;
 
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.table.TableView;
@@ -30,9 +31,7 @@ import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.border.LineBorder;
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Comparator;
+import java.util.*;
 import java.util.List;
 
 /**
@@ -287,7 +286,11 @@ public abstract class ToolbarDecorator implements DataProvider, CommonActionsPan
                              myButtonComparator,
                              myAddName, myRemoveName, myMoveUpName, myMoveDownName, myEditName,
                              buttons);
-    myPanel.setBorder(myBorder);
+    if (myAsTopToolbar) {
+      contextComponent.setBorder(IdeBorderFactory.createBorder(SideBorder.ALL));
+    } else {
+      myPanel.setBorder(myBorder);
+    }
     final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(contextComponent);
     if (myPreferredSize != null) {
       scrollPane.setPreferredSize(myPreferredSize);
@@ -307,7 +310,12 @@ public abstract class ToolbarDecorator implements DataProvider, CommonActionsPan
     installDnD();
     panel.putClientProperty(ActionToolbar.ACTION_TOOLBAR_PROPERTY_KEY, myPanel.getComponent(0));
     DataManager.registerDataProvider(panel, this);
-    if (!myAsTopToolbar) {
+    if (myAsTopToolbar) {
+      panel.setBorder(null);
+      if (getComponent().getBorder() == null) {
+        getComponent().setBorder(IdeBorderFactory.createBorder(SideBorder.ALL));
+      }
+    } else {
       panel.setBorder(new LineBorder(UIUtil.getBorderColor()));
       final JComponent c = getComponent();
       if (contextComponent != null) {
@@ -358,21 +366,21 @@ public abstract class ToolbarDecorator implements DataProvider, CommonActionsPan
 
   private CommonActionsPanel.Buttons[] getButtons() {
     final ArrayList<CommonActionsPanel.Buttons> buttons = new ArrayList<CommonActionsPanel.Buttons>();
-    if (myAddActionEnabled && myAddAction != null) {
-      buttons.add(CommonActionsPanel.Buttons.ADD);
+    final HashMap<CommonActionsPanel.Buttons, Pair<Boolean, AnActionButtonRunnable>> map =
+      new HashMap<CommonActionsPanel.Buttons, Pair<Boolean, AnActionButtonRunnable>>();
+    map.put(CommonActionsPanel.Buttons.ADD, Pair.create(myAddActionEnabled, myAddAction));
+    map.put(CommonActionsPanel.Buttons.REMOVE, Pair.create(myRemoveActionEnabled, myRemoveAction));
+    map.put(CommonActionsPanel.Buttons.EDIT, Pair.create(myEditActionEnabled, myEditAction));
+    map.put(CommonActionsPanel.Buttons.UP, Pair.create(myUpActionEnabled, myUpAction));
+    map.put(CommonActionsPanel.Buttons.DOWN, Pair.create(myDownActionEnabled, myDownAction));
+
+    for (CommonActionsPanel.Buttons button : CommonActionsPanel.Buttons.values()) {
+      final Pair<Boolean, AnActionButtonRunnable> action = map.get(button);
+      if (action != null && action.first && action.second != null) {
+        buttons.add(button);
+      }
     }
-    if (myEditActionEnabled && myEditAction != null) {
-      buttons.add(CommonActionsPanel.Buttons.EDIT);
-    }
-    if (myRemoveActionEnabled && myRemoveAction != null) {
-      buttons.add(CommonActionsPanel.Buttons.REMOVE);
-    }
-    if (myUpActionEnabled && myUpAction != null) {
-      buttons.add(CommonActionsPanel.Buttons.UP);
-    }
-    if (myDownActionEnabled && myDownAction != null) {
-      buttons.add(CommonActionsPanel.Buttons.DOWN);
-    }
+
     return buttons.toArray(new CommonActionsPanel.Buttons[buttons.size()]);
   }
 
