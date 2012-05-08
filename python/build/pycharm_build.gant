@@ -43,31 +43,8 @@ setProperty("pluginFilter", [
             "python-remote-interpreter"
             ])
 
-private List platformImplementationModules() {
-  return [
-          "core-impl",
-          "RegExpSupport",
-          "license_common",
-          "platform-ultimate",
-          "platform-impl",
-          "vcs-impl",
-          "lang-impl",
-          "testRunner",
-          "smRunner",
-          "xdebugger-impl",
-          "xml",
-          "relaxng",
-          "lvcs-impl",
-          "images",
-          "spellchecker",
-          "dom-impl",
-          "yaml",
-          "coverage-common"
-  ]
-}
-
-private List<String> platformApiModules() {
-  return ["core-api", "platform-api", "lvcs-api", "lang-api", "vcs-api", "usageView", "xdebugger-api", "xml-openapi", "dom-openapi", "webide-api"]
+private List pycharmImplementationModules() {
+  return ["yaml", "coverage-common", "python", "python-ide"]
 }
 
 class Paths {
@@ -99,7 +76,7 @@ setProperty("buildName", "PY-$buildNumber")
 
 target('default': "Build artifacts") {
   def modules = [
-          "python", "python-ide", "python-pydev", "colorSchemes", platformApiModules(), platformImplementationModules(), pluginFilter
+          "python-pydev", "colorSchemes", platformUltimateApiModules, platformUltimateImplementationModules, pycharmImplementationModules(), pluginFilter
   ].flatten()
 
   loadProject()
@@ -242,8 +219,8 @@ private String appInfoFile() {
 }
 
 private layoutFull(Map args, String target, Set usedJars) {
-  def openapiModules = platformApiModules()
-  def implementationModules = [platformImplementationModules(), "python", "python-ide"].flatten()
+  def openapiModules = platformUltimateApiModules
+  def implementationModules = [platformUltimateImplementationModules, pycharmImplementationModules()].flatten()
 
   def result = layout(target) {
     dir("lib") {
