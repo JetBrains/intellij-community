@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkType;
 import com.intellij.openapi.projectRoots.JdkUtil;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.SdkType;
+import com.intellij.openapi.projectRoots.SdkTypeId;
 import com.intellij.openapi.util.Computable;
 
 public class CommandLineBuilder {
@@ -70,7 +70,7 @@ public class CommandLineBuilder {
               throw new CantRunException(ExecutionBundle.message("run.configuration.error.no.jdk.specified"));
             }
 
-            final SdkType sdkType = jdk.getSdkType();
+            final SdkTypeId sdkType = jdk.getSdkType();
             if (!(sdkType instanceof JavaSdkType)) {
               throw new CantRunException(ExecutionBundle.message("run.configuration.error.no.jdk.specified"));
             }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.SdkType;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.roots.libraries.Library;
@@ -120,7 +121,7 @@ public class OrderEntryAppearanceServiceImpl extends OrderEntryAppearanceService
 
     String name = jdk.getName();
     CompositeAppearance appearance = new CompositeAppearance();
-    appearance.setIcon(jdk.getSdkType().getIcon());
+    appearance.setIcon(((SdkType) jdk.getSdkType()).getIcon());
     VirtualFile homeDirectory = jdk.getHomeDirectory();
     SimpleTextAttributes attributes = getTextAttributes(homeDirectory != null && homeDirectory.isValid(), selected);
     CompositeAppearance.DequeEnd ending = appearance.getEnding();

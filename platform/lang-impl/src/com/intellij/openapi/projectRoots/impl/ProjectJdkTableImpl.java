@@ -20,7 +20,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.JavaSdkType;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
@@ -74,12 +74,12 @@ public class ProjectJdkTableImpl extends ProjectJdkTable implements PersistentSt
       }
 
       private void updateJdks(VirtualFile file) {
-        if (file.isDirectory() || !StdFileTypes.ARCHIVE.equals(file.getFileType())) {
+        if (file.isDirectory() || !FileTypes.ARCHIVE.equals(file.getFileType())) {
           // consider only archive files that may contain libraries
           return;
         }
         for (Sdk sdk : mySdks) {
-          final SdkType sdkType = sdk.getSdkType();
+          final SdkType sdkType = (SdkType)sdk.getSdkType();
           if (!(sdkType instanceof JavaSdkType)) {
             continue;
           }

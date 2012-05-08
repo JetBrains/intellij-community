@@ -517,7 +517,7 @@ public class CompileServerManager implements ApplicationComponent{
       }
       final SdkAdditionalData data = sdk.getSdkAdditionalData();
       final String additionalDataXml;
-      final SdkType sdkType = sdk.getSdkType();
+      final SdkType sdkType = (SdkType)sdk.getSdkType();
       if (data == null) {
         additionalDataXml = null;
       }

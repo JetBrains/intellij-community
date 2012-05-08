@@ -255,7 +255,7 @@ public class IdeaJdk extends SdkType implements JavaSdkType {
   }
 
   public static boolean isValidInternalJdk(Sdk ideaSdk, Sdk sdk) {
-    final SdkType sdkType = sdk.getSdkType();
+    final SdkTypeId sdkType = sdk.getSdkType();
     if (sdkType instanceof JavaSdk) {
       final JavaSdkVersion version = JavaSdk.getInstance().getVersion(sdk);
       JavaSdkVersion requiredVersion = getRequiredJdkVersion(ideaSdk);
