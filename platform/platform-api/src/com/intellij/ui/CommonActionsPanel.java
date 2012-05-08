@@ -32,9 +32,9 @@ import java.util.*;
  */
 public class CommonActionsPanel extends JPanel {
   public static enum Buttons {
-    ADD, EDIT, REMOVE, UP, DOWN;
+    ADD, REMOVE, EDIT,  UP, DOWN;
 
-    public static Buttons[] ALL = {ADD, EDIT, REMOVE, UP, DOWN};
+    public static Buttons[] ALL = {ADD, REMOVE, EDIT,  UP, DOWN};
 
     Icon getIcon() {
       switch (this) {
@@ -198,6 +198,9 @@ public class CommonActionsPanel extends JPanel {
 
     @Override
     public void updateButton(AnActionEvent e) {
+      super.updateButton(e);
+      if (!e.getPresentation().isEnabled()) return;
+
       final JComponent c = getContextComponent();
       if (c instanceof JTable || c instanceof JList) {
         final ListSelectionModel model = c instanceof JTable ? ((JTable)c).getSelectionModel() 

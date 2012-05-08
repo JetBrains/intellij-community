@@ -32,7 +32,6 @@ public class DomGotoRelatedItem extends GotoRelatedItem {
     myElement = element;
   }
 
-  @NotNull
   @Override
   public String getCustomName() {
     return myElement.getPresentation().getElementName();

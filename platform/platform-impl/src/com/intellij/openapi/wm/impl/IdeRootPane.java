@@ -222,7 +222,7 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
       myNorthPanel.remove(myToolbar);
     }
     myToolbar = createToolbar();
-    myNorthPanel.add(myToolbar);
+    myNorthPanel.add(myToolbar, 0);
     updateToolbarVisibility();
     myContentPane.revalidate();
   }
