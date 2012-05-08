@@ -81,7 +81,7 @@ public class AntImportsIndex extends ScalarIndexExtension<Integer>{
       return map;
     }
   };
-  private static final FileBasedIndex.InputFilter INPUT_FILTER = new FileBasedIndex.InputFilter() {
+  private static final InputFilter INPUT_FILTER = new InputFilter() {
     @Override
     public boolean acceptInput(final VirtualFile file) {
       return file.getFileType() instanceof XmlFileType;
@@ -111,7 +111,7 @@ public class AntImportsIndex extends ScalarIndexExtension<Integer>{
   }
 
   @Override
-  public FileBasedIndex.InputFilter getInputFilter() {
+  public InputFilter getInputFilter() {
     return INPUT_FILTER;
   }
 
