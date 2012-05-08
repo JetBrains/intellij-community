@@ -59,7 +59,7 @@ public class Foundation {
   public static ID getObjcClass(String className) {
     return myFoundationLibrary.objc_getClass(className);
   }
-  
+
   public static ID getProtocol(String name) {
     return myFoundationLibrary.objc_getProtocol(name);
   }
@@ -95,7 +95,7 @@ public class Foundation {
   public static boolean addMethod(ID cls, Pointer selectorName, Callback impl, String types) {
     return myFoundationLibrary.class_addMethod(cls, selectorName, impl, types);
   }
-  
+
   public static boolean addProtocol(ID aClass, ID protocol) {
     return myFoundationLibrary.class_addProtocol(aClass, protocol);
   }
@@ -178,7 +178,7 @@ public class Foundation {
 
   @Nullable
   public static String getEncodingName(long nsStringEncoding) {
-    int cfEncoding = myFoundationLibrary.CFStringConvertNSStringEncodingToEncoding(nsStringEncoding);
+    long cfEncoding = myFoundationLibrary.CFStringConvertNSStringEncodingToEncoding(nsStringEncoding);
     ID pointer = myFoundationLibrary.CFStringConvertEncodingToIANACharSetName(cfEncoding);
     return toStringViaUTF8(pointer);
   }
@@ -187,10 +187,16 @@ public class Foundation {
     if (StringUtil.isEmptyOrSpaces(encodingName)) return -1;
 
     ID converted = nsString(encodingName);
-    int cfEncoding = myFoundationLibrary.CFStringConvertIANACharSetNameToEncoding(converted);
-    if (cfEncoding == FoundationLibrary.kCFStringEncodingInvalidId) return -1;
+    long cfEncoding = myFoundationLibrary.CFStringConvertIANACharSetNameToEncoding(converted);
 
-    return myFoundationLibrary.CFStringConvertEncodingToNSStringEncoding(cfEncoding);
+    ID restored = myFoundationLibrary.CFStringConvertEncodingToIANACharSetName(cfEncoding);
+    if (ID.NIL.equals(restored)) return -1;
+
+    return convertCFEncodingToNS(cfEncoding); // trim to unsigned long C-type
+  }
+
+  private static long convertCFEncodingToNS(long cfEncoding) {
+    return myFoundationLibrary.CFStringConvertEncodingToNSStringEncoding(cfEncoding) & 0xffffffffffl;
   }
 
   public static void cfRetain(ID id) {
@@ -277,18 +283,18 @@ public class Foundation {
       ourRunnableCallback = callback;
     }
   }
-  
+
   public static class NSDictionary {
     private ID myDelegate;
-    
+
     public NSDictionary(ID delegate) {
       myDelegate = delegate;
     }
-    
+
     public ID get(ID key) {
       return invoke(myDelegate, "objectForKey:", key);
     }
-    
+
     public ID get(String key) {
       return get(nsString(key));
     }
@@ -313,7 +319,7 @@ public class Foundation {
       return invoke(myDelegate, "objectAtIndex:", index);
     }
   }
-  
+
   public static class NSAutoreleasePool {
     private ID myDelegate;
 

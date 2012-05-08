@@ -34,11 +34,11 @@ public interface FoundationLibrary extends Library {
   byte CFStringGetCString(ID theString, byte[] buffer, int bufferSize, int encoding);
   int CFStringGetLength(ID theString);
 
-  int CFStringConvertNSStringEncodingToEncoding(long nsEncoding);
-  ID CFStringConvertEncodingToIANACharSetName(int cfEncoding);
+  long CFStringConvertNSStringEncodingToEncoding(long nsEncoding);
+  ID CFStringConvertEncodingToIANACharSetName(long cfEncoding);
 
-  int CFStringConvertIANACharSetNameToEncoding(ID encodingName);
-  long CFStringConvertEncodingToNSStringEncoding(int cfEncoding);
+  long CFStringConvertIANACharSetNameToEncoding(ID encodingName);
+  long CFStringConvertEncodingToNSStringEncoding(long cfEncoding);
 
   void CFRetain(ID cfTypeRef);
   void CFRelease(ID cfTypeRef);
@@ -83,6 +83,4 @@ public interface FoundationLibrary extends Library {
   int kCFStringEncodingUTF32 = 0x0c000100;
   int kCFStringEncodingUTF32BE = 0x18000100;
   int kCFStringEncodingUTF32LE = 0x1c000100;
-
-  int kCFStringEncodingInvalidId = 0xffffffff;
 }
