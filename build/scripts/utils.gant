@@ -222,6 +222,35 @@ binding.setVariable("classPathLibs", [
         "jna.jar"
 ])
 
+binding.setVariable("platformApiModules", [
+        "core-api",
+        "indexing-api",
+        "platform-api",
+        "lvcs-api",
+        "lang-api",
+        "vcs-api",
+        "usageView",
+        "xdebugger-api",
+        "xml-openapi"
+])
+
+
+binding.setVariable("platformImplementationModules", [
+        "core-impl",
+        "platform-impl",
+        "vcs-impl",
+        "lang-impl",
+        "testRunner",
+        "smRunner",
+        "xdebugger-impl",
+        "xml",
+        "relaxng",
+        "lvcs-impl",
+        "spellchecker",
+        "images",
+        "RegExpSupport"
+])
+
 binding.setVariable("layoutMacApp", { String path, String ch, Map args ->
   ant.copy(todir: "$path/bin") {
     fileset(dir: "$ch/bin/mac")

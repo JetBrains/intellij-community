@@ -44,39 +44,18 @@ String patchAppDescriptor(String targetDirectory) {
   return patchedDirectory
 }
 
-private List platformImplementationModules() {
-  return [
-          "core-impl",
-          "platform-impl",
-          "vcs-impl",
-          "lang-impl",
-          "testRunner",
-          "smRunner",
-          "xdebugger-impl",
-          "testFramework",
-          "tests_bootstrap",
-          "xml",
-          "relaxng",
-          "lvcs-impl",
-          "spellchecker",
-          "images",
-  ]
-}
-
-private List<String> platformApiModules() {
-  return ["core-api", "platform-api", "lvcs-api", "lang-api", "vcs-api", "usageView", "xdebugger-api", "xml-openapi"]
-}
-
 def layoutFull(String home, String targetDirectory, String patchedDescriptorDir = null) {
   project.stage("layout to $targetDirectory")
 
   //noinspection GroovyAssignabilityCheck
-  List<String> openapiModules = [platformApiModules(),
+  List<String> openapiModules = [platformApiModules,
           "java-psi-api", "openapi", "testFramework-java", "debugger-openapi", "compiler-openapi", "dom-openapi", "execution-openapi",
           "jsp-openapi", "jsp-base-openapi"].flatten()
 
   //noinspection GroovyAssignabilityCheck
-  List<String> implementationModules = [platformImplementationModules(),
+  List<String> implementationModules = [platformImplementationModules,
+          "testFramework",
+          "tests_bootstrap",
           "instrumentation-util",
           "platform-main",
           "java-psi-impl",
@@ -86,9 +65,8 @@ def layoutFull(String home, String targetDirectory, String patchedDescriptorDir 
           "dom-impl",
           "execution-impl",
           "jsp-spi",
-          "idea-ui",
-          //"ultimate-verifier",
-          "RegExpSupport"].flatten()
+          "idea-ui"
+          ].flatten()
 
   ant.patternset(id: "resources.included") {
     include(name: "**/*.properties")
