@@ -153,8 +153,8 @@ public class TokenIndex extends FileBasedIndexExtension<TokenIndexKey, List<Toke
   }
 
   @Override
-  public FileBasedIndex.InputFilter getInputFilter() {
-    return new FileBasedIndex.InputFilter() {
+  public InputFilter getInputFilter() {
+    return new InputFilter() {
       @Override
       public boolean acceptInput(VirtualFile file) {
         if (file.getFileSystem() instanceof JarFileSystem) return false;
