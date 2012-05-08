@@ -137,7 +137,9 @@ public class VirtualFilePointerImpl extends UserDataHolderBase implements Virtua
     @Override
     public void printStackTrace(PrintStream s) {
       //noinspection IOResourceOpenedButNotSafelyClosed
-      printStackTrace(new PrintWriter(s));
+      PrintWriter writer = new PrintWriter(s);
+      printStackTrace(writer);
+      writer.flush();
     }
 
     @Override
