@@ -43,7 +43,6 @@ import com.intellij.util.PathUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.ContainerUtilRt;
 import gnu.trove.THashMap;
 import org.apache.lucene.search.Query;
 import org.jetbrains.annotations.NonNls;
