@@ -29,7 +29,7 @@ import java.util.Set;
 public class AndroidValueResourcesIndex extends FileBasedIndexExtension<ResourceEntry, Set<ResourceEntry>> {
   public static final ID<ResourceEntry, Set<ResourceEntry>> INDEX_ID = ID.create("android.value.resources.index");
 
-  private final FileBasedIndex.InputFilter myInputFilter = new FileBasedIndex.InputFilter() {
+  private final InputFilter myInputFilter = new InputFilter() {
     @Override
     public boolean acceptInput(final VirtualFile file) {
       return (file.getFileSystem() == LocalFileSystem.getInstance() || file.getFileSystem() instanceof TempFileSystem) &&
@@ -152,7 +152,7 @@ public class AndroidValueResourcesIndex extends FileBasedIndexExtension<Resource
   }
 
   @Override
-  public FileBasedIndex.InputFilter getInputFilter() {
+  public InputFilter getInputFilter() {
     return myInputFilter;
   }
 
