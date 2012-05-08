@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,31 +15,30 @@
  */
 package com.intellij.lang.pratt;
 
+import com.intellij.lang.ITokenTypeRemapper;
 import com.intellij.lexer.Lexer;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.lang.ITokenTypeRemapper;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.LinkedList;
+import java.util.List;
 import java.util.ListIterator;
 
 /**
  * @author peter
  */
 public abstract class PrattBuilder {
-
   public abstract Lexer getLexer();
 
   public abstract void setTokenTypeRemapper(@Nullable ITokenTypeRemapper remapper);
 
   public abstract MutableMarker mark();
 
-  public PrattBuilderFacade createChildBuilder(int priority, @Nullable String expectedMessage) {
+  public PrattBuilder createChildBuilder(int priority, @Nullable String expectedMessage) {
     return createChildBuilder(priority).expecting(expectedMessage);
   }
 
-  public PrattBuilderFacade createChildBuilder(int priority) {
+  public PrattBuilder createChildBuilder(int priority) {
     return createChildBuilder().withLowestPriority(priority);
   }
 
@@ -48,7 +47,7 @@ public abstract class PrattBuilder {
     return createChildBuilder(priority, expectedMessage).parse();
   }
 
-  protected abstract PrattBuilderFacade createChildBuilder();
+  protected abstract PrattBuilder createChildBuilder();
 
   public boolean assertToken(final PrattTokenType type) {
     if (checkToken(type)) {
@@ -95,15 +94,22 @@ public abstract class PrattBuilder {
   public abstract void reduce(@NotNull IElementType type);
 
   public ListIterator<IElementType> getBackResultIterator() {
-    final LinkedList<IElementType> resultTypes = getResultTypes();
+    final List<IElementType> resultTypes = getResultTypes();
     return resultTypes.listIterator(resultTypes.size());
   }
 
-  public abstract LinkedList<IElementType> getResultTypes();
+  public abstract List<IElementType> getResultTypes();
 
   public abstract PrattBuilder getParent();
 
   public abstract int getPriority();
 
   public abstract int getCurrentOffset();
+
+  public abstract PrattBuilder expecting(@Nullable String expectedMessage);
+
+  public abstract PrattBuilder withLowestPriority(int priority);
+
+  @Nullable
+  public abstract IElementType parse();
 }

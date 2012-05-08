@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,9 +18,10 @@ package com.intellij.lang.pratt;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.containers.MultiMap;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
-import java.util.Collections;
 
 /**
  * @author peter
@@ -28,17 +29,16 @@ import java.util.Collections;
 public class PrattRegistry {
   private static final MultiMap<IElementType, Trinity<Integer, PathPattern, TokenParser>> ourMap = new MultiMap<IElementType, Trinity<Integer, PathPattern, TokenParser>>();
 
-  public static void registerParser(IElementType type, int priority, TokenParser parser) {
+  public static void registerParser(@NotNull final IElementType type, final int priority, final TokenParser parser) {
     registerParser(type, priority, PathPattern.path(), parser);
   }
 
-  public static void registerParser(final IElementType type, final int priority, final PathPattern pattern, final TokenParser parser) {
+  public static void registerParser(@NotNull final IElementType type, final int priority, final PathPattern pattern, final TokenParser parser) {
     ourMap.putValue(type, new Trinity<Integer, PathPattern, TokenParser>(priority, pattern, parser));
   }
 
-  public static Collection<Trinity<Integer, PathPattern, TokenParser>> getParsers(IElementType type) {
-    final Collection<Trinity<Integer,PathPattern,TokenParser>> trinities = ourMap.get(type);
-    return trinities == null ? Collections.<Trinity<Integer, PathPattern, TokenParser>>emptyList() : trinities;
+  @NotNull
+  public static Collection<Trinity<Integer, PathPattern, TokenParser>> getParsers(@Nullable final IElementType type) {
+    return ourMap.get(type);
   }
-
 }

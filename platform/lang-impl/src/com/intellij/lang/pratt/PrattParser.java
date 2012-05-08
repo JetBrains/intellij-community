@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,16 +27,14 @@ import org.jetbrains.annotations.NotNull;
 public abstract class PrattParser implements PsiParser {
   @NotNull
   public final ASTNode parse(final IElementType root, final PsiBuilder builder) {
-    //builder.setDebugMode(true);
-
-    final PrattBuilderImpl prattBuilder = PrattBuilderImpl.createBuilder(builder);
+    final PrattBuilder prattBuilder = PrattBuilderImpl.createBuilder(builder);
     final MutableMarker marker = prattBuilder.mark();
     parse(prattBuilder);
     marker.finish(root);
     return builder.getTreeBuilt();
   }
 
-  protected void parse(final PrattBuilderImpl builder) {
+  protected void parse(final PrattBuilder builder) {
     builder.parse();
     while (!builder.isEof()) builder.advance();
   }

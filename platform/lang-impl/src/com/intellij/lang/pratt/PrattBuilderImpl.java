@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,9 +15,9 @@
  */
 package com.intellij.lang.pratt;
 
+import com.intellij.lang.ITokenTypeRemapper;
 import com.intellij.lang.LangBundle;
 import com.intellij.lang.PsiBuilder;
-import com.intellij.lang.ITokenTypeRemapper;
 import com.intellij.lang.impl.PsiBuilderImpl;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.util.Trinity;
@@ -26,11 +26,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.LinkedList;
+import java.util.List;
 
 /**
  * @author peter
  */
-public class PrattBuilderImpl extends PrattBuilder implements PrattBuilderFacade {
+public class PrattBuilderImpl extends PrattBuilder {
   private final PrattBuilder myParentBuilder;
   private final PsiBuilder myBuilder;
   private final LinkedList<IElementType> myLeftSiblings = new LinkedList<IElementType>();
@@ -44,16 +45,16 @@ public class PrattBuilderImpl extends PrattBuilder implements PrattBuilderFacade
     myParentBuilder = parent;
   }
 
-  public static PrattBuilderImpl createBuilder(final PsiBuilder builder) {
+  public static PrattBuilder createBuilder(final PsiBuilder builder) {
     return new PrattBuilderImpl(builder, null);
   }
 
-  public PrattBuilderFacade expecting(final String expectedMessage) {
+  public PrattBuilder expecting(final String expectedMessage) {
     myExpectedMessage = expectedMessage;
     return this;
   }
 
-  public PrattBuilderFacade withLowestPriority(final int priority) {
+  public PrattBuilder withLowestPriority(final int priority) {
     myPriority = priority;
     return this;
   }
@@ -76,7 +77,7 @@ public class PrattBuilderImpl extends PrattBuilder implements PrattBuilderFacade
     return myLeftSiblings.size() != 1 ? null : myLeftSiblings.getLast();
   }
 
-  protected PrattBuilderFacade createChildBuilder() {
+  protected PrattBuilder createChildBuilder() {
     assert myParsingStarted;
     return new PrattBuilderImpl(myBuilder, this) {
       protected void doParse() {
@@ -150,7 +151,7 @@ public class PrattBuilderImpl extends PrattBuilder implements PrattBuilderFacade
   }
 
   @NotNull
-  public LinkedList<IElementType> getResultTypes() {
+  public List<IElementType> getResultTypes() {
     checkParsed();
     return myLeftSiblings;
   }
