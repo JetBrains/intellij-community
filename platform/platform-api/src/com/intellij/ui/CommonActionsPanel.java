@@ -198,6 +198,9 @@ public class CommonActionsPanel extends JPanel {
 
     @Override
     public void updateButton(AnActionEvent e) {
+      super.updateButton(e);
+      if (!e.getPresentation().isEnabled()) return;
+
       final JComponent c = getContextComponent();
       if (c instanceof JTable || c instanceof JList) {
         final ListSelectionModel model = c instanceof JTable ? ((JTable)c).getSelectionModel() 
