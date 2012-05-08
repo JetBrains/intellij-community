@@ -118,7 +118,7 @@ public class CreateModuleLibraryChooser implements ClasspathElementChooser<Libra
     final FileChooserDescriptor chooserDescriptor;
     final List<Pair<LibraryRootsComponentDescriptor, FileChooserDescriptor>> descriptors = new ArrayList<Pair<LibraryRootsComponentDescriptor, FileChooserDescriptor>>();
     for (LibraryRootsComponentDescriptor componentDescriptor : myLibraryTypes.keySet()) {
-      descriptors.add(Pair.create(componentDescriptor, componentDescriptor.createAttachFilesChooserDescriptor()));
+      descriptors.add(Pair.create(componentDescriptor, componentDescriptor.createAttachFilesChooserDescriptor(null)));
     }
     if (descriptors.size() == 1) {
       chooserDescriptor = descriptors.get(0).getSecond();
@@ -168,7 +168,7 @@ public class CreateModuleLibraryChooser implements ClasspathElementChooser<Libra
       rootsComponentDescriptor = myDefaultDescriptor;
     }
     List<OrderRoot> chosenRoots = RootDetectionUtil.detectRoots(Arrays.asList(files), myParentComponent, myModule.getProject(),
-                                                                rootsComponentDescriptor.getRootDetectors(), true);
+                                                                rootsComponentDescriptor);
 
     final List<OrderRoot> roots = filterAlreadyAdded(chosenRoots);
     if (roots.isEmpty()) {

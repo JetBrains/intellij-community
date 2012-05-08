@@ -126,6 +126,7 @@ public class StringUtil {
     return newBuffer == null ? buffer : newBuffer.toString();
   }
 
+  @Nullable
   public static String replace(@NotNull final String text, @NotNull final String oldS, @Nullable final String newS, boolean ignoreCase) {
     if (text.length() < oldS.length()) return text;
 
@@ -1036,6 +1037,7 @@ public class StringUtil {
     return ExceptionUtil.getThrowableText(aThrowable, stackFrameSkipPattern);
   }
 
+  @Nullable
   public static String getMessage(@NotNull Throwable e) {
     return ExceptionUtil.getMessage(e);
   }
@@ -1392,6 +1394,7 @@ public class StringUtil {
     return null;
   }
 
+  @Nullable
   private static String stripEnding(@NotNull String name, @NotNull String ending) {
     if (name.endsWith(ending)) {
       if (name.equals(ending)) return name; // do not return empty string
@@ -1625,6 +1628,7 @@ public class StringUtil {
     return -1;
   }
 
+  @Nullable
   public static String substringAfter(@NotNull String text, @NotNull String subString) {
     int i = text.indexOf(subString);
     if (i == -1) return null;
@@ -1743,12 +1747,14 @@ public class StringUtil {
   @NonNls private static final String[] REPLACES_REFS = {"&lt;", "&gt;", "&amp;", "&#39;", "&quot;"};
   @NonNls private static final String[] REPLACES_DISP = {"<", ">", "&", "'", "\""};
 
-  public static String unescapeXml(final String text) {
+  @Nullable
+  public static String unescapeXml(@Nullable final String text) {
     if (text == null) return null;
     return replace(text, REPLACES_REFS, REPLACES_DISP);
   }
 
-  public static String escapeXml(final String text) {
+  @Nullable
+  public static String escapeXml(@Nullable final String text) {
     if (text == null) return null;
     return replace(text, REPLACES_DISP, REPLACES_REFS);
   }
@@ -1853,6 +1859,7 @@ public class StringUtil {
     return r.toString();
   }
 
+  @Nullable
   public static String getPropertyName(@NonNls @NotNull String methodName) {
     if (methodName.startsWith("get")) {
       return Introspector.decapitalize(methodName.substring(3));
@@ -2243,6 +2250,26 @@ public class StringUtil {
     }
     for (int i = 0; i < s1.length(); i++) {
       if (s1.charAt(i) != s2.charAt(i)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  public static boolean equalsIgnoreCase(@Nullable CharSequence s1, @Nullable CharSequence s2) {
+    if (s1 == null ^ s2 == null) {
+      return false;
+    }
+
+    if (s1 == null) {
+      return true;
+    }
+
+    if (s1.length() != s2.length()) {
+      return false;
+    }
+    for (int i = 0; i < s1.length(); i++) {
+      if (!charsMatch(s1.charAt(i),s2.charAt(i), true)) {
         return false;
       }
     }

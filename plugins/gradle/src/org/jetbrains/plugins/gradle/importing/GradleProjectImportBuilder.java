@@ -171,19 +171,27 @@ public class GradleProjectImportBuilder extends ProjectImportBuilder<GradleProje
       throw new ConfigurationException(GradleBundle.message("gradle.import.text.error.directory.instead.file"));
     }
     final Ref<String> errorReason = new Ref<String>();
+    final Ref<String> errorDetails = new Ref<String>();
     try {
       final Project project = getProject(wizardContext);
-      myGradleProject = GradleUtil.refreshProject(project, myProjectFile.getAbsolutePath(), errorReason, false, true);
+      myGradleProject = GradleUtil.refreshProject(project, myProjectFile.getAbsolutePath(), errorReason, errorDetails, false, true);
     }
     catch (IllegalArgumentException e) {
       throw new ConfigurationException(e.getMessage(), GradleBundle.message("gradle.import.text.error.cannot.parse.project"));
     }
     if (myGradleProject == null) {
-      String errorMessage = GradleBundle.message("gradle.import.text.error.resolve.generic.without.reason", myProjectFile.getPath());
+      final String details = errorDetails.get();
+      if (!StringUtil.isEmpty(details)) {
+        GradleLog.LOG.warn(details);
+      }
+      String errorMessage;
       String reason = errorReason.get();
-      if (reason != null) {
-        GradleLog.LOG.warn(GradleBundle.message("gradle.import.text.error.resolve.generic.with.reason", myProjectFile.getPath(), reason));
-      } 
+      if (reason == null) {
+        errorMessage = GradleBundle.message("gradle.import.text.error.resolve.generic.without.reason", myProjectFile.getPath());
+      }
+      else {
+        errorMessage = GradleBundle.message("gradle.import.text.error.resolve.with.reason", reason);
+      }
       throw new ConfigurationException(errorMessage, GradleBundle.message("gradle.import.title.error.resolve.generic"));
     } 
   }

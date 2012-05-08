@@ -14,7 +14,10 @@ package com.intellij.openapi.roots.libraries.ui;
 
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
+import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.roots.libraries.ui.impl.LibraryRootsDetectorImpl;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,8 +39,7 @@ public abstract class LibraryRootsComponentDescriptor {
   public abstract OrderRootTypePresentation getRootTypePresentation(@NotNull OrderRootType type);
 
   /**
-   * Provides root detectors for 'Attach Files' button. They will be used to automatically assign {@link OrderRootType}s for selected files.
-   * Also these detectors are used when a new library is created so the list must not be empty.
+   * Provides separate detectors for root types supported by the library type.
    *
    * @return non-empty list of {@link RootDetector}'s implementations
    */
@@ -45,11 +47,32 @@ public abstract class LibraryRootsComponentDescriptor {
   public abstract List<? extends RootDetector> getRootDetectors();
 
   /**
-   * @return descriptor for the file chooser which will be shown when 'Attach Files' button is pressed
+   * Provides root detector for 'Attach Files' button. It will be used to automatically assign {@link OrderRootType}s for selected files.
+   * Also this detector is used when a new library is created
+   *
+   * @return {@link LibraryRootsDetector}'s implementation
    */
   @NotNull
-  public FileChooserDescriptor createAttachFilesChooserDescriptor() {
-    return FileChooserDescriptorFactory.createMultipleJavaPathDescriptor();
+  public LibraryRootsDetector getRootsDetector() {
+    final List<? extends RootDetector> detectors = getRootDetectors();
+    if (detectors.isEmpty()) {
+      throw new IllegalStateException("Detectors list is empty for " + this);
+    }
+    return new LibraryRootsDetectorImpl(detectors);
+  }
+
+
+  /**
+   * @return descriptor for the file chooser which will be shown when 'Attach Files' button is pressed
+   * @param libraryName
+   */
+  @NotNull
+  public FileChooserDescriptor createAttachFilesChooserDescriptor(@Nullable String libraryName) {
+    final FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createMultipleJavaPathDescriptor();
+    descriptor.setTitle(StringUtil.isEmpty(libraryName) ? ProjectBundle.message("library.attach.files.action")
+                                                        : ProjectBundle.message("library.attach.files.to.library.action", libraryName));
+    descriptor.setDescription(ProjectBundle.message("library.attach.files.description"));
+    return descriptor;
   }
 
   /**
@@ -66,4 +89,7 @@ public abstract class LibraryRootsComponentDescriptor {
     return OrderRootType.getAllTypes();
   }
 
+  public String getAttachFilesActionName() {
+    return ProjectBundle.message("button.text.attach.files");
+  }
 }

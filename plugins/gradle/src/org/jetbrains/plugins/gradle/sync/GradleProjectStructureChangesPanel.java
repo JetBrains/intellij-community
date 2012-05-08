@@ -11,7 +11,7 @@ import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.gradle.config.GradleSettings;
+import org.jetbrains.plugins.gradle.config.GradleLocalSettings;
 import org.jetbrains.plugins.gradle.config.GradleToolWindowPanel;
 import org.jetbrains.plugins.gradle.ui.GradleDataKeys;
 import org.jetbrains.plugins.gradle.ui.GradleProjectStructureNode;
@@ -56,7 +56,7 @@ public class GradleProjectStructureChangesPanel extends GradleToolWindowPanel {
   /** Holds list of paths which 'expand/collapse' state should be restored. */
   private final List<TreePath> myPathsToProcessCollapseState = new ArrayList<TreePath>();
   
-  private final GradleSettings mySettings;
+  private final GradleLocalSettings mySettings;
   
   private Tree                            myTree;
   private GradleProjectStructureTreeModel myTreeModel;
@@ -68,7 +68,7 @@ public class GradleProjectStructureChangesPanel extends GradleToolWindowPanel {
     super(project, GradleConstants.TOOL_WINDOW_TOOLBAR_PLACE);
     myContext = context;
     myToolbarControls.add(new GradleProjectStructureFiltersPanel());
-    mySettings = GradleSettings.getInstance(project);
+    mySettings = GradleLocalSettings.getInstance(project);
     initContent();
   }
 

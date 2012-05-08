@@ -65,6 +65,7 @@
     <applicationService serviceImplementation="org.jetbrains.plugins.gradle.sync.conflict.GradleLibraryDependencyConflictControlFactory"/>
 
     <projectService serviceImplementation="org.jetbrains.plugins.gradle.config.GradleSettings"/>
+    <projectService serviceImplementation="org.jetbrains.plugins.gradle.config.GradleLocalSettings"/>
     <projectService serviceImplementation="org.jetbrains.plugins.gradle.config.GradleProjectState"/>
 
     <toolWindow id="JetGradle" anchor="right" icon="/icons/gradle.png"

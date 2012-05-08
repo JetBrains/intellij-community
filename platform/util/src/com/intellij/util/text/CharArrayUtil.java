@@ -19,9 +19,7 @@ import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.OutputStreamWriter;
+import java.io.*;
 import java.nio.CharBuffer;
 import java.util.ArrayList;
 import java.util.List;
@@ -546,5 +544,13 @@ public class CharArrayUtil {
       }
     }
     return true;
+  }
+
+  public static Reader readerFromCharSequence(CharSequence text) {
+    Reader reader;
+    char[] chars = fromSequenceWithoutCopying(text);
+    if (chars != null) reader = new UnsyncCharArrayReader(chars, 0, text.length());
+    else reader = new CharSequenceReader(text.toString());
+    return reader;
   }
 }

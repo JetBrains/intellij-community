@@ -45,7 +45,7 @@ public class MarkLibraryRootAction extends AnAction {
     final List<VirtualFile> jars = getRoots(e);
     if (jars.isEmpty()) return;
 
-    final List<OrderRoot> roots = RootDetectionUtil.detectRoots(jars, null, project, new DefaultLibraryRootsComponentDescriptor().getRootDetectors(), true);
+    final List<OrderRoot> roots = RootDetectionUtil.detectRoots(jars, null, project, new DefaultLibraryRootsComponentDescriptor());
     new CreateLibraryFromFilesDialog(project, roots).show();
   }
 

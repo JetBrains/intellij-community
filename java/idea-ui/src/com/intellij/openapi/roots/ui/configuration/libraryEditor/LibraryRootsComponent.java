@@ -41,7 +41,6 @@ import com.intellij.openapi.ui.ex.MultiLineLabel;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.AnActionButton;
@@ -173,7 +172,6 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
         }
       });
 
-    final List<? extends RootDetector> detectors = myDescriptor.getRootDetectors();
     toolbarDecorator.setAddAction(new AnActionButtonRunnable() {
       @Override
       public void run(AnActionButton button) {
@@ -188,9 +186,7 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
 
       private AnAction[] getActions() {
         List<AnAction> actions = new ArrayList<AnAction>();
-        if (!detectors.isEmpty()) {
-          actions.add(new AttachFilesAction(detectors, ProjectBundle.message("button.text.attach.files")));
-        }
+        actions.add(new AttachFilesAction(myDescriptor.getAttachFilesActionName()));
         for (AttachRootButtonDescriptor descriptor : myDescriptor.createAttachButtons()) {
           actions.add(new AttachItemAction(descriptor, descriptor.getButtonText()));
         }
@@ -348,27 +344,21 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
   }
 
   private class AttachFilesAction extends AttachItemActionBase {
-    private final List<? extends RootDetector> myDetectors;
-
-    public AttachFilesAction(List<? extends RootDetector> detectors, String title) {
+    public AttachFilesAction(String title) {
       super(title);
-      myDetectors = detectors;
     }
 
     @Override
     protected List<OrderRoot> selectRoots(@Nullable VirtualFile initialSelection) {
-      final FileChooserDescriptor chooserDescriptor = myDescriptor.createAttachFilesChooserDescriptor();
       final String name = getLibraryEditor().getName();
-      chooserDescriptor.setTitle(StringUtil.isEmpty(name) ? ProjectBundle.message("library.attach.files.action")
-                                                          : ProjectBundle.message("library.attach.files.to.library.action", name));
-      chooserDescriptor.setDescription(ProjectBundle.message("library.attach.files.description"));
+      final FileChooserDescriptor chooserDescriptor = myDescriptor.createAttachFilesChooserDescriptor(name);
       if (myContextModule != null) {
         chooserDescriptor.putUserData(LangDataKeys.MODULE_CONTEXT, myContextModule);
       }
       final VirtualFile[] files = FileChooser.chooseFiles(myPanel, chooserDescriptor, initialSelection);
       if (files.length == 0) return Collections.emptyList();
 
-      return RootDetectionUtil.detectRoots(Arrays.asList(files), myPanel, myProject, myDetectors, true);
+      return RootDetectionUtil.detectRoots(Arrays.asList(files), myPanel, myProject, myDescriptor);
     }
   }
 

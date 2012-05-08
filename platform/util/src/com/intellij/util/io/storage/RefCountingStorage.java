@@ -27,6 +27,7 @@ import com.intellij.util.containers.ConcurrentHashMap;
 import com.intellij.util.io.PagePool;
 import com.intellij.util.io.UnsyncByteArrayInputStream;
 
+import java.io.DataInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.util.Map;
@@ -51,10 +52,19 @@ public class RefCountingStorage extends AbstractStorage {
     super(path);
   }
 
+  public DataInputStream readStream(int record) throws IOException {
+    if (myDoNotZipCaches) return super.readStream(record);
+    BufferExposingByteArrayOutputStream stream = internalReadStream(record);
+    return new DataInputStream(new UnsyncByteArrayInputStream(stream.getInternalBuffer(), 0, stream.size()));
+  }
+
   @Override
   protected byte[] readBytes(int record) throws IOException {
-
     if (myDoNotZipCaches) return super.readBytes(record);
+    return internalReadStream(record).toByteArray();
+  }
+
+  private BufferExposingByteArrayOutputStream internalReadStream(int record) throws IOException {
     waitForPendingWriteForRecord(record);
 
     synchronized (myLock) {
@@ -62,7 +72,9 @@ public class RefCountingStorage extends AbstractStorage {
       byte[] result = super.readBytes(record);
       InflaterInputStream in = new InflaterInputStream(new UnsyncByteArrayInputStream(result));
       try {
-        return StreamUtil.loadFromStream(in);
+        final BufferExposingByteArrayOutputStream outputStream = new BufferExposingByteArrayOutputStream();
+        StreamUtil.copyStreamContent(in, outputStream);
+        return outputStream;
       }
       finally {
         in.close();

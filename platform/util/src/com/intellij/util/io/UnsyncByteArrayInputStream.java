@@ -24,9 +24,13 @@ public class UnsyncByteArrayInputStream extends InputStream {
   private int myMarkedPosition;
 
   public UnsyncByteArrayInputStream(byte buf[]) {
+    this(buf, 0, buf.length);
+  }
+
+  public UnsyncByteArrayInputStream(byte buf[], int offset, int length) {
     this.myBuffer = buf;
-    this.myPosition = 0;
-    this.myCount = buf.length;
+    this.myPosition = offset;
+    this.myCount = length;
   }
 
   public int read() {
