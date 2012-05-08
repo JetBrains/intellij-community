@@ -24,6 +24,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.WaitForProgressToShow;
 import com.intellij.util.xmlb.XmlSerializer;
 import com.intellij.util.xmlb.XmlSerializerUtil;
+import com.intellij.util.xmlb.annotations.Transient;
 import org.apache.commons.codec.binary.Base64;
 import org.jdom.Element;
 
@@ -82,10 +83,12 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
     }
   }
 
+  @Transient
   public String getPlainProxyPassword() {
     return new String(new Base64().decode(PROXY_PASSWORD_CRYPT.getBytes()));
   }
 
+  @Transient
   public void setPlainProxyPassword (String password) {
     PROXY_PASSWORD_CRYPT = new String(new Base64().encode(password.getBytes()));
   }
