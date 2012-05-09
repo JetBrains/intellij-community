@@ -2145,6 +2145,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     myIndexableSetToProjectMap.put(set, project);
   }
 
+  @Override
   public void removeIndexableSet(@NotNull IndexableFileSet set) {
     myChangedFilesCollector.forceUpdate(null, null, null, true);
     myIndexableSets.remove(set);
