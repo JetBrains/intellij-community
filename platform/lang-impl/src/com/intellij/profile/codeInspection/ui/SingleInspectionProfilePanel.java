@@ -229,9 +229,9 @@ public class SingleInspectionProfilePanel extends JPanel {
     List<ScopeToolState> tools = profile.getDefaultStates();
     for (ScopeToolState state : tools) {
       final ArrayList<Descriptor> descriptors = new ArrayList<Descriptor>();
-      if (state.getLevel() == HighlightDisplayLevel.NON_SWITCHABLE_ERROR) {
+     /* if (state.getLevel() == HighlightDisplayLevel.NON_SWITCHABLE_ERROR) {
         continue;
-      }
+      }*/
       myDescriptors.put(new Descriptor(state, profile), descriptors);
       final List<ScopeToolState> nonDefaultTools = profile.getNonDefaultTools(state.getTool().getShortName());
       if (nonDefaultTools != null) {
