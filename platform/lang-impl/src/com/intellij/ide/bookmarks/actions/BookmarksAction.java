@@ -32,14 +32,11 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.popup.util.MasterDetailPopupBuilder;
 import com.intellij.ui.speedSearch.FilteringListModel;
-import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
-import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -67,7 +64,6 @@ public class BookmarksAction extends AnAction implements DumbAware, MasterDetail
 
     final JBList list = new JBList(model);
     list.getEmptyText().setText("No Bookmarks");
-    list.setCellRenderer(new ItemRenderer(project));
 
     EditBookmarkDescriptionAction editDescriptionAction = new EditBookmarkDescriptionAction(project, list);
     DefaultActionGroup actions = new DefaultActionGroup();
@@ -119,43 +115,8 @@ public class BookmarksAction extends AnAction implements DumbAware, MasterDetail
     return model;
   }
 
-  private static class ItemRenderer extends JPanel implements ListCellRenderer {
-    private final Project myProject;
-    private final ColoredListCellRenderer myRenderer;
-
-    private ItemRenderer(Project project) {
-      super(new BorderLayout());
-      myProject = project;
-
-      setBackground(UIUtil.getListBackground());
-
-      final JLabel label = new JLabel();
-      label.setFont(Bookmark.MNEMONIC_FONT);
-
-      label.setPreferredSize(new JLabel("W.").getPreferredSize());
-      label.setOpaque(false);
-
-      if (BookmarkManager.getInstance(project).hasBookmarksWithMnemonics()) {
-        add(label, BorderLayout.WEST);
-      }
-
-      myRenderer = new ColoredListCellRenderer() {
-        @Override
-        protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
-          if (value instanceof ItemWrapper) {
-            final ItemWrapper wrapper = (ItemWrapper)value;
-            wrapper.setupRenderer(this, myProject, selected);
-            wrapper.updateMnemonicLabel(label);
-          }
-        }
-      };
-      add(myRenderer, BorderLayout.CENTER);
-    }
-
-    public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-      myRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-      return this;
-    }
+  public boolean hasItemsWithMnemonic(Project project) {
+    return BookmarkManager.getInstance(project).hasBookmarksWithMnemonics();
   }
 
   protected static class BookmarkInContextInfo {

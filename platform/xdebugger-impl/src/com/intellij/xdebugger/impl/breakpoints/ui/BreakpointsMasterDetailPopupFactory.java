@@ -15,6 +15,7 @@
  */
 package com.intellij.xdebugger.impl.breakpoints.ui;
 
+import com.intellij.ide.bookmarks.BookmarkManager;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
@@ -85,6 +86,10 @@ public class BreakpointsMasterDetailPopupFactory {
         public void itemRemoved(ItemWrapper item, Project project) {
           //To change body of implemented methods use File | Settings | File Templates.
         }
+
+        public boolean hasItemsWithMnemonic(Project project) {
+          return false;
+        }
       }).createMasterDetailPopup();
 
     return popup;
@@ -92,8 +97,12 @@ public class BreakpointsMasterDetailPopupFactory {
 
   private DefaultListModel createBreakpointsItemsList() {
     DefaultListModel model = new DefaultListModel();
+    ArrayList<BreakpointItem> items = new ArrayList<BreakpointItem>();
     for (BreakpointPanelProvider panelProvider : myBreakpointPanelProviders) {
-      panelProvider.provideBreakpointItems(myProject, new ArrayList<BreakpointItem>());
+      panelProvider.provideBreakpointItems(myProject, items);
+    }
+    for (BreakpointItem item : items) {
+      model.addElement(item);
     }
     return model;
   }

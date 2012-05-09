@@ -37,7 +37,8 @@ import javax.swing.*;
  * Used to deexternalize breakpoints of certain category while reading saved configuration and for creating configuration UI
  */
 public abstract class BreakpointFactory {
-  public static final ExtensionPointName<BreakpointFactory> EXTENSION_POINT_NAME = ExtensionPointName.create("com.intellij.debugger.breakpointFactory");
+  public static final ExtensionPointName<BreakpointFactory> EXTENSION_POINT_NAME =
+    ExtensionPointName.create("com.intellij.debugger.breakpointFactory");
 
   public static BreakpointFactory[] getBreakpointFactories() {
     return ApplicationManager.getApplication().getExtensions(EXTENSION_POINT_NAME);
@@ -48,10 +49,9 @@ public abstract class BreakpointFactory {
   public abstract Key<? extends Breakpoint> getBreakpointCategory();
 
   public BreakpointPanel createBreakpointPanel(final Project project, final DialogWrapper parentDialog) {
-    BreakpointPanel panel = new BreakpointPanel(project,
-                                                createBreakpointPropertiesPanel(project, false),
-                                                createBreakpointPanelActions(project, parentDialog),
-                                                getBreakpointCategory(), getDisplayName(), getHelpID());
+    BreakpointPanel panel =
+      new BreakpointPanel(project, createBreakpointPropertiesPanel(project, false), createBreakpointPanelActions(project, parentDialog),
+                          getBreakpointCategory(), getDisplayName(), getHelpID());
     configureBreakpointPanel(panel);
     return panel;
   }
@@ -71,12 +71,16 @@ public abstract class BreakpointFactory {
     return null;
   }
 
-  protected void configureBreakpointPanel(BreakpointPanel panel){};
+  protected void configureBreakpointPanel(BreakpointPanel panel) {
+  }
+
+  ;
 
   protected abstract String getHelpID();
 
   public abstract String getDisplayName();
 
+  @Nullable
   public abstract BreakpointPropertiesPanel createBreakpointPropertiesPanel(Project project, boolean compact);
 
   protected abstract BreakpointPanelAction[] createBreakpointPanelActions(Project project, DialogWrapper parentDialog);
@@ -86,6 +90,7 @@ public abstract class BreakpointFactory {
       @Override
       public void setupRenderer(ColoredListCellRenderer renderer, Project project, boolean selected) {
         renderer.setIcon(breakpoint.getIcon());
+        renderer.append(breakpoint.getDisplayName());
       }
 
       @Override
@@ -113,7 +118,14 @@ public abstract class BreakpointFactory {
         if (breakpoint instanceof LineBreakpoint) {
           SourcePosition sourcePosition = ((LineBreakpoint)breakpoint).getSourcePosition();
           VirtualFile virtualFile = sourcePosition.getFile().getVirtualFile();
-          panel.navigateInPreviewEditor(virtualFile,new LogicalPosition(sourcePosition.getLine(), 0));
+          panel.navigateInPreviewEditor(virtualFile, new LogicalPosition(sourcePosition.getLine(), 0));
+        }
+
+        BreakpointPropertiesPanel breakpointPropertiesPanel = createBreakpointPropertiesPanel(breakpoint.getProject(), false);
+        if (breakpointPropertiesPanel != null) {
+          breakpointPropertiesPanel.initFrom(breakpoint, false);
+          final JPanel mainPanel = breakpointPropertiesPanel.getPanel();
+          panel.setDetailPanel(mainPanel);
         }
       }
     };

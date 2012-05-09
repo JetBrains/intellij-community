@@ -628,7 +628,8 @@
       <separator/>
       <action id="ToggleLineBreakpoint" class="com.intellij.xdebugger.impl.actions.ToggleLineBreakpointAction"/>
       <action id="EditBreakpoint" class="com.intellij.xdebugger.impl.actions.EditBreakpointAction"/>
-      <action id="ViewBreakpoints" class="com.intellij.xdebugger.impl.actions.ViewBreakpointsAction" icon="/debugger/viewBreakpoints.png"/>
+      <action id="ViewBreakpoints" class="com.intellij.xdebugger.impl.actions.ViewBreakpointsActionNew" icon="/debugger/viewBreakpoints.png"/>
+      <!--<action id="ViewBreakpoints" class="com.intellij.xdebugger.impl.actions.ViewBreakpointsAction" icon="/debugger/viewBreakpoints.png"/>-->
       <separator/>
 
       <add-to-group group-id="RunMenu" anchor="last"/>

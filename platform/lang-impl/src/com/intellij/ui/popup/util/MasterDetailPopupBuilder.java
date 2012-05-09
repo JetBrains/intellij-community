@@ -15,6 +15,7 @@
  */
 package com.intellij.ui.popup.util;
 
+import com.intellij.ide.bookmarks.Bookmark;
 import com.intellij.ide.bookmarks.BookmarkItem;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
@@ -23,10 +24,13 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.Gray;
 import com.intellij.ui.components.JBList;
+import com.intellij.ui.speedSearch.FilteringListModel;
 import com.intellij.util.Alarm;
 import com.intellij.util.Function;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -66,6 +70,8 @@ public class MasterDetailPopupBuilder {
 
     final Alarm updateAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
     final DetailViewImpl detailView = new DetailViewImpl(myProject);
+
+    myList.setCellRenderer(new ItemRenderer(myProject));
 
     myList.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
       private String getTitle2Text(String fullText) {
@@ -158,6 +164,7 @@ public class MasterDetailPopupBuilder {
     final JBPopup popup = new PopupChooserBuilder(myList).
       setTitle(myDelegate.getTitle()).
       setMovable(true).
+      setResizable(true).
       setAutoselectOnMouseMove(false).
       setSettingButton(toolBar).
       setSouthComponent(footerPanel).
@@ -181,9 +188,8 @@ public class MasterDetailPopupBuilder {
           for (Object value : values) {
             ItemWrapper item = (ItemWrapper)value;
 
-            assert myList.getModel() instanceof DefaultListModel;
-
-            DefaultListModel model = (DefaultListModel)myList.getModel();
+            DefaultListModel model = myList.getModel() instanceof DefaultListModel ? (DefaultListModel)myList.getModel() :
+                                     (DefaultListModel)((FilteringListModel)myList.getModel()).getOriginalModel();
             model.removeElement(item);
 
             if (model.getSize() > 0) {
@@ -230,5 +236,50 @@ public class MasterDetailPopupBuilder {
     void handleMnemonic(KeyEvent e, Project project, JBPopup popup);
 
     void itemRemoved(ItemWrapper item, Project project);
+
+    boolean hasItemsWithMnemonic(Project project);
   }
+
+  public class ItemRenderer extends JPanel implements ListCellRenderer {
+    private final Project myProject;
+    private final ColoredListCellRenderer myRenderer;
+
+    private ItemRenderer(Project project) {
+      super(new BorderLayout());
+      myProject = project;
+
+      setBackground(UIUtil.getListBackground());
+
+      final JLabel mnemonicLabel = new JLabel();
+      mnemonicLabel.setFont(Bookmark.MNEMONIC_FONT);
+
+      mnemonicLabel.setPreferredSize(new JLabel("W.").getPreferredSize());
+      mnemonicLabel.setOpaque(false);
+
+      final boolean hasMnemonics = myDelegate.hasItemsWithMnemonic(project);
+      if (hasMnemonics) {
+        add(mnemonicLabel, BorderLayout.WEST);
+      }
+
+      myRenderer = new ColoredListCellRenderer() {
+        @Override
+        protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
+          if (value instanceof ItemWrapper) {
+            final ItemWrapper wrapper = (ItemWrapper)value;
+            wrapper.setupRenderer(this, myProject, selected);
+            if (hasMnemonics) {
+              wrapper.updateMnemonicLabel(mnemonicLabel);
+            }
+          }
+        }
+      };
+      add(myRenderer, BorderLayout.CENTER);
+    }
+
+    public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+      myRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+      return this;
+    }
+  }
+
 }
