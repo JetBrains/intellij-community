@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@ package com.intellij.packaging.elements;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.configuration.FacetsProvider;
-import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
+import com.intellij.openapi.roots.ui.configuration.ModulesFacetsProvider;
 import com.intellij.packaging.artifacts.ArtifactModel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -34,7 +34,7 @@ public interface PackagingElementResolvingContext {
   ArtifactModel getArtifactModel();
 
   @NotNull
-  ModulesProvider getModulesProvider();
+  ModulesFacetsProvider getModulesProvider();
 
   @NotNull
   FacetsProvider getFacetsProvider();

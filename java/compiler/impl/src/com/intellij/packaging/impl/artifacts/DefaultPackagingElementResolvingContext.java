@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@ import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.roots.ui.configuration.DefaultModulesProvider;
 import com.intellij.openapi.roots.ui.configuration.FacetsProvider;
-import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
+import com.intellij.openapi.roots.ui.configuration.ModulesFacetsProvider;
 import com.intellij.packaging.artifacts.ArtifactManager;
 import com.intellij.packaging.artifacts.ArtifactModel;
 import com.intellij.packaging.elements.ManifestFileProvider;
@@ -53,7 +53,7 @@ public class DefaultPackagingElementResolvingContext implements PackagingElement
   }
 
   @NotNull
-  public ModulesProvider getModulesProvider() {
+  public ModulesFacetsProvider getModulesProvider() {
     return myModulesProvider;
   }
 
