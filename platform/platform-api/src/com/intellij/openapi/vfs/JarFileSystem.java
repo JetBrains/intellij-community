@@ -15,9 +15,7 @@
  */
 package com.intellij.openapi.vfs;
 
-import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
-import com.intellij.util.StringBuilderSpinAllocator;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,7 +26,7 @@ import java.util.zip.ZipFile;
 public abstract class JarFileSystem extends NewVirtualFileSystem {
   @NonNls public static final String PROTOCOL = StandardFileSystems.JAR_PROTOCOL;
   @NonNls public static final String PROTOCOL_PREFIX = "jar://";
-  @NonNls public static final String JAR_SEPARATOR = "!/";
+  @NonNls public static final String JAR_SEPARATOR = StandardFileSystems.JAR_SEPARATOR;
 
   public static JarFileSystem getInstance(){
     return (JarFileSystem)VirtualFileManager.getInstance().getFileSystem(PROTOCOL);
@@ -40,21 +38,9 @@ public abstract class JarFileSystem extends NewVirtualFileSystem {
 
   public abstract void setNoCopyJarForPath(String pathInJar);
 
+  @SuppressWarnings("MethodMayBeStatic")
   @Nullable
   public VirtualFile getJarRootForLocalFile(@NotNull VirtualFile virtualFile) {
-    if (virtualFile.getFileType() != FileTypes.ARCHIVE) return null;
-
-    final StringBuilder builder = StringBuilderSpinAllocator.alloc();
-    final String path;
-    try {
-      builder.append(virtualFile.getPath());
-      builder.append(JAR_SEPARATOR);
-      path = builder.toString();
-    }
-    finally {
-      StringBuilderSpinAllocator.dispose(builder);
-    }
-    return findFileByPath(path);
-
+    return StandardFileSystems.getJarRootForLocalFile(virtualFile);
   }
 }

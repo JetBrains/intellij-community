@@ -15,13 +15,13 @@
  */
 package com.intellij.util;
 
+import com.intellij.ide.highlighter.ArchiveFileType;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
-import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.FilteringIterator;
 import com.intellij.util.containers.HashSet;
@@ -40,7 +40,7 @@ public class PathsList  {
 
   private static final Function<String, VirtualFile> PATH_TO_LOCAL_VFILE = new NullableFunction<String, VirtualFile>() {
     public VirtualFile fun(String path) {
-      return LocalFileSystem.getInstance().findFileByPath(path.replace(File.separatorChar, '/'));
+      return StandardFileSystems.local().findFileByPath(path.replace(File.separatorChar, '/'));
     }
   };
 
@@ -56,8 +56,8 @@ public class PathsList  {
       final VirtualFile localFile = PATH_TO_LOCAL_VFILE.fun(s);
       if (localFile == null) return null;
 
-      if (FileTypes.ARCHIVE.equals(fileType) && !localFile.isDirectory()) {
-        return JarFileSystem.getInstance().getJarRootForLocalFile(localFile);
+      if (ArchiveFileType.INSTANCE.equals(fileType) && !localFile.isDirectory()) {
+        return StandardFileSystems.getJarRootForLocalFile(localFile);
       }
       return localFile;
     }

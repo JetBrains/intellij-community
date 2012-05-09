@@ -18,7 +18,7 @@ package com.intellij.util;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.JarFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import org.jetbrains.annotations.NonNls;
@@ -34,7 +34,7 @@ public class PathUtil {
     if (file == null || !file.isValid()) {
       return null;
     }
-    if (file.getFileSystem() instanceof JarFileSystem && file.getParent() != null) {
+    if (file.getFileSystem().getProtocol().equals(StandardFileSystems.JAR_PROTOCOL) && file.getParent() != null) {
       return null;
     }
     return getLocalPath(file.getPath());
@@ -42,7 +42,7 @@ public class PathUtil {
 
   @NotNull
   public static String getLocalPath(@NotNull String path) {
-    return FileUtil.toSystemDependentName(StringUtil.trimEnd(path, JarFileSystem.JAR_SEPARATOR));
+    return FileUtil.toSystemDependentName(StringUtil.trimEnd(path, StandardFileSystems.JAR_SEPARATOR));
   }
 
   @NotNull
@@ -50,8 +50,8 @@ public class PathUtil {
     if (!file.isValid()) {
       return file;
     }
-    if (file.getFileSystem() instanceof JarFileSystem) {
-      final VirtualFile jarFile = JarFileSystem.getInstance().getVirtualFileForJar(file);
+    if (file.getFileSystem().getProtocol().equals(StandardFileSystems.JAR_PROTOCOL)) {
+      final VirtualFile jarFile = StandardFileSystems.getVirtualFileForJar(file);
       if (jarFile != null) {
         return jarFile;
       }
