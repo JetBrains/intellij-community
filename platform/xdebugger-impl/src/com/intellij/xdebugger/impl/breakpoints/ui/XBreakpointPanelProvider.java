@@ -15,6 +15,7 @@
  */
 package com.intellij.xdebugger.impl.breakpoints.ui;
 
+import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.project.Project;
@@ -22,14 +23,20 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.ColoredListCellRenderer;
+import com.intellij.ui.popup.util.DetailView;
+import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.breakpoints.*;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.XDebuggerUtil;
+import com.intellij.xdebugger.breakpoints.ui.BreakpointItem;
+import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil;
 import com.intellij.xdebugger.impl.breakpoints.XLineBreakpointImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.Collection;
 import java.util.ArrayList;
 
@@ -89,5 +96,50 @@ public class XBreakpointPanelProvider extends BreakpointPanelProvider<XBreakpoin
   }
 
   public void onDialogClosed(final Project project) {
+  }
+
+  @Override
+  public void provideBreakpointItems(Project project, Collection<BreakpointItem> items) {
+    XBreakpoint<?>[] allBreakpoints = XDebuggerManager.getInstance(project).getBreakpointManager().getAllBreakpoints();
+    for (XBreakpoint<?> breakpoint : allBreakpoints) {
+      createBreakpointItem(breakpoint);
+    }
+  }
+
+  private BreakpointItem createBreakpointItem(final XBreakpoint<?> breakpoint) {
+    return new BreakpointItem() {
+      @Override
+      public void setupRenderer(ColoredListCellRenderer renderer, Project project, boolean selected) {
+        renderer.setIcon(((XBreakpointBase)breakpoint).getIcon());
+      }
+
+      @Override
+      public void updateMnemonicLabel(JLabel label) {
+        //To change body of implemented methods use File | Settings | File Templates.
+      }
+
+      @Override
+      public void execute(Project project) {
+        //To change body of implemented methods use File | Settings | File Templates.
+      }
+
+      @Override
+      public String speedSearchText() {
+        return ((XBreakpointBase)breakpoint).getType().getDisplayText(breakpoint);
+      }
+
+      @Override
+      public String footerText() {
+        return ((XBreakpointBase)breakpoint).getType().getDisplayText(breakpoint);
+      }
+
+      @Override
+      public void updateDetailView(DetailView panel) {
+        XSourcePosition sourcePosition = breakpoint.getSourcePosition();
+        if (sourcePosition != null) {
+          panel.navigateInPreviewEditor(sourcePosition.getFile(), new LogicalPosition(sourcePosition.getLine(), sourcePosition.getOffset()));
+        }
+      }
+    };
   }
 }
