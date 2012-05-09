@@ -21,7 +21,6 @@ import com.intellij.psi.search.UsageSearchContext;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.indexing.FileBasedIndex;
-import com.intellij.util.indexing.FileBasedIndexImpl;
 
 import java.io.File;
 import java.util.Arrays;
