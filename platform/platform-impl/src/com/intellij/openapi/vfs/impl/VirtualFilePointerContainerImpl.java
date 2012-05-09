@@ -182,14 +182,15 @@ public class VirtualFilePointerContainerImpl implements VirtualFilePointerContai
       myCachedUrls = ArrayUtil.EMPTY_STRING_ARRAY;
       return EMPTY;
     }
-    Object[] vf = myList.toArray();
+    VirtualFilePointer[] vf = myList.toArray(new VirtualFilePointer[myList.size()]);
     List<VirtualFile> cachedFiles = new ArrayList<VirtualFile>(vf.length);
     List<String> cachedUrls = new ArrayList<String>(vf.length);
     List<VirtualFile> cachedDirectories = new ArrayList<VirtualFile>(vf.length/3);
 
-    for (Object v : vf) {
-      Pair<VirtualFile, String> pair = v instanceof VirtualFilePointerImpl ? ((VirtualFilePointerImpl)v).update() : Pair.create(
-        ((VirtualFilePointer)v).getFile(), ((VirtualFilePointer)v).getUrl());
+    for (VirtualFilePointer v : vf) {
+      Pair<VirtualFile, String> pair = v instanceof VirtualFilePointerImpl
+                                       ? ((VirtualFilePointerImpl)v).update()
+                                       : Pair.create(v.getFile(), v.getUrl());
       if (pair == null) continue;
       VirtualFile file = pair.first;
       String url = pair.second;
