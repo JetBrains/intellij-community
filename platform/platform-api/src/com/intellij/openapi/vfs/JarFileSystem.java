@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,7 @@ import java.io.IOException;
 import java.util.zip.ZipFile;
 
 public abstract class JarFileSystem extends NewVirtualFileSystem {
-  @NonNls public static final String PROTOCOL = "jar";
+  @NonNls public static final String PROTOCOL = StandardFileSystems.JAR_PROTOCOL;
   @NonNls public static final String PROTOCOL_PREFIX = "jar://";
   @NonNls public static final String JAR_SEPARATOR = "!/";
 
