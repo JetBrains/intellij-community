@@ -2189,7 +2189,8 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     }
   }
 
-  public static void iterateIndexableFiles(@NotNull final ContentIterator processor, @NotNull Project project, ProgressIndicator indicator) {
+  @Override
+  public void iterateIndexableFiles(@NotNull final ContentIterator processor, @NotNull Project project, ProgressIndicator indicator) {
     if (project.isDisposed()) {
       return;
     }
