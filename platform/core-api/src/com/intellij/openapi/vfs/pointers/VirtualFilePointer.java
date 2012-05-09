@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +16,23 @@
 package com.intellij.openapi.vfs.pointers;
 
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-/**
- * @author dsl
- */
-public interface VirtualFilePointerFactory {
-  VirtualFilePointer create(VirtualFile file);
-  VirtualFilePointer create(String url);
-  VirtualFilePointer duplicate(VirtualFilePointer virtualFilePointer);
+public interface VirtualFilePointer {
+  VirtualFilePointer[] EMPTY_ARRAY = new VirtualFilePointer[0];
+
+  @NotNull
+  String getFileName();
+
+  @Nullable
+  VirtualFile getFile();
+
+  @NotNull
+  String getUrl();
+
+  @NotNull
+  String getPresentableUrl();
+
+  boolean isValid();
 }
