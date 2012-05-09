@@ -28,7 +28,6 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileTypeEvent;
 import com.intellij.openapi.fileTypes.FileTypeListener;
 import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.impl.ModuleImpl;
@@ -224,14 +223,6 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
   public void unregisterRefreshUpdater(CacheUpdater updater) {
     boolean removed = myRefreshCacheUpdaters.remove(updater);
     LOG.assertTrue(removed);
-  }
-
-  public void multiCommit(ModifiableRootModel[] rootModels) {
-    ModuleRootManagerImpl.multiCommit(rootModels, ModuleManager.getInstance(myProject).getModifiableModel());
-  }
-
-  public void multiCommit(ModifiableModuleModel moduleModel, ModifiableRootModel[] rootModels) {
-    ModuleRootManagerImpl.multiCommit(rootModels, moduleModel);
   }
 
   @NotNull

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,6 +37,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootModel;
+import com.intellij.openapi.roots.impl.ModuleRootManagerImpl;
 import com.intellij.openapi.roots.impl.ProjectRootManagerImpl;
 import com.intellij.openapi.roots.ui.configuration.actions.ModuleDeleteProvider;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ModuleStructureConfigurable;
@@ -310,7 +311,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
       public void run() {
         try {
           final ModifiableRootModel[] rootModels = models.toArray(new ModifiableRootModel[models.size()]);
-          projectRootManager.multiCommit(myModuleModel, rootModels);
+          ModuleRootManagerImpl.multiCommit(rootModels, myModuleModel);
           myModuleModelCommitted = true;
           myFacetsConfigurator.commitFacets();
 

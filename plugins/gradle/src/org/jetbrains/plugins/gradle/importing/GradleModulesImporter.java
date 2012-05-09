@@ -10,6 +10,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.impl.ModuleRootManagerImpl;
 import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
@@ -130,9 +131,8 @@ public class GradleModulesImporter {
             );
           }
           finally {
-            ProjectRootManager projectRootManager = ProjectRootManager.getInstance(intellijProject);
             ModifiableRootModel[] modelsAsArray = rootModels.toArray(new ModifiableRootModel[rootModels.size()]);
-            projectRootManager.multiCommit(model, modelsAsArray);
+            ModuleRootManagerImpl.multiCommit(modelsAsArray, model);
             for (GradleModule module : modules) {
               publisher.onImportEnd(module);
             }
@@ -402,7 +402,9 @@ public class GradleModulesImporter {
       model.commit();
       ProjectRootManager projectRootManager = ProjectRootManager.getInstance(intellijProject);
       ModifiableRootModel[] modelsAsArray = modelsToCommit.toArray(new ModifiableRootModel[modelsToCommit.size()]);
-      projectRootManager.multiCommit(modelsAsArray);
+      if (modelsAsArray.length > 0) {
+        ModuleRootManagerImpl.multiCommit(modelsAsArray, ModuleManager.getInstance(modelsAsArray[0].getProject()).getModifiableModel());
+      }
       if (libraryMappings != null) {
         for (GradleLibrary library : libraryMappings.keySet()) {
           publisher.onImportEnd(library);

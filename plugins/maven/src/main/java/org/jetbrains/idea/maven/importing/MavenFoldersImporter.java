@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.roots.impl.ModuleRootManagerImpl;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.ArrayUtil;
 import gnu.trove.THashMap;
@@ -70,7 +70,9 @@ public class MavenFoldersImporter {
 
       if (!rootModels.isEmpty()) {
         ModifiableRootModel[] modelsArray = rootModels.toArray(new ModifiableRootModel[rootModels.size()]);
-        ProjectRootManager.getInstance(project).multiCommit(modelsArray);
+        if (modelsArray.length > 0) {
+          ModuleRootManagerImpl.multiCommit(modelsArray, ModuleManager.getInstance(modelsArray[0].getProject()).getModifiableModel());
+        }
       }
     }
     finally {
