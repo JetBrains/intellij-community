@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@ package com.intellij.codeInsight.navigation;
 
 import com.intellij.navigation.GotoRelatedItem;
 import com.intellij.util.xml.DomElement;
-import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
@@ -28,7 +27,7 @@ public class DomGotoRelatedItem extends GotoRelatedItem {
   private final DomElement myElement;
 
   public DomGotoRelatedItem(DomElement element) {
-    super(element.getXmlElement());
+    super(element.getXmlElement(), "XML");
     myElement = element;
   }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,9 +24,9 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Set;
 
 /**
  * Created by IntelliJ IDEA.
@@ -44,10 +44,7 @@ public class HtmlGotoRelatedProvider extends GotoRelatedProvider {
       return Collections.emptyList();
     }
 
-    HashSet<PsiFile> resultSet = new HashSet<PsiFile>();
-    fillRelatedFiles(file, resultSet);
-
-    return GotoRelatedItem.createItems(resultSet);
+    return getRelatedFiles(file);
   }
 
   private static boolean isAvailable(@NotNull PsiFile psiFile) {
@@ -60,15 +57,22 @@ public class HtmlGotoRelatedProvider extends GotoRelatedProvider {
     return false;
   }
 
-  private static void fillRelatedFiles(@NotNull PsiFile file, @NotNull Set<PsiFile> resultSet) {
+  private static List<? extends GotoRelatedItem> getRelatedFiles(@NotNull PsiFile file) {
+    List<GotoRelatedItem> items = new ArrayList<GotoRelatedItem>();
+
     for (PsiFile psiFile : file.getViewProvider().getAllFiles()) {
       if (psiFile instanceof XmlFile) {
         final XmlFile xmlFile = (XmlFile)psiFile;
 
         for (RelatedToHtmlFilesContributor contributor : RelatedToHtmlFilesContributor.EP_NAME.getExtensions()) {
+          HashSet<PsiFile> resultSet = new HashSet<PsiFile>();
           contributor.fillRelatedFiles(xmlFile, resultSet);
+          for (PsiFile f: resultSet) {
+            items.add(new GotoRelatedItem(f, contributor.getGroupName()));
+          }
         }
       }
     }
+    return items;
   }
 }
