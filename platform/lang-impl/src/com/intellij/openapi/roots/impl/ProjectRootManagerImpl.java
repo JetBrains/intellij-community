@@ -35,7 +35,6 @@ import com.intellij.openapi.module.impl.scopes.JdkScope;
 import com.intellij.openapi.module.impl.scopes.LibraryRuntimeClasspathScope;
 import com.intellij.openapi.project.DumbServiceImpl;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.*;
@@ -78,7 +77,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
   @NonNls public static final String PROJECT_JDK_NAME_ATTR = "project-jdk-name";
   @NonNls public static final String PROJECT_JDK_TYPE_ATTR = "project-jdk-type";
 
-  private final ProjectEx myProject;
+  private final Project myProject;
 
   private final EventDispatcher<ProjectJdkListener> myProjectJdkEventDispatcher = EventDispatcher.create(ProjectJdkListener.class);
 
@@ -164,7 +163,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
                                 FileTypeManager fileTypeManager,
                                 DirectoryIndex directoryIndex,
                                 StartupManager startupManager) {
-    myProject = (ProjectEx)project;
+    myProject = project;
     myConnection = project.getMessageBus().connect(project);
     myConnection.subscribe(FileTypeManager.TOPIC, new FileTypeListener() {
       public void beforeFileTypesChanged(FileTypeEvent event) {
@@ -629,7 +628,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
       rootPaths.addAll(extension.getRootsToWatch());
     }
 
-    final String projectFile = myProject.getStateStore().getProjectFilePath();
+    final String projectFile = myProject.getProjectFilePath();
     rootPaths.add(projectFile);
     final VirtualFile baseDir = myProject.getBaseDir();
     if (baseDir != null) {
