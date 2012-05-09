@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -446,6 +446,18 @@ public class PlatformTestUtil {
       total += time[i];
     }
     return total/(n / part);
+  }
+
+  public static boolean canRunTest(@NotNull Class testCaseClass) {
+    if (GraphicsEnvironment.isHeadless()) {
+      for (Class<?> clazz = testCaseClass; clazz != null; clazz = clazz.getSuperclass()) {
+        if (clazz.getAnnotation(SkipInHeadlessEnvironment.class) != null) {
+          System.out.println("Class '" + testCaseClass.getName() + "' is skipped because it requires working UI environment");
+          return false;
+        }
+      }
+    }
+    return true;
   }
 
   public static class TestInfo {
