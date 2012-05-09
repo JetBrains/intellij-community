@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -162,30 +162,10 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
     return url.substring(separatorIndex + JarFileSystem.JAR_SEPARATOR.length());
   }
 
-  /**
-   * @see #create(String, com.intellij.openapi.Disposable, com.intellij.openapi.vfs.pointers.VirtualFilePointerListener)
-   */
-  @NotNull
-  @Override
-  @Deprecated
-  public synchronized VirtualFilePointer create(@NotNull String url, VirtualFilePointerListener listener) {
-    return create(url, this, listener);
-  }
-
   @Override
   @NotNull
   public synchronized VirtualFilePointer create(@NotNull String url, @NotNull Disposable parent, @Nullable VirtualFilePointerListener listener) {
     return create(null, url, parent, listener);
-  }
-
-  /**
-   * @see #create(com.intellij.openapi.vfs.VirtualFile, com.intellij.openapi.Disposable, com.intellij.openapi.vfs.pointers.VirtualFilePointerListener)
-   */
-  @NotNull
-  @Override
-  @Deprecated
-  public synchronized VirtualFilePointer create(@NotNull VirtualFile file, VirtualFilePointerListener listener) {
-    return create(file, this, listener);
   }
 
   @Override
@@ -311,31 +291,12 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
     return path;
   }
 
-  /**
-   * @see #duplicate(com.intellij.openapi.vfs.pointers.VirtualFilePointer, com.intellij.openapi.Disposable, com.intellij.openapi.vfs.pointers.VirtualFilePointerListener)
-   */
-  @NotNull
-  @Override
-  @Deprecated
-  public synchronized VirtualFilePointer duplicate(@NotNull VirtualFilePointer pointer, VirtualFilePointerListener listener) {
-    return duplicate(pointer, this, listener);
-  }
-
   @Override
   @NotNull
   public synchronized VirtualFilePointer duplicate(@NotNull VirtualFilePointer pointer, @NotNull Disposable parent,
                                                    @Nullable VirtualFilePointerListener listener) {
     VirtualFile file = pointer.getFile();
     return file == null ? create(pointer.getUrl(), parent, listener) : create(file, parent, listener);
-  }
-
-  /**
-   * Does nothing. To cleanup the pointer correctly, pass Disposable to its constructor
-   * @see #create(String, com.intellij.openapi.Disposable, com.intellij.openapi.vfs.pointers.VirtualFilePointerListener)
-   */
-  @Override
-  @Deprecated
-  public synchronized void kill(VirtualFilePointer pointer, final VirtualFilePointerListener listener) {
   }
 
   @Override
@@ -379,42 +340,6 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
 
   private void incModificationCounter() {
     myVfsModificationCounter++;
-  }
-
-  /**
-   * @see #createContainer(com.intellij.openapi.Disposable)
-   */
-  @NotNull
-  @Override
-  @Deprecated
-  public synchronized VirtualFilePointerContainer createContainer() {
-    return createContainer(this);
-  }
-
-  /**
-   * @see #createContainer(com.intellij.openapi.Disposable, com.intellij.openapi.vfs.pointers.VirtualFilePointerListener)
-   */
-  @NotNull
-  @Override
-  @Deprecated
-  public synchronized VirtualFilePointerContainer createContainer(@NotNull final VirtualFilePointerFactory factory) {
-    final VirtualFilePointerContainerImpl virtualFilePointerContainer = new VirtualFilePointerContainerImpl(this, this, null){
-      @Override
-      protected VirtualFilePointer create(@NotNull VirtualFile file) {
-        return factory.create(file);
-      }
-
-      @Override
-      protected VirtualFilePointer create(@NotNull String url) {
-        return factory.create(url);
-      }
-
-      @Override
-      protected VirtualFilePointer duplicate(@NotNull VirtualFilePointer virtualFilePointer) {
-        return factory.duplicate(virtualFilePointer);
-      }
-    };
-    return registerContainer(this, virtualFilePointerContainer);
   }
 
   @Override

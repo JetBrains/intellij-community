@@ -27,28 +27,6 @@ public abstract class VirtualFilePointerManager implements Disposable, Modificat
     return ApplicationManager.getApplication().getComponent(VirtualFilePointerManager.class);
   }
 
-  /** @see #create(String, com.intellij.openapi.Disposable, VirtualFilePointerListener) */
-  @Deprecated
-  public abstract VirtualFilePointer create(String url, VirtualFilePointerListener listener);
-
-  /** @see #create(com.intellij.openapi.vfs.VirtualFile, com.intellij.openapi.Disposable, VirtualFilePointerListener)  */
-  @Deprecated
-  public abstract VirtualFilePointer create(VirtualFile file, VirtualFilePointerListener listener);
-
-  /** @see #duplicate(VirtualFilePointer, com.intellij.openapi.Disposable, VirtualFilePointerListener)  */
-  @Deprecated
-  public abstract VirtualFilePointer duplicate (VirtualFilePointer pointer, VirtualFilePointerListener listener);
-
-  @Deprecated
-  public abstract void kill(VirtualFilePointer pointer, VirtualFilePointerListener listener);
-
-  /** @see #createContainer(com.intellij.openapi.Disposable)  */
-  @Deprecated
-  public abstract VirtualFilePointerContainer createContainer();
-
-  @Deprecated
-  public abstract VirtualFilePointerContainer createContainer(VirtualFilePointerFactory factory);
-
   @NotNull
   public abstract VirtualFilePointer create(@NotNull String url, @NotNull Disposable parent, @Nullable VirtualFilePointerListener listener);
 
