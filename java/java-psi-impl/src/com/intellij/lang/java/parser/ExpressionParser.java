@@ -404,7 +404,7 @@ public class ExpressionParser {
           final PsiBuilder.Marker refExpr = expr.precede();
           myReferenceParser.parseReferenceParameterList(builder, false, false);
 
-          if (!JavaParserUtil.expectOrError(builder, JavaTokenType.IDENTIFIER, "expected.identifier")) {
+          if (!expectOrError(builder, JavaTokenType.IDENTIFIER, "expected.identifier")) {
             refExpr.done(JavaElementType.REFERENCE_EXPRESSION);
             startMarker.drop();
             return refExpr;
@@ -726,7 +726,7 @@ public class ExpressionParser {
         }
         bracketCount++;
 
-        if (!JavaParserUtil.expectOrError(builder, JavaTokenType.RBRACKET, "expected.rbracket")) {
+        if (!expectOrError(builder, JavaTokenType.RBRACKET, "expected.rbracket")) {
           newExpr.done(JavaElementType.NEW_EXPRESSION);
           return newExpr;
         }
@@ -812,7 +812,7 @@ public class ExpressionParser {
       }
     }
 
-    final boolean closed = JavaParserUtil.expectOrError(builder, JavaTokenType.RPARENTH, "expected.rparen");
+    final boolean closed = expectOrError(builder, JavaTokenType.RPARENTH, "expected.rparen");
 
     list.done(JavaElementType.EXPRESSION_LIST);
     if (!closed) {
@@ -822,7 +822,7 @@ public class ExpressionParser {
   }
 
   private static void emptyExpression(final PsiBuilder builder) {
-    JavaParserUtil.emptyElement(builder, JavaElementType.EMPTY_EXPRESSION);
+    emptyElement(builder, JavaElementType.EMPTY_EXPRESSION);
   }
 
   @Nullable

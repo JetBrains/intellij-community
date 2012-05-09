@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,9 +20,7 @@ import com.intellij.lang.LanguageASTFactory;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.lang.java.JavaParserDefinition;
-import com.intellij.mock.MockModule;
 import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.roots.impl.LanguageLevelProjectExtensionImpl;
 import com.intellij.pom.java.LanguageLevel;
@@ -42,10 +40,7 @@ import org.jetbrains.annotations.NonNls;
 
 import java.io.IOException;
 
-
 public abstract class JavaParsingTestCase extends ParsingTestCase {
-
-  private Module myModule;
   private LanguageLevel myLanguageLevel;
 
   @SuppressWarnings({"JUnitTestCaseWithNonTrivialConstructors"})
@@ -68,17 +63,9 @@ public abstract class JavaParsingTestCase extends ParsingTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    myModule = new MockModule(getProject(), getTestRootDisposable());
     myLanguageLevel = LanguageLevel.JDK_1_6;
     getProject().registerService(LanguageLevelProjectExtension.class, new LanguageLevelProjectExtensionImpl(getProject()));
     addExplicitExtension(LanguageASTFactory.INSTANCE, JavaLanguage.INSTANCE, new JavaASTFactory());
-    try {
-      registerApplicationService((Class<Object>)Class.forName("com.intellij.psi.jsp.JspSpiUtil"),
-                                 Class.forName("com.intellij.jsp.impl.JspSpiUtilImpl").newInstance());
-    }
-    catch (Exception ex) {
-      // jsp not available
-    }
   }
 
   @Override
@@ -91,17 +78,11 @@ public abstract class JavaParsingTestCase extends ParsingTestCase {
   @Override
   protected void tearDown() throws Exception {
     super.tearDown();
-    myModule = null;
   }
 
   protected interface TestParser {
     void parse(PsiBuilder builder);
   }
-
-  public Module getModule() {
-    return myModule;
-  }
-
 
   protected void doParserTest(final String text, final TestParser parser) {
     final String name = getTestName(false);
