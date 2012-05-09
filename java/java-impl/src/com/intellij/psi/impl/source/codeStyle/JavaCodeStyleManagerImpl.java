@@ -192,28 +192,6 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
   }
 
   @Override
-  public VariableKind getVariableKind(@NotNull PsiVariable variable) {
-    if (variable instanceof PsiField) {
-      if (variable.hasModifierProperty(PsiModifier.STATIC)) {
-        if (variable.hasModifierProperty(PsiModifier.FINAL)) {
-          return VariableKind.STATIC_FINAL_FIELD;
-        }
-        return VariableKind.STATIC_FIELD;
-      }
-      return VariableKind.FIELD;
-    }
-    else {
-      if (variable instanceof PsiParameter) {
-        if (((PsiParameter)variable).getDeclarationScope() instanceof PsiForeachStatement) {
-          return VariableKind.LOCAL_VARIABLE;
-        }
-        return VariableKind.PARAMETER;
-      }
-      return VariableKind.LOCAL_VARIABLE;
-    }
-  }
-
-  @Override
   public SuggestedNameInfo suggestVariableName(@NotNull final VariableKind kind,
                                                @Nullable final String propertyName,
                                                @Nullable final PsiExpression expr,
