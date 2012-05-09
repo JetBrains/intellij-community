@@ -393,11 +393,9 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
   }
 
   public void projectOpened() {
-    myRootModel.projectOpened();
   }
 
   public void projectClosed() {
-    myRootModel.projectClosed();
   }
 
   public void moduleAdded() {
