@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2009 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,6 @@ import com.intellij.facet.FacetType;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.configuration.FacetsProvider;
-import com.intellij.openapi.roots.ui.configuration.ModulesFacetsProvider;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -56,7 +55,7 @@ public interface FacetPointer<F extends Facet> {
   String getFacetTypeId();
 
   @NotNull
-  String getFacetName(@NotNull ModulesFacetsProvider modulesProvider, @NotNull FacetsProvider facetsProvider);
+  String getFacetName(@NotNull ModulesProvider modulesProvider, @NotNull FacetsProvider facetsProvider);
 
   @NotNull 
   String getModuleName(@Nullable ModifiableModuleModel moduleModel);

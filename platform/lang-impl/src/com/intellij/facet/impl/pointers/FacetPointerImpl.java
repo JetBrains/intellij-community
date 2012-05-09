@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2009 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.configuration.FacetsProvider;
-import com.intellij.openapi.roots.ui.configuration.ModulesFacetsProvider;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.util.Disposer;
 import org.jetbrains.annotations.NotNull;
@@ -152,7 +151,7 @@ public class FacetPointerImpl<F extends Facet> implements FacetPointer<F> {
   }
 
   @NotNull
-  public String getFacetName(@NotNull ModulesFacetsProvider modulesProvider, @NotNull FacetsProvider facetsProvider) {
+  public String getFacetName(@NotNull ModulesProvider modulesProvider, @NotNull FacetsProvider facetsProvider) {
     if (myFacet != null) {
       return modulesProvider.getFacetModel(myFacet.getModule()).getFacetName(myFacet);
     }
