@@ -737,7 +737,6 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     ensureUpToDate(indexId, project, filter, null);
   }
 
-  @Override
   protected <K> void ensureUpToDate(@NotNull final ID<K, ?> indexId,
                                     @Nullable Project project,
                                     @Nullable GlobalSearchScope filter,
