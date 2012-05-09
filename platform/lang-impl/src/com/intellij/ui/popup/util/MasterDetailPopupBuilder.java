@@ -188,23 +188,26 @@ public class MasterDetailPopupBuilder {
           for (Object value : values) {
             ItemWrapper item = (ItemWrapper)value;
 
-            DefaultListModel model = myList.getModel() instanceof DefaultListModel ? (DefaultListModel)myList.getModel() :
-                                     (DefaultListModel)((FilteringListModel)myList.getModel()).getOriginalModel();
-            model.removeElement(item);
+            DefaultListModel model = myList.getModel() instanceof DefaultListModel
+                                     ? (DefaultListModel)myList.getModel()
+                                     : (DefaultListModel)((FilteringListModel)myList.getModel()).getOriginalModel();
+            if (myDelegate.allowedToRemoveItem(item)) {
+              model.removeElement(item);
 
-            if (model.getSize() > 0) {
-              if (model.getSize() == index) {
-                myList.setSelectedIndex(model.getSize() - 1);
+              if (model.getSize() > 0) {
+                if (model.getSize() == index) {
+                  myList.setSelectedIndex(model.getSize() - 1);
+                }
+                else if (model.getSize() > index) {
+                  myList.setSelectedIndex(index);
+                }
               }
-              else if (model.getSize() > index) {
-                myList.setSelectedIndex(index);
+              else {
+                myList.clearSelection();
               }
-            }
-            else {
-              myList.clearSelection();
+              myDelegate.itemRemoved(item, myProject);
             }
 
-            myDelegate.itemRemoved(item, myProject);
           }
         }
         else if (e.getModifiersEx() == 0) {
@@ -238,6 +241,8 @@ public class MasterDetailPopupBuilder {
     void itemRemoved(ItemWrapper item, Project project);
 
     boolean hasItemsWithMnemonic(Project project);
+
+    boolean allowedToRemoveItem(ItemWrapper item);
   }
 
   public class ItemRenderer extends JPanel implements ListCellRenderer {

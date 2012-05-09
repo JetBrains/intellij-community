@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.xdebugger.impl.breakpoints.ui;
+package com.intellij.xdebugger.impl.breakpoints;
 
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
@@ -33,6 +33,10 @@ import com.intellij.xdebugger.breakpoints.ui.BreakpointItem;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil;
 import com.intellij.xdebugger.impl.breakpoints.XLineBreakpointImpl;
+import com.intellij.xdebugger.impl.breakpoints.ui.AbstractBreakpointPanel;
+import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointPanelProvider;
+import com.intellij.xdebugger.impl.breakpoints.ui.XBreakpointPropertiesPanel;
+import com.intellij.xdebugger.impl.breakpoints.ui.XBreakpointsPanel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -139,6 +143,13 @@ public class XBreakpointPanelProvider extends BreakpointPanelProvider<XBreakpoin
         if (sourcePosition != null) {
           panel.navigateInPreviewEditor(sourcePosition.getFile(), new LogicalPosition(sourcePosition.getLine(), sourcePosition.getOffset()));
         }
+
+        Project project = ((XBreakpointBase)breakpoint).getProject();
+
+        XBreakpointPropertiesPanel<XBreakpoint<?>> propertiesPanel =
+          new XBreakpointPropertiesPanel<XBreakpoint<?>>(project, ((XBreakpointBase)breakpoint).getBreakpointManager(), breakpoint);
+
+        panel.setDetailPanel(propertiesPanel.getMainPanel());
       }
     };
   }

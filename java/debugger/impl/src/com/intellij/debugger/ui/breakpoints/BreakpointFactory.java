@@ -123,7 +123,7 @@ public abstract class BreakpointFactory {
 
         BreakpointPropertiesPanel breakpointPropertiesPanel = createBreakpointPropertiesPanel(breakpoint.getProject(), false);
         if (breakpointPropertiesPanel != null) {
-          breakpointPropertiesPanel.initFrom(breakpoint, false);
+          breakpointPropertiesPanel.initFrom(breakpoint, true);
           final JPanel mainPanel = breakpointPropertiesPanel.getPanel();
           panel.setDetailPanel(mainPanel);
         }

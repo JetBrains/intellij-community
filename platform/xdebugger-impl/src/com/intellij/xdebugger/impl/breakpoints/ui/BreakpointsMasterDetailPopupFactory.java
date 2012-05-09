@@ -90,6 +90,11 @@ public class BreakpointsMasterDetailPopupFactory {
         public boolean hasItemsWithMnemonic(Project project) {
           return false;
         }
+
+        @Override
+        public boolean allowedToRemoveItem(ItemWrapper item) {
+          return false;
+        }
       }).createMasterDetailPopup();
 
     return popup;
