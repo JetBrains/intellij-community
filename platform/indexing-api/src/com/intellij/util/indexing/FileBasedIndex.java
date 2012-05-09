@@ -16,7 +16,7 @@
 package com.intellij.util.indexing;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ApplicationComponent;
+import com.intellij.openapi.components.BaseComponent;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ContentIterator;
@@ -36,7 +36,7 @@ import java.util.Set;
 /**
  * Author: dmitrylomov
  */
-public abstract class FileBasedIndex implements ApplicationComponent {
+public abstract class FileBasedIndex implements BaseComponent {
   public abstract void iterateIndexableFiles(@NotNull ContentIterator processor, @NotNull Project project, ProgressIndicator indicator);
 
   public abstract void registerIndexableSet(@NotNull IndexableFileSet set, @Nullable Project project);
