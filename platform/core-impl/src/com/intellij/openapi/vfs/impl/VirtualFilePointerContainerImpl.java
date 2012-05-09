@@ -188,8 +188,8 @@ public class VirtualFilePointerContainerImpl implements VirtualFilePointerContai
     List<VirtualFile> cachedDirectories = new ArrayList<VirtualFile>(vf.length/3);
 
     for (VirtualFilePointer v : vf) {
-      Pair<VirtualFile, String> pair = v instanceof VirtualFilePointerImpl
-                                       ? ((VirtualFilePointerImpl)v).update()
+      Pair<VirtualFile, String> pair = v instanceof VirtualFilePointerEx
+                                       ? ((VirtualFilePointerEx)v).update()
                                        : Pair.create(v.getFile(), v.getUrl());
       if (pair == null) continue;
       VirtualFile file = pair.first;
