@@ -39,6 +39,10 @@ import java.util.Set;
 public abstract class FileBasedIndex implements ApplicationComponent {
   public abstract void iterateIndexableFiles(@NotNull ContentIterator processor, @NotNull Project project, ProgressIndicator indicator);
 
+  public abstract void registerIndexableSet(@NotNull IndexableFileSet set, @Nullable Project project);
+
+  public abstract void removeIndexableSet(@NotNull IndexableFileSet set);
+
   public static FileBasedIndex getInstance() {
     return ApplicationManager.getApplication().getComponent(FileBasedIndex.class);
   }

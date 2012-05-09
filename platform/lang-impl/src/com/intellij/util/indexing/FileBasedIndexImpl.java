@@ -2139,11 +2139,13 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     return new UnindexedFilesFinder();
   }
 
+  @Override
   public void registerIndexableSet(@NotNull IndexableFileSet set, @Nullable Project project) {
     myIndexableSets.add(set);
     myIndexableSetToProjectMap.put(set, project);
   }
 
+  @Override
   public void removeIndexableSet(@NotNull IndexableFileSet set) {
     myChangedFilesCollector.forceUpdate(null, null, null, true);
     myIndexableSets.remove(set);
