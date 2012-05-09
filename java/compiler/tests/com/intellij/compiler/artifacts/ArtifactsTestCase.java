@@ -12,7 +12,7 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.configuration.DefaultModulesProvider;
 import com.intellij.openapi.roots.ui.configuration.FacetsProvider;
-import com.intellij.openapi.roots.ui.configuration.ModulesFacetsProvider;
+import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.roots.ui.configuration.artifacts.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.artifacts.*;
@@ -216,7 +216,7 @@ public abstract class ArtifactsTestCase extends IdeaTestCase {
 
     @Override
     @NotNull
-    public ModulesFacetsProvider getModulesProvider() {
+    public ModulesProvider getModulesProvider() {
       return new DefaultModulesProvider(myProject);
     }
 
