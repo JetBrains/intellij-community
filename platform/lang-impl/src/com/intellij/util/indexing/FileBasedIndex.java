@@ -17,7 +17,9 @@ package com.intellij.util.indexing;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
@@ -35,6 +37,8 @@ import java.util.Set;
  * Author: dmitrylomov
  */
 public abstract class FileBasedIndex implements ApplicationComponent {
+  public abstract void iterateIndexableFiles(@NotNull ContentIterator processor, @NotNull Project project, ProgressIndicator indicator);
+
   public static FileBasedIndex getInstance() {
     return ApplicationManager.getApplication().getComponent(FileBasedIndex.class);
   }
