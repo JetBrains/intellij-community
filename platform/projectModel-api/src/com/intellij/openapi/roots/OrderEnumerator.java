@@ -18,7 +18,6 @@ package com.intellij.openapi.roots;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.libraries.Library;
-import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.NotNullFunction;
@@ -116,7 +115,7 @@ public abstract class OrderEnumerator {
    * @param provider provider
    * @return this instance
    */
-  public abstract OrderEnumerator using(@NotNull ModulesProvider provider);
+  public abstract OrderEnumerator using(@NotNull RootModelProvider provider);
 
   /**
    * @return {@link OrderRootsEnumerator} instance for processing classes roots

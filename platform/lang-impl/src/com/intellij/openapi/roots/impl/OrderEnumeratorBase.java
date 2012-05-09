@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
-import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -50,7 +49,7 @@ abstract class OrderEnumeratorBase extends OrderEnumerator implements OrderEnume
   private boolean myExportedOnly;
   private Condition<OrderEntry> myCondition;
   private final List<OrderEnumerationHandler> myCustomHandlers;
-  protected ModulesProvider myModulesProvider;
+  protected RootModelProvider myModulesProvider;
   private final OrderRootsCache myCache;
 
   public OrderEnumeratorBase(@Nullable Module module, @NotNull Project project, @Nullable OrderRootsCache cache) {
@@ -133,7 +132,7 @@ abstract class OrderEnumeratorBase extends OrderEnumerator implements OrderEnume
   }
 
   @Override
-  public OrderEnumerator using(@NotNull ModulesProvider provider) {
+  public OrderEnumerator using(@NotNull RootModelProvider provider) {
     myModulesProvider = provider;
     return this;
   }
