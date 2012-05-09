@@ -76,17 +76,12 @@ public class CoreJavaCodeStyleManager extends JavaCodeStyleManager {
   }
 
   @Override
-  public VariableKind getVariableKind(@NotNull PsiVariable variable) {
-    return null;
-  }
-
-  @Override
   public SuggestedNameInfo suggestVariableName(@NotNull VariableKind kind,
                                                @Nullable String propertyName,
                                                @Nullable PsiExpression expr,
                                                @Nullable PsiType type,
                                                boolean correctKeywords) {
-    return null;
+    return SuggestedNameInfo.NULL_INFO;
   }
 
   @Override
@@ -115,7 +110,7 @@ public class CoreJavaCodeStyleManager extends JavaCodeStyleManager {
 
   @Override
   public PsiElement qualifyClassReferences(@NotNull PsiElement element) {
-    return null;
+    return element;
   }
 
   @Override
