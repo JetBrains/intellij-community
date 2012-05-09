@@ -91,11 +91,6 @@ public abstract class FileBasedIndex implements ApplicationComponent {
 
   public abstract <K> void ensureUpToDate(@NotNull ID<K, ?> indexId, @Nullable Project project, @Nullable GlobalSearchScope filter);
 
-  protected abstract <K> void ensureUpToDate(@NotNull ID<K, ?> indexId,
-                                             @Nullable Project project,
-                                             @Nullable GlobalSearchScope filter,
-                                             @Nullable VirtualFile restrictedFile);
-
   public abstract void requestRebuild(ID<?, ?> indexId, Throwable throwable);
 
   public abstract <K> void scheduleRebuild(@NotNull ID<K, ?> indexId, @NotNull Throwable e);
