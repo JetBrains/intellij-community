@@ -13,20 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+class Test {
+    int i                 = 1;
+    int fieldWithLongName = 2;
 
-package com.intellij.psi.impl.source.codeStyle;
-
-import com.intellij.lang.ASTNode;
-import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.util.TextRange;
-import org.jetbrains.annotations.NotNull;
-
-/**
- * @author yole
- */
-public interface PreFormatProcessor {
-  ExtensionPointName<PreFormatProcessor> EP_NAME = ExtensionPointName.create("com.intellij.preFormatProcessor");
-
-  @NotNull
-  TextRange process(@NotNull ASTNode element, @NotNull TextRange range);
+    void test() {
+        <caret>i = 3;
+    }
 }
