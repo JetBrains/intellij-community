@@ -271,6 +271,15 @@ public class PyTargetExpressionImpl extends PyPresentableElementImpl<PyTargetExp
       final PyType sourceType = source.getType(context);
       if (sourceType instanceof PyCollectionType) {
         type = ((PyCollectionType)sourceType).getElementType(context);
+        if (sourceType instanceof PyClassType) {
+          final PyClass cls = ((PyClassType)sourceType).getPyClass();
+          if (cls != null && type instanceof PyTupleType && PyABCUtil.isSubclass(cls, PyNames.MAPPING)) {
+            final PyTupleType mappingType = (PyTupleType)type;
+            if (mappingType.getElementCount() == 2) {
+              return mappingType.getElementType(0);
+            }
+          }
+        }
       }
       else if (sourceType instanceof PyClassType) {
         final PyClass pyClass = ((PyClassType)sourceType).getPyClass();
