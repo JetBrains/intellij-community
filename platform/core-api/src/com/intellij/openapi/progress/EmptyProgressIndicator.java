@@ -95,15 +95,6 @@ public class EmptyProgressIndicator implements ProgressIndicator {
     return false;
   }
 
-
-  public void finish(final Task task) {
-    myFinished = true;
-  }
-
-  public boolean isFinished(final Task task) {
-    return myFinished;
-  }
-
   public void setIndeterminate(boolean indeterminate) {
   }
 
