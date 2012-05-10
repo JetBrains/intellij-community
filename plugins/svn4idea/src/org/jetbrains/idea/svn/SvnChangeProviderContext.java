@@ -322,14 +322,26 @@ class SvnChangeProviderContext implements StatusReceiver {
   Change createMovedChange(final ContentRevision before, final ContentRevision after, final SVNStatus copiedStatus,
                                    final SVNStatus deletedStatus) throws SVNException {
     // todo no convertion needed for the contents status?
-    return patchWithPropertyChange(new ConflictedSvnChange(before, after, ConflictState.mergeState(getState(copiedStatus), getState(deletedStatus)),
-             ((copiedStatus != null) && (copiedStatus.getTreeConflict() != null)) ? after.getFile() : before.getFile()), copiedStatus, deletedStatus);
+    final ConflictedSvnChange conflictedSvnChange =
+      new ConflictedSvnChange(before, after, ConflictState.mergeState(getState(copiedStatus), getState(deletedStatus)),
+                              ((copiedStatus != null) && (copiedStatus.getTreeConflict() != null)) ? after.getFile() : before.getFile());
+    if (deletedStatus != null) {
+      conflictedSvnChange.setBeforeDescription(deletedStatus.getTreeConflict());
+    }
+    if (copiedStatus != null) {
+      conflictedSvnChange.setAfterDescription(copiedStatus.getTreeConflict());
+    }
+    return patchWithPropertyChange(conflictedSvnChange, copiedStatus, deletedStatus);
   }
 
   private Change createChange(final ContentRevision before, final ContentRevision after, final FileStatus fStatus, final SVNStatus svnStatus)
     throws SVNException {
-    return patchWithPropertyChange(new ConflictedSvnChange(before, after, correctContentsStatus(fStatus, svnStatus),
-             getState(svnStatus), after == null ? before.getFile() : after.getFile()), svnStatus, null);
+    final ConflictedSvnChange conflictedSvnChange = new ConflictedSvnChange(before, after, correctContentsStatus(fStatus, svnStatus),
+                                                         getState(svnStatus), after == null ? before.getFile() : after.getFile());
+    if (svnStatus != null) {
+      conflictedSvnChange.setBeforeDescription(svnStatus.getTreeConflict());
+    }
+    return patchWithPropertyChange(conflictedSvnChange, svnStatus, null);
   }
 
   private FileStatus correctContentsStatus(final FileStatus fs, final SVNStatus svnStatus) throws SVNException {

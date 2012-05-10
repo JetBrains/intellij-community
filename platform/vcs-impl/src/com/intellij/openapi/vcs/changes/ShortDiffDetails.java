@@ -38,7 +38,7 @@ import javax.swing.*;
  * Date: 8/17/11
  * Time: 7:08 PM
  */
-public class ShortDiffDetails implements RefreshablePanel, Disposable {
+public class ShortDiffDetails implements RefreshablePanel<Change>, Disposable {
   private final Project myProject;
   private final VcsChangeDetailsManager myVcsChangeDetailsManager;
   private final Getter<Change[]> myMaster;
@@ -64,6 +64,11 @@ public class ShortDiffDetails implements RefreshablePanel, Disposable {
         }
       }
     };
+  }
+
+  @Override
+  public boolean isStillValid(Change change) {
+    return true;
   }
 
   @Override
@@ -150,7 +155,8 @@ public class ShortDiffDetails implements RefreshablePanel, Disposable {
           myDetailsCache.put(filePath, pair);
         } else if (old != pair) {
           if (pair != null) {
-            Disposer.dispose(pair);
+            myDetailsCache.put(filePath, pair);
+            Disposer.dispose(old);
           }
         }
       }
@@ -174,6 +180,11 @@ public class ShortDiffDetails implements RefreshablePanel, Disposable {
 
         final FilePath filePath = ChangesUtil.getFilePath(change);
         RefreshablePanel details = myDetailsCache.get(filePath);
+        if (details != null && ! details.isStillValid(change)) {
+          Disposer.dispose(details);
+          details = null;
+          myDetailsLoader.resetValueConsumer();
+        }
         if (details != null) {
           myDetailsConsumer.consume(change, details);
         } else {

@@ -32,8 +32,10 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsShowConfirmationOption;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.pending.MockChangeListManagerGate;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.AbstractJunitVcsTestCase;
 import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.testFramework.TestClientRunner;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
 import com.intellij.testFramework.fixtures.TempDirTestFixture;
 import com.intellij.testFramework.vcs.MockChangelistBuilder;
@@ -44,6 +46,7 @@ import org.junit.Before;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -56,6 +59,7 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase  {
   protected String myRepoUrl;
   private ChangeListManagerGate myGate;
   protected AtomicSectionsAware myRefreshCopiesStub;
+  private TestClientRunner myRunner;
 
   protected SvnTestCase() {
     PlatformTestCase.initPlatformLangPrefix();
@@ -63,6 +67,8 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase  {
 
   @Before
   public void setUp() throws Exception {
+    myRunner = createClientRunner();
+
     //System.setProperty("svnkit.wc.17", "false");
     UIUtil.invokeAndWaitIfNeeded(new Runnable() {
       @Override
@@ -151,7 +157,7 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase  {
   }
 
   protected ProcessOutput runSvn(String... commandLine) throws IOException {
-    return runClient("svn", null, myWcRoot, commandLine);
+    return myRunner.runClient("svn", null, myWcRoot, commandLine);
   }
 
   protected void enableSilentOperation(final VcsConfiguration.StandardConfirmation op) {
@@ -190,5 +196,31 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase  {
         }
       }
     });
+  }
+
+  public class SubTree {
+    protected final VirtualFile myRootDir;
+    protected VirtualFile mySourceDir;
+    protected final VirtualFile myTargetDir;
+
+    protected VirtualFile myS1File;
+    protected VirtualFile myS2File;
+
+    protected final List<VirtualFile> myTargetFiles;
+    protected static final String ourS1Contents = "123";
+    protected static final String ourS2Contents = "abc";
+
+    protected SubTree(final VirtualFile base) throws Exception {
+      myRootDir = createDirInCommand(base, "root");
+      mySourceDir = createDirInCommand(myRootDir, "source");
+      myS1File = createFileInCommand(mySourceDir, "s1.txt", ourS1Contents);
+      myS2File = createFileInCommand(mySourceDir, "s2.txt", ourS2Contents);
+
+      myTargetDir = createDirInCommand(myRootDir, "target");
+      myTargetFiles = new ArrayList<VirtualFile>();
+      for (int i = 0; i < 10; i++) {
+        myTargetFiles.add(createFileInCommand(myTargetDir, "t" + (i+10) +".txt", ourS1Contents));
+      }
+    }
   }
 }

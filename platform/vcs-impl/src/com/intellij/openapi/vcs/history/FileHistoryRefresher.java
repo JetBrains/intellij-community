@@ -24,7 +24,7 @@ import com.intellij.openapi.vcs.annotate.AnnotationProvider;
  * @author irengrig
  * @author Kirill Likhodedov
  */
-public class FileHistoryRefresher {
+public class FileHistoryRefresher implements FileHistoryRefresherI {
   private final FileHistorySessionPartner mySessionPartner;
   private final VcsHistoryProvider myVcsHistoryProvider;
   private final FilePath myPath;
@@ -47,6 +47,7 @@ public class FileHistoryRefresher {
   /**
    * @param refresh if true, than this is a refresh. If false, the history is shown for the first time.
    */
+  @Override
   public void run(boolean isRefresh) {
     final VcsHistoryProviderBackgroundableProxy proxy = new VcsHistoryProviderBackgroundableProxy(
       myVcs, myVcsHistoryProvider, myVcs.getDiffProvider());
@@ -59,6 +60,7 @@ public class FileHistoryRefresher {
    * Was the refresher called for the first time or via refresh.
    * @return
    */
+  @Override
   public boolean isFirstTime() {
     return !myIsRefresh;
   }

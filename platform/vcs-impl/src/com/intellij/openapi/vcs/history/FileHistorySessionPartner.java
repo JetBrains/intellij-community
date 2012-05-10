@@ -46,7 +46,7 @@ public class FileHistorySessionPartner implements VcsAppendableHistorySessionPar
   private final FilePath myPath;
   private final String myRepositoryPath;
   private final AbstractVcs myVcs;
-  private final FileHistoryRefresher myRefresher;
+  private final FileHistoryRefresherI myRefresherI;
   private volatile VcsAbstractHistorySession mySession;
   private final BufferedListConsumer<VcsFileRevision> myBuffer;
 
@@ -54,13 +54,13 @@ public class FileHistorySessionPartner implements VcsAppendableHistorySessionPar
                                    final FilePath path,
                                    final String repositoryPath,
                                    final AbstractVcs vcs,
-                                   final FileHistoryRefresher refresher) {
+                                   final FileHistoryRefresherI refresherI) {
     myVcsHistoryProvider = vcsHistoryProvider;
     myAnnotationProvider = annotationProvider;
     myPath = path;
     myRepositoryPath = repositoryPath;
     myVcs = vcs;
-    myRefresher = refresher;
+    myRefresherI = refresherI;
     myBuffer = new BufferedListConsumer<VcsFileRevision>(5, new Consumer<List<VcsFileRevision>>() {
       public void consume(List<VcsFileRevision> vcsFileRevisions) {
         mySession.getRevisionList().addAll(vcsFileRevisions);
@@ -83,7 +83,7 @@ public class FileHistorySessionPartner implements VcsAppendableHistorySessionPar
       ContentManager contentManager = ProjectLevelVcsManagerEx.getInstanceEx(myVcs.getProject()).getContentManager();
       final VcsHistorySession copy = mySession.copyWithCachedRevision();
       myFileHistoryPanel = new FileHistoryPanelImpl(myVcs, myPath, copy, myVcsHistoryProvider,
-                                                    contentManager, myRefresher);
+                                                    contentManager, myRefresherI);
     }
     return myFileHistoryPanel;
   }
@@ -93,7 +93,7 @@ public class FileHistorySessionPartner implements VcsAppendableHistorySessionPar
     if (myFileHistoryPanel == null) {
       ContentManager contentManager = ProjectLevelVcsManagerEx.getInstanceEx(myVcs.getProject()).getContentManager();
       myFileHistoryPanel = new FileHistoryPanelImpl(myVcs, myPath, copy, myVcsHistoryProvider,
-                                                    contentManager, myRefresher);
+                                                    contentManager, myRefresherI);
     } else {
       myFileHistoryPanel.getHistoryPanelRefresh().consume(copy);
     }
@@ -117,7 +117,7 @@ public class FileHistorySessionPartner implements VcsAppendableHistorySessionPar
 
         ToolWindow toolWindow = ToolWindowManager.getInstance(myVcs.getProject()).getToolWindow(ToolWindowId.VCS);
         assert toolWindow != null : "Version Control ToolWindow should be available at this point.";
-        if (myRefresher.isFirstTime()) {
+        if (myRefresherI.isFirstTime()) {
           toolWindow.activate(null);
         }
       }

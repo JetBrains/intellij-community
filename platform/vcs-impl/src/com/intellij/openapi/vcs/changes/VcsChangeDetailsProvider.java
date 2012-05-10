@@ -17,6 +17,7 @@ package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.progress.BackgroundTaskQueue;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.CalledInAwt;
 import com.intellij.openapi.vcs.CalledInBackground;
@@ -36,5 +37,5 @@ public interface VcsChangeDetailsProvider {
   @CalledInAwt
   boolean canComment(final Change change);
   @CalledInAwt
-  RefreshablePanel comment(final Change change, JComponent parent);
+  RefreshablePanel comment(final Change change, JComponent parent, BackgroundTaskQueue queue);
 }

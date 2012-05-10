@@ -24,9 +24,11 @@ import com.intellij.openapi.diff.DiffPanel;
 import com.intellij.openapi.diff.ex.DiffPanelEx;
 import com.intellij.openapi.diff.ex.DiffPanelOptions;
 import com.intellij.openapi.diff.impl.DiffPanelImpl;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.BackgroundTaskQueue;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsKey;
@@ -41,6 +43,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -51,7 +54,7 @@ import java.util.Map;
  *         Time: 5:36 PM
  */
 public class VcsChangeDetailsManager {
-  private final Map<VcsKey, VcsChangeDetailsProvider> myProviderMap = new HashMap<VcsKey, VcsChangeDetailsProvider>();
+  private final List<VcsChangeDetailsProvider> myProviders = new ArrayList<VcsChangeDetailsProvider>();
   private final List<VcsChangeDetailsProvider> myDedicatedList;
   private final Project myProject;
   private final BackgroundTaskQueue myQueue;
@@ -61,8 +64,11 @@ public class VcsChangeDetailsManager {
     myQueue = new BackgroundTaskQueue(myProject, "Loading change details");
     myDedicatedList = new ArrayList<VcsChangeDetailsProvider>();
 
-    myDedicatedList.add(new BinaryDetailsProviderNew(project, myQueue));
-    myDedicatedList.add(new FragmentedDiffDetailsProvider(myProject, myQueue));
+    myDedicatedList.add(new BinaryDetailsProviderNew(project));
+    myDedicatedList.add(new FragmentedDiffDetailsProvider(myProject));
+
+    VcsChangeDetailsProvider[] extensions = Extensions.getExtensions(VcsChangeDetailsProvider.EP_NAME, myProject);
+    myProviders.addAll(Arrays.asList(extensions));
 
     Disposer.register(project, new Disposable() {
       @Override
@@ -76,16 +82,40 @@ public class VcsChangeDetailsManager {
     for (VcsChangeDetailsProvider provider : myDedicatedList) {
       if (provider.canComment(change)) return true;
     }
+    for (VcsChangeDetailsProvider provider : myProviders) {
+      if (provider.canComment(change)) return true;
+    }
     return false;
   }
 
   @Nullable
   public RefreshablePanel getPanel(final Change change, JComponent parent) {
+    final List<Pair<String, RefreshablePanel>> panels = new ArrayList<Pair<String, RefreshablePanel>>();
     for (VcsChangeDetailsProvider convertor : myDedicatedList) {
       if (! convertor.canComment(change)) continue;
-      RefreshablePanel panel = convertor.comment(change, parent);
+      RefreshablePanel panel = convertor.comment(change, parent, myQueue);
       if (panel != null) {
-        return panel;
+        panels.add(new Pair<String, RefreshablePanel>("Diff", panel));
+        break;  // only one of dedicated for now
+      }
+    }
+    for (VcsChangeDetailsProvider provider : myProviders) {
+      if (provider.canComment(change)) {
+        RefreshablePanel panel = provider.comment(change, parent, myQueue);
+        if (panel != null) {
+          panels.add(new Pair<String, RefreshablePanel>(provider.getName(), panel));
+        }
+      }
+    }
+    if (! panels.isEmpty()) {
+      if (panels.size() == 1) {
+        return panels.get(0).getSecond();
+      } else {
+        TabbedRefreshablePanel tabbedRefreshablePanel = new TabbedRefreshablePanel();
+        for (Pair<String, RefreshablePanel> panel : panels) {
+          tabbedRefreshablePanel.addTab(panel.getFirst(), panel.getSecond());
+        }
+        return tabbedRefreshablePanel;
       }
     }
     return null;
@@ -97,11 +127,9 @@ public class VcsChangeDetailsManager {
 
   private static class BinaryDetailsProviderNew implements VcsChangeDetailsProvider {
     private final Project myProject;
-    private final BackgroundTaskQueue myQueue;
 
-    private BinaryDetailsProviderNew(Project project, final BackgroundTaskQueue queue) {
+    private BinaryDetailsProviderNew(Project project) {
       myProject = project;
-      myQueue = queue;
     }
 
     @Override
@@ -111,15 +139,20 @@ public class VcsChangeDetailsManager {
 
     @Override
     public boolean canComment(Change change) {
-      FilePath path = ChangesUtil.getFilePath(change);
-      if (path != null && path.isDirectory()) return false;
-      return ShowDiffAction.isBinaryChangeAndCanShow(myProject, change);
+      return canBeShownInBinaryDiff(change, myProject);
     }
 
     @Override
-    public RefreshablePanel comment(Change change, JComponent parent) {
-      return new BinaryDiffDetailsPanel(myProject, myQueue, change);
+    public RefreshablePanel comment(Change change, JComponent parent, BackgroundTaskQueue queue) {
+      return new BinaryDiffDetailsPanel(myProject, queue, change);
     }
+  }
+
+  private static boolean canBeShownInBinaryDiff(Change change, final Project project) {
+    FilePath path = ChangesUtil.getFilePath(change);
+    if (path != null && path.isDirectory()) return false;
+    if (change.isTreeConflict()) return false;
+    return ShowDiffAction.isBinaryChangeAndCanShow(project, change);
   }
 
   private static class BinaryDiffDetailsPanel extends AbstractRefreshablePanel<ValueWithVcsException<List<BeforeAfter<DiffContent>>>> {
@@ -142,6 +175,11 @@ public class VcsChangeDetailsManager {
       myPanel.removeStatusBar();
       DiffPanelOptions o = ((DiffPanelEx)myPanel).getOptions();
       o.setRequestFocusOnNewContent(false);
+    }
+
+    @Override
+    public boolean isStillValid(Change data) {
+      return canBeShownInBinaryDiff(data, myProject);
     }
 
     @Override
@@ -211,11 +249,9 @@ public class VcsChangeDetailsManager {
 
   private static class FragmentedDiffDetailsProvider implements VcsChangeDetailsProvider {
     private final Project myProject;
-    private final BackgroundTaskQueue myQueue;
 
-    private FragmentedDiffDetailsProvider(Project project, final BackgroundTaskQueue queue) {
+    private FragmentedDiffDetailsProvider(Project project) {
       myProject = project;
-      myQueue = queue;
     }
 
     @Override
@@ -229,8 +265,8 @@ public class VcsChangeDetailsManager {
     }
 
     @Override
-    public RefreshablePanel comment(Change change, JComponent parent) {
-      return new FragmentedDiffDetailsPanel(myProject, myQueue, change, parent);
+    public RefreshablePanel comment(Change change, JComponent parent, BackgroundTaskQueue queue) {
+      return new FragmentedDiffDetailsPanel(myProject, queue, change, parent);
     }
   }
 
@@ -254,6 +290,11 @@ public class VcsChangeDetailsManager {
     @Override
     protected void refreshPresentation() {
       myDiffPanel.refreshPresentation();
+    }
+
+    @Override
+    public boolean isStillValid(Change data) {
+      return FragmentedDiffRequestFromChange.canCreateRequest(data);
     }
 
     @Override

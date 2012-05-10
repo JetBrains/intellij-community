@@ -59,7 +59,7 @@ public class FragmentedDiffRequestFromChange {
   }
 
   public static boolean canCreateRequest(Change change) {
-    if (ChangesUtil.isTextConflictingChange(change)) return false;
+    if (ChangesUtil.isTextConflictingChange(change) || change.isTreeConflict()) return false;
     if (ShowDiffAction.isBinaryChange(change)) return false;
     final FilePath filePath = ChangesUtil.getFilePath(change);
     if (filePath.isDirectory()) return false;

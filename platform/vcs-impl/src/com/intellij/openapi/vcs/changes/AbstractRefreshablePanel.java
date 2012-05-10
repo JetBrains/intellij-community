@@ -43,7 +43,7 @@ import javax.swing.*;
  * Date: 9/7/11
  * Time: 3:13 PM
  */
-public abstract class AbstractRefreshablePanel<T> implements RefreshablePanel {
+public abstract class AbstractRefreshablePanel<T> implements RefreshablePanel<Change> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.AbstractRefreshablePanel");
   protected final Ticket myTicket;
   private final DetailsPanel myDetailsPanel;
@@ -122,6 +122,11 @@ public abstract class AbstractRefreshablePanel<T> implements RefreshablePanel {
   @Override
   public JPanel getPanel() {
     return myDetailsPanel.getPanel();
+  }
+
+  @Override
+  public boolean isStillValid(Change data) {
+    return true;
   }
 
   private class Loader extends ModalityIgnorantBackgroundableTask {

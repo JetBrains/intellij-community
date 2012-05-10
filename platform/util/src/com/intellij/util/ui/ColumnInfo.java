@@ -93,7 +93,7 @@ public abstract class ColumnInfo <Item, Aspect> {
   }
 
   @Nullable
-  public String getMaxStringValue() {
+  public String getMaxStringValue(JTable table) {
     return null;
   }
 

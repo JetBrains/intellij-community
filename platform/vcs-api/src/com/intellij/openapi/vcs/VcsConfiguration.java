@@ -89,6 +89,7 @@ public final class VcsConfiguration implements PersistentStateComponent<Element>
   public Boolean SHOW_PATCH_IN_EXPLORER = null;
   public boolean SHOW_FILE_HISTORY_DETAILS = true;
   public boolean SHOW_VCS_ERROR_NOTIFICATIONS = true;
+  public boolean CHANGE_DETAILS_ON = false;
 
   public enum StandardOption {
     ADD(VcsBundle.message("vcs.command.name.add")),
