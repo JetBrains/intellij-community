@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyIcons;
 import org.jetbrains.plugins.groovy.config.GroovyLibraryPresentationProviderBase;
-import org.jetbrains.plugins.groovy.config.GroovyLibraryProperties;
 
 import javax.swing.*;
 import java.io.File;
@@ -38,7 +37,7 @@ import java.util.regex.Pattern;
  * @author nik
  */
 public class GppLibraryPresentationProvider extends GroovyLibraryPresentationProviderBase {
-  private static final LibraryKind<GroovyLibraryProperties> GPP_KIND = LibraryKind.create("gpp");
+  private static final LibraryKind GPP_KIND = LibraryKind.create("gpp");
   private static final Pattern GROOVYPP_JAR = Pattern.compile("groovypp-([\\d\\.]+)\\.jar");
   private static final Pattern GROOVYPP_ALL_JAR = Pattern.compile("groovypp-all-([\\d\\.]+)\\.jar");
 

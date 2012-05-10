@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +16,9 @@
 package com.intellij.framework.library;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.libraries.LibraryKind;
 import com.intellij.openapi.roots.libraries.LibraryType;
 import com.intellij.openapi.roots.libraries.NewLibraryConfiguration;
+import com.intellij.openapi.roots.libraries.PersistentLibraryKind;
 import com.intellij.openapi.roots.libraries.ui.LibraryEditorComponent;
 import com.intellij.openapi.roots.libraries.ui.LibraryPropertiesEditor;
 import com.intellij.openapi.util.text.StringUtil;
@@ -35,7 +35,7 @@ public class DownloadableLibraryType extends LibraryType<LibraryVersionPropertie
   private final String myLibraryCategoryName;
   private final DownloadableLibraryDescription myLibraryDescription;
 
-  public DownloadableLibraryType(@NotNull LibraryKind<LibraryVersionProperties> kind, @NotNull String libraryCategoryName,
+  public DownloadableLibraryType(@NotNull PersistentLibraryKind<LibraryVersionProperties> kind, @NotNull String libraryCategoryName,
                                  @NotNull DownloadableLibraryDescription description) {
     super(kind);
     myLibraryCategoryName = libraryCategoryName;
@@ -67,12 +67,6 @@ public class DownloadableLibraryType extends LibraryType<LibraryVersionPropertie
   public String getDescription(@NotNull LibraryVersionProperties properties) {
     final String versionString = properties.getVersionString();
     return StringUtil.capitalize(myLibraryCategoryName) + " library" + (versionString != null ? " of version " + versionString : "");
-  }
-
-  @NotNull
-  @Override
-  public LibraryVersionProperties createDefaultProperties() {
-    return new LibraryVersionProperties();
   }
 
   @Override

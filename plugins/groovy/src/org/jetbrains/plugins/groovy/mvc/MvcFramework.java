@@ -522,7 +522,7 @@ public abstract class MvcFramework {
 
   public abstract MvcProjectStructure createProjectStructure(@NotNull Module module, boolean auxModule);
 
-  public abstract LibraryKind<?> getLibraryKind();
+  public abstract LibraryKind getLibraryKind();
 
   public abstract String getSomeFrameworkClass();
 

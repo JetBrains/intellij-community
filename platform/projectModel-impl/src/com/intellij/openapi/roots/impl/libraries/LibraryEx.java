@@ -20,7 +20,8 @@ import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.impl.RootModelImpl;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryProperties;
-import com.intellij.openapi.roots.libraries.LibraryType;
+import com.intellij.openapi.roots.libraries.PersistentLibraryKind;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -34,7 +35,8 @@ public interface LibraryEx extends Library {
 
   boolean isDisposed();
 
-  LibraryType<?> getType();
+  @Nullable
+  PersistentLibraryKind<?> getKind();
 
   LibraryProperties getProperties();
 
@@ -43,8 +45,8 @@ public interface LibraryEx extends Library {
 
     LibraryProperties getProperties();
 
-    void setType(LibraryType<?> type);
+    void setKind(PersistentLibraryKind<?> type);
 
-    LibraryType<?> getType();
+    PersistentLibraryKind<?> getKind();
   }
 }

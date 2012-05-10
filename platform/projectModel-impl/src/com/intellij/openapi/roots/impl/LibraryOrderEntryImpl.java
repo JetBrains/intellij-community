@@ -19,10 +19,7 @@ package com.intellij.openapi.roots.impl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.libraries.LibraryEx;
-import com.intellij.openapi.roots.libraries.Library;
-import com.intellij.openapi.roots.libraries.LibraryTable;
-import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
-import com.intellij.openapi.roots.libraries.LibraryType;
+import com.intellij.openapi.roots.libraries.*;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
@@ -47,14 +44,14 @@ class LibraryOrderEntryImpl extends LibraryOrderEntryBaseImpl implements Library
   @NonNls private static final String LEVEL_ATTR = "level";
   private final MyOrderEntryLibraryTableListener myLibraryListener = new MyOrderEntryLibraryTableListener();
   @NonNls private static final String EXPORTED_ATTR = "exported";
-  private LibraryType myLibraryType;
+  private PersistentLibraryKind myLibraryKind;
 
   LibraryOrderEntryImpl(@NotNull Library library, @NotNull RootModelImpl rootModel, @NotNull ProjectRootManagerImpl projectRootManager) {
     super(rootModel, projectRootManager);
     LOG.assertTrue(library.getTable() != null);
     myLibrary = library;
     if (myLibrary instanceof LibraryEx) {
-      myLibraryType = ((LibraryEx)myLibrary).getType();
+      myLibraryKind = ((LibraryEx)myLibrary).getKind();
     }
     addListeners();
     init();
@@ -82,7 +79,7 @@ class LibraryOrderEntryImpl extends LibraryOrderEntryBaseImpl implements Library
     }
     else {
       myLibrary = that.myLibrary;
-      myLibraryType = that.myLibraryType;
+      myLibraryKind = that.myLibraryKind;
     }
     myExported = that.myExported;
     myScope = that.myScope;
@@ -113,7 +110,7 @@ class LibraryOrderEntryImpl extends LibraryOrderEntryBaseImpl implements Library
       myLibraryLevel = null;
       myLibrary = library;
       if (library instanceof LibraryEx) {
-        myLibraryType = ((LibraryEx)library).getType();
+        myLibraryKind = ((LibraryEx)library).getKind();
       }
     }
   }
@@ -254,8 +251,8 @@ class LibraryOrderEntryImpl extends LibraryOrderEntryBaseImpl implements Library
         myLibrary = newLibrary;
         myLibraryName = null;
         myLibraryLevel = null;
-        if (newLibrary instanceof LibraryEx && myLibraryType == null) {
-          myLibraryType = ((LibraryEx)newLibrary).getType();
+        if (newLibrary instanceof LibraryEx && myLibraryKind == null) {
+          myLibraryKind = ((LibraryEx)newLibrary).getKind();
         }
         updateFromRootProviderAndSubscribe();
       }
@@ -297,7 +294,7 @@ class LibraryOrderEntryImpl extends LibraryOrderEntryBaseImpl implements Library
 
   @Override
   protected VirtualFile[] filterDirectories(@NotNull VirtualFile[] files) {
-    if (myLibraryType != null && myLibraryType.isFileBased()) {
+    if (myLibraryKind != null && myLibraryKind.isFileBased()) {
       return files;
     }
     return super.filterDirectories(files);

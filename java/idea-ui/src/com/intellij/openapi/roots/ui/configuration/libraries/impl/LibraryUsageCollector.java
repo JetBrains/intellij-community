@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package com.intellij.openapi.roots.ui.configuration.libraries.impl;
 
 import com.intellij.internal.statistic.AbstractApplicationUsagesCollector;
-import com.intellij.internal.statistic.UsagesCollector;
 import com.intellij.internal.statistic.beans.GroupDescriptor;
 import com.intellij.internal.statistic.beans.UsageDescriptor;
 import com.intellij.openapi.module.Module;
@@ -30,7 +29,9 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * @author nik
@@ -44,7 +45,7 @@ public class LibraryUsageCollector extends AbstractApplicationUsagesCollector {
   public Set<UsageDescriptor> getProjectUsages(@Nullable Project project) {
     if (project == null) return Collections.emptySet();
 
-    final Set<LibraryKind<?>> usedKinds = new HashSet<LibraryKind<?>>();
+    final Set<LibraryKind> usedKinds = new HashSet<LibraryKind>();
     final Processor<Library> processor = new Processor<Library>() {
       @Override
       public boolean process(Library library) {
@@ -57,7 +58,7 @@ public class LibraryUsageCollector extends AbstractApplicationUsagesCollector {
     }
 
     final HashSet<UsageDescriptor> usageDescriptors = new HashSet<UsageDescriptor>();
-    for (LibraryKind<?> kind : usedKinds) {
+    for (LibraryKind kind : usedKinds) {
       usageDescriptors.add(new UsageDescriptor(kind.getKindId(), 1));
     }
     return usageDescriptors;

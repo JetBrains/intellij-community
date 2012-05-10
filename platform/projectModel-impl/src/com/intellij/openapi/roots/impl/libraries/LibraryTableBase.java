@@ -24,7 +24,7 @@ import com.intellij.openapi.roots.DependencyScope;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
-import com.intellij.openapi.roots.libraries.LibraryType;
+import com.intellij.openapi.roots.libraries.PersistentLibraryKind;
 import com.intellij.openapi.util.*;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.containers.ContainerUtil;
@@ -186,7 +186,7 @@ public abstract class LibraryTableBase implements PersistentStateComponent<Eleme
   }
 
   public interface ModifiableModelEx extends ModifiableModel {
-    Library createLibrary(String name, @Nullable LibraryType type);
+    Library createLibrary(String name, @Nullable PersistentLibraryKind type);
   }
 
   public class LibraryModel implements ModifiableModelEx, JDOMExternalizable {
@@ -244,9 +244,9 @@ public abstract class LibraryTableBase implements PersistentStateComponent<Eleme
     }
 
     @Override
-    public Library createLibrary(String name, @Nullable LibraryType type) {
+    public Library createLibrary(String name, @Nullable PersistentLibraryKind kind) {
       assertWritable();
-      final LibraryImpl library = new LibraryImpl(name, type, LibraryTableBase.this, null);
+      final LibraryImpl library = new LibraryImpl(name, kind, LibraryTableBase.this, null);
       myLibraries.add(library);
       return library;
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,7 +32,7 @@ import java.io.File;
  * @author nik
  */
 public class GroovyLibraryPresentationProvider extends GroovyLibraryPresentationProviderBase {
-  public static final LibraryKind<GroovyLibraryProperties> GROOVY_KIND = LibraryKind.create("groovy");
+  public static final LibraryKind GROOVY_KIND = LibraryKind.create("groovy");
 
   public GroovyLibraryPresentationProvider() {
     super(GROOVY_KIND);

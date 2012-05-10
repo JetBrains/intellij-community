@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +16,9 @@
 
 package com.intellij.openapi.roots.impl.libraries;
 
-import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.impl.RootModelImpl;
-import com.intellij.openapi.roots.libraries.LibraryType;
+import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.roots.libraries.PersistentLibraryKind;
 import com.intellij.openapi.util.InvalidDataException;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -43,8 +43,8 @@ public class LibraryTableImplUtil {
   }
 
   public static Library createModuleLevelLibrary(@Nullable String name,
-                                                 final LibraryType<?> type,
+                                                 final PersistentLibraryKind kind,
                                                  RootModelImpl rootModel) {
-    return new LibraryImpl(name, type, null, rootModel);
+    return new LibraryImpl(name, kind, null, rootModel);
   }
 }

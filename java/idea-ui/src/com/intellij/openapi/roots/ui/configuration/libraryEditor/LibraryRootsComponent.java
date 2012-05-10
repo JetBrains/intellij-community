@@ -121,8 +121,8 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
   public void updatePropertiesLabel() {
     StringBuilder text = new StringBuilder();
     final LibraryType<?> type = getLibraryEditor().getType();
-    final Set<LibraryKind<?>> excluded =
-      type != null ? Collections.<LibraryKind<?>>singleton(type.getKind()) : Collections.<LibraryKind<?>>emptySet();
+    final Set<LibraryKind> excluded =
+      type != null ? Collections.<LibraryKind>singleton(type.getKind()) : Collections.<LibraryKind>emptySet();
     for (String description : LibraryPresentationManager.getInstance().getDescriptions(getLibraryEditor().getFiles(OrderRootType.CLASSES),
                                                                                        excluded)) {
       if (text.length() > 0) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,7 +53,7 @@ public class FrameworkLibraryValidatorImpl extends FrameworkLibraryValidator {
 
   @Override
   public ValidationResult check() {
-    final Set<? extends LibraryKind<?>> libraryKinds = myLibraryDescription.getSuitableLibraryKinds();
+    final Set<? extends LibraryKind> libraryKinds = myLibraryDescription.getSuitableLibraryKinds();
     final Ref<Boolean> found = Ref.create(false);
     myContext.getRootModel().orderEntries().using(myContext.getModulesProvider()).recursively().librariesOnly().forEachLibrary(new Processor<Library>() {
       @Override

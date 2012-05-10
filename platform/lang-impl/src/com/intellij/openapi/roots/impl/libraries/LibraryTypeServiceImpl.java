@@ -18,10 +18,7 @@ package com.intellij.openapi.roots.impl.libraries;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.libraries.LibraryProperties;
-import com.intellij.openapi.roots.libraries.LibraryType;
-import com.intellij.openapi.roots.libraries.LibraryTypeService;
-import com.intellij.openapi.roots.libraries.NewLibraryConfiguration;
+import com.intellij.openapi.roots.libraries.*;
 import com.intellij.openapi.roots.libraries.ui.LibraryRootsComponentDescriptor;
 import com.intellij.openapi.roots.libraries.ui.OrderRoot;
 import com.intellij.openapi.roots.libraries.ui.impl.RootDetectionUtil;
@@ -43,10 +40,10 @@ public class LibraryTypeServiceImpl extends LibraryTypeService {
   private static final String DEFAULT_LIBRARY_NAME = "Unnamed";
 
   @Nullable
-  public LibraryType<?> findTypeById(@NotNull String typeId) {
+  public PersistentLibraryKind<?> findKindById(@NotNull String typeId) {
     for (LibraryType type : LibraryType.EP_NAME.getExtensions()) {
       if (type.getKind().getKindId().equals(typeId)) {
-        return type;
+        return (PersistentLibraryKind<?>)type.getKind();
       }
     }
     return null;
@@ -72,7 +69,7 @@ public class LibraryTypeServiceImpl extends LibraryTypeService {
   }
 
   private static <P extends LibraryProperties<?>> NewLibraryConfiguration doCreate(final LibraryType<P> type, final String name, final List<OrderRoot> roots) {
-    return new NewLibraryConfiguration(name, type, type != null ? type.createDefaultProperties() : null) {
+    return new NewLibraryConfiguration(name, type, type != null ? type.getKind().createDefaultProperties() : null) {
       @Override
       public void addRoots(@NotNull LibraryEditor editor) {
         editor.addRoots(roots);

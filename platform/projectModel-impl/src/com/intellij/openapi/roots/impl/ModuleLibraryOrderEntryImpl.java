@@ -21,7 +21,7 @@ import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.roots.impl.libraries.LibraryTableImplUtil;
 import com.intellij.openapi.roots.libraries.Library;
-import com.intellij.openapi.roots.libraries.LibraryType;
+import com.intellij.openapi.roots.libraries.PersistentLibraryKind;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
@@ -51,9 +51,9 @@ public class ModuleLibraryOrderEntryImpl extends LibraryOrderEntryBaseImpl imple
     myScope = scope;
   }
 
-  ModuleLibraryOrderEntryImpl(String name, final LibraryType<?> type, RootModelImpl rootModel, ProjectRootManagerImpl projectRootManager) {
+  ModuleLibraryOrderEntryImpl(String name, final PersistentLibraryKind kind, RootModelImpl rootModel, ProjectRootManagerImpl projectRootManager) {
     super(rootModel, projectRootManager);
-    myLibrary = LibraryTableImplUtil.createModuleLevelLibrary(name, type, getRootModel());
+    myLibrary = LibraryTableImplUtil.createModuleLevelLibrary(name, kind, getRootModel());
     doinit();
   }
 

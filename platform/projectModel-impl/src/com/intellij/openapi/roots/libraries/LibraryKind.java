@@ -21,11 +21,11 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author nik
  */
-public class LibraryKind<P extends LibraryProperties> {
+public class LibraryKind {
   private final String myKindId;
 
   /**
-   * @param kindId must be unique among all {@link LibraryType} and {@link LibraryPresentationProvider} implementations
+   * @param kindId must be unique among all {@link com.intellij.openapi.roots.libraries.LibraryType} and {@link com.intellij.openapi.roots.libraries.LibraryPresentationProvider} implementations
    */
   public LibraryKind(@NotNull @NonNls String kindId) {
     myKindId = kindId;
@@ -44,7 +44,7 @@ public class LibraryKind<P extends LibraryProperties> {
    * @param kindId must be unique among all {@link LibraryType} and {@link LibraryPresentationProvider} implementations
    * @return new {@link LibraryKind} instance
    */
-  public static <P extends LibraryProperties> LibraryKind<P> create(@NotNull @NonNls String kindId) {
-    return new LibraryKind<P>(kindId);
+  public static LibraryKind create(@NotNull @NonNls String kindId) {
+    return new LibraryKind(kindId);
   }
 }

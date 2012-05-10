@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.config.GroovyLibraryPresentationProviderBase;
-import org.jetbrains.plugins.groovy.config.GroovyLibraryProperties;
 
 import javax.swing.*;
 import java.io.File;
@@ -32,7 +31,7 @@ import java.io.File;
  * @author nik
  */
 public class GantLibraryPresentationProvider extends GroovyLibraryPresentationProviderBase {
-  private static final LibraryKind<GroovyLibraryProperties> GANT_KIND = LibraryKind.create("gant");
+  private static final LibraryKind GANT_KIND = LibraryKind.create("gant");
 
   public GantLibraryPresentationProvider() {
     super(GANT_KIND);

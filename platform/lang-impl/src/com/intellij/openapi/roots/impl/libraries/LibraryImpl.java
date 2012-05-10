@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -66,7 +66,7 @@ public class LibraryImpl implements LibraryEx.ModifiableModelEx, LibraryEx {
   private final Map<OrderRootType, VirtualFilePointerContainer> myRoots;
   private final JarDirectories myJarDirectories = new JarDirectories();
   private final LibraryImpl mySource;
-  private LibraryType<?> myType;
+  private PersistentLibraryKind<?> myKind;
   private LibraryProperties myProperties;
 
   private final MyRootProviderImpl myRootProvider = new MyRootProviderImpl();
@@ -93,13 +93,13 @@ public class LibraryImpl implements LibraryEx.ModifiableModelEx, LibraryEx {
     myRootsWatcher.updateWatchedRoots();
   }
 
-  LibraryImpl(String name, final @Nullable LibraryType<?> type, LibraryTable table, ModifiableRootModel rootModel) {
+  LibraryImpl(String name, final @Nullable PersistentLibraryKind<?> kind, LibraryTable table, ModifiableRootModel rootModel) {
     myName = name;
     myLibraryTable = table;
     myRootModel = rootModel;
-    myType = type;
-    if (type != null) {
-      myProperties = type.createDefaultProperties();
+    myKind = kind;
+    if (kind != null) {
+      myProperties = kind.createDefaultProperties();
     }
     myRoots = initRoots();
     mySource = null;
@@ -108,8 +108,8 @@ public class LibraryImpl implements LibraryEx.ModifiableModelEx, LibraryEx {
   private Set<OrderRootType> getAllRootTypes() {
     Set<OrderRootType> rootTypes = new HashSet<OrderRootType>();
     rootTypes.addAll(Arrays.asList(OrderRootType.getAllTypes()));
-    if (myType != null) {
-      rootTypes.addAll(Arrays.asList(myType.getAdditionalRootTypes()));
+    if (myKind != null) {
+      rootTypes.addAll(Arrays.asList(myKind.getAdditionalRootTypes()));
     }
     return rootTypes;
   }
@@ -118,9 +118,9 @@ public class LibraryImpl implements LibraryEx.ModifiableModelEx, LibraryEx {
     assert !from.isDisposed();
     myRootModel = rootModel;
     myName = from.myName;
-    myType = from.myType;
-    if (from.myType != null && from.myProperties != null) {
-      myProperties = myType.createDefaultProperties();
+    myKind = from.myKind;
+    if (from.myKind != null && from.myProperties != null) {
+      myProperties = myKind.createDefaultProperties();
       //noinspection unchecked
       myProperties.loadState(from.myProperties.getState());
     }
@@ -169,7 +169,7 @@ public class LibraryImpl implements LibraryEx.ModifiableModelEx, LibraryEx {
       }
       expanded.add(file);
     }
-    return VfsUtil.toVirtualFileArray(expanded);
+    return VfsUtilCore.toVirtualFileArray(expanded);
   }
 
   public static void collectJarFiles(final VirtualFile dir, final List<VirtualFile> container, final boolean recursively) {
@@ -257,10 +257,10 @@ public class LibraryImpl implements LibraryEx.ModifiableModelEx, LibraryEx {
     final String typeId = element.getAttributeValue(LIBRARY_TYPE_ATTR);
     if (typeId == null) return;
 
-    myType = LibraryTypeService.getInstance().findTypeById(typeId);
-    if (myType == null) return;
+    myKind = LibraryTypeService.getInstance().findKindById(typeId);
+    if (myKind == null) return;
 
-    myProperties = myType.createDefaultProperties();
+    myProperties = myKind.createDefaultProperties();
     final Element propertiesElement = element.getChild(PROPERTIES_ELEMENT);
     if (propertiesElement != null) {
       final Class<?> stateClass = ReflectionUtil.getRawType(ReflectionUtil.resolveVariableInHierarchy(PersistentStateComponent.class.getTypeParameters()[0], myProperties.getClass()));
@@ -313,8 +313,8 @@ public class LibraryImpl implements LibraryEx.ModifiableModelEx, LibraryEx {
     if (myName != null) {
       element.setAttribute(LIBRARY_NAME_ATTR, myName);
     }
-    if (myType != null) {
-      element.setAttribute(LIBRARY_TYPE_ATTR, myType.getKind().getKindId());
+    if (myKind != null) {
+      element.setAttribute(LIBRARY_TYPE_ATTR, myKind.getKindId());
       final Object state = myProperties.getState();
       if (state != null) {
         final Element propertiesElement = XmlSerializer.serialize(state, SERIALIZATION_FILTERS);
@@ -325,8 +325,8 @@ public class LibraryImpl implements LibraryEx.ModifiableModelEx, LibraryEx {
     }
     ArrayList<OrderRootType> storableRootTypes = new ArrayList<OrderRootType>();
     storableRootTypes.addAll(Arrays.asList(OrderRootType.getAllTypes()));
-    if (myType != null) {
-      storableRootTypes.addAll(Arrays.asList(myType.getAdditionalRootTypes()));
+    if (myKind != null) {
+      storableRootTypes.addAll(Arrays.asList(myKind.getAdditionalRootTypes()));
     }
     for (OrderRootType rootType : sortRootTypes(storableRootTypes)) {
       final VirtualFilePointerContainer roots = myRoots.get(rootType);
@@ -343,9 +343,10 @@ public class LibraryImpl implements LibraryEx.ModifiableModelEx, LibraryEx {
     return mySource != null;
   }
 
+  @Nullable
   @Override
-  public LibraryType<?> getType() {
-    return myType;
+  public PersistentLibraryKind<?> getKind() {
+    return myKind;
   }
 
   @Override
@@ -354,10 +355,10 @@ public class LibraryImpl implements LibraryEx.ModifiableModelEx, LibraryEx {
   }
 
   @Override
-  public void setType(LibraryType<?> type) {
+  public void setKind(PersistentLibraryKind<?> kind) {
     LOG.assertTrue(isWritable());
-    LOG.assertTrue(myType == null || myType.equals(type), "Library type cannot be changed from " + myType + " to " + type);
-    myType = type;
+    LOG.assertTrue(myKind == null || myKind == kind, "Library kind cannot be changed from " + myKind + " to " + kind);
+    myKind = kind;
   }
 
   public void addRoot(@NotNull String url, @NotNull OrderRootType rootType) {
@@ -490,7 +491,7 @@ public class LibraryImpl implements LibraryEx.ModifiableModelEx, LibraryEx {
         ((LibraryTableBase)myLibraryTable).fireLibraryRenamed(this);
       }
     }
-    myType = fromModel.myType;
+    myKind = fromModel.getKind();
     myProperties = fromModel.myProperties;
     if (areRootsChanged(fromModel)) {
       disposeMyPointers();
@@ -552,7 +553,7 @@ public class LibraryImpl implements LibraryEx.ModifiableModelEx, LibraryEx {
     if (!myJarDirectories.equals(library.myJarDirectories)) return false;
     if (myName != null ? !myName.equals(library.myName) : library.myName != null) return false;
     if (myRoots != null ? !myRoots.equals(library.myRoots) : library.myRoots != null) return false;
-    if (myType != null ? !myType.equals(library.myType) : library.myType != null) return false;
+    if (myKind != null ? !myKind.equals(library.myKind) : library.myKind != null) return false;
     if (myProperties != null ? !myProperties.equals(library.myProperties) : library.myProperties != null) return false;
 
     return true;

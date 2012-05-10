@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.config.GroovyLibraryPresentationProviderBase;
-import org.jetbrains.plugins.groovy.config.GroovyLibraryProperties;
 
 import javax.swing.*;
 import java.io.File;
@@ -41,7 +40,7 @@ import java.util.regex.Pattern;
  * @author nik
  */
 public class GriffonLibraryPresentationProvider extends GroovyLibraryPresentationProviderBase {
-  public static final LibraryKind<GroovyLibraryProperties> GRIFFON_KIND = LibraryKind.create("griffon");
+  public static final LibraryKind GRIFFON_KIND = LibraryKind.create("griffon");
   @NonNls private static final Pattern GRIFFON_JAR_FILE_PATTERN = Pattern.compile("griffon-rt-(\\d.*)\\.jar");
 
   public GriffonLibraryPresentationProvider() {
