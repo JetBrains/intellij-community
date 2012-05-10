@@ -33,6 +33,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.HyperlinkListener;
 
 /**
  * Instances of this class are created by the debugging subsystem when {@link XDebuggerManager#startSession} or
@@ -123,6 +124,7 @@ public interface XDebugSession extends AbstractDebuggerSession {
 
   void reportError(@NotNull String message);
   void reportMessage(@NotNull String message, @NotNull MessageType type);
+  void reportMessage(@NotNull String message, @NotNull MessageType type, @Nullable HyperlinkListener listener);
 
   @NotNull
   String getSessionName();
