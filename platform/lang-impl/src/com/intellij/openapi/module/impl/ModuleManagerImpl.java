@@ -472,10 +472,10 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
   }
 
   @NotNull
-  public Module newModule(@NotNull String filePath, @NotNull ModuleType moduleType) {
+  public Module newModule(@NotNull String filePath, final String moduleTypeId) {
     myModificationCount++;
     final ModifiableModuleModel modifiableModel = getModifiableModel();
-    final Module module = modifiableModel.newModule(filePath, moduleType.getId());
+    final Module module = modifiableModel.newModule(filePath, moduleTypeId);
     modifiableModel.commit();
     return module;
   }

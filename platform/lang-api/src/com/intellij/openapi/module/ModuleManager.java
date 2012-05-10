@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,10 +48,10 @@ public abstract class ModuleManager {
    * to which the module manager is related.
    *
    * @param filePath the path at which the module is created.
-   * @param moduleType the type of the module to create.
+   * @param moduleTypeId the ID of the module type to create.
    * @return the module instance.
    */
-  @NotNull public abstract Module newModule(@NotNull @NonNls String filePath, @NotNull ModuleType moduleType);
+  @NotNull public abstract Module newModule(@NotNull @NonNls String filePath, final String moduleTypeId);
 
   /**
    * Loads a module from an .iml file with the specified path and adds it to the project.
