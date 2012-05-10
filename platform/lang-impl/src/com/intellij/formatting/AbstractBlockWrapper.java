@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -236,14 +236,15 @@ public abstract class AbstractBlockWrapper {
       else {
         return childIndent.add(myParent.getChildOffset(this, options, targetBlockStartOffset));
       }
-    } else if (!getWhiteSpace().containsLineFeeds()) {
-        if (isIndentAffectedAlignment(child)) {
-          return createAlignmentIndent(childIndent, child);
-        }
-        else {
-          return childIndent.add(myParent.getChildOffset(this, options, targetBlockStartOffset));
-        }
-    } else {
+    }
+    else if (!getWhiteSpace().containsLineFeeds()) {
+      final IndentData indent = createAlignmentIndent(childIndent, child);
+      if (indent != null) {
+        return indent;
+      }
+      return childIndent.add(myParent.getChildOffset(this, options, targetBlockStartOffset));
+    }
+    else {
       if (myParent == null) return  childIndent.add(getWhiteSpace());
       if (getIndent().isAbsolute()) {
         if (myParent.myParent != null) {
@@ -254,12 +255,11 @@ public abstract class AbstractBlockWrapper {
         }
       }
       if ((myFlags & CAN_USE_FIRST_CHILD_INDENT_AS_BLOCK_INDENT) != 0) {
-        if (isIndentAffectedAlignment(child)) {
-          return createAlignmentIndent(childIndent, child);
+        final IndentData indent = createAlignmentIndent(childIndent, child);
+        if (indent != null) {
+          return indent;
         }
-        else {
-          return childIndent.add(getWhiteSpace());
-        }
+        return childIndent.add(getWhiteSpace());
       }
       else {
         return childIndent.add(myParent.getChildOffset(this, options, targetBlockStartOffset));
@@ -343,29 +343,8 @@ public abstract class AbstractBlockWrapper {
   }
 
   /**
-   * Allows to answer if indent for the given child block should be calculated taking into consideration alignment
-   * of the text at current block start.
-   *
-   * @param child   child block to check
-   * @return        <code>true</code> if indent should be calculated taking into consideration alignment of the text at current
-   *                block start; <code>false</code> otherwise
-   */
-  private boolean isIndentAffectedAlignment(AbstractBlockWrapper child) {
-    if (!child.getWhiteSpace().containsLineFeeds()) {
-      return false;
-    }
-    AlignmentImpl alignment = getAlignmentAtStartOffset();
-    if (alignment == null || alignment == child.getAlignment()) {
-      return false;
-    }
-
-    LeafBlockWrapper anchorOffsetBlock = alignment.getOffsetRespBlockBefore(child);
-    return anchorOffsetBlock == null || anchorOffsetBlock.getStartOffset() >= getStartOffset();
-  }
-
-  /**
-   * Allows to construct indent for the block that is affected by aligning rules. E.g. there is a possible case that the user
-   * configures method call arguments to be aligned and single parameter expression spans more than one line:
+   * Check if it's possible to construct indent for the block that is affected by aligning rules. E.g. there is a possible case
+   * that the user configures method call arguments to be aligned and single parameter expression spans more than one line:
    * <p/>
    * <pre>
    *     public void test(String s1, String s2) {}
@@ -383,15 +362,41 @@ public abstract class AbstractBlockWrapper {
    * sub-blocks that are located on new lines should also be indented to the point of composite block start.
    * <p/>
    * This method takes care about constructing target absolute indent of the given child block assuming that it's parent
-   * (referenced by <code>'this'</code>) or it's ancestor that starts at the same offset is aligned. I.e. it assumes
-   * that {@link #isIndentAffectedAlignment(AbstractBlockWrapper)} returns <code>true</code> for the given child block.
+   * (referenced by <code>'this'</code>) or it's ancestor that starts at the same offset is aligned.
    *
    * @param indentFromParent    basic indent of given child from the current parent block
    * @param child               child block of the current aligned composite block
-   * @return                    absolute indent to use for the given child block of the current composite block
+   * @return                    absolute indent to use for the given child block of the current composite block if alignment-affected
+   *                            indent should be used for it;
+   *                            <code>null</code> otherwise
    */
+  @Nullable
   private IndentData createAlignmentIndent(IndentData indentFromParent, AbstractBlockWrapper child) {
+    if (!child.getWhiteSpace().containsLineFeeds()) {
+      return null;
+    }
+
+    AlignmentImpl alignment = getAlignmentAtStartOffset();
+    if (alignment == null || alignment == child.getAlignment()) {
+      return null;
+    }
+    
     AbstractBlockWrapper previous = child.getPreviousBlock();
+    LeafBlockWrapper anchorOffsetBlock = alignment.getOffsetRespBlockBefore(child);
+    if (anchorOffsetBlock != null && anchorOffsetBlock.getStartOffset() != getStartOffset()) {
+      // Located on different lines.
+      boolean onDifferentLines = false;
+      for (LeafBlockWrapper b = anchorOffsetBlock.getNextBlock(); b != null && b.getStartOffset() < getStartOffset(); b = b.getNextBlock()) {
+        if (b.getWhiteSpace().containsLineFeeds()) {
+          onDifferentLines = true;
+          break;
+        }
+      }
+
+      if (!onDifferentLines) {
+        return null;
+      }
+    }
 
     // There is no point in continuing processing if given child is the first block, i.e. there is no alignment-implied
     // offset to add to the given 'indent from parent'.
@@ -399,7 +404,13 @@ public abstract class AbstractBlockWrapper {
       return indentFromParent;
     }
 
-    IndentData symbolsBeforeCurrent = getNumberOfSymbolsBeforeBlock();
+    IndentData symbolsBeforeCurrent;
+    if (anchorOffsetBlock == null) {
+      symbolsBeforeCurrent = getNumberOfSymbolsBeforeBlock();
+    }
+    else {
+      symbolsBeforeCurrent = anchorOffsetBlock.getNumberOfSymbolsBeforeBlock();
+    }
 
     // Result is calculated as a number of symbols between the current composite parent block plus given 'indent from parent'.
     int indentSpaces = symbolsBeforeCurrent.getIndentSpaces() + indentFromParent.getSpaces() + indentFromParent.getIndentSpaces();
