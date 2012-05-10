@@ -228,6 +228,71 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
   }
 
   @Override
+  public void visitTryStatement(GrTryCatchStatement statement) {
+    final GrCatchClause[] clauses = statement.getCatchClauses();
+    List<PsiType> usedExceptions = new ArrayList<PsiType>();
+
+    final PsiClassType throwable = PsiType.getJavaLangThrowable(statement.getManager(), statement.getResolveScope());
+
+    for (GrCatchClause clause : clauses) {
+      final GrParameter parameter = clause.getParameter();
+      if (parameter == null) continue;
+
+      final GrTypeElement typeElement = parameter.getTypeElementGroovy();
+
+      PsiType type = typeElement != null ? typeElement.getType() : null;
+      if (type == null) {
+        type = throwable;
+      }
+
+      if (!throwable.isAssignableFrom(type)) {
+        LOG.assertTrue(typeElement != null);
+        myHolder.createErrorAnnotation(typeElement,
+                                       GroovyBundle.message("catch.statement.parameter.type.should.be.a.subclass.of.throwable"));
+        continue;
+      }
+
+      if (typeElement instanceof GrDisjunctionTypeElement) {
+        final GrTypeElement[] elements = ((GrDisjunctionTypeElement)typeElement).getTypeElements();
+        PsiType[] types = new PsiType[elements.length];
+        for (int i = 0; i < elements.length; i++) {
+          types[i] = elements[i].getType();
+        }
+
+        List<PsiType> usedInsideDisjunction = new ArrayList<PsiType>();
+        for (int i = 0; i < types.length; i++) {
+          if (checkExceptionUsed(usedExceptions, parameter, elements[i], types[i])) {
+            usedInsideDisjunction.add(types[i]);
+            for (int j = 0; j < types.length; j++) {
+              if (i != j && types[j].isAssignableFrom(types[i])) {
+                myHolder.createWarningAnnotation(elements[i], GroovyBundle.message("unnecessary.type", types[i].getCanonicalText(),
+                                                                                   types[j].getCanonicalText()));
+              }
+            }
+          }
+        }
+
+        usedExceptions.addAll(usedInsideDisjunction);
+      }
+      else {
+        if (checkExceptionUsed(usedExceptions, parameter, typeElement, type)) {
+          usedExceptions.add(type);
+        }
+      }
+    }
+  }
+
+  private boolean checkExceptionUsed(List<PsiType> usedExceptions, GrParameter parameter, GrTypeElement typeElement, PsiType type) {
+    for (PsiType exception : usedExceptions) {
+      if (exception.isAssignableFrom(type)) {
+        myHolder.createWarningAnnotation(typeElement != null ? typeElement : parameter.getNameIdentifierGroovy(), GroovyBundle.message("exception.0.has.already.been.caught", type.getCanonicalText()));
+        return false;
+      }
+    }
+    return true;
+  }
+
+  @Override
   public void visitReferenceExpression(final GrReferenceExpression referenceExpression) {
     checkStringNameIdentifier(referenceExpression);
     GroovyResolveResult resolveResult = referenceExpression.advancedResolve();

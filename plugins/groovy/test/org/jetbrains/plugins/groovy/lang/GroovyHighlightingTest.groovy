@@ -936,4 +936,52 @@ def test() {
 }
 ''', GroovyAssignabilityCheckInspection)
   }
+
+  void testTryCatch1() {
+    testHighlighting('''\
+try {}
+catch (Exception e){}
+catch (<warning descr="Exception 'java.io.IOException' has already been caught">IOException</warning> e){}
+''')
+  }
+
+  void testTryCatch2() {
+    testHighlighting('''\
+try {}
+catch (e){}
+catch (<warning descr="Exception 'java.lang.Throwable' has already been caught">e</warning>){}
+''')
+  }
+
+  void testTryCatch3() {
+    testHighlighting('''\
+try {}
+catch (e){}
+catch (<warning descr="Exception 'java.io.IOException' has already been caught">IOException</warning> e){}
+''')
+  }
+
+  void testTryCatch4() {
+    testHighlighting('''\
+try {}
+catch (Exception | <warning descr="Unnecessary exception 'java.io.IOException'. 'java.lang.Exception' is already declared">IOException</warning> e){}
+''')
+  }
+
+  void testTryCatch5() {
+    testHighlighting('''\
+try {}
+catch (RuntimeException | IOException e){}
+catch (<warning descr="Exception 'java.lang.NullPointerException' has already been caught">NullPointerException</warning> e){}
+''')
+  }
+
+  void testTryCatch6() {
+    testHighlighting('''\
+try {}
+catch (NullPointerException | IOException e){}
+catch (ClassNotFoundException | <warning descr="Exception 'java.lang.NullPointerException' has already been caught">NullPointerException</warning> e){}
+''')
+  }
+
 }
