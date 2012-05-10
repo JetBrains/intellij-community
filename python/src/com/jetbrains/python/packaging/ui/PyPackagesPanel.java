@@ -31,6 +31,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.io.IOException;
 import java.net.URL;
 import java.util.*;
 import java.util.List;
@@ -357,10 +358,14 @@ public class PyPackagesPanel extends JPanel {
           }
           finally {
             final List<PyPackage> finalPackages = packages;
+            final Map<String, String> cache = PyPIPackageUtil.getPyPIPackages();
+            if (cache.isEmpty()) {
+              updateCache(application);
+            }
             application.invokeLater(new Runnable() {
               @Override
               public void run() {
-                final Map<String, String> cache = PyPIPackageUtil.getPyPIPackages();
+
                 if (selectedSdk == mySelectedSdk) {
                   myPackagesTableModel.getDataVector().clear();
                   for (PyPackage pyPackage : finalPackages) {
@@ -371,11 +376,38 @@ public class PyPackagesPanel extends JPanel {
                     myPackagesTableModel
                       .addRow(new Object[]{pyPackage, pyPackage.getVersion(), version == null ? "" : version});
                   }
-                  myPackagesTable.setPaintBusy(false);
+                  if (!cache.isEmpty())
+                    myPackagesTable.setPaintBusy(false);
                 }
               }
             }, ModalityState.any());
           }
+        }
+      }
+    });
+  }
+
+  private void updateCache(final Application application) {
+    application.executeOnPooledThread(new Runnable() {
+      @Override
+      public void run() {
+        try {
+          PyPIPackageUtil.INSTANCE.updatePyPICache(PyPackageService.getInstance());
+          application.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+              final Map<String, String> cache = PyPIPackageUtil.getPyPIPackages();
+              for (int i = 0; i != myPackagesTableModel.getRowCount(); ++i) {
+                final PyPackage pyPackage = (PyPackage)myPackagesTableModel.getValueAt(i, 0);
+                final String version = cache.get(pyPackage.getName());
+                myPackagesTableModel.setValueAt(version, i, 2);
+              }
+              myPackagesTable.setPaintBusy(false);
+            }
+          }, ModalityState.stateForComponent(myPackagesTable));
+        }
+        catch (IOException ignored) {
+          myPackagesTable.setPaintBusy(false);
         }
       }
     });
