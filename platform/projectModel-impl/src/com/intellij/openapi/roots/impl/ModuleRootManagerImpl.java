@@ -23,7 +23,6 @@ import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleComponent;
 import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.module.impl.ModuleManagerImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.*;
@@ -35,16 +34,13 @@ import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.containers.HashMap;
-import com.intellij.util.graph.CachingSemiGraph;
-import com.intellij.util.graph.DFSTBuilder;
-import com.intellij.util.graph.GraphGenerator;
 import gnu.trove.THashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Map;
+import java.util.Set;
 
 
 @State(
@@ -205,56 +201,14 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
 
     final Project project = myModule.getProject();
     final ModifiableModuleModel moduleModel = ModuleManager.getInstance(project).getModifiableModel();
-    multiCommit(new ModifiableRootModel[]{rootModel}, moduleModel);
+    ModifiableModelCommitter.multiCommit(new ModifiableRootModel[]{rootModel}, moduleModel);
   }
 
-  private static void commitModelWithoutEvents(RootModelImpl rootModel) {
-    doCommit(rootModel);
-  }
-
-  private static void doCommit(RootModelImpl rootModel) {
+  static void doCommit(RootModelImpl rootModel) {
     rootModel.docommit();
     rootModel.dispose();
   }
 
-
-  public static void multiCommit(ModifiableRootModel[] rootModels,
-                          ModifiableModuleModel moduleModel) {
-    ApplicationManager.getApplication().assertWriteAccessAllowed();
-
-    final List<RootModelImpl> modelsToCommit = getSortedChangedModels(rootModels, moduleModel);
-
-    final List<ModifiableRootModel> modelsToDispose = new ArrayList<ModifiableRootModel>(Arrays.asList(rootModels));
-    modelsToDispose.removeAll(modelsToCommit);
-
-    Runnable runnable = new Runnable() {
-      public void run() {
-        for (RootModelImpl rootModel : modelsToCommit) {
-          commitModelWithoutEvents(rootModel);
-        }
-
-        for (ModifiableRootModel model : modelsToDispose) {
-          model.dispose();
-        }
-      }
-    };
-    ModuleManagerImpl.commitModelWithRunnable(moduleModel, runnable);
-
-  }
-
-  private static List<RootModelImpl> getSortedChangedModels(ModifiableRootModel[] _rootModels,
-                                                    final ModifiableModuleModel moduleModel) {
-    List<RootModelImpl> rootModels = new ArrayList<RootModelImpl>();
-    for (ModifiableRootModel _rootModel : _rootModels) {
-      RootModelImpl rootModel = (RootModelImpl)_rootModel;
-      if (rootModel.isChanged()) {
-        rootModels.add(rootModel);
-      }
-    }
-
-    sortRootModels(rootModels, moduleModel);
-    return rootModels;
-  }
 
   @NotNull
   public Module[] getDependencies() {
@@ -400,65 +354,6 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
 
   public void moduleAdded() {
     isModuleAdded = true;
-  }
-
-
-  private static void sortRootModels(List<RootModelImpl> rootModels, final ModifiableModuleModel moduleModel) {
-    DFSTBuilder<RootModelImpl> builder = createDFSTBuilder(rootModels, moduleModel);
-
-    final Comparator<RootModelImpl> comparator = builder.comparator();
-    Collections.sort(rootModels, comparator);
-  }
-
-  private static DFSTBuilder<RootModelImpl> createDFSTBuilder(List<RootModelImpl> rootModels, final ModifiableModuleModel moduleModel) {
-    final Map<String, RootModelImpl> nameToModel = new HashMap<String, RootModelImpl>();
-    for (final RootModelImpl rootModel : rootModels) {
-      final String name = rootModel.getModule().getName();
-      LOG.assertTrue(!nameToModel.containsKey(name), name);
-      nameToModel.put(name, rootModel);
-    }
-    final Module[] modules = moduleModel.getModules();
-    for (final Module module : modules) {
-      final String name = module.getName();
-      if (!nameToModel.containsKey(name)) {
-        final RootModelImpl rootModel = ((ModuleRootManagerImpl)ModuleRootManager.getInstance(module)).myRootModel;
-        nameToModel.put(name, rootModel);
-      }
-    }
-    final Collection<RootModelImpl> allRootModels = nameToModel.values();
-    return new DFSTBuilder<RootModelImpl>(new GraphGenerator<RootModelImpl>(new CachingSemiGraph<RootModelImpl>(new GraphGenerator.SemiGraph<RootModelImpl>() {
-          public Collection<RootModelImpl> getNodes() {
-            return allRootModels;
-          }
-
-          public Iterator<RootModelImpl> getIn(RootModelImpl rootModel) {
-            final List<String> namesList = rootModel.orderEntries().withoutSdk().withoutLibraries().withoutModuleSourceEntries()
-              .process(new RootPolicy<ArrayList<String>>() {
-              public ArrayList<String> visitModuleOrderEntry(ModuleOrderEntry moduleOrderEntry, ArrayList<String> strings) {
-                final Module module = moduleOrderEntry.getModule();
-                if (module != null && !module.isDisposed()) {
-                  strings.add(module.getName());
-                } else {
-                  final Module moduleToBeRenamed = moduleModel.getModuleToBeRenamed(moduleOrderEntry.getModuleName());
-                  if (moduleToBeRenamed != null && !moduleToBeRenamed.isDisposed()) {
-                    strings.add(moduleToBeRenamed.getName());
-                  }
-                }
-                return strings;
-              }
-            }, new ArrayList<String>());
-
-            final String[] names = ArrayUtil.toStringArray(namesList);
-            List<RootModelImpl> result = new ArrayList<RootModelImpl>();
-            for (String name : names) {
-              final RootModelImpl depRootModel = nameToModel.get(name);
-              if (depRootModel != null) { // it is ok not to find one
-                result.add(depRootModel);
-              }
-            }
-            return result.iterator();
-          }
-        })));
   }
 
 

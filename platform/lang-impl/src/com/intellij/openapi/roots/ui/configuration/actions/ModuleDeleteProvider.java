@@ -26,13 +26,13 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.roots.impl.ModifiableModelCommitter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleOrderEntry;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderEntry;
-import com.intellij.openapi.roots.impl.ModuleRootManagerImpl;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.projectImport.ProjectAttachProcessor;
@@ -98,7 +98,7 @@ public class ModuleDeleteProvider  implements DeleteProvider, TitledHandler  {
               removeModule(module, modifiableModel, otherModuleRootModels.values(), modifiableModuleModel);
             }
             final ModifiableRootModel[] modifiableRootModels = otherModuleRootModels.values().toArray(new ModifiableRootModel[otherModuleRootModels.size()]);
-            ModuleRootManagerImpl.multiCommit(modifiableRootModels, modifiableModuleModel);
+            ModifiableModelCommitter.multiCommit(modifiableRootModels, modifiableModuleModel);
           }
         };
         ApplicationManager.getApplication().runWriteAction(action);

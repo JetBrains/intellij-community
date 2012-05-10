@@ -22,12 +22,12 @@ import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.StdModuleTypes;
+import com.intellij.openapi.roots.impl.ModifiableModelCommitter;
 import com.intellij.openapi.project.ModuleAdapter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.impl.ModuleRootManagerImpl;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -129,7 +129,7 @@ public class MultiModuleEditingTest extends ModuleTestCase {
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
         @Override
         public void run() {
-          ModuleRootManagerImpl.multiCommit(new ModifiableRootModel[]{rootModelB, rootModelA}, moduleModel);
+          ModifiableModelCommitter.multiCommit(new ModifiableRootModel[]{rootModelB, rootModelA}, moduleModel);
         }
       });
     }
@@ -166,7 +166,7 @@ public class MultiModuleEditingTest extends ModuleTestCase {
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
         @Override
         public void run() {
-          ModuleRootManagerImpl.multiCommit(new ModifiableRootModel[]{rootModelB}, moduleModel);
+          ModifiableModelCommitter.multiCommit(new ModifiableRootModel[]{rootModelB}, moduleModel);
         }
       });
     }
