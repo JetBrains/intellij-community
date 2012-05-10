@@ -371,7 +371,6 @@ public class TargetOptionsComponent extends JPanel {
     public HintTextField(final String hint, final int columns) {
       super(hint, columns);
       myHint = hint.toCharArray();
-      setBorder(null);
     }
 
     @Override
