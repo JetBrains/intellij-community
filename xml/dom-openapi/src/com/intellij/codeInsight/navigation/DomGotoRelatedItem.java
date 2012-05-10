@@ -27,7 +27,15 @@ public class DomGotoRelatedItem extends GotoRelatedItem {
   private final DomElement myElement;
 
   public DomGotoRelatedItem(DomElement element) {
-    super(element.getXmlElement(), "XML");
+    this(element, "XML");
+  }
+
+  public DomGotoRelatedItem(DomElement element, String group) {
+    this(element, group, -1);
+  }
+
+  public DomGotoRelatedItem(DomElement element, String group, int mnemonic) {
+    super(element.getXmlElement(), group, mnemonic);
     myElement = element;
   }
 
