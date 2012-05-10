@@ -92,6 +92,7 @@ public class SoftWrapApplianceManager implements SoftWrapFoldingListener, Docume
    * during viewport's <code>'y'</code> coordinate adjustment on visual area width change.
    */
   private int myLastTopLeftCornerOffset = -1;
+  private int myVerticalScrollBarWidth  = -1;
 
   private VisibleAreaWidthProvider       myWidthProvider;
   private EditorTextRepresentationHelper myRepresentationHelper;
@@ -810,6 +811,31 @@ public class SoftWrapApplianceManager implements SoftWrapFoldingListener, Docume
       return recalculateSoftWraps(); // Recalculate existing dirty regions if any.
     }
 
+    final JScrollBar scrollBar = myEditor.getScrollPane().getVerticalScrollBar();
+    if (myVerticalScrollBarWidth < 0) {
+      myVerticalScrollBarWidth = scrollBar.getWidth();
+      if (myVerticalScrollBarWidth <= 0) {
+        myVerticalScrollBarWidth = scrollBar.getPreferredSize().width;
+      }
+    }
+    
+    // We experienced the following situation:
+    //   1. Editor is configured to show scroll bars only when necessary;
+    //   2. Editor with active soft wraps is changed in order for the vertical scroll bar to appear;
+    //   3. Vertical scrollbar consumes vertical space, hence, soft wraps are recalculated because of the visual area width change;
+    //   4. Newly recalculated soft wraps trigger editor size update;
+    //   5. Editor size update starts scroll pane update which, in turn, disables vertical scroll bar at first (the reason for that
+    //      lays somewhere at the swing depth);
+    //   6. Soft wraps are recalculated because of visible area width change caused by the disabled vertical scroll bar;
+    //   7. Go to the step 4;
+    // I.e. we have an endless EDT activity that stops only when editor is re-sized in a way to avoid vertical scroll bar.
+    // That's why we don't recalculate soft wraps when visual area width is changed to the vertical scroll bar width value assuming
+    // that such a situation is triggered by the scroll bar (dis)appearance.
+    if (Math.abs(currentVisibleAreaWidth - myVisibleAreaWidth) == myVerticalScrollBarWidth) {
+      myVisibleAreaWidth = currentVisibleAreaWidth;
+      return recalculateSoftWraps();
+    }
+    
     // We want to adjust viewport's 'y' coordinate on complete recalculation, so, we remember number of soft-wrapped lines
     // before the target offset on recalculation start and compare it with the number of soft-wrapped lines before the same offset
     // after the recalculation.
