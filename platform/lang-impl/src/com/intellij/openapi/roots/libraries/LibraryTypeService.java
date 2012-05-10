@@ -32,8 +32,6 @@ public abstract class LibraryTypeService {
     return ServiceManager.getService(LibraryTypeService.class);
   }
 
-  public abstract PersistentLibraryKind<?> findKindById(@NotNull String typeId);
-
   @Nullable
   public abstract NewLibraryConfiguration createLibraryFromFiles(@NotNull LibraryRootsComponentDescriptor descriptor,
                                                                  @NotNull JComponent parentComponent,

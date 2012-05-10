@@ -18,17 +18,25 @@ package com.intellij.openapi.roots.libraries;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * @author nik
  */
 public class LibraryKind {
   private final String myKindId;
+  private static final Map<String, LibraryKind> ourAllKinds = new HashMap<String, LibraryKind>();
 
   /**
    * @param kindId must be unique among all {@link com.intellij.openapi.roots.libraries.LibraryType} and {@link com.intellij.openapi.roots.libraries.LibraryPresentationProvider} implementations
    */
   public LibraryKind(@NotNull @NonNls String kindId) {
     myKindId = kindId;
+    if (ourAllKinds.containsKey(kindId)) {
+      throw new IllegalArgumentException("Kind " + kindId + " is not unique");
+    }
+    ourAllKinds.put(kindId, this);
   }
 
   public final String getKindId() {
@@ -46,5 +54,9 @@ public class LibraryKind {
    */
   public static LibraryKind create(@NotNull @NonNls String kindId) {
     return new LibraryKind(kindId);
+  }
+
+  public static LibraryKind findById(String kindId) {
+    return ourAllKinds.get(kindId);
   }
 }

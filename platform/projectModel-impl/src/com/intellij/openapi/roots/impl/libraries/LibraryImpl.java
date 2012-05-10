@@ -174,7 +174,7 @@ public class LibraryImpl implements LibraryEx.ModifiableModelEx, LibraryEx {
 
   public static void collectJarFiles(final VirtualFile dir, final List<VirtualFile> container, final boolean recursively) {
     for (VirtualFile child : dir.getChildren()) {
-      final VirtualFile jarRoot = JarFileSystem.getInstance().getJarRootForLocalFile(child);
+      final VirtualFile jarRoot = StandardFileSystems.getJarRootForLocalFile(child);
       if (jarRoot != null) {
         container.add(jarRoot);
       }
@@ -257,7 +257,7 @@ public class LibraryImpl implements LibraryEx.ModifiableModelEx, LibraryEx {
     final String typeId = element.getAttributeValue(LIBRARY_TYPE_ATTR);
     if (typeId == null) return;
 
-    myKind = LibraryTypeService.getInstance().findKindById(typeId);
+    myKind = (PersistentLibraryKind<?>) LibraryKind.findById(typeId);
     if (myKind == null) return;
 
     myProperties = myKind.createDefaultProperties();

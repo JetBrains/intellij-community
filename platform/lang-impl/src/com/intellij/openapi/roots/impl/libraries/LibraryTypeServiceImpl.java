@@ -39,16 +39,6 @@ import java.util.List;
 public class LibraryTypeServiceImpl extends LibraryTypeService {
   private static final String DEFAULT_LIBRARY_NAME = "Unnamed";
 
-  @Nullable
-  public PersistentLibraryKind<?> findKindById(@NotNull String typeId) {
-    for (LibraryType type : LibraryType.EP_NAME.getExtensions()) {
-      if (type.getKind().getKindId().equals(typeId)) {
-        return (PersistentLibraryKind<?>)type.getKind();
-      }
-    }
-    return null;
-  }
-
   @Override
   public NewLibraryConfiguration createLibraryFromFiles(@NotNull LibraryRootsComponentDescriptor descriptor,
                                                         @NotNull JComponent parentComponent,
