@@ -89,19 +89,6 @@ public class MvcProjectViewPane extends AbstractProjectViewPSIPane implements Id
     myDescriptor = descriptor;
     myId = descriptor.getToolWindowId();
 
-    myAutoScrollFromSourceHandler = new MyAutoScrollFromSourceHandler();
-    myAutoScrollToSourceHandler = new AutoScrollToSourceHandler() {
-      @Override
-      protected boolean isAutoScrollMode() {
-        return myAutoScrollToSource;
-      }
-
-      @Override
-      protected void setAutoScrollMode(boolean state) {
-        myAutoScrollToSource = state;
-      }
-    };
-
     class TreeUpdater implements Runnable, PsiModificationTracker.Listener {
       private volatile boolean myInQueue;
 
@@ -126,6 +113,23 @@ public class MvcProjectViewPane extends AbstractProjectViewPSIPane implements Id
 
     myComponent = createComponent();
     DataManager.registerDataProvider(myComponent, this);
+
+    myAutoScrollFromSourceHandler = new MyAutoScrollFromSourceHandler();
+    myAutoScrollToSourceHandler = new AutoScrollToSourceHandler() {
+      @Override
+      protected boolean isAutoScrollMode() {
+        return myAutoScrollToSource;
+      }
+
+      @Override
+      protected void setAutoScrollMode(boolean state) {
+        myAutoScrollToSource = state;
+      }
+    };
+
+    myAutoScrollFromSourceHandler.install();
+    myAutoScrollToSourceHandler.install(getTree());
+    myAutoScrollToSourceHandler.onMouseClicked(getTree());
 
     myCopyPasteDelegator = new CopyPasteDelegator(project, myComponent) {
       @NotNull
@@ -164,15 +168,6 @@ public class MvcProjectViewPane extends AbstractProjectViewPSIPane implements Id
     collapseAction.getTemplatePresentation().setIcon(IconLoader.getIcon("/general/collapseAll.png"));
 
     toolWindow.setTitleActions(new AnAction[]{new ScrollFromSourceAction(), collapseAction});
-  }
-
-  @Override
-  public JComponent createComponent() {
-    JComponent component = super.createComponent();
-    myAutoScrollFromSourceHandler.install();
-    myAutoScrollToSourceHandler.install(getTree());
-    myAutoScrollToSourceHandler.onMouseClicked(getTree());
-    return component;
   }
 
   public String getTitle() {
@@ -462,7 +457,7 @@ public class MvcProjectViewPane extends AbstractProjectViewPSIPane implements Id
 
   private class MyAutoScrollFromSourceHandler extends AutoScrollFromSourceHandler {
     protected MyAutoScrollFromSourceHandler() {
-      super(MvcProjectViewPane.this.myProject, getTree(), MvcProjectViewPane.this);
+      super(MvcProjectViewPane.this.myProject, myComponent, MvcProjectViewPane.this);
     }
 
     @Override
