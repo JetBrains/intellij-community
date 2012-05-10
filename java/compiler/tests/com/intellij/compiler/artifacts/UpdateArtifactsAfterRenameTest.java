@@ -67,7 +67,7 @@ public class UpdateArtifactsAfterRenameTest extends PackagingElementsTestCase {
     final Module module = new WriteAction<Module>() {
       @Override
       protected void run(Result<Module> result) throws Throwable {
-        Module res = moduleManager.newModule(getProjectBasePath() + "/myModule.iml", StdModuleTypes.JAVA);
+        Module res = moduleManager.newModule(getProjectBasePath() + "/myModule.iml", StdModuleTypes.JAVA.getId());
         result.setResult(res);
       }
     }.execute().getResultObject();
