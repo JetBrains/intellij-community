@@ -360,6 +360,7 @@ public class ManagePackagesDialog extends DialogWrapper {
 
     public void filter(List<Pair> filtered){
       myView.clear();
+      myPackages.clearSelection();
       for (Pair pair : filtered) {
         myView.add(pair);
       }
