@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,7 +32,9 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.options.SchemeElement;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -285,6 +287,7 @@ public class Tool implements SchemeElement {
     }
   }
 
+  @Nullable
   GeneralCommandLine createCommandLine(DataContext dataContext) {
     if (getWorkingDirectory() != null && getWorkingDirectory().trim().length() == 0) {
       setWorkingDirectory(null);
@@ -298,7 +301,10 @@ public class Tool implements SchemeElement {
 
       commandLine.getParametersList().addParametersString(
         MacroManager.getInstance().expandMacrosInString(paramString, false, dataContext));
-      commandLine.setWorkDirectory(MacroManager.getInstance().expandMacrosInString(workingDir, false, dataContext));
+      final String workDirExpanded = MacroManager.getInstance().expandMacrosInString(workingDir, false, dataContext);
+      if (!StringUtil.isEmpty(workDirExpanded)) {
+        commandLine.setWorkDirectory(workDirExpanded);
+      }
       exePath = MacroManager.getInstance().expandMacrosInString(exePath, false, dataContext);
       if (exePath == null) return null;
 
