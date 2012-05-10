@@ -17,11 +17,14 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.types;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiDisjunctionType;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrDisjunctionTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import java.util.ArrayList;
 
@@ -68,5 +71,28 @@ public class GrDisjunctionTypeElementImpl extends GroovyPsiElementImpl implement
   @Override
   public String toString() {
     return "disjunction type element";
+  }
+
+  @Override
+  public void deleteChildInternal(@NotNull ASTNode child) {
+    final PsiElement psi = child.getPsi();
+    if (psi instanceof GrTypeElement) {
+      PsiElement next = PsiUtil.skipWhitespaces(psi.getNextSibling(), true);
+      if (next != null) {
+        if (next.getNode().getElementType() == GroovyTokenTypes.mBOR) {
+          super.deleteChildInternal(next.getNode());
+        }
+      }
+      else {
+        PsiElement prev = PsiUtil.skipWhitespaces(psi.getPrevSibling(), false);
+        if (prev != null) {
+          if (prev.getNode().getElementType() == GroovyTokenTypes.mBOR) {
+            super.deleteChildInternal(prev.getNode());
+          }
+        }
+      }
+    }
+
+    super.deleteChildInternal(child);
   }
 }

@@ -266,7 +266,7 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
             for (int j = 0; j < types.length; j++) {
               if (i != j && types[j].isAssignableFrom(types[i])) {
                 myHolder.createWarningAnnotation(elements[i], GroovyBundle.message("unnecessary.type", types[i].getCanonicalText(),
-                                                                                   types[j].getCanonicalText()));
+                                                                                   types[j].getCanonicalText())).registerFix(new GrRemoveExceptionFix(true));
               }
             }
           }
@@ -285,7 +285,8 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
   private boolean checkExceptionUsed(List<PsiType> usedExceptions, GrParameter parameter, GrTypeElement typeElement, PsiType type) {
     for (PsiType exception : usedExceptions) {
       if (exception.isAssignableFrom(type)) {
-        myHolder.createWarningAnnotation(typeElement != null ? typeElement : parameter.getNameIdentifierGroovy(), GroovyBundle.message("exception.0.has.already.been.caught", type.getCanonicalText()));
+        myHolder.createWarningAnnotation(typeElement != null ? typeElement : parameter.getNameIdentifierGroovy(),GroovyBundle.message("exception.0.has.already.been.caught", type.getCanonicalText()))
+          .registerFix(new GrRemoveExceptionFix(parameter.getTypeElementGroovy() instanceof GrDisjunctionTypeElement));
         return false;
       }
     }
