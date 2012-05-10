@@ -10,4 +10,4 @@ Groovy script
         'this' reference expression
           PsiElement(this)('this')
         PsiElement(.)('.')
-        PsiElement(final)('final')
+        PsiElement(identifier)('final')
