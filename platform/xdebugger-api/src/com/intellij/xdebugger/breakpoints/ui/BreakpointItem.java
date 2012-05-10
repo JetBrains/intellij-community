@@ -26,5 +26,5 @@ import com.intellij.ui.popup.util.ItemWrapper;
  * To change this template use File | Settings | File Templates.
  */
 public interface BreakpointItem extends ItemWrapper {
-
+  Object getBreakpoint();
 }

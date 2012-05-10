@@ -118,4 +118,9 @@ public class BookmarkItem implements ItemWrapper {
 
     panel.navigateInPreviewEditor(file, positionToNavigate);
   }
+
+  @Override
+  public boolean allowedToRemove() {
+    return true;
+  }
 }

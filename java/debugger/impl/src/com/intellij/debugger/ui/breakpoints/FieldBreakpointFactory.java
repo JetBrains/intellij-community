@@ -25,6 +25,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import org.jdom.Element;
@@ -73,7 +74,7 @@ public class FieldBreakpointFactory extends BreakpointFactory{
   protected BreakpointPanelAction[] createBreakpointPanelActions(final Project project, final DialogWrapper parentDialog) {
     return new BreakpointPanelAction[] {
       new SwitchViewAction(),
-      new AddFieldBreakpointAction(project),
+      new AddAction(this, project),
       new GotoSourceAction(project) {
         public void actionPerformed(ActionEvent e) {
           super.actionPerformed(e);
@@ -91,65 +92,61 @@ public class FieldBreakpointFactory extends BreakpointFactory{
     return FieldBreakpoint.CATEGORY;
   }
 
-  private static class AddFieldBreakpointAction extends AddAction {
-    private final Project myProject;
-
-    public AddFieldBreakpointAction(Project project) {
-      myProject = project;
-    }
-
-    public void actionPerformed(ActionEvent e) {
-      AddFieldBreakpointDialog dialog = new AddFieldBreakpointDialog(myProject) {
-        protected boolean validateData() {
-          String className = getClassName();
-          if (className.length() == 0) {
-            Messages.showMessageDialog(myProject, DebuggerBundle.message("error.field.breakpoint.class.name.not.specified"),
-                                       DebuggerBundle.message("add.field.breakpoint.dialog.title"), Messages.getErrorIcon());
-            return false;
-          }
-          String fieldName = getFieldName();
-          if (fieldName.length() == 0) {
-            Messages.showMessageDialog(myProject, DebuggerBundle.message("error.field.breakpoint.field.name.not.specified"),
-                                       DebuggerBundle.message("add.field.breakpoint.dialog.title"), Messages.getErrorIcon());
-            return false;
-          }
-          PsiClass psiClass = JavaPsiFacade.getInstance(myProject).findClass(className, GlobalSearchScope.allScope(myProject));
-          if (psiClass != null) {
-            PsiFile  psiFile  = psiClass.getContainingFile();
-            Document document = PsiDocumentManager.getInstance(myProject).getDocument(psiFile);
-            if(document != null) {
-              PsiField field = psiClass.findFieldByName(fieldName, true);
-              if(field != null) {
-                int line = document.getLineNumber(field.getTextOffset());
-                FieldBreakpoint fieldBreakpoint = DebuggerManagerEx.getInstanceEx(myProject).getBreakpointManager().addFieldBreakpoint(document, line, fieldName);
-                if (fieldBreakpoint != null) {
-                  getPanel().addBreakpoint(fieldBreakpoint);
-                  return true;
-                }
-              }
-              else {
-                Messages.showMessageDialog(
-                  myProject,
-                  DebuggerBundle.message("error.field.breakpoint.field.not.found", className, fieldName, fieldName),
-                  CommonBundle.getErrorTitle(),
-                  Messages.getErrorIcon()
-                );
-
-              }
-            }
-          } else {
-            Messages.showMessageDialog(
-              myProject,
-              DebuggerBundle.message("error.field.breakpoint.class.sources.not.found", className, fieldName, className),
-              CommonBundle.getErrorTitle(),
-              Messages.getErrorIcon()
-            );
-          }
+  @Override
+  public Breakpoint addBreakpoint(final Project project) {
+    final Ref<Breakpoint> result = Ref.create(null);
+    AddFieldBreakpointDialog dialog = new AddFieldBreakpointDialog(project) {
+      protected boolean validateData() {
+        String className = getClassName();
+        if (className.length() == 0) {
+          Messages.showMessageDialog(project, DebuggerBundle.message("error.field.breakpoint.class.name.not.specified"),
+                                     DebuggerBundle.message("add.field.breakpoint.dialog.title"), Messages.getErrorIcon());
           return false;
         }
-      };
-      dialog.show();
-    }
+        String fieldName = getFieldName();
+        if (fieldName.length() == 0) {
+          Messages.showMessageDialog(project, DebuggerBundle.message("error.field.breakpoint.field.name.not.specified"),
+                                     DebuggerBundle.message("add.field.breakpoint.dialog.title"), Messages.getErrorIcon());
+          return false;
+        }
+        PsiClass psiClass = JavaPsiFacade.getInstance(project).findClass(className, GlobalSearchScope.allScope(project));
+        if (psiClass != null) {
+          PsiFile psiFile  = psiClass.getContainingFile();
+          Document document = PsiDocumentManager.getInstance(project).getDocument(psiFile);
+          if(document != null) {
+            PsiField field = psiClass.findFieldByName(fieldName, true);
+            if(field != null) {
+              int line = document.getLineNumber(field.getTextOffset());
+              FieldBreakpoint fieldBreakpoint = DebuggerManagerEx.getInstanceEx(project).getBreakpointManager().addFieldBreakpoint(document, line, fieldName);
+              if (fieldBreakpoint != null) {
+                result.set(fieldBreakpoint);
+                return true;
+              }
+            }
+            else {
+              Messages.showMessageDialog(project,
+                DebuggerBundle.message("error.field.breakpoint.field.not.found", className, fieldName, fieldName),
+                CommonBundle.getErrorTitle(),
+                Messages.getErrorIcon()
+              );
+            }
+          }
+        } else {
+          Messages.showMessageDialog(project,
+            DebuggerBundle.message("error.field.breakpoint.class.sources.not.found", className, fieldName, className),
+            CommonBundle.getErrorTitle(),
+            Messages.getErrorIcon()
+          );
+        }
+        return false;
+      }
+    };
+    dialog.show();
+    return result.get();
   }
 
+  @Override
+  public boolean canAddBreakpoints() {
+    return true;
+  }
 }

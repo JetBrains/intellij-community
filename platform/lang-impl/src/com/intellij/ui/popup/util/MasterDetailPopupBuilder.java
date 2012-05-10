@@ -191,7 +191,7 @@ public class MasterDetailPopupBuilder {
             DefaultListModel model = myList.getModel() instanceof DefaultListModel
                                      ? (DefaultListModel)myList.getModel()
                                      : (DefaultListModel)((FilteringListModel)myList.getModel()).getOriginalModel();
-            if (myDelegate.allowedToRemoveItem(item)) {
+            if (item.allowedToRemove()) {
               model.removeElement(item);
 
               if (model.getSize() > 0) {
@@ -241,8 +241,6 @@ public class MasterDetailPopupBuilder {
     void itemRemoved(ItemWrapper item, Project project);
 
     boolean hasItemsWithMnemonic(Project project);
-
-    boolean allowedToRemoveItem(ItemWrapper item);
   }
 
   public class ItemRenderer extends JPanel implements ListCellRenderer {

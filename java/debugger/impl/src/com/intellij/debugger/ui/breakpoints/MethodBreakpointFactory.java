@@ -63,7 +63,7 @@ public class MethodBreakpointFactory extends BreakpointFactory{
   protected BreakpointPanelAction[] createBreakpointPanelActions(Project project, final DialogWrapper parentDialog) {
     return new BreakpointPanelAction[]{
       new SwitchViewAction(),
-      new AddWildcardBreakpointAction(project),
+      new AddAction(this, project),
       new GotoSourceAction(project) {
         public void actionPerformed(ActionEvent e) {
           super.actionPerformed(e);
@@ -87,23 +87,19 @@ public class MethodBreakpointFactory extends BreakpointFactory{
     return MethodBreakpoint.CATEGORY;
   }
 
-  private static class AddWildcardBreakpointAction extends AddAction {
-    private final Project myProject;
+  @Override
+  public boolean canAddBreakpoints() {
+    return true;
+  }
 
-    public AddWildcardBreakpointAction(Project project) {
-      myProject = project;
-    }
-
-    public void actionPerformed(ActionEvent e) {
-      AddWildcardBreakpointDialog dialog = new AddWildcardBreakpointDialog(myProject);
-      dialog.show();
-      if (!dialog.isOK()) {
-        return;
-      }
-      final WildcardMethodBreakpoint methodBreakpoint = DebuggerManagerEx.getInstanceEx(myProject).getBreakpointManager().addMethodBreakpoint(dialog.getClassPattern(), dialog.getMethodName());
-      if (methodBreakpoint != null) {
-        getPanel().addBreakpoint(methodBreakpoint);
-      }
-    }
+  public WildcardMethodBreakpoint addBreakpoint(Project project) {
+    AddWildcardBreakpointDialog dialog = new AddWildcardBreakpointDialog(project);
+    dialog.show();
+    WildcardMethodBreakpoint methodBreakpoint;
+    methodBreakpoint = !dialog.isOK()
+                       ? null
+                       : DebuggerManagerEx.getInstanceEx(project).getBreakpointManager()
+                         .addMethodBreakpoint(dialog.getClassPattern(), dialog.getMethodName());
+    return methodBreakpoint;
   }
 }

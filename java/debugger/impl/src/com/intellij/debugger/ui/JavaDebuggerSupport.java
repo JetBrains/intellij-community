@@ -21,7 +21,10 @@ import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.settings.*;
 import com.intellij.debugger.ui.breakpoints.*;
 import com.intellij.ide.DataManager;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
@@ -196,6 +199,16 @@ public class JavaDebuggerSupport extends DebuggerSupport {
       return panels;
     }
 
+    @Override
+    public AnAction[] getAddBreakpointActions(@NotNull Project project) {
+      List<AnAction> result = new ArrayList<AnAction>();
+      BreakpointFactory[] breakpointFactories = BreakpointFactory.getBreakpointFactories();
+      for (BreakpointFactory breakpointFactory : breakpointFactories) {
+        result.add(new AddJavaBreakpointAction(breakpointFactory));
+      }
+      return result.toArray(new AnAction[result.size()]);
+    }
+
     public int getPriority() {
       return 1;
     }
@@ -228,6 +241,27 @@ public class JavaDebuggerSupport extends DebuggerSupport {
         for (Breakpoint breakpoint : breakpoints) {
           items.add(breakpointFactory.createBreakpointItem(breakpoint));
         }
+      }
+    }
+
+    private static class AddJavaBreakpointAction extends AnAction {
+      private BreakpointFactory myBreakpointFactory;
+
+      public AddJavaBreakpointAction(BreakpointFactory breakpointFactory) {
+        myBreakpointFactory = breakpointFactory;
+        Presentation p = getTemplatePresentation();
+        p.setIcon(myBreakpointFactory.getIcon());
+        p.setText(breakpointFactory.getDisplayName());
+      }
+
+      @Override
+      public void update(AnActionEvent e) {
+        e.getPresentation().setVisible(myBreakpointFactory.canAddBreakpoints());
+      }
+
+      @Override
+      public void actionPerformed(AnActionEvent e) {
+        myBreakpointFactory.addBreakpoint(getEventProject(e));
       }
     }
   }

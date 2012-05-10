@@ -15,7 +15,8 @@
  */
 package com.intellij.xdebugger.impl.breakpoints;
 
-import com.intellij.openapi.editor.LogicalPosition;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.project.Project;
@@ -23,26 +24,19 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.ColoredListCellRenderer;
-import com.intellij.ui.popup.util.DetailView;
-import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.breakpoints.*;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.XDebuggerUtil;
 import com.intellij.xdebugger.breakpoints.ui.BreakpointItem;
-import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase;
-import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil;
-import com.intellij.xdebugger.impl.breakpoints.XLineBreakpointImpl;
 import com.intellij.xdebugger.impl.breakpoints.ui.AbstractBreakpointPanel;
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointPanelProvider;
-import com.intellij.xdebugger.impl.breakpoints.ui.XBreakpointPropertiesPanel;
 import com.intellij.xdebugger.impl.breakpoints.ui.XBreakpointsPanel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.Collection;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author nik
@@ -95,6 +89,17 @@ public class XBreakpointPanelProvider extends BreakpointPanelProvider<XBreakpoin
     return panels;
   }
 
+  @Override
+  public AnAction[] getAddBreakpointActions(@NotNull Project project) {
+    List<AnAction> result = new ArrayList<AnAction>();
+    for (XBreakpointType<?, ?> type : XBreakpointUtil.getBreakpointTypes()) {
+      if (type.isAddBreakpointButtonVisible()) {
+        result.add(new AddXBreakpointAction(type));
+      }
+    }
+    return new AnAction[0];
+  }
+
   private static <B extends XBreakpoint<?>> XBreakpointsPanel<B> createBreakpointsPanel(final Project project, DialogWrapper parentDialog, final XBreakpointType<B, ?> type) {
     return new XBreakpointsPanel<B>(project, parentDialog, type);
   }
@@ -106,51 +111,23 @@ public class XBreakpointPanelProvider extends BreakpointPanelProvider<XBreakpoin
   public void provideBreakpointItems(Project project, Collection<BreakpointItem> items) {
     XBreakpoint<?>[] allBreakpoints = XDebuggerManager.getInstance(project).getBreakpointManager().getAllBreakpoints();
     for (XBreakpoint<?> breakpoint : allBreakpoints) {
-      createBreakpointItem(breakpoint);
+      items.add(new XBreakpointItem(breakpoint));
     }
   }
 
-  private BreakpointItem createBreakpointItem(final XBreakpoint<?> breakpoint) {
-    return new BreakpointItem() {
-      @Override
-      public void setupRenderer(ColoredListCellRenderer renderer, Project project, boolean selected) {
-        renderer.setIcon(((XBreakpointBase)breakpoint).getIcon());
-      }
+  private class AddXBreakpointAction extends AnAction {
 
-      @Override
-      public void updateMnemonicLabel(JLabel label) {
-        //To change body of implemented methods use File | Settings | File Templates.
-      }
+    private XBreakpointType<?, ?> myType;
 
-      @Override
-      public void execute(Project project) {
-        //To change body of implemented methods use File | Settings | File Templates.
-      }
+    public AddXBreakpointAction(XBreakpointType<?, ?> type) {
+      myType = type;
+      getTemplatePresentation().setIcon(type.getEnabledIcon());
+      getTemplatePresentation().setText(type.getTitle());
+    }
 
-      @Override
-      public String speedSearchText() {
-        return ((XBreakpointBase)breakpoint).getType().getDisplayText(breakpoint);
-      }
-
-      @Override
-      public String footerText() {
-        return ((XBreakpointBase)breakpoint).getType().getDisplayText(breakpoint);
-      }
-
-      @Override
-      public void updateDetailView(DetailView panel) {
-        XSourcePosition sourcePosition = breakpoint.getSourcePosition();
-        if (sourcePosition != null) {
-          panel.navigateInPreviewEditor(sourcePosition.getFile(), new LogicalPosition(sourcePosition.getLine(), sourcePosition.getOffset()));
-        }
-
-        Project project = ((XBreakpointBase)breakpoint).getProject();
-
-        XBreakpointPropertiesPanel<XBreakpoint<?>> propertiesPanel =
-          new XBreakpointPropertiesPanel<XBreakpoint<?>>(project, ((XBreakpointBase)breakpoint).getBreakpointManager(), breakpoint);
-
-        panel.setDetailPanel(propertiesPanel.getMainPanel());
-      }
-    };
+    @Override
+    public void actionPerformed(AnActionEvent e) {
+      myType.addBreakpoint(getEventProject(e), null);
+    }
   }
 }

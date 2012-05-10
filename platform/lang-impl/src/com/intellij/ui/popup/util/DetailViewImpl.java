@@ -127,6 +127,11 @@ public class DetailViewImpl extends JPanel implements DetailView {
 
   @Override
   public void setDetailPanel(JPanel panel) {
+    if (panel == myDetailPanel) return;
+
+    if (myDetailPanel != null) {
+      remove(myDetailPanel);
+    }
     myDetailPanel = panel;
     add(panel, BorderLayout.SOUTH);
   }

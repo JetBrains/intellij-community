@@ -25,8 +25,8 @@ import java.util.Collection;
 /**
  * @author nik
  */
-public class AddBreakpointAction<B extends XBreakpoint<?>> extends XBreakpointPanelAction<B> {
-  public AddBreakpointAction(final XBreakpointsPanel<B> breakpointsPanel) {
+public class XAddBreakpointAction<B extends XBreakpoint<?>> extends XBreakpointPanelAction<B> {
+  public XAddBreakpointAction(final XBreakpointsPanel<B> breakpointsPanel) {
     super(breakpointsPanel, XDebuggerBundle.message("xbreakpoints.dialog.button.add"));
   }
 

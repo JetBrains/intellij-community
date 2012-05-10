@@ -40,4 +40,6 @@ public interface ItemWrapper {
   String footerText();
 
   void updateDetailView(DetailView panel);
+
+  boolean allowedToRemove();
 }

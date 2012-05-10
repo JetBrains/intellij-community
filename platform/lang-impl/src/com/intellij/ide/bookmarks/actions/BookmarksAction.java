@@ -119,11 +119,6 @@ public class BookmarksAction extends AnAction implements DumbAware, MasterDetail
     return BookmarkManager.getInstance(project).hasBookmarksWithMnemonics();
   }
 
-  @Override
-  public boolean allowedToRemoveItem(ItemWrapper item) {
-    return true;
-  }
-
   protected static class BookmarkInContextInfo {
     private final DataContext myDataContext;
     private final Project myProject;

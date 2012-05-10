@@ -15,18 +15,28 @@
  */
 package com.intellij.debugger.ui.breakpoints.actions;
 
+import com.intellij.debugger.ui.breakpoints.Breakpoint;
+import com.intellij.debugger.ui.breakpoints.BreakpointFactory;
 import com.intellij.debugger.ui.breakpoints.BreakpointPanel;
 import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.project.Project;
 
 import javax.swing.*;
+import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 
 /**
  * @author Eugene Zhuravlev
  *         Date: May 25, 2005
- */public abstract class AddAction extends BreakpointPanelAction {
-  protected AddAction() {
+ */
+public class AddAction extends BreakpointPanelAction {
+  protected final Project myProject;
+  protected BreakpointFactory myBreakpointFactory;
+
+  public AddAction(BreakpointFactory breakpointFactory, Project project) {
     super(IdeBundle.message("button.add"));
+    myProject = project;
+    this.myBreakpointFactory = breakpointFactory;
   }
 
   public void setPanel(BreakpointPanel panel) {
@@ -35,5 +45,12 @@ import java.awt.event.KeyEvent;
   }
 
   public void update() {
+  }
+
+  public void actionPerformed(ActionEvent e) {
+    Breakpoint breakpoint = myBreakpointFactory.addBreakpoint(myProject);
+    if (breakpoint != null) {
+      getPanel().addBreakpoint(breakpoint);
+    }
   }
 }
