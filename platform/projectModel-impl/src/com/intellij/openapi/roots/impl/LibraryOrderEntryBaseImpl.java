@@ -21,7 +21,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.DependencyScope;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.RootProvider;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.NullableFunction;
@@ -100,7 +100,7 @@ abstract class LibraryOrderEntryBaseImpl extends OrderEntryBaseImpl {
         return file.isDirectory() ? file : null;
       }
     });
-    return VfsUtil.toVirtualFileArray(filtered);
+    return VfsUtilCore.toVirtualFileArray(filtered);
   }
 
   @Nullable

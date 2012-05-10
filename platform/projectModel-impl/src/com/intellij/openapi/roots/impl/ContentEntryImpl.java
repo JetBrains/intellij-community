@@ -24,7 +24,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
@@ -115,7 +115,7 @@ public class ContentEntryImpl extends RootModelComponentBase implements ContentE
         result.add(file);
       }
     }
-    return VfsUtil.toVirtualFileArray(result);
+    return VfsUtilCore.toVirtualFileArray(result);
   }
 
   @Override
@@ -155,7 +155,7 @@ public class ContentEntryImpl extends RootModelComponentBase implements ContentE
         result.add(file);
       }
     }
-    return VfsUtil.toVirtualFileArray(result);
+    return VfsUtilCore.toVirtualFileArray(result);
   }
 
   @Override
@@ -243,8 +243,8 @@ public class ContentEntryImpl extends RootModelComponentBase implements ContentE
   }
 
   private void assertFolderUnderMe(@NotNull String url) {
-    final String path = VfsUtil.urlToPath(url);
-    final String rootPath = VfsUtil.urlToPath(getUrl());
+    final String path = VfsUtilCore.urlToPath(url);
+    final String rootPath = VfsUtilCore.urlToPath(getUrl());
     if (!FileUtil.isAncestor(rootPath, path, false)) {
       LOG.error("The file '" + path + "' is not under content entry root '" + rootPath + "'");
     }
