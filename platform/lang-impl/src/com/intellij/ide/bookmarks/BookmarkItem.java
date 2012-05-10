@@ -19,9 +19,6 @@ import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
-import com.intellij.ui.popup.util.DetailView;
-import com.intellij.ui.popup.util.DetailViewImpl;
-import com.intellij.ui.popup.util.ItemWrapper;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusManager;
@@ -32,6 +29,8 @@ import com.intellij.psi.PsiManager;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.FileColorManager;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.popup.util.DetailView;
+import com.intellij.ui.popup.util.ItemWrapper;
 
 import javax.swing.*;
 import java.awt.*;
@@ -122,5 +121,10 @@ public class BookmarkItem implements ItemWrapper {
   @Override
   public boolean allowedToRemove() {
     return true;
+  }
+
+  @Override
+  public void removed(Project project) {
+    BookmarkManager.getInstance(project).removeBookmark(getBookmark());
   }
 }

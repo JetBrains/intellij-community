@@ -15,7 +15,6 @@
  */
 package com.intellij.xdebugger.impl.breakpoints.ui;
 
-import com.intellij.ide.actions.ShowPopupMenuAction;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
@@ -23,22 +22,22 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.ui.AnActionButton;
+import com.intellij.openapi.ui.popup.JBPopupListener;
+import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.popup.util.ItemWrapper;
 import com.intellij.ui.popup.util.MasterDetailPopupBuilder;
 import com.intellij.util.PlatformIcons;
-import com.intellij.xdebugger.XDebuggerManager;
-import com.intellij.xdebugger.breakpoints.XBreakpoint;
-import com.intellij.xdebugger.breakpoints.XBreakpointListener;
 import com.intellij.xdebugger.breakpoints.ui.BreakpointItem;
 import com.intellij.xdebugger.impl.DebuggerSupport;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.event.KeyEvent;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 
 /**
  * Created with IntelliJ IDEA.
@@ -60,8 +59,8 @@ public class BreakpointsMasterDetailPopupFactory {
     }
     Collections.sort(myBreakpointPanelProviders, new Comparator<BreakpointPanelProvider>() {
       @Override
-      public int compare(BreakpointPanelProvider breakpointPanelProvider, BreakpointPanelProvider breakpointPanelProvider1) {
-        return breakpointPanelProvider.getPriority() - breakpointPanelProvider1.getPriority();
+      public int compare(BreakpointPanelProvider o1, BreakpointPanelProvider o2) {
+        return o2.getPriority() - o1.getPriority();
       }
     });
   }
@@ -71,8 +70,10 @@ public class BreakpointsMasterDetailPopupFactory {
   }
 
   public JBPopup createPopup(@Nullable Object initialBreakpoint) {
-    DefaultListModel model = createBreakpointsItemsList();
+    final DefaultListSelectionModel selectionModel = new DefaultListSelectionModel();
+    final BreakpointListModel model = createBreakpointsItemsList(selectionModel);
     final JBList list = new JBList(model);
+    list.setSelectionModel(selectionModel);
     list.getEmptyText().setText("No Bookmarks");
 
     DefaultActionGroup actions = getActions();
@@ -99,8 +100,19 @@ public class BreakpointsMasterDetailPopupFactory {
         public boolean hasItemsWithMnemonic(Project project) {
           return false;
         }
-
       }).createMasterDetailPopup();
+
+    popup.addListener(new JBPopupListener() {
+      @Override
+      public void beforeShown(LightweightWindowEvent event) {
+        //To change body of implemented methods use File | Settings | File Templates.
+      }
+
+      @Override
+      public void onClosed(LightweightWindowEvent event) {
+        model.unsubscribe();
+      }
+    });
 
     return popup;
   }
@@ -124,15 +136,63 @@ public class BreakpointsMasterDetailPopupFactory {
     return actions;
   }
 
-  private DefaultListModel createBreakpointsItemsList() {
-    DefaultListModel model = new DefaultListModel();
+  private BreakpointListModel createBreakpointsItemsList(DefaultListSelectionModel selectionModel) {
+    final BreakpointListModel model = new BreakpointListModel();
+    final ArrayList<BreakpointItem> items = collectItems();
+    for (BreakpointItem item : items) {
+      model.addElement(item);
+    }
+    model.subscribe(selectionModel);
+    return model;
+  }
+
+
+
+  private ArrayList<BreakpointItem> collectItems() {
     ArrayList<BreakpointItem> items = new ArrayList<BreakpointItem>();
     for (BreakpointPanelProvider panelProvider : myBreakpointPanelProviders) {
       panelProvider.provideBreakpointItems(myProject, items);
     }
-    for (BreakpointItem item : items) {
-      model.addElement(item);
+    return items;
+  }
+
+  private class BreakpointListModel extends DefaultListModel {
+    List<BreakpointPanelProvider.BreakpointsListener> myListeners = new ArrayList<BreakpointPanelProvider.BreakpointsListener>();
+
+    private void subscribe(DefaultListSelectionModel selectionModel) {
+      for (BreakpointPanelProvider panelProvider : myBreakpointPanelProviders) {
+        final BreakpointPanelProvider.BreakpointsListener listener = new MyBreakpointsListener(this, selectionModel);
+        panelProvider.addListener(listener, myProject);
+        myListeners.add(listener);
+      }
     }
-    return model;
+
+    public void unsubscribe() {
+      for (int i = 0, size = myListeners.size(); i < size; i++) {
+        BreakpointPanelProvider.BreakpointsListener listener = myListeners.get(i);
+        myBreakpointPanelProviders.get(i).removeListener(listener);
+      }
+    }
+  }
+
+  private class MyBreakpointsListener implements BreakpointPanelProvider.BreakpointsListener {
+    private final DefaultListModel myModel;
+    private DefaultListSelectionModel mySelectionModel;
+
+    public MyBreakpointsListener(DefaultListModel model, DefaultListSelectionModel selectionModel) {
+      myModel = model;
+      mySelectionModel = selectionModel;
+    }
+
+    @Override
+    public void breakpointsChanged() {
+      final int index = mySelectionModel.getLeadSelectionIndex();
+      myModel.removeAllElements();
+      final ArrayList<BreakpointItem> items = collectItems();
+      for (BreakpointItem item : items) {
+        myModel.addElement(item);
+      }
+      mySelectionModel.setLeadSelectionIndex(index);
+    }
   }
 }

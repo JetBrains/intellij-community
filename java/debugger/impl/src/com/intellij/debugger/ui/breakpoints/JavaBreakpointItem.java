@@ -15,6 +15,7 @@
  */
 package com.intellij.debugger.ui.breakpoints;
 
+import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.SourcePosition;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.project.Project;
@@ -69,8 +70,8 @@ class JavaBreakpointItem implements BreakpointItem {
 
   @Override
   public void updateDetailView(DetailView panel) {
-    if (myBreakpoint instanceof LineBreakpoint) {
-      SourcePosition sourcePosition = ((LineBreakpoint)myBreakpoint).getSourcePosition();
+    if (myBreakpoint instanceof BreakpointWithHighlighter) {
+      SourcePosition sourcePosition = ((BreakpointWithHighlighter)myBreakpoint).getSourcePosition();
       VirtualFile virtualFile = sourcePosition.getFile().getVirtualFile();
       panel.navigateInPreviewEditor(virtualFile, new LogicalPosition(sourcePosition.getLine(), 0));
     }
@@ -82,15 +83,28 @@ class JavaBreakpointItem implements BreakpointItem {
       final JPanel mainPanel = breakpointPropertiesPanel.getPanel();
       panel.setDetailPanel(mainPanel);
     }
+    else {
+      panel.setDetailPanel(null);
+    }
   }
 
   @Override
   public boolean allowedToRemove() {
-    return false;  //To change body of implemented methods use File | Settings | File Templates.
+    return myBreakpointFactory.breakpointCanBeRemoved(myBreakpoint);
+  }
+
+  @Override
+  public void removed(Project project) {
+    DebuggerManagerEx.getInstanceEx(project).getBreakpointManager().removeBreakpoint(myBreakpoint);
   }
 
   @Override
   public Object getBreakpoint() {
     return myBreakpoint;
+  }
+
+  @Override
+  public int getPriority() {
+    return 0;  //To change body of implemented methods use File | Settings | File Templates.
   }
 }

@@ -49,6 +49,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * @author nik
@@ -185,6 +186,8 @@ public class JavaDebuggerSupport extends DebuggerSupport {
   }
 
   private static class JavaBreakpointPanelProvider extends BreakpointPanelProvider<Breakpoint> {
+    private List<MyBreakpointManagerListener> myListeners = new CopyOnWriteArrayList<MyBreakpointManagerListener>();
+
     @NotNull
     public Collection<AbstractBreakpointPanel<Breakpoint>> getBreakpointPanels(@NotNull final Project project, @NotNull final DialogWrapper parentDialog) {
       List<AbstractBreakpointPanel<Breakpoint>> panels = new ArrayList<AbstractBreakpointPanel<Breakpoint>>();
@@ -207,6 +210,23 @@ public class JavaDebuggerSupport extends DebuggerSupport {
         result.add(new AddJavaBreakpointAction(breakpointFactory));
       }
       return result.toArray(new AnAction[result.size()]);
+    }
+
+    @Override
+    public void addListener(final BreakpointsListener listener, Project project) {
+      final MyBreakpointManagerListener listener1 = new MyBreakpointManagerListener(listener);
+      DebuggerManagerEx.getInstanceEx(getCurrentProject()).getBreakpointManager().addBreakpointManagerListener(listener1);
+      myListeners.add(listener1);
+    }
+
+    @Override
+    public void removeListener(BreakpointsListener listener) {
+      for (MyBreakpointManagerListener managerListener : myListeners) {
+        if (managerListener.myListener == listener) {
+          myListeners.remove(managerListener);
+          break;
+        }
+      }
     }
 
     public int getPriority() {
@@ -262,6 +282,20 @@ public class JavaDebuggerSupport extends DebuggerSupport {
       @Override
       public void actionPerformed(AnActionEvent e) {
         myBreakpointFactory.addBreakpoint(getEventProject(e));
+      }
+    }
+
+    private static class MyBreakpointManagerListener implements BreakpointManagerListener {
+
+      private final BreakpointsListener myListener;
+
+      public MyBreakpointManagerListener(BreakpointsListener listener) {
+        myListener = listener;
+      }
+
+      @Override
+      public void breakpointsChanged() {
+        myListener.breakpointsChanged();
       }
     }
   }

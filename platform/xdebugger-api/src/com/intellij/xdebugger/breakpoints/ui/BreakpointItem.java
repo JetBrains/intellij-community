@@ -15,7 +15,6 @@
  */
 package com.intellij.xdebugger.breakpoints.ui;
 
-import com.intellij.openapi.util.Key;
 import com.intellij.ui.popup.util.ItemWrapper;
 
 /**
@@ -27,4 +26,5 @@ import com.intellij.ui.popup.util.ItemWrapper;
  */
 public interface BreakpointItem extends ItemWrapper {
   Object getBreakpoint();
+  int getPriority();
 }

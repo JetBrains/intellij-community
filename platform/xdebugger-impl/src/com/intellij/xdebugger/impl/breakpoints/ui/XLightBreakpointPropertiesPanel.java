@@ -158,7 +158,7 @@ public class XLightBreakpointPropertiesPanel<B extends XBreakpoint<?>> implement
     }
   }
 
-  public JComponent getMainPanel() {
+  public JPanel getMainPanel() {
     return myMainPanel;
   }
 }

@@ -30,6 +30,15 @@ import java.util.Collection;
  * @author nik
  */
 public abstract class BreakpointPanelProvider<B> {
+
+  public interface BreakpointsListener {
+    void breakpointsChanged();
+  }
+
+  public abstract void addListener(BreakpointsListener listener, Project project);
+
+  public abstract void removeListener(BreakpointsListener listener);
+
   public abstract int getPriority();
 
   @Nullable

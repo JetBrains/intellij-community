@@ -18,6 +18,7 @@ package com.intellij.ui.popup.util;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -37,5 +38,5 @@ public interface DetailView {
 
   JPanel getDetailPanel();
 
-  void setDetailPanel(JPanel panel);
+  void setDetailPanel(@Nullable JPanel panel);
 }

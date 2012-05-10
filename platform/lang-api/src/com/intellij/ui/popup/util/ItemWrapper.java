@@ -42,4 +42,6 @@ public interface ItemWrapper {
   void updateDetailView(DetailView panel);
 
   boolean allowedToRemove();
+
+  void removed(Project project);
 }

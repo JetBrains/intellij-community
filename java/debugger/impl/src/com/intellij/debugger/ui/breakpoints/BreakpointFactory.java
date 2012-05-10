@@ -16,7 +16,6 @@
 package com.intellij.debugger.ui.breakpoints;
 
 import com.intellij.debugger.ui.breakpoints.actions.BreakpointPanelAction;
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
@@ -85,6 +84,10 @@ public abstract class BreakpointFactory {
 
   public boolean canAddBreakpoints() {
     return false;
+  }
+
+  public boolean breakpointCanBeRemoved(Breakpoint breakpoint) {
+    return true;
   }
 
   public BreakpointItem createBreakpointItem(final Breakpoint breakpoint) {

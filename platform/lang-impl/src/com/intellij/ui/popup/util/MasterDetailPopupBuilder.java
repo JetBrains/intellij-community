@@ -205,7 +205,7 @@ public class MasterDetailPopupBuilder {
               else {
                 myList.clearSelection();
               }
-              myDelegate.itemRemoved(item, myProject);
+              item.removed(myProject);
             }
 
           }

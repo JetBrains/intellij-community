@@ -15,6 +15,8 @@
  */
 package com.intellij.xdebugger.impl.breakpoints;
 
+import com.intellij.openapi.application.Result;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.ColoredListCellRenderer;
@@ -22,7 +24,7 @@ import com.intellij.ui.popup.util.DetailView;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.ui.BreakpointItem;
-import com.intellij.xdebugger.impl.breakpoints.ui.XBreakpointPropertiesPanel;
+import com.intellij.xdebugger.impl.breakpoints.ui.XLightBreakpointPropertiesPanel;
 
 import javax.swing.*;
 
@@ -43,6 +45,7 @@ class XBreakpointItem implements BreakpointItem {
   @Override
   public void setupRenderer(ColoredListCellRenderer renderer, Project project, boolean selected) {
     renderer.setIcon(((XBreakpointBase)myBreakpoint).getIcon());
+    renderer.append(XBreakpointUtil.getDisplayText(myBreakpoint));
   }
 
   @Override
@@ -74,19 +77,39 @@ class XBreakpointItem implements BreakpointItem {
 
     Project project = ((XBreakpointBase)myBreakpoint).getProject();
 
-    XBreakpointPropertiesPanel<XBreakpoint<?>> propertiesPanel =
-      new XBreakpointPropertiesPanel<XBreakpoint<?>>(project, ((XBreakpointBase)myBreakpoint).getBreakpointManager(), myBreakpoint);
+    XLightBreakpointPropertiesPanel<XBreakpoint<?>> propertiesPanel =
+      new XLightBreakpointPropertiesPanel<XBreakpoint<?>>(project, getManager(), myBreakpoint, true);
 
     panel.setDetailPanel(propertiesPanel.getMainPanel());
   }
 
+  private XBreakpointManagerImpl getManager() {
+    return ((XBreakpointBase)myBreakpoint).getBreakpointManager();
+  }
+
   @Override
   public boolean allowedToRemove() {
-    return false;  //To change body of implemented methods use File | Settings | File Templates.
+    return !getManager().isDefaultBreakpoint(myBreakpoint);
+  }
+
+  @Override
+  public void removed(Project project) {
+    final XBreakpointManagerImpl breakpointManager = getManager();
+    new WriteAction() {
+      protected void run(final Result result) {
+        breakpointManager.removeBreakpoint(myBreakpoint);
+      }
+    }.execute();
+
   }
 
   @Override
   public Object getBreakpoint() {
     return myBreakpoint;
+  }
+
+  @Override
+  public int getPriority() {
+    return 0;  //To change body of implemented methods use File | Settings | File Templates.
   }
 }

@@ -133,6 +133,8 @@ public class DetailViewImpl extends JPanel implements DetailView {
       remove(myDetailPanel);
     }
     myDetailPanel = panel;
-    add(panel, BorderLayout.SOUTH);
+    if (panel != null) {
+      add(panel, BorderLayout.SOUTH);
+    }
   }
 }
