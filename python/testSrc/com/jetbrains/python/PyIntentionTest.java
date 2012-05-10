@@ -114,6 +114,10 @@ public class PyIntentionTest extends PyTestCase {
     doNegativeTest(PyBundle.message("INTN.replace.plus.with.format.operator"));
   }
 
+  public void testStringConcatToFormat3() {   //PY-6505
+    doTest(PyBundle.message("INTN.replace.plus.with.format.operator"));
+  }
+
   public void testConvertFormatOperatorToMethod() {
     doTest(PyBundle.message("INTN.replace.with.method"), LanguageLevel.PYTHON26);
   }
