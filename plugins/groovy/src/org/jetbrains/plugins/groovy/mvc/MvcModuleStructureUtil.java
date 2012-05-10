@@ -557,7 +557,7 @@ public class MvcModuleStructureUtil {
       }
     }
 
-    moduleModel.newModule(moduleFilePath, StdModuleTypes.JAVA);
+    moduleModel.newModule(moduleFilePath, StdModuleTypes.JAVA.getId());
     moduleModel.commit();
 
     Module pluginsModule = moduleManager.findModuleByName(moduleName);

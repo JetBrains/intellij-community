@@ -475,7 +475,7 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
   public Module newModule(@NotNull String filePath, @NotNull ModuleType moduleType) {
     myModificationCount++;
     final ModifiableModuleModel modifiableModel = getModifiableModel();
-    final Module module = modifiableModel.newModule(filePath, moduleType);
+    final Module module = modifiableModel.newModule(filePath, moduleType.getId());
     modifiableModel.commit();
     return module;
   }
@@ -688,19 +688,21 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
     }
 
     @NotNull
-    public Module newModule(@NotNull String filePath, @NotNull ModuleType moduleType) {
-      return newModule(filePath,moduleType,null);
+    public Module newModule(@NotNull String filePath, final String moduleTypeId) {
+      return newModule(filePath, moduleTypeId, null);
     }
 
     @NotNull
-    public Module newModule(@NotNull String filePath, @NotNull ModuleType moduleType, @Nullable Map<String, String> options) {
+    public Module newModule(@NotNull String filePath,
+                            final String moduleTypeId,
+                            @Nullable Map<String, String> options) {
       assertWritable();
       filePath = resolveShortWindowsName(filePath);
 
       ModuleImpl module = getModuleByFilePath(filePath);
       if (module == null) {
         module = new ModuleImpl(filePath, myProject);
-        module.setOption(Module.ELEMENT_TYPE, moduleType.getId());
+        module.setOption(Module.ELEMENT_TYPE, moduleTypeId);
         if (options != null) {
           for ( Map.Entry<String,String> option : options.entrySet()) {
             module.setOption(option.getKey(),option.getValue());

@@ -323,7 +323,7 @@ import java.util.List;
       @Override
       protected void run(Result<Module> result) throws Throwable {
         final ModifiableModuleModel moduleModel = ModuleManager.getInstance(project).getModifiableModel();
-        String moduleName = moduleModel.newModule(root.getPath() + "/" + name + ".iml", type).getName();
+        String moduleName = moduleModel.newModule(root.getPath() + "/" + name + ".iml", type.getId()).getName();
         moduleModel.commit();
 
         final Module dep = ModuleManager.getInstance(project).findModuleByName(moduleName);

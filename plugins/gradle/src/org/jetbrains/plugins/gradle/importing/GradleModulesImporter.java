@@ -186,7 +186,7 @@ public class GradleModulesImporter {
     Application application = ApplicationManager.getApplication();
     application.assertWriteAccessAllowed();
     final String moduleFilePath = module.getModuleFilePath();
-    return model.newModule(moduleFilePath, StdModuleTypes.JAVA);
+    return model.newModule(moduleFilePath, StdModuleTypes.JAVA.getId());
   }
 
   /**

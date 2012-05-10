@@ -43,22 +43,23 @@ public interface ModifiableModuleModel {
    * bring the changes in effect.
    *
    * @param filePath the path at which the module is created.
-   * @param moduleType the type of the module to create.
+   * @param moduleTypeId the ID of the module type to create.
    * @return the module instance.
    */
-  @NotNull Module newModule(@NotNull String filePath, @NotNull ModuleType moduleType);
+  @NotNull Module newModule(@NotNull String filePath, final String moduleTypeId);
 
   /**
    * Creates a module of the specified type at the specified path and adds it to the project
    * to which the module manager is related. {@link #commit()} must be called to
    * bring the changes in effect.
    *
+   *
    * @param filePath the path at which the module is created.
-   * @param moduleType the type of the module to create.
+   * @param moduleTypeId ID of the module type to create.
    * @param options map of module options to be used when creating the module
    * @return the module instance.
    */
-  @NotNull Module newModule(@NotNull String filePath, @NotNull ModuleType moduleType, @Nullable Map<String,String> options);
+  @NotNull Module newModule(@NotNull String filePath, final String moduleTypeId, @Nullable Map<String, String> options);
 
   /**
    * Loads a module from an .iml file with the specified path and adds it to the project.

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -70,7 +70,7 @@ public class ModulePointerTest extends PlatformTestCase {
     final ModulePointer pointer = getPointerManager().create("xxx");
 
     final ModifiableModuleModel modifiableModel = getModuleManager().getModifiableModel();
-    final Module module = modifiableModel.newModule(myProject.getBaseDir().getPath() + "/xxx.iml", EmptyModuleType.getInstance());
+    final Module module = modifiableModel.newModule(myProject.getBaseDir().getPath() + "/xxx.iml", EmptyModuleType.getInstance().getId());
     assertSame(pointer, getPointerManager().create(module));
     assertSame(pointer, getPointerManager().create("xxx"));
 
@@ -89,7 +89,7 @@ public class ModulePointerTest extends PlatformTestCase {
 
   private Module addModule(final String name) {
     final ModifiableModuleModel model = getModuleManager().getModifiableModel();
-    final Module module = model.newModule(myProject.getBaseDir().getPath() + "/" + name + ".iml", EmptyModuleType.getInstance());
+    final Module module = model.newModule(myProject.getBaseDir().getPath() + "/" + name + ".iml", EmptyModuleType.getInstance().getId());
     commitModel(model);
     disposeOnTearDown(new Disposable() {
       @Override
