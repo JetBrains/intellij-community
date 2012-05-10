@@ -203,4 +203,10 @@ public class VfsUtilCore {
     //noinspection SSBasedInspection
     return files.toArray(new VirtualFile[size]);
   }
+
+  @NotNull
+  public static String urlToPath(@NonNls @Nullable String url) {
+    if (url == null) return "";
+    return VirtualFileManager.extractPath(url);
+  }
 }

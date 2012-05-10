@@ -404,12 +404,6 @@ public class VfsUtil extends VfsUtilCore {
   }
 
   @NotNull
-  public static String urlToPath(@NonNls @Nullable String url) {
-    if (url == null) return "";
-    return VirtualFileManager.extractPath(url);
-  }
-
-  @NotNull
   public static String pathToUrl(@NonNls @NotNull String path) {
     return VirtualFileManager.constructUrl(LocalFileSystem.PROTOCOL, path);
   }
