@@ -15,8 +15,6 @@
  */
 package com.intellij.openapi.module;
 
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.project.ModuleListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.util.graph.Graph;
@@ -139,31 +137,6 @@ public abstract class ModuleManager {
    * @since 11.0
    */
   @NotNull public abstract Graph<Module> moduleGraph(boolean includeTests);
-
-  /**
-   * Adds a listener for receiving notifications to the module structure of the project.
-   *
-   * @param listener the listener instance.
-   * @deprecated Subscribe to {@link com.intellij.ProjectTopics#MODULES} on project bus or lower.
-   */
-  public abstract void addModuleListener(@NotNull ModuleListener listener);
-
-  /**
-   * Adds a listener for receiving notifications to the module structure of the project.
-   *
-   * @param listener the listener instance.
-   * @param parentDisposable object, after whose disposing the listener should be removed
-   * @deprecated Subscribe to {@link com.intellij.ProjectTopics#MODULES} on project bus or lower.
-   */
-  public abstract void addModuleListener(@NotNull ModuleListener listener, Disposable parentDisposable);
-
-  /**
-   * Removes a listener for receiving notifications to the module structure of the project.
-   *
-   * @param listener the listener instance.
-   * @deprecated Subscribe to {@link com.intellij.ProjectTopics#MODULES} on project bus or lower.
-   */
-  public abstract void removeModuleListener(@NotNull ModuleListener listener);
 
   /**
    * Returns the model for the list of modules in the project, which can be used to add,

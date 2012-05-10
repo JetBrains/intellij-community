@@ -21,7 +21,6 @@ import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
@@ -453,23 +452,6 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
   }
 
   private final Map<ModuleListener, MessageBusConnection> myAdapters = new HashMap<ModuleListener, MessageBusConnection>();
-  public void addModuleListener(@NotNull ModuleListener listener) {
-    final MessageBusConnection connection = myMessageBus.connect();
-    connection.subscribe(ProjectTopics.MODULES, listener);
-    myAdapters.put(listener, connection);
-  }
-
-  public void addModuleListener(@NotNull ModuleListener listener, Disposable parentDisposable) {
-    final MessageBusConnection connection = myMessageBus.connect(parentDisposable);
-    connection.subscribe(ProjectTopics.MODULES, listener);
-  }
-
-  public void removeModuleListener(@NotNull ModuleListener listener) {
-    final MessageBusConnection adapter = myAdapters.remove(listener);
-    if (adapter != null) {
-      adapter.disconnect();
-    }
-  }
 
   @NotNull
   public Module newModule(@NotNull String filePath, final String moduleTypeId) {
