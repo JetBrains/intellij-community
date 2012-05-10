@@ -164,6 +164,7 @@ public class EclipseCompiler extends ExternalCompiler {
                                     boolean quoteBootClasspath) throws IOException {
     final Sdk jdk = chunk.getJdk();
     CompilerUtil.addSourceCommandLineSwitch(jdk, chunk.getLanguageLevel(), commandLine);
+    CompilerUtil.addTargetCommandLineSwitch(chunk, commandLine);
 
     final String bootCp = chunk.getCompilationBootClasspath();
 

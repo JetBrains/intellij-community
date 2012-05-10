@@ -190,6 +190,7 @@ public class BackendCompilerWrapper {
     // validate encodings
     if (chunk.getModuleCount() > 1) {
       validateEncoding(chunk, chunkPresentableName);
+      // todo: validation for bytecode target?
     }
 
     runTransformingCompilers(chunk);

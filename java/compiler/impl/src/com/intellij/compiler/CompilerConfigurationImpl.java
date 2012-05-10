@@ -42,7 +42,6 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.ModuleAdapter;
-import com.intellij.openapi.project.ModuleListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.InputValidator;
@@ -105,6 +104,9 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
   private final Map<String, String> myModuleNames = new HashMap<String, String>();
   private boolean myAddNotNullAssertions = true;
 
+  @Nullable
+  private String myBytecodeTargetLevel = null;  // null means compiler default
+  private final Map<String, String> myModuleBytecodeTarget = new java.util.HashMap<String, String>();
 
   public CompilerConfigurationImpl(Project project, ModuleManager moduleManager) {
     myProject = project;
@@ -146,6 +148,35 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
     catch (InvalidDataException e) {
       LOG.error(e);
     }
+  }
+
+  public void setProjectBytecodeTarget(@Nullable String level) {
+    myBytecodeTargetLevel = level;
+  }
+
+  @Override
+  @Nullable
+  public String getProjectBytecodeTarget() {
+    return myBytecodeTargetLevel;
+  }
+
+  public void setModulesBytecodeTargetMap(@NotNull Map<String, String> mapping) {
+    myModuleBytecodeTarget.clear();
+    myModuleBytecodeTarget.putAll(mapping);
+  }
+
+  public Map<String, String> getModulesBytecodeTargetMap() {
+    return myModuleBytecodeTarget;
+  }
+
+  @Override
+  @Nullable
+  public String getBytecodeTargetLevel(Module module) {
+    final String level = myModuleBytecodeTarget.get(module.getName());
+    if (level != null) {
+      return "".equals(level)? null : level;
+    }
+    return myBytecodeTargetLevel;
   }
 
   private void loadDefaultWildcardPatterns() {
@@ -210,7 +241,9 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
   }
 
   private void createCompilers() {
-    if (JAVAC_EXTERNAL_BACKEND != null) return;
+    if (JAVAC_EXTERNAL_BACKEND != null) {
+      return;
+    }
 
     JAVAC_EXTERNAL_BACKEND = new JavacCompiler(myProject);
     myRegisteredCompilers.add(JAVAC_EXTERNAL_BACKEND);
@@ -528,6 +561,7 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
   @NonNls private static final String EXCLUDE_FROM_COMPILE = "excludeFromCompile";
   @NonNls private static final String RESOURCE_EXTENSIONS = "resourceExtensions";
   @NonNls private static final String ANNOTATION_PROCESSING = "annotationProcessing";
+  @NonNls private static final String BYTECODE_TARGET_LEVEL = "bytecodeTargetLevel";
   @NonNls private static final String WILDCARD_RESOURCE_PATTERNS = "wildcardResourcePatterns";
   @NonNls private static final String ENTRY = "entry";
   @NonNls private static final String NAME = "name";
@@ -622,6 +656,24 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
           }
         }
       }
+
+      myBytecodeTargetLevel = null;
+      myModuleBytecodeTarget.clear();
+      final Element bytecodeTargetElement = parentNode.getChild(BYTECODE_TARGET_LEVEL);
+      if (bytecodeTargetElement != null) {
+        myBytecodeTargetLevel = bytecodeTargetElement.getAttributeValue("target");
+        for (Element elem : (Collection<Element>)bytecodeTargetElement.getChildren("module")) {
+          final String name = elem.getAttributeValue("name");
+          if (name == null) {
+            continue;
+          }
+          final String target = elem.getAttributeValue("target");
+          if (target == null) {
+            continue;
+          }
+          myModuleBytecodeTarget.put(name, target);
+        }
+      }
     }
   }
 
@@ -692,6 +744,29 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
         moduleElement.setAttribute("generatedDirName", dirName);
       }
     }
+
+    if (!StringUtil.isEmpty(myBytecodeTargetLevel) || !myModuleBytecodeTarget.isEmpty()) {
+      final Element bytecodeTarget = new Element(BYTECODE_TARGET_LEVEL);
+      parentNode.addContent(bytecodeTarget);
+      if (!StringUtil.isEmpty(myBytecodeTargetLevel)) {
+        bytecodeTarget.setAttribute("target", myBytecodeTargetLevel);
+      }
+      if (!myModuleBytecodeTarget.isEmpty()) {
+        final List<String> moduleNames = new ArrayList<String>(myModuleBytecodeTarget.keySet());
+        Collections.sort(moduleNames, new Comparator<String>() {
+          @Override
+          public int compare(String o1, String o2) {
+            return o1.compareTo(o2);
+          }
+        });
+        for (String name : moduleNames) {
+          final Element moduleElement = new Element("module");
+          bytecodeTarget.addContent(moduleElement);
+          moduleElement.setAttribute("name", name);
+          moduleElement.setAttribute("target", myModuleBytecodeTarget.get(name));
+        }
+      }
+    }
   }
 
   @NotNull @NonNls
@@ -706,7 +781,7 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
 
   /**
    * @param defaultCompiler The compiler that is passed as a parameter to setDefaultCompiler() 
-   * must be one of the registered compilers in compiler configuration. 
+   * must be one of the registered compilers in compiler configuration.
    * Otherwise because of lazy compiler initialization, the value of default compiler will point to some other compiler instance
    */
   public void setDefaultCompiler(BackendCompiler defaultCompiler) {
