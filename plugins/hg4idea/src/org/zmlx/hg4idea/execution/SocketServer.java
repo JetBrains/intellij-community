@@ -13,6 +13,7 @@
 package org.zmlx.hg4idea.execution;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -81,6 +82,9 @@ public class SocketServer {
 
   public static abstract class Protocol {
 
+    private static final int MAX_INPUT_LENGTH = 10 * 1000 * 1000;
+    private static final Logger LOG = Logger.getInstance(Protocol.class);
+
     /**
      * Override this method to implement the actual logic of the protocol.
      *
@@ -92,14 +96,25 @@ public class SocketServer {
      */
     public abstract boolean handleConnection(Socket socket) throws IOException;
 
-    protected byte[] readDataBlock(DataInputStream inputStream) throws IOException {
-      int length = inputStream.readInt();
+    protected static byte[] readDataBlock(DataInputStream inputStream) throws IOException {
+      final int origLength = inputStream.readInt();
+      final int length;
+      if (origLength > MAX_INPUT_LENGTH) {
+        length = MAX_INPUT_LENGTH;
+        LOG.info(String.format("Too large input: %d bytes. Reading %s bytes and skipping all other.", origLength, length));
+      } else {
+        length = origLength;
+      }
       byte[] data = new byte[length];
       inputStream.readFully(data);
+      int skipped = inputStream.skipBytes(origLength - length);
+      if (skipped > 0) {
+        LOG.info(String.format("Skipped %s bytes", skipped));
+      }
       return data;
     }
 
-    protected void sendDataBlock(DataOutputStream out, byte[] data) throws IOException {
+    protected static void sendDataBlock(DataOutputStream out, byte[] data) throws IOException {
       out.writeInt(data.length);
       out.write(data);
     }
