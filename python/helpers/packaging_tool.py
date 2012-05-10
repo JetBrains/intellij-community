@@ -2,8 +2,9 @@ import sys
 import traceback
 
 ERROR_WRONG_USAGE = 1
-ERROR_NO_PACKAGING_TOOLS = 2
-ERROR_EXCEPTION = 3
+ERROR_NO_PIP = 2
+ERROR_NO_DISTRIBUTE = 3
+ERROR_EXCEPTION = 4
 
 def exit(retcode):
     major, minor, micro, release, serial = sys.version_info
@@ -28,14 +29,14 @@ def error(message, retcode):
 
 
 def error_no_pip():
-    error("Python package management tool 'pip' not found. <a href=\"installPip\">Install 'pip'</a>", ERROR_NO_PACKAGING_TOOLS)
+    error("Python package management tool 'pip' not found", ERROR_NO_PIP)
 
 
 def do_list():
     try:
         import pkg_resources
     except ImportError:
-        error("Python package management tools not found. <a href=\"installDistribute\">Install 'distribute'</a>", ERROR_NO_PACKAGING_TOOLS)
+        error("Python package management tool 'setuptools' or 'distribute' not found", ERROR_NO_DISTRIBUTE)
     for pkg in pkg_resources.working_set:
         requires = ':'.join([str(x) for x in pkg.requires()])
         sys.stdout.write('\t'.join([pkg.project_name, pkg.version, pkg.location, requires])+chr(10))

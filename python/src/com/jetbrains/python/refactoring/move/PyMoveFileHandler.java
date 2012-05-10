@@ -85,9 +85,14 @@ public class PyMoveFileHandler extends MoveFileHandler {
           }
           else if (element instanceof PyReferenceExpression) {
             updatedFiles.add(file);
-            final PyQualifiedName newElementName = PyQualifiedName.fromComponents(PyClassRefactoringUtil.getOriginalName(newElement));
-            replaceWithQualifiedExpression(element, newElementName);
-            PyClassRefactoringUtil.insertImport(element, newElement, null);
+            if (((PyReferenceExpression)element).getQualifier() != null) {
+              final PyQualifiedName newQualifiedName = ResolveImportUtil.findCanonicalImportPath(newElement, element);
+              replaceWithQualifiedExpression(element, newQualifiedName);
+            } else {
+              final PyQualifiedName newName = PyQualifiedName.fromComponents(PyClassRefactoringUtil.getOriginalName(newElement));
+              replaceWithQualifiedExpression(element, newName);
+              PyClassRefactoringUtil.insertImport(element, newElement, null);
+            }
           }
         }
       }

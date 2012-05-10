@@ -267,7 +267,7 @@ public class PyClassRefactoringUtil {
     }
   }
 
-  public static void rememberNamedReferences(final PsiElement element) {
+  public static void rememberNamedReferences(@NotNull final PsiElement element) {
     element.acceptChildren(new PyRecursiveElementVisitor() {
       @Override
       public void visitPyReferenceExpression(PyReferenceExpression node) {
@@ -284,7 +284,7 @@ public class PyClassRefactoringUtil {
     });
   }
 
-  private static void rememberReference(PyReferenceExpression node, PsiElement element) {
+  private static void rememberReference(@NotNull PyReferenceExpression node, @NotNull PsiElement element) {
     // We will remember reference in deepest node (except for references to PyImportedModules, as we need references to modules, not to
     // their packages)
     final PyExpression qualifier = node.getQualifier();
@@ -294,7 +294,7 @@ public class PyClassRefactoringUtil {
     final PsiElement target = resolveExpression(node);
     if (target instanceof PsiNamedElement && !PsiTreeUtil.isAncestor(element, target, false)) {
       final PyImportElement importElement = getImportElement(node);
-      if (importElement == null && !(target instanceof PsiFileSystemItem)) {
+      if (!inSameFile(element, target) && importElement == null && !(target instanceof PsiFileSystemItem)) {
         return;
       }
       node.putCopyableUserData(ENCODED_IMPORT, (PsiNamedElement)target);
@@ -303,6 +303,15 @@ public class PyClassRefactoringUtil {
       }
       node.putCopyableUserData(ENCODED_USE_FROM_IMPORT, qualifier == null);
     }
+  }
+
+  private static boolean inSameFile(@NotNull PsiElement e1, @NotNull PsiElement e2) {
+    final PsiFile f1 = e1.getContainingFile();
+    final PsiFile f2 = e2.getContainingFile();
+    if (f1 == null || f2 == null) {
+      return false;
+    }
+    return f1 == f2;
   }
 
   @Nullable

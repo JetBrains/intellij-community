@@ -8,7 +8,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.Consumer;
@@ -442,18 +441,26 @@ public class PyPackagesPanel extends JPanel {
               if (!invalid) {
                 String text = null;
                 if (externalProcessException != null) {
-                  text = externalProcessException.getMessage();
-                  allowCreateVirtualEnv &=
-                    externalProcessException.getRetcode() == PyPackageManager.ERROR_NO_PACKAGING_TOOLS;
+                  final int retCode = externalProcessException.getRetcode();
+                  if (retCode == PyPackageManager.ERROR_NO_PIP) {
+                    myHasPip = false;
+                  }
+                  else if (retCode == PyPackageManager.ERROR_NO_DISTRIBUTE) {
+                    myHasDistribute = false;
+                  }
+                  else {
+                    text = externalProcessException.getMessage();
+                  }
+                  final boolean hasPackagingTools = myHasPip && myHasDistribute;
+                  allowCreateVirtualEnv &= !hasPackagingTools;
                 }
-                else if (!myHasDistribute) {
-                  text = "Python package management tools not found. <a href=\"" + INSTALL_DISTRIBUTE + "\">Install 'distribute'</a>";
-                }
-                else if (!myHasPip) {
-                  text = "Python packaging tool 'pip' not found. <a href=\"" + INSTALL_PIP + "\">Install 'pip'</a>";
-                }
-                if (StringUtil.isEmptyOrSpaces(text) && externalProcessException != null) {
-                  text = "Python packaging tool 'pip' not found. <a href=\"" + INSTALL_PIP + "\">Install 'pip'</a>";
+                if (text == null) {
+                  if (!myHasDistribute) {
+                    text = "Python package management tools not found. <a href=\"" + INSTALL_DISTRIBUTE + "\">Install 'distribute'</a>";
+                  }
+                  else if (!myHasPip) {
+                    text = "Python packaging tool 'pip' not found. <a href=\"" + INSTALL_PIP + "\">Install 'pip'</a>";
+                  }
                 }
                 if (text != null) {
                   if (allowCreateVirtualEnv) {
