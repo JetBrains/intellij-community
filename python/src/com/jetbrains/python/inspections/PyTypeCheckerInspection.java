@@ -5,7 +5,6 @@ import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.util.containers.hash.LinkedHashMap;
@@ -88,10 +87,10 @@ public class PyTypeCheckerInspection extends PyInspection {
           String expected = String.format("'%s'", superName);
           final boolean hasGenerics = PyTypeChecker.hasGenerics(superType, context);
           if (hasGenerics) {
-            final Ref<PyType> subst = PyTypeChecker.substitute(superType, substitutions, context);
+            final PyType subst = PyTypeChecker.substitute(superType, substitutions, context);
             if (subst != null) {
               expected = String.format("'%s' (matched generic type '%s')",
-                                       PythonDocumentationProvider.getTypeName(subst.get(), context),
+                                       PythonDocumentationProvider.getTypeName(subst, context),
                                        superName);
 
             }

@@ -1,6 +1,5 @@
 package com.jetbrains.python.psi.types;
 
-import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPolyVariantReference;
 import com.intellij.psi.PsiReference;
@@ -188,51 +187,39 @@ public class PyTypeChecker {
   }
 
   @Nullable
-  public static Ref<PyType> substitute(@Nullable PyType type, @NotNull Map<PyGenericType, PyType> substitutions,
-                                       @NotNull TypeEvalContext context) {
+  public static PyType substitute(@Nullable PyType type, @NotNull Map<PyGenericType, PyType> substitutions,
+                                  @NotNull TypeEvalContext context) {
     if (hasGenerics(type, context)) {
       if (type instanceof PyGenericType) {
-        final PyType subst = substitutions.get((PyGenericType)type);
-        return subst != null ? Ref.create(subst) : null;
+        return substitutions.get((PyGenericType)type);
       }
       else if (type instanceof PyUnionType) {
         final PyUnionType union = (PyUnionType)type;
         final List<PyType> results = new ArrayList<PyType>();
         for (PyType t : union.getMembers()) {
-          final Ref<PyType> subst = substitute(t, substitutions, context);
-          if (subst == null) {
-            return null;
-          }
-          results.add(subst.get());
+          final PyType subst = substitute(t, substitutions, context);
+          results.add(subst);
         }
-        return Ref.create(PyUnionType.union(results));
+        return PyUnionType.union(results);
       }
       else if (type instanceof PyCollectionTypeImpl) {
         final PyCollectionTypeImpl collection = (PyCollectionTypeImpl)type;
         final PyType elem = collection.getElementType(context);
-        final Ref<PyType> subst = substitute(elem, substitutions, context);
-        if (subst == null) {
-          return null;
-        }
-        final PyType result = new PyCollectionTypeImpl(collection.getPyClass(), collection.isDefinition(), subst.get());
-        return Ref.create(result);
+        final PyType subst = substitute(elem, substitutions, context);
+        return new PyCollectionTypeImpl(collection.getPyClass(), collection.isDefinition(), subst);
       }
       else if (type instanceof PyTupleType) {
         final PyTupleType tuple = (PyTupleType)type;
         final int n = tuple.getElementCount();
         final List<PyType> results = new ArrayList<PyType>();
         for (int i = 0; i < n; i++) {
-          final Ref<PyType> subst = substitute(tuple.getElementType(i), substitutions, context);
-          if (subst == null) {
-            return null;
-          }
-          results.add(subst.get());
+          final PyType subst = substitute(tuple.getElementType(i), substitutions, context);
+          results.add(subst);
         }
-        final PyType result = new PyTupleType((PyTupleType)type, results.toArray(new PyType[results.size()]));
-        return Ref.create(result);
+        return new PyTupleType((PyTupleType)type, results.toArray(new PyType[results.size()]));
       }
     }
-    return Ref.create(type);
+    return type;
   }
 
   @Nullable
