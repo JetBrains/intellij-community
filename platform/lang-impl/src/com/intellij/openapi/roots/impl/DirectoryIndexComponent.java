@@ -30,6 +30,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.impl.BulkVirtualFileListenerAdapter;
+import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.util.messages.MessageBusConnection;
 
 import java.util.ArrayList;
@@ -168,9 +169,21 @@ public class DirectoryIndexComponent extends DirectoryIndexImpl {
       final IndexState state = myState.copy();
 
       ArrayList<VirtualFile> list = new ArrayList<VirtualFile>();
-      state.addDirsRecursively(list, file);
+      addDirsRecursively(state, list, file);
       file.putUserData(FILES_TO_RELEASE_KEY, list);
       myState = state;
+    }
+
+    private void addDirsRecursively(IndexState state, ArrayList<VirtualFile> list, VirtualFile dir) {
+      if (!state.myDirToInfoMap.containsKey(dir) || !(dir instanceof NewVirtualFile)) return;
+
+      list.add(dir);
+
+      for (VirtualFile child : ((NewVirtualFile)dir).getCachedChildren()) {
+        if (child.isDirectory()) {
+          addDirsRecursively(state, list, child);
+        }
+      }
     }
 
     @Override

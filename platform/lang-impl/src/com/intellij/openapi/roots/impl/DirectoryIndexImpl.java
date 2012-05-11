@@ -35,7 +35,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileVisitor;
-import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.util.*;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.containers.Stack;
@@ -368,7 +367,7 @@ public class DirectoryIndexImpl extends DirectoryIndex {
                                            final boolean isTestSource) {
       
       VfsUtilCore.visitChildrenRecursively(dir, new DirectoryVisitor() {
-        
+
         private final Stack<String> myPackages = new Stack<String>();
 
         @Override
@@ -728,18 +727,6 @@ public class DirectoryIndexImpl extends DirectoryIndex {
 
         file = file.getParent();
         if (file == null) break;
-      }
-    }
-
-    protected void addDirsRecursively(ArrayList<VirtualFile> list, VirtualFile dir) {
-      if (!myDirToInfoMap.containsKey(dir) || !(dir instanceof NewVirtualFile)) return;
-
-      list.add(dir);
-
-      for (VirtualFile child : ((NewVirtualFile)dir).getCachedChildren()) {
-        if (child.isDirectory()) {
-          addDirsRecursively(list, child);
-        }
       }
     }
 
