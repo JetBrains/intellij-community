@@ -21,6 +21,7 @@ import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.AbstractVcsTestCase;
+import com.intellij.testFramework.TestClientRunner;
 import com.intellij.ui.GuiUtils;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcsUtil.VcsUtil;
@@ -185,7 +186,7 @@ public abstract class HgTest extends AbstractVcsTestCase {
    * @param commandLine command and parameters (e.g. 'status, -m').
    */
   protected ProcessOutput runHg(@Nullable File workingDir, String... commandLine) throws IOException {
-    return runClient(HG_EXECUTABLE, null, workingDir, commandLine);
+    return createClientRunner().runClient(HG_EXECUTABLE, null, workingDir, commandLine);
   }
 
   protected File fillFile(File aParentDir, String[] filePath, String fileContents) throws FileNotFoundException {

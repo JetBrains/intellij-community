@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,8 +36,7 @@ public class ToolAction extends AnAction implements DumbAware {
   public void actionPerformed(AnActionEvent e) {
     MacroManager.getInstance().cacheMacrosPreview(e.getDataContext());
     Tool[] tools = ToolManager.getInstance().getTools();
-    for (int i = 0; i < tools.length; i++) {
-      Tool tool = tools[i];
+    for (Tool tool : tools) {
       if (myActionId.equals(tool.getActionId())) {
         tool.execute(e.getDataContext());
         break;

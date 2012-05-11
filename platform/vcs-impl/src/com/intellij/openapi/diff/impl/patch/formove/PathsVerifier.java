@@ -55,6 +55,7 @@ public class PathsVerifier<BinaryType extends FilePatch> {
   private DelayedPrecheckContext myDelayedPrecheckContext;
   private List<FilePath> myAddedPaths;
   private List<FilePath> myDeletedPaths;
+  private boolean myIgnoreContentRootsCheck;
 
   public PathsVerifier(final Project project, final VirtualFile baseDirectory, final List<FilePatch> patches, BaseMapper baseMapper) {
     myProject = project;
@@ -314,6 +315,7 @@ public class PathsVerifier<BinaryType extends FilePatch> {
     }
 
     protected boolean checkModificationValid(final VirtualFile file, final String name) {
+      if (ApplicationManager.getApplication().isUnitTestMode() && myIgnoreContentRootsCheck) return true;
       // security check to avoid overwriting system files with a patch
       if ((file == null) || (!inContent(file)) || (myVcsManager.getVcsRootFor(file) == null)) {
         setErrorMessage("File to patch found outside content root: " + name);
@@ -586,5 +588,9 @@ public class PathsVerifier<BinaryType extends FilePatch> {
     public Collection<FilePath> getAlreadyDeletedPaths() {
       return mySkipDeleted.keySet();
     }
+  }
+
+  public void setIgnoreContentRootsCheck(boolean ignoreContentRootsCheck) {
+    myIgnoreContentRootsCheck = ignoreContentRootsCheck;
   }
 }

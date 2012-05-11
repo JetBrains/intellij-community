@@ -363,6 +363,7 @@ public class JavacCompiler extends ExternalCompiler {
 
     LanguageLevel languageLevel = chunk.getLanguageLevel();
     CompilerUtil.addSourceCommandLineSwitch(jdk, languageLevel, commandLine);
+    CompilerUtil.addTargetCommandLineSwitch(chunk, commandLine);
 
     commandLine.add("-verbose");
 

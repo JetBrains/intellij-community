@@ -69,6 +69,10 @@ public class GenericDetailsLoader<Id, Data> implements Details<Id,Data>, Disposa
     myValueConsumer.consume(id, data);
   }
 
+  public void resetValueConsumer() {
+    myValueConsumer.reset();
+  }
+
   @CalledInAny
   @Override
   public Id getCurrentlySelected() {

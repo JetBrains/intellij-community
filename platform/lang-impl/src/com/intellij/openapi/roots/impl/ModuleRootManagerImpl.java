@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -218,7 +218,7 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
   }
 
 
-  static void multiCommit(ModifiableRootModel[] rootModels,
+  public static void multiCommit(ModifiableRootModel[] rootModels,
                           ModifiableModuleModel moduleModel) {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
 
@@ -393,11 +393,9 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
   }
 
   public void projectOpened() {
-    myRootModel.projectOpened();
   }
 
   public void projectClosed() {
-    myRootModel.projectClosed();
   }
 
   public void moduleAdded() {

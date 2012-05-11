@@ -113,11 +113,12 @@ public class TableView<Item> extends BaseTableView implements ItemsProvider, Sel
         column.setPreferredWidth(width);
         column.setMinWidth(width);
       }
-      else if ((maxStringValue = columnInfo.getMaxStringValue()) != null) {
+      else if ((maxStringValue = columnInfo.getMaxStringValue(this)) != null) {
         int width = getFontMetrics(getFont()).stringWidth(maxStringValue) + columnInfo.getAdditionalWidth();
         width = Math.max(width, headerSize.width);
         column.setPreferredWidth(width);
         column.setMaxWidth(width);
+        column.setMinWidth(width);
       }
       else if ((preferredValue = columnInfo.getPreferredStringValue()) != null) {
         int width = getFontMetrics(getFont()).stringWidth(preferredValue) + columnInfo.getAdditionalWidth();

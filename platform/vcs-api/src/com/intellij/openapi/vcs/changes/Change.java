@@ -95,6 +95,10 @@ public class Change {
     return myOtherLayers;
   }
 
+  public boolean isTreeConflict() {
+    return false;
+  }
+
   public boolean hasOtherLayers() {
     return ! myOtherLayers.isEmpty();
   }

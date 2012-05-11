@@ -73,6 +73,8 @@ public class DualView extends JPanel {
   private final Storage.PropertiesComponentStorage myTreeStorage;
   private final PropertyChangeListener myPropertyChangeListener;
 
+  private boolean myZipByHeight;
+
   public DualView(Object root, DualViewColumnInfo[] columns, @NonNls String columnServiceKey, Project project) {
     super(new CardLayout());
 
@@ -483,5 +485,23 @@ public class DualView extends JPanel {
       myCellWrapper.wrap(result, table, value, isSelected, hasFocus, row, column, treeNode);
       return result;
     }
+  }
+
+  @Override
+  public Dimension getPreferredSize() {
+    final Dimension was = super.getPreferredSize();
+    if (! myZipByHeight) return was;
+    final int tableHeight = myFlatView.getTableHeader().getHeight() + myFlatView.getTableViewModel().getRowCount() *
+                                                                 myFlatView.getRowHeight();
+    return new Dimension(was.width, tableHeight);
+  }
+
+  @Override
+  public Dimension getMinimumSize() {
+    return myZipByHeight ? getPreferredSize() : super.getMinimumSize();
+  }
+
+  public void setZipByHeight(boolean zipByHeight) {
+    myZipByHeight = zipByHeight;
   }
 }

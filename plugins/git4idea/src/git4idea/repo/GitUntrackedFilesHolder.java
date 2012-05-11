@@ -31,10 +31,7 @@ import git4idea.commands.Git;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * <p>
@@ -159,7 +156,7 @@ public class GitUntrackedFilesHolder implements Disposable, BulkFileListener {
       rescanAll();
     }
     synchronized (myDefinitelyUntrackedFiles) {
-      return myDefinitelyUntrackedFiles;
+      return new ArrayList<VirtualFile>(myDefinitelyUntrackedFiles);
     }
   }
 

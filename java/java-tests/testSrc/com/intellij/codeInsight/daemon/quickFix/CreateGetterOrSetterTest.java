@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,15 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.vfs.pointers;
+package com.intellij.codeInsight.daemon.quickFix;
 
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspection;
 
 /**
- * @author dsl
+ * @author Danila Ponomarenko
  */
-public interface VirtualFilePointerFactory {
-  VirtualFilePointer create(VirtualFile file);
-  VirtualFilePointer create(String url);
-  VirtualFilePointer duplicate(VirtualFilePointer virtualFilePointer);
+public class CreateGetterOrSetterTest extends LightQuickFixTestCase {
+  public void test() throws Exception {
+    enableInspectionTool(new UnusedSymbolLocalInspection());
+    doAllTests();
+  }
+
+
+  @Override
+  protected String getBasePath() {
+    return "/codeInsight/daemonCodeAnalyzer/quickFix/createGetterOrSetter";
+  }
 }

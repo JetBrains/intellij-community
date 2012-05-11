@@ -22,7 +22,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.util.PathUtil;
@@ -32,7 +31,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.PrintStream;
 import java.io.PrintWriter;
 
-public class VirtualFilePointerImpl extends UserDataHolderBase implements VirtualFilePointer, Disposable {
+public class VirtualFilePointerImpl extends UserDataHolderBase implements VirtualFilePointerEx, Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.impl.VirtualFilePointerImpl");
 
   private volatile Pair<VirtualFile, String> myFileAndUrl; // must not be both null
@@ -163,7 +162,7 @@ public class VirtualFilePointerImpl extends UserDataHolderBase implements Virtua
   }
 
   @Nullable
-  Pair<VirtualFile, String> update() {
+  public Pair<VirtualFile, String> update() {
     if (disposed) return null;
 
     long lastUpdated = myLastUpdated;

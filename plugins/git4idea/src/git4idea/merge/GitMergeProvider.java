@@ -40,6 +40,7 @@ import git4idea.i18n.GitBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
@@ -420,7 +421,7 @@ public class GitMergeProvider implements MergeProvider2 {
       }
 
       @Override
-      public String getMaxStringValue() {
+      public String getMaxStringValue(JTable table) {
         return GitBundle.message("merge.tool.column.status.modified");
       }
 

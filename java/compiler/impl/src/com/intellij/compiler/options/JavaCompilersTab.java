@@ -45,6 +45,7 @@ public class JavaCompilersTab implements SearchableConfigurable, Configurable.No
   private JPanel myPanel;
   private JPanel myContentPanel;
   private JComboBox myCompiler;
+  private JPanel myTargetOptionsPanel;
   private final CardLayout myCardLayout;
 
   private final Project myProject;
@@ -52,6 +53,7 @@ public class JavaCompilersTab implements SearchableConfigurable, Configurable.No
   private BackendCompiler mySelectedCompiler;
   private final CompilerConfigurationImpl myCompilerConfiguration;
   private final Collection<Configurable> myConfigurables;
+  private final TargetOptionsComponent myTargetLevelComponent;
 
   public JavaCompilersTab(final Project project, Collection<BackendCompiler> compilers, BackendCompiler defaultCompiler) {
     myProject = project;
@@ -61,6 +63,10 @@ public class JavaCompilersTab implements SearchableConfigurable, Configurable.No
 
     myCardLayout = new CardLayout();
     myContentPanel.setLayout(myCardLayout);
+
+    myTargetOptionsPanel.setLayout(new BorderLayout());
+    myTargetLevelComponent = new TargetOptionsComponent(project);
+    myTargetOptionsPanel.add(myTargetLevelComponent, BorderLayout.CENTER);
 
     for (BackendCompiler compiler : compilers) {
       Configurable configurable = compiler.createConfigurable();
@@ -118,6 +124,12 @@ public class JavaCompilersTab implements SearchableConfigurable, Configurable.No
         return true;
       }
     }
+    if (!Comparing.equal(myTargetLevelComponent.getProjectBytecodeTarget(), myCompilerConfiguration.getProjectBytecodeTarget())) {
+      return true;
+    }
+    if (!Comparing.equal(myTargetLevelComponent.getModulesBytecodeTargetMap(), myCompilerConfiguration.getModulesBytecodeTargetMap())) {
+      return true;
+    }
     return false;
   }
 
@@ -126,6 +138,12 @@ public class JavaCompilersTab implements SearchableConfigurable, Configurable.No
       configurable.apply();
     }
     myCompilerConfiguration.setDefaultCompiler(mySelectedCompiler);
+    myCompilerConfiguration.setProjectBytecodeTarget(myTargetLevelComponent.getProjectBytecodeTarget());
+    myCompilerConfiguration.setModulesBytecodeTargetMap(myTargetLevelComponent.getModulesBytecodeTargetMap());
+
+    myTargetLevelComponent.setProjectBytecodeTargetLevel(myCompilerConfiguration.getProjectBytecodeTarget());
+    myTargetLevelComponent.setModuleTargetLevels(myCompilerConfiguration.getModulesBytecodeTargetMap());
+
     SwingUtilities.invokeLater(new Runnable() {
       public void run() {
         CompileServerManager.getInstance().sendReloadRequest(myProject);
@@ -139,6 +157,8 @@ public class JavaCompilersTab implements SearchableConfigurable, Configurable.No
       configurable.reset();
     }
     selectCompiler(myCompilerConfiguration.getDefaultCompiler());
+    myTargetLevelComponent.setProjectBytecodeTargetLevel(myCompilerConfiguration.getProjectBytecodeTarget());
+    myTargetLevelComponent.setModuleTargetLevels(myCompilerConfiguration.getModulesBytecodeTargetMap());
   }
 
   public void disposeUIResources() {

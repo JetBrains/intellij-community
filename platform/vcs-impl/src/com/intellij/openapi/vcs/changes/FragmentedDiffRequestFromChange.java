@@ -59,7 +59,7 @@ public class FragmentedDiffRequestFromChange {
   }
 
   public static boolean canCreateRequest(Change change) {
-    if (ChangesUtil.isTextConflictingChange(change)) return false;
+    if (ChangesUtil.isTextConflictingChange(change) || change.isTreeConflict()) return false;
     if (ShowDiffAction.isBinaryChange(change)) return false;
     final FilePath filePath = ChangesUtil.getFilePath(change);
     if (filePath.isDirectory()) return false;
@@ -117,7 +117,8 @@ public class FragmentedDiffRequestFromChange {
             myOldDocument = documentFromRevision(change.getBeforeRevision());
             final String convertedPath = FilePathsHelper.convertPath(filePath);
             if (filePath.getVirtualFile() != null) {
-              myDocument = FileDocumentManager.getInstance().getDocument(filePath.getVirtualFile());
+              myDocument = FileStatus.DELETED.equals(change.getFileStatus()) ? new DocumentImpl("") :
+                           FileDocumentManager.getInstance().getDocument(filePath.getVirtualFile());
               if (myDocument != null) {
                 final List<BeforeAfter<TextRange>> cached = cache.get(new Pair<Long, String>(myDocument.getModificationStamp(), convertedPath));
                 if (cached != null) {

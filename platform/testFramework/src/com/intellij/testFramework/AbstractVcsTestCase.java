@@ -39,6 +39,9 @@ import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
 import com.intellij.testFramework.fixtures.TestFixtureBuilder;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.Processor;
+import com.intellij.util.containers.Convertor;
+import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
 
@@ -62,57 +65,8 @@ public abstract class AbstractVcsTestCase {
   protected IdeaProjectTestFixture myProjectFixture;
   protected boolean myInitChangeListManager = true;
 
-  protected ProcessOutput runClient(String exeName, @Nullable String stdin, @Nullable final File workingDir, String[] commandLine) throws IOException {
-    final List<String> arguments = new ArrayList<String>();
-    final File client = new File(myClientBinaryPath, SystemInfo.isWindows ? exeName + ".exe" : exeName);
-    if (client.exists()) {
-      arguments.add(client.toString());
-    }
-    else {
-      // assume client is in path
-      arguments.add(exeName);
-    }
-    Collections.addAll(arguments, commandLine);
-    if (myTraceClient) {
-      System.out.println("*** running:\n" + arguments);
-      if (StringUtil.isNotEmpty(stdin)) {
-        System.out.println("*** stdin:\n" + stdin);
-      }
-    }
-    final ProcessBuilder builder = new ProcessBuilder().command(arguments);
-    if (workingDir != null) {
-      builder.directory(workingDir);
-    }
-    Process clientProcess = builder.start();
-
-    if (stdin != null) {
-      OutputStream outputStream = clientProcess.getOutputStream();
-      try {
-        byte[] bytes = stdin.getBytes();
-        outputStream.write(bytes);
-      }
-      finally {
-        outputStream.close();
-      }
-    }
-
-    CapturingProcessHandler handler = new CapturingProcessHandler(clientProcess, CharsetToolkit.getDefaultSystemCharset());
-    ProcessOutput result = handler.runProcess(60*1000);
-    if (myTraceClient || result.isTimeout()) {
-      System.out.println("*** result: " + result.getExitCode());
-      final String out = result.getStdout().trim();
-      if (out.length() > 0) {
-        System.out.println("*** output:\n" + out);
-      }
-      final String err = result.getStderr().trim();
-      if (err.length() > 0) {
-        System.out.println("*** error:\n" + err);
-      }
-    }
-    if (result.isTimeout()) {
-      throw new RuntimeException("Timeout waiting for VCS client to finish execution");
-    }
-    return result;
+  protected TestClientRunner createClientRunner() {
+    return new TestClientRunner(myTraceClient, myClientBinaryPath);
   }
 
   public void setVcsMappings(VcsDirectoryMapping... mappings) {
@@ -219,6 +173,25 @@ public abstract class AbstractVcsTestCase {
       }
     }.execute();
     return result.get();
+  }
+
+  protected void clearDirInCommand(final VirtualFile dir, final Processor<VirtualFile> filter) {
+    new WriteCommandAction.Simple(myProject) {
+      @Override
+      protected void run() throws Throwable {
+        try {
+          final VirtualFile[] children = dir.getChildren();
+          for (VirtualFile child : children) {
+            if (filter != null && filter.process(child)) {
+              child.delete(null);
+            }
+          }
+        }
+        catch (IOException e) {
+          throw new RuntimeException(e);
+        }
+      }
+    }.execute();
   }
 
   protected void tearDownProject() throws Exception {

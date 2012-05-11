@@ -19,11 +19,16 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ContentRevision;
+import org.tmatesoft.svn.core.internal.wc.SVNTreeConflictUtil;
+import org.tmatesoft.svn.core.wc.SVNTreeConflictDescription;
 
 import javax.swing.*;
 
 public class ConflictedSvnChange extends Change {
   private final ConflictState myConflictState;
+  // also used if not move/rename
+  private SVNTreeConflictDescription myBeforeDescription;
+  private SVNTreeConflictDescription myAfterDescription;
   // +-
   private final FilePath myTreeConflictMarkHolder;
 
@@ -35,7 +40,8 @@ public class ConflictedSvnChange extends Change {
   }
 
   public ConflictedSvnChange(ContentRevision beforeRevision, ContentRevision afterRevision, FileStatus fileStatus,
-                             final ConflictState conflictState, final FilePath treeConflictMarkHolder) {
+                             final ConflictState conflictState,
+                             final FilePath treeConflictMarkHolder) {
     super(beforeRevision, afterRevision, fileStatus);
     myConflictState = conflictState;
     myTreeConflictMarkHolder = treeConflictMarkHolder;
@@ -43,6 +49,27 @@ public class ConflictedSvnChange extends Change {
 
   public ConflictState getConflictState() {
     return myConflictState;
+  }
+
+  @Override
+  public boolean isTreeConflict() {
+    return myConflictState.isTree();
+  }
+
+  public SVNTreeConflictDescription getBeforeDescription() {
+    return myBeforeDescription;
+  }
+
+  public void setBeforeDescription(SVNTreeConflictDescription beforeDescription) {
+    myBeforeDescription = beforeDescription;
+  }
+
+  public SVNTreeConflictDescription getAfterDescription() {
+    return myAfterDescription;
+  }
+
+  public void setAfterDescription(SVNTreeConflictDescription afterDescription) {
+    myAfterDescription = afterDescription;
   }
 
   @Override
@@ -54,7 +81,22 @@ public class ConflictedSvnChange extends Change {
   public String getDescription() {
     final String description = myConflictState.getDescription();
     if (description != null) {
-      return SvnBundle.message("svn.changeview.item.in.conflict.text", description);
+      final StringBuilder sb = new StringBuilder(SvnBundle.message("svn.changeview.item.in.conflict.text", description));
+      if (myBeforeDescription != null) {
+        sb.append('\n');
+        if (myAfterDescription != null) {
+          sb.append("before: ");
+        }
+        sb.append(SVNTreeConflictUtil.getHumanReadableConflictDescription(myBeforeDescription));
+      }
+      if (myAfterDescription != null) {
+        sb.append('\n');
+        if (myBeforeDescription != null) {
+          sb.append("after: ");
+        }
+        sb.append(SVNTreeConflictUtil.getHumanReadableConflictDescription(myAfterDescription));
+      }
+      return sb.toString();
     }
     return description;
   }

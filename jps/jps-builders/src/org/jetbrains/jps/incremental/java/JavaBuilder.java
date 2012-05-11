@@ -591,13 +591,43 @@ public class JavaBuilder extends ModuleLevelBuilder {
       cached = JAVAC_OPTIONS.get(context);
     }
     final List<String> options = new ArrayList<String>(cached);
-    final Module module = chunk.getModules().iterator().next();
-    final String langlevel = module.getLanguageLevel();
+    final String langlevel = chunk.getModules().iterator().next().getLanguageLevel();
     if (!StringUtil.isEmpty(langlevel)) {
       options.add("-source");
       options.add(langlevel);
     }
+
+    final BytecodeTargetConfiguration targetConfig = context.getProject().getCompilerConfiguration().getBytecodeTarget();
+    String bytecodeTarget = null;
+    for (Module module : chunk.getModules()) {
+      final String moduleTarget = getModuleTarget(targetConfig, module);
+      if (moduleTarget == null) {
+        continue;
+      }
+      if (bytecodeTarget == null) {
+        bytecodeTarget = moduleTarget;
+      }
+      else {
+        if (moduleTarget.compareTo(bytecodeTarget) < 0) {
+          bytecodeTarget = moduleTarget; // use the lower possible target among modules that form the chunk
+        }
+      }
+    }
+    if (bytecodeTarget != null) {
+      options.add("-target");
+      options.add(bytecodeTarget);
+    }
+
     return options;
+  }
+
+  @Nullable
+  private static String getModuleTarget(BytecodeTargetConfiguration config, Module module) {
+    final String level = config.getModulesBytecodeTarget().get(module.getName());
+    if (level != null) {
+      return level.isEmpty()? null : level;
+    }
+    return config.getProjectBytecodeTarget();
   }
 
   private static void loadJavacOptions(CompileContext context) {

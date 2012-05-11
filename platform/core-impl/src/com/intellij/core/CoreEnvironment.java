@@ -39,10 +39,12 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.openapi.vfs.encoding.EncodingRegistry;
+import com.intellij.openapi.vfs.impl.CoreVirtualFilePointerManager;
 import com.intellij.openapi.vfs.impl.VirtualFileManagerImpl;
 import com.intellij.openapi.vfs.impl.jar.CoreJarFileSystem;
 import com.intellij.openapi.vfs.local.CoreLocalFileSystem;
 import com.intellij.openapi.vfs.newvfs.FileSystemPersistence;
+import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiReferenceService;
@@ -120,6 +122,7 @@ public class CoreEnvironment {
                                                          }
                               )
     );
+    registerComponentInstance(appContainer, VirtualFilePointerManager.class, new CoreVirtualFilePointerManager());
 
     myApplication.registerService(DefaultASTFactory.class, new CoreASTFactory());
     myApplication.registerService(PsiBuilderFactory.class, new PsiBuilderFactoryImpl());

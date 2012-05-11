@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,11 +20,12 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Trinity;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerContainer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
+import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
@@ -44,7 +45,7 @@ public class VirtualFilePointerContainerImpl implements VirtualFilePointerContai
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.pointers.VirtualFilePointerContainer");
   @NotNull private final List<VirtualFilePointer> myList = ContainerUtilRt.createEmptyCOWList();
   private final List<VirtualFilePointer> myReadOnlyList = Collections.unmodifiableList(myList);
-  @NotNull private final VirtualFilePointerManagerImpl myVirtualFilePointerManager;
+  @NotNull private final VirtualFilePointerManager myVirtualFilePointerManager;
   @NotNull private final Disposable myParent;
   private final VirtualFilePointerListener myListener;
   private VirtualFile[] myCachedDirectories;
@@ -54,7 +55,7 @@ public class VirtualFilePointerContainerImpl implements VirtualFilePointerContai
   @NonNls private static final String URL_ATTR = "url";
   private boolean myDisposed;
 
-  public VirtualFilePointerContainerImpl(@NotNull VirtualFilePointerManagerImpl manager, @NotNull Disposable parent, @Nullable VirtualFilePointerListener listener) {
+  public VirtualFilePointerContainerImpl(@NotNull VirtualFilePointerManager manager, @NotNull Disposable parent, @Nullable VirtualFilePointerListener listener) {
     myVirtualFilePointerManager = manager;
     myParent = parent;
     myListener = listener;
@@ -181,14 +182,15 @@ public class VirtualFilePointerContainerImpl implements VirtualFilePointerContai
       myCachedUrls = ArrayUtil.EMPTY_STRING_ARRAY;
       return EMPTY;
     }
-    Object[] vf = myList.toArray();
+    VirtualFilePointer[] vf = myList.toArray(new VirtualFilePointer[myList.size()]);
     List<VirtualFile> cachedFiles = new ArrayList<VirtualFile>(vf.length);
     List<String> cachedUrls = new ArrayList<String>(vf.length);
     List<VirtualFile> cachedDirectories = new ArrayList<VirtualFile>(vf.length/3);
 
-    for (Object v : vf) {
-      Pair<VirtualFile, String> pair = v instanceof VirtualFilePointerImpl ? ((VirtualFilePointerImpl)v).update() : Pair.create(
-        ((VirtualFilePointer)v).getFile(), ((VirtualFilePointer)v).getUrl());
+    for (VirtualFilePointer v : vf) {
+      Pair<VirtualFile, String> pair = v instanceof VirtualFilePointerEx
+                                       ? ((VirtualFilePointerEx)v).update()
+                                       : Pair.create(v.getFile(), v.getUrl());
       if (pair == null) continue;
       VirtualFile file = pair.first;
       String url = pair.second;
@@ -201,10 +203,10 @@ public class VirtualFilePointerContainerImpl implements VirtualFilePointerContai
         }
       }
     }
-    VirtualFile[] directories = VfsUtil.toVirtualFileArray(cachedDirectories);
+    VirtualFile[] directories = VfsUtilCore.toVirtualFileArray(cachedDirectories);
     myCachedDirectories = directories;
     VirtualFile[] filesArray;
-    myCachedFiles = filesArray = VfsUtil.toVirtualFileArray(cachedFiles);
+    myCachedFiles = filesArray = VfsUtilCore.toVirtualFileArray(cachedFiles);
     String[] urlsArray;
     myCachedUrls = urlsArray = ArrayUtil.toStringArray(cachedUrls);
     return Trinity.create(urlsArray, filesArray, directories);
@@ -257,11 +259,6 @@ public class VirtualFilePointerContainerImpl implements VirtualFilePointerContai
   @Override
   public int size() {
     return myList.size();
-  }
-
-  @Override
-  public Object get(int index) {
-    return myList.get(index);
   }
 
   public boolean equals(Object o) {

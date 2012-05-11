@@ -2577,6 +2577,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         BorderEffect.paintFoldedEffect(g, foldingXStart, position.y, foldingXEnd, getLineHeight(), effectColor, effectType);
   //      myBorderEffect.collapsedFolderReached(g, this);
       }
+
+      final SoftWrap softWrap = mySoftWrapModel.getSoftWrap(clipEndOffset);
+      if (softWrap != null) {
+        mySoftWrapModel.paint(g, SoftWrapDrawingType.BEFORE_SOFT_WRAP_LINE_FEED, position.x, position.y, getLineHeight());
+      }
     }
     finally {
       iterationState.dispose();
@@ -2592,7 +2597,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
 
     if (KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner() == myEditorComponent) {
-      // There is a possible case that placeholder text was painted and the editor gets focus now. We want to over-paint previuosly
+      // There is a possible case that placeholder text was painted and the editor gets focus now. We want to over-paint previously
       // used placeholder text then.
       myLastBackgroundColor = getBackgroundColor();
       myLastBackgroundPosition = new Point(0, 0);

@@ -31,26 +31,40 @@ import java.awt.*;
 public abstract class PanelWithActionsAndCloseButton extends JPanel implements DataProvider {
   protected final ContentManager myContentManager;
   private final String myHelpId;
+  private final boolean myVerticalToolbar;
+  private boolean myCloseEnabled;
   private final DefaultActionGroup myToolbarGroup = new DefaultActionGroup(null, false);
 
-  public PanelWithActionsAndCloseButton(@NotNull ContentManager contentManager, @NonNls String helpId) {
+  public PanelWithActionsAndCloseButton(ContentManager contentManager, @NonNls String helpId) {
+    this(contentManager, helpId, true);
+  }
+
+  public PanelWithActionsAndCloseButton(ContentManager contentManager, @NonNls String helpId, final boolean verticalToolbar) {
     super(new BorderLayout());
     myContentManager = contentManager;
     myHelpId = helpId;
+    myVerticalToolbar = verticalToolbar;
+    myCloseEnabled = true;
 
-    myContentManager.addContentManagerListener(new ContentManagerAdapter(){
-      public void contentRemoved(ContentManagerEvent event) {
-        if (event.getContent().getComponent() == PanelWithActionsAndCloseButton.this) {
-          dispose();
-          myContentManager.removeContentManagerListener(this);
+    if (myContentManager != null) {
+      myContentManager.addContentManagerListener(new ContentManagerAdapter(){
+        public void contentRemoved(ContentManagerEvent event) {
+          if (event.getContent().getComponent() == PanelWithActionsAndCloseButton.this) {
+            dispose();
+            myContentManager.removeContentManagerListener(this);
+          }
         }
-      }
-    });
+      });
+    }
 
   }
 
   public String getHelpId() {
     return myHelpId;
+  }
+
+  protected void disableClose() {
+    myCloseEnabled = false;
   }
 
   protected void init(){
@@ -59,12 +73,16 @@ public abstract class PanelWithActionsAndCloseButton extends JPanel implements D
     myToolbarGroup.add(ActionManager.getInstance().getAction(IdeActions.ACTION_CONTEXT_HELP));
 
 
-    ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.FILEHISTORY_VIEW_TOOLBAR, myToolbarGroup, false);
+    ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.FILEHISTORY_VIEW_TOOLBAR, myToolbarGroup, ! myVerticalToolbar);
     JComponent centerPanel = createCenterPanel();
     toolbar.setTargetComponent(centerPanel);
 
-    add(toolbar.getComponent(), BorderLayout.WEST);
     add(centerPanel, BorderLayout.CENTER);
+    if (myVerticalToolbar) {
+      add(toolbar.getComponent(), BorderLayout.WEST);
+    } else {
+      add(toolbar.getComponent(), BorderLayout.NORTH);
+    }
   }
 
   public Object getData(String dataId) {
@@ -81,11 +99,18 @@ public abstract class PanelWithActionsAndCloseButton extends JPanel implements D
   protected void dispose() {}
 
   private class MyCloseAction extends CloseTabToolbarAction {
+    @Override
+    public void update(AnActionEvent e) {
+      super.update(e);
+      e.getPresentation().setVisible(myCloseEnabled);
+    }
 
     public void actionPerformed(AnActionEvent e) {
-      Content content = myContentManager.getContent(PanelWithActionsAndCloseButton.this);
-      if (content != null) {
-        myContentManager.removeContent(content, true);
+      if (myContentManager != null) {
+        Content content = myContentManager.getContent(PanelWithActionsAndCloseButton.this);
+        if (content != null) {
+          myContentManager.removeContent(content, true);
+        }
       }
     }
   }

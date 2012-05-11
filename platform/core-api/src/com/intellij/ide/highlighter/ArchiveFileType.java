@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,13 +18,22 @@ package com.intellij.ide.highlighter;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
 public class ArchiveFileType implements FileType {
-  private static final Icon ICON = IconLoader.getIcon("/fileTypes/archive.png");
+  private static final NotNullLazyValue<Icon> ICON = new NotNullLazyValue<Icon>() {
+      @NotNull
+      @Override
+      protected Icon compute() {
+        return IconLoader.getIcon("/fileTypes/archive.png");
+      }
+    };
+
+  public static final ArchiveFileType INSTANCE = new ArchiveFileType();
 
   @NotNull
   public String getName() {
@@ -42,7 +51,7 @@ public class ArchiveFileType implements FileType {
   }
 
   public Icon getIcon() {
-    return ICON;
+    return ICON.getValue();
   }
 
   public boolean isBinary() {

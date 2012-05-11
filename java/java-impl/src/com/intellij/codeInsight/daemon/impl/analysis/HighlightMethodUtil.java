@@ -498,6 +498,7 @@ public class HighlightMethodUtil {
     AddTypeArgumentsFix.REGISTRAR.registerCastActions(methodCandidates, methodCall, highlightInfo, fixRange);
     registerMethodAccessLevelIntentions(methodCandidates, methodCall, list, highlightInfo);
     ChangeMethodSignatureFromUsageFix.registerIntentions(methodCandidates, list, highlightInfo, fixRange);
+    RemoveRedundantArgumentsFix.registerIntentions(methodCandidates, list, highlightInfo, fixRange);
     ConvertDoubleToFloatFix.registerIntentions(methodCandidates, list, highlightInfo, fixRange);
     WrapExpressionFix.registerWrapAction(methodCandidates, list.getExpressions(), highlightInfo);
     ChangeParameterClassFix.registerQuickFixActions(methodCall, list, highlightInfo);

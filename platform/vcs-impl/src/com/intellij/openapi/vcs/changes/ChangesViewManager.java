@@ -25,6 +25,7 @@ package com.intellij.openapi.vcs.changes;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.TreeExpander;
 import com.intellij.ide.actions.ContextHelpAction;
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.lifecycle.PeriodicalTasksCloser;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -37,6 +38,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.actions.IgnoredSettingsAction;
 import com.intellij.openapi.vcs.changes.ui.ChangesListView;
@@ -102,6 +104,7 @@ public class ChangesViewManager implements ChangesViewI, JDOMExternalizable, Pro
   private final FileAndDocumentListenersForShortDiff myListenersForShortDiff;
   private Content myContent;
   private Change[] mySelectedChanges;
+  private static final String DETAILS_SPLITTER_PROPORTION = "ChangesViewManager.DETAILS_SPLITTER_PROPORTION";
 
   public static ChangesViewI getInstance(Project project) {
     return PeriodicalTasksCloser.getInstance().safeGetComponent(project, ChangesViewI.class);
@@ -212,6 +215,10 @@ public class ChangesViewManager implements ChangesViewI, JDOMExternalizable, Pro
         }, ModalityState.NON_MODAL, myProject.getDisposed());
       }
     });
+    // not sure we should turn it on on start (and pre-select smthg - rather heavy actions..)
+    /*if (VcsConfiguration.getInstance(myProject).CHANGE_DETAILS_ON) {
+      myToggleDetailsAction.actionPerformed(null);
+    }*/
   }
 
   public void projectClosed() {
@@ -279,7 +286,16 @@ public class ChangesViewManager implements ChangesViewI, JDOMExternalizable, Pro
     panel.setToolbar(toolbarPanel);
 
     final JPanel content = new JPanel(new BorderLayout());
-    mySplitter = new Splitter(false, 0.5f);
+    String value = PropertiesComponent.getInstance().getValue(DETAILS_SPLITTER_PROPORTION);
+    float f = 0.5f;
+    if (! StringUtil.isEmptyOrSpaces(value)) {
+      try {
+        f = Float.parseFloat(value);
+      } catch (NumberFormatException e) {
+        //
+      }
+    }
+    mySplitter = new Splitter(false, f);
     mySplitter.setHonorComponentsMinimumSize(false);
     final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myView);
     final JPanel wrapper = new JPanel(new BorderLayout());
@@ -539,6 +555,7 @@ public class ChangesViewManager implements ChangesViewI, JDOMExternalizable, Pro
 
   @Override
   public void disposeComponent() {
+    PropertiesComponent.getInstance().setValue(DETAILS_SPLITTER_PROPORTION, String.valueOf(mySplitter.getProportion()));
   }
 
   @Override
@@ -563,6 +580,8 @@ public class ChangesViewManager implements ChangesViewI, JDOMExternalizable, Pro
         myListenersForShortDiff.on();
       }
       myDetailsOn = ! myDetailsOn;
+      // not sure we should turn it on on start (and pre-select smthg - rather heavy actions..)
+//      VcsConfiguration.getInstance(myProject).CHANGE_DETAILS_ON = myDetailsOn;
       changeDetails();
     }
   }

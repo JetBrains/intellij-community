@@ -91,6 +91,10 @@ public class PatchApplier<BinaryType extends FilePatch> {
     });
   }
 
+  public void setIgnoreContentRootsCheck() {
+    myVerifier.setIgnoreContentRootsCheck(true);
+  }
+
   public PatchApplier(final Project project, final VirtualFile baseDirectory, final List<FilePatch> patches,
                         final LocalChangeList targetChangeList, final CustomBinaryPatchApplier<BinaryType> customForBinaries,
                         final CommitContext commitContext) {

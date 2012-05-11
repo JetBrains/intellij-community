@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.impl.ModuleRootManagerImpl;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
@@ -118,9 +119,10 @@ public class PsiPackageImplementationHelperImpl extends PsiPackageImplementation
     }
 
     if (!modelsToCommit.isEmpty()) {
-      ProjectRootManager.getInstance(psiPackage.getProject()).multiCommit(
-        modelsToCommit.toArray(new ModifiableRootModel[modelsToCommit.size()])
-      );
+      ModifiableRootModel[] rootModels = modelsToCommit.toArray(new ModifiableRootModel[modelsToCommit.size()]);
+      if (rootModels.length > 0) {
+        ModuleRootManagerImpl.multiCommit(rootModels, ModuleManager.getInstance(rootModels[0].getProject()).getModifiableModel());
+      }
       return true;
     } else {
       return false;

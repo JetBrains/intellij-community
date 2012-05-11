@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,14 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.vfs.pointers;
+package com.intellij.openapi.vfs.impl;
 
-import com.intellij.util.messages.Topic;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 
-public interface VirtualFilePointerListener {
-  Topic<VirtualFilePointerListener> TOPIC = Topic.create("VirtualFilePointer", VirtualFilePointerListener.class);
-
-  void beforeValidityChanged(@NotNull VirtualFilePointer[] pointers);
-  void validityChanged(@NotNull VirtualFilePointer[] pointers);
+/**
+ * @author yole
+ */
+public interface VirtualFilePointerEx extends VirtualFilePointer {
+  Pair<VirtualFile, String> update();
 }

@@ -29,7 +29,9 @@ import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.RunnerLayoutUi;
+import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationGroup;
+import com.intellij.notification.NotificationListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.Result;
@@ -62,6 +64,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.HyperlinkEvent;
+import javax.swing.event.HyperlinkListener;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -705,7 +709,18 @@ public class XDebugSessionImpl implements XDebugSession {
 
   @Override
   public void reportMessage(@NotNull final String message, @NotNull final MessageType type) {
-    NOTIFICATION_GROUP.createNotification(message, type).notify(myProject);
+    reportMessage(message, type, null);
+  }
+
+  @Override
+  public void reportMessage(@NotNull final String message, @NotNull final MessageType type, @Nullable final HyperlinkListener listener) {
+    NotificationListener notificationListener = listener == null ? null : new NotificationListener() {
+      @Override
+      public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
+        listener.hyperlinkUpdate(event);
+      }
+    };
+    NOTIFICATION_GROUP.createNotification("", message, type.toNotificationType(), notificationListener).notify(myProject);
   }
 
   private class MyBreakpointListener implements XBreakpointListener<XBreakpoint<?>> {

@@ -72,10 +72,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
-import javax.swing.table.DefaultTableCellRenderer;
-import javax.swing.table.TableCellEditor;
-import javax.swing.table.TableCellRenderer;
-import javax.swing.table.TableModel;
+import javax.swing.table.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeCellRenderer;
 import javax.swing.tree.TreePath;
@@ -109,7 +106,8 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
   private final AnnotationProvider myAnnotationProvider;
   private VcsHistorySession myHistorySession;
   private final FilePath myFilePath;
-  private final FileHistoryRefresher myRefresher;
+  private final FileHistoryRefresherI myRefresherI;
+  private VcsFileRevision myBottomRevisionForShowDiff;
   private final DualView myDualView;
 
   private final Alarm myUpdateAlarm;
@@ -122,6 +120,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
   @NonNls private static final String VCS_HISTORY_ACTIONS_GROUP = "VcsHistoryActionsGroup";
 
   private final Map<VcsRevisionNumber, Integer> myRevisionsOrder;
+  private boolean myIsStaticAndEmbedded;
 
   private final Comparator<VcsFileRevision> myRevisionsInOrderComparator = new Comparator<VcsFileRevision>() {
     @Override
@@ -151,6 +150,11 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
       public String getPreferredStringValue() {
         return "123.4567";
       }
+
+      @Override
+      public String getMaxStringValue(JTable table) {
+        return getMaxValue(getName(), table);
+      }
     };
 
   private static final DualViewColumnInfo DATE = new VcsColumnInfo<String>(VcsBundle.message("column.name.revision.date")) {
@@ -167,6 +171,11 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
     @Override
     public String getPreferredStringValue() {
       return DateFormatUtil.formatPrettyDateTime(Clock.getTime());
+    }
+
+    @Override
+    public String getMaxStringValue(JTable table) {
+      return getMaxValue(getName(), table);
     }
   };
   private final Splitter myDetailsSplitter = new Splitter(false, 0.5f);
@@ -254,6 +263,11 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
     public String getPreferredStringValue() {
       return "author_author";
     }
+
+    @Override
+    public String getMaxStringValue(JTable table) {
+      return getMaxValue(getName(), table);
+    }
   };
 
   private Splitter mySplitter;
@@ -325,6 +339,11 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
     public TableCellRenderer getRenderer(VcsFileRevision p0) {
       return myRenderer;
     }
+
+    @Override
+    public String getMaxStringValue(JTable table) {
+      return getMaxValue(getName(), table);
+    }
   }
 
   private final Map<VcsFileRevision, VirtualFile> myRevisionToVirtualFile = new HashMap<VcsFileRevision, VirtualFile>();
@@ -332,12 +351,20 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
   public FileHistoryPanelImpl(AbstractVcs vcs,
                               FilePath filePath, VcsHistorySession session,
                               VcsHistoryProvider provider,
-                              ContentManager contentManager, final FileHistoryRefresher refresher) {
-    super(contentManager, provider.getHelpId() != null ? provider.getHelpId() : "reference.versionControl.toolwindow.history");
+                              ContentManager contentManager, final FileHistoryRefresherI refresherI) {
+    this(vcs, filePath, session, provider, contentManager, refresherI, false);
+  }
+
+  public FileHistoryPanelImpl(AbstractVcs vcs,
+                              FilePath filePath, VcsHistorySession session,
+                              VcsHistoryProvider provider,
+                              ContentManager contentManager, final FileHistoryRefresherI refresherI, final boolean isStaticEmbedded) {
+    super(contentManager, provider.getHelpId() != null ? provider.getHelpId() : "reference.versionControl.toolwindow.history", ! isStaticEmbedded);
+    myIsStaticAndEmbedded = false;
     myVcs = vcs;
     myProvider = provider;
     myAnnotationProvider = myVcs.getCachingAnnotationProvider();
-    myRefresher = refresher;
+    myRefresherI = refresherI;
     myHistorySession = session;         
     myFilePath = filePath;
 
@@ -373,6 +400,9 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
     listener.install(myDualView.getTreeView());
 
     createDualView();
+    if (isStaticEmbedded) {
+      setIsStaticAndEmbedded(isStaticEmbedded);
+    }
 
     myPopupActions = createPopupActions();
 
@@ -521,6 +551,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
         wrapWithTreeElements(myHistorySession.getRevisionList())), myTargetSelection);
     }
 
+    myDualView.getFlatView().updateColumnSizes();
     myDualView.expandAll();
     myDualView.repaint();
   }
@@ -689,7 +720,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
   }
 
   private void setupDetails() {
-    boolean showDetails = getConfiguration().SHOW_FILE_HISTORY_DETAILS;
+    boolean showDetails = ! myIsStaticAndEmbedded && getConfiguration().SHOW_FILE_HISTORY_DETAILS;
     if (showDetails) {
       myDualView.setViewBorder(IdeBorderFactory.createBorder(SideBorder.LEFT | SideBorder.BOTTOM));
     }
@@ -717,7 +748,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
     getConfiguration().FILE_HISTORY_SPLITTER_PROPORTION = newProportion.floatValue();
   }
 
-  private float getSplitterProportion() {
+  protected float getSplitterProportion() {
     return getConfiguration().FILE_HISTORY_SPLITTER_PROPORTION;
   }
 
@@ -779,18 +810,20 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
       }
     }
     result.add(new RefreshFileHistoryAction());
-    result.add(new ToggleAction("Show Details", "Display details panel", IconLoader.getIcon("/actions/showSource.png")) {
-      @Override
-      public boolean isSelected(AnActionEvent e) {
-        return getConfiguration().SHOW_FILE_HISTORY_DETAILS;
-      }
+    if (! myIsStaticAndEmbedded) {
+      result.add(new ToggleAction("Show Details", "Display details panel", IconLoader.getIcon("/actions/showSource.png")) {
+        @Override
+        public boolean isSelected(AnActionEvent e) {
+          return getConfiguration().SHOW_FILE_HISTORY_DETAILS;
+        }
 
-      @Override
-      public void setSelected(AnActionEvent e, boolean state) {
-        getConfiguration().SHOW_FILE_HISTORY_DETAILS = state;
-        setupDetails();
-      }
-    });
+        @Override
+        public void setSelected(AnActionEvent e, boolean state) {
+          getConfiguration().SHOW_FILE_HISTORY_DETAILS = state;
+          setupDetails();
+        }
+      });
+    }
 
     if (!popup && supportsTree()) {
       result.add(new MyShowAsTreeAction());
@@ -809,7 +842,8 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
         mySplitter.revalidate();
         mySplitter.repaint();
 
-        myRefresher.run(true);
+        myRefresherI.run(true);
+        myDualView.getFlatView().updateColumnSizes();
       }
     }.callMe();
   }
@@ -855,7 +889,8 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
         final int selectedRow = flatView.getSelectedRow();
         if (selectedRow == (flatView.getRowCount() - 1)) {
           // no previous
-          showDifferences(myVcs.getProject(), VcsFileRevision.NULL, getFirstSelectedRevision());
+          showDifferences(myVcs.getProject(), myBottomRevisionForShowDiff != null ? myBottomRevisionForShowDiff : VcsFileRevision.NULL,
+                          getFirstSelectedRevision());
         } else {
           showDifferences(myVcs.getProject(), flatView.getRow(selectedRow + 1), getFirstSelectedRevision());
         }
@@ -1395,7 +1430,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
     }
   }
 
-  protected void dispose() {
+  public void dispose() {
     super.dispose();
     myDualView.dispose();
     myUpdateAlarm.dispose();
@@ -1515,8 +1550,10 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
       return myBaseColumn.getEditor(item.myRevision);
     }
 
-    public String getMaxStringValue() {
-      return myBaseColumn.getMaxStringValue();
+    public String getMaxStringValue(JTable table) {
+      final String superValue = myBaseColumn.getMaxStringValue(table);
+      if (superValue != null) return superValue;
+      return getMaxValue(myBaseColumn.getName(), table);
     }
 
     public int getAdditionalWidth() {
@@ -1557,6 +1594,34 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
     return myFilePath.getVirtualFileParent();
   }
 
+  private static String getMaxValue(String name, JTable table) {
+    if (table.getRowCount() == 0) return null;
+    final Enumeration<TableColumn> columns = table.getColumnModel().getColumns();
+    int idx = 0;
+    while (columns.hasMoreElements()) {
+      TableColumn column = columns.nextElement();
+      if (name.equals(column.getHeaderValue())) {
+        break;
+      }
+      ++ idx;
+    }
+    if (idx >= table.getColumnModel().getColumnCount() - 1) return null;
+    final FontMetrics fm = table.getFontMetrics(table.getFont().deriveFont(Font.BOLD));
+    final Object header = table.getColumnModel().getColumn(idx).getHeaderValue();
+    double maxValue = fm.stringWidth((String)header);
+    String value = (String)header;
+    for (int i = 0; i < table.getRowCount(); i++) {
+      final Object at = table.getValueAt(i, idx);
+      if (at instanceof String) {
+        final int newWidth = fm.stringWidth((String)at);
+        if (newWidth > maxValue) {
+          maxValue = newWidth;
+          value = (String) at;
+        }
+      }
+    }
+    return value + "ww";
+  }
 
   private class MyTreeCellRenderer implements TreeCellRenderer {
     private final TreeCellRenderer myDefaultCellRenderer;
@@ -1649,5 +1714,22 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
       myRevisionsOrder.put(revision.getRevisionNumber(), cnt);
       ++ cnt;
     }
+  }
+
+  public void setIsStaticAndEmbedded(boolean isStaticAndEmbedded) {
+    myIsStaticAndEmbedded = isStaticAndEmbedded;
+    myDualView.setZipByHeight(isStaticAndEmbedded);
+    myDualView.getFlatView().updateColumnSizes();
+    if (myIsStaticAndEmbedded) {
+      disableClose();
+      myDualView.getFlatView().getTableHeader().setBorder(IdeBorderFactory.createBorder(SideBorder.TOP));
+      myDualView.getTreeView().getTableHeader().setBorder(IdeBorderFactory.createBorder(SideBorder.TOP));
+      myDualView.getFlatView().setBorder(null);
+      myDualView.getTreeView().setBorder(null);
+    }
+  }
+
+  public void setBottomRevisionForShowDiff(VcsFileRevision bottomRevisionForShowDiff) {
+    myBottomRevisionForShowDiff = bottomRevisionForShowDiff;
   }
 }

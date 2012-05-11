@@ -153,7 +153,7 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase  {
   }
 
   protected ProcessOutput runSvn(String... commandLine) throws IOException {
-    return runClient("svn", null, myWcRoot, commandLine);
+    return createClientRunner().runClient("svn", null, myWcRoot, commandLine);
   }
 
   protected void enableSilentOperation(final VcsConfiguration.StandardConfirmation op) {

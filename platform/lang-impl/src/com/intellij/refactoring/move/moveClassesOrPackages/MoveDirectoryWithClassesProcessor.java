@@ -148,45 +148,51 @@ public class MoveDirectoryWithClassesProcessor extends BaseRefactoringProcessor 
       Messages.showErrorDialog(myProject, e.getMessage(), CommonBundle.getErrorTitle());
       return;
     }
-    final List<PsiFile> movedFiles = new ArrayList<PsiFile>();
-    final Map<PsiElement, PsiElement> oldToNewElementsMapping = new HashMap<PsiElement, PsiElement>();
-    for (PsiFile psiFile : myFilesToMove.keySet()) {
-      for (MoveDirectoryWithClassesHelper helper : MoveDirectoryWithClassesHelper.findAll()) {
-        helper.beforeMove(psiFile);
-      }
-      final RefactoringElementListener listener = getTransaction().getElementListener(psiFile);
-      final PsiDirectory moveDestination = myFilesToMove.get(psiFile).getTargetDirectory();
-
-      for (MoveDirectoryWithClassesHelper helper : MoveDirectoryWithClassesHelper.findAll()) {
-        boolean processed = helper.move(psiFile, moveDestination, oldToNewElementsMapping, movedFiles, listener);
-        if (processed) {
-          break;
+    try {
+      final List<PsiFile> movedFiles = new ArrayList<PsiFile>();
+      final Map<PsiElement, PsiElement> oldToNewElementsMapping = new HashMap<PsiElement, PsiElement>();
+      for (PsiFile psiFile : myFilesToMove.keySet()) {
+        for (MoveDirectoryWithClassesHelper helper : MoveDirectoryWithClassesHelper.findAll()) {
+          helper.beforeMove(psiFile);
+        }
+        final RefactoringElementListener listener = getTransaction().getElementListener(psiFile);
+        final PsiDirectory moveDestination = myFilesToMove.get(psiFile).getTargetDirectory();
+  
+        for (MoveDirectoryWithClassesHelper helper : MoveDirectoryWithClassesHelper.findAll()) {
+          boolean processed = helper.move(psiFile, moveDestination, oldToNewElementsMapping, movedFiles, listener);
+          if (processed) {
+            break;
+          }
         }
       }
-    }
-    for (PsiElement newElement : oldToNewElementsMapping.values()) {
+      for (PsiElement newElement : oldToNewElementsMapping.values()) {
+        for (MoveDirectoryWithClassesHelper helper : MoveDirectoryWithClassesHelper.findAll()) {
+          helper.afterMove(newElement);
+        }
+      }
+
+      // fix references in moved files to outer files
+      for (PsiFile movedFile : movedFiles) {
+        MoveFileHandler.forElement(movedFile).updateMovedFile(movedFile);
+        FileReferenceContextUtil.decodeFileReferences(movedFile);
+      }
+
+      myNonCodeUsages = CommonMoveUtil.retargetUsages(usages, oldToNewElementsMapping);
       for (MoveDirectoryWithClassesHelper helper : MoveDirectoryWithClassesHelper.findAll()) {
-        helper.afterMove(newElement);
+        helper.postProcessUsages(usages, new Function<PsiDirectory, PsiDirectory>() {
+          @Override
+          public PsiDirectory fun(PsiDirectory dir) {
+            return getResultDirectory(dir).getTargetDirectory();
+          }
+        });
+      }
+      for (PsiDirectory directory : myDirectories) {
+        directory.delete();
       }
     }
-
-    // fix references in moved files to outer files
-    for (PsiFile movedFile : movedFiles) {
-      MoveFileHandler.forElement(movedFile).updateMovedFile(movedFile);
-      FileReferenceContextUtil.decodeFileReferences(movedFile);
-    }
-
-    myNonCodeUsages = CommonMoveUtil.retargetUsages(usages, oldToNewElementsMapping);
-    for (MoveDirectoryWithClassesHelper helper : MoveDirectoryWithClassesHelper.findAll()) {
-      helper.postProcessUsages(usages, new Function<PsiDirectory, PsiDirectory>() {
-        @Override
-        public PsiDirectory fun(PsiDirectory dir) {
-          return getResultDirectory(dir).getTargetDirectory();
-        }
-      });
-    }
-    for (PsiDirectory directory : myDirectories) {
-      directory.delete();
+    catch (IncorrectOperationException e) {
+      myNonCodeUsages = new NonCodeUsageInfo[0];
+      RefactoringUIUtil.processIncorrectOperation(myProject, e);
     }
   }
 

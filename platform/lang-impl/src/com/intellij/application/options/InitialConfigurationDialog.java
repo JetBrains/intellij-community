@@ -230,6 +230,11 @@ public class InitialConfigurationDialog extends DialogWrapper {
     public void dataChanged() {}
 
     @Override
+    public boolean isStillValid(Object o) {
+      return false;
+    }
+
+    @Override
     public void refresh() {
       updateColorSchemePreview(false);
     }

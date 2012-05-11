@@ -51,4 +51,8 @@ public class ValueConsumer<Id, Data> {
     myId = id;
     mySetId = null;
   }
+
+  public void reset() {
+    mySetId = null;
+  }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,13 +15,15 @@
  */
 package com.intellij.openapi.fileTypes;
 
+import com.intellij.ide.highlighter.ArchiveFileType;
+
 /**
  * @author max
  */
 public class FileTypes {
   protected FileTypes() { }
 
-  public static final FileType ARCHIVE = FileTypeManager.getInstance().getStdFileType("ARCHIVE");
+  public static final FileType ARCHIVE = ArchiveFileType.INSTANCE;
   public static final FileType UNKNOWN = UnknownFileType.INSTANCE;
   public static final LanguageFileType PLAIN_TEXT = (LanguageFileType)FileTypeManager.getInstance().getStdFileType("PLAIN_TEXT");
 }

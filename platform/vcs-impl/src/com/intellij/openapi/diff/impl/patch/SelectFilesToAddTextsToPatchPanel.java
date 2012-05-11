@@ -159,6 +159,11 @@ public class SelectFilesToAddTextsToPatchPanel implements RefreshablePanel {
   }
 
   @Override
+  public boolean isStillValid(Object o) {
+    return false;
+  }
+
+  @Override
   public JPanel getPanel() {
     if (myPanel == null) {
       createCenterPanel();

@@ -50,32 +50,6 @@ public class SvnChangesCorrectlyRefreshedTest extends SvnTestCase {
     enableSilentOperation(VcsConfiguration.StandardConfirmation.REMOVE);
   }
 
-  private class SubTree {
-    private final VirtualFile myRootDir;
-    private VirtualFile mySourceDir;
-    private final VirtualFile myTargetDir;
-
-    private VirtualFile myS1File;
-    private VirtualFile myS2File;
-
-    private final List<VirtualFile> myTargetFiles;
-    private static final String ourS1Contents = "123";
-    private static final String ourS2Contents = "abc";
-
-    private SubTree(final VirtualFile base) throws Exception {
-      myRootDir = createDirInCommand(base, "root");
-      mySourceDir = createDirInCommand(myRootDir, "source");
-      myS1File = createFileInCommand(mySourceDir, "s1.txt", ourS1Contents);
-      myS2File = createFileInCommand(mySourceDir, "s2.txt", ourS2Contents);
-
-      myTargetDir = createDirInCommand(myRootDir, "target");
-      myTargetFiles = new ArrayList<VirtualFile>();
-      for (int i = 0; i < 10; i++) {
-        myTargetFiles.add(createFileInCommand(myTargetDir, "t" + (i+10) +".txt", ourS1Contents));
-      }
-    }
-  }
-
   private static void sleep(final int millis) {
     try {
       Thread.sleep(millis);
