@@ -5,6 +5,6 @@
  * Time: 17:43
  * To change this template use File | Settings | File Templates.
  */
-@Ann({A.class})
+@Ann(A.class)
 public class Annotated {
 }
