@@ -29,7 +29,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.codeStyle.*;
-import com.intellij.ui.TabbedPaneWrapper;
+import com.intellij.ui.components.JBTabbedPane;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -50,7 +50,7 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
   private CodeStyleAbstractPanel myActiveTab;
   private List<CodeStyleAbstractPanel> myTabs;
   private JPanel myPanel;
-  private TabbedPaneWrapper myTabbedPane;
+  private JTabbedPane myTabbedPane;
   private PredefinedCodeStyle[] myPredefinedCodeStyles;
   private JPopupMenu myCopyFromMenu;
 
@@ -113,9 +113,9 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
     if (myTabs == null) {
       myPanel = new JPanel();
       myPanel.setLayout(new BorderLayout());
-      myTabbedPane = new TabbedPaneWrapper(this);
+      myTabbedPane = new JBTabbedPane();
       myTabs = new ArrayList<CodeStyleAbstractPanel>();
-      myPanel.add(myTabbedPane.getComponent());
+      myPanel.add(myTabbedPane);
       initTabs(getSettings());
     }
     assert !myTabs.isEmpty();
