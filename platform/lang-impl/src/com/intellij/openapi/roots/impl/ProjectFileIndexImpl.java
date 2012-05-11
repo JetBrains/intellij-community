@@ -18,8 +18,9 @@ package com.intellij.openapi.roots.impl;
 
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.file.exclude.ProjectFileExclusionManagerImpl;
+import com.intellij.openapi.file.exclude.ProjectFileExclusionManager;
 import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
@@ -38,18 +39,18 @@ public class ProjectFileIndexImpl implements ProjectFileIndex {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.impl.ProjectFileIndexImpl");
 
   private final Project myProject;
-  private final FileTypeManager myFileTypeManager;
+  private final FileTypeRegistry myFileTypeRegistry;
   private final DirectoryIndex myDirectoryIndex;
   private final ContentFilter myContentFilter;
-  private final ProjectFileExclusionManagerImpl myFileExclusionManager;
+  private final ProjectFileExclusionManager myFileExclusionManager;
 
   public ProjectFileIndexImpl(@NotNull Project project, @NotNull DirectoryIndex directoryIndex, @NotNull FileTypeManager fileTypeManager) {
     myProject = project;
 
     myDirectoryIndex = directoryIndex;
-    myFileTypeManager = fileTypeManager;
+    myFileTypeRegistry = fileTypeManager;
     myContentFilter = new ContentFilter();
-    myFileExclusionManager = ProjectFileExclusionManagerImpl.getInstance(project);
+    myFileExclusionManager = ProjectFileExclusionManager.SERVICE.getInstance(project);
   }
 
   public boolean iterateContent(@NotNull ContentIterator iterator) {
@@ -89,7 +90,7 @@ public class ProjectFileIndexImpl implements ProjectFileIndex {
   }
 
   public boolean isIgnored(@NotNull VirtualFile file) {
-    if (myFileTypeManager.isFileIgnored(file)) return true;
+    if (myFileTypeRegistry.isFileIgnored(file)) return true;
     if (myFileExclusionManager != null && myFileExclusionManager.isExcluded(file)) return true;
     VirtualFile dir = file.isDirectory() ? file : file.getParent();
     if (dir == null) return false;
@@ -157,13 +158,13 @@ public class ProjectFileIndexImpl implements ProjectFileIndex {
 
   public boolean isContentSourceFile(@NotNull VirtualFile file) {
     return !file.isDirectory() &&
-           !myFileTypeManager.isFileIgnored(file) &&
+           !myFileTypeRegistry.isFileIgnored(file) &&
            isInSourceContent(file);
   }
 
   public boolean isLibraryClassFile(@NotNull VirtualFile file) {
     if (file.isDirectory()) return false;
-    if (myFileTypeManager.isFileIgnored(file)) return false;
+    if (myFileTypeRegistry.isFileIgnored(file)) return false;
     VirtualFile parent = file.getParent();
     DirectoryInfo parentInfo = getInfoForDirectory(parent);
     return parentInfo != null && parentInfo.libraryClassRoot != null;
@@ -243,7 +244,7 @@ public class ProjectFileIndexImpl implements ProjectFileIndex {
       }
       else {
         return (myFileExclusionManager == null || !myFileExclusionManager.isExcluded(file))
-               && !myFileTypeManager.isFileIgnored(file);
+               && !myFileTypeRegistry.isFileIgnored(file);
       }
     }
   }
