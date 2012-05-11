@@ -84,6 +84,7 @@ public class GitPushDialog extends DialogWrapper {
 
     init();
     setOKButtonText("Push");
+    setOKButtonMnemonic('P');
     setTitle("Git Push");
   }
 
