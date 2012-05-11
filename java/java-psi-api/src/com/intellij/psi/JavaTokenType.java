@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -87,6 +87,7 @@ public interface JavaTokenType extends TokenType{
   IElementType TRY_KEYWORD = new IKeywordElementType("TRY_KEYWORD");
   IElementType VOLATILE_KEYWORD = new IKeywordElementType("VOLATILE_KEYWORD");
   IElementType THROWS_KEYWORD = new IKeywordElementType("THROWS_KEYWORD");
+  IElementType NONE_KEYWORD = new IKeywordElementType("NONE_KEYWORD");
 
   IElementType LPARENTH = new IJavaElementType("LPARENTH");
   IElementType RPARENTH = new IJavaElementType("RPARENTH");
@@ -138,6 +139,9 @@ public interface JavaTokenType extends TokenType{
   IElementType LTLTEQ = new IJavaElementType("LTLTEQ");
   IElementType GTGTEQ = new IJavaElementType("GTGTEQ");
   IElementType GTGTGTEQ = new IJavaElementType("GTGTGTEQ");
+
+  IElementType DOUBLE_COLON = new IJavaElementType("DOUBLE_COLON");
+  IElementType ARROW = new IJavaElementType("ARROW");
 
   TokenSet OPERATION_BIT_SET = TokenSet.create(
     EQ, GT, LT, EXCL, TILDE, QUEST, COLON, PLUS, MINUS, ASTERISK, DIV, AND, OR, XOR,

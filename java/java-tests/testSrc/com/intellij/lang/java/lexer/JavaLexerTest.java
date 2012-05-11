@@ -134,6 +134,11 @@ public class JavaLexerTest extends LexerTestCase {
            "WHITE_SPACE (' ')\nINTEGER_LITERAL ('0')\nRPARENTH (')')\n");
   }
 
+  public void testJava8Tokens() {
+    doTest("none :: ->",
+           "NONE_KEYWORD ('none')\nWHITE_SPACE (' ')\nDOUBLE_COLON ('::')\nWHITE_SPACE (' ')\nARROW ('->')");
+  }
+
   @Override
   protected Lexer createLexer() {
     return new JavaLexer(LanguageLevel.HIGHEST);

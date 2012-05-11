@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,50 +23,51 @@ import com.intellij.psi.impl.source.tree.JavaDocElementType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.text.CharArrayUtil;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.util.Set;
 
 public class JavaLexer extends LexerBase {
-  private JavaLexer(boolean isAssertKeywordEnabled, boolean isJDK15) {
-    myTable = getTable(isAssertKeywordEnabled, isJDK15);
-    myFlexLexer = new _JavaLexer(isAssertKeywordEnabled, isJDK15);
-  }
+  private static final HashTable[] TABLES = new HashTable[]{
+    new HashTable(LanguageLevel.JDK_1_8),
+    new HashTable(LanguageLevel.JDK_1_5),
+    new HashTable(LanguageLevel.JDK_1_4),
+    new HashTable(LanguageLevel.JDK_1_3)
+  };
 
-  public JavaLexer(LanguageLevel level) {
-    this(level.hasAssertKeyword(), level.hasEnumKeywordAndAutoboxing());
+  private static HashTable getTable(final LanguageLevel level) {
+    for (HashTable table : TABLES) {
+      if (level.isAtLeast(table.myLevel)) {
+        return table;
+      }
+    }
+    throw new IllegalArgumentException("Unsupported level: " + level);
   }
-
-  private static HashTable getTable(boolean isAssertKeywordEnabled, boolean isJDK15) {
-    return isAssertKeywordEnabled
-              ? isJDK15 ? ourTableWithAssertAndJDK15 : ourTableWithAssert
-              : isJDK15 ? ourTableWithJDK15 : ourTableWithoutAssert;
-  }
-
-  private static HashTable getTable(LanguageLevel level) {
-    return getTable(level.hasAssertKeyword(), level.hasEnumKeywordAndAutoboxing());
-  }
-
 
   public static boolean isKeyword(String id, LanguageLevel level) {
     return getTable(level).contains(id);
   }
 
+  private final _JavaLexer myFlexLexer;
+  private final HashTable myTable;
   private CharSequence myBuffer;
   private char[] myBufferArray;
   private int myBufferIndex;
   private int myBufferEndOffset;
-
+  private int myTokenEndOffset;  // positioned after the last symbol of the current token
   private IElementType myTokenType;
-  private _JavaLexer myFlexLexer;
 
-  //Positioned after the last symbol of the current token
-  private int myTokenEndOffset;
+  public JavaLexer(@NotNull final LanguageLevel level) {
+    myFlexLexer = new _JavaLexer(level);
+    myTable = getTable(level);
+  }
 
   private static final class HashTable {
     private static final int NUM_ENTRIES = 999;
     private static final Logger LOG = Logger.getInstance("com.intellij.Lexer.JavaLexer");
 
+    private final LanguageLevel myLevel;
     private final char[][] myTable = new char[NUM_ENTRIES][];
     private final IElementType[] myKeywords = new IElementType[NUM_ENTRIES];
     private final Set<String> myKeywordsInSet = new THashSet<String>();
@@ -111,12 +112,16 @@ public class JavaLexer extends LexerBase {
     }
 
     @SuppressWarnings({"HardCodedStringLiteral"})
-    private HashTable(boolean isAssertKeywordEnabled, boolean isJDK15) {
-      if (isAssertKeywordEnabled) {
+    private HashTable(final LanguageLevel level) {
+      myLevel = level;
+      if (level.isAtLeast(LanguageLevel.JDK_1_4)) {
         add("assert", JavaTokenType.ASSERT_KEYWORD);
-      }
-      if (isJDK15) {
-        add("enum", JavaTokenType.ENUM_KEYWORD);
+        if (level.isAtLeast(LanguageLevel.JDK_1_5)) {
+          add("enum", JavaTokenType.ENUM_KEYWORD);
+          if (level.isAtLeast(LanguageLevel.JDK_1_8)) {
+            add("none", JavaTokenType.NONE_KEYWORD);
+          }
+        }
       }
       add("abstract", JavaTokenType.ABSTRACT_KEYWORD);
       add("default", JavaTokenType.DEFAULT_KEYWORD);
@@ -171,12 +176,6 @@ public class JavaLexer extends LexerBase {
       add("null", JavaTokenType.NULL_KEYWORD);
     }
   }
-
-  private final HashTable myTable;
-  private static final HashTable ourTableWithoutAssert = new HashTable(false, false);
-  private static final HashTable ourTableWithAssert = new HashTable(true, false);
-  private static final HashTable ourTableWithAssertAndJDK15 = new HashTable(true, true);
-  private static final HashTable ourTableWithJDK15 = new HashTable(false, true);
 
   @Override
   public final void start(CharSequence buffer, int startOffset, int endOffset, int initialState) {
