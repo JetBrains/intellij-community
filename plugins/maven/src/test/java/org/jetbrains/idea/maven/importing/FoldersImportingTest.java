@@ -21,6 +21,9 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.idea.maven.MavenCustomRepositoryHelper;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
+import org.jetbrains.idea.maven.project.MavenGeneralSettings;
+import org.jetbrains.idea.maven.project.MavenImportingSettings;
+import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.utils.Path;
 
 import java.io.File;
@@ -530,10 +533,11 @@ public class FoldersImportingTest extends MavenImportingTestCase {
 
   public void testAddingExistingGeneratedSources() throws Exception {
     createStdProjectFolders();
-    createProjectSubDirs("target/generated-sources/src1",
-                         "target/generated-sources/src2",
-                         "target/generated-test-sources/test1",
-                         "target/generated-test-sources/test2");
+
+    createProjectSubFile("target/generated-sources/src1/com/A.java", "package com; class A {}");
+    createProjectSubFile("target/generated-sources/src2/com/B.java", "package com; class B {}");
+    createProjectSubFile("target/generated-test-sources/test1/com/test/A.java", "package com.test; class A {}");
+    createProjectSubFile("target/generated-test-sources/test2/com/test/B.java", "package com.test; class B {}");
 
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
@@ -550,6 +554,39 @@ public class FoldersImportingTest extends MavenImportingTestCase {
                       "src/test/resources",
                       "target/generated-test-sources/test1",
                       "target/generated-test-sources/test2");
+  }
+
+  public void testAddingExistingGeneratedSources2() throws Exception {
+    createStdProjectFolders();
+
+    createProjectSubFile("target/generated-sources/com/A.java", "package com; class A {}");
+
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>");
+
+    assertSources("project",
+                  "src/main/java",
+                  "src/main/resources",
+                  "target/generated-sources");
+  }
+
+  public void testAddingExistingGeneratedSources3() throws Exception {
+    createStdProjectFolders();
+
+    MavenProjectsManager.getInstance(myProject).getImportingSettings().setGeneratedSourcesFolder(
+      MavenImportingSettings.GeneratedSourcesFolder.SUBFOLDER);
+
+    createProjectSubFile("target/generated-sources/com/A.java", "package com; class A {}");
+
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>");
+
+    assertSources("project",
+                  "src/main/java",
+                  "src/main/resources",
+                  "target/generated-sources/com");
   }
 
   public void testAddingExistingGeneratedSourcesWithCustomTargetDir() throws Exception {

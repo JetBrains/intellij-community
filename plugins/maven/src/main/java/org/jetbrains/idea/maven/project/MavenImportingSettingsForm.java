@@ -15,12 +15,14 @@
  */
 package org.jetbrains.idea.maven.project;
 
+import com.intellij.ide.ui.ListCellRendererWrapper;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.projectImport.ProjectFormatPanel;
+import com.intellij.ui.EnumComboBoxModel;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -48,6 +50,7 @@ public class MavenImportingSettingsForm {
 
   private JPanel myAdditionalSettingsPanel;
   private JPanel mySeparateModulesDirPanel;
+  private JComboBox myGeneratedSourcesComboBox;
 
   public MavenImportingSettingsForm(boolean isImportStep, boolean isCreatingNewProject) {
     mySearchRecursivelyCheckBox.setVisible(isImportStep);
@@ -66,6 +69,16 @@ public class MavenImportingSettingsForm {
                                                         FileChooserDescriptorFactory.createSingleFolderDescriptor());
 
     myUpdateFoldersOnImportPhaseComboBox.setModel(new DefaultComboBoxModel(MavenImportingSettings.UPDATE_FOLDERS_PHASES));
+
+    myGeneratedSourcesComboBox.setModel(new EnumComboBoxModel<MavenImportingSettings.GeneratedSourcesFolder>(MavenImportingSettings.GeneratedSourcesFolder.class));
+    myGeneratedSourcesComboBox.setRenderer(new ListCellRendererWrapper(myGeneratedSourcesComboBox.getRenderer()) {
+      @Override
+      public void customize(JList list, Object value, int index, boolean selected, boolean hasFocus) {
+        if (value instanceof MavenImportingSettings.GeneratedSourcesFolder) {
+          setText(((MavenImportingSettings.GeneratedSourcesFolder)value).title);
+        }
+      }
+    });
   }
 
   private void createUIComponents() {
@@ -101,6 +114,7 @@ public class MavenImportingSettingsForm {
     data.setUseMavenOutput(myUseMavenOutputCheckBox.isSelected());
 
     data.setUpdateFoldersOnImportPhase((String)myUpdateFoldersOnImportPhaseComboBox.getSelectedItem());
+    data.setGeneratedSourcesFolder((MavenImportingSettings.GeneratedSourcesFolder)myGeneratedSourcesComboBox.getSelectedItem());
 
     data.setDownloadSourcesAutomatically(myDownloadSourcesCheckBox.isSelected());
     data.setDownloadDocsAutomatically(myDownloadDocsCheckBox.isSelected());
@@ -120,6 +134,7 @@ public class MavenImportingSettingsForm {
     myUseMavenOutputCheckBox.setSelected(data.isUseMavenOutput());
 
     myUpdateFoldersOnImportPhaseComboBox.setSelectedItem(data.getUpdateFoldersOnImportPhase());
+    myGeneratedSourcesComboBox.setSelectedItem(data.getGeneratedSourcesFolder());
 
     myDownloadSourcesCheckBox.setSelected(data.isDownloadSourcesAutomatically());
     myDownloadDocsCheckBox.setSelected(data.isDownloadDocsAutomatically());
