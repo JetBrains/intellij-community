@@ -27,6 +27,7 @@ import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.turnRefsToSuper.TurnRefsToSuperProcessorBase;
 import com.intellij.refactoring.util.DocCommentPolicy;
+import com.intellij.refactoring.util.RefactoringUIUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.usageView.UsageInfo;
@@ -127,9 +128,14 @@ public abstract class ExtractSuperBaseProcessor extends TurnRefsToSuperProcessor
       myClass.setName(myNewClassName);
       PsiClass superClass = extractSuper(superClassName);
       final PsiDirectory initialDirectory = myClass.getContainingFile().getContainingDirectory();
-      if (myTargetDirectory != initialDirectory) {
-        myTargetDirectory.add(myClass.getContainingFile().copy());
-        myClass.getContainingFile().delete();
+      try {
+        if (myTargetDirectory != initialDirectory) {
+          myTargetDirectory.add(myClass.getContainingFile().copy());
+          myClass.getContainingFile().delete();
+        }
+      }
+      catch (IncorrectOperationException e) {
+        RefactoringUIUtil.processIncorrectOperation(myProject, e);
       }
       for (final UsageInfo usage : usages) {
         if (usage instanceof BindToOldUsageInfo) {
