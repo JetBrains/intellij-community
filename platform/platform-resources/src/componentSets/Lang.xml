@@ -45,7 +45,7 @@
     </component>
     <component>
       <interface-class>com.intellij.openapi.roots.impl.DirectoryIndex</interface-class>
-      <implementation-class>com.intellij.openapi.roots.impl.DirectoryIndexImpl</implementation-class>
+      <implementation-class>com.intellij.openapi.roots.impl.DirectoryIndexComponent</implementation-class>
       <loadForDefaultProject/>
     </component>
 
