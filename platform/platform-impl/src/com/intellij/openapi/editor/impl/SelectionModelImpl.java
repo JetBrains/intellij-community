@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -721,7 +721,7 @@ public class SelectionModelImpl implements SelectionModel, PrioritizedDocumentLi
       return;
     }
 
-    Pair<LogicalPosition, LogicalPosition> lines = EditorUtil.calcCaretLinesRange(myEditor);
+    Pair<LogicalPosition, LogicalPosition> lines = EditorUtil.calcCaretLineRange(myEditor);
     LogicalPosition lineStart = lines.first;
     LogicalPosition nextLineStart = lines.second;
 
