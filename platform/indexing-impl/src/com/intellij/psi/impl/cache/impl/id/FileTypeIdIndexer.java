@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,15 +16,12 @@
 
 package com.intellij.psi.impl.cache.impl.id;
 
-import com.intellij.openapi.fileTypes.FileTypeExtension;
+import com.intellij.util.indexing.DataIndexer;
+import com.intellij.util.indexing.FileContent;
 
 /**
- * @author yole
+ * @author Eugene Zhuravlev
+ *         Date: Jan 16, 2008
  */
-public class IdIndexers extends FileTypeExtension<FileTypeIdIndexer> {
-  public static IdIndexers INSTANCE = new IdIndexers();
-
-  private IdIndexers() {
-    super("com.intellij.idIndexer");
-  }
+public abstract class FileTypeIdIndexer implements DataIndexer<IdIndexEntry, Integer, FileContent> {
 }

@@ -8,6 +8,7 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="core-impl" />
+    <orderEntry type="module" module-name="indexing-api" exported="" />
   </component>
 </module>
 
