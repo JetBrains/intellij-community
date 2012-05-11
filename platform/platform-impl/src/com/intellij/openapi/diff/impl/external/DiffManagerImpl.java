@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,10 +58,12 @@ public class DiffManagerImpl extends DiffManager implements JDOMExternalizable {
 
   static final StringProperty FOLDERS_TOOL = new StringProperty("foldersTool", "");
   static final StringProperty FILES_TOOL = new StringProperty("filesTool", "");
-  static final BooleanProperty ENABLE_FOLDERS = new BooleanProperty(
-    "enableFolders", false);
-  static final BooleanProperty ENABLE_FILES = new BooleanProperty(
-    "enableFiles", false);
+  static final StringProperty MERGE_TOOL = new StringProperty("mergeTool", "");
+  static final StringProperty MERGE_TOOL_PARAMETERS = new StringProperty("mergeToolParameters", "");
+  static final BooleanProperty ENABLE_FOLDERS = new BooleanProperty("enableFolders", false);
+  static final BooleanProperty ENABLE_FILES = new BooleanProperty("enableFiles", false);
+  static final BooleanProperty ENABLE_MERGE = new BooleanProperty("enableMerge", false);
+
 
   private final ExternalizablePropertyContainer myProperties;
   private final ArrayList<DiffTool> myAdditionTools = new ArrayList<DiffTool>();
@@ -89,7 +91,7 @@ public class DiffManagerImpl extends DiffManager implements JDOMExternalizable {
   public DiffTool getDiffTool() {
     DiffTool[] standardTools;
     // there is inner check in multiple tool for external viewers as well
-    if (! ENABLE_FILES.value(myProperties) || ! ENABLE_FOLDERS.value(myProperties)) {
+    if (! ENABLE_FILES.value(myProperties) || ! ENABLE_FOLDERS.value(myProperties) || !ENABLE_MERGE.value(myProperties)) {
       DiffTool[] embeddableTools = {
         INTERNAL_DIFF,
         new MergeTool(),
@@ -98,6 +100,7 @@ public class DiffManagerImpl extends DiffManager implements JDOMExternalizable {
       standardTools = new DiffTool[]{
         ExtCompareFolders.INSTANCE,
         ExtCompareFiles.INSTANCE,
+        ExtMergeFiles.INSTANCE,
         new MultiLevelDiffTool(Arrays.asList(embeddableTools)),
         INTERNAL_DIFF,
         new MergeTool(),
@@ -107,6 +110,7 @@ public class DiffManagerImpl extends DiffManager implements JDOMExternalizable {
       standardTools = new DiffTool[]{
         ExtCompareFolders.INSTANCE,
         ExtCompareFiles.INSTANCE,
+        ExtMergeFiles.INSTANCE,
         INTERNAL_DIFF,
         new MergeTool(),
         BinaryDiffTool.INSTANCE

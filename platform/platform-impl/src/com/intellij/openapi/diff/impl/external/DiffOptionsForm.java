@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import com.intellij.util.config.StringProperty;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -39,14 +40,27 @@ public class DiffOptionsForm implements SearchableConfigurable, Configurable.NoS
   private JCheckBox myEnableFiles;
   private TextFieldWithBrowseButton myFoldersTool;
   private TextFieldWithBrowseButton myFilesTool;
+  private TextFieldWithBrowseButton myMergeTool;
+  private JCheckBox myEnableMerge;
+  private JTextField myMergeParameters;
+  private JLabel myMergeParamInfo;
+  private JPanel myMergePanel;
 
-  private final ToolPath[] myTools = new ToolPath[2];
+  private final ToolPath[] myTools = new ToolPath[3];
 
   public DiffOptionsForm() {
-    myTools[0] = new ToolPath(myEnableFolders, myFoldersTool,
-                              DiffManagerImpl.FOLDERS_TOOL, DiffManagerImpl.ENABLE_FOLDERS);
-    myTools[1] = new ToolPath(myEnableFiles, myFilesTool, DiffManagerImpl.FILES_TOOL,
-                              DiffManagerImpl.ENABLE_FILES);
+    myEnableMerge.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        myMergeParameters.setEditable(myEnableMerge.isEnabled());
+        myMergeParameters.setEnabled(myEnableMerge.isEnabled());
+      }
+    });
+    myTools[0] = new ToolPath(myEnableFolders, myFoldersTool, null, DiffManagerImpl.FOLDERS_TOOL, DiffManagerImpl.ENABLE_FOLDERS, null);
+    myTools[1] = new ToolPath(myEnableFiles, myFilesTool, null, DiffManagerImpl.FILES_TOOL, DiffManagerImpl.ENABLE_FILES, null);
+    myTools[2] = new ToolPath(myEnableMerge, myMergeTool, myMergeParameters, DiffManagerImpl.MERGE_TOOL, DiffManagerImpl.ENABLE_MERGE, DiffManagerImpl.MERGE_TOOL_PARAMETERS);
+    myMergeParameters.setEditable(myEnableMerge.isEnabled());
+    myMergeParameters.setEnabled(myEnableMerge.isEnabled());
   }
 
   public JComponent createComponent() {
@@ -102,13 +116,17 @@ public class DiffOptionsForm implements SearchableConfigurable, Configurable.NoS
     private final TextFieldWithBrowseButton myTextField;
     private final StringProperty myPathProperty;
     private final BooleanProperty myEnabledProperty;
+    @Nullable private final JTextField myParameters;
+    @Nullable private final StringProperty myParametersProperty;
 
-    public ToolPath(JCheckBox checkBox, TextFieldWithBrowseButton textField,
-                    StringProperty pathProperty, BooleanProperty enabledProperty) {
+    public ToolPath(JCheckBox checkBox, TextFieldWithBrowseButton textField, @Nullable JTextField parameters,
+                    StringProperty pathProperty, BooleanProperty enabledProperty, @Nullable StringProperty parametersProperty) {
       myCheckBox = checkBox;
       myTextField = textField;
       myPathProperty = pathProperty;
       myEnabledProperty = enabledProperty;
+      myParameters = parameters;
+      myParametersProperty = parametersProperty;
       final ButtonModel model = myCheckBox.getModel();
       model.addActionListener(new ActionListener() {
         public void actionPerformed(ActionEvent e) {
@@ -126,8 +144,9 @@ public class DiffOptionsForm implements SearchableConfigurable, Configurable.NoS
 
     public boolean isModifier() {
       AbstractProperty.AbstractPropertyContainer properties = getProperties();
-      return !myTextField.getText().equals(myPathProperty.get(properties)) ||
-             isEnabled() != myEnabledProperty.value(properties);
+      return !myTextField.getText().equals(myPathProperty.get(properties))
+             || isEnabled() != myEnabledProperty.value(properties)
+             || (myParametersProperty != null && myParameters != null && !myParameters.getText().equals(myParametersProperty.get(properties)));
     }
 
     private boolean isEnabled() {
@@ -141,11 +160,17 @@ public class DiffOptionsForm implements SearchableConfigurable, Configurable.NoS
     public void apply() {
       myPathProperty.set(getProperties(), myTextField.getText());
       myEnabledProperty.primSet(getProperties(), isEnabled());
+      if (myParameters != null && myParametersProperty != null) {
+        myParametersProperty.set(getProperties(), myParameters.getText());
+      }
     }
 
     public void reset() {
       myTextField.setText(myPathProperty.get(getProperties()));
       myCheckBox.getModel().setSelected(myEnabledProperty.value(getProperties()));
+      if (myParameters != null && myParametersProperty != null) {
+        myParameters.setText(myParametersProperty.get(getProperties()));
+      }
       updateEnabledEffect();
     }
   }

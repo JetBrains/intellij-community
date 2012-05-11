@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,24 +15,43 @@
  */
 package com.intellij.openapi.diff.impl.external;
 
+import com.intellij.openapi.diff.DiffContent;
 import com.intellij.openapi.diff.DiffRequest;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.Nullable;
 
+/**
+ * @author Konstantin Bulenkov
+ */
 class ExtCompareFolders extends BaseExternalTool {
   public static final BaseExternalTool INSTANCE = new ExtCompareFolders();
+
   private ExtCompareFolders() {
     super(DiffManagerImpl.ENABLE_FOLDERS, DiffManagerImpl.FOLDERS_TOOL);
   }
 
-  protected BaseExternalTool.ContentExternalizer externalize(DiffRequest request, int index) {
-    VirtualFile file = request.getContents()[index].getFile();
-    if (!isLocalDirectory(file)) return null;
+  @Override
+  public boolean isAvailable(DiffRequest request) {
+    final DiffContent[] contents = request.getContents();
+    if (contents.length != 2) return false;
+    if (externalize(request, 0) == null) return false;
+    if (externalize(request, 1) == null) return false;
+    return true;
+  }
+
+  @Nullable
+  protected ContentExternalizer externalize(DiffRequest request, int index) {
+    final VirtualFile file = request.getContents()[index].getFile();
+
+    if (!isLocalDirectory(file)) {
+      return null;
+    }
+
     return LocalFileExternalizer.tryCreate(file);
   }
 
-  private boolean isLocalDirectory(VirtualFile file) {
-    file = getLocalFile(file);
-    return file != null && file.isDirectory();
+  private static boolean isLocalDirectory(VirtualFile file) {
+    final VirtualFile local = getLocalFile(file);
+    return local != null && local.isDirectory();
   }
-
 }

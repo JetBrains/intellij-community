@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,11 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.util.ExecutionErrorDialog;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.diff.*;
+import com.intellij.openapi.diff.DiffBundle;
+import com.intellij.openapi.diff.DiffRequest;
+import com.intellij.openapi.diff.DiffTool;
+import com.intellij.openapi.diff.DiffViewer;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.config.AbstractProperty;
 import com.intellij.util.config.BooleanProperty;
@@ -27,9 +31,12 @@ import com.intellij.util.config.StringProperty;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
-import java.io.File;
-import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
+/**
+ * @author Konstantin Bulenkov
+ */
 abstract class BaseExternalTool implements DiffTool {
   private final BooleanProperty myEnableProperty;
   private final StringProperty myToolProperty;
@@ -39,16 +46,9 @@ abstract class BaseExternalTool implements DiffTool {
     myToolProperty = toolProperty;
   }
 
-  public boolean canShow(DiffRequest request) {
-    AbstractProperty.AbstractPropertyContainer config = DiffManagerImpl.getInstanceEx().getProperties();
-    if (!myEnableProperty.value(config)) return false;
-    String path = getToolPath();
-    if (path == null || path.length() == 0) return false;
-    DiffContent[] contents = request.getContents();
-    if (contents.length != 2) return false;
-    if (externalize(request, 0) == null) return false;
-    if (externalize(request, 1) == null) return false;
-    return true;
+  public final boolean canShow(DiffRequest request) {
+    if (!isEnabled() || StringUtil.isEmpty(getToolPath())) return false;
+    return isAvailable(request);
   }
 
   @Override
@@ -56,18 +56,45 @@ abstract class BaseExternalTool implements DiffTool {
     return null;
   }
 
-  protected abstract ContentExternalizer externalize(DiffRequest request, int index);
+  public abstract boolean isAvailable(DiffRequest request);
 
-  private String getToolPath() {
-    return myToolProperty.get(DiffManagerImpl.getInstanceEx().getProperties());
+  @Nullable
+  protected ContentExternalizer externalize(final DiffRequest request, final int index) {
+    final VirtualFile file = getLocalFile(request.getContents()[index].getFile());
+
+    if (LocalFileExternalizer.canExternalizeAsFile(file)) {
+      return LocalFileExternalizer.tryCreate(file);
+    }
+
+    return new ExternalToolContentExternalizer(request, index);
+  }
+
+  public static AbstractProperty.AbstractPropertyContainer getProperties() {
+    return DiffManagerImpl.getInstanceEx().getProperties();
+  }
+
+  protected String getToolPath() {
+    return myToolProperty.get(getProperties());
+  }
+
+  protected boolean isEnabled() {
+    return myEnableProperty.value(getProperties());
+  }
+
+  protected List<String> getParameters(DiffRequest request) throws Exception {
+    final String p1 = convertToPath(request, 0);
+    final String p2 = convertToPath(request, 1);
+    final List<String> params = new ArrayList<String>();
+    if (p1 != null) params.add(p1);
+    if (p2 != null) params.add(p2);
+    return params;
   }
 
   public void show(DiffRequest request) {
     GeneralCommandLine commandLine = new GeneralCommandLine();
     commandLine.setExePath(getToolPath());
     try {
-      commandLine.addParameter(convertToPath(request, 0));
-      commandLine.addParameter(convertToPath(request, 1));
+      commandLine.addParameters(getParameters(request));
       commandLine.createProcess();
     }
     catch (Exception e) {
@@ -76,36 +103,15 @@ abstract class BaseExternalTool implements DiffTool {
     }
   }
 
-  private String convertToPath(DiffRequest request, int index) throws IOException {
-    return externalize(request, index).getContentFile().getAbsolutePath();
+  @Nullable
+  protected String convertToPath(DiffRequest request, int index) throws Exception {
+    final ContentExternalizer externalize = externalize(request, index);
+    return externalize == null ? null : externalize.getContentFile().getAbsolutePath();
   }
 
   @Nullable
   protected static VirtualFile getLocalFile(VirtualFile file) {
     if (file != null && file.isInLocalFileSystem()) return file;
     return null;
-  }
-
-  protected interface ContentExternalizer {
-    File getContentFile() throws IOException;
-  }
-
-  protected static class LocalFileExternalizer implements ContentExternalizer {
-    private final File myFile;
-
-    public LocalFileExternalizer(File file) {
-      myFile = file;
-    }
-
-    public File getContentFile() {
-      return myFile;
-    }
-
-    @Nullable
-    public static LocalFileExternalizer tryCreate(VirtualFile file) {
-      if (file == null || !file.isValid()) return null;
-      if (!file.isInLocalFileSystem()) return null;
-      return new LocalFileExternalizer(new File(file.getPath().replace('/', File.separatorChar)));
-    }
   }
 }
