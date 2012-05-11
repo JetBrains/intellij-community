@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -150,7 +150,7 @@ public class ModuleImpl extends ComponentManagerImpl implements Module {
       if (file != null) {
         ClasspathStorage.moduleRenamed(this, newName);
         file.rename(MODULE_RENAMING_REQUESTOR, newName + ModuleFileType.DOT_DEFAULT_EXTENSION);
-        getStateStore().setModuleFilePath(VfsUtil.virtualToIoFile(file).getCanonicalPath());
+        getStateStore().setModuleFilePath(VfsUtilCore.virtualToIoFile(file).getCanonicalPath());
         return;
       }
 
@@ -337,7 +337,7 @@ public class ModuleImpl extends ComponentManagerImpl implements Module {
         final String parentPath = parent.getPath();
         final String ancestorPath = parentPath + "/" + event.getOldValue();
         final String moduleFilePath = getModuleFilePath();
-        if (VfsUtil.isAncestor(new File(ancestorPath), new File(moduleFilePath), true)) {
+        if (VfsUtilCore.isAncestor(new File(ancestorPath), new File(moduleFilePath), true)) {
           final String newValue = (String)event.getNewValue();
           final String relativePath = FileUtil.getRelativePath(ancestorPath, moduleFilePath, '/');
           final String newFilePath = parentPath + "/" + newValue + "/" + relativePath;
@@ -370,7 +370,7 @@ public class ModuleImpl extends ComponentManagerImpl implements Module {
       final String dirName = event.getFileName();
       final String ancestorPath = oldParent.getPath() + "/" + dirName;
       final String moduleFilePath = getModuleFilePath();
-      if (VfsUtil.isAncestor(new File(ancestorPath), new File(moduleFilePath), true)) {
+      if (VfsUtilCore.isAncestor(new File(ancestorPath), new File(moduleFilePath), true)) {
         final String relativePath = FileUtil.getRelativePath(ancestorPath, moduleFilePath, '/');
         setModuleFilePath(moduleFilePath, newParent.getPath() + "/" + dirName + "/" + relativePath);
       }

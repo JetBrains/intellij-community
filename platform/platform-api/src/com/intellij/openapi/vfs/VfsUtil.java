@@ -409,11 +409,6 @@ public class VfsUtil extends VfsUtilCore {
   }
 
   @NotNull
-  public static File virtualToIoFile(@NotNull VirtualFile file) {
-    return new File(PathUtil.toPresentableUrl(file.getUrl()));
-  }
-
-@NotNull
   public static IFile virtualToIFile(@NotNull VirtualFile file) {
     return FileSystem.FILE_SYSTEM.createFile(PathUtil.toPresentableUrl(file.getUrl()));
   }
@@ -466,16 +461,6 @@ public class VfsUtil extends VfsUtilCore {
       }
     }
     return url;
-  }
-
-  public static boolean isAncestor(@NotNull File ancestor, @NotNull File file, boolean strict) {
-    File parent = strict ? file.getParentFile() : file;
-    while (parent != null) {
-      if (parent.equals(ancestor)) return true;
-      parent = parent.getParentFile();
-    }
-
-    return false;
   }
 
   /**
