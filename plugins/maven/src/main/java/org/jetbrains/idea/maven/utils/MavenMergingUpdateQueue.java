@@ -21,6 +21,7 @@ import com.intellij.openapi.application.ModalityStateListener;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.impl.LaterInvocator;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.project.DumbService;
@@ -36,6 +37,9 @@ import javax.swing.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class MavenMergingUpdateQueue extends MergingUpdateQueue {
+
+  private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.maven.utils.MavenMergingUpdateQueue");
+
   private final AtomicInteger mySuspendCounter = new AtomicInteger(0);
 
   public MavenMergingUpdateQueue(String name,
@@ -153,7 +157,6 @@ public class MavenMergingUpdateQueue extends MergingUpdateQueue {
 
   @Override
   public void suspend() {
-    assert mySuspendCounter.get() >= 0;
     if (mySuspendCounter.incrementAndGet() == 1) {
       super.suspend();
     }
@@ -161,8 +164,13 @@ public class MavenMergingUpdateQueue extends MergingUpdateQueue {
 
   @Override
   public void resume() {
-    assert mySuspendCounter.get() > 0;
-    if (mySuspendCounter.decrementAndGet() == 0) {
+    int c = mySuspendCounter.decrementAndGet();
+    if (c <= 0) {
+      if (c < 0) {
+        mySuspendCounter.set(0);
+        LOG.error("Invalid suspend counter state", new Exception());
+      }
+
       super.resume();
     }
   }
