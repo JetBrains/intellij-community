@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,6 +39,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.Pair;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
@@ -118,7 +119,7 @@ public class DataFlowInspection extends BaseLocalInspectionTool {
         binary.getLOperand().replace(qualifier);
         List<LocalQuickFix> fixes = new SmartList<LocalQuickFix>();
 
-        if (PsiUtil.getLanguageLevel(qualifier).hasAssertKeyword()) {
+        if (PsiUtil.getLanguageLevel(qualifier).isAtLeast(LanguageLevel.JDK_1_4)) {
           fixes.add(new AddAssertStatementFix(binary));
         }
         SurroundWithIfFix ifFix = new SurroundWithIfFix(qualifier);
