@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,10 +36,10 @@ public abstract class ProjectJdkTable {
 
   public abstract Sdk[] getAllJdks();
 
-  public abstract List<Sdk> getSdksOfType(SdkType type);
+  public abstract List<Sdk> getSdksOfType(SdkTypeId type);
 
   @Nullable
-  public abstract Sdk findMostRecentSdkOfType(SdkType type);
+  public abstract Sdk findMostRecentSdkOfType(SdkTypeId type);
 
   @Nullable
   public abstract Sdk findMostRecentSdk(Condition<Sdk> condition);
@@ -68,9 +68,9 @@ public abstract class ProjectJdkTable {
    */
   public abstract void removeListener(Listener listener);
 
-  public abstract SdkType getDefaultSdkType();
+  public abstract SdkTypeId getDefaultSdkType();
 
-  public abstract Sdk createSdk(final String name, final SdkType sdkType);
+  public abstract Sdk createSdk(final String name, final SdkTypeId sdkType);
 
   public static Topic<Listener> JDK_TABLE_TOPIC = Topic.create("Project JDK table", Listener.class);
 }
