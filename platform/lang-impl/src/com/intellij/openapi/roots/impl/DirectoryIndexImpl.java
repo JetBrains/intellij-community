@@ -19,12 +19,12 @@ package com.intellij.openapi.roots.impl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.*;
@@ -155,7 +155,7 @@ public class DirectoryIndexImpl extends DirectoryIndex {
   }
 
   private static boolean isIgnored(@NotNull VirtualFile f) {
-    return FileTypeManager.getInstance().isFileIgnored(f);
+    return FileTypeRegistry.getInstance().isFileIgnored(f);
   }
 
   @Override
@@ -624,7 +624,8 @@ public class DirectoryIndexImpl extends DirectoryIndex {
     }
 
     private void doInitialize(boolean reverseAllSets/* for testing order independence*/) {
-      ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
+      final ProgressIndicatorProvider progressIndicatorProvider = ProgressIndicatorProvider.getInstance();
+      ProgressIndicator progress = progressIndicatorProvider == null ? null : progressIndicatorProvider.getProgressIndicator();
       if (progress == null) progress = new EmptyProgressIndicator();
 
       progress.pushState();
