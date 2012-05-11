@@ -147,11 +147,19 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
       return true;
     }
     if (elements.length > 1) {
-      final TextRange range = reference.getRangeInElement();
-      final String elementText = reference.getElement().getText();
-      LOG.assertTrue(range.getStartOffset() >= 0 && range.getEndOffset() <= elementText.length(), Arrays.toString(elements));
-      final String refText = range.substring(elementText);
-      String title = MessageFormat.format(titlePattern, refText);
+      String title;
+
+      if (reference != null) {
+        final TextRange range = reference.getRangeInElement();
+        final String elementText = reference.getElement().getText();
+        LOG.assertTrue(range.getStartOffset() >= 0 && range.getEndOffset() <= elementText.length(), Arrays.toString(elements));
+        final String refText = range.substring(elementText);
+        title = MessageFormat.format(titlePattern, refText);
+      }
+      else {
+        title = titlePattern;
+      }
+
       NavigationUtil.getPsiElementPopup(elements, new DefaultPsiElementCellRenderer(), title, processor).showInBestPositionFor(editor);
       return true;
     }
