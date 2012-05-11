@@ -20,7 +20,7 @@ public class ElementToArrayConversionRule extends TypeConversionRule{
       if (((PsiArrayType)to).getComponentType() instanceof PsiClassType && from instanceof PsiPrimitiveType) {
         final String boxedTypeName = ((PsiPrimitiveType)from).getBoxedTypeName();
         final String normalizedArrayInitializer =
-          PsiUtil.getLanguageLevel(context).hasEnumKeywordAndAutoboxing() ? "$qualifier$" : boxedTypeName + ".valueOf($qualifier$)";
+          PsiUtil.isLanguageLevel5OrHigher(context) ? "$qualifier$" : boxedTypeName + ".valueOf($qualifier$)";
         wrapDescription = new TypeConversionDescriptor("$qualifier$", "new " + boxedTypeName + "[]{" + normalizedArrayInitializer + "}", context);
       }
       final PsiElement parent = context.getParent();
