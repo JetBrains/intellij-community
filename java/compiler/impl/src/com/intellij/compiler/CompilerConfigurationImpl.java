@@ -763,7 +763,8 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
           final Element moduleElement = new Element("module");
           bytecodeTarget.addContent(moduleElement);
           moduleElement.setAttribute("name", name);
-          moduleElement.setAttribute("target", myModuleBytecodeTarget.get(name));
+          final String value = myModuleBytecodeTarget.get(name);
+          moduleElement.setAttribute("target", value != null? value : "");
         }
       }
     }

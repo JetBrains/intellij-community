@@ -11,6 +11,7 @@ class CompilerConfiguration {
   boolean clearOutputDirectoryOnRebuild = true
   boolean addNotNullAssertions = true
   AnnotationProcessingConfiguration annotationProcessing = new AnnotationProcessingConfiguration()
+  BytecodeTargetConfiguration bytecodeTarget = new BytecodeTargetConfiguration()
   CompilerExcludes excludes = new CompilerExcludes()
 }
 
@@ -20,4 +21,9 @@ class AnnotationProcessingConfiguration {
   String processorsPath
   Map<String, String> processorsOptions = [:]
   Map<String, String> processModule = [:]
+}
+
+class BytecodeTargetConfiguration {
+  String projectBytecodeTarget
+  Map<String, String> modulesBytecodeTarget = [:]
 }
