@@ -40,6 +40,7 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.xml.XmlAttribute;
@@ -161,7 +162,7 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testQualifiedNew() throws Exception { doTest(false, false); }
   public void testEnclosingInstance() throws Exception { doTest(false, false); }
 
-  public void testStaticViaInstance() throws Exception { doTest(true, false); } // static via instabnce
+  public void testStaticViaInstance() throws Exception { doTest(true, false); } // static via instance
   public void testQualifiedThisSuper() throws Exception { doTest(true, false); } //illegal qualified this or super
 
   public void testAmbiguousMethodCall() throws Exception { doTest(false, false); }
@@ -230,19 +231,13 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
       }
 
       @Override
-      public void setSelected(boolean selected) {
-
-      }
+      public void setSelected(boolean selected) { }
 
       @Override
-      public void readExternal(Element element) {
-
-      }
+      public void readExternal(Element element) { }
 
       @Override
-      public void writeExternal(Element element) {
-
-      }
+      public void writeExternal(Element element) { }
     };
 
     point.registerExtension(extension);
@@ -265,9 +260,13 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override
       public void run() {
-        PsiFile txt = myFile.getParent().createFile("x.txt");
+        PsiDirectory directory = myFile.getParent();
+        assertNotNull(myFile.toString(), directory);
+        PsiFile txt = directory.createFile("x.txt");
+        VirtualFile vFile = txt.getVirtualFile();
+        assertNotNull(txt.toString(), vFile);
         try {
-          VfsUtil.saveText(txt.getVirtualFile(), "XXX");
+          VfsUtil.saveText(vFile, "XXX");
         }
         catch (IOException e) {
           throw new RuntimeException(e);
@@ -356,11 +355,7 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
     doHighlighting();
   }
 
-  public void testClassicRethrow() throws Exception {
-    doTest(false, false);
-  }
-
-  public void testRegexp() throws Exception {
-    doTest(false, false);
-  }
+  public void testClassicRethrow() throws Exception { doTest(false, false); }
+  public void testRegexp() throws Exception { doTest(false, false); }
+  public void testUnsupportedFeatures() throws Exception { doTest(false, false); }
 }

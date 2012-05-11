@@ -58,6 +58,7 @@ import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.PropertyKey;
 
 import java.util.*;
 
@@ -593,6 +594,7 @@ public class HighlightUtil {
     if (variable instanceof PsiLocalVariable ||
         variable instanceof PsiParameter && ((PsiParameter)variable).getDeclarationScope() instanceof PsiCatchSection ||
         variable instanceof PsiParameter && ((PsiParameter)variable).getDeclarationScope() instanceof PsiForeachStatement) {
+      @SuppressWarnings("unchecked")
       PsiElement scope = PsiTreeUtil.getParentOfType(variable, PsiFile.class, PsiMethod.class, PsiClassInitializer.class, PsiResourceList.class);
       VariablesNotProcessor proc = new VariablesNotProcessor(variable, false) {
         @Override
@@ -602,7 +604,9 @@ public class HighlightUtil {
       };
       PsiScopesUtil.treeWalkUp(proc, identifier, scope);
       if (scope instanceof PsiResourceList && proc.size() == 0) {
-        scope = PsiTreeUtil.getParentOfType(variable, PsiFile.class, PsiMethod.class, PsiClassInitializer.class);
+        @SuppressWarnings({"unchecked", "UnnecessaryLocalVariable"})
+        NavigatablePsiElement parent = PsiTreeUtil.getParentOfType(variable, PsiFile.class, PsiMethod.class, PsiClassInitializer.class);
+        scope = parent;
         PsiScopesUtil.treeWalkUp(proc, identifier, scope);
       }
       if (proc.size() > 0) {
@@ -1403,7 +1407,7 @@ public class HighlightUtil {
   }
 
   @Nullable
-  static HighlightInfo checkValidArrayAccessExpression(PsiExpression arrayExpression, PsiExpression indexExpression, PsiType type) {
+  static HighlightInfo checkValidArrayAccessExpression(@Nullable PsiExpression arrayExpression, PsiExpression indexExpression, PsiType type) {
     PsiType arrayExpressionType = arrayExpression == null ? null : arrayExpression.getType();
     if (arrayExpressionType != null && !(arrayExpressionType instanceof PsiArrayType)) {
       String description = JavaErrorMessages.message("array.type.expected", formatType(arrayExpressionType));
@@ -1744,9 +1748,11 @@ public class HighlightUtil {
           referencedClass = PsiUtil.resolveClassInType(type);
         }
         else if (qualifier instanceof PsiThisExpression || qualifier == null) {
-          resolved = PsiTreeUtil.getParentOfType(expression, PsiMethod.class, true, PsiMember.class);
+          @SuppressWarnings({"unchecked", "UnnecessaryLocalVariable"})
+          PsiMethod parent = PsiTreeUtil.getParentOfType(expression, PsiMethod.class, true, PsiMember.class);
+          resolved = parent;
           expression = qualifier == null ? expression : qualifier;
-          if (resolved instanceof PsiMethod) {
+          if (resolved != null) {
             referencedClass = ((PsiMethod)resolved).getContainingClass();
           }
         }
@@ -2452,7 +2458,7 @@ public class HighlightUtil {
   public static void registerChangeVariableTypeFixes(PsiVariable parameter, PsiType itemType, HighlightInfo highlightInfo) {
     for (ChangeVariableTypeQuickFixProvider fixProvider : Extensions.getExtensions(ChangeVariableTypeQuickFixProvider.EP_NAME)) {
       for (IntentionAction action : fixProvider.getFixes(parameter, itemType)) {
-        QuickFixAction.registerQuickFixAction(highlightInfo, action, null);
+        QuickFixAction.registerQuickFixAction(highlightInfo, action);
       }
     }
     ChangeParameterClassFix.registerQuickFixAction(parameter, itemType, highlightInfo);
@@ -2465,5 +2471,77 @@ public class HighlightUtil {
       return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, list, message);
     }
     return null;
+  }
+
+  private static enum Feature {
+    GENERICS(LanguageLevel.JDK_1_5, "feature.generics"),
+    ANNOTATIONS(LanguageLevel.JDK_1_5, "feature.annotations"),
+    STATIC_IMPORTS(LanguageLevel.JDK_1_5, "feature.static.imports"),
+    FOR_EACH(LanguageLevel.JDK_1_5, "feature.for.each"),
+    VARARGS(LanguageLevel.JDK_1_5, "feature.varargs"),
+    DIAMOND_TYPES(LanguageLevel.JDK_1_7, "feature.diamond.types"),
+    MULTI_CATCH(LanguageLevel.JDK_1_7, "feature.multi.catch"),
+    TRY_WITH_RESOURCES(LanguageLevel.JDK_1_7, "feature.try.with.resources");
+
+    private final LanguageLevel level;
+    private final String key;
+
+    private Feature(final LanguageLevel level, @PropertyKey(resourceBundle = JavaErrorMessages.BUNDLE) final String key) {
+      this.level = level;
+      this.key = key;
+    }
+  }
+
+  @Nullable
+  private static HighlightInfo checkFeature(@Nullable final PsiElement element, @NotNull final Feature feature) {
+    if (element != null && !PsiUtil.getLanguageLevel(element).isAtLeast(feature.level)) {
+      final String message = JavaErrorMessages.message("insufficient.language.level", JavaErrorMessages.message(feature.key));
+      final HighlightInfo info = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, element, message);
+      QuickFixAction.registerQuickFixAction(info, new IncreaseLanguageLevelFix(feature.level));
+      QuickFixAction.registerQuickFixAction(info, new ShowModulePropertiesFix(element));
+      return info;
+    }
+
+    return null;
+  }
+
+  @Nullable
+  public static HighlightInfo checkGenericsFeature(final PsiElement parameterList, final int listSize) {
+    return listSize > 0 ? checkFeature(parameterList, Feature.GENERICS) : null;
+  }
+
+  @Nullable
+  public static HighlightInfo checkAnnotationFeature(final PsiElement element) {
+    return checkFeature(element, Feature.ANNOTATIONS);
+  }
+
+  @Nullable
+  public static HighlightInfo checkForEachFeature(final PsiForeachStatement statement) {
+    return checkFeature(statement, Feature.FOR_EACH);
+  }
+
+  @Nullable
+  public static HighlightInfo checkStaticImportFeature(final PsiImportStaticStatement statement) {
+    return checkFeature(statement, Feature.STATIC_IMPORTS);
+  }
+
+  @Nullable
+  public static HighlightInfo checkVarargFeature(final PsiParameter parameter) {
+    return checkFeature(parameter, Feature.VARARGS);
+  }
+
+  @Nullable
+  public static HighlightInfo checkDiamondFeature(final PsiTypeElement typeElement) {
+    return typeElement.getType() instanceof PsiDiamondType ? checkFeature(typeElement.getParent(), Feature.DIAMOND_TYPES) : null;
+  }
+
+  @Nullable
+  public static HighlightInfo checkMultiCatchFeature(final PsiParameter parameter) {
+    return parameter.getType() instanceof PsiDisjunctionType ? checkFeature(parameter, Feature.MULTI_CATCH) : null;
+  }
+
+  @Nullable
+  public static HighlightInfo checkTryWithResourcesFeature(final PsiResourceVariable resourceVariable) {
+    return checkFeature(resourceVariable.getParent(), Feature.TRY_WITH_RESOURCES);
   }
 }
