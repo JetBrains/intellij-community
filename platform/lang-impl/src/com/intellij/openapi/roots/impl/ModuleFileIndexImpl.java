@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package com.intellij.openapi.roots.impl;
 
 import com.intellij.openapi.file.exclude.ProjectFileExclusionManagerImpl;
 import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.roots.ModuleFileIndex;
@@ -68,9 +67,8 @@ public class ModuleFileIndexImpl implements ModuleFileIndex {
     return FileIndexImplUtil.iterateRecursively(dir, myContentFilter, iterator);
   }
 
-  public boolean isContentJavaSourceFile(@NotNull VirtualFile file) {
+  public boolean isContentSourceFile(@NotNull VirtualFile file) {
     return !file.isDirectory()
-           && file.getFileType() == StdFileTypes.JAVA
            && !myFileTypeManager.isFileIgnored(file)
            && isInSourceContent(file);
   }

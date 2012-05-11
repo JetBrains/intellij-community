@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.impl.file.impl;
 
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.impl.scopes.LibraryRuntimeClasspathScope;
 import com.intellij.openapi.progress.ProgressManager;
@@ -85,7 +86,7 @@ public class ResolveScopeManagerImpl extends ResolveScopeManager {
     Module module = projectFileIndex.getModuleForFile(vFile);
     if (module != null) {
       boolean includeTests = projectFileIndex.isInTestSourceContent(vFile) ||
-                             !projectFileIndex.isContentJavaSourceFile(vFile);
+                             !(vFile.getFileType() == StdFileTypes.JAVA && projectFileIndex.isContentSourceFile(vFile));
       return GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module, includeTests);
     }
     else {

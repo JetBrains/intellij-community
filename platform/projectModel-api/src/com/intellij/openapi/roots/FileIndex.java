@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,14 +53,14 @@ public interface FileIndex {
   boolean isInContent(@NotNull VirtualFile fileOrDir);
 
   /**
-   * Returns true if <code>file</code> is a java source file which belongs to sources of the content.
-   * Note that sometimes a java file can belong to the content and be a source file but not belong to sources of the content.
+   * Returns true if <code>file</code> is a source file which belongs to sources of the content.
+   * Note that sometimes a file can belong to the content and be a source file but not belong to sources of the content.
    * This happens if sources of some library are located under the content (so they belong to the project content but not as sources).
    *
    * @param file the file to check.
-   * @return true if the file is a Java source file in the content sources, false otherwise.
+   * @return true if the file is a source file in the content sources, false otherwise.
    */
-  boolean isContentJavaSourceFile(@NotNull VirtualFile file);
+  boolean isContentSourceFile(@NotNull VirtualFile file);
 
   /**
    * Returns true if <code>fileOrDir</code> is a file or directory from the content source.

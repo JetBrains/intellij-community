@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -156,9 +156,8 @@ public class ProjectFileIndexImpl implements ProjectFileIndex {
     return myDirectoryIndex.getPackageName(dir);
   }
 
-  public boolean isContentJavaSourceFile(@NotNull VirtualFile file) {
+  public boolean isContentSourceFile(@NotNull VirtualFile file) {
     return !file.isDirectory() &&
-           file.getFileType() == StdFileTypes.JAVA &&
            !myFileTypeManager.isFileIgnored(file) &&
            isInSourceContent(file);
   }
