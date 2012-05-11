@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.roots;
 
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -48,31 +47,6 @@ public abstract class ProjectRootManager implements ModificationTracker {
    */
   @NotNull
   public abstract ProjectFileIndex getFileIndex();
-
-  /**
-   * Adds a listener for receiving notifications about changes in project roots.
-   * @deprecated Subscribe to {@link com.intellij.ProjectTopics#PROJECT_ROOTS} messages instead
-   *
-   * @param listener the listener instance.
-   */
-  public abstract void addModuleRootListener(ModuleRootListener listener);
-
-  /**
-   * Adds a listener for receiving notifications about changes in project roots.
-   * @deprecated Subscribe to {@link com.intellij.ProjectTopics#PROJECT_ROOTS} messages instead
-   *
-   * @param listener the listener instance.
-   * @param parentDisposable object, after whose disposing the listener should be removed
-   */
-  public abstract void addModuleRootListener(ModuleRootListener listener, Disposable parentDisposable);
-
-  /**
-   * Removes a listener for receiving notifications about changes in project roots.
-   * @deprecated Subscribe to {@link com.intellij.ProjectTopics#PROJECT_ROOTS} messages instead
-   *
-   * @param listener the listener instance.
-   */
-  public abstract void removeModuleRootListener(ModuleRootListener listener);
 
   /**
    * @deprecated use {@link #orderEntries()}

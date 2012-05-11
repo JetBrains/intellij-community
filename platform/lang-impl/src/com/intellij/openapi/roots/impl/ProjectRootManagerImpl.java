@@ -17,7 +17,6 @@
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.ProjectTopics;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
@@ -145,24 +144,6 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
   }
 
   private final Map<ModuleRootListener, MessageBusConnection> myListenerAdapters = new HashMap<ModuleRootListener, MessageBusConnection>();
-
-  public void addModuleRootListener(final ModuleRootListener listener) {
-    final MessageBusConnection connection = myProject.getMessageBus().connect();
-    myListenerAdapters.put(listener, connection);
-    connection.subscribe(ProjectTopics.PROJECT_ROOTS, listener);
-  }
-
-  public void addModuleRootListener(ModuleRootListener listener, Disposable parentDisposable) {
-    final MessageBusConnection connection = myProject.getMessageBus().connect(parentDisposable);
-    connection.subscribe(ProjectTopics.PROJECT_ROOTS, listener);
-  }
-
-  public void removeModuleRootListener(ModuleRootListener listener) {
-    final MessageBusConnection connection = myListenerAdapters.remove(listener);
-    if (connection != null) {
-      connection.disconnect();
-    }
-  }
 
   @Override
   @NotNull
