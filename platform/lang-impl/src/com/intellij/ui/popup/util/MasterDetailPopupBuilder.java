@@ -26,6 +26,7 @@ import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.Gray;
+import com.intellij.ui.TitledSeparator;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.speedSearch.FilteringListModel;
 import com.intellij.util.Alarm;
@@ -171,6 +172,7 @@ public class MasterDetailPopupBuilder {
       setEastComponent(detailView).
       setItemChoosenCallback(runnable).
       setMayBeParent(true).
+      setMinSize(new Dimension(-1, 700)).
       setFilteringEnabled(new Function<Object, String>() {
         public String fun(Object o) {
           return ((ItemWrapper)o).speedSearchText();
@@ -280,6 +282,11 @@ public class MasterDetailPopupBuilder {
     }
 
     public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+      if (value instanceof SplitterItem) {
+        String label = ((SplitterItem)value).getText();
+        final TitledSeparator separator = new TitledSeparator(label);
+        return separator;
+      }
       myRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
       return this;
     }

@@ -70,17 +70,19 @@ class XBreakpointItem implements BreakpointItem {
 
   @Override
   public void updateDetailView(DetailView panel) {
-    XSourcePosition sourcePosition = myBreakpoint.getSourcePosition();
-    if (sourcePosition != null) {
-      panel.navigateInPreviewEditor(sourcePosition.getFile(), new LogicalPosition(sourcePosition.getLine(), sourcePosition.getOffset()));
-    }
-
     Project project = ((XBreakpointBase)myBreakpoint).getProject();
 
     XLightBreakpointPropertiesPanel<XBreakpoint<?>> propertiesPanel =
       new XLightBreakpointPropertiesPanel<XBreakpoint<?>>(project, getManager(), myBreakpoint, true);
 
     panel.setDetailPanel(propertiesPanel.getMainPanel());
+
+    XSourcePosition sourcePosition = myBreakpoint.getSourcePosition();
+    if (sourcePosition != null) {
+      panel.navigateInPreviewEditor(sourcePosition.getFile(), new LogicalPosition(sourcePosition.getLine(), sourcePosition.getOffset()));
+    } else {
+      panel.clearEditor();
+    }
   }
 
   private XBreakpointManagerImpl getManager() {
@@ -106,10 +108,5 @@ class XBreakpointItem implements BreakpointItem {
   @Override
   public Object getBreakpoint() {
     return myBreakpoint;
-  }
-
-  @Override
-  public int getPriority() {
-    return 0;  //To change body of implemented methods use File | Settings | File Templates.
   }
 }

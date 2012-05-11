@@ -26,5 +26,4 @@ import com.intellij.ui.popup.util.ItemWrapper;
  */
 public interface BreakpointItem extends ItemWrapper {
   Object getBreakpoint();
-  int getPriority();
 }

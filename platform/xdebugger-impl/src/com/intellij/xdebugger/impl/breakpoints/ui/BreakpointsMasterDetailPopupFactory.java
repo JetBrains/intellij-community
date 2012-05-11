@@ -28,7 +28,6 @@ import com.intellij.ui.components.JBList;
 import com.intellij.ui.popup.util.ItemWrapper;
 import com.intellij.ui.popup.util.MasterDetailPopupBuilder;
 import com.intellij.util.PlatformIcons;
-import com.intellij.xdebugger.breakpoints.ui.BreakpointItem;
 import com.intellij.xdebugger.impl.DebuggerSupport;
 import org.jetbrains.annotations.Nullable;
 
@@ -138,8 +137,8 @@ public class BreakpointsMasterDetailPopupFactory {
 
   private BreakpointListModel createBreakpointsItemsList(DefaultListSelectionModel selectionModel) {
     final BreakpointListModel model = new BreakpointListModel();
-    final ArrayList<BreakpointItem> items = collectItems();
-    for (BreakpointItem item : items) {
+    final ArrayList<ItemWrapper> items = collectItems();
+    for (ItemWrapper item : items) {
       model.addElement(item);
     }
     model.subscribe(selectionModel);
@@ -148,8 +147,8 @@ public class BreakpointsMasterDetailPopupFactory {
 
 
 
-  private ArrayList<BreakpointItem> collectItems() {
-    ArrayList<BreakpointItem> items = new ArrayList<BreakpointItem>();
+  private ArrayList<ItemWrapper> collectItems() {
+    ArrayList<ItemWrapper> items = new ArrayList<ItemWrapper>();
     for (BreakpointPanelProvider panelProvider : myBreakpointPanelProviders) {
       panelProvider.provideBreakpointItems(myProject, items);
     }
@@ -188,8 +187,8 @@ public class BreakpointsMasterDetailPopupFactory {
     public void breakpointsChanged() {
       final int index = mySelectionModel.getLeadSelectionIndex();
       myModel.removeAllElements();
-      final ArrayList<BreakpointItem> items = collectItems();
-      for (BreakpointItem item : items) {
+      final ArrayList<ItemWrapper> items = collectItems();
+      for (ItemWrapper item : items) {
         myModel.addElement(item);
       }
       mySelectionModel.setLeadSelectionIndex(index);

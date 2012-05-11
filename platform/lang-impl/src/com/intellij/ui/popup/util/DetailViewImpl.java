@@ -23,6 +23,8 @@ import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.components.JBScrollPane;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -40,10 +42,15 @@ public class DetailViewImpl extends JPanel implements DetailView {
   private ItemWrapper myWrapper;
   private JPanel myDetailPanel;
 
+  private JBScrollPane myDetailScrollPanel;
+  private JPanel myDetailPanelWrapper;
+  private JLabel myNothingToShow = new JLabel("Nothing to show");
+
   public DetailViewImpl(Project project) {
     super(new BorderLayout());
     myProject = project;
     setPreferredSize(new Dimension(600, 400));
+    myNothingToShow.setHorizontalAlignment(JLabel.CENTER);
   }
 
   @Override
@@ -54,7 +61,7 @@ public class DetailViewImpl extends JPanel implements DetailView {
         wrapper.updateDetailView(this);
       }
       else {
-        cleanup();
+        clearEditor();
         repaint();
       }
 
@@ -62,18 +69,20 @@ public class DetailViewImpl extends JPanel implements DetailView {
     }
   }
 
-  private void cleanup() {
-    removeAll();
+  @Override
+  public void clearEditor() {
     if (getEditor() != null) {
+      remove(getEditor().getComponent());
       EditorFactory.getInstance().releaseEditor(getEditor());
       setEditor(null);
+      repaint();
     }
   }
 
   @Override
   public void removeNotify() {
     super.removeNotify();
-    cleanup();
+    clearEditor();
   }
 
   @Override
@@ -92,7 +101,7 @@ public class DetailViewImpl extends JPanel implements DetailView {
 
     if (document != null) {
       if (getEditor() == null || getEditor().getDocument() != document) {
-        cleanup();
+        clearEditor();
         setEditor(EditorFactory.getInstance().createViewer(document, project));
         EditorHighlighter highlighter = EditorHighlighterFactory.getInstance()
           .createEditorHighlighter(file, EditorColorsManager.getInstance().getGlobalScheme(), project);
@@ -112,7 +121,7 @@ public class DetailViewImpl extends JPanel implements DetailView {
       getEditor().getScrollingModel().scrollToCaret(ScrollType.CENTER);
     }
     else {
-      cleanup();
+      clearEditor();
 
       JLabel label = new JLabel("Navigate to selected " + (file.isDirectory() ? "directory " : "file ") + "in Project View");
       label.setHorizontalAlignment(JLabel.CENTER);
@@ -126,15 +135,33 @@ public class DetailViewImpl extends JPanel implements DetailView {
   }
 
   @Override
-  public void setDetailPanel(JPanel panel) {
+  public void setDetailPanel(@Nullable final JPanel panel) {
     if (panel == myDetailPanel) return;
 
-    if (myDetailPanel != null) {
-      remove(myDetailPanel);
+    if (panel != null) {
+      if (myDetailScrollPanel == null) {
+        myDetailPanelWrapper = new JPanel(new GridLayout(1, 1));
+
+        myDetailPanelWrapper.add(panel);
+
+        myDetailScrollPanel =
+          new JBScrollPane(myDetailPanelWrapper, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER) {
+            @Override
+            public Dimension getPreferredSize() {
+              final Dimension size = panel.getPreferredSize();
+              return new Dimension(size.width, size.height + 10);
+            }
+          };
+        add(myDetailScrollPanel, BorderLayout.SOUTH);
+      } else {
+        myDetailPanelWrapper.removeAll();
+        myDetailPanelWrapper.add(panel);
+      }
+    }
+    else {
+      myDetailPanelWrapper.removeAll();
+      myDetailPanelWrapper.add(myNothingToShow);
     }
     myDetailPanel = panel;
-    if (panel != null) {
-      add(panel, BorderLayout.SOUTH);
-    }
   }
 }

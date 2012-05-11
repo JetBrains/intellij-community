@@ -70,12 +70,6 @@ class JavaBreakpointItem implements BreakpointItem {
 
   @Override
   public void updateDetailView(DetailView panel) {
-    if (myBreakpoint instanceof BreakpointWithHighlighter) {
-      SourcePosition sourcePosition = ((BreakpointWithHighlighter)myBreakpoint).getSourcePosition();
-      VirtualFile virtualFile = sourcePosition.getFile().getVirtualFile();
-      panel.navigateInPreviewEditor(virtualFile, new LogicalPosition(sourcePosition.getLine(), 0));
-    }
-
     BreakpointPropertiesPanel breakpointPropertiesPanel = myBreakpointFactory
       .createBreakpointPropertiesPanel(myBreakpoint.getProject(), false);
     if (breakpointPropertiesPanel != null) {
@@ -85,6 +79,14 @@ class JavaBreakpointItem implements BreakpointItem {
     }
     else {
       panel.setDetailPanel(null);
+    }
+
+    if (myBreakpoint instanceof BreakpointWithHighlighter) {
+      SourcePosition sourcePosition = ((BreakpointWithHighlighter)myBreakpoint).getSourcePosition();
+      VirtualFile virtualFile = sourcePosition.getFile().getVirtualFile();
+      panel.navigateInPreviewEditor(virtualFile, new LogicalPosition(sourcePosition.getLine(), 0));
+    } else {
+      panel.clearEditor();
     }
   }
 
@@ -101,10 +103,5 @@ class JavaBreakpointItem implements BreakpointItem {
   @Override
   public Object getBreakpoint() {
     return myBreakpoint;
-  }
-
-  @Override
-  public int getPriority() {
-    return 0;  //To change body of implemented methods use File | Settings | File Templates.
   }
 }

@@ -20,7 +20,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.xdebugger.breakpoints.ui.BreakpointItem;
+import com.intellij.ui.popup.util.ItemWrapper;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -54,5 +54,5 @@ public abstract class BreakpointPanelProvider<B> {
 
   public abstract void onDialogClosed(final Project project);
 
-  public abstract void provideBreakpointItems(Project project, Collection<BreakpointItem> items);
+  public abstract void provideBreakpointItems(Project project, Collection<ItemWrapper> items);
 }

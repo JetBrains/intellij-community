@@ -24,10 +24,11 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.popup.util.ItemWrapper;
+import com.intellij.ui.popup.util.SplitterItem;
 import com.intellij.xdebugger.breakpoints.*;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.XDebuggerUtil;
-import com.intellij.xdebugger.breakpoints.ui.BreakpointItem;
 import com.intellij.xdebugger.impl.breakpoints.ui.AbstractBreakpointPanel;
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointPanelProvider;
 import com.intellij.xdebugger.impl.breakpoints.ui.XBreakpointsPanel;
@@ -128,10 +129,16 @@ public class XBreakpointPanelProvider extends BreakpointPanelProvider<XBreakpoin
   }
 
   @Override
-  public void provideBreakpointItems(Project project, Collection<BreakpointItem> items) {
-    XBreakpoint<?>[] allBreakpoints = XDebuggerManager.getInstance(project).getBreakpointManager().getAllBreakpoints();
-    for (XBreakpoint<?> breakpoint : allBreakpoints) {
-      items.add(new XBreakpointItem(breakpoint));
+  public void provideBreakpointItems(Project project, Collection<ItemWrapper> items) {
+    final XBreakpointType<?, ?>[] types = XBreakpointUtil.getBreakpointTypes();
+    final XBreakpointManager manager = XDebuggerManager.getInstance(project).getBreakpointManager();
+    for (XBreakpointType<?, ?> type : types) {
+      final Collection<? extends XBreakpoint<?>> breakpoints = manager.getBreakpoints(type);
+      if (breakpoints.isEmpty()) continue;
+      items.add(new SplitterItem(type.getTitle()));
+      for (XBreakpoint<?> breakpoint : breakpoints) {
+        items.add(new XBreakpointItem(breakpoint));
+      }
     }
   }
 

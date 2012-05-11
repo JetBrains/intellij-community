@@ -39,4 +39,6 @@ public interface DetailView {
   JPanel getDetailPanel();
 
   void setDetailPanel(@Nullable JPanel panel);
+
+  void clearEditor();
 }
