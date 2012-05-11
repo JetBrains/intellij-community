@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,15 +14,23 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 26-Dec-2007
+package com.intellij.openapi.roots.impl;
+
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ModuleRootEvent;
+
+/**
+ *  @author dsl
  */
-package com.intellij.openapi.roots;
+public class ModuleRootEventImpl extends ModuleRootEvent {
+  private final boolean myFiletypes;
 
-import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.util.JDOMExternalizable;
+  public ModuleRootEventImpl(Project project, boolean filetypes) {
+    super(project);
+    myFiletypes = filetypes;
+  }
 
-public abstract class ProjectExtension implements JDOMExternalizable{
-  public static final ExtensionPointName<ProjectExtension> EP_NAME = ExtensionPointName.create("com.intellij.projectExtension");
+  public boolean isCausedByFileTypesChange() {
+    return myFiletypes;
+  }
 }
