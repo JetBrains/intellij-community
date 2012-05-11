@@ -40,6 +40,16 @@ public class DocStringParameterReference extends PsiReferenceBase<PsiElement> {
       if (init != null) {
         return resolveParameter(init);
       }
+      else {
+        final PyStatementList statementList = ((PyClass)owner).getStatementList();
+        for (PsiElement element : statementList.getChildren()) {
+          if (element instanceof PyAssignmentStatement) {
+            final PyExpression[] targets = ((PyAssignmentStatement)element).getTargets();
+            if (targets.length > 0 && targets[0].getText().equals(getCanonicalText()))
+              return targets[0];
+          }
+        }
+      }
     }
     return null;
   }

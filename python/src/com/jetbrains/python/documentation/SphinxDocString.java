@@ -61,12 +61,12 @@ public class SphinxDocString extends StructuredDocString {
 
   @Override
   public String getReturnDescription() {
-    return concatTrimmedLines(getTagValue(EpydocString.RETURN_TAGS));
+    return concatTrimmedLines(getTagValue(RETURN_TAGS));
   }
 
   @Override
   public List<String> getRaisedExceptions() {
-    return toUniqueStrings(getTagArguments(EpydocString.RAISES_TAGS));
+    return toUniqueStrings(getTagArguments(RAISES_TAGS));
   }
 
   @Nullable
@@ -75,12 +75,12 @@ public class SphinxDocString extends StructuredDocString {
     if (exceptionName == null) {
       return null;
     }
-    return concatTrimmedLines(getTagValue(EpydocString.RAISES_TAGS, exceptionName));
+    return concatTrimmedLines(getTagValue(RAISES_TAGS, exceptionName));
   }
 
   @Override
   public String getAttributeDescription() {
-    return concatTrimmedLines(getTagValue(EpydocString.VARIABLE_TAGS));
+    return concatTrimmedLines(getTagValue(VARIABLE_TAGS));
   }
 
   @Override

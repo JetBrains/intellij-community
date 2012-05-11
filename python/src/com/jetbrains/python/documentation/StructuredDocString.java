@@ -27,6 +27,10 @@ public abstract class StructuredDocString {
 
   public static String[] PARAM_TAGS = new String[] { "param", "parameter", "arg", "argument" };
   public static String[] PARAM_TYPE_TAGS = new String[] { "type" };
+  public static String[] VARIABLE_TAGS = new String[] { "ivar", "cvar", "var" };
+
+  public static String[] RAISES_TAGS = new String[] { "raises", "raise", "except", "exception" };
+  public static String[] RETURN_TAGS = new String[] { "return", "returns" };
 
   @Nullable
   public static StructuredDocString parse(String text) {

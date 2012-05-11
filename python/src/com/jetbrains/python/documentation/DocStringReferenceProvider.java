@@ -47,6 +47,9 @@ public class DocStringReferenceProvider extends PsiReferenceProvider {
                                             docString.getTagArguments(StructuredDocString.PARAM_TYPE_TAGS), "parameter_type"));
           result.addAll(referencesFromNames(element, offset, docString,
                                             docString.getKeywordArgumentSubstrings(), "keyword"));
+
+          result.addAll(referencesFromNames(element, offset, docString,
+                                            docString.getTagArguments(StructuredDocString.VARIABLE_TAGS), "variable"));
         }
         return result.toArray(new PsiReference[result.size()]);
       }
