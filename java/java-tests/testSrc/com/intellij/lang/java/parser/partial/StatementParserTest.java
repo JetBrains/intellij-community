@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,8 +18,6 @@ package com.intellij.lang.java.parser.partial;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.java.parser.JavaParsers;
 import com.intellij.lang.java.parser.JavaParsingTestCase;
-import com.intellij.pom.java.LanguageLevel;
-
 
 public class StatementParserTest extends JavaParsingTestCase {
   public StatementParserTest() {
@@ -119,10 +117,10 @@ public class StatementParserTest extends JavaParsingTestCase {
   public void testTryNormal0() { doParserTest("try{}catch(E e){}"); }
   public void testTryNormal1() { doParserTest("try{}catch(final E e){}finally{}"); }
   public void testTryNormal2() { doParserTest("try{}finally{}"); }
-  public void testTryNormal3() { doParserTestJDK7("try{}catch(A|B e){}"); }
-  public void testTryNormal4() { doParserTestJDK7("try(R r = 0){}"); }
-  public void testTryNormal5() { doParserTestJDK7("try(R1 r1 = 1; R2 r2 = 2){}"); }
-  public void testTryNormal6() { doParserTestJDK7("try(R r = 0;){}"); }
+  public void testTryNormal3() { doParserTest("try{}catch(A|B e){}"); }
+  public void testTryNormal4() { doParserTest("try(R r = 0){}"); }
+  public void testTryNormal5() { doParserTest("try(R1 r1 = 1; R2 r2 = 2){}"); }
+  public void testTryNormal6() { doParserTest("try(R r = 0;){}"); }
   public void testTryIncomplete0() { doParserTest("try"); }
   public void testTryIncomplete1() { doParserTest("try{}"); }
   public void testTryIncomplete2() { doParserTest("try{}catch"); }
@@ -131,16 +129,16 @@ public class StatementParserTest extends JavaParsingTestCase {
   public void testTryIncomplete5() { doParserTest("try{}catch(E e"); }
   public void testTryIncomplete6() { doParserTest("try{}catch(E e)"); }
   public void testTryIncomplete7() { doParserTest("try{}finally"); }
-  public void testTryIncomplete8() { doParserTestJDK7("try{}catch(A|)"); }
-  public void testTryIncomplete9() { doParserTestJDK7("try{}catch(A|B)"); }
-  public void testTryIncomplete10() { doParserTestJDK7("try({}"); }
-  public void testTryIncomplete11() { doParserTestJDK7("try(){}"); }
-  public void testTryIncomplete12() { doParserTestJDK7("try(;){}"); }
-  public void testTryIncomplete13() { doParserTestJDK7("try(final ){}"); }
-  public void testTryIncomplete14() { doParserTestJDK7("try(int){}"); }
-  public void testTryIncomplete15() { doParserTestJDK7("try(R r){}"); }
-  public void testTryIncomplete16() { doParserTestJDK7("try(R r =){}"); }
-  public void testTryIncomplete17() { doParserTestJDK7("try(R r = 0;;){}"); }
+  public void testTryIncomplete8() { doParserTest("try{}catch(A|)"); }
+  public void testTryIncomplete9() { doParserTest("try{}catch(A|B)"); }
+  public void testTryIncomplete10() { doParserTest("try({}"); }
+  public void testTryIncomplete11() { doParserTest("try(){}"); }
+  public void testTryIncomplete12() { doParserTest("try(;){}"); }
+  public void testTryIncomplete13() { doParserTest("try(final ){}"); }
+  public void testTryIncomplete14() { doParserTest("try(int){}"); }
+  public void testTryIncomplete15() { doParserTest("try(R r){}"); }
+  public void testTryIncomplete16() { doParserTest("try(R r =){}"); }
+  public void testTryIncomplete17() { doParserTest("try(R r = 0;;){}"); }
 
   public void testWhileNormal() { doParserTest("while (true) foo();"); }
   public void testWhileIncomplete0() { doParserTest("while"); }
@@ -151,33 +149,22 @@ public class StatementParserTest extends JavaParsingTestCase {
   public void testWhileIncomplete5() { doParserTest("while() foo();"); }
 
   private void doBlockParserTest(final String text) {
-    doParserTest(text, new MyTestParser1());
+    doParserTest(text, new MyBlockTestParser());
   }
-
-  private void doParserTest(final String text) {
-    doParserTest(text, new MyTestParser2());
-  }
-
-  private void doParserTestJDK7(final String text) {
-    withLevel(LanguageLevel.JDK_1_7, new Runnable() {
-      @Override
-      public void run() {
-        doParserTest(text);
-      }
-    });
-  }
-
-  private static class MyTestParser2 implements TestParser {
-    @Override
-    public void parse(final PsiBuilder builder) {
-      JavaParsers.STATEMENT_PARSER.parseStatements(builder);
-    }
-  }
-
-  private static class MyTestParser1 implements TestParser {
+  private static class MyBlockTestParser implements TestParser {
     @Override
     public void parse(final PsiBuilder builder) {
       JavaParsers.STATEMENT_PARSER.parseCodeBlockDeep(builder, true);
+    }
+  }
+
+  private void doParserTest(final String text) {
+    doParserTest(text, new MyStatementsTestParser());
+  }
+  private static class MyStatementsTestParser implements TestParser {
+    @Override
+    public void parse(final PsiBuilder builder) {
+      JavaParsers.STATEMENT_PARSER.parseStatements(builder);
     }
   }
 }
