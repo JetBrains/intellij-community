@@ -24,9 +24,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.module.impl.ModuleImpl;
-import com.intellij.openapi.module.impl.scopes.JdkScope;
-import com.intellij.openapi.module.impl.scopes.LibraryRuntimeClasspathScope;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -43,10 +40,7 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.PsiModificationTrackerImpl;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.EventDispatcher;
-import com.intellij.util.containers.ConcurrentHashMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
@@ -56,7 +50,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
-import java.util.concurrent.ConcurrentMap;
 
 /**
  * @author max
@@ -77,8 +70,6 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
   private long myModificationCount = 0;
   @NonNls private static final String ATTRIBUTE_VERSION = "version";
 
-  private final ConcurrentMap<List<Module>, GlobalSearchScope> myLibraryScopes = new ConcurrentHashMap<List<Module>, GlobalSearchScope>();
-  private final ConcurrentMap<String, GlobalSearchScope> myJdkScopes = new ConcurrentHashMap<String, GlobalSearchScope>();
   private final OrderRootsCache myRootsCache;
 
   protected boolean myStartupActivityPerformed = false;
@@ -350,8 +341,6 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
 
   protected void clearScopesCaches() {
     clearScopesCachesForModules();
-    myJdkScopes.clear();
-    myLibraryScopes.clear();
   }
 
   public void clearScopesCachesForModules() {
@@ -359,7 +348,6 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
     Module[] modules = ModuleManager.getInstance(myProject).getModules();
     for (Module module : modules) {
       ((ModuleRootManagerImpl)ModuleRootManager.getInstance(module)).dropCaches();
-      ((ModuleImpl)module).clearScopesCache();
     }
   }
 
@@ -454,52 +442,6 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
 
   public Project getProject() {
     return myProject;
-  }
-
-  private static class LibrariesOnlyScope extends GlobalSearchScope {
-    private final GlobalSearchScope myOriginal;
-
-    private LibrariesOnlyScope(final GlobalSearchScope original) {
-      super(original.getProject());
-      myOriginal = original;
-    }
-
-    public boolean contains(VirtualFile file) {
-      return myOriginal.contains(file);
-    }
-
-    public int compare(VirtualFile file1, VirtualFile file2) {
-      return myOriginal.compare(file1, file2);
-    }
-
-    public boolean isSearchInModuleContent(@NotNull Module aModule) {
-      return false;
-    }
-
-    public boolean isSearchInLibraries() {
-      return true;
-    }
-  }
-
-  public GlobalSearchScope getScopeForLibraryUsedIn(List<Module> modulesLibraryIsUsedIn) {
-    GlobalSearchScope scope = myLibraryScopes.get(modulesLibraryIsUsedIn);
-    if (scope != null) {
-      return scope;
-    }
-    GlobalSearchScope newScope = modulesLibraryIsUsedIn.isEmpty()
-                                 ? new LibrariesOnlyScope(GlobalSearchScope.allScope(myProject))
-                                 : new LibraryRuntimeClasspathScope(myProject, modulesLibraryIsUsedIn);
-    return ConcurrencyUtil.cacheOrGet(myLibraryScopes, modulesLibraryIsUsedIn, newScope);
-  }
-
-  public GlobalSearchScope getScopeForJdk(final JdkOrderEntry jdkOrderEntry) {
-    final String jdk = jdkOrderEntry.getJdkName();
-    if (jdk == null) return GlobalSearchScope.allScope(myProject);
-    GlobalSearchScope scope = myJdkScopes.get(jdk);
-    if (scope == null) {
-      return ConcurrencyUtil.cacheOrGet(myJdkScopes,jdk, new JdkScope(myProject, jdkOrderEntry));
-    }
-    return scope;
   }
 
   protected void doSynchronizeRoots() {

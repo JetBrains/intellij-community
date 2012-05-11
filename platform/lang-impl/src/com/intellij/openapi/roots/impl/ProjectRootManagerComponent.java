@@ -27,6 +27,7 @@ import com.intellij.openapi.fileTypes.FileTypeListener;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.module.impl.ModuleImpl;
 import com.intellij.openapi.project.DumbServiceImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
@@ -267,6 +268,21 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl {
     }
 
     return result;
+  }
+
+  @Override
+  protected void clearScopesCaches() {
+    super.clearScopesCaches();
+    LibraryScopeCache.getInstance(myProject).clear();
+  }
+
+  @Override
+  public void clearScopesCachesForModules() {
+    super.clearScopesCachesForModules();
+    Module[] modules = ModuleManager.getInstance(myProject).getModules();
+    for (Module module : modules) {
+      ((ModuleImpl)module).clearScopesCache();
+    }
   }
 
   private class AppListener extends ApplicationAdapter {

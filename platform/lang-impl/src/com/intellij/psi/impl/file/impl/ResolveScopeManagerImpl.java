@@ -21,7 +21,7 @@ import com.intellij.openapi.module.impl.scopes.LibraryRuntimeClasspathScope;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
-import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
+import com.intellij.openapi.roots.impl.LibraryScopeCache;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerImpl;
@@ -99,7 +99,7 @@ public class ResolveScopeManagerImpl extends ResolveScopeManager {
         ProgressManager.checkCanceled();
 
         if (entry instanceof JdkOrderEntry) {
-          return ((ProjectRootManagerEx)myProjectRootManager).getScopeForJdk((JdkOrderEntry)entry);
+          return LibraryScopeCache.getInstance(myProject).getScopeForSdk((JdkOrderEntry)entry);
         }
 
         if (entry instanceof LibraryOrderEntry) {
@@ -111,7 +111,7 @@ public class ResolveScopeManagerImpl extends ResolveScopeManager {
         }
       }
 
-      GlobalSearchScope allCandidates = ((ProjectRootManagerEx)myProjectRootManager).getScopeForLibraryUsedIn(modulesLibraryUsedIn);
+      GlobalSearchScope allCandidates = LibraryScopeCache.getInstance(myProject).getScopeForLibraryUsedIn(modulesLibraryUsedIn);
       if (lib != null) {
         final LibraryRuntimeClasspathScope preferred = new LibraryRuntimeClasspathScope(myProject, lib);
         // prefer current library
