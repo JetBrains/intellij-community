@@ -21,7 +21,6 @@ import org.jetbrains.annotations.NotNull;
 import java.awt.*;
 
 public abstract class TabLayout {
-  private Rectangle myHeaderRect;
 
   public ShapeTransform createShapeTransform(Dimension dimension) {
     return createShapeTransform(new Rectangle(0, 0, dimension.width, dimension.height));

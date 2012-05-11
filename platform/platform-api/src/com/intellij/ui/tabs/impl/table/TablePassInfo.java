@@ -27,15 +27,15 @@ import java.util.List;
 import java.util.Map;
 
 public class TablePassInfo extends LayoutPassInfo {
-  List<TableRow> table = new ArrayList<TableRow>();
+  final List<TableRow> table = new ArrayList<TableRow>();
   public Rectangle toFitRec;
-  Map<TabInfo, TableRow> myInfo2Row = new HashMap<TabInfo, TableRow>();
+  final Map<TabInfo, TableRow> myInfo2Row = new HashMap<TabInfo, TableRow>();
 
   int requiredWidth;
   int requiredRows;
   int rowToFitMaxX;
 
-  JBTabsImpl myTabs;
+  final JBTabsImpl myTabs;
 
   TablePassInfo(final JBTabsImpl tabs, List<TabInfo> visibleInfos) {
     super(visibleInfos);

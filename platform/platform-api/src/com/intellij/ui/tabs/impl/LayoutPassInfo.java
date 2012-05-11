@@ -23,7 +23,7 @@ import java.util.List;
 
 public abstract class LayoutPassInfo {
 
-  public List<TabInfo> myVisibleInfos;
+  public final List<TabInfo> myVisibleInfos;
 
   protected LayoutPassInfo(List<TabInfo> visibleInfos) {
     myVisibleInfos = visibleInfos;

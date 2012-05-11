@@ -29,12 +29,12 @@ import java.awt.event.MouseEvent;
 
 class DragHelper extends MouseDragHelper {
 
-  JBTabsImpl myTabs;
-  TabInfo myDragSource;
-  Rectangle myDragOriginalRec;
+  private final JBTabsImpl myTabs;
+  private TabInfo myDragSource;
+  private Rectangle myDragOriginalRec;
 
   Rectangle myDragRec;
-  Dimension myHoldDelta;
+  private Dimension myHoldDelta;
 
   private TabInfo myDragOutSource;
   private TabLabel myPressedTabLabel;
@@ -147,7 +147,7 @@ class DragHelper extends MouseDragHelper {
     if (targetLabel != null) {
       Rectangle saved = myDragRec;
       myDragRec = null;
-      myTabs.reallocate(myDragSource, targetLabel.getInfo(), true);
+      myTabs.reallocate(myDragSource, targetLabel.getInfo());
       myDragOriginalRec = myTabs.myInfo2Label.get(myDragSource).getBounds();
       myDragRec = saved;
       myTabs.moveDraggedTabLabel();

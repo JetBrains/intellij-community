@@ -27,23 +27,18 @@ public abstract class ShapeTransform {
 
   private Rectangle myShapeRect;
 
-  protected int myXTransform;
-  protected int myYTransform;
-  private boolean mySwap;
+  private final int myXTransform;
+  private final int myYTransform;
+  private final boolean mySwap;
 
-  public ShapeTransform(Rectangle shapeRect, int xTransform, int yTransform, boolean swap) {
+  protected ShapeTransform(Rectangle shapeRect, int xTransform, int yTransform, boolean swap) {
     myShapeRect = shapeRect;
     myXTransform = xTransform;
     myYTransform = yTransform;
     mySwap = swap;
   }
 
-  public ShapeTransform(int XTranform, int YTranform) {
-    myXTransform = XTranform;
-    myYTransform = YTranform;
-  }
-
-  public final Rectangle getShapeRect() {
+  protected final Rectangle getShapeRect() {
     return myShapeRect;
   }
 
@@ -63,20 +58,8 @@ public abstract class ShapeTransform {
     return deltaY * myYTransform;
   }
 
-  public final <T> T transformX1(T o1, T o2) {
-    return (mySwap ? myYTransform : myXTransform) == 1 ? o1: o2;
-  }
-
-  public final <T> T transformX2(T o1, T o2) {
-    return (mySwap ? myYTransform : myXTransform) == 1 ? o2: o1;
-  }
-
   public final <T> T transformY1(T o1, T o2) {
     return (mySwap ? myXTransform : myYTransform) == 1 ? o1: o2;
-  }
-
-  public final <T> T transformY2(T o1, T o2) {
-    return (mySwap ? myXTransform : myYTransform) == 1 ? o2: o1;
   }
 
   public abstract Insets transformInsets(Insets insets);
@@ -136,7 +119,7 @@ public abstract class ShapeTransform {
     return reset(null);
   }
 
-  public final ShapeTransform reset(Rectangle shapeRec) {
+  protected final ShapeTransform reset(Rectangle shapeRec) {
     myPath = new GeneralPath();
     if (shapeRec != null) {
       myShapeRect = shapeRec;
