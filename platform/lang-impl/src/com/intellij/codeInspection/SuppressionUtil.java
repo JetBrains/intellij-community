@@ -58,7 +58,7 @@ public class SuppressionUtil {
 
     for (@NonNls String id : ids) {
       @NonNls String trim = id.trim();
-      if (trim.equalsIgnoreCase(ALL)) return true;
+      if (trim.equals(inspectionToolID) || trim.equalsIgnoreCase(ALL)) return true;
     }
     return false;
   }
