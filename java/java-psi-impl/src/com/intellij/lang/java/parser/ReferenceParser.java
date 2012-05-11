@@ -209,9 +209,7 @@ public class ReferenceParser {
       typeInfo.isParameterized = parseReferenceParameterList(builder, true, diamonds);
     }
     else {
-      if (!isStaticImport || builder.getTokenType() == JavaTokenType.DOT) {
-        emptyElement(builder, JavaElementType.REFERENCE_PARAMETER_LIST);
-      }
+      emptyElement(builder, JavaElementType.REFERENCE_PARAMETER_LIST);
     }
 
     boolean hasIdentifier;
@@ -261,7 +259,7 @@ public class ReferenceParser {
       if (parameterList) {
         typeInfo.isParameterized = parseReferenceParameterList(builder, true, diamonds);
       }
-      else if (!isStaticImport || builder.getTokenType() == JavaTokenType.DOT) {
+      else {
         emptyElement(builder, JavaElementType.REFERENCE_PARAMETER_LIST);
       }
     }

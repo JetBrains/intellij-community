@@ -266,6 +266,15 @@ public class IdeaProjectLoader {
       }
     }
 
+    def targetLevels = componentTag?.bytecodeTargetLevel
+    if (!targetLevels.isEmpty()) {
+      def targetLevelTag = targetLevels.first()
+      configuration.bytecodeTarget.projectBytecodeTarget = targetLevelTag."@target" ?: null;
+      targetLevelTag.module?.each {
+        configuration.bytecodeTarget.modulesBytecodeTarget[it."@name"] = it."@target" ?: ""
+      }
+    }
+
     def addNotNullTag = componentTag?.addNotNullAssertions
     if (addNotNullTag != null) {
       project.compilerConfiguration.addNotNullAssertions = parseBoolean(addNotNullTag."@enabled", true);

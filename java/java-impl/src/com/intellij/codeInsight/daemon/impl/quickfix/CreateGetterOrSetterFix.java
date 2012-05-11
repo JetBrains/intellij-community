@@ -76,17 +76,37 @@ public class CreateGetterOrSetterFix implements IntentionAction, LowPriorityActi
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     if (!myField.isValid()) return false;
-    PsiClass aClass = myField.getContainingClass();
+
+    final PsiClass aClass = myField.getContainingClass();
     if (aClass == null) {
       return false;
     }
-    if (myCreateGetter && PropertyUtil.findPropertyGetter(aClass, myPropertyName, myField.hasModifierProperty(PsiModifier.STATIC), false) != null) {
-      return false;
+
+    if (myCreateGetter){
+      if (isStaticFinal(myField) || PropertyUtil.findPropertyGetter(aClass, myPropertyName, isStatic(myField), false) != null){
+        return false;
+      }
     }
-    if (myCreateSetter && PropertyUtil.findPropertySetter(aClass, myPropertyName, myField.hasModifierProperty(PsiModifier.STATIC), false) != null) {
-      return false;
+
+    if (myCreateSetter){
+      if(isFinal(myField) || PropertyUtil.findPropertySetter(aClass, myPropertyName, isStatic(myField), false) != null){
+        return false;
+      }
     }
+
     return true;
+  }
+
+  private static boolean isFinal(@NotNull PsiField field){
+    return field.hasModifierProperty(PsiModifier.FINAL);
+  }
+
+  private static boolean isStatic(@NotNull PsiField field){
+    return field.hasModifierProperty(PsiModifier.STATIC);
+  }
+
+  private static boolean isStaticFinal(@NotNull PsiField field){
+    return isStatic(field) && isFinal(field);
   }
 
   @Override

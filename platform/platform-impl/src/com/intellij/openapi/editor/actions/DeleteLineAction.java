@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,44 +53,8 @@ public class DeleteLineAction extends TextComponentEditorAction {
         document.deleteString(lineStartOffset, nextLineStartOffset);
         return;
       }
-      deleteLineAtCaret(editor);
+      editor.getSelectionModel().selectLineAtCaret();
+      EditorModificationUtil.deleteSelectedText(editor);
     }
-  }
-
-  public static void deleteLineAtCaret(Editor editor) {
-    LogicalPosition logicalPosition = editor.getCaretModel().getLogicalPosition();
-    int lineNumber = logicalPosition.line;
-    Document document = editor.getDocument();
-    if (lineNumber >= document.getLineCount())
-      return;
-
-    if (lineNumber == document.getLineCount() - 1){
-      if (document.getLineCount() > 0 && lineNumber > 0){
-        int start = document.getLineEndOffset(lineNumber - 1);
-        int end = document.getLineEndOffset(lineNumber) + document.getLineSeparatorLength(lineNumber);
-        document.deleteString(start, end);
-        LogicalPosition pos = new LogicalPosition(lineNumber - 1, logicalPosition.column);
-        editor.getCaretModel().moveToLogicalPosition(pos);
-      }
-      else{
-        document.deleteString(0, document.getTextLength());
-        editor.getCaretModel().moveToOffset(0);
-      }
-    }
-    else{
-      VisualPosition caretPosition = editor.getCaretModel().getVisualPosition();
-      VisualPosition thisLineVisible = new VisualPosition(caretPosition.line, 0);
-      LogicalPosition thisLineLogical = editor.visualToLogicalPosition(thisLineVisible);
-      VisualPosition nextLineVisible = new VisualPosition(caretPosition.line + 1, 0);
-      LogicalPosition nextLineLogical = editor.visualToLogicalPosition(nextLineVisible);
-
-      int startOffset = editor.logicalPositionToOffset(thisLineLogical);
-      int endOffset = editor.logicalPositionToOffset(nextLineLogical);
-
-      document.deleteString(startOffset, endOffset);
-    }
-
-    editor.getCaretModel().moveToLogicalPosition(logicalPosition);
-    editor.getSelectionModel().removeSelection();
   }
 }

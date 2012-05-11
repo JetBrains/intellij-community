@@ -662,20 +662,31 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
     }
   }
 
-  protected static void clearLogcatAndConsole(@NotNull Project project, @NotNull IDevice device) {
-    final ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(AndroidLogcatToolWindowFactory.TOOL_WINDOW_ID);
-    if (toolWindow == null) {
-      return;
-    }
+  protected static void clearLogcatAndConsole(@NotNull final Project project, @NotNull final IDevice device) {
+    final boolean[] result = {true};
 
-    for (Content content : toolWindow.getContentManager().getContents()) {
-      final AndroidLogcatToolWindowView view = content.getUserData(AndroidLogcatToolWindowView.ANDROID_LOGCAT_VIEW_KEY);
+    ApplicationManager.getApplication().invokeAndWait(new Runnable() {
+      @Override
+      public void run() {
+        final ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(AndroidLogcatToolWindowFactory.TOOL_WINDOW_ID);
+        if (toolWindow == null) {
+          result[0] = false;
+          return;
+        }
 
-      if (view != null && device == view.getSelectedDevice()) {
-        view.getLogConsole().clear();
+        for (Content content : toolWindow.getContentManager().getContents()) {
+          final AndroidLogcatToolWindowView view = content.getUserData(AndroidLogcatToolWindowView.ANDROID_LOGCAT_VIEW_KEY);
+
+          if (view != null && device == view.getSelectedDevice()) {
+            view.getLogConsole().clear();
+          }
+        }
       }
+    }, ModalityState.defaultModalityState());
+
+    if (result[0]) {
+      AndroidLogcatUtil.clearLogcat(project, device);
     }
-    AndroidLogcatUtil.clearLogcat(project, device);
   }
 
   @NotNull

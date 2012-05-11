@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -65,25 +65,16 @@ public class PsiImportStaticReferenceElementImpl extends CompositePsiElement imp
   @Override
   public final ASTNode findChildByRole(int role) {
     LOG.assertTrue(ChildRole.isUnique(role));
-    switch(role){
+    switch (role) {
       default:
         return null;
 
       case ChildRole.REFERENCE_NAME:
-        if (getLastChildNode().getElementType() == JavaTokenType.IDENTIFIER){
-          return getLastChildNode();
-        }
-        else{
-          return null;
-        }
+        return findChildByType(JavaTokenType.IDENTIFIER);
 
       case ChildRole.QUALIFIER:
-        if (getFirstChildNode().getElementType() == JavaElementType.JAVA_CODE_REFERENCE){
-          return getFirstChildNode();
-        }
-        else{
-          return null;
-        }
+        final TreeElement node = getFirstChildNode();
+        return node.getElementType() == JavaElementType.JAVA_CODE_REFERENCE ? node : null;
 
       case ChildRole.DOT:
         return findChildByType(JavaTokenType.DOT);

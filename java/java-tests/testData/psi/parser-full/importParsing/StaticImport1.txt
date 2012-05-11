@@ -22,4 +22,6 @@ PsiJavaFile:StaticImport1.java
             <empty list>
         PsiJavaToken:DOT('.')
         PsiIdentifier:sort('sort')
+        PsiReferenceParameterList
+          <empty list>
       PsiJavaToken:SEMICOLON(';')

@@ -296,34 +296,6 @@ public class ContentEntryImpl extends RootModelComponentBase implements ContentE
     }
   }
 
-  @Override
-  protected void projectOpened() {
-    super.projectOpened();
-    for (SourceFolder sourceFolder : mySourceFolders) {
-      ((RootModelComponentBase)sourceFolder).projectOpened();
-    }
-    for (ExcludeFolder excludeFolder : myExcludeFolders) {
-      ((RootModelComponentBase)excludeFolder).projectOpened();
-    }
-    for (ExcludedOutputFolder excludedOutputFolder : myExcludedOutputFolders) {
-      ((RootModelComponentBase)excludedOutputFolder).projectOpened();
-    }
-  }
-
-  @Override
-  protected void projectClosed() {
-    super.projectClosed();
-    for (SourceFolder sourceFolder : mySourceFolders) {
-      ((RootModelComponentBase)sourceFolder).projectClosed();
-    }
-    for (ExcludeFolder excludeFolder : myExcludeFolders) {
-      ((RootModelComponentBase)excludeFolder).projectClosed();
-    }
-    for (ExcludedOutputFolder excludedOutputFolder : myExcludedOutputFolders) {
-      ((RootModelComponentBase)excludedOutputFolder).projectClosed();
-    }
-  }
-
   public void writeExternal(@NotNull Element element) throws WriteExternalException {
     assert !isDisposed();
     LOG.assertTrue(ELEMENT_NAME.equals(element.getName()));

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,36 +17,15 @@ package com.intellij.openapi.vfs.pointers;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public abstract class VirtualFilePointerManager implements Disposable {
+public abstract class VirtualFilePointerManager implements Disposable, ModificationTracker {
   public static VirtualFilePointerManager getInstance() {
     return ApplicationManager.getApplication().getComponent(VirtualFilePointerManager.class);
   }
-
-  /** @see #create(String, com.intellij.openapi.Disposable, VirtualFilePointerListener) */
-  @Deprecated
-  public abstract VirtualFilePointer create(String url, VirtualFilePointerListener listener);
-
-  /** @see #create(com.intellij.openapi.vfs.VirtualFile, com.intellij.openapi.Disposable, VirtualFilePointerListener)  */
-  @Deprecated
-  public abstract VirtualFilePointer create(VirtualFile file, VirtualFilePointerListener listener);
-
-  /** @see #duplicate(VirtualFilePointer, com.intellij.openapi.Disposable, VirtualFilePointerListener)  */
-  @Deprecated
-  public abstract VirtualFilePointer duplicate (VirtualFilePointer pointer, VirtualFilePointerListener listener);
-
-  @Deprecated
-  public abstract void kill(VirtualFilePointer pointer, VirtualFilePointerListener listener);
-
-  /** @see #createContainer(com.intellij.openapi.Disposable)  */
-  @Deprecated
-  public abstract VirtualFilePointerContainer createContainer();
-
-  @Deprecated
-  public abstract VirtualFilePointerContainer createContainer(VirtualFilePointerFactory factory);
 
   @NotNull
   public abstract VirtualFilePointer create(@NotNull String url, @NotNull Disposable parent, @Nullable VirtualFilePointerListener listener);

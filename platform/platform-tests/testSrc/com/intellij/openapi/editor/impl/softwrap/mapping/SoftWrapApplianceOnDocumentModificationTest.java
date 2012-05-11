@@ -293,7 +293,7 @@ public class SoftWrapApplianceOnDocumentModificationTest extends AbstractEditorP
       "This a long string that is expected to be wrapped in more than one visual line<caret>";
     init(20, text);
 
-    List<? extends SoftWrap> softWrapsBeforeModification = new ArrayList<SoftWrap>(getSoftWrapModel().getRegisteredSoftWraps());
+    List<SoftWrap> softWrapsBeforeModification = new ArrayList<SoftWrap>(getSoftWrapModel().getRegisteredSoftWraps());
     assertTrue(softWrapsBeforeModification.size() > 0);
     
     backspace();
@@ -307,7 +307,7 @@ public class SoftWrapApplianceOnDocumentModificationTest extends AbstractEditorP
       "Long line2 that is expected to be soft-wrapped<caret>";
     init(20, text);
 
-    List<? extends SoftWrap> softWrapsBeforeModification = new ArrayList<SoftWrap>(getSoftWrapModel().getRegisteredSoftWraps());
+    List<SoftWrap> softWrapsBeforeModification = new ArrayList<SoftWrap>(getSoftWrapModel().getRegisteredSoftWraps());
     assertTrue(softWrapsBeforeModification.size() > 0);
 
     int offset = myEditor.getCaretModel().getOffset();
@@ -967,6 +967,17 @@ public class SoftWrapApplianceOnDocumentModificationTest extends AbstractEditorP
     assertEquals(offset, caretModel.getOffset()); // Navigating from 'after soft wrap' to the 'before soft wrap' position.
     delete();
     assertEquals("text 234", myEditor.getDocument().getText());
+  }
+
+  public void testSelectionOfLineWithSoftWrapAndFoldRegion() throws IOException {
+    final String text =
+      "123\n" +
+      "fold line 1\n" +
+      "fold line 2 456";
+    init(6, text);
+    addCollapsedFoldRegion(2, text.indexOf("4"), "...");
+    myEditor.getSelectionModel().selectLineAtCaret();
+    assertEquals(text, myEditor.getSelectionModel().getSelectedText());
   }
   
   private void init(final int visibleWidthInColumns, @NotNull String fileText) throws IOException {

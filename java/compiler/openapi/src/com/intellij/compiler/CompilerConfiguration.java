@@ -19,12 +19,19 @@ package com.intellij.compiler;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 
 public abstract class CompilerConfiguration {
   // need this flag for profiling purposes. In production code is always set to 'true'
   public static final boolean MAKE_ENABLED = true;
+
+  @Nullable
+  public abstract String getProjectBytecodeTarget();
+
+  @Nullable
+  public abstract String getBytecodeTargetLevel(Module module);
 
   public static CompilerConfiguration getInstance(Project project) {
     return project.getComponent(CompilerConfiguration.class);

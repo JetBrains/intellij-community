@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,7 +32,6 @@ import org.jetbrains.annotations.PropertyKey;
 import static com.intellij.lang.PsiBuilderUtil.expect;
 import static com.intellij.lang.PsiBuilderUtil.nextTokenType;
 import static com.intellij.lang.java.parser.JavaParserUtil.*;
-import static com.intellij.lang.java.parser.JavaParserUtil.exprType;
 
 
 public class DeclarationParser {
@@ -57,12 +56,6 @@ public class DeclarationParser {
     myReferenceParser = new ReferenceParser(this);
     myExpressionParser = new ExpressionParser(this, myReferenceParser);
     myStatementParser = new StatementParser(this, myExpressionParser, myReferenceParser);
-  }
-
-  protected DeclarationParser(ReferenceParser referenceParser, ExpressionParser expressionParser, StatementParser statementParser) {
-    myReferenceParser = referenceParser;
-    myExpressionParser = expressionParser;
-    myStatementParser = statementParser;
   }
 
   public ReferenceParser getReferenceParser() {
@@ -184,7 +177,7 @@ public class DeclarationParser {
         myExpressionParser.parseArgumentList(builder);
       }
       else {
-        JavaParserUtil.emptyElement(builder, JavaElementType.EXPRESSION_LIST);
+        emptyElement(builder, JavaElementType.EXPRESSION_LIST);
       }
 
       if (builder.getTokenType() == JavaTokenType.LBRACE) {
@@ -312,7 +305,7 @@ public class DeclarationParser {
         }
         idPos.rollbackTo();
         if (typeParams == null) {
-          JavaParserUtil.emptyElement(builder, JavaElementType.TYPE_PARAMETER_LIST);
+          emptyElement(builder, JavaElementType.TYPE_PARAMETER_LIST);
         }
         builder.advanceLexer();
         if (builder.getTokenType() != JavaTokenType.LPARENTH) {
@@ -371,7 +364,7 @@ public class DeclarationParser {
     if (builder.getTokenType() == JavaTokenType.LPARENTH) {
       if (context == Context.CLASS || context == Context.ANNOTATION_INTERFACE) {  // method
         if (typeParams == null) {
-          JavaParserUtil.emptyElement(type, JavaElementType.TYPE_PARAMETER_LIST);
+          emptyElement(type, JavaElementType.TYPE_PARAMETER_LIST);
         }
         return parseMethodFromLeftParenth(builder, declaration, (context == Context.ANNOTATION_INTERFACE), false);
       }
@@ -608,7 +601,7 @@ public class DeclarationParser {
       }
       else {
         error(builder, JavaErrorMessages.message("expected.type"));
-        JavaParserUtil.emptyElement(builder, JavaElementType.TYPE);
+        emptyElement(builder, JavaElementType.TYPE);
       }
     }
 

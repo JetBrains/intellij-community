@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,18 +32,6 @@ public abstract class RootModelComponentBase implements Disposable {
     myRootModel = rootModel;
   }
 
-
-  protected void projectOpened() {
-
-  }
-
-  protected void projectClosed() {
-
-  }
-
-  protected void moduleAdded() {
-
-  }
 
   public RootModelImpl getRootModel() {
     return myRootModel;

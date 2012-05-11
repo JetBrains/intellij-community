@@ -16,7 +16,6 @@
 package git4idea.test
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.module.ModifiableModuleModel
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.vfs.VirtualFile
@@ -106,16 +105,6 @@ class GitMockProjectRootManager extends ProjectRootManager {
 
   @Override
   void setProjectSdkName(String name) {
-    throw new UnsupportedOperationException()
-  }
-
-  @Override
-  void multiCommit(ModifiableRootModel[] rootModels) {
-    throw new UnsupportedOperationException()
-  }
-
-  @Override
-  void multiCommit(ModifiableModuleModel moduleModel, ModifiableRootModel[] rootModels) {
     throw new UnsupportedOperationException()
   }
 

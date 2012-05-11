@@ -47,7 +47,7 @@ public class NamedElementDuplicateHandler extends EditorWriteActionHandler {
       PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
       if (file != null) {
         VisualPosition caret = editor.getCaretModel().getVisualPosition();
-        Pair<LogicalPosition, LogicalPosition> lines = EditorUtil.calcCaretLinesRange(editor, caret, caret);
+        Pair<LogicalPosition, LogicalPosition> lines = EditorUtil.calcSurroundingRange(editor, caret, caret);
         TextRange toDuplicate = new TextRange(editor.logicalPositionToOffset(lines.first), editor.logicalPositionToOffset(lines.second));
 
         PsiElement name = findNameIdentifier(editor, file, toDuplicate);

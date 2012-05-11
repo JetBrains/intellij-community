@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,11 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
-import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.roots.ModuleOrderEntry;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.OrderEntry;
+import com.intellij.openapi.roots.impl.ModuleRootManagerImpl;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.projectImport.ProjectAttachProcessor;
@@ -94,7 +98,7 @@ public class ModuleDeleteProvider  implements DeleteProvider, TitledHandler  {
               removeModule(module, modifiableModel, otherModuleRootModels.values(), modifiableModuleModel);
             }
             final ModifiableRootModel[] modifiableRootModels = otherModuleRootModels.values().toArray(new ModifiableRootModel[otherModuleRootModels.size()]);
-            ProjectRootManager.getInstance(project).multiCommit(modifiableModuleModel, modifiableRootModels);
+            ModuleRootManagerImpl.multiCommit(modifiableRootModels, modifiableModuleModel);
           }
         };
         ApplicationManager.getApplication().runWriteAction(action);

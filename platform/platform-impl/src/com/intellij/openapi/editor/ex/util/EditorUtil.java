@@ -651,32 +651,77 @@ public class EditorUtil {
     return result;
   }
 
-  public static Pair<LogicalPosition, LogicalPosition> calcCaretLinesRange(Editor editor) {
-    return calcCaretLinesRange(editor, editor.getCaretModel().getVisualPosition(), editor.getCaretModel().getVisualPosition());
+  /**
+   * Delegates to the {@link #calcSurroundingRange(Editor, VisualPosition, VisualPosition)} with the
+   * {@link CaretModel#getVisualPosition() caret visual position} as an argument.
+   * 
+   * @param editor  target editor
+   * @return        surrounding logical positions
+   * @see #calcSurroundingRange(Editor, VisualPosition, VisualPosition) 
+   */
+  public static Pair<LogicalPosition, LogicalPosition> calcCaretLineRange(Editor editor) {
+    return calcSurroundingRange(editor, editor.getCaretModel().getVisualPosition(), editor.getCaretModel().getVisualPosition());
   }
 
   /**
-   * Calculates the closest non-soft-wrapped logical positions for current caret position.
+   * Calculates logical positions that surround given visual positions and conform to the following criteria:
+   * <pre>
+   * <ul>
+   *   <li>located at the start or the end of the visual line;</li>
+   *   <li>doesn't have soft wrap at the target offset;</li>
+   * </ul>
+   * </pre>
+   * Example:
+   * <pre>
+   *   first line [soft-wrap] some [start-position] text [end-position] [fold-start] fold line 1
+   *   fold line 2
+   *   fold line 3[fold-end] [soft-wrap] end text
+   * </pre>
+   * The very first and the last positions will be returned here.
    *
    * @param editor    target editor to use
    * @param start     target start coordinate
    * @param end       target end coordinate
-   * @return          pair of non-soft-wrapped logical positions closest to the caret position of the given editor
+   * @return          pair of the closest surrounding non-soft-wrapped logical positions for the visual line start and end
    */
-  public static Pair<LogicalPosition, LogicalPosition> calcCaretLinesRange(Editor editor, VisualPosition start, VisualPosition end) {
-    int visualLine = start.line;
+  @SuppressWarnings("AssignmentToForLoopParameter")
+  public static Pair<LogicalPosition, LogicalPosition> calcSurroundingRange(Editor editor, VisualPosition start, VisualPosition end) {
+    final Document document = editor.getDocument();
+    final FoldingModel foldingModel = editor.getFoldingModel();
 
-    LogicalPosition lineStart = editor.visualToLogicalPosition(new VisualPosition(visualLine, 0));
-    while (lineStart.softWrapLinesOnCurrentLogicalLine > 0) {
-      lineStart = editor.visualToLogicalPosition(new VisualPosition(--visualLine, 0));
+    LogicalPosition first = editor.visualToLogicalPosition(new VisualPosition(start.line, 0));
+    for (
+      int line = first.line, offset = document.getLineStartOffset(line);
+      offset > 0;
+      offset = document.getLineStartOffset(line))
+    {
+      final FoldRegion foldRegion = foldingModel.getCollapsedRegionAtOffset(offset);
+      if (foldRegion == null) {
+        first = new LogicalPosition(line, 0);
+        break;
+      }
+      line = document.getLineNumber(foldRegion.getStartOffset());
     }
+    
 
-    visualLine = end.line + 1;
-    LogicalPosition nextLineStart = editor.visualToLogicalPosition(new VisualPosition(end.line + 1, 0));
-    while (nextLineStart.line == lineStart.line) {
-      nextLineStart = editor.visualToLogicalPosition(new VisualPosition(++visualLine, 0));
+    LogicalPosition second = editor.visualToLogicalPosition(new VisualPosition(end.line, 0));
+    for (
+      int line = second.line, offset = document.getLineEndOffset(line);
+      offset <= document.getTextLength();
+      offset = document.getLineEndOffset(line))
+    {
+      final FoldRegion foldRegion = foldingModel.getCollapsedRegionAtOffset(offset);
+      if (foldRegion == null) {
+        second = new LogicalPosition(line + 1, 0);
+        break;
+      }
+      line = document.getLineNumber(foldRegion.getEndOffset());
     }
-    return new Pair<LogicalPosition, LogicalPosition>(lineStart, nextLineStart);
+    
+    if (second.line >= document.getLineCount()) {
+      second = editor.offsetToLogicalPosition(document.getTextLength());
+    }
+    return new Pair<LogicalPosition, LogicalPosition>(first, second);
   }
 
   public static void scrollToTheEnd(final Editor editor) {

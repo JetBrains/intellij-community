@@ -81,6 +81,7 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
   public static final String NOTIFICATION_GROUP_ID = "Mercurial";
   public static final String HG_EXECUTABLE_FILE_NAME = (SystemInfo.isWindows ? "hg.exe" : "hg");
   private final static VcsKey ourKey = createKey(VCS_NAME);
+  private static final int MAX_CONSOLE_OUTPUT_SIZE = 10000;
 
   private static final String ORIG_FILE_PATTERN = "*.orig";
 
@@ -366,6 +367,9 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
   }
 
   public void showMessageInConsole(String message, final TextAttributes style) {
+    if (message.length() > MAX_CONSOLE_OUTPUT_SIZE) {
+      message = message.substring(0, MAX_CONSOLE_OUTPUT_SIZE);
+    }
     myVcsManager.addMessageToConsoleWindow(message, style);
   }
 

@@ -271,12 +271,6 @@ public class AndroidCompileUtil {
 
     final Project project = module.getProject();
 
-    final AndroidFacet facet = AndroidFacet.getInstance(module);
-
-    if (facet != null && facet.getConfiguration().LIBRARY_PROJECT) {
-      removeGenModule(module);
-    }
-
     if (project.isDisposed() || module.isDisposed()) {
       return null;
     }
@@ -327,6 +321,11 @@ public class AndroidCompileUtil {
   private static void removeGenModule(@NotNull final Module libModule) {
     final String genModuleName = getGenModuleName(libModule);
     final ModuleManager moduleManager = ModuleManager.getInstance(libModule.getProject());
+
+    final Module genModule = moduleManager.findModuleByName(genModuleName);
+    if (genModule == null) {
+      return;
+    }
     final ModifiableRootModel model = ModuleRootManager.getInstance(libModule).getModifiableModel();
 
     for (OrderEntry entry : model.getOrderEntries()) {
@@ -342,11 +341,6 @@ public class AndroidCompileUtil {
         model.commit();
       }
     });
-
-    final Module genModule = moduleManager.findModuleByName(genModuleName);
-    if (genModule == null) {
-      return;
-    }
     final VirtualFile moduleFile = genModule.getModuleFile();
     moduleManager.disposeModule(genModule);
 
@@ -634,6 +628,9 @@ public class AndroidCompileUtil {
     final Module module = facet.getModule();
     final GlobalSearchScope moduleScope = facet.getModule().getModuleScope();
 
+    if (facet.getConfiguration().LIBRARY_PROJECT) {
+      removeGenModule(module);
+    }
     initializeGenSourceRoot(module, AndroidRootUtil.getBuildconfigGenSourceRootPath(facet), true, true);
 
     initializeGenSourceRoot(module, AndroidRootUtil.getRenderscriptGenSourceRootPath(facet),
