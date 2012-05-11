@@ -17,7 +17,7 @@
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.openapi.file.exclude.ProjectFileExclusionManagerImpl;
-import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.roots.ModuleFileIndex;
@@ -33,7 +33,7 @@ import java.util.List;
 
 public class ModuleFileIndexImpl implements ModuleFileIndex {
   private final Module myModule;
-  private final FileTypeManager myFileTypeManager;
+  private final FileTypeRegistry myFileTypeRegistry;
   private final DirectoryIndex myDirectoryIndex;
   private final ContentFilter myContentFilter;
   private final ProjectFileExclusionManagerImpl myExclusionManager;
@@ -41,7 +41,7 @@ public class ModuleFileIndexImpl implements ModuleFileIndex {
   public ModuleFileIndexImpl(Module module, DirectoryIndex directoryIndex) {
     myModule = module;
     myDirectoryIndex = directoryIndex;
-    myFileTypeManager = FileTypeManager.getInstance();
+    myFileTypeRegistry = FileTypeRegistry.getInstance();
 
     myContentFilter = new ContentFilter();
     myExclusionManager = ProjectFileExclusionManagerImpl.getInstance(module.getProject());
@@ -69,7 +69,7 @@ public class ModuleFileIndexImpl implements ModuleFileIndex {
 
   public boolean isContentSourceFile(@NotNull VirtualFile file) {
     return !file.isDirectory()
-           && !myFileTypeManager.isFileIgnored(file)
+           && !myFileTypeRegistry.isFileIgnored(file)
            && isInSourceContent(file);
   }
 
@@ -155,7 +155,7 @@ public class ModuleFileIndexImpl implements ModuleFileIndex {
       }
       else {
         if(myExclusionManager != null && myExclusionManager.isExcluded(file)) return false;
-        return !myFileTypeManager.isFileIgnored(file);
+        return !myFileTypeRegistry.isFileIgnored(file);
       }
     }
   }
