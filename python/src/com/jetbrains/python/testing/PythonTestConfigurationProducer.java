@@ -23,6 +23,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.PythonModuleTypeBase;
 import com.jetbrains.python.facet.PythonFacetSettings;
 import com.jetbrains.python.psi.*;
@@ -63,7 +64,9 @@ abstract public class PythonTestConfigurationProducer extends RuntimeConfigurati
       if (settings != null) return settings;
     }
 
-    settings = createConfigurationFromFile(location, location.getPsiElement());
+    final VirtualFile virtualFile = location.getVirtualFile();
+    if (virtualFile != null && virtualFile.getFileType() instanceof PythonFileType)
+      settings = createConfigurationFromFile(location, location.getPsiElement());
     if (settings != null) return settings;
 
     return null;
