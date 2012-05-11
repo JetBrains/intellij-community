@@ -40,7 +40,7 @@
 
     <component>
       <interface-class>com.intellij.openapi.roots.ProjectRootManager</interface-class>
-      <implementation-class>com.intellij.openapi.roots.impl.ProjectRootManagerImpl</implementation-class>
+      <implementation-class>com.intellij.openapi.roots.impl.ProjectRootManagerComponent</implementation-class>
       <loadForDefaultProject/>
     </component>
     <component>

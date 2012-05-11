@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 
 package com.intellij.openapi.roots.ex;
 
-import com.intellij.ide.caches.CacheUpdater;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.JdkOrderEntry;
@@ -31,12 +30,6 @@ public abstract class ProjectRootManagerEx extends ProjectRootManager {
   public static ProjectRootManagerEx getInstanceEx(Project project) {
     return (ProjectRootManagerEx)getInstance(project);
   }
-
-  public abstract void registerRootsChangeUpdater(CacheUpdater updater);
-  public abstract void unregisterRootsChangeUpdater(CacheUpdater updater);
-
-  public abstract void registerRefreshUpdater(CacheUpdater updater);
-  public abstract void unregisterRefreshUpdater(CacheUpdater updater);
 
   public abstract void addProjectJdkListener(ProjectJdkListener listener);
 
