@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -97,7 +97,7 @@ public interface ProjectFileIndex extends FileIndex {
   String getPackageNameByDirectory(@NotNull VirtualFile dir); //Q: move to FileIndex?
 
   /**
-   * Returns true if <code>file</code> is a compiled class file which belongs to some library.
+   * Returns true if <code>file</code> is a file which belongs to the classes (not sources) of some library.
    *
    * @param file the file to check.
    * @return true if the file belongs to library classes, false otherwise.

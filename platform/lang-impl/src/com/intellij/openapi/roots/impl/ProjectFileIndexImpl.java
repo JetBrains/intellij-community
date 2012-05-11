@@ -20,7 +20,6 @@ import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.file.exclude.ProjectFileExclusionManagerImpl;
 import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
@@ -164,7 +163,6 @@ public class ProjectFileIndexImpl implements ProjectFileIndex {
 
   public boolean isLibraryClassFile(@NotNull VirtualFile file) {
     if (file.isDirectory()) return false;
-    if (file.getFileType() != StdFileTypes.CLASS) return false;
     if (myFileTypeManager.isFileIgnored(file)) return false;
     VirtualFile parent = file.getParent();
     DirectoryInfo parentInfo = getInfoForDirectory(parent);
