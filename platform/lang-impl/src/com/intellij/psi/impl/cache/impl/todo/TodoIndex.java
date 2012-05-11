@@ -26,6 +26,7 @@ import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.impl.cache.impl.id.IdTableBuilding;
+import com.intellij.psi.impl.cache.impl.id.PlatformIdTableBuilding;
 import com.intellij.psi.search.IndexPatternProvider;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.indexing.*;
@@ -101,7 +102,8 @@ public class TodoIndex extends FileBasedIndexExtension<TodoIndexEntry, Integer> 
     @NotNull
     public Map<TodoIndexEntry,Integer> map(final FileContent inputData) {
       final VirtualFile file = inputData.getFile();
-      final DataIndexer<TodoIndexEntry, Integer, FileContent> indexer = IdTableBuilding.getTodoIndexer(inputData.getFileType(), file);
+      final DataIndexer<TodoIndexEntry, Integer, FileContent> indexer = PlatformIdTableBuilding
+        .getTodoIndexer(inputData.getFileType(), file);
       if (indexer != null) {
         return indexer.map(inputData);
       }
