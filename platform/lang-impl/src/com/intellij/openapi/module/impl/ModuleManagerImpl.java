@@ -39,7 +39,7 @@ import com.intellij.openapi.roots.impl.ModifiableModelCommitter;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.containers.HashMap;
@@ -352,7 +352,7 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
     public final void writeExternal(Element parentElement) {
       Element moduleElement = new Element(ELEMENT_MODULE);
       final String moduleFilePath = getModuleFilePath();
-      final String url = VirtualFileManager.constructUrl(LocalFileSystem.PROTOCOL, moduleFilePath);
+      final String url = VirtualFileManager.constructUrl(StandardFileSystems.FILE_PROTOCOL, moduleFilePath);
       moduleElement.setAttribute(ATTRIBUTE_FILEURL, url);
       // [dsl] support for older builds
       moduleElement.setAttribute(ATTRIBUTE_FILEPATH, moduleFilePath);
@@ -751,7 +751,7 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
       }
       ModuleImpl module = getModuleByFilePath(filePath);
       if (module == null) {
-        final VirtualFile moduleVFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(FileUtil.toSystemIndependentName(filePath));
+        final VirtualFile moduleVFile = StandardFileSystems.local().refreshAndFindFileByPath(FileUtil.toSystemIndependentName(filePath));
         if (moduleVFile != null) {
           moduleVFile.refresh(false, false);
         }
