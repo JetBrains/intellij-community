@@ -16,7 +16,6 @@
 
 package com.intellij.openapi.roots.impl;
 
-import com.intellij.ProjectTopics;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
@@ -348,7 +347,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
     return filetypes ? myFileTypesChanged : myRootsChanged;
   }
 
-  private boolean isFiringEvent = false;
+  protected boolean isFiringEvent = false;
 
   private boolean fireBeforeRootsChanged(boolean filetypes) {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
@@ -364,19 +363,14 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
         myMergedCallHasRootChange = true;
         myRootsChangesDepth++; // blocks all firing until finishRootsChangedOnDemand
       }
-      isFiringEvent = true;
-      try {
-        myProject.getMessageBus()
-          .syncPublisher(ProjectTopics.PROJECT_ROOTS)
-          .beforeRootsChange(new ModuleRootEventImpl(myProject, filetypes));
-      }
-      finally {
-        isFiringEvent= false;
-      }
+      fireBeforeRootsChangeEvent(filetypes);
       return true;
     }
 
     return false;
+  }
+
+  protected void fireBeforeRootsChangeEvent(boolean filetypes) {
   }
 
   private boolean fireRootsChanged(boolean filetypes) {
@@ -401,21 +395,16 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
     psiManager.dropResolveCaches();
     ((PsiModificationTrackerImpl)psiManager.getModificationTracker()).incCounter();
 
-    isFiringEvent = true;
-    try {
-      myProject.getMessageBus()
-        .syncPublisher(ProjectTopics.PROJECT_ROOTS)
-        .rootsChanged(new ModuleRootEventImpl(myProject, filetypes));
-    }
-    finally {
-      isFiringEvent = false;
-    }
+    fireRootsChangedEvent(filetypes);
 
     doSynchronizeRoots();
 
     addRootsToWatch();
 
     return true;
+  }
+
+  protected void fireRootsChangedEvent(boolean filetypes) {
   }
 
   protected void addRootsToWatch() {

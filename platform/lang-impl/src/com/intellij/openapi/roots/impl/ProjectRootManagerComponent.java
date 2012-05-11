@@ -176,6 +176,30 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl {
     return false;
   }
 
+  protected void fireBeforeRootsChangeEvent(boolean filetypes) {
+    isFiringEvent = true;
+    try {
+      myProject.getMessageBus()
+        .syncPublisher(ProjectTopics.PROJECT_ROOTS)
+        .beforeRootsChange(new ModuleRootEventImpl(myProject, filetypes));
+    }
+    finally {
+      isFiringEvent= false;
+    }
+  }
+
+  protected void fireRootsChangedEvent(boolean filetypes) {
+    isFiringEvent = true;
+    try {
+      myProject.getMessageBus()
+        .syncPublisher(ProjectTopics.PROJECT_ROOTS)
+        .rootsChanged(new ModuleRootEventImpl(myProject, filetypes));
+    }
+    finally {
+      isFiringEvent = false;
+    }
+  }
+
   private static String url2path(String url) {
     String path = VfsUtilCore.urlToPath(url);
 
