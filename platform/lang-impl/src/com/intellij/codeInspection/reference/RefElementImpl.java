@@ -255,7 +255,7 @@ public abstract class RefElementImpl extends RefEntityImpl implements RefElement
   public boolean isSuppressed(final String toolId) {
     if (mySuppressions != null) {
       for (@NonNls String suppression : mySuppressions) {
-        if (suppression.equals(toolId) || suppression.equals(SuppressionUtil.ALL)){
+        if (suppression.equalsIgnoreCase(SuppressionUtil.ALL)){
           return true;
         }
       }
