@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,22 +27,26 @@ import java.util.List;
 
 /**
  * @author Dmitry Avdeev
+ * @author Konstantin Bulenkov
  */
 public class GotoRelatedItem {
+  private final String myGroup;
   private final int myMnemonic;
   private final PsiElement myElement;
+  public static final String DEFAULT_GROUP_NAME = "";
 
-  protected GotoRelatedItem(@Nullable PsiElement element, final int mnemonic) {
+  protected GotoRelatedItem(@Nullable PsiElement element, String group, final int mnemonic) {
     myElement = element;
+    myGroup = group;
     myMnemonic = mnemonic;
   }
   
-  public GotoRelatedItem(@NotNull PsiElement element) {
-    this(element, -1);
+  public GotoRelatedItem(@NotNull PsiElement element, String group) {
+    this(element, group, -1);
   }
 
-  protected GotoRelatedItem() {
-    this(null, -1);
+  public GotoRelatedItem(@NotNull PsiElement element) {
+    this(element, DEFAULT_GROUP_NAME);
   }
 
   public void navigate() {
@@ -67,11 +71,14 @@ public class GotoRelatedItem {
   public int getMnemonic() {
     return myMnemonic;
   }
-
   public static List<GotoRelatedItem> createItems(@NotNull Collection<? extends PsiElement> elements) {
+    return createItems(elements, DEFAULT_GROUP_NAME);
+  }
+
+  public static List<GotoRelatedItem> createItems(@NotNull Collection<? extends PsiElement> elements, String group) {
     List<GotoRelatedItem> items = new ArrayList<GotoRelatedItem>(elements.size());
     for (PsiElement element : elements) {
-      items.add(new GotoRelatedItem(element));
+      items.add(new GotoRelatedItem(element, group));
     }
     return items;
   }
@@ -86,6 +93,10 @@ public class GotoRelatedItem {
     if (myElement != null ? !myElement.equals(item.myElement) : item.myElement != null) return false;
 
     return true;
+  }
+
+  public String getGroup() {
+    return myGroup;
   }
 
   @Override

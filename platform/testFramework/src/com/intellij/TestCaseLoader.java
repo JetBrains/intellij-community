@@ -36,6 +36,7 @@ import java.io.*;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.*;
+import java.util.List;
 
 @SuppressWarnings({"HardCodedStringLiteral", "UseOfSystemOutOrSystemErr", "CallToPrintStackTrace", "TestOnlyProblems"})
 public class TestCaseLoader {
@@ -98,7 +99,9 @@ public class TestCaseLoader {
    * <code>shouldLoadTestCase ()</code> to determine that.
    */
   void addClassIfTestCase(final Class testCaseClass) {
-    if (shouldAddTestCase(testCaseClass, true) && testCaseClass != myFirstTestClass && testCaseClass != myLastTestClass) {
+    if (shouldAddTestCase(testCaseClass, true) && testCaseClass != myFirstTestClass && testCaseClass != myLastTestClass
+        && PlatformTestUtil.canRunTest(testCaseClass))
+    {
       myClassList.add(testCaseClass);
     }
   }

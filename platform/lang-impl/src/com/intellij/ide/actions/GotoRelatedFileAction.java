@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,11 +26,14 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.ColoredListCellRenderer;
+import com.intellij.ui.SeparatorWithText;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.popup.list.ListPopupImpl;
+import com.intellij.ui.popup.list.PopupListElementRenderer;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -97,6 +100,8 @@ public class GotoRelatedFileAction extends AnAction {
                                            final String title, final Processor<Object> processor) {
 
     final Ref<Boolean> hasMnemonic = Ref.create(false);
+    final Ref<ListCellRenderer> rendererRef = Ref.create(null);
+
     final DefaultPsiElementCellRenderer renderer = new DefaultPsiElementCellRenderer() {
       {
         setFocusBorderEnabled(false);
@@ -190,12 +195,55 @@ public class GotoRelatedFileAction extends AnAction {
         return super.onChosen(selectedValue, finalChoice);
       }
     }) {
-      @Override
-      protected ListCellRenderer getListElementRenderer() {
-        return renderer;
-      }
     };
+    popup.getList().setCellRenderer(new PopupListElementRenderer(popup) {
+      Map<Object, String> separators = new HashMap<Object, String>();
+      {
+        final ListModel model = popup.getList().getModel();
+        String current = null;
+        boolean hasTitle = false;
+        for (int i = 0; i < model.getSize(); i++) {
+          final Object element = model.getElementAt(i);
+          final GotoRelatedItem item = itemsMap.get(element);
+          if (!StringUtil.equals(current, item.getGroup())) {
+            current = item.getGroup();
+            separators.put(element, current);
+            if (!hasTitle && !StringUtil.isEmpty(current)) {
+              hasTitle = true;
+            }
+          }
+        }
+
+        if (!hasTitle) {
+          separators.remove(model.getElementAt(0));
+        }
+      }
+      @Override
+      public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+        final Component component = renderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+        final String separator = separators.get(value);
+
+        if (separator != null) {
+          JPanel panel = new JPanel(new BorderLayout());
+          panel.add(component, BorderLayout.CENTER);
+          final SeparatorWithText sep = new SeparatorWithText() {
+            @Override
+            protected void paintComponent(Graphics g) {
+              g.setColor(Color.WHITE);
+              g.fillRect(0,0,getWidth(), getHeight());
+              super.paintComponent(g);
+            }
+          };
+          sep.setCaption(separator);
+          panel.add(sep, BorderLayout.NORTH);
+          return panel;
+        }
+        return component;
+      }
+    });
+
     popup.setMinimumSize(new Dimension(200, -1));
+
     for (Object item : elements) {
       final int mnemonic = getMnemonic(item, itemsMap);
       if (mnemonic != -1) {
@@ -226,7 +274,30 @@ public class GotoRelatedFileAction extends AnAction {
         items.addAll(provider.getItems(dataContext));
       }
     }
+    sortByGroupNames(items);
     return new ArrayList<GotoRelatedItem>(items);
+  }
+
+  private static void sortByGroupNames(Set<GotoRelatedItem> items) {
+    Map<String, List<GotoRelatedItem>> map = new HashMap<String, List<GotoRelatedItem>>();
+    for (GotoRelatedItem item : items) {
+      final String key = item.getGroup();
+      if (!map.containsKey(key)) {
+        map.put(key, new ArrayList<GotoRelatedItem>());
+      }
+      map.get(key).add(item);
+    }
+    final List<String> keys = new ArrayList<String>(map.keySet());
+    Collections.sort(keys, new Comparator<String>() {
+      @Override
+      public int compare(String o1, String o2) {
+        return StringUtil.isEmpty(o1) ? 1 : StringUtil.isEmpty(o2) ? -1 : o1.compareTo(o2);
+      }
+    });
+    items.clear();
+    for (String key : keys) {
+      items.addAll(map.get(key));
+    }
   }
 
   @Override

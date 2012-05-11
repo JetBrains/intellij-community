@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ package com.intellij.psi.impl.source.codeStyle;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.util.TextRange;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author yole
@@ -26,5 +27,6 @@ import com.intellij.openapi.util.TextRange;
 public interface PreFormatProcessor {
   ExtensionPointName<PreFormatProcessor> EP_NAME = ExtensionPointName.create("com.intellij.preFormatProcessor");
 
-  TextRange process(ASTNode element, TextRange range);
+  @NotNull
+  TextRange process(@NotNull ASTNode element, @NotNull TextRange range);
 }

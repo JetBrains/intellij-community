@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,18 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.framework.library;
+class Test {
+    int i                 = 1;
+    int fieldWithLongName = 2;
 
-import com.intellij.openapi.roots.ui.configuration.libraries.CustomLibraryDescription;
-import org.jetbrains.annotations.Nullable;
-
-/**
- * @author nik
- */
-public interface FrameworkSupportWithLibrary {
-
-  @Nullable
-  CustomLibraryDescription createLibraryDescription();
-
-  boolean isLibraryOnly();
+    void test() {
+        <caret>i = 3;
+    }
 }

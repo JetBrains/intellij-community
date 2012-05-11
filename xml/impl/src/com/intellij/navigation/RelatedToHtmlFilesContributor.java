@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,4 +30,5 @@ public abstract class RelatedToHtmlFilesContributor {
     ExtensionPointName.create("com.intellij.xml.relatedToHtmlFilesContributor");
 
   public abstract void fillRelatedFiles(@NotNull XmlFile xmlFile, @NotNull Set<PsiFile> resultSet);
+  public abstract String getGroupName();
 }

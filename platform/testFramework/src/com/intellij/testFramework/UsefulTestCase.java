@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -258,17 +258,7 @@ public abstract class UsefulTestCase extends TestCase {
   }
 
   protected boolean shouldRunTest() {
-    if (isInHeadlessEnvironment()) {
-      Class<?> aClass = getClass();
-      while (aClass != null) {
-        if (aClass.getAnnotation(SkipInHeadlessEnvironment.class) != null) {
-          System.out.println("Test '" + getClass().getName() + "." + getName() + "' is skipped because it requires working UI environment");
-          return false;
-        }
-        aClass = aClass.getSuperclass();
-      }
-    }
-    return true;
+    return PlatformTestUtil.canRunTest(getClass());
   }
 
   public static void edt(Runnable r) {

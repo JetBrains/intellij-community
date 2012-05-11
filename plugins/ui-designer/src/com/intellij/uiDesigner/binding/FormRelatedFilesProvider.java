@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,7 +44,7 @@ public class FormRelatedFilesProvider extends GotoRelatedProvider {
       while (psiClass != null) {
         List<PsiFile> forms = FormClassIndex.findFormsBoundToClass(psiClass);
         if (!forms.isEmpty()) {
-          return GotoRelatedItem.createItems(forms);
+          return GotoRelatedItem.createItems(forms, "UI Forms");
         }
         psiClass = PsiTreeUtil.getParentOfType(psiClass, PsiClass.class);
       }
@@ -58,7 +58,7 @@ public class FormRelatedFilesProvider extends GotoRelatedProvider {
             Project project = file.getProject();
             PsiClass aClass = JavaPsiFacade.getInstance(project).findClass(className, GlobalSearchScope.allScope(project));
             if (aClass != null) {
-              return Collections.singletonList(new GotoRelatedItem(aClass));
+              return Collections.singletonList(new GotoRelatedItem(aClass, "Java"));
             }
           }
         }

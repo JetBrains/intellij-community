@@ -46,6 +46,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArg
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrThrowStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrString;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrIndexProperty;
@@ -346,6 +347,16 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
           }
           registerError(listOrMap, GroovyBundle.message("constructor.call.is.ambiguous"));
         }
+      }
+    }
+
+    @Override
+    public void visitThrowStatement(GrThrowStatement throwStatement) {
+      super.visitThrowStatement(throwStatement);
+
+      final GrExpression exception = throwStatement.getException();
+      if (exception != null) {
+        checkAssignability(PsiType.getJavaLangThrowable(throwStatement.getManager(), throwStatement.getResolveScope()), exception, exception);
       }
     }
 

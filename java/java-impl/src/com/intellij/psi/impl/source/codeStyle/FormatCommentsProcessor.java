@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,10 +25,12 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.codeStyle.javadoc.CommentFormatter;
 import com.intellij.psi.javadoc.PsiDocComment;
+import org.jetbrains.annotations.NotNull;
 
 public class FormatCommentsProcessor implements PreFormatProcessor {
+  @NotNull
   @Override
-  public TextRange process(final ASTNode element, final TextRange range) {
+  public TextRange process(@NotNull final ASTNode element, @NotNull final TextRange range) {
     final Project project = SourceTreeToPsiMap.treeElementToPsi(element).getProject();
     if (!CodeStyleSettingsManager.getSettings(project).ENABLE_JAVADOC_FORMATTING ||
         element.getPsi().getContainingFile().getLanguage() != StdLanguages.JAVA) {

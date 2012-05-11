@@ -265,6 +265,12 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
       GrExpression qualifier = referenceExpression.getQualifierExpression();
       if (qualifier == null && isDeclarationAssignment(referenceExpression)) return;
 
+      if (qualifier != null && referenceExpression.getDotTokenType() == GroovyTokenTypes.mMEMBER_POINTER) {
+        if (results.length > 0) {
+          return;
+        }
+      }
+
       // If it is reference to map.key we shouldn't highlight key unresolved
       if (!(parent instanceof GrCall) && ResolveUtil.isKeyOfMap(referenceExpression)) {
         PsiElement refNameElement = referenceExpression.getReferenceNameElement();

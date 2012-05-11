@@ -89,7 +89,6 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
                                       SystemInfo.isFileSystemCaseSensitive)) {
                 VirtualFile jarRootToRefresh = markDirty(jarPath);
                 if (jarRootToRefresh != null) {
-                  LOG.info(jarPath + " will be refreshed due to " + event);
                   rootsToRefresh.add(jarRootToRefresh);
                 }
               }
