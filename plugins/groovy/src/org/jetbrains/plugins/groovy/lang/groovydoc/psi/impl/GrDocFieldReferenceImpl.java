@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.MethodResolverProcessor;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.PropertyResolverProcessor;
 
@@ -85,7 +86,7 @@ public class GrDocFieldReferenceImpl extends GrDocMemberReferenceImpl implements
       GrCodeReferenceElement referenceElement = holder.getReferenceElement();
       resolved = referenceElement != null ? referenceElement.resolve() : null;
     } else {
-      resolved = getEnclosingClass(this);
+      resolved = PsiUtil.getContextClass(this);
     }
     if (resolved instanceof PsiClass) {
       PropertyResolverProcessor processor = new PropertyResolverProcessor(name, this);

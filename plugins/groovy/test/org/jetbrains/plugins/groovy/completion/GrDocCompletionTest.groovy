@@ -13,22 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package org.jetbrains.plugins.groovy.completion
 
-package org.jetbrains.plugins.groovy.lang.groovydoc.psi.api;
-
-import com.intellij.psi.PsiPolyVariantReference;
-import com.intellij.psi.PsiQualifiedReference;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.util.TestUtils
 
 /**
- * @author ilyas
+ * @author Max Medvedev
  */
-public interface GrDocMemberReference extends GroovyDocPsiElement, PsiPolyVariantReference, PsiQualifiedReference, GrDocTagValueToken {
+class GrDocCompletionTest extends GroovyCompletionTestBase {
+  @Override
+  protected String getBasePath() {
+    "${TestUtils.testDataPath}groovy/completion/gdoc";
+  }
 
-  @Nullable
-  GrDocReferenceElement getReferenceHolder();
-
-  @NotNull
-  GrDocTagValueToken getReferenceNameElement();
+  void testLinkCompletion() { doBasicTest() }
 }

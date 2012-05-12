@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,28 +16,17 @@
 
 package org.jetbrains.plugins.groovy.lang.groovydoc.psi.impl;
 
-import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocMemberReference;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocReferenceElement;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocTagValueToken;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
-import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
-import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
-import org.jetbrains.plugins.groovy.lang.resolve.processors.CompletionProcessor;
-import org.jetbrains.plugins.groovy.lang.resolve.processors.ResolverProcessor;
 
 /**
  * @author ilyas
@@ -166,55 +155,8 @@ public abstract class GrDocMemberReferenceImpl extends GroovyDocPsiElementImpl i
 
   @NotNull
   public Object[] getVariants() {
-    GrDocReferenceElement holder = getReferenceHolder();
-    PsiElement resolved;
-    if (holder != null) {
-      GrCodeReferenceElement referenceElement = holder.getReferenceElement();
-      resolved = referenceElement != null ? referenceElement.resolve() : null;
-    } else {
-      resolved = getEnclosingClass(this);
-    }
-    if (resolved instanceof PsiClass) {
-      ResolverProcessor propertyProcessor = CompletionProcessor.createPropertyCompletionProcessor(this);
-      resolved.processDeclarations(propertyProcessor, ResolveState.initial(), null, this);
-      PsiElement[] propertyCandidates = ResolveUtil.mapToElements(propertyProcessor.getCandidates());
-      ResolverProcessor methodProcessor = CompletionProcessor.createPropertyCompletionProcessor(this);
-
-      resolved.processDeclarations(methodProcessor, ResolveState.initial(), null, this);
-
-      PsiElement[] methodCandidates = ResolveUtil.mapToElements(methodProcessor.getCandidates());
-
-      PsiElement[] elements = ArrayUtil.mergeArrays(propertyCandidates, methodCandidates);
-
-      return ContainerUtil.map2Array(elements, new Function<PsiElement, Object>() {
-        public Object fun(PsiElement psiElement) {
-          LookupElement lookupItem = null;
-          if (psiElement instanceof PsiNamedElement) {
-            if (psiElement instanceof PsiMethod) {
-              lookupItem = new LookupItem<PsiElement>(psiElement, ((PsiMethod) psiElement).getName());
-            } else {
-              String string = ((PsiNamedElement) psiElement).getName();
-              lookupItem = new LookupItem<PsiElement>(psiElement, string == null ? "" : string);
-            }
-            lookupItem.putUserData(LookupItem.FORCE_SHOW_SIGNATURE_ATTR, true);
-          }
-          return lookupItem != null ? lookupItem : psiElement;
-        }
-      });
-    }
-    return ArrayUtil.EMPTY_OBJECT_ARRAY;
-  }
-
-  protected static PsiClass getEnclosingClass(PsiElement element) {
-    PsiElement parent = element.getParent();
-    while (parent != null) {
-      if (parent instanceof GrTypeDefinition) return (PsiClass) parent;
-      if (parent instanceof GroovyFile) return ((GroovyFile) parent).getScriptClass();
-      parent = parent.getParent();
-    }
-    return null;
+    return PsiElement.EMPTY_ARRAY;
   }
 
   protected abstract ResolveResult[] multiResolveImpl();
-
 }

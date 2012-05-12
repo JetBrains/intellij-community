@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@ import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocMethodReference;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.MethodResolverProcessor;
 
 /**
@@ -63,7 +64,7 @@ public class GrDocMethodReferenceImpl extends GrDocMemberReferenceImpl implement
       GrCodeReferenceElement referenceElement = holder.getReferenceElement();
       resolved = referenceElement != null ? referenceElement.resolve() : null;
     } else {
-      resolved = getEnclosingClass(this);
+      resolved = PsiUtil.getContextClass(this);
     }
     if (resolved instanceof PsiClass) {
       PsiType[] parameterTypes = getParameterList().getParameterTypes();
@@ -93,7 +94,7 @@ public class GrDocMethodReferenceImpl extends GrDocMemberReferenceImpl implement
       GrCodeReferenceElement referenceElement = holder.getReferenceElement();
       resolved = referenceElement != null ? referenceElement.resolve() : null;
     } else {
-      resolved = getEnclosingClass(this);
+      resolved = PsiUtil.getContextClass(this);
     }
     if (resolved instanceof PsiClass) {
       PsiType[] parameterTypes = getParameterList().getParameterTypes();

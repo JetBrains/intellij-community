@@ -14,21 +14,13 @@
  * limitations under the License.
  */
 
-package org.jetbrains.plugins.groovy.lang.groovydoc.psi.api;
+class A {
+  def foo(String x) {}
 
-import com.intellij.psi.PsiPolyVariantReference;
-import com.intellij.psi.PsiQualifiedReference;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+  /**
+   * {@link A#fo<caret>
+   */
+  def bar() {
 
-/**
- * @author ilyas
- */
-public interface GrDocMemberReference extends GroovyDocPsiElement, PsiPolyVariantReference, PsiQualifiedReference, GrDocTagValueToken {
-
-  @Nullable
-  GrDocReferenceElement getReferenceHolder();
-
-  @NotNull
-  GrDocTagValueToken getReferenceNameElement();
+  }
 }
