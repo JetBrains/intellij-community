@@ -13,6 +13,7 @@ import java.util.ResourceBundle;
  *         Date: 12.04.12
  */
 public class TypoScriptBundle {
+  @NonNls public static String NOTIFICATION_ID = "TypoScript";
   private static Reference<ResourceBundle> ourBundle;
 
   @NonNls public static final String TYPOSCRIPT_BUNDLE = "messages.TypoScriptBundle";
