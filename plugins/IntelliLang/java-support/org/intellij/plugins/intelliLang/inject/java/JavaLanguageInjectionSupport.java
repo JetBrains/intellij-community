@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -202,7 +202,7 @@ public class JavaLanguageInjectionSupport extends AbstractLanguageInjectionSuppo
 
   static boolean doAddLanguageAnnotation(final Project project, final PsiModifierListOwner modifierListOwner,
                                                  final String languageId) {
-    if (modifierListOwner.getModifierList() == null || !PsiUtil.getLanguageLevel(modifierListOwner).hasEnumKeywordAndAutoboxing()) return false;
+    if (modifierListOwner.getModifierList() == null || !PsiUtil.isLanguageLevel5OrHigher(modifierListOwner)) return false;
     if (!OrderEntryFix.ensureAnnotationsJarInPath(ModuleUtil.findModuleForPsiElement(modifierListOwner), AnnotationUtil.LANGUAGE)) return false;
     new WriteCommandAction(project, modifierListOwner.getContainingFile()) {
       protected void run(final Result result) throws Throwable {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -104,7 +104,7 @@ public class PsiPrimitiveType extends PsiType {
   @Nullable
   public static PsiPrimitiveType getUnboxedType(PsiType type) {
     if (!(type instanceof PsiClassType)) return null;
-    if (!((PsiClassType)type).getLanguageLevel().hasEnumKeywordAndAutoboxing()) return null;
+    if (!((PsiClassType)type).getLanguageLevel().isAtLeast(LanguageLevel.JDK_1_5)) return null;
     final PsiClass psiClass = ((PsiClassType)type).resolve();
     if (psiClass == null) return null;
     return ourQNameToUnboxed.get(psiClass.getQualifiedName());
@@ -124,7 +124,7 @@ public class PsiPrimitiveType extends PsiType {
   @Nullable
   public PsiClassType getBoxedType(PsiElement context) {
     LanguageLevel languageLevel = PsiUtil.getLanguageLevel(context);
-    if (!languageLevel.hasEnumKeywordAndAutoboxing()) return null;
+    if (!languageLevel.isAtLeast(LanguageLevel.JDK_1_5)) return null;
     final String boxedQName = getBoxedTypeName();
 
     //[ven]previous call returns null for NULL, VOID

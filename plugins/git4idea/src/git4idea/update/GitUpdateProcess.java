@@ -29,18 +29,24 @@ import com.intellij.util.continuation.ContinuationContext;
 import com.intellij.util.continuation.ContinuationFinalTasksInserter;
 import com.intellij.util.text.DateFormatUtil;
 import git4idea.GitBranch;
-import git4idea.GitVcs;
+import git4idea.GitUtil;
+import git4idea.PlatformFacade;
 import git4idea.branch.GitBranchPair;
+import git4idea.branch.GitBranchUtil;
 import git4idea.commands.Git;
 import git4idea.merge.GitConflictResolver;
 import git4idea.merge.GitMergeCommittingConflictResolver;
 import git4idea.merge.GitMerger;
 import git4idea.rebase.GitRebaser;
+import git4idea.repo.GitBranchTrackInfo;
+import git4idea.repo.GitRepository;
 import git4idea.stash.GitChangesSaver;
-import git4idea.util.GitUIUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
 
 import static git4idea.util.GitUIUtil.*;
 
@@ -52,10 +58,9 @@ import static git4idea.util.GitUIUtil.*;
 public class GitUpdateProcess {
   private static final Logger LOG = Logger.getInstance(GitUpdateProcess.class);
 
-  private final Project myProject;
-  private final GitVcs myVcs;
+  @NotNull private final Project myProject;
   @NotNull private final Git myGit;
-  private final Set<VirtualFile> myRoots;
+  @NotNull private final Collection<GitRepository> myRepositories;
   private final UpdatedFiles myUpdatedFiles;
   private final ProgressIndicator myProgressIndicator;
   private final GitMerger myMerger;
@@ -72,12 +77,10 @@ public class GitUpdateProcess {
     READ_FROM_SETTINGS
   }
 
-  public GitUpdateProcess(@NotNull Project project,
-                          @NotNull ProgressIndicator progressIndicator,
-                          @NotNull Set<VirtualFile> roots, @NotNull UpdatedFiles updatedFiles) {
+  public GitUpdateProcess(@NotNull Project project, @NotNull ProgressIndicator progressIndicator,
+                          @NotNull Collection<GitRepository> repositories, @NotNull UpdatedFiles updatedFiles) {
     myProject = project;
-    myRoots = roots;
-    myVcs = GitVcs.getInstance(project);
+    myRepositories = repositories;
     myGit = ServiceManager.getService(Git.class);
     myUpdatedFiles = updatedFiles;
     myProgressIndicator = progressIndicator;
@@ -134,8 +137,10 @@ public class GitUpdateProcess {
 
   private boolean updateImpl(UpdateMethod updateMethod, ContinuationContext context) {
     // define updaters for roots
+    LOG.info("updateImpl: defining updaters...");
     try {
-      for (VirtualFile root : myRoots) {
+      for (GitRepository repository : myRepositories) {
+        VirtualFile root = repository.getRoot();
         final GitUpdater updater;
         if (updateMethod == UpdateMethod.MERGE) {
           updater = new GitMergeUpdater(myProject, myGit, root, myTrackedBranches, myProgressIndicator, myUpdatedFiles);
@@ -157,7 +162,9 @@ public class GitUpdateProcess {
     }
 
     if (myUpdaters.isEmpty()) return true;
+
     // save local changes if needed (update via merge may perform without saving).
+    LOG.info("updateImpl: identifying if save is needed...");
     for (Map.Entry<VirtualFile, GitUpdater> entry : myUpdaters.entrySet()) {
       VirtualFile root = entry.getKey();
       GitUpdater updater = entry.getValue();
@@ -167,6 +174,7 @@ public class GitUpdateProcess {
       }
     }
 
+    LOG.info("updateImpl: saving local changes...");
     try {
       mySaver.saveLocalChanges(myRootsToSave);
     } catch (VcsException e) {
@@ -178,6 +186,7 @@ public class GitUpdateProcess {
     }
 
     // update each root
+    LOG.info("updateImpl: updating...");
     boolean incomplete = false;
     boolean success = true;
     VirtualFile currentlyUpdatedRoot = null;
@@ -202,6 +211,7 @@ public class GitUpdateProcess {
         mySaver.notifyLocalChangesAreNotRestored();
       }
       else {
+        LOG.info("updateImpl: restoring local changes...");
         restoreLocalChanges(context);
       }
     }
@@ -227,15 +237,7 @@ public class GitUpdateProcess {
 
   // fetch all roots. If an error happens, return false and notify about errors.
   private boolean fetchAndNotify() {
-    return new GitFetcher(myProject, myProgressIndicator, false).fetchRootsAndNotify(myRoots, "Update failed", false);
-  }
-
-  public Map<VirtualFile, GitBranchPair> getTrackedBranches() {
-    return myTrackedBranches;
-  }
-
-  public GitChangesSaver getSaver() {
-    return mySaver;
+    return new GitFetcher(myProject, myProgressIndicator, false).fetchRootsAndNotify(myRepositories, "Update failed", false);
   }
 
   /**
@@ -245,52 +247,49 @@ public class GitUpdateProcess {
    * If branch configuration is OK for all roots, return true.
    */
   private boolean checkTrackedBranchesConfigured() {
-    for (VirtualFile root : myRoots) {
-      try {
-        final GitBranch branch = GitBranch.current(myProject, root);
-        if (branch == null) {
-          LOG.info("checkTrackedBranchesConfigured current branch is null");
-          notifyImportantError(myProject, "Can't update: no current branch",
-                               "You are in 'detached HEAD' state, which means that you're not on any branch" +
-                               rootStringIfNeeded(root) +
-                               "Checkout a branch to make update possible.");
-          return false;
-        }
-        final GitBranch tracked = branch.tracked(myProject, root);
-        if (tracked == null) {
-          final String branchName = branch.getName();
-          LOG.info("checkTrackedBranchesConfigured tracked branch is null for current branch " + branch);
-          notifyImportantError(myProject, "Can't update: no tracked branch",
-                               "No tracked branch configured for branch " + GitUIUtil.code(branchName) +
-                               rootStringIfNeeded(root) +
-                               "To make your branch track a remote branch call, for example,<br/>" +
-                               "<code>git branch --set-upstream " + branchName + " origin/" + branchName + "</code>");
-          return false;
-        }
-        if (!tracked.exists(root)) {
-          LOG.info("checkTrackedBranchesConfigured tracked branch " + tracked + "  doesn't exist.");
-          notifyMessage(myProject, "Can't update: tracked branch doesn't exist.",
-                        "Tracked branch <code>" + tracked.getName() + "</code> doesn't exist, so there is nothing to update" +
-                        rootStringIfNeeded(root) +
-                        "The branch will be automatically created when you push to it.",
-                        NotificationType.WARNING, true, null);
-          return false;
-        }
-        myTrackedBranches.put(root, new GitBranchPair(branch, tracked));
-      } catch (VcsException e) {
-        LOG.info("checkTrackedBranchesConfigured ", e);
-        notifyImportantError(myProject, "Can't update: error identifying tracked branch", e.getLocalizedMessage());
+    LOG.info("checking tracked branch configuration...");
+    for (GitRepository repository : myRepositories) {
+      VirtualFile root = repository.getRoot();
+      final GitBranch branch = repository.getCurrentBranch();
+      if (branch == null) {
+        LOG.info("checkTrackedBranchesConfigured: current branch is null in " + repository);
+        notifyImportantError(myProject, "Can't update: no current branch",
+                             "You are in 'detached HEAD' state, which means that you're not on any branch" +
+                             rootStringIfNeeded(root) +
+                             "Checkout a branch to make update possible.");
         return false;
       }
+      GitBranchTrackInfo trackInfo = GitBranchUtil.getTrackInfoForBranch(repository, branch);
+      if (trackInfo == null) {
+        final String branchName = branch.getName();
+        LOG.info(String.format("checkTrackedBranchesConfigured: no track info for current branch %s in %s", branch, repository));
+        notifyImportantError(myProject, "Can't update: no tracked branch",
+                             "No tracked branch configured for branch " + code(branchName) +
+                             rootStringIfNeeded(root) +
+                             "To make your branch track a remote branch call, for example,<br/>" +
+                             "<code>git branch --set-upstream " + branchName + " origin/" + branchName + "</code>");
+        return false;
+      }
+      GitBranch tracked = GitBranchUtil.findRemoteBranchByName(repository, trackInfo.getRemote(), trackInfo.getRemoteBranch());
+      if (tracked == null) {
+        LOG.info(String.format("checkTrackedBranchesConfigured: tracked branch %s not found in %s", tracked, repository));
+        notifyMessage(myProject, "Can't update: tracked branch doesn't exist.",
+                      "Tracked branch <code>" + trackInfo.getRemoteBranch() + "</code> doesn't exist" +
+                      rootStringIfNeeded(root) +
+                      "The branch will be automatically created when you push to it.",
+                      NotificationType.WARNING, true, null);
+        return false;
+      }
+      myTrackedBranches.put(root, new GitBranchPair(branch, tracked));
     }
     return true;
   }
 
   private String rootStringIfNeeded(@NotNull VirtualFile root) {
-    if (myRoots.size() < 2) {
+    if (myRepositories.size() < 2) {
       return ".<br/>";
     }
-    return "<br/>in Git repository " + GitUIUtil.code(root.getPresentableUrl()) + "<br/>";
+    return "<br/>in Git repository " + code(root.getPresentableUrl()) + "<br/>";
   }
 
   /**
@@ -298,10 +297,12 @@ public class GitUpdateProcess {
    * @return true if merge is in progress, which means that update can't continue.
    */
   private boolean isMergeInProgress() {
+    LOG.info("isMergeInProgress: checking if there is an unfinished merge process...");
     final Collection<VirtualFile> mergingRoots = myMerger.getMergingRoots();
     if (mergingRoots.isEmpty()) {
       return false;
     }
+    LOG.info("isMergeInProgress: roots with unfinished merge: " + mergingRoots);
     GitConflictResolver.Params params = new GitConflictResolver.Params();
     params.setErrorNotificationTitle("Can't update");
     params.setMergeDescription("You have unfinished merge. These conflicts must be resolved before update.");
@@ -313,10 +314,12 @@ public class GitUpdateProcess {
    * @return true if there are unmerged files at
    */
   private boolean areUnmergedFiles() {
+    LOG.info("areUnmergedFiles: checking if there are unmerged files...");
     GitConflictResolver.Params params = new GitConflictResolver.Params();
     params.setErrorNotificationTitle("Can't update");
     params.setMergeDescription("Unmerged files detected. These conflicts must be resolved before update.");
-    return !new GitMergeCommittingConflictResolver(myProject, myGit, myMerger, myRoots, params, false).merge();
+    return !new GitMergeCommittingConflictResolver(myProject, myGit, myMerger, GitUtil.getRootsFromRepositories(myRepositories),
+                                                   params, false).merge();
   }
 
   /**
@@ -324,19 +327,20 @@ public class GitUpdateProcess {
    * @return true if rebase is in progress, which means that update can't continue.
    */
   private boolean checkRebaseInProgress() {
+    LOG.info("checkRebaseInProgress: checking if there is an unfinished rebase process...");
     final GitRebaser rebaser = new GitRebaser(myProject, myGit, myProgressIndicator);
     final Collection<VirtualFile> rebasingRoots = rebaser.getRebasingRoots();
     if (rebasingRoots.isEmpty()) {
       return false;
     }
-    LOG.info("checkRebaseInProgress rebasingRoots: " + rebasingRoots);
+    LOG.info("checkRebaseInProgress: roots with unfinished rebase: " + rebasingRoots);
 
     GitConflictResolver.Params params = new GitConflictResolver.Params();
     params.setErrorNotificationTitle("Can't update");
     params.setMergeDescription("You have unfinished rebase process. These conflicts must be resolved before update.");
     params.setErrorNotificationAdditionalDescription("Then you may <b>continue rebase</b>. <br/> You also may <b>abort rebase</b> to restore the original branch and stop rebasing.");
     params.setReverse(true);
-    return !new GitConflictResolver(myProject, myGit, ServiceManager.getService(git4idea.PlatformFacade.class), rebasingRoots, params) {
+    return !new GitConflictResolver(myProject, myGit, ServiceManager.getService(PlatformFacade.class), rebasingRoots, params) {
       @Override protected boolean proceedIfNothingToMerge() {
         return rebaser.continueRebase(rebasingRoots);
       }

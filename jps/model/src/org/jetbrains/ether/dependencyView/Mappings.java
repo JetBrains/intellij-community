@@ -930,6 +930,7 @@ public class Mappings {
 
           if (classes != null) {
             for (ClassRepr c : classes) {
+              debug("Affecting usages of removed class ", c.name);
               u.affectAll(c.name, affectedFiles);
             }
           }
@@ -1226,8 +1227,10 @@ public class Mappings {
             }
 
             final Collection<Pair<MethodRepr, ClassRepr>> overriding = u.findOverridingMethods(m, it, false);
+
             for (final Pair<MethodRepr, ClassRepr> p : overriding) {
               final int fName = myClassToSourceFile.get(p.second.name);
+              debug("Affecting file by overriding: ", fName);
               affectedFiles.add(new File(myContext.getValue(fName)));
             }
 

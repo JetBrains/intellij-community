@@ -166,6 +166,7 @@ public abstract class GitUpdater {
 
   protected boolean hasRemoteChanges(@NotNull String currentBranch, @NotNull String remoteBranch) throws VcsException {
     GitSimpleHandler handler = new GitSimpleHandler(myProject, myRoot, GitCommand.REV_LIST);
+    handler.setSilent(true);
     handler.setNoSSH(true);
     handler.addParameters("-1");
     handler.addParameters(currentBranch + ".." + remoteBranch);

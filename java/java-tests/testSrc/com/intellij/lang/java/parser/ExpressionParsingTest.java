@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,11 +15,7 @@
  */
 package com.intellij.lang.java.parser;
 
-
-import com.intellij.pom.java.LanguageLevel;
-
 public class ExpressionParsingTest extends JavaParsingTestCase {
-
   public ExpressionParsingTest() {
     super("parser-full/expressionParsing");
   }
@@ -75,11 +71,7 @@ public class ExpressionParsingTest extends JavaParsingTestCase {
   public void testNew12() { doTest(true); }
   public void testNew13() { doTest(true); }
   public void testNew14() { doTest(true); }
-  public void testNew15() {
-    withLevel(LanguageLevel.JDK_1_7, new Runnable() { @Override public void run() {
-      doTest(true);
-    }});
-  }
+  public void testNew15() { doTest(true); }
 
   public void testExprList0() { doTest(true); }
   public void testExprList1() { doTest(true); }

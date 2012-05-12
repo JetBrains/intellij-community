@@ -20,8 +20,10 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
+import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.i18n.GitBundle;
+import git4idea.repo.GitRepositoryManager;
 import git4idea.update.GitFetcher;
 import org.jetbrains.annotations.NotNull;
 
@@ -46,7 +48,9 @@ public class GitFetch extends GitRepositoryAction {
     GitVcs.runInBackground(new Task.Backgroundable(project, "Fetching...", false) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
-        new GitFetcher(project, indicator, true).fetchRootsAndNotify(gitRoots, null, true);
+        GitRepositoryManager repositoryManager = GitUtil.getRepositoryManager(project);
+        new GitFetcher(project, indicator, true).fetchRootsAndNotify(GitUtil.getRepositoriesFromRoots(repositoryManager, gitRoots),
+                                                                     null, true);
       }
     });
   }

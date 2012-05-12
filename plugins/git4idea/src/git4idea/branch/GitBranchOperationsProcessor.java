@@ -18,7 +18,6 @@ package git4idea.branch;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
@@ -28,7 +27,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.util.ui.UIUtil;
 import git4idea.GitBranch;
 import git4idea.GitExecutionException;
 import git4idea.GitVcs;
@@ -471,7 +469,6 @@ public final class GitBranchOperationsProcessor {
 
     @Override
     public final void run(@NotNull ProgressIndicator indicator) {
-      saveAllDocuments();
       execute(indicator);
       if (myCallInAwtAfterExecution != null) {
         SwingUtilities.invokeLater(myCallInAwtAfterExecution);
@@ -484,14 +481,6 @@ public final class GitBranchOperationsProcessor {
       GitVcs.runInBackground(this);
     }
 
-    private static void saveAllDocuments() {
-      UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-        @Override
-        public void run() {
-          FileDocumentManager.getInstance().saveAllDocuments();
-        }
-      });
-    }
   }
 
 }

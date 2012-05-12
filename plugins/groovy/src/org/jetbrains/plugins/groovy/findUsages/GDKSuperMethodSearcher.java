@@ -65,25 +65,23 @@ public class GDKSuperMethodSearcher implements QueryExecutor<MethodSignatureBack
 
     final GroovyResolveResult[] candidates = processor.getCandidates();
 
-    final List<PsiMethod> allMethods = new ArrayList<PsiMethod>();
+    final PsiManager psiManager = PsiManager.getInstance(project);
+
+    final MethodSignature signature = method.getHierarchicalMethodSignature();
+    List<PsiMethod> goodSupers = new ArrayList<PsiMethod>();
+
     for (GroovyResolveResult candidate : candidates) {
       final PsiElement element = candidate.getElement();
       if (element instanceof PsiMethod) {
-        allMethods.add((PsiMethod)element);
+        final PsiMethod m = (PsiMethod)element;
+        if (!isTheSameMethod(method, psiManager, m) && PsiImplUtil.isExtendsSignature(m.getHierarchicalMethodSignature(), signature)) {
+          goodSupers.add(m);
+        }
       }
     }
 
-    final MethodSignature signature = method.getHierarchicalMethodSignature();
-
-    List<PsiMethod> goodSupers = new ArrayList<PsiMethod>();
-    for (PsiMethod m : allMethods) {
-      if (PsiImplUtil.isExtendsSignature(m.getHierarchicalMethodSignature(), signature)) {
-        goodSupers.add(m);
-      }
-    }
     if (goodSupers.size() == 0) return true;
 
-    final PsiManager psiManager = PsiManager.getInstance(project);
     final GlobalSearchScope searchScope = GlobalSearchScope.allScope(project);
 
     List<PsiMethod> result = new ArrayList<PsiMethod>(goodSupers.size());
@@ -123,6 +121,10 @@ public class GDKSuperMethodSearcher implements QueryExecutor<MethodSignatureBack
       }
     }
     return true;
+  }
+
+  private static boolean isTheSameMethod(PsiMethod method, PsiManager psiManager, PsiMethod m) {
+    return psiManager.areElementsEquivalent(m, method) || psiManager.areElementsEquivalent(m.getNavigationElement(), method);
   }
 
   private static PsiMethod getRealMethod(PsiMethod method) {

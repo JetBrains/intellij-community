@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ package org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefiniti
 import com.intellij.codeInsight.completion.CompletionInitializationContext;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.psi.tree.IElementType;
+import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.types.TypeArguments;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
@@ -97,7 +98,7 @@ public class ReferenceElement implements GroovyElementTypes {
 
     String lastIdentifier = builder.getTokenText();
 
-    if (!ParserUtils.getToken(builder, mIDENT)) {
+    if (!ParserUtils.getToken(builder, TokenSets.CODE_REFERENCE_ELEMENT_NAME_TOKENS)) {
       internalTypeMarker.rollbackTo();
       return fail;
     }
@@ -127,7 +128,7 @@ public class ReferenceElement implements GroovyElementTypes {
 
       lastIdentifier = builder.getTokenText();
 
-      if (!ParserUtils.getToken(builder, mIDENT)) {
+      if (!ParserUtils.getToken(builder, TokenSets.CODE_REFERENCE_ELEMENT_NAME_TOKENS)) {
         internalTypeMarker.rollbackTo();
         return fail;
       }

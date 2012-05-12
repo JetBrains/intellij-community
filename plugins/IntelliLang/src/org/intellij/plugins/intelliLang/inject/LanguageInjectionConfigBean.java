@@ -30,8 +30,5 @@ public class LanguageInjectionConfigBean extends AbstractExtensionPointBean {
     return myConfigUrl;
   }
 
-  public PluginDescriptor getPluginDescriptor() {
-    return myPluginDescriptor;
-  }
 }
 

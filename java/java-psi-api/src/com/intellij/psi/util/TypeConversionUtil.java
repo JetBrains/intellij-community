@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -780,7 +780,7 @@ public class TypeConversionUtil {
   private static final Key<CachedValue<Set<String>>> POSSIBLE_BOXED_HOLDER_TYPES = Key.create("Types that may be possibly assigned from primitive ones");
 
   private static boolean isBoxable(final PsiClassType left, final PsiPrimitiveType right) {
-    if (!left.getLanguageLevel().hasEnumKeywordAndAutoboxing()) return false;
+    if (!left.getLanguageLevel().isAtLeast(LanguageLevel.JDK_1_5)) return false;
     final PsiClass psiClass = left.resolve();
     if (psiClass == null) return false;
 

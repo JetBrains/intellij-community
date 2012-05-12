@@ -15,19 +15,20 @@
  */
 package com.intellij.openapi.vcs.update;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.util.concurrency.Semaphore;
+import gnu.trove.THashSet;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.util.Collection;
 import java.util.List;
 
 public class RefreshVFsSynchronously {
@@ -35,30 +36,28 @@ public class RefreshVFsSynchronously {
   }
 
   public static void updateAllChanged(final UpdatedFiles updatedFiles) {
-    // approx so ok
-    final ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
-    if (progressIndicator != null) {
-      progressIndicator.setIndeterminate(false);
-    }
-    final int num = getFilesNum(updatedFiles);
+    FilesToRefreshCollector callback = new FilesToRefreshCollector();
+    UpdateFilesHelper.iterateFileGroupFilesDeletedOnServerFirst(updatedFiles, callback);
 
-    wrapIntoLock(new Runnable() {
-      public void run() {
-        UpdateFilesHelper.iterateFileGroupFilesDeletedOnServerFirst(updatedFiles, new MyRefreshCallback(num, progressIndicator));
-      }
-    });
-  }
-
-  private static int getFilesNum(final UpdatedFiles files) {
-    int result = 0;
-    for (FileGroup group : files.getTopLevelGroups()) {
-      result += group.getImmediateFilesSize();
-      final List<FileGroup> children = group.getChildren();
-      for (FileGroup child : children) {
-        result += child.getImmediateFilesSize();
-      }
+    for (File file : callback.getToRefreshDeletedOrReplaced()) {
+      refreshDeletedOrReplaced(file);
     }
-    return result;
+
+    final Semaphore semaphore = new Semaphore();
+    semaphore.down();
+    try {
+      LocalFileSystem.getInstance().refreshIoFiles(callback.getToRefresh(), true, false, new Runnable() {
+        @Override
+        public void run() {
+          semaphore.up();
+        }
+      });
+    }
+    catch (Throwable t) {
+      semaphore.up();
+      throw new RuntimeException(t);
+    }
+    semaphore.waitFor();
   }
 
   @Nullable
@@ -191,54 +190,30 @@ public class RefreshVFsSynchronously {
     boolean movedOrRenamedOrReplaced(final Change change);
   }
 
-  private static void wrapIntoLock(final Runnable runnable) {
-    final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
-    if (indicator != null) {
-      indicator.startNonCancelableSection();
-      indicator.setText(VcsBundle.message("progress.text.synchronizing.files"));
-      indicator.setText2("");
-    }
+  private static class FilesToRefreshCollector implements UpdateFilesHelper.Callback {
+    private final Collection<File> myToRefresh = new THashSet<File>();
+    private final Collection<File> myToRefreshDeletedOrReplaced = new THashSet<File>();
 
-    final Semaphore semaphore = new Semaphore();
-    semaphore.down();
-
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      public void run() {
-        try {
-          // common lock for all refreshes inside
-          runnable.run();
-        }
-        finally {
-          semaphore.up();
-        }
-      }
-    });
-    semaphore.waitFor();
-  }
-
-  private static class MyRefreshCallback implements UpdateFilesHelper.Callback {
-    private int myCnt;
-    private final double myTotal;
-    private final ProgressIndicator myProgressIndicator;
-
-    private MyRefreshCallback(final int total, final ProgressIndicator progressIndicator) {
-      myTotal = total;
-      myProgressIndicator = progressIndicator;
-      myCnt = 0;
-    }
-
+    @Override
     public void onFile(String filePath, String groupId) {
       final File file = new File(filePath);
       if (FileGroup.REMOVED_FROM_REPOSITORY_ID.equals(groupId)) {
-        refreshDeletedOrReplaced(file);
-      } else {
-        refresh(file);
+        myToRefreshDeletedOrReplaced.add(file);
       }
-      if (myProgressIndicator != null) {
-        ++ myCnt;
-        myProgressIndicator.setFraction(myCnt/myTotal);
-        myProgressIndicator.setText2("Refreshing " + filePath);
+      else {
+        myToRefresh.add(file);
       }
     }
+
+    @NotNull
+    public Collection<File> getToRefresh() {
+      return myToRefresh;
+    }
+
+    @NotNull
+    public Collection<File> getToRefreshDeletedOrReplaced() {
+      return myToRefreshDeletedOrReplaced;
+    }
   }
+
 }

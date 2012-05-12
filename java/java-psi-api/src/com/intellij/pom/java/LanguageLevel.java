@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,14 +39,20 @@ public enum LanguageLevel {
     myPresentableText = presentableText;
   }
 
+  /** @deprecated (to remove in IDEA 13) */
+  @SuppressWarnings("UnusedDeclaration")
   public int getIndex() {
     return ordinal() + 3;  // solely for backward compatibility
   }
 
+  /** @deprecated (to remove in IDEA 13) */
+  @SuppressWarnings("UnusedDeclaration")
   public boolean hasAssertKeyword() {
     return isAtLeast(JDK_1_4);
   }
 
+  /** @deprecated use {@linkplain com.intellij.psi.util.PsiUtil#isLanguageLevel5OrHigher(com.intellij.psi.PsiElement)} (to remove in IDEA 13) */
+  @SuppressWarnings("UnusedDeclaration")
   public boolean hasEnumKeywordAndAutoboxing() {
     return isAtLeast(JDK_1_5);
   }

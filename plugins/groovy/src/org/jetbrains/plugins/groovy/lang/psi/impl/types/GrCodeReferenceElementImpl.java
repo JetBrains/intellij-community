@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionUtil;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocReferenceElement;
+import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
@@ -90,6 +91,11 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeRef
 
   public GrCodeReferenceElement getQualifier() {
     return (GrCodeReferenceElement) findChildByType(GroovyElementTypes.REFERENCE_ELEMENT);
+  }
+
+  @Override
+  public PsiElement getReferenceNameElement() {
+    return findChildByType(TokenSets.CODE_REFERENCE_ELEMENT_NAME_TOKENS);
   }
 
   enum ReferenceKind {
@@ -216,6 +222,8 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeRef
       case STATIC_MEMBER_FQ:
       case CLASS_OR_PACKAGE:
         if (resolve() instanceof PsiPackage) return true;
+      case CLASS:
+      case CLASS_IN_QUALIFIED_NEW:
     }
     final GrCodeReferenceElement qualifier = getQualifier();
     return qualifier != null && ((GrCodeReferenceElementImpl)qualifier).isFullyQualified();

@@ -20,6 +20,7 @@ import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -172,6 +173,15 @@ abstract class GitBranchOperation {
     notifySuccess(getSuccessMessage());
   }
 
+  protected static void saveAllDocuments() {
+    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+      @Override
+      public void run() {
+        FileDocumentManager.getInstance().saveAllDocuments();
+      }
+    });
+  }
+
   /**
    * Show fatal error as a notification or as a dialog with rollback proposal.
    */
@@ -297,7 +307,8 @@ abstract class GitBranchOperation {
                 setMergeDescription("The following files have unresolved conflicts. You need to resolve them before " +
                                     getOperationName() + ".").
                 setErrorNotificationTitle("Unresolved files remain.");
-          new GitConflictResolver(myProject, myGit, ServiceManager.getService(PlatformFacade.class), GitUtil.getRoots(getRepositories()), params).merge();
+          new GitConflictResolver(myProject, myGit, ServiceManager.getService(PlatformFacade.class), GitUtil.getRootsFromRepositories(
+            getRepositories()), params).merge();
         }
       }
     });

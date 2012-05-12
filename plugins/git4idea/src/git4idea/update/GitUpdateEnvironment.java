@@ -27,15 +27,17 @@ import com.intellij.openapi.vcs.update.UpdateEnvironment;
 import com.intellij.openapi.vcs.update.UpdateSession;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.vfs.VirtualFile;
-import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.config.GitVcsSettings;
+import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Set;
+
+import static git4idea.GitUtil.*;
 
 /**
  * Git update environment implementation. The environment does
@@ -60,8 +62,10 @@ public class GitUpdateEnvironment implements UpdateEnvironment {
 
   @NotNull
   public UpdateSession updateDirectories(@NotNull FilePath[] filePaths, UpdatedFiles updatedFiles, ProgressIndicator progressIndicator, @NotNull Ref<SequentialUpdatesContext> sequentialUpdatesContextRef) throws ProcessCanceledException {
-    Set<VirtualFile> roots = GitUtil.gitRoots(Arrays.asList(filePaths));
-    final GitUpdateProcess gitUpdateProcess = new GitUpdateProcess(myProject, progressIndicator, roots, updatedFiles);
+    Set<VirtualFile> roots = gitRoots(Arrays.asList(filePaths));
+    GitRepositoryManager repositoryManager = getRepositoryManager(myProject);
+    final GitUpdateProcess gitUpdateProcess = new GitUpdateProcess(myProject, progressIndicator,
+                                                                   getRepositoriesFromRoots(repositoryManager, roots), updatedFiles);
     boolean result = gitUpdateProcess.update(GitUpdateProcess.UpdateMethod.READ_FROM_SETTINGS);
     return new GitUpdateSession(result);
   }
@@ -69,7 +73,7 @@ public class GitUpdateEnvironment implements UpdateEnvironment {
 
   public boolean validateOptions(Collection<FilePath> filePaths) {
     for (FilePath p : filePaths) {
-      if (!GitUtil.isUnderGit(p)) {
+      if (!isUnderGit(p)) {
         return false;
       }
     }

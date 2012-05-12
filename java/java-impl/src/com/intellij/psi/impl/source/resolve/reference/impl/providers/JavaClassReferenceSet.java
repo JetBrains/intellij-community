@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -82,7 +82,7 @@ public class JavaClassReferenceSet {
         
         if (ch == LT || ch == COMMA) {
           if (!allowGenericsCalculated) {
-            allowGenerics = !isStaticImport && PsiUtil.getLanguageLevel(element).hasEnumKeywordAndAutoboxing();
+            allowGenerics = !isStaticImport && PsiUtil.isLanguageLevel5OrHigher(element);
             allowGenericsCalculated = true;
           }
 

@@ -86,7 +86,7 @@ public class ClasspathBootstrap {
   private ClasspathBootstrap() {
   }
 
-  public static List<File> getCompileServerApplicationClasspath() {
+  public static List<File> getBuildProcessApplicationClasspath() {
     final Set<File> cp = new LinkedHashSet<File>();
     cp.add(getResourcePath(Server.class));
     for (String path : PathManager.getUtilClassPath()) { cp.add(new File(path)); } // util
@@ -114,14 +114,6 @@ public class ClasspathBootstrap {
     catch (Throwable ignored) {
     }
 
-    final JavaCompiler systemCompiler = ToolProvider.getSystemJavaCompiler();
-    if (systemCompiler != null) {
-      try {
-        cp.add(getResourcePath(systemCompiler.getClass()));  // tools.jar
-      }
-      catch (Throwable ignored) {
-      }
-    }
     return new ArrayList<File>(cp);
   }
 
