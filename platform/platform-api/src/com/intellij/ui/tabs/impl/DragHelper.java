@@ -238,7 +238,7 @@ class DragHelper extends MouseDragHelper {
     if (!willDragOutStart) {
      myTabs.fireTabsMoved();
     }
-    myTabs.relayout(true, false);
+    myTabs.relayout(false);
 
     myTabs.revalidate();
   }
