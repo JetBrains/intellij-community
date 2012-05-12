@@ -101,6 +101,18 @@ public abstract class PythonSdkFlavor {
     return null;
   }
 
+  @Nullable
+  public static PythonSdkFlavor getPlatformIndependentFlavor(@Nullable final String sdkPath) {
+    if (sdkPath == null) return null;
+
+    for (PythonSdkFlavor flavor : getPlatformIndependentFlavors()) {
+      if (flavor.isValidSdkHome(sdkPath)) {
+        return flavor;
+      }
+    }
+    return null;
+  }
+
   /**
    * Checks if the path is the name of a Python interpreter of this flavor.
    *

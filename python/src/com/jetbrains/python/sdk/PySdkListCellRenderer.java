@@ -20,7 +20,7 @@ public class PySdkListCellRenderer extends HtmlListCellRenderer<Sdk> {
   @Override
   protected void doCustomize(final JList list, final Sdk sdk, final int index, final boolean selected, final boolean hasFocus) {
     if (sdk != null) {
-      final PythonSdkFlavor flavor = PythonSdkFlavor.getFlavor(sdk);
+      final PythonSdkFlavor flavor = PythonSdkFlavor.getPlatformIndependentFlavor(sdk.getHomePath());
       final Icon icon = flavor != null ? flavor.getIcon() : sdk.getSdkType().getIcon();
       final String name;
       if (mySdkModificators != null && mySdkModificators.containsKey(sdk)) {
