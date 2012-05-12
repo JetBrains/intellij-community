@@ -519,7 +519,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
           if (!isEditing()) {
             return;
           }
-          Component c = myFocusManager.getFocusOwner();
+          Component c = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
           while (c != null) {
             if (c instanceof JPopupMenu) {
               c = ((JPopupMenu)c).getInvoker();
