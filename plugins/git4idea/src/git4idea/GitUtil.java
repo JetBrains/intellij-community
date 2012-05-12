@@ -698,12 +698,28 @@ public class GitUtil {
   }
 
   @NotNull
-  public static Collection<VirtualFile> getRoots(@NotNull Collection<GitRepository> repositories) {
+  public static Collection<VirtualFile> getRootsFromRepositories(@NotNull Collection<GitRepository> repositories) {
     Collection<VirtualFile> roots = new ArrayList<VirtualFile>(repositories.size());
     for (GitRepository repository : repositories) {
       roots.add(repository.getRoot());
     }
     return roots;
+  }
+
+  @NotNull
+  public static Collection<GitRepository> getRepositoriesFromRoots(@NotNull GitRepositoryManager repositoryManager,
+                                                                   @NotNull Collection<VirtualFile> roots) {
+    Collection<GitRepository> repositories = new ArrayList<GitRepository>(roots.size());
+    for (VirtualFile root : roots) {
+      GitRepository repo = repositoryManager.getRepositoryForRoot(root);
+      if (repo == null) {
+        LOG.error("Repository not found for root " + root);
+      }
+      else {
+        repositories.add(repo);
+      }
+    }
+    return repositories;
   }
 
   /**
@@ -764,7 +780,7 @@ public class GitUtil {
     return affectedChanges;
   }
 
-  @Nullable
+  @NotNull
   public static GitRepositoryManager getRepositoryManager(@NotNull Project project) {
     return ServiceManager.getService(project, GitRepositoryManager.class);
   }

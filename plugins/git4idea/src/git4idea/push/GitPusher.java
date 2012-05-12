@@ -484,7 +484,7 @@ public final class GitPusher {
           Collection<GitRepository> repositoriesToUpdate = getRootsToUpdate(rejectedPushesForCurrentBranch, updateSettings.shouldUpdateAllRoots());
           GitPushResult adjustedPushResult = result.remove(rejectedPushesForCurrentBranch);
           adjustedPushResult.markUpdateStartIfNotMarked(repositoriesToUpdate);
-          boolean updateResult = update(getRootsFromRepositories(repositoriesToUpdate), updateSettings.getUpdateMethod());
+          boolean updateResult = update(repositoriesToUpdate, updateSettings.getUpdateMethod());
           if (updateResult) {
             myProgressIndicator.setText(INDICATOR_TEXT);
             GitPushInfo newPushInfo = pushInfo.retain(rejectedPushesForCurrentBranch);
@@ -544,20 +544,12 @@ public final class GitPusher {
     return updateAllRoots ? myRepositories : rejectedPushesForCurrentBranch.keySet();
   }
   
-  @NotNull
-  private static Collection<VirtualFile> getRootsFromRepositories(@NotNull Collection<GitRepository> repositories) {
-    Collection<VirtualFile> roots = new ArrayList<VirtualFile>();
-    for (GitRepository repository : repositories) {
-      roots.add(repository.getRoot());
-    }
-    return roots;
-  }
-
-  private boolean update(@NotNull Collection<VirtualFile> rootsToUpdate, @NotNull UpdateMethod updateMethod) {
+  private boolean update(@NotNull Collection<GitRepository> rootsToUpdate, @NotNull UpdateMethod updateMethod) {
     GitUpdateProcess.UpdateMethod um = updateMethod == UpdateMethod.MERGE ? GitUpdateProcess.UpdateMethod.MERGE : GitUpdateProcess.UpdateMethod.REBASE;
-    boolean updateResult = new GitUpdateProcess(myProject, myProgressIndicator, new HashSet<VirtualFile>(rootsToUpdate), UpdatedFiles.create()).update(um);
-    for (VirtualFile virtualFile : rootsToUpdate) {
-      virtualFile.refresh(true, true);
+    boolean updateResult = new GitUpdateProcess(myProject, myProgressIndicator, new HashSet<GitRepository>(rootsToUpdate),
+                                                UpdatedFiles.create()).update(um);
+    for (GitRepository repository : rootsToUpdate) {
+      repository.getRoot().refresh(true, true);
     }
     return updateResult;
   }

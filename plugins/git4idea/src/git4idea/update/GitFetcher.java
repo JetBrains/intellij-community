@@ -81,14 +81,11 @@ public class GitFetcher {
    * Invokes 'git fetch'.
    * @return true if fetch was successful, false in the case of error.
    */
-  public GitFetchResult fetch(@NotNull VirtualFile root) {
-    GitRepository repository = myRepositoryManager.getRepositoryForRoot(root);
-    assert repository != null : "Repository can't be null for " + root + "\n" + myRepositoryManager;
-    
+  public GitFetchResult fetch(@NotNull GitRepository repository) {
     // TODO need to have a fair compound result here
     GitFetchResult fetchResult = GitFetchResult.success();
     if (myFetchAll) {
-      fetchResult = fetchAll(root, repository, fetchResult);
+      fetchResult = fetchAll(repository, fetchResult);
     }
     else {
       return fetchCurrentRemote(repository);
@@ -187,7 +184,7 @@ public class GitFetcher {
   }
 
   @NotNull
-  private GitFetchResult fetchAll(@NotNull VirtualFile root, @NotNull GitRepository repository, @NotNull GitFetchResult fetchResult) {
+  private GitFetchResult fetchAll(@NotNull GitRepository repository, @NotNull GitFetchResult fetchResult) {
     for (GitRemote remote : repository.getRemotes()) {
       String url = remote.getFirstUrl();
       if (url == null) {
@@ -204,7 +201,7 @@ public class GitFetcher {
         }
       }
       else {
-        GitFetchResult res = fetchNatively(root, remote, null);
+        GitFetchResult res = fetchNatively(repository.getRoot(), remote, null);
         res.addPruneInfo(fetchResult.getPrunedRefs());
         fetchResult = res;
         if (!fetchResult.isSuccess()) {
@@ -318,13 +315,14 @@ public class GitFetcher {
    * @param notifySuccess           if set to {@code true} successful notification will be displayed.
    * @return true if all fetches were successful, false if at least one fetch failed.
    */
-  public boolean fetchRootsAndNotify(@NotNull Collection<VirtualFile> roots, @Nullable String errorNotificationTitle, boolean notifySuccess) {
+  public boolean fetchRootsAndNotify(@NotNull Collection<GitRepository> roots,
+                                     @Nullable String errorNotificationTitle, boolean notifySuccess) {
     Map<VirtualFile, String> additionalInfo = new HashMap<VirtualFile, String>();
-    for (VirtualFile root : roots) {
-      GitFetchResult result = fetch(root);
+    for (GitRepository repository : roots) {
+      GitFetchResult result = fetch(repository);
       String ai = result.getAdditionalInfo();
       if (!StringUtil.isEmptyOrSpaces(ai)) {
-        additionalInfo.put(root, ai);
+        additionalInfo.put(repository.getRoot(), ai);
       }
       if (!result.isSuccess()) {
         Collection<Exception> errors = new ArrayList<Exception>(getErrors());

@@ -147,7 +147,7 @@ public class GitPreservingProcess {
    */
   private boolean save() {
     try {
-      mySaver.saveLocalChanges(GitUtil.getRoots(myRepositories));
+      mySaver.saveLocalChanges(GitUtil.getRootsFromRepositories(myRepositories));
       return true;
     } catch (VcsException e) {
       LOG.info("Couldn't save local changes", e);
