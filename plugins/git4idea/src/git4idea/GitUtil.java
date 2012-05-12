@@ -719,6 +719,7 @@ public class GitUtil {
     diff.setNoSSH(true);
     diff.setStdoutSuppressed(true);
     diff.setStderrSuppressed(true);
+    diff.setSilent(true);
     final String output = diff.run();
 
     final Collection<String> remoteChanges = new HashSet<String>();
