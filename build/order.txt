@@ -10602,6 +10602,7 @@ gutter/overridingMethod.png:/lib/icons.jar
 gutter/implementingMethod.png:/lib/icons.jar
 gutter/overridenMethod.png:/lib/icons.jar
 gutter/implementedMethod.png:/lib/icons.jar
+gutter/recursiveMethod.png:/lib/icons.jar
 com/intellij/codeInsight/daemon/impl/analysis/HighlightVisitorImpl$1.class:/lib/idea.jar
 com/intellij/codeInsight/daemon/impl/IconLineMarkerProvider.class:/lib/idea.jar
 com/intellij/codeInsight/daemon/impl/IconLineMarkerProvider$1.class:/lib/idea.jar
