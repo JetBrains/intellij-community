@@ -436,6 +436,10 @@ public class FileUtil extends FileUtilRt {
         ioException.initCause(e);
         throw ioException;
       }
+      else if (SystemInfo.isWindows && e.getMessage() != null && e.getMessage().contains("denied") &&
+               WinUACTemporaryFix.nativeCopy(fromFile, toFile, syncTimestamp)) {
+        return;
+      }
       createParentDirs(toFile);
       fos = new FileOutputStream(toFile);
     }
