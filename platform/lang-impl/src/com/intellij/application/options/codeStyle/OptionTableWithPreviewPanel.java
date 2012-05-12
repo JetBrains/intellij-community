@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -263,13 +263,13 @@ public abstract class OptionTableWithPreviewPanel extends MultilanguageCodeStyle
 
     final TableColumn levelColumn = treeTable.getColumnModel().getColumn(1);
     //TODO[max]: better preffered size...
-    JLabel value = new JLabel(ApplicationBundle.message("option.table.sizing.text"));
-    final Dimension valueSize = value.getPreferredSize();
-    levelColumn.setPreferredWidth(valueSize.width);
-    levelColumn.setMaxWidth(valueSize.width);
-    levelColumn.setMinWidth(valueSize.width);
-    levelColumn.setResizable(false);
+    //TODO[kb]: Did I fixed it by making the last column floating?
+    //levelColumn.setPreferredWidth(valueSize.width);
+    //levelColumn.setMaxWidth(valueSize.width);
+    //levelColumn.setMinWidth(valueSize.width);
+    //levelColumn.setResizable(false);
 
+    final Dimension valueSize = new JLabel(ApplicationBundle.message("option.table.sizing.text")).getPreferredSize();
     treeTable.setPreferredScrollableViewportSize(new Dimension(maxWidth + valueSize.width + 10, 20));
 
     return treeTable;
