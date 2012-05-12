@@ -55,7 +55,10 @@ class XBreakpointItem implements BreakpointItem {
 
   @Override
   public void execute(Project project) {
-    //To change body of implemented methods use File | Settings | File Templates.
+    final XSourcePosition position = myBreakpoint.getSourcePosition();
+    if (position != null) {
+      position.createNavigatable(project).navigate(true);
+    }
   }
 
   @Override
@@ -74,7 +77,7 @@ class XBreakpointItem implements BreakpointItem {
 
     XLightBreakpointPropertiesPanel<XBreakpoint<?>> propertiesPanel =
       new XLightBreakpointPropertiesPanel<XBreakpoint<?>>(project, getManager(), myBreakpoint, true);
-
+    propertiesPanel.loadProperties();
     panel.setDetailPanel(propertiesPanel.getMainPanel());
 
     XSourcePosition sourcePosition = myBreakpoint.getSourcePosition();

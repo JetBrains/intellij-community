@@ -55,7 +55,12 @@ class JavaBreakpointItem implements BreakpointItem {
 
   @Override
   public void execute(Project project) {
-    //To change body of implemented methods use File | Settings | File Templates.
+    if (myBreakpoint instanceof BreakpointWithHighlighter) {
+      final SourcePosition position = ((BreakpointWithHighlighter)myBreakpoint).getSourcePosition();
+      if (position != null) {
+        position.navigate(true);
+      }
+    }
   }
 
   @Override
@@ -72,6 +77,7 @@ class JavaBreakpointItem implements BreakpointItem {
   public void updateDetailView(DetailView panel) {
     BreakpointPropertiesPanel breakpointPropertiesPanel = myBreakpointFactory
       .createBreakpointPropertiesPanel(myBreakpoint.getProject(), false);
+
     if (breakpointPropertiesPanel != null) {
       breakpointPropertiesPanel.initFrom(myBreakpoint, true);
       final JPanel mainPanel = breakpointPropertiesPanel.getPanel();

@@ -108,6 +108,7 @@ public abstract class BreakpointPropertiesPanel {
   private static final int MAX_COMBO_WIDTH = 300;
   private final FixedSizeButton myConditionMagnifierButton;
   private boolean myMoreOptionsVisible = true;
+  private Breakpoint myBreakpoint;
 
   public boolean isMoreOptionsVisible() {
     return myMoreOptionsVisible;
@@ -116,13 +117,12 @@ public abstract class BreakpointPropertiesPanel {
   private void createUIComponents() {
     myPanel = new JPanel() {
       @Override
-      public boolean requestFocus(boolean b) {
-        return super.requestFocus(b);    //To change body of overridden methods use File | Settings | File Templates.
-      }
-
-      @Override
-      public void requestFocus() {
-        super.requestFocus();    //To change body of overridden methods use File | Settings | File Templates.
+      public void removeNotify() {
+        super.removeNotify();
+        saveTo(myBreakpoint, new Runnable() {
+          @Override
+          public void run() {}
+        });
       }
     };
   }
@@ -392,6 +392,7 @@ public abstract class BreakpointPropertiesPanel {
    * Init UI components with the values from Breakpoint
    */
   public void initFrom(Breakpoint breakpoint, boolean moreOptionsVisible1) {
+    myBreakpoint = breakpoint;
     boolean moreOptionsVisible = moreOptionsVisible1;
     boolean actionsPanelVisible = moreOptionsVisible1;
     myBreakpointComboboxHandler.initFrom(breakpoint);

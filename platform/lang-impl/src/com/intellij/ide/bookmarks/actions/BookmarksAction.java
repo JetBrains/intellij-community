@@ -27,7 +27,6 @@ import com.intellij.openapi.editor.*;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
-import com.intellij.ui.popup.util.ItemWrapper;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -98,11 +97,6 @@ public class BookmarksAction extends AnAction implements DumbAware, MasterDetail
         }
       });
     }
-  }
-
-  @Override
-  public void itemRemoved(ItemWrapper item, Project project) {
-    BookmarkManager.getInstance(project).removeBookmark(((BookmarkItem)item).getBookmark());
   }
 
   private static DefaultListModel buildModel(Project project) {

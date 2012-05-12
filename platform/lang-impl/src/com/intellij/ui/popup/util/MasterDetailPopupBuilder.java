@@ -74,7 +74,12 @@ public class MasterDetailPopupBuilder {
 
     myList.setCellRenderer(new ItemRenderer(myProject));
 
-    myList.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
+    final ListSelectionModel selectionModel = myList.getSelectionModel();
+    selectionModel.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+
+    final boolean directionUp[] = new boolean[1];
+
+    selectionModel.addListSelectionListener(new ListSelectionListener() {
       private String getTitle2Text(String fullText) {
         int labelWidth = pathLabel.getWidth();
         if (fullText == null || fullText.length() == 0) return " ";
@@ -102,7 +107,7 @@ public class MasterDetailPopupBuilder {
           public void run() {
             detailView.updateWithItem(wrapper);
           }
-        }, 300);
+        }, 100);
       }
 
       private void updatePathLabel() {
@@ -110,6 +115,26 @@ public class MasterDetailPopupBuilder {
         ItemWrapper wrapper = null;
         if (values != null && values.length == 1) {
           wrapper = (ItemWrapper)values[0];
+          if (wrapper instanceof SplitterItem) {
+            if (!directionUp[0]) {
+              final int index = myList.getSelectedIndex();
+              if (myList.getItemsCount() >= index + 1) {
+                myList.setSelectedIndex(index + 1);
+              }
+              else {
+                myList.setSelectedIndex(0);
+              }
+            }
+            else {
+              final int index = myList.getSelectedIndex();
+              if (index - 1 > 0) {
+                myList.setSelectedIndex(index - 1);
+              }
+              else {
+                myList.setSelectedIndex(myList.getItemsCount() - 1);
+              }
+            }
+          }
           pathLabel.setText(getTitle2Text(wrapper.footerText()));
         }
         else {
@@ -212,6 +237,11 @@ public class MasterDetailPopupBuilder {
 
           }
         }
+        else if (e.getKeyCode() == KeyEvent.VK_UP) {
+          directionUp[0] = true;
+        } else if (e.getKeyCode() == KeyEvent.VK_DOWN) {
+          directionUp[0] = false;
+        }
         else if (e.getModifiersEx() == 0) {
           myDelegate.handleMnemonic(e, myProject, popup);
         }
@@ -240,8 +270,6 @@ public class MasterDetailPopupBuilder {
 
     void handleMnemonic(KeyEvent e, Project project, JBPopup popup);
 
-    void itemRemoved(ItemWrapper item, Project project);
-
     boolean hasItemsWithMnemonic(Project project);
   }
 
@@ -253,7 +281,7 @@ public class MasterDetailPopupBuilder {
       super(new BorderLayout());
       myProject = project;
 
-      setBackground(UIUtil.getListBackground());
+      setBackground(UIUtil.getPanelBackground());
 
       final JLabel mnemonicLabel = new JLabel();
       mnemonicLabel.setFont(Bookmark.MNEMONIC_FONT);

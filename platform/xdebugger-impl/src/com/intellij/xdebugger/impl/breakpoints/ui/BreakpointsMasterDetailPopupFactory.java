@@ -91,11 +91,6 @@ public class BreakpointsMasterDetailPopupFactory {
           //To change body of implemented methods use File | Settings | File Templates.
         }
 
-        @Override
-        public void itemRemoved(ItemWrapper item, Project project) {
-          //To change body of implemented methods use File | Settings | File Templates.
-        }
-
         public boolean hasItemsWithMnemonic(Project project) {
           return false;
         }
