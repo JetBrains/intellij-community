@@ -154,11 +154,8 @@ class TeamcityTestResult(TestResult):
             self.current_suite = None
 
     def _unescape(self, text):
-      if PYTHON_VERSION_MAJOR == 3:
-        byte_text = bytes(text, 'utf-8')
-        return byte_text.decode('unicode_escape')
-      else:
-        return text.decode('string_escape')
+      # do not use text.decode('string_escape'), it leads to problems with different string encodings given
+      return text.replace("\\n", "\n")
 
 class TeamcityTestRunner:
     def __init__(self, stream=sys.stdout):
