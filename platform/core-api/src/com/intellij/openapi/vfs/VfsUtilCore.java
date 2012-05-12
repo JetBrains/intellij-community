@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -193,5 +194,13 @@ public class VfsUtilCore {
     finally {
       reader.close();
     }
+  }
+
+  @NotNull
+  public static VirtualFile[] toVirtualFileArray(@NotNull Collection<? extends VirtualFile> files) {
+    int size = files.size();
+    if (size == 0) return VirtualFile.EMPTY_ARRAY;
+    //noinspection SSBasedInspection
+    return files.toArray(new VirtualFile[size]);
   }
 }

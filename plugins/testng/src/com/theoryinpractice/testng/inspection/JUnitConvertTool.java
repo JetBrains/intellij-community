@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInspection.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiElementFilter;
@@ -95,7 +96,7 @@ public class JUnitConvertTool extends BaseJavaLocalInspectionTool {
             convertJUnitConstructor(method);
           }
           else {
-            if (!javaFile.getLanguageLevel().hasEnumKeywordAndAutoboxing()) {
+            if (!javaFile.getLanguageLevel().isAtLeast(LanguageLevel.JDK_1_5)) {
               addMethodJavadoc(factory, method);
             }
             else {

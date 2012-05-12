@@ -36,6 +36,7 @@ import com.intellij.openapi.project.impl.ProjectLifecycleListener;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
+import com.intellij.openapi.roots.impl.ModuleRootManagerImpl;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -839,7 +840,8 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
     }
 
     public void commit() {
-      ProjectRootManagerEx.getInstanceEx(myProject).multiCommit(this, new ModifiableRootModel[0]);
+      ModifiableRootModel[] rootModels = new ModifiableRootModel[0];
+      ModuleRootManagerImpl.multiCommit(rootModels, this);
     }
 
     public void commitWithRunnable(Runnable runnable) {

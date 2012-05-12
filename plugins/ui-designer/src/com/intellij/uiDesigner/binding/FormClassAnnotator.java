@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,9 +15,8 @@
  */
 package com.intellij.uiDesigner.binding;
 
-import com.intellij.codeInsight.daemon.JavaErrorMessages;
-import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.Annotator;
@@ -26,10 +25,10 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.ui.UIBundle;
+import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
-import java.text.MessageFormat;
 import java.util.List;
 
 /**
@@ -37,9 +36,6 @@ import java.util.List;
  */
 public class FormClassAnnotator implements Annotator {
   private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.binding.FormClassAnnotator");
-
-  private static final String FIELD_IS_OVERWRITTEN = JavaErrorMessages.message("uidesigned.field.is.overwritten.by.generated.code");
-  private static final String BOUND_FIELD_TYPE_MISMATCH = JavaErrorMessages.message("uidesigner.bound.field.type.mismatch");
 
   public void annotate(@NotNull PsiElement psiElement, @NotNull AnnotationHolder holder) {
     if (psiElement instanceof PsiField) {
@@ -68,7 +64,8 @@ public class FormClassAnnotator implements Annotator {
     if (guiComponentType != null) {
       final PsiType fieldType = field.getType();
       if (!fieldType.isAssignableFrom(guiComponentType)) {
-        String message = MessageFormat.format(BOUND_FIELD_TYPE_MISMATCH, guiComponentType.getCanonicalText(), fieldType.getCanonicalText());
+        String message = UIDesignerBundle.message("bound.field.type.mismatch", guiComponentType.getCanonicalText(),
+                                                  fieldType.getCanonicalText());
         Annotation annotation = holder.createErrorAnnotation(field.getTypeElement(), message);
         annotation.registerFix(new ChangeFormComponentTypeFix((PsiPlainTextFile)boundForm, field.getName(), field.getType()), null, null);
         annotation.registerFix(new ChangeBoundFieldTypeFix(field, guiComponentType), null, null);
@@ -76,7 +73,7 @@ public class FormClassAnnotator implements Annotator {
     }
 
     if (field.hasInitializer()) {
-      final String message = MessageFormat.format(FIELD_IS_OVERWRITTEN, field.getName());
+      final String message = UIDesignerBundle.message("field.is.overwritten.by.generated.code", field.getName());
       Annotation annotation = holder.createWarningAnnotation(field.getInitializer(), message);
       annotation.registerFix(new IntentionAction() {
         @NotNull

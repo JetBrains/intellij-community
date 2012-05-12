@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,6 @@ import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.ControlFlowUtil;
 import com.intellij.psi.impl.source.javadoc.PsiDocMethodOrFieldRef;
@@ -170,16 +169,11 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     }
   }
 
-  @Override public void visitAnnotation(PsiAnnotation annotation) {
+  @Override
+  public void visitAnnotation(PsiAnnotation annotation) {
     super.visitAnnotation(annotation);
-    if (!PsiUtil.isLanguageLevel5OrHigher(annotation)) {
-      HighlightInfo info = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, annotation, JavaErrorMessages.message("annotations.prior.15"));
-      QuickFixAction.registerQuickFixAction(info, new IncreaseLanguageLevelFix(LanguageLevel.JDK_1_5));
-      myHolder.add(info);
-      return;
-    }
-
-    myHolder.add(AnnotationsHighlightUtil.checkApplicability(annotation));
+    if (!myHolder.hasErrorResults()) myHolder.add(HighlightUtil.checkAnnotationFeature(annotation));
+    if (!myHolder.hasErrorResults()) myHolder.add(AnnotationsHighlightUtil.checkApplicability(annotation));
     if (!myHolder.hasErrorResults()) myHolder.add(AnnotationsHighlightUtil.checkAnnotationType(annotation));
     if (!myHolder.hasErrorResults()) myHolder.add(AnnotationsHighlightUtil.checkMissingAttributes(annotation));
     if (!myHolder.hasErrorResults()) myHolder.add(AnnotationsHighlightUtil.checkTargetAnnotationDuplicates(annotation));
@@ -187,7 +181,8 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     if (!myHolder.hasErrorResults()) myHolder.add(AnnotationsHighlightUtil.checkForeignInnerClassesUsed(annotation));
   }
 
-  @Override public void visitAnnotationArrayInitializer(PsiArrayInitializerMemberValue initializer) {
+  @Override
+  public void visitAnnotationArrayInitializer(PsiArrayInitializerMemberValue initializer) {
     PsiMethod method = null;
     PsiElement parent = initializer.getParent();
     if (parent instanceof PsiNameValuePair) {
@@ -364,28 +359,24 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     }
   }
 
-  @Override public void visitField(PsiField field) {
+  @Override
+  public void visitField(PsiField field) {
     super.visitField(field);
     if (!myHolder.hasErrorResults()) myHolder.add(HighlightControlFlowUtil.checkFinalFieldInitialized(field));
   }
 
-  @Override public void visitForeachStatement(PsiForeachStatement statement) {
-    if (!PsiUtil.isLanguageLevel5OrHigher(statement)) {
-      HighlightInfo info = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, statement.getFirstChild(), JavaErrorMessages.message("foreach.prior.15"));
-      QuickFixAction.registerQuickFixAction(info, new IncreaseLanguageLevelFix(LanguageLevel.JDK_1_5));
-      myHolder.add(info);
-    }
+  @Override
+  public void visitForeachStatement(final PsiForeachStatement statement) {
+    myHolder.add(HighlightUtil.checkForEachFeature(statement));
   }
 
-  @Override public void visitImportStaticStatement(PsiImportStaticStatement statement) {
-    if (!PsiUtil.isLanguageLevel5OrHigher(statement)) {
-      HighlightInfo info = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, statement.getFirstChild(), JavaErrorMessages.message("static.imports.prior.15"));
-      QuickFixAction.registerQuickFixAction(info, new IncreaseLanguageLevelFix(LanguageLevel.JDK_1_5));
-      myHolder.add(info);
-    }
+  @Override
+  public void visitImportStaticStatement(final PsiImportStaticStatement statement) {
+    myHolder.add(HighlightUtil.checkStaticImportFeature(statement));
   }
 
-  @Override public void visitIdentifier(PsiIdentifier identifier) {
+  @Override
+  public void visitIdentifier(final PsiIdentifier identifier) {
     PsiElement parent = identifier.getParent();
     final EditorColorsScheme colorsScheme = myHolder.getColorsScheme();
     if (parent instanceof PsiVariable) {
@@ -411,10 +402,8 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     }
     else if (parent instanceof PsiClass) {
       PsiClass aClass = (PsiClass)parent;
-      if (aClass.isAnnotationType() && !PsiUtil.isLanguageLevel5OrHigher(aClass)) {
-        HighlightInfo info = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, identifier, JavaErrorMessages.message("annotations.prior.15"));
-        QuickFixAction.registerQuickFixAction(info, new IncreaseLanguageLevelFix(LanguageLevel.JDK_1_5));
-        myHolder.add(info);
+      if (aClass.isAnnotationType()) {
+        myHolder.add(HighlightUtil.checkAnnotationFeature(identifier));
       }
 
       myHolder.add(HighlightClassUtil.checkClassAlreadyImported(aClass, identifier));
@@ -742,6 +731,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       if (!myHolder.hasErrorResults()) myHolder.add(GenericsHighlightUtil.checkForeachLoopParameterType((PsiForeachStatement)parent));
     }
     else if (parent instanceof PsiCatchSection) {
+      if (!myHolder.hasErrorResults()) myHolder.add(HighlightUtil.checkMultiCatchFeature(parameter));
       if (!myHolder.hasErrorResults()) myHolder.add(HighlightUtil.checkCatchParameterIsThrowable(parameter));
       if (!myHolder.hasErrorResults()) myHolder.addAll(GenericsHighlightUtil.checkCatchParameterIsClass(parameter));
       if (!myHolder.hasErrorResults()) myHolder.addAll(HighlightUtil.checkCatchTypeIsDisjoint(parameter));
@@ -987,11 +977,14 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   @Override
   public void visitResourceVariable(final PsiResourceVariable resourceVariable) {
     visitVariable(resourceVariable);
+    if (!myHolder.hasErrorResults()) myHolder.add(HighlightUtil.checkTryWithResourcesFeature(resourceVariable));
     if (!myHolder.hasErrorResults()) myHolder.add(HighlightUtil.checkTryResourceIsAutoCloseable(resourceVariable));
     if (!myHolder.hasErrorResults()) myHolder.add(HighlightUtil.checkUnhandledCloserExceptions(resourceVariable));
   }
 
-  @Override public void visitTypeElement(PsiTypeElement type) {
+  @Override
+  public void visitTypeElement(final PsiTypeElement type) {
+    if (!myHolder.hasErrorResults()) myHolder.add(HighlightUtil.checkDiamondFeature(type));
     if (!myHolder.hasErrorResults()) myHolder.add(HighlightUtil.checkIllegalType(type));
     if (!myHolder.hasErrorResults()) myHolder.add(GenericsHighlightUtil.checkReferenceTypeUsedAsTypeArgument(type));
     if (!myHolder.hasErrorResults()) myHolder.add(GenericsHighlightUtil.checkWildcardUsage(type));

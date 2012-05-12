@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,14 +15,17 @@
  */
 package org.jetbrains.idea.maven.importing;
 
+import com.intellij.ide.util.projectWizard.importSources.JavaModuleSourceRoot;
+import com.intellij.ide.util.projectWizard.importSources.JavaSourceRootDetectionUtil;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.roots.impl.ModuleRootManagerImpl;
 import com.intellij.openapi.util.Pair;
+import com.intellij.util.ArrayUtil;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.model.MavenResource;
@@ -33,6 +36,7 @@ import org.jetbrains.idea.maven.utils.Path;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -66,7 +70,9 @@ public class MavenFoldersImporter {
 
       if (!rootModels.isEmpty()) {
         ModifiableRootModel[] modelsArray = rootModels.toArray(new ModifiableRootModel[rootModels.size()]);
-        ProjectRootManager.getInstance(project).multiCommit(modelsArray);
+        if (modelsArray.length > 0) {
+          ModuleRootManagerImpl.multiCommit(modelsArray, ModuleManager.getInstance(modelsArray[0].getProject()).getModifiableModel());
+        }
       }
     }
     finally {
@@ -169,7 +175,7 @@ public class MavenFoldersImporter {
 
       Boolean isGeneratedTestSources = generatedDirs.get(f);
       if (isGeneratedTestSources != null) {
-        addAllSubDirsAsSources(f, isGeneratedTestSources);
+        configGeneratedSourceFolder(f, isGeneratedTestSources);
       }
       else {
         if (myModel.hasRegisteredSourceSubfolder(f)) continue;
@@ -195,7 +201,35 @@ public class MavenFoldersImporter {
     }
   }
 
-  private void addAllSubDirsAsSources(File dir, boolean isTestSources) {
+  private void configGeneratedSourceFolder(@NotNull File dir, boolean isTestSources) {
+    switch (myImportingSettings.getGeneratedSourcesFolder()) {
+      case GENERATED_SOURCE_FOLDER:
+        if (!myModel.hasRegisteredSourceSubfolder(dir)) {
+          myModel.addSourceFolder(dir.getPath(), isTestSources);
+        }
+        break;
+
+      case SUBFOLDER:
+        addAllSubDirsAsSources(dir, isTestSources);
+        break;
+
+      case AUTODETECT:
+        Collection<JavaModuleSourceRoot> sourceRoots = JavaSourceRootDetectionUtil.suggestRoots(dir);
+        if (sourceRoots.size() == 1) {
+          JavaModuleSourceRoot root = sourceRoots.iterator().next();
+          if (dir.equals(root.getDirectory())) {
+            if (!myModel.hasRegisteredSourceSubfolder(dir)) {
+              myModel.addSourceFolder(dir.getPath(), isTestSources);
+            }
+            break;
+          }
+        }
+        addAllSubDirsAsSources(dir, isTestSources);
+        break;
+    }
+  }
+
+  private void addAllSubDirsAsSources(@NotNull File dir, boolean isTestSources) {
     for (File f : getChildren(dir)) {
       if (!f.isDirectory()) continue;
       if (myModel.hasRegisteredSourceSubfolder(f)) continue;
@@ -203,8 +237,8 @@ public class MavenFoldersImporter {
     }
   }
 
-  private File[] getChildren(File dir) {
+  private static File[] getChildren(File dir) {
     File[] result = dir.listFiles();
-    return result == null ? new File[0] : result;
+    return result == null ? ArrayUtil.EMPTY_FILE_ARRAY : result;
   }
 }

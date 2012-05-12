@@ -16,7 +16,6 @@
 package com.intellij.openapi.roots;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -177,19 +176,4 @@ public abstract class ProjectRootManager implements ModificationTracker {
   public void setProjectJdkName(String name) {
     setProjectSdkName(name);
   }
-
-  /**
-   * Commits the change to the lists of roots for the specified modules.
-   *
-   * @param rootModels the root models ro commit.
-   */
-  public abstract void multiCommit(ModifiableRootModel[] rootModels);
-
-  /**
-   * Commits the change to the list of modules and the lists of roots for the specified modules.
-   *
-   * @param moduleModel the module model to commit.
-   * @param rootModels the root models to commit.
-   */
-  public abstract void multiCommit(ModifiableModuleModel moduleModel, ModifiableRootModel[] rootModels);
 }

@@ -80,26 +80,24 @@ public class JavaNameSuggestionProvider implements NameSuggestionProvider {
       }
     }
     final String[] strings = info != null ? info.names : ArrayUtil.EMPTY_STRING_ARRAY;
-    ArrayList<String> list = new ArrayList<String>(Arrays.asList(strings));
+    final ArrayList<String> list = new ArrayList<String>(Arrays.asList(strings));
     final String[] properlyCased = suggestProperlyCasedName(element);
-    if (!list.contains(initialName)) {
-      list.add(0, initialName);
-    }
-    else {
-      int i = list.indexOf(initialName);
-      list.remove(i);
-      list.add(0, initialName);
-    }
     if (properlyCased != null) {
-      for (String properlyCasedSuggestion : properlyCased) {
-        list.add(1, properlyCasedSuggestion);
-      }
+      Collections.addAll(list, properlyCased);
     }
     if (parameterName != null && !list.contains(parameterName)) {
       list.add(parameterName);
     }
     if (superMethodName != null && !list.contains(superMethodName)) {
       list.add(0, superMethodName);
+    }
+    if (!list.contains(initialName)) {
+      list.add(initialName);
+    }
+    else {
+      int i = list.indexOf(initialName);
+      list.remove(i);
+      list.add(initialName);
     }
     ContainerUtil.removeDuplicates(list);
     result.addAll(list);

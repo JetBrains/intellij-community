@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,9 +34,7 @@ public class JavaHighlightingLexer extends LayeredLexer {
     registerSelfStoppingLayer(new StringLiteralLexer('\'', JavaTokenType.STRING_LITERAL),
                               new IElementType[]{JavaTokenType.CHARACTER_LITERAL}, IElementType.EMPTY_ARRAY);
 
-
-    
-    LayeredLexer docLexer = new LayeredLexer(new JavaDocLexer(languageLevel.hasEnumKeywordAndAutoboxing()));
+    LayeredLexer docLexer = new LayeredLexer(new JavaDocLexer(languageLevel.isAtLeast(LanguageLevel.JDK_1_5)));
 
     HtmlHighlightingLexer lexer = new HtmlHighlightingLexer();
     lexer.setHasNoEmbeddments(true);

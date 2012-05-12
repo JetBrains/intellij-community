@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
+import com.intellij.openapi.roots.impl.ModuleRootManagerImpl;
 import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
@@ -115,8 +116,8 @@ public class MavenDefaultModifiableModelsProvider extends MavenBaseModifiableMod
             myLibrariesModel.commit();
             Collection<ModifiableRootModel> rootModels = myRootModels.values();
 
-            ProjectRootManager.getInstance(myProject).multiCommit(myModuleModel,
-                                                                  rootModels.toArray(new ModifiableRootModel[rootModels.size()]));
+            ModifiableRootModel[] rootModels1 = rootModels.toArray(new ModifiableRootModel[rootModels.size()]);
+            ModuleRootManagerImpl.multiCommit(rootModels1, myModuleModel);
 
             for (ModifiableFacetModel each : myFacetModels.values()) {
               each.commit();

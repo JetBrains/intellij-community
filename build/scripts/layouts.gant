@@ -356,8 +356,11 @@ public def layoutCommunityPlugins(String home) {
       }
 
       jar("android-common.jar") {
-        module("android-rt")
         module("android-common")
+      }
+
+      jar("android-rt.jar") {
+        module("android-rt")
       }
 
       dir("jps") {

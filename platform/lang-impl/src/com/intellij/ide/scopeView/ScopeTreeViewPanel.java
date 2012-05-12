@@ -49,7 +49,6 @@ import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootAdapter;
 import com.intellij.openapi.roots.ModuleRootEvent;
-import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.roots.ui.configuration.actions.ModuleDeleteProvider;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
@@ -133,14 +132,17 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
     public void fileStatusChanged(@NotNull VirtualFile virtualFile) {
       if (!virtualFile.isValid()) return;
       final PsiFile file = PsiManager.getInstance(myProject).findFile(virtualFile);
-      if (file != null && getCurrentScope().getValue().contains(file, NamedScopesHolder.getHolder(myProject, getCurrentScope().getName(),
-                                                                                                  myDependencyValidationManager))) {
-        if (!myBuilder.hasFileNode(virtualFile)) return;
-        final PackageDependenciesNode node = myBuilder.getFileParentNode(virtualFile);
-        final PackageDependenciesNode[] nodes = FileTreeModelBuilder.findNodeForPsiElement(node, file);
-        if (nodes != null) {
-          for (PackageDependenciesNode dependenciesNode : nodes) {
-            dependenciesNode.updateColor();
+      if (file != null) {
+        final NamedScope currentScope = getCurrentScope();
+        final PackageSet value = currentScope.getValue();
+        if (value != null && value.contains(file, NamedScopesHolder.getHolder(myProject, currentScope.getName(), myDependencyValidationManager))) {
+          if (!myBuilder.hasFileNode(virtualFile)) return;
+          final PackageDependenciesNode node = myBuilder.getFileParentNode(virtualFile);
+          final PackageDependenciesNode[] nodes = FileTreeModelBuilder.findNodeForPsiElement(node, file);
+          if (nodes != null) {
+            for (PackageDependenciesNode dependenciesNode : nodes) {
+              dependenciesNode.updateColor();
+            }
           }
         }
       }

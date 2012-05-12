@@ -323,7 +323,7 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
                 elements.add(DirDiffElement.createTargetOnly(child, child.getTarget()));
                 break;
               case CHANGED:
-                elements.add(DirDiffElement.createChange(child, child.getSource(), child.getTarget()));
+                elements.add(DirDiffElement.createChange(child, child.getSource(), child.getTarget(), mySettings.customSourceChooser));
                 break;
               case EQUAL:
                 elements.add(DirDiffElement.createEqual(child, child.getSource(), child.getTarget()));

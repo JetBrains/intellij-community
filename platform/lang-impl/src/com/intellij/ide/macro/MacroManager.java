@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,6 +32,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ConvertingIterator;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.HashMap;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.Collection;
@@ -130,10 +131,12 @@ public final class MacroManager {
   /**
    * Expands all macros that are found in the <code>str</code>.
    */
+  @Nullable
   public String expandMacrosInString(String str, boolean firstQueueExpand, DataContext dataContext) throws Macro.ExecutionCancelledException {
     return expandMacroSet(str, firstQueueExpand, dataContext, getMacros().iterator());
   }
 
+  @Nullable
   private String expandMacroSet(String str,
                                 boolean firstQueueExpand, DataContext dataContext, Iterator<Macro> macros
                                 ) throws Macro.ExecutionCancelledException {

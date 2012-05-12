@@ -44,7 +44,7 @@ import java.util.List;
  */
 public class TargetOptionsComponent extends JPanel {
   private static final String[] KNOWN_TARGETS = new String[] {"1.1", "1.2", "1.3","1.4","1.5", "1.6", "1.7", "1.8"};
-  private static final String COMPILER_DEFAULT = "compiler default";
+  private static final String COMPILER_DEFAULT = "JDK default";
 
   private ComboBox myCbProjectTargetLevel;
   private JBTable myTable;
@@ -74,7 +74,7 @@ public class TargetOptionsComponent extends JPanel {
     targetLevelColumn.setMinWidth(width);
     targetLevelColumn.setMaxWidth(width);
 
-    add(new JLabel("Project bytecode version (leave blank for compiler default): "),
+    add(new JLabel("Project bytecode version (leave blank for jdk default): "),
         constraints(0, 0, 1, 1, 0.0, 0.0, GridBagConstraints.NONE));
     add(myCbProjectTargetLevel, constraints(1, 0, 1, 1, 1.0, 0.0, GridBagConstraints.NONE));
     add(new JLabel("Per-module bytecode version:"), constraints(0, 1, 2, 1, 1.0, 0.0, GridBagConstraints.NONE));

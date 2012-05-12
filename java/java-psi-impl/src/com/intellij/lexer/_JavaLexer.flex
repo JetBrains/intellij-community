@@ -1,6 +1,8 @@
 /* It's an automatically generated code. Do not modify it. */
 package com.intellij.lexer;
-import com.intellij.psi.*;
+
+import com.intellij.pom.java.LanguageLevel;
+import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.impl.source.tree.JavaDocElementType;
 import com.intellij.psi.tree.IElementType;
 
@@ -8,13 +10,15 @@ import com.intellij.psi.tree.IElementType;
 %%
 
 %{
-  private boolean myAssertKeywordEnabled;
-  private boolean myJdk15Enabled;
+  private boolean myAssertKeyword;
+  private boolean myEnumKeyword;
+  private boolean myNoneKeyword;
 
-  public _JavaLexer(boolean isAssertKeywordEnabled, boolean jdk15Enabled){
+  public _JavaLexer(LanguageLevel level) {
     this((java.io.Reader)null);
-    myAssertKeywordEnabled = isAssertKeywordEnabled;
-    myJdk15Enabled = jdk15Enabled;
+    myAssertKeyword = level.isAtLeast(LanguageLevel.JDK_1_4);
+    myEnumKeyword = level.isAtLeast(LanguageLevel.JDK_1_5);
+    myNoneKeyword = level.isAtLeast(LanguageLevel.JDK_1_8);
   }
 
   public void goTo(int offset) {
@@ -101,7 +105,7 @@ ESCAPE_SEQUENCE=\\[^\r\n]
 <YYINITIAL> "null" { return JavaTokenType.NULL_KEYWORD; }
 
 <YYINITIAL> "abstract" { return JavaTokenType.ABSTRACT_KEYWORD; }
-<YYINITIAL> "assert" { return myAssertKeywordEnabled ? JavaTokenType.ASSERT_KEYWORD : JavaTokenType.IDENTIFIER; }
+<YYINITIAL> "assert" { return myAssertKeyword ? JavaTokenType.ASSERT_KEYWORD : JavaTokenType.IDENTIFIER; }
 <YYINITIAL> "boolean" { return JavaTokenType.BOOLEAN_KEYWORD; }
 <YYINITIAL> "break" { return JavaTokenType.BREAK_KEYWORD; }
 <YYINITIAL> "byte" { return JavaTokenType.BYTE_KEYWORD; }
@@ -115,7 +119,7 @@ ESCAPE_SEQUENCE=\\[^\r\n]
 <YYINITIAL> "do" { return JavaTokenType.DO_KEYWORD; }
 <YYINITIAL> "double" { return JavaTokenType.DOUBLE_KEYWORD; }
 <YYINITIAL> "else" { return JavaTokenType.ELSE_KEYWORD; }
-<YYINITIAL> "enum" { return myJdk15Enabled ? JavaTokenType.ENUM_KEYWORD : JavaTokenType.IDENTIFIER; }
+<YYINITIAL> "enum" { return myEnumKeyword ? JavaTokenType.ENUM_KEYWORD : JavaTokenType.IDENTIFIER; }
 <YYINITIAL> "extends" { return JavaTokenType.EXTENDS_KEYWORD; }
 <YYINITIAL> "final" { return JavaTokenType.FINAL_KEYWORD; }
 <YYINITIAL> "finally" { return JavaTokenType.FINALLY_KEYWORD; }
@@ -150,6 +154,7 @@ ESCAPE_SEQUENCE=\\[^\r\n]
 <YYINITIAL> "try" { return JavaTokenType.TRY_KEYWORD; }
 <YYINITIAL> "volatile" { return JavaTokenType.VOLATILE_KEYWORD; }
 <YYINITIAL> "throws" { return JavaTokenType.THROWS_KEYWORD; }
+<YYINITIAL> "none" { return myNoneKeyword ? JavaTokenType.NONE_KEYWORD : JavaTokenType.IDENTIFIER; }
 
 <YYINITIAL> {IDENTIFIER} { return JavaTokenType.IDENTIFIER; }
 
@@ -201,5 +206,7 @@ ESCAPE_SEQUENCE=\\[^\r\n]
 <YYINITIAL> "%" { return JavaTokenType.PERC; }
 <YYINITIAL> "@" { return JavaTokenType.AT; }
 
-<YYINITIAL> . { return JavaTokenType.BAD_CHARACTER; }
+<YYINITIAL> "::" { return JavaTokenType.DOUBLE_COLON; }
+<YYINITIAL> "->" { return JavaTokenType.ARROW; }
 
+<YYINITIAL> . { return JavaTokenType.BAD_CHARACTER; }

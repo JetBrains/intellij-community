@@ -733,24 +733,6 @@ public class RootModelImpl implements ModifiableRootModel {
     return false;
   }
 
-  public void projectOpened() {
-    for (ContentEntry contentEntry : myContent) {
-      ((RootModelComponentBase)contentEntry).projectOpened();
-    }
-    for (OrderEntry orderEntry : myOrderEntries) {
-      ((RootModelComponentBase)orderEntry).projectOpened();
-    }
-  }
-
-  public void projectClosed() {
-    for (ContentEntry contentEntry : myContent) {
-      ((RootModelComponentBase)contentEntry).projectClosed();
-    }
-    for (OrderEntry orderEntry : myOrderEntries) {
-      ((RootModelComponentBase)orderEntry).projectClosed();
-    }
-  }
-
   public boolean isOrderEntryDisposed() {
     for (OrderEntry entry : myOrderEntries) {
       if (entry instanceof RootModelComponentBase && ((RootModelComponentBase)entry).isDisposed()) return true;

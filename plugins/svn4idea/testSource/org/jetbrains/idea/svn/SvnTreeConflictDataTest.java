@@ -475,8 +475,8 @@ public class SvnTreeConflictDataTest extends SvnTestCase {
 
     Assert.assertTrue(beforeDescription.isTreeConflict());
     SVNConflictVersion leftVersion = beforeDescription.getSourceLeftVersion();
-    Assert.assertNotNull(leftVersion);
-    Assert.assertEquals(SVNNodeKind.DIR, leftVersion.getKind());
+    Assert.assertNull(leftVersion);
+    //Assert.assertEquals(SVNNodeKind.DIR, leftVersion.getKind());
 
     final SVNConflictVersion version = beforeDescription.getSourceRightVersion();
     Assert.assertNotNull(version);

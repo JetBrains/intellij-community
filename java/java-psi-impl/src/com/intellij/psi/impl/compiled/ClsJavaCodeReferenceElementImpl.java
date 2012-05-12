@@ -122,7 +122,7 @@ public class ClsJavaCodeReferenceElementImpl extends ClsElementImpl implements P
       int index = 0;
       for (PsiTypeParameter parameter : PsiUtil.typeParametersIterable((PsiClass)resolve)) {
         if (index >= myTypeParameters.length) {
-          substitutionMap.put(parameter, null);
+          if (parameter.getOwner() == resolve) substitutionMap.put(parameter, null);
         }
         else {
           substitutionMap.put(parameter, myTypeParameters[index].getType());

@@ -137,7 +137,7 @@ public class RedundantSuppressInspection extends GlobalInspectionTool{
         String idsString = SuppressManager.getInstance().getSuppressedInspectionIdsIn(owner);
         if (idsString != null && idsString.length() != 0) {
           List<String> ids = StringUtil.split(idsString, ",");
-          if (IGNORE_ALL && ids.contains(SuppressionUtil.ALL)) return;
+          if (IGNORE_ALL && (ids.contains(SuppressionUtil.ALL) || ids.contains(SuppressionUtil.ALL.toLowerCase()))) return;
           Collection<String> suppressed = suppressedScopes.get(owner);
           if (suppressed == null) {
             suppressed = ids;

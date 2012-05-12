@@ -111,15 +111,19 @@ public abstract class UpdatePsiFileCopyright extends AbstractUpdateCopyright {
 
   protected void checkComments(PsiElement last, boolean commentHere, List<PsiComment> comments) {
     try {
-      LinkedHashSet<CommentRange> found = new LinkedHashSet<CommentRange>();
-      Pattern pattern = Pattern.compile(myOptions.getKeyword(), Pattern.CASE_INSENSITIVE);
-      Document doc = FileDocumentManager.getInstance().getDocument(getFile().getVirtualFile());
-      for (int i = 0; i < comments.size(); i++) {
-        PsiComment comment = comments.get(i);
-        String text = comment.getText();
-        Matcher match = pattern.matcher(text);
-        if (match.find()) {
-          found.add(getLineCopyrightComments(comments, doc, i, comment));
+      final String keyword = myOptions.getKeyword();
+      final LinkedHashSet<CommentRange> found = new LinkedHashSet<CommentRange>();
+      Document doc = null;
+      if (!StringUtil.isEmpty(keyword)) {
+        Pattern pattern = Pattern.compile(keyword, Pattern.CASE_INSENSITIVE);
+        doc = FileDocumentManager.getInstance().getDocument(getFile().getVirtualFile());
+        for (int i = 0; i < comments.size(); i++) {
+          PsiComment comment = comments.get(i);
+          String text = comment.getText();
+          Matcher match = pattern.matcher(text);
+          if (match.find()) {
+            found.add(getLineCopyrightComments(comments, doc, i, comment));
+          }
         }
       }
 

@@ -39,7 +39,7 @@ public class RemoveRedundantArgumentsFix implements IntentionAction {
   private final PsiExpression[] myArguments;
   private final PsiSubstitutor mySubstitutor;
 
-  public RemoveRedundantArgumentsFix(@NotNull PsiMethod targetMethod,
+  private RemoveRedundantArgumentsFix(@NotNull PsiMethod targetMethod,
                                      @NotNull PsiExpression[] arguments,
                                      @NotNull PsiSubstitutor substitutor) {
     myTargetMethod = targetMethod;
