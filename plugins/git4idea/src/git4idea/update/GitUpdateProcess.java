@@ -32,11 +32,13 @@ import git4idea.GitBranch;
 import git4idea.GitUtil;
 import git4idea.PlatformFacade;
 import git4idea.branch.GitBranchPair;
+import git4idea.branch.GitBranchUtil;
 import git4idea.commands.Git;
 import git4idea.merge.GitConflictResolver;
 import git4idea.merge.GitMergeCommittingConflictResolver;
 import git4idea.merge.GitMerger;
 import git4idea.rebase.GitRebaser;
+import git4idea.repo.GitBranchTrackInfo;
 import git4idea.repo.GitRepository;
 import git4idea.stash.GitChangesSaver;
 import org.jetbrains.annotations.NotNull;
@@ -241,42 +243,37 @@ public class GitUpdateProcess {
   private boolean checkTrackedBranchesConfigured() {
     for (GitRepository repository : myRepositories) {
       VirtualFile root = repository.getRoot();
-      try {
-        final GitBranch branch = GitBranch.current(myProject, root);
-        if (branch == null) {
-          LOG.info("checkTrackedBranchesConfigured current branch is null");
-          notifyImportantError(myProject, "Can't update: no current branch",
-                               "You are in 'detached HEAD' state, which means that you're not on any branch" +
-                               rootStringIfNeeded(root) +
-                               "Checkout a branch to make update possible.");
-          return false;
-        }
-        final GitBranch tracked = branch.tracked(myProject, root);
-        if (tracked == null) {
-          final String branchName = branch.getName();
-          LOG.info("checkTrackedBranchesConfigured tracked branch is null for current branch " + branch);
-          notifyImportantError(myProject, "Can't update: no tracked branch",
-                               "No tracked branch configured for branch " + code(branchName) +
-                               rootStringIfNeeded(root) +
-                               "To make your branch track a remote branch call, for example,<br/>" +
-                               "<code>git branch --set-upstream " + branchName + " origin/" + branchName + "</code>");
-          return false;
-        }
-        if (!tracked.exists(root)) {
-          LOG.info("checkTrackedBranchesConfigured tracked branch " + tracked + "  doesn't exist.");
-          notifyMessage(myProject, "Can't update: tracked branch doesn't exist.",
-                        "Tracked branch <code>" + tracked.getName() + "</code> doesn't exist, so there is nothing to update" +
-                        rootStringIfNeeded(root) +
-                        "The branch will be automatically created when you push to it.",
-                        NotificationType.WARNING, true, null);
-          return false;
-        }
-        myTrackedBranches.put(root, new GitBranchPair(branch, tracked));
-      } catch (VcsException e) {
-        LOG.info("checkTrackedBranchesConfigured ", e);
-        notifyImportantError(myProject, "Can't update: error identifying tracked branch", e.getLocalizedMessage());
+      final GitBranch branch = repository.getCurrentBranch();
+      if (branch == null) {
+        LOG.info("checkTrackedBranchesConfigured: current branch is null in " + repository);
+        notifyImportantError(myProject, "Can't update: no current branch",
+                             "You are in 'detached HEAD' state, which means that you're not on any branch" +
+                             rootStringIfNeeded(root) +
+                             "Checkout a branch to make update possible.");
         return false;
       }
+      GitBranchTrackInfo trackInfo = GitBranchUtil.getTrackInfoForBranch(repository, branch);
+      if (trackInfo == null) {
+        final String branchName = branch.getName();
+        LOG.info(String.format("checkTrackedBranchesConfigured: no track info for current branch %s in %s", branch, repository));
+        notifyImportantError(myProject, "Can't update: no tracked branch",
+                             "No tracked branch configured for branch " + code(branchName) +
+                             rootStringIfNeeded(root) +
+                             "To make your branch track a remote branch call, for example,<br/>" +
+                             "<code>git branch --set-upstream " + branchName + " origin/" + branchName + "</code>");
+        return false;
+      }
+      GitBranch tracked = GitBranchUtil.findRemoteBranchByName(repository, trackInfo.getRemote(), trackInfo.getRemoteBranch());
+      if (tracked == null) {
+        LOG.info(String.format("checkTrackedBranchesConfigured: tracked branch %s not found in %s", tracked, repository));
+        notifyMessage(myProject, "Can't update: tracked branch doesn't exist.",
+                      "Tracked branch <code>" + trackInfo.getRemoteBranch() + "</code> doesn't exist" +
+                      rootStringIfNeeded(root) +
+                      "The branch will be automatically created when you push to it.",
+                      NotificationType.WARNING, true, null);
+        return false;
+      }
+      myTrackedBranches.put(root, new GitBranchPair(branch, tracked));
     }
     return true;
   }
