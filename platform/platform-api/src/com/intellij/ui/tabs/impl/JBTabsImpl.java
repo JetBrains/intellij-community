@@ -111,6 +111,8 @@ public class JBTabsImpl extends JComponent
   private LayoutPassInfo myLastLayoutPass;
   private TabInfo myLastPaintedSelection;
 
+  public boolean myForcedRelayout;
+
   private UiDecorator myUiDecorator;
   static final UiDecorator ourDefaultDecorator = new DefaultDecorator();
 
@@ -385,7 +387,7 @@ public class JBTabsImpl extends JComponent
     }
 
     if (needsUpdate) {
-      relayout(false);
+      relayout(true, false);
     }
   }
 
@@ -673,7 +675,7 @@ public class JBTabsImpl extends JComponent
 
     adjust(info);
 
-    updateAll(false);
+    updateAll(false, false);
 
     if (info.isHidden()) {
       updateHiding();
@@ -726,9 +728,9 @@ public class JBTabsImpl extends JComponent
     return this;
   }
 
-  private void updateAll(final boolean now) {
+  private void updateAll(final boolean forcedRelayout, final boolean now) {
     mySelectedInfo = getSelectedInfo();
-    updateContainer(now);
+    updateContainer(forcedRelayout, now);
     removeDeferred();
     updateListeners();
     updateTabActions(false);
@@ -799,7 +801,7 @@ public class JBTabsImpl extends JComponent
 
     fireBeforeSelectionChanged(oldInfo, newInfo);
 
-    updateContainer(true);
+    updateContainer(false, true);
 
     fireSelectionChanged(oldInfo, newInfo);
 
@@ -942,10 +944,10 @@ public class JBTabsImpl extends JComponent
     final TabInfo tabInfo = (TabInfo)evt.getSource();
     if (TabInfo.ACTION_GROUP.equals(evt.getPropertyName())) {
       updateSideComponent(tabInfo);
-      relayout(false);
+      relayout(false, false);
     }
     else if (TabInfo.COMPONENT.equals(evt.getPropertyName())) {
-      relayout(false);
+      relayout(true, false);
     }
     else if (TabInfo.TEXT.equals(evt.getPropertyName())) {
       updateText(tabInfo);
@@ -962,11 +964,11 @@ public class JBTabsImpl extends JComponent
     }
     else if (TabInfo.TAB_ACTION_GROUP.equals(evt.getPropertyName())) {
       updateTabActions(tabInfo);
-      relayout(false);
+      relayout(false, false);
     }
     else if (TabInfo.HIDDEN.equals(evt.getPropertyName())) {
       updateHiding();
-      relayout(false);
+      relayout(false, false);
     }
     else if (TabInfo.ENABLED.equals(evt.getPropertyName())) {
       updateEnabling();
@@ -1019,7 +1021,7 @@ public class JBTabsImpl extends JComponent
       if (mySelectedInfo != null && myHiddenInfos.containsKey(mySelectedInfo)) {
         mySelectedInfo = getToSelectOnRemoveOf(mySelectedInfo);
       }
-      updateAll(false);
+      updateAll(true, false);
     }
   }
 
@@ -1343,45 +1345,50 @@ public class JBTabsImpl extends JComponent
 
 
   public void doLayout() {
-    myHeaderFitSize = computeHeaderFitSize();
+    try {
+      myHeaderFitSize = computeHeaderFitSize();
 
-    final Collection<TabLabel> labels = myInfo2Label.values();
-    for (TabLabel each : labels) {
-      each.setTabActionsAutoHide(myTabLabelActionsAutoHide);
-    }
-
-
-    List<TabInfo> visible = new ArrayList<TabInfo>();
-    visible.addAll(myVisibleInfos);
-
-    if (myDropInfo != null && !visible.contains(myDropInfo) && myShowDropLocation) {
-      if (getDropInfoIndex() >= 0 && getDropInfoIndex() < visible.size()) {
-        visible.add(getDropInfoIndex(), myDropInfo);
-      } else {
-        visible.add(myDropInfo);
+      final Collection<TabLabel> labels = myInfo2Label.values();
+      for (TabLabel each : labels) {
+        each.setTabActionsAutoHide(myTabLabelActionsAutoHide);
       }
+
+
+      List<TabInfo> visible = new ArrayList<TabInfo>();
+      visible.addAll(myVisibleInfos);
+
+      if (myDropInfo != null && !visible.contains(myDropInfo) && myShowDropLocation) {
+        if (getDropInfoIndex() >= 0 && getDropInfoIndex() < visible.size()) {
+          visible.add(getDropInfoIndex(), myDropInfo);
+        } else {
+          visible.add(myDropInfo);
+        }
+      }
+
+      if (isSingleRow()) {
+        myLastLayoutPass = mySingleRowLayout.layoutSingleRow(visible);
+        myTableLayout.myLastTableLayout = null;
+      }
+      else {
+        myLastLayoutPass = myTableLayout.layoutTable(visible);
+        mySingleRowLayout.myLastSingRowLayout = null;
+      }
+
+      if (isStealthModeEffective() && !isHideTabs()) {
+        final TabLabel label = getSelectedLabel();
+        final Rectangle bounds = label.getBounds();
+        final Insets insets = getLayoutInsets();
+        layout(label, insets.left, bounds.y, getWidth() - insets.right - insets.left, bounds.height);
+      }
+
+
+      moveDraggedTabLabel();
+
+      myTabActionsAutoHideListener.processMouseOver();
     }
-
-    if (isSingleRow()) {
-      myLastLayoutPass = mySingleRowLayout.layoutSingleRow(visible);
-      myTableLayout.myLastTableLayout = null;
+    finally {
+      myForcedRelayout = false;
     }
-    else {
-      myLastLayoutPass = myTableLayout.layoutTable(visible);
-      mySingleRowLayout.myLastSingRowLayout = null;
-    }
-
-    if (isStealthModeEffective() && !isHideTabs()) {
-      final TabLabel label = getSelectedLabel();
-      final Rectangle bounds = label.getBounds();
-      final Insets insets = getLayoutInsets();
-      layout(label, insets.left, bounds.y, getWidth() - insets.right - insets.left, bounds.height);
-    }
-
-
-    moveDraggedTabLabel();
-
-    myTabActionsAutoHideListener.processMouseOver();
 
     applyResetComponents();
   }
@@ -2370,7 +2377,7 @@ public class JBTabsImpl extends JComponent
     myInfo2Toolbar.remove(info);
     resetTabsCache();
 
-    updateAll(false);
+    updateAll(false, false);
 
     // avoid leaks
     myLastPaintedSelection = null;
@@ -2435,7 +2442,7 @@ public class JBTabsImpl extends JComponent
     final Dimension myToolbar = new Dimension();
   }
 
-  private void updateContainer(final boolean layoutNow) {
+  private void updateContainer(boolean forced, final boolean layoutNow) {
     for (TabInfo each : myVisibleInfos) {
       final JComponent eachComponent = each.getComponent();
       if (getSelectedInfo() == each && getSelectedInfo() != null) {
@@ -2462,7 +2469,7 @@ public class JBTabsImpl extends JComponent
     }
 
     mySingleRowLayout.scrollSelectionInView();
-    relayout(layoutNow);
+    relayout(forced, layoutNow);
   }
 
   protected void addImpl(final Component comp, final Object constraints, final int index) {
@@ -2480,7 +2487,10 @@ public class JBTabsImpl extends JComponent
     return c.getRootPane() != null;
   }
 
-  void relayout(final boolean layoutNow) {
+  void relayout(boolean forced, final boolean layoutNow) {
+    if (!myForcedRelayout) {
+      myForcedRelayout = forced;
+    }
     revalidateAndRepaint(layoutNow);
   }
 
@@ -2578,7 +2588,7 @@ public class JBTabsImpl extends JComponent
 
     myHideTabs = hideTabs;
 
-    relayout(false);
+    relayout(true, false);
   }
 
   public JBTabsPresentation setPaintBorder(int top, int left, int right, int bottom) {
@@ -2745,7 +2755,7 @@ public class JBTabsImpl extends JComponent
   public JBTabsPresentation setStealthTabMode(final boolean stealthTabMode) {
     myStealthTabMode = stealthTabMode;
 
-    relayout(false);
+    relayout(true, false);
 
     return this;
   }
@@ -2762,7 +2772,7 @@ public class JBTabsImpl extends JComponent
     }
 
 
-    relayout(false);
+    relayout(true, false);
 
     return this;
   }
@@ -2771,7 +2781,7 @@ public class JBTabsImpl extends JComponent
   public JBTabsPresentation setSideComponentOnTabs(boolean onTabs) {
     mySideComponentOnTabs = onTabs;
 
-    relayout(false);
+    relayout(true, false);
 
     return this;
   }
@@ -2779,7 +2789,7 @@ public class JBTabsImpl extends JComponent
   public JBTabsPresentation setSingleRow(boolean singleRow) {
     myLayout = singleRow ? mySingleRowLayout : myTableLayout;
 
-    relayout(false);
+    relayout(true, false);
 
     return this;
   }
@@ -2787,7 +2797,7 @@ public class JBTabsImpl extends JComponent
   public JBTabsPresentation setGhostsAlwaysVisible(final boolean visible) {
     myGhostsAlwaysVisible = visible;
 
-    relayout(false);
+    relayout(true, false);
 
     return this;
   }
@@ -2848,7 +2858,7 @@ public class JBTabsImpl extends JComponent
       adjust(each);
     }
 
-    relayout(false);
+    relayout(true, false);
   }
 
   private void adjust(final TabInfo each) {
@@ -2860,7 +2870,7 @@ public class JBTabsImpl extends JComponent
   public void sortTabs(Comparator<TabInfo> comparator) {
     Collections.sort(myVisibleInfos, comparator);
 
-    relayout(false);
+    relayout(true, false);
   }
 
   private boolean isRequestFocusOnLastFocusedComponent() {
@@ -2982,7 +2992,7 @@ public class JBTabsImpl extends JComponent
   @NotNull
   public JBTabsPresentation setTabsPosition(final JBTabsPosition position) {
     myPosition = position;
-    relayout(false);
+    relayout(true, false);
     return this;
   }
 
@@ -3017,7 +3027,7 @@ public class JBTabsImpl extends JComponent
     myVisibleInfos.add(targetIndex, source);
 
     invalidate();
-    relayout(true);
+    relayout(true, true);
   }
 
   boolean isHorizontalTabs() {
@@ -3137,7 +3147,7 @@ public class JBTabsImpl extends JComponent
     label.paintOffscreen(g);
     g.dispose();
 
-    relayout(false);
+    relayout(true, false);
 
     return img;
   }
@@ -3147,7 +3157,7 @@ public class JBTabsImpl extends JComponent
     int index = myLayout.getDropIndexFor(point.getPoint(this));
     if (index != getDropInfoIndex()) {
       setDropInfoIndex(index);
-      relayout(false);
+      relayout(true, false);
     }
   }
 

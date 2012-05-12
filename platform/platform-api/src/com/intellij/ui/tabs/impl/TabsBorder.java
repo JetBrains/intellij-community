@@ -47,7 +47,7 @@ public class TabsBorder {
 
     myEffectiveBorder = null;
 
-    myTabs.relayout(false);
+    myTabs.relayout(true, false);
 
     return myTabs;
   }
