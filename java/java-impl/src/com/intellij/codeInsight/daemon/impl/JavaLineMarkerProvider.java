@@ -180,13 +180,11 @@ public class JavaLineMarkerProvider implements LineMarkerProvider, DumbAware {
   }
 
   private static boolean isRecursiveMethodCall(@NotNull PsiMethodCallExpression methodCall){
-    final PsiMethod referencedMethod = (PsiMethod)methodCall.getMethodExpression().resolve();
+    PsiMethod referencedMethod = methodCall.resolveMethod();
 
-    if (referencedMethod == null){
-      return false;
-    }
-
-    return referencedMethod.getTextRange().contains(methodCall.getTextRange());
+    TextRange rmRange = referencedMethod == null ? null : referencedMethod.getTextRange();
+    int mcOffset = methodCall.getTextRange().getStartOffset();
+    return rmRange != null && rmRange.contains(mcOffset);
   }
 
   private static void collectInheritingClasses(PsiClass aClass, Collection<LineMarkerInfo> result) {
