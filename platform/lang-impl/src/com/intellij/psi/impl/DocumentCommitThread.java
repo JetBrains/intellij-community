@@ -143,7 +143,7 @@ public class DocumentCommitThread implements Runnable, Disposable {
 
       markRemovedFromDocsToCommit(newTask);
       markRemovedCurrentTask(newTask);
-      markRemovedFromDocsToApplyInEDT(newTask);
+      removeFromDocsToApplyInEDT(newTask);
 
       documentsToCommit.addLast(newTask);
       log("Queued", newTask, false, reason);
@@ -192,7 +192,7 @@ public class DocumentCommitThread implements Runnable, Disposable {
       cancel("cancel all in tests");
       markRemovedFromDocsToCommit(null);
       documentsToCommit.clear();
-      markRemovedFromDocsToApplyInEDT(null);
+      removeFromDocsToApplyInEDT(null);
       markRemovedCurrentTask(null);
     }
   }
@@ -208,6 +208,7 @@ public class DocumentCommitThread implements Runnable, Disposable {
   private static class CommitTask {
     private final Document document;
     private final Project project;
+
     // when queued it's not started 
     // when dequeued it's started 
     // when failed it's canceled 
@@ -253,25 +254,16 @@ public class DocumentCommitThread implements Runnable, Disposable {
 
   private void markRemovedCurrentTask(@Nullable CommitTask newTask) {
     CommitTask task = currentTask;
-    if (task != null && (task.equals(newTask) || newTask == null)) {
+    if (task != null && (newTask == null || task.equals(newTask))) {
       task.removed = true;
       cancel("Sync commit intervened");
     }
   }
 
-  private void markRemovedFromDocsToApplyInEDT(@Nullable("null means all") CommitTask newTask) {
+  private void removeFromDocsToApplyInEDT(@Nullable("null means all") CommitTask newTask) {
     for (int i = documentsToApplyInEDT.size() - 1; i >= 0; i--) {
       CommitTask task = documentsToApplyInEDT.get(i);
       if (newTask == null || task.equals(newTask)) {
-        log("Marked as Removed in EDT apply queue", task, false);
-        task.removed = true;
-      }
-    }
-  }
-  private void removeFromDocsToApplyInEDT(CommitTask newTask) {
-    for (int i = documentsToApplyInEDT.size() - 1; i >= 0; i--) {
-      CommitTask task = documentsToApplyInEDT.get(i);
-      if (task.equals(newTask)) {
         task.removed = true;
         documentsToApplyInEDT.remove(i);
         log("Marked and Removed from EDT apply queue (sync commit called)", task, true);
@@ -301,7 +293,6 @@ public class DocumentCommitThread implements Runnable, Disposable {
           pollQueue();
         }
         catch(Throwable e) {
-          //e.printStackTrace();
           LOG.error(e);
         }
       }
@@ -443,7 +434,6 @@ public class DocumentCommitThread implements Runnable, Disposable {
       if (cur != null) {
         cur.indicator.cancel();
       }
-      //log("Start new task", task, false, cur == null ? "" : cur.indicator + " canceled", reason);
       currentTask = task;
     }
   }
@@ -556,7 +546,6 @@ public class DocumentCommitThread implements Runnable, Disposable {
     ((PsiDocumentManagerImpl)documentManager).clearTreeHardRef(document);
     final TextBlock textBlock = TextBlock.get(file);
     if (textBlock.isEmpty()) return null;
-    final long startPsiModificationTimeStamp = file.getModificationStamp();
     final long startDocModificationTimeStamp = document.getModificationStamp();
     final FileElement myTreeElementBeingReparsedSoItWontBeCollected = ((PsiFileImpl)file).calcTreeElement();
     if (textBlock.isEmpty()) return null; // if tree was just loaded above textBlock will be cleared by contentsLoaded
@@ -593,7 +582,6 @@ public class DocumentCommitThread implements Runnable, Disposable {
       public boolean process(Document document) {
         ApplicationManager.getApplication().assertWriteAccessAllowed();
         log("Finishing", task, synchronously, document.getModificationStamp(), startDocModificationTimeStamp);
-        //if (file.getModificationStamp() != startPsiModificationTimeStamp) return; // optimistic locking failed
         if (document.getModificationStamp() != startDocModificationTimeStamp) {
           return false; // optimistic locking failed
         }
@@ -619,8 +607,6 @@ public class DocumentCommitThread implements Runnable, Disposable {
           textBlock.clear();
           SmartPointerManagerImpl.synchronizePointers(file);
         }
-
-        //System.out.println("committed "+task+"; tree length of "+myTreeElementBeingReparsedSoItWontBeCollected+" is " +myTreeElementBeingReparsedSoItWontBeCollected.getTextLength());
 
         return true;
       }
