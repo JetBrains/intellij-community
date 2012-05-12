@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -392,5 +392,65 @@ Groovy script
             Arguments
               PsiElement(()('(')
               PsiElement())(')')'''
+  }
+
+  void testRefElementsWithKeywords() {
+    checkParsing('''\
+def a = new def.as.Foo()
+def b = new foo.as.in.Foo()
+''', '''\
+Groovy script
+  Variable definitions
+    Modifiers
+      PsiElement(def)('def')
+    PsiWhiteSpace(' ')
+    Variable
+      PsiElement(identifier)('a')
+      PsiWhiteSpace(' ')
+      PsiElement(=)('=')
+      PsiWhiteSpace(' ')
+      NEW expression
+        PsiElement(new)('new')
+        PsiWhiteSpace(' ')
+        Reference element
+          Reference element
+            Reference element
+              PsiElement(def)('def')
+            PsiElement(.)('.')
+            PsiElement(as)('as')
+          PsiElement(.)('.')
+          PsiElement(identifier)('Foo')
+        Arguments
+          PsiElement(()('(')
+          PsiElement())(')')
+  PsiElement(new line)('\\n')
+  Variable definitions
+    Modifiers
+      PsiElement(def)('def')
+    PsiWhiteSpace(' ')
+    Variable
+      PsiElement(identifier)('b')
+      PsiWhiteSpace(' ')
+      PsiElement(=)('=')
+      PsiWhiteSpace(' ')
+      NEW expression
+        PsiElement(new)('new')
+        PsiWhiteSpace(' ')
+        Reference element
+          Reference element
+            Reference element
+              Reference element
+                PsiElement(identifier)('foo')
+              PsiElement(.)('.')
+              PsiElement(as)('as')
+            PsiElement(.)('.')
+            PsiElement(in)('in')
+          PsiElement(.)('.')
+          PsiElement(identifier)('Foo')
+        Arguments
+          PsiElement(()('(')
+          PsiElement())(')')
+  PsiElement(new line)('\\n')
+''')
   }
 }

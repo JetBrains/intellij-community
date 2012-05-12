@@ -1,15 +1,30 @@
-def <info textAttributesKey="Groovy method declaration">method</info>(int <info textAttributesKey="Groovy parameter">param1</info>, int <info textAttributesKey="Groovy reassigned parameter">param2</info>) {
-  int <info textAttributesKey="Groovy var">var1</info> = 0
-  int <info textAttributesKey="Groovy reassigned var">var2</info> = 1
-  int <info textAttributesKey="Groovy reassigned var">var3</info> = 1
-  if (<info textAttributesKey="Groovy parameter">param1</info> == 1) {
-    <info textAttributesKey="Groovy reassigned parameter">param2</info> = <info textAttributesKey="Groovy reassigned var">var2</info> = 2
-    <info textAttributesKey="Groovy reassigned var">var3</info>++
+/*
+ * Copyright 2000-2012 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+<info descr="null">def</info> <info descr="null">method</info>(<info descr="null">int</info> <info descr="null">param1</info>, <info descr="null">int</info> <info descr="null">param2</info>) {
+<info descr="null">int</info> <info descr="null">var1</info> = 0
+<info descr="null">int</info> <info descr="null">var2</info> = 1
+<info descr="null">int</info> <info descr="null">var3</info> = 1
+<info descr="null">if</info> (<info descr="null">param1</info> == 1) {
+<info descr="null">param2</info> = <info descr="null">var2</info> = 2
+<info descr="null">var3</info>++
   }
-  <info textAttributesKey="Method call">println</info> <info textAttributesKey="Groovy var">var1</info> +
-     <info textAttributesKey="Groovy reassigned var">var2</info> +
-     <info textAttributesKey="Groovy parameter">param1</info> +
-     <info textAttributesKey="Groovy reassigned parameter">param2</info>
+  <info descr="null">println</info> <info descr="null">var1</info> +
+     <info descr="null">var2</info> +
+<info descr="null">param1</info> +
+     <info descr="null">param2</info>
 }
 
-<info textAttributesKey="Method call">method</info>(239, 42)
+<info descr="null">method</info>(239, 42)

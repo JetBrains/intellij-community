@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -193,7 +193,7 @@ public class GroovySyntaxHighlighter extends SyntaxHighlighterBase implements Gr
     fillMap(ATTRIBUTES, tLINE_COMMENTS, DefaultHighlighter.LINE_COMMENT);
     fillMap(ATTRIBUTES, tBLOCK_COMMENTS, DefaultHighlighter.BLOCK_COMMENT);
     fillMap(ATTRIBUTES, tBAD_CHARACTERS, DefaultHighlighter.BAD_CHARACTER);
-    fillMap(ATTRIBUTES, tKEYWORDS, DefaultHighlighter.KEYWORD);
+    //fillMap(ATTRIBUTES, tKEYWORDS, DefaultHighlighter.KEYWORD);
     fillMap(ATTRIBUTES, tNUMBERS, DefaultHighlighter.NUMBER);
     fillMap(ATTRIBUTES, tGSTRINGS, DefaultHighlighter.GSTRING);
     fillMap(ATTRIBUTES, tSTRINGS, DefaultHighlighter.STRING);

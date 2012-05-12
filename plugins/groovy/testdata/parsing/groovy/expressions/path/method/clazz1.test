@@ -12,4 +12,4 @@ Groovy script
           PsiElement(Integer)('2')
       PsiElement())(')')
     PsiElement(?.)('?.')
-    PsiElement(identifier)('class')
+    PsiElement(class)('class')
