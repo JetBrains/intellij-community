@@ -32,6 +32,7 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.AllOverridingMethodsSearch;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
@@ -180,6 +181,10 @@ public class JavaLineMarkerProvider implements LineMarkerProvider, DumbAware {
 
   private static boolean isRecursiveMethodCall(@NotNull PsiMethodCallExpression methodCall){
     final PsiMethod referencedMethod = (PsiMethod)methodCall.getMethodExpression().resolve();
+
+    if (referencedMethod == null){
+      return false;
+    }
 
     return referencedMethod.getTextRange().contains(methodCall.getTextRange());
   }
