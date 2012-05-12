@@ -358,9 +358,8 @@ public class SvnHistoryProvider
 
         SVNWCClient wcClient = myVcs.createWCClient();
         final SVNURL svnurl = SVNURL.parseURIEncoded(myUrl);
-        SVNInfo info = null;
         SVNRevision operationalFrom = myFrom == null ? SVNRevision.HEAD : myFrom;
-        info = wcClient.doInfo(svnurl, myPeg, operationalFrom);
+        SVNInfo info = wcClient.doInfo(svnurl, myPeg, operationalFrom);
         final String root = info.getRepositoryRootURL().toString();
         String relativeUrl = myUrl;
         if (myUrl.startsWith(root)) {

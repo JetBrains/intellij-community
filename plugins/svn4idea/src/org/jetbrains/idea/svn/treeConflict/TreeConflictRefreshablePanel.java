@@ -59,7 +59,7 @@ import java.util.List;
 public class TreeConflictRefreshablePanel extends AbstractRefreshablePanel {
   private final ConflictedSvnChange myChange;
   private final SvnVcs myVcs;
-  private VcsRevisionNumber myCommittedRevision;
+  private SvnRevisionNumber myCommittedRevision;
   private FilePath myPath;
   private final List<Disposable> myChildDisposables;
 
@@ -116,7 +116,7 @@ public class TreeConflictRefreshablePanel extends AbstractRefreshablePanel {
   private BeforeAfter<ConflictSidePresentation> processDescription(SVNTreeConflictDescription description) throws VcsException {
     if (description == null) return null;
     if (myChange.getBeforeRevision() != null) {
-      myCommittedRevision = SvnHistorySession.getCurrentCommittedRevision(myVcs, myPath.getIOFile());
+      myCommittedRevision = (SvnRevisionNumber)SvnHistorySession.getCurrentCommittedRevision(myVcs, myPath.getIOFile());
     }
     boolean differentURLs = description.getSourceLeftVersion() != null && description.getSourceRightVersion() != null &&
                 ! Comparing.equal(description.getSourceLeftVersion().getPath(), description.getSourceRightVersion().getPath());
@@ -132,8 +132,17 @@ public class TreeConflictRefreshablePanel extends AbstractRefreshablePanel {
       } else {
         //only one side
         leftSide = EmptyConflictSide.getInstance();
-        final SVNRevision pegFromLeft = description.getSourceLeftVersion() == null ?
-                                        null : SVNRevision.create(description.getSourceLeftVersion().getPegRevision());
+        final SVNRevision pegFromLeft;
+        if (description.getSourceLeftVersion() == null) {
+          pegFromLeft = null;
+        }
+        else {
+          long committed = description.getSourceLeftVersion().getPegRevision();
+          if (myCommittedRevision != null && myCommittedRevision.getRevision().getNumber() < committed) {
+            committed = myCommittedRevision.getRevision().getNumber();
+          }
+          pegFromLeft = SVNRevision.create(committed);
+        }
         rightSide = createSide(description.getSourceRightVersion(), pegFromLeft, false);
         rightSide.load();
         return new BeforeAfter<ConflictSidePresentation>(leftSide, rightSide);
@@ -389,7 +398,7 @@ public class TreeConflictRefreshablePanel extends AbstractRefreshablePanel {
         // just a portion of history
         myProvider.reportAppendableHistory(myPath, mySessionAdapter, from, myPeg, LIMIT, myPeg, true);
       } else {
-        myProvider.reportAppendableHistory(myPath, mySessionAdapter, myPeg, from, 0, myPeg, true);
+        myProvider.reportAppendableHistory(myPath, mySessionAdapter, from, myPeg, 0, myPeg, true);
       }
     }
 
@@ -408,7 +417,6 @@ public class TreeConflictRefreshablePanel extends AbstractRefreshablePanel {
       if (list.isEmpty()) {
         return EmptyConflictSide.getInstance().createPanel();
       }
-      Collections.reverse(list);
       VcsFileRevision last = null;
       if (! list.isEmpty() && myPeg == null && list.size() == LIMIT ||
           (myPeg != null && myPeg.getNumber() > 0 &&
