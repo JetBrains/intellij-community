@@ -60,9 +60,11 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase  {
   private ChangeListManagerGate myGate;
   protected AtomicSectionsAware myRefreshCopiesStub;
   private TestClientRunner myRunner;
+  protected String myWcrootName;
 
   protected SvnTestCase() {
     PlatformTestCase.initPlatformLangPrefix();
+    myWcrootName = "wcroot";
   }
 
   @Before
@@ -92,7 +94,7 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase  {
 
           ZipUtil.extract(new File(pluginRoot, "testData/svn/newrepo.zip"), myRepoRoot, null);
 
-          myWcRoot = new File(myTempDirFixture.getTempDirPath(), "wcroot");
+          myWcRoot = new File(myTempDirFixture.getTempDirPath(), myWcrootName);
           assert myWcRoot.mkdir() || myWcRoot.isDirectory() : myWcRoot;
 
           myRepoUrl = "file:///" + FileUtil.toSystemIndependentName(myRepoRoot.getPath());

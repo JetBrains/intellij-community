@@ -70,4 +70,9 @@ public class SvnClientRunnerImpl implements SvnClientRunner {
   public void copy(VirtualFile root, String path, String from) throws IOException {
     AbstractVcsTestCase.verify(runSvn(root, "copy", path, from));
   }
+
+  @Override
+  public void testSvnVersion(VirtualFile root) throws IOException {
+    AbstractVcsTestCase.verify(runSvn(root, "--version"));
+  }
 }

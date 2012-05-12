@@ -40,4 +40,6 @@ public interface SvnClientRunner {
   void delete(VirtualFile root, String path) throws IOException;
 
   void copy(VirtualFile root, String path, String from) throws IOException;
+
+  void testSvnVersion(VirtualFile root) throws IOException;
 }
