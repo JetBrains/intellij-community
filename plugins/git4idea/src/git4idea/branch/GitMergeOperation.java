@@ -79,6 +79,7 @@ class GitMergeOperation extends GitBranchOperation {
   @Override
   protected void execute() {
     LOG.info("starting");
+    saveAllDocuments();
     boolean fatalErrorHappened = false;
     int alreadyUpToDateRepositories = 0;
     while (hasMoreRepositories() && !fatalErrorHappened) {
