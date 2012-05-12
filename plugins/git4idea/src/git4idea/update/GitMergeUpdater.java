@@ -245,6 +245,11 @@ public class GitMergeUpdater extends GitUpdater {
     return changes;
   }
 
+  @Override
+  public String toString() {
+    return "Merge updater";
+  }
+
   private enum MergeError {
     CONFLICT,
     LOCAL_CHANGES,
