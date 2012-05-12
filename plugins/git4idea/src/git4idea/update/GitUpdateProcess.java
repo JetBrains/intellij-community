@@ -137,6 +137,7 @@ public class GitUpdateProcess {
 
   private boolean updateImpl(UpdateMethod updateMethod, ContinuationContext context) {
     // define updaters for roots
+    LOG.info("updateImpl: defining updaters...");
     try {
       for (GitRepository repository : myRepositories) {
         VirtualFile root = repository.getRoot();
@@ -161,7 +162,9 @@ public class GitUpdateProcess {
     }
 
     if (myUpdaters.isEmpty()) return true;
+
     // save local changes if needed (update via merge may perform without saving).
+    LOG.info("updateImpl: identifying if save is needed...");
     for (Map.Entry<VirtualFile, GitUpdater> entry : myUpdaters.entrySet()) {
       VirtualFile root = entry.getKey();
       GitUpdater updater = entry.getValue();
@@ -171,6 +174,7 @@ public class GitUpdateProcess {
       }
     }
 
+    LOG.info("updateImpl: saving local changes...");
     try {
       mySaver.saveLocalChanges(myRootsToSave);
     } catch (VcsException e) {
@@ -182,6 +186,7 @@ public class GitUpdateProcess {
     }
 
     // update each root
+    LOG.info("updateImpl: updating...");
     boolean incomplete = false;
     boolean success = true;
     VirtualFile currentlyUpdatedRoot = null;
@@ -206,6 +211,7 @@ public class GitUpdateProcess {
         mySaver.notifyLocalChangesAreNotRestored();
       }
       else {
+        LOG.info("updateImpl: restoring local changes...");
         restoreLocalChanges(context);
       }
     }
@@ -241,6 +247,7 @@ public class GitUpdateProcess {
    * If branch configuration is OK for all roots, return true.
    */
   private boolean checkTrackedBranchesConfigured() {
+    LOG.info("checking tracked branch configuration...");
     for (GitRepository repository : myRepositories) {
       VirtualFile root = repository.getRoot();
       final GitBranch branch = repository.getCurrentBranch();
@@ -290,10 +297,12 @@ public class GitUpdateProcess {
    * @return true if merge is in progress, which means that update can't continue.
    */
   private boolean isMergeInProgress() {
+    LOG.info("isMergeInProgress: checking if there is an unfinished merge process...");
     final Collection<VirtualFile> mergingRoots = myMerger.getMergingRoots();
     if (mergingRoots.isEmpty()) {
       return false;
     }
+    LOG.info("isMergeInProgress: roots with unfinished merge: " + mergingRoots);
     GitConflictResolver.Params params = new GitConflictResolver.Params();
     params.setErrorNotificationTitle("Can't update");
     params.setMergeDescription("You have unfinished merge. These conflicts must be resolved before update.");
@@ -305,6 +314,7 @@ public class GitUpdateProcess {
    * @return true if there are unmerged files at
    */
   private boolean areUnmergedFiles() {
+    LOG.info("areUnmergedFiles: checking if there are unmerged files...");
     GitConflictResolver.Params params = new GitConflictResolver.Params();
     params.setErrorNotificationTitle("Can't update");
     params.setMergeDescription("Unmerged files detected. These conflicts must be resolved before update.");
@@ -317,12 +327,13 @@ public class GitUpdateProcess {
    * @return true if rebase is in progress, which means that update can't continue.
    */
   private boolean checkRebaseInProgress() {
+    LOG.info("checkRebaseInProgress: checking if there is an unfinished rebase process...");
     final GitRebaser rebaser = new GitRebaser(myProject, myGit, myProgressIndicator);
     final Collection<VirtualFile> rebasingRoots = rebaser.getRebasingRoots();
     if (rebasingRoots.isEmpty()) {
       return false;
     }
-    LOG.info("checkRebaseInProgress rebasingRoots: " + rebasingRoots);
+    LOG.info("checkRebaseInProgress: roots with unfinished rebase: " + rebasingRoots);
 
     GitConflictResolver.Params params = new GitConflictResolver.Params();
     params.setErrorNotificationTitle("Can't update");

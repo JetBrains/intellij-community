@@ -319,6 +319,7 @@ public class GitFetcher {
                                      @Nullable String errorNotificationTitle, boolean notifySuccess) {
     Map<VirtualFile, String> additionalInfo = new HashMap<VirtualFile, String>();
     for (GitRepository repository : roots) {
+      LOG.info("fetching " + repository);
       GitFetchResult result = fetch(repository);
       String ai = result.getAdditionalInfo();
       if (!StringUtil.isEmptyOrSpaces(ai)) {
