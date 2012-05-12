@@ -23,6 +23,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.GuiUtils;
 import com.intellij.util.SmartList;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.InvocationTargetException;
@@ -41,7 +42,7 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
     this(project, "Undefined", files);
   }
 
-  protected WriteCommandAction(Project project, String commandName, PsiFile... files) {
+  protected WriteCommandAction(Project project, @NonNls String commandName, PsiFile... files) {
     this(project, commandName, null, files);
   }
 
@@ -64,11 +65,13 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
     return myGroupID;
   }
 
+  @Override
   public RunResult<T> execute() {
     final RunResult<T> result = new RunResult<T>(this);
 
     try {
       Runnable runnable = new Runnable() {
+        @Override
         public void run() {
           performWriteCommandAction(result);
         }
@@ -83,7 +86,7 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
     } catch (Throwable e) {
       if (e instanceof InvocationTargetException) e = e.getCause();
       if (e instanceof Error) throw (Error)e;
-      else if (e instanceof RuntimeException) throw (RuntimeException)e;
+      if (e instanceof RuntimeException) throw (RuntimeException)e;
       throw new Error(e);
     }
     return result;
@@ -116,8 +119,10 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
     final RunResult[] results = {result};
 
     CommandProcessor.getInstance().executeCommand(getProject(), new Runnable() {
+      @Override
       public void run() {
         getApplication().runWriteAction(new Runnable() {
+          @Override
           public void run() {
             results[0].run();
             results[0] = null;
@@ -141,6 +146,7 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
     final RunResult[] results = {result};
 
     CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
+      @Override
       public void run() {
         if (isGlobalUndoAction()) CommandProcessor.getInstance().markCurrentCommandAsGlobal(myProject);
         results[0].run();
@@ -167,6 +173,7 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
       super(project, name, groupID, files);
     }
 
+    @Override
     protected void run(final Result result) throws Throwable {
       run();
     }
