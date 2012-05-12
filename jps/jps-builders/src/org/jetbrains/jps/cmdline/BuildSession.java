@@ -168,11 +168,12 @@ final class BuildSession implements Runnable, CanceledStatus {
     final Project project = loadProject(projectPath);
     final File dataStorageRoot = Utils.getDataStorageRoot(project);
 
+    final boolean inMemoryMappingsDelta = System.getProperty(GlobalOptions.USE_MEMORY_TEMP_CACHE_OPTION) != null;
     ProjectTimestamps projectTimestamps = null;
     BuildDataManager dataManager = null;
     try {
       projectTimestamps = new ProjectTimestamps(dataStorageRoot);
-      dataManager = new BuildDataManager(dataStorageRoot, true);
+      dataManager = new BuildDataManager(dataStorageRoot, inMemoryMappingsDelta);
       if (dataManager.versionDiffers()) {
         forceCleanCaches = true;
         msgHandler.processMessage(new CompilerMessage("build", BuildMessage.Kind.INFO, "Dependency data format has changed, project rebuild required"));
@@ -190,7 +191,7 @@ final class BuildSession implements Runnable, CanceledStatus {
       forceCleanCaches = true;
       FileUtil.delete(dataStorageRoot);
       projectTimestamps = new ProjectTimestamps(dataStorageRoot);
-      dataManager = new BuildDataManager(dataStorageRoot, true);
+      dataManager = new BuildDataManager(dataStorageRoot, inMemoryMappingsDelta);
       // second attempt succeded
       msgHandler.processMessage(new CompilerMessage("build", BuildMessage.Kind.INFO, "Project rebuild forced: " + e.getMessage()));
     }
