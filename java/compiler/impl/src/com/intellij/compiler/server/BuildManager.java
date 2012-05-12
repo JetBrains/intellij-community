@@ -834,13 +834,17 @@ public class BuildManager implements ApplicationComponent{
     }
 
     public void addChanged(Collection<String> paths) {
-      myDeleted.removeAll(paths);
-      myChanged.addAll(paths);
+      if (!myNeedRescan) {
+        myDeleted.removeAll(paths);
+        myChanged.addAll(paths);
+      }
     }
 
     public void addDeleted(Collection<String> paths) {
-      myChanged.removeAll(paths);
-      myDeleted.addAll(paths);
+      if (!myNeedRescan) {
+        myChanged.removeAll(paths);
+        myDeleted.addAll(paths);
+      }
     }
 
     public CmdlineRemoteProto.Message.ControllerMessage.FSEvent createNextEvent() {
