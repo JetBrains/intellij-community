@@ -3,7 +3,6 @@ package de.plushnikov.intellij.lombok.psi;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.psi.JavaPsiFacade;
-import com.intellij.psi.Modifier;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiClassType;
 import com.intellij.psi.PsiElement;
@@ -46,7 +45,7 @@ public class LombokLightMethodBuilder11Impl extends LightMethodBuilder implement
   }
 
   @Override
-  public LombokLightMethodBuilder withModifier(@Modifier @NotNull @NonNls String modifier) {
+  public LombokLightMethodBuilder withModifier(@PsiModifier.ModifierConstant @NotNull @NonNls String modifier) {
     addModifier(modifier);
     return this;
   }

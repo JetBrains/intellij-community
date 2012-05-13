@@ -1,10 +1,10 @@
 package de.plushnikov.intellij.lombok.psi;
 
-import com.intellij.psi.Modifier;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiIdentifier;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.impl.CheckUtil;
 import com.intellij.psi.impl.light.LightFieldBuilder;
@@ -32,7 +32,7 @@ public class LombokLightFieldBuilder11Impl extends LightFieldBuilder implements 
   }
 
   @Override
-  public LombokLightFieldBuilder withModifier(@Modifier @NotNull @NonNls String modifier) {
+  public LombokLightFieldBuilder withModifier(@PsiModifier.ModifierConstant @NotNull @NonNls String modifier) {
     ((LightModifierList) getModifierList()).addModifier(modifier);
     return this;
   }

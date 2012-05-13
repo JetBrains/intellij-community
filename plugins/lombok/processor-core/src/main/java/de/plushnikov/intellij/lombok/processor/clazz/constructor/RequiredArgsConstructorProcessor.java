@@ -1,12 +1,5 @@
 package de.plushnikov.intellij.lombok.processor.clazz.constructor;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -14,11 +7,17 @@ import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiModifierList;
-import de.plushnikov.intellij.lombok.LombokConstants;
+import de.plushnikov.intellij.lombok.LombokUtils;
 import de.plushnikov.intellij.lombok.problem.ProblemBuilder;
 import de.plushnikov.intellij.lombok.util.LombokProcessorUtil;
 import de.plushnikov.intellij.lombok.util.PsiAnnotationUtil;
 import lombok.RequiredArgsConstructor;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
 /**
  * @author Plushnikov Michail
@@ -67,7 +66,7 @@ public class RequiredArgsConstructorProcessor extends AbstractConstructorClassPr
       PsiModifierList modifierList = psiField.getModifierList();
       if (null != modifierList) {
         final boolean isFinal = modifierList.hasModifierProperty(PsiModifier.FINAL);
-        final boolean isNonNull = PsiAnnotationUtil.isAnnotatedWith(psiField, LombokConstants.NON_NULL_PATTERN);
+        final boolean isNonNull = PsiAnnotationUtil.isAnnotatedWith(psiField, LombokUtils.NON_NULL_PATTERN);
         // accept initialized final or nonnull fields
         addField = (isFinal || isNonNull) && null == psiField.getInitializer();
       }

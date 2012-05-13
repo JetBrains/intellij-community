@@ -1,13 +1,5 @@
 package de.plushnikov.intellij.lombok.quickfix;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.generation.GenerateMembersUtil;
 import com.intellij.codeInsight.generation.PsiGenerationInfo;
@@ -20,7 +12,6 @@ import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.JavaPsiFacade;
-import com.intellij.psi.Modifier;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElementFactory;
 import com.intellij.psi.PsiExpression;
@@ -28,15 +19,22 @@ import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiModifierList;
 import com.intellij.psi.PsiType;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * @author Plushnikov Michail
  */
 public class CreateFieldQuickFix implements IntentionAction, LocalQuickFix {
-  private final PsiClass           myClass;
-  private final String             myName;
-  private final PsiType            myType;
-  private final String             myInitializerText;
+  private final PsiClass myClass;
+  private final String myName;
+  private final PsiType myType;
+  private final String myInitializerText;
   private final Collection<String> myModifiers;
 
   public CreateFieldQuickFix(@NotNull PsiClass psiClass, @NotNull String name, @NotNull PsiType psiType, @Nullable String initializerText, String... modifiers) {
@@ -86,7 +84,7 @@ public class CreateFieldQuickFix implements IntentionAction, LocalQuickFix {
 
           final PsiModifierList modifierList = psiField.getModifierList();
           if (null != modifierList) {
-            for (@Modifier String modifier : myModifiers) {
+            for (String modifier : myModifiers) {
               modifierList.setModifierProperty(modifier, true);
             }
           }

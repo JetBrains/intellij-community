@@ -9,7 +9,7 @@ import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiModifierList;
 import com.intellij.psi.PsiType;
 import com.intellij.util.StringBuilderSpinAllocator;
-import de.plushnikov.intellij.lombok.LombokConstants;
+import de.plushnikov.intellij.lombok.LombokUtils;
 import de.plushnikov.intellij.lombok.UserMapKeys;
 import de.plushnikov.intellij.lombok.problem.ProblemBuilder;
 import de.plushnikov.intellij.lombok.processor.clazz.AbstractLombokClassProcessor;
@@ -115,7 +115,7 @@ public abstract class AbstractConstructorClassProcessor extends AbstractLombokCl
     Collection<PsiField> allNotInitializedNotStaticFields = new ArrayList<PsiField>();
     for (PsiField psiField : psiClass.getFields()) {
       // skip fields named $
-      boolean addField = !psiField.getName().startsWith(LombokConstants.LOMBOK_INTERN_FIELD_MARKER);
+      boolean addField = !psiField.getName().startsWith(LombokUtils.LOMBOK_INTERN_FIELD_MARKER);
 
       final PsiModifierList modifierList = psiField.getModifierList();
       if (null != modifierList) {

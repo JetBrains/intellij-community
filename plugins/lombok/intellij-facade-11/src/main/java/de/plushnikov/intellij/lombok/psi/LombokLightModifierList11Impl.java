@@ -2,7 +2,6 @@ package de.plushnikov.intellij.lombok.psi;
 
 import com.intellij.lang.Language;
 import com.intellij.psi.JavaPsiFacade;
-import com.intellij.psi.Modifier;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiElementFactory;
 import com.intellij.psi.PsiManager;
@@ -32,7 +31,7 @@ public class LombokLightModifierList11Impl extends LightModifierList {
     myAnnotations = CollectionFactory.newTroveMap();
   }
 
-  public void setModifierProperty(@Modifier @NotNull @NonNls String name, boolean value) throws IncorrectOperationException {
+  public void setModifierProperty(@PsiModifier.ModifierConstant @NotNull @NonNls String name, boolean value) throws IncorrectOperationException {
     if (value) {
       addModifier(name);
     } else {
@@ -42,7 +41,7 @@ public class LombokLightModifierList11Impl extends LightModifierList {
     }
   }
 
-  private void removeModifier(@Modifier @NotNull @NonNls String name) {
+  private void removeModifier(@PsiModifier.ModifierConstant @NotNull @NonNls String name) {
     final Collection<String> myModifiers = collectAllModifiers();
     myModifiers.remove(name);
 
@@ -55,7 +54,7 @@ public class LombokLightModifierList11Impl extends LightModifierList {
 
   private Collection<String> collectAllModifiers() {
     Collection<String> result = new HashSet<String>();
-    for (@Modifier String modifier : ALL_MODIFIERS) {
+    for (@PsiModifier.ModifierConstant String modifier : ALL_MODIFIERS) {
       if (hasModifierProperty(modifier)) {
         result.add(modifier);
       }
@@ -63,7 +62,7 @@ public class LombokLightModifierList11Impl extends LightModifierList {
     return result;
   }
 
-  public void checkSetModifierProperty(@Modifier @NotNull @NonNls String name, boolean value) throws IncorrectOperationException {
+  public void checkSetModifierProperty(@PsiModifier.ModifierConstant @NotNull @NonNls String name, boolean value) throws IncorrectOperationException {
     throw new IncorrectOperationException();
   }
 

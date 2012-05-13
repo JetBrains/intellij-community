@@ -9,7 +9,7 @@ import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.util.PsiTreeUtil;
-import de.plushnikov.intellij.lombok.LombokConstants;
+import de.plushnikov.intellij.lombok.LombokUtils;
 import de.plushnikov.intellij.lombok.problem.LombokProblem;
 import de.plushnikov.intellij.lombok.problem.ProblemBuilder;
 import de.plushnikov.intellij.lombok.problem.ProblemEmptyBuilder;
@@ -95,7 +95,7 @@ public abstract class AbstractLombokClassProcessor extends AbstractLombokProcess
           builder.addWarning(String.format("The field '%s' does not exist", fieldName),
               PsiQuickFixFactory.createChangeAnnotationParameterFix(psiAnnotation, "exclude", newPropertyValue));
         } else {
-          if (fieldName.startsWith(LombokConstants.LOMBOK_INTERN_FIELD_MARKER) || fieldByName.hasModifierProperty(PsiModifier.STATIC)) {
+          if (fieldName.startsWith(LombokUtils.LOMBOK_INTERN_FIELD_MARKER) || fieldByName.hasModifierProperty(PsiModifier.STATIC)) {
             final String newPropertyValue = calcNewPropertyValue(excludeProperty, fieldName);
             builder.addWarning(String.format("The field '%s' would have been excluded anyway", fieldName),
                 PsiQuickFixFactory.createChangeAnnotationParameterFix(psiAnnotation, "exclude", newPropertyValue));

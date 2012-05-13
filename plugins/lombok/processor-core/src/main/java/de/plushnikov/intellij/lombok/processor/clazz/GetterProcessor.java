@@ -1,12 +1,5 @@
 package de.plushnikov.intellij.lombok.processor.clazz;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-
-import org.jetbrains.annotations.NotNull;
-
-import com.intellij.psi.Modifier;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -15,7 +8,7 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiModifierList;
 import com.intellij.psi.PsiType;
-import de.plushnikov.intellij.lombok.LombokConstants;
+import de.plushnikov.intellij.lombok.LombokUtils;
 import de.plushnikov.intellij.lombok.problem.ProblemBuilder;
 import de.plushnikov.intellij.lombok.processor.field.GetterFieldProcessor;
 import de.plushnikov.intellij.lombok.util.LombokProcessorUtil;
@@ -24,7 +17,11 @@ import de.plushnikov.intellij.lombok.util.PsiClassUtil;
 import de.plushnikov.intellij.lombok.util.PsiMethodUtil;
 import de.plushnikov.intellij.lombok.util.PsiPrimitiveTypeFactory;
 import lombok.Getter;
-import lombok.core.TransformationsUtil;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
 /**
  * Inspect and validate @Getter lombok annotation on a class
@@ -67,14 +64,14 @@ public class GetterProcessor extends AbstractLombokClassProcessor {
   }
 
   protected <Psi extends PsiElement> void processIntern(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<Psi> target) {
-    @Modifier final String methodVisibility = LombokProcessorUtil.getMethodModifier(psiAnnotation);
+    final String methodVisibility = LombokProcessorUtil.getMethodModifier(psiAnnotation);
     if (methodVisibility != null) {
       target.addAll((Collection<? extends Psi>) createFieldGetters(psiClass, methodVisibility));
     }
   }
 
   @NotNull
-  public Collection<PsiMethod> createFieldGetters(@NotNull PsiClass psiClass, @Modifier @NotNull String methodModifier) {
+  public Collection<PsiMethod> createFieldGetters(@NotNull PsiClass psiClass, @NotNull String methodModifier) {
     Collection<PsiMethod> result = new ArrayList<PsiMethod>();
     final PsiMethod[] classMethods = PsiClassUtil.collectClassMethodsIntern(psiClass);
 
@@ -88,9 +85,9 @@ public class GetterProcessor extends AbstractLombokClassProcessor {
         //Skip fields having Getter annotation already
         createGetter &= !hasFieldProcessorAnnotation(modifierList);
         //Skip fields that start with $
-        createGetter &= !psiField.getName().startsWith(LombokConstants.LOMBOK_INTERN_FIELD_MARKER);
+        createGetter &= !psiField.getName().startsWith(LombokUtils.LOMBOK_INTERN_FIELD_MARKER);
         //Skip fields if a method with same name already exists
-        final Collection<String> methodNames = TransformationsUtil.toAllGetterNames(psiField.getName(), booleanType.equals(psiField.getType()));
+        final Collection<String> methodNames = LombokUtils.toAllGetterNames(psiField.getName(), booleanType.equals(psiField.getType()));
         createGetter &= !PsiMethodUtil.hasMethodByName(classMethods, methodNames);
       }
       if (createGetter) {

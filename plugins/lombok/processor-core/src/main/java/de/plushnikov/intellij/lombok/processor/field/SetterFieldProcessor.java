@@ -1,7 +1,6 @@
 package de.plushnikov.intellij.lombok.processor.field;
 
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.Modifier;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -11,7 +10,7 @@ import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiModifierList;
 import com.intellij.psi.PsiParameter;
 import com.intellij.psi.PsiType;
-import de.plushnikov.intellij.lombok.LombokConstants;
+import de.plushnikov.intellij.lombok.LombokUtils;
 import de.plushnikov.intellij.lombok.UserMapKeys;
 import de.plushnikov.intellij.lombok.problem.ProblemBuilder;
 import de.plushnikov.intellij.lombok.psi.LombokLightMethodBuilder;
@@ -23,7 +22,6 @@ import de.plushnikov.intellij.lombok.util.PsiClassUtil;
 import de.plushnikov.intellij.lombok.util.PsiMethodUtil;
 import de.plushnikov.intellij.lombok.util.PsiPrimitiveTypeFactory;
 import lombok.Setter;
-import lombok.core.TransformationsUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.annotation.Annotation;
@@ -103,15 +101,15 @@ public class SetterFieldProcessor extends AbstractLombokFieldProcessor {
   }
 
   public List<String> getAllSetterNames(@NotNull PsiField psiField, boolean isBoolean) {
-    return TransformationsUtil.toAllSetterNames(psiField.getName(), isBoolean);
+    return LombokUtils.toAllSetterNames(psiField.getName(), isBoolean);
   }
 
   protected String getSetterName(@NotNull PsiField psiField, boolean isBoolean) {
-    return TransformationsUtil.toSetterName(psiField.getName(), isBoolean);
+    return LombokUtils.toSetterName(psiField.getName(), isBoolean);
   }
 
   @NotNull
-  public PsiMethod createSetterMethod(@NotNull PsiField psiField, @Modifier @NotNull String methodModifier) {
+  public PsiMethod createSetterMethod(@NotNull PsiField psiField, @NotNull String methodModifier) {
     final String fieldName = psiField.getName();
     final PsiType psiFieldType = psiField.getType();
     final PsiType booleanType = PsiPrimitiveTypeFactory.getInstance().getBooleanType();
@@ -138,7 +136,7 @@ public class SetterFieldProcessor extends AbstractLombokFieldProcessor {
     PsiModifierList methodParameterModifierList = methodParameter.getModifierList();
     if (null != methodParameterModifierList) {
       final Collection<String> annotationsToCopy = PsiAnnotationUtil.collectAnnotationsToCopy(psiField,
-          LombokConstants.NON_NULL_PATTERN, LombokConstants.NULLABLE_PATTERN);
+          LombokUtils.NON_NULL_PATTERN, LombokUtils.NULLABLE_PATTERN);
       for (String annotationFQN : annotationsToCopy) {
         methodParameterModifierList.addAnnotation(annotationFQN);
       }

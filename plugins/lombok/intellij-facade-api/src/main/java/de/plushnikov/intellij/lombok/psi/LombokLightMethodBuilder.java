@@ -1,14 +1,12 @@
 package de.plushnikov.intellij.lombok.psi;
 
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-
-import com.intellij.psi.Modifier;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiClassType;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiType;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Plushnikov Michail
@@ -19,7 +17,7 @@ public interface LombokLightMethodBuilder extends PsiMethod {
 
   LombokLightMethodBuilder withContainingClass(@NotNull PsiClass containingClass);
 
-  LombokLightMethodBuilder withModifier(@Modifier @NotNull @NonNls String modifier);
+  LombokLightMethodBuilder withModifier(@NotNull @NonNls String modifier);
 
   LombokLightMethodBuilder withMethodReturnType(PsiType returnType);
 

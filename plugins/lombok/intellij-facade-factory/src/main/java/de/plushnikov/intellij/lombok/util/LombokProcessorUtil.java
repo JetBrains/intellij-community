@@ -1,6 +1,5 @@
 package de.plushnikov.intellij.lombok.util;
 
-import com.intellij.psi.Modifier;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiKeyword;
 import com.intellij.psi.PsiModifier;
@@ -12,7 +11,6 @@ import org.jetbrains.annotations.Nullable;
  */
 public class LombokProcessorUtil {
 
-  @Modifier
   @Nullable
   public static String getMethodModifier(@NotNull PsiAnnotation psiAnnotation) {
     return convertAccessLevelToJavaModifier(getAnnotationValue(psiAnnotation, "value"));
@@ -51,7 +49,6 @@ public class LombokProcessorUtil {
     }
   }
 
-  @Modifier
   @Nullable
   private static String convertAccessLevelToJavaModifier(String value) {
     if (null == value || value.isEmpty() || value.equals("PUBLIC")) {

@@ -1,15 +1,11 @@
 package de.plushnikov.intellij.lombok.quickfix;
 
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
 import com.intellij.codeInsight.daemon.impl.quickfix.ModifierFix;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.JavaPsiFacade;
-import com.intellij.psi.Modifier;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElementFactory;
@@ -17,6 +13,8 @@ import com.intellij.psi.PsiModifierListOwner;
 import com.intellij.psi.PsiNameValuePair;
 import com.intellij.psi.PsiType;
 import de.plushnikov.intellij.lombok.util.IntelliJVersionRangeUtil;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Plushnikov Michail
@@ -42,7 +40,7 @@ public class PsiQuickFixFactory {
     }
   }
 
-  public static LocalQuickFix createModifierListFix(@NotNull PsiModifierListOwner owner, @Modifier @NotNull String modifier, boolean shouldHave, final boolean showContainingClass) {
+  public static LocalQuickFix createModifierListFix(@NotNull PsiModifierListOwner owner, @NotNull String modifier, boolean shouldHave, final boolean showContainingClass) {
     return new ModifierFix(owner, modifier, shouldHave, showContainingClass);
   }
 
