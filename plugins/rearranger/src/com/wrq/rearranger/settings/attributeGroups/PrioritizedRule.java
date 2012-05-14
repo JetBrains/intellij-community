@@ -25,5 +25,5 @@ package com.wrq.rearranger.settings.attributeGroups;
  * Marker interface for rules which have a user-assignable priority.  This excludes comment rules, and invisible
  * header and trailer rules.
  */
-public interface IPrioritizableRule {
+public interface PrioritizedRule {
 }

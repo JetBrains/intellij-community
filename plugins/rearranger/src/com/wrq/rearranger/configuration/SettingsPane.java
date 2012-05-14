@@ -23,7 +23,7 @@ package com.wrq.rearranger.configuration;
 
 import com.wrq.rearranger.settings.RearrangerSettings;
 import com.wrq.rearranger.settings.attributeGroups.AttributeGroup;
-import com.wrq.rearranger.settings.attributeGroups.IPrioritizableRule;
+import com.wrq.rearranger.settings.attributeGroups.PrioritizedRule;
 import com.wrq.rearranger.settings.attributeGroups.Rule;
 import com.wrq.rearranger.util.Constraints;
 
@@ -139,7 +139,7 @@ public abstract class SettingsPane {
         if (columnIndex == PRIORITY_COLUMN && rowIndex >= 0) {
           ChoicePanel cp = (modelData.get(rowIndex));
           Rule rule = cp.getChoice().getChoiceObject();
-          if (rule instanceof IPrioritizableRule) {
+          if (rule instanceof PrioritizedRule) {
             return true;
           }
         }
@@ -150,7 +150,7 @@ public abstract class SettingsPane {
         if (columnIndex == PRIORITY_COLUMN) {
           ChoicePanel cp = (modelData.get(rowIndex));
           Rule rule = cp.getChoice().getChoiceObject();
-          if (rule instanceof IPrioritizableRule) {
+          if (rule instanceof PrioritizedRule) {
             int priority;
             try {
               priority = (new Integer((String)aValue));

@@ -21,143 +21,121 @@
  */
 package com.wrq.rearranger;
 
-import com.intellij.openapi.editor.Document;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiFile;
-import com.intellij.testFramework.LightCodeInsightTestCase;
-import com.wrq.rearranger.configuration.RearrangerSettingsPanel;
+import com.intellij.testFramework.SkipInHeadlessEnvironment;
+import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import com.wrq.rearranger.settings.RearrangerSettings;
-import com.wrq.rearranger.settings.attributeGroups.IPrioritizableRule;
-import com.wrq.rearranger.settings.attributeGroups.Rule;
-import com.wrq.rearranger.util.Constraints;
-import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
-import org.jdom.Element;
-import org.jdom.JDOMException;
-import org.jdom.input.SAXBuilder;
-
-import javax.swing.*;
-import java.awt.*;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.util.ListIterator;
 
 /**
  * @author davek
  *         Date: Mar 30, 2004
  */
+@SkipInHeadlessEnvironment
 public class InteractiveTest
-  extends LightCodeInsightTestCase
+  extends LightCodeInsightFixtureTestCase
 {
-  private RearrangerSettings rs;
   public static final String DEFAULT_CONFIGURATION_ROOT = ".."; // up one level from test
   public static final String DEFAULT_CONFIGURATION      = DEFAULT_CONFIGURATION_ROOT + "/src/com/wrq/rearranger/defaultConfiguration.xml";
+  private RearrangerSettings mySettings;
 
   @Override
-  protected String getTestDataPath() {
-    return "testData"; // run unit tests with effective working directory of "C:\Rearranger\test"
+  protected String getBasePath() {
+    return "/plugins/rearranger/test/testData/com/wrq/rearranger";
   }
 
   protected final void setUp() throws Exception {
     super.setUp();
-    Logger logger = Logger.getLogger("com.wrq.rearranger");
-//        logger.setAdditivity(false);
-//        logger.addAppender(new ConsoleAppender(new PatternLayout("[%7r] %6p - %30.30c - %m \n")));
-//        logger.setLevel(Level.DEBUG);
-    logger.setLevel(Level.INFO);
-    rs = new RearrangerSettings();
-    rs.setAskBeforeRearranging(true);
-    rs.setRearrangeInnerClasses(true);
+    
+    mySettings = new RearrangerSettings();
+    mySettings.setAskBeforeRearranging(true);
+    mySettings.setRearrangeInnerClasses(true);
   }
 
   public final void testLiveRearrangerDialog() throws Exception {
-    configureByFile("/com/wrq/rearranger/RearrangementTest28.java");
-    final PsiFile file = getFile();
-    final Document doc = PsiDocumentManager.getInstance(getProject()).getDocument(file);
-    final LiveRearrangerActionHandler rah = new LiveRearrangerActionHandler();
-    rah.liveRearrangeDocument(getProject(), file, rs, doc, 0);
-    super.checkResultByFile("/com/wrq/rearranger/RearrangementTest28.java");
+    //configureByFile("/com/wrq/rearranger/RearrangementTest28.java");
+    //final PsiFile file = getFile();
+    //final Document doc = PsiDocumentManager.getInstance(getProject()).getDocument(file);
+    //final LiveRearrangerActionHandler rah = new LiveRearrangerActionHandler();
+    //rah.liveRearrangeDocument(getProject(), file, mySettings, doc, 0);
+    //super.checkResultByFile("/com/wrq/rearranger/RearrangementTest28.java");
   }
 
-  public final void testSettingsPanel() throws Exception {
-    Rearranger rearranger = new Rearranger();
-    SAXBuilder builder = new SAXBuilder();
-    org.jdom.Document doc = null;
-    try {
-      FileInputStream f = new FileInputStream(new File(DEFAULT_CONFIGURATION));
-      doc = builder.build(f);
-      f.close();
-    }
-    catch (JDOMException e) {
-      e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
-    }
-    catch (FileNotFoundException e) {
-      File f = new File(DEFAULT_CONFIGURATION);
-      System.out.println(f.getAbsolutePath());
-      e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
-    }
-    catch (IOException e) {
-      e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
-    }
-    Element appElement = doc.getRootElement();
-    java.util.List componentList = appElement.getChildren();
-    Element rearrangerElement = null;
-    if (appElement.getName().equals("component") &&
-        appElement.getAttributeValue("name").equals(Rearranger.COMPONENT_NAME))
-    {
-      rearrangerElement = appElement;
-    }
-    else {
-      ListIterator li = componentList.listIterator();
-      while (li.hasNext())
-//            for (Element e : componentList)
-      {
-        Element e = (Element)li.next();
-        if (e.getAttributeValue("name").equals(Rearranger.COMPONENT_NAME)) {
-          rearrangerElement = e;
-          break;
-        }
-      }
-    }
-    if (rearrangerElement != null) {
-      rearranger.readExternal(rearrangerElement);
-    }
-    final JDialog frame = new JDialog((Frame)null, "SwingApplication");
-    final Constraints constraints = new Constraints(GridBagConstraints.NORTHWEST);
-    constraints.fill = GridBagConstraints.BOTH;
-    constraints.weightedLastRow();
-    RearrangerSettings settings = rearranger.getSettings();
-    final RearrangerSettingsPanel object = new RearrangerSettingsPanel(settings);
-    frame.getContentPane().setLayout(new GridBagLayout());
-    frame.getContentPane().add(object, constraints.weightedLastCol());
-    //Finish setting up the frame, and show it.
-    frame.pack();
-    frame.setResizable(true);
-    frame.setModal(true);
-    frame.setVisible(true);
-    final RearrangerSettings rs = object.settings.deepCopy();
-    assertTrue("Settings are unequal", rs.equals(object.settings));
-    System.out.println("Class Order");
-    ListIterator li;
-    for (Object o : object.settings.getClassOrderAttributeList()) {
-      if (o instanceof IPrioritizableRule) {
-        System.out.println(o + ", pri=" + ((Rule)o).getPriority());
-      }
-      else {
-        System.out.println(o);
-      }
-    }
-    System.out.println("Item order");
-    for (Object o : object.settings.getItemOrderAttributeList()) {
-      if (o instanceof IPrioritizableRule) {
-        System.out.println(o + ", pri=" + ((Rule)o).getPriority());
-      }
-      else {
-        System.out.println(o);
-      }
-    }
-    object.checkCommentsAgainstGlobalPattern(object.settings);
-  }
+  //public final void testSettingsPanel() throws Exception {
+  //  Rearranger rearranger = new Rearranger();
+  //  SAXBuilder builder = new SAXBuilder();
+  //  org.jdom.Document doc = null;
+  //  FileInputStream in = new FileInputStream(new File(DEFAULT_CONFIGURATION));
+  //  try {
+  //    doc = builder.build(in);
+  //  }
+  //  catch (JDOMException e) {
+  //    e.printStackTrace();
+  //  }
+  //  catch (FileNotFoundException e) {
+  //    File f = new File(DEFAULT_CONFIGURATION);
+  //    System.out.println(f.getAbsolutePath());
+  //    e.printStackTrace();
+  //  }
+  //  catch (IOException e) {
+  //    e.printStackTrace();
+  //  }
+  //  finally {
+  //    in.close();
+  //  }
+  //  
+  //  assert doc != null;
+  //  Element appElement = doc.getRootElement();
+  //  java.util.List componentList = appElement.getChildren();
+  //  Element rearrangerElement = null;
+  //  if (appElement.getName().equals("component") &&
+  //      appElement.getAttributeValue("name").equals(Rearranger.COMPONENT_NAME))
+  //  {
+  //    rearrangerElement = appElement;
+  //  }
+  //  else {
+  //    for (Object aComponentList : componentList) {
+  //      Element e = (Element)aComponentList;
+  //      if (e.getAttributeValue("name").equals(Rearranger.COMPONENT_NAME)) {
+  //        rearrangerElement = e;
+  //        break;
+  //      }
+  //    }
+  //  }
+  //  if (rearrangerElement != null) {
+  //    rearranger.readExternal(rearrangerElement);
+  //  }
+  //  final JDialog frame = new JDialog((Frame)null, "SwingApplication");
+  //  final Constraints constraints = new Constraints(GridBagConstraints.NORTHWEST);
+  //  constraints.fill = GridBagConstraints.BOTH;
+  //  constraints.weightedLastRow();
+  //  RearrangerSettings settings = rearranger.getSettings();
+  //  final RearrangerSettingsPanel object = new RearrangerSettingsPanel(settings);
+  //  frame.getContentPane().setLayout(new GridBagLayout());
+  //  frame.getContentPane().add(object, constraints.weightedLastCol());
+  //  //Finish setting up the frame, and show it.
+  //  frame.pack();
+  //  frame.setResizable(true);
+  //  frame.setModal(true);
+  //  frame.setVisible(true);
+  //  final RearrangerSettings rs = object.settings.deepCopy();
+  //  assertTrue("Settings are unequal", rs.equals(object.settings));
+  //  System.out.println("Class Order");
+  //  for (Object o : object.settings.getClassOrderAttributeList()) {
+  //    if (o instanceof Rule && o instanceof PrioritizedRule) {
+  //      System.out.println(o + ", pri=" + ((Rule)o).getPriority());
+  //    }
+  //    else {
+  //      System.out.println(o);
+  //    }
+  //  }
+  //  System.out.println("Item order");
+  //  for (Object o : object.settings.getItemOrderAttributeList()) {
+  //    if (o instanceof Rule && o instanceof PrioritizedRule) {
+  //      System.out.println(o + ", pri=" + ((Rule)o).getPriority());
+  //    }
+  //    else {
+  //      System.out.println(o);
+  //    }
+  //  }
+  //  object.checkCommentsAgainstGlobalPattern(object.settings);
+  //}
 }

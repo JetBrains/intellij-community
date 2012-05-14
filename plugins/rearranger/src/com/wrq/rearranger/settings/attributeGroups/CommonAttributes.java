@@ -37,7 +37,7 @@ import java.util.List;
  * expression is also supported.
  */
 public abstract class CommonAttributes
-  implements AttributeGroup, IPrioritizableRule
+  implements AttributeGroup, PrioritizedRule
 {
 // ------------------------------ FIELDS ------------------------------
 
