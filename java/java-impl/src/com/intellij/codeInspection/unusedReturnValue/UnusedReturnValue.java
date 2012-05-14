@@ -19,18 +19,22 @@ import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.reference.*;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
+import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
 import com.intellij.util.IncorrectOperationException;
+import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -39,6 +43,8 @@ import java.util.List;
  */
 public class UnusedReturnValue extends GlobalJavaInspectionTool{
   private MakeVoidQuickFix myQuickFix;
+
+  public boolean IGNORE_BUILDER_PATTERN = false;
 
   @Nullable
   public CommonProblemDescriptor[] checkElement(RefEntity refEntity,
@@ -54,8 +60,11 @@ public class UnusedReturnValue extends GlobalJavaInspectionTool{
       if (refMethod.getInReferences().size() == 0) return null;
 
       if (!refMethod.isReturnValueUsed()) {
-        return new ProblemDescriptor[]{manager.createProblemDescriptor(refMethod.getElement().getNavigationElement(),
-                                                                       InspectionsBundle.message("inspection.unused.return.value.problem.descriptor"),
+        final PsiMethod psiMethod = (PsiMethod)refMethod.getElement();
+        if (IGNORE_BUILDER_PATTERN && PropertyUtil.isSimplePropertySetter(psiMethod)) return null;
+        return new ProblemDescriptor[]{manager.createProblemDescriptor(psiMethod.getNavigationElement(),
+                                                                       InspectionsBundle
+                                                                         .message("inspection.unused.return.value.problem.descriptor"),
                                                                        getFix(processor), ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
                                                                        false)};
       }
@@ -64,6 +73,17 @@ public class UnusedReturnValue extends GlobalJavaInspectionTool{
     return null;
   }
 
+  @Override
+  public void writeSettings(Element node) throws WriteExternalException {
+    if (IGNORE_BUILDER_PATTERN) {
+      super.writeSettings(node);
+    }
+  }
+
+  @Override
+  public JComponent createOptionsPanel() {
+    return new SingleCheckboxOptionsPanel("Ignore simple setters", this, "IGNORE_BUILDER_PATTERN");
+  }
 
   protected boolean queryExternalUsagesRequests(final RefManager manager, final GlobalJavaInspectionContext globalContext,
                                                 final ProblemDescriptionsProcessor processor) {

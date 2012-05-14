@@ -15,15 +15,18 @@
  */
 package org.jetbrains.idea.svn.treeConflict;
 
+import com.intellij.history.LocalHistory;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diff.impl.patch.BinaryFilePatch;
 import com.intellij.openapi.diff.impl.patch.FilePatch;
 import com.intellij.openapi.diff.impl.patch.IdeaTextPatchBuilder;
 import com.intellij.openapi.diff.impl.patch.formove.PatchApplier;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.BackgroundTaskQueue;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
@@ -35,6 +38,7 @@ import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.history.*;
+import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.BeforeAfter;
 import com.intellij.util.Consumer;
@@ -70,6 +74,7 @@ import java.util.List;
  * Time: 5:33 PM
  */
 public class TreeConflictRefreshablePanel extends AbstractRefreshablePanel {
+  public static final String TITLE = "Resolve tree conflict";
   private final ConflictedSvnChange myChange;
   private final SvnVcs myVcs;
   private SvnRevisionNumber myCommittedRevision;
@@ -244,11 +249,12 @@ public class TreeConflictRefreshablePanel extends AbstractRefreshablePanel {
   }
 
   private void addResolveButtons(SVNTreeConflictDescription description, JPanel main, GridBagConstraints gb) {
-    JPanel wrapper = new JPanel(new FlowLayout(FlowLayout.LEFT));
+    final FlowLayout flowLayout = new FlowLayout(FlowLayout.LEFT, 5, 5);
+    JPanel wrapper = new JPanel(flowLayout);
     final JButton both = new JButton("Both");
     final JButton merge = new JButton("Merge");
-    final JButton left = new JButton("Mine");
-    final JButton right = new JButton("Theirs");
+    final JButton left = new JButton("Accept Yours");
+    final JButton right = new JButton("Accept Theirs");
     enableAndSetListener(createBoth(description), both);
     enableAndSetListener(createMerge(description), merge);
     enableAndSetListener(createLeft(description), left);
@@ -259,7 +265,9 @@ public class TreeConflictRefreshablePanel extends AbstractRefreshablePanel {
     }
     wrapper.add(left);
     wrapper.add(right);
+    gb.insets.left = -4;
     main.add(wrapper, gb);
+    gb.insets.left = 1;
     ++ gb.gridy;
   }
 
@@ -267,30 +275,79 @@ public class TreeConflictRefreshablePanel extends AbstractRefreshablePanel {
     return new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
+        int ok = Messages.showOkCancelDialog(myVcs.getProject(), "Accept theirs for " + filePath(myPath) + "?",
+                                             TITLE, Messages.getQuestionIcon());
+        if (Messages.OK != ok) return;
+        FileDocumentManager.getInstance().saveAllDocuments();
+        final Paths paths = getPaths(description);
         ProgressManager.getInstance().run(
-          new VcsBackgroundTask<SVNTreeConflictDescription>(myVcs.getProject(), "Accept theirs for: " + myPath,
+          new VcsBackgroundTask<SVNTreeConflictDescription>(myVcs.getProject(), "Accepting theirs for: " + filePath(paths.myMainPath),
                                                             BackgroundFromStartOption.getInstance(), Collections.singletonList(description),
                                                             true) {
             @Override
             protected void process(SVNTreeConflictDescription d) throws VcsException {
-              new SvnTreeConflictResolver(myVcs, myPath, myCommittedRevision, null).resolveSelectTheirsFull(d);
+              new SvnTreeConflictResolver(myVcs, paths.myMainPath, myCommittedRevision, paths.myAdditionalPath).resolveSelectTheirsFull(d);
+            }
+
+            @Override
+            public void onSuccess() {
+              super.onSuccess();
+              if (executedOk()) {
+                VcsBalloonProblemNotifier.showOverChangesView(myProject, "Theirs accepted for " + filePath(paths.myMainPath), MessageType.INFO);
+              }
             }
           });
       }
     };
   }
 
+  private Paths getPaths(final SVNTreeConflictDescription description) {
+    final FilePath mainPath = new FilePathImpl(description.getPath(), SVNNodeKind.DIR.equals(description.getNodeKind()));
+    FilePath additionalPath = null;
+    if (myChange.isMoved() || myChange.isRenamed()) {
+      if (myChange.getBeforeRevision().getFile().equals(mainPath)) {
+        additionalPath = myChange.getAfterRevision().getFile();
+      } else {
+        additionalPath = myChange.getBeforeRevision().getFile();
+      }
+    }
+    return new Paths(mainPath, additionalPath);
+  }
+
+  private static class Paths {
+    public final FilePath myMainPath;
+    public final FilePath myAdditionalPath;
+
+    private Paths(FilePath mainPath, FilePath additionalPath) {
+      myMainPath = mainPath;
+      myAdditionalPath = additionalPath;
+    }
+  }
+
   private ActionListener createLeft(final SVNTreeConflictDescription description) {
     return new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
+        int ok = Messages.showOkCancelDialog(myVcs.getProject(), "Accept yours for " + filePath(myPath) + "?",
+                                             TITLE, Messages.getQuestionIcon());
+        if (Messages.OK != ok) return;
+        FileDocumentManager.getInstance().saveAllDocuments();
+        final Paths paths = getPaths(description);
         ProgressManager.getInstance().run(
-          new VcsBackgroundTask<SVNTreeConflictDescription>(myVcs.getProject(), "Accept theirs for: " + myPath,
+          new VcsBackgroundTask<SVNTreeConflictDescription>(myVcs.getProject(), "Accepting yours for: " + filePath(paths.myMainPath),
                                                             BackgroundFromStartOption.getInstance(), Collections.singletonList(description),
                                                             true) {
             @Override
             protected void process(SVNTreeConflictDescription d) throws VcsException {
-              new SvnTreeConflictResolver(myVcs, myPath, myCommittedRevision, null).resolveSelectMineFull(d);
+              new SvnTreeConflictResolver(myVcs, paths.myMainPath, myCommittedRevision, paths.myAdditionalPath).resolveSelectMineFull(d);
+            }
+
+            @Override
+            public void onSuccess() {
+              super.onSuccess();
+              if (executedOk()) {
+                VcsBalloonProblemNotifier.showOverChangesView(myProject, "Yours accepted for " + filePath(paths.myMainPath), MessageType.INFO);
+              }
             }
           });
       }
@@ -333,10 +390,11 @@ public class TreeConflictRefreshablePanel extends AbstractRefreshablePanel {
                                                                 filePath(newFilePath)) :
                                               SvnBundle.message("confirmation.resolve.tree.conflict.merge.renamed", filePath(oldFilePath),
                                                                 filePath(newFilePath))),
-                                             "Resolve tree conflict", Messages.getQuestionIcon());
+                                             TITLE, Messages.getQuestionIcon());
         if (Messages.OK != ok) return;
 
-        final String name = "Merge changes from theirs for: " + oldFilePath;
+        FileDocumentManager.getInstance().saveAllDocuments();
+        final String name = "Merge changes from theirs for: " + filePath(oldFilePath);
 
         final GatheringContinuationContext cc = new GatheringContinuationContext();
         cc.addExceptionHandler(VcsException.class, new Consumer<VcsException>() {
@@ -388,6 +446,12 @@ public class TreeConflictRefreshablePanel extends AbstractRefreshablePanel {
                   }
                 }
               });
+              context.last(new TaskDescriptor("", Where.AWT) {
+                @Override
+                public void run(ContinuationContext context) {
+                  VcsBalloonProblemNotifier.showOverChangesView(myVcs.getProject(), "Theirs changes merged for " + filePath(myPath), MessageType.INFO);
+                }
+              });
             }
             catch (VcsException e1) {
               context.handleException(e1);
@@ -400,7 +464,7 @@ public class TreeConflictRefreshablePanel extends AbstractRefreshablePanel {
     };
   }
 
-  private String filePath(FilePath newFilePath) {
+  public static String filePath(FilePath newFilePath) {
     return newFilePath.getName() +
     " (" +
     newFilePath.getParentPath().getPath() +
@@ -537,8 +601,8 @@ public class TreeConflictRefreshablePanel extends AbstractRefreshablePanel {
         myProvider.reportAppendableHistory(myPath, mySessionAdapter, from, myPeg, 0, myPeg, true);
       }
       VcsAbstractHistorySession session = mySessionAdapter.getSession();
-      List<VcsFileRevision> list = session.getRevisionList();
-      if (myListToReportLoaded != null) {
+      if (myListToReportLoaded != null && session != null) {
+        List<VcsFileRevision> list = session.getRevisionList();
         for (VcsFileRevision revision : list) {
           myListToReportLoaded.add(((SvnRevisionNumber) revision.getRevisionNumber()).getRevision().getNumber());
         }

@@ -343,7 +343,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
       enableInspectionTool(availableInspectionTools, new LocalInspectionToolWrapper(tool));
     }
 
-    final InspectionProfileImpl profile = new InspectionProfileImpl("Configurable") {
+    final InspectionProfileImpl profile = new InspectionProfileImpl(PROFILE) {
       @Override
       @NotNull
       public InspectionProfileEntry[] getInspectionTools(PsiElement element) {
