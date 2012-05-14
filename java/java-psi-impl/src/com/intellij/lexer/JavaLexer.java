@@ -30,7 +30,6 @@ import java.util.Set;
 
 public class JavaLexer extends LexerBase {
   private static final HashTable[] TABLES = new HashTable[]{
-    new HashTable(LanguageLevel.JDK_1_8),
     new HashTable(LanguageLevel.JDK_1_5),
     new HashTable(LanguageLevel.JDK_1_4),
     new HashTable(LanguageLevel.JDK_1_3)
@@ -118,9 +117,6 @@ public class JavaLexer extends LexerBase {
         add("assert", JavaTokenType.ASSERT_KEYWORD);
         if (level.isAtLeast(LanguageLevel.JDK_1_5)) {
           add("enum", JavaTokenType.ENUM_KEYWORD);
-          if (level.isAtLeast(LanguageLevel.JDK_1_8)) {
-            add("none", JavaTokenType.NONE_KEYWORD);
-          }
         }
       }
       add("abstract", JavaTokenType.ABSTRACT_KEYWORD);

@@ -12,13 +12,11 @@ import com.intellij.psi.tree.IElementType;
 %{
   private boolean myAssertKeyword;
   private boolean myEnumKeyword;
-  private boolean myNoneKeyword;
 
   public _JavaLexer(LanguageLevel level) {
     this((java.io.Reader)null);
     myAssertKeyword = level.isAtLeast(LanguageLevel.JDK_1_4);
     myEnumKeyword = level.isAtLeast(LanguageLevel.JDK_1_5);
-    myNoneKeyword = level.isAtLeast(LanguageLevel.JDK_1_8);
   }
 
   public void goTo(int offset) {
@@ -154,7 +152,6 @@ ESCAPE_SEQUENCE=\\[^\r\n]
 <YYINITIAL> "try" { return JavaTokenType.TRY_KEYWORD; }
 <YYINITIAL> "volatile" { return JavaTokenType.VOLATILE_KEYWORD; }
 <YYINITIAL> "throws" { return JavaTokenType.THROWS_KEYWORD; }
-<YYINITIAL> "none" { return myNoneKeyword ? JavaTokenType.NONE_KEYWORD : JavaTokenType.IDENTIFIER; }
 
 <YYINITIAL> {IDENTIFIER} { return JavaTokenType.IDENTIFIER; }
 

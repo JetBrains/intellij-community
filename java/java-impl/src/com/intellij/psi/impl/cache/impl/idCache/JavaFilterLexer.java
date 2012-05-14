@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.intellij.psi.impl.cache.impl.idCache;
 
 import com.intellij.lexer.Lexer;
 import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.TokenType;
 import com.intellij.psi.impl.cache.impl.BaseFilterLexer;
 import com.intellij.psi.impl.cache.impl.OccurrenceConsumer;
 import com.intellij.psi.impl.source.tree.ElementType;
@@ -30,7 +31,7 @@ import com.intellij.psi.tree.TokenSet;
 public class JavaFilterLexer extends BaseFilterLexer {
   private static final TokenSet ourSkipWordsScanSet = TokenSet.orSet(
     TokenSet.create(
-      JavaTokenType.WHITE_SPACE,
+      TokenType.WHITE_SPACE,
       JavaTokenType.LPARENTH,
       JavaTokenType.RPARENTH,
       JavaTokenType.LBRACE,
@@ -43,7 +44,7 @@ public class JavaFilterLexer extends BaseFilterLexer {
       JavaTokenType.ELLIPSIS,
       JavaTokenType.AT
     ),
-    JavaTokenType.OPERATION_BIT_SET
+    ElementType.OPERATION_BIT_SET
   );
 
   public JavaFilterLexer(final Lexer originalLexer, final OccurrenceConsumer table) {

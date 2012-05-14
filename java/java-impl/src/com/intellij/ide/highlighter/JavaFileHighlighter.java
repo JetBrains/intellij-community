@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,8 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.JavaDocTokenType;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.StringEscapesTokenTypes;
+import com.intellij.psi.TokenType;
+import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.JavaDocElementType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.XmlTokenType;
@@ -51,9 +53,8 @@ public class JavaFileHighlighter extends SyntaxHighlighterBase {
     ourMap1 = new HashMap<IElementType, TextAttributesKey>();
     ourMap2 = new HashMap<IElementType, TextAttributesKey>();
 
-    fillMap(ourMap1, JavaTokenType.KEYWORD_BIT_SET, SyntaxHighlighterColors.KEYWORD);
-    fillMap(ourMap1, JavaTokenType.OPERATION_BIT_SET, SyntaxHighlighterColors.OPERATION_SIGN);
-     fillMap(ourMap1, JavaTokenType.OPERATION_BIT_SET, SyntaxHighlighterColors.OPERATION_SIGN);
+    fillMap(ourMap1, ElementType.KEYWORD_BIT_SET, SyntaxHighlighterColors.KEYWORD);
+    fillMap(ourMap1, ElementType.OPERATION_BIT_SET, SyntaxHighlighterColors.OPERATION_SIGN);
 
     for (IElementType type : JavaDocTokenType.ALL_JAVADOC_TOKENS.getTypes()) {
       ourMap1.put(type, SyntaxHighlighterColors.DOC_COMMENT);
@@ -86,12 +87,10 @@ public class JavaFileHighlighter extends SyntaxHighlighterBase {
     ourMap1.put(JavaTokenType.DOT, SyntaxHighlighterColors.DOT);
     ourMap1.put(JavaTokenType.SEMICOLON, SyntaxHighlighterColors.JAVA_SEMICOLON);
 
-    //ourMap1[JavaTokenType.BOOLEAN_LITERAL] = HighlighterColors.JAVA_KEYWORD;
-    //ourMap1[JavaTokenType.NULL_LITERAL] = HighlighterColors.JAVA_KEYWORD;
     ourMap1.put(JavaTokenType.C_STYLE_COMMENT, SyntaxHighlighterColors.JAVA_BLOCK_COMMENT);
     ourMap1.put(JavaDocElementType.DOC_COMMENT, SyntaxHighlighterColors.DOC_COMMENT);
     ourMap1.put(JavaTokenType.END_OF_LINE_COMMENT, SyntaxHighlighterColors.LINE_COMMENT);
-    ourMap1.put(JavaTokenType.BAD_CHARACTER, HighlighterColors.BAD_CHARACTER);
+    ourMap1.put(TokenType.BAD_CHARACTER, HighlighterColors.BAD_CHARACTER);
 
     ourMap1.put(JavaDocTokenType.DOC_TAG_NAME, SyntaxHighlighterColors.DOC_COMMENT);
     ourMap2.put(JavaDocTokenType.DOC_TAG_NAME, SyntaxHighlighterColors.DOC_COMMENT_TAG);
