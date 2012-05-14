@@ -60,7 +60,9 @@ public class ConstructorParameterOnFieldRenameRenamer extends AutomaticRenamer {
         if (constructor instanceof LightElement) continue;
         final PsiParameter[] parameters = constructor.getParameterList().getParameters();
         for (final PsiParameter parameter : parameters) {
-          if (paramName.equals(parameter.getName())) {
+          final String parameterName = parameter.getName();
+          if (paramName.equals(parameterName) ||
+            propertyName.equals(styleManager.variableNameToPropertyName(parameterName, VariableKind.PARAMETER))) {
             toRename.add(parameter);
           }
         }

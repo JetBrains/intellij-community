@@ -135,7 +135,7 @@ public class JBOptionButton extends JButton implements MouseMotionListener {
 
   @Override
   public String getToolTipText(MouseEvent event) {
-    if (myMoreRec.contains(event.getPoint())) {
+    if (myMoreRec.x < event.getX()) {
       return myOptionTooltipText;
     } else {
       return super.getToolTipText(event);

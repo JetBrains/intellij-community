@@ -42,12 +42,12 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collection;
 
 public class FileBasedIndexProjectHandler extends AbstractProjectComponent implements IndexableFileSet {
-  private final FileBasedIndex myIndex;
+  private final FileBasedIndexImpl myIndex;
   private final ProjectRootManagerEx myRootManager;
   private final FileTypeManager myFileTypeManager;
   private final ProjectFileExclusionManagerImpl myExclusionManager;
 
-  public FileBasedIndexProjectHandler(final FileBasedIndex index, final Project project, final ProjectRootManagerEx rootManager, FileTypeManager ftManager, final ProjectManager projectManager) {
+  public FileBasedIndexProjectHandler(final FileBasedIndexImpl index, final Project project, final ProjectRootManagerEx rootManager, FileTypeManager ftManager, final ProjectManager projectManager) {
     super(project);
     myIndex = index;
     myRootManager = rootManager;

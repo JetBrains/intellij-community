@@ -16,7 +16,6 @@
 package com.intellij.execution.application;
 
 import com.intellij.execution.ExecutionBundle;
-import com.intellij.execution.RunConfigurationExtension;
 import com.intellij.execution.configuration.ConfigurationFactoryEx;
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.ConfigurationType;
@@ -46,11 +45,6 @@ public class ApplicationConfigurationType implements ConfigurationType {
     myFactory = new ConfigurationFactoryEx(this) {
       public RunConfiguration createTemplateConfiguration(Project project) {
         return new ApplicationConfiguration("", project, ApplicationConfigurationType.this);
-      }
-
-      @Override
-      public Icon getIcon(@NotNull final RunConfiguration configuration) {
-        return getIcon();
       }
 
       @Override

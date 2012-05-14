@@ -20,8 +20,7 @@ import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.tree.java.IJavaElementType;
 import com.intellij.psi.tree.java.IKeywordElementType;
 
-
-public interface JavaTokenType extends TokenType{
+public interface JavaTokenType extends TokenType {
   IElementType IDENTIFIER = new IJavaElementType("IDENTIFIER");
   IElementType C_STYLE_COMMENT = new IJavaElementType("C_STYLE_COMMENT");
   IElementType END_OF_LINE_COMMENT = new IJavaElementType("END_OF_LINE_COMMENT");
@@ -87,7 +86,6 @@ public interface JavaTokenType extends TokenType{
   IElementType TRY_KEYWORD = new IKeywordElementType("TRY_KEYWORD");
   IElementType VOLATILE_KEYWORD = new IKeywordElementType("VOLATILE_KEYWORD");
   IElementType THROWS_KEYWORD = new IKeywordElementType("THROWS_KEYWORD");
-  IElementType NONE_KEYWORD = new IKeywordElementType("NONE_KEYWORD");
 
   IElementType LPARENTH = new IJavaElementType("LPARENTH");
   IElementType RPARENTH = new IJavaElementType("RPARENTH");
@@ -143,13 +141,15 @@ public interface JavaTokenType extends TokenType{
   IElementType DOUBLE_COLON = new IJavaElementType("DOUBLE_COLON");
   IElementType ARROW = new IJavaElementType("ARROW");
 
-  TokenSet OPERATION_BIT_SET = TokenSet.create(
+  /** @deprecated use {@linkplain com.intellij.psi.impl.source.tree.ElementType#OPERATION_BIT_SET} (to remove in IDEA 13) */
+  @SuppressWarnings("UnusedDeclaration") TokenSet OPERATION_BIT_SET = TokenSet.create(
     EQ, GT, LT, EXCL, TILDE, QUEST, COLON, PLUS, MINUS, ASTERISK, DIV, AND, OR, XOR,
     PERC, EQEQ, LE, GE, NE, ANDAND, OROR, PLUSPLUS, MINUSMINUS, LTLT, GTGT, GTGTGT,
     PLUSEQ, MINUSEQ, ASTERISKEQ, DIVEQ, ANDEQ, OREQ, XOREQ, PERCEQ, LTLTEQ, GTGTEQ, GTGTGTEQ
   );
 
-  TokenSet KEYWORD_BIT_SET = TokenSet.create(
+  /** @deprecated use {@linkplain com.intellij.psi.impl.source.tree.ElementType#KEYWORD_BIT_SET} (to remove in IDEA 13) */
+  @SuppressWarnings("UnusedDeclaration") TokenSet KEYWORD_BIT_SET = TokenSet.create(
     ABSTRACT_KEYWORD, ASSERT_KEYWORD, BOOLEAN_KEYWORD, BREAK_KEYWORD, BYTE_KEYWORD, CASE_KEYWORD,
     CATCH_KEYWORD, CHAR_KEYWORD, CLASS_KEYWORD, CONST_KEYWORD, CONTINUE_KEYWORD,
     DEFAULT_KEYWORD, DO_KEYWORD, DOUBLE_KEYWORD, ELSE_KEYWORD, ENUM_KEYWORD, EXTENDS_KEYWORD,
@@ -162,7 +162,8 @@ public interface JavaTokenType extends TokenType{
     VOID_KEYWORD, VOLATILE_KEYWORD, WHILE_KEYWORD, TRUE_KEYWORD, FALSE_KEYWORD, NULL_KEYWORD
   );
 
-  TokenSet MODIFIER_BIT_SET = TokenSet.create(
+  /** @deprecated use {@linkplain com.intellij.psi.impl.source.tree.ElementType#MODIFIER_BIT_SET} (to remove in IDEA 13) */
+  @SuppressWarnings("UnusedDeclaration") TokenSet MODIFIER_BIT_SET = TokenSet.create(
     PUBLIC_KEYWORD, PROTECTED_KEYWORD, PRIVATE_KEYWORD, STATIC_KEYWORD,
     ABSTRACT_KEYWORD, FINAL_KEYWORD, NATIVE_KEYWORD, STRICTFP_KEYWORD,
     SYNCHRONIZED_KEYWORD, TRANSIENT_KEYWORD, VOLATILE_KEYWORD

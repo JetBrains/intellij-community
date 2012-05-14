@@ -29,6 +29,7 @@ import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.impl.AbstractFileType;
+import com.intellij.openapi.fileTypes.impl.CustomSyntaxTableFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
@@ -223,8 +224,8 @@ public class CommentByBlockCommentHandler implements CodeInsightActionHandler {
   private TextRange findCommentedRange(final Commenter commenter) {
     final CharSequence text = myDocument.getCharsSequence();
     final FileType fileType = myFile.getFileType();
-    if (fileType instanceof AbstractFileType) {
-      Lexer lexer = new CustomFileTypeLexer(((AbstractFileType)fileType).getSyntaxTable());
+    if (fileType instanceof CustomSyntaxTableFileType) {
+      Lexer lexer = new CustomFileTypeLexer(((CustomSyntaxTableFileType)fileType).getSyntaxTable());
       final int caretOffset = myEditor.getCaretModel().getOffset();
       int commentStart = CharArrayUtil.lastIndexOf(text, commenter.getBlockCommentPrefix(), caretOffset);
       if (commentStart == -1) return null;
@@ -312,7 +313,7 @@ public class CommentByBlockCommentHandler implements CodeInsightActionHandler {
   @Nullable
   private static Commenter findCommenter(PsiFile file, Editor editor) {
     final FileType fileType = file.getFileType();
-    if (fileType instanceof AbstractFileType) {
+    if (fileType instanceof CustomSyntaxTableFileType) {
       return ((AbstractFileType)fileType).getCommenter();
     }
 

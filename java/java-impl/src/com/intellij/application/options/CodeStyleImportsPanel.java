@@ -120,7 +120,7 @@ public class CodeStyleImportsPanel extends JPanel {
   }
 
   private JPanel createGeneralOptionsPanel() {
-    OptionGroup group = new OptionGroup(ApplicationBundle.message("title.general"), true);
+    OptionGroup group = new OptionGroup(ApplicationBundle.message("title.general"));
     myCbUseSingleClassImports = new JCheckBox(ApplicationBundle.message("checkbox.use.single.class.import"));
     group.add(myCbUseSingleClassImports);
 

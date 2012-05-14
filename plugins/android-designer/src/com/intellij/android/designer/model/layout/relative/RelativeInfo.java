@@ -34,6 +34,14 @@ public class RelativeInfo {
   public RadViewComponent toLeftOf;
   public RadViewComponent toRightOf;
 
+  public boolean parentTop;
+  public boolean parentBottom;
+  public boolean parentLeft;
+  public boolean parentRight;
+
+  public boolean parentCenterHorizontal;
+  public boolean parentCenterVertical;
+
   public boolean contains(RadComponent component) {
     return component == alignTop ||
            component == alignBottom ||

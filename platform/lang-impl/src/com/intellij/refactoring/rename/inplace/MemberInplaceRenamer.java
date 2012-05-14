@@ -223,7 +223,7 @@ public class MemberInplaceRenamer extends VariableInplaceRenamer {
                                             elementProcessor.isToSearchInComments(element),
                                             elementProcessor.isToSearchForTextOccurrences(element));
     for (AutomaticRenamerFactory factory : Extensions.getExtensions(AutomaticRenamerFactory.EP_NAME)) {
-      if (factory.isApplicable(element)) {
+      if (factory.getOptionName() != null && factory.isApplicable(element)) {
         renameProcessor.addRenamerFactory(factory);
       }
     }

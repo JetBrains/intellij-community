@@ -35,9 +35,8 @@ public class IdCacheTest extends CodeInsightTestCase{
   protected void setUp() throws Exception {
     super.setUp();
 
-    final FileBasedIndex fileBasedIndex = FileBasedIndex.getInstance();
-    fileBasedIndex.requestRebuild(IdIndex.NAME);
-    fileBasedIndex.requestRebuild(TodoIndex.NAME);
+    FileBasedIndex.getInstance().requestRebuild(IdIndex.NAME);
+    FileBasedIndex.getInstance().requestRebuild(TodoIndex.NAME);
 
     String root = JavaTestUtil.getJavaTestDataPath()+ "/psi/impl/cache/";
 

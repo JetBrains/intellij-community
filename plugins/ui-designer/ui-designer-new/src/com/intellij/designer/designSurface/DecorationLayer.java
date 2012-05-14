@@ -36,6 +36,14 @@ public class DecorationLayer extends JComponent {
     myArea = area;
   }
 
+  public EditableArea getArea() {
+    return myArea;
+  }
+
+  public boolean showSelection() {
+    return myShowSelection;
+  }
+
   public void showSelection(boolean value) {
     if (myShowSelection != value) {
       myShowSelection = value;

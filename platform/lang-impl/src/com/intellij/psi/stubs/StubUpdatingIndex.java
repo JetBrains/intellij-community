@@ -63,7 +63,7 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
     }
   };
 
-  private static final InputFilter INPUT_FILTER = new InputFilter() {
+  private static final FileBasedIndex.InputFilter INPUT_FILTER = new FileBasedIndex.InputFilter() {
     @Override
     public boolean acceptInput(@NotNull final VirtualFile file) {
       return canHaveStub(file);
@@ -144,7 +144,7 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
 
   @NotNull
   @Override
-  public InputFilter getInputFilter() {
+  public FileBasedIndex.InputFilter getInputFilter() {
     return INPUT_FILTER;
   }
 
@@ -232,7 +232,7 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
       }
       catch (StorageException e) {
         LOG.info(e);
-        FileBasedIndex.requestRebuild(INDEX_ID);
+        FileBasedIndex.getInstance().requestRebuild(INDEX_ID);
       }
     }
 

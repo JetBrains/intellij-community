@@ -31,6 +31,7 @@ import com.intellij.openapi.editor.*;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.impl.AbstractFileType;
+import com.intellij.openapi.fileTypes.impl.CustomSyntaxTableFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
@@ -210,9 +211,9 @@ public class CommentByLineCommentHandler implements CodeInsightActionHandler {
 
     Commenter blockSuitableCommenter =
       languageSuitableForCompleteFragment == null ? LanguageCommenters.INSTANCE.forLanguage(myFile.getLanguage()) : null;
-    if (blockSuitableCommenter == null && myFile.getFileType() instanceof AbstractFileType) {
+    if (blockSuitableCommenter == null && myFile.getFileType() instanceof CustomSyntaxTableFileType) {
       blockSuitableCommenter = new Commenter() {
-        final SyntaxTable mySyntaxTable = ((AbstractFileType)myFile.getFileType()).getSyntaxTable();
+        final SyntaxTable mySyntaxTable = ((CustomSyntaxTableFileType)myFile.getFileType()).getSyntaxTable();
 
         @Nullable
         public String getLineCommentPrefix() {

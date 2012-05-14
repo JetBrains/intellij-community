@@ -114,7 +114,7 @@ public class ConfigurationSettingsEditorWrapper extends SettingsEditor<RunnerAnd
   private void doApply(final RunnerAndConfigurationSettings settings) {
     final RunConfiguration runConfiguration = settings.getConfiguration();
     final RunManagerImpl runManager = RunManagerImpl.getInstanceImpl(runConfiguration.getProject());
-    runManager.setBeforeRunTasks(runConfiguration, myBeforeRunStepsPanel.getTasks(true));
+    runManager.setBeforeRunTasks(runConfiguration, myBeforeRunStepsPanel.getTasks(true), false);
     runManager.shareConfiguration(runConfiguration, myStoreProjectConfiguration);
     RunnerAndConfigurationSettings runManagerSettings = runManager.getSettings(runConfiguration);
     if (runManagerSettings != null) {
@@ -125,7 +125,7 @@ public class ConfigurationSettingsEditorWrapper extends SettingsEditor<RunnerAnd
   }
 
   public List<BeforeRunTask> getStepsBeforeLaunch() {
-    return Collections.unmodifiableList(myBeforeRunStepsPanel.getTasks(false));
+    return Collections.unmodifiableList(myBeforeRunStepsPanel.getTasks(true));
   }
 
   public boolean isStoreProjectConfiguration() {

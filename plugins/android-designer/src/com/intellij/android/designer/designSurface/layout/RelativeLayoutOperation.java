@@ -56,6 +56,8 @@ public class RelativeLayoutOperation extends AbstractEditOperation {
 
   private void createFeedback() {
     if (mySnapFeedback == null) {
+      myContainer.setClientProperty(SnapPointFeedbackHost.KEY, Boolean.TRUE);
+
       FeedbackLayer layer = myContext.getArea().getFeedbackLayer();
 
       myHorizontalTextFeedback = new TextFeedback();
@@ -171,6 +173,7 @@ public class RelativeLayoutOperation extends AbstractEditOperation {
   @Override
   public void eraseFeedback() {
     if (mySnapFeedback != null) {
+      myContainer.extractClientProperty(SnapPointFeedbackHost.KEY);
       FeedbackLayer layer = myContext.getArea().getFeedbackLayer();
       layer.remove(myHorizontalTextFeedback);
       layer.remove(myVerticalTextFeedback);

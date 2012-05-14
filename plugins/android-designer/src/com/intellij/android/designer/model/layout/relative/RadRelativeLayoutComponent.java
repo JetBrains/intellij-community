@@ -19,6 +19,7 @@ import com.android.ide.common.rendering.api.ViewInfo;
 import com.intellij.android.designer.model.RadViewComponent;
 import com.intellij.android.designer.model.RadViewContainer;
 import com.intellij.designer.model.RadComponent;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.xml.XmlTag;
 import org.jetbrains.annotations.Nullable;
 
@@ -50,6 +51,7 @@ public class RadRelativeLayoutComponent extends RadViewContainer {
       relativeInfos.put(child, info);
 
       XmlTag tag = ((RadViewComponent)child).getTag();
+
       info.alignTop = getComponent(idToComponent, tag, "android:layout_alignTop");
       info.alignBottom = getComponent(idToComponent, tag, "android:layout_alignBottom");
       info.alignLeft = getComponent(idToComponent, tag, "android:layout_alignLeft");
@@ -59,6 +61,19 @@ public class RadRelativeLayoutComponent extends RadViewContainer {
       info.below = getComponent(idToComponent, tag, "android:layout_below");
       info.toLeftOf = getComponent(idToComponent, tag, "android:layout_toLeftOf");
       info.toRightOf = getComponent(idToComponent, tag, "android:layout_toRightOf");
+
+      info.parentTop = "true".equals(tag.getAttributeValue("android:layout_alignParentTop"));
+      info.parentBottom = "true".equals(tag.getAttributeValue("android:layout_alignParentBottom"));
+      info.parentLeft = "true".equals(tag.getAttributeValue("android:layout_alignParentLeft"));
+      info.parentRight = "true".equals(tag.getAttributeValue("android:layout_alignParentRight"));
+
+      info.parentCenterHorizontal = "true".equals(tag.getAttributeValue("android:layout_centerHorizontal"));
+      info.parentCenterVertical = "true".equals(tag.getAttributeValue("android:layout_centerVertical"));
+
+      String center = tag.getAttributeValue("android:layout_centerInParent");
+      if (!StringUtil.isEmpty(center)) {
+        info.parentCenterHorizontal = info.parentCenterVertical = "true".equals(center);
+      }
     }
   }
 

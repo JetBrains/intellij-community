@@ -35,4 +35,14 @@ public class UnusedReturnValueTest extends InspectionTestCase {
     doTest();
   }
 
+  
+  public void testSimpleSetter() throws Exception {
+    try {
+      myTool.IGNORE_BUILDER_PATTERN = true;
+      doTest();
+    }
+    finally {
+      myTool.IGNORE_BUILDER_PATTERN = false;
+    }
+  }
 }

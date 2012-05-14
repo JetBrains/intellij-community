@@ -52,6 +52,8 @@ public class GroovyDocCompletionProvider extends CompletionProvider<CompletionPa
                                 @NotNull CompletionResultSet result) {
     final PsiElement position = parameters.getPosition();
     GrDocMemberReference reference = PsiTreeUtil.getParentOfType(position, GrDocMemberReference.class);
+    if (reference == null) return;
+
     GrDocReferenceElement holder = reference.getReferenceHolder();
     PsiElement resolved;
     if (holder != null) {

@@ -237,6 +237,7 @@ binding.setVariable("platformApiModules", [
 
 binding.setVariable("platformImplementationModules", [
         "core-impl",
+        "indexing-impl",
         "platform-impl",
         "vcs-impl",
         "lang-impl",

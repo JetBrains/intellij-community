@@ -74,11 +74,7 @@ public class CompositeDescriptor extends RngElementDescriptor {
   }
 
   protected XmlAttributeDescriptor[] collectAttributeDescriptors(@Nullable XmlTag context) {
-
-    final QName qName = context == null ?
-            null :
-            new QName(context.getNamespace(), context.getLocalName());
-
+    final QName qName = null;
     final DPattern[] patterns;
     if (qName == null) {
       patterns = myPatterns;

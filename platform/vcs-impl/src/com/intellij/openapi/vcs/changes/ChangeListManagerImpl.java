@@ -530,7 +530,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
       scope.setWasEverythingDirty(wasEverythingDirty);
       final VcsModifiableDirtyScope adjustedScope = vcs.adjustDirtyScope((VcsModifiableDirtyScope) scope);
 
-      myChangesViewManager.updateProgressText(VcsBundle.message("changes.update.progress.message", vcs.getDisplayName()), false);
+      myChangesViewManager.setBusy(true);
       dataHolder.notifyStartProcessingChanges(adjustedScope);
 
       actualUpdate(builder, adjustedScope, vcs, dataHolder, gate);

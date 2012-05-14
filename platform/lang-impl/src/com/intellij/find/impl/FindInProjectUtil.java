@@ -502,8 +502,7 @@ public class FindInProjectUtil {
       if (!keys.isEmpty()) {
         fast = true;
         List<VirtualFile> hits = new ArrayList<VirtualFile>();
-        FileBasedIndex.getInstance()
-          .getFilesWithKey(TrigramIndex.INDEX_ID, keys, new CommonProcessors.CollectProcessor<VirtualFile>(hits), scope);
+        FileBasedIndex.getInstance().getFilesWithKey(TrigramIndex.INDEX_ID, keys, new CommonProcessors.CollectProcessor<VirtualFile>(hits), scope);
 
         for (VirtualFile hit : hits) {
           resultFiles.add(pm.findFile(hit));

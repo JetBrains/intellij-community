@@ -46,8 +46,10 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 
 @NonNls public class PsiTestUtil {
   public static VirtualFile createTestProjectStructure(Project project,
@@ -215,12 +217,16 @@ import java.util.Collection;
   }
 
   public static void removeContentEntry(final Module module, final ContentEntry e) {
-    new WriteCommandAction.Simple(module.getProject()) {
+    ModuleRootManager rootModel = ModuleRootManager.getInstance(module);
+    final ModifiableRootModel model = rootModel.getModifiableModel();
+    model.removeContentEntry(e);
+    commitModel(model);
+  }
+
+  private static void commitModel(final ModifiableRootModel model) {
+    new WriteCommandAction.Simple(model.getProject()) {
       @Override
       protected void run() throws Throwable {
-        ModuleRootManager rootModel = ModuleRootManager.getInstance(module);
-        ModifiableRootModel model = rootModel.getModifiableModel();
-        model.removeContentEntry(e);
         model.commit();
       }
     }.execute().throwException();
@@ -234,7 +240,6 @@ import java.util.Collection;
   }
 
   public static void addLibrary(final Module module, final String libName, final String libPath, final String... jarArr) {
-    assert ModuleRootManager.getInstance(module).getContentRoots().length > 0 : "content roots must not be empty";
     new WriteCommandAction(module.getProject()) {
       @Override
       protected void run(Result result) throws Throwable {
@@ -245,38 +250,50 @@ import java.util.Collection;
     }.execute().throwException();
   }
 
-  public static void addLibrary(final Module module, final ModifiableRootModel model, final String libName, final String libPath, final String... jarArr) {
+  public static void addProjectLibrary(Module module, String libName, VirtualFile... classesRoots) {
+    final ModifiableRootModel modifiableModel = ModuleRootManager.getInstance(module).getModifiableModel();
+    addProjectLibrary(module, modifiableModel, libName, classesRoots);
+    commitModel(modifiableModel);
+  }
+
+  private static void addProjectLibrary(final Module module, final ModifiableRootModel model, final String libName, final VirtualFile... classesRoots) {
     new WriteCommandAction.Simple(module.getProject()) {
       @Override
       protected void run() throws Throwable {
         final LibraryTable libraryTable = ProjectLibraryTable.getInstance(module.getProject());
         final Library library = libraryTable.createLibrary(libName);
         final Library.ModifiableModel libraryModel = library.getModifiableModel();
-        for (String jar : jarArr) {
-          if (!libPath.endsWith("/") && !jar.startsWith("/")) {
-            jar = "/" + jar;
-          }
-          final String path = libPath + jar;
-          VirtualFile root;
-          if (path.endsWith(".jar")) {
-            root = JarFileSystem.getInstance().refreshAndFindFileByPath(path + "!/");
-          } else {
-            root = LocalFileSystem.getInstance().refreshAndFindFileByPath(path);
-          }
-          assert root != null : "Library root folder not found: " + path + "!/";
+        for (VirtualFile root : classesRoots) {
           libraryModel.addRoot(root, OrderRootType.CLASSES);
         }
         libraryModel.commit();
         model.addLibraryEntry(library);
         final OrderEntry[] orderEntries = model.getOrderEntries();
         OrderEntry last = orderEntries[orderEntries.length - 1];
-        for (int i = orderEntries.length - 2; i > -1; i--) {
-          orderEntries[i + 1] = orderEntries[i];
-        }
+        System.arraycopy(orderEntries, 0, orderEntries, 1, orderEntries.length - 1);
         orderEntries[0] = last;
         model.rearrangeOrderEntries(orderEntries);
       }
     }.execute().throwException();
+  }
+
+  public static void addLibrary(final Module module, final ModifiableRootModel model, final String libName, final String libPath, final String... jarArr) {
+    List<VirtualFile> classesRoots = new ArrayList<VirtualFile>();
+    for (String jar : jarArr) {
+      if (!libPath.endsWith("/") && !jar.startsWith("/")) {
+        jar = "/" + jar;
+      }
+      final String path = libPath + jar;
+      VirtualFile root;
+      if (path.endsWith(".jar")) {
+        root = JarFileSystem.getInstance().refreshAndFindFileByPath(path + "!/");
+      } else {
+        root = LocalFileSystem.getInstance().refreshAndFindFileByPath(path);
+      }
+      assert root != null : "Library root folder not found: " + path + "!/";
+      classesRoots.add(root);
+    }
+    addProjectLibrary(module, model, libName, VfsUtil.toVirtualFileArray(classesRoots));
   }
 
   public static void addLibrary(final Module module,

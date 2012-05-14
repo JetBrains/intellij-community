@@ -121,7 +121,7 @@ public class MoveMembersDialog extends RefactoringDialog implements MoveMembersO
     }
     myMemberInfos = memberList;
     String fqName = initialTargetClass != null && !sourceClass.equals(initialTargetClass) ? initialTargetClass.getQualifiedName() : "";
-    myTfTargetClassName = new ReferenceEditorComboWithBrowseButton(new ChooseClassAction(), fqName, myProject, true, RECENTS_KEY);
+    myTfTargetClassName = new ReferenceEditorComboWithBrowseButton(new ChooseClassAction(), fqName, myProject, true, JavaCodeFragment.VisibilityChecker.PROJECT_SCOPE_VISIBLE, RECENTS_KEY);
 
     init();
   }
