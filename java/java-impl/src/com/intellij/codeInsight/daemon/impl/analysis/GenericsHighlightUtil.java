@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,7 +51,6 @@ import java.util.*;
  */
 public class GenericsHighlightUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.analysis.GenericsHighlightUtil");
-  private static final String GENERICS_ARE_NOT_SUPPORTED = JavaErrorMessages.message("generics.are.not.supported");
   private static final QuickFixFactory QUICK_FIX_FACTORY = QuickFixFactory.getInstance();
 
   private GenericsHighlightUtil() {}
@@ -102,6 +101,7 @@ public class GenericsHighlightUtil {
     return null;
   }
 
+  @Nullable
   public static HighlightInfo checkParameterizedReferenceTypeArguments(PsiElement resolved,
                                                                        final PsiJavaCodeReferenceElement referenceElement,
                                                                        final PsiSubstitutor substitutor) {
@@ -110,17 +110,14 @@ public class GenericsHighlightUtil {
     return checkReferenceTypeArgumentList(typeParameterListOwner, referenceElement.getParameterList(), substitutor, true);
   }
 
+  @Nullable
   public static HighlightInfo checkReferenceTypeArgumentList(final PsiTypeParameterListOwner typeParameterListOwner,
                                                              final PsiReferenceParameterList referenceParameterList,
                                                              final PsiSubstitutor substitutor,
                                                              boolean registerIntentions) {
-    if (referenceParameterList != null && !PsiUtil.isLanguageLevel5OrHigher(referenceParameterList)) {
-      if (referenceParameterList.getTypeParameterElements().length > 0) {
-        HighlightInfo info = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, referenceParameterList, GENERICS_ARE_NOT_SUPPORTED);
-        QuickFixAction.registerQuickFixAction(info, new ShowModulePropertiesFix(referenceParameterList));
-        QuickFixAction.registerQuickFixAction(info, new IncreaseLanguageLevelFix(LanguageLevel.JDK_1_5));
-        return info;
-      }
+    if (referenceParameterList != null) {
+      HighlightInfo info = HighlightUtil.checkGenericsFeature(referenceParameterList, referenceParameterList.getTypeParameterElements().length);
+      if (info != null) return info;
     }
 
     PsiDiamondType.DiamondInferenceResult inferenceResult = null;
@@ -914,15 +911,13 @@ public class GenericsHighlightUtil {
     return valueOfMethod.equals(methodSignature);
   }
 
+  @Nullable
   public static HighlightInfo checkTypeParametersList(PsiTypeParameterList parameterList) {
     PsiTypeParameter[] typeParameters = parameterList.getTypeParameters();
     if (typeParameters.length == 0) return null;
-    if (!PsiUtil.isLanguageLevel5OrHigher(parameterList)) {
-      HighlightInfo info = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, parameterList, GENERICS_ARE_NOT_SUPPORTED);
-      QuickFixAction.registerQuickFixAction(info, new ShowModulePropertiesFix(parameterList));
-      QuickFixAction.registerQuickFixAction(info, new IncreaseLanguageLevelFix(LanguageLevel.JDK_1_5));
-      return info;
-    }
+    HighlightInfo info = HighlightUtil.checkGenericsFeature(parameterList, typeParameters.length);
+    if (info != null) return info;
+
     final PsiElement parent = parameterList.getParent();
     if (parent instanceof PsiClass && ((PsiClass)parent).isEnum()) {
       return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR,
@@ -1208,21 +1203,18 @@ public class GenericsHighlightUtil {
     return null;
   }
 
+  @Nullable
   public static HighlightInfo checkVarArgParameterIsLast(PsiParameter parameter) {
     PsiElement declarationScope = parameter.getDeclarationScope();
     if (declarationScope instanceof PsiMethod) {
       PsiParameter[] params = ((PsiMethod)declarationScope).getParameterList().getParameters();
       if (parameter.isVarArgs()) {
-        if (!PsiUtil.getLanguageLevel(parameter).hasEnumKeywordAndAutoboxing()) {
-          HighlightInfo info = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, parameter, JavaErrorMessages.message("varargs.prior.15"));
-          QuickFixAction.registerQuickFixAction(info, new IncreaseLanguageLevelFix(LanguageLevel.JDK_1_5));
-          return info;
-        }
+        HighlightInfo info = HighlightUtil.checkVarargFeature(parameter);
+        if (info != null) return info;
 
         if (params[params.length - 1] != parameter) {
-          HighlightInfo info = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, parameter,
-                                                                 JavaErrorMessages.message("vararg.not.last.parameter"));
-          QuickFixAction.registerQuickFixAction(info, new MakeVarargParameterLastFix(parameter), null);
+          info = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, parameter, JavaErrorMessages.message("vararg.not.last.parameter"));
+          QuickFixAction.registerQuickFixAction(info, new MakeVarargParameterLastFix(parameter));
           return info;
         }
       }
@@ -1230,6 +1222,7 @@ public class GenericsHighlightUtil {
     return null;
   }
 
+  @Nullable
   public static List<HighlightInfo> checkEnumConstantModifierList(PsiModifierList modifierList) {
     List<HighlightInfo> list = null;
     PsiElement[] children = modifierList.getChildren();

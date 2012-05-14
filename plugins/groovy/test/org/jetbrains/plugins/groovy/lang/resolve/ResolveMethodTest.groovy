@@ -1026,4 +1026,31 @@ fo<caret>o()
 
     assertNotNull(ref.resolve())
   }
+
+  public void testMixin() {
+    def ref = configureByText('''\
+@Mixin([Category1, Category2])
+class A {
+  def test1(){}
+}
+
+
+@Category(A)
+class Category1 {
+  boolean foo() {
+    true
+
+  }
+}
+
+@Category(A)
+class Category2 {
+  void bar() {
+    fo<caret>o()
+  }
+}
+''')
+    assertNotNull(ref.resolve())
+  }
+
 }

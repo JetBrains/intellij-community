@@ -154,6 +154,11 @@ public class GitRebaseUpdater extends GitUpdater {
     return !cancelled.get();
   }
 
+  @Override
+  public String toString() {
+    return "Rebase updater";
+  }
+
   private static class MyConflictResolver extends GitConflictResolver {
     private final GitRebaser myRebaser;
     private final VirtualFile myRoot;

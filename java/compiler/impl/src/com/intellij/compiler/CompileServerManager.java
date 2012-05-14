@@ -643,7 +643,8 @@ public class CompileServerManager implements ApplicationComponent{
 
     cmdLine.addParameter("-classpath");
 
-    final List<File> cp = ClasspathBootstrap.getCompileServerApplicationClasspath();
+    final List<File> cp = ClasspathBootstrap.getBuildProcessApplicationClasspath();
+    cp.add(ClasspathBootstrap.getResourcePath(systemCompiler.getClass())); // tools.jar
     cp.addAll(myClasspathManager.getCompileServerPluginsClasspath());
 
     cmdLine.addParameter(classpathToString(cp));

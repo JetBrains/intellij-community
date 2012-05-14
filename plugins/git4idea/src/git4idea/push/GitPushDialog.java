@@ -27,6 +27,7 @@ import com.intellij.util.Consumer;
 import com.intellij.util.ui.UIUtil;
 import git4idea.GitBranch;
 import git4idea.GitUtil;
+import git4idea.branch.GitBranchUtil;
 import git4idea.history.browser.GitCommit;
 import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
@@ -211,7 +212,7 @@ public class GitPushDialog extends DialogWrapper {
       String remoteName = currentBranch.getTrackedRemoteName(repository.getProject(), repository.getRoot());
       String trackedBranchName = currentBranch.getTrackedBranchName(repository.getProject(), repository.getRoot());
       GitRemote remote = GitUtil.findRemoteByName(repository, remoteName);
-      GitBranch tracked = findRemoteBranchByName(repository, remote, trackedBranchName);
+      GitBranch tracked = GitBranchUtil.findRemoteBranchByName(repository, remote, trackedBranchName);
       if (remote == null || tracked == null) {
         Pair<GitRemote,GitBranch> remoteAndBranch = GitUtil.findMatchingRemoteBranch(repository, currentBranch);
         if (remoteAndBranch == null) {
@@ -226,7 +227,7 @@ public class GitPushDialog extends DialogWrapper {
       if (myRefspecPanel.turnedOn()) {
         String manualBranchName = myRefspecPanel.getBranchToPush();
         remote = myRefspecPanel.getSelectedRemote();
-        GitBranch manualBranch = findRemoteBranchByName(repository, remote, manualBranchName);
+        GitBranch manualBranch = GitBranchUtil.findRemoteBranchByName(repository, remote, manualBranchName);
         if (manualBranch == null) {
           if (!manualBranchName.startsWith("refs/remotes/")) {
             manualBranchName = myRefspecPanel.getSelectedRemote().getName() + "/" + manualBranchName;
@@ -240,24 +241,6 @@ public class GitPushDialog extends DialogWrapper {
       defaultSpecs.put(repository, pushSpec);
     }
     return defaultSpecs;
-  }
-
-  @Nullable
-  private static GitBranch findRemoteBranchByName(@NotNull GitRepository repository, @Nullable GitRemote remote, @Nullable String name) {
-    if (name == null || remote == null) {
-      return null;
-    }
-    final String BRANCH_PREFIX = "refs/heads/";
-    if (name.startsWith(BRANCH_PREFIX)) {
-      name = name.substring(BRANCH_PREFIX.length());
-    }
-
-    for (GitBranch branch : repository.getBranches().getRemoteBranches()) {
-      if (branch.getName().equals(remote.getName() + "/" + name)) {
-        return branch;
-      }
-    }
-    return null;
   }
 
   @Override

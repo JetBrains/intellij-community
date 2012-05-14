@@ -565,14 +565,10 @@ public class BuildManager implements ApplicationComponent{
   }
 
   private Process launchBuildProcess(Project project, final int port, final UUID sessionId) throws ExecutionException {
-    // validate tools.jar presence
-    final JavaCompiler systemCompiler = ToolProvider.getSystemJavaCompiler();
-    if (systemCompiler == null) {
-      throw new ExecutionException("No system java compiler is provided by the JRE. Make sure tools.jar is present in IntelliJ IDEA classpath.");
-    }
 
     // choosing sdk with which the build process should be run
-    Sdk projectJdk = JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk();
+    final Sdk internalJdk = JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk();
+    Sdk projectJdk = internalJdk;
     final String versionString = projectJdk.getVersionString();
     if (versionString != null) {
       JavaSdkVersion sdkVersion = ((JavaSdk)projectJdk.getSdkType()).getVersion(versionString);
@@ -598,6 +594,23 @@ public class BuildManager implements ApplicationComponent{
           }
         }
       }
+    }
+
+    // validate tools.jar presence
+    final File compilerPath;
+    if (projectJdk.equals(internalJdk)) {
+      final JavaCompiler systemCompiler = ToolProvider.getSystemJavaCompiler();
+      if (systemCompiler == null) {
+        throw new ExecutionException("No system java compiler is provided by the JRE. Make sure tools.jar is present in IntelliJ IDEA classpath.");
+      }
+      compilerPath = ClasspathBootstrap.getResourcePath(systemCompiler.getClass());
+    }
+    else {
+      final String path = ((JavaSdk)projectJdk.getSdkType()).getToolsPath(projectJdk);
+      if (path == null) {
+        throw new ExecutionException("Cannot determine path to 'tools.jar' library for " + projectJdk.getName() + " (" + projectJdk.getHomePath() + ")");
+      }
+      compilerPath = new File(path);
     }
 
     final GeneralCommandLine cmdLine = new GeneralCommandLine();
@@ -667,7 +680,8 @@ public class BuildManager implements ApplicationComponent{
 
     cmdLine.addParameter("-classpath");
 
-    final List<File> cp = ClasspathBootstrap.getCompileServerApplicationClasspath();
+    final List<File> cp = ClasspathBootstrap.getBuildProcessApplicationClasspath();
+    cp.add(compilerPath);
     cp.addAll(myClasspathManager.getCompileServerPluginsClasspath());
 
     cmdLine.addParameter(classpathToString(cp));
@@ -820,13 +834,17 @@ public class BuildManager implements ApplicationComponent{
     }
 
     public void addChanged(Collection<String> paths) {
-      myDeleted.removeAll(paths);
-      myChanged.addAll(paths);
+      if (!myNeedRescan) {
+        myDeleted.removeAll(paths);
+        myChanged.addAll(paths);
+      }
     }
 
     public void addDeleted(Collection<String> paths) {
-      myChanged.removeAll(paths);
-      myDeleted.addAll(paths);
+      if (!myNeedRescan) {
+        myChanged.removeAll(paths);
+        myDeleted.addAll(paths);
+      }
     }
 
     public CmdlineRemoteProto.Message.ControllerMessage.FSEvent createNextEvent() {

@@ -18,9 +18,7 @@ package com.intellij.lang.java.parser.partial;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.java.parser.JavaParsers;
 import com.intellij.lang.java.parser.JavaParsingTestCase;
-import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.annotations.NonNls;
-
 
 public class ExpressionParserTest extends JavaParsingTestCase {
   public ExpressionParserTest() {
@@ -77,11 +75,7 @@ public class ExpressionParserTest extends JavaParsingTestCase {
   public void testNew13() { doParserTest("new int[1][][2]"); }
   public void testNew14() { doParserTest("Q.new A()"); }
   public void testNew15() { doParserTest("new C<?>.B()"); }
-  public void testNew16() {
-    withLevel(LanguageLevel.JDK_1_7,
-              new Runnable() { @Override
-                               public void run() { doParserTest("new C<>()"); } });
-  }
+  public void testNew16() { doParserTest("new C<>()"); }
 
   public void testExprList0() { doParserTest("f(1,2)"); }
   public void testExprList1() { doParserTest("f("); }

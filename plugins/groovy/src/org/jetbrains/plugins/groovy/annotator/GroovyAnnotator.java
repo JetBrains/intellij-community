@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -130,6 +130,29 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
       ((GroovyPsiElement)element).accept(this);
       myHolder = null;
     }
+    else {
+      final IElementType token = element.getNode().getElementType();
+      if (TokenSets.KEYWORDS.contains(token)) {
+        highlightKeyword(element, holder, token);
+      }
+    }
+  }
+
+  private static void highlightKeyword(PsiElement element, AnnotationHolder holder, IElementType token) {
+    final PsiElement parent = element.getParent();
+    if (parent instanceof GrArgumentLabel) return; //don't highlight: print (void:'foo')
+
+    if (PsiTreeUtil.getParentOfType(element, GrCodeReferenceElement.class) != null) {
+      if (token == GroovyTokenTypes.kDEF || token == GroovyTokenTypes.kIN || token == GroovyTokenTypes.kAS) {
+        return; //It is allowed to name packages 'as', 'in' or 'def'
+      }
+    }
+    else if (parent instanceof GrReferenceExpression && element == ((GrReferenceExpression)parent).getReferenceNameElement()) {
+      return; //don't highlight foo.def
+    }
+
+    final Annotation annotation = holder.createInfoAnnotation(element, null);
+    annotation.setTextAttributes(DefaultHighlighter.KEYWORD);
   }
 
   @Override
@@ -225,6 +248,72 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
         }
       }
     }
+  }
+
+  @Override
+  public void visitTryStatement(GrTryCatchStatement statement) {
+    final GrCatchClause[] clauses = statement.getCatchClauses();
+    List<PsiType> usedExceptions = new ArrayList<PsiType>();
+
+    final PsiClassType throwable = PsiType.getJavaLangThrowable(statement.getManager(), statement.getResolveScope());
+
+    for (GrCatchClause clause : clauses) {
+      final GrParameter parameter = clause.getParameter();
+      if (parameter == null) continue;
+
+      final GrTypeElement typeElement = parameter.getTypeElementGroovy();
+
+      PsiType type = typeElement != null ? typeElement.getType() : null;
+      if (type == null) {
+        type = throwable;
+      }
+
+      if (!throwable.isAssignableFrom(type)) {
+        LOG.assertTrue(typeElement != null);
+        myHolder.createErrorAnnotation(typeElement,
+                                       GroovyBundle.message("catch.statement.parameter.type.should.be.a.subclass.of.throwable"));
+        continue;
+      }
+
+      if (typeElement instanceof GrDisjunctionTypeElement) {
+        final GrTypeElement[] elements = ((GrDisjunctionTypeElement)typeElement).getTypeElements();
+        PsiType[] types = new PsiType[elements.length];
+        for (int i = 0; i < elements.length; i++) {
+          types[i] = elements[i].getType();
+        }
+
+        List<PsiType> usedInsideDisjunction = new ArrayList<PsiType>();
+        for (int i = 0; i < types.length; i++) {
+          if (checkExceptionUsed(usedExceptions, parameter, elements[i], types[i])) {
+            usedInsideDisjunction.add(types[i]);
+            for (int j = 0; j < types.length; j++) {
+              if (i != j && types[j].isAssignableFrom(types[i])) {
+                myHolder.createWarningAnnotation(elements[i], GroovyBundle.message("unnecessary.type", types[i].getCanonicalText(),
+                                                                                   types[j].getCanonicalText())).registerFix(new GrRemoveExceptionFix(true));
+              }
+            }
+          }
+        }
+
+        usedExceptions.addAll(usedInsideDisjunction);
+      }
+      else {
+        if (checkExceptionUsed(usedExceptions, parameter, typeElement, type)) {
+          usedExceptions.add(type);
+        }
+      }
+    }
+  }
+
+  private boolean checkExceptionUsed(List<PsiType> usedExceptions, GrParameter parameter, GrTypeElement typeElement, PsiType type) {
+    for (PsiType exception : usedExceptions) {
+      if (exception.isAssignableFrom(type)) {
+        myHolder.createWarningAnnotation(typeElement != null ? typeElement : parameter.getNameIdentifierGroovy(),GroovyBundle.message("exception.0.has.already.been.caught", type.getCanonicalText()))
+          .registerFix(new GrRemoveExceptionFix(parameter.getTypeElementGroovy() instanceof GrDisjunctionTypeElement));
+        return false;
+      }
+    }
+    return true;
   }
 
   @Override

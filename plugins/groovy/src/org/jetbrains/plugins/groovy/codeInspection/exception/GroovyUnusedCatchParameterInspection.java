@@ -15,9 +15,12 @@
  */
 package org.jetbrains.plugins.groovy.codeInspection.exception;
 
+import com.intellij.codeInsight.daemon.impl.quickfix.RenameElementFix;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrCatchClause;
@@ -40,12 +43,6 @@ public class GroovyUnusedCatchParameterInspection extends BaseInspection {
   @NotNull
   public String getDisplayName() {
     return "Unused catch parameter";
-  }
-
-  @Nullable
-  protected String buildErrorString(Object... args) {
-    return "Unused catch parameter '#ref' #loc";
-
   }
 
   public BaseInspectionVisitor buildVisitor() {
@@ -71,7 +68,9 @@ public class GroovyUnusedCatchParameterInspection extends BaseInspection {
       final CatchParameterUsedVisitor visitor = new CatchParameterUsedVisitor(parameter);
       block.accept(visitor);
       if (!visitor.isUsed()) {
-        registerVariableError(parameter);
+        final PsiElement nameIdentifier = parameter.getNameIdentifierGroovy();
+        registerError(nameIdentifier, "Unused catch parameter '#ref' #loc", new LocalQuickFix[]{new RenameElementFix(parameter, "ignored")},
+                      ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
       }
     }
   }

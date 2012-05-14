@@ -790,4 +790,25 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
       }
     }.execute().throwException().getResultObject();
   }
+  protected static void delete(@NotNull final VirtualFile file) {
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
+      public void run() {
+        try {
+          file.delete(null);
+        }
+        catch (IOException e) {
+          fail();
+        }
+      }
+    });
+  }
+  protected static void rename(@NotNull final VirtualFile vFile1, @NotNull final String newName) {
+    new WriteCommandAction.Simple(null) {
+      @Override
+      protected void run() throws Throwable {
+        vFile1.rename(this, newName);
+      }
+    }.execute().throwException();
+  }
 }

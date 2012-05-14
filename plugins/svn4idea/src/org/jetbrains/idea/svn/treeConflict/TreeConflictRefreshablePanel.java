@@ -16,24 +16,36 @@
 package org.jetbrains.idea.svn.treeConflict;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diff.impl.patch.BinaryFilePatch;
+import com.intellij.openapi.diff.impl.patch.FilePatch;
+import com.intellij.openapi.diff.impl.patch.IdeaTextPatchBuilder;
+import com.intellij.openapi.diff.impl.patch.formove.PatchApplier;
 import com.intellij.openapi.progress.BackgroundTaskQueue;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.history.*;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.BeforeAfter;
+import com.intellij.util.Consumer;
 import com.intellij.util.containers.Convertor;
+import com.intellij.util.continuation.*;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.VcsBackgroundTask;
-import org.jetbrains.idea.svn.ConflictedSvnChange;
-import org.jetbrains.idea.svn.SvnRevisionNumber;
-import org.jetbrains.idea.svn.SvnVcs;
+import com.intellij.vcsUtil.VcsUtil;
+import gnu.trove.TLongArrayList;
+import org.jetbrains.idea.svn.*;
+import org.jetbrains.idea.svn.history.SvnFileRevision;
 import org.jetbrains.idea.svn.history.SvnHistoryProvider;
 import org.jetbrains.idea.svn.history.SvnHistorySession;
 import org.tmatesoft.svn.core.SVNException;
@@ -46,6 +58,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -59,9 +72,10 @@ import java.util.List;
 public class TreeConflictRefreshablePanel extends AbstractRefreshablePanel {
   private final ConflictedSvnChange myChange;
   private final SvnVcs myVcs;
-  private VcsRevisionNumber myCommittedRevision;
+  private SvnRevisionNumber myCommittedRevision;
   private FilePath myPath;
   private final List<Disposable> myChildDisposables;
+  private final TLongArrayList myRightRevisionsList;
 
   public TreeConflictRefreshablePanel(Project project, String loadingTitle, BackgroundTaskQueue queue, Change change) {
     super(project, loadingTitle, queue);
@@ -70,6 +84,7 @@ public class TreeConflictRefreshablePanel extends AbstractRefreshablePanel {
     myChange = (ConflictedSvnChange) change;
     myPath = ChangesUtil.getFilePath(myChange);
     myChildDisposables = new ArrayList<Disposable>();
+    myRightRevisionsList = new TLongArrayList();
   }
 
   @Override
@@ -116,10 +131,9 @@ public class TreeConflictRefreshablePanel extends AbstractRefreshablePanel {
   private BeforeAfter<ConflictSidePresentation> processDescription(SVNTreeConflictDescription description) throws VcsException {
     if (description == null) return null;
     if (myChange.getBeforeRevision() != null) {
-      myCommittedRevision = SvnHistorySession.getCurrentCommittedRevision(myVcs, myPath.getIOFile());
+      myCommittedRevision = (SvnRevisionNumber)SvnHistorySession.getCurrentCommittedRevision(myVcs, myPath.getIOFile());
     }
-    boolean differentURLs = description.getSourceLeftVersion() != null && description.getSourceRightVersion() != null &&
-                ! Comparing.equal(description.getSourceLeftVersion().getPath(), description.getSourceRightVersion().getPath());
+    boolean differentURLs = isDifferentURLs(description);
 
     ConflictSidePresentation leftSide = null;
     ConflictSidePresentation rightSide = null;
@@ -132,8 +146,17 @@ public class TreeConflictRefreshablePanel extends AbstractRefreshablePanel {
       } else {
         //only one side
         leftSide = EmptyConflictSide.getInstance();
-        final SVNRevision pegFromLeft = description.getSourceLeftVersion() == null ?
-                                        null : SVNRevision.create(description.getSourceLeftVersion().getPegRevision());
+        final SVNRevision pegFromLeft;
+        if (description.getSourceLeftVersion() == null) {
+          pegFromLeft = null;
+        }
+        else {
+          long committed = description.getSourceLeftVersion().getPegRevision();
+          if (myCommittedRevision != null && myCommittedRevision.getRevision().getNumber() < committed) {
+            committed = myCommittedRevision.getRevision().getNumber();
+          }
+          pegFromLeft = SVNRevision.create(committed);
+        }
         rightSide = createSide(description.getSourceRightVersion(), pegFromLeft, false);
         rightSide.load();
         return new BeforeAfter<ConflictSidePresentation>(leftSide, rightSide);
@@ -152,6 +175,11 @@ public class TreeConflictRefreshablePanel extends AbstractRefreshablePanel {
     return new BeforeAfter<ConflictSidePresentation>(leftSide, rightSide);
   }
 
+  private boolean isDifferentURLs(SVNTreeConflictDescription description) {
+    return description.getSourceLeftVersion() != null && description.getSourceRightVersion() != null &&
+                ! Comparing.equal(description.getSourceLeftVersion().getPath(), description.getSourceRightVersion().getPath());
+  }
+
   private ConflictSidePresentation createSide(SVNConflictVersion version, final SVNRevision untilThisOther, final boolean isLeft) throws VcsException {
     if (version == null) return EmptyConflictSide.getInstance();
     SvnRevisionNumber number = null;
@@ -167,7 +195,11 @@ public class TreeConflictRefreshablePanel extends AbstractRefreshablePanel {
     } else {
       return new HistoryConflictSide(myVcs, version);
     }*/
-    return new HistoryConflictSide(myVcs, version, untilThisOther);
+    HistoryConflictSide side = new HistoryConflictSide(myVcs, version, untilThisOther);
+    if (untilThisOther != null && ! isLeft) {
+      side.setListToReportLoaded(myRightRevisionsList);
+    }
+    return side;
   }
 
   @Override
@@ -221,8 +253,10 @@ public class TreeConflictRefreshablePanel extends AbstractRefreshablePanel {
     enableAndSetListener(createMerge(description), merge);
     enableAndSetListener(createLeft(description), left);
     enableAndSetListener(createRight(description), right);
-    /*wrapper.add(both);
-    wrapper.add(merge);*/
+    //wrapper.add(both);
+    if (merge.isEnabled()) {
+      wrapper.add(merge);
+    }
     wrapper.add(left);
     wrapper.add(right);
     main.add(wrapper, gb);
@@ -263,12 +297,118 @@ public class TreeConflictRefreshablePanel extends AbstractRefreshablePanel {
     };
   }
 
-  private ActionListener createMerge(SVNTreeConflictDescription description) {
-    return null;  //To change body of created methods use File | Settings | File Templates.
+  private ActionListener createMerge(final SVNTreeConflictDescription description) {
+    if (isDifferentURLs(description)) {
+      return null;
+    }
+    // my edit, theirs move or delete
+    /*if (SVNConflictAction.DELETE.equals(description.getConflictAction()) && description.getSourceLeftVersion() != null) {
+      //todo
+      return new ActionListener() {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+          mergeMyEditTheirsDelete();
+        }
+      };
+    }    */
+    if (SVNConflictAction.EDIT.equals(description.getConflictAction()) && description.getSourceLeftVersion() != null &&
+        SVNConflictReason.DELETED.equals(description.getConflictReason()) && (myChange.isMoved() || myChange.isRenamed()) &&
+        myCommittedRevision != null) {
+      if (! myPath.isDirectory() && ! SVNNodeKind.DIR.equals(description.getSourceRightVersion().getKind())) {
+        return createMergeTheirsForFile(description);
+      }
+    }
+    return null;
+  }
+
+  private ActionListener createMergeTheirsForFile(final SVNTreeConflictDescription description) {
+    return new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        final FilePath oldFilePath = myChange.getBeforeRevision().getFile();
+        final FilePath newFilePath = myChange.getAfterRevision().getFile();
+        int ok = Messages.showOkCancelDialog(myVcs.getProject(),
+                                             (myChange.isMoved() ?
+                                              SvnBundle.message("confirmation.resolve.tree.conflict.merge.moved", filePath(oldFilePath),
+                                                                filePath(newFilePath)) :
+                                              SvnBundle.message("confirmation.resolve.tree.conflict.merge.renamed", filePath(oldFilePath),
+                                                                filePath(newFilePath))),
+                                             "Resolve tree conflict", Messages.getQuestionIcon());
+        if (Messages.OK != ok) return;
+
+        final String name = "Merge changes from theirs for: " + oldFilePath;
+
+        final GatheringContinuationContext cc = new GatheringContinuationContext();
+        cc.addExceptionHandler(VcsException.class, new Consumer<VcsException>() {
+          @Override
+          public void consume(VcsException e) {
+            AbstractVcsHelper.getInstance(myVcs.getProject()).showErrors(Collections.singletonList(e), name);
+          }
+        });
+        cc.next(new TaskDescriptor("Creating patch for theirs changes", Where.POOLED) {
+          @Override
+          public void run(ContinuationContext context) {
+            try {
+              ProgressManager.progress("Getting base and theirs revisions content");
+              final SvnContentRevision base =
+                SvnContentRevision.createBaseRevision(myVcs, newFilePath, myCommittedRevision.getRevision());
+              final SvnContentRevision remote =
+                SvnContentRevision.createRemote(myVcs, oldFilePath,
+                                                SVNRevision.create(description.getSourceRightVersion().getPegRevision()));
+              final ContentRevision newBase =
+                new SimpleContentRevision(base.getContent(), newFilePath, base.getRevisionNumber().asString());
+              final ContentRevision newRemote =
+                new SimpleContentRevision(remote.getContent(), newFilePath, remote.getRevisionNumber().asString());
+
+              ProgressManager.progress("Creating patch for theirs changes");
+              final VirtualFile baseForPatch = ApplicationManager.getApplication().runReadAction(new Computable<VirtualFile>() {
+                @Override
+                public VirtualFile compute() {
+                  return ChangesUtil.findValidParent(newFilePath);
+                }
+              });
+              final Project project = myVcs.getProject();
+              final List<FilePatch> patches = IdeaTextPatchBuilder
+                .buildPatch(project, Collections.singletonList(new Change(newBase, newRemote)), baseForPatch.getPath(), false);
+
+              ProgressManager.progress("Applying patch to " + newFilePath.getPath());
+              final ChangeListManager clManager = ChangeListManager.getInstance(project);
+              final LocalChangeList changeList = clManager.getChangeList(myChange);
+              final PatchApplier<BinaryFilePatch> patchApplier =
+                new PatchApplier<BinaryFilePatch>(project, baseForPatch, patches, changeList, null, null);
+              patchApplier.scheduleSelf(false, context, true);
+              context.last(new TaskDescriptor("Accepting working state", Where.POOLED) {
+                @Override
+                public void run(ContinuationContext context) {
+                  try {
+                    new SvnTreeConflictResolver(myVcs, oldFilePath, myCommittedRevision, null).resolveSelectMineFull(description);
+                  }
+                  catch (VcsException e1) {
+                    context.handleException(e1);
+                  }
+                }
+              });
+            }
+            catch (VcsException e1) {
+              context.handleException(e1);
+            }
+          }
+        });
+        final Continuation fragmented = Continuation.createFragmented(myVcs.getProject(), false);
+        fragmented.run(cc.getList());
+      }
+    };
+  }
+
+  private String filePath(FilePath newFilePath) {
+    return newFilePath.getName() +
+    " (" +
+    newFilePath.getParentPath().getPath() +
+    ")";
   }
 
   private ActionListener createBoth(SVNTreeConflictDescription description) {
-    return null;  //To change body of created methods use File | Settings | File Templates.
+    return null;
   }
 
   private void enableAndSetListener(final ActionListener al, final JButton b) {
@@ -358,6 +498,7 @@ public class TreeConflictRefreshablePanel extends AbstractRefreshablePanel {
     private final SvnVcs myVcs;
     private final SVNRevision myPeg;
     private FileHistoryPanelImpl myFileHistoryPanel;
+    private TLongArrayList myListToReportLoaded;
 
     private HistoryConflictSide(SvnVcs vcs, SVNConflictVersion version, final SVNRevision peg) throws VcsException {
       super(vcs.getProject(), version);
@@ -377,6 +518,10 @@ public class TreeConflictRefreshablePanel extends AbstractRefreshablePanel {
       myProvider = (SvnHistoryProvider) myVcs.getVcsHistoryProvider();
     }
 
+    public void setListToReportLoaded(TLongArrayList listToReportLoaded) {
+      myListToReportLoaded = listToReportLoaded;
+    }
+
     @Override
     public VcsRevisionNumber convert(VcsFileRevision o) {
       return o.getRevisionNumber();
@@ -389,7 +534,14 @@ public class TreeConflictRefreshablePanel extends AbstractRefreshablePanel {
         // just a portion of history
         myProvider.reportAppendableHistory(myPath, mySessionAdapter, from, myPeg, LIMIT, myPeg, true);
       } else {
-        myProvider.reportAppendableHistory(myPath, mySessionAdapter, myPeg, from, 0, myPeg, true);
+        myProvider.reportAppendableHistory(myPath, mySessionAdapter, from, myPeg, 0, myPeg, true);
+      }
+      VcsAbstractHistorySession session = mySessionAdapter.getSession();
+      List<VcsFileRevision> list = session.getRevisionList();
+      if (myListToReportLoaded != null) {
+        for (VcsFileRevision revision : list) {
+          myListToReportLoaded.add(((SvnRevisionNumber) revision.getRevisionNumber()).getRevision().getNumber());
+        }
       }
     }
 
@@ -408,7 +560,6 @@ public class TreeConflictRefreshablePanel extends AbstractRefreshablePanel {
       if (list.isEmpty()) {
         return EmptyConflictSide.getInstance().createPanel();
       }
-      Collections.reverse(list);
       VcsFileRevision last = null;
       if (! list.isEmpty() && myPeg == null && list.size() == LIMIT ||
           (myPeg != null && myPeg.getNumber() > 0 &&

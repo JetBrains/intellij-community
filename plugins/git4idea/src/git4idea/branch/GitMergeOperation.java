@@ -79,6 +79,7 @@ class GitMergeOperation extends GitBranchOperation {
   @Override
   protected void execute() {
     LOG.info("starting");
+    saveAllDocuments();
     boolean fatalErrorHappened = false;
     int alreadyUpToDateRepositories = 0;
     while (hasMoreRepositories() && !fatalErrorHappened) {
@@ -363,7 +364,7 @@ class GitMergeOperation extends GitBranchOperation {
   private class MyMergeConflictResolver extends GitMergeCommittingConflictResolver {
     public MyMergeConflictResolver() {
       super(GitMergeOperation.this.myProject, myGit, new GitMerger(GitMergeOperation.this.myProject),
-            GitUtil.getRoots(GitMergeOperation.this.myConflictedRepositories.keySet()), new Params(), true);
+            GitUtil.getRootsFromRepositories(GitMergeOperation.this.myConflictedRepositories.keySet()), new Params(), true);
     }
 
     @Override

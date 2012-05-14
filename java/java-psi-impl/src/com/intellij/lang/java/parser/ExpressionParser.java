@@ -671,15 +671,14 @@ public class ExpressionParser {
     final PsiBuilder.Marker newExpr = (start != null ? start.precede() : builder.mark());
     builder.advanceLexer();
 
-    final boolean parseDiamonds = areDiamondsSupported(builder);
-    myReferenceParser.parseReferenceParameterList(builder, false, parseDiamonds);
+    myReferenceParser.parseReferenceParameterList(builder, false, true);
 
     final PsiBuilder.Marker refOrType;
     final boolean parseAnnotations = areTypeAnnotationsSupported(builder) && builder.getTokenType() == JavaTokenType.AT;
 
     final IElementType tokenType = builder.getTokenType();
     if (tokenType == JavaTokenType.IDENTIFIER || parseAnnotations) {
-      refOrType = myReferenceParser.parseJavaCodeReference(builder, true, true, parseAnnotations, true, parseDiamonds);
+      refOrType = myReferenceParser.parseJavaCodeReference(builder, true, true, parseAnnotations, true, true);
       if (refOrType == null) {
         error(builder, JavaErrorMessages.message("expected.identifier"));
         newExpr.done(JavaElementType.NEW_EXPRESSION);

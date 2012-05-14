@@ -37,10 +37,11 @@ import git4idea.merge.GitPullDialog;
 import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
-import git4idea.util.GitUIUtil;
 import git4idea.update.GitFetcher;
+import git4idea.util.GitUIUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
@@ -73,9 +74,6 @@ public class GitPull extends GitRepositoryAction {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         final GitRepositoryManager repositoryManager = GitUtil.getRepositoryManager(myProject);
-        if (repositoryManager == null) {
-          return;
-        }
 
         GitRepository repository = repositoryManager.getRepositoryForRoot(dialog.gitRoot());
         assert repository != null : "Repository can't be null for root " + dialog.gitRoot();
@@ -89,7 +87,8 @@ public class GitPull extends GitRepositoryAction {
         }
 
         if (GitHttpAdapter.shouldUseJGit(url)) {
-          boolean fetchSuccessful = new GitFetcher(project, indicator, true).fetchRootsAndNotify(gitRoots, "Pull failed", false);
+          boolean fetchSuccessful = new GitFetcher(project, indicator, true).fetchRootsAndNotify(Collections.singleton(repository),
+                                                                                                 "Pull failed", false);
           if (!fetchSuccessful) {
             return; 
           }

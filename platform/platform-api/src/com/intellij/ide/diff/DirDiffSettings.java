@@ -41,6 +41,7 @@ public class DirDiffSettings {
   public boolean enableChoosers = true;
   public CompareMode compareMode = CompareMode.CONTENT;
   public double compareTimestampAccuracy = 0;
+  public CustomSourceChooser customSourceChooser;
 
   public boolean showInFrame = true; // in dialog otherwise
 
@@ -102,5 +103,10 @@ public class DirDiffSettings {
 
     @Nullable
     String getName(CompareMode mode);
+  }
+
+  public interface CustomSourceChooser {
+    @Nullable
+    DiffElement chooseSource(@NotNull DiffElement first, @NotNull DiffElement second);
   }
 }

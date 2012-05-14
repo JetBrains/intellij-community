@@ -49,6 +49,7 @@ public class SvnTreeConflictDataTest extends SvnTestCase {
   @Override
   @Before
   public void setUp() throws Exception {
+    myWcrootName = "wcRootConflictData";
     super.setUp();
     disableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
 
@@ -120,6 +121,7 @@ public class SvnTreeConflictDataTest extends SvnTestCase {
   }
 
   private String createConflict(final TreeConflictData.Data data) throws Exception {
+    mySvnClientRunner.testSvnVersion(myWorkingCopyDir);
     createSubTree();
 
     final ConflictCreator creator = new ConflictCreator(myProject, myTheirs, myWorkingCopyDir, data, mySvnClientRunner);

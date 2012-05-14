@@ -65,6 +65,7 @@ class GitCheckoutOperation extends GitBranchOperation {
   
   @Override
   protected void execute() {
+    saveAllDocuments();
     boolean fatalErrorHappened = false;
     while (hasMoreRepositories() && !fatalErrorHappened) {
       final GitRepository repository = next();

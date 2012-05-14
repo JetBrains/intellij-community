@@ -58,6 +58,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
   private static final String JAVA_EXTENSION = ".java";
   private static final String FORM_EXTENSION = ".form";
   public static final boolean USE_EMBEDDED_JAVAC = System.getProperty(GlobalOptions.USE_EXTERNAL_JAVAC_OPTION) == null;
+  private static final Key<Integer> JAVA_COMPILER_VERSION_KEY = Key.create("_java_compiler_version_");
 
   public static final FileFilter JAVA_SOURCES_FILTER = new FileFilter() {
     public boolean accept(File file) {
@@ -599,7 +600,17 @@ public class JavaBuilder extends ModuleLevelBuilder {
 
     final BytecodeTargetConfiguration targetConfig = context.getProject().getCompilerConfiguration().getBytecodeTarget();
     String bytecodeTarget = null;
+    int chunkSdkVersion = -1;
     for (Module module : chunk.getModules()) {
+      final Sdk sdk = module.getSdk();
+      if (sdk instanceof JavaSdk) {
+        final JavaSdk moduleSdk = (JavaSdk)sdk;
+        final int moduleSdkVersion = convertToNumber(moduleSdk.getVersion());
+        if (moduleSdkVersion != 0 /*could determine the version*/&& (chunkSdkVersion < 0 || chunkSdkVersion > moduleSdkVersion)) {
+          chunkSdkVersion = moduleSdkVersion;
+        }
+      }
+
       final String moduleTarget = getModuleTarget(targetConfig, module);
       if (moduleTarget == null) {
         continue;
@@ -617,8 +628,35 @@ public class JavaBuilder extends ModuleLevelBuilder {
       options.add("-target");
       options.add(bytecodeTarget);
     }
+    else {
+      if (chunkSdkVersion > 0 && getCompilerSdkVersion(context) > chunkSdkVersion) {
+        // force lower bytecode target level to match the version of sdk assigned to this chunk
+        options.add("-target");
+        options.add("1." + chunkSdkVersion);
+      }
+    }
 
     return options;
+  }
+
+  private static int getCompilerSdkVersion(CompileContext context) {
+    final Integer cached = JAVA_COMPILER_VERSION_KEY.get(context);
+    if (cached != null) {
+      return cached;
+    }
+    int javaVersion = convertToNumber(SystemProperties.getJavaVersion());
+    if (!USE_EMBEDDED_JAVAC) {
+      // in case of external javac, run compiler from the newest jdk that is used in the project
+      for (JavaSdk sdk : context.getProjectDescriptor().getProjectJavaSdks()) {
+        final String version = sdk.getVersion();
+        final int ver = convertToNumber(version);
+        if (ver > javaVersion) {
+          javaVersion = ver;
+        }
+      }
+    }
+    JAVA_COMPILER_VERSION_KEY.set(context, javaVersion);
+    return javaVersion;
   }
 
   @Nullable

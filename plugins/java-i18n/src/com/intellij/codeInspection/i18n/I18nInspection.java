@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -449,7 +449,7 @@ public class I18nInspection extends BaseLocalInspectionTool {
 
         final Project project = expression.getManager().getProject();
         final JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
-        if (PsiUtil.getLanguageLevel(expression).hasEnumKeywordAndAutoboxing()) {
+        if (PsiUtil.isLanguageLevel5OrHigher(expression)) {
           for (PsiModifierListOwner element : nonNlsTargets) {
             if (!AnnotationUtil.isAnnotated(element, AnnotationUtil.NLS, true)) {
               if (!element.getManager().isInProject(element) || facade.findClass(AnnotationUtil.NON_NLS, element.getResolveScope()) != null) {

@@ -17,6 +17,7 @@ package git4idea.branch;
 
 import git4idea.GitBranch;
 import git4idea.repo.GitBranchTrackInfo;
+import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,6 +38,29 @@ public class GitBranchUtil {
     for (GitBranchTrackInfo trackInfo : repository.getConfig().getBranchTrackInfos()) {
       if (trackInfo.getBranch().equals(branch.getName())) {
         return trackInfo;
+      }
+    }
+    return null;
+  }
+
+  /**
+   * Looks through the remote branches in the given repository and tries to find the one from the given remote,
+   * which the given name.
+   * @return remote branch or null if such branch couldn't be found.
+   */
+  @Nullable
+  public static GitBranch findRemoteBranchByName(@NotNull GitRepository repository, @Nullable GitRemote remote, @Nullable String name) {
+    if (name == null || remote == null) {
+      return null;
+    }
+    final String BRANCH_PREFIX = "refs/heads/";
+    if (name.startsWith(BRANCH_PREFIX)) {
+      name = name.substring(BRANCH_PREFIX.length());
+    }
+
+    for (GitBranch branch : repository.getBranches().getRemoteBranches()) {
+      if (branch.getName().equals(remote.getName() + "/" + name)) {
+        return branch;
       }
     }
     return null;

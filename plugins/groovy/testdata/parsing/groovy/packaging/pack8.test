@@ -8,6 +8,6 @@ Groovy script
     PsiWhiteSpace(' ')
     Reference element
       Reference element
-        PsiElement(identifier)('def')
+        PsiElement(def)('def')
       PsiElement(.)('.')
-      PsiElement(identifier)('as')
+      PsiElement(as)('as')

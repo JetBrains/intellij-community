@@ -50,6 +50,12 @@ public class GitBranchTrackInfo {
     return myRemote;
   }
 
+  /**
+   * Returns the name of the remote branch.<br/>
+   * The name is local for that remote (i.e. without the remote prefix),
+   * and the name is simplified (i.e. without the {@code refs/heads/} prefix).<br/>
+   * For example, returns {@code master}, and not {@code origin/master} or {@code refs/heads/master} or {@code refs/remotes/origin/master}.
+   */
   @NotNull
   public String getRemoteBranch() {
     return myRemoteBranch;

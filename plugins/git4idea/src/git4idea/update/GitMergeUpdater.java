@@ -189,6 +189,7 @@ public class GitMergeUpdater extends GitUpdater {
     diff.setNoSSH(true);
     diff.setStdoutSuppressed(true);
     diff.setStderrSuppressed(true);
+    diff.setSilent(true);
     final String output = diff.run();
     return !output.trim().isEmpty();
   }
@@ -242,6 +243,11 @@ public class GitMergeUpdater extends GitUpdater {
       }
     }
     return changes;
+  }
+
+  @Override
+  public String toString() {
+    return "Merge updater";
   }
 
   private enum MergeError {

@@ -10,4 +10,4 @@ Groovy script
       Reference element
         PsiElement(identifier)('a')
       PsiElement(.)('.')
-      PsiElement(identifier)('def')
+      PsiElement(def)('def')

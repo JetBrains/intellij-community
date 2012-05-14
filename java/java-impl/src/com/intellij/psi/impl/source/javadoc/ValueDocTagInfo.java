@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,7 +53,7 @@ public class ValueDocTagInfo implements JavadocTagInfo {
   public String checkTagValue(PsiDocTagValue value) {
     boolean hasReference = (value != null && value.getFirstChild() != null);
     if (hasReference) {
-      if (!PsiUtil.getLanguageLevel(value).hasEnumKeywordAndAutoboxing()) {
+      if (!PsiUtil.isLanguageLevel5OrHigher(value)) {
         return JavaErrorMessages.message("javadoc.value.tag.jdk15.required");
       }
     }

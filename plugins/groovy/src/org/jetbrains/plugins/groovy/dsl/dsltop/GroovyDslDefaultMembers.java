@@ -22,6 +22,8 @@ import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.dsl.GdslMembersHolderConsumer;
 import org.jetbrains.plugins.groovy.dsl.holders.DelegatedMembersHolder;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall;
@@ -29,6 +31,10 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
+import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
+import org.jetbrains.plugins.groovy.lang.resolve.processors.CompletionProcessor;
+import org.jetbrains.plugins.groovy.lang.resolve.processors.ResolverProcessor;
 
 /**
  * @author ilyas
@@ -37,7 +43,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrM
 public class GroovyDslDefaultMembers implements GdslMembersProvider {
 
   /**
-   * Find a class by its full-qulified name
+   * Find a class by its full-qualified name
    *
    * @param fqn
    * @return
@@ -45,8 +51,7 @@ public class GroovyDslDefaultMembers implements GdslMembersProvider {
   @Nullable
   public PsiClass findClass(String fqn, GdslMembersHolderConsumer consumer) {
     final JavaPsiFacade facade = JavaPsiFacade.getInstance(consumer.getProject());
-    final PsiClass clazz = facade.findClass(fqn, GlobalSearchScope.allScope(consumer.getProject()));
-    return clazz;
+    return facade.findClass(fqn, GlobalSearchScope.allScope(consumer.getProject()));
   }
 
   /**
@@ -59,11 +64,26 @@ public class GroovyDslDefaultMembers implements GdslMembersProvider {
     if (elem instanceof PsiClass) {
       final PsiClass clazz = (PsiClass)elem;
       final DelegatedMembersHolder holder = new DelegatedMembersHolder();
-      for (PsiMethod method : clazz.getAllMethods()) {
-        if (!method.isConstructor()) holder.addMember(method);
+
+      if (clazz instanceof GrTypeDefinition) {
+        final PsiClassType type = JavaPsiFacade.getElementFactory(consumer.getProject()).createType(clazz);
+        final ResolverProcessor processor = CompletionProcessor.createPropertyCompletionProcessor(clazz);
+        final GroovyPsiElement context = (GroovyPsiElement)clazz;
+        ResolveUtil.processAllDeclarations(type, processor, ResolveState.initial(), context);
+        for (GroovyResolveResult result : processor.getCandidates()) {
+          final PsiElement element = result.getElement();
+          if (element instanceof PsiMethod && !((PsiMethod)element).isConstructor() || element instanceof PsiField) {
+            holder.addMember((PsiMember)element);
+          }
+        }
       }
-      for (PsiField field : clazz.getAllFields()) {
-        holder.addMember(field);
+      else {
+        for (PsiMethod method : clazz.getAllMethods()) {
+          if (!method.isConstructor()) holder.addMember(method);
+        }
+        for (PsiField field : clazz.getAllFields()) {
+          holder.addMember(field);
+        }
       }
       consumer.addMemberHolder(holder);
     }
@@ -155,5 +175,4 @@ public class GroovyDslDefaultMembers implements GdslMembersProvider {
     }
     return null;
   }
-
 }

@@ -226,6 +226,12 @@ public def layoutCommunityPlugins(String home) {
         module("gradle")
       }
     }
+
+    layoutPlugin("rearranger") {
+      jar("rearranger.jar") {
+        module("rearranger")
+      }
+    }
     
     layoutPlugin("git4idea") {
       jar("git4idea-rt.jar") {

@@ -68,7 +68,7 @@ public abstract class SetOperationToBase extends AnAction {
   protected abstract boolean isEnabledFor(DirDiffElement element);
 
   @Nullable
-  private static JTable getTable(AnActionEvent e) {
+  static JTable getTable(AnActionEvent e) {
     return e.getData(DirDiffPanel.DIR_DIFF_TABLE);
   }
 
