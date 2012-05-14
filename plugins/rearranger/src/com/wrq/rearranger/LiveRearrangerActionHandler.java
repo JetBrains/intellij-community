@@ -43,7 +43,7 @@ import com.wrq.rearranger.popup.LiveRearrangerDialog;
 import com.wrq.rearranger.popup.LiveRearrangerPopup;
 import com.wrq.rearranger.rearrangement.Mover;
 import com.wrq.rearranger.rearrangement.Parser;
-import com.wrq.rearranger.ruleinstance.IRuleInstance;
+import com.wrq.rearranger.ruleinstance.RuleInstance;
 import com.wrq.rearranger.settings.RearrangerSettings;
 import com.wrq.rearranger.util.CommentUtil;
 
@@ -196,7 +196,7 @@ public final class LiveRearrangerActionHandler
     final List<ClassContentsEntry> outerClasses = p.parseOuterLevel();
     if (outerClasses.size() > 0) {
       final Mover mover = new Mover(outerClasses, settings);
-      final List<IRuleInstance> resultRuleInstances = mover.rearrangeOuterClasses();
+      final List<RuleInstance> resultRuleInstances = mover.rearrangeOuterClasses();
       fsp.setResultRuleInstances(resultRuleInstances);
       fsp.liveRearranger();
     }

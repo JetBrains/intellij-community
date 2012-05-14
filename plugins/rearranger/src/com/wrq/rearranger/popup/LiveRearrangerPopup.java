@@ -31,7 +31,7 @@ import com.intellij.psi.PsiFile;
 import com.wrq.rearranger.LiveRearrangerActionHandler;
 import com.wrq.rearranger.entry.RangeEntry;
 import com.wrq.rearranger.rearrangement.Emitter;
-import com.wrq.rearranger.ruleinstance.IRuleInstance;
+import com.wrq.rearranger.ruleinstance.RuleInstance;
 import com.wrq.rearranger.settings.RearrangerSettings;
 import com.wrq.rearranger.util.IconUtil;
 
@@ -55,11 +55,11 @@ public class LiveRearrangerPopup
   private static final Logger LOG = Logger.getInstance("#" + LiveRearrangerPopup.class.getName());
   final RearrangerSettings settings;
   PopupTreeComponent  treeComponent;
-  List<IRuleInstance> resultRuleInstances;
+  List<RuleInstance> myResultRuleInstances;
   final Window   outerPanel;
   final Document document;
   final PsiFile  psiFile;
-  IFilePopupEntry psiFileEntry;
+  FilePopupEntry myPsiFileEntry;
   private WindowFocusListener windowFocusListener;
   private WindowAdapter       windowAdapter;
   private MouseAdapter        mouseAdapter;
@@ -79,7 +79,7 @@ public class LiveRearrangerPopup
   boolean sawKeyPressed = false;
 
   public LiveRearrangerPopup(RearrangerSettings settings,
-                             final IFilePopupEntry psiFileEntry,
+                             final FilePopupEntry psiFileEntry,
                              Window outerPanel,
                              Document document,
                              Project project)
@@ -87,14 +87,14 @@ public class LiveRearrangerPopup
     LOG.debug("entered LiveRearrangerPopup constructor");
     this.settings = settings;
     this.outerPanel = outerPanel;
-    this.psiFileEntry = psiFileEntry;
+    this.myPsiFileEntry = psiFileEntry;
     this.document = document;
     this.psiFile = null;
     this.project = project;
   }
 
   private void createFilePopupEntry(final PsiFile psiFile) {
-    psiFileEntry = new IFilePopupEntry() {
+    myPsiFileEntry = new FilePopupEntry() {
       public String getTypeIconName() {
         return "nodes/ppFile";
       }
@@ -166,9 +166,9 @@ public class LiveRearrangerPopup
     this.rearrangementOccurred = rearrangementOccurred;
   }
 
-  public void setResultRuleInstances(List<IRuleInstance> resultRuleInstances) {
-    this.resultRuleInstances = resultRuleInstances;
-    treeComponent = new PopupTreeComponent(settings, resultRuleInstances, psiFileEntry);
+  public void setResultRuleInstances(List<RuleInstance> resultRuleInstances) {
+    this.myResultRuleInstances = resultRuleInstances;
+    treeComponent = new PopupTreeComponent(settings, resultRuleInstances, myPsiFileEntry);
   }
 
   /** Display a live rearrangement window. */
@@ -355,7 +355,7 @@ public class LiveRearrangerPopup
     final Runnable task = new Runnable() {
       public void run() {
         if (document != null) {
-          final Emitter e = new Emitter(psiFile, resultRuleInstances, document);
+          final Emitter e = new Emitter(psiFile, myResultRuleInstances, document);
           e.emitRearrangedDocument();
         }
       }
@@ -571,7 +571,7 @@ public class LiveRearrangerPopup
 //        void testIt()
 //        {
     final RearrangerSettings settings = new RearrangerSettings();
-    IFilePopupEntry pf = new IFilePopupEntry() {
+    FilePopupEntry pf = new FilePopupEntry() {
       public String getTypeIconName() {
         return "nodes/ppFile";
       }

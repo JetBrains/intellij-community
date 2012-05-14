@@ -45,7 +45,7 @@ import com.wrq.rearranger.rearrangement.Emitter;
 import com.wrq.rearranger.rearrangement.Mover;
 import com.wrq.rearranger.rearrangement.Parser;
 import com.wrq.rearranger.rearrangement.Spacer;
-import com.wrq.rearranger.ruleinstance.IRuleInstance;
+import com.wrq.rearranger.ruleinstance.RuleInstance;
 import com.wrq.rearranger.settings.RearrangerSettings;
 import com.wrq.rearranger.util.CommentUtil;
 
@@ -173,7 +173,7 @@ public final class RearrangerActionHandler extends EditorActionHandler {
     final List<ClassContentsEntry> outerClasses = p.parseOuterLevel();
     if (outerClasses.size() > 0) {
       final Mover m = new Mover(outerClasses, settings);
-      final List<IRuleInstance> resultRuleInstances = m.rearrangeOuterClasses();
+      final List<RuleInstance> resultRuleInstances = m.rearrangeOuterClasses();
       boolean rearrange = true;
       if (settings.isAskBeforeRearranging()) {
         FileStructurePopup fsp = new FileStructurePopup(settings, resultRuleInstances, psiFile);

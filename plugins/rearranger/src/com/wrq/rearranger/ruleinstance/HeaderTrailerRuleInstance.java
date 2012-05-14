@@ -25,7 +25,7 @@ import com.wrq.rearranger.entry.ClassContentsEntry;
 import com.wrq.rearranger.entry.RangeEntry;
 import com.wrq.rearranger.rearrangement.Emitter;
 import com.wrq.rearranger.settings.RearrangerSettings;
-import com.wrq.rearranger.settings.attributeGroups.IRule;
+import com.wrq.rearranger.settings.attributeGroups.Rule;
 
 import javax.swing.tree.DefaultMutableTreeNode;
 import java.util.ArrayList;
@@ -33,13 +33,13 @@ import java.util.List;
 
 /** Instance to pick up header text. */
 public class HeaderTrailerRuleInstance
-  implements IRuleInstance
+  implements RuleInstance
 {
-  private final IRule      rule;
-  private       RangeEntry entry;
+  private final Rule       myRule;
+  private       RangeEntry myEntry;
 
-  public HeaderTrailerRuleInstance(IRule rule) {
-    this.rule = rule;
+  public HeaderTrailerRuleInstance(Rule rule) {
+    myRule = rule;
   }
 
   public boolean hasMatches() {
@@ -48,34 +48,31 @@ public class HeaderTrailerRuleInstance
 
   public List<RangeEntry> getMatches() {
     List<RangeEntry> list = null;
-    if (entry != null) {
+    if (myEntry != null) {
       list = new ArrayList<RangeEntry>();
-      list.add(entry);
+      list.add(myEntry);
     }
     return list;
   }
 
-  public IRule getRule() {
-    return rule;
+  public Rule getRule() {
+    return myRule;
   }
 
   public void addEntry(RangeEntry entry) {
-    this.entry = entry; // a header only has one entry
+    this.myEntry = entry; // a header only has one entry
   }
 
   public void emit(Emitter emitter) {
-    if (entry != null) {
-      entry.emit(emitter);
+    if (myEntry != null) {
+      myEntry.emit(emitter);
     }
   }
 
-  public void rearrangeRuleItems(List<ClassContentsEntry> entries,
-                                 RearrangerSettings settings)
-  {
-    return;
+  public void rearrangeRuleItems(List<ClassContentsEntry> entries, RearrangerSettings settings) {
   }
 
   public void addRuleInstanceToPopupTree(DefaultMutableTreeNode node, RearrangerSettings settings) {
-    return; // don't show header/trailer junk in popup tree
+    // don't show header/trailer junk in popup tree
   }
 }

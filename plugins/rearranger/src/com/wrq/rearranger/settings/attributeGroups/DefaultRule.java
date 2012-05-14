@@ -23,7 +23,7 @@ package com.wrq.rearranger.settings.attributeGroups;
 
 import com.wrq.rearranger.entry.RangeEntry;
 import com.wrq.rearranger.ruleinstance.DefaultRuleInstance;
-import com.wrq.rearranger.ruleinstance.IRuleInstance;
+import com.wrq.rearranger.ruleinstance.RuleInstance;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -33,9 +33,9 @@ import java.util.List;
  * constant (unparsed) text.
  */
 public class DefaultRule
-  implements IRule
+  implements Rule
 {
-  public IRuleInstance createRuleInstance() {
+  public RuleInstance createRuleInstance() {
     return new DefaultRuleInstance(this);
   }
 

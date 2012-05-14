@@ -26,7 +26,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.psi.PsiElement;
 import com.wrq.rearranger.popup.RearrangerTreeNode;
 import com.wrq.rearranger.rearrangement.Emitter;
-import com.wrq.rearranger.ruleinstance.IRuleInstance;
+import com.wrq.rearranger.ruleinstance.RuleInstance;
 import com.wrq.rearranger.settings.RearrangerSettings;
 import com.wrq.rearranger.util.CommentUtil;
 
@@ -51,7 +51,7 @@ abstract public class RangeEntry implements IPopupTreeRangeEntry {
   private final   boolean       fixedHeader;
   private final   boolean       fixedTrailer;
   private final   String        type;
-  private         IRuleInstance matchedRule;
+  private RuleInstance myMatchedRule;
   private         boolean       separatorCommentPrecedes;
 
 // --------------------------- CONSTRUCTORS ---------------------------
@@ -100,12 +100,12 @@ abstract public class RangeEntry implements IPopupTreeRangeEntry {
     return end;
   }
 
-  public IRuleInstance getMatchedRule() {
-    return matchedRule;
+  public RuleInstance getMatchedRule() {
+    return myMatchedRule;
   }
 
-  public void setMatchedRule(IRuleInstance matchedRule) {
-    this.matchedRule = matchedRule;
+  public void setMatchedRule(RuleInstance matchedRule) {
+    this.myMatchedRule = matchedRule;
   }
 
   public int getModifiers() {

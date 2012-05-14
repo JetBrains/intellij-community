@@ -26,12 +26,12 @@ import com.wrq.rearranger.entry.ClassContentsEntry;
 import com.wrq.rearranger.entry.IPopupTreeRangeEntry;
 import com.wrq.rearranger.entry.MethodEntry;
 import com.wrq.rearranger.entry.RangeEntry;
-import com.wrq.rearranger.popup.IFilePopupEntry;
+import com.wrq.rearranger.popup.FilePopupEntry;
 import com.wrq.rearranger.rearrangement.Emitter;
 import com.wrq.rearranger.settings.RearrangerSettings;
 import com.wrq.rearranger.settings.atomicAttributes.SortOptions;
 import com.wrq.rearranger.settings.attributeGroups.CommonAttributes;
-import com.wrq.rearranger.settings.attributeGroups.IRule;
+import com.wrq.rearranger.settings.attributeGroups.Rule;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -41,20 +41,21 @@ import java.util.List;
 
 /** Handles basic Rule functions. */
 public abstract class CommonRuleInstance
-  implements IRuleInstance,
-             IFilePopupEntry
+  implements RuleInstance,
+             FilePopupEntry
 {
   private static final Logger LOG = Logger.getInstance("#" + CommonRuleInstance.class.getName());
-  protected final IRule            rule;
+
+  protected final Rule             myRule;
   protected final List<RangeEntry> matchedItems;
 
-  public CommonRuleInstance(IRule rule) {
-    this.rule = rule;
+  public CommonRuleInstance(Rule rule) {
+    myRule = rule;
     matchedItems = new ArrayList<RangeEntry>();
   }
 
-  public IRule getRule() {
-    return rule;
+  public Rule getRule() {
+    return myRule;
   }
 
   /**
@@ -63,8 +64,8 @@ public abstract class CommonRuleInstance
    * @param entry
    */
   public void addEntry(RangeEntry entry) {
-    if (rule instanceof CommonAttributes) {
-      SortOptions sortOptions = ((CommonAttributes)rule).getSortAttr();
+    if (myRule instanceof CommonAttributes) {
+      SortOptions sortOptions = ((CommonAttributes)myRule).getSortAttr();
       insertionSort(entry, sortOptions);
     }
     else {

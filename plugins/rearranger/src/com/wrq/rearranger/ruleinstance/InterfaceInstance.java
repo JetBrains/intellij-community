@@ -22,7 +22,7 @@
 package com.wrq.rearranger.ruleinstance;
 
 import com.wrq.rearranger.entry.MethodEntry;
-import com.wrq.rearranger.popup.IFilePopupEntry;
+import com.wrq.rearranger.popup.FilePopupEntry;
 import com.wrq.rearranger.rearrangement.Emitter;
 import com.wrq.rearranger.settings.CommentRule;
 import com.wrq.rearranger.settings.RearrangerSettings;
@@ -36,7 +36,7 @@ import java.util.List;
 
 /** Corresponds to a single interface with one or more implementing methods. */
 public class InterfaceInstance
-  implements IFilePopupEntry
+  implements FilePopupEntry
 {
 // ------------------------------------------------------- FIELDS ------------------------------------------------------
 

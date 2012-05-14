@@ -23,10 +23,10 @@ package com.wrq.rearranger.settings;
 
 import com.wrq.rearranger.entry.IPopupTreeRangeEntry;
 import com.wrq.rearranger.entry.RangeEntry;
-import com.wrq.rearranger.popup.IFilePopupEntry;
+import com.wrq.rearranger.popup.FilePopupEntry;
 import com.wrq.rearranger.popup.RearrangerTreeNode;
 import com.wrq.rearranger.ruleinstance.CommentRuleInstanceFactory;
-import com.wrq.rearranger.ruleinstance.IRuleInstance;
+import com.wrq.rearranger.ruleinstance.RuleInstance;
 import com.wrq.rearranger.settings.attributeGroups.AttributeGroup;
 import com.wrq.rearranger.settings.attributeGroups.RegexUtil;
 import com.wrq.rearranger.util.Constraints;
@@ -51,7 +51,7 @@ import java.util.List;
 public final class CommentRule
   implements AttributeGroup,
              IPopupTreeRangeEntry,
-             IFilePopupEntry
+             FilePopupEntry
 {
 // ------------------------------------------------------- FIELDS ------------------------------------------------------
 
@@ -464,7 +464,7 @@ public final class CommentRule
 // -------------------------------------------------- Interface IRule --------------------------------------------------
 
 
-  public IRuleInstance createRuleInstance() {
+  public RuleInstance createRuleInstance() {
     return CommentRuleInstanceFactory.buildCommentRuleInstance(this);
   }
 

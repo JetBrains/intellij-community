@@ -25,7 +25,7 @@ import org.jdom.Element;
 
 /** Methods implemented by rule objects, which are saved in configuration. */
 public interface AttributeGroup
-  extends IRule
+  extends Rule
 {
 
 // -------------------------- OTHER METHODS --------------------------

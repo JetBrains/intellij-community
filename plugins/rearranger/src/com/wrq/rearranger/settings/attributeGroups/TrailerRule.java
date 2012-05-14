@@ -23,16 +23,16 @@ package com.wrq.rearranger.settings.attributeGroups;
 
 import com.wrq.rearranger.entry.RangeEntry;
 import com.wrq.rearranger.ruleinstance.HeaderTrailerRuleInstance;
-import com.wrq.rearranger.ruleinstance.IRuleInstance;
+import com.wrq.rearranger.ruleinstance.RuleInstance;
 
 import java.util.ArrayList;
 import java.util.List;
 
 /** A rule to match header text (text which does not constitute a matchable item such as a field or method.) */
 public class TrailerRule
-  implements IRule
+  implements Rule
 {
-  public IRuleInstance createRuleInstance() {
+  public RuleInstance createRuleInstance() {
     return new HeaderTrailerRuleInstance(this);
   }
 

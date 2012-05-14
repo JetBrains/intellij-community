@@ -23,11 +23,11 @@ package com.wrq.rearranger.ruleinstance;
 
 import com.wrq.rearranger.entry.ClassContentsEntry;
 import com.wrq.rearranger.entry.RangeEntry;
-import com.wrq.rearranger.popup.IFilePopupEntry;
+import com.wrq.rearranger.popup.FilePopupEntry;
 import com.wrq.rearranger.rearrangement.Emitter;
 import com.wrq.rearranger.settings.CommentRule;
 import com.wrq.rearranger.settings.RearrangerSettings;
-import com.wrq.rearranger.settings.attributeGroups.IRule;
+import com.wrq.rearranger.settings.attributeGroups.Rule;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -38,8 +38,8 @@ import java.util.List;
 
 /** Used to store a generated comment, and to determine if it should be emitted. */
 public abstract class CommentRuleInstance
-  implements IRuleInstance,
-             IFilePopupEntry
+  implements RuleInstance,
+             FilePopupEntry
 {
   protected final CommentRule commentRule;
   protected       boolean     emit;
@@ -57,12 +57,12 @@ public abstract class CommentRuleInstance
     this.emit = emit;
   }
 
-  public IRule getRule() {
+  public Rule getRule() {
     return commentRule;
   }
 
   /** Determine if this comment, in this instance, should be emitted. */
-  public abstract void determineEmit(List<IRuleInstance> resultRuleInstances, int startIndex);
+  public abstract void determineEmit(List<RuleInstance> resultRuleInstances, int startIndex);
 
   public boolean hasMatches() {
     return false; // a generated comment never matches any object
@@ -152,7 +152,7 @@ public abstract class CommentRuleInstance
    * @return true if the match condition is met.
    */
   @SuppressWarnings({"MethodParameterNamingConvention"})
-  protected boolean match(final List<IRuleInstance> resultRuleInstances,
+  protected boolean match(final List<RuleInstance> resultRuleInstances,
                           final int nRules,
                           final int direction,
                           final int startIndex,
@@ -167,7 +167,7 @@ public abstract class CommentRuleInstance
       if (!(resultRuleInstances.get(index) instanceof CommentRuleInstance)) {
         // this is a rule entry, not a comment.
         nRulesSeen++;
-        final IRuleInstance ruleInstance = resultRuleInstances.get(index);
+        final RuleInstance ruleInstance = resultRuleInstances.get(index);
         if (ruleInstance.hasMatches()) {
           if (!ANDing) {
             return true; // OR condition (any matching rule) met

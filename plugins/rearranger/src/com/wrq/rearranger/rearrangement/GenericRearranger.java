@@ -27,7 +27,7 @@ import com.wrq.rearranger.entry.ClassEntry;
 import com.wrq.rearranger.entry.IRelatableEntry;
 import com.wrq.rearranger.entry.RangeEntry;
 import com.wrq.rearranger.ruleinstance.CommentRuleInstance;
-import com.wrq.rearranger.ruleinstance.IRuleInstance;
+import com.wrq.rearranger.ruleinstance.RuleInstance;
 import com.wrq.rearranger.settings.RearrangerSettings;
 import com.wrq.rearranger.settings.attributeGroups.*;
 
@@ -40,7 +40,7 @@ public abstract class GenericRearranger {
   private static final Logger LOG = Logger.getInstance("#" + GenericRearranger.class.getName());
   private final List<AttributeGroup>     rules;
   private final List<ClassContentsEntry> entries;
-  private final List<IRuleInstance>      resultRuleInstances;
+  private final List<RuleInstance> myResultRuleInstances;
   private final int                      nestingLevel;
   private final RearrangerSettings       settings;
 
@@ -54,7 +54,7 @@ public abstract class GenericRearranger {
     entries = outerClasses;
     this.nestingLevel = nestingLevel;
     this.settings = settings;
-    resultRuleInstances = new ArrayList<IRuleInstance>(rules.size() + 4);
+    myResultRuleInstances = new ArrayList<RuleInstance>(rules.size() + 4);
   }
 
   /**
@@ -63,8 +63,8 @@ public abstract class GenericRearranger {
    *
    * @return rearranged list of RangeEntry and CommentRuleInstance objects.
    */
-  public final List<IRuleInstance> rearrangeEntries() {
-    final List<IRuleInstance> prioritizedRuleInstances = new ArrayList<IRuleInstance>();
+  public final List<RuleInstance> rearrangeEntries() {
+    final List<RuleInstance> prioritizedRuleInstances = new ArrayList<RuleInstance>();
     buildRuleInstanceLists(prioritizedRuleInstances);
     /**
      * recursively reorder contents of every nested ClassEntry.
@@ -80,7 +80,7 @@ public abstract class GenericRearranger {
      * Move related methods together.  Extracted methods and setters (emitted with getters)
      * were not moved by the rearrangement code ("MatchPrioritizedRules()") just above.
      */
-    rearrangeRelatedItems(entries, resultRuleInstances);
+    rearrangeRelatedItems(entries, myResultRuleInstances);
     /**
      * Now go back and determine which comments are going to be emitted, based on their criteria and the
      * state of the immediately surrounding rules.  Ignore inner classes if no rearrangement of inner
@@ -89,19 +89,19 @@ public abstract class GenericRearranger {
     if (nestingLevel <= 1 || settings.isRearrangeInnerClasses()) {
       determineEmittedComments();
     }
-    return resultRuleInstances;
+    return myResultRuleInstances;
   }
 
   /** For each comment rule instance, test its "emit" condition and set its emit flag appropriately. */
   private void determineEmittedComments() {
-    for (int i = 0; i < resultRuleInstances.size(); i++) {
-      if (resultRuleInstances.get(i) instanceof CommentRuleInstance) {
-        final CommentRuleInstance ce = (CommentRuleInstance)resultRuleInstances.get(i);
-        ce.determineEmit(resultRuleInstances, i);
+    for (int i = 0; i < myResultRuleInstances.size(); i++) {
+      if (myResultRuleInstances.get(i) instanceof CommentRuleInstance) {
+        final CommentRuleInstance ce = (CommentRuleInstance)myResultRuleInstances.get(i);
+        ce.determineEmit(myResultRuleInstances, i);
         if (ce.isEmit()) {
           // set the "separator comment preceding" flag on the next matching RangeEntry.
-          for (int j = i + 1; j < resultRuleInstances.size(); j++) {
-            IRuleInstance instance = resultRuleInstances.get(j);
+          for (int j = i + 1; j < myResultRuleInstances.size(); j++) {
+            RuleInstance instance = myResultRuleInstances.get(j);
             if (instance.hasMatches()) {
               RangeEntry entry = (instance.getMatches().get(0));
               entry.setSeparatorCommentPrecedes(true);
@@ -122,9 +122,9 @@ public abstract class GenericRearranger {
    * @param prioritizedRules prioritized list of rules
    */
   @SuppressWarnings({"StringContatenationInLoop"})
-  private void matchPrioritizedRules(List<IRuleInstance> prioritizedRules) {
-    for (IRuleInstance ruleInstance : prioritizedRules) {
-      final IRule rule = ruleInstance.getRule();
+  private void matchPrioritizedRules(List<RuleInstance> prioritizedRules) {
+    for (RuleInstance ruleInstance : prioritizedRules) {
+      final Rule rule = ruleInstance.getRule();
       final ListIterator entryIterator = entries.listIterator();
       while (entryIterator.hasNext()) {
         final RangeEntry entry = (RangeEntry)entryIterator.next();
@@ -153,22 +153,22 @@ public abstract class GenericRearranger {
    *
    * @param prioritizedRuleInstances
    */
-  private void buildRuleInstanceLists(final List<IRuleInstance> prioritizedRuleInstances) {
+  private void buildRuleInstanceLists(final List<RuleInstance> prioritizedRuleInstances) {
     /**
      * add a HeaderTrailerRuleInstance to pick up any headers that might exist.
      */
-    IRuleInstance hri = new HeaderRule().createRuleInstance();
-    resultRuleInstances.add(hri);
+    RuleInstance hri = new HeaderRule().createRuleInstance();
+    myResultRuleInstances.add(hri);
     prioritizedRuleInstances.add(hri);
-    for (IRule rule : rules) {
-      IRuleInstance instance = rule.createRuleInstance();
-      resultRuleInstances.add(instance);
+    for (Rule rule : rules) {
+      RuleInstance instance = rule.createRuleInstance();
+      myResultRuleInstances.add(instance);
       /**
        * now insert the rule instance into the prioritized list; highest priority first; stable insertion.
        */
       boolean inserted = false;
       for (int i = prioritizedRuleInstances.size() - 1; i >= 0; i--) {
-        IRuleInstance entry = (prioritizedRuleInstances.get(i));
+        RuleInstance entry = (prioritizedRuleInstances.get(i));
         if (rule.getPriority() <= entry.getRule().getPriority()) {
           prioritizedRuleInstances.add(i + 1, instance);
           inserted = true;
@@ -180,12 +180,12 @@ public abstract class GenericRearranger {
       }
     }
     // now add a default rule to pick up all unmatched items.
-    IRuleInstance defaultRuleInstance = new DefaultRule().createRuleInstance();
-    resultRuleInstances.add(defaultRuleInstance);
+    RuleInstance defaultRuleInstance = new DefaultRule().createRuleInstance();
+    myResultRuleInstances.add(defaultRuleInstance);
     prioritizedRuleInstances.add(defaultRuleInstance);
     // finally, add a TrailerRuleInstance to pick up any leftover text.
-    IRuleInstance tri = new TrailerRule().createRuleInstance();
-    resultRuleInstances.add(tri);
+    RuleInstance tri = new TrailerRule().createRuleInstance();
+    myResultRuleInstances.add(tri);
     prioritizedRuleInstances.add(tri);
   }
 
@@ -197,6 +197,6 @@ public abstract class GenericRearranger {
    * @param rearrangedEntries
    */
   public abstract void rearrangeRelatedItems(List<ClassContentsEntry> entries,
-                                             List<IRuleInstance> rearrangedEntries);
+                                             List<RuleInstance> rearrangedEntries);
 }
 

@@ -23,7 +23,7 @@ package com.wrq.rearranger.settings.attributeGroups;
 
 import com.wrq.rearranger.entry.MethodEntry;
 import com.wrq.rearranger.entry.RangeEntry;
-import com.wrq.rearranger.ruleinstance.IRuleInstance;
+import com.wrq.rearranger.ruleinstance.RuleInstance;
 import com.wrq.rearranger.ruleinstance.InterfaceRuleInstance;
 import com.wrq.rearranger.settings.CommentFillString;
 import com.wrq.rearranger.settings.CommentRule;
@@ -136,7 +136,7 @@ public class InterfaceAttributes
     return priority;
   }
 
-  public IRuleInstance createRuleInstance() {
+  public RuleInstance createRuleInstance() {
     return new InterfaceRuleInstance(this);
   }
 

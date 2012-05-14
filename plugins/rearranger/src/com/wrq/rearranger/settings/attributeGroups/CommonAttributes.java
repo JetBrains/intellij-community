@@ -23,7 +23,7 @@ package com.wrq.rearranger.settings.attributeGroups;
 
 import com.wrq.rearranger.entry.RangeEntry;
 import com.wrq.rearranger.ruleinstance.DefaultRuleInstance;
-import com.wrq.rearranger.ruleinstance.IRuleInstance;
+import com.wrq.rearranger.ruleinstance.RuleInstance;
 import com.wrq.rearranger.settings.RearrangerSettings;
 import com.wrq.rearranger.settings.atomicAttributes.*;
 import org.jdom.Element;
@@ -116,7 +116,7 @@ public abstract class CommonAttributes
 
 // --------------------- Interface IRule ---------------------
 
-  public IRuleInstance createRuleInstance() {
+  public RuleInstance createRuleInstance() {
     return new DefaultRuleInstance(this);
   }
 

@@ -24,7 +24,7 @@ package com.wrq.rearranger.configuration;
 import com.wrq.rearranger.settings.RearrangerSettings;
 import com.wrq.rearranger.settings.attributeGroups.AttributeGroup;
 import com.wrq.rearranger.settings.attributeGroups.IPrioritizableRule;
-import com.wrq.rearranger.settings.attributeGroups.IRule;
+import com.wrq.rearranger.settings.attributeGroups.Rule;
 import com.wrq.rearranger.util.Constraints;
 
 import javax.swing.*;
@@ -98,7 +98,7 @@ public abstract class SettingsPane {
 
           case PRIORITY_COLUMN:
             ChoicePanel cp = (modelData.get(rowIndex));
-            IRule rule = cp.getChoice().getChoiceObject();
+            Rule rule = cp.getChoice().getChoiceObject();
             return new Priority(rule.getPriority());
 
           case DESCRIPTION_COLUMN:
@@ -138,7 +138,7 @@ public abstract class SettingsPane {
       public boolean isCellEditable(int rowIndex, int columnIndex) {
         if (columnIndex == PRIORITY_COLUMN && rowIndex >= 0) {
           ChoicePanel cp = (modelData.get(rowIndex));
-          IRule rule = cp.getChoice().getChoiceObject();
+          Rule rule = cp.getChoice().getChoiceObject();
           if (rule instanceof IPrioritizableRule) {
             return true;
           }
@@ -149,7 +149,7 @@ public abstract class SettingsPane {
       public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
         if (columnIndex == PRIORITY_COLUMN) {
           ChoicePanel cp = (modelData.get(rowIndex));
-          IRule rule = cp.getChoice().getChoiceObject();
+          Rule rule = cp.getChoice().getChoiceObject();
           if (rule instanceof IPrioritizableRule) {
             int priority;
             try {

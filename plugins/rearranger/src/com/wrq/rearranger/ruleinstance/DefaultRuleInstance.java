@@ -21,11 +21,11 @@
  */
 package com.wrq.rearranger.ruleinstance;
 
-import com.wrq.rearranger.settings.attributeGroups.IRule;
+import com.wrq.rearranger.settings.attributeGroups.Rule;
 
 /** Collects any remaining RangeEntries after all explicit rule matching is done. */
 public class DefaultRuleInstance extends CommonRuleInstance {
-  public DefaultRuleInstance(IRule defaultRule) {
+  public DefaultRuleInstance(Rule defaultRule) {
     super(defaultRule);
   }
 

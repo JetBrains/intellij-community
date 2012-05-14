@@ -23,7 +23,7 @@ package com.wrq.rearranger.entry;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
-import com.wrq.rearranger.popup.IFilePopupEntry;
+import com.wrq.rearranger.popup.FilePopupEntry;
 import com.wrq.rearranger.popup.RearrangerTreeNode;
 import com.wrq.rearranger.settings.RearrangerSettings;
 
@@ -35,7 +35,7 @@ import javax.swing.tree.DefaultMutableTreeNode;
  */
 public abstract class ClassContentsEntry
   extends RangeEntry
-  implements IFilePopupEntry
+  implements FilePopupEntry
 {
   public ClassContentsEntry(final PsiElement start,
                             final PsiElement end,

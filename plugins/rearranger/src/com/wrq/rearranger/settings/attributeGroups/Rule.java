@@ -22,13 +22,13 @@
 package com.wrq.rearranger.settings.attributeGroups;
 
 import com.wrq.rearranger.entry.RangeEntry;
-import com.wrq.rearranger.ruleinstance.IRuleInstance;
+import com.wrq.rearranger.ruleinstance.RuleInstance;
 
 import java.util.List;
 
 /** Interface which all rules implement. */
-public interface IRule {
-  IRuleInstance createRuleInstance();
+public interface Rule {
+  RuleInstance createRuleInstance();
 
   // all rules have a priority; but some are not settable by the user.  Those that are user settable implement
   // the marker interface IPrioritizableRule.

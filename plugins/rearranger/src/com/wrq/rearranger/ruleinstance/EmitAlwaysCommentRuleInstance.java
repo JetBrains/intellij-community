@@ -37,7 +37,7 @@ public class EmitAlwaysCommentRuleInstance
    * Determine if this comment, in this instance, should be emitted.
    * For an "Emit Always" type of comment, it should always be emitted.
    */
-  public void determineEmit(List<IRuleInstance> resultRuleInstances, int startIndex) {
+  public void determineEmit(List<RuleInstance> resultRuleInstances, int startIndex) {
     setEmit(true);
   }
 }

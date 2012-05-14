@@ -22,7 +22,7 @@
 package com.wrq.rearranger.rearrangement;
 
 import com.wrq.rearranger.entry.ClassContentsEntry;
-import com.wrq.rearranger.ruleinstance.IRuleInstance;
+import com.wrq.rearranger.ruleinstance.RuleInstance;
 import com.wrq.rearranger.settings.RearrangerSettings;
 
 import java.util.ArrayList;
@@ -40,7 +40,7 @@ public final class Mover {
     this.settings = settings;
   }
 
-  public List<IRuleInstance> rearrangeOuterClasses() {
+  public List<RuleInstance> rearrangeOuterClasses() {
     final GenericRearranger outerClassRearranger = new GenericRearranger(
       settings.getClassOrderAttributeList(),
       outerClasses,
@@ -56,7 +56,7 @@ public final class Mover {
        @param rearrangedEntries
        */
       public void rearrangeRelatedItems(List<ClassContentsEntry> entries,
-                                        List<IRuleInstance> rearrangedEntries)
+                                        List<RuleInstance> rearrangedEntries)
       {
       }
     };

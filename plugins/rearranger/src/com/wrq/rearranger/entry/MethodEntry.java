@@ -27,13 +27,13 @@ import com.intellij.psi.*;
 import com.wrq.rearranger.ModifierConstants;
 import com.wrq.rearranger.popup.RearrangerTreeNode;
 import com.wrq.rearranger.rearrangement.Emitter;
-import com.wrq.rearranger.ruleinstance.IRuleInstance;
+import com.wrq.rearranger.ruleinstance.RuleInstance;
 import com.wrq.rearranger.settings.CommentRule;
 import com.wrq.rearranger.settings.RearrangerSettings;
 import com.wrq.rearranger.settings.RelatedMethodsSettings;
 import com.wrq.rearranger.settings.attributeGroups.IHasGetterSetterDefinition;
 import com.wrq.rearranger.settings.attributeGroups.IRestrictMethodExtraction;
-import com.wrq.rearranger.settings.attributeGroups.IRule;
+import com.wrq.rearranger.settings.attributeGroups.Rule;
 import com.wrq.rearranger.util.CommentUtil;
 import com.wrq.rearranger.util.MethodUtil;
 
@@ -146,7 +146,7 @@ public class MethodEntry
    * @param ruleInstance Rule containing parents (callers) of potentially related methods
    */
   public static void rearrangeRelatedItems(List<ClassContentsEntry> entries,
-                                           IRuleInstance ruleInstance,
+                                           RuleInstance ruleInstance,
                                            RelatedMethodsSettings rms)
   {
     List<RangeEntry> parentEntries = new ArrayList<RangeEntry>(ruleInstance.getMatches());
@@ -161,7 +161,7 @@ public class MethodEntry
             }
           }
           for (MethodEntry theSetter : me.correspondingGetterSetters) {
-            final IRuleInstance theRule = theSetter.getMatchedRule();
+            final RuleInstance theRule = theSetter.getMatchedRule();
             LOG.debug(
               "rearrangeRelatedItems: for getter method " +
               me +
@@ -680,7 +680,7 @@ public class MethodEntry
         settings.getDefaultGSDefinition()
       )
     );
-    for (IRule rule : settings.getItemOrderAttributeList()) {
+    for (Rule rule : settings.getItemOrderAttributeList()) {
       if (rule instanceof IRestrictMethodExtraction) {
         if (rule.isMatch(this)) {
           if (((IRestrictMethodExtraction)rule).isNoExtractedMethods()) {

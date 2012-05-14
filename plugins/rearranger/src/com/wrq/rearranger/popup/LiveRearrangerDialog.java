@@ -26,7 +26,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.psi.PsiFile;
 import com.wrq.rearranger.LiveRearrangerActionHandler;
 import com.wrq.rearranger.rearrangement.Emitter;
-import com.wrq.rearranger.ruleinstance.IRuleInstance;
+import com.wrq.rearranger.ruleinstance.RuleInstance;
 import com.wrq.rearranger.settings.RearrangerSettings;
 import com.wrq.rearranger.util.Constraints;
 import com.wrq.rearranger.util.IconUtil;
@@ -48,11 +48,11 @@ public class LiveRearrangerDialog
   private static final Logger LOG = Logger.getInstance("#" + LiveRearrangerDialog.class.getName());
   final RearrangerSettings settings;
   PopupTreeComponent  treeComponent;
-  List<IRuleInstance> resultRuleInstances;
+  List<RuleInstance> myResultRuleInstances;
   final Window   outerPanel;
   final Document document;
   final PsiFile  psiFile;
-  IFilePopupEntry psiFileEntry;
+  FilePopupEntry myPsiFileEntry;
   TreeDragSource  tds;
   TreeDropTarget  tdt;
   boolean rearrangementOccurred = false;
@@ -61,7 +61,7 @@ public class LiveRearrangerDialog
   private PopupTree popupTree;
 
   private void createFilePopupEntry(final PsiFile psiFile) {
-    psiFileEntry = new IFilePopupEntry() {
+    myPsiFileEntry = new FilePopupEntry() {
       public String getTypeIconName() {
         return "nodes/ppFile";
       }
@@ -91,9 +91,9 @@ public class LiveRearrangerDialog
     this.rearrangementOccurred = rearrangementOccurred;
   }
 
-  public void setResultRuleInstances(List<IRuleInstance> resultRuleInstances) {
-    this.resultRuleInstances = resultRuleInstances;
-    treeComponent = new PopupTreeComponent(settings, resultRuleInstances, psiFileEntry);
+  public void setResultRuleInstances(List<RuleInstance> resultRuleInstances) {
+    this.myResultRuleInstances = resultRuleInstances;
+    treeComponent = new PopupTreeComponent(settings, resultRuleInstances, myPsiFileEntry);
   }
 
   /** Display a live rearrangement window. */
@@ -125,7 +125,7 @@ public class LiveRearrangerDialog
     }
     LOG.debug("rearranging document");
     if (document != null) {
-      final Emitter e = new Emitter(psiFile, resultRuleInstances, document);
+      final Emitter e = new Emitter(psiFile, myResultRuleInstances, document);
       e.emitRearrangedDocument();
     }
 

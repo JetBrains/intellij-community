@@ -23,20 +23,20 @@ package com.wrq.rearranger.rearrangement;
 
 import com.intellij.openapi.editor.Document;
 import com.intellij.psi.PsiFile;
-import com.wrq.rearranger.ruleinstance.IRuleInstance;
+import com.wrq.rearranger.ruleinstance.RuleInstance;
 
 import java.util.List;
 
 /** Emits a new document from the rearranged entries. */
 public final class Emitter {
   private final PsiFile             psiFile;
-  private final List<IRuleInstance> resultRuleInstances;
+  private final List<RuleInstance> myResultRuleInstances;
   private final Document            document;
   private       StringBuffer        stringBuffer;
 
-  public Emitter(final PsiFile psiFile, final List<IRuleInstance> resultRuleInstances, final Document document) {
+  public Emitter(final PsiFile psiFile, final List<RuleInstance> resultRuleInstances, final Document document) {
     this.psiFile = psiFile;
-    this.resultRuleInstances = resultRuleInstances;
+    this.myResultRuleInstances = resultRuleInstances;
     this.document = document;
     stringBuffer = new StringBuffer(psiFile.getText().length() + 100); // room for inserted blank lines
   }
@@ -50,7 +50,7 @@ public final class Emitter {
   }
 
   public void emitRearrangedDocument() {
-    emitRuleInstances(resultRuleInstances);
+    emitRuleInstances(myResultRuleInstances);
     document.replaceString(
       psiFile.getTextRange().getStartOffset(),
       psiFile.getTextRange().getEndOffset(),
@@ -58,11 +58,11 @@ public final class Emitter {
     );
   }
 
-  public void emitRuleInstances(List<IRuleInstance> resultRuleInstances) {
+  public void emitRuleInstances(List<RuleInstance> resultRuleInstances) {
     if (resultRuleInstances == null) {
       return;
     }
-    for (IRuleInstance ruleInstance : resultRuleInstances) {
+    for (RuleInstance ruleInstance : resultRuleInstances) {
       ruleInstance.emit(this);
     }
   }

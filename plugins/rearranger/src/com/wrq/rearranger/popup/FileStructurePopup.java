@@ -22,7 +22,7 @@
 package com.wrq.rearranger.popup;
 
 import com.intellij.psi.PsiFile;
-import com.wrq.rearranger.ruleinstance.IRuleInstance;
+import com.wrq.rearranger.ruleinstance.RuleInstance;
 import com.wrq.rearranger.settings.RearrangerSettings;
 import com.wrq.rearranger.util.Constraints;
 import com.wrq.rearranger.util.IconUtil;
@@ -41,19 +41,19 @@ public class FileStructurePopup
   final PopupTreeComponent treeComponent;
 
   public FileStructurePopup(RearrangerSettings settings,
-                            List<IRuleInstance> resultRuleInstances,
-                            final IFilePopupEntry psiFileEntry)
+                            List<RuleInstance> resultRuleInstances,
+                            final FilePopupEntry psiFileEntry)
   {
     this.settings = settings;
     treeComponent = new PopupTreeComponent(settings, resultRuleInstances, psiFileEntry);
   }
 
   public FileStructurePopup(RearrangerSettings settings,
-                            List<IRuleInstance> resultRuleInstances,
+                            List<RuleInstance> resultRuleInstances,
                             final PsiFile psiFile)
   {
     this.settings = settings;
-    IFilePopupEntry psiFileEntry = new IFilePopupEntry() {
+    FilePopupEntry psiFileEntry = new FilePopupEntry() {
       public String getTypeIconName() {
         return "ppFile";
       }
@@ -305,7 +305,7 @@ public class FileStructurePopup
 
   public static void main(String[] args) {
     final RearrangerSettings settings = new RearrangerSettings();
-    IFilePopupEntry pf = new IFilePopupEntry() {
+    FilePopupEntry pf = new FilePopupEntry() {
       public String getTypeIconName() {
         return "nodes/ppFile";
       }
@@ -318,7 +318,7 @@ public class FileStructurePopup
         return new JLabel("FileName.java");
       }
     };
-    FileStructurePopup fsp = new FileStructurePopup(settings, new ArrayList<IRuleInstance>(), pf);
+    FileStructurePopup fsp = new FileStructurePopup(settings, new ArrayList<RuleInstance>(), pf);
     try {
       UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
     }

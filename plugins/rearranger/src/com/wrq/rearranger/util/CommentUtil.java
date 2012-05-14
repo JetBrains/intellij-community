@@ -22,7 +22,7 @@
 package com.wrq.rearranger.util;
 
 import com.wrq.rearranger.settings.RearrangerSettings;
-import com.wrq.rearranger.settings.attributeGroups.IRule;
+import com.wrq.rearranger.settings.attributeGroups.Rule;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -123,10 +123,10 @@ public class CommentUtil {
 
   private void createCommentPatternList() {
     commentStrings = new ArrayList<String>();
-    for (IRule rule : settings.getClassOrderAttributeList()) {
+    for (Rule rule : settings.getClassOrderAttributeList()) {
       rule.addCommentPatternsToList(commentStrings);
     }
-    for (IRule rule : settings.getItemOrderAttributeList()) {
+    for (Rule rule : settings.getItemOrderAttributeList()) {
       rule.addCommentPatternsToList(commentStrings);
     }
     settings.getExtractedMethodsSettings().addCommentPatternsToList(commentStrings);

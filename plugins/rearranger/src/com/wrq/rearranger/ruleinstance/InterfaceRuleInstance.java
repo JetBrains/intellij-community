@@ -26,7 +26,7 @@ import com.wrq.rearranger.entry.MethodEntry;
 import com.wrq.rearranger.entry.RangeEntry;
 import com.wrq.rearranger.rearrangement.Emitter;
 import com.wrq.rearranger.settings.RearrangerSettings;
-import com.wrq.rearranger.settings.attributeGroups.IRule;
+import com.wrq.rearranger.settings.attributeGroups.Rule;
 import com.wrq.rearranger.settings.attributeGroups.InterfaceAttributes;
 
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -44,7 +44,7 @@ public class InterfaceRuleInstance
 
 // --------------------------- CONSTRUCTORS ---------------------------
 
-  public InterfaceRuleInstance(IRule rule) {
+  public InterfaceRuleInstance(Rule rule) {
     super(rule);
     interfaceInstances = new ArrayList<InterfaceInstance>();
   }

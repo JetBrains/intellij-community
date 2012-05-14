@@ -23,7 +23,7 @@ package com.wrq.rearranger.popup;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.wrq.rearranger.entry.RangeEntry;
-import com.wrq.rearranger.ruleinstance.IRuleInstance;
+import com.wrq.rearranger.ruleinstance.RuleInstance;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -195,7 +195,7 @@ public class PopupTree
     if (!before && dstIndex < peerParent.getChildCount()) {
       dstIndex++;
     }
-    IRuleInstance ruleInstance = entry.getMatchedRule();
+    RuleInstance ruleInstance = entry.getMatchedRule();
     DefaultTreeModel model = (DefaultTreeModel)getModel();
 
     for (TreePath path : paths) {

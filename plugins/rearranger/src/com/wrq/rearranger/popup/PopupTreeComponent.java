@@ -23,7 +23,7 @@ package com.wrq.rearranger.popup;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.wrq.rearranger.Rearranger;
-import com.wrq.rearranger.ruleinstance.IRuleInstance;
+import com.wrq.rearranger.ruleinstance.RuleInstance;
 import com.wrq.rearranger.settings.RearrangerSettings;
 import com.wrq.rearranger.util.Constraints;
 import com.wrq.rearranger.util.IconUtil;
@@ -45,18 +45,18 @@ import java.util.List;
 /** Builds a JTree that can be used in a file structure popup or live rearranger popup. */
 public class PopupTreeComponent {
   private static final Logger LOG = Logger.getInstance("#" + PopupTreeComponent.class.getName());
-  private final IFilePopupEntry     psiFileEntry;
-  private final List<IRuleInstance> resultRuleInstances;
+  private final FilePopupEntry myPsiFileEntry;
+  private final List<RuleInstance> myResultRuleInstances;
   private final RearrangerSettings  settings;
   private       boolean             rearrangementOccurred;
 
   public PopupTreeComponent(RearrangerSettings settings,
-                            List<IRuleInstance> resultRuleInstances,
-                            final IFilePopupEntry psiFileEntry)
+                            List<RuleInstance> resultRuleInstances,
+                            final FilePopupEntry psiFileEntry)
   {
     this.settings = settings;
-    this.resultRuleInstances = resultRuleInstances;
-    this.psiFileEntry = psiFileEntry;
+    this.myResultRuleInstances = resultRuleInstances;
+    this.myPsiFileEntry = psiFileEntry;
   }
 
   public boolean isRearrangementOccurred() {
@@ -239,13 +239,13 @@ public class PopupTreeComponent {
   }
 
   public DefaultMutableTreeNode createAllNodes() {
-    DefaultMutableTreeNode top = new RearrangerTreeNode(psiFileEntry, "root");
+    DefaultMutableTreeNode top = new RearrangerTreeNode(myPsiFileEntry, "root");
     createNodes(top);
     return top;
   }
 
   private void createNodes(DefaultMutableTreeNode top) {
-    for (IRuleInstance ruleInstance : resultRuleInstances) {
+    for (RuleInstance ruleInstance : myResultRuleInstances) {
       ruleInstance.addRuleInstanceToPopupTree(top, settings);
     }
   }
@@ -279,8 +279,8 @@ public class PopupTreeComponent {
         userObject = ((DefaultMutableTreeNode)value).getUserObject();
       }
       // obtain a component that will render the appropriate item.
-      if (userObject instanceof IFilePopupEntry) {
-        IFilePopupEntry entry = (IFilePopupEntry)userObject;
+      if (userObject instanceof FilePopupEntry) {
+        FilePopupEntry entry = (FilePopupEntry)userObject;
         final String iconTypeName = entry.getTypeIconName();
         final String[] iconNames = entry.getAdditionalIconNames();
         final JLabel textLabel = entry.getPopupEntryText(settings);

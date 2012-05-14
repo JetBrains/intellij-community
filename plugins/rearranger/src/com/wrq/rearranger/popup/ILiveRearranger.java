@@ -21,14 +21,14 @@
  */
 package com.wrq.rearranger.popup;
 
-import com.wrq.rearranger.ruleinstance.IRuleInstance;
+import com.wrq.rearranger.ruleinstance.RuleInstance;
 
 import java.util.List;
 
 public interface ILiveRearranger {
   void setRearrangementOccurred(boolean rearrangementOccurred);
 
-  void setResultRuleInstances(List<IRuleInstance> resultRuleInstances);
+  void setResultRuleInstances(List<RuleInstance> resultRuleInstances);
 
   void liveRearranger();
 }

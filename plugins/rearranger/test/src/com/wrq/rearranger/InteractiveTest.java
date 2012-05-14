@@ -28,7 +28,7 @@ import com.intellij.testFramework.LightCodeInsightTestCase;
 import com.wrq.rearranger.configuration.RearrangerSettingsPanel;
 import com.wrq.rearranger.settings.RearrangerSettings;
 import com.wrq.rearranger.settings.attributeGroups.IPrioritizableRule;
-import com.wrq.rearranger.settings.attributeGroups.IRule;
+import com.wrq.rearranger.settings.attributeGroups.Rule;
 import com.wrq.rearranger.util.Constraints;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
@@ -143,7 +143,7 @@ public class InteractiveTest
     ListIterator li;
     for (Object o : object.settings.getClassOrderAttributeList()) {
       if (o instanceof IPrioritizableRule) {
-        System.out.println(o + ", pri=" + ((IRule)o).getPriority());
+        System.out.println(o + ", pri=" + ((Rule)o).getPriority());
       }
       else {
         System.out.println(o);
@@ -152,7 +152,7 @@ public class InteractiveTest
     System.out.println("Item order");
     for (Object o : object.settings.getItemOrderAttributeList()) {
       if (o instanceof IPrioritizableRule) {
-        System.out.println(o + ", pri=" + ((IRule)o).getPriority());
+        System.out.println(o + ", pri=" + ((Rule)o).getPriority());
       }
       else {
         System.out.println(o);

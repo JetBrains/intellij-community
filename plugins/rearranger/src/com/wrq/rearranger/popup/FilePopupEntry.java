@@ -22,18 +22,20 @@
 package com.wrq.rearranger.popup;
 
 import com.wrq.rearranger.settings.RearrangerSettings;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
 /** Interface implemented by objects which can appear as entries in the file structure popup. */
-public interface IFilePopupEntry {
+public interface FilePopupEntry {
   /** @return the name of the icon representing the popup entry's type of Java object (method, class, etc.) */
   String getTypeIconName();
 
   /**
    * @return the names of the icon representing the protection level of the popup entry, and any other
-   *         icons (overrides/overriding/implements/implmenting).
+   *         icons (overrides/overriding/implements/implementing).
    */
+  @Nullable
   String[] getAdditionalIconNames();
 
   /** @return a JLabel containing the text of the popup tree entry. */

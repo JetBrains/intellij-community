@@ -29,10 +29,10 @@ import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.util.Query;
 import com.wrq.rearranger.ModifierConstants;
-import com.wrq.rearranger.popup.IFilePopupEntry;
+import com.wrq.rearranger.popup.FilePopupEntry;
 import com.wrq.rearranger.rearrangement.Emitter;
 import com.wrq.rearranger.rearrangement.GenericRearranger;
-import com.wrq.rearranger.ruleinstance.IRuleInstance;
+import com.wrq.rearranger.ruleinstance.RuleInstance;
 import com.wrq.rearranger.settings.RearrangerSettings;
 import com.wrq.rearranger.util.ModifierUtils;
 
@@ -50,12 +50,12 @@ import java.util.List;
  */
 public class ClassEntry
   extends ClassContentsEntry
-  implements IFilePopupEntry
+  implements FilePopupEntry
 {
   private static final Logger LOG = Logger.getInstance("#" + ClassEntry.class.getName());
 
   protected final List<ClassContentsEntry> contents;
-  private         List<IRuleInstance>      resultRuleInstances;
+  private         List<RuleInstance> myResultRuleInstances;
   private final   RearrangerSettings       settings;
   private final   int                      nestingLevel;
 
@@ -69,7 +69,7 @@ public class ClassEntry
   {
     super(start, end, modifiers, modifierString, name, "");
     contents = new ArrayList<ClassContentsEntry>();
-    resultRuleInstances = null;
+    myResultRuleInstances = null;
     this.settings = settings;
     this.nestingLevel = nestingLevel;
   }
@@ -501,7 +501,7 @@ public class ClassEntry
     DefaultMutableTreeNode result = super.addToPopupTree(parent, settings);
     // now add class contents, if any
     if (getResultRuleInstances() != null) {
-      for (IRuleInstance instance : getResultRuleInstances()) {
+      for (RuleInstance instance : getResultRuleInstances()) {
         instance.addRuleInstanceToPopupTree(result, settings);
       }
     }
@@ -540,14 +540,14 @@ public class ClassEntry
                             settings)
       {
         public void rearrangeRelatedItems(List<ClassContentsEntry> entries,
-                                          List<IRuleInstance> ruleInstanceList)
+                                          List<RuleInstance> ruleInstanceList)
         {
-          for (IRuleInstance ruleInstance : ruleInstanceList) {
+          for (RuleInstance ruleInstance : ruleInstanceList) {
             ruleInstance.rearrangeRuleItems(entries, settings);
           }
         }
       };
-    resultRuleInstances = classContentsRearranger.rearrangeEntries();
+    myResultRuleInstances = classContentsRearranger.rearrangeEntries();
   }
 
   private void buildMethodCallGraph() {
@@ -569,8 +569,8 @@ public class ClassEntry
     return contents;
   }
 
-  public List<IRuleInstance> getResultRuleInstances() {
-    return resultRuleInstances;
+  public List<RuleInstance> getResultRuleInstances() {
+    return myResultRuleInstances;
   }
 }
 

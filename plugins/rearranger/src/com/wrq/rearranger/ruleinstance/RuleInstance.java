@@ -25,7 +25,8 @@ import com.wrq.rearranger.entry.ClassContentsEntry;
 import com.wrq.rearranger.entry.RangeEntry;
 import com.wrq.rearranger.rearrangement.Emitter;
 import com.wrq.rearranger.settings.RearrangerSettings;
-import com.wrq.rearranger.settings.attributeGroups.IRule;
+import com.wrq.rearranger.settings.attributeGroups.Rule;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.tree.DefaultMutableTreeNode;
 import java.util.List;
@@ -34,11 +35,12 @@ import java.util.List;
  * One RuleInstance exists for every execution of every rule.  An execution of a rule is the process by which
  * items are matched to a rule.
  */
-public interface IRuleInstance {
+public interface RuleInstance {
   /** @return true if one or more items matched the rule in this instance. */
   boolean hasMatches();
 
   /** @return list of items matching the rule in this instance. */
+  @Nullable
   List<RangeEntry> getMatches();
 
   /**
@@ -49,7 +51,7 @@ public interface IRuleInstance {
   void emit(Emitter emitter);
 
   /** @return the rule associated with this instance. */
-  IRule getRule();
+  Rule getRule();
 
   /**
    * Adds an item to the list of items matching the rule in this instance.  Order is preserved.
