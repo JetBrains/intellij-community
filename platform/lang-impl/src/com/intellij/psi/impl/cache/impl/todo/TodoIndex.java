@@ -21,7 +21,7 @@ import com.intellij.lang.LanguageParserDefinitions;
 import com.intellij.lang.ParserDefinition;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
-import com.intellij.openapi.fileTypes.impl.AbstractFileType;
+import com.intellij.openapi.fileTypes.impl.CustomSyntaxTableFileType;
 import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -131,7 +131,7 @@ public class TodoIndex extends FileBasedIndexExtension<TodoIndexEntry, Integer> 
       }
       
       return IdTableBuilding.isTodoIndexerRegistered(fileType) ||
-             fileType instanceof AbstractFileType;
+             fileType instanceof CustomSyntaxTableFileType;
     }
   };
 

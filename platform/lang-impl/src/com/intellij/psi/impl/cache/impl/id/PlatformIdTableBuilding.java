@@ -27,7 +27,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.openapi.fileTypes.impl.AbstractFileType;
+import com.intellij.openapi.fileTypes.impl.CustomSyntaxTableFileType;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.CustomHighlighterTokenType;
 import com.intellij.psi.impl.cache.impl.BaseFilterLexer;
@@ -92,7 +92,7 @@ public abstract class PlatformIdTableBuilding {
       }
     }
 
-    if (fileType instanceof AbstractFileType) {
+    if (fileType instanceof CustomSyntaxTableFileType) {
       return new TokenSetTodoIndexer(ABSTRACT_FILE_COMMENT_TOKENS, virtualFile);
     }
 
@@ -107,6 +107,11 @@ public abstract class PlatformIdTableBuilding {
       logger.warn("Unexpected mismatch of editor highlighter content with indexing content");
     }
     return b;
+  }
+
+  @Deprecated
+  public static void registerTodoIndexer(FileType fileType, DataIndexer<TodoIndexEntry, Integer, FileContent> indexer) {
+    ourTodoIndexers.put(fileType, indexer);
   }
 
 
@@ -198,14 +203,14 @@ public abstract class PlatformIdTableBuilding {
 
   static {
     IdTableBuilding.registerIdIndexer(FileTypes.PLAIN_TEXT, new IdTableBuilding.PlainTextIndexer());
-    IdTableBuilding.registerTodoIndexer(FileTypes.PLAIN_TEXT, new IdTableBuilding.PlainTextTodoIndexer());
+    registerTodoIndexer(FileTypes.PLAIN_TEXT, new IdTableBuilding.PlainTextTodoIndexer());
 
     IdTableBuilding.registerIdIndexer(StdFileTypes.IDEA_MODULE, null);
     IdTableBuilding.registerIdIndexer(StdFileTypes.IDEA_WORKSPACE, null);
     IdTableBuilding.registerIdIndexer(StdFileTypes.IDEA_PROJECT, null);
 
-    IdTableBuilding.registerTodoIndexer(StdFileTypes.IDEA_MODULE, null);
-    IdTableBuilding.registerTodoIndexer(StdFileTypes.IDEA_WORKSPACE, null);
-    IdTableBuilding.registerTodoIndexer(StdFileTypes.IDEA_PROJECT, null);
+    registerTodoIndexer(StdFileTypes.IDEA_MODULE, null);
+    registerTodoIndexer(StdFileTypes.IDEA_WORKSPACE, null);
+    registerTodoIndexer(StdFileTypes.IDEA_PROJECT, null);
   }
 }

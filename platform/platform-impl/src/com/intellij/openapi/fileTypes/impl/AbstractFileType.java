@@ -38,7 +38,8 @@ import java.util.List;
 import java.util.Set;
 
 
-public class AbstractFileType extends UserFileType<AbstractFileType> implements ExternalizableFileType, ExternalizableScheme {
+public class AbstractFileType extends UserFileType<AbstractFileType> implements ExternalizableFileType, ExternalizableScheme,
+                                                                                CustomSyntaxTableFileType {
   protected SyntaxTable mySyntaxTable;
   private SyntaxTable myDefaultSyntaxTable;
   protected Commenter myCommenter = null;
@@ -76,6 +77,7 @@ public class AbstractFileType extends UserFileType<AbstractFileType> implements 
     }
   }
 
+  @Override
   public SyntaxTable getSyntaxTable() {
     return mySyntaxTable;
   }
@@ -95,7 +97,7 @@ public class AbstractFileType extends UserFileType<AbstractFileType> implements 
   public void copyFrom(UserFileType newType) {
     super.copyFrom(newType);
     if (newType instanceof AbstractFileType) {
-      mySyntaxTable = ((AbstractFileType)newType).getSyntaxTable();
+      mySyntaxTable = ((CustomSyntaxTableFileType)newType).getSyntaxTable();
       myExternalInfo.copy(((AbstractFileType)newType).myExternalInfo);
     }
   }

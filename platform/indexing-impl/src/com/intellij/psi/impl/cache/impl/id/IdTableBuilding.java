@@ -23,7 +23,7 @@ import com.intellij.lang.findUsages.FindUsagesProvider;
 import com.intellij.lang.findUsages.LanguageFindUsages;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
-import com.intellij.openapi.fileTypes.impl.AbstractFileType;
+import com.intellij.openapi.fileTypes.impl.CustomSyntaxTableFileType;
 import com.intellij.psi.CustomHighlighterTokenType;
 import com.intellij.psi.impl.cache.impl.IndexPatternUtil;
 import com.intellij.psi.impl.cache.impl.OccurrenceConsumer;
@@ -116,11 +116,6 @@ public class IdTableBuilding {
     ourIdIndexers.put(fileType, indexer);
   }
 
-  @Deprecated
-  public static void registerTodoIndexer(FileType fileType, DataIndexer<TodoIndexEntry, Integer, FileContent> indexer) {
-    PlatformIdTableBuilding.ourTodoIndexers.put(fileType, indexer);
-  }
-
   public static boolean isIdIndexerRegistered(FileType fileType) {
     return ourIdIndexers.containsKey(fileType) || IdIndexers.INSTANCE.forFileType(fileType) != null;
   }
@@ -159,15 +154,15 @@ public class IdTableBuilding {
       return new WordsScannerFileTypeIdIndexerAdapter(scanner);
     }
 
-    if (fileType instanceof AbstractFileType) {
-      return new WordsScannerFileTypeIdIndexerAdapter(createWordScanner((AbstractFileType)fileType));
+    if (fileType instanceof CustomSyntaxTableFileType) {
+      return new WordsScannerFileTypeIdIndexerAdapter(createWordScanner((CustomSyntaxTableFileType)fileType));
     }
 
     return null;
   }
 
-  private static WordsScanner createWordScanner(final AbstractFileType abstractFileType) {
-    return new DefaultWordsScanner(new CustomFileTypeLexer(abstractFileType.getSyntaxTable(), true),
+  private static WordsScanner createWordScanner(final CustomSyntaxTableFileType customSyntaxTableFileType) {
+    return new DefaultWordsScanner(new CustomFileTypeLexer(customSyntaxTableFileType.getSyntaxTable(), true),
                                    TokenSet.create(CustomHighlighterTokenType.IDENTIFIER),
                                    TokenSet.create(CustomHighlighterTokenType.LINE_COMMENT,
                                                    CustomHighlighterTokenType.MULTI_LINE_COMMENT),

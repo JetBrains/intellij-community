@@ -25,6 +25,7 @@ import com.intellij.ide.highlighter.custom.SyntaxTable;
 import com.intellij.lang.Commenter;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.impl.AbstractFileType;
+import com.intellij.openapi.fileTypes.impl.CustomSyntaxTableFileType;
 
 public class StandardFileTypeRegistrator implements FileTypeRegistrator {
   public void initFileType(final FileType fileType) {
@@ -51,9 +52,9 @@ public class StandardFileTypeRegistrator implements FileTypeRegistrator {
   }
 
   private static class MyCommenter implements Commenter {
-    private final AbstractFileType myAbstractFileType;
+    private final CustomSyntaxTableFileType myAbstractFileType;
 
-    public MyCommenter(final AbstractFileType abstractFileType) {
+    public MyCommenter(final CustomSyntaxTableFileType abstractFileType) {
 
       myAbstractFileType = abstractFileType;
     }
