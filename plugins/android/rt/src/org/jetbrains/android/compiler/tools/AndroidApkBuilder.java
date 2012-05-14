@@ -156,6 +156,7 @@ public class AndroidApkBuilder {
     result.put(WARNING, new ArrayList<String>());
 
     FileOutputStream fos = null;
+    SignedJarBuilder builder = null;
     try {
 
       String keyStoreOsPath = customKeystorePath != null && customKeystorePath.length() > 0
@@ -212,7 +213,7 @@ public class AndroidApkBuilder {
       }
 
       fos = new FileOutputStream(outputApk);
-      SignedJarBuilder builder = new SignedJarBuilder(fos, key, certificate);
+      builder = new SignedJarBuilder(fos, key, certificate);
 
       FileInputStream fis = new FileInputStream(apkPath);
       try {
@@ -265,7 +266,6 @@ public class AndroidApkBuilder {
           }
         }
       }
-      builder.close();
     }
     catch (IOException e) {
       return addExceptionMessage(e, result);
@@ -292,6 +292,17 @@ public class AndroidApkBuilder {
       return addExceptionMessage(e, result);
     }
     finally {
+      if (builder != null) {
+        try {
+          builder.close();
+        }
+        catch (IOException e) {
+          addExceptionMessage(e, result);
+        }
+        catch (GeneralSecurityException e) {
+          addExceptionMessage(e, result);
+        }
+      }
       if (fos != null) {
         try {
           fos.close();
