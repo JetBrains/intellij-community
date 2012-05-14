@@ -101,6 +101,9 @@ def excepthook(exctype, value, tb):
     #Always call the original excepthook before going on to call the debugger post mortem to show it.
     _original_excepthook(exctype, value, tb)
 
+    if tb is None:  #sometimes it can be None, e.g. with GTK
+      return
+
     frames = []
 
     traceback = tb
