@@ -125,10 +125,13 @@ public abstract class AbstractJavaInplaceIntroducer extends AbstractInplaceIntro
     if (psiVariable == null || !psiVariable.isValid()) return null;
     final PsiElement refVariableElement = containingFile.findElementAt(marker.getStartOffset());
     PsiExpression expression = PsiTreeUtil.getParentOfType(refVariableElement, PsiReferenceExpression.class);
-    if (expression instanceof PsiReferenceExpression && (((PsiReferenceExpression)expression).resolve() == psiVariable ||
-                                                         Comparing.strEqual(psiVariable.getName(),
-                                                                            ((PsiReferenceExpression)expression).getReferenceName()))) {
-      return (PsiExpression)expression.replace(elementFactory.createExpressionFromText(exprText, psiVariable));
+    if (expression instanceof PsiReferenceExpression) {
+      final String referenceName = ((PsiReferenceExpression)expression).getReferenceName();
+      if (((PsiReferenceExpression)expression).resolve() == psiVariable ||
+          Comparing.strEqual(psiVariable.getName(), referenceName) ||
+          Comparing.strEqual(exprText, referenceName)) {
+        return (PsiExpression)expression.replace(elementFactory.createExpressionFromText(exprText, psiVariable));
+      }
     }
     if (expression == null) {
       expression = PsiTreeUtil.getParentOfType(refVariableElement, PsiExpression.class);
