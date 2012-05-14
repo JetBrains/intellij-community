@@ -164,12 +164,7 @@ class RunConfigurable extends BaseConfigurable {
             if (userObject instanceof SingleConfigurationConfigurable) {
               final SingleConfigurationConfigurable<?> settings = (SingleConfigurationConfigurable)userObject;
               RunnerAndConfigurationSettings snapshot;
-              try {
-                snapshot = settings.getSnapshot();
-              }
-              catch (ConfigurationException e) {
-                snapshot = settings.getSettings();
-              }
+              snapshot = settings.getSettings();
               configuration = settings.getConfiguration();
               name = settings.getNameText();
               setIcon(ProgramRunnerUtil.getConfigurationIcon(snapshot, !settings.isValid(), runManager.isTemporary(configuration)));
@@ -645,7 +640,7 @@ class RunConfigurable extends BaseConfigurable {
 
     for (RunConfigurationBean each : stableConfigurations) {
       toDeleteSettings.remove(each.getSettings());
-      manager.addConfiguration(each.getSettings(), each.isShared(), each.getStepsBeforeLaunch());
+      manager.addConfiguration(each.getSettings(), each.isShared(), each.getStepsBeforeLaunch(), false);
     }
 
     RunnerAndConfigurationSettings selected = manager.getSelectedConfiguration();

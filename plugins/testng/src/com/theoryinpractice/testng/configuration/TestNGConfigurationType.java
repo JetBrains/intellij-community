@@ -23,9 +23,7 @@
 package com.theoryinpractice.testng.configuration;
 
 import com.intellij.execution.Location;
-import com.intellij.execution.RunConfigurationExtension;
 import com.intellij.execution.RunManagerEx;
-import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configuration.ConfigurationFactoryEx;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.impl.RunManagerImpl;
@@ -56,11 +54,6 @@ public class TestNGConfigurationType implements ConfigurationType
                 LOGGER.info("Create TestNG Template Configuration");
                 return new TestNGConfiguration("", project, this);
             }
-
-          @Override
-          public Icon getIcon(@NotNull final RunConfiguration configuration) {
-            return ICON;
-          }
 
           @Override
           public void onNewConfigurationCreated(@NotNull RunConfiguration configuration) {

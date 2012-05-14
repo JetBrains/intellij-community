@@ -109,7 +109,7 @@ public class BuildArtifactsBeforeRunTaskProvider extends BeforeRunTaskProvider<B
   @Override
   public String getDescription(BuildArtifactsBeforeRunTask task) {
     final List<ArtifactPointer> pointers = task.getArtifactPointers();
-    if (!task.isEnabled() || pointers.isEmpty()) {
+    if (pointers.isEmpty()) {
       return CompilerBundle.message("build.artifacts.before.run.description.empty");
     }
     if (pointers.size() == 1) {
