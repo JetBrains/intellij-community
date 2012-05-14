@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package com.intellij.psi.impl.source.tree.java;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.lang.ASTNode;
 
-
 /**
  * @author ven
  */
@@ -31,8 +30,6 @@ public class AnnotationMethodElement extends MethodElement {
   public ASTNode findChildByRole(int role) {
     if (role == ChildRole.ANNOTATION_DEFAULT_VALUE) {
       return findChildByType(ANNOTATION_MEMBER_VALUE_BIT_SET);
-    } else if (role == ChildRole.DEFAULT_KEYWORD) {
-      return findChildByType(DEFAULT_KEYWORD);
     }
 
     return super.findChildByRole(role);
@@ -40,9 +37,7 @@ public class AnnotationMethodElement extends MethodElement {
 
   @Override
   public int getChildRole(ASTNode child) {
-    if (child.getElementType() == DEFAULT_KEYWORD) {
-      return ChildRole.DEFAULT_KEYWORD;
-    } else if (ANNOTATION_MEMBER_VALUE_BIT_SET.contains(child.getElementType())) {
+    if (ANNOTATION_MEMBER_VALUE_BIT_SET.contains(child.getElementType())) {
       return ChildRole.ANNOTATION_DEFAULT_VALUE;
     }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -112,6 +112,9 @@ public class MethodElement extends CompositeElement implements Constants {
 
       case ChildRole.CLOSING_SEMICOLON:
         return TreeUtil.findChildBackward(this, SEMICOLON);
+
+      case ChildRole.DEFAULT_KEYWORD:
+        return findChildByType(DEFAULT_KEYWORD);
     }
   }
 
@@ -121,11 +124,6 @@ public class MethodElement extends CompositeElement implements Constants {
     IElementType i = child.getElementType();
     if (i == JavaDocElementType.DOC_COMMENT) {
       return getChildRole(child, ChildRole.DOC_COMMENT);
-    }
-    else if (i == C_STYLE_COMMENT || i == END_OF_LINE_COMMENT) {
-      {
-        return ChildRoleBase.NONE;
-      }
     }
     else if (i == MODIFIER_LIST) {
       return ChildRole.MODIFIER_LIST;
@@ -150,6 +148,9 @@ public class MethodElement extends CompositeElement implements Constants {
     }
     else if (i == SEMICOLON) {
       return getChildRole(child, ChildRole.CLOSING_SEMICOLON);
+    }
+    else if (i == DEFAULT_KEYWORD) {
+      return ChildRole.DEFAULT_KEYWORD;
     }
     else {
       return ChildRoleBase.NONE;

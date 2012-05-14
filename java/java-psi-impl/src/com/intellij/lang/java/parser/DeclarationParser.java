@@ -33,7 +33,6 @@ import static com.intellij.lang.PsiBuilderUtil.expect;
 import static com.intellij.lang.PsiBuilderUtil.nextTokenType;
 import static com.intellij.lang.java.parser.JavaParserUtil.*;
 
-
 public class DeclarationParser {
   private final ExpressionParser myExpressionParser;
   private final StatementParser myStatementParser;
@@ -417,7 +416,7 @@ public class DeclarationParser {
   }
 
   private PsiBuilder.Marker parseMethodFromLeftParenth(final PsiBuilder builder, final PsiBuilder.Marker declaration,
-                                                              final boolean anno, final boolean constructor) {
+                                                       final boolean anno, final boolean constructor) {
     parseParameterList(builder);
 
     eatBrackets(builder, constructor, "expected.semicolon");
@@ -435,12 +434,14 @@ public class DeclarationParser {
 
     myReferenceParser.parseReferenceList(builder, JavaTokenType.THROWS_KEYWORD, JavaElementType.THROWS_LIST, JavaTokenType.COMMA);
 
-    if (anno && expect(builder, JavaTokenType.DEFAULT_KEYWORD)) {
+    final boolean hasDefault = expect(builder, JavaTokenType.DEFAULT_KEYWORD);
+    if (hasDefault && anno) {
       parseAnnotationValue(builder);
     }
 
     final IElementType tokenType = builder.getTokenType();
-    if (tokenType != JavaTokenType.SEMICOLON && tokenType != JavaTokenType.LBRACE) {
+    final boolean hasError = tokenType != JavaTokenType.SEMICOLON && tokenType != JavaTokenType.LBRACE;
+    if (hasError) {
       final PsiBuilder.Marker error = builder.mark();
       // heuristic: going to next line obviously means method signature is over, starting new method (actually, another one completion hack)
       final CharSequence text = builder.getOriginalText();
@@ -456,10 +457,11 @@ public class DeclarationParser {
       error.error(JavaErrorMessages.message("expected.lbrace.or.semicolon"));
     }
 
-    if (!expect(builder, JavaTokenType.SEMICOLON)) {
-      if (builder.getTokenType() == JavaTokenType.LBRACE) {
-        myStatementParser.parseCodeBlock(builder);
-      }
+    if (hasDefault && !anno && !hasError && builder.getTokenType() != JavaTokenType.LBRACE) {
+      error(builder, JavaErrorMessages.message("expected.lbrace"));
+    }
+    if (!expect(builder, JavaTokenType.SEMICOLON) && builder.getTokenType() == JavaTokenType.LBRACE) {
+      myStatementParser.parseCodeBlock(builder);
     }
 
     done(declaration, anno ? JavaElementType.ANNOTATION_METHOD : JavaElementType.METHOD);
