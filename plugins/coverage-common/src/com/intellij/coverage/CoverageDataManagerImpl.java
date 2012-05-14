@@ -503,8 +503,8 @@ public class CoverageDataManagerImpl extends CoverageDataManager {
   public <T> T doInReadActionIfProjectOpen(Computable<T> computation) {
     synchronized(myLock) {
       if (myIsProjectClosing) return null;
-      return ApplicationManager.getApplication().runReadAction(computation);
     }
+    return ApplicationManager.getApplication().runReadAction(computation);
   }
 
   public void selectSubCoverage(@NotNull final CoverageSuitesBundle suite, final List<String> testNames) {
