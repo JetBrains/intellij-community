@@ -86,7 +86,6 @@ public interface JavaTokenType extends TokenType {
   IElementType TRY_KEYWORD = new IKeywordElementType("TRY_KEYWORD");
   IElementType VOLATILE_KEYWORD = new IKeywordElementType("VOLATILE_KEYWORD");
   IElementType THROWS_KEYWORD = new IKeywordElementType("THROWS_KEYWORD");
-  IElementType NONE_KEYWORD = new IKeywordElementType("NONE_KEYWORD");
 
   IElementType LPARENTH = new IJavaElementType("LPARENTH");
   IElementType RPARENTH = new IJavaElementType("RPARENTH");
@@ -160,8 +159,7 @@ public interface JavaTokenType extends TokenType {
     PRIVATE_KEYWORD, PROTECTED_KEYWORD, PUBLIC_KEYWORD, RETURN_KEYWORD, SHORT_KEYWORD,
     SUPER_KEYWORD, STATIC_KEYWORD, STRICTFP_KEYWORD, SWITCH_KEYWORD, SYNCHRONIZED_KEYWORD,
     THIS_KEYWORD, THROW_KEYWORD, THROWS_KEYWORD, TRANSIENT_KEYWORD, TRY_KEYWORD,
-    VOID_KEYWORD, VOLATILE_KEYWORD, WHILE_KEYWORD, TRUE_KEYWORD, FALSE_KEYWORD, NULL_KEYWORD,
-    NONE_KEYWORD
+    VOID_KEYWORD, VOLATILE_KEYWORD, WHILE_KEYWORD, TRUE_KEYWORD, FALSE_KEYWORD, NULL_KEYWORD
   );
 
   /** @deprecated use {@linkplain com.intellij.psi.impl.source.tree.ElementType#MODIFIER_BIT_SET} (to remove in IDEA 13) */

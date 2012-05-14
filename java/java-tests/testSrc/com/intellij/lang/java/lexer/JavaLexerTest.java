@@ -136,7 +136,7 @@ public class JavaLexerTest extends LexerTestCase {
 
   public void testJava8Tokens() {
     doTest("none :: ->",
-           "NONE_KEYWORD ('none')\nWHITE_SPACE (' ')\nDOUBLE_COLON ('::')\nWHITE_SPACE (' ')\nARROW ('->')");
+           "IDENTIFIER ('none')\nWHITE_SPACE (' ')\nDOUBLE_COLON ('::')\nWHITE_SPACE (' ')\nARROW ('->')");
   }
 
   @Override
