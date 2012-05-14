@@ -23,6 +23,7 @@ import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.Gray;
@@ -55,6 +56,7 @@ public class MasterDetailPopupBuilder {
   private ActionGroup myActions;
   private JBList myList;
   private Delegate myDelegate;
+  private boolean myCloseOnEnter;
 
   public MasterDetailPopupBuilder(Project project) {
 
@@ -143,6 +145,7 @@ public class MasterDetailPopupBuilder {
         updatePreviewPanel(wrapper);
       }
     });
+    final Ref<JBPopup> popupRef = Ref.create(null);
 
     Runnable runnable = new Runnable() {
       public void run() {
@@ -151,12 +154,12 @@ public class MasterDetailPopupBuilder {
             Object[] values = myList.getSelectedValues();
 
             if (values.length == 1) {
-              ((ItemWrapper)values[0]).execute(myProject);
+              ((ItemWrapper)values[0]).execute(myProject, popupRef.get());
             }
             else {
               for (Object value : values) {
                 if (value instanceof BookmarkItem) {
-                  ((ItemWrapper)value).execute(myProject);
+                  ((ItemWrapper)value).execute(myProject, popupRef.get());
                 }
               }
             }
@@ -196,6 +199,7 @@ public class MasterDetailPopupBuilder {
       setSouthComponent(footerPanel).
       setEastComponent(detailView).
       setItemChoosenCallback(runnable).
+      setCloseOnEnter(myCloseOnEnter).
       setMayBeParent(true).
       setMinSize(new Dimension(-1, 700)).
       setFilteringEnabled(new Function<Object, String>() {
@@ -203,6 +207,8 @@ public class MasterDetailPopupBuilder {
           return ((ItemWrapper)o).speedSearchText();
         }
       }).createPopup();
+
+    popupRef.set(popup);
 
     myList.addKeyListener(new KeyAdapter() {
       public void keyPressed(KeyEvent e) {
@@ -265,6 +271,11 @@ public class MasterDetailPopupBuilder {
     return this;
   }
 
+  public MasterDetailPopupBuilder setCloseOnEnter(boolean closeOnEnter) {
+    myCloseOnEnter = closeOnEnter;
+    return this;
+  }
+
   public interface Delegate {
     String getTitle();
 
@@ -280,9 +291,7 @@ public class MasterDetailPopupBuilder {
     private ItemRenderer(Project project) {
       super(new BorderLayout());
       myProject = project;
-
-      setBackground(UIUtil.getPanelBackground());
-
+      setBackground(UIUtil.getListBackground());
       final JLabel mnemonicLabel = new JLabel();
       mnemonicLabel.setFont(Bookmark.MNEMONIC_FONT);
 
@@ -313,6 +322,8 @@ public class MasterDetailPopupBuilder {
       if (value instanceof SplitterItem) {
         String label = ((SplitterItem)value).getText();
         final TitledSeparator separator = new TitledSeparator(label);
+        separator.setBackground(UIUtil.getListBackground());
+        separator.setForeground(UIUtil.getListForeground());
         return separator;
       }
       myRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);

@@ -19,6 +19,7 @@ import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.SourcePosition;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.popup.util.DetailView;
@@ -54,11 +55,12 @@ class JavaBreakpointItem implements BreakpointItem {
   }
 
   @Override
-  public void execute(Project project) {
+  public void execute(Project project, JBPopup popup) {
     if (myBreakpoint instanceof BreakpointWithHighlighter) {
       final SourcePosition position = ((BreakpointWithHighlighter)myBreakpoint).getSourcePosition();
       if (position != null) {
         position.navigate(true);
+        popup.cancel();
       }
     }
   }
@@ -77,6 +79,7 @@ class JavaBreakpointItem implements BreakpointItem {
   public void updateDetailView(DetailView panel) {
     BreakpointPropertiesPanel breakpointPropertiesPanel = myBreakpointFactory
       .createBreakpointPropertiesPanel(myBreakpoint.getProject(), false);
+    breakpointPropertiesPanel.setSaveOnRemove(true);
 
     if (breakpointPropertiesPanel != null) {
       breakpointPropertiesPanel.initFrom(myBreakpoint, true);

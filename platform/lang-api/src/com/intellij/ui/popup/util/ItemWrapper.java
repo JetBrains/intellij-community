@@ -16,6 +16,7 @@
 package com.intellij.ui.popup.util;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.ui.ColoredListCellRenderer;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,7 +33,7 @@ public interface ItemWrapper {
   void setupRenderer(ColoredListCellRenderer renderer, Project project, boolean selected);
   void updateMnemonicLabel(JLabel label);
 
-  void execute(Project project);
+  void execute(Project project, JBPopup popup);
 
   String speedSearchText();
 

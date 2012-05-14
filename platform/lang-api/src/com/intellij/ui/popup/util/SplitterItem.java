@@ -16,6 +16,7 @@
 package com.intellij.ui.popup.util;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.ui.ColoredListCellRenderer;
 
 import javax.swing.*;
@@ -50,7 +51,7 @@ public class SplitterItem implements ItemWrapper {
   }
 
   @Override
-  public void execute(Project project) {
+  public void execute(Project project, JBPopup popup) {
     //To change body of implemented methods use File | Settings | File Templates.
   }
 

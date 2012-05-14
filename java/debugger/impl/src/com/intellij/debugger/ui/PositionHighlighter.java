@@ -27,6 +27,7 @@ import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.debugger.ui.breakpoints.*;
 import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -410,7 +411,7 @@ public class PositionHighlighter {
       DefaultActionGroup group = new DefaultActionGroup();
       for (Pair<Breakpoint, Event> eventDescriptor : myEventsOutOfLine) {
         Breakpoint breakpoint = eventDescriptor.getFirst();
-        ViewBreakpointsAction viewBreakpointsAction = new ViewBreakpointsAction(breakpoint.getDisplayName(), breakpoint);
+        AnAction viewBreakpointsAction = new ViewBreakpointsAction(breakpoint.getDisplayName(), breakpoint);
         group.add(viewBreakpointsAction);
       }
 

@@ -19,6 +19,7 @@ import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.popup.util.DetailView;
 import com.intellij.xdebugger.XSourcePosition;
@@ -54,10 +55,11 @@ class XBreakpointItem implements BreakpointItem {
   }
 
   @Override
-  public void execute(Project project) {
+  public void execute(Project project, JBPopup popup) {
     final XSourcePosition position = myBreakpoint.getSourcePosition();
     if (position != null) {
       position.createNavigatable(project).navigate(true);
+      popup.cancel();
     }
   }
 

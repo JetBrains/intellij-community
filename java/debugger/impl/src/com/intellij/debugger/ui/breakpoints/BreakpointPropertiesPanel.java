@@ -51,6 +51,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.PopupMenuEvent;
+import javax.swing.event.PopupMenuListener;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.ArrayList;
@@ -110,6 +112,16 @@ public abstract class BreakpointPropertiesPanel {
   private boolean myMoreOptionsVisible = true;
   private Breakpoint myBreakpoint;
 
+  public boolean isSaveOnRemove() {
+    return mySaveOnRemove;
+  }
+
+  public void setSaveOnRemove(boolean saveOnRemove) {
+    mySaveOnRemove = saveOnRemove;
+  }
+
+  private boolean mySaveOnRemove = false;
+
   public boolean isMoreOptionsVisible() {
     return myMoreOptionsVisible;
   }
@@ -119,10 +131,12 @@ public abstract class BreakpointPropertiesPanel {
       @Override
       public void removeNotify() {
         super.removeNotify();
-        saveTo(myBreakpoint, new Runnable() {
-          @Override
-          public void run() {}
-        });
+        if (mySaveOnRemove) {
+          saveTo(myBreakpoint, new Runnable() {
+            @Override
+            public void run() {}
+          });
+        }
       }
     };
   }
@@ -262,6 +276,24 @@ public abstract class BreakpointPropertiesPanel {
 
     myBreakpointComboboxHandler = new BreakpointComboboxHandler(myProject, baseBreakpointCombo);
     baseBreakpointCombo.setRenderer(new BreakpointComboRenderer(baseBreakpointCombo.getRenderer()));
+    baseBreakpointCombo.addPopupMenuListener(new PopupMenuListener() {
+      @Override
+      public void popupMenuWillBecomeVisible(PopupMenuEvent event) {
+        event.getClass();//To change body of implemented methods use File | Settings | File Templates.
+      }
+
+      @Override
+      public void popupMenuWillBecomeInvisible(PopupMenuEvent event) {
+        //To change body of implemented methods use File | Settings | File Templates.
+        event.getClass();
+      }
+
+      @Override
+      public void popupMenuCanceled(PopupMenuEvent event) {
+        //To change body of implemented methods use File | Settings | File Templates.
+        event.getClass();
+      }
+    });
     baseBreakpointCombo.addItemListener(new ItemListener() {
       public void itemStateChanged(final ItemEvent e) {
         ComboboxItem item = (ComboboxItem)baseBreakpointCombo.getSelectedItem();

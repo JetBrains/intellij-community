@@ -19,6 +19,7 @@ import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusManager;
@@ -102,7 +103,7 @@ public class BookmarkItem implements ItemWrapper {
     return myBookmark.getFile().getName() + " " + myBookmark.getDescription();
   }
 
-  public void execute(Project project) {
+  public void execute(Project project, JBPopup popup) {
     myBookmark.navigate();
   }
 

@@ -28,6 +28,7 @@ import com.intellij.ui.components.JBList;
 import com.intellij.ui.popup.util.ItemWrapper;
 import com.intellij.ui.popup.util.MasterDetailPopupBuilder;
 import com.intellij.util.PlatformIcons;
+import com.intellij.xdebugger.breakpoints.ui.BreakpointItem;
 import com.intellij.xdebugger.impl.DebuggerSupport;
 import org.jetbrains.annotations.Nullable;
 
@@ -73,7 +74,10 @@ public class BreakpointsMasterDetailPopupFactory {
     final BreakpointListModel model = createBreakpointsItemsList(selectionModel);
     final JBList list = new JBList(model);
     list.setSelectionModel(selectionModel);
-    list.getEmptyText().setText("No Bookmarks");
+
+    selectInitial(initialBreakpoint, model, list);
+
+    list.getEmptyText().setText("No Breakpoints");
 
     DefaultActionGroup actions = getActions();
 
@@ -94,7 +98,7 @@ public class BreakpointsMasterDetailPopupFactory {
         public boolean hasItemsWithMnemonic(Project project) {
           return false;
         }
-      }).createMasterDetailPopup();
+      }).setCloseOnEnter(false).createMasterDetailPopup();
 
     popup.addListener(new JBPopupListener() {
       @Override
@@ -109,6 +113,18 @@ public class BreakpointsMasterDetailPopupFactory {
     });
 
     return popup;
+  }
+
+  private void selectInitial(Object initialBreakpoint, BreakpointListModel model, JBList list) {
+    for (int i = 0, l = model.size(); i < l; ++i) {
+      final ItemWrapper item = (ItemWrapper)model.get(i);
+      if (item instanceof BreakpointItem) {
+        if (((BreakpointItem)item).getBreakpoint() == initialBreakpoint) {
+          list.setSelectedIndex(i);
+          break;
+        }
+      }
+    }
   }
 
   private DefaultActionGroup getActions() {
