@@ -1,4 +1,4 @@
-// "Remove redundant arguments to match 'method(int, String)'" "true"
+// "Remove redundant arguments to call 'method(int, String)'" "true"
 class A {
   public A() {
     method(5, "");

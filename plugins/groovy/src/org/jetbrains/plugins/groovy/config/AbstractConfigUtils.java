@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.groovy.config;
 
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable;
 import com.intellij.openapi.roots.libraries.Library;
@@ -32,6 +33,8 @@ import org.jetbrains.plugins.groovy.util.LibrariesUtil;
 
 import java.io.File;
 import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.jar.Attributes;
 import java.util.jar.JarEntry;
@@ -143,6 +146,14 @@ public abstract class AbstractConfigUtils {
 
   public Library[] getAllSDKLibraries(@Nullable Project project) {
     return ArrayUtil.mergeArrays(getGlobalSDKLibraries(), getProjectSDKLibraries(project));
+  }
+
+  public Library[] getAllUsedSDKLibraries(Project project) {
+    final List<Library> libraries = new ArrayList<Library>();
+    for (Module module : ModuleManager.getInstance(project).getModules()) {
+      libraries.addAll(Arrays.asList(getSDKLibrariesByModule(module)));
+    }
+    return libraries.toArray(new Library[libraries.size()]);
   }
 
   public Library[] getGlobalSDKLibraries() {

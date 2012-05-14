@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,7 +55,7 @@ public class GroovyAntCustomCompilerProvider extends ChunkCustomCompilerExtensio
                                     boolean compileTests,
                                     CompositeGenerator generator,
                                     Tag compilerArgs,
-                                    Tag bootclasspathTag,
+                                    Tag bootClassPathTag,
                                     Tag classpathTag,
                                     PatternSetRef compilerExcludes,
                                     Tag srcTag,
@@ -78,12 +78,13 @@ public class GroovyAntCustomCompilerProvider extends ChunkCustomCompilerExtensio
   public void generateCustomCompilerTaskRegistration(Project project, GenerationOptions genOptions, CompositeGenerator generator) {
     final GroovyConfigUtils utils = GroovyConfigUtils.getInstance();
     // find SDK library with maximum version number in order to use for compiler
-    final Library[] libraries = utils.getAllSDKLibraries(project);
+    final Library[] libraries = utils.getAllUsedSDKLibraries(project);
+
     if (libraries.length == 0) {
       // no SDKs in the project, the task registration is not generated
       return;
     }
-    final Collection<String> versions = utils.getSDKVersions(project);
+    final Collection<String> versions = utils.getSDKVersions(libraries);
     String maxVersion = versions.isEmpty() ? null : Collections.max(versions);
     Library sdkLib = null;
     for (Library lib : libraries) {
@@ -92,8 +93,8 @@ public class GroovyAntCustomCompilerProvider extends ChunkCustomCompilerExtensio
       }
     }
     assert sdkLib != null;
-    String grovySdkPathRef = BuildProperties.getLibraryPathId(sdkLib.getName());
-    generator.add(new Property(GROOVYC_TASK_SDK_PROPERTY, grovySdkPathRef));
+    String groovySdkPathRef = BuildProperties.getLibraryPathId(sdkLib.getName());
+    generator.add(new Property(GROOVYC_TASK_SDK_PROPERTY, groovySdkPathRef));
     //noinspection HardCodedStringLiteral
     Tag taskdef = new Tag("taskdef", Pair.create("name", "groovyc"), Pair.create("classname", "org.codehaus.groovy.ant.Groovyc"),
                           Pair.create("classpathref", "${" + GROOVYC_TASK_SDK_PROPERTY + "}"));
