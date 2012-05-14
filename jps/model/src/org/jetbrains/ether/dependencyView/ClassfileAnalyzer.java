@@ -155,7 +155,7 @@ class ClassfileAnalyzer {
         final int methodName = context.get(name);
 
         if (value instanceof Type) {
-          final String className = ((Type)value).getClassName();
+          final String className = ((Type)value).getClassName().replace('.', '/');
 
           if (className != null) {
             usages.addUsage(residence, UsageRepr.createClassUsage(context, context.get(className)));
