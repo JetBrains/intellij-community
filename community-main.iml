@@ -89,6 +89,7 @@
     <orderEntry type="module" module-name="android" />
     <orderEntry type="module" module-name="relaxng" />
     <orderEntry type="module" module-name="gradle" />
+    <orderEntry type="module" module-name="rearranger" />
   </component>
 </module>
 
