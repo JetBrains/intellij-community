@@ -34,7 +34,16 @@ public class ReferenceEditorComboWithBrowseButton extends ComponentWithBrowseBut
                                               final String text,
                                               @NotNull final Project project,
                                               boolean toAcceptClasses, final String recentsKey) {
-    super(new EditorComboBox(createDocument(text, project, toAcceptClasses), project, StdFileTypes.JAVA), browseActionListener);
+    this(browseActionListener, text, project, toAcceptClasses, JavaCodeFragment.VisibilityChecker.EVERYTHING_VISIBLE, recentsKey);
+  }
+
+  public ReferenceEditorComboWithBrowseButton(final ActionListener browseActionListener,
+                                              final String text,
+                                              @NotNull final Project project,
+                                              boolean toAcceptClasses,
+                                              final JavaCodeFragment.VisibilityChecker visibilityChecker, final String recentsKey) {
+    super(new EditorComboBox(createDocument(text, project, toAcceptClasses, visibilityChecker), project, StdFileTypes.JAVA),
+          browseActionListener);
     final List<String> recentEntries = RecentsManager.getInstance(project).getRecentEntries(recentsKey);
     if (recentEntries != null) {
       setHistory(ArrayUtil.toStringArray(recentEntries));
@@ -44,10 +53,13 @@ public class ReferenceEditorComboWithBrowseButton extends ComponentWithBrowseBut
     }
   }
 
-  private static Document createDocument(final String text, Project project, boolean isClassesAccepted) {
+  private static Document createDocument(final String text,
+                                         Project project,
+                                         boolean isClassesAccepted, 
+                                         final JavaCodeFragment.VisibilityChecker visibilityChecker) {
     PsiPackage defaultPackage = JavaPsiFacade.getInstance(project).findPackage("");
     final JavaCodeFragment fragment = JavaCodeFragmentFactory.getInstance(project).createReferenceCodeFragment(text, defaultPackage, true, isClassesAccepted);
-    fragment.setVisibilityChecker(JavaCodeFragment.VisibilityChecker.EVERYTHING_VISIBLE);
+    fragment.setVisibilityChecker(visibilityChecker);
     return PsiDocumentManager.getInstance(project).getDocument(fragment);
   }
 
