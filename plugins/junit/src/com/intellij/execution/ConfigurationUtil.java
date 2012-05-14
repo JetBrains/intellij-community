@@ -29,7 +29,7 @@ import com.intellij.psi.search.PsiElementProcessorAdapter;
 import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.search.searches.AnnotatedMembersSearch;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
-import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -102,7 +102,7 @@ public class ConfigurationUtil {
               new Computable<Boolean>() {
                 @Override
                 public Boolean compute() {
-                  return scope.contains(PsiUtilBase.getVirtualFile(containingClass)) && testClassFilter.isAccepted(containingClass);
+                  return scope.contains(PsiUtilCore.getVirtualFile(containingClass)) && testClassFilter.isAccepted(containingClass);
                 }
               })) {
               found.add(containingClass);
