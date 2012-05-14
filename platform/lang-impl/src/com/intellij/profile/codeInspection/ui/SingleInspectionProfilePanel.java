@@ -842,6 +842,7 @@ public class SingleInspectionProfilePanel extends JPanel {
   }
 
   private void setSelectedProfile(final ModifiableModel modifiableModel) {
+    if (mySelectedProfile == modifiableModel) return;
     mySelectedProfile = (InspectionProfileImpl)modifiableModel;
     if (mySelectedProfile != null) {
       myInitialProfile = mySelectedProfile.getName();
