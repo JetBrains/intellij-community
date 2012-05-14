@@ -167,4 +167,34 @@ public class PyExtractMethodTest extends LightMarkedTestCase {
   public void testDefinedBeforeAccessedAfter() {
     doTest("bar");
   }
+
+  // PY-5865
+  public void testSingleRaise() {
+    doTest("bar");
+  }
+
+  // PY-4156
+  public void testLocalFunction() {
+    doTest("bar");
+  }
+
+  // PY-6413
+  public void testTryFinally() {
+    doTest("bar");
+  }
+
+  // PY-6414
+  public void testTryContext() {
+    doTest("bar");
+  }
+
+  // PY-6416
+  public void testCommentAfterSelection() {
+    doTest("bar");
+  }
+
+  // PY-6417
+  public void testGlobalVarAssignment() {
+    doTest("bar");
+  }
 }
