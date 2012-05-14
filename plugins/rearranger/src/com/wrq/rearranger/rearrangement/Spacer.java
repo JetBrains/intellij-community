@@ -106,12 +106,12 @@ public class Spacer {
 
       public void visitFile(PsiFile psiFile) {
         super.visitFile(psiFile);
-        if (settings.getNewlinesAtEOF().isForce()) {
+        if (settings.getNewLinesAtEOF().isForce()) {
           // remove all newlines at end of file, then append as many as are declared in configuration.
           while (sb.length() > 0 && sb.charAt(sb.length() - 1) == '\n') {
             sb.setLength(sb.length() - 1);
           }
-          for (int count = 0; count < settings.getNewlinesAtEOF().getnBlankLines(); count++) {
+          for (int count = 0; count < settings.getNewLinesAtEOF().getnBlankLines(); count++) {
             sb.append('\n');
           }
         }

@@ -70,7 +70,7 @@ public class SpacingPane {
     constraints.newRow();
     panel.add(getForceBlankLinePanel(settings.getAfterMethodRBrace()), constraints.weightedLastCol());
     constraints.newRow();
-    panel.add(getForceBlankLinePanel(settings.getNewlinesAtEOF()), constraints.weightedLastCol());
+    panel.add(getForceBlankLinePanel(settings.getNewLinesAtEOF()), constraints.weightedLastCol());
     constraints.weightedLastRow();
     final JCheckBox insideBlockBox = new JCheckBox("Remove initial and final blank lines inside code block");
     insideBlockBox.setSelected(settings.isRemoveBlanksInsideCodeBlocks());
