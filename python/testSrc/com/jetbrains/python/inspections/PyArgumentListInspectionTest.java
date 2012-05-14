@@ -49,7 +49,13 @@ public class PyArgumentListInspectionTest extends PyTestCase {
   }
   
   public void testPy1268() {
-    doTest();
+    PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), LanguageLevel.PYTHON30);
+    try {
+      doTest();
+    }
+    finally {
+      PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), null);
+    }
   }
   
   public void testInstanceMethodAsLambda() {
