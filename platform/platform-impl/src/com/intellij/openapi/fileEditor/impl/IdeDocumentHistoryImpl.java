@@ -80,10 +80,12 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Projec
   private boolean myCurrentCommandHasMoves = false;
 
   private final CommandListener myCommandListener = new CommandAdapter() {
+    @Override
     public void commandStarted(CommandEvent event) {
       onCommandStarted();
     }
 
+    @Override
     public void commandFinished(CommandEvent event) {
       onCommandFinished(event.getCommandGroupId());
     }
@@ -105,10 +107,12 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Projec
     myToolWindowManager = toolWindowManager;
   }
 
+  @Override
   public final void projectOpened() {
     EditorEventMulticaster eventMulticaster = myEditorFactory.getEventMulticaster();
 
     DocumentListener documentListener = new DocumentAdapter() {
+      @Override
       public void documentChanged(DocumentEvent e) {
         onDocumentChanged(e);
       }
@@ -116,6 +120,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Projec
     eventMulticaster.addDocumentListener(documentListener, myProject);
 
     CaretListener caretListener = new CaretListener() {
+      @Override
       public void caretPositionChanged(CaretEvent e) {
         onCaretPositionChanged(e);
       }
@@ -123,12 +128,14 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Projec
     eventMulticaster.addCaretListener(caretListener,myProject);
 
     myProject.getMessageBus().connect().subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerAdapter() {
+      @Override
       public void selectionChanged(FileEditorManagerEvent e) {
         onSelectionChanged();
       }
     });
 
     VirtualFileListener fileListener = new VirtualFileAdapter() {
+      @Override
       public void fileDeleted(VirtualFileEvent event) {
         onFileDeleted();
       }
@@ -163,10 +170,12 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Projec
     }
   }
 
+  @Override
   public RecentlyChangedFilesState getState() {
     return myRecentlyChangedFiles;
   }
 
+  @Override
   public void loadState(RecentlyChangedFilesState state) {
     myRecentlyChangedFiles = state;
   }
@@ -238,13 +247,16 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Projec
   }
 
 
+  @Override
   public final void projectClosed() {
   }
 
+  @Override
   public final void includeCurrentCommandAsNavigation() {
     myCurrentCommandIsNavigation = true;
   }
 
+  @Override
   public final void includeCurrentPlaceAsChangePlace() {
     setCurrentChangePlace();
     pushCurrentChangePlace();
@@ -300,6 +312,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Projec
     return VfsUtil.toVirtualFileArray(files);
   }
 
+  @Override
   public final void clearHistory() {
     clearPlaceList(myBackPlaces);
     clearPlaceList(myForwardPlaces);
@@ -318,6 +331,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Projec
     }
   }
 
+  @Override
   public final void back() {
     removeInvalidFilesFromStacks();
     if (myBackPlaces.isEmpty()) return;
@@ -334,6 +348,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Projec
     myBackInProgress = true;
 
     executeCommand(new Runnable() {
+      @Override
       public void run() {
         gotoPlaceInfo(info);
       }
@@ -342,6 +357,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Projec
     myBackInProgress = false;
   }
 
+  @Override
   public final void forward() {
     removeInvalidFilesFromStacks();
 
@@ -350,6 +366,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Projec
 
     myForwardInProgress = true;
     executeCommand(new Runnable() {
+      @Override
       public void run() {
         gotoPlaceInfo(target);
       }
@@ -373,14 +390,17 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Projec
     return target;
   }
 
+  @Override
   public final boolean isBackAvailable() {
     return !myBackPlaces.isEmpty();
   }
 
+  @Override
   public final boolean isForwardAvailable() {
     return !myForwardPlaces.isEmpty();
   }
 
+  @Override
   public final void navigatePreviousChange() {
     removeInvalidFilesFromStacks();
     if (myCurrentIndex == myStartIndex) return;
@@ -388,6 +408,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Projec
     final PlaceInfo info = myChangePlaces.get(index - myStartIndex);
 
     executeCommand(new Runnable() {
+      @Override
       public void run() {
         gotoPlaceInfo(info);
       }
@@ -395,6 +416,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Projec
     myCurrentIndex = index;
   }
 
+  @Override
   public final boolean isNavigatePreviousChangeAvailable() {
     return myCurrentIndex > myStartIndex;
   }
@@ -464,6 +486,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Projec
   }
 
 
+  @Override
   @NotNull
   public final String getComponentName() {
     return "IdeDocumentHistory";
@@ -535,8 +558,10 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Projec
     return myForwardPlaces;
   }
 
+  @Override
   public final void initComponent() { }
 
+  @Override
   public final void disposeComponent() {
     myLastGroupId = null;
   }

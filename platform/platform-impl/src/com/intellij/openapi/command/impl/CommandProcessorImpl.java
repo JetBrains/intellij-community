@@ -73,18 +73,22 @@ public class CommandProcessorImpl extends CommandProcessorEx {
 
   private int myUndoTransparentCount = 0;
 
+  @Override
   public void executeCommand(@NotNull Runnable runnable, String name, Object groupId) {
     executeCommand(null, runnable, name, groupId);
   }
 
+  @Override
   public void executeCommand(Project project, @NotNull Runnable runnable, String name, Object groupId) {
     executeCommand(project, runnable, name, groupId, UndoConfirmationPolicy.DEFAULT);
   }
 
+  @Override
   public void executeCommand(Project project, @NotNull Runnable runnable, String name, Object groupId, Document document) {
     executeCommand(project, runnable, name, groupId, UndoConfirmationPolicy.DEFAULT, document);
   }
 
+  @Override
   public void executeCommand(Project project,
                              @NotNull final Runnable command,
                              final String name,
@@ -93,6 +97,7 @@ public class CommandProcessorImpl extends CommandProcessorEx {
     executeCommand(project, command, name, groupId, confirmationPolicy, null);
   }
 
+  @Override
   public void executeCommand(Project project,
                              @NotNull final Runnable command,
                              final String name,
@@ -124,6 +129,7 @@ public class CommandProcessorImpl extends CommandProcessorEx {
     }
   }
 
+  @Override
   @Nullable
   public Object startCommand(final Project project,
                              @Nls final String name,
@@ -146,6 +152,7 @@ public class CommandProcessorImpl extends CommandProcessorEx {
     return myCurrentCommand;
   }
 
+  @Override
   public void finishCommand(final Project project, final Object command, final Throwable throwable) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     CommandLog.LOG.assertTrue(myCurrentCommand != null, "no current command in progress");
@@ -216,6 +223,7 @@ public class CommandProcessorImpl extends CommandProcessorEx {
     }
   }
 
+  @Override
   public void enterModal() {
     myInterruptedCommands.push(myCurrentCommand);
     if (myCurrentCommand != null) {
@@ -223,6 +231,7 @@ public class CommandProcessorImpl extends CommandProcessorEx {
     }
   }
 
+  @Override
   public void leaveModal() {
     CommandLog.LOG.assertTrue(myCurrentCommand == null, "Command must not run: " + String.valueOf(myCurrentCommand));
 
@@ -232,21 +241,25 @@ public class CommandProcessorImpl extends CommandProcessorEx {
     }
   }
 
+  @Override
   public void setCurrentCommandName(String name) {
     CommandLog.LOG.assertTrue(myCurrentCommand != null);
     myCurrentCommand.myName = name;
   }
 
+  @Override
   public void setCurrentCommandGroupId(Object groupId) {
     CommandLog.LOG.assertTrue(myCurrentCommand != null);
     myCurrentCommand.myGroupId = groupId;
   }
 
+  @Override
   @Nullable
   public Runnable getCurrentCommand() {
     return myCurrentCommand != null ? myCurrentCommand.myCommand : null;
   }
 
+  @Override
   @Nullable
   public String getCurrentCommandName() {
     if (myCurrentCommand != null) return myCurrentCommand.myName;
@@ -257,6 +270,7 @@ public class CommandProcessorImpl extends CommandProcessorEx {
     return null;
   }
 
+  @Override
   @Nullable
   public Object getCurrentCommandGroupId() {
     if (myCurrentCommand != null) return myCurrentCommand.myGroupId;
@@ -267,28 +281,34 @@ public class CommandProcessorImpl extends CommandProcessorEx {
     return null;
   }
 
+  @Override
   @Nullable
   public Project getCurrentCommandProject() {
     return myCurrentCommand != null ? myCurrentCommand.myProject : null;
   }
 
+  @Override
   public void addCommandListener(@NotNull CommandListener listener) {
     myListeners.add(listener);
   }
 
+  @Override
   public void addCommandListener(@NotNull final CommandListener listener, @NotNull Disposable parentDisposable) {
     addCommandListener(listener);
     Disposer.register(parentDisposable, new Disposable() {
+      @Override
       public void dispose() {
         removeCommandListener(listener);
       }
     });
   }
 
+  @Override
   public void removeCommandListener(@NotNull CommandListener listener) {
     myListeners.remove(listener);
   }
 
+  @Override
   public void runUndoTransparentAction(@NotNull Runnable action) {
     if (myUndoTransparentCount++ == 0) fireUndoTransparentStarted();
     try {
@@ -299,10 +319,12 @@ public class CommandProcessorImpl extends CommandProcessorEx {
     }
   }
 
+  @Override
   public boolean isUndoTransparentActionInProgress() {
     return myUndoTransparentCount > 0;
   }
 
+  @Override
   public void markCurrentCommandAsGlobal(Project project) {
     getUndoManager(project).markCurrentCommandAsGlobal();
   }

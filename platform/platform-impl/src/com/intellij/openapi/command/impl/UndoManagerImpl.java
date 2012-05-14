@@ -112,6 +112,7 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
     }
   }
 
+  @Override
   @NotNull
   public String getComponentName() {
     return "UndoManager";
@@ -122,18 +123,22 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
     return myProject;
   }
 
+  @Override
   public void initComponent() {
   }
 
+  @Override
   public void projectOpened() {
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       initialize();
     }
   }
 
+  @Override
   public void projectClosed() {
   }
 
+  @Override
   public void disposeComponent() {
   }
 
@@ -147,6 +152,7 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
     }
     else {
       myStartupManager.registerStartupActivity(new Runnable() {
+        @Override
         public void run() {
           runStartupActivity();
         }
@@ -159,14 +165,17 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
     CommandListener commandListener = new CommandAdapter() {
       private boolean myStarted = false;
 
+      @Override
       public void commandStarted(CommandEvent event) {
         onCommandStarted(event.getProject(), event.getUndoConfirmationPolicy());
       }
 
+      @Override
       public void commandFinished(CommandEvent event) {
         onCommandFinished(event.getProject(), event.getCommandName(), event.getCommandGroupId());
       }
 
+      @Override
       public void undoTransparentActionStarted() {
         if (!isInsideCommand()) {
           myStarted = true;
@@ -174,6 +183,7 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
         }
       }
 
+      @Override
       public void undoTransparentActionFinished() {
         if (myStarted) {
           myStarted = false;
@@ -269,6 +279,7 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
     undoableActionPerformed(new NonUndoableAction(ref, isGlobal));
   }
 
+  @Override
   public void undoableActionPerformed(UndoableAction action) {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
@@ -326,12 +337,14 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
     myRedoStacksHolder.invalidateActionsFor(ref);
   }
 
+  @Override
   public void undo(@Nullable FileEditor editor) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     LOG.assertTrue(isUndoAvailable(editor));
     undoOrRedo(editor, true);
   }
 
+  @Override
   public void redo(@Nullable FileEditor editor) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     LOG.assertTrue(isRedoAvailable(editor));
@@ -343,6 +356,7 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
 
     final RuntimeException[] exception = new RuntimeException[1];
     Runnable executeUndoOrRedoAction = new Runnable() {
+      @Override
       public void run() {
         try {
           if (myProject != null) {
@@ -366,18 +380,22 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
     if (exception[0] != null) throw exception[0];
   }
 
+  @Override
   public boolean isUndoInProgress() {
     return myCurrentOperationState == UNDO;
   }
 
+  @Override
   public boolean isRedoInProgress() {
     return myCurrentOperationState == REDO;
   }
 
+  @Override
   public boolean isUndoAvailable(@Nullable FileEditor editor) {
     return isUndoOrRedoAvailable(editor, true);
   }
 
+  @Override
   public boolean isRedoAvailable(@Nullable FileEditor editor) {
     return isUndoOrRedoAvailable(editor, false);
   }
@@ -440,10 +458,12 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
     return isUndo ? myUndoStacksHolder : myRedoStacksHolder;
   }
 
+  @Override
   public Pair<String, String> getUndoActionNameAndDescription(FileEditor editor) {
     return getUndoOrRedoActionNameAndDescription(editor, true);
   }
 
+  @Override
   public Pair<String, String> getRedoActionNameAndDescription(FileEditor editor) {
     return getUndoOrRedoActionNameAndDescription(editor, false);
   }
@@ -524,6 +544,7 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
 
     DocumentReference[] backSorted = refs.toArray(new DocumentReference[refs.size()]);
     Arrays.sort(backSorted, new Comparator<DocumentReference>() {
+      @Override
       public int compare(DocumentReference a, DocumentReference b) {
         return getLastCommandTimestamp(a) - getLastCommandTimestamp(b);
       }
