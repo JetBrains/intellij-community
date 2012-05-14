@@ -25,4 +25,5 @@ public interface ChangesViewI {
   void selectFile(VirtualFile vFile);
   void refreshChangesViewNodeAsync(VirtualFile file);
   void updateProgressText(final String text, final boolean isError);
+  void setBusy(boolean b);
 }
