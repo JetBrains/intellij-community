@@ -43,17 +43,17 @@ public class SvnClientRunnerImpl implements SvnClientRunner {
 
   @Override
   public void checkin(final VirtualFile file) throws IOException {
-    AbstractVcsTestCase.verify(runSvn(file, "ci", "-m", "test"));
+    AbstractVcsTestCase.verify(runSvn(file, "ci", "-m", "test", file.getPath()));
   }
 
   @Override
   public void update(final VirtualFile file) throws IOException {
-    AbstractVcsTestCase.verify(runSvn(file, "up", "--accept", "postpone"));
+    AbstractVcsTestCase.verify(runSvn(file, "up", "--accept", "postpone", file.getPath()));
   }
 
   @Override
   public void checkout(final String repoUrl, final VirtualFile file) throws IOException {
-    AbstractVcsTestCase.verify(runSvn(file, "co", repoUrl, "."));
+    AbstractVcsTestCase.verify(runSvn(file, "co", repoUrl, file.getPath()));
   }
 
   @Override
