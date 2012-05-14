@@ -21,7 +21,7 @@ import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.project.ProjectUtil;
+import com.intellij.openapi.project.ProjectCoreUtil;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -118,7 +118,7 @@ public class ProjectNameStep extends ModuleWizardStep {
     boolean shouldContinue = true;
 
     final String path = myWizardContext.isCreatingNewProject() && myWizardContext.getProjectStorageFormat() == DIRECTORY_BASED
-                        ? getProjectFileDirectory() + "/" + ProjectUtil.DIRECTORY_BASED_PROJECT_DIR
+                        ? getProjectFileDirectory() + "/" + ProjectCoreUtil.DIRECTORY_BASED_PROJECT_DIR
                         : getProjectFilePath();
     final File projectFile = new File(path);
     if (projectFile.exists()) {
@@ -126,7 +126,7 @@ public class ProjectNameStep extends ModuleWizardStep {
                            ? IdeBundle.message("title.new.project")
                            : IdeBundle.message("title.add.module");
       final String message = myWizardContext.isCreatingNewProject() && myWizardContext.getProjectStorageFormat() == DIRECTORY_BASED
-                             ? IdeBundle.message("prompt.overwrite.project.folder", ProjectUtil.DIRECTORY_BASED_PROJECT_DIR,
+                             ? IdeBundle.message("prompt.overwrite.project.folder", ProjectCoreUtil.DIRECTORY_BASED_PROJECT_DIR,
                                                  projectFile.getParentFile().getAbsolutePath())
                              : IdeBundle.message("prompt.overwrite.project.file", projectFile.getAbsolutePath(),
                                                  myWizardContext.getPresentationName());

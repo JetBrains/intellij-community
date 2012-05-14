@@ -26,6 +26,7 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectCoreUtil;
 import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.FileIndexImplUtil;
@@ -335,7 +336,7 @@ public class AnalysisScope {
                               @NotNull final PsiManager psiManager,
                               final boolean needReadAction) {
     if (fileOrDir.isDirectory()) return true;
-    if (ProjectUtil.isProjectOrWorkspaceFile(fileOrDir)) return true;
+    if (ProjectCoreUtil.isProjectOrWorkspaceFile(fileOrDir)) return true;
     if (projectFileIndex.isInContent(fileOrDir) && (myIncludeTestSource || !projectFileIndex.isInTestSourceContent(fileOrDir))) {
       return processFile(fileOrDir, visitor, psiManager, needReadAction);
     }

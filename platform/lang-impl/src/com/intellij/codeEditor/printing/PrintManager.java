@@ -28,7 +28,7 @@ import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.progress.*;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectUtil;
+import com.intellij.openapi.project.ProjectCoreUtil;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -168,7 +168,7 @@ class PrintManager {
     if(isRecursive) {
       PsiDirectory[] directories = psiDirectory.getSubdirectories();
       for (PsiDirectory directory : directories) {
-        if (!ProjectUtil.DIRECTORY_BASED_PROJECT_DIR.equals(directory.getName())) {
+        if (!ProjectCoreUtil.DIRECTORY_BASED_PROJECT_DIR.equals(directory.getName())) {
           addToPsiFileList(directory, filesList, isRecursive);
         }
       }

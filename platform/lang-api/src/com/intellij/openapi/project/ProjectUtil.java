@@ -16,7 +16,7 @@
 package com.intellij.openapi.project;
 
 import com.intellij.ide.DataManager;
-import com.intellij.ide.highlighter.InternalFileType;
+import com.intellij.openapi.fileTypes.InternalFileType;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.fileEditor.UniqueVFilePathBuilder;
@@ -40,8 +40,7 @@ import javax.swing.*;
 /**
  * @author max
  */
-public class ProjectUtil {
-  @NonNls public static final String DIRECTORY_BASED_PROJECT_DIR = ".idea";
+public class ProjectUtil extends ProjectCoreUtil {
 
   private ProjectUtil() { }
 
@@ -120,16 +119,6 @@ public class ProjectUtil {
   @Nullable
   public static Project guessProjectForFile(VirtualFile file) {
     return ProjectLocator.getInstance().guessProjectForFile(file);
-  }
-
-  public static boolean isProjectOrWorkspaceFile(final VirtualFile file) {
-    return isProjectOrWorkspaceFile(file, file.getFileType());
-  }
-
-  public static boolean isProjectOrWorkspaceFile(final VirtualFile file,
-                                                 final FileType fileType) {
-    if (fileType instanceof InternalFileType) return true;
-    return file.getPath().contains("/"+ DIRECTORY_BASED_PROJECT_DIR +"/");
   }
 
   @NotNull

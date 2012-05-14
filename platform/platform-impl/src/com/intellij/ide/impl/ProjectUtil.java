@@ -25,6 +25,7 @@ import com.intellij.openapi.components.StorageScheme;
 import com.intellij.openapi.components.impl.stores.IProjectStore;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectCoreUtil;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
@@ -102,7 +103,7 @@ public class ProjectUtil {
     }
 
     if (path.endsWith(ProjectFileType.DOT_DEFAULT_EXTENSION) ||
-        virtualFile.isDirectory() && virtualFile.findChild(com.intellij.openapi.project.ProjectUtil.DIRECTORY_BASED_PROJECT_DIR) != null) {
+        virtualFile.isDirectory() && virtualFile.findChild(ProjectCoreUtil.DIRECTORY_BASED_PROJECT_DIR) != null) {
       return openProject(path, projectToClose, forceOpenInNewFrame);
     }
 
@@ -145,8 +146,8 @@ public class ProjectUtil {
       return null;
     }
 
-    if (file.isDirectory() && !new File(file, com.intellij.openapi.project.ProjectUtil.DIRECTORY_BASED_PROJECT_DIR).exists()) {
-      Messages.showErrorDialog(IdeBundle.message("error.project.file.does.not.exist", new File(file, com.intellij.openapi.project.ProjectUtil.DIRECTORY_BASED_PROJECT_DIR).getPath()), CommonBundle.getErrorTitle());
+    if (file.isDirectory() && !new File(file, ProjectCoreUtil.DIRECTORY_BASED_PROJECT_DIR).exists()) {
+      Messages.showErrorDialog(IdeBundle.message("error.project.file.does.not.exist", new File(file, ProjectCoreUtil.DIRECTORY_BASED_PROJECT_DIR).getPath()), CommonBundle.getErrorTitle());
       return null;
     }
 
@@ -268,10 +269,10 @@ public class ProjectUtil {
   }
 
   /**
-   * @deprecated use {@linkplain com.intellij.openapi.project.ProjectUtil#isProjectOrWorkspaceFile(com.intellij.openapi.vfs.VirtualFile)} (to remove in IDEA 13)
+   * @deprecated use {@linkplain com.intellij.openapi.project.ProjectCoreUtil#isProjectOrWorkspaceFile(com.intellij.openapi.vfs.VirtualFile)} (to remove in IDEA 13)
    */
   @SuppressWarnings("UnusedDeclaration")
   public static boolean isProjectOrWorkspaceFile(final VirtualFile file) {
-    return com.intellij.openapi.project.ProjectUtil.isProjectOrWorkspaceFile(file);
+    return ProjectCoreUtil.isProjectOrWorkspaceFile(file);
   }
 }
