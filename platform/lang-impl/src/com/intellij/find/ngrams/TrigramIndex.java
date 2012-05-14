@@ -36,13 +36,13 @@ public class TrigramIndex extends ScalarIndexExtension<Integer> {
 
   public static final ID<Integer,Void> INDEX_ID = ID.create("Trigram.Index");
 
-  private static final InputFilter INPUT_FILTER = new InputFilter() {
+  private static final FileBasedIndex.InputFilter INPUT_FILTER = new FileBasedIndex.InputFilter() {
     @Override
     public boolean acceptInput(VirtualFile file) {
       return !file.getFileType().isBinary();
     }
   };
-  private static final InputFilter NO_FILES = new InputFilter() {
+  private static final FileBasedIndex.InputFilter NO_FILES = new FileBasedIndex.InputFilter() {
     @Override
     public boolean acceptInput(VirtualFile file) {
       return false;
@@ -82,7 +82,7 @@ public class TrigramIndex extends ScalarIndexExtension<Integer> {
   }
 
   @Override
-  public InputFilter getInputFilter() {
+  public FileBasedIndex.InputFilter getInputFilter() {
     if (ENABLED) {
       return INPUT_FILTER;
     }

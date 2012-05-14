@@ -114,4 +114,11 @@ public abstract class FileBasedIndex implements BaseComponent {
      */
     boolean process(VirtualFile file, V value);
   }
+
+  /**
+  * Author: dmitrylomov
+  */
+  public static interface InputFilter {
+    boolean acceptInput(VirtualFile file);
+  }
 }

@@ -111,7 +111,7 @@ public class TodoIndex extends FileBasedIndexExtension<TodoIndexEntry, Integer> 
     }
   };
   
-  private final InputFilter myInputFilter = new InputFilter() {
+  private final FileBasedIndex.InputFilter myInputFilter = new FileBasedIndex.InputFilter() {
     @Override
     public boolean acceptInput(final VirtualFile file) {
       if (!(file.getFileSystem() instanceof LocalFileSystem)) {
@@ -168,7 +168,7 @@ public class TodoIndex extends FileBasedIndexExtension<TodoIndexEntry, Integer> 
   }
 
   @Override
-  public InputFilter getInputFilter() {
+  public FileBasedIndex.InputFilter getInputFilter() {
     return myInputFilter;
   }
 }
