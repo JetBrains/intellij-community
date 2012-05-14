@@ -21,7 +21,6 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.psi.impl.cache.impl.id.IdIndexEntry;
 import com.intellij.psi.impl.cache.impl.id.IdTableBuilding;
 import com.intellij.psi.impl.cache.impl.id.LexerBasedIdIndexer;
-import com.intellij.psi.impl.cache.impl.todo.LexerBasedTodoIndexer;
 import com.intellij.psi.impl.cache.impl.todo.TodoIndexEntry;
 import com.intellij.psi.search.IndexPattern;
 import com.intellij.util.indexing.FileContent;
@@ -29,7 +28,6 @@ import com.intellij.util.indexing.IdDataConsumer;
 import gnu.trove.THashMap;
 
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.Map;
 
 public class BaseFilterLexerUtil {

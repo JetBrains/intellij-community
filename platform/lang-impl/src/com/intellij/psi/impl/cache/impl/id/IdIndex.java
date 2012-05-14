@@ -19,7 +19,7 @@ package com.intellij.psi.impl.cache.impl.id;
 import com.intellij.lang.cacheBuilder.CacheBuilderRegistry;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
-import com.intellij.openapi.fileTypes.impl.AbstractFileType;
+import com.intellij.openapi.fileTypes.impl.CustomSyntaxTableFileType;
 import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.indexing.*;
@@ -126,7 +126,7 @@ public class IdIndex extends FileBasedIndexExtension<IdIndexEntry, Integer> {
   
   private static boolean isIndexable(FileType fileType) {
     return fileType instanceof LanguageFileType ||
-           fileType instanceof AbstractFileType ||
+           fileType instanceof CustomSyntaxTableFileType ||
            IdTableBuilding.isIdIndexerRegistered(fileType) ||
            CacheBuilderRegistry.getInstance().getCacheBuilder(fileType) != null;
   }

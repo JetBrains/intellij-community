@@ -56,7 +56,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.ModuleAdapter;
-import com.intellij.openapi.project.ModuleListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectEx;
@@ -93,6 +92,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.indexing.FileBasedIndex;
+import com.intellij.util.indexing.FileBasedIndexImpl;
 import com.intellij.util.indexing.IndexableFileSet;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
@@ -234,7 +234,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
           throw new RuntimeException(e);
         }
 
-        FileBasedIndex.getInstance().registerIndexableSet(new IndexableFileSet() {
+        ((FileBasedIndexImpl)FileBasedIndex.getInstance()).registerIndexableSet(new IndexableFileSet() {
           @Override
           public boolean isInSet(@NotNull final VirtualFile file) {
             return ourSourceRoot != null && file.getFileSystem() == ourSourceRoot.getFileSystem() && ourProject.isOpen();

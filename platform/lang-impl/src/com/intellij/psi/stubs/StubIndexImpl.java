@@ -200,7 +200,7 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
                                                        @NotNull final Project project,
                                                        @Nullable final GlobalSearchScope scope,
                                                        @NotNull final Processor<? super Psi> processor) {
-    final FileBasedIndex fileBasedIndex = FileBasedIndex.getInstance();
+    final FileBasedIndexImpl fileBasedIndex = (FileBasedIndexImpl)FileBasedIndex.getInstance();
     fileBasedIndex.ensureUpToDate(StubUpdatingIndex.INDEX_ID, project, scope);
 
     final PersistentFS fs = (PersistentFS)ManagingFS.getInstance();
@@ -211,11 +211,11 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
     try {
       try {
         // disable up-to-date check to avoid locks on attempt to acquire index write lock while holding at the same time the readLock for this index
-        FileBasedIndex.disableUpToDateCheckForCurrentThread();
+        FileBasedIndexImpl.disableUpToDateCheckForCurrentThread();
         index.getReadLock().lock();
         final ValueContainer<TIntArrayList> container = index.getData(key);
 
-        final FileBasedIndex.ProjectIndexableFilesFilter projectFilesFilter = fileBasedIndex.projectIndexableFiles(project);
+        final FileBasedIndexImpl.ProjectIndexableFilesFilter projectFilesFilter = fileBasedIndex.projectIndexableFiles(project);
 
         return container.forEach(new ValueContainer.ContainerAction<TIntArrayList>() {
           @Override
@@ -320,14 +320,14 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
       }
       finally {
         index.getReadLock().unlock();
-        FileBasedIndex.enableUpToDateCheckForCurrentThread();
+        FileBasedIndexImpl.enableUpToDateCheckForCurrentThread();
       }
     }
     catch (StorageException e) {
       forceRebuild(e);
     }
     catch (RuntimeException e) {
-      final Throwable cause = FileBasedIndex.getCauseToRebuildIndex(e);
+      final Throwable cause = FileBasedIndexImpl.getCauseToRebuildIndex(e);
       if (cause != null) {
         forceRebuild(cause);
       }
@@ -354,7 +354,7 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
   }
 
   private static void requestRebuild() {
-    FileBasedIndex.requestRebuild(StubUpdatingIndex.INDEX_ID);
+    FileBasedIndex.getInstance().requestRebuild(StubUpdatingIndex.INDEX_ID);
   }
 
   @Override

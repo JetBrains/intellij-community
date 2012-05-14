@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,23 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.ide.highlighter.custom.impl;
 
-import com.intellij.ide.highlighter.custom.SyntaxTable;
-import com.intellij.openapi.fileTypes.impl.AbstractFileType;
-import org.jdom.Element;
+package com.intellij.psi.impl.cache.impl.id;
 
-public class ReadFileType extends AbstractFileType {
+import com.intellij.util.indexing.DataIndexer;
+import com.intellij.util.indexing.FileContent;
 
-  private final Element myElement;
-
-  public ReadFileType(final SyntaxTable syntaxTable, Element element) {
-    super(syntaxTable);
-    myElement = element;
-  }
-
-  public Element getElement() {
-    return myElement;
-  }
-
+/**
+ * @author Eugene Zhuravlev
+ *         Date: Jan 16, 2008
+ */
+public abstract class FileTypeIdIndexer implements DataIndexer<IdIndexEntry, Integer, FileContent> {
 }

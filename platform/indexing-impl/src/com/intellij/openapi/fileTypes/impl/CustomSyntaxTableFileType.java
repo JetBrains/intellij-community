@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,18 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.intellij.openapi.fileTypes.impl;
 
-package com.intellij.lang.findUsages;
-
-import com.intellij.lang.LanguageExtension;
+import com.intellij.ide.highlighter.custom.SyntaxTable;
+import com.intellij.openapi.fileTypes.FileType;
 
 /**
- * @author yole
+ * Author: dmitrylomov
  */
-public class LanguageFindUsages extends LanguageExtension<FindUsagesProvider> {
-  public static final LanguageFindUsages INSTANCE = new LanguageFindUsages();
-
-  private LanguageFindUsages() {
-    super("com.intellij.lang.findUsagesProvider", new EmptyFindUsagesProvider());
-  }
+public interface CustomSyntaxTableFileType extends FileType {
+  SyntaxTable getSyntaxTable();
 }

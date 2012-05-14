@@ -29,6 +29,7 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.extensions.ExtensionsArea;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.*;
+import com.intellij.openapi.progress.*;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexFacade;
@@ -151,6 +152,26 @@ public class CoreEnvironment {
     myProject.registerService(PsiDirectoryFactory.class, new PsiDirectoryFactoryImpl(myPsiManager));
     myProject.registerService(ProjectScopeBuilder.class, new CoreProjectScopeBuilder(myProject, myFileIndexFacade));
     myProject.registerService(DumbService.class, new MockDumbService(myProject));
+
+    ProgressIndicatorProvider.ourInstance = new ProgressIndicatorProvider() {
+      @Override
+      public ProgressIndicator getProgressIndicator() {
+        return new EmptyProgressIndicator();
+      }
+
+      @Override
+      protected void doCheckCanceled() throws ProcessCanceledException {
+      }
+
+      @Override
+      public NonCancelableSection startNonCancelableSection() {
+        return new NonCancelableSection() {
+          @Override
+          public void done() {
+          }
+        };
+      }
+    };
   }
 
   public Project getProject() {
