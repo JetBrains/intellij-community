@@ -748,11 +748,6 @@ public abstract class InplaceRefactoring {
         documentManager.commitAllDocuments();
         finish(false);
         moveOffsetAfter(false);
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          public void run() {
-            documentManager.doPostponedOperationsAndUnblockDocument(myEditor.getDocument());
-          }
-        });
       }
       finally {
         try {
