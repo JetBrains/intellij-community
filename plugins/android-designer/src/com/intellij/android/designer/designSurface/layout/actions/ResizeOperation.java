@@ -65,20 +65,6 @@ public class ResizeOperation implements EditOperation {
     myContext = context;
   }
 
-  public static void points(ResizeSelectionDecorator decorator) {
-    width(decorator);
-    height(decorator);
-    decorator.addPoint(new DirectionResizePoint(blue, Color.black, Position.SOUTH_EAST, TYPE, "Change layout:width x layout:height"));
-  }
-
-  public static void width(ResizeSelectionDecorator decorator) {
-    decorator.addPoint(new DirectionResizePoint(blue, Color.black, Position.EAST, TYPE, "Change layout:width"));
-  }
-
-  public static void height(ResizeSelectionDecorator decorator) {
-    decorator.addPoint(new DirectionResizePoint(blue, Color.black, Position.SOUTH, TYPE, "Change layout:height"));
-  }
-
   @Override
   public void setComponent(RadComponent component) {
     myComponent = (RadViewComponent)component;
@@ -337,5 +323,25 @@ public class ResizeOperation implements EditOperation {
       return "fill_parent";
     }
     return Integer.toString(size) + "dp";
+  }
+
+  //////////////////////////////////////////////////////////////////////////////////////////
+  //
+  // ResizePoint
+  //
+  //////////////////////////////////////////////////////////////////////////////////////////
+
+  public static void points(ResizeSelectionDecorator decorator) {
+    width(decorator);
+    height(decorator);
+    decorator.addPoint(new DirectionResizePoint(blue, Color.black, Position.SOUTH_EAST, TYPE, "Change layout:width x layout:height"));
+  }
+
+  public static void width(ResizeSelectionDecorator decorator) {
+    decorator.addPoint(new DirectionResizePoint(blue, Color.black, Position.EAST, TYPE, "Change layout:width"));
+  }
+
+  public static void height(ResizeSelectionDecorator decorator) {
+    decorator.addPoint(new DirectionResizePoint(blue, Color.black, Position.SOUTH, TYPE, "Change layout:height"));
   }
 }
