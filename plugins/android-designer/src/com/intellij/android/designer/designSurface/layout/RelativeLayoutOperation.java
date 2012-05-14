@@ -43,10 +43,13 @@ public class RelativeLayoutOperation extends AbstractEditOperation {
   private SnapPointFeedbackHost mySnapFeedback;
   private TextFeedback myHorizontalTextFeedback;
   private TextFeedback myVerticalTextFeedback;
+
   private Rectangle myContainerBounds;
   private Rectangle myBounds;
+
   private List<SnapPoint> myHorizontalPoints;
   private List<SnapPoint> myVerticalPoints;
+
   private SnapPoint myHorizontalPoint;
   private SnapPoint myVerticalPoint;
 

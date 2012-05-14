@@ -41,7 +41,7 @@ import java.util.List;
 public class ResizeOperation implements EditOperation {
   public static final String TYPE = "resize_children";
 
-  private final static Color blue = new Color(0, 50, 255);
+  public final static Color blue = new Color(0, 50, 255);
   private static final int SNAP_DELTA = 4;
   private static final int WRAP_CONTENT = 0 << 30;
 
