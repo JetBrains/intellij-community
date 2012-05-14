@@ -25,6 +25,9 @@ import com.intellij.openapi.roots.PackageIndex;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClassOwner;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiPackage;
 import org.jetbrains.annotations.NotNull;
 
@@ -35,6 +38,9 @@ public class PackageScope extends GlobalSearchScope {
   private final PsiPackage myPackage;
   private final boolean myIncludeSubpackages;
   private final boolean myIncludeLibraries;
+  protected final boolean myPartOfPackagePrefix;
+  protected final String myPackageQualifiedName;
+  protected final String myPackageQNamePrefix;
 
   public PackageScope(@NotNull PsiPackage aPackage, boolean includeSubpackages, final boolean includeLibraries) {
     super(aPackage.getProject());
@@ -42,8 +48,12 @@ public class PackageScope extends GlobalSearchScope {
     myIncludeSubpackages = includeSubpackages;
 
     Project project = myPackage.getProject();
-    myDirs = PackageIndex.getInstance(project).getDirsByPackageName(myPackage.getQualifiedName(), true).findAll();
+    myPackageQualifiedName = myPackage.getQualifiedName();
+    myDirs = PackageIndex.getInstance(project).getDirsByPackageName(myPackageQualifiedName, true).findAll();
     myIncludeLibraries = includeLibraries;
+
+    myPartOfPackagePrefix = JavaPsiFacade.getInstance(getProject()).isPartOfPackagePrefix(myPackageQualifiedName);
+    myPackageQNamePrefix = myPackageQualifiedName + ".";
   }
 
   @Override
@@ -53,6 +63,14 @@ public class PackageScope extends GlobalSearchScope {
                       ? VfsUtilCore.isAncestor(scopeDir, file, false)
                       : Comparing.equal(file.getParent(), scopeDir);
       if (inDir) return true;
+    }
+    if (myPartOfPackagePrefix && myIncludeSubpackages) {
+      final PsiFile psiFile = myPackage.getManager().findFile(file);
+      if (psiFile instanceof PsiClassOwner) {
+        final String packageName = ((PsiClassOwner)psiFile).getPackageName();
+        if (myPackageQualifiedName.equals(packageName) ||
+            packageName.startsWith(myPackageQNamePrefix)) return true;
+      }
     }
     return false;
   }

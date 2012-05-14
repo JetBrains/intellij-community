@@ -44,7 +44,7 @@ public abstract class FileBasedIndexExtension<K, V> {
   
   public abstract DataExternalizer<V> getValueExternalizer();
   
-  public abstract InputFilter getInputFilter();
+  public abstract FileBasedIndex.InputFilter getInputFilter();
   
   public abstract boolean dependsOnFileContent();
   

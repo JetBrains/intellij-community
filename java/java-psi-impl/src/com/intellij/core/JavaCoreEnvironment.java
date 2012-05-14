@@ -30,11 +30,9 @@ import com.intellij.openapi.roots.PackageIndex;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.augment.PsiAugmentProvider;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettingsFacade;
-import com.intellij.psi.impl.EmptySubstitutorImpl;
-import com.intellij.psi.impl.JavaPsiFacadeImpl;
-import com.intellij.psi.impl.JavaPsiImplementationHelper;
-import com.intellij.psi.impl.PsiElementFactoryImpl;
+import com.intellij.psi.impl.*;
 import com.intellij.psi.impl.compiled.ClassFileStubBuilder;
 import com.intellij.psi.impl.compiled.ClsStubBuilderFactory;
 import com.intellij.psi.impl.compiled.DefaultClsStubBuilderFactory;
@@ -62,6 +60,7 @@ public class JavaCoreEnvironment extends CoreEnvironment {
     registerFileType(JavaFileType.INSTANCE, "java");
     addExplicitExtension(LanguageASTFactory.INSTANCE, JavaLanguage.INSTANCE, new CoreJavaASTFactory());
     addExplicitExtension(LanguageParserDefinitions.INSTANCE, JavaLanguage.INSTANCE, new JavaParserDefinition());
+    addExplicitExtension(LanguageConstantExpressionEvaluator.INSTANCE, JavaLanguage.INSTANCE, new PsiExpressionEvaluator());
 
     registerProjectExtensionPoint(PsiElementFinder.EP_NAME, PsiElementFinder.class);
     registerExtensionPoint(Extensions.getRootArea(), ClsStubBuilderFactory.EP_NAME, ClsStubBuilderFactory.class);
@@ -79,6 +78,7 @@ public class JavaCoreEnvironment extends CoreEnvironment {
     myProject.registerService(PackageIndex.class, myFileManager);
     myProject.registerService(JavaResolveCache.class, new JavaResolveCache(null));
     myProject.registerService(JavaCodeStyleSettingsFacade.class, new CoreJavaCodeStyleSettingsFacade());
+    myProject.registerService(JavaCodeStyleManager.class, new CoreJavaCodeStyleManager());
 
     JavaPsiFacadeImpl javaPsiFacade = new JavaPsiFacadeImpl(myProject, myPsiManager, myFileManager, null);
     myProject.registerService(CoreJavaFileManager.class, myFileManager);

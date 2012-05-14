@@ -405,6 +405,14 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
     }
   }
 
+  @Override
+  protected boolean isToBeChanged(UsageInfo usageInfo) {
+    if (usageInfo instanceof SafeDeleteReferenceUsageInfo) {
+      return ((SafeDeleteReferenceUsageInfo)usageInfo).isSafeDelete() && super.isToBeChanged(usageInfo);
+    }
+    return super.isToBeChanged(usageInfo);
+  }
+
   public static boolean validElement(PsiElement element) {
     if (element instanceof PsiFile) return true;
     if (!element.isPhysical()) return false;

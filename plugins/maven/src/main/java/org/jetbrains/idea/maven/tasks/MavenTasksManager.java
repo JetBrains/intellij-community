@@ -162,7 +162,7 @@ public class MavenTasksManager extends MavenSimpleProjectComponent implements Pe
       }
     }
     RunManagerEx runManager = RunManagerEx.getInstanceEx(myProject);
-    for (MavenBeforeRunTask each : runManager.getBeforeRunTasks(MavenBeforeRunTasksProvider.ID, true)) {
+    for (MavenBeforeRunTask each : runManager.getBeforeRunTasks(MavenBeforeRunTasksProvider.ID)) {
       if (each.isFor(project, goal)) {
         result.add(TasksBundle.message("maven.tasks.goal.before.run"));
         break;

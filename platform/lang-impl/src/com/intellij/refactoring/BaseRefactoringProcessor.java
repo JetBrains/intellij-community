@@ -415,7 +415,7 @@ public abstract class BaseRefactoringProcessor {
    for (Iterator<UsageInfo> iterator = usageInfoSet.iterator(); iterator.hasNext();) {
       UsageInfo usageInfo = iterator.next();
       final PsiElement element = usageInfo.getElement();
-      if (element == null || !element.isWritable()) {
+      if (element == null || !isToBeChanged(usageInfo)) {
         iterator.remove();
       }
     }
@@ -471,6 +471,10 @@ public abstract class BaseRefactoringProcessor {
         setStatusBarInfo(RefactoringBundle.message("statusBar.noUsages"));
       }
     }
+  }
+
+  protected boolean isToBeChanged(UsageInfo usageInfo) {
+    return usageInfo.isWritable();
   }
 
   /**

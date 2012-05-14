@@ -19,7 +19,7 @@ package com.intellij.psi.impl.cache.impl.id;
 import com.intellij.lang.cacheBuilder.CacheBuilderRegistry;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
-import com.intellij.openapi.fileTypes.impl.AbstractFileType;
+import com.intellij.openapi.fileTypes.impl.CustomSyntaxTableFileType;
 import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.indexing.*;
@@ -42,7 +42,7 @@ import java.util.Map;
 public class IdIndex extends FileBasedIndexExtension<IdIndexEntry, Integer> {
   @NonNls public static final ID<IdIndexEntry, Integer> NAME = ID.create("IdIndex");
   
-  private final InputFilter myInputFilter = new InputFilter() {
+  private final FileBasedIndex.InputFilter myInputFilter = new FileBasedIndex.InputFilter() {
     @Override
     public boolean acceptInput(final VirtualFile file) {
       final FileType fileType = file.getFileType();
@@ -120,13 +120,13 @@ public class IdIndex extends FileBasedIndexExtension<IdIndexEntry, Integer> {
   }
 
   @Override
-  public InputFilter getInputFilter() {
+  public FileBasedIndex.InputFilter getInputFilter() {
     return myInputFilter;
   }
   
   private static boolean isIndexable(FileType fileType) {
     return fileType instanceof LanguageFileType ||
-           fileType instanceof AbstractFileType ||
+           fileType instanceof CustomSyntaxTableFileType ||
            IdTableBuilding.isIdIndexerRegistered(fileType) ||
            CacheBuilderRegistry.getInstance().getCacheBuilder(fileType) != null;
   }

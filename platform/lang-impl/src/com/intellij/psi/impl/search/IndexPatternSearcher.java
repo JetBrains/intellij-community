@@ -24,7 +24,7 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory;
-import com.intellij.openapi.fileTypes.impl.AbstractFileType;
+import com.intellij.openapi.fileTypes.impl.CustomSyntaxTableFileType;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -111,7 +111,7 @@ public class IndexPatternSearcher implements QueryExecutor<IndexPatternOccurrenc
                                              final TIntArrayList commentEnds) {
     if (file instanceof PsiPlainTextFile) {
       FileType fType = file.getFileType();
-      if (fType instanceof AbstractFileType) {
+      if (fType instanceof CustomSyntaxTableFileType) {
         Lexer lexer = SyntaxHighlighter.PROVIDER.create(fType, file.getProject(), file.getVirtualFile()).getHighlightingLexer();
         findComments(lexer, chars, range, COMMENT_TOKENS, commentStarts, commentEnds, null);
       }

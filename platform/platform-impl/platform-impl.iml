@@ -29,6 +29,8 @@
     <orderEntry type="library" name="swingx" level="project" />
     <orderEntry type="module" module-name="core-impl" exported="" />
     <orderEntry type="library" exported="" name="miglayout-swing" level="project" />
+    <orderEntry type="module" module-name="indexing-api" />
+    <orderEntry type="module" module-name="indexing-impl" />
   </component>
 </module>
 

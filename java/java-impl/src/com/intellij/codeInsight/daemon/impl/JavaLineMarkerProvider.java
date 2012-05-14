@@ -32,7 +32,6 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.AllOverridingMethodsSearch;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
@@ -60,8 +59,6 @@ public class JavaLineMarkerProvider implements LineMarkerProvider, DumbAware {
   protected static final Icon IMPLEMENTED_METHOD_MARKER_RENDERER = IconLoader.getIcon("/gutter/implementedMethod.png");
   private static final Icon IMPLEMENTED_INTERFACE_MARKER_RENDERER = IMPLEMENTED_METHOD_MARKER_RENDERER;
   private static final Icon SUBCLASSED_CLASS_MARKER_RENDERER = OVERRIDEN_METHOD_MARKER_RENDERER;
-
-  private static final Icon RECURSIVE_METHOD_ICON = IconLoader.getIcon("/gutter/recursiveMethod.png");
 
   protected final DaemonCodeAnalyzerSettings myDaemonSettings;
   protected final EditorColorsManager myColorsManager;
@@ -167,24 +164,11 @@ public class JavaLineMarkerProvider implements LineMarkerProvider, DumbAware {
       }
       else if (element instanceof PsiClass && !(element instanceof PsiTypeParameter)) {
         collectInheritingClasses((PsiClass)element, result);
-      } else if(element instanceof PsiMethodCallExpression){
-        final PsiMethodCallExpression methodCall = (PsiMethodCallExpression)element;
-        if (isRecursiveMethodCall(methodCall)){
-          result.add(new RecursiveMethodCallMarkerInfo(methodCall));
-        }
       }
     }
     if (!methods.isEmpty()) {
       collectOverridingAccessors(methods, result);
     }
-  }
-
-  private static boolean isRecursiveMethodCall(@NotNull PsiMethodCallExpression methodCall){
-    PsiMethod referencedMethod = methodCall.resolveMethod();
-
-    TextRange rmRange = referencedMethod == null ? null : referencedMethod.getTextRange();
-    int mcOffset = methodCall.getTextRange().getStartOffset();
-    return rmRange != null && rmRange.contains(mcOffset);
   }
 
   private static void collectInheritingClasses(PsiClass aClass, Collection<LineMarkerInfo> result) {
@@ -290,38 +274,6 @@ public class JavaLineMarkerProvider implements LineMarkerProvider, DumbAware {
           return "Multiple method overrides";
         }
       };
-    }
-  }
-
-  private static class RecursiveMethodCallMarkerInfo extends MergeableLineMarkerInfo<PsiMethodCallExpression> {
-    private RecursiveMethodCallMarkerInfo(@NotNull PsiMethodCallExpression methodCall) {
-      super(methodCall,
-            methodCall.getTextRange(),
-            RECURSIVE_METHOD_ICON,
-            Pass.UPDATE_OVERRIDEN_MARKERS,
-            FunctionUtil.<PsiMethodCallExpression, String>constant("Recursive call"),
-            null,
-            GutterIconRenderer.Alignment.RIGHT
-      );
-    }
-
-    @Override
-    public boolean canMergeWith(@NotNull MergeableLineMarkerInfo<?> info) {
-      if (!(info instanceof RecursiveMethodCallMarkerInfo)) return false;
-      PsiElement otherElement = info.getElement();
-      PsiElement myElement = getElement();
-      return otherElement != null && myElement != null;
-    }
-
-
-    @Override
-    public Icon getCommonIcon(@NotNull List<MergeableLineMarkerInfo> infos) {
-      return myIcon;
-    }
-
-    @Override
-    public Function<? super PsiElement, String> getCommonTooltip(@NotNull List<MergeableLineMarkerInfo> infos) {
-      return FunctionUtil.<PsiElement, String>constant("Multiple recursive calls");
     }
   }
 }

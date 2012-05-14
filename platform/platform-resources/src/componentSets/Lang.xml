@@ -12,7 +12,8 @@
     </component>
 
     <component>
-      <implementation-class>com.intellij.util.indexing.FileBasedIndex</implementation-class>
+      <interface-class>com.intellij.util.indexing.FileBasedIndex</interface-class>
+      <implementation-class>com.intellij.util.indexing.FileBasedIndexImpl</implementation-class>
     </component>
     <component>
       <interface-class>com.intellij.psi.stubs.StubIndex</interface-class>

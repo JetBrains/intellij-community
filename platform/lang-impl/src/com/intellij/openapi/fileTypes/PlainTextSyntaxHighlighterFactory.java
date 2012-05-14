@@ -20,13 +20,11 @@
 package com.intellij.openapi.fileTypes;
 
 import com.intellij.ide.highlighter.custom.AbstractCustomLexer;
-import com.intellij.ide.highlighter.custom.CustomHighlighterColors;
 import com.intellij.ide.highlighter.custom.tokens.*;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.CustomHighlighterTokenType;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 
