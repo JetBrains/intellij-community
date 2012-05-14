@@ -1,5 +1,6 @@
 package com.jetbrains.python.psi.impl;
 
+import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.impl.light.LightElement;
@@ -17,20 +18,23 @@ import java.util.List;
  */
 public class PyImportedModule extends LightElement implements NameDefiner {
   @Nullable private PyImportElement myImportElement;
-  private final PsiElement myContainer;
-  private final PyQualifiedName myImportedPrefix;
+  @NotNull private final PyFile myContainingFile;
+  @NotNull private final PyQualifiedName myImportedPrefix;
 
-  public PyImportedModule(@Nullable PyImportElement importElement, PsiElement container, PyQualifiedName importedPrefix) {
-    super(container.getManager(), PythonLanguage.getInstance());
+  public PyImportedModule(@Nullable PyImportElement importElement, @NotNull PyFile containingFile, @NotNull PyQualifiedName importedPrefix) {
+    super(containingFile.getManager(), PythonLanguage.getInstance());
     myImportElement = importElement;
-    myContainer = container;
+    myContainingFile = containingFile;
     myImportedPrefix = importedPrefix;
   }
 
+  @NotNull
+  @Override
   public PyFile getContainingFile() {
-    return (PyFile)myContainer.getContainingFile();
+    return myContainingFile;
   }
 
+  @NotNull
   public PyQualifiedName getImportedPrefix() {
     return myImportedPrefix;
   }
@@ -47,7 +51,7 @@ public class PyImportedModule extends LightElement implements NameDefiner {
       if (qName != null && qName.getComponentCount() == prefix.getComponentCount()) {
         return resolve(myImportElement, prefix);
       }
-      return new PyImportedModule(myImportElement, myContainer, prefix);
+      return new PyImportedModule(myImportElement, myContainingFile, prefix);
     }
     final PyImportElement fromImportElement = findMatchingFromImport(myImportedPrefix, the_name);
     if (fromImportElement != null) {
@@ -88,7 +92,7 @@ public class PyImportedModule extends LightElement implements NameDefiner {
   }
 
   public PsiElement copy() {
-    return new PyImportedModule(myImportElement, myContainer, myImportedPrefix);
+    return new PyImportedModule(myImportElement, myContainingFile, myImportedPrefix);
   }
 
   @Override
@@ -109,7 +113,7 @@ public class PyImportedModule extends LightElement implements NameDefiner {
   }
 
   @Nullable
-  public PyFile resolve() {
+  public PsiElement resolve() {
     final PsiElement element;
     if (myImportElement != null) {
       element = ResolveImportUtil.resolveImportElement(myImportElement, myImportedPrefix);
@@ -117,11 +121,10 @@ public class PyImportedModule extends LightElement implements NameDefiner {
     else {
       element = ResolveImportUtil.resolveModuleInRoots(getImportedPrefix(), getContainingFile());
     }
-    final PsiElement result = PyUtil.turnDirIntoInit(element);
-    if (result instanceof PyFile) {
-      return (PyFile)result;
+    if (element instanceof PsiDirectory) {
+      return PyUtil.getPackageElement((PsiDirectory)element);
     }
-    return null;
+    return element;
   }
 
   @Nullable
@@ -130,6 +133,6 @@ public class PyImportedModule extends LightElement implements NameDefiner {
   }
 
   public boolean isAncestorOf(PyImportedModule other) {
-    return PsiTreeUtil.isAncestor(myContainer, other.myContainer, true);
+    return PsiTreeUtil.isAncestor(myContainingFile, other.myContainingFile, true);
   }
 }

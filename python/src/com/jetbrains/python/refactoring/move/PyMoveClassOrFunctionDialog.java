@@ -13,6 +13,7 @@ import com.intellij.refactoring.ui.RefactoringDialog;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.PyClass;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -22,10 +23,11 @@ import javax.swing.*;
 public class PyMoveClassOrFunctionDialog extends RefactoringDialog {
   private PyMoveClassOrFunctionPanel myPanel;
 
-  public PyMoveClassOrFunctionDialog(@NotNull Project project, PsiNamedElement[] elements) {
+  public PyMoveClassOrFunctionDialog(@NotNull Project project, @NotNull PsiNamedElement[] elements, @Nullable String destination) {
     super(project, true);
     assert elements.length > 0;
     final String moveText;
+
     if (elements.length == 1) {
       PsiNamedElement e = elements[0];
       if (e instanceof PyClass) {
@@ -39,7 +41,11 @@ public class PyMoveClassOrFunctionDialog extends RefactoringDialog {
       moveText = PyBundle.message("refactoring.move.selected.elements");
     }
 
-    myPanel = new PyMoveClassOrFunctionPanel(moveText, getContainingFileName(elements[0]));
+    if (destination == null) {
+      destination = getContainingFileName(elements[0]);
+    }
+
+    myPanel = new PyMoveClassOrFunctionPanel(moveText, destination);
     setTitle(PyBundle.message("refactoring.move.class.or.function.dialog.title"));
 
     final FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor();
@@ -50,10 +56,6 @@ public class PyMoveClassOrFunctionDialog extends RefactoringDialog {
                                                                 null, project, descriptor,
                                                                 TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT);
     init();
-  }
-
-  public String getTargetPath() {
-    return myPanel.getBrowseTargetFileButton().getText();
   }
 
   @Override
@@ -69,6 +71,15 @@ public class PyMoveClassOrFunctionDialog extends RefactoringDialog {
   @Override
   protected String getHelpId() {
     return "python.reference.moveClass";
+  }
+
+  @Override
+  public JComponent getPreferredFocusedComponent() {
+    return myPanel.getBrowseTargetFileButton().getTextField();
+  }
+
+  public String getTargetPath() {
+    return myPanel.getBrowseTargetFileButton().getText();
   }
 
   private static String getContainingFileName(PsiElement element) {

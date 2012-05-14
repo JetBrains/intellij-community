@@ -12,6 +12,9 @@ import com.intellij.util.NotNullFunction;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.impl.PyBuiltinCache;
+import com.jetbrains.python.psi.types.PyTypeChecker;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -45,16 +48,16 @@ public class PyStringConcatenationToFormatIntention extends BaseIntentionAction 
     if (expressions.size() == 0) {
       return false;
     }
-    boolean hasReferenceOrCall = false;
+    final PyBuiltinCache cache = PyBuiltinCache.getInstance(element);
     for (PyExpression expression: expressions) {
-      if (expression instanceof PyReferenceExpression
-            || expression instanceof PyCallExpression)
-        hasReferenceOrCall = true;
-      else if (!(expression instanceof PyStringLiteralExpression))
+      final boolean isStringLiteral = expression instanceof PyStringLiteralExpression;
+      final boolean isStringReference = PyTypeChecker.match(cache.getStringType(LanguageLevel.forElement(expression)),
+                                                            expression.getType(TypeEvalContext.fast()), TypeEvalContext.fast());
+      if (!(isStringLiteral  || ((expression instanceof PyReferenceExpression || expression instanceof PyCallExpression) &&
+                                                           isStringReference))) {
         return false;
+      }
     }
-    if (!hasReferenceOrCall)
-      return false;
 
     setText(PyBundle.message("INTN.replace.plus.with.format.operator"));
     return true;
@@ -97,10 +100,16 @@ public class PyStringConcatenationToFormatIntention extends BaseIntentionAction 
     PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
     PyStringLiteralExpression stringLiteralExpression =
       elementGenerator.createStringLiteralAlreadyEscaped("\"" + stringLiteral.toString() + "\"");
-    String paramString = addParens > 1? "(" + parameters.substring(0, parameters.length() - 2) +")"
+
+    if (addParens > 0) {
+      final String paramString = addParens > 1? "(" + parameters.substring(0, parameters.length() - 2) +")"
                                                      : parameters.substring(0, parameters.length() - 2);
-    PyExpression expression = elementGenerator.createFromText(LanguageLevel.getDefault(),
+      final PyExpression expression = elementGenerator.createFromText(LanguageLevel.getDefault(),
                                                               PyExpressionStatement.class, paramString).getExpression();
-    element.replace(elementGenerator.createBinaryExpression("%", stringLiteralExpression, expression));
+      element.replace(elementGenerator.createBinaryExpression("%", stringLiteralExpression, expression));
+    }
+    else {
+      element.replace(stringLiteralExpression);
+    }
   }
 }

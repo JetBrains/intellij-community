@@ -141,6 +141,10 @@ public class PyStatementMoverTest extends PyTestCase {
     doTest();
   }
 
+  public void testExceptElse() { // PY-6482
+    doTest();
+  }
+
   public void testOneLineCompound() { // PY-5198
     doTest();
   }

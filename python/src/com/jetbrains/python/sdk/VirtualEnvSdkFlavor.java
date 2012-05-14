@@ -5,6 +5,7 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.SystemProperties;
@@ -48,11 +49,16 @@ public class VirtualEnvSdkFlavor extends CPythonSdkFlavor {
   @Nullable
   public static VirtualFile getDefaultLocation() {
     final String path = System.getenv().get("WORKON_HOME");
-    if (path != null) return LocalFileSystem.getInstance().findFileByPath(path.replace('\\','/'));
+    if (!StringUtil.isEmpty(path)) {
+      return LocalFileSystem.getInstance().findFileByPath(path.replace('\\','/'));
+    }
 
     final VirtualFile userHome = LocalFileSystem.getInstance().findFileByPath(SystemProperties.getUserHome().replace('\\','/'));
     if (userHome != null) {
-      return userHome.findChild(".virtualenvs");
+      final VirtualFile predefinedFolder = userHome.findChild(".virtualenvs");
+      if (predefinedFolder == null)
+        return userHome;
+      return predefinedFolder;
     }
     return null;
   }
@@ -63,34 +69,44 @@ public class VirtualEnvSdkFlavor extends CPythonSdkFlavor {
       VirtualFile[] suspects = rootDir.getChildren();
       for (VirtualFile child : suspects) {
         if (child.isDirectory()) {
-          final String childName = child.getName();
-          if (childName.equals("bin") || childName.equals("Scripts"))
-            candidates.addAll(findInterpreter(child));
-          else
-            candidates.addAll(findInDirectory(child));
+          final VirtualFile bin = child.findChild("bin");
+          final VirtualFile scripts = child.findChild("Scripts");
+          if (bin != null) {
+            final String interpreter = findInterpreter(bin);
+            if (interpreter != null) candidates.add(interpreter);
+          }
+          if (scripts != null) {
+            final String interpreter = findInterpreter(scripts);
+            if (interpreter != null) candidates.add(interpreter);
+          }
         }
       }
     }
     return candidates;
   }
 
-  private static Collection<String> findInterpreter(VirtualFile dir) {
-    List<String> candidates = new ArrayList<String>();
+  @Nullable
+  private static String findInterpreter(VirtualFile dir) {
     for (VirtualFile child : dir.getChildren()) {
       if (!child.isDirectory()) {
         final String childName = child.getName();
         for (String name : NAMES) {
-          if (SystemInfo.isWindows && childName.equals(name)) {
-            candidates.add(child.getPath());
+          if (SystemInfo.isWindows) {
+            if (childName.equals(name)) {
+              return child.getPath();
+            }
           }
-          else if (childName.startsWith(name)) {
-            if (!childName.endsWith("-config")) candidates.add(child.getPath());
-            break;
+          else {
+            if (childName.startsWith(name)) {
+              if (!childName.endsWith("-config")) {
+                return child.getPath();
+              }
+            }
           }
         }
       }
     }
-    return candidates;
+    return null;
   }
 
   @Override

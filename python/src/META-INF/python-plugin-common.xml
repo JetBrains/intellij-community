@@ -4,6 +4,7 @@
   <resource-bundle>com.jetbrains.python.PyBundle</resource-bundle>
 
   <extensions defaultExtensionNs="com.intellij">
+    <copyPastePreProcessor implementation="com.jetbrains.python.editor.PythonCopyPasteProcessor"/>
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
     <fileTypeFactory implementation="com.jetbrains.python.PythonFileTypeFactory"/>
     <fileTypeDetector implementation="com.jetbrains.python.PyFileTypeDetector"/>
@@ -670,6 +671,9 @@
     <configurationProducer implementation="com.jetbrains.rest.run.sphinx.SphinxConfigurationProducer"/>
 
     <!-- Mako files -->
+    <multiLangCommenter implementation="com.jetbrains.python.templateLanguages.TemplatesCommentProvider"/>
+    <highlightErrorFilter implementation="com.jetbrains.mako.inspection.MakoErrorFilter"/>
+
     <lang.substitutor language="HTML" implementationClass="com.jetbrains.python.templateLanguages.TemplateLanguageSubstitutor"/>
     <lang.substitutor language="XHTML" implementationClass="com.jetbrains.python.templateLanguages.TemplateLanguageSubstitutor"/>
     <lang.substitutor language="XML" implementationClass="com.jetbrains.python.templateLanguages.TemplateLanguageSubstitutor"/>

@@ -1,7 +1,8 @@
-package com.jetbrains.python.packaging;
+package com.jetbrains.python.packaging.ui;
 
 import com.intellij.ide.util.ChooseElementsDialog;
 import com.intellij.openapi.project.Project;
+import com.jetbrains.python.packaging.PyRequirement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

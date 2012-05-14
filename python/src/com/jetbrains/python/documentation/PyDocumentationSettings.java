@@ -17,8 +17,8 @@ import java.util.List;
  */
 @State(name = "PyDocumentationSettings",
       storages = {
-      @Storage( file = "$PROJECT_FILE$"),
-      @Storage( file = "$PROJECT_CONFIG_DIR$/other.xml", scheme = StorageScheme.DIRECTORY_BASED)
+      @Storage( file = StoragePathMacros.PROJECT_FILE),
+      @Storage( file = StoragePathMacros.PROJECT_CONFIG_DIR + "/other.xml", scheme = StorageScheme.DIRECTORY_BASED)
       }
 )
 public class PyDocumentationSettings implements PersistentStateComponent<PyDocumentationSettings> {

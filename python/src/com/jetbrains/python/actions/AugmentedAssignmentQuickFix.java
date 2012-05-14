@@ -72,7 +72,7 @@ public class AugmentedAssignmentQuickFix implements LocalQuickFix {
               final PsiElement psiOperator = expression.getPsiOperator();
               if (psiOperator == null) return;
               stringBuilder.append(targetText).append(" ").
-                  append(psiOperator.getText()).append("= ").append(rightText);
+                  append(psiOperator.getText()).append("= ").append(rightExpression.getText());
               final PyAugAssignmentStatementImpl augAssignment = elementGenerator.createFromText(LanguageLevel.forElement(element),
                                                             PyAugAssignmentStatementImpl.class, stringBuilder.toString());
               for (PsiComment comment : comments)

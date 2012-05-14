@@ -2,16 +2,19 @@ package com.jetbrains.python.remote;
 
 import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author traff
  */
 public class RemoteFile {
 
+  private final boolean myWin;
   private final String myPath;
 
   public RemoteFile(@NotNull String path, boolean isWin) {
     myPath = toSystemDependent(path, isWin);
+    myWin = isWin;
   }
 
   public RemoteFile(@NotNull String parent, String child) {
@@ -22,14 +25,19 @@ public class RemoteFile {
     this(resolveChild(parent, child, isWin), isWin);
   }
 
-  private static String resolveChild(@NotNull String parent, @NotNull String child, boolean win) {
-    String separator;
-    if (win) {
-      separator = "\\";
+  @Nullable
+  public String getName() {
+    int ind = myPath.lastIndexOf(getSeparator(myWin));
+    if (ind != -1 && ind < myPath.length() - 1) { //not last char
+      return myPath.substring(ind + 1);
     }
     else {
-      separator = "/";
+      return null;
     }
+  }
+
+  private static String resolveChild(@NotNull String parent, @NotNull String child, boolean win) {
+    String separator = getSeparator(win);
 
     String path;
     if (parent.endsWith(separator)) {
@@ -39,6 +47,17 @@ public class RemoteFile {
       path = parent + separator + child;
     }
     return path;
+  }
+
+  private static String getSeparator(boolean win) {
+    String separator;
+    if (win) {
+      separator = "\\";
+    }
+    else {
+      separator = "/";
+    }
+    return separator;
   }
 
 

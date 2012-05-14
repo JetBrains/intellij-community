@@ -56,6 +56,7 @@ public class PythonAllTestsSuite {
     PyFormatterTest.class,
     PyRenameTest.class,
     CythonRenameTest.class,
+    PyMoveTest.class,
     PyExtractMethodTest.class,
     PyPullUpTest.class,
     PyPushDownTest.class,

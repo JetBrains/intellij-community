@@ -191,6 +191,9 @@ public class AddImportHelper {
       if (target != null && existingImport.getTextRange().getStartOffset() > target.getTextRange().getStartOffset()) {
         continue;
       }
+      if (existingImport.isStarImport()) {
+        continue;
+      }
       final PyQualifiedName qName = existingImport.getImportSourceQName();
       if (qName != null && qName.toString().equals(path)) {
         for (PyImportElement el : existingImport.getImportElements()) {
@@ -220,7 +223,7 @@ public class AddImportHelper {
     else if (useQualified) {
       addImportStatement(file, path, null, priority);
       final PyElementGenerator elementGenerator = PyElementGenerator.getInstance(file.getProject());
-      element.replace(elementGenerator.createExpressionFromText(qName + "." + target.getName()));
+      element.replace(elementGenerator.createExpressionFromText(LanguageLevel.forElement(target), qName + "." + target.getName()));
     }
     else {
       addImportFrom(file, null, path, target.getName(), null, priority);

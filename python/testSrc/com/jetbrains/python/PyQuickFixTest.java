@@ -36,6 +36,17 @@ public class PyQuickFixTest extends PyTestCase {
                      PyUnresolvedReferencesInspection.class, PyBundle.message("ACT.NAME.use.import"), true, true);
   }
 
+  public void testImportFromModuleStar() {  // PY-6302
+    myFixture.enableInspections(PyUnresolvedReferencesInspection.class);
+    myFixture.copyDirectoryToProject("importFromModuleStar", "");
+    myFixture.configureFromTempProjectFile("source.py");
+    myFixture.checkHighlighting(true, false, false);
+    final IntentionAction intentionAction = myFixture.findSingleIntention(PyBundle.message("ACT.NAME.use.import"));
+    assertNotNull(intentionAction);
+    myFixture.launchAction(intentionAction);
+    myFixture.checkResultByFile("importFromModuleStar/source_after.py");
+  }
+
   public void testQualifyByImport() {
     final PyCodeInsightSettings settings = PyCodeInsightSettings.getInstance();
     boolean oldPreferFrom = settings.PREFER_FROM_IMPORT;
@@ -220,6 +231,11 @@ public class PyQuickFixTest extends PyTestCase {
                           PyBundle.message("QFIX.augment.assignment"), true, true);
   }
 
+  public void testAugmentAssignment2() {  // PY-6331
+    doInspectionTest("AugmentAssignment2.py", PyAugmentAssignmentInspection.class,
+                     PyBundle.message("QFIX.augment.assignment"), true, true);
+  }
+
   public void testChainedComparisons() {  // PY-1020
     doInspectionTest("ChainedComparisons.py", PyChainedComparisonsInspection.class,
                           PyBundle.message("QFIX.chained.comparison"), true, true);
@@ -243,6 +259,11 @@ public class PyQuickFixTest extends PyTestCase {
   public void testChainedComparison4() {  // PY-5623
     doInspectionTest("ChainedComparison4.py", PyChainedComparisonsInspection.class,
                           PyBundle.message("QFIX.chained.comparison"), true, true);
+  }
+
+  public void testChainedComparison5() {  // PY-6467
+    doInspectionTest("ChainedComparison5.py", PyChainedComparisonsInspection.class,
+                     PyBundle.message("QFIX.chained.comparison"), true, true);
   }
 
   public void testStatementEffect() {  // PY-1362, PY-2585

@@ -43,13 +43,6 @@ extends
   @Nullable
   PyClass getContainingClass();
 
-  /**
-   * Returns true if the function is a top-level class (its parent is its containing file).
-   *
-   * @return true if the function is top-level, false otherwise.
-   */
-  boolean isTopLevel();
-
   @Nullable
   PyType getReturnTypeFromDocString();
 

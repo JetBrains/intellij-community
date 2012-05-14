@@ -29,7 +29,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.HashMap;
-import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.console.PyDebugConsoleBuilder;
 import com.jetbrains.python.debugger.PyDebugRunner;
 import com.jetbrains.python.facet.LibraryContributingFacet;
@@ -306,13 +305,21 @@ public abstract class PythonCommandLineState extends CommandLineState {
 
   private static void addToPythonPath(VirtualFile file, Collection<String> pathList) {
     if (file.getFileSystem() instanceof JarFileSystem) {
-      VirtualFile realFile = JarFileSystem.getInstance().getVirtualFileForJar(file);
+      final VirtualFile realFile = JarFileSystem.getInstance().getVirtualFileForJar(file);
       if (realFile != null) {
-        pathList.add(FileUtil.toSystemDependentName(realFile.getPath()));
+        addIfNeeded(realFile, pathList);
       }
     }
     else {
-      pathList.add(FileUtil.toSystemDependentName(file.getPath()));
+      addIfNeeded(file, pathList);
+    }
+  }
+
+  private static void addIfNeeded(@NotNull final VirtualFile file, @NotNull final Collection<String> pathList) {
+    final Set<String> vals = Sets.newHashSet(pathList);
+    final String filePath = FileUtil.toSystemDependentName(file.getPath());
+    if (!vals.contains(filePath)) {
+      pathList.add(filePath);
     }
   }
 
@@ -323,9 +330,13 @@ public abstract class PythonCommandLineState extends CommandLineState {
 
   @NotNull
   public static Collection<String> collectPythonPath(@Nullable Module module) {
+    return collectPythonPath(module, true);
+  }
+
+  @NotNull
+  public static Collection<String> collectPythonPath(@Nullable Module module, final boolean addProjectRoots) {
     Collection<String> pythonPathList = Sets.newLinkedHashSet();
-    pythonPathList.add(PythonHelpersLocator.getHelpersRoot().getPath());
-    if (module != null) {
+    if (module != null && addProjectRoots) {
       addLibrariesFromModule(module, pythonPathList);
       Set<Module> dependencies = new HashSet<Module>();
       ModuleUtil.getDependencies(module, dependencies);

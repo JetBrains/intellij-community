@@ -26,6 +26,7 @@ import com.jetbrains.cython.psi.CythonCImportStatement;
 import com.jetbrains.cython.psi.CythonFromCImportStatement;
 import com.jetbrains.python.codeInsight.stdlib.PyStdlibUtil;
 import com.jetbrains.python.packaging.*;
+import com.jetbrains.python.packaging.ui.PyChooseRequirementsDialog;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveUtil;
 import com.jetbrains.python.sdk.PythonSdkType;
@@ -433,8 +434,9 @@ public class PyPackageRequirementsInspection extends PyInspection {
                 final PyElementGenerator generator = PyElementGenerator.getInstance(project);
                 if (mySetupPyRequires != null) {
                   if (mySetupPyRequires.getContainingFile().isWritable()) {
-                    final PyStringLiteralExpression literal = generator.createStringLiteralFromString(myPackageName);
-                    mySetupPyRequires.add(literal);
+                    final String text = String.format("'%s'", myPackageName);
+                    final PyExpression generated = generator.createExpressionFromText(myLanguageLevel, text);
+                    mySetupPyRequires.add(generated);
                   }
                 }
                 else if (mySetupArgumentList != null) {

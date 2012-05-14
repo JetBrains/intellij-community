@@ -3,13 +3,13 @@ package com.jetbrains.python.console;
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
 import com.google.common.collect.Collections2;
+import com.google.common.collect.Maps;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -19,8 +19,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiElement;
-import com.jetbrains.django.facet.DjangoFacet;
 import com.jetbrains.python.buildout.BuildoutFacet;
 import com.jetbrains.python.run.PythonCommandLineState;
 import com.jetbrains.python.sdk.PythonSdkType;
@@ -106,7 +104,8 @@ public class RunPythonConsoleAction extends AnAction implements DumbAware {
       setup_fragment = new String[]{self_path_append};
     }
 
-    return PydevConsoleRunner.createAndRun(project, sdk, PyConsoleType.PYTHON, workingDir, settingsProvider.getEnvs(), setup_fragment);
+    return PydevConsoleRunner
+      .createAndRun(project, sdk, PyConsoleType.PYTHON, workingDir, Maps.newHashMap(settingsProvider.getEnvs()), setup_fragment);
   }
 
   @NotNull

@@ -7,7 +7,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.stubs.IStubElementType;
@@ -145,10 +145,6 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
     return getStubOrPsiChild(PyElementTypes.DECORATOR_LIST); // PsiTreeUtil.getChildOfType(this, PyDecoratorList.class);
   }
 
-  public boolean isTopLevel() {
-    return getParentByStub() instanceof PsiFile;
-  }
-
   @Nullable
   @Override
   public PyType getReturnType(@NotNull TypeEvalContext context, @Nullable PyQualifiedExpression callSite) {
@@ -162,10 +158,7 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
         final Map<PyGenericType, PyType> substitutions = PyTypeChecker.unifyGenericCall(this, results.getReceiver(), results.getArguments(),
                                                                                         context);
         if (substitutions != null) {
-          final Ref<PyType> result = PyTypeChecker.substitute(type, substitutions, context);
-          if (result != null) {
-            return result.get();
-          }
+          return PyTypeChecker.substitute(type, substitutions, context);
         }
       }
       return null;
@@ -181,10 +174,7 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
     if (PyTypeChecker.hasGenerics(type, context)) {
       final Map<PyGenericType, PyType> substitutions = PyTypeChecker.unifyGenericCall(this, receiver, arguments, context);
       if (substitutions != null) {
-        final Ref<PyType> result = PyTypeChecker.substitute(type, substitutions, context);
-        if (result != null) {
-          return result.get();
-        }
+        return PyTypeChecker.substitute(type, substitutions, context);
       }
       return null;
     }

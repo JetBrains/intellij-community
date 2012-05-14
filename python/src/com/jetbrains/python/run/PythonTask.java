@@ -19,6 +19,7 @@ import com.jetbrains.django.util.OSUtil;
 import com.jetbrains.python.buildout.BuildoutFacet;
 import com.jetbrains.python.sdk.PythonEnvUtil;
 import com.jetbrains.python.sdk.PythonSdkType;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -41,9 +42,13 @@ public class PythonTask {
   private Runnable myAfterCompletion;
 
   public PythonTask(Module module, String runTabTitle) throws ExecutionException {
+    this(module, runTabTitle, PythonSdkType.findPythonSdk(module));
+  }
+
+  public PythonTask(final Module module, final String runTabTitle, @Nullable final Sdk sdk) throws ExecutionException {
     myModule = module;
     myRunTabTitle = runTabTitle;
-    mySdk = PythonSdkType.findPythonSdk(module);
+    mySdk = sdk;
     if (mySdk == null) {
       throw new ExecutionException("Cannot find Python interpreter for selected module");
     }
@@ -142,8 +147,13 @@ public class PythonTask {
   }
 
   protected List<String> setupPythonPath() {
-    List<String> pythonPath = Lists.newArrayList(PythonCommandLineState.getAddedPaths(mySdk));
-    pythonPath.addAll(PythonCommandLineState.collectPythonPath(myModule));
+    return setupPythonPath(true);
+  }
+
+  protected List<String> setupPythonPath(final boolean addProjectRoot) {
+    final List<String> pythonPath = Lists.newArrayList(PythonCommandLineState.getAddedPaths(mySdk));
+    if (addProjectRoot)
+      pythonPath.addAll(PythonCommandLineState.collectPythonPath(myModule));
     return pythonPath;
   }
 

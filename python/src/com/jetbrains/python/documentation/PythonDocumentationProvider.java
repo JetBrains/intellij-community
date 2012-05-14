@@ -46,6 +46,7 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
 
   @NonNls static final String LINK_TYPE_CLASS = "#class#";
   @NonNls static final String LINK_TYPE_PARENT = "#parent#";
+  @NonNls static final String LINK_TYPE_PARAM = "#param#";
 
   @NonNls private static final String RST_PREFIX = ":";
   @NonNls private static final String EPYDOC_PREFIX = "@";
@@ -287,6 +288,9 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
     if (link.equals(LINK_TYPE_CLASS)) {
       return inferContainingClassOf(context);
     }
+    else if (link.equals(LINK_TYPE_PARAM)) {
+      return inferClassOfParameter(context);
+    }
     else if (link.startsWith(LINK_TYPE_PARENT)) {
       PyClass cls = inferContainingClassOf(context);
       if (cls != null) {
@@ -437,6 +441,14 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
     if (context instanceof PyClass) return (PyClass)context;
     if (context instanceof PyFunction) return ((PyFunction)context).getContainingClass();
     else return PsiTreeUtil.getParentOfType(context, PyClass.class);
+  }
+
+  @Nullable
+  private static PyClass inferClassOfParameter(PsiElement context) {
+    final PyType type = ((PyNamedParameter)context).getType(TypeEvalContext.fast());
+    if (type instanceof PyClassType)
+      return ((PyClassType)type).getPyClass();
+    return null;
   }
 
   public static final DocumentationBuilderKit.LinkWrapper LinkMyClass = new DocumentationBuilderKit.LinkWrapper(LINK_TYPE_CLASS); // link item to containing class

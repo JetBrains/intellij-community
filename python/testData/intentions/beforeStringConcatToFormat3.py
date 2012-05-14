@@ -1,0 +1,1 @@
+foo = "foo" +<caret> "bar"

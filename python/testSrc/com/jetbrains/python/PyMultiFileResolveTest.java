@@ -9,6 +9,7 @@ import com.jetbrains.cython.psi.CythonFunction;
 import com.jetbrains.cython.psi.CythonVariable;
 import com.jetbrains.python.fixtures.PyResolveTestCase;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.impl.PyImportedModule;
 
 /**
  * @author yole
@@ -94,6 +95,14 @@ public class PyMultiFileResolveTest extends PyResolveTestCase {
     assertTrue(results.length == 2); // func and import stmt
     PsiElement elt = results[0].getElement();
     assertTrue("is target?", elt instanceof PyTargetExpression);
+  }
+
+  public void testFromPackageImportIntoInit() {  // PY-6305
+    myFixture.copyDirectoryToProject("fromPackageImportIntoInit/pack", "pack");
+    final PsiFile psiFile = myFixture.configureByFile("pack/__init__.py");
+    final PsiElement result = doResolve(psiFile);
+    assertInstanceOf(result, PyFile.class);
+    assertEquals("mod.py", ((PyFile) result).getName());
   }
 
   public void testResolveInPkg() {
@@ -338,6 +347,29 @@ public class PyMultiFileResolveTest extends PyResolveTestCase {
     assertNotNull(field);
     assertInstanceOf(field, CythonVariable.class);
     assertEquals("x", ((PsiNamedElement)field).getName());
+  }
+
+  // PY-2813
+  public void testFromNamespacePackageImport() {
+    assertResolvesTo(PyFunction.class, "foo");
+  }
+
+  // PY-2813
+  public void testNamespacePackage() {
+    final PsiElement element = doResolve();
+    assertInstanceOf(element, PyImportedModule.class);
+    final PyImportedModule module = (PyImportedModule)element;
+    assertEquals("p1", module.getImportedPrefix().toString());
+  }
+
+  // PY-2813
+  public void testNamespacePackageImport() {
+    assertResolvesTo(PsiDirectory.class, "p1");
+  }
+
+  // PY-2813
+  public void testFromNamespacePackageImportModule() {
+    assertResolvesTo(PyFile.class, "m1.py");
   }
 
   private void prepareTestDirectory() {

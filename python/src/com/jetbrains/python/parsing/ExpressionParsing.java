@@ -288,12 +288,12 @@ public class ExpressionParsing extends Parsing {
 
   public boolean parseMemberExpression(boolean isTargetExpression) {
     // in sequence a.b.... .c all members but last are always references, and the last may be target.
-    boolean recast_first_identifier = false;
-    boolean recast_qualifier = false;
+    boolean recastFirstIdentifier = false;
+    boolean recastQualifier = false;
     do {
-      boolean first_identifier_is_target = isTargetExpression && ! recast_first_identifier;
+      boolean firstIdentifierIsTarget = isTargetExpression && ! recastFirstIdentifier;
       PsiBuilder.Marker expr = myBuilder.mark();
-      if (!parsePrimaryExpression(first_identifier_is_target)) {
+      if (!parsePrimaryExpression(firstIdentifierIsTarget)) {
         expr.drop();
         return false;
       }
@@ -301,15 +301,14 @@ public class ExpressionParsing extends Parsing {
       while (true) {
         final IElementType tokenType = myBuilder.getTokenType();
         if (tokenType == PyTokenTypes.DOT) {
-          if (first_identifier_is_target) {
-            recast_first_identifier = true;
+          if (firstIdentifierIsTarget) {
+            recastFirstIdentifier = true;
             expr.rollbackTo();
             break;
           }
-          else recast_first_identifier = false; 
           myBuilder.advanceLexer();
           checkMatches(PyTokenTypes.IDENTIFIER, message("PARSE.expected.name"));
-          if (isTargetExpression && ! recast_qualifier && !atAnyOfTokens(PyTokenTypes.DOT, PyTokenTypes.LPAR, PyTokenTypes.LBRACKET)) {
+          if (isTargetExpression && ! recastQualifier && !atAnyOfTokens(PyTokenTypes.DOT, PyTokenTypes.LPAR, PyTokenTypes.LBRACKET)) {
             expr.done(PyElementTypes.TARGET_EXPRESSION);
           }
           else {
@@ -354,13 +353,13 @@ public class ExpressionParsing extends Parsing {
               sliceItemStart.drop();
               checkMatches(PyTokenTypes.RBRACKET, message("PARSE.expected.rbracket"));
               expr.done(PyElementTypes.SUBSCRIPTION_EXPRESSION);
-              if (isTargetExpression && ! recast_qualifier) {
-                recast_first_identifier = true; // subscription is always a reference
-                recast_qualifier = true; // recast non-first qualifiers too
-                expr.rollbackTo();
-                break;
-              }
             }
+          }
+          if (isTargetExpression && ! recastQualifier) {
+            recastFirstIdentifier = true; // subscription is always a reference
+            recastQualifier = true; // recast non-first qualifiers too
+            expr.rollbackTo();
+            break;
           }
           expr = expr.precede();
         }
@@ -368,11 +367,11 @@ public class ExpressionParsing extends Parsing {
           expr.drop();
           break;
         }
-        recast_first_identifier = false; // it is true only after a break; normal flow always unsets it.
-        // recast_qualifier is untouched, it remembers whether qualifiers were already recast 
+        recastFirstIdentifier = false; // it is true only after a break; normal flow always unsets it.
+        // recastQualifier is untouched, it remembers whether qualifiers were already recast
       }
     }
-    while (recast_first_identifier);
+    while (recastFirstIdentifier);
 
     return true;
   }

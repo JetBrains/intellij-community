@@ -33,7 +33,7 @@ import java.util.Map;
   name = "VFSTestFrameworkListener",
   storages = {
     @Storage(
-      file = "$APP_CONFIG$/other.xml"
+      file = StoragePathMacros.APP_CONFIG + "/other.xml"
     )}
 )
 public class VFSTestFrameworkListener implements ApplicationComponent, PersistentStateComponent<VFSTestFrameworkListener> {

@@ -24,7 +24,7 @@ but seemingly no one uses them in C extensions yet anyway.
 # * re.search-bound, ~30% time, in likes of builtins and _gtk with complex docstrings.
 # None of this can seemingly be easily helped. Maybe there's a simpler and faster parser library?
 
-VERSION = "1.105" # Must be a number-dot-number string, updated with each change that affects generated skeletons
+VERSION = "1.106" # Must be a number-dot-number string, updated with each change that affects generated skeletons
 # Note: DON'T FORGET TO UPDATE!
 
 VERSION_CONTROL_HEADER_FORMAT = '# from %s by generator %s'
@@ -832,6 +832,12 @@ class ModuleRedeclarator(object):
     else:
         bin_collections_name = '_collections' # Win / Lin
 
+    if version[0] < 3:
+        datetime_mod = "datetime"
+    else:
+        datetime_mod = "_datetime"
+
+
     # NOTE: per-module signature data may be lazily imported
     # keyed by (module_name, class_name, method_name). PREDEFINED_BUILTIN_SIGS might be a layer of it.
     # value is ("signature", "return_literal")
@@ -857,45 +863,45 @@ class ModuleRedeclarator(object):
         ("_struct", "Struct", "unpack"): ("(self, string)", None),
         ("_struct", "Struct", "unpack_from"): ("(self, buffer, offset=0)", None),
 
-        ("datetime", "date", "__new__"): ("(cls, year=None, month=None, day=None)", None),
-        ("datetime", "date", "fromordinal"): ("(cls, ordinal)", "date(1,1,1)"),
-        ("datetime", "date", "fromtimestamp"): ("(cls, timestamp)", "date(1,1,1)"),
-        ("datetime", "date", "isocalendar"): ("(self)", "(1, 1, 1)"),
-        ("datetime", "date", "isoformat"): ("(self)", DEFAULT_STR_LIT),
-        ("datetime", "date", "isoweekday"): ("(self)", INT_LIT),
-        ("datetime", "date", "replace"): ("(self, year=None, month=None, day=None)", "date(1,1,1)"),
-        ("datetime", "date", "strftime"): ("(self, format)", DEFAULT_STR_LIT),
-        ("datetime", "date", "timetuple"): ("(self)", "(0, 0, 0, 0, 0, 0, 0, 0, 0)"),
-        ("datetime", "date", "today"): ("(self)", "date(1, 1, 1)"),
-        ("datetime", "date", "toordinal"): ("(self)", INT_LIT),
-        ("datetime", "date", "weekday"): ("(self)", INT_LIT),
-        ("datetime", "timedelta", "__new__"
+        (datetime_mod, "date", "__new__"): ("(cls, year=None, month=None, day=None)", None),
+        (datetime_mod, "date", "fromordinal"): ("(cls, ordinal)", "date(1,1,1)"),
+        (datetime_mod, "date", "fromtimestamp"): ("(cls, timestamp)", "date(1,1,1)"),
+        (datetime_mod, "date", "isocalendar"): ("(self)", "(1, 1, 1)"),
+        (datetime_mod, "date", "isoformat"): ("(self)", DEFAULT_STR_LIT),
+        (datetime_mod, "date", "isoweekday"): ("(self)", INT_LIT),
+        (datetime_mod, "date", "replace"): ("(self, year=None, month=None, day=None)", "date(1,1,1)"),
+        (datetime_mod, "date", "strftime"): ("(self, format)", DEFAULT_STR_LIT),
+        (datetime_mod, "date", "timetuple"): ("(self)", "(0, 0, 0, 0, 0, 0, 0, 0, 0)"),
+        (datetime_mod, "date", "today"): ("(self)", "date(1, 1, 1)"),
+        (datetime_mod, "date", "toordinal"): ("(self)", INT_LIT),
+        (datetime_mod, "date", "weekday"): ("(self)", INT_LIT),
+        (datetime_mod, "timedelta", "__new__"
         ): ("(cls, days=None, seconds=None, microseconds=None, milliseconds=None, minutes=None, hours=None, weeks=None)", None),
-        ("datetime", "datetime", "__new__"
+        (datetime_mod, "datetime", "__new__"
         ): ("(cls, year=None, month=None, day=None, hour=None, minute=None, second=None, microsecond=None, tzinfo=None)", None),
-        ("datetime", "datetime", "astimezone"): ("(self, tz)", "datetime(1, 1, 1)"),
-        ("datetime", "datetime", "combine"): ("(cls, date, time)", "datetime(1, 1, 1)"),
-        ("datetime", "datetime", "date"): ("(self)", "datetime(1, 1, 1)"),
-        ("datetime", "datetime", "fromtimestamp"): ("(cls, timestamp, tz=None)", "datetime(1, 1, 1)"),
-        ("datetime", "datetime", "isoformat"): ("(self, sep='T')", DEFAULT_STR_LIT),
-        ("datetime", "datetime", "now"): ("(cls, tz=None)", "datetime(1, 1, 1)"),
-        ("datetime", "datetime", "strptime"): ("(cls, date_string, format)", DEFAULT_STR_LIT),
-        ("datetime", "datetime", "replace" ):
+        (datetime_mod, "datetime", "astimezone"): ("(self, tz)", "datetime(1, 1, 1)"),
+        (datetime_mod, "datetime", "combine"): ("(cls, date, time)", "datetime(1, 1, 1)"),
+        (datetime_mod, "datetime", "date"): ("(self)", "datetime(1, 1, 1)"),
+        (datetime_mod, "datetime", "fromtimestamp"): ("(cls, timestamp, tz=None)", "datetime(1, 1, 1)"),
+        (datetime_mod, "datetime", "isoformat"): ("(self, sep='T')", DEFAULT_STR_LIT),
+        (datetime_mod, "datetime", "now"): ("(cls, tz=None)", "datetime(1, 1, 1)"),
+        (datetime_mod, "datetime", "strptime"): ("(cls, date_string, format)", DEFAULT_STR_LIT),
+        (datetime_mod, "datetime", "replace" ):
           ("(self, year=None, month=None, day=None, hour=None, minute=None, second=None, microsecond=None, tzinfo=None)", "datetime(1, 1, 1)"),
-        ("datetime", "datetime", "time"): ("(self)", "time(0, 0)"),
-        ("datetime", "datetime", "timetuple"): ("(self)", "(0, 0, 0, 0, 0, 0, 0, 0, 0)"),
-        ("datetime", "datetime", "timetz"): ("(self)", "time(0, 0)"),
-        ("datetime", "datetime", "utcfromtimestamp"): ("(self, timestamp)", "datetime(1, 1, 1)"),
-        ("datetime", "datetime", "utcnow"): ("(cls)", "datetime(1, 1, 1)"),
-        ("datetime", "datetime", "utctimetuple"): ("(self)", "(0, 0, 0, 0, 0, 0, 0, 0, 0)"),
-        ("datetime", "time", "__new__"): ("(cls, hour=None, minute=None, second=None, microsecond=None, tzinfo=None)", None),
-        ("datetime", "time", "isoformat"): ("(self)", DEFAULT_STR_LIT),
-        ("datetime", "time", "replace"): ("(self, hour=None, minute=None, second=None, microsecond=None, tzinfo=None)", "time(0, 0)"),
-        ("datetime", "time", "strftime"): ("(self, format)", DEFAULT_STR_LIT),
-        ("datetime", "tzinfo", "dst"): ("(self, date_time)", INT_LIT),
-        ("datetime", "tzinfo", "fromutc"): ("(self, date_time)", "datetime(1, 1, 1)"),
-        ("datetime", "tzinfo", "tzname"): ("(self, date_time)", DEFAULT_STR_LIT),
-        ("datetime", "tzinfo", "utcoffset"): ("(self, date_time)", INT_LIT),
+        (datetime_mod, "datetime", "time"): ("(self)", "time(0, 0)"),
+        (datetime_mod, "datetime", "timetuple"): ("(self)", "(0, 0, 0, 0, 0, 0, 0, 0, 0)"),
+        (datetime_mod, "datetime", "timetz"): ("(self)", "time(0, 0)"),
+        (datetime_mod, "datetime", "utcfromtimestamp"): ("(self, timestamp)", "datetime(1, 1, 1)"),
+        (datetime_mod, "datetime", "utcnow"): ("(cls)", "datetime(1, 1, 1)"),
+        (datetime_mod, "datetime", "utctimetuple"): ("(self)", "(0, 0, 0, 0, 0, 0, 0, 0, 0)"),
+        (datetime_mod, "time", "__new__"): ("(cls, hour=None, minute=None, second=None, microsecond=None, tzinfo=None)", None),
+        (datetime_mod, "time", "isoformat"): ("(self)", DEFAULT_STR_LIT),
+        (datetime_mod, "time", "replace"): ("(self, hour=None, minute=None, second=None, microsecond=None, tzinfo=None)", "time(0, 0)"),
+        (datetime_mod, "time", "strftime"): ("(self, format)", DEFAULT_STR_LIT),
+        (datetime_mod, "tzinfo", "dst"): ("(self, date_time)", INT_LIT),
+        (datetime_mod, "tzinfo", "fromutc"): ("(self, date_time)", "datetime(1, 1, 1)"),
+        (datetime_mod, "tzinfo", "tzname"): ("(self, date_time)", DEFAULT_STR_LIT),
+        (datetime_mod, "tzinfo", "utcoffset"): ("(self, date_time)", INT_LIT),
 
         ("_io", None, "open"): ("(name, mode=None, buffering=None)", "file('/dev/null')"),
         ("_io", "FileIO", "read"): ("(self, size=-1)", DEFAULT_STR_LIT),
@@ -1064,7 +1070,7 @@ class ModuleRedeclarator(object):
             ("Struct", "size"): ('r', G_INT),
             ("Struct", "format"): ('r', G_STR),
         },
-        "datetime": {
+        datetime_mod: {
             ("datetime", "hour"): ('r', G_INT),
             ("datetime", "minute"): ('r', G_INT),
             ("datetime", "second"): ('r', G_INT),

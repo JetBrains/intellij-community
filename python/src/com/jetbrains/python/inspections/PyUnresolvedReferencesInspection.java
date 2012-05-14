@@ -154,10 +154,24 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
           final PyClass pyClass = ((PyClassType)type).getPyClass();
           if (pyClass != null && pyClass.isNewStyleClass()) {
             final List<String> slots = pyClass.getSlots();
-            if (slots != null && !slots.contains(node.getReferencedName()) && !slots.contains("__dict__")) {
+            final String attrName = node.getReferencedName();
+            if (slots != null && !slots.contains(attrName) && !slots.contains(PyNames.DICT)) {
+              for (PyClassRef ref : pyClass.iterateAncestors()) {
+                final PyClass ancestor = ref.getPyClass();
+                if (ancestor == null) {
+                  return;
+                }
+                if (PyNames.OBJECT.equals(ancestor.getName())) {
+                  break;
+                }
+                final List<String> ancestorSlots = ancestor.getSlots();
+                if (ancestorSlots == null || ancestorSlots.contains(attrName) || ancestorSlots.contains(PyNames.DICT)) {
+                  return;
+                }
+              }
               final ASTNode nameNode = node.getNameElement();
               final PsiElement e = nameNode != null ? nameNode.getPsi() : node;
-              registerProblem(e, "'" + pyClass.getName() + "' object has no attribute '" + node.getReferencedName() + "'");
+              registerProblem(e, "'" + pyClass.getName() + "' object has no attribute '" + attrName + "'");
             }
           }
         }
