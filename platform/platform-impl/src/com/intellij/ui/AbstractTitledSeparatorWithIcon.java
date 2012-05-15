@@ -42,9 +42,7 @@ public abstract class AbstractTitledSeparatorWithIcon extends JPanel {
 
   public AbstractTitledSeparatorWithIcon(@NotNull final Icon icon,
                                          @NotNull final Icon iconOpen,
-                                         @NotNull final String text,
-                                         final boolean smallFont,
-                                         final boolean boldFont) {
+                                         @NotNull final String text) {
     myIcon = icon;
     myIconOpen = iconOpen;
     setLayout(new GridBagLayout());
@@ -59,7 +57,7 @@ public abstract class AbstractTitledSeparatorWithIcon extends JPanel {
                                    new Insets(3, 0, 0, 0), 0, 0);
     add(mySeparator, gb);
     setBorder(IdeBorderFactory.createEmptyBorder(3, 0, 5, 5));
-    myLabel.setFont(UIUtil.getBorderFont(smallFont ? UIUtil.FontSize.SMALL : UIUtil.FontSize.NORMAL, boldFont));
+    myLabel.setFont(UIUtil.getTitledBorderFont());
     myLabel.setForeground(UIUtil.getTitledBorderTitleColor());
     originalText = text;
     myLabel.setText(UIUtil.replaceMnemonicAmpersand(originalText));

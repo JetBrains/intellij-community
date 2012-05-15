@@ -18,7 +18,6 @@ package com.intellij.openapi.ui;
 import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.actionSystem.Separator;
 import com.intellij.openapi.util.Ref;
 import com.intellij.ui.switcher.QuickActionProvider;
 import com.intellij.util.ui.AwtVisitor;
@@ -28,8 +27,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.*;
-import java.util.*;
+import java.awt.event.ContainerAdapter;
+import java.awt.event.ContainerEvent;
 import java.util.List;
 
 public class SimpleToolWindowPanel extends JPanel implements QuickActionProvider, DataProvider {
@@ -145,7 +144,7 @@ public class SimpleToolWindowPanel extends JPanel implements QuickActionProvider
     super.paintComponent(g);
 
     if (myToolbar != null && myToolbar.getParent() == this && myContent != null && myContent.getParent() == this) {
-      g.setColor(UIUtil.getBorderSeparatorColor());
+      g.setColor(UIUtil.getBorderColor());
       if (myVertical) {
         final int y = (int)myToolbar.getBounds().getMaxY();
         g.drawLine(0, y, getWidth(), y);

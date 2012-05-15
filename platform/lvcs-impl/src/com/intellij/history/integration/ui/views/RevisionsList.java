@@ -394,7 +394,7 @@ public class RevisionsList {
       @Override
       public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
         Graphics2D g2d = (Graphics2D)g.create();
-        g2d.setColor(UIUtil.getBorderSeparatorColor());
+        g2d.setColor(UIUtil.getBorderColor());
         g2d.setStroke(new BasicStroke(1.0f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER, 10.0f, new float[]{1}, 1));
         g2d.drawLine(x, y, x + width, y);
         if (isLast) {

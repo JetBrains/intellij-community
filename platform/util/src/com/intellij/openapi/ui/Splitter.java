@@ -244,8 +244,10 @@ public class Splitter extends JPanel {
 
         if (isHonorMinimumSize()) {
 
-          final double firstMinSize = getOrientation() ? myFirstComponent.getMinimumSize().getHeight() : myFirstComponent.getMinimumSize().getWidth();
-          final double secondMinSize = getOrientation() ? mySecondComponent.getMinimumSize().getHeight() : mySecondComponent.getMinimumSize().getWidth();
+          final double firstMinSize =
+            getOrientation() ? myFirstComponent.getMinimumSize().getHeight() : myFirstComponent.getMinimumSize().getWidth();
+          final double secondMinSize =
+            getOrientation() ? mySecondComponent.getMinimumSize().getHeight() : mySecondComponent.getMinimumSize().getWidth();
 
           if (firstComponentSize + secondComponentSize < firstMinSize + secondMinSize) {
             double proportion = firstMinSize / (firstMinSize + secondMinSize);
@@ -269,19 +271,19 @@ public class Splitter extends JPanel {
 
       firstComponentSize = Math.floor(firstComponentSize);
       secondComponentSize = Math.floor(secondComponentSize);
-      
+
       if (getOrientation()) {
         // fix flooring
-        secondComponentSize += (int) (height - firstComponentSize - secondComponentSize - dividerWidth);
-        
+        secondComponentSize += (int)(height - firstComponentSize - secondComponentSize - dividerWidth);
+
         firstRect.setBounds(0, 0, (int)width, (int)firstComponentSize);
         dividerRect.setBounds(0, (int)firstComponentSize, (int)width, (int)dividerWidth);
         secondRect.setBounds(0, (int)(firstComponentSize + dividerWidth), (int)width, (int)secondComponentSize);
       }
       else {
         // fix flooring
-        secondComponentSize += (int) (width - firstComponentSize - secondComponentSize - dividerWidth);
-        
+        secondComponentSize += (int)(width - firstComponentSize - secondComponentSize - dividerWidth);
+
         firstRect.setBounds(0, 0, (int)firstComponentSize, (int)height);
         dividerRect.setBounds((int)firstComponentSize, 0, (int)dividerWidth, (int)height);
         secondRect.setBounds((int)(firstComponentSize + dividerWidth), 0, (int)secondComponentSize, (int)height);
@@ -485,16 +487,15 @@ public class Splitter extends JPanel {
       }
 
       Icon glueIcon = IconLoader.getIcon(isVerticalSplit ? "/general/splitGlueV.png" : "/general/splitGlueH.png");
-      int leftInsetIcon = 1;
-      int leftInsetArrow = 0;
-      int glueFill = isVerticalSplit ? GridBagConstraints.VERTICAL : GridBagConstraints.HORIZONTAL;
-      add(new JLabel(glueIcon), new GridBagConstraints(0, 0, 1, 1, 0, 0,
-                                                       GridBagConstraints.CENTER, GridBagConstraints.EAST,
-                                                       new Insets(0, leftInsetIcon, 0, 0), 0, 0));
+      add(new JLabel(glueIcon), new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.CENTER, GridBagConstraints.NONE,
+                                                       new Insets(0, 0, 0, 0), 0, 0));
 
       if (myShowDividerControls && false) {
+        int glueFill = isVerticalSplit ? GridBagConstraints.VERTICAL : GridBagConstraints.HORIZONTAL;
         int xMask = isVerticalSplit ? 1 : 0;
         int yMask = isVerticalSplit ? 0 : 1;
+        int leftInsetArrow = 0;
+        int leftInsetIcon = 1;
 
         JLabel splitDownlabel = new JLabel(IconLoader.getIcon(isVerticalSplit ? "/general/splitDown.png" : "/general/splitRight.png"));
         splitDownlabel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
@@ -509,7 +510,8 @@ public class Splitter extends JPanel {
                                                    GridBagConstraints.NONE, new Insets(0, leftInsetArrow, 0, 0), 0, 0));
         //
         add(new JLabel(glueIcon),
-            new GridBagConstraints(2 * xMask, 2 * yMask, 1, 1, 0, 0, GridBagConstraints.CENTER, glueFill, new Insets(0, leftInsetIcon, 0, 0), 0, 0));
+            new GridBagConstraints(2 * xMask, 2 * yMask, 1, 1, 0, 0, GridBagConstraints.CENTER, glueFill,
+                                   new Insets(0, leftInsetIcon, 0, 0), 0, 0));
         JLabel splitCenterlabel =
           new JLabel(IconLoader.getIcon(isVerticalSplit ? "/general/splitCenterV.png" : "/general/splitCenterH.png"));
         splitCenterlabel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
@@ -522,7 +524,8 @@ public class Splitter extends JPanel {
         add(splitCenterlabel, new GridBagConstraints(3 * xMask, 3 * yMask, 1, 1, 0, 0, GridBagConstraints.CENTER, GridBagConstraints.NONE,
                                                      new Insets(0, leftInsetArrow, 0, 0), 0, 0));
         add(new JLabel(glueIcon),
-            new GridBagConstraints(4 * xMask, 4 * yMask, 1, 1, 0, 0, GridBagConstraints.CENTER, glueFill, new Insets(0, leftInsetIcon, 0, 0), 0, 0));
+            new GridBagConstraints(4 * xMask, 4 * yMask, 1, 1, 0, 0, GridBagConstraints.CENTER, glueFill,
+                                   new Insets(0, leftInsetIcon, 0, 0), 0, 0));
         //
         JLabel splitUpLabel = new JLabel(IconLoader.getIcon(isVerticalSplit ? "/general/splitUp.png" : "/general/splitLeft.png"));
         splitUpLabel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
@@ -539,7 +542,7 @@ public class Splitter extends JPanel {
                                                          isVerticalSplit ? GridBagConstraints.WEST : GridBagConstraints.SOUTH, glueFill,
                                                          new Insets(0, leftInsetIcon, 0, 0), 0, 0));
       }
-      
+
       revalidate();
       repaint();
     }
@@ -552,13 +555,17 @@ public class Splitter extends JPanel {
         float proportion;
         if (getOrientation()) {
           if (getHeight() > 0) {
-            proportion = Math.min(1.0f, Math.max(.0f, Math.min(Math.max(getMinProportion(myFirstComponent), (float)myPoint.y / (float)Splitter.this.getHeight()), 1 - getMinProportion(mySecondComponent))));
+            proportion = Math.min(1.0f, Math.max(.0f, Math
+              .min(Math.max(getMinProportion(myFirstComponent), (float)myPoint.y / (float)Splitter.this.getHeight()),
+                   1 - getMinProportion(mySecondComponent))));
             setProportion(proportion);
           }
         }
         else {
           if (getWidth() > 0) {
-            proportion = Math.min(1.0f, Math.max(.0f, Math.min(Math.max(getMinProportion(myFirstComponent), (float)myPoint.x / (float)Splitter.this.getWidth()), 1 - getMinProportion(mySecondComponent))));
+            proportion = Math.min(1.0f, Math.max(.0f, Math
+              .min(Math.max(getMinProportion(myFirstComponent), (float)myPoint.x / (float)Splitter.this.getWidth()),
+                   1 - getMinProportion(mySecondComponent))));
             setProportion(proportion);
           }
         }
@@ -595,9 +602,10 @@ public class Splitter extends JPanel {
 
     public void setResizeEnabled(boolean resizeEnabled) {
       myResizeEnabled = resizeEnabled;
-      if (! myResizeEnabled) {
+      if (!myResizeEnabled) {
         setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
-      } else {
+      }
+      else {
         setCursor(getOrientation() ?
                   Cursor.getPredefinedCursor(Cursor.N_RESIZE_CURSOR) :
                   Cursor.getPredefinedCursor(Cursor.W_RESIZE_CURSOR));

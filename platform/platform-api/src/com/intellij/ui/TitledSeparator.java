@@ -54,7 +54,7 @@ public class TitledSeparator extends JPanel {
   public void updateUI() {
     super.updateUI();
     if (myLabel != null) {
-      myLabel.setFont(UIUtil.getBorderFont(UIUtil.FontSize.SMALL, false));
+      myLabel.setFont(UIUtil.getTitledBorderFont());
     }
   }
 
@@ -80,23 +80,5 @@ public class TitledSeparator extends JPanel {
 
   public JSeparator getSeparator() {
     return mySeparator;
-  }
-
-  @Deprecated
-  public boolean isBoldFont() {
-    return false;
-  }
-
-  @Deprecated
-  public boolean isSmallFont() {
-    return true;
-  }
-
-  @Deprecated
-  public void setBoldFont(boolean boldFont) {
-  }
-
-  @Deprecated
-  public void setSmallFont(boolean smallFont) {
   }
 }
