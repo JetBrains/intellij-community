@@ -15,10 +15,12 @@
  */
 package com.intellij.xdebugger.impl.breakpoints.ui;
 
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.ui.popup.util.ItemWrapper;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,6 +30,15 @@ import java.util.Collection;
  * @author nik
  */
 public abstract class BreakpointPanelProvider<B> {
+
+  public interface BreakpointsListener {
+    void breakpointsChanged();
+  }
+
+  public abstract void addListener(BreakpointsListener listener, Project project);
+
+  public abstract void removeListener(BreakpointsListener listener);
+
   public abstract int getPriority();
 
   @Nullable
@@ -39,6 +50,9 @@ public abstract class BreakpointPanelProvider<B> {
   @NotNull
   public abstract Collection<AbstractBreakpointPanel<B>> getBreakpointPanels(@NotNull Project project, @NotNull DialogWrapper parentDialog);
 
+  public abstract AnAction[] getAddBreakpointActions(@NotNull Project project);
+
   public abstract void onDialogClosed(final Project project);
 
+  public abstract void provideBreakpointItems(Project project, Collection<ItemWrapper> items);
 }

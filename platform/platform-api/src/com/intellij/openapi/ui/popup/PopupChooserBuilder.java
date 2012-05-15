@@ -81,6 +81,7 @@ public class PopupChooserBuilder {
   private boolean myMayBeParent;
   private int myAdAlignment = SwingUtilities.LEFT;
   private boolean myModalContext;
+  private boolean myCloseOnEnter = true;
 
   public PopupChooserBuilder(@NotNull JList list) {
     myChooserComponent = list;
@@ -205,13 +206,28 @@ public class PopupChooserBuilder {
       @Override
       public void mouseReleased(MouseEvent e) {
         if (UIUtil.isActionClick(e, MouseEvent.MOUSE_RELEASED) && !UIUtil.isSelectionButtonDown(e) && !e.isConsumed()) {
-          closePopup(true, e, true);
+          if (myCloseOnEnter) {
+            closePopup(true, e, true);
+          }
+          else {
+            myItemChosenRunnable.run();
+          }
         }
       }
     });
 
     registerClosePopupKeyboardAction(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), false);
-    registerClosePopupKeyboardAction(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), true);
+    if (myCloseOnEnter) {
+      registerClosePopupKeyboardAction(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), true);
+    }
+    else {
+      registerKeyboardAction(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), new ActionListener() {
+        @Override
+        public void actionPerformed(ActionEvent event) {
+          myItemChosenRunnable.run();
+        }
+      });
+    }
     for (KeyStroke keystroke : myAdditionalKeystrokes) {
       registerClosePopupKeyboardAction(keystroke, true);
     }
@@ -295,14 +311,18 @@ public class PopupChooserBuilder {
   }
 
   private void registerClosePopupKeyboardAction(final KeyStroke keyStroke, final boolean shouldPerformAction) {
-    myChooserComponent.registerKeyboardAction(new AbstractAction() {
+    registerPopupKeyboardAction(keyStroke, new AbstractAction() {
       public void actionPerformed(ActionEvent e) {
         if (!shouldPerformAction && myChooserComponent instanceof ListWithFilter) {
           if (((ListWithFilter)myChooserComponent).resetFilter()) return;
         }
         closePopup(shouldPerformAction, null, shouldPerformAction);
       }
-    }, keyStroke, JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
+    });
+  }
+
+  private void registerPopupKeyboardAction(final KeyStroke keyStroke, AbstractAction action) {
+    myChooserComponent.registerKeyboardAction(action, keyStroke, JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
   }
 
   private void closePopup(boolean shouldPerformAction, MouseEvent e, boolean isOk) {
@@ -416,6 +436,11 @@ public class PopupChooserBuilder {
 
   public PopupChooserBuilder setMayBeParent(boolean mayBeParent) {
     myMayBeParent = mayBeParent;
+    return this;
+  }
+
+  public PopupChooserBuilder setCloseOnEnter(boolean closeOnEnter) {
+    myCloseOnEnter = closeOnEnter;
     return this;
   }
 

@@ -252,11 +252,9 @@ public abstract class InplaceRefactoring {
       if (oldDocument != myEditor.getDocument()) {
         final int exitCode = Messages.showYesNoCancelDialog(myProject, e.getMessage(), getCommandName(),
                                                             "Navigate to Started", "Cancel Started", "Cancel", Messages.getErrorIcon());
-        if (exitCode == -1 || exitCode == Messages.CANCEL) return true;
-        //todo ann: //if (exitCode == Messages.YES ) {
-          navigateToAlreadyStarted(oldDocument, exitCode);
-          return true;
-        //}
+        if (exitCode == Messages.CANCEL) return true;
+        navigateToAlreadyStarted(oldDocument, exitCode);
+        return true;
       }
       else {
         revertState();

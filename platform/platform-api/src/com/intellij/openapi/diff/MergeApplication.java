@@ -16,6 +16,7 @@
 package com.intellij.openapi.diff;
 
 import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.vfs.VirtualFile;
 
 /**
@@ -41,7 +42,7 @@ public class MergeApplication extends ApplicationStarterBase {
 
     MergeRequest request = DiffRequestFactory.getInstance()
       .createMergeRequest(getText(left), getText(right), getText(middle), result,
-                          null,
+                          ProjectManager.getInstance().getDefaultProject(),
                           ActionButtonPresentation.APPLY,
                           ActionButtonPresentation.CANCEL_WITH_PROMPT);
     request.addHint(DiffTool.HINT_SHOW_MODAL_DIALOG);

@@ -61,7 +61,7 @@ public class ClassInitializerEntry
 
   public DefaultMutableTreeNode addToPopupTree(DefaultMutableTreeNode parent, RearrangerSettings settings) {
     LOG.debug("add class initializer to popup tree");
-    DefaultMutableTreeNode node = new RearrangerTreeNode(this, name);
+    DefaultMutableTreeNode node = new RearrangerTreeNode(this, myName);
     parent.add(node);
     return node;
   }

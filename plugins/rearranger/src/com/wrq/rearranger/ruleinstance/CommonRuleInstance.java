@@ -23,7 +23,7 @@ package com.wrq.rearranger.ruleinstance;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.wrq.rearranger.entry.ClassContentsEntry;
-import com.wrq.rearranger.entry.IPopupTreeRangeEntry;
+import com.wrq.rearranger.entry.PopupTreeRangeEntry;
 import com.wrq.rearranger.entry.MethodEntry;
 import com.wrq.rearranger.entry.RangeEntry;
 import com.wrq.rearranger.popup.FilePopupEntry;
@@ -65,7 +65,7 @@ public abstract class CommonRuleInstance
    */
   public void addEntry(RangeEntry entry) {
     if (myRule instanceof CommonAttributes) {
-      SortOptions sortOptions = ((CommonAttributes)myRule).getSortAttr();
+      SortOptions sortOptions = ((CommonAttributes)myRule).getSortOptions();
       insertionSort(entry, sortOptions);
     }
     else {
@@ -135,7 +135,7 @@ public abstract class CommonRuleInstance
     /**
      * append each of the matches to the top level.
      */
-    for (IPopupTreeRangeEntry entry : getMatches()) {
+    for (PopupTreeRangeEntry entry : getMatches()) {
       entry.addToPopupTree(top, settings);
     }
   }

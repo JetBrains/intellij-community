@@ -46,6 +46,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.awt.dnd.DragSource;
+import java.io.File;
 import java.util.List;
 
 /**
@@ -121,6 +122,13 @@ public class XLineBreakpointImpl<P extends XBreakpointProperties> extends XBreak
       return FileUtil.toSystemDependentName(VfsUtil.urlToPath(url));
     }
     return url != null ? url : "";
+  }
+
+  @Override
+  public String getShortFilePath() {
+    final String path = getPresentableFilePath();
+    if (path.isEmpty()) return "";
+    return new File(path).getName();
   }
 
   @Nullable

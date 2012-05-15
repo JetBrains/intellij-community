@@ -5,6 +5,7 @@ import org.jetbrains.jps.Module;
 import org.jetbrains.jps.Project;
 import org.jetbrains.jps.Sdk;
 import org.jetbrains.jps.incremental.BuildLoggingManager;
+import org.jetbrains.jps.incremental.CompilerEncodingConfiguration;
 import org.jetbrains.jps.incremental.ModuleRootsIndex;
 import org.jetbrains.jps.incremental.fs.BuildFSState;
 import org.jetbrains.jps.incremental.storage.BuildDataManager;
@@ -27,6 +28,7 @@ public final class ProjectDescriptor {
   public ModuleRootsIndex rootsIndex;
   private int myUseCounter = 1;
   private Set<JavaSdk> myProjectJavaSdks;
+  private CompilerEncodingConfiguration myEncodingConfiguration;
 
   public ProjectDescriptor(Project project,
                            BuildFSState fsState,
@@ -40,6 +42,7 @@ public final class ProjectDescriptor {
     myLoggingManager = loggingManager;
     this.rootsIndex = new ModuleRootsIndex(project);
     myProjectJavaSdks = new HashSet<JavaSdk>();
+    myEncodingConfiguration = new CompilerEncodingConfiguration(project.getFilePathToCharset(), rootsIndex);
     for (Module module : project.getModules().values()) {
       final Sdk sdk = module.getSdk();
       if (sdk instanceof JavaSdk && !myProjectJavaSdks.contains(sdk)) {
@@ -49,6 +52,10 @@ public final class ProjectDescriptor {
         }
       }
     }
+  }
+
+  public CompilerEncodingConfiguration getEncodingConfiguration() {
+    return myEncodingConfiguration;
   }
 
   public Set<JavaSdk> getProjectJavaSdks() {

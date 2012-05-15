@@ -220,6 +220,7 @@ public class JavaDocCompletionContributor extends CompletionContributor {
       if (context.getCompletionChar() == Lookup.REPLACE_SELECT_CHAR) {
         final PsiDocTagValue valueElement = tag.getValueElement();
         endOffset = valueElement.getTextRange().getEndOffset();
+        context.setTailOffset(endOffset);
       }
       editor.getDocument().deleteString(afterSharp, endOffset);
       editor.getCaretModel().moveToOffset(signatureOffset);

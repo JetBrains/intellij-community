@@ -23,13 +23,13 @@ package com.wrq.rearranger.entry;
 
 import com.intellij.psi.PsiElement;
 import com.wrq.rearranger.settings.RearrangerSettings;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
 /** Corresponds to comments and whitespace that surround Java syntactic items like classes and methods. */
-public class MiscellaneousTextEntry
-  extends ClassContentsEntry
-{
+public class MiscellaneousTextEntry extends ClassContentsEntry {
+  
   public MiscellaneousTextEntry(final PsiElement start,
                                 final PsiElement end,
                                 final boolean fixedHeader,
@@ -38,6 +38,7 @@ public class MiscellaneousTextEntry
     super(start, end, fixedHeader, fixedTrailer);
   }
 
+  @Nullable
   public String getTypeIconName() {
     // do not show headers and trailers in the file structure popup.
     return null;
@@ -47,6 +48,7 @@ public class MiscellaneousTextEntry
     return null;
   }
 
+  @Nullable
   public JLabel getPopupEntryText(RearrangerSettings settings) {
     return null;
   }
@@ -59,7 +61,7 @@ public class MiscellaneousTextEntry
     else {
       result = "Trailer";
     }
-    if (alternateValue != null) {
+    if (myAlternateValue != null) {
       result += "; comments removed";
     }
     return result;

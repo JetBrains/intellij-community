@@ -24,14 +24,16 @@ package com.wrq.rearranger.settings.attributeGroups;
 import com.wrq.rearranger.entry.RangeEntry;
 import com.wrq.rearranger.ruleinstance.HeaderTrailerRuleInstance;
 import com.wrq.rearranger.ruleinstance.RuleInstance;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
 
 /** A rule to match header text (text which does not constitute a matchable item such as a field or method.) */
-public class HeaderRule
-  implements Rule
-{
+public class HeaderRule implements Rule {
+  
+  @NotNull
   public RuleInstance createRuleInstance() {
     return new HeaderTrailerRuleInstance(this);
   }
@@ -45,15 +47,15 @@ public class HeaderRule
     // does nothing
   }
 
-  public boolean isMatch(RangeEntry rangeEntry) {
+  public boolean isMatch(@NotNull RangeEntry rangeEntry) {
     return rangeEntry.isFixedHeader();
   }
 
-  public boolean commentsMatchGlobalPattern(String pattern) {
+  public boolean commentsMatchGlobalPattern(@Nullable String pattern) {
     return true;
   }
 
-  public List<String> getOffendingPatterns(String pattern) {
+  public List<String> getOffendingPatterns(@Nullable String pattern) {
     return new ArrayList<String>(1);
   }
 
@@ -61,6 +63,6 @@ public class HeaderRule
     return 0;
   }
 
-  public void addCommentPatternsToList(List<String> list) {
+  public void addCommentPatternsToList(@Nullable List<String> list) {
   }
 }

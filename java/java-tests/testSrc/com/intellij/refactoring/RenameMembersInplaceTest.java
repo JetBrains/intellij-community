@@ -53,6 +53,10 @@ public class RenameMembersInplaceTest extends LightCodeInsightTestCase {
   public void testClassWithMultipleConstructors() throws Exception {
     doTestInplaceRename("Bar");
   }
+  
+  public void testMethodWithJavadocRef() throws Exception {
+    doTestInplaceRename("bar");
+  }
 
   public void testConflictingMethodName() throws Exception {
     try {

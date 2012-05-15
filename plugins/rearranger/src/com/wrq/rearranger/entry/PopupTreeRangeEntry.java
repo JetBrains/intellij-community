@@ -26,13 +26,11 @@ import com.wrq.rearranger.settings.RearrangerSettings;
 import javax.swing.tree.DefaultMutableTreeNode;
 
 /**
- * Created by IntelliJ IDEA.
  * User: davek
  * Date: Feb 18, 2004
  * Time: 9:17:56 AM
- * To change this template use File | Settings | File Templates.
  */
-public interface IPopupTreeRangeEntry {
+public interface PopupTreeRangeEntry {
 
   /**
    * Gives individual entries control over their appearance, depending on settings.

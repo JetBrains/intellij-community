@@ -34,12 +34,13 @@ public class TabsBorder {
 
   public TabsBorder(JBTabsImpl tabs) {
     myTabs = tabs;
-    myBorderSize = new Insets(tabs.getBorder(-1), tabs.getBorder(-1), tabs.getBorder(-1), tabs.getBorder(-1));
-    myTabBorderSize = tabs.getBorder(-1);
+    myBorderSize = new Insets(JBTabsImpl.getBorder(-1), JBTabsImpl.getBorder(-1), JBTabsImpl.getBorder(-1), JBTabsImpl.getBorder(-1));
+    myTabBorderSize = JBTabsImpl.getBorder(-1);
   }
 
   public JBTabsPresentation setPaintBorder(int top, int left, int right, int bottom) {
-    final Insets newBorder = new Insets(myTabs.getBorder(top), myTabs.getBorder(left), myTabs.getBorder(bottom), myTabs.getBorder(right));
+    final Insets newBorder = new Insets(
+      JBTabsImpl.getBorder(top), JBTabsImpl.getBorder(left), JBTabsImpl.getBorder(bottom), JBTabsImpl.getBorder(right));
     if (newBorder.equals(myBorderSize)) return myTabs;
 
     myBorderSize = newBorder;
@@ -52,7 +53,7 @@ public class TabsBorder {
   }
 
   public JBTabsPresentation setTabSidePaintBorder(int size) {
-    final int newSize = myTabs.getBorder(size);
+    final int newSize = JBTabsImpl.getBorder(size);
     if (myTabBorderSize == newSize) return myTabs;
 
     myTabBorderSize = newSize;

@@ -26,19 +26,20 @@ import com.wrq.rearranger.entry.RangeEntry;
 import com.wrq.rearranger.rearrangement.Emitter;
 import com.wrq.rearranger.settings.RearrangerSettings;
 import com.wrq.rearranger.settings.attributeGroups.Rule;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.tree.DefaultMutableTreeNode;
 import java.util.ArrayList;
 import java.util.List;
 
 /** Instance to pick up header text. */
-public class HeaderTrailerRuleInstance
-  implements RuleInstance
-{
-  private final Rule       myRule;
-  private       RangeEntry myEntry;
+public class HeaderTrailerRuleInstance implements RuleInstance {
 
-  public HeaderTrailerRuleInstance(Rule rule) {
+  @NotNull private final Rule       myRule;
+  @Nullable private      RangeEntry myEntry;
+
+  public HeaderTrailerRuleInstance(@NotNull Rule rule) {
     myRule = rule;
   }
 
@@ -55,12 +56,13 @@ public class HeaderTrailerRuleInstance
     return list;
   }
 
+  @NotNull
   public Rule getRule() {
     return myRule;
   }
 
-  public void addEntry(RangeEntry entry) {
-    this.myEntry = entry; // a header only has one entry
+  public void addEntry(@Nullable RangeEntry entry) {
+    myEntry = entry; // a header only has one entry
   }
 
   public void emit(Emitter emitter) {

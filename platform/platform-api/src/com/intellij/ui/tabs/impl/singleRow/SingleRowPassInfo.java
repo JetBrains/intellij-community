@@ -26,19 +26,17 @@ import java.util.List;
 
 public class SingleRowPassInfo extends LayoutPassInfo {
   final Dimension layoutSize;
-  int contentCount;
+  final int contentCount;
   int position;
   int requiredLength;
   int toFitLength;
   public final List<TabInfo> toLayout;
   public final List<TabInfo> toDrop;
-  int moreRectAxisSize;
+  final int moreRectAxisSize;
   public Rectangle moreRect;
 
   public JComponent hToolbar;
   public JComponent vToolbar;
-
-  public int compPosition;
 
   public Rectangle firstGhost;
   public boolean firstGhostVisible;
@@ -48,17 +46,16 @@ public class SingleRowPassInfo extends LayoutPassInfo {
 
   public Insets insets;
 
-  private final JBTabsImpl myTabs;
   public JComponent comp;
   public Rectangle tabRectangle;
-  int scrollOffset;
+  final int scrollOffset;
 
 
   public SingleRowPassInfo(SingleRowLayout layout, List<TabInfo> visibleInfos) {
     super(visibleInfos);
-    myTabs = layout.myTabs;
-    layoutSize = layout.myTabs.getSize();
-    contentCount = myTabs.getTabCount();
+    JBTabsImpl tabs = layout.myTabs;
+    layoutSize = tabs.getSize();
+    contentCount = tabs.getTabCount();
     toLayout = new ArrayList<TabInfo>();
     toDrop = new ArrayList<TabInfo>();
     moreRectAxisSize = layout.getStrategy().getMoreRectAxisSize();

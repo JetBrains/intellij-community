@@ -62,6 +62,11 @@ public class AnyExceptionBreakpointFactory extends BreakpointFactory{
     return new BreakpointPanelAction[0];  //To change body of implemented methods use File | Settings | File Templates.
   }
 
+  @Override
+  public boolean breakpointCanBeRemoved(Breakpoint breakpoint) {
+    return false;
+  }
+
   public @Nullable BreakpointPanel createBreakpointPanel(Project project, DialogWrapper parentDialog) {
     return null;
   }

@@ -212,7 +212,7 @@ public class CherryPicker {
                                                 public void run() {
                                                   changeList.set(createChangeList(changes, commitMessage));
                                                 }
-                                              }, InvokeAfterUpdateMode.SYNCHRONOUS_NOT_CANCELLABLE, "",
+                                              }, InvokeAfterUpdateMode.SYNCHRONOUS_NOT_CANCELLABLE, "Cherry-pick",
                                               new Consumer<VcsDirtyScopeManager>() {
                                                 public void consume(VcsDirtyScopeManager vcsDirtyScopeManager) {
                                                   vcsDirtyScopeManager.filePathsDirty(paths, null);

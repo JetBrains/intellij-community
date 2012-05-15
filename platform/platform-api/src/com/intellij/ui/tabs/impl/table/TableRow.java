@@ -17,13 +17,13 @@ package com.intellij.ui.tabs.impl.table;
 
 import com.intellij.ui.tabs.TabInfo;
 
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
 
 class TableRow {
 
-  TablePassInfo myData;
-  List<TabInfo> myColumns = new ArrayList<TabInfo>();
+  private final TablePassInfo myData;
+  final List<TabInfo> myColumns = new ArrayList<TabInfo>();
   int width;
 
   public TableRow(final TablePassInfo data) {

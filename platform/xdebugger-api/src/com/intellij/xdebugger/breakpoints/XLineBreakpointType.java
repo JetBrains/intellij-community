@@ -71,7 +71,11 @@ public abstract class XLineBreakpointType<P extends XBreakpointProperties> exten
   public abstract P createBreakpointProperties(@NotNull VirtualFile file, int line);
 
   public String getDisplayText(final XLineBreakpoint<P> breakpoint) {
-    return XDebuggerBundle.message("xbreakpoint.default.display.text", breakpoint.getLine() + 1, breakpoint.getPresentableFilePath());
+    return fileLineDisplayText(breakpoint.getPresentableFilePath(), breakpoint.getLine());
+  }
+
+  private String fileLineDisplayText(String path, int line) {
+    return XDebuggerBundle.message("xbreakpoint.default.display.text", line + 1, path);
   }
 
   @NotNull
@@ -85,6 +89,11 @@ public abstract class XLineBreakpointType<P extends XBreakpointProperties> exten
   @Override
   public final XSourcePosition getSourcePosition(@NotNull XBreakpoint<P> breakpoint) {
     return null;
+  }
+
+  @Override
+  public String getShortText(XLineBreakpoint<P> breakpoint) {
+    return fileLineDisplayText(breakpoint.getShortFilePath(), breakpoint.getLine());
   }
 
   /**

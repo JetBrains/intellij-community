@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,7 +40,9 @@ public class DuplicateLinesAction extends EditorAction {
         VisualPosition rangeEnd = editor.offsetToVisualPosition(Math.max(selStart, selEnd));
         final Pair<Integer,Integer> copiedRange =
           DuplicateAction.duplicateLinesRange(editor, editor.getDocument(), rangeStart, rangeEnd);
-        editor.getSelectionModel().setSelection(copiedRange.first, copiedRange.second);
+        if (copiedRange != null) {
+          editor.getSelectionModel().setSelection(copiedRange.first, copiedRange.second);
+        }
       }
       else {
         VisualPosition caretPos = editor.getCaretModel().getVisualPosition();

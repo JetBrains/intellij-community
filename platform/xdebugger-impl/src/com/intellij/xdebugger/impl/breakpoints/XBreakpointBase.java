@@ -400,8 +400,7 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
     public boolean equals(Object obj) {
       return obj instanceof XLineBreakpointImpl.BreakpointGutterIconRenderer
              && getBreakpoint() == ((XLineBreakpointImpl.BreakpointGutterIconRenderer)obj).getBreakpoint()
-             && Comparing.equal(getIcon(), ((XLineBreakpointImpl.BreakpointGutterIconRenderer)obj).getIcon())
-        ;
+             && Comparing.equal(getIcon(), ((XLineBreakpointImpl.BreakpointGutterIconRenderer)obj).getIcon());
     }
 
     @Override

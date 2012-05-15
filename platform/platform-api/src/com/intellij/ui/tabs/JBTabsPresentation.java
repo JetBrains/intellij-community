@@ -30,13 +30,9 @@ public interface JBTabsPresentation {
   JBTabsPresentation setPaintBorder(int top, int left, int right, int bottom);
   JBTabsPresentation setTabSidePaintBorder(int size);
 
-  boolean isPaintFocus();
-
   JBTabsPresentation setPaintFocus(boolean paintFocus);
 
   JBTabsPresentation setStealthTabMode(boolean stealthTabMode);
-
-  boolean isStealthTabMode();
 
   JBTabsPresentation setSideComponentVertical(boolean vertical);
 
@@ -46,34 +42,17 @@ public interface JBTabsPresentation {
 
   boolean isSingleRow();
 
-  boolean isSideComponentVertical();
-
-  boolean isSideComponentOnTabs();
-
   JBTabsPresentation setUiDecorator(@Nullable UiDecorator decorator);
-
-  boolean isRequestFocusOnLastFocusedComponent();
 
   JBTabsPresentation setRequestFocusOnLastFocusedComponent(boolean request);
 
   void setPaintBlocked(boolean blocked, final boolean takeSnapshot);
 
-  void setFocused(boolean focused);
-
   JBTabsPresentation setInnerInsets(Insets innerInsets);
-
-  Insets getInnerInsets();
 
   JBTabsPresentation setGhostsAlwaysVisible(boolean visible);
 
-  boolean isGhostsAlwaysVisible();
-
-  @NotNull
-  JBTabsPresentation setAdjustBorders(boolean adjust);
-
   JBTabsPresentation setFocusCycle(final boolean root);
-
-  boolean isToDrawBorderIfTabsHidden();
 
   @NotNull
   JBTabsPresentation setToDrawBorderIfTabsHidden(boolean draw);
@@ -96,8 +75,6 @@ public interface JBTabsPresentation {
   JBTabsPosition getTabsPosition();
 
   JBTabsPresentation setTabDraggingEnabled(boolean enabled);
-  
-  boolean isTabDraggingEnabled();
 
   JBTabsPresentation setProvideSwitchTargets(boolean provide);
 

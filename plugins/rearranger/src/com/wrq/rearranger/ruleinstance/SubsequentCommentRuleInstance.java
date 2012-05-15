@@ -38,10 +38,10 @@ public class SubsequentCommentRuleInstance
   public void determineEmit(List<RuleInstance> resultRuleInstances, int startIndex) {
     if (match(
       resultRuleInstances,
-      commentRule.getnSubsequentRulesToMatch(),
+      myCommentRule.getnSubsequentRulesToMatch(),
       +1,
       startIndex,
-      commentRule.isAllSubsequentRules()
+      myCommentRule.isAllSubsequentRules()
     ))
     {
       setEmit(true);

@@ -21,7 +21,7 @@
  */
 package com.wrq.rearranger.settings;
 
-import com.wrq.rearranger.entry.IPopupTreeRangeEntry;
+import com.wrq.rearranger.entry.PopupTreeRangeEntry;
 import com.wrq.rearranger.entry.RangeEntry;
 import com.wrq.rearranger.popup.FilePopupEntry;
 import com.wrq.rearranger.popup.RearrangerTreeNode;
@@ -32,6 +32,7 @@ import com.wrq.rearranger.settings.attributeGroups.RegexUtil;
 import com.wrq.rearranger.util.Constraints;
 import org.jdom.Attribute;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -50,7 +51,7 @@ import java.util.List;
 /** Handles insertion of comment separators between sections of the rearranged file. */
 public final class CommentRule
   implements AttributeGroup,
-             IPopupTreeRangeEntry,
+             PopupTreeRangeEntry,
              FilePopupEntry
 {
 // ------------------------------------------------------- FIELDS ------------------------------------------------------
@@ -417,6 +418,7 @@ public final class CommentRule
 
 // ---------------------------------------------- Interface AttributeGroup ---------------------------------------------
 
+  @NotNull
   public final /*CommentRule*/AttributeGroup deepCopy() {
     final CommentRule comment = new CommentRule();
     comment.commentText = commentText;
@@ -429,7 +431,7 @@ public final class CommentRule
     return comment;
   }
 
-  public final void writeExternal(final Element parent) {
+  public final void writeExternal(@NotNull final Element parent) {
     final Element me = new Element("Comment");
     me.setText(escape(commentText));
     me.setAttribute("condition", "" + emitCondition);
@@ -464,11 +466,12 @@ public final class CommentRule
 // -------------------------------------------------- Interface IRule --------------------------------------------------
 
 
+  @NotNull
   public RuleInstance createRuleInstance() {
     return CommentRuleInstanceFactory.buildCommentRuleInstance(this);
   }
 
-  public boolean isMatch(RangeEntry rangeEntry) {
+  public boolean isMatch(@NotNull RangeEntry rangeEntry) {
     return false; // comment rules match no entries -- they're just placeholders to generate comments.
   }
 
