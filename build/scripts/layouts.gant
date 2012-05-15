@@ -496,6 +496,8 @@ def layout_core(String home, String target) {
       module("core-impl")
       module("boot")
       module("extensions")
+      module("indexing-api")
+      module("indexing-impl")
       module("java-psi-api")
       module("java-psi-impl")
     }
