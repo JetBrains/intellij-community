@@ -11,12 +11,9 @@ import java.util.*;
  * @author yole
  */
 public class EpydocString extends StructuredDocString {
-  public static String[] RAISES_TAGS = new String[] { "raises", "raise", "except", "exception" };
 
-  public static String[] RETURN_TAGS = new String[] { "return", "returns" };
   public static String[] RTYPE_TAGS = new String[] { "rtype", "returntype" };
   public static String[] KEYWORD_ARGUMENT_TAGS = new String[] { "keyword", "kwarg", "kwparam" };
-  public static String[] VARIABLE_TAGS = new String[] { "ivar", "cvar", "var" };
 
   public static String[] ALL_TAGS = new String[] {
     "@param", "@type", "@return", "@rtype", "@keyword", "@raise", "@ivar", "@cvar", "@var", "@group", "@sort", "@note", "@attention",

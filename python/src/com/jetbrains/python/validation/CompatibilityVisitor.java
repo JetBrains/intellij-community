@@ -430,6 +430,17 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
     super.visitPyCallExpression(node);
     int len = 0;
     StringBuilder message = new StringBuilder(myCommonMessage);
+
+    if (myVersionsToProcess.contains(LanguageLevel.PYTHON24) || myVersionsToProcess.contains(LanguageLevel.PYTHON25)) {
+      boolean hasStar = false;
+      for (PyExpression argument : node.getArguments()) {
+        if (hasStar && argument instanceof PyKeywordArgument) {
+          registerProblem(argument, "Python version < 2.6 doesn't support this syntax. Named parameter cannot appear past *arg or **kwarg.");
+        }
+        if (argument instanceof PyStarArgument) hasStar = true;
+      }
+    }
+
     for (int i = 0; i != myVersionsToProcess.size(); ++i) {
       LanguageLevel languageLevel = myVersionsToProcess.get(i);
       if (!languageLevel.isPy3K()) {

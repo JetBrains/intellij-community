@@ -334,4 +334,9 @@ public class PyEditingTest extends PyTestCase {
   public void testEnterBeforeString() {  // PY-3673
     doTestEnter("<caret>''", "\n''");
   }
+
+  public void testBackslashInParenthesis() {  // PY-5106
+    doTestEnter("(\"some <caret>string\", 1)", "(\"some \"\n" +
+                                               " \"string\", 1)");
+  }
 }

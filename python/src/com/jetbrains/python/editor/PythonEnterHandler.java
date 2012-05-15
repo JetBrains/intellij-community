@@ -112,9 +112,9 @@ public class PythonEnterHandler extends EnterHandlerDelegateAdapter {
 
       final PsiElement parent = string.getParent();
       final StringBuilder replacementString = new StringBuilder();
-      if (parent instanceof PyListLiteralExpression || parent instanceof PyParenthesizedExpression ||
-          parent instanceof PyBinaryExpression || parent instanceof PySetLiteralExpression ||
-          parent instanceof PyKeyValueExpression || parent instanceof PyNamedParameter || parent instanceof PyArgumentList) {
+      if (parent instanceof PySequenceExpression || parent instanceof PyParenthesizedExpression ||
+          parent instanceof PyBinaryExpression || parent instanceof PyKeyValueExpression ||
+          parent instanceof PyNamedParameter || parent instanceof PyArgumentList) {
         replacementString.append(quote + pref + quote);
         doc.insertString(offset, replacementString);
         caretOffset.set(caretOffset.get() + 1);
@@ -133,6 +133,7 @@ public class PythonEnterHandler extends EnterHandlerDelegateAdapter {
         return Result.Continue;
       }
     }
+
 
     if (!PyCodeInsightSettings.getInstance().INSERT_BACKSLASH_ON_WRAP) {
       return Result.Continue;

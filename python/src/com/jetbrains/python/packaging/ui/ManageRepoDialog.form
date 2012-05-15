@@ -1,51 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="com.jetbrains.python.packaging.ui.ManageRepoDialog">
-  <grid id="cbd77" binding="myMainPanel" layout-manager="GridLayoutManager" row-count="2" column-count="3" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
-    <margin top="0" left="0" bottom="0" right="0"/>
+  <grid id="cbd77" binding="myMainPanel" layout-manager="BorderLayout" hgap="0" vgap="0">
     <constraints>
       <xy x="48" y="54" width="550" height="342"/>
     </constraints>
     <properties/>
     <border type="none"/>
-    <children>
-      <scrollpane id="7d5b1" class="com.intellij.ui.components.JBScrollPane">
-        <constraints>
-          <grid row="0" column="0" row-span="1" col-span="3" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false">
-            <preferred-size width="800" height="600"/>
-          </grid>
-        </constraints>
-        <properties/>
-        <border type="none"/>
-        <children>
-          <component id="1bb3" class="com.intellij.ui.components.JBList" binding="myList">
-            <constraints/>
-            <properties>
-              <selectionMode value="0"/>
-            </properties>
-          </component>
-        </children>
-      </scrollpane>
-      <component id="3deb2" class="javax.swing.JButton" binding="myAddButton">
-        <constraints>
-          <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
-        </constraints>
-        <properties>
-          <text value="Add repository"/>
-        </properties>
-      </component>
-      <component id="3fcf0" class="javax.swing.JButton" binding="myRemoveButton">
-        <constraints>
-          <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
-        </constraints>
-        <properties>
-          <text value="Remove repository"/>
-        </properties>
-      </component>
-      <hspacer id="8198a">
-        <constraints>
-          <grid row="1" column="2" row-span="1" col-span="1" vsize-policy="1" hsize-policy="6" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
-        </constraints>
-      </hspacer>
-    </children>
+    <children/>
   </grid>
 </form>
