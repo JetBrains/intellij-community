@@ -190,6 +190,8 @@ public class DualView extends JPanel {
       if (myCurrentView instanceof JBTable) {
         ((JBTable)myCurrentView).setStriped(true);
       }
+      final int row = myCurrentView.getSelectedRow();
+      myCurrentView.scrollRectToVisible(myCurrentView.getCellRect(row, 0, true));
     }
   }
 
@@ -304,7 +306,7 @@ public class DualView extends JPanel {
     SelectionProvider visibleTable = (SelectionProvider)getVisibleTable();
     Collection selection = visibleTable.getSelection();
     for (Iterator each = selection.iterator(); each.hasNext();) {
-      result.add((Object)each.next());
+      result.add(each.next());
     }
     return result;
   }

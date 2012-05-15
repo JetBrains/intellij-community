@@ -145,19 +145,6 @@ public class MemoryIndexStorage<Key, Value> implements IndexStorage<Key, Value> 
   }
 
   @Override
-  public void removeValue(final Key key, final int inputId, final Value value) throws StorageException {
-    if (myBufferingEnabled.get()) {
-      getMemValueContainer(key).removeValue(inputId, value);
-      return;
-    }
-    final ChangeTrackingValueContainer<Value> valueContainer = myMap.get(key);
-    if (valueContainer != null) {
-      valueContainer.dropMergedData();
-    }
-    myBackendStorage.removeValue(key, inputId, value);
-  }
-
-  @Override
   public void removeAllValues(Key key, int inputId) throws StorageException {
     if (myBufferingEnabled.get()) {
       getMemValueContainer(key).removeAssociatedValue(inputId);

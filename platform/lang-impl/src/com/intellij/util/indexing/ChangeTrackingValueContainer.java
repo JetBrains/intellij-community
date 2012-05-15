@@ -19,6 +19,7 @@ package com.intellij.util.indexing;
 import com.intellij.openapi.util.Computable;
 import gnu.trove.TIntHashSet;
 import gnu.trove.TIntProcedure;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Iterator;
 import java.util.List;
@@ -28,11 +29,11 @@ import java.util.List;
  *         Date: Dec 20, 2007
  */
 class ChangeTrackingValueContainer<Value> extends UpdatableValueContainer<Value>{
-  private final ValueContainerImpl<Value> myAdded;
-  private final ValueContainerImpl<Value> myRemoved;
-  private final TIntHashSet myInvalidated;
+  // there is no volatile as we modify under write lock and read under read lock
+  private ValueContainerImpl<Value> myAdded;
+  private TIntHashSet myInvalidated;
+  private volatile ValueContainerImpl<Value> myMerged;
   private final Initializer<Value> myInitializer;
-  private volatile ValueContainerImpl<Value> myMerged = null;
 
   public interface Initializer<T> extends Computable<ValueContainer<T>> {
     Object getLock();
@@ -40,51 +41,48 @@ class ChangeTrackingValueContainer<Value> extends UpdatableValueContainer<Value>
 
   public ChangeTrackingValueContainer(Initializer<Value> initializer) {
     myInitializer = initializer;
-    myAdded = new ValueContainerImpl<Value>();
-    myRemoved = new ValueContainerImpl<Value>();
-    myInvalidated = new TIntHashSet(1);
   }
-
-  //public void log(String op, int id, final Value value) {
-  //  System.out.print("@" + mcount + ": ");
-  //  System.out.print(op);
-  //  System.out.print("(" + id + ")");
-  //  System.out.print(" value=" + value + " ");
-  //  System.out.print("+[" + myAdded.dumpInputIdMapping() + "], ");
-  //  System.out.print("-[" + myRemoved.dumpInputIdMapping() + "], ");
-  //  System.out.println("*[" + (myMerged != null ? myMerged.dumpInputIdMapping() : "null") + "] ");
-  //}
 
   @Override
   public void addValue(int inputId, Value value) {
-    if (myMerged != null) {
-      myMerged.addValue(inputId, value);
+    ValueContainerImpl<Value> merged = myMerged;
+    if (merged != null) {
+      merged.addValue(inputId, value);
     }
-    if (!myRemoved.removeValue(inputId, value)) {
-      myAdded.addValue(inputId, value);
+    ValueContainerImpl<Value> added = myAdded;
+    if (added == null) {
+      myAdded = added = new ValueContainerImpl<Value>();
     }
+    added.addValue(inputId, value); // will flush the changes & caller should ensure exclusiveness to avoid intermediate visibility issues
   }
 
   @Override
   public void removeAssociatedValue(int inputId) {
-    if (myMerged != null) {
-      myMerged.removeAssociatedValue(inputId);
+    ValueContainerImpl<Value> merged = myMerged;
+    if (merged != null) {
+      merged.removeAssociatedValue(inputId);
     }
-    myAdded.removeAssociatedValue(inputId);
-    myRemoved.removeAssociatedValue(inputId);
-    myInvalidated.add(inputId);
+
+    ValueContainerImpl<Value> added = myAdded;
+    if (added != null) added.removeAssociatedValue(inputId);
+
+    TIntHashSet invalidated = myInvalidated;
+    if (invalidated == null) {
+      invalidated = new TIntHashSet(1);
+    }
+    invalidated.add(inputId);
+    myInvalidated = invalidated; // volatile write
   }
 
   @Override
   public boolean removeValue(int inputId, Value value) {
-    if (myMerged != null) {
-      myMerged.removeValue(inputId, value);
+    ValueContainerImpl<Value> merged = myMerged;
+    if (merged != null) {
+      merged.removeValue(inputId, value);
     }
-    if (!myAdded.removeValue(inputId, value)) {
-      if (!myInvalidated.contains(inputId)) {
-        myRemoved.addValue(inputId, value);
-      }
-    }
+    ValueContainerImpl<Value> added = myAdded;
+    if (added != null) added.removeValue(inputId, value);
+
     return true;
   }
 
@@ -143,28 +141,29 @@ class ChangeTrackingValueContainer<Value> extends UpdatableValueContainer<Value>
       } else {
         newMerged = ((ChangeTrackingValueContainer<Value>)fromDisk).getMergedData().copy();
       }
-      myInvalidated.forEach(new TIntProcedure() {
-        @Override
-        public boolean execute(int inputId) {
-          newMerged.removeAssociatedValue(inputId);
-          return true;
-        }
-      });
-      myRemoved.forEach(new ContainerAction<Value>() {
-        @Override
-        public boolean perform(final int id, final Value value) {
-          newMerged.removeValue(id, value);
-          return true;
-        }
-      });
-      myAdded.forEach(new ContainerAction<Value>() {
-        @Override
-        public boolean perform(final int id, final Value value) {
-          newMerged.removeAssociatedValue(id); // enforcing "one-value-per-file for particular key" invariant
-          newMerged.addValue(id, value);
-          return true;
-        }
-      });
+
+      TIntHashSet invalidated = myInvalidated;
+      if (invalidated != null) {
+        invalidated.forEach(new TIntProcedure() {
+          @Override
+          public boolean execute(int inputId) {
+            newMerged.removeAssociatedValue(inputId);
+            return true;
+          }
+        });
+      }
+
+      ValueContainerImpl<Value> added = myAdded;
+      if (added != null) {
+        added.forEach(new ContainerAction<Value>() {
+          @Override
+          public boolean perform(final int id, final Value value) {
+            newMerged.removeAssociatedValue(id); // enforcing "one-value-per-file for particular key" invariant
+            newMerged.addValue(id, value);
+            return true;
+          }
+        });
+      }
       setNeedsCompacting(fromDisk.needsCompacting());
 
       myMerged = newMerged;
@@ -173,18 +172,16 @@ class ChangeTrackingValueContainer<Value> extends UpdatableValueContainer<Value>
   }
 
   public boolean isDirty() {
-    return myAdded.size() > 0 || myRemoved.size() > 0 || !myInvalidated.isEmpty() || needsCompacting();
+    return (myAdded != null && myAdded.size() > 0) ||
+           (myInvalidated != null && !myInvalidated.isEmpty()) ||
+           needsCompacting();
   }
 
-  public ValueContainer<Value> getAddedDelta() {
+  public @Nullable ValueContainer<Value> getAddedDelta() {
     return myAdded;
   }
-  
-  public ValueContainer<Value> getRemovedDelta() {
-    return myRemoved;
-  }
 
-  public TIntHashSet getInvalidated() {
+  public @Nullable TIntHashSet getInvalidated() {
     return myInvalidated;
   }
 }

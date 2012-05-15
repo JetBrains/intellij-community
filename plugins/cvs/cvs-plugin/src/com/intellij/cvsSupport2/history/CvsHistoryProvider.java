@@ -21,8 +21,7 @@ import com.intellij.cvsSupport2.application.CvsEntriesManager;
 import com.intellij.cvsSupport2.changeBrowser.CvsChangeList;
 import com.intellij.cvsSupport2.connections.CvsConnectionSettings;
 import com.intellij.cvsSupport2.cvsExecution.CvsOperationExecutor;
-import com.intellij.cvsSupport2.cvsExecution.CvsOperationExecutorCallback;
-import com.intellij.cvsSupport2.cvsExecution.ModalityContext;
+import com.intellij.cvsSupport2.cvsExecution.DefaultCvsOperationExecutorCallback;
 import com.intellij.cvsSupport2.cvshandlers.CommandCvsHandler;
 import com.intellij.cvsSupport2.cvsoperations.cvsLog.LocalPathIndifferentLogOperation;
 import com.intellij.cvsSupport2.cvsoperations.cvsTagOrBranch.ui.TagsPanel;
@@ -226,13 +225,8 @@ public class CvsHistoryProvider implements VcsHistoryProvider {
     final CvsOperationExecutor executor = new CvsOperationExecutor(myProject);
     final ArrayList<VcsFileRevision> result = new ArrayList<VcsFileRevision>();
     executor.performActionSync(new CommandCvsHandler(CvsBundle.message("operation.name.load.file.content"), logOperation),
-                               new CvsOperationExecutorCallback() {
-                                 public void executionFinished(boolean successfully) {
-                                 }
-
-                                 public void executeInProgressAfterAction(ModalityContext modalityContext) {
-                                 }
-
+                               new DefaultCvsOperationExecutorCallback() {
+                                 @Override
                                  public void executionFinishedSuccessfully() {
                                    final CvsConnectionSettings env = CvsEntriesManager.getInstance()
                                      .getCvsConnectionSettingsFor(filePath.getVirtualFileParent());
@@ -246,7 +240,7 @@ public class CvsHistoryProvider implements VcsHistoryProvider {
                                    }
                                  }
                                });
-    Collections.sort(result, VcsFileRevisionComparator.INSTANCE);
+    Collections.sort(result, Collections.reverseOrder(VcsFileRevisionComparator.INSTANCE));
     return result;
   }
 
@@ -266,12 +260,12 @@ public class CvsHistoryProvider implements VcsHistoryProvider {
     }
 
     public List<TreeItem<VcsFileRevision>> createTreeOn(List<VcsFileRevision> allRevisions) {
-      final List<VcsFileRevision> sortedRevisions = sortRevisions(allRevisions);
+      Collections.sort(allRevisions, VcsFileRevisionComparator.INSTANCE);
 
       final List<TreeItem<VcsFileRevision>> result = new ArrayList<TreeItem<VcsFileRevision>>();
 
       TreeItem<VcsFileRevision> prevRevision = null;
-      for (final VcsFileRevision sortedRevision : sortedRevisions) {
+      for (final VcsFileRevision sortedRevision : allRevisions) {
         final CvsFileRevisionImpl cvsFileRevision = (CvsFileRevisionImpl)sortedRevision;
         final TreeItem<VcsFileRevision> treeItem = new TreeItem<VcsFileRevision>(cvsFileRevision);
         final TreeItem<VcsFileRevision> commonParent = getCommonParent(prevRevision, treeItem);
@@ -281,12 +275,10 @@ public class CvsHistoryProvider implements VcsHistoryProvider {
         else {
           result.add(treeItem);
         }
-
         prevRevision = treeItem;
       }
 
       return result;
-
     }
 
     @Nullable
@@ -304,11 +296,6 @@ public class CvsHistoryProvider implements VcsHistoryProvider {
       final CvsFileRevisionImpl data = (CvsFileRevisionImpl)cvsFileRevision.getData();
       return data.getRevisionNumber().asString().startsWith(prevData.getRevisionNumber().asString());
     }
-
-    private static List<VcsFileRevision> sortRevisions(List<VcsFileRevision> revisionsList) {
-      Collections.sort(revisionsList, VcsFileRevisionComparator.INSTANCE);
-      return revisionsList;
-    }
   }
 
   private static class VcsFileRevisionComparator implements Comparator<VcsFileRevision> {
@@ -318,7 +305,7 @@ public class CvsHistoryProvider implements VcsHistoryProvider {
     private VcsFileRevisionComparator() {}
 
     public int compare(VcsFileRevision rev1, VcsFileRevision rev2) {
-      return VcsHistoryUtil.compare(rev2, rev1);
+      return VcsHistoryUtil.compare(rev1, rev2);
     }
   }
 }

@@ -33,27 +33,37 @@ import java.util.*;
 class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implements Cloneable{
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.indexing.ValueContainerImpl");
   private final static Object myNullValue = new Object();
-  private THashMap<Value, Object> myInputIdMapping;
-
-  public ValueContainerImpl() {
-    // per statistic most maps (80%) has one value
-    myInputIdMapping = new THashMap<Value, Object>(1);
-  }
+  // there is no volatile as we modify under write lock and read under read lock
+  // Most often (80%) we store 0 or one mapping, then we store them in two fields: myInputIdMapping, myInputIdMappingValue
+  // when there are several value mapped, myInputIdMapping is THashMap<Value, Data>, myInputIdMappingValue = null
+  private Object myInputIdMapping;
+  private Object myInputIdMappingValue;
 
   @Override
   public void addValue(int inputId, Value value) {
-    value = maskNull(value);
-    final Object input = myInputIdMapping.get(value);
+    final Object input = getInput(value);
+
     if (input == null) {
-      //idSet = new TIntHashSet(3, 0.98f);
-      myInputIdMapping.put(value, inputId);
+      if (myInputIdMapping != null) {
+        if (!(myInputIdMapping instanceof THashMap)) {
+          Object oldMapping = myInputIdMapping;
+          myInputIdMapping = new THashMap<Value, Object>(2);
+          ((THashMap<Value, Object>)myInputIdMapping).put((Value)oldMapping, myInputIdMappingValue);
+          myInputIdMappingValue = null;
+        }
+        ((THashMap<Value, Object>)myInputIdMapping).put(value, inputId);
+      } else {
+        myInputIdMapping = value != null ? value:(Value)myNullValue;
+        myInputIdMappingValue = inputId;
+      }
     }
     else {
       final TIntHashSet idSet;
       if (input instanceof Integer) {
         idSet = new IdSet(3, 0.98f);
         idSet.add(((Integer)input).intValue());
-        myInputIdMapping.put(value, idSet);
+        if (!(myInputIdMapping instanceof THashMap)) myInputIdMappingValue = idSet;
+        else ((THashMap<Value, Object>)myInputIdMapping).put(value, idSet);
       }
       else {
         idSet = (TIntHashSet)input;
@@ -64,21 +74,19 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
 
   @Override
   public int size() {
-    return myInputIdMapping.size();
+    return myInputIdMapping != null ? myInputIdMapping instanceof THashMap ? ((THashMap)myInputIdMapping).size(): 1 : 0;
   }
 
   @Override
   public void removeAssociatedValue(int inputId) {
-    if (myInputIdMapping.isEmpty()) return;
+    if (myInputIdMapping == null) return;
     List<Value> toRemove = null;
     for (final Iterator<Value> valueIterator = getValueIterator(); valueIterator.hasNext();) {
       final Value value = valueIterator.next();
       if (isAssociated(value, inputId)) {
-        if (toRemove == null) toRemove = new SmartList<Value>(value);
-        else {
-          LOG.error("Expected only one value per-inputId");
-          toRemove.add(value);
-        }
+        if (toRemove == null) toRemove = new SmartList<Value>();
+        else LOG.error("Expected only one value per-inputId");
+        toRemove.add(value);
       }
     }
 
@@ -91,12 +99,11 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
 
   @Override
   public boolean removeValue(int inputId, Value value) {
-    if (myInputIdMapping.isEmpty()) return false; // skipping hash code for value
-    value = maskNull(value);
-    final Object input = myInputIdMapping.get(value);
+    final Object input = getInput(value);
     if (input == null) {
       return false;
     }
+
     if (input instanceof TIntHashSet) {
       final TIntHashSet idSet = (TIntHashSet)input;
       final boolean reallyRemoved = idSet.remove(inputId);
@@ -112,57 +119,87 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
         return false;
       }
     }
-    myInputIdMapping.remove(value);
-    return true;
-  }
 
-  private Value maskNull(Value value) {
-    if (value == null) {
-      return (Value)myNullValue;
+    if (!(myInputIdMapping instanceof THashMap)) {
+      myInputIdMapping = null;
+      myInputIdMappingValue = null;
+    } else {
+      THashMap<Value, Object> mapping = (THashMap<Value, Object>)myInputIdMapping;
+      mapping.remove(value);
+      if (mapping.size() == 1) {
+        myInputIdMapping = mapping.keySet().iterator().next();
+        myInputIdMappingValue = mapping.get((Value)myInputIdMapping);
+      }
     }
-    return value;
+
+    return true;
   }
 
   @Override
   public Iterator<Value> getValueIterator() {
-    if (myInputIdMapping.isEmpty()) {
+    if (myInputIdMapping != null) {
+      if (!(myInputIdMapping instanceof THashMap)) {
+        return new Iterator<Value>() {
+          private Value value = (Value)myInputIdMapping;
+          @Override
+          public boolean hasNext() {
+            return value != null;
+          }
+
+          @Override
+          public Value next() {
+            Value next = value;
+            if (next == myNullValue) next = null;
+            value = null;
+            return next;
+          }
+
+          @Override
+          public void remove() {
+            throw new UnsupportedOperationException();
+          }
+        };
+      } else {
+        return new Iterator<Value>() {
+          final Iterator<Value> iterator = ((THashMap<Value, Object>)myInputIdMapping).keySet().iterator();
+
+          @Override
+          public boolean hasNext() {
+            return iterator.hasNext();
+          }
+
+          @Override
+          public Value next() {
+            Value next = iterator.next();
+            if (next == myNullValue) next = null;
+            return next;
+          }
+
+          @Override
+          public void remove() {
+            throw new UnsupportedOperationException();
+          }
+        };
+      }
+    } else {
       return EmptyIterator.getInstance();
     }
-
-    return new Iterator<Value>() {
-      final Iterator<Value> iterator = myInputIdMapping.keySet().iterator();
-      
-      @Override
-      public boolean hasNext() {
-        return iterator.hasNext();
-      }
-
-      @Override
-      public Value next() {
-        Value next = iterator.next();
-        if (next == myNullValue) next = null;
-        return next;
-      }
-
-      @Override
-      public void remove() {
-        throw new UnsupportedOperationException();
-      }
-    };
   }
 
   @Override
   public List<Value> toValueList() {
-    if (myInputIdMapping.isEmpty()) {
+    if (myInputIdMapping == null) {
       return Collections.emptyList();
+    } else if (myInputIdMapping instanceof THashMap) {
+      return new ArrayList<Value>(((THashMap<Value, Object>)myInputIdMapping).keySet());
+    } else {
+      return new SmartList<Value>((Value)myInputIdMapping);
     }
-    return new ArrayList<Value>(myInputIdMapping.keySet());
   }
 
   @Override
   public boolean isAssociated(Value value, final int inputId) {
-    value = maskNull(value);
-    final Object input = myInputIdMapping.get(value);
+    final Object input = getInput(value);
     if (input instanceof TIntHashSet) {
       return ((TIntHashSet)input).contains(inputId);
     }
@@ -174,7 +211,7 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
 
   @Override
   public IntPredicate getValueAssociationPredicate(Value value) {
-    final Object input = myInputIdMapping.get(value);
+    final Object input = getInput(value);
     if (input == null) return EMPTY_PREDICATE;
     if (input instanceof Integer) {
       return new IntPredicate() {
@@ -196,8 +233,7 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
 
   @Override
   public IntIterator getInputIdsIterator(Value value) {
-    value = maskNull(value);
-    final Object input = myInputIdMapping.get(value);
+    final Object input = getInput(value);
     final IntIterator it;
     if (input instanceof TIntHashSet) {
       it = new IntSetIterator((TIntHashSet)input);
@@ -211,11 +247,30 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
     return it;
   }
 
+  private Object getInput(Value value) {
+    if (myInputIdMapping == null) return null;
+
+    value = value != null ? value:(Value)myNullValue;
+
+    if (myInputIdMapping == value || // myNullValue is Object
+        myInputIdMapping.equals(value)
+       ) {
+      return myInputIdMappingValue;
+    }
+
+    if (!(myInputIdMapping instanceof THashMap)) return null;
+    return ((THashMap<Value, Object>)myInputIdMapping).get(value);
+  }
+
   @Override
   public ValueContainerImpl<Value> clone() {
     try {
       final ValueContainerImpl clone = (ValueContainerImpl)super.clone();
-      clone.myInputIdMapping = mapCopy(myInputIdMapping);
+      if (myInputIdMapping instanceof THashMap) {
+        clone.myInputIdMapping = mapCopy((THashMap<Value, Object>)myInputIdMapping);
+      } else if (myInputIdMappingValue instanceof TIntHashSet) {
+        clone.myInputIdMappingValue = ((TIntHashSet)myInputIdMappingValue).clone();
+      }
       return clone;
     }
     catch (CloneNotSupportedException e) {
@@ -241,18 +296,30 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
   };
 
   public ValueContainerImpl<Value> copy() {
-    final ValueContainerImpl<Value> container = new ValueContainerImpl<Value>();
-    myInputIdMapping.forEachEntry(new TObjectObjectProcedure<Value, Object>() {
-      @Override
-      public boolean execute(Value key, Object val) {
-        if (val instanceof TIntHashSet) {
-          container.myInputIdMapping.put(key, ((TIntHashSet)val).clone());
-        } else {
-          container.myInputIdMapping.put(key, val);
+    ValueContainerImpl<Value> container = new ValueContainerImpl<Value>();
+
+    if (myInputIdMapping instanceof THashMap) {
+      final THashMap<Value, Object> mapping = (THashMap<Value, Object>)myInputIdMapping;
+      final THashMap<Value, Object> newMapping = new THashMap<Value, Object>(mapping.size());
+      container.myInputIdMapping = newMapping;
+
+      mapping.forEachEntry(new TObjectObjectProcedure<Value, Object>() {
+        @Override
+        public boolean execute(Value key, Object val) {
+          if (val instanceof TIntHashSet) {
+            newMapping.put(key, ((TIntHashSet)val).clone());
+          }
+          else {
+            newMapping.put(key, val);
+          }
+          return true;
         }
-        return true;
-      }
-    });
+      });
+    } else {
+      container.myInputIdMapping = myInputIdMapping;
+      container.myInputIdMappingValue = myInputIdMappingValue instanceof TIntHashSet ?
+                                        ((TIntHashSet)myInputIdMappingValue).clone():myInputIdMappingValue;
+    }
     return container;
   }
 
@@ -271,12 +338,9 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
 
     @Override
     public int next() {
-      try {
-        return myValue;
-      }
-      finally {
-        myValueRead = true;
-      }
+      int next = myValue;
+      myValueRead = true;
+      return next;
     }
 
     @Override

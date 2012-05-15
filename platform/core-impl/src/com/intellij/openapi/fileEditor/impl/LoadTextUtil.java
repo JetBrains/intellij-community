@@ -63,7 +63,8 @@ public final class LoadTextUtil {
       char c = bufferArray != null ? bufferArray[src]:buffer.charAt(src);
       switch (c) {
         case '\r':
-          buffer.put(dst++, '\n');
+          if(bufferArray != null) bufferArray[dst++] = '\n';
+          else buffer.put(dst++, '\n');
           crCount++;
           break;
         case '\n':
@@ -72,12 +73,14 @@ public final class LoadTextUtil {
             crlfCount++;
           }
           else {
-            buffer.put(dst++, '\n');
+            if(bufferArray != null) bufferArray[dst++] = '\n';
+            else buffer.put(dst++, '\n');
             lfCount++;
           }
           break;
         default:
-          buffer.put(dst++, c);
+          if(bufferArray != null) bufferArray[dst++] = c;
+          else buffer.put(dst++, c);
           break;
       }
       prev = c;

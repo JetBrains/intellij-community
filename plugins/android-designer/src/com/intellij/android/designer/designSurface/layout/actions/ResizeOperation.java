@@ -41,7 +41,7 @@ import java.util.List;
 public class ResizeOperation implements EditOperation {
   public static final String TYPE = "resize_children";
 
-  private final static Color blue = new Color(0, 50, 255);
+  public final static Color blue = new Color(0, 50, 255);
   private static final int SNAP_DELTA = 4;
   private static final int WRAP_CONTENT = 0 << 30;
 
@@ -63,20 +63,6 @@ public class ResizeOperation implements EditOperation {
 
   public ResizeOperation(OperationContext context) {
     myContext = context;
-  }
-
-  public static void points(ResizeSelectionDecorator decorator) {
-    width(decorator);
-    height(decorator);
-    decorator.addPoint(new DirectionResizePoint(blue, Color.black, Position.SOUTH_EAST, TYPE, "Change layout:width x layout:height"));
-  }
-
-  public static void width(ResizeSelectionDecorator decorator) {
-    decorator.addPoint(new DirectionResizePoint(blue, Color.black, Position.EAST, TYPE, "Change layout:width"));
-  }
-
-  public static void height(ResizeSelectionDecorator decorator) {
-    decorator.addPoint(new DirectionResizePoint(blue, Color.black, Position.SOUTH, TYPE, "Change layout:height"));
   }
 
   @Override
@@ -337,5 +323,25 @@ public class ResizeOperation implements EditOperation {
       return "fill_parent";
     }
     return Integer.toString(size) + "dp";
+  }
+
+  //////////////////////////////////////////////////////////////////////////////////////////
+  //
+  // ResizePoint
+  //
+  //////////////////////////////////////////////////////////////////////////////////////////
+
+  public static void points(ResizeSelectionDecorator decorator) {
+    width(decorator);
+    height(decorator);
+    decorator.addPoint(new DirectionResizePoint(blue, Color.black, Position.SOUTH_EAST, TYPE, "Change layout:width x layout:height"));
+  }
+
+  public static void width(ResizeSelectionDecorator decorator) {
+    decorator.addPoint(new DirectionResizePoint(blue, Color.black, Position.EAST, TYPE, "Change layout:width"));
+  }
+
+  public static void height(ResizeSelectionDecorator decorator) {
+    decorator.addPoint(new DirectionResizePoint(blue, Color.black, Position.SOUTH, TYPE, "Change layout:height"));
   }
 }

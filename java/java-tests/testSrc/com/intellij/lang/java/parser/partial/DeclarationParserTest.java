@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.java.parser.JavaParsers;
 import com.intellij.lang.java.parser.JavaParsingTestCase;
 import com.intellij.pom.java.LanguageLevel;
-
 
 public class DeclarationParserTest extends JavaParsingTestCase {
   public DeclarationParserTest() {
@@ -82,11 +81,16 @@ public class DeclarationParserTest extends JavaParsingTestCase {
   public void testMethodNormal1() { doParserTest("{ void f(); }", false, false); }
   public void testSemicolons() { doParserTest("{ void f() {}; void g() {}; }", false, false); }
   public void testUnclosed0() { doParserTest("{ void f() }", false, false); }
+  public void testExtension() { doParserTest("{ int f() default { return 42; } }", false, false); }
   public void testUnclosed1() { doParserTest("{ void f( }", false, false); }
   public void testUnclosed2() { doParserTest("{ void f()\n void g(); }", false, false); }
   public void testUnclosed3() { doParserTest("{ void f(int a }", false, false); }
   public void testUnclosed4() { doParserTest("{ void f(int a,, }", false, false); }
   public void testUnclosed5() { doParserTest("{ void f(int a,); }", false, false); }
+  public void testUnclosed6() { doParserTest("{ void f() default ; }", true, false); }
+  public void testUnclosed7() { doParserTest("{ void f() default {return 42;} }", true, false); }
+  public void testUnclosed8() { doParserTest("{ void f() default }", false, false); }
+  public void testUnclosed9() { doParserTest("{ void f() default ; }", false, false); }
   public void testConstructorBrackets() { doParserTest("{ A() [] { } }", false, false); }
   public void testVarArgBrackets() { doParserTest("{ void foo(int... x[]); }", false, false); }
 
