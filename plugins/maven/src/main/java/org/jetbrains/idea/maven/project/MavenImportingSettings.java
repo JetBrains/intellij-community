@@ -52,7 +52,7 @@ public class MavenImportingSettings implements Cloneable {
   private List<Listener> myListeners = ContainerUtil.createEmptyCOWList();
 
   public enum GeneratedSourcesFolder {
-    AUTODETECT("Auto detect"),
+    AUTODETECT("Detect automatically"),
     GENERATED_SOURCE_FOLDER("target/generated-sources"),
     SUBFOLDER("subdirectories of \"target/generated-sources\"");
 
@@ -187,16 +187,29 @@ public class MavenImportingSettings implements Cloneable {
 
   @Override
   public int hashCode() {
-    int result = dedicatedModuleDir.hashCode();
-    result = 31 * result + (lookForNested ? 1 : 0);
-    result = 31 * result + (importAutomatically ? 1 : 0);
-    result = 31 * result + (createModulesForAggregators ? 1 : 0);
-    result = 31 * result + (createModuleGroups ? 1 : 0);
-    result = 31 * result + (keepSourceFolders ? 1 : 0);
-    result = 31 * result + (useMavenOutput ? 1 : 0);
+    int result = 0;
+
+    if (lookForNested) result++;
+    result <<= 1;
+    if (importAutomatically) result++;
+    result <<= 1;
+    if (createModulesForAggregators) result++;
+    result <<= 1;
+    if (createModuleGroups) result++;
+    result <<= 1;
+    if (keepSourceFolders) result++;
+    result <<= 1;
+    if (useMavenOutput) result++;
+    result <<= 1;
+    if (downloadSourcesAutomatically) result++;
+    result <<= 1;
+    if (downloadDocsAutomatically) result++;
+    result <<= 1;
+
     result = 31 * result + (updateFoldersOnImportPhase != null ? updateFoldersOnImportPhase.hashCode() : 0);
-    result = 31 * result + (downloadSourcesAutomatically ? 1 : 0);
-    result = 31 * result + (downloadDocsAutomatically ? 1 : 0);
+    result = 31 * result + dedicatedModuleDir.hashCode();
+    result = 31 * result + generatedSourcesFolder.hashCode();
+
     return result;
   }
 
