@@ -151,11 +151,6 @@ public class MultipleFileMergeDialog extends DialogWrapper {
         acceptRevision(false);
       }
     });
-    myMergeButton.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        showMergeDialog();
-      }
-    });
     myTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
       public void valueChanged(final ListSelectionEvent e) {
         updateButtonState();
@@ -325,6 +320,22 @@ public class MultipleFileMergeDialog extends DialogWrapper {
 
   private void checkMarkModifiedProject(final VirtualFile file) {
     MergeVersion.MergeDocumentVersion.reportProjectFileChangeIfNeeded(myProject, file);
+  }
+
+  private void createUIComponents() {
+    Action mergeAction = new AbstractAction() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        showMergeDialog();
+      }
+    };
+    mergeAction.putValue(DEFAULT_ACTION, Boolean.TRUE);
+    myMergeButton = createJButtonForAction(mergeAction);
+  }
+
+  @Override
+  public JComponent getPreferredFocusedComponent() {
+    return myTable;
   }
 
   private static String decodeContent(final VirtualFile file, final byte[] content) {

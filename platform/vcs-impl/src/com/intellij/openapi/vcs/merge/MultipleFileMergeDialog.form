@@ -37,7 +37,7 @@
               <text resource-bundle="messages/VcsBundle" key="multiple.file.merge.accept.theirs"/>
             </properties>
           </component>
-          <component id="39393" class="javax.swing.JButton" binding="myMergeButton" default-binding="true">
+          <component id="39393" class="javax.swing.JButton" binding="myMergeButton" custom-create="true" default-binding="true">
             <constraints>
               <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
             </constraints>
