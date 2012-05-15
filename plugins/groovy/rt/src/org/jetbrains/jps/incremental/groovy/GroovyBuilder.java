@@ -1,7 +1,6 @@
 package org.jetbrains.jps.incremental.groovy;
 
 
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.ArrayUtil;
@@ -63,8 +62,7 @@ public class GroovyBuilder extends ModuleLevelBuilder {
       
       Map<String, String> class2Src = buildClassToSourceMap(chunk, context, toCompilePaths, moduleOutput);
 
-      String ideCharset = chunk.getProject().getProjectCharset();
-      String encoding = !Comparing.equal(CharsetToolkit.getDefaultSystemCharset().name(), ideCharset) ? ideCharset : null;
+      final String encoding = context.getProjectDescriptor().getEncodingConfiguration().getPreferredModuleChunkEncoding(chunk);
       List<String> patchers = Collections.emptyList(); //todo patchers
       final File tempFile = GroovycOSProcessHandler.fillFileWithGroovycParameters(
         compilerOutput, toCompilePaths, FileUtil.toSystemDependentName(moduleOutput), class2Src, encoding, patchers

@@ -38,7 +38,8 @@ import org.jetbrains.jps.incremental.storage.BuildDataManager;
 import org.jetbrains.jps.incremental.storage.SourceToFormMapping;
 import org.jetbrains.jps.javac.*;
 
-import javax.tools.*;
+import javax.tools.Diagnostic;
+import javax.tools.JavaFileObject;
 import java.io.*;
 import java.net.MalformedURLException;
 import java.net.ServerSocket;
@@ -584,7 +585,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
   private static List<String> getCompilationVMOptions(CompileContext context) {
     List<String> cached = JAVAC_VM_OPTIONS.get(context);
     if (cached == null) {
-      loadJavacOptions(context);
+      loadCommonJavacOptions(context);
       cached = JAVAC_VM_OPTIONS.get(context);
     }
     return cached;
@@ -593,10 +594,28 @@ public class JavaBuilder extends ModuleLevelBuilder {
   private static List<String> getCompilationOptions(CompileContext context, ModuleChunk chunk) {
     List<String> cached = JAVAC_OPTIONS.get(context);
     if (cached == null) {
-      loadJavacOptions(context);
+      loadCommonJavacOptions(context);
       cached = JAVAC_OPTIONS.get(context);
     }
+
     final List<String> options = new ArrayList<String>(cached);
+    if (!isEncodingSet(options)) {
+      final CompilerEncodingConfiguration config = context.getProjectDescriptor().getEncodingConfiguration();
+      final String encoding = config.getPreferredModuleChunkEncoding(chunk);
+      if (config.getAllModuleChunkEncodings(chunk).size() > 1) {
+        final StringBuilder msgBuilder = new StringBuilder();
+        msgBuilder.append("Multiple encodings set for module chunk ").append(getChunkPresentableName(chunk));
+        if (encoding != null) {
+          msgBuilder.append("\n\"").append(encoding).append("\" will be used by compiler");
+        }
+        context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.INFO, msgBuilder.toString()));
+      }
+      if (encoding != null) {
+        options.add("-encoding");
+        options.add(encoding);
+      }
+    }
+
     final String langlevel = chunk.getModules().iterator().next().getLanguageLevel();
     if (!StringUtil.isEmpty(langlevel)) {
       options.add("-source");
@@ -644,6 +663,16 @@ public class JavaBuilder extends ModuleLevelBuilder {
     return options;
   }
 
+  private static boolean isEncodingSet(List<String> options) {
+    for (String option : options) {
+      if ("-encoding".equals(option)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+
   private static int getCompilerSdkVersion(CompileContext context) {
     final Integer cached = JAVA_COMPILER_VERSION_KEY.get(context);
     if (cached != null) {
@@ -673,7 +702,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
     return config.getProjectBytecodeTarget();
   }
 
-  private static void loadJavacOptions(CompileContext context) {
+  private static void loadCommonJavacOptions(CompileContext context) {
     final List<String> options = new ArrayList<String>();
     final List<String> vmOptions = new ArrayList<String>();
 
@@ -694,7 +723,6 @@ public class JavaBuilder extends ModuleLevelBuilder {
     }
 
     final String customArgs = javacOpts.get("ADDITIONAL_OPTIONS_STRING");
-    boolean isEncodingSet = false;
     if (customArgs != null) {
       final StringTokenizer tokenizer = new StringTokenizer(customArgs, " \t\r\n");
       while (tokenizer.hasMoreTokens()) {
@@ -708,15 +736,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
         else {
           options.add(token);
         }
-        if ("-encoding".equals(token)) {
-          isEncodingSet = true;
-        }
       }
-    }
-
-    if (!isEncodingSet && !StringUtil.isEmpty(project.getProjectCharset())) {
-      options.add("-encoding");
-      options.add(project.getProjectCharset());
     }
 
     JAVAC_OPTIONS.set(context, options);

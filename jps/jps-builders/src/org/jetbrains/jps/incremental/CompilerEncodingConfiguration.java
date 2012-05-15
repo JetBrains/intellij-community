@@ -87,9 +87,11 @@ public class CompilerEncodingConfiguration {
     for (Module module : moduleChunk.getModules()) {
       final Set<String> encodings = getModuleCharsetMap().get(module.getName());
       final String encoding = ContainerUtil.getFirstItem(encodings, null);
-      if (encoding != null) return encoding;
+      if (encoding != null) {
+        return encoding;
+      }
     }
-    return null;
+    return moduleChunk.getProject().getProjectCharset();
   }
 
   @NotNull
