@@ -359,8 +359,13 @@ public class ChangesViewManager implements ChangesViewI, JDOMExternalizable, Pro
   }
 
   @Override
-  public void setBusy(boolean b) {
-    myView.setPaintBusy(b);
+  public void setBusy(final boolean b) {
+    UIUtil.invokeLaterIfNeeded(new Runnable() {
+      @Override
+      public void run() {
+        myView.setPaintBusy(b);
+      }
+    });
   }
 
   public static Factory<JComponent> createTextStatusFactory(final String text, final boolean isError) {
