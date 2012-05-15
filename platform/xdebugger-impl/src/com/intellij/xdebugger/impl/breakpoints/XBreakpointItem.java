@@ -45,8 +45,12 @@ class XBreakpointItem implements BreakpointItem {
 
   @Override
   public void setupRenderer(ColoredListCellRenderer renderer, Project project, boolean selected) {
-    renderer.setIcon(((XBreakpointBase)myBreakpoint).getIcon());
-    renderer.append(XBreakpointUtil.getDisplayText(myBreakpoint));
+    renderer.setIcon(getIcon());
+    renderer.append(XBreakpointUtil.getShortText(myBreakpoint));
+  }
+
+  private Icon getIcon() {
+    return ((XBreakpointBase)myBreakpoint).getIcon();
   }
 
   @Override
@@ -113,5 +117,15 @@ class XBreakpointItem implements BreakpointItem {
   @Override
   public Object getBreakpoint() {
     return myBreakpoint;
+  }
+
+  @Override
+  public boolean isEnabled() {
+    return myBreakpoint.isEnabled();
+  }
+
+  @Override
+  public void setEnabled(boolean state) {
+    myBreakpoint.setEnabled(state);
   }
 }

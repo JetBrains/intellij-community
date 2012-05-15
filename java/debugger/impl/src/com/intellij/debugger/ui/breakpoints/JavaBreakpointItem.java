@@ -115,4 +115,14 @@ class JavaBreakpointItem implements BreakpointItem {
   public Object getBreakpoint() {
     return myBreakpoint;
   }
+
+  @Override
+  public boolean isEnabled() {
+    return myBreakpoint.ENABLED;
+  }
+
+  @Override
+  public void setEnabled(boolean state) {
+    myBreakpoint.ENABLED = state;
+  }
 }

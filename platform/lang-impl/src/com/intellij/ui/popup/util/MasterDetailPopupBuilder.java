@@ -332,6 +332,7 @@ public class MasterDetailPopupBuilder {
       add(myRenderer, BorderLayout.CENTER);
     }
 
+
     public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
       if (value instanceof SplitterItem) {
         String label = ((SplitterItem)value).getText();
@@ -341,6 +342,7 @@ public class MasterDetailPopupBuilder {
         return separator;
       }
       myRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+      myRenderer.revalidate();
       return this;
     }
   }

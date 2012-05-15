@@ -36,6 +36,10 @@ public class XBreakpointUtil {
   private XBreakpointUtil() {
   }
 
+  public static <B extends XBreakpoint<?>> String getShortText(B breakpoint) {
+    return getType(breakpoint).getShortText(breakpoint);
+  }
+
   public static <B extends XBreakpoint<?>> String getDisplayText(@NotNull B breakpoint) {
     return getType(breakpoint).getDisplayText(breakpoint);
   }

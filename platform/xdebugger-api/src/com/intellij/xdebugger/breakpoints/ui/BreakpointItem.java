@@ -26,4 +26,8 @@ import com.intellij.ui.popup.util.ItemWrapper;
  */
 public interface BreakpointItem extends ItemWrapper {
   Object getBreakpoint();
+
+  boolean isEnabled();
+
+  void setEnabled(boolean state);
 }

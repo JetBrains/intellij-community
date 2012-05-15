@@ -45,12 +45,14 @@ public class DetailViewImpl extends JPanel implements DetailView {
   private JBScrollPane myDetailScrollPanel;
   private JPanel myDetailPanelWrapper;
   private JLabel myNothingToShow = new JLabel("Nothing to show");
+  private JLabel myNothingToShowInEditor = new JLabel("Nothing to show");
 
   public DetailViewImpl(Project project) {
     super(new BorderLayout());
     myProject = project;
     setPreferredSize(new Dimension(600, 400));
     myNothingToShow.setHorizontalAlignment(JLabel.CENTER);
+    myNothingToShowInEditor.setHorizontalAlignment(JLabel.CENTER);
   }
 
   @Override
@@ -75,7 +77,7 @@ public class DetailViewImpl extends JPanel implements DetailView {
       remove(getEditor().getComponent());
       EditorFactory.getInstance().releaseEditor(getEditor());
       setEditor(null);
-      add(myNothingToShow, BorderLayout.CENTER);
+      add(myNothingToShowInEditor, BorderLayout.CENTER);
       repaint();
     }
   }
@@ -103,6 +105,7 @@ public class DetailViewImpl extends JPanel implements DetailView {
     if (document != null) {
       if (getEditor() == null || getEditor().getDocument() != document) {
         clearEditor();
+        remove(myNothingToShowInEditor);
         setEditor(EditorFactory.getInstance().createViewer(document, project));
         EditorHighlighter highlighter = EditorHighlighterFactory.getInstance()
           .createEditorHighlighter(file, EditorColorsManager.getInstance().getGlobalScheme(), project);

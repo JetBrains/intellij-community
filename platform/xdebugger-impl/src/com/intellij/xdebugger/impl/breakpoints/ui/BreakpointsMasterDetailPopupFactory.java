@@ -17,7 +17,9 @@ package com.intellij.xdebugger.impl.breakpoints.ui;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.ex.CheckboxAction;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
@@ -50,6 +52,7 @@ public class BreakpointsMasterDetailPopupFactory {
 
   private final List<BreakpointPanelProvider> myBreakpointPanelProviders;
   private Project myProject;
+  private BreakpointListModel myModel;
 
   public BreakpointsMasterDetailPopupFactory(Project project) {
     myProject = project;
@@ -71,11 +74,11 @@ public class BreakpointsMasterDetailPopupFactory {
 
   public JBPopup createPopup(@Nullable Object initialBreakpoint) {
     final DefaultListSelectionModel selectionModel = new DefaultListSelectionModel();
-    final BreakpointListModel model = createBreakpointsItemsList(selectionModel);
-    final JBList list = new JBList(model);
+    myModel = createBreakpointsItemsList(selectionModel);
+    final JBList list = new JBList(myModel);
     list.setSelectionModel(selectionModel);
 
-    selectInitial(initialBreakpoint, model, list);
+    selectInitial(initialBreakpoint, myModel, list);
 
     list.getEmptyText().setText("No Breakpoints");
 
@@ -108,7 +111,7 @@ public class BreakpointsMasterDetailPopupFactory {
 
       @Override
       public void onClosed(LightweightWindowEvent event) {
-        model.unsubscribe();
+        myModel.unsubscribe();
       }
     });
 
@@ -154,7 +157,46 @@ public class BreakpointsMasterDetailPopupFactory {
       }
     });
 
+    actions.add(new CheckboxAction("Enabled"){
+      {
+        registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0)), list);
+      }
+      @Override
+      public void update(AnActionEvent e) {
+        super.update(e);
+        e.getPresentation().setEnabled(list.getSelectedValue() instanceof BreakpointItem);
+        if (getCheckBox() != null) {
+          getCheckBox().setFocusable(false);
+        }
+      }
+
+      @Override
+      public boolean isSelected(AnActionEvent e) {
+        return isSelectedBreakpointEnabled(list);
+      }
+
+      @Override
+      public void setSelected(AnActionEvent e, boolean state) {
+        setSelectedBreakpointEnabled(list, state);
+      }
+    });
+
     return actions;
+  }
+
+  private void setSelectedBreakpointEnabled(final JBList list, boolean state) {
+    final Object value = list.getSelectedValue();
+    if (value instanceof BreakpointItem) {
+      ((BreakpointItem)value).setEnabled(state);
+    }
+  }
+
+  private boolean isSelectedBreakpointEnabled(JBList list) {
+    final Object value = list.getSelectedValue();
+    if (value instanceof BreakpointItem) {
+      return ((BreakpointItem)value).isEnabled();
+    }
+    return false;
   }
 
   private BreakpointListModel createBreakpointsItemsList(DefaultListSelectionModel selectionModel) {
@@ -166,7 +208,6 @@ public class BreakpointsMasterDetailPopupFactory {
     model.subscribe(selectionModel);
     return model;
   }
-
 
 
   private ArrayList<ItemWrapper> collectItems() {
@@ -210,30 +251,35 @@ public class BreakpointsMasterDetailPopupFactory {
         if (!reallyChanged(items, myModel)) {
           return;
         }
-        final int index = mySelectionModel.getLeadSelectionIndex();
-        myModel.removeAllElements();
-        for (ItemWrapper item : items) {
-          myModel.addElement(item);
-        }
-        mySelectionModel.setLeadSelectionIndex(index);
+        rebuildModel(items, mySelectionModel, myModel);
       }
 
-      private boolean reallyChanged(List<ItemWrapper> items, DefaultListModel model) {
-        if (items.size() != model.size()) return true;
-        for (int i = 0; i < model.size(); i++) {
-          final ItemWrapper item1 = items.get(i);
-          final ItemWrapper item2 = (ItemWrapper)model.get(i);
-          if (item1.getClass() != item2.getClass()) {
-            return true;
-          }
-          if (item1 instanceof BreakpointItem) {
-            if (((BreakpointItem)item1).getBreakpoint() != ((BreakpointItem)item2).getBreakpoint()) {
-              return true;
-            }
-          }
+    }
+  }
+
+  private static void rebuildModel(ArrayList<ItemWrapper> items, ListSelectionModel model, DefaultListModel model1) {
+    final int index = model.getLeadSelectionIndex();
+    model1.removeAllElements();
+    for (ItemWrapper item : items) {
+      model1.addElement(item);
+    }
+    model.setLeadSelectionIndex(index);
+  }
+
+  private static boolean reallyChanged(List<ItemWrapper> items, DefaultListModel model) {
+    if (items.size() != model.size()) return true;
+    for (int i = 0; i < model.size(); i++) {
+      final ItemWrapper item1 = items.get(i);
+      final ItemWrapper item2 = (ItemWrapper)model.get(i);
+      if (item1.getClass() != item2.getClass()) {
+        return true;
+      }
+      if (item1 instanceof BreakpointItem) {
+        if (((BreakpointItem)item1).getBreakpoint() != ((BreakpointItem)item2).getBreakpoint()) {
+          return true;
         }
-        return false;
       }
     }
+    return false;
   }
 }
