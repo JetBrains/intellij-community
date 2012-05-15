@@ -27,6 +27,7 @@ import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import com.wrq.rearranger.settings.RearrangerSettings
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.Nullable
+import com.wrq.rearranger.settings.attributeGroups.FieldAttributes
 
 /** JUnit tests for the rearranger plugin. */
 class RearrangerTest extends LightCodeInsightFixtureTestCase {
@@ -46,26 +47,21 @@ class RearrangerTest extends LightCodeInsightFixtureTestCase {
     mySettings.showParameterNames = true
     mySettings.showParameterTypes = true
     mySettings.showRules = true
-    mySettings.rearrangeInnerClasses =true
+    mySettings.rearrangeInnerClasses = true
   }
 
   public final void testNoRearrangement() throws Exception {
     doTest('RearrangementTest', 'NoRearrangementResult1')
   }
 
-//  public final void testPublicFieldRearrangement() throws Exception {
-//    configureByFile("/com/wrq/rearranger/RearrangementTest.java");
-//    final PsiFile file = getFile();
-//    final Document doc = PsiDocumentManager.getInstance(getProject()).getDocument(file);
-//    final FieldAttributes fa;
-//    fa = new FieldAttributes();
-//    fa.getPlAttr().setPlPublic(true);
-//    rs.addItem(fa, 0);
-//    final RearrangerActionHandler rah = new RearrangerActionHandler();
-//    rah.rearrangeDocument(getProject(), file, rs, doc);
-//    super.checkResultByFile("/com/wrq/rearranger/RearrangementResult2.java");
-//  }
-//
+  public final void testPublicFieldRearrangement() throws Exception {
+    doTest('RearrangementTest', 'RearrangementResult2') {
+      def attributes = new FieldAttributes()
+      attributes.protectionLevelAttributes.plPublic = true
+      mySettings.addItem(attributes, 0)
+    }
+  }
+
 //  public final void testNotPublicFieldRearrangement() throws Exception {
 //    configureByFile("/com/wrq/rearranger/RearrangementTest.java");
 //    final PsiFile file = getFile();
@@ -2178,8 +2174,11 @@ class RearrangerTest extends LightCodeInsightFixtureTestCase {
 //    super.checkResultByFile("/com/wrq/rearranger/BitFieldResult.java");
 //  }
 
-  private void doTest(@NotNull String srcFileName, @Nullable String expectedResultFileName) {
+  private void doTest(@NotNull String srcFileName, @Nullable String expectedResultFileName, @Nullable Closure adjustment = null) {
     myFixture.configureByFile("${srcFileName}.java")
+    if (adjustment) {
+      adjustment.call()
+    }
     ApplicationManager.application.runWriteAction {
       new RearrangerActionHandler().rearrangeDocument(myFixture.project, myFixture.file, mySettings, myFixture.editor.document);
     }

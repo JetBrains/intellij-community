@@ -24,6 +24,7 @@ package com.wrq.rearranger.settings.attributeGroups;
 import com.wrq.rearranger.entry.RangeEntry;
 import com.wrq.rearranger.ruleinstance.HeaderTrailerRuleInstance;
 import com.wrq.rearranger.ruleinstance.RuleInstance;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -32,6 +33,7 @@ import java.util.List;
 public class TrailerRule
   implements Rule
 {
+  @NotNull
   public RuleInstance createRuleInstance() {
     return new HeaderTrailerRuleInstance(this);
   }
@@ -45,7 +47,7 @@ public class TrailerRule
     // does nothing
   }
 
-  public boolean isMatch(RangeEntry rangeEntry) {
+  public boolean isMatch(@NotNull RangeEntry rangeEntry) {
     return rangeEntry.isFixedTrailer();
   }
 

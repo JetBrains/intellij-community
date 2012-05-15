@@ -31,6 +31,7 @@ import com.wrq.rearranger.settings.RearrangerSettings;
 import com.wrq.rearranger.settings.atomicAttributes.NameAttribute;
 import com.wrq.rearranger.util.Constraints;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -136,11 +137,12 @@ public class InterfaceAttributes
     return priority;
   }
 
+  @NotNull
   public RuleInstance createRuleInstance() {
     return new InterfaceRuleInstance(this);
   }
 
-  public final boolean isMatch(RangeEntry rangeEntry) {
+  public final boolean isMatch(@NotNull RangeEntry rangeEntry) {
     if (rangeEntry instanceof MethodEntry) {
       MethodEntry me = (MethodEntry)rangeEntry;
       if (me.getInterfaceName() != null) {
@@ -191,6 +193,7 @@ public class InterfaceAttributes
     return sb.toString();
   }
 
+  @NotNull
   public final /*InterfaceAttributes*/AttributeGroup deepCopy() {
     final InterfaceAttributes result = new InterfaceAttributes();
     result.nameAttr = (NameAttribute)nameAttr.deepCopy();
@@ -225,7 +228,7 @@ public class InterfaceAttributes
     priority = RearrangerSettings.getIntAttribute(item, "priority", 1);
   }
 
-  public final void writeExternal(final Element parent) {
+  public final void writeExternal(@NotNull final Element parent) {
     final Element me = new Element("Interface");
     parent.getChildren().add(me);
     nameAttr.appendAttributes(me);

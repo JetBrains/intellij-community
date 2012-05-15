@@ -29,34 +29,36 @@ import com.wrq.rearranger.entry.ClassEntry;
 import com.wrq.rearranger.entry.PsiFileEntry;
 import com.wrq.rearranger.entry.RangeEntry;
 import com.wrq.rearranger.settings.RearrangerSettings;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
 /** Creates a list of entries for classes and class members by parsing the Java file. */
 public final class Parser {
-  private static final Logger LOG = Logger.getInstance("#" + Parser.class.getName());
-  private final Project            project;
-  private final RearrangerSettings settings;
-  private final PsiFile            psiFile;
 
-  public Parser(final Project project,
-                final RearrangerSettings settings,
-                final PsiFile psiFile)
-  {
-    this.project = project;
-    this.settings = settings;
-    this.psiFile = psiFile;
+  private static final Logger LOG = Logger.getInstance("#" + Parser.class.getName());
+
+  private final Project            myProject;
+  private final RearrangerSettings mySettings;
+  private final PsiFile            myPsiFile;
+
+  public Parser(final @NotNull Project project, final @NotNull RearrangerSettings settings, final @NotNull PsiFile psiFile) {
+    myProject = project;
+    mySettings = settings;
+    myPsiFile = psiFile;
   }
 
+  @NotNull
   public List<ClassContentsEntry> parseOuterLevel() {
     /**
      * Parse the top level contents of the PsiFile here.
      */
-    PsiFileEntry fileEntry = new PsiFileEntry(settings);
-    return fileEntry.parseFile(project, psiFile, settings.getClassOrderAttributeList());
+    PsiFileEntry fileEntry = new PsiFileEntry(mySettings);
+    return fileEntry.parseFile(myProject, myPsiFile);
   }
 
-  private void dumpOuterClasses(final List<? extends ClassEntry> outerClasses) {
+  @SuppressWarnings("UnusedDeclaration")
+  private static void dumpOuterClasses(final List<? extends ClassEntry> outerClasses) {
     LOG.debug("Outer class entries:");
     for (ClassEntry classEntry : outerClasses) {
       LOG.debug(classEntry.toString());

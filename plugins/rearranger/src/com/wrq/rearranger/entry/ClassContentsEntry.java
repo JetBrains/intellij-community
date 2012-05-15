@@ -26,6 +26,7 @@ import com.intellij.psi.PsiField;
 import com.wrq.rearranger.popup.FilePopupEntry;
 import com.wrq.rearranger.popup.RearrangerTreeNode;
 import com.wrq.rearranger.settings.RearrangerSettings;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.tree.DefaultMutableTreeNode;
 
@@ -37,18 +38,18 @@ public abstract class ClassContentsEntry
   extends RangeEntry
   implements FilePopupEntry
 {
-  public ClassContentsEntry(final PsiElement start,
-                            final PsiElement end,
+  public ClassContentsEntry(@Nullable final PsiElement start,
+                            @Nullable final PsiElement end,
                             final int modifiers,
                             final String modifierString,
-                            final String name,
+                            final @Nullable String name,
                             final String type)
   {
     super(start, end, modifiers, modifierString, name, type);
   }
 
-  public ClassContentsEntry(final PsiElement start,
-                            final PsiElement end,
+  public ClassContentsEntry(@Nullable final PsiElement start,
+                            @Nullable final PsiElement end,
                             final boolean fixedHeader,
                             final boolean fixedTrailer)
   {
@@ -57,10 +58,10 @@ public abstract class ClassContentsEntry
 
   public DefaultMutableTreeNode addToPopupTree(DefaultMutableTreeNode parent, RearrangerSettings settings) {
     DefaultMutableTreeNode node = null;
-    if ((end instanceof PsiField && settings.isShowFields()) ||
+    if ((myEnd instanceof PsiField && settings.isShowFields()) ||
         (this instanceof ClassEntry))
     {
-      node = new RearrangerTreeNode(this, name);
+      node = new RearrangerTreeNode(this, myName);
       parent.add(node);
     }
     return node;

@@ -35,6 +35,8 @@ import com.wrq.rearranger.rearrangement.GenericRearranger;
 import com.wrq.rearranger.ruleinstance.RuleInstance;
 import com.wrq.rearranger.settings.RearrangerSettings;
 import com.wrq.rearranger.util.ModifierUtils;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -48,36 +50,33 @@ import java.util.List;
  * Describes an entire class's range and type.
  * This information is used when reordering outer classes.
  */
-public class ClassEntry
-  extends ClassContentsEntry
-  implements FilePopupEntry
-{
+public class ClassEntry extends ClassContentsEntry implements FilePopupEntry {
+
   private static final Logger LOG = Logger.getInstance("#" + ClassEntry.class.getName());
 
-  protected final List<ClassContentsEntry> contents;
-  private         List<RuleInstance> myResultRuleInstances;
-  private final   RearrangerSettings       settings;
-  private final   int                      nestingLevel;
+  protected final List<ClassContentsEntry> myContents;
+  private         List<RuleInstance>       myResultRuleInstances;
+  private final   RearrangerSettings       mySettings;
+  private final   int                      myNestingLevel;
 
-  public ClassEntry(PsiElement start,
-                    PsiElement end,
+  public ClassEntry(@Nullable PsiElement start,
+                    @Nullable PsiElement end,
                     int modifiers,
                     String modifierString,
-                    String name,
+                    @Nullable String name,
                     int nestingLevel,
-                    RearrangerSettings settings)
-  {
+                    RearrangerSettings settings) {
     super(start, end, modifiers, modifierString, name, "");
-    contents = new ArrayList<ClassContentsEntry>();
+    myContents = new ArrayList<ClassContentsEntry>();
     myResultRuleInstances = null;
-    this.settings = settings;
-    this.nestingLevel = nestingLevel;
+    mySettings = settings;
+    myNestingLevel = nestingLevel;
   }
 
   public String getTypeIconName() {
     String result = "nodes/class";
-    if (end.getParent() instanceof PsiClass) {
-      PsiClass psiClass = (PsiClass)end.getParent();
+    if (myEnd.getParent() instanceof PsiClass) {
+      PsiClass psiClass = (PsiClass)myEnd.getParent();
       if (psiClass.isEnum()) {
         result = "nodes/enum";
       }
@@ -89,15 +88,20 @@ public class ClassEntry
   }
 
   public String[] getAdditionalIconNames() {
-    if (end instanceof PsiJavaToken && end.getText().equals("{")) {
-      PsiClass psiClass = (PsiClass)end.getParent();
-      if (psiClass.getModifierList().hasModifierProperty(PsiModifier.PUBLIC)) {
+    if (myEnd instanceof PsiJavaToken && myEnd.getText().equals("{")) {
+      PsiClass psiClass = (PsiClass)myEnd.getParent();
+      final PsiModifierList modifierList = psiClass.getModifierList();
+      if (modifierList == null) {
+        return null;
+      }
+      
+      if (modifierList.hasModifierProperty(PsiModifier.PUBLIC)) {
         return new String[]{"nodes/c_public"};
       }
-      if (psiClass.getModifierList().hasModifierProperty(PsiModifier.PROTECTED)) {
+      if (modifierList.hasModifierProperty(PsiModifier.PROTECTED)) {
         return new String[]{"nodes/c_protected"};
       }
-      if (psiClass.getModifierList().hasModifierProperty(PsiModifier.PRIVATE)) {
+      if (modifierList.hasModifierProperty(PsiModifier.PRIVATE)) {
         return new String[]{"nodes/c_private"};
       }
       return new String[]{"nodes/c_plocal"};
@@ -106,20 +110,19 @@ public class ClassEntry
   }
 
   public JLabel getPopupEntryText(RearrangerSettings settings) {
-    return new JLabel(name);
+    return new JLabel(myName);
   }
 
   protected void parseRemainingClassContents(final Project project,
                                              int startingIndex,
                                              final PsiElement psiClass
-  )
-  {
+  ) {
     final PsiSearchHelper psh = PsiSearchHelper.SERVICE.getInstance(project);
     int lastIndex = startingIndex;
     /**
      * if option indicates, don't parse inner class contents; leave them unchanged.
      */
-    if (settings.isRearrangeInnerClasses() || nestingLevel <= 1) {
+    if (mySettings.isRearrangeInnerClasses() || myNestingLevel <= 1) {
       for (int i = startingIndex; i < psiClass.getChildren().length; i++) {
         PsiElement child = psiClass.getChildren()[i];
         if (child instanceof PsiJavaToken && child.getText().equals("{")) {
@@ -163,7 +166,7 @@ public class ClassEntry
             );
           }
           if (child instanceof PsiClass) {
-            parseClassAttributes(child, attributes);
+            parseClassAttributes((PsiClass)child, attributes);
             //
             // if child is an enum, set the last entry past the LBrace to the final enumeration or the
             // semicolon thereafter, if any.
@@ -189,8 +192,8 @@ public class ClassEntry
               attributes.modifiers,
               attributes.modifierString,
               attributes.name,
-              nestingLevel + 1,
-              settings
+              myNestingLevel + 1,
+              mySettings
             );
             classContentsEntry = entry;
             entry.parseRemainingClassContents(
@@ -206,7 +209,7 @@ public class ClassEntry
                                                            attributes.modifierString,
                                                            attributes.name);
           }
-          contents.add(classContentsEntry);
+          myContents.add(classContentsEntry);
           classContentsEntry.checkForComment();
           lastIndex = i + 1; // next class includes everything since the end of the prior class.
         }
@@ -222,7 +225,7 @@ public class ClassEntry
         psiClass.getChildren()[psiClass.getChildren().length - 1],
         false, true
       );
-      contents.add(miscellaneousTextEntry);
+      myContents.add(miscellaneousTextEntry);
       miscellaneousTextEntry.checkForComment();
     }
   }
@@ -467,13 +470,16 @@ public class ClassEntry
     }
   }
 
-  private void parseClassAttributes(PsiElement child, MemberAttributes attributes) {
-    attributes.childClass = (PsiClass)child;
+  private static void parseClassAttributes(@NotNull PsiClass child, @NotNull MemberAttributes attributes) {
+    attributes.childClass = child;
     attributes.name = attributes.childClass.getName();
     if (attributes.name == null) {
       attributes.name = "";
     }
-    attributes.modifierString = attributes.childClass.getModifierList().getText();
+    final PsiModifierList modifierList = child.getModifierList();
+    if (modifierList != null) {
+      attributes.modifierString = modifierList.getText();
+    }
     attributes.modifiers = ModifierUtils.getModifierMask(attributes.modifierString);
     attributes.type = attributes.childClass.isEnum() ? "enum" : "class";
     if (attributes.childClass.isEnum()) {
@@ -514,14 +520,14 @@ public class ClassEntry
 
     LOG.debug("identifying setters and extracted (related) methods");
     for (ClassContentsEntry contentsEntry : getContents()) {
-      if (contentsEntry instanceof IRelatableEntry) {
-        ((IRelatableEntry)contentsEntry).determineSettersAndMethodCalls(settings, getContents());
+      if (contentsEntry instanceof RelatableEntry) {
+        ((RelatableEntry)contentsEntry).determineSettersAndMethodCalls(mySettings, getContents());
       }
     }
     LOG.debug("relating extracted methods");
     for (ClassContentsEntry contentsEntry : getContents()) {
-      if (contentsEntry instanceof IRelatableEntry) {
-        ((IRelatableEntry)contentsEntry).determineExtractedMethod(settings.getExtractedMethodsSettings());
+      if (contentsEntry instanceof RelatableEntry) {
+        ((RelatableEntry)contentsEntry).determineExtractedMethod(mySettings.getExtractedMethodsSettings());
       }
     }
     /**
@@ -532,18 +538,18 @@ public class ClassEntry
      * check for overloaded extracted methods; if configured to be kept together, attach subsequent
      * methods to the first and remove them from consideration for other alignment.
      */
-    MethodEntry.handleOverloadedMethods(getContents(), settings);
+    MethodEntry.handleOverloadedMethods(getContents(), mySettings);
     final GenericRearranger classContentsRearranger =
-      new GenericRearranger(settings.getItemOrderAttributeList(),
-                            contents,
-                            nestingLevel,
-                            settings)
+      new GenericRearranger(mySettings.getItemOrderAttributeList(),
+                            myContents,
+                            myNestingLevel,
+                            mySettings)
       {
         public void rearrangeRelatedItems(List<ClassContentsEntry> entries,
                                           List<RuleInstance> ruleInstanceList)
         {
           for (RuleInstance ruleInstance : ruleInstanceList) {
-            ruleInstance.rearrangeRuleItems(entries, settings);
+            ruleInstance.rearrangeRuleItems(entries, mySettings);
           }
         }
       };
@@ -551,13 +557,13 @@ public class ClassEntry
   }
 
   private void buildMethodCallGraph() {
-    if (settings.getExtractedMethodsSettings().isMoveExtractedMethods() ||
-        settings.isKeepGettersSettersTogether())
+    if (mySettings.getExtractedMethodsSettings().isMoveExtractedMethods() ||
+        mySettings.isKeepGettersSettersTogether())
     {
       LOG.debug("building method call & getter-setter graph");
       for (ClassContentsEntry contentsEntry : getContents()) {
-        if (contentsEntry instanceof IRelatableEntry) {
-          ((IRelatableEntry)contentsEntry).determineGetterSetterAndExtractedMethodStatus(settings);
+        if (contentsEntry instanceof RelatableEntry) {
+          ((RelatableEntry)contentsEntry).determineGetterSetterAndExtractedMethodStatus(mySettings);
         }
       }
     }
@@ -566,7 +572,7 @@ public class ClassEntry
 // End Methods of Interface IFilePopupEntry
 
   public final List<ClassContentsEntry> getContents() {
-    return contents;
+    return myContents;
   }
 
   public List<RuleInstance> getResultRuleInstances() {

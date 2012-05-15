@@ -27,6 +27,7 @@ import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiWhiteSpace;
 import com.wrq.rearranger.settings.RearrangerSettings;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -36,27 +37,24 @@ import java.util.List;
  * members, and trailing text, we can create a dummy "class" which will parse the file.  Header text
  * will include the package and import statements, and outer classes will be its members.
  */
-public class PsiFileEntry
-  extends ClassEntry
-{
-  public PsiFileEntry(RearrangerSettings settings) {
+public class PsiFileEntry extends ClassEntry {
+  
+  public PsiFileEntry(@NotNull RearrangerSettings settings) {
     super(null, null, 0, "", null, 0, settings);
   }
 
   /**
-   * Strip off leading elements which do not belong to the first class, and place them in
+   * Strips off leading elements which do not belong to the first class, and place them in
    * a MiscellaneousText entry.
+   *
    *
    * @param project
    * @param psiFile
-   * @param commentList
    * @return
    */
-  public List<ClassContentsEntry> parseFile(Project project,
-                                            PsiElement psiFile,
-                                            List commentList)
-  {
+  public List<ClassContentsEntry> parseFile(Project project, PsiElement psiFile) {
     int startingIndex = 0;
+    // TODO den re-write to the 'firstChild & nextSibling'
     for (int i = 0; i < psiFile.getChildren().length; i++) {
       PsiElement child = psiFile.getChildren()[i];
       if (child instanceof PsiClass) {
@@ -86,8 +84,8 @@ public class PsiFileEntry
     }
     parseRemainingClassContents(project, startingIndex, psiFile);
     if (miscellaneousTextEntry != null) {
-      contents.add(0, miscellaneousTextEntry);
+      myContents.add(0, miscellaneousTextEntry);
     }
-    return contents;
+    return myContents;
   }
 }

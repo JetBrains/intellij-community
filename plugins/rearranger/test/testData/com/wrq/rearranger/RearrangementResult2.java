@@ -10,8 +10,8 @@ public class RearrangementTest {
   /** field 1. */
   private int field1;
   private int field2;
-  final     int field5 = 5;
-  protected int field6 = 6;
+  final               int field5 = 5;
+  protected           int field6 = 6;
 
   /** method 1 comment. */
   void method1() {

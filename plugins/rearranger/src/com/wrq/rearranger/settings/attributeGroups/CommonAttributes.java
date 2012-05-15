@@ -27,6 +27,7 @@ import com.wrq.rearranger.ruleinstance.RuleInstance;
 import com.wrq.rearranger.settings.RearrangerSettings;
 import com.wrq.rearranger.settings.atomicAttributes.*;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -36,64 +37,63 @@ import java.util.List;
  * protected, package), final modifier, and static modifier.  Ability to match the name to a regular
  * expression is also supported.
  */
-public abstract class CommonAttributes
-  implements AttributeGroup, PrioritizedRule
-{
+public abstract class CommonAttributes implements AttributeGroup, PrioritizedRule {
+
 // ------------------------------ FIELDS ------------------------------
 
-  ProtectionLevelAttributes plAttr;
-  FinalAttribute            fAttr;
-  StaticAttribute           stAttr;
-  NameAttribute             nameAttr;
-  SortOptions               sortAttr;
-  int                       priority;   // 1 = low priority, > 1 is higher priority
+  private ProtectionLevelAttributes myProtectionLevelAttributes;
+  private FinalAttribute            myFinalAttribute;
+  private StaticAttribute           myStaticAttribute;
+  private NameAttribute             myNameAttribute;
+  private SortOptions               mySortOptions;
+  private int                       myPriority;   // 1 = low priority, > 1 is higher priority
 
 // -------------------------- STATIC METHODS --------------------------
 
   static void readExternal(final CommonAttributes result, final Element item) {
-    result.plAttr = ProtectionLevelAttributes.readExternal(item);
-    result.stAttr = StaticAttribute.readExternal(item);
-    result.fAttr = FinalAttribute.readExternal(item);
-    result.nameAttr = NameAttribute.readExternal(item);
-    result.sortAttr = SortOptions.readExternal(item);
-    result.priority = RearrangerSettings.getIntAttribute(item, "priority", 1);
+    result.myProtectionLevelAttributes = ProtectionLevelAttributes.readExternal(item);
+    result.myStaticAttribute = StaticAttribute.readExternal(item);
+    result.myFinalAttribute = FinalAttribute.readExternal(item);
+    result.myNameAttribute = NameAttribute.readExternal(item);
+    result.mySortOptions = SortOptions.readExternal(item);
+    result.myPriority = RearrangerSettings.getIntAttribute(item, "priority", 1);
   }
 
 // --------------------------- CONSTRUCTORS ---------------------------
 
   public CommonAttributes() {
-    plAttr = new ProtectionLevelAttributes();
-    fAttr = new FinalAttribute();
-    stAttr = new StaticAttribute();
-    nameAttr = new NameAttribute();
-    sortAttr = new SortOptions();
-    priority = 1;
+    myProtectionLevelAttributes = new ProtectionLevelAttributes();
+    myFinalAttribute = new FinalAttribute();
+    myStaticAttribute = new StaticAttribute();
+    myNameAttribute = new NameAttribute();
+    mySortOptions = new SortOptions();
+    myPriority = 1;
   }
 
 // --------------------- GETTER / SETTER METHODS ---------------------
 
-  public final NameAttribute getNameAttr() {
-    return nameAttr;
+  public final NameAttribute getNameAttribute() {
+    return myNameAttribute;
   }
 
-  final public ProtectionLevelAttributes getPlAttr() {
-    return plAttr;
+  final public ProtectionLevelAttributes getProtectionLevelAttributes() {
+    return myProtectionLevelAttributes;
   }
 
   public int getPriority() {
-    return priority;
+    return myPriority;
   }
 
   public void setPriority(int priority) {
-    this.priority = priority;
+    this.myPriority = priority;
   }
 
-  final public StaticAttribute getStAttr() {
-    return stAttr;
+  final public StaticAttribute getStaticAttribute() {
+    return myStaticAttribute;
   }
 
-  public SortOptions getSortAttr() {
-    return sortAttr;
+  public SortOptions getSortOptions() {
+    return mySortOptions;
   }
 
 // ------------------------ CANONICAL METHODS ------------------------
@@ -103,12 +103,12 @@ public abstract class CommonAttributes
       return false;
     }
     final CommonAttributes ca = (CommonAttributes)obj;
-    return plAttr.equals(ca.plAttr) &&
-           stAttr.equals(ca.stAttr) &&
-           fAttr.equals(ca.fAttr) &&
-           nameAttr.equals(ca.nameAttr) &&
-           sortAttr.equals(ca.sortAttr) &&
-           priority == ca.priority;
+    return myProtectionLevelAttributes.equals(ca.myProtectionLevelAttributes) &&
+           myStaticAttribute.equals(ca.myStaticAttribute) &&
+           myFinalAttribute.equals(ca.myFinalAttribute) &&
+           myNameAttribute.equals(ca.myNameAttribute) &&
+           mySortOptions.equals(ca.mySortOptions) &&
+           myPriority == ca.myPriority;
   }
 
 // ------------------------ INTERFACE METHODS ------------------------
@@ -116,16 +116,14 @@ public abstract class CommonAttributes
 
 // --------------------- Interface IRule ---------------------
 
+  @NotNull
   public RuleInstance createRuleInstance() {
     return new DefaultRuleInstance(this);
   }
 
-  public boolean isMatch(RangeEntry rangeEntry) {
-    final boolean result = plAttr.isMatch(rangeEntry.getModifiers()) &&
-                           stAttr.isMatch(rangeEntry.getModifiers()) &&
-                           fAttr.isMatch(rangeEntry.getModifiers()) &&
-                           nameAttr.isMatch(rangeEntry.getName());
-    return result;
+  public boolean isMatch(@NotNull RangeEntry rangeEntry) {
+    return myProtectionLevelAttributes.isMatch(rangeEntry.getModifiers()) && myStaticAttribute.isMatch(rangeEntry.getModifiers())
+           && myFinalAttribute.isMatch(rangeEntry.getModifiers()) && myNameAttribute.isMatch(rangeEntry.getName());
   }
 
   /**
@@ -147,38 +145,31 @@ public abstract class CommonAttributes
     return 0;
   }
 
-  /**
-   * Calculates a list of regular expression patterns, one for each comment that the rule might create, which will
-   * match any comment that the rule might generate.  These can be combined to form a global comment pattern which
-   * will match all possible generated comments from all rules.   These patterns will be appended to the supplied
-   * list.
-   */
   public void addCommentPatternsToList(List<String> list) {
-    return;
   }
 
 // -------------------------- OTHER METHODS --------------------------
 
   final void deepCopyCommonItems(final CommonAttributes result) {
-    result.plAttr = (ProtectionLevelAttributes)plAttr.deepCopy();
-    result.fAttr = (FinalAttribute)fAttr.deepCopy();
-    result.stAttr = (StaticAttribute)stAttr.deepCopy();
-    result.nameAttr = (NameAttribute)nameAttr.deepCopy();
-    result.sortAttr = (SortOptions)sortAttr.deepCopy();
-    result.priority = priority;
+    result.myProtectionLevelAttributes = (ProtectionLevelAttributes)myProtectionLevelAttributes.deepCopy();
+    result.myFinalAttribute = (FinalAttribute)myFinalAttribute.deepCopy();
+    result.myStaticAttribute = (StaticAttribute)myStaticAttribute.deepCopy();
+    result.myNameAttribute = (NameAttribute)myNameAttribute.deepCopy();
+    result.mySortOptions = (SortOptions)mySortOptions.deepCopy();
+    result.myPriority = myPriority;
   }
 
-  final public FinalAttribute getfAttr() {
-    return fAttr;
+  final public FinalAttribute getFinalAttribute() {
+    return myFinalAttribute;
   }
 
   final void writeExternalCommonAttributes(final Element child) {
-    plAttr.appendAttributes(child);
-    stAttr.appendAttributes(child);
-    fAttr.appendAttributes(child);
-    nameAttr.appendAttributes(child);
-    sortAttr.appendAttributes(child);
-    child.setAttribute("priority", "" + priority);
+    myProtectionLevelAttributes.appendAttributes(child);
+    myStaticAttribute.appendAttributes(child);
+    myFinalAttribute.appendAttributes(child);
+    myNameAttribute.appendAttributes(child);
+    mySortOptions.appendAttributes(child);
+    child.setAttribute("priority", String.valueOf(myPriority));
   }
 }
 

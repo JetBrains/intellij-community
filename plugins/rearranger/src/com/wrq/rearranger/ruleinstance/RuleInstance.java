@@ -32,10 +32,11 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import java.util.List;
 
 /**
- * One RuleInstance exists for every execution of every rule.  An execution of a rule is the process by which
+ * One {@link RuleInstance} exists for every execution of every rule.  An execution of a rule is the process by which
  * items are matched to a rule.
  */
 public interface RuleInstance {
+  
   /** @return true if one or more items matched the rule in this instance. */
   boolean hasMatches();
 

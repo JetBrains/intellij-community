@@ -24,7 +24,7 @@ package com.wrq.rearranger.rearrangement;
 import com.intellij.openapi.diagnostic.Logger;
 import com.wrq.rearranger.entry.ClassContentsEntry;
 import com.wrq.rearranger.entry.ClassEntry;
-import com.wrq.rearranger.entry.IRelatableEntry;
+import com.wrq.rearranger.entry.RelatableEntry;
 import com.wrq.rearranger.entry.RangeEntry;
 import com.wrq.rearranger.ruleinstance.CommentRuleInstance;
 import com.wrq.rearranger.ruleinstance.RuleInstance;
@@ -37,23 +37,24 @@ import java.util.ListIterator;
 
 /** Template for generic rearrangement of items in a class or in a Java file. */
 public abstract class GenericRearranger {
+  
   private static final Logger LOG = Logger.getInstance("#" + GenericRearranger.class.getName());
-  private final List<AttributeGroup>     rules;
-  private final List<ClassContentsEntry> entries;
-  private final List<RuleInstance> myResultRuleInstances;
-  private final int                      nestingLevel;
-  private final RearrangerSettings       settings;
+  
+  private final List<AttributeGroup>     myRules;
+  private final List<ClassContentsEntry> myEntries;
+  private final List<RuleInstance>       myResultRuleInstances;
+  private final int                      myNestingLevel;
+  private final RearrangerSettings       mySettings;
 
   @SuppressWarnings({"AssignmentToCollectionOrArrayFieldFromParameter"})
   protected GenericRearranger(final List<AttributeGroup> rules,
                               final List<ClassContentsEntry> outerClasses,
                               final int nestingLevel,
-                              final RearrangerSettings settings)
-  {
-    this.rules = rules;
-    entries = outerClasses;
-    this.nestingLevel = nestingLevel;
-    this.settings = settings;
+                              final RearrangerSettings settings) {
+    this.myRules = rules;
+    myEntries = outerClasses;
+    this.myNestingLevel = nestingLevel;
+    this.mySettings = settings;
     myResultRuleInstances = new ArrayList<RuleInstance>(rules.size() + 4);
   }
 
@@ -66,27 +67,23 @@ public abstract class GenericRearranger {
   public final List<RuleInstance> rearrangeEntries() {
     final List<RuleInstance> prioritizedRuleInstances = new ArrayList<RuleInstance>();
     buildRuleInstanceLists(prioritizedRuleInstances);
-    /**
-     * recursively reorder contents of every nested ClassEntry.
-     */
-    for (ClassContentsEntry entry : entries) {
+    
+    // Recursively reorder contents of every nested ClassEntry
+    for (ClassContentsEntry entry : myEntries) {
       if (entry instanceof ClassEntry) {
         ((ClassEntry)entry).rearrangeContents();
       }
     }
     matchPrioritizedRules(prioritizedRuleInstances);
 
-    /**
-     * Move related methods together.  Extracted methods and setters (emitted with getters)
-     * were not moved by the rearrangement code ("MatchPrioritizedRules()") just above.
-     */
-    rearrangeRelatedItems(entries, myResultRuleInstances);
-    /**
-     * Now go back and determine which comments are going to be emitted, based on their criteria and the
-     * state of the immediately surrounding rules.  Ignore inner classes if no rearrangement of inner
-     * classes is taking place.
-     */
-    if (nestingLevel <= 1 || settings.isRearrangeInnerClasses()) {
+    // Move related methods together.  Extracted methods and setters (emitted with getters)
+    // were not moved by the rearrangement code ("MatchPrioritizedRules()") just above.
+    rearrangeRelatedItems(myEntries, myResultRuleInstances);
+    
+    // Now go back and determine which comments are going to be emitted, based on their criteria and the
+    // state of the immediately surrounding rules.  Ignore inner classes if no rearrangement of inner
+    // classes is taking place.
+    if (myNestingLevel <= 1 || mySettings.isRearrangeInnerClasses()) {
       determineEmittedComments();
     }
     return myResultRuleInstances;
@@ -103,7 +100,9 @@ public abstract class GenericRearranger {
           for (int j = i + 1; j < myResultRuleInstances.size(); j++) {
             RuleInstance instance = myResultRuleInstances.get(j);
             if (instance.hasMatches()) {
-              RangeEntry entry = (instance.getMatches().get(0));
+              final List<RangeEntry> matches = instance.getMatches();
+              assert matches != null;
+              RangeEntry entry = (matches.get(0));
               entry.setSeparatorCommentPrecedes(true);
               break;
             }
@@ -125,14 +124,14 @@ public abstract class GenericRearranger {
   private void matchPrioritizedRules(List<RuleInstance> prioritizedRules) {
     for (RuleInstance ruleInstance : prioritizedRules) {
       final Rule rule = ruleInstance.getRule();
-      final ListIterator entryIterator = entries.listIterator();
+      final ListIterator entryIterator = myEntries.listIterator();
       while (entryIterator.hasNext()) {
         final RangeEntry entry = (RangeEntry)entryIterator.next();
-        if (entry instanceof IRelatableEntry) {
+        if (entry instanceof RelatableEntry) {
           // if this is an extracted (i.e. related) method, or
           // if this is a setter that will be emitted under the corresponding getter,
           // don't test it for match against the rule.
-          final IRelatableEntry relatableEntry = ((IRelatableEntry)entry);
+          final RelatableEntry relatableEntry = ((RelatableEntry)entry);
           if (relatableEntry.isRelatedMethod() || relatableEntry.isEmittableSetter()) {
             continue;
           }
@@ -154,18 +153,14 @@ public abstract class GenericRearranger {
    * @param prioritizedRuleInstances
    */
   private void buildRuleInstanceLists(final List<RuleInstance> prioritizedRuleInstances) {
-    /**
-     * add a HeaderTrailerRuleInstance to pick up any headers that might exist.
-     */
+    // Add a HeaderTrailerRuleInstance to pick up any headers that might exist.
     RuleInstance hri = new HeaderRule().createRuleInstance();
     myResultRuleInstances.add(hri);
     prioritizedRuleInstances.add(hri);
-    for (Rule rule : rules) {
+    for (Rule rule : myRules) {
       RuleInstance instance = rule.createRuleInstance();
       myResultRuleInstances.add(instance);
-      /**
-       * now insert the rule instance into the prioritized list; highest priority first; stable insertion.
-       */
+      // Now insert the rule instance into the prioritized list; highest priority first; stable insertion.
       boolean inserted = false;
       for (int i = prioritizedRuleInstances.size() - 1; i >= 0; i--) {
         RuleInstance entry = (prioritizedRuleInstances.get(i));
@@ -196,7 +191,6 @@ public abstract class GenericRearranger {
    * @param entries
    * @param rearrangedEntries
    */
-  public abstract void rearrangeRelatedItems(List<ClassContentsEntry> entries,
-                                             List<RuleInstance> rearrangedEntries);
+  public abstract void rearrangeRelatedItems(List<ClassContentsEntry> entries, List<RuleInstance> rearrangedEntries);
 }
 

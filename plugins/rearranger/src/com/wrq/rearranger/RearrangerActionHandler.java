@@ -152,7 +152,7 @@ public final class RearrangerActionHandler extends EditorActionHandler {
       wb.whenTrue();
     }
     catch (InterruptedException e) {
-      e.printStackTrace(); //To change body of catch statement use Options | File Templates.
+      e.printStackTrace();
     }
     LOG.debug("end execute");
   }
@@ -186,7 +186,7 @@ public final class RearrangerActionHandler extends EditorActionHandler {
     }
     LOG.debug("respacing document");
     PsiDocumentManager.getInstance(project).commitDocument(document);
-    Spacer spacer = new Spacer(project, psiFile, document, settings);
+    Spacer spacer = new Spacer(psiFile, document, settings);
     if (spacer.respace()) {
       PsiDocumentManager.getInstance(project).commitDocument(document);
     }

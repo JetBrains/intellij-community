@@ -30,7 +30,7 @@ import java.util.List;
  * Defines methods implemented by entries which may be related to others, i.e. getters and setters,
  * method entries which call other methods, and overloaded method entries.
  */
-public interface IRelatableEntry {
+public interface RelatableEntry {
   /**
    * Determine if the entry is a getter/setter or is excluded from extracted method consideration by an
    * overriding rule.

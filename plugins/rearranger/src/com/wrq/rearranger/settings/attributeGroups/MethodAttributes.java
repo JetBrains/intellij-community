@@ -29,6 +29,7 @@ import com.wrq.rearranger.settings.RearrangerSettings;
 import com.wrq.rearranger.settings.atomicAttributes.*;
 import com.wrq.rearranger.util.MethodUtil;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -252,11 +253,11 @@ public final class MethodAttributes
   public final String toString() {
     // convert settings to readable English description of the method.
     //
-    final StringBuffer sb = new StringBuffer(80);
+    final StringBuilder sb = new StringBuilder(80);
 
-    sb.append(plAttr.getProtectionLevelString());
-    sb.append(stAttr.getDescriptiveString());
-    sb.append(fAttr.getDescriptiveString());
+    sb.append(getProtectionLevelAttributes().getProtectionLevelString());
+    sb.append(getStaticAttribute().getDescriptiveString());
+    sb.append(getFinalAttribute().getDescriptiveString());
     sb.append(staticInitAttr.getDescriptiveString());
     sb.append(nativeAttr.getDescriptiveString());
     sb.append(syncAttr.getDescriptiveString());
@@ -332,32 +333,32 @@ public final class MethodAttributes
         }
       }
     }
-    if (nameAttr.isMatch()) {
+    if (getNameAttribute().isMatch()) {
       checkPredicate(sb, false);
-      nextPredicate = nameAttr.getDescriptiveString();
+      nextPredicate = getNameAttribute().getDescriptiveString();
     }
     if (returnTypeAttr.isMatch()) {
       checkPredicate(sb, false);
       nextPredicate = returnTypeAttr.getDescriptiveString();
     }
     checkPredicate(sb, true);
-    sb.append(sortAttr.getDescriptiveString());
+    sb.append(getSortOptions().getDescriptiveString());
     if (noExtractedMethods) {
       sb.append(" (no extracted methods)");
     }
     return sb.toString();
   }
 
-  private void checkPredicate(StringBuffer sb, boolean finalPredicate) {
+  private void checkPredicate(@NotNull StringBuilder buffer, boolean finalPredicate) {
     if (predicateAdded && nextPredicate != null) {
-      sb.append(',');
+      buffer.append(',');
       if (finalPredicate) {
-        sb.append(" and");
+        buffer.append(" and");
       }
     }
     if (nextPredicate != null) {
-      sb.append(' ');
-      sb.append(nextPredicate);
+      buffer.append(' ');
+      buffer.append(nextPredicate);
       predicateAdded = true;
       nextPredicate = null;
     }
@@ -369,6 +370,7 @@ public final class MethodAttributes
 // --------------------- Interface AttributeGroup ---------------------
 
   // Start Methods of Interface AttributeGroup
+  @NotNull
   public final /*ItemAttributes*/AttributeGroup deepCopy() {
     final MethodAttributes result = new MethodAttributes();
     deepCopyCommonItems(result);
@@ -393,7 +395,8 @@ public final class MethodAttributes
     return result;
   }
 
-  public final void writeExternal(final Element parent) {
+  @SuppressWarnings("unchecked")
+  public final void writeExternal(@NotNull final Element parent) {
     final Element me = new Element("Method");
     writeExternalCommonAttributes(me);
     abstractAttr.appendAttributes(me);
@@ -459,7 +462,7 @@ public final class MethodAttributes
     constraints.weightx = 0.0d;
     constraints.weighty = 0.0d;
     constraints.gridx = constraints.gridy = 0;
-    methodPanel.add(getPlAttr().getProtectionLevelPanel(), constraints);
+    methodPanel.add(getProtectionLevelAttributes().getProtectionLevelPanel(), constraints);
     constraints.gridwidth = GridBagConstraints.REMAINDER;
     constraints.gridheight = 1;
     constraints.gridx = 1;
@@ -470,12 +473,12 @@ public final class MethodAttributes
     constraints.gridx = 0;
     constraints.gridheight = 1;
     constraints.gridwidth = 1;
-    methodPanel.add(getStAttr().getAndNotPanel(), constraints);
+    methodPanel.add(getStaticAttribute().getAndNotPanel(), constraints);
     constraints.gridx++;
     methodPanel.add(getAbstractAttr().getAndNotPanel(), constraints);
     constraints.gridx = 0;
     constraints.gridy++;
-    methodPanel.add(getfAttr().getAndNotPanel(), constraints);
+    methodPanel.add(getFinalAttribute().getAndNotPanel(), constraints);
     constraints.gridx++;
     methodPanel.add(getSyncAttr().getAndNotPanel(), constraints);
     constraints.gridx = 0;
@@ -500,7 +503,7 @@ public final class MethodAttributes
     constraints.gridy++;
     methodPanel.add(getMaxParamsAttr().getIntegerPanel(), constraints);
     constraints.gridy++;
-    methodPanel.add(getNameAttr().getStringPanel(), constraints);
+    methodPanel.add(getNameAttribute().getStringPanel(), constraints);
     constraints.gridy++;
     methodPanel.add(getReturnTypeAttr().getStringPanel(), constraints);
     constraints.gridy++;
@@ -509,7 +512,7 @@ public final class MethodAttributes
     constraints.gridy++;
     constraints.gridheight = GridBagConstraints.REMAINDER;
     constraints.weighty = 1.0d;
-    methodPanel.add(sortAttr.getSortOptionsPanel(), constraints);
+    methodPanel.add(getSortOptions().getSortOptionsPanel(), constraints);
     return methodPanel;
   }
 
@@ -601,8 +604,8 @@ public final class MethodAttributes
     });
     gsDefButton.addActionListener(new ActionListener() {
       public void actionPerformed(final ActionEvent e) {
-        GetterSetterDefinition tempgsd = getterSetterDefinition.deepCopy();
-        final JPanel gsDefPanel = tempgsd.getGSDefinitionPanel();
+        GetterSetterDefinition tmpDefinition = getterSetterDefinition.deepCopy();
+        final JPanel gsDefPanel = tmpDefinition.getGSDefinitionPanel();
         final JOptionPane op = new JOptionPane(
           gsDefPanel,
           JOptionPane.PLAIN_MESSAGE,
@@ -614,7 +617,7 @@ public final class MethodAttributes
         if (result != null &&
             ((Integer)result) == JOptionPane.OK_OPTION)
         {
-          getterSetterDefinition = tempgsd;
+          getterSetterDefinition = tmpDefinition;
         }
       }
     });
@@ -625,7 +628,7 @@ public final class MethodAttributes
 // End Methods of Interface AttributeGroup
 // Start Methods of Interface IRule
 
-  public final boolean isMatch(RangeEntry entry) {
+  public final boolean isMatch(@NotNull RangeEntry entry) {
     final boolean result = (entry.getEnd() instanceof PsiMethod ||
                             entry.getEnd() instanceof PsiClassInitializer) &&
                            super.isMatch(entry) &&
@@ -640,12 +643,12 @@ public final class MethodAttributes
                            returnTypeAttr.isMatch(entry.getType()) &&
                            minParamsAttr.isMatch(entry.getEnd()) &&
                            maxParamsAttr.isMatch(entry.getEnd());
-    if (result == false) {
+    if (!result) {
       return false;
     }
     boolean typeResult = false;
     if (isConstructorMethodType()) {
-      typeResult |= (entry.getModifiers() & ModifierConstants.CONSTRUCTOR) == ModifierConstants.CONSTRUCTOR;
+      typeResult = (entry.getModifiers() & ModifierConstants.CONSTRUCTOR) == ModifierConstants.CONSTRUCTOR;
     }
     if (isGetterSetterMethodType() &&
         entry.getEnd() instanceof PsiMethod)
@@ -674,7 +677,7 @@ public final class MethodAttributes
     {
       typeResult = true; // true if no method type options are selected.
     }
-    return result && typeResult;
+    return typeResult;
   }
 }
 
