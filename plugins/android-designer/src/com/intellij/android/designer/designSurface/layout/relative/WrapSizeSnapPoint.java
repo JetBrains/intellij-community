@@ -15,6 +15,7 @@
  */
 package com.intellij.android.designer.designSurface.layout.relative;
 
+import com.intellij.android.designer.model.ModelParser;
 import com.intellij.android.designer.model.RadViewComponent;
 import com.intellij.designer.designSurface.feedbacks.TextFeedback;
 import com.intellij.designer.model.RadComponent;
@@ -27,42 +28,35 @@ import java.util.List;
 /**
  * @author Alexander Lobas
  */
-public class BaselineSnapPoint extends SnapPoint {
-  private final int myBaseline;
+public class WrapSizeSnapPoint extends SnapPoint {
+  private final Dimension myWrapSize;
 
-  public BaselineSnapPoint(RadViewComponent component) {
-    super(component, false);
-    myBaseline = component.getBaseline();
+  public WrapSizeSnapPoint(RadViewComponent component, boolean horizontal, Dimension wrapSize) {
+    super(component, horizontal);
+    myWrapSize = wrapSize;
   }
 
   @Override
   public void addTextInfo(TextFeedback feedback) {
-    feedback.append("baseline", SnapPointFeedbackHost.SNAP_ATTRIBUTES);
-    feedback.append(" to ");
-    getComponentDecorator().decorate(myComponent, feedback, false);
+    feedback.append("layout:" + (myHorizontal ? "width " : "height "));
+    feedback.snap("wrap_content");
   }
 
   @Override
-  public boolean processBounds(List<RadComponent> components, Rectangle targetBounds, SnapPointFeedbackHost feedback) {
-    if (myBaseline == -1 || components.size() != 1) {
-      return false;
+  public boolean processBounds(List<RadComponent> components, Rectangle bounds, SnapPointFeedbackHost feedback) {
+    super.processBounds(components, bounds, feedback);
+
+    if (myHorizontal) {
+      if (Math.abs(bounds.width - myWrapSize.width) < SNAP_SIZE) {
+        bounds.width = myWrapSize.width;
+        return true;
+      }
     }
-
-    int targetBaseLine = ((RadViewComponent)components.get(0)).getBaseline();
-    if (targetBaseLine == -1) {
-      return false;
-    }
-
-    super.processBounds(components, targetBounds, feedback);
-
-    int startY = myBounds.y + myBaseline - SNAP_SIZE;
-    int endY = startY + 2 * SNAP_SIZE;
-
-    int targetY = targetBounds.y + targetBaseLine;
-    if (startY <= targetY && targetY <= endY) {
-      targetBounds.y = myBounds.y + myBaseline - targetBaseLine;
-      addHorizontalFeedback(feedback, myBounds, targetBounds, myBounds.y + myBaseline);
-      return true;
+    else {
+      if (Math.abs(bounds.height - myWrapSize.height) < SNAP_SIZE) {
+        bounds.height = myWrapSize.height;
+        return true;
+      }
     }
 
     return false;
@@ -74,7 +68,8 @@ public class BaselineSnapPoint extends SnapPoint {
       @Override
       public void run() {
         XmlTag tag = ((RadViewComponent)components.get(0)).getTag();
-        tag.setAttribute("android:layout_alignBaseline", myComponent.ensureId());
+        ModelParser.deleteAttribute(tag, "android:layout_alignParent" + (myHorizontal ? "Right" : "Bottom"));
+        tag.setAttribute("android:layout_" + (myHorizontal ? "width" : "height"), "wrap_content");
       }
     });
   }
