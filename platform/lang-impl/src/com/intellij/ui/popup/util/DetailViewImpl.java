@@ -142,7 +142,7 @@ public class DetailViewImpl extends JPanel implements DetailView {
     if (panel != null) {
       if (myDetailScrollPanel == null) {
         myDetailPanelWrapper = new JPanel(new GridLayout(1, 1));
-
+        myDetailPanelWrapper.setBorder(BorderFactory.createEmptyBorder(3, 3, 3, 3));
         myDetailPanelWrapper.add(panel);
 
         myDetailScrollPanel =
