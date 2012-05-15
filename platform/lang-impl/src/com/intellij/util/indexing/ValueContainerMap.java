@@ -38,18 +38,14 @@ class ValueContainerMap<Key, Value> extends PersistentHashMap<Key, ValueContaine
         //noinspection IOResourceOpenedButNotSafelyClosed
         final DataOutputStream _out = new DataOutputStream(bytes);
         final TIntHashSet set = valueContainer.getInvalidated();
-        if (set.size() > 0) {
+        if (set != null && set.size() > 0) {
           for (int inputId : set.toArray()) {
             ValueContainerExternalizer.saveInvalidateCommand(_out, inputId);
           }
         }
-        final ValueContainer<Value> toRemove = valueContainer.getRemovedDelta();
-        if (toRemove.size() > 0) {
-          myValueContainerExternalizer.saveAsRemoved(_out, toRemove);
-        }
 
         final ValueContainer<Value> toAppend = valueContainer.getAddedDelta();
-        if (toAppend.size() > 0) {
+        if (toAppend != null && toAppend.size() > 0) {
           myValueContainerExternalizer.save(_out, toAppend);
         }
 
@@ -76,18 +72,14 @@ class ValueContainerMap<Key, Value> extends PersistentHashMap<Key, ValueContaine
 
     @Override
     public void save(final DataOutput out, @NotNull final ValueContainer<T> container) throws IOException {
-      saveImpl(out, container, false);
-    }
-
-    public void saveAsRemoved(final DataOutput out, @NotNull final ValueContainer<T> container) throws IOException {
-      saveImpl(out, container, true);
+      saveImpl(out, container);
     }
 
     public static void saveInvalidateCommand(final DataOutput out, int inputId) throws IOException {
       DataInputOutputUtil.writeSINT(out, -inputId);
     }
 
-    private void saveImpl(final DataOutput out, @NotNull final ValueContainer<T> container, final boolean asRemovedData) throws IOException {
+    private void saveImpl(final DataOutput out, @NotNull final ValueContainer<T> container) throws IOException {
       DataInputOutputUtil.writeSINT(out, container.size());
       for (final Iterator<T> valueIterator = container.getValueIterator(); valueIterator.hasNext();) {
         final T value = valueIterator.next();
@@ -98,7 +90,7 @@ class ValueContainerMap<Key, Value> extends PersistentHashMap<Key, ValueContaine
           DataInputOutputUtil.writeSINT(out, ids.size());
           while (ids.hasNext()) {
             final int id = ids.next();
-            DataInputOutputUtil.writeSINT(out, asRemovedData ? -id : id);
+            DataInputOutputUtil.writeSINT(out, id);
           }
         }
         else {

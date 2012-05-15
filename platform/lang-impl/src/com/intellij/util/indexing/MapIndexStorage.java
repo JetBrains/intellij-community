@@ -238,17 +238,6 @@ public final class MapIndexStorage<Key, Value> implements IndexStorage<Key, Valu
   }
 
   @Override
-  public void removeValue(final Key key, final int inputId, final Value value) throws StorageException {
-    try {
-      myMap.markDirty();
-      read(key).removeValue(inputId, value);
-    }
-    catch (IOException e) {
-      throw new StorageException(e);
-    }
-  }
-
-  @Override
   public void removeAllValues(Key key, int inputId) throws StorageException {
     try {
       myMap.markDirty();
