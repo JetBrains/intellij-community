@@ -58,15 +58,15 @@ public class TabLabel extends JPanel {
   protected ActionPanel myActionPanel;
   private boolean myCentered;
 
-  private final Wrapper myLabelPlaceholder = new Wrapper();
+  private final Wrapper myLabelPlaceholder = new Wrapper(false);
   private final JBTabsImpl myTabs;
-
-  private BufferedImage myImage;
 
   private BufferedImage myInactiveStateImage;
   private Rectangle myLastPaintedInactiveImageBounds;
 
   public TabLabel(JBTabsImpl tabs, final TabInfo info) {
+    super(false);
+
     myTabs = tabs;
     myInfo = info;
     myLabel.setOpaque(false);
@@ -147,13 +147,7 @@ public class TabLabel extends JPanel {
     if (myTabs.isDropTarget(myInfo)) return;
 
     if (myTabs.getSelectedInfo() != myInfo) {
-      myImage = null;
       doPaint(g);
-    } else if (!SystemInfo.isMac || SystemInfo.isJavaVersionAtLeast("1.7")) {
-      myImage = new BufferedImage(getWidth(), getHeight(), BufferedImage.TYPE_INT_ARGB);
-      final Graphics2D lg = myImage.createGraphics();
-      doPaint(lg);
-      lg.dispose();
     }
   }
 
@@ -169,17 +163,13 @@ public class TabLabel extends JPanel {
 
   public void paintImage(Graphics g) {
     final Rectangle b = getBounds();
-    if (myImage != null) {
-      g.drawImage(myImage, b.x, b.y, getWidth(), getHeight(), null);
-    } else {
-      final Graphics lG = g.create(b.x, b.y, b.width, b.height);
-      try {
-        lG.setColor(Color.red);
-        doPaint(lG);
-      }
-      finally {
-        lG.dispose();
-      }
+    final Graphics lG = g.create(b.x, b.y, b.width, b.height);
+    try {
+      lG.setColor(Color.red);
+      doPaint(lG);
+    }
+    finally {
+      lG.dispose();
     }
   }
 
