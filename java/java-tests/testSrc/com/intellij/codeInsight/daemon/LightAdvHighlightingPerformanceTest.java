@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2012 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.codeInsight.daemon;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
@@ -11,17 +26,13 @@ import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.impl.source.tree.injected.JavaConcatenationInjectorManager;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import com.intellij.util.ThrowableRunnable;
-import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 
 public class LightAdvHighlightingPerformanceTest extends LightDaemonAnalyzerTestCase {
@@ -74,9 +85,12 @@ public class LightAdvHighlightingPerformanceTest extends LightDaemonAnalyzerTest
     }
   }
 
+  private String getFilePath(final String suffix) {
+    return LightAdvHighlightingTest.BASE_PATH + "/" + getTestName(true) + suffix + ".java";
+  }
+
   private List<HighlightInfo> doTest(final int maxMillis) throws Exception {
-    @NonNls String filePath = LightAdvHighlightingTest.BASE_PATH + "/" + getTestName(false) + ".java";
-    configureByFile(filePath);
+    configureByFile(getFilePath(""));
 
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
     getFile().getText(); //to load text
@@ -92,32 +106,23 @@ public class LightAdvHighlightingPerformanceTest extends LightDaemonAnalyzerTest
         infos.addAll(h);
       }
     }).cpuBound().usesAllCPUCores().assertTiming();
+
     return DaemonAnalyzerTestCase.filter(infos, HighlightSeverity.ERROR);
   }
 
-  public void testaThinlet() throws Exception {
+  public void testAThinlet() throws Exception {
     List<HighlightInfo> errors = doTest(Math.max(10000, 24000 - JobSchedulerImpl.CORES_COUNT * 1000));
-    dump("thinlet", errors);
-    assertEquals(1230, errors.size());
+    if (1226 != errors.size()) {
+      doTest(getFilePath("_hl"), false, false);
+      fail("Actual: " + errors.size());
+    }
   }
 
-  private static void dump(String msg, List<HighlightInfo> errors) {
-    if (true) return;
-    Collections.sort(errors, new Comparator<HighlightInfo>() {
-      @Override
-      public int compare(HighlightInfo o1, HighlightInfo o2) {
-        return o1.toString().compareTo(o2.toString());
-      }
-    });
-    final String s = StringUtil.join(errors, StringUtil.createToStringFunction(HighlightInfo.class), "\n");
-    System.out.println(msg+":\n-----------------------------------------");
-    System.out.println(s);
-    System.out.println("\n--------------------------------------------");
-  }
-
-  public void testaClassLoader() throws Exception {
+  public void testAClassLoader() throws Exception {
     List<HighlightInfo> errors = doTest(Math.max(1000, 10000 - JobSchedulerImpl.CORES_COUNT * 1000));
-    dump("classloader", errors);
-    assertEquals(178, errors.size());
+    if (173 != errors.size()) {
+      doTest(getFilePath("_hl"), false, false);
+      fail("Actual: " + errors.size());
+    }
   }
 }
