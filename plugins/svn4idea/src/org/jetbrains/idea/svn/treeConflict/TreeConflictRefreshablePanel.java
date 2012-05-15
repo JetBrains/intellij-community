@@ -302,13 +302,21 @@ public class TreeConflictRefreshablePanel extends AbstractRefreshablePanel {
   }
 
   private Paths getPaths(final SVNTreeConflictDescription description) {
-    final FilePath mainPath = new FilePathImpl(description.getPath(), SVNNodeKind.DIR.equals(description.getNodeKind()));
+    FilePath mainPath = new FilePathImpl(description.getPath(), SVNNodeKind.DIR.equals(description.getNodeKind()));
     FilePath additionalPath = null;
     if (myChange.isMoved() || myChange.isRenamed()) {
-      if (myChange.getBeforeRevision().getFile().equals(mainPath)) {
-        additionalPath = myChange.getAfterRevision().getFile();
-      } else {
+      if (SVNConflictAction.ADD.equals(description.getConflictAction())) {
+        mainPath = myChange.getAfterRevision().getFile();
         additionalPath = myChange.getBeforeRevision().getFile();
+      } else {
+        mainPath = myChange.getBeforeRevision().getFile();
+        additionalPath = myChange.getAfterRevision().getFile();
+      }
+    } else {
+      if (myChange.getBeforeDescription() != null) {
+        mainPath = myChange.getBeforeRevision().getFile();
+      } else {
+        mainPath = myChange.getAfterRevision().getFile();
       }
     }
     return new Paths(mainPath, additionalPath);
