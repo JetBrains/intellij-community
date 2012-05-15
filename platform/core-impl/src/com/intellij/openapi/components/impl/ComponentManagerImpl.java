@@ -98,7 +98,9 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
 
   private void createComponents() {
     try {
+      long start = System.currentTimeMillis();
       myComponentsRegistry.loadClasses();
+      LOG.info("Component classes loaded in " + (System.currentTimeMillis() - start) + " ms");
 
       final Class[] componentInterfaces = myComponentsRegistry.getComponentInterfaces();
       for (Class componentInterface : componentInterfaces) {
