@@ -301,7 +301,7 @@ public class PositionHighlighter {
       try {
         StackFrameProxyImpl frameProxy = myContext.getFrameProxy();
         final ThreadReferenceProxyImpl thread = getSuspendContext().getThread();
-        isExecutionPoint = thread != null && frameProxy.equals(thread.frame(0));
+        isExecutionPoint = thread != null && frameProxy != null && frameProxy.equals(thread.frame(0));
       }
       catch(Throwable th) {
         LOG.debug(th);
