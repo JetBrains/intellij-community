@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -142,7 +142,10 @@ public class CreateMethodFromUsageFix extends CreateFromUsageBaseFix {
     String methodName = ref.getReferenceName();
     LOG.assertTrue(methodName != null);
 
-    PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
+    JVMElementFactory factory = JVMElementFactories.getFactory(targetClass.getLanguage(), project);
+    if (factory == null) {
+      return;
+    }
 
     PsiMethod method = factory.createMethod(methodName, PsiType.VOID);
 
@@ -251,7 +254,13 @@ public class CreateMethodFromUsageFix extends CreateFromUsageBaseFix {
                 if (typeParameters.length > 0) {
                   for (PsiTypeParameter typeParameter : typeParameters) {
                     if (checkTypeParam( method, typeParameter)) {
-                      method.getTypeParameterList().add(typeParameter);
+                      final JVMElementFactory factory = JVMElementFactories.getFactory(method.getLanguage(), method.getProject());
+                      PsiTypeParameterList list = method.getTypeParameterList();
+                      if (list == null) {
+                        PsiTypeParameterList newList = factory.createTypeParameterList();
+                        list = (PsiTypeParameterList)method.addAfter(newList, method.getModifierList());
+                      }
+                      list.add(factory.createTypeParameter(typeParameter.getName(),typeParameter.getExtendsList().getReferencedTypes()));
                     }
                   }
                 }
@@ -276,32 +285,59 @@ public class CreateMethodFromUsageFix extends CreateFromUsageBaseFix {
     }
   }
 
-  private static boolean checkTypeParam(final PsiElement typeElement,
-                                        final PsiTypeParameter typeParameter) {
+  private static boolean checkTypeParam(final PsiMethod method, final PsiTypeParameter typeParameter) {
     final String typeParameterName = typeParameter.getName();
-    final boolean[] found = new boolean[] {false};
-    typeElement.accept(new JavaRecursiveElementWalkingVisitor(){
 
+    final PsiTypeVisitor<Boolean> visitor = new PsiTypeVisitor<Boolean>() {
       @Override
-      public void visitElement(PsiElement element) {
-        if (found[0]) return;
-        super.visitElement(element);
-      }
-
-      @Override
-      public void visitTypeElement(PsiTypeElement type) {
-        super.visitTypeElement(type);
-        final PsiClass psiClass = PsiUtil.resolveClassInType(type.getType());
+      public Boolean visitClassType(PsiClassType classType) {
+        final PsiClass psiClass = classType.resolve();
         if (psiClass instanceof PsiTypeParameter &&
-            PsiTreeUtil.isAncestor(((PsiTypeParameter)psiClass).getOwner(), typeElement, true)) {
-          return;
+            PsiTreeUtil.isAncestor(((PsiTypeParameter)psiClass).getOwner(), method, true)) {
+          return false;
         }
-        if (Comparing.strEqual(typeParameterName, type.getText())) {
-          found[0] = true;
+        if (Comparing.strEqual(typeParameterName, classType.getCanonicalText())) {
+          return true;
         }
+        for (PsiType p : classType.getParameters()) {
+          if (p.accept(this)) return true;
+        }
+        return false;
       }
-    });
-    return found[0];
+
+      @Override
+      public Boolean visitPrimitiveType(PsiPrimitiveType primitiveType) {
+        return false;
+      }
+
+      @Override
+      public Boolean visitArrayType(PsiArrayType arrayType) {
+        return arrayType.getComponentType().accept(this);
+      }
+
+      @Override
+      public Boolean visitWildcardType(PsiWildcardType wildcardType) {
+        final PsiType bound = wildcardType.getBound();
+        if (bound != null) {
+          return bound.accept(this);
+        }
+        return false;
+      }
+    };
+
+    final PsiTypeElement rElement = method.getReturnTypeElement();
+    if (rElement != null) {
+      if (rElement.getType().accept(visitor)) return true;
+    }
+
+
+    for (PsiParameter parameter : method.getParameterList().getParameters()) {
+      final PsiTypeElement element = parameter.getTypeElement();
+      if (element != null) {
+        if (element.getType().accept(visitor)) return true;
+      }
+    }
+    return false;
   }
 
   protected boolean shouldBeAbstract(PsiClass targetClass) {

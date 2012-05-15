@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,8 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 import com.intellij.codeInsight.*;
 import com.intellij.codeInsight.completion.proc.VariablesProcessor;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
+import com.intellij.codeInsight.generation.OverrideImplementUtil;
+import com.intellij.codeInsight.generation.PsiGenerationInfo;
 import com.intellij.codeInsight.intention.impl.CreateClassDialog;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
@@ -129,7 +131,7 @@ public class CreateFromUsageUtils {
       returnType = PsiType.VOID;
     }
 
-    PsiElementFactory factory = JavaPsiFacade.getInstance(method.getProject()).getElementFactory();
+    JVMElementFactory factory = JVMElementFactories.getFactory(aClass.getLanguage(), aClass.getProject());
 
     LOG.assertTrue(!aClass.isInterface(), "Interface bodies should be already set up");
 
@@ -190,7 +192,7 @@ public class CreateFromUsageUtils {
       PsiElement r = PsiTreeUtil.skipSiblingsBackward(body.getRBrace(), PsiWhiteSpace.class);
       if (l != null && r != null) {
         int start = l.getTextRange().getStartOffset();
-        int end   = r.getTextRange().getEndOffset();
+        int end = r.getTextRange().getEndOffset();
         newEditor.getCaretModel().moveToOffset(Math.max(start, end));
         if (end < start) {
           newEditor.getCaretModel().moveToOffset(end + 1);
@@ -200,8 +202,11 @@ public class CreateFromUsageUtils {
           PsiDocumentManager manager = PsiDocumentManager.getInstance(method.getProject());
           manager.doPostponedOperationsAndUnblockDocument(manager.getDocument(containingFile));
           EditorModificationUtil.insertStringAtCaret(newEditor, lineIndent);
-        } else {
-          newEditor.getSelectionModel().setSelection(Math.min(start, end), Math.max(start, end));
+        }
+        else {
+          //correct position caret for groovy and java methods
+          final PsiGenerationInfo<PsiMethod> info = OverrideImplementUtil.createGenerationInfo(method);
+          info.positionCaret(newEditor, true);
         }
         newEditor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
       }
@@ -225,13 +230,13 @@ public class CreateFromUsageUtils {
                                            final PsiSubstitutor substitutor, final List<Pair<PsiExpression, PsiType>> arguments)
     throws IncorrectOperationException {
     PsiManager psiManager = method.getManager();
-    PsiElementFactory factory = JavaPsiFacade.getInstance(psiManager.getProject()).getElementFactory();
+    JVMElementFactory factory = JVMElementFactories.getFactory(method.getLanguage(), method.getProject());
 
     PsiParameterList parameterList = method.getParameterList();
 
     GlobalSearchScope resolveScope = method.getResolveScope();
 
-    GuessTypeParameters guesser = new GuessTypeParameters(factory);
+    GuessTypeParameters guesser = new GuessTypeParameters(JavaPsiFacade.getElementFactory(method.getProject()));
 
     final PsiClass containingClass = method.getContainingClass();
     final boolean isInterface = containingClass != null && containingClass.isInterface();
@@ -943,6 +948,7 @@ public class CreateFromUsageUtils {
   @Nullable
   private static String getQualifiedName(final PsiClass aClass) {
     return ApplicationManager.getApplication().runReadAction(new Computable<String>() {
+      @Nullable
       @Override
       public String compute() {
         return aClass.getQualifiedName();
@@ -993,7 +999,16 @@ public class CreateFromUsageUtils {
       assert file != null;
       PsiElement elementAt = file.findElementAt(offset);
       PsiParameterList parameterList = PsiTreeUtil.getParentOfType(elementAt, PsiParameterList.class);
-      if (parameterList == null) return LookupElement.EMPTY_ARRAY;
+      if (parameterList == null) {
+        if (elementAt == null) return LookupElement.EMPTY_ARRAY;
+        final PsiElement parent = elementAt.getParent();
+        if (parent instanceof PsiMethod) {
+          parameterList = ((PsiMethod)parent).getParameterList();
+        }
+        else {
+          return LookupElement.EMPTY_ARRAY;
+        }
+      }
 
       PsiParameter parameter = PsiTreeUtil.getParentOfType(elementAt, PsiParameter.class);
 

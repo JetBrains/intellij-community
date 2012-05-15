@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -167,6 +167,34 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
     final PsiClass refClass = resolveResult.getElement();
     assert refClass != null : type;
     return new LightClassReference(myManager, type.getPresentableText(), refClass, resolveResult.getSubstitutor());
+  }
+
+  @NotNull
+  @Override
+  public PsiTypeParameterList createTypeParameterList() {
+    return createMethodFromText("void foo()", null).getTypeParameterList();
+  }
+
+  @NotNull
+  @Override
+  public PsiTypeParameter createTypeParameter(String name, PsiClassType[] superTypes) {
+    StringBuilder builder = new StringBuilder();
+    builder.append("public <").append(name);
+    if (superTypes.length > 0) {
+      builder.append(" extends ");
+      for (PsiClassType type : superTypes) {
+        builder.append(type.getCanonicalText()).append(',');
+      }
+
+      builder.delete(builder.length() - 1, builder.length());
+    }
+    builder.append("> void foo(){}");
+    try {
+      return createMethodFromText(builder.toString(), null).getTypeParameters()[0];
+    }
+    catch (RuntimeException e) {
+      throw new IncorrectOperationException("type parameter text: " + builder.toString());
+    }
   }
 
   @NotNull

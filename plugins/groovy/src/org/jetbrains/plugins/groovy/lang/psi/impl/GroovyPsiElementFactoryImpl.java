@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -158,6 +158,7 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
     return (GrExpression) topStatements[0];
   }
 
+  @NotNull
   @Override
   public GrCodeReferenceElement createReferenceElementByType(PsiClassType type) {
     if (type instanceof GrClassReferenceType) {
@@ -171,6 +172,34 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
     final PsiClass refClass = resolveResult.getElement();
     assert refClass != null : type;
     return createCodeReferenceElementFromText(type.getPresentableText());
+  }
+
+  @NotNull
+  @Override
+  public PsiTypeParameterList createTypeParameterList() {
+    return createMethodFromText("def <> void foo(){}").getTypeParameterList();
+  }
+
+  @NotNull
+  @Override
+  public PsiTypeParameter createTypeParameter(String name, PsiClassType[] superTypes) {
+    StringBuilder builder = new StringBuilder();
+    builder.append("def <").append(name);
+    if (superTypes.length > 0) {
+      builder.append(" extends ");
+      for (PsiClassType type : superTypes) {
+        builder.append(type.getCanonicalText()).append(',');
+      }
+
+      builder.delete(builder.length() - 1, builder.length());
+    }
+    builder.append("> void foo(){}");
+    try {
+      return createMethodFromText(builder.toString()).getTypeParameters()[0];
+    }
+    catch (RuntimeException e) {
+      throw new IncorrectOperationException("type parameter text: " + builder.toString());
+    }
   }
 
   public GrVariableDeclaration createVariableDeclaration(@Nullable String[] modifiers,
