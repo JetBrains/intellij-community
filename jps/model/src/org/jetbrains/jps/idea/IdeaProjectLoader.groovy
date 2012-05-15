@@ -340,6 +340,10 @@ public class IdeaProjectLoader {
       if ("PROJECT".equals(url)) {
         project.projectCharset = charset;
       }
+      else {
+        def path = projectMacroExpander.expandMacros(IdeaProjectLoadingUtil.pathFromUrl(url));
+        project.filePathToCharset[path] = charset;
+      }
     }
   }
 

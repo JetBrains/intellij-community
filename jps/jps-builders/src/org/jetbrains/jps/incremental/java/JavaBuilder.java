@@ -223,6 +223,11 @@ public class JavaBuilder extends ModuleLevelBuilder {
     }
   }
 
+  @Override
+  public boolean shouldHonorFileEncodingForCompilation(File file) {
+    return JAVA_SOURCES_FILTER.accept(file) || FORM_SOURCES_FILTER.accept(file);
+  }
+
   @Nullable
   private static File getBoundSource(File srcRoot, File formFile) throws IOException {
     final String boundClassName = FormsParsing.readBoundClassName(formFile);

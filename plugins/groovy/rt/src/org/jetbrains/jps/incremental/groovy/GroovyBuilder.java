@@ -132,6 +132,11 @@ public class GroovyBuilder extends ModuleLevelBuilder {
     return moduleOutputPath.endsWith("/") ? moduleOutputPath : moduleOutputPath + "/";
   }
 
+  @Override
+  public boolean shouldHonorFileEncodingForCompilation(File file) {
+    return isGroovyFile(file.getAbsolutePath());
+  }
+
   private String getCompilerOutput(String moduleOutputDir) throws IOException {
     return FileUtil.toCanonicalPath((myForStubs ? FileUtil.createTempDirectory("groovyStubs", null) : new File(moduleOutputDir)).getPath());
   }
