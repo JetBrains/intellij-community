@@ -46,7 +46,7 @@ class JavaBreakpointItem implements BreakpointItem {
   @Override
   public void setupRenderer(ColoredListCellRenderer renderer, Project project, boolean selected) {
     renderer.setIcon(myBreakpoint.getIcon());
-    renderer.append(myBreakpoint.getDisplayName());
+    renderer.append(myBreakpoint.getShortName());
   }
 
   @Override
@@ -79,7 +79,9 @@ class JavaBreakpointItem implements BreakpointItem {
   public void updateDetailView(DetailView panel) {
     BreakpointPropertiesPanel breakpointPropertiesPanel = myBreakpointFactory
       .createBreakpointPropertiesPanel(myBreakpoint.getProject(), false);
-    breakpointPropertiesPanel.setSaveOnRemove(true);
+    if (breakpointPropertiesPanel != null) {
+      breakpointPropertiesPanel.setSaveOnRemove(true);
+    }
 
     if (breakpointPropertiesPanel != null) {
       breakpointPropertiesPanel.initFrom(myBreakpoint, true);

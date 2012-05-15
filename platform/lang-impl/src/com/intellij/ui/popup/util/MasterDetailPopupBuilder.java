@@ -213,35 +213,7 @@ public class MasterDetailPopupBuilder {
     myList.addKeyListener(new KeyAdapter() {
       public void keyPressed(KeyEvent e) {
         if (e.getKeyCode() == KeyEvent.VK_DELETE) {
-          int index = myList.getSelectedIndex();
-          if (index == -1 || index >= myList.getModel().getSize()) {
-            return;
-          }
-          Object[] values = myList.getSelectedValues();
-          for (Object value : values) {
-            ItemWrapper item = (ItemWrapper)value;
-
-            DefaultListModel model = myList.getModel() instanceof DefaultListModel
-                                     ? (DefaultListModel)myList.getModel()
-                                     : (DefaultListModel)((FilteringListModel)myList.getModel()).getOriginalModel();
-            if (item.allowedToRemove()) {
-              model.removeElement(item);
-
-              if (model.getSize() > 0) {
-                if (model.getSize() == index) {
-                  myList.setSelectedIndex(model.getSize() - 1);
-                }
-                else if (model.getSize() > index) {
-                  myList.setSelectedIndex(index);
-                }
-              }
-              else {
-                myList.clearSelection();
-              }
-              item.removed(myProject);
-            }
-
-          }
+          removeSelectedItems(MasterDetailPopupBuilder.this.myList, MasterDetailPopupBuilder.this.myProject);
         }
         else if (e.getKeyCode() == KeyEvent.VK_UP) {
           directionUp[0] = true;
@@ -254,6 +226,48 @@ public class MasterDetailPopupBuilder {
       }
     });
     return popup;
+  }
+
+  public static boolean allowedToRemoveSelectedItem(JBList list, Project project) {
+    Object[] values = list.getSelectedValues();
+    for (Object value : values) {
+      ItemWrapper item = (ItemWrapper)value;
+      if (!item.allowedToRemove()) {
+        return false;
+      }
+    }
+    return values.length > 0;
+  }
+
+  public static void removeSelectedItems(JBList list, Project project) {
+    int index = list.getSelectedIndex();
+    if (index == -1 || index >= list.getModel().getSize()) {
+      return;
+    }
+    Object[] values = list.getSelectedValues();
+    for (Object value : values) {
+      ItemWrapper item = (ItemWrapper)value;
+
+      DefaultListModel model = list.getModel() instanceof DefaultListModel
+                               ? (DefaultListModel)list.getModel()
+                               : (DefaultListModel)((FilteringListModel)list.getModel()).getOriginalModel();
+      if (item.allowedToRemove()) {
+        model.removeElement(item);
+
+        if (model.getSize() > 0) {
+          if (model.getSize() == index) {
+            list.setSelectedIndex(model.getSize() - 1);
+          }
+          else if (model.getSize() > index) {
+            list.setSelectedIndex(index);
+          }
+        }
+        else {
+          list.clearSelection();
+        }
+        item.removed(project);
+      }
+    }
   }
 
   public MasterDetailPopupBuilder setActionsGroup(ActionGroup actions) {

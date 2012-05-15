@@ -75,6 +75,7 @@ public class DetailViewImpl extends JPanel implements DetailView {
       remove(getEditor().getComponent());
       EditorFactory.getInstance().releaseEditor(getEditor());
       setEditor(null);
+      add(myNothingToShow, BorderLayout.CENTER);
       repaint();
     }
   }
