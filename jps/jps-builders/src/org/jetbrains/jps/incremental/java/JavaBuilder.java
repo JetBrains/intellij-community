@@ -490,20 +490,22 @@ public class JavaBuilder extends ModuleLevelBuilder {
   }
 
   private static int convertToNumber(final String ver) {
-    final String prefix = "1.";
-    if (ver.startsWith(prefix)) {
-      final String versionNumberString;
-      final int dotIndex = ver.indexOf(".", prefix.length());
-      if (dotIndex > 0) {
-        versionNumberString = ver.substring(prefix.length(), dotIndex);
-      }
-      else {
-        versionNumberString = ver.substring(prefix.length());
-      }
-      try {
-        return Integer.parseInt(versionNumberString);
-      }
-      catch (NumberFormatException ignored) {
+    if (ver != null) {
+      final String prefix = "1.";
+      if (ver.startsWith(prefix)) {
+        final String versionNumberString;
+        final int dotIndex = ver.indexOf(".", prefix.length());
+        if (dotIndex > 0) {
+          versionNumberString = ver.substring(prefix.length(), dotIndex);
+        }
+        else {
+          versionNumberString = ver.substring(prefix.length());
+        }
+        try {
+          return Integer.parseInt(versionNumberString);
+        }
+        catch (NumberFormatException ignored) {
+        }
       }
     }
     return 0;
