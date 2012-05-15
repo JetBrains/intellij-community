@@ -1413,26 +1413,6 @@ class FormatProcessor {
       
       if (done) {
         myModel.commitChanges();
-        
-        // TODO [cdr] remove when IDEA-85591 is done
-        if (myModel instanceof PsiBasedFormattingModel) {
-          PsiBasedFormattingModel psiModel = ((PsiBasedFormattingModel)myModel);
-          final ASTNode rootNode = psiModel.getRootNode();
-          if (rootNode == null) {
-            return;
-          }
-          final PsiElement psi = rootNode.getPsi();
-          if (psi == null) {
-            return;
-          }
-          if (ProjectManager.getInstance().getDefaultProject() != psi.getProject()) {
-            return;
-          }
-          final Document document = psiModel.getDocumentModel().getDocument();
-          if (!document.getText().equals(rootNode.getText()) && ApplicationManager.getApplication().isDispatchThread()) {
-            document.setText(rootNode.getText());
-          }
-        }
       }
     }
 

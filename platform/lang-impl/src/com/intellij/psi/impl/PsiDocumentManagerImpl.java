@@ -91,7 +91,7 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
     myDocumentCommitThread = documentCommitThread;
     mySmartPointerManager = (SmartPointerManagerImpl)smartPointerManager;
     mySynchronizer = new PsiToDocumentSynchronizer(this, bus);
-    if (!project.isDefault()) {
+    if (true || !project.isDefault()) {
       myPsiManager.addPsiTreeChangeListener(mySynchronizer);
       editorFactory.getEventMulticaster().addDocumentListener(this, myProject);
       bus.connect().subscribe(AppTopics.FILE_DOCUMENT_SYNC, new FileDocumentManagerAdapter() {
