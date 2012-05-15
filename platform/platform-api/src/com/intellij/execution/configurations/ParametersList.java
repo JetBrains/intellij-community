@@ -334,8 +334,7 @@ public class ParametersList implements Cloneable {
       final Application application = ApplicationManager.getApplication();
       if (application != null) {
         final PathMacros pathMacros = PathMacros.getInstance();
-        final Set<String> names = pathMacros.getAllMacroNames();
-        for (String name : names) {
+        for (String name : pathMacros.getUserMacroNames()) {
           myMacroMap.put("${" + name + "}", pathMacros.getValue(name));
         }
         final Map<String, String> env = EnvironmentUtil.getEnviromentProperties();
