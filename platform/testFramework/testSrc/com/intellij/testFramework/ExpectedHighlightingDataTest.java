@@ -1,0 +1,125 @@
+/*
+ * Copyright 2000-2012 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package com.intellij.testFramework;
+
+import com.intellij.codeInsight.daemon.impl.HighlightInfo;
+import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
+import com.intellij.lang.annotation.HighlightSeverity;
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
+import org.junit.Test;
+
+import java.util.*;
+
+import static org.junit.Assert.assertEquals;
+
+public class ExpectedHighlightingDataTest {
+  private static Map<String, ExpectedHighlightingData.ExpectedHighlightingSet> TYPES;
+
+  @BeforeClass
+  public static void setUp() throws Exception {
+    TYPES = new HashMap<String, ExpectedHighlightingData.ExpectedHighlightingSet>();
+    TYPES.put("err", new ExpectedHighlightingData.ExpectedHighlightingSet(HighlightSeverity.ERROR, false, true));
+    TYPES.put("warn", new ExpectedHighlightingData.ExpectedHighlightingSet(HighlightSeverity.WARNING, false, true));
+  }
+
+  @AfterClass
+  public static void tearDown() throws Exception {
+    TYPES.clear();
+    TYPES = null;
+  }
+
+  @Test
+  public void empty() throws Exception {
+    doTest("text", Collections.<HighlightInfo>emptyList(), "text");
+  }
+
+  @Test
+  public void sequential() throws Exception {
+    doTest("_my text_",
+           Arrays.asList(error(1, 3, "1"), error(4, 8, "2")),
+           "_<err descr=\"1\">my</err> <err descr=\"2\">text</err>_");
+  }
+
+  @Test
+  public void simpleNested() throws Exception {
+    doTest("[(nested)]",
+           Arrays.asList(error(1, 9, "1"), error(2, 8, "2")),
+           "[<err descr=\"1\">(<err descr=\"2\">nested</err>)</err>]");
+  }
+
+  @Test
+  public void deepNested() throws Exception {
+    doTest("m1(m2(m3(m4(x))))",
+           Arrays.asList(error(3, 16, "m1"), error(6, 15, "m2"), error(9, 14, "m3"), error(12, 13, "m4")),
+           "m1(<err descr=\"m1\">m2(<err descr=\"m2\">m3(<err descr=\"m3\">m4(<err descr=\"m4\">x</err>)</err>)</err>)</err>)");
+  }
+
+  @Test
+  public void sameStart() throws Exception {
+    doTest("same start",
+           Arrays.asList(error(0, 4, "1"), error(0, 10, "2")),
+           "<err descr=\"2\"><err descr=\"1\">same</err> start</err>");
+  }
+
+  @Test
+  public void sameEnd() throws Exception {
+    doTest("same end",
+           Arrays.asList(error(0, 8, "1"), error(5, 8, "2")),
+           "<err descr=\"1\">same <err descr=\"2\">end</err></err>");
+  }
+
+  @Test
+  public void sameBothBounds() throws Exception {
+    doTest("same",
+           Arrays.asList(error(0, 4, "-"), warning(0, 4, "-")),
+           "<err descr=\"-\"><warn descr=\"-\">same</warn></err>");
+  }
+
+  @Test
+  public void samePriority() throws Exception {
+    doTest("same",
+           Arrays.asList(warning(0, 4, "1"), warning(0, 4, "2")),
+           "<warn descr=\"1\"><warn descr=\"2\">same</warn></warn>");
+  }
+
+  @Test
+  public void twoNests() throws Exception {
+    doTest("(two nests)",
+           Arrays.asList(error(0, 11, "-"), error(1, 4, "1"), error(5, 10, "2")),
+           "<err descr=\"-\">(<err descr=\"1\">two</err> <err descr=\"2\">nests</err>)</err>");
+  }
+
+  @Test
+  public void realistic() throws Exception {
+    doTest("one and (two nests)",
+           Arrays.asList(error(4, 7, "-"), error(8, 19, "-"), error(9, 12, "1"), error(13, 18, "2")),
+           "one <err descr=\"-\">and</err> <err descr=\"-\">(<err descr=\"1\">two</err> <err descr=\"2\">nests</err>)</err>");
+  }
+
+  private static void doTest(String original, Collection<HighlightInfo> highlighting, String expected) {
+    String text = ExpectedHighlightingData.composeText(TYPES, highlighting, original);
+    assertEquals(expected, text);
+  }
+
+  private static HighlightInfo error(int start, int end, String description) {
+    return new HighlightInfo(HighlightInfoType.ERROR, start, end, description, null);
+  }
+
+  private static HighlightInfo warning(int start, int end, String description) {
+    return new HighlightInfo(HighlightInfoType.WARNING, start, end, description, null);
+  }
+}
