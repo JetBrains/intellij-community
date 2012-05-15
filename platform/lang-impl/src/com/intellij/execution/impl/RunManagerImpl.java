@@ -256,7 +256,6 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
     checkRecentsLimit();
 
     mySharedConfigurations.put(newId, shared);
-    getTemplateBeforeRunTask(configuration);
     setBeforeRunTasks(configuration, tasks, addEnabledTemplateTasksIfAbsent);
 
     if (existingSettings == settings) {
@@ -830,10 +829,10 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
     if (tasks != null) {
       return getCopies(tasks);
     }
-    return getTemplateBeforeRunTask(settings);
+    return getTemplateBeforeRunTasks(settings);
   }
 
-  private List<BeforeRunTask> getTemplateBeforeRunTask(RunConfiguration settings) {
+  private List<BeforeRunTask> getTemplateBeforeRunTasks(RunConfiguration settings) {
     final RunnerAndConfigurationSettings template = getConfigurationTemplate(settings.getFactory());
     final List<BeforeRunTask> templateTasks = myConfigurationToBeforeTasksMap.get(template.getConfiguration());
     if (templateTasks != null) {
@@ -879,7 +878,7 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
   public final void setBeforeRunTasks(final RunConfiguration runConfiguration, @NotNull List<BeforeRunTask> tasks, boolean addEnabledTemplateTasksIfAbsent) {
     List<BeforeRunTask> result = new ArrayList<BeforeRunTask>(tasks);
     if (addEnabledTemplateTasksIfAbsent) {
-      List<BeforeRunTask> templates = getTemplateBeforeRunTask(runConfiguration);
+      List<BeforeRunTask> templates = getTemplateBeforeRunTasks(runConfiguration);
       Set<Key<BeforeRunTask>> idsToSet = new HashSet<Key<BeforeRunTask>>();
       for (BeforeRunTask task : tasks) {
         idsToSet.add(task.getProviderId());
@@ -902,7 +901,7 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
   }
 
   public void addConfiguration(final RunnerAndConfigurationSettings settings, final boolean isShared) {
-    addConfiguration(settings, isShared, new ArrayList<BeforeRunTask>(), false);
+    addConfiguration(settings, isShared, getTemplateBeforeRunTasks(settings.getConfiguration()), false);
   }
 
   public static RunManagerImpl getInstanceImpl(final Project project) {
