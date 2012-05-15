@@ -53,6 +53,7 @@ public class BreakpointsMasterDetailPopupFactory {
   private final List<BreakpointPanelProvider> myBreakpointPanelProviders;
   private Project myProject;
   private BreakpointListModel myModel;
+  private MasterDetailPopupBuilder myPopupBuilder;
 
   public BreakpointsMasterDetailPopupFactory(Project project) {
     myProject = project;
@@ -84,7 +85,8 @@ public class BreakpointsMasterDetailPopupFactory {
 
     DefaultActionGroup actions = getActions(list);
 
-    final JBPopup popup = new MasterDetailPopupBuilder(myProject).
+    myPopupBuilder = new MasterDetailPopupBuilder(myProject);
+    final JBPopup popup = myPopupBuilder.
       setActionsGroup(actions).
       setList(list).
       setDelegate(new MasterDetailPopupBuilder.Delegate() {
@@ -141,8 +143,8 @@ public class BreakpointsMasterDetailPopupFactory {
       public void actionPerformed(AnActionEvent e) {
 
         JBPopupFactory.getInstance()
-          .createActionGroupPopup("Choose type", breakpointTypes, e.getDataContext(), JBPopupFactory.ActionSelectionAid.NUMBERING, false)
-          .showInFocusCenter();
+          .createActionGroupPopup(null, breakpointTypes, e.getDataContext(), JBPopupFactory.ActionSelectionAid.NUMBERING, false)
+          .showUnderneathOf(myPopupBuilder.getActionToolbar().getComponent());
       }
     });
     actions.add(new AnAction("Remove Breakpoint", null, PlatformIcons.DELETE_ICON) {

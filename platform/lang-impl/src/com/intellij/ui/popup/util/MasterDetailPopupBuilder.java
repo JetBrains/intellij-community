@@ -58,6 +58,12 @@ public class MasterDetailPopupBuilder {
   private Delegate myDelegate;
   private boolean myCloseOnEnter;
 
+  public ActionToolbar getActionToolbar() {
+    return myActionToolbar;
+  }
+
+  private ActionToolbar myActionToolbar;
+
   public MasterDetailPopupBuilder(Project project) {
 
     myProject = project;
@@ -184,10 +190,10 @@ public class MasterDetailPopupBuilder {
     footerPanel.setBorder(BorderFactory.createEmptyBorder(4, 4, 4, 4));
     footerPanel.add(pathLabel);
 
-    ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar("", myActions, true);
-    actionToolbar.setReservePlaceAutoPopupIcon(false);
-    actionToolbar.setMinimumButtonSize(new Dimension(20, 20));
-    final JComponent toolBar = actionToolbar.getComponent();
+    myActionToolbar = ActionManager.getInstance().createActionToolbar("", myActions, true);
+    myActionToolbar.setReservePlaceAutoPopupIcon(false);
+    myActionToolbar.setMinimumButtonSize(new Dimension(20, 20));
+    final JComponent toolBar = myActionToolbar.getComponent();
     toolBar.setOpaque(false);
 
     final JBPopup popup = new PopupChooserBuilder(myList).
