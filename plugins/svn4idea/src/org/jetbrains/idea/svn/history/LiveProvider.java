@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.svn.history;
 
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -73,7 +74,8 @@ public class LiveProvider implements BunchProvider {
       }
     };
 
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
+    final Application application = ApplicationManager.getApplication();
+    if (application.isUnitTestMode() || ! application.isDispatchThread()) {
       loader.run();
     } else {
       ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {

@@ -271,6 +271,9 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     }
     */
 
+  }
+
+  private void initExtensions() {
     try {
       final FileBasedIndexExtension[] extensions = Extensions.getExtensions(FileBasedIndexExtension.EXTENSION_POINT_NAME);
       for (FileBasedIndexExtension<?, ?> extension : extensions) {
@@ -318,6 +321,9 @@ public class FileBasedIndexImpl extends FileBasedIndex {
 
       registerIndexableSet(new AdditionalIndexableFileSet(), null);
     }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
     finally {
       ShutDownTracker.getInstance().registerShutdownTask(new Runnable() {
         @Override
@@ -329,6 +335,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
       saveRegisteredIndices(myIndices.keySet());
       myFlushingFuture = FlushingDaemon.everyFiveSeconds(new Runnable() {
         int lastModCount = 0;
+
         @Override
         public void run() {
           if (lastModCount == myLocalModCount) {
@@ -343,6 +350,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
 
   @Override
   public void initComponent() {
+    initExtensions();
   }
 
   @Nullable

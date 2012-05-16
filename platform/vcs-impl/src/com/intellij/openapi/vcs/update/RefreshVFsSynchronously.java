@@ -197,7 +197,7 @@ public class RefreshVFsSynchronously {
     @Override
     public void onFile(String filePath, String groupId) {
       final File file = new File(filePath);
-      if (FileGroup.REMOVED_FROM_REPOSITORY_ID.equals(groupId)) {
+      if (FileGroup.REMOVED_FROM_REPOSITORY_ID.equals(groupId) || FileGroup.MERGED_WITH_TREE_CONFLICT.endsWith(groupId)) {
         myToRefreshDeletedOrReplaced.add(file);
       }
       else {

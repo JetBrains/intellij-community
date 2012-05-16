@@ -19,7 +19,6 @@ import com.intellij.diagnostic.IdeErrorsDialog;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.components.impl.ComponentManagerImpl;
@@ -66,39 +65,28 @@ abstract class ComponentStoreImpl implements IComponentStore {
     throw new UnsupportedOperationException("Method getDefaultsStorage is not supported in " + getClass());
   }
 
-  public String initComponent(@NotNull final Object component, final boolean service) {
-    boolean isSerializable = component instanceof JDOMExternalizable ||
-                             component instanceof PersistentStateComponent ||
-                             component instanceof SettingsSavingComponent;
-
-    if (!isSerializable) return null;
+  public void initComponent(@NotNull final Object component, final boolean service) {
 
     if (component instanceof SettingsSavingComponent) {
       SettingsSavingComponent settingsSavingComponent = (SettingsSavingComponent)component;
       mySettingsSavingComponents.add(settingsSavingComponent);
     }
 
-    final String[] componentName = {null};
-    final Runnable r = new Runnable() {
+    boolean isSerializable = component instanceof JDOMExternalizable ||
+                             component instanceof PersistentStateComponent;
+
+    if (!isSerializable) return;
+
+    ApplicationManagerEx.getApplicationEx().runReadAction(new Runnable() {
       public void run() {
         if (component instanceof PersistentStateComponent) {
-          componentName[0] = initPersistentComponent((PersistentStateComponent<?>)component, false);
+          initPersistentComponent((PersistentStateComponent<?>)component, false);
         }
-        else if (component instanceof JDOMExternalizable) {
-          componentName[0] = initJdomExternalizable((JDOMExternalizable)component);
+        else {
+          initJdomExternalizable((JDOMExternalizable)component);
         }
       }
-    };
-
-    final ApplicationEx applicationEx = ApplicationManagerEx.getApplicationEx();
-    if (applicationEx.isUnitTestMode()) {
-      r.run();      // Todo
-    }
-    else {
-      applicationEx.runReadAction(r);
-    }
-
-    return componentName[0];
+    });
   }
 
   public boolean isSaving() {

@@ -183,6 +183,11 @@ public abstract class AbstractSvnUpdateIntegrateEnvironment implements UpdateEnv
         if ((conflictedFiles != null) && (! conflictedFiles.isEmpty())) {
           for (final String conflictedFile : conflictedFiles) {
             final File file = new File(conflictedFile);
+            final VirtualFile vfFile = lfs.refreshAndFindFileByIoFile(file);
+            if (vfFile != null) {
+              parents.add(vfFile);
+              continue;
+            }
             final File parent = file.getParentFile();
 
             VirtualFile vf = lfs.findFileByIoFile(parent);
@@ -199,7 +204,7 @@ public abstract class AbstractSvnUpdateIntegrateEnvironment implements UpdateEnv
           final RefreshQueue refreshQueue = RefreshQueue.getInstance();
           final RefreshSession session = refreshQueue.createSession(true, true, new Runnable() {
             public void run() {
-              myDirtyScopeManager.filesDirty(parents, null);
+              myDirtyScopeManager.filesDirty(null, parents);
             }
           });
           session.addAllFiles(parents);

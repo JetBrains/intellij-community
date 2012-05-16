@@ -26,6 +26,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TestDialog;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.VcsException;
@@ -61,6 +62,7 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase  {
   protected AtomicSectionsAware myRefreshCopiesStub;
   private TestClientRunner myRunner;
   protected String myWcrootName;
+  private File mySvnExcutable;
 
   protected SvnTestCase() {
     PlatformTestCase.initPlatformLangPrefix();
@@ -91,6 +93,7 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase  {
             pluginRoot = new File(rootPath).getParentFile().getParentFile().getParentFile();
           }
           myClientBinaryPath = new File(pluginRoot, "testData/svn/bin");
+          mySvnExcutable = new File(myClientBinaryPath, SystemInfo.isWindows ? "svn.exe" : "svn");
 
           ZipUtil.extract(new File(pluginRoot, "testData/svn/newrepo.zip"), myRepoRoot, null);
 
@@ -159,7 +162,7 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase  {
   }
 
   protected ProcessOutput runSvn(String... commandLine) throws IOException {
-    return myRunner.runClient("svn", null, myWcRoot, commandLine);
+    return myRunner.runClient(mySvnExcutable.getPath(), null, myWcRoot, commandLine);
   }
 
   protected void enableSilentOperation(final VcsConfiguration.StandardConfirmation op) {
