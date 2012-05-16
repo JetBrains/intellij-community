@@ -21,6 +21,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerContainer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.util.containers.StripedLockConcurrentHashMap;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
@@ -33,7 +34,7 @@ public class OrderRootsCache {
   private final Map<CacheKey, VirtualFilePointerContainer> myRoots = new StripedLockConcurrentHashMap<CacheKey, VirtualFilePointerContainer>();
   private final Disposable myParentDisposable;
 
-  public OrderRootsCache(Disposable parentDisposable) {
+  public OrderRootsCache(@NotNull Disposable parentDisposable) {
     myParentDisposable = parentDisposable;
   }
 
