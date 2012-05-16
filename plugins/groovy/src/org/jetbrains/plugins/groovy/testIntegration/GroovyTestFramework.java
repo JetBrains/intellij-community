@@ -75,7 +75,7 @@ public class GroovyTestFramework extends JavaTestFramework {
     LOG.assertTrue(clazz.getLanguage() == GroovyFileType.GROOVY_LANGUAGE);
     final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(clazz.getProject());
 
-    final PsiMethod patternMethod = factory.createMethodFromText("protected void setUp() {\nsuper.setUp()\n}", null);
+    final PsiMethod patternMethod = createSetUpPatternMethod(factory);
 
     final PsiClass baseClass = clazz.getSuperClass();
     if (baseClass != null) {
