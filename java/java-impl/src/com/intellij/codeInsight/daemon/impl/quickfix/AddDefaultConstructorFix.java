@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.generation.GenerateConstructorHandler;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiModifier;
+import com.intellij.util.VisibilityUtil;
 import org.jetbrains.annotations.NotNull;
 
 public class AddDefaultConstructorFix extends AddMethodFix {
@@ -26,12 +27,12 @@ public class AddDefaultConstructorFix extends AddMethodFix {
     this(aClass, GenerateConstructorHandler.getConstructorModifier(aClass));
   }
 
-  public AddDefaultConstructorFix(PsiClass aClass, final String modifier) {
+  public AddDefaultConstructorFix(PsiClass aClass, @PsiModifier.ModifierConstant final String modifier) {
     super(generateConstructor(aClass, modifier), aClass);
-    setText(QuickFixBundle.message("add.default.constructor.text", modifier, aClass.getName()));
+    setText(QuickFixBundle.message("add.default.constructor.text", VisibilityUtil.toPresentableText(modifier), aClass.getName()));
   }
 
-  private static String generateConstructor(PsiClass aClass, final String modifier) {
+  private static String generateConstructor(PsiClass aClass, @PsiModifier.ModifierConstant final String modifier) {
     if (modifier == PsiModifier.PACKAGE_LOCAL) {
       return aClass.getName() + "() {}";
     }
