@@ -62,22 +62,6 @@ public class CommentFillString {
     this.fillString = fillString;
   }
 
-  public boolean isUseProjectWidthForFill() {
-    return useProjectWidthForFill;
-  }
-
-  public void setUseProjectWidthForFill(boolean useProjectWidthForFill) {
-    this.useProjectWidthForFill = useProjectWidthForFill;
-  }
-
-  public int getFillWidth() {
-    return fillWidth;
-  }
-
-  public void setFillWidth(int fillWidth) {
-    this.fillWidth = fillWidth;
-  }
-
   public final boolean equals(final Object object) {
     if (!(object instanceof CommentFillString)) return false;
     final CommentFillString c = (CommentFillString)object;
@@ -111,8 +95,8 @@ public class CommentFillString {
 
   public final void writeExternal(final Element me) {
     me.setAttribute("fillString", CommentRule.escape(fillString));
-    me.setAttribute("useProjectWidthForFill", "" + useProjectWidthForFill);
-    me.setAttribute("fillWidth", "" + fillWidth);
+    me.setAttribute("useProjectWidthForFill", String.valueOf(useProjectWidthForFill));
+    me.setAttribute("fillWidth", String.valueOf(fillWidth));
   }
 
   public final JPanel getCommentFillStringPanel() {
@@ -180,7 +164,7 @@ public class CommentFillString {
     String fs = fillString;
     if (fs.length() == 0) fs = " ";
     final int length = fs.length();
-    StringBuffer sb = new StringBuffer(length * (length + 1) / 2 + length * 3);
+    StringBuilder sb = new StringBuilder(length * (length + 1) / 2 + length * 3);
     sb.append('(');
     sb.append(RegexUtil.escape(fs));
     sb.append(")*");

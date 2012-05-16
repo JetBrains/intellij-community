@@ -45,10 +45,7 @@ import java.util.*;
  * Corresponds to a method in the source file.
  * Contains structures and logic to handle related method rearrangement.
  */
-public class MethodEntry
-  extends ClassContentsEntry
-  implements RelatableEntry
-{
+public class MethodEntry extends ClassContentsEntry implements RelatableEntry {
 // ------------------------------ FIELDS ------------------------------
 
   private static final Logger LOG = Logger.getInstance("#" + MethodEntry.class.getName());
@@ -716,9 +713,7 @@ public class MethodEntry
     }
   }
 
-  public void determineSettersAndMethodCalls(RearrangerSettings settings,
-                                             List<ClassContentsEntry> contents)
-  {
+  public void determineSettersAndMethodCalls(RearrangerSettings settings, List<ClassContentsEntry> contents) {
     if (isGetter()) {
       if (settings.isKeepGettersSettersTogether()) {
         determineSetter(contents, settings); // link getters/setters via correspondingGetterSetter entries

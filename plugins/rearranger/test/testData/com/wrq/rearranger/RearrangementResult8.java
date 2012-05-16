@@ -5,7 +5,7 @@ package com.wrq.rearranger;
 
 /** public class comments. */
 public class RearrangementTest {
-  final int field5 = 5;
+  final               int field5 = 5;
 
   /** method 2 comment. */
   public void method2() {

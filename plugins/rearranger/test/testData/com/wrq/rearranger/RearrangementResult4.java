@@ -9,6 +9,7 @@ public class RearrangementTest {
   NoRearrangementTest() {
     // constructor body
   }
+
   /** field 1. */
   private int field1;
   private int field2;
