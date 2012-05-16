@@ -24,26 +24,26 @@ package com.wrq.rearranger.settings.atomicAttributes;
 import com.wrq.rearranger.ModifierConstants;
 import org.jdom.Element;
 
-public final class InitToAnonClassAttribute extends AndNotAttribute {
+public final class InitialisedByAnonymousClassAttribute extends AndNotAttribute {
 
 // -------------------------- STATIC METHODS --------------------------
 
-  public static InitToAnonClassAttribute readExternal(final Element item) {
-    final InitToAnonClassAttribute result = new InitToAnonClassAttribute();
+  public static InitialisedByAnonymousClassAttribute readExternal(final Element item) {
+    final InitialisedByAnonymousClassAttribute result = new InitialisedByAnonymousClassAttribute();
     result.loadAttributes(item.getChild(result.getElementName()));
     return result;
   }
 
 // --------------------------- CONSTRUCTORS ---------------------------
 
-  public InitToAnonClassAttribute() {
+  public InitialisedByAnonymousClassAttribute() {
     super("initialized to anonymous class", ModifierConstants.INIT_TO_ANON_CLASS);
   }
 
 // -------------------------- OTHER METHODS --------------------------
 
   public final /*InitToAnonClassAttribute*/AtomicAttribute deepCopy() {
-    final InitToAnonClassAttribute result = new InitToAnonClassAttribute();
+    final InitialisedByAnonymousClassAttribute result = new InitialisedByAnonymousClassAttribute();
     result.value = value;
     result.invert = invert;
     return result;

@@ -21,8 +21,8 @@
  */
 package com.wrq.rearranger;
 
-import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -31,14 +31,12 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
 import com.wrq.rearranger.entry.ClassContentsEntry;
 import com.wrq.rearranger.popup.FileStructurePopup;
 import com.wrq.rearranger.rearrangement.Emitter;
@@ -48,6 +46,8 @@ import com.wrq.rearranger.rearrangement.Spacer;
 import com.wrq.rearranger.ruleinstance.RuleInstance;
 import com.wrq.rearranger.settings.RearrangerSettings;
 import com.wrq.rearranger.util.CommentUtil;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.dnd.DragSource;
 import java.util.List;
@@ -71,9 +71,6 @@ public final class RearrangerActionHandler extends EditorActionHandler {
     return tabSize;
   }
 
-  public void setTabSize(int tabSize) {
-    RearrangerActionHandler.tabSize = tabSize;
-  }
 // -------------------------- OTHER METHODS --------------------------
 
   public final void execute(final Editor editor, final DataContext context) {
@@ -81,11 +78,14 @@ public final class RearrangerActionHandler extends EditorActionHandler {
       return;
     }
     LOG.debug("enter RearrangerActionHandler.execute()");
-    final Project project = (Project)context.getData(DataConstants.PROJECT);
-    final Document document = editor.getDocument();
     final PsiFile psiFile = getFile(editor, context);
-    LOG.debug("suggested tool window = " +
-              WindowManager.getInstance().suggestParentWindow(project));
+    if (psiFile == null) {
+      return;
+    }
+    
+    final Project project = PlatformDataKeys.PROJECT.getData(context);
+    final Document document = editor.getDocument();
+    LOG.debug("suggested tool window = " + WindowManager.getInstance().suggestParentWindow(project));
     LOG.debug("drag source image supported = " + DragSource.isDragImageSupported());
     if (!psiFile.getName().endsWith(".java")) {
       LOG.debug("not a .java file -- skipping " + psiFile.getName());
@@ -109,15 +109,14 @@ public final class RearrangerActionHandler extends EditorActionHandler {
     );
   }
 
-  private static PsiFile getFile(final Editor editor,
-                                 final DataContext context)
-  {
-    final Project project = (Project)context.getData(DataConstants.PROJECT);
-    final Document document = editor.getDocument();
-    final FileDocumentManager fileDocumentManager = FileDocumentManager.getInstance();
-    final VirtualFile virtualFile = fileDocumentManager.getFile(document);
-    final PsiManager psiManager = PsiManager.getInstance(project);
-    return psiManager.findFile(virtualFile);
+  @Nullable
+  private static PsiFile getFile(final Editor editor, final DataContext context) {
+    final Project project = PlatformDataKeys.PROJECT.getData(context);
+    if (project == null) {
+      return null;
+    }
+
+    return PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
   }
 
   /**
@@ -152,7 +151,7 @@ public final class RearrangerActionHandler extends EditorActionHandler {
       wb.whenTrue();
     }
     catch (InterruptedException e) {
-      e.printStackTrace();
+      LOG.warn(e);
     }
     LOG.debug("end execute");
   }
@@ -162,10 +161,11 @@ public final class RearrangerActionHandler extends EditorActionHandler {
     return file != null && file.isWritable();
   }
 
-  public final void rearrangeDocument(final Project project,
-                                      final PsiFile psiFile,
-                                      final RearrangerSettings settings,
-                                      final Document document)
+  @SuppressWarnings("MethodMayBeStatic")
+  public final void rearrangeDocument(@NotNull final Project project,
+                                      @NotNull final PsiFile psiFile,
+                                      @NotNull final RearrangerSettings settings,
+                                      @NotNull final Document document)
   {
     LOG.debug("enter rearrangeDocument");
     new CommentUtil(settings); // create CommentUtil singleton

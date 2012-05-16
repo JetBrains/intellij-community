@@ -26,9 +26,7 @@ import org.jdom.Element;
 import java.lang.reflect.Modifier;
 
 /** Routines to handle the 'static' modifier. */
-public final class StaticAttribute
-  extends AndNotAttribute
-{
+public final class StaticAttribute extends AndNotAttribute {
 
 // -------------------------- STATIC METHODS --------------------------
 
