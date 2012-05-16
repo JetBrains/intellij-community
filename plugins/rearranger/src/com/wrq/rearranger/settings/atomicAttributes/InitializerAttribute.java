@@ -25,9 +25,7 @@ import com.wrq.rearranger.ModifierConstants;
 import org.jdom.Element;
 
 /** Routines to handle a static initializer method. */
-public final class InitializerAttribute
-  extends AndNotAttribute
-{
+public final class InitializerAttribute extends AndNotAttribute {
 
 // -------------------------- STATIC METHODS --------------------------
 

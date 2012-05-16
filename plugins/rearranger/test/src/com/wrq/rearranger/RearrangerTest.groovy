@@ -30,6 +30,7 @@ import com.wrq.rearranger.settings.attributeGroups.FieldAttributes
 import com.wrq.rearranger.settings.attributeGroups.MethodAttributes
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.Nullable
+import com.wrq.rearranger.settings.CommentRule
 
 /** JUnit tests for the rearranger plugin. */
 class RearrangerTest extends LightCodeInsightFixtureTestCase {
@@ -132,32 +133,29 @@ class RearrangerTest extends LightCodeInsightFixtureTestCase {
 
   public final void testAlphabetizingGSMethods() throws Exception {
     doTest('RearrangementTest', 'RearrangementResult9') {
-      def methodAttributes = new MethodAttributes()
-      methodAttributes.getterSetterMethodType = true
-      methodAttributes.otherMethodType = true
-      methodAttributes.constructorMethodType = false
-      methodAttributes.sortOptions.byName = true
-      mySettings.addItem(methodAttributes, 0)
+      def attributes = new MethodAttributes()
+      attributes.getterSetterMethodType = true
+      attributes.otherMethodType = true
+      attributes.constructorMethodType = false
+      attributes.sortOptions.byName = true
+      mySettings.addItem(attributes, 0)
       mySettings.keepGettersSettersTogether = false
     }
   }
 
-//  public final void testSimpleComment() throws Exception {
-//    configureByFile("/com/wrq/rearranger/RearrangementTest.java");
-//    final PsiFile file = getFile();
-//    final Document doc = PsiDocumentManager.getInstance(getProject()).getDocument(file);
-//    final FieldAttributes fa = new FieldAttributes();
-//    fa.getPlAttr().setPlPublic(true);
-//    rs.addItem(fa, 0);
-//    final CommentRule c = new CommentRule();
-//    c.setCommentText("// simple comment **********");
-//    c.setEmitCondition(CommentRule.EMIT_IF_ITEMS_MATCH_PRECEDING_RULE);
-//    rs.addItem(c, 1);
-//    final RearrangerActionHandler rah = new RearrangerActionHandler();
-//    rah.rearrangeDocument(getProject(), file, rs, doc);
-//    super.checkResultByFile("/com/wrq/rearranger/RearrangementResult10.java");
-//  }
-//
+  public final void testSimpleComment() throws Exception {
+    doTest('RearrangementTest', 'RearrangementResult10') {
+      def attributes = new FieldAttributes()
+      attributes.protectionLevelAttributes.plPublic = true
+      mySettings.addItem(attributes, 0)
+      
+      def comment = new CommentRule()
+      comment.commentText = '// simple comment **********'
+      comment.emitCondition = CommentRule.EMIT_IF_ITEMS_MATCH_PRECEDING_RULE
+      mySettings.addItem(comment, 1)
+    }
+  }
+
 //  /**
 //   * Delete old comment and insert (identical) new one.  This tests proper identification and deletion of old
 //   * comments.
