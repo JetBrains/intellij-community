@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.siyeh.ig.style;
+package com.siyeh.ig.controlflow;
 
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
@@ -71,7 +71,14 @@ public class SimplifiableEqualsExpressionInspection extends BaseInspection {
       if (operands.length != 2) {
         return;
       }
-      final PsiExpression operand = ParenthesesUtils.stripParentheses(operands[1]);
+      PsiExpression operand = ParenthesesUtils.stripParentheses(operands[1]);
+      if (operand instanceof PsiPrefixExpression) {
+        final PsiPrefixExpression prefixExpression = (PsiPrefixExpression)operand;
+        if (!JavaTokenType.EXCL.equals(prefixExpression.getOperationTokenType())) {
+          return;
+        }
+        operand = ParenthesesUtils.stripParentheses(prefixExpression.getOperand());
+      }
       if (!(operand instanceof PsiMethodCallExpression)) {
         return;
       }
@@ -170,7 +177,15 @@ public class SimplifiableEqualsExpressionInspection extends BaseInspection {
           return;
         }
         final PsiExpression rhs = ParenthesesUtils.stripParentheses(operands[1]);
-        if (!isEqualsConstant(rhs, variable)) {
+        if (!(rhs instanceof PsiPrefixExpression)) {
+          return;
+        }
+        final PsiPrefixExpression prefixExpression = (PsiPrefixExpression)rhs;
+        if (!JavaTokenType.EXCL.equals(prefixExpression.getOperationTokenType())) {
+          return;
+        }
+        final PsiExpression operand = ParenthesesUtils.stripParentheses(prefixExpression.getOperand());
+        if (!isEqualsConstant(operand, variable)) {
           return;
         }
         registerError(lhs);
@@ -226,8 +241,14 @@ public class SimplifiableEqualsExpressionInspection extends BaseInspection {
       if (operands.length != 2) {
         return null;
       }
-      final PsiExpression lhs = operands[0];
-      final PsiExpression rhs = operands[1];
+      final PsiExpression lhs = ParenthesesUtils.stripParentheses(operands[0]);
+      if (lhs == null) {
+        return null;
+      }
+      final PsiExpression rhs = ParenthesesUtils.stripParentheses(operands[1]);
+      if (rhs == null) {
+        return null;
+      }
       if (PsiType.NULL.equals(lhs.getType())) {
         if (!(rhs instanceof PsiReferenceExpression)) {
           return null;
