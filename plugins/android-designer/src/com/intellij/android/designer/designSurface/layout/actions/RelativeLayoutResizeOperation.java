@@ -55,8 +55,11 @@ public class RelativeLayoutResizeOperation implements EditOperation {
   private Rectangle myContainerBounds;
   private Dimension myWrapSize;
 
-  private List<SnapPoint> myHorizontalPoints;
-  private List<SnapPoint> myVerticalPoints;
+  private Side myResizeHorizontalSide;
+  private Side myResizeVerticalSide;
+
+  private List<ResizeSnapPoint> myHorizontalPoints;
+  private List<ResizeSnapPoint> myVerticalPoints;
 
   private SnapPoint myHorizontalPoint;
   private SnapPoint myVerticalPoint;
@@ -94,6 +97,7 @@ public class RelativeLayoutResizeOperation implements EditOperation {
       layer.add(myBoundsFeedback);
 
       int direction = myContext.getResizeDirection();
+
       if (direction == Position.EAST || direction == Position.SOUTH || direction == Position.SOUTH_EAST) {
         Rectangle bounds = myComponent.getBounds(myContext.getArea().getFeedbackLayer());
         String width = myComponent.getTag().getAttributeValue("android:layout_width");
@@ -121,6 +125,19 @@ public class RelativeLayoutResizeOperation implements EditOperation {
         layer.add(myWrapFeedback);
       }
 
+      if ((direction & Position.NORTH) != 0) {
+        myResizeVerticalSide = Side.top;
+      }
+      if ((direction & Position.SOUTH) != 0) {
+        myResizeVerticalSide = Side.bottom;
+      }
+      if ((direction & Position.WEST) != 0) {
+        myResizeHorizontalSide = Side.left;
+      }
+      if ((direction & Position.EAST) != 0) {
+        myResizeHorizontalSide = Side.right;
+      }
+
       myContainerBounds = myContainer.getBounds(layer);
 
       mySnapFeedback = new SnapPointFeedbackHost();
@@ -146,14 +163,14 @@ public class RelativeLayoutResizeOperation implements EditOperation {
     myHorizontalPoint = null;
     myVerticalPoint = null;
 
-    for (SnapPoint point : myHorizontalPoints) {
-      if (point.processBounds(myComponents, bounds, mySnapFeedback)) {
+    for (ResizeSnapPoint point : myHorizontalPoints) {
+      if (point.processBounds(myComponents, bounds, myResizeHorizontalSide, mySnapFeedback)) {
         myHorizontalPoint = point;
         break;
       }
     }
-    for (SnapPoint point : myVerticalPoints) {
-      if (point.processBounds(myComponents, bounds, mySnapFeedback)) {
+    for (ResizeSnapPoint point : myVerticalPoints) {
+      if (point.processBounds(myComponents, bounds, myResizeVerticalSide, mySnapFeedback)) {
         myVerticalPoint = point;
         break;
       }
@@ -192,8 +209,8 @@ public class RelativeLayoutResizeOperation implements EditOperation {
   }
 
   private void createPoints() {
-    myHorizontalPoints = new ArrayList<SnapPoint>();
-    myVerticalPoints = new ArrayList<SnapPoint>();
+    myHorizontalPoints = new ArrayList<ResizeSnapPoint>();
+    myVerticalPoints = new ArrayList<ResizeSnapPoint>();
 
     List<RadComponent> snapComponents = RelativeLayoutOperation.getSnapComponents(myContainer, myComponents);
     snapComponents.removeAll(myContext.getComponents());
@@ -207,7 +224,7 @@ public class RelativeLayoutResizeOperation implements EditOperation {
     }
   }
 
-  private void createPoints(List<SnapPoint> points, List<RadComponent> snapComponents, boolean horizontal, int direction) {
+  private void createPoints(List<ResizeSnapPoint> points, List<RadComponent> snapComponents, boolean horizontal, int direction) {
     for (RadComponent component : snapComponents) {
       points.add(new ResizeComponentSnapPoint((RadViewComponent)component, horizontal));
     }
@@ -218,7 +235,7 @@ public class RelativeLayoutResizeOperation implements EditOperation {
       points.add(new WrapSizeSnapPoint(myComponent, horizontal, myWrapSize));
     }
 
-    points.add(new AutoResizeSnapPoint(myContainer, horizontal, direction));
+    points.add(new AutoResizeSnapPoint(myContainer, horizontal));
   }
 
   @Override

@@ -28,7 +28,7 @@ import java.util.List;
 /**
  * @author Alexander Lobas
  */
-public class WrapSizeSnapPoint extends SnapPoint {
+public class WrapSizeSnapPoint extends ResizeSnapPoint {
   private final Dimension myWrapSize;
 
   public WrapSizeSnapPoint(RadViewComponent component, boolean horizontal, Dimension wrapSize) {
@@ -43,8 +43,8 @@ public class WrapSizeSnapPoint extends SnapPoint {
   }
 
   @Override
-  public boolean processBounds(List<RadComponent> components, Rectangle bounds, SnapPointFeedbackHost feedback) {
-    super.processBounds(components, bounds, feedback);
+  public boolean processBounds(List<RadComponent> components, Rectangle bounds, Side resizeSide, SnapPointFeedbackHost feedback) {
+    super.processBounds(components, bounds, resizeSide, feedback);
 
     if (myHorizontal) {
       if (Math.abs(bounds.width - myWrapSize.width) < SNAP_SIZE) {
