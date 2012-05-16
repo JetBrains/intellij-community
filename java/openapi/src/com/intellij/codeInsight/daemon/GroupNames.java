@@ -67,4 +67,5 @@ public interface GroupNames {
   String JAVAEE_GROUP_NAME = InspectionsBundle.message("group.names.javaee.issues");
   String CONCURRENCY_ANNOTATION_ISSUES = InspectionsBundle.message("group.names.concurrency.annotation.issues");
   String JAVADOC_GROUP_NAME = InspectionsBundle.message("group.names.javadoc.issues");
+  String PROPERTIES_GROUP_NAME = InspectionsBundle.message("group.names.properties.files");
 }

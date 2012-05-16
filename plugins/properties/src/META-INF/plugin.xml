@@ -51,7 +51,7 @@
                      groupKey="properties.files.inspection.group.display.name" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.lang.properties.UnusedPropertyInspection"/>
     <globalInspection shortName="DuplicatePropertyInspection" bundle="messages.InspectionsBundle" key="duplicate.property.display.name"
-                      groupKey="group.names.internationalization.issues" enabledByDefault="false" level="WARNING"
+                      groupKey="group.names.properties.files" enabledByDefault="false" level="WARNING"
                       implementationClass="com.intellij.codeInspection.duplicatePropertyInspection.DuplicatePropertyInspection"/>
     <localInspection language="Properties" shortName="TrailingSpacesInProperty" bundle="messages.PropertiesBundle"
                      key="trail.spaces.property.inspection.display.name" groupKey="properties.files.inspection.group.display.name"
