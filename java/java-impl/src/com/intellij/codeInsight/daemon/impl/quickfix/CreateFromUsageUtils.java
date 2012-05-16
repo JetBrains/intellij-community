@@ -202,6 +202,7 @@ public class CreateFromUsageUtils {
           PsiDocumentManager manager = PsiDocumentManager.getInstance(method.getProject());
           manager.doPostponedOperationsAndUnblockDocument(manager.getDocument(containingFile));
           EditorModificationUtil.insertStringAtCaret(newEditor, lineIndent);
+          EditorModificationUtil.insertStringAtCaret(newEditor, "\n", false, false);
         }
         else {
           //correct position caret for groovy and java methods

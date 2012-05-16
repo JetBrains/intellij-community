@@ -285,7 +285,7 @@ public class CreateMethodFromUsageFix extends CreateFromUsageBaseFix {
     }
   }
 
-  private static boolean checkTypeParam(final PsiMethod method, final PsiTypeParameter typeParameter) {
+  public static boolean checkTypeParam(final PsiMethod method, final PsiTypeParameter typeParameter) {
     final String typeParameterName = typeParameter.getName();
 
     final PsiTypeVisitor<Boolean> visitor = new PsiTypeVisitor<Boolean>() {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,11 +54,15 @@ public class JavaTemplateUtil {
           PsiMethod method = PsiTreeUtil.getParentOfType(element, PsiMethod.class);
           if (method != null) {
             PsiTypeParameterList paramList = method.getTypeParameterList();
-            PsiTypeParameter[] params = paramList.getTypeParameters();
+            PsiTypeParameter[] params = paramList != null ? paramList.getTypeParameters() : PsiTypeParameter.EMPTY_ARRAY;
             for (PsiTypeParameter param : params) {
               if (param.getName().equals(aClass.getName())) return;
             }
             try {
+              if (paramList == null) {
+                final PsiTypeParameterList newList = JVMElementFactories.getFactory(method.getLanguage(), project).createTypeParameterList();
+                paramList = (PsiTypeParameterList)method.addAfter(newList, method.getModifierList());
+              }
               paramList.add(aClass.copy());
               PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(document);
             }
