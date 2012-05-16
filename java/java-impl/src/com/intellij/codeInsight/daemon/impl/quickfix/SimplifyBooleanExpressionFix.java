@@ -73,14 +73,18 @@ public class SimplifyBooleanExpressionFix implements IntentionAction {
     if (!isAvailable(project, editor, file)) return;
     LOG.assertTrue(mySubExpression.isValid());
     if (!CodeInsightUtilBase.preparePsiElementForWrite(mySubExpression)) return;
+    simplifyExpression(project, mySubExpression, mySubExpressionValue);
+  }
+
+  public static void simplifyExpression(Project project, final PsiExpression subExpression, final Boolean subExpressionValue) {
     PsiExpression expression;
-    if (mySubExpressionValue == null) {
-      expression = mySubExpression;
+    if (subExpressionValue == null) {
+      expression = subExpression;
     }
     else {
       PsiExpression constExpression = JavaPsiFacade.getInstance(project).getElementFactory()
-        .createExpressionFromText(Boolean.toString(mySubExpressionValue.booleanValue()), mySubExpression);
-      expression = (PsiExpression)mySubExpression.replace(constExpression);
+        .createExpressionFromText(Boolean.toString(subExpressionValue.booleanValue()), subExpression);
+      expression = (PsiExpression)subExpression.replace(constExpression);
     }
     while (expression.getParent() instanceof PsiExpression) {
       expression = (PsiExpression)expression.getParent();
