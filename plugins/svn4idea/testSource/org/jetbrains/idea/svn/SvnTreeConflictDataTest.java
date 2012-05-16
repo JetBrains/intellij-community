@@ -50,6 +50,7 @@ public class SvnTreeConflictDataTest extends SvnTestCase {
   @Before
   public void setUp() throws Exception {
     myWcrootName = "wcRootConflictData";
+    myTraceClient = true;
     super.setUp();
     disableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
 
