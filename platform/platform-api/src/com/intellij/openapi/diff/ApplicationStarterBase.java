@@ -17,6 +17,7 @@ package com.intellij.openapi.diff;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationStarterEx;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.StreamUtil;
@@ -162,7 +163,12 @@ public abstract class ApplicationStarterBase implements ApplicationStarterEx {
 
   @NotNull
   public static VirtualFile findFile(final String path) throws OperationFailedException {
-    final VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(path));
+    File ioFile = new File(path);
+    if (!ioFile.exists()) {
+      final String dir = PathManager.getOriginalWorkingDir();
+      ioFile = new File(dir + File.separator + path);
+    }
+    final VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(ioFile);
     if (file == null) {
       throw new OperationFailedException("Can't find file " + path);
     }
