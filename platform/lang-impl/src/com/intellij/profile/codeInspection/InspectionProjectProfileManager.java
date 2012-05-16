@@ -73,10 +73,12 @@ public class InspectionProjectProfileManager extends DefaultProjectProfileManage
     return project.getComponent(InspectionProjectProfileManager.class);
   }
 
+  @Override
   public String getProfileName() {
     return getInspectionProfile().getName();
   }
 
+  @Override
   public Element getState() {
     try {
       final Element e = new Element("settings");
@@ -89,6 +91,7 @@ public class InspectionProjectProfileManager extends DefaultProjectProfileManage
     }
   }
 
+  @Override
   public void loadState(Element state) {
     try {
       readExternal(state);
@@ -127,11 +130,13 @@ public class InspectionProjectProfileManager extends DefaultProjectProfileManage
     return myName2Profile.get(profileName);
   }
 
+  @Override
   public void updateProfile(Profile profile) {
     super.updateProfile(profile);
     initProfileWrapper(profile);
   }
 
+  @Override
   public void deleteProfile(String name) {
     super.deleteProfile(name);
     final InspectionProfileWrapper profileWrapper = myName2Profile.remove(name);
@@ -140,23 +145,28 @@ public class InspectionProjectProfileManager extends DefaultProjectProfileManage
     }
   }
 
+  @Override
   @NotNull
   @NonNls
   public String getComponentName() {
     return "InspectionProjectProfileManager";
   }
 
+  @Override
   public void initComponent() {
   }
 
+  @Override
   public void disposeComponent() {
   }
 
+  @Override
   public void projectOpened() {
     StatusBarEx statusBar = (StatusBarEx)WindowManager.getInstance().getStatusBar(myProject);
     myTogglePopupHintsPanel = new TogglePopupHintsPanel(myProject);
     statusBar.addWidget(myTogglePopupHintsPanel, myProject);
     StartupManager.getInstance(myProject).registerPostStartupActivity(new DumbAwareRunnable() {
+      @Override
       public void run() {
         final Set<Profile> profiles = new HashSet<Profile>();
         profiles.add(getProjectProfileImpl());
@@ -164,6 +174,7 @@ public class InspectionProjectProfileManager extends DefaultProjectProfileManage
         profiles.addAll(InspectionProfileManager.getInstance().getProfiles());
         final Application app = ApplicationManager.getApplication();
         Runnable initInspectionProfilesRunnable = new Runnable() {
+          @Override
           public void run() {
             for (Profile profile : profiles) {
               initProfileWrapper(profile);
@@ -192,10 +203,12 @@ public class InspectionProjectProfileManager extends DefaultProjectProfileManage
     myName2Profile.put(profile.getName(), wrapper);
   }
 
+  @Override
   public void projectClosed() {
 
     final Application app = ApplicationManager.getApplication();
     Runnable cleanupInspectionProfilesRunnable = new Runnable() {
+      @Override
       public void run() {
         for (InspectionProfileWrapper wrapper : myName2Profile.values()) {
           wrapper.cleanup(myProject);
@@ -211,19 +224,23 @@ public class InspectionProjectProfileManager extends DefaultProjectProfileManage
     HighlightingSettingsPerFile.getInstance(myProject).cleanProfileSettings();
   }
 
+  @Override
   public SeverityRegistrar getSeverityRegistrar() {
     return mySeverityRegistrar;
   }
 
+  @Override
   public SeverityRegistrar getOwnSeverityRegistrar() {
     return mySeverityRegistrar;
   }
 
+  @Override
   public void readExternal(final Element element) throws InvalidDataException {
     mySeverityRegistrar.readExternal(element);
     super.readExternal(element);
   }
 
+  @Override
   public void writeExternal(final Element element) throws WriteExternalException {
     super.writeExternal(element);
     mySeverityRegistrar.writeExternal(element);
@@ -233,10 +250,12 @@ public class InspectionProjectProfileManager extends DefaultProjectProfileManage
     if (myTogglePopupHintsPanel != null) myTogglePopupHintsPanel.updateStatus();
   }
 
+  @Override
   public Profile getProfile(@NotNull final String name) {
     return getProfile(name, true);
   }
 
+  @Override
   public void convert(Element element) throws InvalidDataException {
     super.convert(element);
     if (PROJECT_PROFILE != null) {
