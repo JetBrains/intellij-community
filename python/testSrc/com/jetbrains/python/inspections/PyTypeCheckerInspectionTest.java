@@ -16,4 +16,9 @@ public class PyTypeCheckerInspectionTest extends PyTestCase {
     // TODO: Split these tests into files
     doTest();
   }
+
+  // PY-6570
+  public void testDictLiteralIndexing() {
+    doTest();
+  }
 }
