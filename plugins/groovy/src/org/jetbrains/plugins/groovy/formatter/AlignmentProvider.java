@@ -149,7 +149,12 @@ class AlignmentProvider {
     Alignment alignment = myAlignments.get(set);
     if (alignment != null) return alignment;
 
-    alignment = Alignment.createAlignment(myAllowBackwardShift.get(set), myAnchor.get(set));
+    Alignment.Anchor anchor = myAnchor.get(set);
+    if (anchor == null) {
+      myAnchor.put(set, Alignment.Anchor.LEFT);
+      anchor = Alignment.Anchor.LEFT;
+    }
+    alignment = Alignment.createAlignment(myAllowBackwardShift.get(set), anchor);
     myAlignments.put(set, alignment);
     return alignment;
   }
