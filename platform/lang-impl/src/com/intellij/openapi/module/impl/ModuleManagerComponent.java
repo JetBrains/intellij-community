@@ -27,6 +27,7 @@ import com.intellij.openapi.components.StorageScheme;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
+import com.intellij.openapi.module.UnknownModuleType;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
@@ -101,5 +102,9 @@ public class ModuleManagerComponent extends ModuleManagerImpl {
     ModuleImpl module = new ModuleImpl(filePath, myProject);
     module.getStateStore().load();
     return module;
+  }
+
+  protected boolean isUnknownModuleType(Module module) {
+    return ModuleType.get(module) instanceof UnknownModuleType;
   }
 }

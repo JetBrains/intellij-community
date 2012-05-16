@@ -221,7 +221,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
           for (final ModulePath modulePath : myModulePaths) {
             try {
               final Module module = moduleModel.loadModuleInternal(modulePath.getPath(), progressIndicator);
-              if (ModuleType.get(module) instanceof UnknownModuleType) {
+              if (isUnknownModuleType(module)) {
                 modulesWithUnknownTypes.add(module);
               }
               final String groupPathString = modulePath.getModuleGroup();
@@ -256,6 +256,10 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
       //  app.invokeAndWait(swingRunnable, ModalityState.defaultModalityState());
       //}
     }
+  }
+
+  protected boolean isUnknownModuleType(Module module) {
+    return false;
   }
 
   protected void showUnknownModuleTypeNotification(List<Module> types) {
