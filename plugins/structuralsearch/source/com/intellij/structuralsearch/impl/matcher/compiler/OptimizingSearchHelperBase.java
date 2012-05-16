@@ -45,7 +45,8 @@ abstract class OptimizingSearchHelperBase implements OptimizingSearchHelper {
           javaLexer = LanguageParserDefinitions.INSTANCE.forLanguage(JavaLanguage.INSTANCE).createLexer(context.getProject());
         }
         javaLexer.start(refname);
-        isJavaReservedWord = ElementType.KEYWORD_BIT_SET.contains(javaLexer.getTokenType());
+        isJavaReservedWord = ElementType.KEYWORD_BIT_SET.contains(javaLexer.getTokenType()) ||
+                             ElementType.LITERAL_BIT_SET.contains(javaLexer.getTokenType());
       }
 
       if (isJavaReservedWord) {
@@ -102,5 +103,4 @@ abstract class OptimizingSearchHelperBase implements OptimizingSearchHelper {
   public boolean isScannedSomething() {
     return scanned.size() > 0 || scannedComments.size() > 0 || scannedLiterals.size() > 0;
   }
-
 }
