@@ -221,43 +221,51 @@ public class FindUsagesTest extends LightGroovyTestCase {
   }
 
   void testCapitalizedProperty1() {
-    myFixture.configureByText('_.groovy', '''\
+    doTest(1, '''\
 class A {
   def Pro<caret>p
 }
 
 new A().Prop''')
-    assertUsageCount(1);
   }
 
   void testCapitalizedProperty2() {
-    myFixture.configureByText('_.groovy', '''\
+    doTest(1, '''\
 class A {
   def Pro<caret>p
 }
 
 new A().prop''')
-    assertUsageCount(1)
   }
 
   void testCapitalizedProperty3() {
-    myFixture.configureByText('_.groovy', '''\
+    doTest(0, '''\
 class A {
   def pro<caret>p
 }
 
 new A().Prop''')
-    assertUsageCount(0)
   }
 
   void testCapitalizedProperty4() {
-    myFixture.configureByText('_.groovy', '''\
+    doTest(1, '''\
 class A {
   def p<caret>rop
 }
 
 new A().prop''')
-    assertUsageCount(1)
+  }
+
+  void testCategoryProperty() {
+    doTest(1, '''\
+class Cat {
+  static def ge<caret>tFoo(Number s) {'num'}
+}
+
+use(Cat) {
+  2.foo
+}
+''')
   }
 
   private void doSuperMethodTest(String... firstParameterTypes) {
@@ -277,6 +285,11 @@ new A().prop''')
       final String actualParameterType = ((PsiClassType)methodSignature.getParameterTypes()[0]).resolve().getName();
       assertEquals(firstParameterType, actualParameterType);
     }
+  }
+
+  private void doTest(int usageCount, String text) {
+    myFixture.configureByText('_.groovy', text)
+    assertUsageCount(usageCount);
   }
 
 }
