@@ -56,6 +56,7 @@ public abstract class FileEditorManagerEx extends FileEditorManager implements B
    *
    * @see EditorComposite#getPreferredFocusedComponent()
    */
+  @Nullable
   public abstract JComponent getPreferredFocusedComponent();
 
   @NotNull
@@ -113,6 +114,7 @@ public abstract class FileEditorManagerEx extends FileEditorManager implements B
 
   public abstract boolean hasOpenedFile ();
 
+  @Nullable
   public abstract VirtualFile getCurrentFile();
 
   @Nullable

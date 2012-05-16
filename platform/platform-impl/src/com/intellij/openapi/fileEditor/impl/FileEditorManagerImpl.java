@@ -49,7 +49,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.impl.ProjectImpl;
 import com.intellij.openapi.roots.ModuleRootAdapter;
 import com.intellij.openapi.roots.ModuleRootEvent;
-import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
@@ -1043,7 +1042,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
       openFiles.addAll(Arrays.asList(each.getOpenFiles()));
     }
 
-    return VfsUtil.toVirtualFileArray(openFiles);
+    return VfsUtilCore.toVirtualFileArray(openFiles);
   }
 
   @NotNull
@@ -1053,7 +1052,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
       selectedFiles.addAll(Arrays.asList(each.getSelectedFiles()));
     }
 
-    return VfsUtil.toVirtualFileArray(selectedFiles);
+    return VfsUtilCore.toVirtualFileArray(selectedFiles);
   }
 
   @NotNull
