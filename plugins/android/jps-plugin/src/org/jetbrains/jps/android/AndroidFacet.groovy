@@ -1,6 +1,7 @@
 package org.jetbrains.jps.android
 
 import com.intellij.openapi.util.io.FileUtil
+import org.jetbrains.android.util.AndroidNativeLibData
 import org.jetbrains.jps.Module
 import org.jetbrains.jps.idea.Facet
 
@@ -32,6 +33,8 @@ class AndroidFacet extends Facet {
   String proguardConfigFileRelativePath
   boolean runProguard
   boolean includeSystemProguardCfgFile
+
+  List<AndroidNativeLibData> additionalNativeLibs
 
   AndroidFacet(Module module, String name) {
     this.module = module
