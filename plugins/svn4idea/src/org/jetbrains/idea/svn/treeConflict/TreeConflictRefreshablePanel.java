@@ -15,7 +15,6 @@
  */
 package org.jetbrains.idea.svn.treeConflict;
 
-import com.intellij.history.LocalHistory;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diff.impl.patch.BinaryFilePatch;
@@ -26,14 +25,12 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.BackgroundTaskQueue;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.CollectingContentIterator;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FilePathImpl;
@@ -44,7 +41,6 @@ import com.intellij.openapi.vcs.history.*;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.BeforeAfter;
 import com.intellij.util.Consumer;
@@ -53,23 +49,28 @@ import com.intellij.util.containers.Convertor;
 import com.intellij.util.continuation.*;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.VcsBackgroundTask;
-import com.intellij.vcsUtil.VcsUtil;
 import gnu.trove.TLongArrayList;
-import gnu.trove.TLongProcedure;
 import org.jetbrains.idea.svn.*;
-import org.jetbrains.idea.svn.history.*;
+import org.jetbrains.idea.svn.history.SvnChangeList;
+import org.jetbrains.idea.svn.history.SvnHistoryProvider;
+import org.jetbrains.idea.svn.history.SvnHistorySession;
+import org.jetbrains.idea.svn.history.SvnRepositoryLocation;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.internal.wc.SVNConflictVersion;
 import org.tmatesoft.svn.core.internal.wc.SVNTreeConflictUtil;
-import org.tmatesoft.svn.core.wc.*;
+import org.tmatesoft.svn.core.wc.SVNConflictAction;
+import org.tmatesoft.svn.core.wc.SVNConflictReason;
+import org.tmatesoft.svn.core.wc.SVNRevision;
+import org.tmatesoft.svn.core.wc.SVNTreeConflictDescription;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
