@@ -17,7 +17,6 @@
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
@@ -27,7 +26,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
-import com.intellij.openapi.roots.impl.storage.ClasspathStorage;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
@@ -43,22 +41,7 @@ import java.util.Map;
 import java.util.Set;
 
 
-@State(
-  name = "NewModuleRootManager",
-  storages = {
-    @Storage(
-      id = ClasspathStorage.DEFAULT_STORAGE,
-      file = "$MODULE_FILE$"
-    ),
-
-    @Storage(
-          id = ClasspathStorage.SPECIAL_STORAGE,
-          storageClass = ClasspathStorage.class
-    )
-  },
-  storageChooser = ModuleRootManagerImpl.StorageChooser.class
-)
-public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleComponent, PersistentStateComponent<ModuleRootManagerImpl.ModuleRootManagerState> {
+public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.impl.ModuleRootManagerImpl");
 
   private final Module myModule;
@@ -410,17 +393,6 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
 
     public Element getRootModelElement() {
       return myRootModelElement;
-    }
-  }
-
-  public static class StorageChooser implements StateStorageChooser<ModuleRootManagerImpl> {
-    public Storage[] selectStorages(Storage[] storages, ModuleRootManagerImpl moduleRootManager, final StateStorageOperation operation) {
-      final String storageType = ClasspathStorage.getStorageType(moduleRootManager.getModule());
-      final String id = storageType.equals(ClasspathStorage.DEFAULT_STORAGE)? ClasspathStorage.DEFAULT_STORAGE: ClasspathStorage.SPECIAL_STORAGE;
-      for (Storage storage : storages) {
-        if (storage.id().equals(id)) return new Storage[]{storage};
-      }
-      throw new IllegalArgumentException();
     }
   }
 }

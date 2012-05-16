@@ -230,7 +230,7 @@
   <module-components>
     <component>
       <interface-class>com.intellij.openapi.roots.ModuleRootManager</interface-class>
-      <implementation-class>com.intellij.openapi.roots.impl.ModuleRootManagerImpl</implementation-class>
+      <implementation-class>com.intellij.openapi.roots.impl.ModuleRootManagerComponent</implementation-class>
     </component>
     
     <component>
