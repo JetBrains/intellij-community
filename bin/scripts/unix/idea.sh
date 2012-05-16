@@ -21,7 +21,6 @@ if [ -z "$UNAME" -o -z "$GREP" -o -z "$CUT" -o -z "$MKTEMP" -o -z "$RM" -o -z "$
 fi
 
 OS_TYPE=`"$UNAME" -s`
-WORKING_DIR=`pwd`
 
 # ---------------------------------------------------------------------
 # Locate a JDK installation directory which will be used to run the IDE.
@@ -141,8 +140,6 @@ if [ -r "$VM_OPTIONS_FILE" ]; then
   VM_OPTIONS="$VM_OPTIONS -Djb.vmOptionsFile=\"$VM_OPTIONS_FILE\""
 fi
 
-VM_OPTIONS="$VM_OPTIONS -Doriginal.working.dir=\"$WORKING_DIR\""
-
 IS_EAP="@@isEap@@"
 if [ "$IS_EAP" = "true" ]; then
   OS_NAME=`echo $OS_TYPE | "$TR" '[:upper:]' '[:lower:]'`
@@ -152,7 +149,7 @@ if [ "$IS_EAP" = "true" ]; then
   fi
 fi
 
-COMMON_JVM_ARGS="-Xbootclasspath/a:../lib/boot.jar -Didea.paths.selector=@@system_selector@@ $IDE_PROPERTIES_PROPERTY"
+COMMON_JVM_ARGS="\"-Xbootclasspath/a:$IDE_HOME/lib/boot.jar\" -Didea.paths.selector=@@system_selector@@ $IDE_PROPERTIES_PROPERTY"
 IDE_JVM_ARGS="@@ide_jvm_args@@"
 ALL_JVM_ARGS="$VM_OPTIONS $COMMON_JVM_ARGS $IDE_JVM_ARGS $AGENT $REQUIRED_JVM_ARGS"
 
@@ -167,7 +164,6 @@ export LD_LIBRARY_PATH="$IDE_BIN_HOME:$LD_LIBRARY_PATH"
 # ---------------------------------------------------------------------
 # Run the IDE.
 # ---------------------------------------------------------------------
-cd "$IDE_BIN_HOME"
 while true ; do
   eval "$JDK/bin/java" $ALL_JVM_ARGS -Djb.restart.code=88 $MAIN_CLASS_NAME $*
   test $? -ne 88 && break
