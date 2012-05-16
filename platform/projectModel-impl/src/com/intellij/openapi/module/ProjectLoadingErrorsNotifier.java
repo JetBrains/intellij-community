@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,25 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package com.intellij.openapi.module;
+
+import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.Collection;
 
 /**
  * @author nik
  */
-public class ConfigurationErrorType {
-  private String myElementKind;
-  private boolean myCanIgnore;
+public abstract class ProjectLoadingErrorsNotifier {
 
-  public ConfigurationErrorType(String elementKind, boolean canIgnore) {
-    myElementKind = elementKind;
-    myCanIgnore = canIgnore;
+  public static ProjectLoadingErrorsNotifier getInstance(@NotNull Project project) {
+    return ServiceManager.getService(project, ProjectLoadingErrorsNotifier.class);
   }
 
-  public String getElementKind() {
-    return myElementKind;
-  }
+  public abstract void registerError(ConfigurationErrorDescription errorDescription);
 
-  public boolean canIgnore() {
-    return myCanIgnore;
-  }
+  public abstract void registerErrors(Collection<? extends ConfigurationErrorDescription> errorDescriptions);
 }
