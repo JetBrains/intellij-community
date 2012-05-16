@@ -1180,6 +1180,26 @@
     </creation>
   </meta>
 
+  <meta model="com.intellij.android.designer.model.layout.relative.RadRelativeLayoutComponent"
+        layout="com.intellij.android.designer.model.layout.relative.RadRelativeLayout"
+        class="android.widget.TwoLineListItem"
+        tag="TwoLineListItem">
+
+    <properties important="mode"/>
+
+    <palette title="TwoLineListItem" icon="/com/intellij/android/designer/icons/TwoLineListItem.png"
+             tooltip="A view group with two children, intended for use in ListViews."/>
+
+    <creation>
+      <![CDATA[
+          <TwoLineListItem
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent">
+          </TwoLineListItem>
+      ]]>
+    </creation>
+  </meta>
+
   <!-- ================= Palette ================= -->
 
   <palette>
@@ -1190,6 +1210,7 @@
       <item tag="TableRow"/>
       <item tag="GridLayout"/>
       <item tag="RelativeLayout"/>
+      <item tag="TwoLineListItem"/>
     </group>
     <group name="Widgets">
       <item tag="Button"/>
