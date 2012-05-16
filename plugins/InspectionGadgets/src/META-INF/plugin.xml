@@ -2025,6 +2025,10 @@
                      key="comparator.not.serializable.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.serialization.issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.serialization.ComparatorNotSerializableInspection"/>
+    <localInspection language="JAVA" shortName="ExternalizableWithoutPublicNoArgConstructor" bundle="com.siyeh.InspectionGadgetsBundle"
+                     key="externalizable.without.public.no.arg.constructor.display.name" groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.serialization.issues" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.siyeh.ig.serialization.ExternalizableWithoutPublicNoArgConstructorInspection"/>
     <localInspection language="JAVA" suppressId="ExternalizableClassWithSerializationMethods" shortName="ExternalizableWithSerializationMethods"
                      bundle="com.siyeh.InspectionGadgetsBundle" key="externalizable.with.serialization.methods.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.serialization.issues" enabledByDefault="false"
@@ -2187,7 +2191,7 @@
     <localInspection language="JAVA" shortName="SimplifiableEqualsExpression" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="simplifiable.equals.expression.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.code.style.issues" enabledByDefault="false" level="WARNING"
-                     implementationClass="com.siyeh.ig.style.SimplifiableEqualsExpressionInspection"/>
+                     implementationClass="com.siyeh.ig.controlflow.SimplifiableEqualsExpressionInspection"/>
     <localInspection language="JAVA" shortName="StringBufferReplaceableByString" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="string.buffer.replaceable.by.string.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.performance.issues" enabledByDefault="true" level="WARNING"

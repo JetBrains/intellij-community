@@ -407,7 +407,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       }
 
       myHolder.add(HighlightClassUtil.checkClassAlreadyImported(aClass, identifier));
-      myHolder.add(HighlightClassUtil.checkExternalizableHasPublicNoArgsConstructor(aClass, identifier));
       if (!(parent instanceof PsiAnonymousClass) && aClass.getNameIdentifier() == identifier) {
         myHolder.add(HighlightNamesUtil.highlightClassName(aClass, identifier, colorsScheme));
       }
