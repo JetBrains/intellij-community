@@ -183,6 +183,32 @@ public class ModelParser extends XmlRecursiveElementVisitor {
 
     PropertyParser propertyParser = container.getRoot().getClientProperty(PropertyParser.KEY);
     propertyParser.load(newComponent);
+
+    if (!newComponent.getTag().isEmpty()) {
+      MetaManager metaManager = ViewsMetaManager.getInstance(newComponent.getTag().getProject());
+      IdManager idManager = container.getRoot().getClientProperty(IdManager.KEY);
+      addComponent(newComponent, metaManager, idManager, propertyParser);
+    }
+  }
+
+  private static void addComponent(RadViewComponent parentComponent,
+                                   MetaManager metaManager,
+                                   IdManager idManager,
+                                   PropertyParser propertyParser) throws Exception {
+    for (XmlTag tag : parentComponent.getTag().getSubTags()) {
+      MetaModel metaModel = metaManager.getModelByTag(tag.getName());
+      if (metaModel == null) {
+        metaModel = metaManager.getModelByTag("<unknown>");
+      }
+
+      RadViewComponent component = createComponent(tag, metaModel);
+
+      idManager.addComponent(component);
+      parentComponent.add(component, null);
+      propertyParser.load(component);
+
+      addComponent(component, metaManager, idManager, propertyParser);
+    }
   }
 
   public static void pasteComponent(RadViewComponent container, RadViewComponent newComponent, @Nullable RadViewComponent insertBefore)

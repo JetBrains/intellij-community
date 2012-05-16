@@ -1200,6 +1200,36 @@
     </creation>
   </meta>
 
+  <meta model="com.intellij.android.designer.model.layout.relative.RadRelativeLayoutComponent"
+        layout="com.intellij.android.designer.model.layout.relative.RadRelativeLayout"
+        class="android.widget.DialerFilter"
+        tag="DialerFilter">
+
+    <palette title="DialerFilter" icon="/com/intellij/android/designer/icons/DialerFilter.png"/>
+
+    <creation>
+      <![CDATA[
+          <DialerFilter
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content">
+            <EditText
+              android:id="@android:id/hint"
+              android:layout_width="fill_parent"
+              android:layout_height="wrap_content"
+              android:text="Hint"
+              />
+            <EditText
+              android:id="@android:id/primary"
+              android:layout_width="fill_parent"
+              android:layout_height="wrap_content"
+              android:layout_below="@android:id/hint"
+              android:text="Primary"
+              />
+          </DialerFilter>
+      ]]>
+    </creation>
+  </meta>
+
   <!-- ================= Palette ================= -->
 
   <palette>
@@ -1210,7 +1240,6 @@
       <item tag="TableRow"/>
       <item tag="GridLayout"/>
       <item tag="RelativeLayout"/>
-      <item tag="TwoLineListItem"/>
     </group>
     <group name="Widgets">
       <item tag="Button"/>
@@ -1260,6 +1289,8 @@
       <item tag="HorizontalScrollView"/>
       <item tag="ScrollView"/>
       <item tag="StackView"/>
+      <item tag="TwoLineListItem"/>
+      <item tag="DialerFilter"/>
       <item tag="ViewAnimator"/>
       <item tag="ViewFlipper"/>
       <item tag="ViewSwitcher"/>
