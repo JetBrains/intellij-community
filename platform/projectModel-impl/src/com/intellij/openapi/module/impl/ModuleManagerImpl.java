@@ -17,10 +17,11 @@
 package com.intellij.openapi.module.impl;
 
 import com.intellij.ProjectTopics;
-import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.components.StateStorageException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.*;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -63,6 +64,7 @@ import java.util.*;
 public abstract class ModuleManagerImpl extends ModuleManager implements ProjectComponent, PersistentStateComponent<Element>, ModificationTracker {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.module.impl.ModuleManagerImpl");
   public static final Key<String> DISPOSED_MODULE_NAME = Key.create("DisposedNeverAddedModuleName");
+  private static final String IML_EXTENSION = ".iml";
   protected final Project myProject;
   protected volatile ModuleModelImpl myModuleModel = new ModuleModelImpl();
 
@@ -353,8 +355,8 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
 
       final int slashIndex = myFilePath.lastIndexOf('/');
       final int startIndex = slashIndex >= 0 && slashIndex + 1 < myFilePath.length() ? slashIndex + 1 : 0;
-      final int endIndex = myFilePath.endsWith(ModuleFileType.DOT_DEFAULT_EXTENSION)
-                           ? myFilePath.length() - ModuleFileType.DOT_DEFAULT_EXTENSION.length()
+      final int endIndex = myFilePath.endsWith(IML_EXTENSION)
+                           ? myFilePath.length() - IML_EXTENSION.length()
                            : myFilePath.length();
       myName = myFilePath.substring(startIndex, endIndex);
     }
@@ -699,7 +701,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
         progressIndicator.setText2(FileUtil.getNameWithoutExtension(name));
       }
 
-      if (name.endsWith(ModuleFileType.DOT_DEFAULT_EXTENSION)) {
+      if (name.endsWith(IML_EXTENSION)) {
         final String moduleName = name.substring(0, name.length() - 4);
         for (Module module : myPathToModule.values()) {
           if (module.getName().equals(moduleName)) {
