@@ -127,10 +127,6 @@ class ActionButton extends IconButton implements ActionListener {
     }
   }
 
-  public boolean isAutoHide() {
-    return myAutoHide;
-  }
-
   public void toggleShowActions(boolean show) {
     if (myAutoHide) {
       myButton.setPainting(show);

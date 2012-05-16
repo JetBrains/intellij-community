@@ -28,6 +28,7 @@ import com.wrq.rearranger.entry.RangeEntry;
 import com.wrq.rearranger.settings.atomicAttributes.AbstractAttribute;
 import com.wrq.rearranger.settings.atomicAttributes.EnumAttribute;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -72,11 +73,11 @@ public final class InnerClassAttributes
 // ------------------------ CANONICAL METHODS ------------------------
 
   public final String toString() {
-    final StringBuffer sb = new StringBuffer(70);
+    final StringBuilder sb = new StringBuilder(70);
     sb.append(abAttr.getDescriptiveString());
-    sb.append(plAttr.getProtectionLevelString());
-    sb.append(stAttr.getDescriptiveString());
-    sb.append(fAttr.getDescriptiveString());
+    sb.append(getProtectionLevelAttributes().getProtectionLevelString());
+    sb.append(getStaticAttribute().getDescriptiveString());
+    sb.append(getFinalAttribute().getDescriptiveString());
     sb.append(enumAttr.getDescriptiveString());
     if (sb.length() == 0) {
       sb.append("all inner classes");
@@ -84,11 +85,11 @@ public final class InnerClassAttributes
     else {
       sb.append("inner classes");
     }
-    if (nameAttr.isMatch()) {
+    if (getNameAttribute().isMatch()) {
       sb.append(' ');
-      sb.append(nameAttr.getDescriptiveString());
+      sb.append(getNameAttribute().getDescriptiveString());
     }
-    sb.append(sortAttr.getDescriptiveString());
+    sb.append(getSortOptions().getDescriptiveString());
     return sb.toString();
   }
 
@@ -97,6 +98,7 @@ public final class InnerClassAttributes
 
 // --------------------- Interface AttributeGroup ---------------------
 
+  @NotNull
   public final /*InnerClassAttributes*/AttributeGroup deepCopy() {
     final InnerClassAttributes result = new InnerClassAttributes();
     deepCopyCommonItems(result);
@@ -105,7 +107,8 @@ public final class InnerClassAttributes
     return result;
   }
 
-  public final void writeExternal(final Element parent) {
+  @SuppressWarnings("unchecked")
+  public final void writeExternal(@NotNull final Element parent) {
     final Element me = new Element("InnerClass");
     writeExternalCommonAttributes(me);
     abAttr.appendAttributes(me);
@@ -138,27 +141,27 @@ public final class InnerClassAttributes
     constraints.weighty = 0.0d;
     constraints.gridx = constraints.gridy = 0;
     constraints.insets = new Insets(0, 0, 5, 0);
-    caPanel.add(getPlAttr().getProtectionLevelPanel(), constraints);
+    caPanel.add(getProtectionLevelAttributes().getProtectionLevelPanel(), constraints);
     constraints.gridy = 1;
     constraints.gridheight = 1;
-    caPanel.add(getStAttr().getAndNotPanel(), constraints);
+    caPanel.add(getStaticAttribute().getAndNotPanel(), constraints);
     constraints.gridy++;
     caPanel.add(getAbAttr().getAndNotPanel(), constraints);
     constraints.gridy++;
-    caPanel.add(getfAttr().getAndNotPanel(), constraints);
+    caPanel.add(getFinalAttribute().getAndNotPanel(), constraints);
     constraints.gridy++;
     caPanel.add(getEnumAttr().getAndNotPanel(), constraints);
     constraints.gridy++;
-    caPanel.add(getNameAttr().getStringPanel(), constraints);
+    caPanel.add(getNameAttribute().getStringPanel(), constraints);
     constraints.gridy++;
     constraints.gridheight = GridBagConstraints.REMAINDER;
     constraints.weighty = 1.0d;
     constraints.insets = new Insets(0, 0, 0, 0);
-    caPanel.add(sortAttr.getSortOptionsPanel(), constraints);
+    caPanel.add(getSortOptions().getSortOptionsPanel(), constraints);
     return caPanel;
   }
 
-  public final boolean isMatch(RangeEntry entry) {
+  public final boolean isMatch(@NotNull RangeEntry entry) {
 //        return entry.getEnd() instanceof PsiClass   &&
     // entry.getEnd() should be the LBrace of a class.
     return entry.getEnd().getParent() instanceof PsiClass &&

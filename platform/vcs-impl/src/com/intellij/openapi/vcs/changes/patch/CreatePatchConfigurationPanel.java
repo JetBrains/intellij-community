@@ -34,15 +34,14 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.RefreshablePanel;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWrapper;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
-import com.intellij.ui.SplitterWithSecondHideable;
+import com.intellij.ui.HideableTitledPanel;
 import com.intellij.util.Consumer;
-import com.intellij.util.OnOffListener;
+import com.intellij.util.ui.FormBuilder;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -58,7 +57,7 @@ public class CreatePatchConfigurationPanel {
   private static final String SYSTEM_DEFAULT = IdeBundle.message("encoding.name.system.default");
 
   public static final String ALL = "(All)";
-  private JPanel myPanel;
+  private JPanel myMainPanel;
   private TextFieldWithBrowseButton myFileNameField;
   private JCheckBox myReversePatchCheckbox;
   private JComboBox myEncoding;
@@ -70,17 +69,18 @@ public class CreatePatchConfigurationPanel {
   private List<Change> myChanges;
   private Collection<Change> myIncludedChanges;
   private SelectFilesToAddTextsToPatchPanel mySelectFilesToAddTextsToPatchPanel;
-  private SplitterWithSecondHideable mySplitterWithSecondHideable;
+  private HideableTitledPanel myHideableTitledPanel;
+  private JPanel myPanelWithSelectedFiles;
 
   public CreatePatchConfigurationPanel(final Project project) {
     myProject = project;
-    initUi();
+    initMainPanel();
 
     myFileNameField.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         final FileSaverDialog dialog =
           FileChooserFactory.getInstance().createSaveFileDialog(
-            new FileSaverDescriptor("Save patch to", ""), myPanel);
+            new FileSaverDescriptor("Save patch to", ""), myMainPanel);
         final String path = FileUtil.toSystemIndependentName(myFileNameField.getText().trim());
         final int idx = path.lastIndexOf("/");
         VirtualFile baseDir = idx == -1 ? project.getBaseDir() :
@@ -121,27 +121,6 @@ public class CreatePatchConfigurationPanel {
     });
     myErrorLabel.setForeground(Color.RED);
     checkName();
-    /*new AdjustComponentWhenShown() {
-      @Override
-      protected boolean init() {
-        if (myPanel.isVisible()) {
-          IdeFocusManager.findInstanceByComponent(myPanel).requestFocus(myFileNameField.getTextField(), true);
-          if (myIncludeBaseRevisionTextCheckBox.isVisible()) {
-            // a hack =(
-            final JDialog dialog = getParentDialog();
-            final Dimension dialogSize = dialog.getSize();
-            dialog.setSize(dialogSize.width, dialogSize.height + 1);
-            if (dialogSize.width < 500) {
-              dialog.setSize(500, dialogSize.height - 1);
-            } else {
-              dialog.setSize(dialogSize.width, dialogSize.height - 1);
-            }
-            dialog.repaint();
-          }
-        }
-        return false;
-      }
-    }.install(myPanel);*/
     initEncodingCombo();
   }
 
@@ -165,110 +144,31 @@ public class CreatePatchConfigurationPanel {
     if (SYSTEM_DEFAULT.equals(selectedItem)) {
       return EncodingManager.getInstance().getDefaultCharset();
     }
-    return (Charset) selectedItem;
+    return (Charset)selectedItem;
   }
 
-  private void initUi() {
-    myPanel = new JPanel(new GridBagLayout());
-    myPanel.setMinimumSize(new Dimension(400, -1));
-    final GridBagConstraints gb = new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE,
-                                                                   new Insets(1, 1, 1, 1), 0, 0);
-    gb.anchor = GridBagConstraints.WEST;
-    final JLabel createPatchLabel = new JLabel(VcsBundle.message("create.patch.file.path"));
-    myPanel.add(createPatchLabel, gb);
-    gb.anchor = GridBagConstraints.NORTHWEST;
+  private void initMainPanel() {
     myFileNameField = new TextFieldWithBrowseButton();
-    ++ gb.gridx;
-    gb.fill = GridBagConstraints.HORIZONTAL;
-    gb.weightx = 1;
-    myPanel.add(myFileNameField, gb);
-
-    /*gb.fill = GridBagConstraints.NONE;
-    gb.weightx = 0;*/
-    gb.gridx = 0;
-    ++ gb.gridy;
-    gb.gridwidth = 2;
     myReversePatchCheckbox = new JCheckBox(VcsBundle.message("create.patch.reverse.patch.checkbox"));
-    ++ gb.gridy;
-    myPanel.add(myReversePatchCheckbox, gb);
-    ++ gb.gridy;
-    gb.gridwidth = 2;
-
-    gb.anchor = GridBagConstraints.WEST;
-    myPanel.add(new JLabel("Encoding:"), gb);
-    ++ gb.gridx;
-    gb.anchor = GridBagConstraints.NORTHWEST;
     myEncoding = new JComboBox();
-    myPanel.add(myEncoding, gb);
-    ++ gb.gridy;
-
-    gb.gridx = 0;
     myIncludeBaseRevisionTextCheckBox = new JCheckBox("Include base revision text(s) into patch file");
-    myPanel.add(myIncludeBaseRevisionTextCheckBox, gb);
-    ++ gb.gridy;
-
     myErrorLabel = new JLabel();
-    myPanel.add(myErrorLabel, gb);
+
+    myMainPanel = FormBuilder.createFormBuilder()
+      .addLabeledComponent(VcsBundle.message("create.patch.file.path"), myFileNameField)
+      .addComponent(myReversePatchCheckbox)
+      .addLabeledComponent("Encoding:", myEncoding)
+      .addComponent(myIncludeBaseRevisionTextCheckBox)
+      .addComponent(myErrorLabel)
+      .getPanel();
   }
 
-  private void initSplitter(Runnable inclusionListener) {
+  private void initPanelWithSelectedFiles(Runnable inclusionListener) {
     mySelectFilesToAddTextsToPatchPanel = new SelectFilesToAddTextsToPatchPanel(myProject, myChanges, myIncludedChanges, inclusionListener);
-    final Dimension preferredSize = myPanel.getPreferredSize();
-    final JPanel wrapper = new JPanel(new BorderLayout()) {
-      @Override
-      public Dimension getPreferredSize() {
-        return preferredSize;
-      }
-
-      @Override
-      public Dimension getMaximumSize() {
-        return preferredSize;
-      }
-
-      @Override
-      public Dimension getMinimumSize() {
-        return preferredSize;
-      }
-    };
-    wrapper.add(myPanel, BorderLayout.NORTH);
-    mySplitterWithSecondHideable = new SplitterWithSecondHideable(true, ALL, wrapper, new OnOffListener<Integer>() {
-      @Override
-      public void on(Integer integer) {
-        VcsConfiguration.getInstance(myProject).CREATE_PATCH_EXPAND_DETAILS_DEFAULT = true;
-        final JDialog dialog = getParentDialog();
-        final Dimension dialogSize = dialog.getSize();
-        int width = dialogSize.width < 550 ? 550 : dialogSize.width;
-        dialog.setSize(width, dialogSize.height + integer);
-        dialog.repaint();
-      }
-
-      @Override
-      public void off(Integer integer) {
-        VcsConfiguration.getInstance(myProject).CREATE_PATCH_EXPAND_DETAILS_DEFAULT = false;
-        final JDialog dialog = getParentDialog();
-        final Dimension dialogSize = dialog.getSize();
-        dialog.setSize(dialogSize.width, dialogSize.height - integer);
-        dialog.repaint();
-      }
-    }, false) {
-      @Override
-      protected RefreshablePanel createDetails() {
-        return mySelectFilesToAddTextsToPatchPanel;
-      }
-
-      @Override
-      protected float getSplitterInitialProportion() {
-        return 0.3f;
-      }
-    };
-  }
-
-  private JDialog getParentDialog() {
-    Container parent = myPanel.getParent();
-    while (! (parent instanceof JDialog)) {
-      parent = parent.getParent();
-    }
-    return (JDialog)parent;
+    myHideableTitledPanel = new HideableTitledPanel("", mySelectFilesToAddTextsToPatchPanel.getPanel(), false);
+    myPanelWithSelectedFiles = new JPanel(new BorderLayout());
+    myPanelWithSelectedFiles.add(myMainPanel, BorderLayout.NORTH);
+    myPanelWithSelectedFiles.add(myHideableTitledPanel, BorderLayout.CENTER);
   }
 
   public void showTextStoreOption(final boolean dvcsIsUsed) {
@@ -276,29 +176,29 @@ public class CreatePatchConfigurationPanel {
     if (myChanges.size() > 0) {
       myIncludeBaseRevisionTextCheckBox.setVisible(true);
 
-      final VcsConfiguration configuration = VcsConfiguration.getInstance(myProject);
-
-      boolean turnOn = dvcsIsUsed || configuration.INCLUDE_TEXT_INTO_PATCH;
-      myIncludeBaseRevisionTextCheckBox.setSelected(turnOn);
-      myIncludeBaseRevisionTextCheckBox.addActionListener(new ActionListener() {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-          mySelectFilesToAddTextsToPatchPanel.setEnabled(myIncludeBaseRevisionTextCheckBox.isSelected());
-          mySplitterWithSecondHideable.setEnabledColor(myIncludeBaseRevisionTextCheckBox.isSelected());
-        }
-      });
       final Runnable inclusionListener = new Runnable() {
         @Override
         public void run() {
           if (mySelectFilesToAddTextsToPatchPanel != null) {
             myIncludedChanges = mySelectFilesToAddTextsToPatchPanel.getIncludedChanges();
-            mySplitterWithSecondHideable.setText("Selected: " + (myIncludedChanges.size() == myChanges.size() ?
-                                       "All" : ("" + myIncludedChanges.size() + " of " + myChanges.size())));
+            myHideableTitledPanel.setTitle("Selected: " + (myIncludedChanges.size() == myChanges.size() ?
+                                                           "All" : (myIncludedChanges.size() + " of " + myChanges.size())));
           }
         }
       };
-      initSplitter(inclusionListener);
+      initPanelWithSelectedFiles(inclusionListener);
       inclusionListener.run();
+
+      final VcsConfiguration configuration = VcsConfiguration.getInstance(myProject);
+      boolean turnOn = dvcsIsUsed || configuration.INCLUDE_TEXT_INTO_PATCH;
+      myIncludeBaseRevisionTextCheckBox.setSelected(turnOn);
+      myIncludeBaseRevisionTextCheckBox.addActionListener(new ActionListener() {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+          myHideableTitledPanel.setEnabled(myIncludeBaseRevisionTextCheckBox.isSelected());
+        }
+      });
+      myHideableTitledPanel.setEnabled(myIncludeBaseRevisionTextCheckBox.isSelected());
     }
   }
 
@@ -306,7 +206,8 @@ public class CreatePatchConfigurationPanel {
     final PatchNameChecker patchNameChecker = new PatchNameChecker(myFileNameField.getText());
     if (patchNameChecker.nameOk()) {
       myErrorLabel.setText("");
-    } else {
+    }
+    else {
       myErrorLabel.setText(patchNameChecker.getError());
     }
     if (myOkEnabledListener != null) {
@@ -315,7 +216,7 @@ public class CreatePatchConfigurationPanel {
   }
 
   public void onOk() {
-    if (myIncludeBaseRevisionTextCheckBox.isVisible() && ! myDvcsIsUsed) {
+    if (myIncludeBaseRevisionTextCheckBox.isVisible() && !myDvcsIsUsed) {
       final VcsConfiguration vcsConfiguration = VcsConfiguration.getInstance(myProject);
       vcsConfiguration.INCLUDE_TEXT_INTO_PATCH = myIncludeBaseRevisionTextCheckBox.isSelected();
     }
@@ -330,7 +231,7 @@ public class CreatePatchConfigurationPanel {
   }
 
   public JComponent getPanel() {
-    return ! myIncludeBaseRevisionTextCheckBox.isVisible() || myChanges.isEmpty() ? myPanel : mySplitterWithSecondHideable.getComponent();
+    return !myIncludeBaseRevisionTextCheckBox.isVisible() || myChanges.isEmpty() ? myMainPanel : myPanelWithSelectedFiles;
   }
 
   public void installOkEnabledListener(final Consumer<Boolean> runnable) {

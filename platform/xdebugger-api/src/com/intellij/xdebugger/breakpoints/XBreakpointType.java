@@ -188,6 +188,10 @@ public abstract class XBreakpointType<B extends XBreakpoint<P>, P extends XBreak
     return null;
   }
 
+  public String getShortText(B breakpoint) {
+    return getDisplayText(breakpoint);
+  }
+
   public interface XBreakpointCreator<P extends XBreakpointProperties> {
     @NotNull
     XBreakpoint<P> createBreakpoint(@Nullable P properties);

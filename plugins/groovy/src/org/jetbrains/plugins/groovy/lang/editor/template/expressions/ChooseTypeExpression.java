@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.codeInsight.template.Expression;
 import com.intellij.codeInsight.template.ExpressionContext;
 import com.intellij.codeInsight.template.PsiTypeResult;
 import com.intellij.codeInsight.template.Result;
+import com.intellij.openapi.editor.Document;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTypesUtil;
@@ -86,7 +87,12 @@ public class ChooseTypeExpression extends Expression {
     PsiDocumentManager.getInstance(context.getProject()).commitAllDocuments();
     PsiType type = myTypePointer.getType();
     if (type != null) {
-      return new PsiTypeResult(type, context.getProject());
+      return new PsiTypeResult(type, context.getProject()) {
+        @Override
+        public void handleRecalc(PsiFile psiFile, Document document, int segmentStart, int segmentEnd) {
+          if (myItems.length <= 1) super.handleRecalc(psiFile, document, segmentStart, segmentEnd);
+        }
+      };
     }
 
     return null;

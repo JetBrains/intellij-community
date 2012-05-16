@@ -23,12 +23,15 @@ package com.wrq.rearranger.entry;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.wrq.rearranger.popup.RearrangerTreeNode;
 import com.wrq.rearranger.rearrangement.Emitter;
 import com.wrq.rearranger.ruleinstance.RuleInstance;
 import com.wrq.rearranger.settings.RearrangerSettings;
 import com.wrq.rearranger.util.CommentUtil;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.tree.DefaultMutableTreeNode;
 import java.util.regex.Matcher;
@@ -38,66 +41,68 @@ import java.util.regex.Matcher;
  * contains start and end Psi elements for each item (which could be identical), as well as modifier
  * flags and special flags to mark any miscellaneous text or comments that precede or follow the item.
  */
-abstract public class RangeEntry implements IPopupTreeRangeEntry {
+abstract public class RangeEntry implements PopupTreeRangeEntry {
+  
 // ------------------------------ FIELDS ------------------------------
 
   private static final Logger LOG = Logger.getInstance("#" + RangeEntry.class.getName());
-  String alternateValue;
-  final           String        name;
-  protected final PsiElement    start;
-  protected final PsiElement    end;
-  private final   int           modifiers;
-  private final   String        modifierString;
-  private final   boolean       fixedHeader;
-  private final   boolean       fixedTrailer;
-  private final   String        type;
-  private RuleInstance myMatchedRule;
-  private         boolean       separatorCommentPrecedes;
+
+  String myAlternateValue;
+  final           String       myName;
+  protected final PsiElement   myStart;
+  protected final PsiElement   myEnd;
+  private final   int          myModifiers;
+  private final   String       myModifierString;
+  private final   boolean      myFixedHeader;
+  private final   boolean      myFixedTrailer;
+  private final   String       myType;
+  private         RuleInstance myMatchedRule;
+  private         boolean      mySeparatorCommentPrecedes;
 
 // --------------------------- CONSTRUCTORS ---------------------------
 
-  public RangeEntry(final PsiElement start,
-                    final PsiElement end,
+  public RangeEntry(@Nullable final PsiElement start,
+                    @Nullable final PsiElement end,
                     final boolean fixedHeader,
                     final boolean fixedTrailer)
   {
     this(start, end, 0, "", "", "", fixedHeader, fixedTrailer);
   }
 
-  RangeEntry(final PsiElement start,
-             final PsiElement end,
+  RangeEntry(@Nullable final PsiElement start,
+             @Nullable final PsiElement end,
              final int modifiers,
              final String modifierString,
-             final String name,
+             @Nullable final String name,
              final String type)
   {
     this(start, end, modifiers, modifierString, name, type, false, false);
   }
 
-  private RangeEntry(final PsiElement start,
-                     final PsiElement end,
+  private RangeEntry(@Nullable final PsiElement start,
+                     @Nullable final PsiElement end,
                      final int modifiers,
                      final String modifierString,
-                     final String name,
+                     @Nullable final String name,
                      final String type,
                      final boolean fixedHeader,
                      final boolean fixedTrailer)
   {
-    this.start = start;
-    this.end = end;
-    this.modifiers = modifiers;
-    this.modifierString = modifierString;
-    this.fixedHeader = fixedHeader;
-    this.fixedTrailer = fixedTrailer;
-    this.name = name;
-    this.type = type;
-    alternateValue = null;
+    myStart = start;
+    myEnd = end;
+    myModifiers = modifiers;
+    myModifierString = modifierString;
+    myFixedHeader = fixedHeader;
+    myFixedTrailer = fixedTrailer;
+    myName = name;
+    myType = type;
+    myAlternateValue = null;
   }
 
 // --------------------- GETTER / SETTER METHODS ---------------------
 
   public PsiElement getEnd() {
-    return end;
+    return myEnd;
   }
 
   public RuleInstance getMatchedRule() {
@@ -109,59 +114,59 @@ abstract public class RangeEntry implements IPopupTreeRangeEntry {
   }
 
   public int getModifiers() {
-    return modifiers;
+    return myModifiers;
   }
 
   public String getModifierString() {
-    return modifierString;
+    return myModifierString;
   }
 
   public String getName() {
-    return name;
+    return myName;
   }
 
   public String getType() {
-    return type;
+    return myType;
   }
 
   public PsiElement getStart() {
-    return start;
+    return myStart;
   }
 
   public boolean isFixedHeader() {
-    return fixedHeader;
+    return myFixedHeader;
   }
 
   public boolean isFixedTrailer() {
-    return fixedTrailer;
+    return myFixedTrailer;
   }
 
 // ------------------------ CANONICAL METHODS ------------------------
 
   public String toString() {
-    String result = (name == null ? "<unnamed>" : name);
-    if (start != null && end != null) {
+    String result = (myName == null ? "<unnamed>" : myName);
+    if (myStart != null && myEnd != null) {
       result += "; range from " +
-                start.toString() +
+                myStart.toString() +
                 " [" +
-                start.getTextRange().getStartOffset() +
+                myStart.getTextRange().getStartOffset() +
                 "] to " +
-                end.toString() +
+                myEnd.toString() +
                 " [" +
-                end.getTextRange().getEndOffset() +
+                myEnd.getTextRange().getEndOffset() +
                 "]; modifiers=0x" +
-                Integer.toHexString(modifiers);
+                Integer.toHexString(myModifiers);
     }
     else {
       result += "; no start/end specified";
     }
-    if (fixedHeader) {
+    if (myFixedHeader) {
       result = "Header: " + result;
     }
-    if (fixedTrailer) {
+    if (myFixedTrailer) {
       result = "Trailer: " + result;
     }
-    if (alternateValue != null) {
+    if (myAlternateValue != null) {
       result += "; comments removed";
     }
     return result;
@@ -173,7 +178,7 @@ abstract public class RangeEntry implements IPopupTreeRangeEntry {
 // --------------------- Interface IPopupTreeRangeEntry ---------------------
 
   public DefaultMutableTreeNode addToPopupTree(DefaultMutableTreeNode parent, RearrangerSettings settings) {
-    DefaultMutableTreeNode myNode = new RearrangerTreeNode(this, name);
+    DefaultMutableTreeNode myNode = new RearrangerTreeNode(this, myName);
     parent.add(myNode);
     return myNode;
   }
@@ -189,40 +194,37 @@ abstract public class RangeEntry implements IPopupTreeRangeEntry {
      * for each separator comment specified by the user, check to see if this comment matches.
      */
     for (Matcher matcher : CommentUtil.getCommentMatchers()) {
-      matcher.reset(alternateValue);
+      matcher.reset(myAlternateValue);
       boolean foundMatch = matcher.find();
       if (foundMatch) {
         LOG.debug("found comment pattern '" +
                   matcher.pattern().pattern().replaceAll("\n", "#") +
                   "' in '" +
-                  alternateValue.replaceAll("\n", "#") +
+                  myAlternateValue.replaceAll("\n", "#") +
                   "'");
-        StringBuffer sb = new StringBuffer(alternateValue.length());
+        StringBuffer sb = new StringBuffer(myAlternateValue.length());
         do {
-          boolean leadingNewlines = start.getTextRange().getStartOffset() > 0;
+          boolean leadingNewlines = myStart.getTextRange().getStartOffset() > 0;
           matcher.appendReplacement(sb,
                                     leadingNewlines ? "\n" : "");
           foundMatch = matcher.find();
         }
         while (foundMatch);
         matcher.appendTail(sb);
-        alternateValue = sb.toString();
-        LOG.debug("RangeEntry alternateValue=" + alternateValue.replaceAll("\n", "#"));
+        myAlternateValue = sb.toString();
+        LOG.debug("RangeEntry alternateValue=" + myAlternateValue.replaceAll("\n", "#"));
       }
     }
   }
 
   protected void createAlternateValueString() {
-    if (alternateValue != null) {
+    if (myAlternateValue != null) {
       return;
     }
-    final StringBuffer sb = new StringBuffer(
-      end.getTextRange().getEndOffset() -
-      start.getTextRange().getStartOffset()
-    );
-    PsiElement e = start;
-    while (e != null && e != end) {
-      if (e == end.getParent()) {
+    final StringBuilder sb = new StringBuilder(myEnd.getTextRange().getEndOffset() - myStart.getTextRange().getStartOffset());
+    PsiElement e = myStart;
+    while (e != null && e != myEnd) {
+      if (e == myEnd.getParent()) {
         e = e.getFirstChild();
       }
       else {
@@ -230,58 +232,52 @@ abstract public class RangeEntry implements IPopupTreeRangeEntry {
         e = e.getNextSibling();
       }
     }
-    if (e == end) {
-      sb.append(end.getText());
+    if (e == myEnd) {
+      sb.append(myEnd.getText());
     }
-    alternateValue = sb.toString();
+    myAlternateValue = sb.toString();
   }
 
   public void emit(Emitter emitter) {
-    emitAllElements(emitter.getStringBuffer(), emitter.getDocument());
+    emitAllElements(emitter.getTextBuffer(), emitter.getDocument());
   }
 
-  protected void emitAllElements(StringBuffer sb, Document document) {
-    if (alternateValue != null) {
-      String result = alternateValue;
-      if (separatorCommentPrecedes) {
+  protected void emitAllElements(StringBuilder buffer, Document document) {
+    if (myAlternateValue != null) {
+      String result = myAlternateValue;
+      if (mySeparatorCommentPrecedes) {
         // remove all leading blank lines.  The only blank lines we want are the ones explicitly appended
         // to the preceding separator comment.
         LOG.debug("emitAllElements: separator comment precedes " +
-                  name + "; original value=" +
-                  alternateValue.replaceAll("\n", "#"));
-        result = alternateValue.replaceFirst("\n[ \t\n]*\n", "\n");
+                  myName + "; original value=" +
+                  myAlternateValue.replaceAll("\n", "#"));
+        result = myAlternateValue.replaceFirst("\n[ \t\n]*\n", "\n");
         LOG.debug("emitAllElements: resulting value=" +
-                  alternateValue.replaceAll("\n", "#"));
+                  myAlternateValue.replaceAll("\n", "#"));
       }
-      sb.append(result);
+      buffer.append(result);
     }
     else {
-      PsiElement curr = start;
-      while (curr != null && curr != end) {
-        if (curr == end.getParent()) {
+      PsiElement curr = myStart;
+      while (curr != null && curr != myEnd) {
+        if (curr == myEnd.getParent()) {
           curr = curr.getFirstChild();
         }
         else {
-          emitElement(curr, sb, document);
+          emitElement(curr, buffer, document);
           curr = curr.getNextSibling();
         }
       }
-      if (curr == end) {
-        emitElement(end, sb, document);
+      if (curr == myEnd && myEnd != null) {
+        emitElement(myEnd, buffer, document);
       }
     }
   }
 
-  private void emitElement(final PsiElement curr,
-                           final StringBuffer sb,
-                           final Document document)
-  {
+  private static void emitElement(@NotNull final PsiElement curr, @NotNull final StringBuilder sb, @NotNull final Document document) {
+    final TextRange range = curr.getTextRange();
     try {
-      sb.append(
-        document.getCharsSequence().toString().toCharArray(),  // for Irida (builds 3185 etc).
-        curr.getTextRange().getStartOffset(),
-        curr.getTextRange().getEndOffset() - curr.getTextRange().getStartOffset()
-      );
+      sb.append(document.getCharsSequence(), range.getStartOffset(), range.getEndOffset());
     }
     catch (ArrayIndexOutOfBoundsException oob) {
       LOG.error("internal error attempting to append text to document");
@@ -290,17 +286,17 @@ abstract public class RangeEntry implements IPopupTreeRangeEntry {
       LOG.error("document...toCharArray.length=" + document.getCharsSequence().toString().toCharArray().length);
       LOG.error("current PSI element=" + curr.toString());
       LOG.error("current PSI element text=" + curr.getText());
-      LOG.error("current PSI element text range, start offset=" + curr.getTextRange().getStartOffset());
-      LOG.error("current PSI element text range, end offset=" + curr.getTextRange().getEndOffset());
-      LOG.error("current PSI element text range, length=" + curr.getTextRange().getLength());
+      LOG.error("current PSI element text range, start offset=" + range.getStartOffset());
+      LOG.error("current PSI element text range, end offset=" + range.getEndOffset());
+      LOG.error("current PSI element text range, length=" + range.getLength());
       LOG.error(oob);
       throw oob;
     }
   }
 
   public void setSeparatorCommentPrecedes(boolean precedes) {
-    this.separatorCommentPrecedes = precedes;
-    LOG.debug("emitAllElements: set separator comment precedes " + name);
+    this.mySeparatorCommentPrecedes = precedes;
+    LOG.debug("emitAllElements: set separator comment precedes " + myName);
   }
 }
 

@@ -29,15 +29,14 @@ import com.wrq.rearranger.settings.atomicAttributes.TypeAttribute;
 import com.wrq.rearranger.settings.atomicAttributes.VolatileAttribute;
 import com.wrq.rearranger.util.Constraints;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
 
 /** Routines to handle field attributes not covered by CommonAttributes. */
-public final class FieldAttributes
-  extends ItemAttributes
-{
+public final class FieldAttributes extends ItemAttributes {
 
 // ------------------------------ FIELDS ------------------------------
 
@@ -88,10 +87,10 @@ public final class FieldAttributes
 // ------------------------ CANONICAL METHODS ------------------------
 
   public final String toString() {
-    final StringBuffer sb = new StringBuffer(70);
-    sb.append(plAttr.getProtectionLevelString());
-    sb.append(stAttr.getDescriptiveString());
-    sb.append(fAttr.getDescriptiveString());
+    final StringBuilder sb = new StringBuilder(70);
+    sb.append(getProtectionLevelAttributes().getProtectionLevelString());
+    sb.append(getStaticAttribute().getDescriptiveString());
+    sb.append(getFinalAttribute().getDescriptiveString());
     sb.append(transientAttr.getDescriptiveString());
     sb.append(volatileAttr.getDescriptiveString());
 
@@ -109,21 +108,21 @@ public final class FieldAttributes
         sb.append(" which are not initialized to an anonymous class");
       }
     }
-    if (nameAttr.isMatch()) {
+    if (getNameAttribute().isMatch()) {
       if (initToAnonClassAttr.isValue()) {
         sb.append(" and");
       }
       sb.append(' ');
-      sb.append(nameAttr.getDescriptiveString());
+      sb.append(getNameAttribute().getDescriptiveString());
     }
     if (typeAttr.isMatch()) {
-      if (nameAttr.isMatch() || initToAnonClassAttr.isValue()) {
+      if (getNameAttribute().isMatch() || initToAnonClassAttr.isValue()) {
         sb.append(" and");
       }
       sb.append(' ');
       sb.append(typeAttr.getDescriptiveString());
     }
-    sb.append(sortAttr.getDescriptiveString());
+    sb.append(getSortOptions().getDescriptiveString());
     return sb.toString();
   }
 
@@ -132,6 +131,7 @@ public final class FieldAttributes
 
 // --------------------- Interface AttributeGroup ---------------------
 
+  @NotNull
   public final /*FieldAttributes*/AttributeGroup deepCopy() {
     final FieldAttributes result = new FieldAttributes();
     deepCopyCommonItems(result);
@@ -142,7 +142,8 @@ public final class FieldAttributes
     return result;
   }
 
-  public final void writeExternal(final Element parent) {
+  @SuppressWarnings("unchecked")
+  public final void writeExternal(@NotNull final Element parent) {
     final Element child = new Element("Field");
     writeExternalCommonAttributes(child);
     initToAnonClassAttr.appendAttributes(child);
@@ -173,16 +174,16 @@ public final class FieldAttributes
     constraints.gridwidth = 1;
     constraints.gridheight = 4;
     constraints.weightx = 1.0d;
-    plPanel.add(getPlAttr().getProtectionLevelPanel(), constraints);
+    plPanel.add(getProtectionLevelAttributes().getProtectionLevelPanel(), constraints);
     constraints.fill = GridBagConstraints.HORIZONTAL;
     constraints.gridwidth = GridBagConstraints.REMAINDER;
     constraints.gridy = 0;
     constraints.gridx = 1;
     constraints.gridheight = 1;
     constraints.weighty = 0;
-    plPanel.add(getStAttr().getAndNotPanel(), constraints);
+    plPanel.add(getStaticAttribute().getAndNotPanel(), constraints);
     constraints.gridy++;
-    plPanel.add(getfAttr().getAndNotPanel(), constraints);
+    plPanel.add(getFinalAttribute().getAndNotPanel(), constraints);
     constraints.gridy++;
     plPanel.add(getTransientAttr().getAndNotPanel(), constraints);
     constraints.gridy++;
@@ -192,18 +193,18 @@ public final class FieldAttributes
     constraints.gridy++;
     plPanel.add(getInitToAnonClassAttr().getAndNotPanel(), constraints);
     constraints.gridy++;
-    plPanel.add(getNameAttr().getStringPanel(), constraints);
+    plPanel.add(getNameAttribute().getStringPanel(), constraints);
     constraints.gridy++;
     plPanel.add(getTypeAttr().getStringPanel(), constraints);
     constraints.gridy++;
     constraints.gridheight = GridBagConstraints.REMAINDER;
     constraints.weighty = 1.0d;
     constraints.insets = new Insets(0, 0, 0, 0);
-    plPanel.add(sortAttr.getSortOptionsPanel(), constraints);
+    plPanel.add(getSortOptions().getSortOptionsPanel(), constraints);
     return plPanel;
   }
 
-  public boolean isMatch(RangeEntry rangeEntry) {
+  public boolean isMatch(@NotNull RangeEntry rangeEntry) {
     return rangeEntry.getEnd() instanceof PsiField &&
            initToAnonClassAttr.isMatch(rangeEntry.getModifiers()) &&
            transientAttr.isMatch(rangeEntry.getModifiers()) &&

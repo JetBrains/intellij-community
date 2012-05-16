@@ -14,7 +14,7 @@ public class MethodAttributesTest
   public void testToString() throws Exception {
     ma = new MethodAttributes();
     // test various combinations of min/max parameters, name, and return type.
-    ma.getPlAttr().setPlPublic(true);
+    ma.getProtectionLevelAttributes().setPlPublic(true);
     // min = ?  max = ?  name = ?  return = ?
     setma(false, 0, false, 0, null, null, "public methods");
     // min = 1  max = ?  name = ?  return = ?
@@ -57,8 +57,8 @@ public class MethodAttributesTest
     ma.getMinParamsAttr().setValue(min);
     ma.getMaxParamsAttr().setMatch(maxMatch);
     ma.getMaxParamsAttr().setValue(max);
-    ma.getNameAttr().setMatch(name != null);
-    ma.getNameAttr().setExpression(name);
+    ma.getNameAttribute().setMatch(name != null);
+    ma.getNameAttribute().setExpression(name);
     ma.getReturnTypeAttr().setMatch(returnValue != null);
     ma.getReturnTypeAttr().setExpression(returnValue);
     assertEquals("wrong description", description, ma.toString());

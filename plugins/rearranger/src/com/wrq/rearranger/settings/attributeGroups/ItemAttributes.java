@@ -23,14 +23,15 @@ package com.wrq.rearranger.settings.attributeGroups;
 
 import com.wrq.rearranger.settings.CommentRule;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /** Routines to handle attributes common to class members (fields, methods, and inner classes.) */
-abstract public class ItemAttributes
-  extends CommonAttributes
-{
+abstract public class ItemAttributes extends CommonAttributes {
 
 // -------------------------- STATIC METHODS --------------------------
 
+  @Nullable
   public static AttributeGroup readExternal(final Element element) {
     if (element.getName().equals("Field")) {
       return FieldAttributes.readExternal(element);
@@ -57,6 +58,7 @@ abstract public class ItemAttributes
 
 // --------------------- Interface AttributeGroup ---------------------
 
+  @NotNull
   abstract public /*ItemAttributes*/AttributeGroup deepCopy();
 }
 

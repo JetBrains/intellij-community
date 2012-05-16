@@ -29,9 +29,8 @@ import java.awt.*;
 public abstract class HideableDetailsUnderSeparator extends AbstractTitledSeparatorWithIcon {
   public HideableDetailsUnderSeparator(@NotNull Icon icon,
                                        @NotNull Icon iconOpen,
-                                       @NotNull String text,
-                                       boolean smallFont, boolean boldFont) {
-    super(icon, iconOpen, text, smallFont, boldFont);
+                                       @NotNull String text) {
+    super(icon, iconOpen, text);
   }
 
   public void on() {

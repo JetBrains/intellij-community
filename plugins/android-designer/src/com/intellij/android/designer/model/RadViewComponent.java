@@ -41,11 +41,6 @@ public class RadViewComponent extends RadVisualComponent {
   private XmlTag myTag;
   private List<Property> myProperties;
 
-  @Override
-  public List<RadComponent> getChildren() {
-    return myChildren;
-  }
-
   public XmlTag getTag() {
     return myTag;
   }
@@ -75,6 +70,12 @@ public class RadViewComponent extends RadVisualComponent {
     myMargins = null;
   }
 
+  //////////////////////////////////////////////////////////////////////////////////////////
+  //
+  //
+  //
+  //////////////////////////////////////////////////////////////////////////////////////////
+
   public String ensureId() {
     String id = getId();
     if (id == null) {
@@ -93,6 +94,12 @@ public class RadViewComponent extends RadVisualComponent {
     }
     return "@id/" + idValue.substring(idValue.indexOf('/') + 1);
   }
+
+  //////////////////////////////////////////////////////////////////////////////////////////
+  //
+  //
+  //
+  //////////////////////////////////////////////////////////////////////////////////////////
 
   public int getBaseline() {
     try {
@@ -126,6 +133,46 @@ public class RadViewComponent extends RadVisualComponent {
 
   private static int fixDefault(int value) {
     return value == Integer.MIN_VALUE ? 0 : value;
+  }
+
+  private static final int WRAP_CONTENT = 0 << 30;
+
+  public void calculateWrapSize(Dimension wrapSize, Rectangle bounds) {
+    if (wrapSize.width == -1 || wrapSize.height == -1) {
+      try {
+        Object viewObject = myViewInfo.getViewObject();
+        Class<?> viewClass = viewObject.getClass();
+
+        viewClass.getMethod("forceLayout").invoke(viewObject);
+        viewClass.getMethod("measure", int.class, int.class).invoke(viewObject, WRAP_CONTENT, WRAP_CONTENT);
+
+        if (wrapSize.width == -1) {
+          wrapSize.width = (Integer)viewClass.getMethod("getMeasuredWidth").invoke(viewObject);
+        }
+        if (wrapSize.height == -1) {
+          wrapSize.height = (Integer)viewClass.getMethod("getMeasuredHeight").invoke(viewObject);
+        }
+      }
+      catch (Throwable e) {
+        if (wrapSize.width == -1) {
+          wrapSize.width = bounds.width;
+        }
+        if (wrapSize.height == -1) {
+          wrapSize.height = bounds.height;
+        }
+      }
+    }
+  }
+
+  //////////////////////////////////////////////////////////////////////////////////////////
+  //
+  //
+  //
+  //////////////////////////////////////////////////////////////////////////////////////////
+
+  @Override
+  public List<RadComponent> getChildren() {
+    return myChildren;
   }
 
   @Override

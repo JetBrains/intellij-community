@@ -30,7 +30,7 @@ class FacetLoader {
     }
   }
 
-  private static FacetTypeService findFacetType(String typeId) {
+  private static synchronized FacetTypeService findFacetType(String typeId) {
     if (facetTypes == null) {
       facetTypes = [:]
       facetTypeLoader.each {FacetTypeService type ->

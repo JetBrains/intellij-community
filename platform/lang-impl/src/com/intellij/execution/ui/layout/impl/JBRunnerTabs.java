@@ -53,10 +53,6 @@ public class
   @Override
   protected void paintLastGhost(Graphics2D g2d) {}
 
-  public boolean isGhostsAlwaysVisible() {
-    return false;
-  }
-
   protected void doPaintInactive(Graphics2D g2d,
                                  boolean leftGhostExists,
                                  TabLabel label,

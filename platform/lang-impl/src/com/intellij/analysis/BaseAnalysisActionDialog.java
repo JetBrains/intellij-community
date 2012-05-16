@@ -90,7 +90,7 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
       myAnalysisOptions.ANALYZE_TEST_SOURCES = scope.isAnalyzeTestsByDefault();
     }
     myProject = project;
-    myFileName = scope.getShortenName();
+    myFileName = scope.getScopeType() == AnalysisScope.PROJECT || scope.getScopeType() == AnalysisScope.MODULE ? null : scope.getShortenName();
     myModuleName = moduleName;
     myRememberScope = rememberScope;
     myAnalysisNoon = analysisNoon;
@@ -141,8 +141,12 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
     myChangeLists.setVisible(hasVCS);
 
     //file/package/directory/module scope
-    myFileButton.setText(myFileName);
-    myFileButton.setMnemonic(myFileName.charAt(getSelectedScopeMnemonic()));
+    if (myFileName != null) {
+      myFileButton.setText(myFileName);
+      myFileButton.setMnemonic(myFileName.charAt(getSelectedScopeMnemonic()));
+    } else {
+      myFileButton.setVisible(false);
+    }
 
     VirtualFile file = PsiUtilBase.getVirtualFile(myContext);
     ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
@@ -165,9 +169,10 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
     myScopeCombo.init(myProject, searchInLib, true, preselect);
 
     //correct selection
-    myProjectButton.setSelected(myRememberScope && myAnalysisOptions.SCOPE_TYPE == AnalysisScope.PROJECT);
-    myFileButton.setSelected(!myRememberScope ||
-                             myAnalysisOptions.SCOPE_TYPE != AnalysisScope.PROJECT && !useModuleScope && myAnalysisOptions.SCOPE_TYPE != AnalysisScope.CUSTOM && !useUncommitedFiles);
+    myProjectButton.setSelected(myRememberScope && myAnalysisOptions.SCOPE_TYPE == AnalysisScope.PROJECT || myFileName == null);
+    myFileButton.setSelected(myFileName != null &&
+                             (!myRememberScope ||
+                             myAnalysisOptions.SCOPE_TYPE != AnalysisScope.PROJECT && !useModuleScope && myAnalysisOptions.SCOPE_TYPE != AnalysisScope.CUSTOM && !useUncommitedFiles));
 
     myScopeCombo.setEnabled(myCustomScopeButton.isSelected());
 

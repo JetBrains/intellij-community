@@ -80,7 +80,7 @@ public class XBreakpointsPanel<B extends XBreakpoint<?>> extends AbstractBreakpo
 
     List<XBreakpointPanelAction<B>> actions = new ArrayList<XBreakpointPanelAction<B>>();
     if (type.isAddBreakpointButtonVisible()) {
-      actions.add(new AddBreakpointAction<B>(this));
+      actions.add(new XAddBreakpointAction<B>(this));
     }
     actions.add(new GoToBreakpointAction<B>(this, XDebuggerBundle.message("xbreakpoints.dialog.button.goto"), true));
     actions.add(new GoToBreakpointAction<B>(this, XDebuggerBundle.message("xbreakpoints.dialog.button.view.source"), false));

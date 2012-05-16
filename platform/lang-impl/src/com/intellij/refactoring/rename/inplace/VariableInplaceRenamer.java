@@ -44,7 +44,6 @@ import com.intellij.refactoring.rename.naming.AutomaticRenamerFactory;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.TextOccurrencesUtil;
 import com.intellij.usageView.UsageInfo;
-import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
@@ -260,8 +259,7 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
       LOG.error(myElementToRename);
       return "Rename";
     }
-    return RefactoringBundle.message("renaming.0.1.to.2", UsageViewUtil.getType(variable), UsageViewUtil.getDescriptiveName(variable),
-                                     variable.getName());
+    return RefactoringBundle.message("renaming.command.name", myInitialName);
   }
 
   @Override

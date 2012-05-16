@@ -22,15 +22,15 @@
 package com.wrq.rearranger.settings.attributeGroups;
 
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 
 /** Methods implemented by rule objects, which are saved in configuration. */
-public interface AttributeGroup
-  extends Rule
-{
+public interface AttributeGroup extends Rule {
 
 // -------------------------- OTHER METHODS --------------------------
 
-  public AttributeGroup deepCopy();
+  @NotNull
+  AttributeGroup deepCopy();
 
-  public void writeExternal(final Element parent);
+  void writeExternal(final @NotNull Element parent);
 }

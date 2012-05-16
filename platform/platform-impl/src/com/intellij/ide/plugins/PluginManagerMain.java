@@ -300,22 +300,15 @@ public abstract class PluginManagerMain implements Disposable {
       ProgressManager.getInstance().run(new Task.Backgroundable(null, IdeBundle.message("progress.download.plugins"), true) {
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
-          if (PluginInstaller.prepareToInstall(plugins, allPlugins)) {
-            ApplicationManager.getApplication().invokeLater(onSuccess);
-            result[0] = true;
+          try {
+            if (PluginInstaller.prepareToInstall(plugins, allPlugins)) {
+              ApplicationManager.getApplication().invokeLater(onSuccess);
+              result[0] = true;
+            }
           }
-        }
-
-        @Override
-        public void onCancel() {
-          cleanup.run();
-          super.onCancel();
-        }
-
-        @Override
-        public void onSuccess() {
-          super.onSuccess();
-          cleanup.run();
+          finally {
+            cleanup.run();
+          }
         }
       });
     }

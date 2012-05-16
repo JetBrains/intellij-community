@@ -15,10 +15,11 @@
  */
 package com.intellij.android.designer.designSurface.layout.actions;
 
-import com.intellij.android.designer.designSurface.layout.relative.SnapPoint;
-import com.intellij.android.designer.designSurface.layout.relative.SnapPointFeedbackHost;
+import com.intellij.android.designer.designSurface.layout.RelativeLayoutOperation;
+import com.intellij.android.designer.designSurface.layout.relative.*;
 import com.intellij.android.designer.model.RadViewComponent;
 import com.intellij.designer.designSurface.EditOperation;
+import com.intellij.designer.designSurface.FeedbackLayer;
 import com.intellij.designer.designSurface.OperationContext;
 import com.intellij.designer.designSurface.feedbacks.RectangleFeedback;
 import com.intellij.designer.designSurface.feedbacks.TextFeedback;
@@ -26,8 +27,12 @@ import com.intellij.designer.designSurface.selection.DirectionResizePoint;
 import com.intellij.designer.designSurface.selection.ResizeSelectionDecorator;
 import com.intellij.designer.model.RadComponent;
 import com.intellij.designer.utils.Position;
+import com.intellij.openapi.util.Pair;
+import com.intellij.ui.IdeBorderFactory;
 
 import java.awt.*;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -37,15 +42,18 @@ public class RelativeLayoutResizeOperation implements EditOperation {
   public static final String TYPE = "relative_resize";
 
   private final OperationContext myContext;
+  private List<RadComponent> myComponents;
   private RadViewComponent myComponent;
+  private RadViewComponent myContainer;
 
-  private RectangleFeedback myFeedback;
+  private RectangleFeedback myBoundsFeedback;
+  private RectangleFeedback myWrapFeedback;
   private SnapPointFeedbackHost mySnapFeedback;
   private TextFeedback myHorizontalTextFeedback;
   private TextFeedback myVerticalTextFeedback;
 
   private Rectangle myContainerBounds;
-  private Rectangle myBounds;
+  private Dimension myWrapSize;
 
   private List<SnapPoint> myHorizontalPoints;
   private List<SnapPoint> myVerticalPoints;
@@ -59,7 +67,9 @@ public class RelativeLayoutResizeOperation implements EditOperation {
 
   @Override
   public void setComponent(RadComponent component) {
+    myComponents = Arrays.asList(component);
     myComponent = (RadViewComponent)component;
+    myContainer = (RadViewComponent)myComponent.getParent();
   }
 
   @Override
@@ -67,17 +77,148 @@ public class RelativeLayoutResizeOperation implements EditOperation {
   }
 
   private void createFeedback() {
+    if (mySnapFeedback == null) {
+      myContainer.setClientProperty(SnapPointFeedbackHost.KEY, Boolean.TRUE);
+
+      FeedbackLayer layer = myContext.getArea().getFeedbackLayer();
+
+      myHorizontalTextFeedback = new TextFeedback();
+      myHorizontalTextFeedback.setBorder(IdeBorderFactory.createEmptyBorder(0, 3, 2, 0));
+      layer.add(myHorizontalTextFeedback);
+
+      myVerticalTextFeedback = new TextFeedback();
+      myVerticalTextFeedback.setBorder(IdeBorderFactory.createEmptyBorder(0, 3, 2, 0));
+      layer.add(myVerticalTextFeedback);
+
+      myBoundsFeedback = new RectangleFeedback(Color.blue, 2);
+      layer.add(myBoundsFeedback);
+
+      int direction = myContext.getResizeDirection();
+      if (direction == Position.EAST || direction == Position.SOUTH || direction == Position.SOUTH_EAST) {
+        Rectangle bounds = myComponent.getBounds(myContext.getArea().getFeedbackLayer());
+        String width = myComponent.getTag().getAttributeValue("android:layout_width");
+        String height = myComponent.getTag().getAttributeValue("android:layout_height");
+
+        Pair<Integer, Integer> widthInfo = ResizeOperation.getDefaultSize(width, bounds.width);
+        Pair<Integer, Integer> heightInfo = ResizeOperation.getDefaultSize(height, bounds.height);
+
+        myWrapSize = new Dimension(widthInfo.first, heightInfo.first);
+        myComponent.calculateWrapSize(myWrapSize, bounds);
+
+        Rectangle wrapBounds;
+        if (direction == Position.EAST) {
+          wrapBounds = new Rectangle(bounds.x, bounds.y, myWrapSize.width, bounds.height);
+        }
+        else if (direction == Position.SOUTH) {
+          wrapBounds = new Rectangle(bounds.x, bounds.y, bounds.width, myWrapSize.height);
+        }
+        else {
+          wrapBounds = new Rectangle(bounds.getLocation(), myWrapSize);
+        }
+
+        myWrapFeedback = new RectangleFeedback(Color.green, 1);
+        myWrapFeedback.setBounds(wrapBounds);
+        layer.add(myWrapFeedback);
+      }
+
+      myContainerBounds = myContainer.getBounds(layer);
+
+      mySnapFeedback = new SnapPointFeedbackHost();
+      mySnapFeedback.setBounds(myContainerBounds);
+
+      createPoints();
+
+      layer.add(mySnapFeedback);
+
+      layer.repaint();
+    }
   }
 
   @Override
   public void showFeedback() {
     createFeedback();
-    // TODO: Auto-generated method stub
+
+    Rectangle bounds = myContext.getTransformedRectangle(myComponent.getBounds(myContext.getArea().getFeedbackLayer()));
+    bounds.width = Math.max(bounds.width, 0);
+    bounds.height = Math.max(bounds.height, 0);
+
+    mySnapFeedback.clearAll();
+    myHorizontalPoint = null;
+    myVerticalPoint = null;
+
+    for (SnapPoint point : myHorizontalPoints) {
+      if (point.processBounds(myComponents, bounds, mySnapFeedback)) {
+        myHorizontalPoint = point;
+        break;
+      }
+    }
+    for (SnapPoint point : myVerticalPoints) {
+      if (point.processBounds(myComponents, bounds, mySnapFeedback)) {
+        myVerticalPoint = point;
+        break;
+      }
+    }
+
+    mySnapFeedback.repaint();
+    myBoundsFeedback.setBounds(bounds);
+    RelativeLayoutOperation.configureTextFeedback(myHorizontalTextFeedback,
+                                                  myVerticalTextFeedback,
+                                                  myHorizontalPoint,
+                                                  myVerticalPoint,
+                                                  myContainerBounds);
   }
 
   @Override
   public void eraseFeedback() {
-    // TODO: Auto-generated method stub
+    if (mySnapFeedback != null) {
+      myContainer.extractClientProperty(SnapPointFeedbackHost.KEY);
+      FeedbackLayer layer = myContext.getArea().getFeedbackLayer();
+      layer.remove(myHorizontalTextFeedback);
+      layer.remove(myVerticalTextFeedback);
+      layer.remove(myBoundsFeedback);
+
+      if (myWrapFeedback != null) {
+        layer.remove(myWrapFeedback);
+      }
+
+      layer.remove(mySnapFeedback);
+      layer.repaint();
+      myHorizontalTextFeedback = null;
+      myVerticalTextFeedback = null;
+      myBoundsFeedback = null;
+      myWrapFeedback = null;
+      mySnapFeedback = null;
+    }
+  }
+
+  private void createPoints() {
+    myHorizontalPoints = new ArrayList<SnapPoint>();
+    myVerticalPoints = new ArrayList<SnapPoint>();
+
+    List<RadComponent> snapComponents = RelativeLayoutOperation.getSnapComponents(myContainer, myComponents);
+    snapComponents.removeAll(myContext.getComponents());
+
+    int direction = myContext.getResizeDirection();
+    if ((direction & Position.NORTH_SOUTH) != 0) {
+      createPoints(myVerticalPoints, snapComponents, false, direction);
+    }
+    if ((direction & Position.EAST_WEST) != 0) {
+      createPoints(myHorizontalPoints, snapComponents, true, direction);
+    }
+  }
+
+  private void createPoints(List<SnapPoint> points, List<RadComponent> snapComponents, boolean horizontal, int direction) {
+    for (RadComponent component : snapComponents) {
+      points.add(new ResizeComponentSnapPoint((RadViewComponent)component, horizontal));
+    }
+
+    points.add(new ResizeContainerSnapPoint(myContainer, horizontal));
+
+    if (direction == Position.EAST || direction == Position.SOUTH || direction == Position.SOUTH_EAST) {
+      points.add(new WrapSizeSnapPoint(myComponent, horizontal, myWrapSize));
+    }
+
+    points.add(new AutoResizeSnapPoint(myContainer, horizontal, direction));
   }
 
   @Override
@@ -87,7 +228,12 @@ public class RelativeLayoutResizeOperation implements EditOperation {
 
   @Override
   public void execute() throws Exception {
-    // TODO: Auto-generated method stub
+    if (myHorizontalPoint != null) {
+      myHorizontalPoint.execute(myComponents);
+    }
+    if (myVerticalPoint != null) {
+      myVerticalPoint.execute(myComponents);
+    }
   }
 
   //////////////////////////////////////////////////////////////////////////////////////////

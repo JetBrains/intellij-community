@@ -57,7 +57,7 @@ public class MemberInplaceRenameHandler extends VariableInplaceRenameHandler {
       final RenamePsiElementProcessor processor = RenamePsiElementProcessor.forElement(elementToRename);
       if (processor.isInplaceRenameSupported()) {
         final StartMarkAction startMarkAction = StartMarkAction.canStart(elementToRename.getProject());
-        if (startMarkAction == null) {
+        if (startMarkAction == null || processor.substituteElementToRename(elementToRename, editor) == elementToRename) {
           processor.substituteElementToRename(elementToRename, editor, new Pass<PsiElement>() {
             @Override
             public void pass(PsiElement element) {

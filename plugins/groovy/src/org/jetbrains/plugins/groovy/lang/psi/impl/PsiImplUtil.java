@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -73,6 +73,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithme
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithmetic.GrMultiplicativeExpressionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithmetic.GrRangeExpressionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrSyntheticCodeBlock;
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrSyntheticTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.util.GdkMethodUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
@@ -90,6 +91,7 @@ public class PsiImplUtil {
   private static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil");
   private static final String MAIN_METHOD = "main";
   public static final Key<SoftReference<PsiCodeBlock>> PSI_CODE_BLOCK = Key.create("Psi_code_block");
+  public static final Key<SoftReference<PsiTypeElement>> PSI_TYPE_ELEMENT = Key.create("psi.type.element");
 
   private PsiImplUtil() {
   }
@@ -533,6 +535,17 @@ public class PsiImplUtil {
     final GrSyntheticCodeBlock newBody = new GrSyntheticCodeBlock(block);
     block.putUserData(PSI_CODE_BLOCK, new SoftReference<PsiCodeBlock>(newBody));
     return newBody;
+  }
+
+  public static PsiTypeElement getOrCreateTypeElement(@Nullable GrTypeElement typeElement) {
+    if (typeElement==null) return null;
+
+    final SoftReference<PsiTypeElement> ref = typeElement.getUserData(PSI_TYPE_ELEMENT);
+    final PsiTypeElement element = ref == null ? null : ref.get();
+    if (element != null) return element;
+    final GrSyntheticTypeElement newTypeElement = new GrSyntheticTypeElement(typeElement);
+    typeElement.putUserData(PSI_TYPE_ELEMENT, new SoftReference<PsiTypeElement>(newTypeElement));
+    return newTypeElement;
   }
 
   public static <T extends GrCondition> T replaceBody(T newBody, GrStatement body, ASTNode node, Project project) {

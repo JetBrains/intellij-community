@@ -28,7 +28,7 @@ import java.util.List;
  * @author Alexander Lobas
  */
 public class ComponentSnapPoint extends SnapPoint {
-  private Side myBeginSide;
+  protected Side myBeginSide;
   private Side myEndSide;
 
   public ComponentSnapPoint(RadViewComponent component, boolean horizontal) {

@@ -637,7 +637,8 @@ public abstract class BreakpointWithHighlighter extends Breakpoint {
       }
     }
 
-    ViewBreakpointsAction viewBreakpointsAction =
+
+    AnAction viewBreakpointsAction =
       new ViewBreakpointsAction(ActionsBundle.actionText(XDebuggerActions.VIEW_BREAKPOINTS), this);
 
     DefaultActionGroup group = new DefaultActionGroup();

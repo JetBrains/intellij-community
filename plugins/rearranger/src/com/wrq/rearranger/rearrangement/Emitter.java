@@ -24,41 +24,48 @@ package com.wrq.rearranger.rearrangement;
 import com.intellij.openapi.editor.Document;
 import com.intellij.psi.PsiFile;
 import com.wrq.rearranger.ruleinstance.RuleInstance;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /** Emits a new document from the rearranged entries. */
 public final class Emitter {
-  private final PsiFile             psiFile;
-  private final List<RuleInstance> myResultRuleInstances;
-  private final Document            document;
-  private       StringBuffer        stringBuffer;
 
-  public Emitter(final PsiFile psiFile, final List<RuleInstance> resultRuleInstances, final Document document) {
-    this.psiFile = psiFile;
-    this.myResultRuleInstances = resultRuleInstances;
-    this.document = document;
-    stringBuffer = new StringBuffer(psiFile.getText().length() + 100); // room for inserted blank lines
+  @NotNull private final StringBuilder      myStringBuffer        = new StringBuilder();
+  @NotNull private final List<RuleInstance> myResultRuleInstances = new ArrayList<RuleInstance>();
+
+  @NotNull private final PsiFile  myFile;
+  @NotNull private final Document myDocument;
+
+  public Emitter(@NotNull final PsiFile file, @NotNull final List<RuleInstance> resultRuleInstances, @NotNull final Document document) {
+    myFile = file;
+    myResultRuleInstances.addAll(resultRuleInstances);
+    myDocument = document;
+    myStringBuffer.ensureCapacity(myFile.getText().length() + 100 /* room for inserted blank lines */);
   }
 
+  @NotNull
   public Document getDocument() {
-    return document;
+    return myDocument;
   }
 
-  public StringBuffer getStringBuffer() {
-    return stringBuffer;
+  @NotNull
+  public StringBuilder getTextBuffer() {
+    return myStringBuffer;
   }
 
   public void emitRearrangedDocument() {
     emitRuleInstances(myResultRuleInstances);
-    document.replaceString(
-      psiFile.getTextRange().getStartOffset(),
-      psiFile.getTextRange().getEndOffset(),
-      stringBuffer.toString()
+    myDocument.replaceString(
+      myFile.getTextRange().getStartOffset(),
+      myFile.getTextRange().getEndOffset(),
+      myStringBuffer.toString()
     );
   }
 
-  public void emitRuleInstances(List<RuleInstance> resultRuleInstances) {
+  public void emitRuleInstances(@Nullable List<RuleInstance> resultRuleInstances) {
     if (resultRuleInstances == null) {
       return;
     }

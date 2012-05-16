@@ -29,15 +29,15 @@ import java.util.List;
 
 public class SingleRowLayout extends TabLayout {
 
-  JBTabsImpl myTabs;
+  final JBTabsImpl myTabs;
   public SingleRowPassInfo myLastSingRowLayout;
 
-  final SingleRowLayoutStrategy myTop;
-  final SingleRowLayoutStrategy myLeft;
-  final SingleRowLayoutStrategy myBottom;
-  final SingleRowLayoutStrategy myRight;
+  private final SingleRowLayoutStrategy myTop;
+  private final SingleRowLayoutStrategy myLeft;
+  private final SingleRowLayoutStrategy myBottom;
+  private final SingleRowLayoutStrategy myRight;
 
-  public MoreTabsIcon myMoreIcon = new MoreTabsIcon() {
+  public final MoreTabsIcon myMoreIcon = new MoreTabsIcon() {
     @Nullable
     protected Rectangle getIconRec() {
       return myLastSingRowLayout != null ? myLastSingRowLayout.moreRect : null;
@@ -54,8 +54,8 @@ public class SingleRowLayout extends TabLayout {
   public JPopupMenu myMorePopup;
 
 
-  public GhostComponent myLeftGhost = new GhostComponent(RowDropPolicy.first, RowDropPolicy.first);
-  public GhostComponent myRightGhost = new GhostComponent(RowDropPolicy.last, RowDropPolicy.first);
+  public final GhostComponent myLeftGhost = new GhostComponent(RowDropPolicy.first, RowDropPolicy.first);
+  public final GhostComponent myRightGhost = new GhostComponent(RowDropPolicy.last, RowDropPolicy.first);
 
   private enum RowDropPolicy {
     first, last
@@ -136,7 +136,7 @@ public class SingleRowLayout extends TabLayout {
     return 0;
   }
 
-  public void scrollSelectionInView(List<TabInfo> visibleInfos) {
+  public void scrollSelectionInView() {
   }
 
   public LayoutPassInfo layoutSingleRow(List<TabInfo> visibleInfos)  {
@@ -202,7 +202,7 @@ public class SingleRowLayout extends TabLayout {
     data.toFitLength = getStrategy().getToFitLength(data);
 
     if (myTabs.isGhostsAlwaysVisible()) {
-      data.toFitLength -= myTabs.getGhostTabLength() * 2 + (myTabs.getInterTabSpaceLength() * 2);
+      data.toFitLength -= JBTabsImpl.getGhostTabLength() * 2 + (JBTabsImpl.getInterTabSpaceLength() * 2);
     }
   }
 
@@ -218,9 +218,9 @@ public class SingleRowLayout extends TabLayout {
 
   private void layoutLabelsAndGhosts(final SingleRowPassInfo data) {
     if (data.firstGhostVisible || myTabs.isGhostsAlwaysVisible()) {
-      data.firstGhost = getStrategy().getLayoutRect(data, data.position, myTabs.getGhostTabLength());
+      data.firstGhost = getStrategy().getLayoutRect(data, data.position, JBTabsImpl.getGhostTabLength());
       myTabs.layout(myLeftGhost, data.firstGhost);
-      data.position += getStrategy().getLengthIncrement(data.firstGhost.getSize()) + myTabs.getInterTabSpaceLength();
+      data.position += getStrategy().getLengthIncrement(data.firstGhost.getSize()) + JBTabsImpl.getInterTabSpaceLength();
     }
 
     int deltaToFit = 0;
@@ -257,9 +257,9 @@ public class SingleRowLayout extends TabLayout {
       boolean continueLayout = applyTabLayout(data, label, length, deltaToFit);
 
       data.position = getStrategy().getMaxPosition(label.getBounds());
-      data.position += myTabs.getInterTabSpaceLength();
+      data.position += JBTabsImpl.getInterTabSpaceLength();
 
-      totalLength = getStrategy().getMaxPosition(label.getBounds()) - positionStart + myTabs.getInterTabSpaceLength();
+      totalLength = getStrategy().getMaxPosition(label.getBounds()) - positionStart + JBTabsImpl.getInterTabSpaceLength();
       if (!continueLayout) {
         layoutStopped = true;
       }
@@ -270,7 +270,7 @@ public class SingleRowLayout extends TabLayout {
     }
 
     if (data.lastGhostVisible || myTabs.isGhostsAlwaysVisible()) {
-      data.lastGhost = getStrategy().getLayoutRect(data, data.position, myTabs.getGhostTabLength());
+      data.lastGhost = getStrategy().getLayoutRect(data, data.position, JBTabsImpl.getGhostTabLength());
       myTabs.layout(myRightGhost, data.lastGhost);
     }
   }
@@ -344,7 +344,7 @@ public class SingleRowLayout extends TabLayout {
 
   protected int getRequiredLength(TabInfo eachInfo) {
     return getStrategy().getLengthIncrement(myTabs.myInfo2Label.get(eachInfo).getPreferredSize())
-                                      + (myTabs.isEditorTabs() ? myTabs.getInterTabSpaceLength() : 0);
+                                      + (myTabs.isEditorTabs() ? JBTabsImpl.getInterTabSpaceLength() : 0);
   }
 
 
@@ -358,7 +358,7 @@ public class SingleRowLayout extends TabLayout {
     private GhostComponent(final RowDropPolicy before, final RowDropPolicy after) {
       addMouseListener(new MouseAdapter() {
         public void mousePressed(final MouseEvent e) {
-          if (myTabs.isSelectionClick(e, true) && myInfo != null) {
+          if (JBTabsImpl.isSelectionClick(e, true) && myInfo != null) {
             myRowDropPolicy = before;
             myTabs.select(myInfo, true).doWhenDone(new Runnable() {
               public void run() {
@@ -395,13 +395,13 @@ public class SingleRowLayout extends TabLayout {
     if (!data.firstGhostVisible && isFirstSide) {
       data.firstGhostVisible = !myTabs.isEditorTabs();
       if (!myTabs.isGhostsAlwaysVisible() && !myTabs.isEditorTabs()) {
-        data.toFitLength -= myTabs.getGhostTabLength();
+        data.toFitLength -= JBTabsImpl.getGhostTabLength();
       }
     }
     else if (!data.lastGhostVisible && !isFirstSide) {
       data.lastGhostVisible = !myTabs.isEditorTabs();
       if (!myTabs.isGhostsAlwaysVisible() && !myTabs.isEditorTabs()) {
-        data.toFitLength -= myTabs.getGhostTabLength();
+        data.toFitLength -= JBTabsImpl.getGhostTabLength();
       }
     }
   }
@@ -422,7 +422,7 @@ public class SingleRowLayout extends TabLayout {
         Rectangle firstBounds = first.getBounds();
         Rectangle secondBounds = second.getBounds();
 
-        boolean between = false;
+        final boolean between;
 
         boolean horizontal = getStrategy() instanceof SingleRowLayoutStrategy.Horizontal;
         if (horizontal) {

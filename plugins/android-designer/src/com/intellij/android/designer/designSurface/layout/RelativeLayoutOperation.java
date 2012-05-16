@@ -134,42 +134,46 @@ public class RelativeLayoutOperation extends AbstractEditOperation {
 
     mySnapFeedback.repaint();
     myBoundsFeedback.setLocation(myBounds.x, myBounds.y);
-    configureTextFeedback();
+    configureTextFeedback(myHorizontalTextFeedback, myVerticalTextFeedback, myHorizontalPoint, myVerticalPoint, myContainerBounds);
   }
 
-  private void configureTextFeedback() {
-    myHorizontalTextFeedback.clear();
-    myVerticalTextFeedback.clear();
+  public static void configureTextFeedback(TextFeedback horizontalTextFeedback,
+                                           TextFeedback verticalTextFeedback,
+                                           SnapPoint horizontalPoint,
+                                           SnapPoint verticalPoint,
+                                           Rectangle containerBounds) {
+    horizontalTextFeedback.clear();
+    verticalTextFeedback.clear();
 
-    myHorizontalTextFeedback.setVisible(myHorizontalPoint != null);
-    if (myHorizontalPoint != null) {
-      myHorizontalPoint.addTextInfo(myHorizontalTextFeedback);
+    horizontalTextFeedback.setVisible(horizontalPoint != null);
+    if (horizontalPoint != null) {
+      horizontalPoint.addTextInfo(horizontalTextFeedback);
 
-      if (myVerticalPoint == null) {
-        myHorizontalTextFeedback.centerTop(myContainerBounds);
+      if (verticalPoint == null) {
+        horizontalTextFeedback.centerTop(containerBounds);
       }
     }
 
-    myVerticalTextFeedback.setVisible(myVerticalPoint != null);
-    if (myVerticalPoint != null) {
-      myVerticalPoint.addTextInfo(myVerticalTextFeedback);
+    verticalTextFeedback.setVisible(verticalPoint != null);
+    if (verticalPoint != null) {
+      verticalPoint.addTextInfo(verticalTextFeedback);
 
-      if (myHorizontalPoint == null) {
-        myVerticalTextFeedback.centerTop(myContainerBounds);
+      if (horizontalPoint == null) {
+        verticalTextFeedback.centerTop(containerBounds);
       }
     }
 
-    if (myHorizontalPoint != null && myVerticalPoint != null) {
-      Dimension size1 = myHorizontalTextFeedback.getPreferredSize();
-      Dimension size2 = myVerticalTextFeedback.getPreferredSize();
+    if (horizontalPoint != null && verticalPoint != null) {
+      Dimension size1 = horizontalTextFeedback.getPreferredSize();
+      Dimension size2 = verticalTextFeedback.getPreferredSize();
 
       int width = Math.max(size1.width, size2.width);
       int height = size1.height + size2.height;
-      int x = myContainerBounds.x + myContainerBounds.width / 2 - width / 2;
-      int y = myContainerBounds.y - height - 10;
+      int x = containerBounds.x + containerBounds.width / 2 - width / 2;
+      int y = containerBounds.y - height - 10;
 
-      myHorizontalTextFeedback.setBounds(x, y, width, size1.height);
-      myVerticalTextFeedback.setBounds(x, y + size1.height, width, size2.height);
+      horizontalTextFeedback.setBounds(x, y, width, size1.height);
+      verticalTextFeedback.setBounds(x, y + size1.height, width, size2.height);
     }
   }
 
@@ -191,24 +195,10 @@ public class RelativeLayoutOperation extends AbstractEditOperation {
   }
 
   private void createPoints() {
-    List<RadComponent> children = new ArrayList<RadComponent>(myContainer.getChildren());
-    children.removeAll(myComponents);
-
-    Map<RadComponent, RelativeInfo> relativeInfos = myContainer.getClientProperty(RelativeInfo.KEY);
-    for (RadComponent editComponent : myComponents) {
-      for (Iterator<RadComponent> I = children.iterator(); I.hasNext(); ) {
-        RadComponent child = I.next();
-        RelativeInfo info = relativeInfos.get(child);
-        if (info.contains(editComponent)) {
-          I.remove();
-        }
-      }
-    }
-
     myHorizontalPoints = new ArrayList<SnapPoint>();
     myVerticalPoints = new ArrayList<SnapPoint>();
 
-    for (RadComponent component : children) {
+    for (RadComponent component : getSnapComponents(myContainer, myComponents)) {
       myHorizontalPoints.add(new ComponentSnapPoint((RadViewComponent)component, true));
       myVerticalPoints.add(new ComponentSnapPoint((RadViewComponent)component, false));
       myVerticalPoints.add(new BaselineSnapPoint((RadViewComponent)component));
@@ -221,6 +211,24 @@ public class RelativeLayoutOperation extends AbstractEditOperation {
 
     myHorizontalPoints.add(new AutoSnapPoint(container, true));
     myVerticalPoints.add(new AutoSnapPoint(container, false));
+  }
+
+  public static List<RadComponent> getSnapComponents(RadComponent container, List<RadComponent> components) {
+    List<RadComponent> children = new ArrayList<RadComponent>(container.getChildren());
+    children.removeAll(components);
+
+    Map<RadComponent, RelativeInfo> relativeInfos = container.getClientProperty(RelativeInfo.KEY);
+    for (RadComponent editComponent : components) {
+      for (Iterator<RadComponent> I = children.iterator(); I.hasNext(); ) {
+        RadComponent child = I.next();
+        RelativeInfo info = relativeInfos.get(child);
+        if (info.contains(editComponent)) {
+          I.remove();
+        }
+      }
+    }
+
+    return children;
   }
 
   @Override

@@ -37,15 +37,13 @@ public class ActionPanel extends NonOpaquePanel {
   private boolean myAutoHide;
   private boolean myActionsIsVisible = false;
 
-  private final int myGap = 2;
-
   public ActionPanel(JBTabsImpl tabs, TabInfo tabInfo, Pass<MouseEvent> pass) {
     myTabs = tabs;
     ActionGroup group = tabInfo.getTabLabelActions() != null ? tabInfo.getTabLabelActions() : new DefaultActionGroup();
     AnAction[] children = group.getChildren(null);
 
     final NonOpaquePanel wrapper = new NonOpaquePanel(new BorderLayout());
-    wrapper.add(Box.createHorizontalStrut(myGap), BorderLayout.WEST);
+    wrapper.add(Box.createHorizontalStrut(2), BorderLayout.WEST);
     NonOpaquePanel inner = new NonOpaquePanel();
     inner.setLayout(new BoxLayout(inner, BoxLayout.X_AXIS));
     wrapper.add(inner, BorderLayout.CENTER);

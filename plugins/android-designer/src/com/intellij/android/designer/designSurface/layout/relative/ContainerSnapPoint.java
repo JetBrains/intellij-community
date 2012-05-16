@@ -29,7 +29,7 @@ import java.util.List;
  * @author Alexander Lobas
  */
 public class ContainerSnapPoint extends SnapPoint {
-  private Side mySide;
+  protected Side mySide;
 
   public ContainerSnapPoint(RadViewComponent container, boolean horizontal) {
     super(container, horizontal);
@@ -139,7 +139,7 @@ public class ContainerSnapPoint extends SnapPoint {
     return false;
   }
 
-  private boolean processHorizontalCenter(Rectangle targetBounds, SnapPointFeedbackHost feedback) {
+  protected boolean processHorizontalCenter(Rectangle targetBounds, SnapPointFeedbackHost feedback) {
     int centerX = myBounds.x + myBounds.width / 2;
 
     int startX = centerX - SNAP_SIZE;
@@ -156,7 +156,7 @@ public class ContainerSnapPoint extends SnapPoint {
     return false;
   }
 
-  private boolean processVerticalCenter(Rectangle targetBounds, SnapPointFeedbackHost feedback) {
+  protected boolean processVerticalCenter(Rectangle targetBounds, SnapPointFeedbackHost feedback) {
     int centerY = myBounds.y + myBounds.height / 2;
 
     int startY = centerY - SNAP_SIZE;

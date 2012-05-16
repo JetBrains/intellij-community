@@ -33,6 +33,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.util.containers.HashMap;
@@ -148,7 +149,7 @@ public class JavaMarkObjectActionHandler extends MarkObjectActionHandler {
               if (node instanceof DebuggerTreeNodeImpl) {
                 final DebuggerTreeNodeImpl _node = (DebuggerTreeNodeImpl)node;
                 final NodeDescriptorImpl descriptor = _node.getDescriptor();
-                if (descriptor instanceof ValueDescriptor && value.equals(((ValueDescriptor)descriptor).getValue())) {
+                if (descriptor instanceof ValueDescriptor && Comparing.equal(value, ((ValueDescriptor)descriptor).getValue())) {
                   _node.labelChanged();
                 }
               }

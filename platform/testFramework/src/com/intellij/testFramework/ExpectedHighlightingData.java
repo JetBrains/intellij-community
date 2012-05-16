@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,6 +36,7 @@ import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -44,15 +45,19 @@ import com.intellij.psi.PsiFile;
 import com.intellij.rt.execution.junit.FileComparisonFailure;
 import com.intellij.util.ConstantFunction;
 import com.intellij.util.Function;
+import com.intellij.util.NullableFunction;
+import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import junit.framework.Assert;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.lang.reflect.Field;
 import java.util.*;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -72,17 +77,17 @@ public class ExpectedHighlightingData {
   @NonNls private static final String ANY_TEXT = "*";
   private final String myText;
 
-  private static class ExpectedHighlightingSet {
+  public static class ExpectedHighlightingSet {
+    private final HighlightSeverity severity;
     private final boolean endOfLine;
-    final boolean enabled;
-    final Set<HighlightInfo> infos;
-    final HighlightSeverity severity;
+    private final boolean enabled;
+    private final Set<HighlightInfo> infos;
 
     public ExpectedHighlightingSet(@NotNull HighlightSeverity severity, boolean endOfLine, boolean enabled) {
+      this.severity = severity;
       this.endOfLine = endOfLine;
       this.enabled = enabled;
       infos = new THashSet<HighlightInfo>();
-      this.severity = severity;
     }
   }
   @SuppressWarnings("WeakerAccess")
@@ -114,10 +119,10 @@ public class ExpectedHighlightingData {
     myDocument = document;
     myFile = file;
     myText = document.getText();
-    highlightingTypes = new LinkedHashMap<String,ExpectedHighlightingSet>();
+    highlightingTypes = new LinkedHashMap<String, ExpectedHighlightingSet>();
     new WriteCommandAction.Simple(file == null ? null : file.getProject()) {
       public void run() {
-        boolean checkWarnings= false;
+        boolean checkWarnings = false;
         boolean checkWeakWarnings = false;
         boolean checkInfos = false;
 
@@ -138,13 +143,13 @@ public class ExpectedHighlightingData {
         initAdditionalHighlightingTypes();
       }
     }.execute().throwException();
-
   }
+
   public ExpectedHighlightingData(@NotNull final Document document,
                                   final boolean checkWarnings,
                                   final boolean checkWeakWarnings,
                                   final boolean checkInfos,
-                                  PsiFile file) {
+                                  @Nullable final PsiFile file) {
     this(document, file);
     if (checkWarnings) checkWarnings();
     if (checkWeakWarnings) checkWeakWarnings();
@@ -290,6 +295,7 @@ public class ExpectedHighlightingData {
 
     TextAttributes forcedAttributes = null;
     if (foregroundColor != null) {
+      //noinspection MagicConstant
       forcedAttributes = new TextAttributes(Color.decode(foregroundColor), Color.decode(backgroundColor), Color.decode(effectColor),
                                             EffectType.valueOf(effectType), Integer.parseInt(fontType));
     }
@@ -333,15 +339,6 @@ public class ExpectedHighlightingData {
   }
 
   private static final HighlightInfoType WHATEVER = new HighlightInfoType.HighlightInfoTypeImpl();
-
-  public Collection<HighlightInfo> getExtractedHighlightInfos(){
-    final Collection<HighlightInfo> result = new ArrayList<HighlightInfo>();
-    final Collection<ExpectedHighlightingSet> collection = highlightingTypes.values();
-    for (ExpectedHighlightingSet set : collection) {
-      result.addAll(set.infos);
-    }
-    return result;
-  }
 
   public void checkLineMarkers(Collection<LineMarkerInfo> markerInfos, String text) {
     String fileName = myFile == null ? "" : myFile.getName() + ": ";
@@ -412,7 +409,7 @@ public class ExpectedHighlightingData {
     checkResult(infos, text, null);
   }
 
-  public void checkResult(Collection<HighlightInfo> infos, String text, String filePath) {
+  public void checkResult(Collection<HighlightInfo> infos, String text, @Nullable String filePath) {
     String fileName = myFile == null ? "" : myFile.getName() + ": ";
     String failMessage = "";
 
@@ -470,60 +467,84 @@ public class ExpectedHighlightingData {
     }
   }
 
-  private void compareTexts(Collection<HighlightInfo> infos, String text, String failMessage, String filePath) {
-    final ArrayList<HighlightInfo> list = new ArrayList<HighlightInfo>(infos);
-    Collections.sort(list, new Comparator<HighlightInfo>() {  // by start offset descending then by end offset ascending
+  private void compareTexts(Collection<HighlightInfo> infos, String text, String failMessage, @Nullable String filePath) {
+    String actual = composeText(highlightingTypes,  infos, text);
+    if (filePath != null && !myText.equals(actual)) {
+      throw new FileComparisonFailure(failMessage, myText, actual, filePath);
+    }
+    Assert.assertEquals(failMessage + "\n", myText, actual);
+    Assert.fail(failMessage);
+  }
+
+  public static String composeText(final Map<String, ExpectedHighlightingSet> types, Collection<HighlightInfo> infos, String text) {
+    // filter highlighting data and map each highlighting to a tag name
+    List<Pair<String, HighlightInfo>> list = ContainerUtil.mapNotNull(infos, new NullableFunction<HighlightInfo, Pair<String,HighlightInfo>>() {
       @Override
-      public int compare(HighlightInfo o1, HighlightInfo o2) {
-        final int start = o2.startOffset - o1.startOffset;
-        return start != 0 ? start : o1.endOffset - o2.endOffset;
+      public Pair<String, HighlightInfo> fun(HighlightInfo info) {
+        for (Map.Entry<String, ExpectedHighlightingSet> entry : types.entrySet()) {
+          final ExpectedHighlightingSet set = entry.getValue();
+          if (set.enabled && set.severity == info.getSeverity() && set.endOfLine == info.isAfterEndOfLine) {
+            return Pair.create(entry.getKey(), info);
+          }
+        }
+        return null;
       }
     });
 
-    StringBuilder sb = new StringBuilder();
+    // sort filtered highlighting data by end offset in descending order
+    Collections.sort(list, new Comparator<Pair<String, HighlightInfo>>() {
+      @Override
+      public int compare(Pair<String, HighlightInfo> o1, Pair<String, HighlightInfo> o2) {
+        HighlightInfo i1 = o1.second;
+        HighlightInfo i2 = o2.second;
 
-    int end = text.length();
-    HighlightInfo prev = null;
-    String prevSeverity = null;
-    for (HighlightInfo info : list) {
-      for (Map.Entry<String, ExpectedHighlightingSet> entry : highlightingTypes.entrySet()) {
-        final ExpectedHighlightingSet set = entry.getValue();
-        if (set.enabled
-            && set.severity == info.getSeverity()
-            && set.endOfLine == info.isAfterEndOfLine) {
-          final String severity = entry.getKey();
+        int byEnds = i2.endOffset - i1.endOffset;
+        if (byEnds != 0) return byEnds;
 
-          if (prev != null && info.endOffset > prev.startOffset) {  // nested ranges
-            Assert.assertTrue("Overlapped highlightings: " + info + " and " + prev,
-                              info.endOffset >= prev.endOffset);
+        int byStarts = i1.startOffset - i2.startOffset;
+        if (byStarts != 0) return byStarts;
 
-            int offset = prevSeverity.length()*2 + 14 + (prev.description != null ? prev.description.length() : 4) + // open and closing tags
-                         prev.endOffset - prev.startOffset + info.endOffset - prev.endOffset;
-            sb.insert(offset, "</" + severity + ">");
-            sb.insert(0, text.substring(info.startOffset, prev.startOffset));
-            sb.insert(0, "<" + severity + " descr=\"" + info.description + "\">");
-          }
-          else {  // sequential ranges
-            sb.insert(0, text.substring(info.endOffset, end));
-            sb.insert(0, "<" + severity + " descr=\"" + info.description + "\">" +
-                         text.substring(info.startOffset, info.endOffset) +
-                         "</" + severity + ">");
-          }
+        int bySeverity = i2.severity.compareTo(i1.severity);
+        if (bySeverity != 0) return bySeverity;
 
-          end = info.startOffset;
-          prev = info;
-          prevSeverity = severity;
-          break;
-        }
+        return Comparing.compare(i1.description, i2.description);
       }
-    }
-    sb.insert(0, text.substring(0, end));
+    });
 
-    if (filePath != null && !myText.equals(sb.toString())) {
-      throw new FileComparisonFailure(failMessage, myText, sb.toString(), filePath);
+    // combine highlighting data with original text
+    StringBuilder sb = new StringBuilder();
+    Pair<Integer, Integer> result = composeText(sb, list, 0, text, text.length(), 0);
+    sb.insert(0, text.substring(0, result.second));
+    return sb.toString();
+  }
+
+  private static Pair<Integer, Integer> composeText(StringBuilder sb,
+                                                    List<Pair<String, HighlightInfo>> list, int index,
+                                                    String text, int endPos, int startPos) {
+    int i = index;
+    while (i < list.size()) {
+      Pair<String, HighlightInfo> pair = list.get(i);
+      HighlightInfo info = pair.second;
+      if (info.endOffset < startPos) break;
+      String severity = pair.first;
+      HighlightInfo prev = i < list.size() - 1 ? list.get(i + 1).second : null;
+
+      sb.insert(0, text.substring(info.endOffset, endPos));
+      sb.insert(0, "</" + severity + ">");
+      endPos = info.endOffset;
+      if (prev != null && prev.endOffset > info.startOffset) {
+        Pair<Integer, Integer> result = composeText(sb, list, i + 1, text, endPos, info.startOffset);
+        i = result.first - 1;
+        endPos = result.second;
+      }
+      sb.insert(0, text.substring(info.startOffset, endPos));
+      sb.insert(0, "<" + severity + " descr=\"" + info.description + "\">");
+
+      endPos = info.startOffset;
+      i++;
     }
-    Assert.assertEquals(failMessage + "\n", myText, sb.toString());
-    Assert.fail(failMessage);
+
+    return Pair.create(i, endPos);
   }
 
   private static boolean infosContainsExpectedInfo(Collection<HighlightInfo> infos, HighlightInfo expectedInfo) {
@@ -559,9 +580,9 @@ public class ExpectedHighlightingData {
       info.endOffset == expectedInfo.endOffset &&
       info.isAfterEndOfLine == expectedInfo.isAfterEndOfLine &&
       (expectedInfo.type == WHATEVER || expectedInfo.type.equals(info.type)) &&
-      (Comparing.strEqual(ANY_TEXT, expectedInfo.description) || Comparing.strEqual(info.description, expectedInfo.description))
-      && (expectedInfo.forcedTextAttributes == null || expectedInfo.getTextAttributes(null, null).equals(info.getTextAttributes(null, null)))
-      && (expectedInfo.forcedTextAttributesKey == null || expectedInfo.forcedTextAttributesKey.equals(info.forcedTextAttributesKey))
-      ;
+      (Comparing.strEqual(ANY_TEXT, expectedInfo.description) || Comparing.strEqual(info.description, expectedInfo.description)) &&
+      (expectedInfo.forcedTextAttributes == null || Comparing.equal(expectedInfo.getTextAttributes(null, null),
+                                                                    info.getTextAttributes(null, null))) &&
+      (expectedInfo.forcedTextAttributesKey == null || expectedInfo.forcedTextAttributesKey.equals(info.forcedTextAttributesKey));
   }
 }

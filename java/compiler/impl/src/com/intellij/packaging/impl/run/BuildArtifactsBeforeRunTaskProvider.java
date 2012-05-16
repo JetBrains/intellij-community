@@ -228,6 +228,14 @@ public class BuildArtifactsBeforeRunTaskProvider extends BeforeRunTaskProvider<B
   public static void setBuildArtifactBeforeRun(@NotNull Project project, @NotNull RunConfiguration configuration, @NotNull Artifact artifact) {
     RunManagerEx runManager = RunManagerEx.getInstanceEx(project);
     final List<BuildArtifactsBeforeRunTask> buildArtifactsTasks = runManager.getBeforeRunTasks(configuration, ID);
+    if (buildArtifactsTasks.isEmpty()) { //Add new task if absent
+      BuildArtifactsBeforeRunTask task = new BuildArtifactsBeforeRunTask(project);
+      buildArtifactsTasks.add(task);
+      List<BeforeRunTask> tasks = runManager.getBeforeRunTasks(configuration);
+      tasks.add(task);
+      runManager.setBeforeRunTasks(configuration, tasks, false);
+    }
+
     for (BuildArtifactsBeforeRunTask task : buildArtifactsTasks) {
       task.setEnabled(true);
       task.addArtifact(artifact);

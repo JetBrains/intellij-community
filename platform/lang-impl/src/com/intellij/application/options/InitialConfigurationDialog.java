@@ -165,7 +165,7 @@ public class InitialConfigurationDialog extends DialogWrapper {
   private void createUIComponents() {
     myColorPreviewPanel = new AbstractTitledSeparatorWithIcon(IconLoader.getIcon("/general/comboArrowRight.png"),
                                                               IconLoader.getIcon("/general/comboArrowDown.png"),
-                                                              "Click to preview", true, false) {
+                                                              "Click to preview") {
 
       private int myAddedWidth;
 

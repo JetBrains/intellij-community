@@ -5,7 +5,7 @@ public class A {
     }
 
     private static int f() {
-        <selection>return 0;  //To change body of created methods use File | Settings | File Templates.<caret></selection>
+        <caret><selection>return 0;  //To change body of created methods use File | Settings | File Templates.</selection>
     }
 
     public A(int i) {

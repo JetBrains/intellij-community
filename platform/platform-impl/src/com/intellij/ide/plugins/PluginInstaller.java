@@ -67,6 +67,7 @@ public class PluginInstaller {
             Messages.showErrorDialog(pluginNode.getName() + ": " + e.getMessage(), CommonBundle.message("title.error"));
           }
         });
+        return false;
       }
     }
     return result;

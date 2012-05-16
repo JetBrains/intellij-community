@@ -1,5 +1,6 @@
 package org.jetbrains.jps.incremental;
 
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.jps.idea.OwnServiceLoader;
 
 import java.util.*;
@@ -63,6 +64,10 @@ public class BuilderRegistry {
 
   public List<ModuleLevelBuilder> getBuilders(BuilderCategory category){
     return Collections.unmodifiableList(myModuleLevelBuilders.get(category)); // todo
+  }
+
+  public List<ModuleLevelBuilder> getAllModuleLevelBuilders() {
+    return ContainerUtil.concat(myModuleLevelBuilders.values());
   }
 
   public List<ProjectLevelBuilder> getProjectLevelBuilders() {

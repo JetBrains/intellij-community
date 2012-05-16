@@ -40,7 +40,7 @@ public class TitledSeparator extends JPanel {
 
   public TitledSeparator(String text) {
     setLayout(new GridBagLayout());
-    add(myLabel, new GridBagConstraints(0, 0, 1, 1, 0, 1, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
+    add(myLabel, new GridBagConstraints(0, 0, 1, 1, 0, 1, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 3, 0, 0), 0, 0));
     add(mySeparator,
         new GridBagConstraints(1, 0, GridBagConstraints.REMAINDER, 1, 1, 1, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL,
                                new Insets(2, SEPARATOR_LEFT_INSET, 0, SEPARATOR_RIGHT_INSET), 0, 0));
@@ -54,7 +54,7 @@ public class TitledSeparator extends JPanel {
   public void updateUI() {
     super.updateUI();
     if (myLabel != null) {
-      myLabel.setFont(UIUtil.getBorderFont(UIUtil.FontSize.SMALL, false));
+      myLabel.setFont(UIUtil.getTitledBorderFont());
     }
   }
 
@@ -80,23 +80,5 @@ public class TitledSeparator extends JPanel {
 
   public JSeparator getSeparator() {
     return mySeparator;
-  }
-
-  @Deprecated
-  public boolean isBoldFont() {
-    return false;
-  }
-
-  @Deprecated
-  public boolean isSmallFont() {
-    return true;
-  }
-
-  @Deprecated
-  public void setBoldFont(boolean boldFont) {
-  }
-
-  @Deprecated
-  public void setSmallFont(boolean smallFont) {
   }
 }

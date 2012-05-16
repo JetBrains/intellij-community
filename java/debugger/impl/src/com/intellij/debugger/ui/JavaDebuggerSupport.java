@@ -19,13 +19,12 @@ import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.actions.*;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.settings.*;
-import com.intellij.debugger.ui.breakpoints.Breakpoint;
-import com.intellij.debugger.ui.breakpoints.BreakpointFactory;
-import com.intellij.debugger.ui.breakpoints.BreakpointPanel;
-import com.intellij.debugger.ui.breakpoints.BreakpointWithHighlighter;
+import com.intellij.debugger.ui.breakpoints.*;
 import com.intellij.ide.DataManager;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
@@ -33,6 +32,9 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.Key;
+import com.intellij.ui.popup.util.ItemWrapper;
+import com.intellij.ui.popup.util.SplitterItem;
 import com.intellij.xdebugger.AbstractDebuggerSession;
 import com.intellij.xdebugger.impl.DebuggerSupport;
 import com.intellij.xdebugger.impl.actions.DebuggerActionHandler;
@@ -48,6 +50,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * @author nik
@@ -184,10 +187,12 @@ public class JavaDebuggerSupport extends DebuggerSupport {
   }
 
   private static class JavaBreakpointPanelProvider extends BreakpointPanelProvider<Breakpoint> {
+    private List<MyBreakpointManagerListener> myListeners = new CopyOnWriteArrayList<MyBreakpointManagerListener>();
+
     @NotNull
     public Collection<AbstractBreakpointPanel<Breakpoint>> getBreakpointPanels(@NotNull final Project project, @NotNull final DialogWrapper parentDialog) {
       List<AbstractBreakpointPanel<Breakpoint>> panels = new ArrayList<AbstractBreakpointPanel<Breakpoint>>();
-      final BreakpointFactory[] allFactories = ApplicationManager.getApplication().getExtensions(BreakpointFactory.EXTENSION_POINT_NAME);
+      final BreakpointFactory[] allFactories = BreakpointFactory.getBreakpointFactories();
       for (BreakpointFactory factory : allFactories) {
         BreakpointPanel panel = factory.createBreakpointPanel(project, parentDialog);
         if (panel != null) {
@@ -196,6 +201,33 @@ public class JavaDebuggerSupport extends DebuggerSupport {
         }
       }
       return panels;
+    }
+
+    @Override
+    public AnAction[] getAddBreakpointActions(@NotNull Project project) {
+      List<AnAction> result = new ArrayList<AnAction>();
+      BreakpointFactory[] breakpointFactories = BreakpointFactory.getBreakpointFactories();
+      for (BreakpointFactory breakpointFactory : breakpointFactories) {
+        result.add(new AddJavaBreakpointAction(breakpointFactory));
+      }
+      return result.toArray(new AnAction[result.size()]);
+    }
+
+    @Override
+    public void addListener(final BreakpointsListener listener, Project project) {
+      final MyBreakpointManagerListener listener1 = new MyBreakpointManagerListener(listener);
+      DebuggerManagerEx.getInstanceEx(getCurrentProject()).getBreakpointManager().addBreakpointManagerListener(listener1);
+      myListeners.add(listener1);
+    }
+
+    @Override
+    public void removeListener(BreakpointsListener listener) {
+      for (MyBreakpointManagerListener managerListener : myListeners) {
+        if (managerListener.myListener == listener) {
+          myListeners.remove(managerListener);
+          break;
+        }
+      }
     }
 
     public int getPriority() {
@@ -219,6 +251,55 @@ public class JavaDebuggerSupport extends DebuggerSupport {
 
     public void onDialogClosed(final Project project) {
       DebuggerManagerEx.getInstanceEx(project).getBreakpointManager().updateAllRequests();
+    }
+
+    @Override
+    public void provideBreakpointItems(Project project, Collection<ItemWrapper> items) {
+      for (BreakpointFactory breakpointFactory : BreakpointFactory.getBreakpointFactories()) {
+        Key<? extends Breakpoint> category = breakpointFactory.getBreakpointCategory();
+        Breakpoint[] breakpoints = DebuggerManagerEx.getInstanceEx(project).getBreakpointManager().getBreakpoints(category);
+        if (breakpoints.length > 0) {
+          items.add(new SplitterItem(breakpointFactory.getDisplayName()));
+        }
+        for (Breakpoint breakpoint : breakpoints) {
+          items.add(breakpointFactory.createBreakpointItem(breakpoint));
+        }
+      }
+    }
+
+    private static class AddJavaBreakpointAction extends AnAction {
+      private BreakpointFactory myBreakpointFactory;
+
+      public AddJavaBreakpointAction(BreakpointFactory breakpointFactory) {
+        myBreakpointFactory = breakpointFactory;
+        Presentation p = getTemplatePresentation();
+        p.setIcon(myBreakpointFactory.getIcon());
+        p.setText(breakpointFactory.getDisplayName());
+      }
+
+      @Override
+      public void update(AnActionEvent e) {
+        e.getPresentation().setVisible(myBreakpointFactory.canAddBreakpoints());
+      }
+
+      @Override
+      public void actionPerformed(AnActionEvent e) {
+        myBreakpointFactory.addBreakpoint(getEventProject(e));
+      }
+    }
+
+    private static class MyBreakpointManagerListener implements BreakpointManagerListener {
+
+      private final BreakpointsListener myListener;
+
+      public MyBreakpointManagerListener(BreakpointsListener listener) {
+        myListener = listener;
+      }
+
+      @Override
+      public void breakpointsChanged() {
+        myListener.breakpointsChanged();
+      }
     }
   }
 

@@ -24,6 +24,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
@@ -237,7 +238,10 @@ public class MemberInplaceRenamer extends VariableInplaceRenamer {
 
   @Override
   protected void revertStateOnFinish() {
-    ((EditorImpl)InjectedLanguageUtil.getTopLevelEditor(myEditor)).startDumb();
+    final Editor editor = InjectedLanguageUtil.getTopLevelEditor(myEditor);
+    if (editor == FileEditorManager.getInstance(myProject).getSelectedTextEditor()) {
+      ((EditorImpl)editor).startDumb();
+    }
     revertState();
   }
 

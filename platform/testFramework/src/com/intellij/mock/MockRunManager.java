@@ -130,6 +130,10 @@ public class MockRunManager extends RunManagerEx {
   }
 
   @Override
+  public void setBeforeRunTasks(RunConfiguration runConfiguration, List<BeforeRunTask> tasks, boolean addEnabledTemplateTasksIfAbsent) {
+  }
+
+  @Override
   public RunnerAndConfigurationSettings findConfigurationByName(@NotNull String name) {
     return null;
   }

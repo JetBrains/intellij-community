@@ -47,14 +47,16 @@ public class GitQuickListContentProvider implements VcsQuickListContentProvider 
 
     actions.add(new Separator(activeVcs.getDisplayName()));
     add("CheckinProject", manager, actions);
+    add("CheckinFiles", manager, actions);
     add("ChangesView.Rollback", manager, actions);
+
+    addSeparator(actions);
     add("Vcs.ShowTabbedFileHistory", manager, actions);
     add("Annotate", manager, actions);
     add("Compare.SameVersion", manager, actions);
 
     addSeparator(actions);
     add("Git.Branches", manager, actions);
-    add("Git.Fetch", manager, actions);
     add("Git.Push", manager, actions);
     add("Git.Stash", manager, actions);
     add("Git.Unstash", manager, actions);

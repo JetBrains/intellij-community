@@ -39,7 +39,7 @@ import java.awt.event.ActionEvent;
  * @author Eugene Zhuravlev
  *         Date: Apr 26, 2005
  */
-public class ExceptionBreakpointFactory extends BreakpointFactory{
+public class ExceptionBreakpointFactory extends BreakpointFactory {
   public Breakpoint createBreakpoint(Project project, final Element element) {
     return new ExceptionBreakpoint(project);
   }
@@ -77,47 +77,43 @@ public class ExceptionBreakpointFactory extends BreakpointFactory{
   protected BreakpointPanelAction[] createBreakpointPanelActions(final Project project, DialogWrapper parentDialog) {
     return new BreakpointPanelAction[]{
       new SwitchViewAction(),
-      new AddExceptionBreakpointAction(project),
+      new AddAction(this, project),
       new RemoveAction(project) {
-        public void update() {
-          super.update();
-          if (getButton().isEnabled()) {
-            Breakpoint[] selectedBreakpoints = getPanel().getSelectedBreakpoints();
-            for (Breakpoint bp : selectedBreakpoints) {
-              if (bp instanceof AnyExceptionBreakpoint) {
-                getButton().setEnabled(false);
-              }
+      public void update() {
+        super.update();
+        if (getButton().isEnabled()) {
+          Breakpoint[] selectedBreakpoints = getPanel().getSelectedBreakpoints();
+          for (Breakpoint bp : selectedBreakpoints) {
+            if (bp instanceof AnyExceptionBreakpoint) {
+              getButton().setEnabled(false);
             }
           }
         }
-      },
-      new ToggleGroupByClassesAction(),
-      new ToggleFlattenPackagesAction(),
-    };
+      }
+    }, new ToggleGroupByClassesAction(), new ToggleFlattenPackagesAction(),};
   }
 
-
   public BreakpointPanel createBreakpointPanel(final Project project, final DialogWrapper parentDialog) {
-    BreakpointPanel panel = new BreakpointPanel(project,
-                                                createBreakpointPropertiesPanel(project, false),
-                                                createBreakpointPanelActions(project, parentDialog),
-                                                getBreakpointCategory(), getDisplayName(), getHelpID()){
-      public void resetBreakpoints() {
-        super.resetBreakpoints();
-        Breakpoint[] breakpoints = getBreakpointManager().getBreakpoints(getBreakpointCategory());
-        final AnyExceptionBreakpoint anyExceptionBreakpoint = DebuggerManagerEx.getInstanceEx(project).getBreakpointManager().getAnyExceptionBreakpoint();
-        boolean found = false;
-        for (Breakpoint breakpoint : breakpoints) {
-          if (breakpoint.equals(anyExceptionBreakpoint)) {
-            found = true;
-            break;
+    BreakpointPanel panel =
+      new BreakpointPanel(project, createBreakpointPropertiesPanel(project, false), createBreakpointPanelActions(project, parentDialog),
+                          getBreakpointCategory(), getDisplayName(), getHelpID()) {
+        public void resetBreakpoints() {
+          super.resetBreakpoints();
+          Breakpoint[] breakpoints = getBreakpointManager().getBreakpoints(getBreakpointCategory());
+          final AnyExceptionBreakpoint anyExceptionBreakpoint =
+            DebuggerManagerEx.getInstanceEx(project).getBreakpointManager().getAnyExceptionBreakpoint();
+          boolean found = false;
+          for (Breakpoint breakpoint : breakpoints) {
+            if (breakpoint.equals(anyExceptionBreakpoint)) {
+              found = true;
+              break;
+            }
+          }
+          if (!found) {
+            insertBreakpointAt(anyExceptionBreakpoint, 0);
           }
         }
-        if (!found) {
-          insertBreakpointAt(anyExceptionBreakpoint, 0);
-        }
-      }
-    };
+      };
     configureBreakpointPanel(panel);
     return panel;
   }
@@ -126,29 +122,27 @@ public class ExceptionBreakpointFactory extends BreakpointFactory{
     return ExceptionBreakpoint.CATEGORY;
   }
 
-  private static class AddExceptionBreakpointAction extends AddAction {
-    private final Project myProject;
-
-    public AddExceptionBreakpointAction(Project project) {
-      myProject = project;
-    }
-
-    public void actionPerformed(ActionEvent e) {
-      final PsiClass throwableClass =
-        JavaPsiFacade.getInstance(myProject).findClass("java.lang.Throwable", GlobalSearchScope.allScope(myProject));
-      TreeClassChooser chooser =
-        TreeClassChooserFactory.getInstance(myProject).createInheritanceClassChooser(
-          DebuggerBundle.message("add.exception.breakpoint.classchooser.title"), GlobalSearchScope.allScope(myProject),
-          throwableClass, true, true, null);
-      chooser.showDialog();
-      PsiClass selectedClass = chooser.getSelected();
-      String qName = selectedClass == null ? null : JVMNameUtil.getNonAnonymousClassName(selectedClass);
-
-      if (qName != null && qName.length() > 0) {
-        ExceptionBreakpoint breakpoint = DebuggerManagerEx.getInstanceEx(myProject).getBreakpointManager().addExceptionBreakpoint(qName, ((PsiClassOwner)selectedClass.getContainingFile()).getPackageName());
-        getPanel().addBreakpoint(breakpoint);
-      }
-    }
+  @Override
+  public boolean canAddBreakpoints() {
+    return true;
   }
 
+  @Override
+  public Breakpoint addBreakpoint(Project project) {
+    ExceptionBreakpoint breakpoint = null;
+    final PsiClass throwableClass =
+      JavaPsiFacade.getInstance(project).findClass("java.lang.Throwable", GlobalSearchScope.allScope(project));
+    TreeClassChooser chooser = TreeClassChooserFactory.getInstance(project)
+      .createInheritanceClassChooser(DebuggerBundle.message("add.exception.breakpoint.classchooser.title"),
+                                     GlobalSearchScope.allScope(project), throwableClass, true, true, null);
+    chooser.showDialog();
+    PsiClass selectedClass = chooser.getSelected();
+    String qName = selectedClass == null ? null : JVMNameUtil.getNonAnonymousClassName(selectedClass);
+
+    if (qName != null && qName.length() > 0) {
+      breakpoint = DebuggerManagerEx.getInstanceEx(project).getBreakpointManager()
+        .addExceptionBreakpoint(qName, ((PsiClassOwner)selectedClass.getContainingFile()).getPackageName());
+    }
+    return breakpoint;
+  }
 }

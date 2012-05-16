@@ -228,7 +228,7 @@ public class GroovyBlockGenerator implements GroovyElementTypes {
         else {
           currentGroup = new ArrayList<AlignmentProvider.Aligner>();
           for (LeafPsiElement expression : table) {
-            currentGroup.add(myAlignmentProvider.createAligner(expression, true));
+            currentGroup.add(myAlignmentProvider.createAligner(expression, true, Alignment.Anchor.RIGHT));
           }
         }
       }
@@ -294,7 +294,7 @@ public class GroovyBlockGenerator implements GroovyElementTypes {
   }
 
   private static boolean isTablePart(PsiElement psi) {
-    return psi instanceof GrBinaryExpression && mBOR == ((GrBinaryExpression)psi).getOperationTokenType();
+    return psi instanceof GrBinaryExpression && (mBOR == ((GrBinaryExpression)psi).getOperationTokenType() || mLOR == ((GrBinaryExpression)psi).getOperationTokenType());
   }
 
   private static List<ASTNode> visibleChildren(ASTNode node) {

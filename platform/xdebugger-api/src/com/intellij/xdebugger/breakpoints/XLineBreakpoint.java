@@ -35,4 +35,6 @@ public interface XLineBreakpoint<P extends XBreakpointProperties> extends XBreak
 
   @NotNull
   XLineBreakpointType<P> getType();
+
+  String getShortFilePath();
 }

@@ -17,6 +17,7 @@
     <orderEntry type="module" module-name="java-impl" scope="TEST" />
     <orderEntry type="module" module-name="testFramework-java" scope="TEST" />
     <orderEntry type="module" module-name="idea-ui" />
+    <orderEntry type="library" name="Groovy" level="project" />
   </component>
 </module>
 

@@ -31,6 +31,7 @@ import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.util.Pair;
+import org.jetbrains.annotations.Nullable;
 
 public class DuplicateAction extends EditorAction {
   public DuplicateAction() {
@@ -68,6 +69,7 @@ public class DuplicateAction extends EditorAction {
     }
   }
 
+  @Nullable
   static Pair<Integer, Integer> duplicateLinesRange(Editor editor, Document document, VisualPosition rangeStart, VisualPosition rangeEnd) {
     Pair<LogicalPosition, LogicalPosition> lines = EditorUtil.calcSurroundingRange(editor, rangeStart, rangeEnd);
     int offset = editor.getCaretModel().getOffset();
@@ -76,6 +78,9 @@ public class DuplicateAction extends EditorAction {
     LogicalPosition nextLineStart = lines.second;
     int start = editor.logicalPositionToOffset(lineStart);
     int end = editor.logicalPositionToOffset(nextLineStart);
+    if (end <= start) {
+      return null;
+    }
     String s = document.getCharsSequence().subSequence(start, end).toString();
     final int lineToCheck = nextLineStart.line - 1;
 
