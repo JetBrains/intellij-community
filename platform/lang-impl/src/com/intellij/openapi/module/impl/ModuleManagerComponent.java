@@ -111,4 +111,22 @@ public class ModuleManagerComponent extends ModuleManagerImpl {
   protected boolean isUnknownModuleType(Module module) {
     return ModuleType.get(module) instanceof UnknownModuleType;
   }
+
+  protected void fireModuleAdded(Module module) {
+    myMessageBus.syncPublisher(ProjectTopics.MODULES).moduleAdded(myProject, module);
+  }
+
+  protected void fireModuleRemoved(Module module) {
+    myMessageBus.syncPublisher(ProjectTopics.MODULES).moduleRemoved(myProject, module);
+  }
+
+  protected void fireBeforeModuleRemoved(Module module) {
+    myMessageBus.syncPublisher(ProjectTopics.MODULES).beforeModuleRemoved(myProject, module);
+  }
+
+  protected void fireModulesRenamed(List<Module> modules) {
+    if (!modules.isEmpty()) {
+      myMessageBus.syncPublisher(ProjectTopics.MODULES).modulesRenamed(myProject, modules);
+    }
+  }
 }

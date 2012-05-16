@@ -16,7 +16,6 @@
 
 package com.intellij.openapi.module.impl;
 
-import com.intellij.ProjectTopics;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
@@ -26,7 +25,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.*;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.project.ModuleListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ModifiableRootModel;
@@ -80,7 +78,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
   private long myModificationCount;
   protected final MessageBusConnection myConnection;
   private final ProgressManager myProgressManager;
-  private final MessageBus myMessageBus;
+  protected final MessageBus myMessageBus;
 
   public static ModuleManagerImpl getInstanceImpl(Project project) {
     return (ModuleManagerImpl)getInstance(project);
@@ -397,19 +395,14 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
     element.addContent(modules);
   }
 
-  private void fireModuleAdded(Module module) {
-    myMessageBus.syncPublisher(ProjectTopics.MODULES).moduleAdded(myProject, module);
+  protected void fireModuleAdded(Module module) {
   }
 
-  private void fireModuleRemoved(Module module) {
-    myMessageBus.syncPublisher(ProjectTopics.MODULES).moduleRemoved(myProject, module);
+  protected void fireModuleRemoved(Module module) {
   }
 
-  private void fireBeforeModuleRemoved(Module module) {
-    myMessageBus.syncPublisher(ProjectTopics.MODULES).beforeModuleRemoved(myProject, module);
+  protected void fireBeforeModuleRemoved(Module module) {
   }
-
-  private final Map<ModuleListener, MessageBusConnection> myAdapters = new HashMap<ModuleListener, MessageBusConnection>();
 
   @NotNull
   public Module newModule(@NotNull String filePath, final String moduleTypeId) {
@@ -943,10 +936,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
     }, false, true);
   }
 
-  private void fireModulesRenamed(List<Module> modules) {
-    if (!modules.isEmpty()) {
-      myMessageBus.syncPublisher(ProjectTopics.MODULES).modulesRenamed(myProject, modules);
-    }
+  protected void fireModulesRenamed(List<Module> modules) {
   }
 
   void fireModuleRenamedByVfsEvent(@NotNull final Module module) {
