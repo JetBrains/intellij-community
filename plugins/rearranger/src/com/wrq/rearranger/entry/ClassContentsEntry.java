@@ -34,10 +34,7 @@ import javax.swing.tree.DefaultMutableTreeNode;
  * Describes the fields, methods, and inner class declarations of a class.  This information is used to reorder
  * these declarations within an outer class.
  */
-public abstract class ClassContentsEntry
-  extends RangeEntry
-  implements FilePopupEntry
-{
+public abstract class ClassContentsEntry extends RangeEntry implements FilePopupEntry {
   public ClassContentsEntry(@Nullable final PsiElement start,
                             @Nullable final PsiElement end,
                             final int modifiers,

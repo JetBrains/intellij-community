@@ -24,9 +24,7 @@ package com.wrq.rearranger.settings.atomicAttributes;
 import com.wrq.rearranger.ModifierConstants;
 import org.jdom.Element;
 
-public final class InitToAnonClassAttribute
-  extends AndNotAttribute
-{
+public final class InitToAnonClassAttribute extends AndNotAttribute {
 
 // -------------------------- STATIC METHODS --------------------------
 

@@ -25,9 +25,10 @@ package com.wrq.rearranger;
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import com.wrq.rearranger.settings.RearrangerSettings
+import com.wrq.rearranger.settings.attributeGroups.FieldAttributes
+import com.wrq.rearranger.settings.attributeGroups.MethodAttributes
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.Nullable
-import com.wrq.rearranger.settings.attributeGroups.FieldAttributes
 
 /** JUnit tests for the rearranger plugin. */
 class RearrangerTest extends LightCodeInsightFixtureTestCase {
@@ -62,35 +63,25 @@ class RearrangerTest extends LightCodeInsightFixtureTestCase {
     }
   }
 
-//  public final void testNotPublicFieldRearrangement() throws Exception {
-//    configureByFile("/com/wrq/rearranger/RearrangementTest.java");
-//    final PsiFile file = getFile();
-//    final Document doc = PsiDocumentManager.getInstance(getProject()).getDocument(file);
-//    final FieldAttributes fa;
-//    fa = new FieldAttributes();
-//    fa.getPlAttr().setPlPublic(true);
-//    fa.getPlAttr().setInvertProtectionLevel(true);
-//    rs.addItem(fa, 0);
-//    final RearrangerActionHandler rah = new RearrangerActionHandler();
-//    rah.rearrangeDocument(getProject(), file, rs, doc);
-//    super.checkResultByFile("/com/wrq/rearranger/RearrangementResult3.java");
-//  }
-//
-//  public final void testConstructorRearrangement() throws Exception {
-//    configureByFile("/com/wrq/rearranger/RearrangementTest.java");
-//    final PsiFile file = getFile();
-//    final Document doc = PsiDocumentManager.getInstance(getProject()).getDocument(file);
-//    final MethodAttributes ma;
-//    ma = new MethodAttributes();
-//    ma.getPlAttr().setPlPackage(true);
-//    ma.getPlAttr().setPlPublic(true);
-//    ma.setConstructorMethodType(true);
-//    rs.addItem(ma, 0);
-//    final RearrangerActionHandler rah = new RearrangerActionHandler();
-//    rah.rearrangeDocument(getProject(), file, rs, doc);
-//    super.checkResultByFile("/com/wrq/rearranger/RearrangementResult4.java");
-//  }
-//
+  public final void testNotPublicFieldRearrangement() throws Exception {
+    doTest('RearrangementTest', 'RearrangementResult3') {
+      def attributes = new FieldAttributes()
+      attributes.protectionLevelAttributes.plPublic = true
+      attributes.protectionLevelAttributes.invertProtectionLevel = true
+      mySettings.addItem(attributes, 0)
+    }
+  }
+
+  public final void testConstructorRearrangement() throws Exception {
+    doTest('RearrangementTest', 'RearrangementResult4') {
+      def attributes = new MethodAttributes()
+      attributes.protectionLevelAttributes.plPackage = true
+      attributes.protectionLevelAttributes.plPublic = true
+      attributes.constructorMethodType = true
+      mySettings.addItem(attributes, 0)
+    }
+  }
+
 //  public final void testClassRearrangement() throws Exception {
 //    configureByFile("/com/wrq/rearranger/RearrangementTest.java");
 //    final PsiFile file = getFile();

@@ -42,6 +42,7 @@ import java.util.regex.Matcher;
  * flags and special flags to mark any miscellaneous text or comments that precede or follow the item.
  */
 abstract public class RangeEntry implements PopupTreeRangeEntry {
+  
 // ------------------------------ FIELDS ------------------------------
 
   private static final Logger LOG = Logger.getInstance("#" + RangeEntry.class.getName());
@@ -267,7 +268,7 @@ abstract public class RangeEntry implements PopupTreeRangeEntry {
           curr = curr.getNextSibling();
         }
       }
-      if (curr == myEnd) {
+      if (curr == myEnd && myEnd != null) {
         emitElement(myEnd, buffer, document);
       }
     }

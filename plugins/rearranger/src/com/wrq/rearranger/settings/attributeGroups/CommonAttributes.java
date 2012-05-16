@@ -72,10 +72,12 @@ public abstract class CommonAttributes implements AttributeGroup, PrioritizedRul
 
 // --------------------- GETTER / SETTER METHODS ---------------------
 
+  @NotNull
   public final NameAttribute getNameAttribute() {
     return myNameAttribute;
   }
 
+  @NotNull
   final public ProtectionLevelAttributes getProtectionLevelAttributes() {
     return myProtectionLevelAttributes;
   }
@@ -88,10 +90,12 @@ public abstract class CommonAttributes implements AttributeGroup, PrioritizedRul
     this.myPriority = priority;
   }
 
+  @NotNull
   final public StaticAttribute getStaticAttribute() {
     return myStaticAttribute;
   }
 
+  @NotNull
   public SortOptions getSortOptions() {
     return mySortOptions;
   }

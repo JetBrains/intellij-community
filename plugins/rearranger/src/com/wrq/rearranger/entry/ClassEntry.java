@@ -237,7 +237,7 @@ public class ClassEntry extends ClassContentsEntry implements FilePopupEntry {
    * @param clazz
    * @return starting element index for the portion of the enumeration class following its enum declarations.
    */
-  private int findLastEnumTerminator(PsiClass clazz) {
+  private static int findLastEnumTerminator(PsiClass clazz) {
     int startElementIndex = 0;
     // go until we hit RBrace (non-inclusive), or semicolon (inclusive)
     boolean foundLBrace = false;
@@ -263,25 +263,31 @@ public class ClassEntry extends ClassContentsEntry implements FilePopupEntry {
     return startElementIndex;
   }
 
-  private int parseField(PsiElement child, MemberAttributes attributes, int i, final PsiClass psiClass) {
+  private static int parseField(PsiElement child, MemberAttributes attributes, int i, final PsiClass psiClass) {
     attributes.field = (PsiField)child;
     LOG.debug("enter parseField: child=" +
               (child == null ? "null" : child.toString()));
     attributes.name = attributes.field.getName();
-    if (attributes.field.getTypeElement() == null) {
-      attributes.type = attributes.field.getContainingClass().getName(); // if enum, use class as type
+    final PsiClass containingClass = attributes.field.getContainingClass();
+    final PsiTypeElement typeElement = attributes.field.getTypeElement();
+    if (typeElement == null && containingClass != null) {
+      attributes.type = containingClass.getName(); // if enum, use class as type
     }
-    else {
-      attributes.type = attributes.field.getTypeElement().getText();
+    else if (typeElement != null) {
+      attributes.type = typeElement.getText();
     }
-    attributes.modifierString = attributes.field.getModifierList().getText();
+    final PsiModifierList modifierList = attributes.field.getModifierList();
+    if (modifierList != null) {
+      attributes.modifierString = modifierList.getText();
+    }
     attributes.modifiers = ModifierUtils.getModifierMask(attributes.modifierString);
-    if (attributes.field.getContainingClass().isInterface()) {
+    if (containingClass != null && containingClass.isInterface()) {
       // all fields in an interface are constants, hence "public static final"
       attributes.modifiers |= Modifier.PUBLIC | Modifier.STATIC | Modifier.FINAL;
     }
-    if (attributes.field.getInitializer() instanceof PsiNewExpression) {
-      final PsiElement lc = attributes.field.getInitializer().getLastChild();
+    final PsiExpression initializer = attributes.field.getInitializer();
+    if (initializer instanceof PsiNewExpression) {
+      final PsiElement lc = initializer.getLastChild();
       if (lc instanceof PsiAnonymousClass) {
         attributes.modifiers |= ModifierConstants.INIT_TO_ANON_CLASS;
       }
@@ -335,19 +341,21 @@ public class ClassEntry extends ClassContentsEntry implements FilePopupEntry {
     return i;
   }
 
-  private void parseMethod(PsiElement child, MemberAttributes attributes, final PsiSearchHelper psh) {
+  private static void parseMethod(PsiElement child, MemberAttributes attributes, final PsiSearchHelper psh) {
     attributes.method = (PsiMethod)child;
     attributes.name = attributes.method.getName();
-    if (attributes.method.getReturnTypeElement() == null) {
+    final PsiTypeElement returnTypeElement = attributes.method.getReturnTypeElement();
+    if (returnTypeElement == null) {
       attributes.type = "null";
     }
     else {
-      attributes.type = attributes.method.getReturnTypeElement().getText();
+      attributes.type = returnTypeElement.getText();
     }
     attributes.modifierString = attributes.method.getModifierList().getText();
     attributes.modifiers = ModifierUtils.getModifierMask(attributes.modifierString);
     attributes.nParameters = attributes.method.getParameterList().getParameters().length;
-    if (attributes.method.getContainingClass().isInterface()) {
+    final PsiClass containingClass = attributes.method.getContainingClass();
+    if (containingClass != null && containingClass.isInterface()) {
       // methods in an interface are always considered public
       attributes.modifiers |= Modifier.PUBLIC;
     }
@@ -379,12 +387,12 @@ public class ClassEntry extends ClassContentsEntry implements FilePopupEntry {
         attributes.modifiers |= ModifierConstants.OVERRIDDEN;
       }
     }
-    // determine if this method overrides another.
+    // Determine if this method overrides another.
     final PsiMethod[] superMethods = attributes.method.findSuperMethods(false);
     LOG.debug("method " + attributes.method.toString() + " has " + superMethods.length + " supermethods");
     dumpMethodNames(superMethods);
     if (superMethods.length > 0) {
-      // determine if supermethod is abstract or interface; if so, assign IMPLEMENTING attribute.
+      // Determine if supermethod is abstract or interface; if so, assign IMPLEMENTING attribute.
       PsiMethod superMethod = superMethods[0];
       boolean abztract = superMethod.getModifierList().hasModifierProperty(PsiModifier.ABSTRACT);
       PsiClass superclass = superMethod.getContainingClass();
@@ -400,9 +408,8 @@ public class ClassEntry extends ClassContentsEntry implements FilePopupEntry {
     if (attributes.method.isConstructor()) {
       attributes.modifiers |= ModifierConstants.CONSTRUCTOR;
     }
-    /** getter/setter cannot be determined here because definition of what a getter/setter
-     * is can vary from rule to rule.  Do it at the time of rule matching.
-     */
+    // Getter/setter cannot be determined here because definition of what a getter/setter
+    // is can vary from rule to rule.  Do it at the time of rule matching.
     else if ((attributes.modifiers & ModifierConstants.CANONICAL) == 0) {
       attributes.modifiers |= ModifierConstants.OTHER_METHOD;
     }
@@ -414,7 +421,7 @@ public class ClassEntry extends ClassContentsEntry implements FilePopupEntry {
     );
   }
 
-  private int isCanonicalOrInterface(PsiMethod method, MemberAttributes attributes) {
+  private static int isCanonicalOrInterface(PsiMethod method, MemberAttributes attributes) {
     PsiElement methodParent = method.getParent();
     LOG.debug("checking to see if " + method.getName() + " of " + methodParent + " is canonical");
     PsiMethod[] superMethods = method.findSuperMethods();
@@ -458,7 +465,7 @@ public class ClassEntry extends ClassContentsEntry implements FilePopupEntry {
     return 0;
   }
 
-  private void dumpMethodNames(PsiMethod[] methods) {
+  private static void dumpMethodNames(PsiMethod[] methods) {
     for (int j = 0; j < methods.length; j++) {
       LOG.debug(
         j +
@@ -487,17 +494,19 @@ public class ClassEntry extends ClassContentsEntry implements FilePopupEntry {
     }
   }
 
-  private void parseClassInitializer(PsiElement child, MemberAttributes attributes) {
+  private static void parseClassInitializer(PsiElement child, MemberAttributes attributes) {
     attributes.classInitializer = (PsiClassInitializer)child;
-    attributes.classInitializer.getModifierList();
     attributes.name = "";
-    attributes.modifierString = attributes.classInitializer.getModifierList().getText();
+    final PsiModifierList modifierList = attributes.classInitializer.getModifierList();
+    if (modifierList != null) {
+      attributes.modifierString = modifierList.getText();
+    }
     attributes.modifiers = ModifierUtils.getModifierMask(attributes.modifierString) |
                            ModifierConstants.INITIALIZER;
   }
 
   public void emit(Emitter emitter) {
-    // first emit the text up to and including the left brace.
+    // First emit the text up to and including the left brace.
     super.emit(emitter);
     // now emit all children.
     emitter.emitRuleInstances(getResultRuleInstances());
@@ -514,7 +523,7 @@ public class ClassEntry extends ClassContentsEntry implements FilePopupEntry {
     return result;
   }
 
-  /** rearranges the contents of this PsiClass according to supplied rules. */
+  /** Rearranges the contents of this PsiClass according to supplied rules. */
   public void rearrangeContents() {
     buildMethodCallGraph();
 
@@ -530,14 +539,10 @@ public class ClassEntry extends ClassContentsEntry implements FilePopupEntry {
         ((RelatableEntry)contentsEntry).determineExtractedMethod(mySettings.getExtractedMethodsSettings());
       }
     }
-    /**
-     * remove any cycles in the related method graph.
-     */
+    // Remove any cycles in the related method graph.
     MethodEntry.eliminateCycles(getContents());
-    /**
-     * check for overloaded extracted methods; if configured to be kept together, attach subsequent
-     * methods to the first and remove them from consideration for other alignment.
-     */
+    // Check for overloaded extracted methods; if configured to be kept together, attach subsequent
+    // methods to the first and remove them from consideration for other alignment.
     MethodEntry.handleOverloadedMethods(getContents(), mySettings);
     final GenericRearranger classContentsRearranger =
       new GenericRearranger(mySettings.getItemOrderAttributeList(),

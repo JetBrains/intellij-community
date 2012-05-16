@@ -24,12 +24,13 @@ package com.wrq.rearranger.rearrangement;
 import com.intellij.openapi.diagnostic.Logger;
 import com.wrq.rearranger.entry.ClassContentsEntry;
 import com.wrq.rearranger.entry.ClassEntry;
-import com.wrq.rearranger.entry.RelatableEntry;
 import com.wrq.rearranger.entry.RangeEntry;
+import com.wrq.rearranger.entry.RelatableEntry;
 import com.wrq.rearranger.ruleinstance.CommentRuleInstance;
 import com.wrq.rearranger.ruleinstance.RuleInstance;
 import com.wrq.rearranger.settings.RearrangerSettings;
 import com.wrq.rearranger.settings.attributeGroups.*;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -51,7 +52,7 @@ public abstract class GenericRearranger {
                               final List<ClassContentsEntry> outerClasses,
                               final int nestingLevel,
                               final RearrangerSettings settings) {
-    this.myRules = rules;
+    myRules = rules;
     myEntries = outerClasses;
     this.myNestingLevel = nestingLevel;
     this.mySettings = settings;
@@ -121,7 +122,7 @@ public abstract class GenericRearranger {
    * @param prioritizedRules prioritized list of rules
    */
   @SuppressWarnings({"StringContatenationInLoop"})
-  private void matchPrioritizedRules(List<RuleInstance> prioritizedRules) {
+  private void matchPrioritizedRules(@NotNull List<RuleInstance> prioritizedRules) {
     for (RuleInstance ruleInstance : prioritizedRules) {
       final Rule rule = ruleInstance.getRule();
       final ListIterator entryIterator = myEntries.listIterator();
@@ -174,11 +175,11 @@ public abstract class GenericRearranger {
         prioritizedRuleInstances.add(0, instance);
       }
     }
-    // now add a default rule to pick up all unmatched items.
+    // Now add a default rule to pick up all unmatched items.
     RuleInstance defaultRuleInstance = new DefaultRule().createRuleInstance();
     myResultRuleInstances.add(defaultRuleInstance);
     prioritizedRuleInstances.add(defaultRuleInstance);
-    // finally, add a TrailerRuleInstance to pick up any leftover text.
+    // Finally, add a TrailerRuleInstance to pick up any leftover text.
     RuleInstance tri = new TrailerRule().createRuleInstance();
     myResultRuleInstances.add(tri);
     prioritizedRuleInstances.add(tri);

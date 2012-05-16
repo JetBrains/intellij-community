@@ -74,22 +74,22 @@ public class Spacer {
     myBuffer = new StringBuilder(maxSize);
   }
 
-  private class AbortRespacing extends RuntimeException {
+  private static class AbortRespacingException extends RuntimeException {
   }
 
-  private class BadPsiElement extends Exception {
-    BadPsiElement(String string) {
+  private static class BadPsiElementException extends Exception {
+    BadPsiElementException(String string) {
       super(string);
     }
   }
 
-  private void handleBadPsiElementException(String desc, PsiElement element)
-    throws AbortRespacing
+  private static void handleBadPsiElementException(String desc, PsiElement element)
+    throws AbortRespacingException
   {
     JOptionPane.showMessageDialog(null,
                                   "Spacing could not be performed due to a syntax error:\n" +
                                   desc + element.getText(), "Spacing Error", JOptionPane.ERROR_MESSAGE);
-    throw new AbortRespacing();
+    throw new AbortRespacingException();
   }
 
   public boolean respace() {
@@ -132,7 +132,7 @@ public class Spacer {
             bias
           );
         }
-        catch (BadPsiElement badPsiElement) {
+        catch (BadPsiElementException badPsiElement) {
           handleBadPsiElementException("class " + psiClass.getName() + " missing left brace.  Body follows:", psiClass);
         }
         log(mySettings.getAfterClassLBrace(), psiClass.getName(), oldbias, bias);
@@ -146,7 +146,7 @@ public class Spacer {
             bias
           );
         }
-        catch (BadPsiElement badPsiElement) {
+        catch (BadPsiElementException badPsiElement) {
           handleBadPsiElementException("class " + psiClass.getName() + " missing right brace.  Body follows:", psiClass);
         }
         log(mySettings.getBeforeClassRBrace(), psiClass.getName(), oldbias, bias);
@@ -173,7 +173,7 @@ public class Spacer {
               bias
             );
           }
-          catch (BadPsiElement badPsiElement) {
+          catch (BadPsiElementException badPsiElement) {
             handleBadPsiElementException("class " + psiClass.getName() + " missing left brace.  Body follows:", psiClass);
           }
           log(mySettings.getAfterClassRBrace(), psiClass.getName(), oldbias, bias);
@@ -231,7 +231,7 @@ public class Spacer {
               bias
             );
           }
-          catch (BadPsiElement badPsiElement) {
+          catch (BadPsiElementException badPsiElement) {
             handleBadPsiElementException("body of method " + psiMethod.getName() + " missing left brace.  Body follows:", psiMethod);
           }
           log(mySettings.getAfterMethodLBrace(), psiMethod.getName(), oldbias, bias);
@@ -245,7 +245,7 @@ public class Spacer {
               bias
             );
           }
-          catch (BadPsiElement badPsiElement) {
+          catch (BadPsiElementException badPsiElement) {
             handleBadPsiElementException("body of method " + psiMethod.getName() + " missing right brace.  Body follows:", psiMethod);
           }
           log(mySettings.getBeforeMethodRBrace(), psiMethod.getName(), oldbias, bias);
@@ -276,7 +276,7 @@ public class Spacer {
               bias
             );
           }
-          catch (BadPsiElement badPsiElement) {
+          catch (BadPsiElementException badPsiElement) {
             handleBadPsiElementException("body of method " + psiMethod.getName() + " missing right brace.  Body follows:", psiMethod);
           }
           log(mySettings.getAfterMethodRBrace(), psiMethod.getName(), oldbias, bias);
@@ -300,7 +300,7 @@ public class Spacer {
             bias += adjustSpacing(psiCodeBlock.getLBrace(),
                                   psiCodeBlock.getRBrace(), false, 0, bias);
           }
-          catch (BadPsiElement badPsiElement) {
+          catch (BadPsiElementException badPsiElement) {
             handleBadPsiElementException("code block missing left brace.  Content follows:\n", psiCodeBlock);
           }
           log("code block left brace", oldbias, bias);
@@ -313,7 +313,7 @@ public class Spacer {
           try {
             bias += adjustSpacing(psiCodeBlock.getRBrace(), psiCodeBlock.getLBrace(), true, 0, bias);
           }
-          catch (BadPsiElement badPsiElement) {
+          catch (BadPsiElementException badPsiElement) {
             handleBadPsiElementException("code block missing right brace.  Content follows:\n", psiCodeBlock);
           }
           log("code block right brace", oldbias, bias);
@@ -323,7 +323,7 @@ public class Spacer {
     try {
       myFile.accept(visitor);
     }
-    catch (AbortRespacing ar) {
+    catch (AbortRespacingException ar) {
       return false;
     }
     if (myChangesMade) {
@@ -348,7 +348,7 @@ public class Spacer {
    * @return true if the psiElement is the last syntactic item (i.e., not including comments and whitespace)
    *         of the owner.
    */
-  private boolean isLastMeaningfulElement(PsiElement owner, PsiElement psiElement) {
+  private static boolean isLastMeaningfulElement(PsiElement owner, PsiElement psiElement) {
     boolean lastMethod;
     // class is immediate parent
     PsiElement[] elements = owner.getChildren();
@@ -372,7 +372,7 @@ public class Spacer {
     return lastMethod;
   }
 
-  private void log(ForceBlankLineSetting fbls, String name, int oldbias, int bias) {
+  private static void log(ForceBlankLineSetting fbls, String name, int oldbias, int bias) {
     if (oldbias != bias) {
       LOG.debug(
         fbls.getObjectName() +
@@ -386,7 +386,7 @@ public class Spacer {
     }
   }
 
-  private void log(String name, int oldbias, int bias) {
+  private static void log(String name, int oldbias, int bias) {
     if (oldbias != bias) {
       LOG.debug(
         name +
@@ -397,7 +397,7 @@ public class Spacer {
   }
 
   private int adjustSpacing(PsiElement brace, PsiElement matchingBrace, ForceBlankLineSetting fbls, int bias)
-    throws BadPsiElement
+    throws BadPsiElementException
   {
     if (fbls.isForce()) {
       return adjustSpacing(brace, matchingBrace, fbls.isBefore(), fbls.getnBlankLines(), bias);
@@ -446,11 +446,11 @@ public class Spacer {
    * @return bias adjustment corresponding to number of newlines inserted or deleted
    */
   private int adjustSpacing(PsiElement brace, PsiElement matchingBrace, boolean before, int nBlankLines, int bias)
-    throws BadPsiElement
+    throws BadPsiElementException
   {
     int result = 0;
     if (brace == null) {
-      throw new BadPsiElement(
+      throw new BadPsiElementException(
         "adjustSpacing: illegal syntax (mismatched braces); PsiElement for brace is null"
       );
     }
@@ -495,9 +495,7 @@ public class Spacer {
         return result;
       }
     }
-    while (whiteSpace != null &&
-           (!(whiteSpace instanceof PsiWhiteSpace) ||
-            whiteSpace.getText().indexOf('\n') < 0));
+    while (whiteSpace != null && (!(whiteSpace instanceof PsiWhiteSpace) || whiteSpace.getText().indexOf('\n') < 0));
 
     VirtualElement virtualWhiteSpace = null;
     if (whiteSpace != null) {
