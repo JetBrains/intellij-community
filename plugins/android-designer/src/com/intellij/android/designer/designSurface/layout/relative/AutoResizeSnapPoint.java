@@ -19,7 +19,6 @@ import com.intellij.android.designer.model.ModelParser;
 import com.intellij.android.designer.model.RadViewComponent;
 import com.intellij.designer.designSurface.feedbacks.TextFeedback;
 import com.intellij.designer.model.RadComponent;
-import com.intellij.designer.utils.Position;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.xml.XmlTag;
 
@@ -29,14 +28,13 @@ import java.util.List;
 /**
  * @author Alexander Lobas
  */
-public class AutoResizeSnapPoint extends SnapPoint {
-  private final int myDirection;
+public class AutoResizeSnapPoint extends ResizeSnapPoint {
   private int myMargin;
   private int mySize;
+  private Side mySide;
 
-  public AutoResizeSnapPoint(RadViewComponent container, boolean horizontal, int direction) {
+  public AutoResizeSnapPoint(RadViewComponent container, boolean horizontal) {
     super(container, horizontal);
-    myDirection = direction;
   }
 
   @Override
@@ -48,7 +46,7 @@ public class AutoResizeSnapPoint extends SnapPoint {
       feedback.append(", ");
     }
 
-    if ((myDirection & Position.EAST_WEST) != 0) {
+    if (mySide == Side.left || mySide == Side.right) {
       feedback.append("layout:width ");
     }
     else {
@@ -60,13 +58,15 @@ public class AutoResizeSnapPoint extends SnapPoint {
   }
 
   @Override
-  public boolean processBounds(List<RadComponent> components, Rectangle bounds, SnapPointFeedbackHost feedback) {
-    super.processBounds(components, bounds, feedback);
+  public boolean processBounds(List<RadComponent> components, Rectangle bounds, Side resizeSide, SnapPointFeedbackHost feedback) {
+    super.processBounds(components, bounds, resizeSide, feedback);
+
+    mySide = resizeSide;
 
     if (myHorizontal) {
       mySize = bounds.width;
 
-      if ((myDirection & Position.WEST) != 0) {
+      if (resizeSide == Side.left) {
         myMargin = bounds.x - myBounds.x;
         feedback.addVerticalLine(myBounds.x, myBounds.y, myBounds.height);
         feedback.addHorizontalArrow(myBounds.x, bounds.y + bounds.height / 2, myMargin);
@@ -75,7 +75,7 @@ public class AutoResizeSnapPoint extends SnapPoint {
     else {
       mySize = bounds.height;
 
-      if ((myDirection & Position.NORTH) != 0) {
+      if (resizeSide == Side.top) {
         myMargin = bounds.y - myBounds.y;
         feedback.addHorizontalLine(myBounds.x, myBounds.y, myBounds.width);
         feedback.addVerticalArrow(bounds.x + bounds.width / 2, myBounds.y, myMargin);
@@ -92,11 +92,29 @@ public class AutoResizeSnapPoint extends SnapPoint {
       public void run() {
         XmlTag tag = ((RadViewComponent)components.get(0)).getTag();
         if (myMargin > 0) {
-          tag.setAttribute("android:layout_alignParent" + (myHorizontal ? "Left" : "Top"), "true");
-          tag.setAttribute("android:layout_margin" + (myHorizontal ? "Left" : "Top"), Integer.toString(myMargin) + "dp");
+          String attribute = myHorizontal ? "Left" : "Top";
+          tag.setAttribute("android:layout_alignParent" + attribute, "true");
+          tag.setAttribute("android:layout_margin" + attribute, Integer.toString(myMargin) + "dp");
+          ModelParser.deleteAttribute(tag, "android:layout_align" + attribute);
+
+          if (myHorizontal) {
+            ModelParser.deleteAttribute(tag, "android:layout_toRightOf");
+          }
+          else {
+            ModelParser.deleteAttribute(tag, "android:layout_below");
+          }
         }
         else {
-          ModelParser.deleteAttribute(tag, "android:layout_alignParent" + (myHorizontal ? "Right" : "Bottom"));
+          String attribute = myHorizontal ? "Right" : "Bottom";
+          ModelParser.deleteAttribute(tag, "android:layout_alignParent" + attribute);
+          ModelParser.deleteAttribute(tag, "android:layout_align" + attribute);
+
+          if (myHorizontal) {
+            ModelParser.deleteAttribute(tag, "android:layout_toLeftOf");
+          }
+          else {
+            ModelParser.deleteAttribute(tag, "android:layout_above");
+          }
         }
         tag.setAttribute("android:layout_" + (myHorizontal ? "width" : "height"), Integer.toString(mySize) + "dp");
       }

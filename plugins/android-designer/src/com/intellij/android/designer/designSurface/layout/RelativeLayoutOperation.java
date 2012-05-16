@@ -16,6 +16,7 @@
 package com.intellij.android.designer.designSurface.layout;
 
 import com.intellij.android.designer.designSurface.AbstractEditOperation;
+import com.intellij.android.designer.designSurface.RootView;
 import com.intellij.android.designer.designSurface.layout.relative.*;
 import com.intellij.android.designer.model.ModelParser;
 import com.intellij.android.designer.model.RadViewComponent;
@@ -30,6 +31,7 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.ui.IdeBorderFactory;
 
 import java.awt.*;
+import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -81,6 +83,9 @@ public class RelativeLayoutOperation extends AbstractEditOperation {
 
       if (myContext.isCreate() || myContext.isPaste()) {
         myBounds = new Rectangle(0, 0, 64, 32);
+
+        myBoundsFeedback = new AlphaFeedback(myComponents.size() == 1 ? Color.green : Color.orange);
+        // XXX
       }
       else {
         Iterator<RadComponent> I = myComponents.iterator();
@@ -95,12 +100,28 @@ public class RelativeLayoutOperation extends AbstractEditOperation {
         if (myBounds.height == 0) {
           myBounds.height = 32;
         }
+
+        if (myComponents.size() == 1) {
+          RadComponent component = myComponents.get(0);
+          final Rectangle bounds = component.getBounds();
+          final BufferedImage image = ((RootView)((RadViewComponent)component.getRoot()).getNativeComponent()).getImage();
+
+          myBoundsFeedback = new AlphaFeedback(null) {
+            @Override
+            protected void paintOther2(Graphics2D g2d) {
+              g2d.drawImage(image,
+                            0, 0, bounds.width, bounds.height,
+                            bounds.x, bounds.y, bounds.x + bounds.width, bounds.y + bounds.height,
+                            null);
+            }
+          };
+        }
+        else {
+          myBoundsFeedback = new AlphaFeedback(Color.orange);
+        }
       }
 
-      // XXX
-      myBoundsFeedback = new AlphaFeedback(myComponents.size() == 1 ? Color.green : Color.orange);
       myBoundsFeedback.setSize(myBounds.width, myBounds.height);
-
       layer.add(myBoundsFeedback);
 
       layer.repaint();

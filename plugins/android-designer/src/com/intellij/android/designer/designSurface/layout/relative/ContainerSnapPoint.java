@@ -29,7 +29,7 @@ import java.util.List;
  * @author Alexander Lobas
  */
 public class ContainerSnapPoint extends SnapPoint {
-  protected Side mySide;
+  private Side mySide;
 
   public ContainerSnapPoint(RadViewComponent container, boolean horizontal) {
     super(container, horizontal);
@@ -48,14 +48,14 @@ public class ContainerSnapPoint extends SnapPoint {
     if (mySide == Side.top) {
       return "alignParentTop";
     }
-    else if (mySide == Side.left) {
-      return "alignParentLeft";
-    }
     else if (mySide == Side.bottom) {
       return "alignParentBottom";
     }
+    else if (mySide == Side.left) {
+      return "alignParentLeft";
+    }
     else if (mySide == Side.right) {
-      return "alignParentTop";
+      return "alignParentRight";
     }
     else if (mySide == Side.center_horizontal) {
       return "centerHorizontal";
@@ -72,6 +72,10 @@ public class ContainerSnapPoint extends SnapPoint {
 
     mySide = null;
 
+    return processBounds(bounds, feedback);
+  }
+
+  protected boolean processBounds(Rectangle bounds, SnapPointFeedbackHost feedback) {
     if (myHorizontal) {
       return processLeft(bounds, feedback) || processRight(bounds, feedback) || processHorizontalCenter(bounds, feedback);
     }
@@ -79,7 +83,7 @@ public class ContainerSnapPoint extends SnapPoint {
     return processTop(bounds, feedback) || processBottom(bounds, feedback) || processVerticalCenter(bounds, feedback);
   }
 
-  private boolean processLeft(Rectangle targetBounds, SnapPointFeedbackHost feedback) {
+  protected final boolean processLeft(Rectangle targetBounds, SnapPointFeedbackHost feedback) {
     int startX = myBounds.x - SNAP_SIZE;
     int endX = startX + 2 * SNAP_SIZE;
 
@@ -94,7 +98,7 @@ public class ContainerSnapPoint extends SnapPoint {
     return false;
   }
 
-  private boolean processRight(Rectangle targetBounds, SnapPointFeedbackHost feedback) {
+  protected final boolean processRight(Rectangle targetBounds, SnapPointFeedbackHost feedback) {
     int startX = myBounds.x + myBounds.width - SNAP_SIZE;
     int endX = startX + 2 * SNAP_SIZE;
 
@@ -109,7 +113,7 @@ public class ContainerSnapPoint extends SnapPoint {
     return false;
   }
 
-  private boolean processTop(Rectangle targetBounds, SnapPointFeedbackHost feedback) {
+  protected final boolean processTop(Rectangle targetBounds, SnapPointFeedbackHost feedback) {
     int startY = myBounds.y - SNAP_SIZE;
     int endY = startY + 2 * SNAP_SIZE;
 
@@ -124,7 +128,7 @@ public class ContainerSnapPoint extends SnapPoint {
     return false;
   }
 
-  private boolean processBottom(Rectangle targetBounds, SnapPointFeedbackHost feedback) {
+  protected final boolean processBottom(Rectangle targetBounds, SnapPointFeedbackHost feedback) {
     int startY = myBounds.y + myBounds.height - SNAP_SIZE;
     int endY = startY + 2 * SNAP_SIZE;
 
@@ -139,7 +143,7 @@ public class ContainerSnapPoint extends SnapPoint {
     return false;
   }
 
-  protected boolean processHorizontalCenter(Rectangle targetBounds, SnapPointFeedbackHost feedback) {
+  private boolean processHorizontalCenter(Rectangle targetBounds, SnapPointFeedbackHost feedback) {
     int centerX = myBounds.x + myBounds.width / 2;
 
     int startX = centerX - SNAP_SIZE;
@@ -156,7 +160,7 @@ public class ContainerSnapPoint extends SnapPoint {
     return false;
   }
 
-  protected boolean processVerticalCenter(Rectangle targetBounds, SnapPointFeedbackHost feedback) {
+  private boolean processVerticalCenter(Rectangle targetBounds, SnapPointFeedbackHost feedback) {
     int centerY = myBounds.y + myBounds.height / 2;
 
     int startY = centerY - SNAP_SIZE;

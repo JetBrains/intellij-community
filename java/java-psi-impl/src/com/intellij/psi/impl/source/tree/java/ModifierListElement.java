@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,23 +20,23 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiKeyword;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiModifierList;
-import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.util.containers.HashMap;
+import org.jetbrains.annotations.Nullable;
 
 public class ModifierListElement extends CompositeElement {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.ModifierListElement");
 
   public ModifierListElement() {
-    super(Constants.MODIFIER_LIST);
+    super(JavaElementType.MODIFIER_LIST);
   }
 
   @Override
   public TreeElement addInternal(TreeElement first, ASTNode last, ASTNode anchor, Boolean before) {
-    if (before == null){
-      if (first == last && ElementType.KEYWORD_BIT_SET.contains(first.getElementType())){
+    if (before == null) {
+      if (first == last && ElementType.KEYWORD_BIT_SET.contains(first.getElementType())) {
         anchor = getDefaultAnchor((PsiModifierList)SourceTreeToPsiMap.treeElementToPsi(this),
                                   (PsiKeyword)SourceTreeToPsiMap.treeElementToPsi(first));
         before = Boolean.TRUE;
@@ -68,11 +68,11 @@ public class ModifierListElement extends CompositeElement {
     ourModifierToOrderMap.put(PsiModifier.STRICTFP, 6);
   }
 
+  @Nullable
   private static ASTNode getDefaultAnchor(PsiModifierList modifierList, PsiKeyword modifier) {
     Integer order = ourModifierToOrderMap.get(modifier.getText());
     if (order == null) return null;
-    for (ASTNode child = SourceTreeToPsiMap.psiElementToTree(modifierList).getFirstChildNode(); child != null; child = child.getTreeNext())
-    {
+    for (ASTNode child = SourceTreeToPsiMap.psiToTreeNotNull(modifierList).getFirstChildNode(); child != null; child = child.getTreeNext()) {
       if (ElementType.KEYWORD_BIT_SET.contains(child.getElementType())) {
         Integer order1 = ourModifierToOrderMap.get(child.getText());
         if (order1 == null) continue;

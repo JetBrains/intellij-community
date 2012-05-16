@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,6 +41,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.tree.TokenSet;
+import com.intellij.util.DocumentUtil;
 import com.intellij.util.containers.IntStack;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
@@ -231,8 +232,8 @@ public class IndentsPass extends TextEditorHighlightingPass implements DumbAware
     if (stamp != null && stamp.longValue() == nowStamp()) return;
 
     List<RangeHighlighter> oldHighlighters = myEditor.getUserData(INDENT_HIGHLIGHTERS_IN_EDITOR_KEY);
-    List<RangeHighlighter> newHighlighters = new ArrayList<RangeHighlighter>();
-    MarkupModel mm = myEditor.getMarkupModel();
+    final List<RangeHighlighter> newHighlighters = new ArrayList<RangeHighlighter>();
+    final MarkupModel mm = myEditor.getMarkupModel();
 
     int curRange = 0;
 
@@ -264,9 +265,16 @@ public class IndentsPass extends TextEditorHighlightingPass implements DumbAware
       }
     }
 
-    for (; curRange < myRanges.size(); curRange++) {
-      newHighlighters.add(createHighlighter(mm, myRanges.get(curRange)));
-    }
+    final int startRangeIndex = curRange;
+    DocumentUtil.executeInBulk(myDocument, myRanges.size() > 10000, new Runnable() {
+      @Override
+      public void run() {
+        for (int i = startRangeIndex; i < myRanges.size(); i++) {
+          newHighlighters.add(createHighlighter(mm, myRanges.get(i)));
+        }
+      }
+    });
+    
 
     myEditor.putUserData(INDENT_HIGHLIGHTERS_IN_EDITOR_KEY, newHighlighters);
     myEditor.putUserData(LAST_TIME_INDENTS_BUILT, nowStamp());

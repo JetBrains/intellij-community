@@ -23,7 +23,7 @@ package com.wrq.rearranger.settings.attributeGroups;
 
 import com.intellij.psi.PsiField;
 import com.wrq.rearranger.entry.RangeEntry;
-import com.wrq.rearranger.settings.atomicAttributes.InitToAnonClassAttribute;
+import com.wrq.rearranger.settings.atomicAttributes.InitialisedByAnonymousClassAttribute;
 import com.wrq.rearranger.settings.atomicAttributes.TransientAttribute;
 import com.wrq.rearranger.settings.atomicAttributes.TypeAttribute;
 import com.wrq.rearranger.settings.atomicAttributes.VolatileAttribute;
@@ -40,17 +40,17 @@ public final class FieldAttributes extends ItemAttributes {
 
 // ------------------------------ FIELDS ------------------------------
 
-  private InitToAnonClassAttribute initToAnonClassAttr;
-  private TransientAttribute       transientAttr;
-  private VolatileAttribute        volatileAttr;
-  private TypeAttribute            typeAttr;
+  private InitialisedByAnonymousClassAttribute myInitialisedByAnonymousClassAttr;
+  private TransientAttribute                   transientAttr;
+  private VolatileAttribute                    volatileAttr;
+  private TypeAttribute                        typeAttr;
 
 // -------------------------- STATIC METHODS --------------------------
 
   public static /*FieldAttributes*/AttributeGroup readExternal(final Element item) {
     final FieldAttributes result = new FieldAttributes();
     CommonAttributes.readExternal(result, item);
-    result.initToAnonClassAttr = InitToAnonClassAttribute.readExternal(item);
+    result.myInitialisedByAnonymousClassAttr = InitialisedByAnonymousClassAttribute.readExternal(item);
     result.transientAttr = TransientAttribute.readExternal(item);
     result.volatileAttr = VolatileAttribute.readExternal(item);
     result.typeAttr = TypeAttribute.readExternal(item);
@@ -60,7 +60,7 @@ public final class FieldAttributes extends ItemAttributes {
 // --------------------------- CONSTRUCTORS ---------------------------
 
   public FieldAttributes() {
-    initToAnonClassAttr = new InitToAnonClassAttribute();
+    myInitialisedByAnonymousClassAttr = new InitialisedByAnonymousClassAttribute();
     transientAttr = new TransientAttribute();
     volatileAttr = new VolatileAttribute();
     typeAttr = new TypeAttribute();
@@ -68,8 +68,8 @@ public final class FieldAttributes extends ItemAttributes {
 
 // --------------------- GETTER / SETTER METHODS ---------------------
 
-  public InitToAnonClassAttribute getInitToAnonClassAttr() {
-    return initToAnonClassAttr;
+  public InitialisedByAnonymousClassAttribute getInitialisedByAnonymousClassAttr() {
+    return myInitialisedByAnonymousClassAttr;
   }
 
   private TransientAttribute getTransientAttr() {
@@ -100,8 +100,8 @@ public final class FieldAttributes extends ItemAttributes {
     else {
       sb.append("fields");
     }
-    if (initToAnonClassAttr.isValue()) {
-      if (!initToAnonClassAttr.isInvert()) {
+    if (myInitialisedByAnonymousClassAttr.isValue()) {
+      if (!myInitialisedByAnonymousClassAttr.isInvert()) {
         sb.append(" which are initialized to an anonymous class");
       }
       else {
@@ -109,14 +109,14 @@ public final class FieldAttributes extends ItemAttributes {
       }
     }
     if (getNameAttribute().isMatch()) {
-      if (initToAnonClassAttr.isValue()) {
+      if (myInitialisedByAnonymousClassAttr.isValue()) {
         sb.append(" and");
       }
       sb.append(' ');
       sb.append(getNameAttribute().getDescriptiveString());
     }
     if (typeAttr.isMatch()) {
-      if (getNameAttribute().isMatch() || initToAnonClassAttr.isValue()) {
+      if (getNameAttribute().isMatch() || myInitialisedByAnonymousClassAttr.isValue()) {
         sb.append(" and");
       }
       sb.append(' ');
@@ -135,7 +135,7 @@ public final class FieldAttributes extends ItemAttributes {
   public final /*FieldAttributes*/AttributeGroup deepCopy() {
     final FieldAttributes result = new FieldAttributes();
     deepCopyCommonItems(result);
-    result.initToAnonClassAttr = (InitToAnonClassAttribute)initToAnonClassAttr.deepCopy();
+    result.myInitialisedByAnonymousClassAttr = (InitialisedByAnonymousClassAttribute)myInitialisedByAnonymousClassAttr.deepCopy();
     result.transientAttr = (TransientAttribute)transientAttr.deepCopy();
     result.volatileAttr = (VolatileAttribute)volatileAttr.deepCopy();
     result.typeAttr = (TypeAttribute)typeAttr.deepCopy();
@@ -146,7 +146,7 @@ public final class FieldAttributes extends ItemAttributes {
   public final void writeExternal(@NotNull final Element parent) {
     final Element child = new Element("Field");
     writeExternalCommonAttributes(child);
-    initToAnonClassAttr.appendAttributes(child);
+    myInitialisedByAnonymousClassAttr.appendAttributes(child);
     transientAttr.appendAttributes(child);
     volatileAttr.appendAttributes(child);
     typeAttr.appendAttributes(child);
@@ -161,7 +161,7 @@ public final class FieldAttributes extends ItemAttributes {
     return super.equals(fa) &&
            transientAttr.equals(fa.transientAttr) &&
            volatileAttr.equals(fa.volatileAttr) &&
-           initToAnonClassAttr.equals(fa.initToAnonClassAttr) &&
+           myInitialisedByAnonymousClassAttr.equals(fa.myInitialisedByAnonymousClassAttr) &&
            typeAttr.equals(fa.typeAttr);
   }
 
@@ -191,7 +191,7 @@ public final class FieldAttributes extends ItemAttributes {
     constraints.insets = new Insets(5, 0, 0, 0);
     constraints.gridx = 0;
     constraints.gridy++;
-    plPanel.add(getInitToAnonClassAttr().getAndNotPanel(), constraints);
+    plPanel.add(getInitialisedByAnonymousClassAttr().getAndNotPanel(), constraints);
     constraints.gridy++;
     plPanel.add(getNameAttribute().getStringPanel(), constraints);
     constraints.gridy++;
@@ -206,7 +206,7 @@ public final class FieldAttributes extends ItemAttributes {
 
   public boolean isMatch(@NotNull RangeEntry rangeEntry) {
     return rangeEntry.getEnd() instanceof PsiField &&
-           initToAnonClassAttr.isMatch(rangeEntry.getModifiers()) &&
+           myInitialisedByAnonymousClassAttr.isMatch(rangeEntry.getModifiers()) &&
            transientAttr.isMatch(rangeEntry.getModifiers()) &&
            volatileAttr.isMatch(rangeEntry.getModifiers()) &&
            typeAttr.isMatch(rangeEntry.getType()) &&

@@ -629,8 +629,7 @@ public final class MethodAttributes
 // Start Methods of Interface IRule
 
   public final boolean isMatch(@NotNull RangeEntry entry) {
-    final boolean result = (entry.getEnd() instanceof PsiMethod ||
-                            entry.getEnd() instanceof PsiClassInitializer) &&
+    final boolean result = (entry.getEnd() instanceof PsiMethod || entry.getEnd() instanceof PsiClassInitializer) &&
                            super.isMatch(entry) &&
                            abstractAttr.isMatch(entry.getModifiers()) &&
                            overriddenAttr.isMatch(entry.getModifiers()) &&

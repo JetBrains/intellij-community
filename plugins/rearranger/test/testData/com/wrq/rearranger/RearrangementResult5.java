@@ -9,6 +9,7 @@ class AnotherOuterClass {
 
 /** public class comments. */
 public class RearrangementTest {
+
   /** field 1. */
   private int field1;
   private int field2;

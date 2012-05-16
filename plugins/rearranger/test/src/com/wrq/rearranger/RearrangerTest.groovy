@@ -30,6 +30,7 @@ import com.wrq.rearranger.settings.attributeGroups.FieldAttributes
 import com.wrq.rearranger.settings.attributeGroups.MethodAttributes
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.Nullable
+import com.wrq.rearranger.settings.CommentRule
 
 /** JUnit tests for the rearranger plugin. */
 class RearrangerTest extends LightCodeInsightFixtureTestCase {
@@ -100,83 +101,61 @@ class RearrangerTest extends LightCodeInsightFixtureTestCase {
     }
   }
 
-//  public final void testAnonClassInit() throws Exception {
-//    configureByFile("/com/wrq/rearranger/RearrangementTest7.java");
-//    final PsiFile file = getFile();
-//    final Document doc = PsiDocumentManager.getInstance(getProject()).getDocument(file);
-//    final FieldAttributes fa;
-//    fa = new FieldAttributes();
-//    fa.getInitToAnonClassAttr().setValue(true);
-//    rs.addItem(fa, 0);
-//    final RearrangerActionHandler rah = new RearrangerActionHandler();
-//    rah.rearrangeDocument(getProject(), file, rs, doc);
-//    super.checkResultByFile("/com/wrq/rearranger/RearrangementResult7.java");
-//  }
-//
-//  public final void testNameMatch() throws Exception {
-//    configureByFile("/com/wrq/rearranger/RearrangementTest.java");
-//    final PsiFile file = getFile();
-//    final Document doc = PsiDocumentManager.getInstance(getProject()).getDocument(file);
-//    final FieldAttributes fa;
-//    fa = new FieldAttributes();
-//    fa.getNameAttr().setMatch(true);
-//    fa.getNameAttr().setExpression(".*5");
-//    rs.addItem(fa, 0);
-//    final MethodAttributes ma = new MethodAttributes();
-//    ma.getNameAttr().setMatch(true);
-//    ma.getNameAttr().setExpression(".*2");
-//    rs.addItem(ma, 1);
-//    final RearrangerActionHandler rah = new RearrangerActionHandler();
-//    rah.rearrangeDocument(getProject(), file, rs, doc);
-//    super.checkResultByFile("/com/wrq/rearranger/RearrangementResult8.java");
-//  }
-//
-//  public final void testStaticInitializer() throws Exception {
-//    configureByFile("/com/wrq/rearranger/RearrangementTest8.java");
-//    final PsiFile file = getFile();
-//    final Document doc = PsiDocumentManager.getInstance(getProject()).getDocument(file);
-//    final MethodAttributes ma;
-//    ma = new MethodAttributes();
-//    ma.getStaticInitAttr().setValue(true);
-//    rs.addItem(ma, 0);
-//    final RearrangerActionHandler rah = new RearrangerActionHandler();
-//    rah.rearrangeDocument(getProject(), file, rs, doc);
-//    super.checkResultByFile("/com/wrq/rearranger/RearrangementResult8A.java");
-//  }
-//
-//  public final void testAlphabetizingGSMethods() throws Exception {
-//    configureByFile("/com/wrq/rearranger/RearrangementTest.java");
-//    final PsiFile file = getFile();
-//    final Document doc = PsiDocumentManager.getInstance(getProject()).getDocument(file);
-//    final MethodAttributes ma;
-//    ma = new MethodAttributes();
-//    ma.setGetterSetterMethodType(true);
-//    ma.setOtherMethodType(true);
-//    ma.setConstructorMethodType(false);
-//    ma.getSortAttr().setByName(true);
-//    rs.addItem(ma, 0);
-//    rs.setKeepGettersSettersTogether(false);
-//    final RearrangerActionHandler rah = new RearrangerActionHandler();
-//    rah.rearrangeDocument(getProject(), file, rs, doc);
-//    super.checkResultByFile("/com/wrq/rearranger/RearrangementResult9.java");
-//  }
-//
-//  public final void testSimpleComment() throws Exception {
-//    configureByFile("/com/wrq/rearranger/RearrangementTest.java");
-//    final PsiFile file = getFile();
-//    final Document doc = PsiDocumentManager.getInstance(getProject()).getDocument(file);
-//    final FieldAttributes fa = new FieldAttributes();
-//    fa.getPlAttr().setPlPublic(true);
-//    rs.addItem(fa, 0);
-//    final CommentRule c = new CommentRule();
-//    c.setCommentText("// simple comment **********");
-//    c.setEmitCondition(CommentRule.EMIT_IF_ITEMS_MATCH_PRECEDING_RULE);
-//    rs.addItem(c, 1);
-//    final RearrangerActionHandler rah = new RearrangerActionHandler();
-//    rah.rearrangeDocument(getProject(), file, rs, doc);
-//    super.checkResultByFile("/com/wrq/rearranger/RearrangementResult10.java");
-//  }
-//
+  public final void testAnonClassInit() throws Exception {
+    doTest('RearrangementTest7', 'RearrangementResult7') {
+      def attributes = new FieldAttributes()
+      attributes.initialisedByAnonymousClassAttr.value = true
+      mySettings.addItem(attributes, 0)
+    }
+  }
+
+  public final void testNameMatch() throws Exception {
+    doTest('RearrangementTest', 'RearrangementResult8') {
+      def fieldAttributes = new FieldAttributes()
+      fieldAttributes.nameAttribute.match = true
+      fieldAttributes.nameAttribute.expression = '.*5'
+      mySettings.addItem(fieldAttributes, 0)
+      
+      def methodAttributes = new MethodAttributes()
+      methodAttributes.nameAttribute.match = true
+      methodAttributes.nameAttribute.expression = '.*2'
+      mySettings.addItem(methodAttributes, 1)
+    }
+  }
+
+  public final void testStaticInitializer() throws Exception {
+    doTest('RearrangementTest8', 'RearrangementResult8A') {
+      def methodAttributes = new MethodAttributes()
+      methodAttributes.staticAttribute.value = true
+      mySettings.addItem(methodAttributes, 0)
+    }
+  }
+
+  public final void testAlphabetizingGSMethods() throws Exception {
+    doTest('RearrangementTest', 'RearrangementResult9') {
+      def attributes = new MethodAttributes()
+      attributes.getterSetterMethodType = true
+      attributes.otherMethodType = true
+      attributes.constructorMethodType = false
+      attributes.sortOptions.byName = true
+      mySettings.addItem(attributes, 0)
+      mySettings.keepGettersSettersTogether = false
+    }
+  }
+
+  public final void testSimpleComment() throws Exception {
+    doTest('RearrangementTest', 'RearrangementResult10') {
+      def attributes = new FieldAttributes()
+      attributes.protectionLevelAttributes.plPublic = true
+      mySettings.addItem(attributes, 0)
+      
+      def comment = new CommentRule()
+      comment.commentText = '// simple comment **********'
+      comment.emitCondition = CommentRule.EMIT_IF_ITEMS_MATCH_PRECEDING_RULE
+      mySettings.addItem(comment, 1)
+    }
+  }
+
 //  /**
 //   * Delete old comment and insert (identical) new one.  This tests proper identification and deletion of old
 //   * comments.

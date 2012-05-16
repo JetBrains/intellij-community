@@ -21,6 +21,7 @@ if [ -z "$UNAME" -o -z "$GREP" -o -z "$CUT" -o -z "$MKTEMP" -o -z "$RM" -o -z "$
 fi
 
 OS_TYPE=`"$UNAME" -s`
+WORKING_DIR=`pwd`
 
 # ---------------------------------------------------------------------
 # Locate a JDK installation directory which will be used to run the IDE.
@@ -139,6 +140,8 @@ if [ -r "$VM_OPTIONS_FILE" ]; then
   VM_OPTIONS=`"$CAT" "$VM_OPTIONS_FILE" | "$GREP" -ve "^#.*" | "$TR" '\n' ' '`
   VM_OPTIONS="$VM_OPTIONS -Djb.vmOptionsFile=\"$VM_OPTIONS_FILE\""
 fi
+
+VM_OPTIONS="$VM_OPTIONS -Doriginal.working.dir=\"$WORKING_DIR\""
 
 IS_EAP="@@isEap@@"
 if [ "$IS_EAP" = "true" ]; then
