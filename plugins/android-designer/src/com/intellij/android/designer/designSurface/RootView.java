@@ -36,6 +36,10 @@ public class RootView extends JComponent {
     setImage(image);
   }
 
+  public BufferedImage getImage() {
+    return myImage;
+  }
+
   public void setImage(BufferedImage image) {
     myImage = image;
     myEmptyRegions = new ArrayList<EmptyRegion>();
