@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package com.intellij.psi.impl.source.tree.java;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.resolve.JavaResolveCache;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.ElementType;
@@ -28,7 +27,9 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.Function;
+import com.intellij.util.NullableFunction;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class PsiPolyadicExpressionImpl extends ExpressionPsiElement implements PsiPolyadicExpression {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiPolyadicExpressionImpl");
@@ -57,13 +58,15 @@ public class PsiPolyadicExpressionImpl extends ExpressionPsiElement implements P
   public PsiType getType() {
     return JavaResolveCache.getInstance(getProject()).getType(this, MY_TYPE_EVALUATOR);
   }
-  private static final Function<PsiPolyadicExpressionImpl,PsiType> MY_TYPE_EVALUATOR = new Function<PsiPolyadicExpressionImpl, PsiType>() {
+
+  private static final Function<PsiPolyadicExpressionImpl,PsiType> MY_TYPE_EVALUATOR = new NullableFunction<PsiPolyadicExpressionImpl, PsiType>() {
     @Override
     public PsiType fun(PsiPolyadicExpressionImpl expression) {
       return doGetType(expression);
     }
   };
 
+  @Nullable
   private static PsiType doGetType(PsiPolyadicExpressionImpl param) {
     PsiExpression[] operands = param.getOperands();
     PsiType lType = null;
@@ -79,7 +82,6 @@ public class PsiPolyadicExpressionImpl extends ExpressionPsiElement implements P
     }
     return lType;
   }
-
 
   @Override
   public ASTNode findChildByRole(int role) {
@@ -124,7 +126,7 @@ public class PsiPolyadicExpressionImpl extends ExpressionPsiElement implements P
   public PsiExpression[] getOperands() {
     PsiExpression[] operands = cachedOperands;
     if (operands == null) {
-      cachedOperands = operands = getChildrenAsPsiElements(ElementType.EXPRESSION_BIT_SET, Constants.PSI_EXPRESSION_ARRAY_CONSTRUCTOR);
+      cachedOperands = operands = getChildrenAsPsiElements(ElementType.EXPRESSION_BIT_SET, PsiExpression.ARRAY_FACTORY);
     }
     return operands;
   }
@@ -140,4 +142,3 @@ public class PsiPolyadicExpressionImpl extends ExpressionPsiElement implements P
     return "PsiPolyadicExpression: " + getText();
   }
 }
-

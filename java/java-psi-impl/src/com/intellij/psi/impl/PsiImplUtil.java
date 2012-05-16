@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.impl.light.LightClassReference;
-import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.PsiClassReferenceType;
 import com.intellij.psi.impl.source.PsiImmediateClassType;
 import com.intellij.psi.impl.source.tree.CompositeElement;
@@ -493,10 +492,10 @@ public class PsiImplUtil {
 
   @Nullable
   public static ASTNode findStatementChild(CompositePsiElement statement) {
-    if (DebugUtil.CHECK_INSIDE_ATOMIC_ACTION_ENABLED){
+    if (DebugUtil.CHECK_INSIDE_ATOMIC_ACTION_ENABLED) {
       ApplicationManager.getApplication().assertReadAccessAllowed();
     }
-    for(ASTNode element = statement.getFirstChildNode(); element != null; element = element.getTreeNext()){
+    for (ASTNode element = statement.getFirstChildNode(); element != null; element = element.getTreeNext()) {
       if (element.getPsi() instanceof PsiStatement) return element;
     }
     return null;
@@ -512,10 +511,8 @@ public class PsiImplUtil {
       }
     }
 
-    PsiStatement[] result = Constants.PSI_STATEMENT_ARRAY_CONSTRUCTOR.newPsiElementArray(count);
-    if (count == 0) {
-      return result;
-    }
+    PsiStatement[] result = PsiStatement.ARRAY_FACTORY.create(count);
+    if (count == 0) return result;
     int idx = 0;
     for (ASTNode child = psiCodeBlock.getFirstChildNode(); child != null && idx < count; child = child.getTreeNext()) {
       if (child.getPsi() instanceof PsiStatement) {

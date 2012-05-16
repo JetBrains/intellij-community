@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,8 @@
  */
 package com.intellij.psi;
 
+import com.intellij.util.ArrayFactory;
+
 /**
  * Represents a Java statement.
  */
@@ -23,4 +25,11 @@ public interface PsiStatement extends PsiElement {
    * The empty array of PSI statements which can be reused to avoid unnecessary allocations.
    */
   PsiStatement[] EMPTY_ARRAY = new PsiStatement[0];
+
+  ArrayFactory<PsiStatement> ARRAY_FACTORY = new ArrayFactory<PsiStatement>() {
+    @Override
+    public PsiStatement[] create(final int count) {
+      return count == 0 ? PsiStatement.EMPTY_ARRAY : new PsiStatement[count];
+    }
+  };
 }
