@@ -113,9 +113,9 @@ public class ClassEntry extends ClassContentsEntry implements FilePopupEntry {
     return new JLabel(myName);
   }
 
-  protected void parseRemainingClassContents(final Project project,
+  protected void parseRemainingClassContents(@NotNull final Project project,
                                              int startingIndex,
-                                             final PsiElement psiClass
+                                             @NotNull final PsiElement psiClass
   ) {
     final PsiSearchHelper psh = PsiSearchHelper.SERVICE.getInstance(project);
     int lastIndex = startingIndex;

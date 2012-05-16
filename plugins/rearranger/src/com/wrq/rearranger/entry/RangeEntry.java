@@ -186,13 +186,11 @@ abstract public class RangeEntry implements PopupTreeRangeEntry {
 // -------------------------- OTHER METHODS --------------------------
 
   public void checkForComment() {
-    if (CommentUtil.getCommentMatchers().size() == 0) {
+    if (CommentUtil.getCommentMatchers().isEmpty()) {
       return;
     }
     createAlternateValueString();
-    /**
-     * for each separator comment specified by the user, check to see if this comment matches.
-     */
+    // For each separator comment specified by the user, check to see if this comment matches.
     for (Matcher matcher : CommentUtil.getCommentMatchers()) {
       matcher.reset(myAlternateValue);
       boolean foundMatch = matcher.find();
