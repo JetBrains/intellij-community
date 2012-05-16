@@ -365,7 +365,6 @@ public class AndroidPackagingBuilder extends ProjectLevelBuilder {
     final String classesDexFilePath = classesDexFile.getPath();
     final String[] externalJars = ArrayUtil.toStringArray(externalJarsSet);
 
-    // currently including native libraries through pom.xml doesn't work when jps compilation is used, MAVEN_REPOSITORY url macros needed
     final List<AndroidNativeLibData> additionalNativeLibs = facet.getAdditionalNativeLibs();
 
     final AndroidFileSetState currentFileSetState =

@@ -35,9 +35,8 @@ class AndroidFacetType extends FacetTypeService {
           final targetFileName = nativeLibItem.get("@" + AndroidCommonUtils.TARGET_FILE_NAME_ATTRIBUTE)
 
           if (architecture != null && url != null && targetFileName != null) {
-            facet.additionalNativeLibs.add(new AndroidNativeLibData((String)architecture,
-                                                                    IdeaProjectLoadingUtil.pathFromUrl((String)url),
-                                                                    (String)targetFileName))
+            final path = macroExpander.expandMacros(IdeaProjectLoadingUtil.pathFromUrl((String)url))
+            facet.additionalNativeLibs.add(new AndroidNativeLibData((String)architecture, path, (String)targetFileName))
           }
         }
       }
@@ -76,7 +75,7 @@ class AndroidFacetType extends FacetTypeService {
           facet.apkRelativePath = value
           break
         case "CUSTOM_DEBUG_KEYSTORE_PATH":
-          facet.customDebugKeyStorePath = IdeaProjectLoadingUtil.pathFromUrl(value)
+          facet.customDebugKeyStorePath = macroExpander.expandMacros(IdeaProjectLoadingUtil.pathFromUrl(value))
           break
         case "LIBS_FOLDER_RELATIVE_PATH":
           facet.nativeLibsFolderRelativePath = value
