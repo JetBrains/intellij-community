@@ -54,6 +54,7 @@ public class JavaFileHighlighter extends SyntaxHighlighterBase {
     ourMap2 = new HashMap<IElementType, TextAttributesKey>();
 
     fillMap(ourMap1, ElementType.KEYWORD_BIT_SET, SyntaxHighlighterColors.KEYWORD);
+    fillMap(ourMap1, ElementType.LITERAL_BIT_SET, SyntaxHighlighterColors.KEYWORD);
     fillMap(ourMap1, ElementType.OPERATION_BIT_SET, SyntaxHighlighterColors.OPERATION_SIGN);
 
     for (IElementType type : JavaDocTokenType.ALL_JAVADOC_TOKENS.getTypes()) {
