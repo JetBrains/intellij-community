@@ -21,12 +21,15 @@ import com.intellij.codeInsight.intention.EmptyIntentionAction;
 import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.*;
-import com.intellij.codeInspection.ex.*;
+import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
+import com.intellij.codeInspection.ex.ProblemDescriptorImpl;
+import com.intellij.codeInspection.ex.UnfairLocalInspectionTool;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
@@ -83,6 +86,7 @@ public class CleanupInspectionIntention implements IntentionAction, HighPriority
             final PsiElement element = ((ProblemDescriptor)descriptor).getPsiElement();
             if (element != null && element.isValid()) {
               fix.applyFix(project, descriptor);
+              PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
             }
             break;
           }
