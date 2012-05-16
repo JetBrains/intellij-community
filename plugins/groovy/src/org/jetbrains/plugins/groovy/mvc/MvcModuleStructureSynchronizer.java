@@ -77,9 +77,11 @@ public class MvcModuleStructureSynchronizer extends AbstractProjectComponent {
     return myModificationTracker;
   }
 
+  @Override
   public void initComponent() {
     final MessageBusConnection connection = myProject.getMessageBus().connect();
     connection.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootAdapter() {
+      @Override
       public void rootsChanged(ModuleRootEvent event) {
         queue(SyncAction.SyncLibrariesInPluginsModule, myProject);
         queue(SyncAction.UpgradeFramework, myProject);
@@ -93,6 +95,7 @@ public class MvcModuleStructureSynchronizer extends AbstractProjectComponent {
     });
 
     connection.subscribe(ProjectTopics.MODULES, new ModuleAdapter() {
+      @Override
       public void moduleAdded(Project project, Module module) {
         queue(SyncAction.UpdateProjectStructure, module);
         queue(SyncAction.CreateAppStructureIfNeeded, module);
@@ -100,6 +103,7 @@ public class MvcModuleStructureSynchronizer extends AbstractProjectComponent {
     });
 
     connection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkVirtualFileListenerAdapter(new VirtualFileAdapter() {
+      @Override
       public void fileCreated(final VirtualFileEvent event) {
         myModificationCount++;
 
@@ -224,6 +228,7 @@ public class MvcModuleStructureSynchronizer extends AbstractProjectComponent {
     return file != null && "lib".equals(file.getName());
   }
 
+  @Override
   public void projectOpened() {
     queue(SyncAction.UpdateProjectStructure, myProject);
     queue(SyncAction.EnsureRunConfigurationExists, myProject);
@@ -237,8 +242,10 @@ public class MvcModuleStructureSynchronizer extends AbstractProjectComponent {
     if (myActions.isEmpty()) {
       if (myProject.isDisposed()) return;
       StartupManager.getInstance(myProject).runWhenProjectIsInitialized(new DumbAwareRunnable() {
+        @Override
         public void run() {
           ApplicationManager.getApplication().invokeLater(new Runnable() {
+            @Override
             public void run() {
               runActions();
             }
@@ -398,6 +405,7 @@ public class MvcModuleStructureSynchronizer extends AbstractProjectComponent {
       @Override
       public void run() {
         ApplicationManager.getApplication().invokeLater(new Runnable() {
+          @Override
           public void run() {
             if (myProject.isDisposed()) return;
 

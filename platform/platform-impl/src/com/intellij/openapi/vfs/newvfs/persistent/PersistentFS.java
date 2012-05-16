@@ -39,7 +39,6 @@ import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.StripedLockIntObjectConcurrentHashMap;
-import com.intellij.util.io.DupOutputStream;
 import com.intellij.util.io.ReplicatorInputStream;
 import com.intellij.util.messages.MessageBus;
 import gnu.trove.THashMap;
@@ -625,32 +624,31 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
     publisher.before(events);
 
     return new ByteArrayOutputStream() {
+      private boolean closed; // protection against user calling .close() twice
       @Override
       public void close() throws IOException {
+        if (closed) return;
         super.close();
 
         NewVirtualFileSystem delegate = getDelegate(canonicalFile);
-        final OutputStream outputStream = delegate.getOutputStream(canonicalFile, requestor, modStamp, timeStamp);
-
-        //noinspection IOResourceOpenedButNotSafelyClosed
-        final DupOutputStream sink = new DupOutputStream(new BufferedOutputStream(writeContent(canonicalFile, delegate.isReadOnly())), outputStream) {
-          @Override
-          public void close() throws IOException {
-            try {
-              super.close();
-            }
-            finally {
-              executeTouch(canonicalFile, false, event.getModificationStamp());
-              publisher.after(events);
-            }
-          }
-        };
+        OutputStream ioFileStream = delegate.getOutputStream(canonicalFile, requestor, modStamp, timeStamp);
+        // com.intellij.openapi.vfs.newvfs.persistent.FSRecords.ContentOutputStream already buffered, no need to wrap in BufferedStream
+        OutputStream persistenceStream = writeContent(canonicalFile, delegate.isReadOnly());
 
         try {
-          sink.write(buf, 0, count);
+          persistenceStream.write(buf, 0, count);
         }
         finally {
-          sink.close();
+          try {
+            ioFileStream.write(buf, 0, count);
+          }
+          finally {
+            closed = true;
+            persistenceStream.close();
+            ioFileStream.close();
+            executeTouch(canonicalFile, false, event.getModificationStamp());
+            publisher.after(events);
+          }
         }
       }
     };
@@ -857,7 +855,7 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
       }
     }
 
-    return VfsUtil.toVirtualFileArray(roots);
+    return VfsUtilCore.toVirtualFileArray(roots);
   }
 
   //guarded by dirCacheReadLock/dirCacheWriteLock
@@ -917,7 +915,7 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
   public VirtualFile[] getRoots() {
     synchronized (LOCK) {
       Collection<VirtualFileSystemEntry> roots = myRoots.values();
-      return VfsUtil.toVirtualFileArray(roots);
+      return VfsUtilCore.toVirtualFileArray(roots);
     }
   }
 
@@ -933,7 +931,7 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
       }
     }
 
-    return VfsUtil.toVirtualFileArray(roots);
+    return VfsUtilCore.toVirtualFileArray(roots);
   }
 
   private void applyEvent(@NotNull VFileEvent event) {

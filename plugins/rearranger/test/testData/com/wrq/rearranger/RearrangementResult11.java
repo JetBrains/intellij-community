@@ -1,8 +1,8 @@
 public class RearrangementTest11 {
-  // FIELDS:
+// FIELDS:
 // FINAL FIELDS:
   final        int i;
   public final int k;
-  // NON-FINAL FIELDS:
+// NON-FINAL FIELDS:
   int j;
 }

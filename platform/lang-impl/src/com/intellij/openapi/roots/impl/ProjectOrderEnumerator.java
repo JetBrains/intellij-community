@@ -28,7 +28,7 @@ import org.jetbrains.annotations.NotNull;
  * @author nik
  */
 public class ProjectOrderEnumerator extends OrderEnumeratorBase {
-  private Project myProject;
+  private final Project myProject;
 
   public ProjectOrderEnumerator(Project project, OrderRootsCache rootsCache) {
     super(null, project, rootsCache);

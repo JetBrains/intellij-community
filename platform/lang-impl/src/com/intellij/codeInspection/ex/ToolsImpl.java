@@ -77,6 +77,7 @@ public class ToolsImpl implements Tools {
   }
 
 
+  @Override
   public InspectionProfileEntry getInspectionTool(PsiElement element) {
     if (myTools != null) {
       final Project project = element != null ? element.getProject() : null;
@@ -108,6 +109,7 @@ public class ToolsImpl implements Tools {
     return myDefaultState.getTool();
   }
 
+  @Override
   public String getShortName() {
     return myShortName;
   }
@@ -200,11 +202,13 @@ public class ToolsImpl implements Tools {
     return scopeToolState;
   }
 
+  @Override
   public InspectionProfileEntry getTool() {
     if (myTools == null) return myDefaultState.getTool();
     return myTools.iterator().next().getTool();
   }
 
+  @Override
   @NotNull
   public List<ScopeToolState> getTools() {
     if (myTools == null) return Collections.singletonList(myDefaultState);
@@ -213,6 +217,7 @@ public class ToolsImpl implements Tools {
     return result;
   }
 
+  @Override
   @NotNull
   public ScopeToolState getDefaultState() {
     return myDefaultState;
@@ -292,11 +297,13 @@ public class ToolsImpl implements Tools {
     return myDefaultState.getLevel();
   }
 
+  @Override
   public boolean isEnabled() {
     return myEnabled;
   }
 
 
+  @Override
   public boolean isEnabled(PsiElement element) {
     if (!myEnabled) return false;
     if (myTools == null || element == null) return myDefaultState.isEnabled();
@@ -314,6 +321,7 @@ public class ToolsImpl implements Tools {
     return myDefaultState.isEnabled();
   }
 
+  @Override
   @Nullable
   public InspectionTool getEnabledTool(PsiElement element) {
     if (!myEnabled) return null;

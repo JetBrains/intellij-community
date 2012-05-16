@@ -385,7 +385,7 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
     assert application.isWriteAccessAllowed();  // dispose must be under write action
 
     // can call dispose only via com.intellij.ide.impl.ProjectUtil.closeAndDispose()
-    LOG.assertTrue(ApplicationManager.getApplication().isUnitTestMode() || !ProjectManagerEx.getInstanceEx().isProjectOpened(this));
+    LOG.assertTrue(application.isUnitTestMode() || !ProjectManagerEx.getInstanceEx().isProjectOpened(this));
 
     LOG.assertTrue(!isDisposed());
     if (myProjectManagerListener != null) {

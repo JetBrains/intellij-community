@@ -138,7 +138,7 @@ public abstract class CommentRuleInstance implements RuleInstance, FilePopupEntr
   }
 
   /**
-   * beginning at the index of ruleStatistics (which is a comment entry), find nRules in the direction indicated,
+   * Beginning at the index of ruleStatistics (which is a comment entry), find nRules in the direction indicated,
    * and test to see if all or any of them had entries that matched.
    *
    * @param nRules     number of rules to consider for matching algorithm.

@@ -51,7 +51,7 @@ abstract class OrderEnumeratorBase extends OrderEnumerator implements OrderEnume
   private Condition<OrderEntry> myCondition;
   private final List<OrderEnumerationHandler> myCustomHandlers;
   protected ModulesProvider myModulesProvider;
-  private OrderRootsCache myCache;
+  private final OrderRootsCache myCache;
 
   public OrderEnumeratorBase(@Nullable Module module, @NotNull Project project, @Nullable OrderRootsCache cache) {
     myCache = cache;

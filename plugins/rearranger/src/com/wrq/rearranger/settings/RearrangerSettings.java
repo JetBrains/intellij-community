@@ -35,6 +35,7 @@ import org.jdom.JDOMException;
 import org.jdom.input.SAXBuilder;
 import org.jdom.output.Format;
 import org.jdom.output.XMLOutputter;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
@@ -585,7 +586,11 @@ public final class RearrangerSettings {
 
 // -------------------------- OTHER METHODS --------------------------
 
-  public final void addClass(final AttributeGroup ca, final int index) {
+  public void addClass(@NotNull AttributeGroup group) {
+    myClassOrderAttributeList.add(group);
+  }
+  
+  public final void insertClass(@NotNull final AttributeGroup ca, final int index) {
     if (myClassOrderAttributeList.size() < index) {
       myClassOrderAttributeList.add(ca);
     }
@@ -594,7 +599,11 @@ public final class RearrangerSettings {
     }
   }
 
-  public final void addItem(final AttributeGroup ia, final int index) {
+  public void addItem(@NotNull AttributeGroup group) {
+    myItemOrderAttributeList.add(group);
+  }
+  
+  public final void insertItem(@NotNull final AttributeGroup ia, final int index) {
     if (myItemOrderAttributeList.size() < index) {
       myItemOrderAttributeList.add(ia);
     }

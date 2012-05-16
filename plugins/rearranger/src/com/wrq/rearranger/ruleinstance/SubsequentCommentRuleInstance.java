@@ -26,9 +26,7 @@ import com.wrq.rearranger.settings.CommentRule;
 import java.util.List;
 
 /** Used to store a generated comment which is emitted based on whether it matches subsequent rules. */
-public class SubsequentCommentRuleInstance
-  extends CommentRuleInstance
-{
+public class SubsequentCommentRuleInstance extends CommentRuleInstance {
 
   public SubsequentCommentRuleInstance(final CommentRule commentRule) {
     super(commentRule);
@@ -38,7 +36,7 @@ public class SubsequentCommentRuleInstance
   public void determineEmit(List<RuleInstance> resultRuleInstances, int startIndex) {
     if (match(
       resultRuleInstances,
-      myCommentRule.getnSubsequentRulesToMatch(),
+      myCommentRule.getNSubsequentRulesToMatch(),
       +1,
       startIndex,
       myCommentRule.isAllSubsequentRules()

@@ -135,11 +135,6 @@ public class PsiBasedFormattingModel implements FormattingModel {
     return myRootBlock;
   }
   
-  @Nullable
-  public ASTNode getRootNode() {
-    return myASTNode;
-  }
-
   public void canModifyAllWhiteSpaces() {
     myCanModifyAllWhiteSpaces = true;
   }
