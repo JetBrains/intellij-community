@@ -24,6 +24,7 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
+import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathMacros;
 import com.intellij.openapi.application.PathManager;
@@ -75,7 +76,8 @@ import org.jetbrains.jps.cmdline.BuildMain;
 import org.jetbrains.jps.server.ClasspathBootstrap;
 import org.jetbrains.jps.server.Server;
 
-import javax.tools.*;
+import javax.tools.JavaCompiler;
+import javax.tools.ToolProvider;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -395,6 +397,7 @@ public class BuildManager implements ApplicationComponent{
               return true;
             }
           };
+          final StringBuilder stdErrOutput = new StringBuilder();
           processHandler.addProcessListener(new ProcessAdapter() {
             @Override
             public void processTerminated(ProcessEvent event) {
@@ -409,12 +412,32 @@ public class BuildManager implements ApplicationComponent{
               // re-translate builder's output to idea.log
               final String text = event.getText();
               if (!StringUtil.isEmpty(text)) {
-                LOG.info("BUILDER_PROCESS [" +outputType.toString() +"]: "+ text.trim());
+                LOG.info("BUILDER_PROCESS [" + outputType.toString() + "]: " + text.trim());
+                if (stdErrOutput.length() < 1024 && ProcessOutputTypes.STDERR.equals(outputType)) {
+                  stdErrOutput.append(text);
+                }
               }
             }
           });
           processHandler.startNotify();
-          processHandler.waitFor();
+          final boolean terminated = processHandler.waitFor();
+          if (terminated) {
+            final int exitValue = processHandler.getProcess().exitValue();
+            if (exitValue != 0) {
+              final StringBuilder msg = new StringBuilder();
+              msg.append("Abnormal build process termination: ");
+              if (stdErrOutput.length() > 0) {
+                msg.append("\n").append(stdErrOutput);
+              }
+              else {
+                msg.append("unknown error");
+              }
+              future.getMessageHandler().handleFailure(sessionId, CmdlineProtoUtil.createFailure(msg.toString(), null));
+            }
+          }
+          else {
+            future.getMessageHandler().handleFailure(sessionId, CmdlineProtoUtil.createFailure("Disconnected from build process", null));
+          }
         }
         catch (ExecutionException e) {
           myMessageDispatcher.unregisterBuildMessageHandler(sessionId);
@@ -565,31 +588,28 @@ public class BuildManager implements ApplicationComponent{
   }
 
   private Process launchBuildProcess(Project project, final int port, final UUID sessionId) throws ExecutionException {
-
     // choosing sdk with which the build process should be run
     final Sdk internalJdk = JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk();
     Sdk projectJdk = internalJdk;
     final String versionString = projectJdk.getVersionString();
-    if (versionString != null) {
-      JavaSdkVersion sdkVersion = ((JavaSdk)projectJdk.getSdkType()).getVersion(versionString);
-      if (sdkVersion != null) {
-        final Set<Sdk> candidates = new HashSet<Sdk>();
-        for (Module module : ModuleManager.getInstance(project).getModules()) {
-          final Sdk sdk = ModuleRootManager.getInstance(module).getSdk();
-          if (sdk != null && sdk.getSdkType() instanceof JavaSdk) {
-            candidates.add(sdk);
-          }
+    JavaSdkVersion sdkVersion = versionString != null? ((JavaSdk)projectJdk.getSdkType()).getVersion(versionString) : null;
+    if (sdkVersion != null) {
+      final Set<Sdk> candidates = new HashSet<Sdk>();
+      for (Module module : ModuleManager.getInstance(project).getModules()) {
+        final Sdk sdk = ModuleRootManager.getInstance(module).getSdk();
+        if (sdk != null && sdk.getSdkType() instanceof JavaSdk) {
+          candidates.add(sdk);
         }
-        // now select the latest version from the sdks that are used in the project, but not older than the internal sdk version
-        for (Sdk candidate : candidates) {
-          final String vs = candidate.getVersionString();
-          if (vs != null) {
-            final JavaSdkVersion candidateVersion = ((JavaSdk)candidate.getSdkType()).getVersion(vs);
-            if (candidateVersion != null) {
-              if (candidateVersion.compareTo(sdkVersion) > 0) {
-                sdkVersion = candidateVersion;
-                projectJdk = candidate;
-              }
+      }
+      // now select the latest version from the sdks that are used in the project, but not older than the internal sdk version
+      for (Sdk candidate : candidates) {
+        final String vs = candidate.getVersionString();
+        if (vs != null) {
+          final JavaSdkVersion candidateVersion = ((JavaSdk)candidate.getSdkType()).getVersion(vs);
+          if (candidateVersion != null) {
+            if (candidateVersion.compareTo(sdkVersion) > 0) {
+              sdkVersion = candidateVersion;
+              projectJdk = candidate;
             }
           }
         }
@@ -625,7 +645,8 @@ public class BuildManager implements ApplicationComponent{
     }
     cmdLine.addParameter("-Xmx" + heapSize + "m");
 
-    if (SystemInfo.isMac && Registry.is("compiler.process.32bit.vm.on.mac")) {
+    if (SystemInfo.isMac && sdkVersion != null && JavaSdkVersion.JDK_1_6.equals(sdkVersion) && Registry.is("compiler.process.32bit.vm.on.mac")) {
+      // unfortunately -d32 is supported on jdk 1.6 only
       cmdLine.addParameter("-d32");
     }
 
