@@ -122,7 +122,7 @@ public class MockProjectStore implements IProjectStore {
   }
 
   @Override
-  public String initComponent(Object component, final boolean service) {
+  public void initComponent(Object component, final boolean service) {
     throw new UnsupportedOperationException("Method initComponent is not yet implemented in " + getClass().getName());
   }
 

@@ -28,11 +28,10 @@ import java.util.List;
 import java.util.Set;
 
 public interface IComponentStore {
-  @Nullable
-  String initComponent(Object component, boolean service);
+
+  void initComponent(Object component, boolean service);
   void reinitComponents(Set<String> componentNames, boolean reloadData);
   boolean isReloadPossible(Set<String> componentNames);
-
 
   void load() throws IOException, StateStorageException;
   boolean isSaving();
