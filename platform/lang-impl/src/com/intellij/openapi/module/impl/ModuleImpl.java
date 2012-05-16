@@ -143,7 +143,7 @@ public class ModuleImpl extends ComponentManagerImpl implements ModuleEx {
     return getStateStore().getModuleFile();
   }
 
-  void rename(String newName) {
+  public void rename(String newName) {
     myName = newName;
     final VirtualFile file = getStateStore().getModuleFile();
     try {

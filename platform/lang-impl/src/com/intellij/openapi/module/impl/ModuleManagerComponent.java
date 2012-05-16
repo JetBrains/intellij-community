@@ -98,6 +98,10 @@ public class ModuleManagerComponent extends ModuleManagerImpl {
     }
   }
 
+  protected ModuleEx createModule(String filePath) {
+    return new ModuleImpl(filePath, myProject);
+  }
+
   protected ModuleEx createAndLoadModule(String filePath) throws IOException {
     ModuleImpl module = new ModuleImpl(filePath, myProject);
     module.getStateStore().load();

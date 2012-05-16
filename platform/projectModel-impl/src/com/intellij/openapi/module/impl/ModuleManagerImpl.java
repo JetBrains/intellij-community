@@ -544,6 +544,8 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
     ((ModuleModelImpl)model).commitWithRunnable(runnable);
   }
 
+  protected abstract ModuleEx createModule(String filePath);
+
   protected abstract ModuleEx createAndLoadModule(String filePath) throws IOException;
 
   class ModuleModelImpl implements ModifiableModuleModel {
@@ -641,7 +643,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
 
       ModuleEx module = getModuleByFilePath(filePath);
       if (module == null) {
-        module = new ModuleImpl(filePath, myProject);
+        module = createModule(filePath);
         module.setOption(Module.ELEMENT_TYPE, moduleTypeId);
         if (options != null) {
           for ( Map.Entry<String,String> option : options.entrySet()) {
@@ -835,7 +837,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
     public void projectOpened() {
       final Collection<Module> collection = myPathToModule.values();
       for (final Module aCollection : collection) {
-        ModuleImpl module = (ModuleImpl)aCollection;
+        ModuleEx module = (ModuleEx)aCollection;
         module.projectOpened();
       }
     }
@@ -909,7 +911,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
         modulesToBeRenamed.removeAll(moduleModel.myModulesToDispose);
         final List<Module> modules = new ArrayList<Module>();
         for (final Module moduleToBeRenamed : modulesToBeRenamed) {
-          ModuleImpl module = (ModuleImpl)moduleToBeRenamed;
+          ModuleEx module = (ModuleEx)moduleToBeRenamed;
           moduleModel.myPathToModule.remove(moduleToBeRenamed.getModuleFilePath());
           modules.add(moduleToBeRenamed);
           module.rename(modulesToNewNamesMap.get(moduleToBeRenamed));
@@ -927,7 +929,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
         }
 
         for (Module addedModule : addedModules) {
-          ((ModuleImpl)addedModule).moduleAdded();
+          ((ModuleEx)addedModule).moduleAdded();
           cleanCachedStuff();
           fireModuleAdded(addedModule);
           cleanCachedStuff();
