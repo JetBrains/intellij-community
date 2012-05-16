@@ -30,6 +30,7 @@ import com.intellij.openapi.vcs.changes.ui.ChangesBrowser;
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNodeRenderer;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -183,14 +184,11 @@ public class SelectFilesToAddTextsToPatchPanel implements RefreshablePanel {
     myPanel = new JPanel(new GridBagLayout());
     final GridBagConstraints gb = new GridBagConstraints(0, 0, 1, 1, 1, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL,
                                                                    new Insets(1, 1, 1, 1), 0, 0);
-    final StringBuilder sb = new StringBuilder().append("<html><head>").append(UIUtil.getCssFontDeclaration(UIUtil.getLabelFont())).
-      append("</head><body>Base revision text should be included into patch, if it is about to be used in projects under DVCS.").
-      append("<br/>In DVCS commits can be reordered, so there could exist no revision any more with the text matching patch context.<br/><br/>").
-      append("Only modified files texts needs to be added. Add/delete changes are self-descriptive.").
-      append("</body></html>");
+    final String sb = "<html>Base revision text should be included into patch, if it is about to be used in projects under DVCS." +
+                      "<br/>In DVCS commits can be reordered, so there could exist no revision any more with the text matching patch context." +
+                      "<br/><br/>Only modified files texts needs to be added. Add/delete changes are self-descriptive.</html>";
 
-    myBaseRevisionTextShouldLabel = new JLabel(sb.toString());
-    myBaseRevisionTextShouldLabel.setForeground(UIUtil.getInactiveTextColor());
+    myBaseRevisionTextShouldLabel = new JBLabel(sb, UIUtil.ComponentStyle.SMALL, UIUtil.FontColor.BRIGHTER);
     myPanel.add(myBaseRevisionTextShouldLabel, gb);
     ++ gb.gridy;
     gb.fill = GridBagConstraints.BOTH;
@@ -204,7 +202,7 @@ public class SelectFilesToAddTextsToPatchPanel implements RefreshablePanel {
     myPanel.add(myIncludedText, gb);*/
     return myPanel;
   }
-  
+
   public Collection<Change> getIncludedChanges() {
     return myBrowser.getViewer().getIncludedChanges();
   }

@@ -181,7 +181,7 @@ public class CreatePatchConfigurationPanel {
         public void run() {
           if (mySelectFilesToAddTextsToPatchPanel != null) {
             myIncludedChanges = mySelectFilesToAddTextsToPatchPanel.getIncludedChanges();
-            myHideableTitledPanel.setTitle("Selected: " + (myIncludedChanges.size() == myChanges.size() ?
+            myHideableTitledPanel.setTitle("&Selected: " + (myIncludedChanges.size() == myChanges.size() ?
                                                            "All" : (myIncludedChanges.size() + " of " + myChanges.size())));
           }
         }
@@ -196,9 +196,11 @@ public class CreatePatchConfigurationPanel {
         @Override
         public void actionPerformed(ActionEvent e) {
           myHideableTitledPanel.setEnabled(myIncludeBaseRevisionTextCheckBox.isSelected());
+          mySelectFilesToAddTextsToPatchPanel.setEnabled(myIncludeBaseRevisionTextCheckBox.isSelected());
         }
       });
       myHideableTitledPanel.setEnabled(myIncludeBaseRevisionTextCheckBox.isSelected());
+      mySelectFilesToAddTextsToPatchPanel.setEnabled(myIncludeBaseRevisionTextCheckBox.isSelected());
     }
   }
 
