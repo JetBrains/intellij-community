@@ -66,7 +66,7 @@
 
     <component>
       <interface-class>com.intellij.openapi.module.ModuleManager</interface-class>
-      <implementation-class>com.intellij.openapi.module.impl.ModuleManagerImpl</implementation-class>
+      <implementation-class>com.intellij.openapi.module.impl.ModuleManagerComponent</implementation-class>
       <loadForDefaultProject/>
     </component>
 

@@ -55,7 +55,7 @@ import java.util.*;
 /**
  * @author max
  */
-public class ModuleImpl extends ComponentManagerImpl implements Module {
+public class ModuleImpl extends ComponentManagerImpl implements ModuleEx {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.module.impl.ModuleImpl");
 
   @NotNull private final Project myProject;
