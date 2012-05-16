@@ -25,6 +25,7 @@ package com.wrq.rearranger;
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import com.wrq.rearranger.settings.RearrangerSettings
+import com.wrq.rearranger.settings.attributeGroups.ClassAttributes
 import com.wrq.rearranger.settings.attributeGroups.FieldAttributes
 import com.wrq.rearranger.settings.attributeGroups.MethodAttributes
 import org.jetbrains.annotations.NotNull
@@ -82,33 +83,23 @@ class RearrangerTest extends LightCodeInsightFixtureTestCase {
     }
   }
 
-//  public final void testClassRearrangement() throws Exception {
-//    configureByFile("/com/wrq/rearranger/RearrangementTest.java");
-//    final PsiFile file = getFile();
-//    final Document doc = PsiDocumentManager.getInstance(getProject()).getDocument(file);
-//    final ClassAttributes ca = new ClassAttributes();
-//    ca.getPlAttr().setPlPackage(true);
-//    rs.addClass(ca, 0);
-//    final RearrangerActionHandler rah = new RearrangerActionHandler();
-//    rah.rearrangeDocument(getProject(), file, rs, doc);
-//    super.checkResultByFile("/com/wrq/rearranger/RearrangementResult5.java");
-//  }
-//
-//  public final void testPSFRearrangement() throws Exception {
-//    configureByFile("/com/wrq/rearranger/RearrangementTest2.java");
-//    final PsiFile file = getFile();
-//    final Document doc = PsiDocumentManager.getInstance(getProject()).getDocument(file);
-//    final FieldAttributes fa;
-//    fa = new FieldAttributes();
-//    fa.getPlAttr().setPlPublic(true);
-//    fa.getfAttr().setValue(true);
-//    fa.getStAttr().setValue(true);
-//    rs.addItem(fa, 0);
-//    final RearrangerActionHandler rah = new RearrangerActionHandler();
-//    rah.rearrangeDocument(getProject(), file, rs, doc);
-//    super.checkResultByFile("/com/wrq/rearranger/RearrangementResult6.java");
-//  }
-//
+  public final void testClassRearrangement() throws Exception {
+    doTest('RearrangementTest', 'RearrangementResult5') {
+      def attributes = new ClassAttributes()
+      attributes.protectionLevelAttributes.plPackage = true
+      mySettings.addClass(attributes, 0)
+    }
+  }
+
+  public final void testPSFRearrangement() throws Exception {
+    doTest('RearrangementTest2', 'RearrangementResult6') {
+      def attributes = new FieldAttributes()
+      attributes.finalAttribute.value = true
+      attributes.staticAttribute.value = true
+      mySettings.addItem(attributes, 0)
+    }
+  }
+
 //  public final void testAnonClassInit() throws Exception {
 //    configureByFile("/com/wrq/rearranger/RearrangementTest7.java");
 //    final PsiFile file = getFile();

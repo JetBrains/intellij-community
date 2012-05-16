@@ -36,9 +36,7 @@ import javax.swing.border.Border;
 import java.awt.*;
 
 /** Routines to handle field attributes not covered by CommonAttributes. */
-public final class FieldAttributes
-  extends ItemAttributes
-{
+public final class FieldAttributes extends ItemAttributes {
 
 // ------------------------------ FIELDS ------------------------------
 
