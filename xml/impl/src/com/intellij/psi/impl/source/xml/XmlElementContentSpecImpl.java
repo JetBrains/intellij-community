@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,11 +20,9 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.XmlElementVisitor;
-import com.intellij.psi.impl.source.PsiElementArrayConstructor;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.ChildRoleBase;
-import com.intellij.psi.tree.TokenSet;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.XmlChildRole;
 import com.intellij.psi.xml.XmlElementContentGroup;
 import com.intellij.psi.xml.XmlElementContentSpec;
@@ -35,16 +33,7 @@ import org.jetbrains.annotations.NotNull;
  * @author Mike
  */
 public class XmlElementContentSpecImpl extends XmlElementImpl implements XmlElementContentSpec, XmlElementType {
-
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.xml.XmlElementContentSpecImpl");
-
-  private static final TokenSet GROUPS_FILTER = TokenSet.create(XML_ELEMENT_CONTENT_GROUP);
-  private static final PsiElementArrayConstructor<XmlElementContentGroup> GROUPS_CONSTRUCTOR = new PsiElementArrayConstructor<XmlElementContentGroup>() {
-    @Override
-    public XmlElementContentGroup[] newPsiElementArray(int length) {
-      return new XmlElementContentGroup[length];
-    }
-  };
 
   public XmlElementContentSpecImpl() {
     super(XML_ELEMENT_CONTENT_SPEC);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.psi;
 
+import com.intellij.util.ArrayFactory;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,6 +32,13 @@ public interface PsiNameValuePair extends PsiElement {
    * The empty array of PSI name/value pairs which can be reused to avoid unnecessary allocations.
    */
   PsiNameValuePair[] EMPTY_ARRAY = new PsiNameValuePair[0];
+
+  ArrayFactory<PsiNameValuePair> ARRAY_FACTORY = new ArrayFactory<PsiNameValuePair>() {
+    @Override
+    public PsiNameValuePair[] create(final int count) {
+      return count == 0 ? PsiNameValuePair.EMPTY_ARRAY : new PsiNameValuePair[count];
+    }
+  };
 
   /**
    * Returns the identifier specifying the name of the element.

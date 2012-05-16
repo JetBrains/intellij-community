@@ -311,7 +311,7 @@ public class PsiClassImpl extends JavaStubPsiElement<PsiClassStub<?>> implements
   @NotNull
   @Override
   public List<PsiClass> getOwnInnerClasses() {
-    return Arrays.asList(getStubOrPsiChildren(JavaStubElementTypes.CLASS, ARRAY_FACTORY));
+    return Arrays.asList(getStubOrPsiChildren(JavaStubElementTypes.CLASS, PsiClass.ARRAY_FACTORY));
   }
 
   @Override
@@ -589,7 +589,7 @@ public class PsiClassImpl extends JavaStubPsiElement<PsiClassStub<?>> implements
 
     final StubBasedPsiElementBase<?> context = (StubBasedPsiElementBase)parentStub.getPsi();
     @SuppressWarnings("unchecked")
-    PsiClass[] classesInScope = (PsiClass[])parentStub.getChildrenByType(Constants.CLASS_BIT_SET, ARRAY_FACTORY);
+    PsiClass[] classesInScope = (PsiClass[])parentStub.getChildrenByType(Constants.CLASS_BIT_SET, PsiClass.ARRAY_FACTORY);
 
     boolean needPreciseContext = false;
     if (classesInScope.length > 1) {

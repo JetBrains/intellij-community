@@ -546,7 +546,7 @@ public void addMessageToConsoleWindow(final String message, final TextAttributes
 
   @NotNull
   public VcsShowConfirmationOption getStandardConfirmation(@NotNull VcsConfiguration.StandardConfirmation option,
-                                                           @NotNull AbstractVcs vcs) {
+                                                           AbstractVcs vcs) {
     final VcsShowConfirmationOptionImpl result = getConfirmation(option);
     result.addApplicableVcs(vcs);
     return result;

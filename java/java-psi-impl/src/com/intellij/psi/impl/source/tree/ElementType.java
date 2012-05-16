@@ -17,8 +17,6 @@ package com.intellij.psi.impl.source.tree;
 
 import com.intellij.psi.JavaDocTokenType;
 import com.intellij.psi.JavaTokenType;
-import com.intellij.psi.PsiTypeElement;
-import com.intellij.psi.impl.source.PsiElementArrayConstructor;
 import com.intellij.psi.tree.TokenSet;
 
 public interface ElementType extends JavaTokenType, JavaDocTokenType, JavaElementType, JavaDocElementType {
@@ -76,12 +74,6 @@ public interface ElementType extends JavaTokenType, JavaDocTokenType, JavaElemen
   );
 
   TokenSet TYPES_BIT_SET = TokenSet.create(TYPE);
-  PsiElementArrayConstructor<PsiTypeElement> PSI_TYPE_ELEMENT_ARRAY_CONSTRUCTOR = new PsiElementArrayConstructor<PsiTypeElement>() {
-    @Override
-    public PsiTypeElement[] newPsiElementArray(int length) {
-      return length > 0 ? new PsiTypeElement[length] : PsiTypeElement.EMPTY_ARRAY;
-    }
-  };
   TokenSet IMPORT_STATEMENT_BIT_SET = TokenSet.create(IMPORT_STATEMENT);
   TokenSet IMPORT_STATIC_STATEMENT_BIT_SET = TokenSet.create(IMPORT_STATIC_STATEMENT);
   TokenSet IMPORT_STATEMENT_BASE_BIT_SET = TokenSet.create(IMPORT_STATEMENT, IMPORT_STATIC_STATEMENT);

@@ -35,6 +35,7 @@ public class AndroidMavenUtil {
 
   @NonNls public static final String APKSOURCES_DEPENDENCY_TYPE = "apksources";
   @NonNls public static final String APKLIB_DEPENDENCY_AND_PACKAGING_TYPE = "apklib";
+  @NonNls public static final String SO_PACKAGING_AND_DEPENDENCY_TYPE = "so";
   @NonNls public static final String APK_PACKAGING_TYPE = "apk";
 
   @NonNls public static final String APK_LIB_ARTIFACT_SOURCE_ROOT = "src";

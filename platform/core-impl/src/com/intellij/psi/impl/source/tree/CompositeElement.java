@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -420,7 +420,7 @@ public class CompositeElement extends TreeElement {
   }
 
   @Override
-  public ASTNode[] getChildren(TokenSet filter) {
+  public ASTNode[] getChildren(@Nullable TokenSet filter) {
     int count = countChildren(filter);
     if (count == 0) {
       return EMPTY_ARRAY;
@@ -435,28 +435,8 @@ public class CompositeElement extends TreeElement {
     return result;
   }
 
-
   @NotNull
-  public <T extends PsiElement> T[] getChildrenAsPsiElements(TokenSet filter, PsiElementArrayConstructor<T> constructor) {
-    ApplicationManager.getApplication().assertReadAccessAllowed();
-    int count = countChildren(filter);
-    T[] result = constructor.newPsiElementArray(count);
-    if (count == 0) {
-      return result;
-    }
-    int idx = 0;
-    for (ASTNode child = getFirstChildNode(); child != null && idx < count; child = child.getTreeNext()) {
-      if (filter == null || filter.contains(child.getElementType())) {
-        T element = (T)child.getPsi();
-        LOG.assertTrue(element != null, child);
-        result[idx++] = element;
-      }
-    }
-    return result;
-  }
-
-  @NotNull
-  public <T extends PsiElement> T[] getChildrenAsPsiElements(TokenSet filter, ArrayFactory<T> constructor) {
+  public <T extends PsiElement> T[] getChildrenAsPsiElements(@Nullable TokenSet filter, ArrayFactory<T> constructor) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
     int count = countChildren(filter);
     T[] result = constructor.create(count);
@@ -466,13 +446,14 @@ public class CompositeElement extends TreeElement {
     int idx = 0;
     for (ASTNode child = getFirstChildNode(); child != null && idx < count; child = child.getTreeNext()) {
       if (filter == null || filter.contains(child.getElementType())) {
-        T element = (T)child.getPsi();
+        @SuppressWarnings("unchecked") T element = (T)child.getPsi();
         LOG.assertTrue(element != null, child);
         result[idx++] = element;
       }
     }
     return result;
   }
+
   @NotNull
   public <T extends PsiElement> T[] getChildrenAsPsiElements(@NotNull IElementType type, ArrayFactory<T> constructor) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
@@ -484,7 +465,7 @@ public class CompositeElement extends TreeElement {
     int idx = 0;
     for (ASTNode child = getFirstChildNode(); child != null && idx < count; child = child.getTreeNext()) {
       if (type == child.getElementType()) {
-        T element = (T)child.getPsi();
+        @SuppressWarnings("unchecked") T element = (T)child.getPsi();
         LOG.assertTrue(element != null, child);
         result[idx++] = element;
       }
@@ -492,7 +473,7 @@ public class CompositeElement extends TreeElement {
     return result;
   }
 
-  public int countChildren(TokenSet filter) {
+  public int countChildren(@Nullable TokenSet filter) {
     // no lock is needed because all chameleons are expanded already
     int count = 0;
     for (ASTNode child = getFirstChildNode(); child != null; child = child.getTreeNext()) {

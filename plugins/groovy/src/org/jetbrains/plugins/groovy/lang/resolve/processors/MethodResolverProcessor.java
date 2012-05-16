@@ -48,7 +48,7 @@ public class MethodResolverProcessor extends ResolverProcessor {
   private final PsiType[] myArgumentTypes;
   private final boolean myAllVariants;
 
-  private final Set<GroovyResolveResult> myInapplicableCandidates = new LinkedHashSet<GroovyResolveResult>();
+  protected final Set<GroovyResolveResult> myInapplicableCandidates = new LinkedHashSet<GroovyResolveResult>();
   private final boolean myIsConstructor;
 
   private boolean myStopExecuting = false;

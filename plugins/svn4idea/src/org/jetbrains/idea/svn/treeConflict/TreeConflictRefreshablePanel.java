@@ -443,6 +443,7 @@ public class TreeConflictRefreshablePanel extends AbstractRefreshablePanel {
                 }
                 final List<Change> changesForPatch = CommittedChangesTreeBrowser.collectChanges(lst, true);
                 for (Change change : changesForPatch) {
+                  if (! isUnderOldDir(change, oldFilePath)) continue;
                   ContentRevision before = null;
                   ContentRevision after = null;
                   if (change.getBeforeRevision() != null) {
@@ -478,6 +479,22 @@ public class TreeConflictRefreshablePanel extends AbstractRefreshablePanel {
         fragmented.run(cc.getList());
       }
     };
+  }
+
+  private boolean isUnderOldDir(Change change, FilePath path) {
+    if (change.getBeforeRevision() != null) {
+      final boolean isUnder = FileUtil.isAncestor(path.getIOFile(), change.getBeforeRevision().getFile().getIOFile(), true);
+      if (isUnder) {
+        return true;
+      }
+    }
+    if (change.getAfterRevision() != null) {
+      final boolean isUnder = FileUtil.isAncestor(path.getIOFile(), change.getAfterRevision().getFile().getIOFile(), true);
+      if (isUnder) {
+        return isUnder;
+      }
+    }
+    return false;
   }
 
   private FilePath rebasePath(final FilePath oldBase, final FilePath newBase, final FilePath path) {
