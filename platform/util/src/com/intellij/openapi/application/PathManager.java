@@ -17,7 +17,6 @@
 package com.intellij.openapi.application;
 
 import com.google.common.collect.Lists;
-import com.intellij.CommonBundle;
 import com.intellij.openapi.util.NamedJDOMExternalizable;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.SystemInfoRt;
@@ -49,6 +48,7 @@ public class PathManager {
   @NonNls public static final String PROPERTY_HOME_PATH = "idea.home.path";
   @NonNls public static final String PROPERTY_LOG_PATH = "idea.log.path";
   @NonNls public static final String PROPERTY_PATHS_SELECTOR = "idea.paths.selector";
+  @NonNls public static final String PROPERTY_ORIGINAL_WORKING_DIR = "original.working.dir";
 
   @NonNls private static String ourHomePath;
   @NonNls private static String ourSystemPath;
@@ -291,6 +291,11 @@ public class PathManager {
   @NonNls
   public static File getOptionsFile(NamedJDOMExternalizable externalizable) {
     return new File(getOptionsPath()+File.separatorChar+externalizable.getExternalFileName()+".xml");
+  }
+
+  @Nullable
+  public static String getOriginalWorkingDir() {
+    return System.getProperty(PROPERTY_ORIGINAL_WORKING_DIR);
   }
 
   @NonNls
