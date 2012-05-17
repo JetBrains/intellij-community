@@ -73,7 +73,8 @@ public class LibraryImpl implements LibraryEx.ModifiableModelEx, LibraryEx {
   private final ModifiableRootModel myRootModel;
   private boolean myDisposed;
   private final Disposable myPointersDisposable = Disposer.newDisposable();
-  private final JarDirectoryWatcher myRootsWatcher = new JarDirectoryWatcher(myJarDirectories, myRootProvider);
+  private final JarDirectoryWatcher myRootsWatcher = JarDirectoryWatcherFactory.getInstance().createWatcher(myJarDirectories,
+                                                                                                            myRootProvider);
 
   LibraryImpl(LibraryTable table, Element element, ModifiableRootModel rootModel) throws InvalidDataException {
     myLibraryTable = table;

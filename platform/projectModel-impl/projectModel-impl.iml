@@ -8,8 +8,6 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="projectModel-api" exported="" />
-    <orderEntry type="module" module-name="lang-impl" exported="" />
-    <orderEntry type="module" module-name="platform-api" exported="" />
   </component>
 </module>
 

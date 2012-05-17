@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.roots.impl.libraries;
 
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.impl.RootProviderBaseImpl;
@@ -33,17 +32,18 @@ import java.util.*;
 /**
  * @author ksafonov
  */
-public class JarDirectoryWatcher implements Disposable {
+public class JarDirectoryWatcherImpl implements JarDirectoryWatcher {
   private final JarDirectories myJarDirectories;
   private final RootProviderBaseImpl myRootProvider;
   private MessageBusConnection myBusConnection = null;
   private Collection<LocalFileSystem.WatchRequest> myWatchRequests = Collections.emptySet();
 
-  public JarDirectoryWatcher(JarDirectories jarDirectories, RootProviderBaseImpl rootProvider) {
+  public JarDirectoryWatcherImpl(JarDirectories jarDirectories, RootProviderBaseImpl rootProvider) {
     myJarDirectories = jarDirectories;
     myRootProvider = rootProvider;
   }
 
+  @Override
   public void updateWatchedRoots() {
     final LocalFileSystem fs = LocalFileSystem.getInstance();
     if (!myJarDirectories.isEmpty()) {
