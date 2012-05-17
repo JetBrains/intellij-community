@@ -23,19 +23,23 @@ package com.wrq.rearranger;
 
 
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.psi.PsiModifier
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.wrq.rearranger.settings.CommentRule
 import com.wrq.rearranger.settings.RearrangerSettings
-import com.wrq.rearranger.settings.attributeGroups.ClassAttributes
-import com.wrq.rearranger.settings.attributeGroups.FieldAttributes
-import com.wrq.rearranger.settings.attributeGroups.MethodAttributes
+import com.wrq.rearranger.util.CommentRuleBuilder
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.Nullable
-import com.wrq.rearranger.settings.CommentRule
+import com.wrq.rearranger.util.java.*
 
 /** JUnit tests for the rearranger plugin. */
 class RearrangerTest extends LightCodeInsightFixtureTestCase {
-  
-  private RearrangerSettings mySettings;
+
+  private RearrangerSettings    mySettings
+  private JavaClassRuleBuilder  classRule
+  private JavaFieldRuleBuilder  fieldRule
+  private JavaMethodRuleBuilder methodRule
+  private CommentRuleBuilder    commentRule
 
   @Override
   protected String getBasePath() {
@@ -44,6 +48,7 @@ class RearrangerTest extends LightCodeInsightFixtureTestCase {
 
   protected final void setUp() throws Exception {
     super.setUp();
+    
     mySettings = new RearrangerSettings();
 //        rs.setAskBeforeRearranging(true); // uncomment for debugging file structure popup
     mySettings.showFields = true
@@ -51,6 +56,11 @@ class RearrangerTest extends LightCodeInsightFixtureTestCase {
     mySettings.showParameterTypes = true
     mySettings.showRules = true
     mySettings.rearrangeInnerClasses = true
+
+    classRule = new JavaClassRuleBuilder(settings: mySettings)
+    fieldRule = new JavaFieldRuleBuilder(settings: mySettings)
+    methodRule = new JavaMethodRuleBuilder(settings: mySettings)
+    commentRule = new CommentRuleBuilder(settings: mySettings)
   }
 
   public final void testNoRearrangement() throws Exception {
@@ -59,102 +69,66 @@ class RearrangerTest extends LightCodeInsightFixtureTestCase {
 
   public final void testPublicFieldRearrangement() throws Exception {
     doTest('RearrangementTest', 'RearrangementResult2') {
-      def attributes = new FieldAttributes()
-      attributes.protectionLevelAttributes.plPublic = true
-      mySettings.addItem(attributes)
-    }
-  }
+      fieldRule.create {
+        modifier( PsiModifier.PUBLIC )
+  } } }
 
   public final void testNotPublicFieldRearrangement() throws Exception {
     doTest('RearrangementTest', 'RearrangementResult3') {
-      def attributes = new FieldAttributes()
-      attributes.protectionLevelAttributes.plPublic = true
-      attributes.protectionLevelAttributes.invertProtectionLevel = true
-      mySettings.addItem(attributes)
-    }
-  }
+      fieldRule.create {
+        modifier( PsiModifier.PUBLIC, invert: true )
+  } } }
 
   public final void testConstructorRearrangement() throws Exception {
     doTest('RearrangementTest', 'RearrangementResult4') {
-      def attributes = new MethodAttributes()
-      attributes.protectionLevelAttributes.plPackage = true
-      attributes.protectionLevelAttributes.plPublic = true
-      attributes.constructorMethodType = true
-      mySettings.addItem(attributes)
-    }
-  }
+      methodRule.create {
+        modifier([ PsiModifier.PUBLIC, PsiModifier.PACKAGE_LOCAL ])
+        target( MethodType.CONSTRUCTOR )
+  } } }
 
   public final void testClassRearrangement() throws Exception {
     doTest('RearrangementTest', 'RearrangementResult5') {
-      def attributes = new ClassAttributes()
-      attributes.protectionLevelAttributes.plPackage = true
-      mySettings.addClass(attributes)
-    }
-  }
+      classRule.create {
+        modifier( PsiModifier.PACKAGE_LOCAL )
+  } } }
 
   public final void testPSFRearrangement() throws Exception {
     doTest('RearrangementTest2', 'RearrangementResult6') {
-      def attributes = new FieldAttributes()
-      attributes.finalAttribute.value = true
-      attributes.staticAttribute.value = true
-      mySettings.addItem(attributes)
-    }
-  }
+      fieldRule.create {
+        modifier([ PsiModifier.FINAL, PsiModifier.STATIC ])
+  } } }
 
   public final void testAnonClassInit() throws Exception {
     doTest('RearrangementTest7', 'RearrangementResult7') {
-      def attributes = new FieldAttributes()
-      attributes.initialisedByAnonymousClassAttr.value = true
-      mySettings.addItem(attributes)
-    }
-  }
+      fieldRule.create {
+        initializer( InitializerType.ANONYMOUS_CLASS )
+  } } }
 
   public final void testNameMatch() throws Exception {
     doTest('RearrangementTest', 'RearrangementResult8') {
-      def fieldAttributes = new FieldAttributes()
-      fieldAttributes.nameAttribute.match = true
-      fieldAttributes.nameAttribute.expression = '.*5'
-      mySettings.addItem(fieldAttributes)
-      
-      def methodAttributes = new MethodAttributes()
-      methodAttributes.nameAttribute.match = true
-      methodAttributes.nameAttribute.expression = '.*2'
-      mySettings.addItem(methodAttributes)
-    }
-  }
+      fieldRule.create { name('.*5') }
+      methodRule.create { name('.*2') }
+  } }
 
   public final void testStaticInitializer() throws Exception {
     doTest('RearrangementTest8', 'RearrangementResult8A') {
-      def methodAttributes = new MethodAttributes()
-      methodAttributes.staticAttribute.value = true
-      mySettings.addItem(methodAttributes)
-    }
-  }
+      methodRule.create { modifier( PsiModifier.STATIC ) }
+  } }
 
   public final void testAlphabetizingGSMethods() throws Exception {
+    mySettings.keepGettersSettersTogether = false
     doTest('RearrangementTest', 'RearrangementResult9') {
-      def attributes = new MethodAttributes()
-      attributes.getterSetterMethodType = true
-      attributes.otherMethodType = true
-      attributes.constructorMethodType = false
-      attributes.sortOptions.byName = true
-      mySettings.addItem(attributes)
-      mySettings.keepGettersSettersTogether = false
-    }
-  }
+      methodRule.create {
+        target([ MethodType.GETTER_OR_SETTER, MethodType.OTHER ])
+        sort(SortType.BY_NAME)
+  } } }
 
   public final void testSimpleComment() throws Exception {
     doTest('RearrangementTest', 'RearrangementResult10') {
-      def attributes = new FieldAttributes()
-      attributes.protectionLevelAttributes.plPublic = true
-      mySettings.addItem(attributes)
-      
-      def comment = new CommentRule()
-      comment.commentText = '// simple comment **********'
-      comment.emitCondition = CommentRule.EMIT_IF_ITEMS_MATCH_PRECEDING_RULE
-      mySettings.addItem(comment)
-    }
-  }
+      fieldRule.create { modifier( PsiModifier.PUBLIC) }
+      commentRule.create {
+        comment( '// simple comment **********', condition: CommentRule.EMIT_IF_ITEMS_MATCH_PRECEDING_RULE )
+  } } }
 
   /**
    * Delete old comment and insert (identical) new one.  This tests proper identification and deletion of old
@@ -164,49 +138,21 @@ class RearrangerTest extends LightCodeInsightFixtureTestCase {
    */
   public final void testReplayComment() throws Exception {
     doTest('RearrangementResult10', 'RearrangementResult10') {
-      def attributes = new FieldAttributes()
-      attributes.protectionLevelAttributes.plPublic = true
-      mySettings.addItem(attributes)
-
-      def comment = new CommentRule()
-      comment.commentText = '// simple comment **********'
-      comment.emitCondition = CommentRule.EMIT_IF_ITEMS_MATCH_PRECEDING_RULE
-      mySettings.addItem(comment)
-    }
-  }
+      fieldRule.create { modifier( PsiModifier.PUBLIC) }
+      commentRule.create {
+        comment( '// simple comment **********', condition: CommentRule.EMIT_IF_ITEMS_MATCH_PRECEDING_RULE )
+  } } }
 
   public final void testMultipleRuleCommentMatch() throws Exception {
     doTest('RearrangementTest11', 'RearrangementResult11') {
-      def allFieldsComment = new CommentRule()
-      allFieldsComment.commentText = '// FIELDS:'
-      allFieldsComment.emitCondition = CommentRule.EMIT_IF_ITEMS_MATCH_SUBSEQUENT_RULE
-      allFieldsComment.allSubsequentRules = false
-      mySettings.addItem(allFieldsComment)
-
-      def finalFieldsComment = new CommentRule()
-      finalFieldsComment.commentText = '// FINAL FIELDS:'
-      finalFieldsComment.emitCondition = CommentRule.EMIT_IF_ITEMS_MATCH_SUBSEQUENT_RULE
-      finalFieldsComment.allSubsequentRules = true
-      finalFieldsComment.NSubsequentRulesToMatch = 1
-      mySettings.addItem(finalFieldsComment)
-      
-      def finalFields = new FieldAttributes()
-      finalFields.finalAttribute.value = true
-      mySettings.addItem(finalFields)
-      
-      def nonFinalFieldsComment = new CommentRule()
-      nonFinalFieldsComment.commentText = '// NON-FINAL FIELDS:'
-      nonFinalFieldsComment.emitCondition = CommentRule.EMIT_IF_ITEMS_MATCH_SUBSEQUENT_RULE
-      nonFinalFieldsComment.allSubsequentRules = true
-      nonFinalFieldsComment.NSubsequentRulesToMatch = 1
-      mySettings.addItem(nonFinalFieldsComment)
-      
-      def nonFinalFields = new FieldAttributes()
-      nonFinalFields.finalAttribute.value = true
-      nonFinalFields.finalAttribute.invert = true
-      mySettings.addItem(nonFinalFields)
-    }
-  }
+      commentRule.create { comment('// FIELDS:', condition: CommentRule.EMIT_IF_ITEMS_MATCH_SUBSEQUENT_RULE, allSubsequent: false) }
+      commentRule.create { comment('// FINAL FIELDS:', condition: CommentRule.EMIT_IF_ITEMS_MATCH_SUBSEQUENT_RULE, allSubsequent: false,
+                                   subsequentRulesToMatch: 1) }
+      fieldRule.create { modifier(PsiModifier.FINAL) }
+      commentRule.create { comment('// NON-FINAL FIELDS:', condition: CommentRule.EMIT_IF_ITEMS_MATCH_SUBSEQUENT_RULE, allSubsequent: true,
+                                   subsequentRulesToMatch: 1) }
+      fieldRule.create { modifier(PsiModifier.FINAL, invert: true) }
+  } }
 
 //  public final void testOpsBlockingQueueExample() throws Exception {
 //    testOpsBlockingQueueExampleWorker(false, "/com/wrq/rearranger/OpsBlockingQueue.java",
