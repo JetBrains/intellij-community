@@ -10,6 +10,7 @@ import org.jetbrains.android.compiler.tools.AndroidApkBuilder;
 import org.jetbrains.android.compiler.tools.AndroidApt;
 import org.jetbrains.android.util.AndroidCommonUtils;
 import org.jetbrains.android.util.AndroidCompilerMessageKind;
+import org.jetbrains.android.util.AndroidNativeLibData;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -139,9 +140,11 @@ public class AndroidPackagingBuilder extends ProjectLevelBuilder {
                                        @NotNull Module module,
                                        @NotNull AndroidFileSetStorage storage,
                                        @Nullable AndroidFileSetState state) throws IOException {
-    final AndroidFileSetState savedState = storage.getState(module.getName());
-    if (context.isMake() && savedState != null && savedState.equalsTo(state)) {
-      return true;
+    if (context.isMake()) {
+      final AndroidFileSetState savedState = storage.getState(module.getName());
+      if (savedState != null && savedState.equalsTo(state)) {
+        return true;
+      }
     }
 
     final AndroidFacet facet = AndroidJpsUtil.getFacet(module);
@@ -362,27 +365,31 @@ public class AndroidPackagingBuilder extends ProjectLevelBuilder {
     final String classesDexFilePath = classesDexFile.getPath();
     final String[] externalJars = ArrayUtil.toStringArray(externalJarsSet);
 
+    // currently including native libraries through pom.xml doesn't work when jps compilation is used, MAVEN_REPOSITORY url macros needed
+    final List<AndroidNativeLibData> additionalNativeLibs = facet.getAdditionalNativeLibs();
+
     final AndroidFileSetState currentFileSetState =
-      buildCurrentApkBuilderState(context.getProject(), resPackagePath, classesDexFilePath, nativeLibDirs,
-                                  sourceRoots, externalJars, release);
+      buildCurrentApkBuilderState(context.getProject(), resPackagePath, classesDexFilePath, nativeLibDirs, sourceRoots,
+                                  externalJars, release);
 
     final AndroidApkBuilderConfigState currentApkBuilderConfigState =
-      new AndroidApkBuilderConfigState(outputApkPath, customKeyStorePath);
+      new AndroidApkBuilderConfigState(outputApkPath, customKeyStorePath, additionalNativeLibs);
 
-    final AndroidFileSetState savedApkFileSetState = apkFileSetStorage.getState(module.getName());
-    final AndroidApkBuilderConfigState savedApkBuilderConfigState = apkBuilderConfigStateStorage.getState(module.getName());
+    if (context.isMake()) {
+      final AndroidFileSetState savedApkFileSetState = apkFileSetStorage.getState(module.getName());
+      final AndroidApkBuilderConfigState savedApkBuilderConfigState = apkBuilderConfigStateStorage.getState(module.getName());
 
-    if (context.isMake() &&
-        currentFileSetState.equalsTo(savedApkFileSetState) &&
-        currentApkBuilderConfigState.equalsTo(savedApkBuilderConfigState)) {
-      return true;
+      if (currentFileSetState.equalsTo(savedApkFileSetState) &&
+          currentApkBuilderConfigState.equalsTo(savedApkBuilderConfigState)) {
+        return true;
+      }
     }
     context
       .processMessage(new ProgressMessage(AndroidJpsBundle.message("android.jps.progress.packaging", AndroidJpsUtil.getApkName(module))));
 
     final Map<AndroidCompilerMessageKind, List<String>> messages = AndroidApkBuilder
-      .execute(resPackagePath, classesDexFilePath, sourceRoots, externalJars, nativeLibDirs, outputApkPath,
-               release, sdkPath, customKeyStorePath, new MyExcludedSourcesFilter(context.getProject()));
+      .execute(resPackagePath, classesDexFilePath, sourceRoots, externalJars, nativeLibDirs, additionalNativeLibs,
+               outputApkPath, release, sdkPath, customKeyStorePath, new MyExcludedSourcesFilter(context.getProject()));
 
     AndroidJpsUtil.addMessages(context, messages, BUILDER_NAME);
     final boolean success = messages.get(AndroidCompilerMessageKind.ERROR).isEmpty();

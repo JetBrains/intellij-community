@@ -25,6 +25,7 @@ import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
+import com.intellij.util.ArrayFactory;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -41,6 +42,13 @@ public interface PsiElement extends UserDataHolder, Iconable {
    * The empty array of PSI elements which can be reused to avoid unnecessary allocations.
    */
   PsiElement[] EMPTY_ARRAY = new PsiElement[0];
+
+  ArrayFactory<PsiElement> ARRAY_FACTORY = new ArrayFactory<PsiElement>() {
+    @Override
+    public PsiElement[] create(final int count) {
+      return count == 0 ? EMPTY_ARRAY : new PsiElement[count];
+    }
+  };
 
   /**
    * Returns the project to which the PSI element belongs.

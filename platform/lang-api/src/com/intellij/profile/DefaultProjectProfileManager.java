@@ -74,10 +74,12 @@ public abstract class DefaultProjectProfileManager extends ProjectProfileManager
     return myProject;
   }
 
+  @Override
   public synchronized Profile getProfile(@NotNull String name, boolean returnRootProfileIfNamedIsAbsent) {
     return myProfiles.containsKey(name) ? myProfiles.get(name) : myApplicationProfileManager.getProfile(name, returnRootProfileIfNamedIsAbsent);
   }
 
+  @Override
   public synchronized void updateProfile(Profile profile) {
     myProfiles.put(profile.getName(), profile);
     for (ProfileChangeAdapter profileChangeAdapter : myProfilesListener) {
@@ -85,6 +87,7 @@ public abstract class DefaultProjectProfileManager extends ProjectProfileManager
     }
   }
 
+  @Override
   public synchronized void readExternal(Element element) throws InvalidDataException {
     myProfiles.clear();
     DefaultJDOMExternalizer.readExternal(this, element);
@@ -118,6 +121,7 @@ public abstract class DefaultProjectProfileManager extends ProjectProfileManager
   protected void convert(Element element) throws InvalidDataException {
   }
 
+  @Override
   public synchronized void writeExternal(Element element) throws WriteExternalException {
 
     final List<String> sortedProfiles = new ArrayList<String>(myProfiles.keySet());
@@ -156,27 +160,33 @@ public abstract class DefaultProjectProfileManager extends ProjectProfileManager
     }
   }
 
+  @Override
   public NamedScopesHolder getScopesManager() {
     return myHolder;
   }
 
+  @Override
   public synchronized Collection<Profile> getProfiles() {
     getProjectProfileImpl();
     return myProfiles.values();
   }
 
+  @Override
   public synchronized String[] getAvailableProfileNames() {
     return ArrayUtil.toStringArray(myProfiles.keySet());
   }
 
+  @Override
   public synchronized void deleteProfile(String name) {
     myProfiles.remove(name);
   }
 
+  @Override
   public synchronized String getProjectProfile() {
     return PROJECT_PROFILE;
   }
 
+  @Override
   public synchronized void setProjectProfile(@Nullable final String newProfile) {
     final String oldProfile = PROJECT_PROFILE;
     PROJECT_PROFILE = newProfile;
@@ -198,7 +208,8 @@ public abstract class DefaultProjectProfileManager extends ProjectProfileManager
       projectProfile.setLocal(false);
       projectProfile.setName(PROJECT_DEFAULT_PROFILE_NAME);
       myProfiles.put(PROJECT_DEFAULT_PROFILE_NAME, projectProfile);
-    } else if (!myProfiles.containsKey(PROJECT_PROFILE)){
+    }
+    else if (!myProfiles.containsKey(PROJECT_PROFILE)){
       final String projectProfileAttempt = myProfiles.keySet().iterator().next();
       setProjectProfile(projectProfileAttempt);
     }
@@ -223,6 +234,7 @@ public abstract class DefaultProjectProfileManager extends ProjectProfileManager
 
   public static class ProfileStateSplitter implements StateSplitter {
 
+    @Override
     public List<Pair<Element, String>> splitState(final Element e) {
       final UniqueNameGenerator generator = new UniqueNameGenerator();
       List<Pair<Element, String>> result = new ArrayList<Pair<Element, String>>();
@@ -257,6 +269,7 @@ public abstract class DefaultProjectProfileManager extends ProjectProfileManager
       return result;
     }
 
+    @Override
     public void mergeStatesInto(final Element target, final Element[] elements) {
       Element profiles = new Element("profiles");
       target.addContent(profiles);

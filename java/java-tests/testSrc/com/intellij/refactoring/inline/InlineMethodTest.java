@@ -174,6 +174,18 @@ public class InlineMethodTest extends LightRefactoringTestCase {
   public void testInlineAnonymousClassWithPrivateMethodInside() throws Exception {
     doTest();
   }
+  
+  public void testInlineRunnableRun() throws Exception {
+    @NonNls String fileName = "/refactoring/inlineMethod/" + getTestName(false) + ".java";
+    configureByFile(fileName);
+    performAction(new MockInlineMethodOptions(){
+      @Override
+      public boolean isInlineThisOnly() {
+        return true;
+      }
+    });
+    checkResultByFile(fileName + ".after");
+  }
 
   private void doTest() throws Exception {
     String name = getTestName(false);
@@ -184,6 +196,10 @@ public class InlineMethodTest extends LightRefactoringTestCase {
   }
 
   private void performAction() {
+    performAction(new MockInlineMethodOptions());
+  }
+
+  private void performAction(final InlineOptions options) {
     PsiElement element = TargetElementUtilBase
       .findTargetElement(myEditor, TargetElementUtilBase.ELEMENT_NAME_ACCEPTED | TargetElementUtilBase.REFERENCED_ELEMENT_ACCEPTED);
     final PsiReference ref = myFile.findReferenceAt(myEditor.getCaretModel().getOffset());
@@ -192,7 +208,6 @@ public class InlineMethodTest extends LightRefactoringTestCase {
     PsiMethod method = (PsiMethod)element;
     final boolean condition = InlineMethodProcessor.checkBadReturns(method) && !InlineUtil.allUsagesAreTailCalls(method);
     assertFalse("Bad returns found", condition);
-    InlineOptions options = new MockInlineMethodOptions();
     final InlineMethodProcessor processor = new InlineMethodProcessor(getProject(), method, refExpr, myEditor, options.isInlineThisOnly());
     processor.run();
   }

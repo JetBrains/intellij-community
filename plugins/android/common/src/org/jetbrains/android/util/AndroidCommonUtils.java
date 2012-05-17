@@ -75,7 +75,13 @@ public class AndroidCommonUtils {
   public static final ResourceType[] ID_PROVIDING_RESOURCE_TYPES = new ResourceType[] {
     ResourceType.LAYOUT, ResourceType.MENU
   };
+
   @NonNls public static final String INCLUDE_SYSTEM_PROGUARD_FILE_ELEMENT_NAME = "includeSystemProguardFile";
+  @NonNls public static final String ADDITIONAL_NATIVE_LIBS_ELEMENT = "additionalNativeLibs";
+  @NonNls public static final String ITEM_ELEMENT = "item";
+  @NonNls public static final String ARCHITECTURE_ATTRIBUTE = "architecture";
+  @NonNls public static final String URL_ATTRIBUTE = "url";
+  @NonNls public static final String TARGET_FILE_NAME_ATTRIBUTE = "targetFileName";
 
   private static final String[] TEST_CONFIGURATION_TYPE_IDS =
     {"JUnit", "TestNG", "ScalaTestRunConfiguration", "SpecsRunConfiguration", "Specs2RunConfiguration"};

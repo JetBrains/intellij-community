@@ -651,7 +651,7 @@ public class ResolveUtil {
     //search for getters
     for (String getterName : GroovyPropertyUtils.suggestGettersName(methodName)) {
       AccessorResolverProcessor getterResolver =
-        new AccessorResolverProcessor(getterName, place, true, false, thisType, PsiType.EMPTY_ARRAY);
+        new AccessorResolverProcessor(getterName, methodName, place, true, false, thisType, PsiType.EMPTY_ARRAY);
       processAllDeclarations(thisType, getterResolver, ResolveState.initial(), place);
       final GroovyResolveResult[] candidates = getterResolver.getCandidates(); //can be only one candidate
       final List<GroovyResolveResult> applicable = new ArrayList<GroovyResolveResult>();

@@ -186,6 +186,9 @@ public abstract class AutoScrollToSourceHandler {
         }
         Navigatable[] navigatables = PlatformDataKeys.NAVIGATABLE_ARRAY.getData(context);
         if (navigatables != null) {
+          if (navigatables.length > 1) {
+            return;
+          }
           for (Navigatable navigatable : navigatables) {
             // we are not going to open modal dialog during autoscrolling
             if (!navigatable.canNavigateToSource()) return;

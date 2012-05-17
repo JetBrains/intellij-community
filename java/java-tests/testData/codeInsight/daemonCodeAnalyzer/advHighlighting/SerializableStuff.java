@@ -48,33 +48,6 @@ class b  {
 }
 
 ////////////////////////////
-abstract class e implements Externalizable {
-}
-class eImpl extends e {
-    public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-    }
-
-    public void writeExternal(ObjectOutput out) throws IOException {
-    }
-}
-class <warning descr="Externalizable class should have public no-args constructor">eImpl1</warning> extends e {
-    private eImpl1() {}
-    public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-    }
-
-    public void writeExternal(ObjectOutput out) throws IOException {
-    }
-}
-class <warning descr="Externalizable class should have public no-args constructor">eImpl2</warning> extends e {
-    public eImpl2(int i) {
-      System.out.print(i);
-    }
-    public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-    }
-
-    public void writeExternal(ObjectOutput out) throws IOException {
-    }
-}
 
 abstract class abstractNoSerializable {
   protected Object readResolve() throws ObjectStreamException {

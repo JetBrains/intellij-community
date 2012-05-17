@@ -493,19 +493,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
       }
     }
 
-    if (methodCall.getParent() instanceof PsiExpressionStatement || tailCall == InlineUtil.TailCallType.Return) {
-      methodCall.getParent().delete();
-    }
-    else {
-      if (blockData.resultVar != null) {
-        PsiExpression expr = myFactory.createExpressionFromText(blockData.resultVar.getName(), null);
-        methodCall.replace(expr);
-      }
-      else {
-        //??
-      }
-    }
-
+    
     PsiClass thisClass = myMethod.getContainingClass();
     PsiExpression thisAccessExpr;
     if (thisVar != null) {
@@ -520,6 +508,19 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
       thisAccessExpr = null;
     }
     ChangeContextUtil.decodeContextInfo(anchorParent, thisClass, thisAccessExpr);
+
+    if (methodCall.getParent() instanceof PsiExpressionStatement || tailCall == InlineUtil.TailCallType.Return) {
+      methodCall.getParent().delete();
+    }
+    else {
+      if (blockData.resultVar != null) {
+        PsiExpression expr = myFactory.createExpressionFromText(blockData.resultVar.getName(), null);
+        methodCall.replace(expr);
+      }
+      else {
+        //??
+      }
+    }
 
     if (thisVar != null) {
       inlineParmOrThisVariable(thisVar, false);

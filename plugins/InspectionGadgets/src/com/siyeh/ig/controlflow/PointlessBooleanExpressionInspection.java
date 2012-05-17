@@ -207,7 +207,7 @@ public class PointlessBooleanExpressionInspection extends BaseInspection {
     return new BooleanLiteralComparisonFix();
   }
 
-  private static class BooleanLiteralComparisonFix
+  private class BooleanLiteralComparisonFix
     extends InspectionGadgetsFix {
     @NotNull
     public String getName() {
@@ -219,7 +219,26 @@ public class PointlessBooleanExpressionInspection extends BaseInspection {
     public void doFix(Project project, ProblemDescriptor descriptor)
       throws IncorrectOperationException {
       final PsiElement element = descriptor.getPsiElement();
-      SimplifyBooleanExpressionFix.simplifyExpression((PsiExpression)element);
+      processSubExpressions(project, (PsiExpression)element);
+    }
+
+    private boolean processSubExpressions(Project project, PsiExpression element) {
+      if (element instanceof PsiPrefixExpression) {
+        SimplifyBooleanExpressionFix.simplifyExpression(project, element, isTrue(element));
+      }  else {
+        if (element instanceof PsiPolyadicExpression) {
+          for (PsiExpression operand :((PsiPolyadicExpression)element).getOperands()) {
+            Boolean bool = isTrue(operand) ? Boolean.TRUE : isFalse(operand) ? Boolean.FALSE : null;
+            if (bool != null) {
+              SimplifyBooleanExpressionFix.simplifyExpression(project, operand, bool);
+              return true;
+            } else {
+              if (processSubExpressions(project, operand)) return true;
+            }
+          }
+        }
+      }
+      return false;
     }
   }
 

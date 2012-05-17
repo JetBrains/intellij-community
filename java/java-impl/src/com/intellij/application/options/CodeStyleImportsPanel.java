@@ -160,6 +160,7 @@ public class CodeStyleImportsPanel extends JPanel {
           removeEntryFromPackages();
         }
       }).disableUpDownActions().createPanel();
+    panel.setPreferredSize(new Dimension(-1, 150));
 
     UIUtil.addBorder(panel, IdeBorderFactory.createTitledBorder(ApplicationBundle.message("title.packages.to.use.import.with"), false));
 
@@ -568,7 +569,9 @@ public class CodeStyleImportsPanel extends JPanel {
 
   private JComponent createImportLayoutTable() {
     myImportLayoutTable = createTableForPackageEntries(myImportLayoutList);
-    return ScrollPaneFactory.createScrollPane(myImportLayoutTable);
+    JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myImportLayoutTable);
+    scrollPane.setPreferredSize(new Dimension(-1, 200));
+    return scrollPane;
   }
 
   public void reset(CodeStyleSettings settings) {

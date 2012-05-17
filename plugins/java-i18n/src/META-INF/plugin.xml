@@ -32,7 +32,8 @@
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.internationalization.issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.intellij.codeInspection.i18n.I18nInspection"/>
     <localInspection language="JAVA" shortName="UnresolvedPropertyKey" bundle="messages.CodeInsightBundle"
-                     key="inspection.unresolved.property.key.reference.name" groupName="Internationalization issues" enabledByDefault="true"
+                     key="inspection.unresolved.property.key.reference.name"
+                     groupBundle="messages.InspectionsBundle" groupKey="group.names.properties.files" enabledByDefault="true"
                      level="ERROR" implementationClass="com.intellij.codeInspection.i18n.InvalidPropertyKeyInspection"/>
     <globalInspection shortName="InconsistentResourceBundle" bundle="messages.InspectionsBundle"
                       key="inconsistent.resource.bundle.display.name" groupBundle="messages.PropertiesBundle"

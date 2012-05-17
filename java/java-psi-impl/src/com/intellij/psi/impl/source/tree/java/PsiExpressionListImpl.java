@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
-import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.psi.tree.IElementType;
@@ -36,7 +35,7 @@ public class PsiExpressionListImpl extends CompositePsiElement implements PsiExp
   @Override
   @NotNull
   public PsiExpression[] getExpressions() {
-    return getChildrenAsPsiElements(ElementType.EXPRESSION_BIT_SET, Constants.PSI_EXPRESSION_ARRAY_CONSTRUCTOR);
+    return getChildrenAsPsiElements(ElementType.EXPRESSION_BIT_SET, PsiExpression.ARRAY_FACTORY);
   }
 
   @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,7 +47,7 @@ public class PsiAnnotationParameterListImpl extends PsiCommaSeparatedListImpl im
   public PsiNameValuePair[] getAttributes() {
     PsiNameValuePair[] cachedMembers = myCachedMembers;
     if (cachedMembers == null) {
-      myCachedMembers = cachedMembers = getChildrenAsPsiElements(NAME_VALUE_PAIR_BIT_SET, PSI_NAME_VALUE_PAIR_ARRAY_CONSTRUCTOR);
+      myCachedMembers = cachedMembers = getChildrenAsPsiElements(NAME_VALUE_PAIR_BIT_SET, PsiNameValuePair.ARRAY_FACTORY);
     }
 
     return cachedMembers;

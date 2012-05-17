@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -754,36 +754,6 @@ public class HighlightClassUtil {
       if (resolved != baseClass) return false;
     }
     return true;
-  }
-
-
-  static HighlightInfo checkExternalizableHasPublicNoArgsConstructor(PsiClass aClass, PsiElement context) {
-    if (!isExternalizable(aClass) || aClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
-      return null;
-    }
-    PsiMethod[] constructors = aClass.getConstructors();
-    boolean hasPublicNoArgsConstructor = constructors.length == 0;
-    for (PsiMethod constructor : constructors) {
-      if (constructor.getParameterList().getParametersCount() == 0 && constructor.hasModifierProperty(PsiModifier.PUBLIC)) {
-        hasPublicNoArgsConstructor = true;
-        break;
-      }
-    }
-    if (!hasPublicNoArgsConstructor) {
-      HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.WARNING,
-                                                                      context,
-                                                                      JavaErrorMessages.message("externalizable.class.should.have.public.constructor"));
-      QuickFixAction.registerQuickFixAction(highlightInfo, QUICK_FIX_FACTORY.createAddDefaultConstructorFix(aClass));
-      return highlightInfo;
-    }
-    return null;
-  }
-
-  private static boolean isExternalizable(PsiClass aClass) {
-    PsiManager manager = aClass.getManager();
-    PsiClass externalizableClass =
-      JavaPsiFacade.getInstance(manager.getProject()).findClass("java.io.Externalizable", aClass.getResolveScope());
-    return externalizableClass != null && aClass.isInheritor(externalizableClass, true);
   }
 
   public static boolean hasEnclosingInstanceInScope(PsiClass aClass, PsiElement scope, final boolean isSuperClassAccepted) {

@@ -47,7 +47,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.impl.*;
@@ -171,21 +170,17 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
       }
     }
 
-    final boolean isPropertyName = GroovyPropertyUtils.isPropertyName(name);
-
     final boolean isLValue = PsiUtil.isLValue(this);
     String[] accessorNames = isLValue ? GroovyPropertyUtils.suggestSettersName(name) : GroovyPropertyUtils.suggestGettersName(name);
     List<GroovyResolveResult> accessorResults = new ArrayList<GroovyResolveResult>();
     for (String accessorName : accessorNames) {
-      AccessorResolverProcessor accessorResolver =
-        new AccessorResolverProcessor(accessorName, this, !isLValue, false, getThisType(), getTypeArguments());
+      AccessorResolverProcessor accessorResolver = new AccessorResolverProcessor(accessorName, name, this, !isLValue, false, getThisType(), getTypeArguments());
       GrReferenceResolveUtil.resolveImpl(accessorResolver, this);
-      final GroovyResolveResult[] candidates = accessorResolver.getCandidates(); //can be only one correct candidate
-      if (candidates.length > 0 && candidates[candidates.length - 1].isStaticsOK()) {
-        if (isPropertyName || isCorrectRefNameForResolved(candidates, name)) {
-          if (candidates.length == 1) return candidates;
-          return new GroovyResolveResult[]{candidates[candidates.length - 1]};
-        }
+      final GroovyResolveResult[] candidates = accessorResolver.getCandidates();
+
+      //can be only one correct candidate or some incorrect
+      if (candidates.length == 1 && candidates[0].isStaticsOK() && candidates[0].isAccessible()) {
+        return candidates;
       }
       else {
         ContainerUtil.addAll(accessorResults, candidates);
@@ -202,17 +197,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
     return GroovyResolveResult.EMPTY_ARRAY;
   }
 
-  /**
-   * It is allowed to use capitalized property name if the field is capitalized
-   */
-  private static boolean isCorrectRefNameForResolved(GroovyResolveResult[] candidates, String name) {
-    assert !GroovyPropertyUtils.isPropertyName(name);
-    PsiElement element = candidates[candidates.length - 1].getElement();
-    if (!(element instanceof GrAccessorMethod)) return false;
 
-    String fname = ((GrAccessorMethod)element).getProperty().getName();
-    return name.equals(fname);
-  }
 
   public GroovyResolveResult[] getCallVariants(GrExpression upToArgument) {
     return resolveMethodOrProperty(true, upToArgument, true);
@@ -301,7 +286,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
 
     //search for getters
     for (String getterName : GroovyPropertyUtils.suggestGettersName(name)) {
-      AccessorResolverProcessor getterResolver = new AccessorResolverProcessor(getterName, this, true, genericsMatter, getThisType(), getTypeArguments());
+      AccessorResolverProcessor getterResolver = new AccessorResolverProcessor(getterName, name, this, true, genericsMatter, getThisType(), getTypeArguments());
       GrReferenceResolveUtil.resolveImpl(getterResolver, this);
       final GroovyResolveResult[] candidates = getterResolver.getCandidates(); //can be only one candidate
       if (!allVariants && candidates.length == 1) {

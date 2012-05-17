@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.psi;
 
+import com.intellij.util.ArrayFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,6 +28,13 @@ public interface PsiTypeElement extends PsiElement,PsiAnnotationOwner {
    * The empty array of PSI directories which can be reused to avoid unnecessary allocations.
    */
   PsiTypeElement[] EMPTY_ARRAY = new PsiTypeElement[0];
+
+  ArrayFactory<PsiTypeElement> ARRAY_FACTORY = new ArrayFactory<PsiTypeElement>() {
+    @Override
+    public PsiTypeElement[] create(final int count) {
+      return count == 0 ? EMPTY_ARRAY : new PsiTypeElement[count];
+    }
+  };
 
   /**
    * Returns the type referenced by the type element.

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,18 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-package com.intellij.psi.impl.source;
-
-import com.intellij.psi.PsiElement;
-
-public interface PsiElementArrayConstructor<T extends PsiElement> {
-  PsiElementArrayConstructor<PsiElement> PSI_ELEMENT_ARRAY_CONSTRUCTOR = new PsiElementArrayConstructor<PsiElement>() {
-    @Override
-    public PsiElement[] newPsiElementArray(int length) {
-      return length == 0 ? PsiElement.EMPTY_ARRAY : new PsiElement[length];
-    }
-  };
-
-  T[] newPsiElementArray(int length);
+class Test {
+  private void bar() {
+         //To change body of created methods use File | Settings | File Templates.
+     }
+ 
+     public void foo() {
+         new Runnable() {
+             public void run() {
+                 bar();
+             }
+         }.ru<caret>n();
+     }
 }

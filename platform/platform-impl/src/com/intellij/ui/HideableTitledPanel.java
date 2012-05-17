@@ -1,33 +1,37 @@
 package com.intellij.ui;
 
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
+import java.awt.event.*;
 
 /**
  * @author evgeny zakrevsky
  */
 public class HideableTitledPanel extends JPanel {
-  Icon OFF_ICON = IconLoader.getIcon("/general/comboArrow.png");
-  Icon ON_ICON = IconLoader.getIcon("/general/comboUpPassive.png");
+  private final static Icon OFF_ICON = IconLoader.getIcon("/general/comboArrow.png");
+  private final static Icon ON_ICON = IconLoader.getIcon("/general/comboUpPassive.png");
+
   private TitledSeparatorWithMnemonic myTitledSeparator;
   private boolean myOn;
   private final JComponent myContent;
   private Dimension myPreviousContentSize;
+  private boolean myMnemonicActionRegistered = false;
 
   public HideableTitledPanel(String title, JComponent content, boolean on) {
     super(new BorderLayout());
     myContent = content;
     add(myContent, BorderLayout.CENTER);
-    myTitledSeparator = new TitledSeparatorWithMnemonic(title, null);
+    myTitledSeparator = new TitledSeparatorWithMnemonic("", null);
     add(myTitledSeparator, BorderLayout.NORTH);
     myTitledSeparator.getLabel().setIcon(OFF_ICON);
 
+    myTitledSeparator.getLabel().setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
     myTitledSeparator.getLabel().addMouseListener(new MouseAdapter() {
       @Override
       public void mouseReleased(MouseEvent e) {
@@ -38,31 +42,36 @@ public class HideableTitledPanel extends JPanel {
           on();
         }
       }
-
-      @Override
-      public void mouseEntered(MouseEvent e) {
-        setCursor(new Cursor(Cursor.HAND_CURSOR));
-      }
-
-      @Override
-      public void mouseExited(MouseEvent e) {
-        setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
-      }
-    });
-
-    UIUtil.setActionNameAndMnemonic(title, new AbstractAction() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        if (myOn) {
-          off();
-        }
-        else {
-          on();
-        }
-      }
     });
 
     setOn(on);
+    setTitle(title);
+
+    addHierarchyListener(new HierarchyListener() {
+      @Override
+      public void hierarchyChanged(HierarchyEvent e) {
+        final JComponent rootPane = getRootPane();
+        if (rootPane != null && !myMnemonicActionRegistered) {
+          final int mnemonicIndex = UIUtil.getDisplayMnemonicIndex(getTitle());
+          if (mnemonicIndex != -1) {
+            AnAction action = new AnAction() {
+              public void actionPerformed(AnActionEvent e) {
+                if (myOn) {
+                  off();
+                }
+                else {
+                  on();
+                }
+              }
+            };
+            final Character mnemonicCharacter = UIUtil.removeMnemonic(getTitle()).toLowerCase().charAt(mnemonicIndex);
+            action.registerCustomShortcutSet(
+              new CustomShortcutSet(KeyStroke.getKeyStroke(mnemonicCharacter, InputEvent.ALT_MASK)), rootPane);
+            myMnemonicActionRegistered = true;
+          }
+        }
+      }
+    });
   }
 
   public void setOn(boolean on) {
@@ -75,10 +84,28 @@ public class HideableTitledPanel extends JPanel {
     }
   }
 
+  public void setTitle(String title) {
+    myTitledSeparator.setText(title);
+  }
+
+  public String getTitle() {
+    return myTitledSeparator.getText();
+  }
+
   protected void on() {
     myOn = true;
     myTitledSeparator.getLabel().setIcon(ON_ICON);
     myContent.setVisible(true);
+    adjustWindow();
+    invalidate();
+    repaint();
+  }
+
+  protected void off() {
+    myOn = false;
+    myTitledSeparator.getLabel().setIcon(OFF_ICON);
+    myContent.setVisible(false);
+    myPreviousContentSize = myContent.getSize();
     adjustWindow();
     invalidate();
     repaint();
@@ -107,20 +134,6 @@ public class HideableTitledPanel extends JPanel {
         }
       });
     }
-  }
-
-  protected void off() {
-    myOn = false;
-    myTitledSeparator.getLabel().setIcon(OFF_ICON);
-    myContent.setVisible(false);
-    myPreviousContentSize = myContent.getSize();
-    adjustWindow();
-    invalidate();
-    repaint();
-  }
-
-  public void setTitle(String title) {
-    myTitledSeparator.setText(title);
   }
 
   @Override

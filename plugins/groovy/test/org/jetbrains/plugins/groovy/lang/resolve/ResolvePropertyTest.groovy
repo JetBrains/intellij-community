@@ -28,6 +28,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstant
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil
@@ -593,7 +594,7 @@ set<caret>Foo(2)
   }
 
   public void testUpperCaseFieldWithoutGetter() {
-    assertTrue resolve("A.groovy") instanceof GrAccessorMethod
+    assertInstanceOf(resolve("A.groovy"), GrAccessorMethod)
   }
 
   public void testGetterWithUpperCaseFieldReference() {
@@ -787,5 +788,16 @@ class A {
 
 new A().pro<caret>p''')
     assertNotNull ref.resolve()
+  }
+
+  void testGetChars() {
+    def ref = configureByText('''\
+'abc'.cha<caret>rs
+''')
+    def resolved = ref.resolve()
+    assertInstanceOf(resolved, GrGdkMethod)
+    def method = resolved.staticMethod as PsiMethod
+
+    assertEquals(method.parameterList.parameters[0].type.canonicalText, CommonClassNames.JAVA_LANG_STRING)
   }
 }

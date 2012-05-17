@@ -36,7 +36,7 @@ public class PrecedingCommentRuleInstance extends CommentRuleInstance {
   public void determineEmit(List<RuleInstance> resultRuleInstances, int startIndex) {
     if (match(
       resultRuleInstances,
-      myCommentRule.getnPrecedingRulesToMatch(),
+      myCommentRule.getNPrecedingRulesToMatch(),
       -1,
       startIndex,
       myCommentRule.isAllPrecedingRules()))

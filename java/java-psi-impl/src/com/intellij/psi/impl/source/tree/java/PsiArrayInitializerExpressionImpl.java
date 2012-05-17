@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,7 +35,7 @@ public class PsiArrayInitializerExpressionImpl extends ExpressionPsiElement impl
   @Override
   @NotNull
   public PsiExpression[] getInitializers(){
-    return getChildrenAsPsiElements(EXPRESSION_BIT_SET, PSI_EXPRESSION_ARRAY_CONSTRUCTOR);
+    return getChildrenAsPsiElements(EXPRESSION_BIT_SET, PsiExpression.ARRAY_FACTORY);
   }
 
   @Override
@@ -128,16 +128,15 @@ public class PsiArrayInitializerExpressionImpl extends ExpressionPsiElement impl
 
     if (ElementType.EXPRESSION_BIT_SET.contains(first.getElementType())) {
      final CharTable charTab = SharedImplUtil.findCharTableByTree(this);
-      ASTNode element = first;
-      for (ASTNode child = element.getTreeNext(); child != null; child = child.getTreeNext()) {
+      for (ASTNode child = first.getTreeNext(); child != null; child = child.getTreeNext()) {
         if (child.getElementType() == COMMA) break;
         if (ElementType.EXPRESSION_BIT_SET.contains(child.getElementType())) {
           TreeElement comma = Factory.createSingleLeafElement(COMMA, ",", 0, 1, charTab, getManager());
-          super.addInternal(comma, comma, element, Boolean.FALSE);
+          super.addInternal(comma, comma, first, Boolean.FALSE);
           break;
         }
       }
-      for (ASTNode child = element.getTreePrev(); child != null; child = child.getTreePrev()) {
+      for (ASTNode child = first.getTreePrev(); child != null; child = child.getTreePrev()) {
         if (child.getElementType() == COMMA) break;
         if (ElementType.EXPRESSION_BIT_SET.contains(child.getElementType())) {
           TreeElement comma = Factory.createSingleLeafElement(COMMA, ",", 0, 1, charTab, getManager());

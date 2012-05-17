@@ -97,7 +97,7 @@ public class GroovyPropertyUtils {
       return findPropertySetter(fromText.getType(), propertyName, context);
     }
 
-    final AccessorResolverProcessor processor = new AccessorResolverProcessor(setterName, context, false);
+    final AccessorResolverProcessor processor = new AccessorResolverProcessor(setterName, propertyName, context, false);
     ResolveUtil.processAllDeclarations(type, processor, ResolveState.initial(), context);
     final GroovyResolveResult[] setterCandidates = processor.getCandidates();
     return PsiImplUtil.extractUniqueElement(setterCandidates);
@@ -220,7 +220,12 @@ public class GroovyPropertyUtils {
     if (method.getName().startsWith(IS_PREFIX) && !PsiType.BOOLEAN.equals(method.getReturnType())) {
       return false;
     }
-    return (propertyName == null || propertyName.equals(getPropertyNameByGetter(method))) && method.getReturnType() != PsiType.VOID;
+    if (method.getReturnType() == PsiType.VOID) return false;
+    if (propertyName == null) return true;
+
+    final String byGetter = getPropertyNameByGetter(method);
+    return propertyName.equals(byGetter) || (!isPropertyName(byGetter) && propertyName.equals(
+      getPropertyNameByGetterName(method.getName(), PsiType.BOOLEAN.equals(method.getReturnType()))));
   }
 
   public static boolean isSimplePropertySetter(PsiMethod method) {
@@ -231,7 +236,10 @@ public class GroovyPropertyUtils {
     if (method == null || method.isConstructor()) return false;
     if (method.getParameterList().getParametersCount() != 1) return false;
     if (!isSetterName(method.getName())) return false;
-    return propertyName == null || propertyName.equals(getPropertyNameBySetter(method));
+    if (propertyName==null) return true;
+
+    final String bySetter = getPropertyNameBySetter(method);
+    return propertyName.equals(bySetter) || (!isPropertyName(bySetter) && propertyName.equals(getPropertyNameBySetterName(method.getName())));
   }
 
   @Nullable

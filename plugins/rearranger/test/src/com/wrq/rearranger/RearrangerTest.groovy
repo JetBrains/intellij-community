@@ -61,7 +61,7 @@ class RearrangerTest extends LightCodeInsightFixtureTestCase {
     doTest('RearrangementTest', 'RearrangementResult2') {
       def attributes = new FieldAttributes()
       attributes.protectionLevelAttributes.plPublic = true
-      mySettings.addItem(attributes, 0)
+      mySettings.addItem(attributes)
     }
   }
 
@@ -70,7 +70,7 @@ class RearrangerTest extends LightCodeInsightFixtureTestCase {
       def attributes = new FieldAttributes()
       attributes.protectionLevelAttributes.plPublic = true
       attributes.protectionLevelAttributes.invertProtectionLevel = true
-      mySettings.addItem(attributes, 0)
+      mySettings.addItem(attributes)
     }
   }
 
@@ -80,7 +80,7 @@ class RearrangerTest extends LightCodeInsightFixtureTestCase {
       attributes.protectionLevelAttributes.plPackage = true
       attributes.protectionLevelAttributes.plPublic = true
       attributes.constructorMethodType = true
-      mySettings.addItem(attributes, 0)
+      mySettings.addItem(attributes)
     }
   }
 
@@ -88,7 +88,7 @@ class RearrangerTest extends LightCodeInsightFixtureTestCase {
     doTest('RearrangementTest', 'RearrangementResult5') {
       def attributes = new ClassAttributes()
       attributes.protectionLevelAttributes.plPackage = true
-      mySettings.addClass(attributes, 0)
+      mySettings.addClass(attributes)
     }
   }
 
@@ -97,7 +97,7 @@ class RearrangerTest extends LightCodeInsightFixtureTestCase {
       def attributes = new FieldAttributes()
       attributes.finalAttribute.value = true
       attributes.staticAttribute.value = true
-      mySettings.addItem(attributes, 0)
+      mySettings.addItem(attributes)
     }
   }
 
@@ -105,7 +105,7 @@ class RearrangerTest extends LightCodeInsightFixtureTestCase {
     doTest('RearrangementTest7', 'RearrangementResult7') {
       def attributes = new FieldAttributes()
       attributes.initialisedByAnonymousClassAttr.value = true
-      mySettings.addItem(attributes, 0)
+      mySettings.addItem(attributes)
     }
   }
 
@@ -114,12 +114,12 @@ class RearrangerTest extends LightCodeInsightFixtureTestCase {
       def fieldAttributes = new FieldAttributes()
       fieldAttributes.nameAttribute.match = true
       fieldAttributes.nameAttribute.expression = '.*5'
-      mySettings.addItem(fieldAttributes, 0)
+      mySettings.addItem(fieldAttributes)
       
       def methodAttributes = new MethodAttributes()
       methodAttributes.nameAttribute.match = true
       methodAttributes.nameAttribute.expression = '.*2'
-      mySettings.addItem(methodAttributes, 1)
+      mySettings.addItem(methodAttributes)
     }
   }
 
@@ -127,7 +127,7 @@ class RearrangerTest extends LightCodeInsightFixtureTestCase {
     doTest('RearrangementTest8', 'RearrangementResult8A') {
       def methodAttributes = new MethodAttributes()
       methodAttributes.staticAttribute.value = true
-      mySettings.addItem(methodAttributes, 0)
+      mySettings.addItem(methodAttributes)
     }
   }
 
@@ -138,7 +138,7 @@ class RearrangerTest extends LightCodeInsightFixtureTestCase {
       attributes.otherMethodType = true
       attributes.constructorMethodType = false
       attributes.sortOptions.byName = true
-      mySettings.addItem(attributes, 0)
+      mySettings.addItem(attributes)
       mySettings.keepGettersSettersTogether = false
     }
   }
@@ -147,89 +147,67 @@ class RearrangerTest extends LightCodeInsightFixtureTestCase {
     doTest('RearrangementTest', 'RearrangementResult10') {
       def attributes = new FieldAttributes()
       attributes.protectionLevelAttributes.plPublic = true
-      mySettings.addItem(attributes, 0)
+      mySettings.addItem(attributes)
       
       def comment = new CommentRule()
       comment.commentText = '// simple comment **********'
       comment.emitCondition = CommentRule.EMIT_IF_ITEMS_MATCH_PRECEDING_RULE
-      mySettings.addItem(comment, 1)
+      mySettings.addItem(comment)
     }
   }
 
-//  /**
-//   * Delete old comment and insert (identical) new one.  This tests proper identification and deletion of old
-//   * comments.
-//   *
-//   * @throws Exception test exception
-//   */
-//  public final void testReplayComment() throws Exception {
-//    configureByFile("/com/wrq/rearranger/RearrangementResult10.java");
-//    final PsiFile file = getFile();
-//    final Document doc = PsiDocumentManager.getInstance(getProject()).getDocument(file);
-//    final FieldAttributes fa = new FieldAttributes();
-//    fa.getPlAttr().setPlPublic(true);
-//    rs.addItem(fa, 0);
-//    final CommentRule c = new CommentRule();
-//    c.setCommentText("// simple comment **********");
-//    c.setEmitCondition(CommentRule.EMIT_IF_ITEMS_MATCH_PRECEDING_RULE);
-//    rs.addItem(c, 1);
-//    final RearrangerActionHandler rah = new RearrangerActionHandler();
-//    rah.rearrangeDocument(getProject(), file, rs, doc);
-//    super.checkResultByFile("/com/wrq/rearranger/RearrangementResult10.java");
-//  }
-//
-//  public final void testMultipleRuleCommentMatch() throws Exception {
-//    configureByFile("/com/wrq/rearranger/RearrangementTest11.java");
-//    final PsiFile file = getFile();
-//    final Document doc = PsiDocumentManager.getInstance(getProject()).getDocument(file);
-//    CommentRule c;
-//    FieldAttributes fa;
-//
-//    c = new CommentRule();
-//    c.setCommentText("// FIELDS:");
-//    c.setEmitCondition(CommentRule.EMIT_IF_ITEMS_MATCH_SUBSEQUENT_RULE);
-//    c.setAllSubsequentRules(false);
-//    c.setnSubsequentRulesToMatch(3);
-//    rs.addItem(c, 0);
-//
-//    c = new CommentRule();
-//    c.setCommentText("// PROTECTED FIELDS:");
-//    c.setEmitCondition(CommentRule.EMIT_IF_ITEMS_MATCH_SUBSEQUENT_RULE);
-//    c.setAllSubsequentRules(false);
-//    c.setnSubsequentRulesToMatch(1);
-//    rs.addItem(c, 1);
-//
-//    fa = new FieldAttributes();
-//    fa.getPlAttr().setPlProtected(true);
-//    rs.addItem(fa, 2);
-//
-//    c = new CommentRule();
-//    c.setCommentText("// FINAL FIELDS:");
-//    c.setEmitCondition(CommentRule.EMIT_IF_ITEMS_MATCH_SUBSEQUENT_RULE);
-//    c.setAllSubsequentRules(true);
-//    c.setnSubsequentRulesToMatch(1);
-//    rs.addItem(c, 3);
-//
-//    fa = new FieldAttributes();
-//    fa.getfAttr().setValue(true);
-//    rs.addItem(fa, 4);
-//
-//    c = new CommentRule();
-//    c.setCommentText("// NON-FINAL FIELDS:");
-//    c.setEmitCondition(CommentRule.EMIT_IF_ITEMS_MATCH_SUBSEQUENT_RULE);
-//    c.setAllSubsequentRules(true);
-//    c.setnSubsequentRulesToMatch(1);
-//    rs.addItem(c, 5);
-//
-//    fa = new FieldAttributes();
-//    fa.getfAttr().setValue(true);
-//    fa.getfAttr().setInvert(true);
-//    rs.addItem(fa, 6);
-//    final RearrangerActionHandler rah = new RearrangerActionHandler();
-//    rah.rearrangeDocument(getProject(), file, rs, doc);
-//    super.checkResultByFile("/com/wrq/rearranger/RearrangementResult11.java");
-//  }
-//
+  /**
+   * Delete old comment and insert (identical) new one.  This tests proper identification and deletion of old
+   * comments.
+   *
+   * @throws Exception test exception
+   */
+  public final void testReplayComment() throws Exception {
+    doTest('RearrangementResult10', 'RearrangementResult10') {
+      def attributes = new FieldAttributes()
+      attributes.protectionLevelAttributes.plPublic = true
+      mySettings.addItem(attributes)
+
+      def comment = new CommentRule()
+      comment.commentText = '// simple comment **********'
+      comment.emitCondition = CommentRule.EMIT_IF_ITEMS_MATCH_PRECEDING_RULE
+      mySettings.addItem(comment)
+    }
+  }
+
+  public final void testMultipleRuleCommentMatch() throws Exception {
+    doTest('RearrangementTest11', 'RearrangementResult11') {
+      def allFieldsComment = new CommentRule()
+      allFieldsComment.commentText = '// FIELDS:'
+      allFieldsComment.emitCondition = CommentRule.EMIT_IF_ITEMS_MATCH_SUBSEQUENT_RULE
+      allFieldsComment.allSubsequentRules = false
+      mySettings.addItem(allFieldsComment)
+
+      def finalFieldsComment = new CommentRule()
+      finalFieldsComment.commentText = '// FINAL FIELDS:'
+      finalFieldsComment.emitCondition = CommentRule.EMIT_IF_ITEMS_MATCH_SUBSEQUENT_RULE
+      finalFieldsComment.allSubsequentRules = true
+      finalFieldsComment.NSubsequentRulesToMatch = 1
+      mySettings.addItem(finalFieldsComment)
+      
+      def finalFields = new FieldAttributes()
+      finalFields.finalAttribute.value = true
+      mySettings.addItem(finalFields)
+      
+      def nonFinalFieldsComment = new CommentRule()
+      nonFinalFieldsComment.commentText = '// NON-FINAL FIELDS:'
+      nonFinalFieldsComment.emitCondition = CommentRule.EMIT_IF_ITEMS_MATCH_SUBSEQUENT_RULE
+      nonFinalFieldsComment.allSubsequentRules = true
+      nonFinalFieldsComment.NSubsequentRulesToMatch = 1
+      mySettings.addItem(nonFinalFieldsComment)
+      
+      def nonFinalFields = new FieldAttributes()
+      nonFinalFields.finalAttribute.value = true
+      nonFinalFields.finalAttribute.invert = true
+      mySettings.addItem(nonFinalFields)
+    }
+  }
+
 //  public final void testOpsBlockingQueueExample() throws Exception {
 //    testOpsBlockingQueueExampleWorker(false, "/com/wrq/rearranger/OpsBlockingQueue.java",
 //                                      false, "/com/wrq/rearranger/OpsBlockingQueue.java");

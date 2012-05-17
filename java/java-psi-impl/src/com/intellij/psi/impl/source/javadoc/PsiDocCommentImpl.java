@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettingsFacade;
 import com.intellij.psi.impl.source.Constants;
-import com.intellij.psi.impl.source.PsiElementArrayConstructor;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.javadoc.PsiDocComment;
@@ -30,6 +29,7 @@ import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.util.ArrayFactory;
 import com.intellij.util.CharTable;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
@@ -41,10 +41,10 @@ public class PsiDocCommentImpl extends LazyParseablePsiElement implements PsiDoc
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.javadoc.PsiDocCommentImpl");
 
   private static final TokenSet TAG_BIT_SET = TokenSet.create(DOC_TAG);
-  private static final PsiElementArrayConstructor<PsiDocTag> PSI_TAG_ARRAY_CONSTRUCTOR = new PsiElementArrayConstructor<PsiDocTag>() {
+  private static final ArrayFactory<PsiDocTag> ARRAY_FACTORY = new ArrayFactory<PsiDocTag>() {
     @Override
-    public PsiDocTag[] newPsiElementArray(int length) {
-      return length == 0 ? PsiDocTag.EMPTY_ARRAY : new PsiDocTag[length];
+    public PsiDocTag[] create(final int count) {
+      return count == 0 ? PsiDocTag.EMPTY_ARRAY : new PsiDocTag[count];
     }
   };
 
@@ -86,7 +86,7 @@ public class PsiDocCommentImpl extends LazyParseablePsiElement implements PsiDoc
   @Override
   @NotNull
   public PsiDocTag[] getTags() {
-    return getChildrenAsPsiElements(TAG_BIT_SET, PSI_TAG_ARRAY_CONSTRUCTOR);
+    return getChildrenAsPsiElements(TAG_BIT_SET, ARRAY_FACTORY);
   }
 
   @Override
