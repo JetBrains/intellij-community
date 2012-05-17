@@ -31,6 +31,7 @@ public class ConflictedSvnChange extends Change {
   private SVNTreeConflictDescription myAfterDescription;
   // +-
   private final FilePath myTreeConflictMarkHolder;
+  private boolean myIsPhantom;
 
   public ConflictedSvnChange(ContentRevision beforeRevision, ContentRevision afterRevision, final ConflictState conflictState,
                              final FilePath treeConflictMarkHolder) {
@@ -51,9 +52,18 @@ public class ConflictedSvnChange extends Change {
     return myConflictState;
   }
 
+  public void setIsPhantom(boolean isPhantom) {
+    myIsPhantom = isPhantom;
+  }
+
   @Override
   public boolean isTreeConflict() {
     return myConflictState.isTree();
+  }
+
+  @Override
+  public boolean isPhantom() {
+    return myIsPhantom;
   }
 
   public SVNTreeConflictDescription getBeforeDescription() {

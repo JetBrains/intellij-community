@@ -339,6 +339,9 @@ class SvnChangeProviderContext implements StatusReceiver {
     final ConflictedSvnChange conflictedSvnChange = new ConflictedSvnChange(before, after, correctContentsStatus(fStatus, svnStatus),
                                                          getState(svnStatus), after == null ? before.getFile() : after.getFile());
     if (svnStatus != null) {
+      if (SVNStatusType.STATUS_DELETED.equals(svnStatus.getNodeStatus()) && ! svnStatus.getRevision().isValid()) {
+        conflictedSvnChange.setIsPhantom(true);
+      }
       conflictedSvnChange.setBeforeDescription(svnStatus.getTreeConflict());
     }
     return patchWithPropertyChange(conflictedSvnChange, svnStatus, null);

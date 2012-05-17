@@ -16,6 +16,7 @@
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.impl.ComparisonPolicy;
 import com.intellij.openapi.diff.impl.fragments.LineFragment;
 import com.intellij.openapi.diff.impl.highlighting.FragmentSide;
@@ -52,6 +53,7 @@ import java.util.List;
 public class FragmentedDiffRequestFromChange {
   private final Project myProject;
   private final SLRUMap<Pair<Long, String>, List<BeforeAfter<TextRange>>> myRangesCache;
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.FragmentedDiffRequestFromChange");
 
   public FragmentedDiffRequestFromChange(Project project) {
     myProject = project;
@@ -59,7 +61,7 @@ public class FragmentedDiffRequestFromChange {
   }
 
   public static boolean canCreateRequest(Change change) {
-    if (ChangesUtil.isTextConflictingChange(change) || change.isTreeConflict()) return false;
+    if (ChangesUtil.isTextConflictingChange(change) || change.isTreeConflict() || change.isPhantom()) return false;
     if (ShowDiffAction.isBinaryChange(change)) return false;
     final FilePath filePath = ChangesUtil.getFilePath(change);
     if (filePath.isDirectory()) return false;
@@ -73,6 +75,7 @@ public class FragmentedDiffRequestFromChange {
     calculator.execute(change, filePath, myRangesCache, LineStatusTrackerManager.getInstance(myProject));
     final VcsException exception = calculator.getException();
     if (exception != null) {
+      LOG.info(exception);
       throw exception;
     }
     List<BeforeAfter<TextRange>> ranges = calculator.getRanges();

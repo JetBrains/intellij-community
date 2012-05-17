@@ -39,4 +39,14 @@ public class UIVcsUtil {
                                                          new Insets(1,1,1,1), 0,0));
     return wrapper;
   }
+
+  public static JPanel infoPanel(final String header, final String text) {
+    final JLabel label = new JLabel("<html><body><h4>" + StringUtil.escapeXml(header) +
+                                    "</h4><br/>" + StringUtil.replace(StringUtil.escapeXml(text), "\n", "<br/>") + "</body></html>");
+//    label.setForeground(UIUtil.getInactiveTextColor());
+    final JPanel wrapper = new JPanel(new GridBagLayout());
+    wrapper.add(label, new GridBagConstraints(0,0,1,1,0,0,GridBagConstraints.CENTER, GridBagConstraints.NONE,
+                                                         new Insets(1,1,1,1), 0,0));
+    return wrapper;
+  }
 }

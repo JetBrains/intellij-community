@@ -151,7 +151,7 @@ public class VcsChangeDetailsManager {
   private static boolean canBeShownInBinaryDiff(Change change, final Project project) {
     FilePath path = ChangesUtil.getFilePath(change);
     if (path != null && path.isDirectory()) return false;
-    if (change.isTreeConflict()) return false;
+    if (change.isTreeConflict() || change.isPhantom()) return false;
     return ShowDiffAction.isBinaryChangeAndCanShow(project, change);
   }
 
