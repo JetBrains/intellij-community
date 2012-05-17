@@ -11,6 +11,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.util.PsiUtilCore;
+import com.jetbrains.python.psi.PyFile;
 
 /**
  * User : catherine
@@ -31,7 +32,7 @@ public class PythonCopyPasteProcessor implements CopyPastePreProcessor {
     final CaretModel caretModel = editor.getCaretModel();
     final Document document = editor.getDocument();
 
-    if (StringUtil.startsWithWhitespace(text) && StringUtil.endsWithLineBreak(text)) {
+    if (file instanceof PyFile && StringUtil.startsWithWhitespace(text) && StringUtil.endsWithLineBreak(text)) {
       final int caretOffset = caretModel.getOffset();
       final PsiElement element = PsiUtilCore.getElementAtOffset(file, caretOffset-1);
       final int lineNumber = document.getLineNumber(caretOffset);
