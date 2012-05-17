@@ -12,7 +12,6 @@ import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.options.SettingsEditorGroup;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.SdkType;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizerUtil;
@@ -287,11 +286,10 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractRunConfig
     final String sdk_home = getSdkHome();
     Sdk sdk = PythonSdkType.findPythonSdk(getModule());
     if (sdk != null && sdk_home != null) {
-      SdkType sdkType = sdk.getSdkType();
-      patchCommandLineFirst(commandLine, sdk_home, sdkType);
-      patchCommandLineForVirtualenv(commandLine, sdk_home, sdkType);
-      patchCommandLineForBuildout(commandLine, sdk_home, sdkType);
-      patchCommandLineLast(commandLine, sdk_home, sdkType);
+      patchCommandLineFirst(commandLine, sdk_home);
+      patchCommandLineForVirtualenv(commandLine, sdk_home);
+      patchCommandLineForBuildout(commandLine, sdk_home);
+      patchCommandLineLast(commandLine, sdk_home);
     }
   }
 
@@ -301,9 +299,8 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractRunConfig
    *
    * @param commandLine
    * @param sdk_home
-   * @param sdk_type
    */
-  protected void patchCommandLineFirst(GeneralCommandLine commandLine, String sdk_home, SdkType sdk_type) {
+  protected void patchCommandLineFirst(GeneralCommandLine commandLine, String sdk_home) {
     // override
   }
 
@@ -313,21 +310,19 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractRunConfig
    *
    * @param commandLine
    * @param sdk_home
-   * @param sdk_type
    */
-  protected void patchCommandLineLast(GeneralCommandLine commandLine, String sdk_home, SdkType sdk_type) {
+  protected void patchCommandLineLast(GeneralCommandLine commandLine, String sdk_home) {
     // override
   }
 
   /**
-   * Gets called after {@link #patchCommandLineForVirtualenv(com.intellij.execution.configurations.GeneralCommandLine, String, com.intellij.openapi.projectRoots.SdkType)}
+   * Gets called after {@link #patchCommandLineForVirtualenv(com.intellij.openapi.projectRoots.SdkType, com.intellij.openapi.projectRoots.SdkType)}
    * Does nothing here, real implementations should use alter running script name or use engulfer.
    *
    * @param commandLine
    * @param sdkHome
-   * @param sdkType
    */
-  protected void patchCommandLineForBuildout(GeneralCommandLine commandLine, String sdkHome, SdkType sdkType) {
+  protected void patchCommandLineForBuildout(GeneralCommandLine commandLine, String sdkHome) {
   }
 
   /**
@@ -335,9 +330,8 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractRunConfig
    *
    * @param commandLine
    * @param sdkHome
-   * @param sdkType
    */
-  protected void patchCommandLineForVirtualenv(GeneralCommandLine commandLine, String sdkHome, SdkType sdkType) {
+  protected void patchCommandLineForVirtualenv(GeneralCommandLine commandLine, String sdkHome) {
     PythonSdkType.patchCommandLineForVirtualenv(commandLine, sdkHome, isPassParentEnvs());
   }
 

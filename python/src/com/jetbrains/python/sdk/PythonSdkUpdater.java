@@ -13,13 +13,12 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkModificator;
-import com.intellij.openapi.projectRoots.SdkType;
+import com.intellij.openapi.projectRoots.SdkTypeId;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.python.PyBundle;
-import com.jetbrains.python.remote.PythonRemoteSdkAdditionalData;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -68,7 +67,7 @@ public class PythonSdkUpdater implements StartupActivity {
     for (Module module : ModuleManager.getInstance(project).getModules()) {
       final Sdk sdk = PythonSdkType.findPythonSdk(module);
       if (sdk != null) {
-        final SdkType sdkType = sdk.getSdkType();
+        final SdkTypeId sdkType = sdk.getSdkType();
         if (sdkType instanceof PythonSdkType && !myAlreadyUpdated.contains(sdk.getHomePath())) {
           sdksToUpdate.add(sdk);
         }

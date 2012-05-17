@@ -1,11 +1,9 @@
 package com.jetbrains.python.sdk;
 
 import com.google.common.collect.Sets;
-import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkAdditionalData;
-import com.intellij.openapi.projectRoots.SdkModel;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.django.util.VirtualFileUtil;
@@ -91,11 +89,6 @@ public class PythonSdkAdditionalData implements SdkAdditionalData {
     if (myAssociateWithNewProject) {
       associateWithProject(project);
     }
-  }
-
-  @Override
-  public void checkValid(SdkModel sdkModel) throws ConfigurationException {
-
   }
 
   public void save(@NotNull final Element rootElement) {

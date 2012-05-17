@@ -1,7 +1,6 @@
 package com.jetbrains.python.psi.resolve;
 
 import com.intellij.openapi.vfs.*;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFileSystemItem;
 import com.jetbrains.python.psi.impl.PyQualifiedName;
 
