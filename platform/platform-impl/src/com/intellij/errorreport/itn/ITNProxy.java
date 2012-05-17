@@ -135,7 +135,7 @@ public class ITNProxy {
     params.add(Pair.create("app.version.major", appInfo.getMajorVersion()));
     params.add(Pair.create("app.version.minor", appInfo.getMinorVersion()));
     params.add(Pair.create("app.build.date", format(appInfo.getBuildDate())));
-    params.add(Pair.create("app.build.date.release.", format(appInfo.getMajorReleaseBuildDate())));
+    params.add(Pair.create("app.build.date.release", format(appInfo.getMajorReleaseBuildDate())));
     params.add(Pair.create("app.update.channel", appInfo.getDefaultUpdateChannel()));
     params.add(Pair.create("app.compilation.timestamp", compilationTimestamp));
 
@@ -176,11 +176,7 @@ public class ITNProxy {
   }
 
   private static String format(Calendar calendar) {
-    if (calendar == null) {
-      return null;
-    } else {
-      return new SimpleDateFormat("yyyy-MM-dd").format(calendar.getTime());
-    }
+    return calendar == null ?  null : Long.toString(calendar.getTime().getTime());
   }
 
   private static HttpURLConnection post(URL url, byte[] bytes) throws IOException {

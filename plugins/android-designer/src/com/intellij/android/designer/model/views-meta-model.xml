@@ -1230,6 +1230,64 @@
     </creation>
   </meta>
 
+  <meta model="com.intellij.android.designer.model.RadViewComponent"
+        layout="com.intellij.android.designer.model.RadViewLayout"
+        class="android.widget.TabHost"
+        tag="TabHost">
+
+    <palette title="TabHost" icon="/com/intellij/android/designer/icons/TabHost.png"
+             tooltip="Container for a tabbed window view. This object holds two children: a set of tab labels that the user clicks to select a specific tab, and a FrameLayout object that displays the contents of that page. The individual elements are typically controlled using this container object, rather than setting values on the child elements themselves."/>
+
+    <creation>
+      <![CDATA[
+        <TabHost
+            android:id="@android:id/tabhost"
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent">
+          <LinearLayout
+              android:layout_width="fill_parent"
+              android:layout_height="fill_parent"
+              android:orientation="vertical">
+            <TabWidget
+                android:id="@android:id/tabs"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content">
+            </TabWidget>
+            <FrameLayout
+                android:id="@android:id/tabcontent"
+                android:layout_width="fill_parent"
+                android:layout_height="fill_parent">
+              <LinearLayout
+                  android:id="@+id/tab1"
+                  android:layout_width="fill_parent"
+                  android:layout_height="fill_parent">
+              </LinearLayout>
+              <LinearLayout
+                  android:id="@+id/tab2"
+                  android:layout_width="fill_parent"
+                  android:layout_height="fill_parent">
+              </LinearLayout>
+              <LinearLayout
+                  android:id="@+id/tab3"
+                  android:layout_width="fill_parent"
+                  android:layout_height="fill_parent">
+              </LinearLayout>
+            </FrameLayout>
+          </LinearLayout>
+        </TabHost>
+      ]]>
+    </creation>
+  </meta>
+
+  <meta model="com.intellij.android.designer.model.RadViewComponent"
+        class="android.widget.TabWidget"
+        tag="TabWidget">
+
+    <palette title="TabWidget" icon="/com/intellij/android/designer/icons/TabWidget.png"/>
+
+    <properties important="divider tabStripEnabled tabStripLeft tabStripRight tabLayout"/>
+  </meta>
+
   <!-- ================= Palette ================= -->
 
   <palette>
@@ -1283,6 +1341,7 @@
       <item tag="RadioGroup"/>
       <item tag="ListView"/>
       <item tag="GridView"/>
+      <item tag="TabHost"/>
       <item tag="Gallery"/>
       <item tag="Spinner"/>
       <item tag="ExpandableListView"/>

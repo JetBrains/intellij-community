@@ -45,8 +45,6 @@ public final class ComponentTreeBuilder extends AbstractTreeBuilder implements C
 
     new TreeDropListener(tree, myTreeArea, designer.getToolProvider());
 
-    designer.updateTreeArea(myTreeArea);
-
     selectFromSurface();
     expandFromState();
 

@@ -179,21 +179,20 @@ public class ModelParser extends XmlRecursiveElementVisitor {
       public String compute() {
         return newComponent.getMetaModel().getCreation();
       }
-    }, true);
+    });
 
     PropertyParser propertyParser = container.getRoot().getClientProperty(PropertyParser.KEY);
     propertyParser.load(newComponent);
 
     if (!newComponent.getTag().isEmpty()) {
-      MetaManager metaManager = ViewsMetaManager.getInstance(newComponent.getTag().getProject());
-      IdManager idManager = container.getRoot().getClientProperty(IdManager.KEY);
-      addComponent(newComponent, metaManager, idManager, propertyParser);
+      addComponent(newComponent, ViewsMetaManager.getInstance(newComponent.getTag().getProject()), propertyParser);
     }
+
+    IdManager.get(container).ensureIds(newComponent);
   }
 
   private static void addComponent(RadViewComponent parentComponent,
                                    MetaManager metaManager,
-                                   IdManager idManager,
                                    PropertyParser propertyParser) throws Exception {
     for (XmlTag tag : parentComponent.getTag().getSubTags()) {
       MetaModel metaModel = metaManager.getModelByTag(tag.getName());
@@ -203,11 +202,10 @@ public class ModelParser extends XmlRecursiveElementVisitor {
 
       RadViewComponent component = createComponent(tag, metaModel);
 
-      idManager.addComponent(component);
       parentComponent.add(component, null);
       propertyParser.load(component);
 
-      addComponent(component, metaManager, idManager, propertyParser);
+      addComponent(component, metaManager, propertyParser);
     }
   }
 
@@ -218,7 +216,7 @@ public class ModelParser extends XmlRecursiveElementVisitor {
     PropertyParser propertyParser = container.getRoot().getClientProperty(PropertyParser.KEY);
     pasteComponent(newComponent, container.getTag(), insertBefore == null ? null : insertBefore.getTag(), propertyParser);
 
-    IdManager.get(container).ensurePasteIds(newComponent);
+    IdManager.get(container).ensureIds(newComponent);
   }
 
   private static void pasteComponent(final RadViewComponent component,
@@ -262,7 +260,7 @@ public class ModelParser extends XmlRecursiveElementVisitor {
 
         return builder.append("/>").toString();
       }
-    }, false);
+    });
 
     XmlTag xmlTag = component.getTag();
     List<RadComponent> children = component.getChildren();
@@ -284,8 +282,7 @@ public class ModelParser extends XmlRecursiveElementVisitor {
   public static void addComponentTag(final XmlTag parentTag,
                                      final RadViewComponent component,
                                      final XmlTag nextTag,
-                                     final Computable<String> tagBuilder,
-                                     final boolean createId) {
+                                     final Computable<String> tagBuilder) {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override
       public void run() {
@@ -323,10 +320,6 @@ public class ModelParser extends XmlRecursiveElementVisitor {
         }
 
         component.setTag(xmlTag);
-
-        if (createId) {
-          component.ensureId();
-        }
       }
     });
   }

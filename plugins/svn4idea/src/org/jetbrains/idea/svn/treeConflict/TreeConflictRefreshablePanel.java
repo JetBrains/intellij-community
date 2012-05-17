@@ -104,6 +104,11 @@ public class TreeConflictRefreshablePanel extends AbstractRefreshablePanel {
            descriptionsEqual(((ConflictedSvnChange)change).getBeforeDescription(), myChange.getBeforeDescription());
   }
 
+  @Override
+  public boolean refreshDataSynch() {
+    return true;
+  }
+
   private boolean descriptionsEqual(SVNTreeConflictDescription d1, SVNTreeConflictDescription d2) {
     if (d1.isPropertyConflict() != d2.isPropertyConflict()) return false;
     if (d1.isTextConflict() != d2.isTextConflict()) return false;
@@ -164,7 +169,8 @@ public class TreeConflictRefreshablePanel extends AbstractRefreshablePanel {
         }
         else {
           long committed = description.getSourceLeftVersion().getPegRevision();
-          if (myCommittedRevision != null && myCommittedRevision.getRevision().getNumber() < committed) {
+          if (myCommittedRevision != null && (myCommittedRevision.getRevision().getNumber() < committed) &&
+            myCommittedRevision.getRevision().isValid()) {
             committed = myCommittedRevision.getRevision().getNumber();
           }
           pegFromLeft = SVNRevision.create(committed);
