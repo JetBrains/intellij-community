@@ -21,13 +21,13 @@ public class PyTypeHandler {
 
   private static final Formatter STR_FORMATTER = new Formatter() {
     public String format(final String value) {
-      return new StringBuilder(value.length() + 2).append('\'').append(StringUtil.replace(value, "'", "\\'")).append('\'').toString();
+      return new StringBuilder(value.length() + 2).append('\'').append(StringUtil.replace(value, "'", "\\'").replace("\\", "\\\\")).append('\'').toString();
     }
   };
 
   private static final Formatter UNI_FORMATTER = new Formatter() {
     public String format(final String value) {
-      return new StringBuilder(value.length() + 3).append("u'").append(StringUtil.replace(value, "'", "\\'")).append('\'').toString();
+      return new StringBuilder(value.length() + 3).append("u'").append(StringUtil.replace(value, "'", "\\'").replace("\\", "\\\\")).append('\'').toString();
     }
   };
 
