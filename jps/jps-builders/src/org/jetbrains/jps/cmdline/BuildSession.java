@@ -439,8 +439,7 @@ final class BuildSession implements Runnable, CanceledStatus {
           SharedThreadPool.INSTANCE.submit(new Runnable() {
             @Override
             public void run() {
-              final ChannelFuture closeFuture = myChannel.close();
-              closeFuture.awaitUninterruptibly();
+              myChannel.close();
             }
           });
         }

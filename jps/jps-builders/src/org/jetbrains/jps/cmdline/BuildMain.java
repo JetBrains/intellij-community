@@ -29,6 +29,7 @@ import java.util.UUID;
 public class BuildMain {
   private static final String LOG_FILE_NAME = "log.xml";
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.cmdline.BuildMain");
+  private static NioClientSocketChannelFactory ourChannelFactory;
 
   public static void main(String[] args){
     System.out.println("Build process started. Classpath: " + System.getProperty("java.class.path"));
@@ -40,7 +41,8 @@ public class BuildMain {
 
     initLoggers();
 
-    final ClientBootstrap bootstrap = new ClientBootstrap(new NioClientSocketChannelFactory(SharedThreadPool.INSTANCE, SharedThreadPool.INSTANCE, 1));
+    ourChannelFactory = new NioClientSocketChannelFactory(SharedThreadPool.INSTANCE, SharedThreadPool.INSTANCE, 1);
+    final ClientBootstrap bootstrap = new ClientBootstrap(ourChannelFactory);
     bootstrap.setPipelineFactory(new ChannelPipelineFactory() {
       public ChannelPipeline getPipeline() throws Exception {
         return Channels.pipeline(
@@ -143,12 +145,16 @@ public class BuildMain {
         super.channelClosed(ctx, e);
       }
       finally {
-        SharedThreadPool.INSTANCE.submit(new Runnable() {
-          @Override
+        new Thread("Shutdown thread") {
           public void run() {
-            System.exit(0);
+            try {
+              ourChannelFactory.releaseExternalResources();
+            }
+            finally {
+              System.exit(0);
+            }
           }
-        });
+        }.start();
       }
     }
 
@@ -167,7 +173,7 @@ public class BuildMain {
     SharedThreadPool.INSTANCE.submit(new Runnable() {
       @Override
       public void run() {
-        channel.close().awaitUninterruptibly();
+        channel.close();
       }
     });
   }
