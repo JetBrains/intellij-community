@@ -775,6 +775,26 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
     }
   }
 
+  public void removeRegisteredChangeFor(FilePath path) {
+    myIdx.remove(path);
+
+    for (LocalChangeList list : myMap.values()) {
+      for (Iterator<Change> iterator = list.getChanges().iterator(); iterator.hasNext(); ) {
+        final Change change = iterator.next();
+        final ContentRevision afterRevision = change.getAfterRevision();
+        if (afterRevision != null && afterRevision.getFile().equals(path)) {
+          ((LocalChangeListImpl) list).removeChange(change);
+          return;
+        }
+        final ContentRevision beforeRevision = change.getBeforeRevision();
+        if (beforeRevision != null && beforeRevision.getFile().equals(path)) {
+          ((LocalChangeListImpl) list).removeChange(change);
+          return;
+        }
+      }
+    }
+  }
+
   // assumes after revisions are all not null
   private static class MyChangesAfterRevisionComparator implements Comparator<Pair<Change, String>> {
     private static final MyChangesAfterRevisionComparator ourInstance = new MyChangesAfterRevisionComparator();
