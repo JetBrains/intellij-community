@@ -35,6 +35,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.project.impl.ProjectLifecycleListener;
 import com.intellij.util.messages.MessageBus;
+import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.messages.MessageHandler;
 
 import java.io.IOException;
@@ -54,9 +55,13 @@ import java.util.List;
 public class ModuleManagerComponent extends ModuleManagerImpl {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.module.impl.ModuleManagerComponent");
   private final ProgressManager myProgressManager;
+  private final MessageBus myMessageBus;
+  private final MessageBusConnection myConnection;
 
   public ModuleManagerComponent(Project project, ProgressManager progressManager, MessageBus bus) {
-    super(project, bus);
+    super(project);
+    myMessageBus = bus;
+    myConnection = bus.connect(project);
     myProgressManager = progressManager;
     myConnection.setDefaultHandler(new MessageHandler() {
       public void handle(Method event, Object... params) {
@@ -162,5 +167,9 @@ public class ModuleManagerComponent extends ModuleManagerImpl {
     else {
       runnableWithProgress.run();
     }
+  }
+
+  protected void deliverPendingEvents() {
+    myConnection.deliverImmediately();
   }
 }

@@ -42,8 +42,6 @@ import com.intellij.util.graph.CachingSemiGraph;
 import com.intellij.util.graph.DFSTBuilder;
 import com.intellij.util.graph.Graph;
 import com.intellij.util.graph.GraphGenerator;
-import com.intellij.util.messages.MessageBus;
-import com.intellij.util.messages.MessageBusConnection;
 import gnu.trove.THashMap;
 import org.jdom.Element;
 import org.jdom.JDOMException;
@@ -75,8 +73,6 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
   @NonNls public static final String ATTRIBUTE_FILEPATH = "filepath";
   @NonNls private static final String ATTRIBUTE_GROUP = "group";
   private long myModificationCount;
-  protected final MessageBusConnection myConnection;
-  protected final MessageBus myMessageBus;
 
   public static ModuleManagerImpl getInstanceImpl(Project project) {
     return (ModuleManagerImpl)getInstance(project);
@@ -87,10 +83,8 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
     myCachedSortedModules = null;
   }
 
-  public ModuleManagerImpl(Project project, MessageBus bus) {
+  public ModuleManagerImpl(Project project) {
     myProject = project;
-    myMessageBus = bus;
-    myConnection = bus.connect(project);
   }
 
 
@@ -433,7 +427,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
   @NotNull
   public Module[] getSortedModules() {
     ApplicationManager.getApplication().assertReadAccessAllowed();
-    myConnection.deliverImmediately();
+    deliverPendingEvents();
     if (myCachedSortedModules == null) {
       myCachedSortedModules = myModuleModel.getSortedModules();
     }
@@ -450,11 +444,14 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
   @NotNull
   public Comparator<Module> moduleDependencyComparator() {
     ApplicationManager.getApplication().assertReadAccessAllowed();
-    myConnection.deliverImmediately();
+    deliverPendingEvents();
     if (myCachedModuleComparator == null) {
       myCachedModuleComparator = myModuleModel.moduleDependencyComparator();
     }
     return myCachedModuleComparator;
+  }
+
+  protected void deliverPendingEvents() {
   }
 
   @NotNull

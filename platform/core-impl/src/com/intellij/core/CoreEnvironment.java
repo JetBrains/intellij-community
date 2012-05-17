@@ -81,23 +81,25 @@ public class CoreEnvironment {
   protected final CoreJarFileSystem myJarFileSystem;
   protected final MockFileIndexFacade myFileIndexFacade;
   protected final PsiManagerImpl myPsiManager;
+  private final Disposable myParentDisposable;
 
   public CoreEnvironment(Disposable parentDisposable) {
-    Extensions.cleanRootArea(parentDisposable);
+    myParentDisposable = parentDisposable;
+    Extensions.cleanRootArea(myParentDisposable);
 
     myFileTypeRegistry = new CoreFileTypeRegistry();
     myEncodingRegistry = new CoreEncodingRegistry();
 
-    myApplication = new MockApplication(parentDisposable);
+    myApplication = new MockApplication(myParentDisposable);
     ApplicationManager.setApplication(myApplication,
                                       new StaticGetter<FileTypeRegistry>(myFileTypeRegistry),
                                       new StaticGetter<EncodingRegistry>(myEncodingRegistry),
-                                      parentDisposable);
+                                      myParentDisposable);
     myLocalFileSystem = new CoreLocalFileSystem();
     myJarFileSystem = new CoreJarFileSystem();
 
     Extensions.registerAreaClass("IDEA_PROJECT", null);
-    myProject = new MockProject(myApplication.getPicoContainer(), parentDisposable);
+    myProject = new MockProject(myApplication.getPicoContainer(), myParentDisposable);
 
     final MutablePicoContainer appContainer = myApplication.getPicoContainer();
     registerComponentInstance(appContainer, FileDocumentManager.class, new MockFileDocumentManagerImpl(new Function<CharSequence, Document>() {
@@ -145,7 +147,7 @@ public class CoreEnvironment {
     registerProjectExtensionPoint(PsiTreeChangePreprocessor.EP_NAME, PsiTreeChangePreprocessor.class);
     myPsiManager = new PsiManagerImpl(myProject, null, null, myFileIndexFacade, null, modificationTracker);
     ((FileManagerImpl) myPsiManager.getFileManager()).markInitialized();
-    registerComponentInstance(projectContainer, PsiManager.class, myPsiManager);
+    registerProjectComponent(PsiManager.class, myPsiManager);
 
     myProject.registerService(PsiFileFactory.class, new PsiFileFactoryImpl(myPsiManager));
     myProject.registerService(CachedValuesManager.class, new CachedValuesManagerImpl(myProject, new PsiCachedValuesFactory(myPsiManager)));
@@ -172,6 +174,14 @@ public class CoreEnvironment {
         };
       }
     };
+  }
+
+  public Disposable getParentDisposable() {
+    return myParentDisposable;
+  }
+
+  public  <T> void registerProjectComponent(final Class<T> interfaceClass, final T implementation) {
+    registerComponentInstance(myProject.getPicoContainer(), interfaceClass, implementation);
   }
 
   public Project getProject() {
