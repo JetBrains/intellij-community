@@ -37,7 +37,7 @@ public class IdManager {
 
   public void addComponent(RadViewComponent component) {
     String id = component.getId();
-    if (id != null) {
+    if (id != null && !id.startsWith("@android:id/")) {
       myIdList.add(id);
     }
   }
@@ -71,18 +71,18 @@ public class IdManager {
     return newId;
   }
 
-  public void ensurePasteIds(final RadViewComponent component) {
+  public void ensureIds(final RadViewComponent container) {
     // TODO: rename all references
 
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override
       public void run() {
-        component.accept(new RadComponentVisitor() {
+        container.accept(new RadComponentVisitor() {
           @Override
           public void endVisit(RadComponent component) {
             RadViewComponent viewComponent = (RadViewComponent)component;
             String idValue = viewComponent.getId();
-            if (idValue != null && myIdList.contains(idValue)) {
+            if (component == container || (idValue != null && myIdList.contains(idValue))) {
               createId(viewComponent);
             }
           }

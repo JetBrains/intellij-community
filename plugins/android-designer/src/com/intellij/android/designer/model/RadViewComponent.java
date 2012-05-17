@@ -92,6 +92,9 @@ public class RadViewComponent extends RadVisualComponent {
     if (StringUtil.isEmpty(idValue)) {
       return null;
     }
+    if (idValue.startsWith("@android:id/")) {
+      return idValue;
+    }
     return "@id/" + idValue.substring(idValue.indexOf('/') + 1);
   }
 

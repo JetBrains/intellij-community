@@ -637,9 +637,6 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
 
   public abstract String getPlatformTarget();
 
-  public void updateTreeArea(EditableArea area) {
-  }
-
   protected abstract ComponentDecorator getRootSelectionDecorator();
 
   @Nullable
