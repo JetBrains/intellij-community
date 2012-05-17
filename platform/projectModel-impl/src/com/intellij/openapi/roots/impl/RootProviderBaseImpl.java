@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,7 +38,7 @@ public abstract class RootProviderBaseImpl implements RootProvider {
     myDispatcher.addListener(listener, parentDisposable);
   }
 
-  protected void fireRootSetChanged() {
+  public void fireRootSetChanged() {
     myDispatcher.getMulticaster().rootSetChanged(this);
   }
 

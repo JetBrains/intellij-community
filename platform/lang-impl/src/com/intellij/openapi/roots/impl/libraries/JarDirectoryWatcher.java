@@ -18,6 +18,7 @@ package com.intellij.openapi.roots.impl.libraries;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.roots.impl.RootProviderBaseImpl;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -32,13 +33,15 @@ import java.util.*;
 /**
  * @author ksafonov
  */
-public abstract class JarDirectoryWatcher implements Disposable {
+public class JarDirectoryWatcher implements Disposable {
   private final JarDirectories myJarDirectories;
+  private final RootProviderBaseImpl myRootProvider;
   private MessageBusConnection myBusConnection = null;
   private Collection<LocalFileSystem.WatchRequest> myWatchRequests = Collections.emptySet();
 
-  public JarDirectoryWatcher(JarDirectories jarDirectories) {
+  public JarDirectoryWatcher(JarDirectories jarDirectories, RootProviderBaseImpl rootProvider) {
     myJarDirectories = jarDirectories;
+    myRootProvider = rootProvider;
   }
 
   public void updateWatchedRoots() {
@@ -142,7 +145,9 @@ public abstract class JarDirectoryWatcher implements Disposable {
     }
   }
 
-  protected abstract void fireRootSetChanged();
+  protected void fireRootSetChanged() {
+    myRootProvider.fireRootSetChanged();
+  }
 
   @Override
   public void dispose() {

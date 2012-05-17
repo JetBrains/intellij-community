@@ -73,12 +73,7 @@ public class LibraryImpl implements LibraryEx.ModifiableModelEx, LibraryEx {
   private final ModifiableRootModel myRootModel;
   private boolean myDisposed;
   private final Disposable myPointersDisposable = Disposer.newDisposable();
-  private final JarDirectoryWatcher myRootsWatcher = new JarDirectoryWatcher(myJarDirectories) {
-    @Override
-    protected void fireRootSetChanged() {
-      myRootProvider.fireRootSetChanged();
-    }
-  };
+  private final JarDirectoryWatcher myRootsWatcher = new JarDirectoryWatcher(myJarDirectories, myRootProvider);
 
   LibraryImpl(LibraryTable table, Element element, ModifiableRootModel rootModel) throws InvalidDataException {
     myLibraryTable = table;
@@ -533,10 +528,6 @@ public class LibraryImpl implements LibraryEx.ModifiableModelEx, LibraryEx {
     @NotNull
     public VirtualFile[] getFiles(@NotNull final OrderRootType rootType) {
       return LibraryImpl.this.getFiles(rootType);
-    }
-
-    public void fireRootSetChanged() {
-      super.fireRootSetChanged();
     }
   }
 
