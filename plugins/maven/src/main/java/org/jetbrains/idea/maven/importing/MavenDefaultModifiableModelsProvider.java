@@ -32,6 +32,7 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.packaging.artifacts.ArtifactManager;
 import com.intellij.packaging.artifacts.ModifiableArtifactModel;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import java.util.Collection;
@@ -65,7 +66,7 @@ public class MavenDefaultModifiableModelsProvider extends MavenBaseModifiableMod
   }
 
   @Override
-  protected ModifiableRootModel doGetRootModel(final Module module) {
+  protected ModifiableRootModel doGetRootModel(@NotNull final Module module) {
     return new ReadAction<ModifiableRootModel>() {
       protected void run(Result<ModifiableRootModel> result) throws Throwable {
         result.setResult(ModuleRootManager.getInstance(module).getModifiableModel());
