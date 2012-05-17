@@ -113,6 +113,7 @@
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
     <checkoutProvider implementation="org.jetbrains.idea.svn.checkout.SvnCheckoutProvider"/>
     <vcschangedetails implementation="org.jetbrains.idea.svn.treeConflict.TreeConflictDetailsProvider"/>
+    <vcschangedetails implementation="org.jetbrains.idea.svn.SvnPhantomChangeDetailsProvider"/>
     <applicationService serviceInterface="org.jetbrains.idea.svn.SvnApplicationSettings"
                         serviceImplementation="org.jetbrains.idea.svn.SvnApplicationSettings"/>
     <projectService serviceImplementation="org.jetbrains.idea.svn.SvnConfiguration"/>

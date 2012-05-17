@@ -28,6 +28,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.wc.SVNInfo;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNWCClient;
 
@@ -115,6 +116,13 @@ public class SvnContentRevision implements ContentRevision {
       buffer.close();
     }
     catch (SVNException e) {
+      try {
+        final SVNInfo info = wcClient.doInfo(file, SVNRevision.UNDEFINED);
+        //todo
+      }
+      catch (SVNException e1) {
+        throw new VcsException(e);
+      }
       throw new VcsException(e);
     }
     catch (IOException e) {
