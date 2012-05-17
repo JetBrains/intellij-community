@@ -19,6 +19,7 @@ import com.intellij.ProjectTopics;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
@@ -28,6 +29,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.UnknownModuleType;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
@@ -51,9 +53,11 @@ import java.util.List;
 )
 public class ModuleManagerComponent extends ModuleManagerImpl {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.module.impl.ModuleManagerComponent");
+  private final ProgressManager myProgressManager;
 
   public ModuleManagerComponent(Project project, ProgressManager progressManager, MessageBus bus) {
-    super(project, progressManager, bus);
+    super(project, bus);
+    myProgressManager = progressManager;
     myConnection.setDefaultHandler(new MessageHandler() {
       public void handle(Method event, Object... params) {
         cleanCachedStuff();
@@ -127,6 +131,36 @@ public class ModuleManagerComponent extends ModuleManagerImpl {
   protected void fireModulesRenamed(List<Module> modules) {
     if (!modules.isEmpty()) {
       myMessageBus.syncPublisher(ProjectTopics.MODULES).modulesRenamed(myProject, modules);
+    }
+  }
+
+  protected void fireModulesAdded() {
+    Runnable runnableWithProgress = new Runnable() {
+      public void run() {
+        for (final Module module : myModuleModel.myPathToModule.values()) {
+          final Application app = ApplicationManager.getApplication();
+          final Runnable swingRunnable = new Runnable() {
+            public void run() {
+              fireModuleAddedInWriteAction(module);
+            }
+          };
+          if (app.isDispatchThread() || app.isHeadlessEnvironment()) {
+            swingRunnable.run();
+          }
+          else {
+            ProgressIndicator pi = ProgressManager.getInstance().getProgressIndicator();
+            app.invokeAndWait(swingRunnable, pi.getModalityState());
+          }
+        }
+      }
+    };
+
+    ProgressIndicator progressIndicator = myProgressManager.getProgressIndicator();
+    if (progressIndicator == null) {
+      myProgressManager.runProcessWithProgressSynchronously(runnableWithProgress, "Loading modules", false, myProject);
+    }
+    else {
+      runnableWithProgress.run();
     }
   }
 }

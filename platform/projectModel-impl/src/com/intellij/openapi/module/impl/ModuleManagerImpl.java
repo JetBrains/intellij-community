@@ -16,7 +16,6 @@
 
 package com.intellij.openapi.module.impl;
 
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ProjectComponent;
@@ -25,7 +24,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.*;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ModifiableRootModel;
@@ -78,7 +76,6 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
   @NonNls private static final String ATTRIBUTE_GROUP = "group";
   private long myModificationCount;
   protected final MessageBusConnection myConnection;
-  private final ProgressManager myProgressManager;
   protected final MessageBus myMessageBus;
 
   public static ModuleManagerImpl getInstanceImpl(Project project) {
@@ -90,12 +87,10 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
     myCachedSortedModules = null;
   }
 
-  public ModuleManagerImpl(Project project, ProgressManager progressManager, MessageBus bus) {
+  public ModuleManagerImpl(Project project, MessageBus bus) {
     myProject = project;
-    myProgressManager = progressManager;
     myMessageBus = bus;
     myConnection = bus.connect(project);
-
   }
 
 
@@ -485,40 +480,24 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
   }
 
   public void projectOpened() {
-    Runnable runnableWithProgress = new Runnable() {
-      public void run() {
-        for (final Module module : myModuleModel.myPathToModule.values()) {
-          final Application app = ApplicationManager.getApplication();
-          final Runnable swingRunnable = new Runnable() {
-            public void run() {
-              app.runWriteAction(new Runnable() {
-                public void run() {
-                  ((ModuleEx)module).moduleAdded();
-                  fireModuleAdded(module);
-                }
-              });
-            }
-          };
-          if (app.isDispatchThread() || app.isHeadlessEnvironment()) {
-            swingRunnable.run();
-          }
-          else {
-            ProgressIndicator pi = ProgressManager.getInstance().getProgressIndicator();
-            app.invokeAndWait(swingRunnable, pi.getModalityState());
-          }
-        }
-      }
-    };
-
-    ProgressIndicator progressIndicator = myProgressManager.getProgressIndicator();
-    if (progressIndicator == null) {
-      myProgressManager.runProcessWithProgressSynchronously(runnableWithProgress, "Loading modules", false, myProject);
-    }
-    else {
-      runnableWithProgress.run();
-    }
+    fireModulesAdded();
 
     myModuleModel.projectOpened();
+  }
+
+  protected void fireModulesAdded() {
+    for (final Module module : myModuleModel.myPathToModule.values()) {
+      fireModuleAddedInWriteAction(module);
+    }
+  }
+
+  protected void fireModuleAddedInWriteAction(final Module module) {
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      public void run() {
+        ((ModuleEx)module).moduleAdded();
+        fireModuleAdded(module);
+      }
+    });
   }
 
   public void projectClosed() {
@@ -534,7 +513,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
   protected abstract ModuleEx createAndLoadModule(String filePath) throws IOException;
 
   class ModuleModelImpl implements ModifiableModuleModel {
-    private final Map<String, Module> myPathToModule = new LinkedHashMap<String, Module>();
+    final Map<String, Module> myPathToModule = new LinkedHashMap<String, Module>();
     private Module[] myModulesCache;
 
     private final List<Module> myModulesToDispose = new ArrayList<Module>();
