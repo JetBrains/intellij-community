@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-2010 Bas Leijdekkers
+ * Copyright 2008-2012 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -34,28 +35,36 @@ public class UnnecessaryCallToStringValueOfInspection extends BaseInspection {
   @Nls
   @NotNull
   public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "unnecessary.call.to.string.valueof.display.name");
+    return InspectionGadgetsBundle.message("unnecessary.call.to.string.valueof.display.name");
   }
 
   @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
-    final PsiExpression expression = (PsiExpression)infos[0];
-    return InspectionGadgetsBundle.message(
-      "unnecessary.call.to.string.valueof.problem.descriptor",
-      expression.getText());
+    final String text = (String)infos[0];
+    return InspectionGadgetsBundle.message("unnecessary.call.to.string.valueof.problem.descriptor", text);
   }
 
   @Override
   @Nullable
   protected InspectionGadgetsFix buildFix(Object... infos) {
-    final PsiExpression expression = (PsiExpression)infos[0];
-    return new UnnecessaryCallToStringValueOfFix(expression.getText());
+    final String text = (String)infos[0];
+    return new UnnecessaryCallToStringValueOfFix(text);
   }
 
-  private static class UnnecessaryCallToStringValueOfFix
-    extends InspectionGadgetsFix {
+  public static String calculateReplacementText(PsiExpression expression) {
+    if (!(expression instanceof PsiPolyadicExpression)) {
+      return expression.getText();
+    }
+    final PsiType type = expression.getType();
+    if (TypeUtils.typeEquals(CommonClassNames.JAVA_LANG_STRING, type) ||
+        ParenthesesUtils.getPrecedence(expression) < ParenthesesUtils.ADDITIVE_PRECEDENCE) {
+      return expression.getText();
+    }
+    return '(' + expression.getText() + ')';
+  }
+
+  private static class UnnecessaryCallToStringValueOfFix extends InspectionGadgetsFix {
 
     private final String replacementText;
 
@@ -65,24 +74,18 @@ public class UnnecessaryCallToStringValueOfInspection extends BaseInspection {
 
     @NotNull
     public String getName() {
-      return InspectionGadgetsBundle.message(
-        "unnecessary.call.to.string.valueof.quickfix",
-        replacementText);
+      return InspectionGadgetsBundle.message("unnecessary.call.to.string.valueof.quickfix", replacementText);
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor)
-      throws IncorrectOperationException {
-      final PsiMethodCallExpression methodCallExpression =
-        (PsiMethodCallExpression)descriptor.getPsiElement();
-      final PsiExpressionList argumentList =
-        methodCallExpression.getArgumentList();
+    protected void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
+      final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)descriptor.getPsiElement();
+      final PsiExpressionList argumentList = methodCallExpression.getArgumentList();
       final PsiExpression[] arguments = argumentList.getExpressions();
       if (arguments.length != 1) {
         return;
       }
-      final PsiExpression argument = arguments[0];
-      methodCallExpression.replace(argument);
+      replaceExpression(methodCallExpression, calculateReplacementText(arguments[0]));
     }
   }
 
@@ -91,41 +94,42 @@ public class UnnecessaryCallToStringValueOfInspection extends BaseInspection {
     return new UnnecessaryCallToStringValueOfVisitor();
   }
 
-  private static class UnnecessaryCallToStringValueOfVisitor
-    extends BaseInspectionVisitor {
+  private static class UnnecessaryCallToStringValueOfVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitMethodCallExpression(
-      PsiMethodCallExpression expression) {
+    public void visitMethodCallExpression(PsiMethodCallExpression expression) {
       super.visitMethodCallExpression(expression);
-      final PsiReferenceExpression methodExpression =
-        expression.getMethodExpression();
+      final PsiReferenceExpression methodExpression = expression.getMethodExpression();
       final String referenceName = methodExpression.getReferenceName();
       if (!"valueOf".equals(referenceName)) {
         return;
       }
       final PsiElement parent = expression.getParent();
-      if (!(parent instanceof PsiBinaryExpression)) {
+      if (!(parent instanceof PsiPolyadicExpression)) {
         return;
       }
-      final PsiBinaryExpression binaryExpression =
-        (PsiBinaryExpression)parent;
-      final PsiType type = binaryExpression.getType();
-      if (!TypeUtils.typeEquals(CommonClassNames.JAVA_LANG_STRING,
-                                type)) {
+      final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)parent;
+      final PsiType type = polyadicExpression.getType();
+      if (!TypeUtils.typeEquals(CommonClassNames.JAVA_LANG_STRING, type)) {
         return;
       }
-      final PsiExpression lhs = binaryExpression.getLOperand();
-      if (lhs == expression) {
-        final PsiExpression rhs = binaryExpression.getROperand();
-        if (rhs == null || !TypeUtils.typeEquals(
-          CommonClassNames.JAVA_LANG_STRING,
-          rhs.getType())) {
-          return;
+      final PsiExpression[] operands = polyadicExpression.getOperands();
+      int index = -1;
+      for (int i = 0, length = operands.length; i < length; i++) {
+        final PsiExpression operand = operands[i];
+        if (expression.equals(operand)) {
+          index = i;
         }
       }
-      else if (!TypeUtils.typeEquals(CommonClassNames.JAVA_LANG_STRING,
-                                     lhs.getType())) {
+      if (index > 0) {
+        if (!TypeUtils.typeEquals(CommonClassNames.JAVA_LANG_STRING, operands[index - 1].getType())) {
+          return;
+        }
+      } else if (operands.length > 1) {
+        if (!TypeUtils.typeEquals(CommonClassNames.JAVA_LANG_STRING, operands[index + 1].getType())) {
+          return;
+        }
+      } else {
         return;
       }
       final PsiExpressionList argumentList = expression.getArgumentList();
@@ -154,7 +158,7 @@ public class UnnecessaryCallToStringValueOfInspection extends BaseInspection {
       if (!CommonClassNames.JAVA_LANG_STRING.equals(qualifiedName)) {
         return;
       }
-      registerError(expression, argument);
+      registerError(expression, calculateReplacementText(argument));
     }
   }
 }
