@@ -163,7 +163,8 @@ public class TreeConflictRefreshablePanel extends AbstractRefreshablePanel {
         }
         else {
           long committed = description.getSourceLeftVersion().getPegRevision();
-          if (myCommittedRevision != null && myCommittedRevision.getRevision().getNumber() < committed) {
+          if (myCommittedRevision != null && (myCommittedRevision.getRevision().getNumber() < committed) &&
+            myCommittedRevision.getRevision().isValid()) {
             committed = myCommittedRevision.getRevision().getNumber();
           }
           pegFromLeft = SVNRevision.create(committed);
