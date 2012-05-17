@@ -15,6 +15,15 @@ else:
 
 coverage_file = os.getenv('PYCHARM_COVERAGE_FILE')
 run_cov = os.getenv('PYCHARM_RUN_COVERAGE')
+if os.getenv('PYCHARM_REMOTE_RUN'):
+    line = 'LOG: PyCharm: File mapping:%s\t%s\n'
+    import tempfile
+    (h, new_cov_file) = tempfile.mkstemp(prefix='pycharm-coverage')
+    print(line%(coverage_file, new_cov_file))
+    print(line%(coverage_file + '.syspath.txt', new_cov_file + '.syspath.txt'))
+    print(line%(coverage_file + '.xml', new_cov_file + '.xml'))
+    coverage_file = new_cov_file
+
 if coverage_file:
     os.environ['COVERAGE_FILE'] = coverage_file
 if run_cov:

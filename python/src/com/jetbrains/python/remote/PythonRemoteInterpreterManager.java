@@ -18,6 +18,8 @@ import com.jetbrains.python.sdk.PySkeletonGenerator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
+
 /**
  * @author traff
  */
@@ -70,6 +72,10 @@ public abstract class PythonRemoteInterpreterManager {
                                         PyRemoteProjectSettings settings,
                                         PythonRemoteSdkAdditionalData data);
 
+  public abstract void copyFromRemote(Project project,
+                                      PythonRemoteSdkAdditionalData data,
+                                      List<PyPathMappingSettings.PyPathMapping> mappings);
+
   @Nullable
   public static PythonRemoteInterpreterManager getInstance() {
     if (EP_NAME.getExtensions().length > 0) {
@@ -104,6 +110,13 @@ public abstract class PythonRemoteInterpreterManager {
   public static class PyRemoteInterpreterExecutionException extends ExecutionException {
 
     public PyRemoteInterpreterExecutionException() {
+      super(WEB_DEPLOYMENT_PLUGIN_IS_DISABLED);
+    }
+  }
+
+  public static class PyRemoteInterpreterRuntimeException extends RuntimeException {
+
+    public PyRemoteInterpreterRuntimeException() {
       super(WEB_DEPLOYMENT_PLUGIN_IS_DISABLED);
     }
   }
