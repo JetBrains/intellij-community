@@ -17,6 +17,7 @@
 package com.intellij.openapi.projectRoots.impl;
 
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.SdkType;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.ui.HtmlListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
@@ -63,6 +64,6 @@ public class SdkListCellRenderer extends HtmlListCellRenderer<Sdk> {
   }
 
   protected Icon getSdkIcon(Sdk sdk) {
-    return sdk.getSdkType().getIcon();
+    return ((SdkType) sdk.getSdkType()).getIcon();
   }
 }

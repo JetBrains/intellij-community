@@ -121,15 +121,17 @@ class GitMockProject implements Project {
   }
 
   @Override
-  boolean hasComponent(Class interfaceClass) {
+  boolean hasComponent(@NotNull Class interfaceClass) {
     throw new UnsupportedOperationException()
   }
 
+  @NotNull
   @Override
   def <T> T[] getComponents(Class<T> baseClass) {
     throw new UnsupportedOperationException()
   }
 
+  @NotNull
   @Override
   PicoContainer getPicoContainer() {
     throw new UnsupportedOperationException()
@@ -150,6 +152,7 @@ class GitMockProject implements Project {
     throw new UnsupportedOperationException()
   }
 
+  @NotNull
   @Override
   Condition getDisposed() {
     throw new UnsupportedOperationException()

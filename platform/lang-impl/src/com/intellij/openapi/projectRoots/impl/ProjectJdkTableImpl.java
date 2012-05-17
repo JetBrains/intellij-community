@@ -20,12 +20,9 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.ProjectBundle;
-import com.intellij.openapi.projectRoots.JavaSdkType;
-import com.intellij.openapi.projectRoots.ProjectJdkTable;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.SdkType;
+import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.InvalidDataException;
@@ -74,12 +71,12 @@ public class ProjectJdkTableImpl extends ProjectJdkTable implements PersistentSt
       }
 
       private void updateJdks(VirtualFile file) {
-        if (file.isDirectory() || !StdFileTypes.ARCHIVE.equals(file.getFileType())) {
+        if (file.isDirectory() || !FileTypes.ARCHIVE.equals(file.getFileType())) {
           // consider only archive files that may contain libraries
           return;
         }
         for (Sdk sdk : mySdks) {
-          final SdkType sdkType = sdk.getSdkType();
+          final SdkType sdkType = (SdkType)sdk.getSdkType();
           if (!(sdkType instanceof JavaSdkType)) {
             continue;
           }
@@ -156,7 +153,7 @@ public class ProjectJdkTableImpl extends ProjectJdkTable implements PersistentSt
     return mySdks.toArray(new Sdk[mySdks.size()]);
   }
 
-  public List<Sdk> getSdksOfType(final SdkType type) {
+  public List<Sdk> getSdksOfType(final SdkTypeId type) {
     List<Sdk> result = new ArrayList<Sdk>();
     final Sdk[] sdks = getAllJdks();
     for(Sdk sdk: sdks) {
@@ -168,7 +165,7 @@ public class ProjectJdkTableImpl extends ProjectJdkTable implements PersistentSt
   }
 
   @Override
-  public Sdk findMostRecentSdkOfType(final SdkType type) {
+  public Sdk findMostRecentSdkOfType(final SdkTypeId type) {
     return findMostRecentSdk(new Condition<Sdk>() {
       public boolean value(Sdk sdk) {
         return sdk.getSdkType() == type;
@@ -222,12 +219,12 @@ public class ProjectJdkTableImpl extends ProjectJdkTable implements PersistentSt
     myListenerList.remove(listener);
   }
 
-  public SdkType getDefaultSdkType() {
+  public SdkTypeId getDefaultSdkType() {
     return UnknownSdkType.getInstance(null);
   }
 
-  public Sdk createSdk(final String name, final SdkType sdkType) {
-    return new ProjectJdkImpl(name, sdkType);
+  public Sdk createSdk(final String name, final SdkTypeId sdkType) {
+    return new ProjectJdkImpl(name, (SdkType) sdkType);
   }
 
   public void loadState(Element element) {

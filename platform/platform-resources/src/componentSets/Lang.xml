@@ -40,12 +40,12 @@
 
     <component>
       <interface-class>com.intellij.openapi.roots.ProjectRootManager</interface-class>
-      <implementation-class>com.intellij.openapi.roots.impl.ProjectRootManagerImpl</implementation-class>
+      <implementation-class>com.intellij.openapi.roots.impl.ProjectRootManagerComponent</implementation-class>
       <loadForDefaultProject/>
     </component>
     <component>
       <interface-class>com.intellij.openapi.roots.impl.DirectoryIndex</interface-class>
-      <implementation-class>com.intellij.openapi.roots.impl.DirectoryIndexImpl</implementation-class>
+      <implementation-class>com.intellij.openapi.roots.impl.DirectoryIndexComponent</implementation-class>
       <loadForDefaultProject/>
     </component>
 
@@ -66,7 +66,7 @@
 
     <component>
       <interface-class>com.intellij.openapi.module.ModuleManager</interface-class>
-      <implementation-class>com.intellij.openapi.module.impl.ModuleManagerImpl</implementation-class>
+      <implementation-class>com.intellij.openapi.module.impl.ModuleManagerComponent</implementation-class>
       <loadForDefaultProject/>
     </component>
 
@@ -230,7 +230,7 @@
   <module-components>
     <component>
       <interface-class>com.intellij.openapi.roots.ModuleRootManager</interface-class>
-      <implementation-class>com.intellij.openapi.roots.impl.ModuleRootManagerImpl</implementation-class>
+      <implementation-class>com.intellij.openapi.roots.impl.ModuleRootManagerComponent</implementation-class>
     </component>
     
     <component>

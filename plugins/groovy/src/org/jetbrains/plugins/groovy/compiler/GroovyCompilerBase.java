@@ -45,7 +45,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkType;
 import com.intellij.openapi.projectRoots.JdkUtil;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.SdkType;
+import com.intellij.openapi.projectRoots.SdkTypeId;
 import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.roots.ModuleFileIndex;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -102,7 +102,7 @@ public abstract class GroovyCompilerBase implements TranslatingCompiler {
     //assert !ApplicationManager.getApplication().isDispatchThread();
     final Sdk sdk = ModuleRootManager.getInstance(module).getSdk();
     assert sdk != null; //verified before
-    SdkType sdkType = sdk.getSdkType();
+    SdkTypeId sdkType = sdk.getSdkType();
     assert sdkType instanceof JavaSdkType;
     final String exePath = ((JavaSdkType)sdkType).getVMExecutablePath(sdk);
 

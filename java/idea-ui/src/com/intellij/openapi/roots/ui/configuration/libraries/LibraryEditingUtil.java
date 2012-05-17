@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -190,8 +190,9 @@ public class LibraryEditingUtil {
   }
 
   public static List<Module> getSuitableModules(@NotNull ModuleStructureConfigurable rootConfigurable,
-                                                final @Nullable LibraryType type, @Nullable Library library) {
+                                                final @Nullable LibraryKind kind, @Nullable Library library) {
     final List<Module> modules = new ArrayList<Module>();
+    LibraryType type = kind == null ? null : LibraryType.findByKind(kind);
     for (Module module : rootConfigurable.getModules()) {
       if (type != null && !type.isSuitableModule(module, rootConfigurable.getFacetConfigurator())) {
         continue;

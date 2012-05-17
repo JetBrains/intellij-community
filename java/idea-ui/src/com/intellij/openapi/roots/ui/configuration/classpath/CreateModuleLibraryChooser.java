@@ -21,8 +21,10 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.roots.impl.libraries.LibraryTableBase;
 import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.roots.libraries.LibraryProperties;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryType;
 import com.intellij.openapi.roots.libraries.ui.LibraryRootsComponentDescriptor;
@@ -33,7 +35,9 @@ import com.intellij.openapi.roots.ui.configuration.libraryEditor.DefaultLibraryR
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.*;
@@ -45,20 +49,23 @@ public class CreateModuleLibraryChooser implements ClasspathElementChooser<Libra
   private final JComponent myParentComponent;
   private final Module myModule;
   private final LibraryTable.ModifiableModel myModuleLibrariesModel;
+  @Nullable private final Function<LibraryType, LibraryProperties> myDefaultPropertiesFactory;
   private final HashMap<LibraryRootsComponentDescriptor,LibraryType> myLibraryTypes;
   private final DefaultLibraryRootsComponentDescriptor myDefaultDescriptor;
 
   public CreateModuleLibraryChooser(ClasspathPanel classpathPanel, LibraryTable.ModifiableModel moduleLibraryModel) {
     this(LibraryEditingUtil.getSuitableTypes(classpathPanel), classpathPanel.getComponent(), classpathPanel.getRootModel().getModule(),
-         moduleLibraryModel);
+         moduleLibraryModel, null);
   }
 
   public CreateModuleLibraryChooser(List<? extends LibraryType> libraryTypes, JComponent parentComponent,
                                     Module module,
-                                    final LibraryTable.ModifiableModel moduleLibrariesModel) {
+                                    final LibraryTable.ModifiableModel moduleLibrariesModel,
+                                    @Nullable final Function<LibraryType, LibraryProperties> defaultPropertiesFactory) {
     myParentComponent = parentComponent;
     myModule = module;
     myModuleLibrariesModel = moduleLibrariesModel;
+    myDefaultPropertiesFactory = defaultPropertiesFactory;
     myLibraryTypes = new HashMap<LibraryRootsComponentDescriptor, LibraryType>();
     myDefaultDescriptor = new DefaultLibraryRootsComponentDescriptor();
     for (LibraryType<?> libraryType : libraryTypes) {
@@ -76,8 +83,11 @@ public class CreateModuleLibraryChooser implements ClasspathElementChooser<Libra
   }
 
   private Library createLibraryFromRoots(List<OrderRoot> roots, final LibraryType libraryType) {
-    final Library library = ((LibraryTableBase.ModifiableModelEx)myModuleLibrariesModel).createLibrary(null, libraryType);
-    final Library.ModifiableModel libModel = library.getModifiableModel();
+    final Library library = ((LibraryTableBase.ModifiableModelEx)myModuleLibrariesModel).createLibrary(null, libraryType.getKind());
+    final LibraryEx.ModifiableModelEx libModel = (LibraryEx.ModifiableModelEx)library.getModifiableModel();
+    if (myDefaultPropertiesFactory != null) {
+      libModel.setProperties(myDefaultPropertiesFactory.fun(libraryType));
+    }
     for (OrderRoot root : roots) {
       if (root.isJarDirectory()) {
         libModel.addJarDirectory(root.getFile(), false, root.getType());

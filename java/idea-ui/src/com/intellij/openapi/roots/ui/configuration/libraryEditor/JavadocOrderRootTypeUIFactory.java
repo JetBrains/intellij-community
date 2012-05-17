@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.SdkType;
 import com.intellij.openapi.projectRoots.ui.SdkPathEditor;
 import com.intellij.openapi.projectRoots.ui.Util;
 import com.intellij.openapi.roots.JavadocOrderRootType;
@@ -85,7 +86,7 @@ public class JavadocOrderRootTypeUIFactory implements OrderRootTypeUIFactory {
     }
 
     private void onSpecifyUrlButtonClicked() {
-      final String defaultDocsUrl = mySdk == null ? "" : StringUtil.notNullize(mySdk.getSdkType().getDefaultDocumentationUrl(mySdk), "");
+      final String defaultDocsUrl = mySdk == null ? "" : StringUtil.notNullize(((SdkType) mySdk.getSdkType()).getDefaultDocumentationUrl(mySdk), "");
       VirtualFile virtualFile  = Util.showSpecifyJavadocUrlDialog(myPanel, defaultDocsUrl);
       if(virtualFile != null){
         addElement(virtualFile);

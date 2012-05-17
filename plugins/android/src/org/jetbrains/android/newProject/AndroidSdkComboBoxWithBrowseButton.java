@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.ide.ui.ListCellRendererWrapper;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.SdkType;
 import com.intellij.openapi.projectRoots.ui.ProjectJdksEditor;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.ui.ComboboxWithBrowseButton;
@@ -42,8 +43,9 @@ public class AndroidSdkComboBoxWithBrowseButton extends ComboboxWithBrowseButton
       @Override
       public void customize(JList list, Object value, int index, boolean selected, boolean hasFocus) {
         if (value instanceof Sdk) {
-          setText(((Sdk)value).getName());
-          setIcon(((Sdk)value).getSdkType().getIcon());
+          final Sdk sdk = (Sdk)value;
+          setText(sdk.getName());
+          setIcon(((SdkType) sdk.getSdkType()).getIcon());
         }
         else {
           setText("<html><font color='red'>[none]</font></html>");

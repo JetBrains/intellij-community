@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -84,7 +84,7 @@ public abstract class ModuleFixtureBuilderImpl<T extends ModuleFixture> implemen
     final Project project = myFixtureBuilder.getFixture().getProject();
     assert project != null;
     final String moduleFilePath = new File(project.getProjectFilePath()).getParent() + File.separator + getNextIndex() + ModuleFileType.DOT_DEFAULT_EXTENSION;
-    return ModuleManager.getInstance(project).newModule(moduleFilePath, myModuleType);
+    return ModuleManager.getInstance(project).newModule(moduleFilePath, myModuleType.getId());
   }
 
   private static int getNextIndex() {

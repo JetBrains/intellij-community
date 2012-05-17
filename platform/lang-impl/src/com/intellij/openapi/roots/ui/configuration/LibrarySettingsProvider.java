@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.libraries.LibraryType;
+import com.intellij.openapi.roots.libraries.LibraryKind;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,20 +32,20 @@ public abstract class LibrarySettingsProvider {
     ExtensionPointName.create("com.intellij.librarySettingsProvider");
 
   @NotNull
-  public abstract LibraryType getLibraryType();
+  public abstract LibraryKind getLibraryKind();
   public abstract Configurable getAdditionalSettingsConfigurable(Project project);
 
   @Nullable
-  public static Configurable getAdditionalSettingsConfigurable(Project project, LibraryType libType) {
-    LibrarySettingsProvider provider = forLibraryType(libType);
+  public static Configurable getAdditionalSettingsConfigurable(Project project, LibraryKind libKind) {
+    LibrarySettingsProvider provider = forLibraryType(libKind);
     if (provider == null) return null;
     return provider.getAdditionalSettingsConfigurable(project);
   }
 
   @Nullable
-  public static LibrarySettingsProvider forLibraryType(LibraryType libType) {
+  public static LibrarySettingsProvider forLibraryType(LibraryKind libType) {
     for (LibrarySettingsProvider provider : Extensions.getExtensions(EP_NAME)) {
-      if (provider.getLibraryType().equals(libType)) {
+      if (provider.getLibraryKind().equals(libType)) {
         return provider;
       }
     }

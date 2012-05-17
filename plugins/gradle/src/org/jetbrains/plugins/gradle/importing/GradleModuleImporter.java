@@ -78,7 +78,7 @@ public class GradleModuleImporter {
           }
 
           private void importModule(@NotNull ModuleManager moduleManager, @NotNull GradleModule module) {
-            final Module created = moduleManager.newModule(module.getModuleFilePath(), StdModuleTypes.JAVA);
+            final Module created = moduleManager.newModule(module.getModuleFilePath(), StdModuleTypes.JAVA.getId());
 
             // Ensure that the dependencies are clear (used to be not clear when manually removing the module and importing it via gradle)
             ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(created);

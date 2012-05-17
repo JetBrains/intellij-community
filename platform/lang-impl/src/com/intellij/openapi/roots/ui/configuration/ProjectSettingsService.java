@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,7 @@ import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.roots.libraries.Library;
-import com.intellij.openapi.roots.libraries.LibraryType;
+import com.intellij.openapi.roots.libraries.PersistentLibraryKind;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -92,9 +92,9 @@ public class ProjectSettingsService {
     Library lib = libOrderEntry.getLibrary();
     if (lib instanceof LibraryEx) {
       Project project = libOrderEntry.getOwnerModule().getProject();
-      LibraryType libType = ((LibraryEx)lib).getType();
-      if (libType != null) {
-        return LibrarySettingsProvider.getAdditionalSettingsConfigurable(project, libType);
+      PersistentLibraryKind<?> libKind = ((LibraryEx)lib).getKind();
+      if (libKind != null) {
+        return LibrarySettingsProvider.getAdditionalSettingsConfigurable(project, libKind);
       }
     }
     return null;

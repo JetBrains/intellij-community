@@ -21,12 +21,12 @@ import com.intellij.openapi.application.*;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.roots.impl.ModifiableModelCommitter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
-import com.intellij.openapi.roots.impl.ModuleRootManagerImpl;
 import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
@@ -117,7 +117,7 @@ public class MavenDefaultModifiableModelsProvider extends MavenBaseModifiableMod
             Collection<ModifiableRootModel> rootModels = myRootModels.values();
 
             ModifiableRootModel[] rootModels1 = rootModels.toArray(new ModifiableRootModel[rootModels.size()]);
-            ModuleRootManagerImpl.multiCommit(rootModels1, myModuleModel);
+            ModifiableModelCommitter.multiCommit(rootModels1, myModuleModel);
 
             for (ModifiableFacetModel each : myFacetModels.values()) {
               each.commit();

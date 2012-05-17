@@ -168,6 +168,9 @@
   <applicationService serviceInterface="com.intellij.openapi.fileEditor.UniqueVFilePathBuilder"
                       serviceImplementation="com.intellij.openapi.fileEditor.impl.UniqueVFilePathBuilderImpl"/>
 
+  <applicationService serviceInterface="com.intellij.openapi.roots.impl.libraries.JarDirectoryWatcherFactory"
+                      serviceImplementation="com.intellij.openapi.roots.impl.libraries.JarDirectoryWatcherFactoryImpl"/>
+
   <projectService serviceInterface="com.intellij.ui.EditorTextFieldProvider"
                   serviceImplementation="com.intellij.ui.EditorTextFieldProviderImpl"/>
 
@@ -304,6 +307,9 @@
 
   <projectService serviceInterface="com.intellij.ui.FileColorManager"
                   serviceImplementation="com.intellij.ui.tabs.FileColorManagerImpl"/>
+
+  <projectService serviceInterface="com.intellij.openapi.roots.impl.LibraryScopeCache"
+                  serviceImplementation="com.intellij.openapi.roots.impl.LibraryScopeCache"/>
 
   <colorSettingsPage implementation="com.intellij.openapi.options.colors.pages.GeneralColorsPage" id="general"/>
   <colorSettingsPage implementation="com.intellij.openapi.options.colors.pages.ANSIColoredConsoleColorsPage" id="general"/>
