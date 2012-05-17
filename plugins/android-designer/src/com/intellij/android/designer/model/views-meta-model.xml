@@ -19,6 +19,16 @@
     <palette title="Device Screen (#merge)" icon="/com/intellij/android/designer/icons/DeviceScreen.png"/>
   </meta>
 
+  <meta model="com.intellij.android.designer.model.RadIncludeComponent"
+        class="java.lang.Object"
+        tag="include">
+
+    <presentation title=" - %layout%"/>
+
+    <palette title="include" icon="/com/intellij/android/designer/icons/include.png"
+             tooltip="Lets you statically include XML layout inside other XML layouts."/>
+  </meta>
+
   <meta model="com.intellij.android.designer.model.RadViewComponent"
         tag="&lt;unknown&gt;">
 
