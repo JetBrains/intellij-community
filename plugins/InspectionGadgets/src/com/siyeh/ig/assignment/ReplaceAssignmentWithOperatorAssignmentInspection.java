@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@ import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -151,7 +150,15 @@ public class ReplaceAssignmentWithOperatorAssignmentInspection extends BaseInspe
       }
       final PsiAssignmentExpression expression = (PsiAssignmentExpression)element;
       final PsiExpression lhs = expression.getLExpression();
-      final PsiExpression rhs = expression.getRExpression();
+      PsiExpression rhs = ParenthesesUtils.stripParentheses(expression.getRExpression());
+      if (rhs instanceof PsiTypeCastExpression) {
+        final PsiTypeCastExpression typeCastExpression = (PsiTypeCastExpression)rhs;
+        final PsiType castType = typeCastExpression.getType();
+        if (castType == null || !castType.equals(lhs.getType())) {
+          return;
+        }
+        rhs = ParenthesesUtils.stripParentheses(typeCastExpression.getOperand());
+      }
       if (!(rhs instanceof PsiPolyadicExpression)) {
         return;
       }
@@ -176,7 +183,15 @@ public class ReplaceAssignmentWithOperatorAssignmentInspection extends BaseInspe
         return;
       }
       final PsiExpression lhs = assignment.getLExpression();
-      final PsiExpression rhs = PsiUtil.deparenthesizeExpression(assignment.getRExpression());
+      PsiExpression rhs = ParenthesesUtils.stripParentheses(assignment.getRExpression());
+      if (rhs instanceof PsiTypeCastExpression) {
+        final PsiTypeCastExpression typeCastExpression = (PsiTypeCastExpression)rhs;
+        final PsiType castType = typeCastExpression.getType();
+        if (castType == null || !castType.equals(lhs.getType())) {
+          return;
+        }
+        rhs = ParenthesesUtils.stripParentheses(typeCastExpression.getOperand());
+      }
       if (!(rhs instanceof PsiPolyadicExpression)) {
         return;
       }
