@@ -31,7 +31,6 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.progress.*;
 import com.intellij.openapi.project.DumbService;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.StaticGetter;
@@ -124,7 +123,7 @@ public class CoreEnvironment {
                                                          }
                               )
     );
-    registerComponentInstance(appContainer, VirtualFilePointerManager.class, new CoreVirtualFilePointerManager());
+    registerApplicationComponent(VirtualFilePointerManager.class, new CoreVirtualFilePointerManager());
 
     myApplication.registerService(DefaultASTFactory.class, new CoreASTFactory());
     myApplication.registerService(PsiBuilderFactory.class, new PsiBuilderFactoryImpl());
@@ -180,11 +179,15 @@ public class CoreEnvironment {
     return myParentDisposable;
   }
 
+  public  <T> void registerApplicationComponent(final Class<T> interfaceClass, final T implementation) {
+    registerComponentInstance(myApplication.getPicoContainer(), interfaceClass, implementation);
+  }
+
   public  <T> void registerProjectComponent(final Class<T> interfaceClass, final T implementation) {
     registerComponentInstance(myProject.getPicoContainer(), interfaceClass, implementation);
   }
 
-  public Project getProject() {
+  public MockProject getProject() {
     return myProject;
   }
 

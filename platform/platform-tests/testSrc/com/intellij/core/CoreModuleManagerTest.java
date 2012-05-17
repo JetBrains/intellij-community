@@ -29,7 +29,7 @@ import java.io.IOException;
  * @author yole
  */
 public class CoreModuleManagerTest extends UsefulTestCase {
-  public void _testLoadingModules() throws IOException, JDOMException {
+  public void testLoadingModules() throws IOException, JDOMException {
     CoreEnvironment env = new CoreEnvironment(getTestRootDisposable());
     ProjectModelEnvironment.register(env);
     final String projectPath = PathManagerEx.getTestDataPath("/compileServer/incremental/annotations/addAnnotationTarget");

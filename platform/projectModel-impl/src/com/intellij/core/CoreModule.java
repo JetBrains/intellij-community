@@ -27,11 +27,13 @@ import org.jetbrains.annotations.NotNull;
  * @author yole
  */
 public class CoreModule extends MockComponentManager implements ModuleEx {
+  private String myPath;
   private final Project myProject;
 
-  public CoreModule(@NotNull Disposable parentDisposable, Project project) {
+  public CoreModule(@NotNull Disposable parentDisposable, Project project, String moduleFilePath) {
     super(project.getPicoContainer(), parentDisposable);
     myProject = project;
+    myPath = moduleFilePath;
   }
 
   @Override
@@ -66,7 +68,7 @@ public class CoreModule extends MockComponentManager implements ModuleEx {
   @NotNull
   @Override
   public String getModuleFilePath() {
-    throw new UnsupportedOperationException();
+    return myPath;
   }
 
   @NotNull

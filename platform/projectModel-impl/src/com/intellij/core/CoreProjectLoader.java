@@ -15,8 +15,9 @@
  */
 package com.intellij.core;
 
+import com.intellij.mock.MockProject;
+import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.module.impl.ModuleManagerImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -33,8 +34,9 @@ import java.io.IOException;
  * @author yole
  */
 public class CoreProjectLoader {
-  public static void loadProject(Project project, @NotNull VirtualFile virtualFile) throws IOException, JDOMException {
+  public static void loadProject(MockProject project, @NotNull VirtualFile virtualFile) throws IOException, JDOMException {
     if (virtualFile.isDirectory() && virtualFile.findChild(".idea") != null) {
+      project.setBaseDir(virtualFile);
       loadDirectoryProject(project, virtualFile);
     }
     else {
@@ -48,6 +50,7 @@ public class CoreProjectLoader {
     VirtualFile modulesXml = dotIdea.findChild("modules.xml");
     final Document document = JDOMUtil.loadDocument(new ByteArrayInputStream(modulesXml.contentsToByteArray()));
     final Element moduleManagerState = getComponentState(document, "ProjectModuleManager");
+    PathMacroManager.getInstance(project).expandPaths(moduleManagerState);
     if (moduleManagerState == null) {
       throw new JDOMException("cannot find ProjectModuleManager state in modules.xml");
     }

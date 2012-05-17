@@ -15,6 +15,10 @@
  */
 package com.intellij.core;
 
+import com.intellij.application.options.PathMacrosImpl;
+import com.intellij.openapi.application.PathMacros;
+import com.intellij.openapi.components.PathMacroManager;
+import com.intellij.openapi.components.impl.ProjectPathMacroManager;
 import com.intellij.openapi.module.ModuleManager;
 
 /**
@@ -22,6 +26,9 @@ import com.intellij.openapi.module.ModuleManager;
  */
 public class ProjectModelEnvironment {
   public static void register(CoreEnvironment env) {
+    PathMacrosImpl pathMacros = new PathMacrosImpl();
+    env.registerApplicationComponent(PathMacros.class, pathMacros);
     env.registerProjectComponent(ModuleManager.class, new CoreModuleManager(env.getProject(), env.getParentDisposable()));
+    env.registerProjectComponent(PathMacroManager.class, new ProjectPathMacroManager(pathMacros, env.getProject()));
   }
 }

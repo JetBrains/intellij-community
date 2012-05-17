@@ -31,6 +31,8 @@ import org.picocontainer.PicoContainer;
  * @author yole
  */
 public class MockProject extends MockComponentManager implements Project {
+  private VirtualFile myBaseDir;
+
   public MockProject(PicoContainer parent, @NotNull Disposable parentDisposable) {
     super(parent, parentDisposable);
     Extensions.instantiateArea("IDEA_PROJECT", this, null);
@@ -111,10 +113,14 @@ public class MockProject extends MockComponentManager implements Project {
     return null;
   }
 
+  public void setBaseDir(VirtualFile baseDir) {
+    myBaseDir = baseDir;
+  }
+
   @Override
   @Nullable
   public VirtualFile getBaseDir() {
-    return null;
+    return myBaseDir;
   }
 
   @Override

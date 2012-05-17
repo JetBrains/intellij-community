@@ -9,6 +9,7 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="projectModel-api" exported="" />
     <orderEntry type="module" module-name="core-impl" />
+    <orderEntry type="library" name="Guava" level="project" />
   </component>
 </module>
 

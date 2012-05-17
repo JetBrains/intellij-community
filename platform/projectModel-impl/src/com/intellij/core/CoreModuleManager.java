@@ -35,12 +35,12 @@ public class CoreModuleManager extends ModuleManagerImpl {
 
   @Override
   protected ModuleEx createModule(String filePath) {
-    return new CoreModule(myParentDisposable, myProject);
+    return new CoreModule(myParentDisposable, myProject, filePath);
   }
 
   @Override
   protected ModuleEx createAndLoadModule(String filePath) throws IOException {
-    return new CoreModule(myParentDisposable, myProject);
+    return new CoreModule(myParentDisposable, myProject, filePath);
   }
 
   protected void deliverPendingEvents() {
