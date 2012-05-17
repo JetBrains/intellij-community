@@ -8,6 +8,7 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="projectModel-api" exported="" />
+    <orderEntry type="module" module-name="core-impl" />
   </component>
 </module>
 
