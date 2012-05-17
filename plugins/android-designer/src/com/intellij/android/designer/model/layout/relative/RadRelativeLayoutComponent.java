@@ -79,10 +79,6 @@ public class RadRelativeLayoutComponent extends RadViewContainer {
 
   @Nullable
   private static RadViewComponent getComponent(Map<String, RadViewComponent> idToComponent, XmlTag tag, String attribute) {
-    String idValue = RadViewComponent.getId(tag.getAttributeValue(attribute));
-    if (idValue != null) {
-      return idToComponent.get(idValue);
-    }
-    return null;
+    return idToComponent.get(tag.getAttributeValue(attribute));
   }
 }

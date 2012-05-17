@@ -20,7 +20,6 @@ import com.intellij.designer.model.RadComponent;
 import com.intellij.designer.model.RadVisualComponent;
 import com.intellij.designer.propertyTable.Property;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.containers.hash.HashMap;
@@ -85,17 +84,7 @@ public class RadViewComponent extends RadVisualComponent {
   }
 
   public String getId() {
-    return getId(myTag.getAttributeValue("android:id"));
-  }
-
-  public static String getId(String idValue) {
-    if (StringUtil.isEmpty(idValue)) {
-      return null;
-    }
-    if (idValue.startsWith("@android:id/")) {
-      return idValue;
-    }
-    return "@id/" + idValue.substring(idValue.indexOf('/') + 1);
+    return myTag.getAttributeValue("android:id");
   }
 
   //////////////////////////////////////////////////////////////////////////////////////////
