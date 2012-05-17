@@ -225,19 +225,21 @@ binding.setVariable("classPathLibs", [
 binding.setVariable("platformApiModules", [
         "core-api",
         "indexing-api",
+        "projectModel-api",
         "platform-api",
         "lvcs-api",
         "lang-api",
         "vcs-api",
         "usageView",
         "xdebugger-api",
-        "xml-openapi"
+        "xml-openapi",
 ])
 
 
 binding.setVariable("platformImplementationModules", [
         "core-impl",
         "indexing-impl",
+        "projectModel-impl",
         "platform-impl",
         "vcs-impl",
         "lang-impl",
