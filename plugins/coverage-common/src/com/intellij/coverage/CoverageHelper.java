@@ -19,13 +19,17 @@ public class CoverageHelper {
   public static void attachToProcess(@NotNull RunConfigurationBase configuration,
                                      @NotNull ProcessHandler handler,
                                      RunnerSettings runnerSettings) {
+    resetCoverageSuit(configuration);
+
+    // attach to process termination listener
+    CoverageDataManager.getInstance(configuration.getProject()).attachToProcess(handler, configuration, runnerSettings);
+  }
+
+  public static void resetCoverageSuit(RunConfigurationBase configuration) {
     final CoverageEnabledConfiguration covConfig = CoverageEnabledConfiguration.getOrCreate(configuration);
 
     // reset coverage suite
     covConfig.setCurrentCoverageSuite(null);
-
-    // attach to process termination listener
-    CoverageDataManager.getInstance(configuration.getProject()).attachToProcess(handler, configuration, runnerSettings);
 
     // register new coverage suite
     final CoverageDataManager coverageDataManager = CoverageDataManager.getInstance(configuration.getProject());

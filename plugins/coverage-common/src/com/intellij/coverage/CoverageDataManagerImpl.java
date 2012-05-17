@@ -346,21 +346,24 @@ public class CoverageDataManagerImpl extends CoverageDataManager {
 
   public void attachToProcess(@NotNull final ProcessHandler handler,
                               @NotNull final RunConfigurationBase configuration, RunnerSettings runnerSettings) {
-    final CoverageEnabledConfiguration coverageEnabledConfiguration = CoverageEnabledConfiguration.getOrCreate(configuration);
     //noinspection ConstantConditions
     if (runnerSettings.getData() instanceof CoverageRunnerData) {
       handler.addProcessListener(new ProcessAdapter() {
         public void processTerminated(final ProcessEvent event) {
-          final CoverageDataManager coverageDataManager = CoverageDataManager.getInstance(configuration.getProject());
-          final CoverageEnabledConfiguration coverageEnabledConfiguration = CoverageEnabledConfiguration.getOrCreate(configuration);
-          //noinspection ConstantConditions
-          final CoverageSuite coverageSuite = coverageEnabledConfiguration.getCurrentCoverageSuite();
-          if (coverageSuite != null) {
-            ((BaseCoverageSuite)coverageSuite).setConfiguration(configuration);
-            coverageDataManager.coverageGathered(coverageSuite);
-          }
+          processGatheredCoverage(configuration);
         }
       });
+    }
+  }
+
+  public static void processGatheredCoverage(RunConfigurationBase configuration) {
+    final CoverageDataManager coverageDataManager = CoverageDataManager.getInstance(configuration.getProject());
+    final CoverageEnabledConfiguration coverageEnabledConfiguration = CoverageEnabledConfiguration.getOrCreate(configuration);
+    //noinspection ConstantConditions
+    final CoverageSuite coverageSuite = coverageEnabledConfiguration.getCurrentCoverageSuite();
+    if (coverageSuite != null) {
+      ((BaseCoverageSuite)coverageSuite).setConfiguration(configuration);
+      coverageDataManager.coverageGathered(coverageSuite);
     }
   }
 
