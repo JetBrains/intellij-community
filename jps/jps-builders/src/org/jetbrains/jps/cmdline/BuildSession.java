@@ -11,8 +11,6 @@ import groovy.util.Node;
 import groovy.util.XmlParser;
 import org.codehaus.groovy.runtime.MethodClosure;
 import org.jboss.netty.channel.Channel;
-import org.jboss.netty.channel.ChannelFuture;
-import org.jboss.netty.channel.ChannelFutureListener;
 import org.jboss.netty.channel.Channels;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.ether.dependencyView.Callbacks;
@@ -434,16 +432,12 @@ final class BuildSession implements Runnable, CanceledStatus {
       lastMessage = CmdlineProtoUtil.toMessage(mySessionId, CmdlineProtoUtil.createFailure(e.getMessage(), e));
     }
     finally {
-      Channels.write(myChannel, lastMessage).addListener(new ChannelFutureListener() {
-        public void operationComplete(ChannelFuture future) throws Exception {
-          SharedThreadPool.INSTANCE.submit(new Runnable() {
-            @Override
-            public void run() {
-              myChannel.close();
-            }
-          });
-        }
-      });
+      try {
+        Channels.write(myChannel, lastMessage).await();
+      }
+      catch (InterruptedException e) {
+        LOG.info(e);
+      }
     }
   }
 
