@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,12 +15,15 @@
  */
 package com.intellij.openapi.components;
 
-import org.jdom.Element;
+import org.jetbrains.annotations.Nullable;
 
-public interface PathMacroSubstitutor {
-  String expandPath(String path);
-  String collapsePath(String path);
+import java.util.Collection;
+import java.util.Set;
 
-  void expandPaths(Element element);
-  void collapsePaths(Element element);
+public interface TrackingPathMacroSubstitutor extends PathMacroSubstitutor {
+  Collection<String> getUnknownMacros(@Nullable String componentName);
+  Collection<String> getComponents(final Collection<String> macros);
+  void addUnknownMacros(String componentName, Collection<String> unknownMacros);
+  void invalidateUnknownMacros(Set<String> macros);
+  void reset();
 }
