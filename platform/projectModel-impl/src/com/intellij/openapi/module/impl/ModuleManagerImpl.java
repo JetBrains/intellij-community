@@ -24,6 +24,7 @@ import com.intellij.openapi.components.StateStorageException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.*;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
@@ -205,56 +206,45 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
 
   protected void loadModules(final ModuleModelImpl moduleModel) {
     if (myModulePaths != null && myModulePaths.size() > 0) {
-      final Application app = ApplicationManager.getApplication();
-      final ProgressIndicator progressIndicator = myProject.isDefault() ? null : myProgressManager.getProgressIndicator();
+      final ProgressIndicator progressIndicator = myProject.isDefault() ? null : ProgressIndicatorProvider.getInstance().getProgressIndicator();
       if (progressIndicator != null) {
         progressIndicator.setText("Loading modules...");
         progressIndicator.setText2("");
       }
-      final Runnable swingRunnable = new Runnable() {
-        public void run() {
-          myFailedModulePaths.clear();
-          myFailedModulePaths.addAll(myModulePaths);
-          final List<Module> modulesWithUnknownTypes = new ArrayList<Module>();
-          List<ModuleLoadingErrorDescription> errors = new ArrayList<ModuleLoadingErrorDescription>();
+      myFailedModulePaths.clear();
+      myFailedModulePaths.addAll(myModulePaths);
+      final List<Module> modulesWithUnknownTypes = new ArrayList<Module>();
+      List<ModuleLoadingErrorDescription> errors = new ArrayList<ModuleLoadingErrorDescription>();
 
-          for (final ModulePath modulePath : myModulePaths) {
-            try {
-              final Module module = moduleModel.loadModuleInternal(modulePath.getPath(), progressIndicator);
-              if (isUnknownModuleType(module)) {
-                modulesWithUnknownTypes.add(module);
-              }
-              final String groupPathString = modulePath.getModuleGroup();
-              if (groupPathString != null) {
-                final String[] groupPath = groupPathString.split(MODULE_GROUP_SEPARATOR);
-                moduleModel.setModuleGroupPath(module, groupPath); //model should be updated too
-              }
-              myFailedModulePaths.remove(modulePath);
-            }
-            catch (final IOException e) {
-              errors.add(ModuleLoadingErrorDescription.create(ProjectBundle.message("module.cannot.load.error", modulePath.getPath(), e.getMessage()),
-                                                           modulePath, ModuleManagerImpl.this));
-            }
-            catch (final ModuleWithNameAlreadyExists moduleWithNameAlreadyExists) {
-              errors.add(ModuleLoadingErrorDescription.create(moduleWithNameAlreadyExists.getMessage(), modulePath, ModuleManagerImpl.this));
-            }
-            catch (StateStorageException e) {
-              errors.add(ModuleLoadingErrorDescription.create(ProjectBundle.message("module.cannot.load.error", modulePath.getPath(), e.getMessage()),
-                                                           modulePath, ModuleManagerImpl.this));
-            }
+      for (final ModulePath modulePath : myModulePaths) {
+        try {
+          final Module module = moduleModel.loadModuleInternal(modulePath.getPath(), progressIndicator);
+          if (isUnknownModuleType(module)) {
+            modulesWithUnknownTypes.add(module);
           }
-
-          fireErrors(errors);
-
-          showUnknownModuleTypeNotification(modulesWithUnknownTypes);
+          final String groupPathString = modulePath.getModuleGroup();
+          if (groupPathString != null) {
+            final String[] groupPath = groupPathString.split(MODULE_GROUP_SEPARATOR);
+            moduleModel.setModuleGroupPath(module, groupPath); //model should be updated too
+          }
+          myFailedModulePaths.remove(modulePath);
         }
-      };
-//      if (app.isDispatchThread() || app.isHeadlessEnvironment()) {
-        swingRunnable.run();
-      //}
-      //else {
-      //  app.invokeAndWait(swingRunnable, ModalityState.defaultModalityState());
-      //}
+        catch (final IOException e) {
+          errors.add(ModuleLoadingErrorDescription.create(ProjectBundle.message("module.cannot.load.error", modulePath.getPath(), e.getMessage()),
+                                                       modulePath, this));
+        }
+        catch (final ModuleWithNameAlreadyExists moduleWithNameAlreadyExists) {
+          errors.add(ModuleLoadingErrorDescription.create(moduleWithNameAlreadyExists.getMessage(), modulePath, this));
+        }
+        catch (StateStorageException e) {
+          errors.add(ModuleLoadingErrorDescription.create(ProjectBundle.message("module.cannot.load.error", modulePath.getPath(), e.getMessage()),
+                                                       modulePath, this));
+        }
+      }
+
+      fireErrors(errors);
+
+      showUnknownModuleTypeNotification(modulesWithUnknownTypes);
     }
   }
 
