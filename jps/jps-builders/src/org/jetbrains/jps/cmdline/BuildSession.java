@@ -249,8 +249,20 @@ final class BuildSession implements Runnable, CanceledStatus {
       }
     }
     finally {
+      saveData(pd, dataStorageRoot);
+    }
+  }
+
+  private void saveData(ProjectDescriptor pd, File dataStorageRoot) {
+    final boolean wasInterrupted = Thread.interrupted();
+    try {
       saveFsState(dataStorageRoot, pd.fsState, myLastEventOrdinal);
       pd.release();
+    }
+    finally {
+      if (wasInterrupted) {
+        Thread.currentThread().interrupt();
+      }
     }
   }
 
