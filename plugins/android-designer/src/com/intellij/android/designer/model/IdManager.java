@@ -109,24 +109,28 @@ public class IdManager {
         }, true);
 
         if (!replaceList.isEmpty()) {
-          container.accept(new RadComponentVisitor() {
-            @Override
-            public void endVisit(RadComponent component) {
-              XmlTag tag = ((RadViewComponent)component).getTag();
-              for (XmlAttribute attribute : tag.getAttributes()) {
-                String value = attribute.getValue();
-
-                for (Pair<Pair<String, String>, String> replace : replaceList) {
-                  if (replace.first.first.equals(value) || replace.first.second.equals(value)) {
-                    attribute.setValue(replace.second);
-                    break;
-                  }
-                }
-              }
-            }
-          }, true);
+          replaceIds(container, replaceList);
         }
       }
     });
+  }
+
+  public static void replaceIds(RadViewComponent container, final List<Pair<Pair<String, String>, String>> replaceList) {
+    container.accept(new RadComponentVisitor() {
+      @Override
+      public void endVisit(RadComponent component) {
+        XmlTag tag = ((RadViewComponent)component).getTag();
+        for (XmlAttribute attribute : tag.getAttributes()) {
+          String value = attribute.getValue();
+
+          for (Pair<Pair<String, String>, String> replace : replaceList) {
+            if (replace.first.first.equals(value) || replace.first.second.equals(value)) {
+              attribute.setValue(replace.second);
+              break;
+            }
+          }
+        }
+      }
+    }, true);
   }
 }

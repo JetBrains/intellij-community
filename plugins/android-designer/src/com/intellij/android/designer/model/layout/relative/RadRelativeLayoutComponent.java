@@ -37,7 +37,7 @@ public class RadRelativeLayoutComponent extends RadViewContainer {
     Map<String, RadViewComponent> idToComponent = new HashMap<String, RadViewComponent>();
     for (RadComponent child : getChildren()) {
       RadViewComponent viewChild = (RadViewComponent)child;
-      String id = viewChild.getId();
+      String id = parseIdValue(viewChild.getId());
       if (id != null) {
         idToComponent.put(id, viewChild);
       }
@@ -79,6 +79,16 @@ public class RadRelativeLayoutComponent extends RadViewContainer {
 
   @Nullable
   private static RadViewComponent getComponent(Map<String, RadViewComponent> idToComponent, XmlTag tag, String attribute) {
-    return idToComponent.get(tag.getAttributeValue(attribute));
+    return idToComponent.get(parseIdValue(tag.getAttributeValue(attribute)));
+  }
+
+  private static String parseIdValue(String idValue) {
+    if (!StringUtil.isEmpty(idValue)) {
+      if (idValue.startsWith("@android:id/")) {
+        return idValue;
+      }
+      return idValue.substring(idValue.indexOf('/') + 1);
+    }
+    return null;
   }
 }

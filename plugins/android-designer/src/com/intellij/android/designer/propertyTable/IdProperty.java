@@ -19,11 +19,13 @@ import com.intellij.android.designer.model.IdManager;
 import com.intellij.android.designer.model.RadViewComponent;
 import com.intellij.designer.model.RadComponent;
 import com.intellij.designer.propertyTable.Property;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.util.Pair;
 import org.jetbrains.android.dom.attrs.AttributeDefinition;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -44,16 +46,31 @@ public class IdProperty extends AttributeProperty {
   }
 
   @Override
-  public void setValue(RadViewComponent component, Object value) throws Exception {
-    // TODO: rename all references
-
+  public void setValue(final RadViewComponent component, final Object value) throws Exception {
     IdManager idManager = IdManager.get(component);
+    final String oldId = component.getId();
+
     idManager.removeComponent(component, false);
-
     super.setValue(component, value);
+    idManager.addComponent(component);
 
-    if (!StringUtil.isEmpty((String)value)) {
-      idManager.addComponent(component);
+    if (oldId != null && value != null && !oldId.equals(value)) {
+      ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        @Override
+        public void run() {
+          Pair<String, String> replace;
+          if (oldId.startsWith("@android:id/")) {
+            replace = new Pair<String, String>(oldId, oldId);
+          }
+          else {
+            String idValue = oldId.substring(oldId.indexOf('/') + 1);
+            replace = new Pair<String, String>("@id/" + idValue, "@+id/" + idValue);
+          }
+
+          IdManager.replaceIds((RadViewComponent)component.getRoot(),
+                               Arrays.asList(new Pair<Pair<String, String>, String>(replace, (String)value)));
+        }
+      });
     }
   }
 
