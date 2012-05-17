@@ -46,7 +46,7 @@ public class MavenRootModelAdapter {
   private final ModifiableModuleModel myModuleModel;
   private final ModifiableRootModel myRootModel;
 
-  public MavenRootModelAdapter(MavenProject p, Module module, final MavenModifiableModelsProvider rootModelsProvider) {
+  public MavenRootModelAdapter(@NotNull MavenProject p, @NotNull Module module, final MavenModifiableModelsProvider rootModelsProvider) {
     myMavenProject = p;
     myModuleModel = rootModelsProvider.getModuleModel();
     myRootModel = rootModelsProvider.getRootModel(module);
