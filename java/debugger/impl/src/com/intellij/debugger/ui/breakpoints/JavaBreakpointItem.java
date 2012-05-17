@@ -17,7 +17,6 @@ package com.intellij.debugger.ui.breakpoints;
 
 import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.SourcePosition;
-import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -34,7 +33,7 @@ import javax.swing.*;
 * Time: 3:16
 * To change this template use File | Settings | File Templates.
 */
-class JavaBreakpointItem implements BreakpointItem {
+class JavaBreakpointItem extends BreakpointItem {
   private final Breakpoint myBreakpoint;
   private BreakpointFactory myBreakpointFactory;
 
@@ -56,13 +55,7 @@ class JavaBreakpointItem implements BreakpointItem {
 
   @Override
   public void execute(Project project, JBPopup popup) {
-    if (myBreakpoint instanceof BreakpointWithHighlighter) {
-      final SourcePosition position = ((BreakpointWithHighlighter)myBreakpoint).getSourcePosition();
-      if (position != null) {
-        position.navigate(true);
-        popup.cancel();
-      }
-    }
+
   }
 
   @Override
@@ -95,7 +88,7 @@ class JavaBreakpointItem implements BreakpointItem {
     if (myBreakpoint instanceof BreakpointWithHighlighter) {
       SourcePosition sourcePosition = ((BreakpointWithHighlighter)myBreakpoint).getSourcePosition();
       VirtualFile virtualFile = sourcePosition.getFile().getVirtualFile();
-      panel.navigateInPreviewEditor(virtualFile, new LogicalPosition(sourcePosition.getLine(), 0));
+      showInEditor(panel, virtualFile, sourcePosition.getLine());
     } else {
       panel.clearEditor();
     }

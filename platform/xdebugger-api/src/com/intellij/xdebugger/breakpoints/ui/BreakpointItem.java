@@ -15,7 +15,15 @@
  */
 package com.intellij.xdebugger.breakpoints.ui;
 
+import com.intellij.openapi.editor.LogicalPosition;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.popup.util.DetailView;
 import com.intellij.ui.popup.util.ItemWrapper;
+import com.intellij.xdebugger.ui.DebuggerColors;
+
+import java.awt.*;
 
 /**
  * Created with IntelliJ IDEA.
@@ -24,10 +32,18 @@ import com.intellij.ui.popup.util.ItemWrapper;
  * Time: 4:48 AM
  * To change this template use File | Settings | File Templates.
  */
-public interface BreakpointItem extends ItemWrapper {
-  Object getBreakpoint();
+public abstract class BreakpointItem implements ItemWrapper {
+  public abstract Object getBreakpoint();
 
-  boolean isEnabled();
+  public abstract boolean isEnabled();
 
-  void setEnabled(boolean state);
+  public abstract void setEnabled(boolean state);
+
+  protected void showInEditor(DetailView panel, VirtualFile virtualFile, int line) {
+    final TextAttributes attributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(
+      DebuggerColors.BREAKPOINT_ATTRIBUTES).clone();
+    final Color color = attributes.getBackgroundColor();
+    attributes.setBackgroundColor(new Color(color.getRed(), color.getGreen()-100, color.getBlue()-100));
+    panel.navigateInPreviewEditor(virtualFile, new LogicalPosition(line, 0), attributes);
+  }
 }
