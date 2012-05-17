@@ -81,7 +81,7 @@ public class ReplaceOperatorAssignmentWithAssignmentIntention
       final IElementType signTokenType = sign.getTokenType();
       final IElementType newOperatorToken = tokenMap.get(signTokenType);
       final int precedence2 = ParenthesesUtils.getPrecedenceForBinaryOperator(newOperatorToken);
-      parentheses = precedence1 > precedence2 || !ParenthesesUtils.isCommutativeBinaryOperator(newOperatorToken);
+      parentheses = precedence1 >= precedence2 || !ParenthesesUtils.isCommutativeBinaryOperator(newOperatorToken);
     }
     else {
       parentheses = false;

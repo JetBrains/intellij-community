@@ -5,9 +5,10 @@ import com.siyeh.ipp.IPPTestCase;
 
 public class ReplaceOperatorAssignmentWithAssignmentIntentionTest extends IPPTestCase {
   public void testOperatorAssignment1() { doTest(); }
-  public void DoubleOpAssign() { doTest(); }
-  public void StringOpAssign() { doTest(); }
-  public void ByteOpAssign() { doTest(); }
+  public void testDoubleOpAssign() { doTest(); }
+  public void testStringOpAssign() { doTest(); }
+  public void testByteOpAssign() { doTest(); }
+  public void testPrecedence() { doTest(); }
 
   @Override
   protected String getIntentionName() {
