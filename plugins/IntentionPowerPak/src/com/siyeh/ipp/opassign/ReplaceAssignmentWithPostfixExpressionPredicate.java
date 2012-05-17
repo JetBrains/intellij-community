@@ -1,5 +1,5 @@
 /*
- * Copyright 2009 Bas Leijdekkers
+ * Copyright 2009-2012 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,8 +21,7 @@ import com.siyeh.ipp.psiutils.VariableAccessUtils;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 
-public class ReplaceAssignmentWithPostfixExpressionPredicate
-  implements PsiElementPredicate {
+class ReplaceAssignmentWithPostfixExpressionPredicate implements PsiElementPredicate {
 
   private static final Integer ONE = Integer.valueOf(1);
 

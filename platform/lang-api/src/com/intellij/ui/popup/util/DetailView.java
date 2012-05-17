@@ -17,6 +17,7 @@ package com.intellij.ui.popup.util;
 
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,7 +35,7 @@ public interface DetailView {
 
   Editor getEditor();
 
-  void navigateInPreviewEditor(VirtualFile file, LogicalPosition positionToNavigate);
+  void navigateInPreviewEditor(VirtualFile file, LogicalPosition positionToNavigate, TextAttributes lineAttributes);
 
   JPanel getDetailPanel();
 

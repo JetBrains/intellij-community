@@ -116,7 +116,7 @@ public class BookmarkItem implements ItemWrapper {
     VirtualFile file = myBookmark.getFile();
     LogicalPosition positionToNavigate = new LogicalPosition(myBookmark.getLine(), 0);
 
-    panel.navigateInPreviewEditor(file, positionToNavigate);
+    panel.navigateInPreviewEditor(file, positionToNavigate, null);
   }
 
   @Override
