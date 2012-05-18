@@ -873,6 +873,14 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
         continue;
       }
 
+      if (!AndroidCommonUtils.contains2Identifiers(packageName)) {
+        final String message = "[" + module.getName() + "] " + AndroidJpsBundle.message("android.jps.incorrect.package.name");
+        context.processMessage(new CompilerMessage(BUILDER_NAME, facet.isLibrary() ? BuildMessage.Kind.WARNING : BuildMessage.Kind.ERROR,
+                                                   message));
+        success = false;
+        continue;
+      }
+
       moduleDataMap.put(module, new MyModuleData(platform, facet, manifestFile, packageName));
     }
 
