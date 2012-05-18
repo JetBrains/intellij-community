@@ -59,10 +59,10 @@ public class OffsetTranslator implements Disposable {
     });
 
     originalFile.getProject().getMessageBus().connect(this).subscribe(PsiModificationTracker.TOPIC, new PsiModificationTracker.Listener() {
-      long lastModCount = originalFile.getModificationStamp();
+      long lastModCount = originalFile.getViewProvider().getModificationStamp();
       @Override
       public void modificationCountChanged() {
-        if (isUpToDate() && lastModCount != originalFile.getModificationStamp()) {
+        if (isUpToDate() && lastModCount != originalFile.getViewProvider().getModificationStamp()) {
           myTranslation.addAll(sinceCommit);
           sinceCommit.clear();
         }

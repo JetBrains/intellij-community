@@ -407,7 +407,7 @@ public class UsageInfo2UsageAdapter implements UsageInModule,
   private long myModificationStamp;
   private long getCurrentModificationStamp() {
     final PsiFile containingFile = getPsiFile();
-    return containingFile == null ? -1L : containingFile.getModificationStamp();
+    return containingFile == null ? -1L : containingFile.getViewProvider().getModificationStamp();
   }
 
   @Override

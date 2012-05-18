@@ -473,7 +473,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     if (myDisposed) return false;
     Document document = PsiDocumentManager.getInstance(myProject).getCachedDocument(file);
     return document != null &&
-           document.getModificationStamp() == file.getModificationStamp() &&
+           document.getModificationStamp() == file.getViewProvider().getModificationStamp() &&
            myFileStatusMap.allDirtyScopesAreNull(document);
   }
 
@@ -481,7 +481,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     if (myDisposed) return false;
     Document document = PsiDocumentManager.getInstance(myProject).getCachedDocument(file);
     return document != null &&
-           document.getModificationStamp() == file.getModificationStamp() &&
+           document.getModificationStamp() == file.getViewProvider().getModificationStamp() &&
            myFileStatusMap.getFileDirtyScope(document, Pass.UPDATE_ALL) == null;
   }
 
