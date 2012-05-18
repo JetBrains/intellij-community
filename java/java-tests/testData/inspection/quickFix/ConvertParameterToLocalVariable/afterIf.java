@@ -3,8 +3,8 @@ class Temp {
   public boolean flag;
 
   void test() {
-    <caret>int p;
-    if (flag) {
+      <caret>int p;
+      if (flag) {
       p = 1;
     }
     else {

@@ -80,7 +80,9 @@ public class ParameterCanBeLocalInspection extends BaseJavaLocalInspectionTool {
 
 
   @NotNull
-  private static ProblemDescriptor createProblem(@NotNull InspectionManager manager, @NotNull PsiIdentifier identifier, boolean isOnTheFly) {
+  private static ProblemDescriptor createProblem(@NotNull InspectionManager manager,
+                                                 @NotNull PsiIdentifier identifier,
+                                                 boolean isOnTheFly) {
     return manager.createProblemDescriptor(
       identifier,
       InspectionsBundle.message("inspection.parameter.can.be.local.problem.descriptor"),
@@ -126,7 +128,8 @@ public class ParameterCanBeLocalInspection extends BaseJavaLocalInspectionTool {
   @Nullable
   private static ControlFlow getControlFlow(final PsiElement context) {
     try {
-      return ControlFlowFactory.getInstance(context.getProject()).getControlFlow(context, LocalsOrMyInstanceFieldsControlFlowPolicy.getInstance());
+      return ControlFlowFactory.getInstance(context.getProject())
+        .getControlFlow(context, LocalsOrMyInstanceFieldsControlFlowPolicy.getInstance());
     }
     catch (AnalysisCanceledException e) {
       return null;

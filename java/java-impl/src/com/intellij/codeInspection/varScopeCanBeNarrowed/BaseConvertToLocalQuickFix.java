@@ -19,17 +19,20 @@ import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Computable;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.NotNullFunction;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -42,7 +45,7 @@ import java.util.Set;
  *
  * @author Danila Ponomarenko
  */
-public abstract class BaseConvertToLocalQuickFix<T extends PsiVariable> implements LocalQuickFix {
+public abstract class BaseConvertToLocalQuickFix<V extends PsiVariable> implements LocalQuickFix {
   private static final Logger LOG = Logger.getInstance(BaseConvertToLocalQuickFix.class);
 
   @NotNull
@@ -51,12 +54,12 @@ public abstract class BaseConvertToLocalQuickFix<T extends PsiVariable> implemen
   }
 
   public final void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-    final T myVariable = getVariable(descriptor);
-    final PsiFile myFile = myVariable.getContainingFile();
-    if (myVariable == null || !myVariable.isValid()) return; //weird. should not get here when field becomes invalid
+    final V variable = getVariable(descriptor);
+    final PsiFile myFile = variable.getContainingFile();
+    if (variable == null || !variable.isValid()) return; //weird. should not get here when field becomes invalid
 
     try {
-      final PsiElement newDeclaration = moveDeclaration(project, myVariable);
+      final PsiElement newDeclaration = moveDeclaration(project, variable);
       if (newDeclaration == null) return;
 
       positionCaretToDeclaration(project, myFile, newDeclaration);
@@ -67,11 +70,11 @@ public abstract class BaseConvertToLocalQuickFix<T extends PsiVariable> implemen
   }
 
   @Nullable
-  protected abstract T getVariable(@NotNull ProblemDescriptor descriptor);
+  protected abstract V getVariable(@NotNull ProblemDescriptor descriptor);
 
   private static void positionCaretToDeclaration(@NotNull Project project, @NotNull PsiFile psiFile, @NotNull PsiElement declaration) {
     final Editor editor = FileEditorManager.getInstance(project).getSelectedTextEditor();
-    if (editor != null && IJSwingUtilities.hasFocus(editor.getComponent())) {
+    if (editor != null && (IJSwingUtilities.hasFocus(editor.getComponent()) || ApplicationManager.getApplication().isUnitTestMode())) {
       final PsiFile openedFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
       if (openedFile == psiFile) {
         editor.getCaretModel().moveToOffset(declaration.getTextOffset());
@@ -80,57 +83,87 @@ public abstract class BaseConvertToLocalQuickFix<T extends PsiVariable> implemen
     }
   }
 
-  @Nullable
-  private PsiElement moveDeclaration(@NotNull Project project, @NotNull T variable){
-    final PsiElement newDeclaration = addDeclaration(project, variable);
-    if (newDeclaration == null) return null;
-
-    beforeDelete(project,variable,newDeclaration);
-
-    variable.normalizeDeclaration();
-    variable.delete();
-
-    return newDeclaration;
+  protected void beforeDelete(@NotNull Project project, @NotNull V variable, @NotNull PsiElement newDeclaration) {
   }
 
-  protected void beforeDelete(@NotNull Project project, @NotNull T variable, @NotNull PsiElement newDeclaration){}
-
   @Nullable
-  private PsiElement addDeclaration(@NotNull Project project, @NotNull T myVariable) {
-    final Collection<PsiReference> refs = ReferencesSearch.search(myVariable).findAll();
-    if (refs.isEmpty()) return null;
+  private PsiElement moveDeclaration(@NotNull Project project, @NotNull V variable) {
+    final Collection<PsiReference> references = ReferencesSearch.search(variable).findAll();
+    if (references.isEmpty()) return null;
 
-    final PsiCodeBlock anchorBlock = findAnchorBlock(refs);
+    final PsiCodeBlock anchorBlock = findAnchorBlock(references);
     if (anchorBlock == null) return null; //was assert, but need to fix the case when obsolete inspection highlighting is left
     if (!CodeInsightUtil.preparePsiElementsForWrite(anchorBlock)) return null;
 
-    final PsiElement firstElement = getLowestOffsetElement(refs);
-    final String localName = suggestLocalName(project, myVariable, anchorBlock);
+    final PsiElement firstElement = getLowestOffsetElement(references);
+    final String localName = suggestLocalName(project, variable, anchorBlock);
 
     final PsiElement anchor = getAnchorElement(anchorBlock, firstElement);
 
-    final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
 
     final PsiAssignmentExpression anchorAssignmentExpression = searchAssignmentExpression(anchor);
-    if (anchorAssignmentExpression != null && isVariableAssignment(anchorAssignmentExpression, myVariable)) {
-      final PsiExpression initializer = anchorAssignmentExpression.getRExpression();
-      final PsiDeclarationStatement declaration = elementFactory.createVariableDeclarationStatement(localName, myVariable.getType(), initializer);
-      if (!mayBeFinal(firstElement, refs)) {
-        PsiUtil.setModifierProperty((PsiModifierListOwner)declaration.getDeclaredElements()[0], PsiModifier.FINAL, false);
-      }
-      final PsiElement newDeclaration = anchor.replace(declaration);
-
-      final Set<PsiReference> refsSet = new HashSet<PsiReference>(refs);
+    if (anchorAssignmentExpression != null && isVariableAssignment(anchorAssignmentExpression, variable)) {
+      final Set<PsiReference> refsSet = new HashSet<PsiReference>(references);
       refsSet.remove(anchorAssignmentExpression.getLExpression());
-      retargetReferences(elementFactory, localName, refsSet);
-      return newDeclaration;
+      return applyChanges(
+        project,
+        localName,
+        anchorAssignmentExpression.getRExpression(),
+        variable,
+        refsSet,
+        new NotNullFunction<PsiDeclarationStatement, PsiElement>() {
+          @NotNull
+          @Override
+          public PsiElement fun(PsiDeclarationStatement declaration) {
+            if (!mayBeFinal(firstElement, references)) {
+              PsiUtil.setModifierProperty((PsiModifierListOwner)declaration.getDeclaredElements()[0], PsiModifier.FINAL, false);
+            }
+            return anchor.replace(declaration);
+          }
+        }
+      );
     }
 
-    final PsiDeclarationStatement declaration = elementFactory.createVariableDeclarationStatement(localName, myVariable.getType(), myVariable.getInitializer());
-    final PsiElement newDeclaration = anchorBlock.addBefore(declaration, anchor);
+    return applyChanges(
+      project,
+      localName,
+      variable.getInitializer(),
+      variable,
+      references,
+      new NotNullFunction<PsiDeclarationStatement, PsiElement>() {
+        @NotNull
+        @Override
+        public PsiElement fun(PsiDeclarationStatement declaration) {
+          return anchorBlock.addBefore(declaration, anchor);
+        }
+      }
+    );
+  }
 
-    retargetReferences(elementFactory, localName, refs);
-    return newDeclaration;
+  @NotNull
+  private PsiElement applyChanges(final @NotNull Project project,
+                                  final @NotNull String localName,
+                                  final @Nullable PsiExpression initializer,
+                                  final @NotNull V variable,
+                                  final @NotNull Collection<PsiReference> references,
+                                  final @NotNull NotNullFunction<PsiDeclarationStatement, PsiElement> action) {
+    final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
+
+    return ApplicationManager.getApplication().runWriteAction(
+      new Computable<PsiElement>() {
+        @Override
+        public PsiElement compute() {
+          final PsiDeclarationStatement declaration =
+            elementFactory.createVariableDeclarationStatement(localName, variable.getType(), initializer);
+          final PsiElement newDeclaration = action.fun(declaration);
+          retargetReferences(elementFactory, localName, references);
+          beforeDelete(project, variable, newDeclaration);
+          variable.normalizeDeclaration();
+          variable.delete();
+          return newDeclaration;
+        }
+      }
+    );
   }
 
   @Nullable
@@ -167,7 +200,7 @@ public abstract class BaseConvertToLocalQuickFix<T extends PsiVariable> implemen
   }
 
   @NotNull
-  protected abstract String suggestLocalName(@NotNull Project project, @NotNull T variable, @NotNull PsiCodeBlock scope);
+  protected abstract String suggestLocalName(@NotNull Project project, @NotNull V variable, @NotNull PsiCodeBlock scope);
 
   private static boolean mayBeFinal(PsiElement firstElement, @NotNull Collection<PsiReference> references) {
     for (PsiReference reference : references) {
