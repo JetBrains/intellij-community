@@ -18,7 +18,6 @@ package com.intellij.openapi.diff.impl.incrementalMerge;
 import com.intellij.openapi.diff.impl.highlighting.FragmentSide;
 import com.intellij.openapi.diff.impl.util.ContextLogger;
 import com.intellij.openapi.util.TextRange;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -266,89 +265,6 @@ class MergeBuilder {
 
     public void grow(int delta) {
       myLength += delta;
-    }
-  }
-
-  public static final class MergeFragment {
-
-    @Nullable private final TextRange myLeft;
-    @NotNull private final TextRange myBase;
-    @Nullable private final TextRange myRight;
-
-    public MergeFragment(@Nullable TextRange left, @NotNull TextRange base, @Nullable TextRange right) {
-      myLeft = left;
-      myBase = base;
-      myRight = right;
-    }
-
-    @Nullable
-    public TextRange getLeft() {
-      return myLeft;
-    }
-
-    @NotNull
-    public TextRange getBase() {
-      return myBase;
-    }
-
-    @Nullable
-    public TextRange getRight() {
-      return myRight;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-
-      MergeFragment fragment = (MergeFragment)o;
-
-      // suppressing unnecessary check for null, because myBase may occasionally become nullable
-      //noinspection ConstantConditions
-      if (myBase != null ? !myBase.equals(fragment.myBase) : fragment.myBase != null) return false;
-      if (myLeft != null ? !myLeft.equals(fragment.myLeft) : fragment.myLeft != null) return false;
-      if (myRight != null ? !myRight.equals(fragment.myRight) : fragment.myRight != null) return false;
-
-      return true;
-    }
-
-    @Override
-    public int hashCode() {
-      int result = myLeft != null ? myLeft.hashCode() : 0;
-      // suppressing unnecessary check for null, because myBase may occasionally become nullable
-      // noinspection ConstantConditions
-      result = 31 * result + (myBase != null ? myBase.hashCode() : 0);
-      result = 31 * result + (myRight != null ? myRight.hashCode() : 0);
-      return result;
-    }
-
-    public String toString() {
-      StringBuilder buffer = new StringBuilder();
-      buffer.append("<");
-      buffer.append(range2String(myLeft)).append(", ");
-      buffer.append(range2String(myBase)).append(", ");
-      buffer.append(range2String(myRight));
-      buffer.append(">");
-      return buffer.toString();
-    }
-
-    private static String range2String(@Nullable TextRange left) {
-      return left != null ? left.toString() : "-----";
-    }
-
-    @NotNull
-    public static MergeFragment notConflict(@NotNull TextRange baseChange, TextRange versionChange, FragmentSide versionSide) {
-      TextRange left;
-      TextRange right;
-      if (versionSide == FragmentSide.SIDE1) {
-        left = versionChange;
-        right = null;
-      }
-      else {
-        left = null;
-        right = versionChange;
-      }
-      return new MergeFragment(left, baseChange, right);
     }
   }
 }

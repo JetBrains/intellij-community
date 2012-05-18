@@ -79,12 +79,12 @@ public class MergeList implements UserDataHolder {
       "\nRight\n", rightText
     };
     ContextLogger logger = new ContextLogger(LOG, new ContextLogger.SimpleContext(data));
-    List<MergeBuilder.MergeFragment> fragmentList = processText(leftText, baseText, rightText, logger);
+    List<MergeFragment> fragmentList = processText(leftText, baseText, rightText, logger);
 
     ArrayList<Change> leftChanges = new ArrayList<Change>();
     ArrayList<Change> rightChanges = new ArrayList<Change>();
-    for (Iterator<MergeBuilder.MergeFragment> fragmentIterator = fragmentList.iterator(); fragmentIterator.hasNext(); ) {
-      final MergeBuilder.MergeFragment mergeFragment = fragmentIterator.next();
+    for (Iterator<MergeFragment> fragmentIterator = fragmentList.iterator(); fragmentIterator.hasNext(); ) {
+      final MergeFragment mergeFragment = fragmentIterator.next();
       TextRange baseRange = mergeFragment.getBase();
       TextRange leftRange = mergeFragment.getLeft();
       TextRange rightRange = mergeFragment.getRight();
@@ -118,7 +118,7 @@ public class MergeList implements UserDataHolder {
     return mergeList;
   }
 
-  private static List<MergeBuilder.MergeFragment> processText(String leftText, String baseText, String rightText,
+  private static List<MergeFragment> processText(String leftText, String baseText, String rightText,
                                                               ContextLogger logger) throws FilesTooBigForDiffException {
     DiffFragment[] leftFragments = DiffPolicy.DEFAULT_LINES.buildFragments(baseText, leftText);
     DiffFragment[] rightFragments = DiffPolicy.DEFAULT_LINES.buildFragments(baseText, rightText);
