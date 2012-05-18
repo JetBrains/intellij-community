@@ -155,14 +155,6 @@ public interface PsiElementFactory extends PsiJavaParserFacade, JVMElementFactor
   @NotNull PsiCodeBlock createCodeBlock();
 
   /**
-   * Creates a class type for the specified class.
-   *
-   * @param aClass the class for which the class type is created.
-   * @return the class type instance.
-   */
-  @NotNull PsiClassType createType(@NotNull PsiClass aClass);
-
-  /**
    * Creates a class type for the specified class, using the specified substitutor
    * to replace generic type parameters on the class.
    *
