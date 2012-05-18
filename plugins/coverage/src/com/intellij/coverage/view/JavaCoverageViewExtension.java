@@ -203,7 +203,11 @@ public class JavaCoverageViewExtension extends CoverageViewExtension {
           return aPackage.getDirectories(searchScope); 
         }
       });
-      if (directories.length == 0) continue;
+      if (directories.length == 0 && !ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
+        public Boolean compute() {
+          return JavaPsiFacade.getInstance(aPackage.getProject()).isPartOfPackagePrefix(aPackage.getQualifiedName());
+        }
+      })) continue;
       if (ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
         public Boolean compute() {
           return isInCoverageScope(aPackage, data);

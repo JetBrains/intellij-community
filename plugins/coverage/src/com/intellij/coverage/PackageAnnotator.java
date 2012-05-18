@@ -218,7 +218,8 @@ public class PackageAnnotator {
         final VirtualFile file = folder.getFile();
         if (file == null) continue;
         if (folder.isTestSource() && isTestHierarchy || !isTestHierarchy) {
-          final VirtualFile relativeSrcRoot = file.findFileByRelativePath(packageVMName);
+          final String prefix = folder.getPackagePrefix().replaceAll("\\.", "/");
+          final VirtualFile relativeSrcRoot = file.findFileByRelativePath(StringUtil.trimStart(packageVMName, prefix));
           dirs.add(new DirCoverageInfo(relativeSrcRoot));
         }
       }
