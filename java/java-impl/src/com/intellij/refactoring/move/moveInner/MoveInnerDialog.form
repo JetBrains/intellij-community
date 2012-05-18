@@ -8,7 +8,7 @@
     <properties/>
     <border type="none"/>
     <children>
-      <component id="39dca" class="javax.swing.JLabel">
+      <component id="39dca" class="javax.swing.JLabel" binding="myClassNameLabel">
         <constraints>
           <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
@@ -30,6 +30,7 @@
         <constraints>
           <grid row="1" column="0" row-span="1" col-span="2" vsize-policy="3" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
         </constraints>
+        <properties/>
       </component>
       <component id="13f65" class="com.intellij.ui.NonFocusableCheckBox" binding="myCbPassOuterClass">
         <constraints>
@@ -39,7 +40,7 @@
           <text resource-bundle="messages/RefactoringBundle" key="pass.outer.class.instance.as.parameter"/>
         </properties>
       </component>
-      <component id="ec0ba" class="javax.swing.JLabel">
+      <component id="ec0ba" class="javax.swing.JLabel" binding="myParameterNameLabel">
         <constraints>
           <grid row="5" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="1" use-parent-layout="false"/>
         </constraints>
