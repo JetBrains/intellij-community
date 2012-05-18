@@ -26,6 +26,7 @@ import com.intellij.codeInsight.daemon.LineMarkerInfo;
 import com.intellij.codeInsight.daemon.ReferenceImporter;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.intention.impl.IntentionHintComponent;
+import com.intellij.codeInspection.ex.InspectionProfileWrapper;
 import com.intellij.concurrency.Job;
 import com.intellij.ide.PowerSaveMode;
 import com.intellij.lang.annotation.HighlightSeverity;
@@ -53,6 +54,7 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.packageDependencies.DependencyValidationManager;
+import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiCompiledElement;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
@@ -749,10 +751,31 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
             myPassExecutorService.submitPasses(passes, progress, Job.DEFAULT_PRIORITY);
           }
         };
+
+
         if (activeEditor == null) {
           runnable.run();
         }
         else {
+          final InspectionProfileWrapper profile = InspectionProjectProfileManager.getInstance(myProject).getProfileWrapper();
+          final PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(activeEditor.getDocument());
+          if (psiFile != null && profile != null && !profile.areToolsInstantiated()) {
+            // optimization: do expensive classloading outside readaction
+            ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+              @Override
+              public void run() {
+                try {
+                  if (!psiFile.getManager().isDisposed() && !profile.areToolsInstantiated()) {
+                    profile.preInstantiateTools(psiFile);
+                  }
+                }
+                catch (Exception e) {
+                  throw new RuntimeException(e);
+                }
+              }
+            });
+          }
+
           ((PsiDocumentManagerImpl)PsiDocumentManager.getInstance(myProject)).cancelAndRunWhenAllCommitted(
             "start daemon when all committed", runnable);
         }
