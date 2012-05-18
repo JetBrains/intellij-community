@@ -12,6 +12,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.*;
+import com.intellij.util.IconUtil;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.HashMap;
@@ -267,7 +268,7 @@ public class CoverageSuiteChooserDialog extends DialogWrapper {
 
   private class AddExternalSuiteAction extends AnAction {
     public AddExternalSuiteAction() {
-      super("Add", "Add", PlatformIcons.ADD_ICON);
+      super("Add", "Add", IconUtil.getAddIcon());
       registerCustomShortcutSet(CommonShortcuts.INSERT, mySuitesTree);
     }
 
