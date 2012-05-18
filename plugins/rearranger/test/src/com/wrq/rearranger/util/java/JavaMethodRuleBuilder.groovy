@@ -18,6 +18,7 @@ class JavaMethodRuleBuilder extends AbstractJavaRuleBuilder<MethodAttributes> {
       (MethodType.OTHER) : createRawBooleanAttributeHandler('otherMethodType')
     ]
     registerHandler(RearrangerTestDsl.TARGET, { data, attributes, rule -> handlers[data](attributes, rule) })
+    registerHandler(RearrangerTestDsl.RETURN_TYPE, createStringAttributeHandler('returnTypeAttr'))
   }
   
   @Override

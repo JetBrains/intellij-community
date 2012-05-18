@@ -14,6 +14,7 @@ class JavaFieldRuleBuilder extends AbstractJavaRuleBuilder<FieldAttributes> {
   {
     def handlers = [(InitializerType.ANONYMOUS_CLASS) : createBooleanAttributeHandler('initialisedByAnonymousClassAttr')]
     registerHandler(RearrangerTestDsl.INITIALIZER, { data, attributes, rule -> handlers[data](attributes, rule) })
+    registerHandler(RearrangerTestDsl.TYPE, createStringAttributeHandler('typeAttr'))
   }
   
   @Override

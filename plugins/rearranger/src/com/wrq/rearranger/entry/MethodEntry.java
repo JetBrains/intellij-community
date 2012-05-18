@@ -1050,11 +1050,9 @@ public class MethodEntry extends ClassContentsEntry implements RelatableEntry {
       return;
     }
     createAlternateValueString();
-    /**
-     * we don't want to check for comments in the body of the method.  So reduce the alternate value string
-     * to only that text up to and including the open brace.  Temporarily remove the rest of the text; append
-     * it again after checking for comments.
-     */
+    // We don't want to check for comments in the body of the method.  So reduce the alternate value string
+    // to only that text up to and including the open brace.  Temporarily remove the rest of the text; append
+    // it again after checking for comments.
     int brace = myAlternateValue.indexOf('{');
     String temp = "";
     if (brace >= 0) {
