@@ -17,7 +17,10 @@ package com.intellij.core;
 
 import com.intellij.mock.MockComponentManager;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.PathMacros;
 import com.intellij.openapi.components.ExtensionAreas;
+import com.intellij.openapi.components.PathMacroManager;
+import com.intellij.openapi.components.impl.ModulePathMacroManager;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.impl.ModuleEx;
 import com.intellij.openapi.project.Project;
@@ -57,7 +60,8 @@ public class CoreModule extends MockComponentManager implements ModuleEx {
                                                                         DirectoryIndex.getInstance(project),
                                                                         ProjectRootManagerImpl.getInstanceImpl(project),
                                                                         VirtualFilePointerManager.getInstance());
-    CoreEnvironment.registerComponentInstance(getPicoContainer(), ModuleRootManager.class, moduleRootManager);
+    getPicoContainer().registerComponentInstance(ModuleRootManager.class, moduleRootManager);
+    getPicoContainer().registerComponentInstance(PathMacroManager.class, new ModulePathMacroManager(PathMacros.getInstance(), this));
   }
 
   @Override
