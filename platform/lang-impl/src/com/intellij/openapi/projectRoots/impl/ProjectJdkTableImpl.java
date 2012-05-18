@@ -164,29 +164,6 @@ public class ProjectJdkTableImpl extends ProjectJdkTable implements PersistentSt
     return result;
   }
 
-  @Override
-  public Sdk findMostRecentSdkOfType(final SdkTypeId type) {
-    return findMostRecentSdk(new Condition<Sdk>() {
-      public boolean value(Sdk sdk) {
-        return sdk.getSdkType() == type;
-      }
-    });
-  }
-
-  @Override
-  public Sdk findMostRecentSdk(Condition<Sdk> condition) {
-    Sdk found = null;
-    for (Sdk each : getAllJdks()) {
-      if (!condition.value(each)) continue;
-      if (found == null) {
-        found = each;
-        continue;
-      }
-      if (Comparing.compare(each.getVersionString(), found.getVersionString()) > 0) found = each;
-    }
-    return found;
-  }
-
   public void addJdk(Sdk jdk) {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
     mySdks.add(jdk);
