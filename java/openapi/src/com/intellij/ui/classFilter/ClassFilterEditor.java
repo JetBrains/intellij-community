@@ -47,7 +47,6 @@ import java.util.LinkedList;
 import java.util.List;
 
 public class ClassFilterEditor extends JPanel implements ComponentWithEmptyText {
-  protected AnActionButton myAddPatternButton;
   protected JBTable myTable = null;
   protected FilterTableModel myTableModel = null;
   protected final Project myProject;
@@ -68,20 +67,21 @@ public class ClassFilterEditor extends JPanel implements ComponentWithEmptyText 
     myPatternsHelpId = patternsHelpId;
     myTable = new JBTable();
 
-    add(
-      ToolbarDecorator.createDecorator(myTable)
-        .addExtraAction(new AnActionButton(getAddButtonText(), IconUtil.getAddClassIcon()) {
-          @Override
-          public void actionPerformed(AnActionEvent e) {
-            addClassFilter();
-          }
+    final ToolbarDecorator decorator = ToolbarDecorator.createDecorator(myTable)
+      .addExtraAction(new AnActionButton(getAddButtonText(), getAddButtonIcon()) {
+        @Override
+        public void actionPerformed(AnActionEvent e) {
+          addClassFilter();
+        }
 
-          @Override
-          public void updateButton(AnActionEvent e) {
-            super.updateButton(e);
-            setEnabled(!myProject.isDefault());
-          }
-        }).addExtraAction(myAddPatternButton = new AnActionButton(getAddPatternButtonText(), IconUtil.getAddPatternIcon()) {
+        @Override
+        public void updateButton(AnActionEvent e) {
+          super.updateButton(e);
+          setEnabled(!myProject.isDefault());
+        }
+      });
+    if (addPatternButtonVisible()) {
+      decorator.addExtraAction(new AnActionButton(getAddPatternButtonText(), getAddPatternButtonIcon()) {
         @Override
         public void actionPerformed(AnActionEvent e) {
           addPatternFilter();
@@ -92,14 +92,15 @@ public class ClassFilterEditor extends JPanel implements ComponentWithEmptyText 
           super.updateButton(e);
           setEnabled(!myProject.isDefault());
         }
-      }).setRemoveAction(new AnActionButtonRunnable() {
-        @Override
-        public void run(AnActionButton button) {
-          TableUtil.removeSelectedItems(myTable);
-        }
-      }).setButtonComparator(getAddButtonText(), getAddPatternButtonText(), "Remove")
-        .disableUpDownActions().createPanel(), BorderLayout.CENTER
-    );
+      });
+    }
+    add(decorator.setRemoveAction(new AnActionButtonRunnable() {
+      @Override
+      public void run(AnActionButton button) {
+        TableUtil.removeSelectedItems(myTable);
+      }
+    }).setButtonComparator(getAddButtonText(), getAddPatternButtonText(), "Remove")
+          .disableUpDownActions().createPanel(), BorderLayout.CENTER);
 
     myChooserFilter = classFilter;
     myProject = project;
@@ -135,6 +136,18 @@ public class ClassFilterEditor extends JPanel implements ComponentWithEmptyText 
 
   protected String getAddPatternButtonText() {
     return UIBundle.message("button.add.pattern");
+  }
+
+  protected Icon getAddButtonIcon() {
+    return IconUtil.getAddClassIcon();
+  }
+
+  protected Icon getAddPatternButtonIcon() {
+    return IconUtil.getAddPatternIcon();
+  }
+
+  protected boolean addPatternButtonVisible() {
+    return true;
   }
 
   public void setFilters(com.intellij.ui.classFilter.ClassFilter[] filters) {

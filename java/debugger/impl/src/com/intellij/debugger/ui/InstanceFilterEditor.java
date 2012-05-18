@@ -20,6 +20,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.ui.classFilter.ClassFilter;
 import com.intellij.ui.classFilter.ClassFilterEditor;
+import com.intellij.util.IconUtil;
+
+import javax.swing.*;
 
 /**
  * User: lex
@@ -29,7 +32,6 @@ import com.intellij.ui.classFilter.ClassFilterEditor;
 public class InstanceFilterEditor extends ClassFilterEditor {
   public InstanceFilterEditor(Project project) {
     super(project);
-    myAddPatternButton.setVisible(false);
   }
 
   protected void addClassFilter() {
@@ -49,6 +51,16 @@ public class InstanceFilterEditor extends ClassFilterEditor {
 
   protected String getAddButtonText() {
     return DebuggerBundle.message("button.add");
+  }
+
+  @Override
+  protected Icon getAddButtonIcon() {
+    return IconUtil.getAddIcon();
+  }
+
+  @Override
+  protected boolean addPatternButtonVisible() {
+    return false;
   }
 
   protected ClassFilter createFilter(String pattern) {

@@ -116,4 +116,6 @@ public interface PlatformIcons {
   
   Icon EXPORT_ICON = IconLoader.getIcon("/toolbarDecorator/export.png");
   Icon IMPORT_ICON = IconLoader.getIcon("/toolbarDecorator/import.png");
+
+  Icon SEPARATOR_HORIZONTAL_ICON = IconLoader.getIcon("/general/separatorH.png");
 }
