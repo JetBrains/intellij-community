@@ -23,7 +23,9 @@ public enum RearrangerTestDsl {
   INVERT,
   CONDITION,
   ALL_SUBSEQUENT("allSubsequent"),
-  SUBSEQUENT_RULES_TO_MATCH("subsequentRulesToMatch");
+  ALL_PRECEDING("allPreceding"),
+  SUBSEQUENT_RULES_TO_MATCH("subsequentRulesToMatch"),
+  PRECEDING_RULES_TO_MATCH("precedingRulesToMatch");
 
   @NotNull private final String myValue;
   

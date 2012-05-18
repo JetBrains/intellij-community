@@ -66,7 +66,7 @@ public abstract class GenericRearranger {
    * @return rearranged list of RangeEntry and CommentRuleInstance objects.
    */
   public final List<RuleInstance> rearrangeEntries() {
-    final List<RuleInstance> prioritizedRuleInstances = new ArrayList<RuleInstance>();
+     final List<RuleInstance> prioritizedRuleInstances = new ArrayList<RuleInstance>();
     buildRuleInstanceLists(prioritizedRuleInstances);
     
     // Recursively reorder contents of every nested ClassEntry

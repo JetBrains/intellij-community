@@ -35,11 +35,12 @@ import com.wrq.rearranger.util.java.*
 /** JUnit tests for the rearranger plugin. */
 class RearrangerTest extends LightCodeInsightFixtureTestCase {
 
-  private RearrangerSettings    mySettings
-  private JavaClassRuleBuilder  classRule
-  private JavaFieldRuleBuilder  fieldRule
-  private JavaMethodRuleBuilder methodRule
-  private CommentRuleBuilder    commentRule
+  private RearrangerSettings        mySettings
+  private JavaClassRuleBuilder      classRule
+  private JavaInnerClassRuleBuilder innerClassRule
+  private JavaFieldRuleBuilder      fieldRule
+  private JavaMethodRuleBuilder     methodRule
+  private CommentRuleBuilder        commentRule
 
   @Override
   protected String getBasePath() {
@@ -58,6 +59,7 @@ class RearrangerTest extends LightCodeInsightFixtureTestCase {
     mySettings.rearrangeInnerClasses = true
 
     classRule = new JavaClassRuleBuilder(settings: mySettings)
+    innerClassRule = new JavaInnerClassRuleBuilder(settings: mySettings)
     fieldRule = new JavaFieldRuleBuilder(settings: mySettings)
     methodRule = new JavaMethodRuleBuilder(settings: mySettings)
     commentRule = new CommentRuleBuilder(settings: mySettings)
@@ -154,11 +156,10 @@ class RearrangerTest extends LightCodeInsightFixtureTestCase {
       fieldRule.create { modifier(PsiModifier.FINAL, invert: true) }
   } }
 
-//  public final void testOpsBlockingQueueExample() throws Exception {
-//    testOpsBlockingQueueExampleWorker(false, "/com/wrq/rearranger/OpsBlockingQueue.java",
-//                                      false, "/com/wrq/rearranger/OpsBlockingQueue.java");
-//  }
-//
+  public final void testOpsBlockingQueueExample() throws Exception {
+    testOpsBlockingQueueExampleWorker(false, "OpsBlockingQueue", false, "OpsBlockingQueue");
+  }
+
 //  public final void testOpsBlockingQueueExampleWithGlobalPattern() throws Exception {
 //    testOpsBlockingQueueExampleWorker(true, "/com/wrq/rearranger/OpsBlockingQueue.java",
 //                                      false, "/com/wrq/rearranger/OpsBlockingQueue.java");
@@ -168,182 +169,131 @@ class RearrangerTest extends LightCodeInsightFixtureTestCase {
 //    testOpsBlockingQueueExampleWorker(false, "/com/wrq/rearranger/OpsBlockingQueueIndented.java",
 //                                      true, "/com/wrq/rearranger/OpsBlockingQueueIndentedResult.java");
 //  }
-//
-//  private void testOpsBlockingQueueExampleWorker(boolean doGlobalPattern,
-//                                                 String srcFilename,
-//                                                 boolean doublePublicMethods,
-//                                                 String compareFilename)
-//    throws Exception
-//  {
-//    // submitted by Joe Martinez.
-//    configureByFile(srcFilename);
-//    final PsiFile file = getFile();
-//    final Document doc = PsiDocumentManager.getInstance(getProject()).getDocument(file);
-//    CommentRule c;
-//    FieldAttributes fa;
-//    c = new CommentRule();
-//    c.setCommentText("//**************************************        PUBLIC STATIC FIELDS         *************************************");
-//    c.setEmitCondition(2);
-//    c.setnPrecedingRulesToMatch(1);
-//    c.setnSubsequentRulesToMatch(2);
-//    c.setAllPrecedingRules(true);
-//    c.setAllSubsequentRules(false);
-//    rs.addItem(c, 0);
-//    fa = new FieldAttributes();
-//    fa.getSortAttr().setByName(true);
-//    fa.getPlAttr().setPlPublic(true);
-//    fa.getStAttr().setValue(true);
-//    fa.getfAttr().setValue(true);
-//    rs.addItem(fa, 1);
-//    fa = new FieldAttributes();
-//    fa.getSortAttr().setByName(true);
-//    fa.getPlAttr().setPlPublic(true);
-//    fa.getStAttr().setValue(true);
-//    rs.addItem(fa, 2);
-//    c = new CommentRule();
-//    c.setCommentText("//**************************************        PUBLIC FIELDS          *****************************************");
-//    c.setEmitCondition(2);
-//    c.setnPrecedingRulesToMatch(1);
-//    c.setnSubsequentRulesToMatch(1);
-//    c.setAllPrecedingRules(true);
-//    c.setAllSubsequentRules(true);
-//    rs.addItem(c, 3);
-//    fa = new FieldAttributes();
-//    fa.getSortAttr().setByName(true);
-//    fa.getPlAttr().setPlPublic(true);
-//    rs.addItem(fa, 4);
-//    c = new CommentRule();
-//    c.setCommentText("//***********************************       PROTECTED/PACKAGE FIELDS        **************************************");
-//    c.setEmitCondition(2);
-//    c.setnPrecedingRulesToMatch(1);
-//    c.setnSubsequentRulesToMatch(3);
-//    c.setAllPrecedingRules(true);
-//    c.setAllSubsequentRules(false);
-//    rs.addItem(c, 5);
-//    fa = new FieldAttributes();
-//    fa.getSortAttr().setByName(true);
-//    fa.getPlAttr().setPlProtected(true);
-//    fa.getPlAttr().setPlPackage(true);
-//    fa.getStAttr().setValue(true);
-//    fa.getfAttr().setValue(true);
-//    rs.addItem(fa, 6);
-//    fa = new FieldAttributes();
-//    fa.getSortAttr().setByName(true);
-//    fa.getPlAttr().setPlProtected(true);
-//    fa.getPlAttr().setPlPackage(true);
-//    fa.getStAttr().setValue(true);
-//    rs.addItem(fa, 7);
-//    fa = new FieldAttributes();
-//    fa.getSortAttr().setByName(true);
-//    fa.getPlAttr().setPlProtected(true);
-//    fa.getPlAttr().setPlPackage(true);
-//    rs.addItem(fa, 8);
-//    c = new CommentRule();
-//    c.setCommentText("//**************************************        PRIVATE FIELDS          *****************************************");
-//    c.setEmitCondition(2);
-//    c.setnPrecedingRulesToMatch(1);
-//    c.setnSubsequentRulesToMatch(1);
-//    c.setAllPrecedingRules(true);
-//    c.setAllSubsequentRules(false);
-//    rs.addItem(c, 9);
-//    fa = new FieldAttributes();
-//    fa.getSortAttr().setByName(true);
-//    fa.getPlAttr().setPlPrivate(true);
-//    rs.addItem(fa, 10);
-//    c = new CommentRule();
-//    c.setCommentText("//**************************************        CONSTRUCTORS              ************************************* ");
-//    c.setEmitCondition(2);
-//    c.setnPrecedingRulesToMatch(1);
-//    c.setnSubsequentRulesToMatch(2);
-//    c.setAllPrecedingRules(true);
-//    c.setAllSubsequentRules(false);
-//    rs.addItem(c, 11);
-//    MethodAttributes ma = new MethodAttributes();
-//    ma.getPlAttr().setPlPublic(true);
-//    ma.setConstructorMethodType(true);
-//    rs.addItem(ma, 12);
-//    ma = new MethodAttributes();
-//    ma.setConstructorMethodType(true);
-//    rs.addItem(ma, 13);
-//    c = new CommentRule();
-//    c.setCommentText("//***********************************        GETTERS AND SETTERS              ********************************** ");
-//    c.setEmitCondition(2);
-//    c.setnPrecedingRulesToMatch(1);
-//    c.setnSubsequentRulesToMatch(2);
-//    c.setAllPrecedingRules(true);
-//    c.setAllSubsequentRules(false);
-//    rs.addItem(c, 14);
-//    ma = new MethodAttributes();
-//    ma.getSortAttr().setByName(true);
-//    ma.getPlAttr().setPlPublic(true);
-//    ma.setGetterSetterMethodType(true);
-//    rs.addItem(ma, 15);
-//    ma = new MethodAttributes();
-//    ma.getSortAttr().setByName(true);
-//    ma.setGetterSetterMethodType(true);
-//    rs.addItem(ma, 16);
-//    c = new CommentRule();
-//    String commentText =
-//      "//**************************************        PUBLIC METHODS              ************************************* ";
-//    if (doublePublicMethods) {
-//      commentText += "\n// PUBLIC METHODS LINE 2";
-//    }
-//    c.setCommentText(commentText);
-//    c.setEmitCondition(2);
-//    c.setnPrecedingRulesToMatch(1);
-//    c.setnSubsequentRulesToMatch(1);
-//    c.setAllPrecedingRules(true);
-//    c.setAllSubsequentRules(true);
-//    rs.addItem(c, 17);
-//    ma = new MethodAttributes();
-//    ma.getSortAttr().setByName(true);
-//    ma.getPlAttr().setPlPublic(true);
-//    rs.addItem(ma, 18);
-//    c = new CommentRule();
-//    c.setCommentText("//*********************************     PACKAGE/PROTECTED METHODS              ******************************** ");
-//    c.setEmitCondition(2);
-//    c.setnPrecedingRulesToMatch(1);
-//    c.setnSubsequentRulesToMatch(1);
-//    c.setAllPrecedingRules(true);
-//    c.setAllSubsequentRules(true);
-//    rs.addItem(c, 19);
-//    ma = new MethodAttributes();
-//    ma.getSortAttr().setByName(true);
-//    ma.getPlAttr().setPlProtected(true);
-//    ma.getPlAttr().setPlPackage(true);
-//    rs.addItem(ma, 20);
-//    c = new CommentRule();
-//    c.setCommentText("//**************************************        PRIVATE METHODS              *************************************");
-//    c.setEmitCondition(2);
-//    c.setnPrecedingRulesToMatch(1);
-//    c.setnSubsequentRulesToMatch(1);
-//    c.setAllPrecedingRules(true);
-//    c.setAllSubsequentRules(true);
-//    rs.addItem(c, 21);
-//    ma = new MethodAttributes();
-//    ma.getSortAttr().setByName(true);
-//    ma.getPlAttr().setPlPrivate(true);
-//    rs.addItem(ma, 22);
-//    c = new CommentRule();
-//    c.setCommentText("//**************************************        INNER CLASSES              ************************************* ");
-//    c.setEmitCondition(2);
-//    c.setnPrecedingRulesToMatch(1);
-//    c.setnSubsequentRulesToMatch(1);
-//    c.setAllPrecedingRules(true);
-//    c.setAllSubsequentRules(true);
-//    rs.addItem(c, 23);
-//    InnerClassAttributes ic = new InnerClassAttributes();
-//    ic.getSortAttr().setByName(true);
-//    rs.addItem(ic, 24);
-//    rs.getExtractedMethodsSettings().setMoveExtractedMethods(false);
-//    if (doGlobalPattern) {
-//      rs.setGlobalCommentPattern("//\\*{20,45}[A-Z /]*\\*{20,45}\n");
-//    }
-//    final RearrangerActionHandler rah = new RearrangerActionHandler();
-//    rah.rearrangeDocument(getProject(), file, rs, doc);
-//    super.checkResultByFile(compareFilename);
-//  }
-//
+
+  private void testOpsBlockingQueueExampleWorker(boolean doGlobalPattern,
+                                                 String srcFilename,
+                                                 boolean doublePublicMethods,
+                                                 String compareFilename)
+    throws Exception
+  {
+    // submitted by Joe Martinez.
+    doTest(srcFilename, compareFilename) {
+      commentRule.create {
+        comment('//**************************************        PUBLIC STATIC FIELDS         *************************************',
+                condition: CommentRule.EMIT_IF_ITEMS_MATCH_SUBSEQUENT_RULE, allSubsequent: false, allPreceding: true,
+                subsequentRulesToMatch: 2, precedingRulesToMatch: 1)
+      }
+      fieldRule.create {
+        modifier([ PsiModifier.PUBLIC, PsiModifier.STATIC, PsiModifier.FINAL ])
+        sort( SortType.BY_NAME )
+      }
+      fieldRule.create {
+        modifier([ PsiModifier.PUBLIC, PsiModifier.STATIC ])
+        sort( SortType.BY_NAME )
+      }
+      commentRule.create {
+        comment('//**************************************        PUBLIC FIELDS          *****************************************',
+                condition: CommentRule.EMIT_IF_ITEMS_MATCH_SUBSEQUENT_RULE, allSubsequent: true, allPreceding: true,
+                subsequentRulesToMatch: 1, precedingRulesToMatch: 1)
+      }
+      fieldRule.create {
+        modifier( PsiModifier.PUBLIC )
+        sort( SortType.BY_NAME )
+      }
+      commentRule.create {
+        comment('//***********************************       PROTECTED/PACKAGE FIELDS        **************************************',
+                condition: CommentRule.EMIT_IF_ITEMS_MATCH_SUBSEQUENT_RULE, allSubsequent: false, allPreceding: true,
+                subsequentRulesToMatch: 3, precedingRulesToMatch: 1)
+      }
+      fieldRule.create {
+        modifier([ PsiModifier.PROTECTED, PsiModifier.PACKAGE_LOCAL, PsiModifier.STATIC, PsiModifier.FINAL ])
+        sort( SortType.BY_NAME )
+      }
+      fieldRule.create {
+        modifier([ PsiModifier.PROTECTED, PsiModifier.PACKAGE_LOCAL, PsiModifier.STATIC ])
+        sort( SortType.BY_NAME )
+      }
+      fieldRule.create {
+        modifier([ PsiModifier.PROTECTED, PsiModifier.PACKAGE_LOCAL ])
+        sort( SortType.BY_NAME )
+      }
+      commentRule.create {
+        comment('//**************************************        PRIVATE FIELDS          *****************************************',
+                condition: CommentRule.EMIT_IF_ITEMS_MATCH_SUBSEQUENT_RULE, allSubsequent: false, allPreceding: true,
+                subsequentRulesToMatch: 1, precedingRulesToMatch: 1)
+      }
+      fieldRule.create {
+        modifier( PsiModifier.PRIVATE )
+        sort( SortType.BY_NAME )
+      }
+      commentRule.create {
+        comment('//**************************************        CONSTRUCTORS              ************************************* ',
+                condition: CommentRule.EMIT_IF_ITEMS_MATCH_SUBSEQUENT_RULE, allSubsequent: false, allPreceding: true,
+                subsequentRulesToMatch: 2, precedingRulesToMatch: 1)
+      }
+      methodRule.create {
+        modifier( PsiModifier.PUBLIC )
+        target( MethodType.CONSTRUCTOR )
+      }
+      methodRule.create { target( MethodType.CONSTRUCTOR ) }
+      commentRule.create {
+        comment('//***********************************        GETTERS AND SETTERS              ********************************** ',
+                condition: CommentRule.EMIT_IF_ITEMS_MATCH_SUBSEQUENT_RULE, allSubsequent: false, allPreceding: true,
+                subsequentRulesToMatch: 2, precedingRulesToMatch: 1)
+      }
+      methodRule.create {
+        modifier( PsiModifier.PUBLIC )
+        target( MethodType.GETTER_OR_SETTER )
+        sort( SortType.BY_NAME )
+      }
+      methodRule.create {
+        target( MethodType.GETTER_OR_SETTER )
+        sort( SortType.BY_NAME )
+      }
+      def text = '//**************************************        PUBLIC METHODS              ************************************* '
+      if (doublePublicMethods) {
+        text += "\n// PUBLIC METHODS LINE 2";
+      }
+      commentRule.create {
+        comment(text, condition: CommentRule.EMIT_IF_ITEMS_MATCH_SUBSEQUENT_RULE, allSubsequent: true, allPreceding: true,
+                subsequentRulesToMatch: 1, precedingRulesToMatch: 1)
+      }
+      methodRule.create {
+        modifier( PsiModifier.PUBLIC )
+        sort( SortType.BY_NAME )
+      }
+      commentRule.create {
+        comment('//*********************************     PACKAGE/PROTECTED METHODS              ******************************** ',
+                condition: CommentRule.EMIT_IF_ITEMS_MATCH_SUBSEQUENT_RULE, allSubsequent: true, allPreceding: true,
+                subsequentRulesToMatch: 1, precedingRulesToMatch: 1)
+      }
+      methodRule.create {
+        modifier([ PsiModifier.PROTECTED, PsiModifier.PACKAGE_LOCAL ])
+        sort( SortType.BY_NAME )
+      }
+      commentRule.create {
+        comment('//**************************************        PRIVATE METHODS              *************************************',
+                condition: CommentRule.EMIT_IF_ITEMS_MATCH_SUBSEQUENT_RULE, allSubsequent: true, allPreceding: true,
+                subsequentRulesToMatch: 1, precedingRulesToMatch: 1)
+      }
+      methodRule.create {
+        modifier( PsiModifier.PRIVATE )
+        sort( SortType.BY_NAME )
+      }
+      commentRule.create {
+        comment('//**************************************        INNER CLASSES              ************************************* ',
+                condition: CommentRule.EMIT_IF_ITEMS_MATCH_SUBSEQUENT_RULE, allSubsequent: true, allPreceding: true,
+                subsequentRulesToMatch: 1, precedingRulesToMatch: 1)
+      }
+      innerClassRule.create { sort(SortType.BY_NAME ) }
+      
+      mySettings.extractedMethodsSettings.moveExtractedMethods = false
+      if (doGlobalPattern) {
+        mySettings.globalCommentPattern = "//\\*{20,45}[A-Z /]*\\*{20,45}\n"
+      }
+    }
+  }
+
 //  public final void testReturnTypeMatch() throws Exception {
 //    configureByFile("/com/wrq/rearranger/RearrangementTest12.java");
 //    final PsiFile file = getFile();

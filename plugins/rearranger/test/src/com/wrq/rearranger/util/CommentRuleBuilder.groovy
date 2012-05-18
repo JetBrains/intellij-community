@@ -12,7 +12,7 @@ class CommentRuleBuilder extends AbstractRuleBuilder<CommentRule> {
   
   {
     def helper = { RearrangerTestDsl dslProperty, map, rulePropertyName, rule ->
-      if (map[dslProperty.value]) {
+      if (map.containsKey(dslProperty.value)) {
         rule."$rulePropertyName" = map[dslProperty.value]
       }
     }
@@ -21,7 +21,9 @@ class CommentRuleBuilder extends AbstractRuleBuilder<CommentRule> {
       rule.commentText = data
       helper(RearrangerTestDsl.CONDITION, attributes, 'emitCondition', rule)
       helper(RearrangerTestDsl.ALL_SUBSEQUENT, attributes, 'allSubsequentRules', rule)
+      helper(RearrangerTestDsl.ALL_PRECEDING, attributes, 'allPrecedingRules', rule)
       helper(RearrangerTestDsl.SUBSEQUENT_RULES_TO_MATCH, attributes, 'NSubsequentRulesToMatch', rule)
+      helper(RearrangerTestDsl.PRECEDING_RULES_TO_MATCH, attributes, 'NPrecedingRulesToMatch', rule)
     })
   }
   
