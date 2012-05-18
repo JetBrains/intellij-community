@@ -307,78 +307,43 @@ class RearrangerTest extends LightCodeInsightFixtureTestCase {
       mySettings.extractedMethodsSettings.moveExtractedMethods = true
       mySettings.extractedMethodsSettings.depthFirstOrdering = true
       mySettings.extractedMethodsSettings.ordering = RelatedMethodsSettings.RETAIN_ORIGINAL_ORDER
-    }
-    //configureByFile("/com/wrq/rearranger/RearrangementTest13.java");
-    //final PsiFile file = getFile();
-    //final Document doc = PsiDocumentManager.getInstance(getProject()).getDocument(file);
-    //final RearrangerActionHandler rah = new RearrangerActionHandler();
-    //rs.getExtractedMethodsSettings().setMoveExtractedMethods(true);
-    //rs.getExtractedMethodsSettings().setDepthFirstOrdering(true);
-    //rs.getExtractedMethodsSettings().setOrdering(RelatedMethodsSettings.RETAIN_ORIGINAL_ORDER);
-    //rah.rearrangeDocument(getProject(), file, rs, doc);
-    //super.checkResultByFile("/com/wrq/rearranger/RearrangementResult13DO.java");
-  }
+  } }
 
-//  public final void testRelatedMethodsDepthAlphabetical() throws Exception {
-//    configureByFile("/com/wrq/rearranger/RearrangementTest13.java");
-//    final PsiFile file = getFile();
-//    final Document doc = PsiDocumentManager.getInstance(getProject()).getDocument(file);
-//    final RearrangerActionHandler rah = new RearrangerActionHandler();
-//    rs.getExtractedMethodsSettings().setMoveExtractedMethods(true);
-//    rs.getExtractedMethodsSettings().setDepthFirstOrdering(true);
-//    rs.getExtractedMethodsSettings().setOrdering(RelatedMethodsSettings.ALPHABETICAL_ORDER);
-//    rah.rearrangeDocument(getProject(), file, rs, doc);
-//    super.checkResultByFile("/com/wrq/rearranger/RearrangementResult13DA.java");
-//  }
-//
-//  public final void testRelatedMethodsDepthInvocation() throws Exception {
-//    configureByFile("/com/wrq/rearranger/RearrangementTest13.java");
-//    final PsiFile file = getFile();
-//    final Document doc = PsiDocumentManager.getInstance(getProject()).getDocument(file);
-//    final RearrangerActionHandler rah = new RearrangerActionHandler();
-//    rs.getExtractedMethodsSettings().setMoveExtractedMethods(true);
-//    rs.getExtractedMethodsSettings().setDepthFirstOrdering(true);
-//    rs.getExtractedMethodsSettings().setOrdering(RelatedMethodsSettings.INVOCATION_ORDER);
-//    rah.rearrangeDocument(getProject(), file, rs, doc);
-//    super.checkResultByFile("/com/wrq/rearranger/RearrangementResult13DI.java");
-//  }
-//
-//  public final void testRelatedMethodsBreadthOriginal() throws Exception {
-//    configureByFile("/com/wrq/rearranger/RearrangementTest13.java");
-//    final PsiFile file = getFile();
-//    final Document doc = PsiDocumentManager.getInstance(getProject()).getDocument(file);
-//    final RearrangerActionHandler rah = new RearrangerActionHandler();
-//    rs.getExtractedMethodsSettings().setMoveExtractedMethods(true);
-//    rs.getExtractedMethodsSettings().setDepthFirstOrdering(false);
-//    rs.getExtractedMethodsSettings().setOrdering(RelatedMethodsSettings.RETAIN_ORIGINAL_ORDER);
-//    rah.rearrangeDocument(getProject(), file, rs, doc);
-//    super.checkResultByFile("/com/wrq/rearranger/RearrangementResult13BO.java");
-//  }
-//
-//  public final void testRelatedMethodsBreadthAlphabetical() throws Exception {
-//    configureByFile("/com/wrq/rearranger/RearrangementTest13.java");
-//    final PsiFile file = getFile();
-//    final Document doc = PsiDocumentManager.getInstance(getProject()).getDocument(file);
-//    final RearrangerActionHandler rah = new RearrangerActionHandler();
-//    rs.getExtractedMethodsSettings().setMoveExtractedMethods(true);
-//    rs.getExtractedMethodsSettings().setDepthFirstOrdering(false);
-//    rs.getExtractedMethodsSettings().setOrdering(RelatedMethodsSettings.ALPHABETICAL_ORDER);
-//    rah.rearrangeDocument(getProject(), file, rs, doc);
-//    super.checkResultByFile("/com/wrq/rearranger/RearrangementResult13BA.java");
-//  }
-//
-//  public final void testRelatedMethodsBreadthInvocation() throws Exception {
-//    configureByFile("/com/wrq/rearranger/RearrangementTest13.java");
-//    final PsiFile file = getFile();
-//    final Document doc = PsiDocumentManager.getInstance(getProject()).getDocument(file);
-//    final RearrangerActionHandler rah = new RearrangerActionHandler();
-//    rs.getExtractedMethodsSettings().setMoveExtractedMethods(true);
-//    rs.getExtractedMethodsSettings().setDepthFirstOrdering(false);
-//    rs.getExtractedMethodsSettings().setOrdering(RelatedMethodsSettings.INVOCATION_ORDER);
-//    rah.rearrangeDocument(getProject(), file, rs, doc);
-//    super.checkResultByFile("/com/wrq/rearranger/RearrangementResult13BI.java");
-//  }
-//
+  public final void testRelatedMethodsDepthAlphabetical() throws Exception {
+    doTest('RearrangementTest13', 'RearrangementResult13DA') {
+      mySettings.extractedMethodsSettings.moveExtractedMethods = true
+      mySettings.extractedMethodsSettings.depthFirstOrdering = true
+      mySettings.extractedMethodsSettings.ordering = RelatedMethodsSettings.ALPHABETICAL_ORDER
+  } }
+
+  public final void testRelatedMethodsDepthInvocation() throws Exception {
+    doTest('RearrangementTest13', 'RearrangementResult13DI') {
+      mySettings.extractedMethodsSettings.moveExtractedMethods = true
+      mySettings.extractedMethodsSettings.depthFirstOrdering = true
+      mySettings.extractedMethodsSettings.ordering = RelatedMethodsSettings.INVOCATION_ORDER
+  } }
+
+  public final void testRelatedMethodsBreadthOriginal() throws Exception {
+    doTest('RearrangementTest13', 'RearrangementResult13BO') {
+      mySettings.extractedMethodsSettings.moveExtractedMethods = true
+      mySettings.extractedMethodsSettings.depthFirstOrdering = false
+      mySettings.extractedMethodsSettings.ordering = RelatedMethodsSettings.RETAIN_ORIGINAL_ORDER
+  } }
+
+  public final void testRelatedMethodsBreadthAlphabetical() throws Exception {
+    doTest('RearrangementTest13', 'RearrangementResult13BA') {
+      mySettings.extractedMethodsSettings.moveExtractedMethods = true
+      mySettings.extractedMethodsSettings.depthFirstOrdering = false
+      mySettings.extractedMethodsSettings.ordering = RelatedMethodsSettings.ALPHABETICAL_ORDER
+  } }
+
+  public final void testRelatedMethodsBreadthInvocation() throws Exception {
+    doTest('RearrangementTest13', 'RearrangementResult13BI') {
+      mySettings.extractedMethodsSettings.moveExtractedMethods = true
+      mySettings.extractedMethodsSettings.depthFirstOrdering = false
+      mySettings.extractedMethodsSettings.ordering = RelatedMethodsSettings.INVOCATION_ORDER
+    } }
+  
 //  public final void testEmitTLCommentsRelatedMethodsBreadthInvocation() throws Exception {
 //    configureByFile("/com/wrq/rearranger/RearrangementTest13.java");
 //    final PsiFile file = getFile();
