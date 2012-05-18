@@ -44,23 +44,26 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-public class MergeList implements ChangeList.Parent, UserDataHolder {
+public class MergeList implements UserDataHolder {
 
   public static final FragmentSide BRANCH_SIDE = FragmentSide.SIDE2;
   public static final FragmentSide BASE_SIDE = FragmentSide.SIDE1;
 
   public static final DataKey<MergeList> DATA_KEY = DataKey.create("mergeList");
+  public static final Condition<Change> NOT_CONFLICTS = new Condition<Change>() {
+    public boolean value(Change change) {
+      return !(change instanceof ConflictChange);
+    }
+  };
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.diff.impl.incrementalMerge.MergeList");
 
-  @NotNull private final Project myProject;
   @NotNull private final ChangeList[] myChanges = new ChangeList[2];
   @NotNull private final UserDataHolderBase myDataHolder = new UserDataHolderBase();
 
   private MergeList(@NotNull Project project, @NotNull Document left, @NotNull Document base, @NotNull Document right) {
-    myProject = project;
-    myChanges[0] = new ChangeList(base, left, this);
-    myChanges[1] = new ChangeList(base, right, this);
+    myChanges[0] = new ChangeList(base, left, project);
+    myChanges[1] = new ChangeList(base, right, project);
   }
 
   public static MergeList create(@NotNull Project project, @NotNull Document left, @NotNull Document base,
@@ -235,17 +238,6 @@ public class MergeList implements ChangeList.Parent, UserDataHolder {
     if (mergeList != null) return mergeList;
     MergePanel2 mergePanel = MergePanel2.fromDataContext(dataContext);
     return mergePanel == null ? null : mergePanel.getMergeList();
-  }
-
-  public static final Condition<Change> NOT_CONFLICTS = new Condition<Change>() {
-    public boolean value(Change change) {
-      return !(change instanceof ConflictChange);
-    }
-  };
-
-  @NotNull
-  public Project getProject() {
-    return myProject;
   }
 
   public <T> T getUserData(@NotNull Key<T> key) {

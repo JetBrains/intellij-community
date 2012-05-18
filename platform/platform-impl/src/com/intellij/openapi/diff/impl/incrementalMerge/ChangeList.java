@@ -35,15 +35,15 @@ public class ChangeList {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.diff.impl.incrementalMerge.ChangeList");
   private static final Comparator<Change> CHANGE_ORDER = new SimpleChange.ChangeOrder(FragmentSide.SIDE1);
 
+  private final Project myProject;
   private final Document[] myDocuments = new Document[2];
-  private final Parent myParent;
   private final ArrayList<Listener> myListeners = new ArrayList<Listener>();
   private ArrayList<Change> myChanges;
 
-  public ChangeList(Document base, Document version, Parent parent) {
+  public ChangeList(Document base, Document version, Project project) {
     myDocuments[0] = base;
     myDocuments[1] = version;
-    myParent = parent;
+    myProject = project;
   }
 
   public void addListener(Listener listener) {
@@ -72,14 +72,14 @@ public class ChangeList {
     myChanges = new ArrayList<Change>(changes);
   }
 
-  public Project getProject() { return myParent.getProject(); }
+  public Project getProject() { return myProject; }
 
   public List<Change> getChanges() {
     return Collections.unmodifiableList(myChanges);
   }
 
-  public static ChangeList build(Document base, Document version, Parent parent) throws FilesTooBigForDiffException {
-    ChangeList result = new ChangeList(base, version, parent);
+  public static ChangeList build(Document base, Document version, Project project) throws FilesTooBigForDiffException {
+    ChangeList result = new ChangeList(base, version, project);
     ArrayList<Change> changes = result.buildChanges();
     Collections.sort(changes, CHANGE_ORDER);
     result.setChanges(changes);
@@ -201,10 +201,6 @@ public class ChangeList {
     for (Listener listener : listeners) {
       listener.onChangeRemoved(this);
     }
-  }
-
-  public interface Parent {
-    Project getProject();
   }
 
   public interface Listener {
