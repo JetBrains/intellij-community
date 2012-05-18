@@ -19,7 +19,12 @@ import com.intellij.openapi.diff.impl.highlighting.FragmentSide;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.util.TextRange;
 
+/**
+ * One of two conflicting changes.
+ * @see MergeConflict
+ */
 class ConflictChange extends Change implements DiffRangeMarker.RangeInvalidListener {
+
   private Side myOriginalSide;
   private MergeConflict myConflict;
 
@@ -37,7 +42,7 @@ class ConflictChange extends Change implements DiffRangeMarker.RangeInvalidListe
     return isBranch(side) ? myOriginalSide : myConflict;
   }
 
-  private boolean isBranch(FragmentSide side) {
+  private static boolean isBranch(FragmentSide side) {
     return MergeList.BRANCH_SIDE == side;
   }
 
@@ -45,14 +50,15 @@ class ConflictChange extends Change implements DiffRangeMarker.RangeInvalidListe
     return myOriginalSide;
   }
 
-  public ChangeType getType() { return ChangeType.CONFLICT; }
+  public ChangeType getType() {
+    return ChangeType.CONFLICT;
+  }
 
   public ChangeList getChangeList() {
     return myConflict.getMergeList().getChanges(myOriginalSide.getFragmentSide());
   }
 
   public void onRemovedFromList() {
-    myConflict.onChangeRemoved(myOriginalSide.getFragmentSide(), this);
     myOriginalSide.getRange().removeListener(this);
     myConflict = null;
     myOriginalSide = null;

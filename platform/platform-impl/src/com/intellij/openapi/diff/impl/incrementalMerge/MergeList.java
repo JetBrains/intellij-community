@@ -58,12 +58,13 @@ public class MergeList implements UserDataHolder {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.diff.impl.incrementalMerge.MergeList");
 
-  @NotNull private final ChangeList[] myChanges = new ChangeList[2];
   @NotNull private final UserDataHolderBase myDataHolder = new UserDataHolderBase();
+  @NotNull private final ChangeList myBaseToLeftChangeList;
+  @NotNull private final ChangeList myBaseToRightChangeList;
 
   private MergeList(@NotNull Project project, @NotNull Document left, @NotNull Document base, @NotNull Document right) {
-    myChanges[0] = new ChangeList(base, left, project);
-    myChanges[1] = new ChangeList(base, right, project);
+    myBaseToLeftChangeList = new ChangeList(base, left, project);
+    myBaseToRightChangeList = new ChangeList(base, right, project);
   }
 
   public static MergeList create(@NotNull Project project, @NotNull Document left, @NotNull Document base,
@@ -94,26 +95,26 @@ public class MergeList implements UserDataHolder {
             // the very end, both local and remote revisions does not contain latest base fragment
             final int rightTextLength = rightText.length();
             final int leftTextLength = leftText.length();
-            rightChanges.add(SimpleChange.fromRanges(baseRange, new TextRange(rightTextLength, rightTextLength), mergeList.myChanges[1]));
-            leftChanges.add(SimpleChange.fromRanges(baseRange, new TextRange(leftTextLength, leftTextLength), mergeList.myChanges[0]));
+            rightChanges.add(SimpleChange.fromRanges(baseRange, new TextRange(rightTextLength, rightTextLength), mergeList.myBaseToRightChangeList));
+            leftChanges.add(SimpleChange.fromRanges(baseRange, new TextRange(leftTextLength, leftTextLength), mergeList.myBaseToLeftChangeList));
           } else {
             LOG.error("Left Text: " + leftText + "\n" + "Right Text: " + rightText + "\nBase Text: " + baseText);
           }
         } else {
-          rightChanges.add(SimpleChange.fromRanges(baseRange, rightRange, mergeList.myChanges[1]));
+          rightChanges.add(SimpleChange.fromRanges(baseRange, rightRange, mergeList.myBaseToRightChangeList));
         }
       }
       else if (rightRange == null) {
-        leftChanges.add(SimpleChange.fromRanges(baseRange, leftRange, mergeList.myChanges[0]));
+        leftChanges.add(SimpleChange.fromRanges(baseRange, leftRange, mergeList.myBaseToLeftChangeList));
       }
       else {
-        Change[] changes = MergeConflict.createChanges(leftRange, baseRange, rightRange, mergeList);
-        leftChanges.add(changes[0]);
-        rightChanges.add(changes[1]);
+        MergeConflict conflict = new MergeConflict(baseRange, mergeList, leftRange, rightRange);
+        leftChanges.add(conflict.getLeftChange());
+        rightChanges.add(conflict.getRightChange());
       }
     }
-    mergeList.myChanges[0].setChanges(leftChanges);
-    mergeList.myChanges[1].setChanges(rightChanges);
+    mergeList.myBaseToLeftChangeList.setChanges(leftChanges);
+    mergeList.myBaseToRightChangeList.setChanges(rightChanges);
     return mergeList;
   }
 
@@ -168,31 +169,29 @@ public class MergeList implements UserDataHolder {
   }
 
   public void setMarkups(Editor left, Editor base, Editor right) {
-    myChanges[0].setMarkup(base, left);
-    myChanges[1].setMarkup(base, right);
+    myBaseToLeftChangeList.setMarkup(base, left);
+    myBaseToRightChangeList.setMarkup(base, right);
     addActions(FragmentSide.SIDE1);
     addActions(FragmentSide.SIDE2);
   }
 
   public Iterator<Change> getAllChanges() {
-    return SequenceIterator.create(myChanges[0].getChanges().iterator(),
-                                   FilteringIterator.create(myChanges[1].getChanges().iterator(), NOT_CONFLICTS));
+    return SequenceIterator.create(myBaseToLeftChangeList.getChanges().iterator(),
+                                   FilteringIterator.create(myBaseToRightChangeList.getChanges().iterator(), NOT_CONFLICTS));
   }
 
   public void addListener(ChangeList.Listener listener) {
-    for (ChangeList changeList : myChanges) {
-      changeList.addListener(listener);
-    }
+    myBaseToLeftChangeList.addListener(listener);
+    myBaseToRightChangeList.addListener(listener);
   }
 
   public void removeListener(ChangeList.Listener listener) {
-    for (ChangeList changeList : myChanges) {
-      changeList.removeListener(listener);
-    }
+    myBaseToLeftChangeList.removeListener(listener);
+    myBaseToRightChangeList.removeListener(listener);
   }
 
   private void addActions(final FragmentSide side) {
-    ChangeList changeList = myChanges[side.getIndex()];
+    ChangeList changeList = getChanges(side);
     final FragmentSide originalSide = BRANCH_SIDE;
     for (int i = 0; i < changeList.getCount(); i++) {
       final Change change = changeList.getChange(i);
@@ -215,20 +214,24 @@ public class MergeList implements UserDataHolder {
     Change.apply(change, BRANCH_SIDE);
   }
 
-  public ChangeList getChanges(final FragmentSide changesSide) {
-    return myChanges[changesSide.getIndex()];
-  }
-
-  public void removeChanges(Change[] changes) {
-    for (int i = 0; i < changes.length; i++) {
-      Change change = changes[i];
-      myChanges[i].remove(change);
+  @NotNull
+  public ChangeList getChanges(@NotNull final FragmentSide changesSide) {
+    if (changesSide == FragmentSide.SIDE1) {
+      return myBaseToLeftChangeList;
+    }
+    else {
+      return myBaseToRightChangeList;
     }
   }
 
+  public void removeChanges(@NotNull Change leftChange, @NotNull Change rightChange) {
+    myBaseToLeftChangeList.remove(leftChange);
+    myBaseToRightChangeList.remove(rightChange);
+  }
+
   public Document getBaseDocument() {
-    Document document = myChanges[0].getDocument(BASE_SIDE);
-    LOG.assertTrue(document == myChanges[1].getDocument(BASE_SIDE));
+    Document document = myBaseToLeftChangeList.getDocument(BASE_SIDE);
+    LOG.assertTrue(document == myBaseToRightChangeList.getDocument(BASE_SIDE));
     return document;
   }
 
@@ -248,17 +251,19 @@ public class MergeList implements UserDataHolder {
     myDataHolder.putUserData(key, value);
   }
 
-  @Nullable
-  public FragmentSide getSideOf(ChangeList source) {
-    for (int i = 0; i < myChanges.length; i++) {
-      ChangeList changeList = myChanges[i];
-      if (changeList == source) return FragmentSide.fromIndex(i);
+  @NotNull
+  public FragmentSide getSideOf(@NotNull ChangeList source) {
+    if (myBaseToLeftChangeList == source) {
+      return FragmentSide.SIDE1;
     }
-    return null;
+    else {
+      return FragmentSide.SIDE2;
+    }
   }
 
   public void updateMarkup() {
-    myChanges[0].updateMarkup();
-    myChanges[1].updateMarkup();
+    myBaseToLeftChangeList.updateMarkup();
+    myBaseToRightChangeList.updateMarkup();
   }
+
 }
