@@ -19,12 +19,12 @@ import com.intellij.openapi.diff.impl.highlighting.FragmentSide;
 import com.intellij.openapi.diff.impl.util.ContextLogger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
 
 class MergeBuilder {
-  //private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.diff.impl.incrementalMerge.MergeBuilder");
   private final ContextLogger LOG;
   private final int[] myProcessed = new int[]{0, 0, 0};
   private final ArrayList<MergeFragment> myResult = new ArrayList<MergeFragment>();
@@ -55,7 +55,7 @@ class MergeBuilder {
     LOG.assertTrue(myPairs[0].getBase() == myPairs[1].getBase());
     LOG.assertTrue(myPairs[0].getBase() > myProcessed[1]);
     addMergeFragment(myPairs[0].processVersion(myProcessed),
-                     proccesBaseChange(myPairs[0]),
+                     processBaseChange(myPairs[0]),
                      myPairs[1].processVersion(myProcessed));
     skipProcessed();
   }
@@ -108,7 +108,7 @@ class MergeBuilder {
     skipProcessed();
   }
 
-  private TextRange proccesBaseChange(EqualPair workingPair) {
+  private TextRange processBaseChange(EqualPair workingPair) {
     int base = workingPair.getBase();
     TextRange change = new TextRange(myProcessed[1], base);
     int otherBase = myPairs[workingPair.getSide().otherSide().getIndex()].getBase();
@@ -131,7 +131,7 @@ class MergeBuilder {
     skipProcessed();
   }
 
-  private void addMergeFragment(TextRange left, TextRange base, TextRange right) {
+  private void addMergeFragment(@Nullable TextRange left, @Nullable TextRange base, @Nullable TextRange right) {
     myResult.add(new MergeFragment(new TextRange[]{left, base, right}));
   }
 
@@ -170,7 +170,7 @@ class MergeBuilder {
     return myResult;
   }
 
-  private TextRange createRange(int[] starts, int[] ends, int column) {
+  private static TextRange createRange(int[] starts, int[] ends, int column) {
     return new TextRange(starts[column], ends[column]);
   }
 
@@ -183,6 +183,7 @@ class MergeBuilder {
     myResult.add(new MergeFragment(tailChange));
   }
 
+  @Nullable
   private FragmentSide getNotProcessedSide() {
     EqualPair left = myPairs[0];
     EqualPair right = myPairs[1];
@@ -297,7 +298,7 @@ class MergeBuilder {
     }
 
     public String toString() {
-      StringBuffer buffer = new StringBuffer();
+      StringBuilder buffer = new StringBuilder();
       buffer.append("<");
       for (int i = 0; i < myRanges.length; i++) {
         TextRange range = myRanges[i];
