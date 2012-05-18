@@ -263,12 +263,15 @@ public class DirectoryIndexImpl extends DirectoryIndex {
       return info;
     }
 
-    void fillMapWithModuleContent(VirtualFile root, final Module module, final VirtualFile contentRoot) {
+    void fillMapWithModuleContent(VirtualFile root, final Module module, final VirtualFile contentRoot, @Nullable final ProgressIndicator progress) {
 
       VfsUtilCore.visitChildrenRecursively(root, new DirectoryVisitor() {
         
         @Override
         protected DirectoryInfo updateInfo(VirtualFile file) {
+          if (progress != null) {
+            progress.checkCanceled();
+          }
           if (isExcluded(contentRoot, file)) return null;
           if (isIgnored(file)) return null;
 
@@ -332,7 +335,7 @@ public class DirectoryIndexImpl extends DirectoryIndex {
       }
 
       for (final VirtualFile contentRoot : contentRoots) {
-        fillMapWithModuleContent(contentRoot, module, contentRoot);
+        fillMapWithModuleContent(contentRoot, module, contentRoot, progress);
       }
     }
 
@@ -354,7 +357,7 @@ public class DirectoryIndexImpl extends DirectoryIndex {
         for (SourceFolder sourceFolder : sourceFolders) {
           VirtualFile dir = sourceFolder.getFile();
           if (dir != null) {
-            fillMapWithModuleSource(dir, module, sourceFolder.getPackagePrefix(), dir, sourceFolder.isTestSource());
+            fillMapWithModuleSource(dir, module, sourceFolder.getPackagePrefix(), dir, sourceFolder.isTestSource(), progress);
           }
         }
       }
@@ -364,7 +367,7 @@ public class DirectoryIndexImpl extends DirectoryIndex {
                                            final Module module,
                                            final String packageName,
                                            final VirtualFile sourceRoot,
-                                           final boolean isTestSource) {
+                                           final boolean isTestSource, @Nullable final ProgressIndicator progress) {
       
       VfsUtilCore.visitChildrenRecursively(dir, new DirectoryVisitor() {
 
@@ -372,6 +375,9 @@ public class DirectoryIndexImpl extends DirectoryIndex {
 
         @Override
         protected DirectoryInfo updateInfo(VirtualFile file) {
+          if (progress != null) {
+            progress.checkCanceled();
+          }
           DirectoryInfo info = myDirToInfoMap.get(file);
           if (info == null) return null;
           if (!module.equals(info.module)) return null;
@@ -414,13 +420,16 @@ public class DirectoryIndexImpl extends DirectoryIndex {
         if (isLibrary) {
           VirtualFile[] sourceRoots = orderEntry.getFiles(OrderRootType.SOURCES);
           for (final VirtualFile sourceRoot : sourceRoots) {
-            fillMapWithLibrarySources(sourceRoot, "", sourceRoot);
+            fillMapWithLibrarySources(sourceRoot, "", sourceRoot, progress);
           }
         }
       }
     }
 
-    protected void fillMapWithLibrarySources(VirtualFile dir, String packageName, VirtualFile sourceRoot) {
+    protected void fillMapWithLibrarySources(VirtualFile dir, String packageName, VirtualFile sourceRoot, @Nullable ProgressIndicator progress) {
+      if (progress != null) {
+        progress.checkCanceled();
+      }
       if (isIgnored(dir)) return;
 
       DirectoryInfo info = getOrCreateDirInfo(dir);
@@ -438,7 +447,7 @@ public class DirectoryIndexImpl extends DirectoryIndex {
       for (VirtualFile child : children) {
         if (child.isDirectory()) {
           String childPackageName = getPackageNameForSubdir(packageName, child.getName());
-          fillMapWithLibrarySources(child, childPackageName, sourceRoot);
+          fillMapWithLibrarySources(child, childPackageName, sourceRoot, progress);
         }
       }
     }
@@ -452,13 +461,16 @@ public class DirectoryIndexImpl extends DirectoryIndex {
         if (isLibrary) {
           VirtualFile[] classRoots = orderEntry.getFiles(OrderRootType.CLASSES);
           for (final VirtualFile classRoot : classRoots) {
-            fillMapWithLibraryClasses(classRoot, "", classRoot);
+            fillMapWithLibraryClasses(classRoot, "", classRoot, progress);
           }
         }
       }
     }
 
-    protected void fillMapWithLibraryClasses(VirtualFile dir, String packageName, VirtualFile classRoot) {
+    protected void fillMapWithLibraryClasses(VirtualFile dir, String packageName, VirtualFile classRoot, @Nullable ProgressIndicator progress) {
+      if (progress != null) {
+        progress.checkCanceled();
+      }
       if (isIgnored(dir)) return;
 
       DirectoryInfo info = getOrCreateDirInfo(dir);
@@ -478,7 +490,7 @@ public class DirectoryIndexImpl extends DirectoryIndex {
       for (VirtualFile child : children) {
         if (child.isDirectory()) {
           String childPackageName = getPackageNameForSubdir(packageName, child.getName());
-          fillMapWithLibraryClasses(child, childPackageName, classRoot);
+          fillMapWithLibraryClasses(child, childPackageName, classRoot, progress);
         }
       }
     }
@@ -486,7 +498,7 @@ public class DirectoryIndexImpl extends DirectoryIndex {
     private void initOrderEntries(Module module,
                                   MultiMap<VirtualFile, OrderEntry> depEntries,
                                   MultiMap<VirtualFile, OrderEntry> libClassRootEntries,
-                                  MultiMap<VirtualFile, OrderEntry> libSourceRootEntries) {
+                                  MultiMap<VirtualFile, OrderEntry> libSourceRootEntries, ProgressIndicator progress) {
 
       for (OrderEntry orderEntry : getOrderEntries(module)) {
         if (orderEntry instanceof ModuleOrderEntry) {
@@ -509,7 +521,7 @@ public class DirectoryIndexImpl extends DirectoryIndex {
 
           VirtualFile[] sourceRoots = orderEntry.getFiles(OrderRootType.SOURCES);
           for (VirtualFile sourceRoot : sourceRoots) {
-            fillMapWithOrderEntries(sourceRoot, oneEntryList, entryModule, null, null, null);
+            fillMapWithOrderEntries(sourceRoot, oneEntryList, entryModule, null, null, null, progress);
           }
         }
         else if (orderEntry instanceof LibraryOrderEntry || orderEntry instanceof JdkOrderEntry) {
@@ -527,23 +539,23 @@ public class DirectoryIndexImpl extends DirectoryIndex {
 
     private void fillMapWithOrderEntries(MultiMap<VirtualFile, OrderEntry> depEntries,
                                          MultiMap<VirtualFile, OrderEntry> libClassRootEntries,
-                                         MultiMap<VirtualFile, OrderEntry> libSourceRootEntries) {
+                                         MultiMap<VirtualFile, OrderEntry> libSourceRootEntries, ProgressIndicator progress) {
       for (Map.Entry<VirtualFile, Collection<OrderEntry>> mapEntry : depEntries.entrySet()) {
         final VirtualFile vRoot = mapEntry.getKey();
         final Collection<OrderEntry> entries = mapEntry.getValue();
-        fillMapWithOrderEntries(vRoot, entries, null, null, null, null);
+        fillMapWithOrderEntries(vRoot, entries, null, null, null, null, progress);
       }
 
       for (Map.Entry<VirtualFile, Collection<OrderEntry>> mapEntry : libClassRootEntries.entrySet()) {
         final VirtualFile vRoot = mapEntry.getKey();
         final Collection<OrderEntry> entries = mapEntry.getValue();
-        fillMapWithOrderEntries(vRoot, entries, null, vRoot, null, null);
+        fillMapWithOrderEntries(vRoot, entries, null, vRoot, null, null, progress);
       }
 
       for (Map.Entry<VirtualFile, Collection<OrderEntry>> mapEntry : libSourceRootEntries.entrySet()) {
         final VirtualFile vRoot = mapEntry.getKey();
         final Collection<OrderEntry> entries = mapEntry.getValue();
-        fillMapWithOrderEntries(vRoot, entries, null, null, vRoot, null);
+        fillMapWithOrderEntries(vRoot, entries, null, null, vRoot, null, progress);
       }
     }
 
@@ -578,10 +590,10 @@ public class DirectoryIndexImpl extends DirectoryIndex {
 
     protected void fillMapWithOrderEntries(final VirtualFile root,
                                            final Collection<OrderEntry> orderEntries,
-                                           final Module module,
-                                           final VirtualFile libraryClassRoot,
-                                           final VirtualFile librarySourceRoot,
-                                           final DirectoryInfo parentInfo) {
+                                           @Nullable final Module module,
+                                           @Nullable final VirtualFile libraryClassRoot,
+                                           @Nullable final VirtualFile librarySourceRoot,
+                                           @Nullable final DirectoryInfo parentInfo, @Nullable final ProgressIndicator progress) {
       
       VfsUtilCore.visitChildrenRecursively(root, new DirectoryVisitor() {
 
@@ -589,6 +601,9 @@ public class DirectoryIndexImpl extends DirectoryIndex {
 
         @Override
         protected DirectoryInfo updateInfo(VirtualFile dir) {
+          if (progress != null) {
+            progress.checkCanceled();
+          }
           if (isIgnored(dir)) return null;
 
           DirectoryInfo info = myDirToInfoMap.get(dir); // do not create it here!
@@ -659,9 +674,9 @@ public class DirectoryIndexImpl extends DirectoryIndex {
         initOrderEntries(module,
                          depEntries,
                          libClassRootEntries,
-                         libSourceRootEntries);
+                         libSourceRootEntries, progress);
       }
-      fillMapWithOrderEntries(depEntries, libClassRootEntries, libSourceRootEntries);
+      fillMapWithOrderEntries(depEntries, libClassRootEntries, libSourceRootEntries, progress);
 
       killOrderEntryArrayDuplicates();
     }

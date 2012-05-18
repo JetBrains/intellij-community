@@ -197,8 +197,8 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar {
       myStorage.put(new String(option), configs);
     }
 
-    configs.add(new OptionDescription(null, myIdentifierTable.intern(id), hit != null ? myIdentifierTable.intern(hit) : null,
-                                      path != null ? myIdentifierTable.intern(path) : null));
+    configs.add(new OptionDescription(null, myIdentifierTable.intern(id).trim(), hit != null ? myIdentifierTable.intern(hit).trim() : null,
+                                      path != null ? myIdentifierTable.intern(path).trim() : null));
   }
 
   @NotNull

@@ -71,6 +71,7 @@ public class IntroduceVariableTest extends LightCodeInsightFixtureTestCase {
   public void testLoop7() throws Throwable { doTest(); }
   public void testLoop8() throws Throwable { doTest(); }
   public void testInCase() {doTest();}
+  public void testCaseLabel() {doTest();}
 
   public void testDuplicatesInsideIf() throws Throwable { doTest(); }
   public void testFromGString() throws Throwable { doTest(); }

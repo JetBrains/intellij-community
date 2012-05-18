@@ -36,16 +36,19 @@ import org.jetbrains.annotations.NotNull;
  */
 public class XmlSplitTagAction implements IntentionAction {
 
+  @Override
   @NotNull
   public String getText() {
     return XmlBundle.message("xml.split.tag.intention.action");
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return XmlBundle.message("xml.split.tag.intention.action");
   }
 
+  @Override
   public boolean isAvailable(@NotNull final Project project, final Editor editor, final PsiFile file) {
     if (file instanceof XmlFile) {
       if (editor != null) {
@@ -75,6 +78,7 @@ public class XmlSplitTagAction implements IntentionAction {
     return "html".equals(name) || "body".equals(name) || "title".equals(name);
   }
 
+  @Override
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
     if (!CodeInsightUtilBase.prepareFileForWrite(file)) return;
 
@@ -165,6 +169,7 @@ public class XmlSplitTagAction implements IntentionAction {
     return sb.toString();
   }
 
+  @Override
   public boolean startInWriteAction() {
     return true;
   }

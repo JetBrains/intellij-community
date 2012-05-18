@@ -61,6 +61,10 @@ public class RadViewComponent extends RadVisualComponent {
     }
   }
 
+  public String getCreationXml() {
+    throw new UnsupportedOperationException();
+  }
+
   public ViewInfo getViewInfo() {
     return myViewInfo;
   }

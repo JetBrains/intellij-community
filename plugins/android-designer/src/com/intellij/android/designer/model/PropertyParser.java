@@ -16,10 +16,8 @@
 package com.intellij.android.designer.model;
 
 import com.android.ide.common.rendering.api.ViewInfo;
-import com.android.resources.ResourceType;
 import com.android.sdklib.IAndroidTarget;
 import com.intellij.android.designer.propertyTable.*;
-import com.intellij.android.designer.propertyTable.editors.ResourceDialog;
 import com.intellij.designer.model.MetaManager;
 import com.intellij.designer.model.MetaModel;
 import com.intellij.designer.model.RadComponent;
@@ -35,7 +33,6 @@ import org.jetbrains.android.sdk.AndroidPlatform;
 import org.jetbrains.android.sdk.AndroidTargetData;
 import org.jetbrains.android.uipreview.ProjectClassLoader;
 import org.jetbrains.android.uipreview.RenderServiceFactory;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -50,14 +47,12 @@ public class PropertyParser {
   private static final String LAYOUT_PREFIX = "layout_";
   private static final String LAYOUT_MARGIN_PREFIX = "layout_margin";
 
-  private final Module myModule;
   private MetaManager myMetaManager;
   private AttributeDefinitions myDefinitions;
   private ProjectClassLoader myClassLoader;
   private Map<String, List<Property>> myCachedProperties;
 
   public PropertyParser(Module module, IAndroidTarget target) throws Exception {
-    myModule = module;
     myMetaManager = ViewsMetaManager.getInstance(module.getProject());
     myCachedProperties = myMetaManager.getCache(target.hashString());
     if (myCachedProperties == null) {
@@ -368,10 +363,5 @@ public class PropertyParser {
     catch (Throwable e) {
     }
     return false;
-  }
-
-  @NotNull
-  public ResourceDialog createResourceDialog(ResourceType[] types) {
-    return new ResourceDialog(myModule, types);
   }
 }

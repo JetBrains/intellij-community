@@ -44,10 +44,12 @@ public abstract class LibraryTableBase implements PersistentStateComponent<Eleme
   private LibraryModel myModel = new LibraryModel();
   private boolean myFirstLoad = true;
 
+  @Override
   public ModifiableModel getModifiableModel() {
     return new LibraryModel(myModel);
   }
 
+  @Override
   public Element getState() {
     final Element element = new Element("state");
     try {
@@ -59,6 +61,7 @@ public abstract class LibraryTableBase implements PersistentStateComponent<Eleme
     return element;
   }
 
+  @Override
   public void loadState(final Element element) {
     try {
       if (myFirstLoad) {
@@ -77,28 +80,34 @@ public abstract class LibraryTableBase implements PersistentStateComponent<Eleme
     }
   }
 
+  @Override
   @NotNull
   public Library[] getLibraries() {
     return myModel.getLibraries();
   }
 
+  @Override
   @NotNull
   public Iterator<Library> getLibraryIterator() {
     return myModel.getLibraryIterator();
   }
 
+  @Override
   public Library getLibraryByName(@NotNull String name) {
     return myModel.getLibraryByName(name);
   }
 
+  @Override
   public void addListener(Listener listener) {
     myDispatcher.addListener(listener);
   }
 
+  @Override
   public void addListener(Listener listener, Disposable parentDisposable) {
     myDispatcher.addListener(listener, parentDisposable);
   }
 
+  @Override
   public void removeListener(Listener listener) {
     myDispatcher.removeListener(listener);
   }
@@ -117,12 +126,14 @@ public abstract class LibraryTableBase implements PersistentStateComponent<Eleme
     myDispatcher.getMulticaster().beforeLibraryRemoved(library);
   }
 
+  @Override
   public void dispose() {
     for (Library library : getLibraries()) {
       Disposer.dispose(library);
     }
   }
 
+  @Override
   public Library createLibrary() {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
     return createLibrary(null);
@@ -137,6 +148,7 @@ public abstract class LibraryTableBase implements PersistentStateComponent<Eleme
     myDispatcher.getMulticaster().afterLibraryRenamed(library);
   }
 
+  @Override
   public Library createLibrary(String name) {
     final ModifiableModel modifiableModel = getModifiableModel();
     final Library library = modifiableModel.createLibrary(name);
@@ -144,6 +156,7 @@ public abstract class LibraryTableBase implements PersistentStateComponent<Eleme
     return library;
   }
 
+  @Override
   public void removeLibrary(@NotNull Library library) {
     final ModifiableModel modifiableModel = getModifiableModel();
     modifiableModel.removeLibrary(library);
@@ -202,16 +215,19 @@ public abstract class LibraryTableBase implements PersistentStateComponent<Eleme
       myLibraries.addAll(that.myLibraries);
     }
 
+    @Override
     public void commit() {
       myWritable = false;
       LibraryTableBase.this.commit(this);
     }
 
+    @Override
     @NotNull
     public Iterator<Library> getLibraryIterator() {
       return Collections.unmodifiableList(myLibraries).iterator();
     }
 
+    @Override
     @Nullable
     public Library getLibraryByName(@NotNull String name) {
       for (Library myLibrary : myLibraries) {
@@ -229,6 +245,7 @@ public abstract class LibraryTableBase implements PersistentStateComponent<Eleme
     }
 
 
+    @Override
     @NotNull
     public Library[] getLibraries() {
       return myLibraries.toArray(new Library[myLibraries.size()]);
@@ -251,11 +268,13 @@ public abstract class LibraryTableBase implements PersistentStateComponent<Eleme
       return library;
     }
 
+    @Override
     public void removeLibrary(@NotNull Library library) {
       assertWritable();
       myLibraries.remove(library);
     }
 
+    @Override
     public boolean isChanged() {
       if (!myWritable) return false;
       Set<Library> thisLibraries = new HashSet<Library>(myLibraries);
@@ -263,6 +282,7 @@ public abstract class LibraryTableBase implements PersistentStateComponent<Eleme
       return !thisLibraries.equals(thatLibraries);
     }
 
+    @Override
     public void readExternal(Element element) throws InvalidDataException {
       HashMap<String, Library> libraries = new HashMap<String, Library>();
       for (Library library : myLibraries) {
@@ -288,6 +308,7 @@ public abstract class LibraryTableBase implements PersistentStateComponent<Eleme
       }
     }
 
+    @Override
     public void writeExternal(Element element) throws WriteExternalException {
       final List<Library> libraries = ContainerUtil.findAll(myLibraries, new Condition<Library>() {
         @Override

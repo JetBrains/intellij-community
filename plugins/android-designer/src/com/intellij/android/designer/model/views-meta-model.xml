@@ -19,14 +19,24 @@
     <palette title="Device Screen (#merge)" icon="/com/intellij/android/designer/icons/DeviceScreen.png"/>
   </meta>
 
-  <meta model="com.intellij.android.designer.model.RadIncludeComponent"
+  <meta model="com.intellij.android.designer.model.RadIncludeLayout"
         class="java.lang.Object"
         tag="include">
 
-    <presentation title=" - %layout%"/>
+    <presentation title=" - %layout:xml%"/>
 
     <palette title="include" icon="/com/intellij/android/designer/icons/include.png"
              tooltip="Lets you statically include XML layout inside other XML layouts."/>
+  </meta>
+
+  <meta model="com.intellij.android.designer.model.RadFragment"
+        class="java.lang.Object"
+        tag="fragment">
+
+    <presentation title=" - %name%"/>
+
+    <palette title="fragment" icon="/com/intellij/android/designer/icons/fragment.png"
+             tooltip="A Fragment is a piece of an application's user interface or behavior that can be placed in an Activity."/>
   </meta>
 
   <meta model="com.intellij.android.designer.model.RadViewComponent"
@@ -37,7 +47,7 @@
 
   <meta model="com.intellij.android.designer.model.RadViewComponent"
         class="android.view.View"
-        tag="View">
+        tag="view">
 
     <palette title="View" icon="/com/intellij/android/designer/icons/View.png"/>
 
@@ -1397,6 +1407,10 @@
       <item tag="ImageSwitcher"/>
       <item tag="TextSwitcher"/>
       <item tag="AdapterViewFlipper"/>
+    </group>
+    <group name="Custom">
+      <item tag="include"/>
+      <item tag="fragment"/>
     </group>
   </palette>
 

@@ -132,7 +132,6 @@ public class DefUseUtil {
     if (body == null) {
       return null;
     }
-    List<Info> unusedDefs = new ArrayList<Info>();
 
     ControlFlow flow;
     try {
@@ -222,6 +221,8 @@ public class DefUseUtil {
         }
       }
     }
+
+    List<Info> unusedDefs = new ArrayList<Info>();
 
     for (int i = 0; i < instructions.size(); i++) {
       Instruction instruction = instructions.get(i);

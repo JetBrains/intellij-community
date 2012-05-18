@@ -1001,16 +1001,17 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
   }
 
   private static boolean checkDiamonds(GrCodeReferenceElement refElement, AnnotationHolder holder) {
-    final GroovyConfigUtils configUtils = GroovyConfigUtils.getInstance();
-    if (configUtils.isVersionAtLeast(refElement, GroovyConfigUtils.GROOVY1_8)) return true;
-
     GrTypeArgumentList typeArgumentList = refElement.getTypeArgumentList();
-    if (typeArgumentList != null && typeArgumentList.isDiamond()) {
+    if (typeArgumentList == null) return true;
+
+    if (!typeArgumentList.isDiamond()) return true;
+
+    final GroovyConfigUtils configUtils = GroovyConfigUtils.getInstance();
+    if (!configUtils.isVersionAtLeast(refElement, GroovyConfigUtils.GROOVY1_8)) {
       final String message = GroovyBundle.message("diamonds.are.not.allowed.in.groovy.0", configUtils.getSDKVersion(refElement));
       holder.createErrorAnnotation(typeArgumentList, message);
-      return false;
     }
-    return true;
+    return false;
   }
 
   @Override
@@ -1951,10 +1952,32 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
         annotation.registerFix(CreateClassFix.createClassFromNewAction((GrNewExpression)parent));
       }
       else {
-        annotation.registerFix(CreateClassFix.createClassFixAction(refElement));
+        if (shouldBeInterface(refElement)) {
+          annotation.registerFix(CreateClassFix.createClassFixAction(refElement, CreateClassActionBase.Type.INTERFACE));
+        }
+        else if (shouldBeClass(refElement)) {
+          annotation.registerFix(CreateClassFix.createClassFixAction(refElement, CreateClassActionBase.Type.CLASS));
+          annotation.registerFix(CreateClassFix.createClassFixAction(refElement, CreateClassActionBase.Type.ENUM));
+        }
+        else {
+          annotation.registerFix(CreateClassFix.createClassFixAction(refElement, CreateClassActionBase.Type.CLASS));
+          annotation.registerFix(CreateClassFix.createClassFixAction(refElement, CreateClassActionBase.Type.INTERFACE));
+          annotation.registerFix(CreateClassFix.createClassFixAction(refElement, CreateClassActionBase.Type.ENUM));
+        }
       }
     }
   }
+
+  private static boolean shouldBeInterface(GrReferenceElement myRefElement) {
+    PsiElement parent = myRefElement.getParent();
+    return parent instanceof GrImplementsClause || parent instanceof GrExtendsClause && parent.getParent() instanceof GrInterfaceDefinition;
+  }
+
+  private static boolean shouldBeClass(GrReferenceElement myRefElement) {
+    PsiElement parent = myRefElement.getParent();
+    return parent instanceof GrExtendsClause && !(parent.getParent() instanceof GrInterfaceDefinition);
+  }
+
 
   private static void highlightMember(AnnotationHolder holder, GrMember member) {
     if (member instanceof GrField) {

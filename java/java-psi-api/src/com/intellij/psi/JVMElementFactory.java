@@ -136,4 +136,13 @@ public interface JVMElementFactory {
 
   @NotNull
   PsiTypeParameter createTypeParameter(String name, PsiClassType[] superTypes);
+
+  /**
+   * Creates a class type for the specified class.
+   *
+   * @param aClass the class for which the class type is created.
+   * @return the class type instance.
+   */
+  @NotNull
+  PsiClassType createType(@NotNull PsiClass aClass);
 }

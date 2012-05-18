@@ -120,6 +120,11 @@
       <add-to-group anchor="last" group-id="Internal"/>
     </action>
 
+    <action internal="true" class="org.jetbrains.idea.devkit.actions.ShuffleNamesAction" text="Shuffle Names"
+            id="ShuffleNamesAction">
+      <add-to-group anchor="last" group-id="Internal"/>
+    </action>
+
   </actions>
 
 </idea-plugin>

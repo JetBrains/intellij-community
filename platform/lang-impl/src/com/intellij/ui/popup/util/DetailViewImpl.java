@@ -54,7 +54,7 @@ public class DetailViewImpl extends JPanel implements DetailView {
   public DetailViewImpl(Project project) {
     super(new BorderLayout());
     myProject = project;
-    setPreferredSize(new Dimension(600, 400));
+    setPreferredSize(new Dimension(700, 400));
     myNothingToShow.setHorizontalAlignment(JLabel.CENTER);
     myNothingToShowInEditor.setHorizontalAlignment(JLabel.CENTER);
   }
@@ -164,17 +164,12 @@ public class DetailViewImpl extends JPanel implements DetailView {
     if (panel != null) {
       if (myDetailScrollPanel == null) {
         myDetailPanelWrapper = new JPanel(new GridLayout(1, 1));
-        myDetailPanelWrapper.setBorder(BorderFactory.createEmptyBorder(5, 30, 5, 10));
+        myDetailPanelWrapper.setBorder(BorderFactory.createEmptyBorder(5, 30, 5, 30));
         myDetailPanelWrapper.add(panel);
 
         myDetailScrollPanel =
-          new JBScrollPane(myDetailPanelWrapper, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER) {
-            @Override
-            public Dimension getPreferredSize() {
-              final Dimension size = panel.getPreferredSize();
-              return new Dimension(size.width, size.height + 10);
-            }
-          };
+          new JBScrollPane(myDetailPanelWrapper, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+        myDetailScrollPanel.setPreferredSize(myDetailPanelWrapper.getPreferredSize());
         myDetailScrollPanel.setBorder(null);
         add(myDetailScrollPanel, BorderLayout.SOUTH);
       } else {

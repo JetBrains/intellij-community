@@ -39,6 +39,7 @@ import junit.framework.Assert;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.eclipse.config.EclipseClasspathStorageProvider;
 import org.jetbrains.idea.eclipse.conversion.ConversionException;
 import org.jetbrains.idea.eclipse.conversion.EclipseClasspathReader;
@@ -74,7 +75,7 @@ public class EclipseClasspathTest extends IdeaTestCase {
     checkModule(path, setUpModule(path, project));
   }
 
-  static Module setUpModule(final String path, final Project project)
+  static Module setUpModule(final String path, @NotNull final Project project)
     throws IOException, JDOMException, ConversionException, ConfigurationException {
     final File classpathFile = new File(path, EclipseXml.DOT_CLASSPATH_EXT);
     String fileText = FileUtil.loadFile(classpathFile).replaceAll("\\$ROOT\\$", project.getBaseDir().getPath());

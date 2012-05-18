@@ -785,7 +785,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
         final Pair<PsiFile, Document> pair = reference.get();
         if (pair != null && pair.first.isValid() && pair.first.getClass().equals(file.getClass())) {
           final PsiFile copy = pair.first;
-          if (copy.getModificationStamp() > file.getModificationStamp()) {
+          if (copy.getViewProvider().getModificationStamp() > file.getViewProvider().getModificationStamp()) {
             ((PsiModificationTrackerImpl) file.getManager().getModificationTracker()).incCounter();
           }
           final Document document = pair.second;
