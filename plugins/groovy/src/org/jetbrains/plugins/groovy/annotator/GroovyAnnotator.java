@@ -1001,16 +1001,17 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
   }
 
   private static boolean checkDiamonds(GrCodeReferenceElement refElement, AnnotationHolder holder) {
-    final GroovyConfigUtils configUtils = GroovyConfigUtils.getInstance();
-    if (configUtils.isVersionAtLeast(refElement, GroovyConfigUtils.GROOVY1_8)) return true;
-
     GrTypeArgumentList typeArgumentList = refElement.getTypeArgumentList();
-    if (typeArgumentList != null && typeArgumentList.isDiamond()) {
+    if (typeArgumentList == null) return true;
+
+    if (!typeArgumentList.isDiamond()) return true;
+
+    final GroovyConfigUtils configUtils = GroovyConfigUtils.getInstance();
+    if (!configUtils.isVersionAtLeast(refElement, GroovyConfigUtils.GROOVY1_8)) {
       final String message = GroovyBundle.message("diamonds.are.not.allowed.in.groovy.0", configUtils.getSDKVersion(refElement));
       holder.createErrorAnnotation(typeArgumentList, message);
-      return false;
     }
-    return true;
+    return false;
   }
 
   @Override
