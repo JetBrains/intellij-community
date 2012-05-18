@@ -21,10 +21,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
 
 public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Data> {
   private static final int PAGE_SIZE;
@@ -174,60 +170,33 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
   }
 
   @Override
-  public boolean traverseAllRecords(@NotNull RecordsProcessor p) throws IOException {
+  public boolean traverseAllRecords(@NotNull final RecordsProcessor p) throws IOException {
     try {
       synchronized (ourLock) {
-
-        List<IntToIntBtree.BtreeIndexNodeView> leafPages = new ArrayList<IntToIntBtree.BtreeIndexNodeView> ();
-        btree.doFlush();
-        btree.root.syncWithStore();
-        collectLeafPages(btree.root, leafPages);
-        Collections.sort(leafPages, new Comparator<IntToIntBtree.BtreeIndexNodeView>() {
-          @Override
-          public int compare(@NotNull IntToIntBtree.BtreeIndexNodeView o1, @NotNull IntToIntBtree.BtreeIndexNodeView o2) {
-            return o1.address - o2.address;
-          }
-        });
-
-        out:
-        for(IntToIntBtree.BtreeIndexNodeView page:leafPages) {
-          for(int key:page.exportKeys()) {
-            boolean hasMapping = btree.get(key, myResultBuf);
+        return btree.processMappings(new IntToIntBtree.KeyValueProcessor() {
+          public boolean process(int key, int value) throws IOException {
             p.setCurrentKey(key);
-            assert hasMapping;
-            int record = myResultBuf[0];
 
-            if (record > 0) {
-              if (!p.process(record)) return false;
-            } else {
-              int rec = - record;
-              while(rec != 0) {
+            if (value > 0) {
+              if (!p.process(value)) return false;
+            }
+            else {
+              int rec = -value;
+              while (rec != 0) {
                 int id = myStorage.getInt(rec);
                 if (!p.process(id)) return false;
                 rec = myStorage.getInt(rec + COLLISION_OFFSET);
               }
             }
+            return true;
           }
-        }
-        return true;
+        });
       }
     }
     catch (IllegalStateException e) {
       CorruptedException corruptedException = new CorruptedException(myFile);
       corruptedException.initCause(e);
       throw corruptedException;
-    }
-  }
-
-  private void collectLeafPages(@NotNull IntToIntBtree.BtreeIndexNodeView node, @NotNull List<IntToIntBtree.BtreeIndexNodeView> leafPages) {
-    if (node.isIndexLeaf()) {
-      leafPages.add(node);
-      return;
-    }
-    for(int i = 0; i <= node.getChildrenCount(); ++i) {
-      IntToIntBtree.BtreeIndexNodeView newNode = new IntToIntBtree.BtreeIndexNodeView(btree);
-      newNode.setAddress(-node.addressAt(i));
-      collectLeafPages(newNode, leafPages);
     }
   }
 
