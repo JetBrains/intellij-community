@@ -1952,10 +1952,32 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
         annotation.registerFix(CreateClassFix.createClassFromNewAction((GrNewExpression)parent));
       }
       else {
-        annotation.registerFix(CreateClassFix.createClassFixAction(refElement));
+        if (shouldBeInterface(refElement)) {
+          annotation.registerFix(CreateClassFix.createClassFixAction(refElement, CreateClassActionBase.Type.INTERFACE));
+        }
+        else if (shouldBeClass(refElement)) {
+          annotation.registerFix(CreateClassFix.createClassFixAction(refElement, CreateClassActionBase.Type.CLASS));
+          annotation.registerFix(CreateClassFix.createClassFixAction(refElement, CreateClassActionBase.Type.ENUM));
+        }
+        else {
+          annotation.registerFix(CreateClassFix.createClassFixAction(refElement, CreateClassActionBase.Type.CLASS));
+          annotation.registerFix(CreateClassFix.createClassFixAction(refElement, CreateClassActionBase.Type.INTERFACE));
+          annotation.registerFix(CreateClassFix.createClassFixAction(refElement, CreateClassActionBase.Type.ENUM));
+        }
       }
     }
   }
+
+  private static boolean shouldBeInterface(GrReferenceElement myRefElement) {
+    PsiElement parent = myRefElement.getParent();
+    return parent instanceof GrImplementsClause || parent instanceof GrExtendsClause && parent.getParent() instanceof GrInterfaceDefinition;
+  }
+
+  private static boolean shouldBeClass(GrReferenceElement myRefElement) {
+    PsiElement parent = myRefElement.getParent();
+    return parent instanceof GrExtendsClause && !(parent.getParent() instanceof GrInterfaceDefinition);
+  }
+
 
   private static void highlightMember(AnnotationHolder holder, GrMember member) {
     if (member instanceof GrField) {

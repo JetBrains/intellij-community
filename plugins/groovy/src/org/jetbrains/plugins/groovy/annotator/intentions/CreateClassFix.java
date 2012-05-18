@@ -27,7 +27,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.actions.NewGroovyClassAction;
 import org.jetbrains.plugins.groovy.intentions.base.IntentionUtils;
 import org.jetbrains.plugins.groovy.lang.editor.template.expressions.ChooseTypeExpression;
@@ -50,7 +49,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 public abstract class CreateClassFix {
 
   public static IntentionAction createClassFromNewAction(final GrNewExpression expression) {
-    return new CreateClassActionBase(expression.getReferenceElement()) {
+    return new CreateClassActionBase(CreateClassActionBase.Type.CLASS, expression.getReferenceElement()) {
 
       public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
         if (!(file instanceof GroovyFileBase)) return;
@@ -60,7 +59,7 @@ public abstract class CreateClassFix {
         final String name = myRefElement.getReferenceName();
         assert name != null;
         final Module module = ModuleUtil.findModuleForPsiElement(file);
-        PsiDirectory targetDirectory = getTargetDirectory(project, qualifier, name, module);
+        PsiDirectory targetDirectory = getTargetDirectory(project, qualifier, name, module, getText());
         if (targetDirectory == null) return;
 
         GrTypeDefinition targetClass = createClassByType(targetDirectory, name, manager, myRefElement, NewGroovyClassAction.GROOVY_CLASS);
@@ -96,8 +95,8 @@ public abstract class CreateClassFix {
     };
   }
 
-  public static IntentionAction createClassFixAction(final GrReferenceElement refElement) {
-    return new CreateClassActionBase(refElement) {
+  public static IntentionAction createClassFixAction(final GrReferenceElement refElement, CreateClassActionBase.Type type) {
+    return new CreateClassActionBase(type, refElement) {
 
       public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
         if (!(file instanceof GroovyFileBase)) return;
@@ -106,10 +105,22 @@ public abstract class CreateClassFix {
         final PsiManager manager = PsiManager.getInstance(project);
         final String name = myRefElement.getReferenceName();
         final Module module = ModuleUtil.findModuleForPsiElement(file);
-        PsiDirectory targetDirectory = getTargetDirectory(project, qualifier, name, module);
+        PsiDirectory targetDirectory = getTargetDirectory(project, qualifier, name, module, getText());
         if (targetDirectory == null) return;
 
-        String templateName = shouldCreateInterface() ? NewGroovyClassAction.GROOVY_INTERFACE : NewGroovyClassAction.GROOVY_CLASS;
+
+        String templateName = null;
+        switch (getType()) {
+          case ENUM:
+            templateName = NewGroovyClassAction.GROOVY_ENUM;
+            break;
+          case CLASS:
+            templateName = NewGroovyClassAction.GROOVY_CLASS;
+            break;
+          case INTERFACE:
+            templateName = NewGroovyClassAction.GROOVY_INTERFACE;
+            break;
+        }
         assert name != null;
         PsiClass targetClass = createClassByType(targetDirectory, name, manager, myRefElement, templateName);
         if (targetClass != null) {
@@ -122,8 +133,7 @@ public abstract class CreateClassFix {
   }
 
   @Nullable
-  private static PsiDirectory getTargetDirectory(Project project, String qualifier, String name, Module module) {
-    String title = GroovyBundle.message("create.class.family.name");
+  private static PsiDirectory getTargetDirectory(Project project, String qualifier, String name, Module module, String title) {
     GroovyCreateClassDialog dialog = new GroovyCreateClassDialog(project, title, name, qualifier, module);
     dialog.show();
     if (dialog.getExitCode() != DialogWrapper.OK_EXIT_CODE) return null;
