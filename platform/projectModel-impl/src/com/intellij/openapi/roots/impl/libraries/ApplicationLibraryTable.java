@@ -24,13 +24,6 @@ import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 /**
  *  @author dsl
  */
-@State(
-  name = "libraryTable",
-  roamingType = RoamingType.DISABLED,
-  storages = {
-    @Storage( file = StoragePathMacros.APP_CONFIG + "/applicationLibraries.xml")
-    }
-)
 public class ApplicationLibraryTable extends LibraryTableBase {
   private static final LibraryTablePresentation GLOBAL_LIBRARY_TABLE_PRESENTATION = new LibraryTablePresentation() {
     public String getDisplayName(boolean plural) {

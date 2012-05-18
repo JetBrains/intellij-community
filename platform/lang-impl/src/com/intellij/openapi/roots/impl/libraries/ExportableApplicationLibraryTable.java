@@ -16,7 +16,7 @@
 package com.intellij.openapi.roots.impl.libraries;
 
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.components.ExportableComponent;
+import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.ProjectBundle;
 import org.jetbrains.annotations.NotNull;
 
@@ -25,6 +25,13 @@ import java.io.File;
 /**
  * @author yole
  */
+@State(
+  name = "libraryTable",
+  roamingType = RoamingType.DISABLED,
+  storages = {
+    @Storage( file = StoragePathMacros.APP_CONFIG + "/applicationLibraries.xml")
+    }
+)
 public class ExportableApplicationLibraryTable extends ApplicationLibraryTable implements ExportableComponent {
   @NotNull
   public File[] getExportFiles() {
