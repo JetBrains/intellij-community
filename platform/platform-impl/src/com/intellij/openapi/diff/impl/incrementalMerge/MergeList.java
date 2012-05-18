@@ -45,23 +45,26 @@ import java.util.Iterator;
 import java.util.List;
 
 public class MergeList implements ChangeList.Parent, UserDataHolder {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.diff.impl.incrementalMerge.MergeList");
-  private final Project myProject;
-  private final ChangeList[] myChanges = new ChangeList[2];
-  private final UserDataHolderBase myDataHolder = new UserDataHolderBase();
+
   public static final FragmentSide BRANCH_SIDE = FragmentSide.SIDE2;
   public static final FragmentSide BASE_SIDE = FragmentSide.SIDE1;
 
   public static final DataKey<MergeList> DATA_KEY = DataKey.create("mergeList");
-  @Deprecated public static final String MERGE_LIST = DATA_KEY.getName();
 
-  private MergeList(Project project, Document left, Document base, Document right) {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.diff.impl.incrementalMerge.MergeList");
+
+  @NotNull private final Project myProject;
+  @NotNull private final ChangeList[] myChanges = new ChangeList[2];
+  @NotNull private final UserDataHolderBase myDataHolder = new UserDataHolderBase();
+
+  private MergeList(@NotNull Project project, @NotNull Document left, @NotNull Document base, @NotNull Document right) {
     myProject = project;
     myChanges[0] = new ChangeList(base, left, this);
     myChanges[1] = new ChangeList(base, right, this);
   }
 
-  public static MergeList create(Project project, Document left, Document base, Document right) throws FilesTooBigForDiffException {
+  public static MergeList create(@NotNull Project project, @NotNull Document left, @NotNull Document base,
+                                 @NotNull Document right) throws FilesTooBigForDiffException {
     MergeList mergeList = new MergeList(project, left, base, right);
     String leftText = left.getText();
     String baseText = base.getText();
@@ -76,16 +79,15 @@ public class MergeList implements ChangeList.Parent, UserDataHolder {
 
     ArrayList<Change> leftChanges = new ArrayList<Change>();
     ArrayList<Change> rightChanges = new ArrayList<Change>();
-    final int fragmentsListSize = fragmentList.size();
-    for (int i = 0; i < fragmentsListSize; i++) {
-      final MergeBuilder.MergeFragment mergeFragment = fragmentList.get(i);
+    for (Iterator<MergeBuilder.MergeFragment> fragmentIterator = fragmentList.iterator(); fragmentIterator.hasNext(); ) {
+      final MergeBuilder.MergeFragment mergeFragment = fragmentIterator.next();
       TextRange baseRange = mergeFragment.getBase();
       TextRange leftRange = mergeFragment.getLeft();
       TextRange rightRange = mergeFragment.getRight();
 
       if (leftRange == null) {
         if (rightRange == null) {
-          if (i == fragmentsListSize - 1 && baseRange.getEndOffset() == baseText.length()) {
+          if (!fragmentIterator.hasNext() && baseRange.getEndOffset() == baseText.length()) {
             // the very end, both local and remote revisions does not contain latest base fragment
             final int rightTextLength = rightText.length();
             final int leftTextLength = leftText.length();
@@ -229,7 +231,7 @@ public class MergeList implements ChangeList.Parent, UserDataHolder {
 
   @Nullable
   public static MergeList fromDataContext(DataContext dataContext) {
-    MergeList mergeList = MergeList.DATA_KEY.getData(dataContext);
+    MergeList mergeList = DATA_KEY.getData(dataContext);
     if (mergeList != null) return mergeList;
     MergePanel2 mergePanel = MergePanel2.fromDataContext(dataContext);
     return mergePanel == null ? null : mergePanel.getMergeList();
@@ -241,6 +243,7 @@ public class MergeList implements ChangeList.Parent, UserDataHolder {
     }
   };
 
+  @NotNull
   public Project getProject() {
     return myProject;
   }
@@ -253,6 +256,7 @@ public class MergeList implements ChangeList.Parent, UserDataHolder {
     myDataHolder.putUserData(key, value);
   }
 
+  @Nullable
   public FragmentSide getSideOf(ChangeList source) {
     for (int i = 0; i < myChanges.length; i++) {
       ChangeList changeList = myChanges[i];
