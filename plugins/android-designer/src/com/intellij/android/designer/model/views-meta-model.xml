@@ -29,6 +29,16 @@
              tooltip="Lets you statically include XML layout inside other XML layouts."/>
   </meta>
 
+  <meta model="com.intellij.android.designer.model.RadFragment"
+        class="java.lang.Object"
+        tag="fragment">
+
+    <presentation title=" - %name%"/>
+
+    <palette title="fragment" icon="/com/intellij/android/designer/icons/fragment.png"
+             tooltip="A Fragment is a piece of an application's user interface or behavior that can be placed in an Activity."/>
+  </meta>
+
   <meta model="com.intellij.android.designer.model.RadViewComponent"
         tag="&lt;unknown&gt;">
 
@@ -1400,6 +1410,7 @@
     </group>
     <group name="Custom">
       <item tag="include"/>
+      <item tag="fragment"/>
     </group>
   </palette>
 

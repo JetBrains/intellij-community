@@ -27,10 +27,10 @@ import java.awt.event.ActionListener;
 /**
  * @author Alexander Lobas
  */
-public abstract class AbstractTextFieldEditor extends PropertyEditor {
+public class TextEditor extends PropertyEditor {
   protected final JTextField myTextField = new JTextField();
 
-  protected AbstractTextFieldEditor() {
+  public TextEditor() {
     myTextField.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
@@ -45,6 +45,11 @@ public abstract class AbstractTextFieldEditor extends PropertyEditor {
     setEditorValue(component, value);
     myTextField.setBorder(BorderFactory.createEmptyBorder(0, 4, 0, 0));
     return myTextField;
+  }
+
+  @Override
+  public Object getValue() throws Exception {
+    return myTextField.getText();
   }
 
   protected void setEditorValue(@Nullable RadComponent component, Object value) {

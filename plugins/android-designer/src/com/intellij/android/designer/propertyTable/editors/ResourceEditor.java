@@ -16,10 +16,11 @@
 package com.intellij.android.designer.propertyTable.editors;
 
 import com.android.resources.ResourceType;
-import com.intellij.android.designer.model.PropertyParser;
+import com.intellij.android.designer.model.ModelParser;
 import com.intellij.designer.model.RadComponent;
 import com.intellij.designer.propertyTable.PropertyEditor;
 import com.intellij.designer.propertyTable.editors.ComboEditor;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.ui.ComponentWithBrowseButton;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
@@ -40,7 +41,7 @@ import java.util.Set;
 public class ResourceEditor extends PropertyEditor {
   private final ResourceType[] myTypes;
   private ComponentWithBrowseButton myEditor;
-  private RadComponent myRootComponent;
+  protected RadComponent myRootComponent;
 
   public ResourceEditor(Set<AttributeFormat> formats, String[] values) {
     this(convertTypes(formats), formats, values);
@@ -158,15 +159,19 @@ public class ResourceEditor extends PropertyEditor {
     SwingUtilities.updateComponentTreeUI(myEditor);
   }
 
-  private void showDialog() {
-    PropertyParser parser = myRootComponent.getClientProperty(PropertyParser.KEY);
-    ResourceDialog dialog = parser.createResourceDialog(myTypes);
+  protected void showDialog() {
+    Module module = myRootComponent.getClientProperty(ModelParser.MODULE_KEY);
+    ResourceDialog dialog = new ResourceDialog(module, myTypes);
     dialog.show();
 
     if (dialog.getExitCode() == DialogWrapper.OK_EXIT_CODE) {
-      getComboText().setText(dialog.getResourceName());
-      fireValueCommitted(true, true);
+      setValue(dialog.getResourceName());
     }
+  }
+
+  protected final void setValue(String value) {
+    getComboText().setText(value);
+    fireValueCommitted(true, true);
   }
 
   private JTextField getComboText() {

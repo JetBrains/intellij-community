@@ -152,10 +152,8 @@ public class ResourceDialog extends DialogWrapper implements TreeSelectionListen
       myTree.addMouseListener(new MouseAdapter() {
         @Override
         public void mouseClicked(MouseEvent e) {
-          if (e.getClickCount() == 2) {
-            if (!myTreeBuilder.getSelectedElements(ResourceItem.class).isEmpty()) {
-              close(OK_EXIT_CODE);
-            }
+          if (e.getClickCount() == 2 && !myTreeBuilder.getSelectedElements(ResourceItem.class).isEmpty()) {
+            close(OK_EXIT_CODE);
           }
         }
       });

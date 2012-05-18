@@ -20,10 +20,7 @@ import com.android.ide.common.resources.configuration.*;
 import com.android.sdklib.IAndroidTarget;
 import com.intellij.android.designer.actions.ProfileAction;
 import com.intellij.android.designer.componentTree.AndroidTreeDecorator;
-import com.intellij.android.designer.model.ModelParser;
-import com.intellij.android.designer.model.PropertyParser;
-import com.intellij.android.designer.model.RadIncludeLayout;
-import com.intellij.android.designer.model.RadViewComponent;
+import com.intellij.android.designer.model.*;
 import com.intellij.android.designer.profile.ProfileManager;
 import com.intellij.designer.DesignerToolWindowManager;
 import com.intellij.designer.componentTree.TreeComponentDecorator;
@@ -145,6 +142,7 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
         RadViewComponent newRootComponent = parser.getRootComponent();
 
         newRootComponent.setClientProperty(ModelParser.XML_FILE_KEY, myXmlFile);
+        newRootComponent.setClientProperty(ModelParser.MODULE_KEY, getModule());
         newRootComponent.setClientProperty(TreeComponentDecorator.KEY, myTreeDecorator);
 
         PropertyParser propertyParser = new PropertyParser(myModule, myProfileAction.getProfileManager().getSelectedTarget());
@@ -443,8 +441,8 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
       @Override
       public RadComponent create() throws Exception {
         RadViewComponent component = ModelParser.createComponent(null, paletteItem.getMetaModel());
-        if (component instanceof RadIncludeLayout) {
-          ((RadIncludeLayout)component).configure(getModule());
+        if (component instanceof IConfigurableComponent) {
+          ((IConfigurableComponent)component).configure(getModule());
         }
         return component;
       }

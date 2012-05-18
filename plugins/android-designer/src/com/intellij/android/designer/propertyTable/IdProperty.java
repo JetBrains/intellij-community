@@ -22,6 +22,7 @@ import com.intellij.designer.propertyTable.Property;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Pair;
 import org.jetbrains.android.dom.attrs.AttributeDefinition;
+import org.jetbrains.android.dom.attrs.AttributeFormat;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,6 +33,13 @@ import java.util.List;
  * @author Alexander Lobas
  */
 public class IdProperty extends AttributeProperty {
+  public static final Property INSTANCE = new IdProperty();
+
+  private IdProperty() {
+    this("id", new AttributeDefinition("id", Arrays.asList(AttributeFormat.Reference)));
+    setImportant(true);
+  }
+
   public IdProperty(@NotNull String name, @NotNull AttributeDefinition definition) {
     super(name, definition);
   }

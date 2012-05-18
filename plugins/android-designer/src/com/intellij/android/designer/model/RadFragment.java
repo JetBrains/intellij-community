@@ -15,35 +15,56 @@
  */
 package com.intellij.android.designer.model;
 
+import com.intellij.android.designer.propertyTable.FragmentProperty;
 import com.intellij.android.designer.propertyTable.IdProperty;
-import com.intellij.android.designer.propertyTable.IncludeLayoutProperty;
-import com.intellij.android.designer.propertyTable.editors.ResourceDialog;
+import com.intellij.android.designer.propertyTable.editors.FragmentDialog;
+import com.intellij.android.designer.propertyTable.editors.ResourceEditor;
 import com.intellij.designer.propertyTable.Property;
+import com.intellij.designer.propertyTable.editors.TextEditor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.ui.DialogWrapper;
+import org.jetbrains.android.dom.attrs.AttributeFormat;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
  * @author Alexander Lobas
  */
-public class RadIncludeLayout extends RadViewComponent implements IConfigurableComponent {
+public class RadFragment extends RadViewComponent implements IConfigurableComponent {
+  private static final Property NAME_PROPERTY =
+    new FragmentProperty("name", new ResourceEditor(null, Collections.<AttributeFormat>emptySet(), null) {
+      @Override
+      protected void showDialog() {
+        Module module = myRootComponent.getClientProperty(ModelParser.MODULE_KEY);
+        FragmentDialog dialog = new FragmentDialog(module);
+        dialog.show();
+
+        if (dialog.getExitCode() == DialogWrapper.OK_EXIT_CODE) {
+          setValue(dialog.getFragmentName());
+        }
+      }
+    });
+  private static final Property TAG_PROPERTY = new FragmentProperty("tag", new TextEditor());
+  private static final String NAME_KEY = "fragment.name";
+
   @Override
   public String getCreationXml() {
-    return "<include android:layout_width=\"wrap_content\"\n" +
+    return "<fragment android:layout_width=\"wrap_content\"\n" +
            "android:layout_height=\"wrap_content\"\n" +
-           "layout=\"" +
-           extractClientProperty(IncludeLayoutProperty.NAME) +
+           "android:name=\"" +
+           extractClientProperty(NAME_KEY) +
            "\"/>";
   }
 
+  @Override
   public void configure(Module module) throws Exception {
-    ResourceDialog dialog = new ResourceDialog(module, IncludeLayoutProperty.TYPES);
+    FragmentDialog dialog = new FragmentDialog(module);
     dialog.show();
 
     if (dialog.getExitCode() == DialogWrapper.OK_EXIT_CODE) {
-      setClientProperty(IncludeLayoutProperty.NAME, dialog.getResourceName());
+      setClientProperty(NAME_KEY, dialog.getFragmentName());
     }
     else {
       throw new Exception();
@@ -54,8 +75,9 @@ public class RadIncludeLayout extends RadViewComponent implements IConfigurableC
   public void setProperties(List<Property> properties) {
     if (!properties.isEmpty()) {
       properties = new ArrayList<Property>(properties);
-      properties.add(IncludeLayoutProperty.INSTANCE);
+      properties.add(NAME_PROPERTY);
       properties.add(IdProperty.INSTANCE);
+      properties.add(TAG_PROPERTY);
     }
     super.setProperties(properties);
   }

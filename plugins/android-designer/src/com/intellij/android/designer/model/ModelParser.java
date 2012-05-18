@@ -50,6 +50,7 @@ public class ModelParser extends XmlRecursiveElementVisitor {
     "<?xml version=\"1.0\" encoding=\"utf-8\"?><LinearLayout xmlns:android=\"http://schemas.android.com/apk/res/android\" android:layout_width=\"fill_parent\" android:layout_height=\"fill_parent\" android:orientation=\"vertical\"></LinearLayout>";
 
   public static final String XML_FILE_KEY = "XML_FILE";
+  public static final String MODULE_KEY = "MODULE";
 
   private static final int EMPTY_COMPONENT_SIZE = 5;
 

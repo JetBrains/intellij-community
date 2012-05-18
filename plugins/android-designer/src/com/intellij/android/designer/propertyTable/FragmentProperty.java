@@ -15,39 +15,33 @@
  */
 package com.intellij.android.designer.propertyTable;
 
-import com.android.resources.ResourceType;
+import com.intellij.android.designer.model.ModelParser;
 import com.intellij.android.designer.model.RadViewComponent;
-import com.intellij.android.designer.propertyTable.editors.ResourceEditor;
-import com.intellij.android.designer.propertyTable.renderers.ResourceRenderer;
 import com.intellij.designer.model.RadComponent;
 import com.intellij.designer.propertyTable.Property;
 import com.intellij.designer.propertyTable.PropertyEditor;
 import com.intellij.designer.propertyTable.PropertyRenderer;
+import com.intellij.designer.propertyTable.renderers.LabelPropertyRenderer;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.text.StringUtil;
-import org.jetbrains.android.dom.attrs.AttributeFormat;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.EnumSet;
 import java.util.List;
-import java.util.Set;
 
 /**
  * @author Alexander Lobas
  */
-public class IncludeLayoutProperty extends Property<RadViewComponent> {
-  public static final String NAME = "layout:xml";
-  public static ResourceType[] TYPES = new ResourceType[]{ResourceType.LAYOUT};
-  private static final Set<AttributeFormat> FORMATS = EnumSet.of(AttributeFormat.Reference);
-  public static final Property INSTANCE = new IncludeLayoutProperty();
+public class FragmentProperty extends Property<RadViewComponent> {
+  private final String myAttribute;
+  private final PropertyRenderer myRenderer = new LabelPropertyRenderer(null);
+  private final PropertyEditor myEditor;
 
-  private final PropertyRenderer myRenderer = new ResourceRenderer(FORMATS);
-  private final PropertyEditor myEditor = new ResourceEditor(TYPES, FORMATS, null);
-
-  private IncludeLayoutProperty() {
-    super(null, NAME);
+  public FragmentProperty(@NotNull String name, PropertyEditor editor) {
+    super(null, name);
+    myEditor = editor;
     setImportant(true);
+    myAttribute = "android:" + name;
   }
 
   @Override
@@ -57,19 +51,34 @@ public class IncludeLayoutProperty extends Property<RadViewComponent> {
 
   @Override
   public Object getValue(RadViewComponent component) throws Exception {
-    String layout = component.getTag().getAttributeValue("layout");
-    return layout == null ? "" : layout;
+    String value = component.getTag().getAttributeValue(myAttribute);
+    return value == null ? "" : value;
   }
 
   @Override
   public void setValue(final RadViewComponent component, final Object value) throws Exception {
-    if (!StringUtil.isEmpty((String)value)) {
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        @Override
-        public void run() {
-          component.getTag().setAttribute("layout", (String)value);
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
+      public void run() {
+        if (StringUtil.isEmpty((String)value)) {
+          ModelParser.deleteAttribute(component, myAttribute);
         }
-      });
+        else {
+          component.getTag().setAttribute(myAttribute, (String)value);
+        }
+      }
+    });
+  }
+
+  @Override
+  public boolean isDefaultValue(RadViewComponent component) throws Exception {
+    return component.getTag().getAttribute(myAttribute) == null;
+  }
+
+  @Override
+  public void setDefaultValue(RadViewComponent component) throws Exception {
+    if (component.getTag().getAttribute(myAttribute) != null) {
+      setValue(component, null);
     }
   }
 
