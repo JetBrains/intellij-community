@@ -23,7 +23,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.IconLoader;
+import com.intellij.util.IconUtil;
 import git4idea.GitBranch;
 import git4idea.branch.GitBranchOperationsProcessor;
 import git4idea.repo.GitRepository;
@@ -85,7 +85,7 @@ class GitBranchPopupActions {
     @NotNull private final GitRepository mySelectedRepository;
 
     NewBranchAction(@NotNull Project project, @NotNull List<GitRepository> repositories, @NotNull GitRepository selectedRepository) {
-      super("New Branch", "Create and checkout new branch", IconLoader.getIcon("/general/add.png"));
+      super("New Branch", "Create and checkout new branch", IconUtil.getAddIcon());
       myProject = project;
       myRepositories = repositories;
       mySelectedRepository = selectedRepository;

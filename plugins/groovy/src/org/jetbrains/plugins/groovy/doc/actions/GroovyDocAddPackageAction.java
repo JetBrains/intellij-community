@@ -19,10 +19,10 @@ import com.intellij.ide.util.PackageChooserDialog;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataKeys;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.DumbAware;
-import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiPackage;
+import com.intellij.util.IconUtil;
 import org.jetbrains.plugins.groovy.doc.GroovyDocConfiguration;
 
 import javax.swing.*;
@@ -36,7 +36,7 @@ public class GroovyDocAddPackageAction extends AnAction implements DumbAware {
   private final DefaultListModel myDataModel;
 
   public GroovyDocAddPackageAction(final DefaultListModel dataModel) {
-    super("Add package", "Add package", IconLoader.getIcon("/general/add.png"));
+    super("Add package", "Add package", IconUtil.getAddIcon());
     myDataModel = dataModel;
   }
 

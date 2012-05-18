@@ -2380,7 +2380,7 @@ public class GitLogUI implements Disposable {
 
   private class MyCheckoutNewBranchAction extends DumbAwareAction {
     private MyCheckoutNewBranchAction() {
-      super("New Branch", "Create new branch starting from the selected commit", IconLoader.getIcon("/general/add.png"));
+      super("New Branch", "Create new branch starting from the selected commit", IconUtil.getAddIcon());
     }
 
     @Override

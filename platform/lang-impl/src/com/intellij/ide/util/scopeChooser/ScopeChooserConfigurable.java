@@ -31,7 +31,7 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.psi.search.scope.packageSet.*;
 import com.intellij.ui.TreeSpeedSearch;
-import com.intellij.util.PlatformIcons;
+import com.intellij.util.IconUtil;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -97,8 +97,8 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
     })));
     result.add(new MyCopyAction());
     result.add(new MySaveAsAction());
-    result.add(new MyMoveAction(ExecutionBundle.message("move.up.action.name"), IconLoader.getIcon("/actions/moveUp.png"), -1));
-    result.add(new MyMoveAction(ExecutionBundle.message("move.down.action.name"), IconLoader.getIcon("/actions/moveDown.png"), 1));
+    result.add(new MyMoveAction(ExecutionBundle.message("move.up.action.name"), IconUtil.getMoveUpIcon(), -1));
+    result.add(new MyMoveAction(ExecutionBundle.message("move.down.action.name"), IconUtil.getMoveDownIcon(), 1));
     return result;
   }
 
@@ -363,7 +363,7 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
       super(IdeBundle.message("add.scope.popup.title"), true);
       myFromPopup = fromPopup;
       final Presentation presentation = getTemplatePresentation();
-      presentation.setIcon(PlatformIcons.ADD_ICON);
+      presentation.setIcon(IconUtil.getAddIcon());
       setShortcutSet(CommonShortcuts.INSERT);
     }
 
@@ -394,7 +394,7 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
       }
       if (myFromPopup) {
         final AnAction action = myChildren[getDefaultIndex()];
-        action.getTemplatePresentation().setIcon(PlatformIcons.ADD_ICON);
+        action.getTemplatePresentation().setIcon(IconUtil.getAddIcon());
         return new AnAction[]{action};
       }
       return myChildren;

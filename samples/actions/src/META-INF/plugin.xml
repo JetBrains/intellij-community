@@ -34,7 +34,7 @@
       <mouse-shortcut keystroke="ctrl alt button2" keymap="$default"/>
     </action>
 
-    <action id="Actions.ActionsPlugin.HelloWorld1" class="myActions.HelloWorldAction" text="Hello World" icon ="/icons/plus.png" description=""/>
+    <action id="Actions.ActionsPlugin.HelloWorld1" class="myActions.HelloWorldAction" text="Hello World" icon ="/general/add.png" description=""/>
 
     <group id="Actions.ActionsPlugin.SampleGroup" text="Sample _Menu" description="Sample group">
       <reference ref="ActionsSample.ActionsPlugin.GarbageCollection"/>

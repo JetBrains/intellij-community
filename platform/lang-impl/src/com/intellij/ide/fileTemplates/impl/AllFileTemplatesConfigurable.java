@@ -37,6 +37,7 @@ import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.TabbedPaneWrapper;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
+import com.intellij.util.IconUtil;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
@@ -252,7 +253,7 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable, Con
         e.getPresentation().setEnabled(selectedItem != null && !isInternalTemplate(selectedItem.getName(), myCurrentTab.getTitle()));
       }
     };
-    AnAction addAction = new AnAction(IdeBundle.message("action.create.template"), null, IconLoader.getIcon("/general/add.png")) {
+    AnAction addAction = new AnAction(IdeBundle.message("action.create.template"), null, IconUtil.getAddIcon()) {
       public void actionPerformed(AnActionEvent e) {
         onAdd();
       }

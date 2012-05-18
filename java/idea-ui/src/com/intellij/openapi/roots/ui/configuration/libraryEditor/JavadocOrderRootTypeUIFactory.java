@@ -36,7 +36,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.AnActionButton;
 import com.intellij.ui.AnActionButtonUpdater;
 import com.intellij.ui.ToolbarDecorator;
-import com.intellij.util.PlatformIcons;
+import com.intellij.util.IconUtil;
 
 import javax.swing.*;
 
@@ -69,7 +69,7 @@ public class JavadocOrderRootTypeUIFactory implements OrderRootTypeUIFactory {
 
     @Override
     protected void addToolbarButtons(ToolbarDecorator toolbarDecorator) {
-      AnActionButton specifyUrlButton = new AnActionButton(ProjectBundle.message("sdk.paths.specify.url.button"), PlatformIcons.TABLE_URL) {
+      AnActionButton specifyUrlButton = new AnActionButton(ProjectBundle.message("sdk.paths.specify.url.button"), IconUtil.getAddLinkIcon()) {
         @Override
         public void actionPerformed(AnActionEvent e) {
           onSpecifyUrlButtonClicked();

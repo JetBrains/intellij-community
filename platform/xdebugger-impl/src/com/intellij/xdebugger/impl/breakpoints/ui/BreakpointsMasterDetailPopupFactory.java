@@ -30,6 +30,7 @@ import com.intellij.ui.CheckBoxListListener;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.popup.util.ItemWrapper;
 import com.intellij.ui.popup.util.MasterDetailPopupBuilder;
+import com.intellij.util.IconUtil;
 import com.intellij.util.PlatformIcons;
 import com.intellij.xdebugger.breakpoints.ui.BreakpointItem;
 import com.intellij.xdebugger.impl.DebuggerSupport;
@@ -149,7 +150,7 @@ public class BreakpointsMasterDetailPopupFactory implements CheckBoxListListener
     for (BreakpointPanelProvider provider : myBreakpointPanelProviders) {
       breakpointTypes.addAll(provider.getAddBreakpointActions(myProject));
     }
-    actions.add(new AnAction("Add Breakpoint", null, PlatformIcons.ADD_ICON) {
+    actions.add(new AnAction("Add Breakpoint", null, IconUtil.getAddIcon()) {
       @Override
       public void actionPerformed(AnActionEvent e) {
 

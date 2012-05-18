@@ -21,8 +21,8 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.OrderRootType;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.IconUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -129,7 +129,7 @@ public abstract class SdkType implements SdkTypeId {
   }
 
   public Icon getIconForAddAction() {
-    return IconLoader.getIcon("/general/add.png");
+    return IconUtil.getAddIcon();
   }
 
   public boolean equals(Object o) {

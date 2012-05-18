@@ -15,6 +15,7 @@
  */
 package com.intellij.application.options;
 
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.editor.SyntaxHighlighterColors;
 import com.intellij.openapi.editor.markup.TextAttributes;
@@ -24,13 +25,12 @@ import com.intellij.psi.codeStyle.PackageEntry;
 import com.intellij.psi.codeStyle.PackageEntryTable;
 import com.intellij.ui.*;
 import com.intellij.ui.table.JBTable;
+import com.intellij.util.IconUtil;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import javax.swing.event.CellEditorListener;
 import javax.swing.event.ChangeEvent;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableColumn;
@@ -67,7 +67,7 @@ public class CodeStyleImportsPanel extends JPanel {
   private JPanel myWholePanel;
   private JCheckBox myCbLayoutStaticImportsSeparately;
 
-  public CodeStyleImportsPanel(CodeStyleSettings settings){
+  public CodeStyleImportsPanel(CodeStyleSettings settings) {
     mySettings = settings;
     setLayout(new BorderLayout());
     setBorder(IdeBorderFactory.createEmptyBorder(2, 2, 2, 2));
@@ -96,8 +96,9 @@ public class CodeStyleImportsPanel extends JPanel {
     final MultiLineLabel oneImportPerDirectiveLabel = new MultiLineLabel("<% page import=\"com.company.Boo\"%>\n" +
                                                                          "<% page import=\"com.company.Far\"%>");
     final JPanel labelPanel = new JPanel(new BorderLayout());
-    labelPanel.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createEmptyBorder(20, 10, 0, 0), IdeBorderFactory.createTitledBorder(
-      ApplicationBundle.message("title.preview"), false)));
+    labelPanel.setBorder(
+      BorderFactory.createCompoundBorder(BorderFactory.createEmptyBorder(20, 10, 0, 0), IdeBorderFactory.createTitledBorder(
+        ApplicationBundle.message("title.preview"), false)));
 
     JPanel resultPanel = new JPanel(new BorderLayout());
     resultPanel.add(btnPanel, BorderLayout.NORTH);
@@ -136,12 +137,18 @@ public class CodeStyleImportsPanel extends JPanel {
     myClassCountField = new JTextField(3);
     myNamesCountField = new JTextField(3);
     final JPanel panel = new JPanel(new GridBagLayout());
-    panel.add(new JLabel(ApplicationBundle.message("editbox.class.count.to.use.import.with.star")), new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 3, 0, 0), 0, 0));
+    panel.add(new JLabel(ApplicationBundle.message("editbox.class.count.to.use.import.with.star")),
+              new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE,
+                                     new Insets(0, 3, 0, 0), 0, 0));
     panel.add(myClassCountField,
               new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL,
                                      new Insets(0, 1, 0, 0), 0, 0));
-    panel.add(new JLabel(ApplicationBundle.message("editbox.names.count.to.use.static.import.with.star")), new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 1.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 3, 0, 0), 0, 0));
-    panel.add(myNamesCountField, new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 1.0, 1.0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, new Insets(0, 1, 0, 0), 0, 0));
+    panel.add(new JLabel(ApplicationBundle.message("editbox.names.count.to.use.static.import.with.star")),
+              new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 1.0, GridBagConstraints.WEST, GridBagConstraints.NONE,
+                                     new Insets(0, 3, 0, 0), 0, 0));
+    panel.add(myNamesCountField,
+              new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 1.0, 1.0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL,
+                                     new Insets(0, 1, 0, 0), 0, 0));
 
     group.add(panel);
     return group.createPanel();
@@ -159,8 +166,7 @@ public class CodeStyleImportsPanel extends JPanel {
         public void run(AnActionButton button) {
           removeEntryFromPackages();
         }
-      }).disableUpDownActions().createPanel();
-    panel.setPreferredSize(new Dimension(-1, 150));
+      }).disableUpDownActions().setPreferredSize(new Dimension(-1, 150)).createPanel();
 
     UIUtil.addBorder(panel, IdeBorderFactory.createTitledBorder(ApplicationBundle.message("title.packages.to.use.import.with"), false));
 
@@ -172,11 +178,11 @@ public class CodeStyleImportsPanel extends JPanel {
     panel.setBorder(IdeBorderFactory.createTitledBorder(ApplicationBundle.message("title.import.layout"), false));
     myCbLayoutStaticImportsSeparately = new JCheckBox("Layout static imports separately");
 
-    myCbLayoutStaticImportsSeparately.addItemListener(new ItemListener(){
+    myCbLayoutStaticImportsSeparately.addItemListener(new ItemListener() {
       public void itemStateChanged(ItemEvent e) {
         if (areStaticImportsEnabled()) {
           boolean found = false;
-          for (int i=myImportLayoutList.getEntryCount()-1; i>=0; i--) {
+          for (int i = myImportLayoutList.getEntryCount() - 1; i >= 0; i--) {
             PackageEntry entry = myImportLayoutList.getEntryAt(i);
             if (entry == PackageEntry.ALL_OTHER_STATIC_IMPORTS_ENTRY) {
               found = true;
@@ -185,14 +191,14 @@ public class CodeStyleImportsPanel extends JPanel {
           }
           if (!found) {
             int index = myImportLayoutList.getEntryCount();
-            if (index != 0 && myImportLayoutList.getEntryAt(index-1) != PackageEntry.BLANK_LINE_ENTRY) {
+            if (index != 0 && myImportLayoutList.getEntryAt(index - 1) != PackageEntry.BLANK_LINE_ENTRY) {
               myImportLayoutList.addEntry(PackageEntry.BLANK_LINE_ENTRY);
             }
             myImportLayoutList.addEntry(PackageEntry.ALL_OTHER_STATIC_IMPORTS_ENTRY);
           }
         }
         else {
-          for (int i=myImportLayoutList.getEntryCount()-1; i>=0; i--) {
+          for (int i = myImportLayoutList.getEntryCount() - 1; i >= 0; i--) {
             PackageEntry entry = myImportLayoutList.getEntryAt(i);
             if (entry.isStatic()) {
               myImportLayoutList.removeEntryAt(i);
@@ -204,8 +210,44 @@ public class CodeStyleImportsPanel extends JPanel {
       }
     });
     panel.add(myCbLayoutStaticImportsSeparately, BorderLayout.NORTH);
-    panel.add(createImportLayoutTable(), BorderLayout.CENTER);
-    panel.add(createImportLayoutButtonsPanel(), BorderLayout.EAST);
+
+    panel.add(
+      ToolbarDecorator.createDecorator(myImportLayoutTable = createTableForPackageEntries(myImportLayoutList))
+        .addExtraAction(new AnActionButton(ApplicationBundle.message("button.add.package"), IconUtil.getAddPackageIcon()) {
+          @Override
+          public void actionPerformed(AnActionEvent e) {
+            addPackageToImportLayouts();
+          }
+        }).addExtraAction(new AnActionButton(ApplicationBundle.message("button.add.blank"), IconUtil.getAddBlankLineIcon()) {
+        @Override
+        public void actionPerformed(AnActionEvent e) {
+          addBlankLine();
+        }
+      }).setRemoveAction(new AnActionButtonRunnable() {
+        @Override
+        public void run(AnActionButton button) {
+          removeEntryFromImportLayouts();
+        }
+      }).setMoveUpAction(new AnActionButtonRunnable() {
+        @Override
+        public void run(AnActionButton button) {
+          moveRowUp();
+        }
+      }).setMoveDownAction(new AnActionButtonRunnable() {
+        @Override
+        public void run(AnActionButton button) {
+          moveRowDown();
+        }
+      }).setRemoveActionUpdater(new AnActionButtonUpdater() {
+        @Override
+        public boolean isEnabled(AnActionEvent e) {
+          int selectedImport = myImportLayoutTable.getSelectedRow();
+          PackageEntry entry = selectedImport < 0 ? null : myImportLayoutList.getEntryAt(selectedImport);
+          return entry != null && entry != PackageEntry.ALL_OTHER_STATIC_IMPORTS_ENTRY && entry != PackageEntry.ALL_OTHER_IMPORTS_ENTRY;
+        }
+      }).setButtonComparator(ApplicationBundle.message("button.add.package"), ApplicationBundle.message("button.add.blank"),
+                             "Remove", "Up", "Down")
+        .setPreferredSize(new Dimension(-1, 200)).createPanel(), BorderLayout.CENTER);
     return panel;
   }
 
@@ -220,82 +262,14 @@ public class CodeStyleImportsPanel extends JPanel {
     return myCbLayoutStaticImportsSeparately.isSelected();
   }
 
-  private JPanel createImportLayoutButtonsPanel() {
-    JPanel tableButtonsPanel = new JPanel();
-    tableButtonsPanel.setLayout(new BoxLayout(tableButtonsPanel, BoxLayout.Y_AXIS));
-
-    JButton addPackageToImportLayoutButton = new JButton(ApplicationBundle.message("button.add.package"));
-    tableButtonsPanel.add(addPackageToImportLayoutButton);
-    addPackageToImportLayoutButton.setMaximumSize(new Dimension(Integer.MAX_VALUE, addPackageToImportLayoutButton.getMaximumSize().height));
-
-    JButton addBlankLineButton = new JButton(ApplicationBundle.message("button.add.blank"));
-    tableButtonsPanel.add(addBlankLineButton);
-    addBlankLineButton.setMaximumSize(new Dimension(Integer.MAX_VALUE, addBlankLineButton.getMaximumSize().height));
-
-    myMoveUpButton = new JButton(ApplicationBundle.message("button.move.up"));
-    tableButtonsPanel.add(myMoveUpButton);
-    myMoveUpButton.setMaximumSize(new Dimension(Integer.MAX_VALUE, myMoveUpButton.getMaximumSize().height));
-
-    myMoveDownButton = new JButton(ApplicationBundle.message("button.move.down"));
-    tableButtonsPanel.add(myMoveDownButton);
-    myMoveDownButton.setMaximumSize(new Dimension(Integer.MAX_VALUE, myMoveDownButton.getMaximumSize().height));
-
-    myRemovePackageFromImportLayoutButton = new JButton(ApplicationBundle.message("button.remove"));
-    tableButtonsPanel.add(myRemovePackageFromImportLayoutButton);
-    myRemovePackageFromImportLayoutButton.setMaximumSize(new Dimension(Integer.MAX_VALUE, myRemovePackageFromImportLayoutButton.getMaximumSize().height));
-
-    addPackageToImportLayoutButton.addActionListener(
-      new ActionListener(){
-        public void actionPerformed(ActionEvent e){
-          addPackageToImportLayouts();
-        }
-      }
-    );
-
-    addBlankLineButton.addActionListener(
-      new ActionListener(){
-        public void actionPerformed(ActionEvent e){
-          addBlankLine();
-        }
-      }
-    );
-
-    myRemovePackageFromImportLayoutButton.addActionListener(
-      new ActionListener(){
-        public void actionPerformed(ActionEvent e){
-          removeEntryFromImportLayouts();
-        }
-      }
-    );
-
-    myMoveUpButton.addActionListener(
-      new ActionListener(){
-        public void actionPerformed(ActionEvent e){
-          moveRowUp();
-        }
-      }
-    );
-
-    myMoveDownButton.addActionListener(
-      new ActionListener(){
-        public void actionPerformed(ActionEvent e){
-          moveRowDown();
-        }
-      }
-    );
-
-    return tableButtonsPanel;
-  }
-
   private void addPackageToImportLayouts() {
     int selected = myImportLayoutTable.getSelectedRow() + 1;
-    if(selected < 0) {
+    if (selected < 0) {
       selected = myImportLayoutList.getEntryCount();
     }
-    PackageEntry entry = new PackageEntry(false,"", true);
+    PackageEntry entry = new PackageEntry(false, "", true);
     myImportLayoutList.insertEntryAt(entry, selected);
     refreshTableModel(selected, myImportLayoutTable);
-    updateButtons();
   }
 
   private static void refreshTableModel(int selectedRow, JBTable table) {
@@ -304,102 +278,98 @@ public class CodeStyleImportsPanel extends JPanel {
     table.setRowSelectionInterval(selectedRow, selectedRow);
     TableUtil.editCellAt(table, selectedRow, 0);
     Component editorComp = table.getEditorComponent();
-    if(editorComp != null) {
+    if (editorComp != null) {
       editorComp.requestFocus();
     }
   }
 
   private void addPackageToPackages() {
     int selected = myPackageTable.getSelectedRow() + 1;
-    if(selected < 0) {
+    if (selected < 0) {
       selected = myPackageList.getEntryCount();
     }
-    PackageEntry entry = new PackageEntry(false,"", true);
+    PackageEntry entry = new PackageEntry(false, "", true);
     myPackageList.insertEntryAt(entry, selected);
     refreshTableModel(selected, myPackageTable);
   }
 
   private void addBlankLine() {
     int selected = myImportLayoutTable.getSelectedRow() + 1;
-    if(selected < 0) {
+    if (selected < 0) {
       selected = myImportLayoutList.getEntryCount();
     }
     myImportLayoutList.insertEntryAt(PackageEntry.BLANK_LINE_ENTRY, selected);
     AbstractTableModel model = (AbstractTableModel)myImportLayoutTable.getModel();
     model.fireTableRowsInserted(selected, selected);
     myImportLayoutTable.setRowSelectionInterval(selected, selected);
-    updateButtons();
   }
 
   private void removeEntryFromImportLayouts() {
     int selected = myImportLayoutTable.getSelectedRow();
-    if(selected < 0)
+    if (selected < 0) {
       return;
+    }
     PackageEntry entry = myImportLayoutList.getEntryAt(selected);
-    if(entry == PackageEntry.ALL_OTHER_STATIC_IMPORTS_ENTRY || entry == PackageEntry.ALL_OTHER_IMPORTS_ENTRY) {
+    if (entry == PackageEntry.ALL_OTHER_STATIC_IMPORTS_ENTRY || entry == PackageEntry.ALL_OTHER_IMPORTS_ENTRY) {
       return;
     }
     TableUtil.stopEditing(myImportLayoutTable);
     myImportLayoutList.removeEntryAt(selected);
     AbstractTableModel model = (AbstractTableModel)myImportLayoutTable.getModel();
     model.fireTableRowsDeleted(selected, selected);
-    if(selected >= myImportLayoutList.getEntryCount()) {
-      selected --;
+    if (selected >= myImportLayoutList.getEntryCount()) {
+      selected--;
     }
-    if(selected >= 0) {
+    if (selected >= 0) {
       myImportLayoutTable.setRowSelectionInterval(selected, selected);
     }
-    updateButtons();
   }
 
   private void removeEntryFromPackages() {
     int selected = myPackageTable.getSelectedRow();
-    if(selected < 0) return;
+    if (selected < 0) return;
     TableUtil.stopEditing(myPackageTable);
     myPackageList.removeEntryAt(selected);
     AbstractTableModel model = (AbstractTableModel)myPackageTable.getModel();
     model.fireTableRowsDeleted(selected, selected);
-    if(selected >= myPackageList.getEntryCount()) {
-      selected --;
+    if (selected >= myPackageList.getEntryCount()) {
+      selected--;
     }
-    if(selected >= 0) {
+    if (selected >= 0) {
       myPackageTable.setRowSelectionInterval(selected, selected);
     }
-    updateButtons();
   }
 
   private void moveRowUp() {
     int selected = myImportLayoutTable.getSelectedRow();
-    if(selected < 1) {
+    if (selected < 1) {
       return;
     }
     TableUtil.stopEditing(myImportLayoutTable);
     PackageEntry entry = myImportLayoutList.getEntryAt(selected);
-    PackageEntry previousEntry = myImportLayoutList.getEntryAt(selected-1);
+    PackageEntry previousEntry = myImportLayoutList.getEntryAt(selected - 1);
     myImportLayoutList.setEntryAt(previousEntry, selected);
-    myImportLayoutList.setEntryAt(entry, selected-1);
+    myImportLayoutList.setEntryAt(entry, selected - 1);
 
     AbstractTableModel model = (AbstractTableModel)myImportLayoutTable.getModel();
-    model.fireTableRowsUpdated(selected-1, selected);
-    myImportLayoutTable.setRowSelectionInterval(selected-1, selected-1);
-    updateButtons();
+    model.fireTableRowsUpdated(selected - 1, selected);
+    myImportLayoutTable.setRowSelectionInterval(selected - 1, selected - 1);
   }
 
   private void moveRowDown() {
     int selected = myImportLayoutTable.getSelectedRow();
-    if(selected >= myImportLayoutList.getEntryCount()-1) {
+    if (selected >= myImportLayoutList.getEntryCount() - 1) {
       return;
     }
     TableUtil.stopEditing(myImportLayoutTable);
     PackageEntry entry = myImportLayoutList.getEntryAt(selected);
-    PackageEntry nextEntry = myImportLayoutList.getEntryAt(selected+1);
+    PackageEntry nextEntry = myImportLayoutList.getEntryAt(selected + 1);
     myImportLayoutList.setEntryAt(nextEntry, selected);
-    myImportLayoutList.setEntryAt(entry, selected+1);
+    myImportLayoutList.setEntryAt(entry, selected + 1);
 
     AbstractTableModel model = (AbstractTableModel)myImportLayoutTable.getModel();
-    model.fireTableRowsUpdated(selected, selected+1);
-    myImportLayoutTable.setRowSelectionInterval(selected+1, selected+1);
-    updateButtons();
+    model.fireTableRowsUpdated(selected, selected + 1);
+    myImportLayoutTable.setRowSelectionInterval(selected + 1, selected + 1);
   }
 
   private JBTable createTableForPackageEntries(final PackageEntryTable packageTable) {
@@ -410,7 +380,7 @@ public class CodeStyleImportsPanel extends JPanel {
     // Create a model of the data.
     TableModel dataModel = new AbstractTableModel() {
       public int getColumnCount() {
-        return names.length + (areStaticImportsEnabled()?1:0);
+        return names.length + (areStaticImportsEnabled() ? 1 : 0);
       }
 
       public int getRowCount() {
@@ -421,13 +391,13 @@ public class CodeStyleImportsPanel extends JPanel {
         PackageEntry entry = packageTable.getEntryAt(row);
         if (entry == null || !isCellEditable(row, col)) return null;
         col += areStaticImportsEnabled() ? 0 : 1;
-        if(col == 0) {
+        if (col == 0) {
           return entry.isStatic();
         }
-        if(col == 1) {
+        if (col == 1) {
           return entry.getPackageName();
         }
-        if(col == 2) {
+        if (col == 2) {
           return entry.isWithSubpackages() ? Boolean.TRUE : Boolean.FALSE;
         }
         throw new IllegalArgumentException(String.valueOf(col));
@@ -441,13 +411,13 @@ public class CodeStyleImportsPanel extends JPanel {
 
       public Class getColumnClass(int col) {
         col += areStaticImportsEnabled() ? 0 : 1;
-        if(col == 0) {
+        if (col == 0) {
           return Boolean.class;
         }
-        if(col == 1) {
+        if (col == 1) {
           return String.class;
         }
-        if(col == 2) {
+        if (col == 2) {
           return Boolean.class;
         }
         throw new IllegalArgumentException(String.valueOf(col));
@@ -461,16 +431,18 @@ public class CodeStyleImportsPanel extends JPanel {
       public void setValueAt(Object aValue, int row, int col) {
         PackageEntry packageEntry = packageTable.getEntryAt(row);
         col += areStaticImportsEnabled() ? 0 : 1;
-        if(col == 0) {
+        if (col == 0) {
           PackageEntry newPackageEntry = new PackageEntry((Boolean)aValue, packageEntry.getPackageName(), packageEntry.isWithSubpackages());
           packageTable.setEntryAt(newPackageEntry, row);
         }
-        else if(col == 1) {
-          PackageEntry newPackageEntry = new PackageEntry(packageEntry.isStatic(), ((String)aValue).trim(), packageEntry.isWithSubpackages());
+        else if (col == 1) {
+          PackageEntry newPackageEntry =
+            new PackageEntry(packageEntry.isStatic(), ((String)aValue).trim(), packageEntry.isWithSubpackages());
           packageTable.setEntryAt(newPackageEntry, row);
         }
-        else if(col == 2) {
-          PackageEntry newPackageEntry = new PackageEntry(packageEntry.isStatic(), packageEntry.getPackageName(), ((Boolean)aValue).booleanValue());
+        else if (col == 2) {
+          PackageEntry newPackageEntry =
+            new PackageEntry(packageEntry.isStatic(), packageEntry.getPackageName(), ((Boolean)aValue).booleanValue());
           packageTable.setEntryAt(newPackageEntry, row);
         }
         else {
@@ -483,12 +455,6 @@ public class CodeStyleImportsPanel extends JPanel {
     final JBTable result = new JBTable(dataModel);
     result.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     resizeColumns(packageTable, result);
-    result.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
-      @Override
-      public void valueChanged(ListSelectionEvent e) {
-        updateButtons();
-      }
-    });
 
     TableCellEditor editor = result.getDefaultEditor(String.class);
     if (editor instanceof DefaultCellEditor) {
@@ -553,25 +519,10 @@ public class CodeStyleImportsPanel extends JPanel {
 
   private static void fixColumnWidthToHeader(JBTable result, int columnIdx) {
     final TableColumn column = result.getColumnModel().getColumn(columnIdx);
-    final int width = 15 + result.getTableHeader().getFontMetrics(result.getTableHeader().getFont()).stringWidth(result.getColumnName(columnIdx));
+    final int width =
+      15 + result.getTableHeader().getFontMetrics(result.getTableHeader().getFont()).stringWidth(result.getColumnName(columnIdx));
     column.setMinWidth(width);
     column.setMaxWidth(width);
-  }
-
-  private void updateButtons(){
-    int selectedImport = myImportLayoutTable.getSelectedRow();
-    myMoveUpButton.setEnabled(selectedImport >= 1);
-    myMoveDownButton.setEnabled(selectedImport < myImportLayoutTable.getRowCount() - 1);
-    PackageEntry entry = selectedImport < 0 ? null : myImportLayoutList.getEntryAt(selectedImport);
-    boolean canRemove =  entry != null && entry != PackageEntry.ALL_OTHER_STATIC_IMPORTS_ENTRY && entry != PackageEntry.ALL_OTHER_IMPORTS_ENTRY;
-    myRemovePackageFromImportLayoutButton.setEnabled(canRemove);
-  }
-
-  private JComponent createImportLayoutTable() {
-    myImportLayoutTable = createTableForPackageEntries(myImportLayoutList);
-    JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myImportLayoutTable);
-    scrollPane.setPreferredSize(new Dimension(-1, 200));
-    return scrollPane;
   }
 
   public void reset(CodeStyleSettings settings) {
@@ -593,10 +544,10 @@ public class CodeStyleImportsPanel extends JPanel {
     model = (AbstractTableModel)myPackageTable.getModel();
     model.fireTableDataChanged();
 
-    if(myImportLayoutTable.getRowCount() > 0) {
+    if (myImportLayoutTable.getRowCount() > 0) {
       myImportLayoutTable.getSelectionModel().setSelectionInterval(0, 0);
     }
-    if(myPackageTable.getRowCount() > 0) {
+    if (myPackageTable.getRowCount() > 0) {
       myPackageTable.getSelectionModel().setSelectionInterval(0, 0);
     }
 
@@ -606,7 +557,6 @@ public class CodeStyleImportsPanel extends JPanel {
     else {
       myJspOneImportPerDirective.doClick();
     }
-    updateButtons();
   }
 
   public void reset() {
@@ -621,16 +571,16 @@ public class CodeStyleImportsPanel extends JPanel {
     settings.USE_FQ_CLASS_NAMES_IN_JAVADOC = myCbUseFQClassNamesInJavaDoc.isSelected();
     settings.USE_SINGLE_CLASS_IMPORTS = myCbUseSingleClassImports.isSelected();
     settings.INSERT_INNER_CLASS_IMPORTS = myCbInsertInnerClassImports.isSelected();
-    try{
+    try {
       settings.CLASS_COUNT_TO_USE_IMPORT_ON_DEMAND = Integer.parseInt(myClassCountField.getText());
     }
-    catch(NumberFormatException e){
+    catch (NumberFormatException e) {
       //just a bad number
     }
-    try{
+    try {
       settings.NAMES_COUNT_TO_USE_IMPORT_ON_DEMAND = Integer.parseInt(myNamesCountField.getText());
     }
-    catch(NumberFormatException e){
+    catch (NumberFormatException e) {
       //just a bad number
     }
 
@@ -654,8 +604,7 @@ public class CodeStyleImportsPanel extends JPanel {
   }
 
   public boolean isModified(CodeStyleSettings settings) {
-    boolean
-    isModified  = isModified(myCbLayoutStaticImportsSeparately, settings.LAYOUT_STATIC_IMPORTS_SEPARATELY);
+    boolean isModified = isModified(myCbLayoutStaticImportsSeparately, settings.LAYOUT_STATIC_IMPORTS_SEPARATELY);
     isModified |= isModified(myCbUseFQClassNames, settings.USE_FQ_CLASS_NAMES);
     isModified |= isModified(myCbUseFQClassNamesInJavaDoc, settings.USE_FQ_CLASS_NAMES_IN_JAVADOC);
     isModified |= isModified(myCbUseSingleClassImports, settings.USE_SINGLE_CLASS_IMPORTS);
@@ -679,7 +628,7 @@ public class CodeStyleImportsPanel extends JPanel {
       int fieldValue = Integer.parseInt(textField.getText().trim());
       return fieldValue != value;
     }
-    catch(NumberFormatException e) {
+    catch (NumberFormatException e) {
       return false;
     }
   }
@@ -689,14 +638,14 @@ public class CodeStyleImportsPanel extends JPanel {
   }
 
   private static boolean isModified(PackageEntryTable list, PackageEntryTable table) {
-    if(list.getEntryCount() != table.getEntryCount()) {
+    if (list.getEntryCount() != table.getEntryCount()) {
       return true;
     }
 
-    for(int i=0; i<list.getEntryCount(); i++) {
+    for (int i = 0; i < list.getEntryCount(); i++) {
       PackageEntry entry1 = list.getEntryAt(i);
       PackageEntry entry2 = table.getEntryAt(i);
-      if(!entry1.equals(entry2)) {
+      if (!entry1.equals(entry2)) {
         return true;
       }
     }

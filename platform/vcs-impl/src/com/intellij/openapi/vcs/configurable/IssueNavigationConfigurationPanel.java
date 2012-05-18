@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vcs.configurable;
 
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.SearchableConfigurable;
@@ -23,18 +24,18 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.IssueNavigationConfiguration;
 import com.intellij.openapi.vcs.IssueNavigationLink;
 import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.ui.AnActionButton;
+import com.intellij.ui.AnActionButtonRunnable;
+import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.table.JBTable;
+import com.intellij.util.IconUtil;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -42,14 +43,7 @@ import java.util.List;
  * @author yole
  */
 public class IssueNavigationConfigurationPanel extends JPanel implements SearchableConfigurable, Configurable.NoScroll {
-  private JPanel myPanel;
   private JBTable myLinkTable;
-  private JButton myAddButton;
-  private JButton myEditButton;
-  private JButton myDeleteButton;
-  private JButton myAddJiraPatternButton;
-  private JButton myAddYouTrackPatternButton;
-  private JLabel myDescriptionLabel;
   private final Project myProject;
   private List<IssueNavigationLink> myLinks;
   private ListTableModel<IssueNavigationLink> myModel;
@@ -68,93 +62,85 @@ public class IssueNavigationConfigurationPanel extends JPanel implements Searcha
   public IssueNavigationConfigurationPanel(Project project) {
     super(new BorderLayout());
     myProject = project;
-    add(myPanel, BorderLayout.CENTER);
-    myDescriptionLabel.setText("<html>" + ApplicationNamesInfo.getInstance().getFullProductName() + " will search for the specified patterns in " +
-                               "checkin comments and link them to issues in your issue tracker:</html>");
+    myLinkTable = new JBTable();
+    myLinkTable.getEmptyText().setText(VcsBundle.message("issue.link.no.patterns"));
     reset();
-    myAddButton.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        IssueLinkConfigurationDialog dlg = new IssueLinkConfigurationDialog(myProject);
-        dlg.setTitle(VcsBundle.message("issue.link.add.title"));
-        dlg.show();
-        if (dlg.isOK()) {
-          myLinks.add(dlg.getLink());
-          myModel.fireTableDataChanged();
-        }
-      }
-    });
-    myAddJiraPatternButton.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        String s = Messages.showInputDialog(IssueNavigationConfigurationPanel.this, "Enter JIRA installation URL:",
-                                            "Add JIRA Issue Navigation Pattern", Messages.getQuestionIcon());
-        if (s == null) {
-          return;
-        }
-        if (!s.endsWith("/")) {
-          s += "/";
-        }
-        myLinks.add(new IssueNavigationLink("[A-Z]+\\-\\d+", s + "browse/$0"));
-        myModel.fireTableDataChanged();
-      }
-    });
-    myAddYouTrackPatternButton.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        String s = Messages.showInputDialog(IssueNavigationConfigurationPanel.this, "Enter YouTrack installation URL:",
-                                            "Add YouTrack Issue Navigation Pattern", Messages.getQuestionIcon());
-        if (s == null) {
-          return;
-        }
-        if (!s.endsWith("/")) {
-          s += "/";
-        }
-        myLinks.add(new IssueNavigationLink("[A-Z]+\\-\\d+", s + "issue/$0"));
-        myModel.fireTableDataChanged();
-      }
-    });
-    myEditButton.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        IssueNavigationLink link = (IssueNavigationLink) myModel.getItem(myLinkTable.getSelectedRow());
-        IssueLinkConfigurationDialog dlg = new IssueLinkConfigurationDialog(myProject);
-        dlg.setTitle(VcsBundle.message("issue.link.edit.title"));
-        dlg.setLink(link);
-        dlg.show();
-        if (dlg.isOK()) {
-          final IssueNavigationLink editedLink = dlg.getLink();
-          link.setIssueRegexp(editedLink.getIssueRegexp());
-          link.setLinkRegexp(editedLink.getLinkRegexp());
-          myModel.fireTableDataChanged();
-        }
-      }
-    });
-    myDeleteButton.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        if (Messages.showOkCancelDialog(myProject, VcsBundle.message("issue.link.delete.prompt"),
-                                        VcsBundle.message("issue.link.delete.title"), Messages.getQuestionIcon()) == 0) {
-          int selRow = myLinkTable.getSelectedRow();
-          myLinks.remove(selRow);
-          myModel.fireTableDataChanged();
-          if (myLinkTable.getRowCount() > 0) {
-            if (selRow >= myLinkTable.getRowCount()) {
-              selRow--;
+    add(new JLabel("<html>" + ApplicationNamesInfo.getInstance().getFullProductName() + " will search for the specified patterns in " +
+                   "checkin comments and link them to issues in your issue tracker:</html>"), BorderLayout.NORTH);
+    add(
+      ToolbarDecorator.createDecorator(myLinkTable)
+        .setAddAction(new AnActionButtonRunnable() {
+          @Override
+          public void run(AnActionButton button) {
+            IssueLinkConfigurationDialog dlg = new IssueLinkConfigurationDialog(myProject);
+            dlg.setTitle(VcsBundle.message("issue.link.add.title"));
+            dlg.show();
+            if (dlg.isOK()) {
+              myLinks.add(dlg.getLink());
+              myModel.fireTableDataChanged();
             }
-            myLinkTable.getSelectionModel().setSelectionInterval(selRow, selRow);
+          }
+        }).setRemoveAction(new AnActionButtonRunnable() {
+        @Override
+        public void run(AnActionButton button) {
+          if (Messages.showOkCancelDialog(myProject, VcsBundle.message("issue.link.delete.prompt"),
+                                          VcsBundle.message("issue.link.delete.title"), Messages.getQuestionIcon()) == 0) {
+            int selRow = myLinkTable.getSelectedRow();
+            myLinks.remove(selRow);
+            myModel.fireTableDataChanged();
+            if (myLinkTable.getRowCount() > 0) {
+              if (selRow >= myLinkTable.getRowCount()) {
+                selRow--;
+              }
+              myLinkTable.getSelectionModel().setSelectionInterval(selRow, selRow);
+            }
           }
         }
-      }
-    });
-    myLinkTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
-      public void valueChanged(final ListSelectionEvent e) {
-        updateButtons();
-      }
-    });
-
-    myLinkTable.getEmptyText().setText(VcsBundle.message("issue.link.no.patterns"));
-    updateButtons();
-  }
-
-  private void updateButtons() {
-    myEditButton.setEnabled(myLinkTable.getSelectedRow() >= 0);
-    myDeleteButton.setEnabled(myEditButton.isEnabled());
+      }).setEditAction(new AnActionButtonRunnable() {
+        @Override
+        public void run(AnActionButton button) {
+          IssueNavigationLink link = (IssueNavigationLink) myModel.getItem(myLinkTable.getSelectedRow());
+          IssueLinkConfigurationDialog dlg = new IssueLinkConfigurationDialog(myProject);
+          dlg.setTitle(VcsBundle.message("issue.link.edit.title"));
+          dlg.setLink(link);
+          dlg.show();
+          if (dlg.isOK()) {
+            final IssueNavigationLink editedLink = dlg.getLink();
+            link.setIssueRegexp(editedLink.getIssueRegexp());
+            link.setLinkRegexp(editedLink.getLinkRegexp());
+            myModel.fireTableDataChanged();
+          }
+        }
+      }).addExtraAction(new AnActionButton("Add JIRA Pattern", IconUtil.getAddJiraPatternIcon()) {
+        @Override
+        public void actionPerformed(AnActionEvent e) {
+          String s = Messages.showInputDialog(IssueNavigationConfigurationPanel.this, "Enter JIRA installation URL:",
+                                              "Add JIRA Issue Navigation Pattern", Messages.getQuestionIcon());
+          if (s == null) {
+            return;
+          }
+          if (!s.endsWith("/")) {
+            s += "/";
+          }
+          myLinks.add(new IssueNavigationLink("[A-Z]+\\-\\d+", s + "browse/$0"));
+          myModel.fireTableDataChanged();
+        }
+      }).addExtraAction(new AnActionButton("Add YouTrack Pattern", IconUtil.getAddYouTrackPatternIcon()) {
+        @Override
+        public void actionPerformed(AnActionEvent e) {
+          String s = Messages.showInputDialog(IssueNavigationConfigurationPanel.this, "Enter YouTrack installation URL:",
+                                              "Add YouTrack Issue Navigation Pattern", Messages.getQuestionIcon());
+          if (s == null) {
+            return;
+          }
+          if (!s.endsWith("/")) {
+            s += "/";
+          }
+          myLinks.add(new IssueNavigationLink("[A-Z]+\\-\\d+", s + "issue/$0"));
+          myModel.fireTableDataChanged();
+        }
+      }).setButtonComparator("Add", "Add JIRA Pattern", "Add YouTrack Pattern", "Edit", "Remove")
+        .disableUpDownActions().createPanel(), BorderLayout.CENTER);
   }
 
   public void apply() {

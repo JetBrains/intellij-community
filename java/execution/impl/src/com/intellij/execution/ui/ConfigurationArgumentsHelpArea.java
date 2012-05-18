@@ -49,7 +49,7 @@ public class ConfigurationArgumentsHelpArea extends JPanel {
     );
 
     FixedSizeButton copyButton = new FixedSizeButton(22);
-    copyButton.setIcon(PlatformIcons.DUPLICATE_ICON);
+    copyButton.setIcon(PlatformIcons.COPY_ICON);
     copyButton.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {

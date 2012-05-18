@@ -323,7 +323,7 @@
     <!-- Toolbar -->
     <!--
     <group id="ToolbarNewElement">
-      <action id="NewElementToolbarAction" class="com.intellij.ide.actions.NewElementToolbarAction" icon="/general/plus.png"/>
+      <action id="NewElementToolbarAction" class="com.intellij.ide.actions.NewElementToolbarAction" icon="/general/add.png"/>
       <add-to-group group-id="MainToolBar" anchor="first"/>
     </group>
     -->

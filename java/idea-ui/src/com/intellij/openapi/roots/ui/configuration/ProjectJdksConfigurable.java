@@ -39,7 +39,7 @@ import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.util.Consumer;
-import com.intellij.util.PlatformIcons;
+import com.intellij.util.IconUtil;
 import com.intellij.util.containers.Convertor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -160,7 +160,7 @@ public class ProjectJdksConfigurable extends MasterDetailsComponent {
   protected ArrayList<AnAction> createActions(final boolean fromPopup) {
     final ArrayList<AnAction> actions = new ArrayList<AnAction>();
     DefaultActionGroup group = new DefaultActionGroup(ProjectBundle.message("add.new.jdk.text"), true);
-    group.getTemplatePresentation().setIcon(PlatformIcons.ADD_ICON);
+    group.getTemplatePresentation().setIcon(IconUtil.getAddIcon());
     myProjectJdksModel.createAddActions(group, myTree, new Consumer<Sdk>() {
       public void consume(final Sdk projectJdk) {
         addNode(new MyNode(new JdkConfigurable(((ProjectJdkImpl)projectJdk), myProjectJdksModel, TREE_UPDATER, myHistory, myProject), false), myRoot);

@@ -29,6 +29,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.codeStyle.*;
+import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBTabbedPane;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -512,13 +513,16 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
       myProvider = provider;
       myTopPanel = new JPanel();
       myTopPanel.setLayout(new BorderLayout());
-      myLeftPanel = new JPanel();
+      myLeftPanel = new JPanel(new BorderLayout());
       myTopPanel.add(myLeftPanel, BorderLayout.WEST);
       myRightPanel = new JPanel();
       installPreviewPanel(myRightPanel);
       myEditor = editor;
       if (myEditor != null) {
-        myLeftPanel.add(myEditor.createPanel());
+        JPanel panel = myEditor.createPanel();
+        JScrollPane scroll = ScrollPaneFactory.createScrollPane(panel, true);
+        scroll.setPreferredSize(new Dimension(panel.getPreferredSize().width + scroll.getVerticalScrollBar().getPreferredSize().width + 5, -1));
+        myLeftPanel.add(scroll, BorderLayout.CENTER);
       }
       myTopPanel.add(myRightPanel, BorderLayout.CENTER);
     }

@@ -28,7 +28,7 @@ import com.intellij.ui.*;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.PlatformIcons;
+import com.intellij.util.IconUtil;
 import com.intellij.util.ui.ItemRemovable;
 import com.intellij.util.ui.UIUtil;
 
@@ -108,7 +108,7 @@ public class JavadocEditor extends ModuleElementsEditor {
             TableUtil.selectRows(myTable, new int[]{tableModel.getRowCount() - 1});
           }
         }
-      }).addExtraAction(new AnActionButton(ProjectBundle.message("module.javadoc.add.url.button"), PlatformIcons.TABLE_URL) {
+      }).addExtraAction(new AnActionButton(ProjectBundle.message("module.javadoc.add.url.button"), IconUtil.getAddLinkIcon()) {
         @Override
         public void actionPerformed(AnActionEvent e) {
           VirtualFile[] files = new VirtualFile[]{Util.showSpecifyJavadocUrlDialog(myTable)};
@@ -133,7 +133,7 @@ public class JavadocEditor extends ModuleElementsEditor {
             saveData();
           }
         }
-      }).createPanel();
+      }).setButtonComparator("Add", ProjectBundle.message("module.javadoc.add.url.button"), "Remove").createPanel();
 
     final JPanel mainPanel = new JPanel(new BorderLayout());
     mainPanel.add(tablePanel, BorderLayout.CENTER);

@@ -58,6 +58,7 @@ import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.ui.*;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Alarm;
+import com.intellij.util.IconUtil;
 import com.intellij.util.config.StorageAccessors;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.UIUtil;
@@ -377,7 +378,7 @@ public class SingleInspectionProfilePanel extends JPanel {
     actions.addSeparator();
     actions.add(new MyAddScopeAction());
     actions.add(new MyDeleteScopeAction());
-    actions.add(new MoveScopeAction(myTree, "Move Scope Up", IconLoader.getIcon("/actions/moveUp.png"), -1) {
+    actions.add(new MoveScopeAction(myTree, "Move Scope Up", IconUtil.getMoveUpIcon(), -1) {
       protected boolean isEnabledFor(int idx, InspectionConfigTreeNode parent) {
         return idx > 0;
       }
@@ -386,7 +387,7 @@ public class SingleInspectionProfilePanel extends JPanel {
         return mySelectedProfile;
       }
     });
-    actions.add(new MoveScopeAction(myTree, "Move Scope Down", IconLoader.getIcon("/actions/moveDown.png"), 1) {
+    actions.add(new MoveScopeAction(myTree, "Move Scope Down", IconUtil.getMoveDownIcon(), 1) {
       protected boolean isEnabledFor(int idx, InspectionConfigTreeNode parent) {
         return idx < parent.getChildCount() - 2;
       }

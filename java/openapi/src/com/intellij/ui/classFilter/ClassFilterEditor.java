@@ -23,14 +23,14 @@ package com.intellij.ui.classFilter;
 import com.intellij.ide.util.ClassFilter;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ui.TableUtil;
-import com.intellij.ui.UIBundle;
+import com.intellij.ui.*;
 import com.intellij.ui.table.JBTable;
+import com.intellij.util.IconUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ComponentWithEmptyText;
 import com.intellij.util.ui.ItemRemovable;
@@ -40,55 +40,69 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
 import javax.swing.table.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.KeyEvent;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
 public class ClassFilterEditor extends JPanel implements ComponentWithEmptyText {
+  protected AnActionButton myAddPatternButton;
   protected JBTable myTable = null;
   protected FilterTableModel myTableModel = null;
-  private final JButton myAddClassButton;
-  protected final JButton myAddPatternButton;
-  private final JButton myRemoveButton;
   protected final Project myProject;
   private final ClassFilter myChooserFilter;
   @Nullable
   private final String myPatternsHelpId;
 
   public ClassFilterEditor(Project project) {
-    this (project, null);
+    this(project, null);
   }
 
   public ClassFilterEditor(Project project, ClassFilter classFilter) {
-    this (project, classFilter, null);
+    this(project, classFilter, null);
   }
 
   public ClassFilterEditor(Project project, ClassFilter classFilter, @Nullable String patternsHelpId) {
-    super(new GridBagLayout());
+    super(new BorderLayout());
     myPatternsHelpId = patternsHelpId;
-    myAddClassButton = new JButton(getAddButtonText());
-    myAddPatternButton = new JButton(getAddPatternButtonText());
-    myRemoveButton = new JButton(UIBundle.message("button.remove"));
     myTable = new JBTable();
-    JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myTable);
 
-    add(scrollPane, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 3, 1.0, 1.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(4, 0, 4, 6), 0, 0));
-    add(myAddClassButton, new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(4, 0, 0, 0), 0, 0));
-    add(myAddPatternButton, new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(4, 0, 0, 0), 0, 0));
-    add(myRemoveButton, new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 0.0, 1.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(4, 0, 0, 0), 0, 0));
+    add(
+      ToolbarDecorator.createDecorator(myTable)
+        .addExtraAction(new AnActionButton(getAddButtonText(), IconUtil.getAddClassIcon()) {
+          @Override
+          public void actionPerformed(AnActionEvent e) {
+            addClassFilter();
+          }
+
+          @Override
+          public void updateButton(AnActionEvent e) {
+            super.updateButton(e);
+            setEnabled(!myProject.isDefault());
+          }
+        }).addExtraAction(myAddPatternButton = new AnActionButton(getAddPatternButtonText(), IconUtil.getAddPatternIcon()) {
+        @Override
+        public void actionPerformed(AnActionEvent e) {
+          addPatternFilter();
+        }
+
+        @Override
+        public void updateButton(AnActionEvent e) {
+          super.updateButton(e);
+          setEnabled(!myProject.isDefault());
+        }
+      }).setRemoveAction(new AnActionButtonRunnable() {
+        @Override
+        public void run(AnActionButton button) {
+          TableUtil.removeSelectedItems(myTable);
+        }
+      }).setButtonComparator(getAddButtonText(), getAddPatternButtonText(), "Remove")
+        .disableUpDownActions().createPanel(), BorderLayout.CENTER
+    );
 
     myChooserFilter = classFilter;
     myProject = project;
-    myAddClassButton.setDefaultCapable(false);
-    myAddPatternButton.setDefaultCapable(false);
-    myRemoveButton.setDefaultCapable(false);
 
     myTableModel = new FilterTableModel();
     myTable.setModel(myTableModel);
@@ -106,46 +120,6 @@ public class ClassFilterEditor extends JPanel implements ComponentWithEmptyText 
     column.setMaxWidth(width);
     column.setCellRenderer(new EnabledCellRenderer(myTable.getDefaultRenderer(Boolean.class)));
     columnModel.getColumn(FilterTableModel.FILTER).setCellRenderer(new FilterCellRenderer());
-
-    myTable.registerKeyboardAction(
-      new ActionListener() {
-        public void actionPerformed(ActionEvent e) {
-          myAddClassButton.doClick();
-        }
-      },
-      KeyStroke.getKeyStroke(KeyEvent.VK_INSERT, 0),
-      JComponent.WHEN_FOCUSED
-    );
-    myTable.registerKeyboardAction(
-      new ActionListener() {
-        public void actionPerformed(ActionEvent e) {
-          myRemoveButton.doClick();
-        }
-      },
-      KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0),
-      JComponent.WHEN_FOCUSED
-    );
-    myTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
-      public void valueChanged(ListSelectionEvent e) {
-        myRemoveButton.setEnabled(myTable.getSelectedRow() > -1);
-      }
-    });
-
-    myAddPatternButton.setEnabled(!myProject.isDefault());
-    myAddPatternButton.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        addPatternFilter();
-      }
-    });
-    myAddClassButton.setEnabled(!myProject.isDefault());
-    myAddClassButton.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        addClassFilter();
-      }
-    });
-
-    myRemoveButton.addActionListener(new RemoveAction());
-    myRemoveButton.setEnabled(false);
 
     getEmptyText().setText(UIBundle.message("no.patterns"));
   }
@@ -173,10 +147,7 @@ public class ClassFilterEditor extends JPanel implements ComponentWithEmptyText 
 
   public void setEnabled(boolean enabled) {
     super.setEnabled(enabled);
-
-    myAddPatternButton.setEnabled(enabled);
-    myAddClassButton.setEnabled(enabled);
-    myRemoveButton.setEnabled((myTable.getSelectedRow() > -1) && enabled);
+    myTable.setEnabled(enabled);
     myTable.setRowSelectionAllowed(enabled);
     myTableModel.fireTableDataChanged();
   }
@@ -188,7 +159,7 @@ public class ClassFilterEditor extends JPanel implements ComponentWithEmptyText 
     }
   }
 
-  protected final class FilterTableModel extends AbstractTableModel implements ItemRemovable{
+  protected final class FilterTableModel extends AbstractTableModel implements ItemRemovable {
     private final List<com.intellij.ui.classFilter.ClassFilter> myFilters = new LinkedList<com.intellij.ui.classFilter.ClassFilter>();
     public static final int CHECK_MARK = 0;
     public static final int FILTER = 1;
@@ -202,7 +173,7 @@ public class ClassFilterEditor extends JPanel implements ComponentWithEmptyText 
     }
 
     public com.intellij.ui.classFilter.ClassFilter[] getFilters() {
-      for (Iterator<com.intellij.ui.classFilter.ClassFilter> it = myFilters.iterator(); it.hasNext();) {
+      for (Iterator<com.intellij.ui.classFilter.ClassFilter> it = myFilters.iterator(); it.hasNext(); ) {
         com.intellij.ui.classFilter.ClassFilter filter = it.next();
         String pattern = filter.getPattern();
         if (pattern == null || "".equals(pattern)) {
@@ -240,7 +211,7 @@ public class ClassFilterEditor extends JPanel implements ComponentWithEmptyText 
         return filter;
       }
       if (columnIndex == CHECK_MARK) {
-        return filter.isEnabled()? Boolean.TRUE : Boolean.FALSE;
+        return filter.isEnabled() ? Boolean.TRUE : Boolean.FALSE;
       }
       return null;
     }
@@ -248,7 +219,7 @@ public class ClassFilterEditor extends JPanel implements ComponentWithEmptyText 
     public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
       com.intellij.ui.classFilter.ClassFilter filter = myFilters.get(rowIndex);
       if (columnIndex == FILTER) {
-        filter.setPattern(aValue != null? aValue.toString() : "");
+        filter.setPattern(aValue != null ? aValue.toString() : "");
       }
       else if (columnIndex == CHECK_MARK) {
         filter.setEnabled(aValue == null || ((Boolean)aValue).booleanValue());
@@ -284,7 +255,8 @@ public class ClassFilterEditor extends JPanel implements ComponentWithEmptyText 
         ((JLabel)component).setBorder(noFocusBorder);
       }
       UIManager.put(UIUtil.TABLE_FOCUS_CELL_BACKGROUND_PROPERTY, color);
-      com.intellij.ui.classFilter.ClassFilter filter = (com.intellij.ui.classFilter.ClassFilter)table.getValueAt(row, FilterTableModel.FILTER);
+      com.intellij.ui.classFilter.ClassFilter filter =
+        (com.intellij.ui.classFilter.ClassFilter)table.getValueAt(row, FilterTableModel.FILTER);
       component.setEnabled(ClassFilterEditor.this.isEnabled() && filter.isEnabled());
       return component;
     }
@@ -306,7 +278,7 @@ public class ClassFilterEditor extends JPanel implements ComponentWithEmptyText 
   }
 
   @NotNull
-  protected com.intellij.ui.classFilter.ClassFilter createFilter(String pattern){
+  protected com.intellij.ui.classFilter.ClassFilter createFilter(String pattern) {
     return new com.intellij.ui.classFilter.ClassFilter(pattern);
   }
 
@@ -346,7 +318,7 @@ public class ClassFilterEditor extends JPanel implements ComponentWithEmptyText 
   @Nullable
   private static String getJvmClassName(PsiClass aClass) {
     PsiClass parentClass = PsiTreeUtil.getParentOfType(aClass, PsiClass.class, true);
-    if(parentClass != null) {
+    if (parentClass != null) {
       final String parentName = getJvmClassName(parentClass);
       if (parentName == null) {
         return null;
@@ -359,15 +331,5 @@ public class ClassFilterEditor extends JPanel implements ComponentWithEmptyText 
   public void addPattern(String pattern) {
     com.intellij.ui.classFilter.ClassFilter filter = createFilter(pattern);
     myTableModel.addRow(filter);
-  }
-
-  private final class RemoveAction implements ActionListener {
-    public void actionPerformed(ActionEvent e) {
-      TableUtil.removeSelectedItems(myTable);
-    }
-  }
-
-  public void setAddPatternButtonVisible(boolean visible) {
-    myAddPatternButton.setVisible(visible);
   }
 }

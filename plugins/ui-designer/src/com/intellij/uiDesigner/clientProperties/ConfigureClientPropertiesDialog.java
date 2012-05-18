@@ -25,6 +25,7 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.uiDesigner.UIDesignerBundle;
+import com.intellij.util.IconUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -202,7 +203,7 @@ public class ConfigureClientPropertiesDialog extends DialogWrapper {
 
   private class AddClassAction extends AnAction {
     public AddClassAction() {
-      super(UIDesignerBundle.message("client.properties.add.class.tooltip"), "", IconLoader.getIcon("/general/add.png"));
+      super(UIDesignerBundle.message("client.properties.add.class.tooltip"), "", IconUtil.getAddIcon());
     }
 
     public void actionPerformed(AnActionEvent e) {
@@ -248,7 +249,7 @@ public class ConfigureClientPropertiesDialog extends DialogWrapper {
 
   private class AddPropertyAction extends AnAction {
     public AddPropertyAction() {
-      super(UIDesignerBundle.message("client.properties.add.property.tooltip"), "", IconLoader.getIcon("/general/add.png"));
+      super(UIDesignerBundle.message("client.properties.add.property.tooltip"), "", IconUtil.getAddIcon());
     }
 
     public void actionPerformed(AnActionEvent e) {

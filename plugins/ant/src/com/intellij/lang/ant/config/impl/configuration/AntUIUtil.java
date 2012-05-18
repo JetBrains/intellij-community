@@ -30,6 +30,7 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.util.IconUtil;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.config.AbstractProperty;
 import com.intellij.util.ui.AbstractTableCellEditor;
@@ -120,7 +121,7 @@ public class AntUIUtil {
       getChildComponent().setBorder(BorderFactory.createLineBorder(Color.black));
 
       FixedSizeButton button = myComponent.getComponentWithButton().getButton();
-      button.setIcon(IconLoader.getIcon("/general/plus.png"));
+      button.setIcon(IconUtil.getAddIcon());
       button.setToolTipText(AntBundle.message("ant.property.value.editor.insert.macro.tooltip.text"));
       button.addActionListener(new ActionListener() {
         public void actionPerformed(ActionEvent e) {

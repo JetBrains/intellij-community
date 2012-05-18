@@ -21,7 +21,7 @@ import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.options.ExternalizableScheme;
 import com.intellij.openapi.options.Scheme;
 import com.intellij.openapi.options.SchemesManager;
-import com.intellij.openapi.util.IconLoader;
+import com.intellij.util.PlatformIcons;
 
 import java.awt.*;
 import java.util.Collection;
@@ -32,7 +32,7 @@ public abstract class ImportSchemeAction<T extends Scheme, E extends Externaliza
 
 
   public ImportSchemeAction(SchemesManager manager) {
-    super("Import", "Import", IconLoader.getIcon("/actions/import.png"));
+    super("Import", "Import", PlatformIcons.IMPORT_ICON);
     mySchemesManager = manager;
   }
 

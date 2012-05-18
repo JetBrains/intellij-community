@@ -51,7 +51,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.table.TableView;
-import com.intellij.util.PlatformIcons;
+import com.intellij.util.IconUtil;
 import com.intellij.util.TextFieldCompletionProvider;
 import com.theoryinpractice.testng.MessageInfoException;
 import com.theoryinpractice.testng.configuration.browser.*;
@@ -145,7 +145,7 @@ public class TestNGConfigurationEditor extends SettingsEditor<TestNGConfiguratio
     final JPanel panel = myPattern.getComponent();
     panel.setLayout(new BorderLayout());
     myPatternTextField = new TextFieldWithBrowseButton();
-    myPatternTextField.setButtonIcon(PlatformIcons.ADD_ICON);
+    myPatternTextField.setButtonIcon(IconUtil.getAddIcon());
     panel.add(myPatternTextField, BorderLayout.CENTER);
     final FixedSizeButton editBtn = new FixedSizeButton();
     editBtn.setIcon(IconLoader.getIcon("/actions/showViewer.png"));

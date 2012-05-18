@@ -75,14 +75,11 @@ public interface PlatformIcons {
   Icon SMALL_VCS_CONFIGURABLE = IconLoader.getIcon("/general/smallConfigurableVcs.png");
   Icon VCS_SMALL_TAB = IconLoader.getIcon("/general/vcsSmallTab.png");
   Icon GROUP_BY_PACKAGES = IconLoader.getIcon("/toolbar/folders.png");
-  Icon ADD_ICON = IconLoader.getIcon("/actions/include.png");
-  Icon DELETE_ICON = IconLoader.getIcon("/actions/exclude.png");
+  Icon ADD_ICON = IconUtil.getAddIcon();
+  Icon DELETE_ICON = IconUtil.getRemoveIcon();
   Icon COPY_ICON = IconLoader.getIcon("/actions/copy.png");
-  Icon MOVE_UP_ICON = IconLoader.getIcon("/actions/moveUp.png");
-  Icon MOVE_DOWN_ICON = IconLoader.getIcon("/actions/moveDown.png");
-  Icon EDIT = IconLoader.getIcon("/actions/edit.png");
-  Icon ANALYZE = IconLoader.getIcon("/actions/analyze.png");
-  Icon DUPLICATE_ICON = IconLoader.getIcon("/general/copy.png");
+  Icon EDIT = IconUtil.getEditIcon();
+  Icon ANALYZE = IconUtil.getAnalyzeIcon();
   Icon SELECT_ALL_ICON = IconLoader.getIcon("/actions/selectall.png");
   Icon UNSELECT_ALL_ICON = IconLoader.getIcon("/actions/unselectall.png");
   Icon PROPERTIES_ICON = IconLoader.getIcon("/actions/properties.png");
@@ -96,7 +93,6 @@ public interface PlatformIcons {
 
   Icon OPEN_EDIT_DIALOG_ICON = IconLoader.getIcon("/actions/showViewer.png");
   Icon FLATTEN_PACKAGES_ICON = IconLoader.getIcon("/objectBrowser/flattenPackages.png");
-  Icon ADD_TO_SECTION_ICON = IconLoader.getIcon("/general/addItemToSection.png");
   Icon EDIT_IN_SECTION_ICON = IconLoader.getIcon("/general/editItemInSection.png");
   Icon TASK_ICON = IconLoader.getIcon("/ant/task.png");
   Icon CLASS_INITIALIZER = IconLoader.getIcon("/nodes/classInitializer.png");
@@ -116,17 +112,8 @@ public interface PlatformIcons {
 
   Icon UP_DOWN_ARROWS = IconLoader.getIcon("/ide/upDown.png");
 
-  Icon TABLE_ADD_ROW = IconLoader.getIcon("/tables/add.png");
-  Icon TABLE_REMOVE_ROW = IconLoader.getIcon("/tables/remove.png");
-  Icon TABLE_MOVE_ROW_UP = IconLoader.getIcon("/tables/moveUp.png");
-  Icon TABLE_MOVE_ROW_DOWN = IconLoader.getIcon("/tables/moveDown.png");
-  Icon TABLE_EXCEPTION = IconLoader.getIcon("/tables/exception.png");
-  Icon TABLE_EDIT_ROW = IconLoader.getIcon("/tables/edit.png");
-  Icon TABLE_ANALYZE = IconLoader.getIcon("/tables/analyze.png");
-  Icon TABLE_URL = IconLoader.getIcon("/tables/url.png");
-
   Icon COMBOBOX_ARROW_ICON = IconLoader.getIcon("/general/comboArrow.png");
   
-  Icon EXPORT_ICON = IconLoader.getIcon("/actions/export.png");
-  Icon IMPORT_ICON = IconLoader.getIcon("/actions/import.png");
+  Icon EXPORT_ICON = IconLoader.getIcon("/toolbarDecorator/export.png");
+  Icon IMPORT_ICON = IconLoader.getIcon("/toolbarDecorator/import.png");
 }
