@@ -17,25 +17,23 @@ package com.intellij.structuralsearch.inspection.highlightTemplate;
 
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
-import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.IconLoader;
-import com.intellij.structuralsearch.plugin.replace.ui.ReplaceDialog;
-import com.intellij.structuralsearch.plugin.replace.ui.ReplaceConfiguration;
-import com.intellij.structuralsearch.plugin.ui.*;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.structuralsearch.SSRBundle;
+import com.intellij.structuralsearch.plugin.replace.ui.ReplaceConfiguration;
+import com.intellij.structuralsearch.plugin.replace.ui.ReplaceDialog;
+import com.intellij.structuralsearch.plugin.ui.*;
+import com.intellij.ui.AnActionButton;
+import com.intellij.ui.AnActionButtonRunnable;
+import com.intellij.ui.ToolbarDecorator;
+import com.intellij.ui.components.JBList;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
-import javax.swing.event.ListDataEvent;
-import javax.swing.event.ListDataListener;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.Iterator;
 import java.util.List;
 
@@ -43,115 +41,19 @@ import java.util.List;
  * @author cdr
  */
 public class SSBasedInspectionOptions {
-  private JPanel myPanel;
-  private JList myTemplatesList;
-  private JButton myAddSearchButton;
-  private JButton myRemoveButton;
-  private JButton myAddReplaceButton;
-  private JButton myEditButton;
-
+  private JBList myTemplatesList;
   // for externalization
   private final List<Configuration> myConfigurations;
 
   public SSBasedInspectionOptions(final List<Configuration> configurations) {
     myConfigurations = configurations;
-    myTemplatesList.setModel(new MyListModel());
+    myTemplatesList  = new JBList(new MyListModel());
     myTemplatesList.setCellRenderer(new DefaultListCellRenderer() {
       public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
         JLabel component = (JLabel)super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
         Configuration configuration = myConfigurations.get(index);
         component.setText(configuration.getName());
         return component;
-      }
-    });
-    myTemplatesList.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
-      public void valueChanged(ListSelectionEvent e) {
-        templateListChanged();
-      }
-    });
-    myTemplatesList.getModel().addListDataListener(new ListDataListener() {
-      public void intervalAdded(ListDataEvent e) {
-        templateListChanged();
-      }
-
-      public void intervalRemoved(ListDataEvent e) {
-        templateListChanged();
-      }
-
-      public void contentsChanged(ListDataEvent e) {
-        templateListChanged();
-      }
-    });
-
-    myAddSearchButton.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        addTemplate(new SearchDialogFactory() {
-          public SearchDialog createDialog(SearchContext searchContext) {
-            return new SearchDialog(searchContext, false, false);
-          }
-        });
-      }
-    });
-    myAddReplaceButton.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        addTemplate(new SearchDialogFactory() {
-          public SearchDialog createDialog(SearchContext searchContext) {
-            return new ReplaceDialog(searchContext, false, false);
-          }
-        });
-      }
-    });
-    myEditButton.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        final Configuration configuration = (Configuration)myTemplatesList.getSelectedValue();
-        if (configuration == null) return;
-
-        SearchDialog dialog = createDialog(new SearchDialogFactory() {
-          public SearchDialog createDialog(SearchContext searchContext) {
-            return configuration instanceof SearchConfiguration ? new SearchDialog(searchContext, false, false) {
-              public Configuration createConfiguration() {
-                SearchConfiguration newConfiguration = new SearchConfiguration();
-                copyConfiguration(configuration, newConfiguration);
-                return newConfiguration;
-              }
-            } : new ReplaceDialog(searchContext, false, false) {
-              public Configuration createConfiguration() {
-                ReplaceConfiguration newConfiguration = new ReplaceConfiguration();
-                copyConfiguration(configuration, newConfiguration);
-                return newConfiguration;
-              }
-            };
-          }
-        });
-        dialog.setValuesFromConfig(configuration);
-        dialog.setUseLastConfiguration(true);
-        dialog.show();
-        if (!dialog.isOK()) return;
-        Configuration newConfiguration = dialog.getConfiguration();
-        copyConfiguration(newConfiguration, configuration);
-        configurationsChanged(dialog.getSearchContext());
-      }
-    });
-    myRemoveButton.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        Object[] selected = myTemplatesList.getSelectedValues();
-        for (Object o : selected) {
-          Configuration configuration = (Configuration)o;
-          Iterator<Configuration> iterator = myConfigurations.iterator();
-          while (iterator.hasNext()) {
-            Configuration configuration1 = iterator.next();
-            if (configuration1.getName().equals(configuration.getName())) {
-              iterator.remove();
-            }
-          }
-        }
-        configurationsChanged(createSearchContext());
-      }
-    });
-    // later because InspectionToolPanel enables all controls recursively
-    SwingUtilities.invokeLater(new Runnable(){
-      public void run() {
-        templateListChanged();
       }
     });
   }
@@ -162,15 +64,10 @@ public class SSBasedInspectionOptions {
     newConfiguration.readExternal(temp);
   }
 
-  private void templateListChanged() {
-    boolean somethingSelected = myTemplatesList.getSelectedValue() != null;
-    myRemoveButton.setEnabled(somethingSelected);
-    myEditButton.setEnabled(somethingSelected);
-  }
-
   interface SearchDialogFactory {
     SearchDialog createDialog(SearchContext searchContext);
   }
+
   private void addTemplate(SearchDialogFactory searchDialogFactory) {
     SearchDialog dialog = createDialog(searchDialogFactory);
     dialog.show();
@@ -190,7 +87,7 @@ public class SSBasedInspectionOptions {
 
     configurationsChanged(dialog.getSearchContext());
   }
-         
+
   private static SearchDialog createDialog(final SearchDialogFactory searchDialogFactory) {
     SearchContext searchContext = createSearchContext();
     return searchDialogFactory.createDialog(searchContext);
@@ -209,7 +106,90 @@ public class SSBasedInspectionOptions {
   }
 
   public JPanel getComponent() {
-    return myPanel;
+    JPanel panel = new JPanel(new BorderLayout());
+    panel.add(new JLabel(SSRBundle.message("SSRInspection.selected.templates")));
+    panel.add(
+      ToolbarDecorator.createDecorator(myTemplatesList)
+        .setAddAction(new AnActionButtonRunnable() {
+          @Override
+          public void run(AnActionButton button) {
+            final AnAction[] children = new AnAction[]{
+              new AnAction(SSRBundle.message("SSRInspection.add.search.template.button")) {
+                @Override
+                public void actionPerformed(AnActionEvent e) {
+                  addTemplate(new SearchDialogFactory() {
+                    public SearchDialog createDialog(SearchContext searchContext) {
+                      return new SearchDialog(searchContext, false, false);
+                    }
+                  });
+                }
+              },
+              new AnAction(SSRBundle.message("SSRInspection.add.replace.template.button")) {
+                @Override
+                public void actionPerformed(AnActionEvent e) {
+                  addTemplate(new SearchDialogFactory() {
+                    public SearchDialog createDialog(SearchContext searchContext) {
+                      return new ReplaceDialog(searchContext, false, false);
+                    }
+                  });
+                }
+              }
+            };
+            JBPopupFactory.getInstance().createActionGroupPopup(null, new DefaultActionGroup(children),
+                                                                DataManager.getInstance()
+                                                                  .getDataContext(button.getContextComponent()),
+                                                                JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, true)
+              .show(button.getPreferredPopupPoint());
+          }
+        }).setEditAction(new AnActionButtonRunnable() {
+        @Override
+        public void run(AnActionButton button) {
+          final Configuration configuration = (Configuration)myTemplatesList.getSelectedValue();
+          if (configuration == null) return;
+
+          SearchDialog dialog = createDialog(new SearchDialogFactory() {
+            public SearchDialog createDialog(SearchContext searchContext) {
+              return configuration instanceof SearchConfiguration ? new SearchDialog(searchContext, false, false) {
+                public Configuration createConfiguration() {
+                  SearchConfiguration newConfiguration = new SearchConfiguration();
+                  copyConfiguration(configuration, newConfiguration);
+                  return newConfiguration;
+                }
+              } : new ReplaceDialog(searchContext, false, false) {
+                       public Configuration createConfiguration() {
+                         ReplaceConfiguration newConfiguration = new ReplaceConfiguration();
+                         copyConfiguration(configuration, newConfiguration);
+                         return newConfiguration;
+                       }
+                     };
+            }
+          });
+          dialog.setValuesFromConfig(configuration);
+          dialog.setUseLastConfiguration(true);
+          dialog.show();
+          if (!dialog.isOK()) return;
+          Configuration newConfiguration = dialog.getConfiguration();
+          copyConfiguration(newConfiguration, configuration);
+          configurationsChanged(dialog.getSearchContext());
+        }
+      }).setRemoveAction(new AnActionButtonRunnable() {
+        @Override
+        public void run(AnActionButton button) {
+          Object[] selected = myTemplatesList.getSelectedValues();
+          for (Object o : selected) {
+            Configuration configuration = (Configuration)o;
+            Iterator<Configuration> iterator = myConfigurations.iterator();
+            while (iterator.hasNext()) {
+              Configuration configuration1 = iterator.next();
+              if (configuration1.getName().equals(configuration.getName())) {
+                iterator.remove();
+              }
+            }
+          }
+          configurationsChanged(createSearchContext());
+        }
+      }).disableUpDownActions().createPanel());
+    return panel;
   }
 
   private class MyListModel extends AbstractListModel {
