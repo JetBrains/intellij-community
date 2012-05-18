@@ -79,31 +79,30 @@ public class MergeList implements ChangeList.Parent, UserDataHolder {
     final int fragmentsListSize = fragmentList.size();
     for (int i = 0; i < fragmentsListSize; i++) {
       final MergeBuilder.MergeFragment mergeFragment = fragmentList.get(i);
-      final TextRange[] ranges = mergeFragment.getRanges();
-      logger.assertTrue(ranges[1] != null);
-      if (ranges[0] == null) {
-        if (ranges[2] == null) {
-          if (i == fragmentsListSize - 1 && ranges[1].getEndOffset() == baseText.length()) {
+      TextRange baseRange = mergeFragment.getBase();
+      TextRange leftRange = mergeFragment.getLeft();
+      TextRange rightRange = mergeFragment.getRight();
+
+      if (leftRange == null) {
+        if (rightRange == null) {
+          if (i == fragmentsListSize - 1 && baseRange.getEndOffset() == baseText.length()) {
             // the very end, both local and remote revisions does not contain latest base fragment
             final int rightTextLength = rightText.length();
             final int leftTextLength = leftText.length();
-            rightChanges.add(SimpleChange.fromRanges(ranges[1], new TextRange(rightTextLength, rightTextLength), mergeList.myChanges[1]));
-            leftChanges.add(SimpleChange.fromRanges(ranges[1], new TextRange(leftTextLength, leftTextLength), mergeList.myChanges[0]));
+            rightChanges.add(SimpleChange.fromRanges(baseRange, new TextRange(rightTextLength, rightTextLength), mergeList.myChanges[1]));
+            leftChanges.add(SimpleChange.fromRanges(baseRange, new TextRange(leftTextLength, leftTextLength), mergeList.myChanges[0]));
           } else {
             LOG.error("Left Text: " + leftText + "\n" + "Right Text: " + rightText + "\nBase Text: " + baseText);
           }
         } else {
-          rightChanges.add(SimpleChange.fromRanges(ranges[1], ranges[2], mergeList.myChanges[1]));
+          rightChanges.add(SimpleChange.fromRanges(baseRange, rightRange, mergeList.myChanges[1]));
         }
       }
-      else if (ranges[2] == null) {
-        if (ranges[0] == null) {
-          LOG.error("Left Text: " + leftText + "\n" + "Right Text: " + rightText + "\nBase Text: " + baseText);
-        }
-        leftChanges.add(SimpleChange.fromRanges(ranges[1], ranges[0], mergeList.myChanges[0]));
+      else if (rightRange == null) {
+        leftChanges.add(SimpleChange.fromRanges(baseRange, leftRange, mergeList.myChanges[0]));
       }
       else {
-        Change[] changes = MergeConflict.createChanges(ranges[0], ranges[1], ranges[2], mergeList);
+        Change[] changes = MergeConflict.createChanges(leftRange, baseRange, rightRange, mergeList);
         leftChanges.add(changes[0]);
         rightChanges.add(changes[1]);
       }
@@ -113,9 +112,7 @@ public class MergeList implements ChangeList.Parent, UserDataHolder {
     return mergeList;
   }
 
-  private static List<MergeBuilder.MergeFragment> processText(String leftText,
-                                                              String baseText,
-                                                              String rightText,
+  private static List<MergeBuilder.MergeFragment> processText(String leftText, String baseText, String rightText,
                                                               ContextLogger logger) throws FilesTooBigForDiffException {
     DiffFragment[] leftFragments = DiffPolicy.DEFAULT_LINES.buildFragments(baseText, leftText);
     DiffFragment[] rightFragments = DiffPolicy.DEFAULT_LINES.buildFragments(baseText, rightText);

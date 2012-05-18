@@ -53,7 +53,7 @@ public class MergeBuilderTest extends TestCase {
   }
 
   private MergeBuilder.MergeFragment fragment(TextRange left, TextRange base, TextRange right) {
-    return new MergeBuilder.MergeFragment(new TextRange[]{left, base, right});
+    return new MergeBuilder.MergeFragment(left, base, right);
   }
 
   public void testHeadInsert() {
