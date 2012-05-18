@@ -1275,7 +1275,7 @@ public class ControlFlowUtil {
     private static boolean isMethodParameter(@NotNull PsiVariable variable) {
       if (variable instanceof PsiParameter) {
         final PsiParameter parameter = (PsiParameter)variable;
-        return !(parameter instanceof PsiForeachStatement);
+        return !(parameter.getDeclarationScope() instanceof PsiForeachStatement);
       }
       return false;
     }
