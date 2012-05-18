@@ -320,7 +320,7 @@ public class GenerateMembersUtil {
             super.visitReferenceElement(reference);
             final PsiElement resolve = reference.resolve();
             if (resolve instanceof PsiTypeParameter) {
-              replacementMap.put(reference, factory.createReferenceElementByType((PsiClassType)substitutor.substitute((PsiTypeParameter)resolve)));
+              replacementMap.put(reference, factory.createReferenceElementByType((PsiClassType)substituteType(substitutor, factory.createType((PsiTypeParameter)resolve))));
             }
           }
         });

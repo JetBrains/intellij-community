@@ -44,14 +44,17 @@ public class ModuleLibraryTable implements LibraryTable, LibraryTableBase.Modifi
   private final RootModelImpl myRootModel;
   private final ProjectRootManagerImpl myProjectRootManager;
   public static final LibraryTablePresentation MODULE_LIBRARY_TABLE_PRESENTATION = new LibraryTablePresentation() {
+    @Override
     public String getDisplayName(boolean plural) {
       return ProjectBundle.message("module.library.display.name", plural ? 2 : 1);
     }
 
+    @Override
     public String getDescription() {
       return ProjectBundle.message("libraries.node.text.module");
     }
 
+    @Override
     public String getLibraryTableEditorTitle() {
       return ProjectBundle.message("library.configure.module.title");
     }
@@ -62,6 +65,7 @@ public class ModuleLibraryTable implements LibraryTable, LibraryTableBase.Modifi
     myProjectRootManager = projectRootManager;
   }
 
+  @Override
   @NotNull
   public Library[] getLibraries() {
     final ArrayList<Library> result = new ArrayList<Library>();
@@ -70,10 +74,12 @@ public class ModuleLibraryTable implements LibraryTable, LibraryTableBase.Modifi
     return result.toArray(new Library[result.size()]);
   }
 
+  @Override
   public Library createLibrary() {
     return createLibrary(null);
   }
 
+  @Override
   public Library createLibrary(String name) {
     return createLibrary(name, null);
   }
@@ -85,6 +91,7 @@ public class ModuleLibraryTable implements LibraryTable, LibraryTableBase.Modifi
     return orderEntry.getLibrary();
   }
 
+  @Override
   public void removeLibrary(@NotNull Library library) {
     final Iterator<OrderEntry> orderIterator = myRootModel.getOrderIterator();
     while (orderIterator.hasNext()) {
@@ -102,6 +109,7 @@ public class ModuleLibraryTable implements LibraryTable, LibraryTableBase.Modifi
     }
   }
 
+  @Override
   @NotNull
   public Iterator<Library> getLibraryIterator() {
     FilteringIterator<OrderEntry, LibraryOrderEntry> filteringIterator =
@@ -109,18 +117,22 @@ public class ModuleLibraryTable implements LibraryTable, LibraryTableBase.Modifi
     return new ConvertingIterator<LibraryOrderEntry, Library>(filteringIterator, ORDER_ENTRY_TO_LIBRARY_CONVERTOR);
   }
 
+  @Override
   public String getTableLevel() {
     return LibraryTableImplUtil.MODULE_LEVEL;
   }
 
+  @Override
   public LibraryTablePresentation getPresentation() {
     return MODULE_LIBRARY_TABLE_PRESENTATION;
   }
 
+  @Override
   public boolean isEditable() {
     return true;
   }
 
+  @Override
   @Nullable
   public Library getLibraryByName(@NotNull String name) {
     final Iterator<Library> libraryIterator = getLibraryIterator();
@@ -131,14 +143,17 @@ public class ModuleLibraryTable implements LibraryTable, LibraryTableBase.Modifi
     return null;
   }
 
+  @Override
   public void addListener(Listener listener) {
     throw new UnsupportedOperationException();
   }
 
+  @Override
   public void addListener(Listener listener, Disposable parentDisposable) {
     throw new UnsupportedOperationException("Method addListener is not yet implemented in " + getClass().getName());
   }
 
+  @Override
   public void removeListener(Listener listener) {
     throw new UnsupportedOperationException();
   }
@@ -149,24 +164,29 @@ public class ModuleLibraryTable implements LibraryTable, LibraryTableBase.Modifi
 
 
   private static class ModuleLibraryOrderEntryCondition implements Condition<OrderEntry> {
+    @Override
     public boolean value(OrderEntry entry) {
       return entry instanceof LibraryOrderEntry && ((LibraryOrderEntry)entry).isModuleLevel() && ((LibraryOrderEntry)entry).getLibrary() != null;
     }
   }
 
   private static class OrderEntryToLibraryConvertor implements Convertor<LibraryOrderEntry, Library> {
+    @Override
     public Library convert(LibraryOrderEntry o) {
       return o.getLibrary();
     }
   }
 
+  @Override
   public void commit() {
   }
 
+  @Override
   public boolean isChanged() {
     return myRootModel.isChanged();
   }
 
+  @Override
   public ModifiableModel getModifiableModel() {
     return this;
   }

@@ -34,26 +34,35 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.actions.GroovyTemplatesFactory;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrExtendsClause;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrImplementsClause;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrInterfaceDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 
 /**
  * @author ilyas
  */
 public abstract class CreateClassActionBase implements IntentionAction {
+  private Type myType;
+
   protected final GrReferenceElement myRefElement;
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.annotator.intentions.CreateClassActionBase");
 
-  public CreateClassActionBase(GrReferenceElement refElement) {
+  public CreateClassActionBase(Type type, GrReferenceElement refElement) {
+    myType = type;
     myRefElement = refElement;
   }
 
   @NotNull
   public String getText() {
     String referenceName = myRefElement.getReferenceName();
-    return shouldCreateInterface() ? GroovyBundle.message("create.interface.text", referenceName) : GroovyBundle.message("create.class.text", referenceName);
+    switch (getType()) {
+      case ENUM:
+        return GroovyBundle.message("create.enum", referenceName);
+      case CLASS:
+        return GroovyBundle.message("create.class.text", referenceName);
+      case INTERFACE:
+        return GroovyBundle.message("create.interface.text", referenceName);
+      default:
+        return "";
+    }
   }
 
   @NotNull
@@ -69,17 +78,17 @@ public abstract class CreateClassActionBase implements IntentionAction {
     return true;
   }
 
-  protected boolean shouldCreateInterface() {
-    PsiElement parent = myRefElement.getParent();
-    return parent instanceof GrImplementsClause || parent instanceof GrExtendsClause && parent.getParent() instanceof GrInterfaceDefinition;
+
+  protected Type getType() {
+    return myType;
   }
 
   @Nullable
-  public static GrTypeDefinition createClassByType(@NotNull  final PsiDirectory directory,
-                                           @NotNull  final String name,
-                                           @NotNull  final PsiManager manager,
-                                           @Nullable final PsiElement contextElement,
-                                           @NotNull  final String templateName) {
+  public static GrTypeDefinition createClassByType(@NotNull final PsiDirectory directory,
+                                                   @NotNull final String name,
+                                                   @NotNull final PsiManager manager,
+                                                   @Nullable final PsiElement contextElement,
+                                                   @NotNull final String templateName) {
     AccessToken accessToken = WriteAction.start();
 
     try {
@@ -130,8 +139,13 @@ public abstract class CreateClassActionBase implements IntentionAction {
     if (virtualFile != null) {
       OpenFileDescriptor descriptor = new OpenFileDescriptor(project, virtualFile, textOffset);
       return FileEditorManager.getInstance(project).openTextEditor(descriptor, true);
-    } else {
+    }
+    else {
       return null;
     }
+  }
+
+  public static enum Type {
+    ENUM, CLASS, INTERFACE
   }
 }

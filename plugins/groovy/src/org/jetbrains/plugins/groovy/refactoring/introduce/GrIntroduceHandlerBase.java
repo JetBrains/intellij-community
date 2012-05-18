@@ -47,6 +47,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseLabel;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrStringInjection;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
@@ -412,7 +413,10 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
 
   @Nullable
   private static PsiElement findContainingStatement(PsiElement candidate) {
-    while (candidate != null && !PsiUtil.isExpressionStatement(candidate)) candidate = candidate.getParent();
+    while (candidate != null && !PsiUtil.isExpressionStatement(candidate)) {
+      candidate = candidate.getParent();
+      if (candidate instanceof GrCaseLabel) candidate = candidate.getParent();
+    }
     return candidate;
   }
 

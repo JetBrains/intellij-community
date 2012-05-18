@@ -36,6 +36,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlo
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrThrowStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseLabel;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseSection;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrTraditionalForClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
@@ -389,6 +391,35 @@ public class GroovyExpectedTypesProvider {
           }
         }
       }
+    }
+
+    @Override
+    public void visitCaseLabel(GrCaseLabel caseLabel) {
+      final PsiElement parent = caseLabel.getParent().getParent();
+      assert parent instanceof GrSwitchStatement;
+      final GrExpression condition = ((GrSwitchStatement)parent).getCondition();
+      if (condition == null) return;
+
+      final PsiType type = condition.getType();
+      if (type == null) return;
+
+      myResult = new TypeConstraint[]{SubtypeConstraint.create(type)};
+    }
+
+    @Override
+    public void visitSwitchStatement(GrSwitchStatement switchStatement) {
+      final GrCaseSection[] sections = switchStatement.getCaseSections();
+      List<PsiType> types = new ArrayList<PsiType>(sections.length);
+      for (GrCaseSection section : sections) {
+        final GrExpression value = section.getCaseLabel().getValue();
+        final PsiType type = value != null ? value.getType() : null;
+        if (type != null) types.add(type);
+      }
+
+      final PsiType upperBoundNullable = TypesUtil.getLeastUpperBoundNullable(types, switchStatement.getManager());
+      if (upperBoundNullable == null) return;
+
+      myResult = new TypeConstraint[]{SubtypeConstraint.create(upperBoundNullable)};
     }
 
     public TypeConstraint[] getResult() {
