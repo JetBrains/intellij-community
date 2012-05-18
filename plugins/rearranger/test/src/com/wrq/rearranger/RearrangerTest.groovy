@@ -342,83 +342,80 @@ class RearrangerTest extends LightCodeInsightFixtureTestCase {
       mySettings.extractedMethodsSettings.moveExtractedMethods = true
       mySettings.extractedMethodsSettings.depthFirstOrdering = false
       mySettings.extractedMethodsSettings.ordering = RelatedMethodsSettings.INVOCATION_ORDER
-    } }
+  } }
   
-//  public final void testEmitTLCommentsRelatedMethodsBreadthInvocation() throws Exception {
-//    configureByFile("/com/wrq/rearranger/RearrangementTest13.java");
-//    final PsiFile file = getFile();
-//    final Document doc = PsiDocumentManager.getInstance(getProject()).getDocument(file);
-//    final RearrangerActionHandler rah = new RearrangerActionHandler();
-//    rs.getExtractedMethodsSettings().setMoveExtractedMethods(true);
-//    rs.getExtractedMethodsSettings().setDepthFirstOrdering(false);
-//    rs.getExtractedMethodsSettings().setOrdering(RelatedMethodsSettings.INVOCATION_ORDER);
-//    rs.getExtractedMethodsSettings().setCommentType(RelatedMethodsSettings.COMMENT_TYPE_TOP_LEVEL);
-//    CommentRule c = new CommentRule();
-//    c.setCommentText("// Preceding comment: TL=%TL%\n" +
-//                     "// MN=%MN%\n" +
-//                     "// AM=%AM%\n" +
-//                     "// Level %LV%");
-//    rs.getExtractedMethodsSettings().setPrecedingComment(c);
-//    c = new CommentRule();
-//    c.setCommentText("// Trailing comment: TL=%TL%\n" +
-//                     "// MN=%MN%\n" +
-//                     "// AM=%AM%\n" +
-//                     "// Level %LV%");
-//    rs.getExtractedMethodsSettings().setTrailingComment(c);
-//    rah.rearrangeDocument(getProject(), file, rs, doc);
-//    super.checkResultByFile("/com/wrq/rearranger/RearrangementResult13BITLC.java");
-//  }
-//
-//  public final void testEmitEMCommentsRelatedMethodsBreadthInvocation() throws Exception {
-//    configureByFile("/com/wrq/rearranger/RearrangementTest13.java");
-//    final PsiFile file = getFile();
-//    final Document doc = PsiDocumentManager.getInstance(getProject()).getDocument(file);
-//    final RearrangerActionHandler rah = new RearrangerActionHandler();
-//    rs.getExtractedMethodsSettings().setMoveExtractedMethods(true);
-//    rs.getExtractedMethodsSettings().setDepthFirstOrdering(false);
-//    rs.getExtractedMethodsSettings().setOrdering(RelatedMethodsSettings.INVOCATION_ORDER);
-//    rs.getExtractedMethodsSettings().setCommentType(RelatedMethodsSettings.COMMENT_TYPE_EACH_METHOD);
-//    CommentRule c = new CommentRule();
-//    c.setCommentText("// Preceding comment: TL=%TL%\n" +
-//                     "// MN=%MN%\n" +
-//                     "// AM=%AM%\n" +
-//                     "// Level %LV%");
-//    rs.getExtractedMethodsSettings().setPrecedingComment(c);
-//    c = new CommentRule();
-//    c.setCommentText("// Trailing comment: TL=%TL%\n" +
-//                     "// MN=%MN%\n" +
-//                     "// AM=%AM%\n" +
-//                     "// Level %LV%");
-//    rs.getExtractedMethodsSettings().setTrailingComment(c);
-//    rah.rearrangeDocument(getProject(), file, rs, doc);
-//    super.checkResultByFile("/com/wrq/rearranger/RearrangementResult13BIEMC.java");
-//  }
-//
-//  public final void testEmitELCommentsRelatedMethodsBreadthInvocation() throws Exception {
-//    configureByFile("/com/wrq/rearranger/RearrangementTest13.java");
-//    final PsiFile file = getFile();
-//    final Document doc = PsiDocumentManager.getInstance(getProject()).getDocument(file);
-//    final RearrangerActionHandler rah = new RearrangerActionHandler();
-//    rs.getExtractedMethodsSettings().setMoveExtractedMethods(true);
-//    rs.getExtractedMethodsSettings().setDepthFirstOrdering(false);
-//    rs.getExtractedMethodsSettings().setOrdering(RelatedMethodsSettings.INVOCATION_ORDER);
-//    rs.getExtractedMethodsSettings().setCommentType(RelatedMethodsSettings.COMMENT_TYPE_EACH_LEVEL);
-//    CommentRule c = new CommentRule();
-//    c.setCommentText("// Preceding comment: TL=%TL%\n" +
-//                     "// MN=%MN%\n" +
-//                     "// AM=%AM%\n" +
-//                     "// Level %LV%");
-//    rs.getExtractedMethodsSettings().setPrecedingComment(c);
-//    c = new CommentRule();
-//    c.setCommentText("// Trailing comment: TL=%TL%\n" +
-//                     "// MN=%MN%\n" +
-//                     "// AM=%AM%\n" +
-//                     "// Level %LV%");
-//    rs.getExtractedMethodsSettings().setTrailingComment(c);
-//    rah.rearrangeDocument(getProject(), file, rs, doc);
-//    super.checkResultByFile("/com/wrq/rearranger/RearrangementResult13BIELC.java");
-//  }
-//
+  public final void testEmitTLCommentsRelatedMethodsBreadthInvocation() throws Exception {
+    doTest('RearrangementTest13', 'RearrangementResult13BITLC') {
+      mySettings.extractedMethodsSettings.moveExtractedMethods = true
+      mySettings.extractedMethodsSettings.depthFirstOrdering = false
+      mySettings.extractedMethodsSettings.ordering = RelatedMethodsSettings.INVOCATION_ORDER
+      mySettings.extractedMethodsSettings.commentType = RelatedMethodsSettings.COMMENT_TYPE_TOP_LEVEL
+      
+      def precedingCommentRule = new CommentRule()
+      precedingCommentRule.commentText = '''\
+// Preceding comment: TL=%TL%
+// MN=%MN%
+// AM=%AM%
+// Level %LV%'''
+      mySettings.extractedMethodsSettings.precedingComment = precedingCommentRule
+
+      def trailingCommentRule = new CommentRule()
+      trailingCommentRule.commentText = '''\
+// Trailing comment: TL=%TL%
+// MN=%MN%
+// AM=%AM%
+// Level %LV%'''
+      mySettings.extractedMethodsSettings.trailingComment = trailingCommentRule
+  } }
+
+  public final void testEmitEMCommentsRelatedMethodsBreadthInvocation() throws Exception {
+    doTest('RearrangementTest13', 'RearrangementResult13BIEMC') {
+      mySettings.extractedMethodsSettings.moveExtractedMethods = true
+      mySettings.extractedMethodsSettings.depthFirstOrdering = false
+      mySettings.extractedMethodsSettings.ordering = RelatedMethodsSettings.INVOCATION_ORDER
+      mySettings.extractedMethodsSettings.commentType = RelatedMethodsSettings.COMMENT_TYPE_EACH_METHOD
+
+      def precedingCommentRule = new CommentRule()
+      precedingCommentRule.commentText = '''\
+// Preceding comment: TL=%TL%
+// MN=%MN%
+// AM=%AM%
+// Level %LV%'''
+      mySettings.extractedMethodsSettings.precedingComment = precedingCommentRule
+
+      def trailingCommentRule = new CommentRule()
+      trailingCommentRule.commentText = '''
+// Trailing comment: TL=%TL%
+// MN=%MN%
+// AM=%AM%
+// Level %LV%'''
+      mySettings.extractedMethodsSettings.trailingComment = trailingCommentRule
+  } }
+
+  public final void testEmitELCommentsRelatedMethodsBreadthInvocation() throws Exception {
+    doTest('RearrangementTest13', 'RearrangementResult13BIELC') {
+      mySettings.extractedMethodsSettings.moveExtractedMethods = true
+      mySettings.extractedMethodsSettings.depthFirstOrdering = false
+      mySettings.extractedMethodsSettings.ordering = RelatedMethodsSettings.INVOCATION_ORDER
+      mySettings.extractedMethodsSettings.commentType = RelatedMethodsSettings.COMMENT_TYPE_EACH_LEVEL
+
+      def precedingCommentRule = new CommentRule()
+      precedingCommentRule.commentText = '''\
+// Preceding comment: TL=%TL%
+// MN=%MN%
+// AM=%AM%
+// Level %LV%'''
+      mySettings.extractedMethodsSettings.precedingComment = precedingCommentRule
+
+      def trailingCommentRule = new CommentRule()
+      trailingCommentRule.commentText = '''
+// Trailing comment: TL=%TL%
+// MN=%MN%
+// AM=%AM%
+// Level %LV%'''
+      mySettings.extractedMethodsSettings.trailingComment = trailingCommentRule
+  } }
+
 //  public final void testEmitNFCommentsRelatedMethodsBreadthInvocation() throws Exception {
 //    configureByFile("/com/wrq/rearranger/RearrangementTest13.java");
 //    final PsiFile file = getFile();
