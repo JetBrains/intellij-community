@@ -44,7 +44,7 @@ import java.awt.event.ActionListener;
  */
 public final class MethodAttributes
   extends ItemAttributes
-  implements IRestrictMethodExtraction,
+  implements RestrictMethodExtraction,
              IHasGetterSetterDefinition
 {
 

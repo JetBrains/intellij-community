@@ -32,7 +32,7 @@ import com.wrq.rearranger.settings.CommentRule;
 import com.wrq.rearranger.settings.RearrangerSettings;
 import com.wrq.rearranger.settings.RelatedMethodsSettings;
 import com.wrq.rearranger.settings.attributeGroups.IHasGetterSetterDefinition;
-import com.wrq.rearranger.settings.attributeGroups.IRestrictMethodExtraction;
+import com.wrq.rearranger.settings.attributeGroups.RestrictMethodExtraction;
 import com.wrq.rearranger.settings.attributeGroups.Rule;
 import com.wrq.rearranger.util.CommentUtil;
 import com.wrq.rearranger.util.MethodUtil;
@@ -181,7 +181,7 @@ public class MethodEntry extends ClassContentsEntry implements RelatableEntry {
             }
           }
         }
-        if (me.myCalledMethods.size() > 0) {
+        if (!me.myCalledMethods.isEmpty()) {
           List<MethodEntry> parents = new LinkedList<MethodEntry>();
           parents.add(me);
           moveRelatedItems(
@@ -679,9 +679,9 @@ public class MethodEntry extends ClassContentsEntry implements RelatableEntry {
       )
     );
     for (Rule rule : settings.getItemOrderAttributeList()) {
-      if (rule instanceof IRestrictMethodExtraction) {
+      if (rule instanceof RestrictMethodExtraction) {
         if (rule.isMatch(this)) {
-          if (((IRestrictMethodExtraction)rule).isNoExtractedMethods()) {
+          if (((RestrictMethodExtraction)rule).isNoExtractedMethods()) {
             LOG.debug(
               "excluding " +
               myEnd.toString() +

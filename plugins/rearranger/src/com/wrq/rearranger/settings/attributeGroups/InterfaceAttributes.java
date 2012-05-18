@@ -46,7 +46,7 @@ import java.util.List;
 
 /** Rule and attributes to support grouping of methods that implement interface methods. */
 public class InterfaceAttributes
-  implements AttributeGroup, IRestrictMethodExtraction, PrioritizedRule
+  implements AttributeGroup, RestrictMethodExtraction, PrioritizedRule
 {
   private boolean noExtractedMethods;
   NameAttribute nameAttr;

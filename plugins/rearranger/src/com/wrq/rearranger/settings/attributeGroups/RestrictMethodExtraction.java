@@ -25,8 +25,8 @@ package com.wrq.rearranger.settings.attributeGroups;
  * Interface implemented by rules which can prevent extracted methods being grouped with the
  * calling method, in spite of the global setting.
  */
-public interface IRestrictMethodExtraction {
-  public boolean isNoExtractedMethods();
+public interface RestrictMethodExtraction {
+  boolean isNoExtractedMethods();
 
-  public void setNoExtractedMethods(boolean noExtractedMethods);
+  void setNoExtractedMethods(boolean noExtractedMethods);
 }

@@ -27,6 +27,7 @@ import com.intellij.psi.PsiModifier
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import com.wrq.rearranger.settings.CommentRule
 import com.wrq.rearranger.settings.RearrangerSettings
+import com.wrq.rearranger.settings.RelatedMethodsSettings
 import com.wrq.rearranger.util.CommentRuleBuilder
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.Nullable
@@ -299,47 +300,25 @@ class RearrangerTest extends LightCodeInsightFixtureTestCase {
       methodRule.create { returnType( '.*je.*' ) }
       methodRule.create { returnType( /Integer\[\]/) }
       methodRule.create { returnType( 'int' ) }
+  } }
+
+  public final void testRelatedMethodsDepthOriginal() throws Exception {
+    doTest('RearrangementTest13', 'RearrangementResult13DO') {
+      mySettings.extractedMethodsSettings.moveExtractedMethods = true
+      mySettings.extractedMethodsSettings.depthFirstOrdering = true
+      mySettings.extractedMethodsSettings.ordering = RelatedMethodsSettings.RETAIN_ORIGINAL_ORDER
     }
-    
-    
-    //MethodAttributes ma;
-    //ma = new MethodAttributes();
-    //ma.getReturnTypeAttr().setMatch(true);
-    //ma.getReturnTypeAttr().setExpression("void");
-    //rs.addItem(ma, 0);
-    //FieldAttributes fa = new FieldAttributes();
-    //fa.getTypeAttr().setMatch(true);
-    //fa.getTypeAttr().setExpression("int");
-    //rs.addItem(fa, 1);
-    //ma = new MethodAttributes();
-    //ma.getReturnTypeAttr().setMatch(true);
-    //ma.getReturnTypeAttr().setExpression(".*je.*");
-    //rs.addItem(ma, 2);
-    //ma = new MethodAttributes();
-    //ma.getReturnTypeAttr().setMatch(true);
-    //ma.getReturnTypeAttr().setExpression("Integer\\[\\]");
-    //rs.addItem(ma, 3);
-    //ma = new MethodAttributes();
-    //ma.getReturnTypeAttr().setMatch(true);
-    //ma.getReturnTypeAttr().setExpression("int");
-    //rs.addItem(ma, 4);
+    //configureByFile("/com/wrq/rearranger/RearrangementTest13.java");
+    //final PsiFile file = getFile();
+    //final Document doc = PsiDocumentManager.getInstance(getProject()).getDocument(file);
     //final RearrangerActionHandler rah = new RearrangerActionHandler();
+    //rs.getExtractedMethodsSettings().setMoveExtractedMethods(true);
+    //rs.getExtractedMethodsSettings().setDepthFirstOrdering(true);
+    //rs.getExtractedMethodsSettings().setOrdering(RelatedMethodsSettings.RETAIN_ORIGINAL_ORDER);
     //rah.rearrangeDocument(getProject(), file, rs, doc);
-    //super.checkResultByFile("/com/wrq/rearranger/RearrangementResult12.java");
+    //super.checkResultByFile("/com/wrq/rearranger/RearrangementResult13DO.java");
   }
 
-//  public final void testRelatedMethodsDepthOriginal() throws Exception {
-//    configureByFile("/com/wrq/rearranger/RearrangementTest13.java");
-//    final PsiFile file = getFile();
-//    final Document doc = PsiDocumentManager.getInstance(getProject()).getDocument(file);
-//    final RearrangerActionHandler rah = new RearrangerActionHandler();
-//    rs.getExtractedMethodsSettings().setMoveExtractedMethods(true);
-//    rs.getExtractedMethodsSettings().setDepthFirstOrdering(true);
-//    rs.getExtractedMethodsSettings().setOrdering(RelatedMethodsSettings.RETAIN_ORIGINAL_ORDER);
-//    rah.rearrangeDocument(getProject(), file, rs, doc);
-//    super.checkResultByFile("/com/wrq/rearranger/RearrangementResult13DO.java");
-//  }
-//
 //  public final void testRelatedMethodsDepthAlphabetical() throws Exception {
 //    configureByFile("/com/wrq/rearranger/RearrangementTest13.java");
 //    final PsiFile file = getFile();
