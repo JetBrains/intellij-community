@@ -669,7 +669,7 @@ public class ControlFlowUtil {
     InstructionClientVisitor[] visitors = new InstructionClientVisitor[]{
       new ReturnPresentClientVisitor(flow),
       new UnreachableStatementClientVisitor(flow),
-      new ReadBeforeWriteClientVisitor(flow),
+      new ReadBeforeWriteClientVisitor(flow, true),
       new InitializedTwiceClientVisitor(flow, 0),
     };
     CompositeInstructionClientVisitor visitor = new CompositeInstructionClientVisitor(visitors);
@@ -1223,8 +1223,14 @@ public class ControlFlowUtil {
   /**
    * @return list of PsiReferenceExpression of usages of non-initialized local variables
    */
+  public static List<PsiReferenceExpression> getReadBeforeWriteLocals(ControlFlow flow) {
+    final InstructionClientVisitor<List<PsiReferenceExpression>> visitor = new ReadBeforeWriteClientVisitor(flow, true);
+    depthFirstSearch(flow, visitor);
+    return visitor.getResult();
+  }
+
   public static List<PsiReferenceExpression> getReadBeforeWrite(ControlFlow flow) {
-    final InstructionClientVisitor<List<PsiReferenceExpression>> visitor = new ReadBeforeWriteClientVisitor(flow);
+    final InstructionClientVisitor<List<PsiReferenceExpression>> visitor = new ReadBeforeWriteClientVisitor(flow, false);
     depthFirstSearch(flow, visitor);
     return visitor.getResult();
   }
@@ -1233,9 +1239,11 @@ public class ControlFlowUtil {
     // map of variable->PsiReferenceExpressions for all read before written variables for this point and below in control flow
     private final CopyOnWriteList[] readVariables;
     private final ControlFlow myFlow;
+    private boolean localVariablesOnly;
 
-    public ReadBeforeWriteClientVisitor(ControlFlow flow) {
+    public ReadBeforeWriteClientVisitor(ControlFlow flow, boolean localVariablesOnly) {
       myFlow = flow;
+      this.localVariablesOnly = localVariablesOnly;
       readVariables = new CopyOnWriteList[myFlow.getSize() + 1];
     }
 
@@ -1243,7 +1251,7 @@ public class ControlFlowUtil {
     public void visitReadVariableInstruction(ReadVariableInstruction instruction, int offset, int nextOffset) {
       CopyOnWriteList readVars = readVariables[Math.min(nextOffset, myFlow.getSize())];
       final PsiVariable variable = instruction.variable;
-      if (!isMethodParameter(variable)) {
+      if (!localVariablesOnly || !isMethodParameter(variable)) {
         final PsiReferenceExpression expression = getEnclosingReferenceExpression(myFlow.getElement(offset), variable);
         if (expression != null) {
           readVars = CopyOnWriteList.add(readVars, new VariableInfo(variable, expression));
@@ -1258,7 +1266,7 @@ public class ControlFlowUtil {
       if (readVars == null) return;
 
       final PsiVariable variable = instruction.variable;
-      if (!isMethodParameter(variable)) {
+      if (!localVariablesOnly || !isMethodParameter(variable)) {
         readVars = readVars.remove(new VariableInfo(variable, null));
       }
       merge(offset, readVars, readVariables);
@@ -1481,4 +1489,3 @@ public class ControlFlowUtil {
     return startOffset != -1 && isInstructionReachable(flow, startOffset, startOffset);
   }
 }
-

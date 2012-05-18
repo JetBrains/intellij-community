@@ -65,8 +65,6 @@ import java.util.Set;
  * @author ven
  */
 public class FieldCanBeLocalInspection extends BaseLocalInspectionTool {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.varScopeCanBeNarrowed.FieldCanBeLocalInspection");
-
   @NonNls public static final String SHORT_NAME = "FieldCanBeLocal";
   public final JDOMExternalizableStringList EXCLUDE_ANNOS = new JDOMExternalizableStringList();
 
@@ -110,13 +108,13 @@ public class FieldCanBeLocalInspection extends BaseLocalInspectionTool {
       @Override
       public void visitJavaFile(PsiJavaFile file) {
         for (PsiClass aClass : file.getClasses()) {
-          docheckClass(aClass, holder, EXCLUDE_ANNOS);
+          doCheckClass(aClass, holder, EXCLUDE_ANNOS);
         }
       }
     };
   }
 
-  private static void docheckClass(final PsiClass aClass, ProblemsHolder holder, final List<String> excludeAnnos) {
+  private static void doCheckClass(final PsiClass aClass, ProblemsHolder holder, final List<String> excludeAnnos) {
     if (aClass.isInterface()) return;
     final PsiField[] fields = aClass.getFields();
     final Set<PsiField> candidates = new LinkedHashSet<PsiField>();
@@ -128,6 +126,7 @@ public class FieldCanBeLocalInspection extends BaseLocalInspectionTool {
         candidates.add(field);
       }
     }
+
 
     removeFieldsReferencedFromInitializers(aClass, candidates);
     if (candidates.isEmpty()) return;
@@ -141,7 +140,7 @@ public class FieldCanBeLocalInspection extends BaseLocalInspectionTool {
     for (PsiField field : candidates) {
       if (usedFields.contains(field) && !hasImplicitReadOrWriteUsage(field, implicitUsageProviders)) {
         final String message = InspectionsBundle.message("inspection.field.can.be.local.problem.descriptor");
-        holder.registerProblem(field.getNameIdentifier(), message, new MyQuickFix());
+        holder.registerProblem(field.getNameIdentifier(), message, new ConvertFieldToLocalQuickFix());
       }
     }
   }
@@ -189,7 +188,7 @@ public class FieldCanBeLocalInspection extends BaseLocalInspectionTool {
         final PsiElement resolved = readBeforeWrite.resolve();
         if (resolved instanceof PsiField) {
           final PsiField field = (PsiField)resolved;
-          if (!isImmutableState(field.getType()) || !PsiUtil.isConstantExpression(field.getInitializer()) || getWrittenVariables(controlFlow, writtenVariables).contains(field)){
+          if (!isImmutableState(field.getType()) || !PsiUtil.isConstantExpression(field.getInitializer()) || getWrittenVariables(controlFlow, writtenVariables).contains(field)) {
             PsiElement parent = body.getParent();
             if (!(parent instanceof PsiMethod) ||
                 !((PsiMethod)parent).isConstructor() ||
@@ -222,15 +221,18 @@ public class FieldCanBeLocalInspection extends BaseLocalInspectionTool {
 
   private static void removeFieldsReferencedFromInitializers(final PsiClass aClass, final Set<PsiField> candidates) {
     aClass.accept(new JavaRecursiveElementWalkingVisitor() {
-      @Override public void visitMethod(PsiMethod method) {
+      @Override
+      public void visitMethod(PsiMethod method) {
         //do not go inside method
       }
 
-      @Override public void visitClassInitializer(PsiClassInitializer initializer) {
+      @Override
+      public void visitClassInitializer(PsiClassInitializer initializer) {
         //do not go inside class initializer
       }
 
-      @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
+      @Override
+      public void visitReferenceExpression(PsiReferenceExpression expression) {
         final PsiElement resolved = expression.resolve();
         if (resolved instanceof PsiField) {
           final PsiField field = (PsiField)resolved;
@@ -245,7 +247,7 @@ public class FieldCanBeLocalInspection extends BaseLocalInspectionTool {
   }
 
   private static boolean hasImplicitReadOrWriteUsage(final PsiField field, ImplicitUsageProvider[] implicitUsageProviders) {
-    for(ImplicitUsageProvider provider: implicitUsageProviders) {
+    for (ImplicitUsageProvider provider : implicitUsageProviders) {
       if (provider.isImplicitRead(field) || provider.isImplicitWrite(field)) {
         return true;
       }
@@ -253,173 +255,41 @@ public class FieldCanBeLocalInspection extends BaseLocalInspectionTool {
     return false;
   }
 
-  private static class MyQuickFix implements LocalQuickFix {
-    @NotNull
-    public String getName() {
-      return InspectionsBundle.message("inspection.field.can.be.local.quickfix");
+  private static class ConvertFieldToLocalQuickFix extends BaseConvertToLocalQuickFix<PsiField> {
+
+    @Override
+    @Nullable
+    protected PsiField getVariable(@NotNull ProblemDescriptor descriptor) {
+      return PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PsiField.class);
     }
 
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiElement element = descriptor.getPsiElement();
-      PsiField myField = PsiTreeUtil.getParentOfType(element, PsiField.class);
-      if (myField == null || !myField.isValid()) return; //weird. should not get here when field becomes invalid
+    @Override
+    protected void beforeDelete(@NotNull Project project, @NotNull PsiField variable, @NotNull PsiElement newDeclaration) {
+      final PsiDocComment docComment = variable.getDocComment();
+      if (docComment != null) moveDocCommentToDeclaration(project, docComment, newDeclaration);
+    }
 
-      final PsiDocComment docComment = myField.getDocComment();
-      final Collection<PsiReference> refs = ReferencesSearch.search(myField).findAll();
-      if (refs.isEmpty()) return;
-      Set<PsiReference> refsSet = new HashSet<PsiReference>(refs);
-      PsiCodeBlock anchorBlock = findAnchorBlock(refs);
-      if (anchorBlock == null) return; //was assert, but need to fix the case when obsolete inspection highlighting is left
-      if (!CodeInsightUtil.preparePsiElementsForWrite(anchorBlock)) return;
-      final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(project).getElementFactory();
+    @NotNull
+    @Override
+    protected String suggestLocalName(@NotNull Project project, @NotNull PsiField field, @NotNull PsiCodeBlock scope) {
       final JavaCodeStyleManager styleManager = JavaCodeStyleManager.getInstance(project);
-      final String propertyName = styleManager.variableNameToPropertyName(myField.getName(), VariableKind.FIELD);
-      String localName = styleManager.propertyNameToVariableName(propertyName, VariableKind.LOCAL_VARIABLE);
-      localName = RefactoringUtil.suggestUniqueVariableName(localName, anchorBlock, myField);
-      PsiElement firstElement = getFirstElement(refs);
-      boolean mayBeFinal = mayBeFinal(refsSet, firstElement);
-      PsiElement newDeclaration = null;
-      try {
-        final PsiElement anchor = getAnchorElement(anchorBlock, firstElement);
-        if (anchor instanceof PsiExpressionStatement &&
-            ((PsiExpressionStatement) anchor).getExpression() instanceof PsiAssignmentExpression) {
-          final PsiAssignmentExpression expression = (PsiAssignmentExpression) ((PsiExpressionStatement) anchor).getExpression();
-          if (expression.getOperationTokenType() == JavaTokenType.EQ &&
-              expression.getLExpression() instanceof PsiReferenceExpression &&
-              ((PsiReference)expression.getLExpression()).isReferenceTo(myField)) {
-            final PsiExpression initializer = expression.getRExpression();
-            final PsiDeclarationStatement decl = elementFactory.createVariableDeclarationStatement(localName, myField.getType(), initializer);
-            if (!mayBeFinal) {
-              PsiUtil.setModifierProperty((PsiModifierListOwner)decl.getDeclaredElements()[0], PsiModifier.FINAL, false);
-            }
-            newDeclaration = anchor.replace(decl);
-            refsSet.remove(expression.getLExpression());
-            retargetReferences(elementFactory, localName, refsSet);
-          }
-          else {
-            newDeclaration = addDeclarationWithFieldInitializerAndRetargetReferences(elementFactory, localName, anchorBlock, anchor, refsSet,
-                                                                                     myField);
-          }
-        }
-        else {
-          newDeclaration = addDeclarationWithFieldInitializerAndRetargetReferences(elementFactory, localName, anchorBlock, anchor, refsSet,
-                                                                                   myField);
-        }
-      }
-      catch (IncorrectOperationException e) {
-        LOG.error(e);
-      }
 
-      if (newDeclaration != null) {
-        if (docComment != null) {
-          final StringBuilder buf = new StringBuilder();
-          for (PsiElement psiElement : docComment.getDescriptionElements()) {
-            buf.append(psiElement.getText());
-          }
-          if (buf.length() > 0) {
-            final JavaCommenter commenter = new JavaCommenter();
-            final PsiComment comment = JavaPsiFacade.getElementFactory(project)
-              .createCommentFromText(commenter.getBlockCommentPrefix() +
-                                     buf.toString() +
-                                     commenter.getBlockCommentSuffix(), newDeclaration);
-            newDeclaration.getParent().addBefore(comment, newDeclaration);
-          }
-        }
-        final PsiFile psiFile = myField.getContainingFile();
-        final Editor editor = FileEditorManager.getInstance(project).getSelectedTextEditor();
-        if (editor != null && IJSwingUtilities.hasFocus(editor.getComponent())) {
-          final PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
-          if (file == psiFile) {
-            editor.getCaretModel().moveToOffset(newDeclaration.getTextOffset());
-            editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
-          }
-        }
-      }
-
-      try {
-        myField.normalizeDeclaration();
-        myField.delete();
-      }
-      catch (IncorrectOperationException e) {
-        LOG.error(e);
-      }
-
+      final String propertyName = styleManager.variableNameToPropertyName(field.getName(), VariableKind.FIELD);
+      final String localName = styleManager.propertyNameToVariableName(propertyName, VariableKind.LOCAL_VARIABLE);
+      return RefactoringUtil.suggestUniqueVariableName(localName, scope, field);
     }
 
-    private static boolean mayBeFinal(Set<PsiReference> refsSet, PsiElement firstElement) {
-      for (PsiReference ref : refsSet) {
-        PsiElement element = ref.getElement();
-        if (element == firstElement) continue;
-        if (element instanceof PsiExpression && PsiUtil.isAccessedForWriting((PsiExpression) element)) return false;
+    private static void moveDocCommentToDeclaration(@NotNull Project project, @NotNull PsiDocComment docComment, @NotNull PsiElement declaration) {
+      final StringBuilder buf = new StringBuilder();
+      for (PsiElement psiElement : docComment.getDescriptionElements()) {
+        buf.append(psiElement.getText());
       }
-      return true;
-    }
-
-    private static void retargetReferences(final PsiElementFactory elementFactory, final String localName, final Set<PsiReference> refs)
-      throws IncorrectOperationException {
-      final PsiReferenceExpression refExpr = (PsiReferenceExpression)elementFactory.createExpressionFromText(localName, null);
-      for (PsiReference ref : refs) {
-        if (ref instanceof PsiReferenceExpression) {
-          ((PsiReferenceExpression)ref).replace(refExpr);
-        }
+      if (buf.length() > 0) {
+        final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
+        final JavaCommenter commenter = new JavaCommenter();
+        final PsiComment comment = elementFactory.createCommentFromText(commenter.getBlockCommentPrefix() + buf.toString() + commenter.getBlockCommentSuffix(), declaration);
+        declaration.getParent().addBefore(comment, declaration);
       }
     }
-
-    private static PsiElement addDeclarationWithFieldInitializerAndRetargetReferences(final PsiElementFactory elementFactory,
-                                                                                      final String localName,
-                                                                                      final PsiCodeBlock anchorBlock,
-                                                                                      final PsiElement anchor,
-                                                                                      final Set<PsiReference> refs,
-                                                                                      PsiField myField)
-      throws IncorrectOperationException {
-      final PsiDeclarationStatement decl = elementFactory.createVariableDeclarationStatement(localName, myField.getType(), myField.getInitializer());
-      final PsiElement newDeclaration = anchorBlock.addBefore(decl, anchor);
-
-      retargetReferences(elementFactory, localName, refs);
-      return newDeclaration;
-    }
-
-    @NotNull
-    public String getFamilyName() {
-      return getName();
-    }
-
-    private static PsiElement getAnchorElement(final PsiCodeBlock anchorBlock, @NotNull PsiElement firstElement) {
-      PsiElement element = firstElement;
-      while (element != null && element.getParent() != anchorBlock) {
-        element = element.getParent();
-      }
-      return element;
-    }
-
-    private static PsiElement getFirstElement(Collection<PsiReference> refs) {
-      PsiElement firstElement = null;
-      for (PsiReference reference : refs) {
-        final PsiElement element = reference.getElement();
-        if (firstElement == null || firstElement.getTextRange().getStartOffset() > element.getTextRange().getStartOffset()) {
-          firstElement = element;
-        }
-      }
-      return firstElement;
-    }
-
-    private static PsiCodeBlock findAnchorBlock(final Collection<PsiReference> refs) {
-      PsiCodeBlock result = null;
-      for (PsiReference psiReference : refs) {
-        final PsiElement element = psiReference.getElement();
-        PsiCodeBlock block = PsiTreeUtil.getParentOfType(element, PsiCodeBlock.class);
-        if (result == null || block == null) {
-          result = block;
-        }
-        else {
-          final PsiElement commonParent = PsiTreeUtil.findCommonParent(result, block);
-          result = PsiTreeUtil.getParentOfType(commonParent, PsiCodeBlock.class, false);
-        }
-      }
-      return result;
-    }
-  }
-  public boolean runForWholeFile() {
-    return true;
   }
 }
