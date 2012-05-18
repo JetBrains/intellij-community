@@ -37,6 +37,7 @@ public abstract class RootModelComponentBase implements Disposable {
     return myRootModel;
   }
 
+  @Override
   public void dispose() {
     myDisposed = true;
   }
