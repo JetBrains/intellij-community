@@ -147,7 +147,7 @@ public class Disposer {
   }
 
   /**
-   * @return object registered on parentDisposable which is equal to object, or null
+   * @return object registered on parentDisposable which is equal to object, or null if not found
    */
   @Nullable
   public static <T extends Disposable> T findRegisteredObject(@NotNull Disposable parentDisposable, @NotNull T object) {
