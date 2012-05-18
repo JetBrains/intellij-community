@@ -38,5 +38,7 @@ public class CoreModuleManagerTest extends UsefulTestCase {
     final ModuleManager moduleManager = ModuleManager.getInstance(env.getProject());
     final Module[] modules = moduleManager.getModules();
     assertEquals(1, modules.length);
+
+    //
   }
 }
