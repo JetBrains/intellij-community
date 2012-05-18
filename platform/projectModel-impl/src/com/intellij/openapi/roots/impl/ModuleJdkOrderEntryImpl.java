@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 
 package com.intellij.openapi.roots.impl;
 
-import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleJdkOrderEntry;
@@ -73,25 +72,16 @@ public class ModuleJdkOrderEntryImpl extends LibraryOrderEntryBaseImpl implement
     }
   }
 
-  public abstract static class SdkFinder {
-    private static final ExtensionPointName<SdkFinder> EP_NAME = ExtensionPointName.create("com.intellij.sdkFinder");
-
-    @Nullable
-    public Sdk findSdk(String name, String sdkType) {
-      return null;
-    }
-  }
-
   @Nullable
-  private static Sdk findJdk(final String jdkName, final String jdkType) {
+  private static Sdk findJdk(final String sdkName, final String sdkType) {
     for (SdkFinder sdkFinder : SdkFinder.EP_NAME.getExtensions()) {
-      final Sdk sdk = sdkFinder.findSdk(jdkName, jdkType);
+      final Sdk sdk = sdkFinder.findSdk(sdkName, sdkType);
       if (sdk != null) {
         return sdk;
       }
     }
     final ProjectJdkTable projectJdkTable = ProjectJdkTable.getInstance();
-    return projectJdkTable.findJdk(jdkName, jdkType);
+    return projectJdkTable.findJdk(sdkName, sdkType);
   }
 
 

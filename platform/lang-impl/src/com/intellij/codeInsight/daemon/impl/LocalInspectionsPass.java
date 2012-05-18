@@ -709,7 +709,8 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     return new ArrayList<PsiElement>(result);
   }
 
-  List<LocalInspectionToolWrapper> getInspectionTools(InspectionProfileWrapper profile) {
+  @NotNull
+  List<LocalInspectionToolWrapper> getInspectionTools(@NotNull InspectionProfileWrapper profile) {
     final List<LocalInspectionToolWrapper> tools = profile.getHighlightingLocalInspectionTools(myFile);
     for (Iterator<LocalInspectionToolWrapper> iterator = tools.iterator(); iterator.hasNext(); ) {
       LocalInspectionToolWrapper tool = iterator.next();

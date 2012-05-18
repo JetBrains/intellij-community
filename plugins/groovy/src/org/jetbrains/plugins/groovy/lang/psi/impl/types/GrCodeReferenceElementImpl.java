@@ -376,7 +376,7 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeRef
           final PsiSubstitutor substitutor = result.getSubstitutor();
           final PsiSubstitutor newSubstitutor = substitutor.putAll((PsiClass) element, args);
           GroovyPsiElement context = result.getCurrentFileResolveContext();
-          GroovyResolveResultImpl newResult = new GroovyResolveResultImpl(element, context, newSubstitutor, result.isAccessible(), result.isStaticsOK());
+          GroovyResolveResultImpl newResult = new GroovyResolveResultImpl(element, context, null, newSubstitutor, result.isAccessible(), result.isStaticsOK());
           results[i] = newResult;
           if (context instanceof GrImportStatement) {
             imported.add(newResult);

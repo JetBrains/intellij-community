@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,7 +32,7 @@ class ModuleStateStorageManager extends StateStorageManagerImpl {
     myModule = module;
   }
 
-  protected XmlElementStorage.StorageData createStorageData(String storageSpec) {
+  protected StorageData createStorageData(String storageSpec) {
     return new ModuleStoreImpl.ModuleFileData(ROOT_TAG_NAME, myModule);
   }
 

@@ -16,6 +16,7 @@
 package com.intellij.mock;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.components.ExtensionAreas;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
@@ -35,7 +36,7 @@ public class MockProject extends MockComponentManager implements Project {
 
   public MockProject(PicoContainer parent, @NotNull Disposable parentDisposable) {
     super(parent, parentDisposable);
-    Extensions.instantiateArea("IDEA_PROJECT", this, null);
+    Extensions.instantiateArea(ExtensionAreas.IDEA_PROJECT, this, null);
     Disposer.register(parentDisposable, new Disposable() {
       @Override
       public void dispose() {

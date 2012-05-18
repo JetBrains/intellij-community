@@ -62,7 +62,7 @@ public class GdkMethodUtil {
   private GdkMethodUtil() {
   }
 
-  public static boolean categoryIteration(GrClosableBlock place, final PsiScopeProcessor processor) {
+  public static boolean categoryIteration(GrClosableBlock place, final PsiScopeProcessor processor, ResolveState state) {
     final ClassHint classHint = processor.getHint(ClassHint.KEY);
     if (classHint != null && !classHint.shouldProcess(ClassHint.ResolveKind.METHOD)) return true;
     
@@ -79,11 +79,12 @@ public class GdkMethodUtil {
 
     if (!(call.resolveMethod() instanceof GrGdkMethod)) return true;
 
+    state = state.put(ResolverProcessor.RESOLVE_CONTEXT, call);
     for (GrExpression arg : args) {
       if (arg instanceof GrReferenceExpression) {
         final PsiElement resolved = ((GrReferenceExpression)arg).resolve();
         if (resolved instanceof PsiClass) {
-          if (!processCategoryMethods(place, processor, call, (PsiClass)resolved)) return false;
+          if (!processCategoryMethods(place, processor, state, (PsiClass)resolved)) return false;
         }
       }
     }
@@ -100,7 +101,7 @@ public class GdkMethodUtil {
    */
   public static boolean processCategoryMethods(final GroovyPsiElement place,
                                                final PsiScopeProcessor processor,
-                                               @Nullable GroovyPsiElement resolveContext,
+                                               @NotNull ResolveState state,
                                                @NotNull PsiClass categoryClass) {
     final DelegatingScopeProcessor delegate = new DelegatingScopeProcessor(processor) {
       @Override
@@ -114,18 +115,17 @@ public class GdkMethodUtil {
         return true;
       }
     };
-    final ResolveState state = ResolveState.initial().put(ResolverProcessor.RESOLVE_CONTEXT, resolveContext);
     return categoryClass.processDeclarations(delegate, state, null, place);
   }
 
-  public static boolean withIteration(GrClosableBlock block, final PsiScopeProcessor processor, GroovyPsiElement place) {
+  public static boolean withIteration(GrClosableBlock block, final PsiScopeProcessor processor) {
     GrMethodCall call = checkMethodCall(block, WITH);
     if (call == null) return true;
     final GrExpression invoked = call.getInvokedExpression();
     LOG.assertTrue(invoked instanceof GrReferenceExpression);
     final GrExpression qualifier = ((GrReferenceExpression)invoked).getQualifier();
     if (qualifier == null) return true;
-    if (!GrReferenceResolveUtil.processQualifier(processor, qualifier, place)) return false;
+    if (!GrReferenceResolveUtil.processQualifier(processor, qualifier, (GrReferenceExpression)invoked)) return false;
 
     return true;
   }

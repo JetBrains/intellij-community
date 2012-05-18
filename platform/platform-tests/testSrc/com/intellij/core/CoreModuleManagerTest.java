@@ -18,6 +18,10 @@ package com.intellij.core;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.roots.ContentEntry;
+import com.intellij.openapi.roots.LibraryOrderEntry;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.UsefulTestCase;
@@ -32,11 +36,21 @@ public class CoreModuleManagerTest extends UsefulTestCase {
   public void _testLoadingModules() throws IOException, JDOMException {
     CoreEnvironment env = new CoreEnvironment(getTestRootDisposable());
     ProjectModelEnvironment.register(env);
-    final String projectPath = PathManagerEx.getTestDataPath("/compileServer/incremental/annotations/addAnnotationTarget");
+    final String projectPath = PathManagerEx.getTestDataPath("/core/loadingTest");
     VirtualFile vFile = StandardFileSystems.local().findFileByPath(projectPath);
     CoreProjectLoader.loadProject(env.getProject(), vFile);
     final ModuleManager moduleManager = ModuleManager.getInstance(env.getProject());
     final Module[] modules = moduleManager.getModules();
     assertEquals(1, modules.length);
+
+    ModuleRootManager rootManager = ModuleRootManager.getInstance(modules[0]);
+    final ContentEntry[] contentEntries = rootManager.getContentEntries();
+    assertEquals(1, contentEntries.length);
+    assertNotNull(contentEntries [0].getFile());
+
+    final OrderEntry[] orderEntries = rootManager.getOrderEntries();
+    assertEquals(2, orderEntries.length);
+    LibraryOrderEntry libraryOrderEntry = (LibraryOrderEntry) orderEntries[1];
+    assertNotNull(libraryOrderEntry.getLibrary());
   }
 }

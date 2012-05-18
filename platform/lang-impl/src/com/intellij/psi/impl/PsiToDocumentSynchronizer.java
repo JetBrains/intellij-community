@@ -96,7 +96,7 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
 
     final boolean insideTransaction = myTransactionsMap.containsKey(document);
     if (!insideTransaction) {
-      document.setModificationStamp(psiFile.getModificationStamp());
+      document.setModificationStamp(psiFile.getViewProvider().getModificationStamp());
       if (LOG.isDebugEnabled()) {
         PsiDocumentManagerImpl.checkConsistency(psiFile, document);
       }

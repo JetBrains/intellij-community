@@ -28,7 +28,7 @@
       </library>
     </orderEntry>
     <orderEntry type="library" name="Guava" level="project" />
-    <orderEntry type="module" module-name="projectModel-api" />
+    <orderEntry type="module" module-name="projectModel-api" exported="" />
   </component>
 </module>
 

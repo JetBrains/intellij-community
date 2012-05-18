@@ -67,7 +67,7 @@ public class GroovyCreateClassDialog extends DialogWrapper {
     setModal(true);
     setTitle(title);
 
-    myInformationLabel.setText(GroovyInspectionBundle.message("dialog.create.class.label.0", targetClassName));
+    myInformationLabel.setText(title);
     myPackageTextField.setText(targetPackageName != null ? targetPackageName : "");
 
     init();

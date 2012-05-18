@@ -548,7 +548,7 @@ public class ValidateXmlActionHandler {
       final PsiFile psifile = PsiManager.getInstance(myProject).findFile(file);
 
       if (psifile != null && psifile.isValid()) {
-        timestamp += psifile.getModificationStamp();
+        timestamp += psifile.getViewProvider().getModificationStamp();
       } else {
         break;
       }

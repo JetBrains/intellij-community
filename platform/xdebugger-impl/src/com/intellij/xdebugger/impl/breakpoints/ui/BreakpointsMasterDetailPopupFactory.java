@@ -26,6 +26,7 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
+import com.intellij.ui.CheckBoxListListener;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.popup.util.ItemWrapper;
 import com.intellij.ui.popup.util.MasterDetailPopupBuilder;
@@ -48,7 +49,7 @@ import java.util.List;
  * Time: 3:11 AM
  * To change this template use File | Settings | File Templates.
  */
-public class BreakpointsMasterDetailPopupFactory {
+public class BreakpointsMasterDetailPopupFactory implements CheckBoxListListener {
 
   private final List<BreakpointPanelProvider> myBreakpointPanelProviders;
   private Project myProject;
@@ -69,6 +70,14 @@ public class BreakpointsMasterDetailPopupFactory {
     });
   }
 
+  @Override
+  public void checkBoxSelectionChanged(int index, boolean value) {
+    final Object o = myModel.get(index);
+    if (o instanceof BreakpointItem) {
+      ((BreakpointItem)o).setEnabled(value);
+    }
+  }
+
   public static BreakpointsMasterDetailPopupFactory getInstance(Project project) {
     return ServiceManager.getService(project, BreakpointsMasterDetailPopupFactory.class);
   }
@@ -76,7 +85,9 @@ public class BreakpointsMasterDetailPopupFactory {
   public JBPopup createPopup(@Nullable Object initialBreakpoint) {
     final DefaultListSelectionModel selectionModel = new DefaultListSelectionModel();
     myModel = createBreakpointsItemsList(selectionModel);
+
     final JBList list = new JBList(myModel);
+
     list.setSelectionModel(selectionModel);
 
     selectInitial(initialBreakpoint, myModel, list);
@@ -100,8 +111,8 @@ public class BreakpointsMasterDetailPopupFactory {
           //To change body of implemented methods use File | Settings | File Templates.
         }
 
-        public boolean hasItemsWithMnemonic(Project project) {
-          return false;
+        public JComponent createAccessoryView(Project project) {
+          return new JCheckBox();
         }
       }).setCloseOnEnter(false).createMasterDetailPopup();
 
@@ -159,46 +170,7 @@ public class BreakpointsMasterDetailPopupFactory {
       }
     });
 
-    actions.add(new CheckboxAction("Enabled"){
-      {
-        registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0)), list);
-      }
-      @Override
-      public void update(AnActionEvent e) {
-        super.update(e);
-        e.getPresentation().setEnabled(list.getSelectedValue() instanceof BreakpointItem);
-        if (getCheckBox() != null) {
-          getCheckBox().setFocusable(false);
-        }
-      }
-
-      @Override
-      public boolean isSelected(AnActionEvent e) {
-        return isSelectedBreakpointEnabled(list);
-      }
-
-      @Override
-      public void setSelected(AnActionEvent e, boolean state) {
-        setSelectedBreakpointEnabled(list, state);
-      }
-    });
-
     return actions;
-  }
-
-  private void setSelectedBreakpointEnabled(final JBList list, boolean state) {
-    final Object value = list.getSelectedValue();
-    if (value instanceof BreakpointItem) {
-      ((BreakpointItem)value).setEnabled(state);
-    }
-  }
-
-  private boolean isSelectedBreakpointEnabled(JBList list) {
-    final Object value = list.getSelectedValue();
-    if (value instanceof BreakpointItem) {
-      return ((BreakpointItem)value).isEnabled();
-    }
-    return false;
   }
 
   private BreakpointListModel createBreakpointsItemsList(DefaultListSelectionModel selectionModel) {

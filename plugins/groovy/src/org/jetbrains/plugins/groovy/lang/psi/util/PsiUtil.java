@@ -937,7 +937,7 @@ public class PsiUtil {
 
     final GroovyResolveResult grResult = resolveResult instanceof GroovyResolveResult
                                          ? (GroovyResolveResult)resolveResult
-                                         : new GroovyResolveResultImpl(psiClass, context, substitutor, true, true);
+                                         : new GroovyResolveResultImpl(psiClass, context, null, substitutor, true, true);
     return getConstructorCandidates(context, new GroovyResolveResult[]{grResult}, argTypes);
   }
 

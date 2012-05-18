@@ -16,6 +16,7 @@
 package com.intellij.openapi.projectRoots;
 
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.Nullable;
@@ -39,10 +40,27 @@ public abstract class ProjectJdkTable {
   public abstract List<Sdk> getSdksOfType(SdkTypeId type);
 
   @Nullable
-  public abstract Sdk findMostRecentSdkOfType(SdkTypeId type);
+  public Sdk findMostRecentSdkOfType(final SdkTypeId type) {
+    return findMostRecentSdk(new Condition<Sdk>() {
+      public boolean value(Sdk sdk) {
+        return sdk.getSdkType() == type;
+      }
+    });
+  }
 
   @Nullable
-  public abstract Sdk findMostRecentSdk(Condition<Sdk> condition);
+  public Sdk findMostRecentSdk(Condition<Sdk> condition) {
+    Sdk found = null;
+    for (Sdk each : getAllJdks()) {
+      if (!condition.value(each)) continue;
+      if (found == null) {
+        found = each;
+        continue;
+      }
+      if (Comparing.compare(each.getVersionString(), found.getVersionString()) > 0) found = each;
+    }
+    return found;
+  }
 
   public abstract void addJdk(Sdk jdk);
 
@@ -69,6 +87,8 @@ public abstract class ProjectJdkTable {
   public abstract void removeListener(Listener listener);
 
   public abstract SdkTypeId getDefaultSdkType();
+
+  public abstract SdkTypeId getSdkTypeByName(String name);
 
   public abstract Sdk createSdk(final String name, final SdkTypeId sdkType);
 

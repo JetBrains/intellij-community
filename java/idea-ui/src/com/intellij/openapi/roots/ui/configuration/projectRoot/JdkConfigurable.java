@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.SdkType;
 import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl;
 import com.intellij.openapi.projectRoots.ui.SdkEditor;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureElement;
@@ -78,13 +79,13 @@ public class JdkConfigurable extends ProjectStructureElementConfigurable<Sdk> im
   }
 
   public Icon getIcon() {
-    return myProjectJdk.getSdkType().getIcon();
+    return ((SdkType) myProjectJdk.getSdkType()).getIcon();
   }
 
   @Nullable
   @NonNls
   public String getHelpTopic() {
-    return myProjectJdk.getSdkType().getHelpTopic();
+    return ((SdkType) myProjectJdk.getSdkType()).getHelpTopic();
   }
 
 

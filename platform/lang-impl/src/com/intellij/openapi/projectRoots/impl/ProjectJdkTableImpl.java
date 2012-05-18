@@ -24,7 +24,6 @@ import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.*;
@@ -164,29 +163,6 @@ public class ProjectJdkTableImpl extends ProjectJdkTable implements PersistentSt
     return result;
   }
 
-  @Override
-  public Sdk findMostRecentSdkOfType(final SdkTypeId type) {
-    return findMostRecentSdk(new Condition<Sdk>() {
-      public boolean value(Sdk sdk) {
-        return sdk.getSdkType() == type;
-      }
-    });
-  }
-
-  @Override
-  public Sdk findMostRecentSdk(Condition<Sdk> condition) {
-    Sdk found = null;
-    for (Sdk each : getAllJdks()) {
-      if (!condition.value(each)) continue;
-      if (found == null) {
-        found = each;
-        continue;
-      }
-      if (Comparing.compare(each.getVersionString(), found.getVersionString()) > 0) found = each;
-    }
-    return found;
-  }
-
   public void addJdk(Sdk jdk) {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
     mySdks.add(jdk);
@@ -223,8 +199,23 @@ public class ProjectJdkTableImpl extends ProjectJdkTable implements PersistentSt
     return UnknownSdkType.getInstance(null);
   }
 
+  @Override
+  public SdkTypeId getSdkTypeByName(String sdkTypeName) {
+    return findSdkTypeByName(sdkTypeName);
+  }
+
+  public static SdkTypeId findSdkTypeByName(String sdkTypeName) {
+    final SdkType[] allSdkTypes = SdkType.getAllTypes();
+    for (final SdkType type : allSdkTypes) {
+      if (type.getName().equals(sdkTypeName)) {
+        return type;
+      }
+    }
+    return UnknownSdkType.getInstance(sdkTypeName);
+  }
+
   public Sdk createSdk(final String name, final SdkTypeId sdkType) {
-    return new ProjectJdkImpl(name, (SdkType) sdkType);
+    return new ProjectJdkImpl(name, sdkType);
   }
 
   public void loadState(Element element) {

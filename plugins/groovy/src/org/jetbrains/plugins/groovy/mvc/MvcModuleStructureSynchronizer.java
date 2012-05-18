@@ -244,12 +244,17 @@ public class MvcModuleStructureSynchronizer extends AbstractProjectComponent {
       StartupManager.getInstance(myProject).runWhenProjectIsInitialized(new DumbAwareRunnable() {
         @Override
         public void run() {
-          ApplicationManager.getApplication().invokeLater(new Runnable() {
-            @Override
-            public void run() {
-              runActions();
-            }
-          }, ModalityState.NON_MODAL);
+          if (ApplicationManager.getApplication().isUnitTestMode()) {
+            runActions();
+          }
+          else {
+            ApplicationManager.getApplication().invokeLater(new Runnable() {
+              @Override
+              public void run() {
+                runActions();
+              }
+            }, ModalityState.NON_MODAL);
+          }
         }
       });
     }

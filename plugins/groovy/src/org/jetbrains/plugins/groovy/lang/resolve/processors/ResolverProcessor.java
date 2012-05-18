@@ -26,6 +26,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
+import org.jetbrains.plugins.groovy.lang.psi.api.SpreadState;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
@@ -97,8 +98,9 @@ public class ResolverProcessor implements PsiScopeProcessor, NameHint, ClassHint
 
       boolean isAccessible = isAccessible(namedElement);
       final GroovyPsiElement resolveContext = state.get(RESOLVE_CONTEXT);
+      final SpreadState spreadState = state.get(SpreadState.SPREAD_STATE);
       boolean isStaticsOK = isStaticsOK(namedElement, resolveContext, true);
-      addCandidate(new GroovyResolveResultImpl(namedElement, resolveContext, substitutor, isAccessible, isStaticsOK));
+      addCandidate(new GroovyResolveResultImpl(namedElement, resolveContext, spreadState, substitutor, isAccessible, isStaticsOK));
       return !isAccessible || !isStaticsOK;
     }
 

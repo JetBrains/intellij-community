@@ -222,4 +222,9 @@ public class VfsUtilCore {
   public static File virtualToIoFile(@NotNull VirtualFile file) {
     return new File(PathUtil.toPresentableUrl(file.getUrl()));
   }
+
+  @NotNull
+  public static String pathToUrl(@NonNls @NotNull String path) {
+    return VirtualFileManager.constructUrl(StandardFileSystems.FILE_PROTOCOL, path);
+  }
 }

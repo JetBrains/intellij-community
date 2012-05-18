@@ -168,8 +168,9 @@ public class EclipseClasspathReader {
           srcUrl = VfsUtil.pathToUrl(linked);
           eclipseModuleManager.registerEclipseLinkedSrcVarPath(srcUrl, path);
           rootModel.addContentEntry(srcUrl).addSourceFolder(srcUrl, isTestFolder);
-        } else {
-          getContentEntry().addSourceFolder(srcUrl, isTestFolder);
+        }
+        else {
+          myContentEntry.addSourceFolder(srcUrl, isTestFolder);
         }
         eclipseModuleManager.setExpectedModuleSourcePlace(rearrangeOrderEntryOfType(rootModel, ModuleSourceOrderEntry.class));
         eclipseModuleManager.registerSrcPlace(srcUrl, idx);
@@ -436,10 +437,6 @@ public class EclipseClasspathReader {
   public static String getLastPathComponent(final String path) {
     final int idx = path.lastIndexOf('/');
     return idx < 0 || idx == path.length() - 1 ? null : path.substring(idx + 1);
-  }
-
-  private ContentEntry getContentEntry() {
-    return myContentEntry;
   }
 
   private static String getVariableRelatedPath(String var, String path) {

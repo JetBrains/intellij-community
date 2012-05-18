@@ -404,7 +404,7 @@
 
     <xml.attributeDescriptorsProvider implementation="com.intellij.html.impl.Html5CustomAttributeDescriptorsProvider"/>
 
-    <breadcrumbsPresentationProvider
-        implementation="com.intellij.codeInsight.daemon.impl.tagTreeHighlighting.XmlTagTreeBreadcrumbsPresentationProvider"/>
+    <breadcrumbsPresentationProvider implementation="com.intellij.codeInsight.daemon.impl.tagTreeHighlighting.XmlTagTreeBreadcrumbsPresentationProvider"/>
+    <daemon.changeLocalityDetector implementation="com.intellij.xml.XmlChangeLocalityDetector"/>
   </extensions>
 </idea-plugin>

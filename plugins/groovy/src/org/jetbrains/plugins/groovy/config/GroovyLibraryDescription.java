@@ -23,6 +23,7 @@ import com.intellij.openapi.roots.libraries.NewLibraryConfiguration;
 import com.intellij.openapi.roots.ui.configuration.libraries.CustomLibraryDescription;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryEditor;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -121,6 +122,7 @@ public class GroovyLibraryDescription extends CustomLibraryDescription {
     final String path = dir.getPath();
     final String sdkVersion = provider.getSDKVersion(path);
     if (AbstractConfigUtils.UNDEFINED_VERSION.equals(sdkVersion)) {
+      Messages.showErrorDialog(parentComponent, "Looks like " + myFrameworkName + " distribution in specified path is broken. Cannot determinate version.", "Failed to create library");
       return null;
     }
 

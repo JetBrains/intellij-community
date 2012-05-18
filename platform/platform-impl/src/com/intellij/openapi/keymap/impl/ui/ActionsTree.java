@@ -28,13 +28,13 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.Gray;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.ui.treeStructure.treetable.TreeTableModel;
-import com.intellij.util.Alarm;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.MacTreeUI;
@@ -301,14 +301,8 @@ public class ActionsTree {
     if (node == null) {
       return;
     }
-    tree.expandPath(new TreePath(((DefaultMutableTreeNode)node.getParent()).getPath()));
 
-    Alarm alarm = new Alarm();
-    alarm.addRequest(new Runnable() {
-      public void run() {
-        TreeUtil.selectPath(myTree, new TreePath(node.getPath()));
-      }
-    }, 100);
+    TreeUtil.selectInTree(node, true, tree);
   }
 
   @Nullable
@@ -383,11 +377,18 @@ public class ActionsTree {
 
       TreePath path = new TreePath(root.getPath());
       if (myTree.isPathSelected(path)){
-        mySelectionPaths.add(getPath(root));
+        addPathToList(root, mySelectionPaths);
       }
       if (myTree.isExpanded(path) || root.getChildCount() == 0){
-        myPathsToExpand.add(getPath(root));
+        addPathToList(root, myPathsToExpand);
         _storePaths(root);
+      }
+    }
+
+    private void addPathToList(DefaultMutableTreeNode root, ArrayList<String> list) {
+      String path = getPath(root);
+      if (!StringUtil.isEmpty(path)) {
+        list.add(path);
       }
     }
 
@@ -397,10 +398,10 @@ public class ActionsTree {
         DefaultMutableTreeNode childNode = (DefaultMutableTreeNode)childNode1;
         TreePath path = new TreePath(childNode.getPath());
         if (myTree.isPathSelected(path)) {
-          mySelectionPaths.add(getPath(childNode));
+          addPathToList(childNode, mySelectionPaths);
         }
         if ((myTree.isExpanded(path) || childNode.getChildCount() == 0) && !childNode.isLeaf()) {
-          myPathsToExpand.add(getPath(childNode));
+          addPathToList(childNode, myPathsToExpand);
           _storePaths(childNode);
         }
       }
@@ -412,20 +413,17 @@ public class ActionsTree {
         myTree.expandPath(new TreePath(node.getPath()));
       }
 
-      Alarm alarm = new Alarm().setActivationComponent(myComponent);
-      alarm.addComponentRequest(new Runnable() {
-        public void run() {
-          final ArrayList<DefaultMutableTreeNode> nodesToSelect = getNodesByPaths(mySelectionPaths);
-          if (!nodesToSelect.isEmpty()) {
-            for (DefaultMutableTreeNode node : nodesToSelect) {
-              TreeUtil.selectNode(myTree, node);
-            }
-          }
-          else {
-            myTree.setSelectionRow(0);
+      if (myTree.getSelectionModel().getSelectionCount() == 0) {
+        final ArrayList<DefaultMutableTreeNode> nodesToSelect = getNodesByPaths(mySelectionPaths);
+        if (!nodesToSelect.isEmpty()) {
+          for (DefaultMutableTreeNode node : nodesToSelect) {
+            TreeUtil.selectInTree(node, false, myTree);
           }
         }
-      }, 100);
+        else {
+          myTree.setSelectionRow(0);
+        }
+      }
     }
 
 

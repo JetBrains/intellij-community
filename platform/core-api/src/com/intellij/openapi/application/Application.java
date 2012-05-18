@@ -324,11 +324,13 @@ public interface Application extends ComponentManager {
   boolean isActive();
 
   /**
+   * @deprecated use {@link #runReadAction(Runnable)} instead
    * Returns lock used for read operations, should be closed in finally block
    */
   AccessToken acquireReadActionLock();
 
   /**
+   * @deprecated use {@link #runWriteAction(Runnable)} instead
    * Returns lock used for write operations, should be closed in finally block
    */
   AccessToken acquireWriteActionLock(@Nullable Class marker);

@@ -20,9 +20,17 @@
 package com.intellij.codeInsight.daemon;
 
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public interface ChangeLocalityDetector {
+  /**
+   * @param changedElement
+   * @return the psi element (ancestor of the changedElement) which should be re-highlighted, or null if unsure.
+   * e.g. in Java we re-highlight enclosing code block only when element inside has changed.
+   * Note: do not traverse PSI tree upwards here,
+   *       since this ChangeLocalityDetector will be called for the changed element and all its parents anyway.
+   */
   @Nullable
-  PsiElement getChangeHighlightingDirtyScopeFor(PsiElement changedElement);
+  PsiElement getChangeHighlightingDirtyScopeFor(@NotNull PsiElement changedElement);
 }

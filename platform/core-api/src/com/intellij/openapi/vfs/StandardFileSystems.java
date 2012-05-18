@@ -28,6 +28,7 @@ public class StandardFileSystems {
   public static String FILE_PROTOCOL = "file";
   public static String JAR_PROTOCOL = "jar";
   public static String JAR_SEPARATOR = "!/";
+  public static String HTTP_PROTOCOL = "http";
 
   private static final NotNullLazyValue<VirtualFileSystem> ourLocal = new NotNullLazyValue<VirtualFileSystem>() {
     @NotNull

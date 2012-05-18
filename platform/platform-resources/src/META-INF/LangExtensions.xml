@@ -100,7 +100,7 @@
   <exportable serviceInterface="com.intellij.codeInsight.CodeInsightSettings"/>
 
   <applicationService serviceInterface="com.intellij.openapi.roots.impl.libraries.ApplicationLibraryTable"
-                      serviceImplementation="com.intellij.openapi.roots.impl.libraries.ApplicationLibraryTable"/>
+                      serviceImplementation="com.intellij.openapi.roots.impl.libraries.ExportableApplicationLibraryTable"/>
   <exportable serviceInterface="com.intellij.openapi.roots.impl.libraries.ApplicationLibraryTable"/>
 
   <applicationService serviceInterface="com.intellij.psi.codeStyle.CodeStyleSchemes"
@@ -769,4 +769,6 @@
 
   <completion.contributor language="TEXT" implementationClass="com.intellij.ui.TextFieldWithAutoCompletionContributor"
                           order="first, before commitCompletion"/>
+
+  <pathMacroFilter implementation="com.intellij.execution.configuration.RunConfigurationPathMacroFilter"/>
 </extensions>

@@ -191,10 +191,22 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
       }
     }
     catch (IOException e) {
+      try {
+        // attempt to close already opened resources
+        close();
+      }
+      catch (Throwable ignored) {
+      }
       throw e; // rethrow
     }
     catch (Throwable t) {
       LOG.error(t);
+      try {
+        // attempt to close already opened resources
+        close();
+      }
+      catch (Throwable ignored) {
+      }
       throw new PersistentEnumerator.CorruptedException(file);
     }
   }
@@ -472,7 +484,10 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
       try {
         myAppendCacheFlusher.stop();
         myAppendCache.clear();
-        myValueStorage.dispose();
+        final PersistentHashMapValueStorage valueStorage = myValueStorage;
+        if (valueStorage != null) {
+          valueStorage.dispose();
+        }
       }
       finally {
         super.close();
@@ -490,22 +505,26 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
       myLiveAndGarbageKeysCounter = 0;
       myReadCompactionGarbageSize = 0;
 
-      traverseAllRecords(new PersistentEnumerator.RecordsProcessor() {
-        @Override
-        public boolean process(final int keyId) throws IOException {
-          final long record = readValueId(keyId);
-          if (record != NULL_ADDR) {
-            PersistentHashMapValueStorage.ReadResult readResult = myValueStorage.readBytes(record);
-            long value = newStorage.appendBytes(readResult.buffer, 0, readResult.buffer.length, 0);
-            updateValueId(keyId, value, record, null, getCurrentKey());
-            myLiveAndGarbageKeysCounter += LIVE_KEY_MASK;
+      try {
+        traverseAllRecords(new PersistentEnumerator.RecordsProcessor() {
+          @Override
+          public boolean process(final int keyId) throws IOException {
+            final long record = readValueId(keyId);
+            if (record != NULL_ADDR) {
+              PersistentHashMapValueStorage.ReadResult readResult = myValueStorage.readBytes(record);
+              long value = newStorage.appendBytes(readResult.buffer, 0, readResult.buffer.length, 0);
+              updateValueId(keyId, value, record, null, getCurrentKey());
+              myLiveAndGarbageKeysCounter += LIVE_KEY_MASK;
+            }
+            return true;
           }
-          return true;
-        }
-      });
+        });
+      }
+      finally {
+        newStorage.dispose();
+      }
 
       myValueStorage.dispose();
-      newStorage.dispose();
 
       FileUtil.rename(new File(newPath), getDataFile(myEnumerator.myFile));
 

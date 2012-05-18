@@ -16,9 +16,18 @@
 package com.intellij.core;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.components.StateStorageException;
+import com.intellij.openapi.components.impl.stores.StorageData;
 import com.intellij.openapi.module.impl.ModuleEx;
 import com.intellij.openapi.module.impl.ModuleManagerImpl;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.impl.ModuleRootManagerImpl;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.vfs.StandardFileSystems;
+import com.intellij.openapi.vfs.VirtualFile;
+import org.jdom.Element;
+import org.jdom.JDOMException;
 
 import java.io.IOException;
 
@@ -40,7 +49,22 @@ public class CoreModuleManager extends ModuleManagerImpl {
 
   @Override
   protected ModuleEx createAndLoadModule(String filePath) throws IOException {
-    return new CoreModule(myParentDisposable, myProject, filePath);
+    final CoreModule module = new CoreModule(myParentDisposable, myProject, filePath);
+    VirtualFile vFile = StandardFileSystems.local().findFileByPath(filePath);
+    try {
+      StorageData storageData = CoreProjectLoader.loadStorageFile(module, vFile);
+      final Element element = storageData.getState("NewModuleRootManager");
+      ModuleRootManagerImpl.ModuleRootManagerState state = new ModuleRootManagerImpl.ModuleRootManagerState();
+      state.readExternal(element);
+      ((ModuleRootManagerImpl) ModuleRootManager.getInstance(module)).loadState(state);
+    }
+    catch (JDOMException e) {
+      throw new StateStorageException(e);
+    }
+    catch (InvalidDataException e) {
+      throw new StateStorageException(e);
+    }
+    return module;
   }
 
   protected void deliverPendingEvents() {

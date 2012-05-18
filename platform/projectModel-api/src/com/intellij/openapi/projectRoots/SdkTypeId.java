@@ -15,9 +15,20 @@
  */
 package com.intellij.openapi.projectRoots;
 
+import org.jdom.Element;
+import org.jetbrains.annotations.Nullable;
+
 /**
  * @author yole
  */
 public interface SdkTypeId {
   String getName();
+
+  @Nullable
+  String getVersionString(Sdk sdk);
+
+  void saveAdditionalData(SdkAdditionalData additionalData, Element additional);
+
+  @Nullable
+  SdkAdditionalData loadAdditionalData(Sdk currentSdk, Element additional);
 }
