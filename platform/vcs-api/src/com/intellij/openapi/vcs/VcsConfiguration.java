@@ -51,7 +51,7 @@ public final class VcsConfiguration implements PersistentStateComponent<Element>
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.VcsConfiguration");
   public final static long ourMaximumFileForBaseRevisionSize = 500 * 1000;
 
-  @NonNls private static final String VALUE_ATTR = "value";
+  @NonNls static final String VALUE_ATTR = "value";
   @NonNls private static final String CONFIRM_MOVE_TO_FAILED_COMMIT_ELEMENT = "confirmMoveToFailedCommit";
   @NonNls private static final String CONFIRM_REMOVE_EMPTY_CHANGELIST_ELEMENT = "confirmRemoveEmptyChangelist";
 
@@ -147,7 +147,7 @@ public final class VcsConfiguration implements PersistentStateComponent<Element>
   public boolean SHOW_FILE_HISTORY_AS_TREE = false;
   public float FILE_HISTORY_SPLITTER_PROPORTION = 0.6f;
   private static final int MAX_STORED_MESSAGES = 25;
-  @NonNls private static final String MESSAGE_ELEMENT_NAME = "MESSAGE";
+  @NonNls static final String MESSAGE_ELEMENT_NAME = "MESSAGE";
 
   private final PerformInBackgroundOption myUpdateOption = new UpdateInBackgroundOption();
   private final PerformInBackgroundOption myCommitOption = new CommitInBackgroundOption();

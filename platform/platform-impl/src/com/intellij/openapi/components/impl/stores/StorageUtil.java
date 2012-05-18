@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,16 +17,12 @@ package com.intellij.openapi.components.impl.stores;
 
 import com.intellij.application.options.PathMacrosCollector;
 import com.intellij.notification.*;
-import com.intellij.openapi.application.ApplicationInfo;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
-import com.intellij.openapi.components.RoamingType;
-import com.intellij.openapi.components.StateStorage;
-import com.intellij.openapi.components.StateStorageException;
-import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
+import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.DocumentRunnable;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.options.StreamProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
@@ -39,18 +35,23 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.NotNullFunction;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.UniqueFileNamesProvider;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.fs.FileSystem;
 import com.intellij.util.io.fs.IFile;
-import org.jdom.*;
+import org.jdom.Document;
+import org.jdom.Element;
+import org.jdom.JDOMException;
+import org.jdom.Parent;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.event.HyperlinkEvent;
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.text.SimpleDateFormat;
 import java.util.Collection;
 import java.util.Date;
@@ -227,41 +228,8 @@ public class StorageUtil {
 
   @NotNull
   public static Set<String> getMacroNames(@NotNull final Element e) {
-    return PathMacrosCollector.getMacroNames(e, new NotNullFunction<Object, Boolean>() {
-      @NotNull
-      public Boolean fun(Object o) {
-        if (o instanceof Attribute) {
-          final Attribute attribute = (Attribute)o;
-          final Element parent = attribute.getParent();
-          final String parentName = parent.getName();
-          if (("value".equals(attribute.getName()) || "name".equals(attribute.getName())) && "env".equals(parentName)) {
-            return false; // do not proceed environment variables from run configurations
-          }
-
-          if ("MESSAGE".equals(parentName) && "value".equals(attribute.getName())) return false;
-          if ("option".equals(parentName) && "LAST_COMMIT_MESSAGE".equals(parent.getAttributeValue("name"))) return false;
-
-          // do not proceed macros in searchConfigurations (structural search)
-          if ("replaceConfiguration".equals(parentName) || "searchConfiguration".equals(parentName)) return false;
-        }
-
-        return true;
-      }
-    }, new NotNullFunction<Object, Boolean>() {
-      @NotNull
-      public Boolean fun(Object o) {
-        if (o instanceof Attribute) {
-          // process run configuration's options recursively
-          final Element parent = ((Attribute)o).getParent();
-          if (parent != null && "option".equals(parent.getName())) {
-            final Element grandParent = parent.getParentElement();
-            return grandParent != null && "configuration".equals(grandParent.getName());
-          }
-        }
-
-        return false;
-      }
-    });
+    return PathMacrosCollector.getMacroNames(e, new CompositePathMacroFilter(Extensions.getExtensions(PathMacroFilter.EP_NAME)),
+                                             PathMacros.getInstance());
   }
 
   @Nullable

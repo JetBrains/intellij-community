@@ -15,9 +15,9 @@
  */
 package com.intellij.openapi.components;
 
+import com.intellij.openapi.application.PathMacroFilter;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.util.NotNullFunction;
 import org.jdom.Attribute;
 import org.jdom.Comment;
 import org.jdom.Element;
@@ -57,20 +57,19 @@ public abstract class PathMacroMap {
   }
 
   public final void substitute(Element e, boolean caseSensitive, final boolean recursively,
-                               @Nullable final NotNullFunction<Object, Boolean> filter,
-                               @Nullable final NotNullFunction<Object, Boolean> recursiveFilter) {
+                               @Nullable PathMacroFilter filter) {
     List content = e.getContent();
     //noinspection ForLoopReplaceableByForEach
     for (int i = 0, contentSize = content.size(); i < contentSize; i++) {
       Object child = content.get(i);
       if (child instanceof Element) {
         Element element = (Element)child;
-        substitute(element, caseSensitive, recursively, filter, recursiveFilter);
+        substitute(element, caseSensitive, recursively, filter);
       }
       else if (child instanceof Text) {
         Text t = (Text)child;
-        if (filter == null || filter.fun(t)) {
-          t.setText((recursively || (recursiveFilter != null && recursiveFilter.fun(t)))
+        if (filter == null || !filter.skipPathMacros(t)) {
+          t.setText((recursively || (filter != null && filter.recursePathMacros(t)))
                     ? substituteRecursively(t.getText(), caseSensitive)
                     : substitute(t.getText(), caseSensitive));
         }
@@ -85,8 +84,8 @@ public abstract class PathMacroMap {
     for (int i = 0, attributesSize = attributes.size(); i < attributesSize; i++) {
       Object attribute1 = attributes.get(i);
       Attribute attribute = (Attribute)attribute1;
-      if (filter == null || filter.fun(attribute)) {
-        final String value = (recursively || (recursiveFilter != null && recursiveFilter.fun(attribute)))
+      if (filter == null || !filter.skipPathMacros(attribute)) {
+        final String value = (recursively || (filter != null && filter.recursePathMacros(attribute)))
                              ? substituteRecursively(attribute.getValue(), caseSensitive)
                              : substitute(attribute.getValue(), caseSensitive);
         attribute.setValue(value);
@@ -95,7 +94,7 @@ public abstract class PathMacroMap {
   }
 
   public final void substitute(Element e, boolean caseSensitive, final boolean recursively) {
-    substitute(e, caseSensitive, recursively, null, null);
+    substitute(e, caseSensitive, recursively, null);
   }
 
   public String substituteRecursively(String text, boolean caseSensitive) {

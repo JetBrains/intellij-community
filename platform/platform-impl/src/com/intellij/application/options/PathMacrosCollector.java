@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,9 +15,9 @@
  */
 package com.intellij.application.options;
 
+import com.intellij.openapi.application.PathMacroFilter;
 import com.intellij.openapi.application.PathMacros;
 import com.intellij.openapi.components.PathMacroMap;
-import com.intellij.util.NotNullFunction;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -43,19 +43,15 @@ public class PathMacrosCollector extends PathMacroMap {
     myMatcher = MACRO_PATTERN.matcher("");
   }
 
-  public static Set<String> getMacroNames(Element root, @Nullable final NotNullFunction<Object, Boolean> filter, @Nullable final NotNullFunction<Object, Boolean> recursiveFilter, @NotNull final PathMacros pathMacros) {
+  public static Set<String> getMacroNames(Element root, @Nullable PathMacroFilter filter, @NotNull final PathMacros pathMacros) {
     final PathMacrosCollector collector = new PathMacrosCollector();
-    collector.substitute(root, true, false, filter, recursiveFilter);
+    collector.substitute(root, true, false, filter);
     final HashSet<String> result = new HashSet<String>(collector.myMacroMap.keySet());
     result.removeAll(pathMacros.getSystemMacroNames());
     result.removeAll(pathMacros.getLegacyMacroNames());
     result.removeAll(PathMacrosImpl.getToolMacroNames());
     result.removeAll(pathMacros.getIgnoredMacroNames());
     return result;
-  }
-
-  public static Set<String> getMacroNames(Element root, @Nullable final NotNullFunction<Object, Boolean> filter, @Nullable final NotNullFunction<Object, Boolean> recursiveFilter) {
-    return getMacroNames(root, filter, recursiveFilter, PathMacros.getInstance());
   }
 
   @Override
