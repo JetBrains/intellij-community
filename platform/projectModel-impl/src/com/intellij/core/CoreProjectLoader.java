@@ -18,11 +18,15 @@ package com.intellij.core;
 import com.intellij.mock.MockProject;
 import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.components.PathMacroManager;
+import com.intellij.openapi.components.impl.stores.DirectoryStorageData;
 import com.intellij.openapi.components.impl.stores.StorageData;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.impl.libraries.LibraryTableBase;
+import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.io.fs.FileSystem;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
@@ -56,6 +60,16 @@ public class CoreProjectLoader {
     }
     final CoreModuleManager moduleManager = (CoreModuleManager)ModuleManager.getInstance(project);
     moduleManager.loadState(moduleManagerState);
+
+    VirtualFile libraries = dotIdea.findChild("libraries");
+    if (libraries != null) {
+      DirectoryStorageData data = new DirectoryStorageData();
+      data.loadFrom(FileSystem.FILE_SYSTEM.createFile(libraries.getPath()),
+                    PathMacroManager.getInstance(project).createTrackingSubstitutor());
+      final Element libraryTable = data.getMergedState("libraryTable", Element.class, new ProjectLibraryTable.LibraryStateSplitter(), null);
+      ((LibraryTableBase) ProjectLibraryTable.getInstance(project)).loadState(libraryTable);
+    }
+
     moduleManager.loadModules();
   }
 

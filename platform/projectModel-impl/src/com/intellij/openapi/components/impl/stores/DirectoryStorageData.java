@@ -157,7 +157,7 @@ public class DirectoryStorageData {
   }
 
   @Nullable
-  public <T> T getMergedState(String componentName, Class<T> stateClass, StateSplitter splitter, T mergeInto) {
+  public <T> T getMergedState(String componentName, Class<T> stateClass, StateSplitter splitter, @Nullable T mergeInto) {
     final List<Element> subElements = new ArrayList<Element>();
     processComponent(componentName, new PairConsumer<IFile, Element>() {
       public void consume(final IFile iFile, final Element element) {
