@@ -38,6 +38,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiPackage;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.classFilter.ClassFilterEditor;
+import com.intellij.util.IconUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -106,6 +107,11 @@ public class CoverageConfigurable extends SettingsEditor<RunConfigurationBase> {
 
     protected String getAddPatternButtonText() {
       return CodeInsightBundle.message("coverage.button.add.package");
+    }
+
+    @Override
+    protected Icon getAddPatternButtonIcon() {
+      return IconUtil.getAddPackageIcon();
     }
   }
 
