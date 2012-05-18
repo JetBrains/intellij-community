@@ -180,7 +180,7 @@ public class BlockSupportImpl extends BlockSupport {
       viewProvider.getLanguages();
       FileType fileType = viewProvider.getVirtualFile().getFileType();
       final LightVirtualFile lightFile = new LightVirtualFile(fileImpl.getName(), fileType, newFileText, viewProvider.getVirtualFile().getCharset(),
-                                                              fileImpl.getModificationStamp());
+                                                              fileImpl.getViewProvider().getModificationStamp());
       lightFile.setOriginalFile(viewProvider.getVirtualFile());
 
       FileViewProvider copy = viewProvider.createCopy(lightFile);

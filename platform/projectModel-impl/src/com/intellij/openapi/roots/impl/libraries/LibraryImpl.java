@@ -89,7 +89,7 @@ public class LibraryImpl implements LibraryEx.ModifiableModelEx, LibraryEx {
     myRootsWatcher.updateWatchedRoots();
   }
 
-  LibraryImpl(String name, final @Nullable PersistentLibraryKind<?> kind, LibraryTable table, ModifiableRootModel rootModel) {
+  LibraryImpl(String name, @Nullable final PersistentLibraryKind<?> kind, LibraryTable table, ModifiableRootModel rootModel) {
     myName = name;
     myLibraryTable = table;
     myRootModel = rootModel;
@@ -131,20 +131,24 @@ public class LibraryImpl implements LibraryEx.ModifiableModelEx, LibraryEx {
     myJarDirectories.copyFrom(from.myJarDirectories);
   }
 
+  @Override
   public void dispose() {
     assert !isDisposed();
     Disposer.dispose(myRootsWatcher);
     myDisposed = true;
   }
 
+  @Override
   public boolean isDisposed() {
     return myDisposed;
   }
 
+  @Override
   public String getName() {
     return myName;
   }
 
+  @Override
   @NotNull
   public String[] getUrls(@NotNull OrderRootType rootType) {
     assert !isDisposed();
@@ -152,6 +156,7 @@ public class LibraryImpl implements LibraryEx.ModifiableModelEx, LibraryEx {
     return result.getUrls();
   }
 
+  @Override
   @NotNull
   public VirtualFile[] getFiles(@NotNull OrderRootType rootType) {
     assert !isDisposed();
@@ -182,18 +187,21 @@ public class LibraryImpl implements LibraryEx.ModifiableModelEx, LibraryEx {
     }
   }
 
+  @Override
   public void setName(String name) {
     LOG.assertTrue(isWritable());
     myName = name;
   }
 
   /* you have to commit modifiable model or dispose it by yourself! */
+  @Override
   @NotNull
   public ModifiableModel getModifiableModel() {
     assert !isDisposed();
     return new LibraryImpl(this, this, myRootModel);
   }
 
+  @Override
   public Library cloneLibrary(RootModelImpl rootModel) {
     LOG.assertTrue(myLibraryTable == null);
     final LibraryImpl clone = new LibraryImpl(this, null, rootModel);
@@ -201,6 +209,7 @@ public class LibraryImpl implements LibraryEx.ModifiableModelEx, LibraryEx {
     return clone;
   }
 
+  @Override
   public List<String> getInvalidRootUrls(OrderRootType type) {
     final List<VirtualFilePointer> pointers = myRoots.get(type).getList();
     List<String> invalidPaths = null;
@@ -221,6 +230,7 @@ public class LibraryImpl implements LibraryEx.ModifiableModelEx, LibraryEx {
     myProperties = properties;
   }
 
+  @Override
   @NotNull
   public RootProvider getRootProvider() {
     return myRootProvider;
@@ -241,6 +251,7 @@ public class LibraryImpl implements LibraryEx.ModifiableModelEx, LibraryEx {
     return result;
   }
 
+  @Override
   public void readExternal(Element element) throws InvalidDataException {
     readName(element);
     readProperties(element);
@@ -285,6 +296,7 @@ public class LibraryImpl implements LibraryEx.ModifiableModelEx, LibraryEx {
   public static List<OrderRootType> sortRootTypes(Collection<OrderRootType> rootTypes) {
     List<OrderRootType> allTypes = new ArrayList<OrderRootType>(rootTypes);
     Collections.sort(allTypes, new Comparator<OrderRootType>() {
+      @Override
       public int compare(final OrderRootType o1, final OrderRootType o2) {
         return getSortKey(o1).compareTo(getSortKey(o2));
       }
@@ -296,12 +308,13 @@ public class LibraryImpl implements LibraryEx.ModifiableModelEx, LibraryEx {
     if (orderRootType instanceof PersistentOrderRootType) {
       return ((PersistentOrderRootType)orderRootType).getSdkRootName();
     }
-    else if (orderRootType instanceof OrderRootType.DocumentationRootType) {
+    if (orderRootType instanceof OrderRootType.DocumentationRootType) {
       return ((OrderRootType.DocumentationRootType)orderRootType).getSdkRootName();
     }
     return "";
   }
 
+  @Override
   public void writeExternal(Element rootElement) throws WriteExternalException {
     LOG.assertTrue(!isDisposed(), "Already disposed!");
 
@@ -357,6 +370,7 @@ public class LibraryImpl implements LibraryEx.ModifiableModelEx, LibraryEx {
     myKind = kind;
   }
 
+  @Override
   public void addRoot(@NotNull String url, @NotNull OrderRootType rootType) {
     LOG.assertTrue(isWritable());
     assert !isDisposed();
@@ -365,6 +379,7 @@ public class LibraryImpl implements LibraryEx.ModifiableModelEx, LibraryEx {
     container.add(url);
   }
 
+  @Override
   public void addRoot(@NotNull VirtualFile file, @NotNull OrderRootType rootType) {
     LOG.assertTrue(isWritable());
     assert !isDisposed();
@@ -373,14 +388,17 @@ public class LibraryImpl implements LibraryEx.ModifiableModelEx, LibraryEx {
     container.add(file);
   }
 
+  @Override
   public void addJarDirectory(@NotNull final String url, final boolean recursive) {
     addJarDirectory(url, recursive, JarDirectories.DEFAULT_JAR_DIRECTORY_TYPE);
   }
 
+  @Override
   public void addJarDirectory(@NotNull final VirtualFile file, final boolean recursive) {
     addJarDirectory(file, recursive, JarDirectories.DEFAULT_JAR_DIRECTORY_TYPE);
   }
 
+  @Override
   public void addJarDirectory(@NotNull final String url, final boolean recursive, @NotNull OrderRootType rootType) {
     assert !isDisposed();
     LOG.assertTrue(isWritable());
@@ -389,6 +407,7 @@ public class LibraryImpl implements LibraryEx.ModifiableModelEx, LibraryEx {
     myJarDirectories.add(rootType, url, recursive);
   }
 
+  @Override
   public void addJarDirectory(@NotNull final VirtualFile file, final boolean recursive, @NotNull OrderRootType rootType) {
     assert !isDisposed();
     LOG.assertTrue(isWritable());
@@ -397,20 +416,24 @@ public class LibraryImpl implements LibraryEx.ModifiableModelEx, LibraryEx {
     myJarDirectories.add(rootType, file.getUrl(), recursive);
   }
 
+  @Override
   public boolean isJarDirectory(@NotNull final String url) {
     return isJarDirectory(url, JarDirectories.DEFAULT_JAR_DIRECTORY_TYPE);
   }
 
+  @Override
   public boolean isJarDirectory(@NotNull final String url, @NotNull final OrderRootType rootType) {
     return myJarDirectories.contains(rootType, url);
   }
 
+  @Override
   public boolean isValid(@NotNull final String url, @NotNull final OrderRootType rootType) {
     final VirtualFilePointerContainer container = myRoots.get(rootType);
     final VirtualFilePointer fp = container.findByUrl(url);
     return fp != null && fp.isValid();
   }
 
+  @Override
   public boolean removeRoot(@NotNull String url, @NotNull OrderRootType rootType) {
     assert !isDisposed();
     LOG.assertTrue(isWritable());
@@ -424,6 +447,7 @@ public class LibraryImpl implements LibraryEx.ModifiableModelEx, LibraryEx {
     return false;
   }
 
+  @Override
   public void moveRootUp(@NotNull String url, @NotNull OrderRootType rootType) {
     assert !isDisposed();
     LOG.assertTrue(isWritable());
@@ -431,6 +455,7 @@ public class LibraryImpl implements LibraryEx.ModifiableModelEx, LibraryEx {
     container.moveUp(url);
   }
 
+  @Override
   public void moveRootDown(@NotNull String url, @NotNull OrderRootType rootType) {
     assert !isDisposed();
     LOG.assertTrue(isWritable());
@@ -438,6 +463,7 @@ public class LibraryImpl implements LibraryEx.ModifiableModelEx, LibraryEx {
     container.moveDown(url);
   }
 
+  @Override
   public boolean isChanged() {
     return !mySource.equals(this);
   }
@@ -471,6 +497,7 @@ public class LibraryImpl implements LibraryEx.ModifiableModelEx, LibraryEx {
     return mySource;
   }
 
+  @Override
   public void commit() {
     assert !isDisposed();
     mySource.commit(this);
@@ -517,6 +544,7 @@ public class LibraryImpl implements LibraryEx.ModifiableModelEx, LibraryEx {
   }
 
   private class MyRootProviderImpl extends RootProviderBaseImpl {
+    @Override
     @NotNull
     public String[] getUrls(@NotNull OrderRootType rootType) {
       Set<String> originalUrls = new LinkedHashSet<String>(Arrays.asList(LibraryImpl.this.getUrls(rootType)));
@@ -526,12 +554,14 @@ public class LibraryImpl implements LibraryEx.ModifiableModelEx, LibraryEx {
       return ArrayUtil.toStringArray(originalUrls);
     }
 
+    @Override
     @NotNull
     public VirtualFile[] getFiles(@NotNull final OrderRootType rootType) {
       return LibraryImpl.this.getFiles(rootType);
     }
   }
 
+  @Override
   public LibraryTable getTable() {
     return myLibraryTable;
   }
@@ -558,6 +588,7 @@ public class LibraryImpl implements LibraryEx.ModifiableModelEx, LibraryEx {
     return result;
   }
 
+  @NonNls
   @Override
   public String toString() {
     return "Library: name:" + myName + "; jars:" + myJarDirectories + "; roots:" + myRoots.values();

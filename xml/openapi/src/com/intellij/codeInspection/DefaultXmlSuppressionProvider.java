@@ -37,16 +37,20 @@ import org.jetbrains.annotations.Nullable;
  */
 public class DefaultXmlSuppressionProvider extends XmlSuppressionProvider {
 
+  public static final String SUPPRESS_MARK = "suppress";
+
   @Override
   public boolean isProviderAvailable(PsiFile file) {
     return true;
   }
 
+  @Override
   public boolean isSuppressedFor(PsiElement element, String inspectionId) {
     final XmlTag tag = element instanceof XmlFile ? ((XmlFile)element).getRootTag() : PsiTreeUtil.getContextOfType(element, XmlTag.class, false);
     return tag != null && findSuppression(tag, inspectionId, element) != null;
   }
 
+  @Override
   public void suppressForFile(PsiElement element, String inspectionId) {
     final PsiFile file = element.getContainingFile();
     final XmlDocument document = ((XmlFile)file).getDocument();
@@ -55,6 +59,7 @@ public class DefaultXmlSuppressionProvider extends XmlSuppressionProvider {
     suppress(file, findFileSuppression(anchor, null, element), inspectionId, anchor.getTextRange().getStartOffset());
   }
 
+  @Override
   public void suppressForTag(PsiElement element, String inspectionId) {
     final XmlTag tag = PsiTreeUtil.getParentOfType(element, XmlTag.class);
     assert tag != null;
@@ -140,7 +145,9 @@ public class DefaultXmlSuppressionProvider extends XmlSuppressionProvider {
 
   @NonNls
   protected String getPrefix() {
-    return "<!--suppress ";
+    return "<!--" +
+           SUPPRESS_MARK +
+           " ";
   }
 
   @NonNls

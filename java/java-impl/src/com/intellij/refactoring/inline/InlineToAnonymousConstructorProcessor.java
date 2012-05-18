@@ -57,11 +57,11 @@ class InlineToAnonymousConstructorProcessor {
     psiElement().withText(PsiKeyword.THIS)));
 
   private final PsiClass myClass;
-  private final PsiNewExpression myNewExpression;
+  private PsiNewExpression myNewExpression;
   private final PsiType mySuperType;
   private final Map<String, PsiExpression> myFieldInitializers = new HashMap<String, PsiExpression>();
   private final Map<PsiParameter, PsiVariable> myLocalsForParameters = new HashMap<PsiParameter, PsiVariable>();
-  private final PsiStatement myNewStatement;
+  private PsiStatement myNewStatement;
   private final PsiElementFactory myElementFactory;
   private PsiMethod myConstructor;
   private PsiExpressionList myConstructorArguments;
@@ -263,7 +263,23 @@ class InlineToAnonymousConstructorProcessor {
       final PsiDeclarationStatement declaration = myElementFactory.createVariableDeclarationStatement(localName, type, initializer);
       PsiVariable variable = (PsiVariable)declaration.getDeclaredElements()[0];
       PsiUtil.setModifierProperty(variable, PsiModifier.FINAL, true);
-      myNewStatement.getParent().addBefore(declaration, myNewStatement);
+      final PsiElement parent = myNewStatement.getParent();
+      if (parent instanceof PsiCodeBlock) {
+        variable = (PsiVariable)((PsiDeclarationStatement)parent.addBefore(declaration, myNewStatement)).getDeclaredElements()[0];
+      }
+      else {
+        final int offsetInStatement = myNewExpression.getTextRange().getStartOffset() - myNewStatement.getTextRange().getStartOffset();
+        final PsiBlockStatement blockStatement = (PsiBlockStatement)myElementFactory.createStatementFromText("{}", null);
+        PsiCodeBlock block = blockStatement.getCodeBlock();
+        block.add(declaration);
+        block.add(myNewStatement);
+        block = ((PsiBlockStatement)myNewStatement.replace(blockStatement)).getCodeBlock();
+
+        variable = (PsiVariable)((PsiDeclarationStatement)block.getStatements()[0]).getDeclaredElements()[0];
+        myNewStatement = block.getStatements()[1];
+        myNewExpression = PsiTreeUtil.getParentOfType(myNewStatement.findElementAt(offsetInStatement), PsiNewExpression.class);
+      }
+
       return variable;
     }
     catch (IncorrectOperationException e) {

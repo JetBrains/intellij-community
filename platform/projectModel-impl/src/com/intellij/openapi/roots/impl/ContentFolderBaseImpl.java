@@ -71,11 +71,13 @@ public abstract class ContentFolderBaseImpl extends RootModelComponentBase imple
     return url;
   }
 
+  @Override
   public VirtualFile getFile() {
     final VirtualFile file = myFilePointer.getFile();
     return file == null || !file.isDirectory() ? null : file;
   }
 
+  @Override
   @NotNull
   public ContentEntry getContentEntry() {
     return myContentEntry;
@@ -86,15 +88,18 @@ public abstract class ContentFolderBaseImpl extends RootModelComponentBase imple
     element.setAttribute(URL_ATTRIBUTE, myFilePointer.getUrl());
   }
 
+  @Override
   @NotNull
   public String getUrl() {
     return myFilePointer.getUrl();
   }
 
+  @Override
   public boolean isSynthetic() {
     return false;
   }
 
+  @Override
   public int compareTo(ContentFolderBaseImpl folder) {
     return getUrl().compareTo(folder.getUrl());
   }

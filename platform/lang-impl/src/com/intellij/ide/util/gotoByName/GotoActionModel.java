@@ -59,7 +59,12 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
   private Pattern myCompiledPattern;
   private final PatternMatcher myMatcher = new Perl5Matcher();
   
-  private Map<AnAction, String> myActionsMap = new HashMap<AnAction, String>();
+  private Map<AnAction, String> myActionsMap = new TreeMap<AnAction, String>(new Comparator<AnAction>() {
+    @Override
+    public int compare(AnAction o1, AnAction o2) {
+      return Comparing.compare(o1.getTemplatePresentation().getText(), o2.getTemplatePresentation().getText());
+    }
+  });
   private final SearchableOptionsRegistrar myIndex;
 
 
@@ -289,6 +294,7 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
           }
         }
         final Object[] descriptions = optionDescriptions.toArray();
+        Arrays.sort(descriptions);
         objects = ArrayUtil.mergeArrays(objects, descriptions);
       }
     }
