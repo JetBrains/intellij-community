@@ -22,6 +22,7 @@ import com.intellij.android.designer.actions.ProfileAction;
 import com.intellij.android.designer.componentTree.AndroidTreeDecorator;
 import com.intellij.android.designer.model.ModelParser;
 import com.intellij.android.designer.model.PropertyParser;
+import com.intellij.android.designer.model.RadIncludeLayout;
 import com.intellij.android.designer.model.RadViewComponent;
 import com.intellij.android.designer.profile.ProfileManager;
 import com.intellij.designer.DesignerToolWindowManager;
@@ -441,7 +442,11 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
       @NotNull
       @Override
       public RadComponent create() throws Exception {
-        return ModelParser.createComponent(null, paletteItem.getMetaModel());
+        RadViewComponent component = ModelParser.createComponent(null, paletteItem.getMetaModel());
+        if (component instanceof RadIncludeLayout) {
+          ((RadIncludeLayout)component).configure(getModule());
+        }
+        return component;
       }
     };
   }
