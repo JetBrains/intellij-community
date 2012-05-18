@@ -7,7 +7,6 @@ public class RearrangerTest13 {
     F1();
     F2();
   }
-
 // Trailing comment: TL=GF
 // MN=GF
 // AM=
@@ -21,7 +20,6 @@ public class RearrangerTest13 {
     S1B();
     S1A();
   }
-
 // Trailing comment: TL=GF
 // MN=F1
 // AM=GF()
@@ -35,7 +33,6 @@ public class RearrangerTest13 {
     S2A();
     S2B();
   }
-
 // Trailing comment: TL=GF
 // MN=F2
 // AM=GF()
@@ -47,7 +44,6 @@ public class RearrangerTest13 {
 
   void S1B() {
   }
-
 // Trailing comment: TL=GF
 // MN=S1B
 // AM=GF().[F1(),F2()]
@@ -59,7 +55,6 @@ public class RearrangerTest13 {
 
   void S1A() {
   }
-
 // Trailing comment: TL=GF
 // MN=S1A
 // AM=GF().[F1(),F2()]
@@ -71,7 +66,6 @@ public class RearrangerTest13 {
 
   void S2A() {
   }
-
 // Trailing comment: TL=GF
 // MN=S2A
 // AM=GF().[F1(),F2()]
@@ -83,7 +77,6 @@ public class RearrangerTest13 {
 
   void S2B() {
   }
-
 // Trailing comment: TL=GF
 // MN=S2B
 // AM=GF().[F1(),F2()]

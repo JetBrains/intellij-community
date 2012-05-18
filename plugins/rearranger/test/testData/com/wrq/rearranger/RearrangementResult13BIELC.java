@@ -37,17 +37,14 @@ public class RearrangerTest13 {
 
   void S2B() {
   }
-
 // Trailing comment: TL=GF
 // MN=F2
 // AM=GF().[F1(),F2()]
 // Level 3
-
 // Trailing comment: TL=GF
 // MN=GF
 // AM=GF()
 // Level 2
-
 // Trailing comment: TL=GF
 // MN=GF
 // AM=
