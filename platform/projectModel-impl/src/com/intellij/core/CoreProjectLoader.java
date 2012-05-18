@@ -17,6 +17,7 @@ package com.intellij.core;
 
 import com.intellij.mock.MockProject;
 import com.intellij.openapi.components.PathMacroManager;
+import com.intellij.openapi.components.impl.stores.StorageData;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.JDOMUtil;
@@ -25,7 +26,6 @@ import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -48,9 +48,8 @@ public class CoreProjectLoader {
   private static void loadDirectoryProject(Project project, VirtualFile projectDir) throws IOException, JDOMException {
     VirtualFile dotIdea = projectDir.findChild(".idea");
     VirtualFile modulesXml = dotIdea.findChild("modules.xml");
-    final Document document = JDOMUtil.loadDocument(new ByteArrayInputStream(modulesXml.contentsToByteArray()));
-    final Element moduleManagerState = getComponentState(document, "ProjectModuleManager");
-    PathMacroManager.getInstance(project).expandPaths(moduleManagerState);
+    StorageData storageData = loadStorageFile(project, modulesXml);
+    final Element moduleManagerState = storageData.getState("ProjectModuleManager");
     if (moduleManagerState == null) {
       throw new JDOMException("cannot find ProjectModuleManager state in modules.xml");
     }
@@ -59,14 +58,12 @@ public class CoreProjectLoader {
     moduleManager.loadModules();
   }
 
-  @Nullable
-  private static Element getComponentState(Document document, String componentName) {
-    final Element[] elements = JDOMUtil.getElements(document.getRootElement());
-    for (Element element : elements) {
-      if (element.getName().equals("component") && componentName.equals(element.getAttributeValue("name"))) {
-        return element;
-      }
-    }
-    return null;
+  private static StorageData loadStorageFile(Project project, VirtualFile modulesXml) throws JDOMException, IOException {
+    final Document document = JDOMUtil.loadDocument(new ByteArrayInputStream(modulesXml.contentsToByteArray()));
+    StorageData storageData = new StorageData("project");
+    final Element element = document.getRootElement();
+    PathMacroManager.getInstance(project).expandPaths(element);
+    storageData.load(element);
+    return storageData;
   }
 }

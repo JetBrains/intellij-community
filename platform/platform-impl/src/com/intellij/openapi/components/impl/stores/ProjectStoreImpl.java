@@ -446,7 +446,7 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
       super(storageData);
     }
 
-    protected void load(@NotNull final Element root) throws IOException {
+    public void load(@NotNull final Element root) throws IOException {
       final String v = root.getAttributeValue(VERSION_OPTION);
       //noinspection AssignmentToStaticFieldFromInstanceMethod
       originalVersion = v != null ? Integer.parseInt(v) : 0;

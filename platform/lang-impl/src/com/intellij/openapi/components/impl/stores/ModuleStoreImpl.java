@@ -112,7 +112,7 @@ public class ModuleStoreImpl extends BaseFileConfigurableStoreImpl implements IM
       myModule = storageData.myModule;
     }
 
-    protected void load(@NotNull final Element rootElement) throws IOException {
+    public void load(@NotNull final Element rootElement) throws IOException {
       super.load(rootElement);
 
       final List attributes = rootElement.getAttributes();

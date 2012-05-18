@@ -53,7 +53,8 @@ public class StorageData {
     myComponentStates = new THashMap<String, Element>(storageData.myComponentStates);
   }
 
-  protected void load(@NotNull Element rootElement) throws IOException {
+
+  public void load(@NotNull Element rootElement) throws IOException {
     final Element[] elements = JDOMUtil.getElements(rootElement);
     for (Element element : elements) {
       if (element.getName().equals(COMPONENT)) {
@@ -110,7 +111,7 @@ public class StorageData {
   }
 
   @Nullable
-  Element getState(final String name) {
+  public Element getState(final String name) {
     final Element e = myComponentStates.get(name);
 
     if (e != null) {
