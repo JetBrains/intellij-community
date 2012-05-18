@@ -21,7 +21,6 @@ import com.intellij.openapi.diff.impl.util.TextDiffTypeEnum;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.TextRange;
 
-import java.security.InvalidParameterException;
 import java.util.ArrayList;
 import java.util.Iterator;
 
@@ -55,7 +54,7 @@ public class LineFragment extends LineBlock implements Fragment {
   public TextRange getRange(FragmentSide side) {
     if (side == FragmentSide.SIDE1) return myRange1;
     if (side == FragmentSide.SIDE2) return myRange2;
-    throw new InvalidParameterException(String.valueOf(side));
+    throw new IllegalArgumentException(String.valueOf(side));
   }
 
   public Fragment shift(TextRange range1, TextRange range2, int startingLine1, int startingLine2) {

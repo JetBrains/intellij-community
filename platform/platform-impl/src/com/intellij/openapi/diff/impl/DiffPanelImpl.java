@@ -482,7 +482,7 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
       return myLeftSide;
     }
     if (side == FragmentSide.SIDE2) return myRightSide;
-    throw new InvalidParameterException(String.valueOf(side));
+    throw new IllegalArgumentException(String.valueOf(side));
   }
 
   public LineBlocks getLineBlocks() { return myLineBlocks; }
