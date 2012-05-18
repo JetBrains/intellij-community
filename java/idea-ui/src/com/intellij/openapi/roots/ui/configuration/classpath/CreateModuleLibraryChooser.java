@@ -23,10 +23,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.roots.impl.libraries.LibraryTableBase;
-import com.intellij.openapi.roots.libraries.Library;
-import com.intellij.openapi.roots.libraries.LibraryProperties;
-import com.intellij.openapi.roots.libraries.LibraryTable;
-import com.intellij.openapi.roots.libraries.LibraryType;
+import com.intellij.openapi.roots.libraries.*;
 import com.intellij.openapi.roots.libraries.ui.LibraryRootsComponentDescriptor;
 import com.intellij.openapi.roots.libraries.ui.OrderRoot;
 import com.intellij.openapi.roots.libraries.ui.impl.RootDetectionUtil;
@@ -82,8 +79,9 @@ public class CreateModuleLibraryChooser implements ClasspathElementChooser<Libra
     }
   }
 
-  private Library createLibraryFromRoots(List<OrderRoot> roots, final LibraryType libraryType) {
-    final Library library = ((LibraryTableBase.ModifiableModelEx)myModuleLibrariesModel).createLibrary(null, libraryType.getKind());
+  private Library createLibraryFromRoots(List<OrderRoot> roots, @Nullable final LibraryType libraryType) {
+    final PersistentLibraryKind kind = libraryType == null ? null : libraryType.getKind();
+    final Library library = ((LibraryTableBase.ModifiableModelEx)myModuleLibrariesModel).createLibrary(null, kind);
     final LibraryEx.ModifiableModelEx libModel = (LibraryEx.ModifiableModelEx)library.getModifiableModel();
     if (myDefaultPropertiesFactory != null) {
       libModel.setProperties(myDefaultPropertiesFactory.fun(libraryType));
