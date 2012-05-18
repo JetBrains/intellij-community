@@ -5,6 +5,7 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.indexing.*;
+import com.intellij.util.io.EnumeratorStringDescriptor;
 import com.intellij.util.io.KeyDescriptor;
 import org.jetbrains.annotations.NotNull;
 
@@ -20,7 +21,7 @@ import java.util.Map;
  */
 public class FileTypeIndex extends ScalarIndexExtension<FileType>
   implements FileBasedIndex.InputFilter, KeyDescriptor<FileType>, DataIndexer<FileType, Void, FileContent> {
-
+  private final EnumeratorStringDescriptor myEnumeratorStringDescriptor = new EnumeratorStringDescriptor();
 
   public static Collection<VirtualFile> getFiles(FileType fileType, GlobalSearchScope scope) {
     return FileBasedIndex.getInstance().getContainingFiles(NAME, fileType, scope);
@@ -63,7 +64,7 @@ public class FileTypeIndex extends ScalarIndexExtension<FileType>
 
   @Override
   public int getVersion() {
-    return 0;
+    return 1;
   }
 
   @Override
@@ -73,13 +74,12 @@ public class FileTypeIndex extends ScalarIndexExtension<FileType>
 
   @Override
   public void save(DataOutput out, FileType value) throws IOException {
-    out.writeUTF(value.getName());
+    myEnumeratorStringDescriptor.save(out, value.getName());
   }
 
   @Override
   public FileType read(DataInput in) throws IOException {
-    String name = in.readUTF();
-    return myFileTypeManager.getStdFileType(name);
+    return myFileTypeManager.getStdFileType(myEnumeratorStringDescriptor.read(in));
   }
 
   @Override
