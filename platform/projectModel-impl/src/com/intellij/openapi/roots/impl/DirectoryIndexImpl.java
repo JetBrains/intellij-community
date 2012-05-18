@@ -263,12 +263,15 @@ public class DirectoryIndexImpl extends DirectoryIndex {
       return info;
     }
 
-    void fillMapWithModuleContent(VirtualFile root, final Module module, final VirtualFile contentRoot) {
+    void fillMapWithModuleContent(VirtualFile root, final Module module, final VirtualFile contentRoot, @Nullable final ProgressIndicator progress) {
 
       VfsUtilCore.visitChildrenRecursively(root, new DirectoryVisitor() {
         
         @Override
         protected DirectoryInfo updateInfo(VirtualFile file) {
+          if (progress != null) {
+            progress.checkCanceled();
+          }
           if (isExcluded(contentRoot, file)) return null;
           if (isIgnored(file)) return null;
 
@@ -332,7 +335,7 @@ public class DirectoryIndexImpl extends DirectoryIndex {
       }
 
       for (final VirtualFile contentRoot : contentRoots) {
-        fillMapWithModuleContent(contentRoot, module, contentRoot);
+        fillMapWithModuleContent(contentRoot, module, contentRoot, progress);
       }
     }
 

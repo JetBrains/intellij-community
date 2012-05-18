@@ -117,7 +117,7 @@ public class DirectoryIndexComponent extends DirectoryIndexImpl {
               VirtualFile f = file.findFileByRelativePath(rel);
               if (f != null) {
                 if (state == originalState) state = state.copy();
-                state.fillMapWithModuleContent(f, eachModule, f);
+                state.fillMapWithModuleContent(f, eachModule, f, null);
               }
             }
           }
@@ -133,7 +133,7 @@ public class DirectoryIndexComponent extends DirectoryIndexImpl {
       }
 
       if (state == originalState) state = state.copy();
-      state.fillMapWithModuleContent(file, module, parentInfo.contentRoot);
+      state.fillMapWithModuleContent(file, module, parentInfo.contentRoot, null);
 
       String parentPackage = state.myDirToPackageName.get(parent);
 
