@@ -31,8 +31,8 @@ public class ResizeableMappedFile implements Forceable {
   private long myLogicalSize;
   private final PagedFileStorage myStorage;
 
-  public ResizeableMappedFile(final File file, int initialSize, PagedFileStorage.StorageLock lock, int pageSize, boolean valuesAreBufferAligned) throws IOException {
-    myStorage = new PagedFileStorage(file, lock, pageSize, valuesAreBufferAligned);
+  public ResizeableMappedFile(final File file, int initialSize, PagedFileStorage.StorageLockContext lockContext, int pageSize, boolean valuesAreBufferAligned) throws IOException {
+    myStorage = new PagedFileStorage(file, lockContext, pageSize, valuesAreBufferAligned);
     boolean exists = file.exists();
     if (!exists || file.length() == 0) {
       if (!exists) FileUtil.createParentDirs(file);
@@ -41,10 +41,18 @@ public class ResizeableMappedFile implements Forceable {
 
     myLogicalSize = readLength();
     if (myLogicalSize == 0) {
-      synchronized (lock) {
+      try {
+        getPagedFileStorage().lock();
         resize(initialSize);
       }
+      finally {
+        getPagedFileStorage().unlock();
+      }
     }
+  }
+
+  public ResizeableMappedFile(final File file, int initialSize, PagedFileStorage.StorageLock lock, int pageSize, boolean valuesAreBufferAligned) throws IOException {
+    this(file, initialSize, lock.myDefaultStorageLockContext, pageSize, valuesAreBufferAligned);
   }
 
   public ResizeableMappedFile(final File file, int initialSize, PagedFileStorage.StorageLock lock) throws IOException {

@@ -45,14 +45,14 @@ class IntToIntBtree {
   private TIntIntHashMap myCachedMappings;
   private final int myCachedMappingsSize;
 
-  public IntToIntBtree(int _pageSize, File file, boolean initial) throws IOException {
+  public IntToIntBtree(int _pageSize, File file, PagedFileStorage.StorageLockContext storageLockContext, boolean initial) throws IOException {
     pageSize = _pageSize;
 
     if (initial) {
       FileUtil.delete(file);
     }
 
-    storage = new ResizeableMappedFile(file, pageSize, PersistentEnumeratorBase.ourLock, 1024 * 1024, true);
+    storage = new ResizeableMappedFile(file, pageSize, storageLockContext, 1024 * 1024, true);
     root = new BtreeIndexNodeView(this);
 
     if (initial) {
