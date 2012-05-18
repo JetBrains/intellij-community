@@ -102,8 +102,7 @@ public class GrEnumConstantImpl extends GrFieldImpl implements GrEnumConstant {
   }
 
   public GroovyResolveResult[] multiResolveClass() {
-    final PsiClass psiClass = getContainingClass();
-    GroovyResolveResult result = new GroovyResolveResultImpl(psiClass, this, PsiSubstitutor.EMPTY, true, true);
+    GroovyResolveResult result = new GroovyResolveResultImpl(getContainingClass(), this, null, PsiSubstitutor.EMPTY, true, true);
     return new GroovyResolveResult[]{result};
   }
 
@@ -135,7 +134,6 @@ public class GrEnumConstantImpl extends GrFieldImpl implements GrEnumConstant {
   public GrExpression[] getExpressionArguments() {
     final GrArgumentList argumentList = getArgumentList();
     return argumentList == null ? GrExpression.EMPTY_ARRAY : argumentList.getExpressionArguments();
-
   }
 
   @NotNull

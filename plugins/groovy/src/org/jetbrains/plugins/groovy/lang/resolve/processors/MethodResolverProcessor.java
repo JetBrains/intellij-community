@@ -27,6 +27,7 @@ import org.jetbrains.plugins.groovy.gpp.GppClosureParameterTypeProvider;
 import org.jetbrains.plugins.groovy.gpp.GppTypeConverter;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
+import org.jetbrains.plugins.groovy.lang.psi.api.SpreadState;
 import org.jetbrains.plugins.groovy.lang.psi.api.signatures.GrClosureSignature;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
@@ -100,12 +101,14 @@ public class MethodResolverProcessor extends ResolverProcessor {
       }
       boolean isAccessible = isAccessible(method);
       GroovyPsiElement resolveContext = state.get(RESOLVE_CONTEXT);
+      final SpreadState spreadState = state.get(SpreadState.SPREAD_STATE);
+
       boolean isStaticsOK = isStaticsOK(method, resolveContext, true);
       if (!myAllVariants && isStaticsOK && isAccessible &&
           PsiUtil.isApplicable(myArgumentTypes, method, substitutor, (GroovyPsiElement)myPlace, myByShape)) {
-        addCandidate(new GroovyResolveResultImpl(method, resolveContext, substitutor, isAccessible, isStaticsOK));
+        addCandidate(new GroovyResolveResultImpl(method, resolveContext, spreadState, substitutor, isAccessible, isStaticsOK));
       } else {
-        myInapplicableCandidates.add(new GroovyResolveResultImpl(method, resolveContext, substitutor, isAccessible, isStaticsOK));
+        myInapplicableCandidates.add(new GroovyResolveResultImpl(method, resolveContext, spreadState, substitutor, isAccessible, isStaticsOK));
       }
 
       return true;
