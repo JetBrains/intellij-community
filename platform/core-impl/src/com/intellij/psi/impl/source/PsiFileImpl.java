@@ -73,7 +73,6 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
 
   private IElementType myElementType;
   protected IElementType myContentElementType;
-  private long myModificationStamp;
 
   protected PsiFile myOriginalFile = null;
   private final FileViewProvider myViewProvider;
@@ -355,9 +354,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     myStub = null;
   }
 
-  public void clearCaches() {
-    myModificationStamp ++;
-  }
+  public void clearCaches() {}
 
   @Override
   public String getText() {
@@ -389,7 +386,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
 
   @Override
   public long getModificationStamp() {
-    return myModificationStamp;
+    return getViewProvider().getModificationStamp();
   }
 
   @Override
