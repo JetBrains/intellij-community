@@ -23,7 +23,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.util.zip.ZipFile;
 
-public abstract class JarFileSystem extends NewVirtualFileSystem {
+public abstract class JarFileSystem extends NewVirtualFileSystem implements JarCopyingFileSystem {
   @NonNls public static final String PROTOCOL = StandardFileSystems.JAR_PROTOCOL;
   @NonNls public static final String PROTOCOL_PREFIX = "jar://";
   @NonNls public static final String JAR_SEPARATOR = StandardFileSystems.JAR_SEPARATOR;
@@ -35,8 +35,6 @@ public abstract class JarFileSystem extends NewVirtualFileSystem {
   @Nullable
   public abstract VirtualFile getVirtualFileForJar(@Nullable VirtualFile entryVFile);
   public abstract ZipFile getJarFile(VirtualFile entryVFile) throws IOException;
-
-  public abstract void setNoCopyJarForPath(String pathInJar);
 
   @SuppressWarnings("MethodMayBeStatic")
   @Nullable

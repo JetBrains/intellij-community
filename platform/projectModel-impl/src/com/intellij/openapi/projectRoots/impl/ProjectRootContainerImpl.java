@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,9 +27,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.openapi.vfs.JarFileSystem;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import org.jdom.Element;
@@ -194,9 +192,12 @@ public class ProjectRootContainerImpl implements JDOMExternalizable, ProjectRoot
   private static void setNoCopyJars(ProjectRoot root){
     if (root instanceof SimpleProjectRoot){
       String url = ((SimpleProjectRoot)root).getUrl();
-      if (JarFileSystem.PROTOCOL.equals(VirtualFileManager.extractProtocol(url))){
+      if (StandardFileSystems.JAR_PROTOCOL.equals(VirtualFileManager.extractProtocol(url))){
         String path = VirtualFileManager.extractPath(url);
-        JarFileSystem.getInstance().setNoCopyJarForPath(path);
+        final VirtualFileSystem fileSystem = StandardFileSystems.jar();
+        if (fileSystem instanceof JarCopyingFileSystem) {
+          ((JarCopyingFileSystem)fileSystem).setNoCopyJarForPath(path);
+        }
       }
     }
     else if (root instanceof CompositeProjectRoot){
