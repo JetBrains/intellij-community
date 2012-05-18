@@ -47,7 +47,7 @@
 
   <meta model="com.intellij.android.designer.model.RadViewComponent"
         class="android.view.View"
-        tag="View">
+        tag="view">
 
     <palette title="View" icon="/com/intellij/android/designer/icons/View.png"/>
 
