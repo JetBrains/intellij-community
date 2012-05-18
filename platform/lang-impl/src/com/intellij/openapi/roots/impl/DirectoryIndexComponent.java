@@ -140,22 +140,22 @@ public class DirectoryIndexComponent extends DirectoryIndexImpl {
       if (module != null) {
         if (parentInfo.isInModuleSource) {
           String newDirPackageName = getPackageNameForSubdir(parentPackage, file.getName());
-          state.fillMapWithModuleSource(file, module, newDirPackageName, parentInfo.sourceRoot, parentInfo.isTestSource);
+          state.fillMapWithModuleSource(file, module, newDirPackageName, parentInfo.sourceRoot, parentInfo.isTestSource, null);
         }
       }
 
       if (parentInfo.libraryClassRoot != null) {
         String newDirPackageName = getPackageNameForSubdir(parentPackage, file.getName());
-        state.fillMapWithLibraryClasses(file, newDirPackageName, parentInfo.libraryClassRoot);
+        state.fillMapWithLibraryClasses(file, newDirPackageName, parentInfo.libraryClassRoot, null);
       }
 
       if (parentInfo.isInLibrarySource) {
         String newDirPackageName = getPackageNameForSubdir(parentPackage, file.getName());
-        state.fillMapWithLibrarySources(file, newDirPackageName, parentInfo.sourceRoot);
+        state.fillMapWithLibrarySources(file, newDirPackageName, parentInfo.sourceRoot, null);
       }
 
       if (!parentInfo.getOrderEntries().isEmpty()) {
-        state.fillMapWithOrderEntries(file, parentInfo.getOrderEntries(), null, null, null, parentInfo);
+        state.fillMapWithOrderEntries(file, parentInfo.getOrderEntries(), null, null, null, parentInfo, null);
       }
       return state;
     }
