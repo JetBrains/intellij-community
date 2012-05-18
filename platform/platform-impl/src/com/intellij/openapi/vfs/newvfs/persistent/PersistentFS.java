@@ -506,8 +506,8 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
 
     if (reloadFromDelegate) {
       final NewVirtualFileSystem delegate = getDelegate(canonicalFile);
-      FSRecords.setLength(getFileId(canonicalFile), delegate.getLength(canonicalFile));
       final byte[] content = delegate.contentsToByteArray(canonicalFile);
+      FSRecords.setLength(getFileId(canonicalFile), content.length);
 
       ApplicationEx application = (ApplicationEx)ApplicationManager.getApplication();
       // we should cache every local files content
