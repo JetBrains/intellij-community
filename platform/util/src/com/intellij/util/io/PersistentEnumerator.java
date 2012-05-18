@@ -169,7 +169,7 @@ public class PersistentEnumerator<Data> extends PersistentEnumeratorBase<Data> {
     int id = super.writeData(value, hashCode);
     ++valuesCount;
 
-    if (valuesCount % IOStatistics.KEYS_FACTOR == 0 && IOStatistics.DEBUG) {
+    if (IOStatistics.DEBUG && (valuesCount & IOStatistics.KEYS_FACTOR_MASK) == 0) {
       IOStatistics.dump("Index " + myFile + ", values " + valuesCount + ", storage size:" + myStorage.length());
     }
     return id;

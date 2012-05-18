@@ -334,7 +334,7 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
         int newValueId = writeData(value, valueHC);
         ++valuesCount;
 
-        if (valuesCount % IOStatistics.KEYS_FACTOR == 0 && IOStatistics.DEBUG) {
+        if (IOStatistics.DEBUG && (valuesCount & IOStatistics.KEYS_FACTOR_MASK) == 0) {
           IOStatistics.dump("Index " +
                             myFile +
                             ", values " +

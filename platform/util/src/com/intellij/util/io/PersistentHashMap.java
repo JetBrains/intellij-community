@@ -565,7 +565,7 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
       if (newKey) ++largeKeys;
     }
 
-    if (newKey && requests % IOStatistics.KEYS_FACTOR == 0 && IOStatistics.DEBUG) {
+    if (newKey && IOStatistics.DEBUG && (requests & IOStatistics.KEYS_FACTOR_MASK) == 0) {
       IOStatistics.dump("small:"+smallKeys + ", large:" + largeKeys + ", transformed:"+transformedKeys +
                         ",@"+getBaseFile().getPath());
     }
