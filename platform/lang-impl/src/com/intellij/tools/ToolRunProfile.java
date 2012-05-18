@@ -28,8 +28,6 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessTerminatedListener;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
-import com.intellij.ide.IdeEventQueue;
-import com.intellij.ide.impl.DataManagerImpl;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -48,11 +46,11 @@ public class ToolRunProfile implements ModuleRunProfile{
   public ToolRunProfile(final Tool tool, final DataContext context) {
     myTool = tool;
     myCommandLine = myTool.createCommandLine(context);
-    if (context instanceof DataManagerImpl.MyDataContext) {
-      // hack: macro.expand() can cause UI events such as showing dialogs ('Prompt' macro) which may 'invalidate' the datacontext
-      // since we know exactly that context is valid, we need to update its event count
-      ((DataManagerImpl.MyDataContext)context).setEventCount(IdeEventQueue.getInstance().getEventCount());
-    }
+    //if (context instanceof DataManagerImpl.MyDataContext) {
+    //  // hack: macro.expand() can cause UI events such as showing dialogs ('Prompt' macro) which may 'invalidate' the datacontext
+    //  // since we know exactly that context is valid, we need to update its event count
+    //  ((DataManagerImpl.MyDataContext)context).setEventCount(IdeEventQueue.getInstance().getEventCount());
+    //}
   }
 
   public String getName() {
