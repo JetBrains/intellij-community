@@ -23,6 +23,7 @@ import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.components.impl.ProjectPathMacroManager;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.impl.*;
@@ -37,6 +38,7 @@ public class ProjectModelEnvironment {
     env.registerApplicationComponent(PathMacros.class, pathMacros);
     CoreEnvironment.registerApplicationExtensionPoint(OrderRootType.EP_NAME, OrderRootType.class);
     CoreEnvironment.registerApplicationExtensionPoint(SdkFinder.EP_NAME, SdkFinder.class);
+    env.getApplication().registerService(ProjectJdkTable.class, new CoreProjectJdkTable());
 
     final MockProject project = env.getProject();
     env.registerProjectComponent(ModuleManager.class, new CoreModuleManager(project, env.getParentDisposable()));

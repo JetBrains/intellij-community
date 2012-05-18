@@ -175,6 +175,10 @@ public class CoreEnvironment {
     };
   }
 
+  public MockApplication getApplication() {
+    return myApplication;
+  }
+
   public Disposable getParentDisposable() {
     return myParentDisposable;
   }
