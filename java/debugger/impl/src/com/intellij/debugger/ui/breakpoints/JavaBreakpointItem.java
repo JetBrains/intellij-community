@@ -48,15 +48,6 @@ class JavaBreakpointItem extends BreakpointItem {
     renderer.append(myBreakpoint.getShortName());
   }
 
-  @Override
-  public void updateMnemonicLabel(JLabel label) {
-    //To change body of implemented methods use File | Settings | File Templates.
-  }
-
-  @Override
-  public void execute(Project project, JBPopup popup) {
-
-  }
 
   @Override
   public String speedSearchText() {

@@ -34,6 +34,7 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.popup.util.MasterDetailPopupBuilder;
 import com.intellij.ui.speedSearch.FilteringListModel;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.event.KeyEvent;
@@ -99,6 +100,19 @@ public class BookmarksAction extends AnAction implements DumbAware, MasterDetail
     }
   }
 
+  @Nullable
+  public JComponent createAccessoryView(Project project) {
+    if (!BookmarkManager.getInstance(project).hasBookmarksWithMnemonics()) {
+      return null;
+    }
+    final JLabel mnemonicLabel = new JLabel();
+    mnemonicLabel.setFont(Bookmark.MNEMONIC_FONT);
+
+    mnemonicLabel.setPreferredSize(new JLabel("W.").getPreferredSize());
+    mnemonicLabel.setOpaque(false);
+    return mnemonicLabel;
+  }
+
   private static DefaultListModel buildModel(Project project) {
     final DefaultListModel model = new DefaultListModel();
 
@@ -107,10 +121,6 @@ public class BookmarksAction extends AnAction implements DumbAware, MasterDetail
     }
 
     return model;
-  }
-
-  public boolean hasItemsWithMnemonic(Project project) {
-    return BookmarkManager.getInstance(project).hasBookmarksWithMnemonics();
   }
 
   protected static class BookmarkInContextInfo {
