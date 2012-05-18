@@ -20,8 +20,8 @@ import java.util.*;
  * To change this template use File | Settings | File Templates.
  */
 public class ConfigurationManager {
-  @NonNls private static final String SEARCH_TAG_NAME = "searchConfiguration";
-  @NonNls private static final String REPLACE_TAG_NAME = "replaceConfiguration";
+  @NonNls static final String SEARCH_TAG_NAME = "searchConfiguration";
+  @NonNls static final String REPLACE_TAG_NAME = "replaceConfiguration";
   @NonNls private static final String SAVE_HISTORY_ATTR_NAME = "history";
 
   private List<Configuration> configurations;
