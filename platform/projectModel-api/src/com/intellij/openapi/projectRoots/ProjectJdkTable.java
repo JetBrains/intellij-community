@@ -70,6 +70,8 @@ public abstract class ProjectJdkTable {
 
   public abstract SdkTypeId getDefaultSdkType();
 
+  public abstract SdkTypeId getSdkTypeByName(String name);
+
   public abstract Sdk createSdk(final String name, final SdkTypeId sdkType);
 
   public static Topic<Listener> JDK_TABLE_TOPIC = Topic.create("Project JDK table", Listener.class);

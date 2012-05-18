@@ -65,6 +65,7 @@ public abstract class SdkType implements SdkTypeId {
   public abstract boolean isValidSdkHome(String path);
 
 
+  @Override
   @Nullable
   public String getVersionString(Sdk sdk) {
     return getVersionString(sdk.getHomePath());
@@ -91,8 +92,6 @@ public abstract class SdkType implements SdkTypeId {
    */
   @Nullable
   public abstract AdditionalDataConfigurable createAdditionalDataConfigurable(SdkModel sdkModel, SdkModificator sdkModificator);
-
-  public abstract void saveAdditionalData(SdkAdditionalData additionalData, Element additional);
 
   @Nullable
   public SdkAdditionalData loadAdditionalData(Element additional) {

@@ -223,8 +223,23 @@ public class ProjectJdkTableImpl extends ProjectJdkTable implements PersistentSt
     return UnknownSdkType.getInstance(null);
   }
 
+  @Override
+  public SdkTypeId getSdkTypeByName(String sdkTypeName) {
+    return findSdkTypeByName(sdkTypeName);
+  }
+
+  public static SdkTypeId findSdkTypeByName(String sdkTypeName) {
+    final SdkType[] allSdkTypes = SdkType.getAllTypes();
+    for (final SdkType type : allSdkTypes) {
+      if (type.getName().equals(sdkTypeName)) {
+        return type;
+      }
+    }
+    return UnknownSdkType.getInstance(sdkTypeName);
+  }
+
   public Sdk createSdk(final String name, final SdkTypeId sdkType) {
-    return new ProjectJdkImpl(name, (SdkType) sdkType);
+    return new ProjectJdkImpl(name, sdkType);
   }
 
   public void loadState(Element element) {

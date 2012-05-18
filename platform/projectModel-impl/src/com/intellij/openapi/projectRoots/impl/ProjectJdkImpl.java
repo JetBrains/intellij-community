@@ -48,7 +48,7 @@ public class ProjectJdkImpl extends UserDataHolderBase implements JDOMExternaliz
   private final MyRootProvider myRootProvider = new MyRootProvider();
   private ProjectJdkImpl myOrigin = null;
   private SdkAdditionalData myAdditionalData = null;
-  private SdkType mySdkType;
+  private SdkTypeId mySdkType;
   @NonNls public static final String ELEMENT_NAME = "name";
   @NonNls public static final String ATTRIBUTE_VALUE = "value";
   @NonNls public static final String ELEMENT_TYPE = "type";
@@ -61,7 +61,7 @@ public class ProjectJdkImpl extends UserDataHolderBase implements JDOMExternaliz
   @NonNls public static final String ELEMENT_HOMEPATH = "homePath";
   @NonNls private static final String ELEMENT_ADDITIONAL = "additional";
 
-  public ProjectJdkImpl(String name, SdkType sdkType) {
+  public ProjectJdkImpl(String name, SdkTypeId sdkType) {
     mySdkType = sdkType;
     myRootContainer = new ProjectRootContainerImpl(true);
     myName = name;
@@ -69,9 +69,9 @@ public class ProjectJdkImpl extends UserDataHolderBase implements JDOMExternaliz
   }
 
   @NotNull
-  public SdkType getSdkType() {
+  public SdkTypeId getSdkType() {
     if (mySdkType == null) {
-      mySdkType = (SdkType)ProjectJdkTable.getInstance().getDefaultSdkType();
+      mySdkType = ProjectJdkTable.getInstance().getDefaultSdkType();
     }
     return mySdkType;
   }
@@ -121,7 +121,7 @@ public class ProjectJdkImpl extends UserDataHolderBase implements JDOMExternaliz
     final Element typeChild = element.getChild(ELEMENT_TYPE);
     final String sdkTypeName = typeChild != null? typeChild.getAttributeValue(ATTRIBUTE_VALUE) : null;
     if (sdkTypeName != null) {
-      mySdkType = getSdkTypeByName(sdkTypeName);
+      mySdkType = ProjectJdkTable.getInstance().getSdkTypeByName(sdkTypeName);
     }
     final Element version = element.getChild(ELEMENT_VERSION);
 
@@ -162,16 +162,6 @@ public class ProjectJdkImpl extends UserDataHolderBase implements JDOMExternaliz
      else {
        myAdditionalData = null;
      }
-  }
-
-  private static SdkType getSdkTypeByName(String sdkTypeName) {
-    final SdkType[] allSdkTypes = SdkType.getAllTypes();
-    for (final SdkType type : allSdkTypes) {
-      if (type.getName().equals(sdkTypeName)) {
-        return type;
-      }
-    }
-    return UnknownSdkType.getInstance(sdkTypeName);
   }
 
   public void writeExternal(Element element) throws WriteExternalException {
