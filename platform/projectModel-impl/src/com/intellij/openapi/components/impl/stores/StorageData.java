@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.components.impl.stores;
 
+import com.intellij.application.options.PathMacrosCollector;
 import com.intellij.openapi.components.PathMacroSubstitutor;
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
 import com.intellij.openapi.components.XmlConfigurationMerger;
@@ -212,7 +213,7 @@ public class StorageData {
     if (pathMacroSubstitutor == null) return;
 
     for (String componentName : myComponentStates.keySet()) {
-      final Set<String> unknownMacros = StorageUtil.getMacroNames(myComponentStates.get(componentName));
+      final Set<String> unknownMacros = PathMacrosCollector.getMacroNames(myComponentStates.get(componentName));
       if (!unknownMacros.isEmpty()) {
         pathMacroSubstitutor.addUnknownMacros(componentName, unknownMacros);
       }

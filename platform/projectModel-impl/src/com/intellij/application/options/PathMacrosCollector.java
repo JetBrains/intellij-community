@@ -17,7 +17,9 @@ package com.intellij.application.options;
 
 import com.intellij.openapi.application.PathMacroFilter;
 import com.intellij.openapi.application.PathMacros;
+import com.intellij.openapi.components.CompositePathMacroFilter;
 import com.intellij.openapi.components.PathMacroMap;
+import com.intellij.openapi.extensions.Extensions;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -41,6 +43,12 @@ public class PathMacrosCollector extends PathMacroMap {
 
   private PathMacrosCollector() {
     myMatcher = MACRO_PATTERN.matcher("");
+  }
+
+  @NotNull
+  public static Set<String> getMacroNames(@NotNull final Element e) {
+    return getMacroNames(e, new CompositePathMacroFilter(Extensions.getExtensions(PathMacroFilter.EP_NAME)),
+                         PathMacros.getInstance());
   }
 
   public static Set<String> getMacroNames(Element root, @Nullable PathMacroFilter filter, @NotNull final PathMacros pathMacros) {
@@ -89,5 +97,4 @@ public class PathMacrosCollector extends PathMacroMap {
 
     return text;
   }
-
 }

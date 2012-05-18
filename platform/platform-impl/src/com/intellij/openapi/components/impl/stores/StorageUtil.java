@@ -15,14 +15,17 @@
  */
 package com.intellij.openapi.components.impl.stores;
 
-import com.intellij.application.options.PathMacrosCollector;
 import com.intellij.notification.*;
-import com.intellij.openapi.application.*;
+import com.intellij.openapi.application.ApplicationInfo;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.RoamingType;
+import com.intellij.openapi.components.StateStorage;
+import com.intellij.openapi.components.StateStorageException;
+import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.DocumentRunnable;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.options.StreamProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
@@ -224,12 +227,6 @@ public class StorageUtil {
 
   static String printElement(final Element element, final String lineSeparator) throws StateStorageException {
     return JDOMUtil.writeElement(element, lineSeparator);
-  }
-
-  @NotNull
-  public static Set<String> getMacroNames(@NotNull final Element e) {
-    return PathMacrosCollector.getMacroNames(e, new CompositePathMacroFilter(Extensions.getExtensions(PathMacroFilter.EP_NAME)),
-                                             PathMacros.getInstance());
   }
 
   @Nullable
