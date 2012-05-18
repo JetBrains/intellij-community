@@ -880,7 +880,7 @@ public class PyUtil {
   }
 
   private static boolean isBaseException(String name) {
-    return name != null && (name.contains("BaseException") || "Exception".equals(name));
+    return name != null && (name.contains("BaseException") || name.startsWith("exceptions."));
   }
 
   public static class MethodFlags {
