@@ -39,7 +39,11 @@ public class PersistentEnumeratorDelegate<Data> implements Closeable, Forceable 
 
   @Override
   public void close() throws IOException {
-    myEnumerator.close();
+    final PersistentEnumeratorBase<Data> enumerator = myEnumerator;
+    //noinspection ConstantConditions
+    if (enumerator != null) {
+      enumerator.close();
+    }
   }
 
   public boolean isClosed() {
