@@ -16,6 +16,7 @@
 package com.intellij.core;
 
 import com.intellij.mock.MockProject;
+import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.components.impl.stores.StorageData;
 import com.intellij.openapi.module.ModuleManager;
@@ -58,11 +59,11 @@ public class CoreProjectLoader {
     moduleManager.loadModules();
   }
 
-  private static StorageData loadStorageFile(Project project, VirtualFile modulesXml) throws JDOMException, IOException {
+  public static StorageData loadStorageFile(ComponentManager componentManager, VirtualFile modulesXml) throws JDOMException, IOException {
     final Document document = JDOMUtil.loadDocument(new ByteArrayInputStream(modulesXml.contentsToByteArray()));
     StorageData storageData = new StorageData("project");
     final Element element = document.getRootElement();
-    PathMacroManager.getInstance(project).expandPaths(element);
+    PathMacroManager.getInstance(componentManager).expandPaths(element);
     storageData.load(element);
     return storageData;
   }

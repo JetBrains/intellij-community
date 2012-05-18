@@ -132,7 +132,7 @@ public class CoreEnvironment {
     myApplication.registerService(StubTreeLoader.class, new CoreStubTreeLoader());
     myApplication.registerService(PsiReferenceService.class, new PsiReferenceServiceImpl());
 
-    registerExtensionPoint(Extensions.getRootArea(), ContentBasedFileSubstitutor.EP_NAME, ContentBasedFileSubstitutor.class);
+    registerApplicationExtensionPoint(ContentBasedFileSubstitutor.EP_NAME, ContentBasedFileSubstitutor.class);
     registerExtensionPoint(Extensions.getRootArea(), BinaryFileStubBuilders.EP_NAME, FileTypeExtensionPoint.class);
 
     myFileIndexFacade = new MockFileIndexFacade(myProject);
@@ -246,6 +246,11 @@ public class CoreEnvironment {
       ExtensionPoint.Kind kind = aClass.isInterface() || (aClass.getModifiers() & Modifier.ABSTRACT) != 0 ? ExtensionPoint.Kind.INTERFACE : ExtensionPoint.Kind.BEAN_CLASS;
       area.registerExtensionPoint(name, aClass.getName(), kind);
     }
+  }
+
+  public static <T> void registerApplicationExtensionPoint(final ExtensionPointName<T> extensionPointName, final Class<? extends T> aClass) {
+    final String name = extensionPointName.getName();
+    registerExtensionPoint(Extensions.getRootArea(), name, aClass);
   }
 
   public  <T> void registerProjectExtensionPoint(final ExtensionPointName<T> extensionPointName,

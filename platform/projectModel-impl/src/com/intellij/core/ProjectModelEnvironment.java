@@ -23,6 +23,7 @@ import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.components.impl.ProjectPathMacroManager;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.impl.DirectoryIndex;
 import com.intellij.openapi.roots.impl.DirectoryIndexExcludePolicy;
@@ -37,6 +38,8 @@ public class ProjectModelEnvironment {
     Extensions.registerAreaClass(ExtensionAreas.IDEA_MODULE, null);
     PathMacrosImpl pathMacros = new PathMacrosImpl();
     env.registerApplicationComponent(PathMacros.class, pathMacros);
+    CoreEnvironment.registerApplicationExtensionPoint(OrderRootType.EP_NAME, OrderRootType.class);
+
     final MockProject project = env.getProject();
     env.registerProjectComponent(ModuleManager.class, new CoreModuleManager(project, env.getParentDisposable()));
     env.registerProjectComponent(PathMacroManager.class, new ProjectPathMacroManager(pathMacros, project));
