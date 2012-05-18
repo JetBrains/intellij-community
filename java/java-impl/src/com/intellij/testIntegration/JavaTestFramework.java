@@ -110,6 +110,6 @@ public abstract class JavaTestFramework implements TestFramework {
 
   protected PsiMethod createSetUpPatternMethod(JVMElementFactory factory) {
     final FileTemplate template = FileTemplateManager.getInstance().getCodeTemplate(getSetUpMethodFileTemplateDescriptor().getFileName());
-    return factory.createMethodFromText(StringUtil.replace(template.getText(), "${BODY}", ""), null);
+    return factory.createMethodFromText(StringUtil.replace(template.getText(), "${BODY}\n", ""), null);
   }
 }
