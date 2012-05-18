@@ -160,15 +160,13 @@ class RearrangerTest extends LightCodeInsightFixtureTestCase {
     testOpsBlockingQueueExampleWorker(false, "OpsBlockingQueue", false, "OpsBlockingQueue");
   }
 
-//  public final void testOpsBlockingQueueExampleWithGlobalPattern() throws Exception {
-//    testOpsBlockingQueueExampleWorker(true, "/com/wrq/rearranger/OpsBlockingQueue.java",
-//                                      false, "/com/wrq/rearranger/OpsBlockingQueue.java");
-//  }
-//
-//  public final void testOpsBlockingQueueExampleWithIndentedComments() throws Exception {
-//    testOpsBlockingQueueExampleWorker(false, "/com/wrq/rearranger/OpsBlockingQueueIndented.java",
-//                                      true, "/com/wrq/rearranger/OpsBlockingQueueIndentedResult.java");
-//  }
+  public final void testOpsBlockingQueueExampleWithGlobalPattern() throws Exception {
+    testOpsBlockingQueueExampleWorker(true, "OpsBlockingQueue", false, "OpsBlockingQueue");
+  }
+
+  public final void testOpsBlockingQueueExampleWithIndentedComments() throws Exception {
+    testOpsBlockingQueueExampleWorker(false, "OpsBlockingQueueIndented", true, "OpsBlockingQueueIndentedResult");
+  }
 
   private void testOpsBlockingQueueExampleWorker(boolean doGlobalPattern,
                                                  String srcFilename,
@@ -294,36 +292,42 @@ class RearrangerTest extends LightCodeInsightFixtureTestCase {
     }
   }
 
-//  public final void testReturnTypeMatch() throws Exception {
-//    configureByFile("/com/wrq/rearranger/RearrangementTest12.java");
-//    final PsiFile file = getFile();
-//    final Document doc = PsiDocumentManager.getInstance(getProject()).getDocument(file);
-//    MethodAttributes ma;
-//    ma = new MethodAttributes();
-//    ma.getReturnTypeAttr().setMatch(true);
-//    ma.getReturnTypeAttr().setExpression("void");
-//    rs.addItem(ma, 0);
-//    FieldAttributes fa = new FieldAttributes();
-//    fa.getTypeAttr().setMatch(true);
-//    fa.getTypeAttr().setExpression("int");
-//    rs.addItem(fa, 1);
-//    ma = new MethodAttributes();
-//    ma.getReturnTypeAttr().setMatch(true);
-//    ma.getReturnTypeAttr().setExpression(".*je.*");
-//    rs.addItem(ma, 2);
-//    ma = new MethodAttributes();
-//    ma.getReturnTypeAttr().setMatch(true);
-//    ma.getReturnTypeAttr().setExpression("Integer\\[\\]");
-//    rs.addItem(ma, 3);
-//    ma = new MethodAttributes();
-//    ma.getReturnTypeAttr().setMatch(true);
-//    ma.getReturnTypeAttr().setExpression("int");
-//    rs.addItem(ma, 4);
-//    final RearrangerActionHandler rah = new RearrangerActionHandler();
-//    rah.rearrangeDocument(getProject(), file, rs, doc);
-//    super.checkResultByFile("/com/wrq/rearranger/RearrangementResult12.java");
-//  }
-//
+  public final void testReturnTypeMatch() throws Exception {
+    doTest('RearrangementTest12', 'RearrangementResult12') {
+      methodRule.create { returnType( 'void' ) }
+      fieldRule.create { type( 'int' ) }
+      methodRule.create { returnType( '.*je.*' ) }
+      methodRule.create { returnType( /Integer\[\]/) }
+      methodRule.create { returnType( 'int' ) }
+    }
+    
+    
+    //MethodAttributes ma;
+    //ma = new MethodAttributes();
+    //ma.getReturnTypeAttr().setMatch(true);
+    //ma.getReturnTypeAttr().setExpression("void");
+    //rs.addItem(ma, 0);
+    //FieldAttributes fa = new FieldAttributes();
+    //fa.getTypeAttr().setMatch(true);
+    //fa.getTypeAttr().setExpression("int");
+    //rs.addItem(fa, 1);
+    //ma = new MethodAttributes();
+    //ma.getReturnTypeAttr().setMatch(true);
+    //ma.getReturnTypeAttr().setExpression(".*je.*");
+    //rs.addItem(ma, 2);
+    //ma = new MethodAttributes();
+    //ma.getReturnTypeAttr().setMatch(true);
+    //ma.getReturnTypeAttr().setExpression("Integer\\[\\]");
+    //rs.addItem(ma, 3);
+    //ma = new MethodAttributes();
+    //ma.getReturnTypeAttr().setMatch(true);
+    //ma.getReturnTypeAttr().setExpression("int");
+    //rs.addItem(ma, 4);
+    //final RearrangerActionHandler rah = new RearrangerActionHandler();
+    //rah.rearrangeDocument(getProject(), file, rs, doc);
+    //super.checkResultByFile("/com/wrq/rearranger/RearrangementResult12.java");
+  }
+
 //  public final void testRelatedMethodsDepthOriginal() throws Exception {
 //    configureByFile("/com/wrq/rearranger/RearrangementTest13.java");
 //    final PsiFile file = getFile();

@@ -35,6 +35,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GrTypeConverter;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
+import org.jetbrains.plugins.groovy.lang.psi.api.SpreadState;
 import org.jetbrains.plugins.groovy.lang.psi.api.signatures.GrClosureSignature;
 import org.jetbrains.plugins.groovy.lang.psi.api.signatures.GrSignature;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression;
@@ -688,14 +689,16 @@ public class TypesUtil {
   @Nullable
   public static PsiType substituteBoxAndNormalizeType(@Nullable PsiType type,
                                                       @NotNull PsiSubstitutor substitutor,
-                                                      @NotNull GrExpression expression) {
+                                                      @Nullable SpreadState state, @NotNull GrExpression expression) {
     if (type == null) return null;
     GlobalSearchScope resolveScope = expression.getResolveScope();
     PsiManager manager = expression.getManager();
     type = substitutor.substitute(type);
     type = boxPrimitiveType(type, manager, resolveScope);
     if (type == null) return null;
-    return PsiImplUtil.normalizeWildcardTypeByPosition(type, expression);
+    type = PsiImplUtil.normalizeWildcardTypeByPosition(type, expression);
+    type = SpreadState.apply(type, state, expression.getProject());
+    return type;
   }
 
   @Nullable
@@ -705,4 +708,48 @@ public class TypesUtil {
     if (containerType instanceof PsiArrayType) return ((PsiArrayType)containerType).getComponentType();
     return PsiUtil.extractIterableTypeParameter(containerType, false);
   }
+
+  @Nullable
+  public static PsiClassType createSimilarCollection(PsiType collection, Project project, PsiType... itemType) {
+    if (InheritanceUtil.isInheritor(collection, "java.util.SortedSet")) {
+      return createCollection(project, "java.util.SortedSet", itemType);
+    }
+    if (InheritanceUtil.isInheritor(collection, "java.util.LinkedHashSet")) {
+      return createCollection(project, "java.util.LinkedHashSet", itemType);
+    }
+    if (InheritanceUtil.isInheritor(collection, "java.util.Set")) {
+      return createCollection(project, "java.util.HashSet", itemType);
+    }
+    if (InheritanceUtil.isInheritor(collection, "java.util.LinkedList")) {
+      return createCollection(project, "java.util.LInkedList", itemType);
+    }
+    if (InheritanceUtil.isInheritor(collection, "java.util.Stack")) {
+      return createCollection(project, "java.util.Stack", itemType);
+    }
+    if (InheritanceUtil.isInheritor(collection, "java.util.Vector")) {
+      return createCollection(project, "java.util.Vector", itemType);
+    }
+    if (InheritanceUtil.isInheritor(collection, "java.util.List")) {
+      return createCollection(project, "java.util.ArrayList", itemType);
+    }
+    if (InheritanceUtil.isInheritor(collection, "java.util.Queue")) {
+      return createCollection(project, "java.util.LinkedList", itemType);
+    }
+
+    return createCollection(project, "java.util.ArrayList", itemType);
+  }
+
+  @Nullable
+  private static PsiClassType createCollection(Project project, String collectionName, PsiType... item) {
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
+    PsiClass collection =
+      JavaPsiFacade.getInstance(project).findClass(collectionName, GlobalSearchScope.allScope(project));
+    if (collection == null) return null;
+
+    PsiTypeParameter[] parameters = collection.getTypeParameters();
+    if (parameters.length != 1) return null;
+
+    return factory.createType(collection, item);
+  }
+
 }

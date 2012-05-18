@@ -10,22 +10,20 @@ import opsx.server.email.OpsEmailGenerator;
 
 /** @author dchan */
 public class OpsBlockingQueue extends OpsNonBlockingQueue {
-  //***********************************       PROTECTED/PACKAGE FIELDS        **************************************
+//***********************************       PROTECTED/PACKAGE FIELDS        **************************************
   protected final    Object putLock;
   protected final    Object takeLock;
   protected volatile int    waitCount;
-  //**************************************        PRIVATE FIELDS          *****************************************
+//**************************************        PRIVATE FIELDS          *****************************************
   private static final OpsLogCategory logCat = (OpsLogCategory)OpsLogCategory.getInstance(OpsEmailGenerator.class);
 //**************************************        CONSTRUCTORS              *************************************
-
   /** Creates new OpsBlockingQueue */
   public OpsBlockingQueue() {
     takeLock = new Object();
     putLock = new Object();
     waitCount = 0;
   }
-
-  //**************************************        PUBLIC METHODS              ************************************* 
+//**************************************        PUBLIC METHODS              ************************************* 
 // PUBLIC METHODS LINE 2
   public void put(Object obj) {
     synchronized (putLock) {
@@ -61,8 +59,7 @@ public class OpsBlockingQueue extends OpsNonBlockingQueue {
       }
     }
   }
-
-  //*********************************     PACKAGE/PROTECTED METHODS              ********************************
+//*********************************     PACKAGE/PROTECTED METHODS              ********************************
   protected Object takeNext() {
     synchronized (takeLock) {
       return super.takeNext();

@@ -17,7 +17,7 @@ package com.intellij.ide.macro;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.DataKeys;
+import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.psi.JavaDirectoryService;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
@@ -41,7 +41,7 @@ public final class FilePackageMacro extends Macro {
 
   @Nullable
   static PsiPackage getFilePackage(DataContext dataContext) {
-    PsiFile psiFile = DataKeys.PSI_FILE.getData(dataContext);
+    PsiFile psiFile = LangDataKeys.PSI_FILE.getData(dataContext);
     if (psiFile == null) return null;
     PsiDirectory containingDirectory = psiFile.getContainingDirectory();
     if (containingDirectory == null || !containingDirectory.isValid()) return null;

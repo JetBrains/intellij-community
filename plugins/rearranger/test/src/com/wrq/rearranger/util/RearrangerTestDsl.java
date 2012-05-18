@@ -16,6 +16,8 @@ public enum RearrangerTestDsl {
   INITIALIZER,
   /** Method target type (e.g. constructor). */
   TARGET,
+  TYPE,
+  RETURN_TYPE("returnType"),
   SORT,
   COMMENT,
   
