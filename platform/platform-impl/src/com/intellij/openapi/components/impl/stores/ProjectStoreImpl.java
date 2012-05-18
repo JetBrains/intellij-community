@@ -418,7 +418,7 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
       myProject = storageData.myProject;
     }
 
-    public XmlElementStorage.StorageData clone() {
+    public StorageData clone() {
       return new ProjectStorageData(this);
     }
   }
@@ -432,7 +432,7 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
       super(storageData);
     }
 
-    public XmlElementStorage.StorageData clone() {
+    public StorageData clone() {
       return new WsStorageData(this);
     }
   }
@@ -461,7 +461,7 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
     protected void convert(final Element root, final int originalVersion) {
     }
 
-    public XmlElementStorage.StorageData clone() {
+    public StorageData clone() {
       return new IprStorageData(this);
     }
   }

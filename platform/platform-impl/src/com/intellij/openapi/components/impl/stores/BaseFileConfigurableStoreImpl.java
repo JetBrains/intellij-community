@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -83,7 +83,7 @@ abstract class BaseFileConfigurableStoreImpl extends ComponentStoreImpl {
     }
 
     @Override
-    public XmlElementStorage.StorageData clone() {
+    public StorageData clone() {
       return new BaseStorageData(this);
     }
 
@@ -96,7 +96,7 @@ abstract class BaseFileConfigurableStoreImpl extends ComponentStoreImpl {
 
     @Override
     @Nullable
-    public Set<String> getDifference(final XmlElementStorage.StorageData storageData, PathMacroSubstitutor substitutor) {
+    public Set<String> getDifference(final StorageData storageData, PathMacroSubstitutor substitutor) {
       final BaseStorageData data = (BaseStorageData)storageData;
       if (myVersion != data.myVersion) return null;
       return super.getDifference(storageData, substitutor);

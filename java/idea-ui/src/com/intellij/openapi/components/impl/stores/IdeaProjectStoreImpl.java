@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,11 +34,11 @@ public class IdeaProjectStoreImpl extends ProjectWithModulesStoreImpl {
 
   protected StateStorageManager createStateStorageManager() {
     return new ProjectStateStorageManager(PathMacroManager.getInstance(getComponentManager()).createTrackingSubstitutor(), myProject) {
-      public XmlElementStorage.StorageData createWsStorageData() {
+      public StorageData createWsStorageData() {
         return new IdeaWsStorageData(ROOT_TAG_NAME, myProject);
       }
 
-      public XmlElementStorage.StorageData createIprStorageData() {
+      public StorageData createIprStorageData() {
         return new IdeaIprStorageData(ROOT_TAG_NAME, myProject);
       }
     };
@@ -53,7 +53,7 @@ public class IdeaProjectStoreImpl extends ProjectWithModulesStoreImpl {
       super(storageData);
     }
 
-    public XmlElementStorage.StorageData clone() {
+    public StorageData clone() {
       return new IdeaWsStorageData(this);
     }
   }
@@ -68,7 +68,7 @@ public class IdeaProjectStoreImpl extends ProjectWithModulesStoreImpl {
       super(storageData);
     }
 
-    public XmlElementStorage.StorageData clone() {
+    public StorageData clone() {
       return new IdeaIprStorageData(this);
     }
 
