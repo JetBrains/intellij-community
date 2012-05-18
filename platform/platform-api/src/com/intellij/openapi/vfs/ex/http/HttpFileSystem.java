@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,13 +18,14 @@ package com.intellij.openapi.vfs.ex.http;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.vfs.DeprecatedVirtualFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class HttpFileSystem extends DeprecatedVirtualFileSystem implements ApplicationComponent {
-  @NonNls public static final String PROTOCOL = "http";
+  @NonNls public static final String PROTOCOL = StandardFileSystems.HTTP_PROTOCOL;
 
   public static HttpFileSystem getInstance() {
     return (HttpFileSystem)VirtualFileManager.getInstance().getFileSystem(PROTOCOL);

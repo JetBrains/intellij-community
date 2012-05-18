@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,11 +20,10 @@ import com.intellij.openapi.projectRoots.ex.ProjectRoot;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.openapi.vfs.JarFileSystem;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.StandardFileSystems;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.openapi.vfs.ex.http.HttpFileSystem;
 import com.intellij.util.PathUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -61,8 +60,8 @@ public class SimpleProjectRoot implements ProjectRoot, JDOMExternalizable {
   @NotNull
   public String getPresentableString() {
     String path = VirtualFileManager.extractPath(myUrl);
-    if (path.endsWith(JarFileSystem.JAR_SEPARATOR)) {
-      path = path.substring(0, path.length() - JarFileSystem.JAR_SEPARATOR.length());
+    if (path.endsWith(StandardFileSystems.JAR_SEPARATOR)) {
+      path = path.substring(0, path.length() - StandardFileSystems.JAR_SEPARATOR.length());
     }
     return path.replace('/', File.separatorChar);
   }
@@ -108,7 +107,7 @@ public class SimpleProjectRoot implements ProjectRoot, JDOMExternalizable {
   }
 
   private boolean canHaveChildren() {
-    return myFile.getFileSystem() instanceof HttpFileSystem || myFile.isDirectory();
+    return myFile.getFileSystem().getProtocol().equals(StandardFileSystems.HTTP_PROTOCOL) || myFile.isDirectory();
   }
 
   public String getUrl() {
@@ -122,12 +121,12 @@ public class SimpleProjectRoot implements ProjectRoot, JDOMExternalizable {
 
   // hack to migrate internal IDEA jdk annos dir from IDEA_PROJECT_HOME/jdkAnnotations to IDEA_PROJECT_HOME/community/java/jdkAnnotations
   private static String migrateJdkAnnotationsToCommunityForDevIdea(String url) {
-    File root = new File(VfsUtil.urlToPath(url) + "/..");
+    File root = new File(VfsUtilCore.urlToPath(url) + "/..");
     boolean isOldJdkAnnotations = new File(root, "community/java/jdkAnnotations").exists()
                 && new File(root, "idea.iml").exists()
                 && new File(root, "testData").exists();
     if (isOldJdkAnnotations) {
-      return VfsUtil.pathToUrl(PathUtil.getCanonicalPath(VfsUtil.urlToPath(url + "/../community/java/jdkAnnotations")));
+      return VfsUtilCore.pathToUrl(PathUtil.getCanonicalPath(VfsUtilCore.urlToPath(url + "/../community/java/jdkAnnotations")));
     }
     return url;
   }
