@@ -1,14 +1,15 @@
 package com.intellij.coverage;
 
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
@@ -22,6 +23,7 @@ import com.intellij.rt.coverage.data.ProjectData;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -114,21 +116,20 @@ public class PackageAnnotator {
     Map<String, PackageCoverageInfo> flattenPackageCoverageMap = new HashMap<String, PackageCoverageInfo>();
     for (final Module module : modules) {
       final String rootPackageVMName = qualifiedName.replaceAll("\\.", "/");
-      final VirtualFile packageRoot = myCoverageManager.doInReadActionIfProjectOpen(new Computable<VirtualFile>() {
+      final VirtualFile output = myCoverageManager.doInReadActionIfProjectOpen(new Computable<VirtualFile>() {
         @Nullable
         public VirtualFile compute() {
-          final VirtualFile outputPath = CompilerModuleExtension.getInstance(module).getCompilerOutputPath();
-          if (outputPath != null) {
-            return rootPackageVMName.length() > 0 ? outputPath.findFileByRelativePath(rootPackageVMName) : outputPath;
-          }
-
-          return null;
+          return CompilerModuleExtension.getInstance(module).getCompilerOutputPath();
         }
       });
 
-      if (packageRoot != null) {
-        collectCoverageInformation(packageRoot, packageCoverageMap, flattenPackageCoverageMap, data, rootPackageVMName, annotator, module,
+
+      if (output != null) {
+        File outputRoot = findRelativeFile(rootPackageVMName, output);
+        if (outputRoot.exists()) {
+          collectCoverageInformation(outputRoot, packageCoverageMap, flattenPackageCoverageMap, data, rootPackageVMName, annotator, module,
                                      suite.isTrackTestFolders(), false);
+        }
 
       }
 
@@ -136,19 +137,16 @@ public class PackageAnnotator {
         final VirtualFile testPackageRoot = myCoverageManager.doInReadActionIfProjectOpen(new Computable<VirtualFile>() {
           @Nullable
           public VirtualFile compute() {
-            final VirtualFile outputPath = CompilerModuleExtension.getInstance(module).getCompilerOutputPathForTests();
-            if (outputPath != null) {
-              return rootPackageVMName.length() > 0 ? outputPath.findFileByRelativePath(rootPackageVMName) : outputPath;
-            }
-
-            return null;
+            return CompilerModuleExtension.getInstance(module).getCompilerOutputPathForTests();
           }
         });
 
         if (testPackageRoot != null) {
-            collectCoverageInformation(testPackageRoot, packageCoverageMap, flattenPackageCoverageMap, data, rootPackageVMName, annotator, module,
-                                       suite.isTrackTestFolders(), true);
-
+          final File outputRoot = findRelativeFile(rootPackageVMName, testPackageRoot);
+          if (outputRoot.exists()) {
+            collectCoverageInformation(outputRoot, packageCoverageMap, flattenPackageCoverageMap, data, rootPackageVMName, annotator, module,
+                                         suite.isTrackTestFolders(), true);
+          }
         }
       }
     }
@@ -166,6 +164,12 @@ public class PackageAnnotator {
     }
   }
 
+  private static File findRelativeFile(String rootPackageVMName, VirtualFile output) {
+    File outputRoot = VfsUtilCore.virtualToIoFile(output);
+    outputRoot = rootPackageVMName.length() > 0 ? new File(outputRoot, FileUtil.toSystemDependentName(rootPackageVMName)) : outputRoot;
+    return outputRoot;
+  }
+
   public void annotateFilteredClass(PsiClass psiClass, CoverageSuitesBundle bundle, Annotator annotator) {
     final ProjectData data = bundle.getCoverageData();
     if (data == null) return;
@@ -180,16 +184,19 @@ public class PackageAnnotator {
         final String qualifiedName = psiClass.getQualifiedName();
         if (qualifiedName == null) return;
         final String packageVMName = StringUtil.getPackageName(qualifiedName).replace('.', '/');
-        final VirtualFile packageRoot = outputPath.findFileByRelativePath(packageVMName);
-        if (packageRoot != null) {
+        final File packageRoot = findRelativeFile(packageVMName, outputPath);
+        if (packageRoot != null && packageRoot.exists()) {
           Map<String, ClassCoverageInfo> toplevelClassCoverage = new HashMap<String, ClassCoverageInfo>();
-          for (VirtualFile child : packageRoot.getChildren()) {
-            if (child.getFileType().equals(StdFileTypes.CLASS)) {
-              final String childName = child.getNameWithoutExtension();
-              final String classFqVMName = packageVMName.length() > 0 ? packageVMName + "/" + childName : childName;
-              final String toplevelClassSrcFQName = getSourceToplevelFQName(classFqVMName);
-              if (toplevelClassSrcFQName.equals(qualifiedName)) {
-                collectClassCoverageInformation(child, new PackageCoverageInfo(), data, toplevelClassCoverage, classFqVMName.replace("/", "."), toplevelClassSrcFQName);
+          final File[] files = packageRoot.listFiles();
+          if (files != null) {
+            for (File child : files) {
+              if (isClassFile(child)) {
+                final String childName = getClassName(child);
+                final String classFqVMName = packageVMName.length() > 0 ? packageVMName + "/" + childName : childName;
+                final String toplevelClassSrcFQName = getSourceToplevelFQName(classFqVMName);
+                if (toplevelClassSrcFQName.equals(qualifiedName)) {
+                  collectClassCoverageInformation(child, new PackageCoverageInfo(), data, toplevelClassCoverage, classFqVMName.replace("/", "."), toplevelClassSrcFQName);
+                }
               }
             }
           }
@@ -202,7 +209,7 @@ public class PackageAnnotator {
   }
   
   @Nullable
-  private DirCoverageInfo[] collectCoverageInformation(final VirtualFile packageOutputRoot,
+  private DirCoverageInfo[] collectCoverageInformation(final File packageOutputRoot,
                                                        final Map<String, PackageCoverageInfo> packageCoverageMap,
                                                        Map<String, PackageCoverageInfo> flattenPackageCoverageMap,
                                                        final ProjectData projectInfo,
@@ -225,16 +232,12 @@ public class PackageAnnotator {
       }
     }
 
-    final VirtualFile[] children = myCoverageManager.doInReadActionIfProjectOpen(new Computable<VirtualFile[]>() {
-      public VirtualFile[] compute() {
-        return packageOutputRoot.getChildren();
-      }
-    });
+    final File[] children = packageOutputRoot.listFiles();
 
     if (children == null) return null;
 
     Map<String, ClassCoverageInfo> toplevelClassCoverage = new HashMap<String, ClassCoverageInfo>();
-    for (VirtualFile child : children) {
+    for (File child : children) {
       if (child.isDirectory()) {
         final String childName = child.getName();
         final String childPackageVMName = packageVMName.length() > 0 ? packageVMName + "/" + childName : childName;
@@ -255,8 +258,8 @@ public class PackageAnnotator {
         }
       }
       else {
-        if (child.getFileType().equals(StdFileTypes.CLASS)) {
-          final String childName = child.getNameWithoutExtension();
+        if (isClassFile(child)) {
+          final String childName = getClassName(child);
           final String classFqVMName = packageVMName.length() > 0 ? packageVMName + "/" + childName : childName;
           final String toplevelClassSrcFQName = getSourceToplevelFQName(classFqVMName);
           final VirtualFile[] containingFile = new VirtualFile[1];
@@ -322,6 +325,14 @@ public class PackageAnnotator {
     return dirs.toArray(new DirCoverageInfo[dirs.size()]);
   }
 
+  private static boolean isClassFile(File classFile) {
+    return classFile.getName().endsWith(".class");
+  }
+  
+  private static String getClassName(File classFile) {
+    return StringUtil.trimEnd(classFile.getName(), ".class");
+  }
+  
   private static PackageCoverageInfo getOrCreateCoverageInfo(final Map<String, PackageCoverageInfo> packageCoverageMap,
                                                              final String packageVMName) {
     PackageCoverageInfo coverageInfo = packageCoverageMap.get(packageVMName);
@@ -332,7 +343,7 @@ public class PackageAnnotator {
     return coverageInfo;
   }
 
-  private void collectClassCoverageInformation(final VirtualFile classFile, final PackageCoverageInfo packageCoverageInfo, final ProjectData projectInfo,
+  private void collectClassCoverageInformation(final File classFile, final PackageCoverageInfo packageCoverageInfo, final ProjectData projectInfo,
                                                final Map<String, ClassCoverageInfo> toplevelClassCoverage,
                                                final String className,
                                                final String toplevelClassSrcFQName) {
@@ -413,13 +424,13 @@ public class PackageAnnotator {
   /*
     return true if there is executable code in the class
    */
-  private boolean collectNonCoveredClassInfo(final VirtualFile classFile,
+  private boolean collectNonCoveredClassInfo(final File classFile,
                                              final ClassCoverageInfo classCoverageInfo,
                                              final PackageCoverageInfo packageCoverageInfo) {
     final byte[] content = myCoverageManager.doInReadActionIfProjectOpen(new Computable<byte[]>() {
       public byte[] compute() {
         try {
-          return classFile.contentsToByteArray();
+          return FileUtil.loadFileBytes(classFile);
         }
         catch (IOException e) {
           return null;
