@@ -25,10 +25,7 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.roots.impl.DirectoryIndex;
-import com.intellij.openapi.roots.impl.DirectoryIndexExcludePolicy;
-import com.intellij.openapi.roots.impl.DirectoryIndexImpl;
-import com.intellij.openapi.roots.impl.ProjectRootManagerImpl;
+import com.intellij.openapi.roots.impl.*;
 
 /**
  * @author yole
@@ -39,6 +36,7 @@ public class ProjectModelEnvironment {
     PathMacrosImpl pathMacros = new PathMacrosImpl();
     env.registerApplicationComponent(PathMacros.class, pathMacros);
     CoreEnvironment.registerApplicationExtensionPoint(OrderRootType.EP_NAME, OrderRootType.class);
+    CoreEnvironment.registerApplicationExtensionPoint(SdkFinder.EP_NAME, SdkFinder.class);
 
     final MockProject project = env.getProject();
     env.registerProjectComponent(ModuleManager.class, new CoreModuleManager(project, env.getParentDisposable()));
