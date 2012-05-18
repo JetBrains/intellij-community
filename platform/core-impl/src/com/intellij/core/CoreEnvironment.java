@@ -135,7 +135,6 @@ public class CoreEnvironment {
     registerExtensionPoint(Extensions.getRootArea(), BinaryFileStubBuilders.EP_NAME, FileTypeExtensionPoint.class);
 
     myFileIndexFacade = new MockFileIndexFacade(myProject);
-    final MutablePicoContainer projectContainer = myProject.getPicoContainer();
 
     PsiModificationTrackerImpl modificationTracker = new PsiModificationTrackerImpl(myProject);
     myProject.registerService(PsiModificationTracker.class, modificationTracker);
