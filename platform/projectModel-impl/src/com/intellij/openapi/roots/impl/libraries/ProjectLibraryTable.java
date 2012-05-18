@@ -56,9 +56,6 @@ public class ProjectLibraryTable extends LibraryTableBase {
     }
   };
 
-  ProjectLibraryTable() {
-
-  }
   public static LibraryTable getInstance(Project project) {
     return ServiceManager.getService(project, ProjectLibraryTable.class);
   }

@@ -27,6 +27,10 @@ import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.impl.*;
+import com.intellij.openapi.roots.impl.libraries.ApplicationLibraryTable;
+import com.intellij.openapi.roots.impl.libraries.LibraryTablesRegistrarImpl;
+import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable;
+import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 
 /**
  * @author yole
@@ -39,6 +43,8 @@ public class ProjectModelEnvironment {
     CoreEnvironment.registerApplicationExtensionPoint(OrderRootType.EP_NAME, OrderRootType.class);
     CoreEnvironment.registerApplicationExtensionPoint(SdkFinder.EP_NAME, SdkFinder.class);
     env.getApplication().registerService(ProjectJdkTable.class, new CoreProjectJdkTable());
+    env.getApplication().registerService(ApplicationLibraryTable.class, new ApplicationLibraryTable());
+    env.getApplication().registerService(LibraryTablesRegistrar.class, new LibraryTablesRegistrarImpl());
 
     final MockProject project = env.getProject();
     env.registerProjectComponent(ModuleManager.class, new CoreModuleManager(project, env.getParentDisposable()));
@@ -47,5 +53,6 @@ public class ProjectModelEnvironment {
     DirectoryIndex index = new DirectoryIndexImpl(project);
     env.registerProjectComponent(DirectoryIndex.class, index);
     env.registerProjectComponent(ProjectRootManager.class, new ProjectRootManagerImpl(project, index));
+    project.registerService(ProjectLibraryTable.class, new ProjectLibraryTable());
   }
 }

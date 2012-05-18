@@ -16,14 +16,10 @@
 
 package com.intellij.openapi.roots.impl.libraries;
 
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.libraries.LibraryTablePresentation;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
-import org.jetbrains.annotations.NotNull;
-
-import java.io.File;
 
 /**
  *  @author dsl
@@ -35,7 +31,7 @@ import java.io.File;
     @Storage( file = StoragePathMacros.APP_CONFIG + "/applicationLibraries.xml")
     }
 )
-public class ApplicationLibraryTable extends LibraryTableBase implements ExportableComponent {
+public class ApplicationLibraryTable extends LibraryTableBase {
   private static final LibraryTablePresentation GLOBAL_LIBRARY_TABLE_PRESENTATION = new LibraryTablePresentation() {
     public String getDisplayName(boolean plural) {
       return ProjectBundle.message("global.library.display.name", plural ? 2 : 1);
@@ -68,15 +64,5 @@ public class ApplicationLibraryTable extends LibraryTableBase implements Exporta
 
   public static String getExternalFileName() {
     return "applicationLibraries";
-  }
-
-  @NotNull
-  public File[] getExportFiles() {
-    return new File[]{PathManager.getOptionsFile(getExternalFileName())};
-  }
-
-  @NotNull
-  public String getPresentableName() {
-    return ProjectBundle.message("library.global.settings");
   }
 }
