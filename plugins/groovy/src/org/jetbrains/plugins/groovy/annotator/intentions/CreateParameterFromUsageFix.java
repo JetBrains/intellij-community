@@ -21,10 +21,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.refactoring.RefactoringBundle;
@@ -141,8 +138,13 @@ public class CreateParameterFromUsageFix implements IntentionAction, MethodOrClo
 
         final String name = ref.getName();
         final Set<PsiType> types = GroovyExpectedTypesProvider.getDefaultExpectedTypes(ref);
-        PsiType _type = types.iterator().next();
-        final PsiType type = TypesUtil.unboxPrimitiveTypeWrapper(_type);
+        final PsiType type;
+        if (types.isEmpty()) {
+          type = PsiType.getJavaLangObject(PsiManager.getInstance(project), ref.getResolveScope());
+        }
+        else {
+          type = TypesUtil.unboxPrimitiveTypeWrapper(types.iterator().next());
+        }
 
         if (method instanceof GrMethod) {
           new GrChangeSignatureDialog(project, (GrMethod)method) {

@@ -308,7 +308,7 @@ public class DataManagerImpl extends DataManager implements ApplicationComponent
     PlatformDataKeys.MODALITY_STATE.getName()
   ));
 
-  public class MyDataContext implements DataContext, UserDataHolder {
+  public static class MyDataContext implements DataContext, UserDataHolder {
     private int myEventCount;
     // To prevent memory leak we have to wrap passed component into
     // the weak reference. For example, Swing often remembers menu items
@@ -322,7 +322,9 @@ public class DataManagerImpl extends DataManager implements ApplicationComponent
       myRef = new WeakReference<Component>(component);
     }
 
-    public void setEventCount(int eventCount) {
+
+    public void setEventCount(int eventCount, Object caller) {
+      assert caller instanceof IdeKeyEventDispatcher : "This method might be accessible from " + IdeKeyEventDispatcher.class.getName() + " only";
       myCachedData.clear();
       myEventCount = eventCount;
     }
@@ -366,11 +368,11 @@ public class DataManagerImpl extends DataManager implements ApplicationComponent
         return _component != null ? ModalityState.stateForComponent(_component) : ModalityState.NON_MODAL;
       }
       else if (PlatformDataKeys.EDITOR.is(dataId)) {
-        Editor editor = (Editor)DataManagerImpl.this.getData(dataId, _component);
+        Editor editor = (Editor)(((DataManagerImpl)DataManager.getInstance()).getData(dataId, _component));
         return validateEditor(editor);
       }
       else {
-        return DataManagerImpl.this.getData(dataId, _component);
+        return (((DataManagerImpl)DataManager.getInstance()).getData(dataId, _component));
       }
     }
 

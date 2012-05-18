@@ -226,6 +226,10 @@ public class InlineToAnonymousClassTest extends LightRefactoringTestCase {
     doTest(false, true);
   }
 
+  public void testBraces() throws Exception {
+    doTest(false, false);
+  }
+  
   public void testNoInlineAbstract() throws Exception {
     doTestNoInline("Abstract classes cannot be inlined");
   }

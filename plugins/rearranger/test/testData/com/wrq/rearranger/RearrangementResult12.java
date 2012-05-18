@@ -1,9 +1,9 @@
 class RearrangementTest12 {
+
   void method(int y) {
     x = y;
   }
-
-  int x;
+  int    x;
 
   Object convertX() {
     return new Integer(x);
@@ -16,6 +16,5 @@ class RearrangementTest12 {
   int getX() {
     return x;
   }
-
   String s;
 }

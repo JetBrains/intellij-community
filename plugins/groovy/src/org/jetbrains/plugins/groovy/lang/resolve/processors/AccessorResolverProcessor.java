@@ -20,6 +20,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
+import org.jetbrains.plugins.groovy.lang.psi.api.SpreadState;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
@@ -78,9 +79,10 @@ public class AccessorResolverProcessor extends MethodResolverProcessor {
     }
     boolean isAccessible = isAccessible(method);
     final GroovyPsiElement resolveContext = state.get(RESOLVE_CONTEXT);
+    final SpreadState spreadState = state.get(SpreadState.SPREAD_STATE);
     boolean isStaticsOK = isStaticsOK(method, resolveContext, true);
     final GroovyResolveResultImpl candidate =
-      new GroovyResolveResultImpl(method, resolveContext, substitutor, isAccessible, isStaticsOK, true);
+      new GroovyResolveResultImpl(method, resolveContext, spreadState, substitutor, isAccessible, isStaticsOK, true);
     if (isAccessible && isStaticsOK) {
       addCandidate(candidate);
       return method instanceof GrGdkMethod; //don't stop searching if we found only gdk method

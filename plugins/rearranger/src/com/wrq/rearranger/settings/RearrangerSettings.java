@@ -361,7 +361,7 @@ public final class RearrangerSettings {
 // Level 2 methods
 
   public void setGlobalCommentPattern(String globalCommentPattern) {
-    this.myGlobalCommentPattern = globalCommentPattern;
+    myGlobalCommentPattern = globalCommentPattern;
   }
 
 // end of Level 2 methods
@@ -384,7 +384,7 @@ public final class RearrangerSettings {
 // Level 2 methods
 
   public void setOverloadedOrder(int overloadedOrder) {
-    this.myOverloadedOrder = overloadedOrder;
+    myOverloadedOrder = overloadedOrder;
   }
 
 // end of Level 2 methods
@@ -403,7 +403,7 @@ public final class RearrangerSettings {
 // Level 2 methods
 
   public void setAskBeforeRearranging(boolean askBeforeRearranging) {
-    this.myAskBeforeRearranging = askBeforeRearranging;
+    myAskBeforeRearranging = askBeforeRearranging;
   }
 
   public boolean isKeepGettersSettersTogether() {
@@ -413,7 +413,7 @@ public final class RearrangerSettings {
 // Level 2 methods
 
   public void setKeepGettersSettersTogether(boolean keepGettersSettersTogether) {
-    this.myKeepGettersSettersTogether = keepGettersSettersTogether;
+    myKeepGettersSettersTogether = keepGettersSettersTogether;
   }
 
   public boolean isKeepGettersSettersWithProperty() {
@@ -421,7 +421,7 @@ public final class RearrangerSettings {
   }
 
   public void setKeepGettersSettersWithProperty(boolean keepGettersSettersWithProperty) {
-    this.myKeepGettersSettersWithProperty = keepGettersSettersWithProperty;
+    myKeepGettersSettersWithProperty = keepGettersSettersWithProperty;
   }
 // end of Level 2 methods
 // end of Level 1 methods
@@ -434,7 +434,7 @@ public final class RearrangerSettings {
 // Level 2 methods
 
   public void setKeepOverloadedMethodsTogether(boolean keepOverloadedMethodsTogether) {
-    this.myKeepOverloadedMethodsTogether = keepOverloadedMethodsTogether;
+    myKeepOverloadedMethodsTogether = keepOverloadedMethodsTogether;
   }
 
   // end of Level 2 methods
@@ -445,7 +445,7 @@ public final class RearrangerSettings {
   }
 
   public void setRearrangeInnerClasses(boolean rearrangeInnerClasses) {
-    this.myRearrangeInnerClasses = rearrangeInnerClasses;
+    myRearrangeInnerClasses = rearrangeInnerClasses;
   }
 
 // end of Level 2 methods
@@ -459,7 +459,7 @@ public final class RearrangerSettings {
 // Level 2 methods
 
   public void setRemoveBlanksInsideCodeBlocks(boolean removeBlanksInsideCodeBlocks) {
-    this.myRemoveBlanksInsideCodeBlocks = removeBlanksInsideCodeBlocks;
+    myRemoveBlanksInsideCodeBlocks = removeBlanksInsideCodeBlocks;
   }
 
   public boolean isShowComments() {
@@ -467,7 +467,7 @@ public final class RearrangerSettings {
   }
 
   public void setShowComments(boolean showComments) {
-    this.myShowComments = showComments;
+    myShowComments = showComments;
   }
 
 // end of Level 2 methods
@@ -481,7 +481,7 @@ public final class RearrangerSettings {
 // Level 2 methods
 
   public void setShowFields(boolean showFields) {
-    this.myShowFields = showFields;
+    myShowFields = showFields;
   }
 
   public boolean isShowMatchedRules() {
@@ -489,7 +489,7 @@ public final class RearrangerSettings {
   }
 
   public void setShowMatchedRules(boolean showMatchedRules) {
-    this.myShowMatchedRules = showMatchedRules;
+    myShowMatchedRules = showMatchedRules;
   }
 
   public boolean isShowParameterNames() {
@@ -499,7 +499,7 @@ public final class RearrangerSettings {
 // Level 2 methods
 
   public void setShowParameterNames(boolean showParameterNames) {
-    this.myShowParameterNames = showParameterNames;
+    myShowParameterNames = showParameterNames;
   }
 
 // end of Level 2 methods
@@ -513,7 +513,7 @@ public final class RearrangerSettings {
 // Level 2 methods
 
   public void setShowParameterTypes(boolean showParameterTypes) {
-    this.myShowParameterTypes = showParameterTypes;
+    myShowParameterTypes = showParameterTypes;
   }
 
   // end of Level 2 methods
@@ -524,7 +524,7 @@ public final class RearrangerSettings {
   }
 
   public void setShowRules(boolean showRules) {
-    this.myShowRules = showRules;
+    myShowRules = showRules;
   }
 
   // end of Level 2 methods
@@ -534,7 +534,7 @@ public final class RearrangerSettings {
   }
 
   public void setShowTypeAfterMethod(boolean showTypeAfterMethod) {
-    this.myShowTypeAfterMethod = showTypeAfterMethod;
+    myShowTypeAfterMethod = showTypeAfterMethod;
   }
 
 // ------------------------ CANONICAL METHODS ------------------------

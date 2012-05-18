@@ -31,7 +31,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public class SourceFolderImpl extends ContentFolderBaseImpl implements SourceFolder, ClonableContentFolder {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.impl.SimpleSourceFolderImpl");
-  private boolean myIsTestSource;
+  private final boolean myIsTestSource;
   @NonNls public static final String ELEMENT_NAME = "sourceFolder";
   @NonNls public static final String TEST_SOURCE_ATTR = "isTestSource";
   private String myPackagePrefix;
@@ -75,14 +75,17 @@ public class SourceFolderImpl extends ContentFolderBaseImpl implements SourceFol
     myPackagePrefix = that.myPackagePrefix;
   }
 
+  @Override
   public boolean isTestSource() {
     return myIsTestSource;
   }
 
+  @Override
   public String getPackagePrefix() {
     return myPackagePrefix;
   }
 
+  @Override
   public void setPackagePrefix(String packagePrefix) {
     myPackagePrefix = packagePrefix;
   }
@@ -95,10 +98,12 @@ public class SourceFolderImpl extends ContentFolderBaseImpl implements SourceFol
     }
   }
 
+  @Override
   public ContentFolder cloneFolder(ContentEntry contentEntry) {
     return new SourceFolderImpl(this, (ContentEntryImpl) contentEntry);
   }
 
+  @Override
   public int compareTo(ContentFolderBaseImpl folder) {
     if (!(folder instanceof SourceFolderImpl)) return -1;
 

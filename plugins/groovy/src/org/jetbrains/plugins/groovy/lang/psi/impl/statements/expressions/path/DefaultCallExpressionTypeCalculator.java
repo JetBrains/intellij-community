@@ -21,7 +21,6 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.hash.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
@@ -54,46 +53,54 @@ public class DefaultCallExpressionTypeCalculator extends GrCallExpressionTypeCal
       PsiManager manager = callExpression.getManager();
       PsiType result = null;
       for (GroovyResolveResult resolveResult : resolveResults) {
-        PsiElement resolved = resolveResult.getElement();
-        PsiType returnType = null;
-        if (resolved instanceof PsiMethod) {
-          PsiMethod method = (PsiMethod) resolved;
-          if (resolveResult.isInvokedOnProperty()) {
-            final PsiType propertyType = PsiUtil.getSmartReturnType(method);
-            returnType = extractReturnTypeFromType(propertyType, true, callExpression);
-          } else {
-            returnType = getClosureMethodsReturnType(callExpression, refExpr, method);
-            if (returnType == null) {
-              returnType = PsiUtil.getSmartReturnType(method);
-            }
-          }
-        } else if (resolved instanceof GrVariable) {
-          PsiType refType = refExpr.getType();
-          final PsiType type = refType == null ? ((GrVariable) resolved).getTypeGroovy() : refType;
-          returnType = extractReturnTypeFromType(type, false, callExpression);
-        }
+        PsiType returnType = calculateReturnTypeInner(callExpression, refExpr, resolveResult);
+
         if (returnType == null) return null;
         if (!(returnType instanceof GrLiteralClassType)) {
-          returnType = TypesUtil.substituteBoxAndNormalizeType(returnType, resolveResult.getSubstitutor(), callExpression);
+          returnType = TypesUtil.substituteBoxAndNormalizeType(returnType, resolveResult.getSubstitutor(), resolveResult.getSpreadState(), callExpression);
           LOG.assertTrue(returnType != null);
         }
 
-        if (result == null || returnType.isAssignableFrom(result)) result = returnType;
-        else if (!result.isAssignableFrom(returnType))
+        if (result == null || returnType.isAssignableFrom(result)) {
+          result = returnType;
+        }
+        else if (!result.isAssignableFrom(returnType)) {
           result = TypesUtil.getLeastUpperBound(result, returnType, manager);
+        }
       }
 
-      if (result == null) return null;
-
-      if (refExpr.getDotTokenType() != GroovyTokenTypes.mSPREAD_DOT) {
-        return result;
-      } else {
-        return ResolveUtil.getListTypeForSpreadOperator(refExpr, result);
-      }
+      return result;
     }
     else {
       return extractReturnTypeFromType(invoked.getType(), false, callExpression);
     }
+  }
+
+  @Nullable
+  private static PsiType calculateReturnTypeInner(GrMethodCall callExpression,
+                                                  GrReferenceExpression refExpr,
+                                                  GroovyResolveResult resolveResult) {
+    PsiElement resolved = resolveResult.getElement();
+    PsiType returnType = null;
+    if (resolved instanceof PsiMethod) {
+      PsiMethod method = (PsiMethod)resolved;
+      if (resolveResult.isInvokedOnProperty()) {
+        final PsiType propertyType = PsiUtil.getSmartReturnType(method);
+        returnType = extractReturnTypeFromType(propertyType, true, callExpression);
+      }
+      else {
+        returnType = getClosureMethodsReturnType(callExpression, refExpr, method);
+        if (returnType == null) {
+          returnType = PsiUtil.getSmartReturnType(method);
+        }
+      }
+    }
+    else if (resolved instanceof GrVariable) {
+      PsiType refType = refExpr.getType();
+      final PsiType type = refType == null ? ((GrVariable)resolved).getTypeGroovy() : refType;
+      returnType = extractReturnTypeFromType(type, false, callExpression);
+    }
+    return returnType;
   }
 
   @Nullable

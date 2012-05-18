@@ -15,9 +15,10 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.api;
 
-import com.intellij.psi.ResolveResult;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.ResolveResult;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 
@@ -34,9 +35,13 @@ public interface GroovyResolveResult extends ResolveResult {
   @Nullable
   GroovyPsiElement getCurrentFileResolveContext();
 
+  @NotNull
   PsiSubstitutor getSubstitutor();
 
   boolean isInvokedOnProperty();
+
+  @Nullable
+  SpreadState getSpreadState();
 
   GroovyResolveResult EMPTY_RESULT = new GroovyResolveResult() {
     public boolean isAccessible() {
@@ -51,6 +56,7 @@ public interface GroovyResolveResult extends ResolveResult {
       return true;
     }
 
+    @NotNull
     public PsiSubstitutor getSubstitutor() {
       return PsiSubstitutor.EMPTY;
     }
@@ -67,6 +73,11 @@ public interface GroovyResolveResult extends ResolveResult {
     @Override
     public boolean isInvokedOnProperty() {
       return false;
+    }
+
+    @Override
+    public SpreadState getSpreadState() {
+      return null;
     }
   };
 }

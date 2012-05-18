@@ -16,31 +16,46 @@
 package com.intellij.android.designer.model;
 
 import com.intellij.android.designer.propertyTable.IdProperty;
+import com.intellij.android.designer.propertyTable.IncludeLayoutProperty;
+import com.intellij.android.designer.propertyTable.editors.ResourceDialog;
 import com.intellij.designer.propertyTable.Property;
-import org.jetbrains.android.dom.attrs.AttributeDefinition;
-import org.jetbrains.android.dom.attrs.AttributeFormat;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.ui.DialogWrapper;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 /**
  * @author Alexander Lobas
  */
-public class RadIncludeComponent extends RadViewComponent {
-  private final List<Property> myProperties = new ArrayList<Property>();
+public class RadIncludeLayout extends RadViewComponent implements IConfigurableComponent {
+  @Override
+  public String getCreationXml() {
+    return "<include android:layout_width=\"wrap_content\"\n" +
+           "android:layout_height=\"wrap_content\"\n" +
+           "layout=\"" +
+           extractClientProperty(IncludeLayoutProperty.NAME) +
+           "\"/>";
+  }
 
-  public RadIncludeComponent() {
-    IdProperty idProperty = new IdProperty("id", new AttributeDefinition("id", Arrays.asList(AttributeFormat.Reference)));
-    idProperty.setImportant(true);
-    myProperties.add(idProperty);
+  public void configure(Module module) throws Exception {
+    ResourceDialog dialog = new ResourceDialog(module, IncludeLayoutProperty.TYPES);
+    dialog.show();
+
+    if (dialog.getExitCode() == DialogWrapper.OK_EXIT_CODE) {
+      setClientProperty(IncludeLayoutProperty.NAME, dialog.getResourceName());
+    }
+    else {
+      throw new Exception();
+    }
   }
 
   @Override
   public void setProperties(List<Property> properties) {
     if (!properties.isEmpty()) {
       properties = new ArrayList<Property>(properties);
-      properties.addAll(myProperties);
+      properties.add(IncludeLayoutProperty.INSTANCE);
+      properties.add(IdProperty.INSTANCE);
     }
     super.setProperties(properties);
   }

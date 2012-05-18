@@ -33,6 +33,7 @@ public class LineRange {
   public LineRange(final int startLine, final int endLine) {
     this.startLine = startLine;
     this.endLine = endLine;
+    LOG.assertTrue(startLine >= 0, "Negative start line");
     if (startLine > endLine) {
       LOG.error("start > end: start=" + startLine+"; end="+endLine);
     }

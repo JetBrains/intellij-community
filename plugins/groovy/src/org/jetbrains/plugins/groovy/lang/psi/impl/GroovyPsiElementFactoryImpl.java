@@ -396,6 +396,12 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
     return createTypeElement(typeText);
   }
 
+  @NotNull
+  @Override
+  public PsiClassType createType(@NotNull PsiClass aClass) {
+    return JavaPsiFacade.getElementFactory(myProject).createType(aClass);
+  }
+
   public GrParenthesizedExpression createParenthesizedExpr(GrExpression newExpr) {
     return ((GrParenthesizedExpression) getInstance(myProject).createExpressionFromText("(" + newExpr.getText() + ")"));
   }
