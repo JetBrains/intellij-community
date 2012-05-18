@@ -26,10 +26,7 @@ import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.RootProvider;
 import com.intellij.openapi.roots.impl.RootProviderBaseImpl;
 import com.intellij.openapi.util.*;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
@@ -116,7 +113,7 @@ public class ProjectJdkImpl extends UserDataHolderBase implements JDOMExternaliz
     if (myHomePath == null) {
       return null;
     }
-    return LocalFileSystem.getInstance().findFileByPath(myHomePath);
+    return StandardFileSystems.local().findFileByPath(myHomePath);
   }
 
    public void readExternal(Element element) throws InvalidDataException {
@@ -345,7 +342,7 @@ public class ProjectJdkImpl extends UserDataHolderBase implements JDOMExternaliz
     for (ProjectRoot root : roots) {
       ContainerUtil.addAll(files, root.getVirtualFiles());
     }
-    return VfsUtil.toVirtualFileArray(files);
+    return VfsUtilCore.toVirtualFileArray(files);
   }
 
   public void addRoot(VirtualFile root, OrderRootType rootType) {
