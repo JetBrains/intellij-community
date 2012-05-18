@@ -17,9 +17,18 @@ package com.intellij.core;
 
 import com.intellij.mock.MockComponentManager;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.components.ExtensionAreas;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.impl.ModuleEx;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ModuleExtension;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.impl.DirectoryIndex;
+import com.intellij.openapi.roots.impl.ModuleRootManagerImpl;
+import com.intellij.openapi.roots.impl.ProjectRootManagerImpl;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
 
@@ -34,6 +43,21 @@ public class CoreModule extends MockComponentManager implements ModuleEx {
     super(project.getPicoContainer(), parentDisposable);
     myProject = project;
     myPath = moduleFilePath;
+
+    Extensions.instantiateArea(ExtensionAreas.IDEA_MODULE, this, null);
+    CoreEnvironment.registerExtensionPoint(Extensions.getArea(this), ModuleExtension.EP_NAME, ModuleExtension.class);
+    Disposer.register(parentDisposable, new Disposable() {
+      @Override
+      public void dispose() {
+        Extensions.disposeArea(CoreModule.this);
+      }
+    });
+
+    ModuleRootManagerImpl moduleRootManager = new ModuleRootManagerImpl(this,
+                                                                        DirectoryIndex.getInstance(project),
+                                                                        ProjectRootManagerImpl.getInstanceImpl(project),
+                                                                        VirtualFilePointerManager.getInstance());
+    CoreEnvironment.registerComponentInstance(getPicoContainer(), ModuleRootManager.class, moduleRootManager);
   }
 
   @Override

@@ -16,19 +16,33 @@
 package com.intellij.core;
 
 import com.intellij.application.options.PathMacrosImpl;
+import com.intellij.mock.MockProject;
 import com.intellij.openapi.application.PathMacros;
+import com.intellij.openapi.components.ExtensionAreas;
 import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.components.impl.ProjectPathMacroManager;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.roots.impl.DirectoryIndex;
+import com.intellij.openapi.roots.impl.DirectoryIndexExcludePolicy;
+import com.intellij.openapi.roots.impl.DirectoryIndexImpl;
+import com.intellij.openapi.roots.impl.ProjectRootManagerImpl;
 
 /**
  * @author yole
  */
 public class ProjectModelEnvironment {
   public static void register(CoreEnvironment env) {
+    Extensions.registerAreaClass(ExtensionAreas.IDEA_MODULE, null);
     PathMacrosImpl pathMacros = new PathMacrosImpl();
     env.registerApplicationComponent(PathMacros.class, pathMacros);
-    env.registerProjectComponent(ModuleManager.class, new CoreModuleManager(env.getProject(), env.getParentDisposable()));
-    env.registerProjectComponent(PathMacroManager.class, new ProjectPathMacroManager(pathMacros, env.getProject()));
+    final MockProject project = env.getProject();
+    env.registerProjectComponent(ModuleManager.class, new CoreModuleManager(project, env.getParentDisposable()));
+    env.registerProjectComponent(PathMacroManager.class, new ProjectPathMacroManager(pathMacros, project));
+    env.registerProjectExtensionPoint(DirectoryIndexExcludePolicy.EP_NAME, DirectoryIndexExcludePolicy.class);
+    DirectoryIndex index = new DirectoryIndexImpl(project);
+    env.registerProjectComponent(DirectoryIndex.class, index);
+    env.registerProjectComponent(ProjectRootManager.class, new ProjectRootManagerImpl(project, index));
   }
 }

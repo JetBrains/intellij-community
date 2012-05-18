@@ -18,6 +18,8 @@ package com.intellij.core;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.roots.ContentEntry;
+import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.UsefulTestCase;
@@ -39,6 +41,8 @@ public class CoreModuleManagerTest extends UsefulTestCase {
     final Module[] modules = moduleManager.getModules();
     assertEquals(1, modules.length);
 
-    //
+    ModuleRootManager rootManager = ModuleRootManager.getInstance(modules[0]);
+    final ContentEntry[] contentEntries = rootManager.getContentEntries();
+    assertEquals(1, contentEntries.length);
   }
 }
