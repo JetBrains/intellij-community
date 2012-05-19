@@ -63,6 +63,9 @@ public class GrTypeComboBox extends ComboBox {
       return new GrTypeComboBox(type, expected, expected == null, expression.getManager(), expression.getResolveScope(), selectDef);
     }
     else {
+      if (type == PsiType.NULL) {
+        type = PsiType.getJavaLangObject(expression.getManager(), expression.getResolveScope());
+      }
       return new GrTypeComboBox(type, null, true, null, null, selectDef);
     }
   }
