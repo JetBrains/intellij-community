@@ -36,7 +36,6 @@ import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocMemberReference;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocReferenceElement;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocTag;
-import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrLabel;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
@@ -328,28 +327,33 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
     return createDummyFile(s, false);
   }
 
-  public GrParameter createParameter(String name, @Nullable String typeText, @Nullable String initializer, @Nullable GroovyPsiElement context)
-    throws IncorrectOperationException {
-    StringBuilder fileText = new StringBuilder();
-    fileText.append("def dsfsadfnbhfjks_weyripouh_huihnrecuio(");
-    if (typeText != null) {
-      fileText.append(typeText).append(" ");
-    } else {
-      fileText.append("def ");
-    }
-    fileText.append(name);
-    if (initializer != null && initializer.length() > 0) {
-      fileText.append(" = ").append(initializer);
-    }
-    fileText.append("){}");
-    GroovyFileImpl groovyFile = createDummyFile(fileText.toString());
-    groovyFile.setContext(context);
+  public GrParameter createParameter(String name,
+                                     @Nullable String typeText,
+                                     @Nullable String initializer,
+                                     @Nullable GroovyPsiElement context) throws IncorrectOperationException {
+    try {
+      StringBuilder fileText = new StringBuilder();
+      fileText.append("def dsfsadfnbhfjks_weyripouh_huihnrecuio(");
+      if (typeText != null) {
+        fileText.append(typeText).append(" ");
+      }
+      else {
+        fileText.append("def ");
+      }
+      fileText.append(name);
+      if (initializer != null && initializer.length() > 0) {
+        fileText.append(" = ").append(initializer);
+      }
+      fileText.append("){}");
+      GroovyFileImpl groovyFile = createDummyFile(fileText.toString());
+      groovyFile.setContext(context);
 
-    ASTNode node = groovyFile.getFirstChild().getNode();
-    if (node.getElementType() != GroovyElementTypes.METHOD_DEFINITION) {
-      throw new IncorrectOperationException("Invalid all text");
+      ASTNode node = groovyFile.getFirstChild().getNode();
+      return ((GrMethod)node.getPsi()).getParameters()[0];
     }
-    return ((GrMethod)node.getPsi()).getParameters()[0];
+    catch (RuntimeException e) {
+      throw new IncorrectOperationException("name = " + name + ", type = " + typeText + ", initializer = " + initializer);
+    }
   }
 
   public GrCodeReferenceElement createTypeOrPackageReference(String qName) {
