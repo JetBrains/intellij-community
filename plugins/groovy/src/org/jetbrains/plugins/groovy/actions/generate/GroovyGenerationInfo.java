@@ -23,8 +23,10 @@ import com.intellij.openapi.editor.ScrollType;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMember;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.GrReferenceAdjuster;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
@@ -34,6 +36,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 
 import static org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil.isWhiteSpace;
 
@@ -52,7 +55,7 @@ public class GroovyGenerationInfo<T extends PsiMember> extends PsiGenerationInfo
   }
 
   @Override
-  public void insert(PsiClass aClass, PsiElement anchor, boolean before) throws IncorrectOperationException {
+  public void insert(@NotNull PsiClass aClass, @Nullable PsiElement anchor, boolean before) throws IncorrectOperationException {
     super.insert(aClass, anchor, before);
 
     final T member = getPsiMember();
@@ -76,20 +79,16 @@ public class GroovyGenerationInfo<T extends PsiMember> extends PsiGenerationInfo
 
   @Override
   public PsiElement findInsertionAnchor(@NotNull PsiClass aClass, @NotNull PsiElement leaf) {
-    PsiElement element = leaf;
-    if (element.getParent() != aClass) {
-      while (element.getParent().getParent() != aClass) {
-        element = element.getParent();
-      }
-    }
+    PsiElement parent = aClass instanceof GroovyScriptClass ? aClass.getContainingFile() : ((GrTypeDefinition)aClass).getBody();
 
-    final GrTypeDefinition typeDefinition = (GrTypeDefinition)aClass;
-    PsiElement lBrace = typeDefinition.getLBrace();
+    PsiElement element = PsiTreeUtil.findPrevParent(parent, leaf);
+
+    PsiElement lBrace = aClass.getLBrace();
     if (lBrace == null) {
       return null;
     }
     else {
-      PsiElement rBrace = typeDefinition.getRBrace();
+      PsiElement rBrace = aClass.getRBrace();
       if (!GenerateMembersUtil.isChildInRange(element, lBrace.getNextSibling(), rBrace)) {
         return null;
       }

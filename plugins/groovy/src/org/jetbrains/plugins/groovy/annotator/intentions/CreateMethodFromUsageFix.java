@@ -15,6 +15,8 @@
  */
 package org.jetbrains.plugins.groovy.annotator.intentions;
 
+import com.intellij.codeInsight.generation.OverrideImplementUtil;
+import com.intellij.codeInsight.generation.PsiGenerationInfo;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -22,11 +24,11 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.intentions.base.IntentionUtils;
 import org.jetbrains.plugins.groovy.lang.editor.template.expressions.ChooseTypeExpression;
-import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.GroovyExpectedTypesProvider;
@@ -75,26 +77,24 @@ public class CreateMethodFromUsageFix implements IntentionAction {
     ChooseTypeExpression[] paramTypesExpressions = setupParams(method, argTypes, factory);
 
     TypeConstraint[] constraints = GroovyExpectedTypesProvider.calculateTypeConstraints((GrExpression)myRefExpression.getParent());
-    PsiElement parent = myTargetClass instanceof GroovyScriptClass
-                        ? ((GroovyScriptClass)myTargetClass).getContainingFile()
-                        : myTargetClass;
-    if (PsiTreeUtil.isAncestor(parent, myRefExpression, false)) {
-      PsiElement prevParent = PsiTreeUtil.findPrevParent(parent, myRefExpression);
-      PsiElement sibling = PsiUtil.skipWhitespaces(prevParent.getNextSibling(), true);
-      if (sibling != null && GroovyTokenTypes.mSEMI.equals(sibling.getNode().getElementType())) {
-        sibling = sibling.getNextSibling();
-      }
-      else {
-        sibling = prevParent.getNextSibling();
-      }
-      method = (PsiMethod)myTargetClass.addAfter(method, sibling);
-    }
-    else {
-      method = (PsiMethod)myTargetClass.add(method);
-    }
+
+    final PsiGenerationInfo<PsiMethod> info = OverrideImplementUtil.createGenerationInfo(method);
+    info.insert(myTargetClass, findInsertionAnchor(info), true);
+    method = info.getPsiMember();
 
     final PsiElement context = PsiTreeUtil.getParentOfType(myRefExpression, PsiClass.class, PsiMethod.class);
     IntentionUtils.createTemplateForMethod(argTypes, paramTypesExpressions, method, myTargetClass, constraints, false, context);
+  }
+
+  @Nullable
+  private PsiElement findInsertionAnchor(PsiGenerationInfo<PsiMethod> info) {
+    PsiElement parent = myTargetClass instanceof GroovyScriptClass ? ((GroovyScriptClass)myTargetClass).getContainingFile() : myTargetClass;
+    if (PsiTreeUtil.isAncestor(parent, myRefExpression, false)) {
+      return info.findInsertionAnchor(myTargetClass, myRefExpression);
+    }
+    else {
+      return null;
+    }
   }
 
   private ChooseTypeExpression[] setupParams(PsiMethod method, PsiType[] argTypes, JVMElementFactory factory) {
