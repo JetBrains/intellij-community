@@ -772,7 +772,10 @@ public class Mappings {
     }
   }
 
-  private boolean incrementalDecision(final int owner, final Proto member, final Collection<File> affectedFiles, final DependentFilesFilter filter) {
+  private boolean incrementalDecision(final int owner,
+                                      final Proto member,
+                                      final Collection<File> affectedFiles,
+                                      final DependentFilesFilter filter) {
     final boolean isField = member instanceof FieldRepr;
     final Util self = new Util(this);
 
@@ -859,7 +862,7 @@ public class Mappings {
 
           Callbacks.ConstantAffection getAffection() {
             try {
-              return affection != null? affection.get() : Callbacks.ConstantAffection.EMPTY;
+              return affection != null ? affection.get() : Callbacks.ConstantAffection.EMPTY;
             }
             catch (Exception e) {
               throw new RuntimeException(e);
@@ -1597,8 +1600,12 @@ public class Mappings {
 
                 if (fName > 0) {
                   final String f = myContext.getValue(fName);
-                  debug("Adding dependent file ", f);
-                  affectedFiles.add(new File(f));
+                  final File theFile = new File(f);
+
+                  if (filter.accept(theFile)) {
+                    debug("Adding dependent file ", f);
+                    affectedFiles.add(theFile);
+                  }
                 }
                 return true;
               }
