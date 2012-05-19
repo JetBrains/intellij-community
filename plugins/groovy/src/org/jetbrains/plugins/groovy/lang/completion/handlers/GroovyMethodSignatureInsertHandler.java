@@ -34,6 +34,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.text.CharArrayUtil;
+import org.jetbrains.plugins.groovy.lang.GrReferenceAdjuster;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocMemberReference;
 
 /**
@@ -109,7 +110,7 @@ public class GroovyMethodSignatureInsertHandler implements InsertHandler<LookupE
     final GrDocMemberReference tagValue = PsiTreeUtil.getParentOfType(element, GrDocMemberReference.class);
     if (tagValue != null) {
       try {
-        //GrReferenceAdjuster.shortenReferences(tagValue);
+        GrReferenceAdjuster.shortenReferences(tagValue);
       }
       catch (IncorrectOperationException e) {
         LOG.error(e);

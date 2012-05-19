@@ -13,23 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.groovy.completion
 
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager
-import org.jetbrains.plugins.groovy.util.TestUtils
+class A {
+  def foo(String x) {}
 
-/**
- * @author Max Medvedev
- */
-class GrDocCompletionTest extends GroovyCompletionTestBase {
-  @Override
-  protected String getBasePath() {
-    "${TestUtils.testDataPath}groovy/completion/gdoc";
-  }
+  /**
+   * {@link A#fo<caret>
+   */
+  def bar() {
 
-  void testLinkCompletion() { doBasicTest() }
-  void testLinkCompletion1() {
-    CodeStyleSettingsManager.getSettings(project).USE_FQ_CLASS_NAMES_IN_JAVADOC = false
-    doBasicTest()
   }
 }
