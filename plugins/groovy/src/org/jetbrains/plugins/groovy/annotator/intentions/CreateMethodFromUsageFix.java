@@ -103,7 +103,7 @@ public class CreateMethodFromUsageFix implements IntentionAction {
     ChooseTypeExpression[] paramTypesExpressions = new ChooseTypeExpression[argTypes.length];
     for (int i = 0; i < argTypes.length; i++) {
       PsiType argType = TypesUtil.unboxPrimitiveTypeWrapper(argTypes[i]);
-      if (argType == null) argType = TypesUtil.getJavaLangObject(myRefExpression);
+      if (argType == null || argType == PsiType.NULL) argType = TypesUtil.getJavaLangObject(myRefExpression);
       final PsiParameter p = factory.createParameter("o", argType);
       parameterList.add(p);
       paramTypesExpressions[i] =
