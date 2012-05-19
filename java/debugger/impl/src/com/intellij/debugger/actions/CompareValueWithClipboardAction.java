@@ -16,6 +16,8 @@
 package com.intellij.debugger.actions;
 
 import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.impl.DebuggerContextImpl;
+import com.intellij.debugger.ui.impl.watch.DebuggerTreeNodeImpl;
 import com.intellij.openapi.diff.*;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
@@ -30,7 +32,7 @@ import java.awt.datatransfer.Transferable;
  * @author Jeka
  */
 public class CompareValueWithClipboardAction extends BaseValueAction {
-  protected void processText(final Project project, final String text) {
+  protected void processText(final Project project, final String text, DebuggerTreeNodeImpl node, DebuggerContextImpl debuggerContext) {
     DiffManager.getInstance().getDiffTool().show(new ClipboardSelectionContents(text, project));
   }
 
