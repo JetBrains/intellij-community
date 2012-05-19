@@ -23,6 +23,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyBundle;
+import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.intentions.base.IntentionUtils;
 import org.jetbrains.plugins.groovy.lang.editor.template.expressions.ChooseTypeExpression;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
@@ -105,7 +106,8 @@ public class CreateMethodFromUsageFix implements IntentionAction {
       if (argType == null) argType = TypesUtil.getJavaLangObject(myRefExpression);
       final PsiParameter p = factory.createParameter("o", argType);
       parameterList.add(p);
-      paramTypesExpressions[i] = new ChooseTypeExpression(new TypeConstraint[]{SupertypeConstraint.create(argType)}, myRefExpression.getManager());
+      paramTypesExpressions[i] =
+        new ChooseTypeExpression(new TypeConstraint[]{SupertypeConstraint.create(argType)}, myRefExpression.getManager(), method.getLanguage() == GroovyFileType.GROOVY_LANGUAGE);
     }
     return paramTypesExpressions;
   }
