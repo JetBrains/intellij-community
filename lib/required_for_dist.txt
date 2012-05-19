@@ -46,5 +46,5 @@ xmlrpc-2.0.jar
 xpp3-1.1.4-min.jar
 xstream.jar
 swingx-core-1.6.2.jar
-netty-3.4.0.Final.jar
+netty-3.4.5.Final.jar
 protobuf-2.4.1.jar
