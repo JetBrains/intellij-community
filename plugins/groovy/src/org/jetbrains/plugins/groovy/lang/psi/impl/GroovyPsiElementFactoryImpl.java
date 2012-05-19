@@ -69,6 +69,7 @@ import java.util.List;
 /**
  * @author ven
  */
+@SuppressWarnings("ConstantConditions")
 public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementFactoryImpl");
 
@@ -238,9 +239,9 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
       text.append(" = ").append(initializer.getText());
     }
 
-    GrTopStatement[] topStatements = ((GroovyFileBase)createGroovyFile(text.toString())).getTopStatements();
+    GrTopStatement[] topStatements = createGroovyFile(text.toString()).getTopStatements();
     if (topStatements.length == 0 || !(topStatements[0] instanceof GrVariableDeclaration)) {
-      topStatements = ((GroovyFileBase)createGroovyFile("def " + text)).getTopStatements();
+      topStatements = createGroovyFile("def " + text).getTopStatements();
     }
     if (topStatements.length == 0 || !(topStatements[0] instanceof GrVariableDeclaration)) {
       throw new RuntimeException("Invalid arguments, text = " + text);
@@ -254,7 +255,7 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
 
   @Override
   public GrEnumConstant createEnumConstantFromText(String text) {
-    GroovyFile file = (GroovyFile)createGroovyFile("enum E{" + text + "}");
+    GroovyFile file = createGroovyFile("enum E{" + text + "}");
     final GrEnumTypeDefinition enumClass = (GrEnumTypeDefinition)file.getClasses()[0];
     return enumClass.getEnumConstants()[0];
   }
@@ -265,7 +266,7 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
                                                       @Nullable PsiType type) {
     final String varDeclaration = createVariableDeclaration(modifiers, initializer, type, identifier).getText();
 
-    final GroovyFileBase file = (GroovyFileBase) createGroovyFile("class A { " + varDeclaration + "}");
+    final GroovyFileBase file = createGroovyFile("class A { " + varDeclaration + "}");
     final GrTypeDefinitionBody body = file.getTypeDefinitions()[0].getBody();
     LOG.assertTrue(body.getMemberDeclarations().length == 1 && body.getMemberDeclarations()[0] instanceof GrVariableDeclaration,
                    "ident = <" + identifier + "> initializer = " + (initializer == null ? "_null_" : ("<" + initializer.getText()) + ">"));
@@ -274,7 +275,7 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
 
   @Override
   public GrVariableDeclaration createFieldDeclarationFromText(String text) {
-    final GroovyFile file = (GroovyFile)createGroovyFile("class X{\n" + text + "\n}");
+    final GroovyFile file = createGroovyFile("class X{\n" + text + "\n}");
     final PsiClass psiClass = file.getClasses()[0];
     return (GrVariableDeclaration)psiClass.getFields()[0].getParent();
   }
@@ -429,7 +430,7 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
       classText = "class A { " + typeText + " " + name + "}";
     }
 
-    GroovyFileBase file = (GroovyFileBase) createGroovyFile(classText);
+    GroovyFileBase file = createGroovyFile(classText);
     final GrTypeDefinitionBody body = file.getTypeDefinitions()[0].getBody();
     return (GrVariableDeclaration) body.getMemberDeclarations()[0];
   }
