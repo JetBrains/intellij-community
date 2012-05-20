@@ -45,7 +45,7 @@ import java.net.MalformedURLException;
 import java.net.ServerSocket;
 import java.net.URL;
 import java.util.*;
-import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -73,12 +73,12 @@ public class JavaBuilder extends ModuleLevelBuilder {
   };
 
   private static final Key<Callbacks.Backend> DELTA_MAPPINGS_CALLBACK_KEY = Key.create("_dependency_data_");
-  private final ExecutorService myTaskRunner;
+  private final Executor myTaskRunner;
   private int myTasksInProgress = 0;
   private final Object myCounterLock = new Object();
   private final List<ClassPostProcessor> myClassProcessors = new ArrayList<ClassPostProcessor>();
 
-  public JavaBuilder(ExecutorService tasksExecutor) {
+  public JavaBuilder(Executor tasksExecutor) {
     super(BuilderCategory.TRANSLATOR);
     myTaskRunner = tasksExecutor;
     //add here class processors in the sequence they should be executed
@@ -434,7 +434,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
     synchronized (myCounterLock) {
       myTasksInProgress++;
     }
-    myTaskRunner.submit(new Runnable() {
+    myTaskRunner.execute(new Runnable() {
       public void run() {
         try {
           taskRunnable.run();
