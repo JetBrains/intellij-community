@@ -142,12 +142,12 @@ public class GlobalInspectionContextImpl extends UserDataHolderBase implements G
       profile = InspectionProfileManager.getInstance().getProfile(managerEx.getCurrentProfile());
       if (profile != null) return (InspectionProfile)profile;
 
-      final String[] avaliableProfileNames = inspectionProfileManager.getAvailableProfileNames();
-      if (avaliableProfileNames == null || avaliableProfileNames.length == 0) {
+      final String[] availableProfileNames = inspectionProfileManager.getAvailableProfileNames();
+      if (availableProfileNames == null || availableProfileNames.length == 0) {
         //can't be
         return null;
       }
-      profile = inspectionProfileManager.getProfile(avaliableProfileNames[0]);
+      profile = inspectionProfileManager.getProfile(availableProfileNames[0]);
     }
     return (InspectionProfile)profile;
   }
