@@ -39,7 +39,13 @@ import java.util.*;
 public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.incremental.android.AndroidSourceGeneratingBuilder");
 
+  @NonNls private static final String ANDROID_VALIDATOR = "android-validator";
+  @NonNls private static final String ANDROID_IDL_COMPILER = "android-idl-compiler";
+  @NonNls private static final String ANDROID_RENDERSCRIPT_COMPILER = "android-renderscript-compiler";
+  @NonNls private static final String ANDROID_BUILD_CONFIG_GENERATOR = "android-buildconfig-generator";
+  @NonNls private static final String ANDROID_APT_COMPILER = "android-apt-compiler";
   @NonNls private static final String BUILDER_NAME = "android-source-generator";
+
   @NonNls private static final String AIDL_EXTENSION = "aidl";
   @NonNls private static final String RENDERSCRIPT_EXTENSION = "rs";
   @NonNls private static final String MANIFEST_TAG = "manifest";
@@ -114,13 +120,13 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
       for (Module module : moduleDataMap.keySet()) {
         final File generatedSourcesStorage = AndroidJpsUtil.getGeneratedSourcesStorage(module);
         if (generatedSourcesStorage.exists() &&
-            !deleteAndMarkRecursively(generatedSourcesStorage, context)) {
+            !deleteAndMarkRecursively(generatedSourcesStorage, context, BUILDER_NAME)) {
           success = false;
         }
 
         final File generatedResourcesStorage = AndroidJpsUtil.getGeneratedResourcesStorage(module);
         if (generatedResourcesStorage.exists() &&
-            !deleteAndMarkRecursively(generatedResourcesStorage, context)) {
+            !deleteAndMarkRecursively(generatedResourcesStorage, context, BUILDER_NAME)) {
           success = false;
         }
       }
@@ -177,7 +183,7 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
                                "] Incompatible version of Android SDK Platform-tools package. Min version is " +
                                MIN_PLATFORM_TOOLS_REVISION +
                                ". Please, update it though SDK manager";
-        context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR, message));
+        context.processMessage(new CompilerMessage(ANDROID_VALIDATOR, BuildMessage.Kind.ERROR, message));
         success = false;
       }
 
@@ -188,7 +194,7 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
                                "] Incompatible version of Android SDK Tools package. Min version is " +
                                MIN_SDK_TOOLS_REVISION +
                                ". Please, update it though SDK manager";
-        context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR, message));
+        context.processMessage(new CompilerMessage(ANDROID_VALIDATOR, BuildMessage.Kind.ERROR, message));
         success = false;
       }
 
@@ -225,7 +231,7 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
               message += "change packaging type of module " + depModule.getName() + " to 'apklib' in pom.xml file or ";
             }
             message += "change dependency scope to 'Provided'.";
-            context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.WARNING, message));
+            context.processMessage(new CompilerMessage(ANDROID_VALIDATOR, BuildMessage.Kind.WARNING, message));
           }
         }
       }
@@ -247,7 +253,7 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
 
       try {
         if (facet == null || isLibraryWithBadCircularDependency(facet)) {
-          if (!clearDirectoryIfNotEmpty(outputDirectory, context)) {
+          if (!clearDirectoryIfNotEmpty(outputDirectory, context, ANDROID_BUILD_CONFIG_GENERATOR)) {
             success = false;
           }
           continue;
@@ -266,17 +272,17 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
           }
         }
 
+        context.processMessage(new ProgressMessage(AndroidJpsBundle.message("android.jps.progress.build.config", module.getName())));
+
         // clear directory, because it may contain obsolete files (ex. if package name was changed)
-        if (!clearDirectory(outputDirectory, context)) {
+        if (!clearDirectory(outputDirectory, context, ANDROID_BUILD_CONFIG_GENERATOR)) {
           success = false;
           continue;
         }
 
-        context.processMessage(new ProgressMessage(AndroidJpsBundle.message("android.jps.progress.build.config", module.getName())));
-
         if (doBuildConfigGeneration(packageName, libPackages, debug, outputDirectory, context)) {
           storage.update(module.getName(), newState);
-          markDirtyRecursively(outputDirectory, context);
+          markDirtyRecursively(outputDirectory, context, ANDROID_BUILD_CONFIG_GENERATOR);
         }
         else {
           storage.update(module.getName(), null);
@@ -284,7 +290,7 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
         }
       }
       catch (IOException e) {
-        AndroidJpsUtil.reportExceptionError(context, null, e, BUILDER_NAME);
+        AndroidJpsUtil.reportExceptionError(context, null, e, ANDROID_BUILD_CONFIG_GENERATOR);
         success = false;
       }
     }
@@ -318,7 +324,7 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
       return true;
     }
     catch (IOException e) {
-      AndroidJpsUtil.reportExceptionError(context, null, e, BUILDER_NAME);
+      AndroidJpsUtil.reportExceptionError(context, null, e, ANDROID_BUILD_CONFIG_GENERATOR);
       return false;
     }
   }
@@ -340,7 +346,7 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
       final MyModuleData moduleData = moduleDataMap.get(module);
 
       if (!LOG.assertTrue(moduleData != null)) {
-        context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR, "Internal error"));
+        context.processMessage(new CompilerMessage(ANDROID_IDL_COMPILER, BuildMessage.Kind.ERROR, AndroidJpsBundle.message("android.jps.internal.error")));
         success = false;
         continue;
       }
@@ -349,7 +355,7 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
 
       if (!aidlOutputDirectory.exists() && !aidlOutputDirectory.mkdirs()) {
         context.processMessage(
-          new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR, "Cannot create directory " + aidlOutputDirectory.getPath()));
+          new CompilerMessage(ANDROID_IDL_COMPILER, BuildMessage.Kind.ERROR, AndroidJpsBundle.message("android.jps.cannot.create.directory", aidlOutputDirectory.getPath())));
         success = false;
         continue;
       }
@@ -362,7 +368,7 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
         final String packageName = computePackageForFile(context, file);
 
         if (packageName == null) {
-          context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR,
+          context.processMessage(new CompilerMessage(ANDROID_IDL_COMPILER, BuildMessage.Kind.ERROR,
                                                      AndroidJpsBundle.message("android.jps.errors.cannot.compute.package", filePath)));
           success = false;
           continue;
@@ -374,7 +380,7 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
         final Map<AndroidCompilerMessageKind, List<String>> messages =
           AndroidIdl.execute(target, filePath, outputFilePath, sourceRootPaths);
 
-        addMessages(context, messages, filePath, BUILDER_NAME);
+        addMessages(context, messages, filePath, ANDROID_IDL_COMPILER);
 
         if (messages.get(AndroidCompilerMessageKind.ERROR).size() > 0) {
           success = false;
@@ -386,7 +392,7 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
         }
       }
       catch (final IOException e) {
-        AndroidJpsUtil.reportExceptionError(context, filePath, e, BUILDER_NAME);
+        AndroidJpsUtil.reportExceptionError(context, filePath, e, ANDROID_IDL_COMPILER);
         success = false;
       }
     }
@@ -408,7 +414,8 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
 
       final MyModuleData moduleData = moduleDataMap.get(module);
       if (!LOG.assertTrue(moduleData != null)) {
-        context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR, "Internal error"));
+        context.processMessage(new CompilerMessage(ANDROID_RENDERSCRIPT_COMPILER, BuildMessage.Kind.ERROR,
+                                                   AndroidJpsBundle.message("android.jps.internal.error")));
         success = false;
         continue;
       }
@@ -416,8 +423,8 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
       final File generatedSourcesDir = AndroidJpsUtil.getGeneratedSourcesStorage(module);
       final File rsOutputDirectory = new File(generatedSourcesDir, AndroidJpsUtil.RENDERSCRIPT_GENERATED_SOURCE_ROOT_NAME);
       if (!rsOutputDirectory.exists() && !rsOutputDirectory.mkdirs()) {
-        context.processMessage(
-          new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR, "Cannot create directory " + rsOutputDirectory.getPath()));
+        context.processMessage(new CompilerMessage(ANDROID_RENDERSCRIPT_COMPILER, BuildMessage.Kind.ERROR, AndroidJpsBundle
+          .message("android.jps.cannot.create.directory", rsOutputDirectory.getPath())));
         success = false;
         continue;
       }
@@ -426,7 +433,8 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
       final File rawDir = new File(generatedResourcesDir, "raw");
 
       if (!rawDir.exists() && !rawDir.mkdirs()) {
-        context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR, "Cannot create directory " + rawDir.getPath()));
+        context.processMessage(new CompilerMessage(ANDROID_RENDERSCRIPT_COMPILER, BuildMessage.Kind.ERROR,
+                                                   AndroidJpsBundle.message("android.jps.cannot.create.directory", rawDir.getPath())));
         success = false;
         continue;
       }
@@ -445,7 +453,7 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
         final Map<AndroidCompilerMessageKind, List<String>> messages =
           AndroidRenderscript.execute(sdkLocation, target, filePath, tmpOutputDirectory.getPath(), depFolderPath, rawDir.getPath());
 
-        addMessages(context, messages, filePath, BUILDER_NAME);
+        addMessages(context, messages, filePath, ANDROID_RENDERSCRIPT_COMPILER);
 
         if (messages.get(AndroidCompilerMessageKind.ERROR).size() > 0) {
           success = false;
@@ -469,7 +477,7 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
         }
       }
       catch (IOException e) {
-        AndroidJpsUtil.reportExceptionError(context, filePath, e, BUILDER_NAME);
+        AndroidJpsUtil.reportExceptionError(context, filePath, e, ANDROID_RENDERSCRIPT_COMPILER);
         success = false;
       }
       finally {
@@ -497,7 +505,7 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
 
       try {
         if (!needToRunAaptCompilation(facet)) {
-          if (!clearDirectoryIfNotEmpty(aptOutputDirectory, context)) {
+          if (!clearDirectoryIfNotEmpty(aptOutputDirectory, context, ANDROID_APT_COMPILER)) {
             success = false;
           }
           continue;
@@ -506,7 +514,7 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
         final String[] resPaths = AndroidJpsUtil.collectResourceDirsForCompilation(facet, false, context);
         if (resPaths.length == 0) {
           // there is no resources in the module
-          if (!clearDirectoryIfNotEmpty(aptOutputDirectory, context)) {
+          if (!clearDirectoryIfNotEmpty(aptOutputDirectory, context, ANDROID_APT_COMPILER)) {
             success = false;
           }
           continue;
@@ -515,7 +523,7 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
         final File manifestFile = moduleData.getManifestFileForCompiler();
 
         if (isLibraryWithBadCircularDependency(facet)) {
-          if (!clearDirectoryIfNotEmpty(aptOutputDirectory, context)) {
+          if (!clearDirectoryIfNotEmpty(aptOutputDirectory, context, ANDROID_APT_COMPILER)) {
             success = false;
           }
           continue;
@@ -532,7 +540,7 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
                                  "' won't be final, because of circular dependency on module '" +
                                  circularDepLibWithSamePackage.getName() +
                                  "'";
-          context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.WARNING, message));
+          context.processMessage(new CompilerMessage(ANDROID_APT_COMPILER, BuildMessage.Kind.WARNING, message));
         }
         final boolean generateNonFinalFields = facet.isLibrary() || circularDepLibWithSamePackage != null;
 
@@ -550,20 +558,19 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
             continue;
           }
         }
+        context.processMessage(new ProgressMessage(AndroidJpsBundle.message("android.jps.progress.aapt", module.getName())));
 
         // clear directory, because it may contain obsolete files (ex. if package name was changed)
-        if (!clearDirectory(aptOutputDirectory, context)) {
+        if (!clearDirectory(aptOutputDirectory, context, ANDROID_APT_COMPILER)) {
           success = false;
-          continue;
+         continue;
         }
-
-        context.processMessage(new ProgressMessage(AndroidJpsBundle.message("android.jps.progress.aapt", module.getName())));
 
         final Map<AndroidCompilerMessageKind, List<String>> messages =
           AndroidApt.compile(target, -1, manifestFile.getPath(), packageName, aptOutputDirectory.getPath(), resPaths,
                              ArrayUtil.toStringArray(depLibPackagesSet), generateNonFinalFields);
 
-        AndroidJpsUtil.addMessages(context, messages, BUILDER_NAME);
+        AndroidJpsUtil.addMessages(context, messages, ANDROID_APT_COMPILER, module.getName());
 
         if (messages.get(AndroidCompilerMessageKind.ERROR).size() > 0) {
           success = false;
@@ -571,35 +578,35 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
         }
         else {
           storage.update(module.getName(), newState);
-          markDirtyRecursively(aptOutputDirectory, context);
+          markDirtyRecursively(aptOutputDirectory, context, ANDROID_APT_COMPILER);
         }
       }
       catch (IOException e) {
-        AndroidJpsUtil.reportExceptionError(context, null, e, BUILDER_NAME);
+        AndroidJpsUtil.reportExceptionError(context, null, e, ANDROID_APT_COMPILER);
         success = false;
       }
     }
     return success;
   }
 
-  private static boolean clearDirectory(File dir, CompileContext context) throws IOException {
-    if (!deleteAndMarkRecursively(dir, context)) {
+  private static boolean clearDirectory(File dir, CompileContext context, String compilerName) throws IOException {
+    if (!deleteAndMarkRecursively(dir, context, compilerName)) {
       return false;
     }
 
     if (!dir.mkdirs()) {
-      context.processMessage(
-        new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR, "Cannot create directory " + dir.getPath()));
+      context.processMessage(new CompilerMessage(compilerName, BuildMessage.Kind.ERROR,
+                                                 AndroidJpsBundle.message("android.jps.cannot.create.directory", dir.getPath())));
       return false;
     }
     return true;
   }
 
-  private static boolean clearDirectoryIfNotEmpty(@NotNull File dir, @NotNull CompileContext context) throws IOException {
+  private static boolean clearDirectoryIfNotEmpty(@NotNull File dir, @NotNull CompileContext context, String compilerName) throws IOException {
     if (dir.isDirectory()) {
       final String[] list = dir.list();
       if (list != null && list.length > 0) {
-        return clearDirectory(dir, context);
+        return clearDirectory(dir, context, compilerName);
       }
     }
     return true;
@@ -610,11 +617,13 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
            !AndroidJpsUtil.isMavenizedModule(facet.getModule());
   }
 
-  private static boolean deleteAndMarkRecursively(@NotNull File dir, @NotNull CompileContext context) throws IOException {
+  private static boolean deleteAndMarkRecursively(@NotNull File dir, @NotNull CompileContext context, @NotNull String compilerName)
+    throws IOException {
     if (dir.exists()) {
       final List<File> filesToDelete = collectJavaFilesRecursively(dir);
       if (!FileUtil.delete(dir)) {
-        context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR, "Cannot delete " + dir.getPath()));
+        context.processMessage(
+          new CompilerMessage(compilerName, BuildMessage.Kind.ERROR, AndroidJpsBundle.message("android.jps.cannot.delete", dir.getPath())));
         return false;
       }
 
@@ -625,7 +634,9 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
     return true;
   }
 
-  private static boolean markDirtyRecursively(@NotNull File dir, @NotNull final CompileContext context) {
+  private static boolean markDirtyRecursively(@NotNull File dir,
+                                              @NotNull final CompileContext context,
+                                              @NotNull final String compilerName) {
     final Ref<Boolean> success = Ref.create(true);
 
     FileUtil.processFilesRecursively(dir, new Processor<File>() {
@@ -636,7 +647,7 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
             context.markDirty(file);
           }
           catch (IOException e) {
-            AndroidJpsUtil.reportExceptionError(context, null, e, BUILDER_NAME);
+            AndroidJpsUtil.reportExceptionError(context, null, e, compilerName);
             success.set(false);
             return false;
           }
@@ -869,6 +880,13 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
       if (packageName == null || packageName.length() == 0) {
         context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR, AndroidJpsBundle
           .message("android.jps.errors.package.not.specified", module.getName())));
+        success = false;
+        continue;
+      }
+
+      if (!AndroidCommonUtils.contains2Identifiers(packageName)) {
+        context.processMessage(new CompilerMessage(BUILDER_NAME, facet.isLibrary() ? BuildMessage.Kind.WARNING : BuildMessage.Kind.ERROR,
+                                                   AndroidJpsBundle.message("android.jps.errors.incorrect.package.name", module.getName())));
         success = false;
         continue;
       }

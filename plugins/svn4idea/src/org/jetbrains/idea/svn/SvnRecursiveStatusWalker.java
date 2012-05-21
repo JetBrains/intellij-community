@@ -50,7 +50,7 @@ public class SvnRecursiveStatusWalker {
   }
 
   public void go(final FilePath rootPath, final SVNDepth depth) throws SVNException {
-    final MyItem root = new MyItem(myProject, rootPath, depth, myPartner.createStatusClient(), false);
+    final MyItem root = new MyItem(myProject, rootPath, depth, myPartner.createStatusClient(), true);
     myQueue.add(root);
 
     while (! myQueue.isEmpty()) {
@@ -181,13 +181,25 @@ public class SvnRecursiveStatusWalker {
         if (statusInner == null)  return;
 
         final SVNStatusType status = statusInner.getNodeStatus();
-        if (SVNStatusType.OBSTRUCTED.equals(status) || SVNStatusType.STATUS_IGNORED.equals(status) ||
-            SVNStatusType.STATUS_NONE.equals(status) || SVNStatusType.STATUS_UNVERSIONED.equals(status) ||
-            SVNStatusType.UNKNOWN.equals(status)) {
+        final VirtualFile vf = myCurrentItem.getPath().getVirtualFile();
+        if (SVNStatusType.STATUS_IGNORED.equals(status)) {
+          if (vf != null) {
+            myReceiver.processIgnored(vf);
+          }
           return;
         }
-        if (myCurrentItem.getPath().getVirtualFile() != null) {
-          myReceiver.processCopyRoot(myCurrentItem.getPath().getVirtualFile(), statusInner.getURL(),
+        if (SVNStatusType.STATUS_UNVERSIONED.equals(status) || SVNStatusType.UNKNOWN.equals(status)) {
+          if (vf != null) {
+            myReceiver.processUnversioned(vf);
+            processRecursively(vf, myCurrentItem.getDepth());
+          }
+          return;
+        }
+        if (SVNStatusType.OBSTRUCTED.equals(status) || SVNStatusType.STATUS_NONE.equals(status)) {
+          return;
+        }
+        if (vf != null) {
+          myReceiver.processCopyRoot(vf, statusInner.getURL(),
                                      WorkingCopyFormat.getInstance(statusInner.getWorkingCopyFormat()));
         }
       }
@@ -198,11 +210,7 @@ public class SvnRecursiveStatusWalker {
       final File ioFile = status.getFile();
       checkIfCopyRootWasReported();
 
-      final LocalFileSystem lfs = LocalFileSystem.getInstance();
-      VirtualFile vFile = lfs.findFileByIoFile(ioFile);
-      if (vFile == null) {
-        vFile = lfs.refreshAndFindFileByIoFile(ioFile);
-      }
+      final VirtualFile vFile = getVirtualFile(ioFile);
       if ((vFile != null) && myPartner.isExcluded(vFile)) return;
 
       if ((vFile != null) && (SvnVcs.svnStatusIsUnversioned(status))) {
@@ -223,5 +231,14 @@ public class SvnRecursiveStatusWalker {
         myReceiver.process(path, status);
       }
     }
+  }
+
+  private VirtualFile getVirtualFile(File ioFile) {
+    final LocalFileSystem lfs = LocalFileSystem.getInstance();
+    VirtualFile vFile = lfs.findFileByIoFile(ioFile);
+    if (vFile == null) {
+      vFile = lfs.refreshAndFindFileByIoFile(ioFile);
+    }
+    return vFile;
   }
 }

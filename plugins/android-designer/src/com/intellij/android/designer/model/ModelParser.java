@@ -93,7 +93,7 @@ public class ModelParser extends XmlRecursiveElementVisitor {
     try {
       MetaModel metaModel = myMetaManager.getModelByTag(tag.getName());
       if (metaModel == null) {
-        metaModel = myMetaManager.getModelByTag("<unknown>");
+        metaModel = myMetaManager.getModelByTag("view");
       }
 
       RadViewComponent component = createComponent(tag, metaModel);
@@ -199,7 +199,7 @@ public class ModelParser extends XmlRecursiveElementVisitor {
     for (XmlTag tag : parentComponent.getTag().getSubTags()) {
       MetaModel metaModel = metaManager.getModelByTag(tag.getName());
       if (metaModel == null) {
-        metaModel = metaManager.getModelByTag("<unknown>");
+        metaModel = metaManager.getModelByTag("view");
       }
 
       RadViewComponent component = createComponent(tag, metaModel);

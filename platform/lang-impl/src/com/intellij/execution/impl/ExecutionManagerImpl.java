@@ -106,6 +106,7 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
 
       if (!activeTasks.isEmpty()) {
         ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+          /** @noinspection SSBasedInspection*/
           public void run() {
             for (BeforeRunTask task : activeTasks) {
               BeforeRunTaskProvider<BeforeRunTask> provider = BeforeRunTaskProvider.getProvider(myProject, task.getProviderId());
@@ -116,7 +117,16 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
                 return;
               }
             }
-            DumbService.getInstance(myProject).smartInvokeLater(startRunnable);
+            // important! Do not use DumbService.smartInvokelater here because it depends on modality state
+            // and execution of startRunnable could be skipped if modality state check fails
+            SwingUtilities.invokeLater(new Runnable() {
+              @Override
+              public void run() {
+                if (!myProject.isDisposed()) {
+                  DumbService.getInstance(myProject).runWhenSmart(startRunnable);
+                }
+              }
+            });
           }
         });
       }

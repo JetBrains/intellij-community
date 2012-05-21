@@ -65,7 +65,7 @@ public class BaseGenerateTestSupportMethodAction extends BaseGenerateAction {
 
   @Override
   protected boolean isValidForClass(PsiClass targetClass) {
-    List<TestFramework> frameworks = findSuitableFrameworks(targetClass);
+    List<TestFramework> frameworks = TestIntegrationUtils.findSuitableFrameworks(targetClass);
     if (frameworks.isEmpty()) return false;
 
     for (TestFramework each : frameworks) {
@@ -78,22 +78,6 @@ public class BaseGenerateTestSupportMethodAction extends BaseGenerateAction {
     return true;
   }
 
-  private static List<TestFramework> findSuitableFrameworks(PsiClass targetClass) {
-    TestFramework[] frameworks = Extensions.getExtensions(TestFramework.EXTENSION_NAME);
-    for (TestFramework each : frameworks) {
-      if (each.isTestClass(targetClass)) {
-        return Collections.singletonList(each);
-      }
-    }
-
-    List<TestFramework> result = new SmartList<TestFramework>();
-    for (TestFramework each : frameworks) {
-      if (each.isPotentialTestClass(targetClass)) {
-        result.add(each);
-      }
-    }
-    return result;
-  }
 
   private static class MyHandler implements CodeInsightActionHandler {
     private TestIntegrationUtils.MethodKind myMethodKind;
@@ -104,7 +88,7 @@ public class BaseGenerateTestSupportMethodAction extends BaseGenerateAction {
 
     public void invoke(@NotNull Project project, @NotNull final Editor editor, @NotNull final PsiFile file) {
       final PsiClass targetClass = findTargetClass(editor, file);
-      final List<TestFramework> frameworks = findSuitableFrameworks(targetClass);
+      final List<TestFramework> frameworks = TestIntegrationUtils.findSuitableFrameworks(targetClass);
       if (frameworks.isEmpty()) return;
 
       if (frameworks.size() == 1) {

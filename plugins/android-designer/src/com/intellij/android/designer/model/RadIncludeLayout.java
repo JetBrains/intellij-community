@@ -18,6 +18,7 @@ package com.intellij.android.designer.model;
 import com.intellij.android.designer.propertyTable.IdProperty;
 import com.intellij.android.designer.propertyTable.IncludeLayoutProperty;
 import com.intellij.android.designer.propertyTable.editors.ResourceDialog;
+import com.intellij.designer.model.RadComponent;
 import com.intellij.designer.propertyTable.Property;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -38,7 +39,8 @@ public class RadIncludeLayout extends RadViewComponent implements IConfigurableC
            "\"/>";
   }
 
-  public void configure(Module module) throws Exception {
+  public void configure(RadComponent rootComponent) throws Exception {
+    Module module = rootComponent.getClientProperty(ModelParser.MODULE_KEY);
     ResourceDialog dialog = new ResourceDialog(module, IncludeLayoutProperty.TYPES);
     dialog.show();
 

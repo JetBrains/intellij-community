@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,7 @@ import javax.swing.table.TableColumn;
 import javax.swing.table.TableColumnModel;
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.EventObject;
 import java.util.List;
 
 /**
@@ -42,9 +43,11 @@ public abstract class FileColorSettingsTable extends JBTable {
   private static final int COLOR_COLUMN = 1;
 
   private final List<FileColorConfiguration> myOriginal;
+  @NotNull private final FileColorManager myManager;
 
   public FileColorSettingsTable(@NotNull final FileColorManager manager, @NotNull final List<FileColorConfiguration> configurations) {
     super(new ModelAdapter(manager, copy(configurations)));
+    myManager = manager;
     setStriped(true);
     myOriginal = configurations;
 
@@ -76,6 +79,20 @@ public abstract class FileColorSettingsTable extends JBTable {
 
   public ModelAdapter getModel() {
     return (ModelAdapter) super.getModel();
+  }
+
+  @Override
+  public boolean editCellAt(int row, int column, EventObject e) {
+    final Object at = getModel().getValueAt(row, column);
+    final FileColorConfigurationEditDialog dialog = new FileColorConfigurationEditDialog(myManager, ((FileColorConfiguration)at));
+    dialog.getScopeComboBox().setEnabled(false);
+    dialog.show();
+    return false;
+  }
+
+  @Override
+  public boolean isCellEditable(int row, int column) {
+    return column == 1;
   }
 
   public boolean isModified() {

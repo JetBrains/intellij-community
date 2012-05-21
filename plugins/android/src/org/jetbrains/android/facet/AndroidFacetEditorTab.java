@@ -437,10 +437,7 @@ public class AndroidFacetEditorTab extends FacetEditorTab {
     myConfiguration.RES_FOLDER_RELATIVE_PATH = '/' + getAndCheckRelativePath(absResPath, false);
 
     String absAssetsPath = myAssetsFolderField.getText().trim();
-    if (absResPath.length() == 0) {
-      throw new ConfigurationException("Assets folder not specified");
-    }
-    myConfiguration.ASSETS_FOLDER_RELATIVE_PATH = '/' + getAndCheckRelativePath(absAssetsPath, false);
+    myConfiguration.ASSETS_FOLDER_RELATIVE_PATH = absAssetsPath.length() > 0 ? '/' + getAndCheckRelativePath(absAssetsPath, false) : "";
 
     String absApkPath = (String)myApkPathCombo.getComboBox().getEditor().getItem();
     if (absApkPath.length() == 0) {
@@ -451,10 +448,7 @@ public class AndroidFacetEditorTab extends FacetEditorTab {
     }
 
     String absLibsPath = myNativeLibsFolder.getText().trim();
-    if (absLibsPath.length() == 0) {
-      throw new ConfigurationException("Native libs folder not specified");
-    }
-    myConfiguration.LIBS_FOLDER_RELATIVE_PATH = '/' + getAndCheckRelativePath(absLibsPath, false);
+    myConfiguration.LIBS_FOLDER_RELATIVE_PATH = absLibsPath.length() > 0 ? '/' + getAndCheckRelativePath(absLibsPath, false) : "";
 
     if (myConfiguration.LIBRARY_PROJECT != myIsLibraryProjectCheckbox.isSelected()) {
       runApt = true;
@@ -633,6 +627,12 @@ public class AndroidFacetEditorTab extends FacetEditorTab {
 
   @Nullable
   private String toAbsolutePath(String genRelativePath) {
+    if (genRelativePath == null) {
+      return null;
+    }
+    if (genRelativePath.length() == 0) {
+      return "";
+    }
     String moduleDirPath = AndroidRootUtil.getModuleDirPath(myContext.getModule());
     if (moduleDirPath == null) return null;
     try {

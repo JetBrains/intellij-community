@@ -655,6 +655,10 @@ public class Mappings {
     }
 
     void affectAll(final int className, final Collection<File> affectedFiles) {
+      affectAll(className, affectedFiles, null);
+    }
+
+    void affectAll(final int className, final Collection<File> affectedFiles, final DependentFilesFilter filter) {
       final TIntHashSet dependants = myClassToClassDependency.get(className);
 
       if (dependants != null) {
@@ -665,7 +669,11 @@ public class Mappings {
             public boolean execute(int depClass) {
               final int depFile = myClassToSourceFile.get(depClass);
               if (depFile > 0 && depFile != sourceFile) {
-                affectedFiles.add(new File(myContext.getValue(depFile)));
+                final File theFile = new File(myContext.getValue(depFile));
+
+                if (filter == null || filter.accept(theFile)) {
+                affectedFiles.add(theFile);
+                }
               }
               return true;
             }
@@ -934,7 +942,7 @@ public class Mappings {
           if (classes != null) {
             for (ClassRepr c : classes) {
               debug("Affecting usages of removed class ", c.name);
-              u.affectAll(c.name, affectedFiles);
+              u.affectAll(c.name, affectedFiles, filter);
             }
           }
         }

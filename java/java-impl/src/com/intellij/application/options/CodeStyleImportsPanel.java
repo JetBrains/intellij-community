@@ -52,9 +52,6 @@ public class CodeStyleImportsPanel extends JPanel {
   private final PackageEntryTable myPackageList = new PackageEntryTable();
 
   private JBTable myImportLayoutTable;
-  private JButton myMoveUpButton;
-  private JButton myMoveDownButton;
-  private JButton myRemovePackageFromImportLayoutButton;
   private JBTable myPackageTable;
   private final CodeStyleSettings mySettings;
   private JRadioButton myJspImportCommaSeparated;

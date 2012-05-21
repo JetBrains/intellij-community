@@ -51,6 +51,10 @@ public abstract class RadComponent {
     return myMetaModel;
   }
 
+  public MetaModel getMetaModelForProperties() throws Exception {
+    return myMetaModel;
+  }
+
   public void setMetaModel(MetaModel metaModel) {
     myMetaModel = metaModel;
   }
