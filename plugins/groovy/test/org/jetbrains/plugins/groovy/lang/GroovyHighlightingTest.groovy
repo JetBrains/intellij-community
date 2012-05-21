@@ -984,4 +984,29 @@ catch (ClassNotFoundException | <warning descr="Exception 'java.lang.NullPointer
 ''')
   }
 
+  void testCategoryWithPrimitiveType() {
+    testHighlighting('''\
+class Cat {
+  static foo(Integer x) {}
+}
+
+use(Cat) {
+  1.with {
+    foo()
+  }
+
+  (1 as int).foo()
+}
+
+class Ca {
+  static foo(int x) {}
+}
+
+use(Ca) {
+  1.<warning descr="Category method 'foo' cannot be applied to 'java.lang.Integer'">foo</warning>()
+  (1 as int).<warning descr="Category method 'foo' cannot be applied to 'java.lang.Integer'">foo</warning>()
+}
+''', GroovyAssignabilityCheckInspection)
+  }
+
 }

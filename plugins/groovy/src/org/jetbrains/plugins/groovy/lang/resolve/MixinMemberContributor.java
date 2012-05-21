@@ -70,7 +70,7 @@ public class MixinMemberContributor extends NonCodeMembersContributor {
       if (!mixin.processDeclarations(new DelegatingScopeProcessor(processor) {
         @Override
         public boolean execute(PsiElement element, ResolveState state) {
-          if (isCategoryMethod(element, qualifierType)) {
+          if (isCategoryMethod(element, qualifierType, state.get(PsiSubstitutor.KEY))) {
             return super.execute(GrGdkMethodImpl.createGdkMethod((PsiMethod)element, false), state);
           }
           else {
@@ -93,7 +93,7 @@ public class MixinMemberContributor extends NonCodeMembersContributor {
     return result;
   }
 
-  public static boolean isCategoryMethod(@Nullable PsiElement element, @Nullable PsiType qualifierType) {
+  public static boolean isCategoryMethod(@Nullable PsiElement element, @Nullable PsiType qualifierType, @Nullable PsiSubstitutor substitutor) {
     if (!(element instanceof PsiMethod)) return false;
     if (!((PsiMethod)element).hasModifierProperty(PsiModifier.STATIC)) return false;
 
@@ -102,7 +102,12 @@ public class MixinMemberContributor extends NonCodeMembersContributor {
 
     if (qualifierType == null) return true;
 
-    final PsiType selfType = parameters[0].getType();
+    PsiType selfType = parameters[0].getType();
+    if (selfType instanceof PsiPrimitiveType) return false;
+
+    if (substitutor != null) {
+      selfType = substitutor.substitute(selfType);
+    }
     return TypesUtil.isAssignable(selfType, qualifierType, element.getManager(), element.getResolveScope());
   }
 
