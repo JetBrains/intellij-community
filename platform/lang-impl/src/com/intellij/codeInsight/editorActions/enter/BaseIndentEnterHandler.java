@@ -126,8 +126,8 @@ public class BaseIndentEnterHandler extends EnterHandlerDelegateAdapter {
     }
     else {
       if (myIndentTokens.contains(type)) {
-        final String singleIndent = getSingleIndent(file, lineIndent);
-        EditorModificationUtil.insertStringAtCaret(editor, "\n" + lineIndent + singleIndent);
+        final String newIndent = getNewIndent(file, lineIndent);
+        EditorModificationUtil.insertStringAtCaret(editor, "\n" + newIndent);
         return Result.Stop;
       }
 
@@ -135,6 +135,15 @@ public class BaseIndentEnterHandler extends EnterHandlerDelegateAdapter {
       editor.getCaretModel().moveToLogicalPosition(new LogicalPosition(lineNumber + 1, calcLogicalLength(editor, lineIndent)));
       return Result.Stop;
     }
+  }
+
+  protected String getNewIndent(final @NotNull PsiFile file, final @NotNull CharSequence oldIndent) {
+    if (oldIndent.length() > 0 && oldIndent.charAt(oldIndent.length() - 1) == '\t') {
+      return oldIndent + "\t";
+    }
+    final CodeStyleSettings currentSettings = CodeStyleSettingsManager.getSettings(file.getProject());
+    final CommonCodeStyleSettings.IndentOptions indentOptions = currentSettings.getIndentOptions(file.getFileType());
+    return oldIndent + StringUtil.repeatSymbol(' ', indentOptions.INDENT_SIZE);
   }
 
   private static int calcLogicalLength(Editor editor, CharSequence lineIndent) {
@@ -147,15 +156,6 @@ public class BaseIndentEnterHandler extends EnterHandlerDelegateAdapter {
       }
     }
     return result;
-  }
-
-  protected static String getSingleIndent(final PsiFile file, CharSequence lineIndent) {
-    if (lineIndent.length() > 0 && lineIndent.charAt(lineIndent.length() - 1) == '\t') {
-      return "\t";
-    }
-    CodeStyleSettings currentSettings = CodeStyleSettingsManager.getSettings(file.getProject());
-    CommonCodeStyleSettings.IndentOptions indentOptions = currentSettings.getIndentOptions(file.getFileType());
-    return StringUtil.repeatSymbol(' ', indentOptions.INDENT_SIZE);
   }
 
   @Nullable
