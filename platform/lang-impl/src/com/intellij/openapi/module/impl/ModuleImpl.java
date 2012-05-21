@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
+import com.intellij.openapi.components.ExtensionAreas;
 import com.intellij.openapi.components.impl.ComponentManagerImpl;
 import com.intellij.openapi.components.impl.ModulePathMacroManager;
 import com.intellij.openapi.components.impl.stores.IComponentStore;
@@ -55,7 +56,7 @@ import java.util.*;
 /**
  * @author max
  */
-public class ModuleImpl extends ComponentManagerImpl implements Module {
+public class ModuleImpl extends ComponentManagerImpl implements ModuleEx {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.module.impl.ModuleImpl");
 
   @NotNull private final Project myProject;
@@ -85,7 +86,7 @@ public class ModuleImpl extends ComponentManagerImpl implements Module {
   }
 
   protected void bootstrapPicoContainer() {
-    Extensions.instantiateArea(PluginManager.AREA_IDEA_MODULE, this, (AreaInstance)getParentComponentManager());
+    Extensions.instantiateArea(ExtensionAreas.IDEA_MODULE, this, (AreaInstance)getParentComponentManager());
     super.bootstrapPicoContainer();
     getPicoContainer().registerComponentImplementation(IComponentStore.class, ModuleStoreImpl.class);
     getPicoContainer().registerComponentImplementation(ModulePathMacroManager.class);
@@ -143,14 +144,14 @@ public class ModuleImpl extends ComponentManagerImpl implements Module {
     return getStateStore().getModuleFile();
   }
 
-  void rename(String newName) {
+  public void rename(String newName) {
     myName = newName;
     final VirtualFile file = getStateStore().getModuleFile();
     try {
       if (file != null) {
         ClasspathStorage.moduleRenamed(this, newName);
         file.rename(MODULE_RENAMING_REQUESTOR, newName + ModuleFileType.DOT_DEFAULT_EXTENSION);
-        getStateStore().setModuleFilePath(VfsUtil.virtualToIoFile(file).getCanonicalPath());
+        getStateStore().setModuleFilePath(VfsUtilCore.virtualToIoFile(file).getCanonicalPath());
         return;
       }
 
@@ -337,7 +338,7 @@ public class ModuleImpl extends ComponentManagerImpl implements Module {
         final String parentPath = parent.getPath();
         final String ancestorPath = parentPath + "/" + event.getOldValue();
         final String moduleFilePath = getModuleFilePath();
-        if (VfsUtil.isAncestor(new File(ancestorPath), new File(moduleFilePath), true)) {
+        if (VfsUtilCore.isAncestor(new File(ancestorPath), new File(moduleFilePath), true)) {
           final String newValue = (String)event.getNewValue();
           final String relativePath = FileUtil.getRelativePath(ancestorPath, moduleFilePath, '/');
           final String newFilePath = parentPath + "/" + newValue + "/" + relativePath;
@@ -370,7 +371,7 @@ public class ModuleImpl extends ComponentManagerImpl implements Module {
       final String dirName = event.getFileName();
       final String ancestorPath = oldParent.getPath() + "/" + dirName;
       final String moduleFilePath = getModuleFilePath();
-      if (VfsUtil.isAncestor(new File(ancestorPath), new File(moduleFilePath), true)) {
+      if (VfsUtilCore.isAncestor(new File(ancestorPath), new File(moduleFilePath), true)) {
         final String relativePath = FileUtil.getRelativePath(ancestorPath, moduleFilePath, '/');
         setModuleFilePath(moduleFilePath, newParent.getPath() + "/" + dirName + "/" + relativePath);
       }

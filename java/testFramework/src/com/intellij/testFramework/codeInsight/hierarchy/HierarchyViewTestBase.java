@@ -5,8 +5,10 @@ import com.intellij.ide.hierarchy.HierarchyNodeDescriptor;
 import com.intellij.ide.hierarchy.HierarchyTreeStructure;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.io.FileUtil;
 import org.jdom.Document;
 import org.jdom.Element;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.*;
@@ -32,7 +34,38 @@ public abstract class HierarchyViewTestBase extends CodeInsightTestCase {
     configureByFiles(null, relFilePaths);
 
     final String verificationFilePath = getTestDataPath() + "/" + getBasePath() + "/" + getTestName(false) + "_verification.xml";
-    checkHierarchyTreeStructure(treeStructureComputable.compute(), JDOMUtil.loadDocument(new File(verificationFilePath)));
+    HierarchyTreeStructure structure = treeStructureComputable.compute();
+    try {
+      checkHierarchyTreeStructure(structure, JDOMUtil.loadDocument(new File(verificationFilePath)));
+    } catch (Throwable e)  {
+      assertEquals("XML structure comparison for your convenience, actual failure details BELOW",
+                   FileUtil.loadFile(new File(verificationFilePath)), dump(structure, null, 0));
+      //noinspection CallToPrintStackTrace
+      e.printStackTrace();
+    }
+  }
+
+  private static String dump(final HierarchyTreeStructure treeStructure, @Nullable HierarchyNodeDescriptor descriptor, int level) {
+    if(descriptor==null) descriptor = (HierarchyNodeDescriptor)treeStructure.getRootElement();
+    StringBuilder b = new StringBuilder();
+    for(int i = 0; i<level; i++) b.append("  ");
+    descriptor.update();
+    b.append("<node text=\"").append(descriptor.getHighlightedText().getText()).append("\"")
+      .append(treeStructure.getBaseDescriptor() == descriptor ? " base=\"true\"" : "");
+
+    final Object[] children = treeStructure.getChildElements(descriptor);
+    if(children.length>0) {
+      b.append(">\n");
+      for(Object o : children) {
+        HierarchyNodeDescriptor d = (HierarchyNodeDescriptor)o;
+        b.append(dump(treeStructure, d, level + 1));
+      }
+      for(int i = 0; i<level; i++) b.append("  ");
+      b.append("</node>\n");
+    } else {
+      b.append("/>\n");
+    }
+    return b.toString();
   }
 
   private static void checkHierarchyTreeStructure(final HierarchyTreeStructure treeStructure, final Document document) {

@@ -17,7 +17,6 @@ package com.intellij.xdebugger.impl.breakpoints;
 
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.ui.ColoredListCellRenderer;
@@ -36,7 +35,7 @@ import javax.swing.*;
 * Time: 1:14
 * To change this template use File | Settings | File Templates.
 */
-class XBreakpointItem implements BreakpointItem {
+class XBreakpointItem extends BreakpointItem {
   private final XBreakpoint<?> myBreakpoint;
 
   public XBreakpointItem(XBreakpoint<?> breakpoint) {
@@ -53,19 +52,6 @@ class XBreakpointItem implements BreakpointItem {
     return ((XBreakpointBase)myBreakpoint).getIcon();
   }
 
-  @Override
-  public void updateMnemonicLabel(JLabel label) {
-    //To change body of implemented methods use File | Settings | File Templates.
-  }
-
-  @Override
-  public void execute(Project project, JBPopup popup) {
-    final XSourcePosition position = myBreakpoint.getSourcePosition();
-    if (position != null) {
-      position.createNavigatable(project).navigate(true);
-      popup.cancel();
-    }
-  }
 
   @Override
   public String speedSearchText() {
@@ -88,7 +74,7 @@ class XBreakpointItem implements BreakpointItem {
 
     XSourcePosition sourcePosition = myBreakpoint.getSourcePosition();
     if (sourcePosition != null) {
-      panel.navigateInPreviewEditor(sourcePosition.getFile(), new LogicalPosition(sourcePosition.getLine(), sourcePosition.getOffset()));
+      showInEditor(panel, sourcePosition.getFile(), sourcePosition.getLine());
     } else {
       panel.clearEditor();
     }

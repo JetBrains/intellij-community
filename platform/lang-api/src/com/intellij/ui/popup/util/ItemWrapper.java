@@ -31,7 +31,8 @@ import javax.swing.*;
 */
 public interface ItemWrapper {
   void setupRenderer(ColoredListCellRenderer renderer, Project project, boolean selected);
-  void updateMnemonicLabel(JLabel label);
+
+  void updateAccessoryView(JComponent label);
 
   void execute(Project project, JBPopup popup);
 

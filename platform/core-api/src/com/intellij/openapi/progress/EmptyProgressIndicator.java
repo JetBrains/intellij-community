@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,12 +22,10 @@ import org.jetbrains.annotations.NotNull;
 public class EmptyProgressIndicator implements ProgressIndicator {
   private boolean myIsRunning = false;
   private volatile boolean myIsCanceled = false;
-  private boolean myFinished;
 
   public void start() {
     myIsRunning = true;
     myIsCanceled = false;
-    myFinished = false;
   }
 
   public void stop() {

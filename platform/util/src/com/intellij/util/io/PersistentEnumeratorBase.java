@@ -161,7 +161,8 @@ abstract class PersistentEnumeratorBase<Data> implements Forceable, Closeable {
 
     myStorage = storage;
 
-    synchronized (ourLock) {
+    lockStorage();
+    try {
       if (myStorage.length() == 0) {
         try {
           markDirty(true);
@@ -203,15 +204,26 @@ abstract class PersistentEnumeratorBase<Data> implements Forceable, Closeable {
         }
       }
     }
+    finally {
+      unlockStorage();
+    }
 
     if (myDataDescriptor instanceof InlineKeyDescriptor) {
       myKeyStorage = null;
       myKeyReadStream = null;
     }
     else {
-      myKeyStorage = new ResizeableMappedFile(keystreamFile(), initialSize, ourLock);
+      myKeyStorage = new ResizeableMappedFile(keystreamFile(), initialSize, myStorage.getPagedFileStorage().getStorageLockContext(), -1, false);
       myKeyReadStream = new MyDataIS(myKeyStorage);
     }
+  }
+
+  public void lockStorage() {
+    myStorage.getPagedFileStorage().lock();
+  }
+
+  public void unlockStorage() {
+    myStorage.getPagedFileStorage().unlock();
   }
 
   protected abstract void setupEmptyFile() throws IOException;
@@ -277,26 +289,42 @@ abstract class PersistentEnumeratorBase<Data> implements Forceable, Closeable {
   }
 
   protected void putMetaData(long data) throws IOException {
-    synchronized (ourLock) {
+    lockStorage();
+    try {
       myStorage.putLong(META_DATA_OFFSET, data);
+    }
+    finally {
+      unlockStorage();
     }
   }
 
   protected long getMetaData() throws IOException {
-    synchronized (ourLock) {
+    lockStorage();
+    try {
       return myStorage.getLong(META_DATA_OFFSET);
+    }
+    finally {
+      unlockStorage();
     }
   }
 
   protected void putMetaData2(long data) throws IOException {
-    synchronized (ourLock) {
+    lockStorage();
+    try {
       myStorage.putLong(META_DATA_OFFSET + 8, data);
+    }
+    finally {
+      unlockStorage();
     }
   }
 
   protected long getMetaData2() throws IOException {
-    synchronized (ourLock) {
+    lockStorage();
+    try {
       return myStorage.getLong(META_DATA_OFFSET + 8);
+    }
+    finally {
+      unlockStorage();
     }
   }
 
@@ -365,7 +393,8 @@ abstract class PersistentEnumeratorBase<Data> implements Forceable, Closeable {
   }
 
   protected boolean iterateData(final Processor<Data> processor) throws IOException {
-    synchronized (ourLock) {
+    lockStorage();
+    try {
       if (myKeyStorage == null) {
         throw new UnsupportedOperationException("Iteration over InlineIntegerKeyDescriptors is not supported");
       }
@@ -390,30 +419,35 @@ abstract class PersistentEnumeratorBase<Data> implements Forceable, Closeable {
         keysStream.close();
       }
     }
+    finally {
+      unlockStorage();
+    }
   }
 
   private File keystreamFile() {
     return new File(myFile.getPath() + ".keystream");
   }
 
-  public synchronized Data valueOf(int idx) throws IOException {
-    synchronized (ourLock) {
-      try {
-        int addr = indexToAddr(idx);
+  public Data valueOf(int idx) throws IOException {
+    lockStorage();
+    try {
+      int addr = indexToAddr(idx);
 
-        if (myKeyReadStream == null) return ((InlineKeyDescriptor<Data>)myDataDescriptor).fromInt(addr);
+      if (myKeyReadStream == null) return ((InlineKeyDescriptor<Data>)myDataDescriptor).fromInt(addr);
 
-        myKeyReadStream.setup(addr, myKeyStorage.length());
-        return myDataDescriptor.read(myKeyReadStream);
-      }
-      catch (IOException io) {
-        markCorrupted();
-        throw io;
-      }
-      catch (Throwable e) {
-        markCorrupted();
-        throw new RuntimeException(e);
-      }
+      myKeyReadStream.setup(addr, myKeyStorage.length());
+      return myDataDescriptor.read(myKeyReadStream);
+    }
+    catch (IOException io) {
+      markCorrupted();
+      throw io;
+    }
+    catch (Throwable e) {
+      markCorrupted();
+      throw new RuntimeException(e);
+    }
+    finally {
+      unlockStorage();
     }
   }
 
@@ -452,11 +486,15 @@ abstract class PersistentEnumeratorBase<Data> implements Forceable, Closeable {
 
   @Override
   public synchronized void close() throws IOException {
-    synchronized (ourLock) {
+    lockStorage();
+    try {
       if (!myClosed) {
         myClosed = true;
         doClose();
       }
+    }
+    finally {
+      unlockStorage();
     }
   }
 
@@ -482,10 +520,14 @@ abstract class PersistentEnumeratorBase<Data> implements Forceable, Closeable {
   }
 
   private synchronized void flush() throws IOException {
-    synchronized (ourLock) {
+    lockStorage();
+    try {
       if (myStorage.isDirty() || isDirty()) {
         doFlush();
       }
+    }
+    finally {
+      unlockStorage();
     }
   }
 
@@ -496,23 +538,27 @@ abstract class PersistentEnumeratorBase<Data> implements Forceable, Closeable {
 
   @Override
   public synchronized void force() {
-    synchronized (ourLock) {
-      try {
-        if (myKeyStorage != null) {
-          myKeyStorage.force();
-        }
-        flush();
+    lockStorage();
+
+    try {
+      if (myKeyStorage != null) {
+        myKeyStorage.force();
       }
-      catch (IOException e) {
-        throw new RuntimeException(e);
-      }
+      flush();
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+    finally {
+      unlockStorage();
     }
   }
 
   protected final void markDirty(boolean dirty) throws IOException {
     //assert Thread.holdsLock(this) || Thread.holdsLock(ourLock); // we hold one lock or another so can access myDirty
     if (dirty && myDirty && !myDirtyStatusUpdateInProgress) return;
-    synchronized (ourLock) {
+    lockStorage();
+    try {
       if (myDirty) {
         if (!dirty) {
           myDirtyStatusUpdateInProgress = true;
@@ -532,6 +578,9 @@ abstract class PersistentEnumeratorBase<Data> implements Forceable, Closeable {
           myDirty = true;
         }
       }
+    }
+    finally {
+      unlockStorage();
     }
   }
 

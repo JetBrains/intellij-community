@@ -21,13 +21,13 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.ui.CommonActionsPanel;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.EventDispatcher;
+import com.intellij.util.IconUtil;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
@@ -64,9 +64,9 @@ public class DomCollectionControl<T extends DomElement> extends DomUIControl imp
   private List<T> myCollectionElements = new ArrayList<T>();
   private ColumnInfo<T, ?>[] myColumnInfos;
   private boolean myEditable = false;
-  public static final Icon ADD_ICON = IconLoader.getIcon("/general/add.png");
-  public static final Icon EDIT_ICON = IconLoader.getIcon("/actions/editSource.png");
-  public static final Icon REMOVE_ICON = IconLoader.getIcon("/general/remove.png");
+  public static final Icon ADD_ICON = IconUtil.getAddIcon();
+  public static final Icon EDIT_ICON = IconUtil.getEditIcon();
+  public static final Icon REMOVE_ICON = IconUtil.getRemoveIcon();
 
   public DomCollectionControl(DomElement parentElement,
                               DomCollectionChildDescription description,

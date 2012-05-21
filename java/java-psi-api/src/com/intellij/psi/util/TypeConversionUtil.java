@@ -1213,7 +1213,7 @@ public class TypeConversionUtil {
         final PsiType componentType = ellipsisType.getComponentType();
         final PsiType newComponentType = componentType.accept(this);
         if (newComponentType == componentType) return ellipsisType;
-        return new PsiArrayType(newComponentType);
+        return newComponentType != null ? newComponentType.createArrayType() : null;
       }
 
       @Override
@@ -1221,7 +1221,7 @@ public class TypeConversionUtil {
         final PsiType componentType = arrayType.getComponentType();
         final PsiType newComponentType = componentType.accept(this);
         if (newComponentType == componentType) return arrayType;
-        return newComponentType.createArrayType();
+        return newComponentType != null ? newComponentType.createArrayType() : null;
       }
 
       @Override

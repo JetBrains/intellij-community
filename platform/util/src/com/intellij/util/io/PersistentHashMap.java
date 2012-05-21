@@ -100,24 +100,26 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
 
     @Override
     protected void onDropFromCache(final Key key, @NotNull final AppendStream value) {
-      synchronized (PersistentEnumerator.ourLock) {
-        try {
-          final BufferExposingByteArrayOutputStream bytes = value.getInternalBuffer();
-          final int id = enumerate(key);
-          long oldHeaderRecord = readValueId(id);
+      myEnumerator.lockStorage();
+      try {
+        final BufferExposingByteArrayOutputStream bytes = value.getInternalBuffer();
+        final int id = enumerate(key);
+        long oldHeaderRecord = readValueId(id);
 
-          long headerRecord = myValueStorage.appendBytes(bytes.getInternalBuffer(), 0, bytes.size(), oldHeaderRecord);
+        long headerRecord = myValueStorage.appendBytes(bytes.getInternalBuffer(), 0, bytes.size(), oldHeaderRecord);
 
-          updateValueId(id, headerRecord, oldHeaderRecord, key, 0);
-          if (oldHeaderRecord == NULL_ADDR) {
-            myLiveAndGarbageKeysCounter += LIVE_KEY_MASK;
-          }
-
-          myStreamPool.recycle(value);
+        updateValueId(id, headerRecord, oldHeaderRecord, key, 0);
+        if (oldHeaderRecord == NULL_ADDR) {
+          myLiveAndGarbageKeysCounter += LIVE_KEY_MASK;
         }
-        catch (IOException e) {
-          throw new RuntimeException(e);
-        }
+
+        myStreamPool.recycle(value);
+      }
+      catch (IOException e) {
+        throw new RuntimeException(e);
+      }
+      finally {
+        myEnumerator.unlockStorage();
       }
     }
   };
@@ -191,18 +193,34 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
       }
     }
     catch (IOException e) {
+      try {
+        // attempt to close already opened resources
+        close();
+      }
+      catch (Throwable ignored) {
+      }
       throw e; // rethrow
     }
     catch (Throwable t) {
       LOG.error(t);
+      try {
+        // attempt to close already opened resources
+        close();
+      }
+      catch (Throwable ignored) {
+      }
       throw new PersistentEnumerator.CorruptedException(file);
     }
   }
 
   public void dropMemoryCaches() {
     synchronized (myEnumerator) {
-      synchronized (PersistentEnumerator.ourLock) {
+      myEnumerator.lockStorage();
+      try {
         clearAppenderCaches();
+      }
+      finally {
+        myEnumerator.unlockStorage();
       }
     }
   }
@@ -271,7 +289,8 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
   }
 
   protected void doPut(Key key, Value value) throws IOException {
-    synchronized (PersistentEnumerator.ourLock) {
+    myEnumerator.lockStorage();
+    try {
       myEnumerator.markDirty(true);
       myAppendCache.remove(key);
 
@@ -291,6 +310,9 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
       long header = myValueStorage.appendBytes(bytes.getInternalBuffer(), 0, bytes.size(), 0);
 
       updateValueId(id, header, oldheader, key, 0);
+    }
+    finally {
+      myEnumerator.unlockStorage();
     }
   }
 
@@ -359,7 +381,8 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
 
   @Nullable
   protected Value doGet(Key key) throws IOException {
-    synchronized (PersistentEnumerator.ourLock) {
+    myEnumerator.lockStorage();
+    try {
       myAppendCache.remove(key);
       final int id = tryEnumerate(key);
       if (id == PersistentEnumerator.NULL_ID) {
@@ -387,6 +410,9 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
         input.close();
       }
     }
+    finally {
+      myEnumerator.unlockStorage();
+    }
   }
 
   public final boolean containsMapping(Key key) throws IOException {
@@ -396,13 +422,17 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
   }
 
   protected boolean doContainsMapping(Key key) throws IOException {
-    synchronized (PersistentEnumerator.ourLock) {
+    myEnumerator.lockStorage();
+    try {
       myAppendCache.remove(key);
       final int id = tryEnumerate(key);
       if (id == PersistentEnumerator.NULL_ID) {
         return false;
       }
       return readValueId(id) != NULL_ADDR;
+    }
+    finally {
+      myEnumerator.unlockStorage();
     }
   }
 
@@ -413,7 +443,8 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
   }
 
   protected void doRemove(Key key) throws IOException {
-    synchronized (PersistentEnumerator.ourLock) {
+    myEnumerator.lockStorage();
+    try {
       myAppendCache.remove(key);
       final int id = tryEnumerate(key);
       if (id == PersistentEnumerator.NULL_ID) {
@@ -427,6 +458,9 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
       }
 
       updateValueId(id, NULL_ADDR, record, key, 0);
+    }
+    finally {
+      myEnumerator.unlockStorage();
     }
   }
 
@@ -445,13 +479,17 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
   }
 
   protected void doForce() {
-    synchronized (PersistentEnumerator.ourLock) {
+    myEnumerator.lockStorage();
+    try {
       try {
         clearAppenderCaches();
       }
       finally {
         super.force();
       }
+    }
+    finally {
+      myEnumerator.unlockStorage();
     }
   }
 
@@ -468,15 +506,22 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
   }
 
   protected void doClose() throws IOException {
-    synchronized (PersistentEnumerator.ourLock) {
+    myEnumerator.lockStorage();
+    try {
       try {
         myAppendCacheFlusher.stop();
         myAppendCache.clear();
-        myValueStorage.dispose();
+        final PersistentHashMapValueStorage valueStorage = myValueStorage;
+        if (valueStorage != null) {
+          valueStorage.dispose();
+        }
       }
       finally {
         super.close();
       }
+    }
+    finally {
+      myEnumerator.unlockStorage();
     }
   }
 
@@ -490,22 +535,26 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
       myLiveAndGarbageKeysCounter = 0;
       myReadCompactionGarbageSize = 0;
 
-      traverseAllRecords(new PersistentEnumerator.RecordsProcessor() {
-        @Override
-        public boolean process(final int keyId) throws IOException {
-          final long record = readValueId(keyId);
-          if (record != NULL_ADDR) {
-            PersistentHashMapValueStorage.ReadResult readResult = myValueStorage.readBytes(record);
-            long value = newStorage.appendBytes(readResult.buffer, 0, readResult.buffer.length, 0);
-            updateValueId(keyId, value, record, null, getCurrentKey());
-            myLiveAndGarbageKeysCounter += LIVE_KEY_MASK;
+      try {
+        traverseAllRecords(new PersistentEnumerator.RecordsProcessor() {
+          @Override
+          public boolean process(final int keyId) throws IOException {
+            final long record = readValueId(keyId);
+            if (record != NULL_ADDR) {
+              PersistentHashMapValueStorage.ReadResult readResult = myValueStorage.readBytes(record);
+              long value = newStorage.appendBytes(readResult.buffer, 0, readResult.buffer.length, 0);
+              updateValueId(keyId, value, record, null, getCurrentKey());
+              myLiveAndGarbageKeysCounter += LIVE_KEY_MASK;
+            }
+            return true;
           }
-          return true;
-        }
-      });
+        });
+      }
+      finally {
+        newStorage.dispose();
+      }
 
       myValueStorage.dispose();
-      newStorage.dispose();
 
       FileUtil.rename(new File(newPath), getDataFile(myEnumerator.myFile));
 
@@ -565,7 +614,7 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
       if (newKey) ++largeKeys;
     }
 
-    if (newKey && requests % IOStatistics.KEYS_FACTOR == 0 && IOStatistics.DEBUG) {
+    if (newKey && IOStatistics.DEBUG && (requests & IOStatistics.KEYS_FACTOR_MASK) == 0) {
       IOStatistics.dump("small:"+smallKeys + ", large:" + largeKeys + ", transformed:"+transformedKeys +
                         ",@"+getBaseFile().getPath());
     }

@@ -19,12 +19,13 @@ package org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMembersDeclaration;
 
 /**
  * @author ilyas
  */
 public interface GrMemberOwner extends PsiClass {
-  <T extends GrMembersDeclaration> T addMemberDeclaration(T decl, PsiElement anchorBefore) throws IncorrectOperationException ;
+  <T extends GrMembersDeclaration> T addMemberDeclaration(T decl, @Nullable PsiElement anchorBefore) throws IncorrectOperationException ;
 
 }

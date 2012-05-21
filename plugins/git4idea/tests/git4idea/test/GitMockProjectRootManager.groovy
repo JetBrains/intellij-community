@@ -15,7 +15,6 @@
  */
 package git4idea.test
 
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.vfs.VirtualFile
@@ -43,20 +42,8 @@ class GitMockProjectRootManager extends ProjectRootManager {
     throw new UnsupportedOperationException()
   }
 
-  @Override
-  void addModuleRootListener(ModuleRootListener listener) {
-    throw new UnsupportedOperationException()
-  }
 
-  @Override
-  void addModuleRootListener(ModuleRootListener listener, Disposable parentDisposable) {
-    throw new UnsupportedOperationException()
-  }
 
-  @Override
-  void removeModuleRootListener(ModuleRootListener listener) {
-    throw new UnsupportedOperationException()
-  }
 
   @Override
   VirtualFile[] getFilesFromAllModules(OrderRootType type) {

@@ -18,8 +18,6 @@ package com.intellij.ide.macro;
 
 import com.intellij.application.options.PathMacrosImpl;
 import com.intellij.ide.DataManager;
-import com.intellij.ide.IdeEventQueue;
-import com.intellij.ide.impl.DataManagerImpl;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.components.ServiceManager;
@@ -147,11 +145,11 @@ public final class MacroManager {
       String name = "$" + macro.getName() + "$";
       if (str.indexOf(name) >= 0) {
         String expanded = macro.expand(dataContext);
-        if (dataContext instanceof DataManagerImpl.MyDataContext) {
-          // hack: macro.expand() can cause UI events such as showing dialogs ('Prompt' macro) which may 'invalidate' the datacontext
-          // since we know exactly that context is valid, we need to update its event count
-          ((DataManagerImpl.MyDataContext)dataContext).setEventCount(IdeEventQueue.getInstance().getEventCount());
-        }
+        //if (dataContext instanceof DataManagerImpl.MyDataContext) {
+        //  // hack: macro.expand() can cause UI events such as showing dialogs ('Prompt' macro) which may 'invalidate' the datacontext
+        //  // since we know exactly that context is valid, we need to update its event count
+        //  ((DataManagerImpl.MyDataContext)dataContext).setEventCount(IdeEventQueue.getInstance().getEventCount());
+        //}
         if (expanded == null) {
           expanded = "";
         }

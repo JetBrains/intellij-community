@@ -20,6 +20,9 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
+import com.intellij.openapi.editor.markup.HighlighterLayer;
+import com.intellij.openapi.editor.markup.RangeHighlighter;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -46,11 +49,12 @@ public class DetailViewImpl extends JPanel implements DetailView {
   private JPanel myDetailPanelWrapper;
   private JLabel myNothingToShow = new JLabel("Nothing to show");
   private JLabel myNothingToShowInEditor = new JLabel("Nothing to show");
+  private RangeHighlighter myHighlighter;
 
   public DetailViewImpl(Project project) {
     super(new BorderLayout());
     myProject = project;
-    setPreferredSize(new Dimension(600, 400));
+    setPreferredSize(new Dimension(700, 400));
     myNothingToShow.setHorizontalAlignment(JLabel.CENTER);
     myNothingToShowInEditor.setHorizontalAlignment(JLabel.CENTER);
   }
@@ -74,6 +78,7 @@ public class DetailViewImpl extends JPanel implements DetailView {
   @Override
   public void clearEditor() {
     if (getEditor() != null) {
+      clearHightlighting();
       remove(getEditor().getComponent());
       EditorFactory.getInstance().releaseEditor(getEditor());
       setEditor(null);
@@ -98,7 +103,7 @@ public class DetailViewImpl extends JPanel implements DetailView {
   }
 
   @Override
-  public void navigateInPreviewEditor(VirtualFile file, LogicalPosition positionToNavigate) {
+  public void navigateInPreviewEditor(VirtualFile file, LogicalPosition positionToNavigate, @Nullable TextAttributes lineAttributes) {
     Document document = FileDocumentManager.getInstance().getDocument(file);
     Project project = myProject;
 
@@ -123,6 +128,13 @@ public class DetailViewImpl extends JPanel implements DetailView {
       getEditor().getCaretModel().moveToLogicalPosition(positionToNavigate);
       validate();
       getEditor().getScrollingModel().scrollToCaret(ScrollType.CENTER);
+
+      clearHightlighting();
+      if (lineAttributes != null){
+        myHighlighter = getEditor().getMarkupModel().addLineHighlighter(positionToNavigate.line, HighlighterLayer.SELECTION - 1,
+                                                                        lineAttributes);
+
+      }
     }
     else {
       clearEditor();
@@ -130,6 +142,13 @@ public class DetailViewImpl extends JPanel implements DetailView {
       JLabel label = new JLabel("Navigate to selected " + (file.isDirectory() ? "directory " : "file ") + "in Project View");
       label.setHorizontalAlignment(JLabel.CENTER);
       add(label);
+    }
+  }
+
+  private void clearHightlighting() {
+    if (myHighlighter != null) {
+      getEditor().getMarkupModel().removeHighlighter(myHighlighter);
+      myHighlighter = null;
     }
   }
 
@@ -145,17 +164,13 @@ public class DetailViewImpl extends JPanel implements DetailView {
     if (panel != null) {
       if (myDetailScrollPanel == null) {
         myDetailPanelWrapper = new JPanel(new GridLayout(1, 1));
-        myDetailPanelWrapper.setBorder(BorderFactory.createEmptyBorder(3, 3, 3, 3));
+        myDetailPanelWrapper.setBorder(BorderFactory.createEmptyBorder(5, 30, 5, 30));
         myDetailPanelWrapper.add(panel);
 
         myDetailScrollPanel =
-          new JBScrollPane(myDetailPanelWrapper, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER) {
-            @Override
-            public Dimension getPreferredSize() {
-              final Dimension size = panel.getPreferredSize();
-              return new Dimension(size.width, size.height + 10);
-            }
-          };
+          new JBScrollPane(myDetailPanelWrapper, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+        myDetailScrollPanel.setPreferredSize(myDetailPanelWrapper.getPreferredSize());
+        myDetailScrollPanel.setBorder(null);
         add(myDetailScrollPanel, BorderLayout.SOUTH);
       } else {
         myDetailPanelWrapper.removeAll();

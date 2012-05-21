@@ -20,6 +20,7 @@ import com.intellij.openapi.application.QueryExecutorBase;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.UsageSearchContext;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
@@ -45,7 +46,7 @@ public class AccessorMethodReferencesSearcher extends QueryExecutorBase<PsiRefer
     final PsiMethod method = queryParameters.getMethod();
 
     final String propertyName;
-    if (MixinMemberContributor.isCategoryMethod(method, null)) {
+    if (MixinMemberContributor.isCategoryMethod(method, null, PsiSubstitutor.EMPTY)) {
       final GrGdkMethod cat = GrGdkMethodImpl.createGdkMethod(method, false);
       propertyName = GroovyPropertyUtils.getPropertyName((PsiMethod)cat);
     }

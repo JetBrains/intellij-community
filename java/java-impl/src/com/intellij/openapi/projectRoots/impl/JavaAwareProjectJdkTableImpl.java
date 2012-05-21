@@ -22,10 +22,7 @@ package com.intellij.openapi.projectRoots.impl;
 
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.ProjectBundle;
-import com.intellij.openapi.projectRoots.JavaSdk;
-import com.intellij.openapi.projectRoots.ProjectJdkTable;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.SdkType;
+import com.intellij.openapi.projectRoots.*;
 import com.intellij.util.SystemProperties;
 import org.jdom.Element;
 
@@ -67,7 +64,7 @@ public class JavaAwareProjectJdkTableImpl extends ProjectJdkTableImpl {
   }
 
   @Override
-  public SdkType getDefaultSdkType() {
+  public SdkTypeId getDefaultSdkType() {
     return myJavaSdk;
   }
 

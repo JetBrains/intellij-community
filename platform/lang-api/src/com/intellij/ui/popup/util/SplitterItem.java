@@ -46,7 +46,7 @@ public class SplitterItem implements ItemWrapper {
   }
 
   @Override
-  public void updateMnemonicLabel(JLabel label) {
+  public void updateAccessoryView(JComponent label) {
     //To change body of implemented methods use File | Settings | File Templates.
   }
 

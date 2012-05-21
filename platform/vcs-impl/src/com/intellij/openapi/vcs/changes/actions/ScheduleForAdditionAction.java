@@ -28,12 +28,12 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
 import com.intellij.openapi.vcs.changes.ui.ChangesListView;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.IconUtil;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -41,7 +41,7 @@ import java.util.List;
 
 public class ScheduleForAdditionAction extends AnAction implements DumbAware {
   public ScheduleForAdditionAction() {
-    super("Add to VCS", "Add to VCS", IconLoader.getIcon("/vcs/addToVcs.png"));
+    super("Add to VCS", "Add to VCS", IconUtil.getAddIcon());
   }
 
   public void update(AnActionEvent e) {

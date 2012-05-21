@@ -26,9 +26,7 @@ import org.jdom.Element;
 import java.lang.reflect.Modifier;
 
 /** Routines to handle the 'final' modifier. */
-public final class FinalAttribute
-  extends AndNotAttribute
-{
+public final class FinalAttribute extends AndNotAttribute {
 
 // -------------------------- STATIC METHODS --------------------------
 

@@ -21,8 +21,8 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.OrderRootType;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.IconUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -34,7 +34,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-public abstract class SdkType {
+public abstract class SdkType implements SdkTypeId {
   public static ExtensionPointName<SdkType> EP_NAME = ExtensionPointName.create("com.intellij.sdkType");
 
   private final String myName;
@@ -65,6 +65,7 @@ public abstract class SdkType {
   public abstract boolean isValidSdkHome(String path);
 
 
+  @Override
   @Nullable
   public String getVersionString(Sdk sdk) {
     return getVersionString(sdk.getHomePath());
@@ -91,8 +92,6 @@ public abstract class SdkType {
    */
   @Nullable
   public abstract AdditionalDataConfigurable createAdditionalDataConfigurable(SdkModel sdkModel, SdkModificator sdkModificator);
-
-  public abstract void saveAdditionalData(SdkAdditionalData additionalData, Element additional);
 
   @Nullable
   public SdkAdditionalData loadAdditionalData(Element additional) {
@@ -130,7 +129,7 @@ public abstract class SdkType {
   }
 
   public Icon getIconForAddAction() {
-    return IconLoader.getIcon("/general/add.png");
+    return IconUtil.getAddIcon();
   }
 
   public boolean equals(Object o) {

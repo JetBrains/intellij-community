@@ -20,8 +20,10 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -36,7 +38,6 @@ import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocMemberReference;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocReferenceElement;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocTag;
-import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrLabel;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
@@ -65,10 +66,12 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author ven
  */
+@SuppressWarnings("ConstantConditions")
 public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementFactoryImpl");
 
@@ -238,9 +241,9 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
       text.append(" = ").append(initializer.getText());
     }
 
-    GrTopStatement[] topStatements = ((GroovyFileBase)createGroovyFile(text.toString())).getTopStatements();
+    GrTopStatement[] topStatements = createGroovyFile(text.toString()).getTopStatements();
     if (topStatements.length == 0 || !(topStatements[0] instanceof GrVariableDeclaration)) {
-      topStatements = ((GroovyFileBase)createGroovyFile("def " + text)).getTopStatements();
+      topStatements = createGroovyFile("def " + text).getTopStatements();
     }
     if (topStatements.length == 0 || !(topStatements[0] instanceof GrVariableDeclaration)) {
       throw new RuntimeException("Invalid arguments, text = " + text);
@@ -254,7 +257,7 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
 
   @Override
   public GrEnumConstant createEnumConstantFromText(String text) {
-    GroovyFile file = (GroovyFile)createGroovyFile("enum E{" + text + "}");
+    GroovyFile file = createGroovyFile("enum E{" + text + "}");
     final GrEnumTypeDefinition enumClass = (GrEnumTypeDefinition)file.getClasses()[0];
     return enumClass.getEnumConstants()[0];
   }
@@ -265,7 +268,7 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
                                                       @Nullable PsiType type) {
     final String varDeclaration = createVariableDeclaration(modifiers, initializer, type, identifier).getText();
 
-    final GroovyFileBase file = (GroovyFileBase) createGroovyFile("class A { " + varDeclaration + "}");
+    final GroovyFileBase file = createGroovyFile("class A { " + varDeclaration + "}");
     final GrTypeDefinitionBody body = file.getTypeDefinitions()[0].getBody();
     LOG.assertTrue(body.getMemberDeclarations().length == 1 && body.getMemberDeclarations()[0] instanceof GrVariableDeclaration,
                    "ident = <" + identifier + "> initializer = " + (initializer == null ? "_null_" : ("<" + initializer.getText()) + ">"));
@@ -274,7 +277,7 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
 
   @Override
   public GrVariableDeclaration createFieldDeclarationFromText(String text) {
-    final GroovyFile file = (GroovyFile)createGroovyFile("class X{\n" + text + "\n}");
+    final GroovyFile file = createGroovyFile("class X{\n" + text + "\n}");
     final PsiClass psiClass = file.getClasses()[0];
     return (GrVariableDeclaration)psiClass.getFields()[0].getParent();
   }
@@ -327,28 +330,33 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
     return createDummyFile(s, false);
   }
 
-  public GrParameter createParameter(String name, @Nullable String typeText, @Nullable String initializer, @Nullable GroovyPsiElement context)
-    throws IncorrectOperationException {
-    StringBuilder fileText = new StringBuilder();
-    fileText.append("def dsfsadfnbhfjks_weyripouh_huihnrecuio(");
-    if (typeText != null) {
-      fileText.append(typeText).append(" ");
-    } else {
-      fileText.append("def ");
-    }
-    fileText.append(name);
-    if (initializer != null && initializer.length() > 0) {
-      fileText.append(" = ").append(initializer);
-    }
-    fileText.append("){}");
-    GroovyFileImpl groovyFile = createDummyFile(fileText.toString());
-    groovyFile.setContext(context);
+  public GrParameter createParameter(String name,
+                                     @Nullable String typeText,
+                                     @Nullable String initializer,
+                                     @Nullable GroovyPsiElement context) throws IncorrectOperationException {
+    try {
+      StringBuilder fileText = new StringBuilder();
+      fileText.append("def dsfsadfnbhfjks_weyripouh_huihnrecuio(");
+      if (typeText != null) {
+        fileText.append(typeText).append(" ");
+      }
+      else {
+        fileText.append("def ");
+      }
+      fileText.append(name);
+      if (initializer != null && initializer.length() > 0) {
+        fileText.append(" = ").append(initializer);
+      }
+      fileText.append("){}");
+      GroovyFileImpl groovyFile = createDummyFile(fileText.toString());
+      groovyFile.setContext(context);
 
-    ASTNode node = groovyFile.getFirstChild().getNode();
-    if (node.getElementType() != GroovyElementTypes.METHOD_DEFINITION) {
-      throw new IncorrectOperationException("Invalid all text");
+      ASTNode node = groovyFile.getFirstChild().getNode();
+      return ((GrMethod)node.getPsi()).getParameters()[0];
     }
-    return ((GrMethod)node.getPsi()).getParameters()[0];
+    catch (RuntimeException e) {
+      throw new IncorrectOperationException("name = " + name + ", type = " + typeText + ", initializer = " + initializer);
+    }
   }
 
   public GrCodeReferenceElement createTypeOrPackageReference(String qName) {
@@ -396,8 +404,14 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
     return createTypeElement(typeText);
   }
 
-  public GrParenthesizedExpression createParenthesizedExpr(GrExpression newExpr) {
-    return ((GrParenthesizedExpression) getInstance(myProject).createExpressionFromText("(" + newExpr.getText() + ")"));
+  @NotNull
+  @Override
+  public PsiClassType createType(@NotNull PsiClass aClass) {
+    return JavaPsiFacade.getElementFactory(myProject).createType(aClass);
+  }
+
+  public GrParenthesizedExpression createParenthesizedExpr(GrExpression expression) {
+    return ((GrParenthesizedExpression) createExpressionFromText("(" + expression.getText() + ")"));
   }
 
   public PsiElement createStringLiteralForReference(String text) {
@@ -423,7 +437,7 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
       classText = "class A { " + typeText + " " + name + "}";
     }
 
-    GroovyFileBase file = (GroovyFileBase) createGroovyFile(classText);
+    GroovyFileBase file = createGroovyFile(classText);
     final GrTypeDefinitionBody body = file.getTypeDefinitions()[0].getBody();
     return (GrVariableDeclaration) body.getMemberDeclarations()[0];
   }
@@ -946,4 +960,77 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
     return method.getParameterList();
   }
 
+  @NotNull
+  @Override
+  public PsiClass createAnnotationType(@NotNull @NonNls String name) throws IncorrectOperationException {
+    return createTypeDefinition("@interface " + name + "{}");
+  }
+
+  @NotNull
+  @Override
+  public PsiMethod createConstructor(@NotNull @NonNls String name) {
+    return createConstructorFromText(name, name + "(){}", null);
+  }
+
+  @NotNull
+  @Override
+  public PsiClassType createType(@NotNull PsiClass resolve, @NotNull PsiSubstitutor substitutor) {
+    return JavaPsiFacade.getElementFactory(myProject).createType(resolve, substitutor);
+  }
+
+  @NotNull
+  @Override
+  public PsiClassType createType(@NotNull PsiClass resolve, @NotNull PsiSubstitutor substitutor, @NotNull LanguageLevel languageLevel) {
+    return JavaPsiFacade.getElementFactory(myProject).createType(resolve, substitutor, languageLevel);
+  }
+
+  @NotNull
+  @Override
+  public PsiClassType createType(@NotNull PsiClass resolve,
+                                 @NotNull PsiSubstitutor substitutor,
+                                 @NotNull LanguageLevel languageLevel,
+                                 @NotNull PsiAnnotation[] annotations) {
+    return JavaPsiFacade.getElementFactory(myProject).createType(resolve, substitutor, languageLevel, annotations);
+  }
+
+  @NotNull
+  @Override
+  public PsiClassType createType(@NotNull PsiClass aClass, PsiType parameters) {
+    return JavaPsiFacade.getElementFactory(myProject).createType(aClass, parameters);
+  }
+
+  @NotNull
+  @Override
+  public PsiClassType createType(@NotNull PsiClass aClass, PsiType... parameters) {
+    return JavaPsiFacade.getElementFactory(myProject).createType(aClass, parameters);
+  }
+
+  @NotNull
+  @Override
+  public PsiSubstitutor createRawSubstitutor(@NotNull PsiTypeParameterListOwner owner) {
+    return JavaPsiFacade.getElementFactory(myProject).createRawSubstitutor(owner);
+  }
+
+  @NotNull
+  @Override
+  public PsiSubstitutor createSubstitutor(@NotNull Map<PsiTypeParameter, PsiType> map) {
+    return JavaPsiFacade.getElementFactory(myProject).createSubstitutor(map);
+  }
+
+  @Override
+  public PsiPrimitiveType createPrimitiveType(@NotNull String text) {
+    return JavaPsiFacade.getElementFactory(myProject).createPrimitiveType(text);
+  }
+
+  @NotNull
+  @Override
+  public PsiClassType createTypeByFQClassName(@NotNull @NonNls String qName) {
+    return JavaPsiFacade.getElementFactory(myProject).createTypeByFQClassName(qName);
+  }
+
+  @NotNull
+  @Override
+  public PsiClassType createTypeByFQClassName(@NotNull @NonNls String qName, @NotNull GlobalSearchScope resolveScope) {
+    return JavaPsiFacade.getElementFactory(myProject).createTypeByFQClassName(qName, resolveScope);
+  }
 }

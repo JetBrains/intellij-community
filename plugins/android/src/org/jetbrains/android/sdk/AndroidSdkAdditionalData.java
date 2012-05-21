@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Eugene.Kudelevsky
  */
-public class AndroidSdkAdditionalData implements SdkAdditionalData {
+public class AndroidSdkAdditionalData implements ValidatableSdkAdditionalData {
 
   @NonNls private static final String JDK = "jdk";
   @NonNls private static final String BUILD_TARGET = "sdk";

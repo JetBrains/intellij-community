@@ -29,6 +29,7 @@ import java.util.UUID;
 public class BuildMain {
   private static final String LOG_FILE_NAME = "log.xml";
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.cmdline.BuildMain");
+  private static NioClientSocketChannelFactory ourChannelFactory;
 
   public static void main(String[] args){
     System.out.println("Build process started. Classpath: " + System.getProperty("java.class.path"));
@@ -40,7 +41,8 @@ public class BuildMain {
 
     initLoggers();
 
-    final ClientBootstrap bootstrap = new ClientBootstrap(new NioClientSocketChannelFactory(SharedThreadPool.INSTANCE, SharedThreadPool.INSTANCE, 1));
+    ourChannelFactory = new NioClientSocketChannelFactory(SharedThreadPool.INSTANCE, SharedThreadPool.INSTANCE, 1);
+    final ClientBootstrap bootstrap = new ClientBootstrap(ourChannelFactory);
     bootstrap.setPipelineFactory(new ChannelPipelineFactory() {
       public ChannelPipeline getPipeline() throws Exception {
         return Channels.pipeline(
@@ -86,6 +88,7 @@ public class BuildMain {
     public void messageReceived(final ChannelHandlerContext ctx, MessageEvent e) throws Exception {
       CmdlineRemoteProto.Message message = (CmdlineRemoteProto.Message)e.getMessage();
       final CmdlineRemoteProto.Message.Type type = message.getType();
+      final Channel channel = ctx.getChannel();
 
       if (type == CmdlineRemoteProto.Message.Type.CONTROLLER_MESSAGE) {
         final CmdlineRemoteProto.Message.ControllerMessage controllerMessage = message.getControllerMessage();
@@ -94,9 +97,19 @@ public class BuildMain {
           case BUILD_PARAMETERS: {
             if (mySession == null) {
               final CmdlineRemoteProto.Message.ControllerMessage.FSEvent delta = controllerMessage.hasFsEvent()? controllerMessage.getFsEvent() : null;
-              final BuildSession session = new BuildSession(mySessionId, ctx.getChannel(), controllerMessage.getParamsMessage(), delta);
+              final BuildSession session = new BuildSession(mySessionId, channel, controllerMessage.getParamsMessage(), delta);
               mySession = session;
-              SharedThreadPool.INSTANCE.submit(session);
+              SharedThreadPool.INSTANCE.submit(new Runnable() {
+                public void run() {
+                  try {
+                    session.run();
+                  }
+                  finally {
+                    channel.close();
+                    System.exit(0);
+                  }
+                }
+              });
             }
             else {
               LOG.info("Cannot start another build session because one is already running");
@@ -127,14 +140,14 @@ public class BuildMain {
             }
             else {
               LOG.info("Cannot cancel build: no build session is running");
-              closeChannel(ctx.getChannel());
+              channel.close();
             }
             return;
           }
         }
       }
 
-      Channels.write(ctx.getChannel(), CmdlineProtoUtil.toMessage(mySessionId, CmdlineProtoUtil.createFailure("Unsupported message type: " + type.name(), null)));
+      Channels.write(channel, CmdlineProtoUtil.toMessage(mySessionId, CmdlineProtoUtil.createFailure("Unsupported message type: " + type.name(), null)));
     }
 
     @Override
@@ -143,12 +156,16 @@ public class BuildMain {
         super.channelClosed(ctx, e);
       }
       finally {
-        SharedThreadPool.INSTANCE.submit(new Runnable() {
-          @Override
+        new Thread("Shutdown thread") {
           public void run() {
-            System.exit(0);
+            try {
+              ourChannelFactory.releaseExternalResources();
+            }
+            finally {
+              System.exit(0);
+            }
           }
-        });
+        }.start();
       }
     }
 
@@ -158,18 +175,9 @@ public class BuildMain {
         super.channelDisconnected(ctx, e);
       }
       finally {
-        closeChannel(ctx.getChannel());
+        ctx.getChannel().close();
       }
     }
-  }
-
-  private static void closeChannel(final Channel channel) {
-    SharedThreadPool.INSTANCE.submit(new Runnable() {
-      @Override
-      public void run() {
-        channel.close().awaitUninterruptibly();
-      }
-    });
   }
 
   private static void initLoggers() {

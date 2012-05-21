@@ -74,7 +74,7 @@ public class JdkComboBox extends ComboBoxWithWidePopup {
           else if (value instanceof ProjectJdkComboBoxItem) {
             final Sdk jdk = jdkModel.getProjectSdk();
             if (jdk != null) {
-              setIcon(jdk.getSdkType().getIcon());
+              setIcon(((SdkType) jdk.getSdkType()).getIcon());
               append(ProjectBundle.message("project.roots.project.jdk.inherited"), SimpleTextAttributes.REGULAR_ATTRIBUTES);
               append(" (" + jdk.getName() + ")", SimpleTextAttributes.GRAYED_ATTRIBUTES);
             }

@@ -49,6 +49,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.*;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.IconUtil;
 import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -98,8 +99,8 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
     }
   };
   private static final Icon ICON_RUN = IconLoader.getIcon("/actions/execute.png");
-  private static final Icon ICON_REMOVE = IconLoader.getIcon("/general/remove.png");
-  private static final Icon ICON_ADD = IconLoader.getIcon("/general/add.png");
+  private static final Icon ICON_REMOVE = IconUtil.getRemoveIcon();
+  private static final Icon ICON_ADD = IconUtil.getAddIcon();
   private static final Icon ICON_FILTER = IconLoader.getIcon("/ant/filter.png");
 
   public AntExplorer(final Project project) {

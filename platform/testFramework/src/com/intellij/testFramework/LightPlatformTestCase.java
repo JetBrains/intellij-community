@@ -298,7 +298,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     return ApplicationManager.getApplication().runWriteAction(new Computable<Module>() {
       @Override
       public Module compute() {
-        return ModuleManager.getInstance(ourProject).newModule("light_idea_test_case.iml", moduleType);
+        return ModuleManager.getInstance(ourProject).newModule("light_idea_test_case.iml", moduleType.getId());
       }
     });
   }

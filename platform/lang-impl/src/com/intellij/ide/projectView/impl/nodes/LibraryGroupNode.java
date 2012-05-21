@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@ import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryType;
+import com.intellij.openapi.roots.libraries.PersistentLibraryKind;
 import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -138,9 +139,9 @@ public class LibraryGroupNode extends ProjectViewNode<LibraryGroupElement> {
     if (library == null) return VirtualFile.EMPTY_ARRAY;
     OrderRootType[] rootTypes = LibraryType.DEFAULT_EXTERNAL_ROOT_TYPES;
     if (library instanceof LibraryEx) {
-      LibraryType libraryType = ((LibraryEx)library).getType();
-      if (libraryType != null) {
-        rootTypes = libraryType.getExternalRootTypes();
+      PersistentLibraryKind<?> libKind = ((LibraryEx)library).getKind();
+      if (libKind != null) {
+        rootTypes = LibraryType.findByKind(libKind).getExternalRootTypes();
       }
     }
     for (OrderRootType rootType : rootTypes) {

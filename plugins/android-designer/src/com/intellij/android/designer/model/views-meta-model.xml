@@ -19,6 +19,26 @@
     <palette title="Device Screen (#merge)" icon="/com/intellij/android/designer/icons/DeviceScreen.png"/>
   </meta>
 
+  <meta model="com.intellij.android.designer.model.RadIncludeLayout"
+        class="java.lang.Object"
+        tag="include">
+
+    <presentation title=" - %layout:xml%"/>
+
+    <palette title="include" icon="/com/intellij/android/designer/icons/include.png"
+             tooltip="Lets you statically include XML layout inside other XML layouts."/>
+  </meta>
+
+  <meta model="com.intellij.android.designer.model.RadFragment"
+        class="java.lang.Object"
+        tag="fragment">
+
+    <presentation title=" - %name%"/>
+
+    <palette title="fragment" icon="/com/intellij/android/designer/icons/fragment.png"
+             tooltip="A Fragment is a piece of an application's user interface or behavior that can be placed in an Activity."/>
+  </meta>
+
   <meta model="com.intellij.android.designer.model.RadViewComponent"
         tag="&lt;unknown&gt;">
 
@@ -27,7 +47,7 @@
 
   <meta model="com.intellij.android.designer.model.RadViewComponent"
         class="android.view.View"
-        tag="View">
+        tag="view">
 
     <palette title="View" icon="/com/intellij/android/designer/icons/View.png"/>
 
@@ -1031,6 +1051,144 @@
     </creation>
   </meta>
 
+  <meta model="com.intellij.android.designer.model.layout.relative.RadRelativeLayoutComponent"
+        layout="com.intellij.android.designer.model.layout.relative.RadRelativeLayout"
+        class="android.widget.TwoLineListItem"
+        tag="TwoLineListItem">
+
+    <properties important="mode"/>
+
+    <palette title="TwoLineListItem" icon="/com/intellij/android/designer/icons/TwoLineListItem.png"
+             tooltip="A view group with two children, intended for use in ListViews."/>
+
+    <creation>
+      <![CDATA[
+          <TwoLineListItem
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent">
+          </TwoLineListItem>
+      ]]>
+    </creation>
+  </meta>
+
+  <meta model="com.intellij.android.designer.model.layout.relative.RadRelativeLayoutComponent"
+        layout="com.intellij.android.designer.model.layout.relative.RadRelativeLayout"
+        class="android.widget.DialerFilter"
+        tag="DialerFilter">
+
+    <palette title="DialerFilter" icon="/com/intellij/android/designer/icons/DialerFilter.png"/>
+
+    <creation>
+      <![CDATA[
+          <DialerFilter
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content">
+            <EditText
+              android:id="@android:id/hint"
+              android:layout_width="fill_parent"
+              android:layout_height="wrap_content"
+              android:text="Hint"
+              />
+            <EditText
+              android:id="@android:id/primary"
+              android:layout_width="fill_parent"
+              android:layout_height="wrap_content"
+              android:layout_below="@android:id/hint"
+              android:text="Primary"
+              />
+          </DialerFilter>
+      ]]>
+    </creation>
+  </meta>
+
+  <meta model="com.intellij.android.designer.model.RadViewComponent"
+        layout="com.intellij.android.designer.model.RadViewLayout"
+        class="android.widget.TabHost"
+        tag="TabHost">
+
+    <palette title="TabHost" icon="/com/intellij/android/designer/icons/TabHost.png"
+             tooltip="Container for a tabbed window view. This object holds two children: a set of tab labels that the user clicks to select a specific tab, and a FrameLayout object that displays the contents of that page. The individual elements are typically controlled using this container object, rather than setting values on the child elements themselves."/>
+
+    <creation>
+      <![CDATA[
+        <TabHost
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent">
+          <LinearLayout
+              android:layout_width="fill_parent"
+              android:layout_height="fill_parent"
+              android:orientation="vertical">
+            <TabWidget
+                android:id="@android:id/tabs"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content">
+            </TabWidget>
+            <FrameLayout
+                android:id="@android:id/tabcontent"
+                android:layout_width="fill_parent"
+                android:layout_height="fill_parent">
+              <LinearLayout
+                  android:id="@+id/tab1"
+                  android:layout_width="fill_parent"
+                  android:layout_height="fill_parent">
+              </LinearLayout>
+              <LinearLayout
+                  android:id="@+id/tab2"
+                  android:layout_width="fill_parent"
+                  android:layout_height="fill_parent">
+              </LinearLayout>
+              <LinearLayout
+                  android:id="@+id/tab3"
+                  android:layout_width="fill_parent"
+                  android:layout_height="fill_parent">
+              </LinearLayout>
+            </FrameLayout>
+          </LinearLayout>
+        </TabHost>
+      ]]>
+    </creation>
+  </meta>
+
+  <meta model="com.intellij.android.designer.model.RadViewComponent"
+        class="android.widget.TabWidget"
+        tag="TabWidget">
+
+    <palette title="TabWidget" icon="/com/intellij/android/designer/icons/TabWidget.png"/>
+
+    <properties important="divider tabStripEnabled tabStripLeft tabStripRight tabLayout"/>
+  </meta>
+
+  <meta model="com.intellij.android.designer.model.RadViewComponent"
+        class="android.widget.SlidingDrawer"
+        tag="SlidingDrawer">
+
+    <properties important="orientation" expert="handle content"/>
+
+    <palette title="SlidingDrawer" icon="/com/intellij/android/designer/icons/SlidingDrawer.png"
+             tooltip="SlidingDrawer hides content out of the screen and allows the user to drag a handle to bring the content on screen. SlidingDrawer can be used vertically or horizontally. A special widget composed of two children views: the handle, that the users drags, and the content, attached to the handle and dragged with it."/>
+
+    <creation>
+      <![CDATA[
+        <SlidingDrawer
+          android:layout_width="fill_parent"
+          android:layout_height="fill_parent"
+          android:content="@+id/content"
+          android:handle="@+id/handle">
+          <LinearLayout
+              android:id="@+id/content"
+              android:layout_width="fill_parent"
+              android:layout_height="fill_parent">
+          </LinearLayout>
+          <Button
+              android:id="@+id/handle"
+              android:layout_width="wrap_content"
+              android:layout_height="wrap_content"
+              android:text="Handle"/>
+        </SlidingDrawer>
+      ]]>
+    </creation>
+  </meta>
+
   <!-- ================= Layouts ================= -->
 
   <meta model="com.intellij.android.designer.model.RadViewContainer"
@@ -1180,56 +1338,6 @@
     </creation>
   </meta>
 
-  <meta model="com.intellij.android.designer.model.layout.relative.RadRelativeLayoutComponent"
-        layout="com.intellij.android.designer.model.layout.relative.RadRelativeLayout"
-        class="android.widget.TwoLineListItem"
-        tag="TwoLineListItem">
-
-    <properties important="mode"/>
-
-    <palette title="TwoLineListItem" icon="/com/intellij/android/designer/icons/TwoLineListItem.png"
-             tooltip="A view group with two children, intended for use in ListViews."/>
-
-    <creation>
-      <![CDATA[
-          <TwoLineListItem
-            android:layout_width="fill_parent"
-            android:layout_height="fill_parent">
-          </TwoLineListItem>
-      ]]>
-    </creation>
-  </meta>
-
-  <meta model="com.intellij.android.designer.model.layout.relative.RadRelativeLayoutComponent"
-        layout="com.intellij.android.designer.model.layout.relative.RadRelativeLayout"
-        class="android.widget.DialerFilter"
-        tag="DialerFilter">
-
-    <palette title="DialerFilter" icon="/com/intellij/android/designer/icons/DialerFilter.png"/>
-
-    <creation>
-      <![CDATA[
-          <DialerFilter
-            android:layout_width="fill_parent"
-            android:layout_height="wrap_content">
-            <EditText
-              android:id="@android:id/hint"
-              android:layout_width="fill_parent"
-              android:layout_height="wrap_content"
-              android:text="Hint"
-              />
-            <EditText
-              android:id="@android:id/primary"
-              android:layout_width="fill_parent"
-              android:layout_height="wrap_content"
-              android:layout_below="@android:id/hint"
-              android:text="Primary"
-              />
-          </DialerFilter>
-      ]]>
-    </creation>
-  </meta>
-
   <!-- ================= Palette ================= -->
 
   <palette>
@@ -1283,6 +1391,8 @@
       <item tag="RadioGroup"/>
       <item tag="ListView"/>
       <item tag="GridView"/>
+      <item tag="TabHost"/>
+      <item tag="SlidingDrawer"/>
       <item tag="Gallery"/>
       <item tag="Spinner"/>
       <item tag="ExpandableListView"/>
@@ -1297,6 +1407,10 @@
       <item tag="ImageSwitcher"/>
       <item tag="TextSwitcher"/>
       <item tag="AdapterViewFlipper"/>
+    </group>
+    <group name="Custom">
+      <item tag="include"/>
+      <item tag="fragment"/>
     </group>
   </palette>
 

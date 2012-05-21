@@ -1,4 +1,5 @@
 public class RearrangementTest14 {
+
   int doIt(int x) {
     return x + 1;
   }

@@ -41,6 +41,7 @@ public class TextConsoleBuilderImpl extends TextConsoleBuilder {
     myScope = scope;
   }
 
+  @Override
   public ConsoleView getConsole() {
     final ConsoleView consoleView = createConsole();
     for (final Filter filter : myFilters) {
@@ -53,6 +54,7 @@ public class TextConsoleBuilderImpl extends TextConsoleBuilder {
     return new ConsoleViewImpl(myProject, myScope, myViewer, null);
   }
 
+  @Override
   public void addFilter(final Filter filter) {
     myFilters.add(filter);
   }

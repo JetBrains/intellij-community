@@ -5,12 +5,12 @@ import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.StdModuleTypes;
+import com.intellij.openapi.roots.impl.ModifiableModelCommitter;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
-import com.intellij.openapi.roots.impl.ModuleRootManagerImpl;
 import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
@@ -132,7 +132,7 @@ public class GradleModulesImporter {
           }
           finally {
             ModifiableRootModel[] modelsAsArray = rootModels.toArray(new ModifiableRootModel[rootModels.size()]);
-            ModuleRootManagerImpl.multiCommit(modelsAsArray, model);
+            ModifiableModelCommitter.multiCommit(modelsAsArray, model);
             for (GradleModule module : modules) {
               publisher.onImportEnd(module);
             }
@@ -186,7 +186,7 @@ public class GradleModulesImporter {
     Application application = ApplicationManager.getApplication();
     application.assertWriteAccessAllowed();
     final String moduleFilePath = module.getModuleFilePath();
-    return model.newModule(moduleFilePath, StdModuleTypes.JAVA);
+    return model.newModule(moduleFilePath, StdModuleTypes.JAVA.getId());
   }
 
   /**
@@ -403,7 +403,7 @@ public class GradleModulesImporter {
       ProjectRootManager projectRootManager = ProjectRootManager.getInstance(intellijProject);
       ModifiableRootModel[] modelsAsArray = modelsToCommit.toArray(new ModifiableRootModel[modelsToCommit.size()]);
       if (modelsAsArray.length > 0) {
-        ModuleRootManagerImpl.multiCommit(modelsAsArray, ModuleManager.getInstance(modelsAsArray[0].getProject()).getModifiableModel());
+        ModifiableModelCommitter.multiCommit(modelsAsArray, ModuleManager.getInstance(modelsAsArray[0].getProject()).getModifiableModel());
       }
       if (libraryMappings != null) {
         for (GradleLibrary library : libraryMappings.keySet()) {

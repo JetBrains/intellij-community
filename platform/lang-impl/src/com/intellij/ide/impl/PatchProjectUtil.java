@@ -23,9 +23,9 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.roots.impl.ModifiableModelCommitter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
-import com.intellij.openapi.roots.impl.ModuleRootManagerImpl;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -95,7 +95,7 @@ public class PatchProjectUtil {
 
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
-        ModuleRootManagerImpl.multiCommit(models, modulesModel);
+        ModifiableModelCommitter.multiCommit(models, modulesModel);
       }
     });
   }

@@ -37,6 +37,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.util.IconUtil;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
@@ -131,7 +132,7 @@ public class ImportTree extends NodeRenderer {
   }
 
   public AnAction createIncludeAction() {
-    return new AnAction(CvsBundle.message("import.wizard.include.to.import.action.name"), null, PlatformIcons.ADD_ICON) {
+    return new AnAction(CvsBundle.message("import.wizard.include.to.import.action.name"), null, IconUtil.getAddIcon()) {
       public void update(AnActionEvent e) {
         final VirtualFile[] selectedFiles = myFileSystemTree.getSelectedFiles();
         final Presentation presentation = e.getPresentation();

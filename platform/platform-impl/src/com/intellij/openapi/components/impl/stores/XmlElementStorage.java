@@ -18,19 +18,15 @@ package com.intellij.openapi.components.impl.stores;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.ExtensionPoint;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.options.StreamProvider;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.StringInterner;
 import com.intellij.util.io.fs.IFile;
 import gnu.trove.THashMap;
-import org.jdom.Attribute;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -41,14 +37,9 @@ import java.io.IOException;
 import java.util.*;
 
 public abstract class XmlElementStorage implements StateStorage, Disposable {
-  @NonNls private static final Set<String> OBSOLETE_COMPONENT_NAMES = new HashSet<String>(Arrays.asList(
-    "Palette"
-  ));
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.components.impl.stores.XmlElementStorage");
 
-  @NonNls private static final String COMPONENT = "component";
   @NonNls private static final String ATTR_NAME = "name";
-  @NonNls private static final String NAME = ATTR_NAME;
 
   protected TrackingPathMacroSubstitutor myPathMacroSubstitutor;
   @NotNull private final String myRootElementName;
@@ -530,7 +521,7 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
   private Map<String, Long> loadVersions(Document copy) {
     THashMap<String, Long> result = new THashMap<String, Long>();
 
-    List list = copy.getRootElement().getChildren(COMPONENT);
+    List list = copy.getRootElement().getChildren(StorageData.COMPONENT);
     for (Object o : list) {
       if (o instanceof Element) {
         Element component = (Element)o;
@@ -552,191 +543,6 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
     myDisposed = true;
   }
 
-  protected static class StorageData {
-    private final Map<String, Element> myComponentStates;
-    protected final String myRootElementName;
-    private Integer myHash;
-
-    public StorageData(final String rootElementName) {
-      myComponentStates = new THashMap<String, Element>();
-      myRootElementName = rootElementName;
-    }
-
-    protected StorageData(StorageData storageData) {
-      myRootElementName = storageData.myRootElementName;
-      myComponentStates = new THashMap<String, Element>(storageData.myComponentStates);
-    }
-
-    protected void load(@NotNull Element rootElement) throws IOException {
-      final Element[] elements = JDOMUtil.getElements(rootElement);
-      for (Element element : elements) {
-        if (element.getName().equals(COMPONENT)) {
-          final String name = element.getAttributeValue(NAME);
-
-          if (name == null) {
-            LOG.info("Broken content in file : " + this);
-            continue;
-          }
-
-          if (OBSOLETE_COMPONENT_NAMES.contains(name)) continue;
-
-          element.detach();
-
-          if (element.getAttributes().size() > 1 || !element.getChildren().isEmpty()) {
-            assert element.getAttributeValue(NAME) != null : "No name attribute for component: " + name + " in " + this;
-
-            Element existingElement = myComponentStates.get(name);
-
-            if (existingElement != null) {
-              element = mergeElements(name, element, existingElement);
-            }
-
-            myComponentStates.put(name, element);
-          }
-        }
-      }
-    }
-
-    private Element mergeElements(final String name, final Element element1, final Element element2) {
-      ExtensionPoint<XmlConfigurationMerger> point = Extensions.getRootArea().getExtensionPoint("com.intellij.componentConfigurationMerger");
-      XmlConfigurationMerger[] mergers = point.getExtensions();
-      for (XmlConfigurationMerger merger : mergers) {
-        if (merger.getComponentName().equals(name)) {
-          return merger.merge(element1, element2);
-        }
-      }
-      return element1;
-    }
-
-    @NotNull
-    protected Element save() {
-      Element rootElement = new Element(myRootElementName);
-      String[] componentNames = ArrayUtil.toStringArray(myComponentStates.keySet());
-      Arrays.sort(componentNames);
-      for (String componentName : componentNames) {
-        assert componentName != null;
-        final Element element = myComponentStates.get(componentName);
-
-        if (element.getAttribute(NAME) == null) element.setAttribute(NAME, componentName);
-
-        rootElement.addContent((Element)element.clone());
-      }
-
-      return rootElement;
-    }
-
-    @Nullable
-    private Element getState(final String name) {
-      final Element e = myComponentStates.get(name);
-
-      if (e != null) {
-        assert e.getAttributeValue(NAME) != null : "No name attribute for component: " + name + " in " + this;
-        e.removeAttribute(NAME);
-      }
-
-      return e;
-    }
-
-    private void removeState(final String componentName) {
-      myComponentStates.remove(componentName);
-      clearHash();
-    }
-
-    private void setState(@NotNull final String componentName, final Element element) {
-      element.setName(COMPONENT);
-
-      //componentName should be first!
-      final List attributes = new ArrayList(element.getAttributes());
-      for (Object attribute : attributes) {
-        Attribute attr = (Attribute)attribute;
-        element.removeAttribute(attr);
-      }
-
-      element.setAttribute(NAME, componentName);
-
-      for (Object attribute : attributes) {
-        Attribute attr = (Attribute)attribute;
-        element.setAttribute(attr.getName(), attr.getValue());
-      }
-
-      myComponentStates.put(componentName, element);
-      clearHash();
-    }
-
-    @Override
-    public StorageData clone() {
-      return new StorageData(this);
-    }
-    
-    public final int getHash() {
-      if (myHash == null) {
-        myHash = computeHash();
-      }
-      return myHash.intValue();
-    }
-
-    protected int computeHash() {
-      int result = 0;
-
-      for (String name : myComponentStates.keySet()) {
-        result = 31*result + name.hashCode();
-        result = 31*result + JDOMUtil.getTreeHash(myComponentStates.get(name));
-      }
-
-      return result;
-    }
-
-    protected void clearHash() {
-      myHash = null;
-    }
-
-    public Set<String> getDifference(final StorageData storageData, PathMacroSubstitutor substitutor) {
-      Set<String> bothStates = new HashSet<String>(myComponentStates.keySet());
-      bothStates.retainAll(storageData.myComponentStates.keySet());
-
-      Set<String> diffs = new HashSet<String>();
-      diffs.addAll(storageData.myComponentStates.keySet());
-      diffs.addAll(myComponentStates.keySet());
-      diffs.removeAll(bothStates);
-
-      for (String componentName : bothStates) {
-        final Element e1 = myComponentStates.get(componentName);
-        final Element e2 = storageData.myComponentStates.get(componentName);
-
-        // some configurations want to collapse path elements in writeExternal so make sure paths are expanded
-        if (substitutor != null) {
-          substitutor.expandPaths(e2);
-        }
-
-        if (!JDOMUtil.areElementsEqual(e1, e2)) {
-          diffs.add(componentName);
-        }
-      }
-
-
-      return diffs;
-    }
-
-    public boolean isEmpty() {
-      return myComponentStates.size() == 0;
-    }
-
-    public boolean hasState(final String componentName) {
-        return myComponentStates.containsKey(componentName);
-    }
-
-    public void checkUnknownMacros(TrackingPathMacroSubstitutor pathMacroSubstitutor) {
-      if (pathMacroSubstitutor == null) return;
-
-      for (String componentName : myComponentStates.keySet()) {
-        final Set<String> unknownMacros = StorageUtil.getMacroNames(myComponentStates.get(componentName));
-        if (!unknownMacros.isEmpty()) {
-          pathMacroSubstitutor.addUnknownMacros(componentName, unknownMacros);
-        }
-      }
-    }
-  }
-
   public void resetData(){
     myLoadedData = null;
   }
@@ -756,7 +562,7 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
         if (!storageData.myComponentStates.containsKey(componentToRetain) && myStorageComponentStates.containsKey(componentToRetain)) {
           Element emptyElement = new Element("component");
           LOG.info("Create empty component element for " + componentsToRetain);
-          emptyElement.setAttribute(NAME, componentToRetain);
+          emptyElement.setAttribute(StorageData.NAME, componentToRetain);
           storageData.myComponentStates.put(componentToRetain, emptyElement);
         }
       }
@@ -768,13 +574,13 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
   }
 
   private void filterComponentsDisabledForRoaming(final Element element, final RoamingType roamingType) {
-    final List components = element.getChildren(COMPONENT);
+    final List components = element.getChildren(StorageData.COMPONENT);
 
     List<Element> toDelete = new ArrayList<Element>();
 
     for (Object componentObj : components) {
       final Element componentElement = (Element)componentObj;
-      final String nameAttr = componentElement.getAttributeValue(NAME);
+      final String nameAttr = componentElement.getAttributeValue(StorageData.NAME);
 
       if (myComponentRoamingManager.getRoamingType(nameAttr) != roamingType) {
         toDelete.add(componentElement);
@@ -787,13 +593,13 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
   }
 
   private void filterOutOfDateComponents(final Element element) {
-    final List components = element.getChildren(COMPONENT);
+    final List components = element.getChildren(StorageData.COMPONENT);
 
     List<Element> toDelete = new ArrayList<Element>();
 
     for (Object componentObj : components) {
       final Element componentElement = (Element)componentObj;
-      final String nameAttr = componentElement.getAttributeValue(NAME);
+      final String nameAttr = componentElement.getAttributeValue(StorageData.NAME);
 
       if (myRemoteVersionProvider.getVersion(nameAttr) <= myLocalVersionProvider.getVersion(nameAttr)) {
         toDelete.add(componentElement);

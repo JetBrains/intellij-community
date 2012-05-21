@@ -17,8 +17,8 @@ package com.intellij.openapi.keymap.impl.ui;
 
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.QuickList;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.keymap.KeymapGroup;
+import com.intellij.openapi.util.text.StringUtil;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -136,6 +136,24 @@ public class Group implements KeymapGroup {
   }
 
   public String getActionQualifiedPath(String id) {
+    Group cur = myParent;
+    StringBuilder answer = new StringBuilder();
+
+    while (cur != null && !cur.isRoot()) {
+      answer.insert(0, cur.getName() + " | ");
+
+      cur = cur.myParent;
+    }
+
+    String suffix = calcActionQualifiedPath(id);
+    if (StringUtil.isEmpty(suffix)) return null;
+
+    answer.append(suffix);
+
+    return answer.toString();
+  }
+
+  private String calcActionQualifiedPath(String id) {
     for (Object child : myChildren) {
       if (child instanceof QuickList) {
         child = ((QuickList)child).getActionId();
@@ -154,7 +172,7 @@ public class Group implements KeymapGroup {
         }
       }
       else if (child instanceof Group) {
-        String path = ((Group)child).getActionQualifiedPath(id);
+        String path = ((Group)child).calcActionQualifiedPath(id);
         if (path != null) {
           return !isRoot() ? getName() + " | " + path : path;
         }
@@ -168,10 +186,11 @@ public class Group implements KeymapGroup {
   }
 
   public String getQualifiedPath() {
-    StringBuffer path = new StringBuffer(64);
+    StringBuilder path = new StringBuilder(64);
     Group group = this;
     while (group != null && !group.isRoot()) {
-      path.insert(0, group.getName() + " | ");
+      if (path.length() > 0) path.insert(0, " | ");
+      path.insert(0, group.getName());
       group = group.myParent;
     }
     return path.toString();

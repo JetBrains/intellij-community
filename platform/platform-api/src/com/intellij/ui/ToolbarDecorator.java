@@ -79,6 +79,7 @@ public abstract class ToolbarDecorator implements DataProvider, CommonActionsPan
   private CommonActionsPanel myPanel;
   private Comparator<AnActionButton> myButtonComparator;
   private boolean myAsTopToolbar = false;
+  private Icon myAddIcon;
 
   protected abstract JComponent getComponent();
 
@@ -206,13 +207,13 @@ public abstract class ToolbarDecorator implements DataProvider, CommonActionsPan
     return this;
   }
 
-  public ToolbarDecorator setUpAction(AnActionButtonRunnable action) {
+  public ToolbarDecorator setMoveUpAction(AnActionButtonRunnable action) {
     myUpActionEnabled = action != null;
     myUpAction = action;
     return this;
   }
 
-  public ToolbarDecorator setDownAction(AnActionButtonRunnable action) {
+  public ToolbarDecorator setMoveDownAction(AnActionButtonRunnable action) {
     myDownActionEnabled = action != null;
     myDownAction = action;
     return this;
@@ -277,6 +278,11 @@ public abstract class ToolbarDecorator implements DataProvider, CommonActionsPan
     return this;//do nothing by default
   }
 
+  public ToolbarDecorator setAddIcon(Icon addIcon) {
+    myAddIcon = addIcon;
+    return this;
+  }
+
   public JPanel createPanel() {
     final CommonActionsPanel.Buttons[] buttons = getButtons();
     final JComponent contextComponent = getComponent();
@@ -285,7 +291,7 @@ public abstract class ToolbarDecorator implements DataProvider, CommonActionsPan
                              myExtraActions.toArray(new AnActionButton[myExtraActions.size()]),
                              myButtonComparator,
                              myAddName, myRemoveName, myMoveUpName, myMoveDownName, myEditName,
-                             buttons);
+                             myAddIcon, buttons);
     if (myAsTopToolbar) {
       contextComponent.setBorder(IdeBorderFactory.createBorder(SideBorder.ALL));
     } else {

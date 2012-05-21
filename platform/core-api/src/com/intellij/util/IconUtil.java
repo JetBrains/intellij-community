@@ -211,12 +211,36 @@ public class IconUtil {
     return getToolbarDecoratorIcon("addClass.png");
   }
 
-  public static Icon getImportIcon() {
-    return IconLoader.getIcon("/toolbarDecorator/import.png");
+  public static Icon getAddPatternIcon() {
+    return getToolbarDecoratorIcon("addPattern.png");
   }
 
-  public static Icon getExportIcon() {
-    return IconLoader.getIcon("/toolbarDecorator/export.png");
+  public static Icon getAddJiraPatternIcon() {
+    return getToolbarDecoratorIcon("addJira.png");
+  }
+
+  public static Icon getAddYouTrackPatternIcon() {
+    return getToolbarDecoratorIcon("addYouTrack.png");
+  }
+
+  public static Icon getAddBlankLineIcon() {
+    return getToolbarDecoratorIcon("addBlankLine.png");
+  }
+
+  public static Icon getAddPackageIcon() {
+    return getToolbarDecoratorIcon("addPackage.png");
+  }
+
+  public static Icon getAddLinkIcon() {
+    return getToolbarDecoratorIcon("addLink.png");
+  }
+
+  public static Icon getAddFolderIcon() {
+    return getToolbarDecoratorIcon("addFolder.png");
+  }
+
+  public static Icon getAnalyzeIcon() {
+    return getToolbarDecoratorIcon("analyze.png");
   }
 
   public static Icon getToolbarDecoratorIcon(String name) {

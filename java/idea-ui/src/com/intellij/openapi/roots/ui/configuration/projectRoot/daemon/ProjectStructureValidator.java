@@ -63,7 +63,7 @@ public abstract class ProjectStructureValidator {
     }
 
     final ModuleStructureConfigurable moduleStructureConfigurable = ModuleStructureConfigurable.getInstance(project);
-    final List<Module> modules = LibraryEditingUtil.getSuitableModules(moduleStructureConfigurable, ((LibraryEx)library).getType(), library);
+    final List<Module> modules = LibraryEditingUtil.getSuitableModules(moduleStructureConfigurable, ((LibraryEx)library).getKind(), library);
     if (modules.isEmpty()) return;
     final ChooseModulesDialog
       dlg = new ChooseModulesDialog(moduleStructureConfigurable.getProject(), modules, ProjectBundle.message("choose.modules.dialog.title"),

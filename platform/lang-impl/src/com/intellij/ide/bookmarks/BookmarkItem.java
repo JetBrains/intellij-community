@@ -89,7 +89,8 @@ public class BookmarkItem implements ItemWrapper {
     }
   }
 
-  public void updateMnemonicLabel(JLabel label) {
+  public void updateAccessoryView(JComponent component) {
+    JLabel label = (JLabel)component;
     final char mnemonic = myBookmark.getMnemonic();
     if (mnemonic != 0) {
       label.setText(Character.toString(mnemonic) + '.');
@@ -116,7 +117,7 @@ public class BookmarkItem implements ItemWrapper {
     VirtualFile file = myBookmark.getFile();
     LogicalPosition positionToNavigate = new LogicalPosition(myBookmark.getLine(), 0);
 
-    panel.navigateInPreviewEditor(file, positionToNavigate);
+    panel.navigateInPreviewEditor(file, positionToNavigate, null);
   }
 
   @Override

@@ -23,6 +23,7 @@ import com.intellij.openapi.roots.libraries.NewLibraryConfiguration;
 import com.intellij.openapi.roots.ui.configuration.libraries.CustomLibraryDescription;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryEditor;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -40,15 +41,15 @@ import java.util.*;
 public class GroovyLibraryDescription extends CustomLibraryDescription {
   private static final String GROOVY_FRAMEWORK_NAME = "Groovy";
   private String myEnvVariable;
-  private final Set<? extends LibraryKind<?>> myLibraryKinds;
+  private final Set<? extends LibraryKind> myLibraryKinds;
   private final String myFrameworkName;
 
   public GroovyLibraryDescription() {
     this("GROOVY_HOME", getAllGroovyKinds(), GROOVY_FRAMEWORK_NAME);
   }
 
-  public static Set<? extends LibraryKind<?>> getAllGroovyKinds() {
-    final HashSet<LibraryKind<?>> kinds = new HashSet<LibraryKind<?>>();
+  public static Set<? extends LibraryKind> getAllGroovyKinds() {
+    final HashSet<LibraryKind> kinds = new HashSet<LibraryKind>();
     for (LibraryPresentationProvider provider : LibraryPresentationProvider.EP_NAME.getExtensions()) {
       if (provider instanceof GroovyLibraryPresentationProviderBase) {
         kinds.add(provider.getKind());
@@ -57,11 +58,11 @@ public class GroovyLibraryDescription extends CustomLibraryDescription {
     return kinds;
   }
 
-  public GroovyLibraryDescription(@NotNull String envVariable, @NotNull LibraryKind<?> libraryKind, String frameworkName) {
+  public GroovyLibraryDescription(@NotNull String envVariable, @NotNull LibraryKind libraryKind, String frameworkName) {
     this(envVariable, Collections.singleton(libraryKind), frameworkName);
   }
 
-  private GroovyLibraryDescription(@NotNull String envVariable, @NotNull final Set<? extends LibraryKind<?>> libraryKinds, String frameworkName) {
+  private GroovyLibraryDescription(@NotNull String envVariable, @NotNull final Set<? extends LibraryKind> libraryKinds, String frameworkName) {
     myEnvVariable = envVariable;
     myLibraryKinds = libraryKinds;
     myFrameworkName = frameworkName;
@@ -88,7 +89,7 @@ public class GroovyLibraryDescription extends CustomLibraryDescription {
 
   @NotNull
   @Override
-  public Set<? extends LibraryKind<?>> getSuitableLibraryKinds() {
+  public Set<? extends LibraryKind> getSuitableLibraryKinds() {
     return myLibraryKinds;
   }
 
@@ -121,6 +122,7 @@ public class GroovyLibraryDescription extends CustomLibraryDescription {
     final String path = dir.getPath();
     final String sdkVersion = provider.getSDKVersion(path);
     if (AbstractConfigUtils.UNDEFINED_VERSION.equals(sdkVersion)) {
+      Messages.showErrorDialog(parentComponent, "Looks like " + myFrameworkName + " distribution in specified path is broken. Cannot determinate version.", "Failed to create library");
       return null;
     }
 

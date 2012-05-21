@@ -17,6 +17,7 @@ package com.intellij.openapi.keymap.impl.ui;
 
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Separator;
 import com.intellij.openapi.actionSystem.ex.QuickList;
 import com.intellij.openapi.actionSystem.ex.QuickListsManager;
@@ -24,43 +25,37 @@ import com.intellij.openapi.keymap.KeyMapBundle;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.ui.DocumentAdapter;
-import com.intellij.ui.JBDefaultTreeCellRenderer;
+import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
+import com.intellij.util.PlatformIcons;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 
 public class QuickListPanel {
   private static final Icon EMPTY_ICON = EmptyIcon.ICON_18;
 
   private static final Icon QUICK_LIST_ICON = IconLoader.getIcon("/actions/quickList.png");
-  private JButton myRemoveActionButton;
-  private JButton myIncludeActionButton;
-  private JButton myMoveActionDownButton;
-  private JButton myMoveActionUpButton;
   private JPanel myPanel;
   private JBList myActionsList;
   private JTextField myDisplayName;
   private JTextField myDescription;
-  private JButton myAddSeparatorButton;
-  private final boolean myEditable;
+  private JPanel myListPanel;
   private final QuickList[] myAllQuickLists;
 
   public QuickListPanel(QuickList origin, final QuickList[] allQuickLists, Project project) {
     myAllQuickLists = allQuickLists;
-    myEditable = !QuickListsManager.getInstance().getSchemesManager().isShared(origin);
 
-    myActionsList.setModel(new DefaultListModel());
+    myActionsList = new JBList(new DefaultListModel());
     myActionsList.setCellRenderer(new MyListCellRenderer());
     myActionsList.getEmptyText().setText(KeyMapBundle.message("no.actions"));
+    myActionsList.setEnabled(!QuickListsManager.getInstance().getSchemesManager().isShared(origin));
 
     myActionsList.addMouseListener(new MouseAdapter() {
       public void mouseClicked(MouseEvent e) {
@@ -70,61 +65,19 @@ public class QuickListPanel {
       }
     });
 
-    myActionsList.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
-      public void valueChanged(ListSelectionEvent e) {
-        update();
-      }
-    });
-
-    myIncludeActionButton.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        includeSelectedAction();
-      }
-    });
-
-    myAddSeparatorButton.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        addSeparator();
-      }
-    });
-
-    myActionsList.registerKeyboardAction(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        excludeSelectionAction();
-      }
-    }, KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0), JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
-
-    myRemoveActionButton.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        excludeSelectionAction();
-      }
-    });
-
-    myMoveActionUpButton.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        int idx = myActionsList.getSelectedIndex();
-        if (idx > 0) {
-          DefaultListModel listModel = (DefaultListModel)myActionsList.getModel();
-          Object oldValue = listModel.get(idx);
-          listModel.removeElementAt(idx);
-          listModel.add(--idx, oldValue);
-          myActionsList.getSelectionModel().setSelectionInterval(idx, idx);
+    myListPanel.add(
+      ToolbarDecorator.createDecorator(myActionsList)
+        .setAddAction(new AnActionButtonRunnable() {
+          @Override
+          public void run(AnActionButton button) {
+            includeSelectedAction();
+          }
+        }).addExtraAction(new AnActionButton("Add Separator", PlatformIcons.SEPARATOR_HORIZONTAL_ICON) {
+        @Override
+        public void actionPerformed(AnActionEvent e) {
+          addSeparator();
         }
-      }
-    });
-
-    myMoveActionDownButton.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        int idx = myActionsList.getSelectedIndex();
-        DefaultListModel listModel = (DefaultListModel)myActionsList.getModel();
-        if (idx < listModel.getSize() - 1) {
-          Object oldValue = listModel.get(idx);
-          listModel.removeElementAt(idx);
-          listModel.add(++idx, oldValue);
-          myActionsList.getSelectionModel().setSelectionInterval(idx, idx);
-        }
-      }
-    });
+      }).setButtonComparator("Add", "Add Separator", "Remove", "Up", "Down").createPanel(), BorderLayout.CENTER);
 
     myDisplayName.setText(origin.getDisplayName());
     myDescription.setText(origin.getDescription());
@@ -133,11 +86,9 @@ public class QuickListPanel {
     for (String id : ids) {
       includeActionId(id);
     }
-
-    update();
   }
 
-  public void addNameListener(DocumentAdapter adapter){
+  public void addNameListener(DocumentAdapter adapter) {
     myDisplayName.getDocument().addDocumentListener(adapter);
   }
 
@@ -147,10 +98,9 @@ public class QuickListPanel {
 
   private void excludeSelectionAction() {
     int[] ids = myActionsList.getSelectedIndices();
-    for (int i = ids.length - 1; i >=0; i--) {
+    for (int i = ids.length - 1; i >= 0; i--) {
       ((DefaultListModel)myActionsList.getModel()).remove(ids[i]);
     }
-    update();
   }
 
   private void includeSelectedAction() {
@@ -174,14 +124,12 @@ public class QuickListPanel {
           selectionModel.addSelectionInterval(idx, idx);
         }
       }
-      update();
     }
   }
 
   private void addSeparator() {
     DefaultListModel model = (DefaultListModel)myActionsList.getModel();
     model.addElement(QuickList.SEPARATOR_ID);
-    update();
   }
 
   public JList getActionsList() {
@@ -194,24 +142,6 @@ public class QuickListPanel {
 
   public String getDisplayName() {
     return myDisplayName.getText();
-  }
-
-  private void update() {
-    if (myEditable) {
-      myIncludeActionButton.setEnabled(true);
-      myRemoveActionButton.setEnabled(myActionsList.getSelectedValues().length > 0);
-      boolean enableMove = myActionsList.getSelectedValues().length == 1;
-      myMoveActionUpButton.setEnabled(enableMove && myActionsList.getSelectedIndex() > 0);
-      myMoveActionDownButton.setEnabled(enableMove && myActionsList.getSelectedIndex() < myActionsList.getModel().getSize() - 1);
-    }
-    else {
-      myIncludeActionButton.setEnabled(false);
-      myRemoveActionButton.setEnabled(false);
-      myMoveActionUpButton.setEnabled(false);
-      myMoveActionDownButton.setEnabled(false);
-      myAddSeparatorButton.setEnabled(false);
-
-    }
   }
 
   private void includeActionId(String id) {
@@ -251,8 +181,6 @@ public class QuickListPanel {
           if (icon == null) {
             icon = expanded ? getOpenIcon() : getClosedIcon();
           }
-
-
         }
         else if (userObject instanceof String) {
           String actionId = (String)userObject;
@@ -277,7 +205,6 @@ public class QuickListPanel {
         else if (userObject instanceof Separator) {
           // TODO[vova,anton]: beautify
           setText("-------------");
-
         }
         else {
           throw new IllegalArgumentException("unknown userObject: " + userObject);
@@ -289,7 +216,7 @@ public class QuickListPanel {
           setForeground(getSelectionForeground(tree));
         }
         else {
-          Color foreground = used ? UIUtil.getInactiveTextColor() :UIUtil.getTreeForeground();
+          Color foreground = used ? UIUtil.getInactiveTextColor() : UIUtil.getTreeForeground();
           setForeground(foreground);
         }
       }
@@ -319,7 +246,7 @@ public class QuickListPanel {
             icon = actionIcon;
           }
         }
-        if (actionId.startsWith(QuickList.QUICK_LIST_PREFIX)){
+        if (actionId.startsWith(QuickList.QUICK_LIST_PREFIX)) {
           icon = QUICK_LIST_ICON;
         }
         setIcon(ActionsTree.getEvenIcon(icon));

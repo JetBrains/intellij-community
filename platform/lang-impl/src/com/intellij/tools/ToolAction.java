@@ -35,10 +35,11 @@ public class ToolAction extends AnAction implements DumbAware {
 
   public void actionPerformed(AnActionEvent e) {
     MacroManager.getInstance().cacheMacrosPreview(e.getDataContext());
+    final HackyDataContext dataContext = new HackyDataContext(e.getDataContext());
     Tool[] tools = ToolManager.getInstance().getTools();
     for (Tool tool : tools) {
       if (myActionId.equals(tool.getActionId())) {
-        tool.execute(e.getDataContext());
+        tool.execute(dataContext);
         break;
       }
     }

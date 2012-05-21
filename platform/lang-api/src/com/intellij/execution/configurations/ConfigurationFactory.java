@@ -15,11 +15,11 @@
  */
 package com.intellij.execution.configurations;
 
-import com.intellij.execution.RunManager;
 import com.intellij.execution.BeforeRunTask;
+import com.intellij.execution.RunManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Key;
+import com.intellij.util.IconUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -28,7 +28,7 @@ import javax.swing.*;
  * @author dyoma
  */
 public abstract class ConfigurationFactory {
-  public static final Icon ADD_ICON = IconLoader.getIcon("/general/add.png");
+  public static final Icon ADD_ICON = IconUtil.getAddIcon();
 
   private final ConfigurationType myType;
 

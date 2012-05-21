@@ -16,10 +16,11 @@
 package com.intellij.android.designer.propertyTable.editors;
 
 import com.android.resources.ResourceType;
-import com.intellij.android.designer.model.PropertyParser;
+import com.intellij.android.designer.model.ModelParser;
 import com.intellij.designer.model.RadComponent;
 import com.intellij.designer.propertyTable.PropertyEditor;
 import com.intellij.designer.propertyTable.editors.ComboEditor;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.ui.ComponentWithBrowseButton;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
@@ -38,40 +39,16 @@ import java.util.Set;
  * @author Alexander Lobas
  */
 public class ResourceEditor extends PropertyEditor {
-  private ResourceType[] myTypes;
+  private final ResourceType[] myTypes;
   private ComponentWithBrowseButton myEditor;
-  private RadComponent myRootComponent;
+  protected RadComponent myRootComponent;
 
   public ResourceEditor(Set<AttributeFormat> formats, String[] values) {
-    Set<ResourceType> types = EnumSet.noneOf(ResourceType.class);
-    for (AttributeFormat format : formats) {
-      switch (format) {
-        case Boolean:
-          types.add(ResourceType.BOOL);
-          break;
-        case Color:
-          types.add(ResourceType.COLOR);
-          types.add(ResourceType.DRAWABLE);
-          break;
-        case Dimension:
-          types.add(ResourceType.DIMEN);
-          break;
-        case Integer:
-          types.add(ResourceType.INTEGER);
-          break;
-        case String:
-          types.add(ResourceType.STRING);
-          break;
-        case Reference:
-          types.add(ResourceType.COLOR);
-          types.add(ResourceType.DRAWABLE);
-          types.add(ResourceType.STRING);
-          types.add(ResourceType.ID);
-          types.add(ResourceType.STYLE);
-          break;
-      }
-    }
-    myTypes = types.toArray(new ResourceType[types.size()]);
+    this(convertTypes(formats), formats, values);
+  }
+
+  public ResourceEditor(ResourceType[] types, Set<AttributeFormat> formats, String[] values) {
+    myTypes = types;
 
     if (formats.contains(AttributeFormat.Enum) || formats.contains(AttributeFormat.Boolean)) {
       ComboboxWithBrowseButton editor = new ComboboxWithBrowseButton();
@@ -118,14 +95,7 @@ public class ResourceEditor extends PropertyEditor {
     myEditor.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        PropertyParser parser = myRootComponent.getClientProperty(PropertyParser.KEY);
-        ResourceDialog dialog = parser.createResourceDialog(myTypes);
-        dialog.show();
-
-        if (dialog.getExitCode() == DialogWrapper.OK_EXIT_CODE) {
-          getComboText().setText(dialog.getResourceName());
-          fireValueCommitted(true, true);
-        }
+        showDialog();
       }
     });
     myEditor.addFocusListener(new FocusAdapter() {
@@ -134,6 +104,39 @@ public class ResourceEditor extends PropertyEditor {
         myEditor.getChildComponent().requestFocus();
       }
     });
+  }
+
+  private static ResourceType[] convertTypes(Set<AttributeFormat> formats) {
+    Set<ResourceType> types = EnumSet.noneOf(ResourceType.class);
+    for (AttributeFormat format : formats) {
+      switch (format) {
+        case Boolean:
+          types.add(ResourceType.BOOL);
+          break;
+        case Color:
+          types.add(ResourceType.COLOR);
+          types.add(ResourceType.DRAWABLE);
+          break;
+        case Dimension:
+          types.add(ResourceType.DIMEN);
+          break;
+        case Integer:
+          types.add(ResourceType.INTEGER);
+          break;
+        case String:
+          types.add(ResourceType.STRING);
+          break;
+        case Reference:
+          types.add(ResourceType.COLOR);
+          types.add(ResourceType.DRAWABLE);
+          types.add(ResourceType.STRING);
+          types.add(ResourceType.ID);
+          types.add(ResourceType.STYLE);
+          break;
+      }
+    }
+
+    return types.toArray(new ResourceType[types.size()]);
   }
 
   @NotNull
@@ -151,6 +154,26 @@ public class ResourceEditor extends PropertyEditor {
     return value == StringsComboEditor.UNSET || StringUtil.isEmpty(value) ? null : value;
   }
 
+  @Override
+  public void updateUI() {
+    SwingUtilities.updateComponentTreeUI(myEditor);
+  }
+
+  protected void showDialog() {
+    Module module = myRootComponent.getClientProperty(ModelParser.MODULE_KEY);
+    ResourceDialog dialog = new ResourceDialog(module, myTypes);
+    dialog.show();
+
+    if (dialog.getExitCode() == DialogWrapper.OK_EXIT_CODE) {
+      setValue(dialog.getResourceName());
+    }
+  }
+
+  protected final void setValue(String value) {
+    getComboText().setText(value);
+    fireValueCommitted(true, true);
+  }
+
   private JTextField getComboText() {
     JComponent component = myEditor.getChildComponent();
     if (component instanceof JTextField) {
@@ -158,10 +181,5 @@ public class ResourceEditor extends PropertyEditor {
     }
     JComboBox combo = (JComboBox)component;
     return (JTextField)combo.getEditor().getEditorComponent();
-  }
-
-  @Override
-  public void updateUI() {
-    SwingUtilities.updateComponentTreeUI(myEditor);
   }
 }

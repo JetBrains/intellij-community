@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import com.intellij.openapi.roots.impl.libraries.LibraryTableBase;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
+import com.intellij.openapi.roots.libraries.LibraryType;
 import com.intellij.openapi.roots.libraries.ui.OrderRoot;
 import com.intellij.openapi.roots.ui.configuration.LibraryTableModifiableModelProvider;
 import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator;
@@ -91,7 +92,8 @@ public class LibrariesContainerFactory {
   private static Library createLibraryInTable(final @NotNull NewLibraryEditor editor, final LibraryTable table) {
     LibraryTableBase.ModifiableModelEx modifiableModel = (LibraryTableBase.ModifiableModelEx) table.getModifiableModel();
     final String name = StringUtil.isEmpty(editor.getName()) ? null : getUniqueLibraryName(editor.getName(), modifiableModel);
-    Library library = modifiableModel.createLibrary(name, editor.getType());
+    final LibraryType<?> type = editor.getType();
+    Library library = modifiableModel.createLibrary(name, type == null ? null : type.getKind());
     final LibraryEx.ModifiableModelEx model = (LibraryEx.ModifiableModelEx)library.getModifiableModel();
     editor.applyTo(model);
     model.commit();
@@ -299,7 +301,8 @@ public class LibrariesContainerFactory {
       }
 
       LibraryTableBase.ModifiableModelEx model = (LibraryTableBase.ModifiableModelEx)provider.getModifiableModel();
-      Library library = model.createLibrary(getUniqueLibraryName(libraryEditor.getName(), model), libraryEditor.getType());
+      final LibraryType<?> type = libraryEditor.getType();
+      Library library = model.createLibrary(getUniqueLibraryName(libraryEditor.getName(), model), type == null ? null : type.getKind());
       ExistingLibraryEditor createdLibraryEditor = ((LibrariesModifiableModel)model).getLibraryEditor(library);
       createdLibraryEditor.setProperties(libraryEditor.getProperties());
       libraryEditor.applyTo(createdLibraryEditor);

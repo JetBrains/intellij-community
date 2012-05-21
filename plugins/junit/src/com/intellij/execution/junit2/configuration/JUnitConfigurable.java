@@ -51,7 +51,7 @@ import com.intellij.ui.EditorTextFieldWithBrowseButton;
 import com.intellij.ui.InsertPathAction;
 import com.intellij.ui.PanelWithAnchor;
 import com.intellij.ui.components.JBLabel;
-import com.intellij.util.PlatformIcons;
+import com.intellij.util.IconUtil;
 import com.intellij.util.TextFieldCompletionProvider;
 import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NonNls;
@@ -178,7 +178,7 @@ public class JUnitConfigurable extends SettingsEditor<JUnitConfiguration> implem
     final JPanel panel = myPattern.getComponent();
     panel.setLayout(new BorderLayout());
     myPatternTextField = new TextFieldWithBrowseButton();
-    myPatternTextField.setButtonIcon(PlatformIcons.ADD_ICON);
+    myPatternTextField.setButtonIcon(IconUtil.getAddIcon());
     panel.add(myPatternTextField, BorderLayout.CENTER);
     final FixedSizeButton editBtn = new FixedSizeButton();
     editBtn.setIcon(IconLoader.getIcon("/actions/showViewer.png"));

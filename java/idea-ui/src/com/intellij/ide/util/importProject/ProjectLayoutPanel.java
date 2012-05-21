@@ -29,6 +29,7 @@ import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBList;
+import com.intellij.util.IconUtil;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.containers.ContainerUtil;
@@ -52,7 +53,7 @@ import java.util.List;
  */
 abstract class ProjectLayoutPanel<T> extends JPanel {
   private static final Icon ICON_MODULE = IconLoader.getIcon("/nodes/ModuleClosed.png");
-  private static final Icon RENAME_ICON = IconLoader.getIcon("/modules/edit.png");
+  private static final Icon RENAME_ICON = IconUtil.getEditIcon();
   private static final Icon MERGE_ICON = IconLoader.getIcon("/modules/merge.png");
   private static final Icon SPLIT_ICON = IconLoader.getIcon("/modules/split.png");
   

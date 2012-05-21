@@ -305,7 +305,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
       @Override
       protected void run(Result<Module> result) throws Throwable {
         final VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(moduleFile);
-        Module module = ModuleManager.getInstance(project).newModule(virtualFile.getPath(), moduleType);
+        Module module = ModuleManager.getInstance(project).newModule(virtualFile.getPath(), moduleType.getId());
         module.getModuleFile();
         result.setResult(module);
       }

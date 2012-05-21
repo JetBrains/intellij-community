@@ -23,10 +23,15 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.psi.PsiClass;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBList;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import java.awt.*;
+
+import static com.intellij.util.ui.UIUtil.ComponentStyle.SMALL;
+import static com.intellij.util.ui.UIUtil.FontColor.BRIGHTER;
 
 class RestoreReferencesDialog extends DialogWrapper {
   private final Object[] myNamedElements;
@@ -64,19 +69,14 @@ class RestoreReferencesDialog extends DialogWrapper {
 
   @Override
   protected JComponent createCenterPanel() {
-    final JPanel panel = new JPanel(new BorderLayout());
+    final JPanel panel = new JPanel(new BorderLayout(UIUtil.DEFAULT_HGAP, UIUtil.DEFAULT_VGAP));
     myList = new JBList(myNamedElements);
     myList.setCellRenderer(new FQNameCellRenderer());
-    myList.setBorder(BorderFactory.createEtchedBorder());
     panel.add(ScrollPaneFactory.createScrollPane(myList), BorderLayout.CENTER);
 
-    JTextArea area = new JTextArea(myContainsClassesOnly ?
-                                   CodeInsightBundle.message("dialog.paste.on.import.text") :
-                                   CodeInsightBundle.message("dialog.paste.on.import.text2"));
-    area.setEditable(false);
-    area.setBackground(this.getContentPane().getBackground());
-    area.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
-    panel.add(area, BorderLayout.NORTH);
+    panel.add(new JBLabel(myContainsClassesOnly ?
+                          CodeInsightBundle.message("dialog.paste.on.import.text") :
+                          CodeInsightBundle.message("dialog.paste.on.import.text2"), SMALL, BRIGHTER), BorderLayout.NORTH);
 
     final JPanel buttonPanel = new JPanel(new VerticalFlowLayout());
     final JButton okButton = new JButton(CommonBundle.getOkButtonText());

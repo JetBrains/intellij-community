@@ -84,7 +84,7 @@ public class GitVcsPanel {
    * Test availability of the connection
    */
   private void testConnection() {
-    final String executable = myGitField.getText();
+    final String executable = getCurrentExecutablePath();
     if (myAppSettings != null) {
       myAppSettings.setPathToGit(executable);
     }
@@ -105,6 +105,10 @@ public class GitVcsPanel {
       Messages.showWarningDialog(myRootPanel, GitBundle.message("find.git.unsupported.message", version.toString(), GitVersion.MIN),
                                  GitBundle.getString("find.git.success.title"));
     }
+  }
+
+  private String getCurrentExecutablePath() {
+    return myGitField.getText().trim();
   }
 
   /**
@@ -159,7 +163,7 @@ public class GitVcsPanel {
    * @param settings the settings to load
    */
   public boolean isModified(@NotNull GitVcsSettings settings) {
-    return !settings.getAppSettings().getPathToGit().equals(myGitField.getText()) ||
+    return !settings.getAppSettings().getPathToGit().equals(getCurrentExecutablePath()) ||
            (settings.isIdeaSsh() != IDEA_SSH.equals(mySSHExecutableComboBox.getSelectedItem())) ||
            !crlfPolicyItem(settings).equals(myConvertTextFilesComboBox.getSelectedItem()) ||
            !settings.autoUpdateIfPushRejected() == myAutoUpdateIfPushRejected.isSelected() ||
@@ -173,7 +177,7 @@ public class GitVcsPanel {
    * @param settings the settings object
    */
   public void save(@NotNull GitVcsSettings settings) {
-    settings.getAppSettings().setPathToGit(myGitField.getText());
+    settings.getAppSettings().setPathToGit(getCurrentExecutablePath());
     myVcs.checkVersion();
     settings.setIdeaSsh(IDEA_SSH.equals(mySSHExecutableComboBox.getSelectedItem()));
     settings.setAutoUpdateIfPushRejected(myAutoUpdateIfPushRejected.isSelected());

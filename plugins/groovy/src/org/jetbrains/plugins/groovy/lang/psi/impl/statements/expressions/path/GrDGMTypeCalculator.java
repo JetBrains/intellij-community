@@ -15,10 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.path;
 
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.hash.HashSet;
 import org.jetbrains.annotations.NotNull;
@@ -28,6 +25,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethod
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrCallExpressionTypeCalculator;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 
@@ -82,7 +80,7 @@ public class GrDGMTypeCalculator extends GrCallExpressionTypeCalculator {
               itemType = iitype;
             }
           }
-          return createSimilarCollection(type, callExpression.getProject(), itemType);
+          return TypesUtil.createSimilarCollection(type, callExpression.getProject(), itemType);
         }
       }
     }
@@ -98,49 +96,6 @@ public class GrDGMTypeCalculator extends GrCallExpressionTypeCalculator {
     else {
       return PsiUtil.extractIterableTypeParameter(type, true);
     }
-  }
-
-  @Nullable
-  private static PsiType createSimilarCollection(PsiType collection, Project project, PsiType... itemType) {
-    if (InheritanceUtil.isInheritor(collection, "java.util.SortedSet")) {
-      return createCollection(project, "java.util.SortedSet", itemType);
-    }
-    if (InheritanceUtil.isInheritor(collection, "java.util.LinkedHashSet")) {
-      return createCollection(project, "java.util.LinkedHashSet", itemType);
-    }
-    if (InheritanceUtil.isInheritor(collection, "java.util.Set")) {
-      return createCollection(project, "java.util.HashSet", itemType);
-    }
-    if (InheritanceUtil.isInheritor(collection, "java.util.LinkedList")) {
-      return createCollection(project, "java.util.LInkedList", itemType);
-    }
-    if (InheritanceUtil.isInheritor(collection, "java.util.Stack")) {
-      return createCollection(project, "java.util.Stack", itemType);
-    }
-    if (InheritanceUtil.isInheritor(collection, "java.util.Vector")) {
-      return createCollection(project, "java.util.Vector", itemType);
-    }
-    if (InheritanceUtil.isInheritor(collection, "java.util.List")) {
-      return createCollection(project, "java.util.ArrayList", itemType);
-    }
-    if (InheritanceUtil.isInheritor(collection, "java.util.Queue")) {
-      return createCollection(project, "java.util.LinkedList", itemType);
-    }
-
-    return createCollection(project, "java.util.ArrayList", itemType);
-  }
-
-  @Nullable
-  private static PsiType createCollection(Project project, String collectionName, PsiType... item) {
-    PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
-    PsiClass collection =
-      JavaPsiFacade.getInstance(project).findClass(collectionName, GlobalSearchScope.allScope(project));
-    if (collection == null) return null;
-
-    PsiTypeParameter[] parameters = collection.getTypeParameters();
-    if (parameters.length != 1) return null;
-
-    return factory.createType(collection, item);
   }
 
   private static boolean isSimilarCollectionReturner(PsiMethod resolved) {

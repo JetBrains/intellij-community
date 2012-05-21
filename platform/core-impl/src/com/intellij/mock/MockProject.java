@@ -16,6 +16,7 @@
 package com.intellij.mock;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.components.ExtensionAreas;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
@@ -31,9 +32,11 @@ import org.picocontainer.PicoContainer;
  * @author yole
  */
 public class MockProject extends MockComponentManager implements Project {
+  private VirtualFile myBaseDir;
+
   public MockProject(PicoContainer parent, @NotNull Disposable parentDisposable) {
     super(parent, parentDisposable);
-    Extensions.instantiateArea("IDEA_PROJECT", this, null);
+    Extensions.instantiateArea(ExtensionAreas.IDEA_PROJECT, this, null);
     Disposer.register(parentDisposable, new Disposable() {
       @Override
       public void dispose() {
@@ -111,10 +114,14 @@ public class MockProject extends MockComponentManager implements Project {
     return null;
   }
 
+  public void setBaseDir(VirtualFile baseDir) {
+    myBaseDir = baseDir;
+  }
+
   @Override
   @Nullable
   public VirtualFile getBaseDir() {
-    return null;
+    return myBaseDir;
   }
 
   @Override

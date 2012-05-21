@@ -1,5 +1,5 @@
 public class RearrangementTest18 {
-  int field1;
+  int  field1;
 
   int getField1() {
     return field1;
@@ -8,7 +8,6 @@ public class RearrangementTest18 {
   void setField1(int val) {
     field1 = val;
   }
-
   char char2;
 
   char getChar2() {

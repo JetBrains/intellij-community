@@ -51,7 +51,6 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.packageDependencies.DependenciesBuilder;
@@ -63,7 +62,6 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.IconUtil;
-import com.intellij.util.PlatformIcons;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -286,7 +284,7 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
       }
     };
 
-    final AnActionButton analyzeButton = new AnActionButton(ProjectBundle.message("classpath.panel.analyze"), null, SystemInfo.isMac ? PlatformIcons.TABLE_ANALYZE : PlatformIcons.ANALYZE) {
+    final AnActionButton analyzeButton = new AnActionButton(ProjectBundle.message("classpath.panel.analyze"), null, IconUtil.getAnalyzeIcon()) {
       @Override
       public void actionPerformed(AnActionEvent e) {
         AnalyzeDependenciesDialog.show(getRootModel().getModule());
@@ -355,13 +353,13 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
           removeAction.actionPerformed(null);
         }
       })
-      .setUpAction(new AnActionButtonRunnable() {
+      .setMoveUpAction(new AnActionButtonRunnable() {
         @Override
         public void run(AnActionButton button) {
           moveSelectedRows(-1);
         }
       })
-      .setDownAction(new AnActionButtonRunnable() {
+      .setMoveDownAction(new AnActionButtonRunnable() {
         @Override
         public void run(AnActionButton button) {
           moveSelectedRows(+1);

@@ -30,6 +30,7 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
+import com.intellij.util.PlatformIcons;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
@@ -246,7 +247,7 @@ public class ThreadDumpPanel extends JPanel {
     private final Project myProject;
 
     public CopyToClipboardAction(List<ThreadState> threadDump, Project project) {
-      super("Copy to Clipboard", "Copy whole thread dump to clipboard", IconLoader.getIcon("/general/copy.png"));
+      super("Copy to Clipboard", "Copy whole thread dump to clipboard", PlatformIcons.COPY_ICON);
       myThreadDump = threadDump;
       myProject = project;
     }

@@ -139,13 +139,13 @@ public class SeverityEditorDialog extends DialogWrapper {
           myOptionsList.clearSelection();
           ListScrollingUtil.selectItem(myOptionsList, newSeverityBasedTextAttributes);
         }
-      }).setUpAction(new AnActionButtonRunnable() {
+      }).setMoveUpAction(new AnActionButtonRunnable() {
         @Override
         public void run(AnActionButton button) {
           apply(myCurrentSelection);
           ListUtil.moveSelectedItemsUp(myOptionsList);
         }
-      }).setDownAction(new AnActionButtonRunnable() {
+      }).setMoveDownAction(new AnActionButtonRunnable() {
         @Override
         public void run(AnActionButton button) {
           apply(myCurrentSelection);

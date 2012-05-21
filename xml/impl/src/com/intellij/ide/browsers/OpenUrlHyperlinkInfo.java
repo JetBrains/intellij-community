@@ -24,7 +24,7 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.IconLoader;
+import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.datatransfer.StringSelection;
@@ -66,7 +66,7 @@ public class OpenUrlHyperlinkInfo implements HyperlinkWithPopupMenuInfo {
 
   private class CopyUrlToClipboardAction extends AnAction {
     private CopyUrlToClipboardAction() {
-      super("Copy URL", "Copy URL to clipboard", IconLoader.getIcon("/actions/menu-copy.png"));
+      super("Copy URL", "Copy URL to clipboard", PlatformIcons.COPY_ICON);
     }
 
     @Override

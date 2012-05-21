@@ -29,7 +29,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
-import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.*;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureDaemonAnalyzerListener;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureElement;
 import com.intellij.openapi.ui.MasterDetailsComponent;
 import com.intellij.openapi.ui.MasterDetailsState;
 import com.intellij.openapi.ui.MasterDetailsStateService;
@@ -42,7 +43,7 @@ import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.navigation.Place;
 import com.intellij.util.Function;
-import com.intellij.util.PlatformIcons;
+import com.intellij.util.IconUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -433,7 +434,7 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
     }
 
     public AbstractAddGroup(String text) {
-      this(text, PlatformIcons.ADD_ICON);
+      this(text, IconUtil.getAddIcon());
     }
 
     public ActionGroup getActionGroup() {

@@ -24,6 +24,7 @@ import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.StdModuleTypes;
+import com.intellij.openapi.roots.impl.ModifiableModelCommitter;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -31,7 +32,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.impl.ProjectMacrosUtil;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.impl.ModuleRootManagerImpl;
 import com.intellij.openapi.roots.impl.storage.ClasspathStorage;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
@@ -263,7 +263,8 @@ public class EclipseImportBuilder extends ProjectImportBuilder<String> implement
         if (modulesDirectory == null) {
           modulesDirectory = path;
         }
-        final Module module = moduleModel.newModule(modulesDirectory + "/" + EclipseProjectFinder.findProjectName(path) + IdeaXml.IML_EXT, StdModuleTypes.JAVA);
+        final Module module = moduleModel.newModule(modulesDirectory + "/" + EclipseProjectFinder.findProjectName(path) + IdeaXml.IML_EXT,
+                                                    StdModuleTypes.JAVA.getId());
         result.add(module);
         final ModifiableRootModel rootModel = ModuleRootManager.getInstance(module).getModifiableModel();
         rootModels[idx++] = rootModel;
@@ -291,7 +292,7 @@ public class EclipseImportBuilder extends ProjectImportBuilder<String> implement
       if (model == null) {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
             public void run(){
-              ModuleRootManagerImpl.multiCommit(rootModels, moduleModel);
+              ModifiableModelCommitter.multiCommit(rootModels, moduleModel);
             }
         });
       }

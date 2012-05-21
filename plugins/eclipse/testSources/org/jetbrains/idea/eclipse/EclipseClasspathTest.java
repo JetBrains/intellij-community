@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,6 +39,7 @@ import junit.framework.Assert;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.eclipse.config.EclipseClasspathStorageProvider;
 import org.jetbrains.idea.eclipse.conversion.ConversionException;
 import org.jetbrains.idea.eclipse.conversion.EclipseClasspathReader;
@@ -74,7 +75,7 @@ public class EclipseClasspathTest extends IdeaTestCase {
     checkModule(path, setUpModule(path, project));
   }
 
-  static Module setUpModule(final String path, final Project project)
+  static Module setUpModule(final String path, @NotNull final Project project)
     throws IOException, JDOMException, ConversionException, ConfigurationException {
     final File classpathFile = new File(path, EclipseXml.DOT_CLASSPATH_EXT);
     String fileText = FileUtil.loadFile(classpathFile).replaceAll("\\$ROOT\\$", project.getBaseDir().getPath());
@@ -86,7 +87,7 @@ public class EclipseClasspathTest extends IdeaTestCase {
       @Override
       public Module compute() {
         return ModuleManager.getInstance(project)
-          .newModule(path + "/" + EclipseProjectFinder.findProjectName(path) + IdeaXml.IML_EXT, StdModuleTypes.JAVA);
+          .newModule(path + "/" + EclipseProjectFinder.findProjectName(path) + IdeaXml.IML_EXT, StdModuleTypes.JAVA.getId());
       }
     });
     final ModifiableRootModel rootModel = ModuleRootManager.getInstance(module).getModifiableModel();

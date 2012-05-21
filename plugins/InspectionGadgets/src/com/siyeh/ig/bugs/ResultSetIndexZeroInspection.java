@@ -15,8 +15,10 @@
  */
 package com.siyeh.ig.bugs;
 
-import com.intellij.psi.*;
-import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiExpressionList;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiReferenceExpression;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -78,12 +80,6 @@ public class ResultSetIndexZeroInspection extends BaseInspection {
         return;
       }
       final PsiExpression argument = arguments[0];
-      if (!TypeUtils.expressionHasType(argument, PsiKeyword.INT)) {
-        return;
-      }
-      if (!PsiUtil.isConstantExpression(argument)) {
-        return;
-      }
       final Object val = ExpressionUtils.computeConstantExpression(argument);
       if (!(val instanceof Integer) || ((Integer)val).intValue() != 0) {
         return;

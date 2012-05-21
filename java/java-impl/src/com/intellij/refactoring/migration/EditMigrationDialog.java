@@ -115,12 +115,12 @@ public class EditMigrationDialog extends DialogWrapper{
         public void run(AnActionButton button) {
           edit();
         }
-      }).setUpAction(new AnActionButtonRunnable() {
+      }).setMoveUpAction(new AnActionButtonRunnable() {
         @Override
         public void run(AnActionButton button) {
           moveUp();
         }
-      }).setDownAction(new AnActionButtonRunnable() {
+      }).setMoveDownAction(new AnActionButtonRunnable() {
         @Override
         public void run(AnActionButton button) {
           moveDown();

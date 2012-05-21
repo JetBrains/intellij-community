@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@ import com.intellij.openapi.roots.impl.libraries.LibraryImpl;
 import com.intellij.openapi.roots.impl.libraries.LibraryTableBase;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
-import com.intellij.openapi.roots.libraries.LibraryType;
+import com.intellij.openapi.roots.libraries.PersistentLibraryKind;
 import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.ExistingLibraryEditor;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryEditor;
@@ -60,7 +60,7 @@ public class LibrariesModifiableModel implements LibraryTableBase.ModifiableMode
     return createLibrary(name, null);
   }
 
-  public Library createLibrary(String name, @Nullable LibraryType type) {
+  public Library createLibrary(String name, @Nullable PersistentLibraryKind type) {
     final Library library = ((LibraryTableBase.ModifiableModelEx)getLibrariesModifiableModel()).createLibrary(name, type);
     //createLibraryEditor(library);                     \
     final BaseLibrariesConfigurable configurable = ProjectStructureConfigurable.getInstance(myProject).getConfigurableFor(library);

@@ -276,7 +276,10 @@ public class CreateSubclassAction extends BaseIntentionAction {
           CreateFromUsageBaseFix.startTemplate(editor, template, project, new TemplateEditingAdapter() {
             @Override
             public void templateFinished(Template template, boolean brokenOff) {
-              chooseAndImplement(psiClass, project, PsiTreeUtil.getParentOfType(containingFile.findElementAt(startClassOffset), PsiClass.class), editor);
+              final PsiElement psiElement = containingFile.findElementAt(startClassOffset);
+              final PsiClass aTargetClass = PsiTreeUtil.getParentOfType(psiElement, PsiClass.class);
+              LOG.assertTrue(aTargetClass != null, psiElement);
+              chooseAndImplement(psiClass, project, aTargetClass, editor);
             }
           }, getTitle(psiClass));
         }
@@ -293,7 +296,7 @@ public class CreateSubclassAction extends BaseIntentionAction {
     return typeParameterList.replace(oldTypeParameterList);
   }
 
-  protected static void chooseAndImplement(PsiClass psiClass, Project project, PsiClass targetClass, Editor editor) {
+  protected static void chooseAndImplement(PsiClass psiClass, Project project, @NotNull PsiClass targetClass, Editor editor) {
     boolean hasNonTrivialConstructor = false;
     final PsiMethod[] constructors = psiClass.getConstructors();
     for (PsiMethod constructor : constructors) {

@@ -5,12 +5,11 @@ import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.IdeaTestCase;
+import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.*;
@@ -82,23 +81,8 @@ public class AndroidLibraryProjectTest extends UsefulTestCase {
     myLibFacet = AndroidTestCase.addAndroidFacet(myLibModule, getTestSdkPath());
     myLibFacet.getConfiguration().LIBRARY_PROJECT = true;
 
-    final ModifiableRootModel model1 = ModuleRootManager.getInstance(myAppModule).getModifiableModel();
-    model1.addModuleOrderEntry(myLibModule);
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        model1.commit();
-      }
-    });
-
-    final ModifiableRootModel model2 = ModuleRootManager.getInstance(myLibModule).getModifiableModel();
-    model2.addModuleOrderEntry(myLibGenModule);
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        model2.commit();
-      }
-    });
+    PsiTestUtil.addDependency(myAppModule, myLibModule);
+    PsiTestUtil.addDependency(myLibModule, myLibGenModule);
   }
 
   private void createInitialStructure() {

@@ -17,4 +17,8 @@ public class UnnecessaryCallToStringValueOf {
         System.out.println(String.valueOf(d) + c);
     }
 
+    void polyadic(String s) {
+      s = "abc" + String.valueOf('d') + "efg";
+    }
+
 }

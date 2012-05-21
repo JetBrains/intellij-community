@@ -61,10 +61,7 @@ public class LanguageConsoleViewImpl extends ConsoleViewImpl {
     return myConsole.getComponent();
   }
 
-  public JComponent getComponent() {
-    return super.getComponent();
-  }
-
+  @Override
   public JComponent getPreferredFocusableComponent() {
     return myConsole.getConsoleEditor().getContentComponent();
   }

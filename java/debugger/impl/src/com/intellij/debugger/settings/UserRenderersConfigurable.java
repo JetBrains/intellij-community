@@ -25,8 +25,9 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.DocumentAdapter;
+import com.intellij.util.IconUtil;
+import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.InternalIterator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -44,11 +45,11 @@ import java.util.ArrayList;
  */
 public class UserRenderersConfigurable implements SearchableConfigurable, Configurable.NoScroll {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.settings.UserRenderersConfigurable");
-  private static final Icon ADD_ICON = IconLoader.getIcon("/general/add.png");
-  private static final Icon REMOVE_ICON = IconLoader.getIcon("/general/remove.png");
-  private static final Icon COPY_ICON = IconLoader.getIcon("/general/copy.png");
-  private static final Icon UP_ICON = IconLoader.getIcon("/actions/previousOccurence.png");
-  private static final Icon DOWN_ICON = IconLoader.getIcon("/actions/nextOccurence.png");
+  private static final Icon ADD_ICON = IconUtil.getAddIcon();
+  private static final Icon REMOVE_ICON = IconUtil.getRemoveIcon();
+  private static final Icon COPY_ICON = PlatformIcons.COPY_ICON;
+  private static final Icon UP_ICON = IconUtil.getMoveUpIcon();
+  private static final Icon DOWN_ICON = IconUtil.getMoveDownIcon();
 
   private JTextField myNameField;
   private ElementsChooser<NodeRenderer> myRendererChooser;

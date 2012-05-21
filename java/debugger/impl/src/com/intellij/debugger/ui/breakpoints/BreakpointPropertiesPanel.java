@@ -51,8 +51,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.PopupMenuEvent;
-import javax.swing.event.PopupMenuListener;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.ArrayList;
@@ -178,6 +176,9 @@ public abstract class BreakpointPropertiesPanel {
     if (b) {
       myActionsPanel.setVisible(true);
     }
+    if (!b) {
+      myPanel.setPreferredSize(new Dimension(500, -1));
+    }
   }
 
   public void setDelegate(Delegate delegate) {
@@ -276,24 +277,6 @@ public abstract class BreakpointPropertiesPanel {
 
     myBreakpointComboboxHandler = new BreakpointComboboxHandler(myProject, baseBreakpointCombo);
     baseBreakpointCombo.setRenderer(new BreakpointComboRenderer(baseBreakpointCombo.getRenderer()));
-    baseBreakpointCombo.addPopupMenuListener(new PopupMenuListener() {
-      @Override
-      public void popupMenuWillBecomeVisible(PopupMenuEvent event) {
-        event.getClass();//To change body of implemented methods use File | Settings | File Templates.
-      }
-
-      @Override
-      public void popupMenuWillBecomeInvisible(PopupMenuEvent event) {
-        //To change body of implemented methods use File | Settings | File Templates.
-        event.getClass();
-      }
-
-      @Override
-      public void popupMenuCanceled(PopupMenuEvent event) {
-        //To change body of implemented methods use File | Settings | File Templates.
-        event.getClass();
-      }
-    });
     baseBreakpointCombo.addItemListener(new ItemListener() {
       public void itemStateChanged(final ItemEvent e) {
         ComboboxItem item = (ComboboxItem)baseBreakpointCombo.getSelectedItem();

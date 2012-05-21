@@ -171,7 +171,7 @@
         <separator/>
         <group id="CutCopyPasteGroup">
           <action id="$Cut" class="com.intellij.ide.actions.CutAction" icon="/actions/menu-cut.png"/>
-          <action id="$Copy" class="com.intellij.ide.actions.CopyAction" icon="/actions/menu-copy.png"/>
+          <action id="$Copy" class="com.intellij.ide.actions.CopyAction" icon="/actions/copy.png"/>
           <action id="CopyPaths" class="com.intellij.ide.actions.CopyPathsAction"/>
           <action id="$Paste" class="com.intellij.ide.actions.PasteAction" icon="/actions/menu-paste.png"/>
           <action id="PasteMultiple" class="com.intellij.openapi.editor.actions.MultiplePasteAction"/>

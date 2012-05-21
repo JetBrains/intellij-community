@@ -148,19 +148,19 @@ class ToolsPanel extends JPanel {
         editSelected();
         myTree.requestFocus();
       }
-    }).setUpAction(new AnActionButtonRunnable() {
+    }).setMoveUpAction(new AnActionButtonRunnable() {
       @Override
       public void run(AnActionButton button) {
         moveNode(Direction.UP);
         myIsModified = true;
       }
-    }).setDownAction(new AnActionButtonRunnable() {
+    }).setMoveDownAction(new AnActionButtonRunnable() {
       @Override
       public void run(AnActionButton button) {
         moveNode(Direction.DOWN);
         myIsModified = true;
       }
-    }).addExtraAction(myCopyButton = new AnActionButton(ToolsBundle.message("tools.copy.button"), PlatformIcons.DUPLICATE_ICON) {
+    }).addExtraAction(myCopyButton = new AnActionButton(ToolsBundle.message("tools.copy.button"), PlatformIcons.COPY_ICON) {
       @Override
       public void actionPerformed(AnActionEvent e) {
         Tool originalTool = getSelectedTool();

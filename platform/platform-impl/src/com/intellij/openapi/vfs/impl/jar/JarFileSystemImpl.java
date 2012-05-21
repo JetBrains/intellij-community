@@ -169,13 +169,7 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
   @Override
   @Nullable
   public VirtualFile getVirtualFileForJar(@Nullable VirtualFile entryVFile) {
-    if (entryVFile == null) return null;
-    final String path = entryVFile.getPath();
-    final int separatorIndex = path.indexOf(JAR_SEPARATOR);
-    if (separatorIndex < 0) return null;
-
-    String localPath = path.substring(0, separatorIndex);
-    return LocalFileSystem.getInstance().findFileByPath(localPath);
+    return StandardFileSystems.getVirtualFileForJar(entryVFile);
   }
 
   @Override

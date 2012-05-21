@@ -167,12 +167,12 @@ public class SdkEditor implements Configurable, Place.Navigator {
   }
 
   protected boolean showTabForType(OrderRootType type) {
-    return mySdk.getSdkType().isRootTypeApplicable(type);
+    return ((SdkType) mySdk.getSdkType()).isRootTypeApplicable(type);
   }
 
   private String getHomeFieldLabelValue() {
     if (mySdk != null) {
-      return mySdk.getSdkType().getHomeFieldLabel();
+      return ((SdkType) mySdk.getSdkType()).getHomeFieldLabel();
     }
     return ProjectBundle.message("sdk.configure.general.home.path");
   }
@@ -272,7 +272,7 @@ public class SdkEditor implements Configurable, Place.Navigator {
     final Color fg;
     if (absolutePath != null && absolutePath.length() > 0) {
       final File homeDir = new File(absolutePath);
-      boolean homeMustBeDirectory = mySdk == null || mySdk.getSdkType().getHomeChooserDescriptor().isChooseFolders();
+      boolean homeMustBeDirectory = mySdk == null || ((SdkType) mySdk.getSdkType()).getHomeChooserDescriptor().isChooseFolders();
       fg = homeDir.exists() && (homeDir.isDirectory() == homeMustBeDirectory)
            ? UIUtil.getFieldForegroundColor() 
            : PathEditor.INVALID_COLOR;
@@ -284,7 +284,7 @@ public class SdkEditor implements Configurable, Place.Navigator {
   }
 
   private void doSelectHomePath(){
-    final SdkType sdkType = mySdk.getSdkType();
+    final SdkType sdkType = (SdkType)mySdk.getSdkType();
     SdkConfigurationUtil.selectSdkHome(sdkType, new Consumer<String>() {
       @Override
       public void consume(final String path) {
@@ -331,7 +331,7 @@ public class SdkEditor implements Configurable, Place.Navigator {
 
   private String suggestSdkName(final String homePath) {
     final String currentName = mySdk.getName();
-    final String suggestedName = mySdk.getSdkType().suggestSdkName(currentName , homePath);
+    final String suggestedName = ((SdkType) mySdk.getSdkType()).suggestSdkName(currentName , homePath);
     if (Comparing.equal(currentName, suggestedName)) return currentName;
     String newSdkName = suggestedName;
     final Set<String> allNames = new HashSet<String>();
@@ -369,7 +369,7 @@ public class SdkEditor implements Configurable, Place.Navigator {
 
   @Nullable
   private AdditionalDataConfigurable initAdditionalDataConfigurable(Sdk sdk) {
-    final SdkType sdkType = sdk.getSdkType();
+    final SdkType sdkType = (SdkType)sdk.getSdkType();
     AdditionalDataConfigurable configurable = myAdditionalDataConfigurables.get(sdkType);
     if (configurable == null) {
       configurable = sdkType.createAdditionalDataConfigurable(mySdkModel, myEditedSdkModificator);
@@ -394,7 +394,7 @@ public class SdkEditor implements Configurable, Place.Navigator {
     }
 
     public void setHomePath(String path) {
-      doSetHomePath(path, mySdk.getSdkType());
+      doSetHomePath(path, (SdkType)mySdk.getSdkType());
     }
 
     public String getVersionString() {

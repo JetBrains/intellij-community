@@ -15,7 +15,6 @@
  */
 package com.intellij.ui.popup.util;
 
-import com.intellij.ide.bookmarks.Bookmark;
 import com.intellij.ide.bookmarks.BookmarkItem;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
@@ -33,6 +32,7 @@ import com.intellij.ui.speedSearch.FilteringListModel;
 import com.intellij.util.Alarm;
 import com.intellij.util.Function;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -80,7 +80,7 @@ public class MasterDetailPopupBuilder {
     final Alarm updateAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
     final DetailViewImpl detailView = new DetailViewImpl(myProject);
 
-    myList.setCellRenderer(new ItemRenderer(myProject));
+    myList.setCellRenderer(new ItemRenderer(myDelegate, myProject));
 
     final ListSelectionModel selectionModel = myList.getSelectionModel();
     selectionModel.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
@@ -301,26 +301,24 @@ public class MasterDetailPopupBuilder {
 
     void handleMnemonic(KeyEvent e, Project project, JBPopup popup);
 
-    boolean hasItemsWithMnemonic(Project project);
+    @Nullable
+    JComponent createAccessoryView(Project project);
   }
 
-  public class ItemRenderer extends JPanel implements ListCellRenderer {
+  public static class ItemRenderer extends JPanel implements ListCellRenderer {
     private final Project myProject;
     private final ColoredListCellRenderer myRenderer;
+    private Delegate myDelegate;
 
-    private ItemRenderer(Project project) {
+    private ItemRenderer(Delegate delegate, Project project) {
       super(new BorderLayout());
       myProject = project;
       setBackground(UIUtil.getListBackground());
-      final JLabel mnemonicLabel = new JLabel();
-      mnemonicLabel.setFont(Bookmark.MNEMONIC_FONT);
+      this.myDelegate = delegate;
+      final JComponent accessory = myDelegate.createAccessoryView(project);
 
-      mnemonicLabel.setPreferredSize(new JLabel("W.").getPreferredSize());
-      mnemonicLabel.setOpaque(false);
-
-      final boolean hasMnemonics = myDelegate.hasItemsWithMnemonic(project);
-      if (hasMnemonics) {
-        add(mnemonicLabel, BorderLayout.WEST);
+      if (accessory != null) {
+        add(accessory, BorderLayout.WEST);
       }
 
       myRenderer = new ColoredListCellRenderer() {
@@ -329,15 +327,14 @@ public class MasterDetailPopupBuilder {
           if (value instanceof ItemWrapper) {
             final ItemWrapper wrapper = (ItemWrapper)value;
             wrapper.setupRenderer(this, myProject, selected);
-            if (hasMnemonics) {
-              wrapper.updateMnemonicLabel(mnemonicLabel);
+            if (accessory != null) {
+              wrapper.updateAccessoryView(accessory);
             }
           }
         }
       };
       add(myRenderer, BorderLayout.CENTER);
     }
-
 
     public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
       if (value instanceof SplitterItem) {
@@ -349,8 +346,8 @@ public class MasterDetailPopupBuilder {
       }
       myRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
       myRenderer.revalidate();
+
       return this;
     }
   }
-
 }

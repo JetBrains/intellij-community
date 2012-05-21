@@ -16,7 +16,7 @@
 package org.intellij.lang.xpath.xslt.run;
 
 import com.intellij.ide.ui.ListCellRendererWrapper;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
@@ -32,6 +32,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkType;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.SdkType;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.TextComponentAccessor;
@@ -311,7 +312,7 @@ class XsltRunSettingsEditor extends SettingsEditor<XsltRunConfiguration> {
                 return jdk.getName();
               }
             }));
-            setIcon(jdk.getSdkType().getIcon());
+            setIcon(((SdkType) jdk.getSdkType()).getIcon());
           }
         }
       });

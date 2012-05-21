@@ -21,9 +21,9 @@ import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.roots.impl.ModifiableModelCommitter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.impl.ModuleRootManagerImpl;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.ArrayUtil;
 import gnu.trove.THashMap;
@@ -71,7 +71,7 @@ public class MavenFoldersImporter {
       if (!rootModels.isEmpty()) {
         ModifiableRootModel[] modelsArray = rootModels.toArray(new ModifiableRootModel[rootModels.size()]);
         if (modelsArray.length > 0) {
-          ModuleRootManagerImpl.multiCommit(modelsArray, ModuleManager.getInstance(modelsArray[0].getProject()).getModifiableModel());
+          ModifiableModelCommitter.multiCommit(modelsArray, ModuleManager.getInstance(modelsArray[0].getProject()).getModifiableModel());
         }
       }
     }

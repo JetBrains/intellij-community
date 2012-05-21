@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -85,7 +85,7 @@ public abstract class ModuleTestCase extends IdeaTestCase {
       new Computable<Module>() {
         @Override
         public Module compute() {
-          return ModuleManager.getInstance(myProject).newModule(path, moduleType);
+          return ModuleManager.getInstance(myProject).newModule(path, moduleType.getId());
         }
       }
     );

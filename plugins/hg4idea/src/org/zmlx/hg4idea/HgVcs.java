@@ -25,9 +25,11 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vcs.CommittedChangesProvider;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vcs.annotate.AnnotationProvider;
 import com.intellij.openapi.vcs.changes.ChangeProvider;
 import com.intellij.openapi.vcs.changes.CommitExecutor;
@@ -42,6 +44,7 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
+import com.intellij.util.IconUtil;
 import com.intellij.util.containers.ComparatorDelegate;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.messages.MessageBusConnection;
@@ -73,8 +76,8 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
   public static final Topic<HgUpdater> REMOTE_TOPIC =
     new Topic<HgUpdater>("hg4idea.remote", HgUpdater.class);
 
-  private static final Icon INCOMING_ICON = IconLoader.getIcon("/actions/moveDown.png");
-  private static final Icon OUTGOING_ICON = IconLoader.getIcon("/actions/moveUp.png");
+  private static final Icon INCOMING_ICON = IconUtil.getMoveDownIcon();
+  private static final Icon OUTGOING_ICON = IconUtil.getMoveUpIcon();
   private static final Logger LOG = Logger.getInstance(HgVcs.class);
 
   public static final String VCS_NAME = "hg4idea";

@@ -15,11 +15,14 @@
  */
 package com.intellij.testIntegration;
 
+import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateDescriptor;
+import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.lang.Language;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -103,5 +106,10 @@ public abstract class JavaTestFramework implements TestFramework {
   @Nullable
   public FileTemplateDescriptor getParametersMethodFileTemplateDescriptor() {
     return null;
+  }
+
+  protected PsiMethod createSetUpPatternMethod(JVMElementFactory factory) {
+    final FileTemplate template = FileTemplateManager.getInstance().getCodeTemplate(getSetUpMethodFileTemplateDescriptor().getFileName());
+    return factory.createMethodFromText(StringUtil.replace(template.getText(), "${BODY}\n", ""), null);
   }
 }

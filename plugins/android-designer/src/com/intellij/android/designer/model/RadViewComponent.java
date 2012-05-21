@@ -61,6 +61,10 @@ public class RadViewComponent extends RadVisualComponent {
     }
   }
 
+  public String getCreationXml() {
+    throw new UnsupportedOperationException();
+  }
+
   public ViewInfo getViewInfo() {
     return myViewInfo;
   }
@@ -85,14 +89,8 @@ public class RadViewComponent extends RadVisualComponent {
   }
 
   public String getId() {
-    return getId(myTag.getAttributeValue("android:id"));
-  }
-
-  public static String getId(String idValue) {
-    if (StringUtil.isEmpty(idValue)) {
-      return null;
-    }
-    return "@id/" + idValue.substring(idValue.indexOf('/') + 1);
+    String idValue = myTag.getAttributeValue("android:id");
+    return StringUtil.isEmpty(idValue) ? null : idValue;
   }
 
   //////////////////////////////////////////////////////////////////////////////////////////

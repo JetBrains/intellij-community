@@ -72,14 +72,17 @@ public abstract class ContentEntryEditor implements ContentRootPanel.ActionCallb
     myMainPanel = new JPanel(new BorderLayout());
     myMainPanel.setOpaque(false);
     myMainPanel.addMouseListener(new MouseAdapter() {
+      @Override
       public void mouseClicked(MouseEvent e) {
         myEventDispatcher.getMulticaster().editingStarted(ContentEntryEditor.this);
       }
+      @Override
       public void mouseEntered(MouseEvent e) {
         if (!myIsSelected) {
           highlight(true);
         }
       }
+      @Override
       public void mouseExited(MouseEvent e) {
         if (!myIsSelected) {
           highlight(false);
@@ -106,6 +109,7 @@ public abstract class ContentEntryEditor implements ContentRootPanel.ActionCallb
 
   protected abstract ModifiableRootModel getModel();
 
+  @Override
   public void deleteContentEntry() {
     final String path = FileUtil.toSystemDependentName(VfsUtil.urlToPath(myContentEntryUrl));
     final int answer = Messages.showYesNoDialog(ProjectBundle.message("module.paths.remove.content.prompt", path),
@@ -120,6 +124,7 @@ public abstract class ContentEntryEditor implements ContentRootPanel.ActionCallb
     }
   }
 
+  @Override
   public void deleteContentFolder(ContentEntry contentEntry, ContentFolder folder) {
     if (folder instanceof SourceFolder) {
       removeSourceFolder((SourceFolder)folder);
@@ -132,6 +137,7 @@ public abstract class ContentEntryEditor implements ContentRootPanel.ActionCallb
 
   }
 
+  @Override
   public void navigateFolder(ContentEntry contentEntry, ContentFolder contentFolder) {
     final VirtualFile file = contentFolder.getFile();
     if (file != null) { // file can be deleted externally
@@ -139,6 +145,7 @@ public abstract class ContentEntryEditor implements ContentRootPanel.ActionCallb
     }
   }
 
+  @Override
   public void setPackagePrefix(SourceFolder folder, String prefix) {
     folder.setPackagePrefix(prefix);
     update();

@@ -24,14 +24,14 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
-import com.intellij.util.PlatformIcons;
+import com.intellij.util.IconUtil;
 import org.intellij.lang.xpath.xslt.associations.FileAssociationsManager;
 
 class AddAssociationAction extends AnAction {
     private final FileAssociationsManager myManager;
 
     public AddAssociationAction(FileAssociationsManager manager) {
-        super("Add...", "Add File Association", PlatformIcons.TABLE_ADD_ROW);
+        super("Add...", "Add File Association", IconUtil.getAddIcon());
         myManager = manager;
     }
 

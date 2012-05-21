@@ -15,6 +15,8 @@
  */
 package com.intellij.debugger.actions;
 
+import com.intellij.debugger.impl.DebuggerContextImpl;
+import com.intellij.debugger.ui.impl.watch.DebuggerTreeNodeImpl;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
 
@@ -24,7 +26,7 @@ import java.awt.datatransfer.StringSelection;
  * @author Jeka
  */
 public class CopyValueAction extends BaseValueAction {
-  protected void processText(final Project project, final String text) {
+  protected void processText(final Project project, final String text, DebuggerTreeNodeImpl node, DebuggerContextImpl debuggerContext) {
     CopyPasteManager.getInstance().setContents(new StringSelection(text));
   }
 }

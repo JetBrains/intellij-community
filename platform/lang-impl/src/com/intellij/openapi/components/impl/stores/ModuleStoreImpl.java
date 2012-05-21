@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -112,7 +112,7 @@ public class ModuleStoreImpl extends BaseFileConfigurableStoreImpl implements IM
       myModule = storageData.myModule;
     }
 
-    protected void load(@NotNull final Element rootElement) throws IOException {
+    public void load(@NotNull final Element rootElement) throws IOException {
       super.load(rootElement);
 
       final List attributes = rootElement.getAttributes();
@@ -145,7 +145,7 @@ public class ModuleStoreImpl extends BaseFileConfigurableStoreImpl implements IM
       return root;
     }
 
-    public XmlElementStorage.StorageData clone() {
+    public StorageData clone() {
       return new ModuleFileData(this);
     }
 
@@ -154,7 +154,7 @@ public class ModuleStoreImpl extends BaseFileConfigurableStoreImpl implements IM
     }
 
     @Nullable
-    public Set<String> getDifference(final XmlElementStorage.StorageData storageData, PathMacroSubstitutor substitutor) {
+    public Set<String> getDifference(final StorageData storageData, PathMacroSubstitutor substitutor) {
       final ModuleFileData data = (ModuleFileData)storageData;
       if (!myOptions.equals(data.myOptions)) return null;
       return super.getDifference(storageData, substitutor);

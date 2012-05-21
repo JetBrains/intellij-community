@@ -25,22 +25,19 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.util.ClassFilter;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Factory;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.ui.ReorderableListController;
-import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ui.SeparatorFactory;
-import com.intellij.ui.SortedListModel;
+import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
+import com.intellij.util.IconUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NonNls;
@@ -62,7 +59,9 @@ public class SpecialAnnotationsUtil {
     return createSpecialAnnotationsListControl(list, borderTitle, false);
   }
 
-  public static JPanel createSpecialAnnotationsListControl(final List<String> list, final String borderTitle, final boolean acceptPatterns) {
+  public static JPanel createSpecialAnnotationsListControl(final List<String> list,
+                                                           final String borderTitle,
+                                                           final boolean acceptPatterns) {
     final SortedListModel<String> listModel = new SortedListModel<String>(new Comparator<String>() {
       public int compare(final String o1, final String o2) {
         return o1.compareTo(o2);
@@ -73,41 +72,6 @@ public class SpecialAnnotationsUtil {
       listModel.add(s);
     }
     injectionList.setSelectionMode(ListSelectionModel.SINGLE_INTERVAL_SELECTION);
-    final DefaultActionGroup actionGroup = new DefaultActionGroup();
-    final ReorderableListController<String> controller = ReorderableListController.create(injectionList, actionGroup);
-    controller.addAddAction(InspectionsBundle.message("special.annotations.list.add.annotation.class"), new Factory<String>() {
-      public String create() {
-        Project project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(injectionList));
-        if (project == null) project = ProjectManager.getInstance().getDefaultProject();
-        TreeClassChooser chooser = TreeClassChooserFactory.getInstance(project)
-          .createWithInnerClassesScopeChooser(InspectionsBundle.message("special.annotations.list.annotation.class"),
-                                              GlobalSearchScope.allScope(project), new ClassFilter() {
-              @Override
-              public boolean isAccepted(PsiClass aClass) {
-                return aClass.isAnnotationType();
-              }
-            }, null);
-        chooser.showDialog();
-        final PsiClass selected = chooser.getSelected();
-        return selected != null ? selected.getQualifiedName() : null;
-      }
-    }, true);
-    if (acceptPatterns) {
-      controller.addAction(new AnAction(InspectionsBundle.message("special.annotations.list.annotation.pattern"),
-                                        InspectionsBundle.message("special.annotations.list.annotation.pattern"),
-                                        IconLoader.getIcon("/general/add.png")) {
-        @Override
-        public void actionPerformed(AnActionEvent e) {
-          String selectedPattern = Messages.showInputDialog(InspectionsBundle.message("special.annotations.list.annotation.pattern"),
-                                              InspectionsBundle.message("special.annotations.list.annotation.pattern"),
-                                              Messages.getQuestionIcon());
-          if (selectedPattern != null) {
-            listModel.add(selectedPattern);
-          }
-        }
-      });
-    }
-    controller.addRemoveAction(InspectionsBundle.message("special.annotations.list.remove.annotation.class"));
     injectionList.getModel().addListDataListener(new ListDataListener() {
       public void intervalAdded(ListDataEvent e) {
         listChanged();
@@ -129,32 +93,55 @@ public class SpecialAnnotationsUtil {
       }
     });
 
-    final JScrollPane listScrollPane = ScrollPaneFactory.createScrollPane(injectionList);
-//    listScrollPane.setBorder(BorderFactory.createEtchedBorder());
-    listScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
-    listScrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-    final FontMetrics fontMetrics = injectionList.getFontMetrics(injectionList.getFont());
-    listScrollPane.setPreferredSize(new Dimension(0, fontMetrics.getHeight() * 5));
-    listScrollPane.setMinimumSize(new Dimension(0, fontMetrics.getHeight() * 3));
-    //int height = injectionList.getCellRenderer().getListCellRendererComponent(injectionList, "foo", 0, false, false).getSize().height;
-    //injectionList.setFixedCellHeight(height);
-    //injectionList.setPreferredSize(new Dimension(0, height * 3));
-    //injectionList.setMinimumSize(new Dimension(0, height * 3));
-//    injectionList.setVisibleRowCount(3);
+    ToolbarDecorator toolbarDecorator = ToolbarDecorator.createDecorator(injectionList)
+      .setAddAction(new AnActionButtonRunnable() {
+        @Override
+        public void run(AnActionButton button) {
+          Project project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(injectionList));
+          if (project == null) project = ProjectManager.getInstance().getDefaultProject();
+          TreeClassChooser chooser = TreeClassChooserFactory.getInstance(project)
+            .createWithInnerClassesScopeChooser(InspectionsBundle.message("special.annotations.list.annotation.class"),
+                                                GlobalSearchScope.allScope(project), new ClassFilter() {
+              @Override
+              public boolean isAccepted(PsiClass aClass) {
+                return aClass.isAnnotationType();
+              }
+            }, null);
+          chooser.showDialog();
+          final PsiClass selected = chooser.getSelected();
+          if (selected != null) {
+            listModel.add(selected.getQualifiedName());
+          }
+        }
+      }).setAddActionName(InspectionsBundle.message("special.annotations.list.add.annotation.class")).disableUpDownActions();
 
-    final JPanel listPanel = new JPanel(new BorderLayout());
-
-    ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, actionGroup, true);
-    listPanel.add(actionToolbar.getComponent(), BorderLayout.NORTH);
-    listPanel.add(listScrollPane, BorderLayout.CENTER);
+    if (acceptPatterns) {
+      toolbarDecorator
+        .setAddIcon(IconUtil.getAddClassIcon())
+        .addExtraAction(
+          new AnActionButton(InspectionsBundle.message("special.annotations.list.annotation.pattern"), IconUtil.getAddPatternIcon()) {
+            @Override
+            public void actionPerformed(AnActionEvent e) {
+              String selectedPattern = Messages.showInputDialog(InspectionsBundle.message("special.annotations.list.annotation.pattern"),
+                                                                InspectionsBundle.message("special.annotations.list.annotation.pattern"),
+                                                                Messages.getQuestionIcon());
+              if (selectedPattern != null) {
+                listModel.add(selectedPattern);
+              }
+            }
+          }).setButtonComparator(InspectionsBundle.message("special.annotations.list.add.annotation.class"),
+                                 InspectionsBundle.message("special.annotations.list.annotation.pattern"), "Remove");
+    }
 
     JPanel panel = new JPanel(new BorderLayout());
     panel.add(SeparatorFactory.createSeparator(borderTitle, null), BorderLayout.NORTH);
-    panel.add(listPanel, BorderLayout.CENTER);
+    panel.add(toolbarDecorator.createPanel(), BorderLayout.CENTER);
     return panel;
   }
 
-  public static IntentionAction createAddToSpecialAnnotationsListIntentionAction(final String text, final String family, final List<String> targetList,
+  public static IntentionAction createAddToSpecialAnnotationsListIntentionAction(final String text,
+                                                                                 final String family,
+                                                                                 final List<String> targetList,
                                                                                  final String qualifiedName) {
     return new IntentionAction() {
       @NotNull
@@ -181,9 +168,11 @@ public class SpecialAnnotationsUtil {
     };
   }
 
-  public static LocalQuickFix createAddToSpecialAnnotationsListQuickFix(final String text, final String family, final List<String> targetList,
-                                                                                 final String qualifiedName,
-                                                                                 final PsiElement context) {
+  public static LocalQuickFix createAddToSpecialAnnotationsListQuickFix(final String text,
+                                                                        final String family,
+                                                                        final List<String> targetList,
+                                                                        final String qualifiedName,
+                                                                        final PsiElement context) {
     return new LocalQuickFix() {
       @NotNull
       public String getName() {
@@ -232,5 +221,4 @@ public class SpecialAnnotationsUtil {
       }
     }
   }
-
 }

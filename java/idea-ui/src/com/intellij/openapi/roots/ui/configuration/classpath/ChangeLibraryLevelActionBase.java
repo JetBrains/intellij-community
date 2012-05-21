@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -100,7 +100,7 @@ public abstract class ChangeLibraryLevelActionBase extends AnAction {
       }
     }
 
-    final Library copied = ((LibraryTableBase.ModifiableModelEx)provider.getModifiableModel()).createLibrary(dialog.getLibraryName(), library.getType());
+    final Library copied = ((LibraryTableBase.ModifiableModelEx)provider.getModifiableModel()).createLibrary(dialog.getLibraryName(), library.getKind());
     final LibraryEx.ModifiableModelEx model = (LibraryEx.ModifiableModelEx)copied.getModifiableModel();
     LibraryEditingUtil.copyLibrary(library, copiedFiles, model);
 

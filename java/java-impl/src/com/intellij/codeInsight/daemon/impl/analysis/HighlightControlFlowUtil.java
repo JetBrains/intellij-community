@@ -417,7 +417,7 @@ public class HighlightControlFlowUtil {
     if (codeBlockProblems == null) {
       try {
         final ControlFlow controlFlow = getControlFlow(topBlock);
-        codeBlockProblems = ControlFlowUtil.getReadBeforeWrite(controlFlow);
+        codeBlockProblems = ControlFlowUtil.getReadBeforeWriteLocals(controlFlow);
       }
       catch (AnalysisCanceledException e) {
         codeBlockProblems = Collections.emptyList();
@@ -570,7 +570,7 @@ public class HighlightControlFlowUtil {
   }
 
   @NotNull
-  private static Collection<ControlFlowUtil.VariableInfo> getFinalVariableProblemsInBlock(Map<PsiElement,Collection<ControlFlowUtil.VariableInfo>> finalVarProblems, PsiElement codeBlock) {
+  public static Collection<ControlFlowUtil.VariableInfo> getFinalVariableProblemsInBlock(Map<PsiElement,Collection<ControlFlowUtil.VariableInfo>> finalVarProblems, PsiElement codeBlock) {
     Collection<ControlFlowUtil.VariableInfo> codeBlockProblems = finalVarProblems.get(codeBlock);
     if (codeBlockProblems == null) {
       try {

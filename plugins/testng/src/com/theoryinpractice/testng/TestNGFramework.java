@@ -99,7 +99,7 @@ public class TestNGFramework extends JavaTestFramework {
     final PsiManager manager = clazz.getManager();
     final PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
     String setUpName = "setUp";
-    PsiMethod patternMethod = factory.createMethodFromText("@" + BeforeMethod.class.getName() + "\n protected void " + setUpName + "() throws Exception {}", null);
+    PsiMethod patternMethod = createSetUpPatternMethod(factory);
     PsiMethod inClass = clazz.findMethodBySignature(patternMethod, false);
     if (inClass != null) {
       int exit = ApplicationManager.getApplication().isUnitTestMode() ?

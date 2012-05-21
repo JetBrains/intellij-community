@@ -110,8 +110,8 @@ public class ProfileDialog extends DialogWrapper {
         removeProfile();
       }
     });
-    decorator.setUpAction(null);
-    decorator.setDownAction(null);
+    decorator.setMoveUpAction(null);
+    decorator.setMoveDownAction(null);
 
     myProfileManager = new ProfileManager(module, EmptyRunnable.INSTANCE, EmptyRunnable.INSTANCE);
 

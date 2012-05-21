@@ -26,6 +26,7 @@ import com.intellij.openapi.application.PathMacros;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
+import com.intellij.openapi.components.ExtensionAreas;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.components.StorageScheme;
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
@@ -131,7 +132,7 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
 
   @Override
   protected void bootstrapPicoContainer() {
-    Extensions.instantiateArea(PluginManager.AREA_IDEA_PROJECT, this, null);
+    Extensions.instantiateArea(ExtensionAreas.IDEA_PROJECT, this, null);
     super.bootstrapPicoContainer();
     final MutablePicoContainer picoContainer = getPicoContainer();
 

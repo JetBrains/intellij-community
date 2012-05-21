@@ -129,7 +129,7 @@ class OutputFiltersDialog extends DialogWrapper {
           }
           myFiltersList.requestFocus();
         }
-      }).setUpAction(new AnActionButtonRunnable() {
+      }).setMoveUpAction(new AnActionButtonRunnable() {
         @Override
         public void run(AnActionButton button) {
           int movedCount = ListUtil.moveSelectedItemsUp(myFiltersList);
@@ -138,7 +138,7 @@ class OutputFiltersDialog extends DialogWrapper {
           }
           myFiltersList.requestFocus();
         }
-      }).setDownAction(new AnActionButtonRunnable() {
+      }).setMoveDownAction(new AnActionButtonRunnable() {
         @Override
         public void run(AnActionButton button) {
           int movedCount = ListUtil.moveSelectedItemsDown(myFiltersList);

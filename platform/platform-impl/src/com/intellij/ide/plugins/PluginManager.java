@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@ import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.components.ExtensionAreas;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.extensions.LogProvider;
@@ -74,8 +75,6 @@ import java.util.zip.ZipInputStream;
 @SuppressWarnings({"UseOfSystemOutOrSystemErr", "CallToPrintStackTrace"}) // No logger is loaded at this time so we have to use these.
 public class PluginManager {
 
-  @NonNls public static final String AREA_IDEA_PROJECT = "IDEA_PROJECT";
-  @NonNls public static final String AREA_IDEA_MODULE = "IDEA_MODULE";
   @NonNls private static final String PROPERTY_PLUGIN_PATH = "plugin.path";
   private static final Object PLUGIN_CLASSES_LOCK = new Object();
   private static String myPluginError = null;
@@ -318,8 +317,8 @@ public class PluginManager {
 
   private static void configureExtensions() {
     Extensions.setLogProvider(new IdeaLogProvider());
-    Extensions.registerAreaClass(AREA_IDEA_PROJECT, null);
-    Extensions.registerAreaClass(AREA_IDEA_MODULE, AREA_IDEA_PROJECT);
+    Extensions.registerAreaClass(ExtensionAreas.IDEA_PROJECT, null);
+    Extensions.registerAreaClass(ExtensionAreas.IDEA_MODULE, ExtensionAreas.IDEA_PROJECT);
   }
 
   private static boolean shouldLoadPlugins() {

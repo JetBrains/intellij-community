@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.SdkType;
 import com.intellij.openapi.roots.JdkOrderEntry;
 import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.OrderEntry;
@@ -62,11 +63,12 @@ public class NamedLibraryElementNode extends ProjectViewNode<NamedLibraryElement
   }
 
   private static Icon getJdkIcon(JdkOrderEntry entry, boolean isExpanded) {
-    final Sdk jdk = entry.getJdk();
-    if (jdk == null) {
+    final Sdk sdk = entry.getJdk();
+    if (sdk == null) {
       return GENERIC_JDK_ICON;
     }
-    return isExpanded? jdk.getSdkType().getIconForExpandedTreeNode() : jdk.getSdkType().getIcon();
+    final SdkType sdkType = (SdkType) sdk.getSdkType();
+    return isExpanded ? sdkType.getIconForExpandedTreeNode() : sdkType.getIcon();
   }
 
   public String getName() {

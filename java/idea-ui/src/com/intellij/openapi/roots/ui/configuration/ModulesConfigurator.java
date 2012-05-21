@@ -29,6 +29,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.roots.impl.ModifiableModelCommitter;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
@@ -37,7 +38,6 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootModel;
-import com.intellij.openapi.roots.impl.ModuleRootManagerImpl;
 import com.intellij.openapi.roots.impl.ProjectRootManagerImpl;
 import com.intellij.openapi.roots.ui.configuration.actions.ModuleDeleteProvider;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ModuleStructureConfigurable;
@@ -311,7 +311,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
       public void run() {
         try {
           final ModifiableRootModel[] rootModels = models.toArray(new ModifiableRootModel[models.size()]);
-          ModuleRootManagerImpl.multiCommit(rootModels, myModuleModel);
+          ModifiableModelCommitter.multiCommit(rootModels, myModuleModel);
           myModuleModelCommitted = true;
           myFacetsConfigurator.commitFacets();
 

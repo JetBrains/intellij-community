@@ -480,12 +480,12 @@ public class FindInProjectUtil {
     GlobalSearchScope scope = psiDirectory != null
                               ? GlobalSearchScopes.directoryScope(psiDirectory, true)
                               : module != null
-                                ? moduleContentScope(module)
+                                ? module.getModuleContentScope()
                                 : customScope instanceof GlobalSearchScope
                                   ? (GlobalSearchScope)customScope
                                   : toGlobal(project, customScope);
     if (scope == null) {
-      scope = GlobalSearchScope.projectScope(project);
+      scope = ProjectScope.getContentScope(project);
     }
 
     Set<Integer> keys = new THashSet<Integer>(30);
@@ -551,21 +551,6 @@ public class FindInProjectUtil {
     filterMaskedFiles(resultFiles, fileMaskRegExp);
 
     return new Pair<Boolean, Collection<PsiFile>>(fast, resultFiles);
-  }
-
-  @NotNull
-  private static GlobalSearchScope moduleContentScope(@NotNull final Module module) {
-    VirtualFile[] contentRoots = ModuleRootManager.getInstance(module).getContentRoots();
-    GlobalSearchScope result = null;
-    PsiManager psiManager = PsiManager.getInstance(module.getProject());
-    for (VirtualFile root : contentRoots) {
-      PsiDirectory directory = psiManager.findDirectory(root);
-      if (directory != null) {
-        GlobalSearchScope moduleContent = GlobalSearchScopes.directoryScope(directory, true);
-        result = result == null ? moduleContent : result.uniteWith(moduleContent);
-      }
-    }
-    return result == null ? GlobalSearchScope.EMPTY_SCOPE : result;
   }
 
   private static void filterMaskedFiles(@NotNull final Set<PsiFile> resultFiles, @Nullable final Pattern fileMaskRegExp) {

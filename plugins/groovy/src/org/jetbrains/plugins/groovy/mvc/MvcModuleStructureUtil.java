@@ -25,9 +25,9 @@ import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.StdModuleTypes;
+import com.intellij.openapi.roots.impl.ModifiableModelCommitter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
-import com.intellij.openapi.roots.impl.ModuleRootManagerImpl;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryUtil;
@@ -539,7 +539,7 @@ public class MvcModuleStructureUtil {
     ModuleDeleteProvider.removeModule(toRemove, null, usingModels, moduleModel);
 
     ModifiableRootModel[] rootModels = usingModels.toArray(new ModifiableRootModel[usingModels.size()]);
-    ModuleRootManagerImpl.multiCommit(rootModels, moduleModel);
+    ModifiableModelCommitter.multiCommit(rootModels, moduleModel);
   }
 
   @NotNull
@@ -557,7 +557,7 @@ public class MvcModuleStructureUtil {
       }
     }
 
-    moduleModel.newModule(moduleFilePath, StdModuleTypes.JAVA);
+    moduleModel.newModule(moduleFilePath, StdModuleTypes.JAVA.getId());
     moduleModel.commit();
 
     Module pluginsModule = moduleManager.findModuleByName(moduleName);

@@ -26,11 +26,11 @@ import com.intellij.ide.DeleteProvider;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.util.IconLoader;
+import com.intellij.util.IconUtil;
 
 public class DeleteUnversionedFilesAction extends AnAction {
   public DeleteUnversionedFilesAction() {
-    super("Delete", "Delete", IconLoader.getIcon("/actions/cancel.png"));
+    super("Delete", "Delete", IconUtil.getRemoveIcon());
   }
 
   public void actionPerformed(AnActionEvent e) {
