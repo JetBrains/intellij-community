@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -284,9 +285,10 @@ public class AnnotationUtil {
     return false;
   }
 
-  public static boolean isAnnotatingApplicable(PsiElement elt) {
+  public static boolean isAnnotatingApplicable(@NotNull PsiElement elt) {
+    final Project project = elt.getProject();
     return PsiUtil.isLanguageLevel5OrHigher(elt) &&
-           JavaPsiFacade.getInstance(elt.getProject()).findClass(NULLABLE, elt.getResolveScope()) != null;
+           JavaPsiFacade.getInstance(project).findClass(NullableNotNullManager.getInstance(project).getDefaultNullable(), elt.getResolveScope()) != null;
   }
 
   public static boolean isJetbrainsAnnotation(@NonNls final String simpleName) {
