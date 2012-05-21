@@ -121,7 +121,7 @@ public class AndroidAptCompiler implements SourceGeneratingCompiler {
                                outputDirOsPath, aptItem.myResourcesPaths,
                                aptItem.myLibraryPackages, aptItem.myNonConstantFields));
           toRefresh = true;
-          AndroidCompileUtil.addMessages(context, messages);
+          AndroidCompileUtil.addMessages(context, messages, aptItem.myModule);
           if (messages.get(CompilerMessageCategory.ERROR).isEmpty()) {
             results.add(aptItem);
           }
@@ -257,8 +257,8 @@ public class AndroidAptCompiler implements SourceGeneratingCompiler {
 
           VirtualFile manifestFile = AndroidRootUtil.getManifestFileForCompiler(facet);
           if (manifestFile == null) {
-            myContext.addMessage(CompilerMessageCategory.ERROR, AndroidBundle.message("android.compilation.error.manifest.not.found"),
-                                 null, -1, -1);
+            myContext.addMessage(CompilerMessageCategory.ERROR,
+                                 AndroidBundle.message("android.compilation.error.manifest.not.found", module.getName()), null, -1, -1);
             continue;
           }
 

@@ -217,7 +217,7 @@ public class AndroidDexCompiler implements ClassPostProcessingCompiler {
           Map<CompilerMessageCategory, List<String>> messages = AndroidCompileUtil.toCompilerMessageCategoryKeys(
             AndroidDxWrapper.execute(dexItem.myModule, dexItem.myAndroidTarget, outputDirPath, files));
 
-          addMessages(messages);
+          addMessages(messages, dexItem.myModule);
           if (messages.get(CompilerMessageCategory.ERROR).isEmpty()) {
             results.add(dexItem);
           }
@@ -226,11 +226,11 @@ public class AndroidDexCompiler implements ClassPostProcessingCompiler {
       return results.toArray(new ProcessingItem[results.size()]);
     }
 
-    private void addMessages(Map<CompilerMessageCategory, List<String>> messages) {
+    private void addMessages(Map<CompilerMessageCategory, List<String>> messages, Module module) {
       for (CompilerMessageCategory category : messages.keySet()) {
         List<String> messageList = messages.get(category);
         for (String message : messageList) {
-          myContext.addMessage(category, message, null, -1, -1);
+          myContext.addMessage(category, '[' + module.getName() + "] " + message, null, -1, -1);
         }
       }
     }
