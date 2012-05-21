@@ -50,9 +50,6 @@ public abstract class DependenciesHandlerBase {
 
   public void analyze() {
     final List<DependenciesBuilder> builders = new ArrayList<DependenciesBuilder>();
-    for (AnalysisScope scope : myScopes) {
-      builders.add(createDependenciesBuilder(scope));
-    }
 
     final Task task;
     if (canStartInBackground()) {
@@ -95,7 +92,10 @@ public abstract class DependenciesHandlerBase {
 
   protected abstract DependenciesBuilder createDependenciesBuilder(AnalysisScope scope);
 
-  private static void perform(List<DependenciesBuilder> builders) {
+  private void perform(List<DependenciesBuilder> builders) {
+    for (AnalysisScope scope : myScopes) {
+      builders.add(createDependenciesBuilder(scope));
+    }
     for (DependenciesBuilder builder : builders) {
       builder.analyze();
     }
