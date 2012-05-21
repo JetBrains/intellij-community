@@ -185,6 +185,10 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
 
       final PsiType expectedType = method.getReturnType();
       if (value == null || expectedType == null) return;
+
+      //don't check if the return type is void. the check is done inside annotator, because it's a compilation error
+      if (expectedType == PsiType.VOID) return;
+
       checkAssignability(expectedType, value, returnStatement);
     }
 
