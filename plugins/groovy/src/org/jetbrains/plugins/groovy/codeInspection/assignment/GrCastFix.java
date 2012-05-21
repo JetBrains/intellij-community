@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.codeInspection.assignment;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -32,25 +33,28 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
  * @author Maxim.Medvedev
  */
 public class GrCastFix extends GroovyFix implements LocalQuickFix {
-  private GrExpression myExpression;
   private PsiType myExpectedType;
 
-  public GrCastFix(GrExpression expression, PsiType expectedType) {
-    myExpression = expression;
+  public GrCastFix(PsiType expectedType) {
     myExpectedType = expectedType;
   }
 
   @Override
   protected void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
-    if (!myExpression.isValid() || !myExpectedType.isValid()) return;
+    if (!myExpectedType.isValid()) return;
+
+    final PsiElement element = descriptor.getPsiElement();
+    if (!(element instanceof GrExpression)) return;
+
+    final GrExpression expr = (GrExpression)element;
 
     final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(project);
     final GrSafeCastExpression cast = (GrSafeCastExpression)factory.createExpressionFromText("foo as String");
     final GrTypeElement typeElement = factory.createTypeElement(myExpectedType);
-    cast.getOperand().replace(myExpression);
+    cast.getOperand().replaceWithExpression(expr, true);
     cast.getCastTypeElement().replace(typeElement);
 
-    final GrExpression replaced = myExpression.replaceWithExpression(cast, true);
+    final GrExpression replaced = expr.replaceWithExpression(cast, true);
     GrReferenceAdjuster.shortenReferences(replaced);
   }
 

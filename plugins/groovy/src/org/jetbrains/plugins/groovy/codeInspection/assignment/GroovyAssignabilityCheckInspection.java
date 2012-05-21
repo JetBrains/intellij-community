@@ -117,7 +117,7 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
       if (rType == null || rType == PsiType.VOID) return;
 
       if (!TypesUtil.isAssignable(expectedType, rType, element)) {
-        final LocalQuickFix[] fixes = {new GrCastFix(expression, expectedType)};
+        final LocalQuickFix[] fixes = {new GrCastFix(expectedType)};
         final String message = GroovyBundle.message("cannot.assign", rType.getPresentableText(), expectedType.getPresentableText());
         registerError(element, message, fixes, ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
       }
