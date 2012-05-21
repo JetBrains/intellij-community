@@ -63,6 +63,7 @@ import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
+import gnu.trove.TObjectHashingStrategy;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -78,6 +79,17 @@ import java.util.Set;
 
 public class GlobalInspectionContextImpl extends UserDataHolderBase implements GlobalInspectionContext {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.ex.GlobalInspectionContextImpl");
+  private static final TObjectHashingStrategy<ToolsImpl> TOOLS_HASHING_STRATEGY = new TObjectHashingStrategy<ToolsImpl>() {
+    @Override
+    public int computeHashCode(ToolsImpl object) {
+      return object.getShortName().hashCode();
+    }
+
+    @Override
+    public boolean equals(ToolsImpl o1, ToolsImpl o2) {
+      return o1.getShortName().equals(o2.getShortName());
+    }
+  };
 
   private RefManager myRefManager;
   private final NotNullLazyValue<ContentManager> myContentManager;
@@ -702,7 +714,21 @@ public class GlobalInspectionContextImpl extends UserDataHolderBase implements G
   }
 
   protected List<ToolsImpl> getUsedTools() {
-    return ((InspectionProfileImpl)getCurrentProfile()).getAllEnabledInspectionTools(myProject);
+    InspectionProfileImpl profile = (InspectionProfileImpl)getCurrentProfile();
+    List<ToolsImpl> tools = profile.getAllEnabledInspectionTools(myProject);
+    THashSet<ToolsImpl> set = null;
+    for (ToolsImpl tool : tools) {
+      String id = tool.getTool().getMainToolId();
+      if (id != null) {
+        InspectionProfileEntry mainTool = profile.getInspectionTool(id);
+        LOG.assertTrue(mainTool != null, "Can't find main tool: " + id);
+        if (set == null) {
+          set = new THashSet<ToolsImpl>(tools, TOOLS_HASHING_STRATEGY);
+        }
+        set.add(new ToolsImpl(mainTool, mainTool.getDefaultLevel(), true));
+      }
+    }
+    return set == null ? tools : new ArrayList<ToolsImpl>(set);
   }
 
   private void classifyTool(List<Tools> outGlobalTools,
