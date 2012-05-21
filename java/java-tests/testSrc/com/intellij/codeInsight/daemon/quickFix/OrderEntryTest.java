@@ -101,14 +101,7 @@ public class OrderEntryTest extends DaemonAnalyzerTestCase {
   public void testAddCircularDependency() throws Exception {
     final Module a = ModuleManager.getInstance(getProject()).findModuleByName("A");
     final Module b = ModuleManager.getInstance(getProject()).findModuleByName("B");
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        ModifiableRootModel model = ModuleRootManager.getInstance(a).getModifiableModel();
-        model.addModuleOrderEntry(b);
-        model.commit();
-      }
-    });
+    PsiTestUtil.addDependency(a, b);
 
     try {
       doTest("B/src/y/AddDependency.java");

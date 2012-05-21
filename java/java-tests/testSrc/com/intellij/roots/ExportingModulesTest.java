@@ -31,6 +31,7 @@ import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.IdeaTestCase;
+import com.intellij.testFramework.PsiTestUtil;
 
 import java.io.File;
 
@@ -61,9 +62,7 @@ public class ExportingModulesTest extends IdeaTestCase {
         moduleBAentry.setExported(true);
         rootModelB.commit();
 
-        final ModifiableRootModel rootModelC = ModuleRootManager.getInstance(moduleC).getModifiableModel();
-        rootModelC.addModuleOrderEntry(moduleB);
-        rootModelC.commit();
+        PsiTestUtil.addDependency(moduleC, moduleB);
 
         final PsiClass pCClass =
           JavaPsiFacade.getInstance(myProject).findClass("p.C", GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(moduleC));

@@ -26,6 +26,7 @@ import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.testFramework.PsiTestUtil;
 import org.jetbrains.idea.maven.MavenCustomRepositoryHelper;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
 import org.jetbrains.idea.maven.model.MavenId;
@@ -1506,14 +1507,7 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
 
     final Module module = createModule("my-module");
 
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
-        ModifiableRootModel model = ModuleRootManager.getInstance(getModule("m1")).getModifiableModel();
-        model.addModuleOrderEntry(module);
-        model.commit();
-      }
-    });
-
+    PsiTestUtil.addDependency(getModule("m1"), module);
 
     assertModuleModuleDeps("m1", "m2", "my-module");
 

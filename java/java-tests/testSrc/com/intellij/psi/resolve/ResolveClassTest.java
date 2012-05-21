@@ -20,14 +20,12 @@ import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.StdModuleTypes;
-import com.intellij.openapi.roots.ContentEntry;
-import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.ResolveTestCase;
 
 public class ResolveClassTest extends ResolveTestCase {
@@ -215,18 +213,14 @@ public class ResolveClassTest extends ResolveTestCase {
         Module module = modifiableModel.newModule("a.iml", StdModuleTypes.JAVA.getId());
         modifiableModel.commit();
 
-        ModifiableRootModel rootModel = ModuleRootManager.getInstance(module).getModifiableModel();
         VirtualFile root = LocalFileSystem.getInstance().refreshAndFindFileByPath(getTestDataPath() + "/class/dependentModule");
         assert root != null;
 
-        ContentEntry contentEntry = rootModel.addContentEntry(root);
-        contentEntry.addSourceFolder(root.findChild("src"), false);
-        contentEntry.addSourceFolder(root.findChild("test"), true);
-        rootModel.commit();
+        PsiTestUtil.addContentRoot(module, root);
+        PsiTestUtil.addSourceRoot(module, root.findChild("src"));
+        PsiTestUtil.addSourceRoot(module, root.findChild("test"), true);
 
-        ModifiableRootModel modifiableRootModel = ModuleRootManager.getInstance(getModule()).getModifiableModel();
-        modifiableRootModel.addModuleOrderEntry(module);
-        modifiableRootModel.commit();
+        PsiTestUtil.addDependency(getModule(), module);
       }
     });
   }
