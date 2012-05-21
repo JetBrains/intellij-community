@@ -29,6 +29,8 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
@@ -42,6 +44,7 @@ import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.lang.reflect.Array;
 import java.util.*;
 import java.util.concurrent.Semaphore;
@@ -60,6 +63,7 @@ public class CompilerManagerImpl extends CompilerManager {
   private final Map<Compiler, Set<FileType>> myCompilerToInputTypes = new HashMap<Compiler, Set<FileType>>();
   private final Map<Compiler, Set<FileType>> myCompilerToOutputTypes = new HashMap<Compiler, Set<FileType>>();
   private final Set<ModuleType> myValidationDisabledModuleTypes = new HashSet<ModuleType>();
+  private final Set<LocalFileSystem.WatchRequest> myWatchRoots;
 
   public CompilerManagerImpl(final Project project, CompilerConfigurationImpl compilerConfiguration, MessageBus messageBus) {
     myProject = project;
@@ -82,6 +86,17 @@ public class CompilerManagerImpl extends CompilerManager {
     }
 
     addCompilableFileType(StdFileTypes.JAVA);
+
+    final File projectGeneratedSrcRoot = CompilerPaths.getGeneratedDataDirectory(project);
+    FileUtil.createIfDoesntExist(projectGeneratedSrcRoot);
+    final LocalFileSystem lfs = LocalFileSystem.getInstance();
+    myWatchRoots = lfs.addRootsToWatch(Collections.singletonList(FileUtil.toCanonicalPath(projectGeneratedSrcRoot.getPath())), true);
+    Disposer.register(project, new Disposable() {
+      public void dispose() {
+        lfs.removeWatchedRoots(myWatchRoots);
+      }
+    });
+
     //
     //addCompiler(new DummyTransformingCompiler()); // this one is for testing purposes only
     //addCompiler(new DummySourceGeneratingCompiler(myProject)); // this one is for testing purposes only
