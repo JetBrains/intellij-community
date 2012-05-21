@@ -2,6 +2,7 @@ package org.jetbrains.jps.incremental;
 
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.util.EventDispatcher;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.ether.dependencyView.Mappings;
@@ -9,6 +10,7 @@ import org.jetbrains.jps.*;
 import org.jetbrains.jps.api.CanceledStatus;
 import org.jetbrains.jps.incremental.fs.RootDescriptor;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
+import org.jetbrains.jps.incremental.messages.FileGeneratedEvent;
 import org.jetbrains.jps.incremental.messages.ProgressMessage;
 import org.jetbrains.jps.incremental.messages.UptoDateFilesSavedEvent;
 import org.jetbrains.jps.incremental.storage.BuildDataManager;
@@ -43,6 +45,7 @@ public class CompileContext extends UserDataHolderBase implements MessageHandler
   private final Map<String, String> myBuilderParams;
   private final CanceledStatus myCancelStatus;
   private float myDone = -1.0f;
+  private EventDispatcher<BuildListener> myListeners = EventDispatcher.create(BuildListener.class);
 
   public CompileContext(CompileScope scope,
                         ProjectDescriptor pd, boolean isMake,
@@ -90,6 +93,14 @@ public class CompileContext extends UserDataHolderBase implements MessageHandler
   @Nullable
   public String getBuilderParameter(String paramName) {
     return myBuilderParams.get(paramName);
+  }
+
+  public void addBuildListener(BuildListener listener) {
+    myListeners.addListener(listener);
+  }
+
+  public void removeBuildListener(BuildListener listener) {
+    myListeners.removeListener(listener);
   }
 
   public void markDirty(final File file) throws IOException {
@@ -290,6 +301,12 @@ public class CompileContext extends UserDataHolderBase implements MessageHandler
       ((ProgressMessage)msg).setDone(myDone);
     }
     myDelegateMessageHandler.processMessage(msg);
+    if (msg instanceof FileGeneratedEvent) {
+      final Collection<Pair<String, String>> paths = ((FileGeneratedEvent)msg).getPaths();
+      if (!paths.isEmpty()) {
+        myListeners.getMulticaster().filesGenerated(paths);
+      }
+    }
   }
 
   public boolean errorsDetected() {

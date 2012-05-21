@@ -10,7 +10,6 @@ import com.intellij.util.io.MappingFailedException;
 import com.intellij.util.io.PersistentEnumerator;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.ether.dependencyView.Callbacks;
-import org.jetbrains.ether.dependencyView.Mappings;
 import org.jetbrains.jps.*;
 import org.jetbrains.jps.api.CanceledStatus;
 import org.jetbrains.jps.api.GlobalOptions;
@@ -29,9 +28,11 @@ import org.jetbrains.jps.incremental.storage.SourceToOutputMapping;
 import org.jetbrains.jps.incremental.storage.Timestamps;
 import org.jetbrains.jps.server.ProjectDescriptor;
 
-import java.io.*;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.lang.reflect.Field;
-import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -193,35 +194,47 @@ public class IncProjectBuilder {
   private void runBuild(CompileContext context, boolean forceCleanCaches) throws ProjectBuildException {
     context.setDone(0.0f);
 
-    LOG.info("Building project '" +
-             context.getProject().getProjectName() +
-             "'; isRebuild:" +
-             context.isProjectRebuild() +
-             "; isMake:" +
-             context.isMake());
+    LOG.info("Building project '" + context.getProject().getProjectName() + "'; isRebuild:" + context.isProjectRebuild() + "; isMake:" + context.isMake());
 
-    if (context.isProjectRebuild() || forceCleanCaches) {
-      cleanOutputRoots(context);
+    for (ProjectLevelBuilder builder : myBuilderRegistry.getProjectLevelBuilders()) {
+      builder.buildStarted(context);
+    }
+    for (ModuleLevelBuilder builder : myBuilderRegistry.getModuleLevelBuilders()) {
+      builder.buildStarted(context);
     }
 
-    context.processMessage(new ProgressMessage("Running 'before' tasks"));
-    runTasks(context, myBuilderRegistry.getBeforeTasks());
+    try {
+      if (context.isProjectRebuild() || forceCleanCaches) {
+        cleanOutputRoots(context);
+      }
 
-    context.setCompilingTests(false);
-    context.processMessage(new ProgressMessage("Checking production sources"));
-    buildChunks(context, myProductionChunks);
+      context.processMessage(new ProgressMessage("Running 'before' tasks"));
+      runTasks(context, myBuilderRegistry.getBeforeTasks());
 
-    context.setCompilingTests(true);
-    context.processMessage(new ProgressMessage("Checking test sources"));
-    buildChunks(context, myTestChunks);
+      context.setCompilingTests(false);
+      context.processMessage(new ProgressMessage("Checking production sources"));
+      buildChunks(context, myProductionChunks);
 
-    context.processMessage(new ProgressMessage("Building project"));
-    runProjectLevelBuilders(context);
+      context.setCompilingTests(true);
+      context.processMessage(new ProgressMessage("Checking test sources"));
+      buildChunks(context, myTestChunks);
 
-    context.processMessage(new ProgressMessage("Running 'after' tasks"));
-    runTasks(context, myBuilderRegistry.getAfterTasks());
+      context.processMessage(new ProgressMessage("Building project"));
+      runProjectLevelBuilders(context);
 
-    context.processMessage(new ProgressMessage("Finished, saving caches..."));
+      context.processMessage(new ProgressMessage("Running 'after' tasks"));
+      runTasks(context, myBuilderRegistry.getAfterTasks());
+    }
+    finally {
+      for (ProjectLevelBuilder builder : myBuilderRegistry.getProjectLevelBuilders()) {
+        builder.buildFinished(context);
+      }
+      for (ModuleLevelBuilder builder : myBuilderRegistry.getModuleLevelBuilders()) {
+        builder.buildFinished(context);
+      }
+      context.processMessage(new ProgressMessage("Finished, saving caches..."));
+    }
+
   }
 
   private CompileContext createContext(CompileScope scope, boolean isMake, final boolean isProjectRebuild) throws ProjectBuildException {
