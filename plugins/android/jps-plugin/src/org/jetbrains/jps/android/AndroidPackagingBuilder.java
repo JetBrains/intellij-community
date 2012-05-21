@@ -170,7 +170,7 @@ public class AndroidPackagingBuilder extends ProjectLevelBuilder {
     if (context.isProjectRebuild() && resCacheDir.exists()) {
       if (!FileUtil.delete(resCacheDir)) {
         context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR,
-                                                   "Cannot delete directory " + resCacheDir.getPath()));
+                                                   AndroidJpsBundle.message("android.jps.cannot.create.directory", resCacheDir.getPath())));
         return false;
       }
     }
@@ -178,7 +178,7 @@ public class AndroidPackagingBuilder extends ProjectLevelBuilder {
     if (!resCacheDir.exists()) {
       if (!resCacheDir.mkdirs()) {
         context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR,
-                                                   "Cannot create directory " + resCacheDir.getPath()));
+                                                   AndroidJpsBundle.message("android.jps.cannot.create.directory", resCacheDir.getPath())));
         return false;    
       }
     }
@@ -188,7 +188,7 @@ public class AndroidPackagingBuilder extends ProjectLevelBuilder {
     final Map<AndroidCompilerMessageKind, List<String>> messages =
       AndroidApt.crunch(target, Collections.singletonList(resourceDir.getPath()), resCacheDir.getPath());
 
-    AndroidJpsUtil.addMessages(context, messages, BUILDER_NAME);
+    AndroidJpsUtil.addMessages(context, messages, BUILDER_NAME, module.getName());
 
     final boolean success = messages.get(AndroidCompilerMessageKind.ERROR).isEmpty();
     storage.update(module.getName(), success ? state : null);
@@ -353,8 +353,8 @@ public class AndroidPackagingBuilder extends ProjectLevelBuilder {
     final String sdkPath = platform.getSdk().getSdkPath();
     final String outputPath = AndroidJpsUtil.getApkPath(facet, outputDir);
     if (outputPath == null) {
-      context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR,
-                                                 "Cannot compute output path for file " + AndroidJpsUtil.getApkName(module)));
+      context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR, AndroidJpsBundle
+        .message("android.jps.errors.cannot.compute.output.apk", module.getName())));
       return false;
     }
     final String customKeyStorePath = FileUtil.toSystemDependentName(facet.getCustomDebugKeyStorePath());
@@ -390,7 +390,7 @@ public class AndroidPackagingBuilder extends ProjectLevelBuilder {
       .execute(resPackagePath, classesDexFilePath, sourceRoots, externalJars, nativeLibDirs, additionalNativeLibs,
                outputApkPath, release, sdkPath, customKeyStorePath, new MyExcludedSourcesFilter(context.getProject()));
 
-    AndroidJpsUtil.addMessages(context, messages, BUILDER_NAME);
+    AndroidJpsUtil.addMessages(context, messages, BUILDER_NAME, module.getName());
     final boolean success = messages.get(AndroidCompilerMessageKind.ERROR).isEmpty();
 
     apkFileSetStorage.update(module.getName(), success ? currentFileSetState : null);
@@ -491,7 +491,7 @@ public class AndroidPackagingBuilder extends ProjectLevelBuilder {
       final String[] resourceDirPaths = AndroidJpsUtil.collectResourceDirsForCompilation(facet, true, context);
 
       return doPackageResources(context, manifestFile, target, resourceDirPaths, ArrayUtil.toStringArray(assetsDirPaths), outputFilePath,
-                                AndroidJpsUtil.isReleaseBuild(context));
+                                AndroidJpsUtil.isReleaseBuild(context), module.getName());
     }
     catch (IOException e) {
       AndroidJpsUtil.reportExceptionError(context, null, e, BUILDER_NAME);
@@ -505,7 +505,8 @@ public class AndroidPackagingBuilder extends ProjectLevelBuilder {
                                             @NotNull String[] resourceDirPaths,
                                             @NotNull String[] assetsDirPaths,
                                             @NotNull String outputFilePath,
-                                            boolean releasePackage) {
+                                            boolean releasePackage,
+                                            @NotNull String moduleName) {
     try {
       final String outputPath = releasePackage
                                 ? outputFilePath + RELEASE_SUFFIX
@@ -522,7 +523,7 @@ public class AndroidPackagingBuilder extends ProjectLevelBuilder {
           }
         });
 
-      AndroidJpsUtil.addMessages(context, messages, BUILDER_NAME);
+      AndroidJpsUtil.addMessages(context, messages, BUILDER_NAME, moduleName);
       return messages.get(AndroidCompilerMessageKind.ERROR).size() == 0;
     }
     catch (final IOException e) {
