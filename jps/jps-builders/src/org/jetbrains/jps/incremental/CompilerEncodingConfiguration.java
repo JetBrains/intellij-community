@@ -34,7 +34,7 @@ public class CompilerEncodingConfiguration {
 
   private Map<String, Set<String>> computeModuleCharsetMap() {
     final Map<String, Set<String>> map = new THashMap<String, Set<String>>();
-    final List<ModuleLevelBuilder> builders = BuilderRegistry.getInstance().getAllModuleLevelBuilders();
+    final List<ModuleLevelBuilder> builders = BuilderRegistry.getInstance().getModuleLevelBuilders();
     for (Map.Entry<String, String> entry : myFilePathToCharset.entrySet()) {
       final String filePath = entry.getKey();
       final String charset = entry.getValue();

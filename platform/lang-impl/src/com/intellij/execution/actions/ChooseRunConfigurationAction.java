@@ -451,10 +451,10 @@ public class ChooseRunConfigurationAction extends AnAction {
       final RunnerAndConfigurationSettings selectedConfiguration = manager.getSelectedConfiguration();
 
       final Map<RunnerAndConfigurationSettings, ItemWrapper> wrappedExisting = new LinkedHashMap<RunnerAndConfigurationSettings, ItemWrapper>();
-      final ConfigurationType[] factories = manager.getConfigurationFactories();
-      for (final ConfigurationType factory : factories) {
-        if (!(factory instanceof UnknownConfigurationType)) {
-          final RunnerAndConfigurationSettings[] configurations = manager.getConfigurationSettings(factory);
+      final ConfigurationType[] types = manager.getConfigurationFactories();
+      for (final ConfigurationType type : types) {
+        if (!(type instanceof UnknownConfigurationType)) {
+          final RunnerAndConfigurationSettings[] configurations = manager.getConfigurationSettings(type);
           for (final RunnerAndConfigurationSettings configuration : configurations) {
             final ItemWrapper wrapped = ItemWrapper.wrap(project, configuration);
             if (configuration == selectedConfiguration) {
