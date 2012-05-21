@@ -43,6 +43,7 @@ import com.intellij.openapi.vcs.changes.ui.ChangeListViewerDialog;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.util.IconUtil;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.WaitForProgressToShow;
 import org.jetbrains.annotations.NonNls;
@@ -395,7 +396,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
       if (e.getPlace().equals(PLACE_TOOLBAR)) {
         e.getPresentation().setDescription(SvnBundle.message("repository.browser.add.location.action"));
         e.getPresentation().setText(SvnBundle.message("repository.browser.add.location.action"));
-        e.getPresentation().setIcon(IconLoader.getIcon("/general/add.png"));
+        e.getPresentation().setIcon(IconUtil.getAddIcon());
       }
     }
 

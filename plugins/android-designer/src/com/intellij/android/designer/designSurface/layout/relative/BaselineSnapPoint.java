@@ -32,7 +32,7 @@ public class BaselineSnapPoint extends SnapPoint {
 
   public BaselineSnapPoint(RadViewComponent component) {
     super(component, false);
-    myBaseline = ((RadViewComponent)component).getBaseline();
+    myBaseline = component.getBaseline();
   }
 
   @Override

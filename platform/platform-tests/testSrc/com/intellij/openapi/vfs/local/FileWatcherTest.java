@@ -16,7 +16,6 @@
 package com.intellij.openapi.vfs.local;
 
 import com.intellij.execution.configurations.GeneralCommandLine;
-import com.intellij.idea.Bombed;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Disposer;
@@ -271,7 +270,7 @@ public class FileWatcherTest extends PlatformLangTestCase {
     }
   }
 
-  @Bombed(user = "roman.shevchenko", year = 2012, month = Calendar.MAY, day = 15)
+/*
   public void testSymlinkAboveWatchRoot() throws Exception {
     final File topDir = FileUtil.createTempDirectory("top.", null);
     final File topLink = SymlinkHandlingTest.createTempLink(topDir.getAbsolutePath(), "link");
@@ -299,7 +298,6 @@ public class FileWatcherTest extends PlatformLangTestCase {
     }
   }
 
-  @Bombed(user = "roman.shevchenko", year = 2012, month = Calendar.MAY, day = 15)
   public void testSymlinkBelowWatchRoot() throws Exception {
     final File targetDir = FileUtil.createTempDirectory("top.", null);
     final File file = FileUtil.createTempFile(targetDir, "test.", ".txt", true, false);
@@ -327,6 +325,7 @@ public class FileWatcherTest extends PlatformLangTestCase {
       delete(targetDir);
     }
   }
+*/
 
   public void testSubst() throws Exception {
     if (!SystemInfo.isWindows) {

@@ -20,12 +20,17 @@ import com.intellij.openapi.application.QueryExecutorBase;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.UsageSearchContext;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod;
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrGdkMethodImpl;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
+import org.jetbrains.plugins.groovy.lang.resolve.MixinMemberContributor;
 
 /**
  * author ven
@@ -39,13 +44,24 @@ public class AccessorMethodReferencesSearcher extends QueryExecutorBase<PsiRefer
   @Override
   public void processQuery(@NotNull MethodReferencesSearch.SearchParameters queryParameters, @NotNull Processor<PsiReference> consumer) {
     final PsiMethod method = queryParameters.getMethod();
-    final String propertyName = GroovyPropertyUtils.getPropertyName(method);
+
+    final String propertyName;
+    if (MixinMemberContributor.isCategoryMethod(method, null, PsiSubstitutor.EMPTY)) {
+      final GrGdkMethod cat = GrGdkMethodImpl.createGdkMethod(method, false);
+      propertyName = GroovyPropertyUtils.getPropertyName((PsiMethod)cat);
+    }
+    else {
+      propertyName = GroovyPropertyUtils.getPropertyName(method);
+    }
+
     if (propertyName == null) return;
 
-    queryParameters.getOptimizer().searchWord(propertyName, PsiUtil.restrictScopeToGroovyFiles(queryParameters.getScope()), UsageSearchContext.IN_CODE, true, method);
+    final SearchScope onlyGroovyFiles = PsiUtil.restrictScopeToGroovyFiles(queryParameters.getScope());
+
+    queryParameters.getOptimizer().searchWord(propertyName, onlyGroovyFiles, UsageSearchContext.IN_CODE, true, method);
 
     if (!GroovyPropertyUtils.isPropertyName(propertyName)) {
-      queryParameters.getOptimizer().searchWord(StringUtil.decapitalize(propertyName), PsiUtil.restrictScopeToGroovyFiles(queryParameters.getScope()), UsageSearchContext.IN_CODE, true, method);
+      queryParameters.getOptimizer().searchWord(StringUtil.decapitalize(propertyName), onlyGroovyFiles, UsageSearchContext.IN_CODE, true, method);
     }
   }
 

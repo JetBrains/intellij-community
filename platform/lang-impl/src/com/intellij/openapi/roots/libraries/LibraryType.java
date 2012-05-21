@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,8 +44,14 @@ public abstract class LibraryType<P extends LibraryProperties> extends LibraryPr
   
   public final static OrderRootType[] DEFAULT_EXTERNAL_ROOT_TYPES = {OrderRootType.CLASSES};
 
-  protected LibraryType(@NotNull LibraryKind<P> libraryKind) {
+  protected LibraryType(@NotNull PersistentLibraryKind<P> libraryKind) {
     super(libraryKind);
+  }
+
+  @NotNull
+  @Override
+  public PersistentLibraryKind<P> getKind() {
+    return (PersistentLibraryKind<P>) super.getKind();
   }
 
   /**
@@ -60,9 +66,6 @@ public abstract class LibraryType<P extends LibraryProperties> extends LibraryPr
   @Nullable
   public abstract NewLibraryConfiguration createNewLibrary(@NotNull JComponent parentComponent, @Nullable VirtualFile contextDirectory,
                                                            @NotNull Project project);
-
-  @NotNull
-  public abstract P createDefaultProperties();
 
   /**
    * @return {@code true} if library of this type can be added as a dependency to {@code module}
@@ -95,13 +98,13 @@ public abstract class LibraryType<P extends LibraryProperties> extends LibraryPr
   public OrderRootType[] getExternalRootTypes() {
     return DEFAULT_EXTERNAL_ROOT_TYPES;
   }
-  
-  public OrderRootType[] getAdditionalRootTypes() {
-    return new OrderRootType[0];
-  }
 
-  public boolean isFileBased() {
-    return false;
+  public static LibraryType findByKind(LibraryKind kind) {
+    for (LibraryType type : EP_NAME.getExtensions()) {
+      if (type.getKind() == kind) {
+        return type;
+      }
+    }
+    throw new IllegalArgumentException("Library with kind " + kind + " is not registered");
   }
-
 }

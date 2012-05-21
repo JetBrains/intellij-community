@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +16,9 @@
 package org.jetbrains.idea.maven.utils.library;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.libraries.LibraryKind;
 import com.intellij.openapi.roots.libraries.LibraryType;
 import com.intellij.openapi.roots.libraries.NewLibraryConfiguration;
+import com.intellij.openapi.roots.libraries.PersistentLibraryKind;
 import com.intellij.openapi.roots.libraries.ui.LibraryEditorComponent;
 import com.intellij.openapi.roots.libraries.ui.LibraryPropertiesEditor;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -32,7 +32,13 @@ import javax.swing.*;
  * @author nik
  */
 public class RepositoryLibraryType extends LibraryType<RepositoryLibraryProperties> {
-  private static final LibraryKind<RepositoryLibraryProperties> LIBRARY_KIND = LibraryKind.create("repository");
+  private static final PersistentLibraryKind<RepositoryLibraryProperties> LIBRARY_KIND = new PersistentLibraryKind<RepositoryLibraryProperties>("repository", false) {
+    @NotNull
+    @Override
+    public RepositoryLibraryProperties createDefaultProperties() {
+      return new RepositoryLibraryProperties();
+    }
+  };
 
   public static RepositoryLibraryType getInstance() {
     return EP_NAME.findExtension(RepositoryLibraryType.class);
@@ -52,12 +58,6 @@ public class RepositoryLibraryType extends LibraryType<RepositoryLibraryProperti
                                                   @Nullable VirtualFile contextDirectory,
                                                   @NotNull Project project) {
     return RepositoryAttachHandler.chooseLibraryAndDownload(project, null);
-  }
-
-  @NotNull
-  @Override
-  public RepositoryLibraryProperties createDefaultProperties() {
-    return new RepositoryLibraryProperties();
   }
 
   @Override

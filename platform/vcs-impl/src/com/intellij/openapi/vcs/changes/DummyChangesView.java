@@ -40,4 +40,8 @@ class DummyChangesView implements ChangesViewI {
   @Override
   public void updateProgressText(String text, boolean isError) {
   }
+
+  @Override
+  public void setBusy(boolean b) {
+  }
 }

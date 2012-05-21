@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import com.intellij.psi.StubBasedPsiElement;
 import com.intellij.psi.stubs.EmptyStub;
 import com.intellij.util.ArrayFactory;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameter;
@@ -73,5 +74,36 @@ public class GrTypeParameterListImpl extends GrStubElementBase<EmptyStub> implem
   @Override
   public void accept(GroovyElementVisitor visitor) {
     visitor.visitTypeParameterList(this);
+  }
+
+  @Override
+  public ASTNode addInternal(ASTNode first, ASTNode last, ASTNode anchor, Boolean before) {
+    if (first == last && first.getPsi() instanceof GrTypeParameter) {
+      boolean hasParams = getTypeParameters().length > 0;
+
+      final ASTNode _anchor;
+
+      if (anchor == null) {
+        if (before.booleanValue()) {
+          _anchor = getLastChild().getNode();
+        }
+        else {
+          _anchor = getFirstChild().getNode();
+        }
+      }
+      else {
+        _anchor = anchor;
+      }
+
+
+      final ASTNode node = super.addInternal(first, last, _anchor, before);
+      if (hasParams) {
+        getNode().addLeaf(GroovyTokenTypes.mCOMMA, ",", anchor != null ? anchor : node);
+      }
+      return node;
+    }
+    else {
+      return super.addInternal(first, last, anchor, before);
+    }
   }
 }

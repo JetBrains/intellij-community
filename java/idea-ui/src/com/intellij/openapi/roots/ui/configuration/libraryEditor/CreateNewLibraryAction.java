@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -80,7 +80,7 @@ public class CreateNewLibraryAction extends DumbAwareAction {
                                       @NotNull final Project project, @NotNull final LibrariesModifiableModel modifiableModel) {
     final NewLibraryConfiguration configuration = createNewLibraryConfiguration(type, parentComponent, project);
     if (configuration == null) return null;
-    final Library library = modifiableModel.createLibrary(LibraryEditingUtil.suggestNewLibraryName(modifiableModel, configuration.getDefaultLibraryName()), configuration.getLibraryType());
+    final Library library = modifiableModel.createLibrary(LibraryEditingUtil.suggestNewLibraryName(modifiableModel, configuration.getDefaultLibraryName()), configuration.getLibraryType().getKind());
 
     final NewLibraryEditor editor = new NewLibraryEditor(configuration.getLibraryType(), configuration.getProperties());
     configuration.addRoots(editor);
@@ -117,7 +117,7 @@ public class CreateNewLibraryAction extends DumbAwareAction {
     if (librariesConfigurable instanceof ProjectLibrariesConfigurable) {
       final ModuleStructureConfigurable configurable = ModuleStructureConfigurable.getInstance(project);
       for (LibraryType<?> extension : extensions) {
-        if (!LibraryEditingUtil.getSuitableModules(configurable, extension, null).isEmpty()) {
+        if (!LibraryEditingUtil.getSuitableModules(configurable, extension.getKind(), null).isEmpty()) {
           suitableTypes.add(extension);
         }
       }

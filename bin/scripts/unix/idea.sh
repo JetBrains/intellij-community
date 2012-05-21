@@ -149,7 +149,7 @@ if [ "$IS_EAP" = "true" ]; then
   fi
 fi
 
-COMMON_JVM_ARGS="-Xbootclasspath/a:../lib/boot.jar -Didea.paths.selector=@@system_selector@@ $IDE_PROPERTIES_PROPERTY"
+COMMON_JVM_ARGS="\"-Xbootclasspath/a:$IDE_HOME/lib/boot.jar\" -Didea.paths.selector=@@system_selector@@ $IDE_PROPERTIES_PROPERTY"
 IDE_JVM_ARGS="@@ide_jvm_args@@"
 ALL_JVM_ARGS="$VM_OPTIONS $COMMON_JVM_ARGS $IDE_JVM_ARGS $AGENT $REQUIRED_JVM_ARGS"
 
@@ -164,7 +164,6 @@ export LD_LIBRARY_PATH="$IDE_BIN_HOME:$LD_LIBRARY_PATH"
 # ---------------------------------------------------------------------
 # Run the IDE.
 # ---------------------------------------------------------------------
-cd "$IDE_BIN_HOME"
 while true ; do
   eval "$JDK/bin/java" $ALL_JVM_ARGS -Djb.restart.code=88 $MAIN_CLASS_NAME $*
   test $? -ne 88 && break

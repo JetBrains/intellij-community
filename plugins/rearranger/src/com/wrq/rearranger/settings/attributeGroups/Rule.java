@@ -23,20 +23,23 @@ package com.wrq.rearranger.settings.attributeGroups;
 
 import com.wrq.rearranger.entry.RangeEntry;
 import com.wrq.rearranger.ruleinstance.RuleInstance;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
 /** Interface which all rules implement. */
 public interface Rule {
+  
+  @NotNull
   RuleInstance createRuleInstance();
 
   // all rules have a priority; but some are not settable by the user.  Those that are user settable implement
-  // the marker interface IPrioritizableRule.
+  // the marker interface PrioritizedRule.
   int getPriority();
 
   void setPriority(int priority);
 
-  boolean isMatch(RangeEntry rangeEntry);
+  boolean isMatch(@NotNull RangeEntry rangeEntry);
 
   /**
    * @param pattern global pattern to which all comments should conform.

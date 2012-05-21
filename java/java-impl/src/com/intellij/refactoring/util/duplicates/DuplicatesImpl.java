@@ -21,6 +21,8 @@ import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.find.FindManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.application.Result;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.FoldRegion;
@@ -127,8 +129,10 @@ public class DuplicatesImpl {
       }
     }
     HighlightManager.getInstance(project).removeSegmentHighlighter(editor, highlighters.get(0));
-    final Runnable action = new Runnable() {
-      public void run() {
+
+    new WriteCommandAction(project, MethodDuplicatesHandler.REFACTORING_NAME) {
+      @Override
+      protected void run(Result result) throws Throwable {
         try {
           provider.processMatch(match);
         }
@@ -136,10 +140,7 @@ public class DuplicatesImpl {
           LOG.error(e);
         }
       }
-    };
-
-    //use outer command
-    ApplicationManager.getApplication().runWriteAction(action);
+    }.execute();
 
     return false;
   }

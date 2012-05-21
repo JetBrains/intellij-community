@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,14 @@
  */
 package com.intellij.psi;
 
+import com.intellij.pom.java.LanguageLevel;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Map;
 
 /**
  * @author Medvedev Max
@@ -128,5 +132,134 @@ public interface JVMElementFactory {
   @NotNull
   PsiElement createExpressionFromText(@NotNull @NonNls String text, @Nullable PsiElement context) throws IncorrectOperationException;
 
+  /**
+   * Creates new reference element by type
+   * @param type the type for which reference element should be creted
+   * @return the reference element
+   */
+  @NotNull
   PsiElement createReferenceElementByType(PsiClassType type);
+
+  /**
+   * Creates empty type parameter list
+   * @return the empty type parameter list
+   */
+  @NotNull
+  PsiTypeParameterList createTypeParameterList();
+
+  /**
+   * Creates new type parameter with the specified name and super types
+   * @param name the name which the type parameter should have
+   * @param superTypes the super types of the type parameter
+   * @return the new type parameter
+   */
+  @NotNull
+  PsiTypeParameter createTypeParameter(String name, PsiClassType[] superTypes);
+
+  /**
+   * Creates a class type for the specified class.
+   *
+   * @param aClass the class for which the class type is created.
+   * @return the class type instance.
+   */
+  @NotNull
+  PsiClassType createType(@NotNull PsiClass aClass);
+
+  /**
+   * Creates an empty annotation type with the specified name.
+   *
+   * @param name the name of the annotation type to create.
+   * @return the created annotation type instance.
+   * @throws com.intellij.util.IncorrectOperationException if <code>name</code> is not a valid Java identifier.
+   */
+  @NotNull
+  PsiClass createAnnotationType(@NotNull @NonNls String name) throws IncorrectOperationException;
+
+  /**
+   * Creates an empty constructor with a given name.
+   *
+   * @param name the name of the constructor to create.
+   * @return the created constructor instance.
+   */
+  @NotNull
+  PsiMethod createConstructor(@NotNull @NonNls String name);
+
+  /**
+   * Creates a class type for the specified class, using the specified substitutor
+   * to replace generic type parameters on the class.
+   *
+   * @param resolve     the class for which the class type is created.
+   * @param substitutor the substitutor to use.
+   * @return the class type instance.
+   */
+  @NotNull
+  PsiClassType createType(@NotNull PsiClass resolve, @NotNull PsiSubstitutor substitutor);
+
+  /*
+   additional languageLevel parameter to memorize language level for allowing/prohibiting boxing/unboxing
+  */
+  @NotNull
+  PsiClassType createType(@NotNull PsiClass resolve, @NotNull PsiSubstitutor substitutor, @NotNull LanguageLevel languageLevel);
+
+  @NotNull
+  PsiClassType createType(@NotNull PsiClass resolve,
+                          @NotNull PsiSubstitutor substitutor,
+                          @NotNull LanguageLevel languageLevel,
+                          @NotNull PsiAnnotation[] annotations);
+
+  @NotNull
+  PsiClassType createType(@NotNull PsiClass aClass, PsiType parameters);
+
+  @NotNull
+  PsiClassType createType(@NotNull PsiClass aClass, PsiType... parameters);
+
+  /**
+   * Creates a substitutor for the specified class which replaces all type parameters
+   * with their corresponding raw types.
+   *
+   * @param owner the class or method for which the substitutor is created.
+   * @return the substitutor instance.
+   */
+  @NotNull
+  PsiSubstitutor createRawSubstitutor(@NotNull PsiTypeParameterListOwner owner);
+
+  /**
+   * Creates a substitutor which uses the specified mapping between type parameters and types.
+   *
+   * @param map the type parameter to type map used by the substitutor.
+   * @return the substitutor instance.
+   */
+  @NotNull
+  PsiSubstitutor createSubstitutor(@NotNull Map<PsiTypeParameter, PsiType> map);
+
+  /**
+   * Returns the primitive type instance for the specified type name.
+   *
+   * @param text the name of a Java primitive type (for example, <code>int</code>)
+   * @return the primitive type instance, or null if <code>name</code> is not a valid
+   *         primitive type name.
+   */
+  @Nullable
+  PsiPrimitiveType createPrimitiveType(@NotNull String text);
+
+  /**
+   * The same as {@link #createTypeByFQClassName(String, com.intellij.psi.search.GlobalSearchScope)}
+   * with {@link com.intellij.psi.search.GlobalSearchScope#allScope(com.intellij.openapi.project.Project)}.
+   *
+   * @param qName the full-qualified name of the class to create the reference to.
+   * @return the class type instance.
+   */
+  @NotNull
+  PsiClassType createTypeByFQClassName(@NotNull @NonNls String qName);
+
+  /**
+   * Creates a class type referencing a class with the specified class name in the specified
+   * search scope.
+   *
+   * @param qName        the full-qualified name of the class to create the reference to.
+   * @param resolveScope the scope in which the class is searched.
+   * @return the class type instance.
+   */
+  @NotNull
+  PsiClassType createTypeByFQClassName(@NotNull @NonNls String qName, @NotNull GlobalSearchScope resolveScope);
 }

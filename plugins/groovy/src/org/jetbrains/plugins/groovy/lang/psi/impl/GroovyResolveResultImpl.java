@@ -16,10 +16,12 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl;
 
 import com.intellij.psi.*;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GrClassSubstitutor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
+import org.jetbrains.plugins.groovy.lang.psi.api.SpreadState;
 
 /**
  * @author ven
@@ -31,28 +33,30 @@ public class GroovyResolveResultImpl implements GroovyResolveResult {
   private final PsiSubstitutor mySubstitutor;
   private final boolean myIsInvokedOnProperty;
 
-  private GroovyPsiElement myCurrentFileResolveContext;
+  private final GroovyPsiElement myCurrentFileResolveContext;
+  private final SpreadState mySpreadState;
 
-  public GroovyResolveResultImpl(PsiElement element, boolean isAccessible) {
-    this(element, null, PsiSubstitutor.EMPTY, isAccessible, true);
+  public GroovyResolveResultImpl(@NotNull PsiElement element, boolean isAccessible) {
+    this(element, null, null, PsiSubstitutor.EMPTY, isAccessible, true, false);
   }
 
-  public GroovyResolveResultImpl(PsiElement element,
-                                 @Nullable GroovyPsiElement context,
-                                 PsiSubstitutor substitutor,
+  public GroovyResolveResultImpl(@NotNull PsiElement element,
+                                 @Nullable GroovyPsiElement resolveContext,
+                                 @Nullable SpreadState spreadState,
+                                 @NotNull PsiSubstitutor substitutor,
                                  boolean isAccessible,
                                  boolean staticsOK) {
-    this(element, context, substitutor, isAccessible, staticsOK, false);
+    this(element, resolveContext, spreadState, substitutor, isAccessible, staticsOK, false);
   }
 
   public GroovyResolveResultImpl(PsiClassType.ClassResolveResult classResolveResult) {
-    this(classResolveResult.getElement(), null, classResolveResult.getSubstitutor(), classResolveResult.isAccessible(),
-         classResolveResult.isStaticsScopeCorrect());
+    this(classResolveResult.getElement(), null, null, classResolveResult.getSubstitutor(), classResolveResult.isAccessible(), classResolveResult.isStaticsScopeCorrect(), false);
   }
 
-  public GroovyResolveResultImpl(PsiElement element,
-                                 GroovyPsiElement resolveContext,
-                                 PsiSubstitutor substitutor,
+  public GroovyResolveResultImpl(@NotNull PsiElement element,
+                                 @Nullable GroovyPsiElement resolveContext,
+                                 @Nullable SpreadState spreadState,
+                                 @NotNull PsiSubstitutor substitutor,
                                  boolean isAccessible,
                                  boolean staticsOK,
                                  boolean isInvokedOnProperty) {
@@ -62,8 +66,10 @@ public class GroovyResolveResultImpl implements GroovyResolveResult {
     mySubstitutor = substitutor;
     myIsStaticsOK = staticsOK;
     myIsInvokedOnProperty = isInvokedOnProperty;
+    mySpreadState = spreadState;
   }
 
+  @NotNull
   public PsiSubstitutor getSubstitutor() {
     return mySubstitutor;
   }
@@ -108,12 +114,18 @@ public class GroovyResolveResultImpl implements GroovyResolveResult {
     return result;
   }
 
+  @Nullable
   public GroovyPsiElement getCurrentFileResolveContext() {
     return myCurrentFileResolveContext;
   }
 
   public boolean isInvokedOnProperty() {
     return myIsInvokedOnProperty;
+  }
+
+  @Override
+  public SpreadState getSpreadState() {
+    return mySpreadState;
   }
 
   @Override

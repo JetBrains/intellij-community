@@ -35,6 +35,7 @@ import org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionUtil;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
+import org.jetbrains.plugins.groovy.lang.psi.api.SpreadState;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
@@ -66,7 +67,7 @@ public class CompleteReferenceExpression {
 
   public static void processVariants(PrefixMatcher matcher, Consumer<Object> consumer, GrReferenceExpressionImpl refExpr, CompletionParameters parameters) {
     final CompleteReferenceProcessor processor = new CompleteReferenceProcessor(refExpr, consumer, matcher, parameters);
-    getVariantsImpl(matcher, refExpr, processor);
+    getVariantsImpl(refExpr, processor);
     final GroovyResolveResult[] candidates = processor.getCandidates();
     for (Object o : GroovyCompletionUtil.getCompletionVariants(candidates)) {
       consumer.consume(o);
@@ -85,7 +86,7 @@ public class CompleteReferenceExpression {
     getVariantsFromQualifierType(refExpr, consumer, params[0], refExpr.getProject());
   }
 
-  private static void getVariantsImpl(PrefixMatcher matcher, GrReferenceExpression refExpr, CompleteReferenceProcessor processor) {
+  private static void getVariantsImpl(GrReferenceExpression refExpr, CompleteReferenceProcessor processor) {
     GrExpression qualifier = refExpr.getQualifierExpression();
     if (qualifier == null) {
       ResolveUtil.treeWalkUp(refExpr, processor, true);
@@ -117,7 +118,7 @@ public class CompleteReferenceExpression {
         getVariantsFromQualifierForSpreadOperator(refExpr, processor, qualifier);
       }
     }
-    ResolveUtil.processCategoryMembers(refExpr, processor);
+    ResolveUtil.processCategoryMembers(refExpr, processor, ResolveState.initial());
   }
 
   private static void getVariantsFromQualifierForSpreadOperator(GrReferenceExpression refExpr,
@@ -206,8 +207,8 @@ public class CompleteReferenceExpression {
 
     final GrPropertyForCompletion field = new GrPropertyForCompletion(method, name, type);
     if (resolveResult != null) {
-      return new GroovyResolveResultImpl(field, resolveResult.getCurrentFileResolveContext(), resolveResult.getSubstitutor(),
-                                         resolveResult.isAccessible(), resolveResult.isStaticsOK());
+      return new GroovyResolveResultImpl(field, resolveResult.getCurrentFileResolveContext(), resolveResult.getSpreadState(),
+                                         resolveResult.getSubstitutor(), resolveResult.isAccessible(), resolveResult.isStaticsOK(), false);
     }
     else {
       return new GroovyResolveResultImpl(field, true);
@@ -377,12 +378,13 @@ public class CompleteReferenceExpression {
 
       boolean isAccessible = isAccessible(namedElement);
       final GroovyPsiElement resolveContext = state.get(RESOLVE_CONTEXT);
+      final SpreadState spreadState = state.get(SpreadState.SPREAD_STATE);
       boolean isStaticsOK = isStaticsOK(namedElement, resolveContext, myParameters.getInvocationCount() <= 1);
 
       PsiSubstitutor substitutor = state.get(PsiSubstitutor.KEY);
       if (substitutor == null) substitutor = PsiSubstitutor.EMPTY;
 
-      consume(new GroovyResolveResultImpl(namedElement, resolveContext, substitutor, isAccessible, isStaticsOK));
+      consume(new GroovyResolveResultImpl(namedElement, resolveContext, spreadState, substitutor, isAccessible, isStaticsOK));
 
       return true;
     }
@@ -407,7 +409,7 @@ public class CompleteReferenceExpression {
         element = ((GrReflectedMethod)element).getBaseMethod();
         if (!myProcessedMethodWithOptionalParams.add((GrMethod)element)) return;
 
-        result = new GroovyResolveResultImpl(element, result.getCurrentFileResolveContext(),
+        result = new GroovyResolveResultImpl(element, result.getCurrentFileResolveContext(), result.getSpreadState(),
                                              result.getSubstitutor(), result.isAccessible(), result.isStaticsOK(),
                                              result.isInvokedOnProperty());
       }

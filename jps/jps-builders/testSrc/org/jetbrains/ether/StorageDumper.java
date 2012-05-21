@@ -1,5 +1,6 @@
 package org.jetbrains.ether;
 
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.ether.dependencyView.Mappings;
 import org.jetbrains.jps.Project;
@@ -54,7 +55,7 @@ public class StorageDumper {
             }
             else {
               if (projectPath != null) {
-                errors.append("Multiple projects specified, skipping ");
+                errors.append("Multiple storage paths specified, skipping ");
                 errors.append(arg);
                 errors.append("\n");
               }
@@ -105,7 +106,7 @@ public class StorageDumper {
 
     void report() {
       if (myHelp) {
-        System.out.println("Usage: <executable> [-o <output-path> | -h ] <project-path>");
+        System.out.println("Usage: <executable> [-o <output-path> | -h ] <storage-path>");
         System.out.println();
       }
 
@@ -126,20 +127,8 @@ public class StorageDumper {
     }
     else {
       try {
-        final String projectPath = path + File.separator + ".idea";
         final String outputPath = (oath == null ? "" : oath) + File.separator + "snapshot-" + new SimpleDateFormat("dd-MM-yy(hh:mm:ss)").format(new Date()) + ".log";
-        final Project project = new Project();
-
-        final Sdk jdk = project.createSdk("JavaSDK", "IDEA jdk", "1.6", System.getProperty("java.home"), null);
-        final List<String> paths = new LinkedList<String>();
-
-        paths.add(FileUtil.toSystemIndependentName(ClasspathBootstrap.getResourcePath(Object.class).getCanonicalPath()));
-
-        jdk.setClasspath(paths);
-
-        IdeaProjectLoader.loadFromPath(project, projectPath, "");
-
-        final File dataStorageRoot = Utils.getDataStorageRoot(project);
+        final File dataStorageRoot = new File(path + File.separator + "mappings");
 
         final Mappings mappings = new Mappings(dataStorageRoot, true);
         final PrintStream p = new PrintStream(outputPath);

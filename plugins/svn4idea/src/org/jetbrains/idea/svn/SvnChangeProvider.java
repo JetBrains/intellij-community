@@ -181,7 +181,9 @@ public class SvnChangeProvider implements ChangeProvider {
     return null;
   }
 
-  private void processCopiedFile(SvnChangedFile copiedFile, ChangelistBuilder builder, SvnChangeProviderContext context) throws SVNException {
+  private void processCopiedFile(SvnChangedFile copiedFile,
+                                 ChangelistBuilder builder,
+                                 SvnChangeProviderContext context) throws SVNException {
     boolean foundRename = false;
     final SVNStatus copiedStatus = copiedFile.getStatus();
     final String copyFromURL = copiedFile.getCopyFromURL();
@@ -204,6 +206,7 @@ public class SvnChangeProvider implements ChangeProvider {
       final SVNStatus deletedStatus = deletedFile.getStatus();
       if ((deletedStatus != null) && (deletedStatus.getURL() != null) && Comparing.equal(copyFromURL, deletedStatus.getURL().toString())) {
         final String clName = changeListNameFromStatus(copiedFile.getStatus());
+        builder.removeRegisteredChangeFor(copiedFile.getFilePath());
         builder.processChangeInList(context.createMovedChange(createBeforeRevision(deletedFile, true),
                                  CurrentContentRevision.create(copiedFile.getFilePath()), copiedStatus, deletedStatus), clName, SvnVcs
           .getKey());
@@ -224,6 +227,7 @@ public class SvnChangeProvider implements ChangeProvider {
             File newPath = new File(copiedFile.getFilePath().getIOFile(), relativePath);
             FilePath newFilePath = myFactory.createFilePathOn(newPath);
             if (!context.isDeleted(newFilePath)) {
+              builder.removeRegisteredChangeFor(newFilePath);
               builder.processChangeInList(context.createMovedChange(createBeforeRevision(deletedChild, true),
                                                             CurrentContentRevision.create(newFilePath),
                                                             context.getTreeConflictStatus(newPath), childStatus), clName, SvnVcs.getKey());

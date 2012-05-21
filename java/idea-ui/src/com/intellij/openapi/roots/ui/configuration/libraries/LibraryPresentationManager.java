@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,12 +50,12 @@ public abstract class LibraryPresentationManager {
   public abstract List<String> getDescriptions(@NotNull Library library, StructureConfigurableContext context);
 
   @NotNull
-  public abstract List<String> getDescriptions(@NotNull VirtualFile[] classRoots, Set<LibraryKind<?>> excludedKinds);
+  public abstract List<String> getDescriptions(@NotNull VirtualFile[] classRoots, Set<LibraryKind> excludedKinds);
 
-  public abstract List<Library> getLibraries(@NotNull Set<LibraryKind<?>> kinds, @NotNull Project project, @Nullable StructureConfigurableContext context);
+  public abstract List<Library> getLibraries(@NotNull Set<LibraryKind> kinds, @NotNull Project project, @Nullable StructureConfigurableContext context);
 
-  public abstract boolean isLibraryOfKind(@NotNull List<VirtualFile> files, @NotNull LibraryKind<?> kind);
+  public abstract boolean isLibraryOfKind(@NotNull List<VirtualFile> files, @NotNull LibraryKind kind);
 
   public abstract boolean isLibraryOfKind(@NotNull Library library, @NotNull LibrariesContainer librariesContainer,
-                                          @NotNull Set<? extends LibraryKind<?>> acceptedKinds);
+                                          @NotNull Set<? extends LibraryKind> acceptedKinds);
 }

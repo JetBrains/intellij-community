@@ -145,11 +145,11 @@ public class GitAnnotationProvider implements AnnotationProvider, VcsCacheableAn
                                      final VcsFileRevision revision,
                                      final List<VcsFileRevision> revisions,
                                      final VirtualFile file) throws VcsException {
-    GitSimpleHandler h = new GitSimpleHandler(myProject, GitUtil.getGitRoot(repositoryFilePath), GitCommand.ANNOTATE);
+    GitSimpleHandler h = new GitSimpleHandler(myProject, GitUtil.getGitRoot(repositoryFilePath), GitCommand.BLAME);
     h.setNoSSH(true);
     h.setStdoutSuppressed(true);
     h.setCharset(file.getCharset());
-    h.addParameters("-p", "-l", "-t");
+    h.addParameters("-p", "-l", "-t", "-w");
     if (revision == null) {
       h.addParameters("HEAD");
     }

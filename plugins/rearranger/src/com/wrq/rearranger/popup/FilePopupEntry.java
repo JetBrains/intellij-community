@@ -29,6 +29,7 @@ import javax.swing.*;
 /** Interface implemented by objects which can appear as entries in the file structure popup. */
 public interface FilePopupEntry {
   /** @return the name of the icon representing the popup entry's type of Java object (method, class, etc.) */
+  @Nullable
   String getTypeIconName();
 
   /**
@@ -39,5 +40,6 @@ public interface FilePopupEntry {
   String[] getAdditionalIconNames();
 
   /** @return a JLabel containing the text of the popup tree entry. */
+  @Nullable
   JLabel getPopupEntryText(RearrangerSettings settings);
 }

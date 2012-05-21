@@ -19,6 +19,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.scope.DelegatingScopeProcessor;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationArrayInitializer;
@@ -38,9 +39,9 @@ import java.util.List;
 public class MixinMemberContributor extends NonCodeMembersContributor {
   @Override
   public void processDynamicElements(@NotNull final PsiType qualifierType,
-                                     PsiScopeProcessor processor,
-                                     GroovyPsiElement place,
-                                     ResolveState state) {
+                                     @NotNull PsiScopeProcessor processor,
+                                     @NotNull GroovyPsiElement place,
+                                     @NotNull ResolveState state) {
     if (!(qualifierType instanceof PsiClassType)) return;
     if (isInAnnotation(place)) return;
     final PsiClassType.ClassResolveResult resolveResult = ((PsiClassType)qualifierType).resolveGenerics();
@@ -69,7 +70,7 @@ public class MixinMemberContributor extends NonCodeMembersContributor {
       if (!mixin.processDeclarations(new DelegatingScopeProcessor(processor) {
         @Override
         public boolean execute(PsiElement element, ResolveState state) {
-          if (isCategoryMethod(element, qualifierType)) {
+          if (isCategoryMethod(element, qualifierType, state.get(PsiSubstitutor.KEY))) {
             return super.execute(GrGdkMethodImpl.createGdkMethod((PsiMethod)element, false), state);
           }
           else {
@@ -92,16 +93,21 @@ public class MixinMemberContributor extends NonCodeMembersContributor {
     return result;
   }
 
-  private static boolean isCategoryMethod(PsiElement element, PsiType qualifierType) {
+  public static boolean isCategoryMethod(@Nullable PsiElement element, @Nullable PsiType qualifierType, @Nullable PsiSubstitutor substitutor) {
     if (!(element instanceof PsiMethod)) return false;
     if (!((PsiMethod)element).hasModifierProperty(PsiModifier.STATIC)) return false;
 
     final PsiParameter[] parameters = ((PsiMethod)element).getParameterList().getParameters();
     if (parameters.length == 0) return false;
 
-    final PsiParameter selfParam = parameters[0];
-    final PsiType selfType = selfParam.getType();
+    if (qualifierType == null) return true;
 
+    PsiType selfType = parameters[0].getType();
+    if (selfType instanceof PsiPrimitiveType) return false;
+
+    if (substitutor != null) {
+      selfType = substitutor.substitute(selfType);
+    }
     return TypesUtil.isAssignable(selfType, qualifierType, element.getManager(), element.getResolveScope());
   }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,29 +16,26 @@
 package org.jetbrains.plugins.groovy.intentions.base;
 
 import com.intellij.codeInsight.CodeInsightUtilBase;
-import com.intellij.codeInsight.template.Template;
-import com.intellij.codeInsight.template.TemplateBuilderImpl;
-import com.intellij.codeInsight.template.TemplateManager;
+import com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageUtils;
+import com.intellij.codeInsight.daemon.impl.quickfix.CreateMethodFromUsageFix;
+import com.intellij.codeInsight.template.*;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.annotator.intentions.QuickfixUtil;
 import org.jetbrains.plugins.groovy.lang.editor.template.expressions.ChooseTypeExpression;
 import org.jetbrains.plugins.groovy.lang.editor.template.expressions.ParameterNameExpression;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrMemberOwner;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
-import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.TypeConstraint;
 
 /**
@@ -46,6 +43,8 @@ import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.TypeConstraint;
  * Date: 13.11.2007
  */
 public class IntentionUtils {
+
+  private static final Logger LOG = Logger.getInstance(IntentionUtils.class);
 
   public static void replaceExpression(@NotNull String newExpression, @NotNull GrExpression expression) throws IncorrectOperationException {
     final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(expression.getProject());
@@ -62,27 +61,29 @@ public class IntentionUtils {
 
   public static void createTemplateForMethod(PsiType[] argTypes,
                                              ChooseTypeExpression[] paramTypesExpressions,
-                                             GrMethod method,
-                                             GrMemberOwner owner,
-                                             TypeConstraint[] constraints, boolean isConstructor) {
+                                             PsiMethod method,
+                                             PsiClass owner,
+                                             TypeConstraint[] constraints,
+                                             boolean isConstructor,
+                                             final PsiElement context) {
 
-    Project project = owner.getProject();
-    GrTypeElement typeElement = method.getReturnTypeElementGroovy();
-    ChooseTypeExpression expr = new ChooseTypeExpression(constraints, PsiManager.getInstance(project));
+    final Project project = owner.getProject();
+    PsiTypeElement typeElement = method.getReturnTypeElement();
+    ChooseTypeExpression expr = new ChooseTypeExpression(constraints, PsiManager.getInstance(project), method.getLanguage()== GroovyFileType.GROOVY_LANGUAGE);
     TemplateBuilderImpl builder = new TemplateBuilderImpl(method);
     if (!isConstructor) {
       assert typeElement != null;
       builder.replaceElement(typeElement, expr);
     }
-    GrParameter[] parameters = method.getParameterList().getParameters();
+    PsiParameter[] parameters = method.getParameterList().getParameters();
     assert parameters.length == argTypes.length;
     for (int i = 0; i < parameters.length; i++) {
-      GrParameter parameter = parameters[i];
-      GrTypeElement parameterTypeElement = parameter.getTypeElementGroovy();
+      PsiParameter parameter = parameters[i];
+      PsiTypeElement parameterTypeElement = parameter.getTypeElement();
       builder.replaceElement(parameterTypeElement, paramTypesExpressions[i]);
-      builder.replaceElement(parameter.getNameIdentifierGroovy(), new ParameterNameExpression());
+      builder.replaceElement(parameter.getNameIdentifier(), new ParameterNameExpression());
     }
-    GrOpenBlock body = method.getBlock();
+    PsiCodeBlock body = method.getBody();
     assert body != null;
     PsiElement lbrace = body.getLBrace();
     assert lbrace != null;
@@ -91,11 +92,53 @@ public class IntentionUtils {
     method = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(method);
     Template template = builder.buildTemplate();
 
-    Editor newEditor = QuickfixUtil.positionCursor(project, owner.getContainingFile(), method);
+    final PsiFile targetFile = owner.getContainingFile();
+    final Editor newEditor = QuickfixUtil.positionCursor(project, targetFile, method);
     TextRange range = method.getTextRange();
     newEditor.getDocument().deleteString(range.getStartOffset(), range.getEndOffset());
 
     TemplateManager manager = TemplateManager.getInstance(project);
-    manager.startTemplate(newEditor, template);
+
+
+    TemplateEditingListener templateListener = new TemplateEditingAdapter() {
+      @Override
+      public void templateFinished(Template template, boolean brokenOff) {
+        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          @Override
+          public void run() {
+            PsiDocumentManager.getInstance(project).commitDocument(newEditor.getDocument());
+            final int offset = newEditor.getCaretModel().getOffset();
+            PsiMethod method = PsiTreeUtil.findElementOfClassAtOffset(targetFile, offset - 1, PsiMethod.class, false);
+            if (context instanceof PsiMethod) {
+              final PsiTypeParameter[] typeParameters = ((PsiMethod)context).getTypeParameters();
+              if (typeParameters.length > 0) {
+                for (PsiTypeParameter typeParameter : typeParameters) {
+                  if (CreateMethodFromUsageFix.checkTypeParam(method, typeParameter)) {
+                    final JVMElementFactory factory = JVMElementFactories.getFactory(method.getLanguage(), method.getProject());
+                    PsiTypeParameterList list = method.getTypeParameterList();
+                    if (list == null) {
+                      PsiTypeParameterList newList = factory.createTypeParameterList();
+                      list = (PsiTypeParameterList)method.addAfter(newList, method.getModifierList());
+                    }
+                    list.add(factory.createTypeParameter(typeParameter.getName(), typeParameter.getExtendsList().getReferencedTypes()));
+                  }
+                }
+              }
+            }
+            if (method != null) {
+              try {
+                CreateFromUsageUtils.setupMethodBody(method);
+              }
+              catch (IncorrectOperationException e) {
+                LOG.error(e);
+              }
+
+              CreateFromUsageUtils.setupEditor(method, newEditor);
+            }
+          }
+        });
+      }
+    };
+    manager.startTemplate(newEditor, template, templateListener);
   }
 }

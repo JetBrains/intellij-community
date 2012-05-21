@@ -18,7 +18,6 @@ package org.jetbrains.idea.svn.history;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.FilePath;
@@ -32,6 +31,7 @@ import com.intellij.openapi.vcs.history.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.*;
 import com.intellij.util.Consumer;
+import com.intellij.util.PlatformIcons;
 import com.intellij.util.ThrowableConsumer;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.UIUtil;
@@ -359,8 +359,8 @@ public class SvnHistoryProvider
         SVNWCClient wcClient = myVcs.createWCClient();
         final SVNURL svnurl = SVNURL.parseURIEncoded(myUrl);
         SVNRevision operationalFrom = myFrom == null ? SVNRevision.HEAD : myFrom;
-        SVNInfo info = wcClient.doInfo(svnurl, myPeg, operationalFrom);
-        final String root = info.getRepositoryRootURL().toString();
+        final SVNURL rootURL = getRepositoryRoot(svnurl, myFrom);
+        final String root = rootURL.toString();
         String relativeUrl = myUrl;
         if (myUrl.startsWith(root)) {
           relativeUrl = myUrl.substring(root.length());
@@ -368,8 +368,7 @@ public class SvnHistoryProvider
         SVNLogClient client = myVcs.createLogClient();
         client.doLog(svnurl, new String[]{}, myPeg == null ? myFrom : myPeg,
                      operationalFrom, myTo == null ? SVNRevision.create(1) : myTo, false, true, mySupport15, myLimit, null,
-                     new RepositoryLogEntryHandler(myVcs, myUrl, SVNRevision.UNDEFINED, relativeUrl, createConsumerAdapter(myConsumer),
-                                                   info.getRepositoryRootURL()));
+                     new RepositoryLogEntryHandler(myVcs, myUrl, SVNRevision.UNDEFINED, relativeUrl, createConsumerAdapter(myConsumer), rootURL));
       }
       catch (SVNCancelException e) {
         //
@@ -436,7 +435,7 @@ public class SvnHistoryProvider
       catch (SVNException e) {
         return false;
       }
-      return info != null && info.getURL() != null;
+      return info != null && info.getURL() != null && info.getRevision().isValid();
     }
   }
 
@@ -772,7 +771,7 @@ public class SvnHistoryProvider
   }
 
   private static class CopyFromColumnInfo extends ColumnInfo<VcsFileRevision, String> {
-    private final Icon myIcon = IconLoader.getIcon("/actions/menu-copy.png");
+    private final Icon myIcon = PlatformIcons.COPY_ICON;
     private final ColoredTableCellRenderer myRenderer = new ColoredTableCellRenderer() {
       protected void customizeCellRenderer(final JTable table,
                                            final Object value,

@@ -20,6 +20,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author peter
@@ -43,7 +44,7 @@ public class PsiGenerationInfo<T extends PsiMember> extends GenerationInfoBase i
     return myMember;
   }
 
-  public void insert(final PsiClass aClass, PsiElement anchor, boolean before) throws IncorrectOperationException {
+  public void insert(@NotNull final PsiClass aClass, @Nullable PsiElement anchor, boolean before) throws IncorrectOperationException {
     final PsiMember existingMember;
     if (myMember instanceof PsiField) {
       existingMember = aClass.findFieldByName(myMember.getName(), false);

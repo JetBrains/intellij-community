@@ -27,11 +27,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.treeStructure.Tree;
+import com.intellij.util.IconUtil;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -50,7 +50,7 @@ import java.util.EventObject;
 public abstract class AbstractValueHint {
   private static final Logger LOG = Logger.getInstance("#com.intellij.xdebugger.impl.evaluate.quick.common.AbstractValueHint");
   @NonNls private final static String DIMENSION_SERVICE_KEY = "DebuggerActiveHint";
-  private static final Icon COLLAPSED_TREE_ICON = IconLoader.getIcon("/general/add.png");
+  private static final Icon COLLAPSED_TREE_ICON = IconUtil.getAddIcon();
   private static final int HINT_TIMEOUT = 7000; // ms
   private final KeyListener myEditorKeyListener = new KeyAdapter() {
     public void keyReleased(KeyEvent e) {

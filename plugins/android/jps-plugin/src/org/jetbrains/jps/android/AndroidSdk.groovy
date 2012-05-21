@@ -30,4 +30,16 @@ class AndroidSdk extends JavaSdk {
     def javaSdk = project.sdks[javaSdkName]
     return javaSdk instanceof JavaSdkImpl ? javaSdk.getJavaExecutable() : null
   }
+
+  @Override
+  String getHomePath() {
+    def javaSdk = project.sdks[javaSdkName]
+    return javaSdk instanceof JavaSdkImpl ? javaSdk.getHomePath() : null
+  }
+
+  @Override
+  String getVersion() {
+    def javaSdk = project.sdks[javaSdkName]
+    return javaSdk instanceof JavaSdkImpl ? javaSdk.getVersion() : null
+  }
 }

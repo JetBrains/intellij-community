@@ -17,14 +17,12 @@ package com.intellij.openapi.vfs;
 
 import com.intellij.openapi.util.io.BufferExposingByteArrayInputStream;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
+import java.io.*;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
@@ -48,6 +46,16 @@ public class VfsUtilCore {
       if (parent.equals(ancestor)) return true;
       parent = parent.getParent();
     }
+  }
+
+  public static boolean isAncestor(@NotNull File ancestor, @NotNull File file, boolean strict) {
+    File parent = strict ? file.getParentFile() : file;
+    while (parent != null) {
+      if (parent.equals(ancestor)) return true;
+      parent = parent.getParentFile();
+    }
+
+    return false;
   }
 
   /**
@@ -202,5 +210,21 @@ public class VfsUtilCore {
     if (size == 0) return VirtualFile.EMPTY_ARRAY;
     //noinspection SSBasedInspection
     return files.toArray(new VirtualFile[size]);
+  }
+
+  @NotNull
+  public static String urlToPath(@NonNls @Nullable String url) {
+    if (url == null) return "";
+    return VirtualFileManager.extractPath(url);
+  }
+
+  @NotNull
+  public static File virtualToIoFile(@NotNull VirtualFile file) {
+    return new File(PathUtil.toPresentableUrl(file.getUrl()));
+  }
+
+  @NotNull
+  public static String pathToUrl(@NonNls @NotNull String path) {
+    return VirtualFileManager.constructUrl(StandardFileSystems.FILE_PROTOCOL, path);
   }
 }

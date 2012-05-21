@@ -95,7 +95,7 @@ public class GrConstructorInvocationImpl extends GrCallImpl implements GrConstru
   }
 
   public GroovyResolveResult[] multiResolveClass() {
-    return new GroovyResolveResult[]{new GroovyResolveResultImpl(getDelegatedClass(), this, PsiSubstitutor.EMPTY, true, true)};
+    return new GroovyResolveResult[]{new GroovyResolveResultImpl(getDelegatedClass(), this, null, PsiSubstitutor.EMPTY, true, true)};
   }
 
   public PsiMethod resolveMethod() {

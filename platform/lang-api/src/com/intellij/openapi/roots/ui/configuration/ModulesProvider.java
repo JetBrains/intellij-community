@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,10 +20,11 @@ import com.intellij.facet.FacetModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ModuleRootModel;
+import com.intellij.openapi.roots.RootModelProvider;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public interface ModulesProvider {
+public interface ModulesProvider extends RootModelProvider {
   ModulesProvider EMPTY_MODULES_PROVIDER = new ModulesProvider() {
     @NotNull
     public Module[] getModules() {
@@ -41,13 +42,9 @@ public interface ModulesProvider {
       return FacetManager.getInstance(module);
     }
   };
-  @NotNull
-  Module[] getModules();
 
   @Nullable
   Module getModule(String name);
-
-  ModuleRootModel getRootModel(@NotNull Module module);
 
   FacetModel getFacetModel(@NotNull Module module);
 }

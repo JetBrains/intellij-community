@@ -21,10 +21,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
 
 public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Data> {
   private static final int PAGE_SIZE;
@@ -69,17 +65,28 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
   private static final int KEY_SHIFT = 1;
 
   public PersistentBTreeEnumerator(@NotNull File file, @NotNull KeyDescriptor<Data> dataDescriptor, int initialSize) throws IOException {
-    super(file, new ResizeableMappedFile(file, initialSize, ourLock, VALUE_PAGE_SIZE, true), dataDescriptor, initialSize,
+    this(file, dataDescriptor, initialSize, ourLock.myDefaultStorageLockContext);
+  }
+
+  public PersistentBTreeEnumerator(@NotNull File file,
+                                   @NotNull KeyDescriptor<Data> dataDescriptor,
+                                   int initialSize,
+                                   PagedFileStorage.StorageLockContext lockContext) throws IOException {
+    super(file, new ResizeableMappedFile(file, initialSize, lockContext, VALUE_PAGE_SIZE, true), dataDescriptor, initialSize,
           ourVersion, new RecordBufferHandler(), false);
 
     myInlineKeysNoMapping = myDataDescriptor instanceof InlineKeyDescriptor && !wantKeyMapping();
     myExternalKeysNoMapping = !(myDataDescriptor instanceof InlineKeyDescriptor) && !wantKeyMapping();
 
     if (btree == null) {
-      synchronized (ourLock) {
+      try {
+        lockStorage();
         storeVars(false);
         initBtree(false);
         storeBTreeVars(false);
+      }
+      finally {
+        unlockStorage();
       }
     }
   }
@@ -94,7 +101,7 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
   }
 
   private void initBtree(boolean initial) throws IOException {
-    btree = new IntToIntBtree(PAGE_SIZE, indexFile(myFile), initial);
+    btree = new IntToIntBtree(PAGE_SIZE, indexFile(myFile), myStorage.getPagedFileStorage().getStorageLockContext(), initial);
   }
 
   private void storeVars(boolean toDisk) {
@@ -174,60 +181,34 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
   }
 
   @Override
-  public boolean traverseAllRecords(@NotNull RecordsProcessor p) throws IOException {
+  public boolean traverseAllRecords(@NotNull final RecordsProcessor p) throws IOException {
     try {
-      synchronized (ourLock) {
+      lockStorage();
+      return btree.processMappings(new IntToIntBtree.KeyValueProcessor() {
+        public boolean process(int key, int value) throws IOException {
+          p.setCurrentKey(key);
 
-        List<IntToIntBtree.BtreeIndexNodeView> leafPages = new ArrayList<IntToIntBtree.BtreeIndexNodeView> ();
-        btree.doFlush();
-        btree.root.syncWithStore();
-        collectLeafPages(btree.root, leafPages);
-        Collections.sort(leafPages, new Comparator<IntToIntBtree.BtreeIndexNodeView>() {
-          @Override
-          public int compare(@NotNull IntToIntBtree.BtreeIndexNodeView o1, @NotNull IntToIntBtree.BtreeIndexNodeView o2) {
-            return o1.address - o2.address;
+          if (value > 0) {
+            if (!p.process(value)) return false;
           }
-        });
-
-        out:
-        for(IntToIntBtree.BtreeIndexNodeView page:leafPages) {
-          for(int key:page.exportKeys()) {
-            boolean hasMapping = btree.get(key, myResultBuf);
-            p.setCurrentKey(key);
-            assert hasMapping;
-            int record = myResultBuf[0];
-
-            if (record > 0) {
-              if (!p.process(record)) return false;
-            } else {
-              int rec = - record;
-              while(rec != 0) {
-                int id = myStorage.getInt(rec);
-                if (!p.process(id)) return false;
-                rec = myStorage.getInt(rec + COLLISION_OFFSET);
-              }
+          else {
+            int rec = -value;
+            while (rec != 0) {
+              int id = myStorage.getInt(rec);
+              if (!p.process(id)) return false;
+              rec = myStorage.getInt(rec + COLLISION_OFFSET);
             }
           }
+          return true;
         }
-        return true;
-      }
+      });
     }
     catch (IllegalStateException e) {
       CorruptedException corruptedException = new CorruptedException(myFile);
       corruptedException.initCause(e);
       throw corruptedException;
-    }
-  }
-
-  private void collectLeafPages(@NotNull IntToIntBtree.BtreeIndexNodeView node, @NotNull List<IntToIntBtree.BtreeIndexNodeView> leafPages) {
-    if (node.isIndexLeaf()) {
-      leafPages.add(node);
-      return;
-    }
-    for(int i = 0; i <= node.getChildrenCount(); ++i) {
-      IntToIntBtree.BtreeIndexNodeView newNode = new IntToIntBtree.BtreeIndexNodeView(btree);
-      newNode.setAddress(-node.addressAt(i));
-      collectLeafPages(newNode, leafPages);
+    } finally {
+      unlockStorage();
     }
   }
 
@@ -275,9 +256,9 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
 
   private final int[] myResultBuf = new int[1];
   
-  protected synchronized int enumerateImpl(final Data value, final boolean onlyCheckForExisting, boolean saveNewValue) throws IOException {
+  protected int enumerateImpl(final Data value, final boolean onlyCheckForExisting, boolean saveNewValue) throws IOException {
     try {
-      synchronized (ourLock) {
+      lockStorage();
         if (IntToIntBtree.doDump) System.out.println(value);
         final int valueHC = myDataDescriptor.getHashCode(value);
 
@@ -334,7 +315,7 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
         int newValueId = writeData(value, valueHC);
         ++valuesCount;
 
-        if (valuesCount % IOStatistics.KEYS_FACTOR == 0 && IOStatistics.DEBUG) {
+        if (IOStatistics.DEBUG && (valuesCount & IOStatistics.KEYS_FACTOR_MASK) == 0) {
           IOStatistics.dump("Index " +
                             myFile +
                             ", values " +
@@ -379,12 +360,13 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
           }
         }
         return newValueId;
-      }
     }
     catch (IllegalStateException e) {
       CorruptedException exception = new CorruptedException(myFile);
       exception.initCause(e);
       throw exception;
+    } finally {
+      unlockStorage();
     }
   }
 

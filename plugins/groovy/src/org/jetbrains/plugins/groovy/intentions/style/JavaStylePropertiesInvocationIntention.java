@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -114,9 +114,10 @@ public class JavaStylePropertiesInvocationIntention extends Intention {
     else {
       method = call.resolveMethod();
       if (!isSimplePropertySetter(method)) return false;
+      LOG.assertTrue(method != null);
     }
 
-    if (!GroovyNamesUtil.isValidReference(getPropertyNameByGetterName(method.getName(), true),
+    if (!GroovyNamesUtil.isValidReference(getPropertyNameBySetterName(method.getName()),
                                           ((GrReferenceExpression)expr).getQualifier() != null,
                                           call.getProject())) {
       return false;
@@ -143,7 +144,7 @@ public class JavaStylePropertiesInvocationIntention extends Intention {
 
     PsiMethod method = call.resolveMethod();
     if (!isSimplePropertyGetter(method)) return false;
-
+    LOG.assertTrue(method != null);
     if (!GroovyNamesUtil.isValidReference(getPropertyNameByGetterName(method.getName(), true),
                                           ((GrReferenceExpression)expr).getQualifier() != null,
                                           call.getProject())) {

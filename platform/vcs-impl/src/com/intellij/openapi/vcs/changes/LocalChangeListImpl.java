@@ -40,6 +40,7 @@ public class LocalChangeListImpl extends LocalChangeList {
   private LocalChangeListImpl(Project project, final String name) {
     myProject = project;
     myName = name;
+    myId = UUID.randomUUID().toString();
   }
 
   private LocalChangeListImpl(LocalChangeListImpl origin) {
@@ -48,7 +49,7 @@ public class LocalChangeListImpl extends LocalChangeList {
     myProject = origin.myProject;
   }
 
-  public synchronized Collection<Change> getChanges() {
+  public Collection<Change> getChanges() {
     createReadChangesCache();
     return myReadChangesCache;
   }
@@ -61,11 +62,7 @@ public class LocalChangeListImpl extends LocalChangeList {
 
   @NotNull
   @Override
-  public synchronized String getId() {
-    if (myId == null) {
-      myId = UUID.randomUUID().toString();
-    }
-
+  public String getId() {
     return myId;
   }
 
@@ -115,7 +112,7 @@ public class LocalChangeListImpl extends LocalChangeList {
     myIsReadOnly = isReadOnly;
   }
 
-  synchronized void addChange(Change change) {
+  void addChange(Change change) {
     if (ChangeListManagerImpl.DEBUG) {
       System.out.println("LocalChangeListImpl.addChange: this = " + this + ", change = " + change);
     }
@@ -123,7 +120,7 @@ public class LocalChangeListImpl extends LocalChangeList {
     myChanges.add(change);
   }
 
-  synchronized Change removeChange(Change change) {
+  Change removeChange(Change change) {
     if (ChangeListManagerImpl.DEBUG) {
       System.out.println("LocalChangeListImpl.removeChange: this = " + this + ", change = " + change);
       System.out.println("myChanges.size() = " + myChanges.size());
@@ -138,7 +135,7 @@ public class LocalChangeListImpl extends LocalChangeList {
     return null;
   }
 
-  synchronized Collection<Change> startProcessingChanges(final Project project, @Nullable final VcsDirtyScope scope) {
+  Collection<Change> startProcessingChanges(final Project project, @Nullable final VcsDirtyScope scope) {
     createReadChangesCache();
     final Collection<Change> result = new ArrayList<Change>();
     myChangesBeforeUpdate = new OpenTHashSet<Change>(myChanges);
@@ -171,7 +168,7 @@ public class LocalChangeListImpl extends LocalChangeList {
     });
   }
 
-  synchronized boolean processChange(Change change) {
+  boolean processChange(Change change) {
     LOG.debug("[process change] for '" + myName + "' isDefault: " + myIsDefault + " change: " +
               ChangesUtil.getFilePath(change).getPath());
     if (myIsDefault) {
@@ -191,7 +188,7 @@ public class LocalChangeListImpl extends LocalChangeList {
     return false;
   }
 
-  synchronized boolean doneProcessingChanges(final List<Change> removedChanges, final List<Change> addedChanges) {
+  boolean doneProcessingChanges(final List<Change> removedChanges, final List<Change> addedChanges) {
     boolean changesDetected = (myChanges.size() != myChangesBeforeUpdate.size());
 
     for (Change newChange : myChanges) {
@@ -234,7 +231,7 @@ public class LocalChangeListImpl extends LocalChangeList {
     return b1 == null && b2 == null;
   }
 
-  public synchronized boolean equals(final Object o) {
+  public boolean equals(final Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
     final LocalChangeListImpl list = (LocalChangeListImpl)o;
@@ -250,7 +247,7 @@ public class LocalChangeListImpl extends LocalChangeList {
     return myName.trim();
   }
 
-  public synchronized LocalChangeList copy() {
+  public LocalChangeList copy() {
     final LocalChangeListImpl copy = new LocalChangeListImpl(this);
     copy.myComment = myComment;
     copy.myIsDefault = myIsDefault;

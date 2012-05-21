@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,11 +36,11 @@ import java.util.*;
  * @author nik
  */
 public class LibraryPresentationManagerImpl extends LibraryPresentationManager {
-  private Map<LibraryKind<?>, LibraryPresentationProvider<?>> myPresentationProviders;
+  private Map<LibraryKind, LibraryPresentationProvider<?>> myPresentationProviders;
 
-  private <P extends LibraryProperties> LibraryPresentationProvider<P> getPresentationProvider(LibraryKind<P> kind) {
+  private <P extends LibraryProperties> LibraryPresentationProvider<P> getPresentationProvider(LibraryKind kind) {
     if (myPresentationProviders == null) {
-      final Map<LibraryKind<?>, LibraryPresentationProvider<?>> providers = new HashMap<LibraryKind<?>, LibraryPresentationProvider<?>>();
+      final Map<LibraryKind, LibraryPresentationProvider<?>> providers = new HashMap<LibraryKind, LibraryPresentationProvider<?>>();
       for (LibraryType<?> type : LibraryType.EP_NAME.getExtensions()) {
         providers.put(type.getKind(), type);
       }
@@ -62,9 +62,9 @@ public class LibraryPresentationManagerImpl extends LibraryPresentationManager {
 
   @Override
   public Icon getCustomIcon(@NotNull Library library, StructureConfigurableContext context) {
-    final LibraryType<?> type = ((LibraryEx)library).getType();
-    if (type != null) {
-      return type.getIcon();
+    final LibraryKind kind = ((LibraryEx)library).getKind();
+    if (kind != null) {
+      return LibraryType.findByKind(kind).getIcon();
     }
     final List<Icon> icons = getCustomIcons(library, context);
     if (icons.size() == 1) {
@@ -80,7 +80,7 @@ public class LibraryPresentationManagerImpl extends LibraryPresentationManager {
     final List<Icon> icons = new SmartList<Icon>();
     LibraryDetectionManager.getInstance().processProperties(Arrays.asList(files), new LibraryDetectionManager.LibraryPropertiesProcessor() {
       @Override
-      public <P extends LibraryProperties> boolean processProperties(@NotNull LibraryKind<P> kind, @NotNull P properties) {
+      public <P extends LibraryProperties> boolean processProperties(@NotNull LibraryKind kind, @NotNull P properties) {
         final LibraryPresentationProvider<P> provider = getPresentationProvider(kind);
         if (provider != null) {
           ContainerUtil.addIfNotNull(icons, provider.getIcon());
@@ -92,10 +92,10 @@ public class LibraryPresentationManagerImpl extends LibraryPresentationManager {
   }
 
   @Override
-  public boolean isLibraryOfKind(@NotNull List<VirtualFile> files, @NotNull final LibraryKind<?> kind) {
+  public boolean isLibraryOfKind(@NotNull List<VirtualFile> files, @NotNull final LibraryKind kind) {
     return !LibraryDetectionManager.getInstance().processProperties(files, new LibraryDetectionManager.LibraryPropertiesProcessor() {
       @Override
-      public <P extends LibraryProperties> boolean processProperties(@NotNull LibraryKind<P> processedKind, @NotNull P properties) {
+      public <P extends LibraryProperties> boolean processProperties(@NotNull LibraryKind processedKind, @NotNull P properties) {
         return !kind.equals(processedKind);
       }
     });
@@ -104,29 +104,29 @@ public class LibraryPresentationManagerImpl extends LibraryPresentationManager {
   @Override
   public boolean isLibraryOfKind(@NotNull Library library,
                                  @NotNull LibrariesContainer librariesContainer,
-                                 @NotNull final Set<? extends LibraryKind<?>> acceptedKinds) {
-    final LibraryType<?> type = ((LibraryEx)library).getType();
-    if (type != null && acceptedKinds.contains(type.getKind())) return true;
+                                 @NotNull final Set<? extends LibraryKind> acceptedKinds) {
+    final LibraryKind type = ((LibraryEx)library).getKind();
+    if (type != null && acceptedKinds.contains(type)) return true;
 
     final VirtualFile[] files = librariesContainer.getLibraryFiles(library, OrderRootType.CLASSES);
     return !LibraryDetectionManager.getInstance().processProperties(Arrays.asList(files), new LibraryDetectionManager.LibraryPropertiesProcessor() {
       @Override
-      public <P extends LibraryProperties> boolean processProperties(@NotNull LibraryKind<P> processedKind, @NotNull P properties) {
+      public <P extends LibraryProperties> boolean processProperties(@NotNull LibraryKind processedKind, @NotNull P properties) {
         return !acceptedKinds.contains(processedKind);
       }
     });
   }
 
-  public static List<LibraryKind<?>> getLibraryKinds(@NotNull Library library, @Nullable StructureConfigurableContext context) {
-    final List<LibraryKind<?>> result = new SmartList<LibraryKind<?>>();
-    final LibraryType<?> type = ((LibraryEx)library).getType();
-    if (type != null) {
-      result.add(type.getKind());
+  public static List<LibraryKind> getLibraryKinds(@NotNull Library library, @Nullable StructureConfigurableContext context) {
+    final List<LibraryKind> result = new SmartList<LibraryKind>();
+    final LibraryKind kind = ((LibraryEx)library).getKind();
+    if (kind != null) {
+      result.add(kind);
     }
     final VirtualFile[] files = getLibraryFiles(library, context);
     LibraryDetectionManager.getInstance().processProperties(Arrays.asList(files), new LibraryDetectionManager.LibraryPropertiesProcessor() {
       @Override
-      public <P extends LibraryProperties> boolean processProperties(@NotNull LibraryKind<P> kind, @NotNull P properties) {
+      public <P extends LibraryProperties> boolean processProperties(@NotNull LibraryKind kind, @NotNull P properties) {
         result.add(kind);
         return true;
       }
@@ -138,7 +138,7 @@ public class LibraryPresentationManagerImpl extends LibraryPresentationManager {
   @Override
   public List<String> getDescriptions(@NotNull Library library, StructureConfigurableContext context) {
     final VirtualFile[] files = getLibraryFiles(library, context);
-    return getDescriptions(files, Collections.<LibraryKind<?>>emptySet());
+    return getDescriptions(files, Collections.<LibraryKind>emptySet());
   }
 
   @NotNull
@@ -151,11 +151,11 @@ public class LibraryPresentationManagerImpl extends LibraryPresentationManager {
 
   @NotNull
   @Override
-  public List<String> getDescriptions(@NotNull VirtualFile[] classRoots, final Set<LibraryKind<?>> excludedKinds) {
+  public List<String> getDescriptions(@NotNull VirtualFile[] classRoots, final Set<LibraryKind> excludedKinds) {
     final SmartList<String> result = new SmartList<String>();
     LibraryDetectionManager.getInstance().processProperties(Arrays.asList(classRoots), new LibraryDetectionManager.LibraryPropertiesProcessor() {
       @Override
-      public <P extends LibraryProperties> boolean processProperties(@NotNull LibraryKind<P> kind, @NotNull P properties) {
+      public <P extends LibraryProperties> boolean processProperties(@NotNull LibraryKind kind, @NotNull P properties) {
         if (!excludedKinds.contains(kind)) {
           final LibraryPresentationProvider<P> provider = getPresentationProvider(kind);
           if (provider != null) {
@@ -169,7 +169,7 @@ public class LibraryPresentationManagerImpl extends LibraryPresentationManager {
   }
 
   @Override
-  public List<Library> getLibraries(@NotNull Set<LibraryKind<?>> kinds, @NotNull Project project, @Nullable StructureConfigurableContext context) {
+  public List<Library> getLibraries(@NotNull Set<LibraryKind> kinds, @NotNull Project project, @Nullable StructureConfigurableContext context) {
     List<Library> libraries = new ArrayList<Library>();
     if (context != null) {
       Collections.addAll(libraries, context.getProjectLibrariesProvider().getModifiableModel().getLibraries());
@@ -184,7 +184,7 @@ public class LibraryPresentationManagerImpl extends LibraryPresentationManager {
     final Iterator<Library> iterator = libraries.iterator();
     while (iterator.hasNext()) {
       Library library = iterator.next();
-      final List<LibraryKind<?>> libraryKinds = getLibraryKinds(library, context);
+      final List<LibraryKind> libraryKinds = getLibraryKinds(library, context);
       if (!ContainerUtil.intersects(libraryKinds, kinds)) {
         iterator.remove();
       }

@@ -22,8 +22,8 @@ import java.awt.*;
  * @author Alexander Lobas
  */
 public class AlphaFeedback extends JComponent {
-  private static final AlphaComposite myComposite1 = AlphaComposite.getInstance(AlphaComposite.SRC_ATOP, 0.3f);
-  private static final AlphaComposite myComposite2 = AlphaComposite.getInstance(AlphaComposite.SRC_ATOP, 0.6f);
+  protected static final AlphaComposite myComposite1 = AlphaComposite.getInstance(AlphaComposite.SRC_ATOP, 0.3f);
+  protected static final AlphaComposite myComposite2 = AlphaComposite.getInstance(AlphaComposite.SRC_ATOP, 0.6f);
 
   private final Color myColor;
   private final Color myBorderColor;

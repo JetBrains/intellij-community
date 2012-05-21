@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,7 +45,9 @@ import org.jetbrains.android.facet.AndroidFacetConfiguration;
 import org.jetbrains.android.facet.AndroidFacetType;
 import org.jetbrains.android.facet.AndroidRootUtil;
 import org.jetbrains.android.sdk.*;
+import org.jetbrains.android.util.AndroidNativeLibData;
 import org.jetbrains.android.util.AndroidUtils;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.importing.FacetImporter;
@@ -71,6 +73,7 @@ public abstract class AndroidFacetImporterBase extends FacetImporter<AndroidFace
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.android.maven.AndroidFacetImporterBase");
   
   private static final Key<Boolean> MODULE_IMPORTED = Key.create("ANDROID_NEWLY_CREATED_KEY");
+  @NonNls private static final String DEFAULT_NATIVE_ARCHITECTURE = "armeabi";
 
   public AndroidFacetImporterBase(@NotNull String pluginId) {
     super("com.jayway.maven.plugins.android.generation2", pluginId, FacetType.findInstance(AndroidFacetType.class), "Android");
@@ -135,6 +138,37 @@ public abstract class AndroidFacetImporterBase extends FacetImporter<AndroidFace
     }
     
     postTasks.add(new MyDeleteObsoleteApklibModulesTask(module.getProject(), mavenProject, mavenTree));
+  }
+
+  private void importNativeDependencies(@NotNull AndroidFacet facet, @NotNull MavenProject mavenProject, @NotNull String moduleDirPath) {
+    final List<AndroidNativeLibData> additionalNativeLibs = new ArrayList<AndroidNativeLibData>();
+    final String localRepository = MavenProjectsManager.getInstance(facet.getModule().getProject()).getLocalRepository().getPath();
+
+    String defaultArchitecture = getPathFromConfig(facet.getModule(), mavenProject, moduleDirPath,
+                                                   "nativeLibrariesDependenciesHardwareArchitectureDefault", false, true);
+    if (defaultArchitecture == null) {
+      defaultArchitecture = DEFAULT_NATIVE_ARCHITECTURE;
+    }
+    final String forcedArchitecture = getPathFromConfig(facet.getModule(), mavenProject, moduleDirPath,
+                                                        "nativeLibrariesDependenciesHardwareArchitectureOverride", false, true);
+
+    for (MavenArtifact depArtifact : mavenProject.getDependencies()) {
+      if (AndroidMavenUtil.SO_PACKAGING_AND_DEPENDENCY_TYPE.equals(depArtifact.getType())) {
+        final String architecture;
+        if (forcedArchitecture != null) {
+          architecture = forcedArchitecture;
+        }
+        else {
+          final String classifier = depArtifact.getClassifier();
+          architecture = classifier != null ? classifier : defaultArchitecture;
+        }
+        final String path = FileUtil.toSystemIndependentName(localRepository + '/' + depArtifact.getRelativePath());
+        final String artifactId = depArtifact.getArtifactId();
+        final String targetFileName = artifactId.startsWith("lib") ? artifactId + ".so" : "lib" + artifactId + ".so";
+        additionalNativeLibs.add(new AndroidNativeLibData(architecture, path, targetFileName));
+      }
+    }
+    facet.getConfiguration().setAdditionalNativeLibraries(additionalNativeLibs);
   }
 
   private static boolean hasApklibDependencies(@NotNull MavenProject mavenProject) {
@@ -338,7 +372,7 @@ public abstract class AndroidFacetImporterBase extends FacetImporter<AndroidFace
 
     if (apklibModule == null) {
       final String genModuleFilePath = genExternalApklibsDirPath + '/' + genModuleName + ModuleFileType.DOT_DEFAULT_EXTENSION;
-      apklibModule = moduleModel.newModule(genModuleFilePath, StdModuleTypes.JAVA);
+      apklibModule = moduleModel.newModule(genModuleFilePath, StdModuleTypes.JAVA.getId());
     }
 
     final ModifiableRootModel apklibModuleModel = modelsProvider.getRootModel(apklibModule);
@@ -676,6 +710,9 @@ public abstract class AndroidFacetImporterBase extends FacetImporter<AndroidFace
   private void configurePaths(AndroidFacet facet, MavenProject project) {
     Module module = facet.getModule();
     String moduleDirPath = AndroidRootUtil.getModuleDirPath(module);
+    if (moduleDirPath == null) {
+      return;
+    }
     AndroidFacetConfiguration configuration = facet.getConfiguration();
 
     String resFolderRelPath = getPathFromConfig(module, project, moduleDirPath, "resourceDirectory", true, true);
@@ -740,6 +777,8 @@ public abstract class AndroidFacetImporterBase extends FacetImporter<AndroidFace
     if (nativeLibsFolderRelPath != null && isFullyResolved(nativeLibsFolderRelPath)) {
       configuration.LIBS_FOLDER_RELATIVE_PATH = '/' + nativeLibsFolderRelPath;
     }
+
+    importNativeDependencies(facet, project, moduleDirPath);
   }
 
   private static boolean isFullyResolved(@NotNull String s) {

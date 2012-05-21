@@ -37,6 +37,10 @@ public class EmptyChangelistBuilder implements ChangelistBuilder {
   public void processChangeInList(final Change change, final String changeListName, VcsKey vcsKey) {
   }
 
+  @Override
+  public void removeRegisteredChangeFor(FilePath path) {
+  }
+
   public void processUnversionedFile(final VirtualFile file) {
   }
 

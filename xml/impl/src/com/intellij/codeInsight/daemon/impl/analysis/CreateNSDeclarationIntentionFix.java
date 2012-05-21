@@ -51,7 +51,6 @@ import com.intellij.psi.xml.XmlToken;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.ObjectUtils;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlExtension;
 import com.intellij.xml.impl.schema.AnyXmlElementDescriptor;
@@ -102,6 +101,7 @@ public class CreateNSDeclarationIntentionFix implements HintAction, LocalQuickFi
     myToken = token == null ? null : PsiAnchor.create(token);
   }
 
+  @Override
   @NotNull
   public String getText() {
     final String alias = StringUtil.capitalize(getXmlExtension().getNamespaceAlias(getFile()));
@@ -112,16 +112,19 @@ public class CreateNSDeclarationIntentionFix implements HintAction, LocalQuickFi
     return XmlExtension.getExtension(getFile());
   }
 
+  @Override
   @NotNull
   public String getName() {
     return getFamilyName();
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return getText();
   }
 
+  @Override
   public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
     final PsiFile containingFile = descriptor.getPsiElement().getContainingFile();
     Editor editor = FileEditorManager.getInstance(project).getSelectedTextEditor();
@@ -133,15 +136,18 @@ public class CreateNSDeclarationIntentionFix implements HintAction, LocalQuickFi
     }
   }
 
+  @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     PsiElement element = myElement.retrieve();
     return element != null && element.isValid();
   }
 
+  @Override
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
     if (!CodeInsightUtilBase.prepareFileForWrite(file)) return;
 
-    final PsiElement element = ObjectUtils.assertNotNull(myElement.retrieve());
+    final PsiElement element = myElement.retrieve();
+    if (element == null) return;
     final Set<String> set = getXmlExtension().guessUnboundNamespaces(element, getFile());
     final String[] namespaces = ArrayUtil.toStringArray(set);
     Arrays.sort(namespaces);
@@ -150,6 +156,7 @@ public class CreateNSDeclarationIntentionFix implements HintAction, LocalQuickFi
       namespaces,
       project,
       new StringToAttributeProcessor() {
+        @Override
         public void doSomethingWithGivenStringToProduceXmlAttributeNowPlease(@NotNull final String namespace) throws IncorrectOperationException {
           String prefix = myNamespacePrefix;
           if (StringUtil.isEmpty(prefix)) {
@@ -173,8 +180,9 @@ public class CreateNSDeclarationIntentionFix implements HintAction, LocalQuickFi
           final RangeMarker marker = editor.getDocument().createRangeMarker(offset, offset);
           final XmlExtension extension = XmlExtension.getExtension(file);
           extension.insertNamespaceDeclaration((XmlFile)file, editor, Collections.singleton(namespace), prefix, new XmlExtension.Runner<String, IncorrectOperationException>() {
+            @Override
             public void run(final String param) throws IncorrectOperationException {
-              if (namespace.length() > 0) {
+              if (!namespace.isEmpty()) {
                 editor.getCaretModel().moveToOffset(marker.getStartOffset());
               }
             }
@@ -189,18 +197,21 @@ public class CreateNSDeclarationIntentionFix implements HintAction, LocalQuickFi
     return XmlErrorMessages.message("select.namespace.title", StringUtil.capitalize(getXmlExtension().getNamespaceAlias(getFile())));
   }
 
+  @Override
   public boolean startInWriteAction() {
     return true;
   }
 
+  @Override
   public boolean showHint(final Editor editor) {
     if (myToken == null) return false;
     XmlToken token = (XmlToken)myToken.retrieve();
     if (token == null) return false;
-    if (!XmlSettings.getInstance().SHOW_XML_ADD_IMPORT_HINTS || myNamespacePrefix.length() == 0) {
+    if (!XmlSettings.getInstance().SHOW_XML_ADD_IMPORT_HINTS || myNamespacePrefix.isEmpty()) {
       return false;
     }
-    PsiElement element = ObjectUtils.assertNotNull(myElement.retrieve());
+    final PsiElement element = myElement.retrieve();
+    if (element == null) return false;
     final Set<String> namespaces = getXmlExtension().guessUnboundNamespaces(element, getFile());
     if (!namespaces.isEmpty()) {
       final String message = ShowAutoImportPass.getMessage(namespaces.size() > 1, namespaces.iterator().next());
@@ -224,13 +235,14 @@ public class CreateNSDeclarationIntentionFix implements HintAction, LocalQuickFi
   }
 
   private static boolean checkIfGivenXmlHasTheseWords(final String name, final XmlFile tldFileByUri) {
-    if (name == null || name.length() == 0) return true;
+    if (name == null || name.isEmpty()) return true;
     final List<String> list = StringUtil.getWordsIn(name);
     final String[] words = ArrayUtil.toStringArray(list);
     final boolean[] wordsFound = new boolean[words.length];
     final int[] wordsFoundCount = new int[1];
 
     IdTableBuilding.ScanWordProcessor wordProcessor = new IdTableBuilding.ScanWordProcessor() {
+      @Override
       public void run(final CharSequence chars, @Nullable char[] charsArray, int start, int end) {
         if (wordsFoundCount[0] == words.length) return;
         final int foundWordLen = end - start;
@@ -263,7 +275,7 @@ public class CreateNSDeclarationIntentionFix implements HintAction, LocalQuickFi
   }
 
 
-  public static void runActionOverSeveralAttributeValuesAfterLettingUserSelectTheNeededOne(final @NotNull String[] namespacesToChooseFrom,
+  public static void runActionOverSeveralAttributeValuesAfterLettingUserSelectTheNeededOne(@NotNull final String[] namespacesToChooseFrom,
                                                                                            final Project project, final StringToAttributeProcessor onSelection,
                                                                                            String title,
                                                                                            final IntentionAction requestor,
@@ -273,6 +285,7 @@ public class CreateNSDeclarationIntentionFix implements HintAction, LocalQuickFi
       final JList list = new JBList(namespacesToChooseFrom);
       list.setCellRenderer(XmlNSRenderer.INSTANCE);
       Runnable runnable = new Runnable() {
+        @Override
         public void run() {
           final int index = list.getSelectedIndex();
           if (index < 0) return;
@@ -281,9 +294,11 @@ public class CreateNSDeclarationIntentionFix implements HintAction, LocalQuickFi
           CommandProcessor.getInstance().executeCommand(
             project,
             new Runnable() {
+              @Override
               public void run() {
                 ApplicationManager.getApplication().runWriteAction(
                   new Runnable() {
+                    @Override
                     public void run() {
                       try {
                         onSelection.doSomethingWithGivenStringToProduceXmlAttributeNowPlease(namespacesToChooseFrom[index]);
@@ -321,6 +336,7 @@ public class CreateNSDeclarationIntentionFix implements HintAction, LocalQuickFi
     else {
       ProgressManager.getInstance().runProcessWithProgressSynchronously(
         new Runnable() {
+          @Override
           public void run() {
             processExternalUrisImpl(metaHandler, file, processor);
           }
@@ -345,6 +361,7 @@ public class CreateNSDeclarationIntentionFix implements HintAction, LocalQuickFi
       myName = name;
     }
 
+    @Override
     public boolean isAcceptableMetaData(final PsiMetaData metaData, final String url) {
       if (metaData instanceof XmlNSDescriptorImpl) {
         final XmlNSDescriptorImpl nsDescriptor = (XmlNSDescriptorImpl)metaData;
@@ -355,6 +372,7 @@ public class CreateNSDeclarationIntentionFix implements HintAction, LocalQuickFi
       return false;
     }
 
+    @Override
     public String searchFor() {
       return myName;
     }

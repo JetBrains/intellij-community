@@ -55,6 +55,8 @@ public abstract class BeforeRunTask<T extends BeforeRunTask> implements Cloneabl
     if (attribValue == null) {
       attribValue = element.getAttributeValue("value"); // maintain compatibility with old format
     }
+    if (attribValue == null)
+      attribValue = "true";
     myIsEnabled = Boolean.valueOf(attribValue).booleanValue();
   }
 

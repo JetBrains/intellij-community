@@ -22,8 +22,10 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.util.Function;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -66,9 +68,9 @@ public class InspectionProfileWrapper {
     return enabled;
   }
 
-  // check whether some inspection got registered twice by accident. Bit only once.
+  // check whether some inspection got registered twice by accident. 've bit once.
   private static boolean alreadyChecked;
-  private static void checkInspectionsDuplicates(InspectionTool[] tools) {
+  private static void checkInspectionsDuplicates(@NotNull InspectionTool[] tools) {
     if (alreadyChecked) return;
     alreadyChecked = true;
     Set<InspectionTool> uniqTools = new THashSet<InspectionTool>(tools.length);
@@ -77,6 +79,22 @@ public class InspectionProfileWrapper {
         LOG.error("Inspection " + tool.getDisplayName() + " (" + tool.getClass() + ") already registered");
       }
     }
+  }
+
+  private volatile boolean toolsInstantiated;
+  public void preInstantiateTools(PsiFile psiFile) {
+    if (toolsInstantiated) return;
+    toolsInstantiated = true;
+    InspectionTool[] tools = getInspectionTools(psiFile);
+    for (InspectionTool tool : tools) {
+      if (tool instanceof InspectionToolWrapper) {
+        ((InspectionToolWrapper)tool).getTool();
+      }
+    }
+  }
+
+  public boolean areToolsInstantiated() {
+    return toolsInstantiated;
   }
 
   public String getName() {
@@ -105,13 +123,10 @@ public class InspectionProfileWrapper {
   }
 
   public void cleanup(final Project project){
-
     myProfile.cleanup(project);
   }
 
   public InspectionProfile getInspectionProfile() {
     return myProfile;
   }
-
-
 }

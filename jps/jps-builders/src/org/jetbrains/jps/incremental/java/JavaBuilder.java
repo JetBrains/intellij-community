@@ -38,13 +38,14 @@ import org.jetbrains.jps.incremental.storage.BuildDataManager;
 import org.jetbrains.jps.incremental.storage.SourceToFormMapping;
 import org.jetbrains.jps.javac.*;
 
-import javax.tools.*;
+import javax.tools.Diagnostic;
+import javax.tools.JavaFileObject;
 import java.io.*;
 import java.net.MalformedURLException;
 import java.net.ServerSocket;
 import java.net.URL;
 import java.util.*;
-import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -72,12 +73,12 @@ public class JavaBuilder extends ModuleLevelBuilder {
   };
 
   private static final Key<Callbacks.Backend> DELTA_MAPPINGS_CALLBACK_KEY = Key.create("_dependency_data_");
-  private final ExecutorService myTaskRunner;
+  private final Executor myTaskRunner;
   private int myTasksInProgress = 0;
   private final Object myCounterLock = new Object();
   private final List<ClassPostProcessor> myClassProcessors = new ArrayList<ClassPostProcessor>();
 
-  public JavaBuilder(ExecutorService tasksExecutor) {
+  public JavaBuilder(Executor tasksExecutor) {
     super(BuilderCategory.TRANSLATOR);
     myTaskRunner = tasksExecutor;
     //add here class processors in the sequence they should be executed
@@ -221,6 +222,11 @@ public class JavaBuilder extends ModuleLevelBuilder {
       context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR, message));
       throw new ProjectBuildException(message, e);
     }
+  }
+
+  @Override
+  public boolean shouldHonorFileEncodingForCompilation(File file) {
+    return JAVA_SOURCES_FILTER.accept(file) || FORM_SOURCES_FILTER.accept(file);
   }
 
   @Nullable
@@ -428,7 +434,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
     synchronized (myCounterLock) {
       myTasksInProgress++;
     }
-    myTaskRunner.submit(new Runnable() {
+    myTaskRunner.execute(new Runnable() {
       public void run() {
         try {
           taskRunnable.run();
@@ -484,20 +490,22 @@ public class JavaBuilder extends ModuleLevelBuilder {
   }
 
   private static int convertToNumber(final String ver) {
-    final String prefix = "1.";
-    if (ver.startsWith(prefix)) {
-      final String versionNumberString;
-      final int dotIndex = ver.indexOf(".", prefix.length());
-      if (dotIndex > 0) {
-        versionNumberString = ver.substring(prefix.length(), dotIndex);
-      }
-      else {
-        versionNumberString = ver.substring(prefix.length());
-      }
-      try {
-        return Integer.parseInt(versionNumberString);
-      }
-      catch (NumberFormatException ignored) {
+    if (ver != null) {
+      final String prefix = "1.";
+      if (ver.startsWith(prefix)) {
+        final String versionNumberString;
+        final int dotIndex = ver.indexOf(".", prefix.length());
+        if (dotIndex > 0) {
+          versionNumberString = ver.substring(prefix.length(), dotIndex);
+        }
+        else {
+          versionNumberString = ver.substring(prefix.length());
+        }
+        try {
+          return Integer.parseInt(versionNumberString);
+        }
+        catch (NumberFormatException ignored) {
+        }
       }
     }
     return 0;
@@ -579,7 +587,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
   private static List<String> getCompilationVMOptions(CompileContext context) {
     List<String> cached = JAVAC_VM_OPTIONS.get(context);
     if (cached == null) {
-      loadJavacOptions(context);
+      loadCommonJavacOptions(context);
       cached = JAVAC_VM_OPTIONS.get(context);
     }
     return cached;
@@ -588,10 +596,28 @@ public class JavaBuilder extends ModuleLevelBuilder {
   private static List<String> getCompilationOptions(CompileContext context, ModuleChunk chunk) {
     List<String> cached = JAVAC_OPTIONS.get(context);
     if (cached == null) {
-      loadJavacOptions(context);
+      loadCommonJavacOptions(context);
       cached = JAVAC_OPTIONS.get(context);
     }
+
     final List<String> options = new ArrayList<String>(cached);
+    if (!isEncodingSet(options)) {
+      final CompilerEncodingConfiguration config = context.getProjectDescriptor().getEncodingConfiguration();
+      final String encoding = config.getPreferredModuleChunkEncoding(chunk);
+      if (config.getAllModuleChunkEncodings(chunk).size() > 1) {
+        final StringBuilder msgBuilder = new StringBuilder();
+        msgBuilder.append("Multiple encodings set for module chunk ").append(getChunkPresentableName(chunk));
+        if (encoding != null) {
+          msgBuilder.append("\n\"").append(encoding).append("\" will be used by compiler");
+        }
+        context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.INFO, msgBuilder.toString()));
+      }
+      if (encoding != null) {
+        options.add("-encoding");
+        options.add(encoding);
+      }
+    }
+
     final String langlevel = chunk.getModules().iterator().next().getLanguageLevel();
     if (!StringUtil.isEmpty(langlevel)) {
       options.add("-source");
@@ -639,6 +665,16 @@ public class JavaBuilder extends ModuleLevelBuilder {
     return options;
   }
 
+  private static boolean isEncodingSet(List<String> options) {
+    for (String option : options) {
+      if ("-encoding".equals(option)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+
   private static int getCompilerSdkVersion(CompileContext context) {
     final Integer cached = JAVA_COMPILER_VERSION_KEY.get(context);
     if (cached != null) {
@@ -668,7 +704,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
     return config.getProjectBytecodeTarget();
   }
 
-  private static void loadJavacOptions(CompileContext context) {
+  private static void loadCommonJavacOptions(CompileContext context) {
     final List<String> options = new ArrayList<String>();
     final List<String> vmOptions = new ArrayList<String>();
 
@@ -689,7 +725,6 @@ public class JavaBuilder extends ModuleLevelBuilder {
     }
 
     final String customArgs = javacOpts.get("ADDITIONAL_OPTIONS_STRING");
-    boolean isEncodingSet = false;
     if (customArgs != null) {
       final StringTokenizer tokenizer = new StringTokenizer(customArgs, " \t\r\n");
       while (tokenizer.hasMoreTokens()) {
@@ -703,15 +738,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
         else {
           options.add(token);
         }
-        if ("-encoding".equals(token)) {
-          isEncodingSet = true;
-        }
       }
-    }
-
-    if (!isEncodingSet && !StringUtil.isEmpty(project.getProjectCharset())) {
-      options.add("-encoding");
-      options.add(project.getProjectCharset());
     }
 
     JAVAC_OPTIONS.set(context, options);

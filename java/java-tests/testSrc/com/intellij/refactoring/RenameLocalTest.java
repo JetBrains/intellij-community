@@ -78,6 +78,10 @@ public class RenameLocalTest extends LightRefactoringTestCase {
   public void testRenameInPlaceParamInOverriderAutomaticRenamer() throws Exception {
     doTestInplaceRename("pp");
   }
+  
+  public void testRenameFieldWithConstructorParamAutomatic() throws Exception {
+    doTest("pp");
+  }
 
   public void testRenameInPlaceParamInOverriderAutomaticRenamerConflict() throws Exception {
     doTestInplaceRename("pp");

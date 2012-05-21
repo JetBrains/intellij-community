@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@ import com.intellij.lang.ant.config.impl.*;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.projectRoots.JavaSdkType;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.SdkType;
+import com.intellij.openapi.projectRoots.SdkTypeId;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.rt.ant.execution.AntMain2;
@@ -121,7 +121,7 @@ public class AntCommandLineBuilder {
     
     myCommandLine.getClassPath().addAllFiles(AntBuildFileImpl.getUserHomeLibraries());
 
-    final SdkType sdkType = jdk.getSdkType();
+    final SdkTypeId sdkType = jdk.getSdkType();
     if (sdkType instanceof JavaSdkType) {
       final String toolsJar = ((JavaSdkType)sdkType).getToolsPath(jdk);
       if (toolsJar != null) {

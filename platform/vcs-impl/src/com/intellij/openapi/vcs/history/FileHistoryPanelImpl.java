@@ -579,8 +579,6 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
     });
 
     myDualView.requestFocus();
-    myDualView.setSelectionInterval(0, 0);
-
 
     myDualView.addListSelectionListener(new ListSelectionListener() {
       public void valueChanged(ListSelectionEvent e) {

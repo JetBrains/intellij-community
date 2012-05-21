@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -162,7 +162,7 @@ public abstract class ModuleBuilder extends ProjectBuilder{
 
     deleteModuleFile(myModuleFilePath);
     final ModuleType moduleType = getModuleType();
-    final Module module = moduleModel.newModule(myModuleFilePath, moduleType);
+    final Module module = moduleModel.newModule(myModuleFilePath, moduleType.getId());
     final ModifiableRootModel modifiableModel = ModuleRootManager.getInstance(module).getModifiableModel();
     setupRootModel(modifiableModel);
     for (ModuleConfigurationUpdater updater : myUpdaters) {

@@ -180,7 +180,7 @@ public class ResolveMethodTest extends GroovyResolveTestCase {
     assertTrue(type instanceof PsiClassType);
     PsiClass clazz = ((PsiClassType) type).resolve();
     assertNotNull(clazz);
-    assertEquals("java.util.List", clazz.getQualifiedName());
+    assertEquals("java.util.ArrayList", clazz.getQualifiedName());
   }
 
 

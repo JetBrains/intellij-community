@@ -64,7 +64,7 @@ public abstract class MavenBaseModifiableModelsProvider implements MavenModifiab
     return myModuleModel;
   }
 
-  public ModifiableRootModel getRootModel(Module module) {
+  public ModifiableRootModel getRootModel(@NotNull Module module) {
     ModifiableRootModel result = myRootModels.get(module);
     if (result == null) {
       result = doGetRootModel(module);

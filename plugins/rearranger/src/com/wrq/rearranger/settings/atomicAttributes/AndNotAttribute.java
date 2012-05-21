@@ -31,9 +31,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 /** Base class for all boolean attributes. */
-abstract public class AndNotAttribute
-  extends AtomicAttribute
-{
+abstract public class AndNotAttribute extends AtomicAttribute {
 // ------------------------------ FIELDS ------------------------------
 
   boolean value;

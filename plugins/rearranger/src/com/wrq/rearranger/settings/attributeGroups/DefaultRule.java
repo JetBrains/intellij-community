@@ -24,6 +24,7 @@ package com.wrq.rearranger.settings.attributeGroups;
 import com.wrq.rearranger.entry.RangeEntry;
 import com.wrq.rearranger.ruleinstance.DefaultRuleInstance;
 import com.wrq.rearranger.ruleinstance.RuleInstance;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -35,6 +36,7 @@ import java.util.List;
 public class DefaultRule
   implements Rule
 {
+  @NotNull
   public RuleInstance createRuleInstance() {
     return new DefaultRuleInstance(this);
   }
@@ -47,7 +49,7 @@ public class DefaultRule
     // does nothing
   }
 
-  public boolean isMatch(RangeEntry entry) {
+  public boolean isMatch(@NotNull RangeEntry entry) {
     return !(entry.isFixedHeader() || entry.isFixedTrailer());
   }
 

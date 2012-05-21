@@ -23,7 +23,7 @@ import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.treeStructure.Tree;
-import com.intellij.util.PlatformIcons;
+import com.intellij.util.IconUtil;
 import com.intellij.util.config.StorageAccessors;
 import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.xpath.xslt.XsltSupport;
@@ -225,7 +225,7 @@ class AssociationsEditor {
 
   class RemoveAssociationAction extends AnAction {
     public RemoveAssociationAction() {
-      super(null, "Remove Association", PlatformIcons.TABLE_REMOVE_ROW);
+      super("Remove", "Remove Association", IconUtil.getRemoveIcon());
     }
 
     public void actionPerformed(AnActionEvent e) {

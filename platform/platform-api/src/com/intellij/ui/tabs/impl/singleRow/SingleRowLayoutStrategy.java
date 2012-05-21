@@ -25,8 +25,8 @@ import java.awt.*;
 public abstract class SingleRowLayoutStrategy {
 
   private static final int MIN_TAB_WIDTH = 120;
-  SingleRowLayout myLayout;
-  JBTabsImpl myTabs;
+  final SingleRowLayout myLayout;
+  final JBTabsImpl myTabs;
 
   protected SingleRowLayoutStrategy(final SingleRowLayout layout) {
     myLayout = layout;
@@ -58,8 +58,6 @@ public abstract class SingleRowLayoutStrategy {
   public abstract Rectangle getMoreRect(final SingleRowPassInfo data);
 
   public abstract boolean isToCenterTextWhenStretched();
-
-  public abstract Dimension getCompSizeDelta(SingleRowPassInfo data);
 
   public abstract ShapeTransform createShapeTransform(Rectangle rectangle);
 
@@ -182,7 +180,7 @@ public abstract class SingleRowLayoutStrategy {
       else {
         x = data.position + (data.lastGhostVisible ? data.lastGhost.width : 0);
       }
-      return new Rectangle(x, data.insets.top + myTabs.getSelectionTabVShift(),
+      return new Rectangle(x, data.insets.top + JBTabsImpl.getSelectionTabVShift(),
                                             data.moreRectAxisSize - 1, myTabs.myHeaderFitSize.height - 1);
     }
 
@@ -195,7 +193,7 @@ public abstract class SingleRowLayoutStrategy {
         final int vToolbarWidth = data.vToolbar != null ? data.vToolbar.getPreferredSize().width : 0;
         final int x = vToolbarWidth > 0 ? vToolbarWidth + 1 : 0;
         final int hToolbarHeight = !myTabs.isSideComponentOnTabs() && data.hToolbar != null ? data.hToolbar.getPreferredSize().height : 0;
-        final int y = data.compPosition + myTabs.myHeaderFitSize.height + (myTabs.isEditorTabs() ? 0 : 1) +
+        final int y = myTabs.myHeaderFitSize.height + (myTabs.isEditorTabs() ? 0 : 1) +
                       (hToolbarHeight > 0 ? hToolbarHeight - 2 : 0);
 
         if (data.hToolbar != null) {
@@ -218,11 +216,6 @@ public abstract class SingleRowLayoutStrategy {
         }
       }
     }
-
-    public Dimension getCompSizeDelta(SingleRowPassInfo data) {
-      return new Dimension();
-    }
-
   }
 
   static class Bottom extends Horizontal {
@@ -248,10 +241,6 @@ public abstract class SingleRowLayoutStrategy {
                                             data.moreRectAxisSize - 1, myTabs.myHeaderFitSize.height - 1);
     }
 
-    public Dimension getCompSizeDelta(SingleRowPassInfo data) {
-      return new Dimension(0, -(myTabs.myHeaderFitSize.height + 1));
-    }
-
     @Override
     public ShapeTransform createShapeTransform(Rectangle labelRec) {
       return new ShapeTransform.Bottom(labelRec);
@@ -274,10 +263,6 @@ public abstract class SingleRowLayoutStrategy {
 
     int getMoreRectAxisSize() {
       return myLayout.myMoreIcon.myIcon.getIconHeight() + 4;
-    }
-
-    public Dimension getCompSizeDelta(SingleRowPassInfo data) {
-      return new Dimension();
     }
 
     @Override
@@ -351,7 +336,7 @@ public abstract class SingleRowLayoutStrategy {
     }
 
     public Rectangle getMoreRect(final SingleRowPassInfo data) {
-      return new Rectangle(data.insets.left + myTabs.getSelectionTabVShift(),
+      return new Rectangle(data.insets.left + JBTabsImpl.getSelectionTabVShift(),
                            myTabs.getHeight() - data.insets.bottom - data.moreRectAxisSize - 1,
                            myTabs.myHeaderFitSize.width - 1,
                            data.moreRectAxisSize - 1);
@@ -390,11 +375,6 @@ public abstract class SingleRowLayoutStrategy {
                         myTabs.getHeight() - data.insets.bottom - data.moreRectAxisSize - 1,
                         myTabs.myHeaderFitSize.width - 1,
                         data.moreRectAxisSize - 1);
-    }
-
-    @Override
-    public Dimension getCompSizeDelta(SingleRowPassInfo data) {
-      return new Dimension(-myTabs.myHeaderFitSize.width, 0);
     }
   }
 

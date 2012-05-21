@@ -83,8 +83,8 @@ public class IndentationAnnotatorVisitor extends PsiElementVisitor {
                 final int delta = currentIndentLength - lastIndent;
                 if (currentIndentLength % indentInfoLength != 0 || delta > indentInfoLength) {
                   final String message = useTab
-                                         ? currentIndentLength + " tabs were used for indentation. Must be indented using " + indentInfoLength + " tabs"
-                                         : currentIndentLength + " spaces were used for indentation. Must be indented using " + indentInfoLength + " spaces";
+                                         ? delta + " tabs were used for indentation. Must be indented using " + indentInfoLength + " tabs"
+                                         : delta + " spaces were used for indentation. Must be indented using " + indentInfoLength + " spaces";
                   myHolder.createErrorAnnotation(leaf, message);
                 }
                 lastIndent = currentIndentLength / indentInfoLength * indentInfoLength;

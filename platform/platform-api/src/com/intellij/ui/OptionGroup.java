@@ -17,6 +17,7 @@ package com.intellij.ui;
 
 import com.intellij.openapi.util.Pair;
 import com.intellij.ui.border.IdeaTitledBorder;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -30,19 +31,13 @@ import java.util.List;
 public class OptionGroup implements PanelWithAnchor {
   private String myTitle;
   private List myOptions;
-  private List myIsShifted;
-  private boolean boldTitle;
+  private List<Boolean> myIsShifted;
   private JComponent anchor;
 
-  public OptionGroup(String title) {
-    this(title, false);
-  }
-
-  public OptionGroup(String title, boolean boldTitle) {
+  public OptionGroup(@Nullable String title) {
     myTitle = title;
     myOptions = new ArrayList();
-    myIsShifted = new ArrayList();
-    this.boldTitle = boldTitle;
+    myIsShifted = new ArrayList<Boolean>();
   }
 
   /**
@@ -75,27 +70,26 @@ public class OptionGroup implements PanelWithAnchor {
     panel.setLayout(new GridBagLayout());
 
     for (int i = 0; i < myOptions.size(); i++) {
-      int leftInset = Boolean.TRUE.equals(myIsShifted.get(i)) ? 15 : 5;
-      Object option = myOptions.get(i);
+      final int leftInset = Boolean.TRUE.equals(myIsShifted.get(i)) ? IdeBorderFactory.TITLED_BORDER_INDENT : 0;
+      final int topInset = i == 0 ? 0 : UIUtil.DEFAULT_VGAP;
+      final int rightInset = UIUtil.DEFAULT_HGAP;
+      final Object option = myOptions.get(i);
       if (option instanceof JComponent) {
         JComponent component = (JComponent)option;
-        int verticalInset = component instanceof JLabel || component instanceof JTextField ? 2 : 0;
         panel.add(component,
                   new GridBagConstraints(0, i, GridBagConstraints.REMAINDER, 1, 1, 0, GridBagConstraints.WEST, getFill(component),
-                                         new Insets(verticalInset, leftInset, verticalInset, 5), 0, 0));
+                                         new Insets(topInset, leftInset, 0, 0), 0, 0));
       }
       else {
         Pair pair = (Pair)option;
         JComponent firstComponent = (JComponent)pair.first;
-        int verticalInset = firstComponent instanceof JLabel || firstComponent instanceof JTextField ? 1 : 0;
         panel.add(firstComponent,
                   new GridBagConstraints(0, i, 1, 1, 1, 0, GridBagConstraints.WEST, getFill(firstComponent),
-                                         new Insets(verticalInset, leftInset, verticalInset, 5), 0, 0));
+                                         new Insets(topInset, leftInset, 0, 0), 0, 0));
         JComponent secondComponent = (JComponent)pair.second;
-        verticalInset = secondComponent instanceof JLabel || secondComponent instanceof JTextField ? 2 : 0;
         panel.add(secondComponent,
                   new GridBagConstraints(1, i, 1, 1, 1, 0, GridBagConstraints.EAST, GridBagConstraints.HORIZONTAL,
-                                         new Insets(verticalInset, 5, verticalInset, 5), 0, 0));
+                                         new Insets(topInset, rightInset, 0, 0), 0, 0));
       }
     }
     JPanel p = new JPanel();

@@ -41,10 +41,12 @@ public class ProfileEx implements Profile {
     this(name);
   }
 
+  @Override
   public String getName() {
     return myName;
   }
 
+  @Override
   public void copyFrom(@NotNull Profile profile) {
     try {
       @NonNls final Element config = new Element("config");
@@ -59,31 +61,38 @@ public class ProfileEx implements Profile {
     }
   }
 
+  @Override
   public void setLocal(boolean isLocal) {
     myLocal = isLocal;
   }
 
+  @Override
   public boolean isLocal() {
     return myLocal;
   }
 
+  @Override
   public void setName(String name) {
     myName = name;
   }
 
+  @Override
   public void setProfileManager(@NotNull ProfileManager profileManager) {
     myProfileManager = profileManager;
   }
 
+  @Override
   @NotNull
   public ProfileManager getProfileManager() {
     return myProfileManager;
   }
 
+  @Override
   public void readExternal(Element element) throws InvalidDataException {
     DefaultJDOMExternalizer.readExternal(this, element);
   }
 
+  @Override
   public void writeExternal(Element element) throws WriteExternalException {
     DefaultJDOMExternalizer.writeExternal(this, element);
   }
@@ -103,6 +112,7 @@ public class ProfileEx implements Profile {
     return myName.hashCode();
   }
 
+  @Override
   public int compareTo(final Object o) {
     if (o instanceof Profile){
       return getName().compareToIgnoreCase(((Profile)o).getName());

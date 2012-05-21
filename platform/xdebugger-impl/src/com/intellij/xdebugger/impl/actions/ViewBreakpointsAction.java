@@ -25,8 +25,10 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil;
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointsConfigurationDialogFactory;
+import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointsMasterDetailPopupFactory;
 
 public class ViewBreakpointsAction extends AnAction implements AnAction.TransparentUpdate {
   private Object myInitialBreakpoint;
@@ -52,8 +54,14 @@ public class ViewBreakpointsAction extends AnAction implements AnAction.Transpar
       }
     }
 
-    DialogWrapper dialog = BreakpointsConfigurationDialogFactory.getInstance(project).createDialog(myInitialBreakpoint);
-    dialog.show();
+    if (Registry.is("debugger.breakpoint.use.breakpoints.popup")) {
+      BreakpointsMasterDetailPopupFactory.
+        getInstance(project).createPopup(myInitialBreakpoint).showCenteredInCurrentWindow(project);
+    }
+    else {
+      DialogWrapper dialog = BreakpointsConfigurationDialogFactory.getInstance(project).createDialog(myInitialBreakpoint);
+      dialog.show();
+    }
     myInitialBreakpoint = null;
   }
 

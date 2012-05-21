@@ -53,9 +53,13 @@ public class AutoSnapPoint extends SnapPoint {
 
     if (myHorizontal) {
       myMargin = bounds.x - myBounds.x;
+      feedback.addVerticalLine(myBounds.x, myBounds.y, myBounds.height);
+      feedback.addHorizontalArrow(myBounds.x, bounds.y + bounds.height / 2, myMargin);
     }
     else {
       myMargin = bounds.y - myBounds.y;
+      feedback.addHorizontalLine(myBounds.x, myBounds.y, myBounds.width);
+      feedback.addVerticalArrow(bounds.x + bounds.width / 2, myBounds.y, myMargin);
     }
 
     return true;

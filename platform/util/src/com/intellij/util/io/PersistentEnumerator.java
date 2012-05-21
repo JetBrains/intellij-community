@@ -49,7 +49,14 @@ public class PersistentEnumerator<Data> extends PersistentEnumeratorBase<Data> {
   private static final Version ourVersion = new Version(CORRECTLY_CLOSED_MAGIC, DIRTY_MAGIC);
 
   public PersistentEnumerator(@NotNull File file, @NotNull KeyDescriptor<Data> dataDescriptor, int initialSize) throws IOException {
-    super(file, new ResizeableMappedFile(file, initialSize, ourLock), dataDescriptor, initialSize, ourVersion,
+    this(file, dataDescriptor, initialSize, ourLock.myDefaultStorageLockContext);
+  }
+
+  public PersistentEnumerator(@NotNull File file,
+                              @NotNull KeyDescriptor<Data> dataDescriptor,
+                              int initialSize,
+                              PagedFileStorage.StorageLockContext storageLockContext) throws IOException {
+    super(file, new ResizeableMappedFile(file, initialSize, storageLockContext, -1, false), dataDescriptor, initialSize, ourVersion,
           new RecordBufferHandler(), true);
   }
 
@@ -62,7 +69,8 @@ public class PersistentEnumerator<Data> extends PersistentEnumeratorBase<Data> {
   }
 
   private boolean traverseRecords(int vectorStart, int slotsCount, @NotNull RecordsProcessor p) throws IOException {
-    synchronized (ourLock) {
+    lockStorage();
+    try {
       for (int slotIdx = 0; slotIdx < slotsCount; slotIdx++) {
         final int vector = myStorage.getInt(vectorStart + slotIdx * 4);
         if (vector < 0) {
@@ -76,10 +84,14 @@ public class PersistentEnumerator<Data> extends PersistentEnumeratorBase<Data> {
       }
       return true;
     }
+    finally {
+      unlockStorage();
+    }
   }
 
   protected synchronized int enumerateImpl(final Data value, final boolean onlyCheckForExisting, boolean saveNewValue) throws IOException {
-    synchronized (ourLock) {
+    lockStorage();
+    try {
       int depth = 0;
       final int valueHC = myDataDescriptor.getHashCode(value);
       int hc = valueHC;
@@ -163,13 +175,16 @@ public class PersistentEnumerator<Data> extends PersistentEnumeratorBase<Data> {
         return newId;
       }
     }
+    finally {
+      unlockStorage();
+    }
   }
 
   protected int writeData(final Data value, int hashCode) {
     int id = super.writeData(value, hashCode);
     ++valuesCount;
 
-    if (valuesCount % IOStatistics.KEYS_FACTOR == 0 && IOStatistics.DEBUG) {
+    if (IOStatistics.DEBUG && (valuesCount & IOStatistics.KEYS_FACTOR_MASK) == 0) {
       IOStatistics.dump("Index " + myFile + ", values " + valuesCount + ", storage size:" + myStorage.length());
     }
     return id;

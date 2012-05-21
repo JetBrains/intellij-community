@@ -271,6 +271,9 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     }
     */
 
+  }
+
+  private void initExtensions() {
     try {
       final FileBasedIndexExtension[] extensions = Extensions.getExtensions(FileBasedIndexExtension.EXTENSION_POINT_NAME);
       for (FileBasedIndexExtension<?, ?> extension : extensions) {
@@ -318,6 +321,9 @@ public class FileBasedIndexImpl extends FileBasedIndex {
 
       registerIndexableSet(new AdditionalIndexableFileSet(), null);
     }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
     finally {
       ShutDownTracker.getInstance().registerShutdownTask(new Runnable() {
         @Override
@@ -329,6 +335,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
       saveRegisteredIndices(myIndices.keySet());
       myFlushingFuture = FlushingDaemon.everyFiveSeconds(new Runnable() {
         int lastModCount = 0;
+
         @Override
         public void run() {
           if (lastModCount == myLocalModCount) {
@@ -343,6 +350,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
 
   @Override
   public void initComponent() {
+    initExtensions();
   }
 
   @Nullable
@@ -1376,7 +1384,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
 
     @Override
     public String getText() {
-      if (myFile.getModificationStamp() != myDocument.getModificationStamp()) {
+      if (myFile.getViewProvider().getModificationStamp() != myDocument.getModificationStamp()) {
         final ASTNode node = myFile.getNode();
         assert node != null;
         return node.getText();
@@ -1386,7 +1394,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
 
     @Override
     public long getModificationStamp() {
-      return myFile.getModificationStamp();
+      return myFile.getViewProvider().getModificationStamp();
     }
   }
 
@@ -1410,7 +1418,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     final PsiFile dominantContentFile = findDominantPsiForDocument(document, project);
 
     final DocumentContent content;
-    if (dominantContentFile != null && dominantContentFile.getModificationStamp() != document.getModificationStamp()) {
+    if (dominantContentFile != null && dominantContentFile.getViewProvider().getModificationStamp() != document.getModificationStamp()) {
       content = new PsiContent(document, dominantContentFile);
     }
     else {

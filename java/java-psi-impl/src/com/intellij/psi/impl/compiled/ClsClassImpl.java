@@ -257,7 +257,7 @@ public class ClsClassImpl extends ClsRepositoryPsiElement<PsiClassStub<?>> imple
   @NotNull
   @Override
   public List<PsiClass> getOwnInnerClasses() {
-    return Arrays.asList(getStub().getChildrenByType(JavaStubElementTypes.CLASS, ARRAY_FACTORY));
+    return Arrays.asList(getStub().getChildrenByType(JavaStubElementTypes.CLASS, PsiClass.ARRAY_FACTORY));
   }
 
   @Override

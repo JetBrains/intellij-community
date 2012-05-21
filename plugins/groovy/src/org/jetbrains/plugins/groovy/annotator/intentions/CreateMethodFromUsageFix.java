@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,25 +15,22 @@
  */
 package org.jetbrains.plugins.groovy.annotator.intentions;
 
+import com.intellij.codeInsight.generation.OverrideImplementUtil;
+import com.intellij.codeInsight.generation.PsiGenerationInfo;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyBundle;
+import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.intentions.base.IntentionUtils;
 import org.jetbrains.plugins.groovy.lang.editor.template.expressions.ChooseTypeExpression;
-import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrMemberOwner;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.GroovyExpectedTypesProvider;
 import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.SupertypeConstraint;
 import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.TypeConstraint;
@@ -45,10 +42,10 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
  * @author ven
  */
 public class CreateMethodFromUsageFix implements IntentionAction {
-  private final GrMemberOwner myTargetClass;
+  private final PsiClass myTargetClass;
   private final GrReferenceExpression myRefExpression;
 
-  public CreateMethodFromUsageFix(GrReferenceExpression refExpression, GrMemberOwner targetClass) {
+  public CreateMethodFromUsageFix(GrReferenceExpression refExpression, PsiClass targetClass) {
     myRefExpression = refExpression;
     myTargetClass = targetClass;
   }
@@ -68,43 +65,51 @@ public class CreateMethodFromUsageFix implements IntentionAction {
   }
 
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    StringBuilder methodBuffer = new StringBuilder();
-    if (PsiUtil.isInStaticContext(myRefExpression, myTargetClass)) methodBuffer.append("static ");
-    methodBuffer.append("Object ").append(myRefExpression.getReferenceName()).append(" (");
-    PsiType[] argTypes = PsiUtil.getArgumentTypes(myRefExpression, false);
-    assert argTypes != null;
-    ChooseTypeExpression[] paramTypesExpressions = new ChooseTypeExpression[argTypes.length];
-    for (int i = 0; i < argTypes.length; i++) {
-      PsiType argType = argTypes[i];
-      if (argType == null) argType = TypesUtil.getJavaLangObject(myRefExpression);
-      if (i > 0) methodBuffer.append(", ");
-      methodBuffer.append("Object o").append(i);
-      paramTypesExpressions[i] =
-        new ChooseTypeExpression(new TypeConstraint[]{SupertypeConstraint.create(argType)}, myRefExpression.getManager());
-    }
-    methodBuffer.append(") {\n}");
-    GrMethod method = GroovyPsiElementFactory.getInstance(project).createMethodFromText(methodBuffer.toString());
-    GrMemberOwner owner = myTargetClass;
-    TypeConstraint[] constraints = GroovyExpectedTypesProvider.calculateTypeConstraints((GrExpression)myRefExpression.getParent());
-    PsiElement parent = myTargetClass instanceof GrTypeDefinition
-                        ? ((GrTypeDefinition)myTargetClass).getBody()
-                        : ((GroovyScriptClass)myTargetClass).getContainingFile();
-    if (PsiTreeUtil.isAncestor(parent, myRefExpression, false)) {
-      PsiElement prevParent = PsiTreeUtil.findPrevParent(parent, myRefExpression);
-      PsiElement sibling = PsiUtil.skipWhitespaces(prevParent.getNextSibling(), true);
-      if (sibling != null && GroovyTokenTypes.mSEMI.equals(sibling.getNode().getElementType())) {
-        sibling = sibling.getNextSibling();
-      }
-      else {
-        sibling = prevParent.getNextSibling();
-      }
-      method = owner.addMemberDeclaration(method, sibling);
-    }
-    else {
-      method = owner.addMemberDeclaration(method, null);
+    final JVMElementFactory factory = JVMElementFactories.getFactory(myTargetClass.getLanguage(), project);
+    PsiMethod method = factory.createMethod(myRefExpression.getReferenceName(), PsiType.VOID);
+    if (PsiUtil.isInStaticContext(myRefExpression, myTargetClass)) {
+      method.getModifierList().setModifierProperty(PsiModifier.STATIC, true);
     }
 
-    IntentionUtils.createTemplateForMethod(argTypes, paramTypesExpressions, method, owner, constraints, false);
+    PsiType[] argTypes = PsiUtil.getArgumentTypes(myRefExpression, false);
+    assert argTypes != null;
+
+    ChooseTypeExpression[] paramTypesExpressions = setupParams(method, argTypes, factory);
+
+    TypeConstraint[] constraints = GroovyExpectedTypesProvider.calculateTypeConstraints((GrExpression)myRefExpression.getParent());
+
+    final PsiGenerationInfo<PsiMethod> info = OverrideImplementUtil.createGenerationInfo(method);
+    info.insert(myTargetClass, findInsertionAnchor(info), true);
+    method = info.getPsiMember();
+
+    final PsiElement context = PsiTreeUtil.getParentOfType(myRefExpression, PsiClass.class, PsiMethod.class);
+    IntentionUtils.createTemplateForMethod(argTypes, paramTypesExpressions, method, myTargetClass, constraints, false, context);
+  }
+
+  @Nullable
+  private PsiElement findInsertionAnchor(PsiGenerationInfo<PsiMethod> info) {
+    PsiElement parent = myTargetClass instanceof GroovyScriptClass ? ((GroovyScriptClass)myTargetClass).getContainingFile() : myTargetClass;
+    if (PsiTreeUtil.isAncestor(parent, myRefExpression, false)) {
+      return info.findInsertionAnchor(myTargetClass, myRefExpression);
+    }
+    else {
+      return null;
+    }
+  }
+
+  private ChooseTypeExpression[] setupParams(PsiMethod method, PsiType[] argTypes, JVMElementFactory factory) {
+    final PsiParameterList parameterList = method.getParameterList();
+
+    ChooseTypeExpression[] paramTypesExpressions = new ChooseTypeExpression[argTypes.length];
+    for (int i = 0; i < argTypes.length; i++) {
+      PsiType argType = TypesUtil.unboxPrimitiveTypeWrapper(argTypes[i]);
+      if (argType == null || argType == PsiType.NULL) argType = TypesUtil.getJavaLangObject(myRefExpression);
+      final PsiParameter p = factory.createParameter("o", argType);
+      parameterList.add(p);
+      paramTypesExpressions[i] =
+        new ChooseTypeExpression(new TypeConstraint[]{SupertypeConstraint.create(argType)}, myRefExpression.getManager(), method.getLanguage() == GroovyFileType.GROOVY_LANGUAGE);
+    }
+    return paramTypesExpressions;
   }
 
   public boolean startInWriteAction() {

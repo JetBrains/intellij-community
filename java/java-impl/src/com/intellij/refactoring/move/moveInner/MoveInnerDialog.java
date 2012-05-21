@@ -39,8 +39,8 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.move.MoveInstanceMembersUtil;
 import com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackagesUtil;
 import com.intellij.refactoring.ui.NameSuggestionsField;
-import com.intellij.refactoring.ui.RefactoringDialog;
 import com.intellij.refactoring.ui.PackageNameReferenceEditorCombo;
+import com.intellij.refactoring.ui.RefactoringDialog;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
@@ -70,6 +70,8 @@ public class MoveInnerDialog extends RefactoringDialog {
   private JCheckBox myCbSearchForTextOccurences;
   private PackageNameReferenceEditorCombo myPackageNameField;
   private JLabel myPackageNameLabel;
+  private JLabel myClassNameLabel;
+  private JLabel myParameterNameLabel;
   private SuggestedNameInfo mySuggestedNameInfo;
   private final PsiClass myOuterClass;
 
@@ -84,6 +86,9 @@ public class MoveInnerDialog extends RefactoringDialog {
     myProcessor = processor;
     setTitle(MoveInnerImpl.REFACTORING_NAME);
     init();
+    myPackageNameLabel.setLabelFor(myPackageNameField.getChildComponent());
+    myClassNameLabel.setLabelFor(myClassNameField);
+    myParameterNameLabel.setLabelFor(myParameterField);
   }
 
   public boolean isSearchInComments() {

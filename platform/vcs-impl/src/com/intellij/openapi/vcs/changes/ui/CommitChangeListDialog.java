@@ -948,7 +948,6 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     mySplitter.setHonorComponentsMinimumSize(true);
     mySplitter.setFirstComponent(myBrowser);
     mySplitter.setSecondComponent(myCommitMessageArea);
-    mySplitter.setDividerWidth(3);
     initMainSplitter();
 
     rootPane.add(mySplitter, BorderLayout.CENTER);
@@ -964,8 +963,6 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     infoPanel.add(myAdditionalOptionsPanel, BorderLayout.CENTER);
     rootPane.add(infoPanel, BorderLayout.EAST);
     infoPanel.setBorder(IdeBorderFactory.createEmptyBorder(0, 10, 0, 0));
-
-    rootPane.add(myWarningLabel, BorderLayout.SOUTH);
 
     final JPanel wrapper = new JPanel(new GridBagLayout());
     final GridBagConstraints gb = new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE,
@@ -994,7 +991,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
                                                           setSize(dialogSize.width, dialogSize.height - integer);
                                                           repaint();
                                                         }
-                                                      }, true) {
+                                                      }) {
       @Override
       protected RefreshablePanel createDetails() {
         initDetails();

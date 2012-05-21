@@ -23,7 +23,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.debugger.fragments.GroovyCodeFragment;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
-import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocMemberReference;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GrQualifiedReference;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
@@ -47,8 +46,8 @@ public class GrReferenceAdjuster {
     shortenReferences(element, range.getStartOffset(), range.getEndOffset(), true, false);
   }
 
-  public static void shortenReferences(PsiElement element, int start, int end, boolean addImports, boolean uncomplete) {
-    process(element, start, end, addImports, uncomplete);
+  public static void shortenReferences(PsiElement element, int start, int end, boolean addImports, boolean incomplete) {
+    process(element, start, end, addImports, incomplete);
   }
 
   public static void shortenReference(GrQualifiedReference ref) {
@@ -57,22 +56,22 @@ public class GrReferenceAdjuster {
     process(ref, range.getStartOffset(), range.getEndOffset(), true, false);
   }
 
-  private static void process(PsiElement element, int start, int end, boolean addImports, boolean uncomplete) {
+  private static void process(PsiElement element, int start, int end, boolean addImports, boolean incomplete) {
     if (element instanceof GrQualifiedReference && ((GrQualifiedReference)element).resolve() instanceof PsiClass) {
-      shortenReferenceInner((GrQualifiedReference)element, addImports, uncomplete);
+      shortenReferenceInner((GrQualifiedReference)element, addImports, incomplete);
     }
 
     PsiElement child = element.getFirstChild();
     while (child != null) {
       final TextRange range = child.getTextRange();
       if (start < range.getEndOffset() && range.getStartOffset() < end) {
-        process(child, start, end, addImports, uncomplete);
+        process(child, start, end, addImports, incomplete);
       }
       child = child.getNextSibling();
     }
   }
 
-  private static <Qualifier extends PsiElement> boolean shortenReferenceInner(GrQualifiedReference<Qualifier> ref, boolean addImports, boolean uncomplete) {
+  private static <Qualifier extends PsiElement> boolean shortenReferenceInner(GrQualifiedReference<Qualifier> ref, boolean addImports, boolean incomplete) {
 
     final Qualifier qualifier = ref.getQualifier();
     if (qualifier == null || qualifier instanceof GrSuperReferenceExpression || cannotShortenInContext(ref)) {
@@ -88,7 +87,7 @@ public class GrReferenceAdjuster {
 
     if (!shorteningIsMeaningfully(ref)) return false;
 
-    final PsiElement resolved = resolveRef(ref, uncomplete);
+    final PsiElement resolved = resolveRef(ref, incomplete);
     if (resolved == null) return false;
 
     if (!checkCopyWithoutQualifier(ref, addImports, resolved)) return false;
@@ -124,8 +123,8 @@ public class GrReferenceAdjuster {
   }
 
   @Nullable
-  private static <Qualifier extends PsiElement> PsiElement resolveRef(GrQualifiedReference<Qualifier> ref, boolean uncomplete) {
-    if (!uncomplete) return ref.resolve();
+  private static <Qualifier extends PsiElement> PsiElement resolveRef(GrQualifiedReference<Qualifier> ref, boolean incomplete) {
+    if (!incomplete) return ref.resolve();
 
     PsiResolveHelper helper = JavaPsiFacade.getInstance(ref.getProject()).getResolveHelper();
     if (ref instanceof GrReferenceElement) {
@@ -148,8 +147,14 @@ public class GrReferenceAdjuster {
 
   private static <Qualifier extends PsiElement> boolean shorteningIsMeaningfully(GrQualifiedReference<Qualifier> ref) {
 
-    if (ref instanceof GrReferenceElementImpl) {
-      if (((GrReferenceElementImpl)ref).isFullyQualified() && CodeStyleSettingsManager.getSettings(ref.getProject()).USE_FQ_CLASS_NAMES) return false;
+    if (ref instanceof GrReferenceElementImpl && ((GrReferenceElementImpl)ref).isFullyQualified()) {
+      final GrDocComment doc = PsiTreeUtil.getParentOfType(ref, GrDocComment.class);
+      if (doc != null) {
+        if (CodeStyleSettingsManager.getSettings(ref.getProject()).USE_FQ_CLASS_NAMES_IN_JAVADOC) return false;
+      }
+      else {
+        if (CodeStyleSettingsManager.getSettings(ref.getProject()).USE_FQ_CLASS_NAMES) return false;
+      }
     }
 
     final Qualifier qualifier = ref.getQualifier();
@@ -169,15 +174,12 @@ public class GrReferenceAdjuster {
   }
 
   private static <Qualifier extends PsiElement> boolean cannotShortenInContext(GrQualifiedReference<Qualifier> ref) {
-    return (PsiTreeUtil.getParentOfType(ref, GrDocMemberReference.class) == null &&
-            PsiTreeUtil.getParentOfType(ref, GrDocComment.class) != null) ||
-           PsiTreeUtil.getParentOfType(ref, GrImportStatement.class) != null ||
+    return PsiTreeUtil.getParentOfType(ref, GrImportStatement.class) != null ||
            PsiTreeUtil.getParentOfType(ref, GroovyCodeFragment.class) != null;
   }
 
   private static <Qualifier extends PsiElement> boolean mayInsertImport(GrQualifiedReference<Qualifier> ref) {
-    return PsiTreeUtil.getParentOfType(ref, GrDocComment.class) == null &&
-           !(ref.getContainingFile() instanceof GroovyCodeFragment) &&
+    return !(ref.getContainingFile() instanceof GroovyCodeFragment) &&
            PsiTreeUtil.getParentOfType(ref, GrImportStatement.class) == null &&
            ref.getContainingFile() instanceof GroovyFileBase;
   }

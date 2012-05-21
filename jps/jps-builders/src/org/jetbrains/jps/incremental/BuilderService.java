@@ -4,14 +4,13 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.ExecutorService;
 
 /**
  * @author nik
  */
 public abstract class BuilderService {
   @NotNull
-  public List<? extends ModuleLevelBuilder> createModuleLevelBuilders(ExecutorService executorService) {
+  public List<? extends ModuleLevelBuilder> createModuleLevelBuilders() {
     return Collections.emptyList();
   }
 

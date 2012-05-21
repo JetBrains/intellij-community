@@ -21,9 +21,9 @@ import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.roots.impl.ModifiableModelCommitter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.impl.ModuleRootManagerImpl;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.ArrayUtil;
 import gnu.trove.THashMap;
@@ -71,7 +71,7 @@ public class MavenFoldersImporter {
       if (!rootModels.isEmpty()) {
         ModifiableRootModel[] modelsArray = rootModels.toArray(new ModifiableRootModel[rootModels.size()]);
         if (modelsArray.length > 0) {
-          ModuleRootManagerImpl.multiCommit(modelsArray, ModuleManager.getInstance(modelsArray[0].getProject()).getModifiableModel());
+          ModifiableModelCommitter.multiCommit(modelsArray, ModuleManager.getInstance(modelsArray[0].getProject()).getModifiableModel());
         }
       }
     }
@@ -201,39 +201,44 @@ public class MavenFoldersImporter {
     }
   }
 
-  private void configGeneratedSourceFolder(@NotNull File dir, boolean isTestSources) {
+  private void configGeneratedSourceFolder(@NotNull File targetDir, boolean isTestSources) {
     switch (myImportingSettings.getGeneratedSourcesFolder()) {
       case GENERATED_SOURCE_FOLDER:
-        if (!myModel.hasRegisteredSourceSubfolder(dir)) {
-          myModel.addSourceFolder(dir.getPath(), isTestSources);
-        }
+        addAsSourceFolder(targetDir, isTestSources);
         break;
 
       case SUBFOLDER:
-        addAllSubDirsAsSources(dir, isTestSources);
+        addAllSubDirsAsSources(targetDir, isTestSources);
         break;
 
       case AUTODETECT:
-        Collection<JavaModuleSourceRoot> sourceRoots = JavaSourceRootDetectionUtil.suggestRoots(dir);
-        if (sourceRoots.size() == 1) {
-          JavaModuleSourceRoot root = sourceRoots.iterator().next();
-          if (dir.equals(root.getDirectory())) {
-            if (!myModel.hasRegisteredSourceSubfolder(dir)) {
-              myModel.addSourceFolder(dir.getPath(), isTestSources);
-            }
-            break;
+        Collection<JavaModuleSourceRoot> sourceRoots = JavaSourceRootDetectionUtil.suggestRoots(targetDir);
+
+        for (JavaModuleSourceRoot root : sourceRoots) {
+          if (targetDir.equals(root.getDirectory())) {
+            addAsSourceFolder(targetDir, isTestSources);
+            return;
           }
+
+          addAsSourceFolder(root.getDirectory(), isTestSources);
         }
-        addAllSubDirsAsSources(dir, isTestSources);
+
+        addAllSubDirsAsSources(targetDir, isTestSources);
         break;
+    }
+  }
+
+  private void addAsSourceFolder(@NotNull File dir, boolean isTestSources) {
+    if (!myModel.hasRegisteredSourceSubfolder(dir)) {
+      myModel.addSourceFolder(dir.getPath(), isTestSources);
     }
   }
 
   private void addAllSubDirsAsSources(@NotNull File dir, boolean isTestSources) {
     for (File f : getChildren(dir)) {
-      if (!f.isDirectory()) continue;
-      if (myModel.hasRegisteredSourceSubfolder(f)) continue;
-      myModel.addSourceFolder(f.getPath(), isTestSources);
+      if (f.isDirectory()) {
+        addAsSourceFolder(f, isTestSources);
+      }
     }
   }
 

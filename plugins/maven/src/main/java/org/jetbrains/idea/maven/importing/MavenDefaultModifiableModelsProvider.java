@@ -21,17 +21,18 @@ import com.intellij.openapi.application.*;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.roots.impl.ModifiableModelCommitter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
-import com.intellij.openapi.roots.impl.ModuleRootManagerImpl;
 import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.packaging.artifacts.ArtifactManager;
 import com.intellij.packaging.artifacts.ModifiableArtifactModel;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import java.util.Collection;
@@ -65,7 +66,7 @@ public class MavenDefaultModifiableModelsProvider extends MavenBaseModifiableMod
   }
 
   @Override
-  protected ModifiableRootModel doGetRootModel(final Module module) {
+  protected ModifiableRootModel doGetRootModel(@NotNull final Module module) {
     return new ReadAction<ModifiableRootModel>() {
       protected void run(Result<ModifiableRootModel> result) throws Throwable {
         result.setResult(ModuleRootManager.getInstance(module).getModifiableModel());
@@ -117,7 +118,7 @@ public class MavenDefaultModifiableModelsProvider extends MavenBaseModifiableMod
             Collection<ModifiableRootModel> rootModels = myRootModels.values();
 
             ModifiableRootModel[] rootModels1 = rootModels.toArray(new ModifiableRootModel[rootModels.size()]);
-            ModuleRootManagerImpl.multiCommit(rootModels1, myModuleModel);
+            ModifiableModelCommitter.multiCommit(rootModels1, myModuleModel);
 
             for (ModifiableFacetModel each : myFacetModels.values()) {
               each.commit();

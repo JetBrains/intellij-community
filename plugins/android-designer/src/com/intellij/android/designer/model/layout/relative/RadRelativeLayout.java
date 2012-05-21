@@ -17,11 +17,14 @@ package com.intellij.android.designer.model.layout.relative;
 
 import com.intellij.android.designer.designSurface.TreeDropToOperation;
 import com.intellij.android.designer.designSurface.layout.RelativeLayoutOperation;
+import com.intellij.android.designer.designSurface.layout.actions.RelativeLayoutResizeOperation;
 import com.intellij.android.designer.designSurface.layout.relative.RelativeDecorator;
 import com.intellij.android.designer.model.PropertyParser;
 import com.intellij.android.designer.model.RadViewLayoutWithData;
+import com.intellij.android.designer.model.layout.actions.AllGravityAction;
 import com.intellij.designer.componentTree.TreeEditOperation;
 import com.intellij.designer.designSurface.*;
+import com.intellij.designer.designSurface.selection.ResizeSelectionDecorator;
 import com.intellij.designer.model.RadComponent;
 import com.intellij.designer.propertyTable.Property;
 import com.intellij.designer.propertyTable.PropertyTable;
@@ -29,6 +32,8 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.awt.*;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -38,6 +43,7 @@ public class RadRelativeLayout extends RadViewLayoutWithData implements ILayoutD
   private static final String[] LAYOUT_PARAMS = {"RelativeLayout_Layout", "ViewGroup_MarginLayout"};
 
   private RelativeDecorator myRelativeDecorator;
+  private ResizeSelectionDecorator mySelectionDecorator;
 
   @NotNull
   @Override
@@ -86,13 +92,10 @@ public class RadRelativeLayout extends RadViewLayoutWithData implements ILayoutD
       }
       return new RelativeLayoutOperation(myContainer, context);
     }
-    // XXX
+    if (context.is(RelativeLayoutResizeOperation.TYPE)) {
+      return new RelativeLayoutResizeOperation(context);
+    }
     return null;
-  }
-
-  @Override
-  public void removeComponentFromContainer(RadComponent component) {
-    // TODO: Auto-generated method stub
   }
 
   private RelativeDecorator getRelativeDecorator() {
@@ -117,7 +120,11 @@ public class RadRelativeLayout extends RadViewLayoutWithData implements ILayoutD
 
   @Override
   public ComponentDecorator getChildSelectionDecorator(RadComponent component, List<RadComponent> selection) {
-    return super.getChildSelectionDecorator(component, selection); // TODO: Auto-generated method stub
+    if (mySelectionDecorator == null) {
+      mySelectionDecorator = new ResizeSelectionDecorator(Color.red, 1);
+      RelativeLayoutResizeOperation.points(mySelectionDecorator);
+    }
+    return mySelectionDecorator;
   }
 
   //////////////////////////////////////////////////////////////////////////////////////////
@@ -131,7 +138,16 @@ public class RadRelativeLayout extends RadViewLayoutWithData implements ILayoutD
                                            DefaultActionGroup actionGroup,
                                            JComponent shortcuts,
                                            List<RadComponent> selection) {
-    super.addContainerSelectionActions(designer, actionGroup, shortcuts, selection); // TODO: Auto-generated method stub
+    if (selection.get(selection.size() - 1) != myContainer) {
+      return;
+    }
+    for (RadComponent component : selection) {
+      if (!(component.getLayout() instanceof RadRelativeLayout)) {
+        return;
+      }
+    }
+
+    actionGroup.add(new AllGravityAction(designer, Arrays.asList(myContainer)));
   }
 
   @Override
@@ -139,6 +155,15 @@ public class RadRelativeLayout extends RadViewLayoutWithData implements ILayoutD
                                   DefaultActionGroup actionGroup,
                                   JComponent shortcuts,
                                   List<RadComponent> selection) {
-    super.addSelectionActions(designer, actionGroup, shortcuts, selection); // TODO: Auto-generated method stub
+    if (selection.get(selection.size() - 1).getParent() != myContainer) {
+      return;
+    }
+    for (RadComponent component : selection) {
+      if (!(component.getParent() instanceof RadRelativeLayoutComponent)) {
+        return;
+      }
+    }
+
+    actionGroup.add(new AllGravityAction(designer, Arrays.asList(myContainer)));
   }
 }

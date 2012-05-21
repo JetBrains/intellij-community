@@ -221,31 +221,6 @@ public class IncProjectBuilder {
     context.processMessage(new ProgressMessage("Running 'after' tasks"));
     runTasks(context, myBuilderRegistry.getAfterTasks());
 
-    final JavaBuilderLogger logger = context.getLoggingManager().getJavaBuilderLogger();
-
-    if (logger.isEnabled()) {
-      final File flag = new File(Utils.getSystemRoot() + File.separator + "dumpSnapshot");
-
-      if (flag.exists()) {
-        final Mappings mappings = myProjectDescriptor.dataManager.getMappings();
-        final String fileName =
-          Utils.getSystemRoot() + File.separator + "snapshot-" + new SimpleDateFormat("dd-MM-yy(hh:mm:ss)").format(new Date()) + ".log";
-
-        try {
-          final PrintStream stream = new PrintStream(fileName);
-
-          stream.println("Mappings:");
-          mappings.toStream(stream);
-          stream.println("End Of Mappings");
-
-          stream.close();
-        }
-        catch (FileNotFoundException e) {
-          e.printStackTrace();
-        }
-      }
-    }
-
     context.processMessage(new ProgressMessage("Finished, saving caches..."));
   }
 

@@ -35,7 +35,7 @@ public class JTableCellEditorHelper {
       final Runnable r = new Runnable() {
         @Override
         public void run() {
-          if (table.getEditingRow() != row && table.getEditingColumn() != column) return;
+          if (table.getEditingColumn() != column && table.getEditingRow() != row) return;
 
           Component focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
           if (focusOwner == null || !SwingUtilities.isDescendingFrom(focusOwner, table)) return;

@@ -41,6 +41,10 @@ public abstract class ModuleLevelBuilder extends Builder {
 
   public abstract ExitCode build(CompileContext context, ModuleChunk chunk) throws ProjectBuildException;
 
+  public boolean shouldHonorFileEncodingForCompilation(File file) {
+    return false;
+  }
+
   public final BuilderCategory getCategory() {
     return myCategory;
   }

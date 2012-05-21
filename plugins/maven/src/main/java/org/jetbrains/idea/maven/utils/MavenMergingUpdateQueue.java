@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.maven.utils;
 
+import com.intellij.ProjectTopics;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityStateListener;
@@ -28,7 +29,6 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
@@ -91,24 +91,25 @@ public class MavenMergingUpdateQueue extends MergingUpdateQueue {
             }
           }, MavenMergingUpdateQueue.this);
 
-        ProjectRootManager.getInstance(project).addModuleRootListener(new ModuleRootListener() {
-            int beforeCalled;
+        project.getMessageBus().connect(MavenMergingUpdateQueue.this).subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
+          int beforeCalled;
 
-            public void beforeRootsChange(ModuleRootEvent event) {
-              if (beforeCalled++ == 0) {
-                suspend();
-              }
+          public void beforeRootsChange(ModuleRootEvent event) {
+            if (beforeCalled++ == 0) {
+              suspend();
             }
+          }
 
-            public void rootsChanged(ModuleRootEvent event) {
-              if (beforeCalled == 0) return; // This may occur if listener has been added between beforeRootsChange() and rootsChanged() calls.
+          public void rootsChanged(ModuleRootEvent event) {
+            if (beforeCalled == 0)
+              return; // This may occur if listener has been added between beforeRootsChange() and rootsChanged() calls.
 
-              if (--beforeCalled == 0) {
-                resume();
-                MavenMergingUpdateQueue.this.restartTimer();
-              }
+            if (--beforeCalled == 0) {
+              resume();
+              MavenMergingUpdateQueue.this.restartTimer();
             }
-          }, MavenMergingUpdateQueue.this);
+          }
+        });
       }
     }.execute();
   }

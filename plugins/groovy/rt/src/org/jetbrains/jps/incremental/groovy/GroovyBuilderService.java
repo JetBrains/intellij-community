@@ -21,7 +21,6 @@ import org.jetbrains.jps.incremental.ModuleLevelBuilder;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.ExecutorService;
 
 /**
  * @author peter
@@ -29,7 +28,7 @@ import java.util.concurrent.ExecutorService;
 public class GroovyBuilderService extends BuilderService {
   @NotNull
   @Override
-  public List<? extends ModuleLevelBuilder> createModuleLevelBuilders(ExecutorService executorService) {
+  public List<? extends ModuleLevelBuilder> createModuleLevelBuilders() {
     return Arrays.asList(new GroovyBuilder(true),
                          new GroovyBuilder(false));
   }

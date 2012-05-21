@@ -61,6 +61,10 @@ public class ComponentSnapPoint extends SnapPoint {
     int startX = myBounds.x - SNAP_SIZE;
     int endX = startX + 2 * SNAP_SIZE;
 
+    return processLeftLeft(startX, endX, targetBounds, feedback) || processLeftRight(startX, endX, targetBounds, feedback);
+  }
+
+  protected boolean processLeftLeft(int startX, int endX, Rectangle targetBounds, SnapPointFeedbackHost feedback) {
     int targetX = targetBounds.x;
     if (startX <= targetX && targetX <= endX) {
       targetBounds.x = myBounds.x;
@@ -69,7 +73,11 @@ public class ComponentSnapPoint extends SnapPoint {
       return true;
     }
 
-    targetX = targetBounds.x + targetBounds.width;
+    return false;
+  }
+
+  protected boolean processLeftRight(int startX, int endX, Rectangle targetBounds, SnapPointFeedbackHost feedback) {
+    int targetX = targetBounds.x + targetBounds.width;
     if (startX <= targetX && targetX <= endX) {
       targetBounds.x = myBounds.x - targetBounds.width;
       addVerticalFeedback(feedback, myBounds, targetBounds, true);
@@ -84,6 +92,10 @@ public class ComponentSnapPoint extends SnapPoint {
     int startX = myBounds.x + myBounds.width - SNAP_SIZE;
     int endX = startX + 2 * SNAP_SIZE;
 
+    return processRightLeft(startX, endX, targetBounds, feedback) || processRightRight(startX, endX, targetBounds, feedback);
+  }
+
+  protected boolean processRightLeft(int startX, int endX, Rectangle targetBounds, SnapPointFeedbackHost feedback) {
     int targetX = targetBounds.x;
     if (startX <= targetX && targetX <= endX) {
       targetBounds.x = myBounds.x + myBounds.width;
@@ -92,7 +104,11 @@ public class ComponentSnapPoint extends SnapPoint {
       return true;
     }
 
-    targetX = targetBounds.x + targetBounds.width;
+    return false;
+  }
+
+  protected boolean processRightRight(int startX, int endX, Rectangle targetBounds, SnapPointFeedbackHost feedback) {
+    int targetX = targetBounds.x + targetBounds.width;
     if (startX <= targetX && targetX <= endX) {
       targetBounds.x = myBounds.x + myBounds.width - targetBounds.width;
       addVerticalFeedback(feedback, myBounds, targetBounds, false);
@@ -107,6 +123,10 @@ public class ComponentSnapPoint extends SnapPoint {
     int startY = myBounds.y - SNAP_SIZE;
     int endY = startY + 2 * SNAP_SIZE;
 
+    return processTopTop(startY, endY, targetBounds, feedback) || processTopBottom(startY, endY, targetBounds, feedback);
+  }
+
+  protected boolean processTopTop(int startY, int endY, Rectangle targetBounds, SnapPointFeedbackHost feedback) {
     int targetY = targetBounds.y;
     if (startY <= targetY && targetY <= endY) {
       targetBounds.y = myBounds.y;
@@ -115,7 +135,11 @@ public class ComponentSnapPoint extends SnapPoint {
       return true;
     }
 
-    targetY = targetBounds.y + targetBounds.height;
+    return false;
+  }
+
+  protected boolean processTopBottom(int startY, int endY, Rectangle targetBounds, SnapPointFeedbackHost feedback) {
+    int targetY = targetBounds.y + targetBounds.height;
     if (startY <= targetY && targetY <= endY) {
       targetBounds.y = myBounds.y - targetBounds.height;
       addHorizontalFeedback(feedback, myBounds, targetBounds, true);
@@ -130,6 +154,10 @@ public class ComponentSnapPoint extends SnapPoint {
     int startY = myBounds.y + myBounds.height - SNAP_SIZE;
     int endY = startY + 2 * SNAP_SIZE;
 
+    return processBottomTop(startY, endY, targetBounds, feedback) || processBottomBottom(startY, endY, targetBounds, feedback);
+  }
+
+  protected boolean processBottomTop(int startY, int endY, Rectangle targetBounds, SnapPointFeedbackHost feedback) {
     int targetY = targetBounds.y;
     if (startY <= targetY && targetY <= endY) {
       targetBounds.y = myBounds.y + myBounds.height;
@@ -138,7 +166,11 @@ public class ComponentSnapPoint extends SnapPoint {
       return true;
     }
 
-    targetY = targetBounds.y + targetBounds.height;
+    return false;
+  }
+
+  protected boolean processBottomBottom(int startY, int endY, Rectangle targetBounds, SnapPointFeedbackHost feedback) {
+    int targetY = targetBounds.y + targetBounds.height;
     if (startY <= targetY && targetY <= endY) {
       targetBounds.y = myBounds.y + myBounds.height - targetBounds.height;
       addHorizontalFeedback(feedback, myBounds, targetBounds, false);
@@ -158,19 +190,7 @@ public class ComponentSnapPoint extends SnapPoint {
   public void execute(final List<RadComponent> components) throws Exception {
     final String attribute;
 
-    if (myBeginSide == Side.left && myEndSide == Side.left) {
-      attribute = "android:layout_alignLeft";
-    }
-    else if (myBeginSide == Side.right && myEndSide == Side.right) {
-      attribute = "android:layout_alignRight";
-    }
-    else if (myBeginSide == Side.left && myEndSide == Side.right) {
-      attribute = "android:layout_toRightOf";
-    }
-    else if (myBeginSide == Side.right && myEndSide == Side.left) {
-      attribute = "android:layout_toLeftOf";
-    }
-    else if (myBeginSide == Side.top && myEndSide == Side.top) {
+    if (myBeginSide == Side.top && myEndSide == Side.top) {
       attribute = "android:layout_alignTop";
     }
     else if (myBeginSide == Side.bottom && myEndSide == Side.bottom) {
@@ -181,6 +201,18 @@ public class ComponentSnapPoint extends SnapPoint {
     }
     else if (myBeginSide == Side.bottom && myEndSide == Side.top) {
       attribute = "android:layout_above";
+    }
+    else if (myBeginSide == Side.left && myEndSide == Side.left) {
+      attribute = "android:layout_alignLeft";
+    }
+    else if (myBeginSide == Side.right && myEndSide == Side.right) {
+      attribute = "android:layout_alignRight";
+    }
+    else if (myBeginSide == Side.left && myEndSide == Side.right) {
+      attribute = "android:layout_toRightOf";
+    }
+    else if (myBeginSide == Side.right && myEndSide == Side.left) {
+      attribute = "android:layout_toLeftOf";
     }
     else {
       return;

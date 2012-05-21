@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,9 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.members;
 import com.intellij.lang.ASTNode;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameterList;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrMethodStub;
 
 /**
@@ -34,6 +36,16 @@ public class GrMethodImpl extends GrMethodBaseImpl implements GrMethod {
 
   public GrMethodImpl(GrMethodStub stub) {
     super(stub, GroovyElementTypes.METHOD_DEFINITION);
+  }
+
+  @Override
+  public ASTNode addInternal(ASTNode first, ASTNode last, ASTNode anchor, Boolean before) {
+    if (first == last && first.getPsi() instanceof GrTypeParameterList) {
+      if (!getModifierList().hasExplicitVisibilityModifiers()) {
+        getModifierList().setModifierProperty(GrModifier.DEF, true);
+      }
+    }
+    return super.addInternal(first, last, anchor, before);
   }
 
   public String toString() {

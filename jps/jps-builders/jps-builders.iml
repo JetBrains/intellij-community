@@ -28,11 +28,9 @@
         <SOURCES />
       </library>
     </orderEntry>
-    <orderEntry type="library" name="jna" level="project" />
-    <orderEntry type="library" name="Guava" level="project" />
     <orderEntry type="module" module-name="java-runtime" scope="RUNTIME" />
     <orderEntry type="library" name="Log4J" level="project" />
-    <orderEntry type="library" name="JUnit4" level="project" />
+    <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
     <orderEntry type="module-library" scope="TEST">
       <library>
         <CLASSES>

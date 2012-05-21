@@ -28,6 +28,7 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.table.JBTable;
+import com.intellij.util.IconUtil;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.tmatesoft.svn.core.*;
@@ -317,7 +318,7 @@ public class PropertiesComponent extends JPanel {
       e.getPresentation().setText("Add Property");
       e.getPresentation().setDescription("Add new property");
       if (!CONTEXT_ID.equals(e.getPlace())) {
-        e.getPresentation().setIcon(IconLoader.getIcon("/general/add.png"));
+        e.getPresentation().setIcon(IconUtil.getAddIcon());
       }
       e.getPresentation().setEnabled(myFile != null);
     }

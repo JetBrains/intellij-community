@@ -1,5 +1,5 @@
 /*
- * Copyright 2009 Bas Leijdekkers
+ * Copyright 2009-2012 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,18 +21,14 @@ import com.intellij.psi.PsiPostfixExpression;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.tree.IElementType;
 
-public class ReplacePostfixExpressionWithOperatorAssignmentPredicate
-  implements PsiElementPredicate {
+class ReplacePostfixExpressionWithOperatorAssignmentPredicate implements PsiElementPredicate {
 
   public boolean satisfiedBy(PsiElement element) {
     if (!(element instanceof PsiPostfixExpression)) {
       return false;
     }
-    final PsiPostfixExpression postfixExpression =
-      (PsiPostfixExpression)element;
-    final IElementType tokenType =
-      postfixExpression.getOperationTokenType();
-    return !(!JavaTokenType.PLUSPLUS.equals(tokenType) &&
-             !JavaTokenType.MINUSMINUS.equals(tokenType));
+    final PsiPostfixExpression postfixExpression = (PsiPostfixExpression)element;
+    final IElementType tokenType = postfixExpression.getOperationTokenType();
+    return !(!JavaTokenType.PLUSPLUS.equals(tokenType) && !JavaTokenType.MINUSMINUS.equals(tokenType));
   }
 }

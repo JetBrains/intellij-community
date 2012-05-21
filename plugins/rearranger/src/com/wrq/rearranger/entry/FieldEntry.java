@@ -54,16 +54,16 @@ public class FieldEntry
   }
 
   public String getTypeIconName() {
-    if (end instanceof PsiField) {
-      PsiField f = (PsiField)end;
+    if (myEnd instanceof PsiField) {
+      PsiField f = (PsiField)myEnd;
       return ((PsiModifierList)f.getModifierList()).hasModifierProperty(PsiModifier.STATIC) ? "nodes/staticField" : "nodes/field";
     }
     return null;
   }
 
   public String[] getAdditionalIconNames() {
-    if (end instanceof PsiField) {
-      PsiField f = (PsiField)end;
+    if (myEnd instanceof PsiField) {
+      PsiField f = (PsiField)myEnd;
       if (f.getModifierList().hasModifierProperty(PsiModifier.PUBLIC)) return new String[]{"nodes/c_public"};
       if (f.getModifierList().hasModifierProperty(PsiModifier.PROTECTED)) return new String[]{"nodes/c_protected"};
       if (f.getModifierList().hasModifierProperty(PsiModifier.PRIVATE)) return new String[]{"nodes/c_private"};
@@ -74,7 +74,7 @@ public class FieldEntry
 
   public JLabel getPopupEntryText(RearrangerSettings settings) {
     StringBuffer name = new StringBuffer(80);
-    PsiField f = (PsiField)end;
+    PsiField f = (PsiField)myEnd;
     name.append(f.getName());
     name.append(": ");
     name.append(f.getTypeElement().getText());
@@ -89,7 +89,7 @@ public class FieldEntry
     DefaultMutableTreeNode node = super.addToPopupTree(parent, settings);
     if (node != null && getterMethod != null) {
       getterMethod.addToPopupTree(node, settings);
-      for (MethodEntry me : getterMethod.correspondingGetterSetters) {
+      for (MethodEntry me : getterMethod.myCorrespondingGetterSetters) {
         me.addToPopupTree(node, settings);
       }
     }

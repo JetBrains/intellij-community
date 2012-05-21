@@ -82,7 +82,7 @@ public abstract class LightDaemonAnalyzerTestCase extends LightCodeInsightTestCa
   protected void doTestConfiguredFile(boolean checkWarnings, boolean checkInfos, @Nullable String filePath) {
     getJavaFacade().setAssertOnFileLoadingFilter(VirtualFileFilter.NONE);
 
-    ExpectedHighlightingData data = new ExpectedHighlightingData(getEditor().getDocument(),checkWarnings, checkInfos);
+    ExpectedHighlightingData data = new ExpectedHighlightingData(getEditor().getDocument(), checkWarnings, checkInfos);
     checkHighlighting(data, composeLocalPath(filePath));
   }
 

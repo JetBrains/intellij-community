@@ -18,12 +18,12 @@ package com.intellij.roots;
 import com.intellij.ProjectTopics;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.roots.impl.ModifiableModelCommitter;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkModificator;
 import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.openapi.roots.*;
-import com.intellij.openapi.roots.impl.ModuleRootManagerImpl;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
@@ -93,7 +93,7 @@ public class RootsChangedTest extends ModuleTestCase {
     rootModelB.setSdk(jdk);
     ModifiableRootModel[] rootModels = new ModifiableRootModel[]{rootModelA, rootModelB};
     if (rootModels.length > 0) {
-      ModuleRootManagerImpl.multiCommit(rootModels, ModuleManager.getInstance(rootModels[0].getProject()).getModifiableModel());
+      ModifiableModelCommitter.multiCommit(rootModels, ModuleManager.getInstance(rootModels[0].getProject()).getModifiableModel());
     }
     assertEventsCount(1);
 
@@ -128,7 +128,7 @@ public class RootsChangedTest extends ModuleTestCase {
     rootModelB.inheritSdk();
     ModifiableRootModel[] rootModels = new ModifiableRootModel[]{rootModelA, rootModelB};
     if (rootModels.length > 0) {
-      ModuleRootManagerImpl.multiCommit(rootModels, ModuleManager.getInstance(rootModels[0].getProject()).getModifiableModel());
+      ModifiableModelCommitter.multiCommit(rootModels, ModuleManager.getInstance(rootModels[0].getProject()).getModifiableModel());
     }
     assertEventsCount(1);
 
@@ -163,7 +163,7 @@ public class RootsChangedTest extends ModuleTestCase {
     rootModelB.addInvalidLibrary("Q", libraryTable.getTableLevel());
     ModifiableRootModel[] rootModels = new ModifiableRootModel[]{rootModelA, rootModelB};
     if (rootModels.length > 0) {
-      ModuleRootManagerImpl.multiCommit(rootModels, ModuleManager.getInstance(rootModels[0].getProject()).getModifiableModel());
+      ModifiableModelCommitter.multiCommit(rootModels, ModuleManager.getInstance(rootModels[0].getProject()).getModifiableModel());
     }
     assertEventsCount(1);
 
@@ -223,7 +223,7 @@ public class RootsChangedTest extends ModuleTestCase {
 
     ModifiableRootModel[] rootModels = new ModifiableRootModel[]{rootModelA, rootModelB};
     if (rootModels.length > 0) {
-      ModuleRootManagerImpl.multiCommit(rootModels, ModuleManager.getInstance(rootModels[0].getProject()).getModifiableModel());
+      ModifiableModelCommitter.multiCommit(rootModels, ModuleManager.getInstance(rootModels[0].getProject()).getModifiableModel());
     }
     assertEventsCount(1);
 

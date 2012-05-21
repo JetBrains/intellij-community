@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -85,12 +85,17 @@ public class ParameterDeclaration implements GroovyElementTypes {
 
     PsiBuilder.Marker rb = builder.mark();
 
-    TypeSpec.parseStrict(builder);
+    final ReferenceElement.ReferenceElementResult result = TypeSpec.parseStrict(builder);
 
     if (mIDENT.equals(builder.getTokenType()) || (mTRIPLE_DOT.equals(builder.getTokenType()))) {
       rb.drop();
     }
-    else {
+    else if (result == ReferenceElement.ReferenceElementResult.mustBeType) {
+      rb.drop();
+      pdMarker.error(GroovyBundle.message("identifier.expected"));
+      return true;
+    }
+    else  {
       rb.rollbackTo();
     }
 

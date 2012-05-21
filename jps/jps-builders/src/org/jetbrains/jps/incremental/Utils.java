@@ -16,7 +16,7 @@ import java.util.*;
  */
 public class Utils {
   public static final Key<Map<String, Collection<String>>> REMOVED_SOURCES_KEY = Key.create("_removed_sources_");
-  private static volatile File ourSystemRoot = new File(System.getProperty("user.home", ".jps-server"));
+  private static volatile File ourSystemRoot = new File(System.getProperty("user.home", ".idea-build"));
 
   private Utils() {
   }

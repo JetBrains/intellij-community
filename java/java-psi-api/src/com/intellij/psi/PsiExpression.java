@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.psi;
 
+import com.intellij.util.ArrayFactory;
 import com.intellij.util.Function;
 import com.intellij.util.NullableFunction;
 import org.jetbrains.annotations.Nullable;
@@ -27,6 +28,13 @@ public interface PsiExpression extends PsiAnnotationMemberValue {
    * The empty array of PSI expressions which can be reused to avoid unnecessary allocations.
    */
   PsiExpression[] EMPTY_ARRAY = new PsiExpression[0];
+
+  ArrayFactory<PsiExpression> ARRAY_FACTORY = new ArrayFactory<PsiExpression>() {
+    @Override
+    public PsiExpression[] create(final int count) {
+      return count == 0 ? PsiExpression.EMPTY_ARRAY : new PsiExpression[count];
+    }
+  };
 
   Function<PsiExpression, PsiType> EXPRESSION_TO_TYPE = new NullableFunction<PsiExpression, PsiType>() {
     @Override

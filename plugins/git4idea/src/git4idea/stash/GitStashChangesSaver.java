@@ -74,7 +74,7 @@ public class GitStashChangesSaver extends GitChangesSaver {
       load();
     }
     catch (VcsException e) {
-      context.handleException(e);
+      context.handleException(e, false);
     }
   }
 

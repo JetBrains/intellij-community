@@ -35,6 +35,8 @@ import com.wrq.rearranger.rearrangement.GenericRearranger;
 import com.wrq.rearranger.ruleinstance.RuleInstance;
 import com.wrq.rearranger.settings.RearrangerSettings;
 import com.wrq.rearranger.util.ModifierUtils;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -48,36 +50,33 @@ import java.util.List;
  * Describes an entire class's range and type.
  * This information is used when reordering outer classes.
  */
-public class ClassEntry
-  extends ClassContentsEntry
-  implements FilePopupEntry
-{
+public class ClassEntry extends ClassContentsEntry implements FilePopupEntry {
+
   private static final Logger LOG = Logger.getInstance("#" + ClassEntry.class.getName());
 
-  protected final List<ClassContentsEntry> contents;
-  private         List<RuleInstance> myResultRuleInstances;
-  private final   RearrangerSettings       settings;
-  private final   int                      nestingLevel;
+  protected final List<ClassContentsEntry> myContents;
+  private         List<RuleInstance>       myResultRuleInstances;
+  private final   RearrangerSettings       mySettings;
+  private final   int                      myNestingLevel;
 
-  public ClassEntry(PsiElement start,
-                    PsiElement end,
+  public ClassEntry(@Nullable PsiElement start,
+                    @Nullable PsiElement end,
                     int modifiers,
                     String modifierString,
-                    String name,
+                    @Nullable String name,
                     int nestingLevel,
-                    RearrangerSettings settings)
-  {
+                    RearrangerSettings settings) {
     super(start, end, modifiers, modifierString, name, "");
-    contents = new ArrayList<ClassContentsEntry>();
+    myContents = new ArrayList<ClassContentsEntry>();
     myResultRuleInstances = null;
-    this.settings = settings;
-    this.nestingLevel = nestingLevel;
+    mySettings = settings;
+    myNestingLevel = nestingLevel;
   }
 
   public String getTypeIconName() {
     String result = "nodes/class";
-    if (end.getParent() instanceof PsiClass) {
-      PsiClass psiClass = (PsiClass)end.getParent();
+    if (myEnd.getParent() instanceof PsiClass) {
+      PsiClass psiClass = (PsiClass)myEnd.getParent();
       if (psiClass.isEnum()) {
         result = "nodes/enum";
       }
@@ -89,15 +88,20 @@ public class ClassEntry
   }
 
   public String[] getAdditionalIconNames() {
-    if (end instanceof PsiJavaToken && end.getText().equals("{")) {
-      PsiClass psiClass = (PsiClass)end.getParent();
-      if (psiClass.getModifierList().hasModifierProperty(PsiModifier.PUBLIC)) {
+    if (myEnd instanceof PsiJavaToken && myEnd.getText().equals("{")) {
+      PsiClass psiClass = (PsiClass)myEnd.getParent();
+      final PsiModifierList modifierList = psiClass.getModifierList();
+      if (modifierList == null) {
+        return null;
+      }
+      
+      if (modifierList.hasModifierProperty(PsiModifier.PUBLIC)) {
         return new String[]{"nodes/c_public"};
       }
-      if (psiClass.getModifierList().hasModifierProperty(PsiModifier.PROTECTED)) {
+      if (modifierList.hasModifierProperty(PsiModifier.PROTECTED)) {
         return new String[]{"nodes/c_protected"};
       }
-      if (psiClass.getModifierList().hasModifierProperty(PsiModifier.PRIVATE)) {
+      if (modifierList.hasModifierProperty(PsiModifier.PRIVATE)) {
         return new String[]{"nodes/c_private"};
       }
       return new String[]{"nodes/c_plocal"};
@@ -106,20 +110,19 @@ public class ClassEntry
   }
 
   public JLabel getPopupEntryText(RearrangerSettings settings) {
-    return new JLabel(name);
+    return new JLabel(myName);
   }
 
-  protected void parseRemainingClassContents(final Project project,
+  protected void parseRemainingClassContents(@NotNull final Project project,
                                              int startingIndex,
-                                             final PsiElement psiClass
-  )
-  {
+                                             @NotNull final PsiElement psiClass
+  ) {
     final PsiSearchHelper psh = PsiSearchHelper.SERVICE.getInstance(project);
     int lastIndex = startingIndex;
     /**
      * if option indicates, don't parse inner class contents; leave them unchanged.
      */
-    if (settings.isRearrangeInnerClasses() || nestingLevel <= 1) {
+    if (mySettings.isRearrangeInnerClasses() || myNestingLevel <= 1) {
       for (int i = startingIndex; i < psiClass.getChildren().length; i++) {
         PsiElement child = psiClass.getChildren()[i];
         if (child instanceof PsiJavaToken && child.getText().equals("{")) {
@@ -163,7 +166,7 @@ public class ClassEntry
             );
           }
           if (child instanceof PsiClass) {
-            parseClassAttributes(child, attributes);
+            parseClassAttributes((PsiClass)child, attributes);
             //
             // if child is an enum, set the last entry past the LBrace to the final enumeration or the
             // semicolon thereafter, if any.
@@ -189,8 +192,8 @@ public class ClassEntry
               attributes.modifiers,
               attributes.modifierString,
               attributes.name,
-              nestingLevel + 1,
-              settings
+              myNestingLevel + 1,
+              mySettings
             );
             classContentsEntry = entry;
             entry.parseRemainingClassContents(
@@ -206,7 +209,7 @@ public class ClassEntry
                                                            attributes.modifierString,
                                                            attributes.name);
           }
-          contents.add(classContentsEntry);
+          myContents.add(classContentsEntry);
           classContentsEntry.checkForComment();
           lastIndex = i + 1; // next class includes everything since the end of the prior class.
         }
@@ -222,7 +225,7 @@ public class ClassEntry
         psiClass.getChildren()[psiClass.getChildren().length - 1],
         false, true
       );
-      contents.add(miscellaneousTextEntry);
+      myContents.add(miscellaneousTextEntry);
       miscellaneousTextEntry.checkForComment();
     }
   }
@@ -234,7 +237,7 @@ public class ClassEntry
    * @param clazz
    * @return starting element index for the portion of the enumeration class following its enum declarations.
    */
-  private int findLastEnumTerminator(PsiClass clazz) {
+  private static int findLastEnumTerminator(PsiClass clazz) {
     int startElementIndex = 0;
     // go until we hit RBrace (non-inclusive), or semicolon (inclusive)
     boolean foundLBrace = false;
@@ -260,25 +263,31 @@ public class ClassEntry
     return startElementIndex;
   }
 
-  private int parseField(PsiElement child, MemberAttributes attributes, int i, final PsiClass psiClass) {
+  private static int parseField(PsiElement child, MemberAttributes attributes, int i, final PsiClass psiClass) {
     attributes.field = (PsiField)child;
     LOG.debug("enter parseField: child=" +
               (child == null ? "null" : child.toString()));
     attributes.name = attributes.field.getName();
-    if (attributes.field.getTypeElement() == null) {
-      attributes.type = attributes.field.getContainingClass().getName(); // if enum, use class as type
+    final PsiClass containingClass = attributes.field.getContainingClass();
+    final PsiTypeElement typeElement = attributes.field.getTypeElement();
+    if (typeElement == null && containingClass != null) {
+      attributes.type = containingClass.getName(); // if enum, use class as type
     }
-    else {
-      attributes.type = attributes.field.getTypeElement().getText();
+    else if (typeElement != null) {
+      attributes.type = typeElement.getText();
     }
-    attributes.modifierString = attributes.field.getModifierList().getText();
+    final PsiModifierList modifierList = attributes.field.getModifierList();
+    if (modifierList != null) {
+      attributes.modifierString = modifierList.getText();
+    }
     attributes.modifiers = ModifierUtils.getModifierMask(attributes.modifierString);
-    if (attributes.field.getContainingClass().isInterface()) {
+    if (containingClass != null && containingClass.isInterface()) {
       // all fields in an interface are constants, hence "public static final"
       attributes.modifiers |= Modifier.PUBLIC | Modifier.STATIC | Modifier.FINAL;
     }
-    if (attributes.field.getInitializer() instanceof PsiNewExpression) {
-      final PsiElement lc = attributes.field.getInitializer().getLastChild();
+    final PsiExpression initializer = attributes.field.getInitializer();
+    if (initializer instanceof PsiNewExpression) {
+      final PsiElement lc = initializer.getLastChild();
       if (lc instanceof PsiAnonymousClass) {
         attributes.modifiers |= ModifierConstants.INIT_TO_ANON_CLASS;
       }
@@ -332,19 +341,21 @@ public class ClassEntry
     return i;
   }
 
-  private void parseMethod(PsiElement child, MemberAttributes attributes, final PsiSearchHelper psh) {
+  private static void parseMethod(PsiElement child, MemberAttributes attributes, final PsiSearchHelper psh) {
     attributes.method = (PsiMethod)child;
     attributes.name = attributes.method.getName();
-    if (attributes.method.getReturnTypeElement() == null) {
+    final PsiTypeElement returnTypeElement = attributes.method.getReturnTypeElement();
+    if (returnTypeElement == null) {
       attributes.type = "null";
     }
     else {
-      attributes.type = attributes.method.getReturnTypeElement().getText();
+      attributes.type = returnTypeElement.getText();
     }
     attributes.modifierString = attributes.method.getModifierList().getText();
     attributes.modifiers = ModifierUtils.getModifierMask(attributes.modifierString);
     attributes.nParameters = attributes.method.getParameterList().getParameters().length;
-    if (attributes.method.getContainingClass().isInterface()) {
+    final PsiClass containingClass = attributes.method.getContainingClass();
+    if (containingClass != null && containingClass.isInterface()) {
       // methods in an interface are always considered public
       attributes.modifiers |= Modifier.PUBLIC;
     }
@@ -376,12 +387,12 @@ public class ClassEntry
         attributes.modifiers |= ModifierConstants.OVERRIDDEN;
       }
     }
-    // determine if this method overrides another.
+    // Determine if this method overrides another.
     final PsiMethod[] superMethods = attributes.method.findSuperMethods(false);
     LOG.debug("method " + attributes.method.toString() + " has " + superMethods.length + " supermethods");
     dumpMethodNames(superMethods);
     if (superMethods.length > 0) {
-      // determine if supermethod is abstract or interface; if so, assign IMPLEMENTING attribute.
+      // Determine if supermethod is abstract or interface; if so, assign IMPLEMENTING attribute.
       PsiMethod superMethod = superMethods[0];
       boolean abztract = superMethod.getModifierList().hasModifierProperty(PsiModifier.ABSTRACT);
       PsiClass superclass = superMethod.getContainingClass();
@@ -397,9 +408,8 @@ public class ClassEntry
     if (attributes.method.isConstructor()) {
       attributes.modifiers |= ModifierConstants.CONSTRUCTOR;
     }
-    /** getter/setter cannot be determined here because definition of what a getter/setter
-     * is can vary from rule to rule.  Do it at the time of rule matching.
-     */
+    // Getter/setter cannot be determined here because definition of what a getter/setter
+    // is can vary from rule to rule.  Do it at the time of rule matching.
     else if ((attributes.modifiers & ModifierConstants.CANONICAL) == 0) {
       attributes.modifiers |= ModifierConstants.OTHER_METHOD;
     }
@@ -411,7 +421,7 @@ public class ClassEntry
     );
   }
 
-  private int isCanonicalOrInterface(PsiMethod method, MemberAttributes attributes) {
+  private static int isCanonicalOrInterface(PsiMethod method, MemberAttributes attributes) {
     PsiElement methodParent = method.getParent();
     LOG.debug("checking to see if " + method.getName() + " of " + methodParent + " is canonical");
     PsiMethod[] superMethods = method.findSuperMethods();
@@ -455,7 +465,7 @@ public class ClassEntry
     return 0;
   }
 
-  private void dumpMethodNames(PsiMethod[] methods) {
+  private static void dumpMethodNames(PsiMethod[] methods) {
     for (int j = 0; j < methods.length; j++) {
       LOG.debug(
         j +
@@ -467,13 +477,16 @@ public class ClassEntry
     }
   }
 
-  private void parseClassAttributes(PsiElement child, MemberAttributes attributes) {
-    attributes.childClass = (PsiClass)child;
+  private static void parseClassAttributes(@NotNull PsiClass child, @NotNull MemberAttributes attributes) {
+    attributes.childClass = child;
     attributes.name = attributes.childClass.getName();
     if (attributes.name == null) {
       attributes.name = "";
     }
-    attributes.modifierString = attributes.childClass.getModifierList().getText();
+    final PsiModifierList modifierList = child.getModifierList();
+    if (modifierList != null) {
+      attributes.modifierString = modifierList.getText();
+    }
     attributes.modifiers = ModifierUtils.getModifierMask(attributes.modifierString);
     attributes.type = attributes.childClass.isEnum() ? "enum" : "class";
     if (attributes.childClass.isEnum()) {
@@ -481,17 +494,19 @@ public class ClassEntry
     }
   }
 
-  private void parseClassInitializer(PsiElement child, MemberAttributes attributes) {
+  private static void parseClassInitializer(PsiElement child, MemberAttributes attributes) {
     attributes.classInitializer = (PsiClassInitializer)child;
-    attributes.classInitializer.getModifierList();
     attributes.name = "";
-    attributes.modifierString = attributes.classInitializer.getModifierList().getText();
+    final PsiModifierList modifierList = attributes.classInitializer.getModifierList();
+    if (modifierList != null) {
+      attributes.modifierString = modifierList.getText();
+    }
     attributes.modifiers = ModifierUtils.getModifierMask(attributes.modifierString) |
                            ModifierConstants.INITIALIZER;
   }
 
   public void emit(Emitter emitter) {
-    // first emit the text up to and including the left brace.
+    // First emit the text up to and including the left brace.
     super.emit(emitter);
     // now emit all children.
     emitter.emitRuleInstances(getResultRuleInstances());
@@ -508,42 +523,38 @@ public class ClassEntry
     return result;
   }
 
-  /** rearranges the contents of this PsiClass according to supplied rules. */
+  /** Rearranges the contents of this PsiClass according to supplied rules. */
   public void rearrangeContents() {
     buildMethodCallGraph();
 
     LOG.debug("identifying setters and extracted (related) methods");
     for (ClassContentsEntry contentsEntry : getContents()) {
-      if (contentsEntry instanceof IRelatableEntry) {
-        ((IRelatableEntry)contentsEntry).determineSettersAndMethodCalls(settings, getContents());
+      if (contentsEntry instanceof RelatableEntry) {
+        ((RelatableEntry)contentsEntry).determineSettersAndMethodCalls(mySettings, getContents());
       }
     }
     LOG.debug("relating extracted methods");
     for (ClassContentsEntry contentsEntry : getContents()) {
-      if (contentsEntry instanceof IRelatableEntry) {
-        ((IRelatableEntry)contentsEntry).determineExtractedMethod(settings.getExtractedMethodsSettings());
+      if (contentsEntry instanceof RelatableEntry) {
+        ((RelatableEntry)contentsEntry).determineExtractedMethod(mySettings.getExtractedMethodsSettings());
       }
     }
-    /**
-     * remove any cycles in the related method graph.
-     */
+    // Remove any cycles in the related method graph.
     MethodEntry.eliminateCycles(getContents());
-    /**
-     * check for overloaded extracted methods; if configured to be kept together, attach subsequent
-     * methods to the first and remove them from consideration for other alignment.
-     */
-    MethodEntry.handleOverloadedMethods(getContents(), settings);
+    // Check for overloaded extracted methods; if configured to be kept together, attach subsequent
+    // methods to the first and remove them from consideration for other alignment.
+    MethodEntry.handleOverloadedMethods(getContents(), mySettings);
     final GenericRearranger classContentsRearranger =
-      new GenericRearranger(settings.getItemOrderAttributeList(),
-                            contents,
-                            nestingLevel,
-                            settings)
+      new GenericRearranger(mySettings.getItemOrderAttributeList(),
+                            myContents,
+                            myNestingLevel,
+                            mySettings)
       {
         public void rearrangeRelatedItems(List<ClassContentsEntry> entries,
                                           List<RuleInstance> ruleInstanceList)
         {
           for (RuleInstance ruleInstance : ruleInstanceList) {
-            ruleInstance.rearrangeRuleItems(entries, settings);
+            ruleInstance.rearrangeRuleItems(entries, mySettings);
           }
         }
       };
@@ -551,13 +562,13 @@ public class ClassEntry
   }
 
   private void buildMethodCallGraph() {
-    if (settings.getExtractedMethodsSettings().isMoveExtractedMethods() ||
-        settings.isKeepGettersSettersTogether())
+    if (mySettings.getExtractedMethodsSettings().isMoveExtractedMethods() ||
+        mySettings.isKeepGettersSettersTogether())
     {
       LOG.debug("building method call & getter-setter graph");
       for (ClassContentsEntry contentsEntry : getContents()) {
-        if (contentsEntry instanceof IRelatableEntry) {
-          ((IRelatableEntry)contentsEntry).determineGetterSetterAndExtractedMethodStatus(settings);
+        if (contentsEntry instanceof RelatableEntry) {
+          ((RelatableEntry)contentsEntry).determineGetterSetterAndExtractedMethodStatus(mySettings);
         }
       }
     }
@@ -566,7 +577,7 @@ public class ClassEntry
 // End Methods of Interface IFilePopupEntry
 
   public final List<ClassContentsEntry> getContents() {
-    return contents;
+    return myContents;
   }
 
   public List<RuleInstance> getResultRuleInstances() {

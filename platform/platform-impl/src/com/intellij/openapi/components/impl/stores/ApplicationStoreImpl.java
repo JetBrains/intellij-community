@@ -48,7 +48,7 @@ class ApplicationStoreImpl extends ComponentStoreImpl implements IApplicationSto
   public ApplicationStoreImpl(final ApplicationImpl application, PathMacroManager pathMacroManager) {
     myApplication = application;
     myStateStorageManager = new StateStorageManagerImpl(pathMacroManager.createTrackingSubstitutor(), ROOT_ELEMENT_NAME, application, application.getPicoContainer()) {
-      protected XmlElementStorage.StorageData createStorageData(String storageSpec) {
+      protected StorageData createStorageData(String storageSpec) {
         return new FileBasedStorage.FileStorageData(ROOT_ELEMENT_NAME);
       }
 

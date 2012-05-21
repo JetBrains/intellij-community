@@ -112,7 +112,6 @@ public class ExportToHTMLDialog extends DialogWrapper {
                                                  CodeEditorBundle.message("export.to.html.select.output.directory.description"),
                                                  project, FileChooserDescriptorFactory.createSingleFolderDescriptor());
     labeledComponent.setComponent(targetDirectoryField);
-    labeledComponent.setBorder(BorderFactory.createEmptyBorder(5, 4, 0, 0));
     return labeledComponent;
   }
 

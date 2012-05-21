@@ -27,7 +27,7 @@ import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.ui.impl.watch.DebuggerTreeNodeImpl;
 import com.intellij.debugger.ui.impl.watch.NodeDescriptorImpl;
-import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl;
+import com.intellij.debugger.ui.tree.ValueDescriptor;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -41,69 +41,73 @@ import org.jetbrains.annotations.Nullable;
  * @author Jeka
  */
 public abstract class BaseValueAction extends DebuggerAction {
+
   public void actionPerformed(AnActionEvent e) {
     final DataContext actionContext = e.getDataContext();
-    final Project project = PlatformDataKeys.PROJECT.getData(actionContext);
-    final Value value = getValue(actionContext);
+    final DebuggerTreeNodeImpl node = getSelectedNode(actionContext);
+    final Value value = getValue(node);
     if (value == null) {
       return;
     }
-
-    DebuggerManagerEx debuggerManager = DebuggerManagerEx.getInstanceEx(project);
-    if(debuggerManager != null) {
-      final DebuggerContextImpl debuggerContext = debuggerManager.getContext();
-
-      if(debuggerContext != null && debuggerContext.getDebuggerSession() != null) {
-        final ProgressWindowWithNotification progressWindow = new ProgressWindowWithNotification(true, project);
-        SuspendContextCommandImpl copyValueAction = new SuspendContextCommandImpl(debuggerContext.getSuspendContext()) {
-          public Priority getPriority() {
-            return Priority.HIGH;
-          }
-
-          public void contextAction() throws Exception {
-            //noinspection HardCodedStringLiteral
-            progressWindow.setText(DebuggerBundle.message("progress.evaluating", "toString()"));
-
-            final String valueAsString = DebuggerUtilsEx.getValueOrErrorAsString(debuggerContext.createEvaluationContext(), value);
-
-            if (progressWindow.isCanceled()) return;
-
-            DebuggerInvocationUtil.swingInvokeLater(project, new Runnable() {
-              public void run() {
-                String text = valueAsString;
-
-                if (text == null) text = "";
-
-                processText(project, text);
-              }
-            });
-          }
-        };
-        progressWindow.setTitle(DebuggerBundle.message("title.evaluating"));
-        debuggerContext.getDebugProcess().getManagerThread().startProgress(copyValueAction, progressWindow);
-      }
+    final Project project = PlatformDataKeys.PROJECT.getData(actionContext);
+    final DebuggerManagerEx debuggerManager = DebuggerManagerEx.getInstanceEx(project);
+    if(debuggerManager == null) {
+      return;
     }
+    final DebuggerContextImpl debuggerContext = debuggerManager.getContext();
+    if (debuggerContext == null || debuggerContext.getDebuggerSession() == null) {
+      return;
+    }
+
+    final ProgressWindowWithNotification progressWindow = new ProgressWindowWithNotification(true, project);
+    SuspendContextCommandImpl getTextCommand = new SuspendContextCommandImpl(debuggerContext.getSuspendContext()) {
+      public Priority getPriority() {
+        return Priority.HIGH;
+      }
+
+      public void contextAction() throws Exception {
+        //noinspection HardCodedStringLiteral
+        progressWindow.setText(DebuggerBundle.message("progress.evaluating", "toString()"));
+
+        final String valueAsString = DebuggerUtilsEx.getValueOrErrorAsString(debuggerContext.createEvaluationContext(), value);
+
+        if (progressWindow.isCanceled()) {
+          return;
+        }
+
+        DebuggerInvocationUtil.swingInvokeLater(project, new Runnable() {
+          public void run() {
+            String text = valueAsString;
+            if (text == null) {
+              text = "";
+            }
+            processText(project, text, node, debuggerContext);
+          }
+        });
+      }
+    };
+    progressWindow.setTitle(DebuggerBundle.message("title.evaluating"));
+    debuggerContext.getDebugProcess().getManagerThread().startProgress(getTextCommand, progressWindow);
   }
 
-  protected abstract void processText(final Project project, String text);
+  protected abstract void processText(final Project project, String text, DebuggerTreeNodeImpl node, DebuggerContextImpl debuggerContext);
 
   public void update(AnActionEvent e) {
     Presentation presentation = e.getPresentation();
-    Value value = getValue(e.getDataContext());
+    Value value = getValue(getSelectedNode(e.getDataContext()));
     presentation.setEnabled(value != null);
     presentation.setVisible(value != null);
   }
 
   @Nullable
-  public static Value getValue(DataContext context) {
-    DebuggerTreeNodeImpl selectedNode = getSelectedNode(context);
-    if (selectedNode == null) {
+  private static Value getValue(final DebuggerTreeNodeImpl node) {
+    if (node == null) {
       return null;
     }
-    NodeDescriptorImpl descriptor = selectedNode.getDescriptor();
-    if (!(descriptor instanceof ValueDescriptorImpl)) {
+    NodeDescriptorImpl descriptor = node.getDescriptor();
+    if (!(descriptor instanceof ValueDescriptor)) {
       return null;
     }
-    return ((ValueDescriptorImpl)descriptor).getValue();
+    return ((ValueDescriptor)descriptor).getValue();
   }
 }

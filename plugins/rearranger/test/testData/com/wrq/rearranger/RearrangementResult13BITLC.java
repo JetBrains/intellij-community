@@ -1,5 +1,5 @@
 public class RearrangerTest13 {
-  // Preceding comment: TL=GF
+// Preceding comment: TL=GF
 // MN=GF
 // AM=
 // Level 1

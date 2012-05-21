@@ -10,6 +10,6 @@ class A {
 }
 class B {
     public static void f(Runnable runnable) {
-        <selection>//To change body of created methods use File | Settings | File Templates.<caret></selection>
+        <caret><selection>//To change body of created methods use File | Settings | File Templates.</selection>
     }
 }

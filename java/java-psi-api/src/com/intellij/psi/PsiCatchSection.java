@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.psi;
 
+import com.intellij.util.ArrayFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,6 +31,13 @@ public interface PsiCatchSection extends PsiElement {
    * The empty array of PSI catch sections which can be reused to avoid unnecessary allocations.
    */
   PsiCatchSection[] EMPTY_ARRAY = new PsiCatchSection[0];
+
+  ArrayFactory<PsiCatchSection> ARRAY_FACTORY = new ArrayFactory<PsiCatchSection>() {
+    @Override
+    public PsiCatchSection[] create(final int count) {
+      return count == 0 ? PsiCatchSection.EMPTY_ARRAY : new PsiCatchSection[count];
+    }
+  };
 
   /**
    * Returns the variable in which the caught exception is captured.

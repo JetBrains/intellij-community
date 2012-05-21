@@ -27,5 +27,9 @@ public class ReplaceAssignmentWithOperatorAssignment
       x = x * 2 * 2;
       float f = 1;
       f = f * 2 * 2;
+      int a = Integer.MAX_VALUE;
+      double d = Double.MAX_VALUE;
+      (a) = (byte)(a + (d - d));// should not warn here
+      (a) = (int)(a + (d - d));// should warn here
     }
 }

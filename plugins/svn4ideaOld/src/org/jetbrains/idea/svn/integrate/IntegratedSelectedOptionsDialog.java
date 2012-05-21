@@ -105,7 +105,7 @@ public class IntegratedSelectedOptionsDialog extends DialogWrapper {
     myTargetInfoLabel.setText(SvnBundle.message("action.Subversion.integrate.changes.branch.info.target.label.text", selectedBranchUrl));
 
     final String addText = SvnBundle.message("action.Subversion.integrate.changes.dialog.add.wc.text");
-    final AnAction addAction = new AnAction(addText, addText, PlatformIcons.ADD_ICON) {
+    final AnAction addAction = new AnAction(addText, addText, IconUtil.getAddIcon()) {
       {
         registerCustomShortcutSet(CommonShortcuts.INSERT, myWorkingCopiesList);
       }

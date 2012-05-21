@@ -42,7 +42,7 @@ public final class ModifierUtils {
       final String m = st.nextToken();
       for (int i = 1; i != 0; i <<= 1) {
         if (Modifier.toString(i).equals(m)) {
-          mask = mask | i;
+          mask |= i;
           break;
         }
       }

@@ -21,8 +21,10 @@
  */
 package com.wrq.rearranger.util;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.wrq.rearranger.settings.RearrangerSettings;
 import com.wrq.rearranger.settings.attributeGroups.Rule;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -30,40 +32,38 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class CommentUtil {
-  final  RearrangerSettings settings;
-  static CommentUtil        singleton;
-  List<String>  commentStrings;
-  List<Matcher> commentMatchers;
+  private final RearrangerSettings mySettings;
+  static        CommentUtil        singleton;
+  private final List<String>  myCommentStrings  = new ArrayList<String>();
+  private final List<Matcher> myCommentMatchers = new ArrayList<Matcher>();
 
-  public CommentUtil(RearrangerSettings settings) {
-    this.settings = settings;
+  public CommentUtil(@NotNull RearrangerSettings settings) {
+    mySettings = settings;
     createCommentPatternList();
     createCommentMatcherList();
     singleton = this;
   }
 
   public static List<String> getCommentStrings() {
-    return singleton.commentStrings;
+    return singleton.myCommentStrings;
   }
 
   public static List<Matcher> getCommentMatchers() {
-    return singleton.commentMatchers;
+    return singleton.myCommentMatchers;
   }
 
   private void createCommentMatcherList() {
-    if (settings.getGlobalCommentPattern() != null &&
-        settings.getGlobalCommentPattern().length() > 0)
-    {
-      // create only one Matcher for the global comment pattern.
-      commentMatchers = new ArrayList<Matcher>(1);
-      commentMatchers.add((getMatcher(settings.getGlobalCommentPattern())));
+    if (StringUtil.isEmpty(mySettings.getGlobalCommentPattern())) {
+      myCommentMatchers.clear();
+      for (String comment : myCommentStrings) {
+        Matcher matcher = getMatcher(comment);
+        myCommentMatchers.add(matcher);
+      }
     }
     else {
-      commentMatchers = new ArrayList<Matcher>(commentStrings.size());
-      for (String comment : commentStrings) {
-        Matcher matcher = getMatcher(comment);
-        commentMatchers.add(matcher);
-      }
+      // create only one Matcher for the global comment pattern.
+      myCommentMatchers.clear();
+      myCommentMatchers.add((getMatcher(mySettings.getGlobalCommentPattern())));
     }
   }
 
@@ -78,7 +78,7 @@ public class CommentUtil {
    *         any leading space.
    */
   private Matcher getMatcher(String comment) {
-    StringBuffer sb = new StringBuffer(comment);
+    StringBuilder sb = new StringBuilder(comment);
     /**
      * remove any literal newline characters or escaped equivalent ('\n') at beginning of comment.
      */
@@ -122,20 +122,19 @@ public class CommentUtil {
   }
 
   private void createCommentPatternList() {
-    commentStrings = new ArrayList<String>();
-    for (Rule rule : settings.getClassOrderAttributeList()) {
-      rule.addCommentPatternsToList(commentStrings);
+    for (Rule rule : mySettings.getClassOrderAttributeList()) {
+      rule.addCommentPatternsToList(myCommentStrings);
     }
-    for (Rule rule : settings.getItemOrderAttributeList()) {
-      rule.addCommentPatternsToList(commentStrings);
+    for (Rule rule : mySettings.getItemOrderAttributeList()) {
+      rule.addCommentPatternsToList(myCommentStrings);
     }
-    settings.getExtractedMethodsSettings().addCommentPatternsToList(commentStrings);
+    mySettings.getExtractedMethodsSettings().addCommentPatternsToList(myCommentStrings);
   }
 
   /**
    * Calculate the apparent length of a string if tabs are expanded.
    * Leading tabs are no problem; embedded tabs would be, if the %FS% fill string expansions are not multiples of
-   * "%FS%".length() == 4, because after expansion the embedded tabs would misalign.  However, I'm not going to
+   * "%FS%".length() == 4, because after expansion the embedded tabs would mis-align.  However, I'm not going to
    * address that yet.  (This is just to fix Thomas Singer's bug with leading tab.)
    *
    * @param s
@@ -171,9 +170,9 @@ public class CommentUtil {
                                   int tabSize,
                                   String fillString)
   {
-    StringBuffer result = new StringBuffer(comment.length() * 2);
+    StringBuilder result = new StringBuilder(comment.length() * 2);
     int EOLindex = 0;
-    StringBuffer fillChars = new StringBuffer();
+    StringBuilder fillChars = new StringBuilder();
     if (fillString.length() == 0) {
       fillString = " "; // fill with spaces if no pattern supplied
     }

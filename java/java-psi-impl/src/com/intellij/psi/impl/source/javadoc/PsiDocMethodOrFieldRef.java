@@ -381,18 +381,6 @@ public class PsiDocMethodOrFieldRef extends CompositePsiElement implements PsiDo
       if (nextSibling != null) {
         final int startOffset = nextSibling.getTextRange().getStartOffset() - getTextRange().getStartOffset();
         int endOffset = nextSibling.getTextRange().getEndOffset() - getTextRange().getStartOffset();
-        final PsiElement nextParSibling = nextSibling.getNextSibling();
-        if (nextParSibling != null && "(".equals(nextParSibling.getText())) {
-          endOffset++;
-          PsiElement nextElement = nextParSibling.getNextSibling();
-          if (nextElement != null && SourceTreeToPsiMap.psiToTreeNotNull(nextElement).getElementType() == DOC_TAG_VALUE_TOKEN) {
-            endOffset += nextElement.getTextLength();
-            nextElement = nextElement.getNextSibling();
-          }
-          if (nextElement != null && ")".equals(nextElement.getText())) {
-            endOffset++;
-          }
-        }
         return new TextRange(startOffset, endOffset);
       }
       return new TextRange(getTextLength(), getTextLength());

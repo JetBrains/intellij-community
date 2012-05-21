@@ -26,6 +26,9 @@
     <projectService serviceInterface="com.intellij.xdebugger.impl.breakpoints.ui.BreakpointsConfigurationDialogFactory"
                     serviceImplementation="com.intellij.xdebugger.impl.breakpoints.ui.BreakpointsConfigurationDialogFactory"/>
 
+    <projectService serviceInterface="com.intellij.xdebugger.impl.breakpoints.ui.BreakpointsMasterDetailPopupFactory"
+                    serviceImplementation="com.intellij.xdebugger.impl.breakpoints.ui.BreakpointsMasterDetailPopupFactory"/>
+
     <projectService serviceInterface="com.intellij.xdebugger.impl.XDebuggerHistoryManager"
                     serviceImplementation="com.intellij.xdebugger.impl.XDebuggerHistoryManager"/>
 

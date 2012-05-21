@@ -33,32 +33,30 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import java.awt.*;
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /** Used to store a generated comment, and to determine if it should be emitted. */
-public abstract class CommentRuleInstance
-  implements RuleInstance,
-             FilePopupEntry
-{
-  protected final CommentRule commentRule;
-  protected       boolean     emit;
+public abstract class CommentRuleInstance implements RuleInstance, FilePopupEntry {
+  
+  protected final CommentRule myCommentRule;
+  protected       boolean     myEmit;
 
   public CommentRuleInstance(final CommentRule commentRule) {
-    this.commentRule = commentRule;
-    emit = false;
+    this.myCommentRule = commentRule;
+    myEmit = false;
   }
 
   public boolean isEmit() {
-    return emit;
+    return myEmit;
   }
 
   public void setEmit(final boolean emit) {
-    this.emit = emit;
+    this.myEmit = emit;
   }
 
   public Rule getRule() {
-    return commentRule;
+    return myCommentRule;
   }
 
   /** Determine if this comment, in this instance, should be emitted. */
@@ -69,15 +67,15 @@ public abstract class CommentRuleInstance
   }
 
   public void emit(Emitter emitter) {
-    StringBuffer sb = emitter.getStringBuffer();
-    if (emit) {
+    StringBuilder sb = emitter.getTextBuffer();
+    if (myEmit) {
       // emit a comment.  Precede with a newline unless this is the first line of the file.
       if (sb.length() > 0) {
         sb.append('\n');
-        sb.append(commentRule.getExpandedCommentText());
+        sb.append(myCommentRule.getExpandedCommentText());
       }
       else {
-        sb.append(commentRule.getExpandedCommentText());
+        sb.append(myCommentRule.getExpandedCommentText());
         sb.append('\n');
       }
     }
@@ -91,12 +89,10 @@ public abstract class CommentRuleInstance
   }
 
   public List<RangeEntry> getMatches() {
-    return new ArrayList<RangeEntry>();
+    return Collections.emptyList();
   }
 
-  public void rearrangeRuleItems(List<ClassContentsEntry> entries,
-                                 RearrangerSettings settings)
-  {
+  public void rearrangeRuleItems(List<ClassContentsEntry> entries, RearrangerSettings settings) {
   }
 
   public void addRuleInstanceToPopupTree(DefaultMutableTreeNode node, RearrangerSettings settings) {
@@ -117,7 +113,7 @@ public abstract class CommentRuleInstance
      * append the comment if generated and if showComments is set.
      */
     if (isEmit()) {
-      commentRule.addToPopupTree(top, settings);
+      myCommentRule.addToPopupTree(top, settings);
     }
   }
 
@@ -131,18 +127,18 @@ public abstract class CommentRuleInstance
   }
 
   public JLabel getPopupEntryText(RearrangerSettings settings) {
-    JLabel label = new JLabel(commentRule.toString());
+    JLabel label = new JLabel(myCommentRule.toString());
     Font font = label.getFont().deriveFont(Font.ITALIC);
     label.setFont(font);
     return label;
   }
 
   public String toString() {
-    return "instance of:" + commentRule.toString();
+    return "instance of:" + myCommentRule.toString();
   }
 
   /**
-   * beginning at the index of ruleStatistics (which is a comment entry), find nRules in the direction indicated,
+   * Beginning at the index of ruleStatistics (which is a comment entry), find nRules in the direction indicated,
    * and test to see if all or any of them had entries that matched.
    *
    * @param nRules     number of rules to consider for matching algorithm.

@@ -52,6 +52,7 @@ import com.intellij.psi.stubs.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.ILazyParseableElementType;
 import com.intellij.psi.tree.IStubFileElementType;
+import com.intellij.psi.tree.TokenSet;
 import com.intellij.reference.SoftReference;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.IncorrectOperationException;
@@ -72,6 +73,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
 
   private IElementType myElementType;
   protected IElementType myContentElementType;
+  private long myModificationStamp;
 
   protected PsiFile myOriginalFile = null;
   private final FileViewProvider myViewProvider;
@@ -353,7 +355,9 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     myStub = null;
   }
 
-  public void clearCaches() {}
+  public void clearCaches() {
+    myModificationStamp ++;
+  }
 
   @Override
   public String getText() {
@@ -385,7 +389,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
 
   @Override
   public long getModificationStamp() {
-    return getViewProvider().getModificationStamp();
+    return myModificationStamp;
   }
 
   @Override
@@ -755,7 +759,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
   @Override
   @NotNull
   public PsiElement[] getChildren() {
-    return calcTreeElement().getChildrenAsPsiElements(null, PsiElementArrayConstructor.PSI_ELEMENT_ARRAY_CONSTRUCTOR);
+    return calcTreeElement().getChildrenAsPsiElements((TokenSet)null, PsiElement.ARRAY_FACTORY);
   }
 
   @Override

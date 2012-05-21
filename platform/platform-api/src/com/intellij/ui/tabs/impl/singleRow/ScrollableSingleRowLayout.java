@@ -65,7 +65,7 @@ public class ScrollableSingleRowLayout extends SingleRowLayout {
   }
 
   @Override
-  public void scrollSelectionInView(List<TabInfo> visibleInfos) {
+  public void scrollSelectionInView() {
     myScrollSelectionInViewPending = true;
   }
 

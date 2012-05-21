@@ -108,6 +108,17 @@ public abstract class BreakpointPropertiesPanel {
   private static final int MAX_COMBO_WIDTH = 300;
   private final FixedSizeButton myConditionMagnifierButton;
   private boolean myMoreOptionsVisible = true;
+  private Breakpoint myBreakpoint;
+
+  public boolean isSaveOnRemove() {
+    return mySaveOnRemove;
+  }
+
+  public void setSaveOnRemove(boolean saveOnRemove) {
+    mySaveOnRemove = saveOnRemove;
+  }
+
+  private boolean mySaveOnRemove = false;
 
   public boolean isMoreOptionsVisible() {
     return myMoreOptionsVisible;
@@ -116,13 +127,14 @@ public abstract class BreakpointPropertiesPanel {
   private void createUIComponents() {
     myPanel = new JPanel() {
       @Override
-      public boolean requestFocus(boolean b) {
-        return super.requestFocus(b);    //To change body of overridden methods use File | Settings | File Templates.
-      }
-
-      @Override
-      public void requestFocus() {
-        super.requestFocus();    //To change body of overridden methods use File | Settings | File Templates.
+      public void removeNotify() {
+        super.removeNotify();
+        if (mySaveOnRemove) {
+          saveTo(myBreakpoint, new Runnable() {
+            @Override
+            public void run() {}
+          });
+        }
       }
     };
   }
@@ -163,6 +175,9 @@ public abstract class BreakpointPropertiesPanel {
     myConditionsPanel.setVisible(b);
     if (b) {
       myActionsPanel.setVisible(true);
+    }
+    if (!b) {
+      myPanel.setPreferredSize(new Dimension(500, -1));
     }
   }
 
@@ -392,6 +407,7 @@ public abstract class BreakpointPropertiesPanel {
    * Init UI components with the values from Breakpoint
    */
   public void initFrom(Breakpoint breakpoint, boolean moreOptionsVisible1) {
+    myBreakpoint = breakpoint;
     boolean moreOptionsVisible = moreOptionsVisible1;
     boolean actionsPanelVisible = moreOptionsVisible1;
     myBreakpointComboboxHandler.initFrom(breakpoint);

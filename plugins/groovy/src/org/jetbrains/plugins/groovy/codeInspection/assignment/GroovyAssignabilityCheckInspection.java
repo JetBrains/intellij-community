@@ -30,12 +30,14 @@ import org.jetbrains.plugins.groovy.annotator.GroovyAnnotator;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyFix;
+import org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle;
 import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
 import org.jetbrains.plugins.groovy.extensions.GroovyNamedArgumentProvider;
 import org.jetbrains.plugins.groovy.extensions.NamedArgumentDescriptor;
 import org.jetbrains.plugins.groovy.findUsages.LiteralConstructorReference;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
@@ -55,12 +57,14 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType;
+import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyConstantExpressionEvaluator;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
+import org.jetbrains.plugins.groovy.lang.resolve.MixinMemberContributor;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
 import java.util.Map;
@@ -178,7 +182,7 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
 
       final GrExpression value = returnStatement.getReturnValue();
       if (isNewInstanceInitialingByTuple(value)) return;
-      
+
       final PsiType expectedType = method.getReturnType();
       if (value == null || expectedType == null) return;
       checkAssignability(expectedType, value, returnStatement);
@@ -213,7 +217,7 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
         return;
       }
       if (lValue instanceof GrReferenceExpression && ((GrReferenceExpression)lValue).resolve() instanceof GrReferenceExpression) {
-          //lvalue is not-declared variable
+        //lvalue is not-declared variable
         return;
       }
 
@@ -296,7 +300,6 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
               }
             }
           }
-          
         }
       }
 
@@ -335,7 +338,7 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
             registerError(listOrMap, GroovyBundle.message("cannot.apply.default.constructor", ((PsiClass)element).getName()));
           }
         }
-        else if (element instanceof PsiMethod && ((PsiMethod)element).isConstructor()){
+        else if (element instanceof PsiMethod && ((PsiMethod)element).isConstructor()) {
           checkLiteralConstructorApplicability(result, listOrMap, true);
         }
       }
@@ -356,7 +359,8 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
 
       final GrExpression exception = throwStatement.getException();
       if (exception != null) {
-        checkAssignability(PsiType.getJavaLangThrowable(throwStatement.getManager(), throwStatement.getResolveScope()), exception, exception);
+        checkAssignability(PsiType.getJavaLangThrowable(throwStatement.getManager(), throwStatement.getResolveScope()), exception,
+                           exception);
       }
     }
 
@@ -399,7 +403,9 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
       }
     }
 
-    private  boolean checkConstructorApplicability(GroovyResolveResult constructorResolveResult, GroovyPsiElement place, boolean checkUnknownArgs) {
+    private boolean checkConstructorApplicability(GroovyResolveResult constructorResolveResult,
+                                                  GroovyPsiElement place,
+                                                  boolean checkUnknownArgs) {
       final PsiElement element = constructorResolveResult.getElement();
       LOG.assertTrue(element instanceof PsiMethod && ((PsiMethod)element).isConstructor());
       final PsiMethod constructor = (PsiMethod)element;
@@ -408,7 +414,7 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
       if (argList != null) {
         final GrExpression[] exprArgs = argList.getExpressionArguments();
 
-        if (exprArgs.length == 0 &&  !PsiUtil.isConstructorHasRequiredParameters(constructor)) return true;
+        if (exprArgs.length == 0 && !PsiUtil.isConstructorHasRequiredParameters(constructor)) return true;
       }
       return checkMethodApplicability(constructorResolveResult, place, checkUnknownArgs);
     }
@@ -515,7 +521,8 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
         expressionType = TypesUtil.boxPrimitiveType(expressionType, call.getManager(), call.getResolveScope());
 
         if (!descriptor.checkType(expressionType, call)) {
-          registerError(namedArgumentExpression, "Type of argument '" + labelName + "' can not be '" + expressionType.getPresentableText() + "'");
+          registerError(namedArgumentExpression,
+                        "Type of argument '" + labelName + "' can not be '" + expressionType.getPresentableText() + "'");
         }
       }
     }
@@ -645,6 +652,18 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
           }
         }
       }
+
+      if (method instanceof GrGdkMethod && place instanceof GrReferenceExpression) {
+        final PsiMethod staticMethod = ((GrGdkMethod)method).getStaticMethod();
+        final PsiType qualifier = inferQualifierTypeByPlace((GrReferenceExpression)place);
+        if (qualifier != null && !MixinMemberContributor.isCategoryMethod(staticMethod, qualifier, methodResolveResult.getSubstitutor())) {
+          registerError(((GrReferenceExpression)place).getReferenceNameElement(),
+                        GroovyInspectionBundle.message("category,method.0.cannot.be.applied.to.1", method.getName(),
+                                                       qualifier.getCanonicalText()));
+          return false;
+        }
+      }
+
       if (argumentTypes == null) return true;
 
       GrClosureSignatureUtil.ApplicabilityResult applicable = PsiUtil.isApplicableConcrete(argumentTypes, method, methodResolveResult.getSubstitutor(), place, false);
@@ -701,5 +720,34 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
       }
     }
     return false;
+  }
+
+  @Nullable
+  private static PsiType inferQualifierTypeByPlace(GrReferenceExpression place) {
+    if (place.getParent() instanceof GrIndexProperty) {
+      return place.getType();
+    }
+    final GrExpression rtQualifier = PsiImplUtil.getRuntimeQualifier(place);
+    if (rtQualifier != null) {
+      return rtQualifier.getType();
+    }
+
+    PsiClass containingClass = null;
+    final GrMember member = PsiTreeUtil.getParentOfType(place, GrMember.class);
+    if (member == null) {
+      final PsiFile file = place.getContainingFile();
+      assert file instanceof GroovyFile && ((GroovyFile)file).isScript();
+      containingClass = ((GroovyFile)file).getScriptClass();
+    }
+    else if (member instanceof GrMethod) {
+      if (!member.hasModifierProperty(PsiModifier.STATIC)) {
+        containingClass = member.getContainingClass();
+      }
+    }
+
+    if (containingClass != null) {
+      return JavaPsiFacade.getElementFactory(place.getProject()).createType(containingClass);
+    }
+    return null;
   }
 }

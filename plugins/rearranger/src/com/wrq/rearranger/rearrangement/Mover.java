@@ -30,22 +30,21 @@ import java.util.List;
 
 /** Moves (rearranges) classes and class members according to rules specified by the user. */
 public final class Mover {
-  private final List<ClassContentsEntry> outerClasses;
-  private final RearrangerSettings       settings;
 
-  public Mover(final List<ClassContentsEntry> outerClasses,
-               final RearrangerSettings settings)
-  {
-    this.outerClasses = new ArrayList<ClassContentsEntry>(outerClasses);
-    this.settings = settings;
+  private final List<ClassContentsEntry> myOuterClasses = new ArrayList<ClassContentsEntry>();
+  private final RearrangerSettings mySettings;
+
+  public Mover(final List<? extends ClassContentsEntry> outerClasses, final RearrangerSettings settings) {
+    myOuterClasses.addAll(outerClasses);
+    mySettings = settings;
   }
 
   public List<RuleInstance> rearrangeOuterClasses() {
     final GenericRearranger outerClassRearranger = new GenericRearranger(
-      settings.getClassOrderAttributeList(),
-      outerClasses,
+      mySettings.getClassOrderAttributeList(),
+      myOuterClasses,
       0,
-      settings)
+      mySettings)
     {
       /**
        * There are no items related to outer classes -- outer classes are completely disjoint
@@ -55,9 +54,7 @@ public final class Mover {
 
        @param rearrangedEntries
        */
-      public void rearrangeRelatedItems(List<ClassContentsEntry> entries,
-                                        List<RuleInstance> rearrangedEntries)
-      {
+      public void rearrangeRelatedItems(List<ClassContentsEntry> entries, List<RuleInstance> rearrangedEntries) {
       }
     };
 

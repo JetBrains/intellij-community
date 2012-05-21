@@ -21,6 +21,7 @@ import com.intellij.mock.*;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.components.ExtensionAreas;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.extensions.ExtensionPoint;
@@ -31,7 +32,6 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.progress.*;
 import com.intellij.openapi.project.DumbService;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.StaticGetter;
@@ -81,23 +81,25 @@ public class CoreEnvironment {
   protected final CoreJarFileSystem myJarFileSystem;
   protected final MockFileIndexFacade myFileIndexFacade;
   protected final PsiManagerImpl myPsiManager;
+  private final Disposable myParentDisposable;
 
   public CoreEnvironment(Disposable parentDisposable) {
-    Extensions.cleanRootArea(parentDisposable);
+    myParentDisposable = parentDisposable;
+    Extensions.cleanRootArea(myParentDisposable);
 
     myFileTypeRegistry = new CoreFileTypeRegistry();
     myEncodingRegistry = new CoreEncodingRegistry();
 
-    myApplication = new MockApplication(parentDisposable);
+    myApplication = new MockApplication(myParentDisposable);
     ApplicationManager.setApplication(myApplication,
                                       new StaticGetter<FileTypeRegistry>(myFileTypeRegistry),
                                       new StaticGetter<EncodingRegistry>(myEncodingRegistry),
-                                      parentDisposable);
+                                      myParentDisposable);
     myLocalFileSystem = new CoreLocalFileSystem();
     myJarFileSystem = new CoreJarFileSystem();
 
-    Extensions.registerAreaClass("IDEA_PROJECT", null);
-    myProject = new MockProject(myApplication.getPicoContainer(), parentDisposable);
+    Extensions.registerAreaClass(ExtensionAreas.IDEA_PROJECT, null);
+    myProject = new MockProject(myApplication.getPicoContainer(), myParentDisposable);
 
     final MutablePicoContainer appContainer = myApplication.getPicoContainer();
     registerComponentInstance(appContainer, FileDocumentManager.class, new MockFileDocumentManagerImpl(new Function<CharSequence, Document>() {
@@ -122,7 +124,7 @@ public class CoreEnvironment {
                                                          }
                               )
     );
-    registerComponentInstance(appContainer, VirtualFilePointerManager.class, new CoreVirtualFilePointerManager());
+    registerApplicationComponent(VirtualFilePointerManager.class, new CoreVirtualFilePointerManager());
 
     myApplication.registerService(DefaultASTFactory.class, new CoreASTFactory());
     myApplication.registerService(PsiBuilderFactory.class, new PsiBuilderFactoryImpl());
@@ -130,11 +132,10 @@ public class CoreEnvironment {
     myApplication.registerService(StubTreeLoader.class, new CoreStubTreeLoader());
     myApplication.registerService(PsiReferenceService.class, new PsiReferenceServiceImpl());
 
-    registerExtensionPoint(Extensions.getRootArea(), ContentBasedFileSubstitutor.EP_NAME, ContentBasedFileSubstitutor.class);
+    registerApplicationExtensionPoint(ContentBasedFileSubstitutor.EP_NAME, ContentBasedFileSubstitutor.class);
     registerExtensionPoint(Extensions.getRootArea(), BinaryFileStubBuilders.EP_NAME, FileTypeExtensionPoint.class);
 
     myFileIndexFacade = new MockFileIndexFacade(myProject);
-    final MutablePicoContainer projectContainer = myProject.getPicoContainer();
 
     PsiModificationTrackerImpl modificationTracker = new PsiModificationTrackerImpl(myProject);
     myProject.registerService(PsiModificationTracker.class, modificationTracker);
@@ -145,7 +146,7 @@ public class CoreEnvironment {
     registerProjectExtensionPoint(PsiTreeChangePreprocessor.EP_NAME, PsiTreeChangePreprocessor.class);
     myPsiManager = new PsiManagerImpl(myProject, null, null, myFileIndexFacade, null, modificationTracker);
     ((FileManagerImpl) myPsiManager.getFileManager()).markInitialized();
-    registerComponentInstance(projectContainer, PsiManager.class, myPsiManager);
+    registerProjectComponent(PsiManager.class, myPsiManager);
 
     myProject.registerService(PsiFileFactory.class, new PsiFileFactoryImpl(myPsiManager));
     myProject.registerService(CachedValuesManager.class, new CachedValuesManagerImpl(myProject, new PsiCachedValuesFactory(myPsiManager)));
@@ -174,7 +175,23 @@ public class CoreEnvironment {
     };
   }
 
-  public Project getProject() {
+  public MockApplication getApplication() {
+    return myApplication;
+  }
+
+  public Disposable getParentDisposable() {
+    return myParentDisposable;
+  }
+
+  public  <T> void registerApplicationComponent(final Class<T> interfaceClass, final T implementation) {
+    registerComponentInstance(myApplication.getPicoContainer(), interfaceClass, implementation);
+  }
+
+  public  <T> void registerProjectComponent(final Class<T> interfaceClass, final T implementation) {
+    registerComponentInstance(myProject.getPicoContainer(), interfaceClass, implementation);
+  }
+
+  public MockProject getProject() {
     return myProject;
   }
 
@@ -186,7 +203,7 @@ public class CoreEnvironment {
     addExplicitExtension(LanguageParserDefinitions.INSTANCE, definition.getFileNodeType().getLanguage(), definition);
   }
 
-  protected <T> void registerComponentInstance(final MutablePicoContainer container, final Class<T> key, final T implementation) {
+  public static <T> void registerComponentInstance(final MutablePicoContainer container, final Class<T> key, final T implementation) {
     container.unregisterComponent(key);
     container.registerComponentInstance(key, implementation);
   }
@@ -222,20 +239,25 @@ public class CoreEnvironment {
     });
   }
 
-  protected <T> void registerExtensionPoint(final ExtensionsArea area, final ExtensionPointName<T> extensionPointName,
-                                            final Class<? extends T> aClass) {
+  public static <T> void registerExtensionPoint(final ExtensionsArea area, final ExtensionPointName<T> extensionPointName,
+                                                   final Class<? extends T> aClass) {
     final String name = extensionPointName.getName();
     registerExtensionPoint(area, name, aClass);
   }
 
-  protected <T> void registerExtensionPoint(ExtensionsArea area, String name, Class<? extends T> aClass) {
+  public static <T> void registerExtensionPoint(ExtensionsArea area, String name, Class<? extends T> aClass) {
     if (!area.hasExtensionPoint(name)) {
       ExtensionPoint.Kind kind = aClass.isInterface() || (aClass.getModifiers() & Modifier.ABSTRACT) != 0 ? ExtensionPoint.Kind.INTERFACE : ExtensionPoint.Kind.BEAN_CLASS;
       area.registerExtensionPoint(name, aClass.getName(), kind);
     }
   }
 
-  protected <T> void registerProjectExtensionPoint(final ExtensionPointName<T> extensionPointName,
+  public static <T> void registerApplicationExtensionPoint(final ExtensionPointName<T> extensionPointName, final Class<? extends T> aClass) {
+    final String name = extensionPointName.getName();
+    registerExtensionPoint(Extensions.getRootArea(), name, aClass);
+  }
+
+  public  <T> void registerProjectExtensionPoint(final ExtensionPointName<T> extensionPointName,
                                             final Class<? extends T> aClass) {
     registerExtensionPoint(Extensions.getArea(myProject), extensionPointName, aClass);
   }

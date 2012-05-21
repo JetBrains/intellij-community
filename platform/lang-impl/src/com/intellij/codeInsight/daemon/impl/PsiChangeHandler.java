@@ -17,7 +17,6 @@
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.daemon.ChangeLocalityDetector;
-import com.intellij.codeInspection.SuppressionUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -214,18 +213,9 @@ public class PsiChangeHandler extends PsiTreeChangeAdapter implements Disposable
       return;
     }
 
-    // optimization
-    if (whitespaceOptimizationAllowed && UpdateHighlightersUtil.isWhitespaceOptimizationAllowed(document)) {
-      if (child instanceof PsiWhiteSpace ||
-          child instanceof PsiComment && !child.getText().contains(SuppressionUtil.SUPPRESS_INSPECTIONS_TAG_NAME)) {
-        myFileStatusMap.markFileScopeDirty(document, child.getTextRange(), fileLength);
-        return;
-      }
-    }
-
-    PsiElement element = child;
+    PsiElement element = whitespaceOptimizationAllowed && UpdateHighlightersUtil.isWhitespaceOptimizationAllowed(document) ? child : child.getParent();
     while (true) {
-      if (element instanceof PsiFile || element instanceof PsiDirectory) {
+      if (element == null || element instanceof PsiFile || element instanceof PsiDirectory) {
         myFileStatusMap.markAllFilesDirty();
         return;
       }
@@ -242,10 +232,18 @@ public class PsiChangeHandler extends PsiTreeChangeAdapter implements Disposable
 
   @Nullable
   private static PsiElement getChangeHighlightingScope(PsiElement element) {
+    DefaultChangeLocalityDetector defaultDetector = null;
     for (ChangeLocalityDetector detector : Extensions.getExtensions(EP_NAME)) {
+      if (detector instanceof DefaultChangeLocalityDetector) {
+        // run default detector last
+        assert defaultDetector == null : defaultDetector;
+        defaultDetector = (DefaultChangeLocalityDetector)detector;
+        continue;
+      }
       final PsiElement scope = detector.getChangeHighlightingDirtyScopeFor(element);
       if (scope != null) return scope;
     }
-    return null;
+    assert defaultDetector != null : "com.intellij.codeInsight.daemon.impl.DefaultChangeLocalityDetector is unregistered";
+    return defaultDetector.getChangeHighlightingDirtyScopeFor(element);
   }
 }

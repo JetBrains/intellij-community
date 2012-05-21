@@ -23,9 +23,9 @@ import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.editor.HandlerUtils;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
-import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 
 /**
@@ -33,7 +33,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
  */
 public class GStringTypedActionHandler extends TypedHandlerDelegate {
   @Override
-  public Result charTyped(char c, Project project, Editor editor, PsiFile file) {
+  public Result charTyped(char c, Project project, Editor editor, @NotNull PsiFile file) {
     if (c != '{' || project == null || !HandlerUtils.canBeInvoked(editor, project)) {
       return Result.CONTINUE;
     }
@@ -45,9 +45,9 @@ public class GStringTypedActionHandler extends TypedHandlerDelegate {
     if (caret < 1) return Result.CONTINUE;
 
     HighlighterIterator iterator = highlighter.createIterator(caret - 1);
-    if (iterator.getTokenType() != GroovyElementTypes.mLCURLY) return Result.CONTINUE;
+    if (iterator.getTokenType() != GroovyTokenTypes.mLCURLY) return Result.CONTINUE;
     iterator.retreat();
-    if (iterator.atEnd() || iterator.getTokenType() != GroovyElementTypes.mDOLLAR) return Result.CONTINUE;
+    if (iterator.atEnd() || iterator.getTokenType() != GroovyTokenTypes.mDOLLAR) return Result.CONTINUE;
     iterator.advance();
     if (iterator.atEnd()) return Result.CONTINUE;
     iterator.advance();

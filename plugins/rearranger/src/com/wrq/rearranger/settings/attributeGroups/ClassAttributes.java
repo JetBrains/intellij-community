@@ -29,6 +29,8 @@ import com.wrq.rearranger.settings.atomicAttributes.AbstractAttribute;
 import com.wrq.rearranger.settings.atomicAttributes.EnumAttribute;
 import com.wrq.rearranger.util.Constraints;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -47,6 +49,7 @@ public final class ClassAttributes
 
 // -------------------------- STATIC METHODS --------------------------
 
+  @Nullable
   public static AttributeGroup readExternal(final Element element) {
     if (element.getName().equals("Class")) {
       final ClassAttributes result = new ClassAttributes();
@@ -82,11 +85,11 @@ public final class ClassAttributes
 // ------------------------ CANONICAL METHODS ------------------------
 
   public final String toString() {
-    final StringBuffer sb = new StringBuffer(70);
+    final StringBuilder sb = new StringBuilder(70);
     sb.append(abAttr.getDescriptiveString());
-    sb.append(plAttr.getProtectionLevelString());
-    sb.append(stAttr.getDescriptiveString());
-    sb.append(fAttr.getDescriptiveString());
+    sb.append(getProtectionLevelAttributes().getProtectionLevelString());
+    sb.append(getStaticAttribute().getDescriptiveString());
+    sb.append(getFinalAttribute().getDescriptiveString());
     sb.append(enumAttr.getDescriptiveString());
     if (sb.length() == 0) {
       sb.append("all classes");
@@ -94,11 +97,11 @@ public final class ClassAttributes
     else {
       sb.append("classes");
     }
-    if (nameAttr.isMatch()) {
+    if (getNameAttribute().isMatch()) {
       sb.append(' ');
-      sb.append(nameAttr.getDescriptiveString());
+      sb.append(getNameAttribute().getDescriptiveString());
     }
-    sb.append(sortAttr.getDescriptiveString());
+    sb.append(getSortOptions().getDescriptiveString());
     return sb.toString();
   }
 
@@ -107,6 +110,7 @@ public final class ClassAttributes
 
 // --------------------- Interface AttributeGroup ---------------------
 
+  @NotNull
   public final /*ClassAttributes*/AttributeGroup deepCopy() {
     final ClassAttributes result = new ClassAttributes();
     deepCopyCommonItems(result);
@@ -115,7 +119,8 @@ public final class ClassAttributes
     return result;
   }
 
-  public final void writeExternal(final Element parent) {
+  @SuppressWarnings("unchecked")
+  public final void writeExternal(@NotNull final Element parent) {
     final Element me = new Element("Class");
     writeExternalCommonAttributes(me);
     abAttr.appendAttributes(me);
@@ -146,27 +151,27 @@ public final class ClassAttributes
     constraints.weightx = 1.0d;
     constraints.weighty = 0.0d;
     constraints.insets = new Insets(0, 0, 10, 0);
-    caPanel.add(getPlAttr().getProtectionLevelPanel(), constraints);
+    caPanel.add(getProtectionLevelAttributes().getProtectionLevelPanel(), constraints);
     constraints.gridy = 4;
     constraints.gridheight = 1;
-    caPanel.add(getStAttr().getAndNotPanel(), constraints);
+    caPanel.add(getStaticAttribute().getAndNotPanel(), constraints);
     constraints.gridy++;
     caPanel.add(getAbAttr().getAndNotPanel(), constraints);
     constraints.gridy++;
-    caPanel.add(getfAttr().getAndNotPanel(), constraints);
+    caPanel.add(getFinalAttribute().getAndNotPanel(), constraints);
     constraints.gridy++;
     caPanel.add(getEnumAttr().getAndNotPanel(), constraints);
     constraints.gridy++;
-    caPanel.add(getNameAttr().getStringPanel(), constraints);
+    caPanel.add(getNameAttribute().getStringPanel(), constraints);
     constraints.gridy++;
     constraints.gridheight = GridBagConstraints.REMAINDER;
     constraints.weighty = 1.0d;
     constraints.insets = new Insets(0, 0, 0, 0);
-    caPanel.add(sortAttr.getSortOptionsPanel(), constraints);
+    caPanel.add(getSortOptions().getSortOptionsPanel(), constraints);
     return caPanel;
   }
 
-  public final boolean isMatch(RangeEntry entry)
+  public final boolean isMatch(@NotNull RangeEntry entry)
   // final int modifiers, final String name, final String returnType)
   {
     return entry.getEnd().getParent() instanceof PsiClass &&

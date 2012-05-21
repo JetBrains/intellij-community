@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.SdkType;
 import com.intellij.openapi.projectRoots.ui.SdkPathEditor;
 import com.intellij.openapi.projectRoots.ui.Util;
 import com.intellij.openapi.roots.JavadocOrderRootType;
@@ -35,7 +36,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.AnActionButton;
 import com.intellij.ui.AnActionButtonUpdater;
 import com.intellij.ui.ToolbarDecorator;
-import com.intellij.util.PlatformIcons;
+import com.intellij.util.IconUtil;
 
 import javax.swing.*;
 
@@ -68,7 +69,7 @@ public class JavadocOrderRootTypeUIFactory implements OrderRootTypeUIFactory {
 
     @Override
     protected void addToolbarButtons(ToolbarDecorator toolbarDecorator) {
-      AnActionButton specifyUrlButton = new AnActionButton(ProjectBundle.message("sdk.paths.specify.url.button"), PlatformIcons.TABLE_URL) {
+      AnActionButton specifyUrlButton = new AnActionButton(ProjectBundle.message("sdk.paths.specify.url.button"), IconUtil.getAddLinkIcon()) {
         @Override
         public void actionPerformed(AnActionEvent e) {
           onSpecifyUrlButtonClicked();
@@ -85,7 +86,7 @@ public class JavadocOrderRootTypeUIFactory implements OrderRootTypeUIFactory {
     }
 
     private void onSpecifyUrlButtonClicked() {
-      final String defaultDocsUrl = mySdk == null ? "" : StringUtil.notNullize(mySdk.getSdkType().getDefaultDocumentationUrl(mySdk), "");
+      final String defaultDocsUrl = mySdk == null ? "" : StringUtil.notNullize(((SdkType) mySdk.getSdkType()).getDefaultDocumentationUrl(mySdk), "");
       VirtualFile virtualFile  = Util.showSpecifyJavadocUrlDialog(myPanel, defaultDocsUrl);
       if(virtualFile != null){
         addElement(virtualFile);

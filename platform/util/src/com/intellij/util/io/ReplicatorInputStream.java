@@ -34,6 +34,7 @@ public class ReplicatorInputStream extends InputStream {
     myTarget = target;
   }
 
+  @Override
   public int read() throws IOException {
     final int b = mySource.read();
     if (b == -1) return -1;
@@ -41,25 +42,30 @@ public class ReplicatorInputStream extends InputStream {
     return b;
   }
 
+  @Override
   public synchronized void mark(final int readlimit) {
     mySource.mark(readlimit);
     markedSize = myTarget.size();
   }
 
+  @Override
   public boolean markSupported() {
     return mySource.markSupported();
   }
 
+  @Override
   public synchronized void reset() throws IOException {
     mySource.reset();
     myTarget.backOff(myTarget.size() - markedSize);
     markedSize = 0;
   }
 
+  @Override
   public int read(final byte[] b) throws IOException {
     return read(b, 0, b.length);
   }
 
+  @Override
   public int read(final byte[] b, final int off, final int len) throws IOException {
     final int count = mySource.read(b, off, len);
     if (count < 0) return count;
@@ -67,15 +73,18 @@ public class ReplicatorInputStream extends InputStream {
     return count;
   }
 
+  @Override
   public long skip(final long n) throws IOException {
     final int skipped = read(new byte[(int)n]);
     return skipped;
   }
 
+  @Override
   public int available() throws IOException {
     return mySource.available();
   }
 
+  @Override
   public void close() throws IOException {
     mySource.close();
     myTarget.close();

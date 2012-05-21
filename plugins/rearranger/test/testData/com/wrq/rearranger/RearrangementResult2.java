@@ -7,11 +7,12 @@ package com.wrq.rearranger;
 public class RearrangementTest {
   public static final int field3 = 3;
   public static final int field4 = 4;
+
   /** field 1. */
   private int field1;
   private int field2;
-  final     int field5 = 5;
-  protected int field6 = 6;
+  final               int field5 = 5;
+  protected           int field6 = 6;
 
   /** method 1 comment. */
   void method1() {

@@ -52,7 +52,7 @@ public class HgConfigurationProjectPanel {
 
   public boolean isModified() {
     boolean executableModified = mySelectRadioButton.isSelected()
-                                 ? !myPathSelector.getText().equals(myProjectSettings.getHgExecutable())
+                                 ? !getCurrentPath().equals(myProjectSettings.getHgExecutable())
                                  : myAutoRadioButton.isSelected() != myProjectSettings.isAutodetectHg();
     return executableModified || myCheckIncomingCbx.isSelected() != myProjectSettings.isCheckIncoming()
            || myCheckOutgoingCbx.isSelected() != myProjectSettings.isCheckOutgoing()
@@ -67,8 +67,12 @@ public class HgConfigurationProjectPanel {
     if (myAutoRadioButton.isSelected()) {
       myProjectSettings.enableAutodetectHg();
     } else {
-      myProjectSettings.setHgExecutable(myPathSelector.getText());
+      myProjectSettings.setHgExecutable(getCurrentPath());
     }
+  }
+
+  private String getCurrentPath() {
+    return myPathSelector.getText().trim();
   }
 
   public void loadSettings() {
@@ -96,7 +100,7 @@ public class HgConfigurationProjectPanel {
     if (myAutoRadioButton.isSelected()) {
       hgExecutable = HgGlobalSettings.getDefaultExecutable();
     } else {
-      hgExecutable = myPathSelector.getText();
+      hgExecutable = getCurrentPath();
     }
     HgVersionCommand command = new HgVersionCommand();
     if (!command.isValid(hgExecutable, myRunHgAsBashCheckBox.isSelected())) {

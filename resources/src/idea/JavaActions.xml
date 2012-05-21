@@ -128,6 +128,7 @@
     <group id="JavaDebuggerActions">
       <action id="Debugger.AdjustArrayRange" class="com.intellij.debugger.actions.AdjustArrayRangeAction"/>
       <action id="Debugger.Inspect" class="com.intellij.debugger.actions.InspectAction"/>
+      <action id="Debugger.ViewText" class="com.intellij.debugger.actions.ViewTextAction"/>
       <action id="Debugger.CopyValue" class="com.intellij.debugger.actions.CopyValueAction"/>
       <action id="Debugger.CompareValueWithClipboard" class="com.intellij.debugger.actions.CompareValueWithClipboardAction"/>
       <action id="Debugger.CustomizeContextView" class="com.intellij.debugger.actions.CustomizeContextViewAction"/>
@@ -210,6 +211,7 @@
       <reference ref="ToggleFieldBreakpoint"/>
       <separator/>
       <reference ref="Debugger.CopyValue"/>
+      <reference ref="Debugger.ViewText"/>
       <reference ref="Debugger.CompareValueWithClipboard"/>
       <reference ref="Debugger.CustomizeContextView"/>
     </group>
@@ -230,6 +232,7 @@
       <reference ref="ToggleFieldBreakpoint"/>
       <separator/>
       <reference ref="Debugger.CopyValue"/>
+      <reference ref="Debugger.ViewText"/>
       <reference ref="Debugger.CompareValueWithClipboard"/>
       <reference ref="Debugger.CustomizeContextView"/>
     </group>
@@ -250,6 +253,7 @@
       <reference ref="ToggleFieldBreakpoint"/>
       <separator/>
       <reference ref="Debugger.CopyValue"/>
+      <reference ref="Debugger.ViewText"/>
       <reference ref="Debugger.CompareValueWithClipboard"/>
       <reference ref="Debugger.CustomizeContextView"/>
     </group>
@@ -290,6 +294,7 @@
       <reference ref="ToggleFieldBreakpoint"/>
       <separator/>
       <reference ref="Debugger.CopyValue"/>
+      <reference ref="Debugger.ViewText"/>
       <reference ref="Debugger.CompareValueWithClipboard"/>
       <reference ref="Debugger.CustomizeContextView"/>
     </group>

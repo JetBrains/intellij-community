@@ -361,7 +361,7 @@ public class GitCommitsSequentialIndex implements GitCommitsSequentially {
         }
         catch (VcsException e) {
           context.cancelEverything();
-          if (! context.handleException(e)) {
+          if (! context.handleException(e, false)) {
             VcsBalloonProblemNotifier.showOverChangesView(myProject, e.getMessage(), MessageType.ERROR);
             // and exit, do not ping
           }

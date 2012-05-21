@@ -47,7 +47,7 @@ public class InvalidPropertyKeyInspection extends BaseJavaLocalInspectionTool {
 
   @NotNull
   public String getGroupDisplayName() {
-    return GroupNames.INTERNATIONALIZATION_GROUP_NAME;
+    return GroupNames.PROPERTIES_GROUP_NAME;
   }
 
   @NotNull

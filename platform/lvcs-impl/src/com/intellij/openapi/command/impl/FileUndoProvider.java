@@ -59,6 +59,7 @@ public class FileUndoProvider extends VirtualFileAdapter implements UndoProvider
 
     getFileManager().addVirtualFileListener(this, project);
     myLocalHistory.addListener(new LocalHistoryFacade.Listener() {
+      @Override
       public void changeAdded(Change c) {
         if (!(c instanceof StructuralChange) || c instanceof ContentChange) return;
         myLastChangeId = c.getId();
@@ -70,25 +71,30 @@ public class FileUndoProvider extends VirtualFileAdapter implements UndoProvider
     return VirtualFileManager.getInstance();
   }
 
+  @Override
   public void commandStarted(Project p) {
     if (myProject != p) return;
     myIsInsideCommand = true;
   }
 
+  @Override
   public void commandFinished(Project p) {
     if (myProject != p) return;
     myIsInsideCommand = false;
   }
 
+  @Override
   public void fileCreated(VirtualFileEvent e) {
     processEvent(e);
   }
 
+  @Override
   public void propertyChanged(VirtualFilePropertyEvent e) {
     if (!e.getPropertyName().equals(VirtualFile.PROP_NAME)) return;
     processEvent(e);
   }
 
+  @Override
   public void fileMoved(VirtualFileMoveEvent e) {
     processEvent(e);
   }
@@ -103,12 +109,14 @@ public class FileUndoProvider extends VirtualFileAdapter implements UndoProvider
     }
   }
 
+  @Override
   public void beforeContentsChange(VirtualFileEvent e) {
     if (shouldNotProcess(e)) return;
     if (isUndoable(e)) return;
     registerNonUndoableAction(e);
   }
 
+  @Override
   public void beforeFileDeletion(VirtualFileEvent e) {
     if (shouldNotProcess(e)) {
       invalidateActionsFor(e);
@@ -123,6 +131,7 @@ public class FileUndoProvider extends VirtualFileAdapter implements UndoProvider
     }
   }
 
+  @Override
   public void fileDeleted(VirtualFileEvent e) {
     VirtualFile f = e.getFile();
 
@@ -141,7 +150,7 @@ public class FileUndoProvider extends VirtualFileAdapter implements UndoProvider
     return myProject.isDisposed();
   }
 
-  private boolean isUndoable(VirtualFileEvent e) {
+  private static boolean isUndoable(VirtualFileEvent e) {
     return !e.isFromRefresh();
   }
 
@@ -161,7 +170,7 @@ public class FileUndoProvider extends VirtualFileAdapter implements UndoProvider
     getUndoManager().invalidateActionsFor(createDocumentReference(e));
   }
 
-  private DocumentReference createDocumentReference(VirtualFileEvent e) {
+  private static DocumentReference createDocumentReference(VirtualFileEvent e) {
     return DocumentReferenceManager.getInstance().create(e.getFile());
   }
 
@@ -181,6 +190,7 @@ public class FileUndoProvider extends VirtualFileAdapter implements UndoProvider
       myActionChangeRange = new ChangeRange(myGateway, myLocalHistory, myLastChangeId);
     }
 
+    @Override
     public void undo() throws UnexpectedUndoException {
       try {
         myUndoChangeRange = myActionChangeRange.revert(myUndoChangeRange);
@@ -191,6 +201,7 @@ public class FileUndoProvider extends VirtualFileAdapter implements UndoProvider
       }
     }
 
+    @Override
     public void redo() throws UnexpectedUndoException {
       try {
         myActionChangeRange = myUndoChangeRange.revert(myActionChangeRange);

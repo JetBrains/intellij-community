@@ -15,6 +15,8 @@
  */
 package org.jetbrains.idea.svn;
 
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vcs.VcsConfiguration;
@@ -34,6 +36,7 @@ import org.tmatesoft.svn.core.wc.SVNStatus;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
 
 import java.io.File;
+import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.Arrays;
@@ -136,8 +139,21 @@ public class SvnResolveTreeAcceptVariantsTest extends SvnTestCase {
       myTheirs.refresh(false, true);
       myWorkingCopyDir.refresh(false, true);
       checkStatusesAfterMineFullResolve(data, conflictIoFile);
+      checkFileContents(data, conflictIoFile);
 
       ++ cnt;
+    }
+  }
+
+  private void checkFileContents(TreeConflictData.Data data, File file) throws IOException {
+    Collection<TreeConflictData.FileData> leftFiles = data.getLeftFiles();
+    for (TreeConflictData.FileData leftFile : leftFiles) {
+      if (! leftFile.myIsDir && ! StringUtil.isEmpty(leftFile.myContents)) {
+        final File ioFile = new File(myWorkingCopyDir.getPath(), leftFile.myRelativePath);
+        Assert.assertTrue(ioFile.exists());
+        final String text = FileUtil.loadFile(ioFile);
+        Assert.assertEquals(leftFile.myContents, text);
+      }
     }
   }
 
@@ -250,12 +266,23 @@ public class SvnResolveTreeAcceptVariantsTest extends SvnTestCase {
             Assert.assertTrue("Check failed for test: " + getTestName(data) + " and file: " + relative + " in: " + myWorkingCopyDir.getPath(),
                           exists);
           }
-          SVNInfo theirsInfo = myVcs.getInfo(new File(file.getPath()));
+          final File theirsFile = new File(file.getPath());
+          SVNInfo theirsInfo = myVcs.getInfo(theirsFile);
           SVNInfo thisInfo = myVcs.getInfo(workingFile);
           if (theirsInfo != null) {
             Assert.assertEquals("Check failed for test: " + getTestName(data) + " and file: " + relative + " in: " + myWorkingCopyDir.getPath() +
                                 ", theirs: " + theirsInfo.getRevision().getNumber() + ", mine: " + thisInfo.getRevision().getNumber(),
                                 theirsInfo.getRevision().getNumber(), thisInfo.getRevision().getNumber());
+            if (! theirsFile.isDirectory()){
+              try {
+                final String workText = FileUtil.loadFile(workingFile);
+                final String theirsText = FileUtil.loadFile(theirsFile);
+                Assert.assertEquals(theirsText, workText);
+              }
+              catch (IOException e) {
+                Assert.assertTrue(e.getMessage(), false);
+              }
+            }
           }
           return true;
         }

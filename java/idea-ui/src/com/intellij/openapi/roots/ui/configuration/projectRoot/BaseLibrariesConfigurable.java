@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -331,7 +331,7 @@ public abstract class BaseLibrariesConfigurable extends BaseStructureConfigurabl
         LOG.assertTrue(library != null);
 
         final LibrariesModifiableModel libsModel = configurable.getModelProvider().getModifiableModel();
-        final Library lib = libsModel.createLibrary(newName, library.getType());
+        final Library lib = libsModel.createLibrary(newName, library.getKind());
         final LibraryEx.ModifiableModelEx model = (LibraryEx.ModifiableModelEx)libsModel.getLibraryEditor(lib).getModel();
         LibraryEditingUtil.copyLibrary(library, Collections.<String, String>emptyMap(), model);
       }

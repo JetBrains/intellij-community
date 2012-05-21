@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,9 +31,6 @@ public abstract class LibraryTypeService {
   public static LibraryTypeService getInstance() {
     return ServiceManager.getService(LibraryTypeService.class);
   }
-
-  @Nullable
-  public abstract LibraryType<?> findTypeById(@NotNull String typeId);
 
   @Nullable
   public abstract NewLibraryConfiguration createLibraryFromFiles(@NotNull LibraryRootsComponentDescriptor descriptor,

@@ -25,9 +25,9 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.roots.impl.ModifiableModelCommitter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
-import com.intellij.openapi.roots.impl.ModuleRootManagerImpl;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
@@ -121,7 +121,7 @@ public class PsiPackageImplementationHelperImpl extends PsiPackageImplementation
     if (!modelsToCommit.isEmpty()) {
       ModifiableRootModel[] rootModels = modelsToCommit.toArray(new ModifiableRootModel[modelsToCommit.size()]);
       if (rootModels.length > 0) {
-        ModuleRootManagerImpl.multiCommit(rootModels, ModuleManager.getInstance(rootModels[0].getProject()).getModifiableModel());
+        ModifiableModelCommitter.multiCommit(rootModels, ModuleManager.getInstance(rootModels[0].getProject()).getModifiableModel());
       }
       return true;
     } else {

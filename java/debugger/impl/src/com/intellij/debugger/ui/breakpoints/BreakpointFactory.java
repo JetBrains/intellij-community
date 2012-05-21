@@ -21,6 +21,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Key;
+import com.intellij.xdebugger.breakpoints.ui.BreakpointItem;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,17 +31,21 @@ import javax.swing.*;
  * Used to deexternalize breakpoints of certain category while reading saved configuration and for creating configuration UI
  */
 public abstract class BreakpointFactory {
-  public static final ExtensionPointName<BreakpointFactory> EXTENSION_POINT_NAME = ExtensionPointName.create("com.intellij.debugger.breakpointFactory");
+  public static final ExtensionPointName<BreakpointFactory> EXTENSION_POINT_NAME =
+    ExtensionPointName.create("com.intellij.debugger.breakpointFactory");
+
+  public static BreakpointFactory[] getBreakpointFactories() {
+    return ApplicationManager.getApplication().getExtensions(EXTENSION_POINT_NAME);
+  }
 
   public abstract Breakpoint createBreakpoint(Project project, final Element element);
 
   public abstract Key<? extends Breakpoint> getBreakpointCategory();
 
   public BreakpointPanel createBreakpointPanel(final Project project, final DialogWrapper parentDialog) {
-    BreakpointPanel panel = new BreakpointPanel(project,
-                                                createBreakpointPropertiesPanel(project, false),
-                                                createBreakpointPanelActions(project, parentDialog),
-                                                getBreakpointCategory(), getDisplayName(), getHelpID());
+    BreakpointPanel panel =
+      new BreakpointPanel(project, createBreakpointPropertiesPanel(project, false), createBreakpointPanelActions(project, parentDialog),
+                          getBreakpointCategory(), getDisplayName(), getHelpID());
     configureBreakpointPanel(panel);
     return panel;
   }
@@ -51,7 +56,7 @@ public abstract class BreakpointFactory {
 
   @Nullable
   public static BreakpointFactory getInstance(Key<? extends Breakpoint> category) {
-    final BreakpointFactory[] allFactories = ApplicationManager.getApplication().getExtensions(BreakpointFactory.EXTENSION_POINT_NAME);
+    final BreakpointFactory[] allFactories = getBreakpointFactories();
     for (final BreakpointFactory factory : allFactories) {
       if (category.equals(factory.getBreakpointCategory())) {
         return factory;
@@ -60,13 +65,32 @@ public abstract class BreakpointFactory {
     return null;
   }
 
-  protected void configureBreakpointPanel(BreakpointPanel panel){};
+  protected void configureBreakpointPanel(BreakpointPanel panel) {
+  }
 
   protected abstract String getHelpID();
 
   public abstract String getDisplayName();
 
+  @Nullable
   public abstract BreakpointPropertiesPanel createBreakpointPropertiesPanel(Project project, boolean compact);
 
   protected abstract BreakpointPanelAction[] createBreakpointPanelActions(Project project, DialogWrapper parentDialog);
+
+  @Nullable
+  public Breakpoint addBreakpoint(Project project) {
+    return null;
+  }
+
+  public boolean canAddBreakpoints() {
+    return false;
+  }
+
+  public boolean breakpointCanBeRemoved(Breakpoint breakpoint) {
+    return true;
+  }
+
+  public BreakpointItem createBreakpointItem(final Breakpoint breakpoint) {
+    return new JavaBreakpointItem(this, breakpoint);
+  }
 }

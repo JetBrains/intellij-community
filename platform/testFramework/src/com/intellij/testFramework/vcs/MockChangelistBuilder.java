@@ -25,6 +25,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -50,6 +51,17 @@ public class MockChangelistBuilder implements ChangelistBuilder {
   @Override
   public void processChangeInList(Change change, String changeListName, VcsKey vcsKey) {
     myChanges.add(change);
+  }
+
+  @Override
+  public void removeRegisteredChangeFor(FilePath path) {
+    for (Iterator<Change> iterator = myChanges.iterator(); iterator.hasNext(); ) {
+      final Change change = iterator.next();
+      if (path.equals(ChangesUtil.getFilePath(change))) {
+        iterator.remove();
+        return;
+      }
+    }
   }
 
   @Override

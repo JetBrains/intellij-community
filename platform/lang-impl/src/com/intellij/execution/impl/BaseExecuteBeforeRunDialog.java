@@ -235,7 +235,7 @@ public abstract class BaseExecuteBeforeRunDialog<T extends BeforeRunTask> extend
         tasks.remove(task);
       }
     }
-    runManager.setBeforeRunTasks(config, tasks);
+    runManager.setBeforeRunTasks(config, tasks, false);
   }
 
   protected abstract void update(T task);

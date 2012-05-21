@@ -38,17 +38,17 @@ public class SurroundingCommentRuleInstance
   public void determineEmit(List<RuleInstance> resultRuleInstances, int startIndex) {
     if (match(
       resultRuleInstances,
-      commentRule.getnPrecedingRulesToMatch(),
+      myCommentRule.getNPrecedingRulesToMatch(),
       -1,
       startIndex,
-      commentRule.isAllPrecedingRules()
+      myCommentRule.isAllPrecedingRules()
     ) &&
         match(
           resultRuleInstances,
-          commentRule.getnSubsequentRulesToMatch(),
+          myCommentRule.getNSubsequentRulesToMatch(),
           +1,
           startIndex,
-          commentRule.isAllSubsequentRules()
+          myCommentRule.isAllSubsequentRules()
         ))
     {
       setEmit(true);

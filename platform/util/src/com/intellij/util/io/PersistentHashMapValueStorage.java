@@ -105,7 +105,7 @@ public class PersistentHashMapValueStorage {
         serviceFieldsSizeIncrease = INT_LENGTH_LONG_ADDRESS;
       }
       dataOutputStream.write(data, offset, dataLength);
-      if (requests % IOStatistics.KEYS_FACTOR == 0 && IOStatistics.DEBUG) {
+      if (IOStatistics.DEBUG && (requests % IOStatistics.KEYS_FACTOR_MASK) == 0) {
         IOStatistics.dump("Small writes:"+smallWritesCount +", bytes:"+smallWrites + ", largeWrites:"+largeWritesCount
                           + ", bytes:"+largeWrites+", total:"+requests + "@"+myFile.getPath());
       }

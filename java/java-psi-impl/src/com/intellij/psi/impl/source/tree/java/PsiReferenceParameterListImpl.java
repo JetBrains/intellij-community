@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,7 +38,7 @@ public class PsiReferenceParameterListImpl extends CompositePsiElement implement
   @Override
   @NotNull
   public PsiTypeElement[] getTypeParameterElements() {
-    return getChildrenAsPsiElements(ElementType.TYPES_BIT_SET, ElementType.PSI_TYPE_ELEMENT_ARRAY_CONSTRUCTOR);
+    return getChildrenAsPsiElements(ElementType.TYPES_BIT_SET, PsiTypeElement.ARRAY_FACTORY);
   }
 
   @Override
@@ -125,16 +125,15 @@ public class PsiReferenceParameterListImpl extends CompositePsiElement implement
     final TreeElement firstAdded = super.addInternal(first, last, anchor, before);
 
     if (first == last && first.getElementType() == JavaElementType.TYPE){
-      ASTNode element = first;
-      for(ASTNode child = element.getTreeNext(); child != null; child = child.getTreeNext()){
+      for(ASTNode child = first.getTreeNext(); child != null; child = child.getTreeNext()){
         if (child.getElementType() == JavaTokenType.COMMA) break;
         if (child.getElementType() == JavaElementType.TYPE){
           TreeElement comma = Factory.createSingleLeafElement(JavaTokenType.COMMA, ",", 0, 1, treeCharTab, getManager());
-          super.addInternal(comma, comma, element, Boolean.FALSE);
+          super.addInternal(comma, comma, first, Boolean.FALSE);
           break;
         }
       }
-      for(ASTNode child = element.getTreePrev(); child != null; child = child.getTreePrev()){
+      for(ASTNode child = first.getTreePrev(); child != null; child = child.getTreePrev()){
         if (child.getElementType() == JavaTokenType.COMMA) break;
         if (child.getElementType() == JavaElementType.TYPE){
           TreeElement comma = Factory.createSingleLeafElement(JavaTokenType.COMMA, ",", 0, 1, treeCharTab, getManager());

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -258,7 +258,10 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
       Disposer.register((Disposable)myRunnerUi, manager);
       manager.getComponent();
     } else {
-      DockManager.getInstance(myProject).register(this);
+      final DockManager dockManager = DockManager.getInstance(myProject);
+      if (dockManager != null) { //default project
+        dockManager.register(this);
+      }
     }
   }
 

@@ -24,6 +24,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
@@ -83,14 +84,11 @@ public class MemberInplaceRenamer extends VariableInplaceRenamer {
 
   @Override
   protected PsiElement checkLocalScope() {
-    PsiElement scope = super.checkLocalScope();
-    if (scope == null) {
-      PsiFile currentFile = PsiDocumentManager.getInstance(myProject).getPsiFile(myEditor.getDocument());
-      if (currentFile != null) {
-        return currentFile;
-      }
+    PsiFile currentFile = PsiDocumentManager.getInstance(myProject).getPsiFile(myEditor.getDocument());
+    if (currentFile != null) {
+      return currentFile;
     }
-    return scope;
+    return super.checkLocalScope();
   }
 
   @Override
@@ -223,7 +221,7 @@ public class MemberInplaceRenamer extends VariableInplaceRenamer {
                                             elementProcessor.isToSearchInComments(element),
                                             elementProcessor.isToSearchForTextOccurrences(element));
     for (AutomaticRenamerFactory factory : Extensions.getExtensions(AutomaticRenamerFactory.EP_NAME)) {
-      if (factory.isApplicable(element)) {
+      if (factory.getOptionName() != null && factory.isApplicable(element)) {
         renameProcessor.addRenamerFactory(factory);
       }
     }
@@ -237,7 +235,10 @@ public class MemberInplaceRenamer extends VariableInplaceRenamer {
 
   @Override
   protected void revertStateOnFinish() {
-    ((EditorImpl)InjectedLanguageUtil.getTopLevelEditor(myEditor)).startDumb();
+    final Editor editor = InjectedLanguageUtil.getTopLevelEditor(myEditor);
+    if (editor == FileEditorManager.getInstance(myProject).getSelectedTextEditor()) {
+      ((EditorImpl)editor).startDumb();
+    }
     revertState();
   }
 

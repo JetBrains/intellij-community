@@ -85,6 +85,16 @@ public class FilePathImpl implements FilePath {
     this(virtualFile.getParent(), virtualFile.getName(), virtualFile.isDirectory(), virtualFile, false);
   }
 
+  public FilePath createChild(final String subPath, final boolean isDirectory) {
+    if (StringUtil.isEmptyOrSpaces(subPath)) return this;
+
+    if (getVirtualFile() != null && subPath.indexOf('/') == -1 && subPath.indexOf('\\') == -1) {
+      return new FilePathImpl(getVirtualFile(), subPath, isDirectory, true);
+    } else {
+      return new FilePathImpl(new File(getIOFile(), subPath), isDirectory);
+    }
+  }
+
   public int hashCode() {
     return StringUtil.stringHashCodeInsensitive(myFile.getPath());
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +16,12 @@
 package com.intellij.ide.util.projectWizard;
 
 import com.intellij.CommonBundle;
+import com.intellij.application.options.PathMacrosCollector;
 import com.intellij.application.options.PathMacrosImpl;
 import com.intellij.conversion.ConversionResult;
 import com.intellij.conversion.ConversionService;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.PathMacros;
-import com.intellij.openapi.components.impl.stores.StorageUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
@@ -83,7 +83,7 @@ public class ExistingModuleLoader extends ModuleBuilder {
         }
         final Document document = JDOMUtil.loadDocument(file);
         final Element root = document.getRootElement();
-        final Set<String> usedMacros = StorageUtil.getMacroNames(root);
+        final Set<String> usedMacros = PathMacrosCollector.getMacroNames(root);
         final Set<String> definedMacros = PathMacros.getInstance().getAllMacroNames();
         usedMacros.remove("$" + PathMacrosImpl.MODULE_DIR_MACRO_NAME + "$");
         usedMacros.removeAll(definedMacros);

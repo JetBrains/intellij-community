@@ -268,7 +268,7 @@ public class DebuggerUIUtil {
       balloon.showInCenterOf(component);
     }
     else {
-      balloon.show(new RelativePoint(component, whereToShow), Balloon.Position.atRight);
+      balloon.show(new RelativePoint(component, whereToShow), Balloon.Position.below);
     }
 
     return balloon;

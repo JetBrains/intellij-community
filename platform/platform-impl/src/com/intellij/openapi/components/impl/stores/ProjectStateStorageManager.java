@@ -32,17 +32,17 @@ class ProjectStateStorageManager extends StateStorageManagerImpl {
     myProject = project;
   }
 
-  protected XmlElementStorage.StorageData createStorageData(String storageSpec) {
+  protected StorageData createStorageData(String storageSpec) {
     if (storageSpec.equals(StoragePathMacros.PROJECT_FILE)) return createIprStorageData();
     if (storageSpec.equals(StoragePathMacros.WORKSPACE_FILE)) return createWsStorageData();
     return new ProjectStoreImpl.ProjectStorageData(ROOT_TAG_NAME, myProject);
   }
 
-  public XmlElementStorage.StorageData createWsStorageData() {
+  public StorageData createWsStorageData() {
     return new ProjectStoreImpl.WsStorageData(ROOT_TAG_NAME, myProject);
   }
 
-  public XmlElementStorage.StorageData createIprStorageData() {
+  public StorageData createIprStorageData() {
     return new ProjectStoreImpl.IprStorageData(ROOT_TAG_NAME, myProject);
   }
 

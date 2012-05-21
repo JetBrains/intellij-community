@@ -52,8 +52,8 @@ binding.setVariable("isEap", {
   return "true" == p("component.version.eap")
 })
 
-binding.setVariable("mem32", "-Xms128m -Xmx512m -XX:MaxPermSize=250m -XX:ReservedCodeCacheSize=64m")
-binding.setVariable("mem64", "-Xms128m -Xmx800m -XX:MaxPermSize=350m -XX:ReservedCodeCacheSize=64m")
+binding.setVariable("mem32", "-Xms128m -Xmx512m -XX:MaxPermSize=250m -XX:ReservedCodeCacheSize=64m -XX:+UseCodeCacheFlushing")
+binding.setVariable("mem64", "-Xms128m -Xmx800m -XX:MaxPermSize=350m -XX:ReservedCodeCacheSize=64m -XX:+UseCodeCacheFlushing")
 binding.setVariable("common_vmoptions", "-ea")
 
 binding.setVariable("vmOptions", { "$common_vmoptions ${isEap() ? '-XX:+HeapDumpOnOutOfMemoryError' : ''}".trim() })
@@ -225,19 +225,21 @@ binding.setVariable("classPathLibs", [
 binding.setVariable("platformApiModules", [
         "core-api",
         "indexing-api",
+        "projectModel-api",
         "platform-api",
         "lvcs-api",
         "lang-api",
         "vcs-api",
         "usageView",
         "xdebugger-api",
-        "xml-openapi"
+        "xml-openapi",
 ])
 
 
 binding.setVariable("platformImplementationModules", [
         "core-impl",
         "indexing-impl",
+        "projectModel-impl",
         "platform-impl",
         "vcs-impl",
         "lang-impl",
@@ -368,8 +370,8 @@ binding.setVariable("unixScripts", { String target, String home, String name, Ma
   String product_uc = args.product_uc != null ? args.product_uc : p("component.names.product").toUpperCase()
   String vm_options = args.vm_options != null ? args.vm_options : p("component.names.product").toLowerCase()
 
-  String classPath = "CLASSPATH=\"../lib/${classPathLibs[0]}\"\n"
-  classPath += classPathLibs[1..-1].collect {"CLASSPATH=\"\$CLASSPATH:../lib/${it}\""}.join("\n")
+  String classPath = "CLASSPATH=\"\$IDE_HOME/lib/${classPathLibs[0]}\"\n"
+  classPath += classPathLibs[1..-1].collect {"CLASSPATH=\"\$CLASSPATH:\$IDE_HOME/lib/${it}\""}.join("\n")
   if (args.tools_jar) classPath += "\nCLASSPATH=\"\$CLASSPATH:\$JDK/lib/tools.jar\""
 
   ant.copy(todir: "$target/bin") {

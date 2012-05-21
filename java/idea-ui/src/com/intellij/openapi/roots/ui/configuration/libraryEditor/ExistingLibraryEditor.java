@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,10 +18,7 @@ package com.intellij.openapi.roots.ui.configuration.libraryEditor;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.impl.libraries.LibraryEx;
-import com.intellij.openapi.roots.libraries.Library;
-import com.intellij.openapi.roots.libraries.LibraryDetectionManager;
-import com.intellij.openapi.roots.libraries.LibraryProperties;
-import com.intellij.openapi.roots.libraries.LibraryType;
+import com.intellij.openapi.roots.libraries.*;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -60,16 +57,16 @@ public class ExistingLibraryEditor extends LibraryEditorBase implements Disposab
 
   @Override
   public LibraryType<?> getType() {
-    final LibraryType<?> type = ((LibraryEx)myLibrary).getType();
-    if (type != null) {
-      return type;
+    final LibraryKind kind = ((LibraryEx)myLibrary).getKind();
+    if (kind != null) {
+      return LibraryType.findByKind(kind);
     }
     return detectType();
   }
 
   @Override
   public void setType(@NotNull LibraryType<?> type) {
-    ((LibraryEx.ModifiableModelEx)getModel()).setType(type);
+    ((LibraryEx.ModifiableModelEx)getModel()).setKind(type.getKind());
   }
 
   private LibraryType detectType() {
@@ -94,7 +91,7 @@ public class ExistingLibraryEditor extends LibraryEditorBase implements Disposab
     }
 
     if (myLibraryProperties == null) {
-      myLibraryProperties = type.createDefaultProperties();
+      myLibraryProperties = type.getKind().createDefaultProperties();
       //noinspection unchecked
       myLibraryProperties.loadState(getOriginalProperties().getState());
     }

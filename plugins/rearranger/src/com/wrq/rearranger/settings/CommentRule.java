@@ -21,7 +21,7 @@
  */
 package com.wrq.rearranger.settings;
 
-import com.wrq.rearranger.entry.IPopupTreeRangeEntry;
+import com.wrq.rearranger.entry.PopupTreeRangeEntry;
 import com.wrq.rearranger.entry.RangeEntry;
 import com.wrq.rearranger.popup.FilePopupEntry;
 import com.wrq.rearranger.popup.RearrangerTreeNode;
@@ -32,6 +32,7 @@ import com.wrq.rearranger.settings.attributeGroups.RegexUtil;
 import com.wrq.rearranger.util.Constraints;
 import org.jdom.Attribute;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -50,7 +51,7 @@ import java.util.List;
 /** Handles insertion of comment separators between sections of the rearranged file. */
 public final class CommentRule
   implements AttributeGroup,
-             IPopupTreeRangeEntry,
+             PopupTreeRangeEntry,
              FilePopupEntry
 {
 // ------------------------------------------------------- FIELDS ------------------------------------------------------
@@ -87,26 +88,26 @@ public final class CommentRule
     this.emitCondition = emitCondition;
   }
 
-  private int     nPrecedingRulesToMatch;                    // default 1
-  private int     nSubsequentRulesToMatch;                   // default 1
-  private boolean allPrecedingRules;                         // if false, ANY preceding rules
+  private int     myNPrecedingRulesToMatch;                    // default 1
+  private int     myNSubsequentRulesToMatch;                   // default 1
+  private boolean myAllPrecedingRules;                         // if false, ANY preceding rules
 
   public final boolean isAllPrecedingRules() {
-    return allPrecedingRules;
+    return myAllPrecedingRules;
   }
 
   public final void setAllPrecedingRules(final boolean allPrecedingRules) {
-    this.allPrecedingRules = allPrecedingRules;
+    this.myAllPrecedingRules = allPrecedingRules;
   }
 
-  private boolean allSubsequentRules;                        // if false, ANY subsequent rules
+  private boolean myAllSubsequentRules;                        // if false, ANY subsequent rules
 
   public final boolean isAllSubsequentRules() {
-    return allSubsequentRules;
+    return myAllSubsequentRules;
   }
 
   public final void setAllSubsequentRules(final boolean allSubsequentRules) {
-    this.allSubsequentRules = allSubsequentRules;
+    this.myAllSubsequentRules = allSubsequentRules;
   }
 
   private CommentFillString commentFillString;
@@ -139,10 +140,10 @@ public final class CommentRule
       result.commentText = unescape(text);
     }
     result.emitCondition = RearrangerSettings.getIntAttribute(item, "condition", 0);
-    result.nPrecedingRulesToMatch = RearrangerSettings.getIntAttribute(item, "nPrecedingRulesToMatch", 1);
-    result.nSubsequentRulesToMatch = RearrangerSettings.getIntAttribute(item, "nSubsequentRulesToMatch", 1);
-    result.allPrecedingRules = RearrangerSettings.getBooleanAttribute(item, "allPrecedingRules", true);
-    result.allSubsequentRules = RearrangerSettings.getBooleanAttribute(item, "allSubsequentRules", true);
+    result.myNPrecedingRulesToMatch = RearrangerSettings.getIntAttribute(item, "nPrecedingRulesToMatch", 1);
+    result.myNSubsequentRulesToMatch = RearrangerSettings.getIntAttribute(item, "nSubsequentRulesToMatch", 1);
+    result.myAllPrecedingRules = RearrangerSettings.getBooleanAttribute(item, "allPrecedingRules", true);
+    result.myAllSubsequentRules = RearrangerSettings.getBooleanAttribute(item, "allSubsequentRules", true);
     result.commentFillString = CommentFillString.readExternal(item);
     return result;
   }
@@ -200,10 +201,10 @@ public final class CommentRule
   public CommentRule() {
     commentText = "";
     emitCondition = EMIT_ALWAYS;
-    nPrecedingRulesToMatch = 1;
-    nSubsequentRulesToMatch = 1;
-    allPrecedingRules = true;
-    allSubsequentRules = true;
+    myNPrecedingRulesToMatch = 1;
+    myNSubsequentRulesToMatch = 1;
+    myAllPrecedingRules = true;
+    myAllSubsequentRules = true;
     commentFillString = new CommentFillString();
   }
 
@@ -352,15 +353,15 @@ public final class CommentRule
   }
 
   private String precedingRuleString() {
-    return (nPrecedingRulesToMatch == 1) ? "preceding rule is matched" :
-           (allPrecedingRules ? "all" : "any") +
-           " of preceding " + (nPrecedingRulesToMatch) + " rules are matched";
+    return (myNPrecedingRulesToMatch == 1) ? "preceding rule is matched" :
+           (myAllPrecedingRules ? "all" : "any") +
+           " of preceding " + (myNPrecedingRulesToMatch) + " rules are matched";
   }
 
   private String subsequentRuleString() {
-    return (nSubsequentRulesToMatch == 1) ? "subsequent rule is matched" :
-           (allSubsequentRules ? "all" : "any") +
-           " of subsequent " + (nSubsequentRulesToMatch) + " rules are matched";
+    return (myNSubsequentRulesToMatch == 1) ? "subsequent rule is matched" :
+           (myAllSubsequentRules ? "all" : "any") +
+           " of subsequent " + (myNSubsequentRulesToMatch) + " rules are matched";
   }
 
   public final String getExpandedCommentText() {
@@ -387,12 +388,12 @@ public final class CommentRule
     throw new UnsupportedOperationException("CommentRule.isAlphabetize() not implemented");
   }
 
-  public final void setnPrecedingRulesToMatch(final int nPrecedingRulesToMatch) {
-    this.nPrecedingRulesToMatch = nPrecedingRulesToMatch;
+  public final void setNPrecedingRulesToMatch(final int nPrecedingRulesToMatch) {
+    this.myNPrecedingRulesToMatch = nPrecedingRulesToMatch;
   }
 
-  public final void setnSubsequentRulesToMatch(final int nSubsequentRulesToMatch) {
-    this.nSubsequentRulesToMatch = nSubsequentRulesToMatch;
+  public final void setNSubsequentRulesToMatch(final int nSubsequentRulesToMatch) {
+    this.myNSubsequentRulesToMatch = nSubsequentRulesToMatch;
   }
 
 // ------------------------------------------------- CANONICAL METHODS -------------------------------------------------
@@ -402,10 +403,10 @@ public final class CommentRule
     final CommentRule c = (CommentRule)object;
     return commentText.equals(c.commentText) &&
            emitCondition == c.emitCondition &&
-           nPrecedingRulesToMatch == c.nPrecedingRulesToMatch &&
-           nSubsequentRulesToMatch == c.nSubsequentRulesToMatch &&
-           allPrecedingRules == c.allPrecedingRules &&
-           allSubsequentRules == c.allSubsequentRules &&
+           myNPrecedingRulesToMatch == c.myNPrecedingRulesToMatch &&
+           myNSubsequentRulesToMatch == c.myNSubsequentRulesToMatch &&
+           myAllPrecedingRules == c.myAllPrecedingRules &&
+           myAllSubsequentRules == c.myAllSubsequentRules &&
            commentFillString.equals(c.commentFillString);
   }
 
@@ -417,26 +418,27 @@ public final class CommentRule
 
 // ---------------------------------------------- Interface AttributeGroup ---------------------------------------------
 
+  @NotNull
   public final /*CommentRule*/AttributeGroup deepCopy() {
     final CommentRule comment = new CommentRule();
     comment.commentText = commentText;
     comment.emitCondition = emitCondition;
-    comment.nPrecedingRulesToMatch = nPrecedingRulesToMatch;
-    comment.nSubsequentRulesToMatch = nSubsequentRulesToMatch;
-    comment.allPrecedingRules = allPrecedingRules;
-    comment.allSubsequentRules = allSubsequentRules;
+    comment.myNPrecedingRulesToMatch = myNPrecedingRulesToMatch;
+    comment.myNSubsequentRulesToMatch = myNSubsequentRulesToMatch;
+    comment.myAllPrecedingRules = myAllPrecedingRules;
+    comment.myAllSubsequentRules = myAllSubsequentRules;
     comment.commentFillString = commentFillString.deepCopy();
     return comment;
   }
 
-  public final void writeExternal(final Element parent) {
+  public final void writeExternal(@NotNull final Element parent) {
     final Element me = new Element("Comment");
     me.setText(escape(commentText));
     me.setAttribute("condition", "" + emitCondition);
-    me.setAttribute("nPrecedingRulesToMatch", "" + nPrecedingRulesToMatch);
-    me.setAttribute("nSubsequentRulesToMatch", "" + nSubsequentRulesToMatch);
-    me.setAttribute("allPrecedingRules", "" + allPrecedingRules);
-    me.setAttribute("allSubsequentRules", "" + allSubsequentRules);
+    me.setAttribute("nPrecedingRulesToMatch", "" + myNPrecedingRulesToMatch);
+    me.setAttribute("nSubsequentRulesToMatch", "" + myNSubsequentRulesToMatch);
+    me.setAttribute("allPrecedingRules", "" + myAllPrecedingRules);
+    me.setAttribute("allSubsequentRules", "" + myAllSubsequentRules);
     commentFillString.writeExternal(me);
     parent.getChildren().add(me);
   }
@@ -464,11 +466,12 @@ public final class CommentRule
 // -------------------------------------------------- Interface IRule --------------------------------------------------
 
 
+  @NotNull
   public RuleInstance createRuleInstance() {
     return CommentRuleInstanceFactory.buildCommentRuleInstance(this);
   }
 
-  public boolean isMatch(RangeEntry rangeEntry) {
+  public boolean isMatch(@NotNull RangeEntry rangeEntry) {
     return false; // comment rules match no entries -- they're just placeholders to generate comments.
   }
 
@@ -493,12 +496,12 @@ public final class CommentRule
 
 // --------------------------------------------------- OTHER METHODS ---------------------------------------------------
 
-  public int getnPrecedingRulesToMatch() {
-    return nPrecedingRulesToMatch;
+  public int getNPrecedingRulesToMatch() {
+    return myNPrecedingRulesToMatch;
   }
 
-  public final int getnSubsequentRulesToMatch() {
-    return nSubsequentRulesToMatch;
+  public final int getNSubsequentRulesToMatch() {
+    return myNSubsequentRulesToMatch;
   }
 
 // --------------------------------------------------- INNER CLASSES ---------------------------------------------------
@@ -524,8 +527,8 @@ public final class CommentRule
       anyAllCheckbox = new JCheckBox("items match");
       anyAllCheckbox.setSelected((emitCondition & (preceding ? 1 : 2)) > 0);
       anyAllComboBox = new JComboBox(new String[]{"any", "all"});
-      anyAllComboBox.setSelectedIndex(preceding ? (allPrecedingRules ? 1 : 0)
-                                                : (allSubsequentRules ? 1 : 0));
+      anyAllComboBox.setSelectedIndex(preceding ? (myAllPrecedingRules ? 1 : 0)
+                                                : (myAllSubsequentRules ? 1 : 0));
       Dimension d = anyAllComboBox.getPreferredSize();
       d.width += 3; // make room for "any", if "all" is narrower and is first selection.
       anyAllComboBox.setPreferredSize(d);
@@ -543,7 +546,7 @@ public final class CommentRule
       d = anyAllPrevNumber.getPreferredSize();
       d.width += 3;
       anyAllPrevNumber.setPreferredSize(d);
-      anyAllPrevNumber.setValue(preceding ? nPrecedingRulesToMatch : nSubsequentRulesToMatch);
+      anyAllPrevNumber.setValue(preceding ? myNPrecedingRulesToMatch : myNSubsequentRulesToMatch);
       anyAllPrevNumber.setFocusLostBehavior(JFormattedTextField.COMMIT_OR_REVERT);
       rulesLabel = new JLabel("rules");
       constraints.insets = new Insets(0, 10, 0, 0);
@@ -577,10 +580,10 @@ public final class CommentRule
         public void actionPerformed(final ActionEvent e) {
           final int s = anyAllComboBox.getSelectedIndex();
           if (preceding) {
-            allPrecedingRules = (s == 1);
+            myAllPrecedingRules = (s == 1);
           }
           else {
-            allSubsequentRules = (s == 1);
+            myAllSubsequentRules = (s == 1);
           }
         }
       });
@@ -592,10 +595,10 @@ public final class CommentRule
             anyAllPrevNumber.setValue(n);
           }
           if (preceding) {
-            nPrecedingRulesToMatch = n;
+            myNPrecedingRulesToMatch = n;
           }
           else {
-            nSubsequentRulesToMatch = n;
+            myNSubsequentRulesToMatch = n;
           }
         }
       });

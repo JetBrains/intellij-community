@@ -96,7 +96,10 @@ public class MockRunManager extends RunManagerEx {
   }
 
   @Override
-  public void addConfiguration(RunnerAndConfigurationSettings settings, boolean isShared, List<BeforeRunTask> tasks) {
+  public void addConfiguration(RunnerAndConfigurationSettings settings,
+                               boolean isShared,
+                               List<BeforeRunTask> tasks,
+                               boolean addTemplateTasksIfAbsent) {
   }
 
   @Override
@@ -111,18 +114,12 @@ public class MockRunManager extends RunManagerEx {
   @NotNull
   @Override
   public List<BeforeRunTask> getBeforeRunTasks(RunConfiguration settings) {
-    return null;
-  }
-
-  @NotNull
-  @Override
-  public List<BeforeRunTask> getBeforeRunTasks(RunConfiguration settings, boolean includeOnlyActiveTasks) {
     return Collections.emptyList();
   }
 
   @NotNull
   @Override
-  public <T extends BeforeRunTask> List<T> getBeforeRunTasks(Key<T> taskProviderID, boolean includeOnlyActiveTasks) {
+  public <T extends BeforeRunTask> List<T> getBeforeRunTasks(Key<T> taskProviderID) {
     return Collections.emptyList();
   }
 
@@ -130,6 +127,10 @@ public class MockRunManager extends RunManagerEx {
   @Override
   public <T extends BeforeRunTask> List<T> getBeforeRunTasks(RunConfiguration settings, Key<T> taskProviderID) {
     return Collections.emptyList();
+  }
+
+  @Override
+  public void setBeforeRunTasks(RunConfiguration runConfiguration, List<BeforeRunTask> tasks, boolean addEnabledTemplateTasksIfAbsent) {
   }
 
   @Override

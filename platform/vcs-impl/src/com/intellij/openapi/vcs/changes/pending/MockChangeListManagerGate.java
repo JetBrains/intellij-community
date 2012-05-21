@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vcs.changes.pending;
 
+import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;

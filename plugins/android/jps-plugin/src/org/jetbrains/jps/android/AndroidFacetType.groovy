@@ -1,6 +1,7 @@
 package org.jetbrains.jps.android
 
 import org.jetbrains.android.util.AndroidCommonUtils
+import org.jetbrains.android.util.AndroidNativeLibData
 import org.jetbrains.jps.MacroExpander
 import org.jetbrains.jps.Module
 import org.jetbrains.jps.idea.Facet
@@ -20,10 +21,25 @@ class AndroidFacetType extends FacetTypeService {
   @Override
   Facet createFacet(Module module, String name, Node facetConfiguration, MacroExpander macroExpander) {
     def facet = new AndroidFacet(module, name);
+    facet.additionalNativeLibs = new ArrayList<AndroidNativeLibData>()
 
     facetConfiguration.each {Node child ->
       if (AndroidCommonUtils.INCLUDE_SYSTEM_PROGUARD_FILE_ELEMENT_NAME.equals(child.name())) {
         facet.includeSystemProguardCfgFile = Boolean.parseBoolean((String)child.text())
+      }
+
+      if (AndroidCommonUtils.ADDITIONAL_NATIVE_LIBS_ELEMENT.equals(child.name())) {
+        child.each {Node nativeLibItem ->
+          final architecture = nativeLibItem.get("@" + AndroidCommonUtils.ARCHITECTURE_ATTRIBUTE)
+          final url = nativeLibItem.get("@" + AndroidCommonUtils.URL_ATTRIBUTE)
+          final targetFileName = nativeLibItem.get("@" + AndroidCommonUtils.TARGET_FILE_NAME_ATTRIBUTE)
+
+          if (architecture != null && url != null && targetFileName != null) {
+            facet.additionalNativeLibs.add(new AndroidNativeLibData((String)architecture,
+                                                                    IdeaProjectLoadingUtil.pathFromUrl((String)url),
+                                                                    (String)targetFileName))
+          }
+        }
       }
 
       String value = child."@value"

@@ -118,20 +118,21 @@ public class InterfaceInstance
     }
   }
 
+  @SuppressWarnings("MismatchedQueryAndUpdateOfStringBuilder")
   void emit(Emitter emitter) {
-    StringBuffer sb = emitter.getStringBuffer();
+    StringBuilder buffer = emitter.getTextBuffer();
     String commentString = expandComment(rule.getPrecedingComment());
     if (commentString.length() > 0) {
-      sb.append("\n");
-      sb.append(commentString);
+      buffer.append("\n");
+      buffer.append(commentString);
     }
     for (MethodEntry rangeEntry : methods) {
       rangeEntry.emit(emitter);
     }
     commentString = expandComment(rule.getTrailingComment());
     if (commentString.length() > 0) {
-      sb.append("\n");
-      sb.append(commentString);
+      buffer.append("\n");
+      buffer.append(commentString);
     }
   }
 

@@ -92,7 +92,7 @@ public class JUnit4Framework extends JavaTestFramework {
     PsiManager manager = clazz.getManager();
     PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
 
-    method = factory.createMethodFromText("@org.junit.Before public void setUp() throws Exception {\n}", null);
+    method = createSetUpPatternMethod(factory);
     PsiMethod existingMethod = clazz.findMethodBySignature(method, false);
     if (existingMethod != null) {
       int exit = ApplicationManager.getApplication().isUnitTestMode() ?

@@ -139,6 +139,13 @@ public interface JavaCodeFragment extends PsiImportHolder, PsiCodeFragment {
         return Visibility.VISIBLE;
       }
     };
+
+    VisibilityChecker PROJECT_SCOPE_VISIBLE = new VisibilityChecker() {
+      @Override
+      public Visibility isDeclarationVisible(PsiElement declaration, PsiElement place) {
+        return declaration.getManager().isInProject(declaration) ? Visibility.VISIBLE : Visibility.NOT_VISIBLE;
+      }
+    };
   }
 
   /**

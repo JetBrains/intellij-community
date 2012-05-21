@@ -58,16 +58,15 @@ public class TabLabel extends JPanel {
   protected ActionPanel myActionPanel;
   private boolean myCentered;
 
-  private final Wrapper myLabelPlaceholder = new Wrapper();
+  private final Wrapper myLabelPlaceholder = new Wrapper(false);
   private final JBTabsImpl myTabs;
-
-  private BufferedImage myImage;
 
   private BufferedImage myInactiveStateImage;
   private Rectangle myLastPaintedInactiveImageBounds;
-  private boolean myStretchedByWidth;
 
   public TabLabel(JBTabsImpl tabs, final TabInfo info) {
+    super(false);
+
     myTabs = tabs;
     myInfo = info;
     myLabel.setOpaque(false);
@@ -87,7 +86,7 @@ public class TabLabel extends JPanel {
 
     addMouseListener(new MouseAdapter() {
       public void mousePressed(final MouseEvent e) {
-        if (myTabs.isSelectionClick(e, false) && myInfo.isEnabled()) {
+        if (JBTabsImpl.isSelectionClick(e, false) && myInfo.isEnabled()) {
           final TabInfo selectedInfo = myTabs.getSelectedInfo();
           if (selectedInfo != myInfo) {
             myInfo.setPreviousSelection(selectedInfo);
@@ -148,29 +147,29 @@ public class TabLabel extends JPanel {
     if (myTabs.isDropTarget(myInfo)) return;
 
     if (myTabs.getSelectedInfo() != myInfo) {
-      myImage = null;
       doPaint(g);
-    } else if (!SystemInfo.isMac) {
-      myImage = new BufferedImage(getWidth(), getHeight(), BufferedImage.TYPE_INT_ARGB);
-      final Graphics2D lg = myImage.createGraphics();
-      doPaint(lg);
-      lg.dispose();
     }
+  }
+
+  @Override
+  public void setBounds(Rectangle r) {
+    super.setBounds(r);
+  }
+
+  @Override
+  public void setBounds(int x, int y, int width, int height) {
+    super.setBounds(x, y, width, height);
   }
 
   public void paintImage(Graphics g) {
     final Rectangle b = getBounds();
-    if (myImage != null) {
-      g.drawImage(myImage, b.x, b.y, getWidth(), getHeight(), null);
-    } else {
-      final Graphics lG = g.create(b.x, b.y, b.width, b.height);
-      try {
-        lG.setColor(Color.red);
-        doPaint(lG);
-      }
-      finally {
-        lG.dispose();
-      }
+    final Graphics lG = g.create(b.x, b.y, b.width, b.height);
+    try {
+      lG.setColor(Color.red);
+      doPaint(lG);
+    }
+    finally {
+      lG.dispose();
     }
   }
 
@@ -291,7 +290,6 @@ public class TabLabel extends JPanel {
 
     myTabs.myActivePopup.addPopupMenuListener(myTabs);
     myTabs.myActivePopup.show(e.getComponent(), e.getX(), e.getY());
-    myTabs.onPopup(myTabs.myPopupInfo);
   }
 
 
@@ -350,7 +348,7 @@ public class TabLabel extends JPanel {
     return hasIcons;
   }
   
-  private void setIcon(final Icon icon, int layer) {
+  private void setIcon(@Nullable final Icon icon, int layer) {
     LayeredIcon layeredIcon = getLayeredIcon();
     layeredIcon.setIcon(icon, layer);
     if (hasIcons()) {
@@ -364,14 +362,6 @@ public class TabLabel extends JPanel {
 
   private LayeredIcon getLayeredIcon() {
     return myIcon;
-  }
-
-  public void setAttraction(boolean enabled) {
-    getLayeredIcon().setLayerEnabled(1, enabled);
-  }
-
-  public boolean isAttractionEnabled() {
-    return getLayeredIcon().isLayerEnabled(1);
   }
 
   public TabInfo getInfo() {
@@ -418,10 +408,6 @@ public class TabLabel extends JPanel {
     myTabs.revalidateAndRepaint(false);
   }
 
-  @Override
-  protected void processMouseEvent(final MouseEvent e) {
-    super.processMouseEvent(e);
-  }
 
   private void removeOldActionPanel() {
     if (myActionPanel != null) {
@@ -435,7 +421,7 @@ public class TabLabel extends JPanel {
 
   }
 
-  private void setAttractionIcon(Icon icon) {
+  private void setAttractionIcon(@Nullable Icon icon) {
     if (myIcon.getIcon(0) == null) {
       setIcon(null, 1);
       myOverlayedIcon = icon;

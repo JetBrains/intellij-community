@@ -16,19 +16,18 @@
 package com.intellij.android.designer.designSurface;
 
 import com.android.ide.common.rendering.api.RenderSession;
-import com.android.ide.common.rendering.api.Result;
 import com.android.ide.common.resources.configuration.*;
 import com.android.sdklib.IAndroidTarget;
 import com.intellij.android.designer.actions.ProfileAction;
 import com.intellij.android.designer.componentTree.AndroidTreeDecorator;
-import com.intellij.android.designer.model.ModelParser;
-import com.intellij.android.designer.model.PropertyParser;
-import com.intellij.android.designer.model.RadViewComponent;
-import com.intellij.android.designer.model.viewAnimator.RadViewAnimatorLayout;
+import com.intellij.android.designer.model.*;
 import com.intellij.android.designer.profile.ProfileManager;
 import com.intellij.designer.DesignerToolWindowManager;
 import com.intellij.designer.componentTree.TreeComponentDecorator;
-import com.intellij.designer.designSurface.*;
+import com.intellij.designer.designSurface.ComponentDecorator;
+import com.intellij.designer.designSurface.DesignerEditorPanel;
+import com.intellij.designer.designSurface.EditOperation;
+import com.intellij.designer.designSurface.OperationContext;
 import com.intellij.designer.designSurface.selection.NonResizeSelectionDecorator;
 import com.intellij.designer.designSurface.tools.ComponentCreationFactory;
 import com.intellij.designer.designSurface.tools.ComponentPasteFactory;
@@ -38,7 +37,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
@@ -57,7 +55,6 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.lang.reflect.Method;
 import java.util.List;
 
 /**
@@ -112,71 +109,6 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
     });
   }
 
-  @Override
-  public void updateTreeArea(EditableArea area) {
-    area.addSelectionListener(new ComponentSelectionListener() {
-      @Override
-      public void selectionChanged(EditableArea area) {
-        List<RadComponent> selection = area.getSelection();
-        if (selection.size() == 1) {
-          final RadComponent component = selection.get(0);
-          final RadComponent parent = component.getParent();
-          if (parent instanceof RadViewComponent && parent.getLayout() instanceof RadViewAnimatorLayout) {
-            ApplicationManager.getApplication().invokeLater(
-              new Runnable() {
-                @Override
-                public void run() {
-                  try {
-                    int index = parent.getChildren().indexOf(component);
-                    Object parentView =
-                      ((RadViewComponent)parent).getViewInfo().getViewObject();
-                    Method method =
-                      parentView.getClass().getMethod("setDisplayedChild", int.class);
-                    method.invoke(parentView, index);
-
-                    Result result = mySession.render();
-
-                    // XXX
-
-                    if (!result.isSuccess()) {
-                      System.out.println(
-                        "No re render session: " +
-                        result.getErrorMessage() +
-                        " : " +
-                        result.getStatus() +
-                        " : " +
-                        result.getData() +
-                        " : " +
-                        result.getException());
-                    }
-                    else {
-                      RadViewComponent rootComponent = (RadViewComponent)myRootComponent;
-                      RootView rootView = (RootView)rootComponent.getNativeComponent();
-                      rootView.setImage(mySession.getImage());
-                      ModelParser.updateRootComponent(rootComponent, mySession, rootView);
-
-                      myLayeredPane.revalidate();
-
-                      DesignerToolWindowManager.getInstance(getProject()).refresh(true);
-                    }
-                  }
-                  catch (Throwable e) {
-                    showError("Render error", e);
-                  }
-                }
-              }, new Condition() {
-                @Override
-                public boolean value(Object o) {
-                  return mySession == null;
-                }
-              }
-            );
-          }
-        }
-      }
-    });
-  }
-
   private void reparseFile() {
     try {
       storeState();
@@ -210,6 +142,7 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
         RadViewComponent newRootComponent = parser.getRootComponent();
 
         newRootComponent.setClientProperty(ModelParser.XML_FILE_KEY, myXmlFile);
+        newRootComponent.setClientProperty(ModelParser.MODULE_KEY, getModule());
         newRootComponent.setClientProperty(TreeComponentDecorator.KEY, myTreeDecorator);
 
         PropertyParser propertyParser = new PropertyParser(myModule, myProfileAction.getProfileManager().getSelectedTarget());
@@ -507,7 +440,11 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
       @NotNull
       @Override
       public RadComponent create() throws Exception {
-        return ModelParser.createComponent(null, paletteItem.getMetaModel());
+        RadViewComponent component = ModelParser.createComponent(null, paletteItem.getMetaModel());
+        if (component instanceof IConfigurableComponent) {
+          ((IConfigurableComponent)component).configure(getModule());
+        }
+        return component;
       }
     };
   }

@@ -259,12 +259,12 @@ public class CompoundRendererConfigurable implements UnnamedConfigurable {
             getTableModel().removeRow(selectedRow);
           }
         }
-      }).setUpAction(new AnActionButtonRunnable() {
+      }).setMoveUpAction(new AnActionButtonRunnable() {
         @Override
         public void run(AnActionButton button) {
           TableUtil.moveSelectedItemsUp(myTable);
         }
-      }).setDownAction(new AnActionButtonRunnable() {
+      }).setMoveDownAction(new AnActionButtonRunnable() {
         @Override
         public void run(AnActionButton button) {
           TableUtil.moveSelectedItemsDown(myTable);

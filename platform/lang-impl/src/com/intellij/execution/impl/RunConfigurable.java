@@ -21,7 +21,6 @@ import com.intellij.execution.configuration.ConfigurationFactoryEx;
 import com.intellij.execution.configurations.*;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.options.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -38,6 +37,7 @@ import com.intellij.ui.*;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.IconUtil;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.config.StorageAccessors;
 import com.intellij.util.containers.ContainerUtil;
@@ -54,7 +54,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.event.*;
-import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeNode;
@@ -63,7 +62,6 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
-import java.net.URL;
 import java.util.*;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -71,12 +69,10 @@ import java.util.regex.Pattern;
 
 class RunConfigurable extends BaseConfigurable {
   private static final Icon ICON = IconLoader.getIcon("/general/configurableRunDebug.png");
-  @NonNls private static final String GENERAL_ADD_ICON_PATH = "/general/add.png";
-  private static final Icon ADD_ICON = IconLoader.getIcon(GENERAL_ADD_ICON_PATH);
-  private static final Icon REMOVE_ICON = IconLoader.getIcon("/general/remove.png");
+  private static final Icon ADD_ICON = IconUtil.getAddIcon();
+  private static final Icon REMOVE_ICON = IconUtil.getRemoveIcon();
   private static final Icon SAVE_ICON = IconLoader.getIcon("/runConfigurations/saveTempConfig.png");
-  @NonNls private static final String EDIT_DEFAULTS_ICON_PATH = "/general/ideOptions.png";
-  private static final Icon EDIT_DEFAULTS_ICON = IconLoader.getIcon(EDIT_DEFAULTS_ICON_PATH);
+  private static final Icon EDIT_DEFAULTS_ICON = IconLoader.getIcon("/general/ideOptions.png");
   @NonNls private static final String DIVIDER_PROPORTION = "dividerProportion";
 
   private volatile boolean isDisposed = false;
@@ -164,12 +160,7 @@ class RunConfigurable extends BaseConfigurable {
             if (userObject instanceof SingleConfigurationConfigurable) {
               final SingleConfigurationConfigurable<?> settings = (SingleConfigurationConfigurable)userObject;
               RunnerAndConfigurationSettings snapshot;
-              try {
-                snapshot = settings.getSnapshot();
-              }
-              catch (ConfigurationException e) {
-                snapshot = settings.getSettings();
-              }
+              snapshot = settings.getSettings();
               configuration = settings.getConfiguration();
               name = settings.getNameText();
               setIcon(ProgramRunnerUtil.getConfigurationIcon(snapshot, !settings.isValid(), runManager.isTemporary(configuration)));
@@ -390,47 +381,19 @@ class RunConfigurable extends BaseConfigurable {
   }
 
   private void drawPressAddButtonMessage(final ConfigurationType configurationType) {
-    JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+    JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
     panel.setBorder(new EmptyBorder(30, 0, 0, 0));
     panel.add(new JLabel("Press the"));
 
-    final JEditorPane browser = new JEditorPane();
-    browser.setEditable(false);
-    browser.setEditorKit(new HTMLEditorKit());
-    browser.setBackground(myRightPanel.getBackground());
-    final URL addUrl = getClass().getResource(GENERAL_ADD_ICON_PATH);
+    JLabel addIcon = new JLabel(IconUtil.getAddIcon());
+    addIcon.setBorder(new EmptyBorder(0, 0, 0, 5));
+    panel.add(addIcon);
+
     final String configurationTypeDescription = configurationType != null
                                                 ? configurationType.getConfigurationTypeDescription()
                                                 : ExecutionBundle.message("run.configuration.default.type.description");
-    browser.setText(ExecutionBundle.message("empty.run.configuration.panel.text.label2", addUrl, configurationType != null ? configurationType.getId() : ""));
-    browser.addHyperlinkListener(new HyperlinkListener() {
-      public void hyperlinkUpdate(final HyperlinkEvent e) {
-        if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
-          final String description = e.getDescription();
-          final String addPrefix = "add";
-          if (description.startsWith(addPrefix)) {
-            final String typeId = description.substring(addPrefix.length());
-            if (!typeId.isEmpty()) {
-              for (ConfigurationType type : Extensions.getExtensions(ConfigurationType.CONFIGURATION_TYPE_EP)) {
-                if (Comparing.strEqual(type.getId(), typeId)) {
-                  final ConfigurationFactory[] factories = type.getConfigurationFactories();
-                  if (factories.length > 0) {
-                    createNewConfiguration(factories[0]);
-                  }
-                  return;
-                }
-              }
-            }
-            new MyToolbarAddAction().actionPerformed(null);
-          }
-        }
-      }
-    });
-    panel.add(browser);
-
     panel.add(new JLabel(ExecutionBundle.message("empty.run.configuration.panel.text.label3", configurationTypeDescription)));
-    JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(panel);
-    scrollPane.setBorder(null);
+    JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(panel, true);
 
     myRightPanel.removeAll();
     myRightPanel.add(scrollPane, BorderLayout.CENTER);
@@ -504,8 +467,8 @@ class RunConfigurable extends BaseConfigurable {
         e.getPresentation().setEnabled(TreeUtil.findNodeWithObject("Defaults", myTree.getModel(), myRoot) != null);
       }
     });
-    group.add(new MyMoveAction(ExecutionBundle.message("move.up.action.name"), null, IconLoader.getIcon("/actions/moveUp.png"), -1));
-    group.add(new MyMoveAction(ExecutionBundle.message("move.down.action.name"), null, IconLoader.getIcon("/actions/moveDown.png"), 1));
+    group.add(new MyMoveAction(ExecutionBundle.message("move.up.action.name"), null, IconUtil.getMoveUpIcon(), -1));
+    group.add(new MyMoveAction(ExecutionBundle.message("move.down.action.name"), null, IconUtil.getMoveDownIcon(), 1));
     return group;
   }
 
@@ -645,7 +608,7 @@ class RunConfigurable extends BaseConfigurable {
 
     for (RunConfigurationBean each : stableConfigurations) {
       toDeleteSettings.remove(each.getSettings());
-      manager.addConfiguration(each.getSettings(), each.isShared(), each.getStepsBeforeLaunch());
+      manager.addConfiguration(each.getSettings(), each.isShared(), each.getStepsBeforeLaunch(), false);
     }
 
     RunnerAndConfigurationSettings selected = manager.getSelectedConfiguration();

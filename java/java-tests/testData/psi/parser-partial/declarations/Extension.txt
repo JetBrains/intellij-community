@@ -1,0 +1,33 @@
+PsiJavaFile:Extension.java
+  PsiJavaToken:LBRACE('{')
+  PsiWhiteSpace(' ')
+  PsiMethod:f
+    PsiModifierList:
+      <empty list>
+    PsiTypeParameterList
+      <empty list>
+    PsiTypeElement:int
+      PsiKeyword:int('int')
+    PsiWhiteSpace(' ')
+    PsiIdentifier:f('f')
+    PsiParameterList:()
+      PsiJavaToken:LPARENTH('(')
+      PsiJavaToken:RPARENTH(')')
+    PsiReferenceList
+      <empty list>
+    PsiWhiteSpace(' ')
+    PsiKeyword:default('default')
+    PsiWhiteSpace(' ')
+    PsiCodeBlock
+      PsiJavaToken:LBRACE('{')
+      PsiWhiteSpace(' ')
+      PsiReturnStatement
+        PsiKeyword:return('return')
+        PsiWhiteSpace(' ')
+        PsiLiteralExpression:42
+          PsiJavaToken:INTEGER_LITERAL('42')
+        PsiJavaToken:SEMICOLON(';')
+      PsiWhiteSpace(' ')
+      PsiJavaToken:RBRACE('}')
+  PsiWhiteSpace(' ')
+  PsiJavaToken:RBRACE('}')

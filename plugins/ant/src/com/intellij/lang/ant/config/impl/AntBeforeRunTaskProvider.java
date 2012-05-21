@@ -66,7 +66,7 @@ public class AntBeforeRunTaskProvider extends BeforeRunTaskProvider<AntBeforeRun
   @Override
   public String getDescription(AntBeforeRunTask task) {
     final String targetName = task.getTargetName();
-    if (targetName == null && !task.isEnabled()) {
+    if (targetName == null) {
       return AntBundle.message("ant.target.before.run.description.empty");
     }
     return AntBundle.message("ant.target.before.run.description", targetName != null? targetName : "<not selected>");
@@ -144,7 +144,7 @@ public class AntBeforeRunTaskProvider extends BeforeRunTaskProvider<AntBeforeRun
 
   public void handleTargetRename(String oldName, String newName) {
     final RunManagerEx runManager = RunManagerEx.getInstanceEx(myProject);
-    for (AntBeforeRunTask task : runManager.getBeforeRunTasks(ID, false)) {
+    for (AntBeforeRunTask task : runManager.getBeforeRunTasks(ID)) {
       if (oldName.equals(task.getTargetName())) {
         task.setTargetName(newName);
       }

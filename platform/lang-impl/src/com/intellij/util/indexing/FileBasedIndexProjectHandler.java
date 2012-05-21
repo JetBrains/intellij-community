@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,6 +32,7 @@ import com.intellij.openapi.project.ProjectManagerAdapter;
 import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
+import com.intellij.openapi.roots.impl.ProjectRootManagerComponent;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -47,7 +48,7 @@ public class FileBasedIndexProjectHandler extends AbstractProjectComponent imple
   private final FileTypeManager myFileTypeManager;
   private final ProjectFileExclusionManagerImpl myExclusionManager;
 
-  public FileBasedIndexProjectHandler(final FileBasedIndexImpl index, final Project project, final ProjectRootManagerEx rootManager, FileTypeManager ftManager, final ProjectManager projectManager) {
+  public FileBasedIndexProjectHandler(final FileBasedIndexImpl index, final Project project, final ProjectRootManagerComponent rootManager, FileTypeManager ftManager, final ProjectManager projectManager) {
     super(project);
     myIndex = index;
     myRootManager = rootManager;

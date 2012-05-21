@@ -39,6 +39,8 @@ import net.miginfocom.swing.MigLayout;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.ListDataEvent;
+import javax.swing.event.ListDataListener;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -56,6 +58,7 @@ class BeforeRunStepsPanel extends JPanel {
 
   private final List<BeforeRunTask> originalTasks = new ArrayList<BeforeRunTask>();
   private StepsBeforeRunListener myListener;
+  private final JPanel myPanel;
 
   BeforeRunStepsPanel(StepsBeforeRunListener listener) {
     myListener = listener;
@@ -64,7 +67,28 @@ class BeforeRunStepsPanel extends JPanel {
     myList.getEmptyText().setText(ExecutionBundle.message("before.launch.panel.empty"));
     myList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     myList.setCellRenderer(new MyListCellRenderer());
-    ToolbarDecorator myDecorator = ToolbarDecorator.createDecorator(myList).setVisibleRowCount(4);
+
+    myModel.addListDataListener(new ListDataListener() {
+      @Override
+      public void intervalAdded(ListDataEvent e) {
+        adjustVisibleRowCount();
+      }
+
+      @Override
+      public void intervalRemoved(ListDataEvent e) {
+        adjustVisibleRowCount();
+      }
+
+      @Override
+      public void contentsChanged(ListDataEvent e) {
+      }
+
+      private void adjustVisibleRowCount() {
+        myList.setVisibleRowCount(Math.max(4, Math.min(8, myModel.getSize())));
+      }
+    });
+
+    ToolbarDecorator myDecorator = ToolbarDecorator.createDecorator(myList);
     if (!SystemInfo.isMac) {
       myDecorator.setAsTopToolbar();
     }
@@ -72,7 +96,7 @@ class BeforeRunStepsPanel extends JPanel {
       @Override
       public void run(AnActionButton button) {
         int index = myList.getSelectedIndex();
-        if (index ==-1)
+        if (index == -1)
           return;
         Pair<BeforeRunTask, BeforeRunTaskProvider<BeforeRunTask>> selection = getSelection();
         if (selection == null)
@@ -97,12 +121,19 @@ class BeforeRunStepsPanel extends JPanel {
         doAddAction(button);
       }
     });
+    myDecorator.setAddActionUpdater(new AnActionButtonUpdater() {
+      @Override
+      public boolean isEnabled(AnActionEvent e) {
+        return checkBeforeRunTasksAbility(true);
+      }
+    });
 
     myShowSettingsBeforeRunCheckBox = new JCheckBox(ExecutionBundle.message("configuration.edit.before.run"));
 
-    setLayout(new MigLayout("fill, ins 0, gap 10"));
-    add(myShowSettingsBeforeRunCheckBox, "shrinky, wrap");
-    add(myDecorator.createPanel(), "grow, push");
+    setLayout(new MigLayout("fill, ins 0, gap 10, hidemode 3"));
+    add(myShowSettingsBeforeRunCheckBox, "shrinky, ay bottom, wrap");
+    myPanel = myDecorator.createPanel();
+    add(myPanel, "grow, push");
   }
 
   @Nullable
@@ -120,10 +151,12 @@ class BeforeRunStepsPanel extends JPanel {
     myRunConfiguration = settings.getConfiguration();
 
     originalTasks.clear();
-    originalTasks.addAll(RunManagerImpl.getInstanceImpl(myRunConfiguration.getProject()).getBeforeRunTasks(myRunConfiguration, true));
+    originalTasks.addAll(RunManagerImpl.getInstanceImpl(myRunConfiguration.getProject()).getBeforeRunTasks(myRunConfiguration));
     myModel.replaceAll(originalTasks);
     myShowSettingsBeforeRunCheckBox.setSelected(settings.isEditBeforeRun());
     myShowSettingsBeforeRunCheckBox.setEnabled(!(myRunConfiguration instanceof UnknownRunConfiguration));
+
+    myPanel.setVisible(checkBeforeRunTasksAbility(false));
   }
 
   public List<BeforeRunTask> getTasks(boolean applyCurrentState) {
@@ -138,6 +171,26 @@ class BeforeRunStepsPanel extends JPanel {
     return myShowSettingsBeforeRunCheckBox.isSelected();
   }
 
+  private boolean checkBeforeRunTasksAbility(boolean checkOnlyAddAction) {
+    if (myRunConfiguration instanceof UnknownRunConfiguration) {
+      return false;
+    }
+    Set<Key> activeProviderKeys = getActiveProviderKeys();
+    final BeforeRunTaskProvider<BeforeRunTask>[] providers = Extensions.getExtensions(BeforeRunTaskProvider.EXTENSION_POINT_NAME,
+                                                                                      myRunConfiguration.getProject());
+    for (final BeforeRunTaskProvider<BeforeRunTask> provider : providers) {
+      if (provider.createTask(myRunConfiguration) != null) {
+        if (!checkOnlyAddAction) {
+          return true;
+        }
+        else if (!provider.isSingleton() || !activeProviderKeys.contains(provider.getId())) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
   void doAddAction(AnActionButton button) {
       if (myRunConfiguration instanceof UnknownRunConfiguration) {
         return;
@@ -146,16 +199,15 @@ class BeforeRunStepsPanel extends JPanel {
       final JBPopupFactory popupFactory = JBPopupFactory.getInstance();
       final BeforeRunTaskProvider<BeforeRunTask>[] providers = Extensions.getExtensions(BeforeRunTaskProvider.EXTENSION_POINT_NAME,
                                                                                         myRunConfiguration.getProject());
-    final List<Key> activeProviderKeys = getActiveProviderKeys();
+    Set<Key> activeProviderKeys = getActiveProviderKeys();
 
     DefaultActionGroup actionGroup = new DefaultActionGroup(null, false);
       for (final BeforeRunTaskProvider<BeforeRunTask> provider : providers) {
-        String providerName = provider.getName();
         if (provider.createTask(myRunConfiguration) == null)
           continue;
         if (activeProviderKeys.contains(provider.getId()) && provider.isSingleton())
           continue;
-        AnAction providerAction = new AnAction(providerName, null, provider.getIcon()) {
+        AnAction providerAction = new AnAction(provider.getName(), null, provider.getIcon()) {
           @Override
           public void actionPerformed(AnActionEvent e) {
             BeforeRunTask task = provider.createTask(myRunConfiguration);
@@ -191,8 +243,8 @@ class BeforeRunStepsPanel extends JPanel {
       popup.show(button.getPreferredPopupPoint());
   }
 
-  private List<Key> getActiveProviderKeys() {
-    List<Key> result = new ArrayList<Key>();
+  private Set<Key> getActiveProviderKeys() {
+    Set<Key> result = new HashSet<Key>();
     for (BeforeRunTask task : myModel.getItems()) {
       result.add(task.getProviderId());
     }
@@ -205,11 +257,11 @@ class BeforeRunStepsPanel extends JPanel {
         = (RunConfigurationBeforeRunProvider.RunConfigurableBeforeRunTask)task;
       RunConfiguration configuration = runTask.getSettings().getConfiguration();
 
-      List<BeforeRunTask> tasks = RunManagerImpl.getInstanceImpl(configuration.getProject()).getBeforeRunTasks(configuration, true);
+      List<BeforeRunTask> tasks = RunManagerImpl.getInstanceImpl(configuration.getProject()).getBeforeRunTasks(configuration);
       for (BeforeRunTask beforeRunTask : tasks) {
         if (beforeRunTask instanceof RunConfigurationBeforeRunProvider.RunConfigurableBeforeRunTask) {
-          configurationSet.add(((RunConfigurationBeforeRunProvider.RunConfigurableBeforeRunTask)beforeRunTask).getSettings().getConfiguration());
-          getAllRunBeforeRuns(beforeRunTask, configurationSet);
+          if (configurationSet.add(((RunConfigurationBeforeRunProvider.RunConfigurableBeforeRunTask)beforeRunTask).getSettings().getConfiguration()))
+            getAllRunBeforeRuns(beforeRunTask, configurationSet);
         }
       }
     }

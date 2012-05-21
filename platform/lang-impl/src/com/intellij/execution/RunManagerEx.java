@@ -53,7 +53,10 @@ public abstract class RunManagerEx extends RunManager {
   @NotNull
   public abstract RunnerAndConfigurationSettings createConfiguration(String name, ConfigurationFactory type);
 
-  public abstract void addConfiguration(RunnerAndConfigurationSettings settings, boolean isShared, List<BeforeRunTask> tasks);
+  public abstract void addConfiguration(RunnerAndConfigurationSettings settings,
+                                        boolean isShared,
+                                        List<BeforeRunTask> tasks,
+                                        boolean addTemplateTasksIfAbsent);
 
   public abstract void addConfiguration(final RunnerAndConfigurationSettings settings, final boolean isShared);
 
@@ -62,14 +65,13 @@ public abstract class RunManagerEx extends RunManager {
   @NotNull
   public abstract List<BeforeRunTask> getBeforeRunTasks(RunConfiguration settings);
 
-  @NotNull
-  public abstract List<BeforeRunTask> getBeforeRunTasks(RunConfiguration settings, boolean includeOnlyActiveTasks);
+  public abstract void setBeforeRunTasks(RunConfiguration runConfiguration, List<BeforeRunTask> tasks, boolean addEnabledTemplateTasksIfAbsent);
 
   @NotNull
   public abstract <T extends BeforeRunTask> List<T> getBeforeRunTasks(RunConfiguration settings, Key<T> taskProviderID);
 
   @NotNull
-  public abstract <T extends BeforeRunTask> List<T> getBeforeRunTasks(Key<T> taskProviderID, boolean includeOnlyActiveTasks);
+  public abstract <T extends BeforeRunTask> List<T> getBeforeRunTasks(Key<T> taskProviderID);
 
   public abstract RunnerAndConfigurationSettings findConfigurationByName(@Nullable final String name);
 

@@ -127,7 +127,7 @@ public abstract class AnActionButton extends AnAction implements ShortcutProvide
 
   public void updateButton(AnActionEvent e) {
     final JComponent component = getContextComponent();
-    e.getPresentation().setEnabled(component != null && component.isShowing());
+    e.getPresentation().setEnabled(component != null && component.isShowing() && component.isEnabled());
   }
 
   @Override

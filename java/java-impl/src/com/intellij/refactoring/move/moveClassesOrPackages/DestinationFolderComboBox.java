@@ -287,6 +287,8 @@ public abstract class DestinationFolderComboBox extends ComboboxWithBrowseButton
       }
       return true;
     }
+    if (oItem == null) return itemWrapper == null;
+    if (itemWrapper == null) return false;
     if (oItem.getDirectory() != itemWrapper.getDirectory()) {
       return false;
     }

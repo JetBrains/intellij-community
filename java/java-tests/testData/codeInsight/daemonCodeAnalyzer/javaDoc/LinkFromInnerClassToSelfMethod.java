@@ -2,7 +2,7 @@ class Test {
 
      public void i(int ppp) {}
      /**
-      * {@link #<error>foo(int)</error>}
+      * {@link #<error descr="Cannot resolve symbol 'foo(int)'">foo</error>(int)}
       * {@link #foo()}
       * {@link #i(int)}
      */

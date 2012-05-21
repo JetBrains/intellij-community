@@ -16,8 +16,6 @@
 
 package com.intellij.lang.ant.config.actions;
 
-import com.intellij.ide.IdeEventQueue;
-import com.intellij.ide.impl.DataManagerImpl;
 import com.intellij.lang.ant.config.AntBuildFile;
 import com.intellij.lang.ant.config.AntConfiguration;
 import com.intellij.lang.ant.config.AntConfigurationListener;
@@ -25,7 +23,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 
@@ -83,12 +80,12 @@ public class TargetActionStub extends AnAction implements Disposable {
       return;
     }
     if (!myActionInvoked.getAndSet(true)) {
-      final DataContext context = e.getDataContext();
-      if (context instanceof DataManagerImpl.MyDataContext) {
-        // hack: macro.expand() can cause UI events such as showing dialogs ('Prompt' macro) which may 'invalidate' the datacontext
-        // since we know exactly that context is valid, we need to update its event count
-        ((DataManagerImpl.MyDataContext)context).setEventCount(IdeEventQueue.getInstance().getEventCount());
-      }
+      //final DataContext context = e.getDataContext();
+      //if (context instanceof DataManagerImpl.MyDataContext) {
+      //  // hack: macro.expand() can cause UI events such as showing dialogs ('Prompt' macro) which may 'invalidate' the datacontext
+      //  // since we know exactly that context is valid, we need to update its event count
+      //  ((DataManagerImpl.MyDataContext)context).setEventCount(IdeEventQueue.getInstance().getEventCount());
+      //}
       action.actionPerformed(e);
     }
   }

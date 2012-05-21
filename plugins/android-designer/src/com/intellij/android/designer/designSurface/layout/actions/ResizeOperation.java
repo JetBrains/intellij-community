@@ -41,9 +41,8 @@ import java.util.List;
 public class ResizeOperation implements EditOperation {
   public static final String TYPE = "resize_children";
 
-  private final static Color blue = new Color(0, 50, 255);
+  public final static Color blue = new Color(0, 50, 255);
   private static final int SNAP_DELTA = 4;
-  private static final int WRAP_CONTENT = 0 << 30;
 
   private final OperationContext myContext;
   private RadViewComponent myComponent;
@@ -65,26 +64,11 @@ public class ResizeOperation implements EditOperation {
     myContext = context;
   }
 
-  public static void points(ResizeSelectionDecorator decorator) {
-    width(decorator);
-    height(decorator);
-    decorator.addPoint(new DirectionResizePoint(blue, Color.black, Position.SOUTH_EAST, TYPE, "Change layout:width x layout:height"));
-  }
-
-  public static void width(ResizeSelectionDecorator decorator) {
-    decorator.addPoint(new DirectionResizePoint(blue, Color.black, Position.EAST, TYPE, "Change layout:width"));
-  }
-
-  public static void height(ResizeSelectionDecorator decorator) {
-    decorator.addPoint(new DirectionResizePoint(blue, Color.black, Position.SOUTH, TYPE, "Change layout:height"));
-  }
-
   @Override
   public void setComponent(RadComponent component) {
     myComponent = (RadViewComponent)component;
 
     Rectangle bounds = myComponent.getBounds(myContext.getArea().getFeedbackLayer());
-
     String width = myComponent.getTag().getAttributeValue("android:layout_width");
     String height = myComponent.getTag().getAttributeValue("android:layout_height");
 
@@ -92,39 +76,12 @@ public class ResizeOperation implements EditOperation {
     Pair<Integer, Integer> heightInfo = getDefaultSize(height, bounds.height);
 
     myWrapSize = new Dimension(widthInfo.first, heightInfo.first);
-    calculateWrapSize(bounds);
+    myComponent.calculateWrapSize(myWrapSize, bounds);
 
     myFillSize = new Dimension(widthInfo.second, heightInfo.second);
     calculateFillParentSize(bounds);
 
     createStaticFeedback(bounds, width, height);
-  }
-
-  private void calculateWrapSize(Rectangle bounds) {
-    if (myWrapSize.width == -1 || myWrapSize.height == -1) {
-      try {
-        Object viewObject = myComponent.getViewInfo().getViewObject();
-        Class<?> viewClass = viewObject.getClass();
-
-        viewClass.getMethod("forceLayout").invoke(viewObject);
-        viewClass.getMethod("measure", int.class, int.class).invoke(viewObject, WRAP_CONTENT, WRAP_CONTENT);
-
-        if (myWrapSize.width == -1) {
-          myWrapSize.width = (Integer)viewClass.getMethod("getMeasuredWidth").invoke(viewObject);
-        }
-        if (myWrapSize.height == -1) {
-          myWrapSize.height = (Integer)viewClass.getMethod("getMeasuredHeight").invoke(viewObject);
-        }
-      }
-      catch (Throwable e) {
-        if (myWrapSize.width == -1) {
-          myWrapSize.width = bounds.width;
-        }
-        if (myWrapSize.height == -1) {
-          myWrapSize.height = bounds.height;
-        }
-      }
-    }
   }
 
   private void calculateFillParentSize(Rectangle bounds) {
@@ -146,7 +103,7 @@ public class ResizeOperation implements EditOperation {
     }
   }
 
-  private static Pair<Integer, Integer> getDefaultSize(String value, int size) {
+  public static Pair<Integer, Integer> getDefaultSize(String value, int size) {
     int wrap = -1;
     int fill = -1;
 
@@ -337,5 +294,25 @@ public class ResizeOperation implements EditOperation {
       return "fill_parent";
     }
     return Integer.toString(size) + "dp";
+  }
+
+  //////////////////////////////////////////////////////////////////////////////////////////
+  //
+  // ResizePoint
+  //
+  //////////////////////////////////////////////////////////////////////////////////////////
+
+  public static void points(ResizeSelectionDecorator decorator) {
+    width(decorator);
+    height(decorator);
+    decorator.addPoint(new DirectionResizePoint(blue, Color.black, Position.SOUTH_EAST, TYPE, "Change layout:width x layout:height"));
+  }
+
+  public static void width(ResizeSelectionDecorator decorator) {
+    decorator.addPoint(new DirectionResizePoint(blue, Color.black, Position.EAST, TYPE, "Change layout:width"));
+  }
+
+  public static void height(ResizeSelectionDecorator decorator) {
+    decorator.addPoint(new DirectionResizePoint(blue, Color.black, Position.SOUTH, TYPE, "Change layout:height"));
   }
 }

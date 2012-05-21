@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
-import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.PsiClassReferenceType;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.resolve.reference.impl.PsiPolyVariantCachingReference;
@@ -93,12 +92,12 @@ public class PsiNewExpressionImpl extends ExpressionPsiElement implements PsiNew
   @Override
   @NotNull
   public PsiExpression[] getArrayDimensions() {
-    PsiExpression[] expressions = getChildrenAsPsiElements(ElementType.ARRAY_DIMENSION_BIT_SET, Constants.PSI_EXPRESSION_ARRAY_CONSTRUCTOR);
+    PsiExpression[] expressions = getChildrenAsPsiElements(ElementType.ARRAY_DIMENSION_BIT_SET, PsiExpression.ARRAY_FACTORY);
     PsiExpression qualifier = getQualifier();
-    if (qualifier == null){
+    if (qualifier == null) {
       return expressions;
     }
-    else{
+    else {
       LOG.assertTrue(expressions[0] == qualifier);
       PsiExpression[] expressions1 = new PsiExpression[expressions.length - 1];
       System.arraycopy(expressions, 1, expressions1, 0, expressions1.length);

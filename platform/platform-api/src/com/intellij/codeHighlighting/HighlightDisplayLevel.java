@@ -24,6 +24,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.util.ImageLoader;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -44,11 +45,12 @@ public class HighlightDisplayLevel {
   public static final HighlightDisplayLevel INFO = new HighlightDisplayLevel(HighlightSeverity.INFO, DO_NOT_SHOW.getIcon());
   public static final HighlightDisplayLevel WEAK_WARNING = new HighlightDisplayLevel(HighlightSeverity.WEAK_WARNING, DO_NOT_SHOW.getIcon());
 
-  public static final HighlightDisplayLevel NON_SWITCHABLE_ERROR = new HighlightDisplayLevel(HighlightSeverity.ERROR, createIconByMask(CodeInsightColors.ERRORS_ATTRIBUTES));
+  public static final HighlightDisplayLevel NON_SWITCHABLE_ERROR = new HighlightDisplayLevel(HighlightSeverity.ERROR);
 
   private Icon myIcon;
   private final HighlightSeverity mySeverity;
 
+  @Nullable
   public static HighlightDisplayLevel find(String name) {
     for (Map.Entry<HighlightSeverity, HighlightDisplayLevel> entry : ourMap.entrySet()) {
       HighlightSeverity severity = entry.getKey();
@@ -69,6 +71,11 @@ public class HighlightDisplayLevel {
     myIcon = icon;
     ourMap.put(mySeverity, this);
   }
+
+  public HighlightDisplayLevel(HighlightSeverity severity) {
+    mySeverity = severity;
+  }
+
 
   public String toString() {
     return mySeverity.toString();

@@ -32,7 +32,7 @@ import com.wrq.rearranger.settings.CommentRule;
 import com.wrq.rearranger.settings.RearrangerSettings;
 import com.wrq.rearranger.settings.RelatedMethodsSettings;
 import com.wrq.rearranger.settings.attributeGroups.IHasGetterSetterDefinition;
-import com.wrq.rearranger.settings.attributeGroups.IRestrictMethodExtraction;
+import com.wrq.rearranger.settings.attributeGroups.RestrictMethodExtraction;
 import com.wrq.rearranger.settings.attributeGroups.Rule;
 import com.wrq.rearranger.util.CommentUtil;
 import com.wrq.rearranger.util.MethodUtil;
@@ -45,10 +45,7 @@ import java.util.*;
  * Corresponds to a method in the source file.
  * Contains structures and logic to handle related method rearrangement.
  */
-public class MethodEntry
-  extends ClassContentsEntry
-  implements IRelatableEntry
-{
+public class MethodEntry extends ClassContentsEntry implements RelatableEntry {
 // ------------------------------ FIELDS ------------------------------
 
   private static final Logger LOG = Logger.getInstance("#" + MethodEntry.class.getName());
@@ -58,22 +55,23 @@ public class MethodEntry
    * the corresponding setter will be placed in calledMethods.  This allows the same code to rearrange both
    * types of related methods.
    */
-  List<MethodEntry> calledMethods              = new ArrayList<MethodEntry>();
-  List<MethodEntry> calledByMethods            = new ArrayList<MethodEntry>();
-  List<MethodEntry> overloadedMethods          = new ArrayList<MethodEntry>();
+  private final List<MethodEntry> myCalledMethods              = new ArrayList<MethodEntry>();
+  private final List<MethodEntry> myCalledByMethods            = new ArrayList<MethodEntry>();
+  private final List<MethodEntry> myOverloadedMethods          = new ArrayList<MethodEntry>();
   //    MethodEntry correspondingSetter = null; // TODO - avoid wrong level for setters
-  List<MethodEntry> correspondingGetterSetters = new ArrayList<MethodEntry>();
-  private boolean keptWithProperty;
-  private boolean relatedMethod;
+  final List<MethodEntry> myCorrespondingGetterSetters = new ArrayList<MethodEntry>();
+  
+  private boolean myKeptWithProperty;
+  private boolean myRelatedMethod;
 
   /** @return true if the method is related to another.  In this case, the method is exempt from rule matching. */
   public boolean isRelatedMethod() {
-    return relatedMethod;
+    return myRelatedMethod;
   }
 
   /** @return true if the method is a setter and will be emitted below a corresponding getter. */
   public boolean isEmittableSetter() {
-    return setter && correspondingGetterSetters.size() > 0;
+    return setter && myCorrespondingGetterSetters.size() > 0;
   }
 
   private       boolean isOverloadedMethod;
@@ -151,16 +149,16 @@ public class MethodEntry
   {
     List<RangeEntry> parentEntries = new ArrayList<RangeEntry>(ruleInstance.getMatches());
     for (RangeEntry o : parentEntries) {
-      if (o instanceof IRelatableEntry) {
+      if (o instanceof RelatableEntry) {
         MethodEntry me = (MethodEntry)o;
         if (me.isGetter()) {
-          if (me.keptWithProperty) {
+          if (me.myKeptWithProperty) {
             if (me.getMatchedRule() != null && me.getMatchedRule().getMatches() != null) {
               // prevent the getter from appearing under a rule it matches; it will be placed under the property
               me.getMatchedRule().getMatches().remove(me);
             }
           }
-          for (MethodEntry theSetter : me.correspondingGetterSetters) {
+          for (MethodEntry theSetter : me.myCorrespondingGetterSetters) {
             final RuleInstance theRule = theSetter.getMatchedRule();
             LOG.debug(
               "rearrangeRelatedItems: for getter method " +
@@ -173,7 +171,7 @@ public class MethodEntry
             {
               LOG.debug(
                 "remove entry " +
-                theSetter.end +
+                theSetter.myEnd +
                 " from matched rule" +
                 theRule +
                 "; matches = " +
@@ -183,15 +181,15 @@ public class MethodEntry
             }
           }
         }
-        if (me.calledMethods.size() > 0) {
+        if (!me.myCalledMethods.isEmpty()) {
           List<MethodEntry> parents = new LinkedList<MethodEntry>();
           parents.add(me);
           moveRelatedItems(
             entries,
             parents,
             rms,
-            ((PsiMethod)me.end).getName(),
-            ((PsiMethod)me.end).getName() + "()",
+            ((PsiMethod)me.myEnd).getName(),
+            ((PsiMethod)me.myEnd).getName() + "()",
             1
           );
           if (LOG.isDebugEnabled()) {
@@ -234,10 +232,10 @@ public class MethodEntry
         ListIterator li = entries.listIterator();
         while (li.hasNext()) {
           Object o = li.next();
-          if (o instanceof IRelatableEntry) {
+          if (o instanceof RelatableEntry) {
             MethodEntry me = (MethodEntry)o;
             for (MethodEntry entry : parents) {
-              if (me.calledByMethods.contains(entry)) {
+              if (me.myCalledByMethods.contains(entry)) {
                 children.add(me);
                 li.remove();
                 break;
@@ -255,10 +253,10 @@ public class MethodEntry
         ListIterator li = entries.listIterator();
         while (li.hasNext()) {
           Object o = li.next();
-          if (o instanceof IRelatableEntry) {
+          if (o instanceof RelatableEntry) {
             MethodEntry me = (MethodEntry)o;
             for (MethodEntry entry : parents) {
-              if (me.calledByMethods.contains(entry)) {
+              if (me.myCalledByMethods.contains(entry)) {
                 me.insertAlphabetically(children);
                 li.remove();
                 break;
@@ -274,7 +272,7 @@ public class MethodEntry
          * Add these to the list of children in order of invocation.
          */
         for (MethodEntry me : parents) {
-          for (MethodEntry child : me.calledMethods) {
+          for (MethodEntry child : me.myCalledMethods) {
             if (entries.contains(child)) {
               children.add(child);
               entries.remove(child);
@@ -292,7 +290,7 @@ public class MethodEntry
     if (children.size() > 0) {
       if (rms.isDepthFirstOrdering()) {
         for (MethodEntry entry : children) {
-          if (entry.calledMethods.size() == 0) {
+          if (entry.myCalledMethods.size() == 0) {
             continue;
           }
           List<MethodEntry> parent = new LinkedList<MethodEntry>();
@@ -302,7 +300,7 @@ public class MethodEntry
             parent,
             rms,
             topLevelMethodName,
-            allMethodNames + "." + ((PsiMethod)entry.end).getName() + "()",
+            allMethodNames + "." + ((PsiMethod)entry.myEnd).getName() + "()",
             level + 1
           );
         }
@@ -336,7 +334,7 @@ public class MethodEntry
           allMN.append(",");
         }
         first = false;
-        allMN.append(((PsiMethod)entry.end).getName());
+        allMN.append(((PsiMethod)entry.myEnd).getName());
       }
     }
     if (parents.size() > 1) {
@@ -348,11 +346,11 @@ public class MethodEntry
   public void insertAlphabetically(final List<MethodEntry> list) {
     Comparator<MethodEntry> comparator = new Comparator<MethodEntry>() {
       public int compare(MethodEntry me, MethodEntry me2) {
-        String s = ((PsiMethod)me.end).getName();
+        String s = ((PsiMethod)me.myEnd).getName();
         if (me.isGetter()) {
-          s = MethodUtil.getPropertyName((PsiMethod)me.end);
+          s = MethodUtil.getPropertyName((PsiMethod)me.myEnd);
         }
-        return s.compareTo(((PsiMethod)me2.end).getName());
+        return s.compareTo(((PsiMethod)me2.myEnd).getName());
       }
     };
     insertInList(list, comparator);
@@ -365,7 +363,7 @@ public class MethodEntry
       MethodEntry entry = ((MethodEntry)li.next());
       if (comparator.compare(this, entry) < 0) {
         LOG.debug(
-          "insertInList dependent method: add " + end.toString() + " at index " + (li.nextIndex() - 1)
+          "insertInList dependent method: add " + myEnd.toString() + " at index " + (li.nextIndex() - 1)
         );
         list.add(li.nextIndex() - 1, this);
         inserted = true;
@@ -377,7 +375,7 @@ public class MethodEntry
   }
 
   void dumpChild(int level) {
-    LOG.debug(level + ": " + ((PsiMethod)end).getName());
+    LOG.debug(level + ": " + ((PsiMethod)myEnd).getName());
     for (MethodEntry methodEntry : sortedMethods) {
       methodEntry.dumpChild(level + 1);
     }
@@ -397,7 +395,7 @@ public class MethodEntry
    */
   public static void eliminateCycles(List<ClassContentsEntry> contents) {
     for (ClassContentsEntry entry : contents) {
-      if (entry instanceof IRelatableEntry) {
+      if (entry instanceof RelatableEntry) {
         MethodEntry current = (MethodEntry)entry;
         List<MethodEntry> set = new LinkedList<MethodEntry>();
         set.add(current);
@@ -407,13 +405,13 @@ public class MethodEntry
   }
 
   private static void test(MethodEntry current, List<MethodEntry> set) {
-    Iterator<MethodEntry> it = current.calledMethods.iterator();
+    Iterator<MethodEntry> it = current.myCalledMethods.iterator();
     while (it.hasNext()) {
       MethodEntry callee = it.next();
       if (set.contains(callee)) {
-        callee.calledByMethods.remove(current);
-        if (callee.calledByMethods.size() == 0) {
-          callee.relatedMethod = false;
+        callee.myCalledByMethods.remove(current);
+        if (callee.myCalledByMethods.size() == 0) {
+          callee.myRelatedMethod = false;
         }
         it.remove();
       }
@@ -443,10 +441,10 @@ public class MethodEntry
     cullOverloadedMethods(contents, false);
     List<ClassContentsEntry> copy = new ArrayList<ClassContentsEntry>(contents);
     for (ClassContentsEntry rangeEntry : copy) {
-      if (rangeEntry instanceof IRelatableEntry) {
+      if (rangeEntry instanceof RelatableEntry) {
         MethodEntry current = (MethodEntry)rangeEntry;
-        if (current.overloadedMethods.size() > 0) {
-          List<MethodEntry> newList = new ArrayList<MethodEntry>(current.overloadedMethods.size() + 1);
+        if (current.myOverloadedMethods.size() > 0) {
+          List<MethodEntry> newList = new ArrayList<MethodEntry>(current.myOverloadedMethods.size() + 1);
           newList.add(current);
           /**
            * we are looking at the head of a list of overloaded methods.  We need to sort the list
@@ -456,11 +454,11 @@ public class MethodEntry
             case RearrangerSettings.OVERLOADED_ORDER_RETAIN_ORIGINAL:
               // list is already in original order, except perhaps that the top-most extracted method
               // comes first (if there is one).
-              newList.addAll(current.overloadedMethods);
+              newList.addAll(current.myOverloadedMethods);
               break;
             case RearrangerSettings.OVERLOADED_ORDER_ASCENDING_PARAMETERS:
             case RearrangerSettings.OVERLOADED_ORDER_DESCENDING_PARAMETERS:
-              for (MethodEntry entry : current.overloadedMethods) {
+              for (MethodEntry entry : current.myOverloadedMethods) {
                 boolean inserted = false;
                 for (int index = 0; index < newList.size(); index++) {
                   MethodEntry me = newList.get(index);
@@ -479,7 +477,7 @@ public class MethodEntry
               }
               break;
           }
-          current.overloadedMethods.clear();
+          current.myOverloadedMethods.clear();
           /**
            * if the head of the arraylist is not the same as "current", then the sort operation moved
            * another method to the head of the list.  Replace that in the contents array.  Then assign
@@ -513,23 +511,23 @@ public class MethodEntry
   {
     List<ClassContentsEntry> copy = new ArrayList<ClassContentsEntry>(contents);
     for (ClassContentsEntry o : copy) {
-      if (o instanceof IRelatableEntry) {
+      if (o instanceof RelatableEntry) {
         MethodEntry me = (MethodEntry)o;
         if ((me.isRelatedMethod() == doExtractedMethods) && !me.isOverloadedMethod) {
-          String meName = me.end.toString();
+          String meName = me.myEnd.toString();
           // search contents list for methods with identical name, and attach them as overloaded methods.
           ListIterator<ClassContentsEntry> contentIterator = contents.listIterator();
           while (contentIterator.hasNext()) {
             Object o1 = contentIterator.next();
-            if (o1 instanceof IRelatableEntry) {
+            if (o1 instanceof RelatableEntry) {
               MethodEntry me2 = (MethodEntry)o1;
               if (me2 == me) {
                 continue;
               }
-              String me2Name = me2.end.toString();
+              String me2Name = me2.myEnd.toString();
               if (meName.equals(me2Name)) {
                 contentIterator.remove();
-                me.overloadedMethods.add(me2);
+                me.myOverloadedMethods.add(me2);
                 me2.isOverloadedMethod = true; // set flag so array copy will skip this entry.
               }
             }
@@ -564,8 +562,8 @@ public class MethodEntry
   public String[] getAdditionalIconNames() {
     ArrayList<String> result = new ArrayList<String>();
     String[] sa = new String[0];
-    if (end instanceof PsiMethod) {
-      PsiMethod m = (PsiMethod)end;
+    if (myEnd instanceof PsiMethod) {
+      PsiMethod m = (PsiMethod)myEnd;
       if (m.getModifierList().hasModifierProperty(PsiModifier.PUBLIC)) {
         result.add("nodes/c_public");
       }
@@ -595,8 +593,8 @@ public class MethodEntry
   }
 
   public String getTypeIconName() {
-    if (end instanceof PsiMethod) {
-      PsiMethod m = (PsiMethod)end;
+    if (myEnd instanceof PsiMethod) {
+      PsiMethod m = (PsiMethod)myEnd;
       return (((PsiModifierList)m.getModifierList()).hasModifierProperty(PsiModifier.STATIC)) ? "nodes/staticMethod" : "nodes/method";
     }
     return null;
@@ -610,7 +608,7 @@ public class MethodEntry
   public JLabel getPopupEntryText(RearrangerSettings settings) {
     StringBuffer name = new StringBuffer(80);
 
-    PsiMethod m = (PsiMethod)end;
+    PsiMethod m = (PsiMethod)myEnd;
     if (m.getReturnTypeElement() != null && !settings.isShowTypeAfterMethod()) {
       name.append(m.getReturnTypeElement().getText());
       name.append(' ');
@@ -670,23 +668,23 @@ public class MethodEntry
      */
     setGetter(
       MethodUtil.isGetter(
-        (PsiMethod)end,
+        (PsiMethod)myEnd,
         settings.getDefaultGSDefinition()
       )
     );
     setSetter(
       MethodUtil.isSetter(
-        (PsiMethod)end,
+        (PsiMethod)myEnd,
         settings.getDefaultGSDefinition()
       )
     );
     for (Rule rule : settings.getItemOrderAttributeList()) {
-      if (rule instanceof IRestrictMethodExtraction) {
+      if (rule instanceof RestrictMethodExtraction) {
         if (rule.isMatch(this)) {
-          if (((IRestrictMethodExtraction)rule).isNoExtractedMethods()) {
+          if (((RestrictMethodExtraction)rule).isNoExtractedMethods()) {
             LOG.debug(
               "excluding " +
-              end.toString() +
+              myEnd.toString() +
               " from extracted method consideration"
             );
             setNoExtractedMethods(true);
@@ -715,9 +713,7 @@ public class MethodEntry
     }
   }
 
-  public void determineSettersAndMethodCalls(RearrangerSettings settings,
-                                             List<ClassContentsEntry> contents)
-  {
+  public void determineSettersAndMethodCalls(RearrangerSettings settings, List<ClassContentsEntry> contents) {
     if (isGetter()) {
       if (settings.isKeepGettersSettersTogether()) {
         determineSetter(contents, settings); // link getters/setters via correspondingGetterSetter entries
@@ -739,47 +735,47 @@ public class MethodEntry
    * option to keep getters and setters together is set.  This is a special case.)
    */
   public void determineExtractedMethod(RelatedMethodsSettings settings) {
-    relatedMethod = false;
+    myRelatedMethod = false;
     if (!isGetter() && !isSetter()) {
-      if (calledByMethods.size() > 0) {
-        PsiMethod m = (PsiMethod)end;
+      if (myCalledByMethods.size() > 0) {
+        PsiMethod m = (PsiMethod)myEnd;
         if (!m.getModifierList().hasModifierProperty(PsiModifier.PRIVATE)) {
           switch (settings.getNonPrivateTreatment()) {
             case RelatedMethodsSettings.NON_PRIVATE_EXTRACTED_NEVER:
               break;
             case RelatedMethodsSettings.NON_PRIVATE_EXTRACTED_ONE_CALLER:
-              if (calledByMethods.size() == 1) {
-                relatedMethod = true;
+              if (myCalledByMethods.size() == 1) {
+                myRelatedMethod = true;
               }
               break;
             case RelatedMethodsSettings.NON_PRIVATE_EXTRACTED_ANY_CALLERS:
-              relatedMethod = true;
+              myRelatedMethod = true;
               break;
           }
         }
         else {
-          relatedMethod = true;
+          myRelatedMethod = true;
         }
       }
     }
     else {
-      if (isSetter() && calledByMethods.size() > 0 && correspondingGetterSetters.size() == 0) {
-        relatedMethod = true;
-        LOG.debug(end.toString() + " is setter but has no getter, treated as extracted method");
+      if (isSetter() && myCalledByMethods.size() > 0 && myCorrespondingGetterSetters.size() == 0) {
+        myRelatedMethod = true;
+        LOG.debug(myEnd.toString() + " is setter but has no getter, treated as extracted method");
       }
       else {
-        LOG.debug(end.toString() + " is getter/setter, not treated as extracted method");
+        LOG.debug(myEnd.toString() + " is getter/setter, not treated as extracted method");
       }
     }
-    LOG.debug("determined " + end.toString() + " is extracted method? " + relatedMethod);
+    LOG.debug("determined " + myEnd.toString() + " is extracted method? " + myRelatedMethod);
     /**
      * If this is not an extracted method, remove it from any callers so that it won't be moved.
      */
-    if (!relatedMethod) {
-      ListIterator<MethodEntry> li = calledByMethods.listIterator();
+    if (!myRelatedMethod) {
+      ListIterator<MethodEntry> li = myCalledByMethods.listIterator();
       while (li.hasNext()) {
         MethodEntry entry = (li.next());
-        entry.calledMethods.remove(this);
+        entry.myCalledMethods.remove(this);
         li.remove();
       }
     }
@@ -787,31 +783,31 @@ public class MethodEntry
      * Remaining entries are only extracted methods at this point.  Using first/last rule, keep only the call by
      * the calling method that this child method will be grouped with, and discard the rest.
      */
-    if (calledByMethods.size() > 1) {
+    if (myCalledByMethods.size() > 1) {
       ListIterator<MethodEntry> li;
       if (settings.isBelowFirstCaller()) {
-        li = calledByMethods.listIterator(1);
+        li = myCalledByMethods.listIterator(1);
         while (li.hasNext()) {
           MethodEntry entry = (li.next());
-          entry.calledMethods.remove(this);
+          entry.myCalledMethods.remove(this);
           li.remove();
         }
       }
       else {
-        li = calledByMethods.listIterator(calledByMethods.size() - 1);
+        li = myCalledByMethods.listIterator(myCalledByMethods.size() - 1);
         while (li.hasPrevious()) {
           MethodEntry entry = (li.previous());
-          entry.calledMethods.remove(this);
+          entry.myCalledMethods.remove(this);
           li.remove();
         }
       }
     }
-    if (relatedMethod) {
+    if (myRelatedMethod) {
       LOG.debug(
         "extracted method " +
         toString() +
         " will be arranged under " +
-        calledByMethods.get(0).toString()
+        myCalledByMethods.get(0).toString()
       );
     }
   }
@@ -819,11 +815,11 @@ public class MethodEntry
 // -------------------------- OTHER METHODS --------------------------
 
   public DefaultMutableTreeNode addToPopupTree(DefaultMutableTreeNode parent, RearrangerSettings settings) {
-    DefaultMutableTreeNode node = new RearrangerTreeNode(this, name);
+    DefaultMutableTreeNode node = new RearrangerTreeNode(this, myName);
     parent.add(node);
     ListIterator li;
     for (MethodEntry methodEntry : sortedMethods) {
-      if (methodEntry.isSetter() && methodEntry.calledByMethods.size() > 0) {
+      if (methodEntry.isSetter() && methodEntry.myCalledByMethods.size() > 0) {
         // setters are arranged with getters when "keep getters/setters together" option is checked.
         // but setters are not really called by getters.  So attach them to the upper level.
         methodEntry.addToPopupTree(parent, settings);
@@ -832,7 +828,7 @@ public class MethodEntry
         methodEntry.addToPopupTree(node, settings);
       }
     }
-    for (MethodEntry methodEntry : overloadedMethods) {
+    for (MethodEntry methodEntry : myOverloadedMethods) {
       methodEntry.addToPopupTree(node, settings);
     }
     return node;
@@ -850,15 +846,15 @@ public class MethodEntry
                               String allMethodNames,
                               int level)
   {
-    final String currentMethodName = ((PsiMethod)end).getName();
+    final String currentMethodName = ((PsiMethod)myEnd).getName();
     String[] callingNames = new String[allCallingMethods.size()];
     for (int i = 0; i < allCallingMethods.size(); i++) {
       MethodEntry me = allCallingMethods.get(i);
-      callingNames[i] = ((PsiMethod)me.end).getName();
+      callingNames[i] = ((PsiMethod)me.myEnd).getName();
     }
     MethodEntry topLevel = this;
-    while (topLevel.calledByMethods.size() > 0) {
-      topLevel = (topLevel.calledByMethods.get(0));
+    while (topLevel.myCalledByMethods.size() > 0) {
+      topLevel = (topLevel.myCalledByMethods.get(0));
     }
     switch (rms.getCommentType()) {
       case RelatedMethodsSettings.COMMENT_TYPE_TOP_LEVEL:
@@ -886,14 +882,14 @@ public class MethodEntry
           rms.getPrecedingComment(),
           currentMethodName,
           allMethodNames,
-          ((PsiMethod)topLevel.end).getName(),
+          ((PsiMethod)topLevel.myEnd).getName(),
           level
         );
         customizedTrailingComment = expandComment(
           rms.getTrailingComment(),
           currentMethodName,
           allMethodNames,
-          ((PsiMethod)topLevel.end).getName(),
+          ((PsiMethod)topLevel.myEnd).getName(),
           level
         );
         // recursively assign comments.
@@ -929,7 +925,7 @@ public class MethodEntry
                 rms.getPrecedingComment(),
                 currentMethodName,
                 allMethodNames,
-                ((PsiMethod)topLevel.end).getName(),
+                ((PsiMethod)topLevel.myEnd).getName(),
                 level
               );
           }
@@ -954,7 +950,7 @@ public class MethodEntry
           rms.getPrecedingComment(),
           currentMethodName,
           allMethodNames,
-          ((PsiMethod)topLevel.end).getName(),
+          ((PsiMethod)topLevel.myEnd).getName(),
           level
         );
         // recursively assign comments for each level.
@@ -980,7 +976,7 @@ public class MethodEntry
           rms.getTrailingComment(),
           currentMethodName,
           allMethodNames,
-          ((PsiMethod)topLevel.end).getName(),
+          ((PsiMethod)topLevel.myEnd).getName(),
           level
         );
       }
@@ -1054,20 +1050,18 @@ public class MethodEntry
       return;
     }
     createAlternateValueString();
-    /**
-     * we don't want to check for comments in the body of the method.  So reduce the alternate value string
-     * to only that text up to and including the open brace.  Temporarily remove the rest of the text; append
-     * it again after checking for comments.
-     */
-    int brace = alternateValue.indexOf('{');
+    // We don't want to check for comments in the body of the method.  So reduce the alternate value string
+    // to only that text up to and including the open brace.  Temporarily remove the rest of the text; append
+    // it again after checking for comments.
+    int brace = myAlternateValue.indexOf('{');
     String temp = "";
     if (brace >= 0) {
       // every method should have an open brace -- unless it is abstract.
-      temp = alternateValue.substring(brace + 1, alternateValue.length());
-      alternateValue = alternateValue.substring(0, brace + 1);
+      temp = myAlternateValue.substring(brace + 1, myAlternateValue.length());
+      myAlternateValue = myAlternateValue.substring(0, brace + 1);
     }
     super.checkForComment();
-    alternateValue += temp;
+    myAlternateValue += temp;
   }
 
   /**
@@ -1085,7 +1079,7 @@ public class MethodEntry
     /**
      * recursively walk the method's code block looking for method calls.
      */
-    final PsiMethod thisMethod = (PsiMethod)end;
+    final PsiMethod thisMethod = (PsiMethod)myEnd;
     final MethodEntry thisMethodEntry = this;
 
     JavaRecursiveElementVisitor rev = new JavaRecursiveElementVisitor() {
@@ -1095,11 +1089,11 @@ public class MethodEntry
         /**
          * if the called method is already in our list, don't add it again.
          */
-        if (c != null && !calledMethods.contains(c)) {
+        if (c != null && !myCalledMethods.contains(c)) {
           for (ClassContentsEntry o : possibleMethods) {
-            if (o instanceof IRelatableEntry) {
+            if (o instanceof RelatableEntry) {
               MethodEntry me = (MethodEntry)o;
-              PsiMethod m = (PsiMethod)me.end;
+              PsiMethod m = (PsiMethod)me.myEnd;
               if (c == m) {
                 if (settings.isKeepOverloadedMethodsTogether() &&
                     m.getName().equals(thisMethod.getName()))
@@ -1108,8 +1102,8 @@ public class MethodEntry
                 }
                 else {
                   LOG.debug("method " + thisMethod.toString() + " calls " + m.toString());
-                  calledMethods.add(me);
-                  me.calledByMethods.add(thisMethodEntry);
+                  myCalledMethods.add(me);
+                  me.myCalledByMethods.add(thisMethodEntry);
                 }
                 break;
               }
@@ -1138,40 +1132,40 @@ public class MethodEntry
     {
       return;
     }
-    final PsiMethod thisMethod = (PsiMethod)end;
+    final PsiMethod thisMethod = (PsiMethod)myEnd;
     String thisProperty = MethodUtil.getPropertyName(thisMethod);
-    if (isGetter() && !keptWithProperty) {
+    if (isGetter() && !myKeptWithProperty) {
       if (settings.isKeepGettersSettersWithProperty()) {
         hookGetterToProperty(possibleMethods);
       }
     }
     for (ClassContentsEntry o : possibleMethods) {
-      if (o instanceof IRelatableEntry) {
+      if (o instanceof RelatableEntry) {
         MethodEntry me = (MethodEntry)o;
         // don't use a setter twice (could be two methods which both look like getters; assign the setter
         // to only one of them.)  Also, associate all getter/setter methods for the same property with the
         // first one encountered.
         if ((me.isSetter() ||
              me.isGetter()) &&
-            me.correspondingGetterSetters.size() == 0 &&
+            me.myCorrespondingGetterSetters.size() == 0 &&
             me != this)
         {
-          PsiMethod m = (PsiMethod)me.end;
+          PsiMethod m = (PsiMethod)me.myEnd;
           String otherProperty = MethodUtil.getPropertyName(m);
           if (thisProperty.equals(otherProperty)) {
             LOG.debug("method " + thisMethod.toString() + " is getter; its setter is " + m.toString());
             // place getters ahead of setters
             if (me.isGetter()) {
-              correspondingGetterSetters.add(0, me);
+              myCorrespondingGetterSetters.add(0, me);
               // clear the getter flag and set the setter flag; this causes the method to be emitted
               // under the first getter encountered.
               me.setGetter(false);
               me.setSetter(true);
             }
             else {
-              correspondingGetterSetters.add(me);
+              myCorrespondingGetterSetters.add(me);
             }
-            me.correspondingGetterSetters.add(this);
+            me.myCorrespondingGetterSetters.add(this);
           }
         }
       }
@@ -1186,7 +1180,7 @@ public class MethodEntry
    */
   private void hookGetterToProperty(List<ClassContentsEntry> entries) {
     ListIterator<ClassContentsEntry> li = entries.listIterator();
-    String property = MethodUtil.getPropertyName((PsiMethod)end);
+    String property = MethodUtil.getPropertyName((PsiMethod)myEnd);
     while (li.hasNext()) {
       Object o = li.next();
       if (o instanceof FieldEntry) {
@@ -1195,7 +1189,7 @@ public class MethodEntry
         sb.setCharAt(0, Character.toUpperCase(sb.charAt(0)));
         if (fe.getGetterMethod() == null && property.equals(sb.toString())) {
           fe.setGetterMethod(this);
-          keptWithProperty = true;
+          myKeptWithProperty = true;
           break;
         }
       }
@@ -1203,7 +1197,7 @@ public class MethodEntry
   }
 
   public void emit(Emitter emitter) {
-    StringBuffer sb = emitter.getStringBuffer();
+    StringBuilder sb = emitter.getTextBuffer();
     if (getCustomizedPrecedingComment().length() > 0) {
       sb.append("\n");
       sb.append(getCustomizedPrecedingComment());
@@ -1218,11 +1212,11 @@ public class MethodEntry
      */
     ListIterator li;
     if (isGetter()) {
-      for (MethodEntry entry : correspondingGetterSetters) {
+      for (MethodEntry entry : myCorrespondingGetterSetters) {
         entry.emit(emitter);
       }
     }
-    for (MethodEntry me : overloadedMethods) {
+    for (MethodEntry me : myOverloadedMethods) {
       me.emit(emitter);
     }
     for (MethodEntry me : sortedMethods) {
@@ -1230,17 +1224,17 @@ public class MethodEntry
     }
   }
 
-  protected void emitAllElements(StringBuffer sb, Document document) {
-    if (alternateValue != null) {
+  protected void emitAllElements(StringBuilder sb, Document document) {
+    if (myAlternateValue != null) {
       /**
        * protect body of method from removing newlines.
        */
-      int brace = alternateValue.indexOf('{');
+      int brace = myAlternateValue.indexOf('{');
       String temp = "";
       if (brace >= 0) {
         // every method should have an open brace -- unless it is abstract.
-        temp = alternateValue.substring(brace + 1, alternateValue.length());
-        alternateValue = alternateValue.substring(0, brace + 1);
+        temp = myAlternateValue.substring(brace + 1, myAlternateValue.length());
+        myAlternateValue = myAlternateValue.substring(0, brace + 1);
       }
       super.emitAllElements(sb, document);
       sb.append(temp);
@@ -1253,8 +1247,8 @@ public class MethodEntry
   public void insertInterfaceOrder(List<MethodEntry> list) {
     Comparator<MethodEntry> comparator = new Comparator<MethodEntry>() {
       public int compare(MethodEntry o1, MethodEntry o2) {
-        final int offset1 = getMethodOffsetInInterface((PsiMethod)o1.end);
-        final int offset2 = getMethodOffsetInInterface((PsiMethod)o2.end);
+        final int offset1 = getMethodOffsetInInterface((PsiMethod)o1.myEnd);
+        final int offset2 = getMethodOffsetInInterface((PsiMethod)o2.myEnd);
         if (offset1 < offset2) return -1;
         if (offset1 == offset2) return 0;
         return 1;
@@ -1263,7 +1257,7 @@ public class MethodEntry
     insertInList(list, comparator);
   }
 
-  private int getMethodOffsetInInterface(PsiMethod method) {
+  private static int getMethodOffsetInInterface(PsiMethod method) {
     final PsiMethod[] superMethods = method.findSuperMethods();
 //        final PsiMethod[] superMethods = PsiSuperMethodUtil.findSuperMethods(method); // todo - for IDEA 5.0
     if (superMethods.length == 0) return 0;
@@ -1277,11 +1271,11 @@ public class MethodEntry
 
   public String toString() {
     return "MethodEntry " +
-           end.toString() +
+           myEnd.toString() +
            "; calls " +
-           calledMethods.size() +
+           myCalledMethods.size() +
            ", called by " +
-           calledByMethods.size() +
+           myCalledByMethods.size() +
            ", nParameters=" + nParameters;
   }
 }

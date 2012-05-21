@@ -99,6 +99,10 @@ public class Change {
     return false;
   }
 
+  public boolean isPhantom() {
+    return false;
+  }
+
   public boolean hasOtherLayers() {
     return ! myOtherLayers.isEmpty();
   }

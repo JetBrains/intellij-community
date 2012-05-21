@@ -55,7 +55,7 @@ import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.TabbedPaneWrapper;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.EventDispatcher;
-import com.intellij.util.PlatformIcons;
+import com.intellij.util.IconUtil;
 import com.intellij.util.ui.ThreeStateCheckBox;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -294,8 +294,8 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
     toolbarActionGroup.add(new RemovePackagingElementAction(this));
     toolbarActionGroup.add(Separator.getInstance());
     toolbarActionGroup.add(new SortElementsToggleAction(this.getLayoutTreeComponent()));
-    toolbarActionGroup.add(new MovePackagingElementAction(myLayoutTreeComponent, "Move Up", "", IconLoader.getIcon("/actions/moveUp.png"), -1));
-    toolbarActionGroup.add(new MovePackagingElementAction(myLayoutTreeComponent, "Move Down", "", IconLoader.getIcon("/actions/moveDown.png"), 1));
+    toolbarActionGroup.add(new MovePackagingElementAction(myLayoutTreeComponent, "Move Up", "", IconUtil.getMoveUpIcon(), -1));
+    toolbarActionGroup.add(new MovePackagingElementAction(myLayoutTreeComponent, "Move Down", "", IconUtil.getMoveDownIcon(), 1));
     return toolbarActionGroup;
   }
 
@@ -342,7 +342,7 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
 
   private ActionGroup createAddNonCompositeElementGroup() {
     DefaultActionGroup group = new DefaultActionGroup(ProjectBundle.message("artifacts.add.copy.action"), true);
-    group.getTemplatePresentation().setIcon(PlatformIcons.ADD_ICON);
+    group.getTemplatePresentation().setIcon(IconUtil.getAddIcon());
     for (PackagingElementType<?> type : PackagingElementFactory.getInstance().getNonCompositeElementTypes()) {
       group.add(new AddNewPackagingElementAction(type, this));
     }

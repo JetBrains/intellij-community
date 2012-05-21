@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.codeInsight.template.Expression;
 import com.intellij.codeInsight.template.ExpressionContext;
 import com.intellij.codeInsight.template.PsiTypeResult;
 import com.intellij.codeInsight.template.Result;
+import com.intellij.openapi.editor.Document;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTypesUtil;
@@ -42,28 +43,34 @@ public class ChooseTypeExpression extends Expression {
   private final PsiManager myManager;
 
   public ChooseTypeExpression(TypeConstraint[] constraints, PsiManager manager) {
-    myManager = manager;
-    myTypePointer = SmartTypePointerManager.getInstance(manager.getProject()).createSmartTypePointer(chooseType(constraints));
-    myItems = createItems(constraints);
+    this(constraints, manager, true);
   }
 
-  private LookupElement[] createItems(TypeConstraint[] constraints) {
+  public ChooseTypeExpression(TypeConstraint[] constraints, PsiManager manager, boolean forGroovy) {
+    myManager = manager;
+    myTypePointer = SmartTypePointerManager.getInstance(manager.getProject()).createSmartTypePointer(chooseType(constraints));
+    myItems = createItems(constraints, forGroovy);
+  }
+
+  private static LookupElement[] createItems(TypeConstraint[] constraints, boolean forGroovy) {
     Set<LookupElement> result = new LinkedHashSet<LookupElement>();
 
     for (TypeConstraint constraint : constraints) {
       if (constraint instanceof SubtypeConstraint) {
         result.add(PsiTypeLookupItem.createLookupItem(constraint.getDefaultType(), null));
       } else if (constraint instanceof SupertypeConstraint) {
-        processSupertypes(constraint.getType(), result);
+        processSuperTypes(constraint.getType(), result);
       }
     }
 
-    result.add(LookupElementBuilder.create(GrModifier.DEF).setBold());
+    if (forGroovy) {
+      result.add(LookupElementBuilder.create(GrModifier.DEF).setBold());
+    }
 
     return result.toArray(new LookupElement[result.size()]);
   }
 
-  private static void processSupertypes(PsiType type, Set<LookupElement> result) {
+  private static void processSuperTypes(PsiType type, Set<LookupElement> result) {
     String text = type.getCanonicalText();
     String unboxed = PsiTypesUtil.unboxIfPossible(text);
     if (unboxed != null && !unboxed.equals(text)) {
@@ -73,7 +80,7 @@ public class ChooseTypeExpression extends Expression {
     }
     PsiType[] superTypes = type.getSuperTypes();
     for (PsiType superType : superTypes) {
-      processSupertypes(superType, result);
+      processSuperTypes(superType, result);
     }
   }
 
@@ -86,7 +93,12 @@ public class ChooseTypeExpression extends Expression {
     PsiDocumentManager.getInstance(context.getProject()).commitAllDocuments();
     PsiType type = myTypePointer.getType();
     if (type != null) {
-      return new PsiTypeResult(type, context.getProject());
+      return new PsiTypeResult(type, context.getProject()) {
+        @Override
+        public void handleRecalc(PsiFile psiFile, Document document, int segmentStart, int segmentEnd) {
+          if (myItems.length <= 1) super.handleRecalc(psiFile, document, segmentStart, segmentEnd);
+        }
+      };
     }
 
     return null;

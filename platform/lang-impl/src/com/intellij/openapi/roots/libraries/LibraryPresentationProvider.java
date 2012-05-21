@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,14 +28,14 @@ import java.util.List;
  */
 public abstract class LibraryPresentationProvider<P extends LibraryProperties> {
   public static final ExtensionPointName<LibraryPresentationProvider> EP_NAME = ExtensionPointName.create("com.intellij.library.presentationProvider");
-  private final LibraryKind<P> myKind;
+  private final LibraryKind myKind;
 
-  protected LibraryPresentationProvider(@NotNull LibraryKind<P> kind) {
+  protected LibraryPresentationProvider(@NotNull LibraryKind kind) {
     myKind = kind;
   }
 
   @NotNull
-  public final LibraryKind<P> getKind() {
+  public LibraryKind getKind() {
     return myKind;
   }
 

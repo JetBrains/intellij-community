@@ -20,7 +20,10 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.*;
+import com.intellij.ui.ColorUtil;
+import com.intellij.ui.Gray;
+import com.intellij.ui.PanelWithAnchor;
+import com.intellij.ui.SideBorder;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.PairFunction;
 import com.intellij.util.Processor;
@@ -40,15 +43,12 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
 import javax.swing.plaf.ComboBoxUI;
 import javax.swing.plaf.ProgressBarUI;
-import javax.swing.plaf.UIResource;
 import javax.swing.plaf.basic.BasicComboBoxUI;
-import javax.swing.plaf.basic.BasicTreeUI;
 import javax.swing.plaf.basic.ComboPopup;
 import javax.swing.text.DefaultEditorKit;
 import javax.swing.text.JTextComponent;
 import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.text.html.StyleSheet;
-import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.font.FontRenderContext;
@@ -1562,26 +1562,9 @@ public class UIUtil {
     return BORDER_COLOR;
   }
   
-  public static Color getTitledBorderLineColor() {
-    return BORDER_COLOR;
-  }
-
   public static Font getTitledBorderFont() {
-    return getLabelFont();
-  }
-
-  public static Font getBorderFont(@NotNull FontSize size, boolean isBold) {
-    Font defFont = getTitledBorderFont();
-    if (size == FontSize.SMALL) {
-      defFont = defFont.deriveFont(Math.max(defFont.getSize() - 2f, 11f));
-    }
-    if (size == FontSize.MINI) {
-      defFont = defFont.deriveFont(Math.max(defFont.getSize() - 4f, 9f));
-    }
-    //if (isBold) {
-    //  defFont = defFont.deriveFont(Font.BOLD);
-    //}
-    return defFont;
+    Font defFont = getLabelFont();
+    return defFont.deriveFont(Math.max(defFont.getSize() - 2f, 11f));
   }
 
   public static Color getTitledBorderTitleColor() {

@@ -426,6 +426,57 @@ print ma<caret>p
 ''', "$JAVA_UTIL_MAP<$JAVA_LANG_STRING,$JAVA_LANG_STRING>")
   }
 
+  void testSpread1() {
+    myFixture.addClass('''\
+class A {
+  String getString() {return "a";}
+}''')
+    doTest('''\
+[new A()].stri<caret>ng
+''', "$JAVA_UTIL_ARRAY_LIST<$JAVA_LANG_STRING>")
+  }
+
+  void testSpread2() {
+
+    myFixture.addClass('''\
+class A {
+  String getString() {return "a";}
+}''')
+    doTest('''\
+class Cat {
+  static getFoo(String b) {2}
+}
+use(Cat) {
+  [new A()].string.fo<caret>o
+}
+''', "$JAVA_UTIL_ARRAY_LIST<$JAVA_LANG_INTEGER>")
+  }
+
+  void testSpread3() {
+    myFixture.addClass('''\
+class A {
+  String getString() {return "a";}
+}''')
+    doTest('''\
+[[new A()]].stri<caret>ng
+''', "$JAVA_UTIL_ARRAY_LIST<$JAVA_UTIL_ARRAY_LIST<$JAVA_LANG_STRING>>")
+  }
+
+  void testSpread4() {
+    myFixture.addClass('''\
+class A {
+  String getString() {return "a";}
+}''')
+    doTest('''\
+class Cat {
+  static getFoo(String b) {2}
+}
+
+use(Cat){
+  [[new A()]].string.fo<caret>o
+}
+''', "$JAVA_UTIL_ARRAY_LIST<$JAVA_UTIL_ARRAY_LIST<$JAVA_LANG_INTEGER>>")
+  }
 
   private void doTest(String text, String type) {
     def file = myFixture.configureByText('_.groovy', text)

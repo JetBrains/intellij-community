@@ -19,27 +19,34 @@ import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
+import org.jetbrains.plugins.groovy.lang.psi.api.SpreadState;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 
 /**
  * @author Maxim.Medvedev
  */
-public class AccessorResolverProcessor extends ResolverProcessor {
+public class AccessorResolverProcessor extends MethodResolverProcessor {
+  private final String myPropertyName;
   private final boolean mySearchForGetter;
   private final SubstitutorComputer mySubstitutorComputer;
 
-  public AccessorResolverProcessor(String name, GroovyPsiElement place, boolean searchForGetter) {
-    this(name, place, searchForGetter, false, null, PsiType.EMPTY_ARRAY);
+  public AccessorResolverProcessor(String accessorName, String propertyName, GroovyPsiElement place, boolean searchForGetter) {
+    this(accessorName, propertyName, place, searchForGetter, false, null, PsiType.EMPTY_ARRAY);
   }
 
-  public AccessorResolverProcessor(String name,
+  public AccessorResolverProcessor(String accessorName,
+                                   String propertyName,
                                    GroovyPsiElement place,
                                    boolean searchForGetter,
                                    boolean byShape,
                                    @Nullable PsiType thisType,
                                    @NotNull PsiType[] typeArguments) {
-    super(name, RESOLVE_KINDS_METHOD, place, PsiType.EMPTY_ARRAY);
+    super(accessorName, place, false, thisType, null, typeArguments, false, byShape);
+    myPropertyName = propertyName;
+
     mySearchForGetter = searchForGetter;
     mySubstitutorComputer = byShape ? null : new SubstitutorComputer(thisType, PsiType.EMPTY_ARRAY, typeArguments, false, place) {
       @Override
@@ -51,12 +58,12 @@ public class AccessorResolverProcessor extends ResolverProcessor {
 
   public boolean execute(PsiElement element, ResolveState state) {
     if (mySearchForGetter) {
-      if (element instanceof PsiMethod && GroovyPropertyUtils.isSimplePropertyGetter((PsiMethod)element, null)) {
+      if (element instanceof PsiMethod && GroovyPropertyUtils.isSimplePropertyGetter((PsiMethod)element, myPropertyName)) {
         return addAccessor((PsiMethod)element, state);
       }
     }
     else {
-      if (element instanceof PsiMethod && GroovyPropertyUtils.isSimplePropertySetter((PsiMethod)element, null)) {
+      if (element instanceof PsiMethod && GroovyPropertyUtils.isSimplePropertySetter((PsiMethod)element, myPropertyName)) {
         return addAccessor((PsiMethod)element, state);
       }
     }
@@ -72,8 +79,31 @@ public class AccessorResolverProcessor extends ResolverProcessor {
     }
     boolean isAccessible = isAccessible(method);
     final GroovyPsiElement resolveContext = state.get(RESOLVE_CONTEXT);
+    final SpreadState spreadState = state.get(SpreadState.SPREAD_STATE);
     boolean isStaticsOK = isStaticsOK(method, resolveContext, true);
-    addCandidate(new GroovyResolveResultImpl(method, resolveContext, substitutor, isAccessible, isStaticsOK, true));
-    return !isAccessible || !isStaticsOK;
+    final GroovyResolveResultImpl candidate =
+      new GroovyResolveResultImpl(method, resolveContext, spreadState, substitutor, isAccessible, isStaticsOK, true);
+    if (isAccessible && isStaticsOK) {
+      addCandidate(candidate);
+      return method instanceof GrGdkMethod; //don't stop searching if we found only gdk method
+    }
+    else {
+      myInapplicableCandidates.add(candidate);
+      return true;
+    }
+  }
+
+  @NotNull
+  @Override
+  public GroovyResolveResult[] getCandidates() {
+    final boolean hasApplicableCandidates = hasApplicableCandidates();
+    final GroovyResolveResult[] candidates = super.getCandidates();
+    if (hasApplicableCandidates) {
+      if (candidates.length <= 1) return candidates;
+      return new GroovyResolveResult[]{candidates[0]};
+    }
+    else {
+      return candidates;
+    }
   }
 }

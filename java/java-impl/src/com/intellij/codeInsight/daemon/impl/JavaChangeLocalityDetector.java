@@ -21,15 +21,20 @@ package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.daemon.ChangeLocalityDetector;
 import com.intellij.psi.*;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class JavaChangeLocalityDetector implements ChangeLocalityDetector {
   @Override
   @Nullable
-  public PsiElement getChangeHighlightingDirtyScopeFor(final PsiElement element) {
+  public PsiElement getChangeHighlightingDirtyScopeFor(@NotNull final PsiElement element) {
+    // optimization
     PsiElement parent = element.getParent();
-    if (element instanceof PsiCodeBlock && parent instanceof PsiMethod && !((PsiMethod)parent).isConstructor() &&
-        parent.getParent() instanceof PsiClass && !(parent.getParent() instanceof PsiAnonymousClass)) {
+    if (element instanceof PsiCodeBlock
+        && parent instanceof PsiMethod
+        && !((PsiMethod)parent).isConstructor()
+        && parent.getParent() instanceof PsiClass
+        && !(parent.getParent() instanceof PsiAnonymousClass)) {
       // for changes inside method, rehighlight codeblock only
       // do not use this optimization for constructors and class initializers - to update non-initialized fields
       return parent;

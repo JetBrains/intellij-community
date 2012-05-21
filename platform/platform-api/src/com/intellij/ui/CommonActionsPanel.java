@@ -47,8 +47,8 @@ public class CommonActionsPanel extends JPanel {
       return null;
     }
 
-    MyActionButton createButton(final Listener listener, String name) {
-      return new MyActionButton(this, listener, name == null ? StringUtil.capitalize(name().toLowerCase()) : name);
+    MyActionButton createButton(final Listener listener, String name, Icon icon) {
+      return new MyActionButton(this, listener, name == null ? StringUtil.capitalize(name().toLowerCase()) : name, icon);
     }
 
     public String getText() {
@@ -87,7 +87,7 @@ public class CommonActionsPanel extends JPanel {
   CommonActionsPanel(ListenerFactory factory, @Nullable JComponent contextComponent, boolean isHorizontal,
                      @Nullable AnActionButton[] additionalActions, @Nullable Comparator<AnActionButton> buttonComparator,
                      String addName, String removeName, String moveUpName, String moveDownName, String editName,
-                     Buttons... buttons) {
+                     Icon addIcon, Buttons... buttons) {
     super(new BorderLayout());
     final Listener listener = factory.createListener(this);
     AnActionButton[] actions = new AnActionButton[buttons.length];
@@ -101,7 +101,7 @@ public class CommonActionsPanel extends JPanel {
         case UP:     name = moveUpName;   break;
         case DOWN:   name = moveDownName; break;
       }
-      final MyActionButton b = button.createButton(listener, name);
+      final MyActionButton b = button.createButton(listener, name, button == Buttons.ADD && addIcon != null ? addIcon : button.getIcon());
       actions[i] = b;
       myButtons.put(button, b);
     }
@@ -180,8 +180,8 @@ public class CommonActionsPanel extends JPanel {
     private final Buttons myButton;
     private final Listener myListener;
 
-    MyActionButton(Buttons button, Listener listener, String name) {
-      super(name, name, button.getIcon());
+    MyActionButton(Buttons button, Listener listener, String name, Icon icon) {
+      super(name, name, icon);
       myButton = button;
       myListener = listener;
     }

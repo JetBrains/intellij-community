@@ -78,8 +78,9 @@ public class LocalInspectionsPassFactory extends AbstractProjectComponent implem
       super(file, document, textRange.getStartOffset(), textRange.getEndOffset(), visibleRange, true);
     }
 
+    @NotNull
     @Override
-    List<LocalInspectionToolWrapper> getInspectionTools(InspectionProfileWrapper profile) {
+    List<LocalInspectionToolWrapper> getInspectionTools(@NotNull InspectionProfileWrapper profile) {
       List<LocalInspectionToolWrapper> tools = super.getInspectionTools(profile);
       List<LocalInspectionToolWrapper> result = new ArrayList<LocalInspectionToolWrapper>(tools.size());
       for (LocalInspectionToolWrapper tool : tools) {

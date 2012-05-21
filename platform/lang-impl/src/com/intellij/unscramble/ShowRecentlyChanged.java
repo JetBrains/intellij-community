@@ -20,9 +20,9 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.configurable.VcsContentAnnotationConfigurable;
+import com.intellij.util.PlatformIcons;
 
 /**
 * Created by IntelliJ IDEA.
@@ -33,7 +33,7 @@ import com.intellij.openapi.vcs.configurable.VcsContentAnnotationConfigurable;
 */
 public class ShowRecentlyChanged extends DumbAwareAction {
   public ShowRecentlyChanged() {
-    super("Show recently changed", "Show recently changed", IconLoader.getIcon("/general/copy.png"));
+    super("Show recently changed", "Show recently changed", PlatformIcons.COPY_ICON);
   }
 
   @Override

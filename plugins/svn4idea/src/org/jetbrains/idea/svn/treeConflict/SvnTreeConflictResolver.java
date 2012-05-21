@@ -15,10 +15,17 @@
  */
 package org.jetbrains.idea.svn.treeConflict;
 
+import com.intellij.history.LocalHistory;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnRevisionNumber;
 import org.jetbrains.idea.svn.SvnVcs;
@@ -52,12 +59,26 @@ public class SvnTreeConflictResolver {
   }
 
   public void resolveSelectTheirsFull(SVNTreeConflictDescription d) throws VcsException {
-    updatetoTheirsFull();
-    pathDirty(myPath);
-    revertAdditional();
+    final LocalHistory localHistory = LocalHistory.getInstance();
+    localHistory.putSystemLabel(myVcs.getProject(), "Before accepting theirs for " + TreeConflictRefreshablePanel.filePath(myPath));
+    try {
+      updatetoTheirsFull();
+      pathDirty(myPath);
+      revertAdditional();
+    } finally {
+      localHistory.putSystemLabel(myVcs.getProject(), "After accepting theirs for " + TreeConflictRefreshablePanel.filePath(myPath));
+    }
   }
 
   private void pathDirty(final FilePath path) {
+    final VirtualFile validParent = ApplicationManager.getApplication().runReadAction(new Computable<VirtualFile>() {
+      @Override
+      public VirtualFile compute() {
+        return ChangesUtil.findValidParent(path);
+      }
+    });
+    if (validParent == null) return;
+    validParent.refresh(false, true);
     if (path.isDirectory()) {
       myDirtyScopeManager.dirDirtyRecursively(path);
     }
@@ -69,9 +90,14 @@ public class SvnTreeConflictResolver {
   private void revertAdditional() throws VcsException {
     if (myRevertPath == null) return;
     final File ioFile = myRevertPath.getIOFile();
+    SVNStatusClient statusClient = myVcs.createStatusClient();
     SVNWCClient client = myVcs.createWCClient();
     try {
+      final SVNStatus status = statusClient.doStatus(ioFile, false);
       client.doRevert(new File[]{ioFile}, SVNDepth.INFINITY, null);
+      if (SVNStatusType.STATUS_ADDED.equals(status.getNodeStatus())) {
+        FileUtil.delete(ioFile);
+      }
     }
     catch (SVNException e) {
       throw new VcsException(e);
@@ -82,13 +108,14 @@ public class SvnTreeConflictResolver {
   public void resolveSelectMineFull(SVNTreeConflictDescription d) throws VcsException {
     SVNWCClient client = myVcs.createWCClient();
     try {
-      client.doResolve(myPath.getIOFile(), SVNDepth.INFINITY, SVNConflictChoice.MERGED);
+      final File ioFile = myPath.getIOFile();
+      client.doResolve(ioFile, SVNDepth.INFINITY, SVNConflictChoice.MERGED);
+      pathDirty(myPath);
+      //revertAdditional();
     }
     catch (SVNException e) {
       throw new VcsException(e);
     }
-    pathDirty(myPath);
-    revertAdditional();
   }
 
   private void updatetoTheirsFull() throws VcsException {
@@ -101,13 +128,15 @@ public class SvnTreeConflictResolver {
         myCommittedRevision = new SvnRevisionNumber(status.getCommittedRevision());
       }
       if (status == null || SVNStatusType.STATUS_UNVERSIONED.equals(status.getNodeStatus())) {
+        //FileUtil.delete(ioFile);
         client.doRevert(new File[]{ioFile}, SVNDepth.INFINITY, null);
-        //updateIoFile(ioFile, SVNRevision.HEAD);
+        updateIoFile(ioFile, SVNRevision.HEAD);
         return;
 //        FileUtil.delete(ioFile);
       } else if (SVNStatusType.STATUS_ADDED.equals(status.getNodeStatus())) {
         client.doRevert(new File[]{ioFile}, SVNDepth.INFINITY, null);
-        //updateIoFile(ioFile, SVNRevision.HEAD);
+        updateIoFile(ioFile, SVNRevision.HEAD);
+        FileUtil.delete(ioFile);
         /*client.doRevert(new File[]{ioFile}, SVNDepth.INFINITY, null);
         FileUtil.delete(ioFile);*/
         return;
@@ -125,6 +154,10 @@ public class SvnTreeConflictResolver {
                                 }, null);
         }
         client.doRevert(new File[]{ioFile}, SVNDepth.INFINITY, null);
+        for (File wasAdded : usedToBeAdded) {
+          FileUtil.delete(wasAdded);
+        }
+        updateIoFile(ioFile, SVNRevision.HEAD);
       }
 
       /*if (myPath.isDirectory()) {

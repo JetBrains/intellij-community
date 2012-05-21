@@ -80,7 +80,7 @@ public class JUnit3Framework extends JavaTestFramework {
     final PsiManager manager = clazz.getManager();
     final PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
 
-    final PsiMethod patternMethod = factory.createMethodFromText("protected void setUp() throws Exception {\nsuper.setUp();\n}", null);
+    final PsiMethod patternMethod = createSetUpPatternMethod(factory);
 
     final PsiClass baseClass = clazz.getSuperClass();
     if (baseClass != null) {

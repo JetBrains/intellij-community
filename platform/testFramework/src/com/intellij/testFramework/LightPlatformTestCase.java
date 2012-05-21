@@ -298,7 +298,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     return ApplicationManager.getApplication().runWriteAction(new Computable<Module>() {
       @Override
       public Module compute() {
-        return ModuleManager.getInstance(ourProject).newModule("light_idea_test_case.iml", moduleType);
+        return ModuleManager.getInstance(ourProject).newModule("light_idea_test_case.iml", moduleType.getId());
       }
     });
   }
@@ -343,7 +343,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
       enableInspectionTool(availableInspectionTools, new LocalInspectionToolWrapper(tool));
     }
 
-    final InspectionProfileImpl profile = new InspectionProfileImpl("Configurable") {
+    final InspectionProfileImpl profile = new InspectionProfileImpl(PROFILE) {
       @Override
       @NotNull
       public InspectionProfileEntry[] getInspectionTools(PsiElement element) {

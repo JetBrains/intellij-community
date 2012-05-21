@@ -27,12 +27,12 @@ import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.InputException;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.AnActionButton;
 import com.intellij.ui.AnActionButtonRunnable;
 import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.components.JBList;
+import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -134,7 +134,7 @@ public class CvsConfigurationsListEditor extends DialogWrapper implements DataPr
 
   private JComponent createListPanel() {
     final AnActionButton duplicateButton =
-      new AnActionButton(CvsBundle.message("action.name.copy"), IconLoader.getIcon("/general/copy.png")) {
+      new AnActionButton(CvsBundle.message("action.name.copy"), PlatformIcons.COPY_ICON) {
 
         @Override
         public void updateButton(AnActionEvent e) {

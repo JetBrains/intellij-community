@@ -132,6 +132,8 @@ public class PatchApplier<BinaryType extends FilePatch> {
     private ApplyPatchStatus myStatus;
     private final boolean myShowNotification;
     private final boolean mySystemOperation;
+    private VcsShowConfirmationOption.Value myAddconfirmationvalue;
+    private VcsShowConfirmationOption.Value myDeleteconfirmationvalue;
 
     public ApplyPatchTask(final boolean showNotification, boolean systemOperation) {
       super("", Where.AWT);
@@ -158,17 +160,22 @@ public class PatchApplier<BinaryType extends FilePatch> {
         applyStatus = ApplicationManager.getApplication().runReadAction(new Computable<ApplyPatchStatus>() {
           public ApplyPatchStatus compute() {
             final Ref<ApplyPatchStatus> refStatus = new Ref<ApplyPatchStatus>(ApplyPatchStatus.FAILURE);
-            CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
-              public void run() {
-                if (! createFiles()) {
-                  refStatus.set(ApplyPatchStatus.FAILURE);
-                  return;
+            try {
+              setConfirmationToDefault();
+              CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
+                public void run() {
+                  if (! createFiles()) {
+                    refStatus.set(ApplyPatchStatus.FAILURE);
+                    return;
+                  }
+                  addSkippedItems(trigger);
+                  trigger.prepare();
+                  refStatus.set(executeWritable());
                 }
-                addSkippedItems(trigger);
-                trigger.prepare();
-                refStatus.set(executeWritable());
-              }
-            }, VcsBundle.message("patch.apply.command"), null);
+              }, VcsBundle.message("patch.apply.command"), null);
+            } finally {
+              returnConfirmationBack();
+            }
             return refStatus.get();
           }
         });
@@ -183,6 +190,29 @@ public class PatchApplier<BinaryType extends FilePatch> {
         showApplyStatus(myProject, myStatus);
       }
       refreshFiles(trigger.getAffected(), context);
+    }
+
+    private void returnConfirmationBack() {
+      if (mySystemOperation) {
+        final ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(myProject);
+        final VcsShowConfirmationOption addConfirmation = vcsManager.getStandardConfirmation(VcsConfiguration.StandardConfirmation.ADD, null);
+        addConfirmation.setValue(myAddconfirmationvalue);
+        final VcsShowConfirmationOption deleteConfirmation = vcsManager.getStandardConfirmation(VcsConfiguration.StandardConfirmation.REMOVE, null);
+        deleteConfirmation.setValue(myDeleteconfirmationvalue);
+      }
+    }
+
+    private void setConfirmationToDefault() {
+      if (mySystemOperation) {
+        final ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(myProject);
+        final VcsShowConfirmationOption addConfirmation = vcsManager.getStandardConfirmation(VcsConfiguration.StandardConfirmation.ADD, null);
+        myAddconfirmationvalue = addConfirmation.getValue();
+        addConfirmation.setValue(VcsShowConfirmationOption.Value.DO_ACTION_SILENTLY);
+
+        final VcsShowConfirmationOption deleteConfirmation = vcsManager.getStandardConfirmation(VcsConfiguration.StandardConfirmation.REMOVE, null);
+        myDeleteconfirmationvalue = deleteConfirmation.getValue();
+        deleteConfirmation.setValue(VcsShowConfirmationOption.Value.DO_ACTION_SILENTLY);
+      }
     }
 
     public ApplyPatchStatus getStatus() {

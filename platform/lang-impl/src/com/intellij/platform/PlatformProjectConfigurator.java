@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,7 +40,7 @@ public class PlatformProjectConfigurator implements DirectoryProjectConfigurator
         public void run() {
           String moduleName = baseDir.getName().replace(":", "");     // correct module name when opening root of drive as project (RUBY-5181)
           String imlName = baseDir.getPath() + "/.idea/" + moduleName + ModuleFileType.DOT_DEFAULT_EXTENSION;
-          final Module module = moduleManager.newModule(imlName, ModuleTypeManager.getInstance().getDefaultModuleType());
+          final Module module = moduleManager.newModule(imlName, ModuleTypeManager.getInstance().getDefaultModuleType().getId());
           ModuleRootManager rootManager = ModuleRootManager.getInstance(module);
           ModifiableRootModel rootModel = rootManager.getModifiableModel();
           if (rootModel.getContentRoots().length == 0) {

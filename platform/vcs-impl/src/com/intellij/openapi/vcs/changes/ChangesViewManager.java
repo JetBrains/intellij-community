@@ -358,6 +358,16 @@ public class ChangesViewManager implements ChangesViewI, JDOMExternalizable, Pro
     updateProgressComponent(createTextStatusFactory(text, isError));
   }
 
+  @Override
+  public void setBusy(final boolean b) {
+    UIUtil.invokeLaterIfNeeded(new Runnable() {
+      @Override
+      public void run() {
+        myView.setPaintBusy(b);
+      }
+    });
+  }
+
   public static Factory<JComponent> createTextStatusFactory(final String text, final boolean isError) {
     return new Factory<JComponent>() {
       @Override
@@ -488,6 +498,7 @@ public class ChangesViewManager implements ChangesViewI, JDOMExternalizable, Pro
       VcsException updateException = changeListManager.getUpdateException();
       if (updateException == null) {
         updateProgressText("", false);
+        setBusy(false);
         final Factory<JComponent> additionalUpdateInfo = changeListManager.getAdditionalUpdateInfo();
         if (additionalUpdateInfo != null) {
           updateProgressComponent(additionalUpdateInfo);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,10 +17,7 @@ package org.jetbrains.idea.devkit.projectRoots;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.projectRoots.ProjectJdkTable;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.SdkAdditionalData;
-import com.intellij.openapi.projectRoots.SdkModel;
+import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
@@ -35,7 +32,7 @@ import org.jetbrains.idea.devkit.DevKitBundle;
  * User: anna
  * Date: Nov 22, 2004
  */
-public class Sandbox implements SdkAdditionalData, JDOMExternalizable{
+public class Sandbox implements ValidatableSdkAdditionalData, JDOMExternalizable{
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.devkit.projectRoots.Sandbox");
 
   @SuppressWarnings({"WeakerAccess"})

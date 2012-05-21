@@ -53,6 +53,7 @@ public class NonOpaquePanel extends Wrapper {
   @Override
   public void setOpaque(boolean isOpaque) {
     super.setOpaque(isOpaque);
+    setDoubleBuffered(false);
 
     if (!isOpaque && UIUtil.isUnderNimbusLookAndFeel()) {
       if (UIUtil.isUnderNimbusLookAndFeel()) {

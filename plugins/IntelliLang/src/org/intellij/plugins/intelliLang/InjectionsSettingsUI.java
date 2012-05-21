@@ -148,7 +148,7 @@ public class InjectionsSettingsUI implements SearchableConfigurable.Parent, NonD
     });
 
     final DefaultActionGroup group = new DefaultActionGroup();
-    final AnAction addAction = new AnAction("Add", "Add", PlatformIcons.ADD_ICON) {
+    final AnAction addAction = new AnAction("Add", "Add", IconUtil.getAddIcon()) {
       @Override
       public void update(final AnActionEvent e) {
         e.getPresentation().setEnabled(!myAddActions.isEmpty());
@@ -191,7 +191,7 @@ public class InjectionsSettingsUI implements SearchableConfigurable.Parent, NonD
         performEditAction(e);
       }
     };
-    final AnAction copyAction = new AnAction("Duplicate", "Duplicate", PlatformIcons.DUPLICATE_ICON) {
+    final AnAction copyAction = new AnAction("Duplicate", "Duplicate", PlatformIcons.COPY_ICON) {
       @Override
       public void update(final AnActionEvent e) {
         final AnAction action = getEditAction();
@@ -240,7 +240,7 @@ public class InjectionsSettingsUI implements SearchableConfigurable.Parent, NonD
 
     if (myInfos.length > 1) {
       group.addSeparator();
-      final AnAction shareAction = new AnAction("Make Global", null, IconLoader.getIcon("/actions/import.png")) {
+      final AnAction shareAction = new AnAction("Make Global", null, PlatformIcons.IMPORT_ICON) {
         @Override
         public void actionPerformed(final AnActionEvent e) {
           final List<InjInfo> injections = getSelectedInjections();

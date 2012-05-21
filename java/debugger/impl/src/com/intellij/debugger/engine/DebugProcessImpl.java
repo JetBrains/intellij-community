@@ -447,10 +447,12 @@ public abstract class DebugProcessImpl implements DebugProcess {
     try {
       if (thread != null && thread.frameCount() > 0) {
         StackFrameProxyImpl stackFrame = thread.frame(0);
-        Location location = stackFrame.location();
-        ReferenceType referenceType = location.declaringType();
-        if (referenceType != null) {
-          return referenceType.name();
+        if (stackFrame != null) {
+          Location location = stackFrame.location();
+          ReferenceType referenceType = location.declaringType();
+          if (referenceType != null) {
+            return referenceType.name();
+          }
         }
       }
     }
