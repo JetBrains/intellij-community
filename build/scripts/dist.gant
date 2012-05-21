@@ -30,6 +30,7 @@ class Paths {
   final distMac
   final artifacts
   final artifacts_core
+  final artifacts_core_upsource
 
   def Paths(String out) {
     sandbox = out
@@ -39,6 +40,7 @@ class Paths {
     distMac = "$sandbox/dist.mac.ce"
     artifacts = "$sandbox/artifacts"
     artifacts_core = "$artifacts/core"
+    artifacts_core_upsource = "$artifacts/core-upsource"
   }
 }
 
@@ -89,6 +91,7 @@ def layoutAll(Map args, String home, String out, Paths _paths = null) {
   def layouts = includeFile("$home/build/scripts/layouts.gant")
   layouts.layoutFull(home, paths.distAll)
   layouts.layout_core(home, paths.artifacts_core)
+  layouts.layout_core_upsource(home, paths.artifacts_core_upsource)
 
   layout(paths.distAll) {
     dir("bin") {
