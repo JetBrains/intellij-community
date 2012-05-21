@@ -38,13 +38,23 @@ public class VcsException extends Exception {
     myMessages = Collections.singleton(shownMessage);
   }
 
-  public VcsException(Throwable throwable) {
+  public VcsException(Throwable throwable, final boolean isWarning) {
     this(throwable.getMessage() != null ? throwable.getMessage() : throwable.getLocalizedMessage(), throwable);
+    this.isWarning = isWarning;
+  }
+
+  public VcsException(Throwable throwable) {
+    this(throwable, false);
   }
 
   public VcsException(final String message, final Throwable cause) {
     super(message, cause);
     initMessage(message);
+  }
+
+  public VcsException(final String message, final boolean isWarning) {
+    this(message);
+    this.isWarning = isWarning;
   }
 
   public VcsException(Collection<String> messages) {

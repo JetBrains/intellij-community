@@ -1,0 +1,127 @@
+/*
+ * Copyright 2000-2012 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.jetbrains.idea.svn.treeConflict;
+
+import com.intellij.CommonBundle;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.diff.impl.patch.*;
+import com.intellij.openapi.fileChooser.*;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.FilePathImpl;
+import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.openapi.vcs.changes.*;
+import com.intellij.openapi.vcs.changes.patch.ApplyPatchDefaultExecutor;
+import com.intellij.openapi.vcs.changes.patch.ApplyPatchExecutor;
+import com.intellij.openapi.vcs.changes.patch.FilePatchInProgress;
+import com.intellij.openapi.vcs.changes.patch.PatchWriter;
+import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileWrapper;
+import com.intellij.util.WaitForProgressToShow;
+import com.intellij.util.containers.MultiMap;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+
+/**
+ * Created with IntelliJ IDEA.
+ * User: Irina.Chernushina
+ * Date: 5/17/12
+ * Time: 6:02 PM
+ */
+public class ApplyPatchSaveToFileExecutor implements ApplyPatchExecutor {
+  private final Project myProject;
+  private final VirtualFile myBaseForPatch;
+  private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.treeConflict.ApplyPatchSaveToFileExecutor");
+
+  public ApplyPatchSaveToFileExecutor(Project project, VirtualFile baseForPatch) {
+    myProject = project;
+    myBaseForPatch = baseForPatch;
+  }
+
+  @Override
+  public String getName() {
+    return "Save patch to file";
+  }
+
+  @Override
+  public void apply(MultiMap<VirtualFile, FilePatchInProgress> patchGroups,
+                    LocalChangeList localList,
+                    String fileName,
+                    TransparentlyFailedValue<Map<String, Map<String, CharSequence>>, PatchSyntaxException> additionalInfo) {
+    final FileSaverDialog dialog = FileChooserFactory.getInstance().createSaveFileDialog(
+      new FileSaverDescriptor("Save patch to", ""), myProject);
+    final VirtualFile baseDir = myProject.getBaseDir();
+    final VirtualFileWrapper save = dialog.save(baseDir, "TheirsChanges.patch");
+    if (save != null && save.getFile() != null) {
+      final CommitContext commitContext = new CommitContext();
+
+      final VirtualFile baseForPatch = myBaseForPatch == null ? baseDir : myBaseForPatch;
+      try {
+        final List<FilePatch> textPatches = patchGroupsToOneGroup(patchGroups, baseForPatch);
+        commitContext.putUserData(BaseRevisionTextPatchEP.ourPutBaseRevisionTextKey, false);
+        PatchWriter.writePatches(myProject, save.getFile().getPath(), textPatches, commitContext, CharsetToolkit.UTF8_CHARSET);
+      }
+      catch (final IOException e) {
+        LOG.info(e);
+        WaitForProgressToShow.runOrInvokeLaterAboveProgress(new Runnable() {
+          public void run() {
+            Messages.showErrorDialog(myProject, VcsBundle.message("create.patch.error.title", e.getMessage()), CommonBundle.getErrorTitle());
+          }
+        }, null, myProject);
+      }
+    }
+  }
+
+  public static List<FilePatch> patchGroupsToOneGroup(MultiMap<VirtualFile, FilePatchInProgress> patchGroups, VirtualFile baseDir)
+    throws IOException {
+    final List<FilePatch> textPatches = new ArrayList<FilePatch>();
+    final String baseDirPath = baseDir.getPath();
+
+    for (Map.Entry<VirtualFile, Collection<FilePatchInProgress>> entry : patchGroups.entrySet()) {
+      final VirtualFile vf = entry.getKey();
+      final String currBasePath = vf.getPath();
+      final String relativePath = VfsUtil.getRelativePath(vf, baseDir, '/');
+      final boolean toConvert = !StringUtil.isEmptyOrSpaces(relativePath) && !".".equals(relativePath);
+      for (FilePatchInProgress patchInProgress : entry.getValue()) {
+        final TextFilePatch patch = patchInProgress.getPatch();
+        if (toConvert) {
+          //correct paths
+          patch.setBeforeName(convertRelativePath(patch.getBeforeName(), currBasePath, baseDirPath));
+          patch.setAfterName(convertRelativePath(patch.getAfterName(), currBasePath, baseDirPath));
+        }
+        textPatches.add(patch);
+      }
+    }
+    return textPatches;
+  }
+
+  private static String convertRelativePath(String pathInPatch, String currentBase, String baseDirPath) throws IOException {
+    if (StringUtil.isEmptyOrSpaces(pathInPatch)) return pathInPatch;
+    final File currentPath = new File(currentBase, pathInPatch);
+    return FileUtil.getRelativePath(FileUtil.toSystemIndependentName(baseDirPath), FileUtil.toSystemIndependentName(currentPath.getCanonicalPath()), '/');
+  }
+}

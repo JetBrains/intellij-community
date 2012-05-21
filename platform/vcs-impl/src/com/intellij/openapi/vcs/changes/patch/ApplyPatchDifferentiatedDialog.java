@@ -18,10 +18,7 @@ package com.intellij.openapi.vcs.changes.patch;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.diff.impl.patch.PatchReader;
-import com.intellij.openapi.diff.impl.patch.PatchSyntaxException;
-import com.intellij.openapi.diff.impl.patch.PatchVirtualFileReader;
-import com.intellij.openapi.diff.impl.patch.TextFilePatch;
+import com.intellij.openapi.diff.impl.patch.*;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
@@ -33,10 +30,7 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Getter;
-import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.ObjectsConvertor;
 import com.intellij.openapi.vcs.VcsBundle;
@@ -95,10 +89,22 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
   private JLabel myPatchFileLabel;
   private PatchReader myReader;
   private CommitContext myCommitContext;
-  private final VirtualFileAdapter myListener;
+  private VirtualFileAdapter myListener;
+  private boolean myCanChangePatchFile;
 
   public ApplyPatchDifferentiatedDialog(final Project project, final ApplyPatchExecutor callback, final List<ApplyPatchExecutor> executors,
                                         @NotNull final ApplyPatchMode applyPatchMode, @NotNull final VirtualFile patchFile) {
+    this(project, callback, executors, applyPatchMode, patchFile, null, null);
+  }
+
+  public ApplyPatchDifferentiatedDialog(final Project project, final ApplyPatchExecutor callback, final List<ApplyPatchExecutor> executors,
+      @NotNull final ApplyPatchMode applyPatchMode, @NotNull final List<TextFilePatch> patches, @Nullable final LocalChangeList defaultList) {
+    this(project, callback, executors, applyPatchMode, null, patches, defaultList);
+  }
+
+  private ApplyPatchDifferentiatedDialog(final Project project, final ApplyPatchExecutor callback, final List<ApplyPatchExecutor> executors,
+      @NotNull final ApplyPatchMode applyPatchMode, @Nullable final VirtualFile patchFile, @Nullable final List<TextFilePatch> patches,
+      @Nullable final LocalChangeList defaultList) {
     super(project, true);
     myCallback = callback;
     myExecutors = executors;
@@ -107,18 +113,8 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
 
     final FileChooserDescriptor descriptor = createSelectPatchDescriptor();
     descriptor.setTitle(VcsBundle.message("patch.apply.select.title"));
-    myUpdater = new MyUpdater();
-    myPatchFile = new TextFieldWithBrowseButton();
-    myPatchFile.addBrowseFolderListener(VcsBundle.message("patch.apply.select.title"), "", project, descriptor);
-    myPatchFile.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
-      protected void textChanged(DocumentEvent e) {
-        setPathFileChangeDefault();
-        myLoadQueue.queue(myUpdater);
-      }
-    });
 
     myProject = project;
-    myLoadQueue = new ZipperUpdater(500, getDisposable());
     myPatches = new LinkedList<FilePatchInProgress>();
     myRecentPathFileChange = new AtomicReference<FilePresentation>();
     myChangesTreeList = new MyChangeTreeList(project, Collections.<FilePatchInProgress.PatchChange>emptyList(),
@@ -138,11 +134,24 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
           myCommitLegendPanel.update();
         }
       }, new MyChangeNodeDecorator());
-    myReset = new Runnable() {
+
+    myUpdater = new MyUpdater();
+    myPatchFile = new TextFieldWithBrowseButton();
+    myPatchFile.addBrowseFolderListener(VcsBundle.message("patch.apply.select.title"), "", project, descriptor);
+    myPatchFile.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
+      protected void textChanged(DocumentEvent e) {
+        setPathFileChangeDefault();
+        myLoadQueue.queue(myUpdater);
+      }
+    });
+
+    myLoadQueue = new ZipperUpdater(500, getDisposable());
+    myCanChangePatchFile = applyPatchMode.isCanChangePatchFile();
+    myReset = myCanChangePatchFile ? new Runnable() {
       public void run() {
         reset();
       }
-    };
+    } : EmptyRunnable.getInstance();
 
     myChangeListChooser = new ChangeListChooserPanel(project, new Consumer<String>() {
       public void consume(final String errorMessage) {
@@ -160,27 +169,48 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
 
     init();
 
-    if (patchFile.isValid()) {
+    if (patchFile != null && patchFile.isValid()) {
       init(patchFile);
+    } else if (patches != null) {
+      init(patches, defaultList);
     }
-    myPatchFileLabel.setVisible(applyPatchMode.isCanChangePatchFile());
-    myPatchFile.setVisible(applyPatchMode.isCanChangePatchFile());
 
-    myListener = new VirtualFileAdapter() {
-      @Override
-      public void contentsChanged(VirtualFileEvent event) {
-        if (myRecentPathFileChange.get() != null && myRecentPathFileChange.get().getVf() != null &&
-            myRecentPathFileChange.get().getVf().equals(event.getFile())) {
-          myLoadQueue.queue(myUpdater);
+    myPatchFileLabel.setVisible(myCanChangePatchFile);
+    myPatchFile.setVisible(myCanChangePatchFile);
+
+    if (myCanChangePatchFile) {
+      myListener = new VirtualFileAdapter() {
+        @Override
+        public void contentsChanged(VirtualFileEvent event) {
+          if (myRecentPathFileChange.get() != null && myRecentPathFileChange.get().getVf() != null &&
+              myRecentPathFileChange.get().getVf().equals(event.getFile())) {
+            myLoadQueue.queue(myUpdater);
+          }
         }
-      }
-    };
-    final VirtualFileManager fileManager = VirtualFileManager.getInstance();
-    fileManager.addVirtualFileListener(myListener);
-    Disposer.register(getDisposable(), new Disposable() {
-      @Override
-      public void dispose() {
-        fileManager.removeVirtualFileListener(myListener);
+      };
+      final VirtualFileManager fileManager = VirtualFileManager.getInstance();
+      fileManager.addVirtualFileListener(myListener);
+      Disposer.register(getDisposable(), new Disposable() {
+        @Override
+        public void dispose() {
+          fileManager.removeVirtualFileListener(myListener);
+        }
+      });
+    }
+  }
+
+  private void init(List<TextFilePatch> patches, final LocalChangeList localChangeList) {
+    final List<FilePatchInProgress> matchedPathes = new AutoMatchIterator(myProject).execute(patches);
+
+    SwingUtilities.invokeLater(new Runnable() {
+      public void run() {
+        if (localChangeList != null) {
+          myChangeListChooser.setDefaultSelection(localChangeList);
+        }
+
+        myPatches.clear();
+        myPatches.addAll(matchedPathes);
+        updateTree(true);
       }
     });
   }
@@ -225,7 +255,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
       patchGroups.putValue(patchInProgress.getBase(), patchInProgress);
     }
     final LocalChangeList selected = getSelectedChangeList();
-    executor.apply(patchGroups, selected, myRecentPathFileChange.get().getVf().getName(),
+    executor.apply(patchGroups, selected, myRecentPathFileChange.get() == null ? null : myRecentPathFileChange.get().getVf().getName(),
                    myReader == null ? null : myReader.getAdditionalInfo(ApplyPatchDefaultExecutor.pathsFromGroups(patchGroups)));
   }
 
@@ -369,12 +399,14 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
       group.add(new StripDown());
       group.add(new ResetStrip());
       group.add(new ZeroStrip());
-      group.add(new AnAction("Refresh", "Refresh", IconLoader.getIcon("/actions/sync.png")) {
-        @Override
-        public void actionPerformed(AnActionEvent e) {
-          myLoadQueue.queue(myUpdater);
-        }
-      });
+      if (myCanChangePatchFile) {
+        group.add(new AnAction("Refresh", "Refresh", IconLoader.getIcon("/actions/sync.png")) {
+          @Override
+          public void actionPerformed(AnActionEvent e) {
+            myLoadQueue.queue(myUpdater);
+          }
+        });
+      }
 
       final ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("APPLY_PATCH", group, true);
       myCenterPanel.add(toolbar.getComponent(), gb);

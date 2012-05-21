@@ -62,6 +62,8 @@ public class MvcModuleStructureSynchronizer extends AbstractProjectComponent {
 
   private boolean myOutOfModuleDirectoryCreatedActionAdded;
 
+  public static boolean ourGrailsTestFlag;
+
   private final ModificationTracker myModificationTracker = new ModificationTracker() {
     @Override
     public long getModificationCount() {
@@ -244,17 +246,12 @@ public class MvcModuleStructureSynchronizer extends AbstractProjectComponent {
       StartupManager.getInstance(myProject).runWhenProjectIsInitialized(new DumbAwareRunnable() {
         @Override
         public void run() {
-          if (ApplicationManager.getApplication().isUnitTestMode()) {
-            runActions();
-          }
-          else {
-            ApplicationManager.getApplication().invokeLater(new Runnable() {
-              @Override
-              public void run() {
-                runActions();
-              }
-            }, ModalityState.NON_MODAL);
-          }
+          ApplicationManager.getApplication().invokeLater(new Runnable() {
+            @Override
+            public void run() {
+              runActions();
+            }
+          }, ModalityState.NON_MODAL);
         }
       });
     }
@@ -292,6 +289,10 @@ public class MvcModuleStructureSynchronizer extends AbstractProjectComponent {
   private void runActions() {
     try {
       if (myProject.isDisposed()) {
+        return;
+      }
+
+      if (ApplicationManager.getApplication().isUnitTestMode() && !ourGrailsTestFlag) {
         return;
       }
 

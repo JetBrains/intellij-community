@@ -24,7 +24,8 @@ import com.intellij.openapi.vcs.VcsBundle;
  */
 public enum ApplyPatchMode {
   APPLY(VcsBundle.message("patch.apply.dialog.title"), true),
-  UNSHELVE(VcsBundle.message("unshelve.changes.dialog.title"), false);
+  UNSHELVE(VcsBundle.message("unshelve.changes.dialog.title"), false),
+  APPLY_PATCH_IN_MEMORY(VcsBundle.message("patch.apply.dialog.title"), false);
 
   private final String myTitle;
   private final boolean myCanChangePatchFile;

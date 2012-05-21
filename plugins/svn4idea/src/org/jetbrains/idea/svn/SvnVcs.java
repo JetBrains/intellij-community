@@ -49,6 +49,7 @@ import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.util.Processor;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.SoftHashMap;
@@ -72,6 +73,8 @@ import org.jetbrains.idea.svn.history.SvnHistoryProvider;
 import org.jetbrains.idea.svn.rollback.SvnRollbackEnvironment;
 import org.jetbrains.idea.svn.update.SvnIntegrateEnvironment;
 import org.jetbrains.idea.svn.update.SvnUpdateEnvironment;
+import org.tmatesoft.sqljet.core.SqlJetErrorCode;
+import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.io.dav.DAVRepositoryFactory;
@@ -155,6 +158,21 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
 
   public static final String SVNKIT_HTTP_SSL_PROTOCOLS = "svnkit.http.sslProtocols";
   private final SvnExecutableChecker myChecker;
+
+  public static final Processor<Exception> ourBusyExceptionProcessor = new Processor<Exception>() {
+    @Override
+    public boolean process(Exception e) {
+      if (e instanceof SVNException) {
+        if (SVNErrorCode.SQLITE_ERROR.equals(((SVNException)e).getErrorMessage().getErrorCode())) {
+          Throwable cause = ((SVNException)e).getErrorMessage().getCause();
+          if (cause instanceof SqlJetException) {
+            return SqlJetErrorCode.BUSY.equals(((SqlJetException)cause).getErrorCode());
+          }
+        }
+      }
+      return false;
+    }
+  };
 
   public void checkCommandLineVersion() {
     myChecker.checkExecutableAndNotifyIfNeeded();

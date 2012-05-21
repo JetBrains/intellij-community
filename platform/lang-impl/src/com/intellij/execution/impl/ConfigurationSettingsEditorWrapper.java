@@ -28,7 +28,6 @@ import com.intellij.openapi.actionSystem.TypeSafeDataProvider;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.util.Disposer;
-import net.miginfocom.swing.MigLayout;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -60,8 +59,7 @@ public class ConfigurationSettingsEditorWrapper extends SettingsEditor<RunnerAnd
     myEditor = new ConfigurationSettingsEditor(settings);
     Disposer.register(this, myEditor);
     myBeforeRunStepsPanel = new BeforeRunStepsPanel(this);
-    myBeforeLaunchContainer.setLayout(new MigLayout("fill, ins 0"));
-    myBeforeLaunchContainer.add(myBeforeRunStepsPanel, "grow, push");
+    myBeforeLaunchContainer.add(myBeforeRunStepsPanel);
     doReset(settings);
   }
 
