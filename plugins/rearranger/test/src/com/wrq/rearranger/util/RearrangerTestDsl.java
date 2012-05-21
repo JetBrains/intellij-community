@@ -20,6 +20,8 @@ public enum RearrangerTestDsl {
   RETURN_TYPE("returnType"),
   SORT,
   COMMENT,
+  GETTER_CRITERIA("getterCriteria"),
+  SETTER_CRITERIA("setterCriteria"),
   
   // Attributes
   INVERT,
@@ -27,7 +29,8 @@ public enum RearrangerTestDsl {
   ALL_SUBSEQUENT("allSubsequent"),
   ALL_PRECEDING("allPreceding"),
   SUBSEQUENT_RULES_TO_MATCH("subsequentRulesToMatch"),
-  PRECEDING_RULES_TO_MATCH("precedingRulesToMatch");
+  PRECEDING_RULES_TO_MATCH("precedingRulesToMatch"),
+  BODY;
 
   @NotNull private final String myValue;
   

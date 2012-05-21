@@ -60,9 +60,15 @@ public abstract class AbstractRuleBuilder<T> extends BuilderSupport {
 
   @Override
   protected Object createNode(Object name, Map attributes, Object value) {
-    for (i in [value].flatten()) {
-      myHandlers[name](i, attributes, current)
+    if (value) {
+      for (i in [value].flatten()) {
+        myHandlers[name](i, attributes, current)
+      }
     }
+    else {
+      myHandlers[name](null, attributes, current)
+    }
+    
     getCurrent()
   }
 
@@ -134,6 +140,12 @@ public abstract class AbstractRuleBuilder<T> extends BuilderSupport {
     { value, attributes, T rule ->
       rule."$propertyName".match = true
       rule."$propertyName".expression = value
+    }
+  }
+  
+  protected static void setIf(@NotNull RearrangerTestDsl dslProperty, map, rulePropertyName, rule) {
+    if (map.containsKey(dslProperty.value)) {
+      rule."$rulePropertyName" = map[dslProperty.value]
     }
   }
 }

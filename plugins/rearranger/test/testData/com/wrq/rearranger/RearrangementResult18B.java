@@ -4,8 +4,7 @@ public class MethodEntry {
   public boolean isIsSetter() {
     return isSetter;
   }
-
-  // Getters/Setters
+// Getters/Setters
   public String getCustomizedPrecedingComment() {
     if (customizedPrecedingComment == null) {
       return "";
@@ -20,8 +19,7 @@ public class MethodEntry {
   public boolean isSetter() {
     return isSetter;
   }
-
-  // Other Methods
+// Other Methods
   public DefaultMutableTreeNode addToPopupTree() {
     if (isSetter()) return null;
     return null;

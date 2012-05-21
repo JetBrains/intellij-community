@@ -11,19 +11,13 @@ import org.jetbrains.annotations.NotNull;
 class CommentRuleBuilder extends AbstractRuleBuilder<CommentRule> {
   
   {
-    def helper = { RearrangerTestDsl dslProperty, map, rulePropertyName, rule ->
-      if (map.containsKey(dslProperty.value)) {
-        rule."$rulePropertyName" = map[dslProperty.value]
-      }
-    }
-    
     registerHandler(RearrangerTestDsl.COMMENT, { data, attributes, rule ->
       rule.commentText = data
-      helper(RearrangerTestDsl.CONDITION, attributes, 'emitCondition', rule)
-      helper(RearrangerTestDsl.ALL_SUBSEQUENT, attributes, 'allSubsequentRules', rule)
-      helper(RearrangerTestDsl.ALL_PRECEDING, attributes, 'allPrecedingRules', rule)
-      helper(RearrangerTestDsl.SUBSEQUENT_RULES_TO_MATCH, attributes, 'NSubsequentRulesToMatch', rule)
-      helper(RearrangerTestDsl.PRECEDING_RULES_TO_MATCH, attributes, 'NPrecedingRulesToMatch', rule)
+      setIf(RearrangerTestDsl.CONDITION, attributes, 'emitCondition', rule)
+      setIf(RearrangerTestDsl.ALL_SUBSEQUENT, attributes, 'allSubsequentRules', rule)
+      setIf(RearrangerTestDsl.ALL_PRECEDING, attributes, 'allPrecedingRules', rule)
+      setIf(RearrangerTestDsl.SUBSEQUENT_RULES_TO_MATCH, attributes, 'NSubsequentRulesToMatch', rule)
+      setIf(RearrangerTestDsl.PRECEDING_RULES_TO_MATCH, attributes, 'NPrecedingRulesToMatch', rule)
     })
   }
   

@@ -28,6 +28,7 @@ import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import com.wrq.rearranger.settings.CommentRule
 import com.wrq.rearranger.settings.RearrangerSettings
 import com.wrq.rearranger.settings.RelatedMethodsSettings
+import com.wrq.rearranger.settings.attributeGroups.GetterSetterDefinition
 import com.wrq.rearranger.util.CommentRuleBuilder
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.Nullable
@@ -469,62 +470,43 @@ class RearrangerTest extends LightCodeInsightFixtureTestCase {
         sort( SortType.BY_NAME )
   } } }
 
-//  public final void testKeepGSWithProperty() throws Exception {
-//    configureByFile("/com/wrq/rearranger/RearrangementTest18.java");
-//    final PsiFile file = getFile();
-//    final Document doc = PsiDocumentManager.getInstance(getProject()).getDocument(file);
-//    final RearrangerActionHandler rah = new RearrangerActionHandler();
-//    rs.setKeepGettersSettersTogether(true);
-//    rs.setKeepGettersSettersWithProperty(true);
-//    rs.getExtractedMethodsSettings().setOrdering(RelatedMethodsSettings.ALPHABETICAL_ORDER);
-//    FieldAttributes fa = new FieldAttributes();
-//    rs.addItem(fa, 0);
-//    MethodAttributes ma = new MethodAttributes();
-//    ma.setConstructorMethodType(true);
-//    rs.addItem(ma, 1);
-//    ma = new MethodAttributes();
-//    ma.setGetterSetterMethodType(true);
-//    ma.getSortAttr().setByName(true);
-//    rs.addItem(ma, 2);
-////        rs.setAskBeforeRearranging(true);       //  testing only
-//    rah.rearrangeDocument(getProject(), file, rs, doc);
-//    super.checkResultByFile("/com/wrq/rearranger/RearrangementResult18A.java");
-//  }
-//
-//  public final void testKeepGSWithPropertyElseTogether() throws Exception {
-//    configureByFile("/com/wrq/rearranger/RearrangementTest18B.java");
-//    final PsiFile file = getFile();
-//    final Document doc = PsiDocumentManager.getInstance(getProject()).getDocument(file);
-//    final RearrangerActionHandler rah = new RearrangerActionHandler();
-//    rs.setKeepGettersSettersTogether(true);
-//    rs.setKeepGettersSettersWithProperty(true);
-//    rs.getExtractedMethodsSettings().setOrdering(RelatedMethodsSettings.ALPHABETICAL_ORDER);
-//    FieldAttributes fa = new FieldAttributes();
-//    rs.addItem(fa, 0);
-//    CommentRule cr = new CommentRule();
-//    cr.setCommentText("// Getters/Setters");
-//    cr.setEmitCondition(CommentRule.EMIT_ALWAYS);
-//    rs.addItem(cr, 1);
-//    MethodAttributes ma = new MethodAttributes();
-//    ma.setGetterSetterMethodType(true);
-//    ma.getSortAttr().setByName(true);
-//    ma.getGetterSetterDefinition().setGetterNameCriterion(GetterSetterDefinition.GETTER_NAME_CORRECT_PREFIX);
-//    ma.getGetterSetterDefinition().setGetterBodyCriterion(GetterSetterDefinition.GETTER_BODY_IMMATERIAL);
-//    ma.getGetterSetterDefinition().setSetterNameCriterion(GetterSetterDefinition.SETTER_NAME_CORRECT_PREFIX);
-//    ma.getGetterSetterDefinition().setSetterBodyCriterion(GetterSetterDefinition.SETTER_BODY_IMMATERIAL);
-//    rs.addItem(ma, 2);
-//    cr = new CommentRule();
-//    cr.setCommentText("// Other Methods");
-//    cr.setEmitCondition(CommentRule.EMIT_ALWAYS);
-//    rs.addItem(cr, 3);
-//    ma = new MethodAttributes();
-//    ma.getSortAttr().setByName(true);
-//    rs.addItem(ma, 4);
-//
-//    rah.rearrangeDocument(getProject(), file, rs, doc);
-//    super.checkResultByFile("/com/wrq/rearranger/RearrangementResult18B.java");
-//  }
-//
+  public final void testKeepGSWithProperty() throws Exception {
+    doTest('RearrangementTest18', 'RearrangementResult18A') {
+      mySettings.keepGettersSettersTogether = true
+      mySettings.keepGettersSettersWithProperty = true
+      mySettings.extractedMethodsSettings.ordering = RelatedMethodsSettings.ALPHABETICAL_ORDER
+      fieldRule.create { }
+      methodRule.create { target(MethodType.CONSTRUCTOR) }
+      methodRule.create {
+        target( MethodType.GETTER_OR_SETTER )
+        sort( SortType.BY_NAME )
+  } } }
+
+  public final void testKeepGSWithPropertyElseTogether() throws Exception {
+    doTest('RearrangementTest18B', 'RearrangementResult18B') {
+      mySettings.keepGettersSettersTogether = true
+      mySettings.keepGettersSettersWithProperty = true
+      mySettings.extractedMethodsSettings.ordering = RelatedMethodsSettings.ALPHABETICAL_ORDER
+      fieldRule.create { }
+      commentRule.create {
+        comment('// Getters/Setters', condition: CommentRule.EMIT_ALWAYS)
+      }
+      methodRule.create {
+        target( MethodType.GETTER_OR_SETTER )
+        getterCriteria(
+                name: GetterSetterDefinition.GETTER_NAME_CORRECT_PREFIX,
+                body: GetterSetterDefinition.GETTER_BODY_IMMATERIAL
+        )
+        setterCriteria(
+                name: GetterSetterDefinition.SETTER_NAME_CORRECT_PREFIX,
+                body: GetterSetterDefinition.SETTER_BODY_IMMATERIAL
+        )
+        sort( SortType.BY_NAME )
+      }
+      commentRule.create { comment('// Other Methods', condition: CommentRule.EMIT_ALWAYS) }
+      methodRule.create { sort( SortType.BY_NAME ) }
+  } }
+
 //  public final void testKeepOverloadsTogetherOriginalOrder() throws Exception {
 //    configureByFile("/com/wrq/rearranger/RearrangementTest19.java");
 //    final PsiFile file = getFile();
