@@ -1,7 +1,6 @@
 package com.intellij.util.descriptors.impl;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
@@ -43,7 +42,6 @@ public class ConfigFileImpl implements ConfigFile {
       }
     });
     onChange();
-    Disposer.register(container, this);
     myProject = myContainer.getProject();
   }
 
