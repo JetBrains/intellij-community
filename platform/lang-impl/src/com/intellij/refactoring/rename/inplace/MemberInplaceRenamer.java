@@ -82,14 +82,11 @@ public class MemberInplaceRenamer extends VariableInplaceRenamer {
 
   @Override
   protected PsiElement checkLocalScope() {
-    PsiElement scope = super.checkLocalScope();
-    if (scope == null) {
-      PsiFile currentFile = PsiDocumentManager.getInstance(myProject).getPsiFile(myEditor.getDocument());
-      if (currentFile != null) {
-        return currentFile;
-      }
+    PsiFile currentFile = PsiDocumentManager.getInstance(myProject).getPsiFile(myEditor.getDocument());
+    if (currentFile != null) {
+      return currentFile;
     }
-    return scope;
+    return super.checkLocalScope();
   }
 
   @Override
