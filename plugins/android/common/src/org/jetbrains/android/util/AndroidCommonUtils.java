@@ -434,4 +434,22 @@ public class AndroidCommonUtils {
     }
     return revisionNumber > 0 ? revisionNumber : -1;
   }
+
+  @NotNull
+  public static String readFile(@NotNull File file) throws IOException {
+    final InputStream is = new BufferedInputStream(new FileInputStream(file));
+    try {
+      final byte[] data = new byte[is.available()];
+      //noinspection ResultOfMethodCallIgnored
+      is.read(data);
+      return new String(data);
+    }
+    finally {
+      is.close();
+    }
+  }
+
+  public static boolean contains2Identifiers(String packageName) {
+    return packageName.split("\\.").length >= 2;
+  }
 }
