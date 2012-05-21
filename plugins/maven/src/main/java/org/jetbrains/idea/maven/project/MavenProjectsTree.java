@@ -99,9 +99,7 @@ public class MavenProjectsTree {
         result.myRootProjects.addAll(readProjectsRecursively(in, result));
       }
       catch (Throwable e) {
-        IOException ioException = new IOException();
-        ioException.initCause(e);
-        throw ioException;
+        throw new IOException(e);
       }
     }
     finally {
