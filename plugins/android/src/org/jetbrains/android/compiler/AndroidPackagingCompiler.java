@@ -18,6 +18,7 @@ package org.jetbrains.android.compiler;
 import com.intellij.compiler.CompilerIOUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.*;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
@@ -51,6 +52,7 @@ import java.util.*;
  * @author yole
  */
 public class AndroidPackagingCompiler implements PackagingCompiler {
+  private static final Logger LOG = Logger.getInstance("#org.jetbrains.android.compiler.AndroidPackagingCompiler");
 
   public static final String UNSIGNED_SUFFIX = ".unsigned";
 
@@ -248,6 +250,7 @@ public class AndroidPackagingCompiler implements PackagingCompiler {
       AndroidCompileUtil.addMessages(context, messages, item.myModule);
     }
     catch (final IOException e) {
+      LOG.info(e);
       ApplicationManager.getApplication().runReadAction(new Runnable() {
         public void run() {
           if (context.getProject().isDisposed()) return;

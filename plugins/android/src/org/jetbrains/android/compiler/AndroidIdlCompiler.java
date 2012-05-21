@@ -20,6 +20,7 @@ import com.android.sdklib.SdkConstants;
 import com.intellij.facet.FacetManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.*;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
@@ -48,6 +49,8 @@ import java.util.Map;
  * @author Alexey Efimov
  */
 public class AndroidIdlCompiler implements SourceGeneratingCompiler {
+  private static final Logger LOG = Logger.getInstance("#org.jetbrains.android.compiler.AndroidIdlCompiler");
+
   private static final GenerationItem[] EMPTY_GENERATION_ITEM_ARRAY = {};
 
   private final Project myProject;
@@ -218,6 +221,7 @@ public class AndroidIdlCompiler implements SourceGeneratingCompiler {
           }
         }
         catch (final IOException e) {
+          LOG.info(e);
           ApplicationManager.getApplication().runReadAction(new Runnable() {
             public void run() {
               if (context.getProject().isDisposed()) return;
