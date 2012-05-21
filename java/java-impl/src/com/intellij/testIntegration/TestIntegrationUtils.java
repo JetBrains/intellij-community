@@ -29,17 +29,20 @@ import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
+import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
 
@@ -233,5 +236,25 @@ public class TestIntegrationUtils {
   public static PsiMethod createDummyMethod(Project project) {
     PsiElementFactory f = JavaPsiFacade.getInstance(project).getElementFactory();
     return f.createMethod("dummy", PsiType.VOID);
+  }
+
+  public static List<TestFramework> findSuitableFrameworks(PsiClass targetClass) {
+    TestFramework[] frameworks = Extensions.getExtensions(TestFramework.EXTENSION_NAME);
+    for (TestFramework each : frameworks) {
+      if (each.isTestClass(targetClass)) {
+        return Collections.singletonList(each);
+      }
+    }
+
+    List<TestFramework> result = new SmartList<TestFramework>();
+    for (TestFramework each : frameworks) {
+      if (each.isPotentialTestClass(targetClass)) {
+        result.add(each);
+      }
+    }
+    return result;
+  }
+
+  private TestIntegrationUtils() {
   }
 }
