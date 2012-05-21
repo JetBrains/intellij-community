@@ -42,6 +42,8 @@ public abstract class FileColorManager {
 
   public abstract boolean isEnabledForProjectView();
 
+  public abstract Project getProject();
+
   @SuppressWarnings({"MethodMayBeStatic"})
   @Nullable
   public abstract Color getColor(@NotNull String name);
