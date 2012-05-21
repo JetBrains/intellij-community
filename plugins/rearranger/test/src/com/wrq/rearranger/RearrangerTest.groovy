@@ -579,8 +579,7 @@ class RearrangerTest extends LightCodeInsightFixtureTestCase {
       spacingRule.create {
         spacing( anchor: SpacingAnchor.AFTER_CLASS_RBRACE, lines: 2 )
         spacing( anchor: SpacingAnchor.EOF, lines: 3 )
-      }
-  } }
+  } } }
 
   public void testSpacingWithTrailingWhitespace() throws Exception {
     doTest('SpaceTest6', 'SpaceResult6') {
@@ -599,99 +598,66 @@ class RearrangerTest extends LightCodeInsightFixtureTestCase {
         spacing( anchor: [ SpacingAnchor.BEFORE_METHOD_LBRACE, SpacingAnchor.EOF ], lines: 1)
   } } }
 
-//  public void testGetPrefixImmaterial() throws Exception {
-//    configureByFile("/com/wrq/rearranger/GetterDefinitionTest.java");
-//    final PsiFile file = getFile();
-//    final Document doc = PsiDocumentManager.getInstance(getProject()).getDocument(file);
-//    final RearrangerActionHandler rah = new RearrangerActionHandler();
-//    MethodAttributes ma = new MethodAttributes();
-//    GetterSetterDefinition gsd = ma.getGetterSetterDefinition();
-//    rs.addItem(ma, 0);
-//    ma.setGetterSetterMethodType(true);
-//    gsd.setGetterNameCriterion(GetterSetterDefinition.GETTER_NAME_CORRECT_PREFIX);
-//    gsd.setGetterBodyCriterion(GetterSetterDefinition.GETTER_BODY_IMMATERIAL);
-//    rah.rearrangeDocument(getProject(), file, rs, doc);
-//    super.checkResultByFile("/com/wrq/rearranger/GetPrefixImmaterialResult.java");
-//  }
-//
-//  public void testGetPrefixReturns() throws Exception {
-//    configureByFile("/com/wrq/rearranger/GetterDefinitionTest.java");
-//    final PsiFile file = getFile();
-//    final Document doc = PsiDocumentManager.getInstance(getProject()).getDocument(file);
-//    final RearrangerActionHandler rah = new RearrangerActionHandler();
-//    MethodAttributes ma = new MethodAttributes();
-//    GetterSetterDefinition gsd = ma.getGetterSetterDefinition();
-//    rs.addItem(ma, 0);
-//    ma.setGetterSetterMethodType(true);
-//    gsd.setGetterNameCriterion(GetterSetterDefinition.GETTER_NAME_CORRECT_PREFIX);
-//    gsd.setGetterBodyCriterion(GetterSetterDefinition.GETTER_BODY_RETURNS);
-//    rah.rearrangeDocument(getProject(), file, rs, doc);
-//    super.checkResultByFile("/com/wrq/rearranger/GetPrefixReturnsResult.java");
-//  }
-//
-//  public void testGetPrefixReturnsField() throws Exception {
-//    configureByFile("/com/wrq/rearranger/GetterDefinitionTest.java");
-//    final PsiFile file = getFile();
-//    final Document doc = PsiDocumentManager.getInstance(getProject()).getDocument(file);
-//    final RearrangerActionHandler rah = new RearrangerActionHandler();
-//    MethodAttributes ma = new MethodAttributes();
-//    GetterSetterDefinition gsd = ma.getGetterSetterDefinition();
-//    rs.addItem(ma, 0);
-//    ma.setGetterSetterMethodType(true);
-//    gsd.setGetterNameCriterion(GetterSetterDefinition.GETTER_NAME_CORRECT_PREFIX);
-//    gsd.setGetterBodyCriterion(GetterSetterDefinition.GETTER_BODY_RETURNS_FIELD);
-//    rah.rearrangeDocument(getProject(), file, rs, doc);
-//    super.checkResultByFile("/com/wrq/rearranger/GetPrefixReturnsFieldResult.java");
-//  }
-//
-//  public void testGetFieldReturns() throws Exception {
-//    configureByFile("/com/wrq/rearranger/GetterDefinitionTest.java");
-//    final PsiFile file = getFile();
-//    final Document doc = PsiDocumentManager.getInstance(getProject()).getDocument(file);
-//    final RearrangerActionHandler rah = new RearrangerActionHandler();
-//    MethodAttributes ma = new MethodAttributes();
-//    GetterSetterDefinition gsd = ma.getGetterSetterDefinition();
-//    rs.addItem(ma, 0);
-//    ma.setGetterSetterMethodType(true);
-//    gsd.setGetterNameCriterion(GetterSetterDefinition.GETTER_NAME_MATCHES_FIELD);
-//    gsd.setGetterBodyCriterion(GetterSetterDefinition.GETTER_BODY_RETURNS);
-//    rah.rearrangeDocument(getProject(), file, rs, doc);
-//    super.checkResultByFile("/com/wrq/rearranger/GetFieldReturnsResult.java");
-//  }
-//
-//  public void testGetFieldReturnsField() throws Exception {
-//    configureByFile("/com/wrq/rearranger/GetterDefinitionTest.java");
-//    final PsiFile file = getFile();
-//    final Document doc = PsiDocumentManager.getInstance(getProject()).getDocument(file);
-//    final RearrangerActionHandler rah = new RearrangerActionHandler();
-//    MethodAttributes ma = new MethodAttributes();
-//    GetterSetterDefinition gsd = ma.getGetterSetterDefinition();
-//    rs.addItem(ma, 0);
-//    ma.setGetterSetterMethodType(true);
-//    gsd.setGetterNameCriterion(GetterSetterDefinition.GETTER_NAME_MATCHES_FIELD);
-//    gsd.setGetterBodyCriterion(GetterSetterDefinition.GETTER_BODY_RETURNS_FIELD);
-//    rah.rearrangeDocument(getProject(), file, rs, doc);
-//    super.checkResultByFile("/com/wrq/rearranger/GetFieldReturnsFieldResult.java");
-//  }
-//
-//  public void testSpecialGS() throws Exception {
-//    configureByFile("/com/wrq/rearranger/RearrangementTest22.java");
-//    final PsiFile file = getFile();
-//    final Document doc = PsiDocumentManager.getInstance(getProject()).getDocument(file);
-//    final RearrangerActionHandler rah = new RearrangerActionHandler();
-//    MethodAttributes ma = new MethodAttributes();
-//    GetterSetterDefinition gsd = ma.getGetterSetterDefinition();
-//    rs.addItem(ma, 0);
-//    ma.setGetterSetterMethodType(true);
-//    gsd.setGetterNameCriterion(GetterSetterDefinition.GETTER_NAME_CORRECT_PREFIX);
-//    gsd.setGetterBodyCriterion(GetterSetterDefinition.GETTER_BODY_RETURNS);
-//    gsd.setSetterBodyCriterion(GetterSetterDefinition.SETTER_BODY_IMMATERIAL);
-//    gsd.setSetterNameCriterion(GetterSetterDefinition.SETTER_NAME_CORRECT_PREFIX);
-//    rs.setKeepGettersSettersTogether(true);
-//    rah.rearrangeDocument(getProject(), file, rs, doc);
-//    super.checkResultByFile("/com/wrq/rearranger/RearrangementResult22.java");
-//  }
-//
+  public void testGetPrefixImmaterial() throws Exception {
+    doTest('GetterDefinitionTest', 'GetPrefixImmaterialResult') {
+      methodRule.create {
+        target( MethodType.GETTER_OR_SETTER )
+        getterCriteria(
+          name: GetterSetterDefinition.GETTER_NAME_CORRECT_PREFIX,
+          body: GetterSetterDefinition.GETTER_BODY_IMMATERIAL
+  ) } } }
+
+  public void testGetPrefixReturns() throws Exception {
+    doTest('GetterDefinitionTest', 'GetPrefixReturnsResult') {
+      methodRule.create {
+        target( MethodType.GETTER_OR_SETTER )
+        getterCriteria(
+                name: GetterSetterDefinition.GETTER_NAME_CORRECT_PREFIX,
+                body: GetterSetterDefinition.GETTER_BODY_RETURNS
+  ) } } }
+
+  public void testGetPrefixReturnsField() throws Exception {
+    doTest('GetterDefinitionTest', 'GetPrefixReturnsFieldResult') {
+      methodRule.create {
+        target( MethodType.GETTER_OR_SETTER )
+        getterCriteria(
+                name: GetterSetterDefinition.GETTER_NAME_CORRECT_PREFIX,
+                body: GetterSetterDefinition.GETTER_BODY_RETURNS_FIELD
+    ) } } }
+
+  public void testGetFieldReturns() throws Exception {
+    doTest('GetterDefinitionTest', 'GetFieldReturnsResult') {
+      methodRule.create {
+        target( MethodType.GETTER_OR_SETTER )
+        getterCriteria(
+          name: GetterSetterDefinition.GETTER_NAME_MATCHES_FIELD,
+          body: GetterSetterDefinition.GETTER_BODY_RETURNS
+  ) } } }
+
+  public void testGetFieldReturnsField() throws Exception {
+    doTest('GetterDefinitionTest', 'GetFieldReturnsFieldResult') {
+      methodRule.create {
+        target( MethodType.GETTER_OR_SETTER )
+        getterCriteria(
+          name: GetterSetterDefinition.GETTER_NAME_MATCHES_FIELD,
+          body: GetterSetterDefinition.GETTER_BODY_RETURNS_FIELD
+  ) } } }
+
+  public void testSpecialGS() throws Exception {
+    doTest('RearrangementTest22', 'RearrangementResult22') {
+      methodRule.create {
+        target( MethodType.GETTER_OR_SETTER )
+        getterCriteria(
+          name: GetterSetterDefinition.GETTER_NAME_CORRECT_PREFIX,
+          body: GetterSetterDefinition.GETTER_BODY_RETURNS
+        )
+        setterCriteria(
+          name: GetterSetterDefinition.SETTER_NAME_CORRECT_PREFIX,
+          body: GetterSetterDefinition.SETTER_BODY_IMMATERIAL
+      ) }
+      mySettings.keepGettersSettersTogether = true
+  } }
+
 //  public void testInterfaceNoNameNotAlphabeticalNoExcludeMethodAlphabetical() throws Exception {
 //    configureByFile("/com/wrq/rearranger/RearrangementTest23.java");
 //    final PsiFile file = getFile();

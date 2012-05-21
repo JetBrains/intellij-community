@@ -1,9 +1,9 @@
 public class GetterDefinitionTest {
+
   /** name: matches field; body: returns field */
   public int getField2() {
     return field2;
   }
-
   int dummyField;
   int field;
   int field2;
