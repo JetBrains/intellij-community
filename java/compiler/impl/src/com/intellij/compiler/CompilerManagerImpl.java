@@ -88,7 +88,7 @@ public class CompilerManagerImpl extends CompilerManager {
     addCompilableFileType(StdFileTypes.JAVA);
 
     final File projectGeneratedSrcRoot = CompilerPaths.getGeneratedDataDirectory(project);
-    FileUtil.createIfDoesntExist(projectGeneratedSrcRoot);
+    projectGeneratedSrcRoot.mkdirs();
     final LocalFileSystem lfs = LocalFileSystem.getInstance();
     myWatchRoots = lfs.addRootsToWatch(Collections.singletonList(FileUtil.toCanonicalPath(projectGeneratedSrcRoot.getPath())), true);
     Disposer.register(project, new Disposable() {
