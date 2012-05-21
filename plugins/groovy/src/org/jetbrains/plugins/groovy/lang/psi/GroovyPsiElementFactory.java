@@ -172,7 +172,7 @@ public abstract class GroovyPsiElementFactory implements JVMElementFactory {
 
   public abstract GrTypeElement createTypeElement(String typeText, @Nullable PsiElement context);
 
-  public abstract GrParenthesizedExpression createParenthesizedExpr(GrExpression newExpr);
+  public abstract GrParenthesizedExpression createParenthesizedExpr(GrExpression expression);
 
   public abstract PsiElement createStringLiteralForReference(String text);
 

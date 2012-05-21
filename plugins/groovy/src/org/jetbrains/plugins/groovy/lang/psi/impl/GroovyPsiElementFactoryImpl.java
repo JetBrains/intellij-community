@@ -20,8 +20,10 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -64,6 +66,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author ven
@@ -407,8 +410,8 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
     return JavaPsiFacade.getElementFactory(myProject).createType(aClass);
   }
 
-  public GrParenthesizedExpression createParenthesizedExpr(GrExpression newExpr) {
-    return ((GrParenthesizedExpression) getInstance(myProject).createExpressionFromText("(" + newExpr.getText() + ")"));
+  public GrParenthesizedExpression createParenthesizedExpr(GrExpression expression) {
+    return ((GrParenthesizedExpression) createExpressionFromText("(" + expression.getText() + ")"));
   }
 
   public PsiElement createStringLiteralForReference(String text) {
@@ -957,4 +960,77 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
     return method.getParameterList();
   }
 
+  @NotNull
+  @Override
+  public PsiClass createAnnotationType(@NotNull @NonNls String name) throws IncorrectOperationException {
+    return createTypeDefinition("@interface " + name + "{}");
+  }
+
+  @NotNull
+  @Override
+  public PsiMethod createConstructor(@NotNull @NonNls String name) {
+    return createConstructorFromText(name, name + "(){}", null);
+  }
+
+  @NotNull
+  @Override
+  public PsiClassType createType(@NotNull PsiClass resolve, @NotNull PsiSubstitutor substitutor) {
+    return JavaPsiFacade.getElementFactory(myProject).createType(resolve, substitutor);
+  }
+
+  @NotNull
+  @Override
+  public PsiClassType createType(@NotNull PsiClass resolve, @NotNull PsiSubstitutor substitutor, @NotNull LanguageLevel languageLevel) {
+    return JavaPsiFacade.getElementFactory(myProject).createType(resolve, substitutor, languageLevel);
+  }
+
+  @NotNull
+  @Override
+  public PsiClassType createType(@NotNull PsiClass resolve,
+                                 @NotNull PsiSubstitutor substitutor,
+                                 @NotNull LanguageLevel languageLevel,
+                                 @NotNull PsiAnnotation[] annotations) {
+    return JavaPsiFacade.getElementFactory(myProject).createType(resolve, substitutor, languageLevel, annotations);
+  }
+
+  @NotNull
+  @Override
+  public PsiClassType createType(@NotNull PsiClass aClass, PsiType parameters) {
+    return JavaPsiFacade.getElementFactory(myProject).createType(aClass, parameters);
+  }
+
+  @NotNull
+  @Override
+  public PsiClassType createType(@NotNull PsiClass aClass, PsiType... parameters) {
+    return JavaPsiFacade.getElementFactory(myProject).createType(aClass, parameters);
+  }
+
+  @NotNull
+  @Override
+  public PsiSubstitutor createRawSubstitutor(@NotNull PsiTypeParameterListOwner owner) {
+    return JavaPsiFacade.getElementFactory(myProject).createRawSubstitutor(owner);
+  }
+
+  @NotNull
+  @Override
+  public PsiSubstitutor createSubstitutor(@NotNull Map<PsiTypeParameter, PsiType> map) {
+    return JavaPsiFacade.getElementFactory(myProject).createSubstitutor(map);
+  }
+
+  @Override
+  public PsiPrimitiveType createPrimitiveType(@NotNull String text) {
+    return JavaPsiFacade.getElementFactory(myProject).createPrimitiveType(text);
+  }
+
+  @NotNull
+  @Override
+  public PsiClassType createTypeByFQClassName(@NotNull @NonNls String qName) {
+    return JavaPsiFacade.getElementFactory(myProject).createTypeByFQClassName(qName);
+  }
+
+  @NotNull
+  @Override
+  public PsiClassType createTypeByFQClassName(@NotNull @NonNls String qName, @NotNull GlobalSearchScope resolveScope) {
+    return JavaPsiFacade.getElementFactory(myProject).createTypeByFQClassName(qName, resolveScope);
+  }
 }
