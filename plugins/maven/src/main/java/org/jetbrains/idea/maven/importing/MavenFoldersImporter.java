@@ -199,39 +199,44 @@ public class MavenFoldersImporter {
     }
   }
 
-  private void configGeneratedSourceFolder(@NotNull File dir, boolean isTestSources) {
+  private void configGeneratedSourceFolder(@NotNull File targetDir, boolean isTestSources) {
     switch (myImportingSettings.getGeneratedSourcesFolder()) {
       case GENERATED_SOURCE_FOLDER:
-        if (!myModel.hasRegisteredSourceSubfolder(dir)) {
-          myModel.addSourceFolder(dir.getPath(), isTestSources);
-        }
+        addAsSourceFolder(targetDir, isTestSources);
         break;
 
       case SUBFOLDER:
-        addAllSubDirsAsSources(dir, isTestSources);
+        addAllSubDirsAsSources(targetDir, isTestSources);
         break;
 
       case AUTODETECT:
-        Collection<JavaModuleSourceRoot> sourceRoots = JavaSourceRootDetectionUtil.suggestRoots(dir);
-        if (sourceRoots.size() == 1) {
-          JavaModuleSourceRoot root = sourceRoots.iterator().next();
-          if (dir.equals(root.getDirectory())) {
-            if (!myModel.hasRegisteredSourceSubfolder(dir)) {
-              myModel.addSourceFolder(dir.getPath(), isTestSources);
-            }
-            break;
+        Collection<JavaModuleSourceRoot> sourceRoots = JavaSourceRootDetectionUtil.suggestRoots(targetDir);
+
+        for (JavaModuleSourceRoot root : sourceRoots) {
+          if (targetDir.equals(root.getDirectory())) {
+            addAsSourceFolder(targetDir, isTestSources);
+            return;
           }
+
+          addAsSourceFolder(root.getDirectory(), isTestSources);
         }
-        addAllSubDirsAsSources(dir, isTestSources);
+
+        addAllSubDirsAsSources(targetDir, isTestSources);
         break;
+    }
+  }
+
+  private void addAsSourceFolder(@NotNull File dir, boolean isTestSources) {
+    if (!myModel.hasRegisteredSourceSubfolder(dir)) {
+      myModel.addSourceFolder(dir.getPath(), isTestSources);
     }
   }
 
   private void addAllSubDirsAsSources(@NotNull File dir, boolean isTestSources) {
     for (File f : getChildren(dir)) {
-      if (!f.isDirectory()) continue;
-      if (myModel.hasRegisteredSourceSubfolder(f)) continue;
-      myModel.addSourceFolder(f.getPath(), isTestSources);
+      if (f.isDirectory()) {
+        addAsSourceFolder(f, isTestSources);
+      }
     }
   }
 
