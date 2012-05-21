@@ -16,6 +16,7 @@
 package org.jetbrains.idea.maven.project;
 
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.xmlb.annotations.Property;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -46,7 +47,21 @@ public class MavenImportingSettings implements Cloneable {
   private boolean downloadSourcesAutomatically = false;
   private boolean downloadDocsAutomatically = false;
 
+  private GeneratedSourcesFolder generatedSourcesFolder = GeneratedSourcesFolder.AUTODETECT;
+
   private List<Listener> myListeners = ContainerUtil.createEmptyCOWList();
+
+  public enum GeneratedSourcesFolder {
+    AUTODETECT("Auto detect"),
+    GENERATED_SOURCE_FOLDER("target/generated-sources"),
+    SUBFOLDER("subdirectories of \"target/generated-sources\"");
+
+    public final String title;
+
+    private GeneratedSourcesFolder(String title) {
+      this.title = title;
+    }
+  }
 
   @NotNull
   public String getDedicatedModuleDir() {
@@ -132,6 +147,18 @@ public class MavenImportingSettings implements Cloneable {
     this.downloadDocsAutomatically = value;
   }
 
+  @Property
+  @NotNull
+  public GeneratedSourcesFolder getGeneratedSourcesFolder() {
+    return generatedSourcesFolder;
+  }
+
+  public void setGeneratedSourcesFolder(GeneratedSourcesFolder generatedSourcesFolder) {
+    if (generatedSourcesFolder == null) return; // null may come from deserializator
+
+    this.generatedSourcesFolder = generatedSourcesFolder;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
@@ -147,6 +174,7 @@ public class MavenImportingSettings implements Cloneable {
     if (lookForNested != that.lookForNested) return false;
     if (keepSourceFolders != that.keepSourceFolders) return false;
     if (useMavenOutput != that.useMavenOutput) return false;
+    if (generatedSourcesFolder != that.generatedSourcesFolder) return false;
     if (!dedicatedModuleDir.equals(that.dedicatedModuleDir)) return false;
     if (updateFoldersOnImportPhase != null
         ? !updateFoldersOnImportPhase.equals(that.updateFoldersOnImportPhase)
