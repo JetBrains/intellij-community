@@ -70,7 +70,7 @@ public class JavaCoreEnvironment extends CoreEnvironment {
 
     myApplication.registerService(PsiPackageImplementationHelper.class, new CorePsiPackageImplementationHelper());
 
-    myFileManager = new CoreJavaFileManager(myPsiManager, getLocalFileSystem(), myJarFileSystem);
+    myFileManager = createCoreFileManager();
     myProject.registerService(PsiElementFactory.class, new PsiElementFactoryImpl(myPsiManager));
     myProject.registerService(JavaPsiImplementationHelper.class, new CoreJavaPsiImplementationHelper());
     myProject.registerService(PsiResolveHelper.class, new PsiResolveHelperImpl(myPsiManager));
@@ -90,6 +90,10 @@ public class JavaCoreEnvironment extends CoreEnvironment {
     myApplication.registerService(EmptySubstitutor.class, new EmptySubstitutorImpl());
     myApplication.registerService(JavaDirectoryService.class, new CoreJavaDirectoryService());
     myApplication.registerService(JavaVersionService.class, new JavaVersionService());
+  }
+
+  protected CoreJavaFileManager createCoreFileManager() {
+    return new CoreJavaFileManager(myPsiManager, getLocalFileSystem(), myJarFileSystem);
   }
 
   public void addToClasspath(File path) {
