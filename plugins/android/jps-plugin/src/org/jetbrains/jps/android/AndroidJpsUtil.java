@@ -86,7 +86,8 @@ class AndroidJpsUtil {
 
   public static void addMessages(@NotNull CompileContext context,
                                  @NotNull Map<AndroidCompilerMessageKind, List<String>> messages,
-                                 @NotNull String builderName) {
+                                 @NotNull String builderName,
+                                 @NotNull String moduleName) {
     for (Map.Entry<AndroidCompilerMessageKind, List<String>> entry : messages.entrySet()) {
       for (String message : entry.getValue()) {
         String filePath = null;
@@ -99,7 +100,8 @@ class AndroidJpsUtil {
         }
         final BuildMessage.Kind category = toBuildMessageKind(entry.getKey());
         if (category != null) {
-          context.processMessage(new CompilerMessage(builderName, category, message, filePath, -1L, -1L, -1L, line, -1L));
+          context.processMessage(
+            new CompilerMessage(builderName, category, '[' + moduleName + "] " + message, filePath, -1L, -1L, -1L, line, -1L));
         }
       }
     }

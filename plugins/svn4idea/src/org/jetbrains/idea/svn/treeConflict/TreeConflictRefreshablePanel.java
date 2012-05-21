@@ -16,10 +16,9 @@
 package org.jetbrains.idea.svn.treeConflict;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diff.impl.patch.BinaryFilePatch;
-import com.intellij.openapi.diff.impl.patch.FilePatch;
-import com.intellij.openapi.diff.impl.patch.IdeaTextPatchBuilder;
+import com.intellij.openapi.diff.impl.patch.*;
 import com.intellij.openapi.diff.impl.patch.formove.PatchApplier;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.BackgroundTaskQueue;
@@ -36,16 +35,16 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.*;
-import com.intellij.openapi.vcs.changes.committed.CommittedChangesTreeBrowser;
+import com.intellij.openapi.vcs.changes.patch.*;
 import com.intellij.openapi.vcs.history.*;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.BeforeAfter;
-import com.intellij.util.Consumer;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.Convertor;
+import com.intellij.util.containers.MultiMap;
 import com.intellij.util.continuation.*;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.VcsBackgroundTask;
@@ -403,87 +402,7 @@ public class TreeConflictRefreshablePanel extends AbstractRefreshablePanel {
     return new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        final FilePath oldFilePath = myChange.getBeforeRevision().getFile();
-        final FilePath newFilePath = myChange.getAfterRevision().getFile();
-        int ok = Messages.showOkCancelDialog(myVcs.getProject(),
-                                             (myChange.isMoved() ?
-                                              SvnBundle.message("confirmation.resolve.tree.conflict.merge.moved", filePath(oldFilePath),
-                                                                filePath(newFilePath)) :
-                                              SvnBundle.message("confirmation.resolve.tree.conflict.merge.renamed", filePath(oldFilePath),
-                                                                filePath(newFilePath))),
-                                             TITLE, Messages.getQuestionIcon());
-        if (Messages.OK != ok) return;
-
-        FileDocumentManager.getInstance().saveAllDocuments();
-        final String name = "Merge changes from theirs for: " + filePath(oldFilePath);
-
-        final GatheringContinuationContext cc = new GatheringContinuationContext();
-        cc.addExceptionHandler(VcsException.class, new Consumer<VcsException>() {
-          @Override
-          public void consume(VcsException e) {
-            AbstractVcsHelper.getInstance(myVcs.getProject()).showErrors(Collections.singletonList(e), name);
-          }
-        });
-        cc.next(new TaskDescriptor("Creating patch for theirs changes", Where.POOLED) {
-          @Override
-          public void run(ContinuationContext context) {
-            try {
-              ProgressManager.progress("Getting base and theirs revisions content");
-              final List<Change> changes = new SmartList<Change>();
-
-              if (SVNNodeKind.DIR.equals(description.getNodeKind())) {
-                long max = description.getSourceRightVersion().getPegRevision();
-                long min = description.getSourceLeftVersion().getPegRevision();
-
-                final ChangeBrowserSettings settings = new ChangeBrowserSettings();
-                settings.USE_CHANGE_BEFORE_FILTER = settings.USE_CHANGE_AFTER_FILTER = true;
-                settings.CHANGE_BEFORE = "" + max;
-                settings.CHANGE_AFTER = "" + min;
-                final List<SvnChangeList> committedChanges = myVcs.getCachingCommittedChangesProvider().getCommittedChanges(
-                  settings, new SvnRepositoryLocation(description.getSourceRightVersion().getRepositoryRoot().toString()), 0);
-                final List<CommittedChangeList> lst = new ArrayList<CommittedChangeList>(committedChanges.size() - 1);
-                for (SvnChangeList change : committedChanges) {
-                  if (change.getNumber() == min) {
-                    continue;
-                  }
-                  lst.add(change);
-                }
-                final List<Change> changesForPatch = CommittedChangesTreeBrowser.collectChanges(lst, true);
-                for (Change change : changesForPatch) {
-                  if (! isUnderOldDir(change, oldFilePath)) continue;
-                  ContentRevision before = null;
-                  ContentRevision after = null;
-                  if (change.getBeforeRevision() != null) {
-                    before = new SimpleContentRevision(change.getBeforeRevision().getContent(),
-                      rebasePath(oldFilePath, newFilePath, change.getBeforeRevision().getFile()),
-                      change.getBeforeRevision().getRevisionNumber().asString());
-                  }
-                  if (change.getAfterRevision() != null) {
-                    after = new SimpleContentRevision(change.getAfterRevision().getContent(),
-                      rebasePath(oldFilePath, newFilePath, change.getAfterRevision().getFile()),
-                      change.getAfterRevision().getRevisionNumber().asString());
-                  }
-                  changes.add(new Change(before, after));
-                }
-              } else {
-                final SvnContentRevision base = SvnContentRevision.createBaseRevision(myVcs, newFilePath, myCommittedRevision.getRevision());
-                final SvnContentRevision remote = SvnContentRevision.createRemote(myVcs, oldFilePath,
-                                                                                  SVNRevision.create(
-                                                                                    description.getSourceRightVersion().getPegRevision()));
-                final ContentRevision newBase = new SimpleContentRevision(base.getContent(), newFilePath, base.getRevisionNumber().asString());
-                final ContentRevision newRemote = new SimpleContentRevision(remote.getContent(), newFilePath, remote.getRevisionNumber().asString());
-                changes.add(new Change(newBase, newRemote));
-              }
-
-              mergeFromTheirs(context, newFilePath, oldFilePath, description, changes);
-            }
-            catch (VcsException e1) {
-              context.handleException(e1);
-            }
-          }
-        });
-        final Continuation fragmented = Continuation.createFragmented(myVcs.getProject(), false);
-        fragmented.run(cc.getList());
+        new MergeFromTheirsResolver(myVcs, description, myChange, myCommittedRevision).execute();
       }
     };
   }
@@ -508,44 +427,6 @@ public class TreeConflictRefreshablePanel extends AbstractRefreshablePanel {
     final String relativePath = FileUtil.getRelativePath(oldBase.getPath(), path.getPath(), File.separatorChar);
     //if (StringUtil.isEmptyOrSpaces(relativePath)) return path;
     return ((FilePathImpl) newBase).createChild(relativePath, path.isDirectory());
-  }
-
-  private void mergeFromTheirs(ContinuationContext context, final FilePath newFilePath, final FilePath oldFilePath,
-                               final SVNTreeConflictDescription description, final List<Change> changes) throws VcsException {
-
-    ProgressManager.progress("Creating patch for theirs changes");
-    final VirtualFile baseForPatch = ApplicationManager.getApplication().runReadAction(new Computable<VirtualFile>() {
-      @Override
-      public VirtualFile compute() {
-        return ChangesUtil.findValidParent(newFilePath);
-      }
-    });
-    final Project project = myVcs.getProject();
-    final List<FilePatch> patches = IdeaTextPatchBuilder.buildPatch(project, changes, baseForPatch.getPath(), false);
-
-    ProgressManager.progress("Applying patch to " + newFilePath.getPath());
-    final ChangeListManager clManager = ChangeListManager.getInstance(project);
-    final LocalChangeList changeList = clManager.getChangeList(myChange);
-    final PatchApplier<BinaryFilePatch> patchApplier =
-      new PatchApplier<BinaryFilePatch>(project, baseForPatch, patches, changeList, null, null);
-    patchApplier.scheduleSelf(false, context, true);
-    context.last(new TaskDescriptor("Accepting working state", Where.POOLED) {
-      @Override
-      public void run(ContinuationContext context) {
-        try {
-          new SvnTreeConflictResolver(myVcs, oldFilePath, myCommittedRevision, null).resolveSelectMineFull(description);
-        }
-        catch (VcsException e1) {
-          context.handleException(e1);
-        }
-      }
-    });
-    context.last(new TaskDescriptor("", Where.AWT) {
-      @Override
-      public void run(ContinuationContext context) {
-        VcsBalloonProblemNotifier.showOverChangesView(myVcs.getProject(), "Theirs changes merged for " + filePath(myPath), MessageType.INFO);
-      }
-    });
   }
 
   public static String filePath(FilePath newFilePath) {

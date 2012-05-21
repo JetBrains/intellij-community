@@ -78,7 +78,7 @@ class AndroidFacet extends Facet {
   }
 
   private File findFileByRelativeModulePath(String relativePath, boolean lookInContentRoot) {
-    if (relativePath == null) {
+    if (relativePath == null || relativePath.length() == 0) {
       return null
     }
 

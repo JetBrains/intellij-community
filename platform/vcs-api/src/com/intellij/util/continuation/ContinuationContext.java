@@ -37,7 +37,7 @@ public interface ContinuationContext extends ContinuationPause {
   void cancelEverything();
 
   <T extends Exception> void addExceptionHandler(final Class<T> clazz, final Consumer<T> consumer);
-  boolean handleException(final Exception e);
+  boolean handleException(final Exception e, boolean cancelEveryThing);
 
   void keepExisting(final Object disaster, final Object cure);
   void throwDisaster(final Object disaster, final Object cure);

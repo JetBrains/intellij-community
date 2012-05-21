@@ -58,6 +58,7 @@ import org.jetbrains.android.facet.AndroidRootUtil;
 import org.jetbrains.android.sdk.AndroidPlatform;
 import org.jetbrains.android.util.AndroidBundle;
 import org.jetbrains.android.util.AndroidCommonUtils;
+import org.jetbrains.android.util.SafeSignedJarBuilder;
 import org.jetbrains.android.util.SaveFileListener;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -282,7 +283,7 @@ class ApkStep extends ExportSignedPackageWizardStep {
       assert privateKey != null;
       X509Certificate certificate = myWizard.getCertificate();
       assert certificate != null;
-      SignedJarBuilder builder = new SignedJarBuilder(fos, privateKey, certificate);
+      SignedJarBuilder builder = new SafeSignedJarBuilder(fos, privateKey, certificate, destFile.getPath());
       FileInputStream fis = new FileInputStream(srcApk);
       try {
         builder.writeZip(fis, null);

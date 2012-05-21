@@ -31,6 +31,7 @@ import javax.swing.tree.DefaultMutableTreeNode;
 final class MessageNode extends DefaultMutableTreeNode {
   private String[] myText;
   private AntMessage myMessage;
+  @Nullable
   private RangeMarker myRangeMarker;
   private Document myEditorDocument;
   private boolean myAllowToShowPosition;
@@ -104,6 +105,14 @@ final class MessageNode extends DefaultMutableTreeNode {
 
   public int getPriority() {
     return myMessage.getPriority();
+  }
+
+  public void clearRangeMarker() {
+    final RangeMarker rangeMarker = myRangeMarker;
+    if (rangeMarker != null) {
+      myRangeMarker = null;
+      rangeMarker.dispose();
+    }
   }
 }
 

@@ -616,6 +616,10 @@
       <category>Declaration</category>
     </intentionAction>
     <intentionAction>
+      <className>com.intellij.testIntegration.intention.MoveInitializerToSetUpMethodAction</className>
+      <category>Declaration</category>
+    </intentionAction>
+    <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.MoveFieldAssignmentToInitializerAction</className>
       <category>Declaration</category>
     </intentionAction>

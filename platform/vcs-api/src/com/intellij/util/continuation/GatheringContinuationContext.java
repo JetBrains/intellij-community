@@ -47,7 +47,7 @@ public class GatheringContinuationContext implements ContinuationContext {
   }
 
   @Override
-  public boolean handleException(Exception e) {
+  public boolean handleException(Exception e, boolean cancelEveryThing) {
     return false;
   }
 

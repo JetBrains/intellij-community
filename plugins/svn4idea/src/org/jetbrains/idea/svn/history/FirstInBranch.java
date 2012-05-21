@@ -15,7 +15,9 @@
  */
 package org.jetbrains.idea.svn.history;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.ConcurrentTasks;
 import com.intellij.util.Consumer;
@@ -75,7 +77,12 @@ public class FirstInBranch implements Runnable {
   private Consumer<Consumer<CopyData>> createTask(final SVNURL branchURL) {
     return new Consumer<Consumer<CopyData>>() {
       public void consume(final Consumer<CopyData> copyDataConsumer) {
-        final SVNLogClient logClient = myVcs.createLogClient();
+        final SVNLogClient logClient = ApplicationManager.getApplication().runReadAction(new Computable<SVNLogClient>() {
+          @Override
+          public SVNLogClient compute() {
+            return myVcs.createLogClient();
+          }
+        });
         final long start1 = getStart(logClient, branchURL);
         if (start1 > 0) {
           final SVNRevision start1Rev = SVNRevision.create(start1);

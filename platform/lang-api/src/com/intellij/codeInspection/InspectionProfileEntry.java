@@ -278,6 +278,14 @@ public abstract class InspectionProfileEntry {
     return true;
   }
 
+  /**
+   * @return short name of tool whose results will be used
+   */
+  @Nullable
+  public String getMainToolId() {
+    return null;
+  }
+
   @Nullable
   public String loadDescription() {
     final String description = getStaticDescription();
