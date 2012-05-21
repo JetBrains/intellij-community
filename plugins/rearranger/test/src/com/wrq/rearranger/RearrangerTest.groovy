@@ -507,52 +507,32 @@ class RearrangerTest extends LightCodeInsightFixtureTestCase {
       methodRule.create { sort( SortType.BY_NAME ) }
   } }
 
-//  public final void testKeepOverloadsTogetherOriginalOrder() throws Exception {
-//    configureByFile("/com/wrq/rearranger/RearrangementTest19.java");
-//    final PsiFile file = getFile();
-//    final Document doc = PsiDocumentManager.getInstance(getProject()).getDocument(file);
-//    final RearrangerActionHandler rah = new RearrangerActionHandler();
-//    rs.getExtractedMethodsSettings().setMoveExtractedMethods(false);
-//    rs.setKeepOverloadedMethodsTogether(true);
-//    rs.setOverloadedOrder(RearrangerSettings.OVERLOADED_ORDER_RETAIN_ORIGINAL);
-//    rah.rearrangeDocument(getProject(), file, rs, doc);
-//    super.checkResultByFile("/com/wrq/rearranger/RearrangementResult19A.java");
-//  }
-//
-//  public final void testKeepOverloadsTogetherAscendingOrder() throws Exception {
-//    configureByFile("/com/wrq/rearranger/RearrangementTest19.java");
-//    final PsiFile file = getFile();
-//    final Document doc = PsiDocumentManager.getInstance(getProject()).getDocument(file);
-//    final RearrangerActionHandler rah = new RearrangerActionHandler();
-//    rs.getExtractedMethodsSettings().setMoveExtractedMethods(false);
-//    rs.setKeepOverloadedMethodsTogether(true);
-//    rs.setOverloadedOrder(RearrangerSettings.OVERLOADED_ORDER_ASCENDING_PARAMETERS);
-//    rah.rearrangeDocument(getProject(), file, rs, doc);
-//    super.checkResultByFile("/com/wrq/rearranger/RearrangementResult19B.java");
-//  }
-//
-//  public final void testKeepOverloadsTogetherDescendingOrder() throws Exception {
-//    configureByFile("/com/wrq/rearranger/RearrangementTest19.java");
-//    final PsiFile file = getFile();
-//    final Document doc = PsiDocumentManager.getInstance(getProject()).getDocument(file);
-//    final RearrangerActionHandler rah = new RearrangerActionHandler();
-//    rs.getExtractedMethodsSettings().setMoveExtractedMethods(false);
-//    rs.setKeepOverloadedMethodsTogether(true);
-//    rs.setOverloadedOrder(RearrangerSettings.OVERLOADED_ORDER_DESCENDING_PARAMETERS);
-//    rah.rearrangeDocument(getProject(), file, rs, doc);
-//    super.checkResultByFile("/com/wrq/rearranger/RearrangementResult19C.java");
-//  }
-//
-//  public final void testInnerClassReferenceToChild() throws Exception {
-//    configureByFile("/com/wrq/rearranger/RearrangementTest20.java");
-//    final PsiFile file = getFile();
-//    final Document doc = PsiDocumentManager.getInstance(getProject()).getDocument(file);
-//    final RearrangerActionHandler rah = new RearrangerActionHandler();
-//    rs.getExtractedMethodsSettings().setMoveExtractedMethods(true);
-//    rah.rearrangeDocument(getProject(), file, rs, doc);
-//    super.checkResultByFile("/com/wrq/rearranger/RearrangementResult20.java");
-//  }
-//
+  public final void testKeepOverloadsTogetherOriginalOrder() throws Exception {
+    doTest('RearrangementTest19', 'RearrangementResult19A') {
+      mySettings.extractedMethodsSettings.moveExtractedMethods = false
+      mySettings.keepOverloadedMethodsTogether = true
+      mySettings.overloadedOrder = RearrangerSettings.OVERLOADED_ORDER_RETAIN_ORIGINAL
+  } }
+
+  public final void testKeepOverloadsTogetherAscendingOrder() throws Exception {
+    doTest('RearrangementTest19', 'RearrangementResult19B') {
+      mySettings.extractedMethodsSettings.moveExtractedMethods = false
+      mySettings.keepOverloadedMethodsTogether = true
+      mySettings.overloadedOrder = RearrangerSettings.OVERLOADED_ORDER_ASCENDING_PARAMETERS
+  } }
+
+  public final void testKeepOverloadsTogetherDescendingOrder() throws Exception {
+    doTest('RearrangementTest19', 'RearrangementResult19C') {
+      mySettings.extractedMethodsSettings.moveExtractedMethods = false
+      mySettings.keepOverloadedMethodsTogether = true
+      mySettings.overloadedOrder = RearrangerSettings.OVERLOADED_ORDER_DESCENDING_PARAMETERS
+  } }
+
+  public final void testInnerClassReferenceToChild() throws Exception {
+    doTest('RearrangementTest20', 'RearrangementResult20') {
+      mySettings.extractedMethodsSettings.moveExtractedMethods = true
+  } }
+
 //  public final void testMultipleFieldDecl() throws Exception {
 //    configureByFile("/com/wrq/rearranger/RearrangementTest21.java");
 //    final PsiFile file = getFile();

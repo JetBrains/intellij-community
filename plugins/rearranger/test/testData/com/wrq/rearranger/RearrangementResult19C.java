@@ -5,7 +5,6 @@ public class RearrangementTest19 {
 
   RearrangementTest19(int oneParam) {
   }
-
   RearrangementTest19() {
   }
 
