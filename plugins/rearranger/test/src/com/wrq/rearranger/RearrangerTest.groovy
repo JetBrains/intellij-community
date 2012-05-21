@@ -43,6 +43,7 @@ class RearrangerTest extends LightCodeInsightFixtureTestCase {
   private JavaFieldRuleBuilder      fieldRule
   private JavaMethodRuleBuilder     methodRule
   private CommentRuleBuilder        commentRule
+  private JavaSpacingRule           spacingRule
 
   @Override
   protected String getBasePath() {
@@ -65,6 +66,7 @@ class RearrangerTest extends LightCodeInsightFixtureTestCase {
     fieldRule = new JavaFieldRuleBuilder(settings: mySettings)
     methodRule = new JavaMethodRuleBuilder(settings: mySettings)
     commentRule = new CommentRuleBuilder(settings: mySettings)
+    spacingRule = new JavaSpacingRule(settings: mySettings)
   }
 
   public final void testNoRearrangement() throws Exception {
@@ -523,7 +525,7 @@ class RearrangerTest extends LightCodeInsightFixtureTestCase {
 
   public final void testKeepOverloadsTogetherDescendingOrder() throws Exception {
     doTest('RearrangementTest19', 'RearrangementResult19C') {
-      mySettings.extractedMethodsSettings.moveExtractedMethods = false
+      mySettings.extractedMethodsSettings.moveExtr actedMethods = false
       mySettings.keepOverloadedMethodsTogether = true
       mySettings.overloadedOrder = RearrangerSettings.OVERLOADED_ORDER_DESCENDING_PARAMETERS
   } }
@@ -533,42 +535,24 @@ class RearrangerTest extends LightCodeInsightFixtureTestCase {
       mySettings.extractedMethodsSettings.moveExtractedMethods = true
   } }
 
-//  public final void testMultipleFieldDecl() throws Exception {
-//    configureByFile("/com/wrq/rearranger/RearrangementTest21.java");
-//    final PsiFile file = getFile();
-//    final Document doc = PsiDocumentManager.getInstance(getProject()).getDocument(file);
-//    final RearrangerActionHandler rah = new RearrangerActionHandler();
-//    FieldAttributes fa = new FieldAttributes();
-//    fa.getSortAttr().setByName(true);
-//    rs.addItem(fa, 0);
-//    rah.rearrangeDocument(getProject(), file, rs, doc);
-//    super.checkResultByFile("/com/wrq/rearranger/RearrangementResult21.java");
-//  }
-//
-//  public final void testRemoveBlankLines() throws Exception {
-//    configureByFile("/com/wrq/rearranger/SpaceTest1.java");
-//    final PsiFile file = getFile();
-//    final Document doc = PsiDocumentManager.getInstance(getProject()).getDocument(file);
-//    final RearrangerActionHandler rah = new RearrangerActionHandler();
-//    rs.getAfterClassLBrace().setForce(true);
-//    rs.getAfterClassLBrace().setnBlankLines(0);
-//    rs.getAfterMethodLBrace().setForce(true);
-//    rs.getAfterMethodLBrace().setnBlankLines(0);
-//    rs.getBeforeMethodRBrace().setForce(true);
-//    rs.getBeforeMethodRBrace().setnBlankLines(0);
-//    rs.getAfterMethodRBrace().setForce(true);
-//    rs.getAfterMethodRBrace().setnBlankLines(0);
-//    rs.getBeforeClassRBrace().setForce(true);
-//    rs.getBeforeClassRBrace().setnBlankLines(0);
-//    rs.getAfterClassRBrace().setForce(true);
-//    rs.getAfterClassRBrace().setnBlankLines(0);
-//    rs.getNewlinesAtEOF().setForce(true);
-//    rs.getNewlinesAtEOF().setnBlankLines(1);
-//    rs.setRemoveBlanksInsideCodeBlocks(true);
-//    rah.rearrangeDocument(getProject(), file, rs, doc);
-//    super.checkResultByFile("/com/wrq/rearranger/SpaceResult1.java");
-//  }
-//
+  public final void testMultipleFieldDecl() throws Exception {
+    doTest('RearrangementTest21', 'RearrangementResult21') {
+      fieldRule.create { sort( SortType.BY_NAME ) }
+  } }
+
+  public final void testRemoveBlankLines() throws Exception {
+    doTest('SpaceTest1', 'SpaceResult1') {
+      spacingRule.create {
+        spacing(anchor: [ SpacingAnchor.AFTER_CLASS_LBRACE, SpacingAnchor.AFTER_METHOD_LBRACE, SpacingAnchor.BEFORE_METHOD_RBRACE,
+                          SpacingAnchor.BEFORE_CLASS_RBRACE, SpacingAnchor.AFTER_CLASS_RBRACE ],
+                lines: 0)
+      }
+      spacingRule.create {
+        spacing( anchor: SpacingAnchor.EOF, lines:  1 )
+      }
+      mySettings.removeBlanksInsideCodeBlocks = true
+  } }
+
 //  public final void testAddBlankLines() throws Exception {
 //    configureByFile("/com/wrq/rearranger/SpaceTest2.java");
 //    final PsiFile file = getFile();

@@ -22,6 +22,7 @@ public enum RearrangerTestDsl {
   COMMENT,
   GETTER_CRITERIA("getterCriteria"),
   SETTER_CRITERIA("setterCriteria"),
+  SPACING,
   
   // Attributes
   INVERT,
@@ -30,7 +31,9 @@ public enum RearrangerTestDsl {
   ALL_PRECEDING("allPreceding"),
   SUBSEQUENT_RULES_TO_MATCH("subsequentRulesToMatch"),
   PRECEDING_RULES_TO_MATCH("precedingRulesToMatch"),
-  BODY;
+  BODY,
+  ANCHOR,
+  BLANK_LINES("lines");
 
   @NotNull private final String myValue;
   
