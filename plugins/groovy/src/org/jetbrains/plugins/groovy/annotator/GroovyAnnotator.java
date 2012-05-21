@@ -332,15 +332,6 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
         highlightVariable((GrVariable)resolved, getElementToHighlight(referenceExpression));
       }
 
-      /*if (!resolveResult.isAccessible()) {
-        String message = GroovyBundle.message("cannot.access", referenceExpression.getReferenceName());
-        final Annotation annotation = myHolder.createWarningAnnotation(getElementToHighlight(referenceExpression), message);
-        if (resolved instanceof PsiMember) {
-          registerAccessFix(annotation, referenceExpression, ((PsiMember)resolved));
-        }
-      }*/
-
-      //todo uncomment when correct isStatic() is working
       if (!resolveResult.isStaticsOK() && resolved instanceof PsiModifierListOwner) {
         if (!((PsiModifierListOwner)resolved).hasModifierProperty(PsiModifier.STATIC)) {
           Annotation annotation = myHolder.createInfoAnnotation(referenceExpression,

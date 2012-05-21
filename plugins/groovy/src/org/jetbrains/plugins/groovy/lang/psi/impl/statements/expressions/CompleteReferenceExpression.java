@@ -67,7 +67,7 @@ public class CompleteReferenceExpression {
 
   public static void processVariants(PrefixMatcher matcher, Consumer<Object> consumer, GrReferenceExpressionImpl refExpr, CompletionParameters parameters) {
     final CompleteReferenceProcessor processor = new CompleteReferenceProcessor(refExpr, consumer, matcher, parameters);
-    getVariantsImpl(matcher, refExpr, processor);
+    getVariantsImpl(refExpr, processor);
     final GroovyResolveResult[] candidates = processor.getCandidates();
     for (Object o : GroovyCompletionUtil.getCompletionVariants(candidates)) {
       consumer.consume(o);
@@ -86,7 +86,7 @@ public class CompleteReferenceExpression {
     getVariantsFromQualifierType(refExpr, consumer, params[0], refExpr.getProject());
   }
 
-  private static void getVariantsImpl(PrefixMatcher matcher, GrReferenceExpression refExpr, CompleteReferenceProcessor processor) {
+  private static void getVariantsImpl(GrReferenceExpression refExpr, CompleteReferenceProcessor processor) {
     GrExpression qualifier = refExpr.getQualifierExpression();
     if (qualifier == null) {
       ResolveUtil.treeWalkUp(refExpr, processor, true);
