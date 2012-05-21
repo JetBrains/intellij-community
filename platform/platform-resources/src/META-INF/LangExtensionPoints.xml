@@ -319,7 +319,7 @@
   <extensionPoint name="library.presentationProvider" interface="com.intellij.openapi.roots.libraries.LibraryPresentationProvider"/>
   <extensionPoint name="library.type" interface="com.intellij.openapi.roots.libraries.LibraryType"/>
 
-  <extensionPoint name="sdkFinder" interface="com.intellij.openapi.roots.impl.ModuleJdkOrderEntryImpl$SdkFinder"/>
+  <extensionPoint name="sdkFinder" interface="com.intellij.openapi.roots.impl.SdkFinder"/>
 
   <extensionPoint name="lang.implementationTextSelectioner"
                   beanClass="com.intellij.lang.LanguageExtensionPoint"/>
