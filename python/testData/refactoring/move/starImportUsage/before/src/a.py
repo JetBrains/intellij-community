@@ -1,3 +1,4 @@
 from b import *
 
-print(f())
+def g():
+    return f()
