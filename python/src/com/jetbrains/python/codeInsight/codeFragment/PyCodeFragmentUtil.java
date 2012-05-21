@@ -1,7 +1,6 @@
 package com.jetbrains.python.codeInsight.codeFragment;
 
 import com.intellij.codeInsight.codeFragment.CannotCreateCodeFragmentException;
-import com.intellij.codeInsight.codeFragment.CodeFragment;
 import com.intellij.codeInsight.codeFragment.CodeFragmentUtil;
 import com.intellij.codeInsight.codeFragment.Position;
 import com.intellij.codeInsight.controlflow.ControlFlow;
@@ -13,6 +12,7 @@ import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.controlflow.ReadWriteInstruction;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
+import com.jetbrains.python.codeInsight.dataflow.scope.Scope;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyForStatementNavigator;
@@ -30,9 +30,9 @@ public class PyCodeFragmentUtil {
   }
 
   @NotNull
-  public static CodeFragment createCodeFragment(@NotNull final ScopeOwner owner,
-                                                @NotNull final PsiElement startInScope,
-                                                @NotNull final PsiElement endInScope) throws CannotCreateCodeFragmentException {
+  public static PyCodeFragment createCodeFragment(@NotNull final ScopeOwner owner,
+                                                  @NotNull final PsiElement startInScope,
+                                                  @NotNull final PsiElement endInScope) throws CannotCreateCodeFragmentException {
     final int start = startInScope.getTextOffset();
     final int end = endInScope.getTextOffset() + endInScope.getTextLength();
     final ControlFlow flow = ControlFlowCache.getControlFlow(owner);
@@ -55,12 +55,17 @@ public class PyCodeFragmentUtil {
         PyBundle.message("refactoring.extract.method.error.cannot.perform.refactoring.when.from.import.inside"));
     }
 
+    final Set<String> globalWrites = getGlobalWrites(subGraph, owner);
+
     final Set<String> inputNames = new HashSet<String>();
     for (PsiElement element : filterElementsInScope(getInputElements(subGraph, graph), owner)) {
       final String name = getName(element);
       if (name != null) {
         // Ignore "self", it is generated automatically when extracting any method fragment
         if (PyPsiUtils.isMethodContext(element) && "self".equals(name)) {
+          continue;
+        }
+        if (globalWrites.contains(name)) {
           continue;
         }
         inputNames.add(name);
@@ -75,7 +80,7 @@ public class PyCodeFragmentUtil {
       }
     }
 
-    return new CodeFragment(inputNames, outputNames, subGraphAnalysis.returns > 0);
+    return new PyCodeFragment(inputNames, outputNames, globalWrites, subGraphAnalysis.returns > 0);
   }
 
   @Nullable
@@ -276,6 +281,21 @@ public class PyCodeFragmentUtil {
       }
     }
     return result;
+  }
+
+  @NotNull
+  private static Set<String> getGlobalWrites(@NotNull List<Instruction> instructions, @NotNull ScopeOwner owner) {
+    final Scope scope = ControlFlowCache.getScope(owner);
+    final Set<String> globalWrites = new LinkedHashSet<String>();
+    for (Instruction instruction : getWriteInstructions(instructions)) {
+      if (instruction instanceof ReadWriteInstruction) {
+        final String name = ((ReadWriteInstruction)instruction).getName();
+        if (scope.isGlobal(name)) {
+          globalWrites.add(name);
+        }
+      }
+    }
+    return globalWrites;
   }
 
   @NotNull

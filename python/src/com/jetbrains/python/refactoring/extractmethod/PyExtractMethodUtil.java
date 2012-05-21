@@ -10,6 +10,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.PsiRecursiveElementVisitor;
@@ -32,6 +33,7 @@ import com.intellij.util.containers.hash.HashMap;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PythonLanguage;
+import com.jetbrains.python.codeInsight.codeFragment.PyCodeFragment;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyFunctionBuilder;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
@@ -41,6 +43,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * @author oleg
@@ -53,7 +56,7 @@ public class PyExtractMethodUtil {
 
   public static void extractFromStatements(final Project project,
                                            final Editor editor,
-                                           final CodeFragment fragment,
+                                           final PyCodeFragment fragment,
                                            final PsiElement statement1,
                                            final PsiElement statement2) {
     if (!fragment.getOutputVariables().isEmpty() && fragment.isReturnInstructionInside()) {
@@ -98,6 +101,8 @@ public class PyExtractMethodUtil {
               final PsiElement firstElement = elementsRange.get(0);
               final boolean isMethod = PyPsiUtils.isMethodContext(firstElement);
               processParameters(project, generatedMethod, variableData, isMethod, isClassMethod, isStaticMethod);
+
+              processGlobalWrites(generatedMethod, fragment);
 
               // Generating call element
               final StringBuilder builder = new StringBuilder();
@@ -148,6 +153,8 @@ public class PyExtractMethodUtil {
               final boolean isMethod = PyPsiUtils.isMethodContext(elementsRange.get(0));
               processParameters(project, generatedMethod, variableData, isMethod, isClassMethod, isStaticMethod);
 
+              processGlobalWrites(generatedMethod, fragment);
+
               // Generate call element
               builder.append(" = ");
               if (isMethod){
@@ -166,6 +173,20 @@ public class PyExtractMethodUtil {
           });
         }
       }, "Extract method", null);
+    }
+  }
+
+  private static void processGlobalWrites(@NotNull PyFunction function, @NotNull PyCodeFragment fragment) {
+    final Set<String> globals = fragment.getGlobals();
+    if (!globals.isEmpty()) {
+      final PyElementGenerator generator = PyElementGenerator.getInstance(function.getProject());
+      final PyGlobalStatement globalStatement = generator.createFromText(LanguageLevel.forElement(function),
+                                                                         PyGlobalStatement.class,
+                                                                         "global " + StringUtil.join(globals, ", "));
+      final PyStatementList statementList = function.getStatementList();
+      if (statementList != null) {
+        statementList.addBefore(globalStatement, statementList.getFirstChild());
+      }
     }
   }
 
