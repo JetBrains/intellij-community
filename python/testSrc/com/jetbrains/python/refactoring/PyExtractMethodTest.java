@@ -92,7 +92,8 @@ public class PyExtractMethodTest extends LightMarkedTestCase {
     doTest("outNotEmpty/statements2.before.py", "sum_squares", "outNotEmpty/statements2.after.py");
   }
 
-  public void testComment() {
+  // PY-2903
+  public void _testComment() {
     doTest("comment.before.py", "bar", "comment.after.py");
   }
 
