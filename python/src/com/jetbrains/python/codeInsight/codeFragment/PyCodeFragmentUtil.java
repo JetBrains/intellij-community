@@ -7,15 +7,18 @@ import com.intellij.codeInsight.codeFragment.Position;
 import com.intellij.codeInsight.controlflow.ControlFlow;
 import com.intellij.codeInsight.controlflow.Instruction;
 import com.intellij.openapi.util.Pair;
-import com.intellij.psi.PsiElement;
+import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.controlflow.ReadWriteInstruction;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
+import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyForStatementNavigator;
+import com.jetbrains.python.psi.impl.PyPsiUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -36,8 +39,8 @@ public class PyCodeFragmentUtil {
     if (flow == null) {
       throw new CannotCreateCodeFragmentException("Cannot determine execution flow for the code fragment");
     }
-
-    final List<Instruction> subGraph = getFragmentSubGraph(flow, start, end);
+    final List<Instruction> graph = Arrays.asList(flow.getInstructions());
+    final List<Instruction> subGraph = getFragmentSubGraph(graph, start, end);
     final AnalysisResult subGraphAnalysis = analyseSubGraph(subGraph, start, end);
     if (subGraphAnalysis.regularExits > 0 && subGraphAnalysis.returns > 0) {
       throw new CannotCreateCodeFragmentException(
@@ -52,15 +55,47 @@ public class PyCodeFragmentUtil {
         PyBundle.message("refactoring.extract.method.error.cannot.perform.refactoring.when.from.import.inside"));
     }
 
-    final PyCodeFragmentBuilder builder = new PyCodeFragmentBuilder(owner, start, end);
-    owner.acceptChildren(builder);
-    return new CodeFragment(builder.inElements, builder.outElements, subGraphAnalysis.returns > 0);
+    final Set<String> inputNames = new HashSet<String>();
+    for (PsiElement element : filterElementsInScope(getInputElements(subGraph, graph), owner)) {
+      final String name = getName(element);
+      if (name != null) {
+        // Ignore "self", it is generated automatically when extracting any method fragment
+        if (PyPsiUtils.isMethodContext(element) && "self".equals(name)) {
+          continue;
+        }
+        inputNames.add(name);
+      }
+    }
+
+    final Set<String> outputNames = new HashSet<String>();
+    for (PsiElement element : getOutputElements(subGraph, graph)) {
+      final String name = getName(element);
+      if (name != null) {
+        outputNames.add(name);
+      }
+    }
+
+    return new CodeFragment(inputNames, outputNames, subGraphAnalysis.returns > 0);
+  }
+
+  @Nullable
+  private static String getName(@NotNull PsiElement element) {
+    if (element instanceof PsiNamedElement) {
+      return ((PsiNamedElement)element).getName();
+    }
+    else if (element instanceof PyImportElement) {
+      return ((PyImportElement)element).getVisibleName();
+    }
+    else if (element instanceof PyElement) {
+      return ((PyElement)element).getName();
+    }
+    return null;
   }
 
   @NotNull
-  private static List<Instruction> getFragmentSubGraph(@NotNull ControlFlow flow, int start, int end) {
+  private static List<Instruction> getFragmentSubGraph(@NotNull List<Instruction> graph, int start, int end) {
     List<Instruction> instructions = new ArrayList<Instruction>();
-    for (Instruction instruction : flow.getInstructions()) {
+    for (Instruction instruction : graph) {
       final PsiElement element = instruction.getElement();
       if (element != null) {
         if (CodeFragmentUtil.getPosition(element, start, end) == Position.INSIDE) {
@@ -69,7 +104,7 @@ public class PyCodeFragmentUtil {
       }
     }
     // Hack for including inner assert type instructions that can point to elements outside of the selected scope
-    for (Instruction instruction : flow.getInstructions()) {
+    for (Instruction instruction : graph) {
       if (instruction instanceof ReadWriteInstruction) {
         final ReadWriteInstruction readWriteInstruction = (ReadWriteInstruction)instruction;
         if (readWriteInstruction.getAccess().isAssertTypeAccess()) {
@@ -156,5 +191,136 @@ public class PyCodeFragmentUtil {
       }
     }
     return outgoing;
+  }
+
+  @NotNull
+  private static List<PsiElement> getInputElements(@NotNull List<Instruction> subGraph, @NotNull List<Instruction> graph) {
+    final List<PsiElement> result = new ArrayList<PsiElement>();
+    final Set<PsiElement> subGraphElements = getSubGraphElements(subGraph);
+    for (Instruction instruction : getReadInstructions(subGraph)) {
+      final PsiElement element = instruction.getElement();
+      if (element != null) {
+        final PsiReference reference = element.getReference();
+        if (reference != null) {
+          for (PsiElement resolved : multiResolve(reference)) {
+            if (!subGraphElements.contains(resolved)) {
+              result.add(element);
+            }
+          }
+        }
+      }
+    }
+    final List<PsiElement> outputElements = getOutputElements(subGraph, graph);
+    for (Instruction instruction : getWriteInstructions(subGraph)) {
+      final PsiElement element = instruction.getElement();
+      if (element != null) {
+        final PsiReference reference = element.getReference();
+        if (reference != null) {
+          for (PsiElement resolved : multiResolve(reference)) {
+            if (!subGraphElements.contains(resolved) && outputElements.contains(element)) {
+              result.add(element);
+            }
+          }
+        }
+      }
+    }
+    return result;
+  }
+
+  @NotNull
+  private static List<PsiElement> getOutputElements(@NotNull List<Instruction> subGraph, @NotNull List<Instruction> graph) {
+    final List<PsiElement> result = new ArrayList<PsiElement>();
+    final List<Instruction> outerGraph = new ArrayList<Instruction>();
+    for (Instruction instruction : graph) {
+      if (!subGraph.contains(instruction)) {
+        outerGraph.add(instruction);
+      }
+    }
+    final Set<PsiElement> subGraphElements = getSubGraphElements(subGraph);
+    for (Instruction instruction : getReadInstructions(outerGraph)) {
+      final PsiElement element = instruction.getElement();
+      if (element != null) {
+        final PsiReference reference = element.getReference();
+        if (reference != null) {
+          for (PsiElement resolved : multiResolve(reference)) {
+            if (subGraphElements.contains(resolved)) {
+              result.add(resolved);
+            }
+          }
+        }
+      }
+    }
+    return result;
+  }
+
+  private static List<PsiElement> filterElementsInScope(@NotNull Collection<PsiElement> elements, @NotNull ScopeOwner owner) {
+    final List<PsiElement> result = new ArrayList<PsiElement>();
+    for (PsiElement element : elements) {
+      final PsiReference reference = element.getReference();
+      if (reference != null) {
+        final PsiElement resolved = reference.resolve();
+        if (resolved != null && ScopeUtil.getScopeOwner(resolved) == owner) {
+          result.add(element);
+        }
+      }
+    }
+    return result;
+  }
+
+  private static Set<PsiElement> getSubGraphElements(@NotNull List<Instruction> subGraph) {
+    final Set<PsiElement> result = new HashSet<PsiElement>();
+    for (Instruction instruction : subGraph) {
+      final PsiElement element = instruction.getElement();
+      if (element != null) {
+        result.add(element);
+      }
+    }
+    return result;
+  }
+
+  @NotNull
+  private static List<PsiElement> multiResolve(@NotNull PsiReference reference) {
+    if (reference instanceof PsiPolyVariantReference) {
+      final ResolveResult[] results = ((PsiPolyVariantReference)reference).multiResolve(false);
+      final List<PsiElement> resolved = new ArrayList<PsiElement>();
+      for (ResolveResult result : results) {
+        final PsiElement element = result.getElement();
+        if (element != null) {
+          resolved.add(element);
+        }
+      }
+      return resolved;
+    }
+    final PsiElement element = reference.resolve();
+    if (element != null) {
+      return Collections.singletonList(element);
+    }
+    return Collections.emptyList();
+  }
+
+  private static List<Instruction> getReadInstructions(@NotNull List<Instruction> subGraph) {
+    final List<Instruction> result = new ArrayList<Instruction>();
+    for (Instruction instruction : subGraph) {
+      if (instruction instanceof ReadWriteInstruction) {
+        final ReadWriteInstruction readWriteInstruction = (ReadWriteInstruction)instruction;
+        if (readWriteInstruction.getAccess().isReadAccess()) {
+          result.add(readWriteInstruction);
+        }
+      }
+    }
+    return result;
+  }
+
+  private static List<Instruction> getWriteInstructions(@NotNull List<Instruction> subGraph) {
+    final List<Instruction> result = new ArrayList<Instruction>();
+    for (Instruction instruction : subGraph) {
+      if (instruction instanceof ReadWriteInstruction) {
+        final ReadWriteInstruction readWriteInstruction = (ReadWriteInstruction)instruction;
+        if (readWriteInstruction.getAccess().isWriteAccess()) {
+          result.add(readWriteInstruction);
+        }
+      }
+    }
+    return result;
   }
 }
