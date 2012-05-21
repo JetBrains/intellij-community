@@ -5,13 +5,12 @@ import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.compiler.CompilerFilter;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.impl.compiler.ArtifactCompileScope;
+import com.intellij.testFramework.PsiTestUtil;
 
 import java.io.File;
 import java.io.IOException;
@@ -223,9 +222,8 @@ public class ArtifactsCompilerTest extends ArtifactCompilerTestCase {
       @Override
       protected void run(final Result result) {
         myModule = createModule("myModule");
-        final ModifiableRootModel model = ModuleRootManager.getInstance(myModule).getModifiableModel();
-        model.addContentEntry(dir).addExcludeFolder(excluded);
-        model.commit();
+        PsiTestUtil.addContentRoot(myModule, dir);
+        PsiTestUtil.addExcludedRoot(myModule, excluded);
       }
     }.execute();
 
@@ -246,9 +244,8 @@ public class ArtifactsCompilerTest extends ArtifactCompilerTestCase {
       @Override
       protected void run(final Result result) {
         myModule = createModule("myModule");
-        final ModifiableRootModel model = ModuleRootManager.getInstance(myModule).getModifiableModel();
-        model.addContentEntry(dir).addExcludeFolder(file.getParent());
-        model.commit();
+        PsiTestUtil.addContentRoot(myModule, dir);
+        PsiTestUtil.addExcludedRoot(myModule, file.getParent());
       }
     }.execute();
 

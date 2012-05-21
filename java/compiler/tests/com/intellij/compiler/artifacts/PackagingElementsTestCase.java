@@ -17,6 +17,7 @@ import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.elements.CompositePackagingElement;
 import com.intellij.packaging.elements.PackagingElement;
 import com.intellij.packaging.elements.PackagingElementFactory;
+import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.VfsTestUtil;
 import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.Nullable;
@@ -145,14 +146,7 @@ public abstract class PackagingElementsTestCase extends ArtifactsTestCase {
   }
 
   protected static void addModuleDependency(final Module module, final Module dependency) {
-    new WriteAction() {
-      @Override
-      protected void run(final Result result) {
-        final ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
-        model.addModuleOrderEntry(dependency);
-        model.commit();
-      }
-    }.execute();
+    PsiTestUtil.addDependency(module, dependency);
   }
 
   protected class PackagingElementBuilder {
