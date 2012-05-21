@@ -39,23 +39,17 @@
              tooltip="A Fragment is a piece of an application's user interface or behavior that can be placed in an Activity."/>
   </meta>
 
-  <meta model="com.intellij.android.designer.model.RadViewComponent"
-        tag="&lt;unknown&gt;">
 
-    <presentation title="Unknown (%tag%)" icon="/com/intellij/android/designer/icons/unknown.png"/>
+  <meta model="com.intellij.android.designer.model.RadCustomViewComponent"
+        tag="view">
+    <palette title="CustomView" icon="/com/intellij/android/designer/icons/unknown.png"/>
   </meta>
 
-  <meta model="com.intellij.android.designer.model.RadViewComponent"
-        class="android.view.View"
-        tag="view">
-
-    <palette title="View" icon="/com/intellij/android/designer/icons/View.png"/>
-
+  <meta class="android.view.View">
     <properties
         important="id background"
         expert="tag scrollX scrollY fitsSystemWindows scrollbars scrollbarStyle isScrollContainer fadeScrollbars scrollbarFadeDuration scrollbarDefaultDelayBeforeFade scrollbarSize scrollbarThumbHorizontal scrollbarThumbVertical scrollbarTrackHorizontal scrollbarTrackVertical scrollbarAlwaysDrawHorizontalTrack scrollbarAlwaysDrawVerticalTrack fadingEdge requiresFadingEdge fadingEdgeLength nextFocusLeft nextFocusRight nextFocusUp nextFocusDown nextFocusForward saveEnabled filterTouchesWhenObscured drawingCacheQuality keepScreenOn duplicateParentState soundEffectsEnabled hapticFeedbackEnabled contentDescription overScrollMode translationX translationY transformPivotX transformPivotY rotation rotationX rotationY scaleX scaleY verticalScrollbarPosition layerType layoutDirection textDirection"
         />
-
   </meta>
 
   <meta class="android.view.ViewGroup">
@@ -1411,6 +1405,7 @@
     <group name="Custom">
       <item tag="include"/>
       <item tag="fragment"/>
+      <item tag="view"/>
     </group>
   </palette>
 

@@ -76,7 +76,7 @@ public class PropertyParser {
   }
 
   public void load(RadViewComponent component) throws Exception {
-    MetaModel model = component.getMetaModel();
+    MetaModel model = component.getMetaModelForProperties();
     String target = model.getTarget();
     if (target == null) {
       ViewInfo info = component.getViewInfo();
@@ -106,7 +106,7 @@ public class PropertyParser {
 
       if (layoutParams != null) {
         MetaModel[] models = new MetaModel[layoutParams.length];
-        models[0] = parent.getMetaModel();
+        models[0] = parent.getMetaModelForProperties();
 
         for (int i = 1; i < layoutParams.length; i++) {
           if (models[i - 1] == null) {

@@ -55,9 +55,9 @@ public class IdManager {
   }
 
   public void removeComponent(RadViewComponent component, boolean withChildren) {
-    String id = component.getId();
-    if (id != null) {
-      myIdList.remove(id);
+    String idValue = parseIdValue(component.getId());
+    if (idValue != null) {
+      myIdList.remove(idValue);
     }
 
     if (withChildren) {
