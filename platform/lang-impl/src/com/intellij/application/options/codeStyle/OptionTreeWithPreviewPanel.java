@@ -20,7 +20,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.CustomCodeStyleSettings;
-import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.UIUtil;
@@ -69,17 +69,20 @@ public abstract class OptionTreeWithPreviewPanel extends MultilanguageCodeStyleA
 
     myOptionsTree = createOptionsTree();
     myOptionsTree.setCellRenderer(new MyTreeCellRenderer());
-    JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myOptionsTree);
-    scrollPane.setPreferredSize(new Dimension(350, -1));
-    scrollPane.setMinimumSize(new Dimension(350, -1));
+    JScrollPane scrollPane = new JBScrollPane(myOptionsTree) {
+      @Override
+      public Dimension getMinimumSize() {
+        return super.getPreferredSize();
+      }
+    };
     myPanel.add(scrollPane,
-                new GridBagConstraints(0, 0, 1, 1, 0, 1, GridBagConstraints.WEST, GridBagConstraints.BOTH,
-                                       new Insets(0, 0, 0, 5), 0, 0));
+                new GridBagConstraints(0, 0, 1, 1, 0, 1, GridBagConstraints.CENTER, GridBagConstraints.BOTH,
+                                       new Insets(0, 0, 0, 8), 0, 0));
 
     JPanel previewPanel = createPreviewPanel();
 
     myPanel.add(previewPanel,
-                new GridBagConstraints(1, 0, 1, 1, 1, 1, GridBagConstraints.WEST, GridBagConstraints.BOTH,
+                new GridBagConstraints(1, 0, 1, 1, 1, 1, GridBagConstraints.CENTER, GridBagConstraints.BOTH,
                                        new Insets(0, 0, 0, 0), 0, 0));
 
     installPreviewPanel(previewPanel);
@@ -421,6 +424,7 @@ public abstract class OptionTreeWithPreviewPanel extends MultilanguageCodeStyleA
       else {
         myLabel.setText(value.toString());
         myLabel.setFont(myLabel.getFont().deriveFont(Font.BOLD));
+        myLabel.setOpaque(true);
 
         if (isSelected) {
           myLabel.setForeground(UIUtil.getTreeSelectionForeground());
