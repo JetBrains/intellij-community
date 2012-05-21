@@ -45,6 +45,10 @@ public class RenameMembersInplaceTest extends LightCodeInsightTestCase {
   public void testSuperMethod() throws Exception {
     doTestInplaceRename("xxx");
   }
+  
+  public void testSuperMethodAnonymousInheritor() throws Exception {
+    doTestInplaceRename("xxx");
+  }
 
   public void testMultipleConstructors() throws Exception {
     doTestInplaceRename("Bar");
