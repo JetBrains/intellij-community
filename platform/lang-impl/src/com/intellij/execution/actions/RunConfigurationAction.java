@@ -39,6 +39,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.ArrayList;
 
 public class RunConfigurationAction extends ComboBoxAction implements DumbAware {
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.actions.RunConfigurationAction");
@@ -153,7 +154,16 @@ public class RunConfigurationAction extends ComboBoxAction implements DumbAware 
       for (ConfigurationType type : types) {
         final DefaultActionGroup actionGroup = new DefaultActionGroup();
         final RunnerAndConfigurationSettings[] configurations = runManager.getConfigurationSettings(type);
-        for (final RunnerAndConfigurationSettings configuration : configurations) {
+        ArrayList<RunnerAndConfigurationSettings> configurationSettingsList = new ArrayList<RunnerAndConfigurationSettings>();
+        int i = 0;
+        for (RunnerAndConfigurationSettings configuration : configurations) {
+          if (configuration.isTemporary()) {
+            configurationSettingsList.add(configuration);
+          } else {
+            configurationSettingsList.add(i++, configuration);
+          }
+        }
+        for (final RunnerAndConfigurationSettings configuration : configurationSettingsList) {
           //if (runManager.canRunConfiguration(configuration)) {
           final MenuAction action = new MenuAction(configuration, project);
           actionGroup.add(action);

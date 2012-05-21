@@ -236,7 +236,7 @@ class RunConfigurable extends BaseConfigurable {
                 ConfigurationFactory[] factories = type.getConfigurationFactories();
                 if (factories.length == 1) {
                   final ConfigurationFactory factory = factories[0];
-                  showTemplateConfigurabel(factory);
+                  showTemplateConfigurable(factory);
                 }
                 else {
                   drawPressAddButtonMessage((ConfigurationType)userObject);
@@ -244,7 +244,7 @@ class RunConfigurable extends BaseConfigurable {
               }
             }
             else if (userObject instanceof ConfigurationFactory) {
-              showTemplateConfigurabel((ConfigurationFactory)userObject);
+              showTemplateConfigurable((ConfigurationFactory)userObject);
             }
           }
         }
@@ -290,7 +290,7 @@ class RunConfigurable extends BaseConfigurable {
     ((DefaultTreeModel)myTree.getModel()).reload();
   }
 
-  private void showTemplateConfigurabel(ConfigurationFactory factory) {
+  private void showTemplateConfigurable(ConfigurationFactory factory) {
     Configurable configurable = myStoredComponents.get(factory);
     if (configurable == null){
       configurable = new TemplateConfigurable(RunManagerImpl.getInstanceImpl(myProject).getConfigurationTemplate(factory));
@@ -1123,15 +1123,35 @@ class RunConfigurable extends BaseConfigurable {
       final TreePath selectionPath = myTree.getSelectionPath();
       if (selectionPath != null) {
         final DefaultMutableTreeNode treeNode = (DefaultMutableTreeNode)selectionPath.getLastPathComponent();
-        if (!(treeNode.getUserObject() instanceof ConfigurationType)) {
+        if (!(treeNode.getUserObject() instanceof ConfigurationType) && !(treeNode.getUserObject() instanceof String)) {
+          RunnerAndConfigurationSettings selectedSettings = getSettings(treeNode);
+          if (selectedSettings == null)
+            return;
+          RunnerAndConfigurationSettings siblingSettings = null;
           if (myDirection < 0) {
-            presentation.setEnabled(treeNode.getPreviousSibling() != null);
+            siblingSettings = getSettings(treeNode.getPreviousSibling());
+          } else {
+            siblingSettings = getSettings(treeNode.getNextSibling());
           }
-          else {
-            presentation.setEnabled(treeNode.getNextSibling() != null);
+          if (siblingSettings != null) {
+            presentation.setEnabled(siblingSettings.isTemporary() == selectedSettings.isTemporary());
           }
         }
       }
+    }
+
+    @Nullable
+    private RunnerAndConfigurationSettings getSettings(DefaultMutableTreeNode treeNode) {
+      if (treeNode == null)
+        return null;
+      RunnerAndConfigurationSettings settings = null;
+      if (treeNode.getUserObject() instanceof SingleConfigurationConfigurable) {
+        settings = (RunnerAndConfigurationSettings)((SingleConfigurationConfigurable)treeNode.getUserObject()).getSettings();
+      }
+      if (treeNode.getUserObject() instanceof RunnerAndConfigurationSettings) {
+        settings = (RunnerAndConfigurationSettings)treeNode.getUserObject();
+      }
+      return settings;
     }
   }
 
