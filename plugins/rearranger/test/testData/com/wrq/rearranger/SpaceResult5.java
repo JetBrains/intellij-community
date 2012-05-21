@@ -21,7 +21,6 @@ final class SpaceTest5 {
     this.privateField5 = privateField1;
   }
 
-// -------------------------- INNER CLASSES --------------------------
 
   class inner1 {
     // test class
@@ -31,6 +30,8 @@ final class SpaceTest5 {
   class inner2 {
     // test class
   }
+
+
 }
 
 

@@ -525,7 +525,7 @@ class RearrangerTest extends LightCodeInsightFixtureTestCase {
 
   public final void testKeepOverloadsTogetherDescendingOrder() throws Exception {
     doTest('RearrangementTest19', 'RearrangementResult19C') {
-      mySettings.extractedMethodsSettings.moveExtr actedMethods = false
+      mySettings.extractedMethodsSettings.moveExtractedMethods = false
       mySettings.keepOverloadedMethodsTogether = true
       mySettings.overloadedOrder = RearrangerSettings.OVERLOADED_ORDER_DESCENDING_PARAMETERS
   } }
@@ -553,131 +553,52 @@ class RearrangerTest extends LightCodeInsightFixtureTestCase {
       mySettings.removeBlanksInsideCodeBlocks = true
   } }
 
-//  public final void testAddBlankLines() throws Exception {
-//    configureByFile("/com/wrq/rearranger/SpaceTest2.java");
-//    final PsiFile file = getFile();
-//    final Document doc = PsiDocumentManager.getInstance(getProject()).getDocument(file);
-//    final RearrangerActionHandler rah = new RearrangerActionHandler();
-//    rs.getAfterClassLBrace().setForce(true);
-//    rs.getAfterClassLBrace().setnBlankLines(2);
-//    rs.getAfterMethodLBrace().setForce(true);
-//    rs.getAfterMethodLBrace().setnBlankLines(3);
-//    rs.getBeforeMethodRBrace().setForce(true);
-//    rs.getBeforeMethodRBrace().setnBlankLines(2);
-//    rs.getAfterMethodRBrace().setForce(true);
-//    rs.getAfterMethodRBrace().setnBlankLines(1);
-//    rs.getBeforeClassRBrace().setForce(true);
-//    rs.getBeforeClassRBrace().setnBlankLines(3);
-//    rs.getAfterClassRBrace().setForce(true);
-//    rs.getAfterClassRBrace().setnBlankLines(4);
-//    rs.getNewlinesAtEOF().setForce(true);
-//    rs.getNewlinesAtEOF().setnBlankLines(1);
-//    rs.setRemoveBlanksInsideCodeBlocks(true);
-//    rah.rearrangeDocument(getProject(), file, rs, doc);
-//    super.checkResultByFile("/com/wrq/rearranger/SpaceResult2.java");
-//  }
-//
-//  public final void testInnerClassBlankLines() throws Exception {
-//    configureByFile("/com/wrq/rearranger/SpaceTest4.java");
-//    final PsiFile file = getFile();
-//    final Document doc = PsiDocumentManager.getInstance(getProject()).getDocument(file);
-//    final RearrangerActionHandler rah = new RearrangerActionHandler();
-//    rs.getAfterClassLBrace().setForce(true);
-//    rs.getAfterClassLBrace().setnBlankLines(0);
-//    rs.getAfterMethodLBrace().setForce(true);
-//    rs.getAfterMethodLBrace().setnBlankLines(0);
-//    rs.getBeforeMethodRBrace().setForce(true);
-//    rs.getBeforeMethodRBrace().setnBlankLines(0);
-//    rs.getAfterMethodRBrace().setForce(true);
-//    rs.getAfterMethodRBrace().setnBlankLines(1);
-//    rs.getBeforeClassRBrace().setForce(true);
-//    rs.getBeforeClassRBrace().setnBlankLines(1);
-//    rs.getAfterClassRBrace().setForce(true);
-//    rs.getAfterClassRBrace().setnBlankLines(1);
-//    rs.getNewlinesAtEOF().setForce(true);
-//    rs.getNewlinesAtEOF().setnBlankLines(1);
-//    rs.setRemoveBlanksInsideCodeBlocks(true);
-//    rah.rearrangeDocument(getProject(), file, rs, doc);
-//    super.checkResultByFile("/com/wrq/rearranger/SpaceResult4.java");
-//  }
-//
-//  public void testInnerClassSpacing() throws Exception {
-//    configureByFile("/com/wrq/rearranger/SpaceTest5.java");
-//    final PsiFile file = getFile();
-//    final Document doc = PsiDocumentManager.getInstance(getProject()).getDocument(file);
-//    final File physFile = new File(InteractiveTest.DEFAULT_CONFIGURATION);
-//    rs = RearrangerSettings.getSettingsFromFile(physFile);
-//    rs.setAskBeforeRearranging(false);
-//    rs.getAfterClassRBrace().setnBlankLines(2);
-//    rs.getAfterClassRBrace().setForce(true);
-//    rs.getNewlinesAtEOF().setForce(true);
-//    rs.getNewlinesAtEOF().setnBlankLines(3);
-//    final RearrangerActionHandler rah = new RearrangerActionHandler();
-//    rah.rearrangeDocument(getProject(), file, rs, doc);
-//    super.checkResultByFile("/com/wrq/rearranger/SpaceResult5.java");
-//  }
-//
-//  public void testNoRearrangementInnerClass() throws Exception {
-//    configureByFile("/com/wrq/rearranger/NoRearrangeInnerClassTest.java");
-//    final PsiFile file = getFile();
-//    final Document doc = PsiDocumentManager.getInstance(getProject()).getDocument(file);
-//    final File settingsFile = new File(InteractiveTest.DEFAULT_CONFIGURATION_ROOT +
-//                                       "/test/testData/com/wrq/rearranger/NoRearrangementInnerClassCfg.xml");
-//    rs = RearrangerSettings.getSettingsFromFile(settingsFile);
-//    rs.setAskBeforeRearranging(false);
-//    final RearrangerActionHandler rah = new RearrangerActionHandler();
-//    rah.rearrangeDocument(getProject(), file, rs, doc);
-//    super.checkResultByFile("/com/wrq/rearranger/NoRearrangeInnerClassResult.java");
-//  }
-//
-//  public void testSpacingWithTrailingWhitespace() throws Exception {
-//    configureByFile("/com/wrq/rearranger/SpaceTest6.java");
-//    final PsiFile file = getFile();
-//    final Document doc = PsiDocumentManager.getInstance(getProject()).getDocument(file);
-//    rs = RearrangerSettings.getSettingsFromFile(new File(InteractiveTest.DEFAULT_CONFIGURATION));
-//    rs.setAskBeforeRearranging(false);
-//    rs.getNewlinesAtEOF().setForce(true);
-//    rs.getNewlinesAtEOF().setnBlankLines(1);
-//    final RearrangerActionHandler rah = new RearrangerActionHandler();
-//    rah.rearrangeDocument(getProject(), file, rs, doc);
-//    super.checkResultByFile("/com/wrq/rearranger/SpaceResult6.java");
-//  }
-//
-//  public void testSpacingJoinLineBug() throws Exception {
-//    configureByFile("/com/wrq/rearranger/SpaceTest7.java");
-//    final PsiFile file = getFile();
-//    final Document doc = PsiDocumentManager.getInstance(getProject()).getDocument(file);
-//    File settingsFile = new File(InteractiveTest.DEFAULT_CONFIGURATION_ROOT +
-//                                 "/test/testData/com/wrq/rearranger/SpaceTest7cfg.xml");
-//    rs = RearrangerSettings.getSettingsFromFile(settingsFile);
-//    rs.setAskBeforeRearranging(false);
-//    final RearrangerActionHandler rah = new RearrangerActionHandler();
-//    rah.rearrangeDocument(getProject(), file, rs, doc);
-//    super.checkResultByFile("/com/wrq/rearranger/SpaceResult7.java");
-//  }
-//
-//  /**
-//   * Submitted by Brian Buckley.
-//   *
-//   * @throws Exception test exception
-//   */
-//  public void testSpacingConflictingSettingBug() throws Exception {
-//    configureByFile("/com/wrq/rearranger/SpaceTest8.java");
-//    final PsiFile file = getFile();
-//    final Document doc = PsiDocumentManager.getInstance(getProject()).getDocument(file);
-//    rs = RearrangerSettings.getSettingsFromFile(new File(InteractiveTest.DEFAULT_CONFIGURATION));
-//    rs.setAskBeforeRearranging(false);
-//    rs.getAfterClassLBrace().setForce(true);
-//    rs.getAfterClassLBrace().setnBlankLines(0);
-//    rs.getBeforeMethodLBrace().setForce(true);
-//    rs.getBeforeMethodLBrace().setnBlankLines(1);
-//    rs.getNewlinesAtEOF().setForce(true);
-//    rs.getNewlinesAtEOF().setnBlankLines(1);
-//    final RearrangerActionHandler rah = new RearrangerActionHandler();
-//    rah.rearrangeDocument(getProject(), file, rs, doc);
-//    super.checkResultByFile("/com/wrq/rearranger/SpaceResult8.java");
-//  }
-//
+  public final void testAddBlankLines() throws Exception {
+    doTest('SpaceTest2', 'SpaceResult2') {
+      spacingRule.create {
+        spacing( anchor: [ SpacingAnchor.AFTER_METHOD_RBRACE, SpacingAnchor.EOF ], lines: 1)
+        spacing(anchor: [ SpacingAnchor.AFTER_CLASS_LBRACE, SpacingAnchor.AFTER_METHOD_LBRACE ], lines: 2)
+        spacing( anchor: SpacingAnchor.AFTER_CLASS_RBRACE, lines: 4)
+      }
+      mySettings.removeBlanksInsideCodeBlocks = true
+  } }
+
+  public final void testInnerClassBlankLines() throws Exception {
+    doTest('SpaceTest4', 'SpaceResult4') {
+      spacingRule.create {
+        spacing(anchor: [ SpacingAnchor.AFTER_CLASS_LBRACE, SpacingAnchor.AFTER_METHOD_LBRACE, SpacingAnchor.BEFORE_METHOD_RBRACE ],
+                lines: 0)
+        spacing(anchor: [ SpacingAnchor.AFTER_METHOD_RBRACE, SpacingAnchor.EOF ],
+                lines: 1)
+      }
+      mySettings.removeBlanksInsideCodeBlocks = true
+  } }
+
+  public void testInnerClassSpacing() throws Exception {
+    doTest('SpaceTest5', 'SpaceResult5') {
+      spacingRule.create {
+        spacing( anchor: SpacingAnchor.AFTER_CLASS_RBRACE, lines: 2 )
+        spacing( anchor: SpacingAnchor.EOF, lines: 3 )
+      }
+  } }
+
+  public void testSpacingWithTrailingWhitespace() throws Exception {
+    doTest('SpaceTest6', 'SpaceResult6') {
+      spacingRule.create { spacing( anchor: SpacingAnchor.EOF, lines: 1 ) }
+  } }
+
+  /**
+   * Submitted by Brian Buckley.
+   *
+   * @throws Exception test exception
+   */
+  public void testSpacingConflictingSettingBug() throws Exception {
+    doTest('SpaceTest8', 'SpaceResult8') {
+      spacingRule.create { spacing( anchor: SpacingAnchor.AFTER_CLASS_LBRACE, lines: 0) }
+      spacingRule.create {
+        spacing( anchor: [ SpacingAnchor.BEFORE_METHOD_LBRACE, SpacingAnchor.EOF ], lines: 1)
+  } } }
+
 //  public void testGetPrefixImmaterial() throws Exception {
 //    configureByFile("/com/wrq/rearranger/GetterDefinitionTest.java");
 //    final PsiFile file = getFile();

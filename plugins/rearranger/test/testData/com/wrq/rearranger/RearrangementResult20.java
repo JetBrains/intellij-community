@@ -12,7 +12,6 @@ public class RearrangementTest20 {
       }
     };
   }
-
   private static void ChildA(final Object event) {
   }
 }

@@ -16,6 +16,8 @@ class JavaSpacingRule extends AbstractRuleBuilder<Void> {
             (SpacingAnchor.BEFORE_CLASS_RBRACE)  : 'beforeClassRBrace',
             (SpacingAnchor.AFTER_CLASS_RBRACE)   : 'afterClassRBrace',
             (SpacingAnchor.AFTER_METHOD_LBRACE)  : 'afterMethodLBrace',
+            (SpacingAnchor.AFTER_METHOD_RBRACE)  : 'afterMethodRBrace',
+            (SpacingAnchor.BEFORE_METHOD_LBRACE) : 'beforeMethodLBrace',
             (SpacingAnchor.BEFORE_METHOD_RBRACE) : 'beforeMethodRBrace',
             (SpacingAnchor.EOF)                  : 'newLinesAtEOF'
     ]
