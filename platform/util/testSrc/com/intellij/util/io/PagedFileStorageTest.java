@@ -32,25 +32,33 @@ public class PagedFileStorageTest extends TestCase {
   @Override
   public void setUp() throws Exception {
     super.setUp();
-    synchronized (lock) {
+    lock.lock();
+    try {
       f = FileUtil.createTempFile("storage", ".tmp");
       s = new PagedFileStorage(f, lock);
+    }
+    finally {
+      lock.unlock();
     }
   }
 
   @Override
   public void tearDown() throws Exception {
-    synchronized (lock) {
+    lock.lock();
+    try {
       s.close();
       final File l = new File(f.getPath() + ".len");
       assert !l.exists() || l.delete() : l.getPath();
       assert f.delete() : f.getPath();
+    } finally {
+      lock.unlock();
     }
     super.tearDown();
   }
 
   public void testResizing() throws IOException {
-    synchronized (lock) {
+    lock.lock();
+    try {
       assertEquals(0, f.length());
 
       s.resize(12345);
@@ -58,21 +66,27 @@ public class PagedFileStorageTest extends TestCase {
 
       s.resize(123);
       assertEquals(123, f.length());
+    } finally {
+      lock.unlock();
     }
   }
 
   public void testFillingWithZerosAfterResize() throws IOException {
-    synchronized (lock) {
+    lock.lock();
+    try {
       s.resize(1000);
 
       for (int i = 0; i < 1000; i++) {
         assertEquals(0, s.get(i));
       }
+    } finally {
+      lock.unlock();
     }
   }
 
   public void testResizeableMappedFile() throws Exception {
-    synchronized (lock) {
+    lock.lock();
+    try {
       ResizeableMappedFile file = new ResizeableMappedFile(f, 2000000, lock);
 
       System.out.println("writing...");
@@ -99,6 +113,8 @@ public class PagedFileStorageTest extends TestCase {
       System.out.println("done in " + t + " ms");
 
       file.close();
+    } finally {
+      lock.unlock();
     }
   }
 

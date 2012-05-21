@@ -109,6 +109,14 @@ public class PagedFileStorage implements Forceable {
       myDefaultStorageLockContext = new StorageLockContext(this);
     }
 
+    public void lock() {
+      myDefaultStorageLockContext.myReentrantLock.lock();
+    }
+
+    public void unlock() {
+      myDefaultStorageLockContext.myReentrantLock.unlock();
+    }
+
     private final BuffersCache myBuffersCache = new BuffersCache();
     private final ConcurrentHashMap<Integer, PagedFileStorage> myIndex2Storage = new ConcurrentHashMap<Integer, PagedFileStorage>();
 
