@@ -16,8 +16,6 @@
 
 package com.intellij.formatting;
 
-import com.intellij.lang.ASTNode;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.TextChange;
@@ -25,13 +23,10 @@ import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.impl.BulkChangesMerger;
 import com.intellij.openapi.editor.impl.TextChangeImpl;
 import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.formatter.DocumentBasedFormattingModel;
-import com.intellij.psi.formatter.PsiBasedFormattingModel;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NotNull;
@@ -538,8 +533,7 @@ class FormatProcessor {
         return true;
       }
       if (wrap != null && wrap.getFirstEntry() != null) {
-        //myCurrentBlock = wrap.getFirstEntry();
-        myCurrentBlock = getFirstBlockOnNewLine();
+        myCurrentBlock = wrap.getFirstEntry();
         wrap.markAsUsed();
         return true;
       }
@@ -580,18 +574,6 @@ class FormatProcessor {
     }
 
     return false;
-  }
-
-  @Nullable
-  private LeafBlockWrapper getFirstBlockOnNewLine() {
-    LeafBlockWrapper current = myCurrentBlock;
-    while (current != null) {
-      WhiteSpace whiteSpace = current.getWhiteSpace();
-      if (whiteSpace.containsLineFeeds() && whiteSpace.containsLineFeedsInitially()) return current;
-      if (current.getPreviousBlock() == null) return current;
-      current = current.getPreviousBlock();
-    }
-    return null;
   }
 
   /**
