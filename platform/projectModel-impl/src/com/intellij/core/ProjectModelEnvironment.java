@@ -23,9 +23,11 @@ import com.intellij.openapi.components.ExtensionAreas;
 import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.components.impl.ProjectPathMacroManager;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.impl.*;
 import com.intellij.openapi.roots.impl.libraries.ApplicationLibraryTable;
@@ -56,5 +58,6 @@ public class ProjectModelEnvironment {
     env.registerProjectComponent(DirectoryIndex.class, index);
     env.registerProjectComponent(ProjectRootManager.class, new ProjectRootManagerImpl(project, index));
     project.registerService(ProjectLibraryTable.class, new ProjectLibraryTable());
+    project.registerService(ProjectFileIndex.class, new ProjectFileIndexImpl(project, index, FileTypeRegistry.getInstance()));
   }
 }
