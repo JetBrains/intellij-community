@@ -385,13 +385,17 @@ public class FileUtil extends FileUtilRt {
       String parentDirPath = file.getParent();
       if (parentDirPath != null) {
         final File parentFile = new File(parentDirPath);
-        int parentAttributes = getBooleanAttributes(parentFile);
-        boolean ok = parentAttributes != -1 ? (parentAttributes & (BA_EXISTS | BA_DIRECTORY)) == (BA_EXISTS | BA_DIRECTORY)
-                                            : parentFile.exists() && parentFile.isDirectory();
-        return ok || parentFile.mkdirs();
+        return createDirectory(parentFile);
       }
     }
     return true;
+  }
+
+  public static boolean createDirectory(File parentFile) {
+    int parentAttributes = getBooleanAttributes(parentFile);
+    boolean ok = parentAttributes != -1 ? (parentAttributes & (BA_EXISTS | BA_DIRECTORY)) == (BA_EXISTS | BA_DIRECTORY)
+                                        : parentFile.exists() && parentFile.isDirectory();
+    return ok || parentFile.mkdirs();
   }
 
   public static boolean createIfDoesntExist(@NotNull File file) {

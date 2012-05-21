@@ -77,18 +77,24 @@ abstract class GeneralRunner implements ContinuationContext {
   }
 
   @Override
-  public boolean handleException(Exception e) {
+  public boolean handleException(Exception e, boolean cancelEveryThing) {
     synchronized (myQueueLock) {
-      final Class<? extends Exception> aClass = e.getClass();
-      Consumer<Exception> consumer = myHandlersMap.get(e.getClass());
-      if (consumer != null) {
-        consumer.consume(e);
-        return true;
-      }
-      for (Map.Entry<Class<? extends Exception>, Consumer<Exception>> entry : myHandlersMap.entrySet()) {
-        if (entry.getKey().isAssignableFrom(aClass)) {
-          entry.getValue().consume(e);
+      try {
+        final Class<? extends Exception> aClass = e.getClass();
+        Consumer<Exception> consumer = myHandlersMap.get(e.getClass());
+        if (consumer != null) {
+          consumer.consume(e);
           return true;
+        }
+        for (Map.Entry<Class<? extends Exception>, Consumer<Exception>> entry : myHandlersMap.entrySet()) {
+          if (entry.getKey().isAssignableFrom(aClass)) {
+            entry.getValue().consume(e);
+            return true;
+          }
+        }
+      } finally {
+        if (cancelEveryThing) {
+          cancelEverything();
         }
       }
     }

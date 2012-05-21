@@ -111,6 +111,7 @@ public class SvnConfiguration implements PersistentStateComponent<Element> {
   public boolean IGNORE_SPACES_IN_ANNOTATE = true;
   public boolean SHOW_MERGE_SOURCES_IN_ANNOTATE = true;
   public boolean FORCE_UPDATE = false;
+  public Boolean TREE_CONFLICT_MERGE_THEIRS_NEW_INTO_OLD_PLACE;
 
   public UseAcceleration myUseAcceleration = UseAcceleration.nothing;
 
@@ -409,6 +410,10 @@ public class SvnConfiguration implements PersistentStateComponent<Element> {
     if (cleanupRun != null) {
       myCleanupRun = Boolean.parseBoolean(cleanupRun.getValue());
     }
+    final Attribute treeConflictMergeNewFilesPlace = element.getAttribute("TREE_CONFLICT_MERGE_THEIRS_NEW_INTO_OLD_PLACE");
+    if (treeConflictMergeNewFilesPlace != null) {
+      TREE_CONFLICT_MERGE_THEIRS_NEW_INTO_OLD_PLACE = Boolean.parseBoolean(treeConflictMergeNewFilesPlace.getValue());
+    }
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
@@ -444,6 +449,9 @@ public class SvnConfiguration implements PersistentStateComponent<Element> {
     element.setAttribute("myUseAcceleration", "" + myUseAcceleration);
     element.setAttribute("myAutoUpdateAfterCommit", "" + myAutoUpdateAfterCommit);
     element.setAttribute(CLEANUP_ON_START_RUN, "" + myCleanupRun);
+    if (TREE_CONFLICT_MERGE_THEIRS_NEW_INTO_OLD_PLACE != null) {
+      element.setAttribute("TREE_CONFLICT_MERGE_THEIRS_NEW_INTO_OLD_PLACE", "" + TREE_CONFLICT_MERGE_THEIRS_NEW_INTO_OLD_PLACE);
+    }
   }
 
   public boolean isAutoUpdateAfterCommit() {
