@@ -413,6 +413,13 @@ public class PyExtractMethodUtil {
     if (child != null) {
       child.delete();
     }
+    PsiElement last = statementList;
+    while (last != null) {
+      last = last.getLastChild();
+      if (last instanceof PsiWhiteSpace) {
+        last.delete();
+      }
+    }
     return method;
   }
 
