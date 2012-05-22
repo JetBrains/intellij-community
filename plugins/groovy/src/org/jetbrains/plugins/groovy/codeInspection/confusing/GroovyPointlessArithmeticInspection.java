@@ -181,7 +181,9 @@ public class GroovyPointlessArithmeticInspection extends BaseInspection {
            "0X0".equals(text) ||
            "0.0".equals(text) ||
            "0L".equals(text) ||
-           "0l".equals(text);
+           "0l".equals(text) ||
+           "0b0".equals(text) ||
+           "0B0".equals(text);
   }
 
   /**
@@ -197,6 +199,8 @@ public class GroovyPointlessArithmeticInspection extends BaseInspection {
            "0X1".equals(text) ||
            "1.0".equals(text) ||
            "1L".equals(text) ||
-           "1l".equals(text);
+           "1l".equals(text) ||
+           "0b0".equals(text) ||
+           "0B0".equals(text);
   }
 }
