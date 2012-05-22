@@ -103,7 +103,7 @@ public class ProjectUtil {
     }
 
     if (path.endsWith(ProjectFileType.DOT_DEFAULT_EXTENSION) ||
-        virtualFile.isDirectory() && virtualFile.findChild(ProjectCoreUtil.DIRECTORY_BASED_PROJECT_DIR) != null) {
+        virtualFile.isDirectory() && virtualFile.findChild(Project.DIRECTORY_STORE_FOLDER) != null) {
       return openProject(path, projectToClose, forceOpenInNewFrame);
     }
 
@@ -146,8 +146,9 @@ public class ProjectUtil {
       return null;
     }
 
-    if (file.isDirectory() && !new File(file, ProjectCoreUtil.DIRECTORY_BASED_PROJECT_DIR).exists()) {
-      Messages.showErrorDialog(IdeBundle.message("error.project.file.does.not.exist", new File(file, ProjectCoreUtil.DIRECTORY_BASED_PROJECT_DIR).getPath()), CommonBundle.getErrorTitle());
+    if (file.isDirectory() && !new File(file, Project.DIRECTORY_STORE_FOLDER).exists()) {
+      String message = IdeBundle.message("error.project.file.does.not.exist", new File(file, Project.DIRECTORY_STORE_FOLDER).getPath());
+      Messages.showErrorDialog(message, CommonBundle.getErrorTitle());
       return null;
     }
 
@@ -269,10 +270,10 @@ public class ProjectUtil {
   }
 
   /**
-   * @deprecated use {@linkplain com.intellij.openapi.project.ProjectCoreUtil#isProjectOrWorkspaceFile(com.intellij.openapi.vfs.VirtualFile)} (to remove in IDEA 13)
+   * @deprecated use {@linkplain com.intellij.openapi.project.ProjectUtil#isProjectOrWorkspaceFile(com.intellij.openapi.vfs.VirtualFile)} (to remove in IDEA 13)
    */
   @SuppressWarnings("UnusedDeclaration")
   public static boolean isProjectOrWorkspaceFile(final VirtualFile file) {
-    return ProjectCoreUtil.isProjectOrWorkspaceFile(file);
+    return com.intellij.openapi.project.ProjectUtil.isProjectOrWorkspaceFile(file);
   }
 }

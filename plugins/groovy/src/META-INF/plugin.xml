@@ -636,7 +636,7 @@
                      level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.confusing.GroovyPointlessBooleanInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="GroovyPointlessArithmetic" displayName="Pointless arithmetic expression"
-                     groupName="Potentially confusing code constructs" enabledByDefault="true" level="WARNING"
+                     groupName="Potentially confusing code constructs" enabledByDefault="false" level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.confusing.GroovyPointlessArithmeticInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="GroovyDoubleNegation" displayName="Double negation" groupName="Potentially confusing code constructs"
                      enabledByDefault="true" level="WARNING"

@@ -31,6 +31,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.lang.editor.template.expressions.ChooseTypeExpression;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
@@ -86,9 +87,10 @@ public class CreateLocalVariableFromUsageFix implements IntentionAction {
     GrStatement anchor = findAnchor(file, offset);
 
     TypeConstraint[] constraints = GroovyExpectedTypesProvider.calculateTypeConstraints(myRefExpression);
-    if (anchor.equals(myRefExpression)) {
+    if (myRefExpression.equals(anchor)) {
       decl = myRefExpression.replaceWithStatement(decl);
-    } else {
+    }
+    else {
       decl = myOwner.addVariableDeclarationBefore(decl, anchor);
     }
     GrTypeElement typeElement = decl.getTypeElementGroovy();
@@ -107,11 +109,12 @@ public class CreateLocalVariableFromUsageFix implements IntentionAction {
     manager.startTemplate(newEditor, template);
   }
 
+  @Nullable
   private GrStatement findAnchor(PsiFile file, int offset) {
     PsiElement element = file.findElementAt(offset);
     if (element == null && offset > 0) element = file.findElementAt(offset - 1);
     while (element != null) {
-      if (myOwner.equals(element.getParent())) return element instanceof GrStatement ? (GrStatement) element : null;
+      if (myOwner.equals(element.getParent())) return element instanceof GrStatement ? (GrStatement)element : null;
       element = element.getParent();
     }
     return null;

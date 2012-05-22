@@ -18,6 +18,7 @@ package git4idea.roots;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
+import git4idea.GitUtil;
 import git4idea.PlatformFacade;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -138,7 +139,7 @@ public class GitRootDetector {
   }
 
   private static boolean hasGitDir(@NotNull VirtualFile dir) {
-    VirtualFile gitDir = dir.findChild(".git");
+    VirtualFile gitDir = dir.findChild(GitUtil.DOT_GIT);
     return gitDir != null && gitDir.exists();
   }
 

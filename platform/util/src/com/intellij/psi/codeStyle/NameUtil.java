@@ -439,7 +439,7 @@ public class NameUtil {
         return skipWords(name, patternIndex, nameIndex);
       }
 
-      if ((patternIndex == 0 || patternIndex == 1 && myPattern[0] == ' ') &&
+      if ((patternIndex == 0 || patternIndex == 1 && myPattern[0] == ' ' && nameIndex == 0) &&
           myOptions != MatchingCaseSensitivity.NONE && name.charAt(nameIndex) != myPattern[patternIndex]) {
         return null;
       }

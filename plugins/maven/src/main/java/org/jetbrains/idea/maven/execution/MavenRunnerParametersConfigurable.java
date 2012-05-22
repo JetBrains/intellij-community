@@ -109,7 +109,7 @@ public abstract class MavenRunnerParametersConfigurable implements Configurable,
 
             cachedElements = new ArrayList<LookupElement>(goals.size());
             for (String goal : goals) {
-              cachedElements.add(LookupElementBuilder.create(goal).setIcon(MavenIcons.PHASE_ICON));
+              cachedElements.add(LookupElementBuilder.create(goal).withIcon(MavenIcons.PHASE_ICON));
             }
 
             myCachedElements = cachedElements;

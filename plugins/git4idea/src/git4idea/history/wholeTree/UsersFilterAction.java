@@ -170,7 +170,7 @@ public class UsersFilterAction extends BasePopupAction {
         if (list != null) {
           for (String completionVariant : list) {
             final LookupElementBuilder element = LookupElementBuilder.create(completionVariant);
-            result.addElement(element.addLookupString(completionVariant.toLowerCase()));
+            result.addElement(element.withLookupString(completionVariant.toLowerCase()));
           }
         }
       }

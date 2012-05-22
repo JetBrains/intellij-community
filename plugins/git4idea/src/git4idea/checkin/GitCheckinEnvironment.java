@@ -41,6 +41,7 @@ import com.intellij.vcsUtil.VcsFileUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitUtil;
 import git4idea.commands.GitCommand;
+import git4idea.repo.GitRepositoryFiles;
 import git4idea.util.GitFileUtils;
 import git4idea.commands.GitSimpleHandler;
 import git4idea.config.GitConfigUtil;
@@ -103,8 +104,8 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
   public String getDefaultMessageFor(FilePath[] filesToCheckin) {
     StringBuilder rc = new StringBuilder();
     for (VirtualFile root : GitUtil.gitRoots(Arrays.asList(filesToCheckin))) {
-      VirtualFile mergeMsg = root.findFileByRelativePath(".git/MERGE_MSG");
-      VirtualFile squashMsg = root.findFileByRelativePath(".git/SQUASH_MSG");
+      VirtualFile mergeMsg = root.findFileByRelativePath(GitRepositoryFiles.GIT_MERGE_MSG);
+      VirtualFile squashMsg = root.findFileByRelativePath(GitRepositoryFiles.GIT_SQUASH_MSG);
       if (mergeMsg != null || squashMsg != null) {
         try {
           String encoding = GitConfigUtil.getCommitEncoding(myProject, root);

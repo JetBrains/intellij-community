@@ -17,10 +17,11 @@ package git4idea.rebase;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitRevisionNumber;
 import git4idea.GitUtil;
+import git4idea.repo.GitRepositoryFiles;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.BufferedReader;
@@ -62,12 +63,12 @@ public class GitRebaseUtils {
    */
   @Nullable
   private static File getRebaseDir(VirtualFile root) {
-    File gitDir = new File(VfsUtil.virtualToIoFile(root), ".git");
-    File f = new File(gitDir, "rebase-apply");
+    File gitDir = new File(VfsUtilCore.virtualToIoFile(root), GitUtil.DOT_GIT);
+    File f = new File(gitDir, GitRepositoryFiles.REBASE_APPLY);
     if (f.exists()) {
       return f;
     }
-    f = new File(gitDir, "rebase-merge");
+    f = new File(gitDir, GitRepositoryFiles.REBASE_MERGE);
     if (f.exists()) {
       return f;
     }

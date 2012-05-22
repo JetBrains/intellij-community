@@ -74,7 +74,7 @@ public abstract class RecentProjectsManagerBase implements PersistentStateCompon
     }
     if (myState.lastPath != null) {
       File lastFile = new File(myState.lastPath);
-      if (lastFile.isDirectory() && !new File(lastFile, ProjectCoreUtil.DIRECTORY_BASED_PROJECT_DIR).exists()) {
+      if (lastFile.isDirectory() && !new File(lastFile, Project.DIRECTORY_STORE_FOLDER).exists()) {
         myState.lastPath = null;
       }
     }
@@ -243,7 +243,7 @@ public abstract class RecentProjectsManagerBase implements PersistentStateCompon
 
   public static boolean isValidProjectPath(String projectPath) {
     final File file = new File(projectPath);
-    return file.exists() && (!file.isDirectory() || new File(file, ProjectCoreUtil.DIRECTORY_BASED_PROJECT_DIR).exists());
+    return file.exists() && (!file.isDirectory() || new File(file, ProjectUtil.DIRECTORY_BASED_PROJECT_DIR).exists());
   }
 
   private class MyProjectManagerListener extends ProjectManagerAdapter {

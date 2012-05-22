@@ -19,6 +19,7 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -26,12 +27,11 @@ import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyFix;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle;
-import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
-import java.util.HashSet;
-import java.util.Set;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
 
 public class GroovyPointlessArithmeticInspection extends BaseInspection {
 
@@ -46,7 +46,7 @@ public class GroovyPointlessArithmeticInspection extends BaseInspection {
   }
 
   public boolean isEnabledByDefault() {
-    return true;
+    return false;
   }
 
   public BaseInspectionVisitor buildVisitor() {
@@ -58,90 +58,88 @@ public class GroovyPointlessArithmeticInspection extends BaseInspection {
   }
 
   private static String calculateReplacementExpression(GrExpression expression) {
-    final GrBinaryExpression exp = (GrBinaryExpression) expression;
+    final GrBinaryExpression exp = (GrBinaryExpression)expression;
     final IElementType sign = exp.getOperationTokenType();
     final GrExpression lhs = exp.getLeftOperand();
     final GrExpression rhs = exp.getRightOperand();
     assert rhs != null;
-    if (GroovyTokenTypes.mPLUS.equals(sign)) {
+    if (mPLUS == sign) {
       if (isZero(lhs)) {
         return rhs.getText();
-      } else {
+      }
+      else {
         return lhs.getText();
       }
-    } else if (GroovyTokenTypes.mMINUS.equals(sign)) {
+    }
+
+    if (mMINUS == sign) {
       return lhs.getText();
-    } else if (GroovyTokenTypes.mSTAR.equals(sign)) {
+    }
+
+    if (mSTAR == sign) {
       if (isOne(lhs)) {
         return rhs.getText();
-      } else if (isOne(rhs)) {
+      }
+      else if (isOne(rhs)) {
         return lhs.getText();
-      } else {
+      }
+      else {
         return "0";
       }
-    } else if (GroovyTokenTypes.mDIV.equals(sign)) {
-      return lhs.getText();
-    } else {
-      return "";
     }
+
+    if (mDIV == sign) {
+      return lhs.getText();
+    }
+
+    return "";
   }
 
   public GroovyFix buildFix(PsiElement location) {
     return new PointlessArithmeticFix();
   }
 
-  private class PointlessArithmeticFix extends GroovyFix {
-
+  private static class PointlessArithmeticFix extends GroovyFix {
     @NotNull
     public String getName() {
       return "Simplify";
     }
 
-    public void doFix(Project project, ProblemDescriptor descriptor)
-        throws IncorrectOperationException {
-      final GrExpression expression = (GrExpression) descriptor
-          .getPsiElement();
-      final String newExpression =
-          calculateReplacementExpression(expression);
+    public void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
+      final GrExpression expression = (GrExpression) descriptor.getPsiElement();
+      final String newExpression = calculateReplacementExpression(expression);
       replaceExpression(expression, newExpression);
     }
   }
 
-  private class PointlessArithmeticVisitor extends BaseInspectionVisitor {
+  private static class PointlessArithmeticVisitor extends BaseInspectionVisitor {
 
-    private final Set<IElementType> arithmeticTokens =
-        new HashSet<IElementType>(4);
-
-    {
-      arithmeticTokens.add(GroovyTokenTypes.mPLUS);
-      arithmeticTokens.add(GroovyTokenTypes.mMINUS);
-      arithmeticTokens.add(GroovyTokenTypes.mSTAR);
-      arithmeticTokens.add(GroovyTokenTypes.mDIV);
-    }
+    private final TokenSet arithmeticTokens = TokenSet.create(mPLUS, mMINUS, mSTAR, mDIV);
 
     public void visitBinaryExpression(@NotNull GrBinaryExpression expression) {
       super.visitBinaryExpression(expression);
       final GrExpression rhs = expression.getRightOperand();
-      if (rhs == null) {
-        return;
-      }
+      if (rhs == null) return;
+
       final IElementType sign = expression.getOperationTokenType();
-      if (!arithmeticTokens.contains(sign)) {
-        return;
-      }
+      if (!arithmeticTokens.contains(sign)) return;
+
       final GrExpression lhs = expression.getLeftOperand();
 
-      assert sign != null;
       final boolean isPointless;
-      if (sign.equals(GroovyTokenTypes.mPLUS)) {
+      if (sign.equals(mPLUS)) {
         isPointless = additionExpressionIsPointless(lhs, rhs);
-      } else if (sign.equals(GroovyTokenTypes.mMINUS)) {
+      }
+      else if (sign.equals(mMINUS)) {
         isPointless = subtractionExpressionIsPointless(rhs);
-      } else if (sign.equals(GroovyTokenTypes.mSTAR)) {
+      }
+      else if (sign.equals(mSTAR)) {
         isPointless = multiplyExpressionIsPointless(lhs, rhs);
-      } else if (sign.equals(GroovyTokenTypes.mDIV)) {
+      }
+      else if (sign.equals(mDIV)) {
         isPointless = divideExpressionIsPointless(rhs);
-      } else {
+      }
+      else {
         isPointless = false;
       }
       if (!isPointless) {
@@ -174,25 +172,35 @@ public class GroovyPointlessArithmeticInspection extends BaseInspection {
    * @noinspection FloatingPointEquality
    */
   private static boolean isZero(GrExpression expression) {
-    @NonNls final String text = expression.getText();
+    final PsiElement inner = PsiUtil.skipParentheses(expression, false);
+    if (inner == null) return false;
+
+    @NonNls final String text = inner.getText();
     return "0".equals(text) ||
-        "0x0".equals(text) ||
-        "0X0".equals(text) ||
-        "0.0".equals(text) ||
-        "0L".equals(text) ||
-        "0l".equals(text);
+           "0x0".equals(text) ||
+           "0X0".equals(text) ||
+           "0.0".equals(text) ||
+           "0L".equals(text) ||
+           "0l".equals(text) ||
+           "0b0".equals(text) ||
+           "0B0".equals(text);
   }
 
   /**
    * @noinspection FloatingPointEquality
    */
   private static boolean isOne(GrExpression expression) {
-    @NonNls final String text = expression.getText();
+    final PsiElement inner = PsiUtil.skipParentheses(expression, false);
+    if (inner == null) return false;
+
+    @NonNls final String text = inner.getText();
     return "1".equals(text) ||
-        "0x1".equals(text) ||
-        "0X1".equals(text) ||
-        "1.0".equals(text) ||
-        "1L".equals(text) ||
-        "1l".equals(text);
+           "0x1".equals(text) ||
+           "0X1".equals(text) ||
+           "1.0".equals(text) ||
+           "1L".equals(text) ||
+           "1l".equals(text) ||
+           "0b0".equals(text) ||
+           "0B0".equals(text);
   }
 }

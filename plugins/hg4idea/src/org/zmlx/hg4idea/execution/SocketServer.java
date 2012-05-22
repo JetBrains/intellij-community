@@ -107,18 +107,27 @@ public class SocketServer {
       }
       byte[] data = new byte[length];
 
-      int offset = 0;
-      int available;
-      while ((available = inputStream.available()) > 0) {
-        inputStream.readFully(data, offset, available);
-        offset += available;
-      }
+      readAsMuchAsAvailable(inputStream, data, length);
 
       int skipped = inputStream.skipBytes(origLength - length);
       if (skipped > 0) {
         LOG.info(String.format("Skipped %s bytes", skipped));
       }
       return data;
+    }
+
+    private static void readAsMuchAsAvailable(DataInputStream inputStream, byte[] data, int maxLength) throws IOException {
+      int offset = 0;
+      int available;
+      while ((available = inputStream.available()) > 0) {
+        if (available + offset > maxLength) {
+          // read no more than maxLength
+          inputStream.readFully(data, offset, maxLength - offset);
+          return;
+        }
+        inputStream.readFully(data, offset, available);
+        offset += available;
+      }
     }
 
     protected static void sendDataBlock(DataOutputStream out, byte[] data) throws IOException {

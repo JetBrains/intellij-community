@@ -83,7 +83,7 @@ public class RegExpCompletionContributor extends CompletionContributor {
   }
 
   private static LookupElement createLookupElement(String name, String type, Icon icon) {
-    return LookupElementBuilder.create(name).setTypeText(type).setIcon(icon);
+    return LookupElementBuilder.create(name).withTypeText(type).withIcon(icon);
   }
 
   private static class PropertyNameCompletionProvider extends CompletionProvider<CompletionParameters> {

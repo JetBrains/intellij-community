@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,6 @@ import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.progress.*;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectCoreUtil;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -168,7 +167,7 @@ class PrintManager {
     if(isRecursive) {
       PsiDirectory[] directories = psiDirectory.getSubdirectories();
       for (PsiDirectory directory : directories) {
-        if (!ProjectCoreUtil.DIRECTORY_BASED_PROJECT_DIR.equals(directory.getName())) {
+        if (!Project.DIRECTORY_STORE_FOLDER.equals(directory.getName())) {
           addToPsiFileList(directory, filesList, isRecursive);
         }
       }
@@ -199,7 +198,7 @@ class PrintManager {
       pageFormat.setOrientation(PageFormat.LANDSCAPE);
       paperWidth -= topMargin + bottomMargin;
       paperHeight -= leftMargin + rightMargin;
-      paper.setImageableArea(topMargin, rightMargin, paperWidth, paperHeight);
+      paper.setImageableArea(rightMargin, topMargin, paperWidth, paperHeight);
     }
     pageFormat.setPaper(paper);
     return pageFormat;

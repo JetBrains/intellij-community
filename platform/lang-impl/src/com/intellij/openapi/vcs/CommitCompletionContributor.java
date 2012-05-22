@@ -51,7 +51,7 @@ public class CommitCompletionContributor extends CompletionContributor {
                 VirtualFile virtualFile = change.getVirtualFile();
                 if (virtualFile != null) {
                   insensitive.addElement(LookupElementBuilder.create(virtualFile.getName()).
-                    setIcon(VirtualFilePresentation.getIcon(virtualFile)));
+                    withIcon(VirtualFilePresentation.getIcon(virtualFile)));
                 }
               }
             }

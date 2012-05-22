@@ -39,7 +39,12 @@ final class GitCommitsByBranch {
   }
 
   boolean isEmpty() {
-    return myCommitsByBranch.isEmpty();
+    for (GitPushBranchInfo info : myCommitsByBranch.values()) {
+      if (!info.isEmpty()) {
+        return false;
+      }
+    }
+    return true;
   }
 
   int commitsNumber() {

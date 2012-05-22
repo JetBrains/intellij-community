@@ -64,7 +64,7 @@ public class ChooseTypeExpression extends Expression {
     }
 
     if (forGroovy) {
-      result.add(LookupElementBuilder.create(GrModifier.DEF).setBold());
+      result.add(LookupElementBuilder.create(GrModifier.DEF).bold());
     }
 
     return result.toArray(new LookupElement[result.size()]);
@@ -74,7 +74,7 @@ public class ChooseTypeExpression extends Expression {
     String text = type.getCanonicalText();
     String unboxed = PsiTypesUtil.unboxIfPossible(text);
     if (unboxed != null && !unboxed.equals(text)) {
-      result.add(LookupElementBuilder.create(unboxed).setBold());
+      result.add(LookupElementBuilder.create(unboxed).bold());
     } else {
       result.add(PsiTypeLookupItem.createLookupItem(type, null));
     }

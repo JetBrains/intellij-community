@@ -15,41 +15,30 @@
  */
 package git4idea.history.browser;
 
-import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationListener;
-import com.intellij.notification.NotificationType;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Getter;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
-import com.intellij.openapi.vcs.merge.MergeDialogCustomizer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.AsynchConsumer;
-import git4idea.*;
+import git4idea.GitBranch;
+import git4idea.GitTag;
+import git4idea.GitUtil;
 import git4idea.branch.GitBranchesCollection;
-import git4idea.commands.Git;
-import git4idea.commands.GitCommand;
-import git4idea.commands.GitLineHandler;
-import git4idea.commands.GitLineHandlerAdapter;
 import git4idea.config.GitConfigUtil;
 import git4idea.history.GitHistoryUtils;
 import git4idea.history.wholeTree.AbstractHash;
 import git4idea.history.wholeTree.CommitHashPlusParents;
-import git4idea.merge.GitConflictResolver;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.event.HyperlinkEvent;
 import java.io.File;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 public class LowLevelAccessImpl implements LowLevelAccess {
   private final static Logger LOG = Logger.getInstance("#git4idea.history.browser.LowLevelAccessImpl");
@@ -117,7 +106,7 @@ public class LowLevelAccessImpl implements LowLevelAccess {
     final CachedRefs refs = new CachedRefs();
     GitRepository repository = GitUtil.getRepositoryManager(myProject).getRepositoryForRoot(myRoot);
     if (repository == null) {
-      final File child = new File(myRoot.getPath(), ".git");
+      final File child = new File(myRoot.getPath(), GitUtil.DOT_GIT);
       if (! child.exists()) {
         throw new VcsException("No git repository in " + myRoot.getPath());
       }

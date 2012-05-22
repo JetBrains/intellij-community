@@ -61,7 +61,6 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl {
   private Set<LocalFileSystem.WatchRequest> myRootsToWatch = new HashSet<LocalFileSystem.WatchRequest>();
 
   public ProjectRootManagerComponent(Project project,
-                                     FileTypeManager fileTypeManager,
                                      DirectoryIndex directoryIndex,
                                      StartupManager startupManager) {
     super(project, directoryIndex);
@@ -146,16 +145,16 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl {
   protected void addRootsToWatch() {
     final Set<String> rootPaths = getAllRoots(false);
     if (rootPaths == null) return;
-    myRootsToWatch = LocalFileSystem.getInstance().replaceWatchedRoots(myRootsToWatch, rootPaths, true);
+    myRootsToWatch = LocalFileSystem.getInstance().replaceWatchedRoots(myRootsToWatch, rootPaths, null);
   }
 
-  private void beforeRootsChange(boolean filetypes) {
+  private void beforeRootsChange(boolean fileTypes) {
     if (myProject.isDisposed()) return;
-    getBatchSession(filetypes).beforeRootsChanged();
+    getBatchSession(fileTypes).beforeRootsChanged();
   }
 
-  private void rootsChanged(boolean filetypes) {
-    getBatchSession(filetypes).rootsChanged();
+  private void rootsChanged(boolean fileTypes) {
+    getBatchSession(fileTypes).rootsChanged();
   }
 
   private void doUpdateOnRefresh() {
@@ -176,24 +175,24 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl {
     return false;
   }
 
-  protected void fireBeforeRootsChangeEvent(boolean filetypes) {
+  protected void fireBeforeRootsChangeEvent(boolean fileTypes) {
     isFiringEvent = true;
     try {
       myProject.getMessageBus()
         .syncPublisher(ProjectTopics.PROJECT_ROOTS)
-        .beforeRootsChange(new ModuleRootEventImpl(myProject, filetypes));
+        .beforeRootsChange(new ModuleRootEventImpl(myProject, fileTypes));
     }
     finally {
       isFiringEvent= false;
     }
   }
 
-  protected void fireRootsChangedEvent(boolean filetypes) {
+  protected void fireRootsChangedEvent(boolean fileTypes) {
     isFiringEvent = true;
     try {
       myProject.getMessageBus()
         .syncPublisher(ProjectTopics.PROJECT_ROOTS)
-        .rootsChanged(new ModuleRootEventImpl(myProject, filetypes));
+        .rootsChanged(new ModuleRootEventImpl(myProject, fileTypes));
     }
     finally {
       isFiringEvent = false;

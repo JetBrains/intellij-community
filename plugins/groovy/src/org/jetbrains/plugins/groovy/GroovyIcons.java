@@ -44,6 +44,6 @@ public interface GroovyIcons {
   Icon NO_GROOVY_SDK = IconLoader.getIcon("/org/jetbrains/plugins/groovy/images/no_groovy_sdk.png");
   Icon GROOVY_SDK = IconLoader.getIcon("/org/jetbrains/plugins/groovy/images/groovy_sdk.png");
 
-  Icon DYNAMIC_PROPERTY_TOOL_WINDOW_ICON = IconLoader.getIcon("/org/jetbrains/plugins/groovy/images/dynamicProperty.png");
+  Icon DYNAMIC_PROPERTY_TOOL_WINDOW_ICON = IconLoader.getIcon("/org/jetbrains/plugins/groovy/images/dynamicProperty_13.png");
 
 }

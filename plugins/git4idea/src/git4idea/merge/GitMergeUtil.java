@@ -29,13 +29,15 @@ import com.intellij.openapi.vcs.update.FileGroup;
 import com.intellij.openapi.vcs.update.UpdateInfoTree;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ui.UIUtil;
 import git4idea.GitRevisionNumber;
+import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.actions.GitRepositoryAction;
 import git4idea.i18n.GitBundle;
+import git4idea.repo.GitRepositoryFiles;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -186,8 +188,8 @@ public class GitMergeUtil {
    */
   @Nullable
   private static File getMergeHead(@NotNull VirtualFile root) {
-    File gitDir = new File(VfsUtil.virtualToIoFile(root), ".git");
-    File f = new File(gitDir, "MERGE_HEAD");
+    File gitDir = new File(VfsUtilCore.virtualToIoFile(root), GitUtil.DOT_GIT);
+    File f = new File(gitDir, GitRepositoryFiles.MERGE_HEAD);
     if (f.exists()) {
       return f;
     }

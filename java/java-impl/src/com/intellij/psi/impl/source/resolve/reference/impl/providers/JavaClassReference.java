@@ -563,7 +563,7 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
         return null;
       }
     }
-    return JavaLookupElementBuilder.forClass(clazz, name, true).addLookupString(qname).addLookupString(clazz.getName());
+    return JavaLookupElementBuilder.forClass(clazz, name, true).withLookupString(qname).withLookupString(clazz.getName());
   }
 
   @Override

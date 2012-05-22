@@ -149,9 +149,9 @@ public class CompleteReferenceExpression {
 
   @NotNull
   public static LookupElementBuilder createPropertyLookupElement(@NotNull String name, @Nullable PsiType type) {
-    LookupElementBuilder res = LookupElementBuilder.create(name).setIcon(GroovyIcons.PROPERTY);
+    LookupElementBuilder res = LookupElementBuilder.create(name).withIcon(GroovyIcons.PROPERTY);
     if (type != null) {
-      res = res.setTypeText(type.getPresentableText());
+      res = res.withTypeText(type.getPresentableText());
     }
     return res;
   }
@@ -190,9 +190,9 @@ public class CompleteReferenceExpression {
 
     LookupElementBuilder builder =
       LookupElementBuilder.create(generatePropertyResolveResult(propName, accessor, propType, resolveResult), propName)
-        .setIcon(GroovyIcons.PROPERTY);
+        .withIcon(GroovyIcons.PROPERTY);
     if (substituted != null) {
-      builder = builder.setTypeText(substituted.getPresentableText());
+      builder = builder.withTypeText(substituted.getPresentableText());
     }
     return builder;
   }
@@ -440,7 +440,7 @@ public class CompleteReferenceExpression {
     private void processPropertyFromField(GrField field, GroovyResolveResult resolveResult) {
       if (field.getGetters().length != 0 || field.getSetter() != null || !myPropertyNames.add(field.getName())) return;
 
-      myConsumer.consume(((LookupElementBuilder)GroovyCompletionUtil.createCompletionVariant(resolveResult)).setIcon(GroovyIcons.PROPERTY));
+      myConsumer.consume(((LookupElementBuilder)GroovyCompletionUtil.createCompletionVariant(resolveResult)).withIcon(GroovyIcons.PROPERTY));
     }
 
     private void processProperty(PsiMethod method, GroovyResolveResult resolveResult) {
@@ -474,7 +474,7 @@ public class CompleteReferenceExpression {
         if (myPropertyNames.add(name)) {
           LookupElementBuilder builder = LookupElementBuilder
             .create(generatePropertyResolveResult(name, listenerMethod, null, null), name)
-            .setIcon(GroovyIcons.PROPERTY);
+            .withIcon(GroovyIcons.PROPERTY);
           myConsumer.consume(builder);
         }
       }

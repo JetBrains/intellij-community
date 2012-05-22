@@ -88,7 +88,7 @@ public abstract class AbstractBlockAlignmentProcessor implements BlockAlignmentP
       LOG.error(String.format("Please create dedicated ticket at the tracker with the content of the current editor attached%n%n"
                               + "Formatting error - code block %s is set to be shifted right because of its alignment with "
                               + "block %s more than once. I.e. moving the former block because of alignment algorithm causes "
-                              + "subsequent block to be shifted right as well - cyclic dependency. Debug info: %s",
+                              + "subsequent block to be shifted right as well - cyclic dependency.%nDebug info: %s",
                               offsetResponsibleBlock.getTextRange(), context.targetBlock.getTextRange(), context.targetBlock.getDebugInfo()
       ));
       blocksCausedRealignment.add(context.targetBlock);

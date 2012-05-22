@@ -36,6 +36,7 @@ import org.jetbrains.android.sdk.AndroidPlatform;
 import org.jetbrains.android.util.AndroidBundle;
 import org.jetbrains.android.util.AndroidCommonUtils;
 import org.jetbrains.android.util.AndroidUtils;
+import org.jetbrains.android.util.JavaFilesFilter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -87,19 +88,8 @@ public class AndroidAptCompiler implements SourceGeneratingCompiler {
       return EMPTY_GENERATION_ITEM_ARRAY;
     }
 
-    // we have one item per module there, so clear output directory
     final String genRootPath = FileUtil.toSystemDependentName(outputRootDirectory.getPath());
     final File genRootDir = new File(genRootPath);
-    if (genRootDir.exists()) {
-      if (!FileUtil.delete(genRootDir)) {
-        context.addMessage(CompilerMessageCategory.ERROR, "Cannot delete directory " + genRootPath, null, -1, -1);
-        return EMPTY_GENERATION_ITEM_ARRAY;
-      }
-      if (!genRootDir.mkdir()) {
-        context.addMessage(CompilerMessageCategory.ERROR, "Cannot create directory " + genRootPath, null, -1, -1);
-        return EMPTY_GENERATION_ITEM_ARRAY;
-      }
-    }
 
     List<GenerationItem> results = new ArrayList<GenerationItem>(items.length);
     boolean toRefresh = false;
@@ -112,17 +102,27 @@ public class AndroidAptCompiler implements SourceGeneratingCompiler {
           continue;
         }
 
-        final String outputDirOsPath = FileUtil.toSystemDependentName(outputRootDirectory.getPath());
-
+        File tmpOutputDir = null;
         try {
-          Map<CompilerMessageCategory, List<String>> messages = AndroidCompileUtil.toCompilerMessageCategoryKeys(
-            AndroidApt.compile(aptItem.myAndroidTarget, aptItem.myPlatformToolsRevision,
-                               aptItem.myManifestFile.getPath(), aptItem.myPackage,
-                               outputDirOsPath, aptItem.myResourcesPaths,
-                               aptItem.myLibraryPackages, aptItem.myNonConstantFields));
+          tmpOutputDir = FileUtil.createTempDirectory("android_apt_output", "tmp");
+          Map<CompilerMessageCategory, List<String>> messages = AndroidCompileUtil.toCompilerMessageCategoryKeys(AndroidApt.compile(
+            aptItem.myAndroidTarget, aptItem.myPlatformToolsRevision, aptItem.myManifestFile.getPath(), aptItem.myPackage,
+            tmpOutputDir.getPath(), aptItem.myResourcesPaths, aptItem.myLibraryPackages, aptItem.myNonConstantFields));
           toRefresh = true;
-          AndroidCompileUtil.addMessages(context, messages);
+          AndroidCompileUtil.addMessages(context, messages, aptItem.myModule);
+
           if (messages.get(CompilerMessageCategory.ERROR).isEmpty()) {
+            if (!AndroidCommonUtils.directoriesContainSameContent(tmpOutputDir, genRootDir, JavaFilesFilter.INSTANCE)) {
+              if (genRootDir.exists() && !FileUtil.delete(genRootDir)) {
+                context.addMessage(CompilerMessageCategory.ERROR, "Cannot delete directory " + genRootPath, null, -1, -1);
+                continue;
+              }
+              if (!FileUtil.moveDirWithContent(tmpOutputDir, genRootDir)) {
+                final String message = "Cannot move content from " + tmpOutputDir.getPath() + " to " + genRootPath;
+                context.addMessage(CompilerMessageCategory.ERROR, message, null, -1, -1);
+                continue;
+              }
+            }
             results.add(aptItem);
           }
         }
@@ -134,6 +134,11 @@ public class AndroidAptCompiler implements SourceGeneratingCompiler {
               context.addMessage(CompilerMessageCategory.ERROR, "I/O error: " + e.getMessage(), null, -1, -1);
             }
           });
+        }
+        finally {
+          if (tmpOutputDir != null) {
+            FileUtil.delete(tmpOutputDir);
+          }
         }
       }
     }
@@ -197,7 +202,7 @@ public class AndroidAptCompiler implements SourceGeneratingCompiler {
     }
 
     public String getPath() {
-      return myPackage.replace('.', '/') + '/' + AndroidCommonUtils.R_JAVA_FILENAME;
+      return "FAKE";
     }
 
     public ValidityState getValidityState() {
@@ -257,8 +262,8 @@ public class AndroidAptCompiler implements SourceGeneratingCompiler {
 
           VirtualFile manifestFile = AndroidRootUtil.getManifestFileForCompiler(facet);
           if (manifestFile == null) {
-            myContext.addMessage(CompilerMessageCategory.ERROR, AndroidBundle.message("android.compilation.error.manifest.not.found"),
-                                 null, -1, -1);
+            myContext.addMessage(CompilerMessageCategory.ERROR,
+                                 AndroidBundle.message("android.compilation.error.manifest.not.found", module.getName()), null, -1, -1);
             continue;
           }
 

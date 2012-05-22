@@ -21,11 +21,8 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.NullableFunction;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrThisReferenceExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
@@ -40,12 +37,9 @@ public class GrThisReferenceExpressionImpl extends GrThisSuperReferenceExpressio
       public PsiType fun(GrThisReferenceExpressionImpl ref) {
         final GrReferenceExpression qualifier = ref.getQualifier();
         if (qualifier == null) {
-          GroovyPsiElement context = PsiUtil.getFileOrClassContext(ref);
-          if (context instanceof GrTypeDefinition) {
-            return ref.createType((PsiClass)context);
-          }
-          else if (context instanceof GroovyFileBase) {
-            return ref.createType(((GroovyFileBase)context).getScriptClass());
+          PsiClass context = PsiUtil.getContextClass(ref);
+          if (context != null) {
+            return ref.createType(context);
           }
         }
         else {
@@ -118,14 +112,7 @@ public class GrThisReferenceExpressionImpl extends GrThisSuperReferenceExpressio
       return qualifier.resolve();
     }
 
-    final GroovyPsiElement context = PsiUtil.getFileOrClassContext(this);
-    if (context instanceof GrTypeDefinition) {
-      return context;
-    }
-    else if (context instanceof GroovyFileBase) {
-      return ((GroovyFileBase)context).getScriptClass();
-    }
-    return null;
+    return PsiUtil.getContextClass(this);
   }
 
 }

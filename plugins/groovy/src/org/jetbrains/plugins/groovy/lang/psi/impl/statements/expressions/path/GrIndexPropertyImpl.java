@@ -66,7 +66,6 @@ public class GrIndexPropertyImpl extends GrExpressionImpl implements GrIndexProp
       if (thisType == null) return null;
 
       GrArgumentList argList = index.getArgumentList();
-      if (argList == null) return null;
 
       PsiType[] argTypes = PsiUtil.getArgumentTypes(argList);
       if (argTypes == null) return null;
@@ -148,7 +147,6 @@ public class GrIndexPropertyImpl extends GrExpressionImpl implements GrIndexProp
     if (thisType == null) return GroovyResolveResult.EMPTY_ARRAY;
 
     GrArgumentList argList = getArgumentList();
-    if (argList == null) return GroovyResolveResult.EMPTY_ARRAY;
 
     PsiType[] argTypes = PsiUtil
       .getArgumentTypes(argList.getNamedArguments(), argList.getExpressionArguments(), GrClosableBlock.EMPTY_ARRAY, true, upToArgument);
@@ -235,9 +233,9 @@ public class GrIndexPropertyImpl extends GrExpressionImpl implements GrIndexProp
     return findNotNullChildByClass(GrExpression.class);
   }
 
-  @Nullable
+  @NotNull
   public GrArgumentList getArgumentList() {
-    return findChildByClass(GrArgumentList.class);
+    return findNotNullChildByClass(GrArgumentList.class);
   }
 
   @NotNull
@@ -280,20 +278,19 @@ public class GrIndexPropertyImpl extends GrExpressionImpl implements GrIndexProp
   @Override
   public GrNamedArgument[] getNamedArguments() {
     GrArgumentList list = getArgumentList();
-    return list == null ? GrNamedArgument.EMPTY_ARRAY : list.getNamedArguments();
+    return list.getNamedArguments();
   }
 
   @NotNull
   @Override
   public GrExpression[] getExpressionArguments() {
     GrArgumentList list = getArgumentList();
-    return list == null ? GrExpression.EMPTY_ARRAY : list.getExpressionArguments();
+    return list.getExpressionArguments();
   }
 
   @Override
   public GrNamedArgument addNamedArgument(GrNamedArgument namedArgument) throws IncorrectOperationException {
     GrArgumentList list = getArgumentList();
-    if (list == null) throw new IncorrectOperationException("Argument list is null");
     return list.addNamedArgument(namedArgument);
   }
 

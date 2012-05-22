@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.formatter;
 
 import com.intellij.formatting.*;
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
@@ -55,6 +56,8 @@ import java.util.List;
  * @author ilyas
  */
 public class GroovyBlock implements Block, GroovyElementTypes, ASTBlock {
+  private static final Logger LOG = Logger.getInstance(GroovyBlock.class);
+
   final protected ASTNode myNode;
   protected Alignment myAlignment = null;
   final protected Indent myIndent;
@@ -107,7 +110,12 @@ public class GroovyBlock implements Block, GroovyElementTypes, ASTBlock {
   @Override
   public List<Block> getSubBlocks() {
     if (mySubBlocks == null) {
-      mySubBlocks = new GroovyBlockGenerator(this).generateSubBlocks();
+      try {
+        mySubBlocks = new GroovyBlockGenerator(this).generateSubBlocks();
+      }
+      catch (RuntimeException e) {
+        LOG.error(myNode.getPsi().getContainingFile().getText(), e);
+      }
     }
     return  mySubBlocks;
   }

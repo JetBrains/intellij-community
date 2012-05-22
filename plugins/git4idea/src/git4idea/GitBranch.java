@@ -25,6 +25,7 @@ import git4idea.commands.GitCommand;
 import git4idea.commands.GitSimpleHandler;
 import git4idea.config.GitConfigUtil;
 import git4idea.history.GitHistoryUtils;
+import git4idea.repo.GitRepositoryFiles;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -138,11 +139,11 @@ public class GitBranch extends GitReference {
    * @deprecated use {@link git4idea.repo.GitRepository#getBranches()}
    */
   public boolean exists(VirtualFile root) {
-    final VirtualFile remoteBranch = root.findFileByRelativePath(".git/refs/remotes/" + myName);
+    final VirtualFile remoteBranch = root.findFileByRelativePath(GitRepositoryFiles.GIT_REFS_REMOTES + "/" + myName);
     if (remoteBranch != null && remoteBranch.exists()) {
       return true;
     }
-    final VirtualFile packedRefs = root.findFileByRelativePath(".git/packed-refs");
+    final VirtualFile packedRefs = root.findFileByRelativePath(GitRepositoryFiles.GIT_PACKED_REFS);
     if (packedRefs != null && packedRefs.exists()) {
       final byte[] contents;
       try {
@@ -248,7 +249,7 @@ public class GitBranch extends GitReference {
       // the case after git init and before first commit - there is no branch and no output, and we'll take refs/heads/master
       String head;
       try {
-        head = FileUtil.loadFile(new File(root.getPath(), ".git/HEAD"), GitUtil.UTF8_ENCODING).trim();
+        head = FileUtil.loadFile(new File(root.getPath(), GitRepositoryFiles.GIT_HEAD), GitUtil.UTF8_ENCODING).trim();
         final String prefix = "ref: refs/heads/";
         return head.startsWith(prefix) ? new GitBranch(head.substring(prefix.length()), true, false) : null;
       } catch (IOException e) {

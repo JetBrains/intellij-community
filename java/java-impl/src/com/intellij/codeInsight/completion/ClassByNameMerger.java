@@ -43,7 +43,7 @@ public class ClassByNameMerger implements Consumer<LookupElement> {
     if (lastElement != null) {
       if (lastElement.getLookupString().equals(element.getLookupString())) {
         number++;
-        lastElement = LookupElementBuilder.create(element.getLookupString()).setTailText(" (" + number + " variants...)", true);
+        lastElement = LookupElementBuilder.create(element.getLookupString()).withTailText(" (" + number + " variants...)", true);
         return;
       }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ import com.intellij.openapi.components.ExpandMacroToPathMap;
 import com.intellij.openapi.components.StorageScheme;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.impl.ModuleManagerImpl;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.impl.libraries.LibraryImpl;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.util.Condition;
@@ -82,7 +83,7 @@ public class ConversionContextImpl implements ConversionContext {
     if (myProjectFile.isDirectory()) {
       myStorageScheme = StorageScheme.DIRECTORY_BASED;
       myProjectBaseDir = myProjectFile;
-      mySettingsBaseDir = new File(myProjectBaseDir.getAbsolutePath(), ".idea");
+      mySettingsBaseDir = new File(myProjectBaseDir.getAbsolutePath(), Project.DIRECTORY_STORE_FOLDER);
       modulesFile = new File(mySettingsBaseDir, "modules.xml");
       myWorkspaceFile = new File(mySettingsBaseDir, "workspace.xml");
     }

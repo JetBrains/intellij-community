@@ -236,12 +236,14 @@ public class GroovyScriptRunConfiguration extends ModuleBasedConfiguration<RunCo
       return new RefactoringElementAdapter() {
         @Override
         protected void elementRenamedOrMoved(@NotNull PsiElement newElement) {
-          GroovyFile file = (GroovyFile)newElement;
-          setScriptPath(file.getVirtualFile().getPath());
+          if (newElement instanceof GroovyFile) {
+            GroovyFile file = (GroovyFile)newElement;
+            setScriptPath(file.getVirtualFile().getPath());
 
-          final PsiClass newClassToRun = GroovyRunnerUtil.getRunningClass(newElement);
-          if (newClassToRun instanceof GroovyScriptClass) {
-            setName(GroovyRunnerUtil.getConfigurationName(file.getScriptClass(), getConfigurationModule()));
+            final PsiClass newClassToRun = GroovyRunnerUtil.getRunningClass(newElement);
+            if (newClassToRun instanceof GroovyScriptClass) {
+              setName(GroovyRunnerUtil.getConfigurationName(file.getScriptClass(), getConfigurationModule()));
+            }
           }
         }
 

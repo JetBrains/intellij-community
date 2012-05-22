@@ -249,9 +249,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
 
     final Pair<Boolean, GroovyResolveResult[]> shapeResults = resolveByShape(allVariants, upToArgument);
     if (!genericsMatter && !allVariants && shapeResults.first) {
-      for (GroovyResolveResult candidate : shapeResults.second) {
-        assert candidate.getElement().isValid();
-      }
+      assertAllAreValid(shapeResults.second);
       return shapeResults.second;
     }
 
@@ -328,10 +326,15 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
     final MethodResolverProcessor shapeProcessor = createMethodProcessor(allVariants, name, true, upToArgument);
     processMethods(shapeProcessor);
     GroovyResolveResult[] candidates = shapeProcessor.getCandidates();
-    for (GroovyResolveResult candidate : candidates) {
-      assert candidate.getElement().isValid();
-    }
+    assertAllAreValid(candidates);
     return Pair.create(shapeProcessor.hasApplicableCandidates(), candidates);
+  }
+
+  private static void assertAllAreValid(GroovyResolveResult[] candidates) {
+    for (GroovyResolveResult candidate : candidates) {
+      final PsiElement element = candidate.getElement();
+      assert element == null || element.isValid();
+    }
   }
 
   private MethodResolverProcessor createMethodProcessor(boolean allVariants,
@@ -421,8 +424,11 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
 
   public PsiElement handleElementRenameSimple(String newElementName) throws IncorrectOperationException {
     if (!PsiUtil.isValidReferenceName(newElementName)) {
+      final PsiElement old = getReferenceNameElement();
+      if (old == null) throw new IncorrectOperationException("ref has no name element");
+
       PsiElement element = GroovyPsiElementFactory.getInstance(getProject()).createStringLiteralForReference(newElementName);
-      getReferenceNameElement().replace(element);
+      old.replace(element);
       return this;
     }
 
@@ -525,7 +531,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
       if (containingClass != null &&
           CommonClassNames.JAVA_LANG_OBJECT.equals(containingClass.getQualifiedName()) &&
           "getClass".equals(method.getName())) {
-        return TypesUtil.createJavaLangClassType(getQualifierType(), getProject(), getResolveScope());
+        return TypesUtil.createJavaLangClassType(GrReferenceResolveUtil.getQualifierType(this), getProject(), getResolveScope());
       }
 
       return PsiUtil.getSmartReturnType(method);
@@ -549,7 +555,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
 
     if (resolved == null) {
       if ("class".equals(getReferenceName())) {
-        return TypesUtil.createJavaLangClassType(getQualifierType(), getProject(), getResolveScope());
+        return TypesUtil.createJavaLangClassType(GrReferenceResolveUtil.getQualifierType(this), getProject(), getResolveScope());
       }
 
       //map access
@@ -575,25 +581,6 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
     return null;
   }
 
-  @Nullable
-  private PsiType getQualifierType() {
-    final GrExpression qualifier = getQualifierExpression();
-    if (qualifier == null) {
-      final PsiElement context = PsiUtil.getFileOrClassContext(this);
-      PsiClass contextClass = null;
-      if (context instanceof PsiClass) {
-        contextClass = (PsiClass)context;
-      }
-      else if (context instanceof GroovyFile) contextClass = ((GroovyFile)context).getScriptClass();
-      if (contextClass == null) return null;
-      return JavaPsiFacade.getElementFactory(getProject()).createType(contextClass);
-    }
-    else {
-      return qualifier.getType();
-    }
-  }
-
-
   private static final class OurTypesCalculator implements Function<GrReferenceExpressionImpl, PsiType> {
     @Nullable
     public PsiType fun(GrReferenceExpressionImpl refExpr) {
@@ -602,14 +589,10 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
       if (inferred == null || PsiType.NULL.equals(inferred)) {
         if (nominal == null) {
           //inside nested closure we could still try to infer from variable initializer. Not sound, but makes sense
-          if (!refExpr.isValid()) {
-            throw new AssertionError("invalid reference");
-          }
+          assert refExpr.isValid();
           final PsiElement resolved = refExpr.resolve();
           if (resolved instanceof GrVariable) {
-            if (!resolved.isValid()) {
-              throw new AssertionError("Invalid target of a valid reference");
-            }
+            assert resolved.isValid();
             return ((GrVariable)resolved).getTypeGroovy();
           }
         }
@@ -621,7 +604,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
       if (!TypeConversionUtil.isAssignable(nominal, inferred, false)) {
         final PsiElement resolved = refExpr.resolve();
         if (resolved instanceof GrVariable && ((GrVariable)resolved).getTypeElementGroovy() != null) {
-          return nominal; //see GRVY-487
+          return nominal;
         }
       }
       return inferred;
@@ -642,6 +625,8 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
 
   public PsiElement setName(@NonNls @NotNull String name) throws IncorrectOperationException {
     PsiElement nameElement = getReferenceNameElement();
+    if (nameElement == null) throw new IncorrectOperationException("ref has no name element");
+
     ASTNode node = nameElement.getNode();
     ASTNode newNameNode = GroovyPsiElementFactory.getInstance(getProject()).createReferenceNameFromText(name).getNode();
     assert newNameNode != null && node != null;

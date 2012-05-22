@@ -281,7 +281,7 @@ public class GroovyCompletionContributor extends CompletionContributor {
       protected void addCompletions(@NotNull CompletionParameters parameters,
                                     ProcessingContext context,
                                     @NotNull CompletionResultSet result) {
-        result.addElement(LookupElementBuilder.create("if").setBold().setInsertHandler(new InsertHandler<LookupElement>() {
+        result.addElement(LookupElementBuilder.create("if").bold().withInsertHandler(new InsertHandler<LookupElement>() {
           @Override
           public void handleInsert(InsertionContext context, LookupElement item) {
             if (context.getCompletionChar() != ' ') {
@@ -290,7 +290,7 @@ public class GroovyCompletionContributor extends CompletionContributor {
             if (context.getCompletionChar() == '(') {
               context.setAddCompletionChar(false);
             }
-            }
+          }
         }));
       }
     });

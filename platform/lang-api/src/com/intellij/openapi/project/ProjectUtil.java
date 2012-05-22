@@ -16,11 +16,11 @@
 package com.intellij.openapi.project;
 
 import com.intellij.ide.DataManager;
-import com.intellij.openapi.fileTypes.InternalFileType;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.fileEditor.UniqueVFilePathBuilder;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.InternalFileType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.roots.JdkOrderEntry;
@@ -40,7 +40,9 @@ import javax.swing.*;
 /**
  * @author max
  */
-public class ProjectUtil extends ProjectCoreUtil {
+public class ProjectUtil {
+  /** @deprecated use {@linkplain Project#DIRECTORY_STORE_FOLDER} (to remove in IDEA 13) */
+  @SuppressWarnings("UnusedDeclaration") @NonNls public static final String DIRECTORY_BASED_PROJECT_DIR = Project.DIRECTORY_STORE_FOLDER;
 
   private ProjectUtil() { }
 
@@ -119,6 +121,16 @@ public class ProjectUtil extends ProjectCoreUtil {
   @Nullable
   public static Project guessProjectForFile(VirtualFile file) {
     return ProjectLocator.getInstance().guessProjectForFile(file);
+  }
+
+  public static boolean isProjectOrWorkspaceFile(final VirtualFile file) {
+    return isProjectOrWorkspaceFile(file, file.getFileType());
+  }
+
+  public static boolean isProjectOrWorkspaceFile(final VirtualFile file,
+                                                 final FileType fileType) {
+    if (fileType instanceof InternalFileType) return true;
+    return file.getPath().contains("/"+ Project.DIRECTORY_STORE_FOLDER +"/");
   }
 
   @NotNull
