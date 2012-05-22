@@ -17,6 +17,8 @@ package org.jetbrains.jps.android;
 
 import com.android.sdklib.IAndroidTarget;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.util.ArrayUtil;
@@ -29,10 +31,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.Module;
 import org.jetbrains.jps.ProjectPaths;
-import org.jetbrains.jps.incremental.CompileContext;
-import org.jetbrains.jps.incremental.ExternalProcessUtil;
-import org.jetbrains.jps.incremental.ProjectBuildException;
-import org.jetbrains.jps.incremental.ProjectLevelBuilder;
+import org.jetbrains.jps.incremental.*;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
 import org.jetbrains.jps.incremental.messages.ProgressMessage;
@@ -49,6 +48,9 @@ public class AndroidDexBuilder extends ProjectLevelBuilder {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.android.AndroidDexBuilder");
 
   @NonNls private static final String BUILDER_NAME = "android-dex";
+
+  private static final Key<BuildListener> BUILD_LISTENER_KEY = Key.create("BUILD_LISTENER_KEY");
+  public static final Key<Set<String>> DIRTY_OUTPUT_DIRS = Key.create("DIRTY_OUTPUT_DIRS");
 
   @Override
   public void build(CompileContext context) throws ProjectBuildException {
@@ -146,6 +148,8 @@ public class AndroidDexBuilder extends ProjectLevelBuilder {
       }
 
       final Set<String> fileSet;
+      final Set<String> jars;
+      final Set<String> outputDirs;
 
       try {
         if (proguardCfgPath != null) {
@@ -157,33 +161,73 @@ public class AndroidDexBuilder extends ProjectLevelBuilder {
             success = false;
             continue;
           }
-          fileSet = Collections.singleton(outputJarPath);
+          fileSet = jars = Collections.singleton(outputJarPath);
+          outputDirs = Collections.emptySet();
         }
         else {
           fileSet = new HashSet<String>();
-          AndroidJpsUtil.addSubdirectories(classesDir, fileSet);
-          fileSet.addAll(externalLibraries);
+          jars = new HashSet<String>();
+          outputDirs = new HashSet<String>();
 
-          for (String filePath : AndroidJpsUtil.getClassdirsOfDependentModulesAndPackagesLibraries(projectPaths, module)) {
-            if (!classesDir.getPath().equals(filePath)) {
-              fileSet.add(filePath);
+          AndroidJpsUtil.addSubdirectories(classesDir, fileSet);
+          outputDirs.add(classesDir.getPath());
+
+          fileSet.addAll(externalLibraries);
+          jars.addAll(externalLibraries);
+
+          AndroidJpsUtil.processClasspath(projectPaths, module, new AndroidDependencyProcessor() {
+            @Override
+            public void processExternalLibrary(@NotNull File file) {
+              fileSet.add(file.getPath());
+              jars.add(file.getPath());
             }
-          }
+
+            @Override
+            public void processAndroidLibraryPackage(@NotNull File file) {
+              fileSet.add(file.getPath());
+              jars.add(file.getPath());
+            }
+
+            @Override
+            public void processJavaModuleOutputDirectory(@NotNull File dir) {
+              fileSet.add(dir.getPath());
+              outputDirs.add(dir.getPath());
+            }
+
+            @Override
+            public boolean isToProcess(@NotNull AndroidDependencyType type) {
+              return type == AndroidDependencyType.JAVA_MODULE_OUTPUT_DIR ||
+                     type == AndroidDependencyType.ANDROID_LIBRARY_PACKAGE ||
+                     type == AndroidDependencyType.EXTERNAL_LIBRARY;
+            }
+          });
 
           if (facet.isPackTestCode()) {
             final File testsClassDir = projectPaths.getModuleOutputDir(module, true);
 
             if (testsClassDir != null && testsClassDir.isDirectory()) {
               AndroidJpsUtil.addSubdirectories(testsClassDir, fileSet);
+              outputDirs.add(testsClassDir.getPath());
             }
           }
         }
-        final AndroidFileSetState newState = new AndroidFileSetState(fileSet, AndroidJpsUtil.CLASSES_AND_JARS_FILTER, true);
+        final AndroidFileSetState newState = new AndroidFileSetState(jars, AndroidJpsUtil.CLASSES_AND_JARS_FILTER, true);
 
         if (context.isMake()) {
           final AndroidFileSetState oldState = dexStateStorage.getState(module.getName());
           if (oldState != null && oldState.equalsTo(newState)) {
-            continue;
+            final Set<String> dirtyOutputDirs = context.getUserData(DIRTY_OUTPUT_DIRS);
+            boolean outputDirsDirty = false;
+
+            for (String outputDir : outputDirs) {
+              if (dirtyOutputDirs.contains(outputDir)) {
+                outputDirsDirty = true;
+                break;
+              }
+            }
+            if (!outputDirsDirty) {
+              continue;
+            }
           }
         }
 
@@ -223,6 +267,29 @@ public class AndroidDexBuilder extends ProjectLevelBuilder {
   @Override
   public String getDescription() {
     return "Android Dex Builder";
+  }
+
+  @Override
+  public void buildStarted(CompileContext context) {
+    final HashSet<String> dirtyOutputDirs = new HashSet<String>();
+    final BuildListener listener = new BuildListener() {
+      @Override
+      public void filesGenerated(Collection<Pair<String, String>> paths) {
+        for (Pair<String, String> path : paths) {
+          dirtyOutputDirs.add(path.first);
+        }
+      }
+    };
+    context.putUserData(DIRTY_OUTPUT_DIRS, dirtyOutputDirs);
+    context.putUserData(BUILD_LISTENER_KEY, listener);
+    context.addBuildListener(listener);
+  }
+
+  @Override
+  public void buildFinished(CompileContext context) {
+    final BuildListener listener = context.getUserData(BUILD_LISTENER_KEY);
+    assert listener != null;
+    context.removeBuildListener(listener);
   }
 
   private static boolean runDex(@NotNull AndroidPlatform platform,
@@ -308,34 +375,54 @@ public class AndroidDexBuilder extends ProjectLevelBuilder {
     final ProjectPaths paths = context.getProjectPaths();
     final Set<String> classFilesDirs = new HashSet<String>();
     final Set<String> libClassFilesDirs = new HashSet<String>();
+    final Set<String> outputDirs = new HashSet<String>();
 
     AndroidJpsUtil.addSubdirectories(classesDir, classFilesDirs);
+    outputDirs.add(classesDir.getPath());
 
-    for (String depPath : AndroidJpsUtil.getClassdirsOfDependentModulesAndPackagesLibraries(paths, module)) {
-      final File depFile = new File(depPath);
-      if (depFile.isDirectory()) {
-        AndroidJpsUtil.addSubdirectories(depFile, classFilesDirs);
+    AndroidJpsUtil.processClasspath(paths, module, new AndroidDependencyProcessor() {
+
+      @Override
+      public void processAndroidLibraryOutputDirectory(@NotNull File dir) {
+        AndroidJpsUtil.addSubdirectories(dir, libClassFilesDirs);
+        outputDirs.add(dir.getPath());
       }
-      else {
-        AndroidJpsUtil.addSubdirectories(depFile.getParentFile(), libClassFilesDirs);
+
+      @Override
+      public void processJavaModuleOutputDirectory(@NotNull File dir) {
+        AndroidJpsUtil.addSubdirectories(dir, classFilesDirs);
+        outputDirs.add(dir.getPath());
       }
-    }
+
+      @Override
+      public boolean isToProcess(@NotNull AndroidDependencyType type) {
+        return type == AndroidDependencyType.ANDROID_LIBRARY_OUTPUT_DIRECTORY ||
+               type == AndroidDependencyType.JAVA_MODULE_OUTPUT_DIR;
+      }
+    });
 
     final String logsDirOsPath =
           FileUtil.toSystemDependentName(mainContentRoot.getPath() + '/' + AndroidCommonUtils.DIRECTORY_FOR_LOGS_NAME);
+    final AndroidFileSetState newState = new AndroidFileSetState(externalJars, AndroidJpsUtil.CLASSES_AND_JARS_FILTER, true);
 
-    final Set<String> allFiles = new HashSet<String>();
-    allFiles.addAll(classFilesDirs);
-    allFiles.addAll(libClassFilesDirs);
-    allFiles.addAll(externalJars);
+    if (context.isMake()) {
+      final AndroidFileSetState oldState = proguardStateStorage.getState(module.getName());
+      if (context.getTimestamps().getStamp(proguardCfgFile) == proguardCfgFile.lastModified() &&
+          newState.equalsTo(oldState)) {
 
-    final AndroidFileSetState newState = new AndroidFileSetState(allFiles, AndroidJpsUtil.CLASSES_AND_JARS_FILTER, true);
-    final AndroidFileSetState oldState = proguardStateStorage.getState(module.getName());
-    if (context.getTimestamps().getStamp(proguardCfgFile) == proguardCfgFile.lastModified() &&
-        newState.equalsTo(oldState)) {
-      return true;
+        final Set<String> dirtyOutputDirs = context.getUserData(DIRTY_OUTPUT_DIRS);
+        assert dirtyOutputDirs != null;
+        boolean outputDirsDirty = false;
+        for (String outputDir : outputDirs) {
+          if (dirtyOutputDirs.contains(outputDir)) {
+            outputDirsDirty = true;
+          }
+        }
+        if (!outputDirsDirty) {
+          return true;
+        }
+      }
     }
-
     final String[] classFilesDirOsPaths = ArrayUtil.toStringArray(classFilesDirs);
     final String[] libClassFilesDirOsPaths = ArrayUtil.toStringArray(libClassFilesDirs);
     final String[] externalJarOsPaths = ArrayUtil.toStringArray(externalJars);
