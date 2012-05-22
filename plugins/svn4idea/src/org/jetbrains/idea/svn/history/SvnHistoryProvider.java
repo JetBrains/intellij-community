@@ -803,7 +803,7 @@ public class SvnHistoryProvider
     }
 
     @Override
-    public String getMaxStringValue(JTable table) {
+    public String getMaxStringValue() {
       return SvnBundle.message("copy.column.title");
     }
 

@@ -119,7 +119,7 @@ public class TableView<Item> extends BaseTableView implements ItemsProvider, Sel
         int width = columnInfo.getWidth(this);
         widths[i] = width;
       }
-      else if ((maxStringValue = columnInfo.getMaxStringValue(this)) != null) {
+      else if ((maxStringValue = columnInfo.getMaxStringValue()) != null) {
         sizeMode[i] = 1;
         int width = getFontMetrics(getFont()).stringWidth(maxStringValue) + columnInfo.getAdditionalWidth();
         width = Math.max(width, headerSize.width);

@@ -197,7 +197,7 @@ public class GitCommitListPanel extends JPanel implements TypeSafeDataProvider {
     }
 
     @Override
-    public String getMaxStringValue(JTable table) {
+    public String getMaxStringValue() {
       return myMaxString;
     }
 
