@@ -55,11 +55,13 @@ public class BaseIndentEnterHandler extends EnterHandlerDelegateAdapter {
   private final String myLineCommentPrefix;
   private final TokenSet myWhitespaceTokens;
 
-  public BaseIndentEnterHandler(final Language language,
-                                final TokenSet indentTokens,
-                                final IElementType lineCommentType,
-                                final String lineCommentPrefix,
-                                final TokenSet whitespaceTokens) {
+  public BaseIndentEnterHandler(
+    final Language language,
+    final TokenSet indentTokens,
+    final IElementType lineCommentType,
+    final String lineCommentPrefix,
+    final TokenSet whitespaceTokens)
+  {
     myLanguage = language;
     myIndentTokens = indentTokens;
     myLineCommentType = lineCommentType;
@@ -67,12 +69,14 @@ public class BaseIndentEnterHandler extends EnterHandlerDelegateAdapter {
     myWhitespaceTokens = whitespaceTokens;
   }
 
-  public Result preprocessEnter(@NotNull final PsiFile file,
-                                @NotNull final Editor editor,
-                                @NotNull final Ref<Integer> caretOffset,
-                                @NotNull final Ref<Integer> caretAdvance,
-                                @NotNull final DataContext dataContext,
-                                final EditorActionHandler originalHandler) {
+  public Result preprocessEnter(
+    @NotNull final PsiFile file,
+    @NotNull final Editor editor,
+    @NotNull final Ref<Integer> caretOffset,
+    @NotNull final Ref<Integer> caretAdvance,
+    @NotNull final DataContext dataContext,
+    final EditorActionHandler originalHandler)
+  {
     final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
     if (project == null) {
       return Result.Continue;
@@ -100,7 +104,6 @@ public class BaseIndentEnterHandler extends EnterHandlerDelegateAdapter {
 
     final int lineNumber = document.getLineNumber(caret);
 
-
     final int lineStartOffset = document.getLineStartOffset(lineNumber);
     final int previousLineStartOffset = lineNumber > 0 ? document.getLineStartOffset(lineNumber - 1) : lineStartOffset;
     final EditorHighlighter highlighter = ((EditorEx)editor).getHighlighter();
@@ -117,6 +120,10 @@ public class BaseIndentEnterHandler extends EnterHandlerDelegateAdapter {
       if (!StringUtil.isEmptyOrSpaces(restString)) {
         EditorModificationUtil.insertStringAtCaret(editor, "\n" + lineIndent + myLineCommentPrefix);
         editor.getCaretModel().moveToLogicalPosition(new LogicalPosition(lineNumber + 1, 1));
+        return Result.Stop;
+      }
+      else if (iterator.getStart() < lineStartOffset) {
+        EditorModificationUtil.insertStringAtCaret(editor, "\n" + lineIndent);
         return Result.Stop;
       }
     }

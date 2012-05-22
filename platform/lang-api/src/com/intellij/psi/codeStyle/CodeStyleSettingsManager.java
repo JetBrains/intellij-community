@@ -25,6 +25,7 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class CodeStyleSettingsManager implements PersistentStateComponent<Element> {
 
@@ -56,7 +57,7 @@ public class CodeStyleSettingsManager implements PersistentStateComponent<Elemen
   }
   public CodeStyleSettingsManager() {}
 
-  public static CodeStyleSettings getSettings(Project project) {
+  public static CodeStyleSettings getSettings(final @Nullable Project project) {
     final CodeStyleSettingsManager instance = project == null ? getInstance() : getInstance(project);
     return instance.getCurrentSettings();
   }
