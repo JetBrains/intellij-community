@@ -167,6 +167,7 @@ class GitPushLog extends JPanel implements TypeSafeDataProvider {
       myTree.setModel(myTreeModel);  // TODO: why doesn't it repaint otherwise?
       TreeUtil.expandAll(myTree);
       selectFirstCommit();
+      collapseEmptyRepoNodes(commits);
       myTreeWasConstructed = true;
     }
     finally {
@@ -194,23 +195,66 @@ class GitPushLog extends JPanel implements TypeSafeDataProvider {
     myTree.setSelectionPath(new TreePath(node.getPath()));
   }
 
+  private void collapseEmptyRepoNodes(GitCommitsByRepoAndBranch commits) {
+    Enumeration enumeration = myRootNode.breadthFirstEnumeration();
+    while (enumeration.hasMoreElements()) {
+      DefaultMutableTreeNode node = (DefaultMutableTreeNode) enumeration.nextElement();
+      Object userObject = node.getUserObject();
+      if (userObject == null) {
+        // root object => seeking further
+      }
+      else if (userObject instanceof GitRepository) {
+        if (commits.get((GitRepository)userObject).isEmpty()) {
+          myTree.collapsePath(new TreePath(node.getPath()));
+        }
+      }
+      else {
+        // we're looking to the breadthFirstEnumeration => all repository nodes have already been enumerated
+        // checking for null
+        return;
+      }
+    }
+  }
+
   private void createNodes(@NotNull GitCommitsByRepoAndBranch commits) {
-    for (GitRepository repository : GitUtil.sortRepositories(commits.getRepositories())) {
+    for (GitRepository repository : sortRepositories(commits)) {
       GitCommitsByBranch commitsByBranch = commits.get(repository);
       createRepoNode(repository, commitsByBranch, myRootNode);
     }
+  }
+
+  @NotNull
+  private static List<GitRepository> sortRepositories(@NotNull final GitCommitsByRepoAndBranch commits) {
+    List<GitRepository> repos = new ArrayList<GitRepository>(commits.getRepositories());
+    Collections.sort(repos, new Comparator<GitRepository>() {
+      @Override public int compare(GitRepository r1, GitRepository r2) {
+        // empty repositories - to the end
+        if (commits.get(r1).isEmpty() && !commits.get(r2).isEmpty()) {
+          return 1;
+        }
+        if (commits.get(r2).isEmpty() && !commits.get(r1).isEmpty()) {
+          return -1;
+        }
+        return r1.getPresentableUrl().compareTo(r2.getPresentableUrl());
+      }
+    });
+    return repos;
   }
 
   /**
    * Creates the node with subnodes for a repository and adds it to the rootNode.
    * If there is only one repo in the project, doesn't create a node for the repository, and adds subnodes directly to the rootNode.
    */
-  private void createRepoNode(@NotNull GitRepository repository, @NotNull GitCommitsByBranch commitsByBranch, @NotNull DefaultMutableTreeNode rootNode) {
+  private void createRepoNode(@NotNull GitRepository repository, @NotNull GitCommitsByBranch commitsByBranch,
+                              @NotNull DefaultMutableTreeNode rootNode) {
     DefaultMutableTreeNode parentNode;
     if (GitUtil.justOneGitRepository(myProject)) {
       parentNode = rootNode;
     } else {
       parentNode = new CheckedTreeNode(repository);
+      if (commitsByBranch.isEmpty()) {
+        ((CheckedTreeNode)parentNode).setChecked(false);
+      }
       rootNode.add(parentNode);
     }
 
@@ -302,7 +346,7 @@ class GitPushLog extends JPanel implements TypeSafeDataProvider {
   private static class MyTreeCellRenderer extends CheckboxTree.CheckboxTreeCellRenderer {
 
     @Override
-    public void customizeRenderer(final JTree tree, final Object value, final boolean selected, final boolean expanded, final boolean leaf, final int row, final boolean hasFocus) {
+    public void customizeRenderer(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
       Object userObject;
       if (value instanceof CheckedTreeNode) {
         userObject = ((CheckedTreeNode)value).getUserObject();
