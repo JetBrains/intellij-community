@@ -15,12 +15,13 @@
   </project-components>
 
   <actions>
-    <group id="UIDesigner.ComponentTreePopupMenu">
-      <reference ref="$Cut"/>
-      <reference ref="$Copy"/>
-      <reference ref="$Paste"/>
-      <separator/>
-      <reference ref="$Delete"/>
+    <group id="UIDesigner.PropertyTable">
+      <action id="UIDesigner.PropertyTable.RestoreDefault"
+              class="com.intellij.designer.propertyTable.actions.RestoreDefault"
+              use-shortcut-of="$Delete"/>
+
+      <action id="UIDesigner.PropertyTable.ShowExpert"
+              class="com.intellij.designer.propertyTable.actions.ShowExpert"/>
     </group>
   </actions>
 

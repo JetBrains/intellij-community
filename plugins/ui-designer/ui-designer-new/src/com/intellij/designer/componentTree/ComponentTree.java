@@ -18,9 +18,8 @@ package com.intellij.designer.componentTree;
 import com.intellij.designer.actions.DesignerActionPanel;
 import com.intellij.designer.designSurface.FeedbackTreeLayer;
 import com.intellij.designer.model.RadComponent;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.ui.ColoredTreeCellRenderer;
-import com.intellij.ui.PopupHandler;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NonNls;
@@ -55,10 +54,6 @@ public final class ComponentTree extends Tree implements DataProvider {
 
     // Install convenient keyboard navigation
     TreeUtil.installActions(this);
-
-    PopupHandler
-      .installPopupHandler(this, (ActionGroup)ActionManager.getInstance().getAction("UIDesigner.ComponentTreePopupMenu"),
-                           ActionPlaces.GUI_DESIGNER_COMPONENT_TREE_POPUP, ActionManager.getInstance());
 
     // TODO: F2 should start inplace editing
   }

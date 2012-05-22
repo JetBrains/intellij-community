@@ -17,6 +17,7 @@ package com.intellij.designer.designSurface;
 
 import com.intellij.designer.designSurface.tools.InputTool;
 import com.intellij.designer.model.RadComponent;
+import com.intellij.openapi.actionSystem.ActionGroup;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -52,6 +53,7 @@ public interface EditableArea {
   void setSelection(@NotNull List<RadComponent> components);
 
   void deselectAll();
+
   //////////////////////////////////////////////////////////////////////////////////////////
   //
   // Visual
@@ -86,4 +88,8 @@ public interface EditableArea {
 
   @Nullable
   FeedbackTreeLayer getFeedbackTreeLayer();
+
+  ActionGroup getPopupActions();
+
+  String getPopupPlace();
 }

@@ -19,6 +19,7 @@ import com.intellij.designer.componentTree.ComponentTree;
 import com.intellij.designer.componentTree.ComponentTreeBuilder;
 import com.intellij.designer.componentTree.TreeEditableArea;
 import com.intellij.designer.designSurface.DesignerEditorPanel;
+import com.intellij.designer.propertyTable.PropertyTable;
 import com.intellij.designer.propertyTable.PropertyTablePanel;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -153,6 +154,10 @@ public final class DesignerToolWindowManager implements ProjectComponent {
   public DesignerEditorPanel getActiveDesigner() {
     FileEditor[] editors = myFileEditorManager.getSelectedEditors();
     return editors.length > 0 ? getDesigner(editors[0]) : null;
+  }
+
+  public PropertyTable getPropertyTable() {
+    return myPropertyTablePanel.getPropertyTable();
   }
 
   private void bindToDesigner(final DesignerEditorPanel designer) {
