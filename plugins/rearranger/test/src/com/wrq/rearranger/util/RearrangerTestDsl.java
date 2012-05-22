@@ -50,7 +50,8 @@ public enum RearrangerTestDsl {
   PRECEDING_RULES_TO_MATCH("precedingRulesToMatch"),
   BODY,
   ANCHOR,
-  BLANK_LINES("lines");
+  BLANK_LINES("lines"),
+  REMOVE_BLANK_LINES("remove blank lines");
 
   @NotNull private final String myValue;
   

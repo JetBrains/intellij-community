@@ -18,7 +18,7 @@ import org.junit.Assert
 public abstract class AbstractRuleBuilder<T> extends BuilderSupport {
 
   @NotNull def RearrangerSettings settings
-  private boolean myRuleRegistered
+  private      int                depth
   
   /**
    * Holds rule customization handlers in the form {@code 'property id -> closure'} where <code>'property id'</code>
@@ -41,14 +41,16 @@ public abstract class AbstractRuleBuilder<T> extends BuilderSupport {
 
   @Override
   protected void nodeCompleted(Object parent, Object node) {
-    if (!myRuleRegistered) {
+    if (--depth <= 0) {
+      // Top level call on the build object has been reached.
       registerRule(settings, node as T)
-      myRuleRegistered = true
+      current = null
     }
   }
 
   @Override
   protected void setParent(Object parent, Object child) {
+    depth++
   }
 
   @Override

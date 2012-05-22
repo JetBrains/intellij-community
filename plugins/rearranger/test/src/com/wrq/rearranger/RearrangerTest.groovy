@@ -684,135 +684,23 @@ class RearrangerTest extends LightCodeInsightFixtureTestCase {
         precedingComment( '/**** Interface %IF% Header ****/' )
         trailingComment( '/**** Interface %IF% Trailer ***/' )
         setup( "don't group extracted methods": true, order: InterfaceAttributes.METHOD_ORDER_ENCOUNTERED, alphabetize: true )
-      }
-    }
-    
-    //configureByFile("/com/wrq/rearranger/RearrangementTest23.java");
-    //final PsiFile file = getFile();
-    //final Document doc = PsiDocumentManager.getInstance(getProject()).getDocument(file);
-    //final RearrangerActionHandler rah = new RearrangerActionHandler();
-    //rs.setKeepGettersSettersTogether(false);
-    //InterfaceAttributes ia = new InterfaceAttributes();
-    //CommentRule cr = new CommentRule();
-    //cr.setCommentText("/**** Interface %IF% Header ****/");
-    //ia.setPrecedingComment(cr);
-    //cr = new CommentRule();
-    //cr.setCommentText("/**** Interface %IF% Trailer ***/");
-    //ia.setTrailingComment(cr);
-    //ia.setNoExtractedMethods(true);
-    //ia.setMethodOrder(InterfaceAttributes.METHOD_ORDER_ENCOUNTERED);
-    //ia.setAlphabetizeInterfaces(true);
-    //rs.addItem(ia, 0);
-    //rah.rearrangeDocument(getProject(), file, rs, doc);
-    //super.checkResultByFile("/com/wrq/rearranger/RearrangementResult23NNIANXME.java");
-  }
+  } } }
 
-//  public void testNPE24() throws Exception {
-//    // submitted by Nathan Brown.  Caused NPE in Rearranger plugin version 1.7.
-//    int itemIndex = 0;
-//    configureByFile("/com/wrq/rearranger/RearrangementTest24.java");
-//    final PsiFile file = getFile();
-//    final Document doc = PsiDocumentManager.getInstance(getProject()).getDocument(file);
-//    final RearrangerActionHandler rah = new RearrangerActionHandler();
-//    rs.setKeepGettersSettersTogether(true);
-//    rs.setKeepOverloadedMethodsTogether(true);
-////        rs.setAskBeforeRearranging(false);
-//    rs.setOverloadedOrder(1);
-//    rs.setGlobalCommentPattern("");
-//    rs.setRemoveBlanksInsideCodeBlocks(false);
-//    FieldAttributes fa;
-//    fa = new FieldAttributes();
-//    fa.getSortAttr().setByName(false);
-//    fa.getPlAttr().setPlPublic(true);
-//    fa.getPlAttr().setPlPrivate(true);
-//    fa.getPlAttr().setPlProtected(true);
-//    fa.getPlAttr().setPlPackage(true);
-//    fa.getPlAttr().setInvertProtectionLevel(false);
-//    fa.getStAttr().setValue(true);
-//    fa.getStAttr().setInvert(false);
-//    rs.addItem(fa, itemIndex++);
-//    fa = new FieldAttributes();
-//    fa.getStAttr().setValue(true);
-//    fa.getStAttr().setInvert(true);
-//    fa.getInitToAnonClassAttr().setValue(true);
-//    fa.getInitToAnonClassAttr().setInvert(true);
-//    rs.addItem(fa, itemIndex++);
-//    fa = new FieldAttributes();
-//    fa.getInitToAnonClassAttr().setValue(true);
-//    rs.addItem(fa, itemIndex++);
-//    MethodAttributes ma;
-//    ma = new MethodAttributes();
-//    ma.getStaticInitAttr().setValue(true);
-//    rs.addItem(ma, itemIndex++);
-//    ma = new MethodAttributes();
-//    ma.setConstructorMethodType(true);
-//    rs.addItem(ma, itemIndex++);
-//    ma = new MethodAttributes();
-//    ma.getNameAttr().setMatch(true);
-//    ma.getNameAttr().setExpression("clone");
-//    rs.addItem(ma, itemIndex++);
-//    ma = new MethodAttributes();
-//    ma.getNameAttr().setMatch(true);
-//    ma.getNameAttr().setExpression("dispose");
-//    rs.addItem(ma, itemIndex++);
-//    ma = new MethodAttributes();
-//    ma.getNameAttr().setMatch(true);
-//    ma.getNameAttr().setExpression("_dispose");
-//    rs.addItem(ma, itemIndex++);
-//    ma = new MethodAttributes();
-//    ma.getNameAttr().setMatch(true);
-//    ma.getNameAttr().setExpression("build");
-//    rs.addItem(ma, itemIndex++);
-//    ma = new MethodAttributes();
-//    ma.getAbstractAttr().setValue(true);
-//    rs.addItem(ma, itemIndex++);
-//    ma = new MethodAttributes();
-//    ma.getStAttr().setValue(true);
-//    ma.getStAttr().setInvert(true);
-//    ma.getAbstractAttr().setValue(true);
-//    ma.getAbstractAttr().setInvert(true);
-//    ma.setOtherMethodType(true);
-//    rs.addItem(ma, itemIndex++);
-//    ma = new MethodAttributes();
-//    ma.setGetterSetterMethodType(true);
-//    rs.addItem(ma, itemIndex++);
-//    InnerClassAttributes ica = new InnerClassAttributes();
-//    rs.addItem(ica, itemIndex++);
-//    ma = new MethodAttributes();
-//    ma.getStAttr().setValue(true);
-//    rs.addItem(ma, itemIndex);
-//    rs.getExtractedMethodsSettings().setMoveExtractedMethods(true);
-//    rs.getExtractedMethodsSettings().setBelowFirstCaller(false);
-//    rs.getExtractedMethodsSettings().setDepthFirstOrdering(true);
-//    rs.getExtractedMethodsSettings().setOrdering(0);
-//    rs.getExtractedMethodsSettings().setNonPrivateTreatment(2);
-//    rs.getExtractedMethodsSettings().setCommentType(0);
-//    rah.rearrangeDocument(getProject(), file, rs, doc);
-//  }
-//
-//  public void testSpacingOptions() throws Exception {
-//    /**
-//     * From Thomas Singer:
-//     * I've enabled
-//     * - Force 0 blank lines before class close brace "}"
-//     * - Force 0 blank lines before method close brace "}"
-//     * - Remove initial and final blank lines inside code block
-//     * but in the code below the blank lines don't get removed when invoking
-//     * Rearrager from editor's context menu:
-//     */
-//    configureByFile("/com/wrq/rearranger/RearrangementTest25.java");
-//    final PsiFile file = getFile();
-//    final Document doc = PsiDocumentManager.getInstance(getProject()).getDocument(file);
-//    final RearrangerActionHandler rah = new RearrangerActionHandler();
-//    rs.getBeforeClassRBrace().setForce(true);
-//    rs.getBeforeClassRBrace().setnBlankLines(0);
-//    rs.getBeforeMethodRBrace().setForce(true);
-//    rs.getBeforeMethodRBrace().setnBlankLines(0);
-//    rs.setRemoveBlanksInsideCodeBlocks(true);
-//    rah.rearrangeDocument(getProject(), file, rs, doc);
-//    super.checkResultByFile("/com/wrq/rearranger/RearrangementResult25.java");
-//  }
-//
+  public void testSpacingOptions() throws Exception {
+    /**
+     * From Thomas Singer:
+     * I've enabled
+     * - Force 0 blank lines before class close brace "}"
+     * - Force 0 blank lines before method close brace "}"
+     * - Remove initial and final blank lines inside code block
+     * but in the code below the blank lines don't get removed when invoking
+     * Rearranger from editor's context menu:
+     */
+    doTest('RearrangementTest25', 'RearrangementResult25') {
+      spacingRule.spacing(anchor: [ SpacingAnchor.BEFORE_CLASS_RBRACE, SpacingAnchor.BEFORE_METHOD_RBRACE ],
+                          lines: 0, 'remove blank lines': true
+  ) } }
+
 //  public void testPriority() throws Exception {
 //    configureByFile("/com/wrq/rearranger/RearrangementTest.java");
 //    final PsiFile file = getFile();
