@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.openapi.vfs.impl.jar;
 
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
@@ -35,13 +36,20 @@ public class CoreJarHandler extends JarHandlerBase {
 
     Map<EntryInfo, CoreJarVirtualFile> entries = new HashMap<EntryInfo, CoreJarVirtualFile>();
 
-    for (EntryInfo info : getEntriesMap().values()) {
-      getOrCreateFile(info, entries);
-    }
+    final Map<String, EntryInfo> entriesMap = getEntriesMap();
+    if (entriesMap != null) {
+      for (EntryInfo info : entriesMap.values()) {
+        getOrCreateFile(info, entries);
+      }
 
-    myRoot = getOrCreateFile(getEntryInfo(""), entries);
+      myRoot = getOrCreateFile(getEntryInfo(""), entries);
+    }
+    else {
+      myRoot = null;
+    }
   }
 
+  @NotNull
   private CoreJarVirtualFile getOrCreateFile(EntryInfo info, Map<EntryInfo, CoreJarVirtualFile> entries) {
     CoreJarVirtualFile answer = entries.get(info);
     if (answer == null) {

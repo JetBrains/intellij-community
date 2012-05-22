@@ -1,4 +1,5 @@
 public class GetterDefinitionTest {
+
   /** name: correct prefix; body: returns */
   public int getX() {
     return field + 1;
@@ -18,7 +19,6 @@ public class GetterDefinitionTest {
   public int getField2() {
     return field2;
   }
-
   int dummyField;
   int field;
   int field2;

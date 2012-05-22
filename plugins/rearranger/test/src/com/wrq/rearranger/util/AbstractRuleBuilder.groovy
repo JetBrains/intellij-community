@@ -5,6 +5,7 @@ import com.wrq.rearranger.settings.RearrangerSettings
 import com.wrq.rearranger.settings.atomicAttributes.AndNotAttribute
 import com.wrq.rearranger.settings.attributeGroups.Rule
 import org.jetbrains.annotations.NotNull
+import org.jetbrains.annotations.Nullable
 import org.junit.Assert
 
 /**
@@ -31,7 +32,7 @@ public abstract class AbstractRuleBuilder<T> extends BuilderSupport {
 
   @Override
   protected void nodeCompleted(Object parent, Object node) {
-    if (!parent) {
+    if (!parent && node) {
       registerRule(settings, node as T)
     }
   }
@@ -72,7 +73,7 @@ public abstract class AbstractRuleBuilder<T> extends BuilderSupport {
     getCurrent()
   }
 
-  @NotNull
+  @Nullable
   protected abstract T createRule()
 
   protected abstract void registerRule(@NotNull RearrangerSettings settings, @NotNull T rule)

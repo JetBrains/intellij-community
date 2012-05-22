@@ -61,6 +61,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.ClosureSyntheticParameter;
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
@@ -891,7 +892,7 @@ public class ExpressionGenerator extends Generator {
          resolved instanceof GrReferenceExpression ||
          resolved instanceof LightElement && !(resolved instanceof ClosureSyntheticParameter)) &&
         (referenceExpression.getParent() instanceof GrIndexProperty || !(referenceExpression.getParent() instanceof GrCall)) &&
-        PsiUtil.isInScriptContext(referenceExpression)) {
+        PsiUtil.getContextClass(referenceExpression) instanceof GroovyScriptClass) {
       final GrExpression thisExpr = factory.createExpressionFromText("this", referenceExpression);
       thisExpr.accept(this);
       builder.append(".getBinding().getProperty(\"").append(referenceExpression.getName()).append("\")");

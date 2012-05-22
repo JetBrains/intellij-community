@@ -10,6 +10,8 @@
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
     <applicationService serviceInterface="com.intellij.lang.properties.LastSelectedPropertiesFileStore"
                         serviceImplementation="com.intellij.lang.properties.LastSelectedPropertiesFileStore"/>
+    <applicationService serviceInterface="com.intellij.lang.properties.refactoring.PropertiesRefactoringSettings"
+                        serviceImplementation="com.intellij.lang.properties.refactoring.PropertiesRefactoringSettings"/>
     <annotator language="Properties" implementationClass="com.intellij.lang.properties.PropertiesAnnotator"/>
     <completion.contributor language="Properties" implementationClass="com.intellij.lang.properties.PropertiesCompletionContributor"/>
     <lang.refactoringSupport language="Properties" implementationClass="com.intellij.lang.properties.refactoring.PropertiesRefactoringSupportProvider"/>

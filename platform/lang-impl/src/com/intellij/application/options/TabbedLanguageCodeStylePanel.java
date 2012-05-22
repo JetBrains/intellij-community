@@ -512,7 +512,7 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
       super(settings);
       myProvider = provider;
       myTopPanel = new JPanel();
-      myTopPanel.setLayout(new BorderLayout());
+      myTopPanel.setLayout(new BorderLayout(8, 0));
       myLeftPanel = new JPanel(new BorderLayout());
       myTopPanel.add(myLeftPanel, BorderLayout.WEST);
       myRightPanel = new JPanel();

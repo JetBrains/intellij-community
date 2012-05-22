@@ -22,7 +22,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.Trinity;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.light.LightElement;
@@ -442,7 +441,7 @@ public class PsiUtil {
     }
 
     if (place instanceof GrReferenceExpression && ((GrReferenceExpression)place).getQualifierExpression() == null) {
-      if (member.getContainingClass() instanceof GroovyScriptClass) { //calling toplevel script members from the same script file
+      if (member.getContainingClass() instanceof GroovyScriptClass) { //calling top level script members from the same script file
         return true;
       }
     }
@@ -580,6 +579,22 @@ public class PsiUtil {
 
       context = context.getContext();
     }
+    return null;
+  }
+
+  @Nullable
+  public static GroovyPsiElement getFileOrClassContext(PsiElement context) {
+    while (context != null) {
+      if (context instanceof GrTypeDefinition) {
+        return (GroovyPsiElement)context;
+      }
+      else if (context instanceof GroovyFileBase && context.isPhysical()) {
+        return (GroovyPsiElement)context;
+      }
+
+      context = context.getContext();
+    }
+
     return null;
   }
 
@@ -1117,20 +1132,6 @@ public class PsiUtil {
     if (!(eMethodCall instanceof GrCall)) return null;
 
     return (GrCall)eMethodCall;
-  }
-
-  public static boolean isInScriptContext(GroovyPsiElement expr) {
-    final GroovyPsiElement fileContext = getFileOrClassContext(expr);
-    return fileContext instanceof GroovyFile && ((GroovyFile)fileContext).isScript();
-  }
-
-  public static GroovyPsiElement getFileOrClassContext(final GroovyPsiElement element) {
-    GroovyPsiElement context = PsiTreeUtil.getContextOfType(element, GrTypeDefinition.class, GroovyFileBase.class);
-    while (context instanceof GroovyFileBase &&
-        GroovyPsiElementFactory.DUMMY_FILE_NAME.equals(FileUtil.getNameWithoutExtension(((GroovyFileBase)context).getName()))) {
-      context = PsiTreeUtil.getContextOfType(context, true, GrTypeDefinition.class, GroovyFileBase.class);
-    }
-    return context;
   }
 
   public static String getAnnoAttributeValue(@NotNull PsiAnnotation annotation, final String attributeName, String defaultValue) {

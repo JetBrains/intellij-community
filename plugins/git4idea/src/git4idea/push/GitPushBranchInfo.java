@@ -74,4 +74,9 @@ final class GitPushBranchInfo {
   public GitBranch getSourceBranch() {
     return mySourceBranch;
   }
+
+  boolean isEmpty() {
+    return myCommits.isEmpty();
+  }
+
 }

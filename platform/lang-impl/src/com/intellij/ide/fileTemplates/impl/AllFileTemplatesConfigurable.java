@@ -534,21 +534,20 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable, Con
     if (myEditor != null) {
       myModified = false;
       fireListChanged();
-      reset();
     }
   }
 
   public void reset() {
     myEditor.reset();
     initLists();
-    final PropertiesComponent component = PropertiesComponent.getInstance();
-    final String tabName = component.getValue(CURRENT_TAB);
+    final PropertiesComponent propertiesComponent = PropertiesComponent.getInstance();
+    final String tabName = propertiesComponent.getValue(CURRENT_TAB);
     int idx = 0;
     for (FileTemplateTab tab : myTabs) {
       if (Comparing.strEqual(tab.getTitle(), tabName)) {
         myCurrentTab = tab;
         myTabbedPane.setSelectedIndex(idx);
-        final String selectedTemplateName = component.getValue(SELECTED_TEMPLATE);
+        final String selectedTemplateName = propertiesComponent.getValue(SELECTED_TEMPLATE);
         final FileTemplate[] templates = myCurrentTab.getTemplates();
         for (FileTemplate template : templates) {
           if (Comparing.strEqual(template.getName(), selectedTemplateName)) {

@@ -61,4 +61,14 @@ public class RenamePropertyProcessor extends RenamePsiElementProcessor {
       }
     }
   }
+
+  @Override
+   public boolean isToSearchInComments(PsiElement element) {
+     return PropertiesRefactoringSettings.getInstance().RENAME_SEARCH_IN_COMMENTS;
+   }
+ 
+   @Override
+   public void setToSearchInComments(PsiElement element, boolean enabled) {
+     PropertiesRefactoringSettings.getInstance().RENAME_SEARCH_IN_COMMENTS = enabled;
+   }
 }

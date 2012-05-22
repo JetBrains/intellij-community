@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.intentions;
 
 
 import com.intellij.codeInsight.intention.IntentionAction
+import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.psi.impl.source.PostprocessReformattingAspect
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 
@@ -44,16 +45,18 @@ public abstract class GrIntentionTestCase extends LightCodeInsightFixtureTestCas
     }
   }
 
-  protected void doTextTest(String before, String hint, String after) {
+  protected void doTextTest(String before, String hint, String after, Class<? extends LocalInspectionTool>... inspections) {
     myFixture.configureByText("a.groovy", before);
+    myFixture.enableInspections(inspections)
     final List<IntentionAction> list = myFixture.filterAvailableIntentions(hint);
     myFixture.launchAction(assertOneElement(list));
     PostprocessReformattingAspect.getInstance(project).doPostponedFormatting();
     myFixture.checkResult(after);
   }
 
-  protected void doAntiTest(String before, String hint) {
+  protected void doAntiTest(String before, String hint, Class<? extends LocalInspectionTool>... inspections) {
     myFixture.configureByText("a.groovy", before);
+    myFixture.enableInspections(inspections)
     assertEmpty(myFixture.filterAvailableIntentions(hint));
   }
 }

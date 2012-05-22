@@ -17,6 +17,7 @@
 package org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 
 /**
@@ -25,4 +26,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 public interface GrIndexProperty extends GrExpression, GrCallExpression {
   @NotNull
   GrExpression getInvokedExpression();
+
+  @Override
+  @NotNull
+  GrArgumentList getArgumentList();
 }

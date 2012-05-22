@@ -15,11 +15,11 @@
  */
 package com.intellij.android.designer.model;
 
-import com.intellij.openapi.module.Module;
+import com.intellij.designer.model.RadComponent;
 
 /**
  * @author Alexander Lobas
  */
 public interface IConfigurableComponent {
-  void configure(Module module) throws Exception;
+  void configure(RadComponent rootComponent) throws Exception;
 }

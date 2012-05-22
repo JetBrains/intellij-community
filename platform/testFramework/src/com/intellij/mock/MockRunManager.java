@@ -67,6 +67,7 @@ public class MockRunManager extends RunManagerEx {
   }
 
   @Override
+  @NotNull
   public RunnerAndConfigurationSettings[] getConfigurationSettings(@NotNull ConfigurationType type) {
     return new RunnerAndConfigurationSettings[0];
   }

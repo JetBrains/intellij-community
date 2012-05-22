@@ -926,7 +926,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
       group = outside;
     }
 
-    PopupToolbar popupToolbar = new PopupToolbar(myPlace, group, true, myDataManager, myActionManager, myKeymapManager) {
+    PopupToolbar popupToolbar = new PopupToolbar(myPlace, group, true, myDataManager, myActionManager, myKeymapManager, this) {
       protected void onOtherActionPerformed() {
         hidePopup();
       }
@@ -1051,14 +1051,24 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
   }
 
   abstract static class PopupToolbar extends ActionToolbarImpl implements AnActionListener, Disposable {
+    private JComponent myParent;
+
     public PopupToolbar(final String place,
                         final ActionGroup actionGroup,
                         final boolean horizontal,
                         final DataManager dataManager,
                         final ActionManagerEx actionManager,
-                        final KeymapManagerEx keymapManager) {
+                        final KeymapManagerEx keymapManager,
+                        JComponent parent) {
       super(place, actionGroup, horizontal, dataManager, actionManager, keymapManager, true);
       myActionManager.addAnActionListener(this);
+      myParent = parent;
+    }
+
+    @Override
+    public Container getParent() {
+      Container parent = super.getParent();
+      return parent != null ? parent : myParent;
     }
 
     public void dispose() {
