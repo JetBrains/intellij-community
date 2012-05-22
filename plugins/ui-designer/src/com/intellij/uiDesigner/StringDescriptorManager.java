@@ -23,7 +23,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleServiceManager;
 import com.intellij.openapi.roots.ModuleRootAdapter;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.reference.SoftReference;
 import com.intellij.uiDesigner.lw.StringDescriptor;
