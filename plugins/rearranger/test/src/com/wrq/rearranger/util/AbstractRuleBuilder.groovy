@@ -143,10 +143,4 @@ public abstract class AbstractRuleBuilder<T> extends BuilderSupport {
       rule."$propertyName".expression = value
     }
   }
-  
-  protected static void setIf(@NotNull RearrangerTestDsl dslProperty, map, rulePropertyName, rule) {
-    if (map.containsKey(dslProperty.value)) {
-      rule."$rulePropertyName" = map[dslProperty.value]
-    }
-  }
 }

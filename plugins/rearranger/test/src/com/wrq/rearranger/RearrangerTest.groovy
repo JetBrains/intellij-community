@@ -33,17 +33,19 @@ import com.wrq.rearranger.util.CommentRuleBuilder
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.Nullable
 import com.wrq.rearranger.util.java.*
+import com.wrq.rearranger.util.SettingsConfigurationBuilder
 
 /** JUnit tests for the rearranger plugin. */
 class RearrangerTest extends LightCodeInsightFixtureTestCase {
 
-  private RearrangerSettings        mySettings
-  private JavaClassRuleBuilder      classRule
-  private JavaInnerClassRuleBuilder innerClassRule
-  private JavaFieldRuleBuilder      fieldRule
-  private JavaMethodRuleBuilder     methodRule
-  private CommentRuleBuilder        commentRule
-  private JavaSpacingRule           spacingRule
+  private RearrangerSettings           mySettings
+  private SettingsConfigurationBuilder settings
+  private JavaClassRuleBuilder         classRule
+  private JavaInnerClassRuleBuilder    innerClassRule
+  private JavaFieldRuleBuilder         fieldRule
+  private JavaMethodRuleBuilder        methodRule
+  private CommentRuleBuilder           commentRule
+  private JavaSpacingRule              spacingRule
 
   @Override
   protected String getBasePath() {
@@ -60,7 +62,8 @@ class RearrangerTest extends LightCodeInsightFixtureTestCase {
     mySettings.showParameterTypes = true
     mySettings.showRules = true
     mySettings.rearrangeInnerClasses = true
-
+    
+    settings = new SettingsConfigurationBuilder(settings: mySettings)
     classRule = new JavaClassRuleBuilder(settings: mySettings)
     innerClassRule = new JavaInnerClassRuleBuilder(settings: mySettings)
     fieldRule = new JavaFieldRuleBuilder(settings: mySettings)
@@ -299,7 +302,7 @@ class RearrangerTest extends LightCodeInsightFixtureTestCase {
   public final void testReturnTypeMatch() throws Exception {
     doTest('RearrangementTest12', 'RearrangementResult12') {
       methodRule.create { returnType( 'void' ) }
-      fieldRule.create { type( 'int' ) }
+      fieldRule.create  { type( 'int' ) }
       methodRule.create { returnType( '.*je.*' ) }
       methodRule.create { returnType( /Integer\[\]/) }
       methodRule.create { returnType( 'int' ) }
@@ -307,52 +310,37 @@ class RearrangerTest extends LightCodeInsightFixtureTestCase {
 
   public final void testRelatedMethodsDepthOriginal() throws Exception {
     doTest('RearrangementTest13', 'RearrangementResult13DO') {
-      mySettings.extractedMethodsSettings.moveExtractedMethods = true
-      mySettings.extractedMethodsSettings.depthFirstOrdering = true
-      mySettings.extractedMethodsSettings.ordering = RelatedMethodsSettings.RETAIN_ORIGINAL_ORDER
+      settings.extractedMethods( depthFirstOrder: true, order: RelatedMethodsSettings.RETAIN_ORIGINAL_ORDER )
   } }
 
   public final void testRelatedMethodsDepthAlphabetical() throws Exception {
     doTest('RearrangementTest13', 'RearrangementResult13DA') {
-      mySettings.extractedMethodsSettings.moveExtractedMethods = true
-      mySettings.extractedMethodsSettings.depthFirstOrdering = true
-      mySettings.extractedMethodsSettings.ordering = RelatedMethodsSettings.ALPHABETICAL_ORDER
+      settings.extractedMethods( depthFirstOrder: true, order: RelatedMethodsSettings.ALPHABETICAL_ORDER )
   } }
 
   public final void testRelatedMethodsDepthInvocation() throws Exception {
     doTest('RearrangementTest13', 'RearrangementResult13DI') {
-      mySettings.extractedMethodsSettings.moveExtractedMethods = true
-      mySettings.extractedMethodsSettings.depthFirstOrdering = true
-      mySettings.extractedMethodsSettings.ordering = RelatedMethodsSettings.INVOCATION_ORDER
+      settings.extractedMethods( depthFirstOrder: true, order: RelatedMethodsSettings.INVOCATION_ORDER )
   } }
 
   public final void testRelatedMethodsBreadthOriginal() throws Exception {
     doTest('RearrangementTest13', 'RearrangementResult13BO') {
-      mySettings.extractedMethodsSettings.moveExtractedMethods = true
-      mySettings.extractedMethodsSettings.depthFirstOrdering = false
-      mySettings.extractedMethodsSettings.ordering = RelatedMethodsSettings.RETAIN_ORIGINAL_ORDER
+      settings.extractedMethods( depthFirstOrder: false, order: RelatedMethodsSettings.RETAIN_ORIGINAL_ORDER )
   } }
 
   public final void testRelatedMethodsBreadthAlphabetical() throws Exception {
     doTest('RearrangementTest13', 'RearrangementResult13BA') {
-      mySettings.extractedMethodsSettings.moveExtractedMethods = true
-      mySettings.extractedMethodsSettings.depthFirstOrdering = false
-      mySettings.extractedMethodsSettings.ordering = RelatedMethodsSettings.ALPHABETICAL_ORDER
+      settings.extractedMethods( depthFirstOrder: false, order: RelatedMethodsSettings.ALPHABETICAL_ORDER)
   } }
 
   public final void testRelatedMethodsBreadthInvocation() throws Exception {
     doTest('RearrangementTest13', 'RearrangementResult13BI') {
-      mySettings.extractedMethodsSettings.moveExtractedMethods = true
-      mySettings.extractedMethodsSettings.depthFirstOrdering = false
-      mySettings.extractedMethodsSettings.ordering = RelatedMethodsSettings.INVOCATION_ORDER
+      settings.extractedMethods( depthFirstOrder: false, order: RelatedMethodsSettings.INVOCATION_ORDER)
   } }
 
   private void doTestEmitComments(args) {
     doTest(args.initial?: 'RearrangementTest13', args.expected) {
-      mySettings.extractedMethodsSettings.moveExtractedMethods = true
-      mySettings.extractedMethodsSettings.depthFirstOrdering = args.depthFirst
-      mySettings.extractedMethodsSettings.ordering = args.orderType
-      mySettings.extractedMethodsSettings.commentType = args.commentType
+      settings.extractedMethods( depthFirstOrder: args.depthFirst, order: args.orderType, commentType: args.commentType )
 
       def precedingCommentRule = new CommentRule()
       precedingCommentRule.commentText = '''\
@@ -373,98 +361,97 @@ class RearrangerTest extends LightCodeInsightFixtureTestCase {
   
   public final void testEmitTLCommentsRelatedMethodsBreadthInvocation() throws Exception {
     doTestEmitComments(
-            expected: 'RearrangementResult13BITLC',
-            depthFirst: false,
-            orderType: RelatedMethodsSettings.INVOCATION_ORDER,
-            commentType: RelatedMethodsSettings.COMMENT_TYPE_TOP_LEVEL
+      expected: 'RearrangementResult13BITLC',
+      depthFirst: false,
+      orderType: RelatedMethodsSettings.INVOCATION_ORDER,
+      commentType: RelatedMethodsSettings.COMMENT_TYPE_TOP_LEVEL
     )
   }
 
   public final void testEmitEMCommentsRelatedMethodsBreadthInvocation() throws Exception {
     doTestEmitComments(
-            expected: 'RearrangementResult13BIEMC',
-            depthFirst: false,
-            orderType: RelatedMethodsSettings.INVOCATION_ORDER,
-            commentType: RelatedMethodsSettings.COMMENT_TYPE_EACH_METHOD
+      expected: 'RearrangementResult13BIEMC',
+      depthFirst: false,
+      orderType: RelatedMethodsSettings.INVOCATION_ORDER,
+      commentType: RelatedMethodsSettings.COMMENT_TYPE_EACH_METHOD
     )
   }
 
   public final void testEmitELCommentsRelatedMethodsBreadthInvocation() throws Exception {
     doTestEmitComments(
-            expected: 'RearrangementResult13BIELC',
-            depthFirst: false,
-            orderType: RelatedMethodsSettings.INVOCATION_ORDER,
-            commentType: RelatedMethodsSettings.COMMENT_TYPE_EACH_LEVEL
+      expected: 'RearrangementResult13BIELC',
+      depthFirst: false,
+      orderType: RelatedMethodsSettings.INVOCATION_ORDER,
+      commentType: RelatedMethodsSettings.COMMENT_TYPE_EACH_LEVEL
     )
   }
 
   public final void testEmitNFCommentsRelatedMethodsBreadthInvocation() throws Exception {
     doTestEmitComments(
-            expected: 'RearrangementResult13BINFC',
-            depthFirst: false,
-            orderType: RelatedMethodsSettings.INVOCATION_ORDER,
-            commentType: RelatedMethodsSettings.COMMENT_TYPE_NEW_FAMILY
+      expected: 'RearrangementResult13BINFC',
+      depthFirst: false,
+      orderType: RelatedMethodsSettings.INVOCATION_ORDER,
+      commentType: RelatedMethodsSettings.COMMENT_TYPE_NEW_FAMILY
     )
   }
 
   public final void testEmitTLCommentsRelatedMethodsDepthInvocation() throws Exception {
     doTestEmitComments(
-            expected: 'RearrangementResult13DITLC',
-            depthFirst: true,
-            orderType: RelatedMethodsSettings.INVOCATION_ORDER,
-            commentType: RelatedMethodsSettings.COMMENT_TYPE_TOP_LEVEL
+      expected: 'RearrangementResult13DITLC',
+      depthFirst: true,
+      orderType: RelatedMethodsSettings.INVOCATION_ORDER,
+      commentType: RelatedMethodsSettings.COMMENT_TYPE_TOP_LEVEL
     )
   }
 
   public final void testEmitEMCommentsRelatedMethodsDepthInvocation() throws Exception {
     doTestEmitComments(
-            expected: 'RearrangementResult13DIEMC',
-            depthFirst: true,
-            orderType: RelatedMethodsSettings.INVOCATION_ORDER,
-            commentType: RelatedMethodsSettings.COMMENT_TYPE_EACH_METHOD
+      expected: 'RearrangementResult13DIEMC',
+      depthFirst: true,
+      orderType: RelatedMethodsSettings.INVOCATION_ORDER,
+      commentType: RelatedMethodsSettings.COMMENT_TYPE_EACH_METHOD
     )
   }
 
   public final void testEmitELCommentsRelatedMethodsDepthInvocation() throws Exception {
     doTestEmitComments(
-            expected: 'RearrangementResult13BIELC',
-            depthFirst: false,
-            orderType: RelatedMethodsSettings.INVOCATION_ORDER,
-            commentType: RelatedMethodsSettings.COMMENT_TYPE_EACH_LEVEL
+      expected: 'RearrangementResult13BIELC',
+      depthFirst: false,
+      orderType: RelatedMethodsSettings.INVOCATION_ORDER,
+      commentType: RelatedMethodsSettings.COMMENT_TYPE_EACH_LEVEL
     )
   }
 
   public final void testEmitNFCommentsRelatedMethodsDepthInvocation() throws Exception {
     doTestEmitComments(
-            expected: 'RearrangementResult13DINFC',
-            depthFirst: true,
-            orderType: RelatedMethodsSettings.INVOCATION_ORDER,
-            commentType: RelatedMethodsSettings.COMMENT_TYPE_NEW_FAMILY
+      expected: 'RearrangementResult13DINFC',
+      depthFirst: true,
+      orderType: RelatedMethodsSettings.INVOCATION_ORDER,
+      commentType: RelatedMethodsSettings.COMMENT_TYPE_NEW_FAMILY
     )
   }
   
   public final void testRelatedMethodsException() throws Exception {
     doTest('RearrangementTest13', 'RearrangementResult13Ex') {
-      mySettings.extractedMethodsSettings.moveExtractedMethods = true
-      mySettings.extractedMethodsSettings.depthFirstOrdering = true
-      mySettings.extractedMethodsSettings.ordering = RelatedMethodsSettings.RETAIN_ORIGINAL_ORDER
+      settings.extractedMethods( depthFirstOrder: true, order: RelatedMethodsSettings.RETAIN_ORIGINAL_ORDER )
       methodRule.create { name('GF') }
   } }
 
   public final void testKeepOverloadedMethodsTogether() throws Exception {
     doTest('RearrangementTest14', 'RearrangementResult14') {
-      mySettings.extractedMethodsSettings.moveExtractedMethods = true
-      mySettings.extractedMethodsSettings.depthFirstOrdering = false
-      mySettings.extractedMethodsSettings.ordering = RelatedMethodsSettings.INVOCATION_ORDER
-      mySettings.keepOverloadedMethodsTogether = true
-  } }
+      settings.configure {
+        extractedMethods( depthFirstOrder: false, order: RelatedMethodsSettings.INVOCATION_ORDER )
+        keepTogether( 'overloaded' )
+  } } }
 
   public final void testXML() throws Exception { doTest('RearrangementTest17', 'RearrangementTest17', 'xml') }
 
   public final void testKeepGSTogether() throws Exception {
     doTest('RearrangementTest18', 'RearrangementResult18') {
-      mySettings.keepGettersSettersTogether = true
-      mySettings.extractedMethodsSettings.ordering = RelatedMethodsSettings.ALPHABETICAL_ORDER
+      settings.configure {
+        extractedMethods( order: RelatedMethodsSettings.INVOCATION_ORDER )
+        keepTogether( 'getters and setters' )
+      }
       fieldRule.create {}
       methodRule.create { target( MethodType.CONSTRUCTOR ) }
       methodRule.create {
@@ -474,9 +461,10 @@ class RearrangerTest extends LightCodeInsightFixtureTestCase {
 
   public final void testKeepGSWithProperty() throws Exception {
     doTest('RearrangementTest18', 'RearrangementResult18A') {
-      mySettings.keepGettersSettersTogether = true
-      mySettings.keepGettersSettersWithProperty = true
-      mySettings.extractedMethodsSettings.ordering = RelatedMethodsSettings.ALPHABETICAL_ORDER
+      settings.configure {
+        extractedMethods( order: RelatedMethodsSettings.ALPHABETICAL_ORDER )
+        keepTogether([ 'getters and setters', 'getters and setters with property' ])
+      }
       fieldRule.create { }
       methodRule.create { target(MethodType.CONSTRUCTOR) }
       methodRule.create {
@@ -486,9 +474,10 @@ class RearrangerTest extends LightCodeInsightFixtureTestCase {
 
   public final void testKeepGSWithPropertyElseTogether() throws Exception {
     doTest('RearrangementTest18B', 'RearrangementResult18B') {
-      mySettings.keepGettersSettersTogether = true
-      mySettings.keepGettersSettersWithProperty = true
-      mySettings.extractedMethodsSettings.ordering = RelatedMethodsSettings.ALPHABETICAL_ORDER
+      settings.configure {
+        extractedMethods( order: RelatedMethodsSettings.ALPHABETICAL_ORDER )
+        keepTogether([ 'getters and setters', 'getters and setters with property' ])
+      }
       fieldRule.create { }
       commentRule.create {
         comment('// Getters/Setters', condition: CommentRule.EMIT_ALWAYS)
@@ -511,23 +500,17 @@ class RearrangerTest extends LightCodeInsightFixtureTestCase {
 
   public final void testKeepOverloadsTogetherOriginalOrder() throws Exception {
     doTest('RearrangementTest19', 'RearrangementResult19A') {
-      mySettings.extractedMethodsSettings.moveExtractedMethods = false
-      mySettings.keepOverloadedMethodsTogether = true
-      mySettings.overloadedOrder = RearrangerSettings.OVERLOADED_ORDER_RETAIN_ORIGINAL
+      settings.overloadedMethods( keepTogether: true, order: RearrangerSettings.OVERLOADED_ORDER_RETAIN_ORIGINAL )
   } }
 
   public final void testKeepOverloadsTogetherAscendingOrder() throws Exception {
     doTest('RearrangementTest19', 'RearrangementResult19B') {
-      mySettings.extractedMethodsSettings.moveExtractedMethods = false
-      mySettings.keepOverloadedMethodsTogether = true
-      mySettings.overloadedOrder = RearrangerSettings.OVERLOADED_ORDER_ASCENDING_PARAMETERS
+      settings.overloadedMethods( keepTogether: true, order: RearrangerSettings.OVERLOADED_ORDER_ASCENDING_PARAMETERS )
   } }
 
   public final void testKeepOverloadsTogetherDescendingOrder() throws Exception {
     doTest('RearrangementTest19', 'RearrangementResult19C') {
-      mySettings.extractedMethodsSettings.moveExtractedMethods = false
-      mySettings.keepOverloadedMethodsTogether = true
-      mySettings.overloadedOrder = RearrangerSettings.OVERLOADED_ORDER_DESCENDING_PARAMETERS
+      settings.overloadedMethods( keepTogether: true, order: RearrangerSettings.OVERLOADED_ORDER_DESCENDING_PARAMETERS )
   } }
 
   public final void testInnerClassReferenceToChild() throws Exception {

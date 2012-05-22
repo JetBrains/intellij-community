@@ -9,7 +9,19 @@ import org.jetbrains.annotations.NotNull;
  * @since 5/17/12 12:57 PM
  */
 public enum RearrangerTestDsl {
+
+  // Settings
+  EXTRACTED_METHODS("extractedMethods"),
+  OVERLOADED_METHODS("overloadedMethods"),
+  DEPTH_FIRST_ORDER("depthFirstOrder"),
+  ORDER,
+  COMMENT_TYPE("commentType"),
+  KEEP_TOGETHER("keepTogether"),
+  OVERLOADED,
+  GETTERS_SETTERS("getters and setters"),
+  GETTERS_SETTERS_WITH_PROPERTY("getters and setters with property"),
   
+  // Rules
   NAME,
   MODIFIER,
   /** Field initializer type. */
