@@ -35,6 +35,11 @@ public enum RearrangerTestDsl {
   GETTER_CRITERIA("getterCriteria"),
   SETTER_CRITERIA("setterCriteria"),
   SPACING,
+  PRECEDING_COMMENT("precedingComment"),
+  TRAILING_COMMENT("trailingComment"),
+  SETUP,
+  GROUP_EXTRACTED_METHODS("group extracted methods"),
+  ALPHABETIZE,
   
   // Attributes
   INVERT,

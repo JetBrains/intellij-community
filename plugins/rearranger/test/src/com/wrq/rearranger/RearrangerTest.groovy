@@ -29,11 +29,12 @@ import com.wrq.rearranger.settings.CommentRule
 import com.wrq.rearranger.settings.RearrangerSettings
 import com.wrq.rearranger.settings.RelatedMethodsSettings
 import com.wrq.rearranger.settings.attributeGroups.GetterSetterDefinition
+import com.wrq.rearranger.settings.attributeGroups.InterfaceAttributes
 import com.wrq.rearranger.util.CommentRuleBuilder
+import com.wrq.rearranger.util.SettingsConfigurationBuilder
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.Nullable
 import com.wrq.rearranger.util.java.*
-import com.wrq.rearranger.util.SettingsConfigurationBuilder
 
 /** JUnit tests for the rearranger plugin. */
 class RearrangerTest extends LightCodeInsightFixtureTestCase {
@@ -41,6 +42,7 @@ class RearrangerTest extends LightCodeInsightFixtureTestCase {
   private RearrangerSettings           mySettings
   private SettingsConfigurationBuilder settings
   private JavaClassRuleBuilder         classRule
+  private JavaInterfaceRuleBuilder     interfaceRule
   private JavaInnerClassRuleBuilder    innerClassRule
   private JavaFieldRuleBuilder         fieldRule
   private JavaMethodRuleBuilder        methodRule
@@ -65,6 +67,7 @@ class RearrangerTest extends LightCodeInsightFixtureTestCase {
     
     settings = new SettingsConfigurationBuilder(settings: mySettings)
     classRule = new JavaClassRuleBuilder(settings: mySettings)
+    interfaceRule = new JavaInterfaceRuleBuilder(settings: mySettings)
     innerClassRule = new JavaInnerClassRuleBuilder(settings: mySettings)
     fieldRule = new JavaFieldRuleBuilder(settings: mySettings)
     methodRule = new JavaMethodRuleBuilder(settings: mySettings)
@@ -641,27 +644,15 @@ class RearrangerTest extends LightCodeInsightFixtureTestCase {
       mySettings.keepGettersSettersTogether = true
   } }
 
-//  public void testInterfaceNoNameNotAlphabeticalNoExcludeMethodAlphabetical() throws Exception {
-//    configureByFile("/com/wrq/rearranger/RearrangementTest23.java");
-//    final PsiFile file = getFile();
-//    final Document doc = PsiDocumentManager.getInstance(getProject()).getDocument(file);
-//    final RearrangerActionHandler rah = new RearrangerActionHandler();
-//    rs.setKeepGettersSettersTogether(false);
-//    InterfaceAttributes ia = new InterfaceAttributes();
-//    CommentRule cr = new CommentRule();
-//    cr.setCommentText("/**** Interface %IF% Header ****/");
-//    ia.setPrecedingComment(cr);
-//    cr = new CommentRule();
-//    cr.setCommentText("/**** Interface %IF% Trailer ***/");
-//    ia.setTrailingComment(cr);
-//    ia.setNoExtractedMethods(true);
-//    ia.setMethodOrder(InterfaceAttributes.METHOD_ORDER_ALPHABETICAL);
-//    ia.setAlphabetizeInterfaces(false);
-//    rs.addItem(ia, 0);
-//    rah.rearrangeDocument(getProject(), file, rs, doc);
-//    super.checkResultByFile("/com/wrq/rearranger/RearrangementResult23NNNANXMA.java");
-//  }
-//
+  public void testInterfaceNoNameNotAlphabeticalNoExcludeMethodAlphabetical() throws Exception {
+    doTest('RearrangementTest23', 'RearrangementResult23NNNANXMA') {
+      mySettings.keepGettersSettersTogether = false
+      interfaceRule.create {
+        precedingComment( '/**** Interface %IF% Header ****/' )
+        trailingComment( '/**** Interface %IF% Trailer ***/' )
+        setup( "don't group extracted methods": false, order: InterfaceAttributes.METHOD_ORDER_ALPHABETICAL, alphabetize: false )
+  } } }
+
 //  public void testInterfaceNoNameNotAlphabeticalNoExcludeMethodEncountered() throws Exception {
 //    configureByFile("/com/wrq/rearranger/RearrangementTest23.java");
 //    final PsiFile file = getFile();

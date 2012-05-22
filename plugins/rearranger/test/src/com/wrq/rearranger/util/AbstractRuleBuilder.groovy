@@ -83,7 +83,7 @@ public abstract class AbstractRuleBuilder<T> extends BuilderSupport {
    * <p/>
    * Example:
    * <pre>
-   *   register('modifier', PsiModifier.FINAL, { rule, value, attributes -&gt;
+   *   register('modifier', PsiModifier.FINAL, { value, attributes, rule -&gt;
    *       rule.finalAttribute.value = value
    *       if (attributes.invert) rule.finalAttribute.invert = true
    *   })
