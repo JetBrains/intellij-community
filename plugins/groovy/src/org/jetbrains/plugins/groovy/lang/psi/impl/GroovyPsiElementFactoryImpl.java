@@ -605,9 +605,13 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
 
   @Override
   public GrStatement createStatementFromText(String text, @Nullable PsiElement context) {
-    PsiFile file = createGroovyFile(text, false, context);
-    LOG.assertTrue(((GroovyFileBase) file).getTopStatements()[0] instanceof GrStatement, text);
-    return (GrStatement) ((GroovyFileBase) file).getTopStatements()[0];
+    try {
+      PsiFile file = createGroovyFile(text, false, context);
+      return (GrStatement)((GroovyFileBase)file).getTopStatements()[0];
+    }
+    catch (RuntimeException e) {
+      throw new IncorrectOperationException(text);
+    }
   }
 
   public GrBlockStatement createBlockStatement(@NonNls GrStatement... statements) {
