@@ -65,10 +65,6 @@ public class AndroidFacetConfiguration implements FacetConfiguration {
 
   public List<String> RES_OVERLAY_FOLDERS = Arrays.asList("/res-overlay");
 
-  public boolean REGENERATE_R_JAVA = true;
-
-  public boolean REGENERATE_JAVA_BY_AIDL = true;
-
   public boolean USE_CUSTOM_APK_RESOURCE_FOLDER = false;
   public String CUSTOM_APK_RESOURCE_FOLDER = "";
 
