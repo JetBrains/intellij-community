@@ -206,8 +206,8 @@ public class FileStructurePopup implements Disposable {
       }
     };
 
-    myAbstractTreeBuilder.getUi().setPassthroughMode(true);
-    //myAbstractTreeBuilder.getUi().getUpdater().setDelay(1);
+    //myAbstractTreeBuilder.getUi().setPassthroughMode(true);
+    myAbstractTreeBuilder.getUi().getUpdater().setDelay(1);
     myInitialPsiElement = getCurrentElement(getPsiFile(myProject));
     //myAbstractTreeBuilder.setCanYieldUpdate(true);
     Disposer.register(this, myAbstractTreeBuilder);
