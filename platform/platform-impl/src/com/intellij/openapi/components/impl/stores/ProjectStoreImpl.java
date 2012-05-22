@@ -285,7 +285,7 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
       final VirtualFile baseDir = getProjectBaseDir();
       assert baseDir != null : "project file: " + getProjectFile();
 
-      final VirtualFile ideaDir = baseDir.findChild(".idea");
+      final VirtualFile ideaDir = baseDir.findChild(Project.DIRECTORY_STORE_FOLDER);
       if (ideaDir != null && ideaDir.isValid()) {
         final VirtualFile nameFile = ideaDir.findChild(".name");
         if (nameFile != null && nameFile.isValid()) {
