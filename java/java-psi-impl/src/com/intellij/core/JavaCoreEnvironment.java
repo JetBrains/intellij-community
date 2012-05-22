@@ -76,7 +76,7 @@ public class JavaCoreEnvironment extends CoreEnvironment {
     myProject.registerService(PsiResolveHelper.class, new PsiResolveHelperImpl(myPsiManager));
     myProject.registerService(LanguageLevelProjectExtension.class, new CoreLanguageLevelProjectExtension());
     myProject.registerService(PackageIndex.class, myFileManager);
-    myProject.registerService(JavaResolveCache.class, new JavaResolveCache(null));
+    myProject.registerService(JavaResolveCache.class, new JavaResolveCache(myMessageBus));
     myProject.registerService(JavaCodeStyleSettingsFacade.class, new CoreJavaCodeStyleSettingsFacade());
     myProject.registerService(JavaCodeStyleManager.class, new CoreJavaCodeStyleManager());
 

@@ -63,6 +63,7 @@ import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.CachedValuesManagerImpl;
 import com.intellij.util.Function;
+import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.impl.MessageBusImpl;
 import org.jetbrains.annotations.NotNull;
 import org.picocontainer.MutablePicoContainer;
@@ -82,6 +83,7 @@ public class CoreEnvironment {
   protected final MockFileIndexFacade myFileIndexFacade;
   protected final PsiManagerImpl myPsiManager;
   private final Disposable myParentDisposable;
+  protected final MessageBusImpl myMessageBus;
 
   public CoreEnvironment(Disposable parentDisposable) {
     myParentDisposable = parentDisposable;
@@ -136,15 +138,16 @@ public class CoreEnvironment {
     registerExtensionPoint(Extensions.getRootArea(), BinaryFileStubBuilders.EP_NAME, FileTypeExtensionPoint.class);
 
     myFileIndexFacade = new MockFileIndexFacade(myProject);
+    myMessageBus = new MessageBusImpl();
 
     PsiModificationTrackerImpl modificationTracker = new PsiModificationTrackerImpl(myProject);
     myProject.registerService(PsiModificationTracker.class, modificationTracker);
     myProject.registerService(FileIndexFacade.class, myFileIndexFacade);
     myProject.registerService(ResolveScopeManager.class, new MockResolveScopeManager(myProject));
-    myProject.registerService(ResolveCache.class, new ResolveCache(null));
+    myProject.registerService(ResolveCache.class, new ResolveCache(myMessageBus));
     
     registerProjectExtensionPoint(PsiTreeChangePreprocessor.EP_NAME, PsiTreeChangePreprocessor.class);
-    myPsiManager = new PsiManagerImpl(myProject, null, null, myFileIndexFacade, null, modificationTracker);
+    myPsiManager = new PsiManagerImpl(myProject, null, null, myFileIndexFacade, myMessageBus, modificationTracker);
     ((FileManagerImpl) myPsiManager.getFileManager()).markInitialized();
     registerProjectComponent(PsiManager.class, myPsiManager);
 
