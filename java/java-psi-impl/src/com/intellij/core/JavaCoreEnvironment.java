@@ -80,7 +80,7 @@ public class JavaCoreEnvironment extends CoreEnvironment {
     myProject.registerService(JavaCodeStyleSettingsFacade.class, new CoreJavaCodeStyleSettingsFacade());
     myProject.registerService(JavaCodeStyleManager.class, new CoreJavaCodeStyleManager());
 
-    JavaPsiFacadeImpl javaPsiFacade = new JavaPsiFacadeImpl(myProject, myPsiManager, myFileManager, null);
+    JavaPsiFacadeImpl javaPsiFacade = new JavaPsiFacadeImpl(myProject, myPsiManager, myFileManager, myMessageBus);
     myProject.registerService(CoreJavaFileManager.class, myFileManager);
     registerComponentInstance(myProject.getPicoContainer(),
             JavaPsiFacade.class,
