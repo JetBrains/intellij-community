@@ -144,13 +144,11 @@ public class GrReferenceResolveUtil {
   public static boolean processQualifier(PsiScopeProcessor processor, GrExpression qualifier, GrReferenceExpression place) {
     PsiType qualifierType = qualifier.getType();
     ResolveState state = ResolveState.initial().put(ResolverProcessor.RESOLVE_CONTEXT, qualifier);
-    if (qualifierType == null) {
+    if (qualifierType == null || qualifierType == PsiType.NULL) {
       if (qualifier instanceof GrReferenceExpression) {
         PsiElement resolved = ((GrReferenceExpression)qualifier).resolve();
-        if (resolved instanceof PsiPackage) {
-          if (!resolved.processDeclarations(processor, state, null, place)) return false;
-        }
-        else {
+        if (resolved != null && !resolved.processDeclarations(processor, state, null, place)) return false;
+        if (!(resolved instanceof PsiPackage)) {
           qualifierType = TypesUtil.getJavaLangObject(place);
           if (!processQualifierType(processor, qualifierType, state, place)) return false;
         }
