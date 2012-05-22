@@ -531,7 +531,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
       if (containingClass != null &&
           CommonClassNames.JAVA_LANG_OBJECT.equals(containingClass.getQualifiedName()) &&
           "getClass".equals(method.getName())) {
-        return TypesUtil.createJavaLangClassType(getQualifierType(), getProject(), getResolveScope());
+        return TypesUtil.createJavaLangClassType(GrReferenceResolveUtil.getQualifierType(this), getProject(), getResolveScope());
       }
 
       return PsiUtil.getSmartReturnType(method);
@@ -555,7 +555,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
 
     if (resolved == null) {
       if ("class".equals(getReferenceName())) {
-        return TypesUtil.createJavaLangClassType(getQualifierType(), getProject(), getResolveScope());
+        return TypesUtil.createJavaLangClassType(GrReferenceResolveUtil.getQualifierType(this), getProject(), getResolveScope());
       }
 
       //map access
@@ -580,25 +580,6 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
 
     return null;
   }
-
-  @Nullable
-  private PsiType getQualifierType() {
-    final GrExpression qualifier = getQualifierExpression();
-    if (qualifier == null) {
-      final PsiElement context = PsiUtil.getFileOrClassContext(this);
-      PsiClass contextClass = null;
-      if (context instanceof PsiClass) {
-        contextClass = (PsiClass)context;
-      }
-      else if (context instanceof GroovyFile) contextClass = ((GroovyFile)context).getScriptClass();
-      if (contextClass == null) return null;
-      return JavaPsiFacade.getElementFactory(getProject()).createType(contextClass);
-    }
-    else {
-      return qualifier.getType();
-    }
-  }
-
 
   private static final class OurTypesCalculator implements Function<GrReferenceExpressionImpl, PsiType> {
     @Nullable

@@ -39,7 +39,6 @@ import org.jetbrains.plugins.groovy.extensions.GroovyNamedArgumentProvider;
 import org.jetbrains.plugins.groovy.extensions.NamedArgumentDescriptor;
 import org.jetbrains.plugins.groovy.findUsages.LiteralConstructorReference;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
@@ -61,8 +60,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType;
-import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureUtil;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrReferenceResolveUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyConstantExpressionEvaluator;
@@ -117,7 +116,7 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
 
   private static class MyVisitor extends BaseInspectionVisitor {
     private void checkAssignability(@NotNull PsiType expectedType, @NotNull GrExpression expression) {
-      if (PsiUtil.isRawClassMemberAccess(expression)) return; //GRVY-2197
+      if (PsiUtil.isRawClassMemberAccess(expression)) return;
       if (checkForImplicitEnumAssigning(expectedType, expression, expression)) return;
       final PsiType rType = expression.getType();
       if (rType == null || rType == PsiType.VOID) return;
@@ -523,7 +522,7 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
         GrExpression namedArgumentExpression = namedArgument.getExpression();
         if (namedArgumentExpression == null) continue;
 
-        if (PsiUtil.isRawClassMemberAccess(namedArgumentExpression)) continue; //GRVY-2197
+        if (PsiUtil.isRawClassMemberAccess(namedArgumentExpression)) continue;
 
         PsiType expressionType = namedArgumentExpression.getType();
         if (expressionType == null) continue;
@@ -748,8 +747,8 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
         return true;
       }
       else {
-        final GrExpression qual = expression.getQualifierExpression();
-        if (qual != null) return isListAssignment(qual);
+        final GrExpression qualifier = expression.getQualifierExpression();
+        if (qualifier != null) return isListAssignment(qualifier);
       }
     }
     return false;
@@ -760,27 +759,6 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
     if (place.getParent() instanceof GrIndexProperty) {
       return place.getType();
     }
-    final GrExpression rtQualifier = PsiImplUtil.getRuntimeQualifier(place);
-    if (rtQualifier != null) {
-      return rtQualifier.getType();
-    }
-
-    PsiClass containingClass = null;
-    final GrMember member = PsiTreeUtil.getParentOfType(place, GrMember.class);
-    if (member == null) {
-      final PsiFile file = place.getContainingFile();
-      assert file instanceof GroovyFile && ((GroovyFile)file).isScript();
-      containingClass = ((GroovyFile)file).getScriptClass();
-    }
-    else if (member instanceof GrMethod) {
-      if (!member.hasModifierProperty(PsiModifier.STATIC)) {
-        containingClass = member.getContainingClass();
-      }
-    }
-
-    if (containingClass != null) {
-      return JavaPsiFacade.getElementFactory(place.getProject()).createType(containingClass);
-    }
-    return null;
+    return GrReferenceResolveUtil.getQualifierType(place);
   }
 }
