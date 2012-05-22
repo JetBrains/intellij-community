@@ -29,8 +29,6 @@ import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.engine.evaluation.TextWithImports;
 import com.intellij.debugger.engine.evaluation.TextWithImportsImpl;
-import com.intellij.debugger.engine.evaluation.expression.EvaluatorBuilderImpl;
-import com.intellij.debugger.engine.evaluation.expression.ExpressionEvaluator;
 import com.intellij.debugger.engine.events.DebuggerCommandImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerSession;
@@ -523,15 +521,7 @@ public class FrameVariablesTree extends DebuggerTree {
               boolean isConstant = (var instanceof PsiEnumConstant) || 
                                    (modifierList != null && modifierList.hasModifierProperty(PsiModifier.STATIC) && modifierList.hasModifierProperty(PsiModifier.FINAL));
               if (!isConstant) {
-                final TextWithImportsImpl textWithImports = new TextWithImportsImpl(reference);
-                try {
-                  final ExpressionEvaluator evaluator = EvaluatorBuilderImpl.build(textWithImports, reference, myPosition);
-                  evaluator.evaluate(myEvalContext);
-                  //collect only expressions that do not produce any exceptions on evaluation
-                  myExpressions.add(textWithImports);
-                }
-                catch (EvaluateException ignored) {
-                }
+                myExpressions.add(new TextWithImportsImpl(reference));
               }
             }
           }
