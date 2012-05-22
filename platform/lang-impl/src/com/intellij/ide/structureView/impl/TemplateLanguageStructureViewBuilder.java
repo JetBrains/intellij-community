@@ -17,15 +17,16 @@ package com.intellij.ide.structureView.impl;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.impl.StructureViewWrapperImpl;
-import com.intellij.ide.structureView.*;
+import com.intellij.ide.structureView.StructureView;
+import com.intellij.ide.structureView.StructureViewBuilder;
+import com.intellij.ide.structureView.StructureViewFactoryEx;
+import com.intellij.ide.structureView.StructureViewWrapper;
 import com.intellij.ide.structureView.newStructureView.StructureViewComponent;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageStructureViewBuilder;
 import com.intellij.lang.PsiStructureViewFactory;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.Result;
-import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -224,25 +225,21 @@ public abstract class TemplateLanguageStructureViewBuilder implements StructureV
   }
 
   private void updateTemplateDataFileView() {
-    new WriteCommandAction(myProject) {
-      protected void run(Result result) throws Throwable {
-        final TemplateLanguageFileViewProvider provider = getViewProvider();
-        final Language newDataLanguage = provider == null ? null : provider.getTemplateDataLanguage();
+    final TemplateLanguageFileViewProvider provider = getViewProvider();
+    final Language newDataLanguage = provider == null ? null : provider.getTemplateDataLanguage();
 
-        if (myBaseStructureViewDescriptor != null) {
-          if (myTemplateDataLanguage == newDataLanguage) return;
+    if (myBaseStructureViewDescriptor != null) {
+      if (myTemplateDataLanguage == newDataLanguage) return;
 
-          Disposer.dispose(myBaseStructureViewDescriptor.structureView);
-        }
+      Disposer.dispose(myBaseStructureViewDescriptor.structureView);
+    }
 
-        if (newDataLanguage != null) {
-          myBaseStructureViewDescriptor = createBaseLanguageStructureView(myFileEditor, newDataLanguage);
-          if (myStructureViewComposite != null) {
-            myStructureViewComposite.setStructureView(myBaseLanguageViewDescriptorIndex, myBaseStructureViewDescriptor);
-          }
-        }
+    if (newDataLanguage != null) {
+      myBaseStructureViewDescriptor = createBaseLanguageStructureView(myFileEditor, newDataLanguage);
+      if (myStructureViewComposite != null) {
+        myStructureViewComposite.setStructureView(myBaseLanguageViewDescriptorIndex, myBaseStructureViewDescriptor);
       }
-    }.execute();
+    }
   }
 
   @NotNull
