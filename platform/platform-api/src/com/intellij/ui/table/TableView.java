@@ -90,6 +90,13 @@ public class TableView<Item> extends BaseTableView implements ItemsProvider, Sel
     final RowSorter<? extends TableModel> sorter = getRowSorter();
     final List<? extends RowSorter.SortKey> current = sorter == null ? null : sorter.getSortKeys();
     ColumnInfo[] columns = getListTableModel().getColumnInfos();
+    int[] sizeMode = new int[columns.length];
+    int[] widths = new int[columns.length];
+    int fixedWidth = 0;
+    int varWidth = 0;
+    int varCount = 0;
+
+    // calculate
     for (int i = 0; i < columns.length; i++) {
       final ColumnInfo columnInfo = columns[i];
       final TableColumn column = getColumnModel().getColumn(i);
@@ -108,20 +115,51 @@ public class TableView<Item> extends BaseTableView implements ItemsProvider, Sel
       final String maxStringValue;
       final String preferredValue;
       if (columnInfo.getWidth(this) > 0) {
+        sizeMode[i] = 0;
         int width = columnInfo.getWidth(this);
+        widths[i] = width;
+      }
+      else if ((maxStringValue = columnInfo.getMaxStringValue()) != null) {
+        sizeMode[i] = 1;
+        int width = getFontMetrics(getFont()).stringWidth(maxStringValue) + columnInfo.getAdditionalWidth();
+        width = Math.max(width, headerSize.width);
+        widths[i] = width;
+        varCount ++;
+      }
+      else if ((preferredValue = columnInfo.getPreferredStringValue()) != null) {
+        sizeMode[i] = 2;
+        int width = getFontMetrics(getFont()).stringWidth(preferredValue) + columnInfo.getAdditionalWidth();
+        width = Math.max(width, headerSize.width);
+        widths[i] = width;
+        varCount ++;
+      }
+      if (sizeMode[i] == 0) {
+        fixedWidth += widths[i];
+      }
+      else {
+        varWidth += widths[i];
+      }
+    }
+
+    // apply
+    int viewWidth = getParent() != null? getParent().getWidth() : getWidth();
+    int addendum = varCount > 0 && viewWidth > fixedWidth + varWidth? (viewWidth - fixedWidth - varWidth) / varCount : 0;
+    for (int i=0 ; i<columns.length; i ++) {
+      TableColumn column = getColumnModel().getColumn(i);
+      int width = widths[i];
+      if (sizeMode[i] == 0) {
         column.setMaxWidth(width);
         column.setPreferredWidth(width);
         column.setMinWidth(width);
       }
-      else if ((maxStringValue = columnInfo.getMaxStringValue()) != null) {
-        int width = getFontMetrics(getFont()).stringWidth(maxStringValue) + columnInfo.getAdditionalWidth();
-        width = Math.max(width, headerSize.width);
+      else if (sizeMode[i] == 1) {
+        width += Math.min(addendum, 4 * width);
         column.setPreferredWidth(width);
         column.setMaxWidth(width);
+        column.setMinWidth(width);
       }
-      else if ((preferredValue = columnInfo.getPreferredStringValue()) != null) {
-        int width = getFontMetrics(getFont()).stringWidth(preferredValue) + columnInfo.getAdditionalWidth();
-        width = Math.max(width, headerSize.width);
+      else if (sizeMode[i] == 2) {
+        width += Math.min(addendum, 4 * width);
         column.setPreferredWidth(width);
       }
     }
