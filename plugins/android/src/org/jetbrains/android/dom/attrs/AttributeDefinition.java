@@ -17,6 +17,7 @@ package org.jetbrains.android.dom.attrs;
 
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -27,7 +28,8 @@ public class AttributeDefinition {
   private final String myName;
   private final Set<AttributeFormat> myFormats = EnumSet.noneOf(AttributeFormat.class);
   private final List<String> myValues = new ArrayList<String>();
-                 
+  private String myDocValue;
+
   public AttributeDefinition(@NotNull String name) {
     myName = name;
   }
@@ -58,6 +60,20 @@ public class AttributeDefinition {
   @NotNull
   public String[] getValues() {
     return ArrayUtil.toStringArray(myValues);
+  }
+
+  @Nullable
+  public String getDocValue() {
+    return myDocValue;
+  }
+
+  public void addDocValue(String docValue) {
+    if (myDocValue == null) {
+      myDocValue = docValue;
+    }
+    else {
+      myDocValue += "\n" + docValue;
+    }
   }
 
   @Override

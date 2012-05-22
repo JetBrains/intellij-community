@@ -248,7 +248,7 @@ public class XmlDocumentationProvider implements DocumentationProvider {
   }
 
   @Nullable
-  private static PsiElement findPreviousComment(final PsiElement element) {
+  public static PsiElement findPreviousComment(final PsiElement element) {
     PsiElement curElement = element;
 
     while(curElement!=null && !(curElement instanceof XmlComment)) {
