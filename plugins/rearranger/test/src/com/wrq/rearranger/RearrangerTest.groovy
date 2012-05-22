@@ -30,6 +30,7 @@ import com.wrq.rearranger.settings.RearrangerSettings
 import com.wrq.rearranger.settings.RelatedMethodsSettings
 import com.wrq.rearranger.settings.attributeGroups.GetterSetterDefinition
 import com.wrq.rearranger.settings.attributeGroups.InterfaceAttributes
+import com.wrq.rearranger.settings.attributeGroups.RegexUtil
 import com.wrq.rearranger.util.CommentRuleBuilder
 import com.wrq.rearranger.util.SettingsConfigurationBuilder
 import org.jetbrains.annotations.NotNull
@@ -701,132 +702,84 @@ class RearrangerTest extends LightCodeInsightFixtureTestCase {
                           lines: 0, 'remove blank lines': true
   ) } }
 
-//  public void testPriority() throws Exception {
-//    configureByFile("/com/wrq/rearranger/RearrangementTest.java");
-//    final PsiFile file = getFile();
-//    final Document doc = PsiDocumentManager.getInstance(getProject()).getDocument(file);
-//    final RearrangerActionHandler rah = new RearrangerActionHandler();
-//    MethodAttributes ma;
-//    ma = new MethodAttributes();
-//    ma.setPriority(1);
-//    rs.addItem(ma, 0);
-//    ma = new MethodAttributes();
-//    ma.setPriority(2);
-//    ma.getNameAttr().setMatch(true);
-//    ma.getNameAttr().setExpression("method.*");
-//    rs.addItem(ma, 1);
-//    ma = new MethodAttributes();
-//    ma.setPriority(2);
-//    ma.getNameAttr().setMatch(true);
-//    ma.getNameAttr().setExpression(".*Method");
-//    rs.addItem(ma, 2);
-//    rah.rearrangeDocument(getProject(), file, rs, doc);
-//    super.checkResultByFile("/com/wrq/rearranger/RearrangementResult1A.java");
-//  }
-//
-//  public void testGSRuleWithClassInitializer() throws Exception {
-//    configureByFile("/com/wrq/rearranger/RearrangementTest26.java");
-//    final PsiFile file = getFile();
-//    final Document doc = PsiDocumentManager.getInstance(getProject()).getDocument(file);
-//    final RearrangerActionHandler rah = new RearrangerActionHandler();
-//    MethodAttributes ma;
-//    ma = new MethodAttributes();
-//    ma.setGetterSetterMethodType(true);
-//    rs.addItem(ma, 0);
-//    rs.setKeepGettersSettersTogether(true);
-//    rah.rearrangeDocument(getProject(), file, rs, doc);
-//    super.checkResultByFile("/com/wrq/rearranger/RearrangementResult26.java");
-//  }
-//
-//  public void testKeepGSTogetherAndExtractedMethods() throws Exception {
-//    configureByFile("/com/wrq/rearranger/RearrangementTest27.java");
-//    final PsiFile file = getFile();
-//    final Document doc = PsiDocumentManager.getInstance(getProject()).getDocument(file);
-//    final RearrangerActionHandler rah = new RearrangerActionHandler();
-//    rs.setKeepGettersSettersTogether(true);
-//    rs.setKeepOverloadedMethodsTogether(true);
-//    rs.getExtractedMethodsSettings().setMoveExtractedMethods(true);
-//    rah.rearrangeDocument(getProject(), file, rs, doc);
-//    super.checkResultByFile("/com/wrq/rearranger/RearrangementResult27.java");
-//  }
-//
-//  public void testRegexEscape() throws Exception {
-//    String s = "// ********* start of fields *********";
-//    String result = RegexUtil.escape(s);
-//    assertEquals("sequence reduction failed", "// \\*{9} start of fields \\*{9}", result);
-//    s = "// \\ backslash \n \t \\d [...] (^...$)";
-//    result = RegexUtil.escape(s);
-//    assertEquals("special character escape failed", "// \\\\ backslash \\n \\t \\\\d \\[\\.\\.\\.\\]" +
-//                                                    " \\(\\^\\.\\.\\.\\$\\)", result);
-//  }
-//
-//  public void testRegexCombine() throws Exception {
-//    String p1 = RegexUtil.escape("// ********* start of fields *********");
-//    String p2 = RegexUtil.escape("// ********* start of methods *********");
-//    List<String> list = new ArrayList<String>();
-//    list.add(p1);
-//    list.add(p2);
-//    String result = RegexUtil.combineExpressions(list);
-//    assertEquals("combination failed", "// \\*{9} start of (fiel|metho)ds \\*{9}", result);
-//    String p3 = RegexUtil.escape("// ***** start of interfaces *******");
-//    list.add(p3);
-//    result = RegexUtil.combineExpressions(list);
-//    assertEquals("combination failed", "// (\\*{9} start of (fiel|metho)ds \\*{9}|" +
-//                                       "\\*{5} start of interfaces \\*{7})", result);
-//  }
-//
-//  public void testVariousComments() throws Exception {
-//    configureByFile("/com/wrq/rearranger/RearrangementTest28.java");
-//    final PsiFile file = getFile();
-//    final Document doc = PsiDocumentManager.getInstance(getProject()).getDocument(file);
-//    final RearrangerActionHandler rah = new RearrangerActionHandler();
-//    rs.setKeepGettersSettersTogether(true);
-//    rs.setKeepOverloadedMethodsTogether(true);
-//    CommentRule cr = new CommentRule();
-//    cr.setCommentText("// start of fields");
-//    cr.setEmitCondition(CommentRule.EMIT_IF_ITEMS_MATCH_SUBSEQUENT_RULE);
-//    cr.setAllSubsequentRules(true);
-//    cr.setnSubsequentRulesToMatch(1);
-//    rs.addItem(cr, 0);
-//    FieldAttributes fa = new FieldAttributes();
-//    rs.addItem(fa, 1);
-//    cr = new CommentRule();
-//    cr.setCommentText("// end of fields");
-//    cr.setEmitCondition(CommentRule.EMIT_IF_ITEMS_MATCH_PRECEDING_RULE);
-//    cr.setAllPrecedingRules(true);
-//    cr.setnPrecedingRulesToMatch(1);
-//    rs.addItem(cr, 2);
-//    InterfaceAttributes ia = new InterfaceAttributes();
-//    ia.setMethodOrder(InterfaceAttributes.METHOD_ORDER_ENCOUNTERED);
-//    ia.setAlphabetizeInterfaces(false);
-//    ia.setNoExtractedMethods(false);
-//    cr = new CommentRule();
-//    cr.setCommentText("// start of interface %IF%");
-//    ia.setPrecedingComment(cr);
-//    cr = new CommentRule();
-//    cr.setCommentText("// end of interface %IF%");
-//    ia.setTrailingComment(cr);
-//    rs.addItem(ia, 3);
-//    rs.getExtractedMethodsSettings().setBelowFirstCaller(false);
-//    rs.getExtractedMethodsSettings().setMoveExtractedMethods(true);
-//    rs.getExtractedMethodsSettings().setCommentType(RelatedMethodsSettings.COMMENT_TYPE_EACH_LEVEL);
-//    rs.getExtractedMethodsSettings().setNonPrivateTreatment(RelatedMethodsSettings.NON_PRIVATE_EXTRACTED_ANY_CALLERS);
-//    rs.getExtractedMethodsSettings().setDepthFirstOrdering(true);
-//    cr = new CommentRule();
-//    cr.setCommentText("// Level %LV% methods");
-//    rs.getExtractedMethodsSettings().setPrecedingComment(cr);
-//    cr = new CommentRule();
-//    cr.setCommentText("// end Level %LV% methods");
-//    rs.getExtractedMethodsSettings().setTrailingComment(cr);
-//    // should work with or without the global comment pattern
-////        rs.setGlobalCommentPattern("// (((start|end) of (fields|interface [A-Za-z_0-9]+))|(end|)Level [0-9]+ methods)");
-//    rah.rearrangeDocument(getProject(), file, rs, doc); // note - blank lines end up "reversed"
-//    // where a blank line, generated comment, and method occur in order; the generated comment is removed
-//    // and the blank line precedes the method; when the new comment is generated, it is inserted before
-//    // the blank line.
-//    super.checkResultByFile("/com/wrq/rearranger/RearrangementResult28.java");
-//  }
-//
+  public void testPriority() throws Exception {
+    doTest('RearrangementTest', 'RearrangementResult1A') {
+      methodRule.create { priority( 1 ) }
+      methodRule.create {
+        priority( 2 )
+        name( 'method.*' )
+      }
+      methodRule.create {
+        priority( 2 )
+        name( '.*Method' )
+  } } }
+
+  public void testGSRuleWithClassInitializer() throws Exception {
+    doTest('RearrangementTest26', 'RearrangementResult26') {
+      mySettings.keepOverloadedMethodsTogether = true
+      methodRule.create {
+        target( MethodType.GETTER_OR_SETTER )
+  } } }
+
+  public void testKeepGSTogetherAndExtractedMethods() throws Exception {
+    doTest('RearrangementTest27', 'RearrangementResult27') {
+      settings.configure {
+        keepTogether([ 'getters and setters', 'overloaded' ])
+        extractedMethods( move: true )
+  } } }
+
+  public void testRegexEscape() throws Exception {
+    String s = "// ********* start of fields *********";
+    String result = RegexUtil.escape(s);
+    assertEquals("sequence reduction failed", "// \\*{9} start of fields \\*{9}", result);
+    s = "// \\ backslash \n \t \\d [...] (^...\$)";
+    result = RegexUtil.escape(s);
+    assertEquals("special character escape failed", "// \\\\ backslash \\n \\t \\\\d \\[\\.\\.\\.\\]" +
+                                                    " \\(\\^\\.\\.\\.\\\$\\)", result);
+  }
+
+  public void testRegexCombine() throws Exception {
+    String p1 = RegexUtil.escape("// ********* start of fields *********");
+    String p2 = RegexUtil.escape("// ********* start of methods *********");
+    List<String> list = new ArrayList<String>();
+    list.add(p1);
+    list.add(p2);
+    String result = RegexUtil.combineExpressions(list);
+    assertEquals("combination failed", "// \\*{9} start of (fiel|metho)ds \\*{9}", result);
+    String p3 = RegexUtil.escape("// ***** start of interfaces *******");
+    list.add(p3);
+    result = RegexUtil.combineExpressions(list);
+    assertEquals("combination failed", "// (\\*{9} start of (fiel|metho)ds \\*{9}|" +
+                                       "\\*{5} start of interfaces \\*{7})", result);
+  }
+
+  public void testVariousComments() throws Exception {
+    doTest('RearrangementTest28', 'RearrangementResult28') {
+      settings.configure{
+        keepTogether([ 'getters and setters', 'overloaded' ])
+        extractedMethods( depthFirstOrder: true, commentType: RelatedMethodsSettings.COMMENT_TYPE_EACH_LEVEL, 'below first caller': false,
+                          'non-private treatment': RelatedMethodsSettings.NON_PRIVATE_EXTRACTED_ANY_CALLERS,
+                          precedingComment: '// Level %LV% methods', trailingComment: '// end Level %LV% methods' )
+      }
+      commentRule.create {
+        comment('// start of fields', condition: CommentRule.EMIT_IF_ITEMS_MATCH_SUBSEQUENT_RULE, allSubsequent: true,
+                                   subsequentRulesToMatch: 1)
+      }
+      fieldRule.create { }
+      commentRule.create {
+        comment('// end of fields', condition: CommentRule.EMIT_IF_ITEMS_MATCH_PRECEDING_RULE, allPreceding: true,
+                precedingRulesToMatch: 1)
+      }
+      interfaceRule.configure {
+        precedingComment( '// start of interface %IF%' )
+        trailingComment( '// end of interface %IF%' )
+        setup( methodOrder: InterfaceAttributes.METHOD_ORDER_ENCOUNTERED, alphabetize: false, 'group extracted methods': false )
+    } }
+    // where a blank line, generated comment, and method occur in order; the generated comment is removed
+    // and the blank line precedes the method; when the new comment is generated, it is inserted before
+    // the blank line.
+  }
+
 //  public void testParseBugInfiniteLoop() throws Exception {
 //    configureByFile("/com/wrq/rearranger/RearrangementTest29.java");
 //    final PsiFile file = getFile();

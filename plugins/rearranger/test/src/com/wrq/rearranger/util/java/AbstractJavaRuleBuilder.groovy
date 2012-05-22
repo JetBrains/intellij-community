@@ -48,4 +48,9 @@ abstract class AbstractJavaRuleBuilder<T> extends AbstractRuleBuilder<T> {{
       genericHandlers[value](attributes, rule)
     }
   })
+  
+  // Priority.
+  registerHandler(RearrangerTestDsl.PRIORITY, { value, attributes, rule ->
+    rule.priority = value
+  })
 }}

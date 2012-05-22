@@ -1,5 +1,6 @@
 package com.wrq.rearranger.util
 
+import com.wrq.rearranger.settings.CommentRule
 import com.wrq.rearranger.settings.RearrangerSettings
 
 import static com.wrq.rearranger.util.RearrangerTestUtil.setIf
@@ -33,12 +34,24 @@ class SettingsConfigurationBuilder extends BuilderSupport {
 
   @Override
   protected Object createNode(Object name, Map attributes, Object value) {
+    def commentHandler = { RearrangerTestDsl dslName, propertyName ->
+      if (attributes.containsKey(dslName.value)) {
+        def comment = new CommentRule()
+        comment.commentText = attributes[dslName.value]
+        settings.extractedMethodsSettings."$propertyName" = comment
+      }
+    }
+    
     switch (name) {
       case RearrangerTestDsl.EXTRACTED_METHODS.value:
         settings.extractedMethodsSettings.moveExtractedMethods = true
         setIf(RearrangerTestDsl.DEPTH_FIRST_ORDER, attributes, 'depthFirstOrdering', settings.extractedMethodsSettings)
         setIf(RearrangerTestDsl.ORDER, attributes, 'ordering', settings.extractedMethodsSettings)
         setIf(RearrangerTestDsl.COMMENT_TYPE, attributes, 'commentType', settings.extractedMethodsSettings)
+        setIf(RearrangerTestDsl.BELOW_FIRST_CALLER, attributes, 'belowFirstCaller', settings.extractedMethodsSettings)
+        setIf(RearrangerTestDsl.NON_PRIVATE_TREATMENT, attributes, 'nonPrivateTreatment', settings.extractedMethodsSettings)
+        commentHandler(RearrangerTestDsl.PRECEDING_COMMENT, 'precedingComment')
+        commentHandler(RearrangerTestDsl.TRAILING_COMMENT, 'trailingComment')
         break
       case RearrangerTestDsl.KEEP_TOGETHER.value:
         def m = [

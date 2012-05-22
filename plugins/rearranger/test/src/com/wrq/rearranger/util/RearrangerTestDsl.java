@@ -40,6 +40,7 @@ public enum RearrangerTestDsl {
   SETUP,
   GROUP_EXTRACTED_METHODS("group extracted methods"),
   ALPHABETIZE,
+  PRIORITY,
   
   // Attributes
   INVERT,
@@ -51,7 +52,9 @@ public enum RearrangerTestDsl {
   BODY,
   ANCHOR,
   BLANK_LINES("lines"),
-  REMOVE_BLANK_LINES("remove blank lines");
+  REMOVE_BLANK_LINES("remove blank lines"),
+  BELOW_FIRST_CALLER("below first caller"),
+  NON_PRIVATE_TREATMENT("non-private treatment");
 
   @NotNull private final String myValue;
   
