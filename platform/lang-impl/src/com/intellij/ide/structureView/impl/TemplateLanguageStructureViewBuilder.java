@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,11 +17,9 @@ package com.intellij.ide.structureView.impl;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.impl.StructureViewWrapperImpl;
-import com.intellij.ide.structureView.StructureView;
-import com.intellij.ide.structureView.StructureViewBuilder;
-import com.intellij.ide.structureView.StructureViewFactoryEx;
-import com.intellij.ide.structureView.StructureViewWrapper;
+import com.intellij.ide.structureView.*;
 import com.intellij.ide.structureView.newStructureView.StructureViewComponent;
+import com.intellij.ide.util.treeView.smartTree.TreeElement;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageStructureViewBuilder;
 import com.intellij.lang.PsiStructureViewFactory;
@@ -96,7 +94,7 @@ public abstract class TemplateLanguageStructureViewBuilder implements StructureV
                 if (structureViewWrapper == null) return;
 
                 Language baseLanguage = provider.getTemplateDataLanguage();
-                if (baseLanguage == myTemplateDataLanguage) {
+                if (baseLanguage == myTemplateDataLanguage && isPsiValid()) {
                   updateBaseLanguageView();
                 }
                 else {
@@ -113,6 +111,23 @@ public abstract class TemplateLanguageStructureViewBuilder implements StructureV
     assert provider != null;
     myTemplateDataLanguage = provider.getTemplateDataLanguage();
     PsiManager.getInstance(myProject).addPsiTreeChangeListener(myPsiTreeChangeAdapter);
+  }
+
+  private boolean isPsiValid() {
+    final StructureViewComponent view = (StructureViewComponent)myBaseStructureViewDescriptor.structureView;
+    if (view.isDisposed()) return false;
+
+    final Object root = view.getTreeStructure().getRootElement();
+    if (root instanceof StructureViewComponent.StructureViewTreeElementWrapper) {
+      final TreeElement value = ((StructureViewComponent.StructureViewTreeElementWrapper)root).getValue();
+      if (value instanceof StructureViewTreeElement) {
+        final Object psi = ((StructureViewTreeElement)value).getValue();
+        if (psi instanceof PsiElement) {
+          return ((PsiElement)psi).isValid();
+        }
+      }
+    }
+    return true;
   }
 
   @Nullable
