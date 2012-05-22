@@ -27,6 +27,7 @@ import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.commands.GitCommand;
 import git4idea.commands.GitSimpleHandler;
+import git4idea.repo.GitRepositoryFiles;
 import git4idea.util.StringScanner;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -119,7 +120,7 @@ public class MergeChangeCollector {
       // should be available. In case of --no-commit option, the MERGE_HEAD might contain
       // multiple heads separated by newline. The changes are collected separately for each head
       // and they are merged using TreeSet class (that also sorts the changes).
-      File mergeHeadsFile = new File(root, ".git/MERGE_HEAD");
+      File mergeHeadsFile = new File(root, GitRepositoryFiles.GIT_MERGE_HEAD);
       try {
         if (mergeHeadsFile.exists()) {
           String mergeHeads = new String(FileUtil.loadFileText(mergeHeadsFile, GitUtil.UTF8_ENCODING));

@@ -358,7 +358,7 @@ public final class GitDeprecatedRemote {
   public static List<String> getFetchSpecs(Project project, VirtualFile root, String remoteName) throws VcsException {
     ArrayList<String> rc = new ArrayList<String>();
     final File rootFile = VfsUtil.virtualToIoFile(root);
-    @NonNls final File remotesFile = new File(rootFile, ".git" + File.separator + "remotes" + File.separator + remoteName);
+    @NonNls final File remotesFile = new File(rootFile, GitUtil.DOT_GIT + File.separator + "remotes" + File.separator + remoteName);
     // TODO try branches file?
     if (remotesFile.exists() && !remotesFile.isDirectory()) {
       // try remotes file
