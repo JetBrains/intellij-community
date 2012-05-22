@@ -238,7 +238,7 @@ class PrintManager {
   }
   
   private static TextPainter doInitTextPainter(@NotNull final DocumentEx doc, Project project) {
-     EditorHighlighter highlighter = HighlighterFactory.createHighlighter(project, FileTypes.PLAIN_TEXT);
+     EditorHighlighter highlighter = HighlighterFactory.createHighlighter(project, "unknown");
      highlighter.setText(doc.getCharsSequence());
      return new TextPainter(doc, highlighter, "unknown", project, FileTypes.PLAIN_TEXT, null);
    }
