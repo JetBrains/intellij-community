@@ -530,8 +530,7 @@ class FormatProcessor {
         return true;
       }
       if (wrap != null && wrap.getFirstEntry() != null) {
-        //myCurrentBlock = wrap.getFirstEntry();
-        myCurrentBlock = getFirstBlockOnNewLine();
+        myCurrentBlock = wrap.getFirstEntry();
         wrap.markAsUsed();
         return true;
       }
@@ -572,18 +571,6 @@ class FormatProcessor {
     }
 
     return false;
-  }
-
-  @Nullable
-  private LeafBlockWrapper getFirstBlockOnNewLine() {
-    LeafBlockWrapper current = myCurrentBlock;
-    while (current != null) {
-      WhiteSpace whiteSpace = current.getWhiteSpace();
-      if (whiteSpace.containsLineFeeds() && whiteSpace.containsLineFeedsInitially()) return current;
-      if (current.getPreviousBlock() == null) return current;
-      current = current.getPreviousBlock();
-    }
-    return null;
   }
 
   /**
