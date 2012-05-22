@@ -17,6 +17,18 @@ public class PyTypeCheckerInspectionTest extends PyTestCase {
     doTest();
   }
 
+  public void testEnumerateIterator() {
+    doTest();
+  }
+
+  public void testGenericUserClasses() {
+    doTest();
+  }
+
+  public void testDictGenerics() {
+    doTest();
+  }
+
   // PY-6570
   public void testDictLiteralIndexing() {
     doTest();

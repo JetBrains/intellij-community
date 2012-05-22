@@ -425,45 +425,6 @@ def test_union_return_types():
     f3(<warning descr="Expected type 'int', got 'str' instead">x1.strip()</warning>)
 
 
-def test_enumerate_iterator():
-    def f(x):
-        """
-        :type x: str
-        """
-        pass
-    xs = [1.1, 2.2, 3.3]
-    for i, x in enumerate(xs):
-        f(<warning descr="Expected type 'str', got 'int' instead">i</warning>)
-        f(<warning descr="Expected type 'str', got 'float' instead">x</warning>)
-
-
-def test_generic_user_class():
-    class User1(object):
-        def __init__(self, x):
-            """
-            :type x: T
-            :rtype: User1 of T
-            """
-            self.x = x
-
-        def get(self):
-            """
-            :rtype: T
-            """
-            return self.x
-
-        def put(self, value):
-            """
-            :type value: T
-            """
-            self.x = value
-
-    c = User1(10)
-    print(c.get() + <warning descr="Expected type 'one of (int, long, float, complex)', got 'str' instead">'foo'</warning>)
-    c.put(14)
-    c.put(<weak_warning descr="Expected type 'int' (matched generic type 'T'), got 'str' instead">'foo'</weak_warning>)
-
-
 def test_generic_user_functions():
     def f1(xs):
         """
@@ -510,16 +471,6 @@ def test_generic_user_functions():
 
     result = f3(1, 'foo', True)
     f4(<warning descr="Expected type '(bool,int,str)', got '(int,str,bool)' instead">result</warning>)
-
-
-def test_dict_generics(d):
-    """
-    :type d: dict from int to unicode
-    """
-    xs = d.items()
-    d2 = dict(xs)
-    for k, v in d2.items():
-        print k + <warning descr="Expected type 'one of (int, long, float, complex)', got 'unicode' instead">v</warning>
 
 
 # PY-5474
