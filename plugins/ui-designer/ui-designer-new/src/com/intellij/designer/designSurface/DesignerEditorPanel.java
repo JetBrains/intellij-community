@@ -28,7 +28,7 @@ import com.intellij.designer.propertyTable.Property;
 import com.intellij.diagnostic.LogMessageEx;
 import com.intellij.diagnostic.errordialog.Attachment;
 import com.intellij.ide.palette.impl.PaletteManager;
-import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
@@ -182,6 +182,16 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
       @Override
       public RadComponent getRootComponent() {
         return myRootComponent;
+      }
+
+      @Override
+      public ActionGroup getPopupActions() {
+        return myActionPanel.getPopupActions();
+      }
+
+      @Override
+      public String getPopupPlace() {
+        return ActionPlaces.GUI_DESIGNER_EDITOR_POPUP;
       }
     };
 

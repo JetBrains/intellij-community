@@ -16,22 +16,25 @@
 package com.intellij.designer.propertyTable;
 
 import com.intellij.designer.DesignerBundle;
+import com.intellij.designer.propertyTable.actions.IPropertyTableAction;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.IdeBorderFactory;
+import com.intellij.ui.PopupHandler;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SideBorder;
 
 import javax.swing.*;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 
 /**
  * @author Alexander Lobas
  */
-public final class PropertyTablePanel extends JPanel {
-  private final DefaultActionGroup myActionGroup = new DefaultActionGroup();
+public final class PropertyTablePanel extends JPanel implements ListSelectionListener {
   private final PropertyTable myPropertyTable = new PropertyTable();
+  private final AnAction[] myActions;
 
   public PropertyTablePanel() {
     setLayout(new GridBagLayout());
@@ -40,46 +43,39 @@ public final class PropertyTablePanel extends JPanel {
     add(new JLabel(DesignerBundle.message("designer.properties.title")),
         new GridBagConstraints(0, 0, 1, 1, 1, 0, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL, new Insets(2, 5, 2, 0), 0, 0));
 
-    createActions();
+    ActionGroup actionGroup = (ActionGroup)ActionManager.getInstance().getAction("UIDesigner.PropertyTable");
 
-    AnAction[] actions = myActionGroup.getChildren(null);
-    for (int i = 0; i < actions.length; i++) {
-      AnAction action = actions[i];
+    PopupHandler.installPopupHandler(myPropertyTable, actionGroup,
+                                     ActionPlaces.GUI_DESIGNER_PROPERTY_INSPECTOR_POPUP,
+                                     ActionManager.getInstance());
+
+    myActions = actionGroup.getChildren(null);
+    for (int i = 0; i < myActions.length; i++) {
+      AnAction action = myActions[i];
       add(new ActionButton(action, action.getTemplatePresentation(), ActionPlaces.UNKNOWN, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE),
           new GridBagConstraints(i + 1, 0, 1, 1, 0, 0, GridBagConstraints.CENTER, GridBagConstraints.NONE,
-                                 new Insets(2, 0, 2, i == actions.length - 1 ? 2 : 0), 0, 0));
+                                 new Insets(2, 0, 2, i == myActions.length - 1 ? 2 : 0), 0, 0));
     }
+
+    myPropertyTable.getSelectionModel().addListSelectionListener(this);
+    valueChanged(null);
 
     JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myPropertyTable);
     scrollPane.setBorder(IdeBorderFactory.createBorder(SideBorder.TOP));
-    add(scrollPane, new GridBagConstraints(0, 1, actions.length + 1, 1, 1, 1, GridBagConstraints.CENTER, GridBagConstraints.BOTH,
+    add(scrollPane, new GridBagConstraints(0, 1, myActions.length + 1, 1, 1, 1, GridBagConstraints.CENTER, GridBagConstraints.BOTH,
                                            new Insets(0, 0, 0, 0), 0, 0));
-  }
-
-  private void createActions() {
-    String restore = DesignerBundle.message("designer.properties.restore_default");
-    myActionGroup.add(new AnAction(restore, restore, IconLoader.getIcon("/actions/reset-to-default.png")) {
-      @Override
-      public void actionPerformed(AnActionEvent e) {
-        myPropertyTable.restoreDefaultValue();
-      }
-    });
-
-    String expert = DesignerBundle.message("designer.properties.show.expert");
-    myActionGroup.add(new ToggleAction(expert, expert, IconLoader.getIcon("/com/intellij/designer/icons/filter.png")) {
-      @Override
-      public boolean isSelected(AnActionEvent e) {
-        return myPropertyTable.isShowExpert();
-      }
-
-      @Override
-      public void setSelected(AnActionEvent e, boolean state) {
-        myPropertyTable.showExpert(state);
-      }
-    });
   }
 
   public PropertyTable getPropertyTable() {
     return myPropertyTable;
+  }
+
+  @Override
+  public void valueChanged(ListSelectionEvent e) {
+    for (AnAction action : myActions) {
+      if (action instanceof IPropertyTableAction) {
+        ((IPropertyTableAction)action).update(myPropertyTable);
+      }
+    }
   }
 }
