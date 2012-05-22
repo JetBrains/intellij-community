@@ -653,86 +653,60 @@ class RearrangerTest extends LightCodeInsightFixtureTestCase {
         setup( "don't group extracted methods": false, order: InterfaceAttributes.METHOD_ORDER_ALPHABETICAL, alphabetize: false )
   } } }
 
-//  public void testInterfaceNoNameNotAlphabeticalNoExcludeMethodEncountered() throws Exception {
-//    configureByFile("/com/wrq/rearranger/RearrangementTest23.java");
-//    final PsiFile file = getFile();
-//    final Document doc = PsiDocumentManager.getInstance(getProject()).getDocument(file);
-//    final RearrangerActionHandler rah = new RearrangerActionHandler();
-//    rs.setKeepGettersSettersTogether(false);
-//    InterfaceAttributes ia = new InterfaceAttributes();
-//    CommentRule cr = new CommentRule();
-//    cr.setCommentText("/**** Interface %IF% Header ****/");
-//    ia.setPrecedingComment(cr);
-//    cr = new CommentRule();
-//    cr.setCommentText("/**** Interface %IF% Trailer ***/");
-//    ia.setTrailingComment(cr);
-//    ia.setNoExtractedMethods(true);
-//    ia.setMethodOrder(InterfaceAttributes.METHOD_ORDER_ENCOUNTERED);
-//    ia.setAlphabetizeInterfaces(false);
-//    rs.addItem(ia, 0);
-//    rah.rearrangeDocument(getProject(), file, rs, doc);
-//    super.checkResultByFile("/com/wrq/rearranger/RearrangementResult23NNNANXME.java");
-//  }
-//
-//  public void testInterfaceNoNameNotAlphabeticalNoExcludeMethodInterfaceOrder() throws Exception {
-//    configureByFile("/com/wrq/rearranger/RearrangementTest23.java");
-//    final PsiFile file = getFile();
-//    final Document doc = PsiDocumentManager.getInstance(getProject()).getDocument(file);
-//    final RearrangerActionHandler rah = new RearrangerActionHandler();
-//    rs.setKeepGettersSettersTogether(false);
-//    InterfaceAttributes ia = new InterfaceAttributes();
-//    CommentRule cr = new CommentRule();
-//    cr.setCommentText("/**** Interface %IF% Header ****/");
-//    ia.setPrecedingComment(cr);
-//    cr = new CommentRule();
-//    cr.setCommentText("/**** Interface %IF% Trailer ***/");
-//    ia.setTrailingComment(cr);
-//    ia.setNoExtractedMethods(true);
-//    ia.setMethodOrder(InterfaceAttributes.METHOD_ORDER_INTERFACE_ORDER);
-//    ia.setAlphabetizeInterfaces(false);
-//    rs.addItem(ia, 0);
-//    rah.rearrangeDocument(getProject(), file, rs, doc);
-//    super.checkResultByFile("/com/wrq/rearranger/RearrangementResult23NNNANXMI.java");
-//  }
-//
-//  public void testInterfaceByNameNotAlphabeticalNoExcludeMethodEncountered() throws Exception {
-//    configureByFile("/com/wrq/rearranger/RearrangementTest23.java");
-//    final PsiFile file = getFile();
-//    final Document doc = PsiDocumentManager.getInstance(getProject()).getDocument(file);
-//    final RearrangerActionHandler rah = new RearrangerActionHandler();
-//    rs.setKeepGettersSettersTogether(false);
-//    InterfaceAttributes ia = new InterfaceAttributes();
-//    ia.getNameAttr().setMatch(true);
-//    ia.getNameAttr().setExpression("IFace1");
-//    ia.setNoExtractedMethods(true);
-//    ia.setMethodOrder(InterfaceAttributes.METHOD_ORDER_ENCOUNTERED);
-//    ia.setAlphabetizeInterfaces(false);
-//    rs.addItem(ia, 0);
-//    rah.rearrangeDocument(getProject(), file, rs, doc);
-//    super.checkResultByFile("/com/wrq/rearranger/RearrangementResult23BNNANXME.java");
-//  }
-//
-//  public void testInterfaceIsAlphabeticalNoExcludeMethodEncountered() throws Exception {
-//    configureByFile("/com/wrq/rearranger/RearrangementTest23.java");
-//    final PsiFile file = getFile();
-//    final Document doc = PsiDocumentManager.getInstance(getProject()).getDocument(file);
-//    final RearrangerActionHandler rah = new RearrangerActionHandler();
-//    rs.setKeepGettersSettersTogether(false);
-//    InterfaceAttributes ia = new InterfaceAttributes();
-//    CommentRule cr = new CommentRule();
-//    cr.setCommentText("/**** Interface %IF% Header ****/");
-//    ia.setPrecedingComment(cr);
-//    cr = new CommentRule();
-//    cr.setCommentText("/**** Interface %IF% Trailer ***/");
-//    ia.setTrailingComment(cr);
-//    ia.setNoExtractedMethods(true);
-//    ia.setMethodOrder(InterfaceAttributes.METHOD_ORDER_ENCOUNTERED);
-//    ia.setAlphabetizeInterfaces(true);
-//    rs.addItem(ia, 0);
-//    rah.rearrangeDocument(getProject(), file, rs, doc);
-//    super.checkResultByFile("/com/wrq/rearranger/RearrangementResult23NNIANXME.java");
-//  }
-//
+  public void testInterfaceNoNameNotAlphabeticalNoExcludeMethodEncountered() throws Exception {
+    doTest('RearrangementTest23', 'RearrangementResult23NNNANXME') {
+      mySettings.keepGettersSettersTogether = false
+      interfaceRule.create {
+        precedingComment( '/**** Interface %IF% Header ****/' )
+        trailingComment( '/**** Interface %IF% Trailer ***/' )
+        setup( "don't group extracted methods": false, order: InterfaceAttributes.METHOD_ORDER_ENCOUNTERED, alphabetize: false )
+  } } }
+
+  public void testInterfaceNoNameNotAlphabeticalNoExcludeMethodInterfaceOrder() throws Exception {
+    doTest('RearrangementTest23', 'RearrangementResult23NNNANXMI') {
+      mySettings.keepGettersSettersTogether = false
+      interfaceRule.create {
+        precedingComment( '/**** Interface %IF% Header ****/' )
+        trailingComment( '/**** Interface %IF% Trailer ***/' )
+        setup( "don't group extracted methods": false, order: InterfaceAttributes.METHOD_ORDER_INTERFACE_ORDER, alphabetize: false )
+  } } }
+
+  public void testInterfaceByNameNotAlphabeticalNoExcludeMethodEncountered() throws Exception {
+    doTest('RearrangementTest23', 'RearrangementResult23BNNANXME') {
+      mySettings.keepGettersSettersTogether = false
+      interfaceRule.setup( "don't group extracted methods": true, order: InterfaceAttributes.METHOD_ORDER_ENCOUNTERED,
+                           alphabetize: false, name : 'IFace1'
+  ) } }
+
+  public void testInterfaceIsAlphabeticalNoExcludeMethodEncountered() throws Exception {
+    doTest('RearrangementTest23', 'RearrangementResult23NNIANXME') {
+      interfaceRule.create {
+        precedingComment( '/**** Interface %IF% Header ****/' )
+        trailingComment( '/**** Interface %IF% Trailer ***/' )
+        setup( "don't group extracted methods": true, order: InterfaceAttributes.METHOD_ORDER_ENCOUNTERED, alphabetize: true )
+      }
+    }
+    
+    //configureByFile("/com/wrq/rearranger/RearrangementTest23.java");
+    //final PsiFile file = getFile();
+    //final Document doc = PsiDocumentManager.getInstance(getProject()).getDocument(file);
+    //final RearrangerActionHandler rah = new RearrangerActionHandler();
+    //rs.setKeepGettersSettersTogether(false);
+    //InterfaceAttributes ia = new InterfaceAttributes();
+    //CommentRule cr = new CommentRule();
+    //cr.setCommentText("/**** Interface %IF% Header ****/");
+    //ia.setPrecedingComment(cr);
+    //cr = new CommentRule();
+    //cr.setCommentText("/**** Interface %IF% Trailer ***/");
+    //ia.setTrailingComment(cr);
+    //ia.setNoExtractedMethods(true);
+    //ia.setMethodOrder(InterfaceAttributes.METHOD_ORDER_ENCOUNTERED);
+    //ia.setAlphabetizeInterfaces(true);
+    //rs.addItem(ia, 0);
+    //rah.rearrangeDocument(getProject(), file, rs, doc);
+    //super.checkResultByFile("/com/wrq/rearranger/RearrangementResult23NNIANXME.java");
+  }
+
 //  public void testNPE24() throws Exception {
 //    // submitted by Nathan Brown.  Caused NPE in Rearranger plugin version 1.7.
 //    int itemIndex = 0;

@@ -1,6 +1,7 @@
 public class RearrangementTest23
   implements IFace2, IFace1
 {
+
   public int getY() {
     return 6;
   }
@@ -8,7 +9,6 @@ public class RearrangementTest23
   public int getX() {
     return getA() ? 5 : 3;
   }
-
   int method1() {
     return 4;
   }

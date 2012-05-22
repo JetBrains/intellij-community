@@ -18,6 +18,7 @@ import org.junit.Assert
 public abstract class AbstractRuleBuilder<T> extends BuilderSupport {
 
   @NotNull def RearrangerSettings settings
+  private boolean myRuleRegistered
   
   /**
    * Holds rule customization handlers in the form {@code 'property id -> closure'} where <code>'property id'</code>
@@ -31,9 +32,18 @@ public abstract class AbstractRuleBuilder<T> extends BuilderSupport {
   }
 
   @Override
+  protected Object getCurrent() {
+    if (!super.current) {
+      current = createRule()
+    }
+    super.current
+  }
+
+  @Override
   protected void nodeCompleted(Object parent, Object node) {
-    if (!parent && node) {
+    if (!myRuleRegistered) {
       registerRule(settings, node as T)
+      myRuleRegistered = true
     }
   }
 
@@ -43,12 +53,9 @@ public abstract class AbstractRuleBuilder<T> extends BuilderSupport {
 
   @Override
   protected Object createNode(Object name) {
-    if (name == 'create') {
-      return createRule()
-    }
     createNode(name, [:], [])
   }
-
+  
   @Override
   protected Object createNode(Object name, Object value) {
     createNode(name, [:], value)
@@ -61,6 +68,9 @@ public abstract class AbstractRuleBuilder<T> extends BuilderSupport {
 
   @Override
   protected Object createNode(Object name, Map attributes, Object value) {
+    if (!myHandlers.containsKey(name)) {
+      return current
+    }
     if (value) {
       for (i in [value].flatten()) {
         myHandlers[name](i, attributes, current)
@@ -70,7 +80,7 @@ public abstract class AbstractRuleBuilder<T> extends BuilderSupport {
       myHandlers[name](null, attributes, current)
     }
     
-    getCurrent()
+    current
   }
 
   @Nullable

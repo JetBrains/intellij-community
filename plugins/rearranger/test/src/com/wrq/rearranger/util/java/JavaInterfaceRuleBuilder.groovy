@@ -19,11 +19,17 @@ class JavaInterfaceRuleBuilder extends AbstractJavaRuleBuilder<InterfaceAttribut
       rule."$propertyName" = comment
     }
     
+    def nameHandler = createStringAttributeHandler('nameAttr')
+    
     registerHandler(RearrangerTestDsl.PRECEDING_COMMENT, { value, attributes, rule -> commentHandler(rule, value, 'precedingComment') })
     registerHandler(RearrangerTestDsl.TRAILING_COMMENT, { value, attributes, rule -> commentHandler(rule, value, 'trailingComment') })
     registerHandler(RearrangerTestDsl.SETUP, { value, attributes, rule -> 
       RearrangerTestUtil.setIf(RearrangerTestDsl.GROUP_EXTRACTED_METHODS, attributes, 'noExtractedMethods', rule)
       RearrangerTestUtil.setIf(RearrangerTestDsl.ORDER, attributes, 'methodOrder', rule)
+      RearrangerTestUtil.setIf(RearrangerTestDsl.ALPHABETIZE, attributes, 'alphabetizeInterfaces', rule)
+      if (attributes[RearrangerTestDsl.NAME.value]) {
+        nameHandler(attributes[RearrangerTestDsl.NAME.value], attributes, rule)
+      }
     })
   }
   
