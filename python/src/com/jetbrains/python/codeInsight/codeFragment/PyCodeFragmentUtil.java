@@ -264,7 +264,7 @@ public class PyCodeFragmentUtil {
       final PsiReference reference = element.getReference();
       if (reference != null) {
         final PsiElement resolved = reference.resolve();
-        if (resolved != null && ScopeUtil.getScopeOwner(resolved) == owner) {
+        if (resolved != null && ScopeUtil.getScopeOwner(resolved) == owner && !(owner instanceof PsiFile)) {
           result.add(element);
         }
       }
