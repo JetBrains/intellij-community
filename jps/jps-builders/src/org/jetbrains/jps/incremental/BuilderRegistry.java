@@ -56,7 +56,7 @@ public class BuilderRegistry {
     return Collections.unmodifiableList(myModuleLevelBuilders.get(category)); // todo
   }
 
-  public List<ModuleLevelBuilder> getAllModuleLevelBuilders() {
+  public List<ModuleLevelBuilder> getModuleLevelBuilders() {
     return ContainerUtil.concat(myModuleLevelBuilders.values());
   }
 

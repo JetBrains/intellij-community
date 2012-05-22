@@ -135,8 +135,8 @@ public class AndroidDexBuilder extends ProjectLevelBuilder {
       else if (facet.isRunProguard()) {
         final File proguardCfgFile = facet.getProguardConfigFile();
         if (proguardCfgFile == null) {
-          context.processMessage(
-            new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR, "Cannot find proguard config file for module " + module.getName()));
+          context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR,
+                                                     AndroidJpsBundle.message("android.jps.errors.cannot.find.proguard.cfg", module.getName())));
           success = false;
           continue;
         }
@@ -199,7 +199,7 @@ public class AndroidDexBuilder extends ProjectLevelBuilder {
 
         context.processMessage(new ProgressMessage(AndroidJpsBundle.message("android.jps.progress.dex", module.getName())));
 
-        if (!runDex(platform, dexOutputDir.getPath(), files, context)) {
+        if (!runDex(platform, dexOutputDir.getPath(), files, context, module.getName())) {
           success = false;
           dexStateStorage.update(module.getName(), null);
         }
@@ -228,13 +228,15 @@ public class AndroidDexBuilder extends ProjectLevelBuilder {
   private static boolean runDex(@NotNull AndroidPlatform platform,
                                 @NotNull String outputDir,
                                 @NotNull String[] compileTargets,
-                                @NotNull CompileContext context) throws IOException {
+                                @NotNull CompileContext context,
+                                @NotNull String moduleName) throws IOException {
     @SuppressWarnings("deprecation")
     final String dxJarPath = FileUtil.toSystemDependentName(platform.getTarget().getPath(IAndroidTarget.DX_JAR));
 
     final File dxJar = new File(dxJarPath);
     if (!dxJar.isFile()) {
-      context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR, "Cannot find file " + dxJarPath));
+      context.processMessage(
+        new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR, AndroidJpsBundle.message("android.jps.cannot.find.file", dxJarPath)));
       return false;
     }
 
@@ -253,7 +255,7 @@ public class AndroidDexBuilder extends ProjectLevelBuilder {
     final File outFile = new File(outFilePath);
     if (outFile.exists() && !outFile.delete()) {
       context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.WARNING,
-                                                 AndroidJpsBundle.message("android.jps.errors.cannot.delete.file", outFilePath)));
+                                                 AndroidJpsBundle.message("android.jps.cannot.delete.file", outFilePath)));
     }
 
     // todo: pass additional vm params and max heap size from settings
@@ -273,7 +275,7 @@ public class AndroidDexBuilder extends ProjectLevelBuilder {
 
     AndroidCommonUtils.handleDexCompilationResult(process, outFilePath, messages);
 
-    AndroidJpsUtil.addMessages(context, messages, BUILDER_NAME);
+    AndroidJpsUtil.addMessages(context, messages, BUILDER_NAME, moduleName);
 
     return messages.get(AndroidCompilerMessageKind.ERROR).size() == 0;
   }
@@ -291,7 +293,8 @@ public class AndroidDexBuilder extends ProjectLevelBuilder {
 
     final File proguardCfgFile = new File(proguardCfgPath);
     if (!proguardCfgFile.exists()) {
-      context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR, "Cannot find file " + proguardCfgPath));
+      context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR,
+                                                 AndroidJpsBundle.message("android.jps.cannot.find.file", proguardCfgPath)));
       return false;
     }
 
@@ -341,7 +344,8 @@ public class AndroidDexBuilder extends ProjectLevelBuilder {
     final File logsDir = new File(logsDirOsPath);
     if (!logsDir.exists()) {
       if (!logsDir.mkdirs()) {
-        context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR, "Cannot create directory " + logsDirOsPath));
+        context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR,
+                                                   AndroidJpsBundle.message("android.jps.cannot.create.directory", logsDirOsPath)));
         return false;
       }
     }
@@ -352,7 +356,7 @@ public class AndroidDexBuilder extends ProjectLevelBuilder {
       AndroidCommonUtils.launchProguard(platform.getTarget(), platform.getSdkToolsRevision(), platform.getSdk().getSdkPath(),
                                         proguardCfgPath, includeSystemProguardCfg, inputJarOsPath, externalJarOsPaths, outputJarPath,
                                         logsDirOsPath);
-    AndroidJpsUtil.addMessages(context, messages, BUILDER_NAME);
+    AndroidJpsUtil.addMessages(context, messages, BUILDER_NAME, module.getName());
     final boolean success = messages.get(AndroidCompilerMessageKind.ERROR).isEmpty();
 
     proguardStateStorage.update(module.getName(), success ? newState : null);

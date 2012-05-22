@@ -17,13 +17,15 @@ package com.intellij.android.designer.model;
 
 import com.intellij.android.designer.propertyTable.FragmentProperty;
 import com.intellij.android.designer.propertyTable.IdProperty;
-import com.intellij.android.designer.propertyTable.editors.FragmentDialog;
+import com.intellij.android.designer.propertyTable.editors.ChooseClassDialog;
 import com.intellij.android.designer.propertyTable.editors.ResourceEditor;
+import com.intellij.designer.model.RadComponent;
 import com.intellij.designer.propertyTable.Property;
 import com.intellij.designer.propertyTable.editors.TextEditor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.ui.DialogWrapper;
 import org.jetbrains.android.dom.attrs.AttributeFormat;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -37,12 +39,10 @@ public class RadFragment extends RadViewComponent implements IConfigurableCompon
     new FragmentProperty("name", new ResourceEditor(null, Collections.<AttributeFormat>emptySet(), null) {
       @Override
       protected void showDialog() {
-        Module module = myRootComponent.getClientProperty(ModelParser.MODULE_KEY);
-        FragmentDialog dialog = new FragmentDialog(module);
-        dialog.show();
+        String fragment = chooseFragment(myRootComponent);
 
-        if (dialog.getExitCode() == DialogWrapper.OK_EXIT_CODE) {
-          setValue(dialog.getFragmentName());
+        if (fragment != null) {
+          setValue(fragment);
         }
       }
     });
@@ -59,16 +59,28 @@ public class RadFragment extends RadViewComponent implements IConfigurableCompon
   }
 
   @Override
-  public void configure(Module module) throws Exception {
-    FragmentDialog dialog = new FragmentDialog(module);
-    dialog.show();
-
-    if (dialog.getExitCode() == DialogWrapper.OK_EXIT_CODE) {
-      setClientProperty(NAME_KEY, dialog.getFragmentName());
+  public void configure(RadComponent rootComponent) throws Exception {
+    String fragment = chooseFragment(rootComponent);
+    if (fragment != null) {
+      setClientProperty(NAME_KEY, fragment);
     }
     else {
       throw new Exception();
     }
+  }
+
+  @Nullable
+  private static String chooseFragment(RadComponent rootComponent) {
+    Module module = rootComponent.getClientProperty(ModelParser.MODULE_KEY);
+    ChooseClassDialog dialog =
+      new ChooseClassDialog(module, "Fragment Dialog", true, "android.app.Fragment", "android.support.v4.app.Fragment");
+    dialog.show();
+
+    if (dialog.getExitCode() == DialogWrapper.OK_EXIT_CODE) {
+      return dialog.getClassName();
+    }
+
+    return null;
   }
 
   @Override

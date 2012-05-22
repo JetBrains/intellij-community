@@ -13,17 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.platform;
+package com.intellij.codeInsight.intention;
 
-import org.jetbrains.annotations.NotNull;
+import com.intellij.codeInsight.daemon.LightIntentionActionTestCase;
 
 /**
- * Inheritors of {@link DirectoryProjectGenerator} should implement this interface to be filtered out in some IDE.
- *
- * @author Sergey Simonchik
+ * @author ven
  */
-public interface DirectoryProjectGeneratorProductAware {
+public class MoveInitializerToSetUpMethodActionTest extends LightIntentionActionTestCase {
+  public void test() throws Exception { doAllTests(); }
 
-  boolean isSuitableForProduct(@NotNull String productName);
 
+
+  @Override
+  protected String getBasePath() {
+    return "/codeInsight/daemonCodeAnalyzer/quickFix/moveInitializerToSetUp";
+  }
 }

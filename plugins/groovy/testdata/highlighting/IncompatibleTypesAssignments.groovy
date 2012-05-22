@@ -1,6 +1,6 @@
 class X{
   int method1(Date date) {
-    <warning descr="Cannot assign 'Date' to 'int'">return date</warning>;
+    return <warning descr="Cannot assign 'Date' to 'int'">date</warning>;
   }
 
   int method2(Date date) {

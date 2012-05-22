@@ -14,4 +14,14 @@
     </component>
   </project-components>
 
+  <actions>
+    <group id="UIDesigner.ComponentTreePopupMenu">
+      <reference ref="$Cut"/>
+      <reference ref="$Copy"/>
+      <reference ref="$Paste"/>
+      <separator/>
+      <reference ref="$Delete"/>
+    </group>
+  </actions>
+
 </idea-plugin>

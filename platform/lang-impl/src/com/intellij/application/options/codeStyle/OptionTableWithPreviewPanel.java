@@ -75,16 +75,19 @@ public abstract class OptionTableWithPreviewPanel extends MultilanguageCodeStyle
     initTables();
 
     myTreeTable = createOptionsTree(getSettings());
-    JBScrollPane scrollPane = new JBScrollPane(myTreeTable);
-    scrollPane.setPreferredSize(new Dimension(400, -1));
-    scrollPane.setMinimumSize(new Dimension(400, -1));
+    JBScrollPane scrollPane = new JBScrollPane(myTreeTable) {
+      @Override
+      public Dimension getMinimumSize() {
+        return super.getPreferredSize();
+      }
+    };
     myPanel.add(scrollPane
-      , new GridBagConstraints(0, 0, 1, 1, 0, 1, GridBagConstraints.WEST, GridBagConstraints.BOTH,
-                                       new Insets(0, 0, 0, 5), 0, 0));
+      , new GridBagConstraints(0, 0, 1, 1, 0, 1, GridBagConstraints.CENTER, GridBagConstraints.BOTH,
+                                       new Insets(0, 0, 0, 8), 0, 0));
 
     final JPanel previewPanel = createPreviewPanel();
     myPanel.add(previewPanel,
-                new GridBagConstraints(1, 0, 1, 1, 1, 1, GridBagConstraints.WEST, GridBagConstraints.BOTH,
+                new GridBagConstraints(1, 0, 1, 1, 1, 1, GridBagConstraints.CENTER, GridBagConstraints.BOTH,
                                        new Insets(0, 0, 0, 0), 0, 0));
 
     installPreviewPanel(previewPanel);

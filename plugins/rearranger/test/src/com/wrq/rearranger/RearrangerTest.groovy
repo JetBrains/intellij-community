@@ -43,6 +43,7 @@ class RearrangerTest extends LightCodeInsightFixtureTestCase {
   private JavaFieldRuleBuilder      fieldRule
   private JavaMethodRuleBuilder     methodRule
   private CommentRuleBuilder        commentRule
+  private JavaSpacingRule           spacingRule
 
   @Override
   protected String getBasePath() {
@@ -65,6 +66,7 @@ class RearrangerTest extends LightCodeInsightFixtureTestCase {
     fieldRule = new JavaFieldRuleBuilder(settings: mySettings)
     methodRule = new JavaMethodRuleBuilder(settings: mySettings)
     commentRule = new CommentRuleBuilder(settings: mySettings)
+    spacingRule = new JavaSpacingRule(settings: mySettings)
   }
 
   public final void testNoRearrangement() throws Exception {
@@ -507,306 +509,155 @@ class RearrangerTest extends LightCodeInsightFixtureTestCase {
       methodRule.create { sort( SortType.BY_NAME ) }
   } }
 
-//  public final void testKeepOverloadsTogetherOriginalOrder() throws Exception {
-//    configureByFile("/com/wrq/rearranger/RearrangementTest19.java");
-//    final PsiFile file = getFile();
-//    final Document doc = PsiDocumentManager.getInstance(getProject()).getDocument(file);
-//    final RearrangerActionHandler rah = new RearrangerActionHandler();
-//    rs.getExtractedMethodsSettings().setMoveExtractedMethods(false);
-//    rs.setKeepOverloadedMethodsTogether(true);
-//    rs.setOverloadedOrder(RearrangerSettings.OVERLOADED_ORDER_RETAIN_ORIGINAL);
-//    rah.rearrangeDocument(getProject(), file, rs, doc);
-//    super.checkResultByFile("/com/wrq/rearranger/RearrangementResult19A.java");
-//  }
-//
-//  public final void testKeepOverloadsTogetherAscendingOrder() throws Exception {
-//    configureByFile("/com/wrq/rearranger/RearrangementTest19.java");
-//    final PsiFile file = getFile();
-//    final Document doc = PsiDocumentManager.getInstance(getProject()).getDocument(file);
-//    final RearrangerActionHandler rah = new RearrangerActionHandler();
-//    rs.getExtractedMethodsSettings().setMoveExtractedMethods(false);
-//    rs.setKeepOverloadedMethodsTogether(true);
-//    rs.setOverloadedOrder(RearrangerSettings.OVERLOADED_ORDER_ASCENDING_PARAMETERS);
-//    rah.rearrangeDocument(getProject(), file, rs, doc);
-//    super.checkResultByFile("/com/wrq/rearranger/RearrangementResult19B.java");
-//  }
-//
-//  public final void testKeepOverloadsTogetherDescendingOrder() throws Exception {
-//    configureByFile("/com/wrq/rearranger/RearrangementTest19.java");
-//    final PsiFile file = getFile();
-//    final Document doc = PsiDocumentManager.getInstance(getProject()).getDocument(file);
-//    final RearrangerActionHandler rah = new RearrangerActionHandler();
-//    rs.getExtractedMethodsSettings().setMoveExtractedMethods(false);
-//    rs.setKeepOverloadedMethodsTogether(true);
-//    rs.setOverloadedOrder(RearrangerSettings.OVERLOADED_ORDER_DESCENDING_PARAMETERS);
-//    rah.rearrangeDocument(getProject(), file, rs, doc);
-//    super.checkResultByFile("/com/wrq/rearranger/RearrangementResult19C.java");
-//  }
-//
-//  public final void testInnerClassReferenceToChild() throws Exception {
-//    configureByFile("/com/wrq/rearranger/RearrangementTest20.java");
-//    final PsiFile file = getFile();
-//    final Document doc = PsiDocumentManager.getInstance(getProject()).getDocument(file);
-//    final RearrangerActionHandler rah = new RearrangerActionHandler();
-//    rs.getExtractedMethodsSettings().setMoveExtractedMethods(true);
-//    rah.rearrangeDocument(getProject(), file, rs, doc);
-//    super.checkResultByFile("/com/wrq/rearranger/RearrangementResult20.java");
-//  }
-//
-//  public final void testMultipleFieldDecl() throws Exception {
-//    configureByFile("/com/wrq/rearranger/RearrangementTest21.java");
-//    final PsiFile file = getFile();
-//    final Document doc = PsiDocumentManager.getInstance(getProject()).getDocument(file);
-//    final RearrangerActionHandler rah = new RearrangerActionHandler();
-//    FieldAttributes fa = new FieldAttributes();
-//    fa.getSortAttr().setByName(true);
-//    rs.addItem(fa, 0);
-//    rah.rearrangeDocument(getProject(), file, rs, doc);
-//    super.checkResultByFile("/com/wrq/rearranger/RearrangementResult21.java");
-//  }
-//
-//  public final void testRemoveBlankLines() throws Exception {
-//    configureByFile("/com/wrq/rearranger/SpaceTest1.java");
-//    final PsiFile file = getFile();
-//    final Document doc = PsiDocumentManager.getInstance(getProject()).getDocument(file);
-//    final RearrangerActionHandler rah = new RearrangerActionHandler();
-//    rs.getAfterClassLBrace().setForce(true);
-//    rs.getAfterClassLBrace().setnBlankLines(0);
-//    rs.getAfterMethodLBrace().setForce(true);
-//    rs.getAfterMethodLBrace().setnBlankLines(0);
-//    rs.getBeforeMethodRBrace().setForce(true);
-//    rs.getBeforeMethodRBrace().setnBlankLines(0);
-//    rs.getAfterMethodRBrace().setForce(true);
-//    rs.getAfterMethodRBrace().setnBlankLines(0);
-//    rs.getBeforeClassRBrace().setForce(true);
-//    rs.getBeforeClassRBrace().setnBlankLines(0);
-//    rs.getAfterClassRBrace().setForce(true);
-//    rs.getAfterClassRBrace().setnBlankLines(0);
-//    rs.getNewlinesAtEOF().setForce(true);
-//    rs.getNewlinesAtEOF().setnBlankLines(1);
-//    rs.setRemoveBlanksInsideCodeBlocks(true);
-//    rah.rearrangeDocument(getProject(), file, rs, doc);
-//    super.checkResultByFile("/com/wrq/rearranger/SpaceResult1.java");
-//  }
-//
-//  public final void testAddBlankLines() throws Exception {
-//    configureByFile("/com/wrq/rearranger/SpaceTest2.java");
-//    final PsiFile file = getFile();
-//    final Document doc = PsiDocumentManager.getInstance(getProject()).getDocument(file);
-//    final RearrangerActionHandler rah = new RearrangerActionHandler();
-//    rs.getAfterClassLBrace().setForce(true);
-//    rs.getAfterClassLBrace().setnBlankLines(2);
-//    rs.getAfterMethodLBrace().setForce(true);
-//    rs.getAfterMethodLBrace().setnBlankLines(3);
-//    rs.getBeforeMethodRBrace().setForce(true);
-//    rs.getBeforeMethodRBrace().setnBlankLines(2);
-//    rs.getAfterMethodRBrace().setForce(true);
-//    rs.getAfterMethodRBrace().setnBlankLines(1);
-//    rs.getBeforeClassRBrace().setForce(true);
-//    rs.getBeforeClassRBrace().setnBlankLines(3);
-//    rs.getAfterClassRBrace().setForce(true);
-//    rs.getAfterClassRBrace().setnBlankLines(4);
-//    rs.getNewlinesAtEOF().setForce(true);
-//    rs.getNewlinesAtEOF().setnBlankLines(1);
-//    rs.setRemoveBlanksInsideCodeBlocks(true);
-//    rah.rearrangeDocument(getProject(), file, rs, doc);
-//    super.checkResultByFile("/com/wrq/rearranger/SpaceResult2.java");
-//  }
-//
-//  public final void testInnerClassBlankLines() throws Exception {
-//    configureByFile("/com/wrq/rearranger/SpaceTest4.java");
-//    final PsiFile file = getFile();
-//    final Document doc = PsiDocumentManager.getInstance(getProject()).getDocument(file);
-//    final RearrangerActionHandler rah = new RearrangerActionHandler();
-//    rs.getAfterClassLBrace().setForce(true);
-//    rs.getAfterClassLBrace().setnBlankLines(0);
-//    rs.getAfterMethodLBrace().setForce(true);
-//    rs.getAfterMethodLBrace().setnBlankLines(0);
-//    rs.getBeforeMethodRBrace().setForce(true);
-//    rs.getBeforeMethodRBrace().setnBlankLines(0);
-//    rs.getAfterMethodRBrace().setForce(true);
-//    rs.getAfterMethodRBrace().setnBlankLines(1);
-//    rs.getBeforeClassRBrace().setForce(true);
-//    rs.getBeforeClassRBrace().setnBlankLines(1);
-//    rs.getAfterClassRBrace().setForce(true);
-//    rs.getAfterClassRBrace().setnBlankLines(1);
-//    rs.getNewlinesAtEOF().setForce(true);
-//    rs.getNewlinesAtEOF().setnBlankLines(1);
-//    rs.setRemoveBlanksInsideCodeBlocks(true);
-//    rah.rearrangeDocument(getProject(), file, rs, doc);
-//    super.checkResultByFile("/com/wrq/rearranger/SpaceResult4.java");
-//  }
-//
-//  public void testInnerClassSpacing() throws Exception {
-//    configureByFile("/com/wrq/rearranger/SpaceTest5.java");
-//    final PsiFile file = getFile();
-//    final Document doc = PsiDocumentManager.getInstance(getProject()).getDocument(file);
-//    final File physFile = new File(InteractiveTest.DEFAULT_CONFIGURATION);
-//    rs = RearrangerSettings.getSettingsFromFile(physFile);
-//    rs.setAskBeforeRearranging(false);
-//    rs.getAfterClassRBrace().setnBlankLines(2);
-//    rs.getAfterClassRBrace().setForce(true);
-//    rs.getNewlinesAtEOF().setForce(true);
-//    rs.getNewlinesAtEOF().setnBlankLines(3);
-//    final RearrangerActionHandler rah = new RearrangerActionHandler();
-//    rah.rearrangeDocument(getProject(), file, rs, doc);
-//    super.checkResultByFile("/com/wrq/rearranger/SpaceResult5.java");
-//  }
-//
-//  public void testNoRearrangementInnerClass() throws Exception {
-//    configureByFile("/com/wrq/rearranger/NoRearrangeInnerClassTest.java");
-//    final PsiFile file = getFile();
-//    final Document doc = PsiDocumentManager.getInstance(getProject()).getDocument(file);
-//    final File settingsFile = new File(InteractiveTest.DEFAULT_CONFIGURATION_ROOT +
-//                                       "/test/testData/com/wrq/rearranger/NoRearrangementInnerClassCfg.xml");
-//    rs = RearrangerSettings.getSettingsFromFile(settingsFile);
-//    rs.setAskBeforeRearranging(false);
-//    final RearrangerActionHandler rah = new RearrangerActionHandler();
-//    rah.rearrangeDocument(getProject(), file, rs, doc);
-//    super.checkResultByFile("/com/wrq/rearranger/NoRearrangeInnerClassResult.java");
-//  }
-//
-//  public void testSpacingWithTrailingWhitespace() throws Exception {
-//    configureByFile("/com/wrq/rearranger/SpaceTest6.java");
-//    final PsiFile file = getFile();
-//    final Document doc = PsiDocumentManager.getInstance(getProject()).getDocument(file);
-//    rs = RearrangerSettings.getSettingsFromFile(new File(InteractiveTest.DEFAULT_CONFIGURATION));
-//    rs.setAskBeforeRearranging(false);
-//    rs.getNewlinesAtEOF().setForce(true);
-//    rs.getNewlinesAtEOF().setnBlankLines(1);
-//    final RearrangerActionHandler rah = new RearrangerActionHandler();
-//    rah.rearrangeDocument(getProject(), file, rs, doc);
-//    super.checkResultByFile("/com/wrq/rearranger/SpaceResult6.java");
-//  }
-//
-//  public void testSpacingJoinLineBug() throws Exception {
-//    configureByFile("/com/wrq/rearranger/SpaceTest7.java");
-//    final PsiFile file = getFile();
-//    final Document doc = PsiDocumentManager.getInstance(getProject()).getDocument(file);
-//    File settingsFile = new File(InteractiveTest.DEFAULT_CONFIGURATION_ROOT +
-//                                 "/test/testData/com/wrq/rearranger/SpaceTest7cfg.xml");
-//    rs = RearrangerSettings.getSettingsFromFile(settingsFile);
-//    rs.setAskBeforeRearranging(false);
-//    final RearrangerActionHandler rah = new RearrangerActionHandler();
-//    rah.rearrangeDocument(getProject(), file, rs, doc);
-//    super.checkResultByFile("/com/wrq/rearranger/SpaceResult7.java");
-//  }
-//
-//  /**
-//   * Submitted by Brian Buckley.
-//   *
-//   * @throws Exception test exception
-//   */
-//  public void testSpacingConflictingSettingBug() throws Exception {
-//    configureByFile("/com/wrq/rearranger/SpaceTest8.java");
-//    final PsiFile file = getFile();
-//    final Document doc = PsiDocumentManager.getInstance(getProject()).getDocument(file);
-//    rs = RearrangerSettings.getSettingsFromFile(new File(InteractiveTest.DEFAULT_CONFIGURATION));
-//    rs.setAskBeforeRearranging(false);
-//    rs.getAfterClassLBrace().setForce(true);
-//    rs.getAfterClassLBrace().setnBlankLines(0);
-//    rs.getBeforeMethodLBrace().setForce(true);
-//    rs.getBeforeMethodLBrace().setnBlankLines(1);
-//    rs.getNewlinesAtEOF().setForce(true);
-//    rs.getNewlinesAtEOF().setnBlankLines(1);
-//    final RearrangerActionHandler rah = new RearrangerActionHandler();
-//    rah.rearrangeDocument(getProject(), file, rs, doc);
-//    super.checkResultByFile("/com/wrq/rearranger/SpaceResult8.java");
-//  }
-//
-//  public void testGetPrefixImmaterial() throws Exception {
-//    configureByFile("/com/wrq/rearranger/GetterDefinitionTest.java");
-//    final PsiFile file = getFile();
-//    final Document doc = PsiDocumentManager.getInstance(getProject()).getDocument(file);
-//    final RearrangerActionHandler rah = new RearrangerActionHandler();
-//    MethodAttributes ma = new MethodAttributes();
-//    GetterSetterDefinition gsd = ma.getGetterSetterDefinition();
-//    rs.addItem(ma, 0);
-//    ma.setGetterSetterMethodType(true);
-//    gsd.setGetterNameCriterion(GetterSetterDefinition.GETTER_NAME_CORRECT_PREFIX);
-//    gsd.setGetterBodyCriterion(GetterSetterDefinition.GETTER_BODY_IMMATERIAL);
-//    rah.rearrangeDocument(getProject(), file, rs, doc);
-//    super.checkResultByFile("/com/wrq/rearranger/GetPrefixImmaterialResult.java");
-//  }
-//
-//  public void testGetPrefixReturns() throws Exception {
-//    configureByFile("/com/wrq/rearranger/GetterDefinitionTest.java");
-//    final PsiFile file = getFile();
-//    final Document doc = PsiDocumentManager.getInstance(getProject()).getDocument(file);
-//    final RearrangerActionHandler rah = new RearrangerActionHandler();
-//    MethodAttributes ma = new MethodAttributes();
-//    GetterSetterDefinition gsd = ma.getGetterSetterDefinition();
-//    rs.addItem(ma, 0);
-//    ma.setGetterSetterMethodType(true);
-//    gsd.setGetterNameCriterion(GetterSetterDefinition.GETTER_NAME_CORRECT_PREFIX);
-//    gsd.setGetterBodyCriterion(GetterSetterDefinition.GETTER_BODY_RETURNS);
-//    rah.rearrangeDocument(getProject(), file, rs, doc);
-//    super.checkResultByFile("/com/wrq/rearranger/GetPrefixReturnsResult.java");
-//  }
-//
-//  public void testGetPrefixReturnsField() throws Exception {
-//    configureByFile("/com/wrq/rearranger/GetterDefinitionTest.java");
-//    final PsiFile file = getFile();
-//    final Document doc = PsiDocumentManager.getInstance(getProject()).getDocument(file);
-//    final RearrangerActionHandler rah = new RearrangerActionHandler();
-//    MethodAttributes ma = new MethodAttributes();
-//    GetterSetterDefinition gsd = ma.getGetterSetterDefinition();
-//    rs.addItem(ma, 0);
-//    ma.setGetterSetterMethodType(true);
-//    gsd.setGetterNameCriterion(GetterSetterDefinition.GETTER_NAME_CORRECT_PREFIX);
-//    gsd.setGetterBodyCriterion(GetterSetterDefinition.GETTER_BODY_RETURNS_FIELD);
-//    rah.rearrangeDocument(getProject(), file, rs, doc);
-//    super.checkResultByFile("/com/wrq/rearranger/GetPrefixReturnsFieldResult.java");
-//  }
-//
-//  public void testGetFieldReturns() throws Exception {
-//    configureByFile("/com/wrq/rearranger/GetterDefinitionTest.java");
-//    final PsiFile file = getFile();
-//    final Document doc = PsiDocumentManager.getInstance(getProject()).getDocument(file);
-//    final RearrangerActionHandler rah = new RearrangerActionHandler();
-//    MethodAttributes ma = new MethodAttributes();
-//    GetterSetterDefinition gsd = ma.getGetterSetterDefinition();
-//    rs.addItem(ma, 0);
-//    ma.setGetterSetterMethodType(true);
-//    gsd.setGetterNameCriterion(GetterSetterDefinition.GETTER_NAME_MATCHES_FIELD);
-//    gsd.setGetterBodyCriterion(GetterSetterDefinition.GETTER_BODY_RETURNS);
-//    rah.rearrangeDocument(getProject(), file, rs, doc);
-//    super.checkResultByFile("/com/wrq/rearranger/GetFieldReturnsResult.java");
-//  }
-//
-//  public void testGetFieldReturnsField() throws Exception {
-//    configureByFile("/com/wrq/rearranger/GetterDefinitionTest.java");
-//    final PsiFile file = getFile();
-//    final Document doc = PsiDocumentManager.getInstance(getProject()).getDocument(file);
-//    final RearrangerActionHandler rah = new RearrangerActionHandler();
-//    MethodAttributes ma = new MethodAttributes();
-//    GetterSetterDefinition gsd = ma.getGetterSetterDefinition();
-//    rs.addItem(ma, 0);
-//    ma.setGetterSetterMethodType(true);
-//    gsd.setGetterNameCriterion(GetterSetterDefinition.GETTER_NAME_MATCHES_FIELD);
-//    gsd.setGetterBodyCriterion(GetterSetterDefinition.GETTER_BODY_RETURNS_FIELD);
-//    rah.rearrangeDocument(getProject(), file, rs, doc);
-//    super.checkResultByFile("/com/wrq/rearranger/GetFieldReturnsFieldResult.java");
-//  }
-//
-//  public void testSpecialGS() throws Exception {
-//    configureByFile("/com/wrq/rearranger/RearrangementTest22.java");
-//    final PsiFile file = getFile();
-//    final Document doc = PsiDocumentManager.getInstance(getProject()).getDocument(file);
-//    final RearrangerActionHandler rah = new RearrangerActionHandler();
-//    MethodAttributes ma = new MethodAttributes();
-//    GetterSetterDefinition gsd = ma.getGetterSetterDefinition();
-//    rs.addItem(ma, 0);
-//    ma.setGetterSetterMethodType(true);
-//    gsd.setGetterNameCriterion(GetterSetterDefinition.GETTER_NAME_CORRECT_PREFIX);
-//    gsd.setGetterBodyCriterion(GetterSetterDefinition.GETTER_BODY_RETURNS);
-//    gsd.setSetterBodyCriterion(GetterSetterDefinition.SETTER_BODY_IMMATERIAL);
-//    gsd.setSetterNameCriterion(GetterSetterDefinition.SETTER_NAME_CORRECT_PREFIX);
-//    rs.setKeepGettersSettersTogether(true);
-//    rah.rearrangeDocument(getProject(), file, rs, doc);
-//    super.checkResultByFile("/com/wrq/rearranger/RearrangementResult22.java");
-//  }
-//
+  public final void testKeepOverloadsTogetherOriginalOrder() throws Exception {
+    doTest('RearrangementTest19', 'RearrangementResult19A') {
+      mySettings.extractedMethodsSettings.moveExtractedMethods = false
+      mySettings.keepOverloadedMethodsTogether = true
+      mySettings.overloadedOrder = RearrangerSettings.OVERLOADED_ORDER_RETAIN_ORIGINAL
+  } }
+
+  public final void testKeepOverloadsTogetherAscendingOrder() throws Exception {
+    doTest('RearrangementTest19', 'RearrangementResult19B') {
+      mySettings.extractedMethodsSettings.moveExtractedMethods = false
+      mySettings.keepOverloadedMethodsTogether = true
+      mySettings.overloadedOrder = RearrangerSettings.OVERLOADED_ORDER_ASCENDING_PARAMETERS
+  } }
+
+  public final void testKeepOverloadsTogetherDescendingOrder() throws Exception {
+    doTest('RearrangementTest19', 'RearrangementResult19C') {
+      mySettings.extractedMethodsSettings.moveExtractedMethods = false
+      mySettings.keepOverloadedMethodsTogether = true
+      mySettings.overloadedOrder = RearrangerSettings.OVERLOADED_ORDER_DESCENDING_PARAMETERS
+  } }
+
+  public final void testInnerClassReferenceToChild() throws Exception {
+    doTest('RearrangementTest20', 'RearrangementResult20') {
+      mySettings.extractedMethodsSettings.moveExtractedMethods = true
+  } }
+
+  public final void testMultipleFieldDecl() throws Exception {
+    doTest('RearrangementTest21', 'RearrangementResult21') {
+      fieldRule.create { sort( SortType.BY_NAME ) }
+  } }
+
+  public final void testRemoveBlankLines() throws Exception {
+    doTest('SpaceTest1', 'SpaceResult1') {
+      spacingRule.create {
+        spacing(anchor: [ SpacingAnchor.AFTER_CLASS_LBRACE, SpacingAnchor.AFTER_METHOD_LBRACE, SpacingAnchor.BEFORE_METHOD_RBRACE,
+                          SpacingAnchor.BEFORE_CLASS_RBRACE, SpacingAnchor.AFTER_CLASS_RBRACE ],
+                lines: 0)
+      }
+      spacingRule.create {
+        spacing( anchor: SpacingAnchor.EOF, lines:  1 )
+      }
+      mySettings.removeBlanksInsideCodeBlocks = true
+  } }
+
+  public final void testAddBlankLines() throws Exception {
+    doTest('SpaceTest2', 'SpaceResult2') {
+      spacingRule.create {
+        spacing( anchor: [ SpacingAnchor.AFTER_METHOD_RBRACE, SpacingAnchor.EOF ], lines: 1)
+        spacing(anchor: [ SpacingAnchor.AFTER_CLASS_LBRACE, SpacingAnchor.AFTER_METHOD_LBRACE ], lines: 2)
+        spacing( anchor: SpacingAnchor.AFTER_CLASS_RBRACE, lines: 4)
+      }
+      mySettings.removeBlanksInsideCodeBlocks = true
+  } }
+
+  public final void testInnerClassBlankLines() throws Exception {
+    doTest('SpaceTest4', 'SpaceResult4') {
+      spacingRule.create {
+        spacing(anchor: [ SpacingAnchor.AFTER_CLASS_LBRACE, SpacingAnchor.AFTER_METHOD_LBRACE, SpacingAnchor.BEFORE_METHOD_RBRACE ],
+                lines: 0)
+        spacing(anchor: [ SpacingAnchor.AFTER_METHOD_RBRACE, SpacingAnchor.EOF ],
+                lines: 1)
+      }
+      mySettings.removeBlanksInsideCodeBlocks = true
+  } }
+
+  public void testInnerClassSpacing() throws Exception {
+    doTest('SpaceTest5', 'SpaceResult5') {
+      spacingRule.create {
+        spacing( anchor: SpacingAnchor.AFTER_CLASS_RBRACE, lines: 2 )
+        spacing( anchor: SpacingAnchor.EOF, lines: 3 )
+  } } }
+
+  public void testSpacingWithTrailingWhitespace() throws Exception {
+    doTest('SpaceTest6', 'SpaceResult6') {
+      spacingRule.create { spacing( anchor: SpacingAnchor.EOF, lines: 1 ) }
+  } }
+
+  /**
+   * Submitted by Brian Buckley.
+   *
+   * @throws Exception test exception
+   */
+  public void testSpacingConflictingSettingBug() throws Exception {
+    doTest('SpaceTest8', 'SpaceResult8') {
+      spacingRule.create { spacing( anchor: SpacingAnchor.AFTER_CLASS_LBRACE, lines: 0) }
+      spacingRule.create {
+        spacing( anchor: [ SpacingAnchor.BEFORE_METHOD_LBRACE, SpacingAnchor.EOF ], lines: 1)
+  } } }
+
+  public void testGetPrefixImmaterial() throws Exception {
+    doTest('GetterDefinitionTest', 'GetPrefixImmaterialResult') {
+      methodRule.create {
+        target( MethodType.GETTER_OR_SETTER )
+        getterCriteria(
+          name: GetterSetterDefinition.GETTER_NAME_CORRECT_PREFIX,
+          body: GetterSetterDefinition.GETTER_BODY_IMMATERIAL
+  ) } } }
+
+  public void testGetPrefixReturns() throws Exception {
+    doTest('GetterDefinitionTest', 'GetPrefixReturnsResult') {
+      methodRule.create {
+        target( MethodType.GETTER_OR_SETTER )
+        getterCriteria(
+                name: GetterSetterDefinition.GETTER_NAME_CORRECT_PREFIX,
+                body: GetterSetterDefinition.GETTER_BODY_RETURNS
+  ) } } }
+
+  public void testGetPrefixReturnsField() throws Exception {
+    doTest('GetterDefinitionTest', 'GetPrefixReturnsFieldResult') {
+      methodRule.create {
+        target( MethodType.GETTER_OR_SETTER )
+        getterCriteria(
+                name: GetterSetterDefinition.GETTER_NAME_CORRECT_PREFIX,
+                body: GetterSetterDefinition.GETTER_BODY_RETURNS_FIELD
+    ) } } }
+
+  public void testGetFieldReturns() throws Exception {
+    doTest('GetterDefinitionTest', 'GetFieldReturnsResult') {
+      methodRule.create {
+        target( MethodType.GETTER_OR_SETTER )
+        getterCriteria(
+          name: GetterSetterDefinition.GETTER_NAME_MATCHES_FIELD,
+          body: GetterSetterDefinition.GETTER_BODY_RETURNS
+  ) } } }
+
+  public void testGetFieldReturnsField() throws Exception {
+    doTest('GetterDefinitionTest', 'GetFieldReturnsFieldResult') {
+      methodRule.create {
+        target( MethodType.GETTER_OR_SETTER )
+        getterCriteria(
+          name: GetterSetterDefinition.GETTER_NAME_MATCHES_FIELD,
+          body: GetterSetterDefinition.GETTER_BODY_RETURNS_FIELD
+  ) } } }
+
+  public void testSpecialGS() throws Exception {
+    doTest('RearrangementTest22', 'RearrangementResult22') {
+      methodRule.create {
+        target( MethodType.GETTER_OR_SETTER )
+        getterCriteria(
+          name: GetterSetterDefinition.GETTER_NAME_CORRECT_PREFIX,
+          body: GetterSetterDefinition.GETTER_BODY_RETURNS
+        )
+        setterCriteria(
+          name: GetterSetterDefinition.SETTER_NAME_CORRECT_PREFIX,
+          body: GetterSetterDefinition.SETTER_BODY_IMMATERIAL
+      ) }
+      mySettings.keepGettersSettersTogether = true
+  } }
+
 //  public void testInterfaceNoNameNotAlphabeticalNoExcludeMethodAlphabetical() throws Exception {
 //    configureByFile("/com/wrq/rearranger/RearrangementTest23.java");
 //    final PsiFile file = getFile();

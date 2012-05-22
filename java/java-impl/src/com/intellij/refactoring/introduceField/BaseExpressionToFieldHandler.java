@@ -58,6 +58,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.refactoring.IntroduceHandlerBase;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.introduce.inplace.AbstractInplaceIntroducer;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
 import com.intellij.refactoring.rename.RenameJavaVariableProcessor;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
@@ -123,7 +124,10 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
       if (psiField != null && psiField.getParent() == aClass) break;
       aClass = PsiTreeUtil.getParentOfType(aClass, PsiClass.class, true);
     }
-    if (classes.size() == 1 || editor == null || ApplicationManager.getApplication().isUnitTestMode()) {
+    final AbstractInplaceIntroducer activeIntroducer = AbstractInplaceIntroducer.getActiveIntroducer(editor);
+    final boolean shouldSuggestDialog = activeIntroducer instanceof InplaceIntroduceConstantPopup &&
+                                        activeIntroducer.startsOnTheSameElement(selectedExpr, null);
+    if (classes.size() == 1 || editor == null || ApplicationManager.getApplication().isUnitTestMode() || shouldSuggestDialog) {
       return !convertExpressionToField(selectedExpr, editor, file, project, tempType);
     }
     else {

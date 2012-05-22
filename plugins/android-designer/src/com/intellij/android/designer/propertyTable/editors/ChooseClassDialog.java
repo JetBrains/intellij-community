@@ -24,6 +24,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.ui.ListSpeedSearch;
 import com.intellij.ui.ScrollPaneFactory;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -37,12 +38,12 @@ import java.util.Collections;
 /**
  * @author Alexander Lobas
  */
-public class FragmentDialog extends DialogWrapper implements ListSelectionListener {
+public class ChooseClassDialog extends DialogWrapper implements ListSelectionListener {
   private final JList myList = new JList();
   private final JScrollPane myComponent = ScrollPaneFactory.createScrollPane(myList);
-  private String myResultFragmentName;
+  private String myResultClassName;
 
-  public FragmentDialog(Module module) {
+  public ChooseClassDialog(Module module, String title, boolean includeAll, String... classes) {
     super(module.getProject());
 
     myList.setPreferredSize(new Dimension(500, 400));
@@ -56,11 +57,10 @@ public class FragmentDialog extends DialogWrapper implements ListSelectionListen
     });
 
     DefaultListModel model = new DefaultListModel();
-    for (PsiClass psiClass : findInheritors(module, "android.app.Fragment")) {
-      model.addElement(psiClass.getQualifiedName());
-    }
-    for (PsiClass psiClass : findInheritors(module, "android.support.v4.app.Fragment")) {
-      model.addElement(psiClass.getQualifiedName());
+    for (String className : classes) {
+      for (PsiClass psiClass : findInheritors(module, className, includeAll)) {
+        model.addElement(psiClass.getQualifiedName());
+      }
     }
     myList.setModel(model);
 
@@ -70,20 +70,27 @@ public class FragmentDialog extends DialogWrapper implements ListSelectionListen
 
     new ListSpeedSearch(myList);
 
-    setTitle("Fragment Dialog");
+    setTitle(title);
     getOKAction().setEnabled(false);
 
     init();
   }
 
-  private static Collection<PsiClass> findInheritors(Module module, String name) {
-    Project project = module.getProject();
-    PsiClass base = JavaPsiFacade.getInstance(project).findClass(name, GlobalSearchScope.allScope(project));
+  private static Collection<PsiClass> findInheritors(Module module, String name, boolean includeAll) {
+    PsiClass base = findClass(module, name);
     if (base != null) {
-      GlobalSearchScope scope = GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module, false);
+      GlobalSearchScope scope = includeAll ?
+                                GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module, false) :
+                                GlobalSearchScope.moduleScope(module);
       return ClassInheritorsSearch.search(base, scope, true).findAll();
     }
     return Collections.emptyList();
+  }
+
+  @Nullable
+  public static PsiClass findClass(Module module, String name) {
+    Project project = module.getProject();
+    return JavaPsiFacade.getInstance(project).findClass(name, GlobalSearchScope.allScope(project));
   }
 
   @Override
@@ -96,13 +103,13 @@ public class FragmentDialog extends DialogWrapper implements ListSelectionListen
     return myComponent;
   }
 
-  public String getFragmentName() {
-    return myResultFragmentName;
+  public String getClassName() {
+    return myResultClassName;
   }
 
   @Override
   public void valueChanged(ListSelectionEvent e) {
-    myResultFragmentName = (String)myList.getSelectedValue();
-    getOKAction().setEnabled(myResultFragmentName != null);
+    myResultClassName = (String)myList.getSelectedValue();
+    getOKAction().setEnabled(myResultClassName != null);
   }
 }

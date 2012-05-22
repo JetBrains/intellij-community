@@ -213,16 +213,17 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
   /**
    * Template configuration is not included
    */
+  @NotNull
   public RunnerAndConfigurationSettings[] getConfigurationSettings(@NotNull final ConfigurationType type) {
 
-    final LinkedHashSet<RunnerAndConfigurationSettings> array = new LinkedHashSet<RunnerAndConfigurationSettings>();
+    final LinkedHashSet<RunnerAndConfigurationSettings> set = new LinkedHashSet<RunnerAndConfigurationSettings>();
     for (RunnerAndConfigurationSettings configuration : getSortedConfigurations()) {
       final ConfigurationType configurationType = configuration.getType();
       if (configurationType != null && type.getId().equals(configurationType.getId())) {
-        array.add(configuration);
+        set.add(configuration);
       }
     }
-    return array.toArray(new RunnerAndConfigurationSettings[array.size()]);
+    return set.toArray(new RunnerAndConfigurationSettings[set.size()]);
   }
 
   public RunnerAndConfigurationSettings getConfigurationTemplate(final ConfigurationFactory factory) {
@@ -257,6 +258,8 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
 
     mySharedConfigurations.put(newId, shared);
     setBeforeRunTasks(configuration, tasks, addEnabledTemplateTasksIfAbsent);
+    saveOrder();
+    myOrdered = false;
 
     if (existingSettings == settings) {
       myDispatcher.getMulticaster().runConfigurationChanged(settings);
@@ -354,7 +357,13 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
         Collections.sort(order, new Comparator<Pair<String, RunnerAndConfigurationSettings>>() {
           @Override
           public int compare(Pair<String, RunnerAndConfigurationSettings> o1, Pair<String, RunnerAndConfigurationSettings> o2) {
-            return o1.first.compareTo(o2.first);
+            boolean temporary1 = o1.getSecond().isTemporary();
+            boolean temporary2 = o2.getSecond().isTemporary();
+            if (temporary1 == temporary2) {
+              return o1.first.compareTo(o2.first);
+            } else {
+              return temporary1 ? 1 : -1;
+            }
           }
         });
       }
@@ -362,7 +371,13 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
         Collections.sort(order, new Comparator<Pair<String, RunnerAndConfigurationSettings>>() {
           @Override
           public int compare(Pair<String, RunnerAndConfigurationSettings> o1, Pair<String, RunnerAndConfigurationSettings> o2) {
-            return myOrder.indexOf(o1.first) - myOrder.indexOf(o2.first);
+            boolean temporary1 = o1.getSecond().isTemporary();
+            boolean temporary2 = o2.getSecond().isTemporary();
+            if (temporary1 == temporary2) {
+              return myOrder.indexOf(o1.first) - myOrder.indexOf(o2.first);
+            } else {
+              return temporary1 ? 1 : -1;
+            }
           }
         });
       }
@@ -923,11 +938,13 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
   }
 
   public void fireRunConfigurationChanged(@NotNull RunnerAndConfigurationSettings settings) {
+    myOrdered = false;
     invalidateConfigurationIcon(settings);
     myDispatcher.getMulticaster().runConfigurationChanged(settings);
   }
 
   private void fireRunConfigurationsRemoved(@NotNull List<RunnerAndConfigurationSettings> removed) {
+    myOrdered = false;
     for (RunnerAndConfigurationSettings settings : removed) {
       myDispatcher.getMulticaster().runConfigurationRemoved(settings);
     }

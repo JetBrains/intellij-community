@@ -34,9 +34,6 @@ public class AndroidPackageConverter extends Converter<String> implements Custom
 
   @Override
   public String fromString(@Nullable @NonNls String s, ConvertContext context) {
-    /*if (s == null) return null;
-    final JavaPsiFacade facade = JavaPsiFacade.getInstance(context.getPsiManager().getProject());
-    return facade.findPackage(s) == null ? null : s;*/
     return s;
   }
 

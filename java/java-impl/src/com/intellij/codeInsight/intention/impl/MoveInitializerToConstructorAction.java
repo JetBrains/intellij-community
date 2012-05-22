@@ -16,25 +16,15 @@
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
-import com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageUtils;
-import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.colors.EditorColors;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Ref;
-import com.intellij.psi.*;
-import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
-import com.intellij.psi.javadoc.PsiDocComment;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.IncorrectOperationException;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -42,7 +32,7 @@ import java.util.*;
 /**
  * @author cdr
  */
-public class MoveInitializerToConstructorAction extends PsiElementBaseIntentionAction {
+public class MoveInitializerToConstructorAction extends BaseMoveInitializerToMethodAction {
   @Override
   @NotNull
   public String getFamilyName() {
@@ -55,124 +45,48 @@ public class MoveInitializerToConstructorAction extends PsiElementBaseIntentionA
     return CodeInsightBundle.message("intention.move.initializer.to.constructor");
   }
 
+  @NotNull
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
-    if (element instanceof PsiCompiledElement) return false;
-    final PsiField field = PsiTreeUtil.getParentOfType(element, PsiField.class, false, PsiMember.class, PsiCodeBlock.class, PsiDocComment.class);
-    if (field == null || field.hasModifierProperty(PsiModifier.STATIC)) return false;
-    if (!field.hasInitializer()) return false;
-    PsiClass psiClass = field.getContainingClass();
-    
-    return psiClass != null && !psiClass.isInterface() && !(psiClass instanceof PsiAnonymousClass) && !(psiClass instanceof JspClass);
+  protected Collection<String> getUnsuitableModifiers() {
+    return Arrays.asList(PsiModifier.STATIC);
   }
 
+  @NotNull
   @Override
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    if (!CodeInsightUtilBase.prepareFileForWrite(file)) return;
-
-    int offset = editor.getCaretModel().getOffset();
-
-    PsiElement element = file.findElementAt(offset);
-    final PsiField field = PsiTreeUtil.getParentOfType(element, PsiField.class);
-
-    assert field != null;
-    PsiClass aClass = field.getContainingClass();
-    PsiMethod[] constructors = aClass.getConstructors();
-    Collection<PsiMethod> constructorsToAddInitialization;
-    if (constructors.length == 0) {
-      IntentionAction addDefaultConstructorFix = QuickFixFactory.getInstance().createAddDefaultConstructorFix(aClass);
-      addDefaultConstructorFix.invoke(project, editor, file);
-      editor.getCaretModel().moveToOffset(offset); //restore caret
-      constructorsToAddInitialization = Arrays.asList(aClass.getConstructors());
-    }
-    else {
-      constructorsToAddInitialization = new ArrayList<PsiMethod>(Arrays.asList(constructors));
-      for (Iterator<PsiMethod> iterator = constructorsToAddInitialization.iterator(); iterator.hasNext();) {
-        PsiMethod ctr = iterator.next();
-        List<PsiMethod> chained = HighlightControlFlowUtil.getChainedConstructors(ctr);
-        if (chained != null) {
-          iterator.remove();
-        }
-      }
+  protected Collection<PsiMethod> getOrCreateMethods(@NotNull Project project, @NotNull Editor editor, PsiFile file, @NotNull PsiClass aClass) {
+    final Collection<PsiMethod> constructors = Arrays.asList(aClass.getConstructors());
+    if (constructors.isEmpty()) {
+      return createConstructor(project, editor, file, aClass);
     }
 
-    PsiExpressionStatement toMove = null;
-    for (PsiMethod constructor : constructorsToAddInitialization) {
-      PsiCodeBlock codeBlock = constructor.getBody();
-      if (codeBlock == null) {
-        CreateFromUsageUtils.setupMethodBody(constructor);
-        codeBlock = constructor.getBody();
-      }
-      PsiExpressionStatement added = addAssignment(codeBlock, field);
-      if (toMove == null) toMove = added;
-    }
-    field.getInitializer().delete();
-    if (toMove != null) {
-      PsiAssignmentExpression assignment = (PsiAssignmentExpression)toMove.getExpression();
-      PsiExpression expression = assignment.getRExpression();
-      EditorColorsManager manager = EditorColorsManager.getInstance();
-      TextAttributes attributes = manager.getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
-      HighlightManager.getInstance(project).addOccurrenceHighlights(editor, new PsiElement[] {expression}, attributes, false,null);
-    }
+    return removeChainedConstructors(constructors);
   }
 
-  private static PsiExpressionStatement addAssignment(@NotNull PsiCodeBlock codeBlock, @NotNull PsiField field) throws IncorrectOperationException {
-    PsiElementFactory factory = JavaPsiFacade.getInstance(codeBlock.getProject()).getElementFactory();
-    PsiExpressionStatement statement = (PsiExpressionStatement)factory.createStatementFromText(field.getName()+" = y;", codeBlock);
-    PsiAssignmentExpression expression = (PsiAssignmentExpression)statement.getExpression();
-    PsiExpression initializer = field.getInitializer();
-    if (initializer instanceof PsiArrayInitializerExpression) {
-      PsiType type = initializer.getType();
-      PsiNewExpression newExpression = (PsiNewExpression)factory.createExpressionFromText("new " + type.getCanonicalText() + "{}", codeBlock);
-      newExpression.getArrayInitializer().replace(initializer);
-      initializer = newExpression;
-    }
-    expression.getRExpression().replace(initializer);
-    PsiStatement[] statements = codeBlock.getStatements();
-    PsiElement anchor = null;
-    for (PsiStatement blockStatement : statements) {
-      if (blockStatement instanceof PsiExpressionStatement &&
-          HighlightUtil.isSuperOrThisMethodCall(((PsiExpressionStatement)blockStatement).getExpression())) {
-        continue;
-      }
-      if (containsReference(blockStatement, field)) {
-        anchor = blockStatement;
-        break;
+  @NotNull
+  private static Collection<PsiMethod> removeChainedConstructors(@NotNull Collection<PsiMethod> constructors) {
+    final List<PsiMethod> result = new ArrayList<PsiMethod>(constructors);
+
+    final Iterator<PsiMethod> iterator = result.iterator();
+    //noinspection ForLoopThatDoesntUseLoopVariable
+    for (PsiMethod constructor = iterator.next(); iterator.hasNext(); constructor = iterator.next()) {
+      final List<PsiMethod> chained = HighlightControlFlowUtil.getChainedConstructors(constructor);
+      if (chained != null) {
+        iterator.remove();
       }
     }
-    PsiElement newStatement = codeBlock.addBefore(statement,anchor);
-    replaceWithQualifiedReferences(newStatement, newStatement);
-    return (PsiExpressionStatement)newStatement;
+
+    return result;
   }
 
-  private static boolean containsReference(final PsiElement element, final PsiField field) {
-    final Ref<Boolean> result = new Ref<Boolean>(Boolean.FALSE);
-    element.accept(new JavaRecursiveElementWalkingVisitor() {
-      @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
-        if (expression.resolve() == field) {
-           result.set(Boolean.TRUE);
-        }
-        super.visitReferenceExpression(expression);
-      }
-    });
-    return result.get().booleanValue();
-  }
-
-  private static void replaceWithQualifiedReferences(final PsiElement expression, PsiElement root) throws IncorrectOperationException {
-    PsiReference reference = expression.getReference();
-    if (reference != null) {
-      PsiElement resolved = reference.resolve();
-      if (resolved instanceof PsiVariable && !(resolved instanceof PsiField) && !PsiTreeUtil.isAncestor(root, resolved, false)) {
-        PsiVariable variable = (PsiVariable)resolved;
-        PsiElementFactory factory = JavaPsiFacade.getInstance(resolved.getProject()).getElementFactory();
-        PsiElement qualifiedExpr = factory.createExpressionFromText("this." + variable.getName(), expression);
-        expression.replace(qualifiedExpr);
-      }
-    }
-    else {
-      for (PsiElement child : expression.getChildren()) {
-        replaceWithQualifiedReferences(child, root);
-      }
-    }
+  @NotNull
+  private static Collection<PsiMethod> createConstructor(@NotNull Project project,
+                                                         @NotNull Editor editor,
+                                                         PsiFile file,
+                                                         @NotNull PsiClass aClass) {
+    final IntentionAction addDefaultConstructorFix = QuickFixFactory.getInstance().createAddDefaultConstructorFix(aClass);
+    final int offset = editor.getCaretModel().getOffset();
+    addDefaultConstructorFix.invoke(project, editor, file);
+    editor.getCaretModel().moveToOffset(offset); //restore caret
+    return Arrays.asList(aClass.getConstructors());
   }
 }

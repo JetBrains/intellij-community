@@ -27,6 +27,7 @@ final class TestClass2 {
     // test class
   }
 
+
   class inner2 {
     // test class
   }

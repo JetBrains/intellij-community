@@ -75,7 +75,9 @@ public final class AndroidTreeDecorator extends TreeComponentDecorator {
       }
     }
 
-    renderer.append(fullTitle.toString());
+    if (fullTitle.length() > 0) {
+      renderer.append(fullTitle.toString());
+    }
 
     if (full) {
       renderer.setIcon(metaModel.getIcon());

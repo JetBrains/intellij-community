@@ -29,6 +29,7 @@ import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.IdeBorderFactory;
+import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
@@ -82,13 +83,13 @@ public class ExpressionEvaluationDialog extends EvaluationDialog {
   protected JComponent createCenterPanel() {
     final JPanel panel = new JPanel(new BorderLayout());
 
-    final JPanel exprPanel = new JPanel(new BorderLayout());
+    final JPanel exprPanel = new JPanel(new BorderLayout(UIUtil.DEFAULT_HGAP, 0));
     exprPanel.add(new JLabel(DebuggerBundle.message("label.evaluate.dialog.expression")), BorderLayout.WEST);
     exprPanel.add(getExpressionCombo(), BorderLayout.CENTER);
-    final JLabel help = new JLabel("Press Enter to Evaluate or Control+Enter to evaluate and add to the Watches", SwingConstants.RIGHT);
+    final JBLabel help = new JBLabel("Press Enter to Evaluate or Control+Enter to evaluate and add to the Watches", SwingConstants.RIGHT);
     help.setBorder(IdeBorderFactory.createEmptyBorder(2,0,6,0));
-    UIUtil.applyStyle(UIUtil.ComponentStyle.MINI, help);
-    help.setForeground(UIUtil.getInactiveTextColor());
+    help.setComponentStyle(UIUtil.ComponentStyle.SMALL);
+    help.setFontColor(UIUtil.FontColor.BRIGHTER);
     exprPanel.add(help, BorderLayout.SOUTH);
 
 

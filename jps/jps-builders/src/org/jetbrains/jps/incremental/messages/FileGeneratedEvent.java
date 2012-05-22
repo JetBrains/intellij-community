@@ -11,7 +11,7 @@ import java.util.Collection;
  */
 public class FileGeneratedEvent extends BuildMessage {
 
-  private Collection<Pair<String, String>> myPaths = new ArrayList<Pair<String, String>>();
+  private final Collection<Pair<String, String>> myPaths = new ArrayList<Pair<String, String>>();
 
   public FileGeneratedEvent() {
     super("", Kind.INFO);

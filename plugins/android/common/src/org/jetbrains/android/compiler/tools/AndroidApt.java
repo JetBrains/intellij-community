@@ -27,7 +27,9 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileFilter;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -127,23 +129,9 @@ public final class AndroidApt {
   private static void makeFieldsNotFinal(@NotNull File[] libRJavaFiles) throws IOException {
     for (File file : libRJavaFiles) {
       if (file.isFile()) {
-        final String fileContent = readFile(file);
+        final String fileContent = AndroidCommonUtils.readFile(file);
         FileUtil.writeToFile(file, fileContent.replace("public static final int ", "public static int "));
       }
-    }
-  }
-
-  @NotNull
-  private static String readFile(@NotNull File file) throws IOException {
-    final InputStream is = new BufferedInputStream(new FileInputStream(file));
-    try {
-      final byte[] data = new byte[is.available()];
-      //noinspection ResultOfMethodCallIgnored
-      is.read(data);
-      return new String(data);
-    }
-    finally {
-      is.close();
     }
   }
 
@@ -240,6 +228,24 @@ public final class AndroidApt {
                                                                                boolean debugMode,
                                                                                int versionCode,
                                                                                FileFilter assetsFilter) throws IOException {
+    for (String resDirPath : resPaths) {
+      if (FileUtil.isAncestor(resDirPath, outputPath, false)) {
+        throw new IOException("Resource directory " +
+                              FileUtil.toSystemDependentName(resDirPath) +
+                              " contains output " +
+                              FileUtil.toSystemDependentName(outputPath));
+      }
+    }
+
+    for (String assetsDirPath : osAssetDirPaths) {
+      if (FileUtil.isAncestor(assetsDirPath, outputPath, false)) {
+        throw new IOException("Assets directory " +
+                              FileUtil.toSystemDependentName(assetsDirPath) +
+                              " contains output " +
+                              FileUtil.toSystemDependentName(outputPath));
+      }
+    }
+
     final ArrayList<String> args = new ArrayList<String>();
 
     //noinspection deprecation

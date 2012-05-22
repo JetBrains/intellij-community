@@ -27,10 +27,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.text.DateFormatUtil;
-import org.jetbrains.android.util.AndroidCommonUtils;
-import org.jetbrains.android.util.AndroidCompilerMessageKind;
-import org.jetbrains.android.util.AndroidExecutionUtil;
-import org.jetbrains.android.util.AndroidNativeLibData;
+import org.jetbrains.android.util.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -261,7 +258,7 @@ public class AndroidApkBuilder {
       }
 
       fos = new FileOutputStream(outputApk);
-      builder = new SignedJarBuilder(fos, key, certificate);
+      builder = new SafeSignedJarBuilder(fos, key, certificate, outputApk);
 
       FileInputStream fis = new FileInputStream(apkPath);
       try {

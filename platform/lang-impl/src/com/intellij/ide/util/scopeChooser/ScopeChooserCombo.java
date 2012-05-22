@@ -19,7 +19,6 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.favoritesTreeView.FavoritesManager;
 import com.intellij.ide.projectView.impl.AbstractUrl;
-import com.intellij.ide.ui.ListCellRendererWrapper;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
@@ -46,6 +45,8 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.ComboboxWithBrowseButton;
+import com.intellij.ui.IdeBorderFactory;
+import com.intellij.ui.TitledSeparator;
 import com.intellij.usages.Usage;
 import com.intellij.usages.UsageView;
 import com.intellij.usages.UsageViewManager;
@@ -102,12 +103,7 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
     myValidationManager.addScopeListener(myScopeListener);
     addActionListener(createScopeChooserListener());
 
-    combo.setRenderer(new ListCellRendererWrapper<ScopeDescriptor>(combo.getRenderer()) {
-      @Override
-      public void customize(final JList list, final ScopeDescriptor value, final int index, final boolean selected, final boolean hasFocus) {
-        if (value != null) setText(value.getDisplay());
-      }
-    });
+    combo.setRenderer(new ScopeDescriptionWithDelimiterRenderer());
 
     rebuildModel();
 
@@ -166,19 +162,38 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
     DefaultComboBoxModel model = new DefaultComboBoxModel();
     createPredefinedScopeDescriptors(model);
 
+    boolean firstInGroup = true;
     List<NamedScope> changeLists = ChangeListsScopesProvider.getInstance(myProject).getCustomScopes();
     for (NamedScope changeListScope : changeLists) {
-      model.addElement(new ScopeDescriptor(GlobalSearchScopes.filterScope(myProject, changeListScope)));
+      model.addElement(new ScopeDescriptionWithDelimiter(GlobalSearchScopes.filterScope(myProject, changeListScope), firstInGroup ? "VCS" : null));
+      firstInGroup = false;
     }
+    
+    firstInGroup = true;
     final NamedScopesHolder[] holders = NamedScopesHolder.getAllNamedScopeHolders(myProject);
     for (NamedScopesHolder holder : holders) {
       NamedScope[] scopes = holder.getEditableScopes(); //predefined scopes already included
       for (NamedScope scope : scopes) {
-        model.addElement(new ScopeDescriptor(GlobalSearchScopes.filterScope(myProject, scope)));
+        model.addElement(new ScopeDescriptionWithDelimiter(GlobalSearchScopes.filterScope(myProject, scope), firstInGroup ? "Custom scopes" : null));
+        firstInGroup = false;
       }
     }
 
     return model;
+  }
+  
+  private static class ScopeDescriptionWithDelimiter extends ScopeDescriptor {
+
+    private String mySeparatorAbove;
+
+    public ScopeDescriptionWithDelimiter(SearchScope scope, String separatorAbove) {
+      super(scope);
+      mySeparatorAbove = separatorAbove;
+    }
+
+    public String getSeparatorAbove() {
+      return mySeparatorAbove;
+    }
   }
 
   @Override
@@ -415,5 +430,28 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
     int idx = combo.getSelectedIndex();
     if (idx < 0) return null;
     return ((ScopeDescriptor)combo.getSelectedItem()).getDisplay();
+  }
+
+  private static class ScopeDescriptionWithDelimiterRenderer extends DefaultListCellRenderer {
+    @Override
+    public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+      final JComponent component = (JComponent)super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+      setText(((ScopeDescriptor)value).getDisplay());
+
+      if (value instanceof ScopeDescriptionWithDelimiter && index >= 0) {
+        final String separatorAbove = ((ScopeDescriptionWithDelimiter)value).getSeparatorAbove();
+        if (separatorAbove != null) {
+          JPanel panel = new JPanel(new BorderLayout());
+          final TitledSeparator comp = new TitledSeparator(separatorAbove);
+          panel.add(comp, BorderLayout.NORTH);
+          component.setBorder(IdeBorderFactory.createEmptyBorder(0, 2, 0, 0));
+          panel.add(component, BorderLayout.CENTER);
+          return panel;
+        }
+      } 
+      setBorder(IdeBorderFactory.createEmptyBorder(0, 2, 0, 0));
+
+      return component;
+    }
   }
 }

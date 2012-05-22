@@ -105,6 +105,7 @@ public class BookmarkItem implements ItemWrapper {
   }
 
   public void execute(Project project, JBPopup popup) {
+    popup.cancel();
     myBookmark.navigate();
   }
 

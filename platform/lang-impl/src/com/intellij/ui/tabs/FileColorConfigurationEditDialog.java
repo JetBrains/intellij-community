@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,12 +20,14 @@ import com.intellij.notification.impl.ui.StickyButton;
 import com.intellij.notification.impl.ui.StickyButtonUI;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.search.scope.packageSet.CustomScopesProviderEx;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopeManager;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.intellij.ui.ColorChooser;
 import com.intellij.ui.ColorUtil;
+import com.intellij.ui.FileColorManager;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
@@ -46,12 +48,12 @@ import java.util.List;
 public class FileColorConfigurationEditDialog extends DialogWrapper {
   private FileColorConfiguration myConfiguration;
   private JComboBox myScopeComboBox;
-  private final FileColorManagerImpl myManager;
+  private final FileColorManager myManager;
   private HashMap<String,AbstractButton> myColorToButtonMap;
   private static final String CUSTOM_COLOR_NAME = "Custom";
   private final Map<String, NamedScope> myScopeNames = new HashMap<String, NamedScope>();
 
-  public FileColorConfigurationEditDialog(@NotNull final FileColorManagerImpl manager, @Nullable final FileColorConfiguration configuration) {
+  public FileColorConfigurationEditDialog(@NotNull final FileColorManager manager, @Nullable final FileColorConfiguration configuration) {
     super(true);
 
     setTitle(configuration == null ? "Add color label" : "Edit color label");
@@ -62,7 +64,14 @@ public class FileColorConfigurationEditDialog extends DialogWrapper {
 
     init();
     updateCustomButton();
+    if (myConfiguration != null && !StringUtil.isEmpty(myConfiguration.getScopeName())) {
+      myScopeComboBox.setSelectedItem(myConfiguration.getScopeName());
+    }
     updateOKButton();
+  }
+
+  public JComboBox getScopeComboBox() {
+    return myScopeComboBox;
   }
 
   @Override
