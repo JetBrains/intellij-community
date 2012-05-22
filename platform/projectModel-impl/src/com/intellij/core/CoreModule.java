@@ -15,6 +15,7 @@
  */
 package com.intellij.core;
 
+import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.mock.MockComponentManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.PathMacros;
@@ -30,6 +31,7 @@ import com.intellij.openapi.roots.impl.DirectoryIndex;
 import com.intellij.openapi.roots.impl.ModuleRootManagerImpl;
 import com.intellij.openapi.roots.impl.ProjectRootManagerImpl;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -108,7 +110,7 @@ public class CoreModule extends MockComponentManager implements ModuleEx {
   @NotNull
   @Override
   public String getName() {
-    return null;  //To change body of implemented methods use File | Settings | File Templates.
+    return StringUtil.trimEnd(myPath, ModuleFileType.DOT_DEFAULT_EXTENSION);
   }
 
   @Override
