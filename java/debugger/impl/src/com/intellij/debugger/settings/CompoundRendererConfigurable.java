@@ -102,21 +102,6 @@ public class CompoundRendererConfigurable implements UnnamedConfigurable {
       myProject = JavaDebuggerSupport.getCurrentProject();
     }
     final JPanel panel = new JPanel(new GridBagLayout());
-    myClassNameField = new TextFieldWithBrowseButton(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        PsiClass psiClass = DebuggerUtils.getInstance()
-          .chooseClassDialog(DebuggerBundle.message("title.compound.renderer.configurable.choose.renderer.reference.type"), myProject);
-        if (psiClass != null) {
-          myClassNameField.setText(JVMNameUtil.getNonAnonymousClassName(psiClass));
-        }
-      }
-    });
-    myClassNameField.getTextField().addFocusListener(new FocusAdapter() {
-      public void focusLost(FocusEvent e) {
-        final String qName = myClassNameField.getText();
-        updateContext(qName);
-      }
-    });
 
     myRbDefaultLabel = new JRadioButton(DebuggerBundle.message("label.compound.renderer.configurable.use.default.renderer"));
     myRbExpressionLabel = new JRadioButton(DebuggerBundle.message("label.compound.renderer.configurable.use.expression"));
@@ -145,6 +130,22 @@ public class CompoundRendererConfigurable implements UnnamedConfigurable {
     myRbExpressionLabel.addItemListener(updateListener);
     myRbListChildrenRenderer.addItemListener(updateListener);
     myRbExpressionChildrenRenderer.addItemListener(updateListener);
+
+    myClassNameField = new TextFieldWithBrowseButton(new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        PsiClass psiClass = DebuggerUtils.getInstance()
+          .chooseClassDialog(DebuggerBundle.message("title.compound.renderer.configurable.choose.renderer.reference.type"), myProject);
+        if (psiClass != null) {
+          myClassNameField.setText(JVMNameUtil.getNonAnonymousClassName(psiClass));
+        }
+      }
+    });
+    myClassNameField.getTextField().addFocusListener(new FocusAdapter() {
+      public void focusLost(FocusEvent e) {
+        final String qName = myClassNameField.getText();
+        updateContext(qName);
+      }
+    });
 
     panel.add(new JLabel(DebuggerBundle.message("label.compound.renderer.configurable.apply.to")),
               new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE,
