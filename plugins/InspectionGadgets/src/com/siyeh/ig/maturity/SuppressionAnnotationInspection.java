@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.maturity;
 
+import com.intellij.codeInspection.SuppressionUtil;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiComment;
@@ -55,9 +56,8 @@ public class SuppressionAnnotationInspection extends BaseInspection {
           && !tokenType.equals(JavaTokenType.C_STYLE_COMMENT)) {
         return;
       }
-      @NonNls final String strippedComment =
-        commentText.substring(2).trim();
-      if (strippedComment.startsWith("noinspection")) {
+      @NonNls final String strippedComment = commentText.substring(2).trim();
+      if (strippedComment.startsWith(SuppressionUtil.SUPPRESS_INSPECTIONS_TAG_NAME)) {
         registerError(comment);
       }
     }
