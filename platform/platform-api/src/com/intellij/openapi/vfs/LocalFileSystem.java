@@ -149,13 +149,14 @@ public abstract class LocalFileSystem extends NewVirtualFileSystem {
                                          @NotNull final String rootPath,
                                          final boolean watchRecursively) {
     final Set<WatchRequest> requests = watchRequest != null ? singleton(watchRequest) : Collections.<WatchRequest>emptySet();
-    final Set<WatchRequest> result = replaceWatchedRoots(requests, singleton(rootPath), watchRecursively);
+    final Set<WatchRequest> result = watchRecursively ? replaceWatchedRoots(requests, singleton(rootPath), null)
+                                                      : replaceWatchedRoots(requests, null, singleton(rootPath));
     return result.size() == 1 ? result.iterator().next() : null;
   }
 
   public abstract Set<WatchRequest> replaceWatchedRoots(@NotNull final Collection<WatchRequest> watchRequests,
-                                                        @NotNull final Collection<String> rootPaths,
-                                                        final boolean watchRecursively);
+                                                        @Nullable final Collection<String> recursiveRoots,
+                                                        @Nullable final Collection<String> flatRoots);
 
   public abstract void registerAuxiliaryFileOperationsHandler(@NotNull LocalFileOperationsHandler handler);
 
