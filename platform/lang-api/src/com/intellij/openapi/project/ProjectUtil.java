@@ -41,7 +41,8 @@ import javax.swing.*;
  * @author max
  */
 public class ProjectUtil {
-  @NonNls public static final String DIRECTORY_BASED_PROJECT_DIR = ".idea";
+  /** @deprecated use {@linkplain Project#DIRECTORY_STORE_FOLDER} (to remove in IDEA 13) */
+  @SuppressWarnings("UnusedDeclaration") @NonNls public static final String DIRECTORY_BASED_PROJECT_DIR = Project.DIRECTORY_STORE_FOLDER;
 
   private ProjectUtil() { }
 
@@ -129,7 +130,7 @@ public class ProjectUtil {
   public static boolean isProjectOrWorkspaceFile(final VirtualFile file,
                                                  final FileType fileType) {
     if (fileType instanceof InternalFileType) return true;
-    return file.getPath().contains("/"+ DIRECTORY_BASED_PROJECT_DIR +"/");
+    return file.getPath().contains("/"+ Project.DIRECTORY_STORE_FOLDER +"/");
   }
 
   @NotNull

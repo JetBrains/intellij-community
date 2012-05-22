@@ -198,7 +198,7 @@ public class GitRepositoryManagerImpl extends AbstractProjectComponent implement
   }
 
   private static boolean gitRootOK(@NotNull VirtualFile root) {
-    VirtualFile gitDir = root.findChild(".git");
+    VirtualFile gitDir = root.findChild(GitUtil.DOT_GIT);
     return gitDir != null && gitDir.exists();
   }
 

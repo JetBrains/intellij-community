@@ -92,7 +92,7 @@ public class XmlEncodingReference implements PsiReference, EmptyResolveMessagePr
     Charset[] charsets = CharsetToolkit.getAvailableCharsets();
     List<LookupElement> suggestions = new ArrayList<LookupElement>(charsets.length);
     for (Charset charset : charsets) {
-      suggestions.add(LookupElementBuilder.create(charset.name()).setCaseSensitive(false));
+      suggestions.add(LookupElementBuilder.create(charset.name()).withCaseSensitivity(false));
     }
     return suggestions.toArray(new LookupElement[suggestions.size()]);
   }

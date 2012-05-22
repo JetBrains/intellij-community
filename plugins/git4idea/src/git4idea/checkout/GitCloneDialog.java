@@ -23,6 +23,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.EditorComboBox;
 import com.intellij.util.ArrayUtil;
+import git4idea.GitUtil;
 import git4idea.commands.GitCommand;
 import git4idea.commands.GitLineHandlerPasswordRequestAware;
 import git4idea.commands.GitTask;
@@ -300,13 +301,11 @@ public class GitCloneDialog extends DialogWrapper {
    */
   private static String defaultDirectoryName(final String url) {
     String nonSystemName;
-    //noinspection HardCodedStringLiteral
-    if (url.endsWith("/.git") || url.endsWith(File.separator + ".git")) {
+    if (url.endsWith("/" + GitUtil.DOT_GIT) || url.endsWith(File.separator + GitUtil.DOT_GIT)) {
       nonSystemName = url.substring(0, url.length() - 5);
     }
     else {
-      //noinspection HardCodedStringLiteral
-      if (url.endsWith(".git")) {
+      if (url.endsWith(GitUtil.DOT_GIT)) {
         nonSystemName = url.substring(0, url.length() - 4);
       }
       else {

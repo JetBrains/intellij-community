@@ -23,6 +23,7 @@ import com.intellij.ide.passwordSafe.impl.PasswordSafeProvider;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import git4idea.GitBranch;
+import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.push.GitSimplePushResult;
 import git4idea.remote.GitRememberedInputs;
@@ -362,7 +363,7 @@ public final class GitHttpAdapter {
     if (url.endsWith("/")) {
       url = url.substring(0, url.length() - 1);
     }
-    return url + ".git";
+    return url + GitUtil.DOT_GIT;
   }
 
   private static void log(@NotNull GitHttpRemoteCommand command, @NotNull Project project) {
@@ -387,7 +388,7 @@ public final class GitHttpAdapter {
     if (!(cause instanceof NoRemoteRepositoryException) && !(cause.getCause() instanceof NoRemoteRepositoryException)) {
       return false;
     }
-    return !url.toLowerCase().endsWith(".git");
+    return !url.toLowerCase().endsWith(GitUtil.DOT_GIT);
   }
 
   private static boolean isTransportExceptionForHttp(@NotNull JGitInternalException e, @NotNull String url) {
@@ -499,7 +500,7 @@ public final class GitHttpAdapter {
   @NotNull
   private static Repository convert(@NotNull GitRepository repository) throws IOException {
     FileRepositoryBuilder builder = new FileRepositoryBuilder();
-    return builder.setGitDir(new File(repository.getRoot().getPath(), ".git"))
+    return builder.setGitDir(new File(repository.getRoot().getPath(), GitUtil.DOT_GIT))
     .readEnvironment() // scan environment GIT_* variables
     .findGitDir()     // scan up the file system tree
     .build();

@@ -29,7 +29,6 @@ import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
@@ -115,7 +114,6 @@ public class FileStructurePopup implements Disposable {
   private Map<Class, JCheckBox> myCheckBoxes = new HashMap<Class, JCheckBox>();
   private String myTestSearchFilter;
   private final ActionCallback myTreeHasBuilt = new ActionCallback();
-  private FilteringTreeStructure.FilteringNode myInitialNode;
   private boolean myInitialNodeIsLeaf;
 
   public FileStructurePopup(StructureViewModel structureViewModel,
@@ -187,6 +185,11 @@ public class FileStructurePopup implements Disposable {
     myFilteringStructure = new FilteringTreeStructure(filter, myTreeStructure, ApplicationManager.getApplication().isUnitTestMode());
     myAbstractTreeBuilder = new FilteringTreeBuilder(myTree, filter, myFilteringStructure, null) {
       @Override
+      public void initRootNode() {
+
+      }
+
+      @Override
       protected boolean validateNode(Object child) {
         return StructureViewComponent.isValid(child);
       }
@@ -203,8 +206,8 @@ public class FileStructurePopup implements Disposable {
       }
     };
 
-    //myAbstractTreeBuilder.getUi().setPassthroughMode(true);
-    myAbstractTreeBuilder.getUi().getUpdater().setDelay(0);
+    myAbstractTreeBuilder.getUi().setPassthroughMode(true);
+    //myAbstractTreeBuilder.getUi().getUpdater().setDelay(1);
     myInitialPsiElement = getCurrentElement(getPsiFile(myProject));
     //myAbstractTreeBuilder.setCanYieldUpdate(true);
     Disposer.register(this, myAbstractTreeBuilder);
@@ -269,19 +272,16 @@ public class FileStructurePopup implements Disposable {
     }
 
     IdeFocusManager.getInstance(myProject).requestFocus(myTree, true);
+    myFilteringStructure.rebuild();
     myAbstractTreeBuilder.queueUpdate().doWhenDone(new Runnable() {
       @Override
       public void run() {
         myTreeHasBuilt.setDone();
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
+        //noinspection SSBasedInspection
+        SwingUtilities.invokeLater(new Runnable() {
+          @Override
           public void run() {
-            myFilteringStructure.rebuild();
-            myAbstractTreeBuilder.queueUpdate(true).doWhenDone(new Runnable() {
-              @Override
-              public void run() {
-                selectPsiElement(myInitialPsiElement);
-              }
-            });
+            selectPsiElement(myInitialPsiElement);
           }
         });
       }
@@ -303,21 +303,20 @@ public class FileStructurePopup implements Disposable {
             filter = prefix;
             ApplicationManager.getApplication().invokeLater(new Runnable() {
               public void run() {
-                final AccessToken token = ApplicationManager.getApplication().acquireReadActionLock();
-                try {
-                  myAbstractTreeBuilder.refilter(null, false, false).doWhenProcessed(new Runnable() {
-                    @Override
-                    public void run() {
-                      myTree.repaint();
-                      //if (mySpeedSearch.isPopupActive()) {
-                      //  mySpeedSearch.refreshSelection();
-                      //}
-                    }
-                  });
-                }
-                finally {
-                  token.finish();
-                }
+                ApplicationManager.getApplication().runReadAction(new Runnable() {
+                  @Override
+                  public void run() {
+                    myAbstractTreeBuilder.refilter(null, false, false).doWhenProcessed(new Runnable() {
+                      @Override
+                      public void run() {
+                        myTree.repaint();
+                        //if (mySpeedSearch.isPopupActive()) {
+                        //  mySpeedSearch.refreshSelection();
+                        //}
+                      }
+                    });
+                  }
+                });
               }
             });
           }
@@ -345,7 +344,7 @@ public class FileStructurePopup implements Disposable {
         }
       }
       if (!changed) {
-        myAbstractTreeBuilder.getUi().select(node, null);
+        myAbstractTreeBuilder.select(node);
         if (myAbstractTreeBuilder.getSelectedElements().isEmpty()) {
           TreeUtil.selectFirstNode(myTree);
         }
@@ -549,7 +548,9 @@ public class FileStructurePopup implements Disposable {
         myShouldNarrowDown = checkBox.isSelected();
         PropertiesComponent.getInstance().setValue(narrowDownPropertyKey, Boolean.toString(myShouldNarrowDown));
 
-        myAbstractTreeBuilder.queueUpdate();
+        if (mySpeedSearch.isPopupActive() && !StringUtil.isEmpty(mySpeedSearch.getEnteredPrefix())) {
+          myAbstractTreeBuilder.queueUpdate();
+        }
       }
     });
 
@@ -592,20 +593,19 @@ public class FileStructurePopup implements Disposable {
         final Object sel = selection;
         final Runnable runnable = new Runnable() {
           public void run() {
-            final AccessToken token = ApplicationManager.getApplication().acquireReadActionLock();
-            try {
-              myAbstractTreeBuilder.refilter(sel, true, false).doWhenProcessed(new Runnable() {
-                @Override
-                public void run() {
-                  if (mySpeedSearch.isPopupActive()) {
-                    mySpeedSearch.refreshSelection();
+            ApplicationManager.getApplication().runReadAction(new Runnable() {
+              @Override
+              public void run() {
+                myAbstractTreeBuilder.refilter(sel, true, false).doWhenProcessed(new Runnable() {
+                  @Override
+                  public void run() {
+                    if (mySpeedSearch.isPopupActive()) {
+                      mySpeedSearch.refreshSelection();
+                    }
                   }
-                }
-              });
-            }
-            finally {
-              token.finish();
-            }
+                });
+              }
+            });
           }
         };
         if (ApplicationManager.getApplication().isUnitTestMode()) {
@@ -681,7 +681,7 @@ public class FileStructurePopup implements Disposable {
   }
 
   @Nullable
-  private static String getText(Object node) {
+  private static String getText(final Object node) {
     String text = String.valueOf(node);
     if (text != null) {
       if (node instanceof StructureViewComponent.StructureViewTreeElementWrapper) {
@@ -697,14 +697,14 @@ public class FileStructurePopup implements Disposable {
     }
 
     if (node instanceof StructureViewComponent.StructureViewTreeElementWrapper) {
-      final AccessToken token = ApplicationManager.getApplication().acquireReadActionLock();
-      try {
-        final ItemPresentation presentation = ((StructureViewComponent.StructureViewTreeElementWrapper)node).getValue().getPresentation();
-        return presentation.getPresentableText();
-      }
-      finally {
-        token.finish();
-      }
+      return ApplicationManager.getApplication().runReadAction(new Computable<String>() {
+        @Nullable
+        @Override
+        public String compute() {
+          final ItemPresentation presentation = ((StructureViewComponent.StructureViewTreeElementWrapper)node).getValue().getPresentation();
+          return presentation.getPresentableText();
+        }
+      });
     }
 
     return null;

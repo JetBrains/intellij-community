@@ -222,13 +222,13 @@ public class TagNameReference implements PsiReference {
       LookupElementBuilder lookupElement = LookupElementBuilder.create(qname);
       final int separator = qname.indexOf(':');
       if (separator > 0) {
-        lookupElement = lookupElement.addLookupString(qname.substring(separator + 1));
+        lookupElement = lookupElement.withLookupString(qname.substring(separator + 1));
       }
       String ns = nsInfo.get(i);
       if (StringUtil.isNotEmpty(ns)) {
-        lookupElement = lookupElement.setTypeText(ns, true);
+        lookupElement = lookupElement.withTypeText(ns, true);
       }
-      elements.add(lookupElement.setInsertHandler(XmlTagInsertHandler.INSTANCE));
+      elements.add(lookupElement.withInsertHandler(XmlTagInsertHandler.INSTANCE));
     }
     return elements.toArray(new LookupElement[elements.size()]);
   }

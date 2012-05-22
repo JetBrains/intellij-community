@@ -285,7 +285,7 @@ public class ArtifactManagerImpl extends ArtifactManager implements ProjectCompo
       ContainerUtil.addIfNotNull(request, requestsToRemove);
     }
 
-    Set<LocalFileSystem.WatchRequest> newRequests = LocalFileSystem.getInstance().replaceWatchedRoots(requestsToRemove, toAdd, true);
+    Set<LocalFileSystem.WatchRequest> newRequests = LocalFileSystem.getInstance().replaceWatchedRoots(requestsToRemove, toAdd, null);
     for (LocalFileSystem.WatchRequest request : newRequests) {
       myWatchedOutputs.put(request.getRootPath(), request);
     }

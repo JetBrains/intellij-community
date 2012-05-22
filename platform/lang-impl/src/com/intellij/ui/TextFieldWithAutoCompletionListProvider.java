@@ -108,21 +108,21 @@ public abstract class TextFieldWithAutoCompletionListProvider<T> implements Comp
 
   public LookupElementBuilder createLookupBuilder(@NotNull final T item) {
     LookupElementBuilder builder = LookupElementBuilder.create(item, getLookupString(item))
-      .setIcon(getIcon(item));
+      .withIcon(getIcon(item));
 
     final InsertHandler<LookupElement> handler = createInsertHandler(item);
     if (handler != null) {
-      builder = builder.setInsertHandler(handler);
+      builder = builder.withInsertHandler(handler);
     }
 
     final String tailText = getTailText(item);
     if (tailText != null) {
-      builder = builder.setTailText(tailText, true);
+      builder = builder.withTailText(tailText, true);
     }
 
     final String typeText = getTypeText(item);
     if (typeText != null) {
-      builder = builder.setTypeText(typeText);
+      builder = builder.withTypeText(typeText);
     }
     return builder;
   }

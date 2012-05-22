@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,7 +49,7 @@ public class PlatformProjectViewStructureProvider implements TreeStructureProvid
         for (AbstractTreeNode moduleChild : moduleChildren) {
           if (moduleChild instanceof PsiDirectoryNode) {
             final PsiDirectory value = ((PsiDirectoryNode)moduleChild).getValue();
-            if (value.getName().equals(".idea") && Registry.is("projectView.hide.dot.idea")) {
+            if (value.getName().equals(Project.DIRECTORY_STORE_FOLDER) && Registry.is("projectView.hide.dot.idea")) {
               continue;
             }
           }

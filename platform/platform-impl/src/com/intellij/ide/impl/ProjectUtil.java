@@ -102,7 +102,7 @@ public class ProjectUtil {
     }
 
     if (path.endsWith(ProjectFileType.DOT_DEFAULT_EXTENSION) ||
-        virtualFile.isDirectory() && virtualFile.findChild(com.intellij.openapi.project.ProjectUtil.DIRECTORY_BASED_PROJECT_DIR) != null) {
+        virtualFile.isDirectory() && virtualFile.findChild(Project.DIRECTORY_STORE_FOLDER) != null) {
       return openProject(path, projectToClose, forceOpenInNewFrame);
     }
 
@@ -145,8 +145,9 @@ public class ProjectUtil {
       return null;
     }
 
-    if (file.isDirectory() && !new File(file, com.intellij.openapi.project.ProjectUtil.DIRECTORY_BASED_PROJECT_DIR).exists()) {
-      Messages.showErrorDialog(IdeBundle.message("error.project.file.does.not.exist", new File(file, com.intellij.openapi.project.ProjectUtil.DIRECTORY_BASED_PROJECT_DIR).getPath()), CommonBundle.getErrorTitle());
+    if (file.isDirectory() && !new File(file, Project.DIRECTORY_STORE_FOLDER).exists()) {
+      String message = IdeBundle.message("error.project.file.does.not.exist", new File(file, Project.DIRECTORY_STORE_FOLDER).getPath());
+      Messages.showErrorDialog(message, CommonBundle.getErrorTitle());
       return null;
     }
 

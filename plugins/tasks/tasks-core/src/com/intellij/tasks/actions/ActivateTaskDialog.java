@@ -323,9 +323,9 @@ public class ActivateTaskDialog extends DialogWrapper {
     public LookupElementBuilder createLookupBuilder(@NotNull final Task task) {
       LookupElementBuilder builder = super.createLookupBuilder(task);
 
-      builder = builder.addLookupString(task.getSummary());
+      builder = builder.withLookupString(task.getSummary());
       if (task.isClosed()) {
-        builder = builder.setStrikeout();
+        builder = builder.strikeout();
       }
 
       return builder;

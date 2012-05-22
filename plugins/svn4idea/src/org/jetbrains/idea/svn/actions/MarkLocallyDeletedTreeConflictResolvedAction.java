@@ -122,7 +122,12 @@ public class MarkLocallyDeletedTreeConflictResolvedAction extends AnAction {
 
       final List<LocallyDeletedChange> missingFiles = e.getData(ChangesListView.LOCALLY_DELETED_CHANGES);
 
-      if (missingFiles == null || missingFiles.size() != 1) {
+      if (missingFiles == null || missingFiles.isEmpty()) {
+        myPath = null;
+        myEnabled = false;
+        return;
+      }
+      /*if (missingFiles == null || missingFiles.size() != 1) {
         final Change[] changes = e.getData(VcsDataKeys.CHANGES);
         if (changes == null || changes.length != 1 || changes[0].getAfterRevision() != null) {
           myPath = null;
@@ -136,7 +141,7 @@ public class MarkLocallyDeletedTreeConflictResolvedAction extends AnAction {
           myPath = null;
         }
         return;
-      }
+      } */
 
       final LocallyDeletedChange change = missingFiles.get(0);
       myEnabled = change instanceof SvnLocallyDeletedChange && ((SvnLocallyDeletedChange) change).getConflictState().isTree();

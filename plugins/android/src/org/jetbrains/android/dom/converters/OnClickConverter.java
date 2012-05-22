@@ -153,11 +153,11 @@ public class OnClickConverter extends Converter<String> implements CustomReferen
 
   private static LookupElement createLookupElement(PsiMethod method) {
     final LookupElementBuilder builder = LookupElementBuilder.create(method, method.getName())
-      .setIcon(method.getIcon(Iconable.ICON_FLAG_VISIBILITY))
-      .setPresentableText(method.getName());
+      .withIcon(method.getIcon(Iconable.ICON_FLAG_VISIBILITY))
+      .withPresentableText(method.getName());
     final PsiClass containingClass = method.getContainingClass();
     return containingClass != null
-           ? builder.setTailText(" (" + containingClass.getQualifiedName() + ')')
+           ? builder.withTailText(" (" + containingClass.getQualifiedName() + ')')
            : builder;
   }
 }

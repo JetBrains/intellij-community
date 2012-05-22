@@ -230,6 +230,7 @@ public class NameUtilTest extends UsefulTestCase {
   }
 
   public void testMiddleMatchingFirstLetterSensitive() {
+    assertTrue(NameUtil.buildCompletionMatcher(" cl", 1, true, true).matches("getClass"));
     assertTrue(NameUtil.buildCompletionMatcher(" EUC-", 1, true, true).matches("x-EUC-TW"));
     assertTrue(NameUtil.buildCompletionMatcher(" a", 1, true, true).matches("aaa"));
     assertFalse(NameUtil.buildCompletionMatcher(" a", 1, true, true).matches("Aaa"));

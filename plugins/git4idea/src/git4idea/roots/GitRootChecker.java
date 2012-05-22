@@ -19,6 +19,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsDirectoryMapping;
 import com.intellij.openapi.vcs.VcsRootChecker;
 import com.intellij.openapi.vcs.VcsRootError;
+import git4idea.GitUtil;
 import git4idea.PlatformFacade;
 import org.jetbrains.annotations.NotNull;
 
@@ -69,6 +70,6 @@ public class GitRootChecker implements VcsRootChecker {
     if (mapping.isDefaultMapping()) {
       return myProjectMappingIsInvalid;
     }
-    return !new File(mapping.getDirectory(), ".git").exists();
+    return !new File(mapping.getDirectory(), GitUtil.DOT_GIT).exists();
   }
 }

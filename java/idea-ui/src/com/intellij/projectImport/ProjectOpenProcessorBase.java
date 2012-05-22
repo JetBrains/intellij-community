@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -151,7 +151,7 @@ public abstract class ProjectOpenProcessorBase<T extends ProjectImportBuilder> e
       }
       wizardContext.setProjectJdk(jdk);
 
-      final String dotIdeaFilePath = wizardContext.getProjectFileDirectory() + File.separator + ".idea";
+      final String dotIdeaFilePath = wizardContext.getProjectFileDirectory() + File.separator + Project.DIRECTORY_STORE_FOLDER;
       final String projectFilePath = wizardContext.getProjectFileDirectory() + File.separator + wizardContext.getProjectName() +
                                      ProjectFileType.DOT_DEFAULT_EXTENSION;
 

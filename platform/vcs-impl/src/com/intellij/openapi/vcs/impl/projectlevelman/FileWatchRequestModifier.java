@@ -64,7 +64,7 @@ public class FileWatchRequestModifier implements Runnable {
       }
     }
 
-    final Set<LocalFileSystem.WatchRequest> requests = myLfs.replaceWatchedRoots(toRemove, toAdd.keySet(), true);
+    final Set<LocalFileSystem.WatchRequest> requests = myLfs.replaceWatchedRoots(toRemove, toAdd.keySet(), null);
     for (LocalFileSystem.WatchRequest request : requests) {
       myDirectoryMappingWatches.put(toAdd.get(request.getRootPath()), request);
     }

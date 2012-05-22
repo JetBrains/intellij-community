@@ -58,10 +58,6 @@ import java.util.*;
  */
 public class GitUtil {
   /**
-   * The logger instance
-   */
-  private final static Logger LOG = Logger.getInstance("#git4idea.GitUtil");
-  /**
    * Comparator for virtual files by name
    */
   public static final Comparator<VirtualFile> VIRTUAL_FILE_COMPARATOR = new Comparator<VirtualFile>() {
@@ -86,6 +82,9 @@ public class GitUtil {
    * The UTF8 charset
    */
   public static final Charset UTF8_CHARSET = Charset.forName(UTF8_ENCODING);
+  public static final String DOT_GIT = ".git";
+
+  private final static Logger LOG = Logger.getInstance(GitUtil.class);
 
   /**
    * A private constructor to suppress instance creation
@@ -96,7 +95,7 @@ public class GitUtil {
 
   @Nullable
   public static VirtualFile findGitDir(@NotNull VirtualFile rootDir) {
-    VirtualFile child = rootDir.findChild(".git");
+    VirtualFile child = rootDir.findChild(DOT_GIT);
     if (child == null) {
       return null;
     }
@@ -281,7 +280,7 @@ public class GitUtil {
     for (VirtualFile root : roots) {
       VirtualFile f = root;
       do {
-        if (f.findFileByRelativePath(".git") != null) {
+        if (f.findFileByRelativePath(DOT_GIT) != null) {
           rc.add(f);
           break;
         }
@@ -320,13 +319,13 @@ public class GitUtil {
   }
 
   public static boolean isGitRoot(final File file) {
-    return file != null && file.exists() && file.isDirectory() && new File(file, ".git").exists();
+    return file != null && file.exists() && file.isDirectory() && new File(file, DOT_GIT).exists();
   }
 
   @Nullable
   public static VirtualFile getGitRootOrNull(final File file) {
     File root = file;
-    while (root != null && (!root.exists() || !root.isDirectory() || !new File(root, ".git").exists())) {
+    while (root != null && (!root.exists() || !root.isDirectory() || !new File(root, DOT_GIT).exists())) {
       root = root.getParentFile();
     }
     return root == null ? null : LocalFileSystem.getInstance().findFileByIoFile(root);
@@ -362,7 +361,7 @@ public class GitUtil {
     }
     VirtualFile root = file;
     while (root != null) {
-      if (root.findFileByRelativePath(".git") != null) {
+      if (root.findFileByRelativePath(DOT_GIT) != null) {
         return root;
       }
       root = root.getParent();

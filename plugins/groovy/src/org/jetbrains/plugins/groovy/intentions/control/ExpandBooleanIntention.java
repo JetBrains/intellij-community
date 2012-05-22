@@ -37,30 +37,23 @@ public class ExpandBooleanIntention extends Intention {
     return new ExpandBooleanPredicate();
   }
 
-  public void processIntention(@NotNull PsiElement element, Project project, Editor editor)
-      throws IncorrectOperationException {
-    final GrStatement containingStatement = (GrStatement) element;
+  public void processIntention(@NotNull PsiElement element, Project project, Editor editor) throws IncorrectOperationException {
+    final GrStatement containingStatement = (GrStatement)element;
     if (ExpandBooleanPredicate.isBooleanAssignment(containingStatement)) {
-
-      final GrAssignmentExpression assignmentExpression =
-          (GrAssignmentExpression) containingStatement;
+      final GrAssignmentExpression assignmentExpression = (GrAssignmentExpression)containingStatement;
       final GrExpression rhs = assignmentExpression.getRValue();
       assert rhs != null;
       final String rhsText = rhs.getText();
       final GrExpression lhs = assignmentExpression.getLValue();
       final String lhsText = lhs.getText();
-      @NonNls final String statement =
-          "if(" + rhsText + "){" + lhsText + " = true;}else{" +
-              lhsText +
-              " = false;}";
+      @NonNls final String statement = "if(" + rhsText + "){\n" + lhsText + " = true\n}else{\n" + lhsText + " = false\n}";
       IntentionUtils.replaceStatement(statement, containingStatement);
-    } else if (ExpandBooleanPredicate.isBooleanReturn(containingStatement)) {
-      final GrReturnStatement returnStatement =
-          (GrReturnStatement) containingStatement;
+    }
+    else if (ExpandBooleanPredicate.isBooleanReturn(containingStatement)) {
+      final GrReturnStatement returnStatement = (GrReturnStatement)containingStatement;
       final GrExpression returnValue = returnStatement.getReturnValue();
       final String valueText = returnValue.getText();
-      @NonNls final String statement =
-          "if(" + valueText + "){return true;}else{return false;}";
+      @NonNls final String statement = "if(" + valueText + "){\nreturn true\n}else{\nreturn false\n}";
       IntentionUtils.replaceStatement(statement, containingStatement);
     }
   }

@@ -18,12 +18,14 @@ package git4idea.merge;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitBranch;
+import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.commands.GitCommand;
 import git4idea.commands.GitSimpleHandler;
+import git4idea.repo.GitRepositoryFiles;
 
 import java.io.File;
 import java.util.Collection;
@@ -64,8 +66,8 @@ public class GitMerger {
     GitSimpleHandler handler = new GitSimpleHandler(myProject, root, GitCommand.COMMIT);
     handler.setNoSSH(true);
 
-    File gitDir = new File(VfsUtil.virtualToIoFile(root), ".git");
-    File messageFile = new File(gitDir, "MERGE_MSG");
+    File gitDir = new File(VfsUtilCore.virtualToIoFile(root), GitUtil.DOT_GIT);
+    File messageFile = new File(gitDir, GitRepositoryFiles.MERGE_MSG);
     if (!messageFile.exists()) {
       final GitBranch branch = GitBranch.current(myProject, root);
       final String branchName = branch != null ? branch.getName() : "";
