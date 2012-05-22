@@ -77,6 +77,7 @@ public class PyCodeFragmentUtil {
       final String name = getName(element);
       if (name != null) {
         outputNames.add(name);
+        globalWrites.remove(name);
       }
     }
 
@@ -264,7 +265,7 @@ public class PyCodeFragmentUtil {
       final PsiReference reference = element.getReference();
       if (reference != null) {
         final PsiElement resolved = reference.resolve();
-        if (resolved != null && ScopeUtil.getScopeOwner(resolved) == owner) {
+        if (resolved != null && ScopeUtil.getScopeOwner(resolved) == owner && !(owner instanceof PsiFile)) {
           result.add(element);
         }
       }
@@ -290,7 +291,7 @@ public class PyCodeFragmentUtil {
     for (Instruction instruction : getWriteInstructions(instructions)) {
       if (instruction instanceof ReadWriteInstruction) {
         final String name = ((ReadWriteInstruction)instruction).getName();
-        if (scope.isGlobal(name)) {
+        if (scope.isGlobal(name) || owner instanceof PsiFile) {
           globalWrites.add(name);
         }
       }
