@@ -41,16 +41,19 @@ public class GrCastFix extends GroovyFix implements LocalQuickFix {
 
   @Override
   protected void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
-    if (!myExpectedType.isValid()) return;
+    doCast(project, myExpectedType, descriptor.getPsiElement());
+  }
 
-    final PsiElement element = descriptor.getPsiElement();
+  static void doCast(Project project, PsiType type, PsiElement element) {
+    if (!type.isValid()) return;
+
     if (!(element instanceof GrExpression)) return;
 
     final GrExpression expr = (GrExpression)element;
 
     final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(project);
     final GrSafeCastExpression cast = (GrSafeCastExpression)factory.createExpressionFromText("foo as String");
-    final GrTypeElement typeElement = factory.createTypeElement(myExpectedType);
+    final GrTypeElement typeElement = factory.createTypeElement(type);
     cast.getOperand().replaceWithExpression(expr, true);
     cast.getCastTypeElement().replace(typeElement);
 

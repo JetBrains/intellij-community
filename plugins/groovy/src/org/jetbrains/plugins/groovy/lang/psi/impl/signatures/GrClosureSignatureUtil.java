@@ -847,4 +847,94 @@ public class GrClosureSignatureUtil {
 
     return null;
   }
+
+
+  public static class MapResultWithError<Arg> {
+    private final ArgInfo<Arg>[] mapping;
+    private final List<Pair<Integer, PsiType>> errorsAndExpectedType;
+
+    public MapResultWithError(ArgInfo<Arg>[] mapping, List<Pair<Integer, PsiType>> errorsAndExpectedType) {
+      this.mapping = mapping;
+      this.errorsAndExpectedType = errorsAndExpectedType;
+    }
+
+    public ArgInfo<Arg>[] getMapping() {
+      return mapping;
+    }
+
+    public List<Pair<Integer, PsiType>> getErrors() {
+      return errorsAndExpectedType;
+    }
+  }
+
+  @Nullable
+  public static <Arg> MapResultWithError<Arg> mapSimpleSignatureWithErrors(@NotNull GrClosureSignature signature,
+                                                                            @NotNull Arg[] args,
+                                                                            @NotNull Function<Arg, PsiType> typeComputer,
+                                                                            @NotNull GroovyPsiElement context,
+                                                                            int maxErrorCount) {
+    final GrClosureParameter[] params = signature.getParameters();
+    if (args.length < params.length) return null;
+
+    if (args.length > params.length && !signature.isVarargs()) return null;
+
+    int optional = getOptionalParamCount(params, false);
+    assert optional == 0;
+
+    int errorCount = 0;
+    ArgInfo<Arg>[] map = new ArgInfo[params.length];
+
+    List<Pair<Integer, PsiType>> errors = new ArrayList<Pair<Integer, PsiType>>(maxErrorCount);
+
+    for (int i = 0; i < params.length; i++) {
+      if (isAssignableByConversion(params[i].getType(), typeComputer.fun(args[i]), context)) {
+        map[i] = new ArgInfo<Arg>(args[i]);
+      }
+      else if (params[i].getType() instanceof PsiArrayType && i == params.length - 1) {
+        if (i + 1 == args.length) {
+          errors.add(new Pair<Integer, PsiType>(i, params[i].getType()));
+        }
+        final PsiType ellipsis = ((PsiArrayType)params[i].getType()).getComponentType();
+        for (int j = i; j < args.length; j++) {
+          if (!isAssignableByConversion(ellipsis, typeComputer.fun(args[j]), context)) {
+            errorCount++;
+            if (errorCount > maxErrorCount) return null;
+            errors.add(new Pair<Integer, PsiType>(i, ellipsis));
+          }
+          map[i] = new ArgInfo<Arg>(args[i]);
+        }
+      }
+      else {
+        errorCount++;
+        if (errorCount > maxErrorCount) return null;
+        errors.add(new Pair<Integer, PsiType>(i, params[i].getType()));
+      }
+    }
+    return new MapResultWithError<Arg>(map, errors);
+  }
+
+  public static List<GrClosureSignature> generateSimpleSignature(GrSignature signature) {
+    final List<GrClosureSignature> result = new ArrayList<GrClosureSignature>();
+    signature.accept(new GrRecursiveSignatureVisitor() {
+      @Override
+      public void visitClosureSignature(GrClosureSignature signature) {
+        final GrClosureParameter[] original = signature.getParameters();
+        final ArrayList<GrClosureParameter> parameters = new ArrayList<GrClosureParameter>(original.length);
+
+        for (GrClosureParameter parameter : original) {
+          parameters.add(new GrClosureParameterImpl(parameter.getType(), false, null));
+        }
+
+        final int pcount = signature.isVarargs() ? signature.getParameterCount() - 2 : signature.getParameterCount() - 1;
+        for (int i = pcount; i >= 0; i--) {
+          if (original[i].isOptional()) {
+            result.add(new GrClosureSignatureImpl(parameters.toArray(new GrClosureParameter[parameters.size()]), signature.getReturnType(), signature.isVarargs(), false));
+            parameters.remove(i);
+          }
+        }
+        result.add(new GrClosureSignatureImpl(parameters.toArray(new GrClosureParameter[parameters.size()]), signature.getReturnType(), signature.isVarargs(), false));
+      }
+    });
+    return result;
+  }
 }
