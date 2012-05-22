@@ -198,4 +198,9 @@ public class PyExtractMethodTest extends LightMarkedTestCase {
   public void testGlobalVarAssignment() {
     doTest("bar");
   }
+
+  // PY-6619
+  public void testGlobalToplevelAssignment() {
+    doTest("bar");
+  }
 }
