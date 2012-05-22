@@ -338,7 +338,7 @@ public class EditorHyperlinkSupport {
         action.consume(next);
         linkFollowed(editor, ranges, next);
       }
-    }, i, ranges.size());
+    }, newIndex == -1 ? -1 : newIndex + 1, ranges.size());
   }
 
   // todo fix link followed here!
