@@ -528,7 +528,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
       PsiFile f = realContext.getContainingFile();
       if (f instanceof PyFile) {
         for (String name : PyModuleType.getPossibleInstanceMembers()) {
-          ret.add(LookupElementBuilder.create(name).setIcon(PlatformIcons.FIELD_ICON));
+          ret.add(LookupElementBuilder.create(name).withIcon(PlatformIcons.FIELD_ICON));
         }
       }
     }

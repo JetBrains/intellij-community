@@ -175,33 +175,33 @@ public class PyDictKeyNamesCompletionContributor extends CompletionContributor {
     LookupElementBuilder item;
     item = LookupElementBuilder
       .create(key)
-      .setTypeText("dict key")
-      .setIcon(PlatformIcons.PARAMETER_ICON);
+      .withTypeText("dict key")
+      .withIcon(PlatformIcons.PARAMETER_ICON);
 
     if (addHandler)
-      item = item.setInsertHandler(new InsertHandler<LookupElement>() {
-      @Override
-      public void handleInsert(final InsertionContext context, final LookupElement item) {
-        final PyStringLiteralExpression str = PsiTreeUtil.findElementOfClassAtOffset(context.getFile(), context.getStartOffset(),
-                                                                           PyStringLiteralExpression.class, false);
-        if (str != null) {
-          final boolean isDictKeys = PsiTreeUtil.getParentOfType(str, PySubscriptionExpression.class) != null;
-          if (isDictKeys) {
-            final int off = context.getStartOffset()+str.getTextLength();
-            final PsiElement element = context.getFile().findElementAt(off);
-            final boolean atRBrace = element == null || element.getNode().getElementType() == PyTokenTypes.RBRACKET;
-            final boolean badQuoting = (!StringUtil.startsWithChar(str.getText(), '\'') || !StringUtil.endsWithChar(str.getText(), '\'')) &&
-                                       (!StringUtil.startsWithChar(str.getText(), '"') || !StringUtil.endsWithChar(str.getText(), '"'));
-            if (badQuoting || !atRBrace ) {
-              final Document document = context.getEditor().getDocument();
-              final int offset = context.getTailOffset();
-              document.deleteString(offset-1, offset);
+      item = item.withInsertHandler(new InsertHandler<LookupElement>() {
+        @Override
+        public void handleInsert(final InsertionContext context, final LookupElement item) {
+          final PyStringLiteralExpression str = PsiTreeUtil.findElementOfClassAtOffset(context.getFile(), context.getStartOffset(),
+                                                                                       PyStringLiteralExpression.class, false);
+          if (str != null) {
+            final boolean isDictKeys = PsiTreeUtil.getParentOfType(str, PySubscriptionExpression.class) != null;
+            if (isDictKeys) {
+              final int off = context.getStartOffset() + str.getTextLength();
+              final PsiElement element = context.getFile().findElementAt(off);
+              final boolean atRBrace = element == null || element.getNode().getElementType() == PyTokenTypes.RBRACKET;
+              final boolean badQuoting =
+                (!StringUtil.startsWithChar(str.getText(), '\'') || !StringUtil.endsWithChar(str.getText(), '\'')) &&
+                (!StringUtil.startsWithChar(str.getText(), '"') || !StringUtil.endsWithChar(str.getText(), '"'));
+              if (badQuoting || !atRBrace) {
+                final Document document = context.getEditor().getDocument();
+                final int offset = context.getTailOffset();
+                document.deleteString(offset - 1, offset);
+              }
             }
           }
         }
-
-      }
-    });
+      });
     return item;
   }
 

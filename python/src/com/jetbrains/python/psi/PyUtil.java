@@ -731,7 +731,7 @@ public class PyUtil {
   }
 
   public static LookupElement createNamedParameterLookup(String name) {
-    LookupElementBuilder lookupElementBuilder = LookupElementBuilder.create(name + "=").setIcon(PlatformIcons.PARAMETER_ICON);
+    LookupElementBuilder lookupElementBuilder = LookupElementBuilder.create(name + "=").withIcon(PlatformIcons.PARAMETER_ICON);
     return PrioritizedLookupElement.withGrouping(lookupElementBuilder, 1);
   }
 

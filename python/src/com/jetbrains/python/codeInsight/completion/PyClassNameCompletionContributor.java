@@ -68,9 +68,9 @@ public class PyClassNameCompletionContributor extends CompletionContributor {
         for (T element : elements) {
           if (condition.value(element)) {
             resultSet.addElement(LookupElementBuilder.create(element)
-                                   .setIcon(element.getIcon(Iconable.ICON_FLAG_CLOSED))
-                                   .setTailText(" " + ((NavigationItem)element).getPresentation().getLocationString(), true)
-                                   .setInsertHandler(insertHandler));
+                                   .withIcon(element.getIcon(Iconable.ICON_FLAG_CLOSED))
+                                   .withTailText(" " + ((NavigationItem)element).getPresentation().getLocationString(), true)
+                                   .withInsertHandler(insertHandler));
           }
         }
       }
