@@ -69,7 +69,7 @@ public class MavenModulePsiReference extends MavenPsiReference implements LocalQ
       PsiFile psiFile = eachDomFile.getFile();
       String modulePath = calcRelativeModulePath(myVirtualFile, eachVFile);
 
-      result.add(LookupElementBuilder.create(psiFile, modulePath).setPresentableText(modulePath));
+      result.add(LookupElementBuilder.create(psiFile, modulePath).withPresentableText(modulePath));
     }
 
     return result.toArray();

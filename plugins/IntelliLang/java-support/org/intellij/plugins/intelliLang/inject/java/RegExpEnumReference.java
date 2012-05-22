@@ -50,7 +50,7 @@ final class RegExpEnumReference extends StringLiteralReference {
     }
     return ContainerUtil.map2Array(values, new Function<String, Object>() {
       public Object fun(String s) {
-        return LookupElementBuilder.create(s).setIcon(PlatformIcons.ENUM_ICON);
+        return LookupElementBuilder.create(s).withIcon(PlatformIcons.ENUM_ICON);
       }
     });
   }

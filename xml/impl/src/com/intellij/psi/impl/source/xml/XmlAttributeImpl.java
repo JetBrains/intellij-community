@@ -469,13 +469,13 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute {
             }
             LookupElementBuilder element = LookupElementBuilder.create(name);
             if (descriptor instanceof PsiPresentableMetaData) {
-              element = element.setIcon(((PsiPresentableMetaData)descriptor).getIcon());
+              element = element.withIcon(((PsiPresentableMetaData)descriptor).getIcon());
             }
             final int separator = name.indexOf(':');
             if (separator > 0) {
-              element = element.addLookupString(name.substring(separator + 1));
+              element = element.withLookupString(name.substring(separator + 1));
             }
-            variants.add(element.setCaseSensitive(caseSensitive).setInsertHandler(XmlAttributeInsertHandler.INSTANCE));
+            variants.add(element.withCaseSensitivity(caseSensitive).withInsertHandler(XmlAttributeInsertHandler.INSTANCE));
           }
         }
       }

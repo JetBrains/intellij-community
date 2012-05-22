@@ -36,7 +36,8 @@ public class JavaLookupElementBuilder {
   public static LookupElementBuilder forField(@NotNull PsiField field,
                                               final String lookupString,
                                               final @Nullable PsiClass qualifierClass) {
-    final LookupElementBuilder builder = LookupElementBuilder.create(field, lookupString).setIcon(field.getIcon(Iconable.ICON_FLAG_VISIBILITY));
+    final LookupElementBuilder builder = LookupElementBuilder.create(field, lookupString).withIcon(
+      field.getIcon(Iconable.ICON_FLAG_VISIBILITY));
     return setBoldIfInClass(field, qualifierClass, builder);
   }
 
@@ -48,14 +49,14 @@ public class JavaLookupElementBuilder {
                                                @NotNull String lookupString, final @NotNull PsiSubstitutor substitutor,
                                                @Nullable PsiClass qualifierClass) {
     LookupElementBuilder builder = LookupElementBuilder.create(method, lookupString)
-      .setIcon(method.getIcon(Iconable.ICON_FLAG_VISIBILITY))
-      .setPresentableText(method.getName())
-      .setTailText(PsiFormatUtil.formatMethod(method, substitutor,
-                                              PsiFormatUtil.SHOW_PARAMETERS,
-                                              PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_TYPE));
+      .withIcon(method.getIcon(Iconable.ICON_FLAG_VISIBILITY))
+      .withPresentableText(method.getName())
+      .withTailText(PsiFormatUtil.formatMethod(method, substitutor,
+                                               PsiFormatUtil.SHOW_PARAMETERS,
+                                               PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_TYPE));
     final PsiType returnType = method.getReturnType();
     if (returnType != null) {
-      builder = builder.setTypeText(substitutor.substitute(returnType).getPresentableText());
+      builder = builder.withTypeText(substitutor.substitute(returnType).getPresentableText());
     }
     builder = setBoldIfInClass(method, qualifierClass, builder);
     return builder;
@@ -63,7 +64,7 @@ public class JavaLookupElementBuilder {
 
   private static LookupElementBuilder setBoldIfInClass(@NotNull PsiMember member, @Nullable PsiClass psiClass, @NotNull LookupElementBuilder builder) {
     if (psiClass != null && member.getManager().areElementsEquivalent(member.getContainingClass(), psiClass)) {
-      return builder.setBold();
+      return builder.bold();
     }
     return builder;
   }
@@ -81,9 +82,9 @@ public class JavaLookupElementBuilder {
                                               final String lookupString,
                                               final boolean withLocation) {
     final LookupElementBuilder builder =
-      LookupElementBuilder.create(psiClass, lookupString).setIcon(psiClass.getIcon(Iconable.ICON_FLAG_VISIBILITY));
+      LookupElementBuilder.create(psiClass, lookupString).withIcon(psiClass.getIcon(Iconable.ICON_FLAG_VISIBILITY));
     if (withLocation) {
-      return builder.setTailText(" (" + PsiFormatUtil.getPackageDisplayName(psiClass) + ")", true);
+      return builder.withTailText(" (" + PsiFormatUtil.getPackageDisplayName(psiClass) + ")", true);
     }
     return builder;
   }

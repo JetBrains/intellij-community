@@ -62,7 +62,7 @@ public class StyleItemNameConverter extends ResolvingConverter<String> {
       return null;
     }
     final String attributeName = s.substring(prefix.length());
-    return LookupElementBuilder.create(s).addLookupString(attributeName);
+    return LookupElementBuilder.create(s).withLookupString(attributeName);
   }
 
   @Override

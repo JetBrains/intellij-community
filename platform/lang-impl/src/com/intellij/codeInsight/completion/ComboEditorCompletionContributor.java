@@ -45,12 +45,13 @@ public class ComboEditorCompletionContributor extends CompletionContributor{
         for (int i = 0; i < count; i++) {
           final Object o = comboBox.getItemAt(i);
           if (o instanceof String) {
-            resultSet.addElement(PrioritizedLookupElement.withPriority(LookupElementBuilder.create((String)o).setInsertHandler(new InsertHandler<LookupElement>() {
-              public void handleInsert(final InsertionContext context, final LookupElement item) {
-                final Document document = context.getEditor().getDocument();
-                document.deleteString(context.getEditor().getCaretModel().getOffset(), document.getTextLength());
-              }
-            }), count-i));
+            resultSet.addElement(PrioritizedLookupElement.withPriority(LookupElementBuilder.create((String)o).withInsertHandler(
+              new InsertHandler<LookupElement>() {
+                public void handleInsert(final InsertionContext context, final LookupElement item) {
+                  final Document document = context.getEditor().getDocument();
+                  document.deleteString(context.getEditor().getCaretModel().getOffset(), document.getTextLength());
+                }
+              }), count-i));
           }
         }
         result.stopHere();

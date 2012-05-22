@@ -127,7 +127,7 @@ public class JavaLangClassMemberReference extends PsiReferenceBase<PsiLiteralExp
         final List<LookupElementBuilder> elements = new ArrayList<LookupElementBuilder>();
         for (PsiMethod method : psiClass.getMethods()) {
           if (type == Type.DECLARED_METHOD || isPublic(method)) {
-            elements.add(JavaLookupElementBuilder.forMethod(method, PsiSubstitutor.EMPTY).setInsertHandler(this));
+            elements.add(JavaLookupElementBuilder.forMethod(method, PsiSubstitutor.EMPTY).withInsertHandler(this));
           }
         }
         return elements.toArray();

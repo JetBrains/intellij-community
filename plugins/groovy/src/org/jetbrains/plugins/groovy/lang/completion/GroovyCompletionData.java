@@ -207,7 +207,7 @@ public class GroovyCompletionData {
   }
 
   private static LookupElement keyword(final String keyword, @NotNull TailType tail) {
-    LookupElementBuilder element = LookupElementBuilder.create(keyword).setBold();
+    LookupElementBuilder element = LookupElementBuilder.create(keyword).bold();
     return tail != TailType.NONE ? TailTypeDecorator.withTail(element, tail) : element;
   }
 

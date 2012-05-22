@@ -94,14 +94,14 @@ class MapArgumentCompletionProvider extends CompletionProvider<CompletionParamet
 
     for (Map.Entry<String, NamedArgumentDescriptor> entry : map.entrySet()) {
       LookupElementBuilder lookup = LookupElementBuilder.create(entry.getValue(), entry.getKey())
-        .setInsertHandler(NamedArgumentInsertHandler.INSTANCE)
-        .setTailText(":");
+        .withInsertHandler(NamedArgumentInsertHandler.INSTANCE)
+        .withTailText(":");
 
       if (entry.getValue().getPriority() == Priority.UNLIKELY) {
-        lookup.setItemTextForeground(DefaultHighlighter.MAP_KEY_COLOR);
+        lookup.withItemTextForeground(DefaultHighlighter.MAP_KEY_COLOR);
       }
       else {
-        lookup = lookup.setIcon(GroovyIcons.DYNAMIC);
+        lookup = lookup.withIcon(GroovyIcons.DYNAMIC);
       }
       
       result.addElement(lookup);
