@@ -17,6 +17,7 @@ package com.intellij.designer.propertyTable;
 
 import com.intellij.designer.DesignerBundle;
 import com.intellij.designer.propertyTable.actions.IPropertyTableAction;
+import com.intellij.designer.propertyTable.actions.ShowJavadoc;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.ui.IdeBorderFactory;
@@ -43,18 +44,25 @@ public final class PropertyTablePanel extends JPanel implements ListSelectionLis
     add(new JLabel(DesignerBundle.message("designer.properties.title")),
         new GridBagConstraints(0, 0, 1, 1, 1, 0, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL, new Insets(2, 5, 2, 0), 0, 0));
 
-    ActionGroup actionGroup = (ActionGroup)ActionManager.getInstance().getAction("UIDesigner.PropertyTable");
+    ActionManager actionManager = ActionManager.getInstance();
+
+    AnAction quickJavadocAction = ActionManager.getInstance().getAction(IdeActions.ACTION_QUICK_JAVADOC);
+    new ShowJavadoc().registerCustomShortcutSet(quickJavadocAction.getShortcutSet(), myPropertyTable);
+
+    ActionGroup actionGroup = (ActionGroup)actionManager.getAction("UIDesigner.PropertyTable");
 
     PopupHandler.installPopupHandler(myPropertyTable, actionGroup,
                                      ActionPlaces.GUI_DESIGNER_PROPERTY_INSPECTOR_POPUP,
-                                     ActionManager.getInstance());
+                                     actionManager);
 
     myActions = actionGroup.getChildren(null);
     for (int i = 0; i < myActions.length; i++) {
       AnAction action = myActions[i];
-      add(new ActionButton(action, action.getTemplatePresentation(), ActionPlaces.UNKNOWN, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE),
-          new GridBagConstraints(i + 1, 0, 1, 1, 0, 0, GridBagConstraints.CENTER, GridBagConstraints.NONE,
-                                 new Insets(2, 0, 2, i == myActions.length - 1 ? 2 : 0), 0, 0));
+      if (!(action instanceof Separator)) {
+        add(new ActionButton(action, action.getTemplatePresentation(), ActionPlaces.UNKNOWN, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE),
+            new GridBagConstraints(i + 1, 0, 1, 1, 0, 0, GridBagConstraints.CENTER, GridBagConstraints.NONE,
+                                   new Insets(2, 0, 2, i == myActions.length - 1 ? 2 : 0), 0, 0));
+      }
     }
 
     myPropertyTable.getSelectionModel().addListSelectionListener(this);

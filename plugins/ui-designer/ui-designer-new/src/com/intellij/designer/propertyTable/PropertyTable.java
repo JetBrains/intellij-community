@@ -87,8 +87,6 @@ public final class PropertyTable extends JBTable implements ComponentSelectionLi
       }
     });
 
-    // TODO: ShowJavadocAction
-
     // TODO: Updates UI after LAF updated
   }
 

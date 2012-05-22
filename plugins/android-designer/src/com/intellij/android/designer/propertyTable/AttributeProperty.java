@@ -134,4 +134,9 @@ public class AttributeProperty extends Property<RadViewComponent> {
   public PropertyEditor getEditor() {
     return myEditor;
   }
+
+  @Override
+  public String getJavadocText() {
+    return myDefinition.getDocValue();
+  }
 }
