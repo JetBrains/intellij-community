@@ -33,4 +33,9 @@ public class PyTypeCheckerInspectionTest extends PyTestCase {
   public void testDictLiteralIndexing() {
     doTest();
   }
+
+  // PY-6606
+  public void testBuiltinBaseClass() {
+    doTest();
+  }
 }
