@@ -228,6 +228,24 @@ public final class AndroidApt {
                                                                                boolean debugMode,
                                                                                int versionCode,
                                                                                FileFilter assetsFilter) throws IOException {
+    for (String resDirPath : resPaths) {
+      if (FileUtil.isAncestor(resDirPath, outputPath, false)) {
+        throw new IOException("Resource directory " +
+                              FileUtil.toSystemDependentName(resDirPath) +
+                              " contains output " +
+                              FileUtil.toSystemDependentName(outputPath));
+      }
+    }
+
+    for (String assetsDirPath : osAssetDirPaths) {
+      if (FileUtil.isAncestor(assetsDirPath, outputPath, false)) {
+        throw new IOException("Assets directory " +
+                              FileUtil.toSystemDependentName(assetsDirPath) +
+                              " contains output " +
+                              FileUtil.toSystemDependentName(outputPath));
+      }
+    }
+
     final ArrayList<String> args = new ArrayList<String>();
 
     //noinspection deprecation
