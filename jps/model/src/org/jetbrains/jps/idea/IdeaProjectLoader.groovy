@@ -334,15 +334,17 @@ public class IdeaProjectLoader {
     def componentTag = getComponent(root, "Encoding");
     if (componentTag == null) return;
     componentTag.file?.each {Node fileNode ->
-      def url = fileNode."@url";
-      def charset = fileNode."@charset";
+      String url = fileNode."@url";
+      String charset = fileNode."@charset";
 
-      if ("PROJECT".equals(url)) {
-        project.projectCharset = charset;
-      }
-      else {
-        def path = projectMacroExpander.expandMacros(IdeaProjectLoadingUtil.pathFromUrl(url));
-        project.filePathToCharset[path] = charset;
+      if (!StringUtil.isEmptyOrSpaces(charset)) {
+        if ("PROJECT".equals(url)) {
+          project.projectCharset = charset;
+        }
+        else {
+          def path = projectMacroExpander.expandMacros(IdeaProjectLoadingUtil.pathFromUrl(url));
+          project.filePathToCharset[FileUtil.toCanonicalPath(path)] = charset;
+        }
       }
     }
   }
