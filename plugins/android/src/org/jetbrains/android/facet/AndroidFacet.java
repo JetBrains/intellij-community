@@ -46,7 +46,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkAdditionalData;
 import com.intellij.openapi.projectRoots.SdkModificator;
-import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.ModuleRootAdapter;
+import com.intellij.openapi.roots.ModuleRootEvent;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
@@ -449,12 +452,10 @@ public class AndroidFacet extends Facet<AndroidFacetConfiguration> {
             AndroidCompileUtil.collectAllResources(AndroidFacet.this, resourceSet);
             myListener.setResourceSet(resourceSet);
 
-            if (getConfiguration().REGENERATE_R_JAVA && AndroidAptCompiler.isToCompileModule(module, getConfiguration())) {
+            if (AndroidAptCompiler.isToCompileModule(module, getConfiguration())) {
               AndroidCompileUtil.generate(module, AndroidAutogeneratorMode.AAPT);
             }
-            if (getConfiguration().REGENERATE_JAVA_BY_AIDL) {
-              AndroidCompileUtil.generate(module, AndroidAutogeneratorMode.AIDL);
-            }
+            AndroidCompileUtil.generate(module, AndroidAutogeneratorMode.AIDL);
             AndroidCompileUtil.generate(module, AndroidAutogeneratorMode.RENDERSCRIPT);
             AndroidCompileUtil.generate(module, AndroidAutogeneratorMode.BUILDCONFIG);
 

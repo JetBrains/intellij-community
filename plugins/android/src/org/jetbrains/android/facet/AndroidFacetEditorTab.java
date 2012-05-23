@@ -78,8 +78,6 @@ public class AndroidFacetEditorTab extends FacetEditorTab {
   private JRadioButton myUseAptResDirectoryFromPathRadio;
   private JRadioButton myUseCustomSourceDirectoryRadio;
   private TextFieldWithBrowseButton myCustomAptSourceDirField;
-  private JCheckBox myGenerateRJavaWhenChanged;
-  private JCheckBox myGenerateIdlWhenChanged;
   private JCheckBox myIsLibraryProjectCheckbox;
   private JPanel myAaptCompilerPanel;
   private JCheckBox myGenerateUnsignedApk;
@@ -233,24 +231,6 @@ public class AndroidFacetEditorTab extends FacetEditorTab {
         return file.isDirectory() || "apk".equals(file.getExtension());
       }
     });
-
-    myGenerateIdlWhenChanged.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        final boolean enabled = myGenerateIdlWhenChanged.isSelected();
-        myAidlGenPathLabel.setEnabled(enabled);
-        myAidlGenPathField.setEnabled(enabled);
-      }
-    });
-
-    myGenerateRJavaWhenChanged.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        final boolean enabled = myGenerateRJavaWhenChanged.isSelected();
-        myRGenPathLabel.setEnabled(enabled);
-        myRGenPathField.setEnabled(enabled);
-      }
-    });
   }
 
   private void updateAptPanel() {
@@ -312,14 +292,6 @@ public class AndroidFacetEditorTab extends FacetEditorTab {
     }
 
     if (checkRelativePath(myConfiguration.APK_PATH, (String)myApkPathCombo.getComboBox().getEditor().getItem())) {
-      return true;
-    }
-
-    if (myGenerateRJavaWhenChanged.isSelected() != myConfiguration.REGENERATE_R_JAVA) {
-      return true;
-    }
-
-    if (myGenerateIdlWhenChanged.isSelected() != myConfiguration.REGENERATE_JAVA_BY_AIDL) {
       return true;
     }
 
@@ -487,16 +459,6 @@ public class AndroidFacetEditorTab extends FacetEditorTab {
     }
     myConfiguration.USE_CUSTOM_APK_RESOURCE_FOLDER = useCustomAptSrc;
 
-    if (myConfiguration.REGENERATE_R_JAVA != myGenerateRJavaWhenChanged.isSelected()) {
-      runApt = true;
-    }
-    myConfiguration.REGENERATE_R_JAVA = myGenerateRJavaWhenChanged.isSelected();
-
-    if (myConfiguration.REGENERATE_JAVA_BY_AIDL != myGenerateIdlWhenChanged.isSelected()) {
-      runIdl = true;
-    }
-    myConfiguration.REGENERATE_JAVA_BY_AIDL = myGenerateIdlWhenChanged.isSelected();
-
     String absAptSourcePath = myCustomAptSourceDirField.getText().trim();
     if (useCustomAptSrc) {
       if (absAptSourcePath.length() == 0) {
@@ -513,12 +475,10 @@ public class AndroidFacetEditorTab extends FacetEditorTab {
       myConfiguration.CUSTOM_APK_RESOURCE_FOLDER = relPath != null ? '/' + relPath : "";
     }
 
-    runApt = runApt && myConfiguration.REGENERATE_R_JAVA && AndroidAptCompiler.isToCompileModule(myContext.getModule(), myConfiguration);
-    runIdl = runIdl && myConfiguration.REGENERATE_JAVA_BY_AIDL;
+    runApt = runApt && AndroidAptCompiler.isToCompileModule(myContext.getModule(), myConfiguration);
 
     if (runApt || runIdl) {
       final Module module = myContext.getModule();
-      final Project project = module.getProject();
 
       if (runApt) {
         AndroidCompileUtil.generate(module, AndroidAutogeneratorMode.AAPT, true);
@@ -589,14 +549,6 @@ public class AndroidFacetEditorTab extends FacetEditorTab {
     final AndroidPlatform platform = configuration.getAndroidPlatform();
     final int sdkToolsRevision = platform != null ? platform.getSdkData().getSdkToolsRevision() : -1;
     myIncludeSystemProguardFileCheckBox.setVisible(AndroidCommonUtils.isIncludingInProguardSupported(sdkToolsRevision));
-
-    myGenerateRJavaWhenChanged.setSelected(configuration.REGENERATE_R_JAVA);
-    myRGenPathLabel.setEnabled(configuration.REGENERATE_R_JAVA);
-    myRGenPathField.setEnabled(configuration.REGENERATE_R_JAVA);
-
-    myGenerateIdlWhenChanged.setSelected(configuration.REGENERATE_JAVA_BY_AIDL);
-    myAidlGenPathLabel.setEnabled(configuration.REGENERATE_JAVA_BY_AIDL);
-    myAidlGenPathField.setEnabled(configuration.REGENERATE_JAVA_BY_AIDL);
 
     myUseCustomSourceDirectoryRadio.setSelected(configuration.USE_CUSTOM_APK_RESOURCE_FOLDER);
     myUseAptResDirectoryFromPathRadio.setSelected(!configuration.USE_CUSTOM_APK_RESOURCE_FOLDER);

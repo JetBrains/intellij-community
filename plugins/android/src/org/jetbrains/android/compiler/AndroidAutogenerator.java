@@ -54,10 +54,8 @@ public class AndroidAutogenerator {
   private static boolean toRun(@NotNull AndroidAutogeneratorMode mode, @NotNull AndroidFacet facet) {
     switch (mode) {
       case AAPT:
-        return facet.getConfiguration().REGENERATE_R_JAVA &&
-               AndroidAptCompiler.isToCompileModule(facet.getModule(), facet.getConfiguration());
+        return AndroidAptCompiler.isToCompileModule(facet.getModule(), facet.getConfiguration());
       case AIDL:
-        return facet.getConfiguration().REGENERATE_JAVA_BY_AIDL;
       case RENDERSCRIPT:
       case BUILDCONFIG:
         return true;
