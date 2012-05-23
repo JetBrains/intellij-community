@@ -24,7 +24,6 @@
     <postStartupActivity
         implementation="com.intellij.structuralsearch.inspection.highlightTemplate.SSBasedInspectionCompiledPatternsCache"/>
     <!--<fileBasedIndex implementation="com.intellij.tokenindex.TokenIndex"/>-->
-    <pathMacroFilter implementation="com.intellij.structuralsearch.plugin.ui.StructuralSearchPathMacroFilter"/>
   </extensions>
 
   <resource-bundle>messages.SSRBundle</resource-bundle>
