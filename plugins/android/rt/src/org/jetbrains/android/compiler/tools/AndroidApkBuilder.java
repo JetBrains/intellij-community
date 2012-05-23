@@ -29,6 +29,7 @@ import com.intellij.util.text.DateFormatUtil;
 import org.jetbrains.android.util.AndroidCommonUtils;
 import org.jetbrains.android.util.AndroidCompilerMessageKind;
 import org.jetbrains.android.util.AndroidExecutionUtil;
+import org.jetbrains.android.util.SafeSignedJarBuilder;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -160,9 +161,9 @@ public class AndroidApkBuilder {
     try {
 
       String keyStoreOsPath = customKeystorePath != null && customKeystorePath.length() > 0
-                              ? customKeystorePath 
+                              ? customKeystorePath
                               : DebugKeyProvider.getDefaultKeyStoreOsPath();
-      
+
       DebugKeyProvider provider = createDebugKeyProvider(result, keyStoreOsPath);
 
       X509Certificate certificate = signed ? (X509Certificate)provider.getCertificate() : null;
@@ -213,7 +214,7 @@ public class AndroidApkBuilder {
       }
 
       fos = new FileOutputStream(outputApk);
-      builder = new SignedJarBuilder(fos, key, certificate);
+      builder = new SafeSignedJarBuilder(fos, key, certificate, outputApk);
 
       FileInputStream fis = new FileInputStream(apkPath);
       try {

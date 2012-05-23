@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,6 +56,7 @@ import org.jetbrains.android.facet.AndroidRootUtil;
 import org.jetbrains.android.sdk.AndroidPlatform;
 import org.jetbrains.android.util.AndroidBundle;
 import org.jetbrains.android.util.AndroidCommonUtils;
+import org.jetbrains.android.util.SafeSignedJarBuilder;
 import org.jetbrains.android.util.SaveFileListener;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -116,7 +117,7 @@ class ApkStep extends ExportSignedPackageWizardStep {
           return getContentRootPath(module);
         }
       });
-    
+
     myProguardConfigFilePathField.getButton().addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
@@ -279,7 +280,7 @@ class ApkStep extends ExportSignedPackageWizardStep {
       assert privateKey != null;
       X509Certificate certificate = myWizard.getCertificate();
       assert certificate != null;
-      SignedJarBuilder builder = new SignedJarBuilder(fos, privateKey, certificate);
+      SignedJarBuilder builder = new SafeSignedJarBuilder(fos, privateKey, certificate, destFile.getPath());
       FileInputStream fis = new FileInputStream(srcApk);
       try {
         builder.writeZip(fis, null);
