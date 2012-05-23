@@ -82,28 +82,23 @@ abstract class GitChangesCollector {
     }
 
     if (includeChanges) {
-      try {
-        for (Change c : myChangeListManager.getChangesIn(myVcsRoot)) {
-          switch (c.getType()) {
-            case NEW:
-            case DELETED:
-            case MOVED:
-              ContentRevision afterRevision = c.getAfterRevision();
-              if (afterRevision != null) {
-                addToPaths(afterRevision.getFile(), allPaths);
-              }
-              ContentRevision beforeRevision = c.getBeforeRevision();
-              if (beforeRevision != null) {
-                addToPaths(beforeRevision.getFile(), allPaths);
-              }
-            case MODIFICATION:
-            default:
-              // do nothing
-          }
+      for (Change c : myChangeListManager.getChangesIn(myVcsRoot)) {
+        switch (c.getType()) {
+          case NEW:
+          case DELETED:
+          case MOVED:
+            ContentRevision afterRevision = c.getAfterRevision();
+            if (afterRevision != null) {
+              addToPaths(afterRevision.getFile(), allPaths);
+            }
+            ContentRevision beforeRevision = c.getBeforeRevision();
+            if (beforeRevision != null) {
+              addToPaths(beforeRevision.getFile(), allPaths);
+            }
+          case MODIFICATION:
+          default:
+            // do nothing
         }
-      }
-      catch (Exception t) {
-        // ignore exceptions
       }
     }
 
