@@ -46,6 +46,7 @@ import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.formatter.GeeseUtil;
 import org.jetbrains.plugins.groovy.lang.GrReferenceAdjuster;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
@@ -472,4 +473,19 @@ public class GroovyCompletionUtil {
     return true;
   }
 
+  /*
+  we are here:  foo(List<? <caret> ...
+   */
+  public static boolean isWildcardCompletion(PsiElement position) {
+    PsiElement prev = GeeseUtil.getPreviousNonWhitespaceToken(position);
+    if (prev instanceof PsiErrorElement) prev = GeeseUtil.getPreviousNonWhitespaceToken(prev);
+
+    if (prev == null || prev.getNode().getElementType() != mQUESTION) return false;
+
+    final PsiElement pprev = GeeseUtil.getPreviousNonWhitespaceToken(prev);
+    if (pprev == null) return false;
+
+    final IElementType t = pprev.getNode().getElementType();
+    return t == mLT || t == mCOMMA;
+  }
 }

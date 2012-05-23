@@ -736,6 +736,7 @@ public class GroovyCompletionContributor extends CompletionContributor {
 
   public static void suggestVariableNames(PsiElement context, CompletionResultSet result) {
     final PsiElement parent = context.getParent();
+    if (GroovyCompletionUtil.isWildcardCompletion(context)) return;
     if (parent instanceof GrVariable) {
       final GrVariable variable = (GrVariable) parent;
       if (context.equals(variable.getNameIdentifierGroovy())) {
