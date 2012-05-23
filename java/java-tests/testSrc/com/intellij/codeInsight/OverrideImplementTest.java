@@ -35,6 +35,7 @@ public class OverrideImplementTest extends LightCodeInsightTestCase {
   public void testSubstitutionInTypeParametersList() throws Exception { doTest(false); }
   public void testTestMissed() throws Exception { doTest(false); }
   public void testWildcard() throws Exception { doTest(false); }
+  public void testTypeParam() throws Exception { doTest(false); }
 
   public void testLongFinalParameterList() throws Exception {
     CodeStyleSettings codeStyleSettings = CodeStyleSettingsManager.getSettings(getProject()).clone();
