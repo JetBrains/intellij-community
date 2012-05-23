@@ -74,11 +74,11 @@ public class DesignerActionPanel implements DataProvider {
     SelectAllAction selectAllAction = new SelectAllAction(designer.getSurfaceArea());
     registerAction(selectAllAction, "$SelectAll");
 
-    myPopupGroup.add(actionManager.getAction("$Cut"));
-    myPopupGroup.add(actionManager.getAction("$Copy"));
-    myPopupGroup.add(actionManager.getAction("$Paste"));
+    myPopupGroup.add(actionManager.getAction(IdeActions.ACTION_CUT));
+    myPopupGroup.add(actionManager.getAction(IdeActions.ACTION_COPY));
+    myPopupGroup.add(actionManager.getAction(IdeActions.ACTION_PASTE));
     myPopupGroup.addSeparator();
-    myPopupGroup.add(actionManager.getAction("$Delete"));
+    myPopupGroup.add(actionManager.getAction(IdeActions.ACTION_DELETE));
     myPopupGroup.addSeparator();
     myPopupGroup.add(selectParent);
     myPopupGroup.add(selectAllAction);
