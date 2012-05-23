@@ -54,6 +54,7 @@ public class PyCodeFragmentUtil {
     }
 
     final Set<String> globalWrites = getGlobalWrites(subGraph, owner);
+    final Set<String> nonlocalWrites = getNonlocalWrites(subGraph, owner);
 
     final Set<String> inputNames = new HashSet<String>();
     for (PsiElement element : filterElementsInScope(getInputElements(subGraph, graph), owner)) {
@@ -63,7 +64,7 @@ public class PyCodeFragmentUtil {
         if (resolvesToBoundMethodParameter(element)) {
           continue;
         }
-        if (globalWrites.contains(name)) {
+        if (globalWrites.contains(name) || nonlocalWrites.contains(name)) {
           continue;
         }
         inputNames.add(name);
@@ -74,12 +75,14 @@ public class PyCodeFragmentUtil {
     for (PsiElement element : getOutputElements(subGraph, graph)) {
       final String name = getName(element);
       if (name != null) {
+        if (globalWrites.contains(name) || nonlocalWrites.contains(name)) {
+          continue;
+        }
         outputNames.add(name);
-        globalWrites.remove(name);
       }
     }
 
-    return new PyCodeFragment(inputNames, outputNames, globalWrites, subGraphAnalysis.returns > 0);
+    return new PyCodeFragment(inputNames, outputNames, globalWrites, nonlocalWrites, subGraphAnalysis.returns > 0);
   }
 
   private static boolean resolvesToBoundMethodParameter(@NotNull PsiElement element) {
@@ -331,6 +334,21 @@ public class PyCodeFragmentUtil {
       }
     }
     return globalWrites;
+  }
+
+  @NotNull
+  private static Set<String> getNonlocalWrites(@NotNull List<Instruction> instructions, @NotNull ScopeOwner owner) {
+    final Scope scope = ControlFlowCache.getScope(owner);
+    final Set<String> nonlocalWrites = new LinkedHashSet<String>();
+    for (Instruction instruction : getWriteInstructions(instructions)) {
+      if (instruction instanceof ReadWriteInstruction) {
+        final String name = ((ReadWriteInstruction)instruction).getName();
+        if (scope.isNonlocal(name)) {
+          nonlocalWrites.add(name);
+        }
+      }
+    }
+    return nonlocalWrites;
   }
 
   @NotNull

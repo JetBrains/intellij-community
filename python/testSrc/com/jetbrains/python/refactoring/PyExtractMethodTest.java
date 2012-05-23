@@ -7,12 +7,23 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.fixtures.LightMarkedTestCase;
+import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.refactoring.extractmethod.PyExtractMethodUtil;
 
 /**
  * @author oleg
  */
 public class PyExtractMethodTest extends LightMarkedTestCase {
+  private void doTest(String newName, LanguageLevel level) {
+    setLanguageLevel(level);
+    try {
+      doTest(newName);
+    }
+    finally {
+      setLanguageLevel(null);
+    }
+  }
+
   private void doTest(String newName) {
     final String testName = getTestName(false);
     final String beforeName = testName + ".before.py";
@@ -218,5 +229,10 @@ public class PyExtractMethodTest extends LightMarkedTestCase {
   // PY-6622
   public void testClassWithoutInit() {
     doTest("bar");
+  }
+
+  // PY-6625
+  public void testNonlocal() {
+    doTest("baz", LanguageLevel.PYTHON30);
   }
 }
