@@ -22,9 +22,9 @@
 
       <separator/>
 
-      <action id="UIDesigner.RestoreDefault"
-              class="com.intellij.designer.propertyTable.actions.RestoreDefault"
-              use-shortcut-of="$Delete"/>
+      <!--<action id="UIDesigner.RestoreDefault"-->
+              <!--class="com.intellij.designer.propertyTable.actions.RestoreDefault"-->
+              <!--use-shortcut-of="$Delete"/>-->
 
       <action id="UIDesigner.ShowExpert"
               class="com.intellij.designer.propertyTable.actions.ShowExpert"/>
