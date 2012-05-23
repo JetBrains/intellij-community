@@ -49,7 +49,6 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.WaitForProgressToShow;
-import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.OptionsDialog;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NonNls;
@@ -581,19 +580,14 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
       updateInfoTree.setBefore(myBefore);
       updateInfoTree.setAfter(myAfter);
       
-      // todo make temporal listener of changes reload
-      if (updateInfoTree != null) {
-        updateInfoTree.setCanGroupByChangeList(canGroupByChangelist(myVcsToVirtualFiles.keySet()));
-        final MessageBusConnection messageBusConnection = myProject.getMessageBus().connect();
-        messageBusConnection.subscribe(CommittedChangesCache.COMMITTED_TOPIC, new CommittedChangesAdapter() {
-          public void incomingChangesUpdated(final List<CommittedChangeList> receivedChanges) {
-            if (receivedChanges != null) {
-              updateInfoTree.setChangeLists(receivedChanges);
-              messageBusConnection.disconnect();
-            }
+      updateInfoTree.setCanGroupByChangeList(canGroupByChangelist(myVcsToVirtualFiles.keySet()));
+      myProject.getMessageBus().connect(updateInfoTree).subscribe(CommittedChangesCache.COMMITTED_TOPIC, new CommittedChangesAdapter() {
+        public void incomingChangesUpdated(final List<CommittedChangeList> receivedChanges) {
+          if (receivedChanges != null) {
+            updateInfoTree.setChangeLists(receivedChanges);
           }
-        });
-      }
+        }
+      });
     }
 
     public void onCancel() {
