@@ -23,7 +23,7 @@ PsiJavaFile:Tag2.java
       PsiDocTag:@return
         PsiDocToken:DOC_TAG_NAME('@return')
         PsiWhiteSpace(' ')
-        PsiElement(DOC_TAG_VALUE_TOKEN)
+        PsiElement(DOC_TAG_VALUE_ELEMENT)
           PsiDocToken:DOC_TAG_VALUE_TOKEN('value')
         PsiWhiteSpace(' ')
         PsiDocToken:DOC_COMMENT_DATA('value')

@@ -85,7 +85,6 @@ public class SvnUpdateEnvironment extends AbstractSvnUpdateIntegrateEnvironment 
       final SVNURL sourceUrl = getSourceUrl(myVcs, root);
       final boolean isSwitch = rootInfo != null && rootInfo.getUrl() != null && ! rootInfo.getUrl().equals(sourceUrl);
       final SVNRevision updateTo = rootInfo != null && rootInfo.isUpdateToRevision() ? rootInfo.getRevision() : SVNRevision.HEAD;
-
       if (isSwitch) {
         final SvnUpdateClientI updateClient = createUpdateClient(configuration, root, true, sourceUrl);
         rev = updateClient.doSwitch(root, rootInfo.getUrl(), SVNRevision.UNDEFINED, rootInfo.getRevision(), configuration.UPDATE_DEPTH, configuration.FORCE_UPDATE, false);
@@ -107,6 +106,9 @@ public class SvnUpdateEnvironment extends AbstractSvnUpdateIntegrateEnvironment 
         updateClient = new SvnCommandLineUpdateClient(myVcs.getProject(), null);
       } else {
         updateClient = new SvnSvnkitUpdateClient(myVcs.createUpdateClient());
+      }
+      if (! isSwitch) {
+        updateClient.setIgnoreExternals(configuration.IGNORE_EXTERNALS);
       }
       updateClient.setEventHandler(myHandler);
       updateClient.setUpdateLocksOnDemand(configuration.UPDATE_LOCK_ON_DEMAND);

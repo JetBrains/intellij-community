@@ -93,6 +93,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
 
   private final DefaultActionGroup mySecondaryActions = new DefaultActionGroup();
   private boolean myMinimalMode;
+  private boolean myForceUseMacEnhancements;
 
   public ActionButton getSecondaryActionsButton() {
     return mySecondaryActionsButton;
@@ -164,7 +165,11 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
   }
 
   private boolean doMacEnhancementsForMainToolbar() {
-    return (UIUtil.isUnderAquaLookAndFeel() && ActionPlaces.MAIN_TOOLBAR.equals(myPlace));
+    return (UIUtil.isUnderAquaLookAndFeel() && (ActionPlaces.MAIN_TOOLBAR.equals(myPlace) || myForceUseMacEnhancements));
+  }
+
+  public void setForceUseMacEnhancements(boolean useMacEnhancements) {
+    myForceUseMacEnhancements = useMacEnhancements;
   }
 
   private boolean isInsideNavBar() {

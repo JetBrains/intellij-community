@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -72,7 +72,7 @@ public class FileListeningTest extends IntegrationTestCase {
     LocalFileSystem.getInstance().refresh(false);
 
     List<Change> changes = getVcs().getChangeListInTests().getChangesInTests().get(0).getChanges();
-    assertEquals(4, changes.size());
+    assertEquals(changes.toString(), 4, changes.size());
     List<String> actual = new SmartList<String>();
     for (Change each : changes) {
       actual.add(((StructuralChange)each).getPath());
@@ -100,7 +100,7 @@ public class FileListeningTest extends IntegrationTestCase {
     VirtualFile f = createFile("file.txt");
     assertEquals(2, getRevisionsFor(f).size());
 
-    f.rename(null, "file2.txt");
+    f.rename(this, "file2.txt");
     assertEquals(3, getRevisionsFor(f).size());
   }
 
@@ -125,7 +125,7 @@ public class FileListeningTest extends IntegrationTestCase {
     addFileListenerDuring(l, new RunnableAdapter() {
       @Override
       public void doRun() throws IOException {
-        f.rename(null, "new.txt");
+        f.rename(this, "new.txt");
       }
     });
 
@@ -139,7 +139,7 @@ public class FileListeningTest extends IntegrationTestCase {
     VirtualFile f = createFile("file.hprof");
     assertEquals(before, getRevisionsFor(myRoot).size());
 
-    f.rename(null, "file.txt");
+    f.rename(this, "file.txt");
     assertEquals(before + 1, getRevisionsFor(myRoot).size());
 
     assertEquals(2, getRevisionsFor(f).size());
@@ -151,7 +151,7 @@ public class FileListeningTest extends IntegrationTestCase {
     VirtualFile f = createFile("file.txt");
     assertEquals(before + 1, getRevisionsFor(myRoot).size());
 
-    f.rename(null, "file.hprof");
+    f.rename(this, "file.hprof");
     assertEquals(before + 2, getRevisionsFor(myRoot).size());
   }
 
@@ -161,7 +161,7 @@ public class FileListeningTest extends IntegrationTestCase {
     VirtualFile f = createFile(FILTERED_DIR_NAME);
     assertEquals(before, getRevisionsFor(myRoot).size());
 
-    f.rename(null, "not_filtered");
+    f.rename(this, "not_filtered");
     assertEquals(before + 1, getRevisionsFor(myRoot).size());
 
     assertEquals(2, getRevisionsFor(f).size());
@@ -173,7 +173,7 @@ public class FileListeningTest extends IntegrationTestCase {
     VirtualFile f = createDirectory("not_filtered");
     assertEquals(before + 1, getRevisionsFor(myRoot).size());
 
-    f.rename(null, FILTERED_DIR_NAME);
+    f.rename(this, FILTERED_DIR_NAME);
     assertEquals(before + 2, getRevisionsFor(myRoot).size());
   }
 
@@ -188,7 +188,7 @@ public class FileListeningTest extends IntegrationTestCase {
     assertEquals(4, getRevisionsFor(f).size());
   }
 
-  public void testIgnoringROStstusChangeForUnversionedFiles() throws Exception {
+  public void testIgnoringROStatusChangeForUnversionedFiles() throws Exception {
     int before = getRevisionsFor(myRoot).size();
 
     VirtualFile f = createFile("f.hprof");
@@ -202,7 +202,7 @@ public class FileListeningTest extends IntegrationTestCase {
 
     int before = getRevisionsFor(myRoot).size();
 
-    f.delete(null);
+    f.delete(this);
     assertEquals(before + 1, getRevisionsFor(myRoot).size());
   }
 
@@ -210,24 +210,26 @@ public class FileListeningTest extends IntegrationTestCase {
     int before = getRevisionsFor(myRoot).size();
 
     VirtualFile f = createDirectory(FILTERED_DIR_NAME);
-    f.delete(null);
+    f.delete(this);
     assertEquals(before, getRevisionsFor(myRoot).size());
   }
 
   public void testDeletionDoesNotVersionIgnoredFilesRecursively() throws Exception {
     String dir1 = createDirectoryExternally("dir");
-    String f1 = createFileExternally("dir/f.txt");
+    createFileExternally("dir/f.txt");
     createFileExternally("dir/f.class");
     createFileExternally("dir/subdir/f.txt");
-    String dir2 = createDirectoryExternally("dir/subdir/subdir2");
-    String f2 = createFileExternally("dir/subdir/subdir2/f.txt");
+    createDirectoryExternally("dir/subdir/subdir2");
+    createFileExternally("dir/subdir/subdir2/f.txt");
 
     LocalFileSystem.getInstance().refresh(false);
 
     addExcludedDir(myRoot.getPath() + "/dir/subdir");
     addContentRoot(myRoot.getPath() + "/dir/subdir/subdir2");
 
-    LocalFileSystem.getInstance().findFileByPath(dir1).delete(this);
+    final VirtualFile vDir1 = LocalFileSystem.getInstance().findFileByPath(dir1);
+    assertNotNull(dir1, vDir1);
+    vDir1.delete(this);
 
     List<Change> changes = getVcs().getChangeListInTests().getChangesInTests().get(0).getChanges();
     assertEquals(1, changes.size());

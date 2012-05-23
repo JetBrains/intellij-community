@@ -29,7 +29,55 @@ import java.awt.*;
 
 public class AttributesFlyweight {
   private final int myHashCode;
-  private static final StripedLockConcurrentHashMap<AttributesFlyweight, AttributesFlyweight> entries = new StripedLockConcurrentHashMap<AttributesFlyweight, AttributesFlyweight>();
+  private static final StripedLockConcurrentHashMap<FlyweightKey, AttributesFlyweight> entries = new StripedLockConcurrentHashMap<FlyweightKey, AttributesFlyweight>();
+  private static final ThreadLocal<FlyweightKey> ourKey = new ThreadLocal<FlyweightKey>();
+
+  private static class FlyweightKey implements Cloneable {
+    Color foreground;
+    Color background;
+    @JdkConstants.FontStyle int fontType;
+    Color effectColor;
+    EffectType effectType;
+    Color errorStripeColor;
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (!(o instanceof FlyweightKey)) return false;
+
+      FlyweightKey key = (FlyweightKey)o;
+
+      if (fontType != key.fontType) return false;
+      if (background != null ? !background.equals(key.background) : key.background != null) return false;
+      if (effectColor != null ? !effectColor.equals(key.effectColor) : key.effectColor != null) return false;
+      if (effectType != key.effectType) return false;
+      if (errorStripeColor != null ? !errorStripeColor.equals(key.errorStripeColor) : key.errorStripeColor != null) return false;
+      if (foreground != null ? !foreground.equals(key.foreground) : key.foreground != null) return false;
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      int result = foreground != null ? foreground.hashCode() : 0;
+      result = 31 * result + (background != null ? background.hashCode() : 0);
+      result = 31 * result + fontType;
+      result = 31 * result + (effectColor != null ? effectColor.hashCode() : 0);
+      result = 31 * result + (effectType != null ? effectType.hashCode() : 0);
+      result = 31 * result + (errorStripeColor != null ? errorStripeColor.hashCode() : 0);
+      return result;
+    }
+
+    @Override
+    protected FlyweightKey clone() {
+      try {
+        return (FlyweightKey)super.clone();
+      }
+      catch (CloneNotSupportedException e) {
+        throw new RuntimeException(e);
+      }
+    }
+  }
 
   @NotNull
   public static AttributesFlyweight create(Color foreground,
@@ -38,8 +86,23 @@ public class AttributesFlyweight {
                                            Color effectColor,
                                            EffectType effectType,
                                            Color errorStripeColor) {
-    AttributesFlyweight key = new AttributesFlyweight(foreground, background, fontType, effectColor, effectType, errorStripeColor);
-    return ConcurrencyUtil.cacheOrGet(entries, key, key);
+    FlyweightKey key = ourKey.get();
+    if (key == null) {
+      ourKey.set(key = new FlyweightKey());
+    }
+    key.foreground = foreground;
+    key.background = background;
+    key.fontType = fontType;
+    key.effectColor = effectColor;
+    key.effectType = effectType;
+    key.errorStripeColor = errorStripeColor;
+
+    AttributesFlyweight flyweight = entries.get(key);
+    if (flyweight != null) {
+      return flyweight;
+    }
+
+    return ConcurrencyUtil.cacheOrGet(entries, key.clone(), new AttributesFlyweight(foreground, background, fontType, effectColor, effectType, errorStripeColor));
   }
 
   private final Color      myForeground;

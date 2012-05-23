@@ -23,6 +23,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.VcsRoot;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import git4idea.GitUtil;
@@ -97,9 +98,13 @@ public class GitRepositoryManagerImpl extends AbstractProjectComponent implement
   @Override
   @Nullable
   public GitRepository getRepositoryForFile(@NotNull VirtualFile file) {
-    final VirtualFile vcsRoot = myVcsManager.getVcsRootFor(file);
+    final VcsRoot vcsRoot = myVcsManager.getVcsRootObjectFor(file);
     if (vcsRoot == null) { return null; }
-    return getRepositoryForRoot(vcsRoot);
+    if (!myVcs.equals(vcsRoot.vcs)) {
+      LOG.info(String.format("getRepositoryForFile returned non-Git (%s) root for file %s", vcsRoot.vcs.getDisplayName(), file));
+      return null;
+    }
+    return getRepositoryForRoot(vcsRoot.path);
   }
 
   @Override

@@ -13,21 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.psi.impl.source.tree;
+package com.siyeh.ipp.opassign.assignment;
 
-import com.intellij.psi.impl.source.javadoc.PsiDocTagValueImpl;
-import com.intellij.psi.tree.IElementType;
+class StringOpassign {
 
-/**
- * @author max
- */
-public class JavaASTFactory extends CoreJavaASTFactory {
-  @Override
-  public CompositeElement createComposite(final IElementType type) {
-    if (type == DOC_TAG_VALUE_ELEMENT) {
-      return new PsiDocTagValueImpl();
-    }
-
-    return null;
+  void foo(String s) {
+      s = s + 1.0;
   }
 }

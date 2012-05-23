@@ -32,6 +32,7 @@ public class IntentionActionWrapper implements IntentionAction {
   private IntentionAction myDelegate;
   private final String[] myCategories;
   private final IntentionActionBean myExtension;
+  private String myFullFamilyName;
 
   public IntentionActionWrapper(final IntentionActionBean extension, String[] categories) {
     myExtension = extension;
@@ -60,13 +61,13 @@ public class IntentionActionWrapper implements IntentionAction {
     return getDelegate().startInWriteAction();
   }
 
+  @NotNull
   public String getFullFamilyName(){
-    if (myCategories != null) {
-      return StringUtil.join(myCategories, "/") + "/" + getFamilyName();
+    String result = myFullFamilyName;
+    if (result == null) {
+      myFullFamilyName = result = myCategories != null ? StringUtil.join(myCategories, "/") + "/" + getFamilyName() : getFamilyName();
     }
-    else {
-      return getFamilyName();
-    }
+    return result;
   }
 
   public synchronized IntentionAction getDelegate() {

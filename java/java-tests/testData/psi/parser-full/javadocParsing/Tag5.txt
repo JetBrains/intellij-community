@@ -10,7 +10,7 @@ PsiJavaFile:Tag5.java
       PsiDocTag:@ejb:bean
         PsiDocToken:DOC_TAG_NAME('@ejb:bean')
         PsiWhiteSpace(' ')
-        PsiElement(DOC_TAG_VALUE_TOKEN)
+        PsiElement(DOC_TAG_VALUE_ELEMENT)
           PsiDocToken:DOC_TAG_VALUE_TOKEN('this')
         PsiWhiteSpace(' ')
         PsiDocToken:DOC_COMMENT_DATA('is an EJB  ')

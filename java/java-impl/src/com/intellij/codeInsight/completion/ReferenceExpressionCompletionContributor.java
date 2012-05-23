@@ -274,7 +274,9 @@ public class ReferenceExpressionCompletionContributor {
       }
       if (itemType == null) return;
 
-      final PsiElement qualifier = JavaCompletionUtil.getQualifier(reference.getElement());
+      final PsiElement element1 = reference.getElement();
+      final PsiElement qualifier =
+        element1 instanceof PsiJavaCodeReferenceElement ? ((PsiJavaCodeReferenceElement)element1).getQualifier() : null;
       final PsiType expectedType = parameters.getExpectedType();
       if (!OBJECT_METHOD_PATTERN.accepts(object) || allowGetClass(object, parameters)) {
         if (parameters.getParameters().getInvocationCount() >= 3 || !itemType.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
@@ -398,7 +400,7 @@ public class ReferenceExpressionCompletionContributor {
     }
 
     final String bracketSpace = getSpace(CodeStyleSettingsManager.getSettings(element.getProject()).SPACE_WITHIN_BRACKETS);
-    if (object instanceof PsiVariable && !JavaCompletionUtil.containsMethodCalls(qualifier)) {
+    if (object instanceof PsiVariable && !JavaCompletionUtil.mayHaveSideEffects(qualifier)) {
       final PsiVariable variable = (PsiVariable)object;
       addToArrayConversion(element, prefix,
                            "new " + componentType.getCanonicalText() +

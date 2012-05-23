@@ -584,6 +584,7 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
               if (!FileUtil.moveDirWithContent(tmpOutputDir, aptOutputDirectory)) {
                 context.processMessage(new CompilerMessage(ANDROID_APT_COMPILER, BuildMessage.Kind.ERROR, AndroidJpsBundle
                   .message("android.jps.errors.cannot.move.content", tmpOutputDir.getPath(), aptOutputDirectory.getPath())));
+                success = false;
                 continue;
               }
               markDirtyRecursively(aptOutputDirectory, context, ANDROID_APT_COMPILER);

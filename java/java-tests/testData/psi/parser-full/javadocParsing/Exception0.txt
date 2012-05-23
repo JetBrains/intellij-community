@@ -25,7 +25,7 @@ PsiJavaFile:Exception0.java
         PsiDocTag:@throws
           PsiDocToken:DOC_TAG_NAME('@throws')
           PsiWhiteSpace(' ')
-          PsiElement(DOC_TAG_VALUE_TOKEN)
+          PsiElement(DOC_TAG_VALUE_ELEMENT)
             PsiElement(DOC_REFERENCE_HOLDER)
               PsiJavaCodeReferenceElement:java.lang.Exception
                 PsiJavaCodeReferenceElement:java.lang

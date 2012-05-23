@@ -30,7 +30,7 @@ PsiJavaFile:LinkPlainTag1.java
           PsiDocToken:DOC_TAG_VALUE_SHARP_TOKEN('#')
           PsiDocToken:DOC_TAG_VALUE_TOKEN('equals')
           PsiDocToken:DOC_TAG_VALUE_LPAREN('(')
-          PsiElement(DOC_TAG_VALUE_TOKEN)
+          PsiElement(DOC_TAG_VALUE_ELEMENT)
             PsiElement(DOC_TYPE_HOLDER)
               PsiTypeElement:java.lang.Object
                 PsiJavaCodeReferenceElement:java.lang.Object

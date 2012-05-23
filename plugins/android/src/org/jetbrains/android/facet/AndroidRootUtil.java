@@ -514,4 +514,16 @@ public class AndroidRootUtil {
     String moduleDirPath = getModuleDirPath(facet.getModule());
     return moduleDirPath != null ? FileUtil.toSystemDependentName(moduleDirPath + path) : null;
   }
+
+  @Nullable
+  public static String getPathRelativeToModuleDir(@NotNull Module module, @NotNull String path) {
+    String moduleDirPath = getModuleDirPath(module);
+    if (moduleDirPath == null) {
+      return null;
+    }
+    if (moduleDirPath.equals(path)) {
+      return "";
+    }
+    return FileUtil.getRelativePath(moduleDirPath, path, '/');
+  }
 }

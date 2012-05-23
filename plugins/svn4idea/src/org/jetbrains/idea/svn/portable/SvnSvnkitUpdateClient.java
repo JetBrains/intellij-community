@@ -200,6 +200,11 @@ public class SvnSvnkitUpdateClient implements SvnUpdateClientI {
     myClient.setEventHandler(dispatcher);
   }
 
+  @Override
+  public void setIgnoreExternals(boolean ignoreExternals) {
+    myClient.setIgnoreExternals(ignoreExternals);
+  }
+
   public ISVNEventHandler getEventHandler() {
     return myDispatcher;
   }

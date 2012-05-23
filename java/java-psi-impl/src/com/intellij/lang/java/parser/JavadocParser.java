@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -147,7 +147,7 @@ public class JavadocParser {
           final PsiBuilder.Marker tagValue = builder.mark();
           builder.remapCurrentToken(JavaDocElementType.DOC_REFERENCE_HOLDER);
           builder.advanceLexer();
-          tagValue.done(JavaDocTokenType.DOC_TAG_VALUE_TOKEN);
+          tagValue.done(JavaDocElementType.DOC_TAG_VALUE_ELEMENT);
         }
         else if (!isInline && tagName != null && tagName.equals(PARAM_TAG)) {
           parseSimpleTagValue(builder, true);
@@ -187,7 +187,7 @@ public class JavadocParser {
     else {
       final PsiBuilder.Marker tagValue = builder.mark();
       builder.advanceLexer();
-      tagValue.done(JavaDocTokenType.DOC_TAG_VALUE_TOKEN);
+      tagValue.done(JavaDocElementType.DOC_TAG_VALUE_ELEMENT);
     }
   }
 
@@ -217,7 +217,7 @@ public class JavadocParser {
           }
         }
         else if (tokenType == JavaDocTokenType.DOC_TAG_VALUE_RPAREN) {
-          subValue.done(JavaDocTokenType.DOC_TAG_VALUE_TOKEN);
+          subValue.done(JavaDocElementType.DOC_TAG_VALUE_ELEMENT);
           builder.advanceLexer();
           refStart.done(JavaDocElementType.DOC_METHOD_OR_FIELD_REF);
           return;
@@ -227,7 +227,7 @@ public class JavadocParser {
         }
       }
 
-      subValue.done(JavaDocTokenType.DOC_TAG_VALUE_TOKEN);
+      subValue.done(JavaDocElementType.DOC_TAG_VALUE_ELEMENT);
     }
 
     refStart.done(JavaDocElementType.DOC_METHOD_OR_FIELD_REF);
@@ -238,7 +238,7 @@ public class JavadocParser {
     while (TAG_VALUES_SET.contains(getTokenType(builder))) {
       builder.advanceLexer();
     }
-    tagValue.done(parameter ? JavaDocElementType.DOC_PARAMETER_REF : JavaDocTokenType.DOC_TAG_VALUE_TOKEN);
+    tagValue.done(parameter ? JavaDocElementType.DOC_PARAMETER_REF : JavaDocElementType.DOC_TAG_VALUE_ELEMENT);
   }
 
   @Nullable
