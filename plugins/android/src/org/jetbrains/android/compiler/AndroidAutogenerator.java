@@ -376,6 +376,9 @@ public class AndroidAutogenerator {
         filesToDelete.add(f);
       }
     }
+    if (filesToDelete.size() == 0) {
+      return;
+    }
 
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       @Override
