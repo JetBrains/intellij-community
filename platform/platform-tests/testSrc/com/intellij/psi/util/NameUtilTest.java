@@ -20,6 +20,7 @@
 package com.intellij.psi.util;
 
 import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.UsefulTestCase;
@@ -312,57 +313,57 @@ public class NameUtilTest extends UsefulTestCase {
   }
 
   public void testMinusculeFirstLetter() {
-    assertTrue(new NameUtil.MinusculeMatcher("WebLogic", NameUtil.MatchingCaseSensitivity.FIRST_LETTER).matches("WebLogic"));
-    assertFalse(new NameUtil.MinusculeMatcher("webLogic", NameUtil.MatchingCaseSensitivity.FIRST_LETTER).matches("WebLogic"));
-    assertTrue(new NameUtil.MinusculeMatcher("cL", NameUtil.MatchingCaseSensitivity.FIRST_LETTER).matches("class"));
-    assertTrue(new NameUtil.MinusculeMatcher("CL", NameUtil.MatchingCaseSensitivity.FIRST_LETTER).matches("Class"));
-    assertFalse(new NameUtil.MinusculeMatcher("abc", NameUtil.MatchingCaseSensitivity.FIRST_LETTER).matches("_abc"));
+    assertTrue(new MinusculeMatcher("WebLogic", NameUtil.MatchingCaseSensitivity.FIRST_LETTER).matches("WebLogic"));
+    assertFalse(new MinusculeMatcher("webLogic", NameUtil.MatchingCaseSensitivity.FIRST_LETTER).matches("WebLogic"));
+    assertTrue(new MinusculeMatcher("cL", NameUtil.MatchingCaseSensitivity.FIRST_LETTER).matches("class"));
+    assertTrue(new MinusculeMatcher("CL", NameUtil.MatchingCaseSensitivity.FIRST_LETTER).matches("Class"));
+    assertFalse(new MinusculeMatcher("abc", NameUtil.MatchingCaseSensitivity.FIRST_LETTER).matches("_abc"));
   }
 
   public void testMinusculeAllImportant() {
-    assertTrue(new NameUtil.MinusculeMatcher("WebLogic", NameUtil.MatchingCaseSensitivity.ALL).matches("WebLogic"));
-    assertFalse(new NameUtil.MinusculeMatcher("webLogic", NameUtil.MatchingCaseSensitivity.ALL).matches("weblogic"));
-    assertFalse(new NameUtil.MinusculeMatcher("FOO", NameUtil.MatchingCaseSensitivity.ALL).matches("foo"));
-    assertFalse(new NameUtil.MinusculeMatcher("foo", NameUtil.MatchingCaseSensitivity.ALL).matches("fOO"));
-    assertFalse(new NameUtil.MinusculeMatcher("Wl", NameUtil.MatchingCaseSensitivity.ALL).matches("WebLogic"));
-    assertTrue(new NameUtil.MinusculeMatcher("WL", NameUtil.MatchingCaseSensitivity.ALL).matches("WebLogic"));
-    assertFalse(new NameUtil.MinusculeMatcher("WL", NameUtil.MatchingCaseSensitivity.ALL).matches("Weblogic"));
-    assertFalse(new NameUtil.MinusculeMatcher("WL", NameUtil.MatchingCaseSensitivity.ALL).matches("weblogic"));
-    assertFalse(new NameUtil.MinusculeMatcher("webLogic", NameUtil.MatchingCaseSensitivity.ALL).matches("WebLogic"));
-    assertFalse(new NameUtil.MinusculeMatcher("Str", NameUtil.MatchingCaseSensitivity.ALL).matches("SomeThingRidiculous"));
+    assertTrue(new MinusculeMatcher("WebLogic", NameUtil.MatchingCaseSensitivity.ALL).matches("WebLogic"));
+    assertFalse(new MinusculeMatcher("webLogic", NameUtil.MatchingCaseSensitivity.ALL).matches("weblogic"));
+    assertFalse(new MinusculeMatcher("FOO", NameUtil.MatchingCaseSensitivity.ALL).matches("foo"));
+    assertFalse(new MinusculeMatcher("foo", NameUtil.MatchingCaseSensitivity.ALL).matches("fOO"));
+    assertFalse(new MinusculeMatcher("Wl", NameUtil.MatchingCaseSensitivity.ALL).matches("WebLogic"));
+    assertTrue(new MinusculeMatcher("WL", NameUtil.MatchingCaseSensitivity.ALL).matches("WebLogic"));
+    assertFalse(new MinusculeMatcher("WL", NameUtil.MatchingCaseSensitivity.ALL).matches("Weblogic"));
+    assertFalse(new MinusculeMatcher("WL", NameUtil.MatchingCaseSensitivity.ALL).matches("weblogic"));
+    assertFalse(new MinusculeMatcher("webLogic", NameUtil.MatchingCaseSensitivity.ALL).matches("WebLogic"));
+    assertFalse(new MinusculeMatcher("Str", NameUtil.MatchingCaseSensitivity.ALL).matches("SomeThingRidiculous"));
   }
 
   public void testMatchingFragments() {
     @NonNls String sample = "NoClassDefFoundException";
     //                       0 2    7  10   15    21
-    assertOrderedEquals(new NameUtil.MinusculeMatcher("ncldfou*ion", NameUtil.MatchingCaseSensitivity.NONE).matchingFragments(sample),
+    assertOrderedEquals(new MinusculeMatcher("ncldfou*ion", NameUtil.MatchingCaseSensitivity.NONE).matchingFragments(sample),
                         TextRange.from(0, 1), TextRange.from(2, 2), TextRange.from(7, 1), TextRange.from(10, 3), TextRange.from(21, 3));
 
     sample = "doGet(HttpServletRequest, HttpServletResponse):void";
     //        0                     22
-    assertOrderedEquals(new NameUtil.MinusculeMatcher("d*st", NameUtil.MatchingCaseSensitivity.NONE).matchingFragments(sample),
+    assertOrderedEquals(new MinusculeMatcher("d*st", NameUtil.MatchingCaseSensitivity.NONE).matchingFragments(sample),
                         TextRange.from(0, 1), TextRange.from(22, 2));
-    assertOrderedEquals(new NameUtil.MinusculeMatcher("doge*st", NameUtil.MatchingCaseSensitivity.NONE).matchingFragments(sample),
+    assertOrderedEquals(new MinusculeMatcher("doge*st", NameUtil.MatchingCaseSensitivity.NONE).matchingFragments(sample),
                         TextRange.from(0, 4), TextRange.from(22, 2));
 
     sample = "_test";
-    assertOrderedEquals(new NameUtil.MinusculeMatcher("_", NameUtil.MatchingCaseSensitivity.NONE).matchingFragments(sample),
+    assertOrderedEquals(new MinusculeMatcher("_", NameUtil.MatchingCaseSensitivity.NONE).matchingFragments(sample),
                         TextRange.from(0, 1));
-    assertOrderedEquals(new NameUtil.MinusculeMatcher("_t", NameUtil.MatchingCaseSensitivity.NONE).matchingFragments(sample),
+    assertOrderedEquals(new MinusculeMatcher("_t", NameUtil.MatchingCaseSensitivity.NONE).matchingFragments(sample),
                         TextRange.from(0, 2));
   }
 
   public void testMatchingFragmentsSorted() {
     @NonNls String sample = "SWUPGRADEHDLRFSPR7TEST";
     //                       0        9  12
-    assertOrderedEquals(new NameUtil.MinusculeMatcher("SWU*H*R", NameUtil.MatchingCaseSensitivity.NONE).matchingFragments(sample),
+    assertOrderedEquals(new MinusculeMatcher("SWU*H*R", NameUtil.MatchingCaseSensitivity.NONE).matchingFragments(sample),
                         TextRange.from(0, 3), TextRange.from(9, 1), TextRange.from(12, 1));
   }
 
   public void testPreferCapsMatching() {
     String sample = "getCurrentUser";
     //               0   4     10
-    assertOrderedEquals(new NameUtil.MinusculeMatcher("getCU", NameUtil.MatchingCaseSensitivity.NONE).matchingFragments(sample),
+    assertOrderedEquals(new MinusculeMatcher("getCU", NameUtil.MatchingCaseSensitivity.NONE).matchingFragments(sample),
                         TextRange.from(0, 4), TextRange.from(10, 1));
   }
 
@@ -390,7 +391,7 @@ public class NameUtilTest extends UsefulTestCase {
   }
 
   public void testMeaningfulMatchingDegree() {
-    assertTrue(new NameUtil.MinusculeMatcher(" EUC-", NameUtil.MatchingCaseSensitivity.FIRST_LETTER).matchingDegree("x-EUC-TW") > Integer.MIN_VALUE);
+    assertTrue(new MinusculeMatcher(" EUC-", NameUtil.MatchingCaseSensitivity.FIRST_LETTER).matchingDegree("x-EUC-TW") > Integer.MIN_VALUE);
   }
 
   private static void assertPreference(@NonNls String pattern,
@@ -403,7 +404,7 @@ public class NameUtilTest extends UsefulTestCase {
                                        @NonNls String less,
                                        @NonNls String more,
                                        NameUtil.MatchingCaseSensitivity sensitivity) {
-    NameUtil.MinusculeMatcher matcher = new NameUtil.MinusculeMatcher(pattern, sensitivity);
+    MinusculeMatcher matcher = new MinusculeMatcher(pattern, sensitivity);
     int iLess = matcher.matchingDegree(less);
     int iMore = matcher.matchingDegree(more);
     assertTrue(iLess + ">=" + iMore + "; " + less + ">=" + more, iLess < iMore);
@@ -411,24 +412,24 @@ public class NameUtilTest extends UsefulTestCase {
 
   public void testPerformance() {
     @NonNls final String longName = "ThisIsAQuiteLongNameWithParentheses().Dots.-Minuses-_UNDERSCORES_digits239:colons:/slashes\\AndOfCourseManyLetters";
-    final List<NameUtil.MinusculeMatcher> matching = new ArrayList<NameUtil.MinusculeMatcher>();
-    final List<NameUtil.MinusculeMatcher> nonMatching = new ArrayList<NameUtil.MinusculeMatcher>();
+    final List<MinusculeMatcher> matching = new ArrayList<MinusculeMatcher>();
+    final List<MinusculeMatcher> nonMatching = new ArrayList<MinusculeMatcher>();
 
     for (String s : CollectionFactory.ar("*", "*i", "*a", "*u", "T", "ti", longName, longName.substring(0, 20))) {
-      matching.add(new NameUtil.MinusculeMatcher(s, NameUtil.MatchingCaseSensitivity.NONE));
+      matching.add(new MinusculeMatcher(s, NameUtil.MatchingCaseSensitivity.NONE));
     }
     for (String s : CollectionFactory.ar("A", "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "ta")) {
-      nonMatching.add(new NameUtil.MinusculeMatcher(s, NameUtil.MatchingCaseSensitivity.NONE));
+      nonMatching.add(new MinusculeMatcher(s, NameUtil.MatchingCaseSensitivity.NONE));
     }
 
-    PlatformTestUtil.startPerformanceTest("Matcher is slow", 1200, new ThrowableRunnable() {
+    PlatformTestUtil.startPerformanceTest("Matcher is slow", 1700, new ThrowableRunnable() {
       @Override
       public void run() {
         for (int i = 0; i < 100000; i++) {
-          for (NameUtil.MinusculeMatcher matcher : matching) {
+          for (MinusculeMatcher matcher : matching) {
             assertTrue(matcher.matches(longName));
           }
-          for (NameUtil.MinusculeMatcher matcher : nonMatching) {
+          for (MinusculeMatcher matcher : nonMatching) {
             assertFalse(matcher.matches(longName));
           }
         }
