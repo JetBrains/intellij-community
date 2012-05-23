@@ -41,6 +41,7 @@ public class AttributeProperty extends Property<RadViewComponent> {
   protected final AttributeDefinition myDefinition;
   private final PropertyRenderer myRenderer;
   private final PropertyEditor myEditor;
+  private String myJavadocText;
 
   public AttributeProperty(@NotNull String name, @NotNull AttributeDefinition definition) {
     this(null, name, definition);
@@ -137,6 +138,12 @@ public class AttributeProperty extends Property<RadViewComponent> {
 
   @Override
   public String getJavadocText() {
-    return myDefinition.getDocValue();
+    if (myJavadocText == null) {
+      String javadocText = myDefinition.getDocValue();
+      if (javadocText != null) {
+        myJavadocText = JavadocParser.build(getName(), javadocText);
+      }
+    }
+    return myJavadocText;
   }
 }

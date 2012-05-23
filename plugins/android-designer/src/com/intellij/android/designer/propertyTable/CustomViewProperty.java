@@ -37,6 +37,7 @@ import java.util.List;
  * @author Alexander Lobas
  */
 public class CustomViewProperty extends Property<RadCustomViewComponent> {
+  private static final String JAVA_DOC = JavadocParser.build("view:class", "The fully qualified name of the class.");
   private final PropertyRenderer myRenderer = new LabelPropertyRenderer(null);
   private final PropertyEditor myEditor = new ResourceEditor(null, Collections.<AttributeFormat>emptySet(), null) {
     @Override
@@ -122,6 +123,6 @@ public class CustomViewProperty extends Property<RadCustomViewComponent> {
 
   @Override
   public String getJavadocText() {
-    return "The fully qualified name of the class.";
+    return JAVA_DOC;
   }
 }

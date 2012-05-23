@@ -22,6 +22,7 @@ import com.intellij.android.designer.designSurface.layout.relative.RelativeDecor
 import com.intellij.android.designer.model.PropertyParser;
 import com.intellij.android.designer.model.RadViewLayoutWithData;
 import com.intellij.android.designer.model.layout.actions.AllGravityAction;
+import com.intellij.android.designer.propertyTable.JavadocParser;
 import com.intellij.designer.componentTree.TreeEditOperation;
 import com.intellij.designer.designSurface.*;
 import com.intellij.designer.designSurface.selection.ResizeSelectionDecorator;
@@ -54,7 +55,9 @@ public class RadRelativeLayout extends RadViewLayoutWithData implements ILayoutD
   @Override
   public void configureProperties(List<Property> properties) {
     CompoundProperty alignComponent =
-      new CompoundProperty("layout:alignComponent", "Positions the edges of this view to the edges of the another view.");
+      new CompoundProperty("layout:alignComponent",
+                           JavadocParser
+                             .build("layout:alignComponent", "Positions the edges of this view to the edges of the another view."));
     PropertyParser.moveProperties(properties, alignComponent,
                                   "layout:alignTop", "top:top",
                                   "layout:below", "top:bottom",
@@ -68,7 +71,8 @@ public class RadRelativeLayout extends RadViewLayoutWithData implements ILayoutD
     properties.add(alignComponent);
 
     CompoundProperty alignParent =
-      new CompoundProperty("layout:alignParent", "Positions the edges of this view to the edges of the parent.");
+      new CompoundProperty("layout:alignParent",
+                           JavadocParser.build("layout:alignParent", "Positions the edges of this view to the edges of the parent."));
     PropertyParser.moveProperties(properties, alignParent,
                                   "layout:alignParentTop", "top",
                                   "layout:alignParentLeft", "left",

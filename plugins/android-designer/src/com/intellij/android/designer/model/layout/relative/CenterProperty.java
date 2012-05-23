@@ -25,6 +25,7 @@ import com.intellij.designer.propertyTable.renderers.LabelPropertyRenderer;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ArrayUtil;
+import com.intellij.android.designer.propertyTable.JavadocParser;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,6 +36,8 @@ public class CenterProperty extends Property<RadViewComponent> {
   private static final String[] COMBO_ITEMS = {"horizontal", "vertical", "both"};
   private static final String[] ATTR_ITEMS =
     {"android:layout_centerHorizontal", "android:layout_centerVertical", "android:layout_centerInParent"};
+  private static final String JAVA_DOC =
+    JavadocParser.build("layout:centerInParent", "Set centers this child horizontally or vertically within its parent.");
 
   private final PropertyRenderer myRenderer = new LabelPropertyRenderer(null);
   private final PropertyEditor myEditor = new StringsComboEditor(COMBO_ITEMS);
@@ -116,6 +119,6 @@ public class CenterProperty extends Property<RadViewComponent> {
 
   @Override
   public String getJavadocText() {
-    return "Set centers this child horizontally or vertically within its parent.";
+    return JAVA_DOC;
   }
 }

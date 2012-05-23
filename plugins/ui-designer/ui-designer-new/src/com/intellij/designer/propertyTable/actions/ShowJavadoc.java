@@ -28,11 +28,13 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.ActionCallback;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.popup.NotLookupOrSearchCondition;
 
 import java.awt.*;
 
@@ -85,13 +87,22 @@ public class ShowJavadoc extends AnAction implements IPropertyTableAction {
 
     callback.doWhenProcessed(new Runnable() {
       public void run() {
-        final JBPopup hint =
+        JBPopup hint =
           JBPopupFactory.getInstance().createComponentPopupBuilder(component, component)
+            .setRequestFocusCondition(project, NotLookupOrSearchCondition.INSTANCE)
+            .setProject(project)
             .setDimensionServiceKey(project, DocumentationManager.JAVADOC_LOCATION_AND_SIZE, false)
             .setResizable(true)
             .setMovable(true)
             .setRequestFocus(true)
             .setTitle(DesignerBundle.message("designer.properties.javadoc.title", property.getName()))
+            .setCancelCallback(new Computable<Boolean>() {
+              @Override
+              public Boolean compute() {
+                Disposer.dispose(component);
+                return Boolean.TRUE;
+              }
+            })
             .createPopup();
         component.setHint(hint);
         Disposer.register(hint, component);
