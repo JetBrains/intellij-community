@@ -243,7 +243,7 @@ public class AndroidPackagingCompiler implements PackagingCompiler {
                                   nativeLibsFolders, finalPath, unsigned, item.mySdkPath, item.getCustomKeystorePath(),
                                   new ExcludedSourcesFilter(project)));
 
-      AndroidCompileUtil.addMessages(context, messages);
+      AndroidCompileUtil.addMessages(context, messages, item.myModule);
     }
     catch (final IOException e) {
       ApplicationManager.getApplication().runReadAction(new Runnable() {

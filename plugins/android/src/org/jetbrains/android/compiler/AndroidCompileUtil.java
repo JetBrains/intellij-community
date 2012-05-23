@@ -136,8 +136,8 @@ public class AndroidCompileUtil {
     return null;
   }
 
-  static void addMessages(final CompileContext context, final Map<CompilerMessageCategory, List<String>> messages) {
-    addMessages(context, messages, null);
+  static void addMessages(final CompileContext context, final Map<CompilerMessageCategory, List<String>> messages, Module module) {
+    addMessages(context, messages, null, module);
   }
 
   public static void addMessages(@NotNull Map<CompilerMessageCategory, List<String>> messages,
@@ -152,8 +152,10 @@ public class AndroidCompileUtil {
     }
   }
 
-  static void addMessages(final CompileContext context, final Map<CompilerMessageCategory, List<String>> messages,
-                          @Nullable final Map<VirtualFile, VirtualFile> presentableFilesMap) {
+  static void addMessages(final CompileContext context,
+                          final Map<CompilerMessageCategory, List<String>> messages,
+                          @Nullable final Map<VirtualFile, VirtualFile> presentableFilesMap,
+                          final Module module) {
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
         if (context.getProject().isDisposed()) return;
@@ -170,7 +172,7 @@ public class AndroidCompileUtil {
                 line = Integer.parseInt(matcher.group(2));
               }
             }
-            context.addMessage(category, message, url, line, -1);
+            context.addMessage(category, '[' + module.getName() + "] " + message, url, line, -1);
           }
         }
       }

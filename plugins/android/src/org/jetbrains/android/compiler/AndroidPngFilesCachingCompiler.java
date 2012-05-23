@@ -101,7 +101,7 @@ public class AndroidPngFilesCachingCompiler implements SourceGeneratingCompiler 
 
         final Map<CompilerMessageCategory, List<String>> messages = AndroidCompileUtil.toCompilerMessageCategoryKeys(
           AndroidApt.crunch(item.getTarget(), Collections.singletonList(resDirOsPath), resCacheDirOsPath));
-        AndroidCompileUtil.addMessages(context, messages, null);
+        AndroidCompileUtil.addMessages(context, messages, module);
         if (context.getMessages(CompilerMessageCategory.ERROR).length == 0) {
           processedItems.add(item);
         }
