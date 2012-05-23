@@ -30,11 +30,8 @@ import com.wrq.rearranger.settings.RearrangerSettings;
  *         Date: Mar 30, 2004
  */
 @SkipInHeadlessEnvironment
-public class InteractiveTest
-  extends LightCodeInsightFixtureTestCase
-{
-  public static final String DEFAULT_CONFIGURATION_ROOT = ".."; // up one level from test
-  public static final String DEFAULT_CONFIGURATION      = DEFAULT_CONFIGURATION_ROOT + "/src/com/wrq/rearranger/defaultConfiguration.xml";
+public class InteractiveTest extends LightCodeInsightFixtureTestCase {
+  public static final String DEFAULT_CONFIGURATION      = "/src/com/wrq/rearranger/defaultConfiguration.xml";
   private RearrangerSettings mySettings;
 
   @Override

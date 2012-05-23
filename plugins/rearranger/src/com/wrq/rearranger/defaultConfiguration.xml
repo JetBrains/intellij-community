@@ -27,9 +27,7 @@
               ShowMatchedRules="false" ShowComments="false" RemoveBlanksInsideCodeBlocks="true">
     <Items>
       <Comment condition="2" nPrecedingRulesToMatch="1" nSubsequentRulesToMatch="7" allPrecedingRules="true" allSubsequentRules="false"
-               fillString="" useProjectWidthForFill="true" fillWidth="0">\n//\ ------------------------------\ FIELDS\
-        ------------------------------\n
-      </Comment>
+               fillString="" useProjectWidthForFill="true" fillWidth="0">\n// ------------------------------ FIELDS ------------------------------\n</Comment>
       <Field priority="1">
         <ProtectionLevel public="true" private="false" protected="false" package="false" invert="false"/>
         <Static value="true" invert="false"/>
@@ -247,9 +245,7 @@
         </TrailingComment>
       </Interface>
       <Comment condition="2" nPrecedingRulesToMatch="1" nSubsequentRulesToMatch="1" allPrecedingRules="true" allSubsequentRules="true"
-               fillString="" useProjectWidthForFill="true" fillWidth="0">\n//\ --------------------------\ OTHER\ METHODS\
-        --------------------------\n
-      </Comment>
+               fillString="" useProjectWidthForFill="true" fillWidth="0">\n// -------------------------- OTHER METHODS --------------------------\n</Comment>
       <Method priority="1">
         <ProtectionLevel public="false" private="false" protected="false" package="false" invert="false"/>
         <Static value="false" invert="false"/>

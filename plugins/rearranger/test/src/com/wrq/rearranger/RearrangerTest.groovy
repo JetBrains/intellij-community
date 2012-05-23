@@ -36,6 +36,7 @@ import com.wrq.rearranger.util.SettingsConfigurationBuilder
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.Nullable
 import com.wrq.rearranger.util.java.*
+import com.intellij.testFramework.PlatformTestUtil
 
 /** JUnit tests for the rearranger plugin. */
 class RearrangerTest extends LightCodeInsightFixtureTestCase {
@@ -82,15 +83,13 @@ class RearrangerTest extends LightCodeInsightFixtureTestCase {
 
   public final void testPublicFieldRearrangement() throws Exception {
     doTest('RearrangementTest', 'RearrangementResult2') {
-      fieldRule.create {
-        modifier( PsiModifier.PUBLIC )
-  } } }
+      fieldRule.modifier PsiModifier.PUBLIC
+  } }
 
   public final void testNotPublicFieldRearrangement() throws Exception {
     doTest('RearrangementTest', 'RearrangementResult3') {
-      fieldRule.create {
-        modifier( PsiModifier.PUBLIC, invert: true )
-  } } }
+      fieldRule.modifier PsiModifier.PUBLIC, invert: true 
+  } }
 
   public final void testConstructorRearrangement() throws Exception {
     doTest('RearrangementTest', 'RearrangementResult4') {
@@ -158,12 +157,12 @@ class RearrangerTest extends LightCodeInsightFixtureTestCase {
 
   public final void testMultipleRuleCommentMatch() throws Exception {
     doTest('RearrangementTest11', 'RearrangementResult11') {
-      commentRule.create { comment('// FIELDS:', condition: CommentRule.EMIT_IF_ITEMS_MATCH_SUBSEQUENT_RULE, allSubsequent: false) }
-      commentRule.create { comment('// FINAL FIELDS:', condition: CommentRule.EMIT_IF_ITEMS_MATCH_SUBSEQUENT_RULE, allSubsequent: false,
-                                   subsequentRulesToMatch: 1) }
+      commentRule.create { comment('// FIELDS:', condition: CommentRule.EMIT_IF_ITEMS_MATCH_SUBSEQUENT_RULE, 'all subsequent': false) }
+      commentRule.create { comment('// FINAL FIELDS:', condition: CommentRule.EMIT_IF_ITEMS_MATCH_SUBSEQUENT_RULE, 'all subsequent': false,
+                                   'subsequent rules to match': 1) }
       fieldRule.create { modifier(PsiModifier.FINAL) }
-      commentRule.create { comment('// NON-FINAL FIELDS:', condition: CommentRule.EMIT_IF_ITEMS_MATCH_SUBSEQUENT_RULE, allSubsequent: true,
-                                   subsequentRulesToMatch: 1) }
+      commentRule.create { comment('// NON-FINAL FIELDS:', condition: CommentRule.EMIT_IF_ITEMS_MATCH_SUBSEQUENT_RULE, 'all subsequent': true,
+                                   'subsequent rules to match': 1) }
       fieldRule.create { modifier(PsiModifier.FINAL, invert: true) }
   } }
 
@@ -189,8 +188,8 @@ class RearrangerTest extends LightCodeInsightFixtureTestCase {
     doTest(srcFilename, compareFilename) {
       commentRule.create {
         comment('//**************************************        PUBLIC STATIC FIELDS         *************************************',
-                condition: CommentRule.EMIT_IF_ITEMS_MATCH_SUBSEQUENT_RULE, allSubsequent: false, allPreceding: true,
-                subsequentRulesToMatch: 2, precedingRulesToMatch: 1)
+                condition: CommentRule.EMIT_IF_ITEMS_MATCH_SUBSEQUENT_RULE, 'all subsequent': false, 'all preceding': true,
+                'subsequent rules to match': 2, 'preceding rules to match': 1)
       }
       fieldRule.create {
         modifier([ PsiModifier.PUBLIC, PsiModifier.STATIC, PsiModifier.FINAL ])
@@ -202,8 +201,8 @@ class RearrangerTest extends LightCodeInsightFixtureTestCase {
       }
       commentRule.create {
         comment('//**************************************        PUBLIC FIELDS          *****************************************',
-                condition: CommentRule.EMIT_IF_ITEMS_MATCH_SUBSEQUENT_RULE, allSubsequent: true, allPreceding: true,
-                subsequentRulesToMatch: 1, precedingRulesToMatch: 1)
+                condition: CommentRule.EMIT_IF_ITEMS_MATCH_SUBSEQUENT_RULE, 'all subsequent': true, 'all preceding': true,
+                'subsequent rules to match': 1, 'preceding rules to match': 1)
       }
       fieldRule.create {
         modifier( PsiModifier.PUBLIC )
@@ -211,8 +210,8 @@ class RearrangerTest extends LightCodeInsightFixtureTestCase {
       }
       commentRule.create {
         comment('//***********************************       PROTECTED/PACKAGE FIELDS        **************************************',
-                condition: CommentRule.EMIT_IF_ITEMS_MATCH_SUBSEQUENT_RULE, allSubsequent: false, allPreceding: true,
-                subsequentRulesToMatch: 3, precedingRulesToMatch: 1)
+                condition: CommentRule.EMIT_IF_ITEMS_MATCH_SUBSEQUENT_RULE, 'all subsequent': false, 'all preceding': true,
+                'subsequent rules to match': 3, 'preceding rules to match': 1)
       }
       fieldRule.create {
         modifier([ PsiModifier.PROTECTED, PsiModifier.PACKAGE_LOCAL, PsiModifier.STATIC, PsiModifier.FINAL ])
@@ -228,8 +227,8 @@ class RearrangerTest extends LightCodeInsightFixtureTestCase {
       }
       commentRule.create {
         comment('//**************************************        PRIVATE FIELDS          *****************************************',
-                condition: CommentRule.EMIT_IF_ITEMS_MATCH_SUBSEQUENT_RULE, allSubsequent: false, allPreceding: true,
-                subsequentRulesToMatch: 1, precedingRulesToMatch: 1)
+                condition: CommentRule.EMIT_IF_ITEMS_MATCH_SUBSEQUENT_RULE, 'all subsequent': false, 'all preceding': true,
+                'subsequent rules to match': 1, 'preceding rules to match': 1)
       }
       fieldRule.create {
         modifier( PsiModifier.PRIVATE )
@@ -237,8 +236,8 @@ class RearrangerTest extends LightCodeInsightFixtureTestCase {
       }
       commentRule.create {
         comment('//**************************************        CONSTRUCTORS              ************************************* ',
-                condition: CommentRule.EMIT_IF_ITEMS_MATCH_SUBSEQUENT_RULE, allSubsequent: false, allPreceding: true,
-                subsequentRulesToMatch: 2, precedingRulesToMatch: 1)
+                condition: CommentRule.EMIT_IF_ITEMS_MATCH_SUBSEQUENT_RULE, 'all subsequent': false, 'all preceding': true,
+                'subsequent rules to match': 2, 'preceding rules to match': 1)
       }
       methodRule.create {
         modifier( PsiModifier.PUBLIC )
@@ -247,8 +246,8 @@ class RearrangerTest extends LightCodeInsightFixtureTestCase {
       methodRule.create { target( MethodType.CONSTRUCTOR ) }
       commentRule.create {
         comment('//***********************************        GETTERS AND SETTERS              ********************************** ',
-                condition: CommentRule.EMIT_IF_ITEMS_MATCH_SUBSEQUENT_RULE, allSubsequent: false, allPreceding: true,
-                subsequentRulesToMatch: 2, precedingRulesToMatch: 1)
+                condition: CommentRule.EMIT_IF_ITEMS_MATCH_SUBSEQUENT_RULE, 'all subsequent': false, 'all preceding': true,
+                'subsequent rules to match': 2, 'preceding rules to match': 1)
       }
       methodRule.create {
         modifier( PsiModifier.PUBLIC )
@@ -264,8 +263,8 @@ class RearrangerTest extends LightCodeInsightFixtureTestCase {
         text += "\n// PUBLIC METHODS LINE 2";
       }
       commentRule.create {
-        comment(text, condition: CommentRule.EMIT_IF_ITEMS_MATCH_SUBSEQUENT_RULE, allSubsequent: true, allPreceding: true,
-                subsequentRulesToMatch: 1, precedingRulesToMatch: 1)
+        comment(text, condition: CommentRule.EMIT_IF_ITEMS_MATCH_SUBSEQUENT_RULE, 'all subsequent': true, 'all preceding': true,
+                'subsequent rules to match': 1, 'preceding rules to match': 1)
       }
       methodRule.create {
         modifier( PsiModifier.PUBLIC )
@@ -273,8 +272,8 @@ class RearrangerTest extends LightCodeInsightFixtureTestCase {
       }
       commentRule.create {
         comment('//*********************************     PACKAGE/PROTECTED METHODS              ******************************** ',
-                condition: CommentRule.EMIT_IF_ITEMS_MATCH_SUBSEQUENT_RULE, allSubsequent: true, allPreceding: true,
-                subsequentRulesToMatch: 1, precedingRulesToMatch: 1)
+                condition: CommentRule.EMIT_IF_ITEMS_MATCH_SUBSEQUENT_RULE, 'all subsequent': true, 'all preceding': true,
+                'subsequent rules to match': 1, 'preceding rules to match': 1)
       }
       methodRule.create {
         modifier([ PsiModifier.PROTECTED, PsiModifier.PACKAGE_LOCAL ])
@@ -282,8 +281,8 @@ class RearrangerTest extends LightCodeInsightFixtureTestCase {
       }
       commentRule.create {
         comment('//**************************************        PRIVATE METHODS              *************************************',
-                condition: CommentRule.EMIT_IF_ITEMS_MATCH_SUBSEQUENT_RULE, allSubsequent: true, allPreceding: true,
-                subsequentRulesToMatch: 1, precedingRulesToMatch: 1)
+                condition: CommentRule.EMIT_IF_ITEMS_MATCH_SUBSEQUENT_RULE, 'all subsequent': true, 'all preceding': true,
+                'subsequent rules to match': 1, 'preceding rules to match': 1)
       }
       methodRule.create {
         modifier( PsiModifier.PRIVATE )
@@ -291,8 +290,8 @@ class RearrangerTest extends LightCodeInsightFixtureTestCase {
       }
       commentRule.create {
         comment('//**************************************        INNER CLASSES              ************************************* ',
-                condition: CommentRule.EMIT_IF_ITEMS_MATCH_SUBSEQUENT_RULE, allSubsequent: true, allPreceding: true,
-                subsequentRulesToMatch: 1, precedingRulesToMatch: 1)
+                condition: CommentRule.EMIT_IF_ITEMS_MATCH_SUBSEQUENT_RULE, 'all subsequent': true, 'all preceding': true,
+                'subsequent rules to match': 1, 'preceding rules to match': 1)
       }
       innerClassRule.create { sort(SortType.BY_NAME ) }
       
@@ -305,46 +304,46 @@ class RearrangerTest extends LightCodeInsightFixtureTestCase {
 
   public final void testReturnTypeMatch() throws Exception {
     doTest('RearrangementTest12', 'RearrangementResult12') {
-      methodRule.create { returnType( 'void' ) }
+      methodRule.create { 'return type'( 'void' ) }
       fieldRule.create  { type( 'int' ) }
-      methodRule.create { returnType( '.*je.*' ) }
-      methodRule.create { returnType( /Integer\[\]/) }
-      methodRule.create { returnType( 'int' ) }
+      methodRule.create { 'return type'( '.*je.*' ) }
+      methodRule.create { 'return type'( /Integer\[\]/) }
+      methodRule.create { 'return type'( 'int' ) }
   } }
 
   public final void testRelatedMethodsDepthOriginal() throws Exception {
     doTest('RearrangementTest13', 'RearrangementResult13DO') {
-      settings.extractedMethods( depthFirstOrder: true, order: RelatedMethodsSettings.RETAIN_ORIGINAL_ORDER )
+      settings.'extracted methods'( 'depth-first order': true, order: RelatedMethodsSettings.RETAIN_ORIGINAL_ORDER )
   } }
 
   public final void testRelatedMethodsDepthAlphabetical() throws Exception {
     doTest('RearrangementTest13', 'RearrangementResult13DA') {
-      settings.extractedMethods( depthFirstOrder: true, order: RelatedMethodsSettings.ALPHABETICAL_ORDER )
+      settings.'extracted methods'( 'depth-first order': true, order: RelatedMethodsSettings.ALPHABETICAL_ORDER )
   } }
 
   public final void testRelatedMethodsDepthInvocation() throws Exception {
     doTest('RearrangementTest13', 'RearrangementResult13DI') {
-      settings.extractedMethods( depthFirstOrder: true, order: RelatedMethodsSettings.INVOCATION_ORDER )
+      settings.'extracted methods'( 'depth-first order': true, order: RelatedMethodsSettings.INVOCATION_ORDER )
   } }
 
   public final void testRelatedMethodsBreadthOriginal() throws Exception {
     doTest('RearrangementTest13', 'RearrangementResult13BO') {
-      settings.extractedMethods( depthFirstOrder: false, order: RelatedMethodsSettings.RETAIN_ORIGINAL_ORDER )
+      settings.'extracted methods'( 'depth-first order': false, order: RelatedMethodsSettings.RETAIN_ORIGINAL_ORDER )
   } }
 
   public final void testRelatedMethodsBreadthAlphabetical() throws Exception {
     doTest('RearrangementTest13', 'RearrangementResult13BA') {
-      settings.extractedMethods( depthFirstOrder: false, order: RelatedMethodsSettings.ALPHABETICAL_ORDER)
+      settings.'extracted methods'( 'depth-first order': false, order: RelatedMethodsSettings.ALPHABETICAL_ORDER)
   } }
 
   public final void testRelatedMethodsBreadthInvocation() throws Exception {
     doTest('RearrangementTest13', 'RearrangementResult13BI') {
-      settings.extractedMethods( depthFirstOrder: false, order: RelatedMethodsSettings.INVOCATION_ORDER)
+      settings.'extracted methods'( 'depth-first order': false, order: RelatedMethodsSettings.INVOCATION_ORDER)
   } }
 
   private void doTestEmitComments(args) {
     doTest(args.initial?: 'RearrangementTest13', args.expected) {
-      settings.extractedMethods( depthFirstOrder: args.depthFirst, order: args.orderType, commentType: args.commentType )
+      settings.'extracted methods'( 'depth-first order': args.depthFirst, order: args.orderType, commentType: args.commentType )
 
       def precedingCommentRule = new CommentRule()
       precedingCommentRule.commentText = '''\
@@ -437,15 +436,15 @@ class RearrangerTest extends LightCodeInsightFixtureTestCase {
   
   public final void testRelatedMethodsException() throws Exception {
     doTest('RearrangementTest13', 'RearrangementResult13Ex') {
-      settings.extractedMethods( depthFirstOrder: true, order: RelatedMethodsSettings.RETAIN_ORIGINAL_ORDER )
+      settings.'extracted methods'( 'depth-first order': true, order: RelatedMethodsSettings.RETAIN_ORIGINAL_ORDER )
       methodRule.create { name('GF') }
   } }
 
   public final void testKeepOverloadedMethodsTogether() throws Exception {
     doTest('RearrangementTest14', 'RearrangementResult14') {
       settings.configure {
-        extractedMethods( depthFirstOrder: false, order: RelatedMethodsSettings.INVOCATION_ORDER )
-        keepTogether( 'overloaded' )
+        'extracted methods'( 'depth-first order': false, order: RelatedMethodsSettings.INVOCATION_ORDER )
+        'keep together'( 'overloaded' )
   } } }
 
   public final void testXML() throws Exception { doTest('RearrangementTest17', 'RearrangementTest17', 'xml') }
@@ -453,8 +452,8 @@ class RearrangerTest extends LightCodeInsightFixtureTestCase {
   public final void testKeepGSTogether() throws Exception {
     doTest('RearrangementTest18', 'RearrangementResult18') {
       settings.configure {
-        extractedMethods( order: RelatedMethodsSettings.INVOCATION_ORDER )
-        keepTogether( 'getters and setters' )
+        'extracted methods'( order: RelatedMethodsSettings.INVOCATION_ORDER )
+        'keep together'( 'getters and setters' )
       }
       fieldRule.create {}
       methodRule.create { target( MethodType.CONSTRUCTOR ) }
@@ -466,8 +465,8 @@ class RearrangerTest extends LightCodeInsightFixtureTestCase {
   public final void testKeepGSWithProperty() throws Exception {
     doTest('RearrangementTest18', 'RearrangementResult18A') {
       settings.configure {
-        extractedMethods( order: RelatedMethodsSettings.ALPHABETICAL_ORDER )
-        keepTogether([ 'getters and setters', 'getters and setters with property' ])
+        'extracted methods'( order: RelatedMethodsSettings.ALPHABETICAL_ORDER )
+        'keep together'([ 'getters and setters', 'getters and setters with property' ])
       }
       fieldRule.create { }
       methodRule.create { target(MethodType.CONSTRUCTOR) }
@@ -479,8 +478,8 @@ class RearrangerTest extends LightCodeInsightFixtureTestCase {
   public final void testKeepGSWithPropertyElseTogether() throws Exception {
     doTest('RearrangementTest18B', 'RearrangementResult18B') {
       settings.configure {
-        extractedMethods( order: RelatedMethodsSettings.ALPHABETICAL_ORDER )
-        keepTogether([ 'getters and setters', 'getters and setters with property' ])
+        'extracted methods'( order: RelatedMethodsSettings.ALPHABETICAL_ORDER )
+        'keep together'([ 'getters and setters', 'getters and setters with property' ])
       }
       fieldRule.create { }
       commentRule.create {
@@ -488,7 +487,7 @@ class RearrangerTest extends LightCodeInsightFixtureTestCase {
       }
       methodRule.create {
         target( MethodType.GETTER_OR_SETTER )
-        getterCriteria(
+        'getter criteria'(
                 name: GetterSetterDefinition.GETTER_NAME_CORRECT_PREFIX,
                 body: GetterSetterDefinition.GETTER_BODY_IMMATERIAL
         )
@@ -504,17 +503,17 @@ class RearrangerTest extends LightCodeInsightFixtureTestCase {
 
   public final void testKeepOverloadsTogetherOriginalOrder() throws Exception {
     doTest('RearrangementTest19', 'RearrangementResult19A') {
-      settings.overloadedMethods( keepTogether: true, order: RearrangerSettings.OVERLOADED_ORDER_RETAIN_ORIGINAL )
+      settings.'overloaded methods'( 'keep together': true, order: RearrangerSettings.OVERLOADED_ORDER_RETAIN_ORIGINAL )
   } }
 
   public final void testKeepOverloadsTogetherAscendingOrder() throws Exception {
     doTest('RearrangementTest19', 'RearrangementResult19B') {
-      settings.overloadedMethods( keepTogether: true, order: RearrangerSettings.OVERLOADED_ORDER_ASCENDING_PARAMETERS )
+      settings.'overloaded methods'( 'keep together': true, order: RearrangerSettings.OVERLOADED_ORDER_ASCENDING_PARAMETERS )
   } }
 
   public final void testKeepOverloadsTogetherDescendingOrder() throws Exception {
     doTest('RearrangementTest19', 'RearrangementResult19C') {
-      settings.overloadedMethods( keepTogether: true, order: RearrangerSettings.OVERLOADED_ORDER_DESCENDING_PARAMETERS )
+      settings.'overloaded methods'( 'keep together': true, order: RearrangerSettings.OVERLOADED_ORDER_DESCENDING_PARAMETERS )
   } }
 
   public final void testInnerClassReferenceToChild() throws Exception {
@@ -589,7 +588,7 @@ class RearrangerTest extends LightCodeInsightFixtureTestCase {
     doTest('GetterDefinitionTest', 'GetPrefixImmaterialResult') {
       methodRule.create {
         target( MethodType.GETTER_OR_SETTER )
-        getterCriteria(
+        'getter criteria'(
           name: GetterSetterDefinition.GETTER_NAME_CORRECT_PREFIX,
           body: GetterSetterDefinition.GETTER_BODY_IMMATERIAL
   ) } } }
@@ -598,7 +597,7 @@ class RearrangerTest extends LightCodeInsightFixtureTestCase {
     doTest('GetterDefinitionTest', 'GetPrefixReturnsResult') {
       methodRule.create {
         target( MethodType.GETTER_OR_SETTER )
-        getterCriteria(
+        'getter criteria'(
                 name: GetterSetterDefinition.GETTER_NAME_CORRECT_PREFIX,
                 body: GetterSetterDefinition.GETTER_BODY_RETURNS
   ) } } }
@@ -607,7 +606,7 @@ class RearrangerTest extends LightCodeInsightFixtureTestCase {
     doTest('GetterDefinitionTest', 'GetPrefixReturnsFieldResult') {
       methodRule.create {
         target( MethodType.GETTER_OR_SETTER )
-        getterCriteria(
+        'getter criteria'(
                 name: GetterSetterDefinition.GETTER_NAME_CORRECT_PREFIX,
                 body: GetterSetterDefinition.GETTER_BODY_RETURNS_FIELD
     ) } } }
@@ -616,7 +615,7 @@ class RearrangerTest extends LightCodeInsightFixtureTestCase {
     doTest('GetterDefinitionTest', 'GetFieldReturnsResult') {
       methodRule.create {
         target( MethodType.GETTER_OR_SETTER )
-        getterCriteria(
+        'getter criteria'(
           name: GetterSetterDefinition.GETTER_NAME_MATCHES_FIELD,
           body: GetterSetterDefinition.GETTER_BODY_RETURNS
   ) } } }
@@ -625,7 +624,7 @@ class RearrangerTest extends LightCodeInsightFixtureTestCase {
     doTest('GetterDefinitionTest', 'GetFieldReturnsFieldResult') {
       methodRule.create {
         target( MethodType.GETTER_OR_SETTER )
-        getterCriteria(
+        'getter criteria'(
           name: GetterSetterDefinition.GETTER_NAME_MATCHES_FIELD,
           body: GetterSetterDefinition.GETTER_BODY_RETURNS_FIELD
   ) } } }
@@ -634,7 +633,7 @@ class RearrangerTest extends LightCodeInsightFixtureTestCase {
     doTest('RearrangementTest22', 'RearrangementResult22') {
       methodRule.create {
         target( MethodType.GETTER_OR_SETTER )
-        getterCriteria(
+        'getter criteria'(
           name: GetterSetterDefinition.GETTER_NAME_CORRECT_PREFIX,
           body: GetterSetterDefinition.GETTER_BODY_RETURNS
         )
@@ -649,8 +648,8 @@ class RearrangerTest extends LightCodeInsightFixtureTestCase {
     doTest('RearrangementTest23', 'RearrangementResult23NNNANXMA') {
       mySettings.keepGettersSettersTogether = false
       interfaceRule.create {
-        precedingComment( '/**** Interface %IF% Header ****/' )
-        trailingComment( '/**** Interface %IF% Trailer ***/' )
+        'preceding comment'( '/**** Interface %IF% Header ****/' )
+        'trailing comment'( '/**** Interface %IF% Trailer ***/' )
         setup( "don't group extracted methods": false, order: InterfaceAttributes.METHOD_ORDER_ALPHABETICAL, alphabetize: false )
   } } }
 
@@ -658,8 +657,8 @@ class RearrangerTest extends LightCodeInsightFixtureTestCase {
     doTest('RearrangementTest23', 'RearrangementResult23NNNANXME') {
       mySettings.keepGettersSettersTogether = false
       interfaceRule.create {
-        precedingComment( '/**** Interface %IF% Header ****/' )
-        trailingComment( '/**** Interface %IF% Trailer ***/' )
+        'preceding comment'( '/**** Interface %IF% Header ****/' )
+        'trailing comment'( '/**** Interface %IF% Trailer ***/' )
         setup( "don't group extracted methods": false, order: InterfaceAttributes.METHOD_ORDER_ENCOUNTERED, alphabetize: false )
   } } }
 
@@ -667,8 +666,8 @@ class RearrangerTest extends LightCodeInsightFixtureTestCase {
     doTest('RearrangementTest23', 'RearrangementResult23NNNANXMI') {
       mySettings.keepGettersSettersTogether = false
       interfaceRule.create {
-        precedingComment( '/**** Interface %IF% Header ****/' )
-        trailingComment( '/**** Interface %IF% Trailer ***/' )
+        'preceding comment'( '/**** Interface %IF% Header ****/' )
+        'trailing comment'( '/**** Interface %IF% Trailer ***/' )
         setup( "don't group extracted methods": false, order: InterfaceAttributes.METHOD_ORDER_INTERFACE_ORDER, alphabetize: false )
   } } }
 
@@ -682,8 +681,8 @@ class RearrangerTest extends LightCodeInsightFixtureTestCase {
   public void testInterfaceIsAlphabeticalNoExcludeMethodEncountered() throws Exception {
     doTest('RearrangementTest23', 'RearrangementResult23NNIANXME') {
       interfaceRule.create {
-        precedingComment( '/**** Interface %IF% Header ****/' )
-        trailingComment( '/**** Interface %IF% Trailer ***/' )
+        'preceding comment'( '/**** Interface %IF% Header ****/' )
+        'trailing comment'( '/**** Interface %IF% Trailer ***/' )
         setup( "don't group extracted methods": true, order: InterfaceAttributes.METHOD_ORDER_ENCOUNTERED, alphabetize: true )
   } } }
 
@@ -724,8 +723,8 @@ class RearrangerTest extends LightCodeInsightFixtureTestCase {
   public void testKeepGSTogetherAndExtractedMethods() throws Exception {
     doTest('RearrangementTest27', 'RearrangementResult27') {
       settings.configure {
-        keepTogether([ 'getters and setters', 'overloaded' ])
-        extractedMethods( move: true )
+        'keep together'([ 'getters and setters', 'overloaded' ])
+        'extracted methods'  move: true 
   } } }
 
   public void testRegexEscape() throws Exception {
@@ -756,23 +755,24 @@ class RearrangerTest extends LightCodeInsightFixtureTestCase {
   public void testVariousComments() throws Exception {
     doTest('RearrangementTest28', 'RearrangementResult28') {
       settings.configure{
-        keepTogether([ 'getters and setters', 'overloaded' ])
-        extractedMethods( depthFirstOrder: true, commentType: RelatedMethodsSettings.COMMENT_TYPE_EACH_LEVEL, 'below first caller': false,
-                          'non-private treatment': RelatedMethodsSettings.NON_PRIVATE_EXTRACTED_ANY_CALLERS,
-                          precedingComment: '// Level %LV% methods', trailingComment: '// end Level %LV% methods' )
+        'keep together'([ 'getters and setters', 'overloaded' ])
+        'extracted methods'( 'depth-first order': true, commentType: RelatedMethodsSettings.COMMENT_TYPE_EACH_LEVEL,
+                             'below first caller': false,
+                             'non-private treatment': RelatedMethodsSettings.NON_PRIVATE_EXTRACTED_ANY_CALLERS,
+                             'preceding comment': '// Level %LV% methods', 'trailing comment': '// end Level %LV% methods' )
       }
       commentRule.create {
-        comment('// start of fields', condition: CommentRule.EMIT_IF_ITEMS_MATCH_SUBSEQUENT_RULE, allSubsequent: true,
-                                   subsequentRulesToMatch: 1)
+        comment('// start of fields', condition: CommentRule.EMIT_IF_ITEMS_MATCH_SUBSEQUENT_RULE, 'all subsequent': true,
+                                   'subsequent rules to match': 1)
       }
       fieldRule.create { }
       commentRule.create {
-        comment('// end of fields', condition: CommentRule.EMIT_IF_ITEMS_MATCH_PRECEDING_RULE, allPreceding: true,
-                precedingRulesToMatch: 1)
+        comment('// end of fields', condition: CommentRule.EMIT_IF_ITEMS_MATCH_PRECEDING_RULE, 'all preceding': true,
+                'preceding rules to match': 1)
       }
       interfaceRule.configure {
-        precedingComment( '// start of interface %IF%' )
-        trailingComment( '// end of interface %IF%' )
+        'preceding comment'( '// start of interface %IF%' )
+        'trailing comment'( '// end of interface %IF%' )
         setup( methodOrder: InterfaceAttributes.METHOD_ORDER_ENCOUNTERED, alphabetize: false, 'group extracted methods': false )
     } }
     // where a blank line, generated comment, and method occur in order; the generated comment is removed
@@ -780,106 +780,60 @@ class RearrangerTest extends LightCodeInsightFixtureTestCase {
     // the blank line.
   }
 
-//  public void testParseBugInfiniteLoop() throws Exception {
-//    configureByFile("/com/wrq/rearranger/RearrangementTest29.java");
-//    final PsiFile file = getFile();
-//    final Document doc = PsiDocumentManager.getInstance(getProject()).getDocument(file);
-//    final RearrangerActionHandler rah = new RearrangerActionHandler();
-//    rah.rearrangeDocument(getProject(), file, rs, doc);
-//    super.checkResultByFile("/com/wrq/rearranger/RearrangementTest29.java");
-//  }
-//
-//  public void testSpacingBug() throws Exception {
-//    configureByFile("/com/wrq/rearranger/RearrangementTest30.java");
-//    final PsiFile file = getFile();
-//    final Document doc = PsiDocumentManager.getInstance(getProject()).getDocument(file);
-//    final RearrangerActionHandler rah = new RearrangerActionHandler();
-//    rs.getAfterClassLBrace().setForce(true);
-//    rs.getAfterClassLBrace().setnBlankLines(0);
-//    rs.getAfterClassRBrace().setForce(true);
-//    rs.getAfterClassRBrace().setnBlankLines(1);
-//    rs.getAfterMethodLBrace().setForce(true);
-//    rs.getAfterMethodLBrace().setnBlankLines(0);
-//    rs.getAfterMethodRBrace().setForce(true);
-//    rs.getAfterMethodRBrace().setnBlankLines(1);
-//    rs.getBeforeClassRBrace().setForce(true);
-//    rs.getBeforeClassRBrace().setnBlankLines(0);
-//    rs.getNewlinesAtEOF().setForce(true);
-//    rs.getNewlinesAtEOF().setnBlankLines(1);
-//    rs.setRemoveBlanksInsideCodeBlocks(true);
-//    rah.rearrangeDocument(getProject(), file, rs, doc);
-//    super.checkResultByFile("/com/wrq/rearranger/RearrangementResult30.java");
-//  }
-//
-//  public void testSpacingBug2() throws Exception {
-//    configureByFile("/com/wrq/rearranger/RearrangementTest31.java");
-//    final PsiFile file = getFile();
-//    final Document doc = PsiDocumentManager.getInstance(getProject()).getDocument(file);
-//    final RearrangerActionHandler rah = new RearrangerActionHandler();
-//    rs.getAfterClassLBrace().setForce(true);
-//    rs.getAfterClassLBrace().setnBlankLines(0);
-//    rs.getAfterClassRBrace().setForce(true);
-//    rs.getAfterClassRBrace().setnBlankLines(1);
-//    rs.getAfterMethodLBrace().setForce(true);
-//    rs.getAfterMethodLBrace().setnBlankLines(0);
-//    rs.getAfterMethodRBrace().setForce(true);
-//    rs.getAfterMethodRBrace().setnBlankLines(1);
-//    rs.getBeforeClassRBrace().setForce(true);
-//    rs.getBeforeClassRBrace().setnBlankLines(0);
-//    rs.getBeforeMethodRBrace().setForce(true);
-//    rs.getBeforeMethodRBrace().setnBlankLines(0);
-//    rs.setRemoveBlanksInsideCodeBlocks(true);
-//    rs.getNewlinesAtEOF().setForce(true);
-//    rs.getNewlinesAtEOF().setnBlankLines(1);
-//    rah.rearrangeDocument(getProject(), file, rs, doc);
-//    super.checkResultByFile("/com/wrq/rearranger/RearrangementResult31.java");
-//  }
-//
-//  public void testSpacingBug3() throws Exception {
-//    configureByFile("/com/wrq/rearranger/DomainExpanderTest.java");
-//    final PsiFile file = getFile();
-//    final Document doc = PsiDocumentManager.getInstance(getProject()).getDocument(file);
-//    final RearrangerActionHandler rah = new RearrangerActionHandler();
-//    rs.getAfterClassLBrace().setForce(true);
-//    rs.getAfterClassLBrace().setnBlankLines(0);
-//    rs.getAfterClassRBrace().setForce(true);
-//    rs.getAfterClassRBrace().setnBlankLines(1);
-//    rs.getAfterMethodLBrace().setForce(true);
-//    rs.getAfterMethodLBrace().setnBlankLines(0);
-//    rs.getAfterMethodRBrace().setForce(true);
-//    rs.getAfterMethodRBrace().setnBlankLines(0);
-//    rs.getBeforeClassRBrace().setForce(true);
-//    rs.getBeforeClassRBrace().setnBlankLines(0);
-//    rs.getBeforeMethodRBrace().setForce(true);
-//    rs.getBeforeMethodRBrace().setnBlankLines(0);
-//    rs.setRemoveBlanksInsideCodeBlocks(true);
-//    rs.getNewlinesAtEOF().setForce(true);
-//    rs.getNewlinesAtEOF().setnBlankLines(1);
-//    rah.rearrangeDocument(getProject(), file, rs, doc);
-//    super.checkResultByFile("/com/wrq/rearranger/DomainExpanderResult.java");
-//  }
-//
-//  /**
-//   * Bug occurs when one or more blank lines precede a generated comment.
-//   * When comment is removed, blank lines now precede the item.  Comment is inserted
-//   * at the beginning (i.e. before the blank lines) and a newline character is
-//   * prefixed to the comment.  Net effect is that new blank line(s) appear after the comment.
-//   *
-//   * @throws Exception test exception
-//   */
-//  public void testGeneratedCommentSpacingBug() throws Exception {
-//    configureByFile("/com/wrq/rearranger/RearrangementTest32.java");
-//    final PsiFile file = getFile();
-//    final Document doc = PsiDocumentManager.getInstance(getProject()).getDocument(file);
-//    rs = RearrangerSettings.getSettingsFromFile(new File(InteractiveTest.DEFAULT_CONFIGURATION));
-//    rs.setAskBeforeRearranging(false);
-//    rs.getNewlinesAtEOF().setForce(true);
-//    rs.getNewlinesAtEOF().setnBlankLines(1);
-//    final RearrangerActionHandler rah = new RearrangerActionHandler();
-//    rah.rearrangeDocument(getProject(), file, rs, doc);
-//    super.checkResultByFile("/com/wrq/rearranger/RearrangementResult32.java");
-//  }
-//
+  public void testParseBugInfiniteLoop() throws Exception { doTest('RearrangementTest29', 'RearrangementTest29') }
+
+  public void testSpacingBug() throws Exception {
+    doTest('RearrangementTest30', 'RearrangementResult30') {
+      spacingRule.create {
+        spacing( anchor: [ SpacingAnchor.AFTER_CLASS_LBRACE, SpacingAnchor.AFTER_METHOD_LBRACE, SpacingAnchor.BEFORE_CLASS_RBRACE ],
+                 lines: 0 )
+        spacing( anchor: [ SpacingAnchor.AFTER_CLASS_RBRACE, SpacingAnchor.AFTER_METHOD_RBRACE, SpacingAnchor.EOF ],
+                 lines: 1 )
+        spacing ( 'remove blank lines': true )
+  } } }
+
+  public void testSpacingBug2() throws Exception {
+    doTest('RearrangementTest31', 'RearrangementResult31') {
+      spacingRule.create {
+        spacing( anchor: [ SpacingAnchor.AFTER_CLASS_LBRACE, SpacingAnchor.AFTER_METHOD_LBRACE, SpacingAnchor.BEFORE_CLASS_RBRACE,
+                           SpacingAnchor.BEFORE_METHOD_RBRACE ],
+                 lines: 0 )
+        spacing( anchor: [ SpacingAnchor.AFTER_CLASS_RBRACE, SpacingAnchor.AFTER_METHOD_RBRACE, SpacingAnchor.EOF ],
+                 lines: 1 )
+        spacing ( 'remove blank lines': true )
+  } } }
+
+  public void testSpacingBug3() throws Exception {
+    doTest('DomainExpanderTest', 'DomainExpanderResult') {
+      spacingRule.create {
+        spacing( anchor: [ SpacingAnchor.AFTER_CLASS_LBRACE, SpacingAnchor.AFTER_METHOD_LBRACE,
+                           SpacingAnchor.BEFORE_CLASS_RBRACE, SpacingAnchor.BEFORE_METHOD_RBRACE],
+                 lines: 0 )
+        spacing( anchor: [ SpacingAnchor.AFTER_CLASS_RBRACE, SpacingAnchor.EOF, SpacingAnchor.AFTER_METHOD_RBRACE ],
+                 lines: 1 )
+        spacing ( 'remove blank lines': true )
+  } } }
+
+  /**
+   * Bug occurs when one or more blank lines precede a generated comment.
+   * When comment is removed, blank lines now precede the item.  Comment is inserted
+   * at the beginning (i.e. before the blank lines) and a newline character is
+   * prefixed to the comment.  Net effect is that new blank line(s) appear after the comment.
+   *
+   * @throws Exception test exception
+   */
+  public void testGeneratedCommentSpacingBug() throws Exception {
+    doTest('RearrangementTest32', 'RearrangementResult32') {
+      // Using concat() because simple '+' here produces weird groovy.lang.MissingMethodException: No signature of method:
+      // java.lang.String.positive() is applicable for argument types: () values: []
+      def path = PlatformTestUtil.getCommunityPath().replace(File.separator, '/').concat("/plugins/rearranger")
+        .concat(InteractiveTest.DEFAULT_CONFIGURATION)
+      mySettings = RearrangerSettings.getSettingsFromFile(new File(path));
+      mySettings.askBeforeRearranging = false
+      mySettings.newLinesAtEOF.force = true
+      mySettings.newLinesAtEOF.nBlankLines = 1
+  } }
+
 //  public void testGeneratedCommentSpacing() throws Exception {
 //    configureByFile("/com/wrq/rearranger/RearrangementTest32.java");
 //    final PsiFile file = getFile();
