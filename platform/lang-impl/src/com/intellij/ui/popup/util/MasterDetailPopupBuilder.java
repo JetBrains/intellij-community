@@ -15,14 +15,12 @@
  */
 package com.intellij.ui.popup.util;
 
-import com.intellij.ide.bookmarks.BookmarkItem;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.Gray;
@@ -37,6 +35,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
+import javax.swing.event.TreeSelectionEvent;
+import javax.swing.event.TreeSelectionListener;
 import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
@@ -54,9 +54,20 @@ public class MasterDetailPopupBuilder {
   private static final Color BORDER_COLOR = Gray._135;
   private Project myProject;
   private ActionGroup myActions;
-  private JBList myList;
   private Delegate myDelegate;
   private boolean myCloseOnEnter;
+
+  public DetailViewImpl getDetailView() {
+    return myDetailView;
+  }
+
+  private DetailViewImpl myDetailView;
+  private JLabel myPathLabel;
+  private JBPopup myPopup;
+  private Alarm myUpdateAlarm;
+
+
+  private JComponent myChooserComponent;
 
   public ActionToolbar getActionToolbar() {
     return myActionToolbar;
@@ -69,114 +80,49 @@ public class MasterDetailPopupBuilder {
     myProject = project;
   }
 
+  private String getTitle2Text(String fullText) {
+    int labelWidth = myPathLabel.getWidth();
+    if (fullText == null || fullText.length() == 0) return " ";
+    while (myPathLabel.getFontMetrics(myPathLabel.getFont()).stringWidth(fullText) > labelWidth) {
+      int sep = fullText.indexOf(File.separatorChar, 4);
+      if (sep < 0) return fullText;
+      fullText = "..." + fullText.substring(sep);
+    }
+
+    return fullText;
+  }
+
+  private void doUpdateDetailView() {
+    final Object[] values = getSelectedItems();
+    ItemWrapper wrapper = null;
+    if (values != null && values.length == 1) {
+      wrapper = (ItemWrapper)values[0];
+      myPathLabel.setText(getTitle2Text(wrapper.footerText()));
+    }
+    else {
+      myPathLabel.setText(" ");
+    }
+    final ItemWrapper wrapper1 = wrapper;
+    myUpdateAlarm.cancelAllRequests();
+    myUpdateAlarm.addRequest(new Runnable() {
+      public void run() {
+        myDetailView.updateWithItem(wrapper1);
+      }
+    }, 100);
+  }
 
   public JBPopup createMasterDetailPopup() {
-    final JLabel pathLabel = new JLabel(" ");
-    pathLabel.setHorizontalAlignment(SwingConstants.RIGHT);
 
-    final Font font = pathLabel.getFont();
-    pathLabel.setFont(font.deriveFont((float)10));
+    setupRenderer();
 
-    final Alarm updateAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
-    final DetailViewImpl detailView = new DetailViewImpl(myProject);
+    myPathLabel = new JLabel(" ");
+    myPathLabel.setHorizontalAlignment(SwingConstants.RIGHT);
 
-    myList.setCellRenderer(new ItemRenderer(myDelegate, myProject));
+    final Font font = myPathLabel.getFont();
+    myPathLabel.setFont(font.deriveFont((float)10));
 
-    final ListSelectionModel selectionModel = myList.getSelectionModel();
-    selectionModel.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-
-    final boolean directionUp[] = new boolean[1];
-
-    selectionModel.addListSelectionListener(new ListSelectionListener() {
-      private String getTitle2Text(String fullText) {
-        int labelWidth = pathLabel.getWidth();
-        if (fullText == null || fullText.length() == 0) return " ";
-        while (pathLabel.getFontMetrics(pathLabel.getFont()).stringWidth(fullText) > labelWidth) {
-          int sep = fullText.indexOf(File.separatorChar, 4);
-          if (sep < 0) return fullText;
-          fullText = "..." + fullText.substring(sep);
-        }
-
-        return fullText;
-      }
-
-      public void valueChanged(final ListSelectionEvent e) {
-        //noinspection SSBasedInspection
-        SwingUtilities.invokeLater(new Runnable() {
-          public void run() {
-            updatePathLabel();
-          }
-        });
-      }
-
-      private void updatePreviewPanel(final ItemWrapper wrapper) {
-        updateAlarm.cancelAllRequests();
-        updateAlarm.addRequest(new Runnable() {
-          public void run() {
-            detailView.updateWithItem(wrapper);
-          }
-        }, 100);
-      }
-
-      private void updatePathLabel() {
-        final Object[] values = myList.getSelectedValues();
-        ItemWrapper wrapper = null;
-        if (values != null && values.length == 1) {
-          wrapper = (ItemWrapper)values[0];
-          if (wrapper instanceof SplitterItem) {
-            if (!directionUp[0]) {
-              final int index = myList.getSelectedIndex();
-              if (myList.getItemsCount() >= index + 1) {
-                myList.setSelectedIndex(index + 1);
-              }
-              else {
-                myList.setSelectedIndex(0);
-              }
-            }
-            else {
-              final int index = myList.getSelectedIndex();
-              if (index - 1 > 0) {
-                myList.setSelectedIndex(index - 1);
-              }
-              else {
-                myList.setSelectedIndex(myList.getItemsCount() - 1);
-              }
-            }
-          }
-          pathLabel.setText(getTitle2Text(wrapper.footerText()));
-        }
-        else {
-          pathLabel.setText(" ");
-        }
-        updatePreviewPanel(wrapper);
-      }
-    });
-    final Ref<JBPopup> popupRef = Ref.create(null);
-
-    Runnable runnable = new Runnable() {
-      public void run() {
-        IdeFocusManager.getInstance(myProject).doWhenFocusSettlesDown(new Runnable() {
-          public void run() {
-            Object[] values = myList.getSelectedValues();
-
-            if (values.length == 1) {
-              ((ItemWrapper)values[0]).execute(myProject, popupRef.get());
-            }
-            else {
-              for (Object value : values) {
-                if (value instanceof BookmarkItem) {
-                  ((ItemWrapper)value).execute(myProject, popupRef.get());
-                }
-              }
-            }
-          }
-        });
-      }
-    };
-
-    if (myList.getModel().getSize() == 0) {
-      myList.clearSelection();
-    }
+    myUpdateAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
+    myDetailView = new DetailViewImpl(myProject);
 
     JPanel footerPanel = new JPanel(new BorderLayout()) {
       @Override
@@ -187,8 +133,30 @@ public class MasterDetailPopupBuilder {
       }
     };
 
+
+    Runnable runnable = new Runnable() {
+      public void run() {
+        IdeFocusManager.getInstance(myProject).doWhenFocusSettlesDown(new Runnable() {
+          public void run() {
+            Object[] values = getSelectedItems();
+
+            if (values.length == 1) {
+              ((ItemWrapper)values[0]).execute(myProject, myPopup);
+            }
+            else {
+              for (Object value : values) {
+                if (value instanceof ItemWrapper) {
+                  ((ItemWrapper)value).execute(myProject, myPopup);
+                }
+              }
+            }
+          }
+        });
+      }
+    };
+
     footerPanel.setBorder(BorderFactory.createEmptyBorder(4, 4, 4, 4));
-    footerPanel.add(pathLabel);
+    footerPanel.add(myPathLabel);
 
     myActionToolbar = ActionManager.getInstance().createActionToolbar("", myActions, true);
     myActionToolbar.setReservePlaceAutoPopupIcon(false);
@@ -196,14 +164,15 @@ public class MasterDetailPopupBuilder {
     final JComponent toolBar = myActionToolbar.getComponent();
     toolBar.setOpaque(false);
 
-    final JBPopup popup = new PopupChooserBuilder(myList).
+    final PopupChooserBuilder builder = createInnerBuilder();
+    myPopup = builder.
       setTitle(myDelegate.getTitle()).
       setMovable(true).
       setResizable(true).
       setAutoselectOnMouseMove(false).
       setSettingButton(toolBar).
       setSouthComponent(footerPanel).
-      setEastComponent(detailView).
+      setEastComponent(myDetailView).
       setItemChoosenCallback(runnable).
       setCloseOnEnter(myCloseOnEnter).
       setMayBeParent(true).
@@ -213,29 +182,46 @@ public class MasterDetailPopupBuilder {
           return ((ItemWrapper)o).speedSearchText();
         }
       }).createPopup();
-
-    popupRef.set(popup);
-
-    myList.addKeyListener(new KeyAdapter() {
-      public void keyPressed(KeyEvent e) {
-        if (e.getKeyCode() == KeyEvent.VK_DELETE) {
-          removeSelectedItems(MasterDetailPopupBuilder.this.myList, MasterDetailPopupBuilder.this.myProject);
-        }
-        else if (e.getKeyCode() == KeyEvent.VK_UP) {
-          directionUp[0] = true;
-        } else if (e.getKeyCode() == KeyEvent.VK_DOWN) {
-          directionUp[0] = false;
-        }
-        else if (e.getModifiersEx() == 0) {
-          myDelegate.handleMnemonic(e, myProject, popup);
-        }
-      }
-    });
-    return popup;
+    return myPopup;
   }
 
-  public static boolean allowedToRemoveSelectedItem(JBList list, Project project) {
-    Object[] values = list.getSelectedValues();
+  private void setupRenderer() {
+    if (myChooserComponent instanceof JList) {
+      final JList list = (JList)myChooserComponent;
+      list.setCellRenderer(new ListItemRenderer(myDelegate, myProject));
+    }
+  }
+
+  private PopupChooserBuilder createInnerBuilder() {
+    if (myChooserComponent instanceof JList) {
+      return new PopupChooserBuilder((JList)myChooserComponent);
+    }
+    else if (myChooserComponent instanceof JTree) {
+      return new PopupChooserBuilder((JTree)myChooserComponent);
+    }
+    return null;
+  }
+
+  public Object[] getSelectedItems() {
+    if (myChooserComponent instanceof JList) {
+      return ((JList)myChooserComponent).getSelectedValues();
+    }
+    else if (myChooserComponent instanceof JTree) {
+      return myDelegate.getSelectedItemsInTree();
+    }
+    return new Object[0];
+  }
+
+  private void updateDetailViewLater() {
+    //noinspection SSBasedInspection
+    SwingUtilities.invokeLater(new Runnable() {
+      public void run() {
+        doUpdateDetailView();
+      }
+    });
+  }
+
+  public static boolean allowedToRemoveItems(Object[] values) {
     for (Object value : values) {
       ItemWrapper item = (ItemWrapper)value;
       if (!item.allowedToRemove()) {
@@ -245,33 +231,42 @@ public class MasterDetailPopupBuilder {
     return values.length > 0;
   }
 
-  public static void removeSelectedItems(JBList list, Project project) {
-    int index = list.getSelectedIndex();
-    if (index == -1 || index >= list.getModel().getSize()) {
-      return;
+  public void removeSelectedItems(Project project) {
+    if (myChooserComponent instanceof JList) {
+      final JList list = (JList)myChooserComponent;
+      int index = list.getSelectedIndex();
+      if (index == -1 || index >= list.getModel().getSize()) {
+        return;
+      }
+      Object[] values = list.getSelectedValues();
+      for (Object value : values) {
+        ItemWrapper item = (ItemWrapper)value;
+
+        DefaultListModel model = list.getModel() instanceof DefaultListModel
+                                 ? (DefaultListModel)list.getModel()
+                                 : (DefaultListModel)((FilteringListModel)list.getModel()).getOriginalModel();
+        if (item.allowedToRemove()) {
+          model.removeElement(item);
+
+          if (model.getSize() > 0) {
+            if (model.getSize() == index) {
+              list.setSelectedIndex(model.getSize() - 1);
+            }
+            else if (model.getSize() > index) {
+              list.setSelectedIndex(index);
+            }
+          }
+          else {
+            list.clearSelection();
+          }
+          item.removed(project);
+        }
+      }
     }
-    Object[] values = list.getSelectedValues();
-    for (Object value : values) {
-      ItemWrapper item = (ItemWrapper)value;
-
-      DefaultListModel model = list.getModel() instanceof DefaultListModel
-                               ? (DefaultListModel)list.getModel()
-                               : (DefaultListModel)((FilteringListModel)list.getModel()).getOriginalModel();
-      if (item.allowedToRemove()) {
-        model.removeElement(item);
-
-        if (model.getSize() > 0) {
-          if (model.getSize() == index) {
-            list.setSelectedIndex(model.getSize() - 1);
-          }
-          else if (model.getSize() > index) {
-            list.setSelectedIndex(index);
-          }
-        }
-        else {
-          list.clearSelection();
-        }
-        item.removed(project);
+    else {
+      final Object[] items = getSelectedItems();
+      for (Object item : items) {
+        ((ItemWrapper)item).removed(project);
       }
     }
   }
@@ -281,9 +276,49 @@ public class MasterDetailPopupBuilder {
     return this;
   }
 
-  public MasterDetailPopupBuilder setList(JBList list) {
-    myList = list;
+  public MasterDetailPopupBuilder setTree(final JTree tree) {
+    setChooser(tree);
+
+    tree.getSelectionModel().addTreeSelectionListener(new TreeSelectionListener() {
+      @Override
+      public void valueChanged(TreeSelectionEvent event) {
+        updateDetailViewLater();
+      }
+    });
+
     return this;
+  }
+
+  public MasterDetailPopupBuilder setList(final JBList list) {
+    setChooser(list);
+    final ListSelectionModel listSelectionModel = list.getSelectionModel();
+    listSelectionModel.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+
+    listSelectionModel.addListSelectionListener(new ListSelectionListener() {
+      public void valueChanged(final ListSelectionEvent e) {
+        updateDetailViewLater();
+      }
+    });
+
+
+    if (list.getModel().getSize() == 0) {
+      list.clearSelection();
+    }
+    return this;
+  }
+
+  private void setChooser(JComponent list) {
+    myChooserComponent = list;
+    list.addKeyListener(new KeyAdapter() {
+      public void keyPressed(KeyEvent e) {
+        if (e.getKeyCode() == KeyEvent.VK_DELETE) {
+          removeSelectedItems(myProject);
+        }
+        else if (e.getModifiersEx() == 0) {
+          myDelegate.handleMnemonic(e, myProject, myPopup);
+        }
+      }
+    });
   }
 
   public MasterDetailPopupBuilder setDelegate(Delegate delegate) {
@@ -303,14 +338,16 @@ public class MasterDetailPopupBuilder {
 
     @Nullable
     JComponent createAccessoryView(Project project);
+
+    Object[] getSelectedItemsInTree();
   }
 
-  public static class ItemRenderer extends JPanel implements ListCellRenderer {
+  public static class ListItemRenderer extends JPanel implements ListCellRenderer {
     private final Project myProject;
     private final ColoredListCellRenderer myRenderer;
     private Delegate myDelegate;
 
-    private ItemRenderer(Delegate delegate, Project project) {
+    private ListItemRenderer(Delegate delegate, Project project) {
       super(new BorderLayout());
       myProject = project;
       setBackground(UIUtil.getListBackground());

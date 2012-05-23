@@ -27,13 +27,17 @@ import java.util.Collection;
 /**
  * @author nik
  */
-public class XBreakpointFileGroupingRule<B extends XLineBreakpoint<?>> extends XBreakpointGroupingRule<B, XBreakpointFileGroup> {
+public class XBreakpointFileGroupingRule<B> extends XBreakpointGroupingRule<B, XBreakpointFileGroup> {
   public XBreakpointFileGroupingRule() {
     super("by-file", XDebuggerBundle.message("rule.name.group.by.file"));
   }
 
   public XBreakpointFileGroup getGroup(@NotNull final B breakpoint, @NotNull final Collection<XBreakpointFileGroup> groups) {
-    XSourcePosition position = breakpoint.getSourcePosition();
+    if (!(breakpoint instanceof XLineBreakpoint)) {
+      return null;
+    }
+    XSourcePosition position = ((XLineBreakpoint)breakpoint).getSourcePosition();
+
     if (position == null) return null;
 
     VirtualFile file = position.getFile();

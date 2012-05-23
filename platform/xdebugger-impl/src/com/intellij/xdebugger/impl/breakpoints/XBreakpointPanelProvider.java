@@ -17,26 +17,28 @@ package com.intellij.xdebugger.impl.breakpoints;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.popup.util.ItemWrapper;
-import com.intellij.ui.popup.util.SplitterItem;
-import com.intellij.xdebugger.breakpoints.*;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.XDebuggerUtil;
+import com.intellij.xdebugger.breakpoints.*;
+import com.intellij.xdebugger.breakpoints.ui.BreakpointItem;
+import com.intellij.xdebugger.breakpoints.ui.XBreakpointGroupingByTypeRule;
+import com.intellij.xdebugger.breakpoints.ui.XBreakpointGroupingRule;
 import com.intellij.xdebugger.impl.breakpoints.ui.AbstractBreakpointPanel;
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointPanelProvider;
 import com.intellij.xdebugger.impl.breakpoints.ui.XBreakpointsPanel;
+import com.intellij.xdebugger.impl.breakpoints.ui.grouping.XBreakpointFileGroupingRule;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
@@ -46,6 +48,12 @@ import java.util.concurrent.CopyOnWriteArrayList;
 public class XBreakpointPanelProvider extends BreakpointPanelProvider<XBreakpoint> {
 
   private List<MyXBreakpointListener> myListeners = new CopyOnWriteArrayList<MyXBreakpointListener>();
+
+  @Override
+  public void provideBreakpointsGroupingRules(Collection<XBreakpointGroupingRule> rules) {
+    rules.add(new XBreakpointGroupingByTypeRule());
+    rules.add(new XBreakpointFileGroupingRule());
+  }
 
   @Override
   public void addListener(BreakpointsListener listener, Project project) {
@@ -129,13 +137,12 @@ public class XBreakpointPanelProvider extends BreakpointPanelProvider<XBreakpoin
   }
 
   @Override
-  public void provideBreakpointItems(Project project, Collection<ItemWrapper> items) {
+  public void provideBreakpointItems(Project project, Collection<BreakpointItem> items) {
     final XBreakpointType<?, ?>[] types = XBreakpointUtil.getBreakpointTypes();
     final XBreakpointManager manager = XDebuggerManager.getInstance(project).getBreakpointManager();
     for (XBreakpointType<?, ?> type : types) {
       final Collection<? extends XBreakpoint<?>> breakpoints = manager.getBreakpoints(type);
       if (breakpoints.isEmpty()) continue;
-      items.add(new SplitterItem(type.getTitle()));
       for (XBreakpoint<?> breakpoint : breakpoints) {
         items.add(new XBreakpointItem(breakpoint));
       }

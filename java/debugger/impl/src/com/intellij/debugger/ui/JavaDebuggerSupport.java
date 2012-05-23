@@ -33,9 +33,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Key;
-import com.intellij.ui.popup.util.ItemWrapper;
-import com.intellij.ui.popup.util.SplitterItem;
 import com.intellij.xdebugger.AbstractDebuggerSession;
+import com.intellij.xdebugger.breakpoints.ui.BreakpointItem;
+import com.intellij.xdebugger.breakpoints.ui.XBreakpointGroupingRule;
 import com.intellij.xdebugger.impl.DebuggerSupport;
 import com.intellij.xdebugger.impl.actions.DebuggerActionHandler;
 import com.intellij.xdebugger.impl.actions.DebuggerToggleActionHandler;
@@ -214,6 +214,11 @@ public class JavaDebuggerSupport extends DebuggerSupport {
     }
 
     @Override
+    public void provideBreakpointsGroupingRules(Collection<XBreakpointGroupingRule> rules) {
+      rules.add(new XBreakpointGroupingByCategoryRule());
+    }
+
+    @Override
     public void addListener(final BreakpointsListener listener, Project project) {
       final MyBreakpointManagerListener listener1 = new MyBreakpointManagerListener(listener);
       DebuggerManagerEx.getInstanceEx(getCurrentProject()).getBreakpointManager().addBreakpointManagerListener(listener1);
@@ -254,13 +259,10 @@ public class JavaDebuggerSupport extends DebuggerSupport {
     }
 
     @Override
-    public void provideBreakpointItems(Project project, Collection<ItemWrapper> items) {
+    public void provideBreakpointItems(Project project, Collection<BreakpointItem> items) {
       for (BreakpointFactory breakpointFactory : BreakpointFactory.getBreakpointFactories()) {
         Key<? extends Breakpoint> category = breakpointFactory.getBreakpointCategory();
         Breakpoint[] breakpoints = DebuggerManagerEx.getInstanceEx(project).getBreakpointManager().getBreakpoints(category);
-        if (breakpoints.length > 0) {
-          items.add(new SplitterItem(breakpointFactory.getDisplayName()));
-        }
         for (Breakpoint breakpoint : breakpoints) {
           items.add(breakpointFactory.createBreakpointItem(breakpoint));
         }

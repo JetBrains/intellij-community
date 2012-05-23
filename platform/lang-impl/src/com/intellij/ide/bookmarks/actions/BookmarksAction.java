@@ -113,6 +113,11 @@ public class BookmarksAction extends AnAction implements DumbAware, MasterDetail
     return mnemonicLabel;
   }
 
+  @Override
+  public Object[] getSelectedItemsInTree() {
+    return new Object[0];  //To change body of implemented methods use File | Settings | File Templates.
+  }
+
   private static DefaultListModel buildModel(Project project) {
     final DefaultListModel model = new DefaultListModel();
 

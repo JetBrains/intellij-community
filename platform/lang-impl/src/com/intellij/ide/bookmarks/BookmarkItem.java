@@ -28,6 +28,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.ui.ColoredListCellRenderer;
+import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.FileColorManager;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.popup.util.DetailView;
@@ -89,6 +90,11 @@ public class BookmarkItem implements ItemWrapper {
     }
   }
 
+  @Override
+  public void setupRenderer(ColoredTreeCellRenderer renderer) {
+    //bookmarks tree view not supported
+  }
+
   public void updateAccessoryView(JComponent component) {
     JLabel label = (JLabel)component;
     final char mnemonic = myBookmark.getMnemonic();
@@ -107,6 +113,7 @@ public class BookmarkItem implements ItemWrapper {
   public void execute(Project project, JBPopup popup) {
     popup.cancel();
     myBookmark.navigate();
+    popup.cancel();
   }
 
   public String footerText() {
