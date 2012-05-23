@@ -632,6 +632,12 @@ public class IdeaProjectLoader {
       case "JDK_1_5": return "1.5"
       case "JDK_1_6": return "1.6"
       case "JDK_1_7": return "1.7"
+      case "JDK_1_8": return "1.8"
+    }
+
+    final String prefix = "JDK_";
+    if (imlPropertyText != null && imlPropertyText.startsWith(prefix)) {
+      return imlPropertyText.substring(prefix.length()).replace('_', '.');
     }
 
     return "1.6"
