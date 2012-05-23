@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,9 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileFilter;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -127,23 +129,9 @@ public final class AndroidApt {
   private static void makeFieldsNotFinal(@NotNull File[] libRJavaFiles) throws IOException {
     for (File file : libRJavaFiles) {
       if (file.isFile()) {
-        final String fileContent = readFile(file);
+        final String fileContent = AndroidCommonUtils.readFile(file);
         FileUtil.writeToFile(file, fileContent.replace("public static final int ", "public static int "));
       }
-    }
-  }
-
-  @NotNull
-  private static String readFile(@NotNull File file) throws IOException {
-    final InputStream is = new BufferedInputStream(new FileInputStream(file));
-    try {
-      final byte[] data = new byte[is.available()];
-      //noinspection ResultOfMethodCallIgnored
-      is.read(data);
-      return new String(data);
-    }
-    finally {
-      is.close();
     }
   }
 

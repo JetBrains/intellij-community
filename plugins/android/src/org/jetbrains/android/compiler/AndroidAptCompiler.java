@@ -277,6 +277,13 @@ public class AndroidAptCompiler implements SourceGeneratingCompiler {
                                  -1, -1);
             continue;
           }
+
+          if (!AndroidCommonUtils.contains2Identifiers(packageName)) {
+            final String message = "[" + module.getName() + "] Package name must contain at least 2 segments";
+            myContext.addMessage(facet.getConfiguration().LIBRARY_PROJECT ? CompilerMessageCategory.WARNING : CompilerMessageCategory.ERROR,
+                                 message, manifestFile.getUrl(), -1, -1);
+            continue;
+          }
           final String[] libPackages = AndroidCompileUtil.getLibPackages(module, packageName);
 
           final Module circularDepLibWithSamePackage = AndroidCompileUtil.findCircularDependencyOnLibraryWithSamePackage(facet);
