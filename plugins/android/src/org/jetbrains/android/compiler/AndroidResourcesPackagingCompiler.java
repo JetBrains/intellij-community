@@ -186,6 +186,7 @@ public class AndroidResourcesPackagingCompiler implements ClassPostProcessingCom
       AndroidCompileUtil.addMessages(context, messages, presentableFilesMap, item.myModule);
     }
     catch (final IOException e) {
+      LOG.info(e);
       ApplicationManager.getApplication().runReadAction(new Runnable() {
         public void run() {
           if (context.getProject().isDisposed()) return;

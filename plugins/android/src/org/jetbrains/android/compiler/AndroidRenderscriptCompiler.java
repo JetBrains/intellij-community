@@ -6,6 +6,7 @@ import com.intellij.facet.FacetManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.compiler.ex.CompileContextEx;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
@@ -36,6 +37,7 @@ import java.util.*;
  * @author Eugene.Kudelevsky
  */
 public class AndroidRenderscriptCompiler implements SourceGeneratingCompiler {
+  private static final Logger LOG = Logger.getInstance("#org.jetbrains.android.compiler.AndroidRenderscriptCompiler");
 
   private static final GenerationItem[] EMPTY_GENERATION_ITEM_ARRAY = {};
 
@@ -209,6 +211,7 @@ public class AndroidRenderscriptCompiler implements SourceGeneratingCompiler {
             }
           }
           catch (final IOException e) {
+            LOG.info(e);
             ApplicationManager.getApplication().runReadAction(new Runnable() {
               public void run() {
                 if (context.getProject().isDisposed()) return;
