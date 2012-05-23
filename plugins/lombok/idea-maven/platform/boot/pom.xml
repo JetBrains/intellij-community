@@ -1,0 +1,21 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+
+	<parent>
+		<groupId>org.jetbrains.idea</groupId>
+		<artifactId>parent</artifactId>
+		<version>1</version>
+    <relativePath>../../pom.xml</relativePath>
+	</parent>
+
+	<artifactId>boot</artifactId>
+  <version>${idea.version}</version>
+
+	<name>Maven Integration of boot modul</name>
+	<description>Maven modul for boot jar</description>
+
+	<build>
+		<sourceDirectory>${idea.home}/platform/boot/src</sourceDirectory>
+	</build>
+</project>

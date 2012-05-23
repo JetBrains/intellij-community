@@ -1,0 +1,45 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+
+	<parent>
+		<groupId>org.jetbrains.idea</groupId>
+		<artifactId>parent</artifactId>
+		<version>1</version>
+    <relativePath>../../pom.xml</relativePath>
+	</parent>
+
+	<artifactId>extensions</artifactId>
+  <version>${idea.version}</version>
+
+	<name>Maven Integration of extensions modul</name>
+	<description>Maven modul for extensions jar</description>
+
+	<dependencies>
+		<dependency>
+			<groupId>org.jetbrains.idea</groupId>
+			<artifactId>annotations</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.jetbrains.idea</groupId>
+			<artifactId>util</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>org.picocontainer</groupId>
+			<artifactId>picocontainer</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.jdom</groupId>
+			<artifactId>jdom</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>xstream</groupId>
+			<artifactId>xstream</artifactId>
+		</dependency>
+	</dependencies>
+
+	<build>
+		<sourceDirectory>${idea.home}/platform/extensions/src</sourceDirectory>
+	</build>
+</project>

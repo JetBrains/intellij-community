@@ -1,0 +1,61 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+
+	<parent>
+		<groupId>org.jetbrains.idea</groupId>
+		<artifactId>parent</artifactId>
+		<version>1</version>
+	</parent>
+
+	<artifactId>resources</artifactId>
+  <version>${idea.version}</version>
+
+	<name>Maven Integration of resources modul</name>
+	<description>Maven modul for resources jar</description>
+
+	<build>
+		<sourceDirectory>${idea.home}/resources/src</sourceDirectory>
+		<resources>
+			<resource>
+				<directory>${idea.home}/resources/src</directory>
+				<excludes>
+					<exclude>*.java</exclude>
+				</excludes>
+			</resource>
+			<resource>
+				<directory>${idea.home}/platform/platform-resources/src</directory>
+				<excludes>
+					<exclude>*.java</exclude>
+				</excludes>
+			</resource>
+			<resource>
+				<directory>${idea.home}/community-resources/src</directory>
+				<excludes>
+					<exclude>*.java</exclude>
+				</excludes>
+			</resource>
+		</resources>
+		<plugins>
+			<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>build-helper-maven-plugin</artifactId>
+				<executions>
+					<execution>
+						<id>add-source</id>
+						<phase>generate-sources</phase>
+						<goals>
+							<goal>add-source</goal>
+						</goals>
+						<configuration>
+							<sources>
+								<source>${idea.home}/platform/platform-resources/src</source>
+								<source>${idea.home}/community-resources/src</source>
+							</sources>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+		</plugins>
+	</build>
+</project>
