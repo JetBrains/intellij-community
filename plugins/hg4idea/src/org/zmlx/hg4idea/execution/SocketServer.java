@@ -106,7 +106,14 @@ public class SocketServer {
         length = origLength;
       }
       byte[] data = new byte[length];
-      inputStream.readFully(data);
+
+      int offset = 0;
+      int available;
+      while ((available = inputStream.available()) > 0) {
+        inputStream.readFully(data, offset, available);
+        offset += available;
+      }
+
       int skipped = inputStream.skipBytes(origLength - length);
       if (skipped > 0) {
         LOG.info(String.format("Skipped %s bytes", skipped));
