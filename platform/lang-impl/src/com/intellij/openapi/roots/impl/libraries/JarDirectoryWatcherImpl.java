@@ -60,24 +60,7 @@ public class JarDirectoryWatcherImpl implements JarDirectoryWatcher {
         }
       }
 
-      if (flatRoots.isEmpty()) {
-        myWatchRequests = fs.replaceWatchedRoots(myWatchRequests, recursiveRoots, true);
-      }
-      else if (recursiveRoots.isEmpty()) {
-        myWatchRequests = fs.replaceWatchedRoots(myWatchRequests, flatRoots, false);
-      }
-      else {
-        fs.removeWatchedRoots(myWatchRequests);
-        final int rootsTotal = flatRoots.size() + recursiveRoots.size();
-        if (rootsTotal > 0) {
-          myWatchRequests = new ArrayList<LocalFileSystem.WatchRequest>(rootsTotal);
-          myWatchRequests.addAll(fs.addRootsToWatch(flatRoots, false));
-          myWatchRequests.addAll(fs.addRootsToWatch(recursiveRoots, true));
-        }
-        else {
-          myWatchRequests = Collections.emptySet();
-        }
-      }
+      myWatchRequests = fs.replaceWatchedRoots(myWatchRequests, recursiveRoots, flatRoots);
 
       if (myBusConnection == null) {
         myBusConnection = ApplicationManager.getApplication().getMessageBus().connect();

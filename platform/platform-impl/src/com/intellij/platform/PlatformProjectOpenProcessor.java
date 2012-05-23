@@ -30,6 +30,7 @@ import com.intellij.openapi.project.impl.ProjectManagerImpl;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.projectImport.ProjectAttachProcessor;
@@ -93,7 +94,7 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor {
     if (!baseDir.isDirectory()) {
       baseDir = virtualFile.getParent();
       while (baseDir != null) {
-        if (new File(baseDir.getPath(), ".idea").exists()) {
+        if (new File(FileUtil.toSystemDependentName(baseDir.getPath()), Project.DIRECTORY_STORE_FOLDER).exists()) {
           break;
         }
         baseDir = baseDir.getParent();
@@ -103,7 +104,7 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor {
       }
     }
 
-    final File projectDir = new File(baseDir.getPath(), ".idea");
+    final File projectDir = new File(FileUtil.toSystemDependentName(baseDir.getPath()), Project.DIRECTORY_STORE_FOLDER);
 
     Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
     if (!forceOpenInNewFrame && openProjects.length > 0) {

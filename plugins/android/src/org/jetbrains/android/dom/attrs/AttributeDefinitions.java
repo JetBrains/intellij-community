@@ -17,10 +17,14 @@ package org.jetbrains.android.dom.attrs;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.xml.XmlComment;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.containers.HashMap;
+import com.intellij.xml.util.XmlUtil;
+import com.intellij.xml.util.documentation.XmlDocumentationProvider;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -109,8 +113,19 @@ public class AttributeDefinitions {
       myAttrs.put(def.getName(), def);
     }
     def.addFormats(formats);
+    parseDocComment(tag, def);
     parseAndAddValues(def, values);
     return def;
+  }
+
+  private static void parseDocComment(XmlTag tag, AttributeDefinition def) {
+    PsiElement comment = XmlDocumentationProvider.findPreviousComment(tag);
+    if (comment != null) {
+      String docValue = XmlUtil.getCommentText((XmlComment)comment);
+      if (!StringUtil.isEmpty(docValue)) {
+        def.addDocValue(docValue);
+      }
+    }
   }
 
   private static List<AttributeFormat> parseAttrFormat(String formatString) {

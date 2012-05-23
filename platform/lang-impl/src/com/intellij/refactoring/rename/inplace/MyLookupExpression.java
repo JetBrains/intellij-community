@@ -74,7 +74,7 @@ public class MyLookupExpression extends Expression {
     final Iterator<String> iterator = names.iterator();
     for (int i = 0; i < lookupElements.length; i++) {
       final String suggestion = iterator.next();
-      lookupElements[i] = LookupElementBuilder.create(suggestion).setInsertHandler(new InsertHandler<LookupElement>() {
+      lookupElements[i] = LookupElementBuilder.create(suggestion).withInsertHandler(new InsertHandler<LookupElement>() {
         @Override
         public void handleInsert(InsertionContext context, LookupElement item) {
           if (shouldSelectAll) return;

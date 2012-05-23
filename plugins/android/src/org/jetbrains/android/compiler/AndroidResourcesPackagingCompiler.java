@@ -66,8 +66,8 @@ public class AndroidResourcesPackagingCompiler implements ClassPostProcessingCom
         final String[] assetDirPaths = ArrayUtil.toStringArray(assetDirPathsList);
         
         if (manifestFile == null) {
-          context.addMessage(CompilerMessageCategory.ERROR, AndroidBundle.message("android.compilation.error.manifest.not.found"),
-                             null, -1, -1);
+          context.addMessage(CompilerMessageCategory.ERROR,
+                             AndroidBundle.message("android.compilation.error.manifest.not.found", module.getName()), null, -1, -1);
           continue;
         }
         AndroidFacetConfiguration configuration = facet.getConfiguration();
@@ -156,7 +156,8 @@ public class AndroidResourcesPackagingCompiler implements ClassPostProcessingCom
     }
     catch (IOException e) {
       LOG.info(e);
-      context.addMessage(CompilerMessageCategory.ERROR, "Cannot preprocess AndroidManifest.xml for debug build",
+      context.addMessage(CompilerMessageCategory.ERROR,
+                         '[' + item.myModule.getName() + "] Cannot preprocess AndroidManifest.xml for debug build",
                          item.myManifestFile.getUrl(), -1, -1);
       return;
     }
@@ -182,9 +183,10 @@ public class AndroidResourcesPackagingCompiler implements ClassPostProcessingCom
           }
         }));
 
-      AndroidCompileUtil.addMessages(context, messages, presentableFilesMap);
+      AndroidCompileUtil.addMessages(context, messages, presentableFilesMap, item.myModule);
     }
     catch (final IOException e) {
+      LOG.info(e);
       ApplicationManager.getApplication().runReadAction(new Runnable() {
         public void run() {
           if (context.getProject().isDisposed()) return;

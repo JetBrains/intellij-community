@@ -55,8 +55,8 @@ public abstract class MavenRepositoryConverter extends ResolvingConverter<String
     @Override
     public LookupElement createLookupElement(String s) {
       return LookupElementBuilder.create(s)
-        .setIcon(MavenIcons.REPOSITORY_ICON)
-        .setTailText(" (" + MavenRepositoriesProvider.getInstance().getRepositoryUrl(s) + ")", true);
+        .withIcon(MavenIcons.REPOSITORY_ICON)
+        .withTailText(" (" + MavenRepositoriesProvider.getInstance().getRepositoryUrl(s) + ")", true);
     }
   }
 

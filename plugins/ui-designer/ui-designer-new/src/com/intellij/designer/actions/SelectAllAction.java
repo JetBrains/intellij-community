@@ -31,6 +31,7 @@ public class SelectAllAction extends AnAction {
   private final EditableArea myArea;
 
   public SelectAllAction(EditableArea area) {
+    super("Select All", "Select All", null);
     myArea = area;
   }
 

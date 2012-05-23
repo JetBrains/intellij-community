@@ -20,7 +20,6 @@ import com.intellij.designer.designSurface.ComponentSelectionListener;
 import com.intellij.designer.designSurface.DesignerEditorPanel;
 import com.intellij.designer.designSurface.EditableArea;
 import com.intellij.designer.model.RadComponent;
-import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
@@ -32,7 +31,6 @@ import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.IndentedIcon;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -54,7 +52,7 @@ import java.util.List;
 /**
  * @author Alexander Lobas
  */
-public final class PropertyTable extends JBTable implements ComponentSelectionListener, DataProvider {
+public final class PropertyTable extends JBTable implements ComponentSelectionListener {
   private static final Logger LOG = Logger.getInstance("#com.intellij.designer.propertyTable");
 
   private final AbstractTableModel myModel = new PropertyTableModel();
@@ -88,10 +86,6 @@ public final class PropertyTable extends JBTable implements ComponentSelectionLi
         }
       }
     });
-
-    // TODO: ShowJavadocAction
-
-    // TODO: Popup menu
 
     // TODO: Updates UI after LAF updated
   }
@@ -134,11 +128,6 @@ public final class PropertyTable extends JBTable implements ComponentSelectionLi
 
   public TableCellRenderer getCellRenderer(int row, int column) {
     return myCellRenderer;
-  }
-
-  @Override
-  public Object getData(@NonNls String dataId) {
-    return null;  //To change body of implemented methods use File | Settings | File Templates.
   }
 
   //////////////////////////////////////////////////////////////////////////////////////////
@@ -395,7 +384,7 @@ public final class PropertyTable extends JBTable implements ComponentSelectionLi
   }
 
   @Nullable
-  private Property getSelectionProperty() {
+  public Property getSelectionProperty() {
     int selectedRow = getSelectedRow();
     if (selectedRow >= 0 && selectedRow < myProperties.size()) {
       return myProperties.get(selectedRow);
@@ -423,7 +412,7 @@ public final class PropertyTable extends JBTable implements ComponentSelectionLi
     return properties;
   }
 
-  private boolean isDefault(Property property) throws Exception {
+  public boolean isDefault(Property property) throws Exception {
     for (RadComponent component : myComponents) {
       if (!property.isDefaultValue(component)) {
         return false;

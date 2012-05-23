@@ -30,6 +30,7 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.util.messages.MessageBus;
+import git4idea.GitUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -79,7 +80,7 @@ public class GitRootScanner implements BulkFileListener, ModuleRootListener, Dis
   public void after(@NotNull List<? extends VFileEvent> events) {
     for (VFileEvent event : events) {
       VirtualFile file = event.getFile();
-      if (file != null && file.getName().equalsIgnoreCase(".git") && file.isDirectory()) {
+      if (file != null && file.getName().equalsIgnoreCase(GitUtil.DOT_GIT) && file.isDirectory()) {
         scanIfReady();
       }
     }

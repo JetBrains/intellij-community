@@ -50,8 +50,8 @@ public class AndroidBuildConfigGeneratingCompiler implements SourceGeneratingCom
 
           final VirtualFile manifestFile = AndroidRootUtil.getManifestFileForCompiler(facet);
           if (manifestFile == null) {
-            context.addMessage(CompilerMessageCategory.ERROR, AndroidBundle.message("android.compilation.error.manifest.not.found"),
-                               null, -1, -1);
+            context.addMessage(CompilerMessageCategory.ERROR,
+                               AndroidBundle.message("android.compilation.error.manifest.not.found", module.getName()), null, -1, -1);
             continue;
           }
 

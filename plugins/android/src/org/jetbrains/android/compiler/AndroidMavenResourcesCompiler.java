@@ -103,7 +103,7 @@ public class AndroidMavenResourcesCompiler implements SourceGeneratingCompiler {
         }
 
         Map<CompilerMessageCategory, List<String>> messages = AndroidMavenExecutor.generateResources(genItem.myModule);
-        AndroidCompileUtil.addMessages(context, messages);
+        AndroidCompileUtil.addMessages(context, messages, genItem.myModule);
         if (messages.get(CompilerMessageCategory.ERROR).isEmpty()) {
           results.add(genItem);
         }

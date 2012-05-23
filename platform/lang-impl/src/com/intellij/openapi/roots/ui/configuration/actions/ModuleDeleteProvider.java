@@ -61,7 +61,8 @@ public class ModuleDeleteProvider  implements DeleteProvider, TitledHandler  {
     for (Module module : modules) {
       final File moduleFile = new File(module.getModuleFilePath());
       final File projectFile = new File(module.getProject().getProjectFilePath());
-      if (moduleFile.getParent().equals(projectFile.getParent()) && moduleFile.getParentFile().getName().equals(".idea")) {
+      if (moduleFile.getParent().equals(projectFile.getParent()) &&
+          moduleFile.getParentFile().getName().equals(Project.DIRECTORY_STORE_FOLDER)) {
         return true;
       }
     }

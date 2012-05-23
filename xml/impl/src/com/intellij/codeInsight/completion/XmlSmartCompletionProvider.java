@@ -70,13 +70,13 @@ public class XmlSmartCompletionProvider {
         insertHandler = new ExtendedTagInsertHandler(name, ((XmlElementDescriptorImpl)descriptor).getNamespace(), null);
       }
     }
-    result.addElement(createLookupElement(descriptor).setInsertHandler(insertHandler));
+    result.addElement(createLookupElement(descriptor).withInsertHandler(insertHandler));
   }
 
   public static LookupElementBuilder createLookupElement(@NotNull XmlElementDescriptor descriptor) {
     LookupElementBuilder builder = LookupElementBuilder.create(descriptor.getName());
     if (descriptor instanceof XmlElementDescriptorImpl) {
-      builder = builder.setTypeText(((XmlElementDescriptorImpl)descriptor).getNamespace(), true);
+      builder = builder.withTypeText(((XmlElementDescriptorImpl)descriptor).getNamespace(), true);
     }
     return builder;
   }

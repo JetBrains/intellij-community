@@ -27,6 +27,7 @@ import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
@@ -451,5 +452,68 @@ public class AndroidCommonUtils {
 
   public static boolean contains2Identifiers(String packageName) {
     return packageName.split("\\.").length >= 2;
+  }
+
+  public static boolean directoriesContainSameContent(@NotNull File dir1, @NotNull File dir2, @Nullable FileFilter filter)
+    throws IOException {
+    if (dir1.exists() != dir2.exists()) {
+      return false;
+    }
+
+    final File[] children1 = getFilteredChildren(dir1, filter);
+    final File[] children2 = getFilteredChildren(dir2, filter);
+
+    if (children1 == null || children2 == null) {
+      return children1 == children2;
+    }
+
+    if (children1.length != children2.length) {
+      return false;
+    }
+
+    for (int i = 0; i < children1.length; i++) {
+      final File child1 = children1[i];
+      final File child2 = children2[i];
+
+      if (!Comparing.equal(child1.getName(), child2.getName())) {
+        return false;
+      }
+
+      final boolean childDir = child1.isDirectory();
+      if (childDir != child2.isDirectory()) {
+        return false;
+      }
+
+      if (childDir) {
+        if (!directoriesContainSameContent(child1, child2, filter)) {
+          return false;
+        }
+      }
+      else {
+        final String content1 = readFile(child1);
+        final String content2 = readFile(child2);
+
+        if (!Comparing.equal(content1, content2)) {
+          return false;
+        }
+      }
+    }
+    return true;
+  }
+
+  @Nullable
+  private static File[] getFilteredChildren(@NotNull File dir, @Nullable FileFilter filter) {
+    final File[] children = dir.listFiles();
+    if (children == null || children.length == 0 || filter == null) {
+      return children;
+    }
+
+    final List<File> result = new ArrayList<File>();
+    for (File child : children) {
+      if (child.isDirectory() || filter.accept(child)) {
+        result.add(child);
+      }
+    }
+    return result.toArray(new File[result.size()]);
   }
 }

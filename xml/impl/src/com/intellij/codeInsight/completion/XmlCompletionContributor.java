@@ -181,9 +181,10 @@ public class XmlCompletionContributor extends CompletionContributor {
                                                   final String namespace,
                                                   final String tailText, @Nullable String namespacePrefix) {
     LookupElementBuilder builder =
-      LookupElementBuilder.create(Pair.create(name, namespace), name).setInsertHandler(new ExtendedTagInsertHandler(name, namespace, namespacePrefix));
+      LookupElementBuilder.create(Pair.create(name, namespace), name).withInsertHandler(
+        new ExtendedTagInsertHandler(name, namespace, namespacePrefix));
     if (!StringUtil.isEmpty(namespace)) {
-      builder = builder.setTypeText(tailText, true);
+      builder = builder.withTypeText(tailText, true);
     }
     return builder;
   }

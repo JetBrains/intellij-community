@@ -78,7 +78,7 @@ public class GroovyDocCompletionProvider extends CompletionProvider<CompletionPa
       for (PsiElement psiElement : elements) {
         LookupElement element = GroovyCompletionUtil.getLookupElement(psiElement);
         if (psiElement instanceof PsiMethod) {
-          element = ((LookupElementBuilder)element).setInsertHandler(new GroovyMethodSignatureInsertHandler());
+          element = ((LookupElementBuilder)element).withInsertHandler(new GroovyMethodSignatureInsertHandler());
         }
         result.addElement(element);
       }

@@ -22,6 +22,8 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Arrays;
 import java.util.Collection;
 
+import static git4idea.GitUtil.DOT_GIT;
+
 /**
  * Stores paths to Git service files (from .git/ directory) that are used by IDEA, and provides test-methods to check if a file
  * matches once of them.
@@ -30,9 +32,28 @@ import java.util.Collection;
  */
 public class GitRepositoryFiles {
 
-  public static final String REFS_HEADS = "/refs/heads";
-  public static final String REFS_REMOTES = "/refs/remotes";
-  public static final String INFO = "/info";
+  public static final String COMMIT_EDITMSG = "COMMIT_EDITMSG";
+  public static final String CONFIG = "config";
+  public static final String HEAD = "HEAD";
+  public static final String INDEX = "index";
+  public static final String INFO = "info";
+  public static final String INFO_EXCLUDE = INFO + "/exclude";
+  public static final String MERGE_HEAD = "MERGE_HEAD";
+  public static final String MERGE_MSG = "MERGE_MSG";
+  public static final String REBASE_APPLY = "rebase-apply";
+  public static final String REBASE_MERGE = "rebase-merge";
+  public static final String PACKED_REFS = "packed-refs";
+  public static final String REFS_HEADS = "refs/heads";
+  public static final String REFS_REMOTES = "refs/remotes";
+  public static final String SQUASH_MSG = "SQUASH_MSG";
+
+  public static final String GIT_HEAD  = DOT_GIT + slash(HEAD);
+  public static final String GIT_REFS_REMOTES = DOT_GIT + slash(REFS_REMOTES);
+  public static final String GIT_PACKED_REFS = DOT_GIT + slash(PACKED_REFS);
+  public static final String GIT_MERGE_HEAD = DOT_GIT + slash(MERGE_HEAD);
+  public static final String GIT_MERGE_MSG = DOT_GIT + slash(MERGE_MSG);
+  public static final String GIT_SQUASH_MSG = DOT_GIT + slash(SQUASH_MSG);
+
   private final String myConfigFilePath;
   private final String myHeadFilePath;
   private final String myIndexFilePath;
@@ -54,17 +75,22 @@ public class GitRepositoryFiles {
     // add .git/ and .git/refs/heads to the VFS
     // save paths of the files, that we will watch
     String gitDirPath = GitFileUtils.stripFileProtocolPrefix(gitDir.getPath());
-    myConfigFilePath = gitDirPath + "/config";
-    myHeadFilePath = gitDirPath + "/HEAD";
-    myIndexFilePath = gitDirPath + "/index";
-    myMergeHeadPath = gitDirPath + "/MERGE_HEAD";
-    myCommitMessagePath = gitDirPath + "/COMMIT_EDITMSG";
-    myRebaseApplyPath = gitDirPath + "/rebase-apply";
-    myRebaseMergePath = gitDirPath + "/rebase-merge";
-    myPackedRefsPath = gitDirPath + "/packed-refs";
-    myRefsHeadsDirPath = gitDirPath + REFS_HEADS;
-    myRefsRemotesDirPath = gitDirPath + REFS_REMOTES;
-    myExcludePath = gitDirPath + INFO + "/exclude";
+    myConfigFilePath = gitDirPath + slash(CONFIG);
+    myHeadFilePath = gitDirPath + slash(HEAD);
+    myIndexFilePath = gitDirPath + slash(INDEX);
+    myMergeHeadPath = gitDirPath + slash(MERGE_HEAD);
+    myCommitMessagePath = gitDirPath + slash(COMMIT_EDITMSG);
+    myRebaseApplyPath = gitDirPath + slash(REBASE_APPLY);
+    myRebaseMergePath = gitDirPath + slash(REBASE_MERGE);
+    myPackedRefsPath = gitDirPath + slash(PACKED_REFS);
+    myRefsHeadsDirPath = gitDirPath + slash(REFS_HEADS);
+    myRefsRemotesDirPath = gitDirPath + slash(REFS_REMOTES);
+    myExcludePath = gitDirPath + slash(INFO_EXCLUDE);
+  }
+
+  @NotNull
+  private static String slash(@NotNull String s) {
+    return "/" + s;
   }
 
   /**
@@ -72,7 +98,7 @@ public class GitRepositoryFiles {
    */
   @NotNull
   static Collection<String> getSubDirRelativePaths() {
-    return Arrays.asList(REFS_HEADS, REFS_REMOTES, INFO);
+    return Arrays.asList(slash(REFS_HEADS), slash(REFS_REMOTES), slash(INFO));
   }
   
   @NotNull

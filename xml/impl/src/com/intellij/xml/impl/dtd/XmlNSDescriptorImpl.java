@@ -29,7 +29,7 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.xml.*;
 import com.intellij.xml.XmlElementDescriptor;
-import com.intellij.xml.XmlNSDescriptor;
+import com.intellij.xml.XmlNSDescriptorEx;
 import com.intellij.xml.impl.ExternalDocumentValidator;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NotNull;
@@ -40,7 +40,7 @@ import java.util.*;
 /**
  * @author Mike
  */
-public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator<XmlDocument>, DumbAware {
+public class XmlNSDescriptorImpl implements XmlNSDescriptorEx,Validator<XmlDocument>, DumbAware {
   private XmlElement myElement;
   private XmlFile myDescriptorFile;
 
@@ -195,5 +195,10 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator<XmlDocumen
       return;
     }
     ExternalDocumentValidator.doValidation(document,host);
+  }
+
+  @Override
+  public XmlElementDescriptor getElementDescriptor(String localName, String namespace) {
+    return getElementDescriptor(localName);
   }
 }

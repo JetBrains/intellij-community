@@ -749,6 +749,19 @@ public class MavenProject {
   }
 
   @Nullable
+  public String getEncoding() {
+    String encoding = myState.myProperties.getProperty("project.build.sourceEncoding");
+    if (encoding != null) return encoding;
+
+    Element pluginConfiguration = getPluginConfiguration("org.apache.maven.plugins", "maven-resources-plugin");
+    if (pluginConfiguration != null) {
+      return pluginConfiguration.getChildTextTrim("encoding");
+    }
+
+    return null;
+  }
+
+  @Nullable
   public String getSourceLevel() {
     return getCompilerLevel("source");
   }

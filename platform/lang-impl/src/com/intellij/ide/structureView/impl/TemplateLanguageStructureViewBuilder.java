@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,13 +19,12 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.impl.StructureViewWrapperImpl;
 import com.intellij.ide.structureView.*;
 import com.intellij.ide.structureView.newStructureView.StructureViewComponent;
+import com.intellij.ide.util.treeView.smartTree.TreeElement;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageStructureViewBuilder;
 import com.intellij.lang.PsiStructureViewFactory;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.Result;
-import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -95,7 +94,7 @@ public abstract class TemplateLanguageStructureViewBuilder implements StructureV
                 if (structureViewWrapper == null) return;
 
                 Language baseLanguage = provider.getTemplateDataLanguage();
-                if (baseLanguage == myTemplateDataLanguage) {
+                if (baseLanguage == myTemplateDataLanguage && isPsiValid()) {
                   updateBaseLanguageView();
                 }
                 else {
@@ -112,6 +111,24 @@ public abstract class TemplateLanguageStructureViewBuilder implements StructureV
     assert provider != null;
     myTemplateDataLanguage = provider.getTemplateDataLanguage();
     PsiManager.getInstance(myProject).addPsiTreeChangeListener(myPsiTreeChangeAdapter);
+  }
+
+  private boolean isPsiValid() {
+    if (myBaseStructureViewDescriptor == null) return false;
+    final StructureViewComponent view = (StructureViewComponent)myBaseStructureViewDescriptor.structureView;
+    if (view.isDisposed()) return false;
+
+    final Object root = view.getTreeStructure().getRootElement();
+    if (root instanceof StructureViewComponent.StructureViewTreeElementWrapper) {
+      final TreeElement value = ((StructureViewComponent.StructureViewTreeElementWrapper)root).getValue();
+      if (value instanceof StructureViewTreeElement) {
+        final Object psi = ((StructureViewTreeElement)value).getValue();
+        if (psi instanceof PsiElement) {
+          return ((PsiElement)psi).isValid();
+        }
+      }
+    }
+    return true;
   }
 
   @Nullable
@@ -224,25 +241,21 @@ public abstract class TemplateLanguageStructureViewBuilder implements StructureV
   }
 
   private void updateTemplateDataFileView() {
-    new WriteCommandAction(myProject) {
-      protected void run(Result result) throws Throwable {
-        final TemplateLanguageFileViewProvider provider = getViewProvider();
-        final Language newDataLanguage = provider == null ? null : provider.getTemplateDataLanguage();
+    final TemplateLanguageFileViewProvider provider = getViewProvider();
+    final Language newDataLanguage = provider == null ? null : provider.getTemplateDataLanguage();
 
-        if (myBaseStructureViewDescriptor != null) {
-          if (myTemplateDataLanguage == newDataLanguage) return;
+    if (myBaseStructureViewDescriptor != null) {
+      if (myTemplateDataLanguage == newDataLanguage) return;
 
-          Disposer.dispose(myBaseStructureViewDescriptor.structureView);
-        }
+      Disposer.dispose(myBaseStructureViewDescriptor.structureView);
+    }
 
-        if (newDataLanguage != null) {
-          myBaseStructureViewDescriptor = createBaseLanguageStructureView(myFileEditor, newDataLanguage);
-          if (myStructureViewComposite != null) {
-            myStructureViewComposite.setStructureView(myBaseLanguageViewDescriptorIndex, myBaseStructureViewDescriptor);
-          }
-        }
+    if (newDataLanguage != null) {
+      myBaseStructureViewDescriptor = createBaseLanguageStructureView(myFileEditor, newDataLanguage);
+      if (myStructureViewComposite != null) {
+        myStructureViewComposite.setStructureView(myBaseLanguageViewDescriptorIndex, myBaseStructureViewDescriptor);
       }
-    }.execute();
+    }
   }
 
   @NotNull

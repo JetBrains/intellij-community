@@ -93,7 +93,9 @@ public class MockLocalFileSystem extends LocalFileSystem {
   }
 
   @Override
-  public Set<WatchRequest> replaceWatchedRoots(@NotNull Collection<WatchRequest> watchRequests, @NotNull Collection<String> rootPaths, boolean watchRecursively) {
+  public Set<WatchRequest> replaceWatchedRoots(@NotNull Collection<WatchRequest> watchRequests,
+                                               @Nullable Collection<String> recursiveRoots,
+                                               @Nullable Collection<String> flatRoots) {
     throw new UnsupportedOperationException("Not implemented in " + getClass().getName());
   }
 

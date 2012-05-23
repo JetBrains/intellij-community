@@ -24,6 +24,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.impl.local.LocalFileSystemBase;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.FileNotFoundException;
 import java.util.Arrays;
@@ -198,7 +199,9 @@ public class Win32LocalFileSystem extends LocalFileSystemBase {
   }
 
   @Override
-  public Set<WatchRequest> replaceWatchedRoots(@NotNull Collection<WatchRequest> watchRequests, @NotNull Collection<String> rootPaths, boolean watchRecursively) {
+  public Set<WatchRequest> replaceWatchedRoots(@NotNull Collection<WatchRequest> watchRequests,
+                                               @Nullable Collection<String> recursiveRoots,
+                                               @Nullable Collection<String> flatRoots) {
     throw new UnsupportedOperationException();
   }
 

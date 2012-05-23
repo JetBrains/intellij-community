@@ -345,9 +345,9 @@ public class JavaMemberNameCompletionContributor extends CompletionContributor {
 
     if (ourClassParent.isAnnotationType() && matcher.prefixMatches(PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME)) {
       set.add(LookupElementBuilder.create(PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME)
-                .setIcon(PlatformIcons.METHOD_ICON)
-                .setTailText("()")
-                .setInsertHandler(ParenthesesInsertHandler.NO_PARAMETERS));
+                .withIcon(PlatformIcons.METHOD_ICON)
+                .withTailText("()")
+                .withInsertHandler(ParenthesesInsertHandler.NO_PARAMETERS));
     }
 
     addLookupItems(set, null, matcher, element.getProject(), getUnresolvedReferences(ourClassParent, true));

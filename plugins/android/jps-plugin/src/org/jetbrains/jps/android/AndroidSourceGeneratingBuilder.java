@@ -346,7 +346,8 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
       final MyModuleData moduleData = moduleDataMap.get(module);
 
       if (!LOG.assertTrue(moduleData != null)) {
-        context.processMessage(new CompilerMessage(ANDROID_IDL_COMPILER, BuildMessage.Kind.ERROR, AndroidJpsBundle.message("android.jps.internal.error")));
+        context.processMessage(
+          new CompilerMessage(ANDROID_IDL_COMPILER, BuildMessage.Kind.ERROR, AndroidJpsBundle.message("android.jps.internal.error")));
         success = false;
         continue;
       }
@@ -355,7 +356,8 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
 
       if (!aidlOutputDirectory.exists() && !aidlOutputDirectory.mkdirs()) {
         context.processMessage(
-          new CompilerMessage(ANDROID_IDL_COMPILER, BuildMessage.Kind.ERROR, AndroidJpsBundle.message("android.jps.cannot.create.directory", aidlOutputDirectory.getPath())));
+          new CompilerMessage(ANDROID_IDL_COMPILER, BuildMessage.Kind.ERROR,
+                              AndroidJpsBundle.message("android.jps.cannot.create.directory", aidlOutputDirectory.getPath())));
         success = false;
         continue;
       }
@@ -560,25 +562,39 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
         }
         context.processMessage(new ProgressMessage(AndroidJpsBundle.message("android.jps.progress.aapt", module.getName())));
 
-        // clear directory, because it may contain obsolete files (ex. if package name was changed)
-        if (!clearDirectory(aptOutputDirectory, context, ANDROID_APT_COMPILER)) {
-          success = false;
-         continue;
+        File tmpOutputDir = null;
+        try {
+          tmpOutputDir = FileUtil.createTempDirectory("android_apt_output", "tmp");
+          final Map<AndroidCompilerMessageKind, List<String>> messages =
+            AndroidApt.compile(target, -1, manifestFile.getPath(), packageName, tmpOutputDir.getPath(), resPaths,
+                               ArrayUtil.toStringArray(depLibPackagesSet), generateNonFinalFields);
+
+          AndroidJpsUtil.addMessages(context, messages, ANDROID_APT_COMPILER, module.getName());
+
+          if (messages.get(AndroidCompilerMessageKind.ERROR).size() > 0) {
+            success = false;
+            storage.update(module.getName(), null);
+          }
+          else {
+            if (!AndroidCommonUtils.directoriesContainSameContent(tmpOutputDir, aptOutputDirectory, JavaFilesFilter.INSTANCE)) {
+              if (!deleteAndMarkRecursively(aptOutputDirectory, context, ANDROID_APT_COMPILER)) {
+                success = false;
+                continue;
+              }
+              if (!FileUtil.moveDirWithContent(tmpOutputDir, aptOutputDirectory)) {
+                context.processMessage(new CompilerMessage(ANDROID_APT_COMPILER, BuildMessage.Kind.ERROR, AndroidJpsBundle
+                  .message("android.jps.errors.cannot.move.content", tmpOutputDir.getPath(), aptOutputDirectory.getPath())));
+                continue;
+              }
+              markDirtyRecursively(aptOutputDirectory, context, ANDROID_APT_COMPILER);
+            }
+            storage.update(module.getName(), newState);
+          }
         }
-
-        final Map<AndroidCompilerMessageKind, List<String>> messages =
-          AndroidApt.compile(target, -1, manifestFile.getPath(), packageName, aptOutputDirectory.getPath(), resPaths,
-                             ArrayUtil.toStringArray(depLibPackagesSet), generateNonFinalFields);
-
-        AndroidJpsUtil.addMessages(context, messages, ANDROID_APT_COMPILER, module.getName());
-
-        if (messages.get(AndroidCompilerMessageKind.ERROR).size() > 0) {
-          success = false;
-          storage.update(module.getName(), null);
-        }
-        else {
-          storage.update(module.getName(), newState);
-          markDirtyRecursively(aptOutputDirectory, context, ANDROID_APT_COMPILER);
+        finally {
+          if (tmpOutputDir != null) {
+            FileUtil.delete(tmpOutputDir);
+          }
         }
       }
       catch (IOException e) {
@@ -602,7 +618,8 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
     return true;
   }
 
-  private static boolean clearDirectoryIfNotEmpty(@NotNull File dir, @NotNull CompileContext context, String compilerName) throws IOException {
+  private static boolean clearDirectoryIfNotEmpty(@NotNull File dir, @NotNull CompileContext context, String compilerName)
+    throws IOException {
     if (dir.isDirectory()) {
       final String[] list = dir.list();
       if (list != null && list.length > 0) {
@@ -886,7 +903,8 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
 
       if (!AndroidCommonUtils.contains2Identifiers(packageName)) {
         context.processMessage(new CompilerMessage(BUILDER_NAME, facet.isLibrary() ? BuildMessage.Kind.WARNING : BuildMessage.Kind.ERROR,
-                                                   AndroidJpsBundle.message("android.jps.errors.incorrect.package.name", module.getName())));
+                                                   AndroidJpsBundle
+                                                     .message("android.jps.errors.incorrect.package.name", module.getName())));
         success = false;
         continue;
       }

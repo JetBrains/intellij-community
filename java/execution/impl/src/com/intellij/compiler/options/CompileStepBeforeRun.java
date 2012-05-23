@@ -23,8 +23,6 @@ import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.configurations.RunProfileWithCompileBeforeLaunchOption;
 import com.intellij.execution.remote.RemoteConfiguration;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompileScope;
 import com.intellij.openapi.compiler.CompileStatusNotification;
@@ -34,6 +32,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Ref;
 import com.intellij.util.concurrency.Semaphore;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -109,20 +108,21 @@ public class CompileStepBeforeRun extends BeforeRunTaskProvider<CompileStepBefor
     }
 
     final RunProfileWithCompileBeforeLaunchOption runConfiguration = (RunProfileWithCompileBeforeLaunchOption)configuration;
-    final Semaphore done = new Semaphore();
-    final boolean[] result = new boolean[1];
+    final Ref<Boolean> result = new Ref<Boolean>(Boolean.FALSE);
     try {
+
+      final Semaphore done = new Semaphore();
+      done.down();
       final CompileStatusNotification callback = new CompileStatusNotification() {
         public void finished(final boolean aborted, final int errors, final int warnings, CompileContext compileContext) {
           if (errors == 0 && !aborted) {
-            result[0] = true;
+            result.set(Boolean.TRUE);
           }
-
           done.up();
         }
       };
 
-      ApplicationManager.getApplication().invokeAndWait(new Runnable() {
+      SwingUtilities.invokeAndWait(new Runnable() {
         public void run() {
           CompileScope scope;
           final CompilerManager compilerManager = CompilerManager.getInstance(myProject);
@@ -147,20 +147,22 @@ public class CompileStepBeforeRun extends BeforeRunTaskProvider<CompileStepBefor
           }
 
           if (!myProject.isDisposed()) {
-            done.down();
             scope.putUserData(RUN_CONFIGURATION, configuration);
             scope.putUserData(RUN_CONFIGURATION_TYPE_ID, configuration.getType().getId());
             compilerManager.make(scope, callback);
           }
+          else {
+            done.up();
+          }
         }
-      }, ModalityState.NON_MODAL);
+      });
+      done.waitFor();
     }
     catch (Exception e) {
       return false;
     }
 
-    done.waitFor();
-    return result[0];
+    return result.get();
   }
 
   public boolean isConfigurable() {

@@ -16,6 +16,7 @@
 package com.intellij.designer.propertyTable;
 
 import com.intellij.designer.model.RadComponent;
+import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,6 +43,7 @@ public abstract class Property<T extends RadComponent> {
   }
 
   public abstract Property<T> createForNewPresentation(@Nullable Property parent, @NotNull String name);
+
   //////////////////////////////////////////////////////////////////////////////////////////
   //
   // Hierarchy
@@ -135,4 +137,20 @@ public abstract class Property<T extends RadComponent> {
 
   @Nullable
   public abstract PropertyEditor getEditor();
+
+  //////////////////////////////////////////////////////////////////////////////////////////
+  //
+  // Javadoc
+  //
+  //////////////////////////////////////////////////////////////////////////////////////////
+
+  @Nullable
+  public PsiElement getJavadocElement() {
+    return null;
+  }
+
+  @Nullable
+  public String getJavadocText() {
+    return null;
+  }
 }

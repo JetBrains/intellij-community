@@ -32,7 +32,7 @@ import java.util.Set;
 /**
  * @author peter
  */
-public class LookupElementBuilder extends LookupElement {
+public final class LookupElementBuilder extends LookupElement {
   @NotNull private final String myLookupString;
   @NotNull private final Object myObject;
   private final boolean myCaseSensitive;
@@ -75,12 +75,25 @@ public class LookupElementBuilder extends LookupElement {
     return new LookupElementBuilder(lookupString, lookupObject);
   }
 
+  /**
+   * @deprecated use {@link #withInsertHandler(com.intellij.codeInsight.completion.InsertHandler)}
+   */
   public LookupElementBuilder setInsertHandler(@Nullable InsertHandler<LookupElement> insertHandler) {
+    return withInsertHandler(insertHandler);
+  }
+
+  public LookupElementBuilder withInsertHandler(@Nullable InsertHandler<LookupElement> insertHandler) {
     return new LookupElementBuilder(myLookupString, myObject, insertHandler, myRenderer, myHardcodedPresentation,
                                     myAllLookupStrings, myCaseSensitive);
   }
 
+  /**
+   * @deprecated use {@link #withRenderer(LookupElementRenderer)}
+   */
   public LookupElementBuilder setRenderer(@Nullable LookupElementRenderer<LookupElement> renderer) {
+    return withRenderer(renderer);
+  }
+  public LookupElementBuilder withRenderer(@Nullable LookupElementRenderer<LookupElement> renderer) {
     return new LookupElementBuilder(myLookupString, myObject, myInsertHandler, renderer, myHardcodedPresentation,
                                     myAllLookupStrings, myCaseSensitive);
   }
@@ -91,7 +104,14 @@ public class LookupElementBuilder extends LookupElement {
     return myAllLookupStrings;
   }
 
+  /**
+   * @deprecated use {@link #withIcon(javax.swing.Icon)}
+   */
   public LookupElementBuilder setIcon(@Nullable Icon icon) {
+    return withIcon(icon);
+  }
+
+  public LookupElementBuilder withIcon(@Nullable Icon icon) {
     final LookupElementPresentation presentation = copyPresentation();
     presentation.setIcon(icon);
     return new LookupElementBuilder(myLookupString, myObject, myInsertHandler, null, presentation,
@@ -109,7 +129,13 @@ public class LookupElementBuilder extends LookupElement {
     return presentation;
   }
 
+  /**
+   * @deprecated use {@link #withLookupString(String)}
+   */
   public LookupElementBuilder addLookupString(@NotNull String another) {
+    return withLookupString(another);
+  }
+  public LookupElementBuilder withLookupString(@NotNull String another) {
     final THashSet<String> set = new THashSet<String>(myAllLookupStrings);
     set.add(another);
     return new LookupElementBuilder(myLookupString, myObject, myInsertHandler, myRenderer, myHardcodedPresentation,
@@ -121,32 +147,62 @@ public class LookupElementBuilder extends LookupElement {
   }
 
   /**
+   * @deprecated use {@link #withCaseSensitivity(boolean)}
+   */
+  public LookupElementBuilder setCaseSensitive(boolean caseSensitive) {
+    return withCaseSensitivity(caseSensitive);
+  }
+  /**
    * @param caseSensitive if this lookup item should be completed in the same letter case as prefix
    * @return modified builder
    * @see com.intellij.codeInsight.completion.CompletionResultSet#caseInsensitive()
    */
-  public LookupElementBuilder setCaseSensitive(boolean caseSensitive) {
+  public LookupElementBuilder withCaseSensitivity(boolean caseSensitive) {
     return new LookupElementBuilder(myLookupString, myObject, myInsertHandler, myRenderer, myHardcodedPresentation,
                                     myAllLookupStrings, caseSensitive);
   }
 
+  /**
+   * @deprecated use {@link #withItemTextForeground(java.awt.Color)}
+   */
   public LookupElementBuilder setItemTextForeground(@NotNull Color itemTextForeground) {
+    return withItemTextForeground(itemTextForeground);
+  }
+  public LookupElementBuilder withItemTextForeground(@NotNull Color itemTextForeground) {
     final LookupElementPresentation presentation = copyPresentation();
     presentation.setItemTextForeground(itemTextForeground);
     return new LookupElementBuilder(myLookupString, myObject, myInsertHandler, null, presentation, myAllLookupStrings, myCaseSensitive);
   }
 
+  /**
+   * @deprecated use {@link #withItemTextUnderlined(boolean)}
+   */
   public LookupElementBuilder setItemTextUnderlined(boolean underlined) {
+    return withItemTextUnderlined(underlined);
+  }
+  public LookupElementBuilder withItemTextUnderlined(boolean underlined) {
     final LookupElementPresentation presentation = copyPresentation();
     presentation.setItemTextUnderlined(underlined);
     return new LookupElementBuilder(myLookupString, myObject, myInsertHandler, null, presentation, myAllLookupStrings, myCaseSensitive);
   }
 
+  /**
+   * @deprecated use {@link #withTypeText(String)}
+   */
   public LookupElementBuilder setTypeText(@Nullable String typeText) {
-    return setTypeText(typeText, false);
+    return withTypeText(typeText);
+  }
+  public LookupElementBuilder withTypeText(@Nullable String typeText) {
+    return withTypeText(typeText, false);
   }
 
+  /**
+   * @deprecated use {@link #withTypeText(String, boolean)}
+   */
   public LookupElementBuilder setTypeText(@Nullable String typeText, boolean grayed) {
+    return withTypeText(typeText, grayed);
+  }
+  public LookupElementBuilder withTypeText(@Nullable String typeText, boolean grayed) {
     final LookupElementPresentation presentation = copyPresentation();
     presentation.setTypeText(typeText);
     presentation.setTypeGrayed(grayed);
@@ -154,40 +210,82 @@ public class LookupElementBuilder extends LookupElement {
                                     myAllLookupStrings, myCaseSensitive);
   }
 
+  /**
+   * @deprecated use {@link #withPresentableText(String)}
+   */
   public LookupElementBuilder setPresentableText(@NotNull String presentableText) {
+    return withPresentableText(presentableText);
+  }
+  public LookupElementBuilder withPresentableText(@NotNull String presentableText) {
     final LookupElementPresentation presentation = copyPresentation();
     presentation.setItemText(presentableText);
     return new LookupElementBuilder(myLookupString, myObject, myInsertHandler, null, presentation,
                                     myAllLookupStrings, myCaseSensitive);
   }
 
+  /**
+   * @deprecated use {@link #bold()}
+   */
   public LookupElementBuilder setBold() {
-    return setBold(true);
+    return bold();
+  }
+  public LookupElementBuilder bold() {
+    return withBoldness(true);
   }
 
+  /**
+   * @deprecated use {@link #withBoldness(boolean)}
+   */
   public LookupElementBuilder setBold(boolean bold) {
+    return withBoldness(bold);
+  }
+  public LookupElementBuilder withBoldness(boolean bold) {
     final LookupElementPresentation presentation = copyPresentation();
     presentation.setItemTextBold(bold);
     return new LookupElementBuilder(myLookupString, myObject, myInsertHandler, null, presentation,
                                     myAllLookupStrings, myCaseSensitive);
   }
 
+  /**
+   * @deprecated use {@link #strikeout()}
+   */
   public LookupElementBuilder setStrikeout() {
-    return setStrikeout(true);
+    return strikeout();
+  }
+  public LookupElementBuilder strikeout() {
+    return withStrikeoutness(true);
   }
 
+  /**
+   * @deprecated use {@link #withStrikeoutness(boolean)}
+   */
   public LookupElementBuilder setStrikeout(boolean strikeout) {
+    return withStrikeoutness(strikeout);
+  }
+  public LookupElementBuilder withStrikeoutness(boolean strikeout) {
     final LookupElementPresentation presentation = copyPresentation();
     presentation.setStrikeout(strikeout);
     return new LookupElementBuilder(myLookupString, myObject, myInsertHandler, null, presentation,
                                     myAllLookupStrings, myCaseSensitive);
   }
 
+  /**
+   * @deprecated use {@link #withTailText(String)}
+   */
   public LookupElementBuilder setTailText(@Nullable String tailText) {
-    return setTailText(tailText, false);
+    return withTailText(tailText);
+  }
+  public LookupElementBuilder withTailText(@Nullable String tailText) {
+    return withTailText(tailText, false);
   }
 
+  /**
+   * @deprecated use {@link #withTailText(String, boolean)}
+   */
   public LookupElementBuilder setTailText(@Nullable String tailText, boolean grayed) {
+    return withTailText(tailText, grayed);
+  }
+  public LookupElementBuilder withTailText(@Nullable String tailText, boolean grayed) {
     final LookupElementPresentation presentation = copyPresentation();
     presentation.setTailText(tailText, grayed);
     return new LookupElementBuilder(myLookupString, myObject, myInsertHandler, null, presentation,
