@@ -47,10 +47,8 @@ import java.io.File;
 /**
  * @author yole
  */
-public class JavaCoreEnvironment extends CoreEnvironment {
-  private final CoreJavaFileManager myFileManager;
-  
-  public JavaCoreEnvironment(Disposable parentDisposable) {
+public class JavaCoreApplicationEnvironment extends CoreApplicationEnvironment {
+  public JavaCoreApplicationEnvironment(Disposable parentDisposable) {
     super(parentDisposable);
 
     registerFileType(JavaClassFileType.INSTANCE, "class");
@@ -62,7 +60,6 @@ public class JavaCoreEnvironment extends CoreEnvironment {
     addExplicitExtension(LanguageParserDefinitions.INSTANCE, JavaLanguage.INSTANCE, new JavaParserDefinition());
     addExplicitExtension(LanguageConstantExpressionEvaluator.INSTANCE, JavaLanguage.INSTANCE, new PsiExpressionEvaluator());
 
-    registerProjectExtensionPoint(PsiElementFinder.EP_NAME, PsiElementFinder.class);
     registerExtensionPoint(Extensions.getRootArea(), ClsStubBuilderFactory.EP_NAME, ClsStubBuilderFactory.class);
     registerExtensionPoint(Extensions.getRootArea(), PsiAugmentProvider.EP_NAME, PsiAugmentProvider.class);
     registerExtensionPoint(Extensions.getRootArea(), JavaMainMethodProvider.EP_NAME, JavaMainMethodProvider.class);
@@ -70,43 +67,8 @@ public class JavaCoreEnvironment extends CoreEnvironment {
 
     myApplication.registerService(PsiPackageImplementationHelper.class, new CorePsiPackageImplementationHelper());
 
-    myFileManager = createCoreFileManager();
-    myProject.registerService(PsiElementFactory.class, new PsiElementFactoryImpl(myPsiManager));
-    myProject.registerService(JavaPsiImplementationHelper.class, new CoreJavaPsiImplementationHelper());
-    myProject.registerService(PsiResolveHelper.class, new PsiResolveHelperImpl(myPsiManager));
-    myProject.registerService(LanguageLevelProjectExtension.class, new CoreLanguageLevelProjectExtension());
-    myProject.registerService(PackageIndex.class, myFileManager);
-    myProject.registerService(JavaResolveCache.class, new JavaResolveCache(myMessageBus));
-    myProject.registerService(JavaCodeStyleSettingsFacade.class, new CoreJavaCodeStyleSettingsFacade());
-    myProject.registerService(JavaCodeStyleManager.class, new CoreJavaCodeStyleManager());
-
-    JavaPsiFacadeImpl javaPsiFacade = new JavaPsiFacadeImpl(myProject, myPsiManager, myFileManager, myMessageBus);
-    myProject.registerService(CoreJavaFileManager.class, myFileManager);
-    registerComponentInstance(myProject.getPicoContainer(),
-            JavaPsiFacade.class,
-            javaPsiFacade);
-    myProject.registerService(JavaPsiFacade.class, javaPsiFacade);
-
     myApplication.registerService(EmptySubstitutor.class, new EmptySubstitutorImpl());
     myApplication.registerService(JavaDirectoryService.class, new CoreJavaDirectoryService());
     myApplication.registerService(JavaVersionService.class, new JavaVersionService());
-  }
-
-  protected CoreJavaFileManager createCoreFileManager() {
-    return new CoreJavaFileManager(myPsiManager, getLocalFileSystem(), myJarFileSystem);
-  }
-
-  public void addToClasspath(File path) {
-    final VirtualFile root = path.isFile()
-                             ? myJarFileSystem.findFileByPath(path + "!/")
-                             : getLocalFileSystem().findFileByPath(path.getPath());
-
-    if (root != null) {
-      myFileManager.addToClasspath(path);
-      myFileIndexFacade.addLibraryRoot(root);
-    }
-    else {
-      throw new IllegalArgumentException("trying to add non-existing file to classpath: " + path);
-    }
   }
 }

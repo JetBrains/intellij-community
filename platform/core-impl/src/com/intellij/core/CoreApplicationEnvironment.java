@@ -73,19 +73,15 @@ import java.lang.reflect.Modifier;
 /**
  * @author yole
  */
-public class CoreEnvironment {
+public class CoreApplicationEnvironment {
   private final CoreFileTypeRegistry myFileTypeRegistry;
   private final CoreEncodingRegistry myEncodingRegistry;
   protected final MockApplication myApplication;
-  protected MockProject myProject;
   private final CoreLocalFileSystem myLocalFileSystem;
   protected final CoreJarFileSystem myJarFileSystem;
-  protected final MockFileIndexFacade myFileIndexFacade;
-  protected final PsiManagerImpl myPsiManager;
   private final Disposable myParentDisposable;
-  protected final MessageBusImpl myMessageBus;
 
-  public CoreEnvironment(Disposable parentDisposable) {
+  public CoreApplicationEnvironment(Disposable parentDisposable) {
     myParentDisposable = parentDisposable;
     Extensions.cleanRootArea(myParentDisposable);
 
@@ -101,7 +97,6 @@ public class CoreEnvironment {
     myJarFileSystem = new CoreJarFileSystem();
 
     Extensions.registerAreaClass(ExtensionAreas.IDEA_PROJECT, null);
-    myProject = new MockProject(myApplication.getPicoContainer(), myParentDisposable);
 
     final MutablePicoContainer appContainer = myApplication.getPicoContainer();
     registerComponentInstance(appContainer, FileDocumentManager.class, new MockFileDocumentManagerImpl(new Function<CharSequence, Document>() {
@@ -137,26 +132,6 @@ public class CoreEnvironment {
     registerApplicationExtensionPoint(ContentBasedFileSubstitutor.EP_NAME, ContentBasedFileSubstitutor.class);
     registerExtensionPoint(Extensions.getRootArea(), BinaryFileStubBuilders.EP_NAME, FileTypeExtensionPoint.class);
 
-    myFileIndexFacade = new MockFileIndexFacade(myProject);
-    myMessageBus = new MessageBusImpl();
-
-    PsiModificationTrackerImpl modificationTracker = new PsiModificationTrackerImpl(myProject);
-    myProject.registerService(PsiModificationTracker.class, modificationTracker);
-    myProject.registerService(FileIndexFacade.class, myFileIndexFacade);
-    myProject.registerService(ResolveScopeManager.class, new MockResolveScopeManager(myProject));
-    myProject.registerService(ResolveCache.class, new ResolveCache(myMessageBus));
-    
-    registerProjectExtensionPoint(PsiTreeChangePreprocessor.EP_NAME, PsiTreeChangePreprocessor.class);
-    myPsiManager = new PsiManagerImpl(myProject, null, null, myFileIndexFacade, myMessageBus, modificationTracker);
-    ((FileManagerImpl) myPsiManager.getFileManager()).markInitialized();
-    registerProjectComponent(PsiManager.class, myPsiManager);
-
-    myProject.registerService(PsiFileFactory.class, new PsiFileFactoryImpl(myPsiManager));
-    myProject.registerService(CachedValuesManager.class, new CachedValuesManagerImpl(myProject, new PsiCachedValuesFactory(myPsiManager)));
-    myProject.registerService(PsiDirectoryFactory.class, new PsiDirectoryFactoryImpl(myPsiManager));
-    myProject.registerService(ProjectScopeBuilder.class, new CoreProjectScopeBuilder(myProject, myFileIndexFacade));
-    myProject.registerService(DumbService.class, new MockDumbService(myProject));
-
     ProgressIndicatorProvider.ourInstance = new ProgressIndicatorProvider() {
       @Override
       public ProgressIndicator getProgressIndicator() {
@@ -190,14 +165,6 @@ public class CoreEnvironment {
     registerComponentInstance(myApplication.getPicoContainer(), interfaceClass, implementation);
   }
 
-  public  <T> void registerProjectComponent(final Class<T> interfaceClass, final T implementation) {
-    registerComponentInstance(myProject.getPicoContainer(), interfaceClass, implementation);
-  }
-
-  public MockProject getProject() {
-    return myProject;
-  }
-
   public void registerFileType(FileType fileType, String extension) {
     myFileTypeRegistry.registerFileType(fileType, extension);
   }
@@ -213,7 +180,7 @@ public class CoreEnvironment {
 
   protected <T> void addExplicitExtension(final LanguageExtension<T> instance, final Language language, final T object) {
     instance.addExplicitExtension(language, object);
-    Disposer.register(myProject, new Disposable() {
+    Disposer.register(myParentDisposable, new Disposable() {
       @Override
       public void dispose() {
         instance.removeExplicitExtension(language, object);
@@ -223,7 +190,7 @@ public class CoreEnvironment {
 
   protected <T> void addExplicitExtension(final FileTypeExtension<T> instance, final FileType fileType, final T object) {
     instance.addExplicitExtension(fileType, object);
-    Disposer.register(myProject, new Disposable() {
+    Disposer.register(myParentDisposable, new Disposable() {
       @Override
       public void dispose() {
         instance.removeExplicitExtension(fileType, object);
@@ -234,7 +201,7 @@ public class CoreEnvironment {
   protected <T> void addExtension(ExtensionPointName<T> name, final T extension) {
     final ExtensionPoint<T> extensionPoint = Extensions.getRootArea().getExtensionPoint(name);
     extensionPoint.registerExtension(extension);
-    Disposer.register(myProject, new Disposable() {
+    Disposer.register(myParentDisposable, new Disposable() {
       @Override
       public void dispose() {
         extensionPoint.unregisterExtension(extension);
@@ -260,20 +227,11 @@ public class CoreEnvironment {
     registerExtensionPoint(Extensions.getRootArea(), name, aClass);
   }
 
-  public  <T> void registerProjectExtensionPoint(final ExtensionPointName<T> extensionPointName,
-                                            final Class<? extends T> aClass) {
-    registerExtensionPoint(Extensions.getArea(myProject), extensionPointName, aClass);
-  }
-
   public CoreLocalFileSystem getLocalFileSystem() {
     return myLocalFileSystem;
   }
 
   public CoreJarFileSystem getJarFileSystem() {
     return myJarFileSystem;
-  }
-
-  public void addLibraryRoot(VirtualFile file) {
-    myFileIndexFacade.addLibraryRoot(file);
   }
 }
