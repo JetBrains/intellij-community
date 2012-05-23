@@ -33,6 +33,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.startup.StartupManager;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerAdapter;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
@@ -42,7 +43,11 @@ import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.io.File;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Set;
 
 /**
  * ProjectRootManager extended with ability to watch events.
@@ -143,9 +148,9 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl {
   }
 
   protected void addRootsToWatch() {
-    final Set<String> rootPaths = getAllRoots(false);
-    if (rootPaths == null) return;
-    myRootsToWatch = LocalFileSystem.getInstance().replaceWatchedRoots(myRootsToWatch, rootPaths, null);
+    final Pair<Set<String>, Set<String>> roots = getAllRoots(false);
+    if (roots == null) return;
+    myRootsToWatch = LocalFileSystem.getInstance().replaceWatchedRoots(myRootsToWatch, roots.first, roots.second);
   }
 
   private void beforeRootsChange(boolean fileTypes) {
@@ -165,11 +170,12 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl {
   }
 
   private boolean affectsRoots(VirtualFilePointer[] pointers) {
-    Set<String> roots = getAllRoots(true);
+    Pair<Set<String>, Set<String>> roots = getAllRoots(true);
     if (roots == null) return false;
 
     for (VirtualFilePointer pointer : pointers) {
-      if (roots.contains(url2path(pointer.getUrl()))) return true;
+      final String path = url2path(pointer.getUrl());
+      if (roots.first.contains(path) || roots.second.contains(path)) return true;
     }
 
     return false;
@@ -208,61 +214,63 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl {
   }
 
   @Nullable
-  private Set<String> getAllRoots(boolean includeSourceRoots) {
+  private Pair<Set<String>, Set<String>> getAllRoots(boolean includeSourceRoots) {
     if (myProject.isDefault()) return null;
 
-    final Set<String> rootPaths = new HashSet<String>();
-    Module[] modules = ModuleManager.getInstance(myProject).getModules();
-    for (Module module : modules) {
-      final ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
-      final String[] contentRootUrls = moduleRootManager.getContentRootUrls();
-      rootPaths.addAll(getRootsToTrack(contentRootUrls));
-      if (includeSourceRoots) {
-        final String[] sourceRootUrls = moduleRootManager.getSourceRootUrls();
-        rootPaths.addAll(getRootsToTrack(sourceRootUrls));
+    final Set<String> recursive = new HashSet<String>();
+    final Set<String> flat = new HashSet<String>();
+
+    final String projectFilePath = myProject.getProjectFilePath();
+    final File projectDirFile = new File(projectFilePath).getParentFile();
+    if (projectDirFile != null && projectDirFile.getName().equals(Project.DIRECTORY_STORE_FOLDER)) {
+      recursive.add(projectDirFile.getAbsolutePath());
+    }
+    else {
+      flat.add(projectFilePath);
+      final VirtualFile workspaceFile = myProject.getWorkspaceFile();
+      if (workspaceFile != null) {
+        flat.add(workspaceFile.getPath());
       }
-      rootPaths.add(module.getModuleFilePath());
     }
 
     for (WatchedRootsProvider extension : Extensions.getExtensions(WatchedRootsProvider.EP_NAME, myProject)) {
-      rootPaths.addAll(extension.getRootsToWatch());
+      recursive.addAll(extension.getRootsToWatch());
     }
 
-    final String projectFile = myProject.getProjectFilePath();
-    rootPaths.add(projectFile);
-    final VirtualFile baseDir = myProject.getBaseDir();
-    if (baseDir != null) {
-      rootPaths.add(baseDir.getPath());
-    }
-    // No need to add workspace file separately since they're definitely on same directory with ipr.
-
+    final Module[] modules = ModuleManager.getInstance(myProject).getModules();
     for (Module module : modules) {
       final ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
+
+      addRootsToTrack(moduleRootManager.getContentRootUrls(), recursive, flat);
+      if (includeSourceRoots) {
+        addRootsToTrack(moduleRootManager.getSourceRootUrls(), recursive, flat);
+      }
+      flat.add(module.getModuleFilePath());
+
       final OrderEntry[] orderEntries = moduleRootManager.getOrderEntries();
       for (OrderEntry entry : orderEntries) {
         if (entry instanceof LibraryOrderEntry) {
           final Library library = ((LibraryOrderEntry)entry).getLibrary();
-          for (OrderRootType orderRootType : OrderRootType.getAllTypes()) {
-            rootPaths.addAll(getRootsToTrack(library, orderRootType));
+          if (library != null) {
+            for (OrderRootType orderRootType : OrderRootType.getAllTypes()) {
+              addRootsToTrack(library.getUrls(orderRootType), recursive, flat);
+            }
           }
         }
         else if (entry instanceof JdkOrderEntry) {
           for (OrderRootType orderRootType : OrderRootType.getAllTypes()) {
-            rootPaths.addAll(getRootsToTrack(entry, orderRootType));
+            addRootsToTrack(entry.getUrls(orderRootType), recursive, flat);
           }
         }
       }
-    }
 
-    for (Module module : modules) {
-      final ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
       final String explodedDirectory = moduleRootManager.getExplodedDirectoryUrl();
       if (explodedDirectory != null) {
-        rootPaths.add(extractLocalPath(explodedDirectory));
+        recursive.add(extractLocalPath(explodedDirectory));
       }
     }
 
-    return rootPaths;
+    return Pair.create(recursive, flat);
   }
 
   @Override
@@ -271,26 +279,18 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl {
     DumbServiceImpl.getInstance(myProject).queueCacheUpdate(myRootsChangeUpdaters);
   }
 
-  private static Collection<String> getRootsToTrack(final Library library, final OrderRootType rootType) {
-    return library != null ? getRootsToTrack(library.getUrls(rootType)) : Collections.<String>emptyList();
-  }
-
-  private static Collection<String> getRootsToTrack(final OrderEntry library, final OrderRootType rootType) {
-    return library != null ? getRootsToTrack(library.getUrls(rootType)) : Collections.<String>emptyList();
-  }
-
-  private static List<String> getRootsToTrack(final String[] urls) {
-    final List<String> result = new ArrayList<String>(urls.length);
+  private static void addRootsToTrack(final String[] urls, final Collection<String> recursive, final Collection<String> flat) {
     for (String url : urls) {
       if (url != null) {
         final String protocol = VirtualFileManager.extractProtocol(url);
-        if (protocol == null || JarFileSystem.PROTOCOL.equals(protocol) || LocalFileSystem.PROTOCOL.equals(protocol)) {
-          result.add(extractLocalPath(url));
+        if (protocol == null || LocalFileSystem.PROTOCOL.equals(protocol)) {
+          recursive.add(extractLocalPath(url));
+        }
+        else if (JarFileSystem.PROTOCOL.equals(protocol)) {
+          flat.add(extractLocalPath(url));
         }
       }
     }
-
-    return result;
   }
 
   @Override
@@ -356,5 +356,4 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl {
       }
     }
   }
-
 }
