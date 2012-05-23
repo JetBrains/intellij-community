@@ -29,6 +29,5 @@ print s
 13(14) WRITE s
 14(15) READ print
 15(16) READ s
-16(17) ARGUMENT element: Reference expression
-17(18) element: Call expression MAYBE_RETURN
-18() element: null
+16(17) element: Call expression MAYBE_RETURN
+17() element: null
