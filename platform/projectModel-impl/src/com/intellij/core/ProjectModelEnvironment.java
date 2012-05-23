@@ -55,7 +55,8 @@ public class ProjectModelEnvironment {
     env.registerProjectComponent(PathMacroManager.class, new ProjectPathMacroManager(pathMacros, project));
     env.registerProjectExtensionPoint(DirectoryIndexExcludePolicy.EP_NAME, DirectoryIndexExcludePolicy.class);
     DirectoryIndex index = new DirectoryIndexImpl(project);
-    env.registerProjectComponent(DirectoryIndex.class, index);
+    //env.registerProjectComponent(DirectoryIndex.class, index);
+    project.registerService(DirectoryIndex.class, index);
     env.registerProjectComponent(ProjectRootManager.class, new ProjectRootManagerImpl(project, index));
     project.registerService(ProjectLibraryTable.class, new ProjectLibraryTable());
     project.registerService(ProjectFileIndex.class, new ProjectFileIndexImpl(project, index, FileTypeRegistry.getInstance()));
