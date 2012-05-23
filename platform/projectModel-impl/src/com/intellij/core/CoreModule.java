@@ -50,7 +50,7 @@ public class CoreModule extends MockComponentManager implements ModuleEx {
     myPath = moduleFilePath;
 
     Extensions.instantiateArea(ExtensionAreas.IDEA_MODULE, this, null);
-    CoreEnvironment.registerExtensionPoint(Extensions.getArea(this), ModuleExtension.EP_NAME, ModuleExtension.class);
+    CoreApplicationEnvironment.registerExtensionPoint(Extensions.getArea(this), ModuleExtension.EP_NAME, ModuleExtension.class);
     Disposer.register(parentDisposable, new Disposable() {
       @Override
       public void dispose() {
