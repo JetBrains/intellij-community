@@ -219,10 +219,10 @@ public class CompleteReferenceExpression {
     Project project = qualifier.getProject();
     PsiType qualifierType = qualifier.getType();
     final ResolveState state = ResolveState.initial();
-    if (qualifierType == null) {
+    if (qualifierType == null || qualifierType == PsiType.VOID) {
       if (qualifier instanceof GrReferenceExpression) {
         PsiElement resolved = ((GrReferenceExpression)qualifier).resolve();
-        if (resolved instanceof PsiPackage) {
+        if (resolved instanceof PsiPackage || resolved instanceof PsiVariable) {
           resolved.processDeclarations(processor, state, null, refExpr);
           return;
         }
