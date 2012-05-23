@@ -481,7 +481,7 @@ public abstract class AndroidFacetImporterBase extends FacetImporter<AndroidFace
       return;
     }
 
-    final VirtualFile vDepArtifactFile = LocalFileSystem.getInstance().findFileByIoFile(depArtifacetFile);
+    final VirtualFile vDepArtifactFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(depArtifacetFile);
     if (vDepArtifactFile == null) {
       LOG.error("Cannot find file " + depArtifacetFile.getPath() + " in VFS");
       return;
