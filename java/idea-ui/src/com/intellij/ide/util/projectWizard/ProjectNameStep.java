@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@ import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.project.ProjectUtil;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -118,18 +118,17 @@ public class ProjectNameStep extends ModuleWizardStep {
     boolean shouldContinue = true;
 
     final String path = myWizardContext.isCreatingNewProject() && myWizardContext.getProjectStorageFormat() == DIRECTORY_BASED
-                        ? getProjectFileDirectory() + "/" + ProjectUtil.DIRECTORY_BASED_PROJECT_DIR
-                        : getProjectFilePath();
+                        ? getProjectFileDirectory() + "/" + Project.DIRECTORY_STORE_FOLDER : getProjectFilePath();
     final File projectFile = new File(path);
     if (projectFile.exists()) {
       final String title = myWizardContext.isCreatingNewProject()
                            ? IdeBundle.message("title.new.project")
                            : IdeBundle.message("title.add.module");
       final String message = myWizardContext.isCreatingNewProject() && myWizardContext.getProjectStorageFormat() == DIRECTORY_BASED
-                             ? IdeBundle.message("prompt.overwrite.project.folder", ProjectUtil.DIRECTORY_BASED_PROJECT_DIR,
-                                                 projectFile.getParentFile().getAbsolutePath())
-                             : IdeBundle.message("prompt.overwrite.project.file", projectFile.getAbsolutePath(),
-                                                 myWizardContext.getPresentationName());
+                             ? IdeBundle.message("prompt.overwrite.project.folder",
+                                                 Project.DIRECTORY_STORE_FOLDER, projectFile.getParentFile().getAbsolutePath())
+                             : IdeBundle.message("prompt.overwrite.project.file",
+                                                 projectFile.getAbsolutePath(), myWizardContext.getPresentationName());
       int answer = Messages.showYesNoDialog(message, title, Messages.getQuestionIcon());
       shouldContinue = answer == 0;
     }

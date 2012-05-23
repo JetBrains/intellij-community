@@ -55,10 +55,7 @@ import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.*;
 import com.intellij.ui.content.ContentManager;
-import com.intellij.ui.dualView.CellWrapper;
-import com.intellij.ui.dualView.DualTreeElement;
-import com.intellij.ui.dualView.DualView;
-import com.intellij.ui.dualView.DualViewColumnInfo;
+import com.intellij.ui.dualView.*;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.*;
 import com.intellij.util.text.DateFormatUtil;
@@ -152,12 +149,12 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
       }
 
       @Override
-      public String getMaxStringValue(JTable table) {
-        return getMaxValue(getName(), table);
+      public String getMaxStringValue() {
+        return getMaxValue(getName());
       }
     };
 
-  private static final DualViewColumnInfo DATE = new VcsColumnInfo<String>(VcsBundle.message("column.name.revision.date")) {
+  private final DualViewColumnInfo DATE = new VcsColumnInfo<String>(VcsBundle.message("column.name.revision.date")) {
     protected String getDataOf(VcsFileRevision object) {
       Date date = object.getRevisionDate();
       if (date == null) return "";
@@ -174,8 +171,8 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
     }
 
     @Override
-    public String getMaxStringValue(JTable table) {
-      return getMaxValue(getName(), table);
+    public String getMaxStringValue() {
+      return getMaxValue(getName());
     }
   };
   private final Splitter myDetailsSplitter = new Splitter(false, 0.5f);
@@ -216,7 +213,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
 
   private static final TableCellRenderer AUTHOR_RENDERER = new AuthorCellRenderer();
 
-  private static final DualViewColumnInfo AUTHOR = new VcsColumnInfo<String>(VcsBundle.message("column.name.revision.list.author")) {
+  private final DualViewColumnInfo AUTHOR = new VcsColumnInfo<String>(VcsBundle.message("column.name.revision.list.author")) {
     protected String getDataOf(VcsFileRevision object) {
       VcsFileRevision rev = object;
       if (object instanceof TreeNodeOnVcsRevision) {
@@ -265,8 +262,8 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
     }
 
     @Override
-    public String getMaxStringValue(JTable table) {
-      return getMaxValue(getName(), table);
+    public String getMaxStringValue() {
+      return getMaxValue(getName());
     }
   };
 
@@ -292,7 +289,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
 
   }
 
-  private static class MessageColumnInfo extends VcsColumnInfo<String> {
+  private class MessageColumnInfo extends VcsColumnInfo<String> {
     private final MessageRenderer myRenderer;
 
     public MessageColumnInfo(Project project) {
@@ -319,18 +316,6 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
       }
     }
 
-    private static int getSuitableIndex(int index10, int index13) {
-      if (index10 < 0) {
-        return index13;
-      }
-      else if (index13 < 0) {
-        return index10;
-      }
-      else {
-        return Math.min(index10, index13);
-      }
-    }
-
     @Override
     public String getPreferredStringValue() {
       return StringUtil.repeatSymbol('a', 125);
@@ -341,10 +326,23 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
     }
 
     @Override
-    public String getMaxStringValue(JTable table) {
-      return getMaxValue(getName(), table);
+    public String getMaxStringValue() {
+      return getMaxValue(getName());
     }
   }
+
+  private static int getSuitableIndex(int index10, int index13) {
+    if (index10 < 0) {
+      return index13;
+    }
+    else if (index13 < 0) {
+      return index10;
+    }
+    else {
+      return Math.min(index10, index13);
+    }
+  }
+
 
   private final Map<VcsFileRevision, VirtualFile> myRevisionToVirtualFile = new HashMap<VcsFileRevision, VirtualFile>();
 
@@ -519,7 +517,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
     return columns.toArray(new DualViewColumnInfo[columns.size()]);
   }
 
-  private static Collection<DualViewColumnInfo> wrapAdditionalColumns(ColumnInfo[] additionalColumns) {
+  private Collection<DualViewColumnInfo> wrapAdditionalColumns(ColumnInfo[] additionalColumns) {
     ArrayList<DualViewColumnInfo> result = new ArrayList<DualViewColumnInfo>();
     if (additionalColumns != null) {
       for (ColumnInfo additionalColumn : additionalColumns) {
@@ -1504,7 +1502,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
 
   }
 
-  private static class MyColumnWrapper<T> extends DualViewColumnInfo<TreeNodeOnVcsRevision, Object> {
+  private class MyColumnWrapper<T> extends DualViewColumnInfo<TreeNodeOnVcsRevision, Object> {
     private final ColumnInfo<VcsFileRevision, T> myBaseColumn;
 
     public Comparator<TreeNodeOnVcsRevision> getComparator() {
@@ -1548,10 +1546,10 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
       return myBaseColumn.getEditor(item.myRevision);
     }
 
-    public String getMaxStringValue(JTable table) {
-      final String superValue = myBaseColumn.getMaxStringValue(table);
+    public String getMaxStringValue() {
+      final String superValue = myBaseColumn.getMaxStringValue();
       if (superValue != null) return superValue;
-      return getMaxValue(myBaseColumn.getName(), table);
+      return getMaxValue(myBaseColumn.getName());
     }
 
     public int getAdditionalWidth() {
@@ -1592,7 +1590,9 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
     return myFilePath.getVirtualFileParent();
   }
 
-  private static String getMaxValue(String name, JTable table) {
+  private String getMaxValue(String name) {
+    if (myDualView == null) return null;
+    TableView table = myDualView.getFlatView();
     if (table.getRowCount() == 0) return null;
     final Enumeration<TableColumn> columns = table.getColumnModel().getColumns();
     int idx = 0;

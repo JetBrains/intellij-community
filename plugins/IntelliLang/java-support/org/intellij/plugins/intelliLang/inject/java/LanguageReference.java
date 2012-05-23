@@ -58,12 +58,12 @@ final class LanguageReference extends StringLiteralReference {
 
         final FileType ft = l.getAssociatedFileType();
         if (ft != null) {
-          return LookupElementBuilder.create(s).setIcon(ft.getIcon()).setTypeText(ft.getDescription());
+          return LookupElementBuilder.create(s).withIcon(ft.getIcon()).withTypeText(ft.getDescription());
 //                } else if (l == StdLanguages.EL) {
 //                    // IDEA-10012
 //                    return new LanguageLookupValue(s, StdFileTypes.JSP.getIcon(), "Expression Language");
         }
-        return LookupElementBuilder.create(s).setIcon(EmptyIcon.ICON_16);
+        return LookupElementBuilder.create(s).withIcon(EmptyIcon.ICON_16);
       }
     });
   }

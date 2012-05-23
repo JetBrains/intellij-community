@@ -315,7 +315,7 @@ public class MavenPropertyPsiReference extends MavenPsiReference {
     if (prefix == null) {
       result.add(createLookupElement(baseDir, "project.baseUri", MavenIcons.MAVEN_ICON));
       result.add(createLookupElement(baseDir, "pom.baseUri", MavenIcons.MAVEN_ICON));
-      result.add(LookupElementBuilder.create(TIMESTAMP_PROP).setIcon(MavenIcons.MAVEN_ICON));
+      result.add(LookupElementBuilder.create(TIMESTAMP_PROP).withIcon(MavenIcons.MAVEN_ICON));
     }
 
     processSchema(MavenSchemaProvider.MAVEN_PROJECT_SCHEMA_URL, new SchemaProcessor<Object>() {
@@ -343,12 +343,12 @@ public class MavenPropertyPsiReference extends MavenPsiReference {
     MavenRunnerSettings runnerSettings = MavenRunner.getInstance(myProject).getSettings();
     for (String prop : runnerSettings.getMavenProperties().keySet()) {
       if (!isResultAlreadyContains(result, prop)) {
-        result.add(LookupElementBuilder.create(prop).setIcon(PlatformIcons.PROPERTY_ICON));
+        result.add(LookupElementBuilder.create(prop).withIcon(PlatformIcons.PROPERTY_ICON));
       }
     }
     for (String prop : MavenUtil.getPropertiesFromMavenOpts().keySet()) {
       if (!isResultAlreadyContains(result, prop)) {
-        result.add(LookupElementBuilder.create(prop).setIcon(PlatformIcons.PROPERTY_ICON));
+        result.add(LookupElementBuilder.create(prop).withIcon(PlatformIcons.PROPERTY_ICON));
       }
     }
   }
@@ -404,8 +404,8 @@ public class MavenPropertyPsiReference extends MavenPsiReference {
 
   private static LookupElement createLookupElement(@NotNull Object element, @NotNull String name, @Nullable Icon icon) {
     return LookupElementBuilder.create(element, name)
-      .setIcon(icon)
-      .setPresentableText(name);
+      .withIcon(icon)
+      .withPresentableText(name);
   }
 
   @Nullable

@@ -21,6 +21,7 @@ import com.intellij.application.options.ReplacePathToMacroMap;
 import com.intellij.openapi.application.PathMacros;
 import com.intellij.openapi.components.ExpandMacroToPathMap;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -67,7 +68,7 @@ public class ModulePathMacroManager extends BasePathMacroManager {
     // rather than the .idea directory itself is considered the module root
     // (so that a Ruby IDE project doesn't break if its directory is moved together with the .idea directory)
     File moduleDirParent = moduleDirFile.getParentFile();
-    if (moduleDirParent != null && moduleDirFile.getName().equals(".idea")) {
+    if (moduleDirParent != null && moduleDirFile.getName().equals(Project.DIRECTORY_STORE_FOLDER)) {
       moduleDirFile = moduleDirParent;
     }
     String moduleDir = moduleDirFile.getPath();

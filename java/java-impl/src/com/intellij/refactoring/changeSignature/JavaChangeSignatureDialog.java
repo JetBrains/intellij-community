@@ -347,7 +347,7 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
 
               for (String completionVariant : info.names) {
                 final LookupElementBuilder element = LookupElementBuilder.create(completionVariant);
-                result.addElement(element.addLookupString(completionVariant.toLowerCase()));
+                result.addElement(element.withLookupString(completionVariant.toLowerCase()));
               }
             }
           }

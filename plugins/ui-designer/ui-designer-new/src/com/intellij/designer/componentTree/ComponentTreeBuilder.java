@@ -19,6 +19,7 @@ import com.intellij.designer.designSurface.ComponentSelectionListener;
 import com.intellij.designer.designSurface.DesignerEditorPanel;
 import com.intellij.designer.designSurface.EditableArea;
 import com.intellij.ide.util.treeView.AbstractTreeBuilder;
+import com.intellij.openapi.actionSystem.ActionGroup;
 
 import javax.swing.tree.DefaultTreeModel;
 
@@ -39,7 +40,12 @@ public final class ComponentTreeBuilder extends AbstractTreeBuilder implements C
     initRootNode();
 
     mySurfaceArea = designer.getSurfaceArea();
-    myTreeArea = new TreeEditableArea(tree, this);
+    myTreeArea = new TreeEditableArea(tree, this) {
+      @Override
+      public ActionGroup getPopupActions() {
+        return mySurfaceArea.getPopupActions();
+      }
+    };
     myGlassLayer = new TreeGlassLayer(tree, designer.getToolProvider(), myTreeArea);
     myExpandStateHandler = new ExpandStateHandler(tree, designer, this);
 

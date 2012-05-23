@@ -189,7 +189,7 @@ class AnchorReference implements PsiReference, EmptyResolveMessageProvider {
     String[] variants = idMap.keySet().toArray(new String[idMap.size()]);
     LookupElement[] elements = new LookupElement[variants.length];
     for (int i = 0, variantsLength = variants.length; i < variantsLength; i++) {
-      elements[i] = LookupElementBuilder.create(variants[i]).setCaseSensitive(true);
+      elements[i] = LookupElementBuilder.create(variants[i]).withCaseSensitivity(true);
     }
     return elements;
   }

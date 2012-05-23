@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -92,7 +92,7 @@ public class CreateClassFromNewFix extends CreateFromUsageBaseFix {
     final Project project = aClass.getProject();
     if (argList != null && argList.getExpressions().length > 0) {
       PsiMethod constructor = elementFactory.createConstructor();
-      constructor = (PsiMethod) aClass.add(constructor);
+      constructor = (PsiMethod)aClass.add(constructor);
 
       TemplateBuilderImpl templateBuilder = new TemplateBuilderImpl(aClass);
       CreateFromUsageUtils.setupMethodParameters(constructor, templateBuilder, argList, getTargetSubstitutor(newExpression));
@@ -120,7 +120,8 @@ public class CreateClassFromNewFix extends CreateFromUsageBaseFix {
       };
       if (ApplicationManager.getApplication().isUnitTestMode()) {
         runnable.run();
-      } else {
+      }
+      else {
         ApplicationManager.getApplication().invokeLater(runnable);
       }
     }
@@ -136,7 +137,7 @@ public class CreateClassFromNewFix extends CreateFromUsageBaseFix {
     PsiMethod supConstructor = null;
     PsiClass superClass = targetClass.getSuperClass();
     if (superClass != null && !"java.lang.Object".equals(superClass.getQualifiedName()) &&
-          !"java.lang.Enum".equals(superClass.getQualifiedName())) {
+        !"java.lang.Enum".equals(superClass.getQualifiedName())) {
       PsiMethod[] constructors = superClass.getConstructors();
       boolean hasDefaultConstructor = false;
 
@@ -145,7 +146,8 @@ public class CreateClassFromNewFix extends CreateFromUsageBaseFix {
           hasDefaultConstructor = true;
           supConstructor = null;
           break;
-        } else {
+        }
+        else {
           supConstructor = superConstructor;
         }
       }
@@ -268,5 +270,10 @@ public class CreateClassFromNewFix extends CreateFromUsageBaseFix {
   @NotNull
   public String getFamilyName() {
     return QuickFixBundle.message("create.class.from.new.family");
+  }
+
+  @Override
+  protected boolean canBeTargetClass(PsiClass psiClass) {
+    return false;
   }
 }

@@ -40,7 +40,7 @@ import java.io.IOException;
  */
 public class CoreProjectLoader {
   public static void loadProject(MockProject project, @NotNull VirtualFile virtualFile) throws IOException, JDOMException {
-    if (virtualFile.isDirectory() && virtualFile.findChild(".idea") != null) {
+    if (virtualFile.isDirectory() && virtualFile.findChild(Project.DIRECTORY_STORE_FOLDER) != null) {
       project.setBaseDir(virtualFile);
       loadDirectoryProject(project, virtualFile);
     }
@@ -51,7 +51,7 @@ public class CoreProjectLoader {
   }
 
   private static void loadDirectoryProject(Project project, VirtualFile projectDir) throws IOException, JDOMException {
-    VirtualFile dotIdea = projectDir.findChild(".idea");
+    VirtualFile dotIdea = projectDir.findChild(Project.DIRECTORY_STORE_FOLDER);
     VirtualFile modulesXml = dotIdea.findChild("modules.xml");
     StorageData storageData = loadStorageFile(project, modulesXml);
     final Element moduleManagerState = storageData.getState("ProjectModuleManager");

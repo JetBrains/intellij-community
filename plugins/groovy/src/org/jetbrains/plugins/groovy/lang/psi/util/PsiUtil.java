@@ -751,7 +751,7 @@ public class PsiUtil {
   }
 
   @Nullable
-  public static PsiElement getPrevNonSpace(final PsiElement elem) {
+  public static PsiElement getPrevNonSpace(@NotNull final PsiElement elem) {
     PsiElement prevSibling = elem.getPrevSibling();
     while (prevSibling instanceof PsiWhiteSpace) {
       prevSibling = prevSibling.getPrevSibling();

@@ -90,7 +90,7 @@ public class CustomizeKeywordSubstitutionDialog extends DialogWrapper {
     }
 
     @Override
-    public String getMaxStringValue(JTable table) {
+    public String getMaxStringValue() {
       return KeywordSubstitutionWrapper.KEYWORD_EXPANSION_LOCKER.toString();
     }
   };
@@ -118,7 +118,7 @@ public class CustomizeKeywordSubstitutionDialog extends DialogWrapper {
     }
 
     @Override
-    public String getMaxStringValue(JTable table) {
+    public String getMaxStringValue() {
       return getName();
     }
   };

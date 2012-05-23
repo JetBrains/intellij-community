@@ -100,7 +100,7 @@ public class RncCompletionData extends CompletionData {
     public Object[] get(PsiElement context, CompletionContext completionContext) {
       return ContainerUtil.map2Array(doGetKeywords(context), LookupElement.class, new Function<String, LookupElement>() {
         public LookupElement fun(String s) {
-          return TailTypeDecorator.withTail(LookupElementBuilder.create(s).setBold(), TailType.SPACE);
+          return TailTypeDecorator.withTail(LookupElementBuilder.create(s).bold(), TailType.SPACE);
         }
       });
     }

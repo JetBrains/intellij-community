@@ -270,12 +270,12 @@ public abstract class PropertyReferenceBase implements PsiPolyVariantReference, 
     return ContainerUtil.mapNotNull(variants, new NullableFunction<Object, LookupElement>() {
       @Override
       public LookupElement fun(Object o) {
-        if (o instanceof String) return LookupElementBuilder.create((String)o).setIcon(PlatformIcons.PROPERTY_ICON);
+        if (o instanceof String) return LookupElementBuilder.create((String)o).withIcon(PlatformIcons.PROPERTY_ICON);
         IProperty property = (IProperty)o;
         String key = property.getKey();
         if (key == null) return null;
 
-        return LookupElementBuilder.create(property, key).setRenderer(LOOKUP_ELEMENT_RENDERER);
+        return LookupElementBuilder.create(property, key).withRenderer(LOOKUP_ELEMENT_RENDERER);
       }
     }).toArray();
   }

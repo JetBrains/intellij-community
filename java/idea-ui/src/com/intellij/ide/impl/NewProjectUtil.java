@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -79,12 +79,12 @@ public class NewProjectUtil {
 
     try {
       if (StorageScheme.DIRECTORY_BASED == dialog.getStorageScheme()) {
-        final File ideaDir = new File(projectFilePath + File.separator + ".idea");
+        final File ideaDir = new File(projectFilePath, Project.DIRECTORY_STORE_FOLDER);
         if (!ideaDir.exists() && !ideaDir.mkdirs()) {
           SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {
-              Messages.showErrorDialog("Unable to create '.idea' directory at: " + projectFilePath, "Project initialization failed");
+              Messages.showErrorDialog("Unable to create '.idea' directory at: " + projectFilePath, "Project Initialization Failed");
             }
           });
 

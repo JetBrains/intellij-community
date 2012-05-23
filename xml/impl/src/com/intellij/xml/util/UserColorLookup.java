@@ -39,12 +39,13 @@ public class UserColorLookup extends LookupElementDecorator<LookupElement> {
   private static final String COLOR_STRING = XmlBundle.message("choose.color.in.color.lookup");
 
   public UserColorLookup() {
-    super(PrioritizedLookupElement.withPriority(LookupElementBuilder.create(COLOR_STRING).setInsertHandler(new InsertHandler<LookupElement>() {
-      @Override
-      public void handleInsert(InsertionContext context, LookupElement item) {
-        handleUserSelection(context);
-      }
-    }), LookupValueWithPriority.HIGH));
+    super(PrioritizedLookupElement.withPriority(LookupElementBuilder.create(COLOR_STRING).withInsertHandler(
+      new InsertHandler<LookupElement>() {
+        @Override
+        public void handleInsert(InsertionContext context, LookupElement item) {
+          handleUserSelection(context);
+        }
+      }), LookupValueWithPriority.HIGH));
   }
 
   private static void handleUserSelection(InsertionContext context) {

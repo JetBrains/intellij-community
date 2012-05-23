@@ -92,6 +92,8 @@ public class GroovyCompletionData {
       for (String keyword : addExtendsImplements(position)) {
         result.addElement(keyword(keyword, TailType.HUMBLE_SPACE_BEFORE_WORD));
       }
+      
+      addExtendsForTypeParams(position, result);
 
       registerControlCompletion(position, result);
 
@@ -140,6 +142,12 @@ public class GroovyCompletionData {
           addKeywords(result, true, PsiKeyword.FINAL, "def");
         }
       }
+    }
+  }
+
+  private static void addExtendsForTypeParams(PsiElement position, CompletionResultSet result) {
+    if (GroovyCompletionUtil.isWildcardCompletion(position)) {
+      addKeywords(result, true, PsiKeyword.EXTENDS, PsiKeyword.SUPER);
     }
   }
 
@@ -207,7 +215,7 @@ public class GroovyCompletionData {
   }
 
   private static LookupElement keyword(final String keyword, @NotNull TailType tail) {
-    LookupElementBuilder element = LookupElementBuilder.create(keyword).setBold();
+    LookupElementBuilder element = LookupElementBuilder.create(keyword).bold();
     return tail != TailType.NONE ? TailTypeDecorator.withTail(element, tail) : element;
   }
 

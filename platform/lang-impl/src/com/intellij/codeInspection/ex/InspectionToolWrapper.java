@@ -188,4 +188,9 @@ public abstract class InspectionToolWrapper<T extends InspectionProfileEntry, E 
   public String toString() {
     return getShortName();
   }
+
+  @Override
+  public String getMainToolId() {
+    return getTool().getMainToolId();
+  }
 }

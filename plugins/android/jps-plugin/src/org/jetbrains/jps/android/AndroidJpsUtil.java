@@ -164,7 +164,18 @@ class AndroidJpsUtil {
   @NotNull
   public static Set<String> getExternalLibraries(@NotNull ProjectPaths paths, @NotNull Module module, @NotNull AndroidPlatform platform) {
     final Set<String> result = new HashSet<String>();
-    fillClasspath(paths, module, null, result, new HashSet<String>(), false);
+    final AndroidDependencyProcessor processor = new AndroidDependencyProcessor() {
+      @Override
+      public void processExternalLibrary(@NotNull File file) {
+        result.add(file.getPath());
+      }
+
+      @Override
+      public boolean isToProcess(@NotNull AndroidDependencyType type) {
+        return type == AndroidDependencyType.EXTERNAL_LIBRARY;
+      }
+    };
+    processClasspath(paths, module, processor);
     addAnnotationsJarIfNecessary(platform, result);
     return result;
   }
@@ -180,24 +191,20 @@ class AndroidJpsUtil {
     }
   }
 
-  @NotNull
-  public static Set<String> getClassdirsOfDependentModulesAndPackagesLibraries(@NotNull ProjectPaths paths, @NotNull Module module) {
-    final Set<String> result = new HashSet<String>();
-    fillClasspath(paths, module, result, null, new HashSet<String>(), false);
-    return result;
+  public static void processClasspath(@NotNull ProjectPaths paths, @NotNull Module module, @NotNull AndroidDependencyProcessor processor) {
+    processClasspath(paths, module, processor, new HashSet<String>(), false);
   }
 
-  private static void fillClasspath(@NotNull ProjectPaths paths,
-                                    @NotNull final Module module,
-                                    @Nullable final Set<String> outputDirs,
-                                    @Nullable final Set<String> libraries,
-                                    @NotNull final Set<String> visitedModules,
-                                    final boolean exportedLibrariesOnly) {
+  private static void processClasspath(@NotNull ProjectPaths paths,
+                                      @NotNull final Module module,
+                                      @NotNull final AndroidDependencyProcessor processor,
+                                      @NotNull final Set<String> visitedModules,
+                                      final boolean exportedLibrariesOnly) {
     if (!visitedModules.add(module.getName())) {
       return;
     }
 
-    if (libraries != null) {
+    if (processor.isToProcess(AndroidDependencyType.EXTERNAL_LIBRARY)) {
       for (ClasspathItem item : module.getClasspath(ClasspathKind.PRODUCTION_RUNTIME, exportedLibrariesOnly)) {
         if (item instanceof Library && !(item instanceof Sdk)) {
           for (Object filePathObj : ((Library)item).getClasspath()) {
@@ -208,7 +215,7 @@ class AndroidJpsUtil {
               processClassFilesAndJarsRecursively(filePath, new Processor<File>() {
                 @Override
                 public boolean process(File file) {
-                  libraries.add(file.getPath());
+                  processor.processExternalLibrary(file);
                   return true;
                 }
               });
@@ -225,20 +232,25 @@ class AndroidJpsUtil {
         final boolean depLibrary = depFacet != null && depFacet.isLibrary();
         final File depClassDir = paths.getModuleOutputDir(depModule, false);
 
-        if (outputDirs != null && depClassDir != null) {
+        if (depClassDir != null) {
           if (depLibrary) {
-            final File packagedClassesJar = new File(depClassDir, AndroidCommonUtils.CLASSES_JAR_FILE_NAME);
+            if (processor.isToProcess(AndroidDependencyType.ANDROID_LIBRARY_PACKAGE)) {
+              final File packagedClassesJar = new File(depClassDir, AndroidCommonUtils.CLASSES_JAR_FILE_NAME);
 
-            if (packagedClassesJar.isFile()) {
-              outputDirs.add(packagedClassesJar.getPath());
+              if (packagedClassesJar.isFile()) {
+                processor.processAndroidLibraryPackage(packagedClassesJar);
+              }
+            }
+            if (processor.isToProcess(AndroidDependencyType.ANDROID_LIBRARY_OUTPUT_DIRECTORY)) {
+              processor.processAndroidLibraryOutputDirectory(depClassDir);
             }
           }
-          else if (depFacet == null && depClassDir.isDirectory()) {
+          else if (processor.isToProcess(AndroidDependencyType.JAVA_MODULE_OUTPUT_DIR) && depFacet == null && depClassDir.isDirectory()) {
             // do not support android-app->android-app compile dependencies
-            outputDirs.add(depClassDir.getPath());
+            processor.processJavaModuleOutputDirectory(depClassDir);
           }
         }
-        fillClasspath(paths, depModule, outputDirs, libraries, visitedModules, !depLibrary || exportedLibrariesOnly);
+        processClasspath(paths, depModule, processor, visitedModules, !depLibrary || exportedLibrariesOnly);
       }
     }
   }

@@ -98,6 +98,7 @@ import org.jetbrains.jps.api.JpsRemoteProto;
 import org.jetbrains.jps.api.JpsServerResponseHandler;
 import org.jetbrains.jps.api.RequestFuture;
 
+import javax.swing.*;
 import java.io.*;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
@@ -415,8 +416,8 @@ public class CompileDriver {
   }
 
   @Nullable
-  private RequestFuture compileOnServer(final @NotNull CompileContextImpl compileContext, @NotNull Collection<Module> modules, @NotNull Collection<Artifact> artifacts,
-                                        final @NotNull Collection<String> paths, @Nullable final CompileStatusNotification callback)
+  private RequestFuture compileInExternalProcess(final @NotNull CompileContextImpl compileContext, @NotNull Collection<Module> modules, @NotNull Collection<Artifact> artifacts,
+                                                 final @NotNull Collection<String> paths, @Nullable final CompileStatusNotification callback)
     throws Exception {
     Collection<String> moduleNames = Collections.emptyList();
     if (modules.size() > 0) {
@@ -546,10 +547,7 @@ public class CompileDriver {
       return buildManager.scheduleBuild(myProject, compileContext.isRebuild(), compileContext.isMake(), moduleNames, artifactNames, paths, builderParams, new DefaultMessageHandler(myProject) {
         @Override
         public void sessionTerminated() {
-          final ExitStatus status = COMPILE_SERVER_BUILD_STATUS.get(compileContext);
-          if (status != null) {
-            notifyCompilationCompleted(compileContext, callback, status);
-          }
+          notifyCompilationCompleted(compileContext, callback, COMPILE_SERVER_BUILD_STATUS.get(compileContext));
         }
 
         @Override
@@ -643,7 +641,7 @@ public class CompileDriver {
                        final boolean checkCachesVersion) {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
-    final boolean useServer = useOutOfProcessBuild();
+    final boolean useExtProcessBuild = useOutOfProcessBuild();
 
     final String contentName =
       forceCompile ? CompilerBundle.message("compiler.content.name.compile") : CompilerBundle.message("compiler.content.name.make");
@@ -656,12 +654,12 @@ public class CompileDriver {
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
     FileDocumentManager.getInstance().saveAllDocuments();
 
-    final DependencyCache dependencyCache = useServer? null: createDependencyCache();
+    final DependencyCache dependencyCache = useExtProcessBuild ? null: createDependencyCache();
     final CompileContextImpl compileContext =
       new CompileContextImpl(myProject, compileTask, scope, dependencyCache, !isRebuild && !forceCompile, isRebuild);
     compileContext.putUserData(COMPILATION_START_TIMESTAMP, LocalTimeCounter.currentTime());
 
-    if (!useServer) {
+    if (!useExtProcessBuild) {
       for (Map.Entry<Pair<IntermediateOutputCompiler, Module>, Pair<VirtualFile, VirtualFile>> entry : myGenerationCompilerModuleToOutputDirMap.entrySet()) {
         final Pair<VirtualFile, VirtualFile> outputs = entry.getValue();
         final Pair<IntermediateOutputCompiler, Module> key = entry.getKey();
@@ -673,21 +671,18 @@ public class CompileDriver {
     }
 
     final Runnable compileWork;
-    if (useServer) {
+    if (useExtProcessBuild) {
       compileWork = new Runnable() {
         public void run() {
           final ProgressIndicator indicator = compileContext.getProgressIndicator();
-          if (indicator.isCanceled()) {
+          if (indicator.isCanceled() || myProject.isDisposed()) {
             if (callback != null) {
               callback.finished(true, 0, 0, compileContext);
             }
             return;
           }
-          long start = System.currentTimeMillis();
+          final long start = System.currentTimeMillis();
           try {
-            if (myProject.isDisposed()) {
-              return;
-            }
             LOG.info("COMPILATION STARTED " + (CompilerWorkspaceConfiguration.useServerlessOutOfProcessBuild() ? "(BUILD PROCESS)" : "(COMPILE SERVER)"));
             if (message != null) {
               compileContext.addMessage(message);
@@ -695,7 +690,7 @@ public class CompileDriver {
             final Collection<String> paths = fetchFiles(compileContext);
             final List<Module> modules = paths.isEmpty()? Arrays.asList(compileContext.getCompileScope().getAffectedModules()) : Collections.<Module>emptyList();
             final Set<Artifact> artifacts = ArtifactCompileScope.getArtifactsToBuild(myProject, compileContext.getCompileScope(), true);
-            final RequestFuture future = compileOnServer(compileContext, modules, artifacts, paths, callback);
+            final RequestFuture future = compileInExternalProcess(compileContext, modules, artifacts, paths, callback);
             if (future != null) {
               while (!future.waitFor(200L , TimeUnit.MILLISECONDS)) {
                 if (indicator.isCanceled()) {
@@ -707,7 +702,7 @@ public class CompileDriver {
               callback.finished(false, compileContext.getMessageCount(CompilerMessageCategory.ERROR), compileContext.getMessageCount(CompilerMessageCategory.WARNING), compileContext);
             }
           }
-          catch (Exception e) {
+          catch (Throwable e) {
             LOG.error(e); // todo
             callback.finished(false, compileContext.getMessageCount(CompilerMessageCategory.ERROR), compileContext.getMessageCount(CompilerMessageCategory.WARNING), compileContext);
           }
@@ -876,31 +871,35 @@ public class CompileDriver {
     }
   }
 
+  /** @noinspection SSBasedInspection*/
   private void notifyCompilationCompleted(final CompileContextImpl compileContext, final CompileStatusNotification callback, final ExitStatus _status) {
     final long duration = System.currentTimeMillis() - compileContext.getStartCompilationStamp();
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
+    SwingUtilities.invokeLater(new Runnable() {
       public void run() {
-        if (myProject.isDisposed()) {
-          return;
+        int errorCount = 0;
+        int warningCount = 0;
+        try {
+          errorCount = compileContext.getMessageCount(CompilerMessageCategory.ERROR);
+          warningCount = compileContext.getMessageCount(CompilerMessageCategory.WARNING);
+          if (!myProject.isDisposed()) {
+            final String statusMessage = createStatusMessage(_status, warningCount, errorCount);
+            final MessageType messageType = errorCount > 0 ? MessageType.ERROR : warningCount > 0 ? MessageType.WARNING : MessageType.INFO;
+            if (duration > ONE_MINUTE_MS) {
+              ToolWindowManager.getInstance(myProject).notifyByBalloon(ToolWindowId.MESSAGES_WINDOW, messageType, statusMessage);
+            }
+            CompilerManager.NOTIFICATION_GROUP.createNotification(_status == ExitStatus.UP_TO_DATE ? "Compilation: all files are up to date" : statusMessage, messageType).notify(myProject);
+            if (_status != ExitStatus.UP_TO_DATE && compileContext.getMessageCount(null) > 0) {
+              compileContext.addMessage(CompilerMessageCategory.INFORMATION, statusMessage, null, -1, -1);
+            }
+          }
         }
-        final int errorCount = compileContext.getMessageCount(CompilerMessageCategory.ERROR);
-        final int warningCount = compileContext.getMessageCount(CompilerMessageCategory.WARNING);
-        final String statusMessage = createStatusMessage(_status, warningCount, errorCount);
-        final MessageType messageType = errorCount > 0 ? MessageType.ERROR : warningCount > 0 ? MessageType.WARNING : MessageType.INFO;
-        if (duration > ONE_MINUTE_MS) {
-          ToolWindowManager.getInstance(myProject).notifyByBalloon(ToolWindowId.MESSAGES_WINDOW, messageType, statusMessage);
-        }
-
-        CompilerManager.NOTIFICATION_GROUP.createNotification(_status == ExitStatus.UP_TO_DATE ? "Compilation: all files are up to date" : statusMessage, messageType).notify(myProject);
-
-        if (_status != ExitStatus.UP_TO_DATE && compileContext.getMessageCount(null) > 0) {
-          compileContext.addMessage(CompilerMessageCategory.INFORMATION, statusMessage, null, -1, -1);
-        }
-        if (callback != null) {
-          callback.finished(_status == ExitStatus.CANCELLED, errorCount, warningCount, compileContext);
+        finally {
+          if (callback != null) {
+            callback.finished(_status == ExitStatus.CANCELLED, errorCount, warningCount, compileContext);
+          }
         }
       }
-    }, ModalityState.NON_MODAL);
+    });
   }
 
   private void checkCachesVersion(final CompileContextImpl compileContext, final long currentVFSTimestamp) {
@@ -2316,10 +2315,10 @@ public class CompileDriver {
   }
 
   private boolean validateCompilerConfiguration(final CompileScope scope, boolean checkOutputAndSourceIntersection) {
-    if (useOutOfProcessBuild()) {
-      return true;
-    }
     try {
+      if (useOutOfProcessBuild()) {
+        return true;
+      }
       final Module[] scopeModules = scope.getAffectedModules()/*ModuleManager.getInstance(myProject).getModules()*/;
       final List<String> modulesWithoutOutputPathSpecified = new ArrayList<String>();
       boolean isProjectCompilePathSpecified = true;

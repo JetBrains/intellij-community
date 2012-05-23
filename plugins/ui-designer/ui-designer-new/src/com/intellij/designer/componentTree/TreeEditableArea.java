@@ -19,6 +19,7 @@ import com.intellij.designer.designSurface.*;
 import com.intellij.designer.designSurface.tools.InputTool;
 import com.intellij.designer.model.RadComponent;
 import com.intellij.ide.util.treeView.AbstractTreeBuilder;
+import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -36,7 +37,7 @@ import java.util.List;
 /**
  * @author Alexander Lobas
  */
-public final class TreeEditableArea implements EditableArea, FeedbackTreeLayer, TreeSelectionListener {
+public abstract class TreeEditableArea implements EditableArea, FeedbackTreeLayer, TreeSelectionListener {
   private final EventListenerList myListenerList = new EventListenerList();
   private final ComponentTree myTree;
   private final AbstractTreeBuilder myTreeBuilder;
@@ -236,6 +237,11 @@ public final class TreeEditableArea implements EditableArea, FeedbackTreeLayer, 
   @Override
   public FeedbackTreeLayer getFeedbackTreeLayer() {
     return this;
+  }
+
+  @Override
+  public String getPopupPlace() {
+    return ActionPlaces.GUI_DESIGNER_COMPONENT_TREE_POPUP;
   }
 
   //////////////////////////////////////////////////////////////////////////////////////////

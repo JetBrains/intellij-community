@@ -46,6 +46,7 @@ import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.formatter.GeeseUtil;
 import org.jetbrains.plugins.groovy.lang.GrReferenceAdjuster;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
@@ -267,7 +268,7 @@ public class GroovyCompletionUtil {
     }
 
     final PsiSubstitutor substitutor = resolveResult.getSubstitutor();
-    LookupElementBuilder builder = LookupElementBuilder.create(resolveResult, importedName).setPresentableText(importedName);
+    LookupElementBuilder builder = LookupElementBuilder.create(resolveResult, importedName).withPresentableText(importedName);
     return setupLookupBuilder(element, substitutor, builder);
   }
 
@@ -275,15 +276,15 @@ public class GroovyCompletionUtil {
     if (o instanceof LookupElement) return (LookupElement)o;
     if (o instanceof PsiNamedElement) return generateLookupElement((PsiNamedElement)o);
     if (o instanceof PsiElement) return setupLookupBuilder((PsiElement)o, PsiSubstitutor.EMPTY, LookupElementBuilder.create(o, ((PsiElement)o).getText()));
-    return LookupElementBuilder.create(o, o.toString()).setItemTextUnderlined(true);
+    return LookupElementBuilder.create(o, o.toString()).withItemTextUnderlined(true);
   }
   private static LookupElementBuilder generateLookupElement(PsiNamedElement element) {
     return setupLookupBuilder(element, PsiSubstitutor.EMPTY, LookupElementBuilder.create(element));
   }
 
   private static LookupElementBuilder setupLookupBuilder(PsiElement element, PsiSubstitutor substitutor, LookupElementBuilder builder) {
-    builder = builder.setIcon(element.getIcon(Iconable.ICON_FLAG_VISIBILITY | Iconable.ICON_FLAG_READ_STATUS))
-      .setInsertHandler(GroovyInsertHandler.INSTANCE);
+    builder = builder.withIcon(element.getIcon(Iconable.ICON_FLAG_VISIBILITY | Iconable.ICON_FLAG_READ_STATUS))
+      .withInsertHandler(GroovyInsertHandler.INSTANCE);
     builder = setTailText(element, builder, substitutor);
     builder = setTypeText(element, builder, substitutor);
     return builder;
@@ -291,8 +292,8 @@ public class GroovyCompletionUtil {
 
   private static LookupElementBuilder setTailText(PsiElement element, LookupElementBuilder builder, PsiSubstitutor substitutor) {
     if (element instanceof PsiMethod) {
-      builder = builder.setTailText(PsiFormatUtil.formatMethod((PsiMethod)element, substitutor, PsiFormatUtilBase.SHOW_PARAMETERS,
-                                                               PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_TYPE));
+      builder = builder.withTailText(PsiFormatUtil.formatMethod((PsiMethod)element, substitutor, PsiFormatUtilBase.SHOW_PARAMETERS,
+                                                                PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_TYPE));
     }
     else if (element instanceof PsiClass) {
       String tailText = getPackageText((PsiClass)element);
@@ -304,7 +305,7 @@ public class GroovyCompletionUtil {
           }
         }, "," + (showSpaceAfterComma(psiClass) ? " " : "")) + ">" + tailText;
       }
-      builder = builder.setTailText(tailText, true);
+      builder = builder.withTailText(tailText, true);
     }
     return builder;
   }
@@ -331,7 +332,7 @@ public class GroovyCompletionUtil {
     else if (element instanceof PsiMethod) {
       type = substitutor.substitute(((PsiMethod)element).getReturnType());
     }
-    return type != null ? builder.setTypeText(type.getPresentableText()) : builder;
+    return type != null ? builder.withTypeText(type.getPresentableText()) : builder;
   }
 
   public static boolean hasConstructorParameters(@NotNull PsiClass clazz, @NotNull GroovyPsiElement place) {
@@ -472,4 +473,19 @@ public class GroovyCompletionUtil {
     return true;
   }
 
+  /*
+  we are here:  foo(List<? <caret> ...
+   */
+  public static boolean isWildcardCompletion(PsiElement position) {
+    PsiElement prev = GeeseUtil.getPreviousNonWhitespaceToken(position);
+    if (prev instanceof PsiErrorElement) prev = GeeseUtil.getPreviousNonWhitespaceToken(prev);
+
+    if (prev == null || prev.getNode().getElementType() != mQUESTION) return false;
+
+    final PsiElement pprev = GeeseUtil.getPreviousNonWhitespaceToken(prev);
+    if (pprev == null) return false;
+
+    final IElementType t = pprev.getNode().getElementType();
+    return t == mLT || t == mCOMMA;
+  }
 }

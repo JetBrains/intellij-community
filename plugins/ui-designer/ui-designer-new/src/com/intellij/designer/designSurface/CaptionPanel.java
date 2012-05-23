@@ -21,9 +21,7 @@ import com.intellij.designer.model.FindComponentVisitor;
 import com.intellij.designer.model.RadComponent;
 import com.intellij.designer.model.RadVisualComponent;
 import com.intellij.ide.DeleteProvider;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.SideBorder;
 import com.intellij.util.containers.IntArrayList;
@@ -50,6 +48,7 @@ public class CaptionPanel extends JLayeredPane implements DataProvider, DeletePr
   private final EditableArea myArea;
   private final DecorationLayer myDecorationLayer;
   private final FeedbackLayer myFeedbackLayer;
+  private DefaultActionGroup myActionGroup;
   private final CommonEditActionsProvider myActionsProvider;
   private final RadVisualComponent myRootComponent;
   private List<RadComponent> myRootChildren = Collections.emptyList();
@@ -124,6 +123,20 @@ public class CaptionPanel extends JLayeredPane implements DataProvider, DeletePr
       @Override
       public RadComponent getRootComponent() {
         return myRootComponent;
+      }
+
+      @Override
+      public ActionGroup getPopupActions() {
+        if (myActionGroup == null) {
+          myActionGroup = new DefaultActionGroup();
+          myActionGroup.add(ActionManager.getInstance().getAction("$Delete"));
+        }
+        return myActionGroup;
+      }
+
+      @Override
+      public String getPopupPlace() {
+        return "UIDesigner.CaptionPanel";
       }
     };
 

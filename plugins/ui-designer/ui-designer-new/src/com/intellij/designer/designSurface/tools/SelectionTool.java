@@ -17,6 +17,8 @@ package com.intellij.designer.designSurface.tools;
 
 import com.intellij.designer.designSurface.EditableArea;
 import com.intellij.designer.model.RadComponent;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionPopupMenu;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.event.KeyEvent;
@@ -136,6 +138,11 @@ public class SelectionTool extends InputTool {
       myTracker.mouseUp(event, area);
     }
     super.mouseUp(event, area);
+    if (event.isPopupTrigger()) {
+      ActionManager actionManager = ActionManager.getInstance();
+      ActionPopupMenu popupMenu = actionManager.createActionPopupMenu(area.getPopupPlace(), area.getPopupActions());
+      popupMenu.getComponent().show(area.getNativeComponent(), event.getX(), event.getY());
+    }
   }
 
   @Override

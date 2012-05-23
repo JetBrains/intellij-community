@@ -25,6 +25,7 @@ import com.intellij.ui.SideBorder;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
+import java.awt.event.KeyEvent;
 import java.util.List;
 
 /**
@@ -32,11 +33,11 @@ import java.util.List;
  */
 public class DesignerActionPanel implements DataProvider {
   public static final String TOOLBAR = "DesignerToolbar";
-  public static final String POPUP = "DesignerPopup";
 
   private final DefaultActionGroup myActionGroup = new DefaultActionGroup();
   private final DefaultActionGroup myStaticGroup = new DefaultActionGroup();
   private final DefaultActionGroup myDynamicGroup = new DefaultActionGroup();
+  private final DefaultActionGroup myPopupGroup = new DefaultActionGroup();
   private JComponent myToolbar;
   private final DesignerEditorPanel myDesigner;
   private final CommonEditActionsProvider myCommonEditActionsProvider;
@@ -50,14 +51,37 @@ public class DesignerActionPanel implements DataProvider {
     myActionGroup.add(myStaticGroup);
     myActionGroup.add(myDynamicGroup);
 
-    ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar(TOOLBAR, myActionGroup, true);
+    ActionManager actionManager = ActionManager.getInstance();
+    ActionToolbar actionToolbar = actionManager.createActionToolbar(TOOLBAR, myActionGroup, true);
     actionToolbar.setLayoutPolicy(ActionToolbar.WRAP_LAYOUT_POLICY);
 
     myToolbar = actionToolbar.getComponent();
     myToolbar.setBorder(IdeBorderFactory.createBorder(SideBorder.BOTTOM));
     myToolbar.setVisible(false);
 
-    registerAction(new SelectAllAction(designer.getSurfaceArea()), "$SelectAll");
+    AnAction selectParent = new AnAction("Select Parent", "Select Parent", null) {
+      @Override
+      public void actionPerformed(AnActionEvent e) {
+        myDesigner.getToolProvider().processKeyEvent(new KeyEvent(myDesigner.getSurfaceArea().getNativeComponent(),
+                                                                  KeyEvent.KEY_PRESSED, 0, 0,
+                                                                  KeyEvent.VK_ESCAPE,
+                                                                  (char)KeyEvent.VK_ESCAPE),
+                                                     myDesigner.getSurfaceArea());
+      }
+    };
+    selectParent.registerCustomShortcutSet(KeyEvent.VK_ESCAPE, 0, null);
+
+    SelectAllAction selectAllAction = new SelectAllAction(designer.getSurfaceArea());
+    registerAction(selectAllAction, "$SelectAll");
+
+    myPopupGroup.add(actionManager.getAction("$Cut"));
+    myPopupGroup.add(actionManager.getAction("$Copy"));
+    myPopupGroup.add(actionManager.getAction("$Paste"));
+    myPopupGroup.addSeparator();
+    myPopupGroup.add(actionManager.getAction("$Delete"));
+    myPopupGroup.addSeparator();
+    myPopupGroup.add(selectParent);
+    myPopupGroup.add(selectAllAction);
 
     designer.getSurfaceArea().addSelectionListener(new ComponentSelectionListener() {
       @Override
@@ -65,8 +89,6 @@ public class DesignerActionPanel implements DataProvider {
         updateSelectionActions(area.getSelection());
       }
     });
-
-    // TODO: support popup
   }
 
   private void registerAction(AnAction action, @NonNls String actionId) {
@@ -130,6 +152,10 @@ public class DesignerActionPanel implements DataProvider {
     if (update) {
       update();
     }
+  }
+
+  public ActionGroup getPopupActions() {
+    return myPopupGroup;
   }
 
   @Override

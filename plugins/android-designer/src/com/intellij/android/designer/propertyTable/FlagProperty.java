@@ -161,6 +161,11 @@ public class FlagProperty extends Property<RadViewComponent> implements IPropert
     });
   }
 
+  @Override
+  public String getJavadocText() {
+    return myDefinition.getDocValue();
+  }
+
   //////////////////////////////////////////////////////////////////////////////////////////
   //
   // Option

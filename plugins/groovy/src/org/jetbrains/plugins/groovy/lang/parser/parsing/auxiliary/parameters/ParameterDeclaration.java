@@ -45,7 +45,7 @@ public class ParameterDeclaration implements GroovyElementTypes {
 
     PsiBuilder.Marker rb = builder.mark();
 
-    final ReferenceElement.ReferenceElementResult result = TypeSpec.parseStrict(builder);
+    final ReferenceElement.ReferenceElementResult result = TypeSpec.parseStrict(builder, true);
 
     if (result == ReferenceElement.ReferenceElementResult.fail && !hasModifiers) {
       rb.drop();
@@ -85,7 +85,7 @@ public class ParameterDeclaration implements GroovyElementTypes {
 
     PsiBuilder.Marker rb = builder.mark();
 
-    final ReferenceElement.ReferenceElementResult result = TypeSpec.parseStrict(builder);
+    final ReferenceElement.ReferenceElementResult result = TypeSpec.parseStrict(builder, false);
 
     if (mIDENT.equals(builder.getTokenType()) || (mTRIPLE_DOT.equals(builder.getTokenType()))) {
       rb.drop();
@@ -134,7 +134,7 @@ public class ParameterDeclaration implements GroovyElementTypes {
       typeCount++;
       rb.drop();
       rb = builder.mark();
-      final ReferenceElement.ReferenceElementResult result = TypeSpec.parseStrict(builder);
+      final ReferenceElement.ReferenceElementResult result = TypeSpec.parseStrict(builder, false);
       if (result == ReferenceElement.ReferenceElementResult.fail && ParserUtils.lookAhead(builder, mBOR)) {
         builder.error(GroovyBundle.message("type.expected"));
       }

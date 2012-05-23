@@ -86,7 +86,7 @@ class SameSignatureCallParametersProvider extends CompletionProvider<CompletionP
     icon.setIcon(PlatformIcons.PARAMETER_ICON, 0, 2*w/5, 0);
     icon.setIcon(PlatformIcons.PARAMETER_ICON, 1);
 
-    final LookupElement element = LookupElementBuilder.create(lookupString).setIcon(icon);
+    final LookupElement element = LookupElementBuilder.create(lookupString).withIcon(icon);
     element.putUserData(JavaCompletionUtil.SUPER_METHOD_PARAMETERS, Boolean.TRUE);
 
     return TailTypeDecorator.withTail(element, ExpectedTypesProvider.getFinalCallParameterTailType(call, invoked.getReturnType(), invoked));
