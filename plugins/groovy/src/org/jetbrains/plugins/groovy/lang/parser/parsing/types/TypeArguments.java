@@ -77,8 +77,10 @@ public class TypeArguments implements GroovyElementTypes {
         marker.rollbackTo();
         return false;
       }
+      else {
+        builder.error(GroovyBundle.message("gt.expected"));
+      }
     }
-
 
     marker.done(TYPE_ARGUMENTS);
     return true;
@@ -91,13 +93,7 @@ public class TypeArguments implements GroovyElementTypes {
       ParserUtils.getToken(builder, mQUESTION);
       if (ParserUtils.getToken(builder, kSUPER) || ParserUtils.getToken(builder, kEXTENDS)) {
         ParserUtils.getToken(builder, mNLS);
-
-        //todo: check for upper case type specification
-        if (TypeSpec.parse(builder, false, false) == fail) {
-          taMarker.rollbackTo();
-          return false;
-        }
-
+        TypeSpec.parse(builder, false, false);
         ParserUtils.getToken(builder, mNLS);
       }
 

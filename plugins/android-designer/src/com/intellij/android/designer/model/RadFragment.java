@@ -45,8 +45,15 @@ public class RadFragment extends RadViewComponent implements IConfigurableCompon
           setValue(fragment);
         }
       }
-    });
-  private static final Property TAG_PROPERTY = new FragmentProperty("tag", new TextEditor());
+    }, "Supply the name of the fragment class to instantiate.");
+  private static final Property TAG_PROPERTY = new FragmentProperty("tag", new TextEditor(),
+                                                                    "Use <code>device-admin</code> as the root tag of the XML resource that\n" +
+                                                                    "describes a\n" +
+                                                                    "         {@link android.app.admin.DeviceAdminReceiver}, which is\n" +
+                                                                    "         referenced from its\n" +
+                                                                    "         {@link android.app.admin.DeviceAdminReceiver#DEVICE_ADMIN_META_DATA}\n" +
+                                                                    "         meta-data entry.  Described here are the attributes that can be\n" +
+                                                                    "         included in that tag.");
   private static final String NAME_KEY = "fragment.name";
 
   @Override

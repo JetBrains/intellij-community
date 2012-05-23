@@ -53,7 +53,8 @@ public class RadRelativeLayout extends RadViewLayoutWithData implements ILayoutD
 
   @Override
   public void configureProperties(List<Property> properties) {
-    CompoundProperty alignComponent = new CompoundProperty("layout:alignComponent");
+    CompoundProperty alignComponent =
+      new CompoundProperty("layout:alignComponent", "Positions the edges of this view to the edges of the another view.");
     PropertyParser.moveProperties(properties, alignComponent,
                                   "layout:alignTop", "top:top",
                                   "layout:below", "top:bottom",
@@ -66,7 +67,8 @@ public class RadRelativeLayout extends RadViewLayoutWithData implements ILayoutD
                                   "layout:alignBaseline", "baseline:baseline");
     properties.add(alignComponent);
 
-    CompoundProperty alignParent = new CompoundProperty("layout:alignParent");
+    CompoundProperty alignParent =
+      new CompoundProperty("layout:alignParent", "Positions the edges of this view to the edges of the parent.");
     PropertyParser.moveProperties(properties, alignParent,
                                   "layout:alignParentTop", "top",
                                   "layout:alignParentLeft", "left",

@@ -100,7 +100,7 @@ public class MultipleFileMergeDialog extends DialogWrapper {
       }
 
       @Override
-      public String getMaxStringValue(JTable table) {
+      public String getMaxStringValue() {
         return VcsBundle.message("multiple.file.merge.type.binary");
       }
 

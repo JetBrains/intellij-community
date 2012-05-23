@@ -88,4 +88,9 @@ public class IncludeLayoutProperty extends Property<RadViewComponent> {
   public PropertyEditor getEditor() {
     return myEditor;
   }
+
+  @Override
+  public String getJavadocText() {
+    return "Reference to the layout file you wish to include.";
+  }
 }

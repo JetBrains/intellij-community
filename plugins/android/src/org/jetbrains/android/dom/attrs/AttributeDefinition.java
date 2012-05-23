@@ -68,12 +68,7 @@ public class AttributeDefinition {
   }
 
   public void addDocValue(String docValue) {
-    if (myDocValue == null) {
-      myDocValue = docValue;
-    }
-    else {
-      myDocValue += "\n" + docValue;
-    }
+    myDocValue = docValue;
   }
 
   @Override

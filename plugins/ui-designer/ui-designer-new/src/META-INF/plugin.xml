@@ -16,11 +16,17 @@
 
   <actions>
     <group id="UIDesigner.PropertyTable">
-      <action id="UIDesigner.PropertyTable.RestoreDefault"
-              class="com.intellij.designer.propertyTable.actions.RestoreDefault"
-              use-shortcut-of="$Delete"/>
+      <action id="UIDesigner.QuickJavadoc"
+              class="com.intellij.designer.propertyTable.actions.ShowJavadoc"
+              use-shortcut-of="QuickJavaDoc"/>
 
-      <action id="UIDesigner.PropertyTable.ShowExpert"
+      <separator/>
+
+      <!--<action id="UIDesigner.RestoreDefault"-->
+              <!--class="com.intellij.designer.propertyTable.actions.RestoreDefault"-->
+              <!--use-shortcut-of="$Delete"/>-->
+
+      <action id="UIDesigner.ShowExpert"
               class="com.intellij.designer.propertyTable.actions.ShowExpert"/>
     </group>
   </actions>

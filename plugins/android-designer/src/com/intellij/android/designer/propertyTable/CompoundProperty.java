@@ -121,4 +121,9 @@ public class CompoundProperty extends Property<RadViewComponent> implements IPro
   public PropertyEditor getEditor() {
     return null;
   }
+
+  @Override
+  public String getJavadocText() {
+    return myChildren.isEmpty() ? null : myChildren.get(0).getJavadocText();
+  }
 }

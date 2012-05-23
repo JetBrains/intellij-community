@@ -48,10 +48,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.*;
-import org.tmatesoft.svn.core.SVNCancelException;
-import org.tmatesoft.svn.core.SVNCommitInfo;
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.wc.*;
 
 import javax.swing.*;
@@ -212,7 +209,7 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
     SVNCommitPacket[] commitPackets = null;
     SVNCommitInfo[] results;
     try {
-      commitPackets = committer.doCollectCommitItems(pathsToCommit, keepLocks, force, recursive, true);
+      commitPackets = committer.doCollectCommitItems(pathsToCommit, keepLocks, force, SVNDepth.EMPTY, true, null);
       results = committer.doCommit(commitPackets, keepLocks, comment);
       commitPackets = null;
     }

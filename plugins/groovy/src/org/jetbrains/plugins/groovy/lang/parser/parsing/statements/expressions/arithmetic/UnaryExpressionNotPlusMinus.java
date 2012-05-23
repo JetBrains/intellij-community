@@ -60,7 +60,7 @@ public class UnaryExpressionNotPlusMinus implements GroovyElementTypes {
   }
 
   private static boolean runPostfix(PsiBuilder builder, GroovyParser parser, boolean runPostfixIfFail) {
-    return runPostfixIfFail ? PostfixExpression.parse(builder, parser) : false;
+    return runPostfixIfFail && PostfixExpression.parse(builder, parser);
   }
 
   private static ReferenceElement.ReferenceElementResult parseTypeCast(PsiBuilder builder) {
@@ -70,7 +70,7 @@ public class UnaryExpressionNotPlusMinus implements GroovyElementTypes {
       return fail;
     }
     if (TokenSets.BUILT_IN_TYPE.contains(builder.getTokenType()) || mIDENT.equals(builder.getTokenType())) {
-      final ReferenceElement.ReferenceElementResult result = TypeSpec.parseStrict(builder);
+      final ReferenceElement.ReferenceElementResult result = TypeSpec.parseStrict(builder, true);
       if (result == fail) {
         marker.rollbackTo();
         return fail;

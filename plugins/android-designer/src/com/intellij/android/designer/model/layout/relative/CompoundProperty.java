@@ -23,8 +23,11 @@ import org.jetbrains.annotations.NotNull;
  * @author Alexander Lobas
  */
 public class CompoundProperty extends com.intellij.android.designer.propertyTable.CompoundProperty {
-  public CompoundProperty(@NotNull String name) {
+  private final String myJavadocText;
+
+  public CompoundProperty(@NotNull String name, String javadocText) {
     super(name);
+    myJavadocText = javadocText;
     setImportant(true);
   }
 
@@ -41,5 +44,10 @@ public class CompoundProperty extends com.intellij.android.designer.propertyTabl
       }
     }
     return value.append("]").toString();
+  }
+
+  @Override
+  public String getJavadocText() {
+    return myJavadocText;
   }
 }

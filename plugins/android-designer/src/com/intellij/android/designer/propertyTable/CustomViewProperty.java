@@ -119,4 +119,9 @@ public class CustomViewProperty extends Property<RadCustomViewComponent> {
   public PropertyEditor getEditor() {
     return myEditor;
   }
+
+  @Override
+  public String getJavadocText() {
+    return "The fully qualified name of the class.";
+  }
 }

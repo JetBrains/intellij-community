@@ -46,6 +46,7 @@ import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.search.PsiFileSystemItemProcessor;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PlatformIcons;
@@ -394,6 +395,10 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory, Qu
       VirtualFile copyVFile;
       if (parent.getFileSystem() == vFile.getFileSystem()) {
         copyVFile = vFile.copy(this, parent, newName);
+      }
+      else if (vFile instanceof LightVirtualFile) {
+        copyVFile = parent.createChildData(this, newName);
+        copyVFile.setBinaryContent(originalFile.getText().getBytes(copyVFile.getCharset()));
       }
       else {
         copyVFile = VfsUtilCore.copyFile(this, vFile, parent, newName);

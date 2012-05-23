@@ -113,4 +113,9 @@ public class CenterProperty extends Property<RadViewComponent> {
   public PropertyEditor getEditor() {
     return myEditor;
   }
+
+  @Override
+  public String getJavadocText() {
+    return "Set centers this child horizontally or vertically within its parent.";
+  }
 }

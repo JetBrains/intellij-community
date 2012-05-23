@@ -17,7 +17,6 @@ package org.jetbrains.android.actions;
 
 import com.android.ddmlib.AndroidDebugBridge;
 import com.intellij.facet.ProjectFacetManager;
-import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -58,7 +57,6 @@ public class AndroidConnectDebuggerAction extends AnAction {
     super.update(e);
     final Project project = e.getData(PlatformDataKeys.PROJECT);
     e.getPresentation().setVisible(project != null &&
-                                   ActionPlaces.MAIN_TOOLBAR.equals(e.getPlace()) &&
                                    ProjectFacetManager.getInstance(project).getFacets(AndroidFacet.ID).size() > 0);
   }
 }
