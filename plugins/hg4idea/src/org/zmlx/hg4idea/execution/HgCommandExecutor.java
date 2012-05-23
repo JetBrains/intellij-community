@@ -196,21 +196,25 @@ public final class HgCommandExecutor {
     }
 
     // log output if needed
-    if (!myIsSilent && myShowOutput) {
-      LOG.info(result.getRawOutput());
-      myVcs.showMessageInConsole(result.getRawOutput(), ConsoleViewContentType.SYSTEM_OUTPUT.getAttributes());
-    }
-    else {
-      LOG.debug(result.getRawOutput());
+    if (!result.getRawOutput().isEmpty()) {
+      if (!myIsSilent && myShowOutput) {
+        LOG.info(result.getRawOutput());
+        myVcs.showMessageInConsole(result.getRawOutput(), ConsoleViewContentType.SYSTEM_OUTPUT.getAttributes());
+      }
+      else {
+        LOG.debug(result.getRawOutput());
+      }
     }
 
     // log error
-    if (!myIsSilent) {
-      LOG.info(result.getRawError());
-      myVcs.showMessageInConsole(result.getRawError(), ConsoleViewContentType.ERROR_OUTPUT.getAttributes());
-    }
-    else {
-      LOG.debug(result.getRawError());
+    if (!result.getRawError().isEmpty()) {
+      if (!myIsSilent) {
+        LOG.info(result.getRawError());
+        myVcs.showMessageInConsole(result.getRawError(), ConsoleViewContentType.ERROR_OUTPUT.getAttributes());
+      }
+      else {
+        LOG.debug(result.getRawError());
+      }
     }
   }
 
