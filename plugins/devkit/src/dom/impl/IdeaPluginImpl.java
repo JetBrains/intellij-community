@@ -26,6 +26,10 @@ import org.jetbrains.idea.devkit.dom.IdeaPlugin;
 public abstract class IdeaPluginImpl implements IdeaPlugin {
   public String getPluginId() {
     final XmlTag tag = getXmlTag();
+    if (tag == null) {
+      return null;
+    }
+
     final XmlTag idTag = tag.findFirstSubTag("id");
     if (idTag != null) {
       return idTag.getValue().getTrimmedText();
