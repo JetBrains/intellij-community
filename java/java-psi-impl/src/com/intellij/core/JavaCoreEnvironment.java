@@ -76,11 +76,11 @@ public class JavaCoreEnvironment extends CoreEnvironment {
     myProject.registerService(PsiResolveHelper.class, new PsiResolveHelperImpl(myPsiManager));
     myProject.registerService(LanguageLevelProjectExtension.class, new CoreLanguageLevelProjectExtension());
     myProject.registerService(PackageIndex.class, myFileManager);
-    myProject.registerService(JavaResolveCache.class, new JavaResolveCache(null));
+    myProject.registerService(JavaResolveCache.class, new JavaResolveCache(myMessageBus));
     myProject.registerService(JavaCodeStyleSettingsFacade.class, new CoreJavaCodeStyleSettingsFacade());
     myProject.registerService(JavaCodeStyleManager.class, new CoreJavaCodeStyleManager());
 
-    JavaPsiFacadeImpl javaPsiFacade = new JavaPsiFacadeImpl(myProject, myPsiManager, myFileManager, null);
+    JavaPsiFacadeImpl javaPsiFacade = new JavaPsiFacadeImpl(myProject, myPsiManager, myFileManager, myMessageBus);
     myProject.registerService(CoreJavaFileManager.class, myFileManager);
     registerComponentInstance(myProject.getPicoContainer(),
             JavaPsiFacade.class,

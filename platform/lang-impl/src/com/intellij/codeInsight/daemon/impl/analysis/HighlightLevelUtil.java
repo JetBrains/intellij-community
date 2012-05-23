@@ -18,7 +18,7 @@ package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectUtil;
+import com.intellij.openapi.project.ProjectCoreUtil;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -54,7 +54,7 @@ public class HighlightLevelUtil {
     final VirtualFile virtualFile = psiRoot.getContainingFile().getVirtualFile();
     if (virtualFile == null || !virtualFile.isValid()) return false;
 
-    if (ProjectUtil.isProjectOrWorkspaceFile(virtualFile)) return false;
+    if (ProjectCoreUtil.isProjectOrWorkspaceFile(virtualFile)) return false;
 
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     if (ProjectScope.getLibrariesScope(project).contains(virtualFile) && !fileIndex.isInContent(virtualFile)) return false;

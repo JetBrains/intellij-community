@@ -22,7 +22,7 @@ import com.intellij.lang.ParserDefinition;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.fileTypes.impl.CustomSyntaxTableFileType;
-import com.intellij.openapi.project.ProjectUtil;
+import com.intellij.openapi.project.ProjectCoreUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.impl.cache.impl.id.IdTableBuilding;
@@ -119,7 +119,7 @@ public class TodoIndex extends FileBasedIndexExtension<TodoIndexEntry, Integer> 
       }
 
       final FileType fileType = file.getFileType();
-      if (ProjectUtil.isProjectOrWorkspaceFile(file, fileType)) {
+      if (ProjectCoreUtil.isProjectOrWorkspaceFile(file, fileType)) {
         return false;
       }
       

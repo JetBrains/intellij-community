@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.ide.highlighter;
+package com.intellij.openapi.fileTypes;
 
 import com.intellij.openapi.fileTypes.FileType;
 
