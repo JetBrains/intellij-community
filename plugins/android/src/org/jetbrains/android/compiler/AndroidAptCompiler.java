@@ -41,6 +41,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.DataInput;
 import java.io.DataOutput;
+import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
@@ -82,6 +83,24 @@ public class AndroidAptCompiler implements SourceGeneratingCompiler {
   }
 
   private static GenerationItem[] doGenerate(final CompileContext context, GenerationItem[] items, VirtualFile outputRootDirectory) {
+    if (items == null || items.length == 0) {
+      return EMPTY_GENERATION_ITEM_ARRAY;
+    }
+
+    // we have one item per module there, so clear output directory
+    final String genRootPath = FileUtil.toSystemDependentName(outputRootDirectory.getPath());
+    final File genRootDir = new File(genRootPath);
+    if (genRootDir.exists()) {
+      if (!FileUtil.delete(genRootDir)) {
+        context.addMessage(CompilerMessageCategory.ERROR, "Cannot delete directory " + genRootPath, null, -1, -1);
+        return EMPTY_GENERATION_ITEM_ARRAY;
+      }
+      if (!genRootDir.mkdir()) {
+        context.addMessage(CompilerMessageCategory.ERROR, "Cannot create directory " + genRootPath, null, -1, -1);
+        return EMPTY_GENERATION_ITEM_ARRAY;
+      }
+    }
+
     List<GenerationItem> results = new ArrayList<GenerationItem>(items.length);
     boolean toRefresh = false;
 
