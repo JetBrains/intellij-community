@@ -355,9 +355,13 @@ public abstract class AndroidFacetImporterBase extends FacetImporter<AndroidFace
     final AndroidFacet facet = AndroidUtils.addAndroidFacet(apklibModuleModel, vApklibDir, true);
     
     final AndroidFacetConfiguration configuration = facet.getConfiguration();
-    configuration.RES_FOLDER_RELATIVE_PATH = '/' + AndroidMavenUtil.APK_LIB_ARTIFACT_RES_DIR;
-    configuration.LIBS_FOLDER_RELATIVE_PATH = '/' + AndroidMavenUtil.APK_LIB_ARTIFACT_NATIVE_LIBS_DIR;
-    configuration.MANIFEST_FILE_RELATIVE_PATH = '/' + AndroidMavenUtil.APK_LIB_ARTIFACT_MANIFEST_FILE;
+    String s = AndroidRootUtil.getPathRelativeToModuleDir(apklibModule, vApklibDir.getPath());
+    if (s != null) {
+      s = s.length() > 0 ? '/' + s + '/' : "/";
+      configuration.RES_FOLDER_RELATIVE_PATH = s + AndroidMavenUtil.APK_LIB_ARTIFACT_RES_DIR;
+      configuration.LIBS_FOLDER_RELATIVE_PATH = s + AndroidMavenUtil.APK_LIB_ARTIFACT_NATIVE_LIBS_DIR;
+      configuration.MANIFEST_FILE_RELATIVE_PATH = s + AndroidMavenUtil.APK_LIB_ARTIFACT_MANIFEST_FILE;
+    }
 
     importSdkAndDependenciesForApklibArtifact(project, rootModelAdapter, apklibModuleModel, modelsProvider, mavenTree, artifact,
                                               mavenProject2ModuleName);
