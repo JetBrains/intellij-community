@@ -23,6 +23,7 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -113,7 +114,11 @@ public class FetchExtResourceAction extends BaseExtResourceAction implements Wat
 
   @NotNull
   public Set<String> getRootsToWatch() {
-    return Collections.singleton(getExternalResourcesPath());
+    final File path = new File(getExternalResourcesPath());
+    if (!path.exists() && !path.mkdirs()) {
+      LOG.warn("Unable to create: " + path);
+    }
+    return Collections.singleton(path.getAbsolutePath());
   }
 
   static class FetchingResourceIOException extends IOException {
@@ -176,6 +181,7 @@ public class FetchExtResourceAction extends BaseExtResourceAction implements Wat
     final PsiManager psiManager = PsiManager.getInstance(project);
     ApplicationManager.getApplication().invokeAndWait(new Runnable() {
       public void run() {
+        @SuppressWarnings("deprecation")
         final AccessToken token = ApplicationManager.getApplication().acquireWriteActionLock(FetchExtResourceAction.class);
         try {
           final String path = FileUtil.toSystemIndependentName(extResources.getAbsolutePath());
@@ -342,11 +348,14 @@ public class FetchExtResourceAction extends BaseExtResourceAction implements Wat
     int slashIndex = resourceUrl.lastIndexOf('/');
     String resPath = extResourcesPath + File.separatorChar;
 
-    if (refname != null) { // resource is known under refname so need to save it
+    if (refname != null) { // resource is known under ref.name so need to save it
       resPath += refname;
-      int refnameSlashIndex = resPath.lastIndexOf('/');
-      if (refnameSlashIndex != -1) {
-        new File(resPath.substring(0, refnameSlashIndex)).mkdirs();
+      int refNameSlashIndex = resPath.lastIndexOf('/');
+      if (refNameSlashIndex != -1) {
+        final File parent = new File(resPath.substring(0, refNameSlashIndex));
+        if (!parent.mkdirs() || !parent.exists()) {
+          LOG.warn("Unable to create: " + parent);
+        }
       }
     }
     else {
@@ -355,8 +364,7 @@ public class FetchExtResourceAction extends BaseExtResourceAction implements Wat
 
     final int lastDoPosInResourceUrl = resourceUrl.lastIndexOf('.', slashIndex);
     if (lastDoPosInResourceUrl == -1 ||
-        FileTypeManager.getInstance().getFileTypeByExtension(resourceUrl.substring(lastDoPosInResourceUrl + 1)) == StdFileTypes.UNKNOWN
-      ) {
+        FileTypeManager.getInstance().getFileTypeByExtension(resourceUrl.substring(lastDoPosInResourceUrl + 1)) == FileTypes.UNKNOWN) {
       // remote url does not contain file with extension
       resPath += "." + StdFileTypes.XML.getDefaultExtension();
     }
