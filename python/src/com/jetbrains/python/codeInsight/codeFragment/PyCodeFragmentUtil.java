@@ -42,11 +42,9 @@ public class PyCodeFragmentUtil {
     final List<Instruction> graph = Arrays.asList(flow.getInstructions());
     final List<Instruction> subGraph = getFragmentSubGraph(graph, start, end);
     final AnalysisResult subGraphAnalysis = analyseSubGraph(subGraph, start, end);
-    if (subGraphAnalysis.regularExits > 0 && subGraphAnalysis.returns > 0) {
-      throw new CannotCreateCodeFragmentException(
-        PyBundle.message("refactoring.extract.method.error.cannot.perform.refactoring.when.execution.flow.is.interrupted"));
-    }
-    if (subGraphAnalysis.targetInstructions > 1) {
+    if ((subGraphAnalysis.regularExits > 0 && subGraphAnalysis.returns > 0) ||
+        subGraphAnalysis.targetInstructions > 1 ||
+        subGraphAnalysis.outerLoopBreaks > 0) {
       throw new CannotCreateCodeFragmentException(
         PyBundle.message("refactoring.extract.method.error.cannot.perform.refactoring.when.execution.flow.is.interrupted"));
     }
@@ -56,16 +54,17 @@ public class PyCodeFragmentUtil {
     }
 
     final Set<String> globalWrites = getGlobalWrites(subGraph, owner);
+    final Set<String> nonlocalWrites = getNonlocalWrites(subGraph, owner);
 
     final Set<String> inputNames = new HashSet<String>();
     for (PsiElement element : filterElementsInScope(getInputElements(subGraph, graph), owner)) {
       final String name = getName(element);
       if (name != null) {
-        // Ignore "self", it is generated automatically when extracting any method fragment
-        if (PyPsiUtils.isMethodContext(element) && "self".equals(name)) {
+        // Ignore "self" and "cls", they are generated automatically when extracting any method fragment
+        if (resolvesToBoundMethodParameter(element)) {
           continue;
         }
-        if (globalWrites.contains(name)) {
+        if (globalWrites.contains(name) || nonlocalWrites.contains(name)) {
           continue;
         }
         inputNames.add(name);
@@ -76,12 +75,41 @@ public class PyCodeFragmentUtil {
     for (PsiElement element : getOutputElements(subGraph, graph)) {
       final String name = getName(element);
       if (name != null) {
+        if (globalWrites.contains(name) || nonlocalWrites.contains(name)) {
+          continue;
+        }
         outputNames.add(name);
-        globalWrites.remove(name);
       }
     }
 
-    return new PyCodeFragment(inputNames, outputNames, globalWrites, subGraphAnalysis.returns > 0);
+    return new PyCodeFragment(inputNames, outputNames, globalWrites, nonlocalWrites, subGraphAnalysis.returns > 0);
+  }
+
+  private static boolean resolvesToBoundMethodParameter(@NotNull PsiElement element) {
+    if (PyPsiUtils.isMethodContext(element)) {
+      final PyFunction function = PsiTreeUtil.getParentOfType(element, PyFunction.class);
+      if (function != null) {
+        final PsiReference reference = element.getReference();
+        if (reference != null) {
+          final PsiElement resolved = reference.resolve();
+          if (resolved instanceof PyParameter) {
+            final PyParameterList parameterList = PsiTreeUtil.getParentOfType(resolved, PyParameterList.class);
+            if (parameterList != null) {
+              final PyParameter[] parameters = parameterList.getParameters();
+              if (parameters.length > 0) {
+                if (resolved == parameters[0]) {
+                  final PyFunction.Modifier modifier = function.getModifier();
+                  if (modifier == null || modifier == PyFunction.Modifier.CLASSMETHOD) {
+                    return true;
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+    return false;
   }
 
   @Nullable
@@ -135,12 +163,14 @@ public class PyCodeFragmentUtil {
     private final int targetInstructions;
     private final int regularExits;
     private final int returns;
+    private final int outerLoopBreaks;
 
-    public AnalysisResult(int starImports, int targetInstructions, int returns, int regularExits) {
+    public AnalysisResult(int starImports, int targetInstructions, int returns, int regularExits, int outerLoopBreaks) {
       this.starImports = starImports;
       this.targetInstructions = targetInstructions;
       this.regularExits = regularExits;
       this.returns = returns;
+      this.outerLoopBreaks = outerLoopBreaks;
     }
   }
 
@@ -150,6 +180,7 @@ public class PyCodeFragmentUtil {
     int regularSources = 0;
     final Set<Instruction> targetInstructions = new HashSet<Instruction>();
     int starImports = 0;
+    int outerLoopBreaks = 0;
 
     for (Pair<Instruction, Instruction> edge : getOutgoingEdges(subGraph)) {
       final Instruction sourceInstruction = edge.getFirst();
@@ -173,17 +204,23 @@ public class PyCodeFragmentUtil {
       }
     }
 
-    for (Instruction instruction : subGraph) {
-      final PsiElement element = instruction.getElement();
+    final Set<PsiElement> subGraphElements = getSubGraphElements(subGraph);
+    for (PsiElement element : subGraphElements) {
       if (element instanceof PyFromImportStatement) {
         final PyFromImportStatement fromImportStatement = (PyFromImportStatement)element;
         if (fromImportStatement.getStarImportElement() != null) {
           starImports++;
         }
       }
+      if (element instanceof PyContinueStatement || element instanceof PyBreakStatement) {
+        final PyLoopStatement loopStatement = PsiTreeUtil.getParentOfType(element, PyLoopStatement.class);
+        if (loopStatement != null && !subGraphElements.contains(loopStatement)) {
+          outerLoopBreaks++;
+        }
+      }
     }
 
-    return new AnalysisResult(starImports, targetInstructions.size(), returnSources, regularSources);
+    return new AnalysisResult(starImports, targetInstructions.size(), returnSources, regularSources, outerLoopBreaks);
   }
 
   @NotNull
@@ -300,6 +337,21 @@ public class PyCodeFragmentUtil {
   }
 
   @NotNull
+  private static Set<String> getNonlocalWrites(@NotNull List<Instruction> instructions, @NotNull ScopeOwner owner) {
+    final Scope scope = ControlFlowCache.getScope(owner);
+    final Set<String> nonlocalWrites = new LinkedHashSet<String>();
+    for (Instruction instruction : getWriteInstructions(instructions)) {
+      if (instruction instanceof ReadWriteInstruction) {
+        final String name = ((ReadWriteInstruction)instruction).getName();
+        if (scope.isNonlocal(name)) {
+          nonlocalWrites.add(name);
+        }
+      }
+    }
+    return nonlocalWrites;
+  }
+
+  @NotNull
   private static List<PsiElement> multiResolve(@NotNull PsiReference reference) {
     if (reference instanceof PsiPolyVariantReference) {
       final ResolveResult[] results = ((PsiPolyVariantReference)reference).multiResolve(false);
@@ -308,6 +360,11 @@ public class PyCodeFragmentUtil {
         final PsiElement element = result.getElement();
         if (element != null) {
           resolved.add(element);
+        }
+      }
+      for (PsiElement element : resolved) {
+        if (element instanceof PyClass) {
+          return Collections.singletonList(element);
         }
       }
       return resolved;

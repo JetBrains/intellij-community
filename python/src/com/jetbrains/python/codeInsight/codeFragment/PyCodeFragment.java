@@ -8,14 +8,24 @@ import java.util.Set;
  * @author vlan
  */
 public class PyCodeFragment extends CodeFragment {
-  private final Set<String> myGlobals;
+  private final Set<String> myGlobalWrites;
+  private final Set<String> myNonlocalWrites;
 
-  public PyCodeFragment(final Set<String> input, final Set<String> output, final Set<String> globals, final boolean returnInside) {
+  public PyCodeFragment(final Set<String> input,
+                        final Set<String> output,
+                        final Set<String> globalWrites,
+                        final Set<String> nonlocalWrites,
+                        final boolean returnInside) {
     super(input, output, returnInside);
-    myGlobals = globals;
+    myGlobalWrites = globalWrites;
+    myNonlocalWrites = nonlocalWrites;
   }
 
-  public Set<String> getGlobals() {
-    return myGlobals;
+  public Set<String> getGlobalWrites() {
+    return myGlobalWrites;
+  }
+
+  public Set<String> getNonlocalWrites() {
+    return myNonlocalWrites;
   }
 }
