@@ -209,4 +209,9 @@ public class PyExtractMethodTest extends LightMarkedTestCase {
   public void testGlobalToplevelAssignment() {
     doTest("bar");
   }
+
+  // PY-6623
+  public void testForLoopContinue() {
+    doFail("bar", "Cannot perform refactoring when execution flow is interrupted");
+  }
 }

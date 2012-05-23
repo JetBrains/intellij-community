@@ -42,11 +42,9 @@ public class PyCodeFragmentUtil {
     final List<Instruction> graph = Arrays.asList(flow.getInstructions());
     final List<Instruction> subGraph = getFragmentSubGraph(graph, start, end);
     final AnalysisResult subGraphAnalysis = analyseSubGraph(subGraph, start, end);
-    if (subGraphAnalysis.regularExits > 0 && subGraphAnalysis.returns > 0) {
-      throw new CannotCreateCodeFragmentException(
-        PyBundle.message("refactoring.extract.method.error.cannot.perform.refactoring.when.execution.flow.is.interrupted"));
-    }
-    if (subGraphAnalysis.targetInstructions > 1) {
+    if ((subGraphAnalysis.regularExits > 0 && subGraphAnalysis.returns > 0) ||
+        subGraphAnalysis.targetInstructions > 1 ||
+        subGraphAnalysis.outerLoopBreaks > 0) {
       throw new CannotCreateCodeFragmentException(
         PyBundle.message("refactoring.extract.method.error.cannot.perform.refactoring.when.execution.flow.is.interrupted"));
     }
@@ -135,12 +133,14 @@ public class PyCodeFragmentUtil {
     private final int targetInstructions;
     private final int regularExits;
     private final int returns;
+    private final int outerLoopBreaks;
 
-    public AnalysisResult(int starImports, int targetInstructions, int returns, int regularExits) {
+    public AnalysisResult(int starImports, int targetInstructions, int returns, int regularExits, int outerLoopBreaks) {
       this.starImports = starImports;
       this.targetInstructions = targetInstructions;
       this.regularExits = regularExits;
       this.returns = returns;
+      this.outerLoopBreaks = outerLoopBreaks;
     }
   }
 
@@ -150,6 +150,7 @@ public class PyCodeFragmentUtil {
     int regularSources = 0;
     final Set<Instruction> targetInstructions = new HashSet<Instruction>();
     int starImports = 0;
+    int outerLoopBreaks = 0;
 
     for (Pair<Instruction, Instruction> edge : getOutgoingEdges(subGraph)) {
       final Instruction sourceInstruction = edge.getFirst();
@@ -173,17 +174,23 @@ public class PyCodeFragmentUtil {
       }
     }
 
-    for (Instruction instruction : subGraph) {
-      final PsiElement element = instruction.getElement();
+    final Set<PsiElement> subGraphElements = getSubGraphElements(subGraph);
+    for (PsiElement element : subGraphElements) {
       if (element instanceof PyFromImportStatement) {
         final PyFromImportStatement fromImportStatement = (PyFromImportStatement)element;
         if (fromImportStatement.getStarImportElement() != null) {
           starImports++;
         }
       }
+      if (element instanceof PyContinueStatement || element instanceof PyBreakStatement) {
+        final PyLoopStatement loopStatement = PsiTreeUtil.getParentOfType(element, PyLoopStatement.class);
+        if (loopStatement != null && !subGraphElements.contains(loopStatement)) {
+          outerLoopBreaks++;
+        }
+      }
     }
 
-    return new AnalysisResult(starImports, targetInstructions.size(), returnSources, regularSources);
+    return new AnalysisResult(starImports, targetInstructions.size(), returnSources, regularSources, outerLoopBreaks);
   }
 
   @NotNull
