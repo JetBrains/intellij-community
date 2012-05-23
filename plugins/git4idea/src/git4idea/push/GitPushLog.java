@@ -210,7 +210,6 @@ class GitPushLog extends JPanel implements TypeSafeDataProvider {
       }
       else {
         // we're looking to the breadthFirstEnumeration => all repository nodes have already been enumerated
-        // checking for null
         return;
       }
     }
