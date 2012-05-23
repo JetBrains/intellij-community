@@ -352,7 +352,7 @@ public class PyClassRefactoringUtil {
         if (newFile == file) {
           deleteImportElement = true;
         }
-        else if (insertImport(importStatement, element, importElement.getAsName())) {
+        else if (insertImport(importStatement, element, importElement.getAsName(), true)) {
           deleteImportElement = true;
         }
         if (deleteImportElement) {
