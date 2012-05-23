@@ -322,9 +322,4 @@ public class PythonInspectionsTest extends PyTestCase {
   public void testPyDecoratorInspection() {    //PY-3348
     doHighlightingTest(PyDecoratorInspection.class);
   }
-
-  public void testPyTypeCheckerInspection() {
-    // TODO: Add a Py3K test. Setting a language level is not enough, setting up a Py3K SDK is required
-    doHighlightingTest(PyTypeCheckerInspection.class);
-  }
 }

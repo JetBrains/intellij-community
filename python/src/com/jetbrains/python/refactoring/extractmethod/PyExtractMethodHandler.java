@@ -13,6 +13,7 @@ import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.codeInsight.codeFragment.PyCodeFragment;
 import com.jetbrains.python.codeInsight.codeFragment.PyCodeFragmentUtil;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.psi.PyElement;
@@ -73,7 +74,7 @@ public class PyExtractMethodHandler implements RefactoringActionHandler {
       if (owner == null) {
         return;
       }
-      final CodeFragment fragment;
+      final PyCodeFragment fragment;
       try {
         fragment = PyCodeFragmentUtil.createCodeFragment(owner, element1, element2);
       }

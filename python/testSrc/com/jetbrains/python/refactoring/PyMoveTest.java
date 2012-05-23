@@ -96,7 +96,7 @@ public class PyMoveTest extends PyTestCase {
   }
 
   // PY-6432
-  public void testStarImportUsage() {
+  public void testStarImportWithUsages() {
     doMoveSymbolTest("f", "c.py");
   }
 
@@ -113,6 +113,11 @@ public class PyMoveTest extends PyTestCase {
   // PY-6465
   public void testUsageFromFunction() {
     doMoveSymbolTest("use_f", "b.py");
+  }
+
+  // PY-6571
+  public void testStarImportUsage() {
+    doMoveSymbolTest("g", "c.py");
   }
 
   private void doMoveFileTest(String fileName, String toDirName)  {

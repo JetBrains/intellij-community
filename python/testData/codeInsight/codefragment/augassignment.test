@@ -1,8 +1,9 @@
-aaa = 1
-<begin>
-aaa += 1
-<end>
-print(aaa)
+def f():
+    aaa = 1
+    <begin>
+    aaa += 1
+    <end>
+    print(aaa)
 <result>
 In:
 aaa

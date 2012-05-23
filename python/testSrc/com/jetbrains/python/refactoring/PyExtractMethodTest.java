@@ -92,7 +92,8 @@ public class PyExtractMethodTest extends LightMarkedTestCase {
     doTest("outNotEmpty/statements2.before.py", "sum_squares", "outNotEmpty/statements2.after.py");
   }
 
-  public void testComment() {
+  // PY-2903
+  public void _testComment() {
     doTest("comment.before.py", "bar", "comment.after.py");
   }
 
@@ -165,6 +166,41 @@ public class PyExtractMethodTest extends LightMarkedTestCase {
 
   // PY-6391
   public void testDefinedBeforeAccessedAfter() {
+    doTest("bar");
+  }
+
+  // PY-5865
+  public void testSingleRaise() {
+    doTest("bar");
+  }
+
+  // PY-4156
+  public void testLocalFunction() {
+    doTest("bar");
+  }
+
+  // PY-6413
+  public void testTryFinally() {
+    doTest("bar");
+  }
+
+  // PY-6414
+  public void testTryContext() {
+    doTest("bar");
+  }
+
+  // PY-6416
+  public void testCommentAfterSelection() {
+    doTest("bar");
+  }
+
+  // PY-6417
+  public void testGlobalVarAssignment() {
+    doTest("bar");
+  }
+
+  // PY-6619
+  public void testGlobalToplevelAssignment() {
     doTest("bar");
   }
 }

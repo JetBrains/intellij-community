@@ -24,7 +24,6 @@ import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyReferenceExpression;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -58,19 +57,19 @@ public class PydevConsoleReference extends PsiPolyVariantReferenceBase<PyReferen
         final int type = completion.getType();
         LookupElementBuilder builder = LookupElementBuilder
           .create(new PydevConsoleElement(manager, name, completion.getDescription()))
-          .setIcon(PyCodeCompletionImages.getImageForType(type));
+          .withIcon(PyCodeCompletionImages.getImageForType(type));
 
 
         String args = completion.getArgs();
         if (args.equals("(%)")) {
-          builder.setPresentableText("%" + completion.getName());
-          builder = builder.setInsertHandler(new InsertHandler<LookupElement>() {
+          builder.withPresentableText("%" + completion.getName());
+          builder = builder.withInsertHandler(new InsertHandler<LookupElement>() {
             @Override
             public void handleInsert(InsertionContext context, LookupElement item) {
               final Editor editor = context.getEditor();
               final Document document = editor.getDocument();
               int offset = context.getStartOffset();
-              if (offset == 0 || !"%".equals(document.getText(TextRange.from(offset-1, 1)))) {
+              if (offset == 0 || !"%".equals(document.getText(TextRange.from(offset - 1, 1)))) {
                 document.insertString(offset, "%");
               }
             }
@@ -78,11 +77,11 @@ public class PydevConsoleReference extends PsiPolyVariantReferenceBase<PyReferen
           args = "";
         }
         else if (!StringUtil.isEmptyOrSpaces(args)) {
-          builder = builder.setTailText(args);
+          builder = builder.withTailText(args);
         }
         // Set function insert handler
         if (type == IToken.TYPE_FUNCTION || args.endsWith(")")) {
-          builder = builder.setInsertHandler(ParenthesesInsertHandler.WITH_PARAMETERS);
+          builder = builder.withInsertHandler(ParenthesesInsertHandler.WITH_PARAMETERS);
         }
         variants.add(builder);
       }

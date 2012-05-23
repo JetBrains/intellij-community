@@ -2,6 +2,7 @@ def plus(dddd, eeeee):
     <begin>
     dddd + eeeee * 123
     <end>
+    pass
 
 <result>
 In:

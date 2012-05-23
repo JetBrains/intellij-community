@@ -1,10 +1,11 @@
-aaa = 12
-<begin>
-bbb = aaa
-aaa = bbb + 123
-<end>
-bbb
-aaa
+def f():
+    aaa = 12
+    <begin>
+    bbb = aaa
+    aaa = bbb + 123
+    <end>
+    bbb
+    aaa
 <result>
 In:
 aaa
