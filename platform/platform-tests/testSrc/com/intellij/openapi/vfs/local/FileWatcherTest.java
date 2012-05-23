@@ -41,7 +41,7 @@ import java.io.IOException;
 import java.util.*;
 
 public class FileWatcherTest extends PlatformLangTestCase {
-  private static final int NATIVE_PROCESS_DELAY = 500;  // time to event to be caught by native watcher and passed to watcher thread
+  private static final int NATIVE_PROCESS_DELAY = 750;  // time to event to be caught by native watcher and passed to watcher thread
 
   private FileWatcher myWatcher;
   private LocalFileSystem myFileSystem;
@@ -123,7 +123,7 @@ public class FileWatcherTest extends PlatformLangTestCase {
       assertEvent(VFileCreateEvent.class, file.getAbsolutePath());
     }
     finally {
-      myFileSystem.removeWatchedRoot(request);
+      unwatch(request);
       delete(file);
     }
   }
@@ -150,7 +150,7 @@ public class FileWatcherTest extends PlatformLangTestCase {
       assertEvent(VFileCreateEvent.class, file.getAbsolutePath());
     }
     finally {
-      myFileSystem.removeWatchedRoot(request);
+      unwatch(request);
       delete(file);
     }
   }
@@ -178,7 +178,7 @@ public class FileWatcherTest extends PlatformLangTestCase {
       assertEvent(VFileCreateEvent.class, file.getAbsolutePath());
     }
     finally {
-      myFileSystem.removeWatchedRoot(request);
+      unwatch(request);
       delete(topDir);
     }
   }
@@ -199,7 +199,31 @@ public class FileWatcherTest extends PlatformLangTestCase {
       assertEvent(VFileEvent.class);
     }
     finally {
-      myFileSystem.removeWatchedRoot(request);
+      unwatch(request);
+      delete(topDir);
+    }
+  }
+
+  public void testDirectoryMixed() throws Exception {
+    final File topDir = FileUtil.createTempDirectory("top.", null);
+    final File watchedFile1 = FileUtil.createTempFile(topDir, "test.", ".txt", true, false);
+    final File sub1Dir = FileUtil.createTempDirectory(topDir, "sub1.", null);
+    final File unwatchedFile = FileUtil.createTempFile(sub1Dir, "test.", ".txt", true, false);
+    final File sub2Dir = FileUtil.createTempDirectory(topDir, "sub2.", null);
+    final File sub2subDir = FileUtil.createTempDirectory(sub2Dir, "sub2.", null);
+    final File watchedFile2 = FileUtil.createTempFile(sub2subDir, "test.", ".txt", true, false);
+    refresh(topDir);
+
+    final LocalFileSystem.WatchRequest topRequest = watch(topDir, false);
+    final LocalFileSystem.WatchRequest subRequest = watch(sub2Dir);
+    try {
+      FileUtil.writeToFile(watchedFile1, "new content");
+      FileUtil.writeToFile(watchedFile2, "new content");
+      FileUtil.writeToFile(unwatchedFile, "new content");
+      assertEvent(VFileContentChangeEvent.class, watchedFile1.getAbsolutePath(), watchedFile2.getAbsolutePath());
+    }
+    finally {
+      unwatch(subRequest, topRequest);
       delete(topDir);
     }
   }
@@ -220,7 +244,7 @@ public class FileWatcherTest extends PlatformLangTestCase {
       assertEvent(VFileCreateEvent.class, file.getAbsolutePath());
     }
     finally {
-      myFileSystem.removeWatchedRoot(request);
+      unwatch(request);
       delete(topDir);
     }
   }
@@ -265,7 +289,7 @@ public class FileWatcherTest extends PlatformLangTestCase {
       assertEvent(VFileDeleteEvent.class, file1.getAbsolutePath(), file2.getAbsolutePath(), file3.getAbsolutePath());
     }
     finally {
-      myFileSystem.removeWatchedRoots(Arrays.asList(request1, request2));
+      unwatch(request1, request2);
       delete(topDir);
     }
   }
@@ -381,7 +405,7 @@ public class FileWatcherTest extends PlatformLangTestCase {
         assertEvent(VFileCreateEvent.class, substFile.getAbsolutePath());
       }
       finally {
-        myFileSystem.removeWatchedRoot(request);
+        unwatch(request);
       }
     }
     finally {
@@ -429,8 +453,8 @@ public class FileWatcherTest extends PlatformLangTestCase {
     return request;
   }
 
-  private void unwatch(final LocalFileSystem.WatchRequest request) throws InterruptedException {
-    myFileSystem.removeWatchedRoot(request);
+  private void unwatch(final LocalFileSystem.WatchRequest... requests) throws InterruptedException {
+    myFileSystem.removeWatchedRoots(Arrays.asList(requests));
     waitForResponse();
     clearEvents();
   }
@@ -451,7 +475,7 @@ public class FileWatcherTest extends PlatformLangTestCase {
   private void delete(@NotNull final File file) throws IOException {
     final VirtualFile vFile = myFileSystem.findFileByIoFile(file);
     if (vFile != null) {
-      final AccessToken token = ApplicationManager.getApplication().acquireWriteActionLock(getClass());
+      @SuppressWarnings("deprecation") final AccessToken token = ApplicationManager.getApplication().acquireWriteActionLock(getClass());
       try {
         vFile.delete(this);
       }
