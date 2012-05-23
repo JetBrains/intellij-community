@@ -496,6 +496,8 @@ def layout_core(String home, String target) {
       module("core-impl")
       module("boot")
       module("extensions")
+      module("indexing-api")
+      module("indexing-impl")
       module("java-psi-api")
       module("java-psi-impl")
     }
@@ -511,6 +513,44 @@ def layout_core(String home, String target) {
       include(name: "asm.jar")
       include(name: "asm-commons.jar")
       include(name: "cli-parser-1.1.jar")
+    }
+  }
+}
+
+def layout_core_upsource(String home, String target) {
+  layout(target) {
+    jar("intellij-core-upsource.jar") {
+      module("util-rt")
+      module("util")
+      module("core-api")
+      module("core-impl")
+      module("boot")
+      module("extensions")
+      module("indexing-api")
+      module("indexing-impl")
+      module("java-psi-api")
+      module("java-psi-impl")
+      module("projectModel-api")
+      module("projectModel-impl")
+    }
+
+    jar("annotations.jar") {
+      module("annotations")
+    }
+
+    fileset(dir: "$home/lib") {
+      include(name: "guava-11.0.1.jar")
+      include(name: "picocontainer.jar")
+      include(name: "trove4j.jar")
+      include(name: "asm.jar")
+      include(name: "asm-commons.jar")
+      include(name: "asm4-all.jar")
+      include(name: "cli-parser-1.1.jar")
+      include(name: "jna.jar")
+      include(name: "log4j.jar")
+      include(name: "xstream.jar")
+      include(name: "xpp3-1.1.4-min.jar")
+      include(name: "jdom.jar")
     }
   }
 }

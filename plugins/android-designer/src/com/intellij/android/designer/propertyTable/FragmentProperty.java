@@ -36,10 +36,12 @@ public class FragmentProperty extends Property<RadViewComponent> {
   private final String myAttribute;
   private final PropertyRenderer myRenderer = new LabelPropertyRenderer(null);
   private final PropertyEditor myEditor;
+  private final String myJavadocText;
 
-  public FragmentProperty(@NotNull String name, PropertyEditor editor) {
+  public FragmentProperty(@NotNull String name, PropertyEditor editor, String javadocText) {
     super(null, name);
     myEditor = editor;
+    myJavadocText = javadocText;
     setImportant(true);
     myAttribute = "android:" + name;
   }
@@ -96,5 +98,10 @@ public class FragmentProperty extends Property<RadViewComponent> {
   @Override
   public PropertyEditor getEditor() {
     return myEditor;
+  }
+
+  @Override
+  public String getJavadocText() {
+    return myJavadocText;
   }
 }

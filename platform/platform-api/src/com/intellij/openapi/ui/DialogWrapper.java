@@ -228,7 +228,12 @@ public abstract class DialogWrapper {
   }
 
   //validation
-  private final Alarm myValidationAlarm = new Alarm(myDisposable);
+  private final Alarm myValidationAlarm = new Alarm(getValidationThreadToUse(), myDisposable);
+
+  protected Alarm.ThreadToUse getValidationThreadToUse() {
+    return Alarm.ThreadToUse.SWING_THREAD;
+  }
+
   private int myValidationDelay = 300;
   private boolean myDisposed = false;
   private boolean myValidationStarted = false;
@@ -281,7 +286,12 @@ public abstract class DialogWrapper {
   private void installErrorPainter() {
     if (myErrorPainterInstalled) return;
     myErrorPainterInstalled = true;
-    IdeGlassPaneUtil.installPainter(myErrorPane, myErrorPainter, myDisposable);
+    UIUtil.invokeLaterIfNeeded(new Runnable() {
+      @Override
+      public void run() {
+        IdeGlassPaneUtil.installPainter(myErrorPane, myErrorPainter, myDisposable);
+      }
+    });
   }
 
   private void clearProblems() {
@@ -1150,8 +1160,9 @@ public abstract class DialogWrapper {
 
   protected final void initValidation() {
     myValidationAlarm.cancelAllRequests();
-    myValidationAlarm.addRequest(new Runnable() {
+    final Runnable validateRequest = new Runnable() {
       public void run() {
+        if (myDisposed) return;
         final ValidationInfo result = doValidate();
         if (result == null) {
           clearProblems();
@@ -1164,7 +1175,13 @@ public abstract class DialogWrapper {
           initValidation();
         }
       }
-    }, myValidationDelay, ModalityState.current());
+    };
+
+    if (getValidationThreadToUse() == Alarm.ThreadToUse.SWING_THREAD) {
+      myValidationAlarm.addRequest(validateRequest, myValidationDelay, ModalityState.current());
+    } else {
+      myValidationAlarm.addRequest(validateRequest, myValidationDelay);
+    }
   }
 
   protected boolean isNorthStrictedToPreferredSize() {

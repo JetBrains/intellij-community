@@ -27,7 +27,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectUtil;
+import com.intellij.openapi.project.ProjectCoreUtil;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -105,7 +105,7 @@ public interface MergeVersion {
 
     public static void reportProjectFileChangeIfNeeded(Project project, VirtualFile file) {
       if (file != null && ! file.isDirectory()) {
-        if (ProjectUtil.isProjectOrWorkspaceFile(file) || isProjectFile(file)) {
+        if (ProjectCoreUtil.isProjectOrWorkspaceFile(file) || isProjectFile(file)) {
           ProjectManagerEx.getInstanceEx().saveChangedProjectFile(file, project);
         }
       }
@@ -116,7 +116,7 @@ public interface MergeVersion {
       final Set<VirtualFile> vfs = new HashSet<VirtualFile>();
       for (VirtualFile vf : files) {
         if (vf != null && ! vf.isDirectory()) {
-          if (ProjectUtil.isProjectOrWorkspaceFile(vf) || isProjectFile(vf)) {
+          if (ProjectCoreUtil.isProjectOrWorkspaceFile(vf) || isProjectFile(vf)) {
             vfs.add(vf);
           }
         }

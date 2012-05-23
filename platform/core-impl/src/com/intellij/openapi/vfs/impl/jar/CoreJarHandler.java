@@ -37,16 +37,12 @@ public class CoreJarHandler extends JarHandlerBase {
     Map<EntryInfo, CoreJarVirtualFile> entries = new HashMap<EntryInfo, CoreJarVirtualFile>();
 
     final Map<String, EntryInfo> entriesMap = getEntriesMap();
-    if (entriesMap != null) {
-      for (EntryInfo info : entriesMap.values()) {
-        getOrCreateFile(info, entries);
-      }
+    for (EntryInfo info : entriesMap.values()) {
+      getOrCreateFile(info, entries);
+    }
 
-      myRoot = getOrCreateFile(getEntryInfo(""), entries);
-    }
-    else {
-      myRoot = null;
-    }
+    EntryInfo rootInfo = getEntryInfo("");
+    myRoot = rootInfo != null ? getOrCreateFile(rootInfo, entries) : null;
   }
 
   @NotNull

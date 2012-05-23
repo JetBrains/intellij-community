@@ -20,7 +20,7 @@ import com.intellij.lang.cacheBuilder.CacheBuilderRegistry;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.fileTypes.impl.CustomSyntaxTableFileType;
-import com.intellij.openapi.project.ProjectUtil;
+import com.intellij.openapi.project.ProjectCoreUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.indexing.*;
 import com.intellij.util.io.DataExternalizer;
@@ -46,7 +46,7 @@ public class IdIndex extends FileBasedIndexExtension<IdIndexEntry, Integer> {
     @Override
     public boolean acceptInput(final VirtualFile file) {
       final FileType fileType = file.getFileType();
-      return isIndexable(fileType) && !ProjectUtil.isProjectOrWorkspaceFile(file, fileType);
+      return isIndexable(fileType) && !ProjectCoreUtil.isProjectOrWorkspaceFile(file, fileType);
     }
   };
 

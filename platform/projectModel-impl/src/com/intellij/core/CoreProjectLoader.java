@@ -22,6 +22,8 @@ import com.intellij.openapi.components.impl.stores.DirectoryStorageData;
 import com.intellij.openapi.components.impl.stores.StorageData;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.impl.DirectoryIndex;
+import com.intellij.openapi.roots.impl.DirectoryIndexImpl;
 import com.intellij.openapi.roots.impl.libraries.LibraryTableBase;
 import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable;
 import com.intellij.openapi.util.JDOMUtil;
@@ -71,6 +73,7 @@ public class CoreProjectLoader {
     }
 
     moduleManager.loadModules();
+    ((DirectoryIndexImpl) DirectoryIndex.getInstance(project)).initialize();
   }
 
   public static StorageData loadStorageFile(ComponentManager componentManager, VirtualFile modulesXml) throws JDOMException, IOException {

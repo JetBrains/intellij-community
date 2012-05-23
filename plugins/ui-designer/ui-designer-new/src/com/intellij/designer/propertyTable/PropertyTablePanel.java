@@ -17,6 +17,8 @@ package com.intellij.designer.propertyTable;
 
 import com.intellij.designer.DesignerBundle;
 import com.intellij.designer.propertyTable.actions.IPropertyTableAction;
+import com.intellij.designer.propertyTable.actions.RestoreDefault;
+import com.intellij.designer.propertyTable.actions.ShowExpert;
 import com.intellij.designer.propertyTable.actions.ShowJavadoc;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
@@ -45,11 +47,19 @@ public final class PropertyTablePanel extends JPanel implements ListSelectionLis
         new GridBagConstraints(0, 0, 1, 1, 1, 0, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL, new Insets(2, 5, 2, 0), 0, 0));
 
     ActionManager actionManager = ActionManager.getInstance();
+    DefaultActionGroup actionGroup = new DefaultActionGroup();
 
-    AnAction quickJavadocAction = ActionManager.getInstance().getAction(IdeActions.ACTION_QUICK_JAVADOC);
-    new ShowJavadoc().registerCustomShortcutSet(quickJavadocAction.getShortcutSet(), myPropertyTable);
+    ShowJavadoc showJavadoc = new ShowJavadoc();
+    showJavadoc.registerCustomShortcutSet(actionManager.getAction(IdeActions.ACTION_QUICK_JAVADOC).getShortcutSet(), myPropertyTable);
+    actionGroup.add(showJavadoc);
 
-    ActionGroup actionGroup = (ActionGroup)actionManager.getAction("UIDesigner.PropertyTable");
+    actionGroup.addSeparator();
+
+    RestoreDefault restoreDefault = new RestoreDefault();
+    restoreDefault.registerCustomShortcutSet(actionManager.getAction(IdeActions.ACTION_DELETE).getShortcutSet(), myPropertyTable);
+    actionGroup.add(restoreDefault);
+
+    actionGroup.add(new ShowExpert());
 
     PopupHandler.installPopupHandler(myPropertyTable, actionGroup,
                                      ActionPlaces.GUI_DESIGNER_PROPERTY_INSPECTOR_POPUP,

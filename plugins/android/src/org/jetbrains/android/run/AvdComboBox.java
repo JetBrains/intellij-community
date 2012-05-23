@@ -3,9 +3,11 @@ package org.jetbrains.android.run;
 import com.android.ddmlib.AndroidDebugBridge;
 import com.android.ddmlib.IDevice;
 import com.android.sdklib.internal.avd.AvdInfo;
-import com.intellij.execution.ExecutionBundle;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.projectRoots.ProjectJdkTable;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.SdkAdditionalData;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.ui.ComboboxWithBrowseButton;
 import com.intellij.util.Alarm;
@@ -14,7 +16,8 @@ import com.intellij.util.containers.HashSet;
 import org.jetbrains.android.actions.RunAndroidAvdManagerAction;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.sdk.AndroidPlatform;
-import org.jetbrains.android.util.AndroidBundle;
+import org.jetbrains.android.sdk.AndroidSdkAdditionalData;
+import org.jetbrains.android.sdk.AndroidSdkType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,21 +45,9 @@ public abstract class AvdComboBox extends ComboboxWithBrowseButton {
 
     addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
-        Module module = getModule();
-        if (module == null) {
-          Messages.showErrorDialog(AvdComboBox.this, ExecutionBundle.message("module.not.specified.error.text"));
-          return;
-        }
-
-        AndroidFacet facet = AndroidFacet.getInstance(module);
-        if (facet == null) {
-          Messages.showErrorDialog(AvdComboBox.this, AndroidBundle.message("no.facet.error", module.getName()));
-          return;
-        }
-
-        final AndroidPlatform platform = facet.getConfiguration().getAndroidPlatform();
+        final AndroidPlatform platform = findAndroidPlatform();
         if (platform == null) {
-          Messages.showErrorDialog(AvdComboBox.this, AndroidBundle.message("android.compilation.error.specify.platform", module.getName()));
+          Messages.showErrorDialog(AvdComboBox.this, "Cannot find any configured Android SDK");
           return;
         }
 
@@ -98,7 +89,7 @@ public abstract class AvdComboBox extends ComboboxWithBrowseButton {
     final Module module = getModule();
     final AndroidFacet facet = module != null ? AndroidFacet.getInstance(module) : null;
     final String[] newAvds;
-    
+
     if (facet != null) {
       final Set<String> filteringSet = new HashSet<String>();
       if (myShowNotLaunchedOnly) {
@@ -136,9 +127,44 @@ public abstract class AvdComboBox extends ComboboxWithBrowseButton {
       getComboBox().setModel(new DefaultComboBoxModel(newAvds));
       getComboBox().setSelectedItem(selected);
     }
-
   }
 
   @Nullable
   public abstract Module getModule();
+
+  @Nullable
+  private AndroidPlatform findAndroidPlatform() {
+    AndroidPlatform platform = findAndroidPlatformFromModule();
+    if (platform != null) {
+       return platform;
+    }
+
+    for (Sdk sdk : ProjectJdkTable.getInstance().getAllJdks()) {
+      if (sdk.getSdkType() instanceof AndroidSdkType) {
+        final SdkAdditionalData data = sdk.getSdkAdditionalData();
+        if (data instanceof AndroidSdkAdditionalData) {
+          platform = ((AndroidSdkAdditionalData)data).getAndroidPlatform();
+          if (platform != null) {
+            return platform;
+          }
+        }
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  private AndroidPlatform findAndroidPlatformFromModule() {
+    Module module = getModule();
+    if (module == null) {
+      return null;
+    }
+
+    AndroidFacet facet = AndroidFacet.getInstance(module);
+    if (facet == null) {
+      return null;
+    }
+
+    return facet.getConfiguration().getAndroidPlatform();
+  }
 }

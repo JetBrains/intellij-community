@@ -1304,4 +1304,17 @@ def foo(Integer a) {
 ''')
   }
 
+  void testSuperExtendsInTypeParams() {
+    myFixture.configureByText("_.groovy", '''\
+def foo(List<? <caret>)''');
+    myFixture.complete(CompletionType.BASIC);
+    assertOrderedEquals(myFixture.lookupElementStrings, "extends", "super");
+  }
+
+  void testSuperExtendsInTypeParams2() {
+    myFixture.configureByText("_.groovy", '''\
+def foo(List<? <caret>> list)''');
+    myFixture.complete(CompletionType.BASIC);
+    assertOrderedEquals(myFixture.lookupElementStrings, "extends", "super");
+  }
 }

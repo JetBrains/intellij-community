@@ -22,8 +22,10 @@ import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 
-import static org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.ReferenceElement.*;
-import static org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.ReferenceElement.ReferenceElementResult.*;
+import static org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.ReferenceElement.ReferenceElementResult;
+import static org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.ReferenceElement.ReferenceElementResult.fail;
+import static org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.ReferenceElement.ReferenceElementResult.mustBeType;
+import static org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.ReferenceElement.parseReferenceElement;
 
 /**
  * @autor: Dmitry.Krasilschikov
@@ -114,11 +116,12 @@ public class TypeSpec implements GroovyElementTypes {
    * @param builder
    * @return
    */
-  public static ReferenceElementResult parseStrict(PsiBuilder builder) {
+  public static ReferenceElementResult parseStrict(PsiBuilder builder, boolean expressionPossible) {
     if (TokenSets.BUILT_IN_TYPE.contains(builder.getTokenType())) {
       return parseBuiltInTypeStrict(builder);
-    } else if (builder.getTokenType() == mIDENT) {
-      return parseClassOrInterfaceTypeStrict(builder);
+    }
+    else if (builder.getTokenType() == mIDENT) {
+      return parseClassOrInterfaceTypeStrict(builder, expressionPossible);
     }
     return fail;
   }
@@ -171,11 +174,11 @@ public class TypeSpec implements GroovyElementTypes {
    * @param builder
    * @return
    */
-  private static ReferenceElementResult parseClassOrInterfaceTypeStrict(PsiBuilder builder) {
+  private static ReferenceElementResult parseClassOrInterfaceTypeStrict(PsiBuilder builder, boolean expressionPossible) {
     PsiBuilder.Marker arrMarker = builder.mark();
     PsiBuilder.Marker typeElementMarker = builder.mark();
 
-    final ReferenceElementResult result = parseReferenceElement(builder);
+    final ReferenceElementResult result = parseReferenceElement(builder, false, expressionPossible);
     if (result == fail) {
       typeElementMarker.drop();
       arrMarker.rollbackTo();
@@ -185,9 +188,9 @@ public class TypeSpec implements GroovyElementTypes {
     typeElementMarker.done(CLASS_TYPE_ELEMENT);
 
     if (mLBRACK.equals(builder.getTokenType())) {
-      return declarationBracketsParseStrict(builder, arrMarker)? mustBeType: fail;
-    } else {
-//      arrMarker.done(CLASS_TYPE_ELEMENT);
+      return declarationBracketsParseStrict(builder, arrMarker) ? mustBeType : fail;
+    }
+    else {
       arrMarker.drop();
       return result;
     }

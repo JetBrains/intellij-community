@@ -443,8 +443,8 @@ public class RedundantCastUtil {
 
       PsiTypeElement typeElement = typeCast.getCastType();
       if (typeElement == null) return;
-      PsiType castTo = typeElement.getType();
-      PsiType opType = typeCast.getOperand().getType();
+      final PsiType castTo = typeElement.getType();
+      final PsiType opType = typeCast.getOperand().getType();
       if (opType == null) return;
       if (parent instanceof PsiReferenceExpression) {
         if (castTo instanceof PsiClassType && opType instanceof PsiPrimitiveType) return; //explicit boxing
@@ -460,8 +460,8 @@ public class RedundantCastUtil {
         }
       }
 
-      if (someWhereAtTheLeftSideOfAssignment(parent)) {
-        if (TypeConversionUtil.isAssignable(opType, castTo, false)) {
+      if (arrayAccessAtTheLeftSideOfAssignment(parent)) {
+        if (TypeConversionUtil.isAssignable(opType, castTo, false) && opType.getArrayDimensions() == castTo.getArrayDimensions()) {
           addToResults(typeCast);
         }
       }
@@ -472,7 +472,7 @@ public class RedundantCastUtil {
       }
     }
 
-    private static boolean someWhereAtTheLeftSideOfAssignment(PsiElement element) {
+    private static boolean arrayAccessAtTheLeftSideOfAssignment(PsiElement element) {
       PsiAssignmentExpression assignment = PsiTreeUtil.getParentOfType(element, PsiAssignmentExpression.class, false, PsiMember.class);
       if (assignment == null) return false;
       PsiExpression lExpression = assignment.getLExpression();

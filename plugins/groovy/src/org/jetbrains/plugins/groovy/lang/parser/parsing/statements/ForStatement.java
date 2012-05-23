@@ -71,7 +71,7 @@ public class ForStatement implements GroovyElementTypes {
     boolean isBuiltInType = TokenSets.BUILT_IN_TYPE.contains(builder.getTokenType());
 
     PsiBuilder.Marker typeSpec = builder.mark();
-    TypeSpec.parseStrict(builder);
+    TypeSpec.parseStrict(builder, false);
 
     if (builder.getTokenType() == mIDENT || isBuiltInType) {
       typeSpec.drop();

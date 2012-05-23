@@ -216,9 +216,7 @@ class AndroidResourceFilesListener extends VirtualFileAdapter {
 
       final List<AndroidAutogeneratorMode> modes = new ArrayList<AndroidAutogeneratorMode>();
 
-      if (AndroidAptCompiler.isToCompileModule(module, myFacet.getConfiguration()) &&
-          (myFacet.getConfiguration().REGENERATE_R_JAVA && (gp == resourceDir ||
-           manifestFile == file))) {
+      if (AndroidAptCompiler.isToCompileModule(module, myFacet.getConfiguration()) && (gp == resourceDir || manifestFile == file)) {
         final Manifest manifest = myFacet.getManifest();
         final String aPackage = manifest != null ? manifest.getPackage().getValue() : null;
 
@@ -230,7 +228,7 @@ class AndroidResourceFilesListener extends VirtualFileAdapter {
         modes.add(AndroidAutogeneratorMode.AAPT);
       }
 
-      if (myFacet.getConfiguration().REGENERATE_JAVA_BY_AIDL && file.getFileType() == AndroidIdlFileType.ourFileType) {
+      if (file.getFileType() == AndroidIdlFileType.ourFileType) {
         VirtualFile sourceRoot = findSourceRoot(myModule, file);
         if (sourceRoot != null && AndroidRootUtil.getAidlGenDir(myFacet) != sourceRoot) {
           modes.add(AndroidAutogeneratorMode.AIDL);

@@ -129,7 +129,7 @@ public class CaptionPanel extends JLayeredPane implements DataProvider, DeletePr
       public ActionGroup getPopupActions() {
         if (myActionGroup == null) {
           myActionGroup = new DefaultActionGroup();
-          myActionGroup.add(ActionManager.getInstance().getAction("$Delete"));
+          myActionGroup.add(ActionManager.getInstance().getAction(IdeActions.ACTION_DELETE));
         }
         return myActionGroup;
       }

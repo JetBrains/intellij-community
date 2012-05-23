@@ -16,11 +16,11 @@
 package com.intellij.openapi.project;
 
 import com.intellij.ide.DataManager;
-import com.intellij.ide.highlighter.InternalFileType;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.fileEditor.UniqueVFilePathBuilder;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.InternalFileType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.roots.JdkOrderEntry;
