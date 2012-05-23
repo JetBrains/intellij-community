@@ -214,4 +214,9 @@ public class PyExtractMethodTest extends LightMarkedTestCase {
   public void testForLoopContinue() {
     doFail("bar", "Cannot perform refactoring when execution flow is interrupted");
   }
+
+  // PY-6622
+  public void testClassWithoutInit() {
+    doTest("bar");
+  }
 }

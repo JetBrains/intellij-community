@@ -317,6 +317,11 @@ public class PyCodeFragmentUtil {
           resolved.add(element);
         }
       }
+      for (PsiElement element : resolved) {
+        if (element instanceof PyClass) {
+          return Collections.singletonList(element);
+        }
+      }
       return resolved;
     }
     final PsiElement element = reference.resolve();
