@@ -34,6 +34,10 @@ import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.codeInsight.codeFragment.PyCodeFragment;
+import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
+import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
+import com.jetbrains.python.codeInsight.dataflow.scope.Scope;
+import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyFunctionBuilder;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
@@ -523,7 +527,13 @@ public class PyExtractMethodUtil {
     public PyExtractMethodValidator(final PsiElement element, final Project project) {
       myElement = element;
       myProject = project;
-      final PsiNamedElement parent = PsiTreeUtil.getParentOfType(myElement, PyFile.class, PyClass.class);
+
+      ScopeOwner owner = ScopeUtil.getScopeOwner(myElement);
+      if (owner instanceof PyFunction) {
+        owner = ScopeUtil.getScopeOwner(owner);
+      }
+      final ScopeOwner parent = owner;
+
       if (parent instanceof PyFile){
         final List<PyFunction> functions = ((PyFile)parent).getTopLevelFunctions();
         myFunction = new Function<String, Boolean>() {
@@ -536,14 +546,24 @@ public class PyExtractMethodUtil {
             return true;
           }
         };
-      } else
-      if (parent instanceof PyClass){
+      }
+      else if (parent instanceof PyClass){
         myFunction = new Function<String, Boolean>() {
           public Boolean fun(@NotNull final String s) {
             return ((PyClass) parent).findMethodByName(s, true) == null;
           }
         };
-      } else {
+      }
+      else if (parent instanceof PyFunction) {
+        final Scope scope = ControlFlowCache.getScope(parent);
+        myFunction = new Function<String, Boolean>() {
+          @Override
+          public Boolean fun(String s) {
+            return !scope.containsDeclaration(s);
+          }
+        };
+      }
+      else {
         myFunction = null;
       }
     }
