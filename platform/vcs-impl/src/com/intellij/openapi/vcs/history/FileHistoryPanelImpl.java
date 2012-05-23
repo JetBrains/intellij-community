@@ -21,6 +21,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
@@ -1023,7 +1024,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
       new Task.Backgroundable(project, VcsBundle.message("show.diff.progress.title")) {
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
-          LocalHistoryAction action = file != null ? startLocalHistoryAction(revision) : LocalHistoryAction.NULL;
+          final LocalHistoryAction action = file != null ? startLocalHistoryAction(revision) : LocalHistoryAction.NULL;
           final byte[] revisionContent;
           try {
             revisionContent = VcsHistoryUtil.loadRevisionContent(revision);
@@ -1049,39 +1050,37 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
             return;
           }
 
-          try {
-            UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-              @Override public void run() {
-                ApplicationManager.getApplication().runWriteAction(new Runnable() {
-                  public void run() {
-                    CommandProcessor.getInstance().executeCommand(project, new Runnable() {
-                      public void run() {
-                        if (file != null && !file.isWritable()) {
-                          if (ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(file).hasReadonlyFiles()) {
-                            return;
-                          }
-                        }
+          ApplicationManager.getApplication().invokeLater(new Runnable() {
+            @Override
+            public void run() {
+              try {
+                new WriteCommandAction.Simple(project) {
+                  @Override
+                  protected void run() throws Throwable {
+                    if (file != null &&
+                        !file.isWritable() &&
+                        ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(file).hasReadonlyFiles()) {
+                      return;
+                    }
 
-                        try {
-                          write(revisionContent);
-                        } catch (IOException e) {
-                          Messages.showMessageDialog(VcsBundle.message("message.text.cannot.save.content", e.getLocalizedMessage()),
-                                                     VcsBundle.message( "message.title.get.revision.content"), Messages.getErrorIcon());
-                        }
-                      }
-                    }, createGetActionTitle(revision), null);
+                    try {
+                      write(revisionContent);
+                    }
+                    catch (IOException e) {
+                      Messages.showMessageDialog(VcsBundle.message("message.text.cannot.save.content", e.getLocalizedMessage()),
+                                                 VcsBundle.message("message.title.get.revision.content"), Messages.getErrorIcon());
+                    }
                   }
-                });
+                }.execute();
+                if (file != null) {
+                  VcsDirtyScopeManager.getInstance(project).fileDirty(file);
+                }
               }
-            });
-
-            if (file != null) {
-              VcsDirtyScopeManager.getInstance(project).fileDirty(file);
+              finally {
+                action.finish();
+              }
             }
-          }
-          finally {
-            action.finish();
-          }
+          });
         }
       }.queue();
     }
