@@ -18,6 +18,7 @@ package com.intellij.codeInsight.completion;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.psi.codeStyle.NameUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -38,7 +39,7 @@ public class PrefixMatchingWeigher extends CompletionWeigher {
     final NameUtil.MatchingCaseSensitivity sensitivity =
       setting == CodeInsightSettings.NONE ? NameUtil.MatchingCaseSensitivity.NONE :
       setting == CodeInsightSettings.FIRST_LETTER ? NameUtil.MatchingCaseSensitivity.FIRST_LETTER : NameUtil.MatchingCaseSensitivity.ALL;
-    final NameUtil.MinusculeMatcher matcher = new NameUtil.MinusculeMatcher(CamelHumpMatcher.applyMiddleMatching(prefix), sensitivity);
+    final MinusculeMatcher matcher = new MinusculeMatcher(CamelHumpMatcher.applyMiddleMatching(prefix), sensitivity);
 
     int max = Integer.MIN_VALUE;
     for (String lookupString : item.getAllLookupStrings()) {

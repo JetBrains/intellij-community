@@ -62,6 +62,11 @@ public class GitChangeProvider implements ChangeProvider {
                          final ChangelistBuilder builder,
                          final ProgressIndicator progress,
                          final ChangeListManagerGate addGate) throws VcsException {
+    final GitVcs vcs = GitVcs.getInstance(myProject);
+    if (vcs == null) {
+      // already disposed or not yet initialized => ignoring
+      return;
+    }
 
     final Collection<VirtualFile> affected = dirtyScope.getAffectedContentRootsWithCheck();
     if (dirtyScope.getAffectedContentRoots().size() != affected.size()) {
@@ -78,8 +83,10 @@ public class GitChangeProvider implements ChangeProvider {
                                                                myFileDocumentManager, myVcsManager);
       for (VirtualFile root : roots) {
         GitChangesCollector collector = isNewGitChangeProviderAvailable()
-                                        ? GitNewChangesCollector.collect(myProject, myGit, myChangeListManager, dirtyScope, root)
-                                        : GitOldChangesCollector.collect(myProject, myChangeListManager, dirtyScope, root);
+                                        ? GitNewChangesCollector.collect(myProject, myGit, myChangeListManager, myVcsManager,
+                                                                         vcs, dirtyScope, root)
+                                        : GitOldChangesCollector.collect(myProject, myChangeListManager, myVcsManager,
+                                                                         vcs, dirtyScope, root);
         holder.changed(collector.getChanges());
         for (Change file : collector.getChanges()) {
           builder.processChange(file, GitVcs.getKey());
@@ -90,11 +97,10 @@ public class GitChangeProvider implements ChangeProvider {
         }
         holder.feedBuilder(builder);
       }
-    } catch (VcsException e) {// most probably the error happened because git is not configured
-      final GitVcs vcs = GitVcs.getInstance(myProject);
-      if (vcs != null) {
-        vcs.getExecutableValidator().showNotificationOrThrow(e);
-      }
+    }
+    catch (VcsException e) {
+      // most probably the error happened because git is not configured
+      vcs.getExecutableValidator().showNotificationOrThrow(e);
     }
   }
 

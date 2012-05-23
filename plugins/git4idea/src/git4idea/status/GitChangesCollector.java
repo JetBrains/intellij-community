@@ -17,13 +17,12 @@ package git4idea.status;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.FilePathImpl;
+import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
+import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.VcsDirtyScope;
 import com.intellij.openapi.vfs.VirtualFile;
-import git4idea.GitUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -37,18 +36,21 @@ import java.util.*;
  * @author Kirill Likhodedov
  */
 abstract class GitChangesCollector {
-  protected final Project myProject;
-  protected final VirtualFile myVcsRoot;
-  private final ChangeListManager myChangeListManager;
-  private final VcsDirtyScope myDirtyScope;
+  @NotNull protected final Project myProject;
+  @NotNull protected final VirtualFile myVcsRoot;
+
+  @NotNull private final VcsDirtyScope myDirtyScope;
+  @NotNull private final ChangeListManager myChangeListManager;
+  @NotNull private final ProjectLevelVcsManager myVcsManager;
+  @NotNull private AbstractVcs myVcs;
 
 
-  GitChangesCollector(@NotNull Project project,
-                      @NotNull ChangeListManager changeListManager,
-                      @NotNull VcsDirtyScope dirtyScope,
-                      @NotNull VirtualFile vcsRoot) {
+  GitChangesCollector(@NotNull Project project, @NotNull ChangeListManager changeListManager, @NotNull ProjectLevelVcsManager vcsManager,
+                      @NotNull AbstractVcs vcs, @NotNull VcsDirtyScope dirtyScope, @NotNull VirtualFile vcsRoot) {
     myProject = project;
     myChangeListManager = changeListManager;
+    myVcsManager = vcsManager;
+    myVcs = vcs;
     myDirtyScope = dirtyScope;
     myVcsRoot = vcsRoot;
   }
@@ -80,26 +82,23 @@ abstract class GitChangesCollector {
     }
 
     if (includeChanges) {
-      try {
-        for (Change c : myChangeListManager.getChangesIn(myVcsRoot)) {
-          switch (c.getType()) {
-            case NEW:
-            case DELETED:
-            case MOVED:
-              if (c.getAfterRevision() != null) {
-                addToPaths(c.getAfterRevision().getFile(), allPaths);
-              }
-              if (c.getBeforeRevision() != null) {
-                addToPaths(c.getBeforeRevision().getFile(), allPaths);
-              }
-            case MODIFICATION:
-            default:
-              // do nothing
-          }
+      for (Change c : myChangeListManager.getChangesIn(myVcsRoot)) {
+        switch (c.getType()) {
+          case NEW:
+          case DELETED:
+          case MOVED:
+            ContentRevision afterRevision = c.getAfterRevision();
+            if (afterRevision != null) {
+              addToPaths(afterRevision.getFile(), allPaths);
+            }
+            ContentRevision beforeRevision = c.getBeforeRevision();
+            if (beforeRevision != null) {
+              addToPaths(beforeRevision.getFile(), allPaths);
+            }
+          case MODIFICATION:
+          default:
+            // do nothing
         }
-      }
-      catch (Exception t) {
-        // ignore exceptions
       }
     }
 
@@ -114,9 +113,9 @@ abstract class GitChangesCollector {
   }
 
   protected void addToPaths(FilePath pathToAdd, List<String> paths) {
-    File file = pathToAdd.getIOFile();
-    if (myVcsRoot.equals(GitUtil.getGitRootOrNull(file))) {
-      paths.add(file.getPath());
+    VcsRoot fileRoot = myVcsManager.getVcsRootObjectFor(pathToAdd);
+    if (fileRoot != null && fileRoot.vcs != null && fileRoot.vcs.equals(myVcs) && myVcsRoot.equals(fileRoot.path)) {
+      paths.add(pathToAdd.getPath());
     }
   }
 

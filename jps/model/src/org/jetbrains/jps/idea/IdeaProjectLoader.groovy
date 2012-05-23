@@ -334,15 +334,17 @@ public class IdeaProjectLoader {
     def componentTag = getComponent(root, "Encoding");
     if (componentTag == null) return;
     componentTag.file?.each {Node fileNode ->
-      def url = fileNode."@url";
-      def charset = fileNode."@charset";
+      String url = fileNode."@url";
+      String charset = fileNode."@charset";
 
-      if ("PROJECT".equals(url)) {
-        project.projectCharset = charset;
-      }
-      else {
-        def path = projectMacroExpander.expandMacros(IdeaProjectLoadingUtil.pathFromUrl(url));
-        project.filePathToCharset[path] = charset;
+      if (!StringUtil.isEmptyOrSpaces(charset)) {
+        if ("PROJECT".equals(url)) {
+          project.projectCharset = charset;
+        }
+        else {
+          def path = projectMacroExpander.expandMacros(IdeaProjectLoadingUtil.pathFromUrl(url));
+          project.filePathToCharset[FileUtil.toCanonicalPath(path)] = charset;
+        }
       }
     }
   }
@@ -632,6 +634,12 @@ public class IdeaProjectLoader {
       case "JDK_1_5": return "1.5"
       case "JDK_1_6": return "1.6"
       case "JDK_1_7": return "1.7"
+      case "JDK_1_8": return "1.8"
+    }
+
+    final String prefix = "JDK_";
+    if (imlPropertyText != null && imlPropertyText.startsWith(prefix)) {
+      return imlPropertyText.substring(prefix.length()).replace('_', '.');
     }
 
     return "1.6"

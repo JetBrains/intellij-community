@@ -92,7 +92,7 @@ class AndroidFacet extends Facet {
     }
 
     if (lookInContentRoot) {
-      module.contentRoots.each {String contentRoot ->
+      for (String contentRoot in module.contentRoots) {
         def absPath = FileUtil.toSystemIndependentName(contentRoot + relativePath)
         def f = new File(absPath)
 

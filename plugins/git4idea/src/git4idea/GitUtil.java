@@ -298,6 +298,9 @@ public class GitUtil {
    * @return git root for the file
    * @throws IllegalArgumentException if the file is not under git
    * @throws VcsException             if the file is not under git
+   *
+   * @deprecated because uses the java.io.File.
+   * @use GitRepositoryManager#getRepositoryForFile().
    */
   public static VirtualFile getGitRoot(final FilePath filePath) throws VcsException {
     VirtualFile root = getGitRootOrNull(filePath);
@@ -312,7 +315,11 @@ public class GitUtil {
    *
    * @param filePath a file path
    * @return git root for the file or null if the file is not under git
+   *
+   * @deprecated because uses the java.io.File.
+   * @use GitRepositoryManager#getRepositoryForFile().
    */
+  @Deprecated
   @Nullable
   public static VirtualFile getGitRootOrNull(final FilePath filePath) {
     return getGitRootOrNull(filePath.getIOFile());
@@ -322,6 +329,11 @@ public class GitUtil {
     return file != null && file.exists() && file.isDirectory() && new File(file, DOT_GIT).exists();
   }
 
+  /**
+   * @deprecated because uses the java.io.File.
+   * @use GitRepositoryManager#getRepositoryForFile().
+   */
+  @Deprecated
   @Nullable
   public static VirtualFile getGitRootOrNull(final File file) {
     File root = file;
@@ -337,6 +349,9 @@ public class GitUtil {
    * @param file the file to check
    * @return git root for the file
    * @throws VcsException if the file is not under git
+   *
+   * @deprecated because uses the java.io.File.
+   * @use GitRepositoryManager#getRepositoryForFile().
    */
   public static VirtualFile getGitRoot(@NotNull final VirtualFile file) throws VcsException {
     final VirtualFile root = gitRootOrNull(file);
@@ -353,6 +368,9 @@ public class GitUtil {
    *
    * @param file the file to check
    * @return git root for the file or null if the file is not not under Git
+   *
+   * @deprecated because uses the java.io.File.
+   * @use GitRepositoryManager#getRepositoryForFile().
    */
   @Nullable
   public static VirtualFile gitRootOrNull(final VirtualFile file) {
@@ -376,6 +394,9 @@ public class GitUtil {
    * @param project the project
    * @param vcs     the git Vcs
    * @return the list of the roots
+   *
+   * @deprecated because uses the java.io.File.
+   * @use GitRepositoryManager#getRepositoryForFile().
    */
   @NotNull
   public static List<VirtualFile> getGitRoots(Project project, GitVcs vcs) throws VcsException {

@@ -46,6 +46,7 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.psi.statistics.StatisticsInfo;
 import com.intellij.psi.statistics.StatisticsManager;
@@ -1020,7 +1021,8 @@ public abstract class ChooseByNameBase {
       String text = EXTRA_ELEM.equals(modelElement) ? null : myModel.getFullName(modelElement);
       if (text != null) {
         String shortName = myModel.getElementName(modelElement);
-        int match = shortName != null && matcher instanceof NameUtil.MinusculeMatcher ? ((NameUtil.MinusculeMatcher)matcher).matchingDegree(shortName) : Integer.MIN_VALUE;
+        int match = shortName != null && matcher instanceof MinusculeMatcher
+                    ? ((MinusculeMatcher)matcher).matchingDegree(shortName) : Integer.MIN_VALUE;
         int stats = StatisticsManager.getInstance().getUseCount(new StatisticsInfo(statContext, text));
         if (stats > best || stats == best && match > bestMatch) {
           best = stats;
