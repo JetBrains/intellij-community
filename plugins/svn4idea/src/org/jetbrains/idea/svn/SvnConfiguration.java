@@ -111,6 +111,7 @@ public class SvnConfiguration implements PersistentStateComponent<Element> {
   public boolean IGNORE_SPACES_IN_ANNOTATE = true;
   public boolean SHOW_MERGE_SOURCES_IN_ANNOTATE = true;
   public boolean FORCE_UPDATE = false;
+  public boolean IGNORE_EXTERNALS = false;
   public Boolean TREE_CONFLICT_MERGE_THEIRS_NEW_INTO_OLD_PLACE;
 
   public UseAcceleration myUseAcceleration = UseAcceleration.nothing;

@@ -44,6 +44,7 @@ public class SvnCommandLineUpdateClient extends SvnSvnkitUpdateClient {
   private static final String ourAuthenticationRealm = "Authentication realm:";
   private final Project myProject;
   private final VirtualFile myCommonAncestor;
+  private boolean myIgnoreExternals;
 
   public SvnCommandLineUpdateClient(final Project project, VirtualFile commonAncestor) {
     super(SvnVcs.getInstance(project).createUpdateClient());
@@ -101,6 +102,9 @@ public class SvnCommandLineUpdateClient extends SvnSvnkitUpdateClient {
         }
         if (makeParents) {
           command.addParameters("--parents");
+        }
+        if (myIgnoreExternals) {
+          command.addParameters("--ignore-externals");
         }
         command.addParameters("--accept", "postpone");
         command.addParameters("--config-dir", configDir.getPath());
@@ -267,5 +271,10 @@ public class SvnCommandLineUpdateClient extends SvnSvnkitUpdateClient {
     throw new UnsupportedOperationException();
     // todo MAIN
     //return super.doSwitch(path, url, pegRevision, revision, depth, allowUnversionedObstructions, depthIsSticky, ignoreAncestry);
+  }
+
+  @Override
+  public void setIgnoreExternals(boolean ignoreExternals) {
+    myIgnoreExternals = ignoreExternals;
   }
 }
