@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,15 +16,24 @@
 package com.siyeh.ipp.constant;
 
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
 import com.intellij.util.IncorrectOperationException;
-import com.siyeh.ipp.base.Intention;
+import com.siyeh.IntentionPowerPackBundle;
+import com.siyeh.ipp.base.MutablyNamedIntention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.ipp.psiutils.ExpressionUtils;
+import com.siyeh.ipp.psiutils.HighlightUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public class ConstantExpressionIntention extends Intention {
+public class ConstantExpressionIntention extends MutablyNamedIntention {
+
+  @Override
+  protected String getTextForElement(PsiElement element) {
+    final String text = HighlightUtil.getPresentableText(element);
+    return IntentionPowerPackBundle.message("constant.expression.intention.name", text);
+  }
 
   @Override
   @NotNull
@@ -33,22 +42,16 @@ public class ConstantExpressionIntention extends Intention {
   }
 
   @Override
-  public void processIntention(PsiElement element)
-    throws IncorrectOperationException {
-    final PsiExpression expression =
-      (PsiExpression)element;
-    final Object value =
-      ExpressionUtils.computeConstantExpression(expression);
+  public void processIntention(PsiElement element) throws IncorrectOperationException {
+    final PsiExpression expression = (PsiExpression)element;
+    final Object value = ExpressionUtils.computeConstantExpression(expression);
     @NonNls final String newExpression;
     if (value instanceof String) {
       final String string = (String)value;
-      newExpression =
-        '"' + StringUtil.escapeStringCharacters(string) + '"';
+      newExpression = '"' + StringUtil.escapeStringCharacters(string) + '"';
     }
     else if (value instanceof Character) {
-      newExpression =
-        '\'' + StringUtil.escapeStringCharacters(value.toString()) +
-        '\'';
+      newExpression = '\'' + StringUtil.escapeStringCharacters(value.toString()) + '\'';
     }
     else if (value instanceof Long) {
       newExpression = value.toString() + 'L';
