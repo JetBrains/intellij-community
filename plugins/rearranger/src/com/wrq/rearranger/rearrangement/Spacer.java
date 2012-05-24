@@ -21,6 +21,7 @@
  */
 package com.wrq.rearranger.rearrangement;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.psi.*;
@@ -86,9 +87,11 @@ public class Spacer {
   private static void handleBadPsiElementException(String desc, PsiElement element)
     throws AbortRespacingException
   {
-    JOptionPane.showMessageDialog(null,
-                                  "Spacing could not be performed due to a syntax error:\n" +
-                                  desc + element.getText(), "Spacing Error", JOptionPane.ERROR_MESSAGE);
+    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+      JOptionPane.showMessageDialog(null,
+                                    "Spacing could not be performed due to a syntax error:\n" +
+                                    desc + element.getText(), "Spacing Error", JOptionPane.ERROR_MESSAGE);
+    }
     throw new AbortRespacingException();
   }
 

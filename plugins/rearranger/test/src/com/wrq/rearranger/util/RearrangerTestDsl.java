@@ -56,7 +56,7 @@ public enum RearrangerTestDsl {
   REMOVE_BLANK_LINES("remove blank lines"),
   BELOW_FIRST_CALLER("below first caller"),
   NON_PRIVATE_TREATMENT("non-private treatment"),
-  REARRANGE_INNER_CLASSES("rearranger inner classes"),
+  REARRANGE_INNER_CLASSES("rearrange inner classes"),
   CLASS_COMMENT("class comment"),
   ARGUMENTS_NUMBER("arguments number"),
   FROM,

@@ -106,9 +106,7 @@
         <TypeMatch match="false" invert="false" pattern=""/>
       </Field>
       <Comment condition="2" nPrecedingRulesToMatch="1" nSubsequentRulesToMatch="1" allPrecedingRules="true" allSubsequentRules="true"
-               fillString="" useProjectWidthForFill="true" fillWidth="0">\n//\ --------------------------\ STATIC\ METHODS\
-        --------------------------\n
-      </Comment>
+               fillString="" useProjectWidthForFill="true" fillWidth="0">\n// -------------------------- STATIC METHODS --------------------------\n</Comment>
       <Method priority="1">
         <ProtectionLevel public="false" private="false" protected="false" package="false" invert="false"/>
         <Static value="true" invert="false"/>
@@ -131,9 +129,7 @@
         <GetterSetterDefinition getterBody="0" getterName="0" setterBody="0" setterName="0"/>
       </Method>
       <Comment condition="2" nPrecedingRulesToMatch="1" nSubsequentRulesToMatch="1" allPrecedingRules="true" allSubsequentRules="true"
-               fillString="" useProjectWidthForFill="true" fillWidth="0">\n//\ ---------------------------\ CONSTRUCTORS\
-        ---------------------------\n
-      </Comment>
+               fillString="" useProjectWidthForFill="true" fillWidth="0">\n// --------------------------- CONSTRUCTORS ---------------------------\n</Comment>
       <Method priority="1">
         <ProtectionLevel public="false" private="false" protected="false" package="false" invert="false"/>
         <Static value="false" invert="false"/>
@@ -177,9 +173,7 @@
         <GetterSetterDefinition getterBody="0" getterName="0" setterBody="0" setterName="0"/>
       </Method>
       <Comment condition="2" nPrecedingRulesToMatch="1" nSubsequentRulesToMatch="1" allPrecedingRules="true" allSubsequentRules="true"
-               fillString="" useProjectWidthForFill="true" fillWidth="0">\n//\ ---------------------\ GETTER\ /\ SETTER\ METHODS\
-        ---------------------\n
-      </Comment>
+               fillString="" useProjectWidthForFill="true" fillWidth="0">\n// --------------------- GETTER / SETTER METHODS ---------------------\n</Comment>
       <Method priority="1">
         <ProtectionLevel public="false" private="false" protected="false" package="false" invert="false"/>
         <Static value="false" invert="false"/>
@@ -202,9 +196,7 @@
         <GetterSetterDefinition getterBody="0" getterName="0" setterBody="0" setterName="0"/>
       </Method>
       <Comment condition="2" nPrecedingRulesToMatch="1" nSubsequentRulesToMatch="1" allPrecedingRules="true" allSubsequentRules="true"
-               fillString="" useProjectWidthForFill="true" fillWidth="0">\n//\ ------------------------\ CANONICAL\ METHODS\
-        ------------------------\n
-      </Comment>
+               fillString="" useProjectWidthForFill="true" fillWidth="0">\n// ------------------------ CANONICAL METHODS ------------------------\n</Comment>
       <Method priority="1">
         <ProtectionLevel public="false" private="false" protected="false" package="false" invert="false"/>
         <Static value="false" invert="false"/>
@@ -227,17 +219,13 @@
         <GetterSetterDefinition getterBody="0" getterName="0" setterBody="0" setterName="0"/>
       </Method>
       <Comment condition="2" nPrecedingRulesToMatch="1" nSubsequentRulesToMatch="1" allPrecedingRules="true" allSubsequentRules="true"
-               fillString="" useProjectWidthForFill="true" fillWidth="0">\n//\ ------------------------\ INTERFACE\ METHODS\
-        ------------------------\n
-      </Comment>
+               fillString="" useProjectWidthForFill="true" fillWidth="0">\n// ------------------------ INTERFACE METHODS ------------------------\n</Comment>
       <Interface alphabetizeInterfaces="true" noExtractedMethods="true" methodOrder="1" priority="1" fillString=""
                  useProjectWidthForFill="true" fillWidth="0">
         <NameMatch match="false" invert="false" pattern=""/>
         <PrecedingComment>
           <Comment condition="0" nPrecedingRulesToMatch="1" nSubsequentRulesToMatch="1" allPrecedingRules="true" allSubsequentRules="true"
-                   fillString="" useProjectWidthForFill="true" fillWidth="0">\n//\ ---------------------\ Interface\ %IF%\
-            ---------------------\n
-          </Comment>
+                   fillString="" useProjectWidthForFill="true" fillWidth="0">\n// --------------------- Interface %IF% ---------------------\n</Comment>
         </PrecedingComment>
         <TrailingComment>
           <Comment condition="0" nPrecedingRulesToMatch="1" nSubsequentRulesToMatch="1" allPrecedingRules="true" allSubsequentRules="true"
@@ -268,9 +256,7 @@
         <GetterSetterDefinition getterBody="0" getterName="0" setterBody="0" setterName="0"/>
       </Method>
       <Comment condition="2" nPrecedingRulesToMatch="1" nSubsequentRulesToMatch="1" allPrecedingRules="true" allSubsequentRules="true"
-               fillString="" useProjectWidthForFill="true" fillWidth="0">\n//\ --------------------------\ ENUMERATIONS\
-        --------------------------\n
-      </Comment>
+               fillString="" useProjectWidthForFill="true" fillWidth="0">\n//\ -------------------------- ENUMERATIONS --------------------------\n</Comment>
       <InnerClass priority="1">
         <ProtectionLevel public="false" private="false" protected="false" package="false" invert="false"/>
         <Static value="false" invert="false"/>
