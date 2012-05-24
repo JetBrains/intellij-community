@@ -27,6 +27,7 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jdom.Element;
 import org.jetbrains.android.compiler.AndroidCompileUtil;
@@ -34,12 +35,15 @@ import org.jetbrains.android.sdk.AndroidPlatform;
 import org.jetbrains.android.sdk.AndroidSdkAdditionalData;
 import org.jetbrains.android.sdk.AndroidSdkData;
 import org.jetbrains.android.sdk.AndroidSdkType;
+import org.jetbrains.android.util.AndroidCommonUtils;
+import org.jetbrains.android.util.AndroidNativeLibData;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -87,6 +91,8 @@ public class AndroidFacetConfiguration implements FacetConfiguration {
   public String PROGUARD_CFG_PATH = "/" + AndroidCompileUtil.PROGUARD_CFG_FILE_NAME;
 
   private boolean myIncludeSystemProguardCfgPath = true;
+
+  private List<AndroidNativeLibData> myAdditionalNativeLibraries = Collections.emptyList();
 
   private AndroidFacet myFacet = null;
 
@@ -147,6 +153,22 @@ public class AndroidFacetConfiguration implements FacetConfiguration {
     DefaultJDOMExternalizer.readExternal(this, element);
     readResOverlayFolders(element);
 
+    final Element additionalNativeLibsElement = element.getChild(AndroidCommonUtils.ADDITIONAL_NATIVE_LIBS_ELEMENT);
+    myAdditionalNativeLibraries = new ArrayList<AndroidNativeLibData>();
+
+    if (additionalNativeLibsElement != null) {
+      for (Object child : additionalNativeLibsElement.getChildren()) {
+        final Element childElement = (Element)child;
+        final String architecture = childElement.getAttributeValue(AndroidCommonUtils.ARCHITECTURE_ATTRIBUTE);
+        final String url = childElement.getAttributeValue(AndroidCommonUtils.URL_ATTRIBUTE);
+        final String targetFileName = childElement.getAttributeValue(AndroidCommonUtils.TARGET_FILE_NAME_ATTRIBUTE);
+
+        if (url != null && architecture != null && targetFileName != null) {
+          myAdditionalNativeLibraries.add(new AndroidNativeLibData(architecture, VfsUtil.urlToPath(url), targetFileName));
+        }
+      }
+    }
+
     final Element includeSystemProguardFile = element.getChild(INCLUDE_SYSTEM_PROGUARD_FILE_ELEMENT_NAME);
     if (includeSystemProguardFile != null) {
       final String includeSystemProguardFileValue = includeSystemProguardFile.getValue();
@@ -166,6 +188,17 @@ public class AndroidFacetConfiguration implements FacetConfiguration {
     final Element includeSystemProguerdFile = new Element(INCLUDE_SYSTEM_PROGUARD_FILE_ELEMENT_NAME);
     includeSystemProguerdFile.setText(Boolean.toString(myIncludeSystemProguardCfgPath));
     element.addContent(includeSystemProguerdFile);
+
+    final Element additionalNativeLibs = new Element(AndroidCommonUtils.ADDITIONAL_NATIVE_LIBS_ELEMENT);
+
+    for (AndroidNativeLibData lib : myAdditionalNativeLibraries) {
+      final Element item = new Element(AndroidCommonUtils.ITEM_ELEMENT);
+      item.setAttribute(AndroidCommonUtils.ARCHITECTURE_ATTRIBUTE, lib.getArchitecture());
+      item.setAttribute(AndroidCommonUtils.URL_ATTRIBUTE, VfsUtil.pathToUrl(lib.getPath()));
+      item.setAttribute(AndroidCommonUtils.TARGET_FILE_NAME_ATTRIBUTE, lib.getTargetFileName());
+      additionalNativeLibs.addContent(item);
+    }
+    element.addContent(additionalNativeLibs);
   }
 
   private void readResOverlayFolders(final Element element) throws InvalidDataException {
@@ -198,5 +231,14 @@ public class AndroidFacetConfiguration implements FacetConfiguration {
 
   public void setIncludeSystemProguardCfgPath(boolean includeSystemProguardCfgPath) {
     myIncludeSystemProguardCfgPath = includeSystemProguardCfgPath;
+  }
+
+  @NotNull
+  public List<AndroidNativeLibData> getAdditionalNativeLibraries() {
+    return myAdditionalNativeLibraries;
+  }
+
+  public void setAdditionalNativeLibraries(@NotNull List<AndroidNativeLibData> additionalNativeLibraries) {
+    myAdditionalNativeLibraries = additionalNativeLibraries;
   }
 }

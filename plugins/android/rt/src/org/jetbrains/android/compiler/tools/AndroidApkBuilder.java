@@ -23,13 +23,11 @@ import com.android.sdklib.SdkConstants;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.text.DateFormatUtil;
-import org.jetbrains.android.util.AndroidCommonUtils;
-import org.jetbrains.android.util.AndroidCompilerMessageKind;
-import org.jetbrains.android.util.AndroidExecutionUtil;
-import org.jetbrains.android.util.SafeSignedJarBuilder;
+import org.jetbrains.android.util.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -114,32 +112,78 @@ public class AndroidApkBuilder {
                                                                       @NotNull String[] sourceRoots,
                                                                       @NotNull String[] externalJars,
                                                                       @NotNull String[] nativeLibsFolders,
+                                                                      @NotNull Collection<AndroidNativeLibData> additionalNativeLibs,
                                                                       @NotNull String finalApk,
                                                                       boolean unsigned,
                                                                       @NotNull String sdkPath,
                                                                       @Nullable String customKeystorePath,
                                                                       @NotNull Condition<File> resourceFilter) throws IOException {
-    if (unsigned) {
-      return filterUsingKeystoreMessages(
-        finalPackage(dexPath, sourceRoots, externalJars, nativeLibsFolders, finalApk, resPackagePath, customKeystorePath, false,
-                     resourceFilter));
-    }
-
     final Map<AndroidCompilerMessageKind, List<String>> map = new HashMap<AndroidCompilerMessageKind, List<String>>();
-    final String zipAlignPath = sdkPath + File.separator + AndroidCommonUtils.toolPath(SdkConstants.FN_ZIPALIGN);
-    boolean withAlignment = new File(zipAlignPath).exists();
-    String unalignedApk = finalApk + UNALIGNED_SUFFIX;
+    map.put(ERROR, new ArrayList<String>());
+    map.put(WARNING, new ArrayList<String>());
+    File additionalLibsDir = null;
+    try {
+      if (additionalNativeLibs.size() > 0) {
+        additionalLibsDir = FileUtil.createTempDirectory("android_additional_libs", "tmp");
 
-    Map<AndroidCompilerMessageKind, List<String>> map2 = filterUsingKeystoreMessages(
-      finalPackage(dexPath, sourceRoots, externalJars, nativeLibsFolders, withAlignment ? unalignedApk : finalApk, resPackagePath,
-                   customKeystorePath, true, resourceFilter));
-    map.putAll(map2);
+        if (!copyNativeLibs(additionalNativeLibs, additionalLibsDir, map)) {
+          return map;
+        }
+        nativeLibsFolders = ArrayUtil.append(nativeLibsFolders, additionalLibsDir.getPath());
+      }
 
-    if (withAlignment && map.get(ERROR).size() == 0) {
-      map2 = AndroidExecutionUtil.doExecute(zipAlignPath, "-f", "4", unalignedApk, finalApk);
+      if (unsigned) {
+        return filterUsingKeystoreMessages(
+          finalPackage(dexPath, sourceRoots, externalJars, nativeLibsFolders, finalApk, resPackagePath, customKeystorePath, false,
+                       resourceFilter));
+      }
+      final String zipAlignPath = sdkPath + File.separator + AndroidCommonUtils.toolPath(SdkConstants.FN_ZIPALIGN);
+      boolean withAlignment = new File(zipAlignPath).exists();
+      String unalignedApk = finalApk + UNALIGNED_SUFFIX;
+
+      Map<AndroidCompilerMessageKind, List<String>> map2 = filterUsingKeystoreMessages(
+        finalPackage(dexPath, sourceRoots, externalJars, nativeLibsFolders, withAlignment ? unalignedApk : finalApk, resPackagePath,
+                     customKeystorePath, true, resourceFilter));
       map.putAll(map2);
+
+      if (withAlignment && map.get(ERROR).size() == 0) {
+        map2 = AndroidExecutionUtil.doExecute(zipAlignPath, "-f", "4", unalignedApk, finalApk);
+        map.putAll(map2);
+      }
+      return map;
     }
-    return map;
+    finally {
+      if (additionalLibsDir != null) {
+        FileUtil.delete(additionalLibsDir);
+      }
+    }
+  }
+
+  private static boolean copyNativeLibs(@NotNull Collection<AndroidNativeLibData> libs,
+                                        @NotNull File targetDir,
+                                        @NotNull Map<AndroidCompilerMessageKind, List<String>> map) throws IOException {
+    for (AndroidNativeLibData lib : libs) {
+      final String path = lib.getPath();
+      final File srcFile = new File(path);
+      if (!srcFile.exists()) {
+        map.get(WARNING).add("File not found: " + FileUtil.toSystemDependentName(path) + ". The native library won't be placed into APK");
+        continue;
+      }
+      final File dstDir = new File(targetDir, lib.getArchitecture());
+
+      final File dstFile = new File(dstDir, lib.getTargetFileName());
+      if (dstFile.exists()) {
+        map.get(WARNING).add("Duplicate native library " + dstFile.getName() + "; " + dstFile.getPath() + " already exists");
+        continue;
+      }
+
+      if (!dstDir.mkdirs()) {
+        map.get(ERROR).add("Cannot create directory: " + FileUtil.toSystemDependentName(dstDir.getPath()));
+        continue;
+      }
+      FileUtil.copy(srcFile, dstFile);
+    }
+    return map.get(ERROR).size() == 0;
   }
 
   private static Map<AndroidCompilerMessageKind, List<String>> finalPackage(@NotNull String dexPath,
@@ -161,9 +205,9 @@ public class AndroidApkBuilder {
     try {
 
       String keyStoreOsPath = customKeystorePath != null && customKeystorePath.length() > 0
-                              ? customKeystorePath
+                              ? customKeystorePath 
                               : DebugKeyProvider.getDefaultKeyStoreOsPath();
-
+      
       DebugKeyProvider provider = createDebugKeyProvider(result, keyStoreOsPath);
 
       X509Certificate certificate = signed ? (X509Certificate)provider.getCertificate() : null;

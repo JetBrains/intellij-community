@@ -56,6 +56,12 @@ public class AndroidCommonUtils {
   @NonNls public static final String SYSTEM_PROGUARD_CFG_FILE_NAME = "proguard-android.txt";
   @NonNls private static final String PROGUARD_HOME_ENV_VARIABLE = "PROGUARD_HOME";
 
+  @NonNls public static final String ADDITIONAL_NATIVE_LIBS_ELEMENT = "additionalNativeLibs";
+  @NonNls public static final String ITEM_ELEMENT = "item";
+  @NonNls public static final String ARCHITECTURE_ATTRIBUTE = "architecture";
+  @NonNls public static final String URL_ATTRIBUTE = "url";
+  @NonNls public static final String TARGET_FILE_NAME_ATTRIBUTE = "targetFileName";
+
   private AndroidCommonUtils() {
   }
 
@@ -381,20 +387,20 @@ public class AndroidCommonUtils {
   }
 
   @NotNull
-  public static String readFile(@NotNull File file) throws IOException {
-    final InputStream is = new BufferedInputStream(new FileInputStream(file));
-    try {
-      final byte[] data = new byte[is.available()];
-      //noinspection ResultOfMethodCallIgnored
-      is.read(data);
-      return new String(data);
+    public static String readFile(@NotNull File file) throws IOException {
+      final InputStream is = new BufferedInputStream(new FileInputStream(file));
+      try {
+        final byte[] data = new byte[is.available()];
+        //noinspection ResultOfMethodCallIgnored
+        is.read(data);
+        return new String(data);
+      }
+      finally {
+        is.close();
+      }
     }
-    finally {
-      is.close();
-    }
-  }
 
-  public static boolean contains2Identifiers(String packageName) {
-    return packageName.split("\\.").length >= 2;
-  }
+    public static boolean contains2Identifiers(String packageName) {
+      return packageName.split("\\.").length >= 2;
+    }
 }

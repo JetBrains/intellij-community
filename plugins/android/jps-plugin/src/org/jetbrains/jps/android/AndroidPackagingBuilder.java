@@ -11,6 +11,7 @@ import org.jetbrains.android.compiler.tools.AndroidApkBuilder;
 import org.jetbrains.android.compiler.tools.AndroidApt;
 import org.jetbrains.android.util.AndroidCommonUtils;
 import org.jetbrains.android.util.AndroidCompilerMessageKind;
+import org.jetbrains.android.util.AndroidNativeLibData;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -161,7 +162,7 @@ public class AndroidPackagingBuilder extends ProjectLevelBuilder {
       if (!resCacheDir.mkdirs()) {
         context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR,
                                                    "Cannot create directory " + resCacheDir.getPath()));
-        return false;    
+        return false;
       }
     }
 
@@ -343,8 +344,8 @@ public class AndroidPackagingBuilder extends ProjectLevelBuilder {
       .processMessage(new ProgressMessage(AndroidJpsBundle.message("android.jps.progress.packaging", AndroidJpsUtil.getApkName(module))));
 
     final Map<AndroidCompilerMessageKind, List<String>> messages = AndroidApkBuilder
-      .execute(resPackagePath, classesDexFilePath, sourceRoots, externalJars, nativeLibDirs, outputApkPath,
-               release, sdkPath, customKeyStorePath, new MyExcludedSourcesFilter(context.getProject()));
+      .execute(resPackagePath, classesDexFilePath, sourceRoots, externalJars, nativeLibDirs, Collections.<AndroidNativeLibData>emptyList(),
+               outputApkPath, release, sdkPath, customKeyStorePath, new MyExcludedSourcesFilter(context.getProject()));
 
     AndroidJpsUtil.addMessages(context, messages, BUILDER_NAME);
     final boolean success = messages.get(AndroidCompilerMessageKind.ERROR).isEmpty();
@@ -495,7 +496,7 @@ public class AndroidPackagingBuilder extends ProjectLevelBuilder {
 
   private static void collectAssetDirs(@NotNull AndroidFacet facet, @NotNull List<String> result) throws IOException {
     final File assetsDir = facet.getAssetsDir();
-    
+
     if (assetsDir != null) {
       result.add(assetsDir.getPath());
     }
