@@ -231,6 +231,7 @@ public abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestC
         }
       }
     });
+    touch(file.getVirtualFile());
   }
 
   protected void setFileName(final PsiFile bar, final String name) {
