@@ -17,6 +17,7 @@ package com.intellij.designer.designSurface.tools;
 
 import com.intellij.designer.designSurface.EditOperation;
 import com.intellij.designer.designSurface.EditableArea;
+import com.intellij.designer.propertyTable.InplaceContext;
 import com.intellij.util.ThrowableRunnable;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -133,4 +134,6 @@ public abstract class ToolProvider {
   public abstract boolean execute(ThrowableRunnable<Exception> operation, String command, boolean updateProperties);
 
   public abstract void execute(List<EditOperation> operations, String command);
+
+  public abstract void startInplaceEditing(@Nullable InplaceContext inplaceContext);
 }

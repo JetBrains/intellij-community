@@ -19,6 +19,7 @@ import com.android.ide.common.rendering.api.ViewInfo;
 import com.intellij.designer.model.RadComponent;
 import com.intellij.designer.model.RadVisualComponent;
 import com.intellij.designer.propertyTable.Property;
+import com.intellij.designer.propertyTable.PropertyTable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.xml.XmlAttribute;
@@ -194,6 +195,16 @@ public class RadViewComponent extends RadVisualComponent {
 
   public void setProperties(List<Property> properties) {
     myProperties = properties;
+  }
+
+  @Override
+  public List<Property> getInplaceProperties() throws Exception {
+    List<Property> properties = super.getInplaceProperties();
+    Property idProperty = PropertyTable.findProperty(myProperties, "id");
+    if (idProperty != null) {
+      properties.add(idProperty);
+    }
+    return properties;
   }
 
   @Override
