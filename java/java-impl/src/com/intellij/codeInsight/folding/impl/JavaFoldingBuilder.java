@@ -564,7 +564,7 @@ public class JavaFoldingBuilder extends CustomFoldingBuilder implements DumbAwar
     }
   }
 
-  private static boolean hasOnlyOneMethod(@NotNull PsiAnonymousClass anonymousClass) {
+  private static boolean hasOnlyOneMethod(@NotNull PsiAnonymousClass anonymousClass, boolean checkResolve) {
     if (anonymousClass.getFields().length != 0) {
       return false;
     }
@@ -575,7 +575,20 @@ public class JavaFoldingBuilder extends CustomFoldingBuilder implements DumbAwar
       return false;
     }
 
-    return anonymousClass.getMethods().length == 1;
+    if (anonymousClass.getMethods().length != 1) {
+      return false;
+    }
+
+    if (checkResolve) {
+      PsiReferenceList throwsList = anonymousClass.getMethods()[0].getThrowsList();
+      for (PsiClassType type : throwsList.getReferencedTypes()) {
+        if (type.resolve() == null) {
+          return false;
+        }
+      }
+    }
+
+    return true;
   }
 
   private boolean addClosureFolding(final PsiClass aClass, final Document document, final List<FoldingDescriptor> foldElements,
@@ -593,7 +606,7 @@ public class JavaFoldingBuilder extends CustomFoldingBuilder implements DumbAwar
         final PsiExpressionList argumentList = expression.getArgumentList();
         if (argumentList != null && argumentList.getExpressions().length == 0) {
           final PsiMethod[] methods = anonymousClass.getMethods();
-          if (hasOnlyOneMethod(anonymousClass) && (quick || seemsLikeLambda(anonymousClass.getBaseClassType().resolve()))) {
+          if (hasOnlyOneMethod(anonymousClass, !quick) && (quick || seemsLikeLambda(anonymousClass.getBaseClassType().resolve()))) {
             final PsiMethod method = methods[0];
             final PsiCodeBlock body = method.getBody();
             if (body != null) {

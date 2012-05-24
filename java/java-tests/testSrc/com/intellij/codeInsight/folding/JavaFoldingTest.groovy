@@ -195,6 +195,23 @@ class Test {
     assert closureStartFold
   }
 
+  public void "test no closure folding when the method throws an unresolved exception"() {
+    def text = """\
+class Test {
+    void test() { new Runnable() {
+      public void run() throws Asadfsdafdfasd {
+        System.out.println(<caret>);
+      }
+    };
+  }
+}
+"""
+
+    configure text
+    def foldingModel = myFixture.editor.foldingModel as FoldingModelImpl
+    assert !foldingModel.getCollapsedRegionAtOffset(text.indexOf("Runnable"))
+  }
+
   public void testFindInFolding() {
     def text = """\
 class Test {
