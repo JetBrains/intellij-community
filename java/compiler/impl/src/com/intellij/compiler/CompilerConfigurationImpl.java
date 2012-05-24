@@ -29,7 +29,6 @@ import com.intellij.compiler.impl.javaCompiler.eclipse.EclipseCompiler;
 import com.intellij.compiler.impl.javaCompiler.eclipse.EclipseEmbeddedCompiler;
 import com.intellij.compiler.impl.javaCompiler.javac.JavacCompiler;
 import com.intellij.compiler.impl.javaCompiler.jikes.JikesCompiler;
-import com.intellij.compiler.server.BuildManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
@@ -185,7 +184,6 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
         public void run() {
           if (!project.isDisposed()) {
             CompileServerManager.getInstance().sendReloadRequest(project);
-            BuildManager.getInstance().clearState(project);
           }
         }
       });
