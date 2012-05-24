@@ -162,12 +162,6 @@ class AndroidJpsUtil {
     return dir;
   }
 
-  @Nullable
-  public static File getDirectoryForFinalPackage(@NotNull ProjectPaths paths, @NotNull Module module) {
-    // todo: return build directory for mavenized modules to place .dex and .apk files into target dir (not target/classes)
-    return paths.getModuleOutputDir(module, false);
-  }
-
   public static void addSubdirectories(@NotNull File baseDir, @NotNull Collection<String> result) {
     // only include files inside packages
     final File[] children = baseDir.listFiles();

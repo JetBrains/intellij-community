@@ -335,8 +335,8 @@ public class AndroidPackagingBuilder extends ProjectLevelBuilder {
 
     final File intArtifactsDir = AndroidJpsUtil.getDirectoryForIntermediateArtifacts(context, module);
 
-    final File outputDir = AndroidJpsUtil.getDirectoryForFinalPackage(paths, module);
-    if (outputDir == null) {
+    final File moduleOutputDir = paths.getModuleOutputDir(module, false);
+    if (moduleOutputDir == null) {
       context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR, AndroidJpsBundle
         .message("android.jps.errors.output.dir.not.specified", module.getName())));
       return false;
@@ -353,7 +353,7 @@ public class AndroidPackagingBuilder extends ProjectLevelBuilder {
     final File classesDexFile = new File(intArtifactsDir.getPath(), AndroidCommonUtils.CLASSES_FILE_NAME);
 
     final String sdkPath = platform.getSdk().getSdkPath();
-    final String outputPath = AndroidJpsUtil.getApkPath(facet, outputDir);
+    final String outputPath = AndroidJpsUtil.getApkPath(facet, moduleOutputDir);
     if (outputPath == null) {
       context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR, AndroidJpsBundle
         .message("android.jps.errors.cannot.compute.output.apk", module.getName())));
@@ -363,7 +363,11 @@ public class AndroidPackagingBuilder extends ProjectLevelBuilder {
     final String[] nativeLibDirs = collectNativeLibsFolders(facet);
 
     final String resPackagePath = release ? resPackage.getPath() + RELEASE_SUFFIX : resPackage.getPath();
-    final String outputApkPath = release ? outputPath + UNSIGNED_SUFFIX : outputPath;
+
+    final String outputApkPath = release
+                                 ? AndroidCommonUtils.addSuffixToFileName(outputPath, UNSIGNED_SUFFIX)
+                                 : outputPath;
+
     final String classesDexFilePath = classesDexFile.getPath();
     final String[] externalJars = ArrayUtil.toStringArray(externalJarsSet);
 
