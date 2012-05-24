@@ -15,7 +15,7 @@
         </constraints>
         <properties/>
         <clientProperties>
-          <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$BoldSmallWithIndent"/>
+          <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$PlainSmallWithIndent"/>
         </clientProperties>
         <border type="line" title-resource-bundle="org/jetbrains/idea/svn/SvnBundle" title-key="dialog.edit.http.proxies.settings.panel.proxy.title"/>
         <children>
@@ -176,7 +176,7 @@
         </constraints>
         <properties/>
         <clientProperties>
-          <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$BoldSmallWithIndent"/>
+          <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$PlainSmallWithIndent"/>
         </clientProperties>
         <border type="line" title-resource-bundle="org/jetbrains/idea/svn/SvnBundle" title-key="dialog.edit.http.proxies.settings.panel.ssl.title"/>
         <children>
@@ -250,7 +250,7 @@
         </constraints>
         <properties/>
         <clientProperties>
-          <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$BoldSmallWithoutIndent"/>
+          <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$PlainSmallWithoutIndent"/>
         </clientProperties>
         <border type="line" title-resource-bundle="org/jetbrains/idea/svn/SvnBundle" title-key="dialog.edit.http.proxies.settings.panel.repositories.title"/>
         <children>
