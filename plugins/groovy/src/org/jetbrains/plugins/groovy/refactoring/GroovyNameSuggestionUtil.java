@@ -126,7 +126,7 @@ public class GroovyNameSuggestionUtil {
   private static void generateNameByString(Set<String> possibleNames, String value, boolean forStaticVariable, Project project) {
     if (!JavaPsiFacade.getInstance(project).getNameHelper().isIdentifier(value)) return;
     if (forStaticVariable) {
-      StringBuffer buffer = new StringBuffer(value.length() + 10);
+      StringBuilder buffer = new StringBuilder(value.length() + 10);
       char[] chars = new char[value.length()];
       value.getChars(0, value.length(), chars, 0);
       boolean wasLow = Character.isLowerCase(chars[0]);
