@@ -17,7 +17,9 @@ package com.intellij.core;
 
 import com.intellij.lang.*;
 import com.intellij.lang.impl.PsiBuilderFactoryImpl;
-import com.intellij.mock.*;
+import com.intellij.mock.MockApplication;
+import com.intellij.mock.MockFileDocumentManagerImpl;
+import com.intellij.mock.MockReferenceProvidersRegistry;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -31,11 +33,8 @@ import com.intellij.openapi.extensions.ExtensionsArea;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.progress.*;
-import com.intellij.openapi.project.DumbService;
-import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.StaticGetter;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.openapi.vfs.encoding.EncodingRegistry;
@@ -45,25 +44,13 @@ import com.intellij.openapi.vfs.impl.jar.CoreJarFileSystem;
 import com.intellij.openapi.vfs.local.CoreLocalFileSystem;
 import com.intellij.openapi.vfs.newvfs.FileSystemPersistence;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
-import com.intellij.psi.PsiFileFactory;
-import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiReferenceService;
 import com.intellij.psi.PsiReferenceServiceImpl;
-import com.intellij.psi.impl.*;
-import com.intellij.psi.impl.file.PsiDirectoryFactory;
-import com.intellij.psi.impl.file.PsiDirectoryFactoryImpl;
-import com.intellij.psi.impl.file.impl.FileManagerImpl;
-import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
-import com.intellij.psi.search.ProjectScopeBuilder;
 import com.intellij.psi.stubs.BinaryFileStubBuilders;
 import com.intellij.psi.stubs.CoreStubTreeLoader;
 import com.intellij.psi.stubs.StubTreeLoader;
-import com.intellij.psi.util.CachedValuesManager;
-import com.intellij.psi.util.PsiModificationTracker;
-import com.intellij.util.CachedValuesManagerImpl;
 import com.intellij.util.Function;
-import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.impl.MessageBusImpl;
 import org.jetbrains.annotations.NotNull;
 import org.picocontainer.MutablePicoContainer;
@@ -93,7 +80,7 @@ public class CoreApplicationEnvironment {
                                       new StaticGetter<FileTypeRegistry>(myFileTypeRegistry),
                                       new StaticGetter<EncodingRegistry>(myEncodingRegistry),
                                       myParentDisposable);
-    myLocalFileSystem = new CoreLocalFileSystem();
+    myLocalFileSystem = createLocalFileSystem();
     myJarFileSystem = new CoreJarFileSystem();
 
     Extensions.registerAreaClass(ExtensionAreas.IDEA_PROJECT, null);
@@ -151,6 +138,10 @@ public class CoreApplicationEnvironment {
         };
       }
     };
+  }
+
+  protected CoreLocalFileSystem createLocalFileSystem() {
+    return new CoreLocalFileSystem();
   }
 
   public MockApplication getApplication() {

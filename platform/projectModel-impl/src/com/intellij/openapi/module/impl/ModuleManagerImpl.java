@@ -652,9 +652,13 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
 
     private Module loadModuleInternal(String filePath, @Nullable ProgressIndicator progressIndicator) throws ModuleWithNameAlreadyExists,
                                                               IOException, StateStorageException {
-      final File moduleFile = new File(filePath);
-      filePath = resolveShortWindowsName(filePath);
 
+      final VirtualFile moduleFile = StandardFileSystems.local().findFileByPath(filePath);
+      if (moduleFile == null) {
+        throw new IOException(ProjectBundle.message("module.file.does.not.exist.error", filePath));
+      }
+
+      filePath = resolveShortWindowsName(filePath);
       final String name = moduleFile.getName();
       if (progressIndicator != null) {
         progressIndicator.setText2(FileUtil.getNameWithoutExtension(name));
