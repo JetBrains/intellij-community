@@ -845,8 +845,9 @@ public class HighlightClassUtil {
     }
     PsiModifierListOwner staticParent = PsiUtil.getEnclosingStaticElement(place, outerClass);
     if (staticParent != null) {
-      String description = JavaErrorMessages.message("cannot.be.referenced.from.static.context",
-                                                     outerClass == null ? "" : HighlightUtil.formatClass(outerClass) + "." + PsiKeyword.THIS);
+      String element = outerClass == null ? "" : HighlightUtil.formatClass(outerClass) + "." +
+                                                 (place instanceof PsiSuperExpression ? PsiKeyword.SUPER : PsiKeyword.THIS);
+      String description = JavaErrorMessages.message("cannot.be.referenced.from.static.context", element);
       HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, elementToHighlight, description);
       // make context not static or referenced class static
       IntentionAction fix = QUICK_FIX_FACTORY.createModifierListFix(staticParent, PsiModifier.STATIC, false, false);
