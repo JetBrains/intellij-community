@@ -838,14 +838,19 @@ public class HighlightMethodUtil {
     return null;
   }
 
-
+  @Nullable
   static HighlightInfo checkMethodCanHaveBody(PsiMethod method) {
     if (method.getBody() == null) return null;
     PsiClass aClass = method.getContainingClass();
 
     String message = null;
     if (aClass != null && aClass.isInterface()) {
-      message = JavaErrorMessages.message("interface.methods.cannot.have.body");
+      if (!PsiUtil.isExtensionMethod(method)) {
+        message = JavaErrorMessages.message("interface.methods.cannot.have.body");
+      }
+      else {
+        return HighlightUtil.checkExtensionMethodsFeature(method);
+      }
     }
     else if (method.hasModifierProperty(PsiModifier.ABSTRACT)) {
       message = JavaErrorMessages.message("abstract.methods.cannot.have.a.body");
@@ -853,21 +858,19 @@ public class HighlightMethodUtil {
     else if (method.hasModifierProperty(PsiModifier.NATIVE)) {
       message = JavaErrorMessages.message("native.methods.cannot.have.a.body");
     }
+    if (message == null) return null;
 
-    if (message != null) {
-      TextRange textRange = HighlightNamesUtil.getMethodDeclarationTextRange(method);
-      HighlightInfo info = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, textRange, message);
-      QuickFixAction.registerQuickFixAction(info, new DeleteMethodBodyFix(method));
-      if (method.hasModifierProperty(PsiModifier.ABSTRACT) && aClass != null && !aClass.isInterface()) {
-        IntentionAction fix = QUICK_FIX_FACTORY.createModifierListFix(method, PsiModifier.ABSTRACT, false, false);
-        QuickFixAction.registerQuickFixAction(info, fix);
-      }
-      return info;
+    TextRange textRange = HighlightNamesUtil.getMethodDeclarationTextRange(method);
+    HighlightInfo info = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, textRange, message);
+    QuickFixAction.registerQuickFixAction(info, new DeleteMethodBodyFix(method));
+    if (method.hasModifierProperty(PsiModifier.ABSTRACT) && aClass != null && !aClass.isInterface()) {
+      IntentionAction fix = QUICK_FIX_FACTORY.createModifierListFix(method, PsiModifier.ABSTRACT, false, false);
+      QuickFixAction.registerQuickFixAction(info, fix);
     }
-    return null;
+    return info;
   }
 
-
+  @Nullable
   static HighlightInfo checkConstructorCallMustBeFirstStatement(PsiReferenceExpression expression) {
     PsiElement methodCall = expression.getParent();
     if (!HighlightUtil.isSuperOrThisMethodCall(methodCall)) return null;

@@ -318,7 +318,9 @@ public final class PsiUtil extends PsiUtilCore {
   @PsiModifier.ModifierConstant
   @Nullable
   public static String getAccessModifier(int accessLevel) {
-    return accessLevel > accessModifiers.length ? null : accessModifiers[accessLevel - 1];
+    @SuppressWarnings("UnnecessaryLocalVariable") @PsiModifier.ModifierConstant
+    final String modifier = accessLevel > accessModifiers.length ? null : accessModifiers[accessLevel - 1];
+    return modifier;
   }
 
   private static final String[] accessModifiers = {
@@ -951,5 +953,13 @@ public final class PsiUtil extends PsiUtilCore {
 
   public static boolean isIgnoredName(@Nullable final String name) {
     return "ignore".equals(name) || "ignored".equals(name);
+  }
+
+  public static boolean isExtensionMethod(@Nullable final PsiMethod method) {
+    if (method == null) return false;
+    final PsiCodeBlock body = method.getBody();
+    if (body == null) return false;
+    final PsiElement previous = PsiTreeUtil.skipSiblingsBackward(body, PsiComment.class, PsiWhiteSpace.class);
+    return isJavaToken(previous, JavaTokenType.DEFAULT_KEYWORD);
   }
 }

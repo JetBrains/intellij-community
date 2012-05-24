@@ -2481,7 +2481,8 @@ public class HighlightUtil {
     VARARGS(LanguageLevel.JDK_1_5, "feature.varargs"),
     DIAMOND_TYPES(LanguageLevel.JDK_1_7, "feature.diamond.types"),
     MULTI_CATCH(LanguageLevel.JDK_1_7, "feature.multi.catch"),
-    TRY_WITH_RESOURCES(LanguageLevel.JDK_1_7, "feature.try.with.resources");
+    TRY_WITH_RESOURCES(LanguageLevel.JDK_1_7, "feature.try.with.resources"),
+    EXTENSION_METHODS(LanguageLevel.JDK_1_8, "feature.extension.methods");
 
     private final LanguageLevel level;
     private final String key;
@@ -2543,5 +2544,10 @@ public class HighlightUtil {
   @Nullable
   public static HighlightInfo checkTryWithResourcesFeature(final PsiResourceVariable resourceVariable) {
     return checkFeature(resourceVariable.getParent(), Feature.TRY_WITH_RESOURCES);
+  }
+
+  @Nullable
+  public static HighlightInfo checkExtensionMethodsFeature(final PsiMethod method) {
+    return checkFeature(method, Feature.EXTENSION_METHODS);
   }
 }
