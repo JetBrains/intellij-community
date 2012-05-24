@@ -43,7 +43,6 @@ import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Function;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -626,35 +625,13 @@ public class JavaFoldingBuilder extends CustomFoldingBuilder implements DumbAwar
               if (lastLineEnd > 0 && seq.charAt(lastLineEnd) == '\n') lastLineEnd--;
               if (lastLineEnd < firstLineStart) return false;
 
-              final String baseClassName = quick ?
-                                           anonymousClass.getBaseClassReference().getReferenceName() :
-                                           ObjectUtils.assertNotNull(anonymousClass.getBaseClassType().resolve()).getName();
-              if (lastLineEnd >= seq.length() || firstLineStart >= seq.length() || firstLineStart < 0) {
-                LOG.error("llE=" + lastLineEnd + "; fLS=" + firstLineStart + "; len=" + seq.length() + "rE=" + rangeEnd + "; class=" +
-                          baseClassName);
-              }
-
               final String params = StringUtil.join(method.getParameterList().getParameters(), new Function<PsiParameter, String>() {
                 @Override
                 public String fun(final PsiParameter psiParameter) {
-                  String typeName;
-                  if (quick) {
-                    PsiTypeElement typeElement = psiParameter.getTypeElement();
-                    assert typeElement != null;
-                    typeName = typeElement.getText();
-                  }
-                  else {
-                    typeName = psiParameter.getType().getPresentableText();
-                  }
-                  int genStart = typeName.indexOf('<');
-                  int genEnd = typeName.lastIndexOf('>');
-                  if (genStart > 0 && genEnd > 0) {
-                    typeName = typeName.substring(0, genStart) + typeName.substring(genEnd + 1);
-                  }
-                  return typeName + " " + psiParameter.getName();
+                  return psiParameter.getName();
                 }
               }, ", ");
-              @NonNls final String lambdas = baseClassName + "(" + params + ") {";
+              @NonNls final String lambdas = "{" + params + " =>";
 
               final int closureStart = expression.getTextRange().getStartOffset();
               final int closureEnd = expression.getTextRange().getEndOffset();
