@@ -58,13 +58,13 @@ public class DirtBuilder implements DirtBuilderReader {
   }
 
   public void addDirtyFile(final VcsRoot root) {
-    if (myFileTypeManager.isFileIgnored(root.path.getName())) return;
-    myFiles.add(new FilePathUnderVcs(new FilePathImpl(root.path), root.vcs));
+    if (myFileTypeManager.isFileIgnored(root.getPath().getName())) return;
+    myFiles.add(new FilePathUnderVcs(new FilePathImpl(root.getPath()), root.getVcs()));
   }
 
   public void addDirtyDirRecursively(final VcsRoot root) {
-    if (myFileTypeManager.isFileIgnored(root.path.getName())) return;
-    myDirs.add(new FilePathUnderVcs(new FilePathImpl(root.path), root.vcs));
+    if (myFileTypeManager.isFileIgnored(root.getPath().getName())) return;
+    myDirs.add(new FilePathUnderVcs(new FilePathImpl(root.getPath()), root.getVcs()));
   }
 
   public void addDirtyFile(final FilePathUnderVcs root) {

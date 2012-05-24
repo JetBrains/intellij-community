@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.vcs.changes;
 
-import com.intellij.lifecycle.AtomicSectionsAware;
 import com.intellij.lifecycle.PeriodicalTasksCloser;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
@@ -128,7 +127,7 @@ public class RemoteRevisionsCache implements PlusMinus<Pair<String, AbstractVcs>
     final VcsRoot[] roots = myVcsManager.getAllVcsRoots();
     synchronized (myLock) {
       for (VcsRoot root : roots) {
-        final AbstractVcs vcs = root.vcs;
+        final AbstractVcs vcs = root.getVcs();
         if (! myKinds.containsKey(vcs.getName())) {
           myKinds.put(vcs.getName(), vcs.getRemoteDifferenceStrategy());
         }

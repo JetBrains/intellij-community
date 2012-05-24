@@ -21,6 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.Processor;
@@ -307,16 +308,16 @@ public class VcsDirtyScopeImpl extends VcsModifiableDirtyScope {
         if (myProject.isDisposed()) return Boolean.FALSE;
         final VcsRoot rootObject = myVcsManager.getVcsRootObjectFor(path);
         if (vcsConsumer != null && rootObject != null) {
-          vcsConsumer.consume(rootObject.vcs);
+          vcsConsumer.consume(rootObject.getVcs());
         }
-        if (rootObject == null || rootObject.vcs != myVcs) {
+        if (rootObject == null || rootObject.getVcs() != myVcs) {
           return Boolean.FALSE;
         }
 
-        final VirtualFile vcsRoot = rootObject.path;
+        final VirtualFile vcsRoot = rootObject.getPath();
         if (vcsRoot != null) {
           for (VirtualFile contentRoot : myAffectedContentRoots) {
-            if (VfsUtil.isAncestor(contentRoot, vcsRoot, false)) {
+            if (VfsUtilCore.isAncestor(contentRoot, vcsRoot, false)) {
               THashSet<FilePath> dirsByRoot = myDirtyDirectoriesRecursively.get(contentRoot);
               if (dirsByRoot != null) {
                 for (FilePath filePath : dirsByRoot) {

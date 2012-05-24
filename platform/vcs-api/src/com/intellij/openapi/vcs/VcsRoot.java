@@ -17,18 +17,31 @@
 package com.intellij.openapi.vcs;
 
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author yole
  */
 public class VcsRoot {
-  public final AbstractVcs vcs;
-  public final VirtualFile path;
+
+  @Nullable private final AbstractVcs myVcs;
+  @Nullable private final VirtualFile myPath;
+
   private int hashcode;
 
-  public VcsRoot(final AbstractVcs vcs, final VirtualFile path) {
-    this.vcs = vcs;
-    this.path = path;
+  public VcsRoot(@Nullable AbstractVcs vcs, @Nullable  VirtualFile path) {
+    myVcs = vcs;
+    myPath = path;
+  }
+
+  @Nullable
+  public AbstractVcs getVcs() {
+    return myVcs;
+  }
+
+  @Nullable
+  public VirtualFile getPath() {
+    return myPath;
   }
 
   @Override
@@ -38,26 +51,22 @@ public class VcsRoot {
 
     VcsRoot root = (VcsRoot)o;
 
-    if (path != null ? !path.equals(root.path) : root.path != null) return false;
-    if (vcs != null ? !vcs.getName().equals(root.vcs.getName()) : root.vcs != null) return false;
+    if (myPath != null ? !myPath.equals(root.myPath) : root.myPath != null) return false;
+    if (myVcs != null ? !myVcs.equals(root.myVcs) : root.myVcs != null) return false;
 
     return true;
   }
 
-  @Override
   public int hashCode() {
     if (hashcode == 0) {
-      hashcode = vcs != null ? vcs.getName().hashCode() : 0;
-      hashcode = 31 * hashcode + (path != null ? path.hashCode() : 0);
+      hashcode = myVcs != null ? myVcs.hashCode() : 0;
+      hashcode = 31 * hashcode + (myPath != null ? myPath.hashCode() : 0);
     }
     return hashcode;
   }
 
   @Override
   public String toString() {
-    return "VcsRoot{" +
-           "vcs=" + vcs +
-           ", path=" + path +
-           '}';
+    return String.format("VcsRoot{vcs=%s, path=%s}", myVcs, myPath);
   }
 }
