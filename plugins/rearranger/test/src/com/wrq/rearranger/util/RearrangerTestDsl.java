@@ -33,7 +33,7 @@ public enum RearrangerTestDsl {
   SORT,
   COMMENT,
   GETTER_CRITERIA("getter criteria"),
-  SETTER_CRITERIA("setterCriteria"),
+  SETTER_CRITERIA("setter criteria"),
   SPACING,
   PRECEDING_COMMENT("preceding comment"),
   TRAILING_COMMENT("trailing comment"),

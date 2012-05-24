@@ -68,6 +68,14 @@ class SettingsConfigurationBuilder extends BuilderSupport {
         setIf(RearrangerTestDsl.ORDER,         attributes, 'overloadedOrder',               settings)
         setIf(RearrangerTestDsl.KEEP_TOGETHER, attributes, 'keepOverloadedMethodsTogether', settings)
         break
+      case RearrangerTestDsl.GETTER_CRITERIA.value:
+        setIf(RearrangerTestDsl.NAME, attributes, 'getterNameCriterion', settings.defaultGSDefinition)
+        setIf(RearrangerTestDsl.BODY, attributes, 'getterBodyCriterion', settings.defaultGSDefinition)
+        break
+      case RearrangerTestDsl.SETTER_CRITERIA.value:
+        setIf(RearrangerTestDsl.NAME, attributes, 'setterNameCriterion', settings.defaultGSDefinition)
+        setIf(RearrangerTestDsl.BODY, attributes, 'setterBodyCriterion', settings.defaultGSDefinition)
+        break
       default:
         setIf(RearrangerTestDsl.REARRANGE_INNER_CLASSES, attributes, 'rearrangeInnerClasses', settings)
         if (attributes[RearrangerTestDsl.CLASS_COMMENT.value]) {

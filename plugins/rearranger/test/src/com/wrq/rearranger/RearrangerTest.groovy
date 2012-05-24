@@ -495,7 +495,7 @@ class RearrangerTest extends LightCodeInsightFixtureTestCase {
                 name: GetterSetterDefinition.GETTER_NAME_CORRECT_PREFIX,
                 body: GetterSetterDefinition.GETTER_BODY_IMMATERIAL
         )
-        setterCriteria(
+        'setter criteria'(
                 name: GetterSetterDefinition.SETTER_NAME_CORRECT_PREFIX,
                 body: GetterSetterDefinition.SETTER_BODY_IMMATERIAL
         )
@@ -641,7 +641,7 @@ class RearrangerTest extends LightCodeInsightFixtureTestCase {
           name: GetterSetterDefinition.GETTER_NAME_CORRECT_PREFIX,
           body: GetterSetterDefinition.GETTER_BODY_RETURNS
         )
-        setterCriteria(
+        'setter criteria'(
           name: GetterSetterDefinition.SETTER_NAME_CORRECT_PREFIX,
           body: GetterSetterDefinition.SETTER_BODY_IMMATERIAL
       ) }
@@ -691,7 +691,7 @@ class RearrangerTest extends LightCodeInsightFixtureTestCase {
   } } }
 
   public void testSpacingOptions() throws Exception {
-    /**
+    /*
      * From Thomas Singer:
      * I've enabled
      * - Force 0 blank lines before class close brace "}"
@@ -869,29 +869,22 @@ class RearrangerTest extends LightCodeInsightFixtureTestCase {
       fieldRule.create { }
   } }
 
-//  public void testExcludeFromExtraction() throws Exception {
-//    configureByFile("/com/wrq/rearranger/RearrangementTest36.java");
-//    final PsiFile file = getFile();
-//    final Document doc = PsiDocumentManager.getInstance(getProject()).getDocument(file);
-//    final RearrangerActionHandler rah = new RearrangerActionHandler();
-//    rah.rearrangeDocument(getProject(), file, rs, doc);
-//    super.checkResultByFile("/com/wrq/rearranger/RearrangementTest36.java");
-//  }
-//
-//  public void testInterferingGSNames() throws Exception {
-//    configureByFile("/com/wrq/rearranger/RearrangementTest37.java");
-//    final PsiFile file = getFile();
-//    final Document doc = PsiDocumentManager.getInstance(getProject()).getDocument(file);
-//    final RearrangerActionHandler rah = new RearrangerActionHandler();
-//    rs.setKeepGettersSettersTogether(true);
-//    rs.getDefaultGSDefinition().setGetterBodyCriterion(GetterSetterDefinition.GETTER_BODY_IMMATERIAL);
-//    rs.getDefaultGSDefinition().setGetterNameCriterion(GetterSetterDefinition.GETTER_NAME_CORRECT_PREFIX);
-//    rs.getDefaultGSDefinition().setSetterBodyCriterion(GetterSetterDefinition.SETTER_BODY_IMMATERIAL);
-//    rs.getDefaultGSDefinition().setSetterNameCriterion(GetterSetterDefinition.GETTER_NAME_CORRECT_PREFIX);
-//    rah.rearrangeDocument(getProject(), file, rs, doc);
-//    super.checkResultByFile("/com/wrq/rearranger/RearrangementResult37.java");
-//  }
-//
+  public void testExcludeFromExtraction() throws Exception { doTest('RearrangementTest36', 'RearrangementTest36') }
+
+  public void testInterferingGSNames() throws Exception {
+    doTest('RearrangementTest37', 'RearrangementResult37') {
+      settings.configure {
+        'keep together'( 'getters and setters' )
+        'getter criteria'(
+          name: GetterSetterDefinition.GETTER_NAME_CORRECT_PREFIX,
+          body: GetterSetterDefinition.GETTER_BODY_IMMATERIAL
+        )
+        'setter criteria'(
+          name: GetterSetterDefinition.SETTER_NAME_CORRECT_PREFIX,
+          body: GetterSetterDefinition.SETTER_BODY_IMMATERIAL
+        )
+    } } }
+
 //  public void testInterferingGSNamesNoKGSTogether() throws Exception {
 //    configureByFile("/com/wrq/rearranger/RearrangementTest37.java");
 //    final PsiFile file = getFile();
@@ -1359,7 +1352,6 @@ class RearrangerTest extends LightCodeInsightFixtureTestCase {
   private void doTest(@NotNull String srcFileName, @Nullable String expectedResultFileName, @Nullable Closure adjustment = null) {
     doTest(srcFileName, expectedResultFileName, 'java', adjustment)
   }
-  
   
   private void doTest(@NotNull String srcFileName, @Nullable String expectedResultFileName, @Nullable String extension,
                       @Nullable Closure adjustment = null)
