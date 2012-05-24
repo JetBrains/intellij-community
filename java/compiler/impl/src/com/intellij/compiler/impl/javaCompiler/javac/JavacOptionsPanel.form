@@ -7,7 +7,7 @@
     </constraints>
     <properties/>
     <clientProperties>
-      <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$BoldSmallWithIndent"/>
+      <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$PlainSmallWithIndent"/>
     </clientProperties>
     <border type="etched" title-resource-bundle="messages/CompilerBundle" title-key="javac.options.group.title"/>
     <children>
