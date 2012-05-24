@@ -60,9 +60,6 @@ import java.util.HashSet;
 import java.util.List;
 
 public class HighlightClassUtil {
-  public static final String INTERFACE_EXPECTED = JavaErrorMessages.message("interface.expected");
-  public static final String NO_INTERFACE_EXPECTED = JavaErrorMessages.message("no.interface.expected");
-  private static final String STATIC_DECLARATION_IN_INNER_CLASS = JavaErrorMessages.message("static.declaration.in.inner.class");
   private static final QuickFixFactory QUICK_FIX_FACTORY = QuickFixFactory.getInstance();
 
   /**
@@ -280,9 +277,8 @@ public class HighlightClassUtil {
     if (PsiUtil.isCompileTimeConstant(field)) {
       return null;
     }
-    HighlightInfo errorResult = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR,
-                                                                  keyword,
-                                                                  STATIC_DECLARATION_IN_INNER_CLASS);
+    String message = JavaErrorMessages.message("static.declaration.in.inner.class");
+    HighlightInfo errorResult = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, keyword, message);
     IntentionAction fix1 = QUICK_FIX_FACTORY.createModifierListFix(field, PsiModifier.STATIC, false, false);
     QuickFixAction.registerQuickFixAction(errorResult, fix1);
     IntentionAction fix = QUICK_FIX_FACTORY.createModifierListFix(field.getContainingClass(), PsiModifier.STATIC, true, false);
@@ -297,9 +293,8 @@ public class HighlightClassUtil {
     }
     PsiMethod method = (PsiMethod)keyword.getParent().getParent();
     if (PsiUtilCore.hasErrorElementChild(method)) return null;
-    HighlightInfo errorResult = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR,
-                                                                  keyword,
-                                                                  STATIC_DECLARATION_IN_INNER_CLASS);
+    String message = JavaErrorMessages.message("static.declaration.in.inner.class");
+    HighlightInfo errorResult = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, keyword, message);
     IntentionAction fix1 = QUICK_FIX_FACTORY.createModifierListFix(method, PsiModifier.STATIC, false, false);
     QuickFixAction.registerQuickFixAction(errorResult, fix1);
     IntentionAction fix = QUICK_FIX_FACTORY.createModifierListFix((PsiClass)keyword.getParent().getParent().getParent(), PsiModifier.STATIC, true, false);
@@ -314,9 +309,8 @@ public class HighlightClassUtil {
     }
     PsiClassInitializer initializer = (PsiClassInitializer)keyword.getParent().getParent();
     if (PsiUtilCore.hasErrorElementChild(initializer)) return null;
-    HighlightInfo errorResult = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR,
-                                                                  keyword,
-                                                                  STATIC_DECLARATION_IN_INNER_CLASS);
+    String message = JavaErrorMessages.message("static.declaration.in.inner.class");
+    HighlightInfo errorResult = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, keyword, message);
     IntentionAction fix1 = QUICK_FIX_FACTORY.createModifierListFix(initializer, PsiModifier.STATIC, false, false);
     QuickFixAction.registerQuickFixAction(errorResult, fix1);
     PsiClass owner = (PsiClass)keyword.getParent().getParent().getParent();
@@ -364,7 +358,8 @@ public class HighlightClassUtil {
     if (textRange == null) {
       textRange = HighlightNamesUtil.getClassDeclarationTextRange(aClass);
     }
-    HighlightInfo errorResult = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, textRange, STATIC_DECLARATION_IN_INNER_CLASS);
+    String message = JavaErrorMessages.message("static.declaration.in.inner.class");
+    HighlightInfo errorResult = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, textRange, message);
     if (context != keyword) {
       IntentionAction fix = QUICK_FIX_FACTORY.createModifierListFix(aClass, PsiModifier.STATIC, false, false);
       QuickFixAction.registerQuickFixAction(errorResult, fix);
@@ -425,9 +420,8 @@ public class HighlightClassUtil {
     HighlightInfo errorResult = null;
     PsiClass extendFrom = (PsiClass)resolveResult.getElement();
     if (extendFrom.isInterface() != mustBeInterface) {
-      errorResult = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR,
-                                                      ref,
-                                                      mustBeInterface ? INTERFACE_EXPECTED : NO_INTERFACE_EXPECTED);
+      String message = JavaErrorMessages.message(mustBeInterface ? "interface.expected" : "no.interface.expected");
+      errorResult = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, ref, message);
       PsiClassType type =
         JavaPsiFacade.getInstance(aClass.getProject()).getElementFactory().createType(ref);
       QuickFixAction.registerQuickFixAction(errorResult, new ChangeExtendsToImplementsFix(aClass, type));

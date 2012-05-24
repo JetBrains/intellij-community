@@ -1328,14 +1328,13 @@ public class HighlightUtil {
     }
     if (aClass == null) return null;
     if (qualifier != null && aClass.isInterface()) {
-      return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, qualifier, HighlightClassUtil.NO_INTERFACE_EXPECTED);
+      return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, qualifier, JavaErrorMessages.message("no.interface.expected"));
     }
     if (!HighlightClassUtil.hasEnclosingInstanceInScope(aClass, expr, false)) {
       return HighlightClassUtil.reportIllegalEnclosingUsage(expr, null, aClass, expr);
     }
 
     return null;
-
   }
 
   static String buildProblemWithStaticDescription(PsiElement refElement) {
