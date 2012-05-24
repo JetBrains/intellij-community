@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.folding.impl;
 
 import com.intellij.codeInsight.daemon.impl.CollectHighlightsUtil;
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.codeInsight.folding.JavaCodeFoldingSettings;
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.lang.ASTNode;
@@ -565,8 +566,14 @@ public class JavaFoldingBuilder extends CustomFoldingBuilder implements DumbAwar
   }
 
   private static boolean hasOnlyOneMethod(@NotNull PsiAnonymousClass anonymousClass, boolean checkResolve) {
-    if (anonymousClass.getFields().length != 0) {
-      return false;
+    PsiField[] fields = anonymousClass.getFields();
+    if (fields.length != 0) {
+      if (fields.length == 1 && HighlightUtil.SERIAL_VERSION_UID_FIELD_NAME.equals(fields[0].getName()) &&
+          fields[0].hasModifierProperty(PsiModifier.STATIC)) {
+        //ok
+      } else {
+        return false;
+      }
     }
     if (anonymousClass.getInitializers().length != 0) {
       return false;

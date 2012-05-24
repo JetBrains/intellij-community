@@ -174,6 +174,7 @@ class Test {
 class Test {
     void test() {
      new Runnable() {
+      static final long serialVersionUID = 42L;
       public void run() {
         System.out.println(<caret>);
       }

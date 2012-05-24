@@ -78,7 +78,7 @@ public class HighlightUtil {
   private static final Map<String, Set<String>> ourClassInitializerIncompatibleModifiers;
   private static final Set<String> ourConstructorNotAllowedModifiers;
 
-  @NonNls private static final String SERIAL_VERSION_UID_FIELD_NAME = "serialVersionUID";
+  @NonNls public static final String SERIAL_VERSION_UID_FIELD_NAME = "serialVersionUID";
   @NonNls private static final String SERIAL_PERSISTENT_FIELDS_FIELD_NAME = "serialPersistentFields";
   private static final QuickFixFactory QUICK_FIX_FACTORY = QuickFixFactory.getInstance();
 
