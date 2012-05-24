@@ -333,7 +333,10 @@ public class AndroidPackagingBuilder extends ProjectLevelBuilder {
     final String[] sourceRoots = AndroidJpsUtil.toPaths(AndroidJpsUtil.getSourceRootsForModuleAndDependencies(module));
     final ProjectPaths paths = context.getProjectPaths();
 
-    final File outputDir = AndroidJpsUtil.getOutputDirectoryForPackagedFiles(paths, module);
+    final File intArtifactsDir = AndroidJpsUtil.getDirectoryForIntermediateArtifacts(context, module, false, BUILDER_NAME);
+    assert intArtifactsDir != null;
+
+    final File outputDir = AndroidJpsUtil.getDirectoryForFinalPackage(paths, module);
     if (outputDir == null) {
       context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR, AndroidJpsBundle
         .message("android.jps.errors.output.dir.not.specified", module.getName())));
@@ -346,9 +349,9 @@ public class AndroidPackagingBuilder extends ProjectLevelBuilder {
     }
 
     final Set<String> externalJarsSet = AndroidJpsUtil.getExternalLibraries(paths, module, platform);
-    final File resPackage = getPackagedResourcesFile(module, outputDir);
+    final File resPackage = getPackagedResourcesFile(module, intArtifactsDir);
 
-    final File classesDexFile = new File(outputDir.getPath(), AndroidCommonUtils.CLASSES_FILE_NAME);
+    final File classesDexFile = new File(intArtifactsDir.getPath(), AndroidCommonUtils.CLASSES_FILE_NAME);
 
     final String sdkPath = platform.getSdk().getSdkPath();
     final String outputPath = AndroidJpsUtil.getApkPath(facet, outputDir);
@@ -474,10 +477,8 @@ public class AndroidPackagingBuilder extends ProjectLevelBuilder {
       final ArrayList<String> assetsDirPaths = new ArrayList<String>();
       collectAssetDirs(facet, assetsDirPaths);
 
-      final File outputDir = AndroidJpsUtil.getOutputDirectoryForPackagedFiles(context.getProjectPaths(), module);
+      final File outputDir = AndroidJpsUtil.getDirectoryForIntermediateArtifacts(context, module, true, BUILDER_NAME);
       if (outputDir == null) {
-        context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR, AndroidJpsBundle
-          .message("android.jps.errors.output.dir.not.specified", module.getName())));
         return false;
       }
 

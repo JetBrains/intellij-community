@@ -37,7 +37,8 @@ class AndroidJpsUtil {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.android.AndroidJpsUtil");
 
   @NonNls public static final String ANDROID_STORAGE_DIR = "android";
-  @NonNls private static final String RESOURCE_CACHE_STORAGE = "res-cache";
+  @NonNls private static final String RESOURCE_CACHE_STORAGE = "res_cache";
+  @NonNls private static final String INTERMEDIATE_ARTIFACTS_STORAGE = "intermediate_artifacts";
 
   public static final Condition<File> CLASSES_AND_JARS_FILTER = new Condition<File>() {
     @Override
@@ -143,7 +144,30 @@ class AndroidJpsUtil {
   }
 
   @Nullable
-  public static File getOutputDirectoryForPackagedFiles(@NotNull ProjectPaths paths, @NotNull Module module) {
+  public static File getDirectoryForIntermediateArtifacts(@NotNull CompileContext context,
+                                                          @NotNull Module module,
+                                                          boolean createIfNotExist,
+                                                          @NotNull String compilerName) {
+    final File androidStorage = new File(context.getDataManager().getDataStorageRoot(), ANDROID_STORAGE_DIR);
+    final File dir = new File(new File(androidStorage, INTERMEDIATE_ARTIFACTS_STORAGE), module.getName());
+
+    if (!dir.exists()) {
+      if (createIfNotExist) {
+        if (!dir.mkdirs()) {
+          context.processMessage(new CompilerMessage(compilerName, BuildMessage.Kind.ERROR,
+                                                     AndroidJpsBundle.message("android.jps.cannot.create.directory", dir.getPath())));
+          return null;
+        }
+      }
+      else {
+        return null;
+      }
+    }
+    return dir;
+  }
+
+  @Nullable
+  public static File getDirectoryForFinalPackage(@NotNull ProjectPaths paths, @NotNull Module module) {
     // todo: return build directory for mavenized modules to place .dex and .apk files into target dir (not target/classes)
     return paths.getModuleOutputDir(module, false);
   }

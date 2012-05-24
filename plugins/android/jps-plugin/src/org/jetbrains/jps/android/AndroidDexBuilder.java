@@ -110,11 +110,8 @@ public class AndroidDexBuilder extends ProjectLevelBuilder {
       }
 
       final ProjectPaths projectPaths = context.getProjectPaths();
-      final File dexOutputDir = AndroidJpsUtil.getOutputDirectoryForPackagedFiles(projectPaths, module);
-
+      final File dexOutputDir = AndroidJpsUtil.getDirectoryForIntermediateArtifacts(context, module, true, BUILDER_NAME);
       if (dexOutputDir == null) {
-        context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR, AndroidJpsBundle
-          .message("android.jps.errors.output.dir.not.specified", module.getName())));
         success = false;
         continue;
       }

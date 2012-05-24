@@ -54,7 +54,7 @@ public class AndroidLibraryPackagingBuilder extends ModuleLevelBuilder {
       }
 
       final ProjectPaths projectPaths = context.getProjectPaths();
-      final File outputDirectoryForPackagedFiles = AndroidJpsUtil.getOutputDirectoryForPackagedFiles(projectPaths, module);
+      final File outputDirectoryForPackagedFiles = AndroidJpsUtil.getDirectoryForFinalPackage(projectPaths, module);
 
       if (outputDirectoryForPackagedFiles == null) {
         context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR, AndroidJpsBundle
