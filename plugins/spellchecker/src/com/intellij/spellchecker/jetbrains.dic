@@ -132,6 +132,7 @@ hardlinks
 helvetica
 holdability
 hostname
+hprof
 href
 hsqldb
 html
@@ -156,6 +157,7 @@ iphoneos
 isnull
 javabean
 javabeans
+javac
 javadoc
 javaee
 javascript
@@ -378,12 +380,14 @@ stateful
 stdarg
 stdlib
 stmt
+strictfp
 stylesheet
 stylesheets
 sublicense
 subpackage
 subpartition
 subpartitions
+subst
 substring
 subtree
 subtrees
