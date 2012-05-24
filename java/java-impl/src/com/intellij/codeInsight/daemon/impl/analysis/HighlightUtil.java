@@ -78,7 +78,7 @@ public class HighlightUtil {
   private static final Map<String, Set<String>> ourClassInitializerIncompatibleModifiers;
   private static final Set<String> ourConstructorNotAllowedModifiers;
 
-  @NonNls private static final String SERIAL_VERSION_UID_FIELD_NAME = "serialVersionUID";
+  @NonNls public static final String SERIAL_VERSION_UID_FIELD_NAME = "serialVersionUID";
   @NonNls private static final String SERIAL_PERSISTENT_FIELDS_FIELD_NAME = "serialPersistentFields";
   private static final QuickFixFactory QUICK_FIX_FACTORY = QuickFixFactory.getInstance();
 
@@ -1328,14 +1328,13 @@ public class HighlightUtil {
     }
     if (aClass == null) return null;
     if (qualifier != null && aClass.isInterface()) {
-      return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, qualifier, HighlightClassUtil.NO_INTERFACE_EXPECTED);
+      return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, qualifier, JavaErrorMessages.message("no.interface.expected"));
     }
     if (!HighlightClassUtil.hasEnclosingInstanceInScope(aClass, expr, false)) {
       return HighlightClassUtil.reportIllegalEnclosingUsage(expr, null, aClass, expr);
     }
 
     return null;
-
   }
 
   static String buildProblemWithStaticDescription(PsiElement refElement) {
@@ -2481,7 +2480,8 @@ public class HighlightUtil {
     VARARGS(LanguageLevel.JDK_1_5, "feature.varargs"),
     DIAMOND_TYPES(LanguageLevel.JDK_1_7, "feature.diamond.types"),
     MULTI_CATCH(LanguageLevel.JDK_1_7, "feature.multi.catch"),
-    TRY_WITH_RESOURCES(LanguageLevel.JDK_1_7, "feature.try.with.resources");
+    TRY_WITH_RESOURCES(LanguageLevel.JDK_1_7, "feature.try.with.resources"),
+    EXTENSION_METHODS(LanguageLevel.JDK_1_8, "feature.extension.methods");
 
     private final LanguageLevel level;
     private final String key;
@@ -2543,5 +2543,10 @@ public class HighlightUtil {
   @Nullable
   public static HighlightInfo checkTryWithResourcesFeature(final PsiResourceVariable resourceVariable) {
     return checkFeature(resourceVariable.getParent(), Feature.TRY_WITH_RESOURCES);
+  }
+
+  @Nullable
+  public static HighlightInfo checkExtensionMethodsFeature(final PsiMethod method) {
+    return checkFeature(method, Feature.EXTENSION_METHODS);
   }
 }

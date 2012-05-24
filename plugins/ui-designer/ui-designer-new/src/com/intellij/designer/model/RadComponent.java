@@ -22,6 +22,7 @@ import com.intellij.designer.designSurface.StaticDecorator;
 import com.intellij.designer.designSurface.tools.DragTracker;
 import com.intellij.designer.designSurface.tools.InputTool;
 import com.intellij.designer.propertyTable.Property;
+import com.intellij.designer.propertyTable.PropertyTable;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -184,6 +185,22 @@ public abstract class RadComponent {
 
   public List<Property> getProperties() {
     return Collections.emptyList();
+  }
+
+  public List<Property> getInplaceProperties() throws Exception {
+    List<Property> properties = new ArrayList<Property>();
+
+    if (myMetaModel != null) {
+      List<Property> allProperties = getProperties();
+      for (String name : myMetaModel.getInplaceProperties()) {
+        Property property = PropertyTable.findProperty(allProperties, name);
+        if (property != null) {
+          properties.add(property);
+        }
+      }
+    }
+
+    return properties;
   }
 
   @SuppressWarnings("unchecked")

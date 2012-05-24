@@ -48,6 +48,8 @@ public class DesignerActionPanel implements DataProvider {
     myCommonEditActionsProvider = new CommonEditActionsProvider(designer);
     myShortcuts = shortcuts;
 
+    createInplaceEditingAction(myShortcuts).setDesignerPanel(designer);
+
     myActionGroup.add(myStaticGroup);
     myActionGroup.add(myDynamicGroup);
 
@@ -89,6 +91,12 @@ public class DesignerActionPanel implements DataProvider {
         updateSelectionActions(area.getSelection());
       }
     });
+  }
+
+  public static StartInplaceEditing createInplaceEditingAction(JComponent shortcuts) {
+    StartInplaceEditing action = new StartInplaceEditing();
+    action.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_F2, 0)), shortcuts);
+    return action;
   }
 
   private void registerAction(AnAction action, @NonNls String actionId) {

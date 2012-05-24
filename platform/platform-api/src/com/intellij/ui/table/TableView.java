@@ -93,8 +93,7 @@ public class TableView<Item> extends BaseTableView implements ItemsProvider, Sel
     int[] sizeMode = new int[columns.length];
     int[] headers = new int[columns.length];
     int[] widths = new int[columns.length];
-    int fixedWidth = 0;
-    int varWidth = 0;
+    int allColumnWidth = 0;
     int varCount = 0;
 
     // calculate
@@ -132,18 +131,18 @@ public class TableView<Item> extends BaseTableView implements ItemsProvider, Sel
         widths[i] = getFontMetrics(getFont()).stringWidth(preferredValue) + columnInfo.getAdditionalWidth();
         varCount ++;
       }
-      if (sizeMode[i] == 0) {
-        fixedWidth += widths[i];
-      }
-      else {
-        varWidth += widths[i];
-      }
+      allColumnWidth += widths[i];
     }
 
-    // apply: distribute available space between resizable columns but no more than *4 times.
+    // apply: distribute available space between resizable columns
     //        and make sure that header will fit as well
     int viewWidth = getParent() != null? getParent().getWidth() : getWidth();
-    int addendum = varCount > 0 && viewWidth > fixedWidth + varWidth? (viewWidth - fixedWidth - varWidth) / varCount : 0;
+    double gold = 0.5 * (3 - Math.sqrt(5));
+    int addendum = varCount == 0 || viewWidth < allColumnWidth ?
+                   0 : (int)((allColumnWidth < gold * viewWidth ? gold * viewWidth :
+                              allColumnWidth < (1 - gold) * viewWidth ? (1 - gold) * viewWidth :
+                              viewWidth) - allColumnWidth) / varCount;
+
     for (int i=0 ; i<columns.length; i ++) {
       TableColumn column = getColumnModel().getColumn(i);
       int width = widths[i];
@@ -153,12 +152,12 @@ public class TableView<Item> extends BaseTableView implements ItemsProvider, Sel
         column.setMinWidth(width);
       }
       else if (sizeMode[i] == 2) {
-        width = Math.max(width + Math.min(addendum, 4 * width), headers[i]);
+        width = Math.max(width + addendum, headers[i]);
         column.setPreferredWidth(width);
         column.setMaxWidth(width);
       }
       else if (sizeMode[i] == 3) {
-        width = Math.max(width + Math.min(addendum, 4 * width), headers[i]);
+        width = Math.max(width + addendum, headers[i]);
         column.setPreferredWidth(width);
       }
     }

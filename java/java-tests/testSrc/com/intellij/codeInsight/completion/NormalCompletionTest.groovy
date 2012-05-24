@@ -1339,6 +1339,7 @@ public class ListUtils {
   public void testInterfaceImplementationNoCast() { doTest() }
   public void testStaticallyImportedMethodsBeforeExpression() { doTest() }
   public void testInnerChainedReturnType() { doTest() }
+  public void testOverwriteGenericsAfterNew() { doTest('\n') }
 
   private CommonCodeStyleSettings getCodeStyleSettings() {
     return CodeStyleSettingsManager.getSettings(getProject()).getCommonSettings(JavaLanguage.INSTANCE);

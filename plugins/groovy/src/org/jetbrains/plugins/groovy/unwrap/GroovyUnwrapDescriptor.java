@@ -29,8 +29,8 @@ public class GroovyUnwrapDescriptor extends UnwrapDescriptorBase {
       new GroovyForUnwrapper(),
       new GroovyCatchRemover(),
       new GroovyBracesUnwrapper(),
-      new GroovyElseRemover(),
       new GroovyElseUnwrapper(),
+      new GroovyElseRemover(),
       new GroovyConditionalUnwrapper(),
     };
   }

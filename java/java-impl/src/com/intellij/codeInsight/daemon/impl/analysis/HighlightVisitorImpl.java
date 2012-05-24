@@ -698,7 +698,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   @Override public void visitNewExpression(PsiNewExpression expression) {
     myHolder.add(HighlightUtil.checkUnhandledExceptions(expression, null));
     if (!myHolder.hasErrorResults()) myHolder.add(HighlightClassUtil.checkAnonymousInheritFinal(expression));
-    if (!myHolder.hasErrorResults()) myHolder.add(HighlightClassUtil.checkQualifiedNewOfStaticClass(expression));
+    if (!myHolder.hasErrorResults()) myHolder.add(HighlightClassUtil.checkQualifiedNew(expression));
     if (!myHolder.hasErrorResults()) myHolder.add(HighlightClassUtil.checkCreateInnerClassFromStaticContext(expression));
     if (!myHolder.hasErrorResults()) myHolder.add(GenericsHighlightUtil.checkTypeParameterInstantiation(expression));
     try {

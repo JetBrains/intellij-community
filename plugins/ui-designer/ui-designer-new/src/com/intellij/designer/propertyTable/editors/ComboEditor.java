@@ -52,6 +52,11 @@ public abstract class ComboEditor extends PropertyEditor {
     }
   }
 
+  @Override
+  public JComponent getPreferredFocusedComponent() {
+    return myCombo;
+  }
+
   private static class ComboListeners implements PopupMenuListener, ActionListener {
     private final PropertyEditor myEditor;
     private boolean myCancelled;

@@ -57,126 +57,36 @@ public class LightAdvHighlightingJdk7Test extends LightDaemonAnalyzerTestCase {
     };
   }
 
-  public void testAllJava15Features() throws Exception {
-    doTest(false, false);
-  }
-
-  public void testEnumSyntheticMethods() throws Exception {
-    doTest(false, false);
-  }
-
-  public void testDuplicateAnnotations() throws Exception {
-    doTest(false, false);
-  }
-
-  public void testSwitchByString() throws Exception {
-    doTest(false, false);
-  }
-
-  public void testSwitchByInaccessibleEnum() throws Exception {
-    doTest(false, false);
-  }
-
-  public void testDiamondPos1() throws Exception {
-    doTest(false, false);
-  }
-
-  public void testDiamondPos2() throws Exception {
-    doTest(false, false);
-  }
-
-  public void testDiamondPos3() throws Exception {
-    doTest(false, false);
-  }
-
-  public void testDiamondPos4() throws Exception {
-    doTest(false, false);
-  }
-
-  public void testDiamondPos5() throws Exception {
-    doTest(false, false);
-  }
-
-
-  public void testDiamondPos6() throws Exception {
-    doTest(false, false);
-  }
-
-  public void testDiamondPos7() throws Exception {
-    doTest(false, false);
-  }
-
-  public void testDiamondNeg15() throws Exception {
-    doTest(false, false);
-  }
-
-  public void testDiamondPos9() throws Exception {
-    doTest(false, false);
-  }
-
-  public void testDiamondNeg1() throws Exception {
-    doTest(false, false);
-  }
-
-  public void testDiamondNeg2() throws Exception {
-    doTest(false, false);
-  }
-
-  public void testDiamondNeg3() throws Exception {
-    doTest(false, false);
-  }
-
-  public void testDiamondNeg4() throws Exception {
-    doTest(false, false);
-  }
-
-  public void testDiamondNeg5() throws Exception {
-    doTest(false, false);
-  }
-
-  public void testDiamondNeg6() throws Exception {
-    doTest(false, false);
-  }
-
-  public void testDiamondNeg7() throws Exception {
-    doTest(false, false);
-  }
-
-  public void testDiamondNeg8() throws Exception {
-    doTest(false, false);
-  }
-
-  public void testDiamondNeg9() throws Exception {
-    doTest(false, false);
-  }
-
-  public void testDiamondNeg10() throws Exception {
-    doTest(false, false);
-  }
-
-  public void testDiamondNeg11() throws Exception {
-    doTest(false, false);
-  }
-
-  public void testDiamondNeg12() throws Exception {
-    doTest(false, false);
-  }
-
-  public void testDiamondNeg13() throws Exception {
-    doTest(false, false);
-  }
-
-  public void testDiamondNeg14() throws Exception {
-    doTest(false, false);
-  }
-
-  public void testDiamondMisc() throws Exception {
-    doTest(false, false);
-  }
-
-  public void testHighlightInaccessibleFromClassModifierList() throws Exception {
-    doTest(false, false);
-  }
+  public void testAllJava15Features() throws Exception { doTest(false, false); }
+  public void testEnumSyntheticMethods() throws Exception { doTest(false, false); }
+  public void testDuplicateAnnotations() throws Exception { doTest(false, false); }
+  public void testSwitchByString() throws Exception { doTest(false, false); }
+  public void testSwitchByInaccessibleEnum() throws Exception { doTest(false, false); }
+  public void testDiamondPos1() throws Exception { doTest(false, false); }
+  public void testDiamondPos2() throws Exception { doTest(false, false); }
+  public void testDiamondPos3() throws Exception { doTest(false, false); }
+  public void testDiamondPos4() throws Exception { doTest(false, false); }
+  public void testDiamondPos5() throws Exception { doTest(false, false); }
+  public void testDiamondPos6() throws Exception { doTest(false, false); }
+  public void testDiamondPos7() throws Exception { doTest(false, false); }
+  public void testDiamondNeg15() throws Exception { doTest(false, false); }
+  public void testDiamondPos9() throws Exception { doTest(false, false); }
+  public void testDiamondNeg1() throws Exception { doTest(false, false); }
+  public void testDiamondNeg2() throws Exception { doTest(false, false); }
+  public void testDiamondNeg3() throws Exception { doTest(false, false); }
+  public void testDiamondNeg4() throws Exception { doTest(false, false); }
+  public void testDiamondNeg5() throws Exception { doTest(false, false); }
+  public void testDiamondNeg6() throws Exception { doTest(false, false); }
+  public void testDiamondNeg7() throws Exception { doTest(false, false); }
+  public void testDiamondNeg8() throws Exception { doTest(false, false); }
+  public void testDiamondNeg9() throws Exception { doTest(false, false); }
+  public void testDiamondNeg10() throws Exception { doTest(false, false); }
+  public void testDiamondNeg11() throws Exception { doTest(false, false); }
+  public void testDiamondNeg12() throws Exception { doTest(false, false); }
+  public void testDiamondNeg13() throws Exception { doTest(false, false); }
+  public void testDiamondNeg14() throws Exception { doTest(false, false); }
+  public void testDiamondMisc() throws Exception { doTest(false, false); }
+  public void testHighlightInaccessibleFromClassModifierList() throws Exception { doTest(false, false); }
 
   public void testDynamicallyAddIgnoredAnnotations() throws Exception {
     ExtensionPoint<EntryPoint> point = Extensions.getRootArea().getExtensionPoint(ExtensionPoints.DEAD_CODE_TOOL);
@@ -242,46 +152,21 @@ public class LightAdvHighlightingJdk7Test extends LightDaemonAnalyzerTestCase {
     }
   }
 
-  public void testNumericLiterals() throws Exception {
-    doTest(false, false);
-  }
-
-  public void testMultiCatch() throws Exception {
-    doTest(false, false);
-  }
-
-  public void testTryWithResources() throws Exception {
-    doTest(false, false);
-  }
+  public void testNumericLiterals() throws Exception { doTest(false, false); }
+  public void testMultiCatch() throws Exception { doTest(false, false); }
+  public void testTryWithResources() throws Exception { doTest(false, false); }
 
   public void testTryWithResourcesWarn() throws Exception {
     enableInspectionTool(new DefUseInspection());
     doTest(true, false);
   }
 
-  public void testSafeVarargsApplicability() throws Exception {
-    doTest(true, false);
-  }
-
-  public void testUncheckedGenericsArrayCreation() throws Exception {
-    doTest(true, false);
-  }
-
-  public void testPreciseRethrow() throws Exception {
-    doTest(false, false);
-  }
-
-  public void testImprovedCatchAnalysis() throws Exception {
-    doTest(true, false);
-  }
-
-  public void testJavacQuirks() throws Exception {
-    doTest(true, false);
-  }
-
-  public void testPolymorphicTypeCast() throws Exception {
-    doTest(true, false);
-  }
+  public void testSafeVarargsApplicability() throws Exception { doTest(true, false); }
+  public void testUncheckedGenericsArrayCreation() throws Exception { doTest(true, false); }
+  public void testPreciseRethrow() throws Exception { doTest(false, false); }
+  public void testImprovedCatchAnalysis() throws Exception { doTest(true, false); }
+  public void testJavacQuirks() throws Exception { doTest(true, false); }
+  public void testPolymorphicTypeCast() throws Exception { doTest(true, false); }
 
   public void testErasureClashConfusion() throws Exception {
     enableInspectionTool(new UnusedDeclarationInspection());
@@ -293,16 +178,9 @@ public class LightAdvHighlightingJdk7Test extends LightDaemonAnalyzerTestCase {
     doTest(true, false);
   }
 
-  public void testSuperBound() throws Exception {
-    doTest(false, false);
-  }
-
-  public void testExtendsBound() throws Exception {
-    doTest(false, false);
-  }
-
+  public void testSuperBound() throws Exception { doTest(false, false); }
+  public void testExtendsBound() throws Exception { doTest(false, false); }
   public void testIDEA84533() throws Exception { doTest(false, false); }
-  
-  public void testClassLiteral() throws Exception { doTest(false, false);}
+  public void testClassLiteral() throws Exception { doTest(false, false); }
+  public void testExtensionMethods() throws Exception { doTest(false, false); }
 }
-

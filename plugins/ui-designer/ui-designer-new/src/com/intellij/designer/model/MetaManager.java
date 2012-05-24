@@ -114,6 +114,11 @@ public abstract class MetaManager {
 
     Element properties = element.getChild("properties");
     if (properties != null) {
+      Attribute inplace = properties.getAttribute("inplace");
+      if (inplace != null) {
+        meta.setInplaceProperties(StringUtil.split(inplace.getValue(), " "));
+      }
+
       Attribute top = properties.getAttribute("top");
       if (top != null) {
         meta.setTopProperties(StringUtil.split(top.getValue(), " "));

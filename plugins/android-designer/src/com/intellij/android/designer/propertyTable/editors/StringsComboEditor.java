@@ -16,7 +16,7 @@
 package com.intellij.android.designer.propertyTable.editors;
 
 import com.intellij.designer.model.RadComponent;
-import com.intellij.designer.propertyTable.PropertyEditor;
+import com.intellij.designer.propertyTable.InplaceContext;
 import com.intellij.designer.propertyTable.editors.ComboEditor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -54,7 +54,10 @@ public class StringsComboEditor extends ComboEditor {
 
   @NotNull
   @Override
-  public JComponent getComponent(@NotNull RadComponent rootComponent, @Nullable RadComponent component, Object value) {
+  public JComponent getComponent(@NotNull RadComponent rootComponent,
+                                 @Nullable RadComponent component,
+                                 Object value,
+                                 @Nullable InplaceContext inplaceContext) {
     myCombo.setSelectedItem(value);
     return myCombo;
   }
