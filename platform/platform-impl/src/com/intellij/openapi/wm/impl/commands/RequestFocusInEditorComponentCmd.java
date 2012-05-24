@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -86,7 +86,8 @@ public final class RequestFocusInEditorComponentCmd extends FinalizableCommand{
         return;
       }
 
-      if (owner instanceof IdeFrameImpl && IdeFrameImpl.getActiveFrame() != owner) {
+      final Window activeFrame = IdeFrameImpl.getActiveFrame();
+      if (activeFrame != null && owner instanceof IdeFrameImpl && activeFrame != owner) {
         myDoneCallback.setRejected();
         return;
       }
