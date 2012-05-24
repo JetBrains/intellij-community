@@ -275,7 +275,7 @@ public class PyClassRefactoringUtil {
         if (PsiTreeUtil.getParentOfType(node, PyImportStatementBase.class) != null) {
           return;
         }
-        final PyImportElement importElement = getImportElement(node);
+        final NameDefiner importElement = getImportElement(node);
         if (importElement != null && PsiTreeUtil.isAncestor(element, importElement, false)) {
           return;
         }
@@ -293,13 +293,13 @@ public class PyClassRefactoringUtil {
     }
     final PsiElement target = resolveExpression(node);
     if (target instanceof PsiNamedElement && !PsiTreeUtil.isAncestor(element, target, false)) {
-      final PyImportElement importElement = getImportElement(node);
+      final NameDefiner importElement = getImportElement(node);
       if (!inSameFile(element, target) && importElement == null && !(target instanceof PsiFileSystemItem)) {
         return;
       }
       node.putCopyableUserData(ENCODED_IMPORT, (PsiNamedElement)target);
-      if (importElement != null) {
-        node.putCopyableUserData(ENCODED_IMPORT_AS, importElement.getAsName());
+      if (importElement instanceof PyImportElement) {
+        node.putCopyableUserData(ENCODED_IMPORT_AS, ((PyImportElement)importElement).getAsName());
       }
       node.putCopyableUserData(ENCODED_USE_FROM_IMPORT, qualifier == null);
     }
@@ -315,11 +315,14 @@ public class PyClassRefactoringUtil {
   }
 
   @Nullable
-  private static PyImportElement getImportElement(PyReferenceExpression expr) {
+  private static NameDefiner getImportElement(PyReferenceExpression expr) {
     for (ResolveResult result : expr.getReference().multiResolve(false)) {
       final PsiElement e = result.getElement();
       if (e instanceof PyImportElement) {
         return (PyImportElement)e;
+      }
+      if (e instanceof PyStarImportElement) {
+        return (PyStarImportElement)e;
       }
     }
     return null;
@@ -349,7 +352,7 @@ public class PyClassRefactoringUtil {
         if (newFile == file) {
           deleteImportElement = true;
         }
-        else if (insertImport(importStatement, element, importElement.getAsName())) {
+        else if (insertImport(importStatement, element, importElement.getAsName(), true)) {
           deleteImportElement = true;
         }
         if (deleteImportElement) {

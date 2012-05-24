@@ -149,18 +149,20 @@ public abstract class PythonCommandLineState extends CommandLineState {
 
     Sdk sdk = PythonSdkType.findSdkByPath(myConfig.getSdkHome());
 
+
+    final ProcessHandler processHandler;
     if (PySdkUtil.isRemote(sdk)) {
-      return startRemoteProcess(sdk, commandLine);
+       processHandler = startRemoteProcess(sdk, commandLine);
     }
     else {
-      final ProcessHandler processHandler = doCreateProcess(commandLine);
+      processHandler = doCreateProcess(commandLine);
       ProcessTerminatedListener.attach(processHandler);
-
-      // attach extensions
-      PythonRunConfigurationExtensionsManager.getInstance().attachExtensionsToProcess(myConfig, processHandler, getRunnerSettings());
-
-      return processHandler;
     }
+
+    // attach extensions
+    PythonRunConfigurationExtensionsManager.getInstance().attachExtensionsToProcess(myConfig, processHandler, getRunnerSettings());
+
+    return processHandler;
   }
 
   private ProcessHandler startRemoteProcess(Sdk sdk, GeneralCommandLine commandLine) throws ExecutionException {

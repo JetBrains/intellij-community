@@ -107,7 +107,7 @@ public class PyPackageRequirementsInspection extends PyInspection {
             }
             final List<LocalQuickFix> quickFixes = new ArrayList<LocalQuickFix>();
             if (PyPackageManager.getInstance(sdk).hasPip()) {
-              quickFixes.add(new InstallRequirementsFix(null, module, sdk, unsatisfied));
+              quickFixes.add(new PyInstallRequirementsFix(null, module, sdk, unsatisfied));
             }
             quickFixes.add(new IgnoreRequirementFix(unsatisfiedNames));
             registerProblem(node, msg,
@@ -267,14 +267,14 @@ public class PyPackageRequirementsInspection extends PyInspection {
     return value != null && value;
   }
 
-  public static class InstallRequirementsFix implements LocalQuickFix {
+  public static class PyInstallRequirementsFix implements LocalQuickFix {
     @NotNull private String myName;
     @NotNull private final Module myModule;
     @NotNull private Sdk mySdk;
     @NotNull private final List<PyRequirement> myUnsatisfied;
 
-    public InstallRequirementsFix(@Nullable String name, @NotNull Module module, @NotNull Sdk sdk,
-                                  @NotNull List<PyRequirement> unsatisfied) {
+    public PyInstallRequirementsFix(@Nullable String name, @NotNull Module module, @NotNull Sdk sdk,
+                                    @NotNull List<PyRequirement> unsatisfied) {
       final boolean plural = unsatisfied.size() > 1;
       myName = name != null ? name : String.format("Install requirement%s", plural ? "s" : "");
       myModule = module;

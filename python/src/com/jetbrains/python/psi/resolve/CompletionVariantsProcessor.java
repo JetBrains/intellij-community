@@ -46,7 +46,7 @@ public class CompletionVariantsProcessor extends VariantsProcessor {
       if (!mySuppressParentheses &&
           item.getObject() instanceof PyFunction && ((PyFunction) item.getObject()).getProperty() == null &&
           !isSingleArgDecoratorCall(myContext, (PyFunction)item.getObject())) {
-        item = item.setInsertHandler(PyFunctionInsertHandler.INSTANCE);
+        item = item.withInsertHandler(PyFunctionInsertHandler.INSTANCE);
         final PyParameterList parameterList = ((PyFunction)item.getObject()).getParameterList();
         final String params = StringUtil.join(parameterList.getParameters(), new Function<PyParameter, String>() {
           @Override
@@ -54,10 +54,10 @@ public class CompletionVariantsProcessor extends VariantsProcessor {
             return pyParameter.getText();
           }
         }, ", ");
-        item = item.setTailText("(" + params + ")");
+        item = item.withTailText("(" + params + ")");
       }
       else if (item.getObject() instanceof PyClass) {
-        item = item.setInsertHandler(PyClassInsertHandler.INSTANCE);
+        item = item.withInsertHandler(PyClassInsertHandler.INSTANCE);
       }
     }
     if (myNotice != null) {
@@ -85,7 +85,7 @@ public class CompletionVariantsProcessor extends VariantsProcessor {
   }
 
   protected static LookupElementBuilder setItemNotice(final LookupElementBuilder item, String notice) {
-    return item.setTypeText(notice);
+    return item.withTypeText(notice);
   }
 
   public LookupElement[] getResult() {
@@ -99,14 +99,14 @@ public class CompletionVariantsProcessor extends VariantsProcessor {
 
   @Override
   protected void addElement(String name, PsiElement element) {
-    myVariants.put(name, setupItem(LookupElementBuilder.create(element, name).setIcon(element.getIcon(0))));
+    myVariants.put(name, setupItem(LookupElementBuilder.create(element, name).withIcon(element.getIcon(0))));
   }
 
   protected void addImportedElement(String referencedName, NameDefiner definer, PyElement expr) {
     Icon icon = expr.getIcon(0);
     // things like PyTargetExpression cannot have a general icon, but here we only have variables
     if (icon == null) icon = PlatformIcons.VARIABLE_ICON;
-    LookupElementBuilder lookupItem = setupItem(LookupElementBuilder.create(expr, referencedName).setIcon(icon));
+    LookupElementBuilder lookupItem = setupItem(LookupElementBuilder.create(expr, referencedName).withIcon(icon));
     if (definer instanceof PyImportElement) { // set notice to imported module name if needed
       PsiElement maybeFromImport = definer.getParent();
       if (maybeFromImport instanceof PyFromImportStatement) {
@@ -120,7 +120,7 @@ public class CompletionVariantsProcessor extends VariantsProcessor {
     if (definer instanceof PyAssignmentStatement && expr instanceof PyExpression) {
       PyType type = ((PyExpression) expr).getType(TypeEvalContext.fast());
       if (type != null) {
-        lookupItem = lookupItem.setTypeText(type.getName());
+        lookupItem = lookupItem.withTypeText(type.getName());
       }
     }
     myVariants.put(referencedName, lookupItem);

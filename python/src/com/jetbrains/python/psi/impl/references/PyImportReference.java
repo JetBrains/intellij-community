@@ -112,14 +112,14 @@ public class PyImportReference extends PyReferenceImpl {
       Object item = variants[i];
       if (hasChildPackages(item)) continue;
       if (item instanceof LookupElementBuilder) {
-        variants[i] = ((LookupElementBuilder)item).setInsertHandler(insertHandler);
+        variants[i] = ((LookupElementBuilder)item).withInsertHandler(insertHandler);
       }
       else if (item instanceof PsiNamedElement) {
         final PsiNamedElement element = (PsiNamedElement)item;
         variants[i] = LookupElementBuilder
           .create(element.getName()) // it can't really have null name
-          .setIcon(element.getIcon(0))
-          .setInsertHandler(insertHandler);
+          .withIcon(element.getIcon(0))
+          .withInsertHandler(insertHandler);
       }
     }
   }

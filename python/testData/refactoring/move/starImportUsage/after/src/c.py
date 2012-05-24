@@ -1,2 +1,4 @@
-def f():
-    pass
+from b import f
+
+def g():
+    return f()

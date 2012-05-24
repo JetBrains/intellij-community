@@ -64,11 +64,11 @@ public class PyJavaPackageType implements PyType {
     final GlobalSearchScope scope = getScope(location.getProject());
     final PsiClass[] classes = myPackage.getClasses(scope);
     for (PsiClass psiClass : classes) {
-      variants.add(LookupElementBuilder.create(psiClass).setIcon(psiClass.getIcon(0)));
+      variants.add(LookupElementBuilder.create(psiClass).withIcon(psiClass.getIcon(0)));
     }
     final PsiPackage[] subPackages = myPackage.getSubPackages(scope);
     for (PsiPackage subPackage : subPackages) {
-      variants.add(LookupElementBuilder.create(subPackage).setIcon(subPackage.getIcon(0)));
+      variants.add(LookupElementBuilder.create(subPackage).withIcon(subPackage.getIcon(0)));
     }
     return ArrayUtil.toObjectArray(variants);
   }

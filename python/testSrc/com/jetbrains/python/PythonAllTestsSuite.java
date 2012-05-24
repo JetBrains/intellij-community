@@ -45,6 +45,7 @@ public class PythonAllTestsSuite {
     PyDecoratorTest.class,
     PyQuickDocTest.class,
     PythonInspectionsTest.class,
+    PyTypeCheckerInspectionTest.class,
     PyArgumentListInspectionTest.class,
     CythonInspectionsTest.class,
     PythonDemorganLawIntentionTest.class,

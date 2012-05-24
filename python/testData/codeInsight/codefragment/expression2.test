@@ -1,7 +1,7 @@
-r = 2
-h = 5
-
-print(123 * <begin>r ** 2 * h<end>)
+def f():
+    r = 2
+    h = 5
+    print(123 * <begin>r ** 2 * h<end>)
 
 <result>
 In:

@@ -733,7 +733,7 @@ public class PyUtil {
   }
 
   public static LookupElement createNamedParameterLookup(String name) {
-    LookupElementBuilder lookupElementBuilder = LookupElementBuilder.create(name + "=").setIcon(PlatformIcons.PARAMETER_ICON);
+    LookupElementBuilder lookupElementBuilder = LookupElementBuilder.create(name + "=").withIcon(PlatformIcons.PARAMETER_ICON);
     return PrioritizedLookupElement.withGrouping(lookupElementBuilder, 1);
   }
 
@@ -882,7 +882,7 @@ public class PyUtil {
   }
 
   private static boolean isBaseException(String name) {
-    return name != null && name.contains("BaseException");
+    return name != null && (name.contains("BaseException") || name.startsWith("exceptions."));
   }
 
   public static class MethodFlags {

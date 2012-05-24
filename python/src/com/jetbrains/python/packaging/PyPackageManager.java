@@ -571,7 +571,7 @@ public class PyPackageManager {
           return processOutput;
         }
         catch (PyRemoteInterpreterException e) {
-          throw new PyExternalProcessException(ERROR_INVALID_SDK, helperPath, args, "Error running SDK");
+          throw new PyExternalProcessException(ERROR_INVALID_SDK, helperPath, args, "Error running SDK: " + e.getMessage(), e);
         }
       }
       else {

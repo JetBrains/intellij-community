@@ -1,2 +1,2 @@
 def f():
-    pass
+    return 42

@@ -1,7 +1,7 @@
 class C:
     @classmethod
     def baz(cls):
-        print "hello world"
+        print('foo', cls)
 
     @classmethod
     def foo(cls):

@@ -10,6 +10,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.PsiRecursiveElementVisitor;
@@ -32,15 +33,18 @@ import com.intellij.util.containers.hash.HashMap;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PythonLanguage;
+import com.jetbrains.python.codeInsight.codeFragment.PyCodeFragment;
+import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
+import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
+import com.jetbrains.python.codeInsight.dataflow.scope.Scope;
+import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyFunctionBuilder;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author oleg
@@ -53,7 +57,7 @@ public class PyExtractMethodUtil {
 
   public static void extractFromStatements(final Project project,
                                            final Editor editor,
-                                           final CodeFragment fragment,
+                                           final PyCodeFragment fragment,
                                            final PsiElement statement1,
                                            final PsiElement statement2) {
     if (!fragment.getOutputVariables().isEmpty() && fragment.isReturnInstructionInside()) {
@@ -98,6 +102,8 @@ public class PyExtractMethodUtil {
               final PsiElement firstElement = elementsRange.get(0);
               final boolean isMethod = PyPsiUtils.isMethodContext(firstElement);
               processParameters(project, generatedMethod, variableData, isMethod, isClassMethod, isStaticMethod);
+              processGlobalWrites(generatedMethod, fragment);
+              processNonlocalWrites(generatedMethod, fragment);
 
               // Generating call element
               final StringBuilder builder = new StringBuilder();
@@ -147,6 +153,8 @@ public class PyExtractMethodUtil {
               // Process parameters
               final boolean isMethod = PyPsiUtils.isMethodContext(elementsRange.get(0));
               processParameters(project, generatedMethod, variableData, isMethod, isClassMethod, isStaticMethod);
+              processGlobalWrites(generatedMethod, fragment);
+              processNonlocalWrites(generatedMethod, fragment);
 
               // Generate call element
               builder.append(" = ");
@@ -168,6 +176,49 @@ public class PyExtractMethodUtil {
       }, "Extract method", null);
     }
   }
+
+  private static void processGlobalWrites(@NotNull PyFunction function, @NotNull PyCodeFragment fragment) {
+    final Set<String> globalWrites = fragment.getGlobalWrites();
+    final Set<String> newGlobalNames = new LinkedHashSet<String>();
+    final Scope scope = ControlFlowCache.getScope(function);
+    for (String name : globalWrites) {
+      if (!scope.isGlobal(name)) {
+        newGlobalNames.add(name);
+      }
+    }
+    if (!newGlobalNames.isEmpty()) {
+      final PyElementGenerator generator = PyElementGenerator.getInstance(function.getProject());
+      final PyGlobalStatement globalStatement = generator.createFromText(LanguageLevel.forElement(function),
+                                                                         PyGlobalStatement.class,
+                                                                         "global " + StringUtil.join(newGlobalNames, ", "));
+      final PyStatementList statementList = function.getStatementList();
+      if (statementList != null) {
+        statementList.addBefore(globalStatement, statementList.getFirstChild());
+      }
+    }
+  }
+
+  private static void processNonlocalWrites(@NotNull PyFunction function, @NotNull PyCodeFragment fragment) {
+    final Set<String> nonlocalWrites = fragment.getNonlocalWrites();
+    final Set<String> newNonlocalNames = new LinkedHashSet<String>();
+    final Scope scope = ControlFlowCache.getScope(function);
+    for (String name : nonlocalWrites) {
+      if (!scope.isNonlocal(name)) {
+        newNonlocalNames.add(name);
+      }
+    }
+    if (!newNonlocalNames.isEmpty()) {
+      final PyElementGenerator generator = PyElementGenerator.getInstance(function.getProject());
+      final PyNonlocalStatement nonlocalStatement = generator.createFromText(LanguageLevel.forElement(function),
+                                                                             PyNonlocalStatement.class,
+                                                                             "nonlocal " + StringUtil.join(newNonlocalNames, ", "));
+      final PyStatementList statementList = function.getStatementList();
+      if (statementList != null) {
+        statementList.addBefore(nonlocalStatement, statementList.getFirstChild());
+      }
+    }
+  }
+
 
   private static void appendSelf(PsiElement firstElement, StringBuilder builder, boolean staticMethod) {
     if (staticMethod) {
@@ -392,6 +443,13 @@ public class PyExtractMethodUtil {
     if (child != null) {
       child.delete();
     }
+    PsiElement last = statementList;
+    while (last != null) {
+      last = last.getLastChild();
+      if (last instanceof PsiWhiteSpace) {
+        last.delete();
+      }
+    }
     return method;
   }
 
@@ -495,7 +553,13 @@ public class PyExtractMethodUtil {
     public PyExtractMethodValidator(final PsiElement element, final Project project) {
       myElement = element;
       myProject = project;
-      final PsiNamedElement parent = PsiTreeUtil.getParentOfType(myElement, PyFile.class, PyClass.class);
+
+      ScopeOwner owner = ScopeUtil.getScopeOwner(myElement);
+      if (owner instanceof PyFunction) {
+        owner = ScopeUtil.getScopeOwner(owner);
+      }
+      final ScopeOwner parent = owner;
+
       if (parent instanceof PyFile){
         final List<PyFunction> functions = ((PyFile)parent).getTopLevelFunctions();
         myFunction = new Function<String, Boolean>() {
@@ -508,14 +572,24 @@ public class PyExtractMethodUtil {
             return true;
           }
         };
-      } else
-      if (parent instanceof PyClass){
+      }
+      else if (parent instanceof PyClass){
         myFunction = new Function<String, Boolean>() {
           public Boolean fun(@NotNull final String s) {
             return ((PyClass) parent).findMethodByName(s, true) == null;
           }
         };
-      } else {
+      }
+      else if (parent instanceof PyFunction) {
+        final Scope scope = ControlFlowCache.getScope(parent);
+        myFunction = new Function<String, Boolean>() {
+          @Override
+          public Boolean fun(String s) {
+            return !scope.containsDeclaration(s);
+          }
+        };
+      }
+      else {
         myFunction = null;
       }
     }

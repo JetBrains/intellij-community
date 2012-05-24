@@ -120,7 +120,18 @@ public class PyDebugValue extends XNamedValue {
       value = value.substring(0, MAX_VALUE);
     }
 
-    node.setPresentation(getValueIcon(),  myType, value, myContainer);
+    String name = formatName(getName());
+
+    node.setPresentation(name, getValueIcon(),  myType, value, myContainer);
+  }
+
+  private static String formatName(String name) {
+    name = name.replace("\\", "\\\\");
+
+    if (name.length() >= MAX_VALUE) {
+      name = name.substring(0, MAX_VALUE);
+    }
+    return name;
   }
 
   @Override

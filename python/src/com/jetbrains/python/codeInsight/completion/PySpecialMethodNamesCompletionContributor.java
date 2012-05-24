@@ -49,9 +49,9 @@ public class PySpecialMethodNamesCompletionContributor extends CompletionContrib
             LookupElementBuilder item;
             item = LookupElementBuilder
               .create(entry.getKey() + entry.getValue().getSignature())
-              .setBold()
-              .setTypeText("predefined")
-              .setIcon(PyIcons.PREDEFINED)
+              .bold()
+              .withTypeText("predefined")
+              .withIcon(PyIcons.PREDEFINED)
             ;
             result.addElement(TailTypeDecorator.withTail(item, TailType.CASE_COLON));
           }

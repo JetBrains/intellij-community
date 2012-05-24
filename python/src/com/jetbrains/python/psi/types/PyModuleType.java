@@ -173,7 +173,7 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
     for (PyModuleMembersProvider provider : Extensions.getExtensions(PyModuleMembersProvider.EP_NAME)) {
       for (PyDynamicMember member : provider.getMembers(myModule, point)) {
         final String name = member.getName();
-        result.add(LookupElementBuilder.create(name).setIcon(member.getIcon()).setTypeText(member.getShortType()));
+        result.add(LookupElementBuilder.create(name).withIcon(member.getIcon()).withTypeText(member.getShortType()));
       }
     }
 
@@ -224,7 +224,7 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
             element = buildFileLookupElement(location, names_already, (PsiFileSystemItem) target);
           }
           if (element == null && target instanceof PsiNamedElement) {
-            element = LookupElementBuilder.create((PsiNamedElement)target).setIcon(target.getIcon(0));
+            element = LookupElementBuilder.create((PsiNamedElement)target).withIcon(target.getIcon(0));
           }
           if (element != null) {
             result.add(element);
@@ -260,9 +260,9 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
       else names_already.add(s);
     }
     return LookupElementBuilder.create(pfsi, s)
-      .setTypeText(getPresentablePath((PsiDirectory)pfsi.getParent()))
-      .setPresentableText(s)
-      .setIcon(pfsi.getIcon(0));
+      .withTypeText(getPresentablePath((PsiDirectory)pfsi.getParent()))
+      .withPresentableText(s)
+      .withIcon(pfsi.getIcon(0));
   }
 
   private static String getPresentablePath(PsiDirectory directory) {

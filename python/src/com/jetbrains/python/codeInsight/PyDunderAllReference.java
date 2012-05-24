@@ -54,7 +54,7 @@ public class PyDunderAllReference extends PsiReferenceBase<PyStringLiteralExpres
         if (element instanceof PsiNamedElement && !(element instanceof LightNamedElement)) {
           final String name = ((PsiNamedElement)element).getName();
           if (name != null && PyUtil.getInitialUnderscores(name) == 0 && (dunderAll == null || !dunderAll.contains(name))) {
-            result.add(LookupElementBuilder.create((PsiNamedElement) element).setIcon(element.getIcon(Iconable.ICON_FLAG_CLOSED)));
+            result.add(LookupElementBuilder.create((PsiNamedElement) element).withIcon(element.getIcon(Iconable.ICON_FLAG_CLOSED)));
           }
         }
         else if (element instanceof PyImportElement) {

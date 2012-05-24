@@ -499,7 +499,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
               final List<PyRequirement> requirements = Collections.singletonList(new PyRequirement(packageName));
               final String name = "Install package " + packageName;
               if (PyPackageManager.getInstance(sdk).hasPip()) {
-                actions.add(new PyPackageRequirementsInspection.InstallRequirementsFix(name, module, sdk, requirements));
+                actions.add(new PyPackageRequirementsInspection.PyInstallRequirementsFix(name, module, sdk, requirements));
               }
             }
           }

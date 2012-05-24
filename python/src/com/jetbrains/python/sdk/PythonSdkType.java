@@ -177,6 +177,10 @@ public class PythonSdkType extends SdkType {
     return PySdkUtil.isRemote(sdk);
   }
 
+  public static boolean isRemote(@Nullable String sdkPath) {
+    return isRemote(findSdkByPath(sdkPath));
+  }
+
   @Override
   public FileChooserDescriptor getHomeChooserDescriptor() {
     final boolean is_windows = SystemInfo.isWindows;

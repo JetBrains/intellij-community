@@ -1,161 +1,179 @@
 package com.jetbrains.python.refactoring;
 
 import com.intellij.lang.LanguageRefactoringSupport;
+import com.intellij.lang.refactoring.RefactoringSupportProvider;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.fixtures.LightMarkedTestCase;
+import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.refactoring.extractmethod.PyExtractMethodUtil;
 
 /**
  * @author oleg
  */
 public class PyExtractMethodTest extends LightMarkedTestCase {
-  private void doTest(final String testPath,
-                      final String name,
-                      final String result) {
-
-    myFixture.configureByFile("/refactoring/extractmethod/" + testPath);
-    final RefactoringActionHandler handler = LanguageRefactoringSupport.INSTANCE.forLanguage(PythonLanguage.getInstance()).getExtractMethodHandler();
+  private void doTest(String newName, LanguageLevel level) {
+    setLanguageLevel(level);
     try {
-      System.setProperty(PyExtractMethodUtil.NAME, name);
-      try {
-        handler.invoke(myFixture.getProject(), myFixture.getEditor(), myFixture.getFile(), ((EditorEx) myFixture.getEditor()).getDataContext());
-      }
-      catch (Exception e) {
-        if (result.endsWith(".py")) { // expected output file, not an exception
-          e.printStackTrace();
-        }
-        assertEquals(result, e.getMessage());
-        return;
-      }
-    } finally {
-      System.clearProperty(PyExtractMethodUtil.NAME);
+      doTest(newName);
     }
-    myFixture.checkResultByFile("/refactoring/extractmethod/" + result);
+    finally {
+      setLanguageLevel(null);
+    }
   }
 
   private void doTest(String newName) {
     final String testName = getTestName(false);
-    doTest(testName + ".before.py", newName, testName + ".after.py");
+    final String beforeName = testName + ".before.py";
+    final String afterName = testName + ".after.py";
+    final String dir = "refactoring/extractmethod/";
+
+    myFixture.configureByFile(dir + beforeName);
+    final RefactoringSupportProvider provider = LanguageRefactoringSupport.INSTANCE.forLanguage(PythonLanguage.getInstance());
+    assertNotNull(provider);
+    final RefactoringActionHandler handler = provider.getExtractMethodHandler();
+    assertNotNull(handler);
+    final Editor editor = myFixture.getEditor();
+    assertInstanceOf(editor, EditorEx.class);
+    System.setProperty(PyExtractMethodUtil.NAME, newName);
+    try {
+      handler.invoke(myFixture.getProject(), editor, myFixture.getFile(), ((EditorEx)editor).getDataContext());
+    }
+    finally {
+      System.clearProperty(PyExtractMethodUtil.NAME);
+    }
+    myFixture.checkResultByFile(dir + afterName);
+  }
+
+  private void doFail(String newName, String message) {
+    try {
+      doTest(newName);
+    }
+    catch (Exception e) {
+      assertEquals(message, e.getMessage());
+      return;
+    }
+    fail("No exception was thrown");
   }
 
   public void testParameter() {
-    doTest("outEmpty/parameter.before.py", "bar", "outEmpty/parameter.after.py");
+    doTest("bar");
   }
 
   public void testBreakAst() {
-    doTest("outEmpty/break_ast.before.py", "bar", "outEmpty/break_ast.after.py");
+    doTest("bar");
   }
 
   public void testExpression() {
-    doTest("outEmpty/expression.before.py", "plus", "outEmpty/expression.after.py");
+    doTest("plus");
   }
 
   public void testStatement() {
-    doTest("outEmpty/statement.before.py", "foo", "outEmpty/statement.after.py");
+    doTest("foo");
   }
 
   public void testStatements() {
-    doTest("outEmpty/statements.before.py", "foo", "outEmpty/statements.after.py");
+    doTest("foo");
   }
 
   public void testStatementReturn() {
-    doTest("outEmpty/statement_return.before.py", "foo", "outEmpty/statement_return.after.py");
+    doTest("foo");
   }
 
   public void testBinaryExpression() {
-    doTest("controlFlow/binary_expr.before.py", "foo", "controlFlow/binary_expr.after.py");
+    doTest("foo");
   }
 
   public void testWhileOutput() {
-    doTest("controlFlow/while_output.before.py", "bar", "controlFlow/while_output.after.py");
+    doTest("bar");
   }
 
   public void testNameCollisionClass() {
-    doTest("namesCollision/class.before.py", "hello", "Method name clashes with already existing method name");
+    doFail("hello", "Method name clashes with already existing method name");
   }
 
   public void testNameCollisionFile() {
-    doTest("namesCollision/file.before.py", "hello", "Method name clashes with already existing method name");
+    doFail("hello", "Method name clashes with already existing method name");
   }
 
   public void testNameCollisionSuperClass() {
-    doTest("namesCollision/superclass.before.py", "hello", "Method name clashes with already existing method name");
+    doFail("hello", "Method name clashes with already existing method name");
   }
 
   public void testOutNotEmptyStatements() {
-    doTest("outNotEmpty/statements.before.py", "sum_squares", "outNotEmpty/statements.after.py");
+    doTest("sum_squares");
   }
 
   public void testOutNotEmptyStatements2() {
-    doTest("outNotEmpty/statements2.before.py", "sum_squares", "outNotEmpty/statements2.after.py");
+    doTest("sum_squares");
   }
 
-  public void testComment() {
-    doTest("comment.before.py", "bar", "comment.after.py");
+  // PY-2903
+  public void _testComment() {
+    doTest("bar");
   }
 
   public void testFile() {
-    doTest("file.before.py", "bar", "file.after.py");
+    doTest("bar");
   }
 
-
-  public void testMethod() {
-    doTest("context/method.before.py", "bar", "context/method.after.py");
+  public void testMethodContext() {
+    doTest("bar");
   }
 
   public void testMethodIndent() {
-    doTest("context/methodindent.before.py", "bar", "context/methodindent.after.py");
+    doTest("bar");
   }
 
   public void testMethodReturn() {
-    doTest("context/methodreturn.before.py", "bar", "context/methodreturn.after.py");
+    doTest("bar");
   }
 
   public void testWrongSelectionIfPart() {
-    doTest("wrongSelection/ifpart.before.py", "bar", "Cannot perform extract method using selected element(s)");
+    doFail("bar", "Cannot perform extract method using selected element(s)");
   }
 
-  public void testFromImportStatement() {
-    doTest("wrongSelection/fromimport.before.py", "bar", "Cannot perform refactoring with from import statement inside code block");
+  public void testWrongSelectionFromImportStar() {
+    doFail("bar", "Cannot perform refactoring with from import statement inside code block");
   }
 
   public void testPy479() {
-    doTest("outEmpty/py479.before.py", "bar", "outEmpty/py479.after.py");
+    doTest("bar");
   }
 
-  public void testClass() {
-    doTest("context/class.before.py", "bar", "context/class.after.py");
+  public void testClassContext() {
+    doTest("bar");
   }
 
   public void testConditionalReturn() {
-    doTest("conditionalreturn.before.py", "bar", "Cannot perform refactoring when execution flow is interrupted");
+    doFail("bar", "Cannot perform refactoring when execution flow is interrupted");
   }
 
   public void testReturnTuple() {
-    doTest("return_tuple.before.py", "bar", "return_tuple.after.py");
+    doTest("bar");
   }
 
   public void testComment2() {
-    doTest("comment2.before.py", "baz", "comment2.after.py");
+    doTest("baz");
   }
 
   public void testElseBody() {
-    doTest("elsebody.before.py", "baz", "elsebody.after.py");
+    doTest("baz");
   }
 
   public void testClassMethod() {
-    doTest("classmethod.before.py", "baz", "classmethod.after.py");
+    doTest("baz");
   }
 
   public void testStaticMethod() {
-    doTest("staticmethod.before.py", "baz", "staticmethod.after.py");
+    doTest("baz");
   }
 
   // PY-5123
   public void testMethodInIf() {
-    doTest("methodInIf.before.py", "baz", "methodInIf.after.py");
+    doTest("baz");
   }
 
   // PY-6081
@@ -166,5 +184,55 @@ public class PyExtractMethodTest extends LightMarkedTestCase {
   // PY-6391
   public void testDefinedBeforeAccessedAfter() {
     doTest("bar");
+  }
+
+  // PY-5865
+  public void testSingleRaise() {
+    doTest("bar");
+  }
+
+  // PY-4156
+  public void testLocalFunction() {
+    doTest("bar");
+  }
+
+  // PY-6413
+  public void testTryFinally() {
+    doTest("bar");
+  }
+
+  // PY-6414
+  public void testTryContext() {
+    doTest("bar");
+  }
+
+  // PY-6416
+  public void testCommentAfterSelection() {
+    doTest("bar");
+  }
+
+  // PY-6417
+  public void testGlobalVarAssignment() {
+    doTest("bar");
+  }
+
+  // PY-6619
+  public void testGlobalToplevelAssignment() {
+    doTest("bar");
+  }
+
+  // PY-6623
+  public void testForLoopContinue() {
+    doFail("bar", "Cannot perform refactoring when execution flow is interrupted");
+  }
+
+  // PY-6622
+  public void testClassWithoutInit() {
+    doTest("bar");
+  }
+
+  // PY-6625
+  public void testNonlocal() {
+    doTest("baz", LanguageLevel.PYTHON30);
   }
 }
