@@ -325,5 +325,9 @@ public class NormalCompletionOrderingTest extends CompletionSortingTestCase {
     assertPreferredItems(0, "Component", "FooBean3", "JComponent");
   }
 
+  public void testDispreferReturnBeforeStatement() {
+    checkPreferredItems 0, 'reaction', 'rezet', 'return'
+  }
+
 
 }
