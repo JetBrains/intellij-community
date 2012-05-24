@@ -477,7 +477,7 @@ final class BuildSession implements Runnable, CanceledStatus {
       final String loadPath = isDirectoryBased(projectFile) ? new File(projectFile, IDEA_PROJECT_DIRNAME).getPath() : projectPath;
       IdeaProjectLoader.loadFromPath(project, loadPath, myPathVars, null, new SystemOutErrorReporter(false));
       final String globalEncoding = myGlobalEncoding;
-      if (globalEncoding != null && project.getProjectCharset() == null) {
+      if (!StringUtil.isEmpty(globalEncoding) && project.getProjectCharset() == null) {
         project.setProjectCharset(globalEncoding);
       }
       project.getIgnoredFilePatterns().loadFromString(myIgnorePatterns);
