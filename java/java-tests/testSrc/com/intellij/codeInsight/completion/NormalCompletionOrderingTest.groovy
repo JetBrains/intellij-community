@@ -8,11 +8,11 @@ package com.intellij.codeInsight.completion;
 import com.intellij.JavaTestUtil
 import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.codeInsight.lookup.LookupElement
+import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.ide.ui.UISettings
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiMethod
-import com.intellij.codeInsight.lookup.LookupElementPresentation
 
 public class NormalCompletionOrderingTest extends CompletionSortingTestCase {
   private static final String BASE_PATH = "/codeInsight/completion/normalSorting";
@@ -317,5 +317,13 @@ public class NormalCompletionOrderingTest extends CompletionSortingTestCase {
   public void testPreferBetterMatchingConstantToMethods() {
     checkPreferredItems 0, 'serial', 'superExpressionInIllegalContext'
   }
+
+  public void testJComponentAddNewWithStats() throws Throwable {
+    final LookupImpl lookup = invokeCompletion("/../smartTypeSorting/JComponentAddNew.java");
+    assertPreferredItems(0, "FooBean3", "JComponent", "Component");
+    incUseCount(lookup, 2); //Component
+    assertPreferredItems(0, "Component", "FooBean3", "JComponent");
+  }
+
 
 }
