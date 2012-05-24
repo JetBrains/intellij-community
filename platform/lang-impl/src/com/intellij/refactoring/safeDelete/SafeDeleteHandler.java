@@ -129,10 +129,8 @@ public class SafeDeleteHandler implements RefactoringActionHandler {
 
       };
 
-      if (elementsToDelete.length > 0) {
-        SafeDeleteDialog dialog = new SafeDeleteDialog(project, elementsToDelete, callback);
-        dialog.show();
-      }
+      SafeDeleteDialog dialog = new SafeDeleteDialog(project, elementsToDelete, callback);
+      dialog.show();
     }
   }
 }
