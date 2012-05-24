@@ -378,7 +378,7 @@ public class FileReferenceSet {
   }
 
   @NotNull
-  private static Collection<PsiFileSystemItem> getAbsoluteTopLevelDirLocations(final @NotNull PsiFile file) {
+  public static Collection<PsiFileSystemItem> getAbsoluteTopLevelDirLocations(final @NotNull PsiFile file) {
 
     final VirtualFile virtualFile = file.getVirtualFile();
     if (virtualFile == null) {
