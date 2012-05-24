@@ -35,7 +35,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-abstract class GenerateGetterSetterHandlerBase extends GenerateMembersHandlerBase {
+public abstract class GenerateGetterSetterHandlerBase extends GenerateMembersHandlerBase {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.generation.GenerateGetterSetterHandlerBase");
 
   static {
@@ -44,7 +44,7 @@ abstract class GenerateGetterSetterHandlerBase extends GenerateMembersHandlerBas
       public Collection<EncapsulatableClassMember> fun(PsiClass s) {
         if (s.getLanguage() != StdLanguages.JAVA) return Collections.emptyList();
         final List<EncapsulatableClassMember> result = new ArrayList<EncapsulatableClassMember>();
-        for(PsiField field: s.getFields()) {
+        for (PsiField field : s.getFields()) {
           if (!(field instanceof PsiEnumConstant)) {
             result.add(new PsiFieldMember(field));
           }
@@ -74,6 +74,11 @@ abstract class GenerateGetterSetterHandlerBase extends GenerateMembersHandlerBas
 
   protected abstract String getNothingFoundMessage();
   protected abstract String getNothingAcceptedMessage();
+
+  public boolean canBeAppliedTo(PsiClass targetClass) {
+    final ClassMember[] allMembers = getAllOriginalMembers(targetClass);
+    return allMembers != null && allMembers.length != 0;
+  }
 
   @Nullable
   protected ClassMember[] getAllOriginalMembers(final PsiClass aClass) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,15 +15,22 @@
  */
 package com.intellij.codeInsight.generation.actions;
 
-import com.intellij.codeInsight.generation.GenerateGetterHandler;
+import com.intellij.codeInsight.generation.GenerateGetterSetterHandlerBase;
+import com.intellij.psi.PsiClass;
 
 /**
  * Action group which contains Generate... actions
  * Available in the Java code editor context only
- * @author Alexey Kudravtsev
+ * @author Danila Ponomarenko
  */
-public class GenerateGetterAction extends GenerateGetterSetterBaseAction {
-  public GenerateGetterAction() {
-    super(new GenerateGetterHandler());
+public abstract class GenerateGetterSetterBaseAction extends BaseGenerateAction {
+  public GenerateGetterSetterBaseAction(GenerateGetterSetterHandlerBase handler) {
+    super(handler);
+  }
+
+  @Override
+  protected boolean isValidForClass(PsiClass targetClass) {
+    final GenerateGetterSetterHandlerBase handler = (GenerateGetterSetterHandlerBase)getHandler();
+    return handler.canBeAppliedTo(targetClass);
   }
 }
