@@ -1,7 +1,8 @@
 public class RearrangementTest23
   implements IFace2, IFace1
 {
-  /** * Interface IFace2 Header *** */
+/**** Interface IFace2 Header ****/
+
   public boolean getA() {
     return true;
   }
@@ -10,7 +11,8 @@ public class RearrangementTest23
     return false;
   }
 /**** Interface IFace2 Trailer ***/
-  /** * Interface IFace1 Header *** */
+/**** Interface IFace1 Header ****/
+
   public int getY() {
     return 6;
   }
@@ -18,8 +20,7 @@ public class RearrangementTest23
   public int getX() {
     return getA() ? 5 : 3;
   }
-
-  /** * Interface IFace1 Trailer ** */
+/**** Interface IFace1 Trailer ***/
   int method1() {
     return 4;
   }

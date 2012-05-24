@@ -4,6 +4,7 @@ import com.wrq.rearranger.settings.RearrangerSettings
 import com.wrq.rearranger.settings.attributeGroups.MethodAttributes
 import org.jetbrains.annotations.NotNull
 import com.wrq.rearranger.util.RearrangerTestDsl
+import com.wrq.rearranger.util.RearrangerTestUtil
 
 /** 
  * @author Denis Zhdanov
@@ -20,12 +21,12 @@ class JavaMethodRuleBuilder extends AbstractJavaRuleBuilder<MethodAttributes> {
     registerHandler(RearrangerTestDsl.TARGET, { data, attributes, rule -> handlers[data](attributes, rule) })
     registerHandler(RearrangerTestDsl.RETURN_TYPE, createStringAttributeHandler('returnTypeAttr'))
     registerHandler(RearrangerTestDsl.GETTER_CRITERIA, { data, attributes, rule ->
-      setIf(RearrangerTestDsl.NAME, attributes, 'getterNameCriterion', rule.getterSetterDefinition)
-      setIf(RearrangerTestDsl.BODY, attributes, 'getterBodyCriterion', rule.getterSetterDefinition)
+      RearrangerTestUtil.setIf(RearrangerTestDsl.NAME, attributes, 'getterNameCriterion', rule.getterSetterDefinition)
+      RearrangerTestUtil.setIf(RearrangerTestDsl.BODY, attributes, 'getterBodyCriterion', rule.getterSetterDefinition)
     })
     registerHandler(RearrangerTestDsl.SETTER_CRITERIA, { data, attributes, rule ->
-      setIf(RearrangerTestDsl.NAME, attributes, 'setterNameCriterion', rule.getterSetterDefinition)
-      setIf(RearrangerTestDsl.BODY, attributes, 'setterBodyCriterion', rule.getterSetterDefinition)
+      RearrangerTestUtil.setIf(RearrangerTestDsl.NAME, attributes, 'setterNameCriterion', rule.getterSetterDefinition)
+      RearrangerTestUtil.setIf(RearrangerTestDsl.BODY, attributes, 'setterBodyCriterion', rule.getterSetterDefinition)
     })
   }
   

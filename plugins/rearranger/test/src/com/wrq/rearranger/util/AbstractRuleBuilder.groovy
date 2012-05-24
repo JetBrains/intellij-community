@@ -18,6 +18,7 @@ import org.junit.Assert
 public abstract class AbstractRuleBuilder<T> extends BuilderSupport {
 
   @NotNull def RearrangerSettings settings
+  private      int                depth
   
   /**
    * Holds rule customization handlers in the form {@code 'property id -> closure'} where <code>'property id'</code>
@@ -31,24 +32,32 @@ public abstract class AbstractRuleBuilder<T> extends BuilderSupport {
   }
 
   @Override
+  protected Object getCurrent() {
+    if (!super.current) {
+      current = createRule()
+    }
+    super.current
+  }
+
+  @Override
   protected void nodeCompleted(Object parent, Object node) {
-    if (!parent && node) {
+    if (--depth <= 0) {
+      // Top level call on the build object has been reached.
       registerRule(settings, node as T)
+      current = null
     }
   }
 
   @Override
   protected void setParent(Object parent, Object child) {
+    depth++
   }
 
   @Override
   protected Object createNode(Object name) {
-    if (name == 'create') {
-      return createRule()
-    }
     createNode(name, [:], [])
   }
-
+  
   @Override
   protected Object createNode(Object name, Object value) {
     createNode(name, [:], value)
@@ -61,6 +70,9 @@ public abstract class AbstractRuleBuilder<T> extends BuilderSupport {
 
   @Override
   protected Object createNode(Object name, Map attributes, Object value) {
+    if (!myHandlers.containsKey(name)) {
+      return current
+    }
     if (value) {
       for (i in [value].flatten()) {
         myHandlers[name](i, attributes, current)
@@ -70,7 +82,7 @@ public abstract class AbstractRuleBuilder<T> extends BuilderSupport {
       myHandlers[name](null, attributes, current)
     }
     
-    getCurrent()
+    current
   }
 
   @Nullable
@@ -83,7 +95,7 @@ public abstract class AbstractRuleBuilder<T> extends BuilderSupport {
    * <p/>
    * Example:
    * <pre>
-   *   register('modifier', PsiModifier.FINAL, { rule, value, attributes -&gt;
+   *   register('modifier', PsiModifier.FINAL, { value, attributes, rule -&gt;
    *       rule.finalAttribute.value = value
    *       if (attributes.invert) rule.finalAttribute.invert = true
    *   })
@@ -141,12 +153,6 @@ public abstract class AbstractRuleBuilder<T> extends BuilderSupport {
     { value, attributes, T rule ->
       rule."$propertyName".match = true
       rule."$propertyName".expression = value
-    }
-  }
-  
-  protected static void setIf(@NotNull RearrangerTestDsl dslProperty, map, rulePropertyName, rule) {
-    if (map.containsKey(dslProperty.value)) {
-      rule."$rulePropertyName" = map[dslProperty.value]
     }
   }
 }
