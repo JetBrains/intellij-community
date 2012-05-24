@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@ package com.intellij.psi.impl.cache;
  * @author max
  */
 public interface ModifierFlags {
-// ---- The group equal to corresponding in ClsUtil.ACC_*
   int PUBLIC_MASK = 0x0001;
   int PRIVATE_MASK = 0x0002;
   int PROTECTED_MASK = 0x0004;
@@ -31,9 +30,8 @@ public interface ModifierFlags {
   int TRANSIENT_MASK = 0x0080;
   int NATIVE_MASK = 0x0100;
   int INTERFACE_MASK = 0x0200;
+  int DEFENDER_MASK = 0x0200;
   int ABSTRACT_MASK = 0x0400;
-// ---- End of the group equal to corresponding in ClsUtil.ACC_*
-
   int STRICTFP_MASK = 0x0800;
   int PACKAGE_LOCAL_MASK = 0x1000;
   int DEPRECATED_MASK = 0x2000;

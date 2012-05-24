@@ -13,9 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 class C {
   interface I {
-    <error descr="Interface methods cannot have body">void m1()</error> { }
-    void m2() default { }
+    void m() default { }
+  }
+
+  void test() {
+    new I(){}.m();
   }
 }

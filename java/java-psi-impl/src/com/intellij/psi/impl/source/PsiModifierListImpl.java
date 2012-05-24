@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,7 @@ import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.impl.source.tree.java.PsiAnnotationImpl;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
@@ -151,7 +152,7 @@ public class PsiModifierListImpl extends JavaStubPsiElement<PsiModifierListStub>
           return false;
         }
         if (type == JavaTokenType.ABSTRACT_KEYWORD) {
-          return true;
+          return !PsiUtil.isExtensionMethod((PsiMethod)parent);
         }
       }
     }

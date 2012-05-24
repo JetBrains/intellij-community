@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,6 +43,7 @@ public class PsiMethodStubImpl extends StubBase<PsiMethod> implements PsiMethodS
   private static final int ANNOTATION = 0x04;
   private static final int DEPRECATED = 0x08;
   private static final int DEPRECATED_ANNOTATION = 0x10;
+  private static final int DEFENDER = 0x20;
 
 
   public PsiMethodStubImpl(final StubElement parent,
@@ -86,6 +87,11 @@ public class PsiMethodStubImpl extends StubBase<PsiMethod> implements PsiMethodS
   @Override
   public boolean isAnnotationMethod() {
     return isAnnotationMethod(myFlags);
+  }
+
+  @Override
+  public boolean isDefender() {
+    return (myFlags & DEFENDER) != 0;
   }
 
   public static boolean isAnnotationMethod(final byte flags) {
@@ -145,13 +151,19 @@ public class PsiMethodStubImpl extends StubBase<PsiMethod> implements PsiMethodS
     myDefaultValueText = StringRef.fromString(defaultValueText);
   }
 
-  public static byte packFlags(boolean isConstructor, boolean isAnnotationMethod, boolean isVarargs, boolean isDeprecated, boolean hasDeprecatedAnnotation) {
+  public static byte packFlags(boolean isConstructor,
+                               boolean isAnnotationMethod,
+                               boolean isVarargs,
+                               boolean isDeprecated,
+                               boolean hasDeprecatedAnnotation,
+                               boolean isDefender) {
     byte flags = 0;
     if (isConstructor) flags |= CONSTRUCTOR;
     if (isAnnotationMethod) flags |= ANNOTATION;
     if (isVarargs) flags |= VARARGS;
     if (isDeprecated) flags |= DEPRECATED;
     if (hasDeprecatedAnnotation) flags |= DEPRECATED_ANNOTATION;
+    if (isDefender) flags |= DEFENDER;
     return flags;
   }
 
@@ -177,6 +189,10 @@ public class PsiMethodStubImpl extends StubBase<PsiMethod> implements PsiMethodS
     final String defaultValue = getDefaultValueText();
     if (defaultValue != null) {
       builder.append(" default=").append(defaultValue);
+    }
+
+    if (isDefender()) {
+      builder.append(" default {}");
     }
 
     builder.append("]");
