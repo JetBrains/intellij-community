@@ -43,7 +43,7 @@ public class StatementMover extends LineMover {
 
   private void init(@NotNull final Editor editor, @NotNull final MoveInfo info, final boolean down) {
     LineRange range = StatementUpDownMover.getLineRangeFromSelection(editor);
-    int nearLine = down ? range.endLine : range.startLine - 1;
+    int nearLine = down ? range.endLine : range.startLine;
     info.toMove = range;
     info.toMove2 = new LineRange(nearLine, nearLine + 1);
   }
