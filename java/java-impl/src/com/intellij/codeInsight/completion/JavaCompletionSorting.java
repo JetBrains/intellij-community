@@ -60,7 +60,7 @@ public class JavaCompletionSorting {
 
     List<LookupElementWeigher> afterNegativeStats = new ArrayList<LookupElementWeigher>();
     if (!smart) {
-      ContainerUtil.addIfNotNull(afterNegativeStats, preferStatics(position));
+      ContainerUtil.addIfNotNull(afterNegativeStats, preferStatics(position, expectedTypes));
     }
     afterNegativeStats.add(new PreferLocalVariablesLiteralsAndAnnoMethodsWeigher(type, position));
     ContainerUtil.addIfNotNull(afterNegativeStats, recursion(parameters, expectedTypes));
@@ -126,7 +126,7 @@ public class JavaCompletionSorting {
   }
 
   @Nullable
-  private static LookupElementWeigher preferStatics(PsiElement position) {
+  private static LookupElementWeigher preferStatics(PsiElement position, final ExpectedTypeInfo[] infos) {
     if (PsiTreeUtil.getParentOfType(position, PsiDocComment.class) != null) {
       return null;
     }
@@ -149,7 +149,7 @@ public class JavaCompletionSorting {
         if (o instanceof PsiKeyword) return -3;
         if (!(o instanceof PsiMember)) return 0;
 
-        if (((PsiMember)o).hasModifierProperty(PsiModifier.STATIC)) {
+        if (((PsiMember)o).hasModifierProperty(PsiModifier.STATIC) && !hasNonVoid(infos)) {
           if (o instanceof PsiMethod) return -5;
           if (o instanceof PsiField) return -4;
         }
@@ -179,14 +179,7 @@ public class JavaCompletionSorting {
       }
     }
 
-    boolean hasNonVoid = false;
-    for (ExpectedTypeInfo info : expectedInfos) {
-      if (!PsiType.VOID.equals(info.getType())) {
-        hasNonVoid = true;
-      }
-    }
-
-    if (hasNonVoid) {
+    if (hasNonVoid(expectedInfos)) {
       if (item.getObject() instanceof PsiKeyword) {
         String keyword = ((PsiKeyword)item.getObject()).getText();
         if (PsiKeyword.NEW.equals(keyword) || PsiKeyword.NULL.equals(keyword)) {
@@ -199,6 +192,16 @@ public class JavaCompletionSorting {
     }
 
     return ExpectedTypeMatching.normal;
+  }
+
+  private static boolean hasNonVoid(ExpectedTypeInfo[] expectedInfos) {
+    boolean hasNonVoid = false;
+    for (ExpectedTypeInfo info : expectedInfos) {
+      if (!PsiType.VOID.equals(info.getType())) {
+        hasNonVoid = true;
+      }
+    }
+    return hasNonVoid;
   }
 
   @Nullable
