@@ -640,7 +640,8 @@ public class HighlightClassUtil {
   }
 
 
-  public static HighlightInfo checkQualifiedNewOfStaticClass(PsiNewExpression expression) {
+  @Nullable
+  public static HighlightInfo checkQualifiedNew(PsiNewExpression expression) {
     PsiExpression qualifier = expression.getQualifier();
     if (qualifier == null) return null;
     PsiType type = expression.getType();
@@ -652,18 +653,28 @@ public class HighlightClassUtil {
       return info;
     }
     PsiClass aClass = PsiUtil.resolveClassInType(type);
-    if (aClass != null && aClass.hasModifierProperty(PsiModifier.STATIC)) {
-      HighlightInfo info = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR,
-                                                                      expression,
-                                                                      JavaErrorMessages.message("qualified.new.of.static.class"));
-      if (!aClass.isEnum()) {
-        IntentionAction fix = QUICK_FIX_FACTORY.createModifierListFix(aClass, PsiModifier.STATIC, false, false);
-        QuickFixAction.registerQuickFixAction(info, fix);
+    HighlightInfo info = null;
+    if (aClass != null) {
+      if (aClass.hasModifierProperty(PsiModifier.STATIC)) {
+        info = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR,
+                                                 expression,
+                                                 JavaErrorMessages.message("qualified.new.of.static.class"));
+        if (!aClass.isEnum()) {
+          IntentionAction fix = QUICK_FIX_FACTORY.createModifierListFix(aClass, PsiModifier.STATIC, false, false);
+          QuickFixAction.registerQuickFixAction(info, fix);
+        }
+        
+      } else if (aClass instanceof PsiAnonymousClass) {
+        final PsiClass baseClass = PsiUtil.resolveClassInType(((PsiAnonymousClass)aClass).getBaseClassType());
+        if (baseClass != null && baseClass.isInterface()) {
+          info = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR,
+                                                   expression,
+                                                   "Anonymous class implements interface; cannot have qualifier for new");
+        }
       }
       QuickFixAction.registerQuickFixAction(info, new RemoveNewQualifierFix(expression, aClass));
-      return info;
     }
-    return null;
+    return info;
   }
 
 
