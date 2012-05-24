@@ -1864,11 +1864,16 @@ public class GitLogUI implements Disposable {
   }
 
   public class MyShowTreeAction extends ToggleAction implements DumbAware {
+    private static final String SHOW_GRAPH_TITLE = "Show Graph";
+    private static final String HIDE_GRAPH_TITLE = "Hide Graph";
+    private static final String SHOW_GRAPH_DESCRIPTION = "Display commit graph";
+    private static final String HIDE_GRAPH_DESCRIPTION = "Hide commit graph";
+
     private boolean myIsSelected;
     private final GitLogSettings myInstance;
 
     public MyShowTreeAction() {
-      super("Show Graph", "Display commit graph", IconLoader.getIcon("/icons/branch.png"));
+      super(SHOW_GRAPH_TITLE, SHOW_GRAPH_DESCRIPTION, IconLoader.getIcon("/icons/branch.png"));
       myInstance = GitLogSettings.getInstance(myProject);
       myIsSelected = myInstance.isShowTree();
     }
@@ -1877,6 +1882,8 @@ public class GitLogUI implements Disposable {
     public void update(AnActionEvent e) {
       super.update(e);
       e.getPresentation().setEnabled(!myThereAreFilters);
+      e.getPresentation().setText(isSelected(e) ? HIDE_GRAPH_TITLE : SHOW_GRAPH_TITLE);
+      e.getPresentation().setDescription(isSelected(e) ? HIDE_GRAPH_DESCRIPTION : SHOW_GRAPH_DESCRIPTION);
     }
 
     @Override
