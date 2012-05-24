@@ -967,7 +967,7 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
   private static boolean hasNewStyleMetaClass(PyClass pyClass) {
     final PsiFile containingFile = pyClass.getContainingFile();
     if (containingFile instanceof PyFile) {
-      final PsiElement element = ((PyFile)containingFile).getElementNamed(PyNames.METACLASS);
+      final PsiElement element = ((PyFile)containingFile).getElementNamed(PyNames.DUNDER_METACLASS);
       if (element instanceof PyTargetExpression) {
         final PyQualifiedName qName = ((PyTargetExpression)element).getAssignedQName();
         if (qName != null && qName.matches("type")) {
@@ -975,7 +975,7 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
         }
       }
     }
-    if (pyClass.findClassAttribute(PyNames.METACLASS, false) != null) {
+    if (pyClass.findClassAttribute(PyNames.DUNDER_METACLASS, false) != null) {
       return true;
     }
     return false;

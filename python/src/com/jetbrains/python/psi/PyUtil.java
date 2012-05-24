@@ -37,6 +37,8 @@ import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.codeInsight.stdlib.PyNamedTupleType;
 import com.jetbrains.python.documentation.EpydocUtil;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
+import com.jetbrains.python.psi.resolve.PyResolveContext;
+import com.jetbrains.python.psi.resolve.QualifiedResolveResult;
 import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyTupleType;
 import com.jetbrains.python.psi.types.PyType;
@@ -1049,6 +1051,49 @@ public class PyUtil {
       }
     }
     return valuesLength;
+  }
+
+  @Nullable
+  public static PyClass getMetaClass(@NotNull final PyClass pyClass) {
+    final PyTargetExpression metaClassAttribute = pyClass.findClassAttribute(PyNames.DUNDER_METACLASS, true);
+    if (metaClassAttribute != null) {
+      final PyExpression expression = metaClassAttribute.findAssignedValue();
+      final PyClass metaclass = getMetaFromExpression(expression);
+      if (metaclass != null) return metaclass;
+    }
+    final PsiFile containingFile = pyClass.getContainingFile();
+    if (containingFile instanceof PyFile) {
+      final PsiElement element = ((PyFile)containingFile).getElementNamed(PyNames.DUNDER_METACLASS);
+      if (element instanceof PyTargetExpression) {
+        final PyExpression expression = ((PyTargetExpression)element).findAssignedValue();
+        final PyClass metaclass = getMetaFromExpression(expression);
+        if (metaclass != null) return metaclass;
+      }
+    }
+
+    if (LanguageLevel.forElement(pyClass).isPy3K()) {
+      final PyExpression[] superClassExpressions = pyClass.getSuperClassExpressions();
+      for (PyExpression superClassExpression : superClassExpressions) {
+        if (superClassExpression instanceof PyKeywordArgument &&
+            PyNames.METACLASS.equals(((PyKeywordArgument)superClassExpression).getKeyword())) {
+          final PyExpression expression = ((PyKeywordArgument)superClassExpression).getValueExpression();
+          final PyClass metaclass = getMetaFromExpression(expression);
+          if (metaclass != null) return metaclass;
+        }
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  private static PyClass getMetaFromExpression(final PyExpression metaclass) {
+    if (metaclass instanceof PyReferenceExpression) {
+      final QualifiedResolveResult result = ((PyReferenceExpression)metaclass).followAssignmentsChain(PyResolveContext.noImplicits());
+      if (result.getElement() instanceof PyClass) {
+        return (PyClass)result.getElement();
+      }
+    }
+    return null;
   }
 }
 

@@ -2,6 +2,9 @@ package com.jetbrains.python.psi.types;
 
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.PyClass;
+import com.jetbrains.python.psi.PyDecorator;
+import com.jetbrains.python.psi.PyDecoratorList;
+import com.jetbrains.python.psi.PyFunction;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -21,24 +24,25 @@ public class PyABCUtil {
 
   public static boolean isSubclass(@NotNull PyClass subClass, @NotNull String superClassName) {
     if (PyNames.CALLABLE.equals(superClassName)) {
-      return hasMethod(subClass, PyNames.CALL);
+      return hasNonAbstractMethod(subClass, PyNames.CALL);
     }
     if (PyNames.HASHABLE.equals(superClassName)) {
-      return hasMethod(subClass, PyNames.HASH);
+      return hasNonAbstractMethod(subClass, PyNames.HASH);
     }
-    final boolean hasIter = hasMethod(subClass, PyNames.ITER);
-    final boolean hasGetItem = hasMethod(subClass, PyNames.GETITEM);
+    final boolean hasIter = hasNonAbstractMethod(subClass, PyNames.ITER);
+    final boolean hasGetItem = hasNonAbstractMethod(subClass, PyNames.GETITEM);
     if (PyNames.ITERABLE.equals(superClassName)) {
       return hasIter || hasGetItem;
     }
     if (PyNames.ITERATOR.equals(superClassName)) {
-      return (hasIter && (hasMethod(subClass, PyNames.NEXT) || hasMethod(subClass, PyNames.DUNDER_NEXT))) || hasGetItem;
+      return (hasIter && (hasNonAbstractMethod(subClass, PyNames.NEXT) || hasNonAbstractMethod(subClass,
+                                                                                               PyNames.DUNDER_NEXT))) || hasGetItem;
     }
-    final boolean isSized = hasMethod(subClass, PyNames.LEN);
+    final boolean isSized = hasNonAbstractMethod(subClass, PyNames.LEN);
     if (PyNames.SIZED.equals(superClassName)) {
       return isSized;
     }
-    final boolean isContainer = hasMethod(subClass, PyNames.CONTAINS);
+    final boolean isContainer = hasNonAbstractMethod(subClass, PyNames.CONTAINS);
     if (PyNames.CONTAINER.equals(superClassName)) {
       return isContainer;
     }
@@ -46,7 +50,7 @@ public class PyABCUtil {
       return isSized && hasIter && isContainer && hasGetItem;
     }
     if (PyNames.MAPPING.equals(superClassName)) {
-      return isSized && hasIter && isContainer && hasGetItem && hasMethod(subClass, PyNames.KEYS);
+      return isSized && hasIter && isContainer && hasGetItem && hasNonAbstractMethod(subClass, PyNames.KEYS);
     }
     return false;
   }
@@ -70,7 +74,15 @@ public class PyABCUtil {
     return false;
   }
 
-  private static boolean hasMethod(PyClass cls, String name) {
-    return cls.findMethodByName(name, true) != null;
+  private static boolean hasNonAbstractMethod(PyClass cls, String name) {
+    final PyFunction method = cls.findMethodByName(name, true);
+    if (method == null) return false;
+    final PyDecoratorList decoratorList = method.getDecoratorList();
+    if (decoratorList != null) {
+      for (PyDecorator decorator : decoratorList.getDecorators()) {
+        if (PyNames.ABSTRACTMETHOD.equals(decorator.getName())) return false;
+      }
+    }
+    return true;
   }
 }

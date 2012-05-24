@@ -6,6 +6,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Set;
 import java.util.regex.Pattern;
 
 /**
@@ -25,7 +26,8 @@ public class PyNames {
   public static final String GETATTR = "__getattr__";
   public static final String GETATTRIBUTE = "__getattribute__";
   public static final String CLASS = "__class__";
-  public static final String METACLASS = "__metaclass__";
+  public static final String DUNDER_METACLASS = "__metaclass__";
+  public static final String METACLASS = "metaclass";
 
   public static final String SUPER = "super";
 
@@ -95,6 +97,9 @@ public class PyNames {
   public static final String CALLABLE_BUILTIN = "callable";
   public static final String NAMEDTUPLE = "namedtuple";
   public static final String COLLECTIONS_PY = "collections.py";
+  public static final String COLLECTIONS = "collections";
+
+  public static final String ABSTRACTMETHOD = "abstractmethod";
 
   public static final String SET = "set";
 
@@ -309,6 +314,10 @@ public class PyNames {
     "for",
     "lambda",
     "try"
+  );
+
+  public static Set<String> BuiltinInterfaces = ImmutableSet.of(
+      CALLABLE, HASHABLE, ITERABLE, ITERATOR, SIZED, CONTAINER, SEQUENCE, MAPPING
   );
 
   /**

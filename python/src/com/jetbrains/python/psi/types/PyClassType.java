@@ -198,7 +198,7 @@ public class PyClassType extends UserDataHolderBase implements PyCallableType {
     if (myClass == null) {
       return null;
     }
-    final PyTargetExpression metaClassAttribute = myClass.findClassAttribute(PyNames.METACLASS, true);
+    final PyTargetExpression metaClassAttribute = myClass.findClassAttribute(PyNames.DUNDER_METACLASS, true);
     if (metaClassAttribute != null) {
       final PyExpression metaclass = metaClassAttribute.findAssignedValue();
       if (metaclass instanceof PyReferenceExpression) {
