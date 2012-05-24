@@ -63,7 +63,8 @@ public enum RearrangerTestDsl {
   TO,
   FILL_STRING("fill string"),
   USE_PROJECT_WIDTH_FOR_COMMENT_FILL("use project width for fill"),
-  FILL_WIDTH("fill width");
+  FILL_WIDTH("fill width"),
+  ENUM;
 
   @NotNull private final String myValue;
   
