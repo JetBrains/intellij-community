@@ -24,12 +24,13 @@ import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.StandardFileSystems;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.FactoryMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.util.*;
 
 public class BasePathMacroManager extends PathMacroManager {
@@ -41,15 +42,14 @@ public class BasePathMacroManager extends PathMacroManager {
 
   protected static void addFileHierarchyReplacements(ExpandMacroToPathMap result, String macroName, @Nullable String path) {
     if (path == null) return;
-    final File f = new File(FileUtil.toSystemDependentName(path));
-    addFileHierarchyReplacements(result, f, "$" + macroName + "$");
+    addFileHierarchyReplacements(result, StandardFileSystems.local().findFileByPath(path), "$" + macroName + "$");
   }
 
-  protected static void addFileHierarchyReplacements(ExpandMacroToPathMap result, @Nullable File f, String macro) {
+  private static void addFileHierarchyReplacements(ExpandMacroToPathMap result, @Nullable VirtualFile f, String macro) {
     if (f == null) return;
-    addFileHierarchyReplacements(result, f.getParentFile(), macro + "/..");
+    addFileHierarchyReplacements(result, f.getParent(), macro + "/..");
 
-    final String path = FileUtil.toSystemIndependentName(f.getAbsolutePath());
+    final String path = FileUtil.toSystemIndependentName(f.getCanonicalPath());
     String s = macro;
     if (StringUtil.endsWithChar(path, '/')) s += "/";
     result.put(s, path);
@@ -59,10 +59,10 @@ public class BasePathMacroManager extends PathMacroManager {
     if (path == null) return;
 
     String macro = "$" + macroName + "$";
-    File dir = new File(FileUtil.toSystemDependentName(path));
+    VirtualFile dir = StandardFileSystems.local().findFileByPath(path);
     boolean check = false;
-    while (dir != null && dir.getParentFile() != null) {
-      path = FileUtil.toSystemIndependentName(dir.getAbsolutePath());
+    while (dir != null && dir.getParent() != null) {
+      path = FileUtil.toSystemIndependentName(dir.getCanonicalPath());
 
       String s = macro;
       if (StringUtil.endsWithChar(path, '/')) s += "/";
@@ -83,7 +83,7 @@ public class BasePathMacroManager extends PathMacroManager {
 
       macro += "/..";
       check = true;
-      dir = dir.getParentFile();
+      dir = dir.getParent();
     }
   }
 
