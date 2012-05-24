@@ -82,6 +82,17 @@ target('default': 'The default target') {
             home, null, paths)
 }
 
+target('build-dist-jars' : 'Target to build jars from locally compiled classes') {
+  loadProject()
+  // load ApplicationInfo.xml properties
+  ant.xmlproperty(file: appInfoFile(), collapseAttributes: "true")
+
+  layoutAll([buildNumber: "IC-$snapshot",
+             system_selector: "IdeaIC${p("component.version.major")}",
+             tools_jar: true],
+            home, null, paths)
+}
+
 def layoutAll(Map args, String home, String out, Paths _paths = null) {
   Paths paths = _paths != null ? _paths : new Paths(out)
 
