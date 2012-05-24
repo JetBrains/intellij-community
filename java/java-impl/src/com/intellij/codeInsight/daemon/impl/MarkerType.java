@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,6 +42,7 @@ import com.intellij.util.*;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.event.MouseEvent;
@@ -56,22 +57,7 @@ public class MarkerType {
       if (!(parent instanceof PsiMethod)) return null;
       PsiMethod method = (PsiMethod)parent;
 
-      PsiMethod[] superMethods = method.findSuperMethods(false);
-      if (superMethods.length == 0) return null;
-
-      PsiMethod superMethod = superMethods[0];
-      boolean isAbstract = method.hasModifierProperty(PsiModifier.ABSTRACT);
-      boolean isSuperAbstract = superMethod.hasModifierProperty(PsiModifier.ABSTRACT);
-
-      final boolean sameSignature = superMethod.getSignature(PsiSubstitutor.EMPTY).equals(method.getSignature(PsiSubstitutor.EMPTY));
-      @NonNls final String key;
-      if (isSuperAbstract && !isAbstract){
-        key = sameSignature ? "method.implements" : "method.implements.in";
-      }
-      else{
-        key = sameSignature ? "method.overrides" : "method.overrides.in";
-      }
-      return GutterIconTooltipHelper.composeText(superMethods, "", DaemonBundle.message(key));
+      return calculateOverridingMethodTooltip(method);
     }
   }, new LineMarkerNavigator(){
     @Override
@@ -79,15 +65,40 @@ public class MarkerType {
       PsiElement parent = element.getParent();
       if (!(parent instanceof PsiMethod)) return;
       PsiMethod method = (PsiMethod)parent;
-      PsiMethod[] superMethods = method.findSuperMethods(false);
-      if (superMethods.length == 0) return;
-      boolean showMethodNames = !PsiUtil.allMethodsHaveSameSignature(superMethods);
-      PsiElementListNavigator.openTargets(e, superMethods,
-                  DaemonBundle.message("navigation.title.super.method", method.getName()),
-                  new MethodCellRenderer(showMethodNames));
+      navigateToOverridingMethod(e, method);
 
     }
   });
+
+  @Nullable
+  public static String calculateOverridingMethodTooltip(PsiMethod method) {
+    PsiMethod[] superMethods = method.findSuperMethods(false);
+    if (superMethods.length == 0) return null;
+
+    PsiMethod superMethod = superMethods[0];
+    boolean isAbstract = method.hasModifierProperty(PsiModifier.ABSTRACT);
+    boolean isSuperAbstract = superMethod.hasModifierProperty(PsiModifier.ABSTRACT);
+
+    final boolean sameSignature = superMethod.getSignature(PsiSubstitutor.EMPTY).equals(method.getSignature(PsiSubstitutor.EMPTY));
+    @NonNls final String key;
+    if (isSuperAbstract && !isAbstract){
+      key = sameSignature ? "method.implements" : "method.implements.in";
+    }
+    else{
+      key = sameSignature ? "method.overrides" : "method.overrides.in";
+    }
+    return GutterIconTooltipHelper.composeText(superMethods, "", DaemonBundle.message(key));
+  }
+
+  public static void navigateToOverridingMethod(MouseEvent e, PsiMethod method) {
+    PsiMethod[] superMethods = method.findSuperMethods(false);
+    if (superMethods.length == 0) return;
+    boolean showMethodNames = !PsiUtil.allMethodsHaveSameSignature(superMethods);
+    PsiElementListNavigator.openTargets(e, superMethods,
+                                        DaemonBundle.message("navigation.title.super.method", method.getName()),
+                                        new MethodCellRenderer(showMethodNames));
+  }
+
   public static final String SEARCHING_FOR_OVERRIDING_METHODS = "Searching for overriding methods";
   public static final MarkerType OVERRIDEN_METHOD = new MarkerType(new NullableFunction<PsiElement, String>() {
     @Override
@@ -96,57 +107,66 @@ public class MarkerType {
       if (!(parent instanceof PsiMethod)) return null;
       PsiMethod method = (PsiMethod)parent;
 
-      PsiElementProcessor.CollectElementsWithLimit<PsiMethod> processor = new PsiElementProcessor.CollectElementsWithLimit<PsiMethod>(5);
-      OverridingMethodsSearch.search(method, true).forEach(new PsiElementProcessorAdapter<PsiMethod>(processor));
-
-      boolean isAbstract = method.hasModifierProperty(PsiModifier.ABSTRACT);
-
-      if (processor.isOverflow()){
-        return isAbstract ? DaemonBundle.message("method.is.implemented.too.many") : DaemonBundle.message("method.is.overridden.too.many");
-      }
-
-      PsiMethod[] overridings = processor.toArray(new PsiMethod[processor.getCollection().size()]);
-      if (overridings.length == 0) return null;
-
-      Comparator<PsiMethod> comparator = new MethodCellRenderer(false).getComparator();
-      Arrays.sort(overridings, comparator);
-
-      String start = isAbstract ? DaemonBundle.message("method.is.implemented.header") : DaemonBundle.message("method.is.overriden.header");
-      @NonNls String pattern = "&nbsp;&nbsp;&nbsp;&nbsp;{1}";
-      return GutterIconTooltipHelper.composeText(overridings, start, pattern);
+      return getOverriddenMethodTooltip(method);
     }
   }, new LineMarkerNavigator(){
     @Override
     public void browse(MouseEvent e, PsiElement element) {
       PsiElement parent = element.getParent();
       if (!(parent instanceof PsiMethod)) return;
-      if (DumbService.isDumb(element.getProject())) {
-        DumbService.getInstance(element.getProject()).showDumbModeNotification("Navigation to overriding classes is not possible during index update");
-        return;
-      }
-
-      final PsiMethod method = (PsiMethod)parent;
-      final PsiElementProcessor.CollectElementsWithLimit<PsiMethod> collectProcessor =
-        new PsiElementProcessor.CollectElementsWithLimit<PsiMethod>(2, new THashSet<PsiMethod>());
-      if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
-        @Override
-        public void run() {
-          OverridingMethodsSearch.search(method, true).forEach(new PsiElementProcessorAdapter<PsiMethod>(collectProcessor));
-        }
-      }, SEARCHING_FOR_OVERRIDING_METHODS, true, method.getProject(), (JComponent)e.getComponent())) {
-        return;
-      }
-
-      PsiMethod[] overridings = collectProcessor.toArray(PsiMethod.EMPTY_ARRAY);
-      if (overridings.length == 0) return;
-      boolean showMethodNames = !PsiUtil.allMethodsHaveSameSignature(overridings);
-      MethodCellRenderer renderer = new MethodCellRenderer(showMethodNames);
-      Arrays.sort(overridings, renderer.getComparator());
-      final OverridingMethodsUpdater methodsUpdater = new OverridingMethodsUpdater(method, renderer);
-      PsiElementListNavigator.openTargets(e, overridings, methodsUpdater.getCaption(overridings.length), renderer, methodsUpdater);
+      navigateToOverriddenMethod(e, (PsiMethod)parent);
 
     }
   });
+
+  public static String getOverriddenMethodTooltip(PsiMethod method) {
+    PsiElementProcessor.CollectElementsWithLimit<PsiMethod> processor = new PsiElementProcessor.CollectElementsWithLimit<PsiMethod>(5);
+    OverridingMethodsSearch.search(method, true).forEach(new PsiElementProcessorAdapter<PsiMethod>(processor));
+
+    boolean isAbstract = method.hasModifierProperty(PsiModifier.ABSTRACT);
+
+    if (processor.isOverflow()){
+      return isAbstract ? DaemonBundle.message("method.is.implemented.too.many") : DaemonBundle.message("method.is.overridden.too.many");
+    }
+
+    PsiMethod[] overridings = processor.toArray(new PsiMethod[processor.getCollection().size()]);
+    if (overridings.length == 0) return null;
+
+    Comparator<PsiMethod> comparator = new MethodCellRenderer(false).getComparator();
+    Arrays.sort(overridings, comparator);
+
+    String start = isAbstract ? DaemonBundle.message("method.is.implemented.header") : DaemonBundle.message("method.is.overriden.header");
+    @NonNls String pattern = "&nbsp;&nbsp;&nbsp;&nbsp;{1}";
+    return GutterIconTooltipHelper.composeText(overridings, start, pattern);
+  }
+
+  public static void navigateToOverriddenMethod(MouseEvent e, final PsiMethod method) {
+    if (DumbService.isDumb(method.getProject())) {
+      DumbService.getInstance(method.getProject()).showDumbModeNotification(
+        "Navigation to overriding classes is not possible during index update");
+      return;
+    }
+
+    final PsiElementProcessor.CollectElementsWithLimit<PsiMethod> collectProcessor =
+      new PsiElementProcessor.CollectElementsWithLimit<PsiMethod>(2, new THashSet<PsiMethod>());
+    if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
+      @Override
+      public void run() {
+        OverridingMethodsSearch.search(method, true).forEach(new PsiElementProcessorAdapter<PsiMethod>(collectProcessor));
+      }
+    }, SEARCHING_FOR_OVERRIDING_METHODS, true, method.getProject(), (JComponent)e.getComponent())) {
+      return;
+    }
+
+    PsiMethod[] overridings = collectProcessor.toArray(PsiMethod.EMPTY_ARRAY);
+    if (overridings.length == 0) return;
+    boolean showMethodNames = !PsiUtil.allMethodsHaveSameSignature(overridings);
+    MethodCellRenderer renderer = new MethodCellRenderer(showMethodNames);
+    Arrays.sort(overridings, renderer.getComparator());
+    final OverridingMethodsUpdater methodsUpdater = new OverridingMethodsUpdater(method, renderer);
+    PsiElementListNavigator.openTargets(e, overridings, methodsUpdater.getCaption(overridings.length), renderer, methodsUpdater);
+  }
+
   public static final String SEARCHING_FOR_OVERRIDDEN_METHODS = "Searching for overridden methods";
   public static final MarkerType SUBCLASSED_CLASS = new MarkerType(new NullableFunction<PsiElement, String>() {
     @Override
@@ -154,57 +174,65 @@ public class MarkerType {
       PsiElement parent = element.getParent();
       if (!(parent instanceof PsiClass)) return null;
       PsiClass aClass = (PsiClass)parent;
-      PsiElementProcessor.CollectElementsWithLimit<PsiClass> processor = new PsiElementProcessor.CollectElementsWithLimit<PsiClass>(5, new THashSet<PsiClass>());
-      ClassInheritorsSearch.search(aClass, true).forEach(new PsiElementProcessorAdapter<PsiClass>(processor));
-
-      if (processor.isOverflow()) {
-        return aClass.isInterface()
-               ? DaemonBundle.message("interface.is.implemented.too.many")
-               : DaemonBundle.message("class.is.subclassed.too.many");
-      }
-
-      PsiClass[] subclasses = processor.toArray(new PsiClass[processor.getCollection().size()]);
-      if (subclasses.length == 0) return null;
-
-      Comparator<PsiClass> comparator = new PsiClassListCellRenderer().getComparator();
-      Arrays.sort(subclasses, comparator);
-
-      String start = aClass.isInterface()
-                     ? DaemonBundle.message("interface.is.implemented.by.header")
-                     : DaemonBundle.message("class.is.subclassed.by.header");
-      @NonNls String pattern = "&nbsp;&nbsp;&nbsp;&nbsp;{0}";
-      return GutterIconTooltipHelper.composeText(subclasses, start, pattern);
+      return getSubclassedClassTooltip(aClass);
     }
   }, new LineMarkerNavigator(){
     @Override
     public void browse(MouseEvent e, PsiElement element) {
       final PsiElement parent = element.getParent();
       if (!(parent instanceof PsiClass)) return;
-
-      if (DumbService.isDumb(element.getProject())) {
-        DumbService.getInstance(element.getProject()).showDumbModeNotification("Navigation to overriding methods is not possible during index update");
-        return;
-      }
-
       final PsiClass aClass = (PsiClass)parent;
-      final PsiElementProcessor.CollectElementsWithLimit<PsiClass> collectProcessor = new PsiElementProcessor.CollectElementsWithLimit<PsiClass>(2, new THashSet<PsiClass>());
-      if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
-        @Override
-        public void run() {
-          ClassInheritorsSearch.search(aClass, true).forEach(new PsiElementProcessorAdapter<PsiClass>(collectProcessor));
-        }
-      }, SEARCHING_FOR_OVERRIDDEN_METHODS, true, aClass.getProject(), (JComponent)e.getComponent())) {
-        return;
-      }
 
-      PsiClass[] inheritors = collectProcessor.toArray(PsiClass.EMPTY_ARRAY);
-      if (inheritors.length == 0) return;
-      final PsiClassListCellRenderer renderer = new PsiClassListCellRenderer();
-      final SubclassUpdater subclassUpdater = new SubclassUpdater(aClass, renderer);
-      Arrays.sort(inheritors, renderer.getComparator());
-      PsiElementListNavigator.openTargets(e, inheritors, subclassUpdater.getCaption(inheritors.length), renderer, subclassUpdater);
+      navigateToSubclassedClass(e, aClass);
     }
   });
+
+  public static String getSubclassedClassTooltip(PsiClass aClass) {
+    PsiElementProcessor.CollectElementsWithLimit<PsiClass> processor = new PsiElementProcessor.CollectElementsWithLimit<PsiClass>(5, new THashSet<PsiClass>());
+    ClassInheritorsSearch.search(aClass, true).forEach(new PsiElementProcessorAdapter<PsiClass>(processor));
+
+    if (processor.isOverflow()) {
+      return aClass.isInterface()
+             ? DaemonBundle.message("interface.is.implemented.too.many")
+             : DaemonBundle.message("class.is.subclassed.too.many");
+    }
+
+    PsiClass[] subclasses = processor.toArray(new PsiClass[processor.getCollection().size()]);
+    if (subclasses.length == 0) return null;
+
+    Comparator<PsiClass> comparator = new PsiClassListCellRenderer().getComparator();
+    Arrays.sort(subclasses, comparator);
+
+    String start = aClass.isInterface()
+                   ? DaemonBundle.message("interface.is.implemented.by.header")
+                   : DaemonBundle.message("class.is.subclassed.by.header");
+    @NonNls String pattern = "&nbsp;&nbsp;&nbsp;&nbsp;{0}";
+    return GutterIconTooltipHelper.composeText(subclasses, start, pattern);
+  }
+
+  public static void navigateToSubclassedClass(MouseEvent e, final PsiClass aClass) {
+    if (DumbService.isDumb(aClass.getProject())) {
+      DumbService.getInstance(aClass.getProject()).showDumbModeNotification("Navigation to overriding methods is not possible during index update");
+      return;
+    }
+
+    final PsiElementProcessor.CollectElementsWithLimit<PsiClass> collectProcessor = new PsiElementProcessor.CollectElementsWithLimit<PsiClass>(2, new THashSet<PsiClass>());
+    if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
+      @Override
+      public void run() {
+        ClassInheritorsSearch.search(aClass, true).forEach(new PsiElementProcessorAdapter<PsiClass>(collectProcessor));
+      }
+    }, SEARCHING_FOR_OVERRIDDEN_METHODS, true, aClass.getProject(), (JComponent)e.getComponent())) {
+      return;
+    }
+
+    PsiClass[] inheritors = collectProcessor.toArray(PsiClass.EMPTY_ARRAY);
+    if (inheritors.length == 0) return;
+    final PsiClassListCellRenderer renderer = new PsiClassListCellRenderer();
+    final SubclassUpdater subclassUpdater = new SubclassUpdater(aClass, renderer);
+    Arrays.sort(inheritors, renderer.getComparator());
+    PsiElementListNavigator.openTargets(e, inheritors, subclassUpdater.getCaption(inheritors.length), renderer, subclassUpdater);
+  }
 
   private final GutterIconNavigationHandler<PsiElement> handler;
   private final Function<PsiElement, String> myTooltip;
