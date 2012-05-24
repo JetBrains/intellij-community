@@ -2,6 +2,8 @@ package org.jetbrains.jps.incremental.fs;
 
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.io.IOUtil;
+import gnu.trove.THashSet;
+import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.DataInput;
@@ -50,7 +52,7 @@ final class FilesDelta {
       final File root = new File(IOUtil.readString(in));
       Set<File> files = recompile.get(root);
       if (files == null) {
-        files = new HashSet<File>();
+        files = createSetOfFiles();
         recompile.put(root, files);
       }
       int filesCount = in.readInt();
@@ -58,6 +60,21 @@ final class FilesDelta {
         files.add(new File(IOUtil.readString(in)));
       }
     }
+  }
+
+
+  private static Set<File> createSetOfFiles() {
+    return new THashSet<File>(new TObjectHashingStrategy<File>() {
+      @Override
+      public int computeHashCode(File file) {
+        return FileUtil.fileHashCode(file);
+      }
+
+      @Override
+      public boolean equals(File f1, File f2) {
+        return FileUtil.filesEqual(f1, f2);
+      }
+    });
   }
 
   public void init(Collection<String> deletedProduction, Collection<String> deletedTests, Map<File, Set<File>> recompileProduction, Map<File, Set<File>> recompileTests) {
@@ -103,7 +120,7 @@ final class FilesDelta {
     synchronized (toRecompile) {
       files = toRecompile.get(root);
       if (files == null) {
-        files = new HashSet<File>();
+        files = createSetOfFiles();
         toRecompile.put(root, files);
       }
     }
