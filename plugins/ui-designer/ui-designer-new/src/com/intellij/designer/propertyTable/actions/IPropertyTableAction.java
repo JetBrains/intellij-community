@@ -15,11 +15,9 @@
  */
 package com.intellij.designer.propertyTable.actions;
 
-import com.intellij.designer.propertyTable.PropertyTable;
-
 /**
  * @author Alexander Lobas
  */
 public interface IPropertyTableAction {
-  void update(PropertyTable table);
+  void update();
 }

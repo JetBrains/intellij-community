@@ -49,17 +49,17 @@ public final class PropertyTablePanel extends JPanel implements ListSelectionLis
     ActionManager actionManager = ActionManager.getInstance();
     DefaultActionGroup actionGroup = new DefaultActionGroup();
 
-    ShowJavadoc showJavadoc = new ShowJavadoc();
+    ShowJavadoc showJavadoc = new ShowJavadoc(myPropertyTable);
     showJavadoc.registerCustomShortcutSet(actionManager.getAction(IdeActions.ACTION_QUICK_JAVADOC).getShortcutSet(), myPropertyTable);
     actionGroup.add(showJavadoc);
 
     actionGroup.addSeparator();
 
-    RestoreDefault restoreDefault = new RestoreDefault();
+    RestoreDefault restoreDefault = new RestoreDefault(myPropertyTable);
     restoreDefault.registerCustomShortcutSet(actionManager.getAction(IdeActions.ACTION_DELETE).getShortcutSet(), myPropertyTable);
     actionGroup.add(restoreDefault);
 
-    actionGroup.add(new ShowExpert());
+    actionGroup.add(new ShowExpert(myPropertyTable));
 
     PopupHandler.installPopupHandler(myPropertyTable, actionGroup,
                                      ActionPlaces.GUI_DESIGNER_PROPERTY_INSPECTOR_POPUP,
@@ -92,7 +92,7 @@ public final class PropertyTablePanel extends JPanel implements ListSelectionLis
   public void valueChanged(ListSelectionEvent e) {
     for (AnAction action : myActions) {
       if (action instanceof IPropertyTableAction) {
-        ((IPropertyTableAction)action).update(myPropertyTable);
+        ((IPropertyTableAction)action).update();
       }
     }
   }
