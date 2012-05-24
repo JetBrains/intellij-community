@@ -98,6 +98,15 @@ public class LibraryRuntimeClasspathScope extends GlobalSearchScope {
         return value;
       }
 
+      @Override
+      public LinkedHashSet<VirtualFile> visitModuleOrderEntry(ModuleOrderEntry moduleOrderEntry, LinkedHashSet<VirtualFile> value) {
+        final Module depModule = moduleOrderEntry.getModule();
+        if (depModule != null) {
+          ContainerUtil.addAll(value, ModuleRootManager.getInstance(depModule).getSourceRoots());
+        }
+        return value;
+      }
+
       public LinkedHashSet<VirtualFile> visitJdkOrderEntry(final JdkOrderEntry jdkOrderEntry, final LinkedHashSet<VirtualFile> value) {
         final Sdk jdk = jdkOrderEntry.getJdk();
         if (jdk != null && processedSdk.add(jdk)) {
