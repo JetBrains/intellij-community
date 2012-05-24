@@ -930,78 +930,35 @@ class RearrangerTest extends LightCodeInsightFixtureTestCase {
         'not sort by' SortOption.BY_NAME
   } } }
 
-//  /**
-//   * test detection of method overrides/overridden/implements/implemented attributes.
-//   *
-//   * @throws Exception test exception
-//   */
-//  public void testOverImpl() throws Exception {
-//    configureByFile("/com/wrq/rearranger/RearrangementTest40.java");
-//    final PsiFile file = getFile();
-//    final Document doc = PsiDocumentManager.getInstance(getProject()).getDocument(file);
-//    final RearrangerActionHandler rah = new RearrangerActionHandler();
-//    rah.rearrangeDocument(getProject(), file, rs, doc);
-//    super.checkResultByFile("/com/wrq/rearranger/RearrangementResult40.java");
-//  }
-//
-//  public final void testRemoveBlankLinesBeforeMethod() throws Exception {
-//    configureByFile("/com/wrq/rearranger/RearrangementTest41.java");
-//    final PsiFile file = getFile();
-//    final Document doc = PsiDocumentManager.getInstance(getProject()).getDocument(file);
-//    final RearrangerActionHandler rah = new RearrangerActionHandler();
-//    rs.getAfterClassLBrace().setForce(true);
-//    rs.getAfterClassLBrace().setnBlankLines(0);
-//    rs.getBeforeMethodLBrace().setForce(true);
-//    rs.getBeforeMethodLBrace().setnBlankLines(0);
-//    rs.getAfterMethodLBrace().setForce(true);
-//    rs.getAfterMethodLBrace().setnBlankLines(0);
-//    rs.getBeforeMethodRBrace().setForce(true);
-//    rs.getBeforeMethodRBrace().setnBlankLines(0);
-//    rs.getAfterMethodRBrace().setForce(true);
-//    rs.getAfterMethodRBrace().setnBlankLines(0);
-//    rs.getBeforeClassRBrace().setForce(true);
-//    rs.getBeforeClassRBrace().setnBlankLines(0);
-//    rs.getAfterClassRBrace().setForce(true);
-//    rs.getAfterClassRBrace().setnBlankLines(0);
-//    rs.setRemoveBlanksInsideCodeBlocks(true);
-//    rah.rearrangeDocument(getProject(), file, rs, doc);
-//    super.checkResultByFile("/com/wrq/rearranger/RearrangementResult41.java");
-//  }
-//
-//  public final void testEnumClass() throws Exception {
-//    final Project project = getProject();
-//    final LanguageLevelProjectExtension llpExtension = LanguageLevelProjectExtension.getInstance(project);
-//    LanguageLevel oldLevel = llpExtension.getLanguageLevel();
-//    llpExtension.setLanguageLevel(LanguageLevel.JDK_1_5);
-//    configureByFile("/com/wrq/rearranger/RearrangementTest42.java");
-//    final PsiFile file = getFile();
-//    final Document doc = PsiDocumentManager.getInstance(getProject()).getDocument(file);
-//    final RearrangerActionHandler rah = new RearrangerActionHandler();
-//    rah.rearrangeDocument(getProject(), file, rs, doc);
-//    super.checkResultByFile("/com/wrq/rearranger/RearrangementResult42.java");
-//    llpExtension.setLanguageLevel(oldLevel);
-//  }
-//
-//  public final void testNumParameters() throws Exception {
-//    configureByFile("/com/wrq/rearranger/RearrangementTest43.java");
-//    final PsiFile file = getFile();
-//    final Document doc = PsiDocumentManager.getInstance(getProject()).getDocument(file);
-//    final RearrangerActionHandler rah = new RearrangerActionHandler();
-//    MethodAttributes ma;
-//    ma = new MethodAttributes();
-//    ma.getMinParamsAttr().setMatch(true);
-//    ma.getMinParamsAttr().setValue(2);
-//    ma.getMaxParamsAttr().setMatch(true);
-//    ma.getMaxParamsAttr().setValue(3);
-//    rs.addItem(ma, 0);
-//    ma = new MethodAttributes();
-//    ma.getMinParamsAttr().setMatch(true);
-//    ma.getMinParamsAttr().setValue(1);
-//    rs.addItem(ma, 1);
-//    rah.rearrangeDocument(getProject(), file, rs, doc);
-//    super.checkResultByFile("/com/wrq/rearranger/RearrangementResult43.java");
-//  }
-//
+  /**
+   * test detection of method overrides/overridden/implements/implemented attributes.
+   *
+   * @throws Exception test exception
+   */
+  public void testOverImpl() throws Exception { doTest('RearrangementTest40', 'RearrangementResult40') }
+
+  public final void testRemoveBlankLinesBeforeMethod() throws Exception {
+    doTest('RearrangementTest41', 'RearrangementResult41') {
+      spacingRule.create {
+        spacing(anchor: [ SpacingAnchor.AFTER_CLASS_LBRACE, SpacingAnchor.BEFORE_METHOD_LBRACE, SpacingAnchor.AFTER_METHOD_LBRACE,
+                          SpacingAnchor.BEFORE_METHOD_RBRACE, SpacingAnchor.AFTER_METHOD_RBRACE, SpacingAnchor.BEFORE_CLASS_RBRACE,
+                          SpacingAnchor.AFTER_CLASS_RBRACE],
+                lines: 0, 'remove blank lines': true)
+      }
+    }
+  }
+
+  public final void testEnumClass() throws Exception { doTest('RearrangementTest42', 'RearrangementResult42') }
+
+  public final void testNumParameters() throws Exception {
+    doTest('RearrangementTest43', 'RearrangementResult43') {
+      methodRule.create {
+        'arguments number' ( from: 2, to: 3)
+      }
+      methodRule.create {
+        'arguments number' ( from: 1)
+  } } }
+
 //  public final void testGeneratedComment() throws Exception {
 //    configureByFile("/com/wrq/rearranger/RearrangementTest44.java");
 //    final PsiFile file = getFile();

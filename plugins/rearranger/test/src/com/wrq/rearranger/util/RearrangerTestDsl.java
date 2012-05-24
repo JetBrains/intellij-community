@@ -57,7 +57,10 @@ public enum RearrangerTestDsl {
   BELOW_FIRST_CALLER("below first caller"),
   NON_PRIVATE_TREATMENT("non-private treatment"),
   REARRANGE_INNER_CLASSES("rearranger inner classes"),
-  CLASS_COMMENT("class comment");
+  CLASS_COMMENT("class comment"),
+  ARGUMENTS_NUMBER("arguments number"),
+  FROM,
+  TO;
 
   @NotNull private final String myValue;
   
