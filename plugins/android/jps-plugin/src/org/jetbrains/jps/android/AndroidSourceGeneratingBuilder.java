@@ -177,10 +177,7 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
 
   private static boolean clearAndroidStorages(@NotNull CompileContext context, @NotNull Collection<Module> modules) {
     for (Module module : modules) {
-      final File dir = AndroidJpsUtil.getDirectoryForIntermediateArtifacts(context, module, false, BUILDER_NAME);
-      if (dir == null) {
-        return true;
-      }
+      final File dir = AndroidJpsUtil.getDirectoryForIntermediateArtifacts(context, module);
       if (dir.exists() && !FileUtil.delete(dir)) {
         context.processMessage(
           new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR, AndroidJpsBundle.message("android.jps.cannot.delete", dir.getPath())));

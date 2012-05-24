@@ -110,7 +110,8 @@ public class AndroidDexBuilder extends ProjectLevelBuilder {
       }
 
       final ProjectPaths projectPaths = context.getProjectPaths();
-      final File dexOutputDir = AndroidJpsUtil.getDirectoryForIntermediateArtifacts(context, module, true, BUILDER_NAME);
+      File dexOutputDir = AndroidJpsUtil.getDirectoryForIntermediateArtifacts(context, module);
+      dexOutputDir = AndroidJpsUtil.createDirIfNotExist(dexOutputDir, context, BUILDER_NAME);
       if (dexOutputDir == null) {
         success = false;
         continue;
@@ -122,7 +123,7 @@ public class AndroidDexBuilder extends ProjectLevelBuilder {
           .message("android.jps.warnings.dex.no.compiled.files", module.getName())));
         continue;
       }
-      final Set<String> externalLibraries = AndroidJpsUtil.getExternalLibraries(projectPaths, module, platform);
+      final Set<String> externalLibraries = AndroidJpsUtil.getExternalLibraries(context, module, platform);
 
       boolean includeSystemProguardCfg = false;
       String proguardCfgPath = context.getBuilderParameter(AndroidCommonUtils.PROGUARD_CFG_PATH_OPTION);
@@ -172,7 +173,7 @@ public class AndroidDexBuilder extends ProjectLevelBuilder {
           fileSet.addAll(externalLibraries);
           jars.addAll(externalLibraries);
 
-          AndroidJpsUtil.processClasspath(projectPaths, module, new AndroidDependencyProcessor() {
+          AndroidJpsUtil.processClasspath(context, module, new AndroidDependencyProcessor() {
             @Override
             public void processExternalLibrary(@NotNull File file) {
               fileSet.add(file.getPath());
@@ -369,7 +370,6 @@ public class AndroidDexBuilder extends ProjectLevelBuilder {
       return false;
     }
 
-    final ProjectPaths paths = context.getProjectPaths();
     final Set<String> classFilesDirs = new HashSet<String>();
     final Set<String> libClassFilesDirs = new HashSet<String>();
     final Set<String> outputDirs = new HashSet<String>();
@@ -377,7 +377,7 @@ public class AndroidDexBuilder extends ProjectLevelBuilder {
     AndroidJpsUtil.addSubdirectories(classesDir, classFilesDirs);
     outputDirs.add(classesDir.getPath());
 
-    AndroidJpsUtil.processClasspath(paths, module, new AndroidDependencyProcessor() {
+    AndroidJpsUtil.processClasspath(context, module, new AndroidDependencyProcessor() {
 
       @Override
       public void processAndroidLibraryOutputDirectory(@NotNull File dir) {

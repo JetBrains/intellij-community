@@ -11,8 +11,6 @@ import org.jetbrains.jps.incremental.BuilderCategory;
 import org.jetbrains.jps.incremental.CompileContext;
 import org.jetbrains.jps.incremental.ModuleLevelBuilder;
 import org.jetbrains.jps.incremental.ProjectBuildException;
-import org.jetbrains.jps.incremental.messages.BuildMessage;
-import org.jetbrains.jps.incremental.messages.CompilerMessage;
 import org.jetbrains.jps.incremental.messages.ProgressMessage;
 
 import java.io.File;
@@ -54,11 +52,9 @@ public class AndroidLibraryPackagingBuilder extends ModuleLevelBuilder {
       }
 
       final ProjectPaths projectPaths = context.getProjectPaths();
-      final File outputDirectoryForPackagedFiles = AndroidJpsUtil.getDirectoryForFinalPackage(projectPaths, module);
-
-      if (outputDirectoryForPackagedFiles == null) {
-        context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR, AndroidJpsBundle
-          .message("android.jps.errors.output.dir.not.specified", module.getName())));
+      File outputDir = AndroidJpsUtil.getDirectoryForIntermediateArtifacts(context, module);
+      outputDir = AndroidJpsUtil.createDirIfNotExist(outputDir, context, BUILDER_NAME);
+      if (outputDir == null) {
         success = false;
         continue;
       }
@@ -80,7 +76,7 @@ public class AndroidLibraryPackagingBuilder extends ModuleLevelBuilder {
 
       if (subdirs.size() > 0) {
         context.processMessage(new ProgressMessage(AndroidJpsBundle.message("android.jps.progress.library.packaging", module.getName())));
-        final File outputJarFile = new File(outputDirectoryForPackagedFiles, AndroidCommonUtils.CLASSES_JAR_FILE_NAME);
+        final File outputJarFile = new File(outputDir, AndroidCommonUtils.CLASSES_JAR_FILE_NAME);
         doneSomething = true;
         try {
           AndroidCommonUtils.packClassFilesIntoJar(ArrayUtil.EMPTY_STRING_ARRAY, ArrayUtil.toStringArray(subdirs), outputJarFile);

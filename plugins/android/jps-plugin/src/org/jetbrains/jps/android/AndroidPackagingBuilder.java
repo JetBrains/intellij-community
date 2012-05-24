@@ -333,8 +333,7 @@ public class AndroidPackagingBuilder extends ProjectLevelBuilder {
     final String[] sourceRoots = AndroidJpsUtil.toPaths(AndroidJpsUtil.getSourceRootsForModuleAndDependencies(module));
     final ProjectPaths paths = context.getProjectPaths();
 
-    final File intArtifactsDir = AndroidJpsUtil.getDirectoryForIntermediateArtifacts(context, module, false, BUILDER_NAME);
-    assert intArtifactsDir != null;
+    final File intArtifactsDir = AndroidJpsUtil.getDirectoryForIntermediateArtifacts(context, module);
 
     final File outputDir = AndroidJpsUtil.getDirectoryForFinalPackage(paths, module);
     if (outputDir == null) {
@@ -348,7 +347,7 @@ public class AndroidPackagingBuilder extends ProjectLevelBuilder {
       return false;
     }
 
-    final Set<String> externalJarsSet = AndroidJpsUtil.getExternalLibraries(paths, module, platform);
+    final Set<String> externalJarsSet = AndroidJpsUtil.getExternalLibraries(context, module, platform);
     final File resPackage = getPackagedResourcesFile(module, intArtifactsDir);
 
     final File classesDexFile = new File(intArtifactsDir.getPath(), AndroidCommonUtils.CLASSES_FILE_NAME);
@@ -477,7 +476,8 @@ public class AndroidPackagingBuilder extends ProjectLevelBuilder {
       final ArrayList<String> assetsDirPaths = new ArrayList<String>();
       collectAssetDirs(facet, assetsDirPaths);
 
-      final File outputDir = AndroidJpsUtil.getDirectoryForIntermediateArtifacts(context, module, true, BUILDER_NAME);
+      File outputDir = AndroidJpsUtil.getDirectoryForIntermediateArtifacts(context, module);
+      outputDir = AndroidJpsUtil.createDirIfNotExist(outputDir, context, BUILDER_NAME);
       if (outputDir == null) {
         return false;
       }
