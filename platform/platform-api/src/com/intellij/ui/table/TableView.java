@@ -138,10 +138,10 @@ public class TableView<Item> extends BaseTableView implements ItemsProvider, Sel
     //        and make sure that header will fit as well
     int viewWidth = getParent() != null? getParent().getWidth() : getWidth();
     double gold = 0.5 * (3 - Math.sqrt(5));
-    int addendum =
-      varCount == 0 ? 0 : (int)((allColumnWidth < gold * viewWidth ? gold * viewWidth :
-                                 allColumnWidth < (1 - gold) * viewWidth ? (1 - gold) * viewWidth :
-                                 viewWidth) - allColumnWidth) / varCount;
+    int addendum = varCount == 0 || viewWidth < allColumnWidth ?
+                   0 : (int)((allColumnWidth < gold * viewWidth ? gold * viewWidth :
+                              allColumnWidth < (1 - gold) * viewWidth ? (1 - gold) * viewWidth :
+                              viewWidth) - allColumnWidth) / varCount;
 
     for (int i=0 ; i<columns.length; i ++) {
       TableColumn column = getColumnModel().getColumn(i);
