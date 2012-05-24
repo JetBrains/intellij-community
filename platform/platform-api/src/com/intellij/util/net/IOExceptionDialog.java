@@ -20,9 +20,7 @@ import com.intellij.ui.GuiUtils;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.KeyEvent;
+import java.awt.event.*;
 import java.lang.reflect.InvocationTargetException;
 
 /**
@@ -93,6 +91,14 @@ public class IOExceptionDialog extends JDialog {
     setLocation((parentSize.width - ownSize.width) / 2, (parentSize.height - ownSize.height) / 2);
 
     pack();
+    setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
+    addWindowListener(new WindowAdapter() {
+      @Override
+      public void windowClosing(WindowEvent e) {
+        cancelPressed = true;
+        dispose();
+      }
+    });
   }
 
   /**
