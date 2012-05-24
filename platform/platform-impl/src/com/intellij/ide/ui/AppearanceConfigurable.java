@@ -30,7 +30,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.Dictionary;
@@ -318,7 +317,6 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
     private JLabel myFontNameLabel;
     private JPanel myTransparencyPanel;
     private JCheckBox myOverrideLAFFonts;
-    private JLabel myIDEALafFont;
 
     private JCheckBox myHideIconsInQuickNavigation;
     private JCheckBox myCbDisplayIconsInMenu;
@@ -328,24 +326,15 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
     private JCheckBox myAllowMergeButtons;
 
     public MyComponent() {
-      ActionListener updater = new ActionListener() {
+      myOverrideLAFFonts.addActionListener( new ActionListener() {
         public void actionPerformed(ActionEvent e) {
           updateCombo();
         }
-      };
-      myLafComboBox.addActionListener(updater);
-      myOverrideLAFFonts.addActionListener(updater);
-      myIDEALafFont.setPreferredSize(new Dimension(myIDEALafFont.getPreferredSize().width, myOverrideLAFFonts.getPreferredSize().height));
+      });
     }
 
     public void updateCombo() {
-      UIManager.LookAndFeelInfo selectedLAF = (UIManager.LookAndFeelInfo)myLafComboBox.getSelectedItem();
-      //noinspection HardCodedStringLiteral
-      boolean isIdeaLAFSelected = selectedLAF != null && selectedLAF.getName().startsWith("IDEA");
-
-      myIDEALafFont.setVisible(isIdeaLAFSelected);
-      myOverrideLAFFonts.setVisible(!isIdeaLAFSelected);
-      boolean enableChooser = isIdeaLAFSelected || myOverrideLAFFonts.isSelected();
+      boolean enableChooser = myOverrideLAFFonts.isSelected();
 
       myFontCombo.setEnabled(enableChooser);
       myFontSizeCombo.setEnabled(enableChooser);
