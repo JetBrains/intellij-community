@@ -126,7 +126,7 @@ public class PyDebugValue extends XNamedValue {
   }
 
   private static String formatName(String name) {
-    name = name.replace("\\", "\\\\");
+    name = name.replace("\\", "\\\\").replace("\n", "\\n").replace("\t", "\\t");
 
     if (name.length() >= MAX_VALUE) {
       name = name.substring(0, MAX_VALUE);
