@@ -118,6 +118,9 @@ public class MavenDefaultModifiableModelsProvider extends MavenBaseModifiableMod
             Collection<ModifiableRootModel> rootModels = myRootModels.values();
 
             ModifiableRootModel[] rootModels1 = rootModels.toArray(new ModifiableRootModel[rootModels.size()]);
+            for (ModifiableRootModel model : rootModels1) {
+              assert !model.isDisposed() : "Already disposed: " + model;
+            }
             ModifiableModelCommitter.multiCommit(rootModels1, myModuleModel);
 
             for (ModifiableFacetModel each : myFacetModels.values()) {
