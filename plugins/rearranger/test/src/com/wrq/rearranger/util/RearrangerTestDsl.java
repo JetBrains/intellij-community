@@ -54,7 +54,9 @@ public enum RearrangerTestDsl {
   BLANK_LINES("lines"),
   REMOVE_BLANK_LINES("remove blank lines"),
   BELOW_FIRST_CALLER("below first caller"),
-  NON_PRIVATE_TREATMENT("non-private treatment");
+  NON_PRIVATE_TREATMENT("non-private treatment"),
+  REARRANGE_INNER_CLASSES("rearranger inner classes"),
+  CLASS_COMMENT("class comment");
 
   @NotNull private final String myValue;
   

@@ -66,7 +66,11 @@ class RearrangerTest extends LightCodeInsightFixtureTestCase {
     mySettings.showParameterTypes = true
     mySettings.showRules = true
     mySettings.rearrangeInnerClasses = true
-    
+
+    prepareBuilders(mySettings)
+  }
+
+  private void prepareBuilders(RearrangerSettings mySettings) {
     settings = new SettingsConfigurationBuilder(settings: mySettings)
     classRule = new JavaClassRuleBuilder(settings: mySettings)
     interfaceRule = new JavaInterfaceRuleBuilder(settings: mySettings)
@@ -813,7 +817,18 @@ class RearrangerTest extends LightCodeInsightFixtureTestCase {
                  lines: 1 )
         spacing ( 'remove blank lines': true )
   } } }
-
+  
+  private void setupSettings(@NotNull String relativePath) {
+    // Using concat() because simple '+' here produces weird groovy.lang.MissingMethodException: No signature of method:
+    // java.lang.String.positive() is applicable for argument types: () values: []
+    def path = PlatformTestUtil.getCommunityPath().replace(File.separator, '/').concat("/plugins/rearranger")
+      .concat(relativePath)
+    mySettings = RearrangerSettings.getSettingsFromFile(new File(path));
+    mySettings.askBeforeRearranging = false
+    
+    prepareBuilders(mySettings)
+  }
+  
   /**
    * Bug occurs when one or more blank lines precede a generated comment.
    * When comment is removed, blank lines now precede the item.  Comment is inserted
@@ -824,77 +839,36 @@ class RearrangerTest extends LightCodeInsightFixtureTestCase {
    */
   public void testGeneratedCommentSpacingBug() throws Exception {
     doTest('RearrangementTest32', 'RearrangementResult32') {
-      // Using concat() because simple '+' here produces weird groovy.lang.MissingMethodException: No signature of method:
-      // java.lang.String.positive() is applicable for argument types: () values: []
-      def path = PlatformTestUtil.getCommunityPath().replace(File.separator, '/').concat("/plugins/rearranger")
-        .concat(InteractiveTest.DEFAULT_CONFIGURATION)
-      mySettings = RearrangerSettings.getSettingsFromFile(new File(path));
-      mySettings.askBeforeRearranging = false
-      mySettings.newLinesAtEOF.force = true
-      mySettings.newLinesAtEOF.nBlankLines = 1
+      setupSettings(InteractiveTest.DEFAULT_CONFIGURATION)
+      spacingRule.spacing(anchor: SpacingAnchor.EOF, lines: 1)
   } }
 
-//  public void testGeneratedCommentSpacing() throws Exception {
-//    configureByFile("/com/wrq/rearranger/RearrangementTest32.java");
-//    final PsiFile file = getFile();
-//    final Document doc = PsiDocumentManager.getInstance(getProject()).getDocument(file);
-//    rs = RearrangerSettings.getSettingsFromFile(new File(InteractiveTest.DEFAULT_CONFIGURATION));
-//    rs.setAskBeforeRearranging(false);
-//    rs.getNewlinesAtEOF().setForce(true);
-//    rs.getNewlinesAtEOF().setnBlankLines(1);
-//    final RearrangerActionHandler rah = new RearrangerActionHandler();
-//    rah.rearrangeDocument(getProject(), file, rs, doc);
-//    super.checkResultByFile("/com/wrq/rearranger/RearrangementResult32.java");
-//  }
-//
-//  public void testInnerClassComments() throws Exception {
-//    configureByFile("/com/wrq/rearranger/RearrangementTest34.java");
-//    final PsiFile file = getFile();
-//    final Document doc = PsiDocumentManager.getInstance(getProject()).getDocument(file);
-//    rs = RearrangerSettings.getSettingsFromFile(new File(InteractiveTest.DEFAULT_CONFIGURATION));
-//    rs.setAskBeforeRearranging(false);
-//    rs.setRearrangeInnerClasses(true);
-//    rs.getNewlinesAtEOF().setForce(true);
-//    rs.getNewlinesAtEOF().setnBlankLines(1);
-//    CommentRule cr = new CommentRule();
-//    cr.setCommentText("// ----- OUTER CLASS -----\n");
-//    rs.getClassOrderAttributeList().add(0, cr);
-//    final RearrangerActionHandler rah = new RearrangerActionHandler();
-//    rah.rearrangeDocument(getProject(), file, rs, doc);
-//    super.checkResultByFile("/com/wrq/rearranger/RearrangementResult34.java");
-//  }
-//
-//  public void testInnerClassCommentsNoRearrangement() throws Exception {
-//    configureByFile("/com/wrq/rearranger/RearrangementTest34.java");
-//    final PsiFile file = getFile();
-//    final Document doc = PsiDocumentManager.getInstance(getProject()).getDocument(file);
-//    rs = RearrangerSettings.getSettingsFromFile(new File(InteractiveTest.DEFAULT_CONFIGURATION));
-//    rs.setAskBeforeRearranging(false);
-//    rs.setRearrangeInnerClasses(false);
-//    rs.getNewlinesAtEOF().setForce(true);
-//    rs.getNewlinesAtEOF().setnBlankLines(1);
-//    CommentRule cr = new CommentRule();
-//    cr.setCommentText("// ----- OUTER CLASS -----\n");
-//    rs.getClassOrderAttributeList().add(0, cr);
-//    final RearrangerActionHandler rah = new RearrangerActionHandler();
-//    rah.rearrangeDocument(getProject(), file, rs, doc);
-//    super.checkResultByFile("/com/wrq/rearranger/RearrangementResult34B.java");
-//  }
-//
-//  public void testFirstInsertionOfComment() throws Exception {
-//    configureByFile("/com/wrq/rearranger/RearrangementTest35.java");
-//    final PsiFile file = getFile();
-//    final Document doc = PsiDocumentManager.getInstance(getProject()).getDocument(file);
-//    CommentRule cr = new CommentRule();
-//    cr.setCommentText("// ----- FIELDS -----\n");
-//    FieldAttributes fa = new FieldAttributes();
-//    rs.addItem(cr, 0);
-//    rs.addItem(fa, 1);
-//    final RearrangerActionHandler rah = new RearrangerActionHandler();
-//    rah.rearrangeDocument(getProject(), file, rs, doc);
-//    super.checkResultByFile("/com/wrq/rearranger/RearrangementResult35.java");
-//  }
-//
+  public void testGeneratedCommentSpacing() throws Exception {
+    doTest('RearrangementTest32', 'RearrangementResult32') {
+      setupSettings(InteractiveTest.DEFAULT_CONFIGURATION)
+      spacingRule.spacing(anchor: SpacingAnchor.EOF, lines: 1)
+  } }
+
+  public void testInnerClassComments() throws Exception {
+    doTest('RearrangementTest34', 'RearrangementResult34') {
+      setupSettings(InteractiveTest.DEFAULT_CONFIGURATION)
+      spacingRule.spacing(anchor: SpacingAnchor.EOF, lines: 1)
+      settings.configure( 'rearranger inner classes': true, 'class comment': '// ----- OUTER CLASS -----\n' )
+  } }
+
+  public void testInnerClassCommentsNoRearrangement() throws Exception {
+    doTest('RearrangementTest34', 'RearrangementResult34B') {
+      setupSettings(InteractiveTest.DEFAULT_CONFIGURATION)
+      spacingRule.spacing(anchor: SpacingAnchor.EOF, lines: 1)
+      settings.configure( 'rearranger inner classes': false, 'class comment': '// ----- OUTER CLASS -----\n' )
+  } }
+
+  public void testFirstInsertionOfComment() throws Exception {
+    doTest('RearrangementTest35', 'RearrangementResult35') {
+      commentRule.comment('// ----- FIELDS -----\n')
+      fieldRule.create { }
+  } }
+
 //  public void testExcludeFromExtraction() throws Exception {
 //    configureByFile("/com/wrq/rearranger/RearrangementTest36.java");
 //    final PsiFile file = getFile();

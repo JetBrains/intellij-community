@@ -45,13 +45,14 @@ class SettingsConfigurationBuilder extends BuilderSupport {
     switch (name) {
       case RearrangerTestDsl.EXTRACTED_METHODS.value:
         settings.extractedMethodsSettings.moveExtractedMethods = true
-        setIf(RearrangerTestDsl.DEPTH_FIRST_ORDER, attributes, 'depthFirstOrdering', settings.extractedMethodsSettings)
-        setIf(RearrangerTestDsl.ORDER, attributes, 'ordering', settings.extractedMethodsSettings)
-        setIf(RearrangerTestDsl.COMMENT_TYPE, attributes, 'commentType', settings.extractedMethodsSettings)
-        setIf(RearrangerTestDsl.BELOW_FIRST_CALLER, attributes, 'belowFirstCaller', settings.extractedMethodsSettings)
+        setIf(RearrangerTestDsl.DEPTH_FIRST_ORDER,     attributes, 'depthFirstOrdering',  settings.extractedMethodsSettings)
+        setIf(RearrangerTestDsl.ORDER,                 attributes, 'ordering',            settings.extractedMethodsSettings)
+        setIf(RearrangerTestDsl.COMMENT_TYPE,          attributes, 'commentType',         settings.extractedMethodsSettings)
+        setIf(RearrangerTestDsl.BELOW_FIRST_CALLER,    attributes, 'belowFirstCaller',    settings.extractedMethodsSettings)
         setIf(RearrangerTestDsl.NON_PRIVATE_TREATMENT, attributes, 'nonPrivateTreatment', settings.extractedMethodsSettings)
+        
         commentHandler(RearrangerTestDsl.PRECEDING_COMMENT, 'precedingComment')
-        commentHandler(RearrangerTestDsl.TRAILING_COMMENT, 'trailingComment')
+        commentHandler(RearrangerTestDsl.TRAILING_COMMENT,  'trailingComment')
         break
       case RearrangerTestDsl.KEEP_TOGETHER.value:
         def m = [
@@ -64,8 +65,16 @@ class SettingsConfigurationBuilder extends BuilderSupport {
         }
         break
       case RearrangerTestDsl.OVERLOADED_METHODS.value:
-        setIf(RearrangerTestDsl.ORDER, attributes, 'overloadedOrder', settings)
+        setIf(RearrangerTestDsl.ORDER,         attributes, 'overloadedOrder',               settings)
         setIf(RearrangerTestDsl.KEEP_TOGETHER, attributes, 'keepOverloadedMethodsTogether', settings)
+        break
+      default:
+        setIf(RearrangerTestDsl.REARRANGE_INNER_CLASSES, attributes, 'rearrangeInnerClasses', settings)
+        if (attributes[RearrangerTestDsl.CLASS_COMMENT.value]) {
+          def comment = new CommentRule()
+          comment.commentText = attributes[RearrangerTestDsl.CLASS_COMMENT.value]
+          settings.classOrderAttributeList.add(0, comment)
+        }
     }
     settings
   }
