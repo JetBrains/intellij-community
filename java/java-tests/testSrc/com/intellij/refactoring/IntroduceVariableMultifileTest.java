@@ -74,18 +74,13 @@ public class IntroduceVariableMultifileTest extends MultiFileTestCase {
     );
   }
 
-
-  public void testDummy() {
-
-  }
-
   PerformAction createAction(final String className, final IntroduceVariableBase testMe) {
     return new PerformAction() {
       @Override
       public void performAction(VirtualFile vroot, VirtualFile rootAfter) {
         final JavaPsiFacade psiManager = getJavaFacade();
         final PsiClass aClass = psiManager.findClass(className, GlobalSearchScope.allScope(myProject));
-        assertTrue(aClass != null);
+        assertTrue(className + " class not found", aClass != null);
         final PsiFile containingFile = aClass.getContainingFile();
         final VirtualFile virtualFile = containingFile.getVirtualFile();
         assertTrue(virtualFile != null);

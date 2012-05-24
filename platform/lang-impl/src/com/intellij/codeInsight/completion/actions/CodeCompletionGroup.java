@@ -47,4 +47,9 @@ public class CodeCompletionGroup extends DefaultActionGroup implements DumbAware
 
     presentation.setEnabled(true);
   }
+
+  @Override
+  public boolean disableIfNoVisibleChildren() {
+    return false;
+  }
 }

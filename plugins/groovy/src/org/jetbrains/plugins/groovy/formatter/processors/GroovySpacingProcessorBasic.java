@@ -78,6 +78,10 @@ public abstract class GroovySpacingProcessorBasic {
       return LAZY_SPACING;
     }
 
+    if (leftType == GROOVY_DOC_COMMENT) {
+      return COMMON_SPACING_WITH_NL;
+    }
+
     //For type parameters
     if (mLT == leftType && right instanceof GrTypeParameter ||
         mGT == rightType && left instanceof GrTypeParameter ||

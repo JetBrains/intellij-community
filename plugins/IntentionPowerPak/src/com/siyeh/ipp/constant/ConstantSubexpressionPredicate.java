@@ -73,10 +73,10 @@ class ConstantSubexpressionPredicate implements PsiElementPredicate {
       if (currentToken == token) {
         final String binaryExpressionText = operands[i - 1].getText() + ' ' + token.getText() + ' ' + operand.getText();
         final PsiElementFactory factory = JavaPsiFacade.getElementFactory(expression.getProject());
-        return (PsiBinaryExpression)factory.createExpressionFromText(binaryExpressionText, expression);
+        return (PsiPolyadicExpression)factory.createExpressionFromText(binaryExpressionText, expression);
       }
     }
-    return null;
+    throw new AssertionError();
   }
 
   private static boolean isPartOfLargerExpression(PsiPolyadicExpression expression) {

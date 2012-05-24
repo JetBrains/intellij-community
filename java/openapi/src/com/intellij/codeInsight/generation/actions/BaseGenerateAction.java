@@ -53,10 +53,7 @@ public class BaseGenerateAction extends CodeInsightAction {
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
     PsiClass targetClass = getTargetClass(editor, file);
-    if (targetClass == null) return false;
-    if (!isValidForClass(targetClass)) return false; //?
-
-    return true;
+    return targetClass != null && isValidForClass(targetClass);
   }
 
   protected boolean isValidForClass(final PsiClass targetClass) {

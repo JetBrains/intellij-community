@@ -390,7 +390,7 @@ public class GenericsHighlightUtil {
     if (extendFrom == null) return null;
     HighlightInfo errorResult = null;
     if (!extendFrom.isInterface() && referenceElements.length != 0 && element != referenceElements[0]) {
-      final String description = HighlightClassUtil.INTERFACE_EXPECTED;
+      String description = JavaErrorMessages.message("interface.expected");
       errorResult = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, element, description);
       PsiClassType type =
         JavaPsiFacade.getInstance(aClass.getProject()).getElementFactory().createType(extendFrom, resolveResult.getSubstitutor());

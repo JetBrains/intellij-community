@@ -725,12 +725,8 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     if (!myHasDirtyFields) return;
 
     myHasDirtyFields = false;
-    DfaVariableValue[] fields = runner.getFields();
-    for (DfaVariableValue field : fields) {
-      boolean resetNullability = isNotNull(field);
+    for (DfaVariableValue field : runner.getFields()) {
       flushVariable(field);
-      if (resetNullability) {
-      }
       getVariableState(field).setNullable(false);
     }
   }

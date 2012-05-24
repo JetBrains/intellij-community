@@ -8,11 +8,11 @@ package com.intellij.codeInsight.completion;
 import com.intellij.JavaTestUtil
 import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.codeInsight.lookup.LookupElement
+import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.ide.ui.UISettings
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiMethod
-import com.intellij.codeInsight.lookup.LookupElementPresentation
 
 public class NormalCompletionOrderingTest extends CompletionSortingTestCase {
   private static final String BASE_PATH = "/codeInsight/completion/normalSorting";
@@ -87,7 +87,7 @@ public class NormalCompletionOrderingTest extends CompletionSortingTestCase {
     final String path = getTestName(false) + ".java";
     myFixture.configureByFile(path);
     myFixture.complete(CompletionType.BASIC, 2);
-    assertPreferredItems(0, "booleanMethod", "voidMethod", "registerNatives", "BOOLEAN", "AN_OBJECT");
+    assertPreferredItems(0, "BOOLEAN", "booleanMethod", "AN_OBJECT", "voidMethod", "registerNatives");
   }
 
   public void testDispreferDeclared() throws Throwable {
@@ -313,5 +313,21 @@ public class NormalCompletionOrderingTest extends CompletionSortingTestCase {
   public void testPreferKeywordsToVoidMethodsInExpectedTypeContext() {
     checkPreferredItems 0, 'noo', 'new', 'null', 'noo2', 'notify', 'notifyAll'
   }
+
+  public void testPreferBetterMatchingConstantToMethods() {
+    checkPreferredItems 0, 'serial', 'superExpressionInIllegalContext'
+  }
+
+  public void testJComponentAddNewWithStats() throws Throwable {
+    final LookupImpl lookup = invokeCompletion("/../smartTypeSorting/JComponentAddNew.java");
+    assertPreferredItems(0, "FooBean3", "JComponent", "Component");
+    incUseCount(lookup, 2); //Component
+    assertPreferredItems(0, "Component", "FooBean3", "JComponent");
+  }
+
+  public void testDispreferReturnBeforeStatement() {
+    checkPreferredItems 0, 'reaction', 'rezet', 'return'
+  }
+
 
 }

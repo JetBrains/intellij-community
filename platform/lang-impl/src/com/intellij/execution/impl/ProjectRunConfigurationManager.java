@@ -112,7 +112,7 @@ public class ProjectRunConfigurationManager implements ProjectComponent, Persist
       }
 
       if (configuration != null) {
-        existing.add(RunManagerImpl.getUniqueName(configuration));
+        existing.add(RunManagerImpl.getUniqueName(configuration.getConfiguration()));
       }
     }
 

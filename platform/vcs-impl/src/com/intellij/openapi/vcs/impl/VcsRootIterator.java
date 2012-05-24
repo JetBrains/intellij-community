@@ -92,8 +92,8 @@ public class VcsRootIterator {
       final String ourPath = myRoot.getUrl();
 
       for (VcsRoot root : allRoots) {
-        if (Comparing.equal(root.vcs.getName(), myVcsName)) continue;
-        final String url = root.path.getUrl();
+        if (Comparing.equal(root.getVcs().getName(), myVcsName)) continue;
+        final String url = root.getPath().getUrl();
         if (url.startsWith(ourPath)) {
           myExcludedByOtherVcss.add(url);
         }

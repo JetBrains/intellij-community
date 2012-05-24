@@ -21,6 +21,7 @@ import com.intellij.codeInsight.lookup.LookupElementWeigher;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.getters.MembersGetter;
 import com.intellij.psi.util.PropertyUtil;
+import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
@@ -30,11 +31,13 @@ import java.util.Set;
 */
 public class PreferLocalVariablesLiteralsAndAnnoMethodsWeigher extends LookupElementWeigher {
   private final CompletionType myCompletionType;
+  private final PsiElement myPosition;
   private final Set<PsiField> myNonInitializedFields;
 
   public PreferLocalVariablesLiteralsAndAnnoMethodsWeigher(CompletionType completionType, PsiElement position) {
     super("local");
     myCompletionType = completionType;
+    myPosition = position;
     myNonInitializedFields = JavaCompletionProcessor.getNonInitializedFields(position);
   }
 
@@ -60,7 +63,10 @@ public class PreferLocalVariablesLiteralsAndAnnoMethodsWeigher extends LookupEle
 
     if (object instanceof PsiKeyword) {
       String keyword = ((PsiKeyword)object).getText();
-      if (PsiKeyword.RETURN.equals(keyword) || PsiKeyword.ELSE.equals(keyword) || PsiKeyword.FINALLY.equals(keyword)) {
+      if (PsiKeyword.RETURN.equals(keyword) && isLastStatement(PsiTreeUtil.getParentOfType(myPosition, PsiStatement.class))) {
+        return MyResult.probableKeyword;
+      }
+      if (PsiKeyword.ELSE.equals(keyword) || PsiKeyword.FINALLY.equals(keyword)) {
         return MyResult.probableKeyword;
       }
     }
@@ -117,5 +123,13 @@ public class PreferLocalVariablesLiteralsAndAnnoMethodsWeigher extends LookupEle
     }
 
     return MyResult.normal;
+  }
+
+  private static boolean isLastStatement(PsiStatement statement) {
+    if (statement == null || !(statement.getParent() instanceof PsiCodeBlock)) {
+      return true;
+    }
+    PsiStatement[] siblings = ((PsiCodeBlock)statement.getParent()).getStatements();
+    return statement == siblings[siblings.length - 1];
   }
 }

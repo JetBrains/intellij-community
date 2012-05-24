@@ -91,14 +91,14 @@ public class TriggerAdditionOrDeletion {
     if (myPreparedDeletion != null) {
       for (Map.Entry<VcsRoot, Collection<FilePath>> entry : myPreparedDeletion.entrySet()) {
         final VcsRoot vcsRoot = entry.getKey();
-        final CheckinEnvironment localChangesProvider = vcsRoot.vcs.getCheckinEnvironment();
+        final CheckinEnvironment localChangesProvider = vcsRoot.getVcs().getCheckinEnvironment();
         if (localChangesProvider == null) continue;
         final Collection<FilePath> filePaths = entry.getValue();
-        if (vcsRoot.vcs.fileListenerIsSynchronous()) {
+        if (vcsRoot.getVcs().fileListenerIsSynchronous()) {
           myAffected.addAll(filePaths);
           continue;
         }
-        askUserIfNeededDeletion(vcsRoot.vcs, (List<FilePath>)filePaths);
+        askUserIfNeededDeletion(vcsRoot.getVcs(), (List<FilePath>)filePaths);
         myAffected.addAll(filePaths);
         localChangesProvider.scheduleMissingFileForDeletion((List<FilePath>)filePaths);
       }
@@ -106,14 +106,14 @@ public class TriggerAdditionOrDeletion {
     if (myPreparedAddition != null) {
       for (Map.Entry<VcsRoot, Collection<FilePath>> entry : myPreparedAddition.entrySet()) {
         final VcsRoot vcsRoot = entry.getKey();
-        final CheckinEnvironment localChangesProvider = vcsRoot.vcs.getCheckinEnvironment();
+        final CheckinEnvironment localChangesProvider = vcsRoot.getVcs().getCheckinEnvironment();
         if (localChangesProvider == null) continue;
         final Collection<FilePath> filePaths = entry.getValue();
-        if (vcsRoot.vcs.fileListenerIsSynchronous()) {
+        if (vcsRoot.getVcs().fileListenerIsSynchronous()) {
           myAffected.addAll(filePaths);
           continue;
         }
-        askUserIfNeededAddition(vcsRoot.vcs, (List<FilePath>)filePaths);
+        askUserIfNeededAddition(vcsRoot.getVcs(), (List<FilePath>)filePaths);
         myAffected.addAll(filePaths);
         localChangesProvider.scheduleUnversionedFilesForAddition(ObjectsConvertor.fp2vf(filePaths));
       }
@@ -128,10 +128,10 @@ public class TriggerAdditionOrDeletion {
     final MultiMap<VcsRoot, FilePath> map = sortByVcsRoots.sort(myDeleted);
     myPreparedDeletion = new MultiMap<VcsRoot, FilePath>();
     for (VcsRoot vcsRoot : map.keySet()) {
-      if (vcsRoot != null && vcsRoot.vcs != null) {
-        final CheckinEnvironment localChangesProvider = vcsRoot.vcs.getCheckinEnvironment();
+      if (vcsRoot != null && vcsRoot.getVcs() != null) {
+        final CheckinEnvironment localChangesProvider = vcsRoot.getVcs().getCheckinEnvironment();
         if (localChangesProvider == null) continue;
-        final boolean takeDirs = vcsRoot.vcs.areDirectoriesVersionedItems();
+        final boolean takeDirs = vcsRoot.getVcs().areDirectoriesVersionedItems();
 
         final Collection<FilePath> files = map.get(vcsRoot);
         final List<FilePath> toBeDeleted = new LinkedList<FilePath>();
@@ -142,7 +142,7 @@ public class TriggerAdditionOrDeletion {
           }
         }
         if (toBeDeleted.isEmpty()) return;
-        if (! vcsRoot.vcs.fileListenerIsSynchronous()) {
+        if (! vcsRoot.getVcs().fileListenerIsSynchronous()) {
           for (FilePath filePath : toBeDeleted) {
             myVcsFileListenerContextHelper.ignoreDeleted(filePath);
           }
@@ -159,15 +159,15 @@ public class TriggerAdditionOrDeletion {
     final MultiMap<VcsRoot, FilePath> map = sortByVcsRoots.sort(myExisting);
     myPreparedAddition = new MultiMap<VcsRoot, FilePath>();
     for (VcsRoot vcsRoot : map.keySet()) {
-      if (vcsRoot != null && vcsRoot.vcs != null) {
-        final CheckinEnvironment localChangesProvider = vcsRoot.vcs.getCheckinEnvironment();
+      if (vcsRoot != null && vcsRoot.getVcs() != null) {
+        final CheckinEnvironment localChangesProvider = vcsRoot.getVcs().getCheckinEnvironment();
         if (localChangesProvider == null) continue;
-        final boolean takeDirs = vcsRoot.vcs.areDirectoriesVersionedItems();
+        final boolean takeDirs = vcsRoot.getVcs().areDirectoriesVersionedItems();
 
         final Collection<FilePath> files = map.get(vcsRoot);
         final List<FilePath> toBeAdded;
         if (takeDirs) {
-          final RecursiveCheckAdder adder = new RecursiveCheckAdder(vcsRoot.path);
+          final RecursiveCheckAdder adder = new RecursiveCheckAdder(vcsRoot.getPath());
           for (FilePath file : files) {
             adder.process(file);
           }
@@ -184,7 +184,7 @@ public class TriggerAdditionOrDeletion {
           return;
         }
         Collections.sort(toBeAdded, FilePathByPathComparator.getInstance());
-        if (! vcsRoot.vcs.fileListenerIsSynchronous()) {
+        if (! vcsRoot.getVcs().fileListenerIsSynchronous()) {
           for (FilePath filePath : toBeAdded) {
             myVcsFileListenerContextHelper.ignoreAdded(filePath.getVirtualFile());
           }

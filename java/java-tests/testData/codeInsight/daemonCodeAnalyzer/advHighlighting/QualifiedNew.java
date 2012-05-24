@@ -17,3 +17,16 @@ class b extends A {
   static class c {}
 }
 
+
+class WithAnonym {
+  interface I {
+  }
+  class Inner{}
+}
+
+class WithAnonymInheritor extends WithAnonym {
+  {
+    <error descr="Anonymous class implements interface; cannot have qualifier for new">this.new I() {}</error>;
+    this.new Inner() {};
+  }
+}

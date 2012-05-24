@@ -32,7 +32,7 @@ class ConstantExpressionPredicate implements PsiElementPredicate {
     }
     final PsiPolyadicExpression expression = (PsiPolyadicExpression)element;
     final PsiType expressionType = expression.getType();
-    if (expressionType.equalsToText("java.lang.String")) {
+    if (expressionType == null || expressionType.equalsToText("java.lang.String")) {
       // intention disabled for string concatenations because of performance issues on
       // relatively common large string expressions.
       return false;

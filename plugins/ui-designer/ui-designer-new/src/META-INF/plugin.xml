@@ -14,4 +14,7 @@
     </component>
   </project-components>
 
+  <extensions defaultExtensionNs="com.intellij">
+     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
+  </extensions>
 </idea-plugin>

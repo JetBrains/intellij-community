@@ -114,7 +114,7 @@ abstract class GitChangesCollector {
 
   protected void addToPaths(FilePath pathToAdd, List<String> paths) {
     VcsRoot fileRoot = myVcsManager.getVcsRootObjectFor(pathToAdd);
-    if (fileRoot != null && fileRoot.vcs != null && fileRoot.vcs.equals(myVcs) && myVcsRoot.equals(fileRoot.path)) {
+    if (fileRoot != null && fileRoot.getVcs() != null && myVcs.equals(fileRoot.getVcs()) && myVcsRoot.equals(fileRoot.getPath())) {
       paths.add(pathToAdd.getPath());
     }
   }

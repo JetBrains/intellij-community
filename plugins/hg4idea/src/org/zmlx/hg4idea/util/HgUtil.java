@@ -332,8 +332,8 @@ public abstract class HgUtil {
   public static @NotNull List<VirtualFile> getHgRepositories(@NotNull Project project) {
     final List<VirtualFile> repos = new LinkedList<VirtualFile>();
     for (VcsRoot root : ProjectLevelVcsManager.getInstance(project).getAllVcsRoots()) {
-      if (HgVcs.VCS_NAME.equals(root.vcs.getName())) {
-        repos.add(root.path);
+      if (HgVcs.VCS_NAME.equals(root.getVcs().getName())) {
+        repos.add(root.getPath());
       }
     }
     return repos;

@@ -18,6 +18,7 @@ package com.intellij.execution;
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.execution.configurations.RunProfile;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -45,7 +46,7 @@ public abstract class RunManager {
 
   public abstract boolean isTemporary(@NotNull RunConfiguration configuration);
 
-  public abstract void makeStable(@Nullable RunConfiguration configuration);
+  public abstract void makeStable(@NotNull RunConfiguration configuration);
 
   @Nullable
   public abstract RunnerAndConfigurationSettings getSelectedConfiguration();
@@ -58,4 +59,7 @@ public abstract class RunManager {
 
   @NotNull
   public abstract RunnerAndConfigurationSettings[] getConfigurationSettings(@NotNull ConfigurationType type);
+
+  public abstract void refreshUsagesList(RunProfile profile);
+
 }

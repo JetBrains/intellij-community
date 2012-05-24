@@ -15,7 +15,9 @@
  */
 package com.intellij.formatting;
 
+import com.intellij.diagnostic.LogMessageEx;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -85,12 +87,20 @@ public abstract class AbstractBlockAlignmentProcessor implements BlockAlignmentP
     // alignment of blocks located before them and post error every time we detect endless cycle.
     Set<LeafBlockWrapper> blocksCausedRealignment = context.backwardShiftedAlignedBlocks.get(offsetResponsibleBlock);
     if (blocksCausedRealignment != null && blocksCausedRealignment.contains(context.targetBlock)) {
-      LOG.error(String.format("Please create dedicated ticket at the tracker with the content of the current editor attached%n%n"
-                              + "Formatting error - code block %s is set to be shifted right because of its alignment with "
-                              + "block %s more than once. I.e. moving the former block because of alignment algorithm causes "
-                              + "subsequent block to be shifted right as well - cyclic dependency.%nDebug info: %s",
-                              offsetResponsibleBlock.getTextRange(), context.targetBlock.getTextRange(), context.targetBlock.getDebugInfo()
-      ));
+      StringBuilder messageBuilder = new StringBuilder();
+      TextRange targetRange = context.targetBlock.getTextRange();
+      messageBuilder.append(
+        String.format("Formatting error - code block %s is set to be shifted right because of its alignment with "
+                      + "block %s more than once. I.e. moving the former block because of alignment algorithm causes "
+                      + "subsequent block to be shifted right as well - cyclic dependency.",
+                      offsetResponsibleBlock.getTextRange(), targetRange
+        ));
+      messageBuilder.append(context.targetBlock.getDebugInfo());
+      messageBuilder.append("\nBlock content: '")
+        .append(context.document.getText().substring(targetRange.getStartOffset(), targetRange.getEndOffset()))
+        .append("'\n");
+      messageBuilder.append("Note: document text is attached to this report.");
+      LogMessageEx.error(LOG, messageBuilder.toString(), context.document.getText());
       blocksCausedRealignment.add(context.targetBlock);
       return Result.UNABLE_TO_ALIGN_BACKWARD_BLOCK;
     }

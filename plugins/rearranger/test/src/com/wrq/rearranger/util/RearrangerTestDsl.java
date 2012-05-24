@@ -30,10 +30,11 @@ public enum RearrangerTestDsl {
   TARGET,
   TYPE,
   RETURN_TYPE("return type"),
-  SORT,
+  SORT("sort by"),
+  NOT_SORT("not sort by"),
   COMMENT,
   GETTER_CRITERIA("getter criteria"),
-  SETTER_CRITERIA("setterCriteria"),
+  SETTER_CRITERIA("setter criteria"),
   SPACING,
   PRECEDING_COMMENT("preceding comment"),
   TRAILING_COMMENT("trailing comment"),
@@ -56,7 +57,13 @@ public enum RearrangerTestDsl {
   BELOW_FIRST_CALLER("below first caller"),
   NON_PRIVATE_TREATMENT("non-private treatment"),
   REARRANGE_INNER_CLASSES("rearranger inner classes"),
-  CLASS_COMMENT("class comment");
+  CLASS_COMMENT("class comment"),
+  ARGUMENTS_NUMBER("arguments number"),
+  FROM,
+  TO,
+  FILL_STRING("fill string"),
+  USE_PROJECT_WIDTH_FOR_COMMENT_FILL("use project width for fill"),
+  FILL_WIDTH("fill width");
 
   @NotNull private final String myValue;
   

@@ -1,4 +1,5 @@
 public class RearrangementTest43 {
+
   void method2(int a, int b) {
   }
 
@@ -7,7 +8,6 @@ public class RearrangementTest43 {
 
   void method1(int a) {
   }
-
   void method0() {
   }
 }

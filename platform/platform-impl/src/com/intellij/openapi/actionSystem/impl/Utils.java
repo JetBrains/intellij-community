@@ -130,14 +130,14 @@ public class Utils{
       if (child instanceof ActionGroup) {
         ActionGroup actionGroup = (ActionGroup)child;
         if (actionGroup.isPopup()) { // popup menu has its own presentation
-          // disable group if it contains no visible actions
-          final boolean visibleChildren = hasVisibleChildren(actionGroup, presentationFactory, context, place);
-          if (actionGroup.hideIfNoVisibleChildren() && !visibleChildren) {
-            continue;
+          if (actionGroup.disableIfNoVisibleChildren()) {
+            final boolean visibleChildren = hasVisibleChildren(actionGroup, presentationFactory, context, place);
+            if (actionGroup.hideIfNoVisibleChildren() && !visibleChildren) {
+              continue;
+            }
+            presentation.setEnabled(actionGroup.canBePerformed(context) || visibleChildren);
           }
-          if (!actionGroup.canBePerformed(context) && !visibleChildren) {
-            presentation.setEnabled(false);
-          }
+
           list.add(child);
         }
         else {
