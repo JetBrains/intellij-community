@@ -959,26 +959,13 @@ class RearrangerTest extends LightCodeInsightFixtureTestCase {
         'arguments number' ( from: 1)
   } } }
 
-//  public final void testGeneratedComment() throws Exception {
-//    configureByFile("/com/wrq/rearranger/RearrangementTest44.java");
-//    final PsiFile file = getFile();
-//    final Document doc = PsiDocumentManager.getInstance(getProject()).getDocument(file);
-//    final RearrangerActionHandler rah = new RearrangerActionHandler();
-//    CommentRule cr = new CommentRule();
-//    CommentFillString cfs = cr.getCommentFillString();
-//    cfs.setFillString("-+");
-//    cfs.setUseProjectWidthForFill(false);
-//    cfs.setFillWidth(30);
-//    cr.setEmitCondition(CommentRule.EMIT_ALWAYS);
-//    cr.setCommentText("// %FS% METHODS %FS%");
-//    rs.addItem(cr, 0);
-//    MethodAttributes ma;
-//    ma = new MethodAttributes();  // match all methods
-//    rs.addItem(ma, 1);
-//    rah.rearrangeDocument(getProject(), file, rs, doc);
-//    super.checkResultByFile("/com/wrq/rearranger/RearrangementResult44.java");
-//  }
-//
+  public final void testGeneratedComment() throws Exception {
+    doTest('RearrangementTest44', 'RearrangementResult44') {
+      commentRule.comment('// %FS% METHODS %FS%', condition: CommentRule.EMIT_ALWAYS, 'fill string': '-+', 
+                          'use project width for fill': false, 'fill width': 30)
+      methodRule.create { } // match all methods
+  } }
+
 //  public void testEnum1() throws Exception {
 //    final Project project = getProject();
 //    final LanguageLevelProjectExtension llpExtension = LanguageLevelProjectExtension.getInstance(project);

@@ -60,7 +60,10 @@ public enum RearrangerTestDsl {
   CLASS_COMMENT("class comment"),
   ARGUMENTS_NUMBER("arguments number"),
   FROM,
-  TO;
+  TO,
+  FILL_STRING("fill string"),
+  USE_PROJECT_WIDTH_FOR_COMMENT_FILL("use project width for fill"),
+  FILL_WIDTH("fill width");
 
   @NotNull private final String myValue;
   
