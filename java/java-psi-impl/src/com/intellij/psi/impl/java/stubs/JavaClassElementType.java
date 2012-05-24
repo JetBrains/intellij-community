@@ -108,7 +108,7 @@ public abstract class JavaClassElementType extends JavaStubElementType<PsiClassS
         isInterface = true;
       }
       else if (type == JavaTokenType.ENUM_KEYWORD) {
-        isEnum = truet;
+        isEnum = true;
       }
       else if (!isAnonymous && type == JavaTokenType.IDENTIFIER) {
         name = RecordUtil.intern(tree.getCharTable(), child);

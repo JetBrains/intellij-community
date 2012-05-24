@@ -22,7 +22,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.IOException;
 
-public class PersistentStringEnumerator extends PersistentEnumeratorDelegate<String>{
+public class PersistentStringEnumerator extends PersistentEnumeratorDelegate<String> implements AbstractStringEnumerator {
   @Nullable private final ConcurrentSLRUMap<Integer, String> myIdToStringCache;
   @Nullable private final ConcurrentSLRUMap<Integer, Integer> myHashcodeToIdCache;
 
