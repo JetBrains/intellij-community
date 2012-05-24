@@ -160,7 +160,7 @@ public class GrLiteralImpl extends GrAbstractLiteral implements GrLiteral, PsiLa
     if (child == null) return false;
 
     IElementType elementType = child.getNode().getElementType();
-    return elementType == mGSTRING_LITERAL || elementType == mSTRING_LITERAL;
+    return TokenSets.STRING_LITERAL_SET.contains(elementType);
   }
 
   @NotNull
