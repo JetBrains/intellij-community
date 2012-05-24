@@ -79,12 +79,7 @@ public final class ComponentTree extends Tree implements DataProvider {
 
   @Override
   public Object getData(@NonNls String dataId) {
-    // TODO: support keys
-
-    if (myActionPanel != null) {
-      return myActionPanel.getData(dataId);
-    }
-    return null;
+    return myActionPanel == null ? null : myActionPanel.getData(dataId);
   }
 
   @Nullable

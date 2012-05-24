@@ -18,9 +18,16 @@ abstract class AbstractJavaRuleBuilder<T> extends AbstractRuleBuilder<T> {{
   })
   
   // Sort
-  def sortOptions = [ (SortType.BY_NAME) : "byName"]
+  def sortOptions = [
+    (SortOption.BY_NAME)               : 'byName',
+    (SortOption.BY_TYPE)               : 'byType',
+    (SortOption.TYPE_CASE_INSENSITIVE) : 'typeCaseInsensitive',
+  ]
   registerHandler(RearrangerTestDsl.SORT, { data, attributes, rule ->
     rule.sortOptions."${sortOptions[data]}" = true
+  })
+  registerHandler(RearrangerTestDsl.NOT_SORT, { data, attributes, rule ->
+    rule.sortOptions."${sortOptions[data]}" = false
   })
   
   // Modifiers
@@ -47,5 +54,10 @@ abstract class AbstractJavaRuleBuilder<T> extends AbstractRuleBuilder<T> {{
     else {
       genericHandlers[value](attributes, rule)
     }
+  })
+  
+  // Priority.
+  registerHandler(RearrangerTestDsl.PRIORITY, { value, attributes, rule ->
+    rule.priority = value
   })
 }}

@@ -525,7 +525,7 @@ public class BuildManager implements ApplicationComponent{
     }
 
     final String defaultCharset = EncodingManager.getInstance().getDefaultCharsetName();
-    if (defaultCharset != null) {
+    if (!StringUtil.isEmpty(defaultCharset)) {
       cmdBuilder.setGlobalEncoding(defaultCharset);
     }
 

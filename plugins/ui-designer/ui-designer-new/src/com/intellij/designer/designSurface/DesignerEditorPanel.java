@@ -681,7 +681,6 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
 
   @Override
   public Object getData(@NonNls String dataId) {
-    // TODO: support keys
     return myActionPanel.getData(dataId);
   }
 

@@ -100,8 +100,9 @@ public class GitRepositoryManagerImpl extends AbstractProjectComponent implement
   public GitRepository getRepositoryForFile(@NotNull VirtualFile file) {
     final VcsRoot vcsRoot = myVcsManager.getVcsRootObjectFor(file);
     if (vcsRoot == null) { return null; }
-    if (!myVcs.equals(vcsRoot.vcs)) {
-      LOG.info(String.format("getRepositoryForFile returned non-Git (%s) root for file %s", vcsRoot.vcs.getDisplayName(), file));
+    final AbstractVcs vcs = vcsRoot.vcs;
+    if (!myVcs.equals(vcs)) {
+      LOG.info(String.format("getRepositoryForFile returned non-Git (%s) root for file %s", vcs != null ? vcs.getDisplayName() : vcs, file));
       return null;
     }
     return getRepositoryForRoot(vcsRoot.path);
