@@ -29,6 +29,7 @@ import com.intellij.compiler.impl.javaCompiler.eclipse.EclipseCompiler;
 import com.intellij.compiler.impl.javaCompiler.eclipse.EclipseEmbeddedCompiler;
 import com.intellij.compiler.impl.javaCompiler.javac.JavacCompiler;
 import com.intellij.compiler.impl.javaCompiler.jikes.JikesCompiler;
+import com.intellij.compiler.server.BuildManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
@@ -59,6 +60,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.io.File;
 import java.util.*;
 
@@ -167,6 +169,27 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
 
   public Map<String, String> getModulesBytecodeTargetMap() {
     return myModuleBytecodeTarget;
+  }
+
+  public void setBytecodeTargetLevel(Module module, String level) {
+    final String previous;
+    if (StringUtil.isEmpty(level)) {
+      previous = myModuleBytecodeTarget.remove(module.getName());
+    }
+    else {
+      previous = myModuleBytecodeTarget.put(module.getName(), level);
+    }
+    if (!Comparing.equal(previous, level)) {
+      final Project project = module.getProject();
+      SwingUtilities.invokeLater(new Runnable() {
+        public void run() {
+          if (!project.isDisposed()) {
+            CompileServerManager.getInstance().sendReloadRequest(project);
+            BuildManager.getInstance().clearState(project);
+          }
+        }
+      });
+    }
   }
 
   @Override
