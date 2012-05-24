@@ -30,6 +30,7 @@ import com.intellij.psi.impl.JavaPsiImplementationHelper;
 import com.intellij.psi.impl.PsiElementFactoryImpl;
 import com.intellij.psi.impl.source.resolve.JavaResolveCache;
 import com.intellij.psi.impl.source.resolve.PsiResolveHelperImpl;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 
@@ -61,18 +62,21 @@ public class JavaCoreProjectEnvironment  extends CoreProjectEnvironment {
     return new CoreJavaFileManager(myPsiManager, getEnvironment().getLocalFileSystem(), getEnvironment().getJarFileSystem());
   }
 
-  public void addToClasspath(File path) {
-    final VirtualFile root = path.isFile()
-                             ? getEnvironment().getJarFileSystem().findFileByPath(path + "!/")
-                             : getEnvironment().getLocalFileSystem().findFileByPath(path.getPath());
+  public void addJarToClassPath (File path) {
+    assert path.isFile();
 
-    if (root != null) {
-      myFileManager.addToClasspath(path);
-      myFileIndexFacade.addLibraryRoot(root);
-    }
-    else {
+    final VirtualFile root = getEnvironment().getJarFileSystem().findFileByPath(path + "!/");
+    if (root == null) {
       throw new IllegalArgumentException("trying to add non-existing file to classpath: " + path);
     }
+
+    addSourcesToClasspath(root);
+  }
+
+  public void addSourcesToClasspath(@NotNull VirtualFile root) {
+    assert root.isDirectory();
+    myFileManager.addToClasspath(root);
+    myFileIndexFacade.addLibraryRoot(root);
   }
 
 }
