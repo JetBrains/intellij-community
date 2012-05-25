@@ -66,7 +66,7 @@ public class GroovyBuilder extends ModuleLevelBuilder {
       List<String> patchers = Collections.emptyList(); //todo patchers
       String compilerOutput = generationOutputs.get(chunk.representativeModule());
       final File tempFile = GroovycOSProcessHandler.fillFileWithGroovycParameters(
-        compilerOutput, toCompilePaths, finalOutputs.get(chunk.representativeModule()), class2Src, encoding, patchers
+        compilerOutput, toCompilePaths, FileUtil.toSystemDependentName(finalOutputs.get(chunk.representativeModule())), class2Src, encoding, patchers
       );
 
       //todo xmx
