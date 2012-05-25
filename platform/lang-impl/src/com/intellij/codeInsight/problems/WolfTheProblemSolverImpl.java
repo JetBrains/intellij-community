@@ -66,18 +66,21 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
   private final List<Condition<VirtualFile>> myFilters = ContainerUtil.createEmptyCOWList();
   private boolean myFiltersLoaded = false;
   private final ProblemListener fireProblemListeners = new ProblemListener() {
+    @Override
     public void problemsAppeared(VirtualFile file) {
       for (final ProblemListener problemListener : myProblemListeners) {
         problemListener.problemsAppeared(file);
       }
     }
 
+    @Override
     public void problemsChanged(VirtualFile file) {
       for (final ProblemListener problemListener : myProblemListeners) {
         problemListener.problemsChanged(file);
       }
     }
 
+    @Override
     public void problemsDisappeared(VirtualFile file) {
       for (final ProblemListener problemListener : myProblemListeners) {
         problemListener.problemsDisappeared(file);
@@ -122,36 +125,44 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
   public WolfTheProblemSolverImpl(Project project, PsiManager psiManager, VirtualFileManager virtualFileManager) {
     myProject = project;
     PsiTreeChangeListener changeListener = new PsiTreeChangeAdapter() {
+      @Override
       public void childAdded(@NotNull PsiTreeChangeEvent event) {
         childrenChanged(event);
       }
 
+      @Override
       public void childRemoved(@NotNull PsiTreeChangeEvent event) {
         childrenChanged(event);
       }
 
+      @Override
       public void childReplaced(@NotNull PsiTreeChangeEvent event) {
         childrenChanged(event);
       }
 
+      @Override
       public void childMoved(@NotNull PsiTreeChangeEvent event) {
         childrenChanged(event);
       }
 
+      @Override
       public void propertyChanged(@NotNull PsiTreeChangeEvent event) {
         childrenChanged(event);
       }
 
+      @Override
       public void childrenChanged(@NotNull PsiTreeChangeEvent event) {
         clearSyntaxErrorFlag(event);
       }
     };
     psiManager.addPsiTreeChangeListener(changeListener);
     VirtualFileListener virtualFileListener = new VirtualFileAdapter() {
+      @Override
       public void fileDeleted(final VirtualFileEvent event) {
         onDeleted(event.getFile());
       }
 
+      @Override
       public void fileMoved(final VirtualFileMoveEvent event) {
         onDeleted(event.getFile());
       }
@@ -169,10 +180,12 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
     FileStatusManager fileStatusManager = FileStatusManager.getInstance(myProject);
     if (fileStatusManager != null) { //tests?
       fileStatusManager.addFileStatusListener(new FileStatusListener() {
+        @Override
         public void fileStatusesChanged() {
           clearInvalidFiles();
         }
 
+        @Override
         public void fileStatusChanged(@NotNull VirtualFile virtualFile) {
           fileStatusesChanged();
         }
@@ -204,22 +217,27 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
     }
   }
 
+  @Override
   public void projectOpened() {
   }
 
+  @Override
   public void projectClosed() {
   }
 
+  @Override
   @NotNull
   @NonNls
   public String getComponentName() {
     return "Problems";
   }
 
+  @Override
   public void initComponent() {
 
   }
 
+  @Override
   public void disposeComponent() {
 
   }
@@ -257,14 +275,16 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
     private final HighlightInfo myHighlightInfo;
     private final boolean myHasErrorElement;
 
-    private HaveGotErrorException(HighlightInfo info, final boolean hasErrorElement) {
+    private HaveGotErrorException(@NotNull HighlightInfo info, final boolean hasErrorElement) {
       myHighlightInfo = info;
       myHasErrorElement = hasErrorElement;
     }
   }
 
   // returns true if car has been cleaned
-  private boolean orderVincentToCleanTheCar(final VirtualFile file, final ProgressIndicator progressIndicator, final StatusBar statusBar) throws ProcessCanceledException {
+  private boolean orderVincentToCleanTheCar(@NotNull final VirtualFile file,
+                                            @NotNull final ProgressIndicator progressIndicator,
+                                            @NotNull final StatusBar statusBar) throws ProcessCanceledException {
     if (!isToBeHighlighted(file)) {
       clearProblems(file);
       return true; // file is going to be red waved no more
@@ -282,8 +302,10 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
 
     try {
       GeneralHighlightingPass pass = new GeneralHighlightingPass(myProject, psiFile, document, 0, document.getTextLength(), false) {
+        @Override
         protected HighlightInfoHolder createInfoHolder(final PsiFile file) {
           return new HighlightInfoHolder(file, HighlightInfoFilter.EMPTY_ARRAY) {
+            @Override
             public boolean add(HighlightInfo info) {
               if (info != null && info.getSeverity() == HighlightSeverity.ERROR) {
                 throw new HaveGotErrorException(info, myHasErrorElement);
@@ -294,6 +316,7 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
         }
       };
       ApplicationManager.getApplication().invokeLater(new Runnable() {
+        @Override
         public void run() {
           if (progressIndicator.isCanceled()) return;
           statusBar.setInfo("Checking '" + file.getPresentableUrl() + "'");
@@ -323,6 +346,7 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
   private static void restoreStatusBarInfo(final StatusBar statusBar, final Pair<String, String> oldInfo) {
     if (statusBar instanceof StatusBarEx) {
       LaterInvocator.invokeLater(new Runnable() {
+        @Override
         public void run() {
           statusBar.setInfo(oldInfo.first, oldInfo.second);
         }
@@ -330,6 +354,7 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
     }
   }
 
+  @Override
   public boolean hasSyntaxErrors(final VirtualFile file) {
     synchronized (myProblems) {
       ProblemFileInfo info = myProblems.get(file);
@@ -350,6 +375,7 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
     return false;
   }
 
+  @Override
   public boolean hasProblemFilesBeneath(Condition<VirtualFile> condition) {
     if (!myProject.isOpen()) return false;
     synchronized (myProblems) {
@@ -363,34 +389,42 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
     }
   }
 
+  @Override
   public boolean hasProblemFilesBeneath(final Module scope) {
     return hasProblemFilesBeneath(new Condition<VirtualFile>() {
+      @Override
       public boolean value(final VirtualFile virtualFile) {
         return ModuleUtil.moduleContainsFile(scope, virtualFile, false);
       }
     });
   }
 
+  @Override
   public void addProblemListener(ProblemListener listener) {
     myProblemListeners.add(listener);
   }
 
+  @Override
   public void addProblemListener(final ProblemListener listener, Disposable parentDisposable) {
     addProblemListener(listener);
     Disposer.register(parentDisposable, new Disposable() {
+      @Override
       public void dispose() {
         removeProblemListener(listener);
       }
     });
   }
 
+  @Override
   public void removeProblemListener(ProblemListener listener) {
     myProblemListeners.remove(listener);
   }
 
+  @Override
   public void registerFileHighlightFilter(final Condition<VirtualFile> filter, Disposable parentDisposable) {
     myFilters.add(filter);
     Disposer.register(parentDisposable, new Disposable() {
+      @Override
       public void dispose() {
         myFilters.remove(filter);
       }
@@ -405,6 +439,7 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
     }
   }
 
+  @Override
   public boolean isProblemFile(VirtualFile virtualFile) {
     synchronized (myProblems) {
       return myProblems.containsKey(virtualFile);
@@ -430,6 +465,7 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
     return false;
   }
 
+  @Override
   public void weHaveGotProblems(@NotNull final VirtualFile virtualFile, @NotNull List<Problem> problems) {
     if (problems.isEmpty()) return;
     if (!isToBeHighlighted(virtualFile)) return;
@@ -452,14 +488,17 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
     }
   }
 
+  @Override
   public void clearProblems(@NotNull VirtualFile virtualFile) {
     doRemove(virtualFile);
   }
 
+  @Override
   public Problem convertToProblem(final VirtualFile virtualFile, final HighlightSeverity severity,
                                   final TextRange textRange, final String messageText) {
     if (virtualFile == null || textRange.getStartOffset() < 0 || textRange.getLength() < 0 ) return null;
     HighlightInfo info = ApplicationManager.getApplication().runReadAction(new Computable<HighlightInfo>() {
+      @Override
       public HighlightInfo compute() {
         return HighlightInfo.createHighlightInfo(HighlightInfo.convertSeverity(severity), textRange, messageText);
       }
@@ -467,9 +506,11 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
     return new ProblemImpl(virtualFile, info, false);
   }
 
+  @Override
   public Problem convertToProblem(final VirtualFile virtualFile, final int line, final int column, final String[] message) {
     if (virtualFile == null || virtualFile.isDirectory() || virtualFile.getFileType().isBinary()) return null;
     HighlightInfo info = ApplicationManager.getApplication().runReadAction(new Computable<HighlightInfo>() {
+      @Override
       public HighlightInfo compute() {
         TextRange textRange = getTextRange(virtualFile, line, column);
         return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, textRange, StringUtil.join(message, "\n"));
@@ -479,6 +520,7 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
     return new ProblemImpl(virtualFile, info, false);
   }
 
+  @Override
   public void reportProblems(final VirtualFile file, Collection<Problem> problems) {
     if (problems.isEmpty()) {
       clearProblems(file);
