@@ -412,7 +412,7 @@ public class BuildManager implements ApplicationComponent{
             public void onTextAvailable(ProcessEvent event, Key outputType) {
               // re-translate builder's output to idea.log
               final String text = event.getText();
-              if (!StringUtil.isEmpty(text)) {
+              if (!StringUtil.isEmptyOrSpaces(text)) {
                 LOG.info("BUILDER_PROCESS [" + outputType.toString() + "]: " + text.trim());
                 if (stdErrOutput.length() < 1024 && ProcessOutputTypes.STDERR.equals(outputType)) {
                   stdErrOutput.append(text);
