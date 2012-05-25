@@ -590,11 +590,11 @@ class Main {
     }
 
     println '1'
-    assertEmpty make()
+    println make().join('\n')
     checkClassFiles()
 
     println '2'
-    assertEmpty make()
+    println make().join('\n')
     checkClassFiles()
 
     assertOutput('Foo', 'Hello from Foo', myModule)
@@ -663,6 +663,22 @@ public class Main {
 
     assertEmpty(make())
     assert findClassFile("Client")
+  }
+
+  public void "test ignore groovy internal non-existent interface helper inner class"() {
+    myFixture.addFileToProject 'Foo.groovy', '''
+interface Foo {}
+
+class Zoo {
+  Foo foo() {}
+  static class Inner implements Foo {}
+}
+
+'''
+    def bar = myFixture.addFileToProject('Bar.groovy', 'class Bar { def foo = new Zoo.Inner() {}  }')
+
+    assertEmpty make()
+    assertEmpty compileFiles(bar.virtualFile)
   }
 
   public void "test multiline strings"() {
